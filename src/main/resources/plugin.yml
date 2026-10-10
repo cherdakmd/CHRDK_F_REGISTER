@@ -1,0 +1,30 @@
+name: CHRDK_F_REGISTER
+version: '${version}'
+main: ru.cherdakmd.chrdkregister.RegisterPlugin
+api-version: '1.21.11'
+authors:
+  - cherdakmd
+description: Плагин проходки через DonatePay (150р на 1 месяц) с регистрацией и авторизацией по паролю для Purpur 1.21.11
+
+commands:
+  register:
+    description: Зарегистрировать аккаунт паролем после получения проходки
+    usage: /<command> <пароль> <повтор>
+    aliases: [reg]
+  login:
+    description: Войти в аккаунт по паролю
+    usage: /<command> <пароль>
+    aliases: [l]
+  changepassword:
+    description: Сменить пароль аккаунта
+    usage: /<command> <старый_пароль> <новый_пароль>
+    aliases: [cp, changepass]
+  pass:
+    description: Проверка статуса проходки и управление проходками
+    usage: /<command> [add|remove|check|unregister|status|reload] [ник]
+    aliases: [fregister, prohodka]
+
+permissions:
+  chrdkregister.admin:
+    description: Доступ к ручному добавлению игроков и управлению плагином
+    default: op

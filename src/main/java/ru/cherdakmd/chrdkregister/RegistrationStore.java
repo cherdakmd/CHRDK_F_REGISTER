@@ -2,8 +2,6 @@ package ru.cherdakmd.chrdkregister;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParseException;
-import org.slf4j.Logger;
 
 import java.io.Reader;
 import java.io.Writer;
@@ -11,11 +9,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.security.SecureRandom;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -24,191 +20,265 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-/** Persistent whitelist grants, pending login tickets and the DonatePay polling cursor. */
+/**
+ * Persistent storage for player passes, password hashes, IP sessions, and DonatePay transaction cursor.
+ */
 public final class RegistrationStore {
-    private static final int MAX_TICKETS = 20_000;
     private static final int MAX_PROCESSED_DONATIONS = 5_000;
-    private static final SecureRandom RANDOM = new SecureRandom();
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     private final Path file;
     private final Logger logger;
     private StoreData data;
 
-    public RegistrationStore(Path configDirectory, Logger logger) {
-        this.file = configDirectory.resolve("chrdk_f_register-data.json");
+    public RegistrationStore(Path dataFolder, Logger logger) {
+        this.file = dataFolder.resolve("data.json");
         this.logger = logger;
         load();
     }
 
-    public synchronized Ticket issueTicket(UUID uuid, String name, long lifetimeMillis) {
-        long now = System.currentTimeMillis();
-        removeExpiredTickets(now);
-        String canonical = canonicalName(name);
-        for (Ticket ticket : data.tickets.values()) {
-            if (ticket.expiresAt > now && uuid.toString().equals(ticket.uuid)) {
-                ticket.minecraftName = name;
-                ticket.canonicalName = canonical;
-                ticket.expiresAt = Math.max(ticket.expiresAt, now + lifetimeMillis);
-                save();
-                return copy(ticket);
-            }
+    /** Records a player's UUID and exact casing when they join the server. */
+    public synchronized PlayerAccount recordPlayerSeen(UUID uuid, String playerName) {
+        String key = canonicalName(playerName);
+        PlayerAccount account = data.accounts.computeIfAbsent(key, ignored -> new PlayerAccount());
+        account.canonicalName = key;
+        account.playerName = playerName;
+        if (uuid != null) {
+            account.uuid = uuid.toString();
         }
-
-        if (data.tickets.size() >= MAX_TICKETS) {
-            data.tickets.values().stream()
-                    .min(Comparator.comparingLong(ticket -> ticket.createdAt))
-                    .map(ticket -> ticket.token)
-                    .ifPresent(data.tickets::remove);
-        }
-
-        Ticket ticket = new Ticket();
-        ticket.token = randomToken();
-        ticket.uuid = uuid.toString();
-        ticket.minecraftName = name;
-        ticket.canonicalName = canonical;
-        ticket.createdAt = now;
-        ticket.expiresAt = now + lifetimeMillis;
-        data.tickets.put(ticket.token, ticket);
         save();
-        return copy(ticket);
+        return copy(account);
     }
 
-    public synchronized Optional<Ticket> getTicket(String token) {
-        long now = System.currentTimeMillis();
-        Ticket ticket = data.tickets.get(token);
-        if (ticket == null) return Optional.empty();
-        if (ticket.expiresAt <= now) {
-            data.tickets.remove(token);
-            save();
+    public synchronized Optional<PlayerAccount> getAccount(String playerName) {
+        if (playerName == null || playerName.isBlank()) return Optional.empty();
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        return account == null ? Optional.empty() : Optional.of(copy(account));
+    }
+
+    public synchronized boolean hasActivePass(String playerName, long nowMillis) {
+        if (playerName == null || playerName.isBlank()) return false;
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        return account != null && account.hasActivePass(nowMillis);
+    }
+
+    public synchronized boolean isRegistered(String playerName) {
+        if (playerName == null || playerName.isBlank()) return false;
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        return account != null && account.isRegistered();
+    }
+
+    /**
+     * Grants or extends a pass manually by an administrator.
+     */
+    public synchronized PlayerAccount grantPassManual(String playerName, long nowMillis, long durationMillis) {
+        String key = canonicalName(playerName);
+        PlayerAccount account = data.accounts.computeIfAbsent(key, ignored -> new PlayerAccount());
+        account.canonicalName = key;
+        if (account.playerName == null || account.playerName.isBlank()) {
+            account.playerName = playerName;
+        }
+        long baseTime = Math.max(nowMillis, account.passUntil);
+        account.passUntil = baseTime + durationMillis;
+        account.lastGrantSource = "manual";
+        account.lastGrantAt = nowMillis;
+        save();
+        return copy(account);
+    }
+
+    /**
+     * Grants or extends a pass from a DonatePay transaction.
+     * If {@code strictCaseMatch} is enabled and the player has already been seen on the server,
+     * the donor name must match the player's exact nickname case.
+     */
+    public synchronized Optional<PlayerAccount> grantPassFromDonation(
+            String donorName,
+            long transactionCreatedAtMillis,
+            long nowMillis,
+            long durationMillis,
+            boolean strictCaseMatch
+    ) {
+        if (donorName == null || donorName.isBlank()) return Optional.empty();
+        String key = canonicalName(donorName);
+        PlayerAccount existing = data.accounts.get(key);
+        if (strictCaseMatch && existing != null
+                && existing.playerName != null && !existing.playerName.isBlank()
+                && !existing.playerName.equals(donorName)) {
             return Optional.empty();
         }
-        return Optional.of(copy(ticket));
+
+        PlayerAccount account = data.accounts.computeIfAbsent(key, ignored -> new PlayerAccount());
+        account.canonicalName = key;
+        if (account.playerName == null || account.playerName.isBlank()) {
+            account.playerName = donorName;
+        }
+        long start = Math.max(Math.max(nowMillis, transactionCreatedAtMillis), account.passUntil);
+        account.passUntil = start + durationMillis;
+        account.lastGrantSource = "donatepay";
+        account.lastGrantAt = nowMillis;
+        save();
+        return Optional.of(copy(account));
     }
 
-    public synchronized Optional<Ticket> findTicketForDonation(String donorName, long donationCreatedAt) {
-        if (donorName == null || donorName.isBlank()) return Optional.empty();
-        long now = System.currentTimeMillis();
-        return data.tickets.values().stream()
-                .filter(ticket -> ticket.expiresAt > now)
-                .filter(ticket -> ticket.createdAt <= donationCreatedAt)
-                .filter(ticket -> donorName.equals(ticket.minecraftName))
-                .max(Comparator.comparingLong(ticket -> ticket.createdAt))
-                .map(RegistrationStore::copy);
-    }
-
-    public synchronized Optional<Member> getMember(UUID uuid) {
-        Member member = data.members.get(uuid.toString());
-        return member == null ? Optional.empty() : Optional.of(copy(member));
-    }
-
-    public synchronized Optional<Member> findMemberByName(String name) {
-        String canonical = canonicalName(name);
-        return data.members.values().stream()
-                .filter(member -> canonical.equals(canonicalName(member.minecraftName)))
-                .findFirst()
-                .map(RegistrationStore::copy);
-    }
-
-    public synchronized Optional<Member> findMemberByExactName(String name) {
-        if (name == null) return Optional.empty();
-        return data.members.values().stream()
-                .filter(member -> name.equals(member.minecraftName))
-                .findFirst()
-                .map(RegistrationStore::copy);
-    }
-
-    public synchronized List<Member> getMembersSnapshot() {
-        List<Member> result = new ArrayList<>();
-        for (Member member : data.members.values()) result.add(copy(member));
-        return result;
-    }
-
-    public synchronized int getPendingCount() {
-        removeExpiredTickets(System.currentTimeMillis());
-        return data.tickets.size();
-    }
-
-    public synchronized int getMemberCount() {
-        return data.members.size();
-    }
-
-    public synchronized boolean applyTwitchGrant(
-            Ticket ticket,
-            TwitchApiClient.TwitchUser user,
-            TwitchApiClient.TokenBundle tokens,
-            long twitchUntil,
-            boolean managedWhitelist
-    ) {
-        Ticket currentTicket = liveTicket(ticket.token);
-        if (currentTicket == null || !currentTicket.uuid.equals(ticket.uuid)) return false;
-
-        Member member = data.members.computeIfAbsent(ticket.uuid, ignored -> new Member());
-        initializeMember(member, currentTicket, managedWhitelist);
-        member.twitchUserId = user.id();
-        member.twitchLogin = user.login();
-        member.twitchAccessToken = tokens.accessToken();
-        member.twitchRefreshToken = tokens.refreshToken();
-        member.twitchAccessExpiresAt = tokens.expiresAt();
-        member.twitchUntil = twitchUntil;
-        data.tickets.remove(ticket.token);
+    /**
+     * Revokes a player's active pass while keeping their registered password intact.
+     */
+    public synchronized boolean revokePass(String playerName) {
+        if (playerName == null || playerName.isBlank()) return false;
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        if (account == null || account.passUntil <= 0) return false;
+        account.passUntil = 0;
+        account.lastAuthIp = "";
+        account.lastAuthAt = 0;
         save();
         return true;
     }
 
-    public synchronized boolean applyDonationGrant(
-            Ticket ticket,
-            long donationGrantUntil,
-            boolean managedWhitelist
-    ) {
-        Ticket currentTicket = liveTicket(ticket.token);
-        if (currentTicket == null || !currentTicket.uuid.equals(ticket.uuid)) return false;
-
-        Member member = data.members.computeIfAbsent(ticket.uuid, ignored -> new Member());
-        initializeMember(member, currentTicket, managedWhitelist);
-        member.donateUntil = Math.max(member.donateUntil, donationGrantUntil);
-        data.tickets.remove(ticket.token);
-        save();
-        return true;
-    }
-
-    public synchronized void updateTwitchCheck(
+    /**
+     * Registers a new password for a player and starts an authenticated IP session.
+     */
+    public synchronized boolean registerPassword(
+            String playerName,
             UUID uuid,
-            TwitchApiClient.TokenBundle tokens,
-            long twitchUntil
+            String rawPassword,
+            String ipAddress,
+            long nowMillis
     ) {
-        Member member = data.members.get(uuid.toString());
-        if (member == null) return;
-        member.twitchAccessToken = tokens.accessToken();
-        member.twitchRefreshToken = tokens.refreshToken();
-        member.twitchAccessExpiresAt = tokens.expiresAt();
-        member.twitchUntil = twitchUntil;
+        if (playerName == null || playerName.isBlank() || rawPassword == null || rawPassword.isEmpty()) {
+            return false;
+        }
+        String key = canonicalName(playerName);
+        PlayerAccount account = data.accounts.computeIfAbsent(key, ignored -> new PlayerAccount());
+        if (account.isRegistered()) {
+            return false;
+        }
+        account.canonicalName = key;
+        account.playerName = playerName;
+        if (uuid != null) {
+            account.uuid = uuid.toString();
+        }
+        account.passwordHash = PasswordHasher.hash(rawPassword);
+        account.registeredAt = nowMillis;
+        account.lastAuthIp = ipAddress == null ? "" : ipAddress;
+        account.lastAuthAt = nowMillis;
+        save();
+        return true;
+    }
+
+    public synchronized boolean verifyPassword(String playerName, String rawPassword) {
+        if (playerName == null || playerName.isBlank() || rawPassword == null || rawPassword.isEmpty()) {
+            return false;
+        }
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        if (account == null || !account.isRegistered()) {
+            return false;
+        }
+        return PasswordHasher.verify(rawPassword, account.passwordHash);
+    }
+
+    public synchronized boolean changePassword(String playerName, String oldPassword, String newPassword) {
+        if (!verifyPassword(playerName, oldPassword)) {
+            return false;
+        }
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        if (account == null) return false;
+        account.passwordHash = PasswordHasher.hash(newPassword);
+        save();
+        return true;
+    }
+
+    public synchronized boolean resetPassword(String playerName) {
+        if (playerName == null || playerName.isBlank()) return false;
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        if (account == null || !account.isRegistered()) return false;
+        account.passwordHash = "";
+        account.registeredAt = 0;
+        account.lastAuthIp = "";
+        account.lastAuthAt = 0;
+        save();
+        return true;
+    }
+
+    public synchronized boolean hasValidIpSession(
+            String playerName,
+            String ipAddress,
+            long nowMillis,
+            long sessionDurationMillis
+    ) {
+        if (sessionDurationMillis <= 0 || playerName == null || playerName.isBlank()
+                || ipAddress == null || ipAddress.isBlank()) {
+            return false;
+        }
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        if (account == null || !account.isRegistered() || !account.hasActivePass(nowMillis)) {
+            return false;
+        }
+        if (account.lastAuthIp == null || account.lastAuthIp.isBlank() || account.lastAuthAt <= 0) {
+            return false;
+        }
+        if (!account.lastAuthIp.equals(ipAddress)) {
+            return false;
+        }
+        long elapsed = nowMillis - account.lastAuthAt;
+        return elapsed >= 0 && elapsed <= sessionDurationMillis;
+    }
+
+    public synchronized void touchSession(String playerName, UUID uuid, String ipAddress, long nowMillis) {
+        if (playerName == null || playerName.isBlank()) return;
+        String key = canonicalName(playerName);
+        PlayerAccount account = data.accounts.get(key);
+        if (account == null) return;
+        account.playerName = playerName;
+        if (uuid != null) {
+            account.uuid = uuid.toString();
+        }
+        if (ipAddress != null && !ipAddress.isBlank()) {
+            account.lastAuthIp = ipAddress;
+        }
+        account.lastAuthAt = nowMillis;
         save();
     }
 
-    public synchronized void clearTwitchGrant(UUID uuid) {
-        Member member = data.members.get(uuid.toString());
-        if (member == null) return;
-        member.twitchUserId = "";
-        member.twitchLogin = "";
-        member.twitchAccessToken = "";
-        member.twitchRefreshToken = "";
-        member.twitchAccessExpiresAt = 0;
-        member.twitchUntil = 0;
+    public synchronized void clearSession(String playerName) {
+        if (playerName == null || playerName.isBlank()) return;
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        if (account == null) return;
+        account.lastAuthIp = "";
+        account.lastAuthAt = 0;
         save();
     }
 
-    public synchronized void extendDonationGrant(UUID uuid, String minecraftName, long donationUntil) {
-        Member member = data.members.get(uuid.toString());
-        if (member == null) return;
-        member.minecraftName = minecraftName;
-        member.donateUntil = Math.max(member.donateUntil, donationUntil);
-        save();
+    public synchronized int getActivePassCount(long nowMillis) {
+        int count = 0;
+        for (PlayerAccount account : data.accounts.values()) {
+            if (account.hasActivePass(nowMillis)) count++;
+        }
+        return count;
     }
 
-    public synchronized void removeMember(UUID uuid) {
-        if (data.members.remove(uuid.toString()) != null) save();
+    public synchronized int getRegisteredCount() {
+        int count = 0;
+        for (PlayerAccount account : data.accounts.values()) {
+            if (account.isRegistered()) count++;
+        }
+        return count;
+    }
+
+    public synchronized int getTotalAccountCount() {
+        return data.accounts.size();
+    }
+
+    public synchronized List<String> getAllAccountNames() {
+        List<String> names = new ArrayList<>(data.accounts.size());
+        for (PlayerAccount account : data.accounts.values()) {
+            if (account.playerName != null && !account.playerName.isBlank()) {
+                names.add(account.playerName);
+            }
+        }
+        return names;
     }
 
     public synchronized boolean isDonationCursorInitialized() {
@@ -242,32 +312,6 @@ public final class RegistrationStore {
         save();
     }
 
-    private Ticket liveTicket(String token) {
-        Ticket ticket = data.tickets.get(token);
-        if (ticket == null) return null;
-        if (ticket.expiresAt <= System.currentTimeMillis()) {
-            data.tickets.remove(token);
-            save();
-            return null;
-        }
-        return ticket;
-    }
-
-    private void initializeMember(Member member, Ticket ticket, boolean managedWhitelist) {
-        if (member.uuid == null || member.uuid.isBlank()) {
-            member.uuid = ticket.uuid;
-            member.minecraftName = ticket.minecraftName;
-            member.managedWhitelist = managedWhitelist;
-        } else {
-            member.minecraftName = ticket.minecraftName;
-        }
-    }
-
-    private void removeExpiredTickets(long now) {
-        boolean changed = data.tickets.values().removeIf(ticket -> ticket.expiresAt <= now);
-        if (changed) save();
-    }
-
     private void load() {
         try {
             Files.createDirectories(file.getParent());
@@ -280,19 +324,18 @@ public final class RegistrationStore {
                 data = GSON.fromJson(reader, StoreData.class);
                 if (data == null) data = new StoreData();
             }
-            if (data.members == null) data.members = new LinkedHashMap<>();
-            if (data.tickets == null) data.tickets = new LinkedHashMap<>();
+            if (data.accounts == null) data.accounts = new LinkedHashMap<>();
             if (data.processedDonationIds == null) data.processedDonationIds = new LinkedHashSet<>();
         } catch (Exception exception) {
-            logger.error("Could not load registration data from {}", file.toAbsolutePath(), exception);
+            logger.log(Level.SEVERE, "Could not load registration data from " + file.toAbsolutePath(), exception);
             try {
                 if (Files.exists(file)) {
                     Path backup = file.resolveSibling(file.getFileName() + ".corrupt-" + Instant.now().toEpochMilli());
                     Files.copy(file, backup, StandardCopyOption.REPLACE_EXISTING);
-                    logger.error("The unreadable data file was copied to {}", backup.toAbsolutePath());
+                    logger.severe("Unreadable data file backed up to " + backup.toAbsolutePath());
                 }
             } catch (Exception backupException) {
-                logger.error("Could not back up the unreadable registration data", backupException);
+                logger.log(Level.SEVERE, "Could not back up unreadable registration data", backupException);
             }
             data = new StoreData();
         }
@@ -311,92 +354,57 @@ public final class RegistrationStore {
                 Files.move(temporary, file, StandardCopyOption.REPLACE_EXISTING);
             }
             try {
-                Files.setPosixFilePermissions(file, java.nio.file.attribute.PosixFilePermissions.fromString("rw-------"));
+                Files.setPosixFilePermissions(file, PosixFilePermissions.fromString("rw-------"));
             } catch (UnsupportedOperationException ignored) {
-                // Windows and some filesystems do not support POSIX permissions.
+                // Non-POSIX filesystem
             }
         } catch (Exception exception) {
-            logger.error("Could not save registration data to {}", file.toAbsolutePath(), exception);
+            logger.log(Level.SEVERE, "Could not save registration data to " + file.toAbsolutePath(), exception);
         }
     }
 
-    private static String randomToken() {
-        byte[] bytes = new byte[32];
-        RANDOM.nextBytes(bytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-    }
-
-    private static String canonicalName(String name) {
+    public static String canonicalName(String name) {
         return name == null ? "" : name.trim().toLowerCase(Locale.ROOT);
     }
 
-    private static Ticket copy(Ticket source) {
-        Ticket result = new Ticket();
-        result.token = source.token;
+    private static PlayerAccount copy(PlayerAccount source) {
+        PlayerAccount result = new PlayerAccount();
         result.uuid = source.uuid;
-        result.minecraftName = source.minecraftName;
+        result.playerName = source.playerName;
         result.canonicalName = source.canonicalName;
-        result.createdAt = source.createdAt;
-        result.expiresAt = source.expiresAt;
+        result.passUntil = source.passUntil;
+        result.lastGrantSource = source.lastGrantSource;
+        result.lastGrantAt = source.lastGrantAt;
+        result.passwordHash = source.passwordHash;
+        result.registeredAt = source.registeredAt;
+        result.lastAuthIp = source.lastAuthIp;
+        result.lastAuthAt = source.lastAuthAt;
         return result;
     }
 
-    private static Member copy(Member source) {
-        Member result = new Member();
-        result.uuid = source.uuid;
-        result.minecraftName = source.minecraftName;
-        result.managedWhitelist = source.managedWhitelist;
-        result.donateUntil = source.donateUntil;
-        result.twitchUserId = source.twitchUserId;
-        result.twitchLogin = source.twitchLogin;
-        result.twitchAccessToken = source.twitchAccessToken;
-        result.twitchRefreshToken = source.twitchRefreshToken;
-        result.twitchAccessExpiresAt = source.twitchAccessExpiresAt;
-        result.twitchUntil = source.twitchUntil;
-        return result;
-    }
-
-    public static final class Ticket {
-        public String token = "";
+    public static final class PlayerAccount {
         public String uuid = "";
-        public String minecraftName = "";
+        public String playerName = "";
         public String canonicalName = "";
-        public long createdAt;
-        public long expiresAt;
-    }
+        public long passUntil;
+        public String lastGrantSource = "";
+        public long lastGrantAt;
+        public String passwordHash = "";
+        public long registeredAt;
+        public String lastAuthIp = "";
+        public long lastAuthAt;
 
-    public static final class Member {
-        public String uuid = "";
-        public String minecraftName = "";
-        public boolean managedWhitelist = true;
-        public long donateUntil;
-        public String twitchUserId = "";
-        public String twitchLogin = "";
-        public String twitchAccessToken = "";
-        public String twitchRefreshToken = "";
-        public long twitchAccessExpiresAt;
-        public long twitchUntil;
-
-        public boolean hasTwitchGrant(long now) {
-            return twitchUntil > now && twitchUserId != null && !twitchUserId.isBlank();
+        public boolean hasActivePass(long nowMillis) {
+            return passUntil > nowMillis;
         }
 
-        public boolean hasDonationGrant(long now) {
-            return donateUntil > now;
-        }
-
-        public boolean hasActiveGrant(long now) {
-            return hasTwitchGrant(now) || hasDonationGrant(now);
-        }
-
-        public UUID parsedUuid() {
-            return UUID.fromString(uuid);
+        public boolean isRegistered() {
+            return passwordHash != null && !passwordHash.isBlank();
         }
     }
 
     private static final class StoreData {
-        Map<String, Member> members = new LinkedHashMap<>();
-        Map<String, Ticket> tickets = new LinkedHashMap<>();
+        Map<String, PlayerAccount> accounts = new LinkedHashMap<>();
         Set<String> processedDonationIds = new LinkedHashSet<>();
         long donationCursor;
         boolean donationCursorInitialized;
