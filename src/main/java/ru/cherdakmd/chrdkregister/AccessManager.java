@@ -4,7 +4,6 @@ import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.permissions.Permissions;
 import net.minecraft.ChatFormatting;
 import org.slf4j.Logger;
 
@@ -337,7 +336,7 @@ public final class AccessManager {
 
     private static void performServerCommand(MinecraftServer current, String command) {
         current.getCommands().performPrefixedCommand(
-                current.createCommandSourceStack().withPermission(Permissions.COMMANDS_OWNER).withSuppressedOutput(), command);
+                current.createCommandSourceStack().withSuppressedOutput(), command);
     }
 
     private <T> T runOnServerAndWait(java.util.concurrent.Callable<T> action, T fallback) {
