@@ -1,0 +1,28 @@
+# Gradle / Java
+.gradle/
+build/
+out/
+classes/
+*.class
+*.hprof
+*.jfr
+hs_err_*.log
+
+# IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+.settings/
+.vscode/
+bin/
+.classpath
+.project
+
+# Fabric development runs
+run/
+
+# Never commit live server configuration, OAuth tokens, API keys or registration data
+config/chrdk_f_register.json
+config/chrdk_f_register-data.json
+.env
