@@ -47,7 +47,9 @@ java {
 }
 
 jar {
+    def archiveName = project.archives_base_name
+    inputs.property "archiveName", archiveName
     from("LICENSE") {
-        rename { "${it}_${project.archives_base_name}" }
+        rename { "${it}_${archiveName}" }
     }
 }
