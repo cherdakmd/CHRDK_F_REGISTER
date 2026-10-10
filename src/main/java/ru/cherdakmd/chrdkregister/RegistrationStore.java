@@ -90,12 +90,10 @@ public final class RegistrationStore {
     public synchronized Optional<Ticket> findTicketForDonation(String donorName, long donationCreatedAt) {
         if (donorName == null || donorName.isBlank()) return Optional.empty();
         long now = System.currentTimeMillis();
-        String canonical = canonicalName(donorName);
         return data.tickets.values().stream()
                 .filter(ticket -> ticket.expiresAt > now)
                 .filter(ticket -> ticket.createdAt <= donationCreatedAt)
-                .filter(ticket -> canonical.equals(ticket.canonicalName)
-                        || canonical.equals(canonicalName(ticket.minecraftName)))
+                .filter(ticket -> donorName.equals(ticket.minecraftName))
                 .max(Comparator.comparingLong(ticket -> ticket.createdAt))
                 .map(RegistrationStore::copy);
     }
@@ -109,6 +107,14 @@ public final class RegistrationStore {
         String canonical = canonicalName(name);
         return data.members.values().stream()
                 .filter(member -> canonical.equals(canonicalName(member.minecraftName)))
+                .findFirst()
+                .map(RegistrationStore::copy);
+    }
+
+    public synchronized Optional<Member> findMemberByExactName(String name) {
+        if (name == null) return Optional.empty();
+        return data.members.values().stream()
+                .filter(member -> name.equals(member.minecraftName))
                 .findFirst()
                 .map(RegistrationStore::copy);
     }

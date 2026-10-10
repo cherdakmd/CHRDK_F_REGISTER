@@ -5,6 +5,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.commands.Commands;
+import net.minecraft.server.permissions.Permissions;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.contents.TranslatableContents;
@@ -98,7 +99,7 @@ public final class RegisterMod implements ModInitializer {
     private static void registerAdminCommands() {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->
                 dispatcher.register(Commands.literal("fregister")
-                        .requires(source -> source.hasPermission(3))
+                        .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_ADMIN))
                         .then(Commands.literal("status").executes(context -> {
                             context.getSource().sendSuccess(
                                     () -> Component.literal("CHRDK Registration: " + accessManager.statusLine()), false);
