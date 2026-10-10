@@ -25,15 +25,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Reads successful DonatePay transactions and extracts the donor's display name. */
+/** Reads successful DonatePay transactions and extracts the donor's display name (Minecraft nickname). */
 public final class DonatePayClient {
     private static final String API_URL = "https://donatepay.ru/api/v1/transactions";
     private static final DateTimeFormatter DONATEPAY_DATE = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    private final ModConfig config;
+    private volatile PluginConfig config;
     private final HttpClient http;
 
-    public DonatePayClient(ModConfig config) {
+    public DonatePayClient(PluginConfig config) {
         this.config = config;
         this.http = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
@@ -41,31 +41,55 @@ public final class DonatePayClient {
                 .build();
     }
 
+    public void updateConfig(PluginConfig newConfig) {
+        this.config = newConfig;
+    }
+
     /** Reads the newest successful donations when establishing the initial cursor. */
     public List<Transaction> fetchRecentSuccessful(int limit) throws IOException {
         return requestTransactions(0, limit, true);
     }
 
+    /** Reads successful donations with ID strictly greater than {@code id}. */
     public List<Transaction> fetchAfter(long id, int limit) throws IOException {
         return requestTransactions(id, limit, false);
     }
 
     private List<Transaction> requestTransactions(long afterId, int limit, boolean latestOnly) throws IOException {
-        if (!config.donatePayReady()) return List.of();
+        PluginConfig current = this.config;
+        if (current == null || !current.donatePayReady()) return List.of();
+
         Map<String, String> query = new LinkedHashMap<>();
-        query.put("access_token", config.donatePayApiToken.trim());
-        query.put("limit", Integer.toString(Math.max(1, Math.min(limit, 100))));
+        query.put("access_token", current.donatePayApiToken());
+        query.put("limit", Integer.toString(Math.clamp(limit, 1, 100)));
         query.put("order", latestOnly ? "DESC" : "ASC");
         query.put("type", "donation");
         query.put("status", "success");
-        if (!latestOnly && afterId > 0) query.put("after", Long.toString(afterId));
+        if (!latestOnly && afterId > 0) {
+            query.put("after", Long.toString(afterId));
+        }
 
         HttpRequest request = HttpRequest.newBuilder(URI.create(API_URL + "?" + encodeQuery(query)))
                 .timeout(Duration.ofSeconds(15))
                 .header("Accept", "application/json")
                 .GET()
                 .build();
-        JsonObject root = sendJson(request);
+        String responseBody = sendRequest(request);
+        return parseTransactionsResponse(responseBody);
+    }
+
+    public static List<Transaction> parseTransactionsResponse(String responseBody) throws IOException {
+        JsonObject root;
+        try {
+            JsonElement element = JsonParser.parseString(responseBody);
+            if (!element.isJsonObject()) {
+                throw new IOException("DonatePay returned a non-object JSON response");
+            }
+            root = element.getAsJsonObject();
+        } catch (RuntimeException exception) {
+            throw new IOException("DonatePay returned invalid JSON", exception);
+        }
+
         if (!"success".equalsIgnoreCase(string(root, "status"))) {
             throw new IOException("DonatePay returned an unsuccessful API response");
         }
@@ -83,9 +107,9 @@ public final class DonatePayClient {
             String status = string(transaction, "status");
             String type = string(transaction, "type");
             JsonObject vars = object(transaction, "vars");
-            String donorName = vars == null ? "" : string(vars, "name");
+            String donorName = vars == null ? "" : string(vars, "name").trim();
             BigDecimal amount = decimal(transaction, "sum");
-            long createdAt = parseCreatedAt(object(transaction, "created_at"));
+            long createdAt = parseCreatedAt(transaction.get("created_at"));
             if (transactionId > 0) {
                 transactions.add(new Transaction(transactionId, donorName, amount, status, type, createdAt));
             }
@@ -94,38 +118,52 @@ public final class DonatePayClient {
         return transactions;
     }
 
-    private JsonObject sendJson(HttpRequest request) throws IOException {
+    private String sendRequest(HttpRequest request) throws IOException {
         try {
             HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
                 throw new IOException("DonatePay returned HTTP " + response.statusCode());
             }
-            JsonElement element = JsonParser.parseString(response.body());
-            if (!element.isJsonObject()) throw new IOException("DonatePay returned a non-object JSON response");
-            return element.getAsJsonObject();
+            return response.body();
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
             throw new IOException("DonatePay request was interrupted", exception);
-        } catch (RuntimeException exception) {
-            throw new IOException("DonatePay returned invalid JSON", exception);
         }
     }
 
-    private static long parseCreatedAt(JsonObject createdAt) {
-        if (createdAt == null) return 0;
-        String raw = string(createdAt, "date");
+    private static long parseCreatedAt(JsonElement createdAtElement) {
+        if (createdAtElement == null || createdAtElement.isJsonNull()) return 0;
+        if (createdAtElement.isJsonPrimitive()) {
+            return parseDateString(createdAtElement.getAsString().trim(), ZoneId.of("Europe/Moscow"));
+        }
+        if (!createdAtElement.isJsonObject()) return 0;
+        JsonObject createdAt = createdAtElement.getAsJsonObject();
+        String raw = string(createdAt, "date").trim();
         if (raw.isBlank()) return 0;
-        String zoneName = string(createdAt, "timezone");
+        String zoneName = string(createdAt, "timezone").trim();
         ZoneId zone;
         try {
             zone = zoneName.isBlank() ? ZoneId.of("Europe/Moscow") : ZoneId.of(zoneName);
         } catch (RuntimeException ignored) {
             zone = ZoneId.of("Europe/Moscow");
         }
+        return parseDateString(raw, zone);
+    }
+
+    private static long parseDateString(String raw, ZoneId zone) {
+        if (raw.isBlank()) return 0;
         try {
             return LocalDateTime.parse(raw, DONATEPAY_DATE).atZone(zone).toInstant().toEpochMilli();
         } catch (DateTimeParseException ignored) {
             try {
+                // Handle fractional seconds like "2026-10-11 18:30:00.000000" from PHP DateTime serialization
+                int dotIndex = raw.indexOf('.');
+                if (dotIndex > 0) {
+                    return LocalDateTime.parse(raw.substring(0, dotIndex), DONATEPAY_DATE)
+                            .atZone(zone)
+                            .toInstant()
+                            .toEpochMilli();
+                }
                 return Instant.parse(raw).toEpochMilli();
             } catch (DateTimeParseException ignoredAgain) {
                 return 0;
@@ -165,7 +203,7 @@ public final class DonatePayClient {
     private static String encodeQuery(Map<String, String> values) {
         StringBuilder result = new StringBuilder();
         for (Map.Entry<String, String> entry : values.entrySet()) {
-            if (result.length() > 0) result.append('&');
+            if (!result.isEmpty()) result.append('&');
             result.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8));
             result.append('=');
             result.append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8));
@@ -175,7 +213,9 @@ public final class DonatePayClient {
 
     public record Transaction(long id, String donorName, BigDecimal amount, String status, String type, long createdAt) {
         public boolean isSuccessfulDonation() {
-            return "success".equalsIgnoreCase(status) && "donation".equalsIgnoreCase(type) && createdAt > 0;
+            return "success".equalsIgnoreCase(status)
+                    && "donation".equalsIgnoreCase(type)
+                    && createdAt > 0;
         }
     }
 }
