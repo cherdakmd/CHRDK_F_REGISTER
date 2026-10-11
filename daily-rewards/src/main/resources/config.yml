@@ -1,0 +1,37 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# CHRDK_DailyRewards — ежедневные награды со стриком (аддон CHRDK_F_REGISTER)
+# Сутки считаются по UTC. Стрик растёт ежедневно, пропуск дня — сброс в 1.
+# Награды зациклены: день 8 стрика = день 1 (но стрик продолжает расти).
+# Формат предметов: "MATERIAL количество"; vip-вариант — только при активной
+# проходке (ядро ≥ 1.4.6), vip-pass-days — дни проходки через API ядра.
+# ═══════════════════════════════════════════════════════════════════════════
+
+rewards:
+  - day: 1
+    items: ["BREAD 8", "TORCH 8"]
+    vip-items: ["BREAD 16", "TORCH 16", "IRON_NUGGET 4"]
+  - day: 2
+    items: ["OAK_LOG 12", "COAL 6"]
+    vip-items: ["OAK_LOG 24", "COAL 12"]
+  - day: 3
+    items: ["IRON_INGOT 2", "APPLE 3"]
+    vip-items: ["IRON_INGOT 4", "GOLDEN_APPLE 1"]
+  - day: 4
+    items: ["GOLD_INGOT 2", "COPPER_INGOT 6"]
+    vip-items: ["GOLD_INGOT 4", "REDSTONE 8"]
+  - day: 5
+    items: ["LAPIS_LAZULI 8", "ENDER_PEARL 1"]
+    vip-items: ["LAPIS_LAZULI 16", "ENDER_PEARL 2"]
+  - day: 6
+    items: ["EMERALD 2", "EXPERIENCE_BOTTLE 4"]
+    vip-items: ["EMERALD 4", "EXPERIENCE_BOTTLE 8"]
+  - day: 7
+    items: ["DIAMOND 2"]
+    vip-items: ["DIAMOND 5"]
+    vip-pass-days: 1
+
+# Напоминание авторизованным игрокам при входе, если награда сегодня не взята
+join-reminder: true
+
+general:
+  locale: "ru"
