@@ -3,24 +3,85 @@ package ru.cherdakmd.chrdkregister;
 import org.bukkit.configuration.file.FileConfiguration;
 
 import java.net.URI;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /** Holds validated configuration settings for the Purpur registration, DonatePay pass & TOTP 2FA plugin. */
 public final class PluginConfig {
+    /** A pass tier: a donation sum grants a number of days. */
+    public record PassTier(int amountRubles, int days, String label) {
+    }
+
     private final String donatePayApiToken;
     private final String donatePayPaymentUrl;
     private final int minimumDonationRubles;
     private final int donatePollSeconds;
     private final boolean strictCaseMatch;
+    private final boolean donateReviewUnmatched;
+    private final boolean donateFuzzyMatch;
+    private final boolean paymentCodeEnabled;
+    private final int paymentCodeDigits;
+    private final int donationJournalKeepDays;
+
     private final int grantDays;
+    private final List<PassTier> passTiers;
+    private final List<Long> expiryWarningMinutes;
+    private final boolean expiryBossBar;
+    private final boolean expiryWarningSound;
+    private final int kickAfterSeconds;
+
     private final int sessionMinutes;
     private final int minPasswordLength;
     private final int maxPasswordLength;
     private final int maxLoginAttempts;
     private final int reminderSeconds;
+    private final boolean authDialogs;
+    private final boolean maskCommandsInLogs;
+    private final boolean sessionSkips2fa;
+    private final boolean sessionRequireSameUuid;
+    private final boolean rejectCommonPasswords;
+    private final boolean rejectNicknameAsPassword;
+    private final boolean passwordStrengthHint;
+
+    private final List<Integer> backoffSeconds;
+    private final int accountMaxAttempts;
+    private final int accountWindowMinutes;
+    private final int perIpMaxAttempts;
+    private final int perIpWindowMinutes;
+    private final int tempIpBanMinutes;
+    private final boolean bruteForceNotifyAdmins;
+
     private final boolean totpEnabled;
     private final String totpIssuer;
     private final int totpWindowSteps;
     private final int totpMaxAttempts;
+
+    private final boolean antiMultiAltEnabled;
+    private final String antiMultiAltMode;
+    private final int maxAccountsPerIp;
+    private final int antiMultiAltWindowMinutes;
+
+    private final int storageSaveDebounceSeconds;
+    private final boolean storageWriteAsync;
+    private final int storageBackupCount;
+    private final boolean storageBackupOnStart;
+
+    private final boolean auditEnabled;
+    private final int auditKeepDays;
+    private final boolean auditLogLogins;
+
+    private final String discordWebhookUrl;
+    private final List<String> notificationEvents;
+    private final List<String> notificationMentions;
+
+    private final boolean bStatsEnabled;
+
+    private final ZoneId timeZone;
+
     private final ChatConfig chat;
 
     public PluginConfig(
@@ -37,21 +98,20 @@ public final class PluginConfig {
             int reminderSeconds
     ) {
         this(
-                donatePayApiToken,
-                donatePayPaymentUrl,
-                minimumDonationRubles,
-                donatePollSeconds,
-                strictCaseMatch,
-                grantDays,
-                sessionMinutes,
-                minPasswordLength,
-                maxPasswordLength,
-                maxLoginAttempts,
-                reminderSeconds,
+                donatePayApiToken, donatePayPaymentUrl, minimumDonationRubles, donatePollSeconds, strictCaseMatch,
+                true, true, false, 4, 365,
+                grantDays, defaultTiers(grantDays), List.of(10_080L, 4_320L, 1_440L, 60L), true, true, 0,
+                sessionMinutes, minPasswordLength, maxPasswordLength, maxLoginAttempts, reminderSeconds,
+                false, true, false, true, false, false, true,
+                List.of(0, 0, 1, 2, 5, 10, 30, 60, 120, 300), maxLoginAttempts, 10, 15, 10, 15, true,
+                true, "CHRDK", 1, maxLoginAttempts,
+                true, "notify", 3, 240,
+                5, true, 14, true,
+                true, 180, true,
+                "", List.of("pass.granted", "pass.revoked", "bruteforce.alert", "totp.reset", "donatepay.error"),
+                List.of(),
                 true,
-                "CHRDK",
-                1,
-                maxLoginAttempts,
+                ZoneId.of("Europe/Moscow"),
                 new ChatConfig()
         );
     }
@@ -62,16 +122,56 @@ public final class PluginConfig {
             int minimumDonationRubles,
             int donatePollSeconds,
             boolean strictCaseMatch,
+            boolean donateReviewUnmatched,
+            boolean donateFuzzyMatch,
+            boolean paymentCodeEnabled,
+            int paymentCodeDigits,
+            int donationJournalKeepDays,
             int grantDays,
+            List<PassTier> passTiers,
+            List<Long> expiryWarningMinutes,
+            boolean expiryBossBar,
+            boolean expiryWarningSound,
+            int kickAfterSeconds,
             int sessionMinutes,
             int minPasswordLength,
             int maxPasswordLength,
             int maxLoginAttempts,
             int reminderSeconds,
+            boolean authDialogs,
+            boolean maskCommandsInLogs,
+            boolean sessionSkips2fa,
+            boolean sessionRequireSameUuid,
+            boolean rejectCommonPasswords,
+            boolean rejectNicknameAsPassword,
+            boolean passwordStrengthHint,
+            List<Integer> backoffSeconds,
+            int accountMaxAttempts,
+            int accountWindowMinutes,
+            int perIpMaxAttempts,
+            int perIpWindowMinutes,
+            int tempIpBanMinutes,
+            boolean bruteForceNotifyAdmins,
             boolean totpEnabled,
             String totpIssuer,
             int totpWindowSteps,
             int totpMaxAttempts,
+            boolean antiMultiAltEnabled,
+            String antiMultiAltMode,
+            int maxAccountsPerIp,
+            int antiMultiAltWindowMinutes,
+            int storageSaveDebounceSeconds,
+            boolean storageWriteAsync,
+            int storageBackupCount,
+            boolean storageBackupOnStart,
+            boolean auditEnabled,
+            int auditKeepDays,
+            boolean auditLogLogins,
+            String discordWebhookUrl,
+            List<String> notificationEvents,
+            List<String> notificationMentions,
+            boolean bStatsEnabled,
+            ZoneId timeZone,
             ChatConfig chat
     ) {
         this.donatePayApiToken = donatePayApiToken == null ? "" : donatePayApiToken.trim();
@@ -79,40 +179,143 @@ public final class PluginConfig {
         this.minimumDonationRubles = Math.max(1, minimumDonationRubles);
         this.donatePollSeconds = Math.max(15, donatePollSeconds);
         this.strictCaseMatch = strictCaseMatch;
+        this.donateReviewUnmatched = donateReviewUnmatched;
+        this.donateFuzzyMatch = donateFuzzyMatch;
+        this.paymentCodeEnabled = paymentCodeEnabled;
+        this.paymentCodeDigits = Math.clamp(paymentCodeDigits, 3, 8);
+        this.donationJournalKeepDays = Math.clamp(donationJournalKeepDays, 1, 3650);
+
         this.grantDays = Math.clamp(grantDays, 1, 3650);
+        this.passTiers = normalizeTiers(passTiers, this.grantDays);
+        List<Long> warnings = sanitizeWarnings(expiryWarningMinutes);
+        this.expiryWarningMinutes = warnings;
+        this.expiryBossBar = expiryBossBar;
+        this.expiryWarningSound = expiryWarningSound;
+        this.kickAfterSeconds = Math.clamp(kickAfterSeconds, 0, 3600);
+
         this.sessionMinutes = Math.clamp(sessionMinutes, 0, 10080);
         this.minPasswordLength = Math.clamp(minPasswordLength, 4, 32);
         this.maxPasswordLength = Math.max(this.minPasswordLength, Math.min(128, maxPasswordLength));
         this.maxLoginAttempts = Math.clamp(maxLoginAttempts, 1, 20);
         this.reminderSeconds = Math.clamp(reminderSeconds, 2, 120);
+        this.authDialogs = authDialogs;
+        this.maskCommandsInLogs = maskCommandsInLogs;
+        this.sessionSkips2fa = sessionSkips2fa;
+        this.sessionRequireSameUuid = sessionRequireSameUuid;
+        this.rejectCommonPasswords = rejectCommonPasswords;
+        this.rejectNicknameAsPassword = rejectNicknameAsPassword;
+        this.passwordStrengthHint = passwordStrengthHint;
+
+        List<Integer> backoff = new ArrayList<>();
+        if (backoffSeconds != null) {
+            for (Integer step : backoffSeconds) {
+                if (step != null && step >= 0) backoff.add(Math.min(step, 3600));
+            }
+        }
+        this.backoffSeconds = backoff.isEmpty() ? List.of(0, 0, 1, 2, 5, 10, 30, 60, 120, 300) : List.copyOf(backoff);
+        this.accountMaxAttempts = Math.clamp(accountMaxAttempts, 1, 100);
+        this.accountWindowMinutes = Math.clamp(accountWindowMinutes, 1, 1440);
+        this.perIpMaxAttempts = Math.clamp(perIpMaxAttempts, 1, 500);
+        this.perIpWindowMinutes = Math.clamp(perIpWindowMinutes, 1, 1440);
+        this.tempIpBanMinutes = Math.clamp(tempIpBanMinutes, 0, 10080);
+        this.bruteForceNotifyAdmins = bruteForceNotifyAdmins;
+
         this.totpEnabled = totpEnabled;
         this.totpIssuer = (totpIssuer == null || totpIssuer.isBlank()) ? "CHRDK" : totpIssuer.trim();
         this.totpWindowSteps = Math.clamp(totpWindowSteps, 0, 10);
         this.totpMaxAttempts = Math.clamp(totpMaxAttempts, 1, 20);
+
+        this.antiMultiAltEnabled = antiMultiAltEnabled;
+        String mode = antiMultiAltMode == null ? "notify" : antiMultiAltMode.trim().toLowerCase(Locale.ROOT);
+        this.antiMultiAltMode = mode.equals("deny") ? "deny" : "notify";
+        this.maxAccountsPerIp = Math.clamp(maxAccountsPerIp, 1, 100);
+        this.antiMultiAltWindowMinutes = Math.clamp(antiMultiAltWindowMinutes, 1, 10080);
+
+        this.storageSaveDebounceSeconds = Math.clamp(storageSaveDebounceSeconds, 1, 600);
+        this.storageWriteAsync = storageWriteAsync;
+        this.storageBackupCount = Math.clamp(storageBackupCount, 0, 500);
+        this.storageBackupOnStart = storageBackupOnStart;
+
+        this.auditEnabled = auditEnabled;
+        this.auditKeepDays = Math.clamp(auditKeepDays, 1, 3650);
+        this.auditLogLogins = auditLogLogins;
+
+        this.discordWebhookUrl = sanitizeUrl(discordWebhookUrl);
+        this.notificationEvents = notificationEvents == null ? List.of() : List.copyOf(notificationEvents);
+        this.notificationMentions = notificationMentions == null ? List.of() : List.copyOf(notificationMentions);
+
+        this.bStatsEnabled = bStatsEnabled;
+        this.timeZone = timeZone == null ? ZoneId.of("Europe/Moscow") : timeZone;
         this.chat = chat == null ? new ChatConfig() : chat;
     }
 
     public static PluginConfig fromBukkitConfig(FileConfiguration config) {
         int maxLoginAttempts = config.getInt("auth.max-login-attempts", 5);
+        List<PassTier> tiers = parseTiers(config.getMapList("pass.tiers"));
+        ZoneId zone = parseZone(config.getString("general.timezone", "Europe/Moscow"));
         return new PluginConfig(
                 config.getString("donatepay.api-token", ""),
                 config.getString("donatepay.payment-url", ""),
                 config.getInt("donatepay.minimum-rubles", 150),
                 config.getInt("donatepay.poll-seconds", 30),
                 config.getBoolean("donatepay.strict-case-match", false),
+                config.getBoolean("donatepay.review-unmatched", true),
+                config.getBoolean("donatepay.fuzzy-match", true),
+                config.getBoolean("donatepay.payment-code", false),
+                config.getInt("donatepay.payment-code-digits", 4),
+                config.getInt("donatepay.journal-keep-days", 365),
                 config.getInt("pass.grant-days", 30),
+                tiers,
+                parseWarnings(config.getLongList("pass.expiry-warnings-minutes")),
+                config.getBoolean("pass.expiry-bossbar", true),
+                config.getBoolean("pass.expiry-warning-sound", true),
+                config.getInt("pass.kick-after-seconds", 0),
                 config.getInt("auth.session-minutes", 30),
-                config.getInt("auth.min-password-length", 6),
+                config.getInt("auth.min-password-length", 8),
                 config.getInt("auth.max-password-length", 64),
                 maxLoginAttempts,
                 config.getInt("auth.reminder-seconds", 5),
+                config.getBoolean("auth.dialogs", true),
+                config.getBoolean("auth.mask-commands-in-logs", true),
+                config.getBoolean("auth.session-skips-2fa", false),
+                config.getBoolean("auth.session-require-same-uuid", true),
+                config.getBoolean("auth.reject-common-passwords", true),
+                config.getBoolean("auth.reject-nickname-as-password", true),
+                config.getBoolean("auth.password-strength-hint", true),
+                parseBackoff(config.getIntegerList("auth.brute-force.backoff-seconds")),
+                config.getInt("auth.brute-force.account-max-attempts", 8),
+                config.getInt("auth.brute-force.account-window-minutes", 10),
+                config.getInt("auth.brute-force.per-ip-max-attempts", 15),
+                config.getInt("auth.brute-force.per-ip-window-minutes", 10),
+                config.getInt("auth.brute-force.temp-ip-ban-minutes", 15),
+                config.getBoolean("auth.brute-force.notify-admins", true),
                 config.getBoolean("totp.enabled", true),
                 config.getString("totp.issuer", "CHRDK"),
                 config.getInt("totp.window-steps", 1),
                 config.getInt("totp.max-attempts", maxLoginAttempts),
+                config.getBoolean("anti-multialt.enabled", true),
+                config.getString("anti-multialt.mode", "notify"),
+                config.getInt("anti-multialt.max-accounts-per-ip", 3),
+                config.getInt("anti-multialt.window-minutes", 240),
+                config.getInt("storage.save-debounce-seconds", 5),
+                config.getBoolean("storage.write-async", true),
+                config.getInt("storage.backup-count", 14),
+                config.getBoolean("storage.backup-on-start", true),
+                config.getBoolean("audit.enabled", true),
+                config.getInt("audit.keep-days", 180),
+                config.getBoolean("audit.log-logins", true),
+                config.getString("notifications.discord-webhook-url", ""),
+                config.getStringList("notifications.events"),
+                config.getStringList("notifications.mentions"),
+                config.getBoolean("metrics.bstats", true),
+                zone,
                 ChatConfig.fromBukkitConfig(config)
         );
     }
+
+    /* ------------------------------------------------------------------ *
+     *  DonatePay
+     * ------------------------------------------------------------------ */
 
     public String donatePayApiToken() {
         return donatePayApiToken;
@@ -134,9 +337,91 @@ public final class PluginConfig {
         return strictCaseMatch;
     }
 
+    public boolean donateReviewUnmatched() {
+        return donateReviewUnmatched;
+    }
+
+    public boolean donateFuzzyMatch() {
+        return donateFuzzyMatch;
+    }
+
+    public boolean paymentCodeEnabled() {
+        return paymentCodeEnabled;
+    }
+
+    public int paymentCodeDigits() {
+        return paymentCodeDigits;
+    }
+
+    public int donationJournalKeepDays() {
+        return donationJournalKeepDays;
+    }
+
+    public boolean donatePayReady() {
+        return !donatePayApiToken.isBlank();
+    }
+
+    public boolean hasPaymentUrl() {
+        return !donatePayPaymentUrl.isBlank();
+    }
+
+    /* ------------------------------------------------------------------ *
+     *  Pass
+     * ------------------------------------------------------------------ */
+
     public int grantDays() {
         return grantDays;
     }
+
+    public List<PassTier> passTiers() {
+        return passTiers;
+    }
+
+    /**
+     * Resolves how many days a donation of the given amount grants:
+     * the highest tier whose {@code amountRubles} does not exceed the paid sum,
+     * or {@code grantDays} when no tier matches.
+     */
+    public int daysForAmount(int rubles) {
+        int days = 0;
+        for (PassTier tier : passTiers) {
+            if (rubles >= tier.amountRubles() && tier.days() > days) {
+                days = tier.days();
+            }
+        }
+        return days > 0 ? days : grantDays;
+    }
+
+    /** Returns the tier label that best matches the paid amount. */
+    public String tierLabelForAmount(int rubles) {
+        PassTier best = null;
+        for (PassTier tier : passTiers) {
+            if (rubles >= tier.amountRubles() && (best == null || tier.days() > best.days())) {
+                best = tier;
+            }
+        }
+        return best == null ? "" : best.label();
+    }
+
+    public List<Long> expiryWarningMinutes() {
+        return expiryWarningMinutes;
+    }
+
+    public boolean expiryBossBar() {
+        return expiryBossBar;
+    }
+
+    public boolean expiryWarningSound() {
+        return expiryWarningSound;
+    }
+
+    public int kickAfterSeconds() {
+        return kickAfterSeconds;
+    }
+
+    /* ------------------------------------------------------------------ *
+     *  Auth
+     * ------------------------------------------------------------------ */
 
     public int sessionMinutes() {
         return sessionMinutes;
@@ -158,6 +443,73 @@ public final class PluginConfig {
         return reminderSeconds;
     }
 
+    public boolean authDialogs() {
+        return authDialogs;
+    }
+
+    public boolean maskCommandsInLogs() {
+        return maskCommandsInLogs;
+    }
+
+    public boolean sessionSkips2fa() {
+        return sessionSkips2fa;
+    }
+
+    public boolean sessionRequireSameUuid() {
+        return sessionRequireSameUuid;
+    }
+
+    public boolean rejectCommonPasswords() {
+        return rejectCommonPasswords;
+    }
+
+    public boolean rejectNicknameAsPassword() {
+        return rejectNicknameAsPassword;
+    }
+
+    public boolean passwordStrengthHint() {
+        return passwordStrengthHint;
+    }
+
+    public List<Integer> backoffSeconds() {
+        return backoffSeconds;
+    }
+
+    /** Returns the delay (seconds) a player has to wait before the n-th attempt is processed. */
+    public int backoffForAttempt(int attempt) {
+        if (backoffSeconds.isEmpty()) return 0;
+        int index = Math.clamp(attempt - 1, 0, backoffSeconds.size() - 1);
+        return backoffSeconds.get(index);
+    }
+
+    public int accountMaxAttempts() {
+        return accountMaxAttempts;
+    }
+
+    public int accountWindowMinutes() {
+        return accountWindowMinutes;
+    }
+
+    public int perIpMaxAttempts() {
+        return perIpMaxAttempts;
+    }
+
+    public int perIpWindowMinutes() {
+        return perIpWindowMinutes;
+    }
+
+    public int tempIpBanMinutes() {
+        return tempIpBanMinutes;
+    }
+
+    public boolean bruteForceNotifyAdmins() {
+        return bruteForceNotifyAdmins;
+    }
+
+    /* ------------------------------------------------------------------ *
+     *  2FA
+     * ------------------------------------------------------------------ */
+
     public boolean totpEnabled() {
         return totpEnabled;
     }
@@ -174,16 +526,160 @@ public final class PluginConfig {
         return totpMaxAttempts;
     }
 
+    /* ------------------------------------------------------------------ *
+     *  Anti multi-account, storage, audit, notifications, metrics
+     * ------------------------------------------------------------------ */
+
+    public boolean antiMultiAltEnabled() {
+        return antiMultiAltEnabled;
+    }
+
+    public String antiMultiAltMode() {
+        return antiMultiAltMode;
+    }
+
+    public boolean antiMultiAltDeny() {
+        return antiMultiAltEnabled && "deny".equals(antiMultiAltMode);
+    }
+
+    public int maxAccountsPerIp() {
+        return maxAccountsPerIp;
+    }
+
+    public int antiMultiAltWindowMinutes() {
+        return antiMultiAltWindowMinutes;
+    }
+
+    public int storageSaveDebounceSeconds() {
+        return storageSaveDebounceSeconds;
+    }
+
+    public boolean storageWriteAsync() {
+        return storageWriteAsync;
+    }
+
+    public int storageBackupCount() {
+        return storageBackupCount;
+    }
+
+    public boolean storageBackupOnStart() {
+        return storageBackupOnStart;
+    }
+
+    public boolean auditEnabled() {
+        return auditEnabled;
+    }
+
+    public int auditKeepDays() {
+        return auditKeepDays;
+    }
+
+    public boolean auditLogLogins() {
+        return auditLogLogins;
+    }
+
+    public String discordWebhookUrl() {
+        return discordWebhookUrl;
+    }
+
+    public boolean discordEnabled() {
+        return !discordWebhookUrl.isBlank();
+    }
+
+    public List<String> notificationEvents() {
+        return notificationEvents;
+    }
+
+    public List<String> notificationMentions() {
+        return notificationMentions;
+    }
+
+    public boolean notifyOn(String event) {
+        return notificationEvents.contains(event);
+    }
+
+    public boolean bStatsEnabled() {
+        return bStatsEnabled;
+    }
+
+    public ZoneId timeZone() {
+        return timeZone;
+    }
+
     public ChatConfig chat() {
         return chat;
     }
 
-    public boolean donatePayReady() {
-        return !donatePayApiToken.isBlank();
+    /* ------------------------------------------------------------------ *
+     *  Helpers
+     * ------------------------------------------------------------------ */
+
+    public static List<PassTier> parseTiers(List<Map<?, ?>> raw) {
+        List<PassTier> tiers = new ArrayList<>();
+        if (raw == null) return tiers;
+        for (Map<?, ?> entry : raw) {
+            if (entry == null) continue;
+            Object amount = entry.get("amount");
+            Object days = entry.get("days");
+            Object label = entry.get("label");
+            int amountRubles = asInt(amount, 0);
+            int tierDays = asInt(days, 0);
+            if (amountRubles <= 0 || tierDays <= 0) continue;
+            tiers.add(new PassTier(amountRubles, Math.clamp(tierDays, 1, 3650),
+                    label == null ? "" : label.toString()));
+        }
+        tiers.sort(Comparator.comparingInt(PassTier::amountRubles));
+        return tiers;
     }
 
-    public boolean hasPaymentUrl() {
-        return !donatePayPaymentUrl.isBlank();
+    private static List<PassTier> normalizeTiers(List<PassTier> provided, int fallbackDays) {
+        if (provided == null || provided.isEmpty()) {
+            return defaultTiers(fallbackDays);
+        }
+        List<PassTier> tiers = new ArrayList<>(provided);
+        tiers.sort(Comparator.comparingInt(PassTier::amountRubles));
+        return List.copyOf(tiers);
+    }
+
+    private static List<PassTier> defaultTiers(int days) {
+        return List.of(new PassTier(150, days, "1 месяц"));
+    }
+
+    private static List<Long> parseWarnings(List<Long> raw) {
+        return sanitizeWarnings(raw);
+    }
+
+    private static List<Long> sanitizeWarnings(List<Long> raw) {
+        if (raw == null || raw.isEmpty()) return List.of(10_080L, 4_320L, 1_440L, 60L);
+        List<Long> result = new ArrayList<>();
+        for (Long value : raw) {
+            if (value != null && value > 0) result.add(value);
+        }
+        if (result.isEmpty()) return List.of(60L);
+        result.sort(Comparator.reverseOrder());
+        return List.copyOf(result);
+    }
+
+    private static List<Integer> parseBackoff(List<Integer> raw) {
+        return raw == null ? List.of() : List.copyOf(raw);
+    }
+
+    private static int asInt(Object value, int fallback) {
+        if (value instanceof Number number) return number.intValue();
+        if (value == null) return fallback;
+        try {
+            return Integer.parseInt(value.toString().trim());
+        } catch (NumberFormatException ignored) {
+            return fallback;
+        }
+    }
+
+    private static ZoneId parseZone(String raw) {
+        try {
+            return raw == null || raw.isBlank() ? ZoneId.of("Europe/Moscow") : ZoneId.of(raw.trim());
+        } catch (RuntimeException ignored) {
+            return ZoneId.of("Europe/Moscow");
+        }
     }
 
     private static String sanitizeUrl(String raw) {

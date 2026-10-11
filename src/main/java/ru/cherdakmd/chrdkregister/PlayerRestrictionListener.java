@@ -50,11 +50,15 @@ import java.util.Set;
  * until the player has an active pass and has completed password + TOTP 2FA authentication.
  */
 public final class PlayerRestrictionListener implements Listener {
-    private static final Set<String> PASS_COMMANDS = Set.of("pass", "fregister", "prohodka");
-    private static final Set<String> REGISTER_COMMANDS = Set.of("register", "reg", "pass", "fregister", "prohodka");
-    private static final Set<String> LOGIN_COMMANDS = Set.of("login", "l", "pass", "fregister", "prohodka");
+    private static final Set<String> PASS_COMMANDS =
+            Set.of("pass", "fregister", "prohodka", "logout", "session");
+    private static final Set<String> REGISTER_COMMANDS =
+            Set.of("register", "reg", "pass", "fregister", "prohodka", "logout", "session");
+    private static final Set<String> LOGIN_COMMANDS =
+            Set.of("login", "l", "pass", "fregister", "prohodka", "logout", "session");
     private static final Set<String> TWO_FACTOR_COMMANDS =
-            Set.of("2fa", "totp", "twofactor", "login", "l", "pass", "fregister", "prohodka");
+            Set.of("2fa", "totp", "twofactor", "login", "l", "pass", "fregister", "prohodka",
+                    "logout", "session");
 
     private final AccessManager accessManager;
 

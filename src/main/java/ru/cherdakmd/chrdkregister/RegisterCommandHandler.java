@@ -27,7 +27,10 @@ import java.util.Set;
  */
 public final class RegisterCommandHandler implements CommandExecutor, TabCompleter {
     private static final List<String> ADMIN_SUBCOMMANDS =
-            List.of("add", "remove", "check", "unregister", "reset2fa", "status", "reload");
+            List.of("add", "remove", "check", "unregister", "reset2fa", "status", "reload",
+                    "pending", "approve", "reject", "sessions", "logoutall", "stats", "doctor", "audit",
+                    "backup", "gift");
+    private static final List<String> MUTE_DURATIONS = List.of("10m", "30m", "1h", "6h", "1d", "7d");
     private static final List<String> TWO_FACTOR_SUBCOMMANDS =
             List.of("setup", "confirm", "disable", "status", "cancel");
 
@@ -53,8 +56,56 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             case "changepassword" -> handleChangePassword(sender, args);
             case "2fa" -> handleTwoFactor(sender, label, args);
             case "pass" -> handlePass(sender, label, args);
+            case "logout" -> handleLogout(sender);
+            case "session" -> handleSession(sender, args);
             default -> false;
         };
+    }
+
+    private boolean handleLogout(CommandSender sender) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Эта команда доступна только игрокам.", NamedTextColor.RED));
+            return true;
+        }
+        return accessManager.handleLogoutCommand(player);
+    }
+
+    private boolean handleSession(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Эта команда доступна только игрокам. Админ: /pass sessions <ник>",
+                    NamedTextColor.RED));
+            return true;
+        }
+        if (args.length >= 1 && ("end".equalsIgnoreCase(args[0]) || "logout".equalsIgnoreCase(args[0]))) {
+            return accessManager.handleLogoutCommand(player);
+        }
+        showSessions(sender, player.getName());
+        return true;
+    }
+
+    private void showSessions(CommandSender sender, String playerName) {
+        long now = System.currentTimeMillis();
+        var sessions = accessManager.sessionsOf(playerName);
+        sender.sendMessage(Component.text("=== Сессии игрока " + playerName + " ===", NamedTextColor.GOLD));
+        if (sessions.isEmpty()) {
+            sender.sendMessage(Component.text("Активных сессий нет.", NamedTextColor.GRAY));
+            return;
+        }
+        long sessionMillis = java.util.concurrent.TimeUnit.MINUTES.toMillis(accessManager.config().sessionMinutes());
+        for (var session : sessions) {
+            long age = session.ageMillis(now);
+            boolean active = sessionMillis > 0 && age <= sessionMillis;
+            sender.sendMessage(Component.text("- " + AuditLog.maskIp(session.ip)
+                            + (session.uuid == null || session.uuid.isBlank() ? "" : " (UUID " + session.uuid.substring(0,
+                            Math.min(8, session.uuid.length())) + "…)")
+                            + " — " + (active ? "активна" : "истекла")
+                            + ", последний вход: " + AccessManager.formatTimestamp(session.lastSeenAt)
+                            + ", источник: " + session.source,
+                    active ? NamedTextColor.GREEN : NamedTextColor.GRAY));
+        }
+        if (playerName.equalsIgnoreCase(sender.getName())) {
+            sender.sendMessage(Component.text("Завершить все сессии: /logout", NamedTextColor.YELLOW));
+        }
     }
 
     private boolean handleRegister(CommandSender sender, String[] args) {
@@ -236,7 +287,8 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 showOwnPassStatus(player);
                 if (sender.hasPermission("chrdkregister.admin")) {
                     sender.sendMessage(Component.text(
-                            "Админ-команды: /" + label + " <add|remove|check|unregister|reset2fa|status|reload> [ник]",
+                            "Админ-команды: /" + label + " <add|gift|remove|check|pending|approve|reject"
+                                    + "|sessions|logoutall|unregister|reset2fa|stats|doctor|audit|backup|reload>",
                             NamedTextColor.DARK_GRAY));
                 }
             } else {
@@ -247,6 +299,29 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         }
 
         String sub = args[0].toLowerCase(Locale.ROOT);
+        if ("claim".equals(sub) && sender instanceof Player player) {
+            if (args.length < 2) {
+                player.sendMessage(Component.text("Использование: /" + label + " claim <id доната>",
+                        NamedTextColor.YELLOW));
+                return true;
+            }
+            long id;
+            try {
+                id = Long.parseLong(args[1]);
+            } catch (NumberFormatException exception) {
+                player.sendMessage(Component.text("ID доната должен быть числом.", NamedTextColor.RED));
+                return true;
+            }
+            String error = accessManager.donations().claim(id, player.getName(),
+                    AccessManager.getPlayerIp(player), System.currentTimeMillis());
+            if (error.isEmpty()) {
+                player.sendMessage(Component.text("✓ Платёж #" + id + " подтверждён, проходка активирована!",
+                        NamedTextColor.GREEN));
+            } else {
+                player.sendMessage(Component.text(error, NamedTextColor.RED));
+            }
+            return true;
+        }
         if (!sender.hasPermission("chrdkregister.admin")) {
             if (sender instanceof Player player) {
                 showOwnPassStatus(player);
@@ -259,7 +334,8 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         switch (sub) {
             case "add", "grant" -> {
                 if (args.length < 2) {
-                    sender.sendMessage(Component.text("Использование: /" + label + " add <ник>", NamedTextColor.YELLOW));
+                    sender.sendMessage(Component.text("Использование: /" + label + " add <ник> [дней]",
+                            NamedTextColor.YELLOW));
                     return true;
                 }
                 String targetName = args[1].trim();
@@ -267,11 +343,181 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                     sender.sendMessage(Component.text("Некорректный ник Minecraft: " + targetName, NamedTextColor.RED));
                     return true;
                 }
-                RegistrationStore.PlayerAccount account = accessManager.grantPassManually(targetName);
+                int days = accessManager.config().grantDays();
+                if (args.length >= 3) {
+                    try {
+                        days = Math.clamp(Integer.parseInt(args[2]), 1, 3650);
+                    } catch (NumberFormatException exception) {
+                        sender.sendMessage(Component.text("Количество дней должно быть числом.", NamedTextColor.RED));
+                        return true;
+                    }
+                }
+                RegistrationStore.PlayerAccount account = accessManager.grantPassManually(targetName, days, "manual");
                 sender.sendMessage(Component.text("✓ Проходка выдана игроку ", NamedTextColor.GREEN)
                         .append(Component.text(account.playerName, NamedTextColor.GOLD, TextDecoration.BOLD))
-                        .append(Component.text(" на " + accessManager.config().grantDays() + " дн. (до "
+                        .append(Component.text(" на " + days + " дн. (до "
                                 + AccessManager.formatTimestamp(account.passUntil) + ").", NamedTextColor.GREEN)));
+                return true;
+            }
+            case "gift" -> {
+                if (args.length < 3) {
+                    sender.sendMessage(Component.text("Использование: /" + label + " gift <ник> <дней>",
+                            NamedTextColor.YELLOW));
+                    return true;
+                }
+                String targetName = args[1].trim();
+                int days;
+                try {
+                    days = Math.clamp(Integer.parseInt(args[2]), 1, 3650);
+                } catch (NumberFormatException exception) {
+                    sender.sendMessage(Component.text("Количество дней должно быть числом.", NamedTextColor.RED));
+                    return true;
+                }
+                if (!AccessManager.isValidMinecraftName(targetName)) {
+                    sender.sendMessage(Component.text("Некорректный ник Minecraft: " + targetName, NamedTextColor.RED));
+                    return true;
+                }
+                RegistrationStore.PlayerAccount account = accessManager.grantPassManually(targetName, days,
+                        "gift:" + sender.getName());
+                accessManager.audit().log(AuditLog.PASS_GRANT_GIFT, sender.getName(), targetName, null,
+                        AuditLog.details("days", days));
+                sender.sendMessage(Component.text("✓ Подарок отправлен: ", NamedTextColor.GREEN)
+                        .append(Component.text(account.playerName, NamedTextColor.GOLD))
+                        .append(Component.text(" получил " + days + " дн. проходки.", NamedTextColor.GREEN)));
+                Player online = Bukkit.getPlayerExact(targetName);
+                if (online != null) {
+                    online.sendMessage(Component.text("Вам подарили проходку на " + days + " дн. от "
+                            + sender.getName() + "!", NamedTextColor.GREEN));
+                }
+                return true;
+            }
+            case "pending" -> {
+                var pending = accessManager.donations().pending(20);
+                if (pending.isEmpty()) {
+                    sender.sendMessage(Component.text("Нераспознанных донатов нет — всё выдано автоматически.",
+                            NamedTextColor.GREEN));
+                    return true;
+                }
+                sender.sendMessage(Component.text("=== Донаты, требующие решения (" + pending.size() + ") ===",
+                        NamedTextColor.GOLD));
+                for (RegistrationStore.DonationRecord record : pending) {
+                    sender.sendMessage(Component.text("#" + record.id + " " + record.donorName
+                                    + " — " + record.amountRubles() + " ₽, " + record.status,
+                            NamedTextColor.YELLOW)
+                            .append(Component.text(record.note.isBlank() ? "" : " (" + record.note + ")",
+                                    NamedTextColor.GRAY))
+                            .append(record.suggestedName.isBlank() ? Component.empty()
+                                    : Component.text(" → похоже на " + record.suggestedName, NamedTextColor.AQUA))
+                            .append(Component.text(" | " + AccessManager.formatTimestamp(record.createdAt),
+                                    NamedTextColor.DARK_GRAY)));
+                }
+                sender.sendMessage(Component.text("Выдать: /" + label + " approve <id> [ник] [дней] | "
+                        + "Отклонить: /" + label + " reject <id> [причина]", NamedTextColor.GRAY));
+                return true;
+            }
+            case "approve" -> {
+                if (args.length < 2) {
+                    sender.sendMessage(Component.text("Использование: /" + label + " approve <id> [ник] [дней]",
+                            NamedTextColor.YELLOW));
+                    return true;
+                }
+                long id;
+                try {
+                    id = Long.parseLong(args[1]);
+                } catch (NumberFormatException exception) {
+                    sender.sendMessage(Component.text("ID доната должен быть числом.", NamedTextColor.RED));
+                    return true;
+                }
+                var record = accessManager.store().getDonation(id).orElse(null);
+                if (record == null) {
+                    sender.sendMessage(Component.text("Платёж #" + id + " не найден в журнале.", NamedTextColor.RED));
+                    return true;
+                }
+                String targetName = args.length >= 3 ? args[2].trim()
+                        : (record.suggestedName.isBlank() ? record.donorName : record.suggestedName);
+                int days = 0;
+                if (args.length >= 4) {
+                    try {
+                        days = Math.clamp(Integer.parseInt(args[3]), 1, 3650);
+                    } catch (NumberFormatException exception) {
+                        sender.sendMessage(Component.text("Количество дней должно быть числом.", NamedTextColor.RED));
+                        return true;
+                    }
+                }
+                if (!AccessManager.isValidMinecraftName(targetName)) {
+                    sender.sendMessage(Component.text("Некорректный ник: " + targetName, NamedTextColor.RED));
+                    return true;
+                }
+                if (accessManager.donations().approve(id, targetName, days, sender.getName(),
+                        System.currentTimeMillis())) {
+                    sender.sendMessage(Component.text("✓ Платёж #" + id + " подтверждён, проходка выдана игроку "
+                            + targetName + ".", NamedTextColor.GREEN));
+                } else {
+                    sender.sendMessage(Component.text("Не удалось подтвердить платёж #" + id + ".", NamedTextColor.RED));
+                }
+                return true;
+            }
+            case "reject" -> {
+                if (args.length < 2) {
+                    sender.sendMessage(Component.text("Использование: /" + label + " reject <id> [причина]",
+                            NamedTextColor.YELLOW));
+                    return true;
+                }
+                long id;
+                try {
+                    id = Long.parseLong(args[1]);
+                } catch (NumberFormatException exception) {
+                    sender.sendMessage(Component.text("ID доната должен быть числом.", NamedTextColor.RED));
+                    return true;
+                }
+                String reason = args.length >= 3
+                        ? String.join(" ", Arrays.copyOfRange(args, 2, args.length))
+                        : "";
+                if (accessManager.donations().reject(id, sender.getName(), reason, System.currentTimeMillis())) {
+                    sender.sendMessage(Component.text("Платёж #" + id + " отклонён.", NamedTextColor.YELLOW));
+                } else {
+                    sender.sendMessage(Component.text("Платёж #" + id + " не найден.", NamedTextColor.RED));
+                }
+                return true;
+            }
+            case "sessions" -> {
+                if (args.length < 2) {
+                    sender.sendMessage(Component.text("Использование: /" + label + " sessions <ник>",
+                            NamedTextColor.YELLOW));
+                    return true;
+                }
+                showSessions(sender, args[1].trim());
+                return true;
+            }
+            case "logoutall" -> {
+                if (args.length < 2) {
+                    sender.sendMessage(Component.text("Использование: /" + label + " logoutall <ник>",
+                            NamedTextColor.YELLOW));
+                    return true;
+                }
+                String targetName = args[1].trim();
+                boolean cleared = accessManager.clearAllSessions(targetName);
+                accessManager.lockOnlinePlayer(targetName,
+                        "Все сессии вашего аккаунта завершены администратором — войдите заново.");
+                sender.sendMessage(Component.text(cleared
+                        ? "✓ Сессии игрока " + targetName + " завершены."
+                        : "У игрока " + targetName + " не было активных сессий.", NamedTextColor.GREEN));
+                return true;
+            }
+            case "stats" -> {
+                showStats(sender);
+                return true;
+            }
+            case "doctor" -> {
+                showDoctor(sender);
+                return true;
+            }
+            case "audit" -> {
+                showAudit(sender, args);
+                return true;
+            }
+            case "backup" -> {
+                handleBackup(sender, args, label);
                 return true;
             }
             case "remove", "revoke" -> {
@@ -337,6 +583,157 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         }
     }
 
+    private void showStats(CommandSender sender) {
+        long now = System.currentTimeMillis();
+        RegistrationStore store = accessManager.store();
+        PluginConfig cfg = accessManager.config();
+        long dayAgo = now - java.util.concurrent.TimeUnit.DAYS.toMillis(1);
+        long weekAgo = now - java.util.concurrent.TimeUnit.DAYS.toMillis(7);
+        long monthAgo = now - java.util.concurrent.TimeUnit.DAYS.toMillis(30);
+
+        sender.sendMessage(Component.text("=== Статистика донатов ===", NamedTextColor.GOLD));
+        sender.sendMessage(Component.text("Выручка (подтверждённые донаты): ", NamedTextColor.GRAY)
+                .append(Component.text("24ч: " + DonationService.formatRubles(store.revenueKopecks(dayAgo, now))
+                        + " ₽, 7д: " + DonationService.formatRubles(store.revenueKopecks(weekAgo, now))
+                        + " ₽, 30д: " + DonationService.formatRubles(store.revenueKopecks(monthAgo, now)) + " ₽",
+                        NamedTextColor.AQUA)));
+        sender.sendMessage(Component.text("Ждут решения: ", NamedTextColor.GRAY)
+                .append(Component.text(accessManager.donations().pendingCount() + " платежей (/"
+                        + "pass pending)", NamedTextColor.YELLOW)));
+        int total = Math.max(1, store.getTotalAccountCount());
+        int withPass = store.getActivePassCount(now);
+        sender.sendMessage(Component.text("Конверсия: ", NamedTextColor.GRAY)
+                .append(Component.text(withPass + " активных проходок из " + total + " известных аккаунтов ("
+                        + Math.round(100.0 * withPass / total) + "%)", NamedTextColor.GREEN)));
+        sender.sendMessage(Component.text("Всего выдано донатами: ", NamedTextColor.GRAY)
+                .append(Component.text(store.countDonations(RegistrationStore.DonationStatus.GRANTED)
+                        + " платежей", NamedTextColor.WHITE)));
+        sender.sendMessage(Component.text("Тарифы: ", NamedTextColor.GRAY)
+                .append(Component.text(String.join("; ", DonationService.describeTiers(cfg)
+                        .stream().map(line -> line.replace("&e", "").replace("&7", "").replace("&b", ""))
+                        .toList()), NamedTextColor.WHITE)));
+    }
+
+    private void showDoctor(CommandSender sender) {
+        PluginConfig cfg = accessManager.config();
+        sender.sendMessage(Component.text("=== Проверка конфигурации (/pass doctor) ===", NamedTextColor.GOLD));
+        check(sender, "DonatePay API-токен", cfg.donatePayReady(),
+                "не задан donatepay.api-token — авто-выдача проходок не работает");
+        check(sender, "Ссылка на оплату", cfg.hasPaymentUrl(),
+                "не задан donatepay.payment-url — игроки не видят ссылку");
+        check(sender, "Сессия не обходит 2FA", !cfg.sessionSkips2fa() || !cfg.totpEnabled(),
+                "auth.session-skips-2fa: true — IP-сессия отключает 2FA (осознанный выбор?)");
+        check(sender, "Счётчики попыток сохраняются", cfg.storageWriteAsync(),
+                "storage.write-async: false — запись на диск в главном потоке");
+        check(sender, "Политика паролей", cfg.minPasswordLength() >= 8,
+                "auth.min-password-length < 8 — разрешены короткие пароли");
+        check(sender, "Тестовый запрос к DonatePay", accessManager.probeDonatePay(),
+                "не удалось подключиться к API DonatePay — проверьте токен и сеть");
+        check(sender, "Аудит-лог", cfg.auditEnabled(),
+                "audit.enabled: false — история событий не сохраняется");
+        check(sender, "Discord-уведомления", !cfg.discordEnabled() || !cfg.notificationEvents().isEmpty(),
+                "вебхук задан, но notifications.events пуст — уведомления не отправляются");
+        check(sender, "Хранилище доступно для записи", storeWritable(),
+                "нет доступа на запись в data.json — данные могут не сохраняться");
+        sender.sendMessage(Component.text("Проверок выполнено: 9. Запустите /pass stats для сводки.",
+                NamedTextColor.GRAY));
+    }
+
+    private void check(CommandSender sender, String name, boolean ok, String warning) {
+        sender.sendMessage(Component.text("[" + (ok ? "OK" : "ВНИМАНИЕ") + "] ", ok ? NamedTextColor.GREEN
+                        : NamedTextColor.YELLOW)
+                .append(Component.text(name, NamedTextColor.GRAY))
+                .append(ok ? Component.empty() : Component.text(" — " + warning, NamedTextColor.YELLOW)));
+    }
+
+    private boolean storeWritable() {
+        try {
+            java.nio.file.Path folder = plugin.getDataFolder().toPath();
+            java.nio.file.Files.createDirectories(folder);
+            return java.nio.file.Files.isWritable(folder);
+        } catch (Exception exception) {
+            return false;
+        }
+    }
+
+    private void showAudit(CommandSender sender, String[] args) {
+        String playerFilter = args.length >= 2 ? args[1].trim() : "";
+        int limit = 15;
+        if (args.length >= 3) {
+            try {
+                limit = Math.clamp(Integer.parseInt(args[2]), 1, 100);
+            } catch (NumberFormatException ignored) {
+                limit = 15;
+            }
+        }
+        var entries = accessManager.audit().read(playerFilter, null, limit);
+        if (entries.isEmpty()) {
+            sender.sendMessage(Component.text("Записей аудита не найдено.", NamedTextColor.YELLOW));
+            return;
+        }
+        sender.sendMessage(Component.text("=== Аудит" + (playerFilter.isBlank() ? "" : " (" + playerFilter + ")")
+                + " ===", NamedTextColor.GOLD));
+        for (var entry : entries) {
+            sender.sendMessage(Component.text(
+                    (entry.has("time") ? entry.get("time").getAsString() : "") + " "
+                            + (entry.has("event") ? entry.get("event").getAsString() : "")
+                            + " | " + (entry.has("actor") ? entry.get("actor").getAsString() : "")
+                            + (entry.has("target") && !entry.get("target").getAsString().isBlank()
+                            ? " → " + entry.get("target").getAsString() : "")
+                            + (entry.has("ip") && !entry.get("ip").getAsString().isBlank()
+                            ? " (" + entry.get("ip").getAsString() + ")" : "")
+                            + (entry.has("details") ? " " + entry.get("details") : ""),
+                    NamedTextColor.GRAY));
+        }
+    }
+
+    private void handleBackup(CommandSender sender, String[] args, String label) {
+        String action = args.length >= 2 ? args[1].toLowerCase(Locale.ROOT) : "create";
+        switch (action) {
+            case "create", "now" -> {
+                var created = plugin.createBackup("manual");
+                sender.sendMessage(created.map(path -> Component.text("✓ Бэкап создан: " + path.getFileName(),
+                                NamedTextColor.GREEN))
+                        .orElseGet(() -> Component.text("Не удалось создать бэкап.", NamedTextColor.RED)));
+            }
+            case "list" -> {
+                var backups = accessManager.store().listBackups();
+                if (backups.isEmpty()) {
+                    sender.sendMessage(Component.text("Бэкапов нет.", NamedTextColor.YELLOW));
+                    return;
+                }
+                sender.sendMessage(Component.text("=== Бэкапы ===", NamedTextColor.GOLD));
+                for (var backup : backups) {
+                    sender.sendMessage(Component.text("- " + backup.getFileName(), NamedTextColor.GRAY));
+                }
+                sender.sendMessage(Component.text("Восстановление: /" + label + " backup restore <файл>",
+                        NamedTextColor.DARK_GRAY));
+            }
+            case "restore" -> {
+                if (args.length < 3) {
+                    sender.sendMessage(Component.text("Использование: /" + label + " backup restore <файл>",
+                            NamedTextColor.YELLOW));
+                    return;
+                }
+                java.nio.file.Path target = plugin.getDataFolder().toPath()
+                        .resolve("backups").resolve(args[2].trim()).normalize();
+                if (!target.startsWith(plugin.getDataFolder().toPath().resolve("backups"))) {
+                    sender.sendMessage(Component.text("Недопустимый путь к файлу бэкапа.", NamedTextColor.RED));
+                    return;
+                }
+                boolean restored = accessManager.store().restoreBackup(target);
+                sender.sendMessage(Component.text(restored
+                                ? "✓ Данные восстановлены из " + target.getFileName() + "."
+                                : "Не удалось восстановить из указанного файла.",
+                        restored ? NamedTextColor.GREEN : NamedTextColor.RED));
+                accessManager.audit().log(AuditLog.STORAGE_RESTORE, sender.getName(), "", null,
+                        AuditLog.details("file", target.getFileName().toString(), "ok", restored));
+            }
+            default -> sender.sendMessage(Component.text("Использование: /" + label
+                    + " backup <create|list|restore <файл>>", NamedTextColor.YELLOW));
+        }
+    }
+
     private void showOwnPassStatus(Player player) {
         long now = System.currentTimeMillis();
         Optional<RegistrationStore.PlayerAccount> opt = accessManager.store().getAccount(player.getName());
@@ -357,6 +754,20 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         player.sendMessage(Component.text("Защита TOTP 2FA: ", NamedTextColor.GRAY)
                 .append(Component.text(account.isTotpEnabled() ? "включена" : "не подключена (/2fa setup)",
                         account.isTotpEnabled() ? NamedTextColor.GREEN : NamedTextColor.GRAY)));
+        if (accessManager.config().paymentCodeEnabled()) {
+            accessManager.donations().paymentCode(player.getName()).ifPresent(code ->
+                    player.sendMessage(Component.text("Код вашего платежа (укажите в имени донатера): ", NamedTextColor.GRAY)
+                            .append(Component.text(code, NamedTextColor.GOLD, TextDecoration.BOLD))));
+        }
+        if (account.paymentsCount > 0) {
+            player.sendMessage(Component.text("Оплачено всего: ", NamedTextColor.GRAY)
+                    .append(Component.text(DonationService.formatRubles(account.totalPaidKopecks) + " ₽ ("
+                            + account.paymentsCount + " платежей)", NamedTextColor.AQUA)));
+        }
+        player.sendMessage(Component.text("Продлить: ", NamedTextColor.GRAY)
+                .append(Component.text(accessManager.config().hasPaymentUrl()
+                        ? accessManager.config().donatePayPaymentUrl() : "/pass", NamedTextColor.AQUA))
+                .append(Component.text(" · Сессии: /session · Выйти: /logout", NamedTextColor.DARK_GRAY)));
         player.sendMessage(Component.text("==============================================", NamedTextColor.GOLD));
     }
 
@@ -393,6 +804,39 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                         account.isTotpEnabled() ? NamedTextColor.GREEN : NamedTextColor.YELLOW)));
         sender.sendMessage(Component.text("Статус на сервере: ", NamedTextColor.GRAY)
                 .append(Component.text(stageText, NamedTextColor.WHITE)));
+        if (account.passUntil > 0) {
+            sender.sendMessage(Component.text("Последняя выдача: ", NamedTextColor.GRAY)
+                    .append(Component.text(account.lastGrantDays + " дн., источник "
+                            + (account.lastGrantSource.isBlank() ? "неизвестно" : account.lastGrantSource)
+                            + ", " + AccessManager.formatTimestamp(account.lastGrantAt), NamedTextColor.WHITE)));
+        }
+        if (account.paymentsCount > 0) {
+            sender.sendMessage(Component.text("Всего оплачено: ", NamedTextColor.GRAY)
+                    .append(Component.text(DonationService.formatRubles(account.totalPaidKopecks) + " ₽ ("
+                            + account.paymentsCount + " платежей, последний: "
+                            + AccessManager.formatTimestamp(account.lastPaymentAt) + ")", NamedTextColor.AQUA)));
+        }
+        if (account.lastAuthIp != null && !account.lastAuthIp.isBlank()) {
+            sender.sendMessage(Component.text("Последний вход: ", NamedTextColor.GRAY)
+                    .append(Component.text(AuditLog.maskIp(account.lastAuthIp) + " "
+                            + AccessManager.formatTimestamp(account.lastAuthAt), NamedTextColor.WHITE)));
+        }
+        if (account.mute != null && account.mute.until > now) {
+            sender.sendMessage(Component.text("Мут: ", NamedTextColor.GRAY)
+                    .append(Component.text("до " + AccessManager.formatTimestamp(account.mute.until)
+                            + (account.mute.reason.isBlank() ? "" : " (" + account.mute.reason + ")"),
+                            NamedTextColor.RED)));
+        }
+        if (account.sessions != null && !account.sessions.isEmpty()) {
+            sender.sendMessage(Component.text("Сессии: ", NamedTextColor.GRAY)
+                    .append(Component.text(account.sessions.size() + " шт. (/pass sessions " + account.playerName + ")",
+                            NamedTextColor.WHITE)));
+        }
+        if (accessManager.config().paymentCodeEnabled()) {
+            accessManager.donations().paymentCode(account.playerName).ifPresent(code ->
+                    sender.sendMessage(Component.text("Код платежа: ", NamedTextColor.GRAY)
+                            .append(Component.text(code, NamedTextColor.GOLD))));
+        }
     }
 
     private void showPluginStatus(CommandSender sender) {
@@ -442,6 +886,28 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 .append(Component.text(" — сбросить только TOTP 2FA игрока", NamedTextColor.GRAY)));
         sender.sendMessage(Component.text("/" + label + " status", NamedTextColor.YELLOW)
                 .append(Component.text(" — общая статистика плагина", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.text("/" + label + " add <ник> [дней]", NamedTextColor.YELLOW)
+                .append(Component.text(" — выдать/продлить проходку на произвольный срок", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.text("/" + label + " gift <ник> <дней>", NamedTextColor.YELLOW)
+                .append(Component.text(" — подарить проходку", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.text("/" + label + " pending", NamedTextColor.YELLOW)
+                .append(Component.text(" — нераспознанные донаты", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.text("/" + label + " approve <id> [ник] [дней]", NamedTextColor.YELLOW)
+                .append(Component.text(" — подтвердить платёж и выдать проходку", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.text("/" + label + " reject <id> [причина]", NamedTextColor.YELLOW)
+                .append(Component.text(" — отклонить платёж", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.text("/" + label + " sessions <ник>", NamedTextColor.YELLOW)
+                .append(Component.text(" — активные сессии и IP игрока", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.text("/" + label + " logoutall <ник>", NamedTextColor.YELLOW)
+                .append(Component.text(" — завершить все сессии игрока", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.text("/" + label + " stats", NamedTextColor.YELLOW)
+                .append(Component.text(" — выручка, конверсия и тарифы", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.text("/" + label + " doctor", NamedTextColor.YELLOW)
+                .append(Component.text(" — самопроверка конфигурации", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.text("/" + label + " audit [ник] [N]", NamedTextColor.YELLOW)
+                .append(Component.text(" — последние записи аудита", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.text("/" + label + " backup <create|list|restore>", NamedTextColor.YELLOW)
+                .append(Component.text(" — резервные копии данных", NamedTextColor.GRAY)));
         sender.sendMessage(Component.text("/" + label + " reload", NamedTextColor.YELLOW)
                 .append(Component.text(" — перезагрузить config.yml", NamedTextColor.GRAY)));
     }
@@ -501,8 +967,30 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                     || "remove".equals(sub) || "revoke".equals(sub)
                     || "check".equals(sub) || "info".equals(sub)
                     || "unregister".equals(sub) || "resetpass".equals(sub)
-                    || "reset2fa".equals(sub) || "disable2fa".equals(sub) || "un2fa".equals(sub)) {
+                    || "reset2fa".equals(sub) || "disable2fa".equals(sub) || "un2fa".equals(sub)
+                    || "sessions".equals(sub) || "logoutall".equals(sub)) {
                 return completePlayerNames(args[1]);
+            }
+            if ("gift".equals(sub)) {
+                return completePlayerNames(args[1]);
+            }
+            if ("audit".equals(sub)) {
+                return completePlayerNames(args[1]);
+            }
+            if ("backup".equals(sub)) {
+                return List.of("create", "list", "restore");
+            }
+        }
+        if (args.length == 3) {
+            String sub = args[0].toLowerCase(Locale.ROOT);
+            String action = args[1].toLowerCase(Locale.ROOT);
+            if ("gift".equals(sub) || ("add".equals(sub) && args[2].isBlank())) {
+                return List.of("30", "90", "365");
+            }
+            if ("backup".equals(sub) && "restore".equals(action)) {
+                return accessManager.store().listBackups().stream()
+                        .map(path -> path.getFileName().toString())
+                        .toList();
             }
         }
         return List.of();

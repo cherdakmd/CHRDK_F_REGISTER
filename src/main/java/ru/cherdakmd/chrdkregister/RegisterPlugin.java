@@ -4,6 +4,8 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.logging.Level;
 
 /**
  * Main Purpur 1.21.11 plugin entry point for CHRDK_F_REGISTER.
@@ -11,12 +13,18 @@ import java.util.List;
 public final class RegisterPlugin extends JavaPlugin {
     private AccessManager accessManager;
     private ChatService chatService;
+    private RegistrationStore store;
+    private ExecutionService executor;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
         PluginConfig config = PluginConfig.fromBukkitConfig(getConfig());
-        RegistrationStore store = new RegistrationStore(getDataFolder().toPath(), getLogger());
+
+        this.executor = new ExecutionService(getLogger());
+        this.store = new RegistrationStore(getDataFolder().toPath(), getLogger(),
+                config.storageWriteAsync() ? executor.taskExecutor() : null);
+
         DonatePayClient donatePayClient = new DonatePayClient(config);
 
         this.accessManager = new AccessManager(this, config, store, donatePayClient, getLogger());
@@ -26,7 +34,7 @@ public final class RegisterPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(chatService, this);
 
         RegisterCommandHandler commandHandler = new RegisterCommandHandler(this, accessManager);
-        for (String commandName : List.of("register", "login", "changepassword", "2fa", "pass")) {
+        for (String commandName : List.of("register", "login", "changepassword", "2fa", "pass", "logout", "session")) {
             PluginCommand pluginCommand = getCommand(commandName);
             if (pluginCommand != null) {
                 pluginCommand.setExecutor(commandHandler);
@@ -35,7 +43,7 @@ public final class RegisterPlugin extends JavaPlugin {
         }
 
         ChatCommandHandler chatCommandHandler = new ChatCommandHandler(chatService);
-        for (String commandName : List.of("chat", "msg", "reply", "ignore", "unignore", "socialspy")) {
+        for (String commandName : List.of("chat", "msg", "reply", "ignore", "unignore", "socialspy", "mute", "unmute")) {
             PluginCommand pluginCommand = getCommand(commandName);
             if (pluginCommand != null) {
                 pluginCommand.setExecutor(chatCommandHandler);
@@ -45,7 +53,9 @@ public final class RegisterPlugin extends JavaPlugin {
 
         accessManager.start();
         chatService.start();
-        getLogger().info("CHRDK_F_REGISTER enabled for Purpur 1.21.11 (pass, password auth, TOTP 2FA, chat).");
+        enableMetrics(config);
+        getLogger().info("CHRDK_F_REGISTER enabled for Purpur 1.21.11 (pass, password auth, TOTP 2FA, chat, "
+                + "brute-force protection, donation journal).");
     }
 
     @Override
@@ -58,6 +68,10 @@ public final class RegisterPlugin extends JavaPlugin {
             accessManager.shutdown();
             accessManager = null;
         }
+        if (executor != null) {
+            executor.shutdown();
+            executor = null;
+        }
         getLogger().info("CHRDK_F_REGISTER disabled.");
     }
 
@@ -69,6 +83,59 @@ public final class RegisterPlugin extends JavaPlugin {
         }
         if (chatService != null) {
             chatService.reload(updated.chat());
+        }
+    }
+
+    /** Flushes the storage and creates a manual backup (used by {@code /pass backup}). */
+    public java.util.Optional<java.nio.file.Path> createBackup(String reason) {
+        if (store == null) return java.util.Optional.empty();
+        return store.createBackup(reason, PluginConfig.fromBukkitConfig(getConfig()).storageBackupCount());
+    }
+
+    public RegistrationStore store() {
+        return store;
+    }
+
+    /**
+     * Wires optional bStats metrics. A numeric plugin ID is required and must be obtained from bstats.org;
+     * when it is not configured (or bStats is missing) the plugin simply continues without metrics.
+     */
+    private void enableMetrics(PluginConfig config) {
+        if (!config.bStatsEnabled()) return;
+        int pluginId = getConfig().getInt("metrics.bstats-id", 0);
+        if (pluginId <= 0) {
+            getLogger().info("bStats is enabled in the config but metrics.bstats-id is not set — skipping metrics.");
+            return;
+        }
+        try {
+            Class<?> metricsClass = Class.forName("org.bstats.bukkit.Metrics");
+            metricsClass.getConstructor(org.bukkit.plugin.Plugin.class, int.class)
+                    .newInstance(this, pluginId);
+        } catch (Throwable throwable) {
+            getLogger().log(Level.FINE, "bStats is not available in this build", throwable);
+        }
+    }
+
+    /** Shared executor that runs store writes off the main thread. */
+    public static final class ExecutionService {
+        private final java.util.concurrent.ExecutorService service;
+
+        ExecutionService(java.util.logging.Logger logger) {
+            this.service = java.util.concurrent.Executors.newSingleThreadExecutor(task -> {
+                Thread thread = new Thread(task, "CHRDK-storage");
+                thread.setDaemon(true);
+                thread.setUncaughtExceptionHandler((thread1, error) ->
+                        logger.log(Level.WARNING, "Storage write failed", error));
+                return thread;
+            });
+        }
+
+        public Executor taskExecutor() {
+            return service;
+        }
+
+        public void shutdown() {
+            service.shutdown();
         }
     }
 }
