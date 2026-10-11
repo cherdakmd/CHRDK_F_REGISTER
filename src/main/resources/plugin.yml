@@ -2,6 +2,8 @@ name: CHRDK_F_REGISTER
 version: '${version}'
 main: ru.cherdakmd.chrdkregister.RegisterPlugin
 api-version: '1.21.11'
+softdepend:
+  - PlaceholderAPI
 authors:
   - cherdakmd
 description: Плагин проходки через DonatePay (150р на 1 месяц) с регистрацией, авторизацией по паролю, TOTP 2FA и встроенным чатом (локальный/глобальный, ЛС, автосообщения) для Purpur 1.21.11

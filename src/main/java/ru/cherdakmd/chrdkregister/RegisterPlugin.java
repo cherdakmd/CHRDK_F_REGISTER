@@ -56,6 +56,7 @@ public final class RegisterPlugin extends JavaPlugin {
 
         accessManager.start();
         chatService.start();
+        hookPlaceholderApi();
         enableMetrics(config);
         getLogger().info("CHRDK_F_REGISTER enabled for Purpur 1.21.11 (pass, password auth, TOTP 2FA, chat, "
                 + "brute-force protection, donation journal).");
@@ -120,6 +121,21 @@ public final class RegisterPlugin extends JavaPlugin {
 
     public RegistrationStore store() {
         return store;
+    }
+
+    /**
+     * Wires PlaceholderAPI when the plugin is installed (soft dependency): registers the
+     * {@code %chrdk_*%} expansion for tab-lists, scoreboards and holograms.
+     */
+    private void hookPlaceholderApi() {
+        if (!getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) return;
+        try {
+            String version = getPluginMeta().getVersion();
+            new PlaceholderIntegration(version, accessManager, chatService, store).register();
+            getLogger().info("PlaceholderAPI обнаружен: плейсхолдеры %chrdk_*% зарегистрированы.");
+        } catch (Throwable throwable) {
+            getLogger().log(Level.WARNING, "Не удалось зарегистрировать плейсхолдеры PlaceholderAPI", throwable);
+        }
     }
 
     /**
