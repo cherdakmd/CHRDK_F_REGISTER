@@ -422,7 +422,7 @@ auto-messages:
 ./gradlew build
 ```
 
-Готовый файл плагина появится в `build/libs/chrdk-f-register-1.3.0.jar`. Помести его в папку `plugins/` сервера **Purpur 1.21.11** (готовый JAR также прикладывается к каждому релизу на GitHub).
+Готовый файл плагина появится в `build/libs/chrdk-f-register-1.4.0.jar`. Помести его в папку `plugins/` сервера **Purpur 1.21.11** (готовый JAR также прикладывается к каждому релизу на GitHub).
 
 ---
 
