@@ -26,12 +26,14 @@
 messages:
   "common":
     "connected": "<green>подключён</green>"
+    "console": "<gray>консоль</gray>"
     "disabled": "<yellow><bold>ОТКЛЮЧЕНА</bold></yellow>"
     "disabled-m": "<red>выключен</red>"
     "disabled-many": "<yellow>выключены</yellow>"
     "enabled": "<green><bold>ВКЛЮЧЕНА</bold></green>"
     "enabled-m": "<green>включён</green>"
     "no": "<yellow>нет</yellow>"
+    "none": "<gray>нет</gray>"
     "off": "<red>ОТКЛЮЧЁН</red>"
     "on": "<green>ВКЛЮЧЁН</green>"
     "token-missing": "<red>токен не задан в config.yml</red>"
@@ -67,6 +69,7 @@ messages:
     "command-no-pass": "<red>Команды заблокированы! Сначала приобретите проходку (%price% ₽ на DonatePay, укажите ник %player% в имени донатера).</red>"
     "command-register": "<red>Сначала зарегистрируйте пароль: /register &lt;пароль&gt; &lt;повтор&gt;</red>"
     "command-two-factor": "<red>Подтвердите вход кодом двухфакторной аутентификации: /2fa &lt;6-значный_код&gt;</red>"
+    "too-many-accounts": "<red>С вашего IP уже играет слишком много аккаунтов с проходками. Обратитесь к администрации.</red>"
   "password":
     "change":
       "not-authenticated": "<red>Сначала авторизуйтесь на сервере, чтобы сменить пароль.</red>"
@@ -102,6 +105,7 @@ messages:
     "password-shared": "<red>Этот пароль уже используется другим аккаунтом, который заходил с вашего IP. Придумайте свой пароль.</red>"
     "prompt": "<yellow>Проходка активна! Зарегистрируйте пароль командой: </yellow><click:suggest_command:'/register '><hover:show_text:'<green>Подставить команду в чат</green>'><gold><bold>/register &lt;пароль&gt; &lt;повтор&gt;</bold></gold></hover></click>"
     "reminder": "<gold>Зарегистрируйтесь: /register <пароль> <повтор></gold>"
+    "success": "<green>✓ Вы успешно зарегистрировались и вошли на сервер! Приятной игры!</green>"
     "title": "<gold><bold>РЕГИСТРАЦИЯ</bold></gold>"
     "title-subtitle": "<yellow>Введите /register <пароль> <повтор></yellow>"
   "login":
@@ -109,6 +113,7 @@ messages:
     "prompt": "<yellow>Введите пароль для входа на сервер: </yellow><click:suggest_command:'/login '><hover:show_text:'<green>Подставить команду в чат</green>'><gold><bold>/login &lt;пароль&gt;</bold></gold></hover></click>"
     "register-first": "<yellow>Сначала зарегистрируйте пароль: /register <пароль> <повтор></yellow>"
     "reminder": "<yellow>Авторизуйтесь: /login <пароль></yellow>"
+    "success": "<green>✓ Вы успешно вошли на сервер! Приятной игры!</green>"
     "temp-ban": "<red>Слишком много неверных попыток входа. Аккаунт временно заблокирован на %temp_ip_ban_minutes% мин.</red>"
     "throttled-blocked": "<red>Вход временно заблокирован: %reason%. Попробуйте позже (%blocked_until%).</red>"
     "throttled-delay": "<red>Слишком много неудачных попыток. Подождите %delay_seconds% сек.</red>"
@@ -316,12 +321,43 @@ messages:
       "already-processed": "<yellow>Этот платёж уже обработан администрацией.</yellow>"
       "name-mismatch": "<red>Имя донатера в платеже не совпадает с вашим ником — обратитесь к администрации.</red>"
       "not-found": "<red>Платёж с ID %id% не найден в журнале.</red>"
+    "label":
+      "approved": "подтверждено администратором"
+      "approved-source": "DonatePay #%id% (подтверждено админом)"
+      "rejected": "отклонено администратором"
+      "self-claimed": " (самостоятельно)"
     "not-found": "<red>Платёж #%id% не найден в журнале.</red>"
     "not-found-short": "<red>Платёж #%id% не найден.</red>"
+    "notify":
+      "approved-body": |-
+        ID: %id%
+        Донатер: %donor%
+        Выдано: %player%
+        Дней: %days%
+        Сумма: %amount% ₽
+      "approved-title": "Донат подтверждён администратором"
+      "granted-body": |-
+        Игрок: %player%
+        Сумма: %amount% ₽
+        Срок: %days% дн.
+      "granted-title": "Проходка выдана автоматически"
+      "pending-body": |-
+        ID: %id%
+        Имя: %donor%
+        Сумма: %amount% ₽
+        Причина: %reason%
+        Похоже на: %suggestions%
+        Разбор: /pass pending
+      "pending-title": "Донат требует решения"
     "pending-empty": "<green>Нераспознанных донатов нет — всё выдано автоматически.</green>"
     "pending-entry": "<yellow>#%id% %donor% — %amount% ₽, %status%</yellow><gray>%note%</gray><aqua>%suggested%</aqua><dark_gray> | %created%</dark_gray>"
     "pending-header": "<gold>=== Донаты, требующие решения (%size%) ===</gold>"
     "pending-hint": "<gray>Выдать: /%label% approve <id> [ник] [дней] | Отклонить: /%label% reject <id> [причина]</gray>"
+    "reason":
+      "below-minimum": "сумма ниже минимума (%price% ₽)"
+      "case-mismatch": "регистр ника не совпадает (strict-case-match)"
+      "name-mismatch": "имя донатера не похоже на игровой ник"
+      "not-successful": "транзакция не является успешным донатом"
     "rejected": "<yellow>Платёж #%id% отклонён.</yellow>"
     "suggested": " → похоже на %name%"
   "audit":
@@ -368,6 +404,7 @@ messages:
     "blocked-no-pass": "<red>Чат заблокирован до покупки проходки на DonatePay!</red>"
     "blocked-register": "<red>Чат заблокирован! Зарегистрируйтесь: /register <пароль> <повтор></red>"
     "blocked-two-factor": "<red>Чат заблокирован! Подтвердите вход кодом 2FA: /2fa <6-значный_код></red>"
+    "broadcast-prefix": "&8[&cОбъявление&8] &r"
     "caps-fixed": "<yellow>Пожалуйста, не пишите капсом — сообщение было исправлено.</yellow>"
     "cleared-all": "<green>Чат очищен для всех игроков.</green>"
     "cleared-player": "<green>Чат очищен для игрока %target%.</green>"
@@ -434,6 +471,12 @@ messages:
     "not-muted": "<yellow>У игрока %target_name% нет активного мута.</yellow>"
     "notice": "<red>Вам запрещено писать в чат на %duration%%reason%</red>"
     "notice-reason": " (%reason%)"
+    "notify-body": |-
+      Кто: %admin%
+      Кого: %target%
+      Время: %duration%
+      Причина: %reason%
+    "notify-title": "Игрок заглушён"
     "removed": "<green>Мут снят с игрока %target_name%.</green>"
     "usage": "<yellow>Использование: /%label% <ник> <10m|2h|1d> [причина]</yellow>"
     "usage-unmute": "<yellow>Использование: /unmute <ник></yellow>"
@@ -466,8 +509,33 @@ messages:
     "self": "<red>Нельзя игнорировать самого себя.</red>"
   "bruteforce":
     "multi-alt": "<yellow>[CHRDK] С одного IP (%ip%) заходят несколько аккаунтов с проходками: %sharing%</yellow>"
+    "multi-alt-body": |-
+      IP: %ip%
+      Аккаунты: %accounts%
+      Лимит: %limit%
+    "multi-alt-title": "Подозрение на общий аккаунт"
     "notify": "<red>[CHRDK] %message%</red>"
   "auth":
     "success-actionbar": "<green>Доступ открыт!</green>"
+  "dialog":
+    "cancel": "<white>Отмена</white>"
+    "code-missing": "<red>Код не введён — попробуйте ещё раз.</red>"
+    "confirm-mismatch": "<red>Пароли не совпадают — попробуйте ещё раз.</red>"
+    "login":
+      "body": "<gray>Введите пароль от аккаунта. Пароль не попадёт в чат и логи сервера.</gray>"
+      "submit": "<white>Войти</white>"
+      "title": "<gold><bold>Вход на сервер</bold></gold>"
+    "password-label": "<yellow>Пароль</yellow>"
+    "password-missing": "<red>Пароль не введён — попробуйте ещё раз.</red>"
+    "register":
+      "body": "<gray>Придумайте пароль длиной от %min% до %max% символов. Он понадобится для каждого входа на сервер.</gray>"
+      "confirm-label": "<yellow>Повторите пароль</yellow>"
+      "submit": "<white>Зарегистрироваться</white>"
+      "title": "<gold><bold>Регистрация пароля</bold></gold>"
+    "two-factor":
+      "body": "<gray>Введите 6-значный код из приложения-аутентификатора.</gray>"
+      "code-label": "<yellow>Код</yellow>"
+      "submit": "<white>Подтвердить</white>"
+      "title": "<aqua><bold>Код 2FA</bold></aqua>"
   "logout":
     "success": "<green>✓ Вы вышли из аккаунта. Сессия по IP сброшена, пароль потребуется снова.</green>"

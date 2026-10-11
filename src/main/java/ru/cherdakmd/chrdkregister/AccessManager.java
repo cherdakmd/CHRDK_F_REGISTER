@@ -106,14 +106,14 @@ public final class AccessManager {
         this.notifications = new NotificationService(this::config, logger);
         this.throttle = new AuthThrottle(store, this::config);
         this.donations = new DonationService(store, this::config, audit, notifications, logger,
-                this::onPassGranted);
+                messages, this::onPassGranted);
         this.logMasker = new LogMasker(logger);
         this.authDialogs = createAuthDialogs(plugin);
     }
 
     private AuthDialogs createAuthDialogs(JavaPlugin javaPlugin) {
         try {
-            return new AuthDialogs(javaPlugin, this, () -> this.config, logger);
+            return new AuthDialogs(javaPlugin, this, () -> this.config, messages, logger);
         } catch (Throwable throwable) {
             logger.warning("Нативный ввод пароля диалогами Paper недоступен: " + throwable.getMessage());
             return null;
@@ -153,6 +153,8 @@ public final class AccessManager {
     /** Заменяет тексты (используется при {@code /pass reload}). */
     public void setMessages(Messages messages) {
         this.messages = messages;
+        if (donations != null) this.donations.setMessages(messages);
+        if (authDialogs != null) this.authDialogs.setMessages(messages);
     }
 
     /** Собирает подсказки по надёжности пароля из messages.yml в одну строку. */
@@ -465,11 +467,15 @@ public final class AccessManager {
                 }
             }
         }
-        notifications.notify("multialt.alert", "Подозрение на общий аккаунт",
-                "IP: " + AuditLog.maskIp(ip) + "\nАккаунты: " + String.join(", ", sharing)
-                        + "\nЛимит: " + config.maxAccountsPerIp(), "warn");
+        notifications.notify("multialt.alert",
+                messages.plain("bruteforce.multi-alt-title"),
+                messages.raw("bruteforce.multi-alt-body",
+                        "ip", AuditLog.maskIp(ip),
+                        "accounts", String.join(", ", sharing),
+                        "limit", config.maxAccountsPerIp()),
+                "warn");
         return config.antiMultiAltDeny()
-                ? "С вашего IP уже играет слишком много аккаунтов с проходками. Обратитесь к администрации."
+                ? messages.plain("restriction.too-many-accounts")
                 : null;
     }
 
@@ -538,7 +544,7 @@ public final class AccessManager {
             return true;
         }
 
-        completeAuthentication(player, "✓ Вы успешно зарегистрировались и вошли на сервер! Приятной игры!");
+        completeAuthentication(player, "register.success");
         if (config.passwordStrengthHint()) {
             messages.send(player, "password.strength-ok", "strength", policy.strengthText(messages));
         }
@@ -624,7 +630,7 @@ public final class AccessManager {
             }
             store.touchSession(player.getName(), uuid, getPlayerIp(player), now);
             authSource.put(uuid, "password");
-            completeAuthentication(player, "✓ Вы успешно вошли на сервер! Приятной игры!");
+            completeAuthentication(player, "login.success");
             logger.info("Player " + player.getName() + " logged in.");
             if (config.auditLogLogins()) {
                 audit.log(AuditLog.LOGIN_SUCCESS, player.getName(), player.getName(), getPlayerIp(player),
@@ -1065,7 +1071,7 @@ public final class AccessManager {
         return true;
     }
 
-    private void completeAuthentication(Player player, String successMessage) {
+    private void completeAuthentication(Player player, String successKey) {
         UUID uuid = player.getUniqueId();
         authenticatedPlayers.add(uuid);
         passwordVerifiedPlayers.remove(uuid);
@@ -1074,7 +1080,7 @@ public final class AccessManager {
         hideExpiryBar(uuid);
 
         player.clearTitle();
-        player.sendMessage(Component.text(successMessage, NamedTextColor.GREEN));
+        player.sendMessage(messages.get(successKey));
         player.sendActionBar(messages.get("auth.success-actionbar"));
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.2f);
     }

@@ -54,7 +54,8 @@ public final class ChatService implements Listener {
 
     private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacyAmpersand();
     private static final String MESSAGE_PLACEHOLDER = "%message%";
-    private static final String ANNOUNCEMENT_PREFIX = "&8[&cОбъявление&8] &r";
+    /** Ключ префикса объявления в messages.yml. */
+    private static final String ANNOUNCEMENT_PREFIX_KEY = "chat.broadcast-prefix";
     private static final int MIN_CAPS_LETTERS = 6;
     private static final int MAX_MENTION_LENGTH = 16;
     private static final int CHAT_CLEAR_LINES = 100;
@@ -700,10 +701,13 @@ public final class ChatService implements Listener {
         store().setMute(target, until, reason, sender.getName());
         accessManager.audit().log(AuditLog.CHAT_MUTE, sender.getName(), target, null,
                 AuditLog.details("minutes", minutes, "reason", reason));
-        notifications().notify("chat.mute", "Игрок заглушён",
-                "Кто: " + (sender instanceof Player player ? player.getName() : "консоль")
-                        + "\nКого: " + target + "\nВремя: " + AccessManager.describeRemaining(minutes * 60_000L)
-                        + "\nПричина: " + (reason == null || reason.isBlank() ? "не указана" : reason), "warn");
+        notifications().notify("chat.mute", messages.plain("mute.notify-title"),
+                messages.raw("mute.notify-body",
+                        "admin", sender instanceof Player player ? player.getName() : messages.plain("common.console"),
+                        "target", target,
+                        "duration", AccessManager.describeRemaining(minutes * 60_000L),
+                        "reason", reason == null || reason.isBlank() ? messages.plain("mute.no-reason") : reason),
+                "warn");
         messages.send(sender, "mute.applied",
                 "target", target,
                 "duration", AccessManager.describeRemaining(minutes * 60_000L));
@@ -855,7 +859,7 @@ public final class ChatService implements Listener {
                 AuditLog.details("text", rawText.length() > 200 ? rawText.substring(0, 200) + "…" : rawText));
         boolean colorAllowed = !(source instanceof Player player) || player.hasPermission(PERMISSION_COLOR);
         Component body = colorAllowed ? legacy(rawText) : Component.text(rawText);
-        Component line = legacy(ANNOUNCEMENT_PREFIX).append(body);
+        Component line = legacy(messages.template(ANNOUNCEMENT_PREFIX_KEY)).append(body);
         for (Player online : Bukkit.getOnlinePlayers()) {
             online.sendMessage(line);
         }

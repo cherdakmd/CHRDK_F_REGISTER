@@ -37,9 +37,15 @@ class MessagesTest {
     private static final Pattern CALL = Pattern.compile(
             "messages(?:\\(\\))?\\.(?:send|sendList|get|getList|raw|plain|has)\\(");
     private static final Pattern LITERAL = Pattern.compile("\"([a-z][a-z0-9.\\-]*)\"");
-    /** Группы ключей, которые код собирает динамически (наборы подсказок PasswordPolicy, ответы DonationService). */
+    /**
+     * Ключи, которые код выбирает не напрямую в вызове messages.*: наборы подсказок PasswordPolicy,
+     * ответы DonationService (claim/label/reason/notify) и тексты, передаваемые вспомогательным методам
+     * (например completeAuthentication(player, "register.success") или template("chat.broadcast-prefix")).
+     */
     private static final List<String> DYNAMIC_PREFIXES = List.of(
-            "password.error.", "password.hint.", "password.strength.", "donation.claim.");
+            "password.error.", "password.hint.", "password.strength.", "donation.");
+    private static final Set<String> INDIRECT_KEYS = Set.of(
+            "register.success", "login.success", "chat.broadcast-prefix");
 
     private static final String RESOURCE_PATH = "src/main/resources/messages.yml";
 
@@ -76,6 +82,7 @@ class MessagesTest {
         for (String key : resource().defaultKeys()) {
             if (codeKeys.contains(key)) continue;
             if (DYNAMIC_PREFIXES.stream().anyMatch(key::startsWith)) continue;
+            if (INDIRECT_KEYS.contains(key)) continue;
             dead.add(key);
         }
         assertTrue(dead.isEmpty(), "Ключи, которые никто не читает (ни код, ни динамические наборы): " + dead);

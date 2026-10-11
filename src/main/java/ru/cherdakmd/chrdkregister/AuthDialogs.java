@@ -44,38 +44,44 @@ public final class AuthDialogs {
     private final Logger logger;
 
     private volatile boolean unavailable;
+    private volatile Messages messages;
 
     public AuthDialogs(
             JavaPlugin plugin,
             AccessManager accessManager,
             Supplier<PluginConfig> configSupplier,
+            Messages messages,
             Logger logger
     ) {
         this.plugin = plugin;
         this.accessManager = accessManager;
         this.configSupplier = configSupplier;
+        this.messages = messages;
         this.logger = logger;
+    }
+
+    /** Обновляет тексты после {@code /pass reload}. */
+    public void setMessages(Messages messages) {
+        this.messages = messages;
     }
 
     /** Shows the password dialog of the login step. */
     public void showLogin(Player player) {
         PluginConfig config = configSupplier.get();
         run(player, () -> player.showDialog(Dialog.create(builder -> builder.empty()
-                .base(DialogBase.builder(title("Вход на сервер", NamedTextColor.GOLD))
+                .base(DialogBase.builder(title(messages.get("dialog.login.title")))
                         .canCloseWithEscape(false)
                         .pause(false)
-                        .body(List.of(DialogBody.plainMessage(Component.text(
-                                "Введите пароль от аккаунта. Пароль не попадёт в чат и логи сервера.",
-                                NamedTextColor.GRAY))))
-                        .inputs(List.of(DialogInput.text(KEY_PASSWORD, label("Пароль"))
+                        .body(List.of(DialogBody.plainMessage(messages.get("dialog.login.body"))))
+                        .inputs(List.of(DialogInput.text(KEY_PASSWORD, label(messages.get("dialog.password-label")))
                                 .maxLength(Math.max(8, Math.min(64, config.maxPasswordLength())))
                                 .width(INPUT_WIDTH)
                                 .build()))
                         .build())
                 .type(DialogType.confirmation(
-                        button("Войти", DialogAction.customClick(
+                        button(messages.get("dialog.login.submit"), DialogAction.customClick(
                                 (response, audience) -> submitLogin(player, response), singleUse())),
-                        button("Отмена", null))))));
+                        button(messages.get("dialog.cancel"), null))))));
     }
 
     /** Shows the registration dialog (password + confirmation) of the first join. */
@@ -84,45 +90,41 @@ public final class AuthDialogs {
         int maxLength = Math.max(8, Math.min(64, config.maxPasswordLength()));
         int minLength = Math.max(4, config.minPasswordLength());
         run(player, () -> player.showDialog(Dialog.create(builder -> builder.empty()
-                .base(DialogBase.builder(title("Регистрация пароля", NamedTextColor.GOLD))
+                .base(DialogBase.builder(title(messages.get("dialog.register.title")))
                         .canCloseWithEscape(false)
                         .pause(false)
-                        .body(List.of(DialogBody.plainMessage(Component.text(
-                                "Придумайте пароль длиной от " + minLength + " до " + maxLength
-                                        + " символов. Он понадобится для каждого входа на сервер.",
-                                NamedTextColor.GRAY))))
+                        .body(List.of(DialogBody.plainMessage(
+                                messages.get("dialog.register.body", "min", minLength, "max", maxLength))))
                         .inputs(List.of(
-                                DialogInput.text(KEY_PASSWORD, label("Пароль"))
+                                DialogInput.text(KEY_PASSWORD, label(messages.get("dialog.password-label")))
                                         .maxLength(maxLength)
                                         .width(INPUT_WIDTH)
                                         .build(),
-                                DialogInput.text(KEY_CONFIRM, label("Повторите пароль"))
+                                DialogInput.text(KEY_CONFIRM, label(messages.get("dialog.register.confirm-label")))
                                         .maxLength(maxLength)
                                         .width(INPUT_WIDTH)
                                         .build()))
                         .build())
                 .type(DialogType.confirmation(
-                        button("Зарегистрироваться", DialogAction.customClick(
+                        button(messages.get("dialog.register.submit"), DialogAction.customClick(
                                 (response, audience) -> submitRegister(player, response), singleUse())),
-                        button("Отмена", null))))));
+                        button(messages.get("dialog.cancel"), null))))));
     }
 
     /** Shows the 2FA code dialog of the second authentication step. */
     public void showTwoFactor(Player player) {
         run(player, () -> player.showDialog(Dialog.create(builder -> builder.empty()
-                .base(DialogBase.builder(title("Код 2FA", NamedTextColor.AQUA))
+                .base(DialogBase.builder(title(messages.get("dialog.two-factor.title")))
                         .canCloseWithEscape(false)
                         .pause(false)
-                        .body(List.of(DialogBody.plainMessage(Component.text(
-                                "Введите 6-значный код из приложения-аутентификатора.",
-                                NamedTextColor.GRAY))))
-                        .inputs(List.of(DialogInput.text(KEY_CODE, label("Код"))
+                        .body(List.of(DialogBody.plainMessage(messages.get("dialog.two-factor.body"))))
+                        .inputs(List.of(DialogInput.text(KEY_CODE, label(messages.get("dialog.two-factor.code-label")))
                                 .maxLength(8)
                                 .width(INPUT_WIDTH)
                                 .build()))
                         .build())
                 .type(DialogType.confirmation(
-                        button("Подтвердить", DialogAction.customClick(
+                        button(messages.get("dialog.two-factor.submit"), DialogAction.customClick(
                                 (response, audience) -> submitTwoFactor(player, response), singleUse())),
                         button("Отмена", null))))));
     }
@@ -130,7 +132,7 @@ public final class AuthDialogs {
     private void submitLogin(Player player, DialogResponseView response) {
         String password = response.getText(KEY_PASSWORD);
         if (password == null || password.isEmpty()) {
-            warn(player, "Пароль не введён — попробуйте ещё раз.");
+            warn(player, messages.get("dialog.password-missing"));
             showLogin(player);
             return;
         }
@@ -141,12 +143,12 @@ public final class AuthDialogs {
         String password = response.getText(KEY_PASSWORD);
         String confirmation = response.getText(KEY_CONFIRM);
         if (password == null || password.isEmpty()) {
-            warn(player, "Пароль не введён — попробуйте ещё раз.");
+            warn(player, messages.get("dialog.password-missing"));
             showRegister(player);
             return;
         }
         if (!password.equals(confirmation)) {
-            warn(player, "Пароли не совпадают — попробуйте ещё раз.");
+            warn(player, messages.get("dialog.confirm-mismatch"));
             showRegister(player);
             return;
         }
@@ -156,7 +158,7 @@ public final class AuthDialogs {
     private void submitTwoFactor(Player player, DialogResponseView response) {
         String code = response.getText(KEY_CODE);
         if (code == null || code.isBlank()) {
-            warn(player, "Код не введён — попробуйте ещё раз.");
+            warn(player, messages.get("dialog.code-missing"));
             showTwoFactor(player);
             return;
         }
@@ -197,16 +199,16 @@ public final class AuthDialogs {
         }
     }
 
-    private static Component title(String text, NamedTextColor color) {
-        return Component.text(text, color, TextDecoration.BOLD);
+    private static Component title(Component text) {
+        return text;
     }
 
-    private static Component label(String text) {
-        return Component.text(text, NamedTextColor.YELLOW);
+    private static Component label(Component text) {
+        return text;
     }
 
-    private static ActionButton button(String text, DialogAction action) {
-        return ActionButton.create(Component.text(text, NamedTextColor.WHITE), null, BUTTON_WIDTH, action);
+    private static ActionButton button(Component text, DialogAction action) {
+        return ActionButton.create(text, null, BUTTON_WIDTH, action);
     }
 
     private static ClickCallback.Options singleUse() {

@@ -42,6 +42,7 @@ public final class DonationService {
     private final NotificationService notifications;
     private final Logger logger;
     private final PassNotifier notifier;
+    private volatile Messages messages;
 
     public DonationService(
             RegistrationStore store,
@@ -49,6 +50,7 @@ public final class DonationService {
             AuditLog audit,
             NotificationService notifications,
             Logger logger,
+            Messages messages,
             PassNotifier notifier
     ) {
         this.store = store;
@@ -56,7 +58,19 @@ public final class DonationService {
         this.audit = audit;
         this.notifications = notifications;
         this.logger = logger;
+        this.messages = messages;
         this.notifier = notifier;
+    }
+
+    /** Обновляет тексты после {@code /pass reload}. */
+    public void setMessages(Messages messages) {
+        this.messages = messages;
+    }
+
+    /** Текст по ключу из messages.yml (для уведомлений и записей журнала). */
+    private String text(String key, Object... placeholders) {
+        if (messages == null) return key;
+        return messages.plain(key, placeholders);
     }
 
     /**
@@ -76,13 +90,13 @@ public final class DonationService {
 
         if (!transaction.isSuccessfulDonation()) {
             status = RegistrationStore.DonationStatus.REJECTED;
-            note = "транзакция не является успешным донатом";
+            note = text("donation.reason.not-successful");
         } else if (amountRubles < config.minimumDonationRubles()) {
             status = RegistrationStore.DonationStatus.PENDING_AMOUNT;
-            note = "сумма ниже минимума (" + config.minimumDonationRubles() + " ₽)";
+            note = text("donation.reason.below-minimum", "price", config.minimumDonationRubles());
         } else if (!AccessManager.isValidMinecraftName(transaction.donorName().trim())) {
             status = RegistrationStore.DonationStatus.PENDING_NAME;
-            note = "имя донатера не похоже на игровой ник";
+            note = text("donation.reason.name-mismatch");
         } else {
             Optional<RegistrationStore.PlayerAccount> granted = store.grantPassFromDonation(
                     transaction.donorName().trim(),
@@ -100,7 +114,7 @@ public final class DonationService {
                         .longValueExact(), nowMillis);
             } else {
                 status = RegistrationStore.DonationStatus.PENDING_REVIEW;
-                note = "регистр ника не совпадает (strict-case-match)";
+                note = text("donation.reason.case-mismatch");
             }
         }
 
@@ -133,8 +147,9 @@ public final class DonationService {
                         + transaction.id() + ", " + days + " дн.).");
                 audit.log(AuditLog.PASS_GRANT_DONATEPAY, "donatepay", grantedTo, "",
                         AuditLog.details("donation", transaction.id(), "amount", amount, "days", days));
-                notifications.notify("pass.granted", "Проходка выдана автоматически",
-                        "Игрок: " + grantedTo + "\nСумма: " + amount + " ₽\nСрок: " + days + " дн.",
+                notifications.notify("pass.granted", text("donation.notify.granted-title"),
+                        messages == null ? "" : messages.raw("donation.notify.granted-body",
+                                "player", grantedTo, "amount", amount, "days", days),
                         "good");
                 notifyOnline(grantedTo, passUntil, "DonatePay " + amount + "₽");
             }
@@ -145,10 +160,11 @@ public final class DonationService {
                 audit.log(AuditLog.DONATION_PENDING, "donatepay", donor, "",
                         AuditLog.details("donation", transaction.id(), "amount", amount, "reason", note,
                                 "suggestions", String.join(", ", suggestions)));
-                notifications.notify("donate.pending", "Донат требует решения",
-                        "ID: " + transaction.id() + "\nИмя: " + donor + "\nСумма: " + amount + " ₽\nПричина: " + note
-                                + (suggestions.isEmpty() ? "" : "\nПохоже на: " + String.join(", ", suggestions))
-                                + "\nРазбор: /pass pending",
+                notifications.notify("donate.pending", text("donation.notify.pending-title"),
+                        messages == null ? "" : messages.raw("donation.notify.pending-body",
+                                "id", transaction.id(), "donor", donor, "amount", amount, "reason", note,
+                                "suggestions", suggestions.isEmpty()
+                                        ? text("common.none") : String.join(", ", suggestions)),
                         "warn");
             }
             default -> {
@@ -193,16 +209,18 @@ public final class DonationService {
                 "donatepay:#" + donationId).passUntil;
         store.addPayment(playerName, record.amountKopecks, nowMillis);
         store.updateDonation(donationId, RegistrationStore.DonationStatus.GRANTED.name(),
-                record.note + (record.note.isBlank() ? "" : "; ") + "подтверждено администратором",
+                record.note + (record.note.isBlank() ? "" : "; ") + text("donation.label.approved"),
                 adminName, nowMillis, playerName, grantDays);
         audit.log(AuditLog.DONATION_APPROVED, adminName, playerName, "",
                 AuditLog.details("donation", donationId, "amount", formatRubles(record.amountKopecks),
                         "days", grantDays, "donorName", record.donorName));
-        notifications.notify("pass.granted", "Донат подтверждён администратором",
-                "ID: " + donationId + "\nДонатер: " + record.donorName + "\nВыдано: " + playerName
-                        + "\nДней: " + grantDays + "\nСумма: " + formatRubles(record.amountKopecks) + " ₽",
+        notifications.notify("pass.granted", text("donation.notify.approved-title"),
+                messages == null ? "" : messages.raw("donation.notify.approved-body",
+                        "id", donationId, "donor", record.donorName, "player", playerName,
+                        "days", grantDays, "amount", formatRubles(record.amountKopecks)),
                 "good");
-        notifyOnline(playerName, passUntil, "DonatePay #" + donationId + " (подтверждено админом)");
+        notifyOnline(playerName, passUntil,
+                text("donation.label.approved-source", "id", donationId));
         return true;
     }
 
@@ -212,7 +230,7 @@ public final class DonationService {
         if (existing.isEmpty()) return false;
         RegistrationStore.DonationRecord record = existing.get();
         store.updateDonation(donationId, RegistrationStore.DonationStatus.REJECTED.name(),
-                (reason == null || reason.isBlank()) ? "отклонено администратором" : reason,
+                (reason == null || reason.isBlank()) ? text("donation.label.rejected") : reason,
                 adminName, nowMillis, "", 0);
         audit.log(AuditLog.DONATION_REJECTED, adminName, record.donorName, "",
                 AuditLog.details("donation", donationId, "amount", formatRubles(record.amountKopecks),
@@ -236,7 +254,7 @@ public final class DonationService {
         if (!DonorNameMatcher.looksLikeDonor(record.donorName, playerName)) {
             return "donation.claim.name-mismatch";
         }
-        approve(donationId, playerName, 0, playerName + " (самостоятельно)", nowMillis);
+        approve(donationId, playerName, 0, playerName + text("donation.label.self-claimed"), nowMillis);
         audit.log(AuditLog.DONATION_CLAIMED, playerName, playerName, ipAddress,
                 AuditLog.details("donation", donationId, "donorName", record.donorName));
         return "";
