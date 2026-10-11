@@ -141,7 +141,7 @@ public final class Messages {
 
     /** Текст без разметки — для логов, консоли и сравнений. */
     public String plain(String key, Object... placeholders) {
-        return PlainTextComponentSerializer.plainText().deserialize(get(key, placeholders));
+        return PlainTextComponentSerializer.plainText().serialize(get(key, placeholders));
     }
 
     /** Сырой шаблон с подставленными (уже экранированными) значениями — для кода, который строит строку. */
@@ -309,7 +309,7 @@ public final class Messages {
         }
     }
 
-    private Map<String, String> readResource(JavaPlugin plugin, String name) {
+    private static Map<String, String> readResource(JavaPlugin plugin, String name) {
         try (InputStream stream = plugin.getResource(name)) {
             if (stream == null) return Map.of();
             return read(stream);
@@ -333,7 +333,7 @@ public final class Messages {
     private static Map<String, String> readFile(Path file) {
         if (file == null || !Files.exists(file)) return Map.of();
         YamlConfiguration configuration = new YamlConfiguration();
-        try (InputStreamReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+        try (java.io.BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
             configuration.load(reader);
         } catch (Exception exception) {
             return Map.of();

@@ -258,7 +258,8 @@ public final class ChatService implements Listener {
                 cfg,
                 cfg.mentionHighlight(),
                 bodyColor,
-                candidate -> viewerNames.contains(candidate.toLowerCase(Locale.ROOT))
+                candidate -> viewerNames.contains(candidate.toLowerCase(Locale.ROOT)),
+                messages
         );
         Component line = legacy(segments[0]).append(body).append(legacy(segments[1]));
 
@@ -930,7 +931,7 @@ public final class ChatService implements Listener {
 
         String[] receive = splitFormat(cfg.privateReceiveFormat(), placeholders);
         NamedTextColor bodyColor = extractTrailingColor(receive[0], NamedTextColor.WHITE);
-        Component body = buildMessageBody(message, colorAllowed, cfg, false, bodyColor, name -> false);
+        Component body = buildMessageBody(message, colorAllowed, cfg, false, bodyColor, name -> false, messages);
         target.sendMessage(legacy(receive[0]).append(body).append(legacy(receive[1])));
         if (cfg.privateMessageSound()) {
             target.playSound(target.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.6f);
@@ -1217,6 +1218,12 @@ public final class ChatService implements Listener {
         return percent >= capsPercent ? message.toLowerCase(Locale.ROOT) : message;
     }
 
+    private static Component mentionHover(Messages messages, String candidate) {
+        return messages == null
+                ? Component.text("@" + candidate)
+                : messages.get("chat.mention-hover", "candidate", candidate);
+    }
+
     static boolean isDuplicate(String previous, String current) {
         if (previous == null || current == null) return false;
         String a = previous.trim();
@@ -1250,6 +1257,20 @@ public final class ChatService implements Listener {
             TextColor inheritedColor,
             Predicate<String> isKnownPlayer
     ) {
+        return buildMessageBody(rawMessage, colorAllowed, cfg, highlightMentions, inheritedColor,
+                isKnownPlayer, null);
+    }
+
+    /** Полная версия: {@code messages} нужен для подсказки при наведении на упоминание (в тестах может быть null). */
+    static Component buildMessageBody(
+            String rawMessage,
+            boolean colorAllowed,
+            ChatConfig cfg,
+            boolean highlightMentions,
+            TextColor inheritedColor,
+            Predicate<String> isKnownPlayer,
+            Messages messages
+    ) {
         String normalized = rawMessage == null ? "" : rawMessage;
         if (colorAllowed) {
             // Section signs typed by clients are handled like '&'-codes.
@@ -1281,7 +1302,7 @@ public final class ChatService implements Listener {
             }
             flushPlain(parts, buffer, colorAllowed, inheritedColor);
             parts.add(Component.text("@" + candidate, mentionColor(cfg, inheritedColor), TextDecoration.BOLD)
-                    .hoverEvent(HoverEvent.showText(messages.get("chat.mention-hover", "candidate", candidate)))
+                    .hoverEvent(HoverEvent.showText(mentionHover(messages, candidate)))
                     .clickEvent(ClickEvent.suggestCommand("/msg " + candidate + " ")));
             index = end;
         }
