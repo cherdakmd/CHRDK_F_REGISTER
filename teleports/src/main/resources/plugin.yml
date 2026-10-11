@@ -1,0 +1,38 @@
+name: CHRDK_Teleports
+version: ${version}
+main: ru.cherdakmd.chrdkteleports.TeleportsPlugin
+api-version: '1.21'
+description: Телепортация CHRDK: случайная точка (RTP), запросы игрок-игрок (TPA), точки дома — за алмазы
+author: cherdakmd
+depend: [CHRDK_F_REGISTER]
+commands:
+  rtp:
+    description: Случайная телепортация в радиусе
+  tpa:
+    description: Запрос телепорта к игроку
+  tpahere:
+    description: Запрос телепорта игрока к себе
+  tpaccept:
+    description: Принять запрос на телепортацию
+  tpdeny:
+    description: Отклонить запрос на телепортацию
+  tpcancel:
+    description: Отозвать свой исходящий запрос
+  home:
+    description: Телепорт в точку дома
+  sethome:
+    description: Установить точку дома
+  delhome:
+    description: Удалить точку дома
+  homes:
+    description: Список точек дома
+  tpadmin:
+    description: Управление телепортами
+    permission: chrdktele.admin
+permissions:
+  chrdktele.use:
+    description: Телепортация (RTP/TPA/дома)
+    default: true
+  chrdktele.admin:
+    description: Администрирование телепортов
+    default: op
