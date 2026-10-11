@@ -1,5 +1,7 @@
 package ru.cherdakmd.chrdkregister;
 
+import net.kyori.adventure.text.Component;
+
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -13,8 +15,20 @@ import java.util.Set;
  * characters ({@code aaaaaaaa}). It also reports the strength so the player gets actionable feedback.</p>
  */
 public final class PasswordPolicy {
-    /** Verdict of the policy check. */
-    public record Result(boolean accepted, String message, String strength) {
+    /**
+     * Verdict of the policy check. The texts live in {@code messages.yml}
+     * ({@code password.error.*} and {@code password.strength.*}), so the policy itself stays language-neutral.
+     */
+    public record Result(boolean accepted, String messageKey, List<Object> messageArgs, String strengthKey) {
+        /** Renders the rejection reason using the configured texts. */
+        public Component renderMessage(Messages messages) {
+            return messages.get(messageKey, messageArgs.toArray());
+        }
+
+        /** Plain-text strength word ({@code слабый} / {@code средний} / {@code надёжный}) for logs and audit. */
+        public String strengthText(Messages messages) {
+            return messages.plain(strengthKey);
+        }
     }
 
     /** Compact list of the most frequently used passwords that must never be accepted. */
@@ -44,16 +58,17 @@ public final class PasswordPolicy {
      */
     public static Result check(String nickname, String password, PluginConfig config) {
         if (password == null || password.isEmpty()) {
-            return new Result(false, "Пароль не может быть пустым.", "нет");
+            return new Result(false, "password.error.empty", List.of(), "password.strength.none");
         }
         if (password.length() < config.minPasswordLength() || password.length() > config.maxPasswordLength()) {
-            return new Result(false, "Длина пароля должна быть от " + config.minPasswordLength()
-                    + " до " + config.maxPasswordLength() + " символов.", strengthOf(password));
+            return new Result(false, "password.error.length",
+                    List.of("min", config.minPasswordLength(), "max", config.maxPasswordLength()),
+                    strengthKeyOf(password));
         }
         if (password.contains(" ")) {
-            return new Result(false, "Пароль не должен содержать пробелы.", strengthOf(password));
+            return new Result(false, "password.error.spaces", List.of(), strengthKeyOf(password));
         }
-        String strength = strengthOf(password);
+        String strength = strengthKeyOf(password);
         String lowered = password.toLowerCase(Locale.ROOT);
         String nick = nickname == null ? "" : nickname.toLowerCase(Locale.ROOT);
 
@@ -62,26 +77,23 @@ public final class PasswordPolicy {
                     || DonorNameMatcher.levenshtein(DonorNameMatcher.normalize(lowered),
                     DonorNameMatcher.normalize(nick)) <= 1
                     || (nick.length() >= 4 && lowered.contains(nick))) {
-                return new Result(false, "Пароль не должен совпадать с вашим ником или быть слишком похожим на него.",
-                        strength);
+                return new Result(false, "password.error.nickname", List.of(), strength);
             }
         }
         if (config.rejectCommonPasswords()) {
             if (COMMON_PASSWORDS.contains(lowered)) {
-                return new Result(false, "Этот пароль слишком часто используется и легко подбирается. Придумайте другой.",
-                        strength);
+                return new Result(false, "password.error.common", List.of(), strength);
             }
             if (isMonotonic(lowered) || isRepeated(lowered)) {
-                return new Result(false, "Пароль из одинаковых или последовательных символов легко подобрать.",
-                        strength);
+                return new Result(false, "password.error.sequence", List.of(), strength);
             }
         }
-        return new Result(true, "", strength);
+        return new Result(true, "", List.of(), strength);
     }
 
-    /** Returns {@code weak}, {@code medium} or {@code strong} in Russian for player feedback. */
-    public static String strengthOf(String password) {
-        if (password == null || password.isEmpty()) return "нет";
+    /** Returns the message key of the strength word ({@code password.strength.*}). */
+    public static String strengthKeyOf(String password) {
+        if (password == null || password.isEmpty()) return "password.strength.none";
         int classes = 0;
         if (password.chars().anyMatch(Character::isLowerCase)) classes++;
         if (password.chars().anyMatch(Character::isUpperCase)) classes++;
@@ -96,25 +108,25 @@ public final class PasswordPolicy {
             score = Math.min(score, 0);
         }
         if (COMMON_PASSWORDS.contains(password.toLowerCase(Locale.ROOT))) score = 0;
-        if (score >= 3) return "надёжный";
-        if (score == 2) return "средний";
-        return "слабый";
+        if (score >= 3) return "password.strength.strong";
+        if (score == 2) return "password.strength.medium";
+        return "password.strength.weak";
     }
 
-    /** Returns a player-facing hint list for improving a weak password. */
-    public static List<String> hints(String password) {
+    /** Returns the message keys of the improvement hints for a weak password. */
+    public static List<String> hintKeys(String password) {
         List<String> hints = new java.util.ArrayList<>();
         if (password == null || password.length() < 10) {
-            hints.add("сделайте пароль длиннее (10+ символов)");
+            hints.add("password.hint.longer");
         }
         if (password != null && password.chars().noneMatch(Character::isUpperCase)) {
-            hints.add("добавьте заглавные буквы");
+            hints.add("password.hint.uppercase");
         }
         if (password != null && password.chars().noneMatch(Character::isDigit)) {
-            hints.add("добавьте цифры");
+            hints.add("password.hint.digits");
         }
         if (password != null && password.chars().allMatch(Character::isLetterOrDigit)) {
-            hints.add("добавьте символы вроде ! ? # _");
+            hints.add("password.hint.symbols");
         }
         return hints;
     }

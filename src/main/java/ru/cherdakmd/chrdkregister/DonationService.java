@@ -227,15 +227,14 @@ public final class DonationService {
     public String claim(long donationId, String playerName, String ipAddress, long nowMillis) {
         Optional<RegistrationStore.DonationRecord> existing = store.getDonation(donationId);
         if (existing.isEmpty()) {
-            return "Платёж с ID " + donationId + " не найден в журнале.";
+            return "donation.claim.not-found";
         }
         RegistrationStore.DonationRecord record = existing.get();
         if (!record.donationStatus().isPending()) {
-            return "Этот платёж уже обработан (статус: " + record.status + ").";
+            return "donation.claim.already-processed";
         }
         if (!DonorNameMatcher.looksLikeDonor(record.donorName, playerName)) {
-            return "Имя донатера в платеже («" + record.donorName
-                    + "») не совпадает с вашим ником — обратитесь к администрации.";
+            return "donation.claim.name-mismatch";
         }
         approve(donationId, playerName, 0, playerName + " (самостоятельно)", nowMillis);
         audit.log(AuditLog.DONATION_CLAIMED, playerName, playerName, ipAddress,
@@ -288,14 +287,16 @@ public final class DonationService {
                 : rubles + "." + (rest < 10 ? "0" + rest : Long.toString(rest));
     }
 
-    /** Formats the tier table shown to players. */
-    public static List<String> describeTiers(PluginConfig config) {
+    /** Formats the tier table shown to players using the configured texts ({@code pass.tier-line}). */
+    public static String describeTiers(PluginConfig config, Messages messages) {
         List<String> lines = new ArrayList<>();
         for (PluginConfig.PassTier tier : config.passTiers()) {
-            String label = tier.label() == null || tier.label().isBlank() ? "" : " (" + tier.label() + ")";
-            lines.add("&e" + tier.amountRubles() + " ₽ &7→ &b" + tier.days() + " дн." + label);
+            lines.add(messages.raw("pass.tier-line",
+                    "price", tier.amountRubles(),
+                    "days", tier.days(),
+                    "label", tier.label() == null || tier.label().isBlank() ? "" : " (" + tier.label() + ")"));
         }
-        return lines;
+        return String.join("; ", lines);
     }
 
     /** Logs a mismatch that a strict-case configuration produced (helper for audit readability). */

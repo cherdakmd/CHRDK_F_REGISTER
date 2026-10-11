@@ -77,6 +77,7 @@ public final class AccessManager {
     private final DonationService donations;
     private final LogMasker logMasker;
     private final AuthDialogs authDialogs;
+    private volatile Messages messages;
 
     private BukkitTask donatePollTask;
     private BukkitTask reminderTask;
@@ -92,10 +93,12 @@ public final class AccessManager {
             PluginConfig config,
             RegistrationStore store,
             DonatePayClient donatePay,
+            Messages messages,
             Logger logger
     ) {
         this.plugin = plugin;
         this.config = config;
+        this.messages = messages;
         this.store = store;
         this.donatePay = donatePay;
         this.logger = logger;
@@ -140,6 +143,26 @@ public final class AccessManager {
     public void showAuthDialogNow(Player player) {
         long now = System.currentTimeMillis();
         showAuthDialog(player, getStage(player.getUniqueId(), player.getName(), now));
+    }
+
+    /** Тексты плагина из {@code messages.yml}. */
+    public Messages messages() {
+        return messages;
+    }
+
+    /** Заменяет тексты (используется при {@code /pass reload}). */
+    public void setMessages(Messages messages) {
+        this.messages = messages;
+    }
+
+    /** Собирает подсказки по надёжности пароля из messages.yml в одну строку. */
+    public String describeHints(String password) {
+        List<String> parts = new ArrayList<>();
+        for (String key : PasswordPolicy.hintKeys(password)) {
+            String text = messages.plain(key);
+            if (!text.isBlank()) parts.add(text);
+        }
+        return String.join("; ", parts);
     }
 
     /** Access to the DonatePay journal and the pending-payment workflow. */
@@ -410,8 +433,8 @@ public final class AccessManager {
             lastChatReminderAt.remove(uuid);
             authSource.put(uuid, "session");
             audit.log(AuditLog.SESSION_RESTORE, name, name, ip, AuditLog.details("twoFactorRequired", false));
-            player.sendMessage(Component.text("✓ Сессия авторизации восстановлена по IP. Приятной игры!", NamedTextColor.GREEN));
-            player.sendActionBar(Component.text("Авторизация подтверждена", NamedTextColor.GREEN));
+            messages.send(player, "session.restored");
+            player.sendActionBar(messages.get("session.restored-actionbar"));
             showSessionNotice(player);
             return;
         }
@@ -436,9 +459,9 @@ public final class AccessManager {
         if (config.bruteForceNotifyAdmins()) {
             for (Player online : Bukkit.getOnlinePlayers()) {
                 if (online.hasPermission("chrdkregister.admin")) {
-                    online.sendMessage(Component.text("[CHRDK] С одного IP (" + AuditLog.maskIp(ip)
-                            + ") заходят несколько аккаунтов с проходками: " + String.join(", ", sharing),
-                            NamedTextColor.YELLOW));
+                    messages.send(online, "bruteforce.multi-alt",
+                            "ip", AuditLog.maskIp(ip),
+                            "sharing", String.join(", ", sharing));
                 }
             }
         }
@@ -480,24 +503,25 @@ public final class AccessManager {
             return true;
         }
         if (stage == PlayerStage.NEEDS_LOGIN || stage == PlayerStage.NEEDS_2FA) {
-            player.sendMessage(Component.text("Вы уже зарегистрированы! Используйте: /login <пароль>", NamedTextColor.YELLOW));
+            messages.send(player, "register.already-registered");
             return true;
         }
         if (stage == PlayerStage.AUTHENTICATED) {
-            player.sendMessage(Component.text("Вы уже зарегистрированы и вошли в аккаунт.", NamedTextColor.GREEN));
+            messages.send(player, "register.already-authenticated");
             return true;
         }
 
         if (!password.equals(confirmPassword)) {
-            player.sendMessage(Component.text("Пароли не совпадают! Проверьте ввод: /register <пароль> <повтор>", NamedTextColor.RED));
+            messages.send(player, "register.password-mismatch");
             return true;
         }
         PasswordPolicy.Result policy = PasswordPolicy.check(player.getName(), password, config);
         if (!policy.accepted()) {
-            player.sendMessage(Component.text(policy.message(), NamedTextColor.RED));
+            player.sendMessage(policy.renderMessage(messages));
             if (config.passwordStrengthHint()) {
-                player.sendMessage(Component.text("Надёжность: " + policy.strength()
-                        + ". " + String.join(", ", PasswordPolicy.hints(password)) + ".", NamedTextColor.GRAY));
+                messages.send(player, "password.strength-hint",
+                        "strength", policy.strengthText(messages),
+                        "hints", describeHints(password));
             }
             return true;
         }
@@ -505,24 +529,22 @@ public final class AccessManager {
         String ip = getPlayerIp(player);
         Optional<String> shared = findSharedPassword(player.getName(), password, ip, now);
         if (shared.isPresent()) {
-            player.sendMessage(Component.text("Этот пароль уже используется другим аккаунтом, который заходил "
-                    + "с вашего IP. Придумайте свой пароль.", NamedTextColor.RED));
+            messages.send(player, "register.password-shared");
             return true;
         }
         boolean registered = store.registerPassword(player.getName(), player.getUniqueId(), password, ip, now);
         if (!registered) {
-            player.sendMessage(Component.text("Не удалось завершить регистрацию. Возможно, аккаунт уже зарегистрирован.", NamedTextColor.RED));
+            messages.send(player, "register.failed");
             return true;
         }
 
         completeAuthentication(player, "✓ Вы успешно зарегистрировались и вошли на сервер! Приятной игры!");
         if (config.passwordStrengthHint()) {
-            player.sendMessage(Component.text("Надёжность пароля: " + policy.strength()
-                    + ". Сменить пароль можно командой /changepassword.", NamedTextColor.GRAY));
+            messages.send(player, "password.strength-ok", "strength", policy.strengthText(messages));
         }
         logger.info("Player " + player.getName() + " registered an account password.");
         audit.log(AuditLog.ADMIN_COMMAND, player.getName(), player.getName(), ip,
-                AuditLog.details("action", "register", "strength", policy.strength()));
+                AuditLog.details("action", "register", "strength", policy.strengthText(messages)));
         return true;
     }
 
@@ -553,33 +575,32 @@ public final class AccessManager {
             return true;
         }
         if (stage == PlayerStage.NEEDS_REGISTER) {
-            player.sendMessage(Component.text("Сначала зарегистрируйте пароль: /register <пароль> <повтор>", NamedTextColor.YELLOW));
+            messages.send(player, "login.register-first");
             return true;
         }
         if (stage == PlayerStage.AUTHENTICATED) {
-            player.sendMessage(Component.text("Вы уже вошли в аккаунт!", NamedTextColor.GREEN));
+            messages.send(player, "login.already-authenticated");
             return true;
         }
         if (stage == PlayerStage.NEEDS_2FA) {
             if (optionalTotpCode == null && TotpService.isValidCodeFormat(password)) {
                 return handleTwoFactorLoginCode(player, password);
             }
-            player.sendMessage(Component.text("Пароль уже подтверждён! Введите 6-значный код 2FA: /2fa <код>", NamedTextColor.AQUA));
+            messages.send(player, "login.two-factor-pending");
             return true;
         }
 
         AuthThrottle.Result throttleResult = throttle.check(player.getName(), getPlayerIp(player), now);
         if (throttleResult.blocked()) {
-            player.sendMessage(Component.text("Вход временно заблокирован: " + throttleResult.reason()
-                    + ". Попробуйте позже (" + AccessManager.formatTimestamp(throttleResult.blockedUntil()) + ").",
-                    NamedTextColor.RED));
+            messages.send(player, "login.throttled-blocked",
+                    "reason", throttleResult.reason(),
+                    "blocked_until", AccessManager.formatTimestamp(throttleResult.blockedUntil()));
             audit.log(AuditLog.BRUTEFORCE_ALERT, player.getName(), player.getName(), getPlayerIp(player),
                     AuditLog.details("decision", "blocked", "reason", throttleResult.reason()));
             return true;
         }
         if (throttleResult.decision() == AuthThrottle.Decision.DELAY) {
-            player.sendMessage(Component.text("Слишком много неудачных попыток. Подождите "
-                    + throttleResult.delaySeconds() + " сек.", NamedTextColor.RED));
+            messages.send(player, "login.throttled-delay", "delay_seconds", throttleResult.delaySeconds());
             return true;
         }
 
@@ -620,14 +641,12 @@ public final class AccessManager {
             if (failure.ipBan() && config.tempIpBanMinutes() > 0) {
                 banIpTemporarily(player, failure);
             }
-            player.kick(Component.text("Слишком много неверных попыток входа. Аккаунт временно заблокирован на "
-                    + config.tempIpBanMinutes() + " мин.", NamedTextColor.RED));
+            player.kick(messages.get("login.temp-ban", "temp_ip_ban_minutes", config.tempIpBanMinutes()));
             notifyBruteForce(player, totalFailures);
             return true;
         }
         int remaining = Math.max(0, config.accountMaxAttempts() - totalFailures);
-        player.sendMessage(Component.text("Неверный пароль! Осталось попыток до временной блокировки: " + remaining,
-                NamedTextColor.RED));
+        messages.send(player, "login.wrong-password", "remaining", remaining);
         player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
         showAuthDialog(player, PlayerStage.NEEDS_LOGIN);
         if (totalFailures >= 3 && totalFailures % 3 == 0) {
@@ -655,7 +674,7 @@ public final class AccessManager {
         if (config.bruteForceNotifyAdmins()) {
             for (Player online : Bukkit.getOnlinePlayers()) {
                 if (online.hasPermission("chrdkregister.admin")) {
-                    online.sendMessage(Component.text("[CHRDK] " + message, NamedTextColor.RED));
+                    messages.send(online, "bruteforce.notify", "message", message);
                 }
             }
         }
@@ -679,27 +698,26 @@ public final class AccessManager {
             return true;
         }
         if (stage == PlayerStage.NEEDS_REGISTER) {
-            player.sendMessage(Component.text("Сначала зарегистрируйте пароль: /register <пароль> <повтор>", NamedTextColor.YELLOW));
+            messages.send(player, "two-factor.login.register-first");
             return true;
         }
         if (stage == PlayerStage.NEEDS_LOGIN) {
-            player.sendMessage(Component.text("Сначала введите пароль от аккаунта: /login <пароль>", NamedTextColor.YELLOW));
+            messages.send(player, "two-factor.login.password-first");
             return true;
         }
         if (stage == PlayerStage.AUTHENTICATED) {
-            player.sendMessage(Component.text("Вы уже авторизованы на сервере!", NamedTextColor.GREEN));
+            messages.send(player, "two-factor.login.already-authenticated");
             return true;
         }
 
         if (!TotpService.isValidCodeFormat(rawCode)) {
-            player.sendMessage(Component.text("Код 2FA должен состоять из 6 цифр! Использование: /2fa <6-значный_код>", NamedTextColor.RED));
+            messages.send(player, "two-factor.login.bad-format");
             return true;
         }
 
         AuthThrottle.Result throttleResult = throttle.check(player.getName(), getPlayerIp(player), now);
         if (throttleResult.blocked()) {
-            player.sendMessage(Component.text("Вход временно заблокирован: " + throttleResult.reason()
-                    + ". Попробуйте позже.", NamedTextColor.RED));
+            messages.send(player, "two-factor.login.throttled", "reason", throttleResult.reason());
             return true;
         }
 
@@ -724,14 +742,12 @@ public final class AccessManager {
         AuthThrottle.Result failure = throttle.registerFailure(player.getName(), getPlayerIp(player), now);
         if (failure.blocked()) {
             passwordVerifiedPlayers.remove(uuid);
-            player.kick(Component.text("Превышено количество неверных попыток ввода кода 2FA ("
-                    + config.totpMaxAttempts() + ").", NamedTextColor.RED));
+            player.kick(messages.get("two-factor.login.kicked", "totp_max_attempts", config.totpMaxAttempts()));
             notifyBruteForce(player, throttle.totalFailures(player.getName()));
             return true;
         }
 
-        player.sendMessage(Component.text("Неверный или уже использованный 6-значный код 2FA! Повторите ввод.",
-                NamedTextColor.RED));
+        messages.send(player, "two-factor.login.wrong-code");
         player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
         showAuthDialog(player, PlayerStage.NEEDS_2FA);
         return true;
@@ -742,17 +758,15 @@ public final class AccessManager {
      */
     public boolean handleTwoFactorSetup(Player player) {
         if (getStage(player) != PlayerStage.AUTHENTICATED) {
-            player.sendMessage(Component.text("Сначала полностью авторизуйтесь на сервере.", NamedTextColor.RED));
+            messages.send(player, "two-factor.setup.not-authenticated");
             return true;
         }
         if (!config.totpEnabled()) {
-            player.sendMessage(Component.text("Двухфакторная аутентификация (2FA) отключена в конфигурации сервера.", NamedTextColor.RED));
+            messages.send(player, "two-factor.setup.disabled-server");
             return true;
         }
         if (store.isTotpEnabled(player.getName())) {
-            player.sendMessage(Component.text(
-                    "У вас уже включена TOTP 2FA! Чтобы перепривязать приложение, сначала отключите текущую защиту: /2fa disable <код_2FA>",
-                    NamedTextColor.YELLOW));
+            messages.send(player, "two-factor.setup.already-enabled");
             return true;
         }
 
@@ -766,35 +780,35 @@ public final class AccessManager {
         String formattedSecret = TotpService.formatSecretForDisplay(secret);
         String otpAuthUri = TotpService.buildOtpAuthUri(config.totpIssuer(), player.getName(), secret);
 
-        Component copyKeyButton = Component.text("[ Скопировать секретный ключ ]", NamedTextColor.GREEN, TextDecoration.BOLD)
+        Component copyKeyButton = messages.get("two-factor.setup-instructions.copy-key")
                 .decorate(TextDecoration.UNDERLINED)
                 .clickEvent(ClickEvent.copyToClipboard(secret))
-                .hoverEvent(HoverEvent.showText(Component.text("Нажмите, чтобы скопировать Base32 ключ в буфер обмена", NamedTextColor.GREEN)));
+                .hoverEvent(HoverEvent.showText(messages.get("two-factor.setup-instructions.copy-key-hover")));
 
-        Component copyUriButton = Component.text("[ Скопировать otpauth:// ссылку ]", NamedTextColor.AQUA, TextDecoration.BOLD)
+        Component copyUriButton = messages.get("two-factor.setup-instructions.copy-uri")
                 .decorate(TextDecoration.UNDERLINED)
                 .clickEvent(ClickEvent.copyToClipboard(otpAuthUri))
-                .hoverEvent(HoverEvent.showText(Component.text("Нажмите, чтобы скопировать URI для приложения-аутентификатора", NamedTextColor.AQUA)));
+                .hoverEvent(HoverEvent.showText(messages.get("two-factor.setup-instructions.copy-uri-hover")));
 
-        Component confirmCommandHint = Component.text("/2fa confirm <6-значный_код>", NamedTextColor.GOLD, TextDecoration.BOLD)
+        Component confirmCommandHint = messages.get("two-factor.setup-instructions.confirm-command")
                 .clickEvent(ClickEvent.suggestCommand("/2fa confirm "))
-                .hoverEvent(HoverEvent.showText(Component.text("Нажмите, чтобы подставить команду в чат", NamedTextColor.YELLOW)));
+                .hoverEvent(HoverEvent.showText(messages.get("two-factor.setup-instructions.confirm-hover")));
 
         player.sendMessage(Component.empty());
-        player.sendMessage(Component.text("==============================================", NamedTextColor.GOLD));
-        player.sendMessage(Component.text("Настройка двухфакторной защиты (TOTP 2FA)", NamedTextColor.GOLD, TextDecoration.BOLD));
-        player.sendMessage(Component.text("1. Откройте приложение ", NamedTextColor.GRAY)
-                .append(Component.text("Google Authenticator / 2FAS / Authy / Яндекс Ключ", NamedTextColor.WHITE)));
-        player.sendMessage(Component.text("2. Добавьте аккаунт по секретному ключу (Time-based / По времени):", NamedTextColor.GRAY));
-        player.sendMessage(Component.text("   Ключ: ", NamedTextColor.GRAY)
+        messages.send(player, "two-factor.setup-instructions.header-line");
+        messages.send(player, "two-factor.setup-instructions.header");
+        player.sendMessage(messages.get("two-factor.setup-instructions.step1")
+                .append(messages.get("two-factor.setup-instructions.step1-apps")));
+        messages.send(player, "two-factor.setup-instructions.step2");
+        player.sendMessage(messages.get("two-factor.setup-instructions.step2-key")
                 .append(Component.text(formattedSecret, NamedTextColor.YELLOW, TextDecoration.BOLD)));
         player.sendMessage(Component.text("   ", NamedTextColor.GRAY)
                 .append(copyKeyButton)
                 .append(Component.text("  ", NamedTextColor.GRAY))
                 .append(copyUriButton));
-        player.sendMessage(Component.text("3. Подтвердите привязку текущим кодом из приложения:", NamedTextColor.GRAY));
-        player.sendMessage(Component.text("   Введите: ", NamedTextColor.YELLOW).append(confirmCommandHint));
-        player.sendMessage(Component.text("==============================================", NamedTextColor.GOLD));
+        messages.send(player, "two-factor.setup-instructions.step3");
+        player.sendMessage(messages.get("two-factor.setup-instructions.step3-input").append(confirmCommandHint));
+        messages.send(player, "two-factor.setup-instructions.footer-line");
     }
 
     /**
@@ -805,17 +819,17 @@ public final class AccessManager {
             return handleTwoFactorLoginCode(player, rawCode);
         }
         if (store.isTotpEnabled(player.getName())) {
-            player.sendMessage(Component.text("У вас уже включена двухфакторная аутентификация (2FA)!", NamedTextColor.GREEN));
+            messages.send(player, "two-factor.confirm.already-enabled");
             return true;
         }
         UUID uuid = player.getUniqueId();
         String pendingSecret = pendingTotpSecrets.get(uuid);
         if (pendingSecret == null || pendingSecret.isBlank()) {
-            player.sendMessage(Component.text("Сначала начните настройку 2FA командой: /2fa setup", NamedTextColor.YELLOW));
+            messages.send(player, "two-factor.confirm.no-pending");
             return true;
         }
         if (!TotpService.isValidCodeFormat(rawCode)) {
-            player.sendMessage(Component.text("Код должен состоять из 6 цифр! Использование: /2fa confirm <6-значный_код>", NamedTextColor.RED));
+            messages.send(player, "two-factor.confirm.bad-format");
             return true;
         }
 
@@ -823,24 +837,20 @@ public final class AccessManager {
         OptionalLong matchedStep = TotpService.verifyAndGetStep(
                 pendingSecret, rawCode, now, config.totpWindowSteps(), -1L);
         if (matchedStep.isEmpty()) {
-            player.sendMessage(Component.text(
-                    "Неверный 6-значный код! Проверьте правильность ключа и синхронизацию времени на устройстве.",
-                    NamedTextColor.RED));
+            messages.send(player, "two-factor.confirm.wrong-code");
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
             return true;
         }
 
         if (!store.enableTotp(player.getName(), pendingSecret, matchedStep.getAsLong(), now)) {
-            player.sendMessage(Component.text("Не удалось активировать 2FA. Попробуйте снова.", NamedTextColor.RED));
+            messages.send(player, "two-factor.confirm.failed");
             return true;
         }
 
         pendingTotpSecrets.remove(uuid);
         store.touchSession(player.getName(), uuid, getPlayerIp(player), now);
         player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
-        player.sendMessage(Component.text(
-                "✓ Двухфакторная аутентификация (TOTP 2FA) успешно включена! Теперь при входе после пароля потребуется 6-значный код.",
-                NamedTextColor.GREEN));
+        messages.send(player, "two-factor.confirm.success");
         logger.info("Player " + player.getName() + " enabled TOTP 2FA.");
         audit.log(AuditLog.TOTP_ENABLE, player.getName(), player.getName(), getPlayerIp(player));
         notifications.notify("totp.enabled", "Включена 2FA",
@@ -853,15 +863,15 @@ public final class AccessManager {
      */
     public boolean handleTwoFactorDisable(Player player, String verificationInput) {
         if (getStage(player) != PlayerStage.AUTHENTICATED) {
-            player.sendMessage(Component.text("Сначала авторизуйтесь на сервере, чтобы управлять 2FA.", NamedTextColor.RED));
+            messages.send(player, "two-factor.disable.not-authenticated");
             return true;
         }
         if (!store.isTotpEnabled(player.getName())) {
-            player.sendMessage(Component.text("На вашем аккаунте не включена двухфакторная аутентификация.", NamedTextColor.YELLOW));
+            messages.send(player, "two-factor.disable.not-enabled");
             return true;
         }
         if (verificationInput == null || verificationInput.isBlank()) {
-            player.sendMessage(Component.text("Укажите текущий 6-значный код 2FA (или пароль): /2fa disable <код_2FA>", NamedTextColor.YELLOW));
+            messages.send(player, "two-factor.disable.usage");
             return true;
         }
 
@@ -869,14 +879,14 @@ public final class AccessManager {
         boolean verified = store.verifyTotp(player.getName(), verificationInput, now, config.totpWindowSteps())
                 || store.verifyPassword(player.getName(), verificationInput);
         if (!verified) {
-            player.sendMessage(Component.text("Неверный 6-значный код 2FA или пароль! Отключение отменено.", NamedTextColor.RED));
+            messages.send(player, "two-factor.disable.wrong-code");
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
             return true;
         }
 
         store.disableTotp(player.getName());
         pendingTotpSecrets.remove(player.getUniqueId());
-        player.sendMessage(Component.text("✓ Двухфакторная аутентификация (TOTP 2FA) отключена для вашего аккаунта.", NamedTextColor.GREEN));
+        messages.send(player, "two-factor.disable.success");
         logger.info("Player " + player.getName() + " disabled TOTP 2FA.");
         audit.log(AuditLog.TOTP_DISABLE, player.getName(), player.getName(), getPlayerIp(player));
         notifications.notify("totp.disabled", "2FA отключена игроком",
@@ -886,43 +896,44 @@ public final class AccessManager {
 
     public boolean handleTwoFactorCancel(Player player) {
         if (getStage(player) != PlayerStage.AUTHENTICATED) {
-            player.sendMessage(Component.text("Сначала авторизуйтесь на сервере.", NamedTextColor.RED));
+            messages.send(player, "two-factor.cancel.not-authenticated");
             return true;
         }
         String removed = pendingTotpSecrets.remove(player.getUniqueId());
         if (removed == null) {
-            player.sendMessage(Component.text("У вас нет незавершённой настройки 2FA.", NamedTextColor.YELLOW));
+            messages.send(player, "two-factor.cancel.nothing-pending");
         } else {
-            player.sendMessage(Component.text("✓ Настройка 2FA отменена.", NamedTextColor.GREEN));
+            messages.send(player, "two-factor.cancel.success");
         }
         return true;
     }
 
     public boolean handleChangePasswordCommand(Player player, String oldPassword, String newPassword) {
         if (getStage(player) != PlayerStage.AUTHENTICATED) {
-            player.sendMessage(Component.text("Сначала авторизуйтесь на сервере, чтобы сменить пароль.", NamedTextColor.RED));
+            messages.send(player, "password.change.not-authenticated");
             return true;
         }
         PasswordPolicy.Result policy = PasswordPolicy.check(player.getName(), newPassword, config);
         if (!policy.accepted()) {
-            player.sendMessage(Component.text(policy.message(), NamedTextColor.RED));
+            player.sendMessage(policy.renderMessage(messages));
             if (config.passwordStrengthHint()) {
-                player.sendMessage(Component.text("Надёжность: " + policy.strength()
-                        + ". " + String.join(", ", PasswordPolicy.hints(newPassword)) + ".", NamedTextColor.GRAY));
+                messages.send(player, "password.strength-hint",
+                        "strength", policy.strengthText(messages),
+                        "hints", describeHints(newPassword));
             }
             return true;
         }
         if (!store.changePassword(player.getName(), oldPassword, newPassword)) {
-            player.sendMessage(Component.text("Старый пароль указан неверно!", NamedTextColor.RED));
+            messages.send(player, "password.change.wrong-old");
             return true;
         }
         long changedAt = System.currentTimeMillis();
         store.clearSessions(player.getName());
         store.touchSession(player.getName(), player.getUniqueId(), getPlayerIp(player), changedAt);
-        player.sendMessage(Component.text("✓ Пароль успешно изменён! Все прочие сессии сброшены.", NamedTextColor.GREEN));
+        messages.send(player, "password.change.success");
         logger.info("Player " + player.getName() + " changed their password.");
         audit.log(AuditLog.PASSWORD_CHANGE, player.getName(), player.getName(), getPlayerIp(player),
-                AuditLog.details("strength", policy.strength()));
+                AuditLog.details("strength", policy.strengthText(messages)));
         notifications.notify("password.change", "Смена пароля",
                 "Игрок: " + player.getName() + "\nIP: " + AuditLog.maskIp(getPlayerIp(player)), "info");
         return true;
@@ -991,7 +1002,7 @@ public final class AccessManager {
             store.clearSessions(onlinePlayer.getName());
             freezeLocations.put(uuid, onlinePlayer.getLocation().clone());
             onlinePlayer.closeInventory();
-            onlinePlayer.sendMessage(Component.text("Ваша проходка была отозвана администратором.", NamedTextColor.RED));
+            messages.send(onlinePlayer, "pass.revoked");
             sendNoPassPrompt(onlinePlayer, true);
         }
         logger.info("Pass revoked for player " + targetPlayerName + ".");
@@ -1018,7 +1029,7 @@ public final class AccessManager {
             store.clearSessions(onlinePlayer.getName());
             freezeLocations.put(uuid, onlinePlayer.getLocation().clone());
             onlinePlayer.closeInventory();
-            onlinePlayer.sendMessage(Component.text("Ваш пароль был сброшен администратором. Зарегистрируйте новый пароль!", NamedTextColor.YELLOW));
+            messages.send(onlinePlayer, "pass.password-reset");
             if (store.hasActivePass(onlinePlayer.getName(), System.currentTimeMillis())) {
                 sendRegisterPrompt(onlinePlayer, true);
             }
@@ -1041,9 +1052,7 @@ public final class AccessManager {
         if (onlinePlayer != null) {
             UUID uuid = onlinePlayer.getUniqueId();
             pendingTotpSecrets.remove(uuid);
-            onlinePlayer.sendMessage(Component.text(
-                    "Двухфакторная аутентификация (2FA) вашего аккаунта была сброшена администратором.",
-                    NamedTextColor.YELLOW));
+            messages.send(onlinePlayer, "pass.two-factor-reset");
             if (passwordVerifiedPlayers.remove(uuid) && !authenticatedPlayers.contains(uuid)) {
                 store.touchSession(onlinePlayer.getName(), uuid, getPlayerIp(onlinePlayer), System.currentTimeMillis());
                 completeAuthentication(onlinePlayer, "✓ Вход завершён (2FA была отключена администратором).");
@@ -1066,7 +1075,7 @@ public final class AccessManager {
 
         player.clearTitle();
         player.sendMessage(Component.text(successMessage, NamedTextColor.GREEN));
-        player.sendActionBar(Component.text("Доступ открыт!", NamedTextColor.GREEN));
+        player.sendActionBar(messages.get("auth.success-actionbar"));
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.2f);
     }
 
@@ -1076,11 +1085,8 @@ public final class AccessManager {
 
         player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
         player.sendMessage(Component.empty());
-        player.sendMessage(Component.text("==============================================", NamedTextColor.GOLD));
-        player.sendMessage(Component.text("✓ Проходка на сервер активирована (" + sourceDescription + ")!", NamedTextColor.GREEN, TextDecoration.BOLD));
-        player.sendMessage(Component.text("Срок действия до: ", NamedTextColor.GRAY)
-                .append(Component.text(formatTimestamp(passUntil), NamedTextColor.AQUA)));
-        player.sendMessage(Component.text("==============================================", NamedTextColor.GOLD));
+        messages.sendList(player, "pass.activated",
+                "source", sourceDescription, "until", formatTimestamp(passUntil));
 
         if (!store.isRegistered(player.getName())) {
             sendRegisterPrompt(player, true);
@@ -1104,7 +1110,7 @@ public final class AccessManager {
                 if (authenticatedPlayers.remove(uuid)) {
                     freezeLocations.put(uuid, player.getLocation().clone());
                     player.closeInventory();
-                    player.sendMessage(Component.text("Срок вашей месячной проходки истёк! Продлите проходку через DonatePay.", NamedTextColor.RED));
+                    messages.send(player, "pass.expired");
                     audit.log(AuditLog.PASS_EXPIRE, player.getName(), player.getName(), getPlayerIp(player));
                     sendNoPassPrompt(player, true);
                     continue;
@@ -1163,10 +1169,10 @@ public final class AccessManager {
             if (remainingMinutes > warnMinutes) continue;
             if (store.wasExpiryWarningSent(player.getName(), warnMinutes)) continue;
             store.markExpiryWarningSent(player.getName(), warnMinutes);
-            player.sendMessage(Component.text("Внимание! Проходка заканчивается через "
-                    + AccessManager.describeRemaining(warnMinutes * 60_000L)
-                    + " (до " + formatTime(passUntil) + "). Продлить: "
-                    + (config.hasPaymentUrl() ? config.donatePayPaymentUrl() : "/pass"), NamedTextColor.GOLD));
+            messages.send(player, "pass.expiring",
+                    "remaining", AccessManager.describeRemaining(warnMinutes * 60_000L),
+                    "until", formatTime(passUntil),
+                    "renew", config.hasPaymentUrl() ? config.donatePayPaymentUrl() : "/pass");
             if (config.expiryWarningSound()) {
                 player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1.0f, 0.8f);
             }
@@ -1181,8 +1187,7 @@ public final class AccessManager {
         float progress = Math.clamp((float) total / (float) Math.max(1L, lastHour), 0.0f, 1.0f);
         BossBar bar = expiryBars.computeIfAbsent(player.getUniqueId(), ignored -> BossBar.bossBar(
                 Component.empty(), 1.0f, BossBar.Color.YELLOW, BossBar.Overlay.PROGRESS));
-        bar.name(Component.text("Проходка заканчивается через "
-                + AccessManager.describeRemaining(total), NamedTextColor.YELLOW));
+        bar.name(messages.get("pass.expiry-bar", "remaining", AccessManager.describeRemaining(total)));
         bar.progress(progress);
         bar.color(progress < 0.2f ? BossBar.Color.RED : BossBar.Color.YELLOW);
         player.showBossBar(bar);
@@ -1207,15 +1212,12 @@ public final class AccessManager {
         if (now - joined < limitSeconds * 1000L) {
             return;
         }
-        player.kick(Component.text("Вы не авторизовались за " + limitSeconds
-                + " сек. Зайдите снова и введите пароль.", NamedTextColor.RED));
+        player.kick(messages.get("pass.kick-timeout", "seconds", limitSeconds));
     }
 
     private void sendNoPassReminder(Player player, long now) {
-        player.sendActionBar(Component.text(
-                "Нет проходки! Оплатите " + config.minimumDonationRubles()
-                        + "₽ на DonatePay (укажите ник " + player.getName() + " в имени донатера)",
-                NamedTextColor.RED));
+        player.sendActionBar(messages.get("no-pass.reminder",
+                "price", config.minimumDonationRubles(), "player", player.getName()));
         long lastChat = lastChatReminderAt.getOrDefault(player.getUniqueId(), 0L);
         if (now - lastChat >= CHAT_REMINDER_INTERVAL_MILLIS) {
             lastChatReminderAt.put(player.getUniqueId(), now);
@@ -1224,9 +1226,7 @@ public final class AccessManager {
     }
 
     private void sendRegisterReminder(Player player, long now) {
-        player.sendActionBar(Component.text(
-                "Зарегистрируйтесь: /register <пароль> <повтор>",
-                NamedTextColor.GOLD));
+        player.sendActionBar(messages.get("register.reminder"));
         long lastChat = lastChatReminderAt.getOrDefault(player.getUniqueId(), 0L);
         if (now - lastChat >= CHAT_REMINDER_INTERVAL_MILLIS) {
             lastChatReminderAt.put(player.getUniqueId(), now);
@@ -1235,9 +1235,7 @@ public final class AccessManager {
     }
 
     private void sendLoginReminder(Player player, long now) {
-        player.sendActionBar(Component.text(
-                "Авторизуйтесь: /login <пароль>",
-                NamedTextColor.YELLOW));
+        player.sendActionBar(messages.get("login.reminder"));
         long lastChat = lastChatReminderAt.getOrDefault(player.getUniqueId(), 0L);
         if (now - lastChat >= CHAT_REMINDER_INTERVAL_MILLIS) {
             lastChatReminderAt.put(player.getUniqueId(), now);
@@ -1246,9 +1244,7 @@ public final class AccessManager {
     }
 
     private void sendTwoFactorReminder(Player player, long now) {
-        player.sendActionBar(Component.text(
-                "Подтвердите 2FA: /2fa <6-значный_код>",
-                NamedTextColor.AQUA));
+        player.sendActionBar(messages.get("two-factor.reminder"));
         long lastChat = lastChatReminderAt.getOrDefault(player.getUniqueId(), 0L);
         if (now - lastChat >= CHAT_REMINDER_INTERVAL_MILLIS) {
             lastChatReminderAt.put(player.getUniqueId(), now);
@@ -1258,30 +1254,18 @@ public final class AccessManager {
 
     public void sendNoPassPrompt(Player player, boolean showTitle) {
         player.sendMessage(Component.empty());
-        player.sendMessage(Component.text("==============================================", NamedTextColor.RED));
-        player.sendMessage(Component.text("У вас нет активной проходки на сервер!", NamedTextColor.RED, TextDecoration.BOLD));
-        player.sendMessage(Component.text("Стоимость проходки: ", NamedTextColor.GRAY)
-                .append(Component.text(config.minimumDonationRubles() + " ₽", NamedTextColor.GOLD, TextDecoration.BOLD))
-                .append(Component.text(" (выдаётся на ", NamedTextColor.GRAY))
-                .append(Component.text(config.grantDays() + " дней", NamedTextColor.AQUA))
-                .append(Component.text(")", NamedTextColor.GRAY)));
-        player.sendMessage(Component.text("ВАЖНО: В поле «Ваше имя» (имя донатера) укажите ваш точный ник: ", NamedTextColor.YELLOW)
-                .append(Component.text(player.getName(), NamedTextColor.GREEN, TextDecoration.BOLD)));
-
-        if (config.hasPaymentUrl()) {
-            Component link = Component.text("[ Открыть страницу оплаты DonatePay ]", NamedTextColor.AQUA, TextDecoration.BOLD)
-                    .decorate(TextDecoration.UNDERLINED)
-                    .clickEvent(ClickEvent.openUrl(config.donatePayPaymentUrl()))
-                    .hoverEvent(HoverEvent.showText(Component.text("Нажмите, чтобы перейти к оплате проходки", NamedTextColor.GREEN)));
-            player.sendMessage(link);
-        }
-        player.sendMessage(Component.text("Проходка активируется автоматически сразу после оплаты (не выходя с сервера).", NamedTextColor.GRAY));
-        player.sendMessage(Component.text("==============================================", NamedTextColor.RED));
+        messages.sendList(player, "no-pass.prompt",
+                "price", config.minimumDonationRubles(),
+                "days", config.grantDays(),
+                "player", player.getName(),
+                "payment-url", config.hasPaymentUrl() ? config.donatePayPaymentUrl() : "");
 
         if (showTitle) {
             Title title = Title.title(
-                    Component.text("НЕТ ПРОХОДКИ", NamedTextColor.RED, TextDecoration.BOLD),
-                    Component.text("Донат " + config.minimumDonationRubles() + "₽ на DonatePay (ник: " + player.getName() + ")", NamedTextColor.YELLOW),
+                    messages.get("no-pass.title"),
+                    messages.get("no-pass.title-subtitle",
+                            "price", config.minimumDonationRubles(),
+                            "player", player.getName()),
                     Title.Times.times(Duration.ofMillis(300), Duration.ofSeconds(6), Duration.ofMillis(500))
             );
             player.showTitle(title);
@@ -1289,12 +1273,11 @@ public final class AccessManager {
     }
 
     public void sendRegisterPrompt(Player player, boolean showTitle) {
-        player.sendMessage(Component.text("Проходка активна! Зарегистрируйте пароль командой: ", NamedTextColor.YELLOW)
-                .append(Component.text("/register <пароль> <повтор>", NamedTextColor.GOLD, TextDecoration.BOLD)));
+        messages.sendList(player, "register.prompt");
         if (showTitle) {
             Title title = Title.title(
-                    Component.text("РЕГИСТРАЦИЯ", NamedTextColor.GOLD, TextDecoration.BOLD),
-                    Component.text("Введите /register <пароль> <повтор>", NamedTextColor.YELLOW),
+                    messages.get("register.title"),
+                    messages.get("register.title-subtitle"),
                     Title.Times.times(Duration.ofMillis(200), Duration.ofSeconds(5), Duration.ofMillis(500))
             );
             player.showTitle(title);
@@ -1305,12 +1288,11 @@ public final class AccessManager {
     }
 
     public void sendLoginPrompt(Player player, boolean showTitle) {
-        player.sendMessage(Component.text("Введите пароль для входа на сервер: ", NamedTextColor.YELLOW)
-                .append(Component.text("/login <пароль>", NamedTextColor.GOLD, TextDecoration.BOLD)));
+        messages.sendList(player, "login.prompt");
         if (showTitle) {
             Title title = Title.title(
-                    Component.text("АВТОРИЗАЦИЯ", NamedTextColor.GOLD, TextDecoration.BOLD),
-                    Component.text("Введите /login <пароль>", NamedTextColor.YELLOW),
+                    messages.get("login.title"),
+                    messages.get("login.title-subtitle"),
                     Title.Times.times(Duration.ofMillis(200), Duration.ofSeconds(5), Duration.ofMillis(500))
             );
             player.showTitle(title);
@@ -1321,12 +1303,11 @@ public final class AccessManager {
     }
 
     public void sendTwoFactorPrompt(Player player, boolean showTitle) {
-        player.sendMessage(Component.text("✓ Пароль верный! Введите 6-значный код TOTP 2FA из приложения: ", NamedTextColor.AQUA)
-                .append(Component.text("/2fa <6-значный_код>", NamedTextColor.GOLD, TextDecoration.BOLD)));
+        messages.sendList(player, "two-factor.prompt");
         if (showTitle) {
             Title title = Title.title(
-                    Component.text("2FA ЗАЩИТА", NamedTextColor.AQUA, TextDecoration.BOLD),
-                    Component.text("Введите /2fa <6-значный код>", NamedTextColor.YELLOW),
+                    messages.get("two-factor.title"),
+                    messages.get("two-factor.title-subtitle"),
                     Title.Times.times(Duration.ofMillis(200), Duration.ofSeconds(5), Duration.ofMillis(500))
             );
             player.showTitle(title);
@@ -1404,8 +1385,7 @@ public final class AccessManager {
     private void showSessionNotice(Player player) {
         String source = authSource.getOrDefault(player.getUniqueId(), "session");
         if (!"session".equals(source)) return;
-        player.sendMessage(Component.text("Вы входили с этого IP недавно — пароль и 2FA не требуются "
-                + config.sessionMinutes() + " мин. Выйти: /logout", NamedTextColor.GRAY));
+        messages.send(player, "session.notice", "session_minutes", config.sessionMinutes());
     }
 
     /** Handles {@code /logout}: clears the IP session of the sender and locks them again. */
@@ -1431,8 +1411,7 @@ public final class AccessManager {
         }
         freezeLocations.put(player.getUniqueId(), player.getLocation().clone());
         player.closeInventory();
-        player.sendMessage(Component.text("✓ Вы вышли из аккаунта. Сессия по IP сброшена, пароль потребуется снова.",
-                NamedTextColor.GREEN));
+        messages.send(player, "logout.success");
         sendLoginPrompt(player, true);
         return true;
     }

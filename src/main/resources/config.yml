@@ -8,6 +8,9 @@
 general:
   # Часовой пояс для всех дат в сообщениях, аудите и именах бэкапов
   timezone: "Europe/Moscow"
+  # Язык текстов плагина: ru — файл messages.yml, любой другой — наложение messages_<locale>.yml
+  # (например locale: en подхватит messages_en.yml поверх русских значений по умолчанию)
+  locale: "ru"
 
 donatepay:
   # API-токен из личного кабинета DonatePay (https://donatepay.ru/page/api)

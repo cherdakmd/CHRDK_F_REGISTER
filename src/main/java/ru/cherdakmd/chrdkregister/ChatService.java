@@ -64,6 +64,7 @@ public final class ChatService implements Listener {
     private final Logger logger;
 
     private volatile ChatConfig config;
+    private volatile Messages messages;
     private final Map<UUID, ChatConfig.Channel> channels = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastMessageAt = new ConcurrentHashMap<>();
     private final Map<UUID, String> lastMessageText = new ConcurrentHashMap<>();
@@ -75,11 +76,20 @@ public final class ChatService implements Listener {
     private int autoMessageIndex;
     private volatile long lastGlobalMessageAt;
 
-    public ChatService(JavaPlugin plugin, AccessManager accessManager, ChatConfig config, Logger logger) {
+    public ChatService(JavaPlugin plugin, AccessManager accessManager, ChatConfig config,
+                       Messages messages, Logger logger) {
         this.plugin = plugin;
         this.accessManager = accessManager;
         this.config = config;
+        this.messages = messages;
         this.logger = logger;
+    }
+
+    /** Заменяет тексты из {@code messages.yml} (используется при {@code /pass reload}). */
+    public void setMessages(Messages messages) {
+        if (messages != null) {
+            this.messages = messages;
+        }
     }
 
     public ChatConfig config() {
@@ -140,10 +150,10 @@ public final class ChatService implements Listener {
         RegistrationStore.MuteEntry mute = store.getMute(player.getName(), now).orElse(null);
         if (mute != null) {
             event.setCancelled(true);
-            player.sendMessage(Component.text("Вы заглушены (mute) ещё на "
-                    + AccessManager.describeRemaining(mute.until - now)
-                    + (mute.reason == null || mute.reason.isBlank() ? "" : ", причина: " + mute.reason),
-                    NamedTextColor.RED));
+            messages.send(player, "mute.cannot-write",
+                    "duration", AccessManager.describeRemaining(mute.until - now),
+                    "reason", mute.reason == null || mute.reason.isBlank()
+                            ? "" : messages.raw("mute.notice-reason", "reason", mute.reason));
             return;
         }
 
@@ -166,8 +176,7 @@ public final class ChatService implements Listener {
 
         if (!bypass && cfg.maxMentions() > 0 && countMentions(text) > cfg.maxMentions()) {
             event.setCancelled(true);
-            player.sendMessage(Component.text("Слишком много упоминаний в одном сообщении (максимум "
-                    + cfg.maxMentions() + ").", NamedTextColor.RED));
+            messages.send(player, "chat.too-many-mentions", "max_mentions", cfg.maxMentions());
             return;
         }
 
@@ -176,9 +185,7 @@ public final class ChatService implements Listener {
             long waitMillis = cfg.slowModeSeconds() * 1000L - elapsed;
             if (lastGlobalMessageAt > 0 && waitMillis > 0) {
                 event.setCancelled(true);
-                player.sendMessage(Component.text("Медленный режим: подождите "
-                        + Math.max(1, (waitMillis + 999) / 1000) + " сек. перед сообщением в общий чат.",
-                        NamedTextColor.RED));
+                messages.send(player, "chat.slow-mode-wait", "wait_millis", Math.max(1, (waitMillis + 999) / 1000));
                 return;
             }
         }
@@ -192,8 +199,7 @@ public final class ChatService implements Listener {
 
         if (!bypass && text.length() > cfg.maxMessageLength()) {
             event.setCancelled(true);
-            player.sendMessage(Component.text("Сообщение слишком длинное! Максимум "
-                    + cfg.maxMessageLength() + " символов.", NamedTextColor.RED));
+            messages.send(player, "chat.too-long", "max_message_length", cfg.maxMessageLength());
             return;
         }
 
@@ -201,8 +207,7 @@ public final class ChatService implements Listener {
             String lowered = applyCapsRule(text, cfg.capsPercent());
             if (!lowered.equals(text)) {
                 text = lowered;
-                player.sendMessage(Component.text("Пожалуйста, не пишите капсом — сообщение было исправлено.",
-                        NamedTextColor.YELLOW));
+                messages.send(player, "chat.caps-fixed");
             }
         }
 
@@ -211,7 +216,7 @@ public final class ChatService implements Listener {
             long previousAt = lastMessageAt.getOrDefault(uuid, 0L);
             if (previous != null && now - previousAt <= cfg.duplicateWindowMillis() && isDuplicate(previous, text)) {
                 event.setCancelled(true);
-                player.sendMessage(Component.text("Это сообщение вы уже недавно отправляли!", NamedTextColor.RED));
+                messages.send(player, "chat.duplicate");
                 return;
             }
         }
@@ -221,8 +226,7 @@ public final class ChatService implements Listener {
             long remaining = cfg.cooldownMillis() - (now - last);
             if (last > 0 && remaining > 0) {
                 event.setCancelled(true);
-                player.sendMessage(Component.text("Подождите " + formatSeconds(remaining)
-                        + " сек. перед следующим сообщением.", NamedTextColor.RED));
+                messages.send(player, "chat.cooldown", "remaining", formatSeconds(remaining));
                 return;
             }
         }
@@ -314,8 +318,7 @@ public final class ChatService implements Listener {
         if (cfg.filterNotifyAdmins()) {
             for (Player online : Bukkit.getOnlinePlayers()) {
                 if (online.hasPermission(PERMISSION_MUTE)) {
-                    online.sendMessage(Component.text("[CHRDK] Сообщение игрока " + player.getName()
-                            + " заблокировано фильтром чата.", NamedTextColor.YELLOW));
+                    messages.send(online, "chat.filter-admin-note", "player", player.getName());
                 }
             }
         }
@@ -323,8 +326,7 @@ public final class ChatService implements Listener {
                 AuditLog.details("message", text.length() > 120 ? text.substring(0, 120) + "…" : text,
                         "mode", filter.blockMode() ? "block" : "replace"));
         if (filter.blockMode()) {
-            player.sendMessage(Component.text("Сообщение содержит запрещённые слова или ссылки и не было отправлено.",
-                    NamedTextColor.RED));
+            messages.send(player, "chat.filter-blocked");
             return null;
         }
         return maskMatches(text, filter);
@@ -390,8 +392,7 @@ public final class ChatService implements Listener {
             for (Player viewer : mentioned) {
                 if (!viewer.isOnline()) continue;
                 if (cfg.mentionHighlight()) {
-                    viewer.sendActionBar(Component.text("Вас упомянул(а) " + senderName + " в чате",
-                            NamedTextColor.YELLOW));
+                    viewer.sendActionBar(messages.get("chat.mention-notify", "sender_name", senderName));
                 }
                 if (cfg.mentionSound()) {
                     viewer.playSound(viewer.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.5f);
@@ -502,7 +503,7 @@ public final class ChatService implements Listener {
     public boolean handleChatCommand(CommandSender sender, String label, String[] args) {
         ChatConfig cfg = this.config;
         if (!cfg.enabled()) {
-            sender.sendMessage(Component.text("Встроенный чат отключён в конфигурации сервера.", NamedTextColor.RED));
+            messages.send(sender, "chat.disabled");
             return true;
         }
 
@@ -513,8 +514,7 @@ public final class ChatService implements Listener {
             }
             ChatConfig.Channel next = currentChannel(player).toggled();
             setChannel(player, next);
-            player.sendMessage(Component.text("Режим чата переключён: ", NamedTextColor.GRAY)
-                    .append(Component.text(ChatConfig.describeChannel(next), NamedTextColor.AQUA)));
+            messages.send(player, "chat.mode-switched", "channel", ChatConfig.describeChannel(next));
             return true;
         }
 
@@ -524,59 +524,55 @@ public final class ChatService implements Listener {
                 if (!requirePlayer(sender)) return true;
                 Player player = (Player) sender;
                 setChannel(player, ChatConfig.Channel.GLOBAL);
-                player.sendMessage(Component.text("Режим чата: ", NamedTextColor.GRAY)
-                        .append(Component.text(ChatConfig.describeChannel(ChatConfig.Channel.GLOBAL), NamedTextColor.GOLD)));
+                messages.send(player, "chat.mode-global",
+                        "channel", ChatConfig.describeChannel(ChatConfig.Channel.GLOBAL));
                 return true;
             }
             case "local", "l", "локальный", "местный" -> {
                 if (!requirePlayer(sender)) return true;
                 Player player = (Player) sender;
                 setChannel(player, ChatConfig.Channel.LOCAL);
-                player.sendMessage(Component.text("Режим чата: ", NamedTextColor.GRAY)
-                        .append(Component.text(ChatConfig.describeChannel(ChatConfig.Channel.LOCAL), NamedTextColor.GREEN)));
+                messages.send(player, "chat.mode-local",
+                        "channel", ChatConfig.describeChannel(ChatConfig.Channel.LOCAL));
                 return true;
             }
             case "status", "info", "статус" -> {
                 if (!requirePlayer(sender)) return true;
                 Player player = (Player) sender;
-                player.sendMessage(Component.text("Ваш режим чата: ", NamedTextColor.GRAY)
-                        .append(Component.text(ChatConfig.describeChannel(currentChannel(player)), NamedTextColor.AQUA)));
-                player.sendMessage(Component.text("Радиус локального чата: ", NamedTextColor.GRAY)
-                        .append(Component.text((int) cfg.localRadius() + " блоков", NamedTextColor.WHITE)));
-                player.sendMessage(Component.text("Разовое сообщение всем: ", NamedTextColor.GRAY)
-                        .append(Component.text(cfg.quickGlobalPrefix() + "текст", NamedTextColor.YELLOW)));
+                messages.sendList(player, "chat.status",
+                        "channel", ChatConfig.describeChannel(currentChannel(player)),
+                        "radius", cfg.localRadius(),
+                        "prefix", cfg.quickGlobalPrefix());
                 return true;
             }
             case "clear", "очистить" -> {
                 if (!sender.hasPermission(PERMISSION_CLEAR)) {
-                    sender.sendMessage(Component.text("Недостаточно прав для очистки чата.", NamedTextColor.RED));
+                    messages.send(sender, "chat.no-permission-clear");
                     return true;
                 }
                 if (args.length >= 2) {
                     Player target = Bukkit.getPlayerExact(args[1]);
                     if (target == null) {
-                        sender.sendMessage(Component.text("Игрок " + args[1] + " не в сети.", NamedTextColor.RED));
+                        messages.send(sender, "error.player-offline", "args", args[1]);
                         return true;
                     }
                     clearChat(target);
-                    sender.sendMessage(Component.text("Чат очищен для игрока " + target.getName() + ".",
-                            NamedTextColor.GREEN));
+                    messages.send(sender, "chat.cleared-player", "target", target.getName());
                 } else {
                     for (Player online : Bukkit.getOnlinePlayers()) {
                         clearChat(online);
                     }
-                    sender.sendMessage(Component.text("Чат очищен для всех игроков.", NamedTextColor.GREEN));
+                    messages.send(sender, "chat.cleared-all");
                 }
                 return true;
             }
             case "broadcast", "bc", "объявление" -> {
                 if (!sender.hasPermission(PERMISSION_BROADCAST)) {
-                    sender.sendMessage(Component.text("Недостаточно прав для объявлений.", NamedTextColor.RED));
+                    messages.send(sender, "chat.no-permission-broadcast");
                     return true;
                 }
                 if (args.length < 2) {
-                    sender.sendMessage(Component.text("Использование: /" + label + " broadcast <текст>",
-                            NamedTextColor.YELLOW));
+                    messages.send(sender, "chat.usage-broadcast", "label", label);
                     return true;
                 }
                 String text = String.join(" ", Arrays.copyOfRange(args, 1, args.length)).trim();
@@ -585,45 +581,40 @@ public final class ChatService implements Listener {
             }
             case "slow", "медленный" -> {
                 if (!sender.hasPermission(PERMISSION_MUTE)) {
-                    sender.sendMessage(Component.text("Недостаточно прав для управления медленным режимом.",
-                            NamedTextColor.RED));
+                    messages.send(sender, "chat.no-permission-slow");
                     return true;
                 }
                 if (args.length < 2) {
-                    sender.sendMessage(Component.text("Использование: /" + label + " slow <секунды|off>",
-                            NamedTextColor.YELLOW));
+                    messages.send(sender, "chat.usage-slow", "label", label);
                     return true;
                 }
                 if ("off".equalsIgnoreCase(args[1]) || "выкл".equalsIgnoreCase(args[1]) || "0".equals(args[1])) {
                     ChatConfig updated = config.withSlowModeSeconds(0);
                     reload(updated);
-                    sender.sendMessage(Component.text("Медленный режим общего чата выключен.", NamedTextColor.GREEN));
+                    messages.send(sender, "chat.slow-off");
                     return true;
                 }
                 int seconds;
                 try {
                     seconds = Integer.parseInt(args[1]);
                 } catch (NumberFormatException exception) {
-                    sender.sendMessage(Component.text("Укажите количество секунд или off.", NamedTextColor.RED));
+                    messages.send(sender, "chat.slow-bad-value");
                     return true;
                 }
                 ChatConfig updated = config.withSlowModeSeconds(Math.clamp(seconds, 1, 3600));
                 reload(updated);
-                sender.sendMessage(Component.text("Медленный режим общего чата: " + updated.slowModeSeconds()
-                        + " сек.", NamedTextColor.GREEN));
+                messages.send(sender, "chat.slow-on", "slow_mode_seconds", updated.slowModeSeconds());
                 accessManager.audit().log(AuditLog.ADMIN_COMMAND, sender.getName(), "", null,
                         AuditLog.details("action", "slow-mode", "seconds", updated.slowModeSeconds()));
                 return true;
             }
             case "history", "история" -> {
                 if (!sender.hasPermission(PERMISSION_HISTORY)) {
-                    sender.sendMessage(Component.text("Недостаточно прав для просмотра истории чата.",
-                            NamedTextColor.RED));
+                    messages.send(sender, "chat.no-permission-history");
                     return true;
                 }
                 if (args.length < 2) {
-                    sender.sendMessage(Component.text("Использование: /" + label + " history <ник|ip> [N]",
-                            NamedTextColor.YELLOW));
+                    messages.send(sender, "chat.usage-history", "label", label);
                     return true;
                 }
                 int limit = 20;
@@ -636,10 +627,10 @@ public final class ChatService implements Listener {
                 }
                 List<String> lines = readChatHistory(args[1], limit);
                 if (lines.isEmpty()) {
-                    sender.sendMessage(Component.text("Записей не найдено.", NamedTextColor.YELLOW));
+                    messages.send(sender, "chat.history-empty");
                     return true;
                 }
-                sender.sendMessage(Component.text("=== История чата (" + args[1] + ") ===", NamedTextColor.GOLD));
+                messages.send(sender, "chat.history-header", "args", args[1]);
                 for (String line : lines) {
                     sender.sendMessage(Component.text(line, NamedTextColor.GRAY));
                 }
@@ -669,26 +660,25 @@ public final class ChatService implements Listener {
      */
     public boolean handleMuteCommand(CommandSender sender, String label, String[] args) {
         if (!sender.hasPermission(PERMISSION_MUTE)) {
-            sender.sendMessage(Component.text("Недостаточно прав для управления мутами.", NamedTextColor.RED));
+            messages.send(sender, "mute.no-permission");
             return true;
         }
         if (args.length == 0) {
-            sender.sendMessage(Component.text("Использование: /" + label + " <ник> <10m|2h|1d> [причина]",
-                    NamedTextColor.YELLOW));
+            messages.send(sender, "mute.usage", "label", label);
             return true;
         }
         String targetName = args[0];
         List<RegistrationStore.MuteEntry> mutes = store().listMutes(System.currentTimeMillis(), true);
         boolean listed = false;
         for (RegistrationStore.MuteEntry entry : mutes) {
-            sender.sendMessage(Component.text("- " + entry.playerName + " (ещё "
-                    + AccessManager.describeRemaining(entry.remainingMillis(System.currentTimeMillis()))
-                    + ", причина: " + (entry.reason.isBlank() ? "не указана" : entry.reason) + ")", NamedTextColor.GRAY));
+            messages.send(sender, "mute.list-entry",
+                    "player", entry.playerName,
+                    "remaining", AccessManager.describeRemaining(entry.remainingMillis(System.currentTimeMillis())),
+                    "reason", entry.reason.isBlank() ? messages.raw("mute.no-reason") : entry.reason);
             listed = true;
         }
         if (!listed) {
-            sender.sendMessage(Component.text("Активных мутов нет. Добавить: /" + label + " <ник> <время>",
-                    NamedTextColor.GRAY));
+            messages.send(sender, "mute.list-empty", "label", label);
         }
         return true;
     }
@@ -696,13 +686,12 @@ public final class ChatService implements Listener {
     /** Applies a chat mute. Duration accepts {@code 10m}, {@code 2h}, {@code 1d} or a plain number of minutes. */
     public boolean handleMuteApply(CommandSender sender, String targetName, String durationRaw, String reason) {
         if (!sender.hasPermission(PERMISSION_MUTE)) {
-            sender.sendMessage(Component.text("Недостаточно прав для управления мутами.", NamedTextColor.RED));
+            messages.send(sender, "mute.no-permission");
             return true;
         }
         long minutes = parseDurationMinutes(durationRaw);
         if (minutes <= 0) {
-            sender.sendMessage(Component.text("Не удалось разобрать время. Примеры: 10m, 2h, 1d, 30.",
-                    NamedTextColor.RED));
+            messages.send(sender, "mute.bad-duration");
             return true;
         }
         long until = System.currentTimeMillis() + minutes * 60_000L;
@@ -714,13 +703,16 @@ public final class ChatService implements Listener {
                 "Кто: " + (sender instanceof Player player ? player.getName() : "консоль")
                         + "\nКого: " + target + "\nВремя: " + AccessManager.describeRemaining(minutes * 60_000L)
                         + "\nПричина: " + (reason == null || reason.isBlank() ? "не указана" : reason), "warn");
-        sender.sendMessage(Component.text("Игрок " + target + " заглушён на "
-                + AccessManager.describeRemaining(minutes * 60_000L) + ".", NamedTextColor.GREEN));
+        messages.send(sender, "mute.applied",
+                "target", target,
+                "duration", AccessManager.describeRemaining(minutes * 60_000L));
         Player online = Bukkit.getPlayerExact(target);
         if (online != null) {
-            online.sendMessage(Component.text("Вам запрещено писать в чат на "
-                    + AccessManager.describeRemaining(minutes * 60_000L)
-                    + (reason == null || reason.isBlank() ? "." : " (" + reason + ")."), NamedTextColor.RED));
+            messages.send(online, "mute.notice",
+                    "duration", AccessManager.describeRemaining(minutes * 60_000L),
+                    "reason", reason == null || reason.isBlank()
+                            ? ""
+                            : messages.raw("mute.notice-reason", "reason", reason));
         }
         return true;
     }
@@ -728,19 +720,19 @@ public final class ChatService implements Listener {
     /** Removes a chat mute. */
     public boolean handleUnmuteCommand(CommandSender sender, String targetName) {
         if (!sender.hasPermission(PERMISSION_MUTE)) {
-            sender.sendMessage(Component.text("Недостаточно прав для управления мутами.", NamedTextColor.RED));
+            messages.send(sender, "mute.no-permission");
             return true;
         }
         if (targetName == null || targetName.isBlank()) {
-            sender.sendMessage(Component.text("Использование: /unmute <ник>", NamedTextColor.YELLOW));
+            messages.send(sender, "mute.usage-unmute");
             return true;
         }
         boolean cleared = store().clearMute(resolveKnownPlayerName(targetName));
         if (cleared) {
             accessManager.audit().log(AuditLog.CHAT_UNMUTE, sender.getName(), targetName, null);
-            sender.sendMessage(Component.text("Мут снят с игрока " + targetName + ".", NamedTextColor.GREEN));
+            messages.send(sender, "mute.removed", "target_name", targetName);
         } else {
-            sender.sendMessage(Component.text("У игрока " + targetName + " нет активного мута.", NamedTextColor.YELLOW));
+            messages.send(sender, "mute.not-muted", "target_name", targetName);
         }
         return true;
     }
@@ -813,40 +805,40 @@ public final class ChatService implements Listener {
 
     private boolean requirePlayer(CommandSender sender) {
         if (sender instanceof Player) return true;
-        sender.sendMessage(Component.text("Эта команда доступна только игрокам.", NamedTextColor.RED));
+        messages.send(sender, "error.players-only");
         return false;
     }
 
     private void sendChatHelp(CommandSender sender, String label) {
         if (sender.hasPermission(PERMISSION_MUTE)) {
-            sender.sendMessage(Component.text("/" + label + " slow <секунды|off>", NamedTextColor.YELLOW)
-                    .append(Component.text(" — медленный режим общего чата", NamedTextColor.GRAY)));
-            sender.sendMessage(Component.text("/" + label + " history <ник|ip> [N]", NamedTextColor.YELLOW)
-                    .append(Component.text(" — последние сообщения из истории чата", NamedTextColor.GRAY)));
+            sender.sendMessage(messages.get("chat.help-slow", "label", label)
+                    .append(messages.get("chat.help-slow-desc")));
+            sender.sendMessage(messages.get("chat.help-history", "label", label)
+                    .append(messages.get("chat.help-history-desc")));
         }
         ChatConfig cfg = this.config;
-        sender.sendMessage(Component.text("=== Чат CHRDK_F_REGISTER ===", NamedTextColor.GOLD));
-        sender.sendMessage(Component.text("/" + label + " [global|local|status]", NamedTextColor.YELLOW)
-                .append(Component.text(" — режим чата (без аргументов — переключить)", NamedTextColor.GRAY)));
-        sender.sendMessage(Component.text("/" + label + " <текст>", NamedTextColor.YELLOW)
-                .append(Component.text(" — отправить текст в текущий режим чата", NamedTextColor.GRAY)));
-        sender.sendMessage(Component.text(cfg.quickGlobalPrefix() + "<текст>", NamedTextColor.YELLOW)
-                .append(Component.text(" — разовое сообщение в глобальный чат", NamedTextColor.GRAY)));
-        sender.sendMessage(Component.text("/msg <ник> <текст>", NamedTextColor.YELLOW)
-                .append(Component.text(" — личное сообщение, /r <текст> — ответ", NamedTextColor.GRAY)));
-        sender.sendMessage(Component.text("/ignore <ник>", NamedTextColor.YELLOW)
-                .append(Component.text(" — скрыть сообщения игрока, /ignore list — список", NamedTextColor.GRAY)));
+        messages.send(sender, "chat.help-header");
+        sender.sendMessage(messages.get("chat.help-mode", "label", label)
+                .append(messages.get("chat.help-mode-desc")));
+        sender.sendMessage(messages.get("chat.help-send", "label", label)
+                .append(messages.get("chat.help-send-desc")));
+        sender.sendMessage(messages.get("chat.help-quick", "quick_global_prefix", cfg.quickGlobalPrefix())
+                .append(messages.get("chat.help-quick-desc")));
+        sender.sendMessage(messages.get("chat.help-msg")
+                .append(messages.get("chat.help-msg-desc")));
+        sender.sendMessage(messages.get("chat.help-ignore")
+                .append(messages.get("chat.help-ignore-desc")));
         if (sender.hasPermission(PERMISSION_SOCIAL_SPY)) {
-            sender.sendMessage(Component.text("/socialspy [on|off]", NamedTextColor.YELLOW)
-                    .append(Component.text(" — просмотр личных сообщений игроков", NamedTextColor.GRAY)));
+            sender.sendMessage(messages.get("chat.help-spy")
+                    .append(messages.get("chat.help-spy-desc")));
         }
         if (sender.hasPermission(PERMISSION_CLEAR)) {
-            sender.sendMessage(Component.text("/" + label + " clear [ник]", NamedTextColor.YELLOW)
-                    .append(Component.text(" — очистить чат", NamedTextColor.GRAY)));
+            sender.sendMessage(messages.get("chat.help-clear", "label", label)
+                    .append(messages.get("chat.help-clear-desc")));
         }
         if (sender.hasPermission(PERMISSION_BROADCAST)) {
-            sender.sendMessage(Component.text("/" + label + " broadcast <текст>", NamedTextColor.YELLOW)
-                    .append(Component.text(" — объявление от лица сервера", NamedTextColor.GRAY)));
+            sender.sendMessage(messages.get("chat.help-broadcast", "label", label)
+                    .append(messages.get("chat.help-broadcast-desc")));
         }
     }
 
@@ -876,47 +868,48 @@ public final class ChatService implements Listener {
     public boolean handlePrivateMessageCommand(CommandSender sender, String label, String[] args) {
         ChatConfig cfg = this.config;
         if (!cfg.enabled() || !cfg.privateMessagesEnabled()) {
-            sender.sendMessage(Component.text("Личные сообщения отключены в конфигурации сервера.", NamedTextColor.RED));
+            messages.send(sender, "private-messages.disabled");
             return true;
         }
         if (args.length < 2) {
-            sender.sendMessage(Component.text("Использование: /" + label + " <ник> <сообщение>", NamedTextColor.YELLOW));
+            messages.send(sender, "private-messages.usage", "label", label);
             return true;
         }
 
         Player target = Bukkit.getPlayerExact(args[0]);
         if (target == null) {
-            sender.sendMessage(Component.text("Игрок " + args[0] + " не в сети.", NamedTextColor.RED));
+            messages.send(sender, "error.player-offline", "args", args[0]);
             return true;
         }
         if (sender instanceof Player senderPlayer) {
             if (!senderPlayer.isOnline()) return true;
             if (accessManager.getStage(senderPlayer) != AccessManager.PlayerStage.AUTHENTICATED) {
-                sender.sendMessage(Component.text("Сначала авторизуйтесь на сервере, чтобы писать в чат.",
-                        NamedTextColor.RED));
+                messages.send(sender, "chat.not-authenticated");
                 return true;
             }
             RegistrationStore.MuteEntry mute = activeMute(senderPlayer.getName());
             if (mute != null && !senderPlayer.hasPermission(PERMISSION_BYPASS)) {
-                sender.sendMessage(Component.text("Вам запрещено писать в чат ещё "
-                        + AccessManager.describeRemaining(mute.until - System.currentTimeMillis())
-                        + (mute.reason.isBlank() ? "." : " (" + mute.reason + ")."), NamedTextColor.RED));
+                messages.send(sender, "mute.cannot-write",
+                        "duration", AccessManager.describeRemaining(mute.until - System.currentTimeMillis()),
+                        "reason", mute.reason.isBlank()
+                                ? ""
+                                : messages.raw("mute.notice-reason", "reason", mute.reason));
                 return true;
             }
             if (target.getUniqueId().equals(senderPlayer.getUniqueId())) {
-                sender.sendMessage(Component.text("Нельзя отправить личное сообщение самому себе.", NamedTextColor.RED));
+                messages.send(sender, "private-messages.self");
                 return true;
             }
         }
 
         String message = String.join(" ", Arrays.copyOfRange(args, 1, args.length)).trim();
         if (message.isEmpty()) {
-            sender.sendMessage(Component.text("Сообщение не может быть пустым.", NamedTextColor.RED));
+            messages.send(sender, "private-messages.empty");
             return true;
         }
         if (message.length() > cfg.maxMessageLength() * 2) {
-            sender.sendMessage(Component.text("Личное сообщение слишком длинное! Максимум "
-                    + (cfg.maxMessageLength() * 2) + " символов.", NamedTextColor.RED));
+            messages.send(sender, "private-messages.too-long",
+                    "max_message_length", cfg.maxMessageLength() * 2);
             return true;
         }
 
@@ -925,8 +918,7 @@ public final class ChatService implements Listener {
             accessManager.audit().chat("msg", senderName, target.getName(), message);
         }
         if (store().isIgnoring(target.getName(), senderName)) {
-            sender.sendMessage(Component.text("Игрок " + target.getName() + " вас игнорирует.",
-                    NamedTextColor.RED));
+            messages.send(sender, "private-messages.ignored", "target", target.getName());
             return true;
         }
 
@@ -971,22 +963,21 @@ public final class ChatService implements Listener {
 
     public boolean handleReplyCommand(CommandSender sender, String label, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(Component.text("Эта команда доступна только игрокам.", NamedTextColor.RED));
+            messages.send(sender, "error.players-only");
             return true;
         }
         if (args.length < 1) {
-            sender.sendMessage(Component.text("Использование: /" + label + " <сообщение>", NamedTextColor.YELLOW));
+            messages.send(sender, "private-messages.usage-reply", "label", label);
             return true;
         }
         UUID partnerId = lastPrivatePartners.get(player.getUniqueId());
         if (partnerId == null) {
-            player.sendMessage(Component.text("Вам ещё не писали в личные сообщения или вы уже вышли из игры.",
-                    NamedTextColor.YELLOW));
+            messages.send(player, "private-messages.no-partner");
             return true;
         }
         Player target = Bukkit.getPlayer(partnerId);
         if (target == null || !target.isOnline()) {
-            player.sendMessage(Component.text("Игрок, которому вы отвечаете, уже не в сети.", NamedTextColor.RED));
+            messages.send(player, "private-messages.partner-offline");
             return true;
         }
         String[] forwarded = new String[args.length + 1];
@@ -997,11 +988,11 @@ public final class ChatService implements Listener {
 
     public boolean handleSocialSpyCommand(CommandSender sender, String label, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(Component.text("Эта команда доступна только игрокам.", NamedTextColor.RED));
+            messages.send(sender, "error.players-only");
             return true;
         }
         if (!player.hasPermission(PERMISSION_SOCIAL_SPY)) {
-            player.sendMessage(Component.text("Недостаточно прав для просмотра личных сообщений.", NamedTextColor.RED));
+            messages.send(player, "chat.no-permission-socialspy");
             return true;
         }
 
@@ -1022,9 +1013,8 @@ public final class ChatService implements Listener {
         } else {
             socialSpy.remove(player.getUniqueId());
         }
-        player.sendMessage(Component.text("Режим слежки за личными сообщениями: ", NamedTextColor.GRAY)
-                .append(Component.text(enabled ? "ВКЛЮЧЁН" : "ОТКЛЮЧЁН",
-                        enabled ? NamedTextColor.GREEN : NamedTextColor.RED)));
+        messages.send(player, "socialspy.state",
+                "state", messages.raw(enabled ? "common.on" : "common.off"));
         return true;
     }
 
@@ -1034,7 +1024,7 @@ public final class ChatService implements Listener {
 
     public boolean handleIgnoreCommand(CommandSender sender, String label, String[] args, boolean forcedRemove) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(Component.text("Эта команда доступна только игрокам.", NamedTextColor.RED));
+            messages.send(sender, "error.players-only");
             return true;
         }
         if (args.length == 0) {
@@ -1046,10 +1036,10 @@ public final class ChatService implements Listener {
         if ("list".equals(sub) || "список".equals(sub)) {
             Set<String> ignored = store().getIgnoredDisplayNames(player.getName());
             if (ignored.isEmpty()) {
-                player.sendMessage(Component.text("Вы никого не игнорируете.", NamedTextColor.GRAY));
+                messages.send(player, "ignore.list-empty");
             } else {
-                player.sendMessage(Component.text("Игнорируются (" + ignored.size() + "): ", NamedTextColor.GRAY)
-                        .append(Component.text(String.join(", ", ignored), NamedTextColor.WHITE)));
+                messages.send(player, "ignore.list",
+                        "size", ignored.size(), "players", String.join(", ", ignored));
             }
             return true;
         }
@@ -1071,40 +1061,36 @@ public final class ChatService implements Listener {
         }
 
         if (!AccessManager.isValidMinecraftName(targetName)) {
-            player.sendMessage(Component.text("Некорректный ник Minecraft: " + targetName, NamedTextColor.RED));
+            messages.send(player, "error.invalid-nickname", "target_name", targetName);
             return true;
         }
         if (targetName.equalsIgnoreCase(player.getName())) {
-            player.sendMessage(Component.text("Нельзя игнорировать самого себя.", NamedTextColor.RED));
+            messages.send(player, "ignore.self");
             return true;
         }
 
         if (remove) {
             if (removeIgnore(player, targetName)) {
-                player.sendMessage(Component.text("Игрок " + targetName + " больше не игнорируется.",
-                        NamedTextColor.GREEN));
+                messages.send(player, "ignore.removed", "target_name", targetName);
             } else {
-                player.sendMessage(Component.text("Игрок " + targetName + " не найден в вашем списке игнорирования.",
-                        NamedTextColor.YELLOW));
+                messages.send(player, "ignore.not-listed", "target_name", targetName);
             }
         } else if (addIgnore(player, targetName)) {
-            player.sendMessage(Component.text("Игрок " + targetName + " добавлен в игнор: его сообщения и личные "
-                    + "сообщения будут скрыты.", NamedTextColor.GREEN));
+            messages.send(player, "ignore.added", "target_name", targetName);
         } else {
-            player.sendMessage(Component.text("Игрок " + targetName + " уже находится в вашем списке игнорирования.",
-                    NamedTextColor.YELLOW));
+            messages.send(player, "ignore.already", "target_name", targetName);
         }
         return true;
     }
 
     private void sendIgnoreHelp(Player player, String label) {
-        player.sendMessage(Component.text("Игнорирование игроков:", NamedTextColor.GOLD));
-        player.sendMessage(Component.text("/" + label + " <ник>", NamedTextColor.YELLOW)
-                .append(Component.text(" — игнорировать игрока", NamedTextColor.GRAY)));
-        player.sendMessage(Component.text("/" + label + " remove <ник>", NamedTextColor.YELLOW)
-                .append(Component.text(" — снять игнорирование", NamedTextColor.GRAY)));
-        player.sendMessage(Component.text("/" + label + " list", NamedTextColor.YELLOW)
-                .append(Component.text(" — список игнорируемых игроков", NamedTextColor.GRAY)));
+        messages.send(player, "ignore.help-header");
+        player.sendMessage(messages.get("ignore.help-add", "label", label)
+                .append(messages.get("ignore.help-add-desc")));
+        player.sendMessage(messages.get("ignore.help-remove", "label", label)
+                .append(messages.get("ignore.help-remove-desc")));
+        player.sendMessage(messages.get("ignore.help-list", "label", label)
+                .append(messages.get("ignore.help-list-desc")));
     }
 
     public Set<String> ignoredNames(Player player) {
@@ -1143,9 +1129,13 @@ public final class ChatService implements Listener {
      *  Formatting helpers (covered by unit tests)
      * ------------------------------------------------------------------ */
 
+    /**
+     * Рендерит формат чата: поддерживается MiniMessage ({@code <gradient>}, {@code <hover>}, {@code <click>}),
+     * а старые {@code &}-коды автоматически переводятся в MiniMessage.
+     */
     public static Component legacy(String raw) {
         if (raw == null || raw.isEmpty()) return Component.empty();
-        return LEGACY.deserialize(raw);
+        return Messages.format(raw);
     }
 
     public static String plainText(Component component) {
@@ -1291,8 +1281,7 @@ public final class ChatService implements Listener {
             }
             flushPlain(parts, buffer, colorAllowed, inheritedColor);
             parts.add(Component.text("@" + candidate, mentionColor(cfg, inheritedColor), TextDecoration.BOLD)
-                    .hoverEvent(HoverEvent.showText(Component.text(
-                            "Нажмите, чтобы написать " + candidate, NamedTextColor.GRAY)))
+                    .hoverEvent(HoverEvent.showText(messages.get("chat.mention-hover", "candidate", candidate)))
                     .clickEvent(ClickEvent.suggestCommand("/msg " + candidate + " ")));
             index = end;
         }

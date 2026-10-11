@@ -15,11 +15,14 @@ public final class RegisterPlugin extends JavaPlugin {
     private ChatService chatService;
     private RegistrationStore store;
     private ExecutionService executor;
+    private RegisterCommandHandler commandHandler;
+    private volatile Messages messages;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
         PluginConfig config = PluginConfig.fromBukkitConfig(getConfig());
+        this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
 
         this.executor = new ExecutionService(getLogger());
         this.store = new RegistrationStore(getDataFolder().toPath(), getLogger(),
@@ -27,17 +30,17 @@ public final class RegisterPlugin extends JavaPlugin {
 
         DonatePayClient donatePayClient = new DonatePayClient(config);
 
-        this.accessManager = new AccessManager(this, config, store, donatePayClient, getLogger());
-        this.chatService = new ChatService(this, accessManager, config.chat(), getLogger());
+        this.accessManager = new AccessManager(this, config, store, donatePayClient, messages, getLogger());
+        this.chatService = new ChatService(this, accessManager, config.chat(), messages, getLogger());
 
         getServer().getPluginManager().registerEvents(new PlayerRestrictionListener(accessManager), this);
         getServer().getPluginManager().registerEvents(chatService, this);
 
-        RegisterCommandHandler commandHandler = new RegisterCommandHandler(this, accessManager);
+        this.commandHandler = new RegisterCommandHandler(this, accessManager);
         for (String commandName : List.of("register", "login", "changepassword", "2fa", "pass", "logout", "session")) {
             PluginCommand pluginCommand = getCommand(commandName);
             if (pluginCommand != null) {
-                pluginCommand.setExecutor(commandHandler);
+                pluginCommand.setExecutor(this.commandHandler);
                 pluginCommand.setTabCompleter(commandHandler);
             }
         }
@@ -84,6 +87,29 @@ public final class RegisterPlugin extends JavaPlugin {
         if (chatService != null) {
             chatService.reload(updated.chat());
         }
+    }
+
+    /** Тексты плагина из {@code messages.yml}. */
+    public Messages messages() {
+        return messages;
+    }
+
+    /**
+     * Перезагружает {@code messages.yml} и возвращает список найденных проблем
+     * (неизвестные ключи, ошибки разметки MiniMessage, потерянные подстановки).
+     */
+    public java.util.List<String> reloadMessages() {
+        this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
+        if (accessManager != null) {
+            accessManager.setMessages(messages);
+        }
+        if (chatService != null) {
+            chatService.setMessages(messages);
+        }
+        if (commandHandler != null) {
+            commandHandler.refreshMessages(); // /pass reload сам сообщает результат уже новыми текстами
+        }
+        return messages.validate();
     }
 
     /** Flushes the storage and creates a manual backup (used by {@code /pass backup}). */

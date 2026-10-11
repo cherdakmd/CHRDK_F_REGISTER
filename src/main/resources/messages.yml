@@ -1,0 +1,473 @@
+# =====================================================================
+# CHRDK_F_REGISTER — ТЕКСТЫ ПЛАГИНА (messages.yml)
+# =====================================================================
+# Здесь собраны ВСЕ сообщения плагина: их можно свободно переписывать,
+# переводить и перекрашивать без правки кода.
+#
+# Формат разметки — MiniMessage:
+#   <red>текст</red>, <gradient:gold:yellow>текст</gradient>
+#   <hover:show_text:'<green>подсказка</green>'>текст</hover>
+#   <click:open_url:'https://...'>ссылка</click>, <bold>, <underlined>, <italic>
+#   Старые коды вида &c &l тоже работают — они переводятся автоматически.
+#
+# Подстановки пишутся в процентах и подставляются плагином:
+#   %player%, %price%, %days%, %until%, %reason%, %duration%, %count% и т. д.
+#   Значения экранируются, поэтому ник игрока не сможет «сломать» разметку.
+#
+# Важно:
+#   * Ключи, которых нет в этом файле, берутся из значений по умолчанию —
+#     при обновлении плагина файл ломаться не будет.
+#   * Изменения применяются командой /pass reload (без перезапуска сервера).
+#     Команда также проверит файл: ошибки разметки, неизвестные ключи и
+#     потерянные подстановки будут показаны администратору.
+#   * Часовой пояс дат настраивается в config.yml (general.timezone).
+# =====================================================================
+
+messages:
+  "common":
+    "connected": "<green>подключён</green>"
+    "disabled": "<yellow><bold>ОТКЛЮЧЕНА</bold></yellow>"
+    "disabled-m": "<red>выключен</red>"
+    "disabled-many": "<yellow>выключены</yellow>"
+    "enabled": "<green><bold>ВКЛЮЧЕНА</bold></green>"
+    "enabled-m": "<green>включён</green>"
+    "no": "<yellow>нет</yellow>"
+    "off": "<red>ОТКЛЮЧЁН</red>"
+    "on": "<green>ВКЛЮЧЁН</green>"
+    "token-missing": "<red>токен не задан в config.yml</red>"
+    "unknown": "<white>неизвестно</white>"
+    "yes": "<green>да</green>"
+  "error":
+    "days-number": "<red>Количество дней должно быть числом.</red>"
+    "donation-id-number": "<red>ID доната должен быть числом.</red>"
+    "invalid-nickname": "<red>Некорректный ник Minecraft: %target_name%</red>"
+    "invalid-nickname-soft": "<red>Некорректный ник: %target_name%</red>"
+    "no-permission": "<red>Недостаточно прав.</red>"
+    "player-offline": "<red>Игрок %args% не в сети.</red>"
+    "players-only": "<red>Эта команда доступна только игрокам.</red>"
+    "players-only-session": "<red>Эта команда доступна только игрокам. Админ: /pass sessions <ник></red>"
+  "usage":
+    "backup": "<yellow>Использование: /%label% backup <create|list|restore <файл>></yellow>"
+    "backup-restore": "<yellow>Использование: /%label% backup restore <файл></yellow>"
+    "login": "<yellow>Использование: /login <пароль> [код_2FA]</yellow>"
+    "pass-add": "<yellow>Использование: /%label% add <ник> [дней]</yellow>"
+    "pass-approve": "<yellow>Использование: /%label% approve <id> [ник] [дней]</yellow>"
+    "pass-check": "<yellow>Использование: /%label% check <ник></yellow>"
+    "pass-claim": "<yellow>Использование: /%label% claim <id доната></yellow>"
+    "pass-gift": "<yellow>Использование: /%label% gift <ник> <дней></yellow>"
+    "pass-logoutall": "<yellow>Использование: /%label% logoutall <ник></yellow>"
+    "pass-reject": "<yellow>Использование: /%label% reject <id> [причина]</yellow>"
+    "pass-remove": "<yellow>Использование: /%label% remove <ник></yellow>"
+    "pass-reset2fa": "<yellow>Использование: /%label% reset2fa <ник></yellow>"
+    "pass-sessions": "<yellow>Использование: /%label% sessions <ник></yellow>"
+    "pass-unregister": "<yellow>Использование: /%label% unregister <ник></yellow>"
+    "register": "<yellow>Использование: /register <пароль> <повтор></yellow>"
+  "restriction":
+    "command-login": "<red>Сначала войдите в аккаунт: /login &lt;пароль&gt;</red>"
+    "command-no-pass": "<red>Команды заблокированы! Сначала приобретите проходку (%price% ₽ на DonatePay, укажите ник %player% в имени донатера).</red>"
+    "command-register": "<red>Сначала зарегистрируйте пароль: /register &lt;пароль&gt; &lt;повтор&gt;</red>"
+    "command-two-factor": "<red>Подтвердите вход кодом двухфакторной аутентификации: /2fa &lt;6-значный_код&gt;</red>"
+  "password":
+    "change":
+      "not-authenticated": "<red>Сначала авторизуйтесь на сервере, чтобы сменить пароль.</red>"
+      "players-only": "<red>Эта команда доступна только игрокам.</red>"
+      "success": "<green>✓ Пароль успешно изменён! Все прочие сессии сброшены.</green>"
+      "usage": "<yellow>Использование: /changepassword <старый_пароль> <новый_пароль></yellow>"
+      "wrong-old": "<red>Старый пароль указан неверно!</red>"
+    "error":
+      "common": "<red>Этот пароль слишком часто используется и легко подбирается. Придумайте другой.</red>"
+      "empty": "<red>Пароль не может быть пустым.</red>"
+      "length": "<red>Длина пароля должна быть от %min% до %max% символов.</red>"
+      "nickname": "<red>Пароль не должен совпадать с вашим ником или быть слишком похожим на него.</red>"
+      "sequence": "<red>Пароль из одинаковых или последовательных символов легко подобрать.</red>"
+      "shared": "<red>Этот пароль уже используется другим аккаунтом, который заходил с вашего IP. Придумайте свой пароль.</red>"
+      "spaces": "<red>Пароль не должен содержать пробелы.</red>"
+    "hint":
+      "digits": "добавьте цифры"
+      "longer": "сделайте пароль длиннее (10+ символов)"
+      "symbols": "добавьте символы вроде ! ? # _"
+      "uppercase": "добавьте заглавные буквы"
+    "strength-hint": "<gray>Надёжность пароля: %strength%. Подсказки: %hints%.</gray>"
+    "strength-ok": "<gray>Надёжность пароля: %strength%. Сменить пароль можно командой /changepassword.</gray>"
+    "strength":
+      "medium": "<yellow>средний</yellow>"
+      "none": "<gray>нет</gray>"
+      "strong": "<green>надёжный</green>"
+      "weak": "<red>слабый</red>"
+  "register":
+    "already-authenticated": "<green>Вы уже зарегистрированы и вошли в аккаунт.</green>"
+    "already-registered": "<yellow>Вы уже зарегистрированы! Используйте: /login <пароль></yellow>"
+    "failed": "<red>Не удалось завершить регистрацию. Возможно, аккаунт уже зарегистрирован.</red>"
+    "password-mismatch": "<red>Пароли не совпадают! Проверьте ввод: /register <пароль> <повтор></red>"
+    "password-shared": "<red>Этот пароль уже используется другим аккаунтом, который заходил с вашего IP. Придумайте свой пароль.</red>"
+    "prompt": "<yellow>Проходка активна! Зарегистрируйте пароль командой: </yellow><click:suggest_command:'/register '><hover:show_text:'<green>Подставить команду в чат</green>'><gold><bold>/register &lt;пароль&gt; &lt;повтор&gt;</bold></gold></hover></click>"
+    "reminder": "<gold>Зарегистрируйтесь: /register <пароль> <повтор></gold>"
+    "title": "<gold><bold>РЕГИСТРАЦИЯ</bold></gold>"
+    "title-subtitle": "<yellow>Введите /register <пароль> <повтор></yellow>"
+  "login":
+    "already-authenticated": "<green>Вы уже вошли в аккаунт!</green>"
+    "prompt": "<yellow>Введите пароль для входа на сервер: </yellow><click:suggest_command:'/login '><hover:show_text:'<green>Подставить команду в чат</green>'><gold><bold>/login &lt;пароль&gt;</bold></gold></hover></click>"
+    "register-first": "<yellow>Сначала зарегистрируйте пароль: /register <пароль> <повтор></yellow>"
+    "reminder": "<yellow>Авторизуйтесь: /login <пароль></yellow>"
+    "temp-ban": "<red>Слишком много неверных попыток входа. Аккаунт временно заблокирован на %temp_ip_ban_minutes% мин.</red>"
+    "throttled-blocked": "<red>Вход временно заблокирован: %reason%. Попробуйте позже (%blocked_until%).</red>"
+    "throttled-delay": "<red>Слишком много неудачных попыток. Подождите %delay_seconds% сек.</red>"
+    "title": "<gold><bold>АВТОРИЗАЦИЯ</bold></gold>"
+    "title-subtitle": "<yellow>Введите /login <пароль></yellow>"
+    "two-factor-pending": "<aqua>Пароль уже подтверждён! Введите 6-значный код 2FA: /2fa <код></aqua>"
+    "wrong-password": "<red>Неверный пароль! Осталось попыток до временной блокировки: %remaining%</red>"
+  "two-factor":
+    "cancel":
+      "not-authenticated": "<red>Сначала авторизуйтесь на сервере.</red>"
+      "nothing-pending": "<yellow>У вас нет незавершённой настройки 2FA.</yellow>"
+      "success": "<green>✓ Настройка 2FA отменена.</green>"
+    "confirm":
+      "already-enabled": "<green>У вас уже включена двухфакторная аутентификация (2FA)!</green>"
+      "bad-format": "<red>Код должен состоять из 6 цифр! Использование: /2fa confirm <6-значный_код></red>"
+      "failed": "<red>Не удалось активировать 2FA. Попробуйте снова.</red>"
+      "no-pending": "<yellow>Сначала начните настройку 2FA командой: /2fa setup</yellow>"
+      "success": "<green>✓ Двухфакторная аутентификация (TOTP 2FA) успешно включена! Теперь при входе после пароля потребуется 6-значный код.</green>"
+      "wrong-code": "<red>Неверный 6-значный код! Проверьте правильность ключа и синхронизацию времени на устройстве.</red>"
+    "disable":
+      "not-authenticated": "<red>Сначала авторизуйтесь на сервере, чтобы управлять 2FA.</red>"
+      "not-enabled": "<yellow>На вашем аккаунте не включена двухфакторная аутентификация.</yellow>"
+      "success": "<green>✓ Двухфакторная аутентификация (TOTP 2FA) отключена для вашего аккаунта.</green>"
+      "usage": "<yellow>Укажите текущий 6-значный код 2FA (или пароль): /2fa disable <код_2FA></yellow>"
+      "wrong-code": "<red>Неверный 6-значный код 2FA или пароль! Отключение отменено.</red>"
+    "help": |-
+      <gold>Команды двухфакторной защиты (TOTP 2FA):</gold>
+      <yellow>/%label% setup</yellow><gray> — сгенерировать секретный ключ для приложения-аутентификатора</gray>
+      <yellow>/%label% confirm <код></yellow><gray> — подтвердить ключ 6-значным кодом и включить 2FA</gray>
+      <yellow>/%label% disable <код></yellow><gray> — отключить 2FA (по текущему коду или паролю)</gray>
+      <yellow>/%label% cancel</yellow><gray> — отменить незавершённую настройку 2FA</gray>
+    "login":
+      "already-authenticated": "<green>Вы уже авторизованы на сервере!</green>"
+      "bad-format": "<red>Код 2FA должен состоять из 6 цифр! Использование: /2fa <6-значный_код></red>"
+      "kicked": "<red>Превышено количество неверных попыток ввода кода 2FA (%totp_max_attempts%).</red>"
+      "password-first": "<yellow>Сначала введите пароль от аккаунта: /login <пароль></yellow>"
+      "register-first": "<yellow>Сначала зарегистрируйте пароль: /register <пароль> <повтор></yellow>"
+      "throttled": "<red>Вход временно заблокирован: %reason%. Попробуйте позже.</red>"
+      "wrong-code": "<red>Неверный или уже использованный 6-значный код 2FA! Повторите ввод.</red>"
+    "need-login": "<yellow>Сначала введите пароль: /login <пароль></yellow>"
+    "need-register": "<yellow>Сначала зарегистрируйте пароль: /register <пароль> <повтор></yellow>"
+    "prompt": "<aqua>✓ Пароль верный! Введите 6-значный код TOTP 2FA из приложения: </aqua><click:suggest_command:'/2fa '><hover:show_text:'<green>Подставить команду в чат</green>'><gold><bold>/2fa &lt;6-значный_код&gt;</bold></gold></hover></click>"
+    "reminder": "<aqua>Подтвердите 2FA: /2fa <6-значный_код></aqua>"
+    "reset-not-enabled": "<red>У игрока %target_name% не включена двухфакторная аутентификация.</red>"
+    "reset-players-only": "<red>Эта команда доступна только игрокам. Для сброса 2FA игрока используйте: /pass reset2fa <ник></red>"
+    "reset-success": "<green>✓ TOTP 2FA для игрока %target_name% сброшена.</green>"
+    "setup-instructions":
+      "confirm-command": "<gold><bold>/2fa confirm <6-значный_код></bold></gold>"
+      "confirm-hover": "<yellow>Нажмите, чтобы подставить команду в чат</yellow>"
+      "copy-key": "<green><bold>[ Скопировать секретный ключ ]</bold></green>"
+      "copy-key-hover": "<green>Нажмите, чтобы скопировать Base32 ключ в буфер обмена</green>"
+      "copy-uri": "<aqua><bold>[ Скопировать otpauth:// ссылку ]</bold></aqua>"
+      "copy-uri-hover": "<aqua>Нажмите, чтобы скопировать URI для приложения-аутентификатора</aqua>"
+      "footer-line": "<gold>==============================================</gold>"
+      "header": "<gold><bold>Настройка двухфакторной защиты (TOTP 2FA)</bold></gold>"
+      "header-line": "<gold>==============================================</gold>"
+      "step1": "<gray>1. Откройте приложение </gray>"
+      "step1-apps": "<white>Google Authenticator / 2FAS / Authy / Яндекс Ключ</white>"
+      "step2": "<gray>2. Добавьте аккаунт по секретному ключу (Time-based / По времени):</gray>"
+      "step2-key": "<gray>   Ключ: </gray>"
+      "step3": "<gray>3. Подтвердите привязку текущим кодом из приложения:</gray>"
+      "step3-input": "<yellow>   Введите: </yellow>"
+    "setup":
+      "already-enabled": "<yellow>У вас уже включена TOTP 2FA! Чтобы перепривязать приложение, сначала отключите текущую защиту: /2fa disable <код_2FA></yellow>"
+      "disabled-server": "<red>Двухфакторная аутентификация (2FA) отключена в конфигурации сервера.</red>"
+      "not-authenticated": "<red>Сначала полностью авторизуйтесь на сервере.</red>"
+    "status":
+      "disable-hint": "<gray>Для отключения используйте: </gray>"
+      "disable-hint-command": "<yellow>/%label% disable <6-значный_код></yellow>"
+      "enabled-since": "<green>Включена %since%</green>"
+      "footer": "<gold>==============================================</gold>"
+      "header": "<gold>==============================================</gold>"
+      "pending": "<yellow>Ключ: </yellow><yellow><bold>%secret%</bold></yellow>"
+      "pending-confirm": "<gray>Подтвердите: </gray>"
+      "pending-confirm-cmd": "<gold><bold>/%label% confirm <6-значный_код></bold></gold>"
+      "pending-confirm-hint": "<dark_gray> (или /%label% cancel)</dark_gray>"
+      "pending-hint": "<aqua>Ожидает подтверждения 6-значным кодом</aqua>"
+      "pending-label": "<gray>Статус: </gray>"
+      "setup-button": "<green><bold>[ Включить TOTP 2FA (/%label% setup) ]</bold></green>"
+      "setup-button-hover": "<green>Нажмите, чтобы сгенерировать секретный ключ 2FA</green>"
+      "setup-hint": "<gray>Защитите свой аккаунт приложением Google Authenticator / 2FAS:</gray>"
+      "state-label": "<aqua><bold>Защита TOTP 2FA: </bold></aqua>"
+    "title": "<aqua><bold>2FA ЗАЩИТА</bold></aqua>"
+    "title-subtitle": "<yellow>Введите /2fa <6-значный код></yellow>"
+    "usage-confirm": "<yellow>Использование: /%label% confirm <6-значный_код></yellow>"
+    "usage-disable": "<yellow>Использование: /%label% disable <6-значный_код_или_пароль></yellow>"
+  "session":
+    "cleared": "<green>✓ Сессии игрока %player% завершены.</green>"
+    "list-empty": "<gray>Активных сессий нет.</gray>"
+    "list-entry-active": "<green>- %ip% %uuid% — активна, последний вход: %last-seen%, источник: %source%</green>"
+    "list-entry-expired": "<gray>- %ip% %uuid% — истекла, последний вход: %last-seen%, источник: %source%</gray>"
+    "list-header": "<gold>=== Сессии игрока %player% ===</gold>"
+    "list-hint": "<yellow>Завершить все сессии: /logout</yellow>"
+    "none-active": "<green>У игрока %player% не было активных сессий.</green>"
+    "notice": "<gray>Вы входили с этого IP недавно — пароль и 2FA не требуются %session_minutes% мин. Выйти: /logout</gray>"
+    "restored": "<green>✓ Сессия авторизации восстановлена по IP. Приятной игры!</green>"
+    "restored-actionbar": "<green>Авторизация подтверждена</green>"
+  "no-pass":
+    "prompt": |-
+      <red>==============================================</red>
+      <red><bold>У вас нет активной проходки на сервер!</bold></red>
+      <gray>Стоимость проходки: </gray><gold><bold>%price% ₽</bold></gold><gray> (выдаётся на </gray><aqua>%days% дней</aqua><gray>)</gray>
+      <yellow>ВАЖНО: В поле «Ваше имя» (имя донатера) укажите ваш точный ник: </yellow><green><bold>%player%</bold></green>
+      <click:open_url:'%payment-url%'><hover:show_text:'<green>Нажмите, чтобы перейти к оплате проходки</green>'><aqua><bold><underlined>[ Открыть страницу оплаты DonatePay ]</underlined></bold></aqua></hover></click>
+      <gray>Проходка активируется автоматически сразу после оплаты (не выходя с сервера).</gray>
+      <red>==============================================</red>
+    "reminder": "<red>Нет проходки! Оплатите %price%₽ на DonatePay (укажите ник %player% в имени донатера)</red>"
+    "title": "<red><bold>НЕТ ПРОХОДКИ</bold></red>"
+    "title-subtitle": "<yellow>Донат %price%₽ на DonatePay (ник: %player%)</yellow>"
+  "pass":
+    "activated": |-
+      <gold>==============================================</gold>
+      <green><bold>✓ Проходка на сервер активирована (%source%)!</bold></green>
+      <gray>Срок действия до: </gray><aqua>%until%</aqua>
+      <gold>==============================================</gold>
+    "admin-help": |-
+      <gold>Команды управления проходками:</gold>
+      <yellow>/%label% add <ник></yellow><gray> — выдать/продлить проходку на %grant_days% дней</gray>
+      <yellow>/%label% remove <ник></yellow><gray> — отозвать проходку игрока</gray>
+      <yellow>/%label% check <ник></yellow><gray> — проверить статус проходки, пароля и 2FA игрока</gray>
+      <yellow>/%label% unregister <ник></yellow><gray> — сбросить пароль и 2FA игрока</gray>
+      <yellow>/%label% reset2fa <ник></yellow><gray> — сбросить только TOTP 2FA игрока</gray>
+      <yellow>/%label% status</yellow><gray> — общая статистика плагина</gray>
+      <yellow>/%label% add <ник> [дней]</yellow><gray> — выдать/продлить проходку на произвольный срок</gray>
+      <yellow>/%label% gift <ник> <дней></yellow><gray> — подарить проходку</gray>
+      <yellow>/%label% pending</yellow><gray> — нераспознанные донаты</gray>
+      <yellow>/%label% approve <id> [ник] [дней]</yellow><gray> — подтвердить платёж и выдать проходку</gray>
+      <yellow>/%label% reject <id> [причина]</yellow><gray> — отклонить платёж</gray>
+      <yellow>/%label% sessions <ник></yellow><gray> — активные сессии и IP игрока</gray>
+      <yellow>/%label% logoutall <ник></yellow><gray> — завершить все сессии игрока</gray>
+      <yellow>/%label% stats</yellow><gray> — выручка, конверсия и тарифы</gray>
+      <yellow>/%label% doctor</yellow><gray> — самопроверка конфигурации</gray>
+      <yellow>/%label% audit [ник] [N]</yellow><gray> — последние записи аудита</gray>
+      <yellow>/%label% backup <create|list|restore></yellow><gray> — резервные копии данных</gray>
+      <yellow>/%label% reload</yellow><gray> — перезагрузить config.yml</gray>
+    "claim-success": "<green>✓ Платёж #%id% подтверждён, проходка активирована!</green>"
+    "expired": "<red>Срок вашей месячной проходки истёк! Продлите проходку через DonatePay.</red>"
+    "expiring": "<gold>Внимание! Проходка заканчивается через %remaining% (до %until%). Продлить: %renew%</gold>"
+    "expiry-bar": "<yellow>Проходка заканчивается через %remaining%</yellow>"
+    "gift-notice": "<green>Вам подарили проходку на %days% дн. от %sender%!</green>"
+    "gifted": "<green>✓ Подарок отправлен: <gold>%player%</gold> получил %days% дн. проходки.</green>"
+    "granted": "<green>✓ Проходка выдана игроку <gold><bold>%player%</bold></gold> на %days% дн. (до %until%).</green>"
+    "info":
+      "active": "<green><bold>АКТИВНА</bold></green>"
+      "footer-line": "<gold>==============================================</gold>"
+      "header-line": "<gold>==============================================</gold>"
+      "inactive": "<red><bold>НЕТ / ИСТЕКЛА</bold></red>"
+      "paid-label": "<gray>Оплачено всего: </gray>"
+      "paid-value": "<aqua>%total_paid_kopecks% ₽ (%payments_count% платежей)</aqua>"
+      "payment-code": "<gold>Код оплаты: </gold><gold><bold>%code%</bold></gold>"
+      "payment-code-value": "<gold><bold>%code%</bold></gold>"
+      "registered": "<gray>Регистрация пароля: </gray>%value%"
+      "renew": "<gray>Продлить: </gray><aqua>%url%</aqua><dark_gray> · Сессии: /session · Выйти: /logout</dark_gray>"
+      "status": "<gray>Статус проходки: </gray>"
+      "two-factor": "<gray>Защита TOTP 2FA: </gray>%value%"
+      "until-label": "<gray>Действует до: </gray>"
+      "until-value": "<yellow> (осталось %now%)</yellow>"
+    "kick-timeout": "<red>Вы не авторизовались за %seconds% сек. Зайдите снова и введите пароль.</red>"
+    "not-active": "<red>У игрока %target_name% не найдено активной проходки.</red>"
+    "not-registered": "<red>Игрок %target_name% ещё не регистрировал пароль.</red>"
+    "password-reset": "<yellow>Ваш пароль был сброшен администратором. Зарегистрируйте новый пароль!</yellow>"
+    "password-reset-notice": "<green>✓ Пароль (и 2FA) игрока %target_name% сброшены. Проходка сохранена.</green>"
+    "revoked": "<red>Ваша проходка была отозвана администратором.</red>"
+    "revoked-notice": "<green>✓ Проходка игрока %target_name% отозвана.</green>"
+    "tier-line": "<yellow>%price% ₽</yellow><gray> → </gray><aqua>%days% дн.%label%</aqua>"
+    "two-factor-not-enabled": "<red>У игрока %target_name% не включена двухфакторная аутентификация.</red>"
+    "two-factor-reset": "<yellow>Двухфакторная аутентификация (2FA) вашего аккаунта была сброшена администратором.</yellow>"
+    "two-factor-reset-notice": "<green>✓ Двухфакторная защита (2FA) игрока %target_name% сброшена.</green>"
+  "stats":
+    "conversion": "<gray>Конверсия: </gray><green>%active% активных проходок из %total% известных аккаунтов (%percent%%)</green>"
+    "granted": "<gray>Всего выдано донатами: </gray><white>%count% платежей</white>"
+    "header": "<gold>=== Статистика донатов ===</gold>"
+    "pending": "<gray>Ждут решения: </gray><yellow>%count% платежей (/pass pending)</yellow>"
+    "revenue": "<gray>Выручка (подтверждённые донаты): </gray><aqua>24ч: %day% ₽, 7д: %week% ₽, 30д: %month% ₽</aqua>"
+    "tiers": "<gray>Тарифы: </gray><white>%tiers%</white>"
+  "account":
+    "grant-source": "<gray>Источник выдачи: </gray><white>%value%</white>"
+    "header": "<gold>=== Информация об игроке %player_name% ===</gold>"
+    "last-auth-label": "<gray>Последний вход: </gray>"
+    "last-auth-value": "<white>%last_auth_ip% %last_auth_at%</white>"
+    "last-grant-label": "<gray>Последняя выдача: </gray>"
+    "last-grant-value": "<white>%last_grant_days% дн., источник %last_grant_source%, %last_grant_at%</white>"
+    "mute-label": "<gray>Мут: </gray>"
+    "mute-value": "<red>до %until%%reason%</red>"
+    "not-found": "<red>Игрок %target_name% не найден в базе плагина.</red>"
+    "paid-label": "<gray>Всего оплачено: </gray>"
+    "paid-value": "<aqua>%total_paid_kopecks% ₽ (%payments_count% платежей, последний: %last_payment_at%)</aqua>"
+    "pass": "<gray>Проходка: </gray>%value%"
+    "registered": "<gray>Пароль зарегистрирован: </gray>%value%"
+    "sessions-label": "<gray>Сессии: </gray>"
+    "sessions-value": "<white>%count% шт. (/pass sessions %player%)</white>"
+    "stage": "<gray>Статус на сервере: </gray>%value%"
+    "state-awaiting": "<yellow>ожидает (/register)</yellow>"
+    "state-registered": "<green>зарегистрирован</green>"
+    "state-totp-off": "<gray>не подключена (/2fa setup)</gray>"
+    "state-totp-on": "<green>включена</green>"
+    "state-totp-on-since": "<green>включена (%since%)</green>"
+    "two-factor": "<gray>TOTP 2FA: </gray>%value%"
+    "until-label": "<gray>Срок до: </gray>"
+    "until-value": "<aqua>%until% (%remaining%)</aqua>"
+  "donation":
+    "approve-failed": "<red>Не удалось подтвердить платёж #%id%.</red>"
+    "approved": "<green>✓ Платёж #%id% подтверждён, проходка выдана игроку %target_name%.</green>"
+    "claim":
+      "already-processed": "<yellow>Этот платёж уже обработан администрацией.</yellow>"
+      "name-mismatch": "<red>Имя донатера в платеже не совпадает с вашим ником — обратитесь к администрации.</red>"
+      "not-found": "<red>Платёж с ID %id% не найден в журнале.</red>"
+    "not-found": "<red>Платёж #%id% не найден в журнале.</red>"
+    "not-found-short": "<red>Платёж #%id% не найден.</red>"
+    "pending-empty": "<green>Нераспознанных донатов нет — всё выдано автоматически.</green>"
+    "pending-entry": "<yellow>#%id% %donor% — %amount% ₽, %status%</yellow><gray>%note%</gray><aqua>%suggested%</aqua><dark_gray> | %created%</dark_gray>"
+    "pending-header": "<gold>=== Донаты, требующие решения (%size%) ===</gold>"
+    "pending-hint": "<gray>Выдать: /%label% approve <id> [ник] [дней] | Отклонить: /%label% reject <id> [причина]</gray>"
+    "rejected": "<yellow>Платёж #%id% отклонён.</yellow>"
+    "suggested": " → похоже на %name%"
+  "audit":
+    "empty": "<yellow>Записей аудита не найдено.</yellow>"
+    "entry": "<gray>%time% %event% | %actor%%target%%ip%%details%</gray>"
+    "header": "<gold>=== Аудит%filter% ===</gold>"
+  "backup":
+    "create-failed": "<red>Не удалось создать бэкап.</red>"
+    "created": "<green>✓ Бэкап создан: %path%</green>"
+    "empty": "<yellow>Бэкапов нет.</yellow>"
+    "entry": "<gray>- %backup%</gray>"
+    "header": "<gold>=== Бэкапы ===</gold>"
+    "hint": "<dark_gray>Восстановление: /%label% backup restore <файл></dark_gray>"
+    "invalid-path": "<red>Недопустимый путь к файлу бэкапа.</red>"
+    "restore-failed": "<red>Не удалось восстановить из указанного файла.</red>"
+    "restored": "<green>✓ Данные восстановлены из %file%.</green>"
+  "doctor":
+    "check-ok": "<green>[OK] </green><gray>%name%</gray>"
+    "check-warning": "<yellow>[ВНИМАНИЕ] </yellow><gray>%name%</gray> <yellow>— %warning%</yellow>"
+    "footer": "<gray>Проверок выполнено: 9. Запустите /pass stats для сводки.</gray>"
+    "header": "<gold>=== Проверка конфигурации (/pass doctor) ===</gold>"
+  "config":
+    "messages-ok": "<green>messages.yml загружен без ошибок.</green>"
+    "messages-problem": "<gray> • %problem%</gray>"
+    "messages-problems": "<yellow>messages.yml: найдено проблем — %count%. Первые из них:</yellow>"
+    "reloaded": "<green>✓ Конфигурация CHRDK_F_REGISTER перезагружена.</green>"
+  "status":
+    "accounts": "<gray>Зарегистрировано паролей: </gray>"
+    "accounts-value": "<aqua>%registered% / %total%</aqua>"
+    "active-passes": "<gray>Активных проходок: </gray><green>%count%</green>"
+    "auto-messages": "<gray>Автосообщения: %value%</gray>"
+    "auto-messages-value": "<aqua>каждые %seconds% сек. (%count% шт.)</aqua>"
+    "chat": "<gray>Встроенный чат: %state% (радиус %radius% блоков)</gray>"
+    "donatepay": "<gray>DonatePay: %value%</gray>"
+    "donatepay-label": "<gray>Условия доната: </gray>"
+    "donatepay-value": "<yellow>%minimum_donation_rubles% ₽ на %grant_days% дн.</yellow>"
+    "header": "<gold>=== Статус CHRDK_F_REGISTER ===</gold>"
+    "session-label": "<gray>Сессия по IP: </gray>"
+    "session-value": "<white>%session_minutes% мин.</white>"
+    "two-factor": "<gray>Аккаунтов с TOTP 2FA: </gray>"
+    "two-factor-value": "<aqua>%enabled% (2FA в конфиге: %state%)</aqua>"
+  "chat":
+    "blocked-login": "<red>Чат заблокирован! Авторизуйтесь: /login <пароль></red>"
+    "blocked-no-pass": "<red>Чат заблокирован до покупки проходки на DonatePay!</red>"
+    "blocked-register": "<red>Чат заблокирован! Зарегистрируйтесь: /register <пароль> <повтор></red>"
+    "blocked-two-factor": "<red>Чат заблокирован! Подтвердите вход кодом 2FA: /2fa <6-значный_код></red>"
+    "caps-fixed": "<yellow>Пожалуйста, не пишите капсом — сообщение было исправлено.</yellow>"
+    "cleared-all": "<green>Чат очищен для всех игроков.</green>"
+    "cleared-player": "<green>Чат очищен для игрока %target%.</green>"
+    "cooldown": "<red>Подождите %remaining% сек. перед следующим сообщением.</red>"
+    "disabled": "<red>Встроенный чат отключён в конфигурации сервера.</red>"
+    "duplicate": "<red>Это сообщение вы уже недавно отправляли!</red>"
+    "filter-admin-note": "<yellow>[CHRDK] Сообщение игрока %player% заблокировано фильтром чата.</yellow>"
+    "filter-blocked": "<red>Сообщение содержит запрещённые слова или ссылки и не было отправлено.</red>"
+    "help-broadcast": "<yellow>/%label% broadcast <текст></yellow>"
+    "help-broadcast-desc": "<gray> — объявление от лица сервера</gray>"
+    "help-clear": "<yellow>/%label% clear [ник]</yellow>"
+    "help-clear-desc": "<gray> — очистить чат</gray>"
+    "help-header": "<gold>=== Чат CHRDK_F_REGISTER ===</gold>"
+    "help-history": "<yellow>/%label% history <ник|ip> [N]</yellow>"
+    "help-history-desc": "<gray> — последние сообщения из истории чата</gray>"
+    "help-ignore": "<yellow>/ignore <ник></yellow>"
+    "help-ignore-desc": "<gray> — скрыть сообщения игрока, /ignore list — список</gray>"
+    "help-mode": "<yellow>/%label% [global|local|status]</yellow>"
+    "help-mode-desc": "<gray> — режим чата (без аргументов — переключить)</gray>"
+    "help-msg": "<yellow>/msg <ник> <текст></yellow>"
+    "help-msg-desc": "<gray> — личное сообщение, /r <текст> — ответ</gray>"
+    "help-quick": "<yellow>%quick_global_prefix%<текст></yellow>"
+    "help-quick-desc": "<gray> — разовое сообщение в глобальный чат</gray>"
+    "help-send": "<yellow>/%label% <текст></yellow>"
+    "help-send-desc": "<gray> — отправить текст в текущий режим чата</gray>"
+    "help-slow": "<yellow>/%label% slow <секунды|off></yellow>"
+    "help-slow-desc": "<gray> — медленный режим общего чата</gray>"
+    "help-spy": "<yellow>/socialspy [on|off]</yellow>"
+    "help-spy-desc": "<gray> — просмотр личных сообщений игроков</gray>"
+    "history-empty": "<yellow>Записей не найдено.</yellow>"
+    "history-header": "<gold>=== История чата (%args%) ===</gold>"
+    "mention-hover": "<gray>Нажмите, чтобы написать %candidate%</gray>"
+    "mention-notify": "<yellow>Вас упомянул(а) %sender_name% в чате</yellow>"
+    "mode-global": "<gray>Режим чата: </gray><gold>%channel%</gold>"
+    "mode-local": "<gray>Режим чата: </gray><green>%channel%</green>"
+    "mode-switched": "<gray>Режим чата переключён: </gray><aqua>%channel%</aqua>"
+    "no-permission-broadcast": "<red>Недостаточно прав для объявлений.</red>"
+    "no-permission-clear": "<red>Недостаточно прав для очистки чата.</red>"
+    "no-permission-history": "<red>Недостаточно прав для просмотра истории чата.</red>"
+    "no-permission-slow": "<red>Недостаточно прав для управления медленным режимом.</red>"
+    "no-permission-socialspy": "<red>Недостаточно прав для просмотра личных сообщений.</red>"
+    "not-authenticated": "<red>Сначала авторизуйтесь на сервере, чтобы писать в чат.</red>"
+    "slow-bad-value": "<red>Укажите количество секунд или off.</red>"
+    "slow-mode-wait": "<red>Медленный режим: подождите %wait_millis% сек. перед сообщением в общий чат.</red>"
+    "slow-off": "<green>Медленный режим общего чата выключен.</green>"
+    "slow-on": "<green>Медленный режим общего чата: %slow_mode_seconds% сек.</green>"
+    "status": |-
+      <gray>Ваш режим чата: </gray><aqua>%channel%</aqua>
+      <gray>Радиус локального чата: </gray><white>%radius% блоков</white>
+      <gray>Разовое сообщение всем: </gray><yellow>%prefix%текст</yellow>
+    "too-long": "<red>Сообщение слишком длинное! Максимум %max_message_length% символов.</red>"
+    "too-many-mentions": "<red>Слишком много упоминаний в одном сообщении (максимум %max_mentions%).</red>"
+    "usage-broadcast": "<yellow>Использование: /%label% broadcast <текст></yellow>"
+    "usage-history": "<yellow>Использование: /%label% history <ник|ip> [N]</yellow>"
+    "usage-slow": "<yellow>Использование: /%label% slow <секунды|off></yellow>"
+  "mute":
+    "applied": "<green>Игрок %target% заглушён на %duration%.</green>"
+    "bad-duration": "<red>Не удалось разобрать время. Примеры: 10m, 2h, 1d, 30.</red>"
+    "cannot-write": "<red>Вам запрещено писать в чат ещё %duration%%reason%</red>"
+    "list-empty": "<gray>Активных мутов нет. Добавить: /%label% <ник> <время></gray>"
+    "list-entry": "<gray>- %player% (ещё %remaining%, причина: %reason%)</gray>"
+    "no-permission": "<red>Недостаточно прав для управления мутами.</red>"
+    "no-reason": "не указана"
+    "not-muted": "<yellow>У игрока %target_name% нет активного мута.</yellow>"
+    "notice": "<red>Вам запрещено писать в чат на %duration%%reason%</red>"
+    "notice-reason": " (%reason%)"
+    "removed": "<green>Мут снят с игрока %target_name%.</green>"
+    "usage": "<yellow>Использование: /%label% <ник> <10m|2h|1d> [причина]</yellow>"
+    "usage-unmute": "<yellow>Использование: /unmute <ник></yellow>"
+  "private-messages":
+    "disabled": "<red>Личные сообщения отключены в конфигурации сервера.</red>"
+    "empty": "<red>Сообщение не может быть пустым.</red>"
+    "ignored": "<red>Игрок %target% вас игнорирует.</red>"
+    "no-partner": "<yellow>Вам ещё не писали в личные сообщения или вы уже вышли из игры.</yellow>"
+    "partner-offline": "<red>Игрок, которому вы отвечаете, уже не в сети.</red>"
+    "self": "<red>Нельзя отправить личное сообщение самому себе.</red>"
+    "too-long": "<red>Личное сообщение слишком длинное! Максимум %max_message_length% символов.</red>"
+    "usage": "<yellow>Использование: /%label% <ник> <сообщение></yellow>"
+    "usage-reply": "<yellow>Использование: /%label% <сообщение></yellow>"
+  "socialspy":
+    "state": "<gray>Режим слежки за личными сообщениями: </gray>%state%"
+  "ignore":
+    "added": "<green>Игрок %target_name% добавлен в игнор: его сообщения и личные сообщения будут скрыты.</green>"
+    "already": "<yellow>Игрок %target_name% уже находится в вашем списке игнорирования.</yellow>"
+    "help-add": "<yellow>/%label% <ник></yellow>"
+    "help-add-desc": "<gray> — игнорировать игрока</gray>"
+    "help-header": "<gold>Игнорирование игроков:</gold>"
+    "help-list": "<yellow>/%label% list</yellow>"
+    "help-list-desc": "<gray> — список игнорируемых игроков</gray>"
+    "help-remove": "<yellow>/%label% remove <ник></yellow>"
+    "help-remove-desc": "<gray> — снять игнорирование</gray>"
+    "list": "<gray>Игнорируются (%size%): </gray><white>%players%</white>"
+    "list-empty": "<gray>Вы никого не игнорируете.</gray>"
+    "not-listed": "<yellow>Игрок %target_name% не найден в вашем списке игнорирования.</yellow>"
+    "removed": "<green>Игрок %target_name% больше не игнорируется.</green>"
+    "self": "<red>Нельзя игнорировать самого себя.</red>"
+  "bruteforce":
+    "multi-alt": "<yellow>[CHRDK] С одного IP (%ip%) заходят несколько аккаунтов с проходками: %sharing%</yellow>"
+    "notify": "<red>[CHRDK] %message%</red>"
+  "auth":
+    "success-actionbar": "<green>Доступ открыт!</green>"
+  "logout":
+    "success": "<green>✓ Вы вышли из аккаунта. Сессия по IP сброшена, пароль потребуется снова.</green>"
