@@ -174,8 +174,10 @@ public final class HomeStore {
         if (!(raw instanceof Map<?, ?> map)) {
             return null;
         }
-        String name = String.valueOf(map.getOrDefault("name", fallbackName));
-        String world = String.valueOf(map.getOrDefault("world", "world"));
+        Object nameRaw = map.get("name");
+        Object worldRaw = map.get("world");
+        String name = nameRaw == null ? fallbackName : String.valueOf(nameRaw);
+        String world = worldRaw == null ? "world" : String.valueOf(worldRaw);
         if (!isValidName(name) || "null".equals(world)) {
             return null;
         }
