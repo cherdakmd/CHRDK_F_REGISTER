@@ -342,10 +342,14 @@ public final class Messages {
     }
 
     private static Map<String, String> flatten(ConfigurationSection section) {
+        // Файл читается с корневой секцией messages: — в коде ключи используются без неё.
+        ConfigurationSection root = section.isConfigurationSection("messages")
+                ? section.getConfigurationSection("messages")
+                : section;
         Map<String, String> result = new LinkedHashMap<>();
-        for (String key : section.getKeys(true)) {
-            if (section.isConfigurationSection(key)) continue;
-            Object value = section.get(key);
+        for (String key : root.getKeys(true)) {
+            if (root.isConfigurationSection(key)) continue;
+            Object value = root.get(key);
             if (value == null) continue;
             if (value instanceof List<?> list) {
                 StringBuilder joined = new StringBuilder();
