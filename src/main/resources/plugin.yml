@@ -4,7 +4,7 @@ main: ru.cherdakmd.chrdkregister.RegisterPlugin
 api-version: '1.21.11'
 authors:
   - cherdakmd
-description: Плагин проходки через DonatePay (150р на 1 месяц) с регистрацией, авторизацией по паролю и TOTP 2FA для Purpur 1.21.11
+description: Плагин проходки через DonatePay (150р на 1 месяц) с регистрацией, авторизацией по паролю, TOTP 2FA и встроенным чатом (локальный/глобальный, ЛС, автосообщения) для Purpur 1.21.11
 
 commands:
   register:
@@ -27,8 +27,49 @@ commands:
     description: Проверка статуса проходки и управление проходками
     usage: /<command> [add|remove|check|unregister|reset2fa|status|reload] [ник]
     aliases: [fregister, prohodka]
+  chat:
+    description: Управление чатом — локальный/глобальный режим, очистка, объявления
+    usage: /<command> [global|local|status|help|clear|broadcast] [текст]
+    aliases: [ch]
+  msg:
+    description: Отправить личное сообщение игроку
+    usage: /<command> <ник> <сообщение>
+    aliases: [m, tell, w, whisper, pm]
+  reply:
+    description: Ответить на последнее личное сообщение
+    usage: /<command> <сообщение>
+    aliases: [r]
+  ignore:
+    description: Скрыть сообщения и личные сообщения игрока
+    usage: /<command> [ник|add|remove|list]
+    aliases: [ign]
+  unignore:
+    description: Снять игнорирование с игрока
+    usage: /<command> <ник>
+  socialspy:
+    description: Просмотр личных сообщений игроков (для администрации)
+    usage: /<command> [on|off]
+    aliases: [spy]
 
 permissions:
   chrdkregister.admin:
     description: Доступ к ручному добавлению игроков и управлению плагином
     default: op
+  chrdkregister.chat.color:
+    description: Использование цветовых кодов (&c, &l и т.п.) в чате и личных сообщениях
+    default: op
+  chrdkregister.chat.bypass:
+    description: Обход ограничений чата — задержки, лимита длины, анти-капса и защиты от повторов
+    default: op
+  chrdkregister.chat.socialspy:
+    description: Просмотр личных сообщений игроков командой /socialspy
+    default: op
+  chrdkregister.chat.clear:
+    description: Очистка чата командой /chat clear
+    default: op
+  chrdkregister.chat.broadcast:
+    description: Объявления от лица сервера командой /chat broadcast
+    default: op
+  chrdkregister.automessage.receive:
+    description: Получать автоматические сообщения сервера
+    default: true

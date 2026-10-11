@@ -21,6 +21,7 @@ public final class PluginConfig {
     private final String totpIssuer;
     private final int totpWindowSteps;
     private final int totpMaxAttempts;
+    private final ChatConfig chat;
 
     public PluginConfig(
             String donatePayApiToken,
@@ -50,7 +51,8 @@ public final class PluginConfig {
                 true,
                 "CHRDK",
                 1,
-                maxLoginAttempts
+                maxLoginAttempts,
+                new ChatConfig()
         );
     }
 
@@ -69,7 +71,8 @@ public final class PluginConfig {
             boolean totpEnabled,
             String totpIssuer,
             int totpWindowSteps,
-            int totpMaxAttempts
+            int totpMaxAttempts,
+            ChatConfig chat
     ) {
         this.donatePayApiToken = donatePayApiToken == null ? "" : donatePayApiToken.trim();
         this.donatePayPaymentUrl = sanitizeUrl(donatePayPaymentUrl);
@@ -86,6 +89,7 @@ public final class PluginConfig {
         this.totpIssuer = (totpIssuer == null || totpIssuer.isBlank()) ? "CHRDK" : totpIssuer.trim();
         this.totpWindowSteps = Math.clamp(totpWindowSteps, 0, 10);
         this.totpMaxAttempts = Math.clamp(totpMaxAttempts, 1, 20);
+        this.chat = chat == null ? new ChatConfig() : chat;
     }
 
     public static PluginConfig fromBukkitConfig(FileConfiguration config) {
@@ -105,7 +109,8 @@ public final class PluginConfig {
                 config.getBoolean("totp.enabled", true),
                 config.getString("totp.issuer", "CHRDK"),
                 config.getInt("totp.window-steps", 1),
-                config.getInt("totp.max-attempts", maxLoginAttempts)
+                config.getInt("totp.max-attempts", maxLoginAttempts),
+                ChatConfig.fromBukkitConfig(config)
         );
     }
 
@@ -167,6 +172,10 @@ public final class PluginConfig {
 
     public int totpMaxAttempts() {
         return totpMaxAttempts;
+    }
+
+    public ChatConfig chat() {
+        return chat;
     }
 
     public boolean donatePayReady() {
