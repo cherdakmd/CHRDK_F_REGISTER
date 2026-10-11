@@ -45,7 +45,8 @@ class MessagesTest {
     private static final List<String> DYNAMIC_PREFIXES = List.of(
             "password.error.", "password.hint.", "password.strength.", "donation.");
     private static final Set<String> INDIRECT_KEYS = Set.of(
-            "register.success", "login.success", "chat.broadcast-prefix");
+            "register.success", "login.success", "chat.broadcast-prefix",
+            "dialog.password-missing", "dialog.confirm-mismatch", "dialog.code-missing");
 
     private static final String RESOURCE_PATH = "src/main/resources/messages.yml";
 
