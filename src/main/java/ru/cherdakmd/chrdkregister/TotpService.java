@@ -2,13 +2,13 @@ package ru.cherdakmd.chrdkregister;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.ByteArrayOutputStream;
 import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
-import java.util.ByteArrayOutputStream;
 import java.util.Locale;
 import java.util.OptionalLong;
 
