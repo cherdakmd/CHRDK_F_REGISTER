@@ -98,11 +98,14 @@ public final class DailyStore {
         return progress.streak;
     }
 
-    /** Административная установка стрика (последний день обнуляется — взять снова можно завтра… точнее сразу). */
-    public synchronized void setStreak(UUID uuid, int streak) {
+    /**
+     * Административная установка стрика: стрик становится N, последний взятый день —
+     * СЕГОДНЯ, поэтому следующая награда будет доступна завтра и продолжит цепочку с N+1.
+     */
+    public synchronized void setStreak(UUID uuid, int streak, long nowMillis) {
         Progress progress = progressOf(uuid);
         progress.streak = Math.max(0, streak);
-        progress.lastClaimDay = -1;
+        progress.lastClaimDay = dayOf(nowMillis);
         dirty = true;
     }
 

@@ -133,7 +133,7 @@ public final class DailyCommandHandler implements TabExecutor {
                         "claimed", plugin.messages().raw("daily.claimed-no"));
                 return true;
             }
-            plugin.store().setStreak(uuid, streak);
+            plugin.store().setStreak(uuid, streak, System.currentTimeMillis());
             plugin.messages().send(sender, "admin.set-ok", "player", name, "streak", Math.max(0, streak));
             return true;
         }

@@ -58,11 +58,11 @@ class DailyStoreTest {
         UUID id = UUID.randomUUID();
         long t0 = DAY * 21_500L + 1000;
         store.claim(id, t0);
-        store.setStreak(id, 10);
+        store.setStreak(id, 10, t0);
         DailyStore.Progress progress = store.progressOf(id);
         assertEquals(10, progress.streak);
-        assertTrue(store.canClaim(id, t0), "после set можно взять заново (lastClaimDay сброшен)");
-        assertEquals(11, store.claim(id, t0), "стрик продолжается от установленного");
+        assertFalse(store.canClaim(id, t0), "после set сегодняшняя считается взятой");
+        assertEquals(11, store.claim(id, t0 + DAY), "завтра стрик продолжится с установленного");
     }
 
     @Test
