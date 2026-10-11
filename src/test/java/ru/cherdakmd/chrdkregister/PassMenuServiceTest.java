@@ -60,7 +60,7 @@ class PassMenuServiceTest {
         for (boolean authenticated : new boolean[]{false, true}) {
             for (boolean admin : new boolean[]{false, true}) {
                 List<PassMenuService.MenuEntry> layout = PassMenuService.layout(authenticated, admin);
-                assertEquals(layout.size(), slotsOf(layout).size().intValue(),
+                assertEquals(layout.size(), slotsOf(layout).size(),
                         "слоты не должны пересекаться (auth=" + authenticated + ", admin=" + admin + ")");
                 for (PassMenuService.MenuEntry entry : layout) {
                     assertTrue(entry.slot() >= 0 && entry.slot() < PassMenuService.INVENTORY_SIZE,
