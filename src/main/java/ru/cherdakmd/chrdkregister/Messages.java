@@ -93,12 +93,12 @@ public final class Messages {
 
     /** Загружает тексты для работающего плагина: значения по умолчанию из JAR + настройки с диска. */
     public static Messages load(JavaPlugin plugin, String locale, Logger logger) {
-        Map<String, String> defaults = readResource(plugin, RESOURCE_NAME);
+        Map<String, String> defaults = readResource(plugin, RESOURCE_NAME, logger);
         String fileName = locale == null || locale.isBlank() || "ru".equalsIgnoreCase(locale)
                 ? FILE_NAME
                 : "messages_" + locale.toLowerCase(Locale.ROOT) + ".yml";
         if (!"messages.yml".equals(fileName)) {
-            Map<String, String> localeDefaults = readResource(plugin, fileName);
+            Map<String, String> localeDefaults = readResource(plugin, fileName, logger);
             if (!localeDefaults.isEmpty()) {
                 Map<String, String> merged = new LinkedHashMap<>(defaults);
                 merged.putAll(localeDefaults);
@@ -309,7 +309,7 @@ public final class Messages {
         }
     }
 
-    private static Map<String, String> readResource(JavaPlugin plugin, String name) {
+    private static Map<String, String> readResource(JavaPlugin plugin, String name, Logger logger) {
         try (InputStream stream = plugin.getResource(name)) {
             if (stream == null) return Map.of();
             return read(stream);
