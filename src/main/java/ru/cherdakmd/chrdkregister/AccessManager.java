@@ -219,8 +219,11 @@ public final class AccessManager {
         lastChatReminderAt.clear();
         authSource.clear();
         joinedAt.clear();
-        for (BossBar bar : expiryBars.values()) {
-            bar.hide();
+        for (Map.Entry<UUID, BossBar> entry : expiryBars.entrySet()) {
+            Player online = Bukkit.getPlayer(entry.getKey());
+            if (online != null) {
+                online.hideBossBar(entry.getValue());
+            }
         }
         expiryBars.clear();
         store.flushBlocking();

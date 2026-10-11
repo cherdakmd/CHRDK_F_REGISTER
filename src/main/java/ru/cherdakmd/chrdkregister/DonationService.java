@@ -188,7 +188,7 @@ public final class DonationService {
         Optional<RegistrationStore.DonationRecord> existing = store.getDonation(donationId);
         if (existing.isEmpty()) return false;
         RegistrationStore.DonationRecord record = existing.get();
-        int grantDays = days > 0 ? days : config.daysForAmount(toRubles(record.amountKopecks));
+        int grantDays = days > 0 ? days : config.daysForAmount((int) (record.amountKopecks / 100L));
         long passUntil = store.grantPassManual(playerName, nowMillis, grantDays * 86_400_000L,
                 "donatepay:#" + donationId).passUntil;
         store.addPayment(playerName, record.amountKopecks, nowMillis);
