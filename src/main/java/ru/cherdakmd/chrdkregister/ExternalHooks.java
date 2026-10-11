@@ -46,7 +46,7 @@ public final class ExternalHooks {
         try {
             RegisteredServiceProvider<Economy> registration = services.getRegistration(Economy.class);
             return registration == null ? null : registration.getProvider();
-        } catch (NoClassDefFoundError | LinkageError e) {
+        } catch (LinkageError e) {
             return null; // Vault не установлен
         }
     }
@@ -55,7 +55,7 @@ public final class ExternalHooks {
         try {
             RegisteredServiceProvider<Permission> registration = services.getRegistration(Permission.class);
             return registration == null ? null : registration.getProvider();
-        } catch (NoClassDefFoundError | LinkageError e) {
+        } catch (LinkageError e) {
             return null;
         }
     }
@@ -64,7 +64,7 @@ public final class ExternalHooks {
         try {
             RegisteredServiceProvider<LuckPerms> registration = services.getRegistration(LuckPerms.class);
             return registration == null ? null : registration.getProvider();
-        } catch (NoClassDefFoundError | LinkageError e) {
+        } catch (LinkageError e) {
             return null;
         }
     }
