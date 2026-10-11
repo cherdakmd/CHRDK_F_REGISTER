@@ -167,5 +167,11 @@ public final class TotpQrMapService {
         public void render(@NotNull MapView view, @NotNull MapCanvas canvas, @NotNull Player player) {
             renderFor(canvas, player);
         }
+
+        /** Обязательный метод Purpur Explorer Map API: наша карта — не карта сокровищ. */
+        @Override
+        public boolean isExplorerMap() {
+            return false;
+        }
     }
 }
