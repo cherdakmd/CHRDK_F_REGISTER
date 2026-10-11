@@ -641,6 +641,13 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 "вебхук задан, но notifications.events пуст — уведомления не отправляются");
         check(sender, "Хранилище доступно для записи", storeWritable(),
                 "нет доступа на запись в data.json — данные могут не сохраняться");
+        check(sender, "Vault (экономика и права)", plugin.externalHooks().economy().isPresent()
+                        || plugin.externalHooks().permissions().isPresent(),
+                "Vault не установлен — экономика для аддонов недоступна (опционально)");
+        check(sender, "LuckPerms", plugin.externalHooks().luckPerms().isPresent(),
+                cfg.passGroup().isBlank()
+                        ? "LuckPerms не установлен (опционально — нужен для integrations.pass-group)"
+                        : "задан integrations.pass-group, но LuckPerms не найден — группы не синхронизируются!");
         messages.send(sender, "doctor.footer");
     }
 

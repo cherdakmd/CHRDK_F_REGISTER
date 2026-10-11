@@ -12,7 +12,12 @@ import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.event.Event;
 import org.bukkit.plugin.java.JavaPlugin;
+import ru.cherdakmd.chrdkregister.api.events.PassExpiredEvent;
+import ru.cherdakmd.chrdkregister.api.events.PassGrantedEvent;
+import ru.cherdakmd.chrdkregister.api.events.PassRevokedEvent;
+import ru.cherdakmd.chrdkregister.api.events.PlayerAuthCompletedEvent;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.math.BigDecimal;
@@ -57,7 +62,7 @@ public final class AccessManager {
         AUTHENTICATED
     }
 
-    private final JavaPlugin plugin;
+    private final RegisterPlugin plugin;
     private final RegistrationStore store;
     private final DonatePayClient donatePay;
     private final Logger logger;
@@ -95,7 +100,7 @@ public final class AccessManager {
     private volatile long lastDonatePayWarningMillis;
 
     public AccessManager(
-            JavaPlugin plugin,
+            RegisterPlugin plugin,
             PluginConfig config,
             RegistrationStore store,
             DonatePayClient donatePay,
@@ -1107,6 +1112,8 @@ public final class AccessManager {
                 AuditLog.details("days", lengthDays, "source", source, "passUntil", account.passUntil));
         notifications.notify("pass.granted", "Проходка выдана вручную",
                 "Игрок: " + targetPlayerName + "\nДней: " + lengthDays + "\nИсточник: " + source, "good");
+        plugin.luckPermsPassSync().onPassGranted(targetPlayerName);
+        fireEventSync(new PassGrantedEvent(targetPlayerName, account.passUntil, lengthDays, source));
         return account;
     }
 
@@ -1114,6 +1121,9 @@ public final class AccessManager {
      * Callback used by {@link DonationService} when a payment extends someone's pass.
      */
     public void onPassGranted(String playerName, long passUntil, String sourceDescription) {
+        plugin.luckPermsPassSync().onPassGranted(playerName);
+        int days = Math.max(0, (int) ((passUntil - System.currentTimeMillis()) / 86_400_000L));
+        fireEventSync(new PassGrantedEvent(playerName, passUntil, days, sourceDescription));
         Player online = Bukkit.getPlayerExact(playerName);
         if (online != null) {
             notifyOnlinePassActivated(online, passUntil, sourceDescription);
@@ -1144,6 +1154,8 @@ public final class AccessManager {
         audit.log(AuditLog.PASS_REVOKE, "admin", targetPlayerName, "");
         notifications.notify("pass.revoked", "Проходка отозвана",
                 "Игрок: " + targetPlayerName, "warn");
+        plugin.luckPermsPassSync().onPassRevoked(targetPlayerName);
+        fireEventSync(new PassRevokedEvent(targetPlayerName));
         return true;
     }
 
@@ -1214,6 +1226,19 @@ public final class AccessManager {
         player.sendMessage(messages.get(successKey));
         player.sendActionBar(messages.get("auth.success-actionbar"));
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.2f);
+        fireEventSync(new PlayerAuthCompletedEvent(player));
+    }
+
+    /**
+     * Вызывает Bukkit-событие для аддонов строго на главном потоке: если место вызова оказалось
+     * в асинхронном потоке (например, опрос DonatePay), перебрасывает в tick.
+     */
+    private void fireEventSync(Event event) {
+        if (Bukkit.isPrimaryThread()) {
+            Bukkit.getPluginManager().callEvent(event);
+        } else {
+            Bukkit.getScheduler().runTask(plugin, () -> Bukkit.getPluginManager().callEvent(event));
+        }
     }
 
     private void notifyOnlinePassActivated(Player player, long passUntil, String sourceDescription) {
@@ -1249,6 +1274,8 @@ public final class AccessManager {
                     player.closeInventory();
                     messages.send(player, "pass.expired");
                     audit.log(AuditLog.PASS_EXPIRE, player.getName(), player.getName(), getPlayerIp(player));
+                    plugin.luckPermsPassSync().onPassExpired(player.getName());
+                    fireEventSync(new PassExpiredEvent(player.getName()));
                     sendNoPassPrompt(player, true);
                     continue;
                 }

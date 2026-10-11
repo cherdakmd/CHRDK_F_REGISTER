@@ -1,7 +1,9 @@
 package ru.cherdakmd.chrdkregister;
 
 import org.bukkit.command.PluginCommand;
+import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
+import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -14,6 +16,8 @@ public final class RegisterPlugin extends JavaPlugin {
     private AccessManager accessManager;
     private ChatService chatService;
     private PassMenuService passMenuService;
+    private ExternalHooks externalHooks;
+    private LuckPermsPassSync luckPermsPassSync;
     private RegistrationStore store;
     private ExecutionService executor;
     private RegisterCommandHandler commandHandler;
@@ -34,6 +38,10 @@ public final class RegisterPlugin extends JavaPlugin {
         this.accessManager = new AccessManager(this, config, store, donatePayClient, messages, getLogger());
         this.chatService = new ChatService(this, accessManager, config.chat(), messages, getLogger());
         this.passMenuService = new PassMenuService(accessManager, messages);
+        this.externalHooks = new ExternalHooks(this);
+        this.luckPermsPassSync = new LuckPermsPassSync(externalHooks, store, accessManager::config, getLogger());
+        getServer().getServicesManager().register(ChrdkRegisterApi.class,
+                new ChrdkRegisterApiImpl(this, accessManager, externalHooks), this, ServicePriority.Normal);
 
         getServer().getPluginManager().registerEvents(new PlayerRestrictionListener(accessManager), this);
         getServer().getPluginManager().registerEvents(chatService, this);
@@ -75,6 +83,7 @@ public final class RegisterPlugin extends JavaPlugin {
             accessManager.shutdown();
             accessManager = null;
         }
+        getServer().getServicesManager().unregisterAll(this);
         if (executor != null) {
             executor.shutdown();
             executor = null;
@@ -90,6 +99,9 @@ public final class RegisterPlugin extends JavaPlugin {
         }
         if (chatService != null) {
             chatService.reload(updated.chat());
+        }
+        if (externalHooks != null) {
+            externalHooks.resolve();
         }
     }
 
@@ -132,6 +144,16 @@ public final class RegisterPlugin extends JavaPlugin {
     /** Инвентарное меню {@code /pass menu} (иконки вместо текстовых справок). */
     public PassMenuService passMenu() {
         return passMenuService;
+    }
+
+    /** Мягкие привязки к Vault/LuckPerms (для /pass doctor и аддонов). */
+    public ExternalHooks externalHooks() {
+        return externalHooks;
+    }
+
+    /** Синхронизация группы LuckPerms с проходкой. */
+    public LuckPermsPassSync luckPermsPassSync() {
+        return luckPermsPassSync;
     }
 
     /**

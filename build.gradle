@@ -22,12 +22,22 @@ repositories {
         name = 'placeholderapi'
         url = 'https://repo.extendedclip.com/content/repositories/placeholderapi/'
     }
+    maven {
+        name = 'jitpack'
+        url = 'https://jitpack.io'
+    }
+    maven {
+        name = 'luckperms'
+        url = 'https://repo.luckperms.net/maven'
+    }
 }
 
 dependencies {
     compileOnly "org.purpurmc.purpur:purpur-api:${project.purpur_api_version}"
     compileOnly "com.google.code.gson:gson:2.11.0"
     compileOnly "me.clip:placeholderapi:2.12.3"
+    compileOnly "com.github.MilkBowl:VaultAPI:1.7.1"
+    compileOnly "net.luckperms:api:5.4"
 
     testImplementation "org.purpurmc.purpur:purpur-api:${project.purpur_api_version}"
     testImplementation "com.google.code.gson:gson:2.11.0"

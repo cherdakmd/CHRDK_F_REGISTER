@@ -224,6 +224,12 @@ pass:
   # Инвентарное GUI-меню /pass menu (статус, оплата, тарифы, 2FA, пароль, сессии)
   gui-menu: true
 
+integrations:
+  # Группа LuckPerms для игроков с активной проходкой (пусто — выключено)
+  pass-group: ""
+  # Снимать группу при истечении проходки
+  pass-group-remove-expired: true
+
 auth:
   # Время жизни сессии по IP в минутах (0 = отключить сессию, спрашивать пароль при каждом входе)
   session-minutes: 30
@@ -462,6 +468,65 @@ auto-messages:
 
 ---
 
+## Интеграции (Vault, LuckPerms) и API для аддонов
+
+Начиная с версии 1.4.6 плагин выступает **ядром для аддонов**: доступ к состоянию проходок и
+авторизации, события Bukkit и мягкие привязки к Vault/LuckPerms.
+
+### Мягкие интеграции
+
+| Плагин | Настройка | Что даёт |
+|---|---|---|
+| **Vault** | ставится отдельно | `api.economy()` / `api.permissions()` для аддонов (магазины, донат-услуги) |
+| **LuckPerms** | `integrations.pass-group` | игрок с активной проходкой получает группу (пермишены, префикс); при отзыве — снимается; при истечении — по настройке `integrations.pass-group-remove-expired` |
+
+Присутствие Vault/LuckPerms видно в `/pass doctor` (строки в конце списка проверок).
+
+### Как написать аддон
+
+Аддон — обычный Bukkit-плагин. В его `plugin.yml` добавь `depend` или `softdepend`:
+
+```yaml
+depend: [CHRDK_F_REGISTER]
+```
+
+main-класс:
+
+```java
+@Override
+public void onEnable() {
+    ChrdkRegisterApi api = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
+    if (api == null) {
+        getLogger().warning("CHRDK_F_REGISTER не найден!");
+        return;
+    }
+    // Проверки: api.hasActivePass("Steve"), api.isAuthenticated(player),
+    // api.<Economy>economy(), api.<LuckPerms>luckPerms(), api.grantPass("Steve", 7, "myaddon")
+    Bukkit.getPluginManager().registerEvents(new Listener() {
+        @EventHandler
+        public void onPassGrant(PassGrantedEvent e) {
+            getLogger().info(e.getPlayerName() + " получил проходку до " + e.getPassUntil());
+        }
+    }, this);
+}
+```
+
+| Событие (`ru.cherdakmd.chrdkregister.api.events`) | Когда |
+|---|---|
+| `PassGrantedEvent` | выдача/продление проходки (донат, вручную, подарок, из аддона) |
+| `PassRevokedEvent` | администратор отозвал проходку (`/pass remove`) |
+| `PassExpiredEvent` | истёк срок проходки |
+| `PlayerAuthCompletedEvent` | игрок прошёл пароль и 2FA — можно работать нормально |
+
+Все события вызываются строго на главном потоке. Методы API для оффлайн-ников:
+`hasActivePass`, `passUntil`, `isRegistered`, `isTwoFactorEnabled`, `grantPass`, `revokePass`.
+
+Первый планируемый аддон — **магазин обмена ресурсов с динамическими ценами** на
+«алмазной валюте» (все разновидности алмаза: самоцвет, руды, блок) — см. `docs/IMPROVEMENTS.md`,
+Приложение B.
+
+---
+
 ## Сборка
 
 Требуется **Java 21+**. Из корня проекта:
@@ -470,7 +535,21 @@ auto-messages:
 ./gradlew build
 ```
 
-Готовый файл плагина появится в `build/libs/chrdk-f-register-1.4.5.jar`. Помести его в папку `plugins/` сервера **Purpur 1.21.11** (готовый JAR также прикладывается к каждому релизу на GitHub).
+Готовый файл плагина появится в `build/libs/chrdk-f-register-1.4.6.jar`. Помести его в папку `plugins/` сервера **Purpur 1.21.11** (готовый JAR также прикладывается к каждому релизу на GitHub).
+
+---
+
+## Обновление до 1.4.6
+
+В версии 1.4.6 плагин стал **ядром для аддонов**:
+
+- публичный API `ChrdkRegisterApi` (через `ServicesManager`) — состояние проходок и авторизации, выдача/отзыв проходок;
+- Bukkit-события для аддонов: `PassGrantedEvent`, `PassRevokedEvent`, `PassExpiredEvent`, `PlayerAuthCompletedEvent` (главный поток);
+- мягкая интеграция **Vault** — экономика и права доступны аддонам через `api.economy()` / `api.permissions()`;
+- мягкая интеграция **LuckPerms** — группа по активной проходке: `integrations.pass-group: "donator"` (пусто — выкл; `integrations.pass-group-remove-expired: true` — снимать при истечении);
+- `/pass doctor` показывает наличие Vault и LuckPerms.
+
+**Важно при обновлении:** появилась секция `integrations:` в `config.yml` (по умолчанию синхронизация выключена). Миграция данных не требуется — просто замените JAR. Vault и LuckPerms опциональны (softdepend): без них плагин работает как раньше.
 
 ---
 

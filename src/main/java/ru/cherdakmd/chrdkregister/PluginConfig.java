@@ -34,6 +34,8 @@ public final class PluginConfig {
     private final boolean expiryWarningSound;
     private final int kickAfterSeconds;
     private final boolean passGuiMenu;
+    private final String passGroup;
+    private final boolean passGroupRemoveExpired;
 
     private final int sessionMinutes;
     private final int minPasswordLength;
@@ -103,7 +105,7 @@ public final class PluginConfig {
         this(
                 donatePayApiToken, donatePayPaymentUrl, minimumDonationRubles, donatePollSeconds, strictCaseMatch,
                 true, true, false, 4, 365,
-                grantDays, defaultTiers(grantDays), List.of(10_080L, 4_320L, 1_440L, 60L), true, true, 0, true,
+                grantDays, defaultTiers(grantDays), List.of(10_080L, 4_320L, 1_440L, 60L), true, true, 0, true, "", true,
                 sessionMinutes, minPasswordLength, maxPasswordLength, maxLoginAttempts, reminderSeconds, 3,
                 false, true, false, true, false, false, true,
                 List.of(0, 0, 1, 2, 5, 10, 30, 60, 120, 300), maxLoginAttempts, 10, 15, 10, 15, true,
@@ -137,6 +139,8 @@ public final class PluginConfig {
             boolean expiryWarningSound,
             int kickAfterSeconds,
             boolean passGuiMenu,
+            String passGroup,
+            boolean passGroupRemoveExpired,
             int sessionMinutes,
             int minPasswordLength,
             int maxPasswordLength,
@@ -199,6 +203,8 @@ public final class PluginConfig {
         this.expiryWarningSound = expiryWarningSound;
         this.kickAfterSeconds = Math.clamp(kickAfterSeconds, 0, 3600);
         this.passGuiMenu = passGuiMenu;
+        this.passGroup = passGroup == null ? "" : passGroup.trim();
+        this.passGroupRemoveExpired = passGroupRemoveExpired;
 
         this.sessionMinutes = Math.clamp(sessionMinutes, 0, 10080);
         this.minPasswordLength = Math.clamp(minPasswordLength, 4, 32);
@@ -280,6 +286,8 @@ public final class PluginConfig {
                 config.getBoolean("pass.expiry-warning-sound", true),
                 config.getInt("pass.kick-after-seconds", 0),
                 config.getBoolean("pass.gui-menu", true),
+                config.getString("integrations.pass-group", ""),
+                config.getBoolean("integrations.pass-group-remove-expired", true),
                 config.getInt("auth.session-minutes", 30),
                 config.getInt("auth.min-password-length", 8),
                 config.getInt("auth.max-password-length", 64),
@@ -434,6 +442,16 @@ public final class PluginConfig {
     /** Включено ли инвентарное GUI-меню {@code /pass menu}. */
     public boolean passGuiMenu() {
         return passGuiMenu;
+    }
+
+    /** Группа LuckPerms, синхронизируемая с активной проходкой (пусто — выключено). */
+    public String passGroup() {
+        return passGroup;
+    }
+
+    /** Снимать LuckPerms-группу при истечении проходки. */
+    public boolean passGroupRemoveExpired() {
+        return passGroupRemoveExpired;
     }
 
     /* ------------------------------------------------------------------ *
