@@ -109,7 +109,7 @@ public final class PluginConfig {
                 true, true, false, 4, 365,
                 grantDays, defaultTiers(grantDays), List.of(10_080L, 4_320L, 1_440L, 60L), true, true, 0, true, "", true,
                 sessionMinutes, minPasswordLength, maxPasswordLength, maxLoginAttempts, reminderSeconds, 3,
-                false, true, false, true, false, false, true,
+                false, true, "!@#$%&*-_+=.?", true, false, true, false, false, true,
                 List.of(0, 0, 1, 2, 5, 10, 30, 60, 120, 300), maxLoginAttempts, 10, 15, 10, 15, true,
                 true, "CHRDK", 1, maxLoginAttempts, true,
                 true, "notify", 3, 240,
