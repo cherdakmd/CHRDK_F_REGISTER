@@ -10,7 +10,7 @@ def main() -> int:
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     summary_lines = []
     failures = 0
-    for path in sorted(glob.glob("build/test-results/test/*.xml")):
+    for path in sorted(glob.glob("**/build/test-results/test/*.xml", recursive=True)):
         try:
             tree = ET.parse(path)
         except ET.ParseError as error:  # pragma: no cover - отчёт повреждён

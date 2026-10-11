@@ -41,8 +41,14 @@ jobs:
             exit 1
           fi
           echo "jar=build/libs/chrdk-f-register-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
+          echo "shop_jar=diamond-shop/build/libs/chrdk-diamond-shop-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
 
       - name: Attach the Purpur plugin JAR
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.jar }}" --clobber
+
+      - name: Attach the DiamondShop addon JAR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.shop_jar }}" --clobber

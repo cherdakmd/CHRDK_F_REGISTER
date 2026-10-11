@@ -6,3 +6,5 @@ pluginManagement {
 }
 
 rootProject.name = 'chrdk-f-register'
+
+include 'diamond-shop'

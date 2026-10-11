@@ -1,0 +1,116 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# CHRDK_DiamondShop — магазин обмена ресурсов с динамическими ценами
+# Аддон к CHRDK_F_REGISTER. Валюта — алмаз во всех видах (см. currency).
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Курс обмена предметов в «алмазы» кошелька игрока (1 ед. = N алмазов).
+# Любой из этих предметов принимается `/shop deposit` и выдаётся `/shop withdraw`
+# (при выводе блоки набираются по курсу: 9 алмазов = 1 блок).
+currency:
+  DIAMOND: 1
+  DIAMOND_ORE: 1
+  DEEPSLATE_DIAMOND_ORE: 1
+  DIAMOND_BLOCK: 9
+
+pricing:
+  # Насколько быстро запас товара возвращается к эталону (доля от разницы в час).
+  # 0.05 = за час запас восстанавливается на 5% разницы с эталонным.
+  stock-recovery-per-hour: 0.05
+  # Целая часть от суммы, которую игрок может вывести за одну команду.
+  max-withdraw: 6400
+
+# Товары магазина. Цена = base-price * clamp(ref-stock / stock, min-mult, max-mult):
+# игроки продают товар → запас растёт → цена падает; скупают → запас падает → цена растёт.
+items:
+  - material: STONE
+    base-price: 0.05
+    ref-stock: 20000
+  - material: COBBLESTONE
+    base-price: 0.04
+    ref-stock: 20000
+  - material: DIRT
+    base-price: 0.02
+    ref-stock: 20000
+  - material: OAK_LOG
+    base-price: 0.15
+    ref-stock: 12000
+  - material: SPRUCE_LOG
+    base-price: 0.15
+    ref-stock: 12000
+  - material: BIRCH_LOG
+    base-price: 0.15
+    ref-stock: 12000
+  - material: SAND
+    base-price: 0.08
+    ref-stock: 15000
+  - material: GLASS
+    base-price: 0.12
+    ref-stock: 10000
+  - material: COAL
+    base-price: 0.3
+    ref-stock: 9000
+  - material: IRON_INGOT
+    base-price: 1.0
+    ref-stock: 6000
+  - material: GOLD_INGOT
+    base-price: 2.0
+    ref-stock: 4000
+  - material: COPPER_INGOT
+    base-price: 0.5
+    ref-stock: 6000
+  - material: REDSTONE
+    base-price: 0.5
+    ref-stock: 6000
+  - material: LAPIS_LAZULI
+    base-price: 0.4
+    ref-stock: 6000
+  - material: EMERALD
+    base-price: 3.0
+    ref-stock: 3000
+  - material: QUARTZ
+    base-price: 0.6
+    ref-stock: 5000
+  - material: OBSIDIAN
+    base-price: 1.5
+    ref-stock: 3000
+  - material: WHEAT
+    base-price: 0.2
+    ref-stock: 10000
+  - material: CARROT
+    base-price: 0.15
+    ref-stock: 10000
+  - material: POTATO
+    base-price: 0.15
+    ref-stock: 10000
+  - material: STRING
+    base-price: 0.25
+    ref-stock: 8000
+  - material: LEATHER
+    base-price: 0.5
+    ref-stock: 8000
+  - material: BONE
+    base-price: 0.2
+    ref-stock: 8000
+  - material: GUNPOWDER
+    base-price: 0.8
+    ref-stock: 4000
+    min-multiplier: 0.2
+  - material: ENDER_PEARL
+    base-price: 5.0
+    ref-stock: 2000
+  - material: BLAZE_ROD
+    base-price: 4.0
+    ref-stock: 1500
+  - material: NETHERITE_SCRAP
+    base-price: 100.0
+    ref-stock: 100
+    max-multiplier: 3.0
+
+# Глобальные границы мультипликатора, если у товара свои не заданы
+defaults:
+  min-multiplier: 0.25
+  max-multiplier: 4.0
+
+general:
+  # Язык сообщений (файл messages_<locale>.yml, по умолчанию ru)
+  locale: "ru"
