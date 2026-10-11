@@ -4,7 +4,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 import java.net.URI;
 
-/** Holds validated configuration settings for the Purpur registration & DonatePay pass plugin. */
+/** Holds validated configuration settings for the Purpur registration, DonatePay pass & TOTP 2FA plugin. */
 public final class PluginConfig {
     private final String donatePayApiToken;
     private final String donatePayPaymentUrl;
@@ -17,6 +17,10 @@ public final class PluginConfig {
     private final int maxPasswordLength;
     private final int maxLoginAttempts;
     private final int reminderSeconds;
+    private final boolean totpEnabled;
+    private final String totpIssuer;
+    private final int totpWindowSteps;
+    private final int totpMaxAttempts;
 
     public PluginConfig(
             String donatePayApiToken,
@@ -31,6 +35,42 @@ public final class PluginConfig {
             int maxLoginAttempts,
             int reminderSeconds
     ) {
+        this(
+                donatePayApiToken,
+                donatePayPaymentUrl,
+                minimumDonationRubles,
+                donatePollSeconds,
+                strictCaseMatch,
+                grantDays,
+                sessionMinutes,
+                minPasswordLength,
+                maxPasswordLength,
+                maxLoginAttempts,
+                reminderSeconds,
+                true,
+                "CHRDK",
+                1,
+                maxLoginAttempts
+        );
+    }
+
+    public PluginConfig(
+            String donatePayApiToken,
+            String donatePayPaymentUrl,
+            int minimumDonationRubles,
+            int donatePollSeconds,
+            boolean strictCaseMatch,
+            int grantDays,
+            int sessionMinutes,
+            int minPasswordLength,
+            int maxPasswordLength,
+            int maxLoginAttempts,
+            int reminderSeconds,
+            boolean totpEnabled,
+            String totpIssuer,
+            int totpWindowSteps,
+            int totpMaxAttempts
+    ) {
         this.donatePayApiToken = donatePayApiToken == null ? "" : donatePayApiToken.trim();
         this.donatePayPaymentUrl = sanitizeUrl(donatePayPaymentUrl);
         this.minimumDonationRubles = Math.max(1, minimumDonationRubles);
@@ -42,9 +82,14 @@ public final class PluginConfig {
         this.maxPasswordLength = Math.max(this.minPasswordLength, Math.min(128, maxPasswordLength));
         this.maxLoginAttempts = Math.clamp(maxLoginAttempts, 1, 20);
         this.reminderSeconds = Math.clamp(reminderSeconds, 2, 120);
+        this.totpEnabled = totpEnabled;
+        this.totpIssuer = (totpIssuer == null || totpIssuer.isBlank()) ? "CHRDK" : totpIssuer.trim();
+        this.totpWindowSteps = Math.clamp(totpWindowSteps, 0, 10);
+        this.totpMaxAttempts = Math.clamp(totpMaxAttempts, 1, 20);
     }
 
     public static PluginConfig fromBukkitConfig(FileConfiguration config) {
+        int maxLoginAttempts = config.getInt("auth.max-login-attempts", 5);
         return new PluginConfig(
                 config.getString("donatepay.api-token", ""),
                 config.getString("donatepay.payment-url", ""),
@@ -55,8 +100,12 @@ public final class PluginConfig {
                 config.getInt("auth.session-minutes", 30),
                 config.getInt("auth.min-password-length", 6),
                 config.getInt("auth.max-password-length", 64),
-                config.getInt("auth.max-login-attempts", 5),
-                config.getInt("auth.reminder-seconds", 5)
+                maxLoginAttempts,
+                config.getInt("auth.reminder-seconds", 5),
+                config.getBoolean("totp.enabled", true),
+                config.getString("totp.issuer", "CHRDK"),
+                config.getInt("totp.window-steps", 1),
+                config.getInt("totp.max-attempts", maxLoginAttempts)
         );
     }
 
@@ -102,6 +151,22 @@ public final class PluginConfig {
 
     public int reminderSeconds() {
         return reminderSeconds;
+    }
+
+    public boolean totpEnabled() {
+        return totpEnabled;
+    }
+
+    public String totpIssuer() {
+        return totpIssuer;
+    }
+
+    public int totpWindowSteps() {
+        return totpWindowSteps;
+    }
+
+    public int totpMaxAttempts() {
+        return totpMaxAttempts;
     }
 
     public boolean donatePayReady() {

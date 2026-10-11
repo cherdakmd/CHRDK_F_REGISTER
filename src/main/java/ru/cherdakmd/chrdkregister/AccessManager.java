@@ -23,6 +23,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,7 +34,7 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 /**
- * Coordinates DonatePay pass verification, manual admin pass grants, and password registration/login state.
+ * Coordinates DonatePay pass verification, manual admin pass grants, password registration/login, and TOTP 2FA state.
  */
 public final class AccessManager {
     public static final Pattern MINECRAFT_NAME = Pattern.compile("^[A-Za-z0-9_]{1,16}$");
@@ -45,6 +46,7 @@ public final class AccessManager {
         NO_PASS,
         NEEDS_REGISTER,
         NEEDS_LOGIN,
+        NEEDS_2FA,
         AUTHENTICATED
     }
 
@@ -55,7 +57,10 @@ public final class AccessManager {
 
     private volatile PluginConfig config;
     private final Set<UUID> authenticatedPlayers = ConcurrentHashMap.newKeySet();
+    private final Set<UUID> passwordVerifiedPlayers = ConcurrentHashMap.newKeySet();
     private final Map<UUID, Integer> failedLoginAttempts = new ConcurrentHashMap<>();
+    private final Map<UUID, Integer> failedTotpAttempts = new ConcurrentHashMap<>();
+    private final Map<UUID, String> pendingTotpSecrets = new ConcurrentHashMap<>();
     private final Map<UUID, Location> freezeLocations = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastChatReminderAt = new ConcurrentHashMap<>();
     private final AtomicBoolean donationPollRunning = new AtomicBoolean(false);
@@ -136,7 +141,10 @@ public final class AccessManager {
             }
         }
         authenticatedPlayers.clear();
+        passwordVerifiedPlayers.clear();
         failedLoginAttempts.clear();
+        failedTotpAttempts.clear();
+        pendingTotpSecrets.clear();
         freezeLocations.clear();
         lastChatReminderAt.clear();
     }
@@ -159,20 +167,33 @@ public final class AccessManager {
     public PlayerStage getStage(UUID uuid, String playerName, long nowMillis) {
         if (!store.hasActivePass(playerName, nowMillis)) {
             authenticatedPlayers.remove(uuid);
+            passwordVerifiedPlayers.remove(uuid);
             return PlayerStage.NO_PASS;
         }
         if (!store.isRegistered(playerName)) {
             authenticatedPlayers.remove(uuid);
+            passwordVerifiedPlayers.remove(uuid);
             return PlayerStage.NEEDS_REGISTER;
         }
-        if (!authenticatedPlayers.contains(uuid)) {
-            return PlayerStage.NEEDS_LOGIN;
+        if (authenticatedPlayers.contains(uuid)) {
+            return PlayerStage.AUTHENTICATED;
         }
-        return PlayerStage.AUTHENTICATED;
+        if (config.totpEnabled() && store.isTotpEnabled(playerName) && passwordVerifiedPlayers.contains(uuid)) {
+            return PlayerStage.NEEDS_2FA;
+        }
+        return PlayerStage.NEEDS_LOGIN;
     }
 
     public boolean isBlocked(Player player) {
         return getStage(player) != PlayerStage.AUTHENTICATED;
+    }
+
+    public boolean hasPendingTotpSetup(UUID uuid) {
+        return pendingTotpSecrets.containsKey(uuid);
+    }
+
+    public Optional<String> getPendingTotpSecret(UUID uuid) {
+        return Optional.ofNullable(pendingTotpSecrets.get(uuid));
     }
 
     public Location getFreezeLocation(Player player) {
@@ -192,7 +213,10 @@ public final class AccessManager {
 
         store.recordPlayerSeen(uuid, name);
         authenticatedPlayers.remove(uuid);
+        passwordVerifiedPlayers.remove(uuid);
         failedLoginAttempts.remove(uuid);
+        failedTotpAttempts.remove(uuid);
+        pendingTotpSecrets.remove(uuid);
         freezeLocations.put(uuid, player.getLocation().clone());
         lastChatReminderAt.put(uuid, now);
 
@@ -230,7 +254,10 @@ public final class AccessManager {
         if (authenticatedPlayers.remove(uuid)) {
             store.touchSession(player.getName(), uuid, getPlayerIp(player), System.currentTimeMillis());
         }
+        passwordVerifiedPlayers.remove(uuid);
         failedLoginAttempts.remove(uuid);
+        failedTotpAttempts.remove(uuid);
+        pendingTotpSecrets.remove(uuid);
         freezeLocations.remove(uuid);
         lastChatReminderAt.remove(uuid);
     }
@@ -243,7 +270,7 @@ public final class AccessManager {
             sendNoPassPrompt(player, false);
             return true;
         }
-        if (stage == PlayerStage.NEEDS_LOGIN) {
+        if (stage == PlayerStage.NEEDS_LOGIN || stage == PlayerStage.NEEDS_2FA) {
             player.sendMessage(Component.text("Вы уже зарегистрированы! Используйте: /login <пароль>", NamedTextColor.YELLOW));
             return true;
         }
@@ -275,6 +302,10 @@ public final class AccessManager {
     }
 
     public boolean handleLoginCommand(Player player, String password) {
+        return handleLoginCommand(player, password, null);
+    }
+
+    public boolean handleLoginCommand(Player player, String password, String optionalTotpCode) {
         long now = System.currentTimeMillis();
         UUID uuid = player.getUniqueId();
         PlayerStage stage = getStage(uuid, player.getName(), now);
@@ -291,8 +322,27 @@ public final class AccessManager {
             player.sendMessage(Component.text("Вы уже вошли в аккаунт!", NamedTextColor.GREEN));
             return true;
         }
+        if (stage == PlayerStage.NEEDS_2FA) {
+            if (optionalTotpCode == null && TotpService.isValidCodeFormat(password)) {
+                return handleTwoFactorLoginCode(player, password);
+            }
+            player.sendMessage(Component.text("Пароль уже подтверждён! Введите 6-значный код 2FA: /2fa <код>", NamedTextColor.AQUA));
+            return true;
+        }
 
         if (store.verifyPassword(player.getName(), password)) {
+            failedLoginAttempts.remove(uuid);
+            if (config.totpEnabled() && store.isTotpEnabled(player.getName())) {
+                passwordVerifiedPlayers.add(uuid);
+                lastChatReminderAt.put(uuid, now);
+                if (optionalTotpCode != null && !optionalTotpCode.isBlank()) {
+                    return handleTwoFactorLoginCode(player, optionalTotpCode);
+                }
+                sendTwoFactorPrompt(player, true);
+                player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.2f);
+                return true;
+            }
+
             store.touchSession(player.getName(), uuid, getPlayerIp(player), now);
             completeAuthentication(player, "✓ Вы успешно вошли на сервер! Приятной игры!");
             logger.info("Player " + player.getName() + " logged in.");
@@ -310,6 +360,213 @@ public final class AccessManager {
         int remaining = maxAttempts - attempts;
         player.sendMessage(Component.text("Неверный пароль! Осталось попыток: " + remaining, NamedTextColor.RED));
         player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+        return true;
+    }
+
+    /**
+     * Verifies the 6-digit TOTP code during the NEEDS_2FA login stage.
+     */
+    public boolean handleTwoFactorLoginCode(Player player, String rawCode) {
+        long now = System.currentTimeMillis();
+        UUID uuid = player.getUniqueId();
+        PlayerStage stage = getStage(uuid, player.getName(), now);
+
+        if (stage == PlayerStage.NO_PASS) {
+            sendNoPassPrompt(player, false);
+            return true;
+        }
+        if (stage == PlayerStage.NEEDS_REGISTER) {
+            player.sendMessage(Component.text("Сначала зарегистрируйте пароль: /register <пароль> <повтор>", NamedTextColor.YELLOW));
+            return true;
+        }
+        if (stage == PlayerStage.NEEDS_LOGIN) {
+            player.sendMessage(Component.text("Сначала введите пароль от аккаунта: /login <пароль>", NamedTextColor.YELLOW));
+            return true;
+        }
+        if (stage == PlayerStage.AUTHENTICATED) {
+            player.sendMessage(Component.text("Вы уже авторизованы на сервере!", NamedTextColor.GREEN));
+            return true;
+        }
+
+        if (!TotpService.isValidCodeFormat(rawCode)) {
+            player.sendMessage(Component.text("Код 2FA должен состоять из 6 цифр! Использование: /2fa <6-значный_код>", NamedTextColor.RED));
+            return true;
+        }
+
+        if (store.verifyTotp(player.getName(), rawCode, now, config.totpWindowSteps())) {
+            store.touchSession(player.getName(), uuid, getPlayerIp(player), now);
+            completeAuthentication(player, "✓ Код 2FA подтверждён! Вы успешно вошли на сервер! Приятной игры!");
+            logger.info("Player " + player.getName() + " logged in with TOTP 2FA.");
+            return true;
+        }
+
+        int attempts = failedTotpAttempts.merge(uuid, 1, Integer::sum);
+        int maxAttempts = config.totpMaxAttempts();
+        if (attempts >= maxAttempts) {
+            failedTotpAttempts.remove(uuid);
+            passwordVerifiedPlayers.remove(uuid);
+            player.kick(Component.text("Превышено количество неверных попыток ввода кода 2FA (" + maxAttempts + ").", NamedTextColor.RED));
+            return true;
+        }
+
+        int remaining = maxAttempts - attempts;
+        player.sendMessage(Component.text("Неверный или уже использованный 6-значный код 2FA! Осталось попыток: " + remaining, NamedTextColor.RED));
+        player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+        return true;
+    }
+
+    /**
+     * Starts TOTP 2FA enrollment for an authenticated player by generating a pending Base32 secret.
+     */
+    public boolean handleTwoFactorSetup(Player player) {
+        if (getStage(player) != PlayerStage.AUTHENTICATED) {
+            player.sendMessage(Component.text("Сначала полностью авторизуйтесь на сервере.", NamedTextColor.RED));
+            return true;
+        }
+        if (!config.totpEnabled()) {
+            player.sendMessage(Component.text("Двухфакторная аутентификация (2FA) отключена в конфигурации сервера.", NamedTextColor.RED));
+            return true;
+        }
+        if (store.isTotpEnabled(player.getName())) {
+            player.sendMessage(Component.text(
+                    "У вас уже включена TOTP 2FA! Чтобы перепривязать приложение, сначала отключите текущую защиту: /2fa disable <код_2FA>",
+                    NamedTextColor.YELLOW));
+            return true;
+        }
+
+        String secret = TotpService.generateSecret();
+        pendingTotpSecrets.put(player.getUniqueId(), secret);
+        sendTotpSetupInstructions(player, secret);
+        return true;
+    }
+
+    public void sendTotpSetupInstructions(Player player, String secret) {
+        String formattedSecret = TotpService.formatSecretForDisplay(secret);
+        String otpAuthUri = TotpService.buildOtpAuthUri(config.totpIssuer(), player.getName(), secret);
+
+        Component copyKeyButton = Component.text("[ Скопировать секретный ключ ]", NamedTextColor.GREEN, TextDecoration.BOLD)
+                .decorate(TextDecoration.UNDERLINED)
+                .clickEvent(ClickEvent.copyToClipboard(secret))
+                .hoverEvent(HoverEvent.showText(Component.text("Нажмите, чтобы скопировать Base32 ключ в буфер обмена", NamedTextColor.GREEN)));
+
+        Component copyUriButton = Component.text("[ Скопировать otpauth:// ссылку ]", NamedTextColor.AQUA, TextDecoration.BOLD)
+                .decorate(TextDecoration.UNDERLINED)
+                .clickEvent(ClickEvent.copyToClipboard(otpAuthUri))
+                .hoverEvent(HoverEvent.showText(Component.text("Нажмите, чтобы скопировать URI для приложения-аутентификатора", NamedTextColor.AQUA)));
+
+        Component confirmCommandHint = Component.text("/2fa confirm <6-значный_код>", NamedTextColor.GOLD, TextDecoration.BOLD)
+                .clickEvent(ClickEvent.suggestCommand("/2fa confirm "))
+                .hoverEvent(HoverEvent.showText(Component.text("Нажмите, чтобы подставить команду в чат", NamedTextColor.YELLOW)));
+
+        player.sendMessage(Component.empty());
+        player.sendMessage(Component.text("==============================================", NamedTextColor.GOLD));
+        player.sendMessage(Component.text("Настройка двухфакторной защиты (TOTP 2FA)", NamedTextColor.GOLD, TextDecoration.BOLD));
+        player.sendMessage(Component.text("1. Откройте приложение ", NamedTextColor.GRAY)
+                .append(Component.text("Google Authenticator / 2FAS / Authy / Яндекс Ключ", NamedTextColor.WHITE)));
+        player.sendMessage(Component.text("2. Добавьте аккаунт по секретному ключу (Time-based / По времени):", NamedTextColor.GRAY));
+        player.sendMessage(Component.text("   Ключ: ", NamedTextColor.GRAY)
+                .append(Component.text(formattedSecret, NamedTextColor.YELLOW, TextDecoration.BOLD)));
+        player.sendMessage(Component.text("   ", NamedTextColor.GRAY)
+                .append(copyKeyButton)
+                .append(Component.text("  ", NamedTextColor.GRAY))
+                .append(copyUriButton));
+        player.sendMessage(Component.text("3. Подтвердите привязку текущим кодом из приложения:", NamedTextColor.GRAY));
+        player.sendMessage(Component.text("   Введите: ", NamedTextColor.YELLOW).append(confirmCommandHint));
+        player.sendMessage(Component.text("==============================================", NamedTextColor.GOLD));
+    }
+
+    /**
+     * Confirms pending TOTP 2FA setup using a 6-digit code from the player's authenticator app.
+     */
+    public boolean handleTwoFactorConfirmSetup(Player player, String rawCode) {
+        if (getStage(player) != PlayerStage.AUTHENTICATED) {
+            return handleTwoFactorLoginCode(player, rawCode);
+        }
+        if (store.isTotpEnabled(player.getName())) {
+            player.sendMessage(Component.text("У вас уже включена двухфакторная аутентификация (2FA)!", NamedTextColor.GREEN));
+            return true;
+        }
+        UUID uuid = player.getUniqueId();
+        String pendingSecret = pendingTotpSecrets.get(uuid);
+        if (pendingSecret == null || pendingSecret.isBlank()) {
+            player.sendMessage(Component.text("Сначала начните настройку 2FA командой: /2fa setup", NamedTextColor.YELLOW));
+            return true;
+        }
+        if (!TotpService.isValidCodeFormat(rawCode)) {
+            player.sendMessage(Component.text("Код должен состоять из 6 цифр! Использование: /2fa confirm <6-значный_код>", NamedTextColor.RED));
+            return true;
+        }
+
+        long now = System.currentTimeMillis();
+        OptionalLong matchedStep = TotpService.verifyAndGetStep(
+                pendingSecret, rawCode, now, config.totpWindowSteps(), -1L);
+        if (matchedStep.isEmpty()) {
+            player.sendMessage(Component.text(
+                    "Неверный 6-значный код! Проверьте правильность ключа и синхронизацию времени на устройстве.",
+                    NamedTextColor.RED));
+            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+            return true;
+        }
+
+        if (!store.enableTotp(player.getName(), pendingSecret, matchedStep.getAsLong(), now)) {
+            player.sendMessage(Component.text("Не удалось активировать 2FA. Попробуйте снова.", NamedTextColor.RED));
+            return true;
+        }
+
+        pendingTotpSecrets.remove(uuid);
+        store.touchSession(player.getName(), uuid, getPlayerIp(player), now);
+        player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
+        player.sendMessage(Component.text(
+                "✓ Двухфакторная аутентификация (TOTP 2FA) успешно включена! Теперь при входе после пароля потребуется 6-значный код.",
+                NamedTextColor.GREEN));
+        logger.info("Player " + player.getName() + " enabled TOTP 2FA.");
+        return true;
+    }
+
+    /**
+     * Disables TOTP 2FA for an authenticated player after verifying their 6-digit code or account password.
+     */
+    public boolean handleTwoFactorDisable(Player player, String verificationInput) {
+        if (getStage(player) != PlayerStage.AUTHENTICATED) {
+            player.sendMessage(Component.text("Сначала авторизуйтесь на сервере, чтобы управлять 2FA.", NamedTextColor.RED));
+            return true;
+        }
+        if (!store.isTotpEnabled(player.getName())) {
+            player.sendMessage(Component.text("На вашем аккаунте не включена двухфакторная аутентификация.", NamedTextColor.YELLOW));
+            return true;
+        }
+        if (verificationInput == null || verificationInput.isBlank()) {
+            player.sendMessage(Component.text("Укажите текущий 6-значный код 2FA (или пароль): /2fa disable <код_2FA>", NamedTextColor.YELLOW));
+            return true;
+        }
+
+        long now = System.currentTimeMillis();
+        boolean verified = store.verifyTotp(player.getName(), verificationInput, now, config.totpWindowSteps())
+                || store.verifyPassword(player.getName(), verificationInput);
+        if (!verified) {
+            player.sendMessage(Component.text("Неверный 6-значный код 2FA или пароль! Отключение отменено.", NamedTextColor.RED));
+            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+            return true;
+        }
+
+        store.disableTotp(player.getName());
+        pendingTotpSecrets.remove(player.getUniqueId());
+        player.sendMessage(Component.text("✓ Двухфакторная аутентификация (TOTP 2FA) отключена для вашего аккаунта.", NamedTextColor.GREEN));
+        logger.info("Player " + player.getName() + " disabled TOTP 2FA.");
+        return true;
+    }
+
+    public boolean handleTwoFactorCancel(Player player) {
+        if (getStage(player) != PlayerStage.AUTHENTICATED) {
+            player.sendMessage(Component.text("Сначала авторизуйтесь на сервере.", NamedTextColor.RED));
+            return true;
+        }
+        String removed = pendingTotpSecrets.remove(player.getUniqueId());
+        if (removed == null) {
+            player.sendMessage(Component.text("У вас нет незавершённой настройки 2FA.", NamedTextColor.YELLOW));
+        } else {
+            player.sendMessage(Component.text("✓ Настройка 2FA отменена.", NamedTextColor.GREEN));
+        }
         return true;
     }
 
@@ -361,6 +618,8 @@ public final class AccessManager {
         if (onlinePlayer != null) {
             UUID uuid = onlinePlayer.getUniqueId();
             authenticatedPlayers.remove(uuid);
+            passwordVerifiedPlayers.remove(uuid);
+            pendingTotpSecrets.remove(uuid);
             freezeLocations.put(uuid, onlinePlayer.getLocation().clone());
             onlinePlayer.closeInventory();
             onlinePlayer.sendMessage(Component.text("Ваша проходка была отозвана администратором.", NamedTextColor.RED));
@@ -371,7 +630,7 @@ public final class AccessManager {
     }
 
     /**
-     * Resets a player's password so they must register again via /register.
+     * Resets a player's password (and 2FA) so they must register again via /register.
      */
     public boolean resetPassword(String targetPlayerName) {
         boolean reset = store.resetPassword(targetPlayerName);
@@ -381,6 +640,10 @@ public final class AccessManager {
         if (onlinePlayer != null) {
             UUID uuid = onlinePlayer.getUniqueId();
             authenticatedPlayers.remove(uuid);
+            passwordVerifiedPlayers.remove(uuid);
+            failedLoginAttempts.remove(uuid);
+            failedTotpAttempts.remove(uuid);
+            pendingTotpSecrets.remove(uuid);
             freezeLocations.put(uuid, onlinePlayer.getLocation().clone());
             onlinePlayer.closeInventory();
             onlinePlayer.sendMessage(Component.text("Ваш пароль был сброшен администратором. Зарегистрируйте новый пароль!", NamedTextColor.YELLOW));
@@ -392,10 +655,36 @@ public final class AccessManager {
         return true;
     }
 
+    /**
+     * Resets only TOTP 2FA for a player while keeping their pass and password intact.
+     */
+    public boolean resetTwoFactor(String targetPlayerName) {
+        boolean disabled = store.disableTotp(targetPlayerName);
+        if (!disabled) return false;
+
+        Player onlinePlayer = Bukkit.getPlayerExact(targetPlayerName);
+        if (onlinePlayer != null) {
+            UUID uuid = onlinePlayer.getUniqueId();
+            pendingTotpSecrets.remove(uuid);
+            failedTotpAttempts.remove(uuid);
+            onlinePlayer.sendMessage(Component.text(
+                    "Двухфакторная аутентификация (2FA) вашего аккаунта была сброшена администратором.",
+                    NamedTextColor.YELLOW));
+            if (passwordVerifiedPlayers.remove(uuid) && !authenticatedPlayers.contains(uuid)) {
+                store.touchSession(onlinePlayer.getName(), uuid, getPlayerIp(onlinePlayer), System.currentTimeMillis());
+                completeAuthentication(onlinePlayer, "✓ Вход завершён (2FA была отключена администратором).");
+            }
+        }
+        logger.info("TOTP 2FA reset for player " + targetPlayerName + " by administrator.");
+        return true;
+    }
+
     private void completeAuthentication(Player player, String successMessage) {
         UUID uuid = player.getUniqueId();
         authenticatedPlayers.add(uuid);
+        passwordVerifiedPlayers.remove(uuid);
         failedLoginAttempts.remove(uuid);
+        failedTotpAttempts.remove(uuid);
         freezeLocations.remove(uuid);
         lastChatReminderAt.remove(uuid);
 
@@ -420,7 +709,11 @@ public final class AccessManager {
         if (!store.isRegistered(player.getName())) {
             sendRegisterPrompt(player, true);
         } else if (!authenticatedPlayers.contains(uuid)) {
-            sendLoginPrompt(player, true);
+            if (config.totpEnabled() && store.isTotpEnabled(player.getName()) && passwordVerifiedPlayers.contains(uuid)) {
+                sendTwoFactorPrompt(player, true);
+            } else {
+                sendLoginPrompt(player, true);
+            }
         }
     }
 
@@ -431,6 +724,7 @@ public final class AccessManager {
             boolean hasPass = store.hasActivePass(player.getName(), now);
 
             if (!hasPass) {
+                passwordVerifiedPlayers.remove(uuid);
                 if (authenticatedPlayers.remove(uuid)) {
                     freezeLocations.put(uuid, player.getLocation().clone());
                     player.closeInventory();
@@ -444,11 +738,18 @@ public final class AccessManager {
 
             if (!store.isRegistered(player.getName())) {
                 authenticatedPlayers.remove(uuid);
+                passwordVerifiedPlayers.remove(uuid);
                 sendRegisterReminder(player, now);
                 continue;
             }
 
-            if (!authenticatedPlayers.contains(uuid)) {
+            if (authenticatedPlayers.contains(uuid)) {
+                continue;
+            }
+
+            if (config.totpEnabled() && store.isTotpEnabled(player.getName()) && passwordVerifiedPlayers.contains(uuid)) {
+                sendTwoFactorReminder(player, now);
+            } else {
                 sendLoginReminder(player, now);
             }
         }
@@ -485,6 +786,17 @@ public final class AccessManager {
         if (now - lastChat >= CHAT_REMINDER_INTERVAL_MILLIS) {
             lastChatReminderAt.put(player.getUniqueId(), now);
             sendLoginPrompt(player, false);
+        }
+    }
+
+    private void sendTwoFactorReminder(Player player, long now) {
+        player.sendActionBar(Component.text(
+                "Подтвердите 2FA: /2fa <6-значный_код>",
+                NamedTextColor.AQUA));
+        long lastChat = lastChatReminderAt.getOrDefault(player.getUniqueId(), 0L);
+        if (now - lastChat >= CHAT_REMINDER_INTERVAL_MILLIS) {
+            lastChatReminderAt.put(player.getUniqueId(), now);
+            sendTwoFactorPrompt(player, false);
         }
     }
 
@@ -540,6 +852,19 @@ public final class AccessManager {
             Title title = Title.title(
                     Component.text("АВТОРИЗАЦИЯ", NamedTextColor.GOLD, TextDecoration.BOLD),
                     Component.text("Введите /login <пароль>", NamedTextColor.YELLOW),
+                    Title.Times.times(Duration.ofMillis(200), Duration.ofSeconds(5), Duration.ofMillis(500))
+            );
+            player.showTitle(title);
+        }
+    }
+
+    public void sendTwoFactorPrompt(Player player, boolean showTitle) {
+        player.sendMessage(Component.text("✓ Пароль верный! Введите 6-значный код TOTP 2FA из приложения: ", NamedTextColor.AQUA)
+                .append(Component.text("/2fa <6-значный_код>", NamedTextColor.GOLD, TextDecoration.BOLD)));
+        if (showTitle) {
+            Title title = Title.title(
+                    Component.text("2FA ЗАЩИТА", NamedTextColor.AQUA, TextDecoration.BOLD),
+                    Component.text("Введите /2fa <6-значный код>", NamedTextColor.YELLOW),
                     Title.Times.times(Duration.ofMillis(200), Duration.ofSeconds(5), Duration.ofMillis(500))
             );
             player.showTitle(title);

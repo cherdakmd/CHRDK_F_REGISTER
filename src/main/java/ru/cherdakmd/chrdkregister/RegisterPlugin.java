@@ -23,7 +23,7 @@ public final class RegisterPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PlayerRestrictionListener(accessManager), this);
 
         RegisterCommandHandler commandHandler = new RegisterCommandHandler(this, accessManager);
-        for (String commandName : List.of("register", "login", "changepassword", "pass")) {
+        for (String commandName : List.of("register", "login", "changepassword", "2fa", "pass")) {
             PluginCommand pluginCommand = getCommand(commandName);
             if (pluginCommand != null) {
                 pluginCommand.setExecutor(commandHandler);
