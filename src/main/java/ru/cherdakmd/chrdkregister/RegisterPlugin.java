@@ -16,6 +16,7 @@ public final class RegisterPlugin extends JavaPlugin {
     private AccessManager accessManager;
     private ChatService chatService;
     private PassMenuService passMenuService;
+    private PasswordKeypadService passwordKeypad;
     private ExternalHooks externalHooks;
     private LuckPermsPassSync luckPermsPassSync;
     private RegistrationStore store;
@@ -38,6 +39,7 @@ public final class RegisterPlugin extends JavaPlugin {
         this.accessManager = new AccessManager(this, config, store, donatePayClient, messages, getLogger());
         this.chatService = new ChatService(this, accessManager, config.chat(), messages, getLogger());
         this.passMenuService = new PassMenuService(accessManager, messages);
+        this.passwordKeypad = new PasswordKeypadService(this, accessManager, messages);
         this.externalHooks = new ExternalHooks(this);
         this.luckPermsPassSync = new LuckPermsPassSync(externalHooks, store, accessManager::config, getLogger());
         getServer().getServicesManager().register(ChrdkRegisterApi.class,
@@ -46,6 +48,7 @@ public final class RegisterPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PlayerRestrictionListener(accessManager), this);
         getServer().getPluginManager().registerEvents(chatService, this);
         getServer().getPluginManager().registerEvents(passMenuService, this);
+        getServer().getPluginManager().registerEvents(passwordKeypad, this);
 
         this.commandHandler = new RegisterCommandHandler(this, accessManager);
         for (String commandName : List.of("register", "login", "changepassword", "2fa", "pass", "logout", "session", "captcha")) {
@@ -125,6 +128,9 @@ public final class RegisterPlugin extends JavaPlugin {
         if (passMenuService != null) {
             passMenuService.setMessages(messages);
         }
+        if (passwordKeypad != null) {
+            passwordKeypad.setMessages(messages);
+        }
         if (commandHandler != null) {
             commandHandler.refreshMessages(); // /pass reload сам сообщает результат уже новыми текстами
         }
@@ -144,6 +150,11 @@ public final class RegisterPlugin extends JavaPlugin {
     /** Инвентарное меню {@code /pass menu} (иконки вместо текстовых справок). */
     public PassMenuService passMenu() {
         return passMenuService;
+    }
+
+    /** Кнопочная клавиатура пароля для {@code /login} без аргументов (безопасно на стриме). */
+    public PasswordKeypadService keypadLogin() {
+        return passwordKeypad;
     }
 
     /** Мягкие привязки к Vault/LuckPerms (для /pass doctor и аддонов). */

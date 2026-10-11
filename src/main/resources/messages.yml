@@ -147,6 +147,26 @@ messages:
 
   # login — Вход по паролю
   # ---------------------------------------------------------------
+  "button-login":
+    "title": "Вход кнопками — пароль не попадёт ни в чат, ни в логи"
+    "char-name": "<aqua><bold>%char%</bold></aqua>"
+    "footer-name": "<gray>Набрано: <yellow>%entered%</yellow> симв.</gray>"
+    "footer-lore":
+      - "<gray>Клик — добавить символ в конец.</gray>"
+      - "<gray>После каждого нажатия раскладка</gray>"
+      - "<gray>перетасовывается — на стриме безопасно.</gray>"
+    "backspace": "<yellow>⌫ Стереть символ</yellow>"
+    "clear": "<gold>Очистить всё</gold>"
+    "page-button": "<aqua>Раскладка: <white>%page%</white></aqua>"
+    "page-lower": "буквы a–z"
+    "page-upper": "буквы A–Z"
+    "page-symbols": "цифры и знаки"
+    "cancel": "<red>Отменить вход</red>"
+    "confirm": "<green>Готово — войти</green>"
+    "opened": "<gray>Открыта кнопочная клавиатура пароля — кликайте символы; после каждого нажатия раскладка тасуется.</gray>"
+    "cancelled": "<yellow>Клавиатура закрыта — пароль не отправлен.</yellow>"
+    "empty": "<red>Вы ничего не набрали.</red>"
+    "full": "<red>Максимальная длина набрана — подтвердите или сотрите пароль.</red>"
   "login":
     "already-authenticated": "<green>Вы уже вошли в аккаунт!</green>"
     "prompt": "<yellow>Введите пароль для входа на сервер: </yellow><click:suggest_command:'/login '><hover:show_text:'<green>Подставить команду в чат</green>'><gold><bold>/login &lt;пароль&gt;</bold></gold></hover></click>"

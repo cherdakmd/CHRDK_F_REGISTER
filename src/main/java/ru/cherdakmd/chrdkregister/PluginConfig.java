@@ -44,6 +44,8 @@ public final class PluginConfig {
     private final int reminderSeconds;
     private final int captchaAfterAttempts;
     private final boolean authDialogs;
+    private final boolean buttonLogin;
+    private final String buttonLoginSymbols;
     private final boolean maskCommandsInLogs;
     private final boolean sessionSkips2fa;
     private final boolean sessionRequireSameUuid;
@@ -148,6 +150,8 @@ public final class PluginConfig {
             int reminderSeconds,
             int captchaAfterAttempts,
             boolean authDialogs,
+            boolean buttonLogin,
+            String buttonLoginSymbols,
             boolean maskCommandsInLogs,
             boolean sessionSkips2fa,
             boolean sessionRequireSameUuid,
@@ -213,6 +217,8 @@ public final class PluginConfig {
         this.reminderSeconds = Math.clamp(reminderSeconds, 2, 120);
         this.captchaAfterAttempts = Math.clamp(captchaAfterAttempts, 0, 10);
         this.authDialogs = authDialogs;
+        this.buttonLogin = buttonLogin;
+        this.buttonLoginSymbols = buttonLoginSymbols == null ? "" : buttonLoginSymbols.trim();
         this.maskCommandsInLogs = maskCommandsInLogs;
         this.sessionSkips2fa = sessionSkips2fa;
         this.sessionRequireSameUuid = sessionRequireSameUuid;
@@ -295,6 +301,8 @@ public final class PluginConfig {
                 config.getInt("auth.reminder-seconds", 5),
                 config.getInt("auth.captcha-after-attempts", 3),
                 config.getBoolean("auth.dialogs", true),
+                config.getBoolean("auth.button-login", true),
+                config.getString("auth.button-login-symbols", "!@#$%&*-_+=.?"),
                 config.getBoolean("auth.mask-commands-in-logs", true),
                 config.getBoolean("auth.session-skips-2fa", false),
                 config.getBoolean("auth.session-require-same-uuid", true),
@@ -488,6 +496,16 @@ public final class PluginConfig {
 
     public boolean authDialogs() {
         return authDialogs;
+    }
+
+    /** Инвентарная клавиатура входа (клики вместо набора пароля в чат) для {@code /login} без аргументов. */
+    public boolean buttonLogin() {
+        return buttonLogin;
+    }
+
+    /** Дополнительные знаки на странице «цифры и знаки» кнопочной клавиатуры. */
+    public String buttonLoginSymbols() {
+        return buttonLoginSymbols;
     }
 
     public boolean maskCommandsInLogs() {

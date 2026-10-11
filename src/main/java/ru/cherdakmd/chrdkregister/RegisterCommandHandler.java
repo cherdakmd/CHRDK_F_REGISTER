@@ -134,6 +134,10 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         }
         if (args.length < 1 || args.length > 2) {
             messages.send(player, "usage.login");
+            PasswordKeypadService keypad = plugin.keypadLogin();
+            if (keypad != null && keypad.openIfEligible(player)) {
+                return true;
+            }
             accessManager.showAuthDialogNow(player);
             return true;
         }
