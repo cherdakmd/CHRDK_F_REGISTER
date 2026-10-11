@@ -120,18 +120,12 @@ public final class PasswordKeypadService implements Listener {
                 inventory.setItem(slot, EMPTY);
             }
         }
-        inventory.setItem(SLOT_BACKSPACE, control(Material.ARROW, "button-login.backspace"));
-        inventory.setItem(SLOT_CLEAR, control(Material.BARRIER, "button-login.clear"));
-        String pageKey = switch (state.page) {
-            case LOWER -> "button-login.page-lower";
-            case UPPER -> "button-login.page-upper";
-            case DIGITS_SYMBOLS -> "button-login.page-symbols";
-        };
+        inventory.setItem(SLOT_BACKSPACE, named(Material.ARROW, messages.get("button-login.backspace")));
+        inventory.setItem(SLOT_CLEAR, named(Material.BARRIER, messages.get("button-login.clear")));
         inventory.setItem(SLOT_PAGE, named(Material.COMPASS,
-                messages.get("button-login.page-button",
-                        "page", messages.raw(pageKey))));
-        inventory.setItem(SLOT_CANCEL, control(Material.RED_CONCRETE, "button-login.cancel"));
-        inventory.setItem(SLOT_CONFIRM, control(Material.LIME_CONCRETE, "button-login.confirm"));
+                messages.get("button-login.page-button", "page", pageLabel(state.page))));
+        inventory.setItem(SLOT_CANCEL, named(Material.RED_CONCRETE, messages.get("button-login.cancel")));
+        inventory.setItem(SLOT_CONFIRM, named(Material.LIME_CONCRETE, messages.get("button-login.confirm")));
         ItemStack progress = new ItemStack(Material.BOOK);
         ItemMeta progressMeta = progress.getItemMeta();
         if (progressMeta != null) {
@@ -147,8 +141,13 @@ public final class PasswordKeypadService implements Listener {
         return named(Material.PAPER, messages.get("button-login.char-name", "char", String.valueOf(ch)));
     }
 
-    private ItemStack control(Material material, String nameKey) {
-        return named(material, messages.get(nameKey));
+    /** Человекочитаемое имя раскладки (литералы — чтобы MessagesTest видел ключи). */
+    private String pageLabel(KeypadRules.Page page) {
+        return switch (page) {
+            case LOWER -> messages.raw("button-login.page-lower");
+            case UPPER -> messages.raw("button-login.page-upper");
+            case DIGITS_SYMBOLS -> messages.raw("button-login.page-symbols");
+        };
     }
 
     private static ItemStack named(Material material, net.kyori.adventure.text.Component name) {
