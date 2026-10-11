@@ -83,4 +83,13 @@ final class PlaceholderValues {
                 && account.mute != null
                 && account.mute.remainingMillis(nowMillis) > 0;
     }
+
+    /**
+     * Процент аккаунтов с активной проходкой от всех аккаунтов (как «конверсия» в {@code /pass stats}).
+     * Пустой сервер (нет аккаунтов) — 0.
+     */
+    static int conversionPercent(int withPassAccounts, int totalAccounts) {
+        if (withPassAccounts <= 0 || totalAccounts <= 0) return 0;
+        return Math.round(100.0f * withPassAccounts / totalAccounts);
+    }
 }

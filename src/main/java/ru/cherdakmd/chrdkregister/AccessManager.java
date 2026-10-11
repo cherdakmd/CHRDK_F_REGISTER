@@ -204,6 +204,20 @@ public final class AccessManager {
         return store;
     }
 
+    /** Number of players currently online (PlaceholderAPI: {@code %chrdk_online_total%}). */
+    public int countOnlinePlayers() {
+        return plugin.getServer().getOnlinePlayers().size();
+    }
+
+    /** Number of online players that completed authentication (PlaceholderAPI: {@code %chrdk_online_authed%}). */
+    public int countAuthenticatedOnline() {
+        int count = 0;
+        for (Player player : plugin.getServer().getOnlinePlayers()) {
+            if (authenticatedPlayers.contains(player.getUniqueId())) count++;
+        }
+        return count;
+    }
+
     public synchronized void start() {
         stopTasks();
         this.serverStartedAtMillis = System.currentTimeMillis();

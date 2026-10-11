@@ -18,10 +18,17 @@ import java.util.Locale;
  *     <li>{@code %chrdk_pass_until%} — дата окончания проходки;</li>
  *     <li>{@code %chrdk_auth_stage%} / {@code %chrdk_auth_stage_id%} — стадия входа игрока;</li>
  *     <li>{@code %chrdk_chat_channel%} / {@code %chrdk_chat_channel_id%} — текущий канал чата;</li>
- *     <li>{@code %chrdk_registered%}, {@code %chrdk_2fa%}, {@code %chrdk_muted%} — «да»/«нет».</li>
+ *     <li>{@code %chrdk_registered%}, {@code %chrdk_2fa%}, {@code %chrdk_muted%} — «да»/«нет»;</li>
+ *     <li>глобальные (без привязки к игроку): {@code %chrdk_online_total%}, {@code %chrdk_online_authed%},
+ *     {@code %chrdk_accounts_total%}, {@code %chrdk_accounts_with_pass%}, {@code %chrdk_stats_revenue_24h%},
+ *     {@code %chrdk_stats_revenue_7d%}, {@code %chrdk_stats_revenue_30d%}, {@code %chrdk_stats_pending%},
+ *     {@code %chrdk_stats_granted%}, {@code %chrdk_stats_conversion%}, {@code %chrdk_pass_price%},
+ *     {@code %chrdk_payment_url%}.</li>
  * </ul>
  */
 public final class PlaceholderIntegration extends PlaceholderExpansion {
+
+    private static final long DAY_MILLIS = 86_400_000L;
 
     private final AccessManager accessManager;
     private final ChatService chatService;
@@ -63,9 +70,16 @@ public final class PlaceholderIntegration extends PlaceholderExpansion {
 
     @Override
     public @Nullable String onRequest(OfflinePlayer offlinePlayer, @Nullable String params) {
-        if (offlinePlayer == null || params == null || params.isBlank()) return "";
+        if (params == null || params.isBlank()) return "";
 
         long now = System.currentTimeMillis();
+        String key = params.toLowerCase(Locale.ROOT);
+
+        // Глобальные плейсхолдеры (серверная статистика, настройки оплаты) — игрок не нужен
+        String global = resolveGlobal(key, now);
+        if (global != null) return global;
+        if (offlinePlayer == null) return "";
+
         String name = offlinePlayer.getName();
         RegistrationStore.PlayerAccount account = name == null
                 ? null
@@ -73,7 +87,7 @@ public final class PlaceholderIntegration extends PlaceholderExpansion {
         long passUntil = account == null ? 0 : account.passUntil;
         Player live = offlinePlayer.getPlayer();
 
-        return switch (params.toLowerCase(Locale.ROOT)) {
+        return switch (key) {
             case "pass_status" -> PlaceholderValues.passStatus(account, now);
             case "pass_left" -> PlaceholderValues.passLeft(account, now);
             case "pass_days_left" -> Long.toString(PlaceholderValues.wholeDaysLeft(passUntil, now));
@@ -95,6 +109,32 @@ public final class PlaceholderIntegration extends PlaceholderExpansion {
             case "2fa" -> PlaceholderValues.yesNo(account != null && account.isTotpEnabled());
             case "muted" -> PlaceholderValues.yesNo(PlaceholderValues.isMuted(account, now));
             default -> null; // неизвестный плейсхолдер — PlaceholderAPI оставит его как есть
+        };
+    }
+
+    /**
+     * Серверные плейсхолдеры без привязки к игроку: онлайн, счётчики аккаунтов,
+     * статистика донатов (как {@code /pass stats}), цена и ссылка на оплату.
+     *
+     * @return значение плейсхолдера или {@code null}, если ключ не относится к глобальным
+     */
+    private @Nullable String resolveGlobal(String key, long now) {
+        return switch (key) {
+            case "online_total" -> Integer.toString(accessManager.countOnlinePlayers());
+            case "online_authed" -> Integer.toString(accessManager.countAuthenticatedOnline());
+            case "accounts_total" -> Integer.toString(store.getTotalAccountCount());
+            case "accounts_with_pass" -> Integer.toString(store.getActivePassCount(now));
+            case "stats_revenue_24h" -> DonationService.formatRubles(store.revenueKopecks(now - DAY_MILLIS, now));
+            case "stats_revenue_7d" -> DonationService.formatRubles(store.revenueKopecks(now - 7 * DAY_MILLIS, now));
+            case "stats_revenue_30d" -> DonationService.formatRubles(store.revenueKopecks(now - 30 * DAY_MILLIS, now));
+            case "stats_pending" -> Integer.toString(accessManager.donations().pendingCount());
+            case "stats_granted" -> Integer.toString(
+                    store.countDonations(RegistrationStore.DonationStatus.GRANTED));
+            case "stats_conversion" -> Integer.toString(PlaceholderValues.conversionPercent(
+                    store.getActivePassCount(now), store.getTotalAccountCount()));
+            case "pass_price" -> Integer.toString(accessManager.config().minimumDonationRubles());
+            case "payment_url" -> accessManager.config().donatePayPaymentUrl();
+            default -> null;
         };
     }
 }

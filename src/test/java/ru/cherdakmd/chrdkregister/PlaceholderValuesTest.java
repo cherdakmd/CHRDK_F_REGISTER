@@ -97,4 +97,14 @@ class PlaceholderValuesTest {
         assertEquals("нет", PlaceholderValues.yesNo(false));
         assertEquals("нет", PlaceholderValues.NONE);
     }
+
+    @Test
+    void conversionPercentRoundsAndHandlesEmptyServer() {
+        assertEquals(0, PlaceholderValues.conversionPercent(0, 0), "пустой сервер — 0%");
+        assertEquals(0, PlaceholderValues.conversionPercent(0, 10));
+        assertEquals(0, PlaceholderValues.conversionPercent(5, 0), "нет аккаунтов — 0%, без деления на ноль");
+        assertEquals(100, PlaceholderValues.conversionPercent(10, 10));
+        assertEquals(33, PlaceholderValues.conversionPercent(1, 3), "1 из 3 → 33%");
+        assertEquals(67, PlaceholderValues.conversionPercent(2, 3), "2 из 3 → 67%");
+    }
 }
