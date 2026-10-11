@@ -18,13 +18,14 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Persistent storage for player passes, password hashes, IP sessions, and DonatePay transaction cursor.
+ * Persistent storage for player passes, password hashes, TOTP 2FA secrets, IP sessions, and DonatePay cursor.
  */
 public final class RegistrationStore {
     private static final int MAX_PROCESSED_DONATIONS = 5_000;
@@ -69,6 +70,12 @@ public final class RegistrationStore {
         if (playerName == null || playerName.isBlank()) return false;
         PlayerAccount account = data.accounts.get(canonicalName(playerName));
         return account != null && account.isRegistered();
+    }
+
+    public synchronized boolean isTotpEnabled(String playerName) {
+        if (playerName == null || playerName.isBlank()) return false;
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        return account != null && account.isTotpEnabled();
     }
 
     /**
@@ -196,8 +203,70 @@ public final class RegistrationStore {
         if (account == null || !account.isRegistered()) return false;
         account.passwordHash = "";
         account.registeredAt = 0;
+        account.totpSecret = "";
+        account.totpEnabledAt = 0;
+        account.lastTotpStep = -1;
         account.lastAuthIp = "";
         account.lastAuthAt = 0;
+        save();
+        return true;
+    }
+
+    /**
+     * Enables TOTP 2FA for a registered player after they confirm their first 6-digit code.
+     */
+    public synchronized boolean enableTotp(
+            String playerName,
+            String base32Secret,
+            long verifiedStep,
+            long nowMillis
+    ) {
+        if (playerName == null || playerName.isBlank() || base32Secret == null || base32Secret.isBlank()) {
+            return false;
+        }
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        if (account == null || !account.isRegistered()) {
+            return false;
+        }
+        account.totpSecret = base32Secret.trim();
+        account.totpEnabledAt = nowMillis;
+        account.lastTotpStep = verifiedStep;
+        save();
+        return true;
+    }
+
+    /**
+     * Disables TOTP 2FA for a player.
+     */
+    public synchronized boolean disableTotp(String playerName) {
+        if (playerName == null || playerName.isBlank()) return false;
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        if (account == null || !account.isTotpEnabled()) return false;
+        account.totpSecret = "";
+        account.totpEnabledAt = 0;
+        account.lastTotpStep = -1;
+        save();
+        return true;
+    }
+
+    /**
+     * Verifies a 6-digit TOTP code against the player's active 2FA secret and records the used time step.
+     */
+    public synchronized boolean verifyTotp(
+            String playerName,
+            String code,
+            long nowMillis,
+            int windowSteps
+    ) {
+        if (playerName == null || playerName.isBlank()) return false;
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        if (account == null || !account.isTotpEnabled()) return false;
+        OptionalLong matchedStep = TotpService.verifyAndGetStep(
+                account.totpSecret, code, nowMillis, windowSteps, account.lastTotpStep);
+        if (matchedStep.isEmpty()) {
+            return false;
+        }
+        account.lastTotpStep = matchedStep.getAsLong();
         save();
         return true;
     }
@@ -263,6 +332,14 @@ public final class RegistrationStore {
         int count = 0;
         for (PlayerAccount account : data.accounts.values()) {
             if (account.isRegistered()) count++;
+        }
+        return count;
+    }
+
+    public synchronized int getTotpEnabledCount() {
+        int count = 0;
+        for (PlayerAccount account : data.accounts.values()) {
+            if (account.isTotpEnabled()) count++;
         }
         return count;
     }
@@ -377,6 +454,9 @@ public final class RegistrationStore {
         result.lastGrantAt = source.lastGrantAt;
         result.passwordHash = source.passwordHash;
         result.registeredAt = source.registeredAt;
+        result.totpSecret = source.totpSecret == null ? "" : source.totpSecret;
+        result.totpEnabledAt = source.totpEnabledAt;
+        result.lastTotpStep = source.lastTotpStep;
         result.lastAuthIp = source.lastAuthIp;
         result.lastAuthAt = source.lastAuthAt;
         return result;
@@ -391,6 +471,9 @@ public final class RegistrationStore {
         public long lastGrantAt;
         public String passwordHash = "";
         public long registeredAt;
+        public String totpSecret = "";
+        public long totpEnabledAt;
+        public long lastTotpStep = -1;
         public String lastAuthIp = "";
         public long lastAuthAt;
 
@@ -400,6 +483,10 @@ public final class RegistrationStore {
 
         public boolean isRegistered() {
             return passwordHash != null && !passwordHash.isBlank();
+        }
+
+        public boolean isTotpEnabled() {
+            return totpSecret != null && !totpSecret.isBlank();
         }
     }
 

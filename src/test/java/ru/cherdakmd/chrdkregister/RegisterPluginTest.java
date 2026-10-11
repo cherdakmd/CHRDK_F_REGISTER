@@ -4,13 +4,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.UUID;
 import java.util.logging.Logger;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -30,7 +33,46 @@ class RegisterPluginTest {
     }
 
     @Test
-    void storeHandlesManualAndDonatePayPassesAndSessions(@TempDir Path tempDir) {
+    void totpServiceMatchesRfcVectorsAndHandlesWindowAndReplay() {
+        // RFC 4226 / RFC 6238 standard 20-byte ASCII test secret: "12345678901234567890"
+        byte[] rawSecret = "12345678901234567890".getBytes(StandardCharsets.US_ASCII);
+        String base32Secret = TotpService.encodeBase32(rawSecret);
+        assertEquals("GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ", base32Secret);
+        assertArrayEquals(rawSecret, TotpService.decodeBase32(base32Secret));
+        assertArrayEquals(rawSecret, TotpService.decodeBase32("gezd gnbv-gy3t qojq gezd gnbv gy3t qojq="));
+
+        // RFC 4226 Appendix D & RFC 6238 Appendix B test vectors (6 digits, SHA1)
+        assertEquals("755224", TotpService.generateCodeAtStep(rawSecret, 0L));
+        assertEquals("287082", TotpService.generateCode(base32Secret, 59_000L));
+        assertEquals("081804", TotpService.generateCode(base32Secret, 1_111_111_109_000L));
+        assertEquals("050471", TotpService.generateCode(base32Secret, 1_111_111_111_000L));
+        assertEquals("005924", TotpService.generateCode(base32Secret, 1_234_567_890_000L));
+        assertEquals("279037", TotpService.generateCode(base32Secret, 2_000_000_000_000L));
+
+        // Time window & replay protection check
+        long epochMillis = 1_234_567_890_000L; // step 41152263 -> "005924"
+        assertTrue(TotpService.verifyCode(base32Secret, "005 924", epochMillis, 1));
+        assertTrue(TotpService.verifyCode(base32Secret, "005924", epochMillis + 30_000L, 1));
+        assertFalse(TotpService.verifyCode(base32Secret, "005924", epochMillis + 60_000L, 1));
+
+        OptionalLong matchedStep = TotpService.verifyAndGetStep(base32Secret, "005924", epochMillis, 1, -1L);
+        assertTrue(matchedStep.isPresent());
+        assertEquals(41152263L, matchedStep.getAsLong());
+
+        // Replaying the same or earlier time step must be rejected
+        assertTrue(TotpService.verifyAndGetStep(base32Secret, "005924", epochMillis, 1, matchedStep.getAsLong()).isEmpty());
+
+        // Generated secret & URI format
+        String randomSecret = TotpService.generateSecret();
+        assertEquals(32, randomSecret.length());
+        assertEquals(39, TotpService.formatSecretForDisplay(randomSecret).length());
+        String uri = TotpService.buildOtpAuthUri("CHRDK", "TestPlayer", randomSecret);
+        assertTrue(uri.startsWith("otpauth://totp/CHRDK:TestPlayer?secret=" + randomSecret));
+        assertTrue(uri.contains("&issuer=CHRDK&algorithm=SHA1&digits=6&period=30"));
+    }
+
+    @Test
+    void storeHandlesManualAndDonatePayPassesSessionsAndTotp2fa(@TempDir Path tempDir) {
         Logger logger = Logger.getLogger("test");
         RegistrationStore store = new RegistrationStore(tempDir, logger);
         long now = 1_700_000_000_000L;
@@ -63,10 +105,38 @@ class RegisterPluginTest {
         assertFalse(store.hasValidIpSession("CherdakPlayer", "198.51.100.7", now + Duration.ofMinutes(5).toMillis(), thirtyMinutes));
         assertFalse(store.hasValidIpSession("CherdakPlayer", "192.0.2.10", now + Duration.ofMinutes(31).toMillis(), thirtyMinutes));
 
-        // Reload from disk and verify persistence
+        // TOTP 2FA setup, login verification, replay protection, and persistence
+        assertFalse(store.isTotpEnabled("CherdakPlayer"));
+        String totpSecret = TotpService.generateSecret();
+        long setupStep = TotpService.getTimeStep(now);
+        assertTrue(store.enableTotp("CherdakPlayer", totpSecret, setupStep, now));
+        assertTrue(store.isTotpEnabled("CherdakPlayer"));
+        assertEquals(1, store.getTotpEnabledCount());
+
+        // Same time step used during setup cannot be replayed immediately
+        String setupCode = TotpService.generateCode(totpSecret, now);
+        assertFalse(store.verifyTotp("CherdakPlayer", setupCode, now, 0));
+
+        // Next 30-second window code succeeds once and then blocks replay
+        long nextWindowMillis = now + 30_000L;
+        String nextCode = TotpService.generateCode(totpSecret, nextWindowMillis);
+        assertTrue(store.verifyTotp("CherdakPlayer", nextCode, nextWindowMillis, 1));
+        assertFalse(store.verifyTotp("CherdakPlayer", nextCode, nextWindowMillis, 1));
+
+        // Reload from disk and verify persistence of pass, password, and 2FA
         RegistrationStore reloaded = new RegistrationStore(tempDir, logger);
         assertTrue(reloaded.hasActivePass("CherdakPlayer", now));
         assertTrue(reloaded.verifyPassword("CherdakPlayer", "Secret123"));
+        assertTrue(reloaded.isTotpEnabled("CherdakPlayer"));
+
+        long thirdWindowMillis = now + 60_000L;
+        String thirdCode = TotpService.generateCode(totpSecret, thirdWindowMillis);
+        assertTrue(reloaded.verifyTotp("CherdakPlayer", thirdCode, thirdWindowMillis, 1));
+
+        // Disable 2FA and verify
+        assertTrue(reloaded.disableTotp("CherdakPlayer"));
+        assertFalse(reloaded.isTotpEnabled("CherdakPlayer"));
+        assertEquals(0, reloaded.getTotpEnabledCount());
     }
 
     @Test
@@ -123,18 +193,30 @@ class RegisterPluginTest {
         assertEquals("register", PlayerRestrictionListener.extractCommandLabel("/register pass1 pass1"));
         assertEquals("reg", PlayerRestrictionListener.extractCommandLabel("/chrdk_f_register:reg pass1 pass1"));
         assertEquals("login", PlayerRestrictionListener.extractCommandLabel("/login pass1"));
+        assertEquals("2fa", PlayerRestrictionListener.extractCommandLabel("/2fa 123456"));
 
         assertTrue(PlayerRestrictionListener.isCommandAllowed(AccessManager.PlayerStage.NO_PASS, "pass"));
         assertFalse(PlayerRestrictionListener.isCommandAllowed(AccessManager.PlayerStage.NO_PASS, "register"));
         assertFalse(PlayerRestrictionListener.isCommandAllowed(AccessManager.PlayerStage.NO_PASS, "login"));
+        assertFalse(PlayerRestrictionListener.isCommandAllowed(AccessManager.PlayerStage.NO_PASS, "2fa"));
         assertFalse(PlayerRestrictionListener.isCommandAllowed(AccessManager.PlayerStage.NO_PASS, "spawn"));
 
         assertTrue(PlayerRestrictionListener.isCommandAllowed(AccessManager.PlayerStage.NEEDS_REGISTER, "register"));
         assertTrue(PlayerRestrictionListener.isCommandAllowed(AccessManager.PlayerStage.NEEDS_REGISTER, "reg"));
         assertFalse(PlayerRestrictionListener.isCommandAllowed(AccessManager.PlayerStage.NEEDS_REGISTER, "login"));
+        assertFalse(PlayerRestrictionListener.isCommandAllowed(AccessManager.PlayerStage.NEEDS_REGISTER, "2fa"));
 
         assertTrue(PlayerRestrictionListener.isCommandAllowed(AccessManager.PlayerStage.NEEDS_LOGIN, "login"));
         assertTrue(PlayerRestrictionListener.isCommandAllowed(AccessManager.PlayerStage.NEEDS_LOGIN, "l"));
         assertFalse(PlayerRestrictionListener.isCommandAllowed(AccessManager.PlayerStage.NEEDS_LOGIN, "register"));
+        assertFalse(PlayerRestrictionListener.isCommandAllowed(AccessManager.PlayerStage.NEEDS_LOGIN, "2fa"));
+
+        assertTrue(PlayerRestrictionListener.isCommandAllowed(AccessManager.PlayerStage.NEEDS_2FA, "2fa"));
+        assertTrue(PlayerRestrictionListener.isCommandAllowed(AccessManager.PlayerStage.NEEDS_2FA, "totp"));
+        assertTrue(PlayerRestrictionListener.isCommandAllowed(AccessManager.PlayerStage.NEEDS_2FA, "twofactor"));
+        assertTrue(PlayerRestrictionListener.isCommandAllowed(AccessManager.PlayerStage.NEEDS_2FA, "login"));
+        assertTrue(PlayerRestrictionListener.isCommandAllowed(AccessManager.PlayerStage.NEEDS_2FA, "pass"));
+        assertFalse(PlayerRestrictionListener.isCommandAllowed(AccessManager.PlayerStage.NEEDS_2FA, "register"));
+        assertFalse(PlayerRestrictionListener.isCommandAllowed(AccessManager.PlayerStage.NEEDS_2FA, "spawn"));
     }
 }

@@ -4,7 +4,7 @@ main: ru.cherdakmd.chrdkregister.RegisterPlugin
 api-version: '1.21.11'
 authors:
   - cherdakmd
-description: Плагин проходки через DonatePay (150р на 1 месяц) с регистрацией и авторизацией по паролю для Purpur 1.21.11
+description: Плагин проходки через DonatePay (150р на 1 месяц) с регистрацией, авторизацией по паролю и TOTP 2FA для Purpur 1.21.11
 
 commands:
   register:
@@ -12,16 +12,20 @@ commands:
     usage: /<command> <пароль> <повтор>
     aliases: [reg]
   login:
-    description: Войти в аккаунт по паролю
-    usage: /<command> <пароль>
+    description: Войти в аккаунт по паролю (и коду 2FA, если подключена)
+    usage: /<command> <пароль> [код_2FA]
     aliases: [l]
   changepassword:
     description: Сменить пароль аккаунта
     usage: /<command> <старый_пароль> <новый_пароль>
     aliases: [cp, changepass]
+  2fa:
+    description: Двухфакторная аутентификация TOTP (Google Authenticator / 2FAS / Authy)
+    usage: /<command> [setup|confirm|disable|status|cancel|<6-значный_код>]
+    aliases: [totp, twofactor]
   pass:
     description: Проверка статуса проходки и управление проходками
-    usage: /<command> [add|remove|check|unregister|status|reload] [ник]
+    usage: /<command> [add|remove|check|unregister|reset2fa|status|reload] [ник]
     aliases: [fregister, prohodka]
 
 permissions:

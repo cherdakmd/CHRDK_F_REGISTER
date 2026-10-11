@@ -47,12 +47,14 @@ import java.util.Set;
 
 /**
  * Blocks all world, movement, inventory, combat, chat, and command actions
- * until the player has an active pass and has completed password registration/login.
+ * until the player has an active pass and has completed password + TOTP 2FA authentication.
  */
 public final class PlayerRestrictionListener implements Listener {
     private static final Set<String> PASS_COMMANDS = Set.of("pass", "fregister", "prohodka");
     private static final Set<String> REGISTER_COMMANDS = Set.of("register", "reg", "pass", "fregister", "prohodka");
     private static final Set<String> LOGIN_COMMANDS = Set.of("login", "l", "pass", "fregister", "prohodka");
+    private static final Set<String> TWO_FACTOR_COMMANDS =
+            Set.of("2fa", "totp", "twofactor", "login", "l", "pass", "fregister", "prohodka");
 
     private final AccessManager accessManager;
 
@@ -121,6 +123,9 @@ public final class PlayerRestrictionListener implements Listener {
             case NEEDS_LOGIN -> player.sendMessage(Component.text(
                     "Сначала войдите в аккаунт: /login <пароль>",
                     NamedTextColor.RED));
+            case NEEDS_2FA -> player.sendMessage(Component.text(
+                    "Подтвердите вход кодом двухфакторной аутентификации: /2fa <6-значный_код>",
+                    NamedTextColor.RED));
             default -> {
             }
         }
@@ -148,6 +153,7 @@ public final class PlayerRestrictionListener implements Listener {
             case NO_PASS -> PASS_COMMANDS.contains(label);
             case NEEDS_REGISTER -> REGISTER_COMMANDS.contains(label);
             case NEEDS_LOGIN -> LOGIN_COMMANDS.contains(label);
+            case NEEDS_2FA -> TWO_FACTOR_COMMANDS.contains(label);
         };
     }
 
@@ -167,6 +173,9 @@ public final class PlayerRestrictionListener implements Listener {
                     NamedTextColor.RED));
             case NEEDS_LOGIN -> player.sendMessage(Component.text(
                     "Чат заблокирован! Авторизуйтесь: /login <пароль>",
+                    NamedTextColor.RED));
+            case NEEDS_2FA -> player.sendMessage(Component.text(
+                    "Чат заблокирован! Подтвердите вход кодом 2FA: /2fa <6-значный_код>",
                     NamedTextColor.RED));
             default -> {
             }
