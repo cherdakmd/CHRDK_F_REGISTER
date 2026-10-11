@@ -555,7 +555,7 @@ public final class ChatService implements Listener {
                 if (args.length >= 2) {
                     Player target = Bukkit.getPlayerExact(args[1]);
                     if (target == null) {
-                        messages.send(sender, "error.player-offline", "args", args[1]);
+                        messages.send(sender, "error.player-offline", "player", args[1]);
                         return true;
                     }
                     clearChat(target);
@@ -883,7 +883,7 @@ public final class ChatService implements Listener {
 
         Player target = Bukkit.getPlayerExact(args[0]);
         if (target == null) {
-            messages.send(sender, "error.player-offline", "args", args[0]);
+            messages.send(sender, "error.player-offline", "player", args[0]);
             return true;
         }
         if (sender instanceof Player senderPlayer) {

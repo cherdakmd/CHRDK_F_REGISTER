@@ -126,13 +126,13 @@ public final class AuthDialogs {
                 .type(DialogType.confirmation(
                         button(messages.get("dialog.two-factor.submit"), DialogAction.customClick(
                                 (response, audience) -> submitTwoFactor(player, response), singleUse())),
-                        button("Отмена", null))))));
+                        button(messages.get("dialog.cancel"), null))))));
     }
 
     private void submitLogin(Player player, DialogResponseView response) {
         String password = response.getText(KEY_PASSWORD);
         if (password == null || password.isEmpty()) {
-            warn(player, messages.get("dialog.password-missing"));
+            warn(player, "dialog.password-missing");
             showLogin(player);
             return;
         }
@@ -143,12 +143,12 @@ public final class AuthDialogs {
         String password = response.getText(KEY_PASSWORD);
         String confirmation = response.getText(KEY_CONFIRM);
         if (password == null || password.isEmpty()) {
-            warn(player, messages.get("dialog.password-missing"));
+            warn(player, "dialog.password-missing");
             showRegister(player);
             return;
         }
         if (!password.equals(confirmation)) {
-            warn(player, messages.get("dialog.confirm-mismatch"));
+            warn(player, "dialog.confirm-mismatch");
             showRegister(player);
             return;
         }
@@ -158,7 +158,7 @@ public final class AuthDialogs {
     private void submitTwoFactor(Player player, DialogResponseView response) {
         String code = response.getText(KEY_CODE);
         if (code == null || code.isBlank()) {
-            warn(player, messages.get("dialog.code-missing"));
+            warn(player, "dialog.code-missing");
             showTwoFactor(player);
             return;
         }
@@ -177,8 +177,8 @@ public final class AuthDialogs {
         }
     }
 
-    private void warn(Player player, String message) {
-        player.sendMessage(Component.text(message, NamedTextColor.RED));
+    private void warn(Player player, String messageKey) {
+        player.sendMessage(messages.get(messageKey));
     }
 
     private void run(Player player, Runnable action) {
