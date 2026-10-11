@@ -1,0 +1,133 @@
+# CHRDK_Enchants — имена/описания 30 чар (en.<id>.name, en.<id>.lore) и тексты UI.
+enchants:
+  no-api: "<red>Ядро CHRDK_F_REGISTER не найдено — чары недоступны.</red>"
+  need-auth: "<red>Сначала войдите на сервер (/login).</red>"
+  table-added: "<light_purple>✦ Стол дарует эпическую чару: %name%!</light_purple>"
+  anvil-applied: "<light_purple>✦ Чара перенесена: %name%</light_purple>"
+  anvil-capped: "<red>На предмете уже максимум чар (%max%) или они конфликтуют.</red>"
+  usage: "<gray>/enchants — книга с описанием всех 30 чар; /enchants info <id></gray>"
+  info-header: "<light_purple>✦ %name% <gray>(%rarity%, ур. I–%maxlevel%)</gray>"
+  info-items: "<gray>Накладывается на: <yellow>%items%</yellow></gray>"
+  info-conflicts: "<gray>Конфликтует с: <red>%conflicts%</red></gray>"
+  not-found: "<red>Чара с id <yellow>%id%</yellow> не найдена.</red>"
+  player-only: "<red>Команда доступна только игрокам.</red>"
+  no-permission: "<red>Недостаточно прав.</red>"
+  admin-given: "<green>Выдана книга чары: %name% <gray>ур. %level%</gray> игроку %player%.</green>"
+  admin-offline: "<red>Игрок %player% не в сети.</red>"
+  admin-reloaded: "<green>Конфигурация чар перезагружена.</green>"
+  admin-usage:
+    - "<gray><yellow>/enchantsadmin give <ник> <id> [уровень]</yellow> — выдать книгу</gray>"
+    - "<gray><yellow>/enchantsadmin reload</yellow> — перечитать конфиг</gray>"
+  phoenix-armed: "<gold>✦ Феникс готов вспыхнуть.</gold>"
+  phoenix-consumed: "<gold>☀ Феникс воскресил вас! Перезарядка %seconds% сек.</gold>"
+  laststand-triggered: "<yellow>✦ Последний шанс: держитесь! (перезарядка %seconds% сек)</yellow>"
+  gui-title: "Эпичные чары — 30 шт."
+  gui-enchant-lore-rarity: "<gray>Редкость: %rarity% · макс. ур.: %maxlevel%</gray>"
+  gui-enchant-lore-items: "<gray>На: %items%</gray>"
+  gui-book-name: "<light_purple>✦ Книга чар: %name%</light_purple>"
+  lore-line: "<dark_purple>✦ %name% <gray>%levelroman%</gray>"
+  gui-footer: "<gray>Источники: стол зачарований и жители-библиотекари.</gray>"
+  rarity-common: "<gray>Обычная</gray>"
+  rarity-rare: "<aqua>Редкая</aqua>"
+  rarity-epic: "<light_purple>Эпическая</light_purple>"
+  rarity-legendary: "<gold>Легендарная</gold>"
+  item-sword: "мечи/топоры"
+  item-bow: "луки/арбалеты"
+  item-helmet: "шлемы"
+  item-chestplate: "нагрудники"
+  item-leggings: "поножи"
+  item-boots: "ботинки"
+  item-armor: "любая броня"
+  item-tool: "кирки/лопаты/топоры"
+  # --- 30 чар ---
+  en:
+    thunderstrike:
+      name: "Громобой"
+      lore: "<gray><gray>Есть шанс, что удар вызовет молнию и подпалит цель.</gray></gray>"
+    lifesteal:
+      name: "Вампиризм"
+      lore: "<gray><gray>Часть наносимого урона возвращается здоровьем.</gray></gray>"
+    chainspark:
+      name: "Цепная молния"
+      lore: "<gray><gray>Удар перескакивает на ближайших врагов цепной зарницей.</gray></gray>"
+    bleeding:
+      name: "Кровоточность"
+      lore: "<gray><gray>Раны кровоточат — цель иссушается несколько секунд.</gray></gray>"
+    paralyze:
+      name: "Паралич"
+      lore: "<gray><gray>Может сковать врага: ступор и тяжёлые руки.</gray></gray>"
+    execution:
+      name: "Казнь"
+      lore: "<gray><gray>По почти павшим врагам бьёт разяще сильнее.</gray></gray>"
+    berserk:
+      name: "Берсерк"
+      lore: "<gray><gray>Чем меньше у вас здоровья (ниже половины), тем сильнее удары.</gray></gray>"
+    slayer:
+      name: "Истребитель"
+      lore: "<gray><gray>За каждое убийство дарует прилив силы.</gray></gray>"
+    souleater:
+      name: "Пожиратель душ"
+      lore: "<gray>Убийства участвуют в вашей сытости и здоровье.</gray>"
+    stormarrow:
+      name: "Грозовая стрела"
+      lore: "<gray>Попадание бьёт зарницей и задевает врагов рядом.</gray>"
+    explosive:
+      name: "Взрывная стрела"
+      lore: "<gray>Стрела взрывается (кубики целы, врагам — больно).</gray>"
+    sniper:
+      name: "Снайперская стрела"
+      lore: "<gray>Урон растёт с каждыми десятью пролетевшими блоками.</gray>"
+    frostarrow:
+      name: "Морозная стрела"
+      lore: "<gray>Замораживает цель и замедляет её.</gray>"
+    tracer:
+      name: "Следящая стрела"
+      lore: "<gray>Помеченная цель светится 10 сек.</gray>"
+    headhunter:
+      name: "Охотник за головами"
+      lore: "<gold>Игроки умирают, оставляя голову; по игрокам по ним +15 процентов урона.</gold>"
+    retribution:
+      name: "Возмездие"
+      lore: "<gray>Бьющий вас получает часть удара обратно.</gray>"
+    laststand:
+      name: "Последний шанс"
+      lore: "<gold>На пороге смерти даёт щит и стойкость (редкий трюк).</gold>"
+    fortified:
+      name: "Крепость"
+      lore: "<gray>Уменьшает любой входящий урон.</gray>"
+    lightningrod:
+      name: "Громоотвод"
+      lore: "<gray>Молнии не страшны; её удар даёт скорость.</gray>"
+    phoenix:
+      name: "Феникс"
+      lore: "<gold>Смертельный удар отменяется: воскрешение в пламени (редкий трюк).</gold>"
+    iceward:
+      name: "Страж льдов"
+      lore: "<gray>Нападающие в ближнем бою подмораживаются.</gray>"
+    truesight:
+      name: "Орлиный глаз"
+      lore: "<gray>Видит невидимок поблизости — они вспыхивают.</gray>"
+    seer:
+      name: "Провидец"
+      lore: "<gray>Вечное ночное зрение на носящем.</gray>"
+    swiftfeet:
+      name: "Стремительные"
+      lore: "<gray>Спринт заметно ускоряет шаг.</gray>"
+    froggy:
+      name: "Лягушачьи лапки"
+      lore: "<gray>Дарует выдающуюся прыгучесть.</gray>"
+    lavawalker:
+      name: "Лавоступ"
+      lore: "<gold>Шагайте по лаве: под ногами — магматическая корка.</gold>"
+    autosmelt:
+      name: "Автоплавка"
+      lore: "<gray>Руды железа/золота/меди плавятся прямо при добыче.</gray>"
+    veinminer:
+      name: "Жилодробитель"
+      lore: "<gray>Одна рудная жила раскалывается одним нажатием.</gray>"
+    excavator:
+      name: "Дробитель"
+      lore: "<gray>Выбивает участок 3×3 (ур. II — ещё на слой вглубь).</gray>"
+    midas:
+      name: "Рука Мидаса"
+      lore: "<gold>Иногда удваивает добычу минералов.</gold>"
