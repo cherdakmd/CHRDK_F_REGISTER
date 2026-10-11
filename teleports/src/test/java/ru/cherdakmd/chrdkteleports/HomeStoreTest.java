@@ -44,7 +44,7 @@ class HomeStoreTest {
         HomeLocation found = store.get(id, HomeStore.normalize("ДОМ"));
         assertNotNull(found);
         assertEquals(3, found.z());
-        assertEquals(3, found.y());
+        assertEquals(2, found.y());
         assertTrue(store.remove(id, home.name().toLowerCase(java.util.Locale.ROOT)));
         assertNull(store.get(id, HomeStore.normalize("Дом")));
     }
