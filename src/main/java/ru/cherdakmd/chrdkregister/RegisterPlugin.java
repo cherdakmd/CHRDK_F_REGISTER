@@ -13,6 +13,7 @@ import java.util.logging.Level;
 public final class RegisterPlugin extends JavaPlugin {
     private AccessManager accessManager;
     private ChatService chatService;
+    private PassMenuService passMenuService;
     private RegistrationStore store;
     private ExecutionService executor;
     private RegisterCommandHandler commandHandler;
@@ -32,9 +33,11 @@ public final class RegisterPlugin extends JavaPlugin {
 
         this.accessManager = new AccessManager(this, config, store, donatePayClient, messages, getLogger());
         this.chatService = new ChatService(this, accessManager, config.chat(), messages, getLogger());
+        this.passMenuService = new PassMenuService(accessManager, messages);
 
         getServer().getPluginManager().registerEvents(new PlayerRestrictionListener(accessManager), this);
         getServer().getPluginManager().registerEvents(chatService, this);
+        getServer().getPluginManager().registerEvents(passMenuService, this);
 
         this.commandHandler = new RegisterCommandHandler(this, accessManager);
         for (String commandName : List.of("register", "login", "changepassword", "2fa", "pass", "logout", "session", "captcha")) {
@@ -107,6 +110,9 @@ public final class RegisterPlugin extends JavaPlugin {
         if (chatService != null) {
             chatService.setMessages(messages);
         }
+        if (passMenuService != null) {
+            passMenuService.setMessages(messages);
+        }
         if (commandHandler != null) {
             commandHandler.refreshMessages(); // /pass reload сам сообщает результат уже новыми текстами
         }
@@ -121,6 +127,11 @@ public final class RegisterPlugin extends JavaPlugin {
 
     public RegistrationStore store() {
         return store;
+    }
+
+    /** Инвентарное меню {@code /pass menu} (иконки вместо текстовых справок). */
+    public PassMenuService passMenu() {
+        return passMenuService;
     }
 
     /**

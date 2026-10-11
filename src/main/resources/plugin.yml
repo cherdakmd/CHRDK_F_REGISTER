@@ -30,7 +30,7 @@ commands:
     aliases: [totp, twofactor]
   pass:
     description: Проверка статуса проходки и управление проходками
-    usage: /<command> [add|remove|check|unregister|reset2fa|status|reload] [ник]
+    usage: /<command> [menu|add|remove|check|unregister|reset2fa|status|reload] [ник]
     aliases: [fregister, prohodka]
   chat:
     description: Управление чатом — локальный/глобальный режим, очистка, объявления

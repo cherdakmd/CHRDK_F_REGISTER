@@ -33,6 +33,7 @@ public final class PluginConfig {
     private final boolean expiryBossBar;
     private final boolean expiryWarningSound;
     private final int kickAfterSeconds;
+    private final boolean passGuiMenu;
 
     private final int sessionMinutes;
     private final int minPasswordLength;
@@ -102,7 +103,7 @@ public final class PluginConfig {
         this(
                 donatePayApiToken, donatePayPaymentUrl, minimumDonationRubles, donatePollSeconds, strictCaseMatch,
                 true, true, false, 4, 365,
-                grantDays, defaultTiers(grantDays), List.of(10_080L, 4_320L, 1_440L, 60L), true, true, 0,
+                grantDays, defaultTiers(grantDays), List.of(10_080L, 4_320L, 1_440L, 60L), true, true, 0, true,
                 sessionMinutes, minPasswordLength, maxPasswordLength, maxLoginAttempts, reminderSeconds, 3,
                 false, true, false, true, false, false, true,
                 List.of(0, 0, 1, 2, 5, 10, 30, 60, 120, 300), maxLoginAttempts, 10, 15, 10, 15, true,
@@ -135,6 +136,7 @@ public final class PluginConfig {
             boolean expiryBossBar,
             boolean expiryWarningSound,
             int kickAfterSeconds,
+            boolean passGuiMenu,
             int sessionMinutes,
             int minPasswordLength,
             int maxPasswordLength,
@@ -196,6 +198,7 @@ public final class PluginConfig {
         this.expiryBossBar = expiryBossBar;
         this.expiryWarningSound = expiryWarningSound;
         this.kickAfterSeconds = Math.clamp(kickAfterSeconds, 0, 3600);
+        this.passGuiMenu = passGuiMenu;
 
         this.sessionMinutes = Math.clamp(sessionMinutes, 0, 10080);
         this.minPasswordLength = Math.clamp(minPasswordLength, 4, 32);
@@ -276,6 +279,7 @@ public final class PluginConfig {
                 config.getBoolean("pass.expiry-bossbar", true),
                 config.getBoolean("pass.expiry-warning-sound", true),
                 config.getInt("pass.kick-after-seconds", 0),
+                config.getBoolean("pass.gui-menu", true),
                 config.getInt("auth.session-minutes", 30),
                 config.getInt("auth.min-password-length", 8),
                 config.getInt("auth.max-password-length", 64),
@@ -425,6 +429,11 @@ public final class PluginConfig {
 
     public int kickAfterSeconds() {
         return kickAfterSeconds;
+    }
+
+    /** Включено ли инвентарное GUI-меню {@code /pass menu}. */
+    public boolean passGuiMenu() {
+        return passGuiMenu;
     }
 
     /* ------------------------------------------------------------------ *
