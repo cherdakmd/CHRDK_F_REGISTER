@@ -50,6 +50,19 @@ commands:
     description: Просмотр личных сообщений игроков (для администрации)
     usage: /<command> [on|off]
     aliases: [spy]
+  logout:
+    description: Выйти из аккаунта и сбросить сессию по IP
+    usage: /<command>
+  session:
+    description: Показать активные сессии аккаунта (IP, последний вход)
+    usage: /<command> [end]
+    aliases: [sessions]
+  mute:
+    description: Запретить игроку писать в чат на заданное время
+    usage: /<command> <ник> <10m|2h|1d> [причина]
+  unmute:
+    description: Снять мут с игрока
+    usage: /<command> <ник>
 
 permissions:
   chrdkregister.admin:
@@ -73,3 +86,9 @@ permissions:
   chrdkregister.automessage.receive:
     description: Получать автоматические сообщения сервера
     default: true
+  chrdkregister.chat.mute:
+    description: Управление мутами (/mute, /unmute) и медленным режимом (/chat slow)
+    default: op
+  chrdkregister.chat.history:
+    description: Просмотр истории чата командой /chat history
+    default: op

@@ -27,16 +27,26 @@ import java.util.Set;
  */
 public final class RegisterCommandHandler implements CommandExecutor, TabCompleter {
     private static final List<String> ADMIN_SUBCOMMANDS =
-            List.of("add", "remove", "check", "unregister", "reset2fa", "status", "reload");
+            List.of("add", "remove", "check", "unregister", "reset2fa", "status", "reload",
+                    "pending", "approve", "reject", "sessions", "logoutall", "stats", "doctor", "audit",
+                    "backup", "gift");
+    private static final List<String> MUTE_DURATIONS = List.of("10m", "30m", "1h", "6h", "1d", "7d");
     private static final List<String> TWO_FACTOR_SUBCOMMANDS =
             List.of("setup", "confirm", "disable", "status", "cancel");
 
     private final RegisterPlugin plugin;
     private final AccessManager accessManager;
+    private Messages messages;
 
     public RegisterCommandHandler(RegisterPlugin plugin, AccessManager accessManager) {
         this.plugin = plugin;
         this.accessManager = accessManager;
+        this.messages = plugin.messages();
+    }
+
+    /** Обновляет тексты после перезагрузки {@code messages.yml}. */
+    public void refreshMessages() {
+        this.messages = plugin.messages();
     }
 
     @Override
@@ -53,17 +63,63 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             case "changepassword" -> handleChangePassword(sender, args);
             case "2fa" -> handleTwoFactor(sender, label, args);
             case "pass" -> handlePass(sender, label, args);
+            case "logout" -> handleLogout(sender);
+            case "session" -> handleSession(sender, args);
             default -> false;
         };
     }
 
+    private boolean handleLogout(CommandSender sender) {
+        if (!(sender instanceof Player player)) {
+            messages.send(sender, "error.players-only");
+            return true;
+        }
+        return accessManager.handleLogoutCommand(player);
+    }
+
+    private boolean handleSession(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            messages.send(sender, "error.players-only-session");
+            return true;
+        }
+        if (args.length >= 1 && ("end".equalsIgnoreCase(args[0]) || "logout".equalsIgnoreCase(args[0]))) {
+            return accessManager.handleLogoutCommand(player);
+        }
+        showSessions(sender, player.getName());
+        return true;
+    }
+
+    private void showSessions(CommandSender sender, String playerName) {
+        long now = System.currentTimeMillis();
+        var sessions = accessManager.sessionsOf(playerName);
+        messages.send(sender, "session.list-header", "player", playerName);
+        if (sessions.isEmpty()) {
+            messages.send(sender, "session.list-empty");
+            return;
+        }
+        long sessionMillis = java.util.concurrent.TimeUnit.MINUTES.toMillis(accessManager.config().sessionMinutes());
+        for (var session : sessions) {
+            long age = session.ageMillis(now);
+            boolean active = sessionMillis > 0 && age <= sessionMillis;
+            messages.send(sender, active ? "session.list-entry-active" : "session.list-entry-expired",
+                    "ip", AuditLog.maskIp(session.ip),
+                    "uuid", session.uuid == null || session.uuid.isBlank()
+                            ? "" : session.uuid.substring(0, Math.min(8, session.uuid.length())) + "…",
+                    "last-seen", AccessManager.formatTimestamp(session.lastSeenAt),
+                    "source", session.source);
+        }
+        if (playerName.equalsIgnoreCase(sender.getName())) {
+            messages.send(sender, "session.list-hint");
+        }
+    }
+
     private boolean handleRegister(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(Component.text("Эта команда доступна только игрокам.", NamedTextColor.RED));
+            messages.send(sender, "error.players-only");
             return true;
         }
         if (args.length != 2) {
-            player.sendMessage(Component.text("Использование: /register <пароль> <повтор>", NamedTextColor.YELLOW));
+            messages.send(player, "usage.register");
             return true;
         }
         return accessManager.handleRegisterCommand(player, args[0], args[1]);
@@ -71,11 +127,12 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
 
     private boolean handleLogin(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(Component.text("Эта команда доступна только игрокам.", NamedTextColor.RED));
+            messages.send(sender, "error.players-only");
             return true;
         }
         if (args.length < 1 || args.length > 2) {
-            player.sendMessage(Component.text("Использование: /login <пароль> [код_2FA]", NamedTextColor.YELLOW));
+            messages.send(player, "usage.login");
+            accessManager.showAuthDialogNow(player);
             return true;
         }
         String totpCode = args.length == 2 ? args[1] : null;
@@ -84,11 +141,11 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
 
     private boolean handleChangePassword(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(Component.text("Эта команда доступна только игрокам.", NamedTextColor.RED));
+            messages.send(sender, "password.change.players-only");
             return true;
         }
         if (args.length != 2) {
-            player.sendMessage(Component.text("Использование: /changepassword <старый_пароль> <новый_пароль>", NamedTextColor.YELLOW));
+            messages.send(player, "password.change.usage");
             return true;
         }
         return accessManager.handleChangePasswordCommand(player, args[0], args[1]);
@@ -100,17 +157,15 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 && sender.hasPermission("chrdkregister.admin")) {
             String targetName = args[1].trim();
             if (accessManager.resetTwoFactor(targetName)) {
-                sender.sendMessage(Component.text("✓ TOTP 2FA для игрока " + targetName + " сброшена.", NamedTextColor.GREEN));
+                messages.send(sender, "two-factor.reset-success", "target_name", targetName);
             } else {
-                sender.sendMessage(Component.text("У игрока " + targetName + " не включена двухфакторная аутентификация.", NamedTextColor.RED));
+                messages.send(sender, "two-factor.reset-not-enabled", "target_name", targetName);
             }
             return true;
         }
 
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(Component.text(
-                    "Эта команда доступна только игрокам. Для сброса 2FA игрока используйте: /pass reset2fa <ник>",
-                    NamedTextColor.RED));
+            messages.send(sender, "two-factor.reset-players-only");
             return true;
         }
 
@@ -120,16 +175,17 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             return true;
         }
         if (stage == AccessManager.PlayerStage.NEEDS_REGISTER) {
-            player.sendMessage(Component.text("Сначала зарегистрируйте пароль: /register <пароль> <повтор>", NamedTextColor.YELLOW));
+            messages.send(player, "two-factor.need-register");
             return true;
         }
         if (stage == AccessManager.PlayerStage.NEEDS_LOGIN) {
-            player.sendMessage(Component.text("Сначала введите пароль: /login <пароль>", NamedTextColor.YELLOW));
+            messages.send(player, "two-factor.need-login");
             return true;
         }
         if (stage == AccessManager.PlayerStage.NEEDS_2FA) {
             if (args.length == 0) {
                 accessManager.sendTwoFactorPrompt(player, false);
+                accessManager.showAuthDialogNow(player);
                 return true;
             }
             String sub = args[0].toLowerCase(Locale.ROOT);
@@ -156,14 +212,14 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             }
             case "confirm", "verify", "activate" -> {
                 if (args.length < 2) {
-                    player.sendMessage(Component.text("Использование: /" + label + " confirm <6-значный_код>", NamedTextColor.YELLOW));
+                    messages.send(player, "two-factor.usage-confirm", "label", label);
                     return true;
                 }
                 return accessManager.handleTwoFactorConfirmSetup(player, joinArgsFrom(args, 1));
             }
             case "disable", "off", "unbind", "remove" -> {
                 if (args.length < 2) {
-                    player.sendMessage(Component.text("Использование: /" + label + " disable <6-значный_код_или_пароль>", NamedTextColor.YELLOW));
+                    messages.send(player, "two-factor.usage-disable", "label", label);
                     return true;
                 }
                 return accessManager.handleTwoFactorDisable(player, joinArgsFrom(args, 1));
@@ -186,48 +242,38 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         boolean enabled = accessManager.store().isTotpEnabled(player.getName());
         Optional<String> pendingSecret = accessManager.getPendingTotpSecret(player.getUniqueId());
 
-        player.sendMessage(Component.text("==============================================", NamedTextColor.GOLD));
-        player.sendMessage(Component.text("Двухфакторная аутентификация (TOTP 2FA): ", NamedTextColor.GRAY)
-                .append(Component.text(enabled ? "ВКЛЮЧЕНА" : "ОТКЛЮЧЕНА",
-                        enabled ? NamedTextColor.GREEN : NamedTextColor.YELLOW, TextDecoration.BOLD)));
+        messages.send(player, "two-factor.status.header");
+        player.sendMessage(messages.get("two-factor.status.state-label")
+                .append(messages.get(enabled ? "common.enabled" : "common.disabled")));
 
         if (enabled) {
             Optional<RegistrationStore.PlayerAccount> accountOpt = accessManager.store().getAccount(player.getName());
-            if (accountOpt.isPresent() && accountOpt.get().totpEnabledAt > 0) {
-                player.sendMessage(Component.text("Подключена: ", NamedTextColor.GRAY)
-                        .append(Component.text(AccessManager.formatTimestamp(accountOpt.get().totpEnabledAt), NamedTextColor.AQUA)));
+            if (accountOpt.isPresent() && accountOpt.get().totpEnabledAt > 0) {                messages.send(player, "two-factor.status.enabled-since",
+                        "since", AccessManager.formatTimestamp(accountOpt.get().totpEnabledAt));
             }
-            player.sendMessage(Component.text("Для отключения используйте: ", NamedTextColor.GRAY)
-                    .append(Component.text("/" + label + " disable <6-значный_код>", NamedTextColor.YELLOW)));
+            player.sendMessage(messages.get("two-factor.status.disable-hint")
+                    .append(messages.get("two-factor.status.disable-hint-command", "label", label)));
         } else if (pendingSecret.isPresent()) {
-            player.sendMessage(Component.text("Статус: ", NamedTextColor.GRAY)
-                    .append(Component.text("Ожидает подтверждения 6-значным кодом", NamedTextColor.AQUA)));
-            player.sendMessage(Component.text("Ваш ключ: ", NamedTextColor.GRAY)
-                    .append(Component.text(TotpService.formatSecretForDisplay(pendingSecret.get()), NamedTextColor.YELLOW, TextDecoration.BOLD)));
-            player.sendMessage(Component.text("Подтвердите: ", NamedTextColor.GRAY)
-                    .append(Component.text("/" + label + " confirm <6-значный_код>", NamedTextColor.GOLD, TextDecoration.BOLD))
-                    .append(Component.text(" (или /" + label + " cancel)", NamedTextColor.DARK_GRAY)));
+            player.sendMessage(messages.get("two-factor.status.pending-label")
+                    .append(messages.get("two-factor.status.pending-hint")));
+                    messages.send(player, "two-factor.status.pending",
+                    "secret", TotpService.formatSecretForDisplay(pendingSecret.get()));
+            player.sendMessage(messages.get("two-factor.status.pending-confirm")
+                    .append(messages.get("two-factor.status.pending-confirm-cmd", "label", label))
+                    .append(messages.get("two-factor.status.pending-confirm-hint", "label", label)));
         } else {
-            Component setupBtn = Component.text("[ Включить TOTP 2FA (/" + label + " setup) ]", NamedTextColor.GREEN, TextDecoration.BOLD)
+            Component setupBtn = messages.get("two-factor.status.setup-button", "label", label)
                     .decorate(TextDecoration.UNDERLINED)
                     .clickEvent(ClickEvent.runCommand("/" + label + " setup"))
-                    .hoverEvent(HoverEvent.showText(Component.text("Нажмите, чтобы сгенерировать секретный ключ 2FA", NamedTextColor.GREEN)));
-            player.sendMessage(Component.text("Защитите свой аккаунт приложением Google Authenticator / 2FAS:", NamedTextColor.GRAY));
+                    .hoverEvent(HoverEvent.showText(messages.get("two-factor.status.setup-button-hover")));
+            messages.send(player, "two-factor.status.setup-hint");
             player.sendMessage(setupBtn);
         }
-        player.sendMessage(Component.text("==============================================", NamedTextColor.GOLD));
+        messages.send(player, "two-factor.status.footer");
     }
 
     private void sendTwoFactorHelp(Player player, String label) {
-        player.sendMessage(Component.text("Команды двухфакторной защиты (TOTP 2FA):", NamedTextColor.GOLD));
-        player.sendMessage(Component.text("/" + label + " setup", NamedTextColor.YELLOW)
-                .append(Component.text(" — сгенерировать секретный ключ для приложения-аутентификатора", NamedTextColor.GRAY)));
-        player.sendMessage(Component.text("/" + label + " confirm <код>", NamedTextColor.YELLOW)
-                .append(Component.text(" — подтвердить ключ 6-значным кодом и включить 2FA", NamedTextColor.GRAY)));
-        player.sendMessage(Component.text("/" + label + " disable <код>", NamedTextColor.YELLOW)
-                .append(Component.text(" — отключить 2FA (по текущему коду или паролю)", NamedTextColor.GRAY)));
-        player.sendMessage(Component.text("/" + label + " cancel", NamedTextColor.YELLOW)
-                .append(Component.text(" — отменить незавершённую настройку 2FA", NamedTextColor.GRAY)));
+        messages.sendList(player, "two-factor.help", "label", label);
     }
 
     private boolean handlePass(CommandSender sender, String label, String[] args) {
@@ -235,9 +281,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             if (sender instanceof Player player) {
                 showOwnPassStatus(player);
                 if (sender.hasPermission("chrdkregister.admin")) {
-                    sender.sendMessage(Component.text(
-                            "Админ-команды: /" + label + " <add|remove|check|unregister|reset2fa|status|reload> [ник]",
-                            NamedTextColor.DARK_GRAY));
+                    messages.send(sender, "pass.admin-help", "label", label);
                 }
             } else {
                 showPluginStatus(sender);
@@ -247,11 +291,32 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         }
 
         String sub = args[0].toLowerCase(Locale.ROOT);
+        if ("claim".equals(sub) && sender instanceof Player player) {
+            if (args.length < 2) {
+                messages.send(player, "usage.pass-claim", "label", label);
+                return true;
+            }
+            long id;
+            try {
+                id = Long.parseLong(args[1]);
+            } catch (NumberFormatException exception) {
+                messages.send(player, "error.donation-id-number");
+                return true;
+            }
+            String errorKey = accessManager.donations().claim(id, player.getName(),
+                    AccessManager.getPlayerIp(player), System.currentTimeMillis());
+            if (errorKey.isEmpty()) {
+                messages.send(player, "pass.claim-success", "id", id);
+            } else {
+                messages.send(player, errorKey, "id", id);
+            }
+            return true;
+        }
         if (!sender.hasPermission("chrdkregister.admin")) {
             if (sender instanceof Player player) {
                 showOwnPassStatus(player);
             } else {
-                sender.sendMessage(Component.text("Недостаточно прав.", NamedTextColor.RED));
+                messages.send(sender, "error.no-permission");
             }
             return true;
         }
@@ -259,37 +324,194 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         switch (sub) {
             case "add", "grant" -> {
                 if (args.length < 2) {
-                    sender.sendMessage(Component.text("Использование: /" + label + " add <ник>", NamedTextColor.YELLOW));
+                    messages.send(sender, "usage.pass-add", "label", label);
                     return true;
                 }
                 String targetName = args[1].trim();
                 if (!AccessManager.isValidMinecraftName(targetName)) {
-                    sender.sendMessage(Component.text("Некорректный ник Minecraft: " + targetName, NamedTextColor.RED));
+                    messages.send(sender, "error.invalid-nickname", "target_name", targetName);
                     return true;
                 }
-                RegistrationStore.PlayerAccount account = accessManager.grantPassManually(targetName);
-                sender.sendMessage(Component.text("✓ Проходка выдана игроку ", NamedTextColor.GREEN)
-                        .append(Component.text(account.playerName, NamedTextColor.GOLD, TextDecoration.BOLD))
-                        .append(Component.text(" на " + accessManager.config().grantDays() + " дн. (до "
-                                + AccessManager.formatTimestamp(account.passUntil) + ").", NamedTextColor.GREEN)));
+                int days = accessManager.config().grantDays();
+                if (args.length >= 3) {
+                    try {
+                        days = Math.clamp(Integer.parseInt(args[2]), 1, 3650);
+                    } catch (NumberFormatException exception) {
+                        messages.send(sender, "error.days-number");
+                        return true;
+                    }
+                }
+                RegistrationStore.PlayerAccount account = accessManager.grantPassManually(targetName, days, "manual");
+                messages.send(sender, "pass.granted",
+                        "player", account.playerName,
+                        "days", days,
+                        "until", AccessManager.formatTimestamp(account.passUntil));
+                return true;
+            }
+            case "gift" -> {
+                if (args.length < 3) {
+                    messages.send(sender, "usage.pass-gift", "label", label);
+                    return true;
+                }
+                String targetName = args[1].trim();
+                int days;
+                try {
+                    days = Math.clamp(Integer.parseInt(args[2]), 1, 3650);
+                } catch (NumberFormatException exception) {
+                    messages.send(sender, "error.days-number");
+                    return true;
+                }
+                if (!AccessManager.isValidMinecraftName(targetName)) {
+                    messages.send(sender, "error.invalid-nickname", "target_name", targetName);
+                    return true;
+                }
+                RegistrationStore.PlayerAccount account = accessManager.grantPassManually(targetName, days,
+                        "gift:" + sender.getName());
+                accessManager.audit().log(AuditLog.PASS_GRANT_GIFT, sender.getName(), targetName, null,
+                        AuditLog.details("days", days));
+                        messages.send(sender, "pass.gifted",
+                        "player", account.playerName, "days", days);
+                Player online = Bukkit.getPlayerExact(targetName);
+                if (online != null) {
+                    messages.send(online, "pass.gift-notice", "days", days, "sender", sender.getName());
+                }
+                return true;
+            }
+            case "pending" -> {
+                var pending = accessManager.donations().pending(20);
+                if (pending.isEmpty()) {
+                    messages.send(sender, "donation.pending-empty");
+                    return true;
+                }
+                messages.send(sender, "donation.pending-header", "size", pending.size());
+                for (RegistrationStore.DonationRecord record : pending) {                    messages.send(sender, "donation.pending-entry",
+                            "id", record.id,
+                            "donor", record.donorName,
+                            "amount", record.amountRubles(),
+                            "status", record.status,
+                            "note", record.note.isBlank() ? "" : " (" + record.note + ")",
+                            "suggested", record.suggestedName.isBlank()
+                                    ? "" : messages.raw("donation.suggested", "name", record.suggestedName),
+                            "created", AccessManager.formatTimestamp(record.createdAt));
+                }
+                messages.send(sender, "donation.pending-hint", "label", label);
+                return true;
+            }
+            case "approve" -> {
+                if (args.length < 2) {
+                    messages.send(sender, "usage.pass-approve", "label", label);
+                    return true;
+                }
+                long id;
+                try {
+                    id = Long.parseLong(args[1]);
+                } catch (NumberFormatException exception) {
+                    messages.send(sender, "error.donation-id-number");
+                    return true;
+                }
+                var record = accessManager.store().getDonation(id).orElse(null);
+                if (record == null) {
+                    messages.send(sender, "donation.not-found", "id", id);
+                    return true;
+                }
+                String targetName = args.length >= 3 ? args[2].trim()
+                        : (record.suggestedName.isBlank() ? record.donorName : record.suggestedName);
+                int days = 0;
+                if (args.length >= 4) {
+                    try {
+                        days = Math.clamp(Integer.parseInt(args[3]), 1, 3650);
+                    } catch (NumberFormatException exception) {
+                        messages.send(sender, "error.days-number");
+                        return true;
+                    }
+                }
+                if (!AccessManager.isValidMinecraftName(targetName)) {
+                    messages.send(sender, "error.invalid-nickname-soft", "target_name", targetName);
+                    return true;
+                }
+                if (accessManager.donations().approve(id, targetName, days, sender.getName(),
+                        System.currentTimeMillis())) {
+                    messages.send(sender, "donation.approved", "id", id, "target_name", targetName);
+                } else {
+                    messages.send(sender, "donation.approve-failed", "id", id);
+                }
+                return true;
+            }
+            case "reject" -> {
+                if (args.length < 2) {
+                    messages.send(sender, "usage.pass-reject", "label", label);
+                    return true;
+                }
+                long id;
+                try {
+                    id = Long.parseLong(args[1]);
+                } catch (NumberFormatException exception) {
+                    messages.send(sender, "error.donation-id-number");
+                    return true;
+                }
+                String reason = args.length >= 3
+                        ? String.join(" ", Arrays.copyOfRange(args, 2, args.length))
+                        : "";
+                if (accessManager.donations().reject(id, sender.getName(), reason, System.currentTimeMillis())) {
+                    messages.send(sender, "donation.rejected", "id", id);
+                } else {
+                    messages.send(sender, "donation.not-found-short", "id", id);
+                }
+                return true;
+            }
+            case "sessions" -> {
+                if (args.length < 2) {
+                    messages.send(sender, "usage.pass-sessions", "label", label);
+                    return true;
+                }
+                showSessions(sender, args[1].trim());
+                return true;
+            }
+            case "logoutall" -> {
+                if (args.length < 2) {
+                    messages.send(sender, "usage.pass-logoutall", "label", label);
+                    return true;
+                }
+                String targetName = args[1].trim();
+                boolean cleared = accessManager.clearAllSessions(targetName);
+                accessManager.lockOnlinePlayer(targetName,
+                        "Все сессии вашего аккаунта завершены администратором — войдите заново.");
+                        messages.send(sender, cleared ? "session.cleared" : "session.none-active",
+                        "player", targetName);
+                return true;
+            }
+            case "stats" -> {
+                showStats(sender);
+                return true;
+            }
+            case "doctor" -> {
+                showDoctor(sender);
+                return true;
+            }
+            case "audit" -> {
+                showAudit(sender, args);
+                return true;
+            }
+            case "backup" -> {
+                handleBackup(sender, args, label);
                 return true;
             }
             case "remove", "revoke" -> {
                 if (args.length < 2) {
-                    sender.sendMessage(Component.text("Использование: /" + label + " remove <ник>", NamedTextColor.YELLOW));
+                    messages.send(sender, "usage.pass-remove", "label", label);
                     return true;
                 }
                 String targetName = args[1].trim();
                 if (accessManager.revokePass(targetName)) {
-                    sender.sendMessage(Component.text("✓ Проходка игрока " + targetName + " отозвана.", NamedTextColor.GREEN));
+                    messages.send(sender, "pass.revoked-notice", "target_name", targetName);
                 } else {
-                    sender.sendMessage(Component.text("У игрока " + targetName + " не найдено активной проходки.", NamedTextColor.RED));
+                    messages.send(sender, "pass.not-active", "target_name", targetName);
                 }
                 return true;
             }
             case "check", "info" -> {
                 if (args.length < 2) {
-                    sender.sendMessage(Component.text("Использование: /" + label + " check <ник>", NamedTextColor.YELLOW));
+                    messages.send(sender, "usage.pass-check", "label", label);
                     return true;
                 }
                 showAccountDetails(sender, args[1].trim());
@@ -297,27 +519,27 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             }
             case "unregister", "resetpass" -> {
                 if (args.length < 2) {
-                    sender.sendMessage(Component.text("Использование: /" + label + " unregister <ник>", NamedTextColor.YELLOW));
+                    messages.send(sender, "usage.pass-unregister", "label", label);
                     return true;
                 }
                 String targetName = args[1].trim();
                 if (accessManager.resetPassword(targetName)) {
-                    sender.sendMessage(Component.text("✓ Пароль (и 2FA) игрока " + targetName + " сброшены. Проходка сохранена.", NamedTextColor.GREEN));
+                    messages.send(sender, "pass.password-reset-notice", "target_name", targetName);
                 } else {
-                    sender.sendMessage(Component.text("Игрок " + targetName + " ещё не регистрировал пароль.", NamedTextColor.RED));
+                    messages.send(sender, "pass.not-registered", "target_name", targetName);
                 }
                 return true;
             }
             case "reset2fa", "disable2fa", "un2fa" -> {
                 if (args.length < 2) {
-                    sender.sendMessage(Component.text("Использование: /" + label + " reset2fa <ник>", NamedTextColor.YELLOW));
+                    messages.send(sender, "usage.pass-reset2fa", "label", label);
                     return true;
                 }
                 String targetName = args[1].trim();
                 if (accessManager.resetTwoFactor(targetName)) {
-                    sender.sendMessage(Component.text("✓ Двухфакторная защита (2FA) игрока " + targetName + " сброшена.", NamedTextColor.GREEN));
+                    messages.send(sender, "pass.two-factor-reset-notice", "target_name", targetName);
                 } else {
-                    sender.sendMessage(Component.text("У игрока " + targetName + " не включена двухфакторная аутентификация.", NamedTextColor.RED));
+                    messages.send(sender, "pass.two-factor-not-enabled", "target_name", targetName);
                 }
                 return true;
             }
@@ -327,13 +549,157 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             }
             case "reload" -> {
                 plugin.reloadPluginConfig();
-                sender.sendMessage(Component.text("✓ Конфигурация CHRDK_F_REGISTER перезагружена.", NamedTextColor.GREEN));
+                java.util.List<String> problems = plugin.reloadMessages();
+                refreshMessages();
+                messages.send(sender, "config.reloaded");
+                if (problems.isEmpty()) {
+                    messages.send(sender, "config.messages-ok");
+                } else {
+                    messages.send(sender, "config.messages-problems", "count", problems.size());
+                    for (String problem : problems.subList(0, Math.min(10, problems.size()))) {
+                        messages.send(sender, "config.messages-problem", "problem", problem);
+                    }
+                }
                 return true;
             }
             default -> {
                 sendAdminHelp(sender, label);
                 return true;
             }
+        }
+    }
+
+    private void showStats(CommandSender sender) {
+        long now = System.currentTimeMillis();
+        RegistrationStore store = accessManager.store();
+        PluginConfig cfg = accessManager.config();
+        long dayAgo = now - java.util.concurrent.TimeUnit.DAYS.toMillis(1);
+        long weekAgo = now - java.util.concurrent.TimeUnit.DAYS.toMillis(7);
+        long monthAgo = now - java.util.concurrent.TimeUnit.DAYS.toMillis(30);
+        messages.send(sender, "stats.header");
+        messages.send(sender, "stats.revenue",
+                "day", DonationService.formatRubles(store.revenueKopecks(dayAgo, now)),
+                "week", DonationService.formatRubles(store.revenueKopecks(weekAgo, now)),
+                "month", DonationService.formatRubles(store.revenueKopecks(monthAgo, now)));
+        messages.send(sender, "stats.pending",
+                "count", accessManager.donations().pendingCount());
+        int total = Math.max(1, store.getTotalAccountCount());
+        int withPass = store.getActivePassCount(now);
+        messages.send(sender, "stats.conversion",
+                "active", withPass,
+                "total", total,
+                "percent", Math.round(100.0 * withPass / total));
+        messages.send(sender, "stats.granted",
+                "count", store.countDonations(RegistrationStore.DonationStatus.GRANTED));
+        messages.send(sender, "stats.tiers", "tiers", DonationService.describeTiers(cfg, messages));
+    }
+
+    private void showDoctor(CommandSender sender) {
+        PluginConfig cfg = accessManager.config();
+        messages.send(sender, "doctor.header");
+        check(sender, "DonatePay API-токен", cfg.donatePayReady(),
+                "не задан donatepay.api-token — авто-выдача проходок не работает");
+        check(sender, "Ссылка на оплату", cfg.hasPaymentUrl(),
+                "не задан donatepay.payment-url — игроки не видят ссылку");
+        check(sender, "Сессия не обходит 2FA", !cfg.sessionSkips2fa() || !cfg.totpEnabled(),
+                "auth.session-skips-2fa: true — IP-сессия отключает 2FA (осознанный выбор?)");
+        check(sender, "Счётчики попыток сохраняются", cfg.storageWriteAsync(),
+                "storage.write-async: false — запись на диск в главном потоке");
+        check(sender, "Политика паролей", cfg.minPasswordLength() >= 8,
+                "auth.min-password-length < 8 — разрешены короткие пароли");
+        check(sender, "Тестовый запрос к DonatePay", accessManager.probeDonatePay(),
+                "не удалось подключиться к API DonatePay — проверьте токен и сеть");
+        check(sender, "Аудит-лог", cfg.auditEnabled(),
+                "audit.enabled: false — история событий не сохраняется");
+        check(sender, "Discord-уведомления", !cfg.discordEnabled() || !cfg.notificationEvents().isEmpty(),
+                "вебхук задан, но notifications.events пуст — уведомления не отправляются");
+        check(sender, "Хранилище доступно для записи", storeWritable(),
+                "нет доступа на запись в data.json — данные могут не сохраняться");
+        messages.send(sender, "doctor.footer");
+    }
+
+    private void check(CommandSender sender, String name, boolean ok, String warning) {
+        messages.sendList(sender, ok ? "doctor.check-ok" : "doctor.check-warning",
+                "name", name, "warning", warning == null ? "" : warning);
+    }
+
+    private boolean storeWritable() {
+        try {
+            java.nio.file.Path folder = plugin.getDataFolder().toPath();
+            java.nio.file.Files.createDirectories(folder);
+            return java.nio.file.Files.isWritable(folder);
+        } catch (Exception exception) {
+            return false;
+        }
+    }
+
+    private void showAudit(CommandSender sender, String[] args) {
+        String playerFilter = args.length >= 2 ? args[1].trim() : "";
+        int limit = 15;
+        if (args.length >= 3) {
+            try {
+                limit = Math.clamp(Integer.parseInt(args[2]), 1, 100);
+            } catch (NumberFormatException ignored) {
+                limit = 15;
+            }
+        }
+        var entries = accessManager.audit().read(playerFilter, null, limit);
+        if (entries.isEmpty()) {
+            messages.send(sender, "audit.empty");
+            return;
+        }        messages.send(sender, "audit.header",
+                "filter", playerFilter.isBlank() ? "" : " (" + playerFilter + ")");
+        for (var entry : entries) {
+            messages.send(sender, "audit.entry",
+                    "time", entry.has("time") ? entry.get("time").getAsString() : "",
+                    "event", entry.has("event") ? entry.get("event").getAsString() : "",
+                    "actor", entry.has("actor") ? entry.get("actor").getAsString() : "",
+                    "target", entry.has("target") && !entry.get("target").getAsString().isBlank()
+                            ? " → " + entry.get("target").getAsString() : "",
+                    "ip", entry.has("ip") && !entry.get("ip").getAsString().isBlank()
+                            ? " (" + entry.get("ip").getAsString() + ")" : "",
+                    "details", entry.has("details") ? " " + entry.get("details") : "");
+        }
+    }
+
+    private void handleBackup(CommandSender sender, String[] args, String label) {
+        String action = args.length >= 2 ? args[1].toLowerCase(Locale.ROOT) : "create";
+        switch (action) {
+            case "create", "now" -> {
+                var created = plugin.createBackup("manual");
+                sender.sendMessage(created.map(path -> messages.get("backup.created", "path", path.getFileName()))
+                        .orElseGet(() -> messages.get("backup.create-failed")));
+            }
+            case "list" -> {
+                var backups = accessManager.store().listBackups();
+                if (backups.isEmpty()) {
+                    messages.send(sender, "backup.empty");
+                    return;
+                }
+                messages.send(sender, "backup.header");
+                for (var backup : backups) {
+                    messages.send(sender, "backup.entry", "backup", backup.getFileName());
+                }
+                messages.send(sender, "backup.hint", "label", label);
+            }
+            case "restore" -> {
+                if (args.length < 3) {
+                    messages.send(sender, "usage.backup-restore", "label", label);
+                    return;
+                }
+                java.nio.file.Path target = plugin.getDataFolder().toPath()
+                        .resolve("backups").resolve(args[2].trim()).normalize();
+                if (!target.startsWith(plugin.getDataFolder().toPath().resolve("backups"))) {
+                    messages.send(sender, "backup.invalid-path");
+                    return;
+                }
+                boolean restored = accessManager.store().restoreBackup(target);
+                messages.send(sender, restored ? "backup.restored" : "backup.restore-failed",
+                        "file", String.valueOf(target.getFileName()));
+                accessManager.audit().log(AuditLog.STORAGE_RESTORE, sender.getName(), "", null,
+                        AuditLog.details("file", target.getFileName().toString(), "ok", restored));
+            }
+            default -> messages.send(sender, "usage.backup", "label", label);
         }
     }
 
@@ -345,26 +711,39 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             return;
         }
         RegistrationStore.PlayerAccount account = opt.get();
-        player.sendMessage(Component.text("==============================================", NamedTextColor.GOLD));
-        player.sendMessage(Component.text("Статус проходки: ", NamedTextColor.GRAY)
-                .append(Component.text("АКТИВНА", NamedTextColor.GREEN, TextDecoration.BOLD)));
-        player.sendMessage(Component.text("Действует до: ", NamedTextColor.GRAY)
+        messages.send(player, "pass.info.header-line");
+        player.sendMessage(messages.get("pass.info.status")
+                .append(messages.get("pass.info.active")));
+        player.sendMessage(messages.get("pass.info.until-label")
                 .append(Component.text(AccessManager.formatTimestamp(account.passUntil), NamedTextColor.AQUA))
-                .append(Component.text(" (осталось " + AccessManager.formatRemainingTime(account.passUntil, now) + ")", NamedTextColor.YELLOW)));
-        player.sendMessage(Component.text("Регистрация пароля: ", NamedTextColor.GRAY)
-                .append(Component.text(account.isRegistered() ? "зарегистрирован" : "ожидает (/register)",
-                        account.isRegistered() ? NamedTextColor.GREEN : NamedTextColor.YELLOW)));
-        player.sendMessage(Component.text("Защита TOTP 2FA: ", NamedTextColor.GRAY)
-                .append(Component.text(account.isTotpEnabled() ? "включена" : "не подключена (/2fa setup)",
-                        account.isTotpEnabled() ? NamedTextColor.GREEN : NamedTextColor.GRAY)));
-        player.sendMessage(Component.text("==============================================", NamedTextColor.GOLD));
+                .append(messages.get("pass.info.until-value",
+                                "now", AccessManager.formatRemainingTime(account.passUntil, now))));
+                                messages.send(player, "pass.info.registered",
+                "value", messages.raw(account.isRegistered()
+                        ? "account.state-registered" : "account.state-awaiting"));
+                        messages.send(player, "pass.info.two-factor",
+                "value", messages.raw(account.isTotpEnabled()
+                        ? "account.state-totp-on" : "account.state-totp-off"));
+        if (accessManager.config().paymentCodeEnabled()) {
+            accessManager.donations().paymentCode(player.getName()).ifPresent(code ->                    player.sendMessage(messages.get("pass.info.payment-code")
+                            .append(messages.get("pass.info.payment-code-value", "code", code))));
+        }
+        if (account.paymentsCount > 0) {
+            player.sendMessage(messages.get("pass.info.paid-label")
+                    .append(messages.get("pass.info.paid-value",
+                                    "total_paid_kopecks", DonationService.formatRubles(account.totalPaidKopecks),
+                                    "payments_count", account.paymentsCount)));
+        }        messages.send(player, "pass.info.renew",
+                "url", accessManager.config().hasPaymentUrl()
+                        ? accessManager.config().donatePayPaymentUrl() : "/pass");
+        messages.send(player, "pass.info.footer-line");
     }
 
     private void showAccountDetails(CommandSender sender, String targetName) {
         long now = System.currentTimeMillis();
         Optional<RegistrationStore.PlayerAccount> opt = accessManager.store().getAccount(targetName);
         if (opt.isEmpty()) {
-            sender.sendMessage(Component.text("Игрок " + targetName + " не найден в базе плагина.", NamedTextColor.RED));
+            messages.send(sender, "account.not-found", "target_name", targetName);
             return;
         }
         RegistrationStore.PlayerAccount account = opt.get();
@@ -372,27 +751,65 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         Player online = Bukkit.getPlayerExact(account.playerName);
         String stageText = online == null ? "оффлайн" : accessManager.getStage(online).name();
 
-        sender.sendMessage(Component.text("=== Информация об игроке " + account.playerName + " ===", NamedTextColor.GOLD));
-        sender.sendMessage(Component.text("Проходка: ", NamedTextColor.GRAY)
-                .append(Component.text(activePass ? "АКТИВНА" : "НЕТ / ИСТЕКЛА",
-                        activePass ? NamedTextColor.GREEN : NamedTextColor.RED)));
+        messages.send(sender, "account.header", "player_name", account.playerName);
+        messages.send(sender, "account.pass",
+                "value", messages.raw(activePass ? "pass.info.active" : "pass.info.inactive"));
         if (account.passUntil > 0) {
-            sender.sendMessage(Component.text("Срок до: ", NamedTextColor.GRAY)
-                    .append(Component.text(AccessManager.formatTimestamp(account.passUntil)
-                            + " (" + AccessManager.formatRemainingTime(account.passUntil, now) + ")", NamedTextColor.AQUA)));
-            sender.sendMessage(Component.text("Источник выдачи: ", NamedTextColor.GRAY)
-                    .append(Component.text(account.lastGrantSource.isBlank() ? "неизвестно" : account.lastGrantSource, NamedTextColor.WHITE)));
+            sender.sendMessage(messages.get("account.until-label")
+                    .append(messages.get("account.until-value",
+                                    "until", AccessManager.formatTimestamp(account.passUntil),
+                                    "remaining", AccessManager.formatRemainingTime(account.passUntil, now))));
         }
-        sender.sendMessage(Component.text("Пароль зарегистрирован: ", NamedTextColor.GRAY)
-                .append(Component.text(account.isRegistered() ? "да" : "нет",
-                        account.isRegistered() ? NamedTextColor.GREEN : NamedTextColor.YELLOW)));
-        sender.sendMessage(Component.text("TOTP 2FA: ", NamedTextColor.GRAY)
-                .append(Component.text(account.isTotpEnabled()
-                                ? "включена (" + AccessManager.formatTimestamp(account.totpEnabledAt) + ")"
-                                : "отключена",
-                        account.isTotpEnabled() ? NamedTextColor.GREEN : NamedTextColor.YELLOW)));
-        sender.sendMessage(Component.text("Статус на сервере: ", NamedTextColor.GRAY)
-                .append(Component.text(stageText, NamedTextColor.WHITE)));
+        if (account.passUntil > 0) {
+            messages.send(sender, "account.grant-source",
+                    "value", account.lastGrantSource.isBlank()
+                            ? messages.raw("common.unknown") : account.lastGrantSource);
+                            messages.send(sender, "account.registered",
+                "value", messages.raw(account.isRegistered() ? "common.yes" : "common.no"));
+                messages.send(sender, "account.two-factor",
+                "value", account.isTotpEnabled()
+                        ? messages.raw("account.state-totp-on-since",
+                                "since", AccessManager.formatTimestamp(account.totpEnabledAt))
+                        : messages.raw("account.state-totp-off"));
+                        messages.send(sender, "account.stage", "value", stageText);
+        if (account.passUntil > 0) {
+            sender.sendMessage(messages.get("account.last-grant-label")
+                    .append(messages.get("account.last-grant-value",
+                                    "last_grant_days", account.lastGrantDays,
+                                    "last_grant_source", account.lastGrantSource.isBlank() ? "неизвестно" : account.lastGrantSource,
+                                    "last_grant_at", AccessManager.formatTimestamp(account.lastGrantAt))));
+        }
+        if (account.paymentsCount > 0) {
+            sender.sendMessage(messages.get("account.paid-label")
+                    .append(messages.get("account.paid-value",
+                                    "total_paid_kopecks", DonationService.formatRubles(account.totalPaidKopecks),
+                                    "payments_count", account.paymentsCount,
+                                    "last_payment_at", AccessManager.formatTimestamp(account.lastPaymentAt))));
+        }
+        if (account.lastAuthIp != null && !account.lastAuthIp.isBlank()) {
+            sender.sendMessage(messages.get("account.last-auth-label")
+                    .append(messages.get("account.last-auth-value",
+                                    "last_auth_ip", AuditLog.maskIp(account.lastAuthIp),
+                                    "last_auth_at", AccessManager.formatTimestamp(account.lastAuthAt))));
+        }
+        if (account.mute != null && account.mute.until > now) {
+            sender.sendMessage(messages.get("account.mute-label")
+                    .append(messages.get("account.mute-value",
+                                    "until", AccessManager.formatTimestamp(account.mute.until),
+                                    "reason", account.mute.reason.isBlank() ? "" : " (" + account.mute.reason + ")")));
+        }
+        if (account.sessions != null && !account.sessions.isEmpty()) {
+            sender.sendMessage(messages.get("account.sessions-label")
+                    .append(messages.get("account.sessions-value",
+                                    "count", account.sessions.size(),
+                                    "player", account.playerName)));
+        }
+        if (accessManager.config().paymentCodeEnabled()) {
+            accessManager.donations().paymentCode(account.playerName).ifPresent(code ->
+                    sender.sendMessage(messages.get("pass.info.payment-code")
+                            .append(Component.text(code, NamedTextColor.GOLD))));
+        }
+    }
     }
 
     private void showPluginStatus(CommandSender sender) {
@@ -400,50 +817,40 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         RegistrationStore store = accessManager.store();
         PluginConfig cfg = accessManager.config();
 
-        sender.sendMessage(Component.text("=== Статус CHRDK_F_REGISTER ===", NamedTextColor.GOLD));
-        sender.sendMessage(Component.text("Активных проходок: ", NamedTextColor.GRAY)
-                .append(Component.text(Integer.toString(store.getActivePassCount(now)), NamedTextColor.GREEN)));
-        sender.sendMessage(Component.text("Зарегистрировано паролей: ", NamedTextColor.GRAY)
-                .append(Component.text(store.getRegisteredCount() + " / " + store.getTotalAccountCount(), NamedTextColor.AQUA)));
-        sender.sendMessage(Component.text("Аккаунтов с TOTP 2FA: ", NamedTextColor.GRAY)
-                .append(Component.text(store.getTotpEnabledCount() + " (2FA в конфиге: "
-                        + (cfg.totpEnabled() ? "вкл." : "выкл.") + ")", NamedTextColor.AQUA)));
-        sender.sendMessage(Component.text("DonatePay API: ", NamedTextColor.GRAY)
-                .append(Component.text(cfg.donatePayReady() ? "подключён" : "токен не задан в config.yml",
-                        cfg.donatePayReady() ? NamedTextColor.GREEN : NamedTextColor.RED)));
-        sender.sendMessage(Component.text("Условия доната: ", NamedTextColor.GRAY)
-                .append(Component.text(cfg.minimumDonationRubles() + " ₽ на " + cfg.grantDays() + " дн.", NamedTextColor.YELLOW)));
-        sender.sendMessage(Component.text("Сессия по IP: ", NamedTextColor.GRAY)
-                .append(Component.text(cfg.sessionMinutes() + " мин.", NamedTextColor.WHITE)));
-        sender.sendMessage(Component.text("Встроенный чат: ", NamedTextColor.GRAY)
-                .append(Component.text(cfg.chat().enabled() ? "включён" : "выключен",
-                        cfg.chat().enabled() ? NamedTextColor.GREEN : NamedTextColor.RED))
-                .append(Component.text(", локальный радиус: " + (int) cfg.chat().localRadius() + " блоков",
-                        NamedTextColor.WHITE)));
-        sender.sendMessage(Component.text("Автосообщения: ", NamedTextColor.GRAY)
-                .append(Component.text(cfg.chat().autoMessagesEnabled()
-                                ? "каждые " + cfg.chat().autoMessagesIntervalSeconds() + " сек. ("
-                                        + cfg.chat().autoMessages().size() + " шт.)"
-                                : "выключены",
-                        cfg.chat().autoMessagesEnabled() ? NamedTextColor.AQUA : NamedTextColor.YELLOW)));
+        messages.send(sender, "status.header");
+        messages.send(sender, "status.active-passes",
+                "count", store.getActivePassCount(now));
+        sender.sendMessage(messages.get("status.accounts")
+                .append(messages.get("status.accounts-value",
+                                "registered", store.getRegisteredCount(),
+                                "total", store.getTotalAccountCount())));
+        sender.sendMessage(messages.get("status.two-factor")
+                .append(messages.get("status.two-factor-value",
+                                "enabled", store.getTotpEnabledCount(),
+                                "state", messages.raw(cfg.totpEnabled() ? "common.on" : "common.off"))));
+                                messages.send(sender, "status.donatepay",
+                "value", messages.raw(cfg.donatePayReady() ? "common.connected" : "common.token-missing"));
+        sender.sendMessage(messages.get("status.donatepay-label")
+                .append(messages.get("status.donatepay-value",
+                                "minimum_donation_rubles", cfg.minimumDonationRubles(),
+                                "grant_days", cfg.grantDays())));
+        sender.sendMessage(messages.get("status.session-label")
+                .append(messages.get("status.session-value", "session_minutes", cfg.sessionMinutes())));
+                messages.send(sender, "status.chat",
+                "state", messages.raw(cfg.chat().enabled() ? "common.enabled-m" : "common.disabled-m"),
+                "radius", cfg.chat().localRadius());
+                messages.send(sender, "status.auto-messages",
+                "value", cfg.chat().autoMessagesEnabled()
+                        ? messages.raw("status.auto-messages-value",
+                                "seconds", cfg.chat().autoMessagesIntervalSeconds(),
+                                "count", cfg.chat().autoMessages().size())
+                        : messages.raw("common.disabled-many"));
     }
 
     private void sendAdminHelp(CommandSender sender, String label) {
-        sender.sendMessage(Component.text("Команды управления проходками:", NamedTextColor.GOLD));
-        sender.sendMessage(Component.text("/" + label + " add <ник>", NamedTextColor.YELLOW)
-                .append(Component.text(" — выдать/продлить проходку на " + accessManager.config().grantDays() + " дней", NamedTextColor.GRAY)));
-        sender.sendMessage(Component.text("/" + label + " remove <ник>", NamedTextColor.YELLOW)
-                .append(Component.text(" — отозвать проходку игрока", NamedTextColor.GRAY)));
-        sender.sendMessage(Component.text("/" + label + " check <ник>", NamedTextColor.YELLOW)
-                .append(Component.text(" — проверить статус проходки, пароля и 2FA игрока", NamedTextColor.GRAY)));
-        sender.sendMessage(Component.text("/" + label + " unregister <ник>", NamedTextColor.YELLOW)
-                .append(Component.text(" — сбросить пароль и 2FA игрока", NamedTextColor.GRAY)));
-        sender.sendMessage(Component.text("/" + label + " reset2fa <ник>", NamedTextColor.YELLOW)
-                .append(Component.text(" — сбросить только TOTP 2FA игрока", NamedTextColor.GRAY)));
-        sender.sendMessage(Component.text("/" + label + " status", NamedTextColor.YELLOW)
-                .append(Component.text(" — общая статистика плагина", NamedTextColor.GRAY)));
-        sender.sendMessage(Component.text("/" + label + " reload", NamedTextColor.YELLOW)
-                .append(Component.text(" — перезагрузить config.yml", NamedTextColor.GRAY)));
+        // Одна многострочная запись в messages.yml — список строк, а не 37 ключей.
+        messages.sendList(sender, "pass.admin-help", "label", label,
+                "grant_days", accessManager.config().grantDays());
     }
 
     @Override
@@ -501,8 +908,30 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                     || "remove".equals(sub) || "revoke".equals(sub)
                     || "check".equals(sub) || "info".equals(sub)
                     || "unregister".equals(sub) || "resetpass".equals(sub)
-                    || "reset2fa".equals(sub) || "disable2fa".equals(sub) || "un2fa".equals(sub)) {
+                    || "reset2fa".equals(sub) || "disable2fa".equals(sub) || "un2fa".equals(sub)
+                    || "sessions".equals(sub) || "logoutall".equals(sub)) {
                 return completePlayerNames(args[1]);
+            }
+            if ("gift".equals(sub)) {
+                return completePlayerNames(args[1]);
+            }
+            if ("audit".equals(sub)) {
+                return completePlayerNames(args[1]);
+            }
+            if ("backup".equals(sub)) {
+                return List.of("create", "list", "restore");
+            }
+        }
+        if (args.length == 3) {
+            String sub = args[0].toLowerCase(Locale.ROOT);
+            String action = args[1].toLowerCase(Locale.ROOT);
+            if ("gift".equals(sub) || ("add".equals(sub) && args[2].isBlank())) {
+                return List.of("30", "90", "365");
+            }
+            if ("backup".equals(sub) && "restore".equals(action)) {
+                return accessManager.store().listBackups().stream()
+                        .map(path -> path.getFileName().toString())
+                        .toList();
             }
         }
         return List.of();

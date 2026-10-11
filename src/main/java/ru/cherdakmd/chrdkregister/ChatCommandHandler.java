@@ -20,9 +20,10 @@ import java.util.Set;
  */
 public final class ChatCommandHandler implements CommandExecutor, TabCompleter {
     private static final List<String> CHAT_SUBCOMMANDS =
-            List.of("global", "local", "status", "help", "clear", "broadcast");
+            List.of("global", "local", "status", "help", "clear", "broadcast", "slow", "history");
     private static final List<String> IGNORE_SUBCOMMANDS = List.of("add", "remove", "list");
     private static final List<String> TOGGLE_SUBCOMMANDS = List.of("on", "off");
+    private static final List<String> MUTE_DURATIONS = List.of("10m", "30m", "1h", "6h", "1d", "7d");
 
     private final ChatService chatService;
 
@@ -44,6 +45,11 @@ public final class ChatCommandHandler implements CommandExecutor, TabCompleter {
             case "ignore" -> chatService.handleIgnoreCommand(sender, label, args, false);
             case "unignore" -> chatService.handleIgnoreCommand(sender, label, args, true);
             case "socialspy" -> chatService.handleSocialSpyCommand(sender, label, args);
+            case "mute" -> args.length == 0
+                    ? chatService.handleMuteCommand(sender, label, args)
+                    : chatService.handleMuteApply(sender, args[0], args.length >= 2 ? args[1] : "",
+                            args.length >= 3 ? String.join(" ", java.util.Arrays.copyOfRange(args, 2, args.length)) : "");
+            case "unmute" -> chatService.handleUnmuteCommand(sender, args.length >= 1 ? args[0] : "");
             default -> false;
         };
     }
@@ -60,6 +66,10 @@ public final class ChatCommandHandler implements CommandExecutor, TabCompleter {
             case "msg" -> args.length == 1 ? completeOnlinePlayers(args[0]) : List.of();
             case "ignore", "unignore" -> completeIgnore(args);
             case "socialspy" -> args.length == 1 ? filterPrefix(TOGGLE_SUBCOMMANDS, args[0]) : List.of();
+            case "mute" -> args.length == 1
+                    ? completeOnlinePlayers(args[0])
+                    : (args.length == 2 ? filterPrefix(MUTE_DURATIONS, args[1]) : List.of());
+            case "unmute" -> args.length == 1 ? completeOnlinePlayers(args[0]) : List.of();
             default -> List.of();
         };
     }
@@ -72,6 +82,8 @@ public final class ChatCommandHandler implements CommandExecutor, TabCompleter {
                 if (!sub.startsWith(prefix)) continue;
                 if ("clear".equals(sub) && !sender.hasPermission(ChatService.PERMISSION_CLEAR)) continue;
                 if ("broadcast".equals(sub) && !sender.hasPermission(ChatService.PERMISSION_BROADCAST)) continue;
+                if ("slow".equals(sub) && !sender.hasPermission(ChatService.PERMISSION_MUTE)) continue;
+                if ("history".equals(sub) && !sender.hasPermission(ChatService.PERMISSION_HISTORY)) continue;
                 matches.add(sub);
             }
             return matches;

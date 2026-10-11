@@ -1,8 +1,6 @@
 package ru.cherdakmd.chrdkregister;
 
 import io.papermc.paper.event.player.AsyncChatEvent;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
@@ -50,16 +48,25 @@ import java.util.Set;
  * until the player has an active pass and has completed password + TOTP 2FA authentication.
  */
 public final class PlayerRestrictionListener implements Listener {
-    private static final Set<String> PASS_COMMANDS = Set.of("pass", "fregister", "prohodka");
-    private static final Set<String> REGISTER_COMMANDS = Set.of("register", "reg", "pass", "fregister", "prohodka");
-    private static final Set<String> LOGIN_COMMANDS = Set.of("login", "l", "pass", "fregister", "prohodka");
+    private static final Set<String> PASS_COMMANDS =
+            Set.of("pass", "fregister", "prohodka", "logout", "session");
+    private static final Set<String> REGISTER_COMMANDS =
+            Set.of("register", "reg", "pass", "fregister", "prohodka", "logout", "session");
+    private static final Set<String> LOGIN_COMMANDS =
+            Set.of("login", "l", "pass", "fregister", "prohodka", "logout", "session");
     private static final Set<String> TWO_FACTOR_COMMANDS =
-            Set.of("2fa", "totp", "twofactor", "login", "l", "pass", "fregister", "prohodka");
+            Set.of("2fa", "totp", "twofactor", "login", "l", "pass", "fregister", "prohodka",
+                    "logout", "session");
 
     private final AccessManager accessManager;
 
     public PlayerRestrictionListener(AccessManager accessManager) {
         this.accessManager = accessManager;
+    }
+
+    /** Тексты берём у менеджера, чтобы /pass reload подхватывался без пересоздания слушателя. */
+    private Messages messages() {
+        return accessManager.messages();
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -113,19 +120,12 @@ public final class PlayerRestrictionListener implements Listener {
 
         event.setCancelled(true);
         switch (stage) {
-            case NO_PASS -> player.sendMessage(Component.text(
-                    "Команды заблокированы! Сначала приобретите проходку (150₽ на DonatePay, укажите ник "
-                            + player.getName() + " в имени донатера).",
-                    NamedTextColor.RED));
-            case NEEDS_REGISTER -> player.sendMessage(Component.text(
-                    "Сначала зарегистрируйте пароль: /register <пароль> <повтор>",
-                    NamedTextColor.RED));
-            case NEEDS_LOGIN -> player.sendMessage(Component.text(
-                    "Сначала войдите в аккаунт: /login <пароль>",
-                    NamedTextColor.RED));
-            case NEEDS_2FA -> player.sendMessage(Component.text(
-                    "Подтвердите вход кодом двухфакторной аутентификации: /2fa <6-значный_код>",
-                    NamedTextColor.RED));
+            case NO_PASS -> messages().send(player, "restriction.command-no-pass",
+                    "price", accessManager.config().minimumDonationRubles(),
+                    "player", player.getName());
+            case NEEDS_REGISTER -> messages().send(player, "restriction.command-register");
+            case NEEDS_LOGIN -> messages().send(player, "restriction.command-login");
+            case NEEDS_2FA -> messages().send(player, "restriction.command-two-factor");
             default -> {
             }
         }
@@ -165,18 +165,10 @@ public final class PlayerRestrictionListener implements Listener {
 
         event.setCancelled(true);
         switch (stage) {
-            case NO_PASS -> player.sendMessage(Component.text(
-                    "Чат заблокирован до покупки проходки на DonatePay!",
-                    NamedTextColor.RED));
-            case NEEDS_REGISTER -> player.sendMessage(Component.text(
-                    "Чат заблокирован! Зарегистрируйтесь: /register <пароль> <повтор>",
-                    NamedTextColor.RED));
-            case NEEDS_LOGIN -> player.sendMessage(Component.text(
-                    "Чат заблокирован! Авторизуйтесь: /login <пароль>",
-                    NamedTextColor.RED));
-            case NEEDS_2FA -> player.sendMessage(Component.text(
-                    "Чат заблокирован! Подтвердите вход кодом 2FA: /2fa <6-значный_код>",
-                    NamedTextColor.RED));
+            case NO_PASS -> messages().send(player, "chat.blocked-no-pass");
+            case NEEDS_REGISTER -> messages().send(player, "chat.blocked-register");
+            case NEEDS_LOGIN -> messages().send(player, "chat.blocked-login");
+            case NEEDS_2FA -> messages().send(player, "chat.blocked-two-factor");
             default -> {
             }
         }

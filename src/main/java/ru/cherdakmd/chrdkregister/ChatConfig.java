@@ -5,11 +5,61 @@ import org.bukkit.configuration.file.FileConfiguration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
- * Validated settings for the built-in chat (local/global channels), private messages, and automatic broadcasts.
+ * Validated settings for the built-in chat (local/global channels), private messages, automatic broadcasts,
+ * moderation (slow mode, word/link filter, mention limits) and chat history logging.
  */
 public final class ChatConfig {
+    /** Compiled moderation filter built from {@code chat.filter.*}. */
+    public static final class ChatFilter {
+        private final boolean enabled;
+        private final boolean blockMode;
+        private final List<String> words;
+        private final List<String> whitelist;
+        private final List<Pattern> patterns;
+
+        private ChatFilter(boolean enabled, boolean blockMode, List<String> words,
+                           List<String> whitelist, List<Pattern> patterns) {
+            this.enabled = enabled;
+            this.blockMode = blockMode;
+            this.words = words;
+            this.whitelist = whitelist;
+            this.patterns = patterns;
+        }
+
+        public boolean enabled() {
+            return enabled;
+        }
+
+        /** {@code true} when a matching message must be blocked instead of masked. */
+        public boolean blockMode() {
+            return blockMode;
+        }
+
+        public List<String> words() {
+            return words;
+        }
+
+        public List<String> whitelist() {
+            return whitelist;
+        }
+
+        public List<Pattern> patterns() {
+            return patterns;
+        }
+
+        /** Returns {@code true} when the lower-cased text contains a whitelisted fragment. */
+        public boolean isWhitelisted(String lowercased) {
+            for (String allowed : whitelist) {
+                if (!allowed.isBlank() && lowercased.contains(allowed)) return true;
+            }
+            return false;
+        }
+    }
+
     /** Chat channel a player is currently writing to. */
     public enum Channel {
         LOCAL,
@@ -53,6 +103,19 @@ public final class ChatConfig {
     private boolean mentionHighlight = true;
     private String mentionColor = "&e";
     private boolean mentionSound = true;
+    private int maxMentions = 3;
+    private int slowModeSeconds = 0;
+    private boolean filterEnabled = true;
+    private boolean filterBlockMode = false;
+    private List<String> filterWords = List.of();
+    private List<String> filterPatternsRaw = List.of(
+            "(?i)https?://", "(?i)discord\\.gg/", "(?i)(?:\\d{1,3}\\.){3}\\d{1,3}");
+    private List<String> filterWhitelist = List.of();
+    private boolean filterNotifyAdmins = true;
+    private ChatFilter filter = new ChatFilter(false, false, List.of(), List.of(), List.of());
+    private boolean chatLogEnabled = true;
+    private int chatLogKeepDays = 90;
+    private boolean chatLogIncludePrivate = true;
     private boolean joinQuitMessages = false;
     private String joinMessage = "&8[&a+&8] &7%player% &7присоединился к серверу";
     private String quitMessage = "&8[&c-&8] &7%player% &7покинул сервер";
@@ -71,6 +134,60 @@ public final class ChatConfig {
     private List<String> autoMessages = List.copyOf(DEFAULT_AUTO_MESSAGES);
 
     public ChatConfig() {
+    }
+
+    /** Copy constructor used for hot configuration tweaks (for example {@code /chat slow}). */
+    private ChatConfig(ChatConfig other) {
+        this.enabled = other.enabled;
+        this.defaultChannel = other.defaultChannel;
+        this.localRadius = other.localRadius;
+        this.localCrossWorld = other.localCrossWorld;
+        this.quickGlobalPrefix = other.quickGlobalPrefix;
+        this.localFormat = other.localFormat;
+        this.globalFormat = other.globalFormat;
+        this.allowColorCodes = other.allowColorCodes;
+        this.cooldownMillis = other.cooldownMillis;
+        this.maxMessageLength = other.maxMessageLength;
+        this.antiCaps = other.antiCaps;
+        this.capsPercent = other.capsPercent;
+        this.blockDuplicates = other.blockDuplicates;
+        this.duplicateWindowMillis = other.duplicateWindowMillis;
+        this.mentionHighlight = other.mentionHighlight;
+        this.mentionColor = other.mentionColor;
+        this.mentionSound = other.mentionSound;
+        this.maxMentions = other.maxMentions;
+        this.slowModeSeconds = other.slowModeSeconds;
+        this.filterEnabled = other.filterEnabled;
+        this.filterBlockMode = other.filterBlockMode;
+        this.filterWords = other.filterWords;
+        this.filterPatternsRaw = other.filterPatternsRaw;
+        this.filterWhitelist = other.filterWhitelist;
+        this.filterNotifyAdmins = other.filterNotifyAdmins;
+        this.filter = other.filter;
+        this.chatLogEnabled = other.chatLogEnabled;
+        this.chatLogKeepDays = other.chatLogKeepDays;
+        this.chatLogIncludePrivate = other.chatLogIncludePrivate;
+        this.joinQuitMessages = other.joinQuitMessages;
+        this.joinMessage = other.joinMessage;
+        this.quitMessage = other.quitMessage;
+        this.privateMessagesEnabled = other.privateMessagesEnabled;
+        this.privateMessageSound = other.privateMessageSound;
+        this.privateSendFormat = other.privateSendFormat;
+        this.privateReceiveFormat = other.privateReceiveFormat;
+        this.socialSpyFormat = other.socialSpyFormat;
+        this.autoMessagesEnabled = other.autoMessagesEnabled;
+        this.autoMessagesIntervalSeconds = other.autoMessagesIntervalSeconds;
+        this.autoMessagesRandomOrder = other.autoMessagesRandomOrder;
+        this.autoMessagesMinimumPlayers = other.autoMessagesMinimumPlayers;
+        this.autoMessagesPrefix = other.autoMessagesPrefix;
+        this.autoMessages = other.autoMessages;
+    }
+
+    /** Returns a copy of this configuration with a different slow-mode value. */
+    public ChatConfig withSlowModeSeconds(int seconds) {
+        ChatConfig copy = new ChatConfig(this);
+        copy.slowModeSeconds = Math.clamp(seconds, 0, 3_600);
+        return copy;
     }
 
     public static ChatConfig fromBukkitConfig(FileConfiguration config) {
@@ -94,6 +211,23 @@ public final class ChatConfig {
         chat.mentionHighlight = config.getBoolean("chat.mention-highlight", true);
         chat.mentionColor = config.getString("chat.mention-color", "&e");
         chat.mentionSound = config.getBoolean("chat.mention-sound", true);
+        chat.maxMentions = config.getInt("chat.max-mentions", 3);
+        chat.slowModeSeconds = config.getInt("chat.slow-mode-seconds", 0);
+        chat.filterEnabled = config.getBoolean("chat.filter.enabled", true);
+        chat.filterBlockMode = "block".equalsIgnoreCase(config.getString("chat.filter.mode", "replace"));
+        List<String> configuredWords = config.getStringList("chat.filter.words");
+        chat.filterWords = configuredWords.isEmpty()
+                ? List.of()
+                : configuredWords.stream().map(word -> word.toLowerCase(Locale.ROOT)).toList();
+        List<String> configuredPatterns = config.getStringList("chat.filter.regex");
+        if (!configuredPatterns.isEmpty()) {
+            chat.filterPatternsRaw = List.copyOf(configuredPatterns);
+        }
+        chat.filterWhitelist = config.getStringList("chat.filter.whitelist");
+        chat.filterNotifyAdmins = config.getBoolean("chat.filter.notify-admins", true);
+        chat.chatLogEnabled = config.getBoolean("chat.chat-log.enabled", true);
+        chat.chatLogKeepDays = config.getInt("chat.chat-log.keep-days", 90);
+        chat.chatLogIncludePrivate = config.getBoolean("chat.chat-log.include-private", true);
         chat.joinQuitMessages = config.getBoolean("chat.join-quit-messages", false);
         chat.joinMessage = config.getString("chat.join-message", chat.joinMessage);
         chat.quitMessage = config.getString("chat.quit-message", chat.quitMessage);
@@ -127,6 +261,9 @@ public final class ChatConfig {
         duplicateWindowMillis = Math.clamp(duplicateWindowMillis, 0, 600_000);
         autoMessagesIntervalSeconds = Math.clamp(autoMessagesIntervalSeconds, 30, 86_400);
         autoMessagesMinimumPlayers = Math.clamp(autoMessagesMinimumPlayers, 0, 10_000);
+        maxMentions = Math.clamp(maxMentions, 0, 50);
+        slowModeSeconds = Math.clamp(slowModeSeconds, 0, 3_600);
+        chatLogKeepDays = Math.clamp(chatLogKeepDays, 1, 3_650);
         quickGlobalPrefix = quickGlobalPrefix == null ? "" : quickGlobalPrefix.trim();
         mentionColor = isBlank(mentionColor) ? "&e" : mentionColor.trim();
         localFormat = sanitizeFormat(localFormat, "&7[Л] &f%player%&7: &f%message%");
@@ -140,6 +277,29 @@ public final class ChatConfig {
         if (autoMessages == null || autoMessages.isEmpty()) {
             autoMessages = List.copyOf(DEFAULT_AUTO_MESSAGES);
         }
+        this.filter = compileFilter();
+    }
+
+    private ChatFilter compileFilter() {
+        List<Pattern> compiled = new ArrayList<>();
+        if (filterPatternsRaw != null) {
+            for (String raw : filterPatternsRaw) {
+                if (raw == null || raw.isBlank()) continue;
+                try {
+                    compiled.add(Pattern.compile(raw));
+                } catch (PatternSyntaxException ignored) {
+                    // Invalid administrator-provided regex is skipped instead of breaking the chat.
+                }
+            }
+        }
+        return new ChatFilter(                filterEnabled,
+                filterBlockMode,
+                filterWords == null ? List.of() : List.copyOf(filterWords),
+                filterWhitelist == null ? List.of() : filterWhitelist.stream()
+                        .filter(entry -> entry != null && !entry.isBlank())
+                        .map(entry -> entry.toLowerCase(Locale.ROOT))
+                        .toList(),
+                List.copyOf(compiled));
     }
 
     private static String sanitizeFormat(String raw, String fallback) {
@@ -272,6 +432,37 @@ public final class ChatConfig {
 
     public List<String> autoMessages() {
         return autoMessages;
+    }
+
+    /** Maximum number of {@code @mentions} honoured in one message (0 = unlimited). */
+    public int maxMentions() {
+        return maxMentions;
+    }
+
+    /** Server-wide slow mode for the global channel in seconds (0 = disabled). */
+    public int slowModeSeconds() {
+        return slowModeSeconds;
+    }
+
+    /** Compiled moderation filter (words, regex, whitelist). */
+    public ChatFilter filter() {
+        return filter;
+    }
+
+    public boolean filterNotifyAdmins() {
+        return filterNotifyAdmins;
+    }
+
+    public boolean chatLogEnabled() {
+        return chatLogEnabled;
+    }
+
+    public int chatLogKeepDays() {
+        return chatLogKeepDays;
+    }
+
+    public boolean chatLogIncludePrivate() {
+        return chatLogIncludePrivate;
     }
 
     /** Formats the current channel for status and chat commands. */
