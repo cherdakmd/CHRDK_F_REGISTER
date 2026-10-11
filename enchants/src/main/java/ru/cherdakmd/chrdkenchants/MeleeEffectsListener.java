@@ -61,8 +61,8 @@ public final class MeleeEffectsListener implements Listener {
         EnchantDef execution = mountIf(enchants, "execution");
         if (execution != null) {
             int level = enchants.get("execution");
-            double threshold = victim.getAttribute(Attribute.GENERIC_MAX_HEALTH) != null
-                    ? victim.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue() * 0.2 : 4;
+            double threshold = victim.getAttribute(Attribute.MAX_HEALTH) != null
+                    ? victim.getAttribute(Attribute.MAX_HEALTH).getValue() * 0.2 : 4;
             if (victim.getHealth() <= threshold) {
                 event.setDamage(event.getDamage()
                         * EnchantParams.multiplier("execution", level));
@@ -73,8 +73,8 @@ public final class MeleeEffectsListener implements Listener {
 
         // Берсерк: ниже 50% HP у нападающего — удар сильнее
         if (enchants.containsKey("berserk")) {
-            double maxHp = attacker.getAttribute(Attribute.GENERIC_MAX_HEALTH) != null
-                    ? attacker.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue() : 20;
+            double maxHp = attacker.getAttribute(Attribute.MAX_HEALTH) != null
+                    ? attacker.getAttribute(Attribute.MAX_HEALTH).getValue() : 20;
             if (attacker.getHealth() <= maxHp * 0.5) {
                 event.setDamage(event.getDamage()
                         * (1 + EnchantParams.percent("berserk", enchants.get("berserk")) / 100.0));
@@ -170,8 +170,8 @@ public final class MeleeEffectsListener implements Listener {
     }
 
     private static void healPlayer(Player player, double amount) {
-        double max = player.getAttribute(Attribute.GENERIC_MAX_HEALTH) != null
-                ? player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue() : 20;
+        double max = player.getAttribute(Attribute.MAX_HEALTH) != null
+                ? player.getAttribute(Attribute.MAX_HEALTH).getValue() : 20;
         player.setHealth(Math.min(max, player.getHealth() + Math.max(0.5, amount)));
     }
 

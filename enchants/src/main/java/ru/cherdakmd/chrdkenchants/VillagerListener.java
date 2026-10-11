@@ -42,11 +42,10 @@ public final class VillagerListener implements Listener {
             return;
         }
         ItemStack book = plugin.items().makeEnchantBook(roll.def(), roll.level());
-        MerchantRecipe custom = new MerchantRecipe(book, recipe.getUses(), recipe.getMaxUses());
+        MerchantRecipe custom = new MerchantRecipe(book, recipe.getUses(), recipe.getMaxUses(),
+                true, recipe.getVillagerExperience(), recipe.getPriceMultiplier(),
+                recipe.getDemand(), recipe.getSpecialPrice());
         recipe.getIngredients().forEach(custom::addIngredient);
-        custom.setExperienceReward(true);
-        custom.setVillagerExperience(recipe.getVillagerExperience());
-        custom.setPriceMultiplier(recipe.getPriceMultiplier());
         event.setRecipe(custom);
     }
 }

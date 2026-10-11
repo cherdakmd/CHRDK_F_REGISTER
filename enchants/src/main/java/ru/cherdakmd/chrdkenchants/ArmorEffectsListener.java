@@ -125,8 +125,8 @@ public final class ArmorEffectsListener implements Listener {
 
     private void resurrectPhoenix(Player victim) {
         markCooldown(victim, "phoenix");
-        double max = victim.getAttribute(Attribute.GENERIC_MAX_HEALTH) != null
-                ? victim.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue() : 20;
+        double max = victim.getAttribute(Attribute.MAX_HEALTH) != null
+                ? victim.getAttribute(Attribute.MAX_HEALTH).getValue() : 20;
         victim.setHealth(Math.min(max, 8.0));
         victim.setFireTicks(0);
         int resistTicks = EnchantParams.seconds("phoenix-resist", 1) * 20;
