@@ -61,6 +61,7 @@ public final class ShopCommandHandler implements TabExecutor {
             case "price" -> handlePrice(player, args);
             case "buy" -> handleBuy(player, args);
             case "sell" -> handleSell(player, args);
+            case "sellall" -> handleSellAll(player);
             case "stats" -> handleStats(player);
             default -> plugin.messages().send(player, "shop.usage");
         }
@@ -117,7 +118,15 @@ public final class ShopCommandHandler implements TabExecutor {
         plugin.messages().send(player, "shop.price-info",
                 "material", item.material().toLowerCase(Locale.ROOT),
                 "price", service.priceOf(item),
+                "bid", service.bidPrice(item),
+                "ask", service.askPrice(item),
                 "stock", stock, "ref", item.refStock());
+        double[] history = service.historyOf(item);
+        if (history.length > 0) {
+            plugin.messages().send(player, "shop.price-history",
+                    "history", PriceEngine.sparkline(history),
+                    "trend", PriceEngine.trend(history));
+        }
     }
 
     private void handleBuy(Player player, String[] args) {
@@ -136,7 +145,7 @@ public final class ShopCommandHandler implements TabExecutor {
                     "balance", PriceEngine.round(plugin.shopService().store().balanceOf(player.getUniqueId())));
         } else {
             plugin.messages().send(player, result.errorKey(),
-                    "cost", result.money(),
+                    "cost", result.money(), "limit", plugin.shopService().config().dailyTurnoverLimit(),
                     "balance", PriceEngine.round(plugin.shopService().store().balanceOf(player.getUniqueId())),
                     "material", item.material().toLowerCase(Locale.ROOT), "units", units, "value", args[2]);
         }
@@ -172,11 +181,23 @@ public final class ShopCommandHandler implements TabExecutor {
                     "balance", PriceEngine.round(plugin.shopService().store().balanceOf(player.getUniqueId())));
         } else {
             plugin.messages().send(player, result.errorKey() == null ? "shop.invalid-number" : result.errorKey(),
-                    "cost", result.money(),
+                    "cost", result.money(), "limit", plugin.shopService().config().dailyTurnoverLimit(),
                     "balance", PriceEngine.round(plugin.shopService().store().balanceOf(player.getUniqueId())),
                     "material", item.material().toLowerCase(Locale.ROOT), "units", units,
                     "value", args.length >= 3 ? args[2] : "1");
         }
+    }
+
+    private void handleSellAll(Player player) {
+        ShopService.SellAllResult result = plugin.shopService().sellAll(player);
+        if (result.kinds() == 0) {
+            plugin.messages().send(player, "shop.sellall-none");
+            return;
+        }
+        plugin.messages().send(player, "shop.sellall-done",
+                "kinds", result.kinds(), "units", result.units(),
+                "income", result.income(),
+                "balance", PriceEngine.round(plugin.shopService().store().balanceOf(player.getUniqueId())));
     }
 
     private void handleStats(CommandSender sender) {
@@ -312,7 +333,7 @@ public final class ShopCommandHandler implements TabExecutor {
         }
         switch (args.length) {
             case 1 -> addMatches(matches, prefix,
-                    List.of("balance", "deposit", "withdraw", "price", "buy", "sell", "stats"));
+                    List.of("balance", "deposit", "withdraw", "price", "buy", "sell", "sellall", "stats"));
             case 2 -> {
                 if ("price".equalsIgnoreCase(args[0]) || "buy".equalsIgnoreCase(args[0])
                         || "sell".equalsIgnoreCase(args[0])) {

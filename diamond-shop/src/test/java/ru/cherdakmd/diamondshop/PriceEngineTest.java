@@ -60,6 +60,34 @@ class PriceEngineTest {
     }
 
     @Test
+    void spreadSplitsAroundMid() {
+        // spread 10% → ask = mid*1.05, bid = mid*0.95
+        assertEquals(1.05, PriceEngine.ask(1.0, 10.0), 1e-9);
+        assertEquals(0.95, PriceEngine.bid(1.0, 10.0), 1e-9);
+        assertEquals(PriceEngine.ask(2.0, 0.0), PriceEngine.bid(2.0, 0.0),
+                "нулевой спред = единая цена");
+        assertTrue(PriceEngine.ask(1.5, 10.0) > PriceEngine.bid(1.5, 10.0));
+    }
+
+    @Test
+    void sparklineScales() {
+        assertEquals("", PriceEngine.sparkline(new double[0]));
+        assertEquals("▄▄▄", PriceEngine.sparkline(new double[]{5, 5, 5}),
+                "ровная история = плоская линия средней высоты");
+        assertEquals("▁▄▇", PriceEngine.sparkline(new double[]{0, 0.5, 1}));
+        String long_ = PriceEngine.sparkline(new double[48]);
+        assertEquals(24, long_.length(), "спарклайн обрезан до 24 последних точек");
+    }
+
+    @Test
+    void trendDetectsDirection() {
+        assertEquals("═", PriceEngine.trend(new double[]{1}));
+        assertEquals("═", PriceEngine.trend(new double[]{1, 1}));
+        assertEquals("▲", PriceEngine.trend(new double[]{1, 1.5}));
+        assertEquals("▼", PriceEngine.trend(new double[]{1.5, 1}));
+    }
+
+    @Test
     void recoveryDisabledOrNoTimeIsNoop() {
         assertEquals(500, PriceEngine.recover(500, 1000, 0, 3_600_000L));
         assertEquals(500, PriceEngine.recover(500, 1000, 0.5, 0));

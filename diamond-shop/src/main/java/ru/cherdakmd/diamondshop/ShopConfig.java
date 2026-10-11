@@ -34,7 +34,11 @@ public final class ShopConfig {
             int maxWithdraw,
             double defaultMinMultiplier,
             double defaultMaxMultiplier,
-            List<ShopItem> items
+            List<ShopItem> items,
+            double spreadPercent,
+            double dailyTurnoverLimit,
+            int historyMaxPoints,
+            long historyIntervalMillis
     ) {
         /** Товар по имени материала (верхний регистр, как в конфиге). */
         public Optional<ShopItem> item(String material) {
@@ -72,13 +76,18 @@ public final class ShopConfig {
         int maxWithdraw = Math.clamp(config.getInt("pricing.max-withdraw", 6400), 1, 640_000);
         double minMult = Math.clamp(config.getDouble("defaults.min-multiplier", 0.25), 0.01, 1d);
         double maxMult = Math.clamp(config.getDouble("defaults.max-multiplier", 4.0), 1d, 100d);
+        double spread = Math.clamp(config.getDouble("pricing.spread-percent", 10.0), 0d, 90d);
+        double dailyLimit = Math.max(0, config.getDouble("pricing.daily-turnover-limit", 0d));
+        int historyPoints = Math.clamp(config.getInt("pricing.history-points", 24), 4, 168);
+        long historyInterval = Math.clamp(config.getLong("pricing.history-interval-minutes", 60), 5, 1440) * 60_000L;
 
         List<ShopItem> items = new ArrayList<>();
         for (Map<?, ?> raw : config.getMapList("items")) {
             ShopItem item = parseItem(raw, minMult, maxMult, logger);
             if (item != null) items.add(item);
         }
-        return new ShopConfigData(rates, recovery, maxWithdraw, minMult, maxMult, List.copyOf(items));
+        return new ShopConfigData(rates, recovery, maxWithdraw, minMult, maxMult, List.copyOf(items),
+                spread, dailyLimit, historyPoints, historyInterval);
     }
 
     private static ShopItem parseItem(Map<?, ?> raw, double defMin, double defMax, Logger logger) {

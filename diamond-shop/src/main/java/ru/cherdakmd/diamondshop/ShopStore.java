@@ -32,6 +32,14 @@ public final class ShopStore {
         public long recoveryAt;
         public long soldByPlayers;   // товар, влитый игроками В магазин
         public long boughtByPlayers; // товар, выкупленный игроками из магазина
+        public double[] history = new double[0]; // mid-цены по тикам истории (старые → новые)
+        long historyAt; // метка последнего тика истории
+    }
+
+    /** Дневное окно оборота игрока (для лимита антиманипуляции). */
+    public static final class LimitRow {
+        public long dayStart;
+        public double used;
     }
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -43,6 +51,7 @@ public final class ShopStore {
 
     private final Map<UUID, Double> balances = new HashMap<>();
     private final Map<String, ItemState> items = new HashMap<>();
+    private final Map<UUID, LimitRow> limits = new HashMap<>();
     private double turnover;
     private boolean dirty;
 
@@ -69,7 +78,30 @@ public final class ShopStore {
                     itemState.recoveryAt = longOf(state.get("recoveryAt"));
                     itemState.soldByPlayers = longOf(state.get("soldByPlayers"));
                     itemState.boughtByPlayers = longOf(state.get("boughtByPlayers"));
+                    Object historyObj = state.get("history");
+                    if (historyObj instanceof List<?> list) {
+                        double[] history = new double[list.size()];
+                        for (int i = 0; i < list.size(); i++) {
+                            history[i] = list.get(i) instanceof Number number ? number.doubleValue() : 0d;
+                        }
+                        itemState.history = history;
+                    }
+                    itemState.historyAt = longOf(state.get("historyAt"));
                     items.put(String.valueOf(entry.getKey()), itemState);
+                }
+            }
+            Object limitsObj = data.get("limits");
+            if (limitsObj instanceof Map<?, ?> map) {
+                for (Map.Entry<?, ?> entry : map.entrySet()) {
+                    if (!(entry.getValue() instanceof Map<?, ?> row)) continue;
+                    try {
+                        LimitRow limitRow = new LimitRow();
+                        limitRow.dayStart = longOf(row.get("dayStart"));
+                        limitRow.used = doubleOf(row.get("used"));
+                        limits.put(UUID.fromString(String.valueOf(entry.getKey())), limitRow);
+                    } catch (Exception ignored) {
+                        // повреждённая запись — пропускаем
+                    }
                 }
             }
             turnover = doubleOf(data.get("turnover"));
@@ -173,6 +205,65 @@ public final class ShopStore {
     }
 
     /** Сериализованный snapshot (из синхронизированного контекста; писать можно асинхронно). */
+    /* ------------------------------- история цен ------------------------------- */
+
+    /**
+     * Добавляет точку mid-цены в историю товара. Если с прошлой точки прошло меньше
+     * {@code minIntervalMillis}, обновляет саму последнюю точку (сделки не плодят шум).
+     */
+    public synchronized void recordPrice(ShopConfig.ShopItem item, double price, long nowMillis,
+                                         int maxPoints, long minIntervalMillis) {
+        ItemState state = itemState(item, nowMillis);
+        if (state.history.length > 0 && nowMillis - state.historyAt < minIntervalMillis) {
+            state.history[state.history.length - 1] = price; // тот же тик — обновляем значение
+        } else {
+            int keep = Math.min(maxPoints - 1, state.history.length);
+            double[] next = new double[keep + 1];
+            System.arraycopy(state.history, state.history.length - keep, next, 0, keep);
+            next[keep] = price;
+            state.history = next;
+            state.historyAt = nowMillis;
+        }
+        dirty = true;
+    }
+
+    /** Вся накопленная история товара (копия массива). */
+    public synchronized double[] historyOf(String material) {
+        ItemState state = items.get(material);
+        return state == null ? new double[0] : state.history.clone();
+    }
+
+    /* ------------------------------- дневной лимит оборота ------------------------------- */
+
+    /**
+     * Пытается записать оборот в дневное окно игрока. {@code limit <= 0} — лимит выключен.
+     * Окно — календарные сутки UTC.
+     */
+    public synchronized boolean tryRecordTurnover(UUID uuid, double amount, double limit, long nowMillis) {
+        if (limit <= 0) return true;
+        long today = nowMillis - Math.floorMod(nowMillis, 86_400_000L);
+        LimitRow row = limits.get(uuid);
+        if (row == null || row.dayStart != today) {
+            row = new LimitRow();
+            row.dayStart = today;
+            limits.put(uuid, row);
+        }
+        if (row.used + amount > limit + 1e-9) {
+            dirty = true; // окно могло пересоздаться
+            return false;
+        }
+        row.used = PriceEngine.round(row.used + amount);
+        dirty = true;
+        return true;
+    }
+
+    /** Сколько оборота игрок «сжёг» сегодня. */
+    public synchronized double usedToday(UUID uuid, long nowMillis) {
+        LimitRow row = limits.get(uuid);
+        long today = nowMillis - Math.floorMod(nowMillis, 86_400_000L);
+        return row == null || row.dayStart != today ? 0d : row.used;
+    }
+
     public synchronized String snapshotJson() {
         Map<String, Object> data = new LinkedHashMap<>();
         Map<String, Double> balancesCopy = new LinkedHashMap<>();
@@ -185,9 +276,19 @@ public final class ShopStore {
             fields.put("recoveryAt", state.recoveryAt);
             fields.put("soldByPlayers", state.soldByPlayers);
             fields.put("boughtByPlayers", state.boughtByPlayers);
+            fields.put("history", state.history);
+            fields.put("historyAt", state.historyAt);
             itemsCopy.put(material, fields);
         });
         data.put("items", itemsCopy);
+        Map<String, Object> limitsCopy = new LinkedHashMap<>();
+        limits.forEach((uuid, row) -> {
+            Map<String, Object> fields = new LinkedHashMap<>();
+            fields.put("dayStart", row.dayStart);
+            fields.put("used", row.used);
+            limitsCopy.put(uuid.toString(), fields);
+        });
+        data.put("limits", limitsCopy);
         data.put("turnover", turnover);
         dirty = false;
         return GSON.toJson(data);

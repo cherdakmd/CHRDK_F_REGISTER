@@ -25,6 +25,7 @@ public final class DiamondShopPlugin extends JavaPlugin {
     private ShopGui gui;
     private volatile Messages messages;
     private BukkitTask saveTask;
+    private BukkitTask historyTask;
 
     @Override
     public void onEnable() {
@@ -49,6 +50,13 @@ public final class DiamondShopPlugin extends JavaPlugin {
             }
         }, 6000L, 6000L);
 
+        // точка истории цен раз в интервал из конфига (по умолчанию час)
+        long historyTicks = Math.clamp(
+                shopService.config().historyIntervalMillis() / 50, 6000L, 1728000L);
+        this.historyTask = Bukkit.getScheduler().runTaskTimerAsynchronously(this, () ->
+                shopService.config().items().forEach(item -> shopService.recordPricePoint(item)),
+                historyTicks, historyTicks);
+
         getLogger().info("CHRDK_DiamondShop включён: товаров " + shopService.config().items().size()
                 + ", ядро " + (coreApi == null ? "НЕ найдено!" : "v" + coreApi.pluginVersion()) + ".");
     }
@@ -58,6 +66,10 @@ public final class DiamondShopPlugin extends JavaPlugin {
         if (saveTask != null) {
             saveTask.cancel();
             saveTask = null;
+        }
+        if (historyTask != null) {
+            historyTask.cancel();
+            historyTask = null;
         }
         if (store != null) {
             store.saveNow(); // принудительно, даже если не dirty-флага не было снято

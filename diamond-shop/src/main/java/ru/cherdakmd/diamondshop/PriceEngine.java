@@ -50,4 +50,51 @@ public final class PriceEngine {
     public static double revenue(double pricePerUnit, long units) {
         return round(pricePerUnit * units);
     }
+
+    /* ------------------------------- спред bid/ask ------------------------------- */
+
+    /** Цена ПОКУПКИ игроком (ask): mid + половина спреда. */
+    public static double ask(double midPrice, double spreadPercent) {
+        return round(midPrice * (1 + spreadPercent / 200d));
+    }
+
+    /** Цена ПРОДАЖИ игроком (bid): mid - половина спреда. */
+    public static double bid(double midPrice, double spreadPercent) {
+        return round(midPrice * (1 - spreadPercent / 200d));
+    }
+
+    /* ------------------------------- спарклайн истории ------------------------------- */
+
+    private static final char[] BARS = {'▁', '▂', '▃', '▄', '▅', '▆', '▇'};
+
+    /**
+     * ASCII-спарклайн по точкам истории цен (▁▂▃▅▇…). Равные значения — плоская линия
+     * средней высоты, пустая история — пустая строка. До 24 точек — иначе хвост.
+     */
+    public static String sparkline(double[] values) {
+        if (values == null || values.length == 0) return "";
+        int from = Math.max(0, values.length - 24);
+        double min = Double.MAX_VALUE;
+        double max = -Double.MAX_VALUE;
+        for (int i = from; i < values.length; i++) {
+            min = Math.min(min, values[i]);
+            max = Math.max(max, values[i]);
+        }
+        StringBuilder line = new StringBuilder(values.length - from);
+        for (int i = from; i < values.length; i++) {
+            int level = max - min < 1e-9 ? 3
+                    : (int) Math.round((values[i] - min) / (max - min) * (BARS.length - 1));
+            line.append(BARS[Math.clamp(level, 0, BARS.length - 1)]);
+        }
+        return line.toString();
+    }
+
+    /** Символ тренда между двумя последними точками: ▲ рост, ▼ падение, ═ без изменений. */
+    public static String trend(double[] values) {
+        if (values == null || values.length < 2) return "═";
+        double prev = values[values.length - 2];
+        double last = values[values.length - 1];
+        if (Math.abs(last - prev) < 1e-9) return "═";
+        return last > prev ? "▲" : "▼";
+    }
 }

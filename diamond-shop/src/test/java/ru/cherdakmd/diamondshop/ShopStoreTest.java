@@ -102,6 +102,54 @@ class ShopStoreTest {
     }
 
     @Test
+    void priceHistoryAccumulatesWithIntervalDamping(@TempDir Path dir) {
+        ShopStore store = newStore(dir);
+        ShopConfig.ShopItem stone = item("STONE", 1000);
+        long t0 = 1_800_000_000_000L;
+        store.recordPrice(stone, 1.0, t0, 24, 3_600_000L);
+        store.recordPrice(stone, 1.1, t0 + 60_000L, 24, 3_600_000L); // тот же тик → обновление
+        assertEquals(1, store.historyOf("STONE").length);
+        assertEquals(1.1, store.historyOf("STONE")[0], 1e-9);
+        store.recordPrice(stone, 1.2, t0 + 3_600_000L, 24, 3_600_000L); // новый тик
+        assertEquals(2, store.historyOf("STONE").length);
+        for (int i = 0; i < 100; i++) {
+            store.recordPrice(stone, 2.0 + i, t0 + 3_600_000L * (i + 2), 24, 3_600_000L);
+        }
+        assertEquals(24, store.historyOf("STONE").length, "история ограничена maxPoints");
+    }
+
+    @Test
+    void priceHistoryPersists(@TempDir Path dir) {
+        ShopStore store = newStore(dir);
+        ShopConfig.ShopItem stone = item("STONE", 1000);
+        long t0 = 1_800_000_000_000L;
+        store.recordPrice(stone, 1.0, t0, 24, 3_600_000L);
+        store.recordPrice(stone, 1.5, t0 + 3_600_000L, 24, 3_600_000L);
+        store.saveNow();
+        ShopStore reloaded = newStore(dir);
+        reloaded.load();
+        assertEquals(2, reloaded.historyOf("STONE").length);
+        assertEquals(1.5, reloaded.historyOf("STONE")[1], 1e-9);
+    }
+
+    @Test
+    void dailyTurnoverLimitResetsByCalendarDay(@TempDir Path dir) {
+        ShopStore store = newStore(dir);
+        UUID id = UUID.randomUUID();
+        long day = 86_400_000L;
+        long t0 = day * 21_500L + 1000; // середина суток
+        assertTrue(store.tryRecordTurnover(id, 60, 100, t0));
+        assertEquals(60, store.usedToday(id, t0), 1e-9);
+        assertTrue(store.tryRecordTurnover(id, 40, 100, t0));
+        assertFalse(store.tryRecordTurnover(id, 1, 100, t0), "сверх лимита — отказ");
+        assertEquals(100, store.usedToday(id, t0), 1e-9);
+        assertTrue(store.tryRecordTurnover(id, 1, 0, t0), "лимит 0 = выключен");
+        // следующие сутки — окно сброшено
+        assertTrue(store.tryRecordTurnover(id, 100, 100, t0 + day));
+        assertEquals(100, store.usedToday(id, t0 + day), 1e-9);
+    }
+
+    @Test
     void corruptedFileDoesNotCrashLoad(@TempDir Path dir) throws Exception {
         Path file = dir.resolve("shop-data.json");
         java.nio.file.Files.writeString(file, "{не json!!}");
@@ -114,7 +162,8 @@ class ShopStoreTest {
     void configItemLookupIsCaseInsensitive() {
         ShopConfig.ShopConfigData data = new ShopConfig.ShopConfigData(
                 Map.of("DIAMOND", 1), 0.05, 6400, 0.25, 4.0,
-                List.of(item("STONE", 1000), item("IRON_INGOT", 6000)));
+                List.of(item("STONE", 1000), item("IRON_INGOT", 6000)),
+                10.0, 0, 24, 3_600_000L);
         assertTrue(data.item("stone").isPresent());
         assertTrue(data.item("Iron_Ingot").isPresent());
         assertTrue(data.item("bedrock").isEmpty());

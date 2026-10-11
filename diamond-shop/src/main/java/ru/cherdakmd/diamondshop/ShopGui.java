@@ -70,8 +70,13 @@ public final class ShopGui implements Listener {
             long now = System.currentTimeMillis();
             long stock = service.store().stockOf(item, now, service.config().stockRecoveryPerHour());
             double price = service.priceOf(item);
+            double[] history = service.historyOf(item);
             meta.lore(plugin.messages().getList("shop.gui.item-lore",
                     "price", PriceEngine.round(price),
+                    "bid", service.bidPrice(item),
+                    "ask", service.askPrice(item),
+                    "trend", PriceEngine.trend(history),
+                    "history", PriceEngine.sparkline(history),
                     "stock", stock,
                     "ref", item.refStock()));
             icon.setItemMeta(meta);

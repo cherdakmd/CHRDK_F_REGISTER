@@ -30,10 +30,31 @@ public final class ShopService {
         return store;
     }
 
-    /** Цена единицы товара прямо сейчас (с применённым возвратом запаса). */
+    /** Средняя цена единицы товара (mid) с применённым возвратом запаса. */
     public double priceOf(ShopConfig.ShopItem item) {
         long stock = store.stockOf(item, System.currentTimeMillis(), config.stockRecoveryPerHour());
         return PriceEngine.price(item.basePrice(), stock, item.refStock(), item.minMultiplier(), item.maxMultiplier());
+    }
+
+    /** Цена, по которой игрок ПОКУПАЕТ у магазина (mid + половина спреда). */
+    public double askPrice(ShopConfig.ShopItem item) {
+        return PriceEngine.ask(priceOf(item), config.spreadPercent());
+    }
+
+    /** Цена, по которой игрок ПРОДАЁТ магазину (mid - половина спреда). */
+    public double bidPrice(ShopConfig.ShopItem item) {
+        return PriceEngine.bid(priceOf(item), config.spreadPercent());
+    }
+
+    /** Фиксирует точку mid-цены в истории (вызывается после сделок и по таймеру). */
+    public void recordPricePoint(ShopConfig.ShopItem item) {
+        store.recordPrice(item, priceOf(item), System.currentTimeMillis(),
+                config.historyMaxPoints(), config.historyIntervalMillis());
+    }
+
+    /** История mid-цен товара (для спарклайна). */
+    public double[] historyOf(ShopConfig.ShopItem item) {
+        return store.historyOf(item.material());
     }
 
     /** Алмазный эквивалент {@code count} единиц материала по действующему курсу. */
@@ -108,10 +129,15 @@ public final class ShopService {
     /** Покупка игроком {@code units} единиц товара у магазина. */
     public TradeResult buy(Player player, ShopConfig.ShopItem item, long units) {
         if (units <= 0) return new TradeResult(false, 0d, "shop.invalid-number");
-        double price = priceOf(item);
+        double price = askPrice(item);
         double cost = PriceEngine.revenue(price, units);
         if (!store.trySpend(player.getUniqueId(), cost)) {
             return new TradeResult(false, cost, "shop.not-enough-balance");
+        }
+        if (!store.tryRecordTurnover(player.getUniqueId(), cost, config.dailyTurnoverLimit(),
+                System.currentTimeMillis())) {
+            store.addBalance(player.getUniqueId(), cost); // откат списания
+            return new TradeResult(false, cost, "shop.daily-limit");
         }
         Material material = Material.matchMaterial(item.material());
         if (material == null) {
@@ -122,6 +148,7 @@ public final class ShopService {
         long now = System.currentTimeMillis();
         store.adjustStock(item, -units, now, config.stockRecoveryPerHour());
         store.recordTrade(item, units, false, cost);
+        recordPricePoint(item);
         return new TradeResult(true, cost, null);
     }
 
@@ -133,14 +160,57 @@ public final class ShopService {
         if (countItems(player.getInventory(), material) < units) {
             return new TradeResult(false, 0d, "shop.not-enough-items");
         }
-        double price = priceOf(item);
+        double price = bidPrice(item);
         double income = PriceEngine.revenue(price, units);
+        if (!store.tryRecordTurnover(player.getUniqueId(), income, config.dailyTurnoverLimit(),
+                System.currentTimeMillis())) {
+            return new TradeResult(false, income, "shop.daily-limit");
+        }
         removeItems(player.getInventory(), material, units);
         store.addBalance(player.getUniqueId(), income);
         long now = System.currentTimeMillis();
         store.adjustStock(item, units, now, config.stockRecoveryPerHour());
         store.recordTrade(item, units, true, income);
+        recordPricePoint(item);
         return new TradeResult(true, income, null);
+    }
+
+    /* ------------------------------- sellall ------------------------------- */
+
+    /** Результат распродажи всего торгуемого из инвентаря. */
+    public record SellAllResult(double income, long units, int kinds) {
+    }
+
+    /** Продаёт ВСЕ торгуемые товары из инвентаря игрока (с учётом дневного лимита). */
+    public SellAllResult sellAll(Player player) {
+        double incomeTotal = 0d;
+        long unitsTotal = 0;
+        int kinds = 0;
+        double limitLeft = config.dailyTurnoverLimit() <= 0 ? Double.MAX_VALUE
+                : config.dailyTurnoverLimit() - store.usedToday(player.getUniqueId(), System.currentTimeMillis());
+        for (ShopConfig.ShopItem item : config.items()) {
+            Material material = Material.matchMaterial(item.material());
+            if (material == null) continue;
+            long have = countItems(player.getInventory(), material);
+            if (have <= 0) continue;
+            // ограничиваем объём, чтобы не вылететь за дневной лимит
+            if (limitLeft < Double.MAX_VALUE) {
+                double unitPrice = bidPrice(item);
+                long affordable = (long) Math.floor(limitLeft / Math.max(1e-9, unitPrice));
+                if (affordable <= 0) continue;
+                have = Math.min(have, affordable);
+            }
+            TradeResult result = sell(player, item, have);
+            if (result.success()) {
+                incomeTotal = PriceEngine.round(incomeTotal + result.money());
+                unitsTotal += have;
+                kinds++;
+                if (limitLeft < Double.MAX_VALUE) {
+                    limitLeft = Math.max(0, limitLeft - result.money());
+                }
+            }
+        }
+        return new SellAllResult(incomeTotal, unitsTotal, kinds);
     }
 
     /* ------------------------------- инвентарная математика ------------------------------- */
