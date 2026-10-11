@@ -76,6 +76,7 @@ public final class AccessManager {
     private final AuthThrottle throttle;
     private final DonationService donations;
     private final LogMasker logMasker;
+    private final AuthDialogs authDialogs;
 
     private BukkitTask donatePollTask;
     private BukkitTask reminderTask;
@@ -104,6 +105,41 @@ public final class AccessManager {
         this.donations = new DonationService(store, this::config, audit, notifications, logger,
                 this::onPassGranted);
         this.logMasker = new LogMasker(logger);
+        this.authDialogs = createAuthDialogs(plugin);
+    }
+
+    private AuthDialogs createAuthDialogs(JavaPlugin javaPlugin) {
+        try {
+            return new AuthDialogs(javaPlugin, this, () -> this.config, logger);
+        } catch (Throwable throwable) {
+            logger.warning("Нативный ввод пароля диалогами Paper недоступен: " + throwable.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Shows the Paper dialog matching the current authentication stage, when dialogs are enabled.
+     * Silently does nothing on server builds without the dialog API.
+     */
+    private void showAuthDialog(Player player, PlayerStage stage) {
+        AuthDialogs dialogs = this.authDialogs;
+        if (dialogs == null || player == null || !player.isOnline() || !config.authDialogs()) {
+            return;
+        }
+        switch (stage) {
+            case NEEDS_REGISTER -> dialogs.showRegister(player);
+            case NEEDS_2FA -> dialogs.showTwoFactor(player);
+            case NEEDS_LOGIN -> dialogs.showLogin(player);
+            default -> {
+                // no password input is required on the other stages
+            }
+        }
+    }
+
+    /** Opens the dialog of the current stage; used when {@code /login} or {@code /2fa} is run without arguments. */
+    public void showAuthDialogNow(Player player) {
+        long now = System.currentTimeMillis();
+        showAuthDialog(player, getStage(player.getUniqueId(), player.getName(), now));
     }
 
     /** Access to the DonatePay journal and the pending-payment workflow. */
@@ -593,6 +629,7 @@ public final class AccessManager {
         player.sendMessage(Component.text("Неверный пароль! Осталось попыток до временной блокировки: " + remaining,
                 NamedTextColor.RED));
         player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+        showAuthDialog(player, PlayerStage.NEEDS_LOGIN);
         if (totalFailures >= 3 && totalFailures % 3 == 0) {
             notifyBruteForce(player, totalFailures);
         }
@@ -696,6 +733,7 @@ public final class AccessManager {
         player.sendMessage(Component.text("Неверный или уже использованный 6-значный код 2FA! Повторите ввод.",
                 NamedTextColor.RED));
         player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+        showAuthDialog(player, PlayerStage.NEEDS_2FA);
         return true;
     }
 
@@ -1261,6 +1299,9 @@ public final class AccessManager {
             );
             player.showTitle(title);
         }
+        if (showTitle) {
+            showAuthDialog(player, PlayerStage.NEEDS_REGISTER);
+        }
     }
 
     public void sendLoginPrompt(Player player, boolean showTitle) {
@@ -1274,6 +1315,9 @@ public final class AccessManager {
             );
             player.showTitle(title);
         }
+        if (showTitle) {
+            showAuthDialog(player, PlayerStage.NEEDS_LOGIN);
+        }
     }
 
     public void sendTwoFactorPrompt(Player player, boolean showTitle) {
@@ -1286,6 +1330,9 @@ public final class AccessManager {
                     Title.Times.times(Duration.ofMillis(200), Duration.ofSeconds(5), Duration.ofMillis(500))
             );
             player.showTitle(title);
+        }
+        if (showTitle) {
+            showAuthDialog(player, PlayerStage.NEEDS_2FA);
         }
     }
 

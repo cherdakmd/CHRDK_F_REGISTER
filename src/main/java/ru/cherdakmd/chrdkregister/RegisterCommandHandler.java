@@ -127,6 +127,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         }
         if (args.length < 1 || args.length > 2) {
             player.sendMessage(Component.text("Использование: /login <пароль> [код_2FA]", NamedTextColor.YELLOW));
+            accessManager.showAuthDialogNow(player);
             return true;
         }
         String totpCode = args.length == 2 ? args[1] : null;
@@ -181,6 +182,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         if (stage == AccessManager.PlayerStage.NEEDS_2FA) {
             if (args.length == 0) {
                 accessManager.sendTwoFactorPrompt(player, false);
+                accessManager.showAuthDialogNow(player);
                 return true;
             }
             String sub = args[0].toLowerCase(Locale.ROOT);

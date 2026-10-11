@@ -118,7 +118,8 @@ public final class PlayerRestrictionListener implements Listener {
         event.setCancelled(true);
         switch (stage) {
             case NO_PASS -> player.sendMessage(Component.text(
-                    "Команды заблокированы! Сначала приобретите проходку (150₽ на DonatePay, укажите ник "
+                    "Команды заблокированы! Сначала приобретите проходку ("
+                            + accessManager.config().minimumDonationRubles() + "₽ на DonatePay, укажите ник "
                             + player.getName() + " в имени донатера).",
                     NamedTextColor.RED));
             case NEEDS_REGISTER -> player.sendMessage(Component.text(
