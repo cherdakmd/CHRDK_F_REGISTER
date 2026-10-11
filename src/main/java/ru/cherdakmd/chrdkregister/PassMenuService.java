@@ -104,8 +104,8 @@ public final class PassMenuService implements Listener {
         ItemStack item = new ItemStack(materialOf(action));
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.displayName(messages.get("pass.menu.item-" + keyOf(action) + "-name"));
-            meta.lore(List.of(messages.get("pass.menu.item-" + keyOf(action) + "-lore")));
+            meta.displayName(messages.get(keyOf(action) + "-name"));
+            meta.lore(List.of(messages.get(keyOf(action) + "-lore")));
             item.setItemMeta(meta);
         }
         return item;
@@ -123,9 +123,9 @@ public final class PassMenuService implements Listener {
         };
     }
 
-    /** Ключ секции текстов иконки в messages.yml. */
+    /** Префикс текстов иконки в messages.yml ({@code pass.menu.item-*}). */
     static String keyOf(Action action) {
-        return switch (action) {
+        return "pass.menu.item-" + switch (action) {
             case STATUS -> "status";
             case PAYMENT -> "payment";
             case TIERS -> "tiers";

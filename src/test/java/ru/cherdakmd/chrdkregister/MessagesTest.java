@@ -43,7 +43,7 @@ class MessagesTest {
      * (например completeAuthentication(player, "register.success") или template("chat.broadcast-prefix")).
      */
     private static final List<String> DYNAMIC_PREFIXES = List.of(
-            "password.error.", "password.hint.", "password.strength.", "donation.");
+            "password.error.", "password.hint.", "password.strength.", "donation.", "pass.menu.item-");
     private static final Set<String> INDIRECT_KEYS = Set.of(
             "register.success", "login.success", "chat.broadcast-prefix",
             "dialog.password-missing", "dialog.confirm-mismatch", "dialog.code-missing");
