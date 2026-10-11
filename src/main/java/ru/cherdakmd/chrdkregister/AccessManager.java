@@ -29,6 +29,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.UUID;
@@ -66,6 +67,9 @@ public final class AccessManager {
     private final Set<UUID> passwordVerifiedPlayers = ConcurrentHashMap.newKeySet();
     private final Map<UUID, String> pendingTotpSecrets = new ConcurrentHashMap<>();
     private final Map<UUID, Location> freezeLocations = new ConcurrentHashMap<>();
+    private final Map<UUID, CaptchaChallenge> pendingCaptchas = new ConcurrentHashMap<>();
+    private final Map<UUID, Integer> captchaClearedFailures = new ConcurrentHashMap<>();
+    private final Random captchaRandom = new Random();
     private final Map<UUID, Long> lastChatReminderAt = new ConcurrentHashMap<>();
     private final Map<UUID, String> authSource = new ConcurrentHashMap<>();
     private final Map<UUID, Long> joinedAt = new ConcurrentHashMap<>();
@@ -514,6 +518,8 @@ public final class AccessManager {
         freezeLocations.remove(uuid);
         lastChatReminderAt.remove(uuid);
         joinedAt.remove(uuid);
+        pendingCaptchas.remove(uuid);
+        captchaClearedFailures.remove(uuid);
         hideExpiryBar(uuid);
     }
 
@@ -624,6 +630,10 @@ public final class AccessManager {
         }
         if (throttleResult.decision() == AuthThrottle.Decision.DELAY) {
             messages.send(player, "login.throttled-delay", "delay_seconds", throttleResult.delaySeconds());
+            return true;
+        }
+        if (isCaptchaRequired(uuid, player.getName())) {
+            presentCaptchaChallenge(player);
             return true;
         }
 
@@ -743,6 +753,14 @@ public final class AccessManager {
             messages.send(player, "two-factor.login.throttled", "reason", throttleResult.reason());
             return true;
         }
+        if (throttleResult.decision() == AuthThrottle.Decision.DELAY) {
+            messages.send(player, "two-factor.login.throttled", "reason", throttleResult.reason());
+            return true;
+        }
+        if (isCaptchaRequired(uuid, player.getName())) {
+            presentCaptchaChallenge(player);
+            return true;
+        }
 
         if (store.verifyTotp(player.getName(), rawCode, now, config.totpWindowSteps())) {
             throttle.registerSuccess(player.getName(), getPlayerIp(player));
@@ -860,6 +878,58 @@ public final class AccessManager {
         }
         giveTotpQrMap(player);
         messages.send(player, "two-factor.qr.sent");
+        return true;
+    }
+
+    /* ------------------------------------------------------------------ *
+     *  Escalation captcha after repeated failed logins (/captcha <число>) *
+     * ------------------------------------------------------------------ */
+
+    /**
+     * Требуется ли эскалационная капча: счётчик неудач достиг {@code auth.captcha-after-attempts},
+     * а последняя пройденная проверка относилась к более ранней серии неудач.
+     */
+    public boolean isCaptchaRequired(UUID uuid, String playerName) {
+        int failures = throttle.totalFailures(playerName);
+        return CaptchaChallenge.required(
+                failures, captchaClearedFailures.getOrDefault(uuid, -1), config.captchaAfterAttempts());
+    }
+
+    /** Показывает текущий или генерирует новый вызов: диалог Paper либо чат-подсказка. */
+    public void presentCaptchaChallenge(Player player) {
+        CaptchaChallenge challenge = pendingCaptchas.computeIfAbsent(
+                player.getUniqueId(), ignored -> CaptchaChallenge.generate(captchaRandom));
+        messages.send(player, "captcha.required", "failures", throttle.totalFailures(player.getName()));
+        AuthDialogs dialogs = this.authDialogs;
+        if (dialogs != null && config.authDialogs()) {
+            dialogs.showCaptcha(player, challenge);
+        } else {
+            messages.send(player, "captcha.chat-fallback",
+                    "options", String.join(" ", challenge.options()));
+        }
+    }
+
+    /** Обрабатывает ответ {@code /captcha <число>} (и клики кнопок диалога). */
+    public boolean handleCaptchaAnswer(Player player, String answer) {
+        UUID uuid = player.getUniqueId();
+        CaptchaChallenge challenge = pendingCaptchas.get(uuid);
+        PlayerStage stage = getStage(uuid, player.getName(), System.currentTimeMillis());
+        if (challenge == null || stage == PlayerStage.AUTHENTICATED) {
+            messages.send(player, "captcha.not-required");
+            return true;
+        }
+        if (!challenge.matches(answer)) {
+            pendingCaptchas.remove(uuid);
+            messages.send(player, "captcha.wrong");
+            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+            presentCaptchaChallenge(player);
+            return true;
+        }
+        pendingCaptchas.remove(uuid);
+        captchaClearedFailures.put(uuid, throttle.totalFailures(player.getName()));
+        messages.send(player, "captcha.solved");
+        player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.2f);
+        showAuthDialog(player, stage == PlayerStage.NEEDS_2FA ? PlayerStage.NEEDS_2FA : PlayerStage.NEEDS_LOGIN);
         return true;
     }
 
@@ -1136,6 +1206,8 @@ public final class AccessManager {
         passwordVerifiedPlayers.remove(uuid);
         freezeLocations.remove(uuid);
         lastChatReminderAt.remove(uuid);
+        pendingCaptchas.remove(uuid);
+        captchaClearedFailures.remove(uuid);
         hideExpiryBar(uuid);
 
         player.clearTitle();

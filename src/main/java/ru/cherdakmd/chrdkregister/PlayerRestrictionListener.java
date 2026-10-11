@@ -53,10 +53,10 @@ public final class PlayerRestrictionListener implements Listener {
     private static final Set<String> REGISTER_COMMANDS =
             Set.of("register", "reg", "pass", "fregister", "prohodka", "logout", "session");
     private static final Set<String> LOGIN_COMMANDS =
-            Set.of("login", "l", "pass", "fregister", "prohodka", "logout", "session");
+            Set.of("login", "l", "pass", "fregister", "prohodka", "logout", "session", "captcha");
     private static final Set<String> TWO_FACTOR_COMMANDS =
             Set.of("2fa", "totp", "twofactor", "login", "l", "pass", "fregister", "prohodka",
-                    "logout", "session");
+                    "logout", "session", "captcha");
 
     private final AccessManager accessManager;
 

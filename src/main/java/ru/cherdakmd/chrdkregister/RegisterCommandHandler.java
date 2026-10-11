@@ -60,6 +60,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         return switch (cmdName) {
             case "register" -> handleRegister(sender, args);
             case "login" -> handleLogin(sender, args);
+            case "captcha" -> handleCaptcha(sender, args);
             case "changepassword" -> handleChangePassword(sender, args);
             case "2fa" -> handleTwoFactor(sender, label, args);
             case "pass" -> handlePass(sender, label, args);
@@ -137,6 +138,23 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         }
         String totpCode = args.length == 2 ? args[1] : null;
         return accessManager.handleLoginCommand(player, args[0], totpCode);
+    }
+
+    /** {@code /captcha <число>} — ответ на эскалационную проверку после серии неудачных входов. */
+    private boolean handleCaptcha(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            messages.send(sender, "error.players-only");
+            return true;
+        }
+        if (args.length != 1) {
+            if (accessManager.isCaptchaRequired(player.getUniqueId(), player.getName())) {
+                accessManager.presentCaptchaChallenge(player);
+            } else {
+                messages.send(player, "captcha.not-required");
+            }
+            return true;
+        }
+        return accessManager.handleCaptchaAnswer(player, args[0]);
     }
 
     private boolean handleChangePassword(CommandSender sender, String[] args) {

@@ -39,6 +39,7 @@ public final class PluginConfig {
     private final int maxPasswordLength;
     private final int maxLoginAttempts;
     private final int reminderSeconds;
+    private final int captchaAfterAttempts;
     private final boolean authDialogs;
     private final boolean maskCommandsInLogs;
     private final boolean sessionSkips2fa;
@@ -102,7 +103,7 @@ public final class PluginConfig {
                 donatePayApiToken, donatePayPaymentUrl, minimumDonationRubles, donatePollSeconds, strictCaseMatch,
                 true, true, false, 4, 365,
                 grantDays, defaultTiers(grantDays), List.of(10_080L, 4_320L, 1_440L, 60L), true, true, 0,
-                sessionMinutes, minPasswordLength, maxPasswordLength, maxLoginAttempts, reminderSeconds,
+                sessionMinutes, minPasswordLength, maxPasswordLength, maxLoginAttempts, reminderSeconds, 3,
                 false, true, false, true, false, false, true,
                 List.of(0, 0, 1, 2, 5, 10, 30, 60, 120, 300), maxLoginAttempts, 10, 15, 10, 15, true,
                 true, "CHRDK", 1, maxLoginAttempts, true,
@@ -139,6 +140,7 @@ public final class PluginConfig {
             int maxPasswordLength,
             int maxLoginAttempts,
             int reminderSeconds,
+            int captchaAfterAttempts,
             boolean authDialogs,
             boolean maskCommandsInLogs,
             boolean sessionSkips2fa,
@@ -200,6 +202,7 @@ public final class PluginConfig {
         this.maxPasswordLength = Math.max(this.minPasswordLength, Math.min(128, maxPasswordLength));
         this.maxLoginAttempts = Math.clamp(maxLoginAttempts, 1, 20);
         this.reminderSeconds = Math.clamp(reminderSeconds, 2, 120);
+        this.captchaAfterAttempts = Math.clamp(captchaAfterAttempts, 0, 10);
         this.authDialogs = authDialogs;
         this.maskCommandsInLogs = maskCommandsInLogs;
         this.sessionSkips2fa = sessionSkips2fa;
@@ -278,6 +281,7 @@ public final class PluginConfig {
                 config.getInt("auth.max-password-length", 64),
                 maxLoginAttempts,
                 config.getInt("auth.reminder-seconds", 5),
+                config.getInt("auth.captcha-after-attempts", 3),
                 config.getBoolean("auth.dialogs", true),
                 config.getBoolean("auth.mask-commands-in-logs", true),
                 config.getBoolean("auth.session-skips-2fa", false),
@@ -445,6 +449,14 @@ public final class PluginConfig {
 
     public int reminderSeconds() {
         return reminderSeconds;
+    }
+
+    /**
+     * Порог неудачных попыток входа, после которого включается эскалационная
+     * капча (0 — выключена).
+     */
+    public int captchaAfterAttempts() {
+        return captchaAfterAttempts;
     }
 
     public boolean authDialogs() {

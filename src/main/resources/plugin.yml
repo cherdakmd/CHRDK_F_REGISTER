@@ -17,6 +17,9 @@ commands:
     description: Войти в аккаунт по паролю (и коду 2FA, если подключена)
     usage: /<command> <пароль> [код_2FA]
     aliases: [l]
+  captcha:
+    description: Ответ на проверку «ты не бот» после серии неудачных попыток входа
+    usage: /<command> <число>
   changepassword:
     description: Сменить пароль аккаунта
     usage: /<command> <старый_пароль> <новый_пароль>

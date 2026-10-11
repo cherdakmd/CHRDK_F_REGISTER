@@ -37,7 +37,7 @@ public final class RegisterPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(chatService, this);
 
         this.commandHandler = new RegisterCommandHandler(this, accessManager);
-        for (String commandName : List.of("register", "login", "changepassword", "2fa", "pass", "logout", "session")) {
+        for (String commandName : List.of("register", "login", "changepassword", "2fa", "pass", "logout", "session", "captcha")) {
             PluginCommand pluginCommand = getCommand(commandName);
             if (pluginCommand != null) {
                 pluginCommand.setExecutor(this.commandHandler);
