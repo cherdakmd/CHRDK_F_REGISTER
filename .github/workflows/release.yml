@@ -42,6 +42,7 @@ jobs:
           fi
           echo "jar=build/libs/chrdk-f-register-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
           echo "shop_jar=diamond-shop/build/libs/chrdk-diamond-shop-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
+          echo "ref_jar=referrals/build/libs/chrdk-referrals-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
 
       - name: Attach the Purpur plugin JAR
         env:
@@ -52,3 +53,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.shop_jar }}" --clobber
+
+      - name: Attach the Referrals addon JAR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.ref_jar }}" --clobber

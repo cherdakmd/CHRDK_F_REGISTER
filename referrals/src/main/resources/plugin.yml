@@ -1,0 +1,24 @@
+name: CHRDK_Referrals
+version: '${version}'
+main: ru.cherdakmd.chrdkreferrals.ReferralsPlugin
+api-version: '1.21.11'
+depend:
+  - CHRDK_F_REGISTER
+description: Реферальная система: приглашайте друзей — получайте бонусные дни проходки (аддон CHRDK_F_REGISTER)
+commands:
+  ref:
+    aliases: [referral, invite]
+    description: Реферальная система: статус, привязка, топ
+    usage: /<command> [use <ник>|top]
+  refadmin:
+    aliases: [referraladmin]
+    description: Администрирование реферальной системы
+    usage: /<command> [lookup <ник>|reset <ник>|reload]
+    permission: chrdkref.admin
+permissions:
+  chrdkref.use:
+    description: Использование /ref
+    default: true
+  chrdkref.admin:
+    description: Управление /refadmin
+    default: op
