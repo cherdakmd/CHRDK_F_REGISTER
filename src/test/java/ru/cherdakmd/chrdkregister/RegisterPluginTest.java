@@ -1,5 +1,7 @@
 package ru.cherdakmd.chrdkregister;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -8,8 +10,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -218,5 +222,126 @@ class RegisterPluginTest {
         assertTrue(PlayerRestrictionListener.isCommandAllowed(AccessManager.PlayerStage.NEEDS_2FA, "pass"));
         assertFalse(PlayerRestrictionListener.isCommandAllowed(AccessManager.PlayerStage.NEEDS_2FA, "register"));
         assertFalse(PlayerRestrictionListener.isCommandAllowed(AccessManager.PlayerStage.NEEDS_2FA, "spawn"));
+    }
+
+    @Test
+    void chatConfigDefaultsAndChannelParsing() {
+        ChatConfig defaults = new ChatConfig();
+        assertTrue(defaults.enabled());
+        assertEquals(ChatConfig.Channel.LOCAL, defaults.defaultChannel());
+        assertEquals(100.0, defaults.localRadius(), 0.001);
+        assertEquals("!", defaults.quickGlobalPrefix());
+        assertEquals(1_000, defaults.cooldownMillis());
+        assertTrue(defaults.privateMessagesEnabled());
+        assertTrue(defaults.autoMessagesEnabled());
+        assertFalse(defaults.autoMessages().isEmpty());
+        assertFalse(defaults.autoMessagesPrefix().isEmpty());
+
+        assertEquals(ChatConfig.Channel.GLOBAL, ChatConfig.Channel.parse("GLOBAL", ChatConfig.Channel.LOCAL));
+        assertEquals(ChatConfig.Channel.LOCAL, ChatConfig.Channel.parse("local", ChatConfig.Channel.GLOBAL));
+        assertEquals(ChatConfig.Channel.GLOBAL, ChatConfig.Channel.parse("global", ChatConfig.Channel.LOCAL));
+        assertEquals(ChatConfig.Channel.LOCAL, ChatConfig.Channel.parse("", ChatConfig.Channel.LOCAL));
+        assertEquals(ChatConfig.Channel.GLOBAL, ChatConfig.Channel.parse("нечто", ChatConfig.Channel.GLOBAL));
+
+        assertEquals(ChatConfig.Channel.GLOBAL, ChatConfig.Channel.LOCAL.toggled());
+        assertEquals(ChatConfig.Channel.LOCAL, ChatConfig.Channel.GLOBAL.toggled());
+    }
+
+    @Test
+    void chatFormattingHelpersWork() {
+        String[] segments = ChatService.splitFormat("&7[Л] &f%player%&7: &f%message%",
+                Map.of("%player%", "CherdakPlayer", "%world%", "world"));
+        assertEquals("&7[Л] &fCherdakPlayer&7: &f", segments[0]);
+        assertEquals("", segments[1]);
+
+        String[] privateMessage = ChatService.splitFormat(
+                "&7[&d%sender% &7→ &d%target%&7] &f%message% &7(конец)",
+                Map.of("%sender%", "Sender", "%target%", "Target"));
+        assertEquals("&7[&dSender &7→ &dTarget&7] &f", privateMessage[0]);
+        assertEquals(" &7(конец)", privateMessage[1]);
+
+        // A format without %message% keeps the whole line in the head part
+        String[] withoutPlaceholder = ChatService.splitFormat("&6[Г] %player%", Map.of("%player%", "Steve"));
+        assertEquals("&6[Г] Steve", withoutPlaceholder[0]);
+        assertEquals("", withoutPlaceholder[1]);
+
+        assertEquals(NamedTextColor.WHITE, ChatService.extractTrailingColor("&7[Л] &fИгрок&7: &f", NamedTextColor.GRAY));
+        assertEquals(NamedTextColor.GOLD, ChatService.extractTrailingColor("&6[Г] ", NamedTextColor.WHITE));
+        assertEquals(NamedTextColor.GRAY, ChatService.extractTrailingColor("без цветовых кодов", NamedTextColor.GRAY));
+        assertEquals(NamedTextColor.WHITE, ChatService.extractTrailingColor("&7Текст&r", NamedTextColor.GRAY));
+
+        // Caps protection
+        assertEquals("привет всем", ChatService.applyCapsRule("ПРИВЕТ ВСЕМ", 70));
+        assertEquals("Привет всем", ChatService.applyCapsRule("Привет всем", 70));
+        assertEquals("OK", ChatService.applyCapsRule("OK", 70));
+
+        // Duplicate protection
+        assertTrue(ChatService.isDuplicate("Привет", "привет"));
+        assertFalse(ChatService.isDuplicate("Привет", "привет всем"));
+        assertFalse(ChatService.isDuplicate("", ""));
+
+        // Mentions
+        assertTrue(ChatService.hasMention("привет @CherdakPlayer как дела", "CherdakPlayer"));
+        assertTrue(ChatService.hasMention("привет @cherdakplayer", "CherdakPlayer"));
+        assertFalse(ChatService.hasMention("привет @CherdakPlayer123", "CherdakPlayer"));
+        assertFalse(ChatService.hasMention("привет всем", "CherdakPlayer"));
+    }
+
+    @Test
+    void chatMessageBodyHandlesColorsAndMentions() {
+        ChatConfig cfg = new ChatConfig();
+
+        Component plain = ChatService.buildMessageBody(
+                "привет всем", false, cfg, true, NamedTextColor.WHITE, name -> false);
+        assertEquals("привет всем", ChatService.plainText(plain));
+
+        // Without the color permission the codes stay visible
+        Component literal = ChatService.buildMessageBody(
+                "&cпривет", false, cfg, true, NamedTextColor.WHITE, name -> false);
+        assertEquals("&cпривет", ChatService.plainText(literal));
+
+        // With the color permission the codes are applied
+        Component colored = ChatService.buildMessageBody(
+                "&cпривет", true, cfg, true, NamedTextColor.WHITE, name -> false);
+        assertEquals("привет", ChatService.plainText(colored));
+        assertFalse(colored.children().isEmpty());
+        assertEquals(NamedTextColor.RED, colored.children().get(0).color());
+
+        // Mentions are highlighted and keep the message text intact
+        Component withMention = ChatService.buildMessageBody(
+                "привет @Steve, как дела?", false, cfg, true, NamedTextColor.WHITE,
+                name -> name.equalsIgnoreCase("Steve"));
+        assertEquals("привет @Steve, как дела?", ChatService.plainText(withMention));
+
+        // Disabled highlight keeps the mention as plain text
+        Component withoutHighlight = ChatService.buildMessageBody(
+                "привет @Steve", false, cfg, false, NamedTextColor.WHITE, name -> true);
+        assertEquals("привет @Steve", ChatService.plainText(withoutHighlight));
+    }
+
+    @Test
+    void storeKeepsIgnoreLists(@TempDir Path tempDir) {
+        Logger logger = Logger.getLogger("test-ignore");
+        RegistrationStore store = new RegistrationStore(tempDir, logger);
+        store.recordPlayerSeen(UUID.randomUUID(), "CherdakPlayer");
+        store.recordPlayerSeen(UUID.randomUUID(), "GrieferOne");
+
+        assertFalse(store.isIgnoring("CherdakPlayer", "GrieferOne"));
+        assertTrue(store.addIgnoredPlayer("CherdakPlayer", "grieferone"));
+        assertTrue(store.isIgnoring("CherdakPlayer", "GrieferOne"));
+        assertTrue(store.isIgnoring("cherdakplayer", "grieferone"));
+        assertFalse(store.addIgnoredPlayer("CherdakPlayer", "GrieferOne"));
+        assertEquals(Set.of("grieferone"), store.getIgnoredPlayers("CherdakPlayer"));
+        assertEquals(Set.of("GrieferOne"), store.getIgnoredDisplayNames("CherdakPlayer"));
+        assertFalse(store.isIgnoring("GrieferOne", "CherdakPlayer"));
+
+        // The ignore list survives a reload from disk
+        RegistrationStore reloaded = new RegistrationStore(tempDir, logger);
+        assertTrue(reloaded.isIgnoring("CherdakPlayer", "GrieferOne"));
+        assertEquals(Set.of("GrieferOne"), reloaded.getIgnoredDisplayNames("CherdakPlayer"));
+        assertTrue(reloaded.removeIgnoredPlayer("CherdakPlayer", "GrieferOne"));
+        assertFalse(reloaded.isIgnoring("CherdakPlayer", "GrieferOne"));
+        assertFalse(reloaded.removeIgnoredPlayer("CherdakPlayer", "GrieferOne"));
+        assertTrue(reloaded.getIgnoredPlayers("CherdakPlayer").isEmpty());
     }
 }

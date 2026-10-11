@@ -320,6 +320,77 @@ public final class RegistrationStore {
         save();
     }
 
+    /**
+     * Adds a player to the ignore list of another player. Names are stored by canonical (lower-case) form.
+     *
+     * @return {@code true} when the entry was newly added
+     */
+    public synchronized boolean addIgnoredPlayer(String ownerName, String ignoredName) {
+        if (ownerName == null || ownerName.isBlank() || ignoredName == null || ignoredName.isBlank()) return false;
+        String key = canonicalName(ownerName);
+        PlayerAccount account = data.accounts.computeIfAbsent(key, ignored -> new PlayerAccount());
+        account.canonicalName = key;
+        if (account.playerName == null || account.playerName.isBlank()) {
+            account.playerName = ownerName;
+        }
+        if (account.ignoredPlayers == null) {
+            account.ignoredPlayers = new LinkedHashSet<>();
+        }
+        if (!account.ignoredPlayers.add(canonicalName(ignoredName))) {
+            return false;
+        }
+        save();
+        return true;
+    }
+
+    /**
+     * Removes a player from the ignore list of another player.
+     *
+     * @return {@code true} when the entry was present and got removed
+     */
+    public synchronized boolean removeIgnoredPlayer(String ownerName, String ignoredName) {
+        if (ownerName == null || ownerName.isBlank() || ignoredName == null || ignoredName.isBlank()) return false;
+        PlayerAccount account = data.accounts.get(canonicalName(ownerName));
+        if (account == null || account.ignoredPlayers == null) return false;
+        if (!account.ignoredPlayers.remove(canonicalName(ignoredName))) {
+            return false;
+        }
+        save();
+        return true;
+    }
+
+    public synchronized boolean isIgnoring(String ownerName, String ignoredName) {
+        if (ownerName == null || ownerName.isBlank() || ignoredName == null || ignoredName.isBlank()) return false;
+        PlayerAccount account = data.accounts.get(canonicalName(ownerName));
+        return account != null
+                && account.ignoredPlayers != null
+                && account.ignoredPlayers.contains(canonicalName(ignoredName));
+    }
+
+    /** Returns the canonical names ignored by the given player. */
+    public synchronized Set<String> getIgnoredPlayers(String ownerName) {
+        if (ownerName == null || ownerName.isBlank()) return Set.of();
+        PlayerAccount account = data.accounts.get(canonicalName(ownerName));
+        if (account == null || account.ignoredPlayers == null || account.ignoredPlayers.isEmpty()) {
+            return Set.of();
+        }
+        return new LinkedHashSet<>(account.ignoredPlayers);
+    }
+
+    /** Returns the ignore list with the exact nickname casing of known players when available. */
+    public synchronized Set<String> getIgnoredDisplayNames(String ownerName) {
+        Set<String> canonicalNames = getIgnoredPlayers(ownerName);
+        if (canonicalNames.isEmpty()) return Set.of();
+        Set<String> display = new LinkedHashSet<>();
+        for (String canonical : canonicalNames) {
+            PlayerAccount account = data.accounts.get(canonical);
+            display.add(account != null && account.playerName != null && !account.playerName.isBlank()
+                    ? account.playerName
+                    : canonical);
+        }
+        return display;
+    }
+
     public synchronized int getActivePassCount(long nowMillis) {
         int count = 0;
         for (PlayerAccount account : data.accounts.values()) {
@@ -403,6 +474,11 @@ public final class RegistrationStore {
             }
             if (data.accounts == null) data.accounts = new LinkedHashMap<>();
             if (data.processedDonationIds == null) data.processedDonationIds = new LinkedHashSet<>();
+            for (PlayerAccount account : data.accounts.values()) {
+                if (account.ignoredPlayers == null) {
+                    account.ignoredPlayers = new LinkedHashSet<>();
+                }
+            }
         } catch (Exception exception) {
             logger.log(Level.SEVERE, "Could not load registration data from " + file.toAbsolutePath(), exception);
             try {
@@ -459,6 +535,9 @@ public final class RegistrationStore {
         result.lastTotpStep = source.lastTotpStep;
         result.lastAuthIp = source.lastAuthIp;
         result.lastAuthAt = source.lastAuthAt;
+        result.ignoredPlayers = source.ignoredPlayers == null
+                ? new LinkedHashSet<>()
+                : new LinkedHashSet<>(source.ignoredPlayers);
         return result;
     }
 
@@ -476,6 +555,7 @@ public final class RegistrationStore {
         public long lastTotpStep = -1;
         public String lastAuthIp = "";
         public long lastAuthAt;
+        public Set<String> ignoredPlayers = new LinkedHashSet<>();
 
         public boolean hasActivePass(long nowMillis) {
             return passUntil > nowMillis;

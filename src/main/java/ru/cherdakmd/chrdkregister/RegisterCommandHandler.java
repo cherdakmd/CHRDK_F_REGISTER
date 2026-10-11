@@ -415,6 +415,17 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 .append(Component.text(cfg.minimumDonationRubles() + " ₽ на " + cfg.grantDays() + " дн.", NamedTextColor.YELLOW)));
         sender.sendMessage(Component.text("Сессия по IP: ", NamedTextColor.GRAY)
                 .append(Component.text(cfg.sessionMinutes() + " мин.", NamedTextColor.WHITE)));
+        sender.sendMessage(Component.text("Встроенный чат: ", NamedTextColor.GRAY)
+                .append(Component.text(cfg.chat().enabled() ? "включён" : "выключен",
+                        cfg.chat().enabled() ? NamedTextColor.GREEN : NamedTextColor.RED))
+                .append(Component.text(", локальный радиус: " + (int) cfg.chat().localRadius() + " блоков",
+                        NamedTextColor.WHITE)));
+        sender.sendMessage(Component.text("Автосообщения: ", NamedTextColor.GRAY)
+                .append(Component.text(cfg.chat().autoMessagesEnabled()
+                                ? "каждые " + cfg.chat().autoMessagesIntervalSeconds() + " сек. ("
+                                        + cfg.chat().autoMessages().size() + " шт.)"
+                                : "выключены",
+                        cfg.chat().autoMessagesEnabled() ? NamedTextColor.AQUA : NamedTextColor.YELLOW)));
     }
 
     private void sendAdminHelp(CommandSender sender, String label) {
