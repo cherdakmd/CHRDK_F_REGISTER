@@ -339,6 +339,22 @@ public final class ChatService implements Listener {
     }
 
     /* ------------------------------------------------------------------ *
+     *  Chat channels (local / global)
+     * ------------------------------------------------------------------ */
+
+    public ChatConfig.Channel currentChannel(Player player) {
+        return channels.getOrDefault(player.getUniqueId(), this.config.defaultChannel());
+    }
+
+    public void setChannel(Player player, ChatConfig.Channel channel) {
+        if (channel == this.config.defaultChannel()) {
+            channels.remove(player.getUniqueId());
+        } else {
+            channels.put(player.getUniqueId(), channel);
+        }
+    }
+
+    /* ------------------------------------------------------------------ *
      *  /chat command
      * ------------------------------------------------------------------ */
 
