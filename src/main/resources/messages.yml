@@ -177,6 +177,7 @@ messages:
       <yellow>/%label% confirm <код></yellow><gray> — подтвердить ключ 6-значным кодом и включить 2FA</gray>
       <yellow>/%label% disable <код></yellow><gray> — отключить 2FA (по текущему коду или паролю)</gray>
       <yellow>/%label% cancel</yellow><gray> — отменить незавершённую настройку 2FA</gray>
+      <yellow>/%label% qr</yellow><gray> — повторно выдать карту с QR-кодом привязки</gray>
     "login":
       "already-authenticated": "<green>Вы уже авторизованы на сервере!</green>"
       "bad-format": "<red>Код 2FA должен состоять из 6 цифр! Использование: /2fa <6-значный_код></red>"
@@ -188,6 +189,11 @@ messages:
     "need-login": "<yellow>Сначала введите пароль: /login <пароль></yellow>"
     "need-register": "<yellow>Сначала зарегистрируйте пароль: /register <пароль> <повтор></yellow>"
     "prompt": "<aqua>✓ Пароль верный! Введите 6-значный код TOTP 2FA из приложения: </aqua><click:suggest_command:'/2fa '><hover:show_text:'<green>Подставить команду в чат</green>'><gold><bold>/2fa &lt;6-значный_код&gt;</bold></gold></hover></click>"
+    "qr":
+      "disabled": "<red>QR-код для привязки 2FA отключён в конфигурации сервера.</red>"
+      "no-pending": "<yellow>Нет активной настройки 2FA: сначала сгенерируйте ключ командой /2fa setup</yellow>"
+      "not-authenticated": "<red>Сначала полностью авторизуйтесь на сервере.</red>"
+      "sent": "<green>✓ Карта с QR-кодом выдана в инвентарь (при полном инвентаре — выпала рядом). Возьмите карту в руку и наведите камеру приложения-аутентификатора на экран.</green>"
     "reminder": "<aqua>Подтвердите 2FA: /2fa <6-значный_код></aqua>"
     "reset-not-enabled": "<red>У игрока %target_name% не включена двухфакторная аутентификация.</red>"
     "reset-players-only": "<red>Эта команда доступна только игрокам. Для сброса 2FA игрока используйте: /pass reset2fa <ник></red>"
@@ -202,6 +208,7 @@ messages:
       "footer-line": "<gold>==============================================</gold>"
       "header": "<gold><bold>Настройка двухфакторной защиты (TOTP 2FA)</bold></gold>"
       "header-line": "<gold>==============================================</gold>"
+      "qr-map": "<gray>QR-код на карте выдан в инвентарь — возьмите карту в руку и отсканируйте экран приложением. Повторно: /2fa qr</gray>"
       "step1": "<gray>1. Откройте приложение </gray>"
       "step1-apps": "<white>Google Authenticator / 2FAS / Authy / Яндекс Ключ</white>"
       "step2": "<gray>2. Добавьте аккаунт по секретному ключу (Time-based / По времени):</gray>"

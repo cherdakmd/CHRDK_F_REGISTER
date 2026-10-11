@@ -11,6 +11,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -77,6 +78,7 @@ public final class AccessManager {
     private final DonationService donations;
     private final LogMasker logMasker;
     private final AuthDialogs authDialogs;
+    private final TotpQrMapService totpQrMaps;
     private volatile Messages messages;
 
     private BukkitTask donatePollTask;
@@ -109,6 +111,7 @@ public final class AccessManager {
                 messages, this::onPassGranted);
         this.logMasker = new LogMasker(logger);
         this.authDialogs = createAuthDialogs(plugin);
+        this.totpQrMaps = new TotpQrMapService(this, logger);
     }
 
     private AuthDialogs createAuthDialogs(JavaPlugin javaPlugin) {
@@ -829,6 +832,48 @@ public final class AccessManager {
         messages.send(player, "two-factor.setup-instructions.step3");
         player.sendMessage(messages.get("two-factor.setup-instructions.step3-input").append(confirmCommandHint));
         messages.send(player, "two-factor.setup-instructions.footer-line");
+        if (config.totpQrMap()) {
+            giveTotpQrMap(player);
+            messages.send(player, "two-factor.setup-instructions.qr-map");
+        }
+    }
+
+    /**
+     * Re-sends the 2FA binding QR map while a setup is pending ({@code /2fa qr}).
+     */
+    public boolean handleTwoFactorQrMap(Player player) {
+        if (getStage(player) != PlayerStage.AUTHENTICATED) {
+            messages.send(player, "two-factor.qr.not-authenticated");
+            return true;
+        }
+        if (!config.totpEnabled() || !config.totpQrMap()) {
+            messages.send(player, "two-factor.qr.disabled");
+            return true;
+        }
+        if (store.isTotpEnabled(player.getName())) {
+            messages.send(player, "two-factor.setup.already-enabled");
+            return true;
+        }
+        if (getPendingTotpSecret(player.getUniqueId()).isEmpty()) {
+            messages.send(player, "two-factor.qr.no-pending");
+            return true;
+        }
+        giveTotpQrMap(player);
+        messages.send(player, "two-factor.qr.sent");
+        return true;
+    }
+
+    /** Hands the player a map with their personal otpauth:// QR (dropped at feet on full inventory). */
+    private void giveTotpQrMap(Player player) {
+        try {
+            ItemStack mapItem = totpQrMaps.createMapItem(player.getWorld());
+            Map<Integer, ItemStack> leftover = player.getInventory().addItem(mapItem);
+            leftover.values().forEach(rest ->
+                    player.getWorld().dropItemNaturally(player.getLocation(), rest));
+        } catch (Throwable throwable) {
+            logger.log(Level.WARNING, "Не удалось выдать карту с QR-кодом 2FA игроку "
+                    + player.getName(), throwable);
+        }
     }
 
     /**

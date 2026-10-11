@@ -23,7 +23,7 @@ commands:
     aliases: [cp, changepass]
   2fa:
     description: Двухфакторная аутентификация TOTP (Google Authenticator / 2FAS / Authy)
-    usage: /<command> [setup|confirm|disable|status|cancel|<6-значный_код>]
+    usage: /<command> [setup|qr|confirm|disable|status|cancel|<6-значный_код>]
     aliases: [totp, twofactor]
   pass:
     description: Проверка статуса проходки и управление проходками

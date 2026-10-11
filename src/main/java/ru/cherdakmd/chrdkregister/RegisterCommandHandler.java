@@ -32,7 +32,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                     "backup", "gift");
     private static final List<String> MUTE_DURATIONS = List.of("10m", "30m", "1h", "6h", "1d", "7d");
     private static final List<String> TWO_FACTOR_SUBCOMMANDS =
-            List.of("setup", "confirm", "disable", "status", "cancel");
+            List.of("setup", "confirm", "disable", "status", "cancel", "qr");
 
     private final RegisterPlugin plugin;
     private final AccessManager accessManager;
@@ -226,6 +226,9 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             }
             case "cancel" -> {
                 return accessManager.handleTwoFactorCancel(player);
+            }
+            case "qr", "qrcode", "map" -> {
+                return accessManager.handleTwoFactorQrMap(player);
             }
             default -> {
                 String candidateCode = String.join("", args);

@@ -59,6 +59,7 @@ public final class PluginConfig {
     private final String totpIssuer;
     private final int totpWindowSteps;
     private final int totpMaxAttempts;
+    private final boolean totpQrMap;
 
     private final boolean antiMultiAltEnabled;
     private final String antiMultiAltMode;
@@ -104,7 +105,7 @@ public final class PluginConfig {
                 sessionMinutes, minPasswordLength, maxPasswordLength, maxLoginAttempts, reminderSeconds,
                 false, true, false, true, false, false, true,
                 List.of(0, 0, 1, 2, 5, 10, 30, 60, 120, 300), maxLoginAttempts, 10, 15, 10, 15, true,
-                true, "CHRDK", 1, maxLoginAttempts,
+                true, "CHRDK", 1, maxLoginAttempts, true,
                 true, "notify", 3, 240,
                 5, true, 14, true,
                 true, 180, true,
@@ -156,6 +157,7 @@ public final class PluginConfig {
             String totpIssuer,
             int totpWindowSteps,
             int totpMaxAttempts,
+            boolean totpQrMap,
             boolean antiMultiAltEnabled,
             String antiMultiAltMode,
             int maxAccountsPerIp,
@@ -224,6 +226,7 @@ public final class PluginConfig {
         this.totpIssuer = (totpIssuer == null || totpIssuer.isBlank()) ? "CHRDK" : totpIssuer.trim();
         this.totpWindowSteps = Math.clamp(totpWindowSteps, 0, 10);
         this.totpMaxAttempts = Math.clamp(totpMaxAttempts, 1, 20);
+        this.totpQrMap = totpQrMap;
 
         this.antiMultiAltEnabled = antiMultiAltEnabled;
         String mode = antiMultiAltMode == null ? "notify" : antiMultiAltMode.trim().toLowerCase(Locale.ROOT);
@@ -293,6 +296,7 @@ public final class PluginConfig {
                 config.getString("totp.issuer", "CHRDK"),
                 config.getInt("totp.window-steps", 1),
                 config.getInt("totp.max-attempts", maxLoginAttempts),
+                config.getBoolean("totp.qr-map", true),
                 config.getBoolean("anti-multialt.enabled", true),
                 config.getString("anti-multialt.mode", "notify"),
                 config.getInt("anti-multialt.max-accounts-per-ip", 3),
@@ -524,6 +528,11 @@ public final class PluginConfig {
 
     public int totpMaxAttempts() {
         return totpMaxAttempts;
+    }
+
+    /** Выдавать ли карту с QR-кодом otpauth:// при {@code /2fa setup} и по {@code /2fa qr}. */
+    public boolean totpQrMap() {
+        return totpQrMap;
     }
 
     /* ------------------------------------------------------------------ *
