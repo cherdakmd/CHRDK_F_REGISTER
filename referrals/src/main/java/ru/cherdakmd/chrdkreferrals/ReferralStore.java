@@ -146,7 +146,8 @@ public final class ReferralStore {
     public synchronized List<Map.Entry<String, RefStats>> topByPaid(int limit) {
         List<Map.Entry<String, RefStats>> ranked = new ArrayList<>(stats.entrySet());
         ranked.sort(Comparator.<Map.Entry<String, RefStats>>comparingInt(e -> e.getValue().paid).reversed()
-                .thenComparing((Map.Entry<String, RefStats> e) -> e.getValue().daysEarned).reversed());
+                .thenComparing(Comparator.<Map.Entry<String, RefStats>>comparingLong(
+                        e -> e.getValue().daysEarned).reversed()));
         return ranked.subList(0, Math.min(limit, ranked.size()));
     }
 
