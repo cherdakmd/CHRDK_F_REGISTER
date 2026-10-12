@@ -69,17 +69,14 @@ class GoalsConfigTest {
 
     @Test
     void waveCappedByEnabledPool() {
-        GoalsConfig config = parse("""
-                rotation: {active-count: 8}
-                goals:
-                  hostile-slay: {enabled: false}
-                  ore-break: {enabled: false}
-                  blocks-travelled: {enabled: false}
-                  blocks-placed: {enabled: false}
-                  crops-harvested: {enabled: false}
-                  fish-caught: {enabled: false}
-                """);
-        var wave = config.rollWave(new Random(1));
+        // выключаем все шаблоны, кроме двух — волна обязана сжаться до включённых
+        StringBuilder yaml = new StringBuilder("rotation: {active-count: 8}\ngoals:\n");
+        for (GoalTemplate template : GoalTemplate.ALL) {
+            if (!"fish-caught".equals(template.id()) && !"donate-diamonds".equals(template.id())) {
+                yaml.append("  ").append(template.id()).append(": {enabled: false}\n");
+            }
+        }
+        var wave = parse(yaml.toString()).rollWave(new Random(1));
         assertEquals(2, wave.size(), "только включённые шаблоны, даже если просят больше");
     }
 }
