@@ -105,9 +105,9 @@ class EasyDonateClientTest {
         assertTrue(store.isDonationCursorInitialized("easydonate"));
         assertEquals(0L, store.getDonationCursor("unknown-provider"), "незнакомый источник — курсор 0");
 
-        // markDonationProcessed поднимает курсор источника
-        store.markDonationProcessed(EasyDonateClient.SOURCE, 100L);
-        assertEquals(100L, store.getDonationCursor(EasyDonateClient.SOURCE));
+        // markDonationProcessed поднимает курсор источника (вниз — никогда)
+        store.markDonationProcessed(EasyDonateClient.SOURCE, 200L);
+        assertEquals(200L, store.getDonationCursor(EasyDonateClient.SOURCE));
         assertEquals(900L, store.getDonationCursor(), "cursor donatepay не тронут");
     }
 }
