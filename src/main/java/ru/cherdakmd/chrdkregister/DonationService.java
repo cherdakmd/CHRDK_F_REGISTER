@@ -193,6 +193,27 @@ public final class DonationService {
         return new Outcome(status, grantedTo, passUntil, days, note, journal.suggestedName);
     }
 
+    /** Допустимые фильтры журнала донатов (/pass donations). */
+    public static final List<String> JOURNAL_FILTERS =
+            List.of("all", "granted", "pending", "rejected", "name", "amount", "review");
+
+    /**
+     * Чистый матчер фильтра журнала: «pending» объединяет все очереди ожидания,
+     * «name»/«amount»/«review» — конкретные причины ручного разбора.
+     */
+    public static boolean journalFilterMatches(RegistrationStore.DonationStatus status, String filter) {
+        return switch (filter) {
+            case "all" -> true;
+            case "granted" -> status == RegistrationStore.DonationStatus.GRANTED;
+            case "pending" -> status.isPending();
+            case "rejected" -> status == RegistrationStore.DonationStatus.REJECTED;
+            case "name" -> status == RegistrationStore.DonationStatus.PENDING_NAME;
+            case "amount" -> status == RegistrationStore.DonationStatus.PENDING_AMOUNT;
+            case "review" -> status == RegistrationStore.DonationStatus.PENDING_REVIEW;
+            default -> false;
+        };
+    }
+
     /** Returns pending (unmatched) journal entries, newest first. */
     public List<RegistrationStore.DonationRecord> pending(int limit) {
         List<RegistrationStore.DonationRecord> result = new ArrayList<>();

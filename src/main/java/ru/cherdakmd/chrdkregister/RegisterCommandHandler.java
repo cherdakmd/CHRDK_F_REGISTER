@@ -28,7 +28,7 @@ import java.util.Set;
 public final class RegisterCommandHandler implements CommandExecutor, TabCompleter {
     private static final List<String> ADMIN_SUBCOMMANDS =
             List.of("add", "remove", "check", "unregister", "reset2fa", "status", "reload",
-                    "pending", "approve", "reject", "sessions", "logoutall", "stats", "doctor", "audit",
+                    "pending", "donations", "approve", "reject", "sessions", "logoutall", "stats", "doctor", "audit",
                     "backup", "gift", "testpay", "recheck");
     private static final List<String> MUTE_DURATIONS = List.of("10m", "30m", "1h", "6h", "1d", "7d");
     private static final List<String> TWO_FACTOR_SUBCOMMANDS =
@@ -489,6 +489,62 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 }
                 return true;
             }
+            case "donations", "journal" -> {
+                String filter = args.length >= 2
+                        ? args[1].toLowerCase(Locale.ROOT) : "all";
+                if (!DonationService.JOURNAL_FILTERS.contains(filter)) {
+                    messages.send(sender, "usage.pass-donations", "label", label);
+                    return true;
+                }
+                int limit = 10;
+                if (args.length >= 3) {
+                    try {
+                        limit = Math.clamp(Integer.parseInt(args[2]), 1, 50);
+                    } catch (NumberFormatException ignored) {
+                        limit = 10;
+                    }
+                }
+                List<RegistrationStore.DonationRecord> all =
+                        accessManager.store().listDonations(null, 200);
+                List<RegistrationStore.DonationRecord> shown = new ArrayList<>();
+                for (RegistrationStore.DonationRecord record : all) {
+                    if (DonationService.journalFilterMatches(record.donationStatus(), filter)) {
+                        shown.add(record);
+                    }
+                    if (shown.size() >= limit) break;
+                }
+                messages.send(sender, "donation.journal-header",
+                        "size", shown.size(), "filter", journalFilterLabel(filter));
+                if (shown.isEmpty()) {
+                    messages.send(sender, "donation.journal-empty", "label", label);
+                    return true;
+                }
+                for (RegistrationStore.DonationRecord record : shown) {
+                    RegistrationStore.DonationStatus status = record.donationStatus();
+                    String detail;
+                    if (status == RegistrationStore.DonationStatus.GRANTED) {
+                        detail = " → " + record.grantedTo + " (+" + record.days + " дн.)"
+                                + (record.decidedBy == null || record.decidedBy.isBlank()
+                                        ? "" : " (" + record.decidedBy + ")");
+                    } else if (status == RegistrationStore.DonationStatus.REJECTED) {
+                        detail = record.decidedBy == null || record.decidedBy.isBlank()
+                                ? "" : " (" + record.decidedBy + ")";
+                    } else {
+                        detail = (record.note.isBlank() ? "" : " (" + record.note + ")")
+                                + (record.suggestedName.isBlank() ? ""
+                                        : messages.raw("donation.suggested", "name", record.suggestedName));
+                    }
+                    messages.send(sender, "donation.journal-entry",
+                            "id", record.id,
+                            "donor", record.donorName,
+                            "amount", record.amountRubles(),
+                            "status", donationStatusLabel(status),
+                            "detail", detail,
+                            "created", AccessManager.formatTimestamp(record.createdAt));
+                }
+                messages.send(sender, "donation.journal-hint", "label", label);
+                return true;
+            }
             case "sessions" -> {
                 if (args.length < 2) {
                     messages.send(sender, "usage.pass-sessions", "label", label);
@@ -715,6 +771,30 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         } catch (Exception exception) {
             return false;
         }
+    }
+
+    /** Свёртка статуса доната в цветное слово из messages.yml (литеральные ключи). */
+    private String donationStatusLabel(RegistrationStore.DonationStatus status) {
+        return switch (status) {
+            case GRANTED -> messages.raw("donation.status-granted");
+            case PENDING_NAME -> messages.raw("donation.status-pending-name");
+            case PENDING_AMOUNT -> messages.raw("donation.status-pending-amount");
+            case PENDING_REVIEW -> messages.raw("donation.status-pending-review");
+            case REJECTED -> messages.raw("donation.status-rejected");
+        };
+    }
+
+    /** Подпись фильтра журнала в заголовке (литеральные ключи). */
+    private String journalFilterLabel(String filter) {
+        return switch (filter) {
+            case "granted" -> messages.raw("donation.filter-granted");
+            case "pending" -> messages.raw("donation.filter-pending");
+            case "rejected" -> messages.raw("donation.filter-rejected");
+            case "name" -> messages.raw("donation.filter-name");
+            case "amount" -> messages.raw("donation.filter-amount");
+            case "review" -> messages.raw("donation.filter-review");
+            default -> messages.raw("donation.filter-all");
+        };
     }
 
     private void showAudit(CommandSender sender, String[] args) {
