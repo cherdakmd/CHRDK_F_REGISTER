@@ -27,6 +27,9 @@ messages:
   admin-given: "<green>Выдан артефакт: %name% <gray>x%amount%</gray> игроку %player%.</green>"
   admin-received: "<gold>✦ Вам вручён артефакт: %name%</gold>"
   admin-usage: "<yellow>/artifactsadmin give <игрок> <ид> [кол-во] | /artifactsadmin reload</yellow>"
+  dropped: "<gold>⚑ Судьба одарила вас артефактом: %name%!</gold>"
+  sources-header: "<gray>────── Где добыть ──────</gray>"
+  sources-line: "<gray>• Данжи и сокровищницы ● Боссы (дракон, визер, варден) ● Рыбалка на сокровище ● Или у админов событий</gray>"
 
   art:
     solnechny-obereg:

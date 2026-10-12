@@ -54,6 +54,8 @@ public final class ArtifactCommandHandler implements CommandExecutor, TabComplet
         sendGroup(player, ArtifactRegistry.bySide(ArtifactDef.Side.GOOD), carried);
         plugin.messages().send(player, "list-header-cursed");
         sendGroup(player, ArtifactRegistry.bySide(ArtifactDef.Side.CURSED), carried);
+        plugin.messages().send(player, "sources-header");
+        plugin.messages().send(player, "sources-line");
         return true;
     }
 

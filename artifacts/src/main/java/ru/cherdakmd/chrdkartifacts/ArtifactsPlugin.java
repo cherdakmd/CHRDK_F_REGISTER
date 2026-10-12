@@ -31,6 +31,7 @@ public final class ArtifactsPlugin extends JavaPlugin {
         reloadArtifactsConfig();
 
         Bukkit.getPluginManager().registerEvents(new ActiveEffectsListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new ArtifactLootListener(this), this);
 
         ArtifactCommandHandler commands = new ArtifactCommandHandler(this);
         PluginCommand artifacts = getCommand("artifacts");

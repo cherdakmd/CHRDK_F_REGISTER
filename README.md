@@ -757,8 +757,9 @@ public void onEnable() {
 кулдауну (Грозовой колокол бьёт тремя молниями, Рог тайги — рывок, Часы дурошлёпа зовут
 полночь, Хартия чар сама вписывает кастомную чару из CHRDK_Enchants в предмет во второй
 руке). Метки — только PDC предметов; кулдауны — в памяти; проклятия время от времени
-сами стреляют (Пепел погрома вспыхивает, Сушёный глаз пускает яд). Выдача — админкой
-`/artifactsadmin give <ник> <ид> [кол-во]` (список — `/artifacts`).
+сами стреляют (Пепел погрома вспыхивает, Сушёный глаз пускает яд). Добыча: сундуки данжей/сокровищниц,
+боссы и опасные мобы (дроп), рыбалка на сокровище — шансы в `sources:` конфига; плюс
+выдача админкой `/artifactsadmin give <ник> <ид> [кол-во]` (список — `/artifacts`).
 
 ---
 
@@ -785,16 +786,25 @@ public void onEnable() {
 ./gradlew build
 ```
 
-Собираются оба модуля: ядро появится в `build/libs/chrdk-f-register-1.4.18.jar`, аддон
-CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.18.jar`, реферальный —
-`referrals/build/libs/chrdk-referrals-1.4.18.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.18.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.18.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.18.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.18.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.18.jar` (зависит от аддона чар), общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.18.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются оба модуля: ядро появится в `build/libs/chrdk-f-register-1.4.19.jar`, аддон
+CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.19.jar`, реферальный —
+`referrals/build/libs/chrdk-referrals-1.4.19.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.19.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.19.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.19.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.19.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.19.jar` (зависит от аддона чар), общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.19.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). Оба JAR прикладываются к каждому релизу на GitHub.
+
+---
+
+## Обновление до 1.4.19
+
+**Артефакты теперь добываются в мире**, а не только у админов: сундуки данжей и
+сокровищниц (см. `sources.chests`), боссы и серьёзные мобы (`sources.mobs`),
+рыбалка на сокровище (`sources.fishing-treasure-percent`). Вес сторон —
+70% светлых / 30% проклятых; `/artifacts` теперь ещё и «карта сокровищ».
 
 ---
 
@@ -815,7 +825,7 @@ JAR-ы — простая замена.
 
 Восьмой аддон — **CHRDK_CommonGoals**, общие цели сообщества: сервер сообща набивает
 цели волны, пул алмазов делится между участниками по вкладу, выдача — `/goals claim`.
-`chrdk-common-goals-1.4.18.jar` рядом с ядром (≥ 1.4.6), перезапуск. Настройки
+`chrdk-common-goals-1.4.19.jar` рядом с ядром (≥ 1.4.6), перезапуск. Настройки
 волны/шаблонов — `plugins/CHRDK_CommonGoals/config.yml`.
 
 ---
@@ -843,7 +853,7 @@ plugins/<Addon>/messages.yml — удалите их после обновлен
 структуру), чтобы сервер взял актуальные ключи.
 
 **Важно при обновлении:** ядро — заменой JAR. Аддон опционален:
-`chrdk-artifacts-1.4.18.jar` рядом с ядром и chrdk-enchants (той же версии), перезапуск.
+`chrdk-artifacts-1.4.19.jar` рядом с ядром и chrdk-enchants (той же версии), перезапуск.
 Кулдауны/вкл/цена опытом — в `plugins/CHRDK_Artifacts/config.yml`.
 
 ---
@@ -854,7 +864,7 @@ plugins/<Addon>/messages.yml — удалите их после обновлен
 проклятого до легендарного, накат при крафте брони/оружия/инструментов, апгрейд двух
 одинаковых тирированных предметов на наковальне, перенос тира через апгрейд в незерит.
 
-**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-tier-forge-1.4.18.jar`
+**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-tier-forge-1.4.19.jar`
 рядом с ядром (≥ 1.4.6), перезапуск. Шансы/бонусы тиров — в `plugins/CHRDK_TierForge/config.yml`.
 
 ---
@@ -866,7 +876,7 @@ plugins/<Addon>/messages.yml — удалите их после обновлен
 крадушке и снайперских стрел с поправкой на дистанцию. Получение — стол зачарований и
 жители-библиотекари, применение — наковальня; всё хранится в NBT предметов.
 
-**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-enchants-1.4.18.jar`
+**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-enchants-1.4.19.jar`
 рядом с ядром (≥ 1.4.6, `depend`), перезапуск. Баланс/шансы/лимиты — `plugins/CHRDK_Enchants/config.yml`.
 
 ---

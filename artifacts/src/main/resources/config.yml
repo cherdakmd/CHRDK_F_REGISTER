@@ -9,6 +9,37 @@ general:
   # Период (в тиках) пульса пассивных эффектов (20 тиков = 1 сек).
   passive-refresh-ticks: 40
 
+# Природные источники артефактов (шанс в %; 0 — источник выключен).
+sources:
+  # Вес стороны при броске артефакта: светлая vs проклятая (по умолчанию 70/30).
+  good-side-chance-percent: 70
+  # Сундуки: ключ таблицы лута (можно полный minecraft:chests/… или короткий).
+  chests:
+    minecraft:chests/ancient_city: 12
+    minecraft:chests/end_city_treasure: 15
+    minecraft:chests/bastion_treasure: 10
+    minecraft:chests/buried_treasure: 8
+    minecraft:chests/woodland_mansion: 6
+    minecraft:chests/shipwreck_treasure: 6
+    minecraft:chests/pillager_outpost: 4
+    minecraft:chests/desert_pyramid: 4
+    minecraft:chests/stronghold_corridor: 3
+    minecraft:chests/stronghold_crossing: 3
+    minecraft:chests/ruined_portal: 3
+    minecraft:chests/jungle_pyramid: 3
+    minecraft:chests/simple_dungeon: 2
+    minecraft:chests/abandoned_mineshaft: 2
+  # Мобы: шанс дропа при убийстве игроком (типы — EntityType).
+  mobs:
+    ENDER_DRAGON: 100
+    WITHER: 50
+    WARDEN: 25
+    ELDER_GUARDIAN: 12
+    RAVAGER: 3
+    EVOKER: 4
+  # Сокровище с рыбалки (состояние CAUGHT_TREASURE): дополнительная находка.
+  fishing-treasure-percent: 3
+
 # По-артефактные настройки. cooldown-seconds/xp-cost-levels имеют смысл для активных.
 artifacts:
   # --- светлые: пассивные (работают просто из инвентаря) ---
