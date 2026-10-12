@@ -1465,11 +1465,12 @@ public final class AccessManager {
                 "days", config.grantDays(),
                 "player", player.getName());
         // ссылок на оплату в шаблоне нет: кликабельные теги через %placeholder% не проходят
-        // парсер, а провайдеров может быть ноль/один/два — строки добавляем из кода
-        if (config.donatePayEnabled() && config.hasPaymentUrl()) {
+        // парсер. С 1.4.39 показ ссылки НЕ зависит от enabled: флаг выключает только
+        // API-опрос, а ссылка живёт по наличию URL (режим «только магазин, без API»)
+        if (config.hasPaymentUrl()) {
             sendPaymentLinkLine(player, "DonatePay", config.donatePayPaymentUrl());
         }
-        if (config.easyDonateEnabled() && !config.easyDonatePaymentUrl().isBlank()) {
+        if (!config.easyDonatePaymentUrl().isBlank()) {
             sendPaymentLinkLine(player, "EasyDonate", config.easyDonatePaymentUrl());
         }
 
