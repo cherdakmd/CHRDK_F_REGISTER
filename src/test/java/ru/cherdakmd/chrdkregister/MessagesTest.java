@@ -90,6 +90,38 @@ class MessagesTest {
     }
 
     @Test
+    void singleWrapperSectionIsUnwrappedForAddons() throws Exception {
+        // Аддоны хранят файл под единственной верхней секцией («enchants:», «tiers:») —
+        // в коде ключи идут без этого префикса.
+        Messages addon = inline("""
+                tiers:
+                  need-auth: "<red>Сначала войдите.</red>"
+                  tier:
+                    cursed:
+                      name: "Проклятый"
+                """);
+        assertEquals("<red>Сначала войдите.</red>", addon.template("need-auth"));
+        assertEquals("Проклятый", addon.template("tier.cursed.name"));
+
+        // Классическая обёртка messages: тоже разворачивается, как и раньше.
+        Messages classic = inline("""
+                messages:
+                  hello: "Привет"
+                """);
+        assertEquals("Привет", classic.template("hello"));
+
+        // Несколько верхних секций без messages: — префиксы сохраняются.
+        Messages twin = inline("""
+                one:
+                  key: "A"
+                two:
+                  key: "B"
+                """);
+        assertEquals("A", twin.template("one.key"));
+        assertEquals("B", twin.template("two.key"));
+    }
+
+    @Test
     void everyResourceTextIsRenderable() throws Exception {
         Messages messages = resource();
         for (String key : messages.defaultKeys()) {

@@ -67,7 +67,7 @@ public final class EnchantGui implements Listener {
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             meta.displayName(plugin.messages().get("lore-line",
-                    "name", plugin.messages().raw("enchants.en." + def.id() + ".name"),
+                    "name", plugin.messages().raw("en." + def.id() + ".name"),
                     "levelroman", EnchantCodec.roman(def.maxLevel())));
             List<net.kyori.adventure.text.Component> lore = new ArrayList<>();
             lore.add(plugin.messages().get("gui-enchant-lore-rarity",
@@ -79,7 +79,7 @@ public final class EnchantGui implements Listener {
                 lore.add(plugin.messages().get("info-conflicts",
                         "conflicts", conflictsLabel(def)));
             }
-            lore.addAll(plugin.messages().getList("enchants.en." + def.id() + ".lore"));
+            lore.addAll(plugin.messages().getList("en." + def.id() + ".lore"));
             meta.lore(lore);
             item.setItemMeta(meta);
         }
@@ -109,7 +109,7 @@ public final class EnchantGui implements Listener {
             if (other.conflictGroup() != null
                     && other.conflictGroup().equals(def.conflictGroup())
                     && !other.id().equals(def.id())) {
-                conflicting.add(plugin.messages().raw("enchants.en." + other.id() + ".name"));
+                conflicting.add(plugin.messages().raw("en." + other.id() + ".name"));
             }
         }
         return String.join(", ", conflicting);

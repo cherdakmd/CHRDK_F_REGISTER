@@ -1,0 +1,121 @@
+# CHRDK_Artifacts — имена/описания 30 артефактов (art.<id>.name, art.<id>.lore) и тексты.
+messages:
+  player-only: "<red>Эта команда только для игроков.</red>"
+  need-auth: "<red>Артефакты слушаются лишь авторизованного хозяина. Войдите сначала.</red>"
+  no-permission: "<red>Недостаточно прав.</red>"
+  activated: "<gold>✦ Артефакт пробудился: %name%</gold>"
+  on-cooldown: "<gray>Артефакт ещё спит: %seconds% сек.</gray>"
+  not-enough-levels: "<red>Не хватает уровней опыта: нужно %need%.</red>"
+  dash-blocked: "<red>Тайга не пускает: впереди толща.</red>"
+  revealed: "<light_purple>✦ Линза обнажила %count% существ вокруг.</light_purple>"
+  enchant-needs-item: "<red>Хартия ждёт предмет во второй руке.</red>"
+  enchant-failed: "<red>Письмена хартии не проступили. Архив чар недоступен.</red>"
+  enchant-no-room: "<red>На предмете не осталось места для новых чар.</red>"
+  curse-ignite: "<dark_red>✖ Пепел погрома вспыхнул на вас!</dark_red>"
+  curse-poison: "<dark_red>✖ Сушёный глаз недобро посмотрел: в жилах яд.</dark_red>"
+  line-good-passive: "<yellow>★ Светлый артефакт · пассивный</yellow>"
+  line-good-active: "<gold>★ Светлый артефакт · активный (ПКМ)</gold>"
+  line-cursed-passive: "<red>✖ Проклятый артефакт · пассивный</red>"
+  line-cursed-active: "<dark_red>✖ Проклятый артефакт · активный (ПКМ)</dark_red>"
+  lore-desc: "<gray>%text%</gray>"
+  lore-active-info: "<yellow>ПКМ — активировать · КД %cooldown%с · цена %xp% ур.</yellow>"
+  list-header-good: "<gold>══════ Светлые артефакты ══════</gold>"
+  list-header-cursed: "<dark_red>══════ Проклятые артефакты ══════</dark_red>"
+  admin-reloaded: "<green>Конфигурация артефактов перечитана.</green>"
+  admin-player-not-found: "<red>Игрок не найден (должен быть онлайн).</red>"
+  admin-unknown-artifact: "<red>Неизвестный ид артефакта (см. /artifacts).</red>"
+  admin-given: "<green>Выдан артефакт: %name% <gray>x%amount%</gray> игроку %player%.</green>"
+  admin-received: "<gold>✦ Вам вручён артефакт: %name%</gold>"
+  admin-usage: "<yellow>/artifactsadmin give <игрок> <ид> [кол-во] | /artifactsadmin reload</yellow>"
+
+  art:
+    solnechny-obereg:
+      name: "Солнечный оберег"
+      lore: "Покуда при себе — огонь не страшен и удача ближе."
+    zhabii-kamen:
+      name: "Жабий камень"
+      lore: "Дышит вместо тебя под водой и гонит волну."
+    dyhanie-gor:
+      name: "Дыхание гор"
+      lore: "Падение становится неторопливым планированием."
+    nochnoj-svetlyak:
+      name: "Ночной светляк"
+      lore: "Тьма расступается вокруг носителя."
+    kamen-stojkosti:
+      name: "Камень стойкости"
+      lore: "Чужие удары тупятся об камень."
+    vetryanaya-spitsa:
+      name: "Ветряная спица"
+      lore: "Ноги сами плетут дорогу."
+    koren-zhizni:
+      name: "Корень жизни"
+      lore: "Сердцевина мира делится сердцем."
+    ruka-rudokopa:
+      name: "Рука рудокопа"
+      lore: "Кирка летит быстрее мысли."
+    grozovoj-kolokol:
+      name: "Грозовой колокол"
+      lore: "Звонит — и небо бьёт трижды."
+    rog-tajgi:
+      name: "Рог тайги"
+      lore: "Один вдох — и ты уже за восемь шагов дальше."
+    plamya-ochaga:
+      name: "Пламя очага"
+      lore: "Теплосытость дома взамен уровня опыта."
+    kaplya-zhizni:
+      name: "Капля жизни"
+      lore: "Последняя слеза родника: лечит всё до дна."
+    klyuch-strannika:
+      name: "Ключ странника"
+      lore: "Всегда открывает дверь куда-то ещё."
+    linza-providesa:
+      name: "Линза провидца"
+      lore: "Сквозь неё не спрятаться злым тварям."
+    hartiya-char:
+      name: "Хартия чар"
+      lore: "Клеймо мастера само вписывает чару в предмет во второй руке."
+    sleza-vdovy:
+      name: "Слеза вдовы"
+      lore: "Тяжесть чужого горя в кармане."
+    golodnyj-koren:
+      name: "Голодный корень"
+      lore: "Сосёт силы тише, чем хлеб даёт."
+    smolyanoj-mrak:
+      name: "Смоляной мрак"
+      lore: "Капля ночи, что не смывается."
+    krivoe-zerkalo:
+      name: "Кривое зеркало"
+      lore: "Мир плывёт перед очами."
+    rzhavyj-gvozd:
+      name: "Ржавый гвоздь"
+      lore: "Руки помнят его тяжесть при каждом ударе кирки."
+    glinyanaya-dusha:
+      name: "Глиняная душа"
+      lore: "Ноги прирастают к земле."
+    pepel-pogroma:
+      name: "Пепел погрома"
+      lore: "То и дело вспыхивает заново."
+    sushonyj-glaz:
+      name: "Сушёный глаз"
+      lore: "Недобро смотрит на тебя."
+    chernaya-moneta:
+      name: "Чёрная монета"
+      lore: "Сила по сходной цене: расплата тут же."
+    svistok-kostej:
+      name: "Свисток костей"
+      lore: "Слышат лишь мертвяки. И бегут на звук."
+    membrana-prizraka:
+      name: "Мембрана призрака"
+      lore: "Рвёт пространство, не глядя куда."
+    rakovina-toski:
+      name: "Раковина тоски"
+      lore: "Шумит бурей и зовёт молнию на голову."
+    zhalo-moroki:
+      name: "Жало мороки"
+      lore: "Сковывает чужих, слепит своего."
+    chasy-duroshljopa:
+      name: "Часы дурошлёпа"
+      lore: "Вечно показывают полночь."
+    porvannyj-kupon:
+      name: "Порванный купон"
+      lore: "Кто-то уже расплатился. Тобой."

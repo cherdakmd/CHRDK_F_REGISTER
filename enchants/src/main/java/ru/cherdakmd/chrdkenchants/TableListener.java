@@ -33,7 +33,7 @@ public final class TableListener implements Listener {
         EnchantService.RollResult roll = plugin.service().rollOnto(item, tier);
         if (roll == null) return;
         plugin.messages().send(player, "table-added",
-                "name", plugin.messages().raw("enchants.en." + roll.def().id() + ".name"),
+                "name", plugin.messages().raw("en." + roll.def().id() + ".name"),
                 "levelroman", "I");
         // маленький колдовской флёр: убираем известную гибель удачи
         try {

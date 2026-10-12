@@ -1,0 +1,47 @@
+# CHRDK_Artifacts — 30 артефактов (15 светлых, 15 проклятых). Метки артефактов живут в
+# PDC предметов, поэтому отдельного хранилища нет. Здесь включаемость, кулдауны и цена
+# активации в уровнях опыта для каждого артефакта.
+
+general:
+  locale: ru
+  # Пассивные и активные артефакты работают только для авторизованных игроков.
+  require-auth: true
+  # Период (в тиках) пульса пассивных эффектов (20 тиков = 1 сек).
+  passive-refresh-ticks: 40
+
+# По-артефактные настройки. cooldown-seconds/xp-cost-levels имеют смысл для активных.
+artifacts:
+  # --- светлые: пассивные (работают просто из инвентаря) ---
+  solnechny-obereg: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  zhabii-kamen: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  dyhanie-gor: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  nochnoj-svetlyak: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  kamen-stojkosti: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  vetryanaya-spitsa: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  koren-zhizni: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  ruka-rudokopa: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  # --- светлые: активные (ПКМ артефактом) ---
+  grozovoj-kolokol: {enabled: true, cooldown-seconds: 90, xp-cost-levels: 2}
+  rog-tajgi: {enabled: true, cooldown-seconds: 45, xp-cost-levels: 1}
+  plamya-ochaga: {enabled: true, cooldown-seconds: 120, xp-cost-levels: 3}
+  kaplya-zhizni: {enabled: true, cooldown-seconds: 300, xp-cost-levels: 10}
+  klyuch-strannika: {enabled: true, cooldown-seconds: 180, xp-cost-levels: 5}
+  linza-providesa: {enabled: true, cooldown-seconds: 240, xp-cost-levels: 4}
+  hartiya-char: {enabled: true, cooldown-seconds: 3600, xp-cost-levels: 15}
+  # --- проклятые: пассивные ---
+  sleza-vdovy: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  golodnyj-koren: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  smolyanoj-mrak: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  krivoe-zerkalo: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  rzhavyj-gvozd: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  glinyanaya-dusha: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  pepel-pogroma: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  sushonyj-glaz: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  # --- проклятые: активные ---
+  chernaya-moneta: {enabled: true, cooldown-seconds: 300, xp-cost-levels: 0}
+  svistok-kostej: {enabled: true, cooldown-seconds: 180, xp-cost-levels: 2}
+  membrana-prizraka: {enabled: true, cooldown-seconds: 60, xp-cost-levels: 1}
+  rakovina-toski: {enabled: true, cooldown-seconds: 600, xp-cost-levels: 5}
+  zhalo-moroki: {enabled: true, cooldown-seconds: 120, xp-cost-levels: 2}
+  chasy-duroshljopa: {enabled: true, cooldown-seconds: 900, xp-cost-levels: 3}
+  porvannyj-kupon: {enabled: true, cooldown-seconds: 300, xp-cost-levels: 0}

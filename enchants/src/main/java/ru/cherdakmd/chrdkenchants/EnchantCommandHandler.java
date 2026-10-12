@@ -57,7 +57,7 @@ public final class EnchantCommandHandler implements TabExecutor {
             return true;
         }
         plugin.messages().send(player, "info-header",
-                "name", plugin.messages().raw("enchants.en." + def.id() + ".name"),
+                "name", plugin.messages().raw("en." + def.id() + ".name"),
                 "rarity", plugin.messages().raw(def.rarity().labelKey()),
                 "maxlevel", def.maxLevel());
         plugin.messages().send(player, "info-items",
@@ -67,7 +67,7 @@ public final class EnchantCommandHandler implements TabExecutor {
                     "conflicts", "");
         }
         for (net.kyori.adventure.text.Component line
-                : plugin.messages().getList("enchants.en." + def.id() + ".lore")) {
+                : plugin.messages().getList("en." + def.id() + ".lore")) {
             player.sendMessage(line);
         }
         return true;
@@ -107,7 +107,7 @@ public final class EnchantCommandHandler implements TabExecutor {
             target.getInventory().addItem(book).values()
                     .forEach(leftover -> target.getWorld().dropItemNaturally(target.getLocation(), leftover));
             plugin.messages().send(sender, "admin-given",
-                    "name", plugin.messages().raw("enchants.en." + def.id() + ".name"),
+                    "name", plugin.messages().raw("en." + def.id() + ".name"),
                     "level", level, "player", target.getName());
             return true;
         }

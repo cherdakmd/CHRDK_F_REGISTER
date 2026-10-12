@@ -80,7 +80,7 @@ public final class EnchantItems {
         ItemMeta meta = book.getItemMeta();
         if (meta != null) {
             meta.displayName(plugin.messages().get("gui-book-name",
-                    "name", plugin.messages().raw("enchants.en." + def.id() + ".name")));
+                    "name", plugin.messages().raw("en." + def.id() + ".name")));
             book.setItemMeta(meta);
         }
         return book;
@@ -138,7 +138,7 @@ public final class EnchantItems {
             EnchantDef def = EnchantRegistry.byId(entry.getKey());
             if (def == null) continue;
             lore.add(plugin.messages().get("lore-line",
-                    "name", plugin.messages().raw("enchants.en." + def.id() + ".name"),
+                    "name", plugin.messages().raw("en." + def.id() + ".name"),
                     "levelroman", EnchantCodec.roman(entry.getValue())));
         }
         meta.lore(lore.isEmpty() ? null : lore);

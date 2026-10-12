@@ -346,6 +346,17 @@ public final class Messages {
         ConfigurationSection root = section.isConfigurationSection("messages")
                 ? section.getConfigurationSection("messages")
                 : section;
+        // Аддоны оборачивают файл в единственную верхнюю секцию (например, "enchants:" или
+        // "tiers:"): разворачиваем и её, чтобы ключи в коде шли без префикса обёртки.
+        if (root == section) {
+            java.util.Set<String> top = section.getKeys(false);
+            if (top.size() == 1) {
+                String only = top.iterator().next();
+                if (section.isConfigurationSection(only)) {
+                    root = section.getConfigurationSection(only);
+                }
+            }
+        }
         Map<String, String> result = new LinkedHashMap<>();
         for (String key : root.getKeys(true)) {
             if (root.isConfigurationSection(key)) continue;
