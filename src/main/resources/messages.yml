@@ -326,6 +326,7 @@ messages:
       <yellow>/%label% gift <ник> <дней></yellow><gray> — подарить проходку</gray>
       <yellow>/%label% pending</yellow><gray> — нераспознанные донаты</gray>
       <yellow>/%label% donations [фильтр] [лимит]</yellow><gray> — журнал всех донатов (выданные/ожидание/отклонённые)</gray>
+      <yellow>/%label% health</yellow><gray> — состояние связи DonatePay, счётчики опросов</gray>
       <yellow>/%label% approve <id> [ник] [дней]</yellow><gray> — подтвердить платёж и выдать проходку</gray>
       <yellow>/%label% reject <id> [причина]</yellow><gray> — отклонить платёж</gray>
       <yellow>/%label% sessions <ник></yellow><gray> — активные сессии и IP игрока</gray>
@@ -452,6 +453,10 @@ messages:
         Дней: %days%
         Сумма: %amount% ₽
       "approved-title": "Донат подтверждён администратором"
+      "down-title": "⛔ DonatePay недоступен"
+      "down-desc": "Серия отказов: %fails% подряд. Последняя ошибка: %error%. Авто-выдача проходок на паузе до восстановления связи."
+      "up-title": "✅ DonatePay снова на связи"
+      "up-desc": "Автоматическая выдача проходок восстановлена, серия отказов завершена."
       "granted-body": |-
         Игрок: %player%
         Сумма: %amount% ₽
@@ -472,6 +477,14 @@ messages:
     "recheck-failed": "<red>Опрос DonatePay не удался: %error%. Подробности — в консоли сервера.</red>"
     "alert-offline": "<red>⚠ DonatePay недоступен: %fails% неудач подряд (%error%). Проходки по донатам не выдаются — проверьте сайт и токен.</red>"
     "alert-online": "<green>✔ DonatePay снова на связи — авто-проверка донатов восстановлена.</green>"
+    "health-header": "<gold>=== Здоровье донатов DonatePay ===</gold>"
+    "health-state": "%state%<gray>, интервал опроса: %poll_seconds% с, курсор транзакций: #%cursor%</gray>"
+    "health-ok": "<green>✔ связь в норме</green>"
+    "health-flaky": "<yellow>⚠ связь шалит (%fails% неудач подряд)</yellow>"
+    "health-down": "<red>⛔ связи нет ни разу за запуск (%fails% попыток)</red>"
+    "health-last": "<gray>Последний успех: %ago% назад; последняя ошибка: %error%</gray>"
+    "health-stats": "<gray>Опросов: %attempts% (успешных %ok%, сбоев %fail%); транзакций обработано: %processed%; ждут решения: %pending%</gray>"
+    "health-footer": "<gray>Журнал: /%label% donations | Очередь: /%label% pending | Форс-опрос: /%label% recheck</gray>"
     "testpay-granted": "<green>[ТЕСТ] Донат на %amount% ₽ (игроку «%name%») обработан движком: проходка продлена до %until% (+%days% дн.).</green>"
     "testpay-pending": "<yellow>[ТЕСТ] Донат %amount% ₽ от «%donor%» ушёл в очередь решений (%status%: %note%) — смотрите /%label% pending.</yellow>"
     "testpay-rejected": "<red>[ТЕСТ] Донат %amount% ₽ отклонён движком: %note%.</red>"

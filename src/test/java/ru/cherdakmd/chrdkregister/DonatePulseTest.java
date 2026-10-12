@@ -40,6 +40,25 @@ class DonatePulseTest {
     }
 
     @Test
+    void repeatingsGateByConfigInterval() {
+        assertFalse(DonatePulse.repeatDue(1_000L, 61_000L, 0), "0 минут = повторов нет");
+        assertFalse(DonatePulse.repeatDue(1_000L, 61_000L, 15));
+        assertTrue(DonatePulse.repeatDue(1_000L, 901_001L, 15),
+                "прошло 15 минут — напомнить о лежащем сервисе");
+        assertFalse(DonatePulse.repeatDue(901_000L, 902_000L, 15),
+                "сразу после тревоги не дублируем");
+    }
+
+    @Test
+    void classifyMirrorsHeartbeatStates() {
+        assertEquals(DonatePulse.State.OK, DonatePulse.classify(1_000L, 0));
+        assertEquals(DonatePulse.State.FLAKY, DonatePulse.classify(1_000L, 2));
+        assertEquals(DonatePulse.State.NO_CONTACT, DonatePulse.classify(0L, 3));
+        assertEquals(DonatePulse.State.OK, DonatePulse.classify(0L, 0),
+                "сервер только поднялся и первого опроса не было — ничего страшного");
+    }
+
+    @Test
     void staleSuccessTimestampClampsAgoToZero() {
         String ok = DonatePulse.heartbeatLine(200_000L, 100_000L, 0, null);
         assertTrue(ok.contains("0 с назад"), "кривые часы не должны дать отрицательный возраст");

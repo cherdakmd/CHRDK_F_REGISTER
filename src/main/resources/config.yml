@@ -29,6 +29,9 @@ donatepay:
   alert-fail-streak: 10
   # Дублировать тревогу о падении/восстановлении DonatePay онлайн-админам в чат
   alert-admins: true
+  # Повторять тревогу, пока DonatePay всё ещё недоступен (интервал в минутах; 0 = только
+  # одна тревога на эпизод). Совпадение с health-seconds гармонично: 15 мин ~ 3 heartbeat линии
+  alert-repeat-minutes: 15
   # Строгая проверка регистра букв в нике донатера (false = ник сверяется без учёта регистра)
   strict-case-match: false
   # Платежи, которые не удалось сопоставить с ником, попадают в журнал и ждут решения:
@@ -160,8 +163,10 @@ notifications:
   # Вебхук Discord для важных событий (пусто = уведомления выключены)
   discord-webhook-url: ""
   # Какие события отправлять: pass.granted, pass.revoked, bruteforce.alert, totp.reset, password.reset,
-  # multialt.alert, donate.pending, donatepay.error, chat.mute, totp.enabled, totp.disabled, password.change
-  events: [pass.granted, pass.revoked, bruteforce.alert, totp.reset, password.reset, donate.pending, donatepay.error]
+  # multialt.alert, donate.pending, donatepay.error, donatepay.down, donatepay.up,
+  # chat.mute, totp.enabled, totp.disabled, password.change
+  events: [pass.granted, pass.revoked, bruteforce.alert, totp.reset, password.reset, donate.pending,
+          donatepay.error, donatepay.down, donatepay.up]
   # Упоминания в сообщении (например, "<@&1234567890>")
   mentions: []
 

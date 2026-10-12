@@ -28,7 +28,7 @@ import java.util.Set;
 public final class RegisterCommandHandler implements CommandExecutor, TabCompleter {
     private static final List<String> ADMIN_SUBCOMMANDS =
             List.of("add", "remove", "check", "unregister", "reset2fa", "status", "reload",
-                    "pending", "donations", "approve", "reject", "sessions", "logoutall", "stats", "doctor", "audit",
+                    "pending", "donations", "health", "approve", "reject", "sessions", "logoutall", "stats", "doctor", "audit",
                     "backup", "gift", "testpay", "recheck");
     private static final List<String> MUTE_DURATIONS = List.of("10m", "30m", "1h", "6h", "1d", "7d");
     private static final List<String> TWO_FACTOR_SUBCOMMANDS =
@@ -543,6 +543,38 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                             "created", AccessManager.formatTimestamp(record.createdAt));
                 }
                 messages.send(sender, "donation.journal-hint", "label", label);
+                return true;
+            }
+            case "health" -> {
+                AccessManager.DonateHealthCard card = accessManager.donateHealthCard();
+                messages.send(sender, "donation.health-header");
+                if (!accessManager.config().donatePayReady()) {
+                    check(sender, "DonatePay API", false,
+                            "не задан donatepay.api-token — автопроверка донатов выключена");
+                    return true;
+                }
+                String state = switch (card.state()) {
+                    case OK -> messages.raw("donation.health-ok");
+                    case FLAKY -> messages.raw("donation.health-flaky",
+                            "fails", card.failStreak());
+                    case NO_CONTACT -> messages.raw("donation.health-down",
+                            "fails", card.failStreak());
+                };
+                messages.send(sender, "donation.health-state",
+                        "state", state,
+                        "poll_seconds", card.pollSeconds(),
+                        "cursor", card.cursorId());
+                if (card.lastSuccessAtMillis() > 0) {
+                    messages.send(sender, "donation.health-last",
+                            "ago", AccessManager.formatDuration(
+                                    System.currentTimeMillis() - card.lastSuccessAtMillis()),
+                            "error", card.lastError() == null ? "—" : card.lastError());
+                }
+                messages.send(sender, "donation.health-stats",
+                        "attempts", card.attempts(), "ok", card.successes(),
+                        "fail", card.failures(), "processed", card.processedTransactions(),
+                        "pending", accessManager.donations().pendingCount());
+                messages.send(sender, "donation.health-footer", "label", label);
                 return true;
             }
             case "sessions" -> {

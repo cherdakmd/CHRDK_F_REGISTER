@@ -52,6 +52,8 @@ public final class AuditLog {
     public static final String DONATION_REJECTED = "donation.rejected";
     public static final String DONATION_CLAIMED = "donation.claimed";
     public static final String DONATEPAY_ERROR = "donatepay.error";
+    public static final String DONATEPAY_DOWN = "donatepay.down";
+    public static final String DONATEPAY_UP = "donatepay.up";
     public static final String STORAGE_MIGRATION = "storage.migration";
     public static final String STORAGE_BACKUP = "storage.backup";
     public static final String STORAGE_RESTORE = "storage.restore";

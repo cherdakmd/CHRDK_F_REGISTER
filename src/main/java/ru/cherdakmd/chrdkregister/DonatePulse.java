@@ -22,6 +22,31 @@ final class DonatePulse {
         return wasAlerted;
     }
 
+    /** Пора ли повторить тревогу (серия отказов всё тянется; 0 минут = без повторов). */
+    static boolean repeatDue(long lastAlertAtMillis, long nowMillis, int repeatMinutes) {
+        if (repeatMinutes <= 0) {
+            return false;
+        }
+        return nowMillis - lastAlertAtMillis >= repeatMinutes * 60_000L;
+    }
+
+    /** Состояние связи для /pass health. */
+    enum State {
+        /** Первый удачный опрос был, серия отказов пуста. */
+        OK,
+        /** Уже обламывались, но успех был — связь шалит. */
+        FLAKY,
+        /** Ни одной удачной попытки с момента старта сервера. */
+        NO_CONTACT
+    }
+
+    static State classify(long lastSuccessAtMillis, int failStreak) {
+        if (lastSuccessAtMillis <= 0) {
+            return failStreak > 0 ? State.NO_CONTACT : State.OK;
+        }
+        return failStreak > 0 ? State.FLAKY : State.OK;
+    }
+
     /** Консольный heartbeat-пульс: тихо в норме (пустая строка), громко при проблеме. */
     static String heartbeatLine(long lastSuccessAtMillis, long nowMillis, int failStreak, String lastError) {
         if (failStreak > 0 && lastSuccessAtMillis <= 0) {

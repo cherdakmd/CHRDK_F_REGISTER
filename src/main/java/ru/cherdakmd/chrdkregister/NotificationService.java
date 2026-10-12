@@ -87,7 +87,8 @@ public final class NotificationService {
         return switch (event) {
             case "pass.granted", "donation.approved" -> "good";
             case "bruteforce.alert", "pass.revoked", "totp.reset", "password.reset", "multialt.alert" -> "warn";
-            case "donatepay.error", "storage.error" -> "bad";
+            case "donatepay.error", "storage.error", "donatepay.down" -> "bad";
+            case "donatepay.up" -> "good";
             default -> "info";
         };
     }

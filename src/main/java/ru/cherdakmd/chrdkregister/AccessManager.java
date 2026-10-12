@@ -86,6 +86,11 @@ public final class AccessManager {
     private volatile long donateLastSuccessAtMillis;
     private volatile String donateLastError;
     private volatile boolean donateOutageAlerted;
+    private volatile long donateLastAlertAtMillis;
+    private final java.util.concurrent.atomic.AtomicLong donatePollAttempts = new java.util.concurrent.atomic.AtomicLong();
+    private final java.util.concurrent.atomic.AtomicLong donatePollSuccesses = new java.util.concurrent.atomic.AtomicLong();
+    private final java.util.concurrent.atomic.AtomicLong donatePollFailures = new java.util.concurrent.atomic.AtomicLong();
+    private final java.util.concurrent.atomic.AtomicLong donateTransactionsProcessed = new java.util.concurrent.atomic.AtomicLong();
 
     private final AuditLog audit;
     private final NotificationService notifications;
@@ -1520,6 +1525,7 @@ public final class AccessManager {
             return DonatePollReport.skipped();
         }
         int processed = 0;
+        donatePollAttempts.incrementAndGet();
         try {
             if (!store.isDonationCursorInitialized()) {
                 List<DonatePayClient.Transaction> recent = donatePay.fetchRecentSuccessful(100);
@@ -1537,6 +1543,7 @@ public final class AccessManager {
                 logger.info("DonatePay transaction cursor initialized at ID " + latest
                         + " (payments prior to initial setup are ignored).");
                 markDonatePollSuccess();
+                donateTransactionsProcessed.addAndGet(processed);
                 return new DonatePollReport(processed, null);
             }
 
@@ -1552,6 +1559,7 @@ public final class AccessManager {
                 processed++;
             }
             markDonatePollSuccess();
+            donateTransactionsProcessed.addAndGet(processed);
             return new DonatePollReport(processed, null);
         } catch (Exception exception) {
             String message = exception.getMessage();
@@ -1569,9 +1577,17 @@ public final class AccessManager {
         donationPollFailStreak.set(0);
         donateLastSuccessAtMillis = System.currentTimeMillis();
         donateLastError = null;
+        donatePollSuccesses.incrementAndGet();
         if (DonatePulse.shouldAlertRecovery(donateOutageAlerted)) {
             donateOutageAlerted = false;
+            donateLastAlertAtMillis = 0;
             logger.info("DonatePay is reachable again — donation auto-check recovered.");
+            audit.log(AuditLog.DONATEPAY_UP, "watcher", "", "",
+                    AuditLog.details("lastErrorCleared", true));
+            notifications.notify("donatepay.up",
+                    messages == null ? "DonatePay UP" : messages.raw("donation.notify.up-title"),
+                    messages == null ? "" : messages.raw("donation.notify.up-desc"),
+                    "good");
             if (config.donateAlertAdmins()) {
                 notifyAdminsOnline("donation.alert-online");
             }
@@ -1581,11 +1597,22 @@ public final class AccessManager {
     /** Сбой опроса: серия нарастает; на переходе через порог — разовая тревога админам. */
     private void markDonatePollFailure(String error) {
         donateLastError = error;
+        donatePollFailures.incrementAndGet();
         int streak = donationPollFailStreak.incrementAndGet();
         if (DonatePulse.shouldAlertOutage(streak, config.donateAlertFailStreak(), donateOutageAlerted)) {
             donateOutageAlerted = true;
+            donateLastAlertAtMillis = System.currentTimeMillis();
             logger.warning("DonatePay appears DOWN (" + streak + " failed polls in a row): "
                     + (error == null ? "unknown error" : error));
+            audit.log(AuditLog.DONATEPAY_DOWN, "watcher", "", "",
+                    AuditLog.details("fails", streak, "error", error == null ? "unknown" : error));
+            Messages live = this.messages;
+            notifications.notify("donatepay.down",
+                    live == null ? "DonatePay DOWN" : live.raw("donation.notify.down-title"),
+                    (live == null ? "Серия отказов: " + streak : live.raw("donation.notify.down-desc")
+                            .replace("%fails%", String.valueOf(streak))
+                            .replace("%error%", error == null ? "unknown" : error)),
+                    "bad");
             if (config.donateAlertAdmins()) {
                 notifyAdminsOnline("donation.alert-offline",
                         "fails", streak, "error", error == null ? "unknown" : error);
@@ -1605,6 +1632,17 @@ public final class AccessManager {
             logger.info(line);
         } else {
             logger.warning(line);
+        }
+        // повторные тревоги, если отказ затянулся (раз в donatepay.alert-repeat-minutes)
+        if (donateOutageAlerted && DonatePulse.repeatDue(donateLastAlertAtMillis,
+                System.currentTimeMillis(), currentConfig.donateAlertRepeatMinutes())) {
+            donateLastAlertAtMillis = System.currentTimeMillis();
+            int streak = donationPollFailStreak.get();
+            logger.warning("DonatePay STILL DOWN — " + streak + " failed polls in a row.");
+            if (currentConfig.donateAlertAdmins()) {
+                notifyAdminsOnline("donation.alert-offline",
+                        "fails", streak, "error", donateLastError == null ? "unknown" : donateLastError);
+            }
         }
     }
 
@@ -1630,6 +1668,21 @@ public final class AccessManager {
     public DonatePulseSnapshot donatePulseSnapshot() {
         return new DonatePulseSnapshot(donateLastSuccessAtMillis,
                 donationPollFailStreak.get(), donateLastError);
+    }
+
+    /** Полная карточка пульса для /pass health. */
+    public record DonateHealthCard(DonatePulse.State state, long lastSuccessAtMillis, int failStreak,
+                                   String lastError, long attempts, long successes, long failures,
+                                   long processedTransactions, int pollSeconds, long cursorId) {
+    }
+
+    public DonateHealthCard donateHealthCard() {
+        return new DonateHealthCard(
+                DonatePulse.classify(donateLastSuccessAtMillis, donationPollFailStreak.get()),
+                donateLastSuccessAtMillis, donationPollFailStreak.get(), donateLastError,
+                donatePollAttempts.get(), donatePollSuccesses.get(), donatePollFailures.get(),
+                donateTransactionsProcessed.get(),
+                config.donatePollSeconds(), store.getDonationCursor());
     }
 
     /** Reprocesses payments that are still waiting for a decision (used by {@code /pass pending retry}). */

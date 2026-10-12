@@ -23,6 +23,7 @@ public final class PluginConfig {
     private final int donateHealthSeconds;
     private final int donateAlertFailStreak;
     private final boolean donateAlertAdmins;
+    private final int donateAlertRepeatMinutes;
     private final boolean strictCaseMatch;
     private final boolean donateReviewUnmatched;
     private final boolean donateFuzzyMatch;
@@ -118,12 +119,13 @@ public final class PluginConfig {
                 true, "notify", 3, 240,
                 5, true, 14, true,
                 true, 180, true,
-                "", List.of("pass.granted", "pass.revoked", "bruteforce.alert", "totp.reset", "donatepay.error"),
+                "", List.of("pass.granted", "pass.revoked", "bruteforce.alert", "totp.reset",
+                        "donatepay.error", "donatepay.down", "donatepay.up"),
                 List.of(),
                 true,
                 ZoneId.of("Europe/Moscow"),
                 new ChatConfig(),
-                300, 10, true
+                300, 10, true, 15
         );
     }
 
@@ -193,7 +195,8 @@ public final class PluginConfig {
             ChatConfig chat,
             int donateHealthSeconds,
             int donateAlertFailStreak,
-            boolean donateAlertAdmins
+            boolean donateAlertAdmins,
+            int donateAlertRepeatMinutes
     ) {
         this.donatePayApiToken = donatePayApiToken == null ? "" : donatePayApiToken.trim();
         this.donatePayPaymentUrl = sanitizeUrl(donatePayPaymentUrl);
@@ -202,6 +205,7 @@ public final class PluginConfig {
         this.donateHealthSeconds = Math.clamp(donateHealthSeconds, 60, 3600);
         this.donateAlertFailStreak = Math.clamp(donateAlertFailStreak, 3, 100);
         this.donateAlertAdmins = donateAlertAdmins;
+        this.donateAlertRepeatMinutes = Math.clamp(donateAlertRepeatMinutes, 0, 1440);
         this.strictCaseMatch = strictCaseMatch;
         this.donateReviewUnmatched = donateReviewUnmatched;
         this.donateFuzzyMatch = donateFuzzyMatch;
@@ -350,7 +354,8 @@ public final class PluginConfig {
                 ChatConfig.fromBukkitConfig(config),
                 config.getInt("donatepay.health-seconds", 300),
                 config.getInt("donatepay.alert-fail-streak", 10),
-                config.getBoolean("donatepay.alert-admins", true)
+                config.getBoolean("donatepay.alert-admins", true),
+                config.getInt("donatepay.alert-repeat-minutes", 15)
         );
     }
 
@@ -387,6 +392,11 @@ public final class PluginConfig {
     /** Дублировать тревогу о падении DonatePay онлайн-админам в чат. */
     public boolean donateAlertAdmins() {
         return donateAlertAdmins;
+    }
+
+    /** Повторная тревога, если отказ DonatePay тянется (минуты; 0 = без повторов). */
+    public int donateAlertRepeatMinutes() {
+        return donateAlertRepeatMinutes;
     }
 
     public boolean strictCaseMatch() {
