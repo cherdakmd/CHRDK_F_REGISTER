@@ -1,0 +1,32 @@
+# CHRDK_TierForge — крафт с накатом редкости (Terraria-style).
+# Хранилище — только NBT (PDC) предметов.
+
+general:
+  locale: ru
+
+# Шанс, что подходящие предметы получат накат при крафте (0 = аддон не трогает крафты).
+roll-on-craft-chance-percent: 100
+
+# 7 тиров редкости, от слабого к сильному. weight — вес выпадения (столбик в сумме),
+# percent — базовый бонус к характеристикам (-х = штраф): оружию — к урону,
+# броне — к броне и твёрдости, инструментам — к урону и скорости атаки.
+tiers:
+  cursed:    {weight: 5,  percent: -12}
+  weak:      {weight: 15, percent: -5}
+  common:    {weight: 30, percent: 0}
+  fine:      {weight: 20, percent: 6}
+  rare:      {weight: 15, percent: 12}
+  epic:      {weight: 10, percent: 20}
+  legendary: {weight: 5,  percent: 30}
+
+anvil:
+  # Апгрейд: два предмета одного материала и тира на наковальне → тир выше.
+  enabled: true
+  # Оплата опытом за уровень тира повышения (умножается на индекс тира).
+  base-xp-cost: 3
+
+craft:
+  # Только эти группы предметов получают накат (броня, оружие, инструменты).
+  armor: true
+  weapons: true
+  tools: true

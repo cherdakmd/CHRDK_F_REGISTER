@@ -46,6 +46,7 @@ jobs:
           echo "daily_jar=daily-rewards/build/libs/chrdk-daily-rewards-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
           echo "teleports_jar=teleports/build/libs/chrdk-teleports-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
           echo "enchants_jar=enchants/build/libs/chrdk-enchants-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
+          echo "tier_forge_jar=tier-forge/build/libs/chrdk-tier-forge-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
 
       - name: Attach the Purpur plugin JAR
         env:
@@ -76,3 +77,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.enchants_jar }}" --clobber
+
+      - name: Attach the CHRDK_TierForge addon JAR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.tier_forge_jar }}" --clobber
