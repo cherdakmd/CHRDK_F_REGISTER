@@ -76,14 +76,22 @@ final class PlaytimeStore {
 
     synchronized void save() {
         Map<String, Object> out = new HashMap<>();
-        for (Map.Entry<UUID, Long> entry : seconds.entrySet()) {
+        // объединяем ключи: бывают игроки только с awarded-метками (без секунд)
+        Set<UUID> all = new HashSet<>(seconds.keySet());
+        all.addAll(awarded.keySet());
+        for (UUID uuid : all) {
             Map<String, Object> row = new HashMap<>();
-            row.put("seconds", entry.getValue());
-            Set<String> ids = awarded.get(entry.getKey());
+            long total = seconds.getOrDefault(uuid, 0L);
+            if (total > 0) {
+                row.put("seconds", total);
+            }
+            Set<String> ids = awarded.get(uuid);
             if (ids != null && !ids.isEmpty()) {
                 row.put("awarded", ids.stream().sorted().toList());
             }
-            out.put(entry.getKey().toString(), row);
+            if (!row.isEmpty()) {
+                out.put(uuid.toString(), row);
+            }
         }
         try {
             Files.createDirectories(file.getParent());

@@ -57,7 +57,9 @@ final class RankLadder {
     static NextRank nextUp(List<Rank> ladder, long totalSeconds) {
         int current = tierIndex(ladder, totalSeconds);
         long hours = Math.floorDiv(Math.max(0, totalSeconds), 3600);
-        for (int i = current + 1; i < ladder.size(); i++) {
+        // ближайшее недостигнутое = минимальное звание выше текущего:
+        // идём от младших порогов к старшим и берём первый, что выше текущего звания игрока
+        for (int i = ladder.size() - 1; i > current; i--) {
             Rank candidate = ladder.get(i);
             if (hours < candidate.hours()) {
                 return new NextRank(candidate, candidate.hours() - hours);
