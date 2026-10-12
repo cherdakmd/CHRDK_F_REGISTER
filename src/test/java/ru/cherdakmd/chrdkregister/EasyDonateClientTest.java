@@ -96,11 +96,12 @@ class EasyDonateClientTest {
         store.markDonationProcessed(123L);
         assertTrue(store.isDonationProcessed(123L), "donatepay #123 имеет своё пространство имён");
 
-        // курсоры живут раздельно: ED-КУРСОР не подхватывает DP-значения
+        // mark уже инициализировал курсор ED на 123; повторный initialize — no-op (одноразовость)
         store.initializeDonationCursor(RegistrationStore.DONATION_SOURCE_DONATEPAY, 900L);
         store.initializeDonationCursor(EasyDonateClient.SOURCE, 42L);
         assertEquals(900L, store.getDonationCursor());
-        assertEquals(42L, store.getDonationCursor(EasyDonateClient.SOURCE));
+        assertEquals(123L, store.getDonationCursor(EasyDonateClient.SOURCE),
+                "initialize после mark ничего не меняет (курсор уже инициализирован)");
         assertTrue(store.isDonationCursorInitialized("easydonate"));
         assertEquals(0L, store.getDonationCursor("unknown-provider"), "незнакомый источник — курсор 0");
 
