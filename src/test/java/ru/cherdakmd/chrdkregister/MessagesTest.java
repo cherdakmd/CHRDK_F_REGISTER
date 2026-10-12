@@ -187,7 +187,7 @@ class MessagesTest {
         assertTrue(messages.has("no-pass.title-subtitle"), "has() видит значения по умолчанию");
         assertEquals(defaults.template("no-pass.reminder"), messages.template("no-pass.reminder"),
                 "Неправленные ключи продолжают работать после обновления плагина");
-        assertEquals("Донат 150₽ на DonatePay (ник: Steve)", messages.plain("no-pass.title-subtitle",
+        assertEquals("Донат 150₽ (ник: Steve)", messages.plain("no-pass.title-subtitle",
                 "price", 150, "player", "Steve"));
         assertEquals(List.of(), messages.validate(), "Корректный файл не должен давать замечаний");
     }
