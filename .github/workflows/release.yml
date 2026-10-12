@@ -123,7 +123,20 @@ jobs:
         shell: bash
         run: |
           plugin_version="$(sed -n 's/^plugin_version=//p' gradle.properties)"
-          zip -j "chrdk-plugins-${plugin_version}.zip"             "${{ steps.verify-version.outputs.jar }}"             "${{ steps.verify-version.outputs.shop_jar }}"             "${{ steps.verify-version.outputs.ref_jar }}"             "${{ steps.verify-version.outputs.daily_jar }}"             "${{ steps.verify-version.outputs.teleports_jar }}"             "${{ steps.verify-version.outputs.enchants_jar }}"             "${{ steps.verify-version.outputs.tier_forge_jar }}"             "${{ steps.verify-version.outputs.artifacts_jar }}"             "${{ steps.verify-version.outputs.goals_jar }}"             "${{ steps.verify-version.outputs.claims_jar }}"             "${{ steps.verify-version.outputs.ranks_jar }}"             "${{ steps.verify-version.outputs.cosmetics_jar }}"             "${{ steps.verify-version.outputs.battlepass_jar }}"
+          zip -j "chrdk-plugins-${plugin_version}.zip" \
+            "${{ steps.verify-version.outputs.jar }}" \
+            "${{ steps.verify-version.outputs.shop_jar }}" \
+            "${{ steps.verify-version.outputs.ref_jar }}" \
+            "${{ steps.verify-version.outputs.daily_jar }}" \
+            "${{ steps.verify-version.outputs.teleports_jar }}" \
+            "${{ steps.verify-version.outputs.enchants_jar }}" \
+            "${{ steps.verify-version.outputs.tier_forge_jar }}" \
+            "${{ steps.verify-version.outputs.artifacts_jar }}" \
+            "${{ steps.verify-version.outputs.goals_jar }}" \
+            "${{ steps.verify-version.outputs.claims_jar }}" \
+            "${{ steps.verify-version.outputs.ranks_jar }}" \
+            "${{ steps.verify-version.outputs.cosmetics_jar }}" \
+            "${{ steps.verify-version.outputs.battlepass_jar }}"
           echo "zip=chrdk-plugins-${plugin_version}.zip" >> "$GITHUB_ENV"
 
       - name: Attach the all-in-one ZIP archive
