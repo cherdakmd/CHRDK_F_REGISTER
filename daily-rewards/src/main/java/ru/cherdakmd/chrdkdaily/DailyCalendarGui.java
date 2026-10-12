@@ -16,14 +16,18 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * Инвентарный календарь стрика: дни цикла в один ряд (слоты 10..16), сегодняшний доступный
- * день — сундук с подсветкой; взятые — зелёная панель; будущие — серая. Клик по сегодняшнему
- * дню забирает награду и ставит следующий статус сразу здесь.
+ * Инвентарный календарь стрика: месячная сетка 7 колонок × до 5 рядов (дни месяца
+ * укладываются по порядку слева направо, сверху вниз, начиная с ряда 2). Верхний ряд —
+ * шапка с книгой стрика, прочие слоты заполнены рамкой. Сегодняшний доступный день —
+ * сундук с подсветкой; взятые — зелёная панель; будущие — серая. Клик по календарю
+ * забирает сегодняшнюю награду и перерисовывает статусы.
  */
 public final class DailyCalendarGui implements Listener {
 
-    private static final int SIZE = 27;
-    private static final int FIRST_DAY_SLOT = 10;
+    private static final int SIZE = 54;
+    private static final int FIRST_DAY_SLOT = 9;   // начало месячной сетки (7 колонок)
+    private static final int HEADER_SLOT = 4;      // книга стрика в шапке
+    private static final int MAX_DAY_CELLS = 35;   // 5 рядов по 7 колонок
 
     private final DailyRewardsPlugin plugin;
 
@@ -50,7 +54,22 @@ public final class DailyCalendarGui implements Listener {
         int todayIndex = Math.floorMod(displayStreak - 1, cycleSize);
         boolean vip = plugin.coreApi() != null && plugin.coreApi().hasActivePass(player.getName());
 
-        for (int index = 0; index < rewards.size() && index < 7; index++) {
+        // рамка: верхний ряд и хвост за месячной сеткой
+        ItemStack filler = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
+        ItemMeta fillerMeta = filler.getItemMeta();
+        if (fillerMeta != null) {
+            fillerMeta.displayName(net.kyori.adventure.text.Component.text(" "));
+            filler.setItemMeta(fillerMeta);
+        }
+        for (int slot = 0; slot < FIRST_DAY_SLOT; slot++) {
+            inventory.setItem(slot, filler);
+        }
+        for (int slot = FIRST_DAY_SLOT + Math.min(rewards.size(), MAX_DAY_CELLS);
+                slot < SIZE; slot++) {
+            inventory.setItem(slot, filler);
+        }
+
+        for (int index = 0; index < rewards.size() && index < MAX_DAY_CELLS; index++) {
             int slot = FIRST_DAY_SLOT + index;
             DailyConfig.DayReward day = rewards.get(index);
             ItemStack icon;
@@ -69,14 +88,14 @@ public final class DailyCalendarGui implements Listener {
             }
             inventory.setItem(slot, icon);
         }
-        ItemStack footer = new ItemStack(Material.BOOK);
-        ItemMeta footerMeta = footer.getItemMeta();
-        if (footerMeta != null) {
-            footerMeta.displayName(plugin.messages().get("daily.gui.footer-name",
+        ItemStack header = new ItemStack(Material.BOOK);
+        ItemMeta headerMeta = header.getItemMeta();
+        if (headerMeta != null) {
+            headerMeta.displayName(plugin.messages().get("daily.gui.footer-name",
                     "streak", progress.streak));
-            footer.setItemMeta(footerMeta);
+            header.setItemMeta(headerMeta);
         }
-        inventory.setItem(26, footer);
+        inventory.setItem(HEADER_SLOT, header);
     }
 
     private ItemStack pane(Material material, String nameKey, int dayNum,
