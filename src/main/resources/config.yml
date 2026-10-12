@@ -13,6 +13,9 @@ general:
   locale: "ru"
 
 donatepay:
+  # Включить DonatePay? false — сторож, опрос и ссылка для игроков полностью выключаются
+  # (удобно при переезде на EasyDonate или временном отключении)
+  enabled: true
   # API-токен из личного кабинета DonatePay (https://donatepay.ru/page/api)
   api-token: ""
   # Ссылка на вашу страницу оплаты DonatePay (показывается игроку в чате)

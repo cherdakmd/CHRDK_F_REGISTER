@@ -665,7 +665,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 return true;
             }
             case "recheck" -> {
-                if (!accessManager.config().donatePayReady()) {
+                if (!accessManager.config().donatePayReady() && !accessManager.config().easyDonateReady()) {
                     messages.send(sender, "donation.recheck-unavailable");
                     return true;
                 }
@@ -799,25 +799,35 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
     private void showDoctor(CommandSender sender) {
         PluginConfig cfg = accessManager.config();
         messages.send(sender, "doctor.header");
-        check(sender, "DonatePay API-токен", cfg.donatePayReady(),
-                "не задан donatepay.api-token — авто-выдача проходок не работает");
-        check(sender, "Ссылка на оплату", cfg.hasPaymentUrl(),
-                "не задан donatepay.payment-url — игроки не видят ссылку");
+        if (!cfg.donatePayEnabled()) {
+            check(sender, "DonatePay (провайдер)", true, "выключен в конфиге (donatepay.enabled: false)");
+        } else {
+            check(sender, "DonatePay API-токен", cfg.donatePayReady(),
+                    "не задан donatepay.api-token — авто-выдача проходок не работает");
+            if (cfg.donatePayReady()) {
+                check(sender, "Ссылка DonatePay для игроков", cfg.hasPaymentUrl(),
+                        "не задан donatepay.payment-url — игроки не видят ссылку");
+                check(sender, "Тестовый запрос к DonatePay", accessManager.probeDonatePay(),
+                        "не удалось подключиться к API DonatePay — проверьте токен и сеть");
+            }
+        }
         check(sender, "Сессия не обходит 2FA", !cfg.sessionSkips2fa() || !cfg.totpEnabled(),
                 "auth.session-skips-2fa: true — IP-сессия отключает 2FA (осознанный выбор?)");
         check(sender, "Счётчики попыток сохраняются", cfg.storageWriteAsync(),
                 "storage.write-async: false — запись на диск в главном потоке");
         check(sender, "Политика паролей", cfg.minPasswordLength() >= 8,
                 "auth.min-password-length < 8 — разрешены короткие пароли");
-        check(sender, "Тестовый запрос к DonatePay", accessManager.probeDonatePay(),
-                "не удалось подключиться к API DonatePay — проверьте токен и сеть");
         // EasyDonate — только если хозяин решил его использовать
         if (cfg.easyDonateEnabled()) {
             check(sender, "EasyDonate Shop-Key", cfg.easyDonateReady(),
                     "easydonate.enabled: true, но shop-key пуст — опрос не ведётся");
-            check(sender, "Тестовый запрос к EasyDonate",
-                    accessManager.probeDonationProvider(EasyDonateClient.SOURCE),
-                    "не удалось подключиться к API EasyDonate — проверьте shop-key и сеть");
+            if (cfg.easyDonateReady()) {
+                check(sender, "Ссылка EasyDonate для игроков", !cfg.easyDonatePaymentUrl().isBlank(),
+                        "не задан easydonate.payment-url — ссылка для игроков не показывается");
+                check(sender, "Тестовый запрос к EasyDonate",
+                        accessManager.probeDonationProvider(EasyDonateClient.SOURCE),
+                        "не удалось подключиться к API EasyDonate — проверьте shop-key и сеть");
+            }
         }
         check(sender, "Аудит-лог", cfg.auditEnabled(),
                 "audit.enabled: false — история событий не сохраняется");
@@ -1070,7 +1080,8 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                                 "enabled", store.getTotpEnabledCount(),
                                 "state", messages.raw(cfg.totpEnabled() ? "common.on" : "common.off"))));
                                 messages.send(sender, "status.donatepay",
-                "value", messages.raw(cfg.donatePayReady() ? "common.connected" : "common.token-missing"));
+                "value", messages.raw(!cfg.donatePayEnabled() ? "common.provider-disabled"
+                        : (cfg.donatePayReady() ? "common.connected" : "common.token-missing")));
         sender.sendMessage(messages.get("status.donatepay-label")
                 .append(messages.get("status.donatepay-value",
                                 "minimum_donation_rubles", cfg.minimumDonationRubles(),

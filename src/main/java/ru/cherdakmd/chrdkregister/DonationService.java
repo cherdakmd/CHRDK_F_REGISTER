@@ -256,7 +256,7 @@ public final class DonationService {
         RegistrationStore.DonationRecord record = existing.get();
         int grantDays = days > 0 ? days : config.daysForAmount((int) (record.amountKopecks / 100L));
         long passUntil = store.grantPassManual(playerName, nowMillis, grantDays * 86_400_000L,
-                "donatepay:#" + donationId).passUntil;
+                record.source + ":#" + donationId).passUntil;
         store.addPayment(playerName, record.amountKopecks, nowMillis);
         store.updateDonation(donationId, RegistrationStore.DonationStatus.GRANTED.name(),
                 record.note + (record.note.isBlank() ? "" : "; ") + text("donation.label.approved"),
@@ -270,7 +270,9 @@ public final class DonationService {
                         "days", grantDays, "amount", formatRubles(record.amountKopecks)),
                 "good");
         notifyOnline(playerName, passUntil,
-                text("donation.label.approved-source", "id", donationId));
+                text("donation.label.approved-source",
+                        "service", EasyDonateClient.SOURCE.equals(record.source) ? "EasyDonate" : "DonatePay",
+                        "id", donationId));
         return true;
     }
 

@@ -28,6 +28,7 @@ public final class PluginConfig {
     private final boolean easyDonateEnabled;
     private final String easyDonateShopKey;
     private final String easyDonatePaymentUrl;
+    private final boolean donatePayEnabled;
     private final boolean strictCaseMatch;
     private final boolean donateReviewUnmatched;
     private final boolean donateFuzzyMatch;
@@ -129,7 +130,7 @@ public final class PluginConfig {
                 true,
                 ZoneId.of("Europe/Moscow"),
                 new ChatConfig(),
-                300, 10, true, 15, 24, false, "", ""
+                300, 10, true, 15, 24, false, "", "", true
         );
     }
 
@@ -204,7 +205,8 @@ public final class PluginConfig {
             int donatePendingNotifyHours,
             boolean easyDonateEnabled,
             String easyDonateShopKey,
-            String easyDonatePaymentUrl
+            String easyDonatePaymentUrl,
+            boolean donatePayEnabled
     ) {
         this.donatePayApiToken = donatePayApiToken == null ? "" : donatePayApiToken.trim();
         this.donatePayPaymentUrl = sanitizeUrl(donatePayPaymentUrl);
@@ -218,6 +220,7 @@ public final class PluginConfig {
         this.easyDonateEnabled = easyDonateEnabled;
         this.easyDonateShopKey = easyDonateShopKey == null ? "" : easyDonateShopKey.trim();
         this.easyDonatePaymentUrl = sanitizeUrl(easyDonatePaymentUrl);
+        this.donatePayEnabled = donatePayEnabled;
         this.strictCaseMatch = strictCaseMatch;
         this.donateReviewUnmatched = donateReviewUnmatched;
         this.donateFuzzyMatch = donateFuzzyMatch;
@@ -371,7 +374,8 @@ public final class PluginConfig {
                 config.getInt("donatepay.pending-notify-hours", 24),
                 config.getBoolean("easydonate.enabled", false),
                 config.getString("easydonate.shop-key", ""),
-                config.getString("easydonate.payment-url", "")
+                config.getString("easydonate.payment-url", ""),
+                config.getBoolean("donatepay.enabled", true)
         );
     }
 
@@ -464,7 +468,12 @@ public final class PluginConfig {
     }
 
     public boolean donatePayReady() {
-        return !donatePayApiToken.isBlank();
+        return donatePayEnabled && !donatePayApiToken.isBlank();
+    }
+
+    /** Флаг включения провайдера DonatePay (donatepay.enabled). */
+    public boolean donatePayEnabled() {
+        return donatePayEnabled;
     }
 
     public boolean hasPaymentUrl() {

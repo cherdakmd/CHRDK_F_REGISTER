@@ -41,6 +41,7 @@ messages:
     "off": "<red>ОТКЛЮЧЁН</red>"
     "on": "<green>ВКЛЮЧЁН</green>"
     "token-missing": "<red>токен не задан в config.yml</red>"
+    "provider-disabled": "<gray>выключен в конфиге</gray>"
     "unknown": "<white>неизвестно</white>"
     "yes": "<green>да</green>"
 
@@ -85,7 +86,7 @@ messages:
   # ---------------------------------------------------------------
   "restriction":
     "command-login": "<red>Сначала войдите в аккаунт: /login &lt;пароль&gt;</red>"
-    "command-no-pass": "<red>Команды заблокированы! Сначала приобретите проходку (%price% ₽ на DonatePay, укажите ник %player% в имени донатера).</red>"
+    "command-no-pass": "<red>Команды заблокированы! Сначала приобретите проходку (%price% ₽, укажите ник %player% в имени донатера).</red>"
     "command-register": "<red>Сначала зарегистрируйте пароль: /register &lt;пароль&gt; &lt;повтор&gt;</red>"
     "command-two-factor": "<red>Подтвердите вход кодом двухфакторной аутентификации: /2fa &lt;6-значный_код&gt;</red>"
     "too-many-accounts": "<red>С вашего IP уже играет слишком много аккаунтов с проходками. Обратитесь к администрации.</red>"
@@ -290,7 +291,7 @@ messages:
     "restored-actionbar": "<green>Авторизация подтверждена</green>"
 
   # ---------------------------------------------------------------
-  # no-pass — Нет проходки (оплата DonatePay)
+  # no-pass — Нет проходки (страница оплаты подставляется по включённым провайдерам)
   # ---------------------------------------------------------------
   "no-pass":
     "prompt": |-
@@ -298,12 +299,11 @@ messages:
       <red><bold>У вас нет активной проходки на сервер!</bold></red>
       <gray>Стоимость проходки: </gray><gold><bold>%price% ₽</bold></gold><gray> (выдаётся на </gray><aqua>%days% дней</aqua><gray>)</gray>
       <yellow>ВАЖНО: В поле «Ваше имя» (имя донатера) укажите ваш точный ник: </yellow><green><bold>%player%</bold></green>
-      <click:open_url:'%payment-url%'><hover:show_text:'<green>Нажмите, чтобы перейти к оплате проходки</green>'><aqua><bold><underlined>[ Открыть страницу оплаты DonatePay ]</underlined></bold></aqua></hover></click>
       <gray>Проходка активируется автоматически сразу после оплаты (не выходя с сервера).</gray>
       <red>==============================================</red>
-    "reminder": "<red>Нет проходки! Оплатите %price%₽ на DonatePay (укажите ник %player% в имени донатера)</red>"
+    "reminder": "<red>Нет проходки! Оплатите %price%₽ на странице оплаты (укажите ник %player% в имени донатера)</red>"
     "title": "<red><bold>НЕТ ПРОХОДКИ</bold></red>"
-    "title-subtitle": "<yellow>Донат %price%₽ на DonatePay (ник: %player%)</yellow>"
+    "title-subtitle": "<yellow>Донат %price%₽ (ник: %player%)</yellow>"
 
   # ---------------------------------------------------------------
   # pass — Проходка: активация, срок, выдача, отзыв
@@ -326,7 +326,7 @@ messages:
       <yellow>/%label% gift <ник> <дней></yellow><gray> — подарить проходку</gray>
       <yellow>/%label% pending</yellow><gray> — нераспознанные донаты</gray>
       <yellow>/%label% donations [фильтр] [лимит]</yellow><gray> — журнал всех донатов (выданные/ожидание/отклонённые)</gray>
-      <yellow>/%label% health</yellow><gray> — состояние связи DonatePay, счётчики опросов</gray>
+      <yellow>/%label% health</yellow><gray> — состояние донатных сервисов, счётчики опросов</gray>
       <yellow>/%label% approve <id> [ник] [дней]</yellow><gray> — подтвердить платёж и выдать проходку</gray>
       <yellow>/%label% reject <id> [причина]</yellow><gray> — отклонить платёж</gray>
       <yellow>/%label% sessions <ник></yellow><gray> — активные сессии и IP игрока</gray>
@@ -337,7 +337,7 @@ messages:
       <yellow>/%label% backup <create|list|restore></yellow><gray> — резервные копии данных</gray>
       <yellow>/%label% reload</yellow><gray> — перезагрузить config.yml</gray>
     "claim-success": "<green>✓ Платёж #%id% подтверждён, проходка активирована!</green>"
-    "expired": "<red>Срок вашей месячной проходки истёк! Продлите проходку через DonatePay.</red>"
+    "expired": "<red>Срок вашей месячной проходки истёк! Продлите проходку на странице оплаты сервера.</red>"
     "expiring": "<gold>Внимание! Проходка заканчивается через %remaining% (до %until%). Продлить: %renew%</gold>"
     "expiry-bar": "<yellow>Проходка заканчивается через %remaining%</yellow>"
     "gift-notice": "<green>Вам подарили проходку на %days% дн. от %sender%!</green>"
@@ -365,7 +365,7 @@ messages:
       "item-2fa-name": "<red><bold>Двухфакторная защита</bold></red>"
       "item-password-lore": "<gray>подсказка по смене пароля</gray>"
       "item-password-name": "<yellow><bold>Сменить пароль</bold></yellow>"
-      "item-payment-lore": "<gray>ссылка на страницу DonatePay</gray>"
+      "item-payment-lore": "<gray>ссылка на страницу оплаты</gray>"
       "item-payment-name": "<gold><bold>Оплатить / продлить проходку</bold></gold>"
       "item-sessions-lore": "<gray>устройства, IP, завершение сессий</gray>"
       "item-sessions-name": "<green><bold>Активные сессии</bold></green>"
@@ -440,7 +440,7 @@ messages:
       "not-found": "<red>Платёж с ID %id% не найден в журнале.</red>"
     "label":
       "approved": "подтверждено администратором"
-      "approved-source": "DonatePay #%id% (подтверждено админом)"
+      "approved-source": "%service% #%id% (подтверждено админом)"
       "rejected": "отклонено администратором"
       "self-claimed": " (самостоятельно)"
     "not-found": "<red>Платёж #%id% не найден в журнале.</red>"
@@ -471,14 +471,14 @@ messages:
         Разбор: /pass pending
       "pending-title": "Донат требует решения"
     "pending-empty": "<green>Нераспознанных донатов нет — всё выдано автоматически.</green>"
-    "recheck-started": "<gray>Внеочередной опрос DonatePay запущен — результат смотрите в консоли сервера и в /%label% pending.</gray>"
-    "recheck-unavailable": "<red>DonatePay не настроен: укажите donatepay.api-token в plugins/CHRDK_F_REGISTER/config.yml.</red>"
-    "recheck-done": "<green>Опрос DonatePay завершён: новых транзакций — %count%, в очереди решений — %pending% шт. (/%label% pending).</green>"
-    "recheck-failed": "<red>Опрос DonatePay не удался: %error%. Подробности — в консоли сервера.</red>"
+    "recheck-started": "<gray>Внеочередной опрос донатов запущен — результат смотрите в консоли сервера и в /%label% pending.</gray>"
+    "recheck-unavailable": "<red>Донаты выключены или не настроены: включите donatepay.enabled / easydonate.enabled и задайте ключ в plugins/CHRDK_F_REGISTER/config.yml.</red>"
+    "recheck-done": "<green>Опрос донатов завершён: новых транзакций — %count%, в очереди решений — %pending% шт. (/%label% pending).</green>"
+    "recheck-failed": "<red>Опрос донатов не удался: %error%. Подробности — в консоли сервера.</red>"
     "alert-offline": "<red>⚠ %service% недоступен: %fails% неудач подряд (%error%). Проходки по донатам не выдаются — проверьте сайт и ключи.</red>"
     "alert-online": "<green>✔ %service% снова на связи — авто-проверка донатов восстановлена.</green>"
     "alert-pending-stale": "<yellow>⧗ %count% донат(а) ждут решения дольше %hours% ч — разбор: /pass pending.</yellow>"
-    "health-header": "<gold>=== Здоровье донатов DonatePay ===</gold>"
+    "health-header": "<gold>=== Здоровье донатов ===</gold>"
     "health-service-off": "<dark_gray>%service% — не настроен или выключен (пропуск опроса)</dark_gray>"
     "health-state": "<white>%service%</white> — %state%<gray>, интервал опроса: %poll_seconds% с, курсор транзакций: #%cursor%</gray>"
     "health-ok": "<green>✔ связь в норме</green>"
@@ -497,7 +497,7 @@ messages:
     "journal-header": "<gold>=== Журнал донатов: %size% шт.%filter% ===</gold>"
     "journal-empty": "<yellow>По этому разделу журнал пуст. Добавить: /%label% testpay.</yellow>"
     "journal-entry": "<yellow>#%id% [%source%] %donor% — %amount% ₽</yellow> [%status%]<gray>%detail%</gray><dark_gray> | %created%</dark_gray>"
-    "journal-hint": "<gray>Ждут решения: /%label% pending | Обновить с DonatePay сейчас: /%label% recheck</gray>"
+    "journal-hint": "<gray>Ждут решения: /%label% pending | Обновить сейчас: /%label% recheck</gray>"
     "status-granted": "✔ выдан"
     "status-pending-name": "⧗ ждёт (ник)"
     "status-pending-amount": "⧗ ждёт (сумма)"
@@ -583,7 +583,7 @@ messages:
   # ---------------------------------------------------------------
   "chat":
     "blocked-login": "<red>Чат заблокирован! Авторизуйтесь: /login <пароль></red>"
-    "blocked-no-pass": "<red>Чат заблокирован до покупки проходки на DonatePay!</red>"
+    "blocked-no-pass": "<red>Чат заблокирован до покупки проходки!</red>"
     "blocked-register": "<red>Чат заблокирован! Зарегистрируйтесь: /register <пароль> <повтор></red>"
     "blocked-two-factor": "<red>Чат заблокирован! Подтвердите вход кодом 2FA: /2fa <6-значный_код></red>"
     "broadcast-prefix": "&8[&cОбъявление&8] &r"

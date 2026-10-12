@@ -1463,16 +1463,14 @@ public final class AccessManager {
         messages.sendList(player, "no-pass.prompt",
                 "price", config.minimumDonationRubles(),
                 "days", config.grantDays(),
-                "player", player.getName(),
-                "payment-url", config.hasPaymentUrl() ? config.donatePayPaymentUrl() : "");
-        String easyUrl = config.easyDonateReady() ? config.easyDonatePaymentUrl() : "";
-        if (!easyUrl.isBlank()) {
-            // вторая ссылка — отдельной строкой: кликабельные теги через %placeholder% не проходят парсер
-            player.sendMessage(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(
-                    "<click:open_url:'" + easyUrl + "'>"
-                    + "<hover:show_text:'<green>Нажмите, чтобы перейти к оплате проходки</green>'>"
-                    + "<aqua><bold><underlined>[ Открыть страницу оплаты EasyDonate ]</underlined></bold></aqua>"
-                    + "</hover></click>"));
+                "player", player.getName());
+        // ссылок на оплату в шаблоне нет: кликабельные теги через %placeholder% не проходят
+        // парсер, а провайдеров может быть ноль/один/два — строки добавляем из кода
+        if (config.donatePayEnabled() && config.hasPaymentUrl()) {
+            sendPaymentLinkLine(player, "DonatePay", config.donatePayPaymentUrl());
+        }
+        if (config.easyDonateEnabled() && !config.easyDonatePaymentUrl().isBlank()) {
+            sendPaymentLinkLine(player, "EasyDonate", config.easyDonatePaymentUrl());
         }
 
         if (showTitle) {
@@ -1485,6 +1483,15 @@ public final class AccessManager {
             );
             player.showTitle(title);
         }
+    }
+
+    /** Кликабельная строка «Открыть страницу оплаты <сервис>» — собирается вне messages.yml. */
+    private void sendPaymentLinkLine(Player player, String service, String url) {
+        player.sendMessage(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(
+                "<click:open_url:'" + url + "'>"
+                + "<hover:show_text:'<green>Нажмите, чтобы перейти к оплате проходки</green>'>"
+                + "<aqua><bold><underlined>[ Открыть страницу оплаты " + service + " ]</underlined></bold></aqua>"
+                + "</hover></click>"));
     }
 
     public void sendRegisterPrompt(Player player, boolean showTitle) {
