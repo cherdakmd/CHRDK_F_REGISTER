@@ -59,7 +59,7 @@ class BattlePassConfigTest {
                                 "free-days", "2", "vip-days", "1")))));
         assertEquals(1, weeks.size());
         List<BattlePassConfig.MissionDef> missions = weeks.get(0).missions();
-        assertEquals(3, missions.size(), "ок/craft, дубликат id отброшен, fish по умолчанию any");
+        assertEquals(2, missions.size(), "ok/craft + fishy; мусор и дубликат id отброшены");
         BattlePassConfig.MissionDef fish = missions.stream()
                 .filter(m -> m.id().equals("fishy")).findFirst().orElseThrow();
         assertEquals("any", fish.matchKey(), "FISH без entity ловит любой улов");
