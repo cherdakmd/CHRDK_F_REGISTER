@@ -25,6 +25,37 @@ public final class MaterialGoals {
             Material.NETHER_WART, Material.PUMPKIN, Material.MELON
     );
 
+    /** Древесина для рубки: брёвна, обтёсанные брёвна, блоки древесины, стебли и гифы. */
+    private static final Set<Material> LOGS = Set.of(
+            Material.OAK_LOG, Material.SPRUCE_LOG, Material.BIRCH_LOG, Material.JUNGLE_LOG,
+            Material.ACACIA_LOG, Material.DARK_OAK_LOG, Material.MANGROVE_LOG,
+            Material.CHERRY_LOG, Material.PALE_OAK_LOG,
+            Material.STRIPPED_OAK_LOG, Material.STRIPPED_SPRUCE_LOG, Material.STRIPPED_BIRCH_LOG,
+            Material.STRIPPED_JUNGLE_LOG, Material.STRIPPED_ACACIA_LOG,
+            Material.STRIPPED_DARK_OAK_LOG, Material.STRIPPED_MANGROVE_LOG,
+            Material.STRIPPED_CHERRY_LOG, Material.STRIPPED_PALE_OAK_LOG,
+            Material.OAK_WOOD, Material.SPRUCE_WOOD, Material.BIRCH_WOOD, Material.JUNGLE_WOOD,
+            Material.ACACIA_WOOD, Material.DARK_OAK_WOOD, Material.MANGROVE_WOOD,
+            Material.CHERRY_WOOD, Material.PALE_OAK_WOOD,
+            Material.STRIPPED_OAK_WOOD, Material.STRIPPED_SPRUCE_WOOD,
+            Material.STRIPPED_BIRCH_WOOD, Material.STRIPPED_JUNGLE_WOOD,
+            Material.STRIPPED_ACACIA_WOOD, Material.STRIPPED_DARK_OAK_WOOD,
+            Material.STRIPPED_MANGROVE_WOOD, Material.STRIPPED_CHERRY_WOOD,
+            Material.STRIPPED_PALE_OAK_WOOD,
+            Material.CRIMSON_STEM, Material.WARPED_STEM,
+            Material.STRIPPED_CRIMSON_STEM, Material.STRIPPED_WARPED_STEM,
+            Material.CRIMSON_HYPHAE, Material.WARPED_HYPHAE,
+            Material.STRIPPED_CRIMSON_HYPHAE, Material.STRIPPED_WARPED_HYPHAE
+    );
+
+    /** Копаемый грунт: земля, песок, гравий и родственные мягкие блоки. */
+    private static final Set<Material> DIGGABLE = Set.of(
+            Material.DIRT, Material.GRASS_BLOCK, Material.DIRT_PATH, Material.COARSE_DIRT,
+            Material.ROOTED_DIRT, Material.PODZOL, Material.MYCELIUM, Material.FARMLAND,
+            Material.MUD, Material.SAND, Material.RED_SAND, Material.GRAVEL, Material.CLAY,
+            Material.SOUL_SAND, Material.SOUL_SOIL, Material.SNOW_BLOCK
+    );
+
     /** Материалы, считаемые алмазным содержанием для взноса в котёл; значение = эквивалент в алмазах. */
     public static int diamondValue(Material material) {
         return switch (material) {
@@ -40,6 +71,14 @@ public final class MaterialGoals {
 
     public static boolean isCrop(Material material) {
         return CROPS.contains(material);
+    }
+
+    public static boolean isLog(Material material) {
+        return LOGS.contains(material);
+    }
+
+    public static boolean isDiggable(Material material) {
+        return DIGGABLE.contains(material);
     }
 
     private MaterialGoals() {

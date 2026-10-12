@@ -32,7 +32,7 @@ public final class GoalsConfig {
 
     public static GoalsConfig parse(FileConfiguration cfg, Logger logger) {
         boolean requireAuth = cfg.getBoolean("general.require-auth", true);
-        int activeCount = clamp(cfg.getInt("rotation.active-count", 4), 1, GoalTemplate.ALL.length);
+        int activeCount = clamp(cfg.getInt("rotation.active-count", 6), 1, GoalTemplate.ALL.length);
         int periodDays = clamp(cfg.getInt("rotation.period-days", 7), 1, 90);
         int bonus = clamp(cfg.getInt("rotation.reward-bonus-percent", 0), 0, 200);
         Map<String, TemplateOverride> templates = new HashMap<>();

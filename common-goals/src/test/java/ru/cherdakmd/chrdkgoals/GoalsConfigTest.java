@@ -26,7 +26,7 @@ class GoalsConfigTest {
     void defaultsAndClamp() {
         GoalsConfig config = parse("general: {}\n");
         assertTrue(config.requireAuth());
-        assertEquals(4, config.activeCount());
+        assertEquals(6, config.activeCount());
         assertEquals(7, config.periodDays());
 
         GoalsConfig clamped = parse("""

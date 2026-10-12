@@ -8,8 +8,8 @@ general:
   require-auth: true
 
 rotation:
-  # Сколько целей активно одновременно (1..8).
-  active-count: 4
+  # Сколько целей активно одновременно (1..24).
+  active-count: 6
   # Срок волны целей в днях (1..90): по истечении — новая ротация.
   period-days: 7
   # Бонус пула ко всем наградам (%) — округление вверх доли каждого.
@@ -17,11 +17,33 @@ rotation:
 
 # Шаблоны целей: вкл/выкл, честный целевой объём и пул наград (алмазов).
 goals:
+  # — бой и охота —
   hostile-slay:      {enabled: true, target: 1500, reward-pool: 96}
+  passive-slay:      {enabled: true, target: 3000, reward-pool: 64}
+  boss-slay:         {enabled: true, target: 10, reward-pool: 160}
+  bow-shoot:         {enabled: true, target: 3000, reward-pool: 32}
+  raid-win:          {enabled: true, target: 6, reward-pool: 128}
+  # — шахтёрство и стройка —
   ore-break:         {enabled: true, target: 4000, reward-pool: 128}
-  blocks-travelled:  {enabled: true, target: 400000, reward-pool: 64}
-  blocks-placed:     {enabled: true, target: 20000, reward-pool: 64}
-  crops-harvested:   {enabled: true, target: 6000, reward-pool: 48}
-  fish-caught:       {enabled: true, target: 1500, reward-pool: 48}
   blocks-broken:     {enabled: true, target: 50000, reward-pool: 96}
+  wood-chop:         {enabled: true, target: 25000, reward-pool: 80}
+  ground-dig:        {enabled: true, target: 20000, reward-pool: 48}
+  blocks-placed:     {enabled: true, target: 20000, reward-pool: 64}
+  # — ферма и животные —
+  crops-harvested:   {enabled: true, target: 6000, reward-pool: 48}
+  animal-breed:      {enabled: true, target: 800, reward-pool: 48}
+  animal-tame:       {enabled: true, target: 100, reward-pool: 40}
+  fish-caught:       {enabled: true, target: 1500, reward-pool: 48}
+  # — магия и ремесло —
+  enchant-items:     {enabled: true, target: 400, reward-pool: 80}
+  potion-brew:       {enabled: true, target: 500, reward-pool: 64}
+  item-smelt:        {enabled: true, target: 6000, reward-pool: 48}
+  item-craft:        {enabled: true, target: 12000, reward-pool: 48}
+  pearl-throw:       {enabled: true, target: 500, reward-pool: 32}
+  # — мир и быт —
+  blocks-travelled:  {enabled: true, target: 400000, reward-pool: 64}
+  villager-trade:    {enabled: true, target: 1500, reward-pool: 64}
+  xp-collect:        {enabled: true, target: 80000, reward-pool: 80}
+  bed-sleep:         {enabled: true, target: 250, reward-pool: 24}
+  # — общий котёл —
   donate-diamonds:   {enabled: true, target: 2000, reward-pool: 192}

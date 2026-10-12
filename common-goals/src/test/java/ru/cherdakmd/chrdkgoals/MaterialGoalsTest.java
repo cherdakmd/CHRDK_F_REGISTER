@@ -26,6 +26,33 @@ class MaterialGoalsTest {
     }
 
     @Test
+    void logsCoverWoodFamilies() {
+        assertTrue(MaterialGoals.isLog(Material.OAK_LOG));
+        assertTrue(MaterialGoals.isLog(Material.STRIPPED_DARK_OAK_LOG));
+        assertTrue(MaterialGoals.isLog(Material.CHERRY_WOOD));
+        assertTrue(MaterialGoals.isLog(Material.PALE_OAK_LOG));
+        assertTrue(MaterialGoals.isLog(Material.WARPED_STEM));
+        assertTrue(MaterialGoals.isLog(Material.STRIPPED_CRIMSON_HYPHAE));
+        assertFalse(MaterialGoals.isLog(Material.OAK_PLANKS));
+        assertFalse(MaterialGoals.isLog(Material.STICK));
+    }
+
+    @Test
+    void diggableCoversSoilSandGravel() {
+        assertTrue(MaterialGoals.isDiggable(Material.GRASS_BLOCK));
+        assertTrue(MaterialGoals.isDiggable(Material.DIRT));
+        assertTrue(MaterialGoals.isDiggable(Material.SAND));
+        assertTrue(MaterialGoals.isDiggable(Material.RED_SAND));
+        assertTrue(MaterialGoals.isDiggable(Material.GRAVEL));
+        assertTrue(MaterialGoals.isDiggable(Material.SOUL_SOIL));
+        assertTrue(MaterialGoals.isDiggable(Material.CLAY));
+        assertTrue(MaterialGoals.isDiggable(Material.SNOW_BLOCK));
+        assertFalse(MaterialGoals.isDiggable(Material.STONE));
+        assertFalse(MaterialGoals.isDiggable(Material.OAK_LOG));
+        assertFalse(MaterialGoals.isDiggable(Material.DIAMOND_ORE));
+    }
+
+    @Test
     void diamondEquivalence() {
         assertEquals(1, MaterialGoals.diamondValue(Material.DIAMOND));
         assertEquals(9, MaterialGoals.diamondValue(Material.DIAMOND_BLOCK));
