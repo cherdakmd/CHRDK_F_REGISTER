@@ -12,7 +12,7 @@ class ClaimMathTest {
         long day = ClaimMath.DAY_MILLIS;
         long base = 1_000_000_000L;
         assertEquals(0, ClaimMath.overdueDays(base, base - 1), "будущее не должно");
-        assertEquals(0, ClaimMath.overdueDays(base, base), "ровно в срок — ещё не просрочено");
+        assertEquals(1, ClaimMath.overdueDays(base, base), "в момент дедлайна сутка подлежит списанию");
         assertEquals(1, ClaimMath.overdueDays(base, base + 1), "первая просроченная сутка");
         assertEquals(1, ClaimMath.overdueDays(base, base + day - 1));
         assertEquals(2, ClaimMath.overdueDays(base, base + day));
