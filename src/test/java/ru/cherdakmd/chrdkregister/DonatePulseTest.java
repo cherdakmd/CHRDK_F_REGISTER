@@ -68,7 +68,7 @@ class DonatePulseTest {
 
     @Test
     void stalePendingCountsOnlyOlderThanThreshold() {
-        long now = 10_000_000L;
+        long now = 100L * 3_600_000L; // «сейчас» ~100 часов после эпохи — метки в прошлом не уходят в минус
         long[] stamps = {now - 60_000, now - 25 * 3_600_000L, 0, now - 30 * 3_600_000L};
         assertEquals(2, DonatePulse.countStalePending(stamps, now, 24),
                 "два доната старше суток, свежий и кривая метка — мимо");
