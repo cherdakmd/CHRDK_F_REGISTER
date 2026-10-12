@@ -1,6 +1,7 @@
 package ru.cherdakmd.chrdkgoals;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /** Делёж пула наград между участниками: пропорционально вкладу, минимум 1 каждому. */
