@@ -11,6 +11,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 
@@ -107,11 +108,22 @@ public final class TierItems {
     }
 
     private void clearTierModifiers(ItemMeta meta) {
-        for (String tag : List.of("attack", "armor", "toughness", "movespeed",
-                "attack_tool", "attackspeed")) {
-            for (Attribute attribute : List.of(Attribute.ATTACK_DAMAGE, Attribute.ARMOR,
-                    Attribute.ARMOR_TOUGHNESS, Attribute.MOVEMENT_SPEED, Attribute.ATTACK_SPEED)) {
-                meta.removeAttributeModifier(attribute, modifierKey(tag));
+        if (meta.hasAttributeModifiers()) {
+            for (String tag : List.of("attack", "armor", "toughness", "movespeed",
+                    "attack_tool", "attackspeed")) {
+                NamespacedKey key = modifierKey(tag);
+                for (Attribute attribute : List.of(Attribute.ATTACK_DAMAGE, Attribute.ARMOR,
+                        Attribute.ARMOR_TOUGHNESS, Attribute.MOVEMENT_SPEED, Attribute.ATTACK_SPEED)) {
+                    Collection<AttributeModifier> mods = meta.getAttributeModifiers(attribute);
+                    if (mods == null) {
+                        continue;
+                    }
+                    for (AttributeModifier existing : mods) {
+                        if (existing.getKey().equals(key)) {
+                            meta.removeAttributeModifier(attribute, existing);
+                        }
+                    }
+                }
             }
         }
         // снятие нашего блеска: если глайнт стоял через оверрайд — вернуть к стандартному
