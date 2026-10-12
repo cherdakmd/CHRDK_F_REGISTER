@@ -30,7 +30,9 @@ final class RankLadder {
      */
     static int tierIndex(List<Rank> ladder, long totalSeconds) {
         long hours = Math.floorDiv(Math.max(0, totalSeconds), 3600);
-        for (int i = ladder.size() - 1; i >= 0; i--) {
+        // лестница убывает (индекс 0 — высшее звание): берём первый порог сверху,
+        // который стаж уже набил — это и есть текущее звание игрока
+        for (int i = 0; i < ladder.size(); i++) {
             if (hours >= ladder.get(i).hours()) {
                 return i;
             }
@@ -88,7 +90,7 @@ final class RankLadder {
             if (id.isEmpty() || name.isEmpty()) {
                 throw new IllegalStateException("Звание без id или name: " + entry);
             }
-            if (hours < 0 || hours > previousHours) {
+            if (hours < 0 || hours >= previousHours) {
                 throw new IllegalStateException("Часы лестницы должны строго убывать сверху вниз: " + id);
             }
             previousHours = hours;
