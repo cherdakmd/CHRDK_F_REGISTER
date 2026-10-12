@@ -2,7 +2,7 @@ name: CHRDK_CommonGoals
 version: ${version}
 main: ru.cherdakmd.chrdkgoals.CommonGoalsPlugin
 api-version: '1.21'
-description: Общие цели сообщества: сервер совместно набивает прогресс, награда — пропорционально вкладу
+description: "Общие цели сообщества: сервер совместно набивает прогресс, награда — пропорционально вкладу"
 author: cherdakmd
 depend: [CHRDK_F_REGISTER]
 commands:

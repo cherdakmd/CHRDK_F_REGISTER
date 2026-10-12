@@ -4,11 +4,11 @@ main: ru.cherdakmd.chrdkreferrals.ReferralsPlugin
 api-version: '1.21.11'
 depend:
   - CHRDK_F_REGISTER
-description: Реферальная система: приглашайте друзей — получайте бонусные дни проходки (аддон CHRDK_F_REGISTER)
+description: "Реферальная система: приглашайте друзей — получайте бонусные дни проходки (аддон CHRDK_F_REGISTER)"
 commands:
   ref:
     aliases: [referral, invite]
-    description: Реферальная система: статус, привязка, топ
+    description: "Реферальная система: статус, привязка, топ"
     usage: /<command> [use <ник>|top]
   refadmin:
     aliases: [referraladmin]

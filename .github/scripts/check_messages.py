@@ -155,6 +155,34 @@ def scan_module(module: str) -> list[str]:
     return errors
 
 
+# ---------------------------------------------------------------------------
+# plugin.yml: «голый» скаляр с двоеточием — невалидный YAML, плагин не грузится.
+# (В 1.4.19 и раньше 6 аддонов молча отваливались на сервере: description вида
+# «Телепортация CHRDK: …» без кавычек ломал SnakeYAML.)
+# ---------------------------------------------------------------------------
+
+# key: <значение> — значение не в кавычках/не flow/не блочное
+PLAIN_VALUE = re.compile(r"^\s*[A-Za-z0-9_.-]+:\s+([^\s\"'\[\{>|&*!%@`][^#\n]*\S)\s*$")
+
+
+def scan_plugin_yml(module: str) -> list[str]:
+    errors = []
+    yml = os.path.join(module, "src/main/resources/plugin.yml")
+    if not os.path.exists(yml):
+        return errors
+    name = os.path.basename(module) or "core"
+    with open(yml, encoding="utf-8") as handle:
+        for lineno, line in enumerate(handle, 1):
+            match = PLAIN_VALUE.match(line.rstrip("\n"))
+            if match and ": " in match.group(1):
+                errors.append(
+                    f"[{name}] plugin.yml:{lineno}: скаляр с двоеточием без кавычек: "
+                    f"{line.strip()[:80]}"
+                )
+    print(f"[{name}] plugin.yml: двоеточий без кавычек {len(errors)} — {'OK' if not errors else 'FAIL'}")
+    return errors
+
+
 def main() -> int:
     modules = [REPO]
     for entry in sorted(os.listdir(REPO)):
@@ -167,6 +195,13 @@ def main() -> int:
     all_errors: list[str] = []
     for module in modules:
         all_errors.extend(scan_module(module))
+        all_errors.extend(scan_plugin_yml(module))
+    # plugin.yml может лежать в модуле без messages.yml (или в ядре): добираем остальные
+    for entry in sorted(os.listdir(REPO)):
+        path = os.path.join(REPO, entry)
+        if os.path.isdir(path) and path not in modules \
+                and os.path.exists(os.path.join(path, "src/main/resources/plugin.yml")):
+            all_errors.extend(scan_plugin_yml(path))
 
     if all_errors:
         print("\nКонтракт сообщений нарушен:")

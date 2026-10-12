@@ -789,16 +789,33 @@ public void onEnable() {
 ./gradlew build
 ```
 
-Собираются оба модуля: ядро появится в `build/libs/chrdk-f-register-1.4.20.jar`, аддон
-CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.20.jar`, реферальный —
-`referrals/build/libs/chrdk-referrals-1.4.20.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.20.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.20.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.20.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.20.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.20.jar` (зависит от аддона чар), общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.20.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются оба модуля: ядро появится в `build/libs/chrdk-f-register-1.4.21.jar`, аддон
+CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.21.jar`, реферальный —
+`referrals/build/libs/chrdk-referrals-1.4.21.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.21.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.21.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.21.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.21.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.21.jar` (зависит от аддона чар), общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.21.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). Оба JAR прикладываются к каждому релизу на GitHub.
+
+---
+
+## Обновление до 1.4.21
+
+**Критический фикс: половина аддонов не грузилась на сервере.** В `plugin.yml`
+шести аддонов (Teleports, Referrals, Enchants, TierForge, Artifacts, CommonGoals)
+`description` содержал двоеточие без кавычек — SnakeYAML отклонял такой файл целиком,
+и сервер писал `Invalid plugin.yml`, молча выкидывая плагин из загрузки. По логу это
+выглядит как `mapping values are not allowed here` при старте. Теперь описания
+в кавычках, а в CI добавлена проверка, которая больше не даст такому пройти.
+
+**Обновление обязательное**: замените все JAR-ы целиком. Если на сервере аддоны
+«пропадали» или не отвечали на команды — после этой версии они встанут как надо
+(у Artifacts ещё и появится добыча реликвий из 1.4.19, у CommonGoals — 24 задания
+из 1.4.20: в `plugins/CHRDK_CommonGoals/config.yml` поднимите `rotation.active-count`
+до 6 или удалите файл перед рестартом).
 
 ---
 
@@ -845,7 +862,7 @@ JAR-ы — простая замена.
 
 Восьмой аддон — **CHRDK_CommonGoals**, общие цели сообщества: сервер сообща набивает
 цели волны, пул алмазов делится между участниками по вкладу, выдача — `/goals claim`.
-`chrdk-common-goals-1.4.20.jar` рядом с ядром (≥ 1.4.6), перезапуск. Настройки
+`chrdk-common-goals-1.4.21.jar` рядом с ядром (≥ 1.4.6), перезапуск. Настройки
 волны/шаблонов — `plugins/CHRDK_CommonGoals/config.yml`.
 
 ---
@@ -873,7 +890,7 @@ plugins/<Addon>/messages.yml — удалите их после обновлен
 структуру), чтобы сервер взял актуальные ключи.
 
 **Важно при обновлении:** ядро — заменой JAR. Аддон опционален:
-`chrdk-artifacts-1.4.20.jar` рядом с ядром и chrdk-enchants (той же версии), перезапуск.
+`chrdk-artifacts-1.4.21.jar` рядом с ядром и chrdk-enchants (той же версии), перезапуск.
 Кулдауны/вкл/цена опытом — в `plugins/CHRDK_Artifacts/config.yml`.
 
 ---
@@ -884,7 +901,7 @@ plugins/<Addon>/messages.yml — удалите их после обновлен
 проклятого до легендарного, накат при крафте брони/оружия/инструментов, апгрейд двух
 одинаковых тирированных предметов на наковальне, перенос тира через апгрейд в незерит.
 
-**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-tier-forge-1.4.20.jar`
+**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-tier-forge-1.4.21.jar`
 рядом с ядром (≥ 1.4.6), перезапуск. Шансы/бонусы тиров — в `plugins/CHRDK_TierForge/config.yml`.
 
 ---
@@ -896,7 +913,7 @@ plugins/<Addon>/messages.yml — удалите их после обновлен
 крадушке и снайперских стрел с поправкой на дистанцию. Получение — стол зачарований и
 жители-библиотекари, применение — наковальня; всё хранится в NBT предметов.
 
-**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-enchants-1.4.20.jar`
+**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-enchants-1.4.21.jar`
 рядом с ядром (≥ 1.4.6, `depend`), перезапуск. Баланс/шансы/лимиты — `plugins/CHRDK_Enchants/config.yml`.
 
 ---
