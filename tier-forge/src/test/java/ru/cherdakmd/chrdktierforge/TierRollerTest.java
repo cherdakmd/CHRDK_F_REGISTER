@@ -49,7 +49,7 @@ class TierRollerTest {
         assertEquals(0.06, TierMath.damageScalar(6), 0.0001);
         assertEquals(-0.12, TierMath.defenseScalar(-12), 0.0001);
         assertEquals(0.15, TierMath.toughnessScalar(30), 0.0001);
-        assertEquals(0.048, TierMath.attackSpeedScalar(14), 0.001);
+        assertEquals(14 / 300.0, TierMath.attackSpeedScalar(14), 0.0001);
         assertEquals(0.0, TierMath.movementScalar(-12), 0.0001, "штраф скорости бега не даём");
         assertEquals(0.05, TierMath.movementScalar(30), 0.0001);
         assertEquals(4 * 3, TierMath.upgradeXpCost(3, 3));
