@@ -69,7 +69,9 @@ public final class ArtifactLootListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onFish(PlayerFishEvent event) {
-        if (event.getState() != PlayerFishEvent.State.CAUGHT_TREASURE) {
+        if (event.getState() != PlayerFishEvent.State.CAUGHT_FISH
+                || !(event.getCaught() instanceof org.bukkit.entity.Item item)
+                || !TreasureLoot.isTreasure(item.getItemStack().getType())) {
             return;
         }
         double chance = plugin.config().fishingTreasurePercent();
