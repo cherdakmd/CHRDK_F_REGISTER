@@ -762,6 +762,21 @@ public void onEnable() {
 
 ---
 
+## Аддон CHRDK_CommonGoals — общие цели сообщества (с версии 1.4.17)
+
+Сервер сообща набивает цели: «Чистилище полей» (1500 мобов), «Руда зовёт», «Большой улов»,
+«Общий котёл» (взносы алмазов через `/goals donate`) и ещё четыре. Волна длится неделю
+(`rotation.period-days`), активных целей одновременно — 4 (`rotation.active-count`).
+Вклад каждого игрока считается отдельно; по завершении цели пул алмазов делится между
+участниками **пропорционально вкладу** (минимум 1 каждому), оффлайн-игроки забирают награду
+командой `/goals claim`. Прогресс — только авторизованным игрокам. Когда вся волна
+завершена досрочно — новая ротация приезжает через 5 минут.
+
+Команды: `/goals` (активные цели, ваш вклад, лидер каждой), `/goals claim`, `/goals donate`,
+`/goals top`; админка `/goalsadmin rotate|reload|progress <id> <n>`.
+
+---
+
 ## Сборка
 
 Требуется **Java 21+**. Из корня проекта:
@@ -770,15 +785,25 @@ public void onEnable() {
 ./gradlew build
 ```
 
-Собираются оба модуля: ядро появится в `build/libs/chrdk-f-register-1.4.16.jar`, аддон
-CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.16.jar`, реферальный —
-`referrals/build/libs/chrdk-referrals-1.4.16.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.16.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.16.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.16.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.16.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.16.jar` (зависит от аддона чар). На сервер ядро обязательно, аддоны — по желанию
+Собираются оба модуля: ядро появится в `build/libs/chrdk-f-register-1.4.17.jar`, аддон
+CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.17.jar`, реферальный —
+`referrals/build/libs/chrdk-referrals-1.4.17.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.17.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.17.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.17.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.17.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.17.jar` (зависит от аддона чар), общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.17.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). Оба JAR прикладываются к каждому релизу на GitHub.
+
+---
+
+## Обновление до 1.4.17
+
+Восьмой аддон — **CHRDK_CommonGoals**, общие цели сообщества: сервер сообща набивает
+цели волны, пул алмазов делится между участниками по вкладу, выдача — `/goals claim`.
+`chrdk-common-goals-1.4.17.jar` рядом с ядром (≥ 1.4.6), перезапуск. Настройки
+волны/шаблонов — `plugins/CHRDK_CommonGoals/config.yml`.
 
 ---
 
@@ -805,7 +830,7 @@ plugins/<Addon>/messages.yml — удалите их после обновлен
 структуру), чтобы сервер взял актуальные ключи.
 
 **Важно при обновлении:** ядро — заменой JAR. Аддон опционален:
-`chrdk-artifacts-1.4.16.jar` рядом с ядром и chrdk-enchants (той же версии), перезапуск.
+`chrdk-artifacts-1.4.17.jar` рядом с ядром и chrdk-enchants (той же версии), перезапуск.
 Кулдауны/вкл/цена опытом — в `plugins/CHRDK_Artifacts/config.yml`.
 
 ---
@@ -816,7 +841,7 @@ plugins/<Addon>/messages.yml — удалите их после обновлен
 проклятого до легендарного, накат при крафте брони/оружия/инструментов, апгрейд двух
 одинаковых тирированных предметов на наковальне, перенос тира через апгрейд в незерит.
 
-**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-tier-forge-1.4.16.jar`
+**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-tier-forge-1.4.17.jar`
 рядом с ядром (≥ 1.4.6), перезапуск. Шансы/бонусы тиров — в `plugins/CHRDK_TierForge/config.yml`.
 
 ---
@@ -828,7 +853,7 @@ plugins/<Addon>/messages.yml — удалите их после обновлен
 крадушке и снайперских стрел с поправкой на дистанцию. Получение — стол зачарований и
 жители-библиотекари, применение — наковальня; всё хранится в NBT предметов.
 
-**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-enchants-1.4.16.jar`
+**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-enchants-1.4.17.jar`
 рядом с ядром (≥ 1.4.6, `depend`), перезапуск. Баланс/шансы/лимиты — `plugins/CHRDK_Enchants/config.yml`.
 
 ---

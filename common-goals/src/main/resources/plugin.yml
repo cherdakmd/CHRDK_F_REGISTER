@@ -1,0 +1,20 @@
+name: CHRDK_CommonGoals
+version: ${version}
+main: ru.cherdakmd.chrdkgoals.CommonGoalsPlugin
+api-version: '1.21'
+description: Общие цели сообщества: сервер совместно набивает прогресс, награда — пропорционально вкладу
+author: cherdakmd
+depend: [CHRDK_F_REGISTER]
+commands:
+  goals:
+    description: Активные общие цели, вклад и награды
+  goalsadmin:
+    description: Управление общими целями
+    permission: chrdkgoals.admin
+permissions:
+  chrdkgoals.use:
+    description: Участие в общих целях
+    default: true
+  chrdkgoals.admin:
+    description: Администрирование общих целей
+    default: op

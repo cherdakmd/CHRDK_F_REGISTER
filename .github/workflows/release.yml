@@ -48,6 +48,7 @@ jobs:
           echo "enchants_jar=enchants/build/libs/chrdk-enchants-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
           echo "tier_forge_jar=tier-forge/build/libs/chrdk-tier-forge-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
           echo "artifacts_jar=artifacts/build/libs/chrdk-artifacts-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
+          echo "goals_jar=common-goals/build/libs/chrdk-common-goals-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
 
       - name: Attach the Purpur plugin JAR
         env:
@@ -88,3 +89,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.artifacts_jar }}" --clobber
+
+      - name: Attach the CHRDK_CommonGoals addon JAR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.goals_jar }}" --clobber

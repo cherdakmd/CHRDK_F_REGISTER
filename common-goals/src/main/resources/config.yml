@@ -1,0 +1,27 @@
+# CHRDK_CommonGoals — общие цели сообщества. Прогресс набивается всем сервером,
+# вклад каждого учитывается лично; по выполнении пул алмазов делится между участниками
+# пропорционально их вкладу (оффлайн — копится и выдаётся через /goals claim).
+
+general:
+  locale: ru
+  # Прогресс засчитывается только авторизованным игрокам.
+  require-auth: true
+
+rotation:
+  # Сколько целей активно одновременно (1..8).
+  active-count: 4
+  # Срок волны целей в днях (1..90): по истечении — новая ротация.
+  period-days: 7
+  # Бонус пула ко всем наградам (%) — округление вверх доли каждого.
+  reward-bonus-percent: 0
+
+# Шаблоны целей: вкл/выкл, честный целевой объём и пул наград (алмазов).
+goals:
+  hostile-slay:      {enabled: true, target: 1500, reward-pool: 96}
+  ore-break:         {enabled: true, target: 4000, reward-pool: 128}
+  blocks-travelled:  {enabled: true, target: 400000, reward-pool: 64}
+  blocks-placed:     {enabled: true, target: 20000, reward-pool: 64}
+  crops-harvested:   {enabled: true, target: 6000, reward-pool: 48}
+  fish-caught:       {enabled: true, target: 1500, reward-pool: 48}
+  blocks-broken:     {enabled: true, target: 50000, reward-pool: 96}
+  donate-diamonds:   {enabled: true, target: 2000, reward-pool: 192}
