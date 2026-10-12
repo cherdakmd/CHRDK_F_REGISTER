@@ -29,7 +29,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
     private static final List<String> ADMIN_SUBCOMMANDS =
             List.of("add", "remove", "check", "unregister", "reset2fa", "status", "reload",
                     "pending", "approve", "reject", "sessions", "logoutall", "stats", "doctor", "audit",
-                    "backup", "gift");
+                    "backup", "gift", "testpay", "recheck");
     private static final List<String> MUTE_DURATIONS = List.of("10m", "30m", "1h", "6h", "1d", "7d");
     private static final List<String> TWO_FACTOR_SUBCOMMANDS =
             List.of("setup", "confirm", "disable", "status", "cancel", "qr");
@@ -508,6 +508,53 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                         "Все сессии вашего аккаунта завершены администратором — войдите заново.");
                         messages.send(sender, cleared ? "session.cleared" : "session.none-active",
                         "player", targetName);
+                return true;
+            }
+            case "testpay" -> {
+                if (args.length < 2) {
+                    messages.send(sender, "usage.pass-testpay", "label", label);
+                    return true;
+                }
+                String targetName = args[1].trim();
+                int amount = accessManager.config().minimumDonationRubles();
+                if (args.length >= 3) {
+                    try {
+                        amount = Integer.parseInt(args[2]);
+                        if (amount < 0 || amount > 1_000_000) {
+                            messages.send(sender, "error.amount-number");
+                            return true;
+                        }
+                    } catch (NumberFormatException exception) {
+                        messages.send(sender, "error.amount-number");
+                        return true;
+                    }
+                }
+                DonationService.Outcome outcome = accessManager.simulateDonation(targetName, amount);
+                switch (outcome.status()) {
+                    case GRANTED -> messages.send(sender, "donation.testpay-granted",
+                            "amount", amount,
+                            "name", outcome.playerName(),
+                            "days", outcome.days(),
+                            "until", AccessManager.formatTimestamp(outcome.passUntil()));
+                    case REJECTED -> messages.send(sender, "donation.testpay-rejected",
+                            "amount", amount,
+                            "note", outcome.note().isBlank() ? "—" : outcome.note());
+                    default -> messages.send(sender, "donation.testpay-pending",
+                            "amount", amount,
+                            "donor", targetName,
+                            "status", outcome.status().name(),
+                            "note", outcome.note().isBlank() ? "—" : outcome.note(),
+                            "label", label);
+                }
+                return true;
+            }
+            case "recheck" -> {
+                if (!accessManager.config().donatePayReady()) {
+                    messages.send(sender, "donation.recheck-unavailable");
+                    return true;
+                }
+                accessManager.forceDonationPoll();
+                messages.send(sender, "donation.recheck-started", "label", label);
                 return true;
             }
             case "stats" -> {

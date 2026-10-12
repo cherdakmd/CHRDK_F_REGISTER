@@ -1611,6 +1611,23 @@ public final class AccessManager {
         sendLoginPrompt(online, true);
     }
 
+    /** Внеочередной опрос DonatePay (для {@code /pass recheck}); сам опрос асинхронный и защищён от дублей. */
+    public void forceDonationPoll() {
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, this::pollDonationsSafely);
+    }
+
+    /**
+     * Синтетическая транзакция DonatePay для {@code /pass testpay}: полный цикл
+     * (матчинг, журнал, аудит, уведомления, выдача/продление) без обращения к API.
+     * id отрицательный — тестовый диапазон, курсор боевых платежей не трогает.
+     */
+    public DonationService.Outcome simulateDonation(String playerName, int amountRubles) {
+        long now = System.currentTimeMillis();
+        DonatePayClient.Transaction transaction = new DonatePayClient.Transaction(
+                -now, playerName, BigDecimal.valueOf(Math.max(0, amountRubles)), "success", "donation", now);
+        return donations.process(transaction, now, false);
+    }
+
     /** Performs a lightweight DonatePay API probe for {@code /pass doctor}. */
     public boolean probeDonatePay() {
         if (!config.donatePayReady()) {

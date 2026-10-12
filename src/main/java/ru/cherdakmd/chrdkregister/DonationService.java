@@ -94,27 +94,44 @@ public final class DonationService {
         } else if (amountRubles < config.minimumDonationRubles()) {
             status = RegistrationStore.DonationStatus.PENDING_AMOUNT;
             note = text("donation.reason.below-minimum", "price", config.minimumDonationRubles());
-        } else if (!AccessManager.isValidMinecraftName(transaction.donorName().trim())) {
-            status = RegistrationStore.DonationStatus.PENDING_NAME;
-            note = text("donation.reason.name-mismatch");
         } else {
-            Optional<RegistrationStore.PlayerAccount> granted = store.grantPassFromDonation(
-                    transaction.donorName().trim(),
-                    transaction.createdAt(),
-                    nowMillis,
-                    days * 86_400_000L,
-                    config.strictCaseMatch());
-            if (granted.isPresent()) {
-                status = RegistrationStore.DonationStatus.GRANTED;
-                grantedTo = granted.get().playerName;
-                passUntil = granted.get().passUntil;
-                store.addPayment(grantedTo, transaction.amount()
-                        .multiply(BigDecimal.valueOf(100))
-                        .setScale(0, RoundingMode.HALF_UP)
-                        .longValueExact(), nowMillis);
+            String donorName = transaction.donorName().trim();
+            String grantName = AccessManager.isValidMinecraftName(donorName) ? donorName : null;
+            // «Nick 4821»: имя с платёжным кодом тоже матчится автоматически — иначе
+            // инструкция «укажите ник и код» вела донат в вечный pending
+            boolean viaCode = false;
+            if (grantName == null) {
+                Optional<String> coded = matchByPaymentCode(config.paymentCodeEnabled(), store, donorName);
+                if (coded.isPresent()) {
+                    grantName = coded.get();
+                    viaCode = true;
+                }
+            }
+            if (grantName == null) {
+                status = RegistrationStore.DonationStatus.PENDING_NAME;
+                note = text("donation.reason.name-mismatch");
             } else {
-                status = RegistrationStore.DonationStatus.PENDING_REVIEW;
-                note = text("donation.reason.case-mismatch");
+                Optional<RegistrationStore.PlayerAccount> granted = store.grantPassFromDonation(
+                        grantName,
+                        transaction.createdAt(),
+                        nowMillis,
+                        days * 86_400_000L,
+                        config.strictCaseMatch());
+                if (granted.isPresent()) {
+                    status = RegistrationStore.DonationStatus.GRANTED;
+                    grantedTo = granted.get().playerName;
+                    passUntil = granted.get().passUntil;
+                    if (viaCode) {
+                        note = text("donation.reason.code-match");
+                    }
+                    store.addPayment(grantedTo, transaction.amount()
+                            .multiply(BigDecimal.valueOf(100))
+                            .setScale(0, RoundingMode.HALF_UP)
+                            .longValueExact(), nowMillis);
+                } else {
+                    status = RegistrationStore.DonationStatus.PENDING_REVIEW;
+                    note = text("donation.reason.case-mismatch");
+                }
             }
         }
 
@@ -248,16 +265,27 @@ public final class DonationService {
             return "donation.claim.not-found";
         }
         RegistrationStore.DonationRecord record = existing.get();
+        boolean viaCode = matchByPaymentCode(configSupplier.get().paymentCodeEnabled(), store, record.donorName)
+                .map(owner -> owner.equalsIgnoreCase(playerName)).orElse(false);
         if (!record.donationStatus().isPending()) {
             return "donation.claim.already-processed";
         }
-        if (!DonorNameMatcher.looksLikeDonor(record.donorName, playerName)) {
+        if (!viaCode && !DonorNameMatcher.looksLikeDonor(record.donorName, playerName)) {
             return "donation.claim.name-mismatch";
         }
         approve(donationId, playerName, 0, playerName + text("donation.label.self-claimed"), nowMillis);
         audit.log(AuditLog.DONATION_CLAIMED, playerName, playerName, ipAddress,
                 AuditLog.details("donation", donationId, "donorName", record.donorName));
         return "";
+    }
+
+    /** Платёжный код в имени донатера: игрок-владелец кода, если функция кодов включена. */
+    public static Optional<String> matchByPaymentCode(boolean codeEnabled, RegistrationStore store,
+                                                      String donorName) {
+        if (!codeEnabled || donorName == null || store == null) {
+            return Optional.empty();
+        }
+        return store.findPlayerByPaymentCode(donorName.trim());
     }
 
     /** Player-facing payment hint: either "Nick 4821" or just the nickname. */
