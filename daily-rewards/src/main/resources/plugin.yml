@@ -1,7 +1,7 @@
 name: CHRDK_DailyRewards
 version: '${version}'
 main: ru.cherdakmd.chrdkdaily.DailyRewardsPlugin
-api-version: '1.21.11'
+api-version: '26.3'
 depend:
   - CHRDK_F_REGISTER
 description: Ежедневные награды со стриком и VIP-веткой для обладателей проходки (аддон CHRDK_F_REGISTER)

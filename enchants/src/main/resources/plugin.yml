@@ -1,7 +1,7 @@
 name: CHRDK_Enchants
 version: ${version}
 main: ru.cherdakmd.chrdkenchants.EnchantsPlugin
-api-version: '1.21'
+api-version: '26.3'
 description: "30 кастомных эпичных чар CHRDK: стол зачарований и жители-библиотекари"
 author: cherdakmd
 depend: [CHRDK_F_REGISTER]

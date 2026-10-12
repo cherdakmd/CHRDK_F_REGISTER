@@ -1,7 +1,7 @@
 name: CHRDK_DiamondShop
 version: '${version}'
 main: ru.cherdakmd.diamondshop.DiamondShopPlugin
-api-version: '1.21.11'
+api-version: '26.3'
 depend:
   - CHRDK_F_REGISTER
 description: Магазин обмена ресурсов с динамическими ценами на алмазной валюте (аддон CHRDK_F_REGISTER)

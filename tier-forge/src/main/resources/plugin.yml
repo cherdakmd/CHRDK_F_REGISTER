@@ -1,7 +1,7 @@
 name: CHRDK_TierForge
 version: ${version}
 main: ru.cherdakmd.chrdktierforge.TierForgePlugin
-api-version: '1.21'
+api-version: '26.3'
 description: "Тир-предметы в духе Terraria: случайная редкость крафта брони, оружия и инструментов"
 author: cherdakmd
 depend: [CHRDK_F_REGISTER]

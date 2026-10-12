@@ -1,7 +1,7 @@
 name: CHRDK_Claims
 version: ${version}
 main: ru.cherdakmd.chrdkclaims.ClaimsPlugin
-api-version: '1.21'
+api-version: '26.3'
 description: "Приваты чанков за алмазы: покупка территории, рента каждый день из казны, налог на сделки, продажа игрокам и полная защита территории (аддон CHRDK_F_REGISTER)"
 author: cherdakmd
 depend: [CHRDK_F_REGISTER]
