@@ -352,6 +352,7 @@ public final class RegistrationStore {
     private StoreData normalize(StoreData loaded) {
         if (loaded.accounts == null) loaded.accounts = new LinkedHashMap<>();
         if (loaded.processedDonationIds == null) loaded.processedDonationIds = new LinkedHashSet<>();
+        if (loaded.donationCursorsBySource == null) loaded.donationCursorsBySource = new LinkedHashMap<>();
         if (loaded.donations == null) loaded.donations = new ArrayList<>();
         if (loaded.accountAttempts == null) loaded.accountAttempts = new LinkedHashMap<>();
         if (loaded.ipAttempts == null) loaded.ipAttempts = new LinkedHashMap<>();
@@ -1041,12 +1042,68 @@ public final class RegistrationStore {
         return result;
     }
 
+    /** Идентификатор первоисточника донатов (исторический, без префиксов). */
+    public static final String DONATION_SOURCE_DONATEPAY = "donatepay";
+
     /* ------------------------------------------------------------------ *
      *  DonatePay journal, payment codes and counters
      * ------------------------------------------------------------------ */
 
     public synchronized boolean isDonationCursorInitialized() {
         return data.donationCursorInitialized;
+    }
+
+    /** Инициализирован ли курсор для источника (donatepay — по старому полю). */
+    public synchronized boolean isDonationCursorInitialized(String source) {
+        if (RegistrationStore.DONATION_SOURCE_DONATEPAY.equals(source)) {
+            return isDonationCursorInitialized();
+        }
+        return data.donationCursorsBySource.containsKey(source);
+    }
+
+    /** Курсор опроса по источнику. */
+    public synchronized long getDonationCursor(String source) {
+        if (RegistrationStore.DONATION_SOURCE_DONATEPAY.equals(source)) {
+            return getDonationCursor();
+        }
+        return data.donationCursorsBySource.getOrDefault(source, 0L);
+    }
+
+    /** Одноразовая инициализация курсора источника. */
+    public synchronized void initializeDonationCursor(String source, long cursor) {
+        if (RegistrationStore.DONATION_SOURCE_DONATEPAY.equals(source)) {
+            initializeDonationCursor(cursor);
+            return;
+        }
+        if (data.donationCursorsBySource.containsKey(source)) return;
+        data.donationCursorsBySource.put(source, Math.max(0, cursor));
+        markDirtyNow();
+    }
+
+    /** Обработан ли платёж данного источника (старые записи без префикса = donatepay). */
+    public synchronized boolean isDonationProcessed(String source, long id) {
+        if (RegistrationStore.DONATION_SOURCE_DONATEPAY.equals(source)) {
+            return isDonationProcessed(id);
+        }
+        return data.processedDonationIds.contains(source + ":" + id);
+    }
+
+    /** Пометить платёж обработанным; курсор источника поднимается не ниже id. */
+    public synchronized void markDonationProcessed(String source, long id) {
+        if (RegistrationStore.DONATION_SOURCE_DONATEPAY.equals(source)) {
+            markDonationProcessed(id);
+            return;
+        }
+        String key = source + ":" + id;
+        data.processedDonationIds.remove(key);
+        data.processedDonationIds.add(key);
+        data.donationCursorsBySource.put(source,
+                Math.max(data.donationCursorsBySource.getOrDefault(source, 0L), id));
+        while (data.processedDonationIds.size() > MAX_PROCESSED_DONATIONS) {
+            String first = data.processedDonationIds.iterator().next();
+            data.processedDonationIds.remove(first);
+        }
+        markDirty();
     }
 
     public synchronized long getDonationCursor() {
@@ -1433,6 +1490,7 @@ public final class RegistrationStore {
     private static DonationRecord copyDonation(DonationRecord source) {
         DonationRecord copy = new DonationRecord();
         copy.id = source.id;
+        copy.source = source.source;
         copy.donorName = source.donorName;
         copy.amountKopecks = source.amountKopecks;
         copy.amountRaw = source.amountRaw;
@@ -1501,6 +1559,8 @@ public final class RegistrationStore {
     public static final class DonationRecord {
         public long id;
         public String donorName = "";
+        /** Источник доната: donatepay (пусто/отсутствует у старых записей) или easydonate. */
+        public String source = DONATION_SOURCE_DONATEPAY;
         public long amountKopecks;
         public String amountRaw = "";
         public long createdAt;
@@ -1571,6 +1631,8 @@ public final class RegistrationStore {
         Set<String> processedDonationIds = new LinkedHashSet<>();
         long donationCursor;
         boolean donationCursorInitialized;
+        /** Курсоры опроса по источникам (donatepay живёт в старых полях — обратная совместимость). */
+        Map<String, Long> donationCursorsBySource = new LinkedHashMap<>();
         Map<String, AttemptRecord> accountAttempts = new LinkedHashMap<>();
         Map<String, AttemptRecord> ipAttempts = new LinkedHashMap<>();
         List<DonationRecord> donations = new ArrayList<>();

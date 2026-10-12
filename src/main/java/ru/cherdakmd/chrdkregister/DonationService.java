@@ -78,6 +78,12 @@ public final class DonationService {
      * journals the payment with a pending status. The transaction is always marked as processed.
      */
     public Outcome process(DonatePayClient.Transaction transaction, long nowMillis, boolean pollMode) {
+        return process(transaction, nowMillis, pollMode, RegistrationStore.DONATION_SOURCE_DONATEPAY);
+    }
+
+    /** Обработка платежа от произвольного провайдера (источник записывается в журнал). */
+    public Outcome process(DonatePayClient.Transaction transaction, long nowMillis,
+                           boolean pollMode, String source) {
         PluginConfig config = configSupplier.get();
         int amountRubles = toRubles(transaction.amount());
         int days = config.daysForAmount(amountRubles);
@@ -137,6 +143,8 @@ public final class DonationService {
 
         RegistrationStore.DonationRecord journal = new RegistrationStore.DonationRecord();
         journal.id = transaction.id();
+        journal.source = source == null || source.isBlank()
+                ? RegistrationStore.DONATION_SOURCE_DONATEPAY : source;
         journal.donorName = transaction.donorName();
         journal.amountKopecks = transaction.amount()
                 .multiply(BigDecimal.valueOf(100))

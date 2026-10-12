@@ -535,6 +535,8 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                                         : messages.raw("donation.suggested", "name", record.suggestedName));
                     }
                     messages.send(sender, "donation.journal-entry",
+                            "source", EasyDonateClient.SOURCE.equals(record.source)
+                                    ? "ed" : "dp",
                             "id", record.id,
                             "donor", record.donorName,
                             "amount", record.amountRubles(),
@@ -546,37 +548,49 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 return true;
             }
             case "health" -> {
-                AccessManager.DonateHealthCard card = accessManager.donateHealthCard();
+                java.util.List<AccessManager.DonateHealthCard> cards = accessManager.donateHealthCards();
                 messages.send(sender, "donation.health-header");
-                if (!accessManager.config().donatePayReady()) {
-                    check(sender, "DonatePay API", false,
-                            "не задан donatepay.api-token — автопроверка донатов выключена");
-                    return true;
+                boolean anyReady = cards.stream().anyMatch(AccessManager.DonateHealthCard::ready);
+                for (AccessManager.DonateHealthCard card : cards) {
+                    if (!card.ready()) {
+                        if (!anyReady) {
+                            messages.send(sender, "donation.health-service-off", "service", card.serviceName());
+                        }
+                        continue;
+                    }
+                    String state = switch (card.state()) {
+                        case OK -> messages.raw("donation.health-ok");
+                        case FLAKY -> messages.raw("donation.health-flaky",
+                                "fails", card.failStreak());
+                        case NO_CONTACT -> messages.raw("donation.health-down",
+                                "fails", card.failStreak());
+                    };
+                    messages.send(sender, "donation.health-state",
+                            "service", card.serviceName(),
+                            "state", state,
+                            "poll_seconds", card.pollSeconds(),
+                            "cursor", card.cursorId());
+                    if (card.lastSuccessAtMillis() > 0) {
+                        messages.send(sender, "donation.health-last",
+                                "service", card.serviceName(),
+                                "ago", AccessManager.formatDuration(
+                                        System.currentTimeMillis() - card.lastSuccessAtMillis()),
+                                "error", card.lastError() == null ? "—" : card.lastError());
+                    }
                 }
-                String state = switch (card.state()) {
-                    case OK -> messages.raw("donation.health-ok");
-                    case FLAKY -> messages.raw("donation.health-flaky",
-                            "fails", card.failStreak());
-                    case NO_CONTACT -> messages.raw("donation.health-down",
-                            "fails", card.failStreak());
-                };
-                messages.send(sender, "donation.health-state",
-                        "state", state,
-                        "poll_seconds", card.pollSeconds(),
-                        "cursor", card.cursorId());
-                if (card.lastSuccessAtMillis() > 0) {
-                    messages.send(sender, "donation.health-last",
-                            "ago", AccessManager.formatDuration(
-                                    System.currentTimeMillis() - card.lastSuccessAtMillis()),
-                            "error", card.lastError() == null ? "—" : card.lastError());
-                }
+                long attempts = cards.stream().mapToLong(AccessManager.DonateHealthCard::attempts).sum();
+                long successes = cards.stream().mapToLong(AccessManager.DonateHealthCard::successes).sum();
+                long failures = cards.stream().mapToLong(AccessManager.DonateHealthCard::failures).sum();
+                long processedTotal = cards.stream().mapToLong(AccessManager.DonateHealthCard::processedTransactions).sum();
+                long avgLatency = cards.stream().mapToLong(AccessManager.DonateHealthCard::avgLatencyMs).max().orElse(0);
+                long maxLatency = cards.stream().mapToLong(AccessManager.DonateHealthCard::maxLatencyMs).max().orElse(0);
                 int pendingCount = accessManager.donations().pendingCount();
                 messages.send(sender, "donation.health-stats",
-                        "attempts", card.attempts(), "ok", card.successes(),
-                        "fail", card.failures(), "uptime", card.uptimePercent(),
-                        "avg_ms", card.avgLatencyMs(), "max_ms", card.maxLatencyMs());
+                        "attempts", attempts, "ok", successes,
+                        "fail", failures, "uptime", DonatePulse.uptimePercent(attempts, successes),
+                        "avg_ms", avgLatency, "max_ms", maxLatency);
                 messages.send(sender, "donation.health-stats2",
-                        "processed", card.processedTransactions(),
+                        "processed", processedTotal,
                         "pending", pendingCount,
                         "stale", pendingCount == 0 ? "" : " (разбор: /" + label + " pending)");
                 messages.send(sender, "donation.health-footer", "label", label);
@@ -610,6 +624,15 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 }
                 String targetName = args[1].trim();
                 int amount = accessManager.config().minimumDonationRubles();
+                String source = RegistrationStore.DONATION_SOURCE_DONATEPAY;
+                if (args.length >= 4) {
+                    source = args[3].trim().toLowerCase(java.util.Locale.ROOT);
+                    if (!source.equals(RegistrationStore.DONATION_SOURCE_DONATEPAY)
+                            && !source.equals(EasyDonateClient.SOURCE)) {
+                        messages.send(sender, "usage.pass-testpay", "label", label);
+                        return true;
+                    }
+                }
                 if (args.length >= 3) {
                     try {
                         amount = Integer.parseInt(args[2]);
@@ -622,7 +645,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                         return true;
                     }
                 }
-                DonationService.Outcome outcome = accessManager.simulateDonation(targetName, amount);
+                DonationService.Outcome outcome = accessManager.simulateDonation(targetName, amount, source);
                 switch (outcome.status()) {
                     case GRANTED -> messages.send(sender, "donation.testpay-granted",
                             "amount", amount,
@@ -1156,6 +1179,9 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                         .map(path -> path.getFileName().toString())
                         .toList();
             }
+        }
+        if (args.length == 4 && "testpay".equals(args[0].toLowerCase(Locale.ROOT))) {
+            return List.of(RegistrationStore.DONATION_SOURCE_DONATEPAY, EasyDonateClient.SOURCE);
         }
         return List.of();
     }

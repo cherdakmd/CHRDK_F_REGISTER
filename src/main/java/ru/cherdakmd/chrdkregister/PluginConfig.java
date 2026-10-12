@@ -25,6 +25,8 @@ public final class PluginConfig {
     private final boolean donateAlertAdmins;
     private final int donateAlertRepeatMinutes;
     private final int donatePendingNotifyHours;
+    private final boolean easyDonateEnabled;
+    private final String easyDonateShopKey;
     private final boolean strictCaseMatch;
     private final boolean donateReviewUnmatched;
     private final boolean donateFuzzyMatch;
@@ -126,7 +128,7 @@ public final class PluginConfig {
                 true,
                 ZoneId.of("Europe/Moscow"),
                 new ChatConfig(),
-                300, 10, true, 15, 24
+                300, 10, true, 15, 24, false, ""
         );
     }
 
@@ -198,7 +200,9 @@ public final class PluginConfig {
             int donateAlertFailStreak,
             boolean donateAlertAdmins,
             int donateAlertRepeatMinutes,
-            int donatePendingNotifyHours
+            int donatePendingNotifyHours,
+            boolean easyDonateEnabled,
+            String easyDonateShopKey
     ) {
         this.donatePayApiToken = donatePayApiToken == null ? "" : donatePayApiToken.trim();
         this.donatePayPaymentUrl = sanitizeUrl(donatePayPaymentUrl);
@@ -209,6 +213,8 @@ public final class PluginConfig {
         this.donateAlertAdmins = donateAlertAdmins;
         this.donateAlertRepeatMinutes = Math.clamp(donateAlertRepeatMinutes, 0, 1440);
         this.donatePendingNotifyHours = Math.clamp(donatePendingNotifyHours, 0, 8760);
+        this.easyDonateEnabled = easyDonateEnabled;
+        this.easyDonateShopKey = easyDonateShopKey == null ? "" : easyDonateShopKey.trim();
         this.strictCaseMatch = strictCaseMatch;
         this.donateReviewUnmatched = donateReviewUnmatched;
         this.donateFuzzyMatch = donateFuzzyMatch;
@@ -359,7 +365,9 @@ public final class PluginConfig {
                 config.getInt("donatepay.alert-fail-streak", 10),
                 config.getBoolean("donatepay.alert-admins", true),
                 config.getInt("donatepay.alert-repeat-minutes", 15),
-                config.getInt("donatepay.pending-notify-hours", 24)
+                config.getInt("donatepay.pending-notify-hours", 24),
+                config.getBoolean("easydonate.enabled", false),
+                config.getString("easydonate.shop-key", "")
         );
     }
 
@@ -406,6 +414,15 @@ public final class PluginConfig {
     /** Напоминать админам, если донат ждёт разбора дольше N часов (0 = выкл). */
     public int donatePendingNotifyHours() {
         return donatePendingNotifyHours;
+    }
+
+    /** EasyDonate-провайдер включён и настроен (shop-key задан). */
+    public boolean easyDonateReady() {
+        return easyDonateEnabled && !easyDonateShopKey.isBlank();
+    }
+
+    public String easyDonateShopKey() {
+        return easyDonateShopKey;
     }
 
     public boolean strictCaseMatch() {

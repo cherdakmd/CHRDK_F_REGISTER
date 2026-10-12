@@ -81,17 +81,27 @@ public final class AccessManager {
     private final Map<UUID, String> authSource = new ConcurrentHashMap<>();
     private final Map<UUID, Long> joinedAt = new ConcurrentHashMap<>();
     private final Map<UUID, BossBar> expiryBars = new ConcurrentHashMap<>();
+    /** Состояние опроса одного донатного провайдера (1.4.35; видно тестам). */
+    static final class ProviderPulse {
+        final DonationProvider provider;
+        final AtomicInteger failStreak = new AtomicInteger(0);
+        final AtomicLong attempts = new AtomicLong();
+        final AtomicLong successes = new AtomicLong();
+        final AtomicLong failures = new AtomicLong();
+        final AtomicLong processed = new AtomicLong();
+        final LatencySeries latency = new LatencySeries(20);
+        volatile long lastSuccessAtMillis;
+        volatile String lastError;
+        volatile boolean outageAlerted;
+        volatile long lastAlertAtMillis;
+
+        ProviderPulse(DonationProvider provider) {
+            this.provider = provider;
+        }
+    }
     private final AtomicBoolean donationPollRunning = new AtomicBoolean(false);
-    private final AtomicInteger donationPollFailStreak = new AtomicInteger(0);
-    private volatile long donateLastSuccessAtMillis;
-    private volatile String donateLastError;
-    private volatile boolean donateOutageAlerted;
-    private volatile long donateLastAlertAtMillis;
-    private final java.util.concurrent.atomic.AtomicLong donatePollAttempts = new java.util.concurrent.atomic.AtomicLong();
-    private final java.util.concurrent.atomic.AtomicLong donatePollSuccesses = new java.util.concurrent.atomic.AtomicLong();
-    private final java.util.concurrent.atomic.AtomicLong donatePollFailures = new java.util.concurrent.atomic.AtomicLong();
-    private final java.util.concurrent.atomic.AtomicLong donateTransactionsProcessed = new java.util.concurrent.atomic.AtomicLong();
-    private final LatencySeries donatePollLatency = new LatencySeries(20);
+    /** Провайдеры донатов, в фиксированном порядке (donatepay, easydonate). */
+    private final java.util.Map<String, ProviderPulse> donationPulses = new java.util.LinkedHashMap<>();
     private volatile long donateLastStalePendingNotifyAtMillis;
 
     private final AuditLog audit;
@@ -127,6 +137,8 @@ public final class AccessManager {
         this.store = store;
         this.donatePay = donatePay;
         this.logger = logger;
+        donationPulses.put(donatePay.key(), new ProviderPulse(donatePay));
+        donationPulses.put(EasyDonateClient.SOURCE, new ProviderPulse(new EasyDonateClient(config)));
         this.audit = new AuditLog(plugin.getDataFolder().toPath(), logger, config.timeZone());
         this.notifications = new NotificationService(this::config, logger);
         this.throttle = new AuthThrottle(store, this::config);
@@ -286,7 +298,9 @@ public final class AccessManager {
 
     public synchronized void reload(PluginConfig newConfig) {
         this.config = newConfig;
-        this.donatePay.updateConfig(newConfig);
+        for (ProviderPulse pulse : donationPulses.values()) {
+            pulse.provider.updateConfig(newConfig);
+        }
         stopTasks();
 
         long pollTicks = Math.max(20L * 15L, newConfig.donatePollSeconds() * 20L);
@@ -1516,129 +1530,184 @@ public final class AccessManager {
     }
 
     /**
-     * Опрос DonatePay. Это же и проверка связи: успех — связь есть (сбрасывает серию
-     * отказов и шлёт «восстановление», если была тревога), ошибка HTTP — серия нарастает,
-     * на переходе через donatepay.alert-fail-streak онлайн-админы узнают о падении
-     * разом, а не из логов спустя часы.
+     * Опрос всех настроенных донатных провайдеров (DonatePay, EasyDonate, …). Каждый
+     * провайдер живёт независимо: своя серия отказов, тревога и курсор — падение одного
+     * сервиса не блокирует выдачу через другой.
      */
     private DonatePollReport pollDonationsSafely() {
-        PluginConfig currentConfig = this.config;
-        if (!currentConfig.donatePayReady() || !donationPollRunning.compareAndSet(false, true)) {
+        if (!donationPollRunning.compareAndSet(false, true)) {
             return DonatePollReport.skipped();
         }
-        int processed = 0;
-        donatePollAttempts.incrementAndGet();
-        long apiCallStartedNanos = System.nanoTime();
         try {
-            if (!store.isDonationCursorInitialized()) {
-                List<DonatePayClient.Transaction> recent = donatePay.fetchRecentSuccessful(100);
-                long latest = 0;
-                for (DonatePayClient.Transaction transaction : recent) {
-                    latest = Math.max(latest, transaction.id());
-                    if (transaction.createdAt() < serverStartedAtMillis || store.isDonationProcessed(transaction.id())) {
-                        continue;
-                    }
-                    donations.process(transaction, System.currentTimeMillis(), true);
-                    store.markDonationProcessed(transaction.id());
-                    processed++;
-                }
-                store.initializeDonationCursor(latest);
-                logger.info("DonatePay transaction cursor initialized at ID " + latest
-                        + " (payments prior to initial setup are ignored).");
-                donatePollLatency.add((System.nanoTime() - apiCallStartedNanos) / 1_000_000L);
-                markDonatePollSuccess();
-                donateTransactionsProcessed.addAndGet(processed);
-                return new DonatePollReport(processed, null);
-            }
-
-            long cursor = store.getDonationCursor();
-            List<DonatePayClient.Transaction> transactions = donatePay.fetchAfter(cursor, 100);
-            for (DonatePayClient.Transaction transaction : transactions) {
-                if (transaction.id() <= cursor || store.isDonationProcessed(transaction.id())) {
+            int processed = 0;
+            StringBuilder errors = new StringBuilder();
+            for (ProviderPulse pulse : donationPulses.values()) {
+                if (!pulse.provider.ready()) {
                     continue;
                 }
-                donations.process(transaction, System.currentTimeMillis(), true);
-                store.markDonationProcessed(transaction.id());
-                cursor = Math.max(cursor, transaction.id());
-                processed++;
+                DonatePollReport report = pollProviderOnce(pulse);
+                processed += report.processed();
+                if (report.error() != null && !report.error().isBlank()) {
+                    if (errors.length() > 0) {
+                        errors.append("; ");
+                    }
+                    errors.append(pulse.provider.displayName()).append(": ").append(report.error());
+                }
             }
-            donatePollLatency.add((System.nanoTime() - apiCallStartedNanos) / 1_000_000L);
-            markDonatePollSuccess();
-            donateTransactionsProcessed.addAndGet(processed);
-            return new DonatePollReport(processed, null);
-        } catch (Exception exception) {
-            String message = exception.getMessage();
-            markDonatePollFailure(message);
-            warnDonatePayThrottled(message);
-            return new DonatePollReport(processed, message == null || message.isBlank()
-                    ? "unknown error" : message);
+            return processed == 0 && errors.length() == 0
+                    ? DonatePollReport.skipped()
+                    : new DonatePollReport(processed, errors.length() == 0 ? null : errors.toString());
         } finally {
             donationPollRunning.set(false);
         }
     }
 
-    /** Успешный опрос: связь есть; если была тревога — шлём «DonatePay снова на связи». */
-    private void markDonatePollSuccess() {
-        donationPollFailStreak.set(0);
-        donateLastSuccessAtMillis = System.currentTimeMillis();
-        donateLastError = null;
-        donatePollSuccesses.incrementAndGet();
-        if (DonatePulse.shouldAlertRecovery(donateOutageAlerted)) {
-            donateOutageAlerted = false;
-            donateLastAlertAtMillis = 0;
-            logger.info("DonatePay is reachable again — donation auto-check recovered.");
+    /** Один цикл опроса конкретного провайдера; сторожевые счётчики — при нём. */
+    private DonatePollReport pollProviderOnce(ProviderPulse pulse) {
+        String source = pulse.provider.key();
+        pulse.attempts.incrementAndGet();
+        long apiCallStartedNanos = System.nanoTime();
+        int processed = 0;
+        try {
+            if (!store.isDonationCursorInitialized(source)) {
+                List<DonatePayClient.Transaction> recent = pulse.provider.fetchRecentSuccessful(100);
+                long latest = 0;
+                long backfillSince = System.currentTimeMillis() - 24L * 60 * 60 * 1000L;
+                for (DonatePayClient.Transaction transaction : recent) {
+                    latest = Math.max(latest, transaction.id());
+                    // DonatePay — исторически игнорируем прошлое; EasyDonate — backfill за сутки
+                    boolean tooOld = RegistrationStore.DONATION_SOURCE_DONATEPAY.equals(source)
+                            ? transaction.createdAt() < serverStartedAtMillis
+                            : (transaction.createdAt() > 0 && transaction.createdAt() < backfillSince);
+                    if (tooOld || store.isDonationProcessed(source, transaction.id())) {
+                        continue;
+                    }
+                    donations.process(transaction, System.currentTimeMillis(), true, source);
+                    store.markDonationProcessed(source, transaction.id());
+                    processed++;
+                }
+                store.initializeDonationCursor(source, latest);
+                logger.info(pulse.provider.displayName() + " transaction cursor initialized at ID " + latest
+                        + (RegistrationStore.DONATION_SOURCE_DONATEPAY.equals(source)
+                        ? " (payments prior to initial setup are ignored)."
+                        : " (payments older than 24h before first enable are ignored — backfill)."));
+                pulse.latency.add((System.nanoTime() - apiCallStartedNanos) / 1_000_000L);
+                markDonatePollSuccess(pulse);
+                pulse.processed.addAndGet(processed);
+                return new DonatePollReport(processed, null);
+            }
+
+            long cursor = store.getDonationCursor(source);
+            List<DonatePayClient.Transaction> transactions = pulse.provider.fetchAfter(cursor, 100);
+            for (DonatePayClient.Transaction transaction : transactions) {
+                if (transaction.id() <= cursor || store.isDonationProcessed(source, transaction.id())) {
+                    continue;
+                }
+                donations.process(transaction, System.currentTimeMillis(), true, source);
+                store.markDonationProcessed(source, transaction.id());
+                cursor = Math.max(cursor, transaction.id());
+                processed++;
+            }
+            pulse.latency.add((System.nanoTime() - apiCallStartedNanos) / 1_000_000L);
+            markDonatePollSuccess(pulse);
+            pulse.processed.addAndGet(processed);
+            return new DonatePollReport(processed, null);
+        } catch (Exception exception) {
+            String message = exception.getMessage();
+            markDonatePollFailure(pulse, message);
+            warnDonatePayThrottled(pulse.provider.displayName() + " " + message);
+            return new DonatePollReport(processed, message == null || message.isBlank()
+                    ? "unknown error" : message);
+        }
+    }
+
+    /** Успешный опрос: связь есть; если была тревога — шлём «%service% снова на связи». */
+    private void markDonatePollSuccess(ProviderPulse pulse) {
+        String service = pulse.provider.displayName();
+        pulse.failStreak.set(0);
+        pulse.lastSuccessAtMillis = System.currentTimeMillis();
+        pulse.lastError = null;
+        pulse.successes.incrementAndGet();
+        if (DonatePulse.shouldAlertRecovery(pulse.outageAlerted)) {
+            pulse.outageAlerted = false;
+            pulse.lastAlertAtMillis = 0;
+            logger.info(service + " is reachable again — donation auto-check recovered.");
             audit.log(AuditLog.DONATEPAY_UP, "watcher", "", "",
-                    AuditLog.details("lastErrorCleared", true));
+                    AuditLog.details("provider", service, "lastErrorCleared", true));
             notifications.notify("donatepay.up",
-                    messages == null ? "DonatePay UP" : messages.raw("donation.notify.up-title"),
-                    messages == null ? "" : messages.raw("donation.notify.up-desc"),
+                    (messages == null ? "%service% UP" : messages.raw("donation.notify.up-title"))
+                            .replace("%service%", service),
+                    (messages == null ? "" : messages.raw("donation.notify.up-desc"))
+                            .replace("%service%", service),
                     "good");
             if (config.donateAlertAdmins()) {
-                notifyAdminsOnline("donation.alert-online");
+                notifyAdminsOnline("donation.alert-online", "service", service);
             }
         }
     }
 
     /** Сбой опроса: серия нарастает; на переходе через порог — разовая тревога админам. */
-    private void markDonatePollFailure(String error) {
-        donateLastError = error;
-        donatePollFailures.incrementAndGet();
-        int streak = donationPollFailStreak.incrementAndGet();
-        if (DonatePulse.shouldAlertOutage(streak, config.donateAlertFailStreak(), donateOutageAlerted)) {
-            donateOutageAlerted = true;
-            donateLastAlertAtMillis = System.currentTimeMillis();
-            logger.warning("DonatePay appears DOWN (" + streak + " failed polls in a row): "
+    private void markDonatePollFailure(ProviderPulse pulse, String error) {
+        String service = pulse.provider.displayName();
+        pulse.lastError = error;
+        pulse.failures.incrementAndGet();
+        int streak = pulse.failStreak.incrementAndGet();
+        if (DonatePulse.shouldAlertOutage(streak, config.donateAlertFailStreak(), pulse.outageAlerted)) {
+            pulse.outageAlerted = true;
+            pulse.lastAlertAtMillis = System.currentTimeMillis();
+            logger.warning(service + " appears DOWN (" + streak + " failed polls in a row): "
                     + (error == null ? "unknown error" : error));
             audit.log(AuditLog.DONATEPAY_DOWN, "watcher", "", "",
-                    AuditLog.details("fails", streak, "error", error == null ? "unknown" : error));
+                    AuditLog.details("provider", service, "fails", streak,
+                            "error", error == null ? "unknown" : error));
             Messages live = this.messages;
             notifications.notify("donatepay.down",
-                    live == null ? "DonatePay DOWN" : live.raw("donation.notify.down-title"),
+                    (live == null ? "%service% DOWN" : live.raw("donation.notify.down-title"))
+                            .replace("%service%", service),
                     (live == null ? "Серия отказов: " + streak : live.raw("donation.notify.down-desc")
                             .replace("%fails%", String.valueOf(streak))
-                            .replace("%error%", error == null ? "unknown" : error)),
+                            .replace("%error%", error == null ? "unknown" : error)
+                            .replace("%service%", service)),
                     "bad");
             if (config.donateAlertAdmins()) {
                 notifyAdminsOnline("donation.alert-offline",
-                        "fails", streak, "error", error == null ? "unknown" : error);
+                        "service", service, "fails", streak,
+                        "error", error == null ? "unknown" : error);
             }
         }
     }
 
-    /** Heartbeat-строка в консоль раз в donatepay.health-seconds — видно, что сторож жив. */
+    /** Heartbeat-строки по провайдерам + напоминания об очереди — видно, что сторож жив. */
     private void donateHeartbeat() {
         PluginConfig currentConfig = this.config;
-        if (!currentConfig.donatePayReady()) {
-            return;
+        for (ProviderPulse pulse : donationPulses.values()) {
+            if (!pulse.provider.ready()) {
+                continue;
+            }
+            String line = DonatePulse.heartbeatLine(pulse.provider.displayName(),
+                    pulse.lastSuccessAtMillis, System.currentTimeMillis(),
+                    pulse.failStreak.get(), pulse.lastError);
+            if (line.endsWith(": OK") || line.contains(" heartbeat: OK")) {
+                logger.info(line);
+            } else {
+                logger.warning(line);
+            }
+            // повторные тревоги, если отказ затянулся (раз в alert-repeat-minutes)
+            if (pulse.outageAlerted && DonatePulse.repeatDue(pulse.lastAlertAtMillis,
+                    System.currentTimeMillis(), currentConfig.donateAlertRepeatMinutes())) {
+                pulse.lastAlertAtMillis = System.currentTimeMillis();
+                int streak = pulse.failStreak.get();
+                logger.warning(pulse.provider.displayName() + " STILL DOWN — "
+                        + streak + " failed polls in a row.");
+                if (currentConfig.donateAlertAdmins()) {
+                    notifyAdminsOnline("donation.alert-offline",
+                            "service", pulse.provider.displayName(), "fails", streak,
+                            "error", pulse.lastError == null ? "unknown" : pulse.lastError);
+                }
+            }
         }
-        String line = DonatePulse.heartbeatLine(donateLastSuccessAtMillis,
-                System.currentTimeMillis(), donationPollFailStreak.get(), donateLastError);
-        if (line.startsWith("DonatePay heartbeat: OK")) {
-            logger.info(line);
-        } else {
-            logger.warning(line);
-        }
-        // залежавшиеся в очереди донаты: напоминаем, чтобы не висели сутками
+
+        // залежавшиеся в очереди донаты (общая очередь всех провайдеров)
         int staleHours = currentConfig.donatePendingNotifyHours();
         if (staleHours > 0) {
             List<RegistrationStore.DonationRecord> pendingNow = donations.pending(200);
@@ -1650,24 +1719,12 @@ public final class AccessManager {
             if (stale > 0 && DonatePulse.repeatDue(donateLastStalePendingNotifyAtMillis,
                     System.currentTimeMillis(), staleHours * 60)) {
                 donateLastStalePendingNotifyAtMillis = System.currentTimeMillis();
-                logger.warning("DonatePay pending queue: " + stale
+                logger.warning("Donations pending queue: " + stale
                         + " donation(s) wait for a decision longer than " + staleHours + " h — /pass pending.");
                 if (currentConfig.donateAlertAdmins()) {
                     notifyAdminsOnline("donation.alert-pending-stale",
                             "count", stale, "hours", staleHours);
                 }
-            }
-        }
-
-        // повторные тревоги, если отказ затянулся (раз в donatepay.alert-repeat-minutes)
-        if (donateOutageAlerted && DonatePulse.repeatDue(donateLastAlertAtMillis,
-                System.currentTimeMillis(), currentConfig.donateAlertRepeatMinutes())) {
-            donateLastAlertAtMillis = System.currentTimeMillis();
-            int streak = donationPollFailStreak.get();
-            logger.warning("DonatePay STILL DOWN — " + streak + " failed polls in a row.");
-            if (currentConfig.donateAlertAdmins()) {
-                notifyAdminsOnline("donation.alert-offline",
-                        "fails", streak, "error", donateLastError == null ? "unknown" : donateLastError);
             }
         }
     }
@@ -1687,32 +1744,30 @@ public final class AccessManager {
         });
     }
 
-    /** Состояние связи (последний успех, серия отказов, последняя ошибка) для /pass doctor и др. */
-    public record DonatePulseSnapshot(long lastSuccessAtMillis, int failStreak, String lastError) {
-    }
-
-    public DonatePulseSnapshot donatePulseSnapshot() {
-        return new DonatePulseSnapshot(donateLastSuccessAtMillis,
-                donationPollFailStreak.get(), donateLastError);
-    }
-
-    /** Полная карточка пульса для /pass health. */
-    public record DonateHealthCard(DonatePulse.State state, long lastSuccessAtMillis, int failStreak,
+    /** Карточка сторожа одного провайдера для {@code /pass health}. */
+    public record DonateHealthCard(String serviceKey, String serviceName, boolean ready,
+                                   DonatePulse.State state, long lastSuccessAtMillis, int failStreak,
                                    String lastError, long attempts, long successes, long failures,
                                    long processedTransactions, int pollSeconds, long cursorId,
                                    int uptimePercent, long avgLatencyMs, long maxLatencyMs) {
     }
 
-    public DonateHealthCard donateHealthCard() {
-        long attempts = donatePollAttempts.get();
-        return new DonateHealthCard(
-                DonatePulse.classify(donateLastSuccessAtMillis, donationPollFailStreak.get()),
-                donateLastSuccessAtMillis, donationPollFailStreak.get(), donateLastError,
-                attempts, donatePollSuccesses.get(), donatePollFailures.get(),
-                donateTransactionsProcessed.get(),
-                config.donatePollSeconds(), store.getDonationCursor(),
-                DonatePulse.uptimePercent(attempts, donatePollSuccesses.get()),
-                donatePollLatency.avg(), donatePollLatency.max());
+    /** Карточки всех провайдеров в фиксированном порядке (donatepay, easydonate). */
+    public java.util.List<DonateHealthCard> donateHealthCards() {
+        java.util.List<DonateHealthCard> cards = new java.util.ArrayList<>();
+        for (ProviderPulse pulse : donationPulses.values()) {
+            long attempts = pulse.attempts.get();
+            String source = pulse.provider.key();
+            cards.add(new DonateHealthCard(source, pulse.provider.displayName(),
+                    pulse.provider.ready(),
+                    DonatePulse.classify(pulse.lastSuccessAtMillis, pulse.failStreak.get()),
+                    pulse.lastSuccessAtMillis, pulse.failStreak.get(), pulse.lastError,
+                    attempts, pulse.successes.get(), pulse.failures.get(), pulse.processed.get(),
+                    config.donatePollSeconds(), store.getDonationCursor(source),
+                    DonatePulse.uptimePercent(attempts, pulse.successes.get()),
+                    pulse.latency.avg(), pulse.latency.max()));
+        }
+        return cards;
     }
 
     /** Reprocesses payments that are still waiting for a decision (used by {@code /pass pending retry}). */
@@ -1727,7 +1782,8 @@ public final class AccessManager {
                     "success",
                     "donation",
                     record.createdAt);
-            DonationService.Outcome outcome = donations.process(transaction, System.currentTimeMillis(), false);
+            DonationService.Outcome outcome = donations.process(transaction,
+                    System.currentTimeMillis(), false, record.source);
             if (outcome.granted()) {
                 processed++;
             }
@@ -1826,10 +1882,16 @@ public final class AccessManager {
      * id отрицательный — тестовый диапазон, курсор боевых платежей не трогает.
      */
     public DonationService.Outcome simulateDonation(String playerName, int amountRubles) {
+        return simulateDonation(playerName, amountRubles, RegistrationStore.DONATION_SOURCE_DONATEPAY);
+    }
+
+    /** {{@code /pass testpay <ник> <сумма> [сервис]}}: источник тоже идёт в журнал. */
+    public DonationService.Outcome simulateDonation(String playerName, int amountRubles, String source) {
         long now = System.currentTimeMillis();
         DonatePayClient.Transaction transaction = new DonatePayClient.Transaction(
                 -now, playerName, BigDecimal.valueOf(Math.max(0, amountRubles)), "success", "donation", now);
-        return donations.process(transaction, now, false);
+        return donations.process(transaction, now, false,
+                RegistrationStore.DONATION_SOURCE_DONATEPAY.equals(source) ? source : source);
     }
 
     /** Performs a lightweight DonatePay API probe for {@code /pass doctor}. */

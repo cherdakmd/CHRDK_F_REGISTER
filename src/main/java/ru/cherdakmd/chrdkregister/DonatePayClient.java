@@ -26,7 +26,23 @@ import java.util.List;
 import java.util.Map;
 
 /** Reads successful DonatePay transactions and extracts the donor's display name (Minecraft nickname). */
-public final class DonatePayClient {
+public final class DonatePayClient implements DonationProvider {
+    @Override
+    public String key() {
+        return RegistrationStore.DONATION_SOURCE_DONATEPAY;
+    }
+
+    @Override
+    public String displayName() {
+        return "DonatePay";
+    }
+
+    @Override
+    public boolean ready() {
+        PluginConfig current = this.config;
+        return current != null && current.donatePayReady();
+    }
+
     private static final String API_URL = "https://donatepay.ru/api/v1/transactions";
     private static final DateTimeFormatter DONATEPAY_DATE = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -41,6 +57,7 @@ public final class DonatePayClient {
                 .build();
     }
 
+    @Override
     public void updateConfig(PluginConfig newConfig) {
         this.config = newConfig;
     }

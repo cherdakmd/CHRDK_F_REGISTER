@@ -75,17 +75,23 @@ final class DonatePulse {
 
     /** Консольный heartbeat-пульс: тихо в норме (пустая строка), громко при проблеме. */
     static String heartbeatLine(long lastSuccessAtMillis, long nowMillis, int failStreak, String lastError) {
+        return heartbeatLine("DonatePay", lastSuccessAtMillis, nowMillis, failStreak, lastError);
+    }
+
+    /** Та же строка, но с именем провайдера (DonatePay / EasyDonate / …). */
+    static String heartbeatLine(String service, long lastSuccessAtMillis, long nowMillis,
+                                int failStreak, String lastError) {
         if (failStreak > 0 && lastSuccessAtMillis <= 0) {
-            return "DonatePay heartbeat: NO CONTACT — ни одной удачной попытки за запуск сервера"
+            return service + " heartbeat: NO CONTACT — ни одной удачной попытки за запуск сервера"
                     + " (неудач подряд: " + failStreak + ")"
                     + ". Ошибка: " + (lastError == null ? "unknown" : lastError);
         }
         long agoSeconds = Math.max(0, (nowMillis - lastSuccessAtMillis) / 1000L);
         if (failStreak > 0) {
-            return "DonatePay heartbeat: FLAKY — последний успех " + agoSeconds
+            return service + " heartbeat: FLAKY — последний успех " + agoSeconds
                     + " с назад, неудач подряд: " + failStreak
                     + ". Ошибка: " + (lastError == null ? "unknown" : lastError);
         }
-        return "DonatePay heartbeat: OK — последний успешный опрос " + agoSeconds + " с назад";
+        return service + " heartbeat: OK — последний успешный опрос " + agoSeconds + " с назад";
     }
 }
