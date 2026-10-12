@@ -39,7 +39,7 @@ public final class GoalRewards {
             }
         }
         if (leader != null && assigned < poolWithBonus) {
-            result.compute(leader, (k, v) -> v == null ? poolWithBonus - assigned : v + poolWithBonus - assigned);
+            result.merge(leader, poolWithBonus - assigned, Integer::sum);
         }
         return result;
     }
