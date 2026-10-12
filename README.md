@@ -770,15 +770,25 @@ public void onEnable() {
 ./gradlew build
 ```
 
-Собираются оба модуля: ядро появится в `build/libs/chrdk-f-register-1.4.15.jar`, аддон
-CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.15.jar`, реферальный —
-`referrals/build/libs/chrdk-referrals-1.4.15.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.15.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.15.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.15.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.15.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.15.jar` (зависит от аддона чар). На сервер ядро обязательно, аддоны — по желанию
+Собираются оба модуля: ядро появится в `build/libs/chrdk-f-register-1.4.16.jar`, аддон
+CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.16.jar`, реферальный —
+`referrals/build/libs/chrdk-referrals-1.4.16.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.16.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.16.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.16.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.16.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.16.jar` (зависит от аддона чар). На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). Оба JAR прикладываются к каждому релизу на GitHub.
+
+---
+
+## Обновление до 1.4.16
+
+Технический выпуск по первой ревизии 1.4.15: фикс «молчания» сообщений аддонов
+додавлен CI-гардом `.github/scripts/check_messages.py` (каждый литеральный ключ
+кода обязан присутствовать в messages.yml модуля), вычищены мёртвые ключи
+(`tiers.lore-tier`, `enchants.anvil-applied`). Если вы уже обновились до 1.4.15 и
+удалили старые plugins/<Addon>/messages.yml — просто поменяйте JAR-ы.
 
 ---
 
@@ -795,7 +805,7 @@ plugins/<Addon>/messages.yml — удалите их после обновлен
 структуру), чтобы сервер взял актуальные ключи.
 
 **Важно при обновлении:** ядро — заменой JAR. Аддон опционален:
-`chrdk-artifacts-1.4.15.jar` рядом с ядром и chrdk-enchants (той же версии), перезапуск.
+`chrdk-artifacts-1.4.16.jar` рядом с ядром и chrdk-enchants (той же версии), перезапуск.
 Кулдауны/вкл/цена опытом — в `plugins/CHRDK_Artifacts/config.yml`.
 
 ---
@@ -806,7 +816,7 @@ plugins/<Addon>/messages.yml — удалите их после обновлен
 проклятого до легендарного, накат при крафте брони/оружия/инструментов, апгрейд двух
 одинаковых тирированных предметов на наковальне, перенос тира через апгрейд в незерит.
 
-**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-tier-forge-1.4.15.jar`
+**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-tier-forge-1.4.16.jar`
 рядом с ядром (≥ 1.4.6), перезапуск. Шансы/бонусы тиров — в `plugins/CHRDK_TierForge/config.yml`.
 
 ---
@@ -818,7 +828,7 @@ plugins/<Addon>/messages.yml — удалите их после обновлен
 крадушке и снайперских стрел с поправкой на дистанцию. Получение — стол зачарований и
 жители-библиотекари, применение — наковальня; всё хранится в NBT предметов.
 
-**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-enchants-1.4.15.jar`
+**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-enchants-1.4.16.jar`
 рядом с ядром (≥ 1.4.6, `depend`), перезапуск. Баланс/шансы/лимиты — `plugins/CHRDK_Enchants/config.yml`.
 
 ---

@@ -3,7 +3,6 @@ enchants:
   no-api: "<red>Ядро CHRDK_F_REGISTER не найдено — чары недоступны.</red>"
   need-auth: "<red>Сначала войдите на сервер (/login).</red>"
   table-added: "<light_purple>✦ Стол дарует эпическую чару: %name%!</light_purple>"
-  anvil-applied: "<light_purple>✦ Чара перенесена: %name%</light_purple>"
   anvil-capped: "<red>На предмете уже максимум чар (%max%) или они конфликтуют.</red>"
   usage: "<gray>/enchants — книга с описанием всех 30 чар; /enchants info <id></gray>"
   info-header: "<light_purple>✦ %name% <gray>(%rarity%, ур. I–%maxlevel%)</gray>"

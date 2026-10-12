@@ -19,7 +19,6 @@ tiers:
   admin-usage:
     - "<gray><yellow>/tiersadmin give <ник> <материал> <тир></yellow> — выдать тир-предмет</gray>"
     - "<gray><yellow>/tiersadmin reload</yellow> — перечитать конфиг</gray>"
-  lore-tier: "%color%%name%"
   tier:
     cursed:
       name: "✖ Проклятый"
