@@ -40,6 +40,20 @@ class GoalRewardsTest {
     }
 
     @Test
+    void moreHeroesThanPoolGivesOnesToTopContributors() {
+        Map<String, Integer> many = new LinkedHashMap<>();
+        many.put("top1", 100);
+        many.put("top2", 90);
+        many.put("mid", 50);
+        many.put("low", 1);
+        Map<String, Integer> shares = GoalRewards.distribute(2, many, 0);
+        assertEquals(2, shares.size());
+        assertEquals(1, shares.get("top1"));
+        assertEquals(1, shares.get("top2"));
+        assertEquals(2, shares.values().stream().mapToInt(Integer::intValue).sum());
+    }
+
+    @Test
     void bonusPercentScalesPool() {
         Map<String, Integer> shares = GoalRewards.distribute(100, Map.of("alex", 1), 50);
         assertEquals(150, shares.get("alex"));
