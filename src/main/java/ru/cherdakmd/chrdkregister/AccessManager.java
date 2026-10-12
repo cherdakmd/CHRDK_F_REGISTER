@@ -91,6 +91,8 @@ public final class AccessManager {
     private final java.util.concurrent.atomic.AtomicLong donatePollSuccesses = new java.util.concurrent.atomic.AtomicLong();
     private final java.util.concurrent.atomic.AtomicLong donatePollFailures = new java.util.concurrent.atomic.AtomicLong();
     private final java.util.concurrent.atomic.AtomicLong donateTransactionsProcessed = new java.util.concurrent.atomic.AtomicLong();
+    private final LatencySeries donatePollLatency = new LatencySeries(20);
+    private volatile long donateLastStalePendingNotifyAtMillis;
 
     private final AuditLog audit;
     private final NotificationService notifications;
@@ -1526,6 +1528,7 @@ public final class AccessManager {
         }
         int processed = 0;
         donatePollAttempts.incrementAndGet();
+        long apiCallStartedNanos = System.nanoTime();
         try {
             if (!store.isDonationCursorInitialized()) {
                 List<DonatePayClient.Transaction> recent = donatePay.fetchRecentSuccessful(100);
@@ -1542,6 +1545,7 @@ public final class AccessManager {
                 store.initializeDonationCursor(latest);
                 logger.info("DonatePay transaction cursor initialized at ID " + latest
                         + " (payments prior to initial setup are ignored).");
+                donatePollLatency.add((System.nanoTime() - apiCallStartedNanos) / 1_000_000L);
                 markDonatePollSuccess();
                 donateTransactionsProcessed.addAndGet(processed);
                 return new DonatePollReport(processed, null);
@@ -1558,6 +1562,7 @@ public final class AccessManager {
                 cursor = Math.max(cursor, transaction.id());
                 processed++;
             }
+            donatePollLatency.add((System.nanoTime() - apiCallStartedNanos) / 1_000_000L);
             markDonatePollSuccess();
             donateTransactionsProcessed.addAndGet(processed);
             return new DonatePollReport(processed, null);
@@ -1633,6 +1638,27 @@ public final class AccessManager {
         } else {
             logger.warning(line);
         }
+        // залежавшиеся в очереди донаты: напоминаем, чтобы не висели сутками
+        int staleHours = currentConfig.donatePendingNotifyHours();
+        if (staleHours > 0) {
+            List<RegistrationStore.DonationRecord> pendingNow = donations.pending(200);
+            long[] stamps = new long[pendingNow.size()];
+            for (int i = 0; i < pendingNow.size(); i++) {
+                stamps[i] = pendingNow.get(i).createdAt;
+            }
+            int stale = DonatePulse.countStalePending(stamps, System.currentTimeMillis(), staleHours);
+            if (stale > 0 && DonatePulse.repeatDue(donateLastStalePendingNotifyAtMillis,
+                    System.currentTimeMillis(), staleHours * 60)) {
+                donateLastStalePendingNotifyAtMillis = System.currentTimeMillis();
+                logger.warning("DonatePay pending queue: " + stale
+                        + " donation(s) wait for a decision longer than " + staleHours + " h — /pass pending.");
+                if (currentConfig.donateAlertAdmins()) {
+                    notifyAdminsOnline("donation.alert-pending-stale",
+                            "count", stale, "hours", staleHours);
+                }
+            }
+        }
+
         // повторные тревоги, если отказ затянулся (раз в donatepay.alert-repeat-minutes)
         if (donateOutageAlerted && DonatePulse.repeatDue(donateLastAlertAtMillis,
                 System.currentTimeMillis(), currentConfig.donateAlertRepeatMinutes())) {
@@ -1673,16 +1699,20 @@ public final class AccessManager {
     /** Полная карточка пульса для /pass health. */
     public record DonateHealthCard(DonatePulse.State state, long lastSuccessAtMillis, int failStreak,
                                    String lastError, long attempts, long successes, long failures,
-                                   long processedTransactions, int pollSeconds, long cursorId) {
+                                   long processedTransactions, int pollSeconds, long cursorId,
+                                   int uptimePercent, long avgLatencyMs, long maxLatencyMs) {
     }
 
     public DonateHealthCard donateHealthCard() {
+        long attempts = donatePollAttempts.get();
         return new DonateHealthCard(
                 DonatePulse.classify(donateLastSuccessAtMillis, donationPollFailStreak.get()),
                 donateLastSuccessAtMillis, donationPollFailStreak.get(), donateLastError,
-                donatePollAttempts.get(), donatePollSuccesses.get(), donatePollFailures.get(),
+                attempts, donatePollSuccesses.get(), donatePollFailures.get(),
                 donateTransactionsProcessed.get(),
-                config.donatePollSeconds(), store.getDonationCursor());
+                config.donatePollSeconds(), store.getDonationCursor(),
+                DonatePulse.uptimePercent(attempts, donatePollSuccesses.get()),
+                donatePollLatency.avg(), donatePollLatency.max());
     }
 
     /** Reprocesses payments that are still waiting for a decision (used by {@code /pass pending retry}). */

@@ -47,6 +47,32 @@ final class DonatePulse {
         return failStreak > 0 ? State.FLAKY : State.OK;
     }
 
+    /** Процент доступности серии опросов (попыток не было — считаем 100%). */
+    static int uptimePercent(long attempts, long successes) {
+        if (attempts <= 0) {
+            return 100;
+        }
+        return (int) Math.min(100, Math.max(0, successes * 100 / attempts));
+    }
+
+    /**
+     * Сколько записей очереди «залежались»: созданы раньше, чем {@code staleHours} назад.
+     * Принимает только метки времени создания (изолировано от хранилища).
+     */
+    static int countStalePending(long[] createdAtMillis, long nowMillis, int staleHours) {
+        if (staleHours <= 0) {
+            return 0;
+        }
+        long edge = nowMillis - staleHours * 3_600_000L;
+        int count = 0;
+        for (long createdAt : createdAtMillis) {
+            if (createdAt > 0 && createdAt < edge) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     /** Консольный heartbeat-пульс: тихо в норме (пустая строка), громко при проблеме. */
     static String heartbeatLine(long lastSuccessAtMillis, long nowMillis, int failStreak, String lastError) {
         if (failStreak > 0 && lastSuccessAtMillis <= 0) {

@@ -59,6 +59,25 @@ class DonatePulseTest {
     }
 
     @Test
+    void uptimeEndsAtOneHundredForFreshServer() {
+        assertEquals(100, DonatePulse.uptimePercent(0, 0));
+        assertEquals(100, DonatePulse.uptimePercent(10, 10));
+        assertEquals(90, DonatePulse.uptimePercent(10, 9));
+        assertEquals(0, DonatePulse.uptimePercent(10, 0));
+    }
+
+    @Test
+    void stalePendingCountsOnlyOlderThanThreshold() {
+        long now = 10_000_000L;
+        long[] stamps = {now - 60_000, now - 25 * 3_600_000L, 0, now - 30 * 3_600_000L};
+        assertEquals(2, DonatePulse.countStalePending(stamps, now, 24),
+                "два доната старше суток, свежий и кривая метка — мимо");
+        assertEquals(0, DonatePulse.countStalePending(stamps, now, 0),
+                "0 часов в конфиге = напоминаний нет вовсе");
+        assertEquals(3, DonatePulse.countStalePending(stamps, now, 48));
+    }
+
+    @Test
     void staleSuccessTimestampClampsAgoToZero() {
         String ok = DonatePulse.heartbeatLine(200_000L, 100_000L, 0, null);
         assertTrue(ok.contains("0 с назад"), "кривые часы не должны дать отрицательный возраст");

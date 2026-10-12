@@ -24,6 +24,7 @@ public final class PluginConfig {
     private final int donateAlertFailStreak;
     private final boolean donateAlertAdmins;
     private final int donateAlertRepeatMinutes;
+    private final int donatePendingNotifyHours;
     private final boolean strictCaseMatch;
     private final boolean donateReviewUnmatched;
     private final boolean donateFuzzyMatch;
@@ -125,7 +126,7 @@ public final class PluginConfig {
                 true,
                 ZoneId.of("Europe/Moscow"),
                 new ChatConfig(),
-                300, 10, true, 15
+                300, 10, true, 15, 24
         );
     }
 
@@ -196,7 +197,8 @@ public final class PluginConfig {
             int donateHealthSeconds,
             int donateAlertFailStreak,
             boolean donateAlertAdmins,
-            int donateAlertRepeatMinutes
+            int donateAlertRepeatMinutes,
+            int donatePendingNotifyHours
     ) {
         this.donatePayApiToken = donatePayApiToken == null ? "" : donatePayApiToken.trim();
         this.donatePayPaymentUrl = sanitizeUrl(donatePayPaymentUrl);
@@ -206,6 +208,7 @@ public final class PluginConfig {
         this.donateAlertFailStreak = Math.clamp(donateAlertFailStreak, 3, 100);
         this.donateAlertAdmins = donateAlertAdmins;
         this.donateAlertRepeatMinutes = Math.clamp(donateAlertRepeatMinutes, 0, 1440);
+        this.donatePendingNotifyHours = Math.clamp(donatePendingNotifyHours, 0, 8760);
         this.strictCaseMatch = strictCaseMatch;
         this.donateReviewUnmatched = donateReviewUnmatched;
         this.donateFuzzyMatch = donateFuzzyMatch;
@@ -355,7 +358,8 @@ public final class PluginConfig {
                 config.getInt("donatepay.health-seconds", 300),
                 config.getInt("donatepay.alert-fail-streak", 10),
                 config.getBoolean("donatepay.alert-admins", true),
-                config.getInt("donatepay.alert-repeat-minutes", 15)
+                config.getInt("donatepay.alert-repeat-minutes", 15),
+                config.getInt("donatepay.pending-notify-hours", 24)
         );
     }
 
@@ -397,6 +401,11 @@ public final class PluginConfig {
     /** Повторная тревога, если отказ DonatePay тянется (минуты; 0 = без повторов). */
     public int donateAlertRepeatMinutes() {
         return donateAlertRepeatMinutes;
+    }
+
+    /** Напоминать админам, если донат ждёт разбора дольше N часов (0 = выкл). */
+    public int donatePendingNotifyHours() {
+        return donatePendingNotifyHours;
     }
 
     public boolean strictCaseMatch() {

@@ -570,10 +570,15 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                                     System.currentTimeMillis() - card.lastSuccessAtMillis()),
                             "error", card.lastError() == null ? "—" : card.lastError());
                 }
+                int pendingCount = accessManager.donations().pendingCount();
                 messages.send(sender, "donation.health-stats",
                         "attempts", card.attempts(), "ok", card.successes(),
-                        "fail", card.failures(), "processed", card.processedTransactions(),
-                        "pending", accessManager.donations().pendingCount());
+                        "fail", card.failures(), "uptime", card.uptimePercent(),
+                        "avg_ms", card.avgLatencyMs(), "max_ms", card.maxLatencyMs());
+                messages.send(sender, "donation.health-stats2",
+                        "processed", card.processedTransactions(),
+                        "pending", pendingCount,
+                        "stale", pendingCount == 0 ? "" : " (разбор: /" + label + " pending)");
                 messages.send(sender, "donation.health-footer", "label", label);
                 return true;
             }
