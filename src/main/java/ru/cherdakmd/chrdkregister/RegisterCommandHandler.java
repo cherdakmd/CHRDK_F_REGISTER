@@ -609,8 +609,17 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                     messages.send(sender, "donation.recheck-unavailable");
                     return true;
                 }
-                accessManager.forceDonationPoll();
                 messages.send(sender, "donation.recheck-started", "label", label);
+                accessManager.forceDonationPoll(report -> {
+                    if (report.error() != null) {
+                        messages.send(sender, "donation.recheck-failed", "error", report.error());
+                    } else {
+                        messages.send(sender, "donation.recheck-done",
+                                "count", report.processed(),
+                                "pending", accessManager.donations().pendingCount(),
+                                "label", label);
+                    }
+                });
                 return true;
             }
             case "stats" -> {

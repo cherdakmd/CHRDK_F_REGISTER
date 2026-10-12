@@ -41,6 +41,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -80,6 +82,10 @@ public final class AccessManager {
     private final Map<UUID, Long> joinedAt = new ConcurrentHashMap<>();
     private final Map<UUID, BossBar> expiryBars = new ConcurrentHashMap<>();
     private final AtomicBoolean donationPollRunning = new AtomicBoolean(false);
+    private final AtomicInteger donationPollFailStreak = new AtomicInteger(0);
+    private volatile long donateLastSuccessAtMillis;
+    private volatile String donateLastError;
+    private volatile boolean donateOutageAlerted;
 
     private final AuditLog audit;
     private final NotificationService notifications;
@@ -94,6 +100,7 @@ public final class AccessManager {
     private BukkitTask reminderTask;
     private BukkitTask flushTask;
     private BukkitTask housekeepingTask;
+    private BukkitTask donateHealthTask;
     private volatile long lastBackupAtMillis;
     private volatile long lastPurgeAtMillis;
     private volatile long serverStartedAtMillis;
@@ -236,7 +243,11 @@ public final class AccessManager {
 
         long pollTicks = Math.max(20L * 15L, config.donatePollSeconds() * 20L);
         this.donatePollTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
-                plugin, this::pollDonationsSafely, 20L * 5L, pollTicks);
+                plugin, () -> pollDonationsSafely(), 20L * 5L, pollTicks);
+
+        this.donateHealthTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
+                plugin, this::donateHeartbeat, 20L * config.donateHealthSeconds(),
+                20L * config.donateHealthSeconds());
 
         long reminderTicks = Math.max(40L, config.reminderSeconds() * 20L);
         this.reminderTask = Bukkit.getScheduler().runTaskTimer(
@@ -273,7 +284,11 @@ public final class AccessManager {
 
         long pollTicks = Math.max(20L * 15L, newConfig.donatePollSeconds() * 20L);
         this.donatePollTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
-                plugin, this::pollDonationsSafely, 20L * 2L, pollTicks);
+                plugin, () -> pollDonationsSafely(), 20L * 2L, pollTicks);
+
+        this.donateHealthTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
+                plugin, this::donateHeartbeat, 20L * newConfig.donateHealthSeconds(),
+                20L * newConfig.donateHealthSeconds());
 
         long reminderTicks = Math.max(40L, newConfig.reminderSeconds() * 20L);
         this.reminderTask = Bukkit.getScheduler().runTaskTimer(
@@ -335,6 +350,11 @@ public final class AccessManager {
             housekeepingTask.cancel();
             housekeepingTask = null;
         }
+        if (donateHealthTask != null) {
+            donateHealthTask.cancel();
+            donateHealthTask = null;
+        }
+
     }
 
     /** Periodic maintenance: storage flush, backups, audit rotation and counter pruning. */
@@ -1481,11 +1501,25 @@ public final class AccessManager {
         }
     }
 
-    private void pollDonationsSafely() {
+    /** Итог опроса DonatePay: сколько новых транзакций обработали (или текст ошибки). */
+    public record DonatePollReport(int processed, String error) {
+        public static DonatePollReport skipped() {
+            return new DonatePollReport(0, null);
+        }
+    }
+
+    /**
+     * Опрос DonatePay. Это же и проверка связи: успех — связь есть (сбрасывает серию
+     * отказов и шлёт «восстановление», если была тревога), ошибка HTTP — серия нарастает,
+     * на переходе через donatepay.alert-fail-streak онлайн-админы узнают о падении
+     * разом, а не из логов спустя часы.
+     */
+    private DonatePollReport pollDonationsSafely() {
         PluginConfig currentConfig = this.config;
         if (!currentConfig.donatePayReady() || !donationPollRunning.compareAndSet(false, true)) {
-            return;
+            return DonatePollReport.skipped();
         }
+        int processed = 0;
         try {
             if (!store.isDonationCursorInitialized()) {
                 List<DonatePayClient.Transaction> recent = donatePay.fetchRecentSuccessful(100);
@@ -1497,11 +1531,13 @@ public final class AccessManager {
                     }
                     donations.process(transaction, System.currentTimeMillis(), true);
                     store.markDonationProcessed(transaction.id());
+                    processed++;
                 }
                 store.initializeDonationCursor(latest);
                 logger.info("DonatePay transaction cursor initialized at ID " + latest
                         + " (payments prior to initial setup are ignored).");
-                return;
+                markDonatePollSuccess();
+                return new DonatePollReport(processed, null);
             }
 
             long cursor = store.getDonationCursor();
@@ -1513,12 +1549,87 @@ public final class AccessManager {
                 donations.process(transaction, System.currentTimeMillis(), true);
                 store.markDonationProcessed(transaction.id());
                 cursor = Math.max(cursor, transaction.id());
+                processed++;
             }
+            markDonatePollSuccess();
+            return new DonatePollReport(processed, null);
         } catch (Exception exception) {
-            warnDonatePayThrottled(exception.getMessage());
+            String message = exception.getMessage();
+            markDonatePollFailure(message);
+            warnDonatePayThrottled(message);
+            return new DonatePollReport(processed, message == null || message.isBlank()
+                    ? "unknown error" : message);
         } finally {
             donationPollRunning.set(false);
         }
+    }
+
+    /** Успешный опрос: связь есть; если была тревога — шлём «DonatePay снова на связи». */
+    private void markDonatePollSuccess() {
+        donationPollFailStreak.set(0);
+        donateLastSuccessAtMillis = System.currentTimeMillis();
+        donateLastError = null;
+        if (DonatePulse.shouldAlertRecovery(donateOutageAlerted)) {
+            donateOutageAlerted = false;
+            logger.info("DonatePay is reachable again — donation auto-check recovered.");
+            if (config.donateAlertAdmins()) {
+                notifyAdminsOnline("donation.alert-online");
+            }
+        }
+    }
+
+    /** Сбой опроса: серия нарастает; на переходе через порог — разовая тревога админам. */
+    private void markDonatePollFailure(String error) {
+        donateLastError = error;
+        int streak = donationPollFailStreak.incrementAndGet();
+        if (DonatePulse.shouldAlertOutage(streak, config.donateAlertFailStreak(), donateOutageAlerted)) {
+            donateOutageAlerted = true;
+            logger.warning("DonatePay appears DOWN (" + streak + " failed polls in a row): "
+                    + (error == null ? "unknown error" : error));
+            if (config.donateAlertAdmins()) {
+                notifyAdminsOnline("donation.alert-offline",
+                        "fails", streak, "error", error == null ? "unknown" : error);
+            }
+        }
+    }
+
+    /** Heartbeat-строка в консоль раз в donatepay.health-seconds — видно, что сторож жив. */
+    private void donateHeartbeat() {
+        PluginConfig currentConfig = this.config;
+        if (!currentConfig.donatePayReady()) {
+            return;
+        }
+        String line = DonatePulse.heartbeatLine(donateLastSuccessAtMillis,
+                System.currentTimeMillis(), donationPollFailStreak.get(), donateLastError);
+        if (line.startsWith("DonatePay heartbeat: OK")) {
+            logger.info(line);
+        } else {
+            logger.warning(line);
+        }
+    }
+
+    /** Рассылка всем онлайн-админам (chrdkregister.admin) из асинхронного контекста. */
+    private void notifyAdminsOnline(String key, Object... params) {
+        Messages liveMessages = this.messages;
+        if (liveMessages == null) {
+            return;
+        }
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            for (org.bukkit.entity.Player player : plugin.getServer().getOnlinePlayers()) {
+                if (player.hasPermission("chrdkregister.admin")) {
+                    liveMessages.send(player, key, params);
+                }
+            }
+        });
+    }
+
+    /** Состояние связи (последний успех, серия отказов, последняя ошибка) для /pass doctor и др. */
+    public record DonatePulseSnapshot(long lastSuccessAtMillis, int failStreak, String lastError) {
+    }
+
+    public DonatePulseSnapshot donatePulseSnapshot() {
+        return new DonatePulseSnapshot(donateLastSuccessAtMillis,
+                donationPollFailStreak.get(), donateLastError);
     }
 
     /** Reprocesses payments that are still waiting for a decision (used by {@code /pass pending retry}). */
@@ -1611,9 +1722,19 @@ public final class AccessManager {
         sendLoginPrompt(online, true);
     }
 
-    /** Внеочередной опрос DonatePay (для {@code /pass recheck}); сам опрос асинхронный и защищён от дублей. */
-    public void forceDonationPoll() {
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, this::pollDonationsSafely);
+    /**
+     * Внеочередной опрос DonatePay (для {@code /pass recheck}); сам опрос асинхронный
+     * и защищён от дублей, результат придёт в onDone уже на главном потоке.
+     */
+    public void forceDonationPoll(Consumer<DonatePollReport> onDone) {
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            DonatePollReport report = pollDonationsSafely();
+            try {
+                Bukkit.getScheduler().runTask(plugin, () -> onDone.accept(report));
+            } catch (IllegalStateException ignored) {
+                // плагин выключился, пока бежал опрос — результат просто некому отдать
+            }
+        });
     }
 
     /**

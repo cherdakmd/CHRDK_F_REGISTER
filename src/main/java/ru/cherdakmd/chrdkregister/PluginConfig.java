@@ -20,6 +20,9 @@ public final class PluginConfig {
     private final String donatePayPaymentUrl;
     private final int minimumDonationRubles;
     private final int donatePollSeconds;
+    private final int donateHealthSeconds;
+    private final int donateAlertFailStreak;
+    private final boolean donateAlertAdmins;
     private final boolean strictCaseMatch;
     private final boolean donateReviewUnmatched;
     private final boolean donateFuzzyMatch;
@@ -119,7 +122,8 @@ public final class PluginConfig {
                 List.of(),
                 true,
                 ZoneId.of("Europe/Moscow"),
-                new ChatConfig()
+                new ChatConfig(),
+                300, 10, true
         );
     }
 
@@ -186,12 +190,18 @@ public final class PluginConfig {
             List<String> notificationMentions,
             boolean bStatsEnabled,
             ZoneId timeZone,
-            ChatConfig chat
+            ChatConfig chat,
+            int donateHealthSeconds,
+            int donateAlertFailStreak,
+            boolean donateAlertAdmins
     ) {
         this.donatePayApiToken = donatePayApiToken == null ? "" : donatePayApiToken.trim();
         this.donatePayPaymentUrl = sanitizeUrl(donatePayPaymentUrl);
         this.minimumDonationRubles = Math.max(1, minimumDonationRubles);
         this.donatePollSeconds = Math.max(15, donatePollSeconds);
+        this.donateHealthSeconds = Math.clamp(donateHealthSeconds, 60, 3600);
+        this.donateAlertFailStreak = Math.clamp(donateAlertFailStreak, 3, 100);
+        this.donateAlertAdmins = donateAlertAdmins;
         this.strictCaseMatch = strictCaseMatch;
         this.donateReviewUnmatched = donateReviewUnmatched;
         this.donateFuzzyMatch = donateFuzzyMatch;
@@ -337,7 +347,10 @@ public final class PluginConfig {
                 config.getStringList("notifications.mentions"),
                 config.getBoolean("metrics.bstats", true),
                 zone,
-                ChatConfig.fromBukkitConfig(config)
+                ChatConfig.fromBukkitConfig(config),
+                config.getInt("donatepay.health-seconds", 300),
+                config.getInt("donatepay.alert-fail-streak", 10),
+                config.getBoolean("donatepay.alert-admins", true)
         );
     }
 
@@ -359,6 +372,21 @@ public final class PluginConfig {
 
     public int donatePollSeconds() {
         return donatePollSeconds;
+    }
+
+    /** Interval of the DonatePay connectivity heartbeat (console line, seconds). */
+    public int donateHealthSeconds() {
+        return donateHealthSeconds;
+    }
+
+    /** Сколько подряд неудачных опросов считается падением DonatePay. */
+    public int donateAlertFailStreak() {
+        return donateAlertFailStreak;
+    }
+
+    /** Дублировать тревогу о падении DonatePay онлайн-админам в чат. */
+    public boolean donateAlertAdmins() {
+        return donateAlertAdmins;
     }
 
     public boolean strictCaseMatch() {
