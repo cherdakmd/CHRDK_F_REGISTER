@@ -74,7 +74,8 @@ class DonatePulseTest {
                 "два доната старше суток, свежий и кривая метка — мимо");
         assertEquals(0, DonatePulse.countStalePending(stamps, now, 0),
                 "0 часов в конфиге = напоминаний нет вовсе");
-        assertEquals(3, DonatePulse.countStalePending(stamps, now, 48));
+        assertEquals(0, DonatePulse.countStalePending(stamps, now, 48),
+                "ни один не старше двух суток — порог работает в обе стороны");
     }
 
     @Test
