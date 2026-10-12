@@ -75,4 +75,32 @@ class TabListServiceTest {
                 List.of("&6Игрок: &f%player% <gray>(%ping% мс)</gray>"), context()).get(0);
         assertEquals("Игрок: Steve (42 мс)", PLAIN.serialize(line));
     }
+
+    @Test
+    void pinnedMatchingIsCaseAndWhitespaceInsensitive() {
+        List<String> pinned = List.of("kalinin_play", " Admin ");
+        assertTrue(TabListService.isPinned(pinned, "KALININ_PLAY"));
+        assertTrue(TabListService.isPinned(pinned, "kalinin_play"));
+        assertTrue(TabListService.isPinned(pinned, "admin"));
+        assertTrue(!TabListService.isPinned(pinned, "kalinin_play2"));
+        assertTrue(!TabListService.isPinned(List.of(), "kalinin_play"));
+        assertTrue(!TabListService.isPinned(null, "kalinin_play"));
+        assertTrue(!TabListService.isPinned(pinned, null));
+    }
+
+    @Test
+    void pinTeamSortsAboveRegularTeamsAndFitsNameLimit() {
+        // клиент сортирует список по имени команды: '!' (0x21) выше любых букв/цифр
+        assertEquals('!', TabListService.PIN_TEAM_NAME.charAt(0));
+        assertTrue(TabListService.PIN_TEAM_NAME.compareTo("z") < 0
+                && TabListService.PIN_TEAM_NAME.compareTo("A") < 0
+                && TabListService.PIN_TEAM_NAME.compareTo("0ranks") < 0,
+                "команда закрепа должна быть первой в алфавите команд");
+        assertTrue(TabListService.PIN_TEAM_NAME.length() <= 16,
+                "имя команды должно влезать в лимит 16 символов");
+    }
+
+    private static void assertTrue(boolean condition, String message) {
+        org.junit.jupiter.api.Assertions.assertTrue(condition, message);
+    }
 }

@@ -8,6 +8,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.Team;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,11 +27,14 @@ import java.util.Locale;
  */
 public final class TabListService implements Listener {
 
+    /** Команда «вверх таба»: клиент ставит игроков с командой выше остальных, а '!' сортируется первым. */
+    static final String PIN_TEAM_NAME = "!chrdk-pin";
+
     /** Снимок настроек из {@code config.yml}. */
-    record Settings(boolean enabled, int refreshTicks,
-                    List<String> header, List<String> footer, String nameFormat) {
+    record Settings(boolean enabled, int refreshTicks, List<String> header, List<String> footer,
+                    String nameFormat, List<String> pinnedNames) {
         static Settings disabled() {
-            return new Settings(false, 40, List.of(), List.of(), "");
+            return new Settings(false, 40, List.of(), List.of(), "", List.of());
         }
     }
 
@@ -71,8 +76,10 @@ public final class TabListService implements Listener {
                 Math.max(10, cfg.getInt(root + ".refresh-ticks", 40)),
                 cfg.getStringList(root + ".header"),
                 cfg.getStringList(root + ".footer"),
-                cfg.getString(root + ".player-name-format", ""));
+                cfg.getString(root + ".player-name-format", ""),
+                cfg.getStringList(root + ".pinned-names"));
         reschedule();
+        syncPinned();
         if (settings.enabled()) {
             applyAll();
         } else {
@@ -85,6 +92,7 @@ public final class TabListService implements Listener {
             refreshTask.cancel();
             refreshTask = null;
         }
+        clearPinned();
     }
 
     @EventHandler
@@ -113,6 +121,7 @@ public final class TabListService implements Listener {
     }
 
     private void applyAll() {
+        ensurePinned();
         for (Player player : Bukkit.getOnlinePlayers()) {
             apply(player);
         }
@@ -134,6 +143,85 @@ public final class TabListService implements Listener {
         if (!settings.nameFormat().isBlank()) {
             player.playerListName(renderName(messages, settings.nameFormat(), context));
         }
+    }
+
+    // ------------------------------ закрепление вверху списка -------------------
+
+    /** Полная синхронизация закреплённых ников при reload: команда пересобирается. */
+    private void syncPinned() {
+        Scoreboard board = mainScoreboard();
+        if (board == null) {
+            return;
+        }
+        Team team = board.getTeam(PIN_TEAM_NAME);
+        if (!settings.enabled() || settings.pinnedNames().isEmpty()) {
+            if (team != null) {
+                team.unregister();
+            }
+            return;
+        }
+        if (team == null) {
+            team = board.registerNewTeam(PIN_TEAM_NAME);
+        }
+        // пересобираем участников: админ мог убрать ник из pinned-names на reload
+        for (String entry : new ArrayList<>(team.getEntries())) {
+            team.removeEntry(entry);
+        }
+        for (String name : settings.pinnedNames()) {
+            if (name != null && !name.isBlank()) {
+                team.addEntry(name.trim()); // работает и для оффлайн-игроков
+            }
+        }
+    }
+
+    /** Страховка на каждый refresh: если другой плагин выкинул запись — вернуть. */
+    private void ensurePinned() {
+        if (!settings.enabled() || settings.pinnedNames().isEmpty()) {
+            return;
+        }
+        Scoreboard board = mainScoreboard();
+        if (board == null) {
+            return;
+        }
+        Team team = board.getTeam(PIN_TEAM_NAME);
+        if (team == null) {
+            team = board.registerNewTeam(PIN_TEAM_NAME);
+        }
+        for (String name : settings.pinnedNames()) {
+            if (name != null && !name.isBlank() && !team.hasEntry(name.trim())) {
+                team.addEntry(name.trim());
+            }
+        }
+    }
+
+    private void clearPinned() {
+        Scoreboard board = mainScoreboard();
+        if (board == null) {
+            return;
+        }
+        Team team = board.getTeam(PIN_TEAM_NAME);
+        if (team != null) {
+            team.unregister();
+        }
+    }
+
+    private static Scoreboard mainScoreboard() {
+        return Bukkit.getScoreboardManager() == null
+                ? null
+                : Bukkit.getScoreboardManager().getMainScoreboard();
+    }
+
+    /** Есть ли ник в закрепе (регистронезависимо) — чистая логика для тестов. */
+    static boolean isPinned(List<String> pinnedNames, String playerName) {
+        if (pinnedNames == null || playerName == null) {
+            return false;
+        }
+        for (String pinned : pinnedNames) {
+            if (pinned != null && pinned.trim().equalsIgnoreCase(playerName.trim())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // ------------------------------ чистая логика (юнит-тесты) -------------------
