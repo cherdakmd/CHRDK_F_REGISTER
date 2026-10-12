@@ -154,8 +154,11 @@ public final class EasyDonateClient implements DonationProvider {
             String createdRaw = payment.has("created_at") && payment.get("created_at").isJsonPrimitive()
                     ? payment.get("created_at").getAsString() : "";
             long createdAt = DonationProvider.parseServiceTimestamp(createdRaw, timezone);
+            String paymentType = payment.has("payment_type") && payment.get("payment_type").isJsonPrimitive()
+                    ? payment.get("payment_type").getAsString().trim() : "";
             transactions.add(new DonatePayClient.Transaction(
-                    id, customer, amount, "success", "donation", createdAt));
+                    id, customer, amount, "success", "donation", createdAt,
+                    "test".equalsIgnoreCase(paymentType)));
         }
         transactions.sort(Comparator.comparingLong(DonatePayClient.Transaction::id));
         return transactions;

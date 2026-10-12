@@ -1465,6 +1465,15 @@ public final class AccessManager {
                 "days", config.grantDays(),
                 "player", player.getName(),
                 "payment-url", config.hasPaymentUrl() ? config.donatePayPaymentUrl() : "");
+        String easyUrl = config.easyDonateReady() ? config.easyDonatePaymentUrl() : "";
+        if (!easyUrl.isBlank()) {
+            // вторая ссылка — отдельной строкой: кликабельные теги через %placeholder% не проходят парсер
+            player.sendMessage(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(
+                    "<click:open_url:'" + easyUrl + "'>"
+                    + "<hover:show_text:'<green>Нажмите, чтобы перейти к оплате проходки</green>'>"
+                    + "<aqua><bold><underlined>[ Открыть страницу оплаты EasyDonate ]</underlined></bold></aqua>"
+                    + "</hover></click>"));
+        }
 
         if (showTitle) {
             Title title = Title.title(
@@ -1897,11 +1906,17 @@ public final class AccessManager {
 
     /** Performs a lightweight DonatePay API probe for {@code /pass doctor}. */
     public boolean probeDonatePay() {
-        if (!config.donatePayReady()) {
+        return probeDonationProvider(RegistrationStore.DONATION_SOURCE_DONATEPAY);
+    }
+
+    /** Живой прогон одного HTTP-запроса к донатному сервису (для {@code /pass doctor}). */
+    public boolean probeDonationProvider(String source) {
+        ProviderPulse pulse = donationPulses.get(source);
+        if (pulse == null || !pulse.provider.ready()) {
             return false;
         }
         try {
-            donatePay.fetchRecentSuccessful(1);
+            pulse.provider.fetchRecentSuccessful(1);
             return true;
         } catch (Exception exception) {
             return false;

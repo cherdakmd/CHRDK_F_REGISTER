@@ -155,11 +155,15 @@ public final class DonationService {
         journal.detectedAt = nowMillis;
         journal.status = status.name();
         journal.note = note;
+        if (transaction.testPayment()) {
+            journal.note = "🧪 тестовый платёж — оплата не реальная"
+                    + (note == null || note.isBlank() ? "" : "; " + note);
+        }
         journal.grantedTo = grantedTo;
         journal.days = status == RegistrationStore.DonationStatus.GRANTED ? days : 0;
         journal.suggestedName = suggestions.isEmpty() ? "" : suggestions.get(0);
         store.recordDonation(journal);
-        store.markDonationProcessed(transaction.id());
+        store.markDonationProcessed(journal.source, transaction.id());
         if (status == RegistrationStore.DonationStatus.GRANTED) {
             store.updateDonation(transaction.id(), status.name(), note, "", 0, grantedTo, days);
         }

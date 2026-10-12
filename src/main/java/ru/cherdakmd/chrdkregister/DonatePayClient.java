@@ -228,7 +228,13 @@ public final class DonatePayClient implements DonationProvider {
         return result.toString();
     }
 
-    public record Transaction(long id, String donorName, BigDecimal amount, String status, String type, long createdAt) {
+    public record Transaction(long id, String donorName, BigDecimal amount, String status, String type,
+                              long createdAt, boolean testPayment) {
+        public Transaction(long id, String donorName, BigDecimal amount, String status,
+                           String type, long createdAt) {
+            this(id, donorName, amount, status, type, createdAt, false);
+        }
+
         public boolean isSuccessfulDonation() {
             return "success".equalsIgnoreCase(status)
                     && "donation".equalsIgnoreCase(type)

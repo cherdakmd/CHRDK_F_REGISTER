@@ -811,6 +811,14 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 "auth.min-password-length < 8 — разрешены короткие пароли");
         check(sender, "Тестовый запрос к DonatePay", accessManager.probeDonatePay(),
                 "не удалось подключиться к API DonatePay — проверьте токен и сеть");
+        // EasyDonate — только если хозяин решил его использовать
+        if (cfg.easyDonateEnabled()) {
+            check(sender, "EasyDonate Shop-Key", cfg.easyDonateReady(),
+                    "easydonate.enabled: true, но shop-key пуст — опрос не ведётся");
+            check(sender, "Тестовый запрос к EasyDonate",
+                    accessManager.probeDonationProvider(EasyDonateClient.SOURCE),
+                    "не удалось подключиться к API EasyDonate — проверьте shop-key и сеть");
+        }
         check(sender, "Аудит-лог", cfg.auditEnabled(),
                 "audit.enabled: false — история событий не сохраняется");
         check(sender, "Discord-уведомления", !cfg.discordEnabled() || !cfg.notificationEvents().isEmpty(),

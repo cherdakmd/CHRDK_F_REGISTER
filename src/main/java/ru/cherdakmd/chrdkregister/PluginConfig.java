@@ -27,6 +27,7 @@ public final class PluginConfig {
     private final int donatePendingNotifyHours;
     private final boolean easyDonateEnabled;
     private final String easyDonateShopKey;
+    private final String easyDonatePaymentUrl;
     private final boolean strictCaseMatch;
     private final boolean donateReviewUnmatched;
     private final boolean donateFuzzyMatch;
@@ -128,7 +129,7 @@ public final class PluginConfig {
                 true,
                 ZoneId.of("Europe/Moscow"),
                 new ChatConfig(),
-                300, 10, true, 15, 24, false, ""
+                300, 10, true, 15, 24, false, "", ""
         );
     }
 
@@ -202,7 +203,8 @@ public final class PluginConfig {
             int donateAlertRepeatMinutes,
             int donatePendingNotifyHours,
             boolean easyDonateEnabled,
-            String easyDonateShopKey
+            String easyDonateShopKey,
+            String easyDonatePaymentUrl
     ) {
         this.donatePayApiToken = donatePayApiToken == null ? "" : donatePayApiToken.trim();
         this.donatePayPaymentUrl = sanitizeUrl(donatePayPaymentUrl);
@@ -215,6 +217,7 @@ public final class PluginConfig {
         this.donatePendingNotifyHours = Math.clamp(donatePendingNotifyHours, 0, 8760);
         this.easyDonateEnabled = easyDonateEnabled;
         this.easyDonateShopKey = easyDonateShopKey == null ? "" : easyDonateShopKey.trim();
+        this.easyDonatePaymentUrl = sanitizeUrl(easyDonatePaymentUrl);
         this.strictCaseMatch = strictCaseMatch;
         this.donateReviewUnmatched = donateReviewUnmatched;
         this.donateFuzzyMatch = donateFuzzyMatch;
@@ -367,7 +370,8 @@ public final class PluginConfig {
                 config.getInt("donatepay.alert-repeat-minutes", 15),
                 config.getInt("donatepay.pending-notify-hours", 24),
                 config.getBoolean("easydonate.enabled", false),
-                config.getString("easydonate.shop-key", "")
+                config.getString("easydonate.shop-key", ""),
+                config.getString("easydonate.payment-url", "")
         );
     }
 
@@ -423,6 +427,16 @@ public final class PluginConfig {
 
     public String easyDonateShopKey() {
         return easyDonateShopKey;
+    }
+
+    /** Флаг включения без привязки к ключу (для doctor: «включён, но ключа нет»). */
+    public boolean easyDonateEnabled() {
+        return easyDonateEnabled;
+    }
+
+    /** Ссылка на страницу EasyDonate-магазина для игроков (пусто = не показывать). */
+    public String easyDonatePaymentUrl() {
+        return easyDonatePaymentUrl;
     }
 
     public boolean strictCaseMatch() {

@@ -75,6 +75,16 @@ class EasyDonateClientTest {
         assertEquals(new BigDecimal("491"), parsed.get(0).amount(), "сумма — enrolled");
         assertEquals(new BigDecimal("250.50"), parsed.get(1).amount(), "enrolled может быть строкой");
         assertTrue(parsed.get(0).createdAt() > 0, "created_at распаршен в миллисекунды");
+        assertTrue(parsed.get(0).testPayment(), "payment_type=test помечается флагом (уйдёт в журнал с 🧪)");
+        assertFalse(parsed.get(1).testPayment(), "обычный платёж — без флага");
+    }
+
+    @Test
+    void compactConstructorIsNotTestPayment() {
+        // шесть аргументов (DonatePay и прочие): тестовым платёж не считается
+        DonatePayClient.Transaction tx = new DonatePayClient.Transaction(
+                1L, "Player", java.math.BigDecimal.TEN, "success", "donation", 1L);
+        assertFalse(tx.testPayment());
     }
 
     @Test
