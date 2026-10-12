@@ -99,8 +99,4 @@ class TabListServiceTest {
         assertTrue(TabListService.PIN_TEAM_NAME.length() <= 16,
                 "имя команды должно влезать в лимит 16 символов");
     }
-
-    private static void assertTrue(boolean condition, String message) {
-        org.junit.jupiter.api.Assertions.assertTrue(condition, message);
-    }
 }
