@@ -3,19 +3,26 @@ package ru.cherdakmd.chrdktierforge;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.event.inventory.PrepareSmithingEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.Random;
 
 /**
  * Накат редкости при крафте (и сохранение тира при апгрейде на кузнечном столе).
+ *
+ * <p>Ролл откладывается на «игрок + тип результата» ({@link CraftRollKeeper}): перестановка
+ * ингредиентов в окне крафта НЕ перевыполняет ролл — новую попытку даёт только
+ * завершённый крафт. Это исключает бесконечный перепбор редкости без траты материалов.
  */
 public final class TierCraftListener implements Listener {
 
     private final TierForgePlugin plugin;
     private final Random random = new Random();
+    private final CraftRollKeeper rollKeeper = new CraftRollKeeper();
 
     public TierCraftListener(TierForgePlugin plugin) {
         this.plugin = plugin;
@@ -32,20 +39,33 @@ public final class TierCraftListener implements Listener {
         if (!plugin.config().kindAllowed(kind)) {
             return;
         }
-        // не пересматриваем чужие тир-предметы
+        // не пересматриваем уже тир-предметы
         if (plugin.items().tierOf(result) != null) return;
 
-        int chance = plugin.config().rollOnCraftChancePercent();
-        if (chance <= 0 || random.nextInt(100) >= chance) return;
-        TierDef.Snapshot roll = TierRoller.roll(plugin.config().tiers(), random);
+        // отложенный ролл: стабилен до тех пор, пока результат реально не забрали
+        TierDef.Snapshot roll = rollKeeper.preview(
+                player.getUniqueId(), result.getType().name(), this::rollFresh);
         if (roll == null) return;
         plugin.items().apply(result, roll);
-        if ("cursed".equals(roll.id())) {
-            plugin.messages().send(player, "rolled-cursed");
-        } else if (roll.percent() != 0) {
-            plugin.messages().send(player, "rolled",
-                    "tier", plugin.messages().raw("tier." + roll.id() + ".name"));
-        }
+    }
+
+    /** Результат забран: отложенный ролл сгорает, следующее превью роллит заново. */
+    @EventHandler(ignoreCancelled = true)
+    public void onCraft(CraftItemEvent event) {
+        if (!(event.getWhoClicked() instanceof Player player)) return;
+        if (event.getRecipe() == null) return;
+        ItemStack current = event.getCurrentItem();
+        if (current == null) return;
+        String tier = plugin.items().tierOf(current);
+        TierDef.Snapshot consumed = rollKeeper.consume(
+                player.getUniqueId(), current.getType().name());
+        if (tier == null || consumed == null) return;
+        notifyRolled(player, consumed);
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        rollKeeper.clear(event.getPlayer().getUniqueId());
     }
 
     /** Кузнечный стол: апгрейд в незерит сохраняет накатанный тир. */
@@ -60,5 +80,21 @@ public final class TierCraftListener implements Listener {
         TierDef.Snapshot snapshot = plugin.config().find(tier);
         if (snapshot == null) return;
         plugin.items().apply(result, snapshot);
+    }
+
+    /** Честная попытка случайности: null — «ровно обычный предмет, без тира». */
+    private TierDef.Snapshot rollFresh() {
+        int chance = plugin.config().rollOnCraftChancePercent();
+        if (chance <= 0 || random.nextInt(100) >= chance) return null;
+        return TierRoller.roll(plugin.config().tiers(), random);
+    }
+
+    private void notifyRolled(Player player, TierDef.Snapshot roll) {
+        if ("cursed".equals(roll.id())) {
+            plugin.messages().send(player, "rolled-cursed");
+        } else if (roll.percent() != 0) {
+            plugin.messages().send(player, "rolled",
+                    "tier", plugin.messages().raw("tier." + roll.id() + ".name"));
+        }
     }
 }
