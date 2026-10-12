@@ -1,0 +1,61 @@
+plugins {
+    id 'java'
+}
+
+group = project.maven_group
+version = project.plugin_version
+
+base {
+    archivesName = 'chrdk-ranks'
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'purpurmc'
+        url = 'https://repo.purpurmc.org/snapshots'
+    }
+    maven {
+        name = 'papermc'
+        url = 'https://repo.papermc.io/repository/maven-public/'
+    }
+}
+
+dependencies {
+    compileOnly "org.purpurmc.purpur:purpur-api:${project.purpur_api_version}"
+    // Ядро CHRDK_F_REGISTER: публичный API и Messages.
+    compileOnly project(':')
+    compileOnly "com.google.code.gson:gson:2.11.0"
+
+    testImplementation "org.purpurmc.purpur:purpur-api:${project.purpur_api_version}"
+    testImplementation project(':')
+    testImplementation "com.google.code.gson:gson:2.11.0"
+    testImplementation "org.junit.jupiter:junit-jupiter:5.11.3"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+}
+
+processResources {
+    def pluginVersion = project.version
+    inputs.property "version", pluginVersion
+    filteringCharset = 'UTF-8'
+    filesMatching("plugin.yml") {
+        expand "version": pluginVersion
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 21
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "failed"
+    }
+}

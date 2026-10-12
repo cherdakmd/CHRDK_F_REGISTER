@@ -1,0 +1,16 @@
+name: CHRDK_Cosmetics
+version: ${version}
+main: ru.cherdakmd.chrdkcosmetics.CosmeticsPlugin
+api-version: '1.21'
+description: "Косметика владельцев проходки: шлейфы частиц при ходьбе и торжественный эффект входа (аддон CHRDK_F_REGISTER)"
+author: cherdakmd
+depend: [CHRDK_F_REGISTER]
+commands:
+  cosmetics:
+    description: "Косметические эффекты: шлейфы частиц"
+    aliases: [cosmetic, cos]
+    usage: "/cosmetics [list|off|<эффект>]"
+permissions:
+  chrdkcosmetics.use:
+    description: "Выбирать косметические эффекты"
+    default: true

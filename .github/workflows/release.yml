@@ -50,6 +50,9 @@ jobs:
           echo "artifacts_jar=artifacts/build/libs/chrdk-artifacts-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
           echo "goals_jar=common-goals/build/libs/chrdk-common-goals-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
           echo "claims_jar=claims/build/libs/chrdk-claims-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
+          echo "ranks_jar=ranks/build/libs/chrdk-ranks-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
+          echo "cosmetics_jar=cosmetics/build/libs/chrdk-cosmetics-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
+          echo "battlepass_jar=battlepass/build/libs/chrdk-battlepass-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
 
       - name: Attach the Purpur plugin JAR
         env:
@@ -100,3 +103,18 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.claims_jar }}" --clobber
+
+      - name: Attach the CHRDK_Ranks addon JAR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.ranks_jar }}" --clobber
+
+      - name: Attach the CHRDK_Cosmetics addon JAR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.cosmetics_jar }}" --clobber
+
+      - name: Attach the CHRDK_BattlePass addon JAR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.battlepass_jar }}" --clobber

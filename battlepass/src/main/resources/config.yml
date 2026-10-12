@@ -1,0 +1,58 @@
+battlepass:
+  # Имя сезона (MiniMessage/&-коды), показывается в /battlepass.
+  season-name: "<gold>Сезон «Первая стужа»</gold>"
+  # Дата старта сезона (UTC). От неё считаются волны.
+  season-start: "2026-10-13"
+  # Награды за задания: дни проходки. free — всем, vip — дополнительно владельцам активной проходки.
+  # Виды заданий (type):
+  #   MINE <материал>   — добыть блоки (material: DIAMOND_ORE, ANCIENT_DEBRIS…)
+  #   KILL <сущность>   — победить мобов (entity: ZOMBIE, SKELETON, ANY…)
+  #   CRAFT <материал>  — скрафтить предметы
+  #   FISH any          — выловить рыбу (entity: ANY ловит любой улов)
+  weeks:
+    - unlock-day: 0
+      missions:
+        - id: mine_diamonds
+          desc: "<gray>Добыть алмазную руду</gray>"
+          type: MINE
+          material: DIAMOND_ORE
+          target: 16
+          free-days: 1
+          vip-days: 2
+        - id: hunt_zombies
+          desc: "<gray>Победить зомби</gray>"
+          type: KILL
+          entity: ZOMBIE
+          target: 40
+          free-days: 1
+          vip-days: 1
+        - id: angler
+          desc: "<gray>Поймать рыбу</gray>"
+          type: FISH
+          entity: ANY
+          target: 10
+          free-days: 1
+          vip-days: 1
+    - unlock-day: 7
+      missions:
+        - id: mine_ancient
+          desc: "<gray>Добыть древние обломки</gray>"
+          type: MINE
+          material: ANCIENT_DEBRIS
+          target: 6
+          free-days: 2
+          vip-days: 3
+        - id: craft_netherite
+          desc: "<gray>Сковать незеритовый предмет</gray>"
+          type: CRAFT
+          material: NETHERITE_INGOT
+          target: 2
+          free-days: 1
+          vip-days: 2
+        - id: hunt_skeletons
+          desc: "<gray>Победить скелетов</gray>"
+          type: KILL
+          entity: SKELETON
+          target: 60
+          free-days: 1
+          vip-days: 1
