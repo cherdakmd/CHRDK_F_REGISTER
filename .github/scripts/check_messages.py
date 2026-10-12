@@ -183,6 +183,50 @@ def scan_plugin_yml(module: str) -> list[str]:
     return errors
 
 
+# ---------------------------------------------------------------------------
+# «Glint-contract»: чтение состояния X без hasX() — краш 1.4.24 класса.
+# На API 1.21.5+ геттеры компонентов (`getEnchantmentGlintOverride`,
+# `getCustomModelData` и т.п.) падают, если компонент не задан. Правило:
+# в пределах ±3 строк до вызова getX() обязан быть hasX().
+# ---------------------------------------------------------------------------
+
+GLINT_GETTER = re.compile(r"\.get(EnchantmentGlintOverride)\s*\(\s*\)")
+GLINT_HAS = re.compile(r"\.has(EnchantmentGlintOverride)\s*\(\s*\)")
+
+
+def scan_glint_contract(module: str) -> list[str]:
+    errors = []
+    name = os.path.basename(module) or "core"
+    sources = glob.glob(os.path.join(module, "**/*.java"), recursive=True)
+    checked = 0
+    for path in sources:
+        if "/build/" in path or "/target/" in path:
+            continue
+        with open(path, encoding="utf-8") as handle:
+            lines = handle.readlines()
+        for idx, line in enumerate(lines):
+            if not GLINT_GETTER.search(line):
+                continue
+            window = lines[max(0, idx - 3): idx + 1]
+            before_guard = any(GLINT_HAS.search(prev) for prev in window[:-1])
+            after_guard = GLINT_HAS.search(lines[idx + 1]) if idx + 1 < len(lines) else None
+            next_lines_guard = False
+            for follow in lines[idx + 1: idx + 4]:
+                if GLINT_HAS.search(follow):
+                    next_lines_guard = True
+                    break
+            if before_guard or after_guard or next_lines_guard or "hasEnchantmentGlintOverride" in line:
+                continue
+            checked += 1
+            errors.append(
+                f"[{name}] {os.path.relpath(path, module)}:{idx + 1}: "
+                f"getX() без hasX() в окрестности ({line.strip()[:80]})"
+            )
+    if checked:
+        print(f"[{name}] glint-contract: нарушений {checked} — FAIL")
+    return errors
+
+
 def main() -> int:
     modules = [REPO]
     for entry in sorted(os.listdir(REPO)):
@@ -196,6 +240,7 @@ def main() -> int:
     for module in modules:
         all_errors.extend(scan_module(module))
         all_errors.extend(scan_plugin_yml(module))
+        all_errors.extend(scan_glint_contract(module))
     # plugin.yml может лежать в модуле без messages.yml (или в ядре): добираем остальные
     for entry in sorted(os.listdir(REPO)):
         path = os.path.join(REPO, entry)

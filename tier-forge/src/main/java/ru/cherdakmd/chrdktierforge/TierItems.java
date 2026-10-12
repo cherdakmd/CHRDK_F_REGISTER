@@ -100,7 +100,14 @@ public final class TierItems {
                      EquipmentSlotGroup slot) {
         AttributeModifier modifier = new AttributeModifier(modifierKey(tag), amount,
                 AttributeModifier.Operation.MULTIPLY_SCALAR_1, slot);
-        meta.addAttributeModifier(attribute, modifier);
+        // 1.4.25-аудит: addAttributeModifier кидает при кривой комбинации
+        // атрибут/слот/операция — крафт не должен падать из-за одного бонуса
+        try {
+            meta.addAttributeModifier(attribute, modifier);
+        } catch (IllegalArgumentException ex) {
+            plugin.getLogger().warning("Tier attribute rejected on " + attribute
+                    + ": " + ex.getMessage());
+        }
     }
 
     private NamespacedKey modifierKey(String tag) {
