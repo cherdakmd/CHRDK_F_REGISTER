@@ -126,8 +126,10 @@ public final class TierItems {
                 }
             }
         }
-        // снятие нашего блеска: если глайнт стоял через оверрайд — вернуть к стандартному
-        if (Boolean.TRUE.equals(meta.getEnchantmentGlintOverride())) {
+        // снятие нашего блеска: если глайнт стоял через оверрайд — вернуть к стандартному.
+        // На 1.21.5+ геттер падает, если компонента нет — сначала hasEnchantmentGlintOverride()
+        if (meta.hasEnchantmentGlintOverride()
+                && Boolean.TRUE.equals(meta.getEnchantmentGlintOverride())) {
             meta.setEnchantmentGlintOverride(null);
         }
     }
