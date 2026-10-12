@@ -17,6 +17,7 @@ public final class RegisterPlugin extends JavaPlugin {
     private ChatService chatService;
     private PassMenuService passMenuService;
     private PasswordKeypadService passwordKeypad;
+    private TabListService tabListService;
     private ExternalHooks externalHooks;
     private LuckPermsPassSync luckPermsPassSync;
     private RegistrationStore store;
@@ -40,6 +41,7 @@ public final class RegisterPlugin extends JavaPlugin {
         this.chatService = new ChatService(this, accessManager, config.chat(), messages, getLogger());
         this.passMenuService = new PassMenuService(accessManager, messages);
         this.passwordKeypad = new PasswordKeypadService(this, accessManager, messages);
+        this.tabListService = new TabListService(this, accessManager);
         this.externalHooks = new ExternalHooks(this);
         this.luckPermsPassSync = new LuckPermsPassSync(externalHooks, store, accessManager::config, getLogger());
         getServer().getServicesManager().register(ChrdkRegisterApi.class,
@@ -49,6 +51,8 @@ public final class RegisterPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(chatService, this);
         getServer().getPluginManager().registerEvents(passMenuService, this);
         getServer().getPluginManager().registerEvents(passwordKeypad, this);
+        getServer().getPluginManager().registerEvents(tabListService, this);
+        tabListService.reload();
 
         this.commandHandler = new RegisterCommandHandler(this, accessManager);
         for (String commandName : List.of("register", "login", "changepassword", "2fa", "pass", "logout", "session", "captcha")) {
@@ -78,6 +82,10 @@ public final class RegisterPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (tabListService != null) {
+            tabListService.shutdown();
+            tabListService = null;
+        }
         if (chatService != null) {
             chatService.shutdown();
             chatService = null;
@@ -102,6 +110,9 @@ public final class RegisterPlugin extends JavaPlugin {
         }
         if (chatService != null) {
             chatService.reload(updated.chat());
+        }
+        if (tabListService != null) {
+            tabListService.reload();
         }
         if (externalHooks != null) {
             externalHooks.resolve();

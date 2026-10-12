@@ -1009,6 +1009,9 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             if ("gift".equals(sub)) {
                 return completePlayerNames(args[1]);
             }
+            if ("testpay".equals(sub)) {
+                return completePlayerNames(args[1]);
+            }
             if ("audit".equals(sub)) {
                 return completePlayerNames(args[1]);
             }
