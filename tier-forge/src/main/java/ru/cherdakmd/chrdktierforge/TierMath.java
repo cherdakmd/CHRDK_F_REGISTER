@@ -38,4 +38,12 @@ public final class TierMath {
     public static int upgradeXpCost(int baseXp, int newTierIndex) {
         return Math.max(1, baseXp) * Math.max(1, newTierIndex + 1);
     }
+
+    /**
+     * Стоимость опыта переката: базовая * (индекс ТЕКУЩЕГО тира + 1) — чем дороже
+     * предмет, тем больше жалко его перекатывать. Индекс 0 (проклятый) даёт минимум.
+     */
+    public static int rerollXpCost(int baseXp, int currentTierIndex) {
+        return Math.max(1, baseXp) * Math.max(1, currentTierIndex + 1);
+    }
 }

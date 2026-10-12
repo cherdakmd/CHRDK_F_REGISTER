@@ -1,18 +1,37 @@
 package ru.cherdakmd.chrdktierforge;
 
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.AnvilInventory;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.PrepareAnvilEvent;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+import java.util.UUID;
+
 /**
- * Наковальня: два тир-предмета одного материала и одного тира сливаются
- * в предмет тиром выше (максимум — Легендарный). Цена — опыт, растёт с индексом тира.
+ * Наковальня, две механики:
+ *
+ * <p>1) <b>Апгрейд</b>: два тир-предмета одного материала и одного тира сливаются
+ * в предмет тиром выше (максимум — Легендарный).
+ *
+ * <p>2) <b>Перекат</b>: тир-предмет + катализатор (по умолчанию аметистовый осколок)
+ * → новый случайный тир. Цена опыта растёт с индексом текущего тира.
+ * Ролл отложен на «игрок + предмет + тир» ({@link CraftRollKeeper}) — иначе превью
+ * перекатывалось бы дерганием слотов, как крафт до 1.4.29.
  */
 public final class TierAnvilListener implements Listener {
 
     private final TierForgePlugin plugin;
+    private final CraftRollKeeper rerollKeeper = new CraftRollKeeper();
+    private final Random random = new Random();
+    /** Последний показанный в превью ключ переката, чтобы изъять ролл на клике. */
+    private final Map<UUID, String> previewKeys = new HashMap<>();
 
     public TierAnvilListener(TierForgePlugin plugin) {
         this.plugin = plugin;
@@ -20,7 +39,6 @@ public final class TierAnvilListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onPrepareAnvil(PrepareAnvilEvent event) {
-        if (!plugin.config().anvilEnabled()) return;
         ItemStack left = event.getInventory().getItem(0);
         ItemStack right = event.getInventory().getItem(1);
         if (left == null || right == null) return;
@@ -29,6 +47,27 @@ public final class TierAnvilListener implements Listener {
 
         String leftTier = plugin.items().tierOf(left);
         String rightTier = plugin.items().tierOf(right);
+
+        // ---- перекат: слева тир-предмет, справа катализатор без тира ----
+        if (leftTier != null && rightTier == null && plugin.config().rerollEnabled()
+                && isCatalyst(right) && plugin.config().kindAllowed(
+                        ItemKind.classify(left.getType().name()))) {
+            String key = left.getType().name() + ":" + leftTier;
+            TierDef.Snapshot roll = rerollKeeper.preview(player.getUniqueId(), key,
+                    () -> TierRoller.roll(plugin.config().tiers(), random));
+            if (roll == null) return;
+            ItemStack result = left.clone();
+            result.setAmount(1);
+            plugin.items().apply(result, roll);
+            event.setResult(result);
+            event.getInventory().setRepairCost(TierMath.rerollXpCost(
+                    plugin.config().rerollBaseXp(), TierDef.indexOf(leftTier)));
+            previewKeys.put(player.getUniqueId(), key);
+            return;
+        }
+
+        // ---- апгрейд: два предмета одного материала и одного тира ----
+        if (!plugin.config().anvilEnabled()) return;
         if (leftTier == null && rightTier == null) return; // не наша пара
         if (leftTier == null || rightTier == null
                 || !leftTier.equals(rightTier)
@@ -51,5 +90,30 @@ public final class TierAnvilListener implements Listener {
                 TierMath.upgradeXpCost(plugin.config().anvilBaseXp(), TierDef.indexOf(next)));
         plugin.messages().send(player, "upgraded",
                 "tier", plugin.messages().raw("tier." + next + ".name"));
+    }
+
+    /** Результат наковальни забран: отложенный ролл переката сгорает (и шлём весточку). */
+    @EventHandler(ignoreCancelled = true)
+    public void onAnvilTake(InventoryClickEvent event) {
+        if (!(event.getInventory() instanceof AnvilInventory)) return;
+        if (event.getRawSlot() != 2) return; // слот результата
+        if (!(event.getWhoClicked() instanceof Player player)) return;
+        String key = previewKeys.remove(player.getUniqueId());
+        if (key == null) return;
+        TierDef.Snapshot consumed = rerollKeeper.consume(player.getUniqueId(), key);
+        ItemStack taken = event.getCurrentItem();
+        String tier = taken == null ? null : plugin.items().tierOf(taken);
+        if (consumed == null || tier == null || !consumed.id().equals(tier)) return;
+        if ("cursed".equals(consumed.id())) {
+            plugin.messages().send(player, "rerolled-cursed");
+        } else if (consumed.percent() != 0) {
+            plugin.messages().send(player, "rerolled",
+                    "tier", plugin.messages().raw("tier." + consumed.id() + ".name"));
+        }
+    }
+
+    private boolean isCatalyst(ItemStack item) {
+        Material catalyst = Material.matchMaterial(plugin.config().rerollCatalyst());
+        return catalyst != null && item.getType() == catalyst;
     }
 }

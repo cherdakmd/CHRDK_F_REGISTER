@@ -28,6 +28,7 @@ public final class TierForgePlugin extends JavaPlugin {
 
         Bukkit.getPluginManager().registerEvents(new TierCraftListener(this), this);
         Bukkit.getPluginManager().registerEvents(new TierAnvilListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new TierMobDropListener(this), this);
 
         TierCommandHandler handler = new TierCommandHandler(this);
         for (String name : List.of("tiers", "tiersadmin")) {
