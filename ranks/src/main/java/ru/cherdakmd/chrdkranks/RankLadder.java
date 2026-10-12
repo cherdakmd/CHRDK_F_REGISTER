@@ -79,8 +79,10 @@ final class RankLadder {
         long previousHours = Long.MAX_VALUE;
         for (Map<?, ?> entry : raw) {
             long hours = longOf(entry.get("hours"));
-            String id = String.valueOf(entry.getOrDefault("id", "")).trim();
-            String name = String.valueOf(entry.getOrDefault("name", "")).trim();
+            Object idRaw = entry.get("id");
+            Object nameRaw = entry.get("name");
+            String id = idRaw == null ? "" : String.valueOf(idRaw).trim();
+            String name = nameRaw == null ? "" : String.valueOf(nameRaw).trim();
             if (id.isEmpty() || name.isEmpty()) {
                 throw new IllegalStateException("Звание без id или name: " + entry);
             }

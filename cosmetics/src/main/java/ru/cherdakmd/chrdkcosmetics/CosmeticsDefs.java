@@ -34,7 +34,8 @@ final class CosmeticsDefs {
             if (id.isEmpty() || particle.isEmpty()) {
                 continue; // безсообразные записи пропускаем — сервер не извещаем смертью
             }
-            String name = String.valueOf(entry.getOrDefault("name", id));
+            Object nameRaw = entry.get("name");
+            String name = nameRaw == null ? id : String.valueOf(nameRaw);
             int count = clamp(intOf(entry.get("count"), 2), 1, 50);
             double spread = doubleOf(entry.get("spread"), 0.2);
             double speed = doubleOf(entry.get("speed"), 0.0);

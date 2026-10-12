@@ -130,7 +130,8 @@ final class BattlePassConfig {
 
     private static MissionDef parseMission(Map<?, ?> raw) {
         String id = norm(raw.get("id"));
-        String desc = String.valueOf(raw.getOrDefault("desc", id)).trim();
+        Object descRaw = raw.get("desc");
+        String desc = descRaw == null ? id : String.valueOf(descRaw).trim();
         MissionType type;
         try {
             type = MissionType.valueOf(norm(raw.get("type")).toUpperCase(Locale.ROOT));
