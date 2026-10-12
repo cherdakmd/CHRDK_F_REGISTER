@@ -19,13 +19,12 @@ class TierMathTest {
 
     @Test
     void upgradeAndRerollCostsDifferSemantically() {
-        // апгрейд платит за индекс НОВОГО тира, перекат — за индекс ТЕКУЩЕГО
-        int upgrade = TierMath.upgradeXpCost(3, TierDef.indexOf("epic"));
+        // апгрейд платит за индекс НОВОГО тира (эпик → легенда = indexOf("legendary") = 6):
+        // 3 * (6+1) = 21; перекат — за индекс ТЕКУЩЕГО (эпик, 5): 3 * (5+1) = 18.
+        int upgrade = TierMath.upgradeXpCost(3, TierDef.indexOf("legendary"));
         int reroll = TierMath.rerollXpCost(3, TierDef.indexOf("epic"));
-        assertTrue(upgrade > 0 && reroll > 0);
-        // перекат эпического (idx 5) дороже апгрейда «эпик → легенда» при той же базе:
-        // 3 * (5+1) = 18 против 3 * (6+1) = 21 — так и должно быть: слияние дороже.
-        assertEquals(3 * 6, reroll);
         assertEquals(3 * 7, upgrade);
+        assertEquals(3 * 6, reroll);
+        assertTrue(upgrade > reroll, "слияние эпика в легенду дороже переката эпика");
     }
 }
