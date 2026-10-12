@@ -171,8 +171,8 @@ public final class ClaimStore {
     // ----------------------------------------------------------- claims --
 
     public synchronized Claim claimAt(String world, int chunkX, int chunkZ) {
-        Map<Long, Claim> world = claims.get(world);
-        return world == null ? null : world.get(ClaimMath.chunkKey(chunkX, chunkZ));
+        Map<Long, Claim> inWorld = claims.get(world);
+        return inWorld == null ? null : inWorld.get(ClaimMath.chunkKey(chunkX, chunkZ));
     }
 
     public synchronized void add(Claim claim) {

@@ -485,7 +485,7 @@ public final class ClaimProtectionListener implements Listener {
         if (claim == null) {
             return;
         }
-        Player attacker = event.getAttacker();
+        Player attacker = damageSource(event.getAttacker());
         if (attacker == null || !may(attacker, claim)) {
             event.setCancelled(true);
             if (attacker != null) {
