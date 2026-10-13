@@ -1,7 +1,9 @@
 package ru.cherdakmd.chrdkregister;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -17,11 +19,11 @@ import java.util.logging.Logger;
  * Клиент к приватному веб-API Boosty (api.boosty.to/v1/…).
  *
  * <p>Публичного документированного API у Boosty нет — но API приложения стабильно
- * годами (на нём живут их же веб/мобильные клиенты и вся сторонняя ботота).
- * Авторизация — bearer-токен ручной выгрузки из браузера, обновление через
- * {@code POST /oauth/token/} (grant_type=refresh_token + device_id). Boosty
- * РОТИРУЕТ refresh при каждом обновлении — свежая пара сразу сохраняется
- * ({@link BoostyTokenStore}), иначе перезапуск сервера убьёт сессию.</p>
+ * годами (на нём живут их же веб/мобильные клиенты). Авторизация — bearer-токен
+ * ручной выгрузки из браузера, обновление через {@code POST /oauth/token/}
+ * (grant_type=refresh_token + device_id). Boosty РОТИРУЕТ refresh при каждом
+ * обновлении — свежая пара сразу сохраняется ({@link BoostyTokenStore}), иначе
+ * перезапуск сервера убьёт сессию.</p>
  */
 public final class BoostyClient {
 
@@ -72,19 +74,19 @@ public final class BoostyClient {
             String url = API_BASE + "/v1/blog/" + settings.blog()
                     + "/subscribers?sort_by=on_time&order=gt&offset=" + offset + "&limit=" + PAGE_LIMIT;
             String body = authedGet(url);
-            JSONArray data = parseArray(body);
-            for (int i = 0; i < data.length(); i++) {
-                all.add(parseSubscriber(data.getJSONObject(i)));
+            JsonArray data = parseArray(body);
+            for (JsonElement element : data) {
+                all.add(parseSubscriber(element.getAsJsonObject()));
             }
-            if (data.length() < PAGE_LIMIT) {
+            if (data.size() < PAGE_LIMIT) {
                 break;
             }
-            offset += data.length();
+            offset += data.size();
         }
         return all;
     }
 
-    /** Жив ли API + токен: одна запись достаточна (для doctor/первичного самотеста). */
+    /** Жив ли API + токен: одна запись достаточна (для doctor/самотеста). */
     public boolean probe() {
         try {
             String url = API_BASE + "/v1/blog/" + settings.blog()
@@ -99,33 +101,37 @@ public final class BoostyClient {
         }
     }
 
-    private static JSONArray parseArray(String body) throws IOException {
-        JSONObject json = new JSONObject(body);
-        if (!json.has("data")) {
+    private static JsonArray parseArray(String body) throws IOException {
+        JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+        if (!json.has("data") || !json.get("data").isJsonArray()) {
             throw new IOException("Boosty: в ответе нет массива data");
         }
-        return json.getJSONArray("data");
+        return json.getAsJsonArray("data");
     }
 
-    private static Subscriber parseSubscriber(JSONObject raw) {
-        JSONObject level = raw.optJSONObject("level");
+    private static Subscriber parseSubscriber(JsonObject raw) {
+        JsonObject level = raw.has("level") && raw.get("level").isJsonObject()
+                ? raw.getAsJsonObject("level") : null;
         double price = 0.0;
         String levelName = "";
         if (level != null) {
-            levelName = level.optString("name", "");
-            price = level.optDouble("price", 0.0);
-            JSONObject currency = level.optJSONObject("currencyPrices");
-            if (currency != null && currency.has("RUB")) {
-                price = currency.optDouble("RUB", price);
+            levelName = BoostyTokenStore.optString(level, "name", "");
+            if (level.has("price") && level.get("price").isJsonPrimitive()) {
+                price = level.get("price").getAsDouble();
+            }
+            if (level.has("currencyPrices") && level.get("currencyPrices").isJsonObject()) {
+                JsonObject currency = level.getAsJsonObject("currencyPrices");
+                if (currency.has("RUB") && currency.get("RUB").isJsonPrimitive()) {
+                    price = currency.get("RUB").getAsDouble();
+                }
             }
         }
-        return new Subscriber(
-                raw.optLong("id", 0L),
-                raw.optString("name", "").trim(),
-                raw.optBoolean("subscribed", false),
-                raw.optBoolean("isBlackListed", false),
-                levelName,
-                price);
+        long id = raw.has("id") && raw.get("id").isJsonPrimitive() ? raw.get("id").getAsLong() : 0L;
+        boolean subscribed = raw.has("subscribed") && raw.get("subscribed").getAsBoolean();
+        boolean blacklisted = raw.has("isBlackListed") && raw.get("isBlackListed").getAsBoolean();
+        return new Subscriber(id,
+                BoostyTokenStore.optString(raw, "name", "").trim(),
+                subscribed, blacklisted, levelName, price);
     }
 
     /* ------------------------------------------------------------------ *
@@ -167,11 +173,11 @@ public final class BoostyClient {
                         response.code));
                 return false;
             }
-            JSONObject json = new JSONObject(response.body);
-            String access = json.optString("access_token", "");
-            String refresh = json.optString("refresh_token", tokens.refreshToken());
+            JsonObject json = JsonParser.parseString(response.body).getAsJsonObject();
+            String access = BoostyTokenStore.optString(json, "access_token", "");
+            String refresh = BoostyTokenStore.optString(json, "refresh_token", tokens.refreshToken());
             // device_id возвращается не всегда — если есть, обновляем
-            String device = json.optString("device_id", tokens.deviceId());
+            String device = BoostyTokenStore.optString(json, "device_id", tokens.deviceId());
             if (access.isBlank()) {
                 logger.warning("[Boosty] refresh-токен не вернул access_token.");
                 return false;

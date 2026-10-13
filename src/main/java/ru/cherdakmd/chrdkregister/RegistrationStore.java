@@ -496,7 +496,6 @@ public final class RegistrationStore {
         account.lastGrantSource = (source == null || source.isBlank()) ? "subscription" : source;
         account.lastGrantAt = nowMillis;
         clearExpiryWarnings(account);
-        cleanupPassChangeRequest(key);
         markDirtyNow();
         return copy(account);
     }

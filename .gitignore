@@ -26,3 +26,4 @@ run/
 config/chrdk_f_register.json
 config/chrdk_f_register-data.json
 .env
+*.pyc

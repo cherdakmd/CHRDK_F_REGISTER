@@ -1,6 +1,9 @@
 package ru.cherdakmd.chrdkregister;
 
-import org.json.JSONObject;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,6 +24,8 @@ import java.util.logging.Logger;
  */
 public final class BoostyTokenStore {
 
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+
     private final Path file;
     private final Logger logger;
 
@@ -34,22 +39,17 @@ public final class BoostyTokenStore {
         this.logger = logger;
     }
 
-    /** Имена ключей в JSON + в config.yml (для подсказок админу). */
-    public static final String KEY_ACCESS = "token";
-    public static final String KEY_REFRESH = "refresh-token";
-    public static final String KEY_DEVICE = "device-id";
-
     /** Чтение файла; отсутствие/битость — не ошибка (админ пересеет токены). */
     public synchronized void load() {
         if (!Files.exists(file)) {
             return;
         }
         try {
-            JSONObject json = new JSONObject(Files.readString(file, StandardCharsets.UTF_8));
-            accessToken = json.optString("accessToken", "");
-            refreshToken = json.optString("refreshToken", "");
-            deviceId = json.optString("deviceId", "");
-            savedAtMillis = json.optLong("savedAt", 0L);
+            JsonObject json = JsonParser.parseString(Files.readString(file, StandardCharsets.UTF_8)).getAsJsonObject();
+            accessToken = optString(json, "accessToken", "");
+            refreshToken = optString(json, "refreshToken", "");
+            deviceId = optString(json, "deviceId", "");
+            savedAtMillis = json.has("savedAt") ? json.get("savedAt").getAsLong() : 0L;
         } catch (Exception exception) {
             logger.warning("[Boosty] Не удалось прочитать boosty-tokens.json: " + exception.getMessage());
         }
@@ -92,16 +92,32 @@ public final class BoostyTokenStore {
         deviceId = newDevice == null || newDevice.isBlank() ? deviceId : newDevice.trim();
         savedAtMillis = System.currentTimeMillis();
 
-        JSONObject json = new JSONObject();
-        json.put("accessToken", accessToken.isBlank() ? JSONObject.NULL : accessToken);
-        // refresh отдаём как есть — без него следующий. 401 рефрешевки уже не поможет
-        json.put("refreshToken", refreshToken.isBlank() ? JSONObject.NULL : refreshToken);
-        json.put("deviceId", deviceId.isBlank() ? JSONObject.NULL : deviceId);
-        json.put("savedAt", savedAtMillis);
+        JsonObject json = new JsonObject();
+        if (!accessToken.isBlank()) {
+            json.addProperty("accessToken", accessToken);
+        }
+        if (!refreshToken.isBlank()) {
+            json.addProperty("refreshToken", refreshToken);
+        }
+        if (!deviceId.isBlank()) {
+            json.addProperty("deviceId", deviceId);
+        }
+        json.addProperty("savedAt", savedAtMillis);
 
         Path temp = file.resolveSibling(file.getFileName() + ".tmp");
         Files.createDirectories(file.getParent());
-        Files.writeString(temp, json.toString(2), StandardCharsets.UTF_8);
+        Files.writeString(temp, GSON.toJson(json), StandardCharsets.UTF_8);
         Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    static String optString(JsonObject json, String key, String fallback) {
+        if (json == null || !json.has(key) || json.get(key).isJsonNull()) {
+            return fallback;
+        }
+        try {
+            return json.get(key).getAsString();
+        } catch (Exception exception) {
+            return fallback;
+        }
     }
 }

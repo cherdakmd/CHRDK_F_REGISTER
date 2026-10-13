@@ -1,7 +1,11 @@
 package ru.cherdakmd.chrdkregister;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -28,6 +32,8 @@ import java.util.logging.Logger;
  * отзывать резко не будем — честный grace-период).</p>
  */
 public final class BoostyManager {
+
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     private final RegisterPlugin plugin;
     private final RegistrationStore store;
@@ -210,18 +216,18 @@ public final class BoostyManager {
             return;
         }
         try {
-            JSONObject json = new JSONObject(Files.readString(bindingsFile, StandardCharsets.UTF_8));
-            JSONArray array = json.optJSONArray("bindings");
-            if (array == null) {
+            JsonObject json = JsonParser.parseString(
+                    Files.readString(bindingsFile, StandardCharsets.UTF_8)).getAsJsonObject();
+            if (!json.has("bindings") || !json.get("bindings").isJsonArray()) {
                 return;
             }
-            for (int i = 0; i < array.length(); i++) {
-                JSONObject entry = array.getJSONObject(i);
+            for (JsonElement element : json.getAsJsonArray("bindings")) {
+                JsonObject entry = element.getAsJsonObject();
                 Binding binding = new Binding(
-                        entry.optString("mcName", ""),
-                        entry.optString("boostyName", ""),
-                        entry.optLong("boostyUserId", 0L),
-                        entry.optLong("linkedAt", 0L));
+                        BoostyTokenStore.optString(entry, "mcName", ""),
+                        BoostyTokenStore.optString(entry, "boostyName", ""),
+                        entry.has("boostyUserId") ? entry.get("boostyUserId").getAsLong() : 0L,
+                        entry.has("linkedAt") ? entry.get("linkedAt").getAsLong() : 0L);
                 if (!binding.mcName().isBlank()) {
                     bindings.put(key(binding.mcName()), binding);
                 }
@@ -232,21 +238,21 @@ public final class BoostyManager {
     }
 
     private synchronized void saveBindings() {
-        JSONArray array = new JSONArray();
+        JsonArray array = new JsonArray();
         for (Binding binding : bindings.values()) {
-            JSONObject entry = new JSONObject();
-            entry.put("mcName", binding.mcName());
-            entry.put("boostyName", binding.boostyName());
-            entry.put("boostyUserId", binding.boostyUserId());
-            entry.put("linkedAt", binding.linkedAtMillis());
-            array.put(entry);
+            JsonObject entry = new JsonObject();
+            entry.addProperty("mcName", binding.mcName());
+            entry.addProperty("boostyName", binding.boostyName());
+            entry.addProperty("boostyUserId", binding.boostyUserId());
+            entry.addProperty("linkedAt", binding.linkedAtMillis());
+            array.add(entry);
         }
-        JSONObject json = new JSONObject();
-        json.put("bindings", array);
+        JsonObject json = new JsonObject();
+        json.add("bindings", array);
         try {
             Path temp = bindingsFile.resolveSibling(bindingsFile.getFileName() + ".tmp");
             Files.createDirectories(bindingsFile.getParent());
-            Files.writeString(temp, json.toString(2), StandardCharsets.UTF_8);
+            Files.writeString(temp, GSON.toJson(json), StandardCharsets.UTF_8);
             Files.move(temp, bindingsFile, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException exception) {
             plugin.getLogger().warning("[Boosty] Не удалось сохранить boosty-bindings.json: " + exception.getMessage());
