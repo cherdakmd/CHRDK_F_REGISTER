@@ -50,12 +50,26 @@ donatepay:
 #     command: "broadcast <gold>{username}</gold> поддержал сервер на <yellow>{sum} ₽</yellow>!"
 #   - sum: 500
 #     command: "title @a title {\"text\":\"{username} — ЛЕГЕНДА!\",\"color\":\"gold\"}"
-donation-actions: []
   # Повторять тревогу, пока DonatePay всё ещё недоступен (интервал в минутах; 0 = только
   # одна тревога на эпизод). Совпадение с health-seconds гармонично: 15 мин ~ 3 heartbeat линии
   alert-repeat-minutes: 15
   # Напоминать админам, если донат ждёт ручного разбора дольше N часов (0 = выкл; повтор — раз в N часов)
   pending-notify-hours: 24
+  # Строгая проверка регистра букв в нике донатера (false = ник сверяется без учёта регистра)
+  strict-case-match: false
+  # Платежи, которые не удалось сопоставить с ником, попадают в журнал и ждут решения:
+  # /pass pending → /pass approve <id> / /pass reject <id>. false = игнорировать такие платежи
+  review-unmatched: true
+  # Подсказывать администратору похожие ники (регистр, раскладка клавиатуры, одна опечатка)
+  fuzzy-match: true
+  # Просить игрока указывать в имени донатера короткий код: "Ник 4821" (детерминированное сопоставление)
+  payment-code: false
+  # Количество цифр в коде платежа
+  payment-code-digits: 4
+  # Сколько дней хранить журнал донатов
+  journal-keep-days: 365
+
+donation-actions: []
 
 # EasyDonate (v1.4.35) — второй провайдер донатов: опрашивается рядом с DonatePay
 # в тот же интервал poll-seconds. Отказ одного сервиса не ставит на паузу другой.
@@ -68,14 +82,8 @@ easydonate:
   shop-key: ""
   # Ссылка на страницу магазина EasyDonate — появляется игроку второй кнопкой рядом с DonatePay
   payment-url: ""
-  # Строгая проверка регистра букв в нике донатера (false = ник сверяется без учёта регистра)
-  strict-case-match: false
-  # Платежи, которые не удалось сопоставить с ником, попадают в журнал и ждут решения:
-  # /pass pending → /pass approve <id> / /pass reject <id>. false = игнорировать такие платежи
-  review-unmatched: true
-  # Подсказывать администратору похожие ники (регистр, раскладка клавиатуры, одна опечатка)
-  fuzzy-match: true
-  # Просить игрока указывать в имени донатера короткий код: "Ник 4821" (детерминированное сопоставление)
+  # Обратите внимание: сверка ников (strict-case-match, review-unmatched, fuzzy-match,
+  # payment-code, journal-keep-days) — общие и живут в секции donatepay выше.
   # ================================================================
 #  Подписочная проходка через Boosty.to ("проходка, пока жива подписка")
 #  Игрок пишет /pass boost <ник_на_Boosty>; пока его подписка активна,
@@ -126,12 +134,6 @@ motd:
   lines:
     - "<gold><b>Millida SMP</b></gold> <gray>•</gray> <green>выживание для своих</green>\n<gray>Онлайн: <white>%online%/%max%</white> — проходка через Boosty</gray>"
     - "<gradient:#ffcc00:#ff8800><b>Добро пожаловать в Millida</b></gradient>\n<gray>Сегодня %date% · v%version% · ждём именно тебя</gray>"
-
-payment-code: false
-  # Количество цифр в коде платежа
-  payment-code-digits: 4
-  # Сколько дней хранить журнал донатов
-  journal-keep-days: 365
 
 pass:
   # Мастер-флаг донат-стены. false — игроки БЕЗ проходки не получают
