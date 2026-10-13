@@ -61,9 +61,17 @@ public final class AdminDonationsGuiService implements Listener {
                         int page, int pages) {
     }
 
+    /** Сколько живёт кэш кошелька DonatePay (не дёргаем /user на каждое открытие меню). */
+    private static final long WALLET_CACHE_MS = 60_000L;
+
+    /** Кэш кошелька DonatePay для иконки статуса. */
+    private record CachedWallet(String name, long balance, String error, long fetchedAtMillis) {
+    }
+
     private final AccessManager accessManager;
     private final org.bukkit.plugin.Plugin plugin;
     private volatile Messages messages;
+    private volatile CachedWallet walletCache;
 
     public AdminDonationsGuiService(AccessManager accessManager, Messages messages,
                                     org.bukkit.plugin.Plugin plugin) {
@@ -126,10 +134,15 @@ public final class AdminDonationsGuiService implements Listener {
         inventory.setItem(2, control(Material.REDSTONE,
                 messages.get("pass.donationsgui.refresh-name"),
                 List.of(messages.get("pass.donationsgui.refresh-lore"))));
+        inventory.setItem(4, statusIcon());
         inventory.setItem(8, control(Material.ARROW,
                 messages.get("pass.donationsgui.next-name"),
                 List.of(messages.get("pass.donationsgui.next-lore",
                         "page", data.page() + 1, "pages", data.pages()))));
+
+        if (!walletFresh() && accessManager.config().donatePayReady()) {
+            refreshWallet(); // просроченный кэш — подтянем баланс в фоне
+        }
 
         // записи
         if (data.records().isEmpty()) {
@@ -141,6 +154,102 @@ public final class AdminDonationsGuiService implements Listener {
             inventory.setItem(9 + i, donationIcon(data.records().get(i)));
         }
         player.openInventory(inventory);
+    }
+
+    /**
+     * Иконка «статус подключения и баланс»: шерсть по худшему здоровью провайдеров,
+     * в лоре — карточки опроса (сервис/состояние/курсор/латентность) и баланс
+     * DonatePay из кэша (обновляется раз в {@link #WALLET_CACHE_MS} мс или по клику).
+     */
+    private String statusDetailsState(AccessManager.DonateHealthCard card) {
+        String key = switch (card.state()) {
+            case OK -> "donation.health-ok";
+            case FLAKY -> "donation.health-flaky";
+            case NO_CONTACT -> "donation.health-down";
+        };
+        return card.state() == DonatePulse.State.OK
+                ? Messages.stripFormatting(messages.raw(key))
+                : Messages.stripFormatting(messages.raw(key, "fails", card.failStreak()));
+    }
+
+    private ItemStack statusIcon() {
+        List<AccessManager.DonateHealthCard> cards = accessManager.donateHealthCards();
+        boolean anyReady = false;
+        boolean flaky = false;
+        boolean down = false;
+        List<net.kyori.adventure.text.Component> lore = new ArrayList<>();
+        for (AccessManager.DonateHealthCard card : cards) {
+            if (!card.ready()) {
+                lore.add(messages.get("pass.donationsgui.status-off", "service", card.serviceName()));
+                continue;
+            }
+            anyReady = true;
+            flaky |= card.state() == DonatePulse.State.FLAKY;
+            down |= card.state() == DonatePulse.State.NO_CONTACT;
+            lore.add(messages.get("pass.donationsgui.status-line",
+                    "service", card.serviceName(),
+                    "state", statusDetailsState(card),
+                    "cursor", card.cursorId(),
+                    "latency", card.avgLatencyMs()));
+        }
+
+        // --- баланс кошелька DonatePay (кэш ≤60 с) ---
+        if (accessManager.config().donatePayReady() && anyDonatePayReady(cards)) {
+            if (!accessManager.config().donatePayShowBalance()) {
+                lore.add(messages.get("pass.donationsgui.status-balance-hidden"));
+            } else {
+                CachedWallet wallet = walletCache;
+                if (wallet == null) {
+                    lore.add(messages.get("pass.donationsgui.status-balance-loading"));
+                    refreshWallet(); // обновит кэш и перерисует открытые меню
+                } else if (wallet.error() != null) {
+                    lore.add(messages.get("pass.donationsgui.status-balance-error",
+                            "error", wallet.error()));
+                } else {
+                    lore.add(messages.get("pass.donationsgui.status-balance",
+                            "wallet", wallet.name(), "balance", wallet.balance()));
+                }
+            }
+        }
+        lore.add(messages.get("pass.donationsgui.status-click"));
+
+        Material wool = !anyReady || down ? Material.RED_WOOL
+                : flaky ? Material.YELLOW_WOOL : Material.LIME_WOOL;
+        return control(wool, messages.get("pass.donationsgui.status-name"), lore);
+    }
+
+    private static boolean anyDonatePayReady(List<AccessManager.DonateHealthCard> cards) {
+        return cards.stream().anyMatch(card -> card.ready()
+                && RegistrationStore.DONATION_SOURCE_DONATEPAY.equals(card.serviceKey()));
+    }
+
+    /** Асинхронно обновляет кэш кошелька и перерисовывает у всех, у кого наш GUI открыт. */
+    private void refreshWallet() {
+        accessManager.fetchDonatePayWallet(
+                user -> {
+                    walletCache = new CachedWallet(user.name(), user.balanceRubles(), null,
+                            System.currentTimeMillis());
+                    reopenOpenMenus();
+                },
+                error -> {
+                    walletCache = new CachedWallet("", 0, error, System.currentTimeMillis());
+                    reopenOpenMenus();
+                });
+    }
+
+    /** Кэш свежий? (просроченные кошельки перечитываем при следующем открытии) */
+    private boolean walletFresh() {
+        CachedWallet wallet = walletCache;
+        return wallet != null && System.currentTimeMillis() - wallet.fetchedAtMillis() < WALLET_CACHE_MS;
+    }
+
+    /** Переоткрыть меню тем, кто прямо сейчас смотрит GUI журнала. */
+    private void reopenOpenMenus() {
+        for (Player viewer : Bukkit.getOnlinePlayers()) {
+            if (viewer.getOpenInventory().getTopInventory().getHolder() instanceof DonationsGuiHolder holder) {
+                openMenu(viewer, holder.filter(), holder.page());
+            }
+        }
     }
 
     private String filterLabel(Filter filter) {
@@ -226,6 +335,12 @@ public final class AdminDonationsGuiService implements Listener {
             return;
         }
         if (slot == 2) { // обновить
+            openMenu(player, holder.filter(), holder.page());
+            return;
+        }
+        if (slot == 4) { // принудительное обновление баланса
+            walletCache = null;
+            refreshWallet();
             openMenu(player, holder.filter(), holder.page());
             return;
         }

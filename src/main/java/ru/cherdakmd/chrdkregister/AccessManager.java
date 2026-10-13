@@ -2096,6 +2096,28 @@ public final class AccessManager {
     }
 
     /**
+     * Асинхронно читает кошелёк DonatePay (GET /user) для GUI/диагностики.
+     * Коллбэки — в главном потоке; {@code onFail} получает текст ошибки.
+     */
+    public void fetchDonatePayWallet(Consumer<DonatePayClient.UserInfo> onOk,
+                                     Consumer<String> onFail) {
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                DonatePayClient.UserInfo user = donatePay.verifyToken();
+                Bukkit.getScheduler().runTask(plugin, () -> onOk.accept(user));
+            } catch (Exception exception) {
+                String message = exception.getMessage();
+                try {
+                    Bukkit.getScheduler().runTask(plugin, () -> onFail.accept(
+                            message == null || message.isBlank() ? "unknown error" : message));
+                } catch (IllegalStateException ignored) {
+                    // плагин выключился — отчёт некому отдать
+                }
+            }
+        });
+    }
+
+    /**
      * {@code /pass testpay-live}: отправляет тестовый донат В КОШЕЛЁК DonatePay через
      * официальный set_notification (POST /api/v1/notification, notification=-1 —
      * без публичного алерта). Запись навсегда остаётся в истории кошелька —
