@@ -33,15 +33,19 @@ public record ServerMenuSettings(boolean enabled, List<ServerMenuSettings.Entry>
         for (Map<?, ?> map : maps) {
             if (map == null) continue;
             int slot = toInt(map.get("slot"), -1);
-            String iconRaw = String.valueOf(map.getOrDefault("icon", "PAPER")).trim().toUpperCase();
+            Object iconObj = map.get("icon");
+            String iconRaw = String.valueOf(iconObj == null ? "PAPER" : iconObj).trim().toUpperCase();
             Material icon = Material.matchMaterial(iconRaw);
             if (icon == null || !icon.isItem()) {
                 // неизвестная иконка → безопасный PAPER (сервер не должен падать из-за конфига)
                 icon = Material.PAPER;
             }
-            String name = String.valueOf(map.getOrDefault("name", "")).trim();
-            String lore = String.valueOf(map.getOrDefault("lore", "")).trim();
-            String command = String.valueOf(map.getOrDefault("command", "")).trim();
+            Object nameObj = map.get("name");
+            Object loreObj = map.get("lore");
+            Object commandObj = map.get("command");
+            String name = String.valueOf(nameObj == null ? "" : nameObj).trim();
+            String lore = String.valueOf(loreObj == null ? "" : loreObj).trim();
+            String command = String.valueOf(commandObj == null ? "" : commandObj).trim();
             if (name.isEmpty() || command.isEmpty() || slot < -1 || slot > 53) {
                 continue;
             }

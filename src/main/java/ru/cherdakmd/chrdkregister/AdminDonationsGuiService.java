@@ -213,7 +213,7 @@ public final class AdminDonationsGuiService implements Listener {
         if (!(event.getInventory().getHolder() instanceof DonationsGuiHolder holder)) return;
         event.setCancelled(true);
         if (!(event.getWhoClicked() instanceof Player player)) return;
-        if (!holder.inventory().equals(event.getClickedInventory())) return;
+        if (!holder.getInventory().equals(event.getClickedInventory())) return;
         int slot = event.getRawSlot();
 
         // управление
