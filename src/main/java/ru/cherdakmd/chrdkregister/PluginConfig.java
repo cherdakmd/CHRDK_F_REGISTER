@@ -37,6 +37,9 @@ public final class PluginConfig {
 
     /** Мастер-флаг донат-стены проходки (seed из load()). */
     private boolean passEnabled = true;
+
+    /** donation-actions: консольные команды по входящим донатам (не часть ctor — как boosty/motd). */
+    private List<DonateAction> donateActions = List.of();
     private final boolean donatePayEnabled;
     private final boolean strictCaseMatch;
     private final boolean donateReviewUnmatched;
@@ -389,6 +392,7 @@ public final class PluginConfig {
         parsed.boosty = BoostySettings.from(config);
         parsed.motd = MotdSettings.from(config);
         parsed.passEnabled = config.getBoolean("pass.enabled", true);
+        parsed.donateActions = DonateAction.parseList(config.getMapList("donation-actions"));
         return parsed;
     }
 
@@ -452,6 +456,11 @@ public final class PluginConfig {
     }
 
     /** Подписочный Boosty-провайдер. НИКОГДА не null. */
+    /** Консольные действия по донатам ({@code donation-actions}). */
+    public List<DonateAction> donateActions() {
+        return donateActions;
+    }
+
     public BoostySettings boosty() {
         return boosty;
     }

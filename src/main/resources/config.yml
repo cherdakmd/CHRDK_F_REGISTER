@@ -34,6 +34,20 @@ donatepay:
   alert-fail-streak: 10
   # Дублировать тревогу о падении/восстановлении DonatePay онлайн-админам в чат
   alert-admins: true
+
+# Консольные действия по входящим донатам (оба провайдера: DonatePay и EasyDonate).
+# При успешной оплате с суммой >= sum выполняется command от имени консоли.
+# Плейсхолдеры: {username} — имя из формы оплаты, {player} — ник получателя прохода
+# (или username, если не заматчился), {sum} — сумма в рублях, {message} — комментарий.
+# Донорский ввод экранируется автоматически (кавычки/слэши вырезаются).
+# Не срабатывает для backfill при первом включении и retry старых pending — только
+# новые платежи и /pass testpay (удобно обкатывать шаблоны: /pass testpay Ник 500).
+# Примеры:
+#   - sum: 50
+#     command: "broadcast <gold>{username}</gold> поддержал сервер на <yellow>{sum} ₽</yellow>!"
+#   - sum: 500
+#     command: "title @a title {\"text\":\"{username} — ЛЕГЕНДА!\",\"color\":\"gold\"}"
+donation-actions: []
   # Повторять тревогу, пока DonatePay всё ещё недоступен (интервал в минутах; 0 = только
   # одна тревога на эпизод). Совпадение с health-seconds гармонично: 15 мин ~ 3 heartbeat линии
   alert-repeat-minutes: 15

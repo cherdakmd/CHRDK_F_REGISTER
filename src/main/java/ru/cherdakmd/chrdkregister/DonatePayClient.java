@@ -170,10 +170,12 @@ public final class DonatePayClient implements DonationProvider {
             String type = string(transaction, "type");
             JsonObject vars = object(transaction, "vars");
             String donorName = vars == null ? "" : string(vars, "name").trim();
+            String comment = vars == null ? "" : string(vars, "comment").trim();
             BigDecimal amount = decimal(transaction, "sum");
             long createdAt = parseCreatedAt(transaction.get("created_at"));
             if (transactionId > 0) {
-                transactions.add(new Transaction(transactionId, donorName, amount, status, type, createdAt));
+                transactions.add(new Transaction(transactionId, donorName, amount, status, type,
+                        createdAt, false, comment));
             }
         }
         transactions.sort(Comparator.comparingLong(Transaction::id));
@@ -274,10 +276,15 @@ public final class DonatePayClient implements DonationProvider {
     }
 
     public record Transaction(long id, String donorName, BigDecimal amount, String status, String type,
-                              long createdAt, boolean testPayment) {
+                              long createdAt, boolean testPayment, String comment) {
         public Transaction(long id, String donorName, BigDecimal amount, String status,
                            String type, long createdAt) {
-            this(id, donorName, amount, status, type, createdAt, false);
+            this(id, donorName, amount, status, type, createdAt, false, "");
+        }
+
+        public Transaction(long id, String donorName, BigDecimal amount, String status,
+                           String type, long createdAt, boolean testPayment) {
+            this(id, donorName, amount, status, type, createdAt, testPayment, "");
         }
 
         public boolean isSuccessfulDonation() {

@@ -335,6 +335,52 @@ public final class AccessManager {
         });
     }
 
+    /**
+     * donation-actions: при успешной оплате ≥ порога выполняем команды от консоли.
+     * Вызывается ТОЛЬКО на боевом потоке новых платежей и из /pass testpay —
+     * не в backfill курсора и не при retry старых pending (историю не флудим).
+     */
+    private void runDonateActions(DonatePayClient.Transaction transaction,
+                                  DonationService.Outcome outcome) {
+        try {
+            if (transaction == null || !transaction.isSuccessfulDonation()) {
+                return;
+            }
+            List<DonateAction> actions = config.donateActions();
+            if (actions.isEmpty()) {
+                return;
+            }
+            long rubles = DonateAction.rublesOf(transaction.amount());
+            List<DonateAction> matched = actions.stream()
+                    .filter(action -> rubles >= action.minSumRubles())
+                    .toList();
+            if (matched.isEmpty()) {
+                return;
+            }
+            String username = DonateAction.sanitize(transaction.donorName());
+            String player = outcome != null && outcome.playerName() != null
+                    && !outcome.playerName().isBlank()
+                    ? DonateAction.sanitize(outcome.playerName()) : username;
+            String sum = Long.toString(rubles);
+            String message = DonateAction.sanitize(transaction.comment());
+            long delayTicks = 0;
+            for (DonateAction action : matched) {
+                String command = action.render(username, player, sum, message);
+                if (command.isEmpty()) {
+                    continue;
+                }
+                logger.info("donation-action (" + username + ", " + sum + " ₽): /" + command);
+                // между командами 2 секунды (аналог cmdCooldown) — консоль не захлёстываем
+                Bukkit.getScheduler().runTaskLater(plugin,
+                        () -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command),
+                        delayTicks);
+                delayTicks += 40L;
+            }
+        } catch (Exception exception) {
+            logger.warning("donation-actions: команда не выполнена — " + exception.getMessage());
+        }
+    }
+
     public synchronized void reload(PluginConfig newConfig) {
         this.config = newConfig;
         for (ProviderPulse pulse : donationPulses.values()) {
@@ -1768,8 +1814,10 @@ public final class AccessManager {
                 if (transaction.id() <= cursor || store.isDonationProcessed(source, transaction.id())) {
                     continue;
                 }
-                donations.process(transaction, System.currentTimeMillis(), true, source);
+                DonationService.Outcome outcome = donations.process(
+                        transaction, System.currentTimeMillis(), true, source);
                 store.markDonationProcessed(source, transaction.id());
+                runDonateActions(transaction, outcome);
                 cursor = Math.max(cursor, transaction.id());
                 processed++;
             }
@@ -2055,8 +2103,9 @@ public final class AccessManager {
         long now = System.currentTimeMillis();
         DonatePayClient.Transaction transaction = new DonatePayClient.Transaction(
                 -now, playerName, BigDecimal.valueOf(Math.max(0, amountRubles)), "success", "donation", now);
-        return donations.process(transaction, now, false,
-                RegistrationStore.DONATION_SOURCE_DONATEPAY.equals(source) ? source : source);
+        DonationService.Outcome outcome = donations.process(transaction, now, false, source);
+        runDonateActions(transaction, outcome); // прогоняем и donation-actions для обкатки шаблонов
+        return outcome;
     }
 
     /** Performs a lightweight DonatePay API probe for {@code /pass doctor}. */
