@@ -33,7 +33,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
     private static final List<String> MUTE_DURATIONS = List.of("10m", "30m", "1h", "6h", "1d", "7d");
     private static final List<String> TWO_FACTOR_SUBCOMMANDS =
             List.of("setup", "confirm", "disable", "status", "cancel", "qr");
-    private static final List<String> PLAYER_SUBCOMMANDS = List.of("menu", "gui", "claim");
+    private static final List<String> PLAYER_SUBCOMMANDS = List.of("menu", "gui", "claim", "donate");
 
     private final RegisterPlugin plugin;
     private final AccessManager accessManager;
@@ -319,6 +319,10 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         String sub = args[0].toLowerCase(Locale.ROOT);
         if (("menu".equals(sub) || "gui".equals(sub)) && sender instanceof Player player) {
             plugin.passMenu().openMenu(player);
+            return true;
+        }
+        if (("donate".equals(sub) || "donates".equals(sub)) && sender instanceof Player player) {
+            plugin.donateMenu().openMenu(player);
             return true;
         }
         if ("claim".equals(sub) && sender instanceof Player player) {

@@ -323,9 +323,15 @@ public final class AccessManager {
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
                 DonatePayClient.UserInfo user = donatePay.verifyToken();
-                logger.info("DonatePay подключён (" + reason + "): кошелёк '" + user.name()
-                        + "', баланс " + user.balanceRubles() + " ₽; минимальный донат "
-                        + snapshot.minimumDonationRubles() + " ₽.");
+                if (snapshot.donatePayShowBalance()) {
+                    logger.info("DonatePay подключён (" + reason + "): кошелёк '" + user.name()
+                            + "', баланс " + user.balanceRubles() + " ₽; минимальный донат "
+                            + snapshot.minimumDonationRubles() + " ₽.");
+                } else {
+                    logger.info("DonatePay подключён (" + reason + "): токен валиден"
+                            + " (имя и баланс скрыты — donatepay.show-balance: false);"
+                            + " минимальный донат " + snapshot.minimumDonationRubles() + " ₽.");
+                }
             } catch (IOException exception) {
                 logger.warning("DonatePay: проверка токена НЕ прошла (" + reason + "): "
                         + exception.getMessage()

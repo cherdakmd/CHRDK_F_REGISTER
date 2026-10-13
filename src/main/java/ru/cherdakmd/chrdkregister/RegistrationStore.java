@@ -1234,6 +1234,31 @@ public final class RegistrationStore {
         return result;
     }
 
+    /**
+     * Донаты конкретного игрока (для GUI {@code /pass donate}): запись относится к игроку,
+     * если совпал {@code grantedTo} ИЛИ имя донатора по форме (без учёта регистра).
+     * Сортировка — от новых к старым, {@code limit} обрезает сверху.
+     */
+    public synchronized List<DonationRecord> listDonationsOf(String playerName, int limit) {
+        if (playerName == null || playerName.isBlank()) {
+            return List.of();
+        }
+        List<DonationRecord> result = new ArrayList<>();
+        for (DonationRecord record : data.donations) {
+            if (record == null) continue;
+            boolean mine = (record.grantedTo != null && record.grantedTo.equalsIgnoreCase(playerName))
+                    || (record.donorName != null && record.donorName.trim().equalsIgnoreCase(playerName));
+            if (mine) {
+                result.add(copyDonation(record));
+            }
+        }
+        result.sort(Comparator.comparingLong((DonationRecord record) -> record.createdAt).reversed());
+        if (limit > 0 && result.size() > limit) {
+            return new ArrayList<>(result.subList(0, limit));
+        }
+        return result;
+    }
+
     /** Counts journal entries with the given status ({@code null} counts everything except rejections). */
     public synchronized int countDonations(DonationStatus status) {
         int count = 0;

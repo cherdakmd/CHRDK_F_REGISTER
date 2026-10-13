@@ -40,6 +40,9 @@ public final class PluginConfig {
 
     /** donation-actions: консольные команды по входящим донатам (не часть ctor — как boosty/motd). */
     private List<DonateAction> donateActions = List.of();
+
+    /** donatepay.show-balance (не часть ctor): писать ли имя кошелька и баланс в boot-лог. */
+    private boolean donatePayShowBalance = true;
     private final boolean donatePayEnabled;
     private final boolean strictCaseMatch;
     private final boolean donateReviewUnmatched;
@@ -393,6 +396,7 @@ public final class PluginConfig {
         parsed.motd = MotdSettings.from(config);
         parsed.passEnabled = config.getBoolean("pass.enabled", true);
         parsed.donateActions = DonateAction.parseList(config.getMapList("donation-actions"));
+        parsed.donatePayShowBalance = config.getBoolean("donatepay.show-balance", true);
         return parsed;
     }
 
@@ -459,6 +463,11 @@ public final class PluginConfig {
     /** Консольные действия по донатам ({@code donation-actions}). */
     public List<DonateAction> donateActions() {
         return donateActions;
+    }
+
+    /** Показывать ли в консоли имя кошелька и баланс при рукопожатии DonatePay. */
+    public boolean donatePayShowBalance() {
+        return donatePayShowBalance;
     }
 
     public BoostySettings boosty() {

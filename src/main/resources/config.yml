@@ -20,6 +20,9 @@ donatepay:
   enabled: true
   # API-токен из личного кабинета DonatePay (https://donatepay.ru/page/api)
   api-token: ""
+  # Показывать в консоли имя кошелька DonatePay и баланс при рукопожатии (GET /user
+  # при старте/релоаде). false — в логах только «токен валиден», без имени и суммы.
+  show-balance: true
   # Ссылка на вашу страницу оплаты DonatePay (показывается игроку в чате)
   payment-url: "https://new.donatepay.ru/@your_page"
   # Минимальная сумма доната в рублях для автоматической выдачи проходки

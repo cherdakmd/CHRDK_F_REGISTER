@@ -16,6 +16,7 @@ public final class RegisterPlugin extends JavaPlugin {
     private AccessManager accessManager;
     private ChatService chatService;
     private PassMenuService passMenuService;
+    private DonateMenuService donateMenuService;
     private PasswordKeypadService passwordKeypad;
     private TabListService tabListService;
     private ExternalHooks externalHooks;
@@ -44,6 +45,7 @@ public final class RegisterPlugin extends JavaPlugin {
         this.accessManager = new AccessManager(this, config, store, donatePayClient, messages, getLogger());
         this.chatService = new ChatService(this, accessManager, config.chat(), messages, getLogger());
         this.passMenuService = new PassMenuService(accessManager, messages);
+        this.donateMenuService = new DonateMenuService(accessManager, messages);
         this.passwordKeypad = new PasswordKeypadService(this, accessManager, messages);
         this.tabListService = new TabListService(this, accessManager);
         this.externalHooks = new ExternalHooks(this);
@@ -54,6 +56,7 @@ public final class RegisterPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PlayerRestrictionListener(accessManager), this);
         getServer().getPluginManager().registerEvents(chatService, this);
         getServer().getPluginManager().registerEvents(passMenuService, this);
+        getServer().getPluginManager().registerEvents(donateMenuService, this);
         getServer().getPluginManager().registerEvents(
                 new MotdService(this, accessManager::config), this);
         getServer().getPluginManager().registerEvents(passwordKeypad, this);
@@ -165,6 +168,9 @@ public final class RegisterPlugin extends JavaPlugin {
         if (passMenuService != null) {
             passMenuService.setMessages(messages);
         }
+        if (donateMenuService != null) {
+            donateMenuService.setMessages(messages);
+        }
         if (passwordKeypad != null) {
             passwordKeypad.setMessages(messages);
         }
@@ -187,6 +193,10 @@ public final class RegisterPlugin extends JavaPlugin {
     /** Инвентарное меню {@code /pass menu} (иконки вместо текстовых справок). */
     public PassMenuService passMenu() {
         return passMenuService;
+    }
+
+    public DonateMenuService donateMenu() {
+        return donateMenuService;
     }
 
     /** Кнопочная клавиатура пароля для {@code /login} без аргументов (безопасно на стриме). */
