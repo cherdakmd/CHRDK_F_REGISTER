@@ -376,7 +376,7 @@ public final class ForgeUpgradeListener implements Listener {
         java.util.List<ItemStack> pieces = new ArrayList<>(java.util.Arrays.asList(
                 event.getPlayer().getInventory().getArmorContents()));
         pieces.add(event.getPlayer().getInventory().getItemInMainHand());
-        pieces.add(event.getPlayer().getInventory().getItemInOffhand());
+        pieces.add(event.getPlayer().getInventory().getItemInOffHand());
         for (ItemStack piece : pieces) {
             Map<ForgeUpgrade.Def, Integer> ups = plugin.items().upgradesOf(piece);
             int selfmend = levelOf(ups, ForgeUpgrade.Effect.XP_REPAIR);
@@ -452,7 +452,7 @@ public final class ForgeUpgradeListener implements Listener {
             java.util.List<ItemStack> pieces = new ArrayList<>(java.util.Arrays.asList(
                     player.getInventory().getArmorContents()));
             pieces.add(player.getInventory().getItemInMainHand());
-            pieces.add(player.getInventory().getItemInOffhand());
+            pieces.add(player.getInventory().getItemInOffHand());
             for (ItemStack piece : pieces) {
                 Map<ForgeUpgrade.Def, Integer> ups = plugin.items().upgradesOf(piece);
                 regen += sumAbs(ups, ForgeUpgrade.Effect.REGEN_PULSE);
