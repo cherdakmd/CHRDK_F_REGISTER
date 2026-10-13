@@ -30,7 +30,14 @@ public record TierForgeConfig(
         int toolsChancePercent,
         java.util.Set<String> materialBlacklist,
         double mobBossMultiplier,
-        boolean rerollNoDowngrade) {
+        boolean rerollNoDowngrade,
+        boolean improveEnabled,
+        int improveBaseXp,
+        java.util.Map<String, String> improveMaterials,
+        boolean namesEnabled,
+        java.util.List<String> namesWeapons,
+        java.util.List<String> namesArmor,
+        java.util.List<String> namesTools) {
 
     public TierDef.Snapshot find(String id) {
         return tiers.stream().filter(s -> s.id().equals(id)).findFirst().orElse(null);
@@ -68,6 +75,31 @@ public record TierForgeConfig(
             }
         }
 
+        // --- кузнечные улучшения (1.4.55) ---
+        boolean improve = config.getBoolean("improve.enabled", true);
+        int improveXp = clamp(config.getInt("improve.base-xp-cost", 3), 1, 38, logger,
+                "improve.base-xp-cost");
+        java.util.Map<String, String> improveMaterials = new java.util.HashMap<>();
+        org.bukkit.configuration.ConfigurationSection materialsSection =
+                config.getConfigurationSection("improve.materials");
+        for (ForgeUpgrade.Def def : ForgeUpgrade.ALL) {
+            String raw = materialsSection == null ? def.material()
+                    : materialsSection.getString(def.id(), def.material());
+            if (raw == null || raw.isBlank()) {
+                raw = def.material();
+            }
+            String normalized = raw.trim().toUpperCase(Locale.ROOT);
+            if (Material.matchMaterial(normalized) == null) {
+                logger.warning("config: improve.materials." + def.id() + " '" + normalized
+                        + "' — неизвестный материал, используется умолчание " + def.material());
+                normalized = def.material();
+            }
+            improveMaterials.put(def.id(), normalized);
+        }
+
+        // --- клички кованных предметов (1.4.55) ---
+        boolean naming = config.getBoolean("names.enabled", true);
+
         return new TierForgeConfig(chance, tiers, anvil, baseXp,
                 config.getBoolean("craft.armor", true),
                 config.getBoolean("craft.weapons", true),
@@ -83,7 +115,21 @@ public record TierForgeConfig(
                 config.getInt("craft.tools-chance-percent", -1),
                 blacklist,
                 Math.max(0.0, config.getDouble("mob-drop.boss-multiplier", 2.0)),
-                config.getBoolean("reroll.no-downgrade", true));
+                config.getBoolean("reroll.no-downgrade", true),
+                improve, improveXp, improveMaterials, naming,
+                readNames(config, "names.weapons", ForgeNamePool.DEFAULT_WEAPONS),
+                readNames(config, "names.armor", ForgeNamePool.DEFAULT_ARMOR),
+                readNames(config, "names.tools", ForgeNamePool.DEFAULT_TOOLS));
+    }
+
+    /** Список имён из конфига с дефолтом (пустая/битая секция = умолчание). */
+    private static java.util.List<String> readNames(org.bukkit.configuration.file.FileConfiguration config,
+                                                    String key, java.util.List<String> fallback) {
+        java.util.List<String> cleaned = config.getStringList(key).stream()
+                .filter(line -> line != null && !line.isBlank())
+                .map(String::trim)
+                .toList();
+        return cleaned.isEmpty() ? fallback : cleaned;
     }
 
     /** Шанс наката при крафте для вида предмета (%). -1 в конфиге значит «по общему». */

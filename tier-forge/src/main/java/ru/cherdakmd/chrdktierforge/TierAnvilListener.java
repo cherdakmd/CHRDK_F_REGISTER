@@ -15,12 +15,16 @@ import java.util.Random;
 import java.util.UUID;
 
 /**
- * Наковальня, две механики:
+ * Наковальня, три механики:
  *
- * <p>1) <b>Апгрейд</b>: два тир-предмета одного материала и одного тира сливаются
+ * <p>1) <b>Улучшение</b> (1.4.55): тир-предмет + кузнечный материал из реестра
+ * {@link ForgeUpgrade} → уровень свойства +1. Детерминировано — превью-ролл не нужен.
+ * Материалы дефолта не пересекаются с починкой и катализатором переката.
+ *
+ * <p>2) <b>Апгрейд</b>: два тир-предмета одного материала и одного тира сливаются
  * в предмет тиром выше (максимум — Легендарный).
  *
- * <p>2) <b>Перекат</b>: тир-предмет + катализатор (по умолчанию аметистовый осколок)
+ * <p>3) <b>Перекат</b>: тир-предмет + катализатор (по умолчанию аметистовый осколок)
  * → новый случайный тир. Цена опыта растёт с индексом текущего тира.
  * Ролл отложен на «игрок + предмет + тир» ({@link CraftRollKeeper}) — иначе превью
  * перекатывалось бы дерганием слотов, как крафт до 1.4.29.
@@ -54,6 +58,35 @@ public final class TierAnvilListener implements Listener {
 
         String leftTier = plugin.items().tierOf(left);
         String rightTier = plugin.items().tierOf(right);
+
+        // ---- улучшение: тир-предмет + кузнечный материал → уровень свойства +1 ----
+        // (раньше ветки переката проверять не надо: наши материалы ≠ катализатору,
+        // а сам катализатор ловит перекат выше)
+        if (leftTier != null && rightTier == null && plugin.config().improveEnabled()) {
+            ItemKind kind = ItemKind.classify(left.getType().name());
+            ForgeUpgrade.Def def = ForgeUpgrade.forMaterial(right.getType().name(), kind,
+                    plugin.config().improveMaterials());
+            if (def != null && !isCatalyst(right) && plugin.config().kindAllowed(kind)) {
+                int level = plugin.items().upgradeLevel(left, def.id());
+                if (level >= def.maxLevel()) {
+                    event.setResult(null);
+                    plugin.messages().send(player, "improve-max", "name", def.displayName());
+                    return;
+                }
+                ItemStack result = left.clone();
+                result.setAmount(1);
+                plugin.items().bumpUpgrade(result, def, level + 1);
+                event.setResult(result);
+                event.getInventory().setRepairCost(
+                        Math.min(39, plugin.config().improveBaseXp() + level));
+                event.getInventory().setRepairCostAmount(1);
+                previewKeys.remove(player.getUniqueId()); // улучшение детерминировано, ролла нет
+                plugin.messages().send(player, "improved",
+                        "name", def.displayName(),
+                        "level", ForgeUpgrade.roman(level + 1));
+                return;
+            }
+        }
 
         // ---- перекат: слева тир-предмет, справа катализатор без тира ----
         if (leftTier != null && rightTier == null && plugin.config().rerollEnabled()

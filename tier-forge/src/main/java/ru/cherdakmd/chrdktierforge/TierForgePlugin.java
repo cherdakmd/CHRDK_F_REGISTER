@@ -18,6 +18,7 @@ public final class TierForgePlugin extends JavaPlugin {
     private volatile ChrdkRegisterApi coreApi;
     private volatile Messages messages;
     private volatile TierForgeConfig config;
+    private volatile ForgeNamePool namePool;
     private TierItems items;
     private final TierStatsKeeper stats = new TierStatsKeeper();
     private TierIdentificationListener identification;
@@ -32,6 +33,7 @@ public final class TierForgePlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new TierCraftListener(this), this);
         Bukkit.getPluginManager().registerEvents(new TierAnvilListener(this), this);
         Bukkit.getPluginManager().registerEvents(new TierMobDropListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new ForgeUpgradeListener(this), this);
 
         this.identification = new TierIdentificationListener(this);
         Bukkit.getPluginManager().registerEvents(identification, this);
@@ -51,7 +53,10 @@ public final class TierForgePlugin extends JavaPlugin {
                 command.setTabCompleter(handler);
             }
         }
-        getLogger().info("CHRDK_TierForge включён: " + config.tiers().size() + " тиров.");
+        getLogger().info("CHRDK_TierForge включён: " + config.tiers().size() + " тиров"
+                + (config.improveEnabled() ? ", ковка улучшений (" + ForgeUpgrade.ALL.size() + " видов)" : "")
+                + (config.namesEnabled() ? ", имён в пуле: " + namePool.totalCount() : "")
+                + ".");
     }
 
     /** Перечитывает config.yml/messages.yml. */
@@ -60,6 +65,7 @@ public final class TierForgePlugin extends JavaPlugin {
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
         this.config = TierForgeConfig.parse(getConfig(), getLogger());
+        this.namePool = new ForgeNamePool(config.namesWeapons(), config.namesArmor(), config.namesTools());
         if (identifyScanTask != null) {
             identifyScanTask.cancel();
             identifyScanTask = null;
@@ -80,6 +86,11 @@ public final class TierForgePlugin extends JavaPlugin {
 
     public TierForgeConfig config() {
         return config;
+    }
+
+    /** Пул кличек кованных предметов (пересобирается при reload). */
+    public ForgeNamePool namePool() {
+        return namePool;
     }
 
     public TierItems items() {
