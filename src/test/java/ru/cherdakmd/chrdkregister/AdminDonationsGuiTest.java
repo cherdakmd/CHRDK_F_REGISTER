@@ -51,4 +51,20 @@ class AdminDonationsGuiTest {
         assertTrue(shortened.endsWith("…"));
         assertEquals(longText.substring(0, 9), shortened.substring(0, 9));
     }
+
+    @Test
+    void transactionKopecksConvertsRublesSafely() {
+        assertEquals(15_000, AccessManager.transactionKopecks(transaction("150")));
+        assertEquals(12_345, AccessManager.transactionKopecks(transaction("123.45")));
+        assertEquals(60, AccessManager.transactionKopecks(transaction("0.6")));
+        assertEquals(0, AccessManager.transactionKopecks(transaction(null)));
+        assertEquals(0, AccessManager.transactionKopecks(transaction("-50")));
+        assertEquals(0, AccessManager.transactionKopecks(null));
+    }
+
+    private static DonatePayClient.Transaction transaction(String rubles) {
+        return new DonatePayClient.Transaction(1L, "donor",
+                rubles == null ? null : new java.math.BigDecimal(rubles),
+                "success", "donation", 1L, false, "");
+    }
 }

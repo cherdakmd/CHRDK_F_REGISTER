@@ -868,6 +868,19 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 "percent", Math.round(100.0 * withPass / total));
         messages.send(sender, "stats.granted",
                 "count", store.countDonations(RegistrationStore.DonationStatus.GRANTED));
+        // сводка по каждому активному провайдеру: опросы и оборот за текущую сессию
+        for (AccessManager.DonateHealthCard card : accessManager.donateHealthCards()) {
+            if (!card.ready()) {
+                continue;
+            }
+            messages.send(sender, "stats.provider-line",
+                    "service", card.serviceName(),
+                    "attempts", card.attempts(),
+                    "ok", card.successes(),
+                    "fail", card.failures(),
+                    "processed", card.processedTransactions(),
+                    "sum", DonationService.formatRubles(card.sessionSumKopecks()));
+        }
         messages.send(sender, "stats.tiers", "tiers", DonationService.describeTiers(cfg, messages));
     }
 

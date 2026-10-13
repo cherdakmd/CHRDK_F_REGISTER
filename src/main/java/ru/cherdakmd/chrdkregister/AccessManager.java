@@ -2074,7 +2074,7 @@ public final class AccessManager {
                                    String lastError, long attempts, long successes, long failures,
                                    long processedTransactions, int pollSeconds, long cursorId,
                                    int uptimePercent, long avgLatencyMs, long maxLatencyMs,
-                                   long apiWaitMillis) {
+                                   long apiWaitMillis, long sessionSumKopecks) {
     }
 
     /** Карточки всех провайдеров в фиксированном порядке (donatepay, easydonate). */
@@ -2092,7 +2092,8 @@ public final class AccessManager {
                     DonatePulse.uptimePercent(attempts, pulse.successes.get()),
                     pulse.latency.avg(), pulse.latency.max(),
                     RegistrationStore.DONATION_SOURCE_DONATEPAY.equals(source)
-                            ? donatePayApiWaitMillis() : 0));
+                            ? donatePayApiWaitMillis() : 0,
+                    pulse.processedKopecks.get()));
         }
         return cards;
     }

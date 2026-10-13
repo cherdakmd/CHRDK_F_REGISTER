@@ -457,6 +457,7 @@ messages:
   "stats":
     "conversion": "<gray>Конверсия: </gray><green>%active% активных проходок из %total% известных аккаунтов (%percent%%)</green>"
     "granted": "<gray>Всего выдано донатами: </gray><white>%count% платежей</white>"
+    "provider-line": "<gray>%service% (сессия): опросов %attempts% (успех %ok%, сбоев %fail%); обработано донатов %processed% на %sum% ₽</gray>"
     "header": "<gold>=== Статистика донатов ===</gold>"
     "pending": "<gray>Ждут решения: </gray><yellow>%count% платежей (/pass pending)</yellow>"
     "revenue": "<gray>Выручка (подтверждённые донаты): </gray><aqua>24ч: %day% ₽, 7д: %week% ₽, 30д: %month% ₽</aqua>"
