@@ -28,6 +28,9 @@ public final class PluginConfig {
     private final boolean easyDonateEnabled;
     private final String easyDonateShopKey;
     private final String easyDonatePaymentUrl;
+
+    /** Подписочный провайдер Boosty (сеттится из load(), в большой ctor не входит). */
+    private BoostySettings boosty = BoostySettings.DISABLED;
     private final boolean donatePayEnabled;
     private final boolean strictCaseMatch;
     private final boolean donateReviewUnmatched;
@@ -436,6 +439,11 @@ public final class PluginConfig {
     /** Флаг включения без привязки к ключу (для doctor: «включён, но ключа нет»). */
     public boolean easyDonateEnabled() {
         return easyDonateEnabled;
+    }
+
+    /** Подписочный Boosty-провайдер. НИКОГДА не null. */
+    public BoostySettings boosty() {
+        return boosty;
     }
 
     /** Ссылка на страницу EasyDonate-магазина для игроков (пусто = не показывать). */
@@ -850,6 +858,89 @@ public final class PluginConfig {
             return trimmed;
         } catch (IllegalArgumentException ignored) {
             return "";
+        }
+    }
+
+    /* ------------------------------------------------------------------ *
+     *  Boosty (подписка → автопродление проходки)
+     * ------------------------------------------------------------------ */
+
+    /** Настройки подписочного провайдера Boosty.to (boosty:<key> секция). */
+    public static final class BoostySettings {
+        public static final BoostySettings DISABLED = new BoostySettings(
+                false, "", "", "", "", "", 300, 30, 24, false, false);
+
+        private final boolean enabled;
+        private final String blog;
+        private final String blogUrl;
+        private final String token;
+        private final String refreshToken;
+        private final String deviceId;
+        private final int minLevelPrice;
+        private final int daysPerPeriod;
+        private final int recheckHours;
+        private final boolean dryRun;
+        private final boolean debugLog;
+
+        BoostySettings(boolean enabled, String blog, String blogUrl, String token, String refreshToken,
+                       String deviceId, int minLevelPrice, int daysPerPeriod, int recheckHours,
+                       boolean dryRun, boolean debugLog) {
+            this.enabled = enabled;
+            this.blog = blog;
+            this.blogUrl = blogUrl;
+            this.token = token;
+            this.refreshToken = refreshToken;
+            this.deviceId = deviceId;
+            this.minLevelPrice = minLevelPrice;
+            this.daysPerPeriod = daysPerPeriod;
+            this.recheckHours = recheckHours;
+            this.dryRun = dryRun;
+            this.debugLog = debugLog;
+        }
+
+        static BoostySettings from(FileConfiguration config) {
+            return new BoostySettings(
+                    config.getBoolean("boosty.enabled", false),
+                    config.getString("boosty.blog", "").trim(),
+                    config.getString("boosty.blog-url", "").trim(),
+                    config.getString("boosty.token", ""),
+                    config.getString("boosty.refresh-token", ""),
+                    config.getString("boosty.device-id", ""),
+                    config.getInt("boosty.min-level-price", 300),
+                    Math.clamp(config.getInt("boosty.days-per-period", 30), 1, 365),
+                    Math.clamp(config.getInt("boosty.recheck-hours", 24), 1, 168),
+                    config.getBoolean("boosty.dry-run", false),
+                    config.getBoolean("boosty.debug-log", false));
+        }
+
+        public boolean enabled() { return enabled; }
+        public String blog() { return blog; }
+        public String blogUrl() { return blogUrl; }
+        public String token() { return token; }
+        public String refreshToken() { return refreshToken; }
+        public String deviceId() { return deviceId; }
+        public int minLevelPrice() { return minLevelPrice; }
+        public int daysPerPeriod() { return daysPerPeriod; }
+        public int recheckHours() { return recheckHours; }
+        public boolean dryRun() { return dryRun; }
+        public boolean debugLog() { return debugLog; }
+
+        /** Есть хотя бы одна пара авторизации (access ИЛИ refresh+device). */
+        public boolean hasAuth() {
+            return !token.isBlank() || (!refreshToken.isBlank() && !deviceId.isBlank());
+        }
+
+        /** Всё ли есть, чтобы клиент реально полетел в сеть. */
+        public boolean ready() {
+            return enabled && !blog.isBlank() && hasAuth();
+        }
+
+        /** Ссылка для игроков: blog-url, иначе собираем из имени блога. */
+        public String linkForPlayers() {
+            if (!blogUrl.isBlank()) {
+                return blogUrl;
+            }
+            return blog.isBlank() ? "" : "https://boosty.to/" + blog;
         }
     }
 }

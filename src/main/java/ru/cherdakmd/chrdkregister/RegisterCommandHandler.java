@@ -352,6 +352,24 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         }
 
         switch (sub) {
+            case "boost" -> {
+                if (!(sender instanceof Player boostPlayer)) {
+                    messages.send(sender, "error.players-only");
+                    return true;
+                }
+                if (args.length < 2) {
+                    messages.send(boostPlayer, "usage.pass-boost", "label", label);
+                    return true;
+                }
+                String boostArg = args[1].trim();
+                if (boostArg.equalsIgnoreCase("reset") || boostArg.equalsIgnoreCase("off")) {
+                    boolean wasBound = accessManager.boostyManager().unlink(boostPlayer.getName());
+                    messages.send(boostPlayer, wasBound ? "pass.boost-unbound" : "pass.boost-not-bound");
+                    return true;
+                }
+                accessManager.bindBoostyAsync(boostPlayer, boostArg);
+                return true;
+            }
             case "add", "grant" -> {
                 if (args.length < 2) {
                     messages.send(sender, "usage.pass-add", "label", label);
@@ -827,6 +845,17 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 check(sender, "Тестовый запрос к EasyDonate",
                         accessManager.probeDonationProvider(EasyDonateClient.SOURCE),
                         "не удалось подключиться к API EasyDonate — проверьте shop-key и сеть");
+            }
+        }
+        PluginConfig.BoostySettings boosty = cfg.boosty();
+        if (boosty.enabled()) {
+            check(sender, "Boosty: блог и токены", boosty.ready(),
+                    boosty.blog().isBlank()
+                            ? "не задан boosty.blog — URL блога на boosty.to"
+                            : "нет boosty.token / refresh-token+device-id — снимите токены из браузера");
+            if (boosty.ready()) {
+                check(sender, "Тестовый запрос к Boosty", accessManager.probeBoosty(),
+                        "API Boosty не ответил — проверьте токен, имя блога и сеть");
             }
         }
         check(sender, "Аудит-лог", cfg.auditEnabled(),

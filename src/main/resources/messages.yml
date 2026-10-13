@@ -67,6 +67,7 @@ messages:
     "backup-restore": "<yellow>Использование: /%label% backup restore <файл></yellow>"
     "login": "<yellow>Использование: /login <пароль> [код_2FA]</yellow>"
     "pass-add": "<yellow>Использование: /%label% add <ник> [дней]</yellow>"
+    "pass-boost": "<yellow>Использование: /%label% boost <ник_на_Boosty></yellow> — привязать подписку; /%label% boost reset — отвязать"
     "pass-approve": "<yellow>Использование: /%label% approve <id> [ник] [дней]</yellow>"
     "pass-check": "<yellow>Использование: /%label% check <ник></yellow>"
     "pass-claim": "<yellow>Использование: /%label% claim <id доната></yellow>"
@@ -427,6 +428,24 @@ messages:
     "two-factor": "<gray>TOTP 2FA: </gray>%value%"
     "until-label": "<gray>Срок до: </gray>"
     "until-value": "<aqua>%until% (%remaining%)</aqua>"
+
+    "boost-checking": "<gray>Проверяем подписку Boosty для %boosty%…</gray>"
+    "boost-linked": "<green>✓ Привязка к Boosty <gold>%boosty%</gold> (%level%) создана — проходка активна до <aqua>%until%</aqua>.</green>"
+    "boost-changed": "<green>✓ Привязка обновлена: теперь Boosty <gold>%boosty%</gold> (%level%). Проходка до <aqua>%until%</aqua>.</green>"
+    "boost-not-found": "<red>Подписчика <gold>%boosty%</gold> на Boosty не нашли. Проверьте ник в точности как на сайте boosty.to.</red>"
+    "boost-inactive": "<red>Подписка Boosty <gold>%boosty%</gold> сейчас не активна. Если вы только что оформили — подождите пару минут и повторите.</red>"
+    "boost-low-level": "<red>Уровень «%level%» дешевле требуемых %min% ₽/мес. Оформите подходящий уровень на Boosty.</red>"
+    "boost-taken": "<red>Этот Boosty-аккаунт уже привязан к игроку <gold>%player%</gold>.</red>"
+    "boost-unbound": "<yellow>Привязка Boosty снята. Текущая проходка догорит по своему сроку.</yellow>"
+    "boost-not-bound": "<yellow>У вас нет привязки Boosty — сначала /pass boost <ник_на_Boosty>.</yellow>"
+    "boost-error": "<red>Boosty не отвечает — попробуйте через пару минут. Админу: смотреть консоль.</red>"
+
+  # ---------------------------------------------------------------
+  # boost — Подписочный Boosty-провайдер (статус и конфиг)
+  # ---------------------------------------------------------------
+  "boost":
+    "disabled": "<red>Подписочный режим Boosty на этом сервере выключен.</red>"
+    "not-configured": "<red>Boosty не настроен владельцем сервера — попробуйте позже или напишите админу.</red>"
 
   # ---------------------------------------------------------------
   # donation — Журнал донатов и ручное подтверждение

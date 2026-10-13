@@ -473,6 +473,35 @@ public final class RegistrationStore {
     }
 
     /**
+     * Доводит проходку до горизонта {@code untilMillis} БЕЗ сложения: если текущий
+     * срок уже дальше — ничего не меняем (анти-компаунд для подписочных перепроверок
+     * Boosty: каждый день «поднимаем горизонт» до now+days, а не плюсуем).
+     */
+    public synchronized PlayerAccount renewPassUntil(
+            String playerName,
+            long nowMillis,
+            long untilMillis,
+            String source
+    ) {
+        String key = canonicalName(playerName);
+        PlayerAccount account = data.accounts.computeIfAbsent(key, ignored -> new PlayerAccount());
+        account.canonicalName = key;
+        if (account.playerName == null || account.playerName.isBlank()) {
+            account.playerName = playerName;
+        }
+        if (untilMillis <= account.passUntil) {
+            return copy(account); // уже дальше — подписка просто подтверждена
+        }
+        account.passUntil = untilMillis;
+        account.lastGrantSource = (source == null || source.isBlank()) ? "subscription" : source;
+        account.lastGrantAt = nowMillis;
+        clearExpiryWarnings(account);
+        cleanupPassChangeRequest(key);
+        markDirtyNow();
+        return copy(account);
+    }
+
+    /**
      * Grants or extends a pass from a DonatePay transaction.
      * If {@code strictCaseMatch} is enabled and the player has already been seen on the server,
      * the donor name must match the player's exact nickname case.

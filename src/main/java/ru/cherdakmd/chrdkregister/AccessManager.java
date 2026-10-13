@@ -119,6 +119,8 @@ public final class AccessManager {
     private BukkitTask flushTask;
     private BukkitTask housekeepingTask;
     private BukkitTask donateHealthTask;
+    private BukkitTask boostyRecheckTask;
+    private final BoostyManager boostyManager;
     private volatile long lastBackupAtMillis;
     private volatile long lastPurgeAtMillis;
     private volatile long serverStartedAtMillis;
@@ -148,6 +150,7 @@ public final class AccessManager {
         this.logMasker = new LogMasker(logger);
         this.authDialogs = createAuthDialogs(plugin);
         this.totpQrMaps = new TotpQrMapService(this, logger);
+        this.boostyManager = new BoostyManager(plugin, store, config);
     }
 
     private AuthDialogs createAuthDialogs(JavaPlugin javaPlugin) {
@@ -278,6 +281,14 @@ public final class AccessManager {
         this.housekeepingTask = Bukkit.getScheduler().runTaskTimer(
                 plugin, this::runHousekeeping, 20L * 30L, 20L * 60L * 30L);
 
+        long boostyTicksReload = Math.max(20L * 600L, newConfig.boosty().recheckHours() * 20L * 3600L);
+        this.boostyRecheckTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
+                plugin, this::maybeRecheckBoosty, 20L * 600L, boostyTicksReload);
+
+        long boostyTicks = Math.max(20L * 600L, config.boosty().recheckHours() * 20L * 3600L);
+        this.boostyRecheckTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
+                plugin, this::maybeRecheckBoosty, 20L * 600L, boostyTicks);
+
         if (config.storageBackupOnStart()) {
             store.createBackup("start", config.storageBackupCount());
         }
@@ -302,6 +313,7 @@ public final class AccessManager {
         for (ProviderPulse pulse : donationPulses.values()) {
             pulse.provider.updateConfig(newConfig);
         }
+        boostyManager.updateConfig(newConfig);
         stopTasks();
 
         long pollTicks = Math.max(20L * 15L, newConfig.donatePollSeconds() * 20L);
@@ -320,6 +332,10 @@ public final class AccessManager {
                 plugin, store::flush, 20L * 5L, 20L * newConfig.storageSaveDebounceSeconds());
         this.housekeepingTask = Bukkit.getScheduler().runTaskTimer(
                 plugin, this::runHousekeeping, 20L * 30L, 20L * 60L * 30L);
+
+        long boostyTicksReload = Math.max(20L * 600L, newConfig.boosty().recheckHours() * 20L * 3600L);
+        this.boostyRecheckTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
+                plugin, this::maybeRecheckBoosty, 20L * 600L, boostyTicksReload);
 
         applyLogMasking();
         audit.log(AuditLog.CONFIG_RELOAD, "server", "", "",
@@ -371,6 +387,10 @@ public final class AccessManager {
         if (housekeepingTask != null) {
             housekeepingTask.cancel();
             housekeepingTask = null;
+        }
+        if (boostyRecheckTask != null) {
+            boostyRecheckTask.cancel();
+            boostyRecheckTask = null;
         }
         if (donateHealthTask != null) {
             donateHealthTask.cancel();
@@ -1124,6 +1144,92 @@ public final class AccessManager {
     /**
      * Grants a pass manually by an administrator with the default duration and source.
      */
+    /* ------------------------------------------------------------------ *
+     *  Подписочный Boosty (модель «проходка, пока живая подписка»)
+     * ------------------------------------------------------------------ */
+
+    /** Менеджер привязок/перепроверок Boosty (для /pass boost и doctor). */
+    public BoostyManager boostyManager() {
+        return boostyManager;
+    }
+
+    /** Жив ли API Boosty? SYNCHRONOUS network call — только для консольных команд (doctor). */
+    public boolean probeBoosty() {
+        PluginConfig.BoostySettings bs = config().boosty();
+        return bs.ready() && boostyManager.client().probe();
+    }
+
+    /** /pass boost <ник>: сеть делается асинхронно, сообщения — в главном потоке. */
+    public void bindBoostyAsync(Player player, String boostyNameRaw) {
+        PluginConfig.BoostySettings bs = config().boosty();
+        if (!bs.enabled()) {
+            messages.send(player, "boost.disabled");
+            return;
+        }
+        if (!bs.ready()) {
+            messages.send(player, "boost.not-configured");
+            return;
+        }
+        String boostyName = boostyNameRaw == null ? "" : boostyNameRaw.trim();
+        messages.send(player, "pass.boost-checking", "boosty", boostyName);
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            BoostyManager.BindOutcome outcome;
+            try {
+                outcome = boostyManager.bindFor(player.getName(), boostyName, config());
+            } catch (java.io.IOException exception) {
+                logger.warning("[Boosty] Ошибка привязки " + player.getName() + ": " + exception.getMessage());
+                Bukkit.getScheduler().runTask(plugin, () -> messages.send(player, "pass.boost-error"));
+                return;
+            }
+            Bukkit.getScheduler().runTask(plugin, () -> sendBoostyOutcome(player, boostyName, outcome, bs));
+        });
+    }
+
+    private void sendBoostyOutcome(Player player, String typedName,
+                                   BoostyManager.BindOutcome outcome, PluginConfig.BoostySettings bs) {
+        switch (outcome.kind()) {
+            case LINKED, CHANGED -> {
+                RegistrationStore.PlayerAccount account =
+                        store.getAccount(player.getName()).orElse(null);
+                long until = account != null ? account.passUntil : 0L;
+                onPassGranted(player.getName(), until,
+                        BoostyClient.SOURCE + " (" + outcome.subscriber().name() + ")");
+                messages.send(player,
+                        outcome.kind() == BoostyManager.BindOutcome.Kind.LINKED
+                                ? "pass.boost-linked" : "pass.boost-changed",
+                        "boosty", outcome.subscriber().name(),
+                        "level", outcome.subscriber().levelName(),
+                        "until", formatTimestamp(until));
+            }
+            case NOT_FOUND -> messages.send(player, "pass.boost-not-found", "boosty", typedName);
+            case INACTIVE -> messages.send(player, "pass.boost-inactive",
+                    "boosty", outcome.subscriber().name());
+            case LOW_LEVEL -> messages.send(player, "pass.boost-low-level",
+                    "boosty", outcome.subscriber().name(),
+                    "level", outcome.subscriber().levelName(),
+                    "min", String.valueOf(bs.minLevelPrice()));
+            case TAKEN -> messages.send(player, "pass.boost-taken",
+                    "boosty", outcome.subscriber().name(),
+                    "player", outcome.holder());
+        }
+    }
+
+    /** Асинхронная перепроверка привязок: активным догоняет горизонт проходки. */
+    private void maybeRecheckBoosty() {
+        PluginConfig.BoostySettings bs = config().boosty();
+        if (!bs.ready() || boostyManager.bindings().isEmpty()) {
+            return;
+        }
+        try {
+            BoostyManager.RecheckStats stats = boostyManager.recheckAll(config());
+            logger.info(java.lang.String.format(java.util.Locale.ROOT,
+                    "Boosty heartbeat: OK (привязок: %d; продлено: %d; не подтверждено: %d).",
+                    stats.total(), stats.extended(), stats.lapsed()));
+        } catch (java.io.IOException exception) {
+            logger.warning("Boosty heartbeat: FAIL — " + exception.getMessage());
+        }
+    }
+
     public RegistrationStore.PlayerAccount grantPassManually(String targetPlayerName) {
         return grantPassManually(targetPlayerName, config.grantDays(), "manual");
     }
@@ -1472,6 +1578,9 @@ public final class AccessManager {
         }
         if (!config.easyDonatePaymentUrl().isBlank()) {
             sendPaymentLinkLine(player, "EasyDonate", config.easyDonatePaymentUrl());
+        }
+        if (!config.boosty().linkForPlayers().isBlank()) {
+            sendPaymentLinkLine(player, "Boosty", config.boosty().linkForPlayers());
         }
 
         if (showTitle) {
