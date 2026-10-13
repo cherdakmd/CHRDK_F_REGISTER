@@ -23,13 +23,21 @@ import java.util.Locale;
 public final class TierItems {
 
     public static final String PDC_KEY = "item_tier";
+    /** Флаг «неопознанного» предмета: редкость скрыта до попадания в инвентарь. */
+    public static final String PDC_UNIDENTIFIED = "item_unidentified";
+    /** Источник выдачи неопознанного предмета ("craft" / "drop") — нужен для статистики. */
+    public static final String PDC_SOURCE = "item_tier_source";
 
     private final TierForgePlugin plugin;
     private final NamespacedKey key;
+    private final NamespacedKey unidentifiedKey;
+    private final NamespacedKey sourceKey;
 
     public TierItems(TierForgePlugin plugin) {
         this.plugin = plugin;
         this.key = new NamespacedKey(plugin, PDC_KEY);
+        this.unidentifiedKey = new NamespacedKey(plugin, PDC_UNIDENTIFIED);
+        this.sourceKey = new NamespacedKey(plugin, PDC_SOURCE);
     }
 
     /** Читает id тира предмета (null — предмет без тира). */
@@ -56,6 +64,51 @@ public final class TierItems {
         if ("legendary".equals(tier.id())) {
             meta.setEnchantmentGlintOverride(true);
         }
+        item.setItemMeta(meta);
+    }
+
+    /** Предмет — «неопознанный» (редкость скрыта до попадания в инвентарь)? */
+    public boolean isUnidentified(ItemStack item) {
+        if (item == null || !item.hasItemMeta()) {
+            return false;
+        }
+        ItemMeta meta = item.getItemMeta();
+        return meta != null && meta.getPersistentDataContainer().has(unidentifiedKey, PersistentDataType.STRING);
+    }
+
+    /** Читает источник строкой ("craft"/"drop", пусто — не задан). */
+    public String unidentifiedSource(ItemStack item) {
+        if (item == null || !item.hasItemMeta()) {
+            return "";
+        }
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return "";
+        String source = meta.getPersistentDataContainer().get(sourceKey, PersistentDataType.STRING);
+        return source == null ? "" : source;
+    }
+
+    /** Пометить как неопознанный: стираем «настоящее» имя и даём лор-подсказку. */
+    public void markUnidentified(ItemStack item, String source, net.kyori.adventure.text.Component name,
+                                 java.util.List<net.kyori.adventure.text.Component> lore) {
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return;
+        meta.getPersistentDataContainer().set(unidentifiedKey, PersistentDataType.STRING, "1");
+        if (source != null && !source.isBlank()) {
+            meta.getPersistentDataContainer().set(sourceKey, PersistentDataType.STRING, source);
+        }
+        meta.displayName(name);
+        meta.lore(lore == null ? java.util.List.of() : lore);
+        item.setItemMeta(meta);
+    }
+
+    /** Снять «маску» неопознанного: вернуть стандартное имя/пустой лор (тир наносится отдельно). */
+    public void clearUnidentified(ItemStack item) {
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return;
+        meta.getPersistentDataContainer().remove(unidentifiedKey);
+        meta.getPersistentDataContainer().remove(sourceKey);
+        meta.displayName(null);
+        meta.lore(null);
         item.setItemMeta(meta);
     }
 

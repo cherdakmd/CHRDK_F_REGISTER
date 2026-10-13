@@ -4,7 +4,7 @@ main: ru.cherdakmd.chrdkenchants.EnchantsPlugin
 api-version: '26.3'
 description: "30 кастомных эпичных чар CHRDK: стол зачарований и жители-библиотекари"
 author: cherdakmd
-depend: [CHRDK_F_REGISTER]
+depend: [CHRDK_Core]
 commands:
   enchants:
     description: Список кастомных чар и их описания

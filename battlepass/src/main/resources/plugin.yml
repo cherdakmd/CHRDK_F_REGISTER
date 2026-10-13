@@ -2,9 +2,9 @@ name: CHRDK_BattlePass
 version: ${version}
 main: ru.cherdakmd.chrdkbp.BattlePassPlugin
 api-version: '26.3'
-description: "Батлпасс: сезоны с недельными волнами заданий и двумя ветками наград — бесплатной и VIP для владельцев проходки (аддон CHRDK_F_REGISTER)"
+description: "Батлпасс: сезоны с недельными волнами заданий и двумя ветками наград — бесплатной и VIP для владельцев проходки (аддон CHRDK_Core)"
 author: cherdakmd
-depend: [CHRDK_F_REGISTER]
+depend: [CHRDK_Core]
 commands:
   battlepass:
     description: "Батлпасс: задания сезона и награды"

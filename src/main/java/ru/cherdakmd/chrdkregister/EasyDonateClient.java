@@ -92,7 +92,7 @@ public final class EasyDonateClient implements DonationProvider {
                 .timeout(Duration.ofSeconds(15))
                 .header("Shop-Key", current.easyDonateShopKey())
                 .header("Accept", "application/json")
-                .header("User-Agent", "CHRDK_F_REGISTER")
+                .header("User-Agent", "CHRDK_Core")
                 .GET()
                 .build();
         String body;

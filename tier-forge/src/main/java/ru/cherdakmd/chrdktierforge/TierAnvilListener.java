@@ -45,6 +45,13 @@ public final class TierAnvilListener implements Listener {
         Player player = event.getView().getPlayer() instanceof Player p ? p : null;
         if (player == null) return;
 
+        // неопознанные на наковальне не обрабатываем — пусть сначала бывают в инвентаре
+        if (plugin.items().isUnidentified(left) || plugin.items().isUnidentified(right)) {
+            event.setResult(null);
+            plugin.messages().send(player, "anvil-unidentified");
+            return;
+        }
+
         String leftTier = plugin.items().tierOf(left);
         String rightTier = plugin.items().tierOf(right);
 
@@ -54,7 +61,9 @@ public final class TierAnvilListener implements Listener {
                         ItemKind.classify(left.getType().name()))) {
             String key = left.getType().name() + ":" + leftTier;
             TierDef.Snapshot roll = rerollKeeper.preview(player.getUniqueId(), key,
-                    () -> TierRoller.roll(plugin.config().tiers(), random));
+                    () -> plugin.config().rerollNoDowngrade()
+                            ? rollNotWorseThan(leftTier)
+                            : TierRoller.roll(plugin.config().tiers(), random));
             if (roll == null) return;
             ItemStack result = left.clone();
             result.setAmount(1);
@@ -110,6 +119,21 @@ public final class TierAnvilListener implements Listener {
             plugin.messages().send(player, "rerolled",
                     "tier", plugin.messages().raw("tier." + consumed.id() + ".name"));
         }
+    }
+
+    /**
+     * Перекат с защитой от понижения ({@code reroll.no-downgrade: true}):
+     * ролл ограничен тирами НЕ НИЖЕ текущего.
+     */
+    private TierDef.Snapshot rollNotWorseThan(String currentTierId) {
+        int floor = TierDef.indexOf(currentTierId);
+        java.util.List<TierDef.Snapshot> filtered = plugin.config().tiers().stream()
+                .filter(tier -> TierDef.indexOf(tier.id()) >= floor && tier.weight() > 0)
+                .toList();
+        if (filtered.isEmpty()) {
+            return plugin.config().find(currentTierId); // потолок — оставляем как есть
+        }
+        return TierRoller.roll(filtered, random);
     }
 
     private boolean isCatalyst(ItemStack item) {

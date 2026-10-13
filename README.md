@@ -1,4 +1,4 @@
-# CHRDK_F_REGISTER (Purpur 26.3)
+# CHRDK_Core (Purpur 26.3)
 
 Плагин для сервера **Purpur 26.3** (Java 25; сборки под 1.21.11 — в релизах ≤ 1.4.37), реализующий платную проходку через **DonatePay** (**150 ₽ на 1 месяц / 30 дней**, тарифы настраиваются), ручную выдачу проходки администратором, встроенную систему регистрации (`/register`), входа по паролю (`/login`) и двухфакторной аутентификации **TOTP 2FA** (`/2fa`) с сессиями по IP, а также **встроенный чат**: локальный и глобальный каналы, личные сообщения (`/msg`, `/r`), упоминания `@ник`, муты, фильтр слов и ссылок, история чата и автоматические сообщения сервера.
 
@@ -175,13 +175,13 @@
 
 ---
 
-## Настройка (`plugins/CHRDK_F_REGISTER/config.yml`)
+## Настройка (`plugins/CHRDK_Core/config.yml`)
 
-После первого запуска сервера с плагином создастся файл `plugins/CHRDK_F_REGISTER/config.yml`:
+После первого запуска сервера с плагином создастся файл `plugins/CHRDK_Core/config.yml`:
 
 ```yaml
 # =====================================================================
-# CHRDK_F_REGISTER — Настройки проходки через DonatePay, паролей, TOTP 2FA,
+# CHRDK_Core — Настройки проходки через DonatePay, паролей, TOTP 2FA,
 # встроенного чата (локальный/глобальный, ЛС, автосообщения), защиты от
 # перебора паролей, журнала донатов и аудита.
 # Сервер: Purpur 26.3
@@ -496,7 +496,7 @@ auto-messages:
 Аддон — обычный Bukkit-плагин. В его `plugin.yml` добавь `depend` или `softdepend`:
 
 ```yaml
-depend: [CHRDK_F_REGISTER]
+depend: [CHRDK_Core]
 ```
 
 main-класс:
@@ -506,7 +506,7 @@ main-класс:
 public void onEnable() {
     ChrdkRegisterApi api = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
     if (api == null) {
-        getLogger().warning("CHRDK_F_REGISTER не найден!");
+        getLogger().warning("CHRDK_Core не найден!");
         return;
     }
     // Проверки: api.hasActivePass("Steve"), api.isAuthenticated(player),
@@ -814,20 +814,20 @@ info <ник>`, данные — `plugins/CHRDK_Claims/claims-data.json`.
 ./gradlew build
 ```
 
-Собираются оба модуля: ядро появится в `build/libs/chrdk-f-register-1.4.43.jar`, аддон
-CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.43.jar`, реферальный —
-`referrals/build/libs/chrdk-referrals-1.4.43.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.43.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.43.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.43.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.43.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.43.jar` (зависит от аддона чар), общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.43.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.43.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.43.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.43.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.43.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.43.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются оба модуля: ядро появится в `build/libs/chrdk-core-1.4.44.jar`, аддон
+CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.44.jar`, реферальный —
+`referrals/build/libs/chrdk-referrals-1.4.44.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.44.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.44.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.44.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.44.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.44.jar` (зависит от аддона чар), общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.44.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.44.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.44.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.44.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.44.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.44.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). Оба JAR прикладываются к каждому релизу на GitHub.
 
 ---
@@ -849,7 +849,7 @@ CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.43.jar`
 - кольцо латентности (`LatencySeries`), uptime-процент и фильтр залежавшихся —
   чистый код с тестами (`LatencySeriesTest`, добор в `DonatePulseTest`).
 
-Обновите ядро `chrdk-f-register`.
+Обновите ядро `chrdk-core`.
 
 ---
 
@@ -874,7 +874,7 @@ CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.43.jar`
   вечной темы `DonatePulseTest`; классификация `OK/FLAKY/NO_CONTACT` — чистый
   код `DonatePulse.classify`.
 
-Обновите ядро `chrdk-f-register`.
+Обновите ядро `chrdk-core`.
 
 ---
 
@@ -896,7 +896,7 @@ CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.43.jar`
   только консоль. Решение сторожа — чистый класс `DonatePulse` с тестами
   переходов.
 
-Обновите ядро `chrdk-f-register` (аддоны без изменений).
+Обновите ядро `chrdk-core` (аддоны без изменений).
 
 ---
 
@@ -1040,7 +1040,7 @@ ItemMeta, асинхронные сохранения, численные кра
 крафте брони/оружия без оверрайда блеска: чтение `getEnchantmentGlintOverride()`
 теперь идёт только после `hasEnchantmentGlintOverride()` — как требует новый
 контракт API. Все прочие JAR-ы без изменений; конфиги не менялись — замена
-одного `chrdk-tier-forge-1.4.43.jar` (или всех подряд) достаточна.
+одного `chrdk-tier-forge-1.4.44.jar` (или всех подряд) достаточна.
 
 ---
 
@@ -1067,7 +1067,7 @@ ItemMeta, асинхронные сохранения, численные кра
 (`/claim sell <цена>` + `/claim buy`, налог 10% с продавца), участники
 (`/claim add <ник> [все]`), карта `/claim map`, полная защита территории
 (блоки/контейнеры/двери/сущности/взрывы/огонь/жидкости/поршни/воронки).
-Лимит 24 чанка (+8 с проходкой). `chrdk-claims-1.4.43.jar` рядом с ядром
+Лимит 24 чанка (+8 с проходкой). `chrdk-claims-1.4.44.jar` рядом с ядром
 (≥ 1.4.6), перезапуск; данные — `plugins/CHRDK_Claims/claims-data.json`,
 настройки — `plugins/CHRDK_Claims/config.yml`. Остальные JAR-ы без изменений.
 
@@ -1133,7 +1133,7 @@ JAR-ы — простая замена.
 
 Восьмой аддон — **CHRDK_CommonGoals**, общие цели сообщества: сервер сообща набивает
 цели волны, пул алмазов делится между участниками по вкладу, выдача — `/goals claim`.
-`chrdk-common-goals-1.4.43.jar` рядом с ядром (≥ 1.4.6), перезапуск. Настройки
+`chrdk-common-goals-1.4.44.jar` рядом с ядром (≥ 1.4.6), перезапуск. Настройки
 волны/шаблонов — `plugins/CHRDK_CommonGoals/config.yml`.
 
 ---
@@ -1161,7 +1161,7 @@ plugins/<Addon>/messages.yml — удалите их после обновлен
 структуру), чтобы сервер взял актуальные ключи.
 
 **Важно при обновлении:** ядро — заменой JAR. Аддон опционален:
-`chrdk-artifacts-1.4.43.jar` рядом с ядром и chrdk-enchants (той же версии), перезапуск.
+`chrdk-artifacts-1.4.44.jar` рядом с ядром и chrdk-enchants (той же версии), перезапуск.
 Кулдауны/вкл/цена опытом — в `plugins/CHRDK_Artifacts/config.yml`.
 
 ---
@@ -1172,7 +1172,7 @@ plugins/<Addon>/messages.yml — удалите их после обновлен
 проклятого до легендарного, накат при крафте брони/оружия/инструментов, апгрейд двух
 одинаковых тирированных предметов на наковальне, перенос тира через апгрейд в незерит.
 
-**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-tier-forge-1.4.43.jar`
+**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-tier-forge-1.4.44.jar`
 рядом с ядром (≥ 1.4.6), перезапуск. Шансы/бонусы тиров — в `plugins/CHRDK_TierForge/config.yml`.
 
 ---
@@ -1184,7 +1184,7 @@ plugins/<Addon>/messages.yml — удалите их после обновлен
 крадушке и снайперских стрел с поправкой на дистанцию. Получение — стол зачарований и
 жители-библиотекари, применение — наковальня; всё хранится в NBT предметов.
 
-**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-enchants-1.4.43.jar`
+**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-enchants-1.4.44.jar`
 рядом с ядром (≥ 1.4.6, `depend`), перезапуск. Баланс/шансы/лимиты — `plugins/CHRDK_Enchants/config.yml`.
 
 ---
@@ -1199,7 +1199,7 @@ plugins/<Addon>/messages.yml — удалите их после обновлен
 капча и 2FA. Выключить можно флагом `auth.button-login: false`, тогда `/login` без аргументов
 как раньше показывает нативный диалог.
 
-**Важно при обновлении:** ядро — заменой `chrdk-f-register-1.4.12.jar`; настройки появятся сами
+**Важно при обновлении:** ядро — заменой `chrdk-core-1.4.12.jar`; настройки появятся сами
 (проверьте `config.yml`, секция `auth:`), в `messages.yml` добавился блок `button-login:*` —
 новые ключи подтянутся из значений по умолчанию, а свои можно вписать в файл.
 
@@ -1346,7 +1346,7 @@ plugins/<Addon>/messages.yml — удалите их после обновлен
 
 ---
 
-## Тексты и локализация (`plugins/CHRDK_F_REGISTER/messages.yml`)
+## Тексты и локализация (`plugins/CHRDK_Core/messages.yml`)
 
 Все сообщения плагина вынесены в `messages.yml` (при первом запуске создаётся автоматически) — код
 Java больше не содержит пользовательских строк.

@@ -40,7 +40,7 @@ jobs:
             echo "Release tag $GITHUB_REF_NAME does not match plugin version $plugin_version" >&2
             exit 1
           fi
-          echo "jar=build/libs/chrdk-f-register-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
+          echo "jar=build/libs/chrdk-core-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
           echo "shop_jar=diamond-shop/build/libs/chrdk-diamond-shop-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
           echo "ref_jar=referrals/build/libs/chrdk-referrals-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
           echo "daily_jar=daily-rewards/build/libs/chrdk-daily-rewards-${plugin_version}.jar" >> "$GITHUB_OUTPUT"

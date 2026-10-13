@@ -2,9 +2,9 @@ name: CHRDK_Ranks
 version: ${version}
 main: ru.cherdakmd.chrdkranks.RanksPlugin
 api-version: '26.3'
-description: "Звания за наигранное время: лестница рангов с церемонией вручения и сортировка TAB-списка по стажу (аддон CHRDK_F_REGISTER)"
+description: "Звания за наигранное время: лестница рангов с церемонией вручения и сортировка TAB-списка по стажу (аддон CHRDK_Core)"
 author: cherdakmd
-depend: [CHRDK_F_REGISTER]
+depend: [CHRDK_Core]
 commands:
   ranks:
     description: "Звания и наигранное время"

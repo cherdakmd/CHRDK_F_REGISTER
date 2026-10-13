@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
 /**
  * Хранилище всех текстов плагина.
  *
- * <p>Значения читаются из {@code plugins/CHRDK_F_REGISTER/messages.yml}. Ключи, которых нет в файле
+ * <p>Значения читаются из {@code plugins/CHRDK_Core/messages.yml}. Ключи, которых нет в файле
  * пользователя, автоматически берутся из ресурса плагина, поэтому обновление версии никогда не ломает
  * уже настроенный файл. Тексты поддерживают разметку <b>MiniMessage</b>
  * ({@code <red>}, {@code <gradient>}, {@code <hover>}, {@code <click>}) и старые {@code &}-коды

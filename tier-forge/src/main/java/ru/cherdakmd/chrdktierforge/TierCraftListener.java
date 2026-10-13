@@ -39,8 +39,25 @@ public final class TierCraftListener implements Listener {
         if (!plugin.config().kindAllowed(kind)) {
             return;
         }
-        // не пересматриваем уже тир-предметы
-        if (plugin.items().tierOf(result) != null) return;
+        // не пересматриваем уже тир-предметы и «неопознанные» заготовки
+        if (plugin.items().tierOf(result) != null || plugin.items().isUnidentified(result)) return;
+        // чёрный список материалов — накат запрещён
+        if (plugin.config().materialBlocked(result.getType())) return;
+
+        // --- Новый флоу (1.4.44): редкость скрывается до попадания в инвентарь ---
+        if (plugin.config().identifyUnidentified()) {
+            int chance = plugin.config().craftChanceFor(kind);
+            if (plugin.config().passBonusCraftPercent() > 0
+                    && plugin.coreApi().hasActivePass(player.getName())) {
+                chance = Math.min(100, chance + plugin.config().passBonusCraftPercent());
+            }
+            if (chance > 0 && random.nextInt(100) < chance) {
+                plugin.items().markUnidentified(result, "craft",
+                        plugin.messages().get("unidentified-name"),
+                        java.util.List.of(plugin.messages().get("unidentified-lore")));
+            }
+            return;
+        }
 
         // отложенный ролл: стабилен до тех пор, пока результат реально не забрали
         TierDef.Snapshot roll = rollKeeper.preview(
@@ -56,6 +73,7 @@ public final class TierCraftListener implements Listener {
         if (event.getRecipe() == null) return;
         ItemStack current = event.getCurrentItem();
         if (current == null) return;
+        if (plugin.config().identifyUnidentified()) return; // оповещение — на опознании
         String tier = plugin.items().tierOf(current);
         TierDef.Snapshot consumed = rollKeeper.consume(
                 player.getUniqueId(), current.getType().name());

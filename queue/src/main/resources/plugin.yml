@@ -2,9 +2,9 @@ name: CHRDK_Queue
 version: ${version}
 main: ru.cherdakmd.chrdkqueue.QueuePlugin
 api-version: '26.3'
-description: "Очередь входа: игроки LuckPerms-VIP-групп заходят на переполненный сервер, обычные встают в очередь с бронированием слота (аддон CHRDK_F_REGISTER)"
+description: "Очередь входа: игроки LuckPerms-VIP-групп заходят на переполненный сервер, обычные встают в очередь с бронированием слота (аддон CHRDK_Core)"
 author: cherdakmd
-depend: [CHRDK_F_REGISTER]
+depend: [CHRDK_Core]
 softdepend: [LuckPerms]
 commands:
   queue:

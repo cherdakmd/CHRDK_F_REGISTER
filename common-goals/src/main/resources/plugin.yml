@@ -4,7 +4,7 @@ main: ru.cherdakmd.chrdkgoals.CommonGoalsPlugin
 api-version: '26.3'
 description: "Общие цели сообщества: сервер совместно набивает прогресс, награда — пропорционально вкладу"
 author: cherdakmd
-depend: [CHRDK_F_REGISTER]
+depend: [CHRDK_Core]
 commands:
   goals:
     description: Активные общие цели, вклад и награды

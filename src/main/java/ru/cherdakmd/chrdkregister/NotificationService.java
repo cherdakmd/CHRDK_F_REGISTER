@@ -96,7 +96,7 @@ public final class NotificationService {
     private void send(String webhookUrl, String title, String description, String severity, java.util.List<String> mentions) {
         try {
             JsonObject embed = new JsonObject();
-            embed.addProperty("title", title == null ? "CHRDK_F_REGISTER" : title);
+            embed.addProperty("title", title == null ? "CHRDK_Core" : title);
             embed.addProperty("description", description == null ? "" : description);
             embed.addProperty("color", colorFor(severity));
             embed.addProperty("timestamp", Instant.now().toString());
@@ -125,7 +125,7 @@ public final class NotificationService {
             HttpRequest request = HttpRequest.newBuilder(URI.create(webhookUrl))
                     .timeout(Duration.ofSeconds(15))
                     .header("Content-Type", "application/json")
-                    .header("User-Agent", "CHRDK_F_REGISTER")
+                    .header("User-Agent", "CHRDK_Core")
                     .POST(HttpRequest.BodyPublishers.ofString(payload.toString(), StandardCharsets.UTF_8))
                     .build();
             HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());

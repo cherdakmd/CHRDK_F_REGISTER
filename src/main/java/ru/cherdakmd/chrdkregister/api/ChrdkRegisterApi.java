@@ -5,9 +5,9 @@ import org.bukkit.entity.Player;
 import java.util.Optional;
 
 /**
- * Публичный API основного плагина CHRDK_F_REGISTER для аддонов (v1.4.6).
+ * Публичный API основного плагина CHRDK_Core для аддонов (v1.4.6).
  *
- * <p>Аддон — обычный Bukkit-плагин с {@code depend: [CHRDK_F_REGISTER]} (или softdepend) в
+ * <p>Аддон — обычный Bukkit-плагин с {@code depend: [CHRDK_Core]} (или softdepend) в
  * {@code plugin.yml}. Экземпляр API получают через {@code ServicesManager}:</p>
  *
  * <pre>{@code

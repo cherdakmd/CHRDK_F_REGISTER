@@ -155,7 +155,10 @@ public final class BoostyManager {
      *  Периодическая перепроверка
      * ------------------------------------------------------------------ */
 
-    public record RecheckStats(int extended, int lapsed, int total) {
+    public record RecheckStats(int extended, int lapsed, int total, java.util.List<String> revived) {
+        static RecheckStats empty() {
+            return new RecheckStats(0, 0, 0, java.util.List.of());
+        }
     }
 
     /**
@@ -167,7 +170,7 @@ public final class BoostyManager {
         Logger log = plugin.getLogger();
         int total = bindings.size();
         if (total == 0) {
-            return new RecheckStats(0, 0, 0);
+            return RecheckStats.empty();
         }
 
         List<BoostyClient.Subscriber> all = client.fetchSubscribers();
@@ -179,6 +182,7 @@ public final class BoostyManager {
         PluginConfig.BoostySettings bs = config.boosty();
         int extended = 0;
         int lapsed = 0;
+        List<String> revived = new ArrayList<>();
         for (Binding binding : new ArrayList<>(bindings.values())) {
             BoostyClient.Subscriber subscriber = byName.get(binding.boostyName().toLowerCase(Locale.ROOT));
             boolean active = subscriber != null && subscriber.countsForPass(bs.minLevelPrice());
@@ -186,7 +190,12 @@ public final class BoostyManager {
                 if (bs.dryRun()) {
                     log.info("[Boosty] DRY-RUN: продление для " + binding.mcName() + " НЕ применено.");
                 } else {
+                    long before = store.getAccount(binding.mcName()).map(acc -> acc.passUntil).orElse(0L);
+                    boolean wasExpired = before < System.currentTimeMillis();
                     renewPass(binding.mcName(), bs.daysPerPeriod(), subscriber.name());
+                    if (wasExpired) {
+                        revived.add(binding.mcName()); // сгорал → возродился: нужно LuckPerms/венты
+                    }
                 }
                 extended++;
             } else {
@@ -195,7 +204,7 @@ public final class BoostyManager {
                         + ") НЕ подтверждена — проходка догорит по своему сроку.");
             }
         }
-        return new RecheckStats(extended, lapsed, total);
+        return new RecheckStats(extended, lapsed, total, revived);
     }
 
     /** Горизонт «сейчас + days»: не складывается, а доводится до уровня (анти-компаунд). */

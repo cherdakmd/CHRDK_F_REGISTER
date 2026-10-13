@@ -4,7 +4,7 @@ main: ru.cherdakmd.chrdktierforge.TierForgePlugin
 api-version: '26.3'
 description: "Тир-предметы в духе Terraria: случайная редкость крафта брони, оружия и инструментов"
 author: cherdakmd
-depend: [CHRDK_F_REGISTER]
+depend: [CHRDK_Core]
 commands:
   tiers:
     description: Таблица редкостей крафта и шансов

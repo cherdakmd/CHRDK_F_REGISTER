@@ -10,7 +10,7 @@ import java.util.concurrent.Executor;
 import java.util.logging.Level;
 
 /**
- * Main Purpur 1.21.11 plugin entry point for CHRDK_F_REGISTER.
+ * Main Purpur 1.21.11 plugin entry point for CHRDK_Core.
  */
 public final class RegisterPlugin extends JavaPlugin {
     private AccessManager accessManager;
@@ -25,8 +25,12 @@ public final class RegisterPlugin extends JavaPlugin {
     private RegisterCommandHandler commandHandler;
     private volatile Messages messages;
 
+    /** Имя папки данных до переименования ядра (1.4.44). */
+    private static final String LEGACY_DATA_FOLDER = "CHRDK_F_REGISTER";
+
     @Override
     public void onEnable() {
+        migrateLegacyDataFolder();
         saveDefaultConfig();
         PluginConfig config = PluginConfig.fromBukkitConfig(getConfig());
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
@@ -78,8 +82,28 @@ public final class RegisterPlugin extends JavaPlugin {
         chatService.start();
         hookPlaceholderApi();
         enableMetrics(config);
-        getLogger().info("CHRDK_F_REGISTER enabled for Purpur 1.21.11 (pass, password auth, TOTP 2FA, chat, "
+        getLogger().info("CHRDK_Core enabled for Purpur 1.21.11 (pass, password auth, TOTP 2FA, chat, "
                 + "brute-force protection, donation journal).");
+    }
+
+    /**
+     * Переезд папки данных со старого имени плагина (CHRDK_F_REGISTER) на новое
+     * (CHRDK_Core): запускается до всего остального; если новая папка уже есть —
+     * ничего не трогаем (миграция одноразовая). Конфликт: залогирован.
+     */
+    private void migrateLegacyDataFolder() {
+        java.io.File fresh = getDataFolder();
+        java.io.File legacy = new java.io.File(getDataFolder().getParentFile(), LEGACY_DATA_FOLDER);
+        if (fresh.exists() || !legacy.exists()) {
+            return;
+        }
+        if (legacy.renameTo(fresh)) {
+            getLogger().info("[migration] Папка данных " + LEGACY_DATA_FOLDER
+                    + " переименована в " + fresh.getName() + ".");
+        } else {
+            getLogger().severe("[migration] НЕ УДАЛОСЬ переименовать папку " + LEGACY_DATA_FOLDER
+                    + " в " + fresh.getName() + " — перенесите файлы вручную, иначе начнём с чистого хранилища!");
+        }
     }
 
     @Override
@@ -101,7 +125,7 @@ public final class RegisterPlugin extends JavaPlugin {
             executor.shutdown();
             executor = null;
         }
-        getLogger().info("CHRDK_F_REGISTER disabled.");
+        getLogger().info("CHRDK_Core disabled.");
     }
 
     public void reloadPluginConfig() {

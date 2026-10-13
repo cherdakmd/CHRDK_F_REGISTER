@@ -1,4 +1,4 @@
-name: CHRDK_F_REGISTER
+name: CHRDK_Core
 version: '${version}'
 main: ru.cherdakmd.chrdkregister.RegisterPlugin
 api-version: '26.3'

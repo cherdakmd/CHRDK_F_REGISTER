@@ -296,10 +296,10 @@ public final class AccessManager {
         }
 
         if (!config.donatePayReady()) {
-            logger.warning("DonatePay API token is not set in plugins/CHRDK_F_REGISTER/config.yml. "
+            logger.warning("DonatePay API token is not set in plugins/CHRDK_Core/config.yml. "
                     + "Automatic pass activation via DonatePay is paused until configured.");
         } else {
-            logger.info("CHRDK_F_REGISTER active: minimum donation " + config.minimumDonationRubles()
+            logger.info("CHRDK_Core active: minimum donation " + config.minimumDonationRubles()
                     + " RUB, pass duration " + config.grantDays() + " days.");
         }
         if (!config.passEnabled()) {
@@ -368,7 +368,7 @@ public final class AccessManager {
         expiryBars.clear();
         store.flushBlocking();
         notifications.shutdown();
-        logger.info("CHRDK_F_REGISTER storage flushed and notifications stopped.");
+        logger.info("CHRDK_Core storage flushed and notifications stopped.");
     }
 
     private void stopTasks() {
@@ -760,7 +760,7 @@ public final class AccessManager {
             long minutes = Math.max(1, (failure.blockedUntil() - System.currentTimeMillis()) / 60_000L);
             Bukkit.getBanList(org.bukkit.BanList.Type.IP)
                     .addBan(AccessManager.getPlayerIp(player), "CHRDK: перебор пароля ("
-                            + AuditLog.describeDuration(minutes * 60_000L) + ")", null, "CHRDK_F_REGISTER");
+                            + AuditLog.describeDuration(minutes * 60_000L) + ")", null, "CHRDK_Core");
             logger.warning("Temporary IP ban applied to " + AuditLog.maskIp(AccessManager.getPlayerIp(player))
                     + " for " + minutes + " min.");
         } catch (RuntimeException exception) {
@@ -1225,7 +1225,13 @@ public final class AccessManager {
             logger.info(java.lang.String.format(java.util.Locale.ROOT,
                     "Boosty heartbeat: OK (привязок: %d; продлено: %d; не подтверждено: %d).",
                     stats.total(), stats.extended(), stats.lapsed()));
-        } catch (java.io.IOException exception) {
+            long now = System.currentTimeMillis();
+            for (String revived : stats.revived()) {
+                store.getAccount(revived).ifPresent(account ->
+                        onPassGranted(revived, account.passUntil,
+                                BoostyClient.SOURCE + " (возрождение подписки)"));
+            }
+        } catch (Exception exception) {
             logger.warning("Boosty heartbeat: FAIL — " + exception.getMessage());
         }
     }

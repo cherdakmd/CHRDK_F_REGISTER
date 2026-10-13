@@ -65,6 +65,9 @@ public final class MotdService implements Listener {
         if (!motd.enabled()) {
             return;
         }
+        if (motd.lines().stream().allMatch(String::isBlank)) {
+            return; // список пуст — не трогаем ванильный MOTD из server.properties
+        }
         Component rendered = render(motd, event.getNumPlayers(), event.getMaxPlayers());
         if (motdComponentSetter != null) {
             try {

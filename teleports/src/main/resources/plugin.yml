@@ -4,7 +4,7 @@ main: ru.cherdakmd.chrdkteleports.TeleportsPlugin
 api-version: '26.3'
 description: "Телепортация CHRDK: случайная точка (RTP), запросы игрок-игрок (TPA), точки дома — за алмазы"
 author: cherdakmd
-depend: [CHRDK_F_REGISTER]
+depend: [CHRDK_Core]
 commands:
   rtp:
     description: Случайная телепортация в радиусе

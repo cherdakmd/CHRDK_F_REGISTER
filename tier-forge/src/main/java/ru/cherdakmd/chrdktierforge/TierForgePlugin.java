@@ -19,6 +19,9 @@ public final class TierForgePlugin extends JavaPlugin {
     private volatile Messages messages;
     private volatile TierForgeConfig config;
     private TierItems items;
+    private final TierStatsKeeper stats = new TierStatsKeeper();
+    private TierIdentificationListener identification;
+    private org.bukkit.scheduler.BukkitTask identifyScanTask;
 
     @Override
     public void onEnable() {
@@ -29,6 +32,16 @@ public final class TierForgePlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new TierCraftListener(this), this);
         Bukkit.getPluginManager().registerEvents(new TierAnvilListener(this), this);
         Bukkit.getPluginManager().registerEvents(new TierMobDropListener(this), this);
+
+        this.identification = new TierIdentificationListener(this);
+        Bukkit.getPluginManager().registerEvents(identification, this);
+        if (config.identifyUnidentified()) {
+            this.identifyScanTask = Bukkit.getScheduler().runTaskTimer(this,
+                    identification::scanAll, config.identifyScanTicks(), config.identifyScanTicks());
+            getLogger().info("CHRDK_TierForge: режим неопознанных предметов включён "
+                    + "(редкость открывается в инвентаре; скан каждые "
+                    + config.identifyScanTicks() + " тиков).");
+        }
 
         TierCommandHandler handler = new TierCommandHandler(this);
         for (String name : List.of("tiers", "tiersadmin")) {
@@ -47,6 +60,14 @@ public final class TierForgePlugin extends JavaPlugin {
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
         this.config = TierForgeConfig.parse(getConfig(), getLogger());
+        if (identifyScanTask != null) {
+            identifyScanTask.cancel();
+            identifyScanTask = null;
+        }
+        if (identification != null && config.identifyUnidentified()) {
+            this.identifyScanTask = Bukkit.getScheduler().runTaskTimer(this,
+                    identification::scanAll, config.identifyScanTicks(), config.identifyScanTicks());
+        }
     }
 
     public ChrdkRegisterApi coreApi() {
@@ -63,5 +84,9 @@ public final class TierForgePlugin extends JavaPlugin {
 
     public TierItems items() {
         return items;
+    }
+
+    public TierStatsKeeper stats() {
+        return stats;
     }
 }
