@@ -13,18 +13,22 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Реестр кузнечных улучшений (1.4.55): состав, уникальность оплат, потолки,
- * подбор по материалу, форматирование лора и римские уровни.
+ * Реестр кузнечных улучшений (1.4.55 + 1.4.56): состав (50 видов),
+ * уникальность оплат, потолки, подбор по материалу, форматирование лора
+ * и римские уровни.
  */
 class ForgeUpgradeTest {
 
+    // Материалы ванильной наковальни-починки СЕМЕЙСТВ, которые проходят тир-фильтр.
+    // (Кожа/булыжник/цепь фиксируем про запас. Мембрана фантома официально чинит
+    // элитру, но элитра не попадает в тир-систему — поэтому мембрану «Вееру» разрешаем.)
     private static final Set<String> REPAIR_MATERIALS = Set.of(
             "IRON_INGOT", "GOLD_INGOT", "DIAMOND", "NETHERITE_INGOT", "LEATHER",
-            "TURTLE_SCUTE", "PHANTOM_MEMBRANE", "COBBLESTONE", "CHAIN");
+            "TURTLE_SCUTE", "COBBLESTONE", "CHAIN");
 
     @Test
-    void registryHasFifteenUniqueUpgrades() {
-        assertEquals(15, ForgeUpgrade.ALL.size());
+    void registryHasFiftyUniqueUpgrades() {
+        assertEquals(50, ForgeUpgrade.ALL.size());
         Set<String> ids = new HashSet<>();
         for (ForgeUpgrade.Def def : ForgeUpgrade.ALL) {
             assertTrue(ids.add(def.id()), "дубликат id: " + def.id());
@@ -32,7 +36,7 @@ class ForgeUpgradeTest {
             assertTrue(def.perLevel() > 0, "бесполезный шаг у " + def.id());
             assertTrue(def.maxLevel() >= 1 && def.maxLevel() <= 10, "странный потолок у " + def.id());
         }
-        assertEquals(15, ids.size());
+        assertEquals(50, ids.size());
     }
 
     @Test
@@ -63,10 +67,17 @@ class ForgeUpgradeTest {
         assertEquals("edge", ForgeUpgrade.forMaterial("QUARTZ", ItemKind.AXE, null).id());
         assertEquals("quickpick", ForgeUpgrade.forMaterial("REDSTONE", ItemKind.AXE, null).id());
         // переопределение конфигом
-        assertEquals("edge", ForgeUpgrade.forMaterial("GLOWSTONE_DUST", ItemKind.SWORD,
-                Map.of("edge", "GLOWSTONE_DUST")).id());
+        assertEquals("crusher", ForgeUpgrade.forMaterial("FLINT", ItemKind.SWORD,
+                Map.of("crusher", "FLINT")).id());
         assertNull(ForgeUpgrade.forMaterial("QUARTZ", ItemKind.SWORD,
                 Map.of("edge", "GLOWSTONE_DUST")));
+        // вторая ковка: новые материалы встают в свои ветки
+        assertEquals("igniter", ForgeUpgrade.forMaterial("FLINT_AND_STEEL", ItemKind.SWORD, null).id());
+        assertEquals("unbending", ForgeUpgrade.forMaterial("ANCIENT_DEBRIS", ItemKind.CHESTPLATE, null).id());
+        assertEquals("hewer", ForgeUpgrade.forMaterial("RAIL", ItemKind.PICKAXE, null).id());
+        assertEquals("soulbind", ForgeUpgrade.forMaterial("NETHER_STAR", ItemKind.BOOTS, null).id());
+        assertNull(ForgeUpgrade.forMaterial("PUFFERFISH", ItemKind.SWORD, null),
+                "Жабры — броневое свойство, оружию не положено");
         // левые материалы не распознаются
         assertNull(ForgeUpgrade.forMaterial("APPLE", ItemKind.SWORD, null));
     }
@@ -81,6 +92,19 @@ class ForgeUpgradeTest {
                 ForgeUpgrade.byId("vitality"), 4));
         assertEquals("вампиризм 6% урона", ForgeUpgrade.describe(
                 ForgeUpgrade.byId("lifesteal"), 3));
+        // вторая ковка: абсолютные, процентные и текстовые описания
+        assertEquals("+1 к урону", ForgeUpgrade.describe(ForgeUpgrade.byId("sharpen"), 4));
+        assertEquals("+40% отпора отбросу", ForgeUpgrade.describe(ForgeUpgrade.byId("unbending"), 4));
+        assertEquals("+3 м мягкости падения", ForgeUpgrade.describe(ForgeUpgrade.byId("feather"), 3));
+        assertEquals("+2 удачи", ForgeUpgrade.describe(ForgeUpgrade.byId("charm"), 4));
+        assertEquals("не выпадает при смерти", ForgeUpgrade.describe(ForgeUpgrade.byId("soulbind"), 1));
+        assertEquals("ночное зрение (пассивно)", ForgeUpgrade.describe(ForgeUpgrade.byId("lantern"), 1));
+        // у описаний не должно быть угловых скобок — MiniMessage распарсил бы их как теги
+        for (ForgeUpgrade.Def def : ForgeUpgrade.ALL) {
+            String line = ForgeUpgrade.describe(def, Math.min(3, def.maxLevel()));
+            assertFalse(line.contains("<") || line.contains(">"),
+                    "угловые скобки в описании " + def.id() + ": " + line);
+        }
     }
 
     @Test

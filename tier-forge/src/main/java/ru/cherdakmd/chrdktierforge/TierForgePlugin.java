@@ -22,7 +22,10 @@ public final class TierForgePlugin extends JavaPlugin {
     private TierItems items;
     private final TierStatsKeeper stats = new TierStatsKeeper();
     private TierIdentificationListener identification;
+    private ForgeUpgradeListener forgeUpgrades;
     private org.bukkit.scheduler.BukkitTask identifyScanTask;
+    /** Таймер пассивного пульса кузни (регенерация/зрение/магнит), гасим при перезагрузке. */
+    private org.bukkit.scheduler.BukkitTask forgePulseTask;
 
     @Override
     public void onEnable() {
@@ -33,7 +36,11 @@ public final class TierForgePlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new TierCraftListener(this), this);
         Bukkit.getPluginManager().registerEvents(new TierAnvilListener(this), this);
         Bukkit.getPluginManager().registerEvents(new TierMobDropListener(this), this);
-        Bukkit.getPluginManager().registerEvents(new ForgeUpgradeListener(this), this);
+        if (forgeUpgrades == null) {
+            this.forgeUpgrades = new ForgeUpgradeListener(this);
+            Bukkit.getPluginManager().registerEvents(forgeUpgrades, this);
+            startForgePulse();
+        }
 
         this.identification = new TierIdentificationListener(this);
         Bukkit.getPluginManager().registerEvents(identification, this);
@@ -57,6 +64,28 @@ public final class TierForgePlugin extends JavaPlugin {
                 + (config.improveEnabled() ? ", ковка улучшений (" + ForgeUpgrade.ALL.size() + " видов)" : "")
                 + (config.namesEnabled() ? ", имён в пуле: " + namePool.totalCount() : "")
                 + ".");
+    }
+
+    /** Пульс кузни раз в 2 секунды (тихий no-op, если ковка выключена). */
+    private void startForgePulse() {
+        this.forgePulseTask = Bukkit.getScheduler().runTaskTimer(this, () -> {
+            TierForgeConfig cfg = this.config;
+            if (cfg != null && cfg.improveEnabled() && forgeUpgrades != null) {
+                forgeUpgrades.pulse();
+            }
+        }, 40L, 40L);
+    }
+
+    @Override
+    public void onDisable() {
+        if (identifyScanTask != null) {
+            identifyScanTask.cancel();
+            identifyScanTask = null;
+        }
+        if (forgePulseTask != null) {
+            forgePulseTask.cancel();
+            forgePulseTask = null;
+        }
     }
 
     /** Перечитывает config.yml/messages.yml. */

@@ -223,19 +223,36 @@ public final class TierItems {
         for (Map.Entry<ForgeUpgrade.Def, Integer> entry : upgradesOf(item).entrySet()) {
             ForgeUpgrade.Def def = entry.getKey();
             double total = def.perLevel() * entry.getValue();
+            String tag = "fu_" + def.id();
             switch (def.effect()) {
-                case ATTACK_PERCENT -> add(meta, Attribute.ATTACK_DAMAGE, "fu_" + def.id(),
+                case ATTACK_PERCENT -> add(meta, Attribute.ATTACK_DAMAGE, tag, total / 100.0, slot);
+                case ATTACK_SPEED_PERCENT -> add(meta, Attribute.ATTACK_SPEED, tag, total / 100.0, slot);
+                case ARMOR_PERCENT -> add(meta, Attribute.ARMOR, tag, total / 100.0, slot);
+                case MOVE_SPEED_PERCENT -> add(meta, Attribute.MOVEMENT_SPEED, tag, total / 100.0, slot);
+                case MAX_HEALTH -> addAbsolute(meta, Attribute.MAX_HEALTH, tag, total, slot);
+                case DIG_SPEED_PERCENT -> add(meta, Attribute.BLOCK_BREAK_SPEED, tag,
                         total / 100.0, slot);
-                case ATTACK_SPEED_PERCENT -> add(meta, Attribute.ATTACK_SPEED, "fu_" + def.id(),
-                        total / 100.0, slot);
-                case ARMOR_PERCENT -> add(meta, Attribute.ARMOR, "fu_" + def.id(),
-                        total / 100.0, slot);
-                case MOVE_SPEED_PERCENT -> add(meta, Attribute.MOVEMENT_SPEED, "fu_" + def.id(),
-                        total / 100.0, slot);
-                case MAX_HEALTH -> addAbsolute(meta, Attribute.MAX_HEALTH, "fu_" + def.id(),
+                // --- 1.4.56: атрибутная часть новых фишек ---
+                case RAW_DAMAGE -> addAbsolute(meta, Attribute.ATTACK_DAMAGE, tag, total, slot);
+                case ATTACK_KNOCKBACK -> addAbsolute(meta, Attribute.ATTACK_KNOCKBACK, tag, total, slot);
+                case REACH -> addAbsolute(meta, Attribute.ENTITY_INTERACTION_RANGE, tag, total, slot);
+                case SWEEP_RATIO -> addAbsolute(meta, Attribute.SWEEPING_DAMAGE_RATIO, tag, total, slot);
+                case KB_RESIST -> addAbsolute(meta, Attribute.KNOCKBACK_RESISTANCE, tag, total, slot);
+                case SAFE_FALL -> addAbsolute(meta, Attribute.SAFE_FALL_DISTANCE, tag, total, slot);
+                case STEP_HEIGHT -> addAbsolute(meta, Attribute.STEP_HEIGHT, tag, total, slot);
+                case OXYGEN -> addAbsolute(meta, Attribute.OXYGEN_BONUS, tag, total, slot);
+                case SWIM_SPEED -> addAbsolute(meta, Attribute.WATER_MOVEMENT_EFFICIENCY, tag,
                         total, slot);
-                case DIG_SPEED_PERCENT -> add(meta, Attribute.BLOCK_BREAK_SPEED, "fu_" + def.id(),
-                        total / 100.0, slot);
+                case SNEAK_SPEED -> add(meta, Attribute.SNEAKING_SPEED, tag, total / 100.0, slot);
+                case BURN_TIME -> add(meta, Attribute.BURNING_TIME, tag, -total / 100.0, slot);
+                case EXPLOSION_RESIST -> addAbsolute(meta, Attribute.EXPLOSION_KNOCKBACK_RESISTANCE,
+                        tag, total, slot);
+                case LUCK -> addAbsolute(meta, Attribute.LUCK, tag, total, slot);
+                case MINING_EFFICIENCY -> addAbsolute(meta, Attribute.MINING_EFFICIENCY, tag,
+                        total, slot);
+                case BLOCK_REACH -> addAbsolute(meta, Attribute.BLOCK_INTERACTION_RANGE, tag,
+                        total, slot);
+                case SCALE_UP -> add(meta, Attribute.SCALE, tag, total / 100.0, slot);
                 default -> {
                     // событийные свойства (крит/вампиризм/терновник/…) — атрибутов не требуют
                 }
@@ -301,6 +318,18 @@ public final class TierItems {
         }
     }
 
+    /** Все атрибуты, которые могут нести модификаторы улучшений. */
+    private static final List<Attribute> FORGE_ATTRIBUTES = List.of(
+            Attribute.ATTACK_DAMAGE, Attribute.ATTACK_SPEED, Attribute.ARMOR,
+            Attribute.MOVEMENT_SPEED, Attribute.MAX_HEALTH, Attribute.BLOCK_BREAK_SPEED,
+            Attribute.ATTACK_KNOCKBACK, Attribute.ENTITY_INTERACTION_RANGE,
+            Attribute.SWEEPING_DAMAGE_RATIO, Attribute.KNOCKBACK_RESISTANCE,
+            Attribute.SAFE_FALL_DISTANCE, Attribute.STEP_HEIGHT, Attribute.OXYGEN_BONUS,
+            Attribute.WATER_MOVEMENT_EFFICIENCY, Attribute.SNEAKING_SPEED,
+            Attribute.BURNING_TIME, Attribute.EXPLOSION_KNOCKBACK_RESISTANCE,
+            Attribute.LUCK, Attribute.MINING_EFFICIENCY, Attribute.BLOCK_INTERACTION_RANGE,
+            Attribute.SCALE);
+
     /** Снимает модификаторы улучшений (fu_<id>) со всех атрибутов. */
     private void clearForgeModifiers(ItemMeta meta) {
         if (!meta.hasAttributeModifiers()) {
@@ -308,9 +337,7 @@ public final class TierItems {
         }
         for (ForgeUpgrade.Def def : ForgeUpgrade.ALL) {
             NamespacedKey fuKey = modifierKey("fu_" + def.id());
-            for (Attribute attribute : List.of(Attribute.ATTACK_DAMAGE, Attribute.ATTACK_SPEED,
-                    Attribute.ARMOR, Attribute.MOVEMENT_SPEED, Attribute.MAX_HEALTH,
-                    Attribute.BLOCK_BREAK_SPEED)) {
+            for (Attribute attribute : FORGE_ATTRIBUTES) {
                 Collection<AttributeModifier> mods = meta.getAttributeModifiers(attribute);
                 if (mods == null) {
                     continue;
