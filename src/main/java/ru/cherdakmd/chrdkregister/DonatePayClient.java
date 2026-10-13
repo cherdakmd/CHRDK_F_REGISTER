@@ -46,8 +46,15 @@ public final class DonatePayClient implements DonationProvider {
     private static final String API_URL = "https://donatepay.ru/api/v1/transactions";
     private static final DateTimeFormatter DONATEPAY_DATE = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
+    /**
+     * Правило DonatePay: любую API-операцию можно вызывать не чаще раза в 20 секунд
+     * (+0,5 с запаса на джиттер сети и расхождение часов — иначе HTTP 429).
+     */
+    static final long API_MIN_INTERVAL_MILLIS = 20_500L;
+
     private volatile PluginConfig config;
     private final HttpClient http;
+    private final ApiThrottle apiThrottle = new ApiThrottle(API_MIN_INTERVAL_MILLIS);
 
     public DonatePayClient(PluginConfig config) {
         this.config = config;
@@ -233,14 +240,69 @@ public final class DonatePayClient implements DonationProvider {
 
     private String sendRequest(HttpRequest request) throws IOException {
         try {
+            apiThrottle.await();
             HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                if (response.statusCode() == 429) {
+                    // нас зарежали — отодвигаем следующий слот, чтобы повторы не добивали лимит
+                    apiThrottle.noteRateLimited();
+                }
                 throw new IOException("DonatePay returned HTTP " + response.statusCode());
             }
             return response.body();
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
             throw new IOException("DonatePay request was interrupted", exception);
+        }
+    }
+
+    /**
+     * Сколько миллисекунд осталось до ближайшего разрешённого окна API
+     * (0 — можно звонить прямо сейчас). Для диагностики/GUI.
+     */
+    public long apiRateLimitWaitMillis() {
+        return apiThrottle.waitMillis();
+    }
+
+    /**
+     * Троттлер «не чаще одного HTTP-вызова в N мс». ВСЕ обращения к DonatePay идут
+     * через {@link #sendRequest} → {@link ApiThrottle#await()}: плановый опрос,
+     * {@code /pass recheck}, boot-проверка токена и обновление баланса из GUI
+     * физически не могут долбить API чаще разрешённого окна. До появления троттлера
+     * их наложение (recheck за пару секунд до планового опроса, boot-проверка и первый
+     * опрос через 5 с) закономерно собирало HTTP 429 (Too Many Requests).
+     */
+    static final class ApiThrottle {
+        private final long minIntervalMillis;
+        private long nextSlotAtMillis;
+
+        ApiThrottle(long minIntervalMillis) {
+            this.minIntervalMillis = minIntervalMillis;
+        }
+
+        /** Сколько миллисекунд осталось до ближайшего разрешённого слота (0 — слот свободен). */
+        synchronized long waitMillis() {
+            return Math.max(0L, nextSlotAtMillis - System.currentTimeMillis());
+        }
+
+        /** Дожидается своего слота и сразу резервирует следующий; вызывается перед каждым HTTP-вызовом. */
+        synchronized void await() throws IOException {
+            long wait = waitMillis();
+            if (wait > 0) {
+                try {
+                    Thread.sleep(wait);
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                    throw new IOException("DonatePay request interrupted while awaiting the API rate-limit window",
+                            exception);
+                }
+            }
+            nextSlotAtMillis = System.currentTimeMillis() + minIntervalMillis;
+        }
+
+        /** Пришёл HTTP 429 — следующий слот считаем занятым ещё на полный интервал. */
+        synchronized void noteRateLimited() {
+            nextSlotAtMillis = Math.max(nextSlotAtMillis, System.currentTimeMillis() + minIntervalMillis);
         }
     }
 

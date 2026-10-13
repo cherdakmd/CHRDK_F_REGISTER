@@ -1833,6 +1833,13 @@ public final class AccessManager {
             return new DonatePollReport(processed, null);
         } catch (Exception exception) {
             String message = exception.getMessage();
+            // исключения клиента уже начинаются с имени сервиса («DonatePay returned HTTP …») —
+            // убираем дубль, иначе в логах читается «DonatePay DonatePay returned …»
+            String servicePrefix = pulse.provider.displayName() + " ";
+            if (message != null && message.length() > servicePrefix.length()
+                    && message.startsWith(servicePrefix)) {
+                message = message.substring(servicePrefix.length());
+            }
             markDonatePollFailure(pulse, message);
             warnDonatePayThrottled(pulse.provider.displayName() + " " + message);
             return new DonatePollReport(processed, message == null || message.isBlank()
