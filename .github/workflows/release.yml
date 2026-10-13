@@ -53,6 +53,7 @@ jobs:
           echo "ranks_jar=ranks/build/libs/chrdk-ranks-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
           echo "cosmetics_jar=cosmetics/build/libs/chrdk-cosmetics-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
           echo "battlepass_jar=battlepass/build/libs/chrdk-battlepass-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
+          echo "queue_jar=queue/build/libs/chrdk-queue-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
 
       - name: Attach the Purpur plugin JAR
         env:
@@ -119,6 +120,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.battlepass_jar }}" --clobber
 
+      - name: Attach the CHRDK_Queue addon JAR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.queue_jar }}" --clobber
+
       - name: Pack all plugin JARs into one ZIP archive
         shell: bash
         run: |
@@ -136,7 +142,8 @@ jobs:
             "${{ steps.verify-version.outputs.claims_jar }}" \
             "${{ steps.verify-version.outputs.ranks_jar }}" \
             "${{ steps.verify-version.outputs.cosmetics_jar }}" \
-            "${{ steps.verify-version.outputs.battlepass_jar }}"
+            "${{ steps.verify-version.outputs.battlepass_jar }}" \
+            "${{ steps.verify-version.outputs.queue_jar }}"
           echo "zip=chrdk-plugins-${plugin_version}.zip" >> "$GITHUB_ENV"
 
       - name: Attach the all-in-one ZIP archive
