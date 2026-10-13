@@ -301,11 +301,37 @@ public final class AccessManager {
         } else {
             logger.info("CHRDK_Core active: minimum donation " + config.minimumDonationRubles()
                     + " RUB, pass duration " + config.grantDays() + " days.");
+            verifyDonatePayToken("сервер запущен");
         }
         if (!config.passEnabled()) {
             logger.warning("pass.enabled: false — донат-стена проходки ВЫКЛЮЧЕНА. "
                     + "Вход контролирует только очередь (CHRDK_Queue) и лимиты сервера.");
         }
+    }
+
+    /**
+     * Разовая проверка DonatePay-токена через официальный GET /api/v1/user:
+     * пишем в консоль имя кошелька и баланс либо сразу сигнализируем о битом
+     * токене — иначе невалидный конфиг проявляется только тишиной автоначислений.
+     */
+    private void verifyDonatePayToken(String reason) {
+        if (!config.donatePayReady()) {
+            return;
+        }
+        PluginConfig snapshot = config;
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                DonatePayClient.UserInfo user = donatePay.verifyToken();
+                logger.info("DonatePay подключён (" + reason + "): кошелёк '" + user.name()
+                        + "', баланс " + user.balanceRubles() + " ₽; минимальный донат "
+                        + snapshot.minimumDonationRubles() + " ₽.");
+            } catch (IOException exception) {
+                logger.warning("DonatePay: проверка токена НЕ прошла (" + reason + "): "
+                        + exception.getMessage()
+                        + ". Автономная выдача проходов может молчать — проверьте donatepay.api-token "
+                        + "в plugins/CHRDK_Core/config.yml.");
+            }
+        });
     }
 
     public synchronized void reload(PluginConfig newConfig) {
@@ -315,6 +341,7 @@ public final class AccessManager {
         }
         boostyManager.updateConfig(newConfig);
         stopTasks();
+        verifyDonatePayToken("конфиг перезагружен");
 
         long pollTicks = Math.max(20L * 15L, newConfig.donatePollSeconds() * 20L);
         this.donatePollTask = Bukkit.getScheduler().runTaskTimerAsynchronously(

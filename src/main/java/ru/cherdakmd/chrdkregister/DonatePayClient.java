@@ -62,6 +62,51 @@ public final class DonatePayClient implements DonationProvider {
         this.config = newConfig;
     }
 
+    /** Профиль кошелька для boot-проверки токена (GET /user по официальной спецификации). */
+    public record UserInfo(String name, long balanceRubles) {
+    }
+
+    /**
+     * Рукопожатие GET /api/v1/user: жив ли токен и чей это кошелёк. Дешёвый
+     * способ дать владельцу сервера мгновенную обратную связь «DonatePay подключён»
+     * прямо в консоли при старте — вместо тишины до первого доната.
+     *
+     * @throws IOException если API недоступен или ответил status != success (невалидный токен)
+     */
+    public UserInfo verifyToken() throws IOException {
+        PluginConfig current = this.config;
+        if (current == null || !current.donatePayReady()) {
+            throw new IOException("DonatePay token is not configured");
+        }
+        URI uri = URI.create("https://donatepay.ru/api/v1/user?access_token="
+                + URLEncoder.encode(current.donatePayApiToken(), StandardCharsets.UTF_8));
+        HttpRequest request = HttpRequest.newBuilder(uri)
+                .timeout(Duration.ofSeconds(15))
+                .header("Accept", "application/json")
+                .GET()
+                .build();
+        String responseBody = sendRequest(request);
+        JsonObject root;
+        try {
+            JsonElement element = JsonParser.parseString(responseBody);
+            if (!element.isJsonObject()) {
+                throw new IOException("DonatePay /user вернул не-объект");
+            }
+            root = element.getAsJsonObject();
+        } catch (RuntimeException exception) {
+            throw new IOException("DonatePay /user вернул невалидный JSON", exception);
+        }
+        if (!"success".equalsIgnoreCase(string(root, "status"))) {
+            String message = string(root, "message");
+            throw new IOException("DonatePay /user: status="
+                    + string(root, "status") + (message.isBlank() ? "" : " (" + message + ")"));
+        }
+        JsonObject data = object(root, "data");
+        String name = data == null ? "" : string(data, "name").trim();
+        long balance = data == null ? 0 : number(data, "balance", 0);
+        return new UserInfo(name, balance);
+    }
+
     /** Reads the newest successful donations when establishing the initial cursor. */
     public List<Transaction> fetchRecentSuccessful(int limit) throws IOException {
         return requestTransactions(0, limit, true);
