@@ -55,21 +55,6 @@ jobs:
           fi
           exit "$status"
 
-      - name: TEMP DIAG extended annotations
-        if: failure()
-        shell: bash
-        run: |
-          python3 - <<'PYDIAG' || true
-          import linecache
-          lines = open("build.log", encoding="utf-8", errors="replace").read().splitlines()
-          out = []
-          for i, l in enumerate(lines):
-              if "error:" in l:
-                  out.append(" | ".join(x.strip() for x in lines[i:i+4])[:450])
-          if out:
-              print("::error title=DIAG::" + " ## ".join(out[:20]))
-          PYDIAG
-
       - name: Report test failures
         if: always()
         shell: bash
