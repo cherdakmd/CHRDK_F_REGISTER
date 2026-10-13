@@ -31,6 +31,9 @@ public final class PluginConfig {
 
     /** Подписочный провайдер Boosty (сеттится из load(), в большой ctor не входит). */
     private BoostySettings boosty = BoostySettings.DISABLED;
+
+    /** Динамический MOTD (сеттится из load(), как и Boosty). */
+    private MotdSettings motd = MotdSettings.DISABLED;
     private final boolean donatePayEnabled;
     private final boolean strictCaseMatch;
     private final boolean donateReviewUnmatched;
@@ -306,7 +309,7 @@ public final class PluginConfig {
         int maxLoginAttempts = config.getInt("auth.max-login-attempts", 5);
         List<PassTier> tiers = parseTiers(config.getMapList("pass.tiers"));
         ZoneId zone = parseZone(config.getString("general.timezone", "Europe/Moscow"));
-        return new PluginConfig(
+        PluginConfig parsed = new PluginConfig(
                 config.getString("donatepay.api-token", ""),
                 config.getString("donatepay.payment-url", ""),
                 config.getInt("donatepay.minimum-rubles", 150),
@@ -380,6 +383,9 @@ public final class PluginConfig {
                 config.getString("easydonate.payment-url", ""),
                 config.getBoolean("donatepay.enabled", true)
         );
+        parsed.boosty = BoostySettings.from(config);
+        parsed.motd = MotdSettings.from(config);
+        return parsed;
     }
 
     /* ------------------------------------------------------------------ *
@@ -444,6 +450,11 @@ public final class PluginConfig {
     /** Подписочный Boosty-провайдер. НИКОГДА не null. */
     public BoostySettings boosty() {
         return boosty;
+    }
+
+    /** Динамический MOTD. НИКОГДА не null. */
+    public MotdSettings motd() {
+        return motd;
     }
 
     /** Ссылка на страницу EasyDonate-магазина для игроков (пусто = не показывать). */
@@ -942,5 +953,36 @@ public final class PluginConfig {
             }
             return blog.isBlank() ? "" : "https://boosty.to/" + blog;
         }
+    }
+
+
+    /* ------------------------------------------------------------------ *
+     *  Динамический MOTD (список серверов)
+     * ------------------------------------------------------------------ */
+
+    /** Настройки динамического MOTD (motd:<key> секция). */
+    public static final class MotdSettings {
+        public static final MotdSettings DISABLED = new MotdSettings(false, 60, List.of());
+
+        private final boolean enabled;
+        private final int rotateSeconds;
+        private final List<String> lines;
+
+        MotdSettings(boolean enabled, int rotateSeconds, List<String> lines) {
+            this.enabled = enabled;
+            this.rotateSeconds = rotateSeconds;
+            this.lines = List.copyOf(lines);
+        }
+
+        static MotdSettings from(FileConfiguration config) {
+            return new MotdSettings(
+                    config.getBoolean("motd.enabled", false),
+                    Math.clamp(config.getInt("motd.rotate-seconds", 60), 1, 3600),
+                    config.getStringList("motd.lines"));
+        }
+
+        public boolean enabled() { return enabled; }
+        public int rotateSeconds() { return rotateSeconds; }
+        public List<String> lines() { return lines; }
     }
 }

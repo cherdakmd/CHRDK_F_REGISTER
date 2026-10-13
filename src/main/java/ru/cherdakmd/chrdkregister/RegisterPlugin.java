@@ -50,6 +50,8 @@ public final class RegisterPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PlayerRestrictionListener(accessManager), this);
         getServer().getPluginManager().registerEvents(chatService, this);
         getServer().getPluginManager().registerEvents(passMenuService, this);
+        getServer().getPluginManager().registerEvents(
+                new MotdService(this, accessManager::config), this);
         getServer().getPluginManager().registerEvents(passwordKeypad, this);
         getServer().getPluginManager().registerEvents(tabListService, this);
         tabListService.reload();

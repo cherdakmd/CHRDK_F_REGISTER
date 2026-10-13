@@ -96,6 +96,20 @@ boosty:
   # Подробное логирование Boosty в консоль
   debug-log: false
 
+# ================================================================
+#  Динамический MOTD (текст в списке серверов)
+#  Строки ротируются каждые rotate-seconds и поддерживают MiniMessage
+#  (<color>, <gradient>, <b> и т.п.) + плейсхолдеры:
+#  %online% %max% %date% %time% %version%
+#  Для переноса строки внутри MOTD используйте \n (внутри one-linе кавычек)
+# ================================================================
+motd:
+  enabled: false
+  rotate-seconds: 60
+  lines:
+    - "<gold><b>Millida SMP</b></gold> <gray>•</gray> <green>выживание для своих</green>\n<gray>Онлайн: <white>%online%/%max%</white> — проходка через Boosty</gray>"
+    - "<gradient:#ffcc00:#ff8800><b>Добро пожаловать в Millida</b></gradient>\n<gray>Сегодня %date% · v%version% · ждём именно тебя</gray>"
+
 payment-code: false
   # Количество цифр в коде платежа
   payment-code-digits: 4
