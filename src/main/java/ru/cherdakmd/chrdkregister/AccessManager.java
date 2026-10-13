@@ -1900,6 +1900,73 @@ public final class AccessManager {
                         "service", service, "fails", streak,
                         "error", error == null ? "unknown" : error);
             }
+            // эпизод объявлен — один verifyToken через окно API разберёт точную причину
+            if (RegistrationStore.DONATION_SOURCE_DONATEPAY.equals(pulse.provider.key())) {
+                diagnoseDonatePayOutage(error);
+            }
+        }
+    }
+
+    /**
+     * Разбор причины отказа DonatePay одной строкой для алертов, чата и логов —
+     * вместо голого «returned HTTP 429» админ видит «душит лимит / токен отклонён / сеть».
+     */
+    public String describeDonatePayFailure(Throwable error) {
+        DonatePayClient.DonatePayException.Kind kind =
+                error instanceof DonatePayClient.DonatePayException donatePayException
+                        ? donatePayException.kind() : DonatePayClient.DonatePayException.Kind.UNKNOWN;
+        String detail = error == null ? "" : error.getMessage();
+        if (detail == null) detail = "";
+        detail = detail.replace('\n', ' ').replace('\r', ' ').trim();
+        if (detail.length() > 80) detail = detail.substring(0, 79) + "…";
+        String key = switch (kind) {
+            case RATE_LIMITED -> "donation.diagnosis-rate-limited";
+            case UNAUTHORIZED -> "donation.diagnosis-unauthorized";
+            case UNREACHABLE -> "donation.diagnosis-unreachable";
+            case BAD_RESPONSE -> "donation.diagnosis-bad-response";
+            case UNKNOWN -> "donation.diagnosis-unknown";
+        };
+        Messages live = this.messages;
+        return live == null ? kind.name() + (detail.isEmpty() ? "" : " — " + detail)
+                : Messages.stripFormatting(live.raw(key, "detail", detail));
+    }
+
+    /**
+     * Разовая диагностика в момент объявления эпизода отказа: один verifyToken
+     * (через то же 20-секундное окно API) — и админам падает точный вердикт
+     * («токен мёртв» / «сеть» / «лимит» / «живо, сбоит только опрос»).
+     */
+    private void diagnoseDonatePayOutage(String lastPollError) {
+        if (donatePay == null) {
+            return;
+        }
+        try {
+            Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+                String diagnosis;
+                try {
+                    DonatePayClient.UserInfo user = donatePay.verifyToken();
+                    String wallet = config.donatePayShowBalance()
+                            ? (user.name().isBlank() ? "?" : user.name()) : "(hidden)";
+                    Messages live = this.messages;
+                    diagnosis = live == null
+                            ? "API OK, token valid (wallet '" + wallet + "') — /transactions polling is what fails"
+                            : Messages.stripFormatting(live.raw("donation.diagnosis-endpoint-ok",
+                                    "wallet", wallet,
+                                    "detail", lastPollError == null || lastPollError.isBlank()
+                                            ? "?" : lastPollError));
+                } catch (Exception exception) {
+                    diagnosis = describeDonatePayFailure(exception);
+                }
+                logger.warning("DonatePay outage diagnosis: " + diagnosis);
+                audit.log(AuditLog.DONATEPAY_DOWN, "watcher", "", "",
+                        AuditLog.details("provider", "DonatePay", "diagnosis", diagnosis));
+                if (config.donateAlertAdmins()) {
+                    notifyAdminsOnline("donation.alert-diagnosis",
+                            "service", "DonatePay", "diagnosis", diagnosis);
+                }
+            });
+        } catch (IllegalStateException ignored) {
+            // плагин выключился, пока собирали диагностику — она уже некому нужна
         }
     }
 

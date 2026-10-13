@@ -105,8 +105,9 @@ public final class DonatePayClient implements DonationProvider {
         }
         if (!"success".equalsIgnoreCase(string(root, "status"))) {
             String message = string(root, "message");
-            throw new IOException("DonatePay /user: status="
-                    + string(root, "status") + (message.isBlank() ? "" : " (" + message + ")"));
+            throw new DonatePayException("DonatePay /user: status="
+                    + string(root, "status") + (message.isBlank() ? "" : " (" + message + ")"),
+                    DonatePayException.Kind.UNAUTHORIZED);
         }
         JsonObject data = object(root, "data");
         String name = data == null ? "" : string(data, "name").trim();
@@ -239,20 +240,67 @@ public final class DonatePayClient implements DonationProvider {
     }
 
     private String sendRequest(HttpRequest request) throws IOException {
+        apiThrottle.await();
+        HttpResponse<String> response;
         try {
-            apiThrottle.await();
-            HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                if (response.statusCode() == 429) {
-                    // нас зарежали — отодвигаем следующий слот, чтобы повторы не добивали лимит
-                    apiThrottle.noteRateLimited();
-                }
-                throw new IOException("DonatePay returned HTTP " + response.statusCode());
-            }
-            return response.body();
+            response = http.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
             throw new IOException("DonatePay request was interrupted", exception);
+        } catch (IOException exception) {
+            throw new DonatePayException("DonatePay network error: " + exception.getMessage(),
+                    DonatePayException.Kind.UNREACHABLE, exception);
+        }
+        if (response.statusCode() == 429) {
+            // нас зарежали — отодвигаем следующий слот, чтобы повторы не добивали лимит
+            apiThrottle.noteRateLimited();
+            throw new DonatePayException("DonatePay returned HTTP 429", DonatePayException.Kind.RATE_LIMITED);
+        }
+        if (response.statusCode() == 401 || response.statusCode() == 403) {
+            throw new DonatePayException("DonatePay returned HTTP " + response.statusCode(),
+                    DonatePayException.Kind.UNAUTHORIZED);
+        }
+        if (response.statusCode() < 200 || response.statusCode() >= 300) {
+            throw new DonatePayException("DonatePay returned HTTP " + response.statusCode(),
+                    DonatePayException.Kind.BAD_RESPONSE);
+        }
+        return response.body();
+    }
+
+    /**
+     * Ошибка обращения к DonatePay с разобранной причиной — AccessManager переводит
+     * её в понятный вердикт админам («токен отозван» vs «сеть лежит» vs «лимит API»)
+     * вместо голого текста исключения.
+     */
+    public static final class DonatePayException extends IOException {
+        /** Категория отказа для диагностики. */
+        public enum Kind {
+            /** HTTP 429 — чаще раза в 20 с; вероятно, тем же токеном пользуется кто-то ещё. */
+            RATE_LIMITED,
+            /** HTTP 401/403 или status != success на GET /user — токен отклонён. */
+            UNAUTHORIZED,
+            /** HTTP-запрос вообще не доехал (сеть сервера / падение donatepay.ru). */
+            UNREACHABLE,
+            /** Нештатный HTTP-код (5xx и прочие сюрпризы). */
+            BAD_RESPONSE,
+            /** Всё остальное (битый JSON, прерванный поток, внутренние ошибки). */
+            UNKNOWN
+        }
+
+        private final Kind kind;
+
+        public DonatePayException(String message, Kind kind) {
+            super(message);
+            this.kind = kind;
+        }
+
+        public DonatePayException(String message, Kind kind, Throwable cause) {
+            super(message, cause);
+            this.kind = kind;
+        }
+
+        public Kind kind() {
+            return kind;
         }
     }
 
