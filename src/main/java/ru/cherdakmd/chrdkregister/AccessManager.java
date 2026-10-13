@@ -20,6 +20,7 @@ import ru.cherdakmd.chrdkregister.api.events.PassRevokedEvent;
 import ru.cherdakmd.chrdkregister.api.events.PlayerAuthCompletedEvent;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
