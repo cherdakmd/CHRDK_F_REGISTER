@@ -1975,7 +1975,8 @@ public final class AccessManager {
                                    DonatePulse.State state, long lastSuccessAtMillis, int failStreak,
                                    String lastError, long attempts, long successes, long failures,
                                    long processedTransactions, int pollSeconds, long cursorId,
-                                   int uptimePercent, long avgLatencyMs, long maxLatencyMs) {
+                                   int uptimePercent, long avgLatencyMs, long maxLatencyMs,
+                                   long apiWaitMillis) {
     }
 
     /** Карточки всех провайдеров в фиксированном порядке (donatepay, easydonate). */
@@ -1991,7 +1992,9 @@ public final class AccessManager {
                     attempts, pulse.successes.get(), pulse.failures.get(), pulse.processed.get(),
                     config.donatePollSeconds(), store.getDonationCursor(source),
                     DonatePulse.uptimePercent(attempts, pulse.successes.get()),
-                    pulse.latency.avg(), pulse.latency.max()));
+                    pulse.latency.avg(), pulse.latency.max(),
+                    RegistrationStore.DONATION_SOURCE_DONATEPAY.equals(source)
+                            ? donatePayApiWaitMillis() : 0));
         }
         return cards;
     }
@@ -2100,6 +2103,23 @@ public final class AccessManager {
                 // плагин выключился, пока бежал опрос — результат просто некому отдать
             }
         });
+    }
+
+    /**
+     * Сколько миллисекунд осталось до ближайшего разрешённого окна DonatePay API
+     * (0 — можно звонить). DonatePay разрешает одну операцию в 20 секунд; GUI
+     * и {@code /pass recheck} показывают это ожидание пользователю вместо тишины.
+     */
+    public long donatePayApiWaitMillis() {
+        return donatePay == null ? 0 : donatePay.apiRateLimitWaitMillis();
+    }
+
+    /**
+     * Округление миллисекунд ожидания до целых секунд «с запасом» для показа
+     * пользователю: «через ~N с» (0 мс → 0, 1 мс → 1, 20_500 мс → 21).
+     */
+    public static int waitSeconds(long millis) {
+        return millis <= 0 ? 0 : (int) Math.min(Integer.MAX_VALUE, (millis + 999L) / 1000L);
     }
 
     /**

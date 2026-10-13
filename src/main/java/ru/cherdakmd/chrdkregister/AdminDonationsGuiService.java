@@ -72,6 +72,8 @@ public final class AdminDonationsGuiService implements Listener {
     private final org.bukkit.plugin.Plugin plugin;
     private volatile Messages messages;
     private volatile CachedWallet walletCache;
+    /** Запрос баланса уже летит к API (возможно, ждёт слот 20-секундного окна) — не плодим дубли. */
+    private volatile boolean walletRefreshInFlight;
 
     public AdminDonationsGuiService(AccessManager accessManager, Messages messages,
                                     org.bukkit.plugin.Plugin plugin) {
@@ -191,6 +193,15 @@ public final class AdminDonationsGuiService implements Listener {
                     "state", statusDetailsState(card),
                     "cursor", card.cursorId(),
                     "latency", card.avgLatencyMs()));
+            if (card.apiWaitMillis() > 0) {
+                // окно API DonatePay занято (раз в 20 с) — видно, почему ответ не мгновенный
+                lore.add(messages.get("pass.donationsgui.status-api-window",
+                        "seconds", AccessManager.waitSeconds(card.apiWaitMillis())));
+            }
+            if (card.lastError() != null && card.state() != DonatePulse.State.OK) {
+                lore.add(messages.get("pass.donationsgui.status-error-line",
+                        "error", shorten(card.lastError(), 60)));
+            }
         }
 
         // --- баланс кошелька DonatePay (кэш ≤60 с) ---
@@ -208,10 +219,14 @@ public final class AdminDonationsGuiService implements Listener {
                 } else {
                     lore.add(messages.get("pass.donationsgui.status-balance",
                             "wallet", wallet.name(), "balance", wallet.balance()));
+                    lore.add(messages.get("pass.donationsgui.status-balance-age",
+                            "ago", AccessManager.formatDuration(
+                                    System.currentTimeMillis() - wallet.fetchedAtMillis())));
                 }
             }
         }
         lore.add(messages.get("pass.donationsgui.status-click"));
+        lore.add(messages.get("pass.donationsgui.status-click-recheck"));
 
         Material wool = !anyReady || down ? Material.RED_WOOL
                 : flaky ? Material.YELLOW_WOOL : Material.LIME_WOOL;
@@ -225,16 +240,31 @@ public final class AdminDonationsGuiService implements Listener {
 
     /** Асинхронно обновляет кэш кошелька и перерисовывает у всех, у кого наш GUI открыт. */
     private void refreshWallet() {
+        if (walletRefreshInFlight) {
+            return; // один запрос уже летит (возможно, ждёт слот окна API) — дубли не нужны
+        }
+        walletRefreshInFlight = true;
         accessManager.fetchDonatePayWallet(
                 user -> {
+                    walletRefreshInFlight = false;
                     walletCache = new CachedWallet(user.name(), user.balanceRubles(), null,
                             System.currentTimeMillis());
                     reopenOpenMenus();
                 },
                 error -> {
+                    walletRefreshInFlight = false;
                     walletCache = new CachedWallet("", 0, error, System.currentTimeMillis());
                     reopenOpenMenus();
                 });
+    }
+
+    /** Обрезка длинной ошибки API для лора (без переносов, с «…»). */
+    static String shorten(String text, int maxLength) {
+        if (text == null) {
+            return "";
+        }
+        String flat = text.replace('\n', ' ').replace('\r', ' ').trim();
+        return flat.length() <= maxLength ? flat : flat.substring(0, maxLength - 1) + "…";
     }
 
     /** Кэш свежий? (просроченные кошельки перечитываем при следующем открытии) */
@@ -338,9 +368,23 @@ public final class AdminDonationsGuiService implements Listener {
             openMenu(player, holder.filter(), holder.page());
             return;
         }
-        if (slot == 4) { // принудительное обновление баланса
-            walletCache = null;
-            refreshWallet();
+        if (slot == 4) {
+            if (event.getClick().isRightClick()) { // ПКМ — внеочередной опрос транзакций
+                player.performCommand("pass recheck");
+                openMenu(player, holder.filter(), holder.page());
+                return;
+            }
+            // ЛКМ — принудительное обновление баланса
+            long apiWait = accessManager.donatePayApiWaitMillis();
+            if (walletRefreshInFlight || (apiWait > 0 && walletCache != null && walletCache.error() == null)) {
+                // запрос уже летит ИЛИ окно API занято, а свежий баланс у нас есть —
+                // честно говорим, когда ждать, вместо сброса кэша в «загружается…»
+                messages.send(player, "pass.donationsgui.balance-wait",
+                        "seconds", Math.max(1, AccessManager.waitSeconds(apiWait)));
+            } else {
+                walletCache = null;
+                refreshWallet();
+            }
             openMenu(player, holder.filter(), holder.page());
             return;
         }

@@ -600,6 +600,10 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                             "state", state,
                             "poll_seconds", card.pollSeconds(),
                             "cursor", card.cursorId());
+                    if (card.apiWaitMillis() > 0) {
+                        messages.send(sender, "donation.health-api-window",
+                                "seconds", Math.max(1, AccessManager.waitSeconds(card.apiWaitMillis())));
+                    }
                     if (card.lastSuccessAtMillis() > 0) {
                         messages.send(sender, "donation.health-last",
                                 "service", card.serviceName(),
@@ -731,7 +735,16 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                     messages.send(sender, "donation.recheck-unavailable");
                     return true;
                 }
-                messages.send(sender, "donation.recheck-started", "label", label);
+                long apiWait = accessManager.config().donatePayReady()
+                        ? accessManager.donatePayApiWaitMillis() : 0;
+                if (apiWait > 0) {
+                    // окно API DonatePay занято (раз в 20 с) — опрос дождётся своего слота,
+                    // но честно предупреждаем, что ответ будет не мгновенный
+                    messages.send(sender, "donation.recheck-waiting",
+                            "seconds", Math.max(1, AccessManager.waitSeconds(apiWait)));
+                } else {
+                    messages.send(sender, "donation.recheck-started", "label", label);
+                }
                 accessManager.forceDonationPoll(report -> {
                     if (report.error() != null) {
                         messages.send(sender, "donation.recheck-failed", "error", report.error());
