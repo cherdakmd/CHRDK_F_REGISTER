@@ -84,6 +84,9 @@ public final class AccessManager {
     private final Map<UUID, Long> joinedAt = new ConcurrentHashMap<>();
     private final Map<UUID, BossBar> expiryBars = new ConcurrentHashMap<>();
     /** Состояние опроса одного донатного провайдера (1.4.35; видно тестам). */
+    /** Максимум страниц по 100 транзакций за один цикл опроса (предохранитель от потока донатов). */
+    static final int MAX_PAGES_PER_POLL = 10;
+
     static final class ProviderPulse {
         final DonationProvider provider;
         final AtomicInteger failStreak = new AtomicInteger(0);
@@ -91,6 +94,8 @@ public final class AccessManager {
         final AtomicLong successes = new AtomicLong();
         final AtomicLong failures = new AtomicLong();
         final AtomicLong processed = new AtomicLong();
+        /** Сумма обработанных за сессию донатов, копейки (для /pass stats). */
+        final AtomicLong processedKopecks = new AtomicLong();
         final LatencySeries latency = new LatencySeries(20);
         volatile long lastSuccessAtMillis;
         volatile String lastError;
@@ -1802,6 +1807,7 @@ public final class AccessManager {
                     donations.process(transaction, System.currentTimeMillis(), true, source);
                     store.markDonationProcessed(source, transaction.id());
                     processed++;
+                    pulse.processedKopecks.addAndGet(transactionKopecks(transaction));
                 }
                 store.initializeDonationCursor(source, latest);
                 logger.info(pulse.provider.displayName() + " transaction cursor initialized at ID " + latest
@@ -1815,17 +1821,42 @@ public final class AccessManager {
             }
 
             long cursor = store.getDonationCursor(source);
-            List<DonatePayClient.Transaction> transactions = pulse.provider.fetchAfter(cursor, 100);
-            for (DonatePayClient.Transaction transaction : transactions) {
-                if (transaction.id() <= cursor || store.isDonationProcessed(source, transaction.id())) {
-                    continue;
+            // API отдаёт максимум 100 транзакций за вызов. Флуд донатов (за цикл ≥100)
+            // раньше беззвучно «обрезался» до первой сотни. Теперь страницы дочитываются
+            // — каждая следующая честно ждёт 20-секундное окно API (throttle внутри клиента).
+            int pages = 1;
+            while (true) {
+                long cursorBeforePage = cursor;
+                List<DonatePayClient.Transaction> transactions = pulse.provider.fetchAfter(cursor, 100);
+                for (DonatePayClient.Transaction transaction : transactions) {
+                    if (transaction.id() <= cursor || store.isDonationProcessed(source, transaction.id())) {
+                        continue;
+                    }
+                    DonationService.Outcome outcome = donations.process(
+                            transaction, System.currentTimeMillis(), true, source);
+                    store.markDonationProcessed(source, transaction.id());
+                    runDonateActions(transaction, outcome);
+                    cursor = Math.max(cursor, transaction.id());
+                    processed++;
+                    pulse.processedKopecks.addAndGet(transactionKopecks(transaction));
                 }
-                DonationService.Outcome outcome = donations.process(
-                        transaction, System.currentTimeMillis(), true, source);
-                store.markDonationProcessed(source, transaction.id());
-                runDonateActions(transaction, outcome);
-                cursor = Math.max(cursor, transaction.id());
-                processed++;
+                if (transactions.size() < 100) {
+                    break; // неполная страница — хвоста больше нет
+                }
+                if (cursor == cursorBeforePage) {
+                    break; // 100 записей, и все старые — не крутимся по кругу
+                }
+                if (pages >= MAX_PAGES_PER_POLL) {
+                    logger.warning(pulse.provider.displayName()
+                            + ": донаты льются потоком — прочитано " + pages
+                            + " страниц по 100 за цикл, остаток дочитает следующий опрос (курсор #"
+                            + cursor + ")");
+                    break;
+                }
+                pages++;
+                logger.info(pulse.provider.displayName()
+                        + ": страница из 100 транзакций заполнена целиком — догружаю следующую"
+                        + " через окно API (курсор #" + cursor + ")");
             }
             pulse.latency.add((System.nanoTime() - apiCallStartedNanos) / 1_000_000L);
             markDonatePollSuccess(pulse);
@@ -2187,6 +2218,15 @@ public final class AccessManager {
      */
     public static int waitSeconds(long millis) {
         return millis <= 0 ? 0 : (int) Math.min(Integer.MAX_VALUE, (millis + 999L) / 1000L);
+    }
+
+    /** Сумма транзакции в копейках для счётчиков (null/отрицательные — как 0). */
+    static long transactionKopecks(DonatePayClient.Transaction transaction) {
+        if (transaction == null || transaction.amount() == null
+                || transaction.amount().signum() <= 0) {
+            return 0;
+        }
+        return transaction.amount().movePointRight(2).longValue();
     }
 
     /**
