@@ -32,7 +32,6 @@ import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-import org.bukkit.potion.PotionEffectTypeCategory;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -236,7 +235,7 @@ public final class ForgeUpgradeListener implements Listener {
         }
         java.util.List<PotionEffect> boons = new ArrayList<>();
         for (PotionEffect active : target.getActivePotionEffects()) {
-            if (active.getType().getEffectCategory() == PotionEffectTypeCategory.BENEFICIAL) {
+            if (active.getType().getEffectCategory() == PotionEffectType.Category.BENEFICIAL) {
                 boons.add(active);
             }
         }
@@ -260,7 +259,7 @@ public final class ForgeUpgradeListener implements Listener {
     /** Есть ли на цели хотя бы один негативный эффект (для «Калечащего»). */
     private static boolean hasHarmfulEffect(LivingEntity target) {
         for (PotionEffect active : target.getActivePotionEffects()) {
-            if (active.getType().getEffectCategory() == PotionEffectTypeCategory.HARMFUL) {
+            if (active.getType().getEffectCategory() == PotionEffectType.Category.HARMFUL) {
                 return true;
             }
         }
@@ -683,7 +682,7 @@ public final class ForgeUpgradeListener implements Listener {
             longer += sumFraction(ups, ForgeUpgrade.Effect.GOOD_EFFECTS_LONGER);
             shorter += sumFraction(ups, ForgeUpgrade.Effect.BAD_EFFECTS_SHORTER);
         }
-        PotionEffectTypeCategory category = fresh.getType().getEffectCategory();
+        PotionEffectType.Category category = fresh.getType().getEffectCategory();
         double multiplier = switch (category) {
             case BENEFICIAL -> longer > 0 ? 1.0 + longer : 1.0;
             case HARMFUL -> shorter > 0 ? Math.max(0.1, 1.0 - Math.min(CAP_PROC, shorter)) : 1.0;
