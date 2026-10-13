@@ -168,7 +168,7 @@ public final class BoostyClient {
                     + "&device_id=" + urlEncode(tokens.deviceId());
             HttpResponse response = request("POST", API_BASE + "/oauth/token/", form, null);
             if (response.code / 100 != 2) {
-                logger.warning(Locale.ROOT.format(
+                logger.warning(String.format(Locale.ROOT,
                         "[Boosty] refresh токена отклонён (HTTP %d). Снимите новые токены из браузера.",
                         response.code));
                 return false;
