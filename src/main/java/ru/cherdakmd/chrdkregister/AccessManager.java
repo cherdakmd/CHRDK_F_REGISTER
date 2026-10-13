@@ -281,10 +281,6 @@ public final class AccessManager {
         this.housekeepingTask = Bukkit.getScheduler().runTaskTimer(
                 plugin, this::runHousekeeping, 20L * 30L, 20L * 60L * 30L);
 
-        long boostyTicksReload = Math.max(20L * 600L, newConfig.boosty().recheckHours() * 20L * 3600L);
-        this.boostyRecheckTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
-                plugin, this::maybeRecheckBoosty, 20L * 600L, boostyTicksReload);
-
         long boostyTicks = Math.max(20L * 600L, config.boosty().recheckHours() * 20L * 3600L);
         this.boostyRecheckTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
                 plugin, this::maybeRecheckBoosty, 20L * 600L, boostyTicks);
