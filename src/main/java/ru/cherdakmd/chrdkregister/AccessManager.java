@@ -2090,6 +2090,30 @@ public final class AccessManager {
     }
 
     /**
+     * {@code /pass testpay-live}: отправляет тестовый донат В КОШЕЛЁК DonatePay через
+     * официальный set_notification (POST /api/v1/notification, notification=-1 —
+     * без публичного алерта). Запись навсегда остаётся в истории кошелька —
+     * команда только для админов, об этом честно пишем в ответе.
+     */
+    public void postTestDonateNotification(String donorName, long sumRubles, String comment,
+                                           Consumer<String> onOk, Consumer<String> onFail) {
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                String status = donatePay.postNotification(donorName, sumRubles, comment);
+                Bukkit.getScheduler().runTask(plugin, () -> onOk.accept(status));
+            } catch (Exception exception) {
+                String message = exception.getMessage();
+                try {
+                    Bukkit.getScheduler().runTask(plugin, () -> onFail.accept(
+                            message == null || message.isBlank() ? "unknown error" : message));
+                } catch (IllegalStateException ignored) {
+                    // плагин выключился — отчёт некому отдать
+                }
+            }
+        });
+    }
+
+    /**
      * Синтетическая транзакция DonatePay для {@code /pass testpay}: полный цикл
      * (матчинг, журнал, аудит, уведомления, выдача/продление) без обращения к API.
      * id отрицательный — тестовый диапазон, курсор боевых платежей не трогает.

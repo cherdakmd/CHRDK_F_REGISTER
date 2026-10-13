@@ -29,7 +29,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
     private static final List<String> ADMIN_SUBCOMMANDS =
             List.of("add", "remove", "check", "unregister", "reset2fa", "status", "reload",
                     "pending", "donations", "health", "approve", "reject", "sessions", "logoutall", "stats", "doctor", "audit",
-                    "backup", "gift", "testpay", "recheck");
+                    "backup", "gift", "testpay", "testpay-live", "recheck");
     private static final List<String> MUTE_DURATIONS = List.of("10m", "30m", "1h", "6h", "1d", "7d");
     private static final List<String> TWO_FACTOR_SUBCOMMANDS =
             List.of("setup", "confirm", "disable", "status", "cancel", "qr");
@@ -680,6 +680,38 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                             "note", outcome.note().isBlank() ? "—" : outcome.note(),
                             "label", label);
                 }
+                return true;
+            }
+            case "testpay-live" -> {
+                // Живой тест: отправляем запись о донате прямо в кошелёк DonatePay (set_notification)
+                if (args.length < 3) {
+                    messages.send(sender, "usage.pass-testpaylive", "label", label);
+                    return true;
+                }
+                if (!accessManager.config().donatePayReady()) {
+                    messages.send(sender, "donation.testpaylive-notready");
+                    return true;
+                }
+                String donorName = args[1].trim();
+                long amount;
+                try {
+                    amount = Long.parseLong(args[2]);
+                } catch (NumberFormatException exception) {
+                    messages.send(sender, "error.amount-number");
+                    return true;
+                }
+                if (amount <= 0 || amount > 1_000_000) {
+                    messages.send(sender, "error.amount-number");
+                    return true;
+                }
+                String comment = args.length > 3
+                        ? String.join(" ", java.util.Arrays.copyOfRange(args, 3, args.length)) : "";
+                messages.send(sender, "donation.testpaylive-sending", "donor", donorName, "amount", amount);
+                accessManager.postTestDonateNotification(donorName, amount, comment,
+                        status -> messages.send(sender, "donation.testpaylive-posted",
+                                "donor", donorName, "amount", amount, "status", status),
+                        error -> messages.send(sender, "donation.testpaylive-failed",
+                                "error", error));
                 return true;
             }
             case "recheck" -> {

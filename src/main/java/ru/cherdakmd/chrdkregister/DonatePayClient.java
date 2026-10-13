@@ -107,6 +107,55 @@ public final class DonatePayClient implements DonationProvider {
         return new UserInfo(name, balance);
     }
 
+    /**
+     * Официальный set_notification (POST /api/v1/notification): создаёт тестовую
+     * запись о донате ПРЯМО в кошельке DonatePay. {@code notification=-1} — без
+     * показа в публичном виджете алертов. Запись навсегда остаётся в истории
+     * кошелька; светится ли она опросом /transactions как success — на совести API.
+     *
+     * @return сырая строка ответа API (обычно {"result": "success"})
+     * @throws IOException при сетевой ошибке или status != success
+     */
+    public String postNotification(String name, long sumRubles, String comment) throws IOException {
+        PluginConfig current = this.config;
+        if (current == null || !current.donatePayReady()) {
+            throw new IOException("DonatePay token is not configured");
+        }
+        String date = java.time.LocalDateTime.now(java.time.ZoneId.of("Europe/Moscow"))
+                .format(DONATEPAY_DATE) + ".000000";
+        Map<String, String> query = new LinkedHashMap<>();
+        query.put("access_token", current.donatePayApiToken());
+        query.put("name", name == null ? "" : name);
+        query.put("sum", Long.toString(Math.max(0, sumRubles)));
+        query.put("comment", comment == null ? "" : comment);
+        query.put("date", date);
+        query.put("notification", "-1"); // не светим в публичном виджете стримера
+        HttpRequest request = HttpRequest.newBuilder(
+                        URI.create("https://donatepay.ru/api/v1/notification?" + encodeQuery(query)))
+                .timeout(Duration.ofSeconds(15))
+                .header("Accept", "application/json")
+                .POST(HttpRequest.BodyPublishers.noBody())
+                .build();
+        String responseBody = sendRequest(request);
+        try {
+            JsonElement element = JsonParser.parseString(responseBody);
+            if (element.isJsonObject()) {
+                JsonObject root = element.getAsJsonObject();
+                String status = string(root, "status");
+                String result = string(root, "result");
+                if ("success".equalsIgnoreCase(status) || "success".equalsIgnoreCase(result)) {
+                    return responseBody;
+                }
+                String message = string(root, "message");
+                throw new IOException("DonatePay set_notification: status=" + status
+                        + (message.isBlank() ? "" : " — " + message));
+            }
+        } catch (IllegalStateException exception) {
+            throw new IOException("DonatePay set_notification вернул невалидный JSON", exception);
+        }
+        return responseBody;
+    }
+
     /** Reads the newest successful donations when establishing the initial cursor. */
     public List<Transaction> fetchRecentSuccessful(int limit) throws IOException {
         return requestTransactions(0, limit, true);
