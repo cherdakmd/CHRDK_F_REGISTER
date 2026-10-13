@@ -2195,15 +2195,25 @@ public final class AccessManager {
      */
     public void fetchDonatePayWallet(Consumer<DonatePayClient.UserInfo> onOk,
                                      Consumer<String> onFail) {
+        fetchDonatePayWallet(onOk, (message, error) -> onFail.accept(message));
+    }
+
+    /**
+     * Та же выборка кошелька, но коллбэк ошибки получает и само исключение —
+     * кнопке «проверить токен» нужна разобранная {@link DonatePayClient.DonatePayException.Kind}
+     * для точного вердикта ({@link #describeDonatePayFailure(Throwable)}).
+     */
+    public void fetchDonatePayWallet(Consumer<DonatePayClient.UserInfo> onOk,
+                                     java.util.function.BiConsumer<String, Throwable> onFail) {
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
                 DonatePayClient.UserInfo user = donatePay.verifyToken();
                 Bukkit.getScheduler().runTask(plugin, () -> onOk.accept(user));
             } catch (Exception exception) {
                 String message = exception.getMessage();
+                String text = message == null || message.isBlank() ? "unknown error" : message;
                 try {
-                    Bukkit.getScheduler().runTask(plugin, () -> onFail.accept(
-                            message == null || message.isBlank() ? "unknown error" : message));
+                    Bukkit.getScheduler().runTask(plugin, () -> onFail.accept(text, exception));
                 } catch (IllegalStateException ignored) {
                     // плагин выключился — отчёт некому отдать
                 }

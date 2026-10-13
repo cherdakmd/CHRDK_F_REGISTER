@@ -227,6 +227,9 @@ public final class AdminDonationsGuiService implements Listener {
         }
         lore.add(messages.get("pass.donationsgui.status-click"));
         lore.add(messages.get("pass.donationsgui.status-click-recheck"));
+        if (accessManager.config().donatePayReady()) {
+            lore.add(messages.get("pass.donationsgui.status-click-verify"));
+        }
 
         Material wool = !anyReady || down ? Material.RED_WOOL
                 : flaky ? Material.YELLOW_WOOL : Material.LIME_WOOL;
@@ -254,6 +257,52 @@ public final class AdminDonationsGuiService implements Listener {
                 error -> {
                     walletRefreshInFlight = false;
                     walletCache = new CachedWallet("", 0, error, System.currentTimeMillis());
+                    reopenOpenMenus();
+                });
+    }
+
+    /**
+     * Shift+ЛКМ по иконке статуса: живая проверка токена DonatePay (GET /user через
+     * окно API). Успех попутно освежает кэш баланса, отказ приходит с разобранной
+     * причиной ({@code donation.diagnosis-*}). Общий флаг «в полёте» не даёт
+     * поставить второй запрос в очередь, пока первый ждёт слот.
+     */
+    private void verifyTokenButton(Player player) {
+        if (!accessManager.config().donatePayReady()) {
+            messages.send(player, "pass.donationsgui.verify-fail",
+                    "error", "DonatePay не настроен (нет donatepay.api-token)");
+            return;
+        }
+        if (walletRefreshInFlight) {
+            messages.send(player, "pass.donationsgui.balance-wait",
+                    "seconds", Math.max(1, AccessManager.waitSeconds(accessManager.donatePayApiWaitMillis())));
+            return;
+        }
+        walletRefreshInFlight = true;
+        messages.send(player, "pass.donationsgui.verify-started");
+        accessManager.fetchDonatePayWallet(
+                user -> {
+                    walletRefreshInFlight = false;
+                    walletCache = new CachedWallet(user.name(), user.balanceRubles(), null,
+                            System.currentTimeMillis());
+                    if (accessManager.config().donatePayShowBalance()) {
+                        messages.send(player, "pass.donationsgui.verify-ok",
+                                "wallet", user.name().isBlank() ? "?" : user.name(),
+                                "balance", user.balanceRubles());
+                    } else {
+                        messages.send(player, "pass.donationsgui.verify-ok-hidden");
+                    }
+                    reopenOpenMenus();
+                },
+                (message, error) -> {
+                    walletRefreshInFlight = false;
+                    walletCache = new CachedWallet("", 0, message, System.currentTimeMillis());
+                    messages.send(player, "pass.donationsgui.verify-fail", "error", message);
+                    String diagnosis = accessManager.describeDonatePayFailure(error);
+                    if (!diagnosis.isBlank()) {
+                        messages.send(player, "donation.alert-diagnosis",
+                                "service", "DonatePay", "diagnosis", diagnosis);
+                    }
                     reopenOpenMenus();
                 });
     }
@@ -371,6 +420,11 @@ public final class AdminDonationsGuiService implements Listener {
         if (slot == 4) {
             if (event.getClick().isRightClick()) { // ПКМ — внеочередной опрос транзакций
                 player.performCommand("pass recheck");
+                openMenu(player, holder.filter(), holder.page());
+                return;
+            }
+            if (event.getClick().isShiftClick()) { // Shift+ЛКМ — живой тест токена DonatePay
+                verifyTokenButton(player);
                 openMenu(player, holder.filter(), holder.page());
                 return;
             }
