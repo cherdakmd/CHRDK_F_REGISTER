@@ -27,8 +27,8 @@ class ForgeUpgradeTest {
             "TURTLE_SCUTE", "COBBLESTONE", "CHAIN");
 
     @Test
-    void registryHasFiftyUniqueUpgrades() {
-        assertEquals(50, ForgeUpgrade.ALL.size());
+    void registryHasEightyFiveUniqueUpgrades() {
+        assertEquals(85, ForgeUpgrade.ALL.size());
         Set<String> ids = new HashSet<>();
         for (ForgeUpgrade.Def def : ForgeUpgrade.ALL) {
             assertTrue(ids.add(def.id()), "дубликат id: " + def.id());
@@ -36,7 +36,7 @@ class ForgeUpgradeTest {
             assertTrue(def.perLevel() > 0, "бесполезный шаг у " + def.id());
             assertTrue(def.maxLevel() >= 1 && def.maxLevel() <= 10, "странный потолок у " + def.id());
         }
-        assertEquals(50, ids.size());
+        assertEquals(85, ids.size());
     }
 
     @Test
@@ -78,6 +78,13 @@ class ForgeUpgradeTest {
         assertEquals("soulbind", ForgeUpgrade.forMaterial("NETHER_STAR", ItemKind.BOOTS, null).id());
         assertNull(ForgeUpgrade.forMaterial("PUFFERFISH", ItemKind.SWORD, null),
                 "Жабры — броневое свойство, оружию не положено");
+        // третья ковка (1.4.57)
+        assertEquals("storm", ForgeUpgrade.forMaterial("LIGHTNING_ROD", ItemKind.SWORD, null).id());
+        assertEquals("plated", ForgeUpgrade.forMaterial("COPPER_BLOCK", ItemKind.HELMET, null).id());
+        assertEquals("sailor", ForgeUpgrade.forMaterial("HEART_OF_THE_SEA", ItemKind.PICKAXE, null).id());
+        assertEquals("scholar", ForgeUpgrade.forMaterial("PAPER", ItemKind.PICKAXE, null).id());
+        assertNull(ForgeUpgrade.forMaterial("LIGHTNING_ROD", ItemKind.HELMET, null),
+                "Громовержец — оружейное свойство, броне не положен");
         // левые материалы не распознаются
         assertNull(ForgeUpgrade.forMaterial("APPLE", ItemKind.SWORD, null));
     }
@@ -99,6 +106,14 @@ class ForgeUpgradeTest {
         assertEquals("+2 удачи", ForgeUpgrade.describe(ForgeUpgrade.byId("charm"), 4));
         assertEquals("не выпадает при смерти", ForgeUpgrade.describe(ForgeUpgrade.byId("soulbind"), 1));
         assertEquals("ночное зрение (пассивно)", ForgeUpgrade.describe(ForgeUpgrade.byId("lantern"), 1));
+        // третья ковка
+        assertEquals("-12% гравитации", ForgeUpgrade.describe(ForgeUpgrade.byId("gliding"), 2));
+        assertEquals("+2 к прочности брони", ForgeUpgrade.describe(ForgeUpgrade.byId("plated"), 4));
+        assertEquals("+20% лёгкости ходьбы", ForgeUpgrade.describe(ForgeUpgrade.byId("hikers"), 2));
+        assertEquals("24% ударить громом (+1.5❤)", ForgeUpgrade.describe(
+                ForgeUpgrade.byId("storm"), 3));
+        assertEquals("скорость вне боя (после 5 с тишины)", ForgeUpgrade.describe(
+                ForgeUpgrade.byId("breeze"), 1));
         // у описаний не должно быть угловых скобок — MiniMessage распарсил бы их как теги
         for (ForgeUpgrade.Def def : ForgeUpgrade.ALL) {
             String line = ForgeUpgrade.describe(def, Math.min(3, def.maxLevel()));

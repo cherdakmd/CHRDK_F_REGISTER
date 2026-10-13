@@ -2,13 +2,16 @@ package ru.cherdakmd.chrdktierforge;
 
 import org.bukkit.GameRule;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
 import org.bukkit.entity.AbstractSkeleton;
+import org.bukkit.entity.Animals;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Phantom;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.entity.Wither;
 import org.bukkit.entity.Zombie;
 import org.bukkit.event.EventHandler;
@@ -18,8 +21,10 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockDropItemEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.EntityPotionEffectEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerExpChangeEvent;
+import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.player.PlayerItemDamageEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
@@ -27,6 +32,7 @@ import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.potion.PotionEffectTypeCategory;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -63,6 +69,10 @@ public final class ForgeUpgradeListener implements Listener {
     private final Map<UUID, java.util.List<ItemStack>> soulboundReturns = new ConcurrentHashMap<>();
     /** Флаг реентера внутри «Забойщика»: ломаемые нами блоки не рождают новых залпов. */
     private boolean zoneBreaking;
+    /** Последнее боевое действие игрока (дал или получил урон) — для «Ветра». */
+    private final Map<UUID, Long> lastCombat = new ConcurrentHashMap<>();
+    /** Флаг реентера внутри «Медовника»/«Стойкого»: пере-применённые зелья не масштабируем. */
+    private boolean effectShifting;
 
     public ForgeUpgradeListener(TierForgePlugin plugin) {
         this.plugin = plugin;
@@ -72,7 +82,15 @@ public final class ForgeUpgradeListener implements Listener {
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onPlayerHit(EntityDamageByEntityEvent event) {
-        if (!(event.getDamager() instanceof Player attacker)) {
+        Player attacker;
+        boolean projectileHit = false;
+        if (event.getDamager() instanceof Player melee) {
+            attacker = melee;
+        } else if (event.getDamager() instanceof Projectile shot
+                && shot.getShooter() instanceof Player shooter) {
+            attacker = shooter;
+            projectileHit = true;
+        } else {
             return;
         }
         ItemStack weapon = attacker.getInventory().getItemInMainHand();
@@ -80,6 +98,18 @@ public final class ForgeUpgradeListener implements Listener {
         if (ups.isEmpty()) {
             return;
         }
+        lastCombat.put(attacker.getUniqueId(), System.currentTimeMillis());
+
+        // Снаряды («Снайпер»): оружие — лук в момент попадания; проки ближнего боя не работают
+        if (projectileHit) {
+            int snipe = levelOf(ups, ForgeUpgrade.Effect.SNIPE);
+            if (snipe > 0) {
+                event.setDamage(event.getDamage()
+                        * (1.0 + snipe * fraction(ups, ForgeUpgrade.Effect.SNIPE)));
+            }
+            return;
+        }
+
         double damage = event.getDamage();
 
         // Крит: шанс — уровни ×3%, удар ×1.5
@@ -110,6 +140,21 @@ public final class ForgeUpgradeListener implements Listener {
             if (smite > 0 && isUndead(target)) {
                 damage *= 1.0 + smite * fraction(ups, ForgeUpgrade.Effect.SMITE);
             }
+            // Калечащий: +% по целям, уже страдающим от злых чар
+            int crippler = levelOf(ups, ForgeUpgrade.Effect.DEBUFF_DAMAGE);
+            if (crippler > 0 && hasHarmfulEffect(target)) {
+                damage *= 1.0 + crippler * fraction(ups, ForgeUpgrade.Effect.DEBUFF_DAMAGE);
+            }
+            // Дуэлянт: +% по игрокам
+            int duelist = levelOf(ups, ForgeUpgrade.Effect.PVP_DAMAGE);
+            if (duelist > 0 && target instanceof Player) {
+                damage *= 1.0 + duelist * fraction(ups, ForgeUpgrade.Effect.PVP_DAMAGE);
+            }
+            // Зверолов: +% по животным
+            int tamer = levelOf(ups, ForgeUpgrade.Effect.ANIMAL_DAMAGE);
+            if (tamer > 0 && target instanceof Animals) {
+                damage *= 1.0 + tamer * fraction(ups, ForgeUpgrade.Effect.ANIMAL_DAMAGE);
+            }
             // Ярость: +0.75%/ур за каждое потерянное сердце нападающего (потолок 30%)
             int rage = levelOf(ups, ForgeUpgrade.Effect.RAGE);
             if (rage > 0 && !attacker.isDead()) {
@@ -117,6 +162,14 @@ public final class ForgeUpgradeListener implements Listener {
                 double bonus = Math.min(CAP_RAGE,
                         missingHearts * rage * fraction(ups, ForgeUpgrade.Effect.RAGE));
                 damage *= 1.0 + bonus;
+            }
+            // Громовержец: прок грозы — плоский дозаряд и раскат над целью
+            int storm = levelOf(ups, ForgeUpgrade.Effect.THUNDER);
+            if (storm > 0 && random.nextDouble()
+                    < Math.min(CAP_PROC, storm * fraction(ups, ForgeUpgrade.Effect.THUNDER))) {
+                damage += storm * 1.0; // +0.5❤ за уровень поверх расчётного удара
+                target.getWorld().playSound(target.getLocation(),
+                        Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.8f, 1.2f);
             }
         }
         event.setDamage(damage);
@@ -127,6 +180,11 @@ public final class ForgeUpgradeListener implements Listener {
             procPotion(ups, ForgeUpgrade.Effect.SLOW_HIT, attacker, target);
             procPotion(ups, ForgeUpgrade.Effect.POISON_HIT, attacker, target);
             procPotion(ups, ForgeUpgrade.Effect.BLIND_HIT, attacker, target);
+            // Проки третьей ковки
+            procPotion(ups, ForgeUpgrade.Effect.WITHER_HEX, attacker, target);
+            procFreeze(ups, attacker, target);
+            procCleanse(ups, attacker, target);
+            procHook(ups, attacker, target);
         }
 
         // Кровопийца: % от финального урона назад в здоровье
@@ -154,8 +212,59 @@ public final class ForgeUpgradeListener implements Listener {
             case SLOW_HIT -> applyFresh(target, PotionEffectType.SLOWNESS, durationTicks, 0);
             case POISON_HIT -> applyFresh(target, PotionEffectType.POISON, durationTicks, 0);
             case BLIND_HIT -> applyFresh(target, PotionEffectType.BLINDNESS, durationTicks, 0);
+            case WITHER_HEX -> applyFresh(target, PotionEffectType.WITHER, durationTicks, 0);
             default -> { }
         }
+    }
+
+    /** Морозильник: прок заморозки — весь уровень уходит в тики холода. */
+    private void procFreeze(Map<ForgeUpgrade.Def, Integer> ups, Player attacker, LivingEntity target) {
+        int level = levelOf(ups, ForgeUpgrade.Effect.FREEZE_HIT);
+        if (level <= 0 || random.nextDouble()
+                >= Math.min(CAP_PROC, level * fraction(ups, ForgeUpgrade.Effect.FREEZE_HIT))) {
+            return;
+        }
+        target.setFreezeTicks(Math.max(target.getFreezeTicks(), 40 * level));
+    }
+
+    /** Гаситель: прок снимает с цели один случайный положительный эффект. */
+    private void procCleanse(Map<ForgeUpgrade.Def, Integer> ups, Player attacker, LivingEntity target) {
+        int level = levelOf(ups, ForgeUpgrade.Effect.CLEANSE_HIT);
+        if (level <= 0 || random.nextDouble()
+                >= Math.min(CAP_PROC, level * fraction(ups, ForgeUpgrade.Effect.CLEANSE_HIT))) {
+            return;
+        }
+        java.util.List<PotionEffect> boons = new ArrayList<>();
+        for (PotionEffect active : target.getActivePotionEffects()) {
+            if (active.getType().getEffectCategory() == PotionEffectTypeCategory.BENEFICIAL) {
+                boons.add(active);
+            }
+        }
+        if (!boons.isEmpty()) {
+            target.removePotionEffect(boons.get(random.nextInt(boons.size())).getType());
+        }
+    }
+
+    /** Крюк: прок подтягивает цель к нападающему. */
+    private void procHook(Map<ForgeUpgrade.Def, Integer> ups, Player attacker, LivingEntity target) {
+        int level = levelOf(ups, ForgeUpgrade.Effect.HOOK);
+        if (level <= 0 || random.nextDouble()
+                >= Math.min(CAP_PROC, level * fraction(ups, ForgeUpgrade.Effect.HOOK))) {
+            return;
+        }
+        org.bukkit.util.Vector pull = attacker.getLocation().toVector()
+                .subtract(target.getLocation().toVector()).normalize().multiply(0.6);
+        target.setVelocity(target.getVelocity().add(pull));
+    }
+
+    /** Есть ли на цели хотя бы один негативный эффект (для «Калечащего»). */
+    private static boolean hasHarmfulEffect(LivingEntity target) {
+        for (PotionEffect active : target.getActivePotionEffects()) {
+            if (active.getType().getEffectCategory() == PotionEffectTypeCategory.HARMFUL) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Не накладываем эффект поверх более сильного действующего. */
@@ -175,10 +284,16 @@ public final class ForgeUpgradeListener implements Listener {
         if (!(event.getEntity() instanceof Player victim)) {
             return;
         }
+        lastCombat.put(victim.getUniqueId(), System.currentTimeMillis());
         double thornChance = 0;
         double reduction = 0;
         double parryChance = 0;
         double catchChance = 0;
+        double aegisChance = 0;
+        double wardChance = 0;
+        double mirrorChance = 0;
+        double explosionDown = 0;
+        double magicDown = 0;
         int adrenaline = 0;
         boolean lastStand = false;
         for (ItemStack piece : victim.getInventory().getArmorContents()) {
@@ -187,8 +302,23 @@ public final class ForgeUpgradeListener implements Listener {
             reduction += sumFraction(ups, ForgeUpgrade.Effect.DAMAGE_TAKEN_PERCENT);
             parryChance += sumFraction(ups, ForgeUpgrade.Effect.PARRY);
             catchChance += sumFraction(ups, ForgeUpgrade.Effect.CATCHER);
+            aegisChance += sumFraction(ups, ForgeUpgrade.Effect.ABSORB_PROC);
+            wardChance += sumFraction(ups, ForgeUpgrade.Effect.RESIST_PROC);
+            mirrorChance += sumFraction(ups, ForgeUpgrade.Effect.PROJECTILE_REFLECT);
+            explosionDown += sumFraction(ups, ForgeUpgrade.Effect.EXPLOSION_DAMAGE_DOWN);
+            magicDown += sumFraction(ups, ForgeUpgrade.Effect.MAGIC_DAMAGE_DOWN);
             adrenaline += levelOf(ups, ForgeUpgrade.Effect.ADRENALINE);
             lastStand |= levelOf(ups, ForgeUpgrade.Effect.LAST_STAND) > 0;
+        }
+
+        // Зеркало: снаряд уходит обратно в стрелка
+        if (mirrorChance > 0 && event.getDamager() instanceof Projectile shot
+                && shot.getShooter() instanceof LivingEntity shooter
+                && !shooter.equals(victim)
+                && random.nextDouble() < Math.min(CAP_PROC, mirrorChance)) {
+            event.setCancelled(true);
+            shooter.damage(Math.max(1.0, event.getFinalDamage() * 0.5), victim);
+            return;
         }
 
         // Последний рубеж: смертельный удар → 1 HP + Сопротивление II (раз в 60 с)
@@ -209,6 +339,20 @@ public final class ForgeUpgradeListener implements Listener {
         if (reduction > 0) {
             event.setDamage(event.getDamage() * (1.0 - Math.min(CAP_RESILIENCE, reduction)));
         }
+        // Сапёр/Антимаг: срезы по причине урона (потолок 60%)
+        switch (event.getCause()) {
+            case BLOCK_EXPLOSION, ENTITY_EXPLOSION -> {
+                if (explosionDown > 0) {
+                    event.setDamage(event.getDamage() * (1.0 - Math.min(0.6, explosionDown)));
+                }
+            }
+            case MAGIC, DRAGON_BREATH -> {
+                if (magicDown > 0) {
+                    event.setDamage(event.getDamage() * (1.0 - Math.min(0.6, magicDown)));
+                }
+            }
+            default -> { }
+        }
         LivingEntity damager = event.getDamager() instanceof LivingEntity d ? d : null;
         if (damager != null) {
             // Терновник: вернуть четверть полученного урона (килл-кредит — жертве)
@@ -226,6 +370,14 @@ public final class ForgeUpgradeListener implements Listener {
                 && victim.getHealth() < 0.3 * maxHealth(victim)
                 && cooldownReady(adrenalineCooldown, victim.getUniqueId(), ADRENALINE_CD_MS)) {
             applyFresh(victim, PotionEffectType.SPEED, 20 * (1 + adrenaline), 0);
+        }
+        // Эгида: шанс Поглощения I на 10 с
+        if (aegisChance > 0 && random.nextDouble() < Math.min(CAP_PROC, aegisChance)) {
+            applyFresh(victim, PotionEffectType.ABSORPTION, 200, 0);
+        }
+        // Щитоносец: шанс Сопротивления I на 4 с
+        if (wardChance > 0 && random.nextDouble() < Math.min(CAP_PROC, wardChance)) {
+            applyFresh(victim, PotionEffectType.RESISTANCE, 80, 0);
         }
     }
 
@@ -253,17 +405,29 @@ public final class ForgeUpgradeListener implements Listener {
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onMobDeath(EntityDeathEvent event) {
         Player killer = event.getEntity().getKiller();
-        if (killer == null || event.getDroppedExp() <= 0) {
+        if (killer == null) {
             return;
         }
         Map<ForgeUpgrade.Def, Integer> ups =
                 plugin.items().upgradesOf(killer.getInventory().getItemInMainHand());
         int hunter = levelOf(ups, ForgeUpgrade.Effect.HUNTER_XP);
-        if (hunter <= 0) {
-            return;
+        if (hunter > 0 && event.getDroppedExp() > 0) {
+            double bonus = hunter * fraction(ups, ForgeUpgrade.Effect.HUNTER_XP);
+            event.setDroppedExp((int) Math.round(event.getDroppedExp() * (1.0 + bonus)));
         }
-        double bonus = hunter * fraction(ups, ForgeUpgrade.Effect.HUNTER_XP);
-        event.setDroppedExp((int) Math.round(event.getDroppedExp() * (1.0 + bonus)));
+
+        // Жатва: шанс дублировать один дроп убитого моба
+        int reaper = levelOf(ups, ForgeUpgrade.Effect.LOOT_DOUBLE);
+        if (reaper > 0 && !event.getDrops().isEmpty()
+                && random.nextDouble() < Math.min(CAP_PROC,
+                        reaper * fraction(ups, ForgeUpgrade.Effect.LOOT_DOUBLE))) {
+            for (ItemStack drop : event.getDrops()) {
+                if (drop != null && !drop.getType().isAir()) {
+                    event.getDrops().add(drop.clone());
+                    break;
+                }
+            }
+        }
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
@@ -320,23 +484,98 @@ public final class ForgeUpgradeListener implements Listener {
         sibling.breakNaturally(tool);
     }
 
-    /** Плавильня: дроп блоков может обернуться слитками (пер-объект дропа, шанс ур×10%). */
+    /**
+     * Плавильня/Земледел/Лесник/Златолюб/Глубинник: дроп блоков может обернуться
+     * слитками, удвоиться (по типу блока) или породить золотой самородок.
+     */
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onBlockDrops(BlockDropItemEvent event) {
         ItemStack tool = event.getPlayer().getInventory().getItemInMainHand();
         Map<ForgeUpgrade.Def, Integer> ups = plugin.items().upgradesOf(tool);
-        int smelter = levelOf(ups, ForgeUpgrade.Effect.SMELT_ORE);
-        if (smelter <= 0) {
+        if (ups.isEmpty()) {
             return;
         }
-        double chance = smelter * fraction(ups, ForgeUpgrade.Effect.SMELT_ORE);
+        int smelter = levelOf(ups, ForgeUpgrade.Effect.SMELT_ORE);
+        int gardener = levelOf(ups, ForgeUpgrade.Effect.CROP_DOUBLE);
+        int logger = levelOf(ups, ForgeUpgrade.Effect.LOG_DOUBLE);
+        int goldbug = levelOf(ups, ForgeUpgrade.Effect.GOLD_FIND);
+        int delver = levelOf(ups, ForgeUpgrade.Effect.DEEP_DOUBLE);
+        if (smelter <= 0 && gardener <= 0 && logger <= 0 && goldbug <= 0 && delver <= 0) {
+            return;
+        }
+        Material blockType = event.getBlockState().getType();
+        boolean crop = isCropBlock(blockType);
+        boolean log = isLogBlock(blockType);
+        boolean deep = delver > 0 && event.getBlock().getY() < 0;
+        double smeltChance = smelter * fraction(ups, ForgeUpgrade.Effect.SMELT_ORE);
+        double cropChance = Math.min(CAP_PROC, gardener * fraction(ups, ForgeUpgrade.Effect.CROP_DOUBLE));
+        double logChance = Math.min(CAP_PROC, logger * fraction(ups, ForgeUpgrade.Effect.LOG_DOUBLE));
+        double deepChance = Math.min(CAP_PROC, delver * fraction(ups, ForgeUpgrade.Effect.DEEP_DOUBLE));
+
         for (Item dropEntity : event.getItems()) {
             ItemStack stack = dropEntity.getItemStack();
             Material smelted = smeltResultOf(stack.getType());
-            if (smelted != null && random.nextDouble() < chance) {
+            if (smelted != null && smelter > 0 && random.nextDouble() < smeltChance) {
                 dropEntity.setItemStack(new ItemStack(smelted, stack.getAmount()));
+                stack = dropEntity.getItemStack();
+            }
+            if (crop && gardener > 0 && random.nextDouble() < cropChance) {
+                stack.setAmount(stack.getAmount() * 2);
+                dropEntity.setItemStack(stack);
+            }
+            if (log && logger > 0 && random.nextDouble() < logChance) {
+                stack = dropEntity.getItemStack();
+                stack.setAmount(stack.getAmount() * 2);
+                dropEntity.setItemStack(stack);
+            }
+            if (deep && random.nextDouble() < deepChance) {
+                stack = dropEntity.getItemStack();
+                stack.setAmount(stack.getAmount() * 2);
+                dropEntity.setItemStack(stack);
             }
         }
+        // Златолюб: крупица золота поверх дропа камня
+        if (goldbug > 0 && isStoneForGold(blockType)
+                && random.nextDouble()
+                        < goldbug * fraction(ups, ForgeUpgrade.Effect.GOLD_FIND)) {
+            event.getBlock().getWorld().dropItemNaturally(
+                    event.getBlock().getLocation().add(0.5, 0.5, 0.5),
+                    new ItemStack(Material.GOLD_NUGGET));
+        }
+    }
+
+    /** Культуры, чей дроп считается урожаем (для «Земледела»). */
+    static boolean isCropBlock(Material type) {
+        if (type == null) {
+            return false;
+        }
+        return switch (type) {
+            case WHEAT, CARROTS, POTATOES, BEETROOTS, NETHER_WART, COCOA, MELON, PUMPKIN_STEM,
+                    SWEET_BERRY_BUSH -> true;
+            default -> false;
+        };
+    }
+
+    /** Брёвна и стволы (для «Лесника») — по суффиксу имени материала. */
+    static boolean isLogBlock(Material type) {
+        if (type == null) {
+            return false;
+        }
+        String name = type.name();
+        return name.endsWith("_LOG") || name.endsWith("_WOOD")
+                || name.endsWith("_STEM") || name.endsWith("_HYPHAE");
+    }
+
+    /** Каменные породы, в которых «Златолюб» находит крупицу золота. */
+    static boolean isStoneForGold(Material type) {
+        if (type == null) {
+            return false;
+        }
+        return switch (type) {
+            case STONE, COBBLESTONE, DEEPSLATE, COBBLED_DEEPSLATE, ANDESITE, DIORITE,
+                    GRANITE, TUFF -> true;
+            default -> false;
+        };
     }
 
     /** Во что переплавить дроп: сырьё/руды → слитки, древние обломки → незерит-обрывок. */
@@ -396,6 +635,72 @@ public final class ForgeUpgradeListener implements Listener {
                 piece.setItemMeta(meta);
             }
         }
+
+        // Эрудит: +% к получаемому опыту со всей экипировки
+        double scholarBonus = 0;
+        for (ItemStack piece : pieces) {
+            scholarBonus += sumFraction(plugin.items().upgradesOf(piece), ForgeUpgrade.Effect.XP_GAIN);
+        }
+        if (scholarBonus > 0) {
+            event.setAmount(Math.max(1, (int) Math.round(amount * (1.0 + scholarBonus))));
+        }
+    }
+
+    /** Моряк: шанс вытащить второй трофей тем же забросом. */
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+    public void onFish(PlayerFishEvent event) {
+        if (event.getState() != PlayerFishEvent.State.CAUGHT_FISH
+                || !(event.getCaught() instanceof Item caught)) {
+            return;
+        }
+        Map<ForgeUpgrade.Def, Integer> ups =
+                plugin.items().upgradesOf(event.getPlayer().getInventory().getItemInMainHand());
+        int sailor = levelOf(ups, ForgeUpgrade.Effect.FISH_DOUBLE);
+        if (sailor <= 0 || random.nextDouble()
+                >= Math.min(CAP_PROC, sailor * fraction(ups, ForgeUpgrade.Effect.FISH_DOUBLE))) {
+            return;
+        }
+        caught.getWorld().dropItemNaturally(caught.getLocation(),
+                caught.getItemStack().clone());
+    }
+
+    /** Медовник/Стойкий: масштабируем длительность новых эффектов на владельце брони. */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onPotionEffect(EntityPotionEffectEvent event) {
+        if (effectShifting || !(event.getEntity() instanceof Player player)
+                || event.getAction() != EntityPotionEffectEvent.Action.ADDED
+                || event.getCause() == EntityPotionEffectEvent.Cause.BEACON) {
+            return;
+        }
+        PotionEffect fresh = event.getNewEffect();
+        if (fresh == null || fresh.isInfinite()) {
+            return;
+        }
+        double longer = 0;
+        double shorter = 0;
+        for (ItemStack piece : player.getInventory().getArmorContents()) {
+            Map<ForgeUpgrade.Def, Integer> ups = plugin.items().upgradesOf(piece);
+            longer += sumFraction(ups, ForgeUpgrade.Effect.GOOD_EFFECTS_LONGER);
+            shorter += sumFraction(ups, ForgeUpgrade.Effect.BAD_EFFECTS_SHORTER);
+        }
+        PotionEffectTypeCategory category = fresh.getType().getEffectCategory();
+        double multiplier = switch (category) {
+            case BENEFICIAL -> longer > 0 ? 1.0 + longer : 1.0;
+            case HARMFUL -> shorter > 0 ? Math.max(0.1, 1.0 - Math.min(CAP_PROC, shorter)) : 1.0;
+            case NEUTRAL -> 1.0;
+        };
+        if (Math.abs(multiplier - 1.0) < 0.001) {
+            return;
+        }
+        event.setCancelled(true); // иначе подадим стоковую длительность
+        effectShifting = true;    // наш же повторный эффект не масштабируем вновь
+        try {
+            int duration = Math.max(1, (int) Math.round(fresh.getDuration() * multiplier));
+            player.addPotionEffect(new PotionEffect(fresh.getType(), duration,
+                    fresh.getAmplifier(), fresh.isAmbient(), fresh.hasParticles(), fresh.hasIcon()));
+        } finally {
+            effectShifting = false;
+        }
     }
 
     /* ------------------------------- привязка души ------------------------------- */
@@ -448,6 +753,11 @@ public final class ForgeUpgradeListener implements Listener {
             double regen = 0;
             double magnetLevels = 0;
             boolean nightVision = false;
+            boolean noFreeze = false;
+            double satiate = 0;
+            int haste = 0;
+            boolean pathSpeed = false;
+            boolean roamSpeed = false;
             // Arrays.asList — armorContents содержит null-ячейки, List.of бросил бы NPE
             java.util.List<ItemStack> pieces = new ArrayList<>(java.util.Arrays.asList(
                     player.getInventory().getArmorContents()));
@@ -458,6 +768,19 @@ public final class ForgeUpgradeListener implements Listener {
                 regen += sumAbs(ups, ForgeUpgrade.Effect.REGEN_PULSE);
                 magnetLevels += levelOf(ups, ForgeUpgrade.Effect.MAGNET);
                 nightVision |= levelOf(ups, ForgeUpgrade.Effect.NIGHT_VISION) > 0;
+                noFreeze |= levelOf(ups, ForgeUpgrade.Effect.NO_FREEZE) > 0;
+                satiate += sumAbs(ups, ForgeUpgrade.Effect.FEED_PULSE);
+                haste += levelOf(ups, ForgeUpgrade.Effect.PULSE_HASTE);
+                pathSpeed |= levelOf(ups, ForgeUpgrade.Effect.PATH_SPEED) > 0;
+                roamSpeed |= levelOf(ups, ForgeUpgrade.Effect.ROAM_SPEED) > 0;
+                // Мастеровой: предмет с этим свойством точит сам себя
+                int mendPoints = (int) Math.round(sumAbs(ups, ForgeUpgrade.Effect.PULSE_MEND));
+                if (mendPoints > 0 && piece != null
+                        && piece.getItemMeta() instanceof Damageable wear && wear.getDamage() > 0) {
+                    ItemMeta meta = piece.getItemMeta();
+                    ((Damageable) meta).setDamage(Math.max(0, wear.getDamage() - mendPoints));
+                    piece.setItemMeta(meta);
+                }
             }
 
             if (regen > 0 && player.getHealth() > 0 && player.getHealth() < maxHealth(player)) {
@@ -470,7 +793,37 @@ public final class ForgeUpgradeListener implements Listener {
             if (magnetLevels > 0) {
                 pullDrops(player, magnetLevels);
             }
+            // Шуба: замерзания не бывает вовсе
+            if (noFreeze && player.getFreezeTicks() > 0) {
+                player.setFreezeTicks(0);
+            }
+            // Кормилец: тихий паёк, пока сытость не восстановилась
+            if (satiate > 0 && player.getSaturation() < 6.0f) {
+                player.setSaturation((float) Math.min(player.getFoodLevel(),
+                        player.getSaturation() + satiate));
+            }
+            // Трудоголик: Спешка I/II, пока инструмент с клеймом в руках
+            if (haste > 0) {
+                applyFresh(player, PotionEffectType.HASTE, 20 * 15, Math.min(1, haste - 1));
+            }
+            // Тропинка: Speed I на тропинках и траве
+            if (pathSpeed && isWalkPath(player)) {
+                applyFresh(player, PotionEffectType.SPEED, 60, 0);
+            }
+            // Ветер: Speed I после пяти секунд вне боя
+            if (roamSpeed) {
+                Long last = lastCombat.get(player.getUniqueId());
+                if (last == null || last < System.currentTimeMillis() - 5000L) {
+                    applyFresh(player, PotionEffectType.SPEED, 60, 0);
+                }
+            }
         }
+    }
+
+    /** Стоит ли игрок на тропинке/траве («Тропинка»). */
+    private static boolean isWalkPath(Player player) {
+        Material below = player.getLocation().getBlock().getRelative(0, -1, 0).getType();
+        return below == Material.DIRT_PATH || below == Material.GRASS_BLOCK;
     }
 
     /** Магнит: притягиваем до 6 ближайших дропов к игроку (радиус 1.5 + 0.5×ур). */

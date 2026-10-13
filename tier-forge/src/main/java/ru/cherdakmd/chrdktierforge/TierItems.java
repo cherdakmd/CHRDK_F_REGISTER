@@ -253,6 +253,15 @@ public final class TierItems {
                 case BLOCK_REACH -> addAbsolute(meta, Attribute.BLOCK_INTERACTION_RANGE, tag,
                         total, slot);
                 case SCALE_UP -> add(meta, Attribute.SCALE, tag, total / 100.0, slot);
+                // --- 1.4.57: атрибутная часть третьей ковки ---
+                case ATTACK_SPEED_FLAT -> addAbsolute(meta, Attribute.ATTACK_SPEED, tag, total, slot);
+                case TOUGHNESS_FLAT -> addAbsolute(meta, Attribute.ARMOR_TOUGHNESS, tag, total, slot);
+                case JUMP -> add(meta, Attribute.JUMP_STRENGTH, tag, total / 100.0, slot);
+                case GRAVITY_DOWN -> add(meta, Attribute.GRAVITY, tag, -total / 100.0, slot);
+                case FALL_DAMAGE_DOWN -> add(meta, Attribute.FALL_DAMAGE_MULTIPLIER, tag,
+                        -total / 100.0, slot);
+                case WALK_EFFICIENCY -> addAbsolute(meta, Attribute.MOVEMENT_EFFICIENCY, tag,
+                        total, slot);
                 default -> {
                     // событийные свойства (крит/вампиризм/терновник/…) — атрибутов не требуют
                 }
@@ -328,7 +337,9 @@ public final class TierItems {
             Attribute.WATER_MOVEMENT_EFFICIENCY, Attribute.SNEAKING_SPEED,
             Attribute.BURNING_TIME, Attribute.EXPLOSION_KNOCKBACK_RESISTANCE,
             Attribute.LUCK, Attribute.MINING_EFFICIENCY, Attribute.BLOCK_INTERACTION_RANGE,
-            Attribute.SCALE);
+            Attribute.SCALE, Attribute.ARMOR_TOUGHNESS, Attribute.JUMP_STRENGTH,
+            Attribute.GRAVITY, Attribute.FALL_DAMAGE_MULTIPLIER,
+            Attribute.MOVEMENT_EFFICIENCY);
 
     /** Снимает модификаторы улучшений (fu_<id>) со всех атрибутов. */
     private void clearForgeModifiers(ItemMeta meta) {
