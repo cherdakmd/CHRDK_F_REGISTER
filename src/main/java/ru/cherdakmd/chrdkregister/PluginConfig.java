@@ -34,6 +34,9 @@ public final class PluginConfig {
 
     /** Динамический MOTD (сеттится из load(), как и Boosty). */
     private MotdSettings motd = MotdSettings.DISABLED;
+
+    /** Мастер-флаг донат-стены проходки (seed из load()). */
+    private boolean passEnabled = true;
     private final boolean donatePayEnabled;
     private final boolean strictCaseMatch;
     private final boolean donateReviewUnmatched;
@@ -385,6 +388,7 @@ public final class PluginConfig {
         );
         parsed.boosty = BoostySettings.from(config);
         parsed.motd = MotdSettings.from(config);
+        parsed.passEnabled = config.getBoolean("pass.enabled", true);
         return parsed;
     }
 
@@ -455,6 +459,16 @@ public final class PluginConfig {
     /** Динамический MOTD. НИКОГДА не null. */
     public MotdSettings motd() {
         return motd;
+    }
+
+    /**
+     * Включена ли донат-стена проходки ({@code pass.enabled: true} по умолчанию).
+     * При выключении регистрация/2FA остаются, но игроки без проходки больше
+     * не получают подсказок-ссылок, actionbar и не кикаются — игровой контроль
+     * входаcделают очередь (CHRDK_Queue) и ограничения сервера.
+     */
+    public boolean passEnabled() {
+        return passEnabled;
     }
 
     /** Ссылка на страницу EasyDonate-магазина для игроков (пусто = не показывать). */

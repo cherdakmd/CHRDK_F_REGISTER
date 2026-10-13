@@ -302,6 +302,10 @@ public final class AccessManager {
             logger.info("CHRDK_F_REGISTER active: minimum donation " + config.minimumDonationRubles()
                     + " RUB, pass duration " + config.grantDays() + " days.");
         }
+        if (!config.passEnabled()) {
+            logger.warning("pass.enabled: false — донат-стена проходки ВЫКЛЮЧЕНА. "
+                    + "Вход контролирует только очередь (CHRDK_Queue) и лимиты сервера.");
+        }
     }
 
     public synchronized void reload(PluginConfig newConfig) {
@@ -1409,7 +1413,7 @@ public final class AccessManager {
         long now = System.currentTimeMillis();
         for (Player player : Bukkit.getOnlinePlayers()) {
             UUID uuid = player.getUniqueId();
-            boolean hasPass = store.hasActivePass(player.getName(), now);
+            boolean hasPass = !config.passEnabled() || store.hasActivePass(player.getName(), now);
 
             if (!hasPass) {
                 passwordVerifiedPlayers.remove(uuid);
@@ -1561,6 +1565,10 @@ public final class AccessManager {
     }
 
     public void sendNoPassPrompt(Player player, boolean showTitle) {
+        if (!config.passEnabled()) {
+            return; // стена проходки выключена (pass.enabled: false) — подсказок не шлём
+        }
+
         player.sendMessage(Component.empty());
         messages.sendList(player, "no-pass.prompt",
                 "price", config.minimumDonationRubles(),
