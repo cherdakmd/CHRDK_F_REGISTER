@@ -43,6 +43,9 @@ public final class PluginConfig {
 
     /** donatepay.show-balance (не часть ctor): писать ли имя кошелька и баланс в boot-лог. */
     private boolean donatePayShowBalance = true;
+
+    /** server-menu.* (не часть ctor): конфиг-driven серверное меню /menu. */
+    private ServerMenuSettings serverMenu = ServerMenuSettings.DISABLED;
     private final boolean donatePayEnabled;
     private final boolean strictCaseMatch;
     private final boolean donateReviewUnmatched;
@@ -397,6 +400,7 @@ public final class PluginConfig {
         parsed.passEnabled = config.getBoolean("pass.enabled", true);
         parsed.donateActions = DonateAction.parseList(config.getMapList("donation-actions"));
         parsed.donatePayShowBalance = config.getBoolean("donatepay.show-balance", true);
+        parsed.serverMenu = ServerMenuSettings.from(config);
         return parsed;
     }
 
@@ -468,6 +472,11 @@ public final class PluginConfig {
     /** Показывать ли в консоли имя кошелька и баланс при рукопожатии DonatePay. */
     public boolean donatePayShowBalance() {
         return donatePayShowBalance;
+    }
+
+    /** Настройки серверного меню {@code /menu}. */
+    public ServerMenuSettings serverMenu() {
+        return serverMenu;
     }
 
     public BoostySettings boosty() {

@@ -158,6 +158,21 @@ pass:
   # Инвентарное GUI-меню /pass menu: статус, оплата, тарифы, 2FA, пароль, сессии (для админов — статистика)
   gui-menu: true
 
+# Главное меню сервера /menu (GUI, конфиг-driven): ядро про аддоны не знает —
+# вы сами решаете, какие пункты видят игроки. Каждый пункт: slot (0-53; -1 = авто,
+# раскладка рядами по центру), icon (материал Bukkit), name/lore (MiniMessage),
+# command (выполняется ОТ ИГРОКА по клику — как если бы он написал её сам).
+# Уважает флаг pass.gui-menu? Нет — server-menu живёт сам по себе.
+server-menu:
+  enabled: true
+  items:
+    - { slot: 10, icon: EMERALD,    name: "<gold><bold>Оплатить / продлить</bold></gold>",        lore: "<gray>кликабельная ссылка на оплату</gray>",  command: "pass donate" }
+    - { slot: 12, icon: PAPER,      name: "<aqua><bold>Проходка и аккаунт</bold></aqua>",         lore: "<gray>статус, тарифы, сессии, 2FA</gray>",    command: "pass menu" }
+    - { slot: 14, icon: CLOCK,      name: "<yellow><bold>Ежедневные награды</bold></yellow>",     lore: "<gray>призы за ежедневный вход</gray>",       command: "daily" }
+    - { slot: 16, icon: COMPASS,    name: "<green><bold>Телепорты</bold></green>",                lore: "<gray>точки дома и телепорты</gray>",         command: "home" }
+    - { slot: -1, icon: NETHER_STAR, name: "<light_purple><bold>Ранги и прогресс</bold></light_purple>", lore: "<gray>звания по наигранному времени</gray>", command: "ranks" }
+    - { slot: -1, icon: DIAMOND,    name: "<aqua><bold>Магазин</bold></aqua>",                    lore: "<gray>обмен и цены</gray>",                   command: "shop" }
+
 # Интеграции со сторонними плагинами (мягкие зависимости — без них плагин работает как обычно)
 integrations:
   # Группа LuckPerms, которая выдаётся игрокам с активной проходкой (пустая строка — выключено).

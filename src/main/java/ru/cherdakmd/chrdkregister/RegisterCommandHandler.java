@@ -29,7 +29,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
     private static final List<String> ADMIN_SUBCOMMANDS =
             List.of("add", "remove", "check", "unregister", "reset2fa", "status", "reload",
                     "pending", "donations", "health", "approve", "reject", "sessions", "logoutall", "stats", "doctor", "audit",
-                    "backup", "gift", "testpay", "testpay-live", "recheck");
+                    "backup", "gift", "testpay", "testpay-live", "recheck", "donationsgui");
     private static final List<String> MUTE_DURATIONS = List.of("10m", "30m", "1h", "6h", "1d", "7d");
     private static final List<String> TWO_FACTOR_SUBCOMMANDS =
             List.of("setup", "confirm", "disable", "status", "cancel", "qr");
@@ -509,6 +509,14 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 } else {
                     messages.send(sender, "donation.not-found-short", "id", id);
                 }
+                return true;
+            }
+            case "donationsgui" -> {
+                if (!(sender instanceof org.bukkit.entity.Player player)) {
+                    messages.send(sender, "error.players-only");
+                    return true;
+                }
+                plugin.adminDonationsGui().openMenu(player);
                 return true;
             }
             case "donations", "journal" -> {

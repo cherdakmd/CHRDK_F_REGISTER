@@ -393,6 +393,23 @@ messages:
       "history-empty-lore": "<dark_gray>Поддержите сервер — донаты появятся здесь автоматически.</dark_gray>"
       "admin-journal-name": "<gold><bold>Журнал всех донатов</bold></gold>"
       "admin-journal-lore": "<gray>клик — открыть журнал (/pass donations)</gray>"
+    "donationsgui":
+      "title": "<gold>Журнал донатов · стр. %page%/%pages%</gold>"
+      "prev-name": "<yellow><bold>← Назад</bold></yellow>"
+      "prev-lore": "<gray>страница %page% из %pages%</gray>"
+      "next-name": "<yellow><bold>Вперёд →</bold></yellow>"
+      "next-lore": "<gray>страница %page% из %pages%</gray>"
+      "filter-name": "<aqua><bold>Фильтр: %filter%</bold></aqua>"
+      "filter-lore": "<gray>клик — следующий фильтр: все → ждут → выданные → отклонённые</gray>"
+      "refresh-name": "<white><bold>Обновить</bold></white>"
+      "refresh-lore": "<gray>перечитать журнал заново</gray>"
+      "empty-name": "<gray>Записей нет</gray>"
+      "empty-lore": "<dark_gray>по этому фильтру журнал пуст</dark_gray>"
+      "item-name": "<white>#%id% · %amount% ₽</white>"
+      "item-line-status": "<gray>%status% · %date% · источник: %source%</gray>"
+      "item-line-donor": "<dark_gray>донатер: %donor% → %player% · %days% дн.</dark_gray>"
+      "item-lore-approve": "<green>ЛКМ — выдать проходку</green>"
+      "item-lore-reject": "<red>ПКМ — отклонить</red>"
     "not-active": "<red>У игрока %target_name% не найдено активной проходки.</red>"
     "not-registered": "<red>Игрок %target_name% ещё не регистрировал пароль.</red>"
     "password-reset": "<yellow>Ваш пароль был сброшен администратором. Зарегистрируйте новый пароль!</yellow>"
@@ -404,6 +421,7 @@ messages:
     "two-factor-reset": "<yellow>Двухфакторная аутентификация (2FA) вашего аккаунта была сброшена администратором.</yellow>"
     "two-factor-reset-notice": "<green>✓ Двухфакторная защита (2FA) игрока %target_name% сброшена.</green>"
 
+  # ---------------------------------------------------------------
   # ---------------------------------------------------------------
     "boost-checking": "<gray>Проверяем подписку Boosty для %boosty%…</gray>"
     "boost-linked": "<green>✓ Привязка к Boosty <gold>%boosty%</gold> (%level%) создана — проходка активна до <aqua>%until%</aqua>.</green>"
@@ -793,3 +811,9 @@ messages:
   # ---------------------------------------------------------------
   "logout":
     "success": "<green>✓ Вы вышли из аккаунта. Сессия по IP сброшена, пароль потребуется снова.</green>"
+  # ---------------------------------------------------------------
+  # Серверное меню /menu (GUI, конфиг-driven; иконки/тексты берутся из config.yml)
+  "server-menu":
+    "title": "<gold>Меню сервера</gold>"
+    "disabled": "<red>Меню сервера отключено в конфигурации.</red>"
+    "player-only": "<red>Меню доступно только игрокам.</red>"

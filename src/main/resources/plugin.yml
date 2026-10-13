@@ -19,6 +19,9 @@ commands:
     description: Войти в аккаунт по паролю (и коду 2FA, если подключена)
     usage: /<command> <пароль> [код_2FA]
     aliases: [l]
+  menu:
+    description: "Главное меню сервера (GUI): проходка, донаты, ежедневки, телепорты и прочие модули"
+    usage: /<command>
   captcha:
     description: Ответ на проверку «ты не бот» после серии неудачных попыток входа
     usage: /<command> <число>
@@ -72,6 +75,9 @@ commands:
     usage: /<command> <ник>
 
 permissions:
+  chrdkregister.menu:
+    description: Главное меню сервера /menu (GUI)
+    default: true
   chrdkregister.admin:
     description: Доступ к ручному добавлению игроков и управлению плагином
     default: op

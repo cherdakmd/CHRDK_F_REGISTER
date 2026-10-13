@@ -17,6 +17,8 @@ public final class RegisterPlugin extends JavaPlugin {
     private ChatService chatService;
     private PassMenuService passMenuService;
     private DonateMenuService donateMenuService;
+    private ServerMenuService serverMenuService;
+    private AdminDonationsGuiService adminDonationsGui;
     private PasswordKeypadService passwordKeypad;
     private TabListService tabListService;
     private ExternalHooks externalHooks;
@@ -46,6 +48,9 @@ public final class RegisterPlugin extends JavaPlugin {
         this.chatService = new ChatService(this, accessManager, config.chat(), messages, getLogger());
         this.passMenuService = new PassMenuService(accessManager, messages);
         this.donateMenuService = new DonateMenuService(accessManager, messages);
+        this.serverMenuService = new ServerMenuService(accessManager, messages);
+        this.adminDonationsGui = new AdminDonationsGuiService(accessManager, messages, this);
+        this.donateMenuService.setAdminJournalOpener(player -> adminDonationsGui.openMenu(player));
         this.passwordKeypad = new PasswordKeypadService(this, accessManager, messages);
         this.tabListService = new TabListService(this, accessManager);
         this.externalHooks = new ExternalHooks(this);
@@ -57,6 +62,8 @@ public final class RegisterPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(chatService, this);
         getServer().getPluginManager().registerEvents(passMenuService, this);
         getServer().getPluginManager().registerEvents(donateMenuService, this);
+        getServer().getPluginManager().registerEvents(serverMenuService, this);
+        getServer().getPluginManager().registerEvents(adminDonationsGui, this);
         getServer().getPluginManager().registerEvents(
                 new MotdService(this, accessManager::config), this);
         getServer().getPluginManager().registerEvents(passwordKeypad, this);
@@ -64,6 +71,21 @@ public final class RegisterPlugin extends JavaPlugin {
         tabListService.reload();
 
         this.commandHandler = new RegisterCommandHandler(this, accessManager);
+        PluginCommand menuCommand = getCommand("menu");
+        if (menuCommand != null) {
+            menuCommand.setExecutor((sender, command, label, args) -> {
+                if (!accessManager.config().serverMenu().enabled()) {
+                    messages.send(sender, "server-menu.disabled");
+                    return true;
+                }
+                if (!(sender instanceof org.bukkit.entity.Player player)) {
+                    messages.send(sender, "server-menu.player-only");
+                    return true;
+                }
+                serverMenuService.openMenu(player);
+                return true;
+            });
+        }
         for (String commandName : List.of("register", "login", "changepassword", "2fa", "pass", "logout", "session", "captcha")) {
             PluginCommand pluginCommand = getCommand(commandName);
             if (pluginCommand != null) {
@@ -171,6 +193,12 @@ public final class RegisterPlugin extends JavaPlugin {
         if (donateMenuService != null) {
             donateMenuService.setMessages(messages);
         }
+        if (serverMenuService != null) {
+            serverMenuService.setMessages(messages);
+        }
+        if (adminDonationsGui != null) {
+            adminDonationsGui.setMessages(messages);
+        }
         if (passwordKeypad != null) {
             passwordKeypad.setMessages(messages);
         }
@@ -197,6 +225,14 @@ public final class RegisterPlugin extends JavaPlugin {
 
     public DonateMenuService donateMenu() {
         return donateMenuService;
+    }
+
+    public ServerMenuService serverMenu() {
+        return serverMenuService;
+    }
+
+    public AdminDonationsGuiService adminDonationsGui() {
+        return adminDonationsGui;
     }
 
     /** Кнопочная клавиатура пароля для {@code /login} без аргументов (безопасно на стриме). */

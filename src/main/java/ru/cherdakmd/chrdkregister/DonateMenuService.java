@@ -58,10 +58,16 @@ public final class DonateMenuService implements Listener {
 
     private final AccessManager accessManager;
     private volatile Messages messages;
+    private volatile java.util.function.Consumer<Player> adminJournalOpener;
 
     public DonateMenuService(AccessManager accessManager, Messages messages) {
         this.accessManager = accessManager;
         this.messages = messages;
+    }
+
+    /** Куда вести админа по кнопке «Журнал» (по умолчанию — чат-команда, ядро — GUI). */
+    public void setAdminJournalOpener(java.util.function.Consumer<Player> opener) {
+        this.adminJournalOpener = opener;
     }
 
     /** Обновляет тексты после {@code /pass reload}. */
@@ -207,7 +213,12 @@ public final class DonateMenuService implements Listener {
             }
             case ADMIN_JOURNAL -> {
                 player.closeInventory();
-                player.performCommand("pass donations");
+                java.util.function.Consumer<Player> opener = adminJournalOpener;
+                if (opener != null) {
+                    opener.accept(player);
+                } else {
+                    player.performCommand("pass donations");
+                }
             }
             case HISTORY -> { /* информационная иконка — клик без действия */ }
         }
