@@ -88,7 +88,7 @@ public final class ArtifactRegistry {
         register("oskolok-vechnosti", GOOD, ACTIVE, Material.NETHER_STAR, 600, 12);
 
         /* ---- тёмная волна (1.4.58): проклятые пассивные ---- */
-        register("okov-tyazhesti", CURSED, PASSIVE, Material.CHAIN);
+        register("okov-tyazhesti", CURSED, PASSIVE, Material.IRON_BARS);
         register("pustoy-zhivot", CURSED, PASSIVE, Material.WEEPING_VINES);
         register("slabye-kisti", CURSED, PASSIVE, Material.SPONGE);
         register("krovavyj-svyaz", CURSED, PASSIVE, Material.NETHERITE_SCRAP);
