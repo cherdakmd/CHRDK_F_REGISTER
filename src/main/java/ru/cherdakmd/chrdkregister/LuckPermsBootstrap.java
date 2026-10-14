@@ -174,12 +174,13 @@ public final class LuckPermsBootstrap {
         return result;
     }
 
-    /** Выборка из набора узлов по суффиксу (.use/.admin). */
+    /** Выборка chrdk*-узлов из набора по суффиксу (.use/.admin), lower-case. */
     static java.util.List<String> splitDiscovered(java.util.Set<String> keys, String suffix) {
         java.util.List<String> result = new ArrayList<>();
         for (String key : keys) {
-            if (key.endsWith(suffix)) {
-                result.add(key);
+            String normalized = key == null ? "" : key.trim().toLowerCase(Locale.ROOT);
+            if (normalized.startsWith("chrdk") && normalized.endsWith(suffix)) {
+                result.add(normalized);
             }
         }
         return result;
