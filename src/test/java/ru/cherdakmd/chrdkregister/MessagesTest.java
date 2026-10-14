@@ -169,6 +169,21 @@ class MessagesTest {
     }
 
     @Test
+    void trustedPlaceholderValuesKeepTags() {
+        Messages messages = inline("""
+                messages:
+                  wrap: "Статус: %value%"
+                """);
+
+        Component line = messages.get("wrap", "value", Messages.trusted("<green>АКТИВНА</green>"));
+        assertEquals("Статус: АКТИВНА", ChatService.plainText(line));
+        assertEquals(NamedTextColor.GREEN,
+                line.children().isEmpty() ? line.color() : line.children().get(0).color(),
+                "Теги доверенного значения должны исполняться");
+        assertEquals("", Messages.trusted(null).text(), "trusted(null) подставляет пустую строку");
+    }
+
+    @Test
     void missingKeysFallBackToBundledDefaults(@TempDir Path tempDir) throws Exception {
         Path userFile = tempDir.resolve("messages.yml");
         Files.writeString(userFile, """

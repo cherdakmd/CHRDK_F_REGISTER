@@ -253,15 +253,24 @@ public final class Messages {
         return fill(legacyToMini(template(key)), placeholders);
     }
 
-    private String fill(String template, Object... placeholders) {
-        if (placeholders == null || placeholders.length == 0) return template;
-        String result = template;
-        for (int index = 0; index + 1 < placeholders.length; index += 2) {
-            String name = String.valueOf(placeholders[index]);
-            String value = escape(placeholders[index + 1]);
-            result = result.replace("%" + name + "%", value);
-        }
-        return result;
+     private String fill(String template, Object... placeholders) {
+         if (placeholders == null || placeholders.length == 0) return template;
+         String result = template;
+         for (int index = 0; index + 1 < placeholders.length; index += 2) {
+             String name = String.valueOf(placeholders[index]);
+             Object replacement = placeholders[index + 1];
+             String value = replacement instanceof Trusted trusted ? trusted.text() : escape(replacement);
+             result = result.replace("%" + name + "%", value);
+         }
+         return result;
+     }
+
+    /** Значение подстановки с уже готовой MiniMessage-разметкой: вставляется в шаблон без экранирования. */
+    public record Trusted(String text) { }
+
+    /** Обёртка для внутренних плагинных строк с MiniMessage-тегами. НЕ использовать для ввода игроков. */
+    public static Trusted trusted(String miniMessage) {
+        return new Trusted(miniMessage == null ? "" : miniMessage);
     }
 
     /** Экранирует значение, чтобы ник или текст сообщения не могли вставить разметку. */

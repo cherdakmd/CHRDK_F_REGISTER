@@ -22,6 +22,11 @@ public final class DonationService {
         void onPassGranted(String playerName, long passUntil, String sourceDescription);
     }
 
+    /** Callback used to chat with the paying player when the payment is below the auto-grant minimum. */
+    public interface PendingNotifier {
+        void onDonationPending(String donorName, String amountRubles, int minRubles);
+    }
+
     /** Result of processing one transaction. */
     public record Outcome(
             RegistrationStore.DonationStatus status,
@@ -42,6 +47,7 @@ public final class DonationService {
     private final NotificationService notifications;
     private final Logger logger;
     private final PassNotifier notifier;
+    private volatile PendingNotifier pendingNotifier;
     private volatile Messages messages;
 
     public DonationService(
@@ -65,6 +71,11 @@ public final class DonationService {
     /** Обновляет тексты после {@code /pass reload}. */
     public void setMessages(Messages messages) {
         this.messages = messages;
+    }
+
+    /** Подписать внешний слушатель «донат ниже минимума» (пишет игроку в чат, если он онлайн). */
+    public void setPendingNotifier(PendingNotifier pendingNotifier) {
+        this.pendingNotifier = pendingNotifier;
     }
 
     /** Текст по ключу из messages.yml (для уведомлений и записей журнала). */
@@ -195,6 +206,10 @@ public final class DonationService {
                                 "suggestions", suggestions.isEmpty()
                                         ? text("common.none") : String.join(", ", suggestions)),
                         "warn");
+                if (status == RegistrationStore.DonationStatus.PENDING_AMOUNT
+                        && pendingNotifier != null) {
+                    pendingNotifier.onDonationPending(donor, amount, config.minimumDonationRubles());
+                }
             }
             default -> {
                 if (pollMode) {

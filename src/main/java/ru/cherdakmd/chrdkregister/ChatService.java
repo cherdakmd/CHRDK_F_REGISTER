@@ -1019,7 +1019,7 @@ public final class ChatService implements Listener {
             socialSpy.remove(player.getUniqueId());
         }
         messages.send(player, "socialspy.state",
-                "state", messages.raw(enabled ? "common.on" : "common.off"));
+                "state", Messages.trusted(messages.raw(enabled ? "common.on" : "common.off")));
         return true;
     }
 

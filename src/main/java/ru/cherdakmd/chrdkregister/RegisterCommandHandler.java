@@ -597,7 +597,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                     };
                     messages.send(sender, "donation.health-state",
                             "service", card.serviceName(),
-                            "state", state,
+                            "state", Messages.trusted(state),
                             "poll_seconds", card.pollSeconds(),
                             "cursor", card.cursorId());
                     if (card.apiWaitMillis() > 0) {
@@ -1069,11 +1069,11 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 .append(messages.get("pass.info.until-value",
                                 "now", AccessManager.formatRemainingTime(account.passUntil, now))));
                                 messages.send(player, "pass.info.registered",
-                "value", messages.raw(account.isRegistered()
-                        ? "account.state-registered" : "account.state-awaiting"));
+                "value", Messages.trusted(messages.raw(account.isRegistered()
+                        ? "account.state-registered" : "account.state-awaiting")));
                         messages.send(player, "pass.info.two-factor",
-                "value", messages.raw(account.isTotpEnabled()
-                        ? "account.state-totp-on" : "account.state-totp-off"));
+                "value", Messages.trusted(messages.raw(account.isTotpEnabled()
+                        ? "account.state-totp-on" : "account.state-totp-off")));
         if (accessManager.config().paymentCodeEnabled()) {
             accessManager.donations().paymentCode(player.getName()).ifPresent(code ->                    player.sendMessage(messages.get("pass.info.payment-code")
                             .append(messages.get("pass.info.payment-code-value", "code", code))));
@@ -1103,7 +1103,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
 
         messages.send(sender, "account.header", "player_name", account.playerName);
         messages.send(sender, "account.pass",
-                "value", messages.raw(activePass ? "pass.info.active" : "pass.info.inactive"));
+                "value", Messages.trusted(messages.raw(activePass ? "pass.info.active" : "pass.info.inactive")));
         if (account.passUntil > 0) {
             sender.sendMessage(messages.get("account.until-label")
                     .append(messages.get("account.until-value",
@@ -1113,14 +1113,14 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         if (account.passUntil > 0) {
             messages.send(sender, "account.grant-source",
                     "value", account.lastGrantSource.isBlank()
-                            ? messages.raw("common.unknown") : account.lastGrantSource);
+                            ? Messages.trusted(messages.raw("common.unknown")) : account.lastGrantSource);
                             messages.send(sender, "account.registered",
-                "value", messages.raw(account.isRegistered() ? "common.yes" : "common.no"));
+                "value", Messages.trusted(messages.raw(account.isRegistered() ? "common.yes" : "common.no")));
                 messages.send(sender, "account.two-factor",
                 "value", account.isTotpEnabled()
-                        ? messages.raw("account.state-totp-on-since",
-                                "since", AccessManager.formatTimestamp(account.totpEnabledAt))
-                        : messages.raw("account.state-totp-off"));
+                        ? Messages.trusted(messages.raw("account.state-totp-on-since",
+                                "since", AccessManager.formatTimestamp(account.totpEnabledAt)))
+                        : Messages.trusted(messages.raw("account.state-totp-off")));
                         messages.send(sender, "account.stage", "value", stageText);
         if (account.passUntil > 0) {
             sender.sendMessage(messages.get("account.last-grant-label")
@@ -1177,10 +1177,10 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         sender.sendMessage(messages.get("status.two-factor")
                 .append(messages.get("status.two-factor-value",
                                 "enabled", store.getTotpEnabledCount(),
-                                "state", messages.raw(cfg.totpEnabled() ? "common.on" : "common.off"))));
+                                "state", Messages.trusted(messages.raw(cfg.totpEnabled() ? "common.on" : "common.off")))));
                                 messages.send(sender, "status.donatepay",
-                "value", messages.raw(!cfg.donatePayEnabled() ? "common.provider-disabled"
-                        : (cfg.donatePayReady() ? "common.connected" : "common.token-missing")));
+                "value", Messages.trusted(messages.raw(!cfg.donatePayEnabled() ? "common.provider-disabled"
+                        : (cfg.donatePayReady() ? "common.connected" : "common.token-missing"))));
         sender.sendMessage(messages.get("status.donatepay-label")
                 .append(messages.get("status.donatepay-value",
                                 "minimum_donation_rubles", cfg.minimumDonationRubles(),
@@ -1188,14 +1188,14 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         sender.sendMessage(messages.get("status.session-label")
                 .append(messages.get("status.session-value", "session_minutes", cfg.sessionMinutes())));
                 messages.send(sender, "status.chat",
-                "state", messages.raw(cfg.chat().enabled() ? "common.enabled-m" : "common.disabled-m"),
+                "state", Messages.trusted(messages.raw(cfg.chat().enabled() ? "common.enabled-m" : "common.disabled-m")),
                 "radius", cfg.chat().localRadius());
                 messages.send(sender, "status.auto-messages",
                 "value", cfg.chat().autoMessagesEnabled()
-                        ? messages.raw("status.auto-messages-value",
+                        ? Messages.trusted(messages.raw("status.auto-messages-value",
                                 "seconds", cfg.chat().autoMessagesIntervalSeconds(),
-                                "count", cfg.chat().autoMessages().size())
-                        : messages.raw("common.disabled-many"));
+                                "count", cfg.chat().autoMessages().size()))
+                        : Messages.trusted(messages.raw("common.disabled-many")));
     }
 
     private void sendAdminHelp(CommandSender sender, String label) {

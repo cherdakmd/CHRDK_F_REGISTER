@@ -153,6 +153,7 @@ public final class AccessManager {
         this.throttle = new AuthThrottle(store, this::config);
         this.donations = new DonationService(store, this::config, audit, notifications, logger,
                 messages, this::onPassGranted);
+        this.donations.setPendingNotifier(this::onDonationPending);
         this.logMasker = new LogMasker(logger);
         this.authDialogs = createAuthDialogs(plugin);
         this.totpQrMaps = new TotpQrMapService(this, logger);
@@ -1366,6 +1367,19 @@ public final class AccessManager {
         Player online = Bukkit.getPlayerExact(playerName);
         if (online != null) {
             notifyOnlinePassActivated(online, passUntil, sourceDescription);
+        }
+    }
+
+    /**
+     * Callback used by {@link DonationService} when a payment lands below the auto-grant minimum:
+     * chats the paying player, if online, so the donation doesn't feel lost.
+     */
+    public void onDonationPending(String donorName, String amountRubles, int minRubles) {
+        if (donorName == null || donorName.isBlank()) return;
+        Player online = Bukkit.getPlayerExact(donorName);
+        if (online != null) {
+            messages.send(online, "donation.pending-notice",
+                    "amount", amountRubles, "price", minRubles);
         }
     }
 
