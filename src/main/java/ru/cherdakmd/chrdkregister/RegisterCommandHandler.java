@@ -724,10 +724,23 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                         ? String.join(" ", java.util.Arrays.copyOfRange(args, 3, args.length)) : "";
                 messages.send(sender, "donation.testpaylive-sending", "donor", donorName, "amount", amount);
                 accessManager.postTestDonateNotification(donorName, amount, comment,
-                        status -> messages.send(sender, "donation.testpaylive-posted",
-                                "donor", donorName, "amount", amount, "status", status),
+                        status -> {
+                            messages.send(sender, "donation.testpaylive-posted",
+                                    "donor", donorName, "amount", amount, "status", status);
+                            messages.send(sender, "donation.testpaylive-probing");
+                        },
                         error -> messages.send(sender, "donation.testpaylive-failed",
-                                "error", error));
+                                "error", error),
+                        (seen, transaction) -> {
+                            if (seen) {
+                                messages.send(sender, "donation.testpaylive-verdict-seen",
+                                        "donor", donorName, "amount", amount,
+                                        "id", transaction == null ? 0 : transaction.id());
+                            } else {
+                                messages.send(sender, "donation.testpaylive-verdict-hidden",
+                                        "label", label, "donor", donorName, "amount", amount);
+                            }
+                        });
                 return true;
             }
             case "recheck" -> {

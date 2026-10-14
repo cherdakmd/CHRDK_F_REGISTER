@@ -2283,11 +2283,14 @@ public final class AccessManager {
      * команда только для админов, об этом честно пишем в ответе.
      */
     public void postTestDonateNotification(String donorName, long sumRubles, String comment,
-                                           Consumer<String> onOk, Consumer<String> onFail) {
+                                           Consumer<String> onOk, Consumer<String> onFail,
+                                           java.util.function.BiConsumer<Boolean, DonatePayClient.Transaction> onVerdict) {
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
                 String status = donatePay.postNotification(donorName, sumRubles, comment);
                 Bukkit.getScheduler().runTask(plugin, () -> onOk.accept(status));
+                probeLiveTestVisible(donorName, sumRubles,
+                        System.currentTimeMillis() + 70_000L, onVerdict);
             } catch (Exception exception) {
                 String message = exception.getMessage();
                 try {
@@ -2298,6 +2301,50 @@ public final class AccessManager {
                 }
             }
         });
+    }
+
+    /**
+     * {@code /pass testpay-live}: после set_notification ~1 минуту проверяет, вернул ли
+     * DonatePay запись в /transactions (тогда её подхватит обычный опрос) — и отдаёт вердикт.
+     */
+    private void probeLiveTestVisible(String donorName, long sumRubles, long deadline,
+                                      java.util.function.BiConsumer<Boolean, DonatePayClient.Transaction> onVerdict) {
+        try {
+            Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
+                DonatePayClient.Transaction found = findRecentLiveTest(donorName, sumRubles);
+                try {
+                    if (found != null) {
+                        Bukkit.getScheduler().runTask(plugin, () -> onVerdict.accept(true, found));
+                    } else if (System.currentTimeMillis() < deadline) {
+                        probeLiveTestVisible(donorName, sumRubles, deadline, onVerdict);
+                    } else {
+                        Bukkit.getScheduler().runTask(plugin, () -> onVerdict.accept(false, null));
+                    }
+                } catch (IllegalStateException ignored) {
+                    // плагин выключился — вердикт доносить некому
+                }
+            }, 160L); // повторная проба каждые ~8 с до дедлайна (~8 попыток)
+        } catch (IllegalStateException ignored) {
+            // плагин выключился во время ожидания
+        }
+    }
+
+    /** Ищет в /transactions запись живого теста по нику, сумме и свежести (±20 минут). */
+    private DonatePayClient.Transaction findRecentLiveTest(String donorName, long sumRubles) {
+        try {
+            long now = System.currentTimeMillis();
+            for (DonatePayClient.Transaction transaction : donatePay.fetchRecentSuccessful(15)) {
+                if (donorName.equalsIgnoreCase(transaction.donorName())
+                        && transaction.amount() != null
+                        && transaction.amount().longValue() == sumRubles
+                        && Math.abs(now - transaction.createdAt()) < 20 * 60_000L) {
+                    return transaction;
+                }
+            }
+        } catch (Exception exception) {
+            logger.fine("DonatePay live-test probe failed: " + exception.getMessage());
+        }
+        return null;
     }
 
     /**

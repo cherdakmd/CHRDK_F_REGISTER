@@ -121,7 +121,7 @@ public final class DonatePayClient implements DonationProvider {
      * показа в публичном виджете алертов. Запись навсегда остаётся в истории
      * кошелька; светится ли она опросом /transactions как success — на совести API.
      *
-     * @return сырая строка ответа API (обычно {"result": "success"})
+     * @return компактный вердикт вида «success · Операция проведена успешно»
      * @throws IOException при сетевой ошибке или status != success
      */
     public String postNotification(String name, long sumRubles, String comment) throws IOException {
@@ -151,10 +151,11 @@ public final class DonatePayClient implements DonationProvider {
                 JsonObject root = element.getAsJsonObject();
                 String status = string(root, "status");
                 String result = string(root, "result");
-                if ("success".equalsIgnoreCase(status) || "success".equalsIgnoreCase(result)) {
-                    return responseBody;
-                }
                 String message = string(root, "message");
+                if ("success".equalsIgnoreCase(status) || "success".equalsIgnoreCase(result)) {
+                    String verdict = "success".equalsIgnoreCase(status) ? status : result;
+                    return verdict + (message.isBlank() ? "" : " · " + message);
+                }
                 throw new IOException("DonatePay set_notification: status=" + status
                         + (message.isBlank() ? "" : " — " + message));
             }
