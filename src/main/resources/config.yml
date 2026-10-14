@@ -313,16 +313,28 @@ notifications:
   discord-webhook-url: ""
   # Какие события отправлять: pass.granted, pass.revoked, bruteforce.alert, totp.reset, password.reset,
   # multialt.alert, donate.pending, donatepay.error, donatepay.down, donatepay.up,
-  # chat.mute, totp.enabled, totp.disabled, password.change
+  # chat.mute, totp.enabled, totp.disabled, password.change, update.available
   events: [pass.granted, pass.revoked, bruteforce.alert, totp.reset, password.reset, donate.pending,
-          donatepay.error, donatepay.down, donatepay.up]
+          donatepay.error, donatepay.down, donatepay.up, update.available]
   # Упоминания в сообщении (например, "<@&1234567890>")
   mentions: []
 
 metrics:
   # Отправлять анонимную статистику bStats (требуется числовой ID плагина с bstats.org)
   bstats: true
+  # ID выдаётся бесплатно на bstats.org (заведите там плагин CHRDK_Core); 0 = метрики выключены.
+  # Отправляются только обезличенные числа: игроки с проходкой, аккаунты с 2FA, активный провайдер доната.
   bstats-id: 0
+
+updates:
+  # Фоново проверять новые версии ядра на GitHub Releases (игру не тормозит)
+  enabled: true
+  # Репозиторий релизов вида owner/name
+  repo: "cherdakmd/CHRDK_F_REGISTER"
+  # Как часто проверять, в часах (1..720)
+  interval-hours: 6
+  # Сообщать администраторам (право chrdkregister.admin) — сразу при обнаружении и при входе на сервер
+  notify-admins: true
 
 chat:
   # Включить встроенный чат: локальный/глобальный каналы, упоминания, личные сообщения, автосообщения

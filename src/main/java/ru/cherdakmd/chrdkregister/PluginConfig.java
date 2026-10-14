@@ -38,6 +38,14 @@ public final class PluginConfig {
     private boolean lpCommandProtect = true;
     /** Доп. узлы для запрета обычным игрокам (integrations.lp-deny-extra). */
     private List<String> lpDenyExtra = List.of();
+    /** Проверять обновления ядра на GitHub (updates.enabled). */
+    private boolean updatesEnabled = true;
+    /** Репозиторий релизов для проверки обновлений (updates.repo). */
+    private String updatesRepo = "cherdakmd/CHRDK_F_REGISTER";
+    /** Интервал проверки обновлений в часах (updates.interval-hours). */
+    private int updatesIntervalHours = 6;
+    /** Сообщать администраторам о новой версии (updates.notify-admins). */
+    private boolean updatesNotifyAdmins = true;
 
     /** Динамический MOTD (сеттится из load(), как и Boosty). */
     private MotdSettings motd = MotdSettings.DISABLED;
@@ -407,6 +415,10 @@ public final class PluginConfig {
         parsed.passGroupPermissions = List.copyOf(config.getStringList("integrations.pass-group-permissions"));
         parsed.lpCommandProtect = config.getBoolean("integrations.lp-command-protect", true);
         parsed.lpDenyExtra = List.copyOf(config.getStringList("integrations.lp-deny-extra"));
+        parsed.updatesEnabled = config.getBoolean("updates.enabled", true);
+        parsed.updatesRepo = config.getString("updates.repo", "cherdakmd/CHRDK_F_REGISTER");
+        parsed.updatesIntervalHours = Math.max(1, Math.min(720, config.getInt("updates.interval-hours", 6)));
+        parsed.updatesNotifyAdmins = config.getBoolean("updates.notify-admins", true);
         parsed.motd = MotdSettings.from(config);
         parsed.passEnabled = config.getBoolean("pass.enabled", true);
         parsed.donateActions = DonateAction.parseList(config.getMapList("donation-actions"));
@@ -512,6 +524,26 @@ public final class PluginConfig {
     /** Доп. узлы запрета обычным игрокам (extra — поверх встроенного deny-листа). */
     public List<String> lpDenyExtra() {
         return lpDenyExtra;
+    }
+
+    /** Включена ли фоновая проверка обновлений ядра на GitHub. */
+    public boolean updatesEnabled() {
+        return updatesEnabled;
+    }
+
+    /** Репозиторий релизов (owner/name) для UpdateChecker. */
+    public String updatesRepo() {
+        return updatesRepo;
+    }
+
+    /** Интервал проверки обновлений, часов (минимум 1). */
+    public int updatesIntervalHours() {
+        return updatesIntervalHours;
+    }
+
+    /** Показывать ли уведомления о новой версии администраторам в игре. */
+    public boolean updatesNotifyAdmins() {
+        return updatesNotifyAdmins;
     }
 
     /** Ссылка, которую видит игрок как «продлить/купить проходку»: в TradeMC-режиме — ссылка магазина. */

@@ -4,6 +4,9 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
+import ru.cherdakmd.chrdkregister.libs.bstats.bukkit.Metrics;
+import ru.cherdakmd.chrdkregister.libs.bstats.charts.SimplePie;
+import ru.cherdakmd.chrdkregister.libs.bstats.charts.SingleLineChart;
 
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -23,6 +26,7 @@ public final class RegisterPlugin extends JavaPlugin {
     private TabListService tabListService;
     private ExternalHooks externalHooks;
     private LuckPermsPassSync luckPermsPassSync;
+    private UpdateChecker updateChecker;
     private RegistrationStore store;
     private ExecutionService executor;
     private RegisterCommandHandler commandHandler;
@@ -105,6 +109,9 @@ public final class RegisterPlugin extends JavaPlugin {
 
         accessManager.start();
         chatService.start();
+        this.updateChecker = new UpdateChecker(this, accessManager, getLogger());
+        getServer().getPluginManager().registerEvents(updateChecker, this);
+        updateChecker.start();
         hookPlaceholderApi();
         enableMetrics(config);
         getLogger().info("CHRDK_Core enabled for Purpur 1.21.11 (pass, password auth, TOTP 2FA, chat, "
@@ -133,6 +140,10 @@ public final class RegisterPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (updateChecker != null) {
+            updateChecker.shutdown();
+            updateChecker = null;
+        }
         if (tabListService != null) {
             tabListService.shutdown();
             tabListService = null;
@@ -266,23 +277,44 @@ public final class RegisterPlugin extends JavaPlugin {
     }
 
     /**
-     * Wires optional bStats metrics. A numeric plugin ID is required and must be obtained from bstats.org;
-     * when it is not configured (or bStats is missing) the plugin simply continues without metrics.
+     * Wires optional bStats metrics: the client is bundled with the plugin (relocated
+     * to {@code ru.cherdakmd.chrdkregister.libs.bstats}), so no external dependency is needed.
+     * A numeric plugin ID is required and must be obtained from bstats.org;
+     * when it is not configured the plugin simply continues without metrics.
+     *
+     * <p>Besides the standard charts we report anonymous aggregates: how many accounts
+     * hold an active pass / have 2FA on, and which donation provider is in use.
+     * Only numbers and enum labels — never names, UUIDs or IPs.</p>
      */
     private void enableMetrics(PluginConfig config) {
         if (!config.bStatsEnabled()) return;
         int pluginId = getConfig().getInt("metrics.bstats-id", 0);
         if (pluginId <= 0) {
-            getLogger().info("bStats is enabled in the config but metrics.bstats-id is not set — skipping metrics.");
+            getLogger().info("bStats включён, но metrics.bstats-id не задан — метрики пропущены "
+                    + "(ID плагина бесплатно выдаётся на bstats.org).");
             return;
         }
         try {
-            Class<?> metricsClass = Class.forName("org.bstats.bukkit.Metrics");
-            metricsClass.getConstructor(org.bukkit.plugin.Plugin.class, int.class)
-                    .newInstance(this, pluginId);
+            Metrics metrics = new Metrics(this, pluginId);
+            metrics.addCustomChart(new SingleLineChart("players_with_active_pass",
+                    () -> store.statsSnapshot(System.currentTimeMillis()).activePass()));
+            metrics.addCustomChart(new SingleLineChart("totp_accounts",
+                    () -> store.statsSnapshot(System.currentTimeMillis()).totpEnabled()));
+            metrics.addCustomChart(new SimplePie("donate_provider", this::donateProviderLabel));
+            getLogger().info("bStats-метрики запущены (id " + pluginId + ").");
         } catch (Throwable throwable) {
-            getLogger().log(Level.FINE, "bStats is not available in this build", throwable);
+            getLogger().log(Level.WARNING, "Не удалось запустить bStats-метрики", throwable);
         }
+    }
+
+    /** Метка активного донат-провайдера для графика bStats (читается при каждой отправке). */
+    private String donateProviderLabel() {
+        PluginConfig current = accessManager != null ? accessManager.config() : null;
+        if (current == null) return "none";
+        if (current.trademc().enabled()) return "TradeMC";
+        if (current.donatePayEnabled()) return "DonatePay";
+        if (current.easyDonateEnabled()) return "EasyDonate";
+        return "none";
     }
 
     /** Shared executor that runs store writes off the main thread. */

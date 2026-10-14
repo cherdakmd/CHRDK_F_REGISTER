@@ -440,6 +440,26 @@ public final class RegistrationStore {
         return account != null && account.isTotpEnabled();
     }
 
+    /**
+     * Агрегированные счётчики по всем аккаунтам — для метрик bStats и диагностики.
+     * Только числа, без имён и персональных данных.
+     */
+    public record StatsSnapshot(int accounts, int registered, int activePass, int totpEnabled) {
+    }
+
+    /** Снимок счётчиков за один синхронизированный проход по аккаунтам. */
+    public synchronized StatsSnapshot statsSnapshot(long nowMillis) {
+        int registered = 0;
+        int activePass = 0;
+        int totpEnabled = 0;
+        for (PlayerAccount account : data.accounts.values()) {
+            if (account.isRegistered()) registered++;
+            if (account.hasActivePass(nowMillis)) activePass++;
+            if (account.isTotpEnabled()) totpEnabled++;
+        }
+        return new StatsSnapshot(data.accounts.size(), registered, activePass, totpEnabled);
+    }
+
     /** Grants or extends a pass manually with the default source tag. */
     public synchronized PlayerAccount grantPassManual(String playerName, long nowMillis, long durationMillis) {
         return grantPassManual(playerName, nowMillis, durationMillis, "manual");
