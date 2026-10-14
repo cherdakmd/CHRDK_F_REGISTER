@@ -84,6 +84,17 @@ public final class LuckPermsBootstrap {
         this.config = config;
     }
 
+    /** Облегчённый конструктор для тестов: без LuckPerms-хука; setup/status не вызываются. */
+    LuckPermsBootstrap(Supplier<PluginConfig> config) {
+        this.hooks = null;
+        this.config = config;
+    }
+
+    /** Есть ли LuckPerms (провайдер зарегистрирован). */
+    public boolean available() {
+        return hooks != null && hooks.luckPerms().isPresent();
+    }
+
     /**
      * Команды, не нужные обычному игроку: в default выставляются ЯВНО выключенными
      * (value=false) — защита и от wildcard-выдач других плагинов, — а в admin те же
@@ -94,6 +105,8 @@ public final class LuckPermsBootstrap {
             "bukkit.command.version",
             "bukkit.command.about",
             "bukkit.command.timings",
+            "bukkit.command.reload",
+            "bukkit.command.restart",
             "minecraft.command.op",
             "minecraft.command.deop",
             "minecraft.command.stop",
@@ -104,11 +117,6 @@ public final class LuckPermsBootstrap {
             "minecraft.command.pardon-ip",
             "minecraft.command.kick"
     );
-
-    /** Есть ли LuckPerms (провайдер зарегистрирован). */
-    public boolean available() {
-        return hooks.luckPerms().isPresent();
-    }
 
     /** Имя группы проходки: настроенное integrations.pass-group, иначе предлагаемое «pass». */
     public String passGroupName() {
@@ -132,11 +140,60 @@ public final class LuckPermsBootstrap {
         List<String> groups = new ArrayList<>();
         int[] created = {0};
         int[] nodes = {0};
+        // Правила самих плагинов берём у установленных плагинов (без хардкода):
+        // для default — все chrdk*.use, для admin — все chrdk*.admin
+        java.util.Set<String> discovered = discoverChrdkPerms();
+        java.util.List<String> usePerms = mergeUnique(DEFAULT_PERMS, splitDiscovered(discovered, ".use"));
+        java.util.List<String> adminPerms = mergeUnique(ADMIN_PERMS, splitDiscovered(discovered, ".admin"));
         CompletableFuture<Void> chain = CompletableFuture.completedFuture(null);
         for (GroupSpec spec : scheme()) {
-            chain = chain.thenCompose(ignored -> applySpec(api, spec, groups, created, nodes));
+            java.util.List<String> resolved = switch (spec.name()) {
+                case "default" -> usePerms;
+                case "admin" -> adminPerms;
+                default -> spec.permissions();
+            };
+            GroupSpec effective = new GroupSpec(spec.name(), spec.weight(), spec.parent(), resolved);
+            chain = chain.thenCompose(ignored -> applySpec(api, effective, groups, created, nodes));
         }
         return chain.thenApply(ignored -> new SetupResult(List.copyOf(groups), created[0], nodes[0]));
+    }
+
+    /** Все зарегистрированные на сервере узлы chrdk* (из plugin.yml аддонов) — lower-case, без дублей. */
+    static java.util.Set<String> discoverChrdkPerms() {
+        java.util.Set<String> result = new java.util.TreeSet<>();
+        try {
+            org.bukkit.Bukkit.getPluginManager().getPermissions().forEach(permission -> {
+                String key = permission.getName() == null ? "" : permission.getName().toLowerCase(Locale.ROOT);
+                if (key.startsWith("chrdk")) {
+                    result.add(key);
+                }
+            });
+        } catch (Throwable ignored) {
+            // тестовое окружение без Bukkit — вернём пустое
+        }
+        return result;
+    }
+
+    /** Выборка из набора узлов по суффиксу (.use/.admin). */
+    static java.util.List<String> splitDiscovered(java.util.Set<String> keys, String suffix) {
+        java.util.List<String> result = new ArrayList<>();
+        for (String key : keys) {
+            if (key.endsWith(suffix)) {
+                result.add(key);
+            }
+        }
+        return result;
+    }
+
+    /** Объединение базового списка с обнаруженным (без дублей, регистронезависимо). */
+    static java.util.List<String> mergeUnique(java.util.List<String> base, java.util.Collection<String> extra) {
+        java.util.LinkedHashSet<String> merged = new java.util.LinkedHashSet<>(base);
+        for (String key : extra) {
+            if (key != null && !key.isBlank()) {
+                merged.add(key.trim().toLowerCase(Locale.ROOT));
+            }
+        }
+        return List.copyOf(merged);
     }
 
     /** Текущее состояние групп схемы (асинхронно). */
@@ -213,7 +270,7 @@ public final class LuckPermsBootstrap {
     }
 
     /** Весь deny-лист: встроенный + доп. узлы из integrations.lp-deny-extra. */
-    private java.util.List<String> commandProtect() {
+    java.util.List<String> commandProtect() {
         java.util.List<String> extra = config.get().lpDenyExtra();
         if (extra.isEmpty()) {
             return COMMAND_PROTECT;
