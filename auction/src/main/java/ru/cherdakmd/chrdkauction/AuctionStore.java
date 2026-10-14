@@ -14,6 +14,8 @@ public final class AuctionStore {
     public static final int MAX_PRICE = 1_000_000;
     public static final int MAX_PAYLOAD = 90_000;
     public static final int MAX_ENTRIES = 5000;
+    private static final int MAX_STATE_BYTES = 24 * 1024 * 1024;
+    private static final int MAX_SNAPSHOT_CHARS = 4 * 1024 * 1024;
     public record Lot(long id, UUID seller, String name, String item, int price, int fee, long expires) { }
     public record Parcel(long id, String item) { }
     public record Pending(UUID player, String operation, String before, String after, State next) { }
@@ -47,6 +49,7 @@ public final class AuctionStore {
                 Pending p = loaded.pending;
                 if (p.player == null || p.operation == null || p.before == null || p.after == null)
                     throw new IllegalArgumentException("pending");
+                validateSnapshots(p.before, p.after);
                 validate(p.next);
             }
             data = loaded;
@@ -81,6 +84,14 @@ public final class AuctionStore {
         if (entries > MAX_ENTRIES) throw new IllegalArgumentException("market capacity");
         for (var e : s.money.entrySet()) if (e.getKey() == null || e.getValue() == null || e.getValue() <= 0)
             throw new IllegalArgumentException("money");
+        // Reserve space for BOTH states plus inventory snapshots. A full ledger must remain claimable.
+        if (JSON.toJson(s).getBytes(StandardCharsets.UTF_8).length > MAX_STATE_BYTES)
+            throw new IllegalArgumentException("state capacity");
+    }
+    private static void validateSnapshots(String before, String after) {
+        if (before == null || after == null || before.equals(after)
+                || before.length() > MAX_SNAPSHOT_CHARS || after.length() > MAX_SNAPSHOT_CHARS)
+            throw new IllegalArgumentException("inventory snapshots");
     }
     private static void payload(String s) {
         if (s == null || s.isBlank() || s.length() > MAX_PAYLOAD) throw new IllegalArgumentException("item payload size");
@@ -101,7 +112,8 @@ public final class AuctionStore {
     private void available() { if (data.pending != null) throw new IllegalStateException("recovery required"); }
     private void prepare(UUID player, String op, String before, String after, State next) throws IOException {
         available(); validate(next);
-        if (player == null || before == null || after == null || before.equals(after)) throw new IllegalArgumentException("transfer");
+        if (player == null) throw new IllegalArgumentException("transfer player");
+        validateSnapshots(before, after);
         Envelope env = new Envelope(); env.state = data.state;
         env.pending = new Pending(player, op, before, after, next);
         write(env);
