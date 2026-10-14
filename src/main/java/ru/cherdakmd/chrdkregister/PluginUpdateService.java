@@ -235,7 +235,7 @@ public final class PluginUpdateService implements AutoCloseable {
     private Map<String, Installed> installed() throws IOException {
         Map<String, Installed> found = new TreeMap<>();
         try (var paths = Files.list(plugins)) {
-            for (Path path : paths.filter(p -> p.getFileName().toString().endsWith(".jar")).toList()) {
+            for (Path path : paths.filter(p -> p.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".jar")).toList()) {
                 if (Files.isSymbolicLink(path) || !Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS))
                     throw new IOException("Автообновление не поддерживает ссылки вместо JAR: " + path.getFileName());
                 Descriptor descriptor = descriptor(path);
@@ -358,7 +358,7 @@ public final class PluginUpdateService implements AutoCloseable {
                 .followRedirects(HttpClient.Redirect.NEVER).build();
 
         static void validateUri(URI uri) throws IOException {
-            if (!"https".equalsIgnoreCase(uri.getScheme()) || uri.getUserInfo() != null || uri.getFragment() != null
+            if (!"https".equalsIgnoreCase(uri.getScheme()) || uri.getHost() == null || uri.getUserInfo() != null || uri.getFragment() != null
                     || (uri.getPort() != -1 && uri.getPort() != 443)
                     || !Set.of("github.com", "api.github.com", "release-assets.githubusercontent.com", "objects.githubusercontent.com").contains(uri.getHost()))
                 throw new IOException("Небезопасный адрес загрузки или перенаправления.");

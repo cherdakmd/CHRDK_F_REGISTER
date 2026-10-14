@@ -244,7 +244,7 @@ class PluginUpdateServiceTest {
             assertThrows(IOException.class, () -> updater.execute(true, "1.4.72"));
             assertEquals("keep", Files.readString(foreign));
             Files.delete(foreign);
-            Path duplicate = Files.copy(installed, root.resolve("duplicate.jar"));
+            Path duplicate = Files.copy(installed, root.resolve("duplicate.JAR"));
             assertThrows(IOException.class, () -> updater.execute(true, "1.4.72"));
             Files.delete(duplicate);
             Files.delete(update);
@@ -292,7 +292,7 @@ class PluginUpdateServiceTest {
     }
 
     @Test void unsafeRedirectsAndOversizedBodiesAreRejected() throws Exception {
-        for (String uri : List.of("http://github.com/a", "https://localhost/a", "https://github.com.evil.example/a",
+        for (String uri : List.of("http://github.com/a", "https:github.com/a", "https://localhost/a", "https://github.com.evil.example/a",
                 "https://github.com@localhost/a", "https://github.com:444/a", "https://127.0.0.1/a"))
             assertThrows(IOException.class, () -> PluginUpdateService.GithubTransport.validateUri(URI.create(uri)));
         PluginUpdateService.GithubTransport.validateUri(URI.create("https://release-assets.githubusercontent.com/a?signature=ok"));
