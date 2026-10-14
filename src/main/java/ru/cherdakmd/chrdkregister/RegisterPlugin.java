@@ -24,6 +24,7 @@ public final class RegisterPlugin extends JavaPlugin {
     private AdminDonationsGuiService adminDonationsGui;
     private PasswordKeypadService passwordKeypad;
     private TabListService tabListService;
+    private PluginUpdateService pluginUpdater;
     private ExternalHooks externalHooks;
     private LuckPermsPassSync luckPermsPassSync;
     private UpdateChecker updateChecker;
@@ -76,6 +77,9 @@ public final class RegisterPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(tabListService, this);
         tabListService.reload();
 
+        this.pluginUpdater = new PluginUpdateService(getDataFolder().getParentFile().toPath(),
+                getServer().getUpdateFolderFile().toPath(), getDataFolder().toPath(),
+                () -> accessManager.config().updatesRepo(), getServer().getBukkitVersion());
         this.commandHandler = new RegisterCommandHandler(this, accessManager);
         PluginCommand menuCommand = getCommand("menu");
         if (menuCommand != null) {
@@ -142,6 +146,7 @@ public final class RegisterPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (pluginUpdater != null) pluginUpdater.close();
         if (serverMenuService != null) serverMenuService.shutdown();
         if (updateChecker != null) {
             updateChecker.shutdown();
@@ -186,6 +191,8 @@ public final class RegisterPlugin extends JavaPlugin {
     }
 
     /** Тексты плагина из {@code messages.yml}. */
+    public PluginUpdateService pluginUpdater() { return pluginUpdater; }
+
     public Messages messages() {
         return messages;
     }

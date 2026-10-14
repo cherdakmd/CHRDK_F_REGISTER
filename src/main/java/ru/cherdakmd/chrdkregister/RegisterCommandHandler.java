@@ -30,7 +30,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             List.of("add", "remove", "check", "unregister", "reset2fa", "status", "reload",
                     "pending", "donations", "health", "approve", "reject", "sessions", "logoutall", "stats", "doctor", "audit",
                     "backup", "gift", "testpay", "testpay-live", "shoppay", "recheck", "donationsgui",
-                    "luckperms");
+                    "luckperms", "update");
     private static final List<String> MUTE_DURATIONS = List.of("10m", "30m", "1h", "6h", "1d", "7d");
     private static final List<String> TWO_FACTOR_SUBCOMMANDS =
             List.of("setup", "confirm", "disable", "status", "cancel", "qr");
@@ -792,6 +792,10 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 }
                 return true;
             }
+            case "update" -> {
+                handleUpdate(sender, label, args);
+                return true;
+            }
             case "luckperms" -> {
                 // Авто-настройка LuckPerms по схеме CHRDK: default → <pass-group> → admin
                 String action = args.length > 1 ? args[1].toLowerCase(Locale.ROOT) : "status";
@@ -1328,6 +1332,58 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                         : Messages.trusted(messages.raw("common.disabled-many")));
     }
 
+    private void handleUpdate(CommandSender sender, String label, String[] args) {
+        String action = args.length == 2 ? args[1].toLowerCase(Locale.ROOT) : "";
+        if (!action.equals("check") && !action.equals("download")) {
+            messages.send(sender, "update.command-usage", "label", label);
+            return;
+        }
+        boolean download = action.equals("download");
+        if (download && !canDownloadUpdates(sender)) {
+            messages.send(sender, "update.console-only");
+            return;
+        }
+        PluginUpdateService updater = plugin.pluginUpdater();
+        String current = plugin.getPluginMeta().getVersion();
+        messages.send(sender, download ? "update.download-start" : "update.check-start");
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                PluginUpdateService.Result result = updater.execute(download, current);
+                updateReply(() -> {
+                    Messages latest = plugin.messages();
+                    if (!download) {
+                        latest.send(sender, "update.check-result", "current", current,
+                                "latest", result.version(), "url", result.url(), "label", label);
+                    } else if (result.filesCurrent()) {
+                        latest.send(sender, "update.files-current", "latest", result.version());
+                    } else {
+                        latest.send(sender, "update.download-ready", "latest", result.version(),
+                                "count", result.count(), "backup", result.backup(), "folder", result.updateDirectory());
+                    }
+                });
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+                updateReply(() -> plugin.messages().send(sender, "update.command-error", "error", "Операция прервана."));
+            } catch (Exception exception) {
+                plugin.getLogger().log(java.util.logging.Level.WARNING, "[updates] Command failed", exception);
+                updateReply(() -> plugin.messages().send(sender, "update.command-error", "error",
+                        exception.getMessage() == null ? exception.getClass().getSimpleName() : exception.getMessage()));
+            }
+        });
+    }
+
+    // Downloading executable code is console/RCON-only, even for an in-game OP.
+    static boolean canDownloadUpdates(CommandSender sender) {
+        return sender instanceof org.bukkit.command.ConsoleCommandSender
+                || sender instanceof org.bukkit.command.RemoteConsoleCommandSender;
+    }
+
+    private void updateReply(Runnable reply) {
+        if (!plugin.isEnabled()) return;
+        try { plugin.getServer().getScheduler().runTask(plugin, reply); }
+        catch (org.bukkit.plugin.IllegalPluginAccessException ignored) { /* server is stopping */ }
+    }
+
     private void sendAdminHelp(CommandSender sender, String label) {
         // Одна многострочная запись в messages.yml — список строк, а не 37 ключей.
         messages.sendList(sender, "pass.admin-help", "label", label,
@@ -1414,6 +1470,11 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             }
             if ("backup".equals(sub)) {
                 return List.of("create", "list", "restore");
+            }
+            if ("update".equals(sub)) {
+                String prefix = args[1].toLowerCase(Locale.ROOT);
+                return (canDownloadUpdates(sender) ? List.of("check", "download") : List.of("check"))
+                        .stream().filter(value -> value.startsWith(prefix)).toList();
             }
         }
         if (args.length == 3) {
