@@ -53,6 +53,13 @@ class ReferralRulesTest {
     }
 
     @Test
+    void trialDoesNotPayReferralBonus() {
+        org.junit.jupiter.api.Assertions.assertFalse(ReferralRules.triggersBonus("trial"));
+        org.junit.jupiter.api.Assertions.assertTrue(ReferralRules.triggersBonus("donatepay"));
+        org.junit.jupiter.api.Assertions.assertTrue(ReferralRules.triggersBonus("manual"));
+    }
+
+    @Test
     void errorKeysMapToMessages() {
         assertEquals("ref.use-ok", ReferralRules.messageKeyOf(ReferralRules.LinkError.OK));
         assertEquals("ref.use-too-late", ReferralRules.messageKeyOf(ReferralRules.LinkError.TOO_LATE));

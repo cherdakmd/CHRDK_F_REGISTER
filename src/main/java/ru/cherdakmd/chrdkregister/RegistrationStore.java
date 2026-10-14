@@ -1739,6 +1739,10 @@ public final class RegistrationStore {
         public int paymentsCount;
         public long lastPaymentAt;
 
+        public boolean isTrialOnly() {
+            return trialGrantedAt > 0 && "trial".equals(lastGrantSource) && paymentsCount == 0;
+        }
+
         public boolean hasActivePass(long nowMillis) {
             return passUntil > nowMillis;
         }

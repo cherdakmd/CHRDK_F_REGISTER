@@ -39,6 +39,7 @@ public final class RegisterPlugin extends JavaPlugin {
     public void onEnable() {
         migrateLegacyDataFolder();
         saveDefaultConfig();
+        PresentationMigration.apply(this);
         PluginConfig config = PluginConfig.fromBukkitConfig(getConfig());
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
 
@@ -52,7 +53,7 @@ public final class RegisterPlugin extends JavaPlugin {
         this.chatService = new ChatService(this, accessManager, config.chat(), messages, getLogger());
         this.passMenuService = new PassMenuService(accessManager, messages);
         this.donateMenuService = new DonateMenuService(accessManager, messages);
-        this.serverMenuService = new ServerMenuService(accessManager, messages);
+        this.serverMenuService = new ServerMenuService(this, accessManager, messages);
         this.adminDonationsGui = new AdminDonationsGuiService(accessManager, messages, this);
         this.donateMenuService.setAdminJournalOpener(player -> adminDonationsGui.openMenu(player));
         this.passwordKeypad = new PasswordKeypadService(this, accessManager, messages);
@@ -140,6 +141,7 @@ public final class RegisterPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (serverMenuService != null) serverMenuService.shutdown();
         if (updateChecker != null) {
             updateChecker.shutdown();
             updateChecker = null;
@@ -166,6 +168,7 @@ public final class RegisterPlugin extends JavaPlugin {
 
     public void reloadPluginConfig() {
         reloadConfig();
+        PresentationMigration.apply(this);
         PluginConfig updated = PluginConfig.fromBukkitConfig(getConfig());
         if (accessManager != null) {
             accessManager.reload(updated);

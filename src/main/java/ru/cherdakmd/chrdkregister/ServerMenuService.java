@@ -42,10 +42,12 @@ public final class ServerMenuService implements Listener {
     public record MenuLayout(int size, List<Integer> slots) {
     }
 
+    private final RegisterPlugin plugin;
     private final AccessManager accessManager;
     private volatile Messages messages;
 
-    public ServerMenuService(AccessManager accessManager, Messages messages) {
+    public ServerMenuService(RegisterPlugin plugin, AccessManager accessManager, Messages messages) {
+        this.plugin = plugin;
         this.accessManager = accessManager;
         this.messages = messages;
     }
@@ -130,71 +132,103 @@ public final class ServerMenuService implements Listener {
 
     /** Открывает серверное меню игроку ({@code /menu}). */
     public void openMenu(Player player) {
+        if (!player.hasPermission("chrdkregister.menu")) { messages.send(player, "server-menu.no-permission"); return; }
+        if (accessManager.getStage(player) != AccessManager.PlayerStage.AUTHENTICATED) {
+            messages.send(player, "server-menu.need-auth"); return;
+        }
         ServerMenuSettings settings = accessManager.config().serverMenu();
         if (settings == null || !settings.enabled() || settings.entries().isEmpty()) {
             messages.send(player, "server-menu.disabled");
             return;
         }
-        MenuLayout layout = layout(settings.entries());
-        ServerMenuHolder holder = new ServerMenuHolder(layout.slots());
+        List<ServerMenuSettings.Entry> entries = settings.entries().stream().filter(entry -> available(entry, player)).toList();
+        if (entries.isEmpty()) { messages.send(player, "server-menu.disabled"); return; }
+        MenuLayout layout = layout(entries);
+        ServerMenuHolder holder = new ServerMenuHolder(player.getUniqueId(), layout.slots(), entries);
         Inventory inventory = Bukkit.createInventory(holder, layout.size(),
                 messages.get("server-menu.title"));
         holder.bind(inventory);
-        List<ServerMenuSettings.Entry> entries = settings.entries();
         for (int i = 0; i < entries.size() && i < layout.slots().size(); i++) {
             int slot = layout.slots().get(i);
             if (slot < 0 || slot >= inventory.getSize()) continue;
-            inventory.setItem(slot, icon(entries.get(i)));
+            inventory.setItem(slot, icon(entries.get(i), player));
         }
         player.openInventory(inventory);
     }
 
-    private ItemStack icon(ServerMenuSettings.Entry entry) {
+    private boolean available(ServerMenuSettings.Entry entry, Player player) {
+        return entry.available(name -> Bukkit.getPluginManager().isPluginEnabled(name), player::hasPermission);
+    }
+
+    private ItemStack icon(ServerMenuSettings.Entry entry, Player player) {
         Material material = entry.icon() == null ? Material.PAPER : entry.icon();
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.displayName(Messages.format(entry.name()));
+            meta.displayName(messages.renderTemplate(entry.name(), menuPlaceholders(player)));
             if (!entry.lore().isBlank()) {
-                meta.lore(List.of(Messages.format(entry.lore())));
+                meta.lore(java.util.Arrays.stream(entry.lore().split("\\R")).map(line -> messages.renderTemplate(line, menuPlaceholders(player))).toList());
             }
             item.setItemMeta(meta);
         }
         return item;
     }
 
-    @EventHandler(ignoreCancelled = true)
+    private Object[] menuPlaceholders(Player player) {
+        var account = accessManager.store().getAccount(player.getName()).orElse(null);
+        long now = System.currentTimeMillis();
+        return new Object[]{"player", player.getName(), "pass_left", PlaceholderValues.passLeft(account, now),
+                "pass_days", account == null ? 0 : PlaceholderValues.wholeDaysLeft(account.passUntil, now),
+                "trial_days", accessManager.config().trialDays()};
+    }
+
+    @EventHandler(priority = org.bukkit.event.EventPriority.HIGHEST)
     public void onInventoryClick(InventoryClickEvent event) {
-        if (!(event.getInventory().getHolder() instanceof ServerMenuHolder holder)) return;
-        event.setCancelled(true);
-        if (!(event.getWhoClicked() instanceof Player player)) return;
-        if (!holder.inventory().equals(event.getClickedInventory())) return;
-        ServerMenuSettings settings = accessManager.config().serverMenu();
-        List<ServerMenuSettings.Entry> entries = settings.entries();
-        List<Integer> slots = holder.slots();
-        for (int i = 0; i < slots.size() && i < entries.size(); i++) {
-            if (slots.get(i) != event.getRawSlot()) continue;
-            ServerMenuSettings.Entry entry = entries.get(i);
-            player.closeInventory();
-            player.performCommand(entry.command());
+        if (!(event.getView().getTopInventory().getHolder() instanceof ServerMenuHolder holder)) return;
+        event.setCancelled(true); // also bottom inventory/shift/hotbar/double-click
+        if (!(event.getWhoClicked() instanceof Player player) || !holder.owner.equals(player.getUniqueId())) return;
+        if (event.getClick() != org.bukkit.event.inventory.ClickType.LEFT && event.getClick() != org.bukkit.event.inventory.ClickType.RIGHT) return;
+        for (int i = 0; i < holder.slots.size(); i++) {
+            if (holder.slots.get(i) != event.getRawSlot()) continue;
+            ServerMenuSettings.Entry entry = holder.entries.get(i);
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (!player.isOnline() || player.getOpenInventory().getTopInventory() != holder.inventory) return;
+                if (!accessManager.config().serverMenu().enabled()
+                        || !accessManager.config().serverMenu().entries().contains(entry)) {
+                    player.closeInventory(); messages.send(player, "server-menu.changed"); return;
+                }
+                if (!player.hasPermission("chrdkregister.menu") || !available(entry, player)
+                        || accessManager.getStage(player) != AccessManager.PlayerStage.AUTHENTICATED) {
+                    player.closeInventory(); messages.send(player, "server-menu.unavailable"); return;
+                }
+                player.closeInventory();
+                player.performCommand(entry.command());
+            });
             return;
         }
     }
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(priority = org.bukkit.event.EventPriority.HIGHEST)
     public void onInventoryDrag(InventoryDragEvent event) {
-        if (event.getInventory().getHolder() instanceof ServerMenuHolder) {
-            event.setCancelled(true);
-        }
+        if (event.getView().getTopInventory().getHolder() instanceof ServerMenuHolder) event.setCancelled(true);
+    }
+
+    public void shutdown() {
+        for (Player player : Bukkit.getOnlinePlayers())
+            if (player.getOpenInventory().getTopInventory().getHolder() instanceof ServerMenuHolder) player.closeInventory();
     }
 
     /** Маркержолдер: отличает наше меню от чужих инвентарей, хранит слоты кликов. */
     static final class ServerMenuHolder implements InventoryHolder {
         private final List<Integer> slots;
+        private final List<ServerMenuSettings.Entry> entries;
+        private final java.util.UUID owner;
         private Inventory inventory;
 
-        ServerMenuHolder(List<Integer> slots) {
+        ServerMenuHolder(java.util.UUID owner, List<Integer> slots, List<ServerMenuSettings.Entry> entries) {
+            this.owner = owner;
             this.slots = List.copyOf(slots);
+            this.entries = List.copyOf(entries);
         }
 
         void bind(Inventory inventory) {

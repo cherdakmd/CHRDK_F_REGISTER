@@ -20,7 +20,13 @@ public record ServerMenuSettings(boolean enabled, List<ServerMenuSettings.Entry>
     public static final ServerMenuSettings DISABLED = new ServerMenuSettings(false, List.of());
 
     /** Пункт меню: иконка, имя/лор (MiniMessage), команда от игрока, слот (-1 = авто-раскладка). */
-    public record Entry(int slot, Material icon, String name, String lore, String command) {
+    public record Entry(int slot, Material icon, String name, String lore, String command, String plugin, String permission) {
+        public Entry(int slot, Material icon, String name, String lore, String command) {
+            this(slot, icon, name, lore, command, "", "");
+        }
+        boolean available(java.util.function.Predicate<String> plugins, java.util.function.Predicate<String> permissions) {
+            return (plugin.isBlank() || plugins.test(plugin)) && (permission.isBlank() || permissions.test(permission));
+        }
     }
 
     public static ServerMenuSettings from(FileConfiguration config) {
@@ -34,7 +40,7 @@ public record ServerMenuSettings(boolean enabled, List<ServerMenuSettings.Entry>
             if (map == null) continue;
             int slot = toInt(map.get("slot"), -1);
             Object iconObj = map.get("icon");
-            String iconRaw = String.valueOf(iconObj == null ? "PAPER" : iconObj).trim().toUpperCase();
+            String iconRaw = String.valueOf(iconObj == null ? "PAPER" : iconObj).trim().toUpperCase(java.util.Locale.ROOT);
             Material icon = Material.matchMaterial(iconRaw);
             if (icon == null || !icon.isItem()) {
                 // неизвестная иконка → безопасный PAPER (сервер не должен падать из-за конфига)
@@ -49,10 +55,12 @@ public record ServerMenuSettings(boolean enabled, List<ServerMenuSettings.Entry>
             if (name.isEmpty() || command.isEmpty() || slot < -1 || slot > 53) {
                 continue;
             }
-            entries.add(new Entry(slot, icon, name, lore, command));
+            entries.add(new Entry(slot, icon, name, lore, command, string(map.get("plugin")), string(map.get("permission"))));
         }
         return new ServerMenuSettings(enabled, List.copyOf(entries));
     }
+
+    private static String string(Object raw) { return raw == null ? "" : raw.toString().trim(); }
 
     private static int toInt(Object raw, int fallback) {
         if (raw instanceof Number number) {

@@ -1,0 +1,62 @@
+server-menu:
+  enabled: true
+  items:
+    - { slot: 10, icon: EMERALD,    name: "<gold><bold>Оплатить / продлить</bold></gold>",        lore: "<gray>кликабельная ссылка на оплату</gray>",  command: "pass donate" }
+    - { slot: 12, icon: PAPER,      name: "<aqua><bold>Проходка и аккаунт</bold></aqua>",         lore: "<gray>статус, тарифы, сессии, 2FA</gray>",    command: "pass menu" }
+    - { slot: 14, icon: CLOCK,      name: "<yellow><bold>Ежедневные награды</bold></yellow>",     lore: "<gray>призы за ежедневный вход</gray>",       command: "daily" }
+    - { slot: 16, icon: COMPASS,    name: "<green><bold>Телепорты</bold></green>",                lore: "<gray>точки дома и телепорты</gray>",         command: "home" }
+    - { slot: -1, icon: NETHER_STAR, name: "<light_purple><bold>Ранги и прогресс</bold></light_purple>", lore: "<gray>звания по наигранному времени</gray>", command: "ranks" }
+    - { slot: -1, icon: DIAMOND,    name: "<aqua><bold>Магазин</bold></aqua>",                    lore: "<gray>обмен и цены</gray>",                   command: "shop" }
+
+
+auto-messages:
+  # Автоматические сообщения в чат через заданный интервал
+  enabled: true
+  # Интервал между сообщениями в секундах (минимум 30)
+  interval-seconds: 240
+  # Отправлять сообщения в случайном порядке (false = строго по порядку списка)
+  random-order: true
+  # Не отправлять сообщения, если на сервере меньше указанного количества игроков
+  minimum-players: 1
+  # Префикс перед каждым автосообщением
+  prefix: "&8[&6CHRDK&8] &r"
+  # Доступна подстановка %online% — количество игроков онлайн
+  messages:
+    - "&eПонравился сервер? Поддержи проект и продли проходку: &b/pass"
+    - "&eВключи двухфакторную защиту аккаунта: &b/2fa setup"
+    - "&eСмени пароль на надёжный: &b/changepassword"
+    - "&eСейчас на сервере: &b%online% &eигроков"
+
+
+tablist:
+  # Таб-лист (TAB): шапка/подвал списка игроков и формат имени в нём.
+  # Разметка — MiniMessage либо &-коды. Подстановки:
+  #   %player% — ник игрока, %online%/%max% — онлайн и лимит,
+  #   %tps% — TPS сервера, %ping% — пинг игрока, %world% — его мир,
+  #   %pass_status% — активна/истекла/нет проходки, %pass_left% — «12 дн. 3 ч.»,
+  #   %pass_days% — осталось целых дней проходки.
+  enabled: true
+  # Как часто (в тиках, 20 = 1 сек) обновлять таб-лист всем игрокам. Минимум 10.
+  refresh-ticks: 40
+  # Строки шапки списка (каждая с новой строки экрана)
+  header:
+    - ""
+    - "<gradient:gold:yellow><bold>CHERDAK SERVER</bold></gradient>"
+    - "<gray>Онлайн: <white>%online%</white>/<white>%max%</white> <dark_gray>|</dark_gray> TPS: <green>%tps%</green>"
+    - ""
+  # Строки подвала списка
+  footer:
+    - ""
+    - "<gray>Проходка: <aqua>%pass_status%</aqua> <dark_gray>|</dark_gray> осталось: <aqua>%pass_left%</aqua>"
+    - "<gray>Пинг: <yellow>%ping% мс</yellow> <dark_gray>|</dark_gray> Мир: <yellow>%world%</yellow>"
+    - ""
+  # Формат имени игрока в списке (TAB). Пустая строка = не менять имя
+  # (удобно, если именами управляет другой плагин, например LuckPerms).
+  player-name-format: "<gray>%player%</gray>"
+  # Никнеймы, закреплённые ВВЕРХУ списка игроков (регистр не важен).
+  # Реализовано через приоритетную команду scoreboard — клиент Minecraft
+  # сортирует список сначала по команде, потом по нику.
+  # ВНИМАНИЕ: если другой плагин садит этих игроков в свою команду
+  # (префиксы/ранги), закрепление может конфликтовать — пусть один плагин владеет командами.
+  pinned-names:
+    - kalinin_play

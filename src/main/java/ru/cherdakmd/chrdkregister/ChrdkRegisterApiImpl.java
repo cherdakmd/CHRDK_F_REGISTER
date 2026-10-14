@@ -41,6 +41,11 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
     }
 
     @Override
+    public boolean isTrialOnly(String playerName) {
+        return accessManager.store().getAccount(playerName).map(RegistrationStore.PlayerAccount::isTrialOnly).orElse(false);
+    }
+
+    @Override
     public boolean isRegistered(String playerName) {
         return accessManager.store().isRegistered(playerName);
     }

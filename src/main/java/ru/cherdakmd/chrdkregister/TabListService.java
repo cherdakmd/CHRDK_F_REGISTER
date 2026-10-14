@@ -40,11 +40,16 @@ public final class TabListService implements Listener {
 
     /** Значения подстановок одного игрока — ровно то, что знает юнит-тест. */
     record TabContext(String playerName, int online, int maxPlayers, double tps, int ping,
-                      String world, String passStatus, String passLeft, long passDaysLeft) {
+                      String world, String passStatus, String passLeft, long passDaysLeft, PresentationContext presentation) {
+        TabContext(String playerName, int online, int maxPlayers, double tps, int ping, String world,
+                   String passStatus, String passLeft, long passDaysLeft) {
+            this(playerName, online, maxPlayers, tps, ping, world, passStatus, passLeft, passDaysLeft,
+                    new PresentationContext("", "", "", "", ""));
+        }
 
         /** Пары «ключ-значение» для Messages.fill: ключ → строковое значение. */
         Object[] placeholders() {
-            return new Object[]{
+            Object[] base = new Object[]{
                     "player", playerName,
                     "online", online,
                     "max", maxPlayers,
@@ -54,6 +59,10 @@ public final class TabListService implements Listener {
                     "pass_status", passStatus,
                     "pass_left", passLeft,
                     "pass_days", passDaysLeft};
+            Object[] extra = presentation.placeholders();
+            Object[] result = java.util.Arrays.copyOf(base, base.length + extra.length);
+            System.arraycopy(extra, 0, result, base.length, extra.length);
+            return result;
         }
     }
 
@@ -61,6 +70,8 @@ public final class TabListService implements Listener {
     private final AccessManager accessManager;
     private Settings settings = Settings.disabled();
     private BukkitTask refreshTask;
+    private final java.util.Set<java.util.UUID> managedNames = new java.util.HashSet<>();
+    private final java.util.Set<java.util.UUID> managedHeaders = new java.util.HashSet<>();
 
     public TabListService(RegisterPlugin plugin, AccessManager accessManager) {
         this.plugin = plugin;
@@ -93,6 +104,7 @@ public final class TabListService implements Listener {
             refreshTask = null;
         }
         clearPinned();
+        resetAll();
     }
 
     @EventHandler
@@ -113,7 +125,8 @@ public final class TabListService implements Listener {
     }
 
     private void reschedule() {
-        shutdown();
+        if (refreshTask != null) { refreshTask.cancel(); refreshTask = null; }
+        clearPinned();
         if (settings.enabled() && settings.refreshTicks() > 0) {
             refreshTask = Bukkit.getScheduler().runTaskTimer(plugin, this::applyAll,
                     settings.refreshTicks(), settings.refreshTicks());
@@ -129,8 +142,8 @@ public final class TabListService implements Listener {
 
     private void resetAll() {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            player.playerListName(null);
-            player.sendPlayerListHeaderAndFooter(Component.empty(), Component.empty());
+            if (managedNames.remove(player.getUniqueId())) player.playerListName(null);
+            if (managedHeaders.remove(player.getUniqueId())) player.sendPlayerListHeaderAndFooter(Component.empty(), Component.empty());
         }
     }
 
@@ -140,9 +153,11 @@ public final class TabListService implements Listener {
         Component header = joinLines(renderLines(messages, settings.header(), context));
         Component footer = joinLines(renderLines(messages, settings.footer(), context));
         player.sendPlayerListHeaderAndFooter(header, footer);
+        managedHeaders.add(player.getUniqueId());
         if (!settings.nameFormat().isBlank()) {
             player.playerListName(renderName(messages, settings.nameFormat(), context));
-        }
+            managedNames.add(player.getUniqueId());
+        } else if (managedNames.remove(player.getUniqueId())) player.playerListName(null);
     }
 
     // ------------------------------ закрепление вверху списка -------------------
@@ -169,7 +184,9 @@ public final class TabListService implements Listener {
         }
         for (String name : settings.pinnedNames()) {
             if (name != null && !name.isBlank()) {
-                team.addEntry(name.trim()); // работает и для оффлайн-игроков
+                String exact = Bukkit.getOnlinePlayers().stream().map(Player::getName)
+                        .filter(n -> n.equalsIgnoreCase(name.trim())).findFirst().orElse(name.trim());
+                if (board.getEntryTeam(exact) == null || board.getEntryTeam(exact) == team) team.addEntry(exact);
             }
         }
     }
@@ -187,10 +204,9 @@ public final class TabListService implements Listener {
         if (team == null) {
             team = board.registerNewTeam(PIN_TEAM_NAME);
         }
-        for (String name : settings.pinnedNames()) {
-            if (name != null && !name.isBlank() && !team.hasEntry(name.trim())) {
-                team.addEntry(name.trim());
-            }
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            String name = player.getName();
+            if (isPinned(settings.pinnedNames(), name) && !team.hasEntry(name) && board.getEntryTeam(name) == null) team.addEntry(name);
         }
     }
 
@@ -272,6 +288,19 @@ public final class TabListService implements Listener {
                 PlaceholderValues.passLeft(account, nowMillis),
                 account != null && account.passUntil > 0
                         ? PlaceholderValues.wholeDaysLeft(account.passUntil, nowMillis)
-                        : 0);
+                        : 0,
+                PresentationContext.of(account, accessManager.getStage(player), nowMillis,
+                        accessManager.config().trialEnabled() && accessManager.store().isTrialEligible(player.getName(), player.getUniqueId()),
+                        accessManager.config().trialDays(), plugin.messages(), navigation(player)));
+    }
+
+    private String navigation(Player player) {
+        List<String> links = new ArrayList<>();
+        if (accessManager.config().serverMenu().enabled() && player.hasPermission("chrdkregister.menu")) links.add("/menu");
+        for (String[] addon : new String[][]{{"CHRDK_DailyRewards", "chrdkdaily.use", "/daily"},
+                {"CHRDK_Auction", "chrdkauction.use", "/ah"}, {"CHRDK_Lottery", "chrdklottery.use", "/lottery"}}) {
+            if (Bukkit.getPluginManager().isPluginEnabled(addon[0]) && player.hasPermission(addon[1])) links.add(addon[2]);
+        }
+        return String.join(" • ", links);
     }
 }

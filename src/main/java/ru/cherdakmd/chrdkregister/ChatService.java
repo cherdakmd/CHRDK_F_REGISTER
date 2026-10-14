@@ -75,6 +75,7 @@ public final class ChatService implements Listener {
 
     private BukkitTask autoMessageTask;
     private int autoMessageIndex;
+    private String lastAutoMessage = "";
     private volatile long lastGlobalMessageAt;
 
     public ChatService(JavaPlugin plugin, AccessManager accessManager, ChatConfig config,
@@ -459,27 +460,40 @@ public final class ChatService implements Listener {
     private void sendNextAutoMessage() {
         ChatConfig cfg = this.config;
         if (!cfg.enabled() || !cfg.autoMessagesEnabled()) return;
-        List<String> messages = cfg.autoMessages();
-        if (messages.isEmpty()) return;
-
-        int onlineCount = Bukkit.getOnlinePlayers().size();
-        if (onlineCount < cfg.autoMessagesMinimumPlayers()) return;
-
-        String raw;
+        List<Player> audience = Bukkit.getOnlinePlayers().stream()
+                .filter(p -> p.hasPermission(PERMISSION_AUTO_MESSAGE)
+                        && accessManager.getStage(p) == AccessManager.PlayerStage.AUTHENTICATED).toList();
+        if (audience.isEmpty() || audience.size() < cfg.autoMessagesMinimumPlayers()) return;
+        List<AutoMessage> candidates = cfg.autoMessageEntries().stream()
+                .filter(entry -> audience.stream().anyMatch(p -> eligible(entry, p))).toList();
+        if (candidates.isEmpty()) return;
+        AutoMessage chosen;
         if (cfg.autoMessagesRandomOrder()) {
-            raw = messages.get(ThreadLocalRandom.current().nextInt(messages.size()));
+            List<AutoMessage> different = candidates.stream().filter(entry -> !entry.text().equals(lastAutoMessage)).toList();
+            List<AutoMessage> pool = different.isEmpty() ? candidates : different;
+            chosen = pool.get(ThreadLocalRandom.current().nextInt(pool.size()));
         } else {
-            raw = messages.get(Math.floorMod(autoMessageIndex, messages.size()));
-            autoMessageIndex++;
+            chosen = candidates.get(Math.floorMod(autoMessageIndex++, candidates.size()));
         }
+        lastAutoMessage = chosen.text();
+        long now = System.currentTimeMillis();
+        for (Player player : audience) {
+            if (!eligible(chosen, player)) continue;
+            var account = accessManager.store().getAccount(player.getName()).orElse(null);
+            player.sendMessage(messages.renderTemplate(cfg.autoMessagesPrefix() + chosen.text(),
+                    "online", audience.size(), "player", player.getName(),
+                    "pass_left", PlaceholderValues.passLeft(account, now),
+                    "trial_days", accessManager.config().trialDays()));
+        }
+    }
 
-        Component line = legacy(cfg.autoMessagesPrefix())
-                .append(legacy(applyPlaceholders(raw, Map.of("%online%", Integer.toString(onlineCount)))));
-        for (Player online : Bukkit.getOnlinePlayers()) {
-            if (!online.hasPermission(PERMISSION_AUTO_MESSAGE)) continue;
-            if (accessManager.getStage(online) != AccessManager.PlayerStage.AUTHENTICATED) continue;
-            online.sendMessage(line);
-        }
+    private boolean eligible(AutoMessage entry, Player player) {
+        var account = accessManager.store().getAccount(player.getName()).orElse(null);
+        long now = System.currentTimeMillis();
+        boolean trial = account != null && account.hasActivePass(now) && "trial".equals(account.lastGrantSource)
+                && account.trialUntil == account.passUntil;
+        boolean unsecured = accessManager.config().totpEnabled() && (account == null || !account.isTotpEnabled());
+        return entry.eligible(name -> Bukkit.getPluginManager().isPluginEnabled(name), player::hasPermission, trial, unsecured);
     }
 
     /* ------------------------------------------------------------------ *

@@ -28,7 +28,7 @@ import java.util.Optional;
 public interface ChrdkRegisterApi {
 
     /** Версия контракта API. Растёт при расширении (добавлении методов/событий). */
-    int API_VERSION = 2;
+    int API_VERSION = 3;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -40,6 +40,11 @@ public interface ChrdkRegisterApi {
 
     /** Unix-время (мс) окончания проходки; {@code 0}, если проходки нет. Работает оффлайн. */
     long passUntil(String playerName);
+
+    /** True when the account has only received its registration trial (no later non-trial grant).
+     * Includes an expired/revoked trial. Default false preserves older API implementations.
+     */
+    default boolean isTrialOnly(String playerName) { return false; }
 
     /** Зарегистрирован ли у игрока пароль. Работает оффлайн. */
     boolean isRegistered(String playerName);

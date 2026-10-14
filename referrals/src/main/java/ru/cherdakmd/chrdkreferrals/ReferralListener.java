@@ -22,13 +22,11 @@ public final class ReferralListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPassGranted(PassGrantedEvent event) {
-        service.onPassGranted(event.getPlayerName());
+        if (ReferralRules.triggersBonus(event.getSource())) service.onPassGranted(event.getPlayerName());
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        if (!service.shouldHint(event.getPlayer().getName())) return;
-        plugin.getServer().getScheduler().runTaskLater(plugin,
-                () -> plugin.messages().send(event.getPlayer(), "ref.join-hint"), 100L);
+    public void onAuthenticated(ru.cherdakmd.chrdkregister.api.events.PlayerAuthCompletedEvent event) {
+        if (service.shouldHint(event.getPlayer().getName())) plugin.messages().send(event.getPlayer(), "ref.join-hint");
     }
 }

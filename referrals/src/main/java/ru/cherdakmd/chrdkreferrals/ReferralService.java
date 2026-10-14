@@ -32,7 +32,7 @@ public final class ReferralService {
                 || api.isRegistered(inviter);
         ReferralRules.LinkError error = ReferralRules.canLink(
                 inviter, invitee,
-                api.passUntil(invitee),
+                api.isTrialOnly(invitee) ? 0 : api.passUntil(invitee),
                 store.hasAnyLink(invitee),
                 inviterRegistered,
                 plugin.config().requireInviterRegistered());
@@ -83,7 +83,7 @@ public final class ReferralService {
         ChrdkRegisterApi api = plugin.coreApi();
         return api != null
                 && plugin.config().joinHintEnabled()
-                && api.passUntil(playerName) == 0
+                && (api.passUntil(playerName) == 0 || api.isTrialOnly(playerName))
                 && !store.hasAnyLink(playerName);
     }
 }
