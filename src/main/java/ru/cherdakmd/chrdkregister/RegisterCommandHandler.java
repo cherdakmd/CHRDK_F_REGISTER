@@ -1350,14 +1350,14 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             try {
                 PluginUpdateService.Result result = updater.execute(download, current);
                 updateReply(() -> {
-                    Messages latest = plugin.messages();
+                    Messages messages = plugin.messages();
                     if (!download) {
-                        latest.send(sender, "update.check-result", "current", current,
+                        messages.send(sender, "update.check-result", "current", current,
                                 "latest", result.version(), "url", result.url(), "label", label);
                     } else if (result.filesCurrent()) {
-                        latest.send(sender, "update.files-current", "latest", result.version());
+                        messages.send(sender, "update.files-current", "latest", result.version());
                     } else {
-                        latest.send(sender, "update.download-ready", "latest", result.version(),
+                        messages.send(sender, "update.download-ready", "latest", result.version(),
                                 "count", result.count(), "backup", result.backup(), "folder", result.updateDirectory());
                     }
                 });

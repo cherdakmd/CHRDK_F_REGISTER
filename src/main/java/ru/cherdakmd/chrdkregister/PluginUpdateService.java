@@ -323,7 +323,7 @@ public final class PluginUpdateService implements AutoCloseable {
         // Never follow symlinks. Cleanup must not turn a successfully staged update into a reported failure.
         try (var paths = Files.walk(root)) {
             for (Path path : paths.sorted(Comparator.reverseOrder()).toList()) Files.deleteIfExists(path);
-        } catch (IOException ignored) { }
+        } catch (IOException | UncheckedIOException | SecurityException ignored) { }
     }
 
     @Override public void close() {
@@ -371,7 +371,21 @@ public final class PluginUpdateService implements AutoCloseable {
                         .header("User-Agent", "CHRDK_Core-safe-updater")
                         .header("Accept", uri.getHost().equals("api.github.com") ? "application/vnd.github+json" : "application/octet-stream")
                         .GET().build();
-                HttpResponse<byte[]> response = client.send(request, info -> new LimitedBody(limit));
+                CompletableFuture<HttpResponse<byte[]>> pending = client.sendAsync(request, info -> new LimitedBody(limit));
+                HttpResponse<byte[]> response;
+                try {
+                    // A total deadline includes the entire body, even if headers arrive promptly.
+                    response = pending.get(90, TimeUnit.SECONDS);
+                } catch (TimeoutException timeout) {
+                    pending.cancel(true);
+                    throw new IOException("Истекло время загрузки ответа GitHub.", timeout);
+                } catch (ExecutionException exception) {
+                    if (exception.getCause() instanceof IOException io) throw io;
+                    throw new IOException("Ошибка загрузки GitHub.", exception.getCause());
+                } catch (InterruptedException interrupted) {
+                    pending.cancel(true);
+                    throw interrupted;
+                }
                 if (response.statusCode() == 200) return response.body();
                 if (Set.of(301, 302, 303, 307, 308).contains(response.statusCode())) {
                     String location = response.headers().firstValue("Location").orElseThrow(() -> new IOException("Перенаправление без адреса."));
