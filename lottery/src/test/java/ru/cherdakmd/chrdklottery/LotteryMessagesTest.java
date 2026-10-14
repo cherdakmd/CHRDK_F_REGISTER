@@ -18,7 +18,11 @@ class LotteryMessagesTest {
             try (var paths = Files.walk(Path.of("src/main/java"))) {
                 for (Path path : paths.filter(p -> p.toString().endsWith(".java")).toList()) {
                     Matcher matcher = pattern.matcher(Files.readString(path));
-                    while (matcher.find()) assertTrue(yaml.isString("messages." + matcher.group(1)), matcher.group(1));
+                    while (matcher.find()) {
+                        // notifyEvent("lottery.draw", ...) is a Discord event identifier, not a message key.
+                        if (matcher.group(1).equals("lottery.draw")) continue;
+                        assertTrue(yaml.isString("messages." + matcher.group(1)), matcher.group(1));
+                    }
                 }
             }
             assertTrue(yaml.getString("messages.lottery.info-yours").contains("%chance%"));
