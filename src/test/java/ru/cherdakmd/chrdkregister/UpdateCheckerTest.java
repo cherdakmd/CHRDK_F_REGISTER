@@ -51,7 +51,8 @@ class UpdateCheckerTest {
     void compareHandlesDifferentLengthsAndGarbage() {
         assertTrue(UpdateChecker.compareVersions("1.4.1", "1.4") > 0, "длиннее = новее");
         assertTrue(UpdateChecker.compareVersions("1.4", "1.4.1") < 0);
-        assertEquals(0, UpdateChecker.compareVersions("1.x.65", "1.0.65"), "битый компонент считается нулём");
+        assertEquals(0, UpdateChecker.compareVersions("1.x.65", "1"), "мусор в середине усекает версию");
+        assertTrue(UpdateChecker.compareVersions("1.x.65", "1.0.1") < 0, "усечённая версия короче = старее");
         assertTrue(UpdateChecker.compareVersions("1.4.66", "latest") > 0, "мусор трактуется как 0");
     }
 }
