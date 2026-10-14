@@ -1056,27 +1056,32 @@ public final class PluginConfig {
 
     /** Настройки динамического MOTD (motd:<key> секция). */
     public static final class MotdSettings {
-        public static final MotdSettings DISABLED = new MotdSettings(false, 60, List.of());
+        public static final MotdSettings DISABLED = new MotdSettings(false, 60, List.of(), "rotate");
 
         private final boolean enabled;
         private final int rotateSeconds;
         private final List<String> lines;
+        /** Режим выбора строки: {@code rotate} — по временному ковшу, {@code random} — случайно на пинг. */
+        private final String mode;
 
-        MotdSettings(boolean enabled, int rotateSeconds, List<String> lines) {
+        MotdSettings(boolean enabled, int rotateSeconds, List<String> lines, String mode) {
             this.enabled = enabled;
             this.rotateSeconds = rotateSeconds;
             this.lines = List.copyOf(lines);
+            this.mode = "random".equalsIgnoreCase(mode) ? "random" : "rotate";
         }
 
         static MotdSettings from(FileConfiguration config) {
             return new MotdSettings(
                     config.getBoolean("motd.enabled", false),
                     Math.clamp(config.getInt("motd.rotate-seconds", 60), 1, 3600),
-                    config.getStringList("motd.lines"));
+                    config.getStringList("motd.lines"),
+                    config.getString("motd.mode", "rotate").trim());
         }
 
         public boolean enabled() { return enabled; }
         public int rotateSeconds() { return rotateSeconds; }
         public List<String> lines() { return lines; }
+        public String mode() { return mode; }
     }
 }

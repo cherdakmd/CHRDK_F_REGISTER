@@ -147,17 +147,23 @@ boosty:
 
 # ================================================================
 #  Динамический MOTD (текст в списке серверов)
-#  Строки ротируются каждые rotate-seconds и поддерживают MiniMessage
-#  (<color>, <gradient>, <b> и т.п.) + плейсхолдеры:
-#  %online% %max% %date% %time% %version%
+#  Выбор строки — motd.mode (rotate каждые rotate-seconds или random на пинг),
+#  MiniMessage (<color>, <gradient>, <b> и т.п.) + плейсхолдеры:
+#  %online% %max% %date% %time% %version% %players% (ники онлайн)
+#  %price% (мин. цена проходки) %url% (ссылка на оплату)
 #  Для переноса строки внутри MOTD используйте \n (внутри one-linе кавычек)
 # ================================================================
 motd:
   enabled: false
+  # Как выбирать строку из списка: rotate — ковш по времени (при повторном пинге
+  # текст один и тот же), random — случайная строка на каждый пинг.
+  mode: rotate
   rotate-seconds: 60
+  # Плейсхолдеры: %online% %max% %date% %time% %version% %players% (ники онлайн,
+  # до 10 — дальше "+N"), %price% (мин. цена проходки), %url% (ссылка на оплату).
   lines:
-    - "<gold><b>Millida SMP</b></gold> <gray>•</gray> <green>выживание для своих</green>\n<gray>Онлайн: <white>%online%/%max%</white> — проходка через Boosty</gray>"
-    - "<gradient:#ffcc00:#ff8800><b>Добро пожаловать в Millida</b></gradient>\n<gray>Сегодня %date% · v%version% · ждём именно тебя</gray>"
+    - "<gold><b>ЧРДК</b></gold> <gray>•</gray> <green>выживание для своих</green>\n<gray>Онлайн: <white>%online%/%max%</white> — проходка через TradeMC</gray>"
+    - "<gradient:#ffcc00:#ff8800><b>ЧРДК — делаем контент вместе</b></gradient>\n<gray>Сегодня %date% · v%version% · ждём именно тебя</gray>"
 
 pass:
   # Мастер-флаг донат-стены. false — игроки БЕЗ проходки не получают

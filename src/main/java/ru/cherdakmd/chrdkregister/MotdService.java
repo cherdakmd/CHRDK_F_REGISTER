@@ -19,9 +19,11 @@ import java.util.function.Supplier;
  *
  * <p>Поддерживает несколько строк-шаблонов с MiniMessage-разметкой (градиенты,
  * категориальные цвета, иконки) и плейсхолдерами %online%, %max%, %date%,
- * %time%, %version%. Строки ротируются по временному ковшу
- * {@code rotate-seconds} — пинги внутри окна получают одинаковый текст
- * (в списке серверов MOTD не «моргает» при повторных пингах трекера).</p>
+ * %time%, %version%, %players% (ники онлайн), %price% (мин. цена проходки),
+ * %url% (ссылка на оплату). Режим выбора строки — {@code motd.mode}:
+ * {@code rotate} (по временному ковшу {@code rotate-seconds} — пинги внутри окна
+ * получают одинаковый текст, MOTD не «моргает» при повторных пингах трекера)
+ * или {@code random} (случайная строка на каждый пинг).</p>
  *
  * <p>Техника подачи: если у нас есть Adventure-сеттер {@code motd(Component)}
  * (Purpur/Paper — всегда), мотд отдаём компонентом; на старых ядрах — legacy
@@ -89,20 +91,48 @@ public final class MotdService implements Listener {
             return Component.text("");
         }
         int index = pickIndex(motd);
+        PluginConfig cfg = configSupplier.get();
         String raw = lines.get(index)
                 .replace("%online%", String.valueOf(onlinePlayers))
                 .replace("%max%", String.valueOf(maxPlayers))
+                .replace("%players%", onlinePlayersNicks(10))
+                .replace("%price%", String.valueOf(cfg.minimumDonationRubles()))
+                .replace("%url%", cfg.hasEffectiveDonateUrl() ? cfg.effectiveDonateUrl() : "")
                 .replace("%date%", LocalDateTime.now(configSupplier.get().timeZone()).format(DATE_FORMAT))
                 .replace("%time%", LocalDateTime.now(configSupplier.get().timeZone()).format(TIME_FORMAT))
                 .replace("%version%", plugin.getPluginMeta().getVersion());
         return mini.deserialize(raw);
     }
 
-    /** Номер строки для текущей секунды; при 1 строке — всегда 0. */
+    /** Первые N ников онлайн для MOTD («Steve, Alex, +7»); пусто — пустая строка. */
+    private static String onlinePlayersNicks(int limit) {
+        java.util.List<String> names = new java.util.ArrayList<>();
+        int total = 0;
+        for (org.bukkit.entity.Player online : org.bukkit.Bukkit.getOnlinePlayers()) {
+            total++;
+            if (names.size() < limit) {
+                names.add(online.getName());
+            }
+        }
+        StringBuilder builder = new StringBuilder(String.join(", ", names));
+        int rest = total - names.size();
+        if (rest > 0) {
+            if (builder.length() > 0) {
+                builder.append(" ");
+            }
+            builder.append("<dark_gray>+").append(rest).append("</dark_gray>");
+        }
+        return builder.toString();
+    }
+
+    /** Номер строки для текущего пинга; при 1 строке — всегда 0; режим random — случайный. */
     int pickIndex(PluginConfig.MotdSettings motd) {
         List<String> lines = motd.lines();
         if (lines.size() <= 1) {
             return 0;
+        }
+        if ("random".equals(motd.mode())) {
+            return java.util.concurrent.ThreadLocalRandom.current().nextInt(lines.size());
         }
         long bucket = System.currentTimeMillis() / (Math.max(1, motd.rotateSeconds()) * 1000L);
         return (int) (bucket % lines.size());
