@@ -28,7 +28,7 @@ import java.util.Optional;
 public interface ChrdkRegisterApi {
 
     /** Версия контракта API. Растёт при расширении (добавлении методов/событий). */
-    int API_VERSION = 1;
+    int API_VERSION = 2;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -67,6 +67,11 @@ public interface ChrdkRegisterApi {
 
     /** Отзывает проходку; {@code true}, если проходка была активна. */
     boolean revokePass(String playerName);
+
+    /** Queue an addon notification using the core Discord webhook and notifications.events allowlist.
+     * Default no-op keeps third-party API implementations source compatible. No webhook credentials leave the core.
+     */
+    default void notifyEvent(String event, String title, String description, String severity) { }
 
     /* ------------------------------ интеграции ------------------------------ */
 

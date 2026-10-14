@@ -20,3 +20,5 @@ include 'ranks'
 include 'cosmetics'
 include 'battlepass'
 include 'queue'
+
+include 'lottery'

@@ -52,6 +52,9 @@ class LuckPermsBootstrapTest {
         assertFalse(base.permissions().isEmpty(), "default наполняется правами игрока");
         assertTrue(base.permissions().contains("chrdkregister.menu"));
         assertTrue(admin.permissions().contains("chrdkregister.admin"));
+        assertTrue(base.permissions().contains("chrdklottery.use"));
+        assertTrue(admin.permissions().contains("chrdklottery.admin"));
+        assertFalse(base.permissions().contains("chrdklottery.admin"));
     }
 
     @Test

@@ -75,6 +75,11 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
         return accessManager.revokePass(playerName);
     }
 
+    @Override
+    public void notifyEvent(String event, String title, String description, String severity) {
+        accessManager.notifications().notify(event, title, description, severity);
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public <T> Optional<T> economy() {

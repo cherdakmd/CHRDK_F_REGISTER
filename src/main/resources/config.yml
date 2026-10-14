@@ -313,9 +313,9 @@ notifications:
   discord-webhook-url: ""
   # Какие события отправлять: pass.granted, pass.revoked, bruteforce.alert, totp.reset, password.reset,
   # multialt.alert, donate.pending, donatepay.error, donatepay.down, donatepay.up,
-  # chat.mute, totp.enabled, totp.disabled, password.change, update.available
+  # chat.mute, totp.enabled, totp.disabled, password.change, update.available, lottery.draw
   events: [pass.granted, pass.revoked, bruteforce.alert, totp.reset, password.reset, donate.pending,
-          donatepay.error, donatepay.down, donatepay.up, update.available]
+          donatepay.error, donatepay.down, donatepay.up, update.available, lottery.draw]
   # Упоминания в сообщении (например, "<@&1234567890>")
   mentions: []
 

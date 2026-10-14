@@ -24,6 +24,13 @@ class AddonApiContractTest {
     }
 
     @Test
+    void addonNotificationContractIsAdditive() throws Exception {
+        assertTrue(ChrdkRegisterApi.API_VERSION >= 2);
+        assertTrue(ChrdkRegisterApi.class.getMethod("notifyEvent", String.class, String.class,
+                String.class, String.class).isDefault());
+    }
+
+    @Test
     void authStagesKeepStableOrder() {
         // Аддоны полагаются на то, что значения не переименовываются/не удаляются.
         assertEquals("NO_PASS", ApiAuthStage.values()[0].name());
