@@ -177,6 +177,33 @@
 
 ## Настройка (`plugins/CHRDK_Core/config.yml`)
 
+### Донат только через TradeMC (RCON-режим, с 1.4.61)
+
+Если донат должен идти **только** через магазин [TradeMC](https://trademc.org), включите секцию
+`trademc` в `config.yml` — она одним переключателем выключает опросы DonatePay/EasyDonate и Boosty-подписки:
+
+```yaml
+trademc:
+  enabled: true
+  shop-id: 123456                      # ID магазина из панели
+  payment-url: "https://ваш-магазин.trademc.org"
+```
+
+Доставка покупок у TradeMC — по **RCON** (панель сама выполняет команду на сервере после оплаты):
+
+1. В `panel.trademc.org` → «Сервера» привяжите сервер по RCON (хост, порт и пароль из
+   `server.properties` → `rcon.port`/`rcon.password`, `enable-rcon=true`).
+2. Товару проходки пропишите поле «команда при покупке»:
+   `chrdkregister pass shoppay {player} <цена_товара>` — плейсхолдер ника смотрите в подсказке вашей панели.
+   Цену выставляйте равной тарифу плагина (`donatepay.minimum-rubles` / tiers) — по сумме считается срок.
+3. Хук `/pass shoppay <ник> <сумма>` проводит покупку полным донат-конвейером: сверка ника, журнал со
+   статусом источника `trademc`, аудит, авто-выдача/продление, donation-actions и уведомление игроку
+   («TradeMC xxx₽»). Мелкая сумма — в журнал на ручной разбор (`/pass pending`).
+4. Проверка: из консоли сервера `chrdkregister pass shoppay TestPlayer 150` или пробная покупка в магазине.
+
+Игрокам в строке продления показывается `trademc.payment-url`; `/pass status` показывает активный
+TradeMC-режим, `/pass health` — что API-опросы выключены сознательно.
+
 После первого запуска сервера с плагином создастся файл `plugins/CHRDK_Core/config.yml`:
 
 ```yaml
@@ -471,7 +498,7 @@ auto-messages:
 | `%chrdk_stats_granted%` | Проходок выдано по донатам за всё время | `61` |
 | `%chrdk_stats_conversion%` | Доля аккаунтов с активной проходкой, % | `44` |
 | `%chrdk_pass_price%` | Минимальная цена проходки (`donatepay.minimum-rubles`) | `150` |
-| `%chrdk_payment_url%` | Ссылка на страницу оплаты (`donatepay.payment-url`) | `https://new.donatepay.ru/@your_page` |
+| `%chrdk_payment_url%` | Ссылка на страницу оплаты (`trademc.payment-url` в режиме TradeMC, иначе `donatepay.payment-url`) | `https://new.donatepay.ru/@your_page` |
 
 Для оффлайн-игроков плейсхолдеры стадии входа и канала возвращают `оффлайн`/`нет`, остальные работают по сохранённым данным. Проверить вывод можно командой `/papi parse <ник> %chrdk_pass_left%`.
 
@@ -855,20 +882,20 @@ info <ник>`, данные — `plugins/CHRDK_Claims/claims-data.json`.
 ./gradlew build
 ```
 
-Собираются оба модуля: ядро появится в `build/libs/chrdk-core-1.4.60.jar`, аддон
-CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.60.jar`, реферальный —
-`referrals/build/libs/chrdk-referrals-1.4.60.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.60.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.60.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.60.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.60.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.60.jar` (зависит от аддона чар), общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.60.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.60.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.60.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.60.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.60.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.60.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются оба модуля: ядро появится в `build/libs/chrdk-core-1.4.61.jar`, аддон
+CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.61.jar`, реферальный —
+`referrals/build/libs/chrdk-referrals-1.4.61.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.61.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.61.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.61.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.61.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.61.jar` (зависит от аддона чар), общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.61.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.61.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.61.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.61.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.61.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.61.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). Оба JAR прикладываются к каждому релизу на GitHub.
 
 ---
@@ -1081,7 +1108,7 @@ ItemMeta, асинхронные сохранения, численные кра
 крафте брони/оружия без оверрайда блеска: чтение `getEnchantmentGlintOverride()`
 теперь идёт только после `hasEnchantmentGlintOverride()` — как требует новый
 контракт API. Все прочие JAR-ы без изменений; конфиги не менялись — замена
-одного `chrdk-tier-forge-1.4.60.jar` (или всех подряд) достаточна.
+одного `chrdk-tier-forge-1.4.61.jar` (или всех подряд) достаточна.
 
 ---
 
@@ -1108,7 +1135,7 @@ ItemMeta, асинхронные сохранения, численные кра
 (`/claim sell <цена>` + `/claim buy`, налог 10% с продавца), участники
 (`/claim add <ник> [все]`), карта `/claim map`, полная защита территории
 (блоки/контейнеры/двери/сущности/взрывы/огонь/жидкости/поршни/воронки).
-Лимит 24 чанка (+8 с проходкой). `chrdk-claims-1.4.60.jar` рядом с ядром
+Лимит 24 чанка (+8 с проходкой). `chrdk-claims-1.4.61.jar` рядом с ядром
 (≥ 1.4.6), перезапуск; данные — `plugins/CHRDK_Claims/claims-data.json`,
 настройки — `plugins/CHRDK_Claims/config.yml`. Остальные JAR-ы без изменений.
 
@@ -1174,7 +1201,7 @@ JAR-ы — простая замена.
 
 Восьмой аддон — **CHRDK_CommonGoals**, общие цели сообщества: сервер сообща набивает
 цели волны, пул алмазов делится между участниками по вкладу, выдача — `/goals claim`.
-`chrdk-common-goals-1.4.60.jar` рядом с ядром (≥ 1.4.6), перезапуск. Настройки
+`chrdk-common-goals-1.4.61.jar` рядом с ядром (≥ 1.4.6), перезапуск. Настройки
 волны/шаблонов — `plugins/CHRDK_CommonGoals/config.yml`.
 
 ---
@@ -1202,7 +1229,7 @@ plugins/<Addon>/messages.yml — удалите их после обновлен
 структуру), чтобы сервер взял актуальные ключи.
 
 **Важно при обновлении:** ядро — заменой JAR. Аддон опционален:
-`chrdk-artifacts-1.4.60.jar` рядом с ядром и chrdk-enchants (той же версии), перезапуск.
+`chrdk-artifacts-1.4.61.jar` рядом с ядром и chrdk-enchants (той же версии), перезапуск.
 Кулдауны/вкл/цена опытом — в `plugins/CHRDK_Artifacts/config.yml`.
 
 ---
@@ -1213,7 +1240,7 @@ plugins/<Addon>/messages.yml — удалите их после обновлен
 проклятого до легендарного, накат при крафте брони/оружия/инструментов, апгрейд двух
 одинаковых тирированных предметов на наковальне, перенос тира через апгрейд в незерит.
 
-**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-tier-forge-1.4.60.jar`
+**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-tier-forge-1.4.61.jar`
 рядом с ядром (≥ 1.4.6), перезапуск. Шансы/бонусы тиров — в `plugins/CHRDK_TierForge/config.yml`.
 
 ---
@@ -1225,7 +1252,7 @@ plugins/<Addon>/messages.yml — удалите их после обновлен
 крадушке и снайперских стрел с поправкой на дистанцию. Получение — стол зачарований и
 жители-библиотекари, применение — наковальня; всё хранится в NBT предметов.
 
-**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-enchants-1.4.60.jar`
+**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-enchants-1.4.61.jar`
 рядом с ядром (≥ 1.4.6, `depend`), перезапуск. Баланс/шансы/лимиты — `plugins/CHRDK_Enchants/config.yml`.
 
 ---

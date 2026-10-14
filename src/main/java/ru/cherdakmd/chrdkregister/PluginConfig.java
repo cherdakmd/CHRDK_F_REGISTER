@@ -31,6 +31,7 @@ public final class PluginConfig {
 
     /** Подписочный провайдер Boosty (сеттится из load(), в большой ctor не входит). */
     private BoostySettings boosty = BoostySettings.DISABLED;
+    private TradeMcSettings trademc = TradeMcSettings.DISABLED;
 
     /** Динамический MOTD (сеттится из load(), как и Boosty). */
     private MotdSettings motd = MotdSettings.DISABLED;
@@ -396,6 +397,7 @@ public final class PluginConfig {
                 config.getBoolean("donatepay.enabled", true)
         );
         parsed.boosty = BoostySettings.from(config);
+        parsed.trademc = TradeMcSettings.from(config);
         parsed.motd = MotdSettings.from(config);
         parsed.passEnabled = config.getBoolean("pass.enabled", true);
         parsed.donateActions = DonateAction.parseList(config.getMapList("donation-actions"));
@@ -481,6 +483,26 @@ public final class PluginConfig {
 
     public BoostySettings boosty() {
         return boosty;
+    }
+
+    /** Настройки магазина TradeMC (trademc:<key> секция). */
+    public TradeMcSettings trademc() {
+        return trademc;
+    }
+
+    /** Ссылка, которую видит игрок как «продлить/купить проходку»: в TradeMC-режиме — ссылка магазина. */
+    public String effectiveDonateUrl() {
+        return trademc.enabled() && !trademc.paymentUrl().isBlank()
+                ? trademc.paymentUrl() : donatePayPaymentUrl;
+    }
+
+    public boolean hasEffectiveDonateUrl() {
+        return effectiveDonateUrl() != null && !effectiveDonateUrl().isBlank();
+    }
+
+    /** Подпись провайдера ссылки у игроков: «TradeMC» в RCON-режиме, иначе «DonatePay». */
+    public String effectiveDonateLabel() {
+        return trademc.enabled() ? "TradeMC" : "DonatePay";
     }
 
     /** Динамический MOTD. НИКОГДА не null. */
@@ -994,6 +1016,37 @@ public final class PluginConfig {
             }
             return blog.isBlank() ? "" : "https://boosty.to/" + blog;
         }
+    }
+
+
+    /* ------------------------------------------------------------------ *
+     *  TradeMC — магазин с доставкой по RCON (trademc:<key> секция)
+     * ------------------------------------------------------------------ */
+
+    /** Настройки магазина TradeMC. Режим enabled выключает опросы DonatePay/EasyDonate и Boosty. */
+    public static final class TradeMcSettings {
+        public static final TradeMcSettings DISABLED = new TradeMcSettings(false, 0, "");
+
+        private final boolean enabled;
+        private final int shopId;
+        private final String paymentUrl;
+
+        TradeMcSettings(boolean enabled, int shopId, String paymentUrl) {
+            this.enabled = enabled;
+            this.shopId = shopId;
+            this.paymentUrl = paymentUrl;
+        }
+
+        static TradeMcSettings from(FileConfiguration config) {
+            return new TradeMcSettings(
+                    config.getBoolean("trademc.enabled", false),
+                    Math.max(0, config.getInt("trademc.shop-id", 0)),
+                    config.getString("trademc.payment-url", "").trim());
+        }
+
+        public boolean enabled() { return enabled; }
+        public int shopId() { return shopId; }
+        public String paymentUrl() { return paymentUrl; }
     }
 
 

@@ -288,9 +288,11 @@ public final class AccessManager {
         this.housekeepingTask = Bukkit.getScheduler().runTaskTimer(
                 plugin, this::runHousekeeping, 20L * 30L, 20L * 60L * 30L);
 
-        long boostyTicks = Math.max(20L * 600L, config.boosty().recheckHours() * 20L * 3600L);
-        this.boostyRecheckTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
-                plugin, this::maybeRecheckBoosty, 20L * 600L, boostyTicks);
+        if (!config.trademc().enabled()) {
+            long boostyTicks = Math.max(20L * 600L, config.boosty().recheckHours() * 20L * 3600L);
+            this.boostyRecheckTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
+                    plugin, this::maybeRecheckBoosty, 20L * 600L, boostyTicks);
+        }
 
         if (config.storageBackupOnStart()) {
             store.createBackup("start", config.storageBackupCount());
@@ -302,7 +304,11 @@ public final class AccessManager {
             onPlayerJoin(online);
         }
 
-        if (!config.donatePayReady()) {
+        if (config.trademc().enabled()) {
+            logger.info("TradeMC-режим: донат ТОЛЬКО через магазин TradeMC (RCON-команда "
+                    + "'/pass shoppay <ник> <сумма_руб>' от панели). Опросы DonatePay/EasyDonate "
+                    + "и Boosty-подписки выключены единым переключателем trademc.enabled.");
+        } else if (!config.donatePayReady()) {
             logger.warning("DonatePay API token is not set in plugins/CHRDK_Core/config.yml. "
                     + "Automatic pass activation via DonatePay is paused until configured.");
         } else {
@@ -322,7 +328,7 @@ public final class AccessManager {
      * токене — иначе невалидный конфиг проявляется только тишиной автоначислений.
      */
     private void verifyDonatePayToken(String reason) {
-        if (!config.donatePayReady()) {
+        if (!config.donatePayReady() || config.trademc().enabled()) {
             return;
         }
         PluginConfig snapshot = config;
@@ -419,9 +425,11 @@ public final class AccessManager {
         this.housekeepingTask = Bukkit.getScheduler().runTaskTimer(
                 plugin, this::runHousekeeping, 20L * 30L, 20L * 60L * 30L);
 
-        long boostyTicksReload = Math.max(20L * 600L, newConfig.boosty().recheckHours() * 20L * 3600L);
-        this.boostyRecheckTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
-                plugin, this::maybeRecheckBoosty, 20L * 600L, boostyTicksReload);
+        if (!newConfig.trademc().enabled()) {
+            long boostyTicksReload = Math.max(20L * 600L, newConfig.boosty().recheckHours() * 20L * 3600L);
+            this.boostyRecheckTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
+                    plugin, this::maybeRecheckBoosty, 20L * 600L, boostyTicksReload);
+        }
 
         applyLogMasking();
         audit.log(AuditLog.CONFIG_RELOAD, "server", "", "",
@@ -1302,6 +1310,9 @@ public final class AccessManager {
 
     /** Асинхронная перепроверка привязок: активным догоняет горизонт проходки. */
     private void maybeRecheckBoosty() {
+        if (config().trademc().enabled()) {
+            return; // TradeMC-режим: Boosty-подписки выключены единым переключателем
+        }
         PluginConfig.BoostySettings bs = config().boosty();
         if (!bs.ready() || boostyManager.bindings().isEmpty()) {
             return;
@@ -1589,7 +1600,7 @@ public final class AccessManager {
             messages.send(player, "pass.expiring",
                     "remaining", AccessManager.describeRemaining(warnMinutes * 60_000L),
                     "until", formatTime(passUntil),
-                    "renew", config.hasPaymentUrl() ? config.donatePayPaymentUrl() : "/pass");
+                    "renew", config.hasEffectiveDonateUrl() ? config.effectiveDonateUrl() : "/pass");
             if (config.expiryWarningSound()) {
                 player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1.0f, 0.8f);
             }
@@ -1682,14 +1693,20 @@ public final class AccessManager {
         // ссылок на оплату в шаблоне нет: кликабельные теги через %placeholder% не проходят
         // парсер. С 1.4.39 показ ссылки НЕ зависит от enabled: флаг выключает только
         // API-опрос, а ссылка живёт по наличию URL (режим «только магазин, без API»)
-        if (config.hasPaymentUrl()) {
-            sendPaymentLinkLine(player, "DonatePay", config.donatePayPaymentUrl());
-        }
-        if (!config.easyDonatePaymentUrl().isBlank()) {
-            sendPaymentLinkLine(player, "EasyDonate", config.easyDonatePaymentUrl());
-        }
-        if (!config.boosty().linkForPlayers().isBlank()) {
-            sendPaymentLinkLine(player, "Boosty", config.boosty().linkForPlayers());
+        if (config.trademc().enabled()) {
+            if (config.hasEffectiveDonateUrl()) {
+                sendPaymentLinkLine(player, "TradeMC", config.effectiveDonateUrl());
+            }
+        } else {
+            if (config.hasPaymentUrl()) {
+                sendPaymentLinkLine(player, "DonatePay", config.donatePayPaymentUrl());
+            }
+            if (!config.easyDonatePaymentUrl().isBlank()) {
+                sendPaymentLinkLine(player, "EasyDonate", config.easyDonatePaymentUrl());
+            }
+            if (!config.boosty().linkForPlayers().isBlank()) {
+                sendPaymentLinkLine(player, "Boosty", config.boosty().linkForPlayers());
+            }
         }
 
         if (showTitle) {
@@ -1771,6 +1788,10 @@ public final class AccessManager {
      * сервиса не блокирует выдачу через другой.
      */
     private DonatePollReport pollDonationsSafely() {
+        if (config.trademc().enabled()) {
+            // Режим TradeMC: все API-опросы донат-провайдеров выключены единым переключателем
+            return DonatePollReport.skipped();
+        }
         if (!donationPollRunning.compareAndSet(false, true)) {
             return DonatePollReport.skipped();
         }
@@ -2018,6 +2039,9 @@ public final class AccessManager {
     /** Heartbeat-строки по провайдерам + напоминания об очереди — видно, что сторож жив. */
     private void donateHeartbeat() {
         PluginConfig currentConfig = this.config;
+        if (currentConfig.trademc().enabled()) {
+            return; // TradeMC-режим: провайдерские пульсы не работают — стучать не о чем
+        }
         for (ProviderPulse pulse : donationPulses.values()) {
             if (!pulse.provider.ready()) {
                 continue;
@@ -2094,6 +2118,9 @@ public final class AccessManager {
     /** Карточки всех провайдеров в фиксированном порядке (donatepay, easydonate). */
     public java.util.List<DonateHealthCard> donateHealthCards() {
         java.util.List<DonateHealthCard> cards = new java.util.ArrayList<>();
+        if (config.trademc().enabled()) {
+            return cards; // TradeMC-режим: провайдеры выключены — карточек нет
+        }
         for (ProviderPulse pulse : donationPulses.values()) {
             long attempts = pulse.attempts.get();
             String source = pulse.provider.key();

@@ -1072,6 +1072,8 @@ public final class RegistrationStore {
 
     /** Идентификатор первоисточника донатов (исторический, без префиксов). */
     public static final String DONATION_SOURCE_DONATEPAY = "donatepay";
+    /** Источник журнала: покупки магазина TradeMC, приходящие RCON-командой {@code /pass shoppay}. */
+    public static final String DONATION_SOURCE_TRADEMC = "trademc";
 
     /* ------------------------------------------------------------------ *
      *  DonatePay journal, payment codes and counters

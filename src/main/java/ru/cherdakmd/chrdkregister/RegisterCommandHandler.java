@@ -29,7 +29,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
     private static final List<String> ADMIN_SUBCOMMANDS =
             List.of("add", "remove", "check", "unregister", "reset2fa", "status", "reload",
                     "pending", "donations", "health", "approve", "reject", "sessions", "logoutall", "stats", "doctor", "audit",
-                    "backup", "gift", "testpay", "testpay-live", "recheck", "donationsgui");
+                    "backup", "gift", "testpay", "testpay-live", "shoppay", "recheck", "donationsgui");
     private static final List<String> MUTE_DURATIONS = List.of("10m", "30m", "1h", "6h", "1d", "7d");
     private static final List<String> TWO_FACTOR_SUBCOMMANDS =
             List.of("setup", "confirm", "disable", "status", "cancel", "qr");
@@ -357,6 +357,10 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
 
         switch (sub) {
             case "boost" -> {
+                if (accessManager.config().trademc().enabled()) {
+                    messages.send(sender, "boost.disabled");
+                    return true;
+                }
                 if (!(sender instanceof Player boostPlayer)) {
                     messages.send(sender, "error.players-only");
                     return true;
@@ -578,6 +582,10 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 return true;
             }
             case "health" -> {
+                if (accessManager.config().trademc().enabled()) {
+                    messages.send(sender, "donation.health-trademc-mode");
+                    return true;
+                }
                 java.util.List<AccessManager.DonateHealthCard> cards = accessManager.donateHealthCards();
                 messages.send(sender, "donation.health-header");
                 boolean anyReady = cards.stream().anyMatch(AccessManager.DonateHealthCard::ready);
@@ -662,7 +670,8 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 if (args.length >= 4) {
                     source = args[3].trim().toLowerCase(java.util.Locale.ROOT);
                     if (!source.equals(RegistrationStore.DONATION_SOURCE_DONATEPAY)
-                            && !source.equals(EasyDonateClient.SOURCE)) {
+                            && !source.equals(EasyDonateClient.SOURCE)
+                            && !source.equals(RegistrationStore.DONATION_SOURCE_TRADEMC)) {
                         messages.send(sender, "usage.pass-testpay", "label", label);
                         return true;
                     }
@@ -743,7 +752,50 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                         });
                 return true;
             }
+            case "shoppay" -> {
+                // Хук магазина TradeMC: панель шлёт по RCON 'chrdkregister pass shoppay <ник> <сумма_руб>'
+                // после оплаты товара — проводим покупку полным донат-конвейером (журнал, тарифы, действия).
+                if (args.length < 3) {
+                    messages.send(sender, "usage.pass-shoppay", "label", label);
+                    return true;
+                }
+                String donorName = args[1].trim();
+                int amount;
+                try {
+                    amount = Integer.parseInt(args[2]);
+                    if (amount < 0 || amount > 1_000_000) {
+                        messages.send(sender, "error.amount-number");
+                        return true;
+                    }
+                } catch (NumberFormatException exception) {
+                    messages.send(sender, "error.amount-number");
+                    return true;
+                }
+                DonationService.Outcome outcome = accessManager.simulateDonation(
+                        donorName, amount, RegistrationStore.DONATION_SOURCE_TRADEMC);
+                switch (outcome.status()) {
+                    case GRANTED -> messages.send(sender, "donation.shoppay-granted",
+                            "amount", amount,
+                            "name", outcome.playerName(),
+                            "days", outcome.days(),
+                            "until", AccessManager.formatTimestamp(outcome.passUntil()));
+                    case REJECTED -> messages.send(sender, "donation.shoppay-rejected",
+                            "amount", amount,
+                            "note", outcome.note().isBlank() ? "—" : outcome.note());
+                    default -> messages.send(sender, "donation.shoppay-pending",
+                            "amount", amount,
+                            "donor", donorName,
+                            "status", outcome.status().name(),
+                            "note", outcome.note().isBlank() ? "—" : outcome.note(),
+                            "label", label);
+                }
+                return true;
+            }
             case "recheck" -> {
+                if (accessManager.config().trademc().enabled()) {
+                    messages.send(sender, "donation.recheck-unavailable");
+                    return true;
+                }
                 if (!accessManager.config().donatePayReady() && !accessManager.config().easyDonateReady()) {
                     messages.send(sender, "donation.recheck-unavailable");
                     return true;
@@ -1097,8 +1149,8 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                                     "total_paid_kopecks", DonationService.formatRubles(account.totalPaidKopecks),
                                     "payments_count", account.paymentsCount)));
         }        messages.send(player, "pass.info.renew",
-                "url", accessManager.config().hasPaymentUrl()
-                        ? accessManager.config().donatePayPaymentUrl() : "/pass");
+                "url", accessManager.config().hasEffectiveDonateUrl()
+                        ? accessManager.config().effectiveDonateUrl() : "/pass");
         messages.send(player, "pass.info.footer-line");
     }
 
@@ -1191,9 +1243,14 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 .append(messages.get("status.two-factor-value",
                                 "enabled", store.getTotpEnabledCount(),
                                 "state", Messages.trusted(messages.raw(cfg.totpEnabled() ? "common.on" : "common.off")))));
+                                if (cfg.trademc().enabled()) {
+                                    messages.send(sender, "status.trademc-mode",
+                                            "shop", cfg.trademc().shopId());
+                                } else {
                                 messages.send(sender, "status.donatepay",
                 "value", Messages.trusted(messages.raw(!cfg.donatePayEnabled() ? "common.provider-disabled"
                         : (cfg.donatePayReady() ? "common.connected" : "common.token-missing"))));
+                                }
         sender.sendMessage(messages.get("status.donatepay-label")
                 .append(messages.get("status.donatepay-value",
                                 "minimum_donation_rubles", cfg.minimumDonationRubles(),

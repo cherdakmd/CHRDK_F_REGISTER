@@ -133,7 +133,7 @@ public final class PlaceholderIntegration extends PlaceholderExpansion {
             case "stats_conversion" -> Integer.toString(PlaceholderValues.conversionPercent(
                     store.getActivePassCount(now), store.getTotalAccountCount()));
             case "pass_price" -> Integer.toString(accessManager.config().minimumDonationRubles());
-            case "payment_url" -> accessManager.config().donatePayPaymentUrl();
+            case "payment_url" -> accessManager.config().effectiveDonateUrl();
             default -> null;
         };
     }

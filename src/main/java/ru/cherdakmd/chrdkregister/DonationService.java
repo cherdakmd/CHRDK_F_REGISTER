@@ -191,7 +191,7 @@ public final class DonationService {
                         messages == null ? "" : messages.raw("donation.notify.granted-body",
                                 "player", grantedTo, "amount", amount, "days", days),
                         "good");
-                notifyOnline(grantedTo, passUntil, "DonatePay " + amount + "₽");
+                notifyOnline(grantedTo, passUntil, sourceLabel(source) + " " + amount + "₽");
             }
             case PENDING_AMOUNT, PENDING_NAME, PENDING_REVIEW -> {
                 logger.warning("DonatePay donation #" + transaction.id() + " from '" + donor
@@ -363,6 +363,14 @@ public final class DonationService {
         if (notifier != null) {
             notifier.onPassGranted(playerName, passUntil, source);
         }
+    }
+
+    /** Человекочитаемое имя источника доната для нотификаций игроку («TradeMC 159₽»). */
+    private static String sourceLabel(String source) {
+        if (RegistrationStore.DONATION_SOURCE_TRADEMC.equals(source)) return "TradeMC";
+        if (EasyDonateClient.SOURCE.equals(source)) return "EasyDonate";
+        if (RegistrationStore.DONATION_SOURCE_DONATEPAY.equals(source)) return "DonatePay";
+        return source == null || source.isBlank() ? "Donation" : source;
     }
 
     private static String generateCode(int digits) {
