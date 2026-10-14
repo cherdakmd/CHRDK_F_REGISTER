@@ -14,15 +14,15 @@ import static ru.cherdakmd.chrdkartifacts.ArtifactDef.Side.GOOD;
 import org.bukkit.Material;
 
 /**
- * Статический каталог всех 30 артефактов: 15 светлых и 15 проклятых.
- * Имена и описания живут в messages.yml ({@code art.<id>.name|lore}),
- * эффекты — в {@link ArtifactEffects}.
+ * Статический каталог всех 65 артефактов: 33 светлых и 32 проклятых (30 базовых
+ * + 35 по мотивам CHRDK_REBORN, 1.4.58). Имена и описания живут в messages.yml
+ * ({@code art.<id>.name|lore}), эффекты — в {@link ArtifactEffects}.
  */
 public final class ArtifactRegistry {
 
-    public static final int EXPECTED_SIZE = 30;
-    public static final int EXPECTED_GOOD = 15;
-    public static final int EXPECTED_CURSED = 15;
+    public static final int EXPECTED_SIZE = 65;
+    public static final int EXPECTED_GOOD = 33;
+    public static final int EXPECTED_CURSED = 32;
 
     private static final Map<String, ArtifactDef> REGISTRY = new LinkedHashMap<>();
 
@@ -64,6 +64,49 @@ public final class ArtifactRegistry {
         register("zhalo-moroki", CURSED, ACTIVE, Material.BLAZE_ROD, 120, 2);
         register("chasy-duroshljopa", CURSED, ACTIVE, Material.CLOCK, 900, 3);
         register("porvannyj-kupon", CURSED, ACTIVE, Material.LEATHER, 300, 0);
+
+        /* ---- добрая волна (1.4.58, по мотивам CHRDK_REBORN): пассивные ---- */
+        register("pero-feniksa", GOOD, PASSIVE, Material.BLAZE_POWDER);
+        register("magnit-opyta", GOOD, PASSIVE, Material.PRISMARINE_SHARD);
+        register("zhnej-dush", GOOD, PASSIVE, Material.SOUL_LANTERN);
+        register("ledyanaya-aura", GOOD, PASSIVE, Material.BLUE_ICE);
+        register("ternistyj-plasch", GOOD, PASSIVE, Material.CACTUS);
+        register("travjanoj-eliksir", GOOD, PASSIVE, Material.OXEYE_DAISY);
+        register("sapogi-vetra", GOOD, PASSIVE, Material.RABBIT_FOOT);
+        register("klever-udachi", GOOD, PASSIVE, Material.FERN);
+        register("travyanoj-meshochek", GOOD, PASSIVE, Material.WHEAT_SEEDS);
+        register("serdtse-drakona", GOOD, PASSIVE, Material.DRAGON_BREATH);
+
+        /* ---- добрая волна (1.4.58): активные ---- */
+        register("svitok-ochischeniya", GOOD, ACTIVE, Material.SHULKER_SHELL, 240, 5);
+        register("totem-krovi", GOOD, ACTIVE, Material.ROTTEN_FLESH, 180, 4);
+        register("sfera-pobega", GOOD, ACTIVE, Material.ENDER_PEARL, 120, 3);
+        register("ledyanaya-stena", GOOD, ACTIVE, Material.SNOW_BLOCK, 90, 2);
+        register("glaz-nachala", GOOD, ACTIVE, Material.ENDER_EYE, 300, 4);
+        register("korona-bezdny", GOOD, ACTIVE, Material.CRYING_OBSIDIAN, 300, 8);
+        register("ender-sdvig", GOOD, ACTIVE, Material.CHORUS_FRUIT, 60, 1);
+        register("oskolok-vechnosti", GOOD, ACTIVE, Material.NETHER_STAR, 600, 12);
+
+        /* ---- тёмная волна (1.4.58): проклятые пассивные ---- */
+        register("okov-tyazhesti", CURSED, PASSIVE, Material.CHAIN);
+        register("pustoy-zhivot", CURSED, PASSIVE, Material.WEEPING_VINES);
+        register("slabye-kisti", CURSED, PASSIVE, Material.SPONGE);
+        register("krovavyj-svyaz", CURSED, PASSIVE, Material.NETHERITE_SCRAP);
+        register("smertnyj-potok", CURSED, PASSIVE, Material.KELP);
+        register("chernye-slezy", CURSED, PASSIVE, Material.BLACK_DYE);
+        register("ruga-zhadnosti", CURSED, PASSIVE, Material.LAPIS_LAZULI);
+        register("prah-marka", CURSED, PASSIVE, Material.BROWN_MUSHROOM);
+        register("koltso-usmerti", CURSED, PASSIVE, Material.WITHER_ROSE);
+
+        /* ---- тёмная волна (1.4.58): проклятые активные ---- */
+        register("kniga-proklyatiy", CURSED, ACTIVE, Material.BOOK, 300, 4);
+        register("zhertvennyj-kubok", CURSED, ACTIVE, Material.CRIMSON_FUNGUS, 120, 2);
+        register("raskolotaya-luna", CURSED, ACTIVE, Material.PACKED_ICE, 600, 5);
+        register("shlyapa-bezdelnika", CURSED, ACTIVE, Material.CARROT_ON_A_STICK, 30, 0);
+        register("silok-dushi", CURSED, ACTIVE, Material.TWISTING_VINES, 90, 2);
+        register("oblaka-durmana", CURSED, ACTIVE, Material.HANGING_ROOTS, 120, 2);
+        register("klyuch-propasti", CURSED, ACTIVE, Material.COAL_ORE, 300, 5);
+        register("svist-gadov", CURSED, ACTIVE, Material.COBWEB, 180, 3);
     }
 
     private ArtifactRegistry() {

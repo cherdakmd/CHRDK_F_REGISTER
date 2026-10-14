@@ -59,6 +59,7 @@ public final class PassiveEffectsService {
                 }
                 applyPotions(player, id);
                 rollTrigger(player, id);
+                runSpecial(player, id);
             }
         }
     }
@@ -69,7 +70,9 @@ public final class PassiveEffectsService {
             if (type == null) {
                 continue;
             }
-            player.addPotionEffect(new PotionEffect(type, POTION_BUFFER_TICKS,
+            // мгновенные эффекты (сытость) тикают раз за пульс, а не каждый тик запаса
+            int duration = type.isInstant() ? 1 : POTION_BUFFER_TICKS;
+            player.addPotionEffect(new PotionEffect(type, duration,
                     spec.amplifier(), true, false, true));
         }
     }
@@ -88,6 +91,67 @@ public final class PassiveEffectsService {
                 player.addPotionEffect(new PotionEffect(PotionEffectType.POISON,
                         POISON_TICKS, 0, true, false, true));
                 plugin.messages().send(player, "curse-poison");
+            }
+            case BLEED -> {
+                if (player.getHealth() > 1.0) {
+                    player.damage(1.0);
+                    plugin.messages().send(player, "curse-bleed");
+                }
+            }
+            case WATER_HURT -> {
+                if (player.isInWater()) {
+                    player.damage(1.0);
+                    plugin.messages().send(player, "curse-water");
+                }
+            }
+            case BLINDNESS_PROC -> {
+                player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS,
+                        60, 0, true, false, true));
+                plugin.messages().send(player, "curse-blind");
+            }
+            case XP_DRAIN -> {
+                if (player.getTotalExperience() > 10) {
+                    player.giveExp(-10);
+                    plugin.messages().send(player, "curse-xp");
+                }
+            }
+            case WITHER_PROC -> {
+                player.addPotionEffect(new PotionEffect(PotionEffectType.WITHER,
+                        80, 0, true, false, true));
+                plugin.messages().send(player, "curse-wither");
+            }
+        }
+    }
+
+    /** Пульсовая половина суперспособностей: Магнит Опыта и Ледяная Аура. */
+    private void runSpecial(Player player, String id) {
+        ArtifactEffects.SpecialKind special = ArtifactEffects.passiveSpecial(id);
+        if (special == null) {
+            return;
+        }
+        switch (special) {
+            case XP_MAGNET -> {
+                int pulled = 0;
+                for (org.bukkit.entity.Entity entity : player.getNearbyEntities(8, 5, 8)) {
+                    if (entity instanceof org.bukkit.entity.ExperienceOrb orb && !orb.isDead()) {
+                        orb.teleport(player.getLocation());
+                        if (++pulled >= 12) {
+                            break;
+                        }
+                    }
+                }
+            }
+            case FROST_AURA -> {
+                for (org.bukkit.entity.Entity entity : player.getNearbyEntities(8, 5, 8)) {
+                    if (entity instanceof org.bukkit.entity.Monster mob && !mob.isDead()) {
+                        mob.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS,
+                                100, 1, true, false, true));
+                        mob.setFreezeTicks(Math.max(mob.getFreezeTicks(), 40));
+                    }
+                }
+            }
+            default -> {
+                // PHOENIX_REVIVE/SOUL_THIEF/THORNS_RETALIATE обслуживает ArtifactEventListener
             }
         }
     }

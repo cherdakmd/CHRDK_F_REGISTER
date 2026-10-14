@@ -7,11 +7,12 @@ import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 
 /**
- * CHRDK_Artifacts — 30 артефактов (15 светлых, 15 проклятых), работающих из инвентаря.
- * Пассивные вешают зельевые эффекты пульсом; активные срабатывают по ПКМ за уровни
- * опыта и кулдаун. Жёстко зависит от ядра и CHRDK_Enchants (хартия чар выкатывает
- * случайную кастомную чару). Хранилища нет: метки артефактов живут в PDC предметов,
- * кулдауны — в памяти.
+ * CHRDK_Artifacts — 65 артефактов (33 светлых, 32 проклятых; 30 базовых + 35
+ * «по мотивам CHRDK_REBORN»), работающих из инвентаря. Пассивные вешают зельевые
+ * эффекты пульсом или отвечают на игровые события; активные срабатывают по ПКМ за
+ * уровни опыта и кулдаун. Жёстко зависит от ядра и CHRDK_Enchants (хартия чар
+ * выкатывает случайную кастомную чару). Хранилища нет: метки артефактов живут в
+ * PDC предметов, кулдауны — в памяти.
  */
 public final class ArtifactsPlugin extends JavaPlugin {
 
@@ -32,6 +33,7 @@ public final class ArtifactsPlugin extends JavaPlugin {
 
         Bukkit.getPluginManager().registerEvents(new ActiveEffectsListener(this), this);
         Bukkit.getPluginManager().registerEvents(new ArtifactLootListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new ArtifactEventListener(this), this);
 
         ArtifactCommandHandler commands = new ArtifactCommandHandler(this);
         PluginCommand artifacts = getCommand("artifacts");

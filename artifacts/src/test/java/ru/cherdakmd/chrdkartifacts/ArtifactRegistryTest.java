@@ -15,12 +15,31 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ArtifactRegistryTest {
 
     @Test
-    void catalogueIsThirtySplitEvenly() {
+    void catalogueIsSixtyFiveSplitThirtyThreeThirtyTwo() {
         assertEquals(ArtifactRegistry.EXPECTED_SIZE, ArtifactRegistry.size());
+        assertEquals(65, ArtifactRegistry.size(), "30 базовых + 35 по мотивам CHRDK_REBORN");
         assertEquals(ArtifactRegistry.EXPECTED_GOOD,
                 ArtifactRegistry.bySide(ArtifactDef.Side.GOOD).size());
         assertEquals(ArtifactRegistry.EXPECTED_CURSED,
                 ArtifactRegistry.bySide(ArtifactDef.Side.CURSED).size());
+    }
+
+    @Test
+    void rebornWaveArtifactsArePresent() {
+        // Мифическая тройка из CHRDK_REBORN: феникс/бездна/дракон
+        assertNotNull(ArtifactRegistry.byId("pero-feniksa"));
+        assertNotNull(ArtifactRegistry.byId("korona-bezdny"));
+        assertNotNull(ArtifactRegistry.byId("serdtse-drakona"));
+        // Именословы старших тиров: свитки/тотемы/сферы из магазина реборна
+        assertNotNull(ArtifactRegistry.byId("svitok-ochischeniya"));
+        assertNotNull(ArtifactRegistry.byId("totem-krovi"));
+        assertNotNull(ArtifactRegistry.byId("sfera-pobega"));
+        // Суперспособности: у каждого пассива-особняка — свой SpecialKind
+        for (String id : new String[]{"pero-feniksa", "zhnej-dush", "ledyanaya-aura",
+                "ternistyj-plasch", "magnit-opyta"}) {
+            assertNotNull(ArtifactEffects.passiveSpecial(id),
+                    "суперспособность не привязана к " + id);
+        }
     }
 
     @Test

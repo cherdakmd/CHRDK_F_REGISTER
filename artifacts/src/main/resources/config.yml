@@ -1,4 +1,4 @@
-# CHRDK_Artifacts — 30 артефактов (15 светлых, 15 проклятых). Метки артефактов живут в
+# CHRDK_Artifacts — 65 артефактов (33 светлых, 32 проклятых). Метки артефактов живут в
 # PDC предметов, поэтому отдельного хранилища нет. Здесь включаемость, кулдауны и цена
 # активации в уровнях опыта для каждого артефакта.
 
@@ -76,3 +76,42 @@ artifacts:
   zhalo-moroki: {enabled: true, cooldown-seconds: 120, xp-cost-levels: 2}
   chasy-duroshljopa: {enabled: true, cooldown-seconds: 900, xp-cost-levels: 3}
   porvannyj-kupon: {enabled: true, cooldown-seconds: 300, xp-cost-levels: 0}
+  # --- добрая волна (1.4.58, по мотивам CHRDK_REBORN): пассивные ---
+  pero-feniksa: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  magnit-opyta: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  zhnej-dush: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  ledyanaya-aura: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  ternistyj-plasch: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  travjanoj-eliksir: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  sapogi-vetra: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  klever-udachi: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  travyanoj-meshochek: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  serdtse-drakona: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  # --- добрая волна: активные (ПКМ) ---
+  svitok-ochischeniya: {enabled: true, cooldown-seconds: 240, xp-cost-levels: 5}
+  totem-krovi: {enabled: true, cooldown-seconds: 180, xp-cost-levels: 4}
+  sfera-pobega: {enabled: true, cooldown-seconds: 120, xp-cost-levels: 3}
+  ledyanaya-stena: {enabled: true, cooldown-seconds: 90, xp-cost-levels: 2}
+  glaz-nachala: {enabled: true, cooldown-seconds: 300, xp-cost-levels: 4}
+  korona-bezdny: {enabled: true, cooldown-seconds: 300, xp-cost-levels: 8}
+  ender-sdvig: {enabled: true, cooldown-seconds: 60, xp-cost-levels: 1}
+  oskolok-vechnosti: {enabled: true, cooldown-seconds: 600, xp-cost-levels: 12}
+  # --- тёмная волна: проклятые пассивные ---
+  okov-tyazhesti: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  pustoy-zhivot: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  slabye-kisti: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  krovavyj-svyaz: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  smertnyj-potok: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  chernye-slezy: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  ruga-zhadnosti: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  prah-marka: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  koltso-usmerti: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  # --- тёмная волна: проклятые активные ---
+  kniga-proklyatiy: {enabled: true, cooldown-seconds: 300, xp-cost-levels: 4}
+  zhertvennyj-kubok: {enabled: true, cooldown-seconds: 120, xp-cost-levels: 2}
+  raskolotaya-luna: {enabled: true, cooldown-seconds: 600, xp-cost-levels: 5}
+  shlyapa-bezdelnika: {enabled: true, cooldown-seconds: 30, xp-cost-levels: 0}
+  silok-dushi: {enabled: true, cooldown-seconds: 90, xp-cost-levels: 2}
+  oblaka-durmana: {enabled: true, cooldown-seconds: 120, xp-cost-levels: 2}
+  klyuch-propasti: {enabled: true, cooldown-seconds: 300, xp-cost-levels: 5}
+  svist-gadov: {enabled: true, cooldown-seconds: 180, xp-cost-levels: 3}

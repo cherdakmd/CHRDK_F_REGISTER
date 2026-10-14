@@ -36,6 +36,8 @@ final class Potions {
             case "slow_falling" -> PotionEffectType.SLOW_FALLING;
             case "dolphins_grace" -> PotionEffectType.DOLPHINS_GRACE;
             case "darkness" -> PotionEffectType.DARKNESS;
+            case "saturation" -> PotionEffectType.SATURATION;
+            case "unluck" -> PotionEffectType.UNLUCK;
             default -> null;
         };
     }
