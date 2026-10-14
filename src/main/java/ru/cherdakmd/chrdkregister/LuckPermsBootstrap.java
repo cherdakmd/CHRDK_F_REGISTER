@@ -84,7 +84,7 @@ public final class LuckPermsBootstrap {
     private final Supplier<PluginConfig> config;
 
     public LuckPermsBootstrap(ExternalHooks hooks, Supplier<PluginConfig> config) {
-        this.hooks = hooks;
+        this.hooks = java.util.Objects.requireNonNull(hooks, "Initialize ExternalHooks before LuckPermsBootstrap");
         this.config = config;
     }
 

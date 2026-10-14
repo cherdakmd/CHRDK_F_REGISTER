@@ -27,8 +27,13 @@ public final class ExternalHooks {
     private volatile LuckPerms luckPerms;
 
     public ExternalHooks(JavaPlugin plugin) {
-        this.services = plugin.getServer().getServicesManager();
-        this.logger = plugin.getLogger();
+        this(plugin.getServer().getServicesManager(), plugin.getLogger());
+    }
+
+    /** Service-based constructor also allows integration tests without a live Bukkit server. */
+    ExternalHooks(ServicesManager services, Logger logger) {
+        this.services = java.util.Objects.requireNonNull(services, "services");
+        this.logger = java.util.Objects.requireNonNull(logger, "logger");
         resolve();
     }
 

@@ -49,6 +49,8 @@ public final class RegisterPlugin extends JavaPlugin {
 
         DonatePayClient donatePayClient = new DonatePayClient(config);
 
+        // AccessManager captures these hooks in LuckPermsBootstrap; initialize them first.
+        this.externalHooks = new ExternalHooks(this);
         this.accessManager = new AccessManager(this, config, store, donatePayClient, messages, getLogger());
         this.chatService = new ChatService(this, accessManager, config.chat(), messages, getLogger());
         this.passMenuService = new PassMenuService(accessManager, messages);
@@ -58,7 +60,6 @@ public final class RegisterPlugin extends JavaPlugin {
         this.donateMenuService.setAdminJournalOpener(player -> adminDonationsGui.openMenu(player));
         this.passwordKeypad = new PasswordKeypadService(this, accessManager, messages);
         this.tabListService = new TabListService(this, accessManager);
-        this.externalHooks = new ExternalHooks(this);
         this.luckPermsPassSync = new LuckPermsPassSync(externalHooks, store, accessManager::config, getLogger());
         getServer().getServicesManager().register(ChrdkRegisterApi.class,
                 new ChrdkRegisterApiImpl(this, accessManager, externalHooks), this, ServicePriority.Normal);
