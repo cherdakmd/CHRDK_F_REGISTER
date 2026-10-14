@@ -118,6 +118,8 @@ public final class TabListService implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
+        managedNames.remove(event.getPlayer().getUniqueId());
+        managedHeaders.remove(event.getPlayer().getUniqueId());
         if (!settings.enabled()) {
             return;
         }

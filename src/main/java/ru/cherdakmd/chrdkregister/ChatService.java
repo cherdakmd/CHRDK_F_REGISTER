@@ -460,7 +460,7 @@ public final class ChatService implements Listener {
     private void sendNextAutoMessage() {
         ChatConfig cfg = this.config;
         if (!cfg.enabled() || !cfg.autoMessagesEnabled()) return;
-        List<Player> audience = Bukkit.getOnlinePlayers().stream()
+        List<? extends Player> audience = Bukkit.getOnlinePlayers().stream()
                 .filter(p -> p.hasPermission(PERMISSION_AUTO_MESSAGE)
                         && accessManager.getStage(p) == AccessManager.PlayerStage.AUTHENTICATED).toList();
         if (audience.isEmpty() || audience.size() < cfg.autoMessagesMinimumPlayers()) return;
