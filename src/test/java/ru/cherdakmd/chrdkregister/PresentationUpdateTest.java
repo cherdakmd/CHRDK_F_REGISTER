@@ -47,7 +47,7 @@ class PresentationUpdateTest {
                         map.get("name").toString(), map.get("lore").toString(), map.get("command").toString(),
                         map.get("plugin")==null?"":map.get("plugin").toString(),
                         map.get("permission")==null?"":map.get("permission").toString())).toList();
-        var settings=new ServerMenuSettings(true,entries);assertEquals(26,settings.entries().size());
+        var settings=new ServerMenuSettings(true,entries);assertEquals(27,settings.entries().size());
         var layout=ServerMenuService.layout(settings.entries());assertFalse(layout.slots().contains(-1));
         assertEquals(layout.slots().size(),new HashSet<>(layout.slots()).size());
         Set<String> advertised=new HashSet<>();
