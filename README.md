@@ -517,6 +517,7 @@ auto-messages:
 Если на сервере установлен LuckPerms, ядро умеет выстроить схему групп одной командой (право `chrdkregister.admin`):
 
 - `/pass luckperms setup` — создаст/достроит группы **`default`** (все права `chrdk*.use` игроков + меню/автосообщения), **`<имя integrations.pass-group>`** (наследует default; доп. права из списка `integrations.pass-group-permissions`; выдаётся автоматически с активной проходкой через синк) и **`admin`** (наследует default; все `chrdk*.admin` + модераторские права чата), с весами 0/10/100. Повторный запуск безопасен — только достраивает недостающее.
+- **Защита служебных команд** (по умолчанию включена, `integrations.lp-command-protect`): в `default` выставляются явные запреты на то, что обычному игроку не нужно — `/plugins`, `/version`, `/timings`, `/op`, `/deop`, `/stop`, `/whitelist`, `/ban`, `/ban-ip`, `/pardon`, `/kick`; в `admin` те же узлы возвращаются разрешёнными (вес группы перекрывает). Свои узлы — списком `integrations.lp-deny-extra`. Важно: оператор, не входящий в группу `admin`, унаследует запреты из `default` — админов держите в `admin` (`lp user <ник> parent set admin`).
 - `/pass luckperms status` — показывает, какая группа создана, её вес и количество узлов прав; при отсутствии — подсказку запустить setup.
 
 Если `integrations.pass-group` заполнена, а группы нет, при старте сервера в консоль выводится одноразовая подсказка выполнить setup.
@@ -899,20 +900,20 @@ info <ник>`, данные — `plugins/CHRDK_Claims/claims-data.json`.
 ./gradlew build
 ```
 
-Собираются оба модуля: ядро появится в `build/libs/chrdk-core-1.4.63.jar`, аддон
-CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.63.jar`, реферальный —
-`referrals/build/libs/chrdk-referrals-1.4.63.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.63.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.63.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.63.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.63.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.63.jar` (зависит от аддона чар), общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.63.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.63.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.63.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.63.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.63.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.63.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются оба модуля: ядро появится в `build/libs/chrdk-core-1.4.64.jar`, аддон
+CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.64.jar`, реферальный —
+`referrals/build/libs/chrdk-referrals-1.4.64.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.64.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.64.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.64.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.64.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.64.jar` (зависит от аддона чар), общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.64.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.64.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.64.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.64.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.64.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.64.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). Оба JAR прикладываются к каждому релизу на GitHub.
 
 ---
@@ -1125,7 +1126,7 @@ ItemMeta, асинхронные сохранения, численные кра
 крафте брони/оружия без оверрайда блеска: чтение `getEnchantmentGlintOverride()`
 теперь идёт только после `hasEnchantmentGlintOverride()` — как требует новый
 контракт API. Все прочие JAR-ы без изменений; конфиги не менялись — замена
-одного `chrdk-tier-forge-1.4.63.jar` (или всех подряд) достаточна.
+одного `chrdk-tier-forge-1.4.64.jar` (или всех подряд) достаточна.
 
 ---
 
@@ -1152,7 +1153,7 @@ ItemMeta, асинхронные сохранения, численные кра
 (`/claim sell <цена>` + `/claim buy`, налог 10% с продавца), участники
 (`/claim add <ник> [все]`), карта `/claim map`, полная защита территории
 (блоки/контейнеры/двери/сущности/взрывы/огонь/жидкости/поршни/воронки).
-Лимит 24 чанка (+8 с проходкой). `chrdk-claims-1.4.63.jar` рядом с ядром
+Лимит 24 чанка (+8 с проходкой). `chrdk-claims-1.4.64.jar` рядом с ядром
 (≥ 1.4.6), перезапуск; данные — `plugins/CHRDK_Claims/claims-data.json`,
 настройки — `plugins/CHRDK_Claims/config.yml`. Остальные JAR-ы без изменений.
 
@@ -1218,7 +1219,7 @@ JAR-ы — простая замена.
 
 Восьмой аддон — **CHRDK_CommonGoals**, общие цели сообщества: сервер сообща набивает
 цели волны, пул алмазов делится между участниками по вкладу, выдача — `/goals claim`.
-`chrdk-common-goals-1.4.63.jar` рядом с ядром (≥ 1.4.6), перезапуск. Настройки
+`chrdk-common-goals-1.4.64.jar` рядом с ядром (≥ 1.4.6), перезапуск. Настройки
 волны/шаблонов — `plugins/CHRDK_CommonGoals/config.yml`.
 
 ---
@@ -1246,7 +1247,7 @@ plugins/<Addon>/messages.yml — удалите их после обновлен
 структуру), чтобы сервер взял актуальные ключи.
 
 **Важно при обновлении:** ядро — заменой JAR. Аддон опционален:
-`chrdk-artifacts-1.4.63.jar` рядом с ядром и chrdk-enchants (той же версии), перезапуск.
+`chrdk-artifacts-1.4.64.jar` рядом с ядром и chrdk-enchants (той же версии), перезапуск.
 Кулдауны/вкл/цена опытом — в `plugins/CHRDK_Artifacts/config.yml`.
 
 ---
@@ -1257,7 +1258,7 @@ plugins/<Addon>/messages.yml — удалите их после обновлен
 проклятого до легендарного, накат при крафте брони/оружия/инструментов, апгрейд двух
 одинаковых тирированных предметов на наковальне, перенос тира через апгрейд в незерит.
 
-**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-tier-forge-1.4.63.jar`
+**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-tier-forge-1.4.64.jar`
 рядом с ядром (≥ 1.4.6), перезапуск. Шансы/бонусы тиров — в `plugins/CHRDK_TierForge/config.yml`.
 
 ---
@@ -1269,7 +1270,7 @@ plugins/<Addon>/messages.yml — удалите их после обновлен
 крадушке и снайперских стрел с поправкой на дистанцию. Получение — стол зачарований и
 жители-библиотекари, применение — наковальня; всё хранится в NBT предметов.
 
-**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-enchants-1.4.63.jar`
+**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-enchants-1.4.64.jar`
 рядом с ядром (≥ 1.4.6, `depend`), перезапуск. Баланс/шансы/лимиты — `plugins/CHRDK_Enchants/config.yml`.
 
 ---

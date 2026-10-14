@@ -34,6 +34,10 @@ public final class PluginConfig {
     private TradeMcSettings trademc = TradeMcSettings.DISABLED;
     /** Дополнительные права для группы проходки из integrations.pass-group-permissions. */
     private List<String> passGroupPermissions = List.of();
+    /** Запрещать обычным игрокам служебные команды при /pass luckperms setup (integrations.lp-command-protect). */
+    private boolean lpCommandProtect = true;
+    /** Доп. узлы для запрета обычным игрокам (integrations.lp-deny-extra). */
+    private List<String> lpDenyExtra = List.of();
 
     /** Динамический MOTD (сеттится из load(), как и Boosty). */
     private MotdSettings motd = MotdSettings.DISABLED;
@@ -401,6 +405,8 @@ public final class PluginConfig {
         parsed.boosty = BoostySettings.from(config);
         parsed.trademc = TradeMcSettings.from(config);
         parsed.passGroupPermissions = List.copyOf(config.getStringList("integrations.pass-group-permissions"));
+        parsed.lpCommandProtect = config.getBoolean("integrations.lp-command-protect", true);
+        parsed.lpDenyExtra = List.copyOf(config.getStringList("integrations.lp-deny-extra"));
         parsed.motd = MotdSettings.from(config);
         parsed.passEnabled = config.getBoolean("pass.enabled", true);
         parsed.donateActions = DonateAction.parseList(config.getMapList("donation-actions"));
@@ -496,6 +502,16 @@ public final class PluginConfig {
     /** Доп. узлы прав, попадающие в группу проходки при /pass luckperms setup. */
     public List<String> passGroupPermissions() {
         return passGroupPermissions;
+    }
+
+    /** Защита служебных команд для обычных игроков при /pass luckperms setup. */
+    public boolean lpCommandProtect() {
+        return lpCommandProtect;
+    }
+
+    /** Доп. узлы запрета обычным игрокам (extra — поверх встроенного deny-листа). */
+    public List<String> lpDenyExtra() {
+        return lpDenyExtra;
     }
 
     /** Ссылка, которую видит игрок как «продлить/купить проходку»: в TradeMC-режиме — ссылка магазина. */

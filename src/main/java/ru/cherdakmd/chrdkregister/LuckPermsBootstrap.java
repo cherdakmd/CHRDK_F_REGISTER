@@ -84,6 +84,27 @@ public final class LuckPermsBootstrap {
         this.config = config;
     }
 
+    /**
+     * Команды, не нужные обычному игроку: в default выставляются ЯВНО выключенными
+     * (value=false) — защита и от wildcard-выдач других плагинов, — а в admin те же
+     * узлы возвращаются включёнными (вес admin 100 перекрывает default 0).
+     */
+    private static final List<String> COMMAND_PROTECT = List.of(
+            "bukkit.command.plugins",
+            "bukkit.command.version",
+            "bukkit.command.about",
+            "bukkit.command.timings",
+            "minecraft.command.op",
+            "minecraft.command.deop",
+            "minecraft.command.stop",
+            "minecraft.command.whitelist",
+            "minecraft.command.ban",
+            "minecraft.command.ban-ip",
+            "minecraft.command.pardon",
+            "minecraft.command.pardon-ip",
+            "minecraft.command.kick"
+    );
+
     /** Есть ли LuckPerms (провайдер зарегистрирован). */
     public boolean available() {
         return hooks.luckPerms().isPresent();
@@ -170,11 +191,40 @@ public final class LuckPermsBootstrap {
                     live.data().add(Node.builder(key).build());
                     nodes[0]++;
                 }
+                // Защита команд: обычный игрок — явный запрет, админ — явное разрешение.
+                if (config.get().lpCommandProtect()) {
+                    if ("default".equals(spec.name())) {
+                        for (String key : commandProtect()) {
+                            live.data().add(Node.builder(key).value(false).build());
+                            nodes[0]++;
+                        }
+                    } else if ("admin".equals(spec.name())) {
+                        for (String key : commandProtect()) {
+                            live.data().add(Node.builder(key).value(true).build());
+                            nodes[0]++;
+                        }
+                    }
+                }
             }).exceptionally(error -> {
                 throw new CompletionException(new IllegalStateException(
                         "Не удалось настроить группу '" + spec.name() + "': " + error.getMessage(), error));
             }));
         });
+    }
+
+    /** Весь deny-лист: встроенный + доп. узлы из integrations.lp-deny-extra. */
+    private java.util.List<String> commandProtect() {
+        java.util.List<String> extra = config.get().lpDenyExtra();
+        if (extra.isEmpty()) {
+            return COMMAND_PROTECT;
+        }
+        java.util.List<String> merged = new java.util.ArrayList<>(COMMAND_PROTECT);
+        for (String permission : extra) {
+            if (permission != null && !permission.isBlank()) {
+                merged.add(permission.trim().toLowerCase(Locale.ROOT));
+            }
+        }
+        return merged;
     }
 
     /** Нужна ли группа проходки подсказка: LuckPerms есть, а группа (настроенная) не создана. */
