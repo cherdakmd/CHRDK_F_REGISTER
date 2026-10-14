@@ -69,6 +69,8 @@ public final class PluginConfig {
     private final int paymentCodeDigits;
     private final int donationJournalKeepDays;
 
+    private boolean trialEnabled = true;
+    private int trialDays = 14;
     private final int grantDays;
     private final List<PassTier> passTiers;
     private final List<Long> expiryWarningMinutes;
@@ -415,6 +417,8 @@ public final class PluginConfig {
         parsed.passGroupPermissions = List.copyOf(config.getStringList("integrations.pass-group-permissions"));
         parsed.lpCommandProtect = config.getBoolean("integrations.lp-command-protect", true);
         parsed.lpDenyExtra = List.copyOf(config.getStringList("integrations.lp-deny-extra"));
+        parsed.trialEnabled = config.getBoolean("pass.trial.enabled", true);
+        parsed.trialDays = Math.max(1, Math.min(365, config.getInt("pass.trial.days", 14)));
         parsed.updatesEnabled = config.getBoolean("updates.enabled", true);
         parsed.updatesRepo = config.getString("updates.repo", "cherdakmd/CHRDK_F_REGISTER");
         parsed.updatesIntervalHours = Math.max(1, Math.min(720, config.getInt("updates.interval-hours", 6)));
@@ -621,6 +625,10 @@ public final class PluginConfig {
     /* ------------------------------------------------------------------ *
      *  Pass
      * ------------------------------------------------------------------ */
+
+    public boolean trialEnabled() { return trialEnabled; }
+
+    public int trialDays() { return trialDays; }
 
     public int grantDays() {
         return grantDays;

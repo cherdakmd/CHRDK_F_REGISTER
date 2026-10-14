@@ -546,6 +546,7 @@ public final class AccessManager {
         if (!store.hasActivePass(playerName, nowMillis)) {
             authenticatedPlayers.remove(uuid);
             passwordVerifiedPlayers.remove(uuid);
+            if (config.trialEnabled() && store.isTrialEligible(playerName, uuid)) return PlayerStage.NEEDS_REGISTER;
             return PlayerStage.NO_PASS;
         }
         if (!store.isRegistered(playerName)) {
@@ -599,7 +600,7 @@ public final class AccessManager {
         joinedAt.put(uuid, now);
         hideExpiryBar(uuid);
 
-        if (!store.hasActivePass(name, now)) {
+        if (!store.hasActivePass(name, now) && !(config.trialEnabled() && store.isTrialEligible(name, uuid))) {
             player.closeInventory();
             sendNoPassPrompt(player, true);
             return;
@@ -740,12 +741,24 @@ public final class AccessManager {
             messages.send(player, "register.password-shared");
             return true;
         }
-        boolean registered = store.registerPassword(player.getName(), player.getUniqueId(), password, ip, now);
+        boolean registered = store.registerPassword(player.getName(), player.getUniqueId(), password, ip, now,
+                config.trialEnabled() ? config.trialDays() : 0);
         if (!registered) {
             messages.send(player, "register.failed");
             return true;
         }
 
+        RegistrationStore.PlayerAccount account = store.getAccount(player.getName()).orElseThrow();
+        if (account.trialGrantedAt == now && "trial".equals(account.lastGrantSource)) {
+            messages.send(player, "trial.granted", "days", config.trialDays(), "until", formatTimestamp(account.passUntil));
+            plugin.luckPermsPassSync().onPassGranted(player.getName());
+            fireEventSync(new PassGrantedEvent(player.getName(), account.passUntil, config.trialDays(), "trial"));
+            audit.log(AuditLog.ADMIN_COMMAND, player.getName(), player.getName(), ip,
+                    AuditLog.details("action", "trial.granted", "days", config.trialDays(), "passUntil", account.passUntil));
+            notifications.notify("pass.granted", messages.plain("trial.notify-title"),
+                    messages.plain("trial.notify-desc", "player", player.getName(), "days", config.trialDays(),
+                            "until", formatTimestamp(account.passUntil)), "good");
+        }
         completeAuthentication(player, "register.success");
         if (config.passwordStrengthHint()) {
             messages.send(player, "password.strength-ok", "strength", policy.strengthText(messages));
@@ -1549,6 +1562,12 @@ public final class AccessManager {
             UUID uuid = player.getUniqueId();
             boolean hasPass = !config.passEnabled() || store.hasActivePass(player.getName(), now);
 
+            if (!hasPass && config.trialEnabled() && store.isTrialEligible(player.getName(), uuid)) {
+                authenticatedPlayers.remove(uuid);
+                passwordVerifiedPlayers.remove(uuid);
+                sendRegisterReminder(player, now);
+                continue;
+            }
             if (!hasPass) {
                 passwordVerifiedPlayers.remove(uuid);
                 if (authenticatedPlayers.remove(uuid)) {
@@ -1749,6 +1768,9 @@ public final class AccessManager {
     }
 
     public void sendRegisterPrompt(Player player, boolean showTitle) {
+        if (config.trialEnabled() && store.isTrialEligible(player.getName(), player.getUniqueId())) {
+            messages.send(player, "trial.welcome", "days", config.trialDays());
+        }
         messages.sendList(player, "register.prompt");
         if (showTitle) {
             Title title = Title.title(
