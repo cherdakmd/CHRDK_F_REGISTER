@@ -1768,10 +1768,9 @@ public final class AccessManager {
     }
 
     public void sendRegisterPrompt(Player player, boolean showTitle) {
-        if (config.trialEnabled() && store.isTrialEligible(player.getName(), player.getUniqueId())) {
-            messages.send(player, "trial.welcome", "days", config.trialDays());
-        }
-        messages.sendList(player, "register.prompt");
+        boolean trial = config.trialEnabled() && store.isTrialEligible(player.getName(), player.getUniqueId());
+        if (trial) messages.send(player, "trial.welcome", "days", config.trialDays());
+        messages.sendList(player, trial ? "trial.register-prompt" : "register.prompt");
         if (showTitle) {
             Title title = Title.title(
                     messages.get("register.title"),

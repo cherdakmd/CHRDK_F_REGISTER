@@ -37,6 +37,7 @@ messages:
     "secured": "включена"
     "unsecured": "не подключена"
   "trial":
+    "register-prompt": "<yellow>Зарегистрируйте пароль командой: </yellow><click:suggest_command:'/register '><hover:show_text:'<green>Подставить команду в чат</green>'><gold><bold>/register \\<пароль> \\<повтор></bold></gold></hover></click>"
     "welcome": "<gold>Добро пожаловать! Зарегистрируйтесь — получите %days% дней бесплатной проходки. /register пароль пароль</gold>"
     "granted": "<green>Пробная проходка на %days% дней активирована! Действует до %until%. Приятной игры!</green>"
     "notify-title": "Пробная проходка активирована"
@@ -106,10 +107,10 @@ messages:
   # restriction — Блокировка команд и чата до авторизации
   # ---------------------------------------------------------------
   "restriction":
-    "command-login": "<red>Сначала войдите в аккаунт: /login &lt;пароль&gt;</red>"
+    "command-login": "<red>Сначала войдите в аккаунт: /login \\<пароль></red>"
     "command-no-pass": "<red>Команды заблокированы! Сначала приобретите проходку (%price% ₽, укажите ник %player% в имени донатера).</red>"
-    "command-register": "<red>Сначала зарегистрируйте пароль: /register &lt;пароль&gt; &lt;повтор&gt;</red>"
-    "command-two-factor": "<red>Подтвердите вход кодом двухфакторной аутентификации: /2fa &lt;6-значный_код&gt;</red>"
+    "command-register": "<red>Сначала зарегистрируйте пароль: /register \\<пароль> \\<повтор></red>"
+    "command-two-factor": "<red>Подтвердите вход кодом двухфакторной аутентификации: /2fa \\<6-значный_код></red>"
     "too-many-accounts": "<red>С вашего IP уже играет слишком много аккаунтов с проходками. Обратитесь к администрации.</red>"
 
   # ---------------------------------------------------------------
@@ -152,7 +153,7 @@ messages:
     "failed": "<red>Не удалось завершить регистрацию. Возможно, аккаунт уже зарегистрирован.</red>"
     "password-mismatch": "<red>Пароли не совпадают! Проверьте ввод: /register <пароль> <повтор></red>"
     "password-shared": "<red>Этот пароль уже используется другим аккаунтом, который заходил с вашего IP. Придумайте свой пароль.</red>"
-    "prompt": "<yellow>Проходка активна! Зарегистрируйте пароль командой: </yellow><click:suggest_command:'/register '><hover:show_text:'<green>Подставить команду в чат</green>'><gold><bold>/register &lt;пароль&gt; &lt;повтор&gt;</bold></gold></hover></click>"
+    "prompt": "<yellow>Зарегистрируйте пароль командой: </yellow><click:suggest_command:'/register '><hover:show_text:'<green>Подставить команду в чат</green>'><gold><bold>/register \\<пароль> \\<повтор></bold></gold></hover></click>"
     "reminder": "<gold>Зарегистрируйтесь: /register <пароль> <повтор></gold>"
     "success": "<green>✓ Вы успешно зарегистрировались и вошли на сервер! Приятной игры!</green>"
     "title": "<gold><bold>РЕГИСТРАЦИЯ</bold></gold>"
@@ -194,7 +195,7 @@ messages:
     "full": "<red>Максимальная длина набрана — подтвердите или сотрите пароль.</red>"
   "login":
     "already-authenticated": "<green>Вы уже вошли в аккаунт!</green>"
-    "prompt": "<yellow>Введите пароль для входа на сервер: </yellow><click:suggest_command:'/login '><hover:show_text:'<green>Подставить команду в чат</green>'><gold><bold>/login &lt;пароль&gt;</bold></gold></hover></click>"
+    "prompt": "<yellow>Введите пароль для входа на сервер: </yellow><click:suggest_command:'/login '><hover:show_text:'<green>Подставить команду в чат</green>'><gold><bold>/login \\<пароль></bold></gold></hover></click>"
     "register-first": "<yellow>Сначала зарегистрируйте пароль: /register <пароль> <повтор></yellow>"
     "reminder": "<yellow>Авторизуйтесь: /login <пароль></yellow>"
     "success": "<green>✓ Вы успешно вошли на сервер! Приятной игры!</green>"
@@ -244,7 +245,7 @@ messages:
       "wrong-code": "<red>Неверный или уже использованный 6-значный код 2FA! Повторите ввод.</red>"
     "need-login": "<yellow>Сначала введите пароль: /login <пароль></yellow>"
     "need-register": "<yellow>Сначала зарегистрируйте пароль: /register <пароль> <повтор></yellow>"
-    "prompt": "<aqua>✓ Пароль верный! Введите 6-значный код TOTP 2FA из приложения: </aqua><click:suggest_command:'/2fa '><hover:show_text:'<green>Подставить команду в чат</green>'><gold><bold>/2fa &lt;6-значный_код&gt;</bold></gold></hover></click>"
+    "prompt": "<aqua>✓ Пароль верный! Введите 6-значный код TOTP 2FA из приложения: </aqua><click:suggest_command:'/2fa '><hover:show_text:'<green>Подставить команду в чат</green>'><gold><bold>/2fa \\<6-значный_код></bold></gold></hover></click>"
     "qr":
       "disabled": "<red>QR-код для привязки 2FA отключён в конфигурации сервера.</red>"
       "no-pending": "<yellow>Нет активной настройки 2FA: сначала сгенерируйте ключ командой /2fa setup</yellow>"

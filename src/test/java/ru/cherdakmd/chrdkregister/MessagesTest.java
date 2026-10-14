@@ -241,6 +241,52 @@ class MessagesTest {
     }
 
     @Test
+    void oldHtmlBracketsAndLegacyColorsWorkInSingleAndListMessages() {
+        Messages messages = inline("""
+                messages:
+                  prompt: "&c/register &lt;пароль&gt; &lt;повтор&gt;"
+                """);
+        Component single = messages.get("prompt");
+        Component list = messages.getList("prompt").get(0);
+        assertEquals("/register <пароль> <повтор>", ChatService.plainText(single));
+        assertEquals(single, list, "getList must use exactly the same colour conversion as get");
+        assertEquals(NamedTextColor.RED, list.color());
+        assertEquals("/register <пароль> <повтор>", messages.plain("prompt"));
+    }
+
+    @Test
+    void encodedTagsStayLiteralAndUserValuesAreNotDecoded() {
+        Messages messages = inline("""
+                messages:
+                  encoded: "&lt;red&gt;это текст&lt;/red&gt;"
+                  value: "<gold>%player%</gold>"
+                """);
+        assertEquals("<red>это текст</red>", messages.plain("encoded"));
+        assertEquals("&lt;red&gt;Nick", messages.plain("value", "player", "&lt;red&gt;Nick"));
+        assertEquals("<red>Nick", messages.plain("value", "player", "<red>Nick"));
+    }
+
+    @Test
+    void liveOverridesWithOldBracketsAreRepairedWithoutRewritingFile(@TempDir Path tempDir) throws Exception {
+        Path file = tempDir.resolve("old-messages.yml");
+        String content = "messages:\n  prompt: '<yellow>/login &lt;пароль&gt;</yellow>'\n";
+        Files.writeString(file, content);
+        Messages messages = Messages.from(new ByteArrayInputStream("messages: {}".getBytes(StandardCharsets.UTF_8)), file, LOGGER);
+        assertEquals("/login <пароль>", ChatService.plainText(messages.getList("prompt").get(0)));
+        assertEquals(content, Files.readString(file));
+    }
+
+    @Test
+    void stockRegistrationPromptHasCorrectLiteralBracketsAndNoPrematureActivation() throws Exception {
+        Messages messages = resource();
+        String prompt = ChatService.plainText(messages.getList("trial.register-prompt").get(0));
+        assertEquals("Зарегистрируйте пароль командой: /register <пароль> <повтор>", prompt);
+        assertFalse(prompt.contains("&lt;"));
+        assertFalse(prompt.contains("Проходка активна"));
+        assertEquals(prompt, messages.plain("register.prompt"));
+    }
+
+    @Test
     void legacyConversionAndStripFormattingWork() {
         assertEquals("<red>текст<reset>", Messages.legacyToMini("&cтекст&r"));
         assertEquals("Привет мир", Messages.stripFormatting("<red>Привет </red><bold>мир</bold>"));

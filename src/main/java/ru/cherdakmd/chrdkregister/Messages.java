@@ -134,7 +134,7 @@ public final class Messages {
     public List<Component> getList(String key, Object... placeholders) {
         List<Component> result = new ArrayList<>();
         for (String line : template(key).split("\n", -1)) {
-            result.add(mini.deserialize(fill(line, placeholders)));
+            result.add(mini.deserialize(fill(legacyToMini(line), placeholders)));
         }
         return result;
     }
@@ -283,9 +283,13 @@ public final class Messages {
 
     /** Переводит старые {@code &}-коды в теги MiniMessage (обратная совместимость). */
     public static String legacyToMini(String legacy) {
-        if (legacy == null || legacy.indexOf('&') < 0) return legacy;
-        Matcher matcher = LEGACY_CODE.matcher(legacy);
-        StringBuilder result = new StringBuilder(legacy.length() + 16);
+        if (legacy == null) return null;
+        // Old live messages.yml used HTML brackets. Escape the opening bracket BEFORE parsing
+        // colours: &lt; otherwise looks like the legacy &l (bold) code. Never create a live tag.
+        String normalized = legacy.replace("&lt;", "\\<").replace("&gt;", ">");
+        if (normalized.indexOf('&') < 0) return normalized;
+        Matcher matcher = LEGACY_CODE.matcher(normalized);
+        StringBuilder result = new StringBuilder(normalized.length() + 16);
         while (matcher.find()) {
             String tag = LEGACY_TAGS.get(Character.toLowerCase(matcher.group(1).charAt(0)));
             matcher.appendReplacement(result, tag == null ? Matcher.quoteReplacement(matcher.group())
