@@ -55,6 +55,9 @@ class LuckPermsBootstrapTest {
         assertTrue(base.permissions().contains("chrdklottery.use"));
         assertTrue(admin.permissions().contains("chrdklottery.admin"));
         assertFalse(base.permissions().contains("chrdklottery.admin"));
+        assertTrue(base.permissions().contains("chrdkauction.use"));
+        assertTrue(admin.permissions().contains("chrdkauction.admin"));
+        assertFalse(base.permissions().contains("chrdkauction.admin"));
     }
 
     @Test
