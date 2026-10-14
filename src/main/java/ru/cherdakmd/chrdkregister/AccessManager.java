@@ -127,6 +127,7 @@ public final class AccessManager {
     private BukkitTask donateHealthTask;
     private BukkitTask boostyRecheckTask;
     private final BoostyManager boostyManager;
+    private final LuckPermsBootstrap luckPermsBootstrap;
     private volatile long lastBackupAtMillis;
     private volatile long lastPurgeAtMillis;
     private volatile long serverStartedAtMillis;
@@ -154,6 +155,7 @@ public final class AccessManager {
         this.donations = new DonationService(store, this::config, audit, notifications, logger,
                 messages, this::onPassGranted);
         this.donations.setPendingNotifier(this::onDonationPending);
+        this.luckPermsBootstrap = new LuckPermsBootstrap(plugin.externalHooks(), this::config);
         this.logMasker = new LogMasker(logger);
         this.authDialogs = createAuthDialogs(plugin);
         this.totpQrMaps = new TotpQrMapService(this, logger);
@@ -320,6 +322,22 @@ public final class AccessManager {
             logger.warning("pass.enabled: false — донат-стена проходки ВЫКЛЮЧЕНА. "
                     + "Вход контролирует только очередь (CHRDK_Queue) и лимиты сервера.");
         }
+        // Одноразовая подсказка: LuckPerms есть, а группа проходки (integrations.pass-group) не создана
+        if (config.passGroup() != null && !config.passGroup().isBlank()) {
+            Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () ->
+                    luckPermsBootstrap.passGroupMissing().thenAccept(missing -> {
+                        if (Boolean.TRUE.equals(missing)) {
+                            logger.warning("LuckPerms: группа проходки '" + config.passGroup()
+                                    + "' не создана. Авто-настройка схемы групп: "
+                                    + "/pass luckperms setup");
+                        }
+                    }), 20L * 60L);
+        }
+    }
+
+    /** Авто-настройка групп LuckPerms по схеме CHRDK (default → pass → admin). */
+    public LuckPermsBootstrap luckPermsBootstrap() {
+        return luckPermsBootstrap;
     }
 
     /**

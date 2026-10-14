@@ -79,6 +79,7 @@ messages:
     "pass-testpay": "<yellow>Использование: /%label% testpay <ник> [сумма_руб] [сервис] — тестовый платёж (donatepay/easydonate/trademc): полный цикл выдачи (журнал, аудит, уведомления).</yellow>"
     "pass-testpaylive": "<yellow>Использование: /%label% testpay-live <ник> <сумма_руб> [комментарий] — ЖИВОЙ тест: запись о донате отправится в ваш кошелёк DonatePay (set_notification).</yellow>"
     "pass-shoppay": "<yellow>Использование: /%label% shoppay <ник> <сумма_руб> — RCON-хук магазина TradeMC: провести покупку как донат (журнал, выдача по тарифам).</yellow>"
+    "pass-luckperms": "<yellow>Использование: /%label% luckperms [setup|status] — авто-настройка групп LuckPerms (default → проходка → admin) или просмотр схемы.</yellow>"
     "pass-reset2fa": "<yellow>Использование: /%label% reset2fa <ник></yellow>"
     "pass-sessions": "<yellow>Использование: /%label% sessions <ник></yellow>"
     "pass-unregister": "<yellow>Использование: /%label% unregister <ник></yellow>"
@@ -338,6 +339,7 @@ messages:
       <yellow>/%label% doctor</yellow><gray> — самопроверка конфигурации</gray>
       <yellow>/%label% audit [ник] [N]</yellow><gray> — последние записи аудита</gray>
       <yellow>/%label% backup <create|list|restore></yellow><gray> — резервные копии данных</gray>
+      <yellow>/%label% luckperms [setup|status]</yellow><gray> — авто-настройка групп LuckPerms (default → проходка → admin)</gray>
       <yellow>/%label% reload</yellow><gray> — перезагрузить config.yml</gray>
     "claim-success": "<green>✓ Платёж #%id% подтверждён, проходка активирована!</green>"
     "expired": "<red>Срок вашей месячной проходки истёк! Продлите проходку на странице оплаты сервера.</red>"
@@ -613,6 +615,19 @@ messages:
       "not-successful": "транзакция не является успешным донатом"
     "rejected": "<yellow>Платёж #%id% отклонён.</yellow>"
     "suggested": " → похоже на %name%"
+
+  # ---------------------------------------------------------------
+  # lp — авто-настройка LuckPerms (/pass luckperms setup|status)
+  # ---------------------------------------------------------------
+  "lp":
+    "unavailable": "<red>LuckPerms не найден на сервере — авто-настройка групп невозможна.</red>"
+    "setup-start": "<gray>Настраиваю группы LuckPerms по схеме default → проходка → admin…</gray>"
+    "setup-done": "<green>✓ LuckPerms настроен: группы %groups% (создано: %created%, узлов выставлено: %nodes%).</green>"
+    "setup-fail": "<red>Авто-настройка LuckPerms не удалась: %error%</red>"
+    "setup-hint-pass": "<yellow>Группа '%group%' создана. Включите авто-выдачу проходным: integrations.pass-group: \"%group%\" в config.yml + /pass reload.</yellow>"
+    "status-header": "<gold>=== Группы LuckPerms (схема CHRDK) ===</gold>"
+    "status-line": "<gray>- %group%: существует, вес %weight%, прав %perms%</gray>"
+    "status-missing": "<yellow>- %group%: НЕ создана — выполните /%label% luckperms setup</yellow>"
 
   # ---------------------------------------------------------------
   # audit — Аудит /pass audit

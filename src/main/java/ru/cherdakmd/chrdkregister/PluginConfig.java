@@ -32,6 +32,8 @@ public final class PluginConfig {
     /** Подписочный провайдер Boosty (сеттится из load(), в большой ctor не входит). */
     private BoostySettings boosty = BoostySettings.DISABLED;
     private TradeMcSettings trademc = TradeMcSettings.DISABLED;
+    /** Дополнительные права для группы проходки из integrations.pass-group-permissions. */
+    private List<String> passGroupPermissions = List.of();
 
     /** Динамический MOTD (сеттится из load(), как и Boosty). */
     private MotdSettings motd = MotdSettings.DISABLED;
@@ -398,6 +400,7 @@ public final class PluginConfig {
         );
         parsed.boosty = BoostySettings.from(config);
         parsed.trademc = TradeMcSettings.from(config);
+        parsed.passGroupPermissions = List.copyOf(config.getStringList("integrations.pass-group-permissions"));
         parsed.motd = MotdSettings.from(config);
         parsed.passEnabled = config.getBoolean("pass.enabled", true);
         parsed.donateActions = DonateAction.parseList(config.getMapList("donation-actions"));
@@ -488,6 +491,11 @@ public final class PluginConfig {
     /** Настройки магазина TradeMC (trademc:<key> секция). */
     public TradeMcSettings trademc() {
         return trademc;
+    }
+
+    /** Доп. узлы прав, попадающие в группу проходки при /pass luckperms setup. */
+    public List<String> passGroupPermissions() {
+        return passGroupPermissions;
     }
 
     /** Ссылка, которую видит игрок как «продлить/купить проходку»: в TradeMC-режиме — ссылка магазина. */

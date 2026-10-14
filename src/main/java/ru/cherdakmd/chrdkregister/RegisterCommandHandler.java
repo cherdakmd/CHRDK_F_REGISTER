@@ -29,7 +29,8 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
     private static final List<String> ADMIN_SUBCOMMANDS =
             List.of("add", "remove", "check", "unregister", "reset2fa", "status", "reload",
                     "pending", "donations", "health", "approve", "reject", "sessions", "logoutall", "stats", "doctor", "audit",
-                    "backup", "gift", "testpay", "testpay-live", "shoppay", "recheck", "donationsgui");
+                    "backup", "gift", "testpay", "testpay-live", "shoppay", "recheck", "donationsgui",
+                    "luckperms");
     private static final List<String> MUTE_DURATIONS = List.of("10m", "30m", "1h", "6h", "1d", "7d");
     private static final List<String> TWO_FACTOR_SUBCOMMANDS =
             List.of("setup", "confirm", "disable", "status", "cancel", "qr");
@@ -788,6 +789,65 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                             "status", outcome.status().name(),
                             "note", outcome.note().isBlank() ? "—" : outcome.note(),
                             "label", label);
+                }
+                return true;
+            }
+            case "luckperms" -> {
+                // Авто-настройка LuckPerms по схеме CHRDK: default → <pass-group> → admin
+                String action = args.length > 1 ? args[1].toLowerCase(Locale.ROOT) : "status";
+                LuckPermsBootstrap bootstrap = accessManager.luckPermsBootstrap();
+                if (!bootstrap.available()) {
+                    messages.send(sender, "lp.unavailable");
+                    return true;
+                }
+                switch (action) {
+                    case "setup" -> {
+                        messages.send(sender, "lp.setup-start");
+                        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () ->
+                                bootstrap.setup().whenComplete((result, error) ->
+                                        plugin.getServer().getScheduler().runTask(plugin, () -> {
+                                            if (error != null) {
+                                                messages.send(sender, "lp.setup-fail",
+                                                        "error", error.getMessage() == null
+                                                                ? "unknown" : error.getMessage());
+                                                return;
+                                            }
+                                            messages.send(sender, "lp.setup-done",
+                                                    "groups", String.join(", ", result.groups()),
+                                                    "created", result.createdCount(),
+                                                    "nodes", result.nodeCount());
+                                            if (accessManager.config().passGroup().isBlank()) {
+                                                messages.send(sender, "lp.setup-hint-pass",
+                                                        "group", bootstrap.passGroupName());
+                                            }
+                                        })));
+                    }
+                    case "status" -> {
+                        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () ->
+                                bootstrap.status().whenComplete((statuses, error) ->
+                                        plugin.getServer().getScheduler().runTask(plugin, () -> {
+                                            if (error != null) {
+                                                messages.send(sender, "lp.setup-fail",
+                                                        "error", error.getMessage() == null
+                                                                ? "unknown" : error.getMessage());
+                                                return;
+                                            }
+                                            messages.send(sender, "lp.status-header");
+                                            for (LuckPermsBootstrap.GroupStatus line : statuses) {
+                                                if (line.exists()) {
+                                                    messages.send(sender, "lp.status-line",
+                                                            "group", line.name(),
+                                                            "weight", line.weight(),
+                                                            "perms", line.permissionNodes());
+                                                } else {
+                                                    messages.send(sender, "lp.status-missing",
+                                                            "group", line.name(),
+                                                            "label", label);
+                                                }
+                                            }
+                                        })));
+                    }
+                    default -> messages.send(sender, "usage.pass-luckperms", "label", label);
                 }
                 return true;
             }
