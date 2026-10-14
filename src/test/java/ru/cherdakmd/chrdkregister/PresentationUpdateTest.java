@@ -40,7 +40,14 @@ class PresentationUpdateTest {
         assertTrue(PresentationMigration.replacements(empty,yaml("presentation-legacy.yml"),yaml("config.yml")).isEmpty());
     }
     @Test void stockMenuCoversAllAddonsWithCorrectPermissionsAndNonPurchasingClaims() throws Exception {
-        var settings=ServerMenuSettings.from(yaml("config.yml"));assertEquals(26,settings.entries().size());
+        // Material.isItem() in the runtime parser needs the server registry in Purpur 26.3.
+        // Verify raw config + layout here; icon creation remains a live-server smoke test.
+        var entries=yaml("config.yml").getMapList("server-menu.items").stream().map(map ->
+                new ServerMenuSettings.Entry(((Number)map.get("slot")).intValue(), org.bukkit.Material.valueOf(map.get("icon").toString()),
+                        map.get("name").toString(), map.get("lore").toString(), map.get("command").toString(),
+                        map.get("plugin")==null?"":map.get("plugin").toString(),
+                        map.get("permission")==null?"":map.get("permission").toString())).toList();
+        var settings=new ServerMenuSettings(true,entries);assertEquals(26,settings.entries().size());
         var layout=ServerMenuService.layout(settings.entries());assertFalse(layout.slots().contains(-1));
         assertEquals(layout.slots().size(),new HashSet<>(layout.slots()).size());
         Set<String> advertised=new HashSet<>();

@@ -216,25 +216,62 @@ TradeMC-режим, `/pass health` — что API-опросы выключен�
 
 ```yaml
 # =====================================================================
-# CHRDK_Core — Настройки проходки через DonatePay, паролей, TOTP 2FA,
+# CHRDK_F_REGISTER — Настройки проходки через DonatePay, паролей, TOTP 2FA,
 # встроенного чата (локальный/глобальный, ЛС, автосообщения), защиты от
 # перебора паролей, журнала донатов и аудита.
-# Сервер: Purpur 26.3
+# Сервер: Purpur 26.3 (Java 25)
 # =====================================================================
 
 general:
   # Часовой пояс для всех дат в сообщениях, аудите и именах бэкапов
   timezone: "Europe/Moscow"
+  # Язык текстов плагина: ru — файл messages.yml, любой другой — наложение messages_<locale>.yml
+  # (например locale: en подхватит messages_en.yml поверх русских значений по умолчанию)
+  locale: "ru"
 
 donatepay:
+  # Включить API-опрос DonatePay? false — сторож/опрос/health выключены, но кликабельная
+  # ссылка (payment-url ниже) показывается игрокам, пока она заполнена.
+  # Режим «оплату обрабатывает внешний плагин (EasyPayments), CHRDK — только ссылка и
+  # хранилище проходок»: выключите оба опроса и пропишите ссылку на магазин EasyDonate.
+  enabled: true
   # API-токен из личного кабинета DonatePay (https://donatepay.ru/page/api)
   api-token: ""
+  # Показывать в консоли имя кошелька DonatePay и баланс при рукопожатии (GET /user
+  # при старте/релоаде). false — в логах только «токен валиден», без имени и суммы.
+  show-balance: true
   # Ссылка на вашу страницу оплаты DonatePay (показывается игроку в чате)
   payment-url: "https://new.donatepay.ru/@your_page"
   # Минимальная сумма доната в рублях для автоматической выдачи проходки
   minimum-rubles: 150
   # Интервал проверки новых донатов через API DonatePay в секундах (минимум 15)
   poll-seconds: 30
+  # Пульс подключения: раз в столько секунд в консоль пишется heartbeat-строка вида
+  # "DonatePay heartbeat: OK — последний успешный опрос N с назад" (60..3600)
+  health-seconds: 300
+  # Сколько подряд неудачных опросов считается падением DonatePay (тревога админам +
+  # консоль, по одному разу на эпизод; сообщение о восстановлении — после первой удачи)
+  alert-fail-streak: 10
+  # Дублировать тревогу о падении/восстановлении DonatePay онлайн-админам в чат
+  alert-admins: true
+
+# Консольные действия по входящим донатам (оба провайдера: DonatePay и EasyDonate).
+# При успешной оплате с суммой >= sum выполняется command от имени консоли.
+# Плейсхолдеры: {username} — имя из формы оплаты, {player} — ник получателя прохода
+# (или username, если не заматчился), {sum} — сумма в рублях, {message} — комментарий.
+# Донорский ввод экранируется автоматически (кавычки/слэши вырезаются).
+# Не срабатывает для backfill при первом включении и retry старых pending — только
+# новые платежи и /pass testpay (удобно обкатывать шаблоны: /pass testpay Ник 500).
+# Примеры:
+#   - sum: 50
+#     command: "broadcast <gold>{username}</gold> поддержал сервер на <yellow>{sum} ₽</yellow>!"
+#   - sum: 500
+#     command: "title @a title {\"text\":\"{username} — ЛЕГЕНДА!\",\"color\":\"gold\"}"
+  # Повторять тревогу, пока DonatePay всё ещё недоступен (интервал в минутах; 0 = только
+  # одна тревога на эпизод). Совпадение с health-seconds гармонично: 15 мин ~ 3 heartbeat линии
+  alert-repeat-minutes: 15
+  # Напоминать админам, если донат ждёт ручного разбора дольше N часов (0 = выкл; повтор — раз в N часов)
+  pending-notify-hours: 24
   # Строгая проверка регистра букв в нике донатера (false = ник сверяется без учёта регистра)
   strict-case-match: false
   # Платежи, которые не удалось сопоставить с ником, попадают в журнал и ждут решения:
@@ -249,11 +286,115 @@ donatepay:
   # Сколько дней хранить журнал донатов
   journal-keep-days: 365
 
+donation-actions: []
+
+# EasyDonate (v1.4.35) — второй провайдер донатов: опрашивается рядом с DonatePay
+# в тот же интервал poll-seconds. Отказ одного сервиса не ставит на паузу другой.
+easydonate:
+  # Включить API-опрос EasyDonate? false — опрос/сторож выключены; при желании
+  # оставить только LINK к магазину — заполните payment-url ниже (он показывается
+  # независимо от enabled). При ПЕРВОМ включении опроса идёт backfill за 24 ч.
+  enabled: false
+  # Ключ магазина EasyDonate: раздел «Магазин → Настройки → API» (заголовок Shop-Key из доков v3)
+  shop-key: ""
+  # Ссылка на страницу магазина EasyDonate — появляется игроку второй кнопкой рядом с DonatePay
+  payment-url: ""
+  # Обратите внимание: сверка ников (strict-case-match, review-unmatched, fuzzy-match,
+  # payment-code, journal-keep-days) — общие и живут в секции donatepay выше.
+
+  # ================================================================
+#  Магазин TradeMC (https://trademc.org) — режим "донат ТОЛЬКО через TradeMC"
+#  Доставка покупок — по RCON: панель магазина сама выполняет на сервере
+#  команду после оплаты. enabled: true выключает опросы DonatePay и
+#  EasyDonate и Boosty-подписки ЕДИНЫМ переключателем.
+#  Настройка в panel.trademc.org:
+#   1) Магазин → Сервера: привяжите сервер по RCON (хост/порт/пароль rcon).
+#   2) Товар проходки → поле "команда при покупке":
+#      chrdkregister pass shoppay <плейсхолдер_ника> <цена_товара>
+#      Плейсхолдер ника смотрите в подсказке вашей панели (обычно {player}).
+#      Сумма должна совпадать с ценами тарифов (minimum-rubles/tiers в
+#      секции donatepay) — по сумме считается срок проходки.
+#   3) Тест: купите товар или выполните из консоли
+#      chrdkregister pass shoppay TestPlayer 150
+# ================================================================
+trademc:
+  # Включить TradeMC-режим (донат только через TradeMC, остальные провайдеры выкл.)
+  enabled: false
+  # Числовой ID вашего магазина из панели TradeMC (идёт в логи и /pass status)
+  shop-id: 0
+  # Ссылка на вашу витрину TradeMC — игрокам в строке продления проходки
+  payment-url: ""
+
+  # ================================================================
+#  Подписочная проходка через Boosty.to ("проходка, пока жива подписка")
+#  Игрок пишет /pass boost <ник_на_Boosty>; пока его подписка активна,
+#  проходка ежедневно продлевается до "сейчас + days-per-period".
+#  Никаких платёжных API: подписчики читаются со страницы блога.
+# ================================================================
+boosty:
+  # Включить подписочный провайдер Boosty? У Boosty нет публичного API —
+  # используется приватный веб-API с токеном из браузера (ниже).
+  enabled: false
+  # Имя вашего блога: https://boosty.to/<blog>
+  blog: ""
+  # Ссылка, которую игроки видят в подсказке о проходке (если пустая —
+  # собирается из имени блога)
+  blog-url: ""
+  # Токены из браузера: зайдите на boosty.to под ВЛАДЕЛЬЦЕМ БЛОГА,
+  # F12 → Application → Local Storage, ключи:
+  #   "auth"       → accessToken/refreshToken/expiresAt (inside JSON)
+  #   "_clientId"  → deviceId
+  # Либо из DevTools: Network → любой запрос к api.boosty.to →
+  # заголовок Authorization: Bearer <это ваш token>.
+  # ВНИМАНИЕ: Boosty РОТИРУЕТ refresh-token при каждом обновлении — рабочие
+  # токены плагин хранит в boosty-tokens.json, config.yml нужен только для посева.
+  token: ""
+  refresh-token: ""
+  device-id: ""
+  # Минимальная цена уровня подписки (₽/мес), дающего проходку
+  min-level-price: 300
+  # На сколько дней хватает подтверждённой подписки (горизонт продления)
+  days-per-period: 30
+  # Как часто перепроверять подписки привязанных игроков (часы)
+  recheck-hours: 24
+  # Холостой прогон: всё проверяем, но привязки/продления не применяем
+  dry-run: false
+  # Подробное логирование Boosty в консоль
+  debug-log: false
+
+# ================================================================
+#  Динамический MOTD (текст в списке серверов)
+#  Выбор строки — motd.mode (rotate каждые rotate-seconds или random на пинг),
+#  MiniMessage (<color>, <gradient>, <b> и т.п.) + плейсхолдеры:
+#  %online% %max% %date% %time% %version% %players% (ники онлайн)
+#  %price% (мин. цена проходки) %url% (ссылка на оплату)
+#  Для переноса строки внутри MOTD используйте \n (внутри one-linе кавычек)
+# ================================================================
+motd:
+  enabled: false
+  # Как выбирать строку из списка: rotate — ковш по времени (при повторном пинге
+  # текст один и тот же), random — случайная строка на каждый пинг.
+  mode: rotate
+  rotate-seconds: 60
+  # Плейсхолдеры: %online% %max% %date% %time% %version% %players% (ники онлайн,
+  # до 10 — дальше "+N"), %price% (мин. цена проходки), %url% (ссылка на оплату).
+  lines:
+    - "<gold><b>ЧРДК</b></gold> <gray>•</gray> <green>выживание для своих</green>\n<gray>Онлайн: <white>%online%/%max%</white> — проходка через TradeMC</gray>"
+    - "<gradient:#ffcc00:#ff8800><b>ЧРДК — делаем контент вместе</b></gradient>\n<gray>Сегодня %date% · v%version% · ждём именно тебя</gray>"
+
 pass:
-  # Однократная бесплатная проходка после первой успешной регистрации.
+  # Однократная бесплатная проходка для нового аккаунта после первой регистрации.
+  # Отсчёт начинается с успешного /register; до регистрации доступен только вход/регистрация.
+  # Уже зарегистрированным и ранее получавшим проходку аккаунтам повторно не выдаётся.
   trial:
     enabled: true
     days: 14
+  # Мастер-флаг донат-стены. false — игроки БЕЗ проходки не получают
+  # подсказок-ссылок/боссбаров и НЕ кикаются по kick-after-seconds:
+  # регистрация/пароль/2FA остаются, но требование проходки снимается.
+  # Вход на сервер тогда контролирует только очередь (CHRDK_Queue) и
+  # настройки server.properties. По умолчанию стена ВКЛЮЧЕНА.
+  enabled: true
   # Срок действия проходки в днях по умолчанию (1 месяц = 30 дней)
   grant-days: 30
   # Тарифы: сумма в рублях → количество дней. Побеждает самый дорогой подходящий тариф
@@ -269,14 +410,63 @@ pass:
   expiry-warning-sound: true
   # Кикать незаавторизовавшихся игроков через N секунд (0 = не кикать)
   kick-after-seconds: 0
-  # Инвентарное GUI-меню /pass menu (статус, оплата, тарифы, 2FA, пароль, сессии)
+  # Инвентарное GUI-меню /pass menu: статус, оплата, тарифы, 2FA, пароль, сессии (для админов — статистика)
   gui-menu: true
 
+# Главное меню сервера /menu (GUI, конфиг-driven): ядро про аддоны не знает —
+# вы сами решаете, какие пункты видят игроки. Каждый пункт: slot (0-53; -1 = авто,
+# раскладка рядами по центру), icon (материал Bukkit), name/lore (MiniMessage),
+# command (выполняется ОТ ИГРОКА по клику — как если бы он написал её сам).
+# Уважает флаг pass.gui-menu? Нет — server-menu живёт сам по себе.
+server-menu:
+  enabled: true
+  # plugin/permission: пункт скрыт, если аддон выключен или нет права.
+  # Команды выполняются только от игрока; административных действий здесь нет.
+  items:
+    - {"slot": 10, "icon": "PAPER", "name": "<gold><bold>Проходка и аккаунт</bold></gold>", "lore": "<gray>Осталось: %pass_left%</gray>\n<gray>Статус, тарифы и настройки аккаунта</gray>", "command": "pass menu"}
+    - {"slot": 11, "icon": "EMERALD", "name": "<gold><bold>Поддержать сервер</bold></gold>", "lore": "<gray>Ссылка на оплату и продление</gray>\n<gray>Пробный срок не требует оплаты заранее</gray>", "command": "pass donate"}
+    - {"slot": 12, "icon": "CLOCK", "name": "<gold><bold>Ежедневные награды</bold></gold>", "lore": "<gray>Календарь, стрик и награда дня</gray>", "command": "daily", "plugin": "CHRDK_DailyRewards", "permission": "chrdkdaily.use"}
+    - {"slot": 13, "icon": "EXPERIENCE_BOTTLE", "name": "<gold><bold>Боевой пропуск</bold></gold>", "lore": "<gray>Задания сезона и получение наград</gray>", "command": "battlepass", "plugin": "CHRDK_BattlePass", "permission": "chrdkbp.use"}
+    - {"slot": 14, "icon": "NETHER_STAR", "name": "<gold><bold>Звания</bold></gold>", "lore": "<gray>Прогресс по наигранному времени</gray>", "command": "ranks", "plugin": "CHRDK_Ranks", "permission": "chrdkranks.use"}
+    - {"slot": 15, "icon": "BEACON", "name": "<gold><bold>Общие цели</bold></gold>", "lore": "<gray>Вклад в цели всего сообщества</gray>", "command": "goals", "plugin": "CHRDK_CommonGoals", "permission": "chrdkgoals.use"}
+    - {"slot": 16, "icon": "PLAYER_HEAD", "name": "<gold><bold>Пригласить друга</bold></gold>", "lore": "<gray>Реферальный статус и бонусные дни</gray>", "command": "ref", "plugin": "CHRDK_Referrals", "permission": "chrdkref.use"}
+    - {"slot": 19, "icon": "DIAMOND", "name": "<gold><bold>Алмазный магазин</bold></gold>", "lore": "<gray>Обмен ресурсов и динамические цены</gray>\n<gray>Счёт магазина отделён от выручки аукциона</gray>", "command": "shop", "plugin": "CHRDK_DiamondShop", "permission": "chrdkshop.use"}
+    - {"slot": 20, "icon": "GOLD_INGOT", "name": "<gold><bold>Аукцион игроков</bold></gold>", "lore": "<gray>Лоты, цены и подтверждение покупки</gray>\n<gray>Выставление: /ah sell цена</gray>", "command": "auction", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
+    - {"slot": 21, "icon": "ENDER_CHEST", "name": "<gold><bold>Почта аукциона</bold></gold>", "lore": "<gray>Купленные товары и возврат непроданного</gray>\n<gray>Выручка: /ah money</gray>", "command": "auction mail", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
+    - {"slot": 22, "icon": "SUNFLOWER", "name": "<gold><bold>Лотерея недели</bold></gold>", "lore": "<gray>Банк, ваш шанс и время розыгрыша</gray>\n<gray>Билеты покупаются отдельно: /lottery buy</gray>", "command": "lottery info", "plugin": "CHRDK_Lottery", "permission": "chrdklottery.use"}
+    - {"slot": 23, "icon": "GOLD_BLOCK", "name": "<gold><bold>Результат лотереи</bold></gold>", "lore": "<gray>Прошлый победитель</gray>\n<gray>Призы: /lottery claim</gray>", "command": "lottery last", "plugin": "CHRDK_Lottery", "permission": "chrdklottery.use"}
+    - {"slot": 24, "icon": "MAP", "name": "<gold><bold>Ваши территории</bold></gold>", "lore": "<gray>Список принадлежащих вам чанков</gray>", "command": "claim list", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
+    - {"slot": 25, "icon": "CHEST", "name": "<gold><bold>Казна приватов</bold></gold>", "lore": "<gray>Баланс казны для ренты</gray>\n<gray>Следите за ежедневными расходами</gray>", "command": "claim balance", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
+    - {"slot": 28, "icon": "COMPASS", "name": "<gold><bold>Дома</bold></gold>", "lore": "<gray>Список точек дома</gray>\n<gray>Установить точку: /sethome имя</gray>", "command": "homes", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
+    - {"slot": 29, "icon": "ENDER_PEARL", "name": "<gold><bold>Случайный телепорт</bold></gold>", "lore": "<gray>Запустить RTP за алмазы</gray>\n<gray>Стоимость задаётся настройками телепортов</gray>", "command": "rtp", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
+    - {"slot": 30, "icon": "OAK_DOOR", "name": "<gold><bold>Телепорты к игрокам</bold></gold>", "lore": "<gray>Запрос: /tpa ник</gray>\n<gray>Принять запрос: /tpaccept</gray>", "command": "tpa", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
+    - {"slot": 31, "icon": "GRASS_BLOCK", "name": "<gold><bold>Как приватить</bold></gold>", "lore": "<gray>Справка по покупке, членам и ренте</gray>\n<gray>Эта кнопка НЕ покупает чанк</gray>", "command": "claim help", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
+    - {"slot": 32, "icon": "FILLED_MAP", "name": "<gold><bold>Карта приватов</bold></gold>", "lore": "<gray>Карта чанков вокруг вас</gray>", "command": "claim map", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
+    - {"slot": 33, "icon": "ENCHANTED_BOOK", "name": "<gold><bold>Кастомные чары</bold></gold>", "lore": "<gray>Каталог чар и описания</gray>\n<gray>Получение через игровую механику</gray>", "command": "enchants", "plugin": "CHRDK_Enchants", "permission": "chrdkenchants.use"}
+    - {"slot": 34, "icon": "ANVIL", "name": "<gold><bold>Редкости снаряжения</bold></gold>", "lore": "<gray>Тиры крафта и характеристики</gray>", "command": "tiers", "plugin": "CHRDK_TierForge", "permission": "chrdktierforge.use"}
+    - {"slot": 37, "icon": "TOTEM_OF_UNDYING", "name": "<gold><bold>Артефакты</bold></gold>", "lore": "<gray>Каталог, носимые артефакты и источники</gray>\n<gray>Добывайте их в мире</gray>", "command": "artifacts", "plugin": "CHRDK_Artifacts", "permission": "chrdkartifacts.use"}
+    - {"slot": 38, "icon": "FIREWORK_ROCKET", "name": "<gold><bold>Косметика</bold></gold>", "lore": "<gray>Список эффектов и шлейфов</gray>", "command": "cosmetics list", "plugin": "CHRDK_Cosmetics", "permission": "chrdkcosmetics.use"}
+    - {"slot": 39, "icon": "TRIPWIRE_HOOK", "name": "<gold><bold>Защита 2FA</bold></gold>", "lore": "<gray>Статус двухфакторной защиты</gray>\n<gray>Подключение: /2fa setup</gray>", "command": "2fa status"}
+    - {"slot": 40, "icon": "BOOK", "name": "<gold><bold>Сессии входа</bold></gold>", "lore": "<gray>Проверить активные сессии аккаунта</gray>", "command": "session"}
+    - {"slot": 41, "icon": "HOPPER", "name": "<gold><bold>Очередь входа</bold></gold>", "lore": "<gray>Статус и сведения об очереди</gray>\n<gray>VIP-приоритет зависит от настроек сервера</gray>", "command": "queue info", "plugin": "CHRDK_Queue", "permission": "chrdkqueue.use"}
+    - {"slot": 42, "icon": "WRITABLE_BOOK", "name": "<gold><bold>Чат</bold></gold>", "lore": "<gray>Текущий режим и переключение</gray>\n<gray>/chat — локальный / глобальный</gray>", "command": "chat"}
+
+# Интеграции со сторонними плагинами (мягкие зависимости — без них плагин работает как обычно)
 integrations:
-  # Группа LuckPerms для игроков с активной проходкой (пусто — выключено)
+  # Группа LuckPerms, которая выдаётся игрокам с активной проходкой (пустая строка — выключено).
+  # Снимается при отзыве /pass remove и при истечении (см. ниже).
   pass-group: ""
-  # Снимать группу при истечении проходки
+  # Снимать группу при истечении проходки (false — группа остаётся, пока админ не отзовёт проходку)
   pass-group-remove-expired: true
+  # Дополнительные права для группы проходки. Применяются по /pass luckperms setup:
+  # он создаёт/достраивает схему default → <pass-group> → admin (права всех chrdk*-аддонов).
+  pass-group-permissions: []
+  # Защита служебных команд от обычных игроков при /pass luckperms setup: в группу
+  # default выставляются ЯВНЫЕ запреты (/plugins, /version, /timings, /op, /ban,
+  # /whitelist, /kick и т.п.), а в admin — те же узлы разрешёнными (вес решает).
+  lp-command-protect: true
+  # Дополнительные узлы, запрещаемые обычным игрокам (добавляются к встроенному списку):
+  lp-deny-extra: []
 
 auth:
   # Время жизни сессии по IP в минутах (0 = отключить сессию, спрашивать пароль при каждом входе)
@@ -292,10 +482,17 @@ auth:
   max-login-attempts: 5
   # Интервал отправки напоминаний заблокированным игрокам (в секундах)
   reminder-seconds: 5
-  # Эскалационная проверка «ты не бот» после N неудачных попыток входа (0 = выключено)
+  # Эскалационная проверка «ты не бот»: после N подряд неудачных попыток входа перед
+  # следующей попыткой открывается диалог с выбором правильного числа (0 = выключено)
   captcha-after-attempts: 3
   # Показывать ввод пароля в нативном диалоге Paper 1.21.6+ вместо команды /login <пароль>
   dialogs: true
+  # Вход кнопками: /login без аргументов открывает инвентарную клавиатуру, где каждый клик
+  # добавляет символ и перетасовывает раскладку — по записи стрима пароль не восстановить.
+  # Клики не попадают ни в чат, ни в консоль, ни в логи. (false = только команда/диалог)
+  button-login: true
+  # Дополнительные знаки на странице «цифры и знаки» кнопочной клавиатуры
+  button-login-symbols: "!@#$%&*-_+=.?"
   # Маскировать аргументы /login, /register, /changepassword и /2fa в консоли и logs/latest.log
   mask-commands-in-logs: true
   # Запрещать пароли из списка самых частых и пароли из последовательных символов
@@ -335,6 +532,9 @@ totp:
   window-steps: 1
   # Максимальное количество неверных попыток ввода 6-значного кода 2FA до кика с сервера
   max-attempts: 5
+  # Выдавать карту с QR-кодом otpauth:// при /2fa setup (и по команде /2fa qr):
+  # привязка приложения-аутентификатора одним сканом вместо ручного ввода ключа
+  qr-map: true
 
 storage:
   # Как часто сбрасывать накопленные изменения data.json на диск (в секундах)
@@ -358,8 +558,10 @@ notifications:
   # Вебхук Discord для важных событий (пусто = уведомления выключены)
   discord-webhook-url: ""
   # Какие события отправлять: pass.granted, pass.revoked, bruteforce.alert, totp.reset, password.reset,
-  # multialt.alert, donate.pending, donatepay.error, chat.mute, totp.enabled, totp.disabled, password.change
-  events: [pass.granted, pass.revoked, bruteforce.alert, totp.reset, password.reset, donate.pending, donatepay.error]
+  # multialt.alert, donate.pending, donatepay.error, donatepay.down, donatepay.up,
+  # chat.mute, totp.enabled, totp.disabled, password.change, update.available, lottery.draw
+  events: [pass.granted, pass.revoked, bruteforce.alert, totp.reset, password.reset, donate.pending,
+          donatepay.error, donatepay.down, donatepay.up, update.available, lottery.draw]
   # Упоминания в сообщении (например, "<@&1234567890>")
   mentions: []
 
@@ -451,22 +653,75 @@ private-messages:
   spy-format: "&8[SPY] &7%sender% &8→ &7%target%&8: &r%message%"
 
 auto-messages:
-  # Автоматические сообщения в чат через заданный интервал
   enabled: true
-  # Интервал между сообщениями в секундах (минимум 30)
   interval-seconds: 240
-  # Отправлять сообщения в случайном порядке (false = строго по порядку списка)
+  # Случайный выбор без немедленного повтора; учитываются доступность и права.
   random-order: true
-  # Не отправлять сообщения, если на сервере меньше указанного количества игроков
+  # Минимум авторизованных получателей с правом automessage.receive.
   minimum-players: 1
-  # Префикс перед каждым автосообщением
-  prefix: "&8[&6CHRDK&8] &r"
-  # Доступна подстановка %online% — количество игроков онлайн
+  prefix: "<dark_gray>[<gold>CHRDK</gold>]</dark_gray> "
+  # Старые строки поддерживаются. Карты: text, plugin, permission, condition.
+  # condition: always (по умолчанию), trial, unsecured.
   messages:
-    - "&eПонравился сервер? Поддержи проект и продли проходку: &b/pass"
-    - "&eВключи двухфакторную защиту аккаунта: &b/2fa setup"
-    - "&eСмени пароль на надёжный: &b/changepassword"
-    - "&eСейчас на сервере: &b%online% &eигроков"
+    - {"text": "<gray>Все возможности сервера собраны в /menu. Начните с ежедневной награды и целей сезона.</gray>"}
+    - {"text": "<gray>Ваш пробный период активен. Осталось %pass_left%. Статус и продление — /pass menu.</gray>", "condition": "trial"}
+    - {"text": "<gray>Защитите аккаунт: /2fa setup, затем подтвердите код приложения. Не сообщайте никому пароль и коды.</gray>", "condition": "unsecured"}
+    - {"text": "<gray>Забирайте ежедневную награду: /daily. Сохраняйте стрик входов.</gray>", "plugin": "CHRDK_DailyRewards", "permission": "chrdkdaily.use"}
+    - {"text": "<gray>Проверьте задания сезона и доступные награды: /battlepass.</gray>", "plugin": "CHRDK_BattlePass", "permission": "chrdkbp.use"}
+    - {"text": "<gray>Помогите общим целям сервера: /goals — ваш вклад и прогресс сообщества.</gray>", "plugin": "CHRDK_CommonGoals", "permission": "chrdkgoals.use"}
+    - {"text": "<gray>Звание растёт вместе с наигранным временем. Ваш прогресс — /ranks.</gray>", "plugin": "CHRDK_Ranks", "permission": "chrdkranks.use"}
+    - {"text": "<gray>Обмен ресурсов и актуальные цены: /shop. Счёт магазина и выручка аукциона — разные хранилища.</gray>", "plugin": "CHRDK_DiamondShop", "permission": "chrdkshop.use"}
+    - {"text": "<gray>Продайте весь стак из руки: /ah sell цена. Покупка через /ah требует подтверждения, комиссия указана в лоте.</gray>", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
+    - {"text": "<gray>Купленные и возвращённые лоты ждут в /ah mail. Выручку забирайте через /ah money.</gray>", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
+    - {"text": "<gray>Лотерея: /lottery — банк, шанс и точное время. Билеты — /lottery buy, выигрыш — /lottery claim.</gray>", "plugin": "CHRDK_Lottery", "permission": "chrdklottery.use"}
+    - {"text": "<gray>Защитите постройки: /claim help. Не забывайте казну для ежедневной ренты: /claim balance.</gray>", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
+    - {"text": "<gray>Точки дома: /homes и /sethome имя. Запрос к игроку: /tpa ник. Телепорты могут стоить алмазы.</gray>", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
+    - {"text": "<gray>Изучайте кастомные чары: /enchants. Они доступны через игровые способы получения.</gray>", "plugin": "CHRDK_Enchants", "permission": "chrdkenchants.use"}
+    - {"text": "<gray>Редкости снаряжения и ваши находки: /tiers и /tiers stats.</gray>", "plugin": "CHRDK_TierForge", "permission": "chrdktierforge.use"}
+    - {"text": "<gray>Артефакты добываются в мире. Каталог, носимые предметы и источники — /artifacts.</gray>", "plugin": "CHRDK_Artifacts", "permission": "chrdkartifacts.use"}
+    - {"text": "<gray>Выберите косметический шлейф: /cosmetics list. Выключить эффект: /cosmetics off.</gray>", "plugin": "CHRDK_Cosmetics", "permission": "chrdkcosmetics.use"}
+    - {"text": "<gray>Приглашайте друзей: /ref — статус и условия бонуса. Для привязки друга: /ref use ник.</gray>", "plugin": "CHRDK_Referrals", "permission": "chrdkref.use"}
+    - {"text": "<gray>Сведения об очереди входа: /queue info. Приоритет определяется настройками VIP-групп.</gray>", "plugin": "CHRDK_Queue", "permission": "chrdkqueue.use"}
+    - {"text": "<gray>Переключение локального и общего чата — /chat. Личное сообщение — /msg ник текст, ответ — /r текст.</gray>"}
+    - {"text": "<gray>Проверьте сессии входа: /session. Для выхода из аккаунта используйте /logout.</gray>"}
+    - {"text": "<gray>Хотите поддержать проект? /pass donate откроет ссылку на оплату и продление.</gray>"}
+
+tablist:
+  # Таб-лист (TAB): шапка/подвал списка игроков и формат имени в нём.
+  # Разметка — MiniMessage либо &-коды. Подстановки:
+  #   %player% — ник игрока, %online%/%max% — онлайн и лимит,
+  #   %tps% — TPS сервера, %ping% — пинг игрока, %world% — его мир,
+  #   %pass_status% — активна/истекла/нет проходки, %pass_left% — «12 дн. 3 ч.»,
+  #   %pass_days% — осталось целых дней проходки.
+  #   %pass_type% — пробная/обычная/нет, %auth_status% — состояние входа,
+  #   %auth_hint% — следующий шаг, %security% — состояние 2FA,
+  #   %navigation% — доступные ссылки (до входа: только подсказка входа).
+  enabled: true
+  # Как часто (в тиках, 20 = 1 сек) обновлять таб-лист всем игрокам. Минимум 10.
+  refresh-ticks: 40
+  # Строки шапки списка (каждая с новой строки экрана)
+  header:
+    - ""
+    - "<gradient:gold:yellow><bold>CHERDAK • ВЫЖИВАНИЕ</bold></gradient>"
+    - "<gray>Онлайн <white>%online%/%max%</white> <dark_gray>•</dark_gray> TPS <green>%tps%</green>"
+    - "<gray>%player% <dark_gray>•</dark_gray> <white>%auth_status%</white>"
+    - ""
+  footer:
+    - ""
+    - "<gold>%pass_type%</gold> <dark_gray>•</dark_gray> <aqua>%pass_left%</aqua>"
+    - "<gray>%auth_hint%</gray>"
+    - "<gray>2FA: <white>%security%</white> <dark_gray>•</dark_gray> <yellow>%ping% мс</yellow> <dark_gray>•</dark_gray> %world%"
+    - "<aqua>%navigation%</aqua>"
+    - ""
+  # Пусто: не перекрашивать чужие префиксы/имена; CHRDK_Ranks управляет сортировкой.
+  player-name-format: ""
+  # Никнеймы, закреплённые ВВЕРХУ списка игроков (регистр не важен).
+  # Реализовано через приоритетную команду scoreboard — клиент Minecraft
+  # сортирует список сначала по команде, потом по нику.
+  # ВНИМАНИЕ: если другой плагин садит этих игроков в свою команду
+  # (префиксы/ранги), его команда имеет приоритет — TAB не перетягивает игрока обратно.
+  pinned-names:
+    - kalinin_play
 ```
 
 После заполнения `api-token` и `payment-url` выполни `/pass reload` (или перезапусти сервер).
