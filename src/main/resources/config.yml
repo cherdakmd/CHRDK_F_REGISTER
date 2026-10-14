@@ -463,7 +463,7 @@ auto-messages:
     - {"text": "<gray>Редкости снаряжения и ваши находки: /tiers и /tiers stats.</gray>", "plugin": "CHRDK_TierForge", "permission": "chrdktierforge.use"}
     - {"text": "<gray>Артефакты добываются в мире. Каталог, носимые предметы и источники — /artifacts.</gray>", "plugin": "CHRDK_Artifacts", "permission": "chrdkartifacts.use"}
     - {"text": "<gray>Выберите косметический шлейф: /cosmetics list. Выключить эффект: /cosmetics off.</gray>", "plugin": "CHRDK_Cosmetics", "permission": "chrdkcosmetics.use"}
-    - {"text": "<gray>Приглашайте друзей: /ref — статус и условия бонуса. Для привязки друга: /ref use ник.</gray>", "plugin": "CHRDK_Referrals", "permission": "chrdkref.use"}
+    - {"text": "<gray>Приглашайте друзей: /ref — статус и условия бонуса. Если вас позвал друг, до первого непробного продления: /ref use его_ник.</gray>", "plugin": "CHRDK_Referrals", "permission": "chrdkref.use"}
     - {"text": "<gray>Сведения об очереди входа: /queue info. Приоритет определяется настройками VIP-групп.</gray>", "plugin": "CHRDK_Queue", "permission": "chrdkqueue.use"}
     - {"text": "<gray>Переключение локального и общего чата — /chat. Личное сообщение — /msg ник текст, ответ — /r текст.</gray>"}
     - {"text": "<gray>Проверьте сессии входа: /session. Для выхода из аккаунта используйте /logout.</gray>"}
@@ -478,7 +478,7 @@ tablist:
   #   %pass_days% — осталось целых дней проходки.
   #   %pass_type% — пробная/обычная/нет, %auth_status% — состояние входа,
   #   %auth_hint% — следующий шаг, %security% — состояние 2FA,
-  #   %navigation% — доступные ссылки (до входа: только подсказка входа).
+  #   %navigation% — доступные ссылки после входа (до входа: пустая строка).
   enabled: true
   # Как часто (в тиках, 20 = 1 сек) обновлять таб-лист всем игрокам. Минимум 10.
   refresh-ticks: 40

@@ -18,7 +18,7 @@ record PresentationContext(String passType, String authStatus, String authHint, 
         };
         return new PresentationContext(passType, PlaceholderValues.describeStage(stage), authHint,
                 messages.plain(account != null && account.isTotpEnabled() ? "presentation.secured" : "presentation.unsecured"),
-                stage == AccessManager.PlayerStage.AUTHENTICATED ? navigation : authHint);
+                stage == AccessManager.PlayerStage.AUTHENTICATED ? navigation : "");
     }
     Object[] placeholders() {
         return new Object[]{"pass_type", passType, "auth_status", authStatus, "auth_hint", authHint,

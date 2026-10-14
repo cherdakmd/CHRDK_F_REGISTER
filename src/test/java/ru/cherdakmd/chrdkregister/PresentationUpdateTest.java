@@ -98,9 +98,9 @@ class PresentationUpdateTest {
         a.lastGrantSource="manual";a.passUntil+=86400000;
         assertEquals("Проходка активна",PresentationContext.of(a,AccessManager.PlayerStage.AUTHENTICATED,now,false,14,messages(),"/menu").passType());
         var reg=PresentationContext.of(null,AccessManager.PlayerStage.NEEDS_REGISTER,now,true,14,messages(),"/ah");
-        assertTrue(reg.authHint().contains("14"));assertTrue(reg.navigation().contains("/register"));assertFalse(reg.navigation().contains("/ah"));
+        assertTrue(reg.authHint().contains("14"));assertTrue(reg.navigation().isEmpty());assertFalse(reg.navigation().contains("/ah"));
         var login=PresentationContext.of(a,AccessManager.PlayerStage.NEEDS_LOGIN,now,false,14,messages(),"/ah");
-        assertEquals("Войдите в аккаунт: /login",login.navigation());
+        assertEquals("Войдите в аккаунт: /login",login.authHint());assertTrue(login.navigation().isEmpty());
     }
     @Test void trialHistoryIsNotMistakenForPaidReferralAdmission() throws Exception {
         var a=new RegistrationStore.PlayerAccount();a.trialGrantedAt=100;a.lastGrantSource="trial";
