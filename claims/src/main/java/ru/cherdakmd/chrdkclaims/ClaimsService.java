@@ -55,9 +55,11 @@ public final class ClaimsService {
         return Bukkit.getPlayerExact(name) != null || Bukkit.getOfflinePlayerIfCached(name) != null;
     }
 
-    /** Текущая казна + алмазы в инвентаре. */
+    /** Текущая казна + алмазы в инвентаре (с защитой от переполнения int). */
     public int available(Player player) {
-        return plugin.store().treasuryOf(player.getName()) + DiamondItems.count(player.getInventory());
+        long sum = (long) plugin.store().treasuryOf(player.getName())
+                + DiamondItems.count(player.getInventory());
+        return (int) Math.min(Integer.MAX_VALUE, sum);
     }
 
     /**
@@ -71,7 +73,7 @@ public final class ClaimsService {
         }
         int treasury = plugin.store().treasuryOf(player.getName());
         int items = DiamondItems.count(player.getInventory());
-        if (treasury + items < amount) {
+        if ((long) treasury + items < amount) {
             return false;
         }
         int fromItems = Math.max(0, amount - treasury);
@@ -328,8 +330,8 @@ public final class ClaimsService {
         } else {
             plugin.messages().send(player, "add-done", "name", name);
         }
+        Claim first = targets.get(0);
         if (target != null) {
-            Claim first = targets.get(0);
             if (everywhere) {
                 plugin.messages().send(target, "member-added-all",
                         "owner", player.getName(), "count", String.valueOf(changed));
@@ -338,6 +340,13 @@ public final class ClaimsService {
                         "owner", player.getName(),
                         "x", String.valueOf(first.x), "z", String.valueOf(first.z));
             }
+        } else if (everywhere) {
+            plugin.store().addNotice(name, plugin.messages().plain("member-added-all",
+                    "owner", player.getName(), "count", String.valueOf(changed)));
+        } else {
+            plugin.store().addNotice(name, plugin.messages().plain("member-added",
+                    "owner", player.getName(),
+                    "x", String.valueOf(first.x), "z", String.valueOf(first.z)));
         }
         return true;
     }
@@ -667,16 +676,21 @@ public final class ClaimsService {
         }
         long now = System.currentTimeMillis();
         long earliest = Long.MAX_VALUE;
-        int dueDays = 1; // ближайшие сутки
+        int chunks = 0;
+        long dueDays = 0;
         for (Claim claim : claims) {
             if (!cfg.worldEnabled(claim.world)) {
                 continue;
             }
+            chunks++;
+            dueDays += 1L + Math.max(0, claim.debtDays);
             earliest = Math.min(earliest, claim.paidUntil);
-            dueDays += Math.max(0, claim.debtDays);
+        }
+        if (chunks == 0) {
+            return;
         }
         int balance = plugin.store().treasuryOf(player.getName());
-        int need = dueDays * cfg.upkeepPerDay;
+        int need = (int) Math.min(Integer.MAX_VALUE, dueDays * cfg.upkeepPerDay);
         if (balance >= need) {
             return;
         }

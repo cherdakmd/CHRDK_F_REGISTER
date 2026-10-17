@@ -123,7 +123,7 @@ public final class ClaimProtectionListener implements Listener {
             Material.JUKEBOX, Material.NOTE_BLOCK, Material.CAKE, Material.CANDLE, Material.CANDLE_CAKE,
             Material.CAMPFIRE, Material.SOUL_CAMPFIRE, Material.DECORATED_POT,
             Material.COMPOSTER, Material.TNT, Material.LECTERN, Material.FLOWER_POT,
-            Material.CHISELED_BOOKSHELF
+            Material.CHISELED_BOOKSHELF, Material.PUMPKIN, Material.BEEHIVE, Material.BEE_NEST
     );
 
     private final ClaimsPlugin plugin;
@@ -182,7 +182,7 @@ public final class ClaimProtectionListener implements Listener {
         }
         String name = type.name();
         return name.startsWith("POTTED_") || name.endsWith("_CANDLE")
-                || name.endsWith("_CANDLE_CAKE");
+                || name.endsWith("_CANDLE_CAKE") || name.endsWith("_BED");
     }
 
     private boolean isSpawnEgg(ItemStack item) {
