@@ -435,6 +435,11 @@ public final class ClaimsService {
 
     /** Выдать текущий чанк игроку от администратора: свободный — создать, занятый — передать. */
     public void giveHere(Player admin, String targetName) {
+        if (!plugin.config().worldEnabled(admin.getLocation().getWorld().getName())) {
+            plugin.messages().send(admin, "world-disabled",
+                    "world", admin.getLocation().getWorld().getName());
+            return;
+        }
         Claim claim = claimHere(admin);
         if (claim != null) {
             transfer(claim, admin, targetName, true);

@@ -25,7 +25,7 @@ class ClaimMathTest {
                 ClaimMath.settleRentDay(0, 1, 0, 3));
         assertEquals(new ClaimMath.RentStep(0, 4, true),
                 ClaimMath.settleRentDay(0, 1, 3, 3), "четвёртые сутки долга — освобождение");
-        assertEquals(new ClaimMath.RentStep(0, 1, false),
+        assertEquals(new ClaimMath.RentStep(0, 4, false),
                 ClaimMath.settleRentDay(0, 1, 3, 5), "при большей льготе чанк ещё жив");
     }
 

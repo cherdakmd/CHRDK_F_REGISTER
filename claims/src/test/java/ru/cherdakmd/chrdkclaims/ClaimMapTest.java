@@ -23,8 +23,8 @@ class ClaimMapTest {
     @Test
     void radiusIsConfigurableAndClamped() {
         List<String> small = ClaimMap.render(0, 0, 1, (x, z) -> ClaimMap.Cell.FREE);
-        assertEquals(3, small.size(), "радиус 1 — 3×3");
-        assertEquals(3, small.get(0).length());
+        assertEquals(ClaimMap.MIN_RADIUS * 2 + 1, small.size(), "радиус зажат снизу");
+        assertEquals(ClaimMap.MIN_RADIUS * 2 + 1, small.get(0).length());
 
         List<String> wide = ClaimMap.render(0, 0, 100, (x, z) -> ClaimMap.Cell.FREE);
         assertEquals(ClaimMap.MAX_RADIUS * 2 + 1, wide.size(), "радиус зажат сверху");

@@ -123,6 +123,10 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
         }
         String name = args[1];
         List<Claim> claims = plugin.store().ofOwner(name);
+        if (claims.isEmpty()) {
+            plugin.messages().send(sender, "admin-player-not-found", "name", name);
+            return;
+        }
         plugin.messages().send(sender, "list-other", "name", name, "count", String.valueOf(claims.size()));
         for (Claim claim : claims) {
             plugin.messages().send(sender, "list-line",

@@ -61,7 +61,7 @@ public final class ClaimStore {
     private long revision;
     private boolean dirty;
     /** Запись запрещена: повреждённый файл не удалось отложить, затирать его нельзя. */
-    private boolean blocked;
+    private volatile boolean blocked;
 
     public ClaimStore(Path dataFolder, Logger logger) {
         this.file = dataFolder.resolve("claims-data.json");
