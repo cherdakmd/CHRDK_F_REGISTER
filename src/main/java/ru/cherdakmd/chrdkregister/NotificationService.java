@@ -49,11 +49,14 @@ public final class NotificationService {
                 .connectTimeout(Duration.ofSeconds(10))
                 .followRedirects(HttpClient.Redirect.NEVER)
                 .build();
-        this.worker = Executors.newSingleThreadExecutor(task -> {
-            Thread thread = new Thread(task, "CHRDK-notifications");
-            thread.setDaemon(true);
-            return thread;
-        });
+        this.worker = new java.util.concurrent.ThreadPoolExecutor(
+                1, 1, 0L, TimeUnit.MILLISECONDS,
+                new java.util.concurrent.LinkedBlockingQueue<>(),
+                task -> {
+                    Thread thread = new Thread(task, "CHRDK-notifications");
+                    thread.setDaemon(true);
+                    return thread;
+                });
     }
 
     /**

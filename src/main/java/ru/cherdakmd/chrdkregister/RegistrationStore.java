@@ -255,6 +255,9 @@ public final class RegistrationStore {
                 writtenSequence.set(sequence);
             } catch (Exception exception) {
                 logger.log(Level.SEVERE, "Could not save registration data to " + file.toAbsolutePath(), exception);
+                synchronized (this) {
+                    dirty = true;
+                }
             }
         }
     }
@@ -405,13 +408,31 @@ public final class RegistrationStore {
     /** Records a player's UUID and exact casing when they join the server. */
     public synchronized PlayerAccount recordPlayerSeen(UUID uuid, String playerName) {
         String key = canonicalName(playerName);
-        PlayerAccount account = data.accounts.computeIfAbsent(key, ignored -> new PlayerAccount());
-        account.canonicalName = key;
-        account.playerName = playerName;
-        if (uuid != null) {
-            account.uuid = uuid.toString();
+        PlayerAccount account = data.accounts.get(key);
+        boolean created = account == null;
+        if (created) {
+            account = new PlayerAccount();
+            data.accounts.put(key, account);
         }
-        markDirty();
+        boolean changed = created;
+        if (account.canonicalName == null || !account.canonicalName.equals(key)) {
+            account.canonicalName = key;
+            changed = true;
+        }
+        if (account.playerName == null || !account.playerName.equals(playerName)) {
+            account.playerName = playerName;
+            changed = true;
+        }
+        if (uuid != null) {
+            String uuidString = uuid.toString();
+            if (account.uuid == null || !account.uuid.equals(uuidString)) {
+                account.uuid = uuidString;
+                changed = true;
+            }
+        }
+        if (changed) {
+            markDirty();
+        }
         return copy(account);
     }
 

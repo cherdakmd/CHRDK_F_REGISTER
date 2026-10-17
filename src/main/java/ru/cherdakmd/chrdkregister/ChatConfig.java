@@ -223,7 +223,8 @@ public final class ChatConfig {
         if (!configuredPatterns.isEmpty()) {
             chat.filterPatternsRaw = List.copyOf(configuredPatterns);
         }
-        chat.filterWhitelist = config.getStringList("chat.filter.whitelist");
+        chat.filterWhitelist = config.getStringList("chat.filter.whitelist").stream()
+                .map(value -> value.toLowerCase(Locale.ROOT)).toList();
         chat.filterNotifyAdmins = config.getBoolean("chat.filter.notify-admins", true);
         chat.chatLogEnabled = config.getBoolean("chat.chat-log.enabled", true);
         chat.chatLogKeepDays = config.getInt("chat.chat-log.keep-days", 90);
