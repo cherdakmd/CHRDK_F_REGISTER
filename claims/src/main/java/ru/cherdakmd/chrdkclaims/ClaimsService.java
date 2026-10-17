@@ -484,6 +484,7 @@ public final class ClaimsService {
         String oldOwner = claim.owner;
         int x = claim.x;
         int z = claim.z;
+        List<String> formerMembers = new ArrayList<>(claim.members);
         claim.owner = targetName;
         claim.members.clear();
         claim.salePrice = 0;
@@ -507,6 +508,17 @@ public final class ClaimsService {
                 && authenticated(oldOnline)) {
             plugin.messages().send(oldOnline, "transfer-given",
                     "name", targetName, "x", String.valueOf(x), "z", String.valueOf(z));
+        }
+        for (String member : formerMembers) {
+            String text = plugin.messages().plain("member-removed",
+                    "owner", oldOwner, "x", String.valueOf(x), "z", String.valueOf(z));
+            Player memberOnline = Bukkit.getPlayerExact(member);
+            if (memberOnline != null && authenticated(memberOnline)) {
+                plugin.messages().send(memberOnline, "member-removed",
+                        "owner", oldOwner, "x", String.valueOf(x), "z", String.valueOf(z));
+            } else {
+                plugin.store().addNotice(member, text);
+            }
         }
         return true;
     }
@@ -572,6 +584,23 @@ public final class ClaimsService {
             }
             long overdue = ClaimMath.overdueDays(claim.paidUntil, now);
             if (overdue <= 0) {
+                // Долг мог остаться с прошлых суток: как только казна пополнена,
+                // закрываем его, не дожидаясь следующего дня.
+                if (claim.debtDays > 0) {
+                    int charged = 0;
+                    while (claim.debtDays > 0
+                            && plugin.store().takeTreasury(claim.owner, cfg.upkeepPerDay)) {
+                        claim.debtDays--;
+                        charged += cfg.upkeepPerDay;
+                    }
+                    if (charged > 0) {
+                        chargedTotal += charged;
+                        chargedByOwner.merge(claim.owner, charged, Integer::sum);
+                    }
+                    if (claim.debtDays > 0) {
+                        debtClaims++;
+                    }
+                }
                 continue;
             }
             boolean clamped = overdue > ClaimMath.MAX_CATCHUP_DAYS;

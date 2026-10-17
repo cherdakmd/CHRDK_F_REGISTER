@@ -53,12 +53,15 @@ public final class ClaimStore {
     private final Map<String, Integer> treasury = new LinkedHashMap<>();
     private final Map<String, List<String>> notices = new LinkedHashMap<>();
     private final AtomicBoolean saving = new AtomicBoolean();
+    private final Object writeLock = new Object();
 
     private long chunksClaimedTotal;
     private long diamondsSpent;
     private long taxBurned;
     private long revision;
     private boolean dirty;
+    /** Запись запрещена: повреждённый файл не удалось отложить, затирать его нельзя. */
+    private boolean blocked;
 
     public ClaimStore(Path dataFolder, Logger logger) {
         this.file = dataFolder.resolve("claims-data.json");
@@ -94,8 +97,15 @@ public final class ClaimStore {
 
     /** Пишет данные синхронно. Вызывается из onDisable и асинхронной задачи. */
     public void save() {
+        if (blocked) {
+            return;
+        }
         Snapshot snapshot = snapshot();
-        if (write(snapshot.data())) {
+        boolean written;
+        synchronized (writeLock) {
+            written = write(snapshot.data());
+        }
+        if (written) {
             synchronized (this) {
                 if (revision == snapshot.revision()) {
                     dirty = false;
@@ -106,7 +116,7 @@ public final class ClaimStore {
 
     /** Планирует асинхронную запись; параллельные запуски не дублируются. */
     public void saveAsync(org.bukkit.plugin.Plugin plugin) {
-        if (!dirty || plugin == null) {
+        if (!dirty || blocked || plugin == null) {
             return;
         }
         if (!saving.compareAndSet(false, true)) {
@@ -140,6 +150,7 @@ public final class ClaimStore {
         taxBurned = 0;
         revision = 0;
         dirty = false;
+        blocked = false;
     }
 
     private void touch() {
@@ -318,8 +329,10 @@ public final class ClaimStore {
                     + "; плагин стартует с пустыми приватами. Проверьте резервную копию "
                     + backup.getFileName() + ".", exception);
         } catch (IOException moveException) {
+            blocked = true;
             logger.log(Level.SEVERE, "[CHRDK_Claims] claims-data.json повреждён, и его не удалось "
-                    + "отложить в сторону. Запись новых данных остановлена.", moveException);
+                    + "отложить в сторону. Запись новых данных остановлена, чтобы не затереть файл: "
+                    + "освободите место/права и перезапустите сервер.", moveException);
         }
     }
 

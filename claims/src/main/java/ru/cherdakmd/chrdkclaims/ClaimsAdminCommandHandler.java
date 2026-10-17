@@ -208,8 +208,11 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
                 "spent", String.valueOf(plugin.store().diamondsSpent()),
                 "tax", String.valueOf(plugin.store().taxBurned()));
         List<Map.Entry<String, Integer>> top = new ArrayList<>(byOwner.entrySet());
-        top.sort(Map.Entry.<String, Integer>comparingByValue(Comparator.reverseOrder())
-                .thenComparing(Map.Entry.comparingByKey(String.CASE_INSENSITIVE_ORDER)));
+        top.sort((left, right) -> {
+            int byCount = Integer.compare(right.getValue(), left.getValue());
+            return byCount != 0 ? byCount
+                    : String.CASE_INSENSITIVE_ORDER.compare(left.getKey(), right.getKey());
+        });
         int place = 0;
         for (Map.Entry<String, Integer> entry : top) {
             if (++place > 5) {

@@ -2,7 +2,7 @@ name: CHRDK_Claims
 version: ${version}
 main: ru.cherdakmd.chrdkclaims.ClaimsPlugin
 api-version: '26.3'
-description: "Приваты чанков за алмазы: покупка территории, рента каждый день из казны, налог на сделки, продажа игрокам и полная защита территории (аддон CHRDK_Core)"
+description: "Приваты чанков за алмазы: покупка территории, рента из казны, налог на сделки, продажа и передача игрокам, полная защита территории (аддон CHRDK_Core)"
 author: cherdakmd
 depend: [CHRDK_Core]
 commands:
@@ -15,7 +15,7 @@ commands:
     permission: chrdkclaims.admin
 permissions:
   chrdkclaims.use:
-    description: "Пользоваться приватами"
+    description: "Пользоваться приватами и командой /claim"
     default: true
   chrdkclaims.admin:
     description: "Администрирование приватов"
