@@ -5,6 +5,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.Map;
+
 /** Алмазная «мелочь» предметами: оценка, подсчёт, сбор и выдача. */
 public final class DiamondItems {
 
@@ -29,8 +31,8 @@ public final class DiamondItems {
     }
 
     /**
-     * Изымает алмазные предметы на сумму amount из инвентаря. Единицы: целые предметы;
-     * если добираем блоком (9 ⛁ ценой) — сдача возвращается числом, чтобы сервис
+     * Изымает алмазные предметы на сумму amount из инвентаря.
+     * Если добираем блоком (9 ⛁ ценой) — сдача возвращается числом, чтобы сервис
      * зачислил её в казну.
      *
      * @return сколько эквивалента изъято на самом деле (>= amount), 0 если не хватило
@@ -70,23 +72,34 @@ public final class DiamondItems {
         return collected;
     }
 
-    /** Выдаёт сумму предметами: блоками и алмазами; что не влезло — падает под ноги. */
-    public static void give(Player player, int amount) {
+    /**
+     * Выдаёт сумму предметами: блоками и алмазами; что не влезло — падает под ноги.
+     *
+     * @return сколько алмазного эквивалента выпало на землю вместо инвентаря
+     */
+    public static int give(Player player, int amount) {
         int remaining = amount;
+        int dropped = 0;
         while (remaining >= 9) {
             int blocks = Math.min(64, remaining / 9);
-            addOrDrop(player, new ItemStack(Material.DIAMOND_BLOCK, blocks));
+            dropped += addOrDrop(player, new ItemStack(Material.DIAMOND_BLOCK, blocks));
             remaining -= blocks * 9;
         }
         if (remaining > 0) {
-            addOrDrop(player, new ItemStack(Material.DIAMOND, remaining));
+            dropped += addOrDrop(player, new ItemStack(Material.DIAMOND, remaining));
         }
+        return dropped;
     }
 
-    private static void addOrDrop(Player player, ItemStack stack) {
-        var leftover = player.getInventory().addItem(stack);
-        leftover.values().forEach(item ->
-                player.getWorld().dropItemNaturally(player.getLocation(), item));
+    /** @return сколько эквивалента не поместилось и выпало на землю */
+    private static int addOrDrop(Player player, ItemStack stack) {
+        Map<Integer, ItemStack> leftover = player.getInventory().addItem(stack);
+        int dropped = 0;
+        for (ItemStack item : leftover.values()) {
+            dropped += valueOf(item.getType()) * item.getAmount();
+            player.getWorld().dropItemNaturally(player.getLocation(), item);
+        }
+        return dropped;
     }
 
     private DiamondItems() {

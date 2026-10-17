@@ -9,166 +9,324 @@ import java.io.Reader;
 import java.io.Writer;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * Данные приватов (claims-data.json): чанки по мирам (запись плоским списком),
- * казна игроков, отложенные вести (долги/утраты) и статистика. Мутации в памяти,
- * периодический snapshot + async-запись, как в остальных аддонах.
+ * казна игроков, отложенные вести (долги/утраты) и статистика.
+ *
+ * <p>Запись: снимок под блокировкой → JSON во временный файл → атомарная замена;
+ * предыдущая версия сохраняется в {@code claims-data.json.bak}. Повреждённый файл
+ * не перезаписывается, а откладывается рядом как {@code claims-data.json.corrupt-<millis>}.
+ * Чтение и снимок синхронизированы, поэтому асинхронное сохранение не мешает игре.</p>
  */
 public final class ClaimStore {
 
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    /** Версия схемы данных (для будущих миграций). */
+    public static final int SCHEMA_VERSION = 2;
+    /** Сколько отложенных вестей хранить на игрока (старые вытесняются). */
+    public static final int MAX_NOTICES = 40;
+
     private static final Type DATA_TYPE = new TypeToken<LinkedHashMap<String, Object>>() {
     }.getType();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     private final Path file;
+    private final Path backup;
     private final Logger logger;
     /** world → (chunkKey → Claim). */
     private final Map<String, Map<Long, Claim>> claims = new HashMap<>();
     private final Map<String, Integer> treasury = new LinkedHashMap<>();
     private final Map<String, List<String>> notices = new LinkedHashMap<>();
+    private final AtomicBoolean saving = new AtomicBoolean();
 
     private long chunksClaimedTotal;
     private long diamondsSpent;
     private long taxBurned;
+    private long revision;
     private boolean dirty;
 
     public ClaimStore(Path dataFolder, Logger logger) {
         this.file = dataFolder.resolve("claims-data.json");
+        this.backup = dataFolder.resolve("claims-data.json.bak");
         this.logger = logger;
     }
 
-    // ---------------------------------------------------------------- io --
+    // ------------------------------------------------------------------ io --
 
     public synchronized void load() {
+        reset();
         if (!Files.isRegularFile(file)) {
             return;
         }
+        Map<String, Object> data;
         try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
-            Map<String, Object> data = GSON.fromJson(reader, DATA_TYPE);
-            if (data == null) {
-                return;
-            }
-            claims.clear();
-            if (data.get("claims") instanceof List<?> list) {
-                for (Object entry : list) {
-                    if (!(entry instanceof Map<?, ?> map)) {
-                        continue;
-                    }
-                    String world = str(map.get("w"));
-                    int x = (int) longOf(map.get("x"));
-                    int z = (int) longOf(map.get("z"));
-                    String owner = str(map.get("o"));
-                    if (world == null || owner == null) {
-                        continue;
-                    }
-                    Claim claim = new Claim(world, x, z, owner, longOf(map.get("p")));
-                    claim.debtDays = (int) longOf(map.get("d"));
-                    claim.salePrice = (int) longOf(map.get("s"));
-                    if (map.get("m") instanceof List<?> members) {
-                        for (Object member : members) {
-                            if (member != null) {
-                                claim.members.add(String.valueOf(member));
-                            }
-                        }
-                    }
-                    claims.computeIfAbsent(world, k -> new HashMap<>()).put(claim.key(), claim);
-                }
-            }
-            treasury.clear();
-            if (data.get("treasury") instanceof Map<?, ?> map) {
-                for (Map.Entry<?, ?> entry : map.entrySet()) {
-                    treasury.put(String.valueOf(entry.getKey()), (int) longOf(entry.getValue()));
-                }
-            }
-            notices.clear();
-            if (data.get("notices") instanceof Map<?, ?> map) {
-                for (Map.Entry<?, ?> entry : map.entrySet()) {
-                    if (entry.getValue() instanceof List<?> list) {
-                        List<String> lines = new ArrayList<>();
-                        for (Object line : list) {
-                            lines.add(String.valueOf(line));
-                        }
-                        notices.put(String.valueOf(entry.getKey()), lines);
-                    }
-                }
-            }
-            if (data.get("stats") instanceof Map<?, ?> stats) {
-                chunksClaimedTotal = longOf(stats.get("chunksClaimedTotal"));
-                diamondsSpent = longOf(stats.get("diamondsSpent"));
-                taxBurned = longOf(stats.get("taxBurned"));
-            }
+            data = GSON.fromJson(reader, DATA_TYPE);
         } catch (IOException | RuntimeException exception) {
-            logger.log(Level.WARNING, "[CHRDK_Claims] Не удалось прочитать claims-data.json: "
+            quarantine(exception);
+            return;
+        }
+        if (data == null) {
+            return;
+        }
+        try {
+            read(data);
+            dirty = false;
+        } catch (RuntimeException exception) {
+            reset();
+            quarantine(exception);
+        }
+    }
+
+    /** Пишет данные синхронно. Вызывается из onDisable и асинхронной задачи. */
+    public void save() {
+        Snapshot snapshot = snapshot();
+        if (write(snapshot.data())) {
+            synchronized (this) {
+                if (revision == snapshot.revision()) {
+                    dirty = false;
+                }
+            }
+        }
+    }
+
+    /** Планирует асинхронную запись; параллельные запуски не дублируются. */
+    public void saveAsync(org.bukkit.plugin.Plugin plugin) {
+        if (!dirty || plugin == null) {
+            return;
+        }
+        if (!saving.compareAndSet(false, true)) {
+            return;
+        }
+        try {
+            plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+                try {
+                    save();
+                } finally {
+                    saving.set(false);
+                }
+            });
+        } catch (RuntimeException exception) {
+            saving.set(false);
+            logger.log(Level.WARNING, "[CHRDK_Claims] Не удалось запланировать сохранение: "
                     + exception.getMessage(), exception);
         }
     }
 
-    public synchronized void save() {
-        Map<String, Object> data = new LinkedHashMap<>();
-        List<Map<String, Object>> claimsList = new ArrayList<>();
-        for (Map<Long, Claim> world : claims.values()) {
-            for (Claim claim : world.values()) {
-                Map<String, Object> entry = new LinkedHashMap<>();
-                entry.put("w", claim.world);
-                entry.put("x", claim.x);
-                entry.put("z", claim.z);
-                entry.put("o", claim.owner);
-                entry.put("p", claim.paidUntil);
-                entry.put("d", claim.debtDays);
-                entry.put("s", claim.salePrice);
-                if (!claim.members.isEmpty()) {
-                    entry.put("m", new ArrayList<>(claim.members));
+    public synchronized void markDirty() {
+        touch();
+    }
+
+    private void reset() {
+        claims.clear();
+        treasury.clear();
+        notices.clear();
+        chunksClaimedTotal = 0;
+        diamondsSpent = 0;
+        taxBurned = 0;
+        revision = 0;
+        dirty = false;
+    }
+
+    private void touch() {
+        dirty = true;
+        revision++;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void read(Map<String, Object> data) {
+        int version = (int) longOf(data.get("version"));
+        if (version > SCHEMA_VERSION) {
+            logger.warning("[CHRDK_Claims] claims-data.json версии " + version
+                    + " новее плагина (" + SCHEMA_VERSION + "): неизвестные поля будут проигнорированы.");
+        }
+        long now = System.currentTimeMillis();
+        int repairedDates = 0;
+        int duplicates = 0;
+        Object rawClaims = data.get("claims");
+        if (rawClaims instanceof List<?> list) {
+            for (Object entry : list) {
+                if (!(entry instanceof Map<?, ?> map)) {
+                    continue;
                 }
-                claimsList.add(entry);
+                String world = str(map.get("w"));
+                String owner = str(map.get("o"));
+                if (world == null || world.isBlank() || owner == null || owner.isBlank()) {
+                    continue;
+                }
+                int x = (int) longOf(map.get("x"));
+                int z = (int) longOf(map.get("z"));
+                long paidUntil = longOf(map.get("p"));
+                if (paidUntil <= 0) {
+                    paidUntil = now;
+                    repairedDates++;
+                }
+                Claim claim = new Claim(world, x, z, owner, paidUntil);
+                claim.debtDays = clamp((int) longOf(map.get("d")), 0, 100_000);
+                claim.salePrice = clamp((int) longOf(map.get("s")), 0, 1_000_000);
+                Set<String> seenMembers = new LinkedHashSet<>();
+                if (map.get("m") instanceof List<?> members) {
+                    for (Object member : members) {
+                        if (member == null) {
+                            continue;
+                        }
+                        String name = String.valueOf(member).trim();
+                        if (name.isEmpty() || claim.isOwner(name)
+                                || !seenMembers.add(name.toLowerCase(Locale.ROOT))) {
+                            continue;
+                        }
+                        claim.members.add(name);
+                    }
+                }
+                Claim previous = claims.computeIfAbsent(world, key -> new HashMap<>())
+                        .putIfAbsent(claim.key(), claim);
+                if (previous != null) {
+                    duplicates++;
+                }
             }
         }
-        data.put("claims", claimsList);
-        data.put("treasury", treasury);
-        if (!notices.isEmpty()) {
-            data.put("notices", notices);
+        if (repairedDates > 0) {
+            logger.warning("[CHRDK_Claims] В claims-data.json " + repairedDates
+                    + " приват(ов) без корректной даты оплаты — рента начнёт начисляться с этого запуска.");
         }
-        Map<String, Object> stats = new LinkedHashMap<>();
-        stats.put("chunksClaimedTotal", chunksClaimedTotal);
-        stats.put("diamondsSpent", diamondsSpent);
-        stats.put("taxBurned", taxBurned);
-        data.put("stats", stats);
+        if (duplicates > 0) {
+            logger.warning("[CHRDK_Claims] В claims-data.json найдено " + duplicates
+                    + " дубликат(ов) чанков — оставлены первые записи.");
+        }
 
+        if (data.get("treasury") instanceof Map<?, ?> map) {
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                if (entry.getKey() == null) {
+                    continue;
+                }
+                String name = String.valueOf(entry.getKey());
+                int balance = clamp((int) longOf(entry.getValue()), 0, Integer.MAX_VALUE);
+                if (!name.isBlank() && balance > 0) {
+                    treasury.put(name, balance);
+                }
+            }
+        }
+        if (data.get("notices") instanceof Map<?, ?> map) {
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                if (!(entry.getValue() instanceof List<?> list) || entry.getKey() == null) {
+                    continue;
+                }
+                List<String> lines = new ArrayList<>();
+                for (Object line : list) {
+                    if (line != null) {
+                        lines.add(String.valueOf(line));
+                    }
+                }
+                trimNotices(lines);
+                if (!lines.isEmpty()) {
+                    notices.put(String.valueOf(entry.getKey()), lines);
+                }
+            }
+        }
+        if (data.get("stats") instanceof Map<?, ?> stats) {
+            chunksClaimedTotal = Math.max(0, longOf(stats.get("chunksClaimedTotal")));
+            diamondsSpent = Math.max(0, longOf(stats.get("diamondsSpent")));
+            taxBurned = Math.max(0, longOf(stats.get("taxBurned")));
+        }
+    }
+
+    private Snapshot snapshot() {
+        synchronized (this) {
+            Map<String, Object> data = new LinkedHashMap<>();
+            data.put("version", SCHEMA_VERSION);
+            List<Map<String, Object>> claimsList = new ArrayList<>();
+            for (Map<Long, Claim> world : claims.values()) {
+                for (Claim claim : world.values()) {
+                    Map<String, Object> entry = new LinkedHashMap<>();
+                    entry.put("w", claim.world);
+                    entry.put("x", claim.x);
+                    entry.put("z", claim.z);
+                    entry.put("o", claim.owner);
+                    entry.put("p", claim.paidUntil);
+                    entry.put("d", claim.debtDays);
+                    entry.put("s", claim.salePrice);
+                    if (!claim.members.isEmpty()) {
+                        entry.put("m", new ArrayList<>(claim.members));
+                    }
+                    claimsList.add(entry);
+                }
+            }
+            data.put("claims", claimsList);
+            data.put("treasury", new LinkedHashMap<>(treasury));
+            if (!notices.isEmpty()) {
+                Map<String, List<String>> copy = new LinkedHashMap<>();
+                notices.forEach((name, lines) -> copy.put(name, new ArrayList<>(lines)));
+                data.put("notices", copy);
+            }
+            Map<String, Object> stats = new LinkedHashMap<>();
+            stats.put("chunksClaimedTotal", chunksClaimedTotal);
+            stats.put("diamondsSpent", diamondsSpent);
+            stats.put("taxBurned", taxBurned);
+            data.put("stats", stats);
+            return new Snapshot(data, revision);
+        }
+    }
+
+    private boolean write(Map<String, Object> data) {
         try {
-            Files.createDirectories(file.getParent());
+            Path parent = file.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
             Path tmp = file.resolveSibling(file.getFileName() + ".tmp");
             try (Writer writer = Files.newBufferedWriter(tmp, StandardCharsets.UTF_8)) {
                 GSON.toJson(data, writer);
             }
-            Files.move(tmp, file, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-            dirty = false;
+            if (Files.isRegularFile(file)) {
+                Files.copy(file, backup, StandardCopyOption.REPLACE_EXISTING);
+            }
+            try {
+                Files.move(tmp, file, StandardCopyOption.REPLACE_EXISTING,
+                        StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException unsupported) {
+                Files.move(tmp, file, StandardCopyOption.REPLACE_EXISTING);
+            }
+            return true;
         } catch (IOException exception) {
             logger.log(Level.WARNING, "[CHRDK_Claims] Не удалось записать claims-data.json: "
                     + exception.getMessage(), exception);
+            return false;
         }
     }
 
-    public void saveAsync(org.bukkit.plugin.Plugin plugin) {
-        if (!dirty) {
-            return;
+    /** Повреждённый файл не затирается: откладываем его рядом для ручного восстановления. */
+    private void quarantine(Exception exception) {
+        Path broken = file.resolveSibling(file.getFileName() + ".corrupt-" + System.currentTimeMillis());
+        try {
+            Files.move(file, broken, StandardCopyOption.REPLACE_EXISTING);
+            logger.log(Level.SEVERE, "[CHRDK_Claims] claims-data.json не удалось прочитать ("
+                    + exception.getMessage() + "). Файл сохранён как " + broken.getFileName()
+                    + "; плагин стартует с пустыми приватами. Проверьте резервную копию "
+                    + backup.getFileName() + ".", exception);
+        } catch (IOException moveException) {
+            logger.log(Level.SEVERE, "[CHRDK_Claims] claims-data.json повреждён, и его не удалось "
+                    + "отложить в сторону. Запись новых данных остановлена.", moveException);
         }
-        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, this::save);
     }
 
-    public void markDirty() {
-        dirty = true;
+    private record Snapshot(Map<String, Object> data, long revision) {
     }
 
-    // ----------------------------------------------------------- claims --
+    // -------------------------------------------------------------- claims --
 
     public synchronized Claim claimAt(String world, int chunkX, int chunkZ) {
         Map<Long, Claim> inWorld = claims.get(world);
@@ -176,20 +334,38 @@ public final class ClaimStore {
     }
 
     public synchronized void add(Claim claim) {
-        claims.computeIfAbsent(claim.world, k -> new HashMap<>()).put(claim.key(), claim);
+        Map<Long, Claim> world = claims.computeIfAbsent(claim.world, key -> new HashMap<>());
+        Claim previous = world.put(claim.key(), claim);
+        if (previous != null) {
+            logger.warning("[CHRDK_Claims] Приват " + claim.where() + " перезаписан новым владельцем "
+                    + claim.owner + " (был " + previous.owner + ").");
+        }
         chunksClaimedTotal++;
-        dirty = true;
+        touch();
     }
 
     public synchronized void remove(Claim claim) {
         Map<Long, Claim> world = claims.get(claim.world);
         if (world != null) {
-            world.remove(claim.key());
+            if (!world.remove(claim.key(), claim)) {
+                logger.warning("[CHRDK_Claims] Приват " + claim.where()
+                        + " уже заменён другой записью — удаление пропущено.");
+            }
             if (world.isEmpty()) {
                 claims.remove(claim.world);
             }
         }
-        dirty = true;
+        touch();
+    }
+
+    /** Удаляет все приваты мира (например, после смены карты). @return сколько удалено. */
+    public synchronized int removeWorld(String world) {
+        Map<Long, Claim> removed = claims.remove(world);
+        if (removed == null || removed.isEmpty()) {
+            return 0;
+        }
+        touch();
+        return removed.size();
     }
 
     public synchronized List<Claim> ofOwner(String owner) {
@@ -202,6 +378,11 @@ public final class ClaimStore {
             }
         }
         return result;
+    }
+
+    public synchronized List<Claim> inWorld(String world) {
+        Map<Long, Claim> inWorld = claims.get(world);
+        return inWorld == null ? List.of() : new ArrayList<>(inWorld.values());
     }
 
     public synchronized List<Claim> all() {
@@ -224,35 +405,58 @@ public final class ClaimStore {
         return total;
     }
 
-    // ---------------------------------------------------------- treasury --
+    // ------------------------------------------------------------ treasury --
 
     public synchronized int treasuryOf(String name) {
         return treasury.getOrDefault(name, 0);
     }
 
-    /** @return новый баланс. */
+    /** @return новый баланс (не больше {@link Integer#MAX_VALUE}). */
     public synchronized int addTreasury(String name, int amount) {
-        int balance = treasuryOf(name) + amount;
+        long sum = (long) treasuryOf(name) + Math.max(0, amount);
+        int balance = (int) Math.min(Integer.MAX_VALUE, sum);
         treasury.put(name, balance);
-        dirty = true;
+        touch();
         return balance;
     }
 
     public synchronized boolean takeTreasury(String name, int amount) {
+        if (amount <= 0) {
+            return true;
+        }
         int balance = treasuryOf(name);
         if (balance < amount) {
             return false;
         }
         treasury.put(name, balance - amount);
-        dirty = true;
+        touch();
         return true;
     }
 
-    // ----------------------------------------------------------- notices --
+    public synchronized long totalTreasury() {
+        long total = 0;
+        for (int balance : treasury.values()) {
+            total += balance;
+        }
+        return total;
+    }
+
+    // ------------------------------------------------------------- notices --
 
     public synchronized void addNotice(String name, String text) {
-        notices.computeIfAbsent(name, k -> new ArrayList<>()).add(text);
-        dirty = true;
+        if (name == null || name.isBlank() || text == null || text.isBlank()) {
+            return;
+        }
+        List<String> lines = notices.computeIfAbsent(name, key -> new ArrayList<>());
+        lines.add(text);
+        trimNotices(lines);
+        touch();
+    }
+
+    private void trimNotices(List<String> lines) {
+        while (lines.size() > MAX_NOTICES) {
+            lines.remove(0);
+        }
     }
 
     /** Забирает (и очищает) вести игрока. */
@@ -261,32 +465,48 @@ public final class ClaimStore {
         if (lines == null) {
             return List.of();
         }
-        dirty = true;
-        return lines;
+        touch();
+        return List.copyOf(lines);
     }
 
-    // ------------------------------------------------------------- stats --
+    // --------------------------------------------------------------- stats --
 
     public synchronized void addDiamondsSpent(long amount) {
+        if (amount <= 0) {
+            return;
+        }
         diamondsSpent += amount;
-        dirty = true;
+        touch();
     }
 
     public synchronized void addTaxBurned(long amount) {
+        if (amount <= 0) {
+            return;
+        }
         taxBurned += amount;
-        dirty = true;
+        touch();
     }
 
     public synchronized long chunksClaimedTotal() {
         return chunksClaimedTotal;
     }
 
+    public synchronized long diamondsSpent() {
+        return diamondsSpent;
+    }
+
     public synchronized long taxBurned() {
         return taxBurned;
     }
 
+    // ----------------------------------------------------------- helpers ----
+
     private static String str(Object value) {
-        return value == null ? null : String.valueOf(value);
+        return value == null ? null : String.valueOf(value).trim();
+    }
+
+    private static int clamp(int value, int min, int max) {
+        return Math.min(max, Math.max(min, value));
     }
 
     private static long longOf(Object value) {
@@ -295,7 +515,7 @@ public final class ClaimStore {
         }
         if (value != null) {
             try {
-                return Long.parseLong(String.valueOf(value));
+                return Long.parseLong(String.valueOf(value).trim());
             } catch (NumberFormatException ignored) {
             }
         }

@@ -5,10 +5,12 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
+import ru.cherdakmd.chrdkregister.api.events.PassExpiredEvent;
 import ru.cherdakmd.chrdkregister.api.events.PlayerAuthCompletedEvent;
 
 import java.util.List;
@@ -41,6 +43,10 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         store.load();
         this.service = new ClaimsService(this);
         reloadClaimsConfig();
+        if (coreApi == null) {
+            getLogger().warning("[CHRDK_Claims] API CHRDK_Core не найден (нужно ядро 1.4.6+): "
+                    + "проверка авторизации и бонус лимита за проходку недоступны.");
+        }
 
         Bukkit.getPluginManager().registerEvents(new ClaimProtectionListener(this), this);
         Bukkit.getPluginManager().registerEvents(this, this);
@@ -91,18 +97,38 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         this.config = ClaimsConfig.parse(getConfig(), getLogger());
     }
 
-    /** После авторизации доставляем отложенные вести (долги, утраты, продажи). */
+    /** После авторизации доставляем отложенные вести (долги, утраты, продажи) и напоминаем о ренте. */
     @EventHandler
     public void onAuthCompleted(PlayerAuthCompletedEvent event) {
         Player player = event.getPlayer();
         List<String> notices = store.pollNotices(player.getName());
-        if (notices.isEmpty()) {
+        if (!notices.isEmpty()) {
+            messages().send(player, "notices-join", "count", String.valueOf(notices.size()));
+            for (String notice : notices) {
+                messages().send(player, "notice-line", "text", notice);
+            }
+        }
+        service.sendRentReminder(player);
+    }
+
+    /** После истечения проходки лимит уменьшается: предупреждаем, если чанков стало больше нормы. */
+    @EventHandler
+    public void onPassExpired(PassExpiredEvent event) {
+        Player player = Bukkit.getPlayerExact(event.getPlayerName());
+        if (player == null) {
             return;
         }
-        messages().send(player, "notices-join", "count", String.valueOf(notices.size()));
-        for (String notice : notices) {
-            messages().send(player, "notice-line", "text", notice);
+        int claims = store.count(player.getName());
+        int limit = ClaimMath.effectiveLimit(config.baseChunks, config.passBonusChunks, false);
+        if (claims > limit) {
+            messages().send(player, "limit-shrunk",
+                    "claims", String.valueOf(claims), "limit", String.valueOf(limit));
         }
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        bypass.remove(event.getPlayer().getUniqueId());
     }
 
     public boolean isBypassing(Player player) {

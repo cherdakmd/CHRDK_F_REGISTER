@@ -21,6 +21,18 @@ class ClaimMapTest {
     }
 
     @Test
+    void radiusIsConfigurableAndClamped() {
+        List<String> small = ClaimMap.render(0, 0, 1, (x, z) -> ClaimMap.Cell.FREE);
+        assertEquals(3, small.size(), "радиус 1 — 3×3");
+        assertEquals(3, small.get(0).length());
+
+        List<String> wide = ClaimMap.render(0, 0, 100, (x, z) -> ClaimMap.Cell.FREE);
+        assertEquals(ClaimMap.MAX_RADIUS * 2 + 1, wide.size(), "радиус зажат сверху");
+        List<String> narrow = ClaimMap.render(0, 0, 0, (x, z) -> ClaimMap.Cell.FREE);
+        assertEquals(ClaimMap.MIN_RADIUS * 2 + 1, narrow.size(), "радиус зажат снизу");
+    }
+
+    @Test
     void marksMineForeignAndForSale() {
         List<String> rows = ClaimMap.render(0, 0, (x, z) -> {
             if (x == 1 && z == 0) {

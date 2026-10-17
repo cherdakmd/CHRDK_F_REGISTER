@@ -31,11 +31,15 @@ public final class Claim {
     }
 
     public boolean isOwner(String name) {
-        return owner.equalsIgnoreCase(name);
+        return owner != null && owner.equalsIgnoreCase(name);
+    }
+
+    public boolean isMember(String name) {
+        return members.stream().anyMatch(member -> member.equalsIgnoreCase(name));
     }
 
     public boolean canBuild(String name) {
-        return isOwner(name) || members.stream().anyMatch(m -> m.equalsIgnoreCase(name));
+        return isOwner(name) || isMember(name);
     }
 
     public String where() {
