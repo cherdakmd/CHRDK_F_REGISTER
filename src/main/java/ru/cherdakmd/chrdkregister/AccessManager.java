@@ -455,7 +455,7 @@ public final class AccessManager {
         long window = TimeUnit.MINUTES.toMillis(config.antiMultiAltWindowMinutes());
         List<String> sharing = store.accountsSharingIp(ip, now, window);
         long withPass = sharing.stream().filter(entry -> store.hasActivePass(entry, now)).count();
-        if (withPass < config.maxAccountsPerIp()) return null;
+        if (withPass <= config.maxAccountsPerIp()) return null;
         audit.log(AuditLog.MULTIALT_ALERT, name, "", ip,
                 AuditLog.details("accounts", String.join(", ", sharing), "limit", config.maxAccountsPerIp()));
         if (config.bruteForceNotifyAdmins()) {
@@ -736,7 +736,7 @@ public final class AccessManager {
             }
             store.touchSession(player.getName(), uuid, getPlayerIp(player), now);
             authSource.put(uuid, "2fa");
-            completeAuthentication(player, "✓ Код 2FA подтверждён! Вы успешно вошли на сервер! Приятной игры!");
+            completeAuthentication(player, "login.success");
             logger.info("Player " + player.getName() + " logged in with TOTP 2FA.");
             if (config.auditLogLogins()) {
                 audit.log(AuditLog.LOGIN_SUCCESS, player.getName(), player.getName(), getPlayerIp(player),
@@ -1061,7 +1061,7 @@ public final class AccessManager {
             messages.send(onlinePlayer, "pass.two-factor-reset");
             if (passwordVerifiedPlayers.remove(uuid) && !authenticatedPlayers.contains(uuid)) {
                 store.touchSession(onlinePlayer.getName(), uuid, getPlayerIp(onlinePlayer), System.currentTimeMillis());
-                completeAuthentication(onlinePlayer, "✓ Вход завершён (2FA была отключена администратором).");
+                completeAuthentication(onlinePlayer, "login.success");
             }
         }
         logger.info("TOTP 2FA reset for player " + targetPlayerName + " by administrator.");

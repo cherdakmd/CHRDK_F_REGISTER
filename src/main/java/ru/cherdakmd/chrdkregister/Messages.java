@@ -107,7 +107,7 @@ public final class Messages {
         }
 
         Path userFile = plugin.getDataFolder().toPath().resolve(fileName);
-        if (!Files.exists(userFile)) {
+        if (!Files.exists(userFile) && plugin.getResource(fileName) != null) {
             plugin.saveResource(fileName, false);
         }
         Map<String, String> overrides = readFile(userFile);

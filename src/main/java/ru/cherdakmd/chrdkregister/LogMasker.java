@@ -145,9 +145,13 @@ public final class LogMasker {
         private Object stateValue() {
             try {
                 Class<?> stateClass = Class.forName("org.apache.logging.log4j.core.LifeCycle$State");
-                return stateClass.getField("INSTANCE").get(null);
+                return stateClass.getField("STARTED").get(null);
             } catch (Throwable ignored) {
-                return null;
+                try {
+                    return stateClass.getEnumConstants()[0];
+                } catch (Throwable ignoredAgain) {
+                    return null;
+                }
             }
         }
     }

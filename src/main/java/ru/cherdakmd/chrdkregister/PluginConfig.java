@@ -53,6 +53,7 @@ public final class PluginConfig {
     private final int perIpMaxAttempts;
     private final int perIpWindowMinutes;
     private final int tempIpBanMinutes;
+    private final int accountBlockMinutes;
     private final boolean bruteForceNotifyAdmins;
 
     private final boolean totpEnabled;
@@ -103,7 +104,7 @@ public final class PluginConfig {
                 grantDays, defaultTiers(grantDays), List.of(10_080L, 4_320L, 1_440L, 60L), true, true, 0,
                 sessionMinutes, minPasswordLength, maxPasswordLength, maxLoginAttempts, reminderSeconds,
                 false, true, false, true, false, false, true,
-                List.of(0, 0, 1, 2, 5, 10, 30, 60, 120, 300), maxLoginAttempts, 10, 15, 10, 15, true,
+                List.of(0, 0, 1, 2, 5, 10, 30, 60, 120, 300), maxLoginAttempts, 10, 15, 10, 15, 10, true,
                 true, "CHRDK", 1, maxLoginAttempts,
                 true, "notify", 3, 240,
                 5, true, 14, true,
@@ -151,6 +152,7 @@ public final class PluginConfig {
             int perIpMaxAttempts,
             int perIpWindowMinutes,
             int tempIpBanMinutes,
+            int accountBlockMinutes,
             boolean bruteForceNotifyAdmins,
             boolean totpEnabled,
             String totpIssuer,
@@ -218,6 +220,7 @@ public final class PluginConfig {
         this.perIpMaxAttempts = Math.clamp(perIpMaxAttempts, 1, 500);
         this.perIpWindowMinutes = Math.clamp(perIpWindowMinutes, 1, 1440);
         this.tempIpBanMinutes = Math.clamp(tempIpBanMinutes, 0, 10080);
+        this.accountBlockMinutes = Math.clamp(accountBlockMinutes, 0, 10080);
         this.bruteForceNotifyAdmins = bruteForceNotifyAdmins;
 
         this.totpEnabled = totpEnabled;
@@ -288,6 +291,7 @@ public final class PluginConfig {
                 config.getInt("auth.brute-force.per-ip-max-attempts", 15),
                 config.getInt("auth.brute-force.per-ip-window-minutes", 10),
                 config.getInt("auth.brute-force.temp-ip-ban-minutes", 15),
+                config.getInt("auth.brute-force.account-block-minutes", 10),
                 config.getBoolean("auth.brute-force.notify-admins", true),
                 config.getBoolean("totp.enabled", true),
                 config.getString("totp.issuer", "CHRDK"),
@@ -500,6 +504,10 @@ public final class PluginConfig {
 
     public int tempIpBanMinutes() {
         return tempIpBanMinutes;
+    }
+
+    public int accountBlockMinutes() {
+        return accountBlockMinutes;
     }
 
     public boolean bruteForceNotifyAdmins() {

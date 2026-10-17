@@ -69,6 +69,7 @@ public final class ChatService implements Listener {
     private final Map<UUID, ChatConfig.Channel> channels = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastMessageAt = new ConcurrentHashMap<>();
     private final Map<UUID, String> lastMessageText = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> lastPrivateMessageAt = new ConcurrentHashMap<>();
     private final Map<UUID, UUID> lastPrivatePartners = new ConcurrentHashMap<>();
     private final Map<UUID, Set<String>> ignoreCache = new ConcurrentHashMap<>();
     private final Set<UUID> socialSpy = ConcurrentHashMap.newKeySet();
@@ -429,6 +430,7 @@ public final class ChatService implements Listener {
         channels.remove(uuid);
         lastMessageAt.remove(uuid);
         lastMessageText.remove(uuid);
+        lastPrivateMessageAt.remove(uuid);
         lastPrivatePartners.remove(uuid);
         ignoreCache.remove(uuid);
         socialSpy.remove(uuid);
@@ -918,6 +920,17 @@ public final class ChatService implements Listener {
             return true;
         }
 
+        if (sender instanceof Player senderPlayer && !senderPlayer.hasPermission(PERMISSION_BYPASS)
+                && cfg.cooldownMillis() > 0) {
+            long last = lastPrivateMessageAt.getOrDefault(senderPlayer.getUniqueId(), 0L);
+            long remaining = cfg.cooldownMillis() - (System.currentTimeMillis() - last);
+            if (last > 0 && remaining > 0) {
+                messages.send(sender, "chat.cooldown", "remaining", formatSeconds(remaining));
+                return true;
+            }
+            lastPrivateMessageAt.put(senderPlayer.getUniqueId(), System.currentTimeMillis());
+        }
+
         String senderName = sender instanceof Player senderPlayer ? senderPlayer.getName() : "Сервер";
         if (cfg.chatLogEnabled() && cfg.chatLogIncludePrivate()) {
             accessManager.audit().chat("msg", senderName, target.getName(), message);
@@ -982,6 +995,7 @@ public final class ChatService implements Listener {
         }
         Player target = Bukkit.getPlayer(partnerId);
         if (target == null || !target.isOnline()) {
+            lastPrivatePartners.remove(player.getUniqueId());
             messages.send(player, "private-messages.partner-offline");
             return true;
         }

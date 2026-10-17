@@ -68,7 +68,7 @@ public final class AuthThrottle {
     public Result registerFailure(String playerName, String ipAddress, long nowMillis) {
         PluginConfig config = configSupplier.get();
         Result accountResult = bump(RegistrationStore.AttemptKind.ACCOUNT, playerName, ipAddress, nowMillis,
-                config.accountMaxAttempts(), config.accountWindowMinutes(), 0,
+                config.accountMaxAttempts(), config.accountWindowMinutes(), config.accountBlockMinutes(),
                 "аккаунт временно заблокирован после нескольких неудачных попыток");
         if (ipAddress == null || ipAddress.isBlank()) {
             return accountResult;

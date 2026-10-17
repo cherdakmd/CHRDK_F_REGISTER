@@ -214,8 +214,7 @@ public final class DonatePayClient {
     public record Transaction(long id, String donorName, BigDecimal amount, String status, String type, long createdAt) {
         public boolean isSuccessfulDonation() {
             return "success".equalsIgnoreCase(status)
-                    && "donation".equalsIgnoreCase(type)
-                    && createdAt > 0;
+                    && "donation".equalsIgnoreCase(type);
         }
     }
 }
