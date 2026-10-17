@@ -180,16 +180,20 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
                 "limit", String.valueOf(service().limitOf(player.getName())),
                 "upkeep", String.valueOf(plugin.config().upkeepPerDay),
                 "debt", debt ? plugin.messages().raw("balance-debt") : "");
-        long earliest = claims.stream()
-                .filter(claim -> plugin.config().worldEnabled(claim.world))
-                .mapToLong(claim -> claim.paidUntil)
-                .min()
-                .orElse(0L);
-        if (earliest > 0) {
+        long earliest = Long.MAX_VALUE;
+        long need = 0;
+        for (Claim claim : claims) {
+            if (!plugin.config().worldEnabled(claim.world)) {
+                continue;
+            }
+            earliest = Math.min(earliest, claim.paidUntil);
+            need += (long) plugin.config().upkeepPerDay * (1L + claim.debtDays);
+        }
+        if (!claims.isEmpty() && earliest != Long.MAX_VALUE) {
             plugin.messages().send(player, "balance-due",
                     "date", service().formatDate(earliest),
                     "balance", String.valueOf(treasury),
-                    "need", String.valueOf(plugin.config().upkeepPerDay));
+                    "need", String.valueOf(Math.min(Integer.MAX_VALUE, need)));
         }
     }
 

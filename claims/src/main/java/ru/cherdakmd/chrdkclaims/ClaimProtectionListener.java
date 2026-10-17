@@ -28,6 +28,7 @@ import org.bukkit.event.block.BlockPistonRetractEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntityPlaceEvent;
 import org.bukkit.event.hanging.HangingBreakByEntityEvent;
@@ -123,7 +124,11 @@ public final class ClaimProtectionListener implements Listener {
             Material.JUKEBOX, Material.NOTE_BLOCK, Material.CAKE, Material.CANDLE, Material.CANDLE_CAKE,
             Material.CAMPFIRE, Material.SOUL_CAMPFIRE, Material.DECORATED_POT,
             Material.COMPOSTER, Material.TNT, Material.LECTERN, Material.FLOWER_POT,
-            Material.CHISELED_BOOKSHELF, Material.PUMPKIN, Material.BEEHIVE, Material.BEE_NEST
+            Material.CHISELED_BOOKSHELF, Material.PUMPKIN, Material.BEEHIVE, Material.BEE_NEST,
+            // яйцо дракона телепортируется от клика, хранилище тратит ключи,
+            // подозрительные блоки отдают добычу археологии — всё это «использование»
+            Material.DRAGON_EGG, Material.VAULT, Material.SUSPICIOUS_SAND,
+            Material.SUSPICIOUS_GRAVEL
     );
 
     private final ClaimsPlugin plugin;
@@ -446,15 +451,17 @@ public final class ClaimProtectionListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onHangingBreakByEntity(HangingBreakByEntityEvent event) {
-        if (!plugin.config().entities) {
+        Claim claim = claimAt(event.getEntity().getLocation().getBlock());
+        if (claim == null) {
             return;
         }
         Player attacker = damageSource(event.getRemover());
         if (attacker == null) {
-            return; // взрыв/физика — решает onHangingBreak по причине
-        }
-        Claim claim = claimAt(event.getEntity().getLocation().getBlock());
-        if (claim == null) {
+            // Стрела скелета, взрыв, поршень: личного виновника нет — решает флаг.
+            boolean explosion = event.getCause() == HangingBreakEvent.RemoveCause.EXPLOSION;
+            if (explosion ? plugin.config().explosions : plugin.config().entities) {
+                event.setCancelled(true);
+            }
             return;
         }
         if (!may(attacker, claim)) {
@@ -488,11 +495,14 @@ public final class ClaimProtectionListener implements Listener {
         if (!plugin.config().entities) {
             return;
         }
+        Player player = event.getPlayer();
+        if (player == null) {
+            return; // рамку/стойку поставил раздатчик, а не игрок
+        }
         Claim claim = claimAt(event.getEntity().getLocation().getBlock());
-        if (!may(event.getPlayer(), claim)) {
+        if (!may(player, claim)) {
             event.setCancelled(true);
-            deny(event.getPlayer(), claim, event.getEntity().getLocation().getBlock(),
-                    "denied-place");
+            deny(player, claim, event.getEntity().getLocation().getBlock(), "denied-place");
         }
     }
 
@@ -512,6 +522,30 @@ public final class ClaimProtectionListener implements Listener {
             return;
         }
         event.blockList().removeIf(block -> claimAt(block) != null);
+    }
+
+    /** Взрыв не должен убивать питомцев, скот и стойки на чужой/своей территории. */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onExplosionDamage(EntityDamageEvent event) {
+        if (!plugin.config().explosions) {
+            return;
+        }
+        if (event.getCause() != EntityDamageEvent.DamageCause.BLOCK_EXPLOSION
+                && event.getCause() != EntityDamageEvent.DamageCause.ENTITY_EXPLOSION) {
+            return;
+        }
+        var entity = event.getEntity();
+        if (entity instanceof Player) {
+            return; // урон игрокам регулируется protect.pvp
+        }
+        if (!(entity instanceof Animals) && !(entity instanceof ArmorStand)
+                && !(entity instanceof Hanging) && !(entity instanceof Vehicle)
+                && !(entity instanceof Villager) && !(entity instanceof WanderingTrader)) {
+            return;
+        }
+        if (claimAt(entity.getLocation().getBlock()) != null) {
+            event.setCancelled(true);
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -579,7 +613,8 @@ public final class ClaimProtectionListener implements Listener {
         Claim pistonClaim = claimAt(event.getBlock());
         for (Block moved : event.getBlocks()) {
             if (crossesBorder(pistonClaim, claimAt(moved))
-                    || crossesBorder(pistonClaim, claimAt(moved.getRelative(event.getDirection())))) {
+                    || crossesBorder(pistonClaim,
+                    claimAt(moved.getRelative(event.getDirection().getOppositeFace())))) {
                 event.setCancelled(true);
                 return;
             }

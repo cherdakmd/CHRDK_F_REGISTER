@@ -302,8 +302,14 @@ public final class ClaimStore {
             try (Writer writer = Files.newBufferedWriter(tmp, StandardCharsets.UTF_8)) {
                 GSON.toJson(data, writer);
             }
-            if (Files.isRegularFile(file)) {
-                Files.copy(file, backup, StandardCopyOption.REPLACE_EXISTING);
+            try {
+                if (Files.isRegularFile(file)) {
+                    Files.copy(file, backup, StandardCopyOption.REPLACE_EXISTING);
+                }
+            } catch (IOException backupException) {
+                // Нехватка места/прав на .bak не должна блокировать сохранение данных.
+                logger.log(Level.WARNING, "[CHRDK_Claims] Не удалось обновить "
+                        + backup.getFileName() + ": " + backupException.getMessage(), backupException);
             }
             try {
                 Files.move(tmp, file, StandardCopyOption.REPLACE_EXISTING,

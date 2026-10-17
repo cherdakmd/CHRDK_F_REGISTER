@@ -110,9 +110,13 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
         plugin.messages().send(sender, "admin-deleteall-done",
                 "name", name, "count", String.valueOf(claims.size()));
         Player online = Bukkit.getPlayerExact(name);
-        if (online != null) {
+        String notice = plugin.messages().plain("admin-deleteall-notice",
+                "count", String.valueOf(claims.size()));
+        if (online != null && plugin.service().isAllowed(online)) {
             plugin.messages().send(online, "admin-deleteall-notice",
                     "count", String.valueOf(claims.size()));
+        } else {
+            plugin.store().addNotice(name, notice);
         }
     }
 
