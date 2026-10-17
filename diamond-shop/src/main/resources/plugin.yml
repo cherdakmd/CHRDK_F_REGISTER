@@ -1,0 +1,24 @@
+name: CHRDK_DiamondShop
+version: '${version}'
+main: ru.cherdakmd.diamondshop.DiamondShopPlugin
+api-version: '26.3'
+depend:
+  - CHRDK_Core
+description: Магазин обмена ресурсов с динамическими ценами на алмазной валюте (аддон CHRDK_Core)
+commands:
+  shop:
+    aliases: [dshop, market, exchanger]
+    description: Магазин обмена ресурсов за алмазы
+    usage: /<command> [balance|deposit|withdraw|price|buy|sell|stats|help]
+  shopadmin:
+    aliases: [dshopadmin, marketadmin]
+    description: Администрирование алмазного магазина
+    usage: /<command> [stock|top|reload]
+    permission: chrdkshop.admin
+permissions:
+  chrdkshop.use:
+    description: Использование магазина (/shop)
+    default: true
+  chrdkshop.admin:
+    description: Управление магазином (/shopadmin)
+    default: op

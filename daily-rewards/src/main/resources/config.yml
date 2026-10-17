@@ -1,0 +1,121 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# CHRDK_DailyRewards — ежедневные награды со стриком (аддон CHRDK_F_REGISTER)
+# Сутки считаются по UTC. Стрик растёт ежедневно, пропуск дня — сброс в 1.
+# Календарь — месячный (31 день): день 32 стрика = день 1, но стрик растёт дальше.
+# Недели щедреют друг друга; юбилейные дни (7/14/21/28/30/31) — заметно жирнее,
+# а для VIP с проходкой ещё и дни проходки через API ядра.
+# Формат предметов: "MATERIAL количество"; vip-вариант — только при активной
+# проходке (ядро ≥ 1.4.6), vip-pass-days — дни проходки.
+# ═══════════════════════════════════════════════════════════════════════════
+
+rewards:
+  # ── неделя 1: стартовая разведка ──
+  - day: 1
+    items: ["BREAD 8", "TORCH 8"]
+    vip-items: ["BREAD 16", "TORCH 16", "IRON_NUGGET 4"]
+  - day: 2
+    items: ["OAK_LOG 12", "COAL 6"]
+    vip-items: ["OAK_LOG 24", "COAL 12"]
+  - day: 3
+    items: ["IRON_INGOT 2", "APPLE 3"]
+    vip-items: ["IRON_INGOT 4", "GOLDEN_APPLE 1"]
+  - day: 4
+    items: ["GOLD_INGOT 2", "COPPER_INGOT 6"]
+    vip-items: ["GOLD_INGOT 4", "REDSTONE 8"]
+  - day: 5
+    items: ["LAPIS_LAZULI 8", "ENDER_PEARL 1"]
+    vip-items: ["LAPIS_LAZULI 16", "ENDER_PEARL 2"]
+  - day: 6
+    items: ["EMERALD 2", "EXPERIENCE_BOTTLE 4"]
+    vip-items: ["EMERALD 4", "EXPERIENCE_BOTTLE 8"]
+  - day: 7
+    items: ["DIAMOND 2"]
+    vip-items: ["DIAMOND 5"]
+    vip-pass-days: 1
+  # ── неделя 2: в дороге уже неделя ──
+  - day: 8
+    items: ["COPPER_INGOT 12", "HONEY_BOTTLE 2"]
+    vip-items: ["COPPER_INGOT 24", "GLOW_BERRIES 16"]
+  - day: 9
+    items: ["IRON_INGOT 4", "BAKED_POTATO 8"]
+    vip-items: ["IRON_INGOT 8", "GOLDEN_CARROT 4"]
+  - day: 10
+    items: ["REDSTONE 16", "SADDLE 1"]
+    vip-items: ["REDSTONE 32", "NAME_TAG 1"]
+  - day: 11
+    items: ["QUARTZ 8", "SWEET_BERRIES 8"]
+    vip-items: ["QUARTZ 16", "EMERALD 4", "EXPERIENCE_BOTTLE 8"]
+  - day: 12
+    items: ["AMETHYST_SHARD 4", "GLOW_INK_SAC 4"]
+    vip-items: ["AMETHYST_SHARD 8", "GLOW_INK_SAC 8"]
+  - day: 13
+    items: ["DIAMOND 3", "EMERALD 4"]
+    vip-items: ["DIAMOND 5", "EMERALD 8"]
+  - day: 14
+    items: ["IRON_BLOCK 2", "DIAMOND 2"]
+    vip-items: ["DIAMOND 6", "NETHERITE_SCRAP 1"]
+    vip-pass-days: 1
+  # ── неделя 3: ветеран ──
+  - day: 15
+    items: ["BONE 8", "ARROW 32"]
+    vip-items: ["BONE 16", "ARROW 64"]
+  - day: 16
+    items: ["BLAZE_ROD 2", "MAGMA_CREAM 4"]
+    vip-items: ["BLAZE_ROD 4", "MAGMA_CREAM 8"]
+  - day: 17
+    items: ["ENDER_PEARL 3", "ENDER_EYE 1"]
+    vip-items: ["ENDER_PEARL 6", "ENDER_EYE 2"]
+  - day: 18
+    items: ["GHAST_TEAR 2", "GUNPOWDER 16"]
+    vip-items: ["GHAST_TEAR 4", "GUNPOWDER 24"]
+  - day: 19
+    items: ["SLIME_BALL 8", "HONEYCOMB 4"]
+    vip-items: ["SLIME_BALL 16", "HONEYCOMB 8"]
+  - day: 20
+    items: ["OBSIDIAN 8", "SOUL_TORCH 8"]
+    vip-items: ["OBSIDIAN 16", "CRYING_OBSIDIAN 4"]
+  - day: 21
+    items: ["DIAMOND 4"]
+    vip-items: ["DIAMOND 8", "EXPERIENCE_BOTTLE 16"]
+    vip-pass-days: 1
+  # ── неделя 4: почти месяц ──
+  - day: 22
+    items: ["TURTLE_SCUTE 2", "DRIED_KELP_BLOCK 4"]
+    vip-items: ["TURTLE_SCUTE 4", "TURTLE_HELMET 1"]
+  - day: 23
+    items: ["IRON_BLOCK 1", "GOLD_BLOCK 1"]
+    vip-items: ["IRON_BLOCK 2", "GOLD_BLOCK 2", "DIAMOND 2"]
+  - day: 24
+    items: ["NAUTILUS_SHELL 1", "PRISMARINE_SHARD 8"]
+    vip-items: ["NAUTILUS_SHELL 2", "PRISMARINE_SHARD 16"]
+  - day: 25
+    items: ["FIRE_CHARGE 8", "OBSIDIAN 4"]
+    vip-items: ["FIRE_CHARGE 16", "OBSIDIAN 8"]
+  - day: 26
+    items: ["EXPERIENCE_BOTTLE 8", "EMERALD 6"]
+    vip-items: ["EXPERIENCE_BOTTLE 16", "EMERALD 12"]
+  - day: 27
+    items: ["NETHER_WART 8", "GHAST_TEAR 1"]
+    vip-items: ["NETHER_WART 16", "GHAST_TEAR 2"]
+  - day: 28
+    items: ["DIAMOND 5", "GOLDEN_APPLE 2"]
+    vip-items: ["DIAMOND 8", "ENCHANTED_GOLDEN_APPLE 1"]
+    vip-pass-days: 1
+  # ── финиш месяца: жирнее всех ──
+  - day: 29
+    items: ["EMERALD_BLOCK 1", "EXPERIENCE_BOTTLE 10"]
+    vip-items: ["EMERALD_BLOCK 2", "EXPERIENCE_BOTTLE 20"]
+  - day: 30
+    items: ["NETHERITE_SCRAP 1", "DIAMOND 4"]
+    vip-items: ["NETHERITE_SCRAP 2", "DIAMOND 8"]
+    vip-pass-days: 2
+  - day: 31
+    items: ["NETHERITE_SCRAP 1", "DIAMOND 6"]
+    vip-items: ["NETHERITE_SCRAP 2", "DIAMOND 12", "ENCHANTED_GOLDEN_APPLE 1"]
+    vip-pass-days: 3
+
+# Напоминание авторизованным игрокам при входе, если награда сегодня не взята
+join-reminder: true
+
+general:
+  locale: "ru"

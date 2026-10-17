@@ -1,0 +1,13 @@
+queue:
+  "kick-full": "<yellow>Сервер заполнен (%online%/%limit% слотов).</yellow>\n<green>Вы в очереди: <white>%position%-е место</white></green> <gray>— повторите вход через пару минут; когда слот освободится, первого ждут %reserve% сек.</gray>"
+  "kick-reserved": "<yellow>Появившийся слот пока зарезервирован за игроком из очереди.</yellow>\n<green>Вы %position%-й в очереди</green> <gray>— повторите чуть позже.</gray>"
+  "kick-overfull": "<red>Сервер заполнен и очередь переполнена (%max% игроков).</red>\n<gray>Попробуйте зайти позже.</gray>"
+  "info-header": "<gold>=== Очередь (%size% игр.) ===</gold>"
+  "info-entry": "<white>%position%.</white> %name% <gray>(ждёт %wait% мин)</gray>%reserved%"
+  "info-reserved-tag": " <green>[слот зарезервирован]</green>"
+  "info-empty": "<gray>Очередь пуста.</gray>"
+  "info-summary": "<gray>Онлайн: %online%/%limit% обычных слотов; VIP-группы: <white>%groups%</white>; резерв: %reserve% сек.</gray>"
+  "cleared": "<yellow>Очередь очищена администратором.</yellow>"
+  "reloaded": "<green>Конфигурация очереди перечитана из config.yml.</green>"
+  "no-permission": "<red>Нет прав на управление очередью.</red>"
+  "usage": "<yellow>Использование: /%label% <info | clear | reload></yellow>"

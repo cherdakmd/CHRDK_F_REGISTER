@@ -21,14 +21,38 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '25'
           cache: gradle
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build plugin
-        run: ./gradlew --no-daemon build
+        shell: bash
+        run: |
+          set +e
+          ./gradlew --no-daemon build 2>&1 | tee build.log
+          status=${PIPESTATUS[0]}
+          if [[ $status -ne 0 ]]; then
+            {
+              echo '### Gradle failure excerpt'
+              echo '```text'
+              tail -n 100 build.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+
+            grep -A 4 -E 'error:|Could not find|Could not resolve|What went wrong|Execution failed|FAILURE:' build.log \
+              | head -n 50 \
+              | while IFS= read -r line; do
+                  printf '::error title=Gradle build output::%s\n' "$line"
+                done
+          fi
+          exit "$status"
+
+      - name: Report test failures
+        if: always()
+        shell: bash
+        run: python3 .github/scripts/report_tests.py
 
       - name: Verify release tag matches plugin version
         id: verify-version
@@ -40,9 +64,127 @@ jobs:
             echo "Release tag $GITHUB_REF_NAME does not match plugin version $plugin_version" >&2
             exit 1
           fi
-          echo "jar=build/libs/chrdk-f-register-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
+          echo "jar=build/libs/chrdk-core-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
+          echo "shop_jar=diamond-shop/build/libs/chrdk-diamond-shop-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
+          echo "ref_jar=referrals/build/libs/chrdk-referrals-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
+          echo "daily_jar=daily-rewards/build/libs/chrdk-daily-rewards-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
+          echo "teleports_jar=teleports/build/libs/chrdk-teleports-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
+          echo "enchants_jar=enchants/build/libs/chrdk-enchants-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
+          echo "tier_forge_jar=tier-forge/build/libs/chrdk-tier-forge-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
+          echo "artifacts_jar=artifacts/build/libs/chrdk-artifacts-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
+          echo "goals_jar=common-goals/build/libs/chrdk-common-goals-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
+          echo "claims_jar=claims/build/libs/chrdk-claims-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
+          echo "ranks_jar=ranks/build/libs/chrdk-ranks-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
+          echo "cosmetics_jar=cosmetics/build/libs/chrdk-cosmetics-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
+          echo "battlepass_jar=battlepass/build/libs/chrdk-battlepass-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
+          echo "auction_jar=auction/build/libs/chrdk-auction-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
+          echo "lottery_jar=lottery/build/libs/chrdk-lottery-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
+          echo "queue_jar=queue/build/libs/chrdk-queue-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
 
       - name: Attach the Purpur plugin JAR
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.jar }}" --clobber
+
+      - name: Attach the DiamondShop addon JAR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.shop_jar }}" --clobber
+
+      - name: Attach the Referrals addon JAR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.ref_jar }}" --clobber
+
+      - name: Attach the DailyRewards addon JAR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.daily_jar }}" --clobber
+
+      - name: Attach the CHRDK_Teleports addon JAR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.teleports_jar }}" --clobber
+
+      - name: Attach the CHRDK_Enchants addon JAR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.enchants_jar }}" --clobber
+
+      - name: Attach the CHRDK_TierForge addon JAR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.tier_forge_jar }}" --clobber
+
+      - name: Attach the CHRDK_Artifacts addon JAR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.artifacts_jar }}" --clobber
+
+      - name: Attach the CHRDK_CommonGoals addon JAR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.goals_jar }}" --clobber
+
+      - name: Attach the CHRDK_Claims addon JAR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.claims_jar }}" --clobber
+
+      - name: Attach the CHRDK_Ranks addon JAR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.ranks_jar }}" --clobber
+
+      - name: Attach the CHRDK_Cosmetics addon JAR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.cosmetics_jar }}" --clobber
+
+      - name: Attach the CHRDK_BattlePass addon JAR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.battlepass_jar }}" --clobber
+
+      - name: Attach the CHRDK_Queue addon JAR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.queue_jar }}" --clobber
+
+      - name: Attach lottery plugin JAR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.lottery_jar }}" --clobber
+
+      - name: Attach auction plugin JAR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.auction_jar }}" --clobber
+
+      - name: Pack all plugin JARs into one ZIP archive
+        shell: bash
+        run: |
+          plugin_version="$(sed -n 's/^plugin_version=//p' gradle.properties)"
+          zip -j "chrdk-plugins-${plugin_version}.zip" \
+            "${{ steps.verify-version.outputs.jar }}" \
+            "${{ steps.verify-version.outputs.shop_jar }}" \
+            "${{ steps.verify-version.outputs.ref_jar }}" \
+            "${{ steps.verify-version.outputs.daily_jar }}" \
+            "${{ steps.verify-version.outputs.teleports_jar }}" \
+            "${{ steps.verify-version.outputs.enchants_jar }}" \
+            "${{ steps.verify-version.outputs.tier_forge_jar }}" \
+            "${{ steps.verify-version.outputs.artifacts_jar }}" \
+            "${{ steps.verify-version.outputs.goals_jar }}" \
+            "${{ steps.verify-version.outputs.claims_jar }}" \
+            "${{ steps.verify-version.outputs.ranks_jar }}" \
+            "${{ steps.verify-version.outputs.cosmetics_jar }}" \
+            "${{ steps.verify-version.outputs.battlepass_jar }}" \
+            "${{ steps.verify-version.outputs.queue_jar }}" \
+            "${{ steps.verify-version.outputs.lottery_jar }}" \
+            "${{ steps.verify-version.outputs.auction_jar }}"
+          echo "zip=chrdk-plugins-${plugin_version}.zip" >> "$GITHUB_ENV"
+
+      - name: Attach the all-in-one ZIP archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ env.zip }}" --clobber

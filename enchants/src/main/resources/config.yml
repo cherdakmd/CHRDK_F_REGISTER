@@ -1,0 +1,56 @@
+# CHRDK_Enchants — 30 кастомных эпичных чар. Предметы с ними живут в NBT (PDC) и
+# сохраняются в инвентарях игроков — отдельного хранилища нет.
+
+general:
+  locale: ru
+
+# Источники получения
+sources:
+  table:
+    # Кастомная чара может добавиться при обычном зачаровании на столе.
+    enabled: true
+    # Базовый шанс (%) при полной стойке книг (3 лазурита); при меньшей цене — пропорционально.
+    chance-percent: 35
+  villager:
+    # У библиотекарей книга в трейде может замениться на книгу кастомной чары.
+    enabled: true
+    convert-chance-percent: 50
+
+rules:
+  # Максимум кастомных чар на одном предмете (конфликты учитываются отдельно).
+  max-per-item: 3
+  # Не более одной легендарной чары на предмет.
+  max-legendary-per-item: 1
+
+# Отключение отдельных чар (id: enabled).
+enchants:
+  thunderstrike: {enabled: true}      # Громобой
+  lifesteal: {enabled: true}          # Вампиризм
+  chainspark: {enabled: true}         # Цепная молния
+  bleeding: {enabled: true}           # Кровоточность
+  paralyze: {enabled: true}           # Паралич
+  execution: {enabled: true}          # Казнь
+  berserk: {enabled: true}            # Берсерк
+  slayer: {enabled: true}             # Истребитель
+  souleater: {enabled: true}          # Пожиратель душ
+  stormarrow: {enabled: true}         # Грозовая стрела
+  explosive: {enabled: true}          # Взрывная стрела
+  sniper: {enabled: true}             # Снайперская стрела
+  frostarrow: {enabled: true}         # Морозная стрела
+  tracer: {enabled: true}             # Следящая стрела
+  headhunter: {enabled: true}         # Охотник за головами
+  retribution: {enabled: true}        # Возмездие
+  laststand: {enabled: true}          # Последний шанс
+  fortified: {enabled: true}          # Крепость
+  lightningrod: {enabled: true}       # Громоотвод
+  phoenix: {enabled: true}            # Феникс
+  iceward: {enabled: true}            # Страж льдов
+  truesight: {enabled: true}          # Орлиный глаз
+  seer: {enabled: true}               # Провидец
+  swiftfeet: {enabled: true}          # Стремительные
+  froggy: {enabled: true}             # Лягушачьи лапки
+  lavawalker: {enabled: true}         # Лавоступ
+  autosmelt: {enabled: true}          # Автоплавка
+  veinminer: {enabled: true}          # Жилодробитель
+  excavator: {enabled: true}          # Дробитель
+  midas: {enabled: true}              # Рука Мидаса

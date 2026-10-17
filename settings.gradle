@@ -6,3 +6,21 @@ pluginManagement {
 }
 
 rootProject.name = 'chrdk-f-register'
+
+include 'diamond-shop'
+include 'referrals'
+include 'daily-rewards'
+include 'teleports'
+include 'enchants'
+include 'tier-forge'
+include 'artifacts'
+include 'common-goals'
+include 'claims'
+include 'ranks'
+include 'cosmetics'
+include 'battlepass'
+include 'queue'
+
+include 'lottery'
+
+include 'auction'

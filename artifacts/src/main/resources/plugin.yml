@@ -1,0 +1,20 @@
+name: CHRDK_Artifacts
+version: ${version}
+main: ru.cherdakmd.chrdkartifacts.ArtifactsPlugin
+api-version: '26.3'
+description: "30 артефактов (15 светлых и 15 проклятых), работающих из инвентаря: пассивные и активные"
+author: cherdakmd
+depend: [CHRDK_Core, CHRDK_Enchants]
+commands:
+  artifacts:
+    description: Каталог артефактов и статус носимых
+  artifactsadmin:
+    description: Выдача и управление артефактами
+    permission: chrdkartifacts.admin
+permissions:
+  chrdkartifacts.use:
+    description: Ношение и использование артефактов, справка
+    default: true
+  chrdkartifacts.admin:
+    description: Администрирование артефактов
+    default: op

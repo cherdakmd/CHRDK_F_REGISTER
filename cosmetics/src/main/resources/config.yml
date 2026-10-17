@@ -1,0 +1,48 @@
+cosmetics:
+  # Косметика только для владельцев активной проходки (рекомендуется — это витрина доната).
+  access-pass-only: true
+  # Шлейф частиц за игроком при ходьбе/беге.
+  trail:
+    enabled: true
+    # Как часто (тики) рисовать очередную порцию частиц. Минимум 2.
+    every-ticks: 4
+    # Доступные эффекты. particle — имя частицы из registry (flame, heart, note, end_rod, witch…).
+    defs:
+      - id: flame
+        name: "<red>Огненный шлейф</red>"
+        particle: flame
+        count: 3
+        spread: 0.15
+        speed: 0.0
+      - id: hearts
+        name: "<light_purple>Сердечки</light_purple>"
+        particle: heart
+        count: 1
+        spread: 0.25
+        speed: 0.0
+      - id: notes
+        name: "<aqua>Ноты</aqua>"
+        particle: note
+        count: 2
+        spread: 0.3
+        speed: 1.0
+      - id: sparkles
+        name: "<yellow>Искры Энда</yellow>"
+        particle: end_rod
+        count: 2
+        spread: 0.2
+        speed: 0.0
+      - id: magic
+        name: "<dark_purple>Ведьмина магия</dark_purple>"
+        particle: witch
+        count: 4
+        spread: 0.25
+        speed: 0.0
+  # Торжественный вход: звук и вспышка частиц при заходе на сервер.
+  join-effect:
+    enabled: true
+    particle: totem_of_undying
+    particle-count: 60
+    sound: entity_player_levelup
+    volume: 0.8
+    pitch: 1.2

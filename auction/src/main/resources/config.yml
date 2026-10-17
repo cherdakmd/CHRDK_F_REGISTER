@@ -1,0 +1,11 @@
+# CHRDK_Auction — обычные алмазы, НЕ Vault и НЕ реальные деньги.
+market:
+  min-price: 20
+  max-price: 100000
+  # Комиссия фиксируется при выставлении; округление ВВЕРХ до целого алмаза.
+  fee-percent: 5
+  duration-hours: 48
+  max-per-player: 10
+  max-active-lots: 500
+  # Ошибка в имени материала отключит аддон вместо незаметного разрешения предмета.
+  blocked-materials: [BEDROCK, BARRIER, COMMAND_BLOCK, CHAIN_COMMAND_BLOCK, REPEATING_COMMAND_BLOCK, STRUCTURE_BLOCK, JIGSAW]

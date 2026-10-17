@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
 /**
  * Хранилище всех текстов плагина.
  *
- * <p>Значения читаются из {@code plugins/CHRDK_F_REGISTER/messages.yml}. Ключи, которых нет в файле
+ * <p>Значения читаются из {@code plugins/CHRDK_Core/messages.yml}. Ключи, которых нет в файле
  * пользователя, автоматически берутся из ресурса плагина, поэтому обновление версии никогда не ломает
  * уже настроенный файл. Тексты поддерживают разметку <b>MiniMessage</b>
  * ({@code <red>}, {@code <gradient>}, {@code <hover>}, {@code <click>}) и старые {@code &}-коды
@@ -134,7 +134,7 @@ public final class Messages {
     public List<Component> getList(String key, Object... placeholders) {
         List<Component> result = new ArrayList<>();
         for (String line : template(key).split("\n", -1)) {
-            result.add(mini.deserialize(fill(line, placeholders)));
+            result.add(mini.deserialize(fill(legacyToMini(line), placeholders)));
         }
         return result;
     }
@@ -253,15 +253,24 @@ public final class Messages {
         return fill(legacyToMini(template(key)), placeholders);
     }
 
-    private String fill(String template, Object... placeholders) {
-        if (placeholders == null || placeholders.length == 0) return template;
-        String result = template;
-        for (int index = 0; index + 1 < placeholders.length; index += 2) {
-            String name = String.valueOf(placeholders[index]);
-            String value = escape(placeholders[index + 1]);
-            result = result.replace("%" + name + "%", value);
-        }
-        return result;
+     private String fill(String template, Object... placeholders) {
+         if (placeholders == null || placeholders.length == 0) return template;
+         String result = template;
+         for (int index = 0; index + 1 < placeholders.length; index += 2) {
+             String name = String.valueOf(placeholders[index]);
+             Object replacement = placeholders[index + 1];
+             String value = replacement instanceof Trusted trusted ? trusted.text() : escape(replacement);
+             result = result.replace("%" + name + "%", value);
+         }
+         return result;
+     }
+
+    /** Значение подстановки с уже готовой MiniMessage-разметкой: вставляется в шаблон без экранирования. */
+    public record Trusted(String text) { }
+
+    /** Обёртка для внутренних плагинных строк с MiniMessage-тегами. НЕ использовать для ввода игроков. */
+    public static Trusted trusted(String miniMessage) {
+        return new Trusted(miniMessage == null ? "" : miniMessage);
     }
 
     /** Экранирует значение, чтобы ник или текст сообщения не могли вставить разметку. */
@@ -274,9 +283,13 @@ public final class Messages {
 
     /** Переводит старые {@code &}-коды в теги MiniMessage (обратная совместимость). */
     public static String legacyToMini(String legacy) {
-        if (legacy == null || legacy.indexOf('&') < 0) return legacy;
-        Matcher matcher = LEGACY_CODE.matcher(legacy);
-        StringBuilder result = new StringBuilder(legacy.length() + 16);
+        if (legacy == null) return null;
+        // Old live messages.yml used HTML brackets. Escape the opening bracket BEFORE parsing
+        // colours: &lt; otherwise looks like the legacy &l (bold) code. Never create a live tag.
+        String normalized = legacy.replace("&lt;", "\\<").replace("&gt;", ">");
+        if (normalized.indexOf('&') < 0) return normalized;
+        Matcher matcher = LEGACY_CODE.matcher(normalized);
+        StringBuilder result = new StringBuilder(normalized.length() + 16);
         while (matcher.find()) {
             String tag = LEGACY_TAGS.get(Character.toLowerCase(matcher.group(1).charAt(0)));
             matcher.appendReplacement(result, tag == null ? Matcher.quoteReplacement(matcher.group())
@@ -346,6 +359,17 @@ public final class Messages {
         ConfigurationSection root = section.isConfigurationSection("messages")
                 ? section.getConfigurationSection("messages")
                 : section;
+        // Аддоны оборачивают файл в единственную верхнюю секцию (например, "enchants:" или
+        // "tiers:"): разворачиваем и её, чтобы ключи в коде шли без префикса обёртки.
+        if (root == section) {
+            java.util.Set<String> top = section.getKeys(false);
+            if (top.size() == 1) {
+                String only = top.iterator().next();
+                if (section.isConfigurationSection(only)) {
+                    root = section.getConfigurationSection(only);
+                }
+            }
+        }
         Map<String, String> result = new LinkedHashMap<>();
         for (String key : root.getKeys(true)) {
             if (root.isConfigurationSection(key)) continue;

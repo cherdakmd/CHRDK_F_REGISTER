@@ -28,11 +28,13 @@ import java.util.Set;
 public final class RegisterCommandHandler implements CommandExecutor, TabCompleter {
     private static final List<String> ADMIN_SUBCOMMANDS =
             List.of("add", "remove", "check", "unregister", "reset2fa", "status", "reload",
-                    "pending", "approve", "reject", "sessions", "logoutall", "stats", "doctor", "audit",
-                    "backup", "gift");
+                    "pending", "donations", "health", "approve", "reject", "sessions", "logoutall", "stats", "doctor", "audit",
+                    "backup", "gift", "testpay", "testpay-live", "shoppay", "recheck", "donationsgui",
+                    "luckperms", "update");
     private static final List<String> MUTE_DURATIONS = List.of("10m", "30m", "1h", "6h", "1d", "7d");
     private static final List<String> TWO_FACTOR_SUBCOMMANDS =
-            List.of("setup", "confirm", "disable", "status", "cancel");
+            List.of("setup", "confirm", "disable", "status", "cancel", "qr");
+    private static final List<String> PLAYER_SUBCOMMANDS = List.of("menu", "gui", "claim", "donate");
 
     private final RegisterPlugin plugin;
     private final AccessManager accessManager;
@@ -60,6 +62,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         return switch (cmdName) {
             case "register" -> handleRegister(sender, args);
             case "login" -> handleLogin(sender, args);
+            case "captcha" -> handleCaptcha(sender, args);
             case "changepassword" -> handleChangePassword(sender, args);
             case "2fa" -> handleTwoFactor(sender, label, args);
             case "pass" -> handlePass(sender, label, args);
@@ -132,11 +135,32 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         }
         if (args.length < 1 || args.length > 2) {
             messages.send(player, "usage.login");
+            PasswordKeypadService keypad = plugin.keypadLogin();
+            if (keypad != null && keypad.openIfEligible(player)) {
+                return true;
+            }
             accessManager.showAuthDialogNow(player);
             return true;
         }
         String totpCode = args.length == 2 ? args[1] : null;
         return accessManager.handleLoginCommand(player, args[0], totpCode);
+    }
+
+    /** {@code /captcha <число>} — ответ на эскалационную проверку после серии неудачных входов. */
+    private boolean handleCaptcha(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            messages.send(sender, "error.players-only");
+            return true;
+        }
+        if (args.length != 1) {
+            if (accessManager.isCaptchaRequired(player.getUniqueId(), player.getName())) {
+                accessManager.presentCaptchaChallenge(player);
+            } else {
+                messages.send(player, "captcha.not-required");
+            }
+            return true;
+        }
+        return accessManager.handleCaptchaAnswer(player, args[0]);
     }
 
     private boolean handleChangePassword(CommandSender sender, String[] args) {
@@ -227,6 +251,9 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             case "cancel" -> {
                 return accessManager.handleTwoFactorCancel(player);
             }
+            case "qr", "qrcode", "map" -> {
+                return accessManager.handleTwoFactorQrMap(player);
+            }
             default -> {
                 String candidateCode = String.join("", args);
                 if (TotpService.isValidCodeFormat(candidateCode) && accessManager.hasPendingTotpSetup(player.getUniqueId())) {
@@ -291,6 +318,14 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         }
 
         String sub = args[0].toLowerCase(Locale.ROOT);
+        if (("menu".equals(sub) || "gui".equals(sub)) && sender instanceof Player player) {
+            plugin.passMenu().openMenu(player);
+            return true;
+        }
+        if (("donate".equals(sub) || "donates".equals(sub)) && sender instanceof Player player) {
+            plugin.donateMenu().openMenu(player);
+            return true;
+        }
         if ("claim".equals(sub) && sender instanceof Player player) {
             if (args.length < 2) {
                 messages.send(player, "usage.pass-claim", "label", label);
@@ -322,6 +357,28 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         }
 
         switch (sub) {
+            case "boost" -> {
+                if (accessManager.config().trademc().enabled()) {
+                    messages.send(sender, "boost.disabled");
+                    return true;
+                }
+                if (!(sender instanceof Player boostPlayer)) {
+                    messages.send(sender, "error.players-only");
+                    return true;
+                }
+                if (args.length < 2) {
+                    messages.send(boostPlayer, "usage.pass-boost", "label", label);
+                    return true;
+                }
+                String boostArg = args[1].trim();
+                if (boostArg.equalsIgnoreCase("reset") || boostArg.equalsIgnoreCase("off")) {
+                    boolean wasBound = accessManager.boostyManager().unlink(boostPlayer.getName());
+                    messages.send(boostPlayer, wasBound ? "pass.boost-unbound" : "pass.boost-not-bound");
+                    return true;
+                }
+                accessManager.bindBoostyAsync(boostPlayer, boostArg);
+                return true;
+            }
             case "add", "grant" -> {
                 if (args.length < 2) {
                     messages.send(sender, "usage.pass-add", "label", label);
@@ -459,6 +516,129 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 }
                 return true;
             }
+            case "donationsgui" -> {
+                if (!(sender instanceof org.bukkit.entity.Player player)) {
+                    messages.send(sender, "error.players-only");
+                    return true;
+                }
+                plugin.adminDonationsGui().openMenu(player);
+                return true;
+            }
+            case "donations", "journal" -> {
+                String filter = args.length >= 2
+                        ? args[1].toLowerCase(Locale.ROOT) : "all";
+                if (!DonationService.JOURNAL_FILTERS.contains(filter)) {
+                    messages.send(sender, "usage.pass-donations", "label", label);
+                    return true;
+                }
+                int limit = 10;
+                if (args.length >= 3) {
+                    try {
+                        limit = Math.clamp(Integer.parseInt(args[2]), 1, 50);
+                    } catch (NumberFormatException ignored) {
+                        limit = 10;
+                    }
+                }
+                List<RegistrationStore.DonationRecord> all =
+                        accessManager.store().listDonations(null, 200);
+                List<RegistrationStore.DonationRecord> shown = new ArrayList<>();
+                for (RegistrationStore.DonationRecord record : all) {
+                    if (DonationService.journalFilterMatches(record.donationStatus(), filter)) {
+                        shown.add(record);
+                    }
+                    if (shown.size() >= limit) break;
+                }
+                messages.send(sender, "donation.journal-header",
+                        "size", shown.size(), "filter", journalFilterLabel(filter));
+                if (shown.isEmpty()) {
+                    messages.send(sender, "donation.journal-empty", "label", label);
+                    return true;
+                }
+                for (RegistrationStore.DonationRecord record : shown) {
+                    RegistrationStore.DonationStatus status = record.donationStatus();
+                    String detail;
+                    if (status == RegistrationStore.DonationStatus.GRANTED) {
+                        detail = " → " + record.grantedTo + " (+" + record.days + " дн.)"
+                                + (record.decidedBy == null || record.decidedBy.isBlank()
+                                        ? "" : " (" + record.decidedBy + ")");
+                    } else if (status == RegistrationStore.DonationStatus.REJECTED) {
+                        detail = record.decidedBy == null || record.decidedBy.isBlank()
+                                ? "" : " (" + record.decidedBy + ")";
+                    } else {
+                        detail = (record.note.isBlank() ? "" : " (" + record.note + ")")
+                                + (record.suggestedName.isBlank() ? ""
+                                        : messages.raw("donation.suggested", "name", record.suggestedName));
+                    }
+                    messages.send(sender, "donation.journal-entry",
+                            "source", EasyDonateClient.SOURCE.equals(record.source)
+                                    ? "ed" : "dp",
+                            "id", record.id,
+                            "donor", record.donorName,
+                            "amount", record.amountRubles(),
+                            "status", donationStatusLabel(status),
+                            "detail", detail,
+                            "created", AccessManager.formatTimestamp(record.createdAt));
+                }
+                messages.send(sender, "donation.journal-hint", "label", label);
+                return true;
+            }
+            case "health" -> {
+                if (accessManager.config().trademc().enabled()) {
+                    messages.send(sender, "donation.health-trademc-mode");
+                    return true;
+                }
+                java.util.List<AccessManager.DonateHealthCard> cards = accessManager.donateHealthCards();
+                messages.send(sender, "donation.health-header");
+                boolean anyReady = cards.stream().anyMatch(AccessManager.DonateHealthCard::ready);
+                for (AccessManager.DonateHealthCard card : cards) {
+                    if (!card.ready()) {
+                        if (!anyReady) {
+                            messages.send(sender, "donation.health-service-off", "service", card.serviceName());
+                        }
+                        continue;
+                    }
+                    String state = switch (card.state()) {
+                        case OK -> messages.raw("donation.health-ok");
+                        case FLAKY -> messages.raw("donation.health-flaky",
+                                "fails", card.failStreak());
+                        case NO_CONTACT -> messages.raw("donation.health-down",
+                                "fails", card.failStreak());
+                    };
+                    messages.send(sender, "donation.health-state",
+                            "service", card.serviceName(),
+                            "state", Messages.trusted(state),
+                            "poll_seconds", card.pollSeconds(),
+                            "cursor", card.cursorId());
+                    if (card.apiWaitMillis() > 0) {
+                        messages.send(sender, "donation.health-api-window",
+                                "seconds", Math.max(1, AccessManager.waitSeconds(card.apiWaitMillis())));
+                    }
+                    if (card.lastSuccessAtMillis() > 0) {
+                        messages.send(sender, "donation.health-last",
+                                "service", card.serviceName(),
+                                "ago", AccessManager.formatDuration(
+                                        System.currentTimeMillis() - card.lastSuccessAtMillis()),
+                                "error", card.lastError() == null ? "—" : card.lastError());
+                    }
+                }
+                long attempts = cards.stream().mapToLong(AccessManager.DonateHealthCard::attempts).sum();
+                long successes = cards.stream().mapToLong(AccessManager.DonateHealthCard::successes).sum();
+                long failures = cards.stream().mapToLong(AccessManager.DonateHealthCard::failures).sum();
+                long processedTotal = cards.stream().mapToLong(AccessManager.DonateHealthCard::processedTransactions).sum();
+                long avgLatency = cards.stream().mapToLong(AccessManager.DonateHealthCard::avgLatencyMs).max().orElse(0);
+                long maxLatency = cards.stream().mapToLong(AccessManager.DonateHealthCard::maxLatencyMs).max().orElse(0);
+                int pendingCount = accessManager.donations().pendingCount();
+                messages.send(sender, "donation.health-stats",
+                        "attempts", attempts, "ok", successes,
+                        "fail", failures, "uptime", DonatePulse.uptimePercent(attempts, successes),
+                        "avg_ms", avgLatency, "max_ms", maxLatency);
+                messages.send(sender, "donation.health-stats2",
+                        "processed", processedTotal,
+                        "pending", pendingCount,
+                        "stale", pendingCount == 0 ? "" : " (разбор: /" + label + " pending)");
+                messages.send(sender, "donation.health-footer", "label", label);
+                return true;
+            }
             case "sessions" -> {
                 if (args.length < 2) {
                     messages.send(sender, "usage.pass-sessions", "label", label);
@@ -478,6 +658,232 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                         "Все сессии вашего аккаунта завершены администратором — войдите заново.");
                         messages.send(sender, cleared ? "session.cleared" : "session.none-active",
                         "player", targetName);
+                return true;
+            }
+            case "testpay" -> {
+                if (args.length < 2) {
+                    messages.send(sender, "usage.pass-testpay", "label", label);
+                    return true;
+                }
+                String targetName = args[1].trim();
+                int amount = accessManager.config().minimumDonationRubles();
+                String source = RegistrationStore.DONATION_SOURCE_DONATEPAY;
+                if (args.length >= 4) {
+                    source = args[3].trim().toLowerCase(java.util.Locale.ROOT);
+                    if (!source.equals(RegistrationStore.DONATION_SOURCE_DONATEPAY)
+                            && !source.equals(EasyDonateClient.SOURCE)
+                            && !source.equals(RegistrationStore.DONATION_SOURCE_TRADEMC)) {
+                        messages.send(sender, "usage.pass-testpay", "label", label);
+                        return true;
+                    }
+                }
+                if (args.length >= 3) {
+                    try {
+                        amount = Integer.parseInt(args[2]);
+                        if (amount < 0 || amount > 1_000_000) {
+                            messages.send(sender, "error.amount-number");
+                            return true;
+                        }
+                    } catch (NumberFormatException exception) {
+                        messages.send(sender, "error.amount-number");
+                        return true;
+                    }
+                }
+                DonationService.Outcome outcome = accessManager.simulateDonation(targetName, amount, source);
+                switch (outcome.status()) {
+                    case GRANTED -> messages.send(sender, "donation.testpay-granted",
+                            "amount", amount,
+                            "name", outcome.playerName(),
+                            "days", outcome.days(),
+                            "until", AccessManager.formatTimestamp(outcome.passUntil()));
+                    case REJECTED -> messages.send(sender, "donation.testpay-rejected",
+                            "amount", amount,
+                            "note", outcome.note().isBlank() ? "—" : outcome.note());
+                    default -> messages.send(sender, "donation.testpay-pending",
+                            "amount", amount,
+                            "donor", targetName,
+                            "status", outcome.status().name(),
+                            "note", outcome.note().isBlank() ? "—" : outcome.note(),
+                            "label", label);
+                }
+                return true;
+            }
+            case "testpay-live" -> {
+                // Живой тест: отправляем запись о донате прямо в кошелёк DonatePay (set_notification)
+                if (args.length < 3) {
+                    messages.send(sender, "usage.pass-testpaylive", "label", label);
+                    return true;
+                }
+                if (!accessManager.config().donatePayReady()) {
+                    messages.send(sender, "donation.testpaylive-notready");
+                    return true;
+                }
+                String donorName = args[1].trim();
+                long amount;
+                try {
+                    amount = Long.parseLong(args[2]);
+                } catch (NumberFormatException exception) {
+                    messages.send(sender, "error.amount-number");
+                    return true;
+                }
+                if (amount <= 0 || amount > 1_000_000) {
+                    messages.send(sender, "error.amount-number");
+                    return true;
+                }
+                String comment = args.length > 3
+                        ? String.join(" ", java.util.Arrays.copyOfRange(args, 3, args.length)) : "";
+                messages.send(sender, "donation.testpaylive-sending", "donor", donorName, "amount", amount);
+                accessManager.postTestDonateNotification(donorName, amount, comment,
+                        status -> {
+                            messages.send(sender, "donation.testpaylive-posted",
+                                    "donor", donorName, "amount", amount, "status", status);
+                            messages.send(sender, "donation.testpaylive-probing");
+                        },
+                        error -> messages.send(sender, "donation.testpaylive-failed",
+                                "error", error),
+                        (seen, transaction) -> {
+                            if (seen) {
+                                messages.send(sender, "donation.testpaylive-verdict-seen",
+                                        "donor", donorName, "amount", amount,
+                                        "id", transaction == null ? 0 : transaction.id());
+                            } else {
+                                messages.send(sender, "donation.testpaylive-verdict-hidden",
+                                        "label", label, "donor", donorName, "amount", amount);
+                            }
+                        });
+                return true;
+            }
+            case "shoppay" -> {
+                // Хук магазина TradeMC: панель шлёт по RCON 'chrdkregister pass shoppay <ник> <сумма_руб>'
+                // после оплаты товара — проводим покупку полным донат-конвейером (журнал, тарифы, действия).
+                if (args.length < 3) {
+                    messages.send(sender, "usage.pass-shoppay", "label", label);
+                    return true;
+                }
+                String donorName = args[1].trim();
+                int amount;
+                try {
+                    amount = Integer.parseInt(args[2]);
+                    if (amount < 0 || amount > 1_000_000) {
+                        messages.send(sender, "error.amount-number");
+                        return true;
+                    }
+                } catch (NumberFormatException exception) {
+                    messages.send(sender, "error.amount-number");
+                    return true;
+                }
+                DonationService.Outcome outcome = accessManager.simulateDonation(
+                        donorName, amount, RegistrationStore.DONATION_SOURCE_TRADEMC);
+                switch (outcome.status()) {
+                    case GRANTED -> messages.send(sender, "donation.shoppay-granted",
+                            "amount", amount,
+                            "name", outcome.playerName(),
+                            "days", outcome.days(),
+                            "until", AccessManager.formatTimestamp(outcome.passUntil()));
+                    case REJECTED -> messages.send(sender, "donation.shoppay-rejected",
+                            "amount", amount,
+                            "note", outcome.note().isBlank() ? "—" : outcome.note());
+                    default -> messages.send(sender, "donation.shoppay-pending",
+                            "amount", amount,
+                            "donor", donorName,
+                            "status", outcome.status().name(),
+                            "note", outcome.note().isBlank() ? "—" : outcome.note(),
+                            "label", label);
+                }
+                return true;
+            }
+            case "update" -> {
+                handleUpdate(sender, label, args);
+                return true;
+            }
+            case "luckperms" -> {
+                // Авто-настройка LuckPerms по схеме CHRDK: default → <pass-group> → admin
+                String action = args.length > 1 ? args[1].toLowerCase(Locale.ROOT) : "status";
+                LuckPermsBootstrap bootstrap = accessManager.luckPermsBootstrap();
+                if (!bootstrap.available()) {
+                    messages.send(sender, "lp.unavailable");
+                    return true;
+                }
+                switch (action) {
+                    case "setup" -> {
+                        messages.send(sender, "lp.setup-start");
+                        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () ->
+                                bootstrap.setup().whenComplete((result, error) ->
+                                        plugin.getServer().getScheduler().runTask(plugin, () -> {
+                                            if (error != null) {
+                                                messages.send(sender, "lp.setup-fail",
+                                                        "error", error.getMessage() == null
+                                                                ? "unknown" : error.getMessage());
+                                                return;
+                                            }
+                                            messages.send(sender, "lp.setup-done",
+                                                    "groups", String.join(", ", result.groups()),
+                                                    "created", result.createdCount(),
+                                                    "nodes", result.nodeCount());
+                                            if (accessManager.config().passGroup().isBlank()) {
+                                                messages.send(sender, "lp.setup-hint-pass",
+                                                        "group", bootstrap.passGroupName());
+                                            }
+                                        })));
+                    }
+                    case "status" -> {
+                        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () ->
+                                bootstrap.status().whenComplete((statuses, error) ->
+                                        plugin.getServer().getScheduler().runTask(plugin, () -> {
+                                            if (error != null) {
+                                                messages.send(sender, "lp.setup-fail",
+                                                        "error", error.getMessage() == null
+                                                                ? "unknown" : error.getMessage());
+                                                return;
+                                            }
+                                            messages.send(sender, "lp.status-header");
+                                            for (LuckPermsBootstrap.GroupStatus line : statuses) {
+                                                if (line.exists()) {
+                                                    messages.send(sender, "lp.status-line",
+                                                            "group", line.name(),
+                                                            "weight", line.weight(),
+                                                            "perms", line.permissionNodes());
+                                                } else {
+                                                    messages.send(sender, "lp.status-missing",
+                                                            "group", line.name(),
+                                                            "label", label);
+                                                }
+                                            }
+                                        })));
+                    }
+                    default -> messages.send(sender, "usage.pass-luckperms", "label", label);
+                }
+                return true;
+            }
+            case "recheck" -> {
+                if (accessManager.config().trademc().enabled()) {
+                    messages.send(sender, "donation.recheck-unavailable");
+                    return true;
+                }
+                if (!accessManager.config().donatePayReady() && !accessManager.config().easyDonateReady()) {
+                    messages.send(sender, "donation.recheck-unavailable");
+                    return true;
+                }
+                long apiWait = accessManager.config().donatePayReady()
+                        ? accessManager.donatePayApiWaitMillis() : 0;
+                if (apiWait > 0) {
+                    // окно API DonatePay занято (раз в 20 с) — опрос дождётся своего слота,
+                    // но честно предупреждаем, что ответ будет не мгновенный
+                    messages.send(sender, "donation.recheck-waiting",
+                            "seconds", Math.max(1, AccessManager.waitSeconds(apiWait)));
+                } else {
+                    messages.send(sender, "donation.recheck-started", "label", label);
+                }
+                accessManager.forceDonationPoll(report -> {
+                    if (report.error() != null) {
+                        messages.send(sender, "donation.recheck-failed", "error", report.error());
+                    } else {
+                        messages.send(sender, "donation.recheck-done",
+                                "count", report.processed(),
+                                "pending", accessManager.donations().pendingCount(),
+                                "label", label);
+                    }
+                });
                 return true;
             }
             case "stats" -> {
@@ -591,30 +997,79 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 "percent", Math.round(100.0 * withPass / total));
         messages.send(sender, "stats.granted",
                 "count", store.countDonations(RegistrationStore.DonationStatus.GRANTED));
+        // сводка по каждому активному провайдеру: опросы и оборот за текущую сессию
+        for (AccessManager.DonateHealthCard card : accessManager.donateHealthCards()) {
+            if (!card.ready()) {
+                continue;
+            }
+            messages.send(sender, "stats.provider-line",
+                    "service", card.serviceName(),
+                    "attempts", card.attempts(),
+                    "ok", card.successes(),
+                    "fail", card.failures(),
+                    "processed", card.processedTransactions(),
+                    "sum", DonationService.formatRubles(card.sessionSumKopecks()));
+        }
         messages.send(sender, "stats.tiers", "tiers", DonationService.describeTiers(cfg, messages));
     }
 
     private void showDoctor(CommandSender sender) {
         PluginConfig cfg = accessManager.config();
         messages.send(sender, "doctor.header");
-        check(sender, "DonatePay API-токен", cfg.donatePayReady(),
-                "не задан donatepay.api-token — авто-выдача проходок не работает");
-        check(sender, "Ссылка на оплату", cfg.hasPaymentUrl(),
-                "не задан donatepay.payment-url — игроки не видят ссылку");
+        if (!cfg.donatePayEnabled()) {
+            check(sender, "DonatePay (провайдер)", true, "выключен в конфиге (donatepay.enabled: false)");
+        } else {
+            check(sender, "DonatePay API-токен", cfg.donatePayReady(),
+                    "не задан donatepay.api-token — авто-выдача проходок не работает");
+            if (cfg.donatePayReady()) {
+                check(sender, "Ссылка DonatePay для игроков", cfg.hasPaymentUrl(),
+                        "не задан donatepay.payment-url — игроки не видят ссылку");
+                check(sender, "Тестовый запрос к DonatePay", accessManager.probeDonatePay(),
+                        "не удалось подключиться к API DonatePay — проверьте токен и сеть");
+            }
+        }
         check(sender, "Сессия не обходит 2FA", !cfg.sessionSkips2fa() || !cfg.totpEnabled(),
                 "auth.session-skips-2fa: true — IP-сессия отключает 2FA (осознанный выбор?)");
         check(sender, "Счётчики попыток сохраняются", cfg.storageWriteAsync(),
                 "storage.write-async: false — запись на диск в главном потоке");
         check(sender, "Политика паролей", cfg.minPasswordLength() >= 8,
                 "auth.min-password-length < 8 — разрешены короткие пароли");
-        check(sender, "Тестовый запрос к DonatePay", accessManager.probeDonatePay(),
-                "не удалось подключиться к API DonatePay — проверьте токен и сеть");
+        // EasyDonate — только если хозяин решил его использовать
+        if (cfg.easyDonateEnabled()) {
+            check(sender, "EasyDonate Shop-Key", cfg.easyDonateReady(),
+                    "easydonate.enabled: true, но shop-key пуст — опрос не ведётся");
+            if (cfg.easyDonateReady()) {
+                check(sender, "Ссылка EasyDonate для игроков", !cfg.easyDonatePaymentUrl().isBlank(),
+                        "не задан easydonate.payment-url — ссылка для игроков не показывается");
+                check(sender, "Тестовый запрос к EasyDonate",
+                        accessManager.probeDonationProvider(EasyDonateClient.SOURCE),
+                        "не удалось подключиться к API EasyDonate — проверьте shop-key и сеть");
+            }
+        }
+        PluginConfig.BoostySettings boosty = cfg.boosty();
+        if (boosty.enabled()) {
+            check(sender, "Boosty: блог и токены", boosty.ready(),
+                    boosty.blog().isBlank()
+                            ? "не задан boosty.blog — URL блога на boosty.to"
+                            : "нет boosty.token / refresh-token+device-id — снимите токены из браузера");
+            if (boosty.ready()) {
+                check(sender, "Тестовый запрос к Boosty", accessManager.probeBoosty(),
+                        "API Boosty не ответил — проверьте токен, имя блога и сеть");
+            }
+        }
         check(sender, "Аудит-лог", cfg.auditEnabled(),
                 "audit.enabled: false — история событий не сохраняется");
         check(sender, "Discord-уведомления", !cfg.discordEnabled() || !cfg.notificationEvents().isEmpty(),
                 "вебхук задан, но notifications.events пуст — уведомления не отправляются");
         check(sender, "Хранилище доступно для записи", storeWritable(),
                 "нет доступа на запись в data.json — данные могут не сохраняться");
+        check(sender, "Vault (экономика и права)", plugin.externalHooks().economy().isPresent()
+                        || plugin.externalHooks().permissions().isPresent(),
+                "Vault не установлен — экономика для аддонов недоступна (опционально)");
+        check(sender, "LuckPerms", plugin.externalHooks().luckPerms().isPresent(),
+                cfg.passGroup().isBlank()
+                        ? "LuckPerms не установлен (опционально — нужен для integrations.pass-group)"
+                        : "задан integrations.pass-group, но LuckPerms не найден — группы не синхронизируются!");
         messages.send(sender, "doctor.footer");
     }
 
@@ -631,6 +1086,30 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         } catch (Exception exception) {
             return false;
         }
+    }
+
+    /** Свёртка статуса доната в цветное слово из messages.yml (литеральные ключи). */
+    private String donationStatusLabel(RegistrationStore.DonationStatus status) {
+        return switch (status) {
+            case GRANTED -> messages.raw("donation.status-granted");
+            case PENDING_NAME -> messages.raw("donation.status-pending-name");
+            case PENDING_AMOUNT -> messages.raw("donation.status-pending-amount");
+            case PENDING_REVIEW -> messages.raw("donation.status-pending-review");
+            case REJECTED -> messages.raw("donation.status-rejected");
+        };
+    }
+
+    /** Подпись фильтра журнала в заголовке (литеральные ключи). */
+    private String journalFilterLabel(String filter) {
+        return switch (filter) {
+            case "granted" -> messages.raw("donation.filter-granted");
+            case "pending" -> messages.raw("donation.filter-pending");
+            case "rejected" -> messages.raw("donation.filter-rejected");
+            case "name" -> messages.raw("donation.filter-name");
+            case "amount" -> messages.raw("donation.filter-amount");
+            case "review" -> messages.raw("donation.filter-review");
+            default -> messages.raw("donation.filter-all");
+        };
     }
 
     private void showAudit(CommandSender sender, String[] args) {
@@ -719,11 +1198,11 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 .append(messages.get("pass.info.until-value",
                                 "now", AccessManager.formatRemainingTime(account.passUntil, now))));
                                 messages.send(player, "pass.info.registered",
-                "value", messages.raw(account.isRegistered()
-                        ? "account.state-registered" : "account.state-awaiting"));
+                "value", Messages.trusted(messages.raw(account.isRegistered()
+                        ? "account.state-registered" : "account.state-awaiting")));
                         messages.send(player, "pass.info.two-factor",
-                "value", messages.raw(account.isTotpEnabled()
-                        ? "account.state-totp-on" : "account.state-totp-off"));
+                "value", Messages.trusted(messages.raw(account.isTotpEnabled()
+                        ? "account.state-totp-on" : "account.state-totp-off")));
         if (accessManager.config().paymentCodeEnabled()) {
             accessManager.donations().paymentCode(player.getName()).ifPresent(code ->                    player.sendMessage(messages.get("pass.info.payment-code")
                             .append(messages.get("pass.info.payment-code-value", "code", code))));
@@ -734,8 +1213,8 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                                     "total_paid_kopecks", DonationService.formatRubles(account.totalPaidKopecks),
                                     "payments_count", account.paymentsCount)));
         }        messages.send(player, "pass.info.renew",
-                "url", accessManager.config().hasPaymentUrl()
-                        ? accessManager.config().donatePayPaymentUrl() : "/pass");
+                "url", accessManager.config().hasEffectiveDonateUrl()
+                        ? accessManager.config().effectiveDonateUrl() : "/pass");
         messages.send(player, "pass.info.footer-line");
     }
 
@@ -753,7 +1232,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
 
         messages.send(sender, "account.header", "player_name", account.playerName);
         messages.send(sender, "account.pass",
-                "value", messages.raw(activePass ? "pass.info.active" : "pass.info.inactive"));
+                "value", Messages.trusted(messages.raw(activePass ? "pass.info.active" : "pass.info.inactive")));
         if (account.passUntil > 0) {
             sender.sendMessage(messages.get("account.until-label")
                     .append(messages.get("account.until-value",
@@ -763,14 +1242,14 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         if (account.passUntil > 0) {
             messages.send(sender, "account.grant-source",
                     "value", account.lastGrantSource.isBlank()
-                            ? messages.raw("common.unknown") : account.lastGrantSource);
+                            ? Messages.trusted(messages.raw("common.unknown")) : account.lastGrantSource);
                             messages.send(sender, "account.registered",
-                "value", messages.raw(account.isRegistered() ? "common.yes" : "common.no"));
+                "value", Messages.trusted(messages.raw(account.isRegistered() ? "common.yes" : "common.no")));
                 messages.send(sender, "account.two-factor",
                 "value", account.isTotpEnabled()
-                        ? messages.raw("account.state-totp-on-since",
-                                "since", AccessManager.formatTimestamp(account.totpEnabledAt))
-                        : messages.raw("account.state-totp-off"));
+                        ? Messages.trusted(messages.raw("account.state-totp-on-since",
+                                "since", AccessManager.formatTimestamp(account.totpEnabledAt)))
+                        : Messages.trusted(messages.raw("account.state-totp-off")));
                         messages.send(sender, "account.stage", "value", stageText);
         if (account.passUntil > 0) {
             sender.sendMessage(messages.get("account.last-grant-label")
@@ -827,9 +1306,15 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         sender.sendMessage(messages.get("status.two-factor")
                 .append(messages.get("status.two-factor-value",
                                 "enabled", store.getTotpEnabledCount(),
-                                "state", messages.raw(cfg.totpEnabled() ? "common.on" : "common.off"))));
+                                "state", Messages.trusted(messages.raw(cfg.totpEnabled() ? "common.on" : "common.off")))));
+                                if (cfg.trademc().enabled()) {
+                                    messages.send(sender, "status.trademc-mode",
+                                            "shop", cfg.trademc().shopId());
+                                } else {
                                 messages.send(sender, "status.donatepay",
-                "value", messages.raw(cfg.donatePayReady() ? "common.connected" : "common.token-missing"));
+                "value", Messages.trusted(messages.raw(!cfg.donatePayEnabled() ? "common.provider-disabled"
+                        : (cfg.donatePayReady() ? "common.connected" : "common.token-missing"))));
+                                }
         sender.sendMessage(messages.get("status.donatepay-label")
                 .append(messages.get("status.donatepay-value",
                                 "minimum_donation_rubles", cfg.minimumDonationRubles(),
@@ -837,14 +1322,66 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         sender.sendMessage(messages.get("status.session-label")
                 .append(messages.get("status.session-value", "session_minutes", cfg.sessionMinutes())));
                 messages.send(sender, "status.chat",
-                "state", messages.raw(cfg.chat().enabled() ? "common.enabled-m" : "common.disabled-m"),
+                "state", Messages.trusted(messages.raw(cfg.chat().enabled() ? "common.enabled-m" : "common.disabled-m")),
                 "radius", cfg.chat().localRadius());
                 messages.send(sender, "status.auto-messages",
                 "value", cfg.chat().autoMessagesEnabled()
-                        ? messages.raw("status.auto-messages-value",
+                        ? Messages.trusted(messages.raw("status.auto-messages-value",
                                 "seconds", cfg.chat().autoMessagesIntervalSeconds(),
-                                "count", cfg.chat().autoMessages().size())
-                        : messages.raw("common.disabled-many"));
+                                "count", cfg.chat().autoMessages().size()))
+                        : Messages.trusted(messages.raw("common.disabled-many")));
+    }
+
+    private void handleUpdate(CommandSender sender, String label, String[] args) {
+        String action = args.length == 2 ? args[1].toLowerCase(Locale.ROOT) : "";
+        if (!action.equals("check") && !action.equals("download")) {
+            messages.send(sender, "update.command-usage", "label", label);
+            return;
+        }
+        boolean download = action.equals("download");
+        if (download && !canDownloadUpdates(sender)) {
+            messages.send(sender, "update.console-only");
+            return;
+        }
+        PluginUpdateService updater = plugin.pluginUpdater();
+        String current = plugin.getPluginMeta().getVersion();
+        messages.send(sender, download ? "update.download-start" : "update.check-start");
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                PluginUpdateService.Result result = updater.execute(download, current);
+                updateReply(() -> {
+                    Messages messages = plugin.messages();
+                    if (!download) {
+                        messages.send(sender, "update.check-result", "current", current,
+                                "latest", result.version(), "url", result.url(), "label", label);
+                    } else if (result.filesCurrent()) {
+                        messages.send(sender, "update.files-current", "latest", result.version());
+                    } else {
+                        messages.send(sender, "update.download-ready", "latest", result.version(),
+                                "count", result.count(), "backup", result.backup(), "folder", result.updateDirectory());
+                    }
+                });
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+                updateReply(() -> plugin.messages().send(sender, "update.command-error", "error", "Операция прервана."));
+            } catch (Exception exception) {
+                plugin.getLogger().log(java.util.logging.Level.WARNING, "[updates] Command failed", exception);
+                updateReply(() -> plugin.messages().send(sender, "update.command-error", "error",
+                        exception.getMessage() == null ? exception.getClass().getSimpleName() : exception.getMessage()));
+            }
+        });
+    }
+
+    // Downloading executable code is console/RCON-only, even for an in-game OP.
+    static boolean canDownloadUpdates(CommandSender sender) {
+        return sender instanceof org.bukkit.command.ConsoleCommandSender
+                || sender instanceof org.bukkit.command.RemoteConsoleCommandSender;
+    }
+
+    private void updateReply(Runnable reply) {
+        if (!plugin.isEnabled()) return;
+        try { plugin.getServer().getScheduler().runTask(plugin, reply); }
+        catch (org.bukkit.plugin.IllegalPluginAccessException ignored) { /* server is stopping */ }
     }
 
     private void sendAdminHelp(CommandSender sender, String label) {
@@ -890,6 +1427,16 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             return List.of();
         }
         if (!sender.hasPermission("chrdkregister.admin")) {
+            if (args.length == 1) {
+                String prefix = args[0].toLowerCase(Locale.ROOT);
+                List<String> matches = new ArrayList<>();
+                for (String sub : PLAYER_SUBCOMMANDS) {
+                    if (sub.startsWith(prefix)) {
+                        matches.add(sub);
+                    }
+                }
+                return matches;
+            }
             return List.of();
         }
         if (args.length == 1) {
@@ -915,11 +1462,19 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             if ("gift".equals(sub)) {
                 return completePlayerNames(args[1]);
             }
+            if ("testpay".equals(sub)) {
+                return completePlayerNames(args[1]);
+            }
             if ("audit".equals(sub)) {
                 return completePlayerNames(args[1]);
             }
             if ("backup".equals(sub)) {
                 return List.of("create", "list", "restore");
+            }
+            if ("update".equals(sub)) {
+                String prefix = args[1].toLowerCase(Locale.ROOT);
+                return (canDownloadUpdates(sender) ? List.of("check", "download") : List.of("check"))
+                        .stream().filter(value -> value.startsWith(prefix)).toList();
             }
         }
         if (args.length == 3) {
@@ -933,6 +1488,9 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                         .map(path -> path.getFileName().toString())
                         .toList();
             }
+        }
+        if (args.length == 4 && "testpay".equals(args[0].toLowerCase(Locale.ROOT))) {
+            return List.of(RegistrationStore.DONATION_SOURCE_DONATEPAY, EasyDonateClient.SOURCE);
         }
         return List.of();
     }

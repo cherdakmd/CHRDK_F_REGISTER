@@ -1,31 +1,41 @@
-name: CHRDK_F_REGISTER
+name: CHRDK_Core
 version: '${version}'
 main: ru.cherdakmd.chrdkregister.RegisterPlugin
-api-version: '1.21.11'
+api-version: '26.3'
+softdepend:
+  - PlaceholderAPI
+  - Vault
+  - LuckPerms
 authors:
   - cherdakmd
-description: Плагин проходки через DonatePay (150р на 1 месяц) с регистрацией, авторизацией по паролю, TOTP 2FA и встроенным чатом (локальный/глобальный, ЛС, автосообщения) для Purpur 1.21.11
+description: Плагин проходки через DonatePay (150р на 1 месяц) с регистрацией, авторизацией по паролю, TOTP 2FA и встроенным чатом (локальный/глобальный, ЛС, автосообщения) для Purpur 26.3
 
 commands:
   register:
-    description: Зарегистрировать аккаунт паролем после получения проходки
+    description: Зарегистрировать аккаунт и активировать одноразовый пробный период
     usage: /<command> <пароль> <повтор>
     aliases: [reg]
   login:
     description: Войти в аккаунт по паролю (и коду 2FA, если подключена)
     usage: /<command> <пароль> [код_2FA]
     aliases: [l]
+  menu:
+    description: "Главное меню сервера (GUI): аккаунт, награды, экономика, приваты, развитие и защита"
+    usage: /<command>
+  captcha:
+    description: Ответ на проверку «ты не бот» после серии неудачных попыток входа
+    usage: /<command> <число>
   changepassword:
     description: Сменить пароль аккаунта
     usage: /<command> <старый_пароль> <новый_пароль>
     aliases: [cp, changepass]
   2fa:
     description: Двухфакторная аутентификация TOTP (Google Authenticator / 2FAS / Authy)
-    usage: /<command> [setup|confirm|disable|status|cancel|<6-значный_код>]
+    usage: /<command> [setup|qr|confirm|disable|status|cancel|<6-значный_код>]
     aliases: [totp, twofactor]
   pass:
     description: Проверка статуса проходки и управление проходками
-    usage: /<command> [add|remove|check|unregister|reset2fa|status|reload] [ник]
+    usage: /<command> [menu|add|remove|check|unregister|reset2fa|status|reload] [ник]
     aliases: [fregister, prohodka]
   chat:
     description: Управление чатом — локальный/глобальный режим, очистка, объявления
@@ -65,6 +75,9 @@ commands:
     usage: /<command> <ник>
 
 permissions:
+  chrdkregister.menu:
+    description: Главное меню сервера /menu (GUI)
+    default: true
   chrdkregister.admin:
     description: Доступ к ручному добавлению игроков и управлению плагином
     default: op

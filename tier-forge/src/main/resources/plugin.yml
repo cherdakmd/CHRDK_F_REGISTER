@@ -1,0 +1,20 @@
+name: CHRDK_TierForge
+version: ${version}
+main: ru.cherdakmd.chrdktierforge.TierForgePlugin
+api-version: '26.3'
+description: "Тир-предметы в духе Terraria: случайная редкость крафта брони, оружия и инструментов"
+author: cherdakmd
+depend: [CHRDK_Core]
+commands:
+  tiers:
+    description: Таблица редкостей крафта и шансов
+  tiersadmin:
+    description: Управление тир-предметами
+    permission: chrdktierforge.admin
+permissions:
+  chrdktierforge.use:
+    description: Использование тир-крафта и справки
+    default: true
+  chrdktierforge.admin:
+    description: Администрирование тир-предметов
+    default: op

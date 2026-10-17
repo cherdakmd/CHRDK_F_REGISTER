@@ -24,6 +24,24 @@
 # =====================================================================
 
 messages:
+  "presentation":
+    "trial": "Пробная проходка"
+    "pass": "Проходка активна"
+    "no-pass": "Нет активной проходки"
+    "register-trial": "Зарегистрируйтесь — %days% бесплатных дней: /register пароль пароль"
+    "register": "Создайте пароль: /register пароль пароль"
+    "login": "Войдите в аккаунт: /login"
+    "two-factor": "Подтвердите вход: /2fa код"
+    "renew": "Продлите доступ: /pass donate"
+    "play": "Вы в игре. Исследуйте мир и развивайте персонажа."
+    "secured": "включена"
+    "unsecured": "не подключена"
+  "trial":
+    "register-prompt": "<yellow>Зарегистрируйте пароль командой: </yellow><click:suggest_command:'/register '><hover:show_text:'<green>Подставить команду в чат</green>'><gold><bold>/register \\<пароль> \\<повтор></bold></gold></hover></click>"
+    "welcome": "<gold>Добро пожаловать! Зарегистрируйтесь — получите %days% дней бесплатной проходки. /register пароль пароль</gold>"
+    "granted": "<green>Пробная проходка на %days% дней активирована! Действует до %until%. Приятной игры!</green>"
+    "notify-title": "Пробная проходка активирована"
+    "notify-desc": "Игрок: %player%. Пробный период: %days% дней, до %until%."
 
   # ---------------------------------------------------------------
   # common — Общие слова состояния (используются в разных сообщениях)
@@ -41,6 +59,7 @@ messages:
     "off": "<red>ОТКЛЮЧЁН</red>"
     "on": "<green>ВКЛЮЧЁН</green>"
     "token-missing": "<red>токен не задан в config.yml</red>"
+    "provider-disabled": "<gray>выключен в конфиге</gray>"
     "unknown": "<white>неизвестно</white>"
     "yes": "<green>да</green>"
 
@@ -50,6 +69,7 @@ messages:
   "error":
     "days-number": "<red>Количество дней должно быть числом.</red>"
     "donation-id-number": "<red>ID доната должен быть числом.</red>"
+    "amount-number": "<red>Сумма должна быть числом (рубли).</red>"
     "invalid-nickname": "<red>Некорректный ник Minecraft: %target_name%</red>"
     "invalid-nickname-soft": "<red>Некорректный ник: %target_name%</red>"
     "no-permission": "<red>Недостаточно прав.</red>"
@@ -65,13 +85,19 @@ messages:
     "backup-restore": "<yellow>Использование: /%label% backup restore <файл></yellow>"
     "login": "<yellow>Использование: /login <пароль> [код_2FA]</yellow>"
     "pass-add": "<yellow>Использование: /%label% add <ник> [дней]</yellow>"
+    "pass-boost": "<yellow>Использование: /%label% boost <ник_на_Boosty></yellow> — привязать подписку; /%label% boost reset — отвязать"
     "pass-approve": "<yellow>Использование: /%label% approve <id> [ник] [дней]</yellow>"
     "pass-check": "<yellow>Использование: /%label% check <ник></yellow>"
     "pass-claim": "<yellow>Использование: /%label% claim <id доната></yellow>"
     "pass-gift": "<yellow>Использование: /%label% gift <ник> <дней></yellow>"
     "pass-logoutall": "<yellow>Использование: /%label% logoutall <ник></yellow>"
     "pass-reject": "<yellow>Использование: /%label% reject <id> [причина]</yellow>"
+    "pass-donations": "<yellow>Использование: /%label% donations [all|granted|pending|rejected|name|amount|review] [лимит]</yellow>"
     "pass-remove": "<yellow>Использование: /%label% remove <ник></yellow>"
+    "pass-testpay": "<yellow>Использование: /%label% testpay <ник> [сумма_руб] [сервис] — тестовый платёж (donatepay/easydonate/trademc): полный цикл выдачи (журнал, аудит, уведомления).</yellow>"
+    "pass-testpaylive": "<yellow>Использование: /%label% testpay-live <ник> <сумма_руб> [комментарий] — ЖИВОЙ тест: запись о донате отправится в ваш кошелёк DonatePay (set_notification).</yellow>"
+    "pass-shoppay": "<yellow>Использование: /%label% shoppay <ник> <сумма_руб> — RCON-хук магазина TradeMC: провести покупку как донат (журнал, выдача по тарифам).</yellow>"
+    "pass-luckperms": "<yellow>Использование: /%label% luckperms [setup|status] — авто-настройка групп LuckPerms (default → проходка → admin) или просмотр схемы.</yellow>"
     "pass-reset2fa": "<yellow>Использование: /%label% reset2fa <ник></yellow>"
     "pass-sessions": "<yellow>Использование: /%label% sessions <ник></yellow>"
     "pass-unregister": "<yellow>Использование: /%label% unregister <ник></yellow>"
@@ -81,10 +107,10 @@ messages:
   # restriction — Блокировка команд и чата до авторизации
   # ---------------------------------------------------------------
   "restriction":
-    "command-login": "<red>Сначала войдите в аккаунт: /login &lt;пароль&gt;</red>"
-    "command-no-pass": "<red>Команды заблокированы! Сначала приобретите проходку (%price% ₽ на DonatePay, укажите ник %player% в имени донатера).</red>"
-    "command-register": "<red>Сначала зарегистрируйте пароль: /register &lt;пароль&gt; &lt;повтор&gt;</red>"
-    "command-two-factor": "<red>Подтвердите вход кодом двухфакторной аутентификации: /2fa &lt;6-значный_код&gt;</red>"
+    "command-login": "<red>Сначала войдите в аккаунт: /login \\<пароль></red>"
+    "command-no-pass": "<red>Команды заблокированы! Сначала приобретите проходку (%price% ₽, укажите ник %player% в имени донатера).</red>"
+    "command-register": "<red>Сначала зарегистрируйте пароль: /register \\<пароль> \\<повтор></red>"
+    "command-two-factor": "<red>Подтвердите вход кодом двухфакторной аутентификации: /2fa \\<6-значный_код></red>"
     "too-many-accounts": "<red>С вашего IP уже играет слишком много аккаунтов с проходками. Обратитесь к администрации.</red>"
 
   # ---------------------------------------------------------------
@@ -127,18 +153,49 @@ messages:
     "failed": "<red>Не удалось завершить регистрацию. Возможно, аккаунт уже зарегистрирован.</red>"
     "password-mismatch": "<red>Пароли не совпадают! Проверьте ввод: /register <пароль> <повтор></red>"
     "password-shared": "<red>Этот пароль уже используется другим аккаунтом, который заходил с вашего IP. Придумайте свой пароль.</red>"
-    "prompt": "<yellow>Проходка активна! Зарегистрируйте пароль командой: </yellow><click:suggest_command:'/register '><hover:show_text:'<green>Подставить команду в чат</green>'><gold><bold>/register &lt;пароль&gt; &lt;повтор&gt;</bold></gold></hover></click>"
+    "prompt": "<yellow>Зарегистрируйте пароль командой: </yellow><click:suggest_command:'/register '><hover:show_text:'<green>Подставить команду в чат</green>'><gold><bold>/register \\<пароль> \\<повтор></bold></gold></hover></click>"
     "reminder": "<gold>Зарегистрируйтесь: /register <пароль> <повтор></gold>"
     "success": "<green>✓ Вы успешно зарегистрировались и вошли на сервер! Приятной игры!</green>"
     "title": "<gold><bold>РЕГИСТРАЦИЯ</bold></gold>"
     "title-subtitle": "<yellow>Введите /register <пароль> <повтор></yellow>"
 
   # ---------------------------------------------------------------
+  # captcha — Эскалационная проверка «ты не бот» после серии неудачных попыток входа
+  # ---------------------------------------------------------------
+  "captcha":
+    "chat-fallback": "<gray>Введите одно из чисел командой: /captcha <вариант> — варианты: </gray><gold>%options%</gold>"
+    "dialog-body": "<gray>Слишком много неудачных попыток входа. Чтобы продолжить, нажмите кнопку с числом: </gray><gold><bold>%code%</bold></gold>"
+    "dialog-title": "<red>Проверка: вы не бот?</red>"
+    "not-required": "<green>Проверка не требуется — просто введите пароль: /login <пароль></green>"
+    "required": "<yellow>Слишком много неудачных попыток входа (%failures%). Подтвердите, что вы не бот.</yellow>"
+    "solved": "<green>✓ Проверка пройдена! Теперь введите пароль: /login <пароль></green>"
+    "wrong": "<red>Неверный вариант! Сгенерирован новый код, попробуйте ещё раз.</red>"
+
   # login — Вход по паролю
   # ---------------------------------------------------------------
+  "button-login":
+    "title": "Вход кнопками — пароль не попадёт ни в чат, ни в логи"
+    "char-name": "<aqua><bold>%char%</bold></aqua>"
+    "footer-name": "<gray>Набрано: <yellow>%entered%</yellow> симв.</gray>"
+    "footer-lore":
+      - "<gray>Клик — добавить символ в конец.</gray>"
+      - "<gray>После каждого нажатия раскладка</gray>"
+      - "<gray>перетасовывается — на стриме безопасно.</gray>"
+    "backspace": "<yellow>⌫ Стереть символ</yellow>"
+    "clear": "<gold>Очистить всё</gold>"
+    "page-button": "<aqua>Раскладка: <white>%page%</white></aqua>"
+    "page-lower": "буквы a–z"
+    "page-upper": "буквы A–Z"
+    "page-symbols": "цифры и знаки"
+    "cancel": "<red>Отменить вход</red>"
+    "confirm": "<green>Готово — войти</green>"
+    "opened": "<gray>Открыта кнопочная клавиатура пароля — кликайте символы; после каждого нажатия раскладка тасуется.</gray>"
+    "cancelled": "<yellow>Клавиатура закрыта — пароль не отправлен.</yellow>"
+    "empty": "<red>Вы ничего не набрали.</red>"
+    "full": "<red>Максимальная длина набрана — подтвердите или сотрите пароль.</red>"
   "login":
     "already-authenticated": "<green>Вы уже вошли в аккаунт!</green>"
-    "prompt": "<yellow>Введите пароль для входа на сервер: </yellow><click:suggest_command:'/login '><hover:show_text:'<green>Подставить команду в чат</green>'><gold><bold>/login &lt;пароль&gt;</bold></gold></hover></click>"
+    "prompt": "<yellow>Введите пароль для входа на сервер: </yellow><click:suggest_command:'/login '><hover:show_text:'<green>Подставить команду в чат</green>'><gold><bold>/login \\<пароль></bold></gold></hover></click>"
     "register-first": "<yellow>Сначала зарегистрируйте пароль: /register <пароль> <повтор></yellow>"
     "reminder": "<yellow>Авторизуйтесь: /login <пароль></yellow>"
     "success": "<green>✓ Вы успешно вошли на сервер! Приятной игры!</green>"
@@ -177,6 +234,7 @@ messages:
       <yellow>/%label% confirm <код></yellow><gray> — подтвердить ключ 6-значным кодом и включить 2FA</gray>
       <yellow>/%label% disable <код></yellow><gray> — отключить 2FA (по текущему коду или паролю)</gray>
       <yellow>/%label% cancel</yellow><gray> — отменить незавершённую настройку 2FA</gray>
+      <yellow>/%label% qr</yellow><gray> — повторно выдать карту с QR-кодом привязки</gray>
     "login":
       "already-authenticated": "<green>Вы уже авторизованы на сервере!</green>"
       "bad-format": "<red>Код 2FA должен состоять из 6 цифр! Использование: /2fa <6-значный_код></red>"
@@ -187,7 +245,12 @@ messages:
       "wrong-code": "<red>Неверный или уже использованный 6-значный код 2FA! Повторите ввод.</red>"
     "need-login": "<yellow>Сначала введите пароль: /login <пароль></yellow>"
     "need-register": "<yellow>Сначала зарегистрируйте пароль: /register <пароль> <повтор></yellow>"
-    "prompt": "<aqua>✓ Пароль верный! Введите 6-значный код TOTP 2FA из приложения: </aqua><click:suggest_command:'/2fa '><hover:show_text:'<green>Подставить команду в чат</green>'><gold><bold>/2fa &lt;6-значный_код&gt;</bold></gold></hover></click>"
+    "prompt": "<aqua>✓ Пароль верный! Введите 6-значный код TOTP 2FA из приложения: </aqua><click:suggest_command:'/2fa '><hover:show_text:'<green>Подставить команду в чат</green>'><gold><bold>/2fa \\<6-значный_код></bold></gold></hover></click>"
+    "qr":
+      "disabled": "<red>QR-код для привязки 2FA отключён в конфигурации сервера.</red>"
+      "no-pending": "<yellow>Нет активной настройки 2FA: сначала сгенерируйте ключ командой /2fa setup</yellow>"
+      "not-authenticated": "<red>Сначала полностью авторизуйтесь на сервере.</red>"
+      "sent": "<green>✓ Карта с QR-кодом выдана в инвентарь (при полном инвентаре — выпала рядом). Возьмите карту в руку и наведите камеру приложения-аутентификатора на экран.</green>"
     "reminder": "<aqua>Подтвердите 2FA: /2fa <6-значный_код></aqua>"
     "reset-not-enabled": "<red>У игрока %target_name% не включена двухфакторная аутентификация.</red>"
     "reset-players-only": "<red>Эта команда доступна только игрокам. Для сброса 2FA игрока используйте: /pass reset2fa <ник></red>"
@@ -202,6 +265,7 @@ messages:
       "footer-line": "<gold>==============================================</gold>"
       "header": "<gold><bold>Настройка двухфакторной защиты (TOTP 2FA)</bold></gold>"
       "header-line": "<gold>==============================================</gold>"
+      "qr-map": "<gray>QR-код на карте выдан в инвентарь — возьмите карту в руку и отсканируйте экран приложением. Повторно: /2fa qr</gray>"
       "step1": "<gray>1. Откройте приложение </gray>"
       "step1-apps": "<white>Google Authenticator / 2FAS / Authy / Яндекс Ключ</white>"
       "step2": "<gray>2. Добавьте аккаунт по секретному ключу (Time-based / По времени):</gray>"
@@ -249,7 +313,7 @@ messages:
     "restored-actionbar": "<green>Авторизация подтверждена</green>"
 
   # ---------------------------------------------------------------
-  # no-pass — Нет проходки (оплата DonatePay)
+  # no-pass — Нет проходки (страница оплаты подставляется по включённым провайдерам)
   # ---------------------------------------------------------------
   "no-pass":
     "prompt": |-
@@ -257,12 +321,11 @@ messages:
       <red><bold>У вас нет активной проходки на сервер!</bold></red>
       <gray>Стоимость проходки: </gray><gold><bold>%price% ₽</bold></gold><gray> (выдаётся на </gray><aqua>%days% дней</aqua><gray>)</gray>
       <yellow>ВАЖНО: В поле «Ваше имя» (имя донатера) укажите ваш точный ник: </yellow><green><bold>%player%</bold></green>
-      <click:open_url:'%payment-url%'><hover:show_text:'<green>Нажмите, чтобы перейти к оплате проходки</green>'><aqua><bold><underlined>[ Открыть страницу оплаты DonatePay ]</underlined></bold></aqua></hover></click>
       <gray>Проходка активируется автоматически сразу после оплаты (не выходя с сервера).</gray>
       <red>==============================================</red>
-    "reminder": "<red>Нет проходки! Оплатите %price%₽ на DonatePay (укажите ник %player% в имени донатера)</red>"
+    "reminder": "<red>Нет проходки! Оплатите %price%₽ на странице оплаты (укажите ник %player% в имени донатера)</red>"
     "title": "<red><bold>НЕТ ПРОХОДКИ</bold></red>"
-    "title-subtitle": "<yellow>Донат %price%₽ на DonatePay (ник: %player%)</yellow>"
+    "title-subtitle": "<yellow>Донат %price%₽ (ник: %player%)</yellow>"
 
   # ---------------------------------------------------------------
   # pass — Проходка: активация, срок, выдача, отзыв
@@ -284,6 +347,8 @@ messages:
       <yellow>/%label% add <ник> [дней]</yellow><gray> — выдать/продлить проходку на произвольный срок</gray>
       <yellow>/%label% gift <ник> <дней></yellow><gray> — подарить проходку</gray>
       <yellow>/%label% pending</yellow><gray> — нераспознанные донаты</gray>
+      <yellow>/%label% donations [фильтр] [лимит]</yellow><gray> — журнал всех донатов (выданные/ожидание/отклонённые)</gray>
+      <yellow>/%label% health</yellow><gray> — состояние донатных сервисов, счётчики опросов</gray>
       <yellow>/%label% approve <id> [ник] [дней]</yellow><gray> — подтвердить платёж и выдать проходку</gray>
       <yellow>/%label% reject <id> [причина]</yellow><gray> — отклонить платёж</gray>
       <yellow>/%label% sessions <ник></yellow><gray> — активные сессии и IP игрока</gray>
@@ -292,9 +357,11 @@ messages:
       <yellow>/%label% doctor</yellow><gray> — самопроверка конфигурации</gray>
       <yellow>/%label% audit [ник] [N]</yellow><gray> — последние записи аудита</gray>
       <yellow>/%label% backup <create|list|restore></yellow><gray> — резервные копии данных</gray>
+      <yellow>/%label% luckperms [setup|status]</yellow><gray> — авто-настройка групп LuckPerms (default → проходка → admin)</gray>
+      <yellow>/%label% update check|download</yellow><gray> — проверить релиз / подготовить обновление (download только из консоли)</gray>
       <yellow>/%label% reload</yellow><gray> — перезагрузить config.yml</gray>
     "claim-success": "<green>✓ Платёж #%id% подтверждён, проходка активирована!</green>"
-    "expired": "<red>Срок вашей месячной проходки истёк! Продлите проходку через DonatePay.</red>"
+    "expired": "<red>Срок вашей месячной проходки истёк! Продлите проходку на странице оплаты сервера.</red>"
     "expiring": "<gold>Внимание! Проходка заканчивается через %remaining% (до %until%). Продлить: %renew%</gold>"
     "expiry-bar": "<yellow>Проходка заканчивается через %remaining%</yellow>"
     "gift-notice": "<green>Вам подарили проходку на %days% дн. от %sender%!</green>"
@@ -316,6 +383,73 @@ messages:
       "until-label": "<gray>Действует до: </gray>"
       "until-value": "<yellow> (осталось %now%)</yellow>"
     "kick-timeout": "<red>Вы не авторизовались за %seconds% сек. Зайдите снова и введите пароль.</red>"
+    "menu":
+      "disabled": "<red>Инвентарное меню отключено в конфигурации сервера.</red>"
+      "item-2fa-lore": "<gray>статус привязки TOTP и команды /2fa</gray>"
+      "item-2fa-name": "<red><bold>Двухфакторная защита</bold></red>"
+      "item-password-lore": "<gray>подсказка по смене пароля</gray>"
+      "item-password-name": "<yellow><bold>Сменить пароль</bold></yellow>"
+      "item-payment-lore": "<gray>ссылка на страницу оплаты</gray>"
+      "item-payment-name": "<gold><bold>Оплатить / продлить проходку</bold></gold>"
+      "item-sessions-lore": "<gray>устройства, IP, завершение сессий</gray>"
+      "item-sessions-name": "<green><bold>Активные сессии</bold></green>"
+      "item-stats-lore": "<gray>выручка, очередь, конверсия</gray>"
+      "item-stats-name": "<gold><bold>Статистика (админ)</bold></gold>"
+      "item-status-lore": "<gray>срок проходки, входы, 2FA</gray>"
+      "item-status-name": "<yellow><bold>Статус проходки</bold></yellow>"
+      "item-tiers-lore": "<gray>цены и длительность проходки</gray>"
+      "item-tiers-name": "<aqua><bold>Тарифы</bold></aqua>"
+      "tiers-header": "<gold>Тарифы проходки:</gold>"
+      "title": "<gold>Меню проходки и аккаунта</gold>"
+    "donate":
+      "title": "<gold>Донат: тарифы и ваша история</gold>"
+      "pay-name": "<gold><bold>Оплатить / продлить проходку</bold></gold>"
+      "pay-lore": "<gray>Клик — ссылка на страницу оплаты в чат.</gray>"
+      "tier-name": "<yellow><bold>%label%</bold></yellow>"
+      "tier-lore": "<gray>%amount% ₽ → %days% дн. прохода · клик — ссылка на оплату.</gray>"
+      "tier-picked": "<green>Тариф «%label%»: %amount% ₽ → %days% дн. Ссылка на оплату — ниже в чате.</green>"
+      "history-name": "<white>%amount% ₽ · %status%</white>"
+      "history-info": "<gray>%date% · источник: %source%</gray>"
+      "history-donor": "<dark_gray>донатер: %donor% · выдано дней: %days%</dark_gray>"
+      "history-empty-name": "<gray>Ваших донатов пока нет</gray>"
+      "history-empty-lore": "<dark_gray>Поддержите сервер — донаты появятся здесь автоматически.</dark_gray>"
+      "admin-journal-name": "<gold><bold>Журнал всех донатов</bold></gold>"
+      "admin-journal-lore": "<gray>клик — открыть журнал (/pass donations)</gray>"
+    "donationsgui":
+      "title": "<gold>Журнал донатов · стр. %page%/%pages%</gold>"
+      "prev-name": "<yellow><bold>← Назад</bold></yellow>"
+      "prev-lore": "<gray>страница %page% из %pages%</gray>"
+      "next-name": "<yellow><bold>Вперёд →</bold></yellow>"
+      "next-lore": "<gray>страница %page% из %pages%</gray>"
+      "filter-name": "<aqua><bold>Фильтр: %filter%</bold></aqua>"
+      "filter-lore": "<gray>клик — следующий фильтр: все → ждут → выданные → отклонённые</gray>"
+      "refresh-name": "<white><bold>Обновить</bold></white>"
+      "refresh-lore": "<gray>перечитать журнал заново</gray>"
+      "empty-name": "<gray>Записей нет</gray>"
+      "empty-lore": "<dark_gray>по этому фильтру журнал пуст</dark_gray>"
+      "item-name": "<white>#%id% · %amount% ₽</white>"
+      "item-line-status": "<gray>%status% · %date% · источник: %source%</gray>"
+      "item-line-donor": "<dark_gray>донатер: %donor% → %player% · %days% дн.</dark_gray>"
+      "item-lore-approve": "<green>ЛКМ — выдать проходку</green>"
+      "item-lore-reject": "<red>ПКМ — отклонить</red>"
+      "status-name": "<gold><bold>Сервисы и баланс</bold></gold>"
+      "status-line": "<gray>%service%: %state% · курсор #%cursor% · ~%latency% мс</gray>"
+      "status-off": "<dark_gray>%service% — не настроен или выключен</dark_gray>"
+      "status-balance": "<gray>Баланс DonatePay: <aqua>%balance% ₽</aqua> («%wallet%»)</gray>"
+      "status-balance-loading": "<dark_gray>Баланс DonatePay: загружается…</dark_gray>"
+      "status-balance-hidden": "<dark_gray>Баланс DonatePay: скрыт (donatepay.show-balance: false)</dark_gray>"
+      "status-balance-error": "<red>Баланс DonatePay: %error%</red>"
+      "status-click": "<dark_gray>клик — обновить баланс сейчас</dark_gray>"
+      "status-click-recheck": "<dark_gray>ПКМ — внеочередной опрос транзакций</dark_gray>"
+      "status-click-verify": "<dark_gray>Shift+ЛКМ — живой тест токена DonatePay</dark_gray>"
+      "verify-started": "<gray>Проверяю токен DonatePay… (если окно API занято — до ~20 с ожидания)</gray>"
+      "verify-ok": "<green>✔ Токен DonatePay валиден: кошелёк «%wallet%», баланс %balance% ₽.</green>"
+      "verify-ok-hidden": "<green>✔ Токен DonatePay валиден (баланс скрыт настройкой donatepay.show-balance).</green>"
+      "verify-fail": "<red>✘ Проверка токена DonatePay не прошла: %error%</red>"
+      "status-api-window": "<dark_gray> ↻ окно API занято: следующий вызов через ~%seconds% с</dark_gray>"
+      "status-error-line": "<red> последняя ошибка: %error%</red>"
+      "status-balance-age": "<dark_gray> обновлено %ago% назад</dark_gray>"
+      "balance-wait": "<yellow>Окно API DonatePay занято: баланс обновится через ~%seconds% с (правило — один вызов в 20 с).</yellow>"
     "not-active": "<red>У игрока %target_name% не найдено активной проходки.</red>"
     "not-registered": "<red>Игрок %target_name% ещё не регистрировал пароль.</red>"
     "password-reset": "<yellow>Ваш пароль был сброшен администратором. Зарегистрируйте новый пароль!</yellow>"
@@ -328,11 +462,24 @@ messages:
     "two-factor-reset-notice": "<green>✓ Двухфакторная защита (2FA) игрока %target_name% сброшена.</green>"
 
   # ---------------------------------------------------------------
+  # ---------------------------------------------------------------
+    "boost-checking": "<gray>Проверяем подписку Boosty для %boosty%…</gray>"
+    "boost-linked": "<green>✓ Привязка к Boosty <gold>%boosty%</gold> (%level%) создана — проходка активна до <aqua>%until%</aqua>.</green>"
+    "boost-changed": "<green>✓ Привязка обновлена: теперь Boosty <gold>%boosty%</gold> (%level%). Проходка до <aqua>%until%</aqua>.</green>"
+    "boost-not-found": "<red>Подписчика <gold>%boosty%</gold> на Boosty не нашли. Проверьте ник в точности как на сайте boosty.to.</red>"
+    "boost-inactive": "<red>Подписка Boosty <gold>%boosty%</gold> сейчас не активна. Если вы только что оформили — подождите пару минут и повторите.</red>"
+    "boost-low-level": "<red>Уровень «%level%» дешевле требуемых %min% ₽/мес. Оформите подходящий уровень на Boosty.</red>"
+    "boost-taken": "<red>Этот Boosty-аккаунт уже привязан к игроку <gold>%player%</gold>.</red>"
+    "boost-unbound": "<yellow>Привязка Boosty снята. Текущая проходка догорит по своему сроку.</yellow>"
+    "boost-not-bound": "<yellow>У вас нет привязки Boosty — сначала /pass boost <ник_на_Boosty>.</yellow>"
+    "boost-error": "<red>Boosty не отвечает — попробуйте через пару минут. Админу: смотреть консоль.</red>"
+
   # stats — Статистика /pass stats
   # ---------------------------------------------------------------
   "stats":
     "conversion": "<gray>Конверсия: </gray><green>%active% активных проходок из %total% известных аккаунтов (%percent%%)</green>"
     "granted": "<gray>Всего выдано донатами: </gray><white>%count% платежей</white>"
+    "provider-line": "<gray>%service% (сессия): опросов %attempts% (успех %ok%, сбоев %fail%); обработано донатов %processed% на %sum% ₽</gray>"
     "header": "<gold>=== Статистика донатов ===</gold>"
     "pending": "<gray>Ждут решения: </gray><yellow>%count% платежей (/pass pending)</yellow>"
     "revenue": "<gray>Выручка (подтверждённые донаты): </gray><aqua>24ч: %day% ₽, 7д: %week% ₽, 30д: %month% ₽</aqua>"
@@ -341,6 +488,7 @@ messages:
   # ---------------------------------------------------------------
   # account — Информация об игроке (/pass check)
   # ---------------------------------------------------------------
+
   "account":
     "grant-source": "<gray>Источник выдачи: </gray><white>%value%</white>"
     "header": "<gold>=== Информация об игроке %player_name% ===</gold>"
@@ -367,6 +515,14 @@ messages:
     "until-label": "<gray>Срок до: </gray>"
     "until-value": "<aqua>%until% (%remaining%)</aqua>"
 
+
+  # ---------------------------------------------------------------
+  # boost — Подписочный Boosty-провайдер (статус и конфиг)
+  # ---------------------------------------------------------------
+  "boost":
+    "disabled": "<red>Подписочный режим Boosty на этом сервере выключен.</red>"
+    "not-configured": "<red>Boosty не настроен владельцем сервера — попробуйте позже или напишите админу.</red>"
+
   # ---------------------------------------------------------------
   # donation — Журнал донатов и ручное подтверждение
   # ---------------------------------------------------------------
@@ -379,7 +535,7 @@ messages:
       "not-found": "<red>Платёж с ID %id% не найден в журнале.</red>"
     "label":
       "approved": "подтверждено администратором"
-      "approved-source": "DonatePay #%id% (подтверждено админом)"
+      "approved-source": "%service% #%id% (подтверждено админом)"
       "rejected": "отклонено администратором"
       "self-claimed": " (самостоятельно)"
     "not-found": "<red>Платёж #%id% не найден в журнале.</red>"
@@ -392,6 +548,10 @@ messages:
         Дней: %days%
         Сумма: %amount% ₽
       "approved-title": "Донат подтверждён администратором"
+      "down-title": "⛔ %service% недоступен"
+      "down-desc": "Серия отказов %service%: %fails% подряд. Последняя ошибка: %error%. Авто-выдача проходок на паузе до восстановления связи."
+      "up-title": "✅ %service% снова на связи"
+      "up-desc": "Автоматическая выдача проходок восстановлена, серия отказов завершена."
       "granted-body": |-
         Игрок: %player%
         Сумма: %amount% ₽
@@ -406,16 +566,105 @@ messages:
         Разбор: /pass pending
       "pending-title": "Донат требует решения"
     "pending-empty": "<green>Нераспознанных донатов нет — всё выдано автоматически.</green>"
+    "recheck-started": "<gray>Внеочередной опрос донатов запущен — результат смотрите в консоли сервера и в /%label% pending.</gray>"
+    "recheck-waiting": "<gray>Опрос поставлен в очередь: окно API DonatePay занято — начнётся через ~%seconds% с, результат придёт в этот чат.</gray>"
+    "recheck-unavailable": "<red>Донаты выключены или не настроены: включите donatepay.enabled / easydonate.enabled и задайте ключ в plugins/CHRDK_F_REGISTER/config.yml.</red>"
+    "recheck-done": "<green>Опрос донатов завершён: новых транзакций — %count%, в очереди решений — %pending% шт. (/%label% pending).</green>"
+    "recheck-failed": "<red>Опрос донатов не удался: %error%. Подробности — в консоли сервера.</red>"
+    "alert-offline": "<red>⚠ %service% недоступен: %fails% неудач подряд (%error%). Проходки по донатам не выдаются — проверьте сайт и ключи.</red>"
+    "alert-online": "<green>✔ %service% снова на связи — авто-проверка донатов восстановлена.</green>"
+    "alert-pending-stale": "<yellow>⧗ %count% донат(а) ждут решения дольше %hours% ч — разбор: /pass pending.</yellow>"
+    "alert-diagnosis": "<gray>Диагноз %service%: %diagnosis%</gray>"
+    "diagnosis-rate-limited": "API душит лимит (один вызов в 20 с): похоже, тем же токеном пользуется кто-то ещё — дашборд, виджет, второй сервер"
+    "diagnosis-unauthorized": "токен отклонён DonatePay (%detail%) — обновите donatepay.api-token в config.yml"
+    "diagnosis-unreachable": "API недоступен по сети (%detail%) — проверьте интернет/файрвол сервера или дождитесь восстановления donatepay.ru"
+    "diagnosis-bad-response": "нестандартный ответ API (%detail%) — похоже на сбой на стороне DonatePay"
+    "diagnosis-unknown": "причина не распознана (%detail%) — детали в последней ошибке опроса"
+    "diagnosis-endpoint-ok": "API и токен в порядке (кошелёк «%wallet%») — сбоит именно опрос транзакций; последняя ошибка: %detail%"
+    "health-header": "<gold>=== Здоровье донатов ===</gold>"
+    "health-service-off": "<dark_gray>%service% — не настроен или выключен (пропуск опроса)</dark_gray>"
+    "health-state": "<white>%service%</white> — %state%<gray>, интервал опроса: %poll_seconds% с, курсор транзакций: #%cursor%</gray>"
+    "health-ok": "<green>✔ связь в норме</green>"
+    "health-flaky": "<yellow>⚠ связь шалит (%fails% неудач подряд)</yellow>"
+    "health-down": "<red>⛔ связи нет ни разу за запуск (%fails% попыток)</red>"
+    "health-last": "<gray>  Последний успех %service%: %ago% назад; последняя ошибка: %error%</gray>"
+    "health-api-window": "<gray>  Окно API занято: следующий вызов DonatePay через ~%seconds% с (правило — один вызов в 20 с)</gray>"
+    "health-stats": "<gray>Опросов: %attempts% (успешных %ok%, сбоев %fail%), uptime %uptime%%; латентность API ~%avg_ms% мс (пик %max_ms% мс)</gray>"
+    "health-stats2": "<gray>Транзакций обработано: %processed%; ждут решения: %pending%%stale%</gray>"
+    "health-footer": "<gray>Журнал: /%label% donations | Очередь: /%label% pending | Форс-опрос: /%label% recheck</gray>"
+    "testpay-granted": "<green>[ТЕСТ] Донат на %amount% ₽ (игроку «%name%») обработан движком: проходка продлена до %until% (+%days% дн.).</green>"
+    "testpay-pending": "<yellow>[ТЕСТ] Донат %amount% ₽ от «%donor%» ушёл в очередь решений (%status%: %note%) — смотрите /%label% pending.</yellow>"
+    "testpay-rejected": "<red>[ТЕСТ] Донат %amount% ₽ отклонён движком: %note%.</red>"
+    "testpaylive-notready": "<red>DonatePay не настроен (нет donatepay.api-token) — живой тест невозможен.</red>"
+    "testpaylive-sending": "<gray>Отправляем тестовый донат «%donor%» %amount% ₽ в DonatePay… Запись навсегда останется в истории кошелька.</gray>"
+    "testpaylive-posted": "<green>[LIVE] DonatePay принял запись «%donor%» %amount% ₽ (%status%). Она в истории кошелька; опрос подхватит её, если API отдаст как success/donation.</green>"
+    "testpaylive-failed": "<red>[LIVE] DonatePay не принял запись: %error%. Проверьте donatepay.api-token.</red>"
+    "testpaylive-probing": "<gray>[LIVE] Проверяю, вернётся ли запись в /transactions (~1 минута) — тогда её подхватит обычный опрос…</gray>"
+    "testpaylive-verdict-seen": "<green>[LIVE] Опрос вернул запись #%id%: %donor% %amount% ₽ — донат пройдёт обычным игровым конвейером.</green>"
+    "testpaylive-verdict-hidden": "<yellow>[LIVE] DonatePay не отдал запись через /transactions (API отдаёт set_notification только в ленту алертов) — в игре напрямую её не видно. Полный игровой прогон: /%label% testpay %donor% %amount%</yellow>"
+    "shoppay-granted": "<green>[TradeMC] Покупка %amount% ₽: проходка %name% на %days% дн. (до %until%).</green>"
+    "shoppay-pending": "<yellow>[TradeMC] Покупка %amount% ₽ от '%donor%' — в журнал со статусом %status% (%note%). Разбор: /%label% pending</yellow>"
+    "shoppay-rejected": "<red>[TradeMC] Покупка %amount% ₽ отклонена: %note%.</red>"
+    "health-trademc-mode": "<green>[TradeMC] Режим включён: донат только через магазин TradeMC (RCON). API-опросы DonatePay/EasyDonate и Boosty-подписки отключены переключателем trademc.enabled.</green>"
     "pending-entry": "<yellow>#%id% %donor% — %amount% ₽, %status%</yellow><gray>%note%</gray><aqua>%suggested%</aqua><dark_gray> | %created%</dark_gray>"
     "pending-header": "<gold>=== Донаты, требующие решения (%size%) ===</gold>"
     "pending-hint": "<gray>Выдать: /%label% approve <id> [ник] [дней] | Отклонить: /%label% reject <id> [причина]</gray>"
+    "pending-notice": "<gold>Спасибо! Ваш донат %amount% ₽ получен. Минимальная сумма авто-выдачи — %price% ₽: платёж виден администратору и будет зачтён вручную или после доплаты.</gold>"
+    "journal-header": "<gold>=== Журнал донатов: %size% шт.%filter% ===</gold>"
+    "journal-empty": "<yellow>По этому разделу журнал пуст. Добавить: /%label% testpay.</yellow>"
+    "journal-entry": "<yellow>#%id% [%source%] %donor% — %amount% ₽</yellow> [%status%]<gray>%detail%</gray><dark_gray> | %created%</dark_gray>"
+    "journal-hint": "<gray>Ждут решения: /%label% pending | Обновить сейчас: /%label% recheck</gray>"
+    "status-granted": "✔ выдан"
+    "status-pending-name": "⧗ ждёт (ник)"
+    "status-pending-amount": "⧗ ждёт (сумма)"
+    "status-pending-review": "⧗ ждёт (проверка)"
+    "status-rejected": "✖ отклонён"
+    "filter-all": ""
+    "filter-granted": " (выданные)"
+    "filter-pending": " (ждут решения)"
+    "filter-rejected": " (отклонённые)"
+    "filter-name": " (одинокие ники)"
+    "filter-amount": " (сумма ниже минимума)"
+    "filter-review": " (ручной разбор)"
     "reason":
       "below-minimum": "сумма ниже минимума (%price% ₽)"
       "case-mismatch": "регистр ника не совпадает (strict-case-match)"
+      "code-match": "имя сверено по платёжному коду"
       "name-mismatch": "имя донатера не похоже на игровой ник"
       "not-successful": "транзакция не является успешным донатом"
     "rejected": "<yellow>Платёж #%id% отклонён.</yellow>"
     "suggested": " → похоже на %name%"
+
+  # ---------------------------------------------------------------
+  # lp — авто-настройка LuckPerms (/pass luckperms setup|status)
+  # ---------------------------------------------------------------
+  "lp":
+    "unavailable": "<red>LuckPerms не найден на сервере — авто-настройка групп невозможна.</red>"
+    "setup-start": "<gray>Настраиваю группы LuckPerms по схеме default → проходка → admin…</gray>"
+    "setup-done": "<green>✓ LuckPerms настроен: группы %groups% (создано: %created%, узлов выставлено: %nodes%).</green>"
+    "setup-fail": "<red>Авто-настройка LuckPerms не удалась: %error%</red>"
+    "setup-hint-pass": "<yellow>Группа '%group%' создана. Включите авто-выдачу проходным: integrations.pass-group: \"%group%\" в config.yml + /pass reload.</yellow>"
+    "status-header": "<gold>=== Группы LuckPerms (схема CHRDK) ===</gold>"
+    "status-line": "<gray>- %group%: существует, вес %weight%, прав %perms%</gray>"
+    "status-missing": "<yellow>- %group%: НЕ создана — выполните /%label% luckperms setup</yellow>"
+
+  # ---------------------------------------------------------------
+  # update — Проверка обновлений (секция updates в config.yml)
+  # ---------------------------------------------------------------
+  "update":
+    "command-usage": "<yellow>Использование: /%label% update check | download. Скачивание — только из консоли/RCON; установка после полного перезапуска.</yellow>"
+    "console-only": "<red>Скачивание обновлений разрешено только из консоли сервера или RCON. В игре доступен /pass update check.</red>"
+    "check-start": "<gray>Проверяю стабильный релиз и наличие полного комплекта на GitHub…</gray>"
+    "download-start": "<gray>Проверяю и скачиваю комплект. Работающие JAR не заменяются; дождитесь сообщения о готовности.</gray>"
+    "check-result": "<gold>Ядро: %current%. Стабильный комплект: %latest% (все 16 JAR + ZIP с SHA-256 готовы).</gold>\n<gray>%url%</gray>\n<yellow>Подготовка установленных плагинов: /%label% update download из консоли. После неё нужен полный перезапуск.</yellow>"
+    "files-current": "<green>Все установленные JAR семейства уже версии %latest% на диске; ничего не скачано и не подготовлено.</green><gray> Если заменяли JAR вручную, для загрузки кода нужен перезапуск.</gray>"
+    "download-ready": "<green>✓ Комплект %latest% проверен. Для перезапуска подготовлено плагинов: %count%.</green>\n<gray>Каталог: %folder%</gray>\n<gray>Резервные копии исходных JAR: %backup%</gray>\n<gold>Теперь выполните полный перезапуск через панель. /reload и PlugMan не использовать. Дождитесь завершения команды до остановки сервера.</gold>"
+    "command-error": "<red>Обновление не подготовлено: %error%</red><gray> Работающие JAR не заменялись. Если релиз только опубликован, дождитесь окончания сборки и повторите команду.</gray>"
+    # Администратору в игру: при входе и сразу при обнаружении новой версии
+    "admin-join": "<gold>⬆ Обновление CHRDK_Core: доступна <green>v%latest%</green> (у вас v%current%) — <yellow>%url%</yellow>"
+    # Событие update.available в Discord-вебхук (чистый текст, без разметки)
+    "notify-title": "Доступно обновление CHRDK_Core"
+    "notify-desc": "На GitHub опубликована версия v%latest% (у вас v%current%). Скачать: %url%"
 
   # ---------------------------------------------------------------
   # audit — Аудит /pass audit
@@ -468,6 +717,7 @@ messages:
     "auto-messages-value": "<aqua>каждые %seconds% сек. (%count% шт.)</aqua>"
     "chat": "<gray>Встроенный чат: %state% (радиус %radius% блоков)</gray>"
     "donatepay": "<gray>DonatePay: %value%</gray>"
+    "trademc-mode": "<gray>Донат-режим: </gray><green>TradeMC (RCON-хук /pass shoppay, магазин #%shop%); DonatePay/EasyDonate/Boosty выключены</green>"
     "donatepay-label": "<gray>Условия доната: </gray>"
     "donatepay-value": "<yellow>%minimum_donation_rubles% ₽ на %grant_days% дн.</yellow>"
     "header": "<gold>=== Статус CHRDK_F_REGISTER ===</gold>"
@@ -481,7 +731,7 @@ messages:
   # ---------------------------------------------------------------
   "chat":
     "blocked-login": "<red>Чат заблокирован! Авторизуйтесь: /login <пароль></red>"
-    "blocked-no-pass": "<red>Чат заблокирован до покупки проходки на DonatePay!</red>"
+    "blocked-no-pass": "<red>Чат заблокирован до покупки проходки!</red>"
     "blocked-register": "<red>Чат заблокирован! Зарегистрируйтесь: /register <пароль> <повтор></red>"
     "blocked-two-factor": "<red>Чат заблокирован! Подтвердите вход кодом 2FA: /2fa <6-значный_код></red>"
     "broadcast-prefix": "&8[&cОбъявление&8] &r"
@@ -651,3 +901,13 @@ messages:
   # ---------------------------------------------------------------
   "logout":
     "success": "<green>✓ Вы вышли из аккаунта. Сессия по IP сброшена, пароль потребуется снова.</green>"
+  # ---------------------------------------------------------------
+  # Серверное меню /menu (GUI, конфиг-driven; иконки/тексты берутся из config.yml)
+  "server-menu":
+    "no-permission": "<red>Нет права chrdkregister.menu.</red>"
+    "need-auth": "<yellow>Сначала завершите регистрацию и вход. Подсказка доступна в TAB.</yellow>"
+    "changed": "<yellow>Меню обновилось. Откройте /menu заново.</yellow>"
+    "unavailable": "<yellow>Пункт больше недоступен: проверьте вход, права и наличие аддона.</yellow>"
+    "title": "<gold>Меню сервера</gold>"
+    "disabled": "<red>Меню сервера отключено в конфигурации.</red>"
+    "player-only": "<red>Меню доступно только игрокам.</red>"

@@ -1,0 +1,23 @@
+name: CHRDK_Ranks
+version: ${version}
+main: ru.cherdakmd.chrdkranks.RanksPlugin
+api-version: '26.3'
+description: "Звания за наигранное время: лестница рангов с церемонией вручения и сортировка TAB-списка по стажу (аддон CHRDK_Core)"
+author: cherdakmd
+depend: [CHRDK_Core]
+commands:
+  ranks:
+    description: "Звания и наигранное время"
+    aliases: [rank, zvanie]
+    usage: "/ranks [ник]"
+  ranksadmin:
+    description: "Администрирование званий"
+    permission: chrdkranks.admin
+    usage: "/ranksadmin <reload|set <ник> <часы>|info>"
+permissions:
+  chrdkranks.use:
+    description: "Смотреть звания и свой стаж"
+    default: true
+  chrdkranks.admin:
+    description: "Администрирование званий"
+    default: op

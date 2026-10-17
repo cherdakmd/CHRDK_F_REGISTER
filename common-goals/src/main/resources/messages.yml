@@ -1,0 +1,103 @@
+# CHRDK_CommonGoals — тексты и имена общих целей (goal.<id>.name).
+goals:
+  need-auth: "<red>Сначала войдите на сервер (/login).</red>"
+  player-only: "<red>Команда доступна только игрокам.</red>"
+  no-permission: "<red>Недостаточно прав.</red>"
+  usage: "<gray>/goals — активные цели и ваш вклад; /goals claim — забрать награды; /goals top — лидеры; /goals donate <кол-во> — взнос в котёл.</gray>"
+  goal-completed: "<gold>⚑ Цель «%goal%» выполнена! Пул %pool% ⛁ разошёлся между %heroes% героев.</gold>"
+  goal-complete-you: "<green>✦ Ваша доля за цель «%goal%»: %reward% ⛁ — заберите через /goals claim.</green>"
+  hero-line: "<gray>%place%. %name% — %contrib% (%percent%%)</gray>"
+  rotated: "<gold>Новая волна общих целей! Смотрите /goals.</gold>"
+  all-done-idle: "<yellow>Все цели волны выполнены — новая ротация уже на подходе.</yellow>"
+  list-header: "<gold>══════ Общие цели сервера (до %until%) ══════</gold>"
+  list-line-active: "<yellow>⚐ %name%</yellow> <gray>%progress%/%target% (%percent%%) · ваш вклад: %mine% · лидер: %leader%</gray>"
+  list-line-done: "<green>✔ %name% — выполнено!</green> <gray>ваш вклад: %mine%</gray>"
+  list-footer: "<gray>Пул наград делится между участниками по вкладу. Накоплено у вас: <aqua>%pending% ⛁</aqua> — /goals claim.</gray>"
+  top-header: "<gold>══════ Лидеры общих целей ══════</gold>"
+  top-line-header: "<yellow>%name%</yellow>"
+  top-none: "<gray>В этой волне вклада ещё нет — откроем/подсчитаем первые герои.</gray>"
+  donate-done: "<aqua>В котёл общих целей внесено %amount% ⛁. Спасибо!</aqua>"
+  donate-none: "<red>У вас нет алмазов (или их руд/блоков) на такую сумму.</red>"
+  donate-invalid: "<red>Количество — целое число от 1 до %max%.</red>"
+  donate-no-goal: "<gray>Сейчас нет активной цели «Общий котёл» — взнос не принят.</gray>"
+  claim-done: "<green>Получено %amount% ⛁ из общей награды!</green>"
+  claim-none: "<gray>У вас пока нет незабранных наград общих целей.</gray>"
+  join-pending: "<aqua>Общие цели запомнили вас: ждёт %amount% ⛁. Заберите: /goals claim.</aqua>"
+  admin-rotated: "<green>Волна целей принудительно обновлена.</green>"
+  admin-reloaded: "<green>Конфигурация общих целей перечитана.</green>"
+  admin-progress-set: "<green>Прогресс цели «%goal%» теперь %progress%.</green>"
+  admin-unknown-goal: "<red>Нет такой цели. Активные смотрите в /goals.</red>"
+  admin-usage: "<yellow>/goalsadmin rotate | reload | progress <id> <значение></yellow>"
+  goal:
+    hostile-slay:
+      name: "Чистилище полей"
+      desc: "Убить сервером враждебных мобов"
+    passive-slay:
+      name: "Мясной привал"
+      desc: "Перебить сервером сельскохозяйственных животных"
+    boss-slay:
+      name: "Бич гигантов"
+      desc: "Победить боссов: дракон, иссушитель, блюститель, древний страж"
+    bow-shoot:
+      name: "Тир"
+      desc: "Выпустить стрелы из лука или арбалета"
+    raid-win:
+      name: "Сердце деревни"
+      desc: "Отбить рейды разбойников"
+    ore-break:
+      name: "Руда зовёт"
+      desc: "Выбить руду любых видов"
+    blocks-broken:
+      name: "Выкорчевать мир"
+      desc: "Сломать блоки в мире"
+    wood-chop:
+      name: "Лесоповал"
+      desc: "Нарубить древесины всех пород"
+    ground-dig:
+      name: "Большая копка"
+      desc: "Выкопать грунт, песок и гравий"
+    blocks-placed:
+      name: "Город мастеров"
+      desc: "Поставить блоки в мире"
+    crops-harvested:
+      name: "Обжинки"
+      desc: "Собрать урожай зерновых и овощей"
+    animal-breed:
+      name: "Ясли"
+      desc: "Развести животных на фермах"
+    animal-tame:
+      name: "Укротители"
+      desc: "Приручить диких питомцев"
+    fish-caught:
+      name: "Большой улов"
+      desc: "Вытащить суммарно рыбу"
+    enchant-items:
+      name: "Академия чар"
+      desc: "Зачаровать предметы на столе зачарований"
+    potion-brew:
+      name: "Алхимический цех"
+      desc: "Сварить зелья в варочной стойке"
+    item-smelt:
+      name: "Домны и коптильни"
+      desc: "Забрать переплавленное из печей"
+    item-craft:
+      name: "Мануфактура"
+      desc: "Скрафтить предметы на верстаке"
+    pearl-throw:
+      name: "Эндер-шаги"
+      desc: "Бросить эндер-жемчуг"
+    blocks-travelled:
+      name: "Семь лиг пути"
+      desc: "Пройти суммарно блоков пешим ходом"
+    villager-trade:
+      name: "Ярмарка"
+      desc: "Совершить сделки с жителями"
+    xp-collect:
+      name: "Мудрость веков"
+      desc: "Собрать очки опыта"
+    bed-sleep:
+      name: "Спокойной ночи"
+      desc: "Лечь спать в кровать"
+    donate-diamonds:
+      name: "Общий котёл"
+      desc: "Внести алмазы в общий котёл (/goals donate)"

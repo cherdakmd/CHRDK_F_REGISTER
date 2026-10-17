@@ -43,7 +43,7 @@ class MessagesTest {
      * (например completeAuthentication(player, "register.success") или template("chat.broadcast-prefix")).
      */
     private static final List<String> DYNAMIC_PREFIXES = List.of(
-            "password.error.", "password.hint.", "password.strength.", "donation.");
+            "password.error.", "password.hint.", "password.strength.", "donation.", "pass.menu.item-");
     private static final Set<String> INDIRECT_KEYS = Set.of(
             "register.success", "login.success", "chat.broadcast-prefix",
             "dialog.password-missing", "dialog.confirm-mismatch", "dialog.code-missing");
@@ -87,6 +87,38 @@ class MessagesTest {
             dead.add(key);
         }
         assertTrue(dead.isEmpty(), "Ключи, которые никто не читает (ни код, ни динамические наборы): " + dead);
+    }
+
+    @Test
+    void singleWrapperSectionIsUnwrappedForAddons() throws Exception {
+        // Аддоны хранят файл под единственной верхней секцией («enchants:», «tiers:») —
+        // в коде ключи идут без этого префикса.
+        Messages addon = inline("""
+                tiers:
+                  need-auth: "<red>Сначала войдите.</red>"
+                  tier:
+                    cursed:
+                      name: "Проклятый"
+                """);
+        assertEquals("<red>Сначала войдите.</red>", addon.template("need-auth"));
+        assertEquals("Проклятый", addon.template("tier.cursed.name"));
+
+        // Классическая обёртка messages: тоже разворачивается, как и раньше.
+        Messages classic = inline("""
+                messages:
+                  hello: "Привет"
+                """);
+        assertEquals("Привет", classic.template("hello"));
+
+        // Несколько верхних секций без messages: — префиксы сохраняются.
+        Messages twin = inline("""
+                one:
+                  key: "A"
+                two:
+                  key: "B"
+                """);
+        assertEquals("A", twin.template("one.key"));
+        assertEquals("B", twin.template("two.key"));
     }
 
     @Test
@@ -137,6 +169,21 @@ class MessagesTest {
     }
 
     @Test
+    void trustedPlaceholderValuesKeepTags() {
+        Messages messages = inline("""
+                messages:
+                  wrap: "Статус: %value%"
+                """);
+
+        Component line = messages.get("wrap", "value", Messages.trusted("<green>АКТИВНА</green>"));
+        assertEquals("Статус: АКТИВНА", ChatService.plainText(line));
+        assertEquals(NamedTextColor.GREEN,
+                line.children().isEmpty() ? line.color() : line.children().get(0).color(),
+                "Теги доверенного значения должны исполняться");
+        assertEquals("", Messages.trusted(null).text(), "trusted(null) подставляет пустую строку");
+    }
+
+    @Test
     void missingKeysFallBackToBundledDefaults(@TempDir Path tempDir) throws Exception {
         Path userFile = tempDir.resolve("messages.yml");
         Files.writeString(userFile, """
@@ -155,7 +202,7 @@ class MessagesTest {
         assertTrue(messages.has("no-pass.title-subtitle"), "has() видит значения по умолчанию");
         assertEquals(defaults.template("no-pass.reminder"), messages.template("no-pass.reminder"),
                 "Неправленные ключи продолжают работать после обновления плагина");
-        assertEquals("Донат 150₽ на DonatePay (ник: Steve)", messages.plain("no-pass.title-subtitle",
+        assertEquals("Донат 150₽ (ник: Steve)", messages.plain("no-pass.title-subtitle",
                 "price", 150, "player", "Steve"));
         assertEquals(List.of(), messages.validate(), "Корректный файл не должен давать замечаний");
     }
@@ -191,6 +238,52 @@ class MessagesTest {
         assertEquals("bold", Messages.firstUnclosedTag("<red><bold>жирный</red>"));
         assertEquals("hover", Messages.firstUnclosedTag(
                 "<click:suggest_command:'/login '><hover:show_text:'подсказка'>вход"));
+    }
+
+    @Test
+    void oldHtmlBracketsAndLegacyColorsWorkInSingleAndListMessages() {
+        Messages messages = inline("""
+                messages:
+                  prompt: "&c/register &lt;пароль&gt; &lt;повтор&gt;"
+                """);
+        Component single = messages.get("prompt");
+        Component list = messages.getList("prompt").get(0);
+        assertEquals("/register <пароль> <повтор>", ChatService.plainText(single));
+        assertEquals(single, list, "getList must use exactly the same colour conversion as get");
+        assertEquals(NamedTextColor.RED, list.color());
+        assertEquals("/register <пароль> <повтор>", messages.plain("prompt"));
+    }
+
+    @Test
+    void encodedTagsStayLiteralAndUserValuesAreNotDecoded() {
+        Messages messages = inline("""
+                messages:
+                  encoded: "&lt;red&gt;это текст&lt;/red&gt;"
+                  value: "<gold>%player%</gold>"
+                """);
+        assertEquals("<red>это текст</red>", messages.plain("encoded"));
+        assertEquals("&lt;red&gt;Nick", messages.plain("value", "player", "&lt;red&gt;Nick"));
+        assertEquals("<red>Nick", messages.plain("value", "player", "<red>Nick"));
+    }
+
+    @Test
+    void liveOverridesWithOldBracketsAreRepairedWithoutRewritingFile(@TempDir Path tempDir) throws Exception {
+        Path file = tempDir.resolve("old-messages.yml");
+        String content = "messages:\n  prompt: '<yellow>/login &lt;пароль&gt;</yellow>'\n";
+        Files.writeString(file, content);
+        Messages messages = Messages.from(new ByteArrayInputStream("messages: {}".getBytes(StandardCharsets.UTF_8)), file, LOGGER);
+        assertEquals("/login <пароль>", ChatService.plainText(messages.getList("prompt").get(0)));
+        assertEquals(content, Files.readString(file));
+    }
+
+    @Test
+    void stockRegistrationPromptHasCorrectLiteralBracketsAndNoPrematureActivation() throws Exception {
+        Messages messages = resource();
+        String prompt = ChatService.plainText(messages.getList("trial.register-prompt").get(0));
+        assertEquals("Зарегистрируйте пароль командой: /register <пароль> <повтор>", prompt);
+        assertFalse(prompt.contains("&lt;"));
+        assertFalse(prompt.contains("Проходка активна"));
+        assertEquals(prompt, messages.plain("register.prompt"));
     }
 
     @Test
