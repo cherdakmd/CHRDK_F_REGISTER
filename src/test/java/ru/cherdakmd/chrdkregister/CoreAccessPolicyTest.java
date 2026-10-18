@@ -24,7 +24,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CoreAccessPolicyTest {
 
     private static PluginConfig config(String yaml) throws Exception {
-        return PluginConfig.fromBukkitConfig(YamlConfiguration.loadFromString(yaml));
+        YamlConfiguration configuration = new YamlConfiguration();
+        configuration.loadFromString(yaml);
+        return PluginConfig.fromBukkitConfig(configuration);
     }
 
     @Test
