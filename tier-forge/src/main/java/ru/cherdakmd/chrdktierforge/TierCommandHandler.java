@@ -74,12 +74,14 @@ public final class TierCommandHandler implements TabExecutor {
                     "tools", plugin.config().mobDropChanceFor(ItemKind.PICKAXE));
         }
         for (TierDef.Snapshot tier : plugin.config().tiers()) {
+            // 1.4.90: строка тира тоже живёт в messages.yml — раньше русский текст
+            // и MiniMessage собирались прямо в Java в обход локализации.
             String color = plugin.messages().raw("tier." + tier.id() + ".color");
             String name = plugin.messages().raw("tier." + tier.id() + ".name");
             String percent = (tier.percent() > 0 ? "+" : "") + tier.percent();
-            player.sendMessage(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage()
-                    .deserialize(color + name + " <gray>— вес " + tier.weight()
-                            + ", характеристики " + percent + "%</gray>"));
+            plugin.messages().send(player, "list-row",
+                    "color", color, "name", name,
+                    "weight", tier.weight(), "percent", percent);
         }
         plugin.messages().send(player, "list-footer",
                 "own_count", plugin.stats().total(player.getUniqueId()),
@@ -92,18 +94,31 @@ public final class TierCommandHandler implements TabExecutor {
      * все кузнечные улучшения с описанием, цена слияния и переката.
      */
     private boolean handleInfo(Player player) {
+        // 1.4.90: если в основной руке пусто/обычный предмет, смотрим во вторую —
+        // раньше /tiers info молчал, хотя тир-предмет был в левой руке.
         ItemStack item = player.getInventory().getItemInMainHand();
+        boolean offhand = false;
+        if (!isTierItem(item)) {
+            ItemStack second = player.getInventory().getItemInOffHand();
+            if (isTierItem(second)) {
+                item = second;
+                offhand = true;
+            }
+        }
         if (item == null || item.getType() == Material.AIR) {
             plugin.messages().send(player, "info-empty");
             return true;
         }
-        boolean unidentified = plugin.items().isUnidentified(item);
-        String tierId = plugin.items().tierOf(item);
-        if (!unidentified && tierId == null) {
-            plugin.messages().send(player, "info-empty");
+        if (!isTierItem(item)) {
+            plugin.messages().send(player, "info-not-tier");
             return true;
         }
+        boolean unidentified = plugin.items().isUnidentified(item);
+        String tierId = plugin.items().tierOf(item);
         String itemTag = TierInfoFormat.languageTag(item.getType());
+        if (offhand) {
+            plugin.messages().send(player, "info-offhand");
+        }
         plugin.messages().send(player, "info-header");
         if (unidentified) {
             plugin.messages().send(player, "info-unidentified",
@@ -162,6 +177,12 @@ public final class TierCommandHandler implements TabExecutor {
                             Material.matchMaterial(plugin.config().rerollCatalyst()))));
         }
         return true;
+    }
+
+    /** Тир-предмет или неопознанная заготовка (для выбора руки в /tiers info). */
+    private boolean isTierItem(ItemStack item) {
+        return item != null && item.getType() != Material.AIR
+                && (plugin.items().isUnidentified(item) || plugin.items().tierOf(item) != null);
     }
 
     /** UUID из аргумента (null — это ник или опечатка). */
