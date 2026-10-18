@@ -56,6 +56,9 @@ public final class TierCommandHandler implements TabExecutor {
         if (args.length >= 1 && "info".equalsIgnoreCase(args[0])) {
             return handleInfo(player);
         }
+        if (args.length >= 1 && "top".equalsIgnoreCase(args[0])) {
+            return handleTop(player, args.length >= 2 ? args[1].toLowerCase(Locale.ROOT) : null);
+        }
         return handleTiers(player);
     }
 
@@ -183,6 +186,47 @@ public final class TierCommandHandler implements TabExecutor {
     private boolean isTierItem(ItemStack item) {
         return item != null && item.getType() != Material.AIR
                 && (plugin.items().isUnidentified(item) || plugin.items().tierOf(item) != null);
+    }
+
+    /**
+     * /tiers top [тир] — серверный рейтинг находок (1.4.97): топ-10 игроков по
+     * всем тирам или по одному. Имена берём у сервера; если профиль недоступен
+     * (офлайн-игрок без кэша), показываем короткий UUID.
+     */
+    private boolean handleTop(Player player, String tierId) {
+        if (tierId != null && !TierDef.isTier(tierId)) {
+            plugin.messages().send(player, "admin-bad-tier",
+                    "tier", tierId,
+                    "tiers", plugin.config().tiers().stream()
+                            .map(TierDef.Snapshot::id).collect(Collectors.joining(", ")));
+            return true;
+        }
+        String scope = tierId == null
+                ? plugin.messages().plain("top-scope-all")
+                : plugin.messages().raw("tier." + tierId + ".name");
+        plugin.messages().send(player, "top-header", "scope", scope);
+        List<TierStatsKeeper.TopEntry> entries = plugin.stats().top(tierId, 10);
+        if (entries.isEmpty()) {
+            plugin.messages().send(player, "top-empty");
+            return true;
+        }
+        int place = 1;
+        for (TierStatsKeeper.TopEntry entry : entries) {
+            plugin.messages().send(player, "top-row",
+                    "place", place++,
+                    "player", leaderboardName(entry.player()),
+                    "count", entry.count());
+        }
+        return true;
+    }
+
+    /** Ник для рейтинга: серверный профиль, иначе первые 8 символов UUID. */
+    private static String leaderboardName(UUID player) {
+        String name = Bukkit.getOfflinePlayer(player).getName();
+        if (name != null && !name.isBlank()) {
+            return name;
+        }
+        return player.toString().substring(0, 8);
     }
 
     /** UUID из аргумента (null — это ник или опечатка). */
@@ -384,10 +428,13 @@ public final class TierCommandHandler implements TabExecutor {
         String prefix = args[args.length - 1].toLowerCase(Locale.ROOT);
         if ("tiers".equalsIgnoreCase(command.getName())) {
             if (args.length == 1) {
-                List.of("info", "stats").stream()
+                List.of("info", "stats", "top").stream()
                         .filter(x -> x.startsWith(prefix)).forEach(matches::add);
             } else if (args.length == 2 && "stats".equalsIgnoreCase(args[0])) {
                 List.of("reset").stream().filter(x -> x.startsWith(prefix)).forEach(matches::add);
+            } else if (args.length == 2 && "top".equalsIgnoreCase(args[0])) {
+                plugin.config().tiers().stream().map(TierDef.Snapshot::id)
+                        .filter(id -> id.startsWith(prefix)).forEach(matches::add);
             }
             return matches;
         }

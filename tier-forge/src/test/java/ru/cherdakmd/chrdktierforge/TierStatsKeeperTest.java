@@ -4,6 +4,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -108,5 +109,50 @@ class TierStatsKeeperTest {
         keeper.load(null);
         keeper.writeTo(null);
         assertEquals(0, keeper.grandTotal());
+    }
+    @Test
+    void topRanksByCountThenUuid() {
+        TierStatsKeeper keeper = new TierStatsKeeper();
+        UUID first = UUID.fromString("00000000-0000-0000-0000-000000000001");
+        UUID second = UUID.fromString("00000000-0000-0000-0000-000000000002");
+        UUID third = UUID.fromString("00000000-0000-0000-0000-000000000003");
+        keeper.count(second, "rare");
+        keeper.count(second, "rare");
+        keeper.count(first, "rare");
+        keeper.count(third, "common");
+
+        List<TierStatsKeeper.TopEntry> all = keeper.top(null, 5);
+        assertEquals(3, all.size());
+        assertEquals(second, all.get(0).player(), "две находки — первое место");
+        assertEquals(first, all.get(1).player(), "при равенстве решает UUID");
+        assertEquals(third, all.get(2).player());
+        assertEquals(2, all.get(0).count());
+    }
+
+    @Test
+    void topByTierFiltersAndLimits() {
+        TierStatsKeeper keeper = new TierStatsKeeper();
+        UUID first = UUID.fromString("00000000-0000-0000-0000-000000000001");
+        UUID second = UUID.fromString("00000000-0000-0000-0000-000000000002");
+        keeper.count(first, "rare");
+        keeper.count(first, "rare");
+        keeper.count(second, "rare");
+        keeper.count(second, "common");
+
+        List<TierStatsKeeper.TopEntry> rare = keeper.top("rare", 1);
+        assertEquals(1, rare.size(), "лимит соблюдается");
+        assertEquals(first, rare.get(0).player());
+        assertEquals(2, rare.get(0).count());
+        assertEquals(1, keeper.top("common", 5).size(), "другой тир — своя выборка");
+        assertTrue(keeper.top("legendary", 5).isEmpty());
+    }
+
+    @Test
+    void topHandlesZeroLimitAndUnknownTier() {
+        TierStatsKeeper keeper = new TierStatsKeeper();
+        keeper.count(UUID.randomUUID(), "rare");
+        assertTrue(keeper.top(null, 0).isEmpty());
+        assertTrue(keeper.top(null, -3).isEmpty());
+        assertTrue(keeper.top("no-such-tier", 5).isEmpty());
     }
 }
