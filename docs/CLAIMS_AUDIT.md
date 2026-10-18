@@ -1,4 +1,4 @@
-# CHRDK_Claims: аудит релиза 1.4.73, исправления и доработки 1.4.74–1.4.78
+# CHRDK_Claims: аудит релиза 1.4.73, исправления и доработки 1.4.74–1.4.79
 
 Документ фиксирует разбор модуля **CHRDK_Claims** из релиза **v1.4.73**
 (`chrdk-claims-1.4.73.jar`, Purpur 26.3 / Minecraft 26.3, Java 25), найденные дефекты,
@@ -450,3 +450,17 @@ CI (`.github/workflows/build.yml`) дополнительно прогоняет
 `ClaimRoleTest` (10 тестов: владелец, участник без роли, порядок уровней, посторонние,
 регистр, снятие роли, `clearMembers`), `ClaimStoreTest.memberRolesSurviveReloadAndUnknownRolesAreIgnored`.
 Контракт `messages.yml`: 160 ключей, 148 литералов, 0 динамических префиксов.
+
+## 16. Доработки 1.4.79: операции по координатам
+
+- `ClaimsService.buyFromPlayer(player, x, z)` — покупка выставленного чанка в текущем
+  мире по координатам; прежний `buyFromPlayer(player)` делегирует в него с координатами
+  текущего чанка. Добавлена проверка `worldEnabled` (раньше покупка на месте её не
+  делала, полагаясь на отсутствие приватов в выключенных мирах).
+- `ClaimsService.buy(player)` разделён на публичный вход и приватный `buy(player, chunk)`;
+  `buyAt(player, x, z)` покупает свободный чанк по координатам через
+  `World#getChunkAt` (чанк загружается, если нужно).
+- `ClaimsCommandHandler`: `/claim buy [x z]` и `/claim info [x z]`; общий разбор
+  `parseCoords` (пустой массив — аргументов нет, `null` — ошибка и сообщение
+  `coords-invalid`). `/claim info` больше не зависит от `Player#getLocation().getChunk()`.
+- Сообщения: `coords-invalid`, обновлённые `usage` и `plugin.yml`.

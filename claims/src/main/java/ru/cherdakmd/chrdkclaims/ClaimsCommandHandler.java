@@ -42,7 +42,7 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
         String sub = args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
             case "help" -> plugin.messages().send(player, "usage");
-            case "info" -> info(player);
+            case "info" -> info(player, args);
             case "map" -> map(player);
             case "list" -> list(player, args);
             case "forsale" -> forsale(player, args);
@@ -60,7 +60,15 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
             }
             case "buy" -> {
                 if (ready(player)) {
-                    service().buyFromPlayer(player);
+                    Integer[] parsed = parseCoords(player, args);
+                    if (parsed == null) {
+                        return true;
+                    }
+                    if (parsed.length == 2) {
+                        service().buyFromPlayer(player, parsed[0], parsed[1]);
+                    } else {
+                        service().buyFromPlayer(player);
+                    }
                 }
             }
             case "transfer" -> transfer(player, args);
@@ -96,15 +104,28 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
 
     // ---------------------------------------------------------------- view --
 
-    private void info(Player player) {
-        Chunk chunk = player.getLocation().getChunk();
+    private void info(Player player, String[] args) {
+        String world = player.getWorld().getName();
+        int chunkX;
+        int chunkZ;
+        Integer[] parsed = parseCoords(player, args);
+        if (parsed == null) {
+            return;
+        }
+        if (parsed.length == 2) {
+            chunkX = parsed[0];
+            chunkZ = parsed[1];
+        } else {
+            Chunk here = player.getLocation().getChunk();
+            chunkX = here.getX();
+            chunkZ = here.getZ();
+        }
         plugin.messages().send(player, "info-header",
-                "x", String.valueOf(chunk.getX()),
-                "z", String.valueOf(chunk.getZ()),
-                "world", chunk.getWorld().getName());
-        Claim claim = service().claimHere(player);
+                "x", String.valueOf(chunkX),
+                "z", String.valueOf(chunkZ),
+                "world", world);
+        Claim claim = plugin.store().claimAt(world, chunkX, chunkZ);
         if (claim == null) {
-            String world = chunk.getWorld().getName();
             plugin.messages().send(player, "info-free",
                     "price", String.valueOf(plugin.config().priceIn(world)),
                     "upkeep", String.valueOf(plugin.config().upkeepIn(world)));
@@ -235,6 +256,25 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
             plugin.messages().send(player, "borders-on-free", "seconds", seconds);
         } else {
             plugin.messages().send(player, "borders-on", "seconds", seconds, "owner", claim.owner);
+        }
+    }
+
+    /**
+     * Координаты чанка из аргументов {@code <x> <z>}: пустой массив — аргументов нет
+     * (действуем в текущем чанке), {@code null} — координаты некорректны и игрок уже
+     * получил сообщение.
+     */
+    private Integer[] parseCoords(Player player, String[] args) {
+        if (args.length < 3) {
+            return new Integer[0];
+        }
+        try {
+            int x = Integer.parseInt(args[1]);
+            int z = Integer.parseInt(args[2]);
+            return new Integer[]{x, z};
+        } catch (NumberFormatException exception) {
+            plugin.messages().send(player, "coords-invalid");
+            return null;
         }
     }
 

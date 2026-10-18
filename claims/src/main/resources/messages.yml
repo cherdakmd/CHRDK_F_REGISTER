@@ -6,7 +6,8 @@ claims:
   need-auth: "<red>Сначала войдите на сервер (/login).</red>"
   no-permission: "<red>Недостаточно прав.</red>"
   unknown-sub: "<red>Неизвестная подкоманда. Смотрите /claim help.</red>"
-  usage: "<gray>/claim — купить чанк · info · map · list [стр] · forsale · borders · unclaim · add/remove <ник> [доступ|контейнеры|полный] [все] · transfer <ник> · deposit [n|все] · withdraw <n> · balance · sell <цена|снять> · sellback · buy · help</gray>"
+  coords-invalid: "<red>Координаты чанка — два целых числа: /claim info <x> <z>.</red>"
+  usage: "<gray>/claim — купить чанк · info [x z] · map · list [стр] · forsale · borders · unclaim · add/remove <ник> [доступ|контейнеры|полный] [все] · transfer <ник> · deposit [n|все] · withdraw <n> · balance · sell <цена|снять> · sellback · buy [x z] · help</gray>"
   # покупка/продажа
   bought: "<green>Чанк приватизирован за %price% ⛁! Рента %upkeep% ⛁/сутки, оплачен до %paid%. Участники: /claim add <ник>.</green>"
   already-claimed: "<red>Этот чанк уже занят (%owner%). Границы — /claim map.</red>"

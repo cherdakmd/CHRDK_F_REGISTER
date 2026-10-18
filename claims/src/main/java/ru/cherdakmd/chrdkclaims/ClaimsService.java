@@ -141,12 +141,21 @@ public final class ClaimsService {
 
     /** Покупка текущего чанка. Обмен сообщениями — здесь. */
     public void buy(Player player) {
-        ClaimsConfig cfg = plugin.config();
         Chunk chunk = player.getLocation().getChunk();
+        buy(player, chunk);
+    }
+
+    /** Покупка свободного чанка по координатам текущего мира. */
+    public void buyAt(Player player, int chunkX, int chunkZ) {
+        buy(player, player.getWorld().getChunkAt(chunkX, chunkZ));
+    }
+
+    private void buy(Player player, Chunk chunk) {
+        ClaimsConfig cfg = plugin.config();
         String world = chunk.getWorld().getName();
         int price = cfg.priceIn(world);
         int upkeep = cfg.upkeepIn(world);
-        Claim existing = plugin.store().claimAt(chunk.getWorld().getName(), chunk.getX(), chunk.getZ());
+        Claim existing = plugin.store().claimAt(world, chunk.getX(), chunk.getZ());
         String refusal = checkBuyable(player, chunk);
         if (refusal != null) {
             switch (refusal) {
@@ -265,7 +274,20 @@ public final class ClaimsService {
     /** Покупка чужого чанка, выставленного на продажу (в точке, где стоит покупатель). */
     public void buyFromPlayer(Player player) {
         Chunk chunk = player.getLocation().getChunk();
-        Claim claim = plugin.store().claimAt(chunk.getWorld().getName(), chunk.getX(), chunk.getZ());
+        buyFromPlayer(player, chunk.getX(), chunk.getZ());
+    }
+
+    /**
+     * Покупка чанка, выставленного игроком, по координатам в текущем мире:
+     * витриной `/claim forsale` можно пользоваться, не бегая по карте.
+     */
+    public void buyFromPlayer(Player player, int chunkX, int chunkZ) {
+        String world = player.getWorld().getName();
+        if (!plugin.config().worldEnabled(world)) {
+            plugin.messages().send(player, "world-disabled", "world", world);
+            return;
+        }
+        Claim claim = plugin.store().claimAt(world, chunkX, chunkZ);
         if (claim == null || claim.salePrice <= 0) {
             plugin.messages().send(player, "buy-not-for-sale");
             return;
