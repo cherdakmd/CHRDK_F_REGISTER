@@ -67,6 +67,15 @@ public record TierForgeConfig(
         boolean mobDrop = config.getBoolean("mob-drop.enabled", true);
         int mobChance = clamp(config.getInt("mob-drop.chance-percent", 15), 0, 100, logger,
                 "mob-drop.chance-percent");
+        // 1.4.80: множитель босса больше не принимает 0/отрицательные и абсурдные
+        // значения (NaN из YAML тоже отсекаем) — иначе шанс дропа молча становился нулевым.
+        double bossMultiplier = config.getDouble("mob-drop.boss-multiplier", 2.0);
+        if (!Double.isFinite(bossMultiplier) || bossMultiplier < 1.0 || bossMultiplier > 20.0) {
+            logger.warning("config: mob-drop.boss-multiplier вне диапазона 1.0..20.0, "
+                    + "применена граница");
+            bossMultiplier = Math.max(1.0, Math.min(20.0,
+                    Double.isFinite(bossMultiplier) ? bossMultiplier : 2.0));
+        }
 
         java.util.Set<String> blacklist = new java.util.HashSet<>();
         for (String material : config.getStringList("craft.material-blacklist")) {
@@ -106,15 +115,21 @@ public record TierForgeConfig(
                 config.getBoolean("craft.tools", true),
                 reroll, catalyst, rerollXp, mobDrop, mobChance,
                 config.getBoolean("identify.enabled", true),
-                Math.max(5, config.getInt("identify.scan-ticks", 10)),
+                // 1.4.80: верхняя граница и внятное предупреждение — скан «раз в тик»
+                // ронял TPS, а нулевой/крошечный период молча не применялся.
+                clamp(config.getInt("identify.scan-ticks", 10), 10, 1200, logger,
+                        "identify.scan-ticks"),
                 config.getBoolean("identify.sounds", true),
                 clamp(config.getInt("identify.pass-bonus-chance-percent", 0), 0, 100, logger,
                         "identify.pass-bonus-chance-percent"),
-                config.getInt("craft.weapons-chance-percent", -1),
-                config.getInt("craft.armor-chance-percent", -1),
-                config.getInt("craft.tools-chance-percent", -1),
+                kindChance(config.getInt("craft.weapons-chance-percent", -1), logger,
+                        "craft.weapons-chance-percent"),
+                kindChance(config.getInt("craft.armor-chance-percent", -1), logger,
+                        "craft.armor-chance-percent"),
+                kindChance(config.getInt("craft.tools-chance-percent", -1), logger,
+                        "craft.tools-chance-percent"),
                 blacklist,
-                Math.max(0.0, config.getDouble("mob-drop.boss-multiplier", 2.0)),
+                bossMultiplier,
                 config.getBoolean("reroll.no-downgrade", true),
                 improve, improveXp, improveMaterials, naming,
                 readNames(config, "names.weapons", ForgeNamePool.DEFAULT_WEAPONS),
@@ -151,6 +166,18 @@ public record TierForgeConfig(
         if (kind.isWeapon() && craftWeapons) return true;
         if (kind.isArmor() && craftArmor) return true;
         return kind.isTool() && craftTools && !kind.isWeapon();
+    }
+
+    /**
+     * Шанс вида: -1 — «использовать общий», 0..100 — свой. Прочие значения
+     * (в том числе -5 или 150) клампятся с предупреждением в лог (1.4.80).
+     */
+    static int kindChance(int raw, Logger logger, String key) {
+        if (raw < -1 || raw > 100) {
+            logger.warning("config: " + key + " вне диапазона -1..100, применена граница");
+            return Math.max(-1, Math.min(100, raw));
+        }
+        return raw;
     }
 
     private static int clamp(int value, int min, int max, Logger logger, String key) {

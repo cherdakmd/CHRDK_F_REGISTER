@@ -36,6 +36,8 @@ public final class TierAnvilListener implements Listener {
     private final Random random = new Random();
     /** Последний показанный в превью ключ переката, чтобы изъять ролл на клике. */
     private final Map<UUID, String> previewKeys = new HashMap<>();
+    /** Анти-спам: одна и та же подсказка на каждое движение в окне — только раз (1.4.80). */
+    private final AnvilNoticeGate notices = new AnvilNoticeGate();
 
     public TierAnvilListener(TierForgePlugin plugin) {
         this.plugin = plugin;
@@ -49,10 +51,19 @@ public final class TierAnvilListener implements Listener {
         Player player = event.getView().getPlayer() instanceof Player p ? p : null;
         if (player == null) return;
 
+        // 1.4.80: anvil.enabled — мастер-выключатель ВСЕХ механик наковальни
+        // (улучшение, перекат, слияние). Раньше он гасил только слияние, а ковка
+        // и перекат продолжали работать вопреки документации.
+        if (!plugin.config().anvilEnabled()) {
+            notices.reset(player.getUniqueId());
+            return;
+        }
+
         // неопознанные на наковальне не обрабатываем — пусть сначала бывают в инвентаре
         if (plugin.items().isUnidentified(left) || plugin.items().isUnidentified(right)) {
             event.setResult(null);
-            plugin.messages().send(player, "anvil-unidentified");
+            notify(player, "unidentified:" + left.getType().name() + ":"
+                    + right.getType().name(), "anvil-unidentified");
             return;
         }
 
@@ -70,7 +81,8 @@ public final class TierAnvilListener implements Listener {
                 int level = plugin.items().upgradeLevel(left, def.id());
                 if (level >= def.maxLevel()) {
                     event.setResult(null);
-                    plugin.messages().send(player, "improve-max", "name", def.displayName());
+                    notify(player, "improve-max:" + def.id(), "improve-max",
+                            "name", def.displayName());
                     return;
                 }
                 ItemStack result = left.clone();
@@ -81,7 +93,9 @@ public final class TierAnvilListener implements Listener {
                         Math.min(39, plugin.config().improveBaseXp() + level));
                 event.getInventory().setRepairCostAmount(1);
                 previewKeys.remove(player.getUniqueId()); // улучшение детерминировано, ролла нет
-                plugin.messages().send(player, "improved",
+                // Превью наковальни приходит и на каждую букву переименования —
+                // успех показываем один раз на «свойство + уровень» (1.4.80).
+                notify(player, "improved:" + def.id() + ":" + (level + 1), "improved",
                         "name", def.displayName(),
                         "level", ForgeUpgrade.roman(level + 1));
                 return;
@@ -105,21 +119,25 @@ public final class TierAnvilListener implements Listener {
             event.getInventory().setRepairCost(TierMath.rerollXpCost(
                     plugin.config().rerollBaseXp(), TierDef.indexOf(leftTier)));
             previewKeys.put(player.getUniqueId(), key);
+            notices.reset(player.getUniqueId());
             return;
         }
 
         // ---- апгрейд: два предмета одного материала и одного тира ----
-        if (!plugin.config().anvilEnabled()) return;
-        if (leftTier == null && rightTier == null) return; // не наша пара
+        if (leftTier == null && rightTier == null) { // не наша пара
+            notices.reset(player.getUniqueId());
+            return;
+        }
         if (leftTier == null || rightTier == null
                 || !leftTier.equals(rightTier)
                 || left.getType() != right.getType()) {
-            plugin.messages().send(player, "up-mismatch");
+            notify(player, "mismatch:" + left.getType().name() + ":" + leftTier
+                    + "|" + right.getType().name() + ":" + rightTier, "up-mismatch");
             return;
         }
         String next = TierDef.next(leftTier);
         if (next == null) {
-            plugin.messages().send(player, "up-max");
+            notify(player, "max:" + leftTier, "up-max");
             return;
         }
         TierDef.Snapshot target = plugin.config().find(next);
@@ -130,8 +148,24 @@ public final class TierAnvilListener implements Listener {
         event.setResult(result);
         event.getInventory().setRepairCost(
                 TierMath.upgradeXpCost(plugin.config().anvilBaseXp(), TierDef.indexOf(next)));
-        plugin.messages().send(player, "upgraded",
-                "tier", plugin.messages().raw("tier." + next + ".name"));
+        notify(player, "upgraded:" + left.getType().name() + ":" + leftTier,
+                "upgraded", "tier", plugin.messages().raw("tier." + next + ".name"));
+    }
+
+    /** Подсказка без спама: повтор той же сигнатуры в этом окне молчит. */
+    private void notify(Player player, String signature, String key, Object... placeholders) {
+        if (notices.shouldNotify(player.getUniqueId(), signature)) {
+            plugin.messages().send(player, key, placeholders);
+        }
+    }
+
+    /** Выход: подчищаем отложенный ролл и анти-спам-память игрока (1.4.80). */
+    @EventHandler
+    public void onQuit(org.bukkit.event.player.PlayerQuitEvent event) {
+        UUID player = event.getPlayer().getUniqueId();
+        previewKeys.remove(player);
+        rerollKeeper.clear(player);
+        notices.clear(player);
     }
 
     /** Результат наковальни забран: отложенный ролл переката сгорает (и шлём весточку). */

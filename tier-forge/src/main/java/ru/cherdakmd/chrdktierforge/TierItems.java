@@ -187,6 +187,37 @@ public final class TierItems {
         }
     }
 
+    /**
+     * Переносит «кузнечное состояние» предмета (кличка из пула + уровни всех
+     * улучшений) на другой предмет — для незеритового апгрейда на кузнечном
+     * столе (1.4.80). Тир наносится отдельно через {@link #apply}.
+     */
+    public void copyForgeState(ItemStack from, ItemStack to) {
+        if (from == null || to == null || !from.hasItemMeta()) {
+            return;
+        }
+        ItemMeta source = from.getItemMeta();
+        ItemMeta target = to.getItemMeta();
+        if (source == null || target == null) {
+            return;
+        }
+        String forgeName = source.getPersistentDataContainer()
+                .get(forgeNameKey, PersistentDataType.STRING);
+        if (forgeName != null && !forgeName.isBlank()) {
+            target.getPersistentDataContainer()
+                    .set(forgeNameKey, PersistentDataType.STRING, forgeName);
+        }
+        for (ForgeUpgrade.Def def : ForgeUpgrade.ALL) {
+            Integer level = source.getPersistentDataContainer()
+                    .get(upgradeKey(def.id()), PersistentDataType.INTEGER);
+            if (level != null && level > 0) {
+                target.getPersistentDataContainer()
+                        .set(upgradeKey(def.id()), PersistentDataType.INTEGER, level);
+            }
+        }
+        to.setItemMeta(target);
+    }
+
     /* ------------------------------- атрибуты ------------------------------- */
 
     private void applyModifiers(ItemStack item, ItemMeta meta, TierDef.Snapshot tier) {

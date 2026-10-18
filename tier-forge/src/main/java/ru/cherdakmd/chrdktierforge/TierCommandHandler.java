@@ -48,8 +48,13 @@ public final class TierCommandHandler implements TabExecutor {
     }
 
     private boolean handleTiers(Player player) {
-        plugin.messages().send(player, "list-header",
-                "chance", plugin.config().rollOnCraftChancePercent());
+        plugin.messages().send(player, "list-header");
+        // 1.4.80: показываем ДЕЙСТВУЮЩИЙ шанс каждой группы, а не только общий —
+        // craft.weapons/armor/tools-chance-percent раньше никак не отражались в UI.
+        plugin.messages().send(player, "list-chances",
+                "weapons", plugin.config().craftChanceFor(ItemKind.SWORD),
+                "armor", plugin.config().craftChanceFor(ItemKind.CHESTPLATE),
+                "tools", plugin.config().craftChanceFor(ItemKind.PICKAXE));
         for (TierDef.Snapshot tier : plugin.config().tiers()) {
             String color = plugin.messages().raw("tier." + tier.id() + ".color");
             String name = plugin.messages().raw("tier." + tier.id() + ".name");

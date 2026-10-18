@@ -54,7 +54,9 @@ public final class TierIdentificationListener implements Listener {
     }
 
     public void scanPlayer(Player player) {
-        ItemStack[] contents = player.getInventory().getStorageContents();
+        // 1.4.80: getContents() включает надетую броню и левую руку — раньше
+        // неопознанный предмет, надетый на себя, оставался «скрытым» до снятия.
+        ItemStack[] contents = player.getInventory().getContents();
         boolean dirty = false;
         for (ItemStack stack : contents) {
             if (stack == null || !plugin.items().isUnidentified(stack)) {

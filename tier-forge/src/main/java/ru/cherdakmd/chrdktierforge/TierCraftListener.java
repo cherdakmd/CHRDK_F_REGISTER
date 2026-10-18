@@ -46,11 +46,7 @@ public final class TierCraftListener implements Listener {
 
         // --- Новый флоу (1.4.44): редкость скрывается до попадания в инвентарь ---
         if (plugin.config().identifyUnidentified()) {
-            int chance = plugin.config().craftChanceFor(kind);
-            if (plugin.config().passBonusCraftPercent() > 0
-                    && plugin.coreApi().hasActivePass(player.getName())) {
-                chance = Math.min(100, chance + plugin.config().passBonusCraftPercent());
-            }
+            int chance = craftChance(player, kind);
             if (chance > 0 && random.nextInt(100) < chance) {
                 plugin.items().markUnidentified(result, "craft",
                         plugin.messages().get("unidentified-name"),
@@ -60,8 +56,10 @@ public final class TierCraftListener implements Listener {
         }
 
         // отложенный ролл: стабилен до тех пор, пока результат реально не забрали
+        // 1.4.80: шанс берётся по виду предмета (craft.*-chance-percent), как и в
+        // identify-флоу, — раньше здесь жил только общий roll-on-craft-chance-percent.
         TierDef.Snapshot roll = rollKeeper.preview(
-                player.getUniqueId(), result.getType().name(), this::rollFresh);
+                player.getUniqueId(), result.getType().name(), () -> rollFresh(player, kind));
         if (roll == null) return;
         plugin.items().apply(result, roll);
     }
@@ -97,12 +95,31 @@ public final class TierCraftListener implements Listener {
         if (tier == null) return;
         TierDef.Snapshot snapshot = plugin.config().find(tier);
         if (snapshot == null) return;
+        // 1.4.80: незеритовый апгрейд переносит и кузнечное состояние — кличку и
+        // уровни всех улучшений (раньше они молча сгорали вместе со старым предметом).
+        plugin.items().copyForgeState(base, result);
         plugin.items().apply(result, snapshot);
+        event.setResult(result);
+    }
+
+    /**
+     * Шанс наката для вида предмета: свой (craft.weapons/armor/tools-chance-percent)
+     * или общий, плюс бонус активной проходки. Один расчёт на оба флоу — identify
+     * и «старый» превью-ролл (1.4.80).
+     */
+    private int craftChance(Player player, ItemKind kind) {
+        int chance = plugin.config().craftChanceFor(kind);
+        if (chance > 0 && plugin.config().passBonusCraftPercent() > 0
+                && plugin.coreApi() != null
+                && plugin.coreApi().hasActivePass(player.getName())) {
+            chance = Math.min(100, chance + plugin.config().passBonusCraftPercent());
+        }
+        return chance;
     }
 
     /** Честная попытка случайности: null — «ровно обычный предмет, без тира». */
-    private TierDef.Snapshot rollFresh() {
-        int chance = plugin.config().rollOnCraftChancePercent();
+    private TierDef.Snapshot rollFresh(Player player, ItemKind kind) {
+        int chance = craftChance(player, kind);
         if (chance <= 0 || random.nextInt(100) >= chance) return null;
         return TierRoller.roll(plugin.config().tiers(), random);
     }
