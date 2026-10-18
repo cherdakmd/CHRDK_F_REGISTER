@@ -1246,20 +1246,20 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.93.jar`, аддон
-CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.93.jar`, реферальный —
-`referrals/build/libs/chrdk-referrals-1.4.93.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.93.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.93.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.93.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.93.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.93.jar` (зависит от аддона чар), общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.93.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.93.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.93.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.93.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.93.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.93.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.94.jar`, аддон
+CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.94.jar`, реферальный —
+`referrals/build/libs/chrdk-referrals-1.4.94.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.94.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.94.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.94.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.94.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.94.jar` (зависит от аддона чар), общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.94.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.94.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.94.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.94.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.94.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.94.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). Оба JAR прикладываются к каждому релизу на GitHub.
 
 ---
@@ -1604,7 +1604,7 @@ plugins/<Addon>/messages.yml — удалите их после обновлен
 проклятого до легендарного, накат при крафте брони/оружия/инструментов, апгрейд двух
 одинаковых тирированных предметов на наковальне, перенос тира через апгрейд в незерит.
 
-**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-tier-forge-1.4.93.jar`
+**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-tier-forge-1.4.94.jar`
 рядом с ядром (≥ 1.4.6), перезапуск. Шансы/бонусы тиров — в `plugins/CHRDK_TierForge/config.yml`.
 
 ---
@@ -2659,3 +2659,23 @@ Discord-интеграция и её настройки не изменены.
 Контракт `messages.yml` не менялся (84 ключа). Тестов стало 68 в 14 классах:
 `SoulboundDropTest` удалён вместе с ручной логикой.
 Версия 1.4.93, полный перезапуск.
+
+### CHRDK_TierForge: одно сообщение на пачку опознаний — 1.4.94
+
+Пятнадцатая волна аудита `docs/TIER_FORGE_AUDIT.md`. Фоновый скан инвентаря
+опознавал предметы по одному и на каждый отправлял сообщение и звук: после
+сундука, воронки или торговли чат забивался десятком строк.
+
+- **Одна сводка.** Скан собирает всю пачку, роллит каждый предмет (статистика и
+  лог rare+ — как раньше) и показывает одно сообщение: сколько опознано и какой
+  тир лучший.
+- **Один звук.** Акцент звучит по лучшему тиру пачки, а не шесть раз подряд.
+- **Отдельный случай «всё проклятое».** Если вся пачка вышла проклятой —
+  соответствующее сообщение, без обнадёживающего «лучший тир».
+- **Подбор с земли не изменился.** Один предмет по-прежнему даёт привычную
+  строку «Предмет опознан».
+
+Контракт `messages.yml` — 86 ключей и 46 литералов (+`identified-batch`,
+`identified-batch-cursed`). Новый тест `IdentifyBatchTest` — 4 проверки;
+всего 72 `@Test` в 15 классах. Настройки не менялись.
+Версия 1.4.94, полный перезапуск.

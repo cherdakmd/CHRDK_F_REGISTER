@@ -74,40 +74,74 @@ public final class TierIdentificationListener implements Listener {
         // 1.4.80: getContents() включает надетую броню и левую руку — раньше
         // неопознанный предмет, надетый на себя, оставался «скрытым» до снятия.
         ItemStack[] contents = player.getInventory().getContents();
-        boolean dirty = false;
+        List<ItemStack> pending = new ArrayList<>();
         for (ItemStack stack : contents) {
-            if (stack == null || !plugin.items().isUnidentified(stack)) {
-                continue;
+            if (stack != null && plugin.items().isUnidentified(stack)) {
+                pending.add(stack);
             }
-            identify(player, stack, "scan");
-            dirty = true;
         }
-        if (dirty) {
+        if (pending.isEmpty()) {
+            return;
+        }
+        // 1.4.94: вся пачка — одним сообщением и одним звуком.
+        if (identifyAll(player, pending, "scan") > 0) {
             player.updateInventory();
         }
     }
 
-    /** Опознать один предмет: ролл тира, применение, сообщение/звук, статистика. */
+    /** Опознать один предмет (подбор с земли). */
     public void identify(Player player, ItemStack stack, String channel) {
-        String source = plugin.items().unidentifiedSource(stack);
-        plugin.items().clearUnidentified(stack);
-
-        TierDef.Snapshot roll = TierRoller.roll(plugin.config().tiers(), random);
-        if (roll == null) {
-            return; // страховка: роллер никогда не должен вернуть null для неопознанного
+        if (stack == null) {
+            return; // List.of(null) бросил бы NPE
         }
-        plugin.items().apply(stack, roll);
-        plugin.stats().count(player.getUniqueId(), roll.id());
+        identifyAll(player, List.of(stack), channel);
+    }
 
-        if ("cursed".equals(roll.id())) {
-            plugin.messages().send(player, "identified-cursed");
-            playSound(player, roll);
-            return;
+    /**
+     * Опознать пачку предметов: ролл, применение, статистика — на каждый предмет,
+     * а сообщение и звук — одни на всю пачку (1.4.94). Раньше скан инвентаря
+     * отправлял отдельное сообщение на каждую находку и забивал чат.
+     *
+     * @return сколько предметов реально получило тир.
+     */
+    public int identifyAll(Player player, List<ItemStack> stacks, String channel) {
+        List<TierDef.Snapshot> rolls = new ArrayList<>(stacks.size());
+        for (ItemStack stack : stacks) {
+            if (stack == null || !plugin.items().isUnidentified(stack)) {
+                continue;
+            }
+            String source = plugin.items().unidentifiedSource(stack);
+            plugin.items().clearUnidentified(stack);
+            TierDef.Snapshot roll = TierRoller.roll(plugin.config().tiers(), random);
+            if (roll == null) {
+                continue; // страховка: роллер никогда не должен вернуть null
+            }
+            plugin.items().apply(stack, roll);
+            plugin.stats().count(player.getUniqueId(), roll.id());
+            logHighTier(player, stack, roll, source, channel);
+            rolls.add(roll);
         }
-        plugin.messages().send(player, "identified",
-                "tier", plugin.messages().raw("tier." + roll.id() + ".name"));
-        playSound(player, roll);
-        logHighTier(player, stack, roll, source, channel);
+        IdentifyBatch batch = IdentifyBatch.of(rolls);
+        if (batch.isEmpty()) {
+            return 0;
+        }
+        if (batch.total() == 1) {
+            TierDef.Snapshot roll = batch.best();
+            if ("cursed".equals(roll.id())) {
+                plugin.messages().send(player, "identified-cursed");
+            } else {
+                plugin.messages().send(player, "identified",
+                        "tier", plugin.messages().raw("tier." + roll.id() + ".name"));
+            }
+        } else if (batch.allCursed()) {
+            plugin.messages().send(player, "identified-batch-cursed", "count", batch.total());
+        } else {
+            plugin.messages().send(player, "identified-batch",
+                    "count", batch.total(),
+                    "tier", plugin.messages().raw("tier." + batch.best().id() + ".name"));
+        }
+        playSound(player, batch.best());
+        return batch.total();
     }
 
     /** Звуковой акцент по «мощности» тира (опционально отключается в конфиге). */

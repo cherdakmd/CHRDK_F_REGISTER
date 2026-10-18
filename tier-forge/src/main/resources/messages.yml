@@ -16,6 +16,8 @@ tiers:
   unidentified-lore: "<dark_gray>Примите в инвентарь, чтобы открыть редкость…</dark_gray>"
   identified: "<light_purple>✧ Предмет опознан: %tier%!</light_purple>"
   identified-cursed: "<dark_red>✖ Предмет оказался проклятым… Возьмите на себя эту тяжесть.</dark_red>"
+  identified-batch: "<light_purple>✧ Опознано предметов: <white>%count%</white>. Лучший тир: %tier%!</light_purple>"
+  identified-batch-cursed: "<dark_red>✖ Опознано предметов: <white>%count%</white> — всё проклятое… Такое не отмыть.</dark_red>"
   anvil-unidentified: "<red>Неопознанный предмет нельзя обрабатывать на наковальне — сначала инвентарь.</red>"
   improved: "<light_purple>✦ Кованое улучшение: %name% %level%!</light_purple>"
   improve-max: "<gold>%name% уже на пределе — выше не поднять.</gold>"
