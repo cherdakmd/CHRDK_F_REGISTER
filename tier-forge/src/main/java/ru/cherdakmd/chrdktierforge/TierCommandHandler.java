@@ -295,10 +295,33 @@ public final class TierCommandHandler implements TabExecutor {
                                 .map(TierDef.Snapshot::id).collect(Collectors.joining(", ")));
                 return true;
             }
-            giveItems(target, material, amount, item -> plugin.items().apply(item, tier));
+            // 1.4.96: необязательные уровни ковки и кличка — иначе админу
+            // приходилось собирать предмет на наковальне вручную.
+            UpgradeSpec.Result upgrades = UpgradeSpec.parse(args.length >= 6 ? args[5] : "-");
+            if (upgrades.hasRejected()) {
+                plugin.messages().send(sender, "admin-bad-upgrades",
+                        "list", String.join(", ", upgrades.rejected()));
+                return true;
+            }
+            String forgeName = args.length >= 7 ? args[6].trim() : "";
+            giveItems(target, material, amount, item -> {
+                plugin.items().apply(item, tier);
+                for (Map.Entry<ForgeUpgrade.Def, Integer> entry
+                        : upgrades.upgrades().entrySet()) {
+                    plugin.items().bumpUpgrade(item, entry.getKey(), entry.getValue());
+                }
+                if (!forgeName.isEmpty()) {
+                    plugin.items().setForgeName(item, forgeName);
+                }
+            });
             plugin.messages().send(sender, "admin-given",
                     "material", material.name(), "tier", tier.id(),
                     "player", target.getName(), "amount", amount);
+            if (!upgrades.isEmpty()) {
+                plugin.messages().send(sender, "admin-given-forged",
+                        "player", target.getName(),
+                        "list", UpgradeSpec.describe(upgrades.upgrades()));
+            }
             return true;
         }
         if (args.length >= 3 && "give-unidentified".equalsIgnoreCase(args[0])) {
@@ -388,6 +411,10 @@ public final class TierCommandHandler implements TabExecutor {
             } else if (args.length == 4 && "give".equalsIgnoreCase(args[0])) {
                 plugin.config().tiers().stream().map(TierDef.Snapshot::id)
                         .filter(id -> id.startsWith(prefix)).forEach(matches::add);
+            } else if (args.length == 6 && "give".equalsIgnoreCase(args[0])) {
+                // 1.4.96: подсказка формата уровней ковки
+                List.of("edge:3", "crit:2", "bulwark:2", "prospector:2", "-")
+                        .stream().filter(x -> x.startsWith(prefix)).forEach(matches::add);
             } else if ((args.length == 5 && "give".equalsIgnoreCase(args[0]))
                     || (args.length == 4 && unidentified)) {
                 List.of("1", "4", "16", "64").stream().filter(x -> x.startsWith(prefix)).forEach(matches::add);

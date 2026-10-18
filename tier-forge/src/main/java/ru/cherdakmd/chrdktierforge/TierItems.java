@@ -483,6 +483,28 @@ public final class TierItems {
         }
     }
 
+    /**
+     * Задать кличку вручную (админская выдача, 1.4.96). Пересобирает предмет,
+     * чтобы имя и лор сразу отражали кличку.
+     */
+    public void setForgeName(ItemStack item, String name) {
+        if (item == null || name == null || name.isBlank()) {
+            return;
+        }
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) {
+            return;
+        }
+        meta.getPersistentDataContainer()
+                .set(forgeNameKey, PersistentDataType.STRING, name.trim());
+        item.setItemMeta(meta);
+        String tierId = tierOf(item);
+        TierDef.Snapshot snapshot = tierId == null ? null : plugin.config().find(tierId);
+        if (snapshot != null) {
+            apply(item, snapshot);
+        }
+    }
+
     /** Кличка предмета из PDC (пустая строка — не окрещён). */
     public String forgeNameOf(ItemStack item) {
         if (item == null || !item.hasItemMeta()) {

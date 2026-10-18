@@ -61,9 +61,11 @@ tiers:
   admin-bad-material: "<red>Материал %material% не подходит (броня/оружие/инструменты).</red>"
   admin-bad-tier: "<red>Нет тира %tier%. Доступны: %tiers%</red>"
   admin-bad-amount: "<red>Количество %amount% — не число. Укажите 1-64.</red>"
+  admin-bad-upgrades: "<red>Не понял улучшения: %list%. Формат — edge:3,crit:2 (или - без улучшений).</red>"
+  admin-given-forged: "<green>С ковкой для %player%: %list%.</green>"
   admin-unidentified-off: "<red>Режим неопознанных предметов выключен (identify.enabled: false).</red>"
   admin-usage:
-    - "<gray><yellow>/tiersadmin give <ник> <материал> <тир> [кол-во]</yellow> — выдать тир-предмет</gray>"
+    - "<gray><yellow>/tiersadmin give <ник> <материал> <тир> [кол-во] [улучшения] [кличка]</yellow> — выдать тир-предмет; улучшения вида edge:3,crit:2</gray>"
     - "<gray><yellow>/tiersadmin give-unidentified <ник> <материал> [кол-во]</yellow> — выдать неопознанный предмет</gray>"
     - "<gray><yellow>/tiersadmin stats <ник></yellow> — находки игрока за всё время</gray>"
     - "<gray><yellow>/tiersadmin resetstats <ник></yellow> — обнулить счётчик игрока</gray>"
