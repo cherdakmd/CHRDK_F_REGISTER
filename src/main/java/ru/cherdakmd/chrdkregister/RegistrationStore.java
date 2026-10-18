@@ -548,6 +548,24 @@ public final class RegistrationStore {
             long durationMillis,
             boolean strictCaseMatch
     ) {
+        return grantPassFromDonation(donorName, transactionCreatedAtMillis, nowMillis,
+                durationMillis, strictCaseMatch, false);
+    }
+
+    /**
+     * То же, но с пометкой тестовой оплаты ({@code /pass testpay}): проходка продлевается,
+     * однако покупка не засчитывается — счётчик платежей и источник выдачи не меняются,
+     * поэтому {@link PlayerAccount#isTrialOnly()} остаётся честным, а LuckPerms-группа
+     * проходки не выдаётся.
+     */
+    public synchronized Optional<PlayerAccount> grantPassFromDonation(
+            String donorName,
+            long transactionCreatedAtMillis,
+            long nowMillis,
+            long durationMillis,
+            boolean strictCaseMatch,
+            boolean testPayment
+    ) {
         if (donorName == null || donorName.isBlank()) return Optional.empty();
         String key = canonicalName(donorName);
         PlayerAccount existing = data.accounts.get(key);
@@ -565,10 +583,12 @@ public final class RegistrationStore {
         long start = Math.max(Math.max(nowMillis, transactionCreatedAtMillis), account.passUntil);
         account.passUntil = start + durationMillis;
         consumeTrial(account);
-        account.lastGrantSource = "donatepay";
-        account.lastGrantAt = nowMillis;
-        account.lastGrantDays = (int) Math.max(0, durationMillis / 86_400_000L);
-        account.paymentsCount++;
+        if (!testPayment) {
+            account.lastGrantSource = "donatepay";
+            account.lastGrantAt = nowMillis;
+            account.lastGrantDays = (int) Math.max(0, durationMillis / 86_400_000L);
+            account.paymentsCount++;
+        }
         clearExpiryWarnings(account);
         markDirtyNow();
         return Optional.of(copy(account));

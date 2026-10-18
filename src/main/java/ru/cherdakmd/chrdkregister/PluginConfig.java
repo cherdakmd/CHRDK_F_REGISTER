@@ -80,6 +80,7 @@ public final class PluginConfig {
     private final boolean passGuiMenu;
     private final String passGroup;
     private final boolean passGroupRemoveExpired;
+    private final boolean passGroupPaidOnly;
 
     private final int sessionMinutes;
     private final int minPasswordLength;
@@ -106,6 +107,7 @@ public final class PluginConfig {
     private final boolean bruteForceNotifyAdmins;
 
     private final boolean totpEnabled;
+    private final boolean totpRequired;
     private final String totpIssuer;
     private final int totpWindowSteps;
     private final int totpMaxAttempts;
@@ -151,11 +153,11 @@ public final class PluginConfig {
         this(
                 donatePayApiToken, donatePayPaymentUrl, minimumDonationRubles, donatePollSeconds, strictCaseMatch,
                 true, true, false, 4, 365,
-                grantDays, defaultTiers(grantDays), List.of(10_080L, 4_320L, 1_440L, 60L), true, true, 0, true, "", true,
+                grantDays, defaultTiers(grantDays), List.of(10_080L, 4_320L, 1_440L, 60L), true, true, 0, true, "", true, true,
                 sessionMinutes, minPasswordLength, maxPasswordLength, maxLoginAttempts, reminderSeconds, 3,
                 false, true, "!@#$%&*-_+=.?", true, false, true, false, false, true,
                 List.of(0, 0, 1, 2, 5, 10, 30, 60, 120, 300), maxLoginAttempts, 10, 15, 10, 15, true,
-                true, "CHRDK", 1, maxLoginAttempts, true,
+                true, true, "CHRDK", 1, maxLoginAttempts, true,
                 true, "notify", 3, 240,
                 5, true, 14, true,
                 true, 180, true,
@@ -189,6 +191,7 @@ public final class PluginConfig {
             boolean passGuiMenu,
             String passGroup,
             boolean passGroupRemoveExpired,
+            boolean passGroupPaidOnly,
             int sessionMinutes,
             int minPasswordLength,
             int maxPasswordLength,
@@ -212,6 +215,7 @@ public final class PluginConfig {
             int tempIpBanMinutes,
             boolean bruteForceNotifyAdmins,
             boolean totpEnabled,
+            boolean totpRequired,
             String totpIssuer,
             int totpWindowSteps,
             int totpMaxAttempts,
@@ -273,6 +277,7 @@ public final class PluginConfig {
         this.passGuiMenu = passGuiMenu;
         this.passGroup = passGroup == null ? "" : passGroup.trim();
         this.passGroupRemoveExpired = passGroupRemoveExpired;
+        this.passGroupPaidOnly = passGroupPaidOnly;
 
         this.sessionMinutes = Math.clamp(sessionMinutes, 0, 10080);
         this.minPasswordLength = Math.clamp(minPasswordLength, 4, 32);
@@ -305,6 +310,7 @@ public final class PluginConfig {
         this.bruteForceNotifyAdmins = bruteForceNotifyAdmins;
 
         this.totpEnabled = totpEnabled;
+        this.totpRequired = totpRequired;
         this.totpIssuer = (totpIssuer == null || totpIssuer.isBlank()) ? "CHRDK" : totpIssuer.trim();
         this.totpWindowSteps = Math.clamp(totpWindowSteps, 0, 10);
         this.totpMaxAttempts = Math.clamp(totpMaxAttempts, 1, 20);
@@ -358,6 +364,7 @@ public final class PluginConfig {
                 config.getBoolean("pass.gui-menu", true),
                 config.getString("integrations.pass-group", ""),
                 config.getBoolean("integrations.pass-group-remove-expired", true),
+                config.getBoolean("integrations.pass-group-paid-only", true),
                 config.getInt("auth.session-minutes", 30),
                 config.getInt("auth.min-password-length", 8),
                 config.getInt("auth.max-password-length", 64),
@@ -381,6 +388,7 @@ public final class PluginConfig {
                 config.getInt("auth.brute-force.temp-ip-ban-minutes", 15),
                 config.getBoolean("auth.brute-force.notify-admins", true),
                 config.getBoolean("totp.enabled", true),
+                config.getBoolean("totp.required", true),
                 config.getString("totp.issuer", "CHRDK"),
                 config.getInt("totp.window-steps", 1),
                 config.getInt("totp.max-attempts", maxLoginAttempts),
@@ -695,6 +703,14 @@ public final class PluginConfig {
         return passGroupRemoveExpired;
     }
 
+    /**
+     * Выдавать группу проходки только за реальную оплату: тестовый период и
+     * {@code /pass testpay} группу не выдают.
+     */
+    public boolean passGroupPaidOnly() {
+        return passGroupPaidOnly;
+    }
+
     /* ------------------------------------------------------------------ *
      *  Auth
      * ------------------------------------------------------------------ */
@@ -806,6 +822,15 @@ public final class PluginConfig {
 
     public boolean totpEnabled() {
         return totpEnabled;
+    }
+
+    /**
+     * Обязательная привязка TOTP 2FA: без аутентификатора игрок не попадает в игру.
+     * Действует только при {@link #totpEnabled()}; включать 2FA «для всех» в обход
+     * администратора нельзя — сброс делается командой {@code /pass reset2fa}.
+     */
+    public boolean totpRequired() {
+        return totpRequired && totpEnabled;
     }
 
     public String totpIssuer() {

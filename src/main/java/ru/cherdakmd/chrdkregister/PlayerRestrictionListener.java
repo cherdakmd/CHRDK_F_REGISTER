@@ -57,6 +57,8 @@ public final class PlayerRestrictionListener implements Listener {
     private static final Set<String> TWO_FACTOR_COMMANDS =
             Set.of("2fa", "totp", "twofactor", "login", "l", "pass", "fregister", "prohodka",
                     "logout", "session", "captcha");
+    // Обязательная привязка 2FA (NEEDS_2FA_SETUP) использует тот же список: /2fa setup|confirm|qr,
+    // /login, /pass, /logout, /session, /captcha — всё, что нужно для привязки и выхода.
 
     private final AccessManager accessManager;
 
@@ -126,6 +128,7 @@ public final class PlayerRestrictionListener implements Listener {
             case NEEDS_REGISTER -> messages().send(player, "restriction.command-register");
             case NEEDS_LOGIN -> messages().send(player, "restriction.command-login");
             case NEEDS_2FA -> messages().send(player, "restriction.command-two-factor");
+            case NEEDS_2FA_SETUP -> messages().send(player, "restriction.command-two-factor-setup");
             default -> {
             }
         }
@@ -154,6 +157,7 @@ public final class PlayerRestrictionListener implements Listener {
             case NEEDS_REGISTER -> REGISTER_COMMANDS.contains(label);
             case NEEDS_LOGIN -> LOGIN_COMMANDS.contains(label);
             case NEEDS_2FA -> TWO_FACTOR_COMMANDS.contains(label);
+            case NEEDS_2FA_SETUP -> TWO_FACTOR_COMMANDS.contains(label);
         };
     }
 
@@ -169,6 +173,7 @@ public final class PlayerRestrictionListener implements Listener {
             case NEEDS_REGISTER -> messages().send(player, "chat.blocked-register");
             case NEEDS_LOGIN -> messages().send(player, "chat.blocked-login");
             case NEEDS_2FA -> messages().send(player, "chat.blocked-two-factor");
+            case NEEDS_2FA_SETUP -> messages().send(player, "chat.blocked-two-factor-setup");
             default -> {
             }
         }

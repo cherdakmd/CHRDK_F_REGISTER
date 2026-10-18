@@ -13,6 +13,7 @@ record PresentationContext(String passType, String authStatus, String authHint, 
                     : messages.plain("presentation.register");
             case NEEDS_LOGIN -> messages.plain("presentation.login");
             case NEEDS_2FA -> messages.plain("presentation.two-factor");
+            case NEEDS_2FA_SETUP -> messages.plain("presentation.two-factor-setup");
             case NO_PASS -> messages.plain("presentation.renew");
             case AUTHENTICATED -> messages.plain("presentation.play");
         };

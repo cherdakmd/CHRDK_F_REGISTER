@@ -14,6 +14,9 @@ import java.util.logging.Logger;
  * узел {@code group.<имя>}, а при отзыве и (при {@code integrations.pass-group-remove-expired})
  * истечении — снимается. Операции выполняются асинхронно через {@code modifyUser} и работают
  * и для оффлайн-игроков.</p>
+ *
+ * <p>С {@code integrations.pass-group-paid-only: true} группа — признак реальной покупки:
+ * тестовый период при регистрации и {@code /pass testpay} её не выдают.</p>
  */
 public final class LuckPermsPassSync {
 
@@ -41,8 +44,32 @@ public final class LuckPermsPassSync {
         return group == null || group.isBlank() ? null : group;
     }
 
-    /** Выдать синхронизируемую группу (вызовы из AccessManager при выдаче/продлении). */
+    /**
+     * Чистая политика выдачи группы: тестовый режим не даёт группу, если включён
+     * {@code integrations.pass-group-paid-only}. Покрыто юнит-тестами.
+     */
+    public static boolean grantsGroup(boolean paidGrant, boolean paidOnly) {
+        return paidGrant || !paidOnly;
+    }
+
+    /** Выдать синхронизируемую группу (реальная покупка, ручная выдача, Boosty). */
     public void onPassGranted(String playerName) {
+        onPassGranted(playerName, true);
+    }
+
+    /**
+     * Выдать синхронизируемую группу с учётом источника проходки.
+     *
+     * @param paidGrant {@code false} для тестового режима (trial при регистрации,
+     *                  {@code /pass testpay}) — группа тогда не выдаётся
+     */
+    public void onPassGranted(String playerName, boolean paidGrant) {
+        String group = configuredGroup();
+        if (group != null && !grantsGroup(paidGrant, config.get().passGroupPaidOnly())) {
+            logger.info("LuckPerms: проходка игрока " + playerName + " получена не за покупку "
+                    + "(тестовый режим) — группа " + group + " не выдаётся.");
+            return;
+        }
         apply(playerName, true);
     }
 

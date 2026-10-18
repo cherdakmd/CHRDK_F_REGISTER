@@ -133,6 +133,11 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             messages.send(sender, "error.players-only");
             return true;
         }
+        if (args.length == 0 && accessManager.getStage(player) == AccessManager.PlayerStage.NEEDS_2FA_SETUP) {
+            // Пароль уже принят — /login без аргументов показывает, что осталось привязать 2FA.
+            accessManager.sendTotpEnrollmentPrompt(player, true);
+            return true;
+        }
         if (args.length < 1 || args.length > 2) {
             messages.send(player, "usage.login");
             PasswordKeypadService keypad = plugin.keypadLogin();
@@ -217,6 +222,44 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 return accessManager.handleTwoFactorLoginCode(player, joinArgsFrom(args, 1));
             }
             return accessManager.handleTwoFactorLoginCode(player, String.join("", args));
+        }
+        if (stage == AccessManager.PlayerStage.NEEDS_2FA_SETUP) {
+            // Обязательная привязка: до неё в игру не пускаем, но /2fa setup/confirm/qr работают.
+            if (args.length == 0) {
+                accessManager.sendTotpEnrollmentPrompt(player, true);
+                return true;
+            }
+            String sub = args[0].toLowerCase(Locale.ROOT);
+            switch (sub) {
+                case "setup", "enable", "on", "bind" -> {
+                    return accessManager.handleTwoFactorSetup(player);
+                }
+                case "confirm", "verify", "activate", "code" -> {
+                    if (args.length < 2) {
+                        messages.send(player, "two-factor.usage-confirm", "label", label);
+                        return true;
+                    }
+                    return accessManager.handleTwoFactorConfirmSetup(player, joinArgsFrom(args, 1));
+                }
+                case "qr", "qrcode", "map" -> {
+                    return accessManager.handleTwoFactorQrMap(player);
+                }
+                case "cancel" -> {
+                    return accessManager.handleTwoFactorCancel(player);
+                }
+                case "status", "info" -> {
+                    showOwnTwoFactorStatus(player, label);
+                    return true;
+                }
+                default -> {
+                    String candidateCode = String.join("", args);
+                    if (TotpService.isValidCodeFormat(candidateCode)) {
+                        return accessManager.handleTwoFactorConfirmSetup(player, candidateCode);
+                    }
+                    accessManager.sendTotpEnrollmentPrompt(player, true);
+                    return true;
+                }
+            }
         }
 
         // Player is AUTHENTICATED
@@ -691,11 +734,18 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 }
                 DonationService.Outcome outcome = accessManager.simulateDonation(targetName, amount, source);
                 switch (outcome.status()) {
-                    case GRANTED -> messages.send(sender, "donation.testpay-granted",
-                            "amount", amount,
-                            "name", outcome.playerName(),
-                            "days", outcome.days(),
-                            "until", AccessManager.formatTimestamp(outcome.passUntil()));
+                    case GRANTED -> {
+                        messages.send(sender, "donation.testpay-granted",
+                                "amount", amount,
+                                "name", outcome.playerName(),
+                                "days", outcome.days(),
+                                "until", AccessManager.formatTimestamp(outcome.passUntil()));
+                        if (!accessManager.config().passGroup().isBlank()
+                                && accessManager.config().passGroupPaidOnly()) {
+                            messages.send(sender, "donation.testpay-group-skipped",
+                                    "group", accessManager.config().passGroup());
+                        }
+                    }
                     case REJECTED -> messages.send(sender, "donation.testpay-rejected",
                             "amount", amount,
                             "note", outcome.note().isBlank() ? "—" : outcome.note());

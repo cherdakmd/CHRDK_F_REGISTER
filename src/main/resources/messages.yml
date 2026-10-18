@@ -32,6 +32,7 @@ messages:
     "register": "Создайте пароль: /register пароль пароль"
     "login": "Войдите в аккаунт: /login"
     "two-factor": "Подтвердите вход: /2fa код"
+    "two-factor-setup": "Привяжите 2FA, чтобы войти: /2fa setup"
     "renew": "Продлите доступ: /pass donate"
     "play": "Вы в игре. Исследуйте мир и развивайте персонажа."
     "secured": "включена"
@@ -111,6 +112,7 @@ messages:
     "command-no-pass": "<red>Команды заблокированы! Сначала приобретите проходку (%price% ₽, укажите ник %player% в имени донатера).</red>"
     "command-register": "<red>Сначала зарегистрируйте пароль: /register \\<пароль> \\<повтор></red>"
     "command-two-factor": "<red>Подтвердите вход кодом двухфакторной аутентификации: /2fa \\<6-значный_код></red>"
+    "command-two-factor-setup": "<red>Сначала привяжите 2FA, чтобы войти в игру: /2fa setup</red>"
     "too-many-accounts": "<red>С вашего IP уже играет слишком много аккаунтов с проходками. Обратитесь к администрации.</red>"
 
   # ---------------------------------------------------------------
@@ -156,6 +158,7 @@ messages:
     "prompt": "<yellow>Зарегистрируйте пароль командой: </yellow><click:suggest_command:'/register '><hover:show_text:'<green>Подставить команду в чат</green>'><gold><bold>/register \\<пароль> \\<повтор></bold></gold></hover></click>"
     "reminder": "<gold>Зарегистрируйтесь: /register <пароль> <повтор></gold>"
     "success": "<green>✓ Вы успешно зарегистрировались и вошли на сервер! Приятной игры!</green>"
+    "success-two-factor": "<green>✓ Аккаунт создан и пароль сохранён!</green> <aqua>Осталось привязать 2FA — инструкция ниже.</aqua>"
     "title": "<gold><bold>РЕГИСТРАЦИЯ</bold></gold>"
     "title-subtitle": "<yellow>Введите /register <пароль> <повтор></yellow>"
 
@@ -195,6 +198,7 @@ messages:
     "full": "<red>Максимальная длина набрана — подтвердите или сотрите пароль.</red>"
   "login":
     "already-authenticated": "<green>Вы уже вошли в аккаунт!</green>"
+    "password-ok-two-factor": "<green>✓ Пароль верный!</green> <aqua>Осталось привязать 2FA — инструкция ниже.</aqua>"
     "prompt": "<yellow>Введите пароль для входа на сервер: </yellow><click:suggest_command:'/login '><hover:show_text:'<green>Подставить команду в чат</green>'><gold><bold>/login \\<пароль></bold></gold></hover></click>"
     "register-first": "<yellow>Сначала зарегистрируйте пароль: /register <пароль> <повтор></yellow>"
     "reminder": "<yellow>Авторизуйтесь: /login <пароль></yellow>"
@@ -205,6 +209,7 @@ messages:
     "title": "<gold><bold>АВТОРИЗАЦИЯ</bold></gold>"
     "title-subtitle": "<yellow>Введите /login <пароль></yellow>"
     "two-factor-pending": "<aqua>Пароль уже подтверждён! Введите 6-значный код 2FA: /2fa <код></aqua>"
+    "two-factor-setup-pending": "<yellow>Пароль уже подтверждён! Осталось привязать 2FA: /2fa setup — инструкция с ключом в чате.</yellow>"
     "wrong-password": "<red>Неверный пароль! Осталось попыток до временной блокировки: %remaining%</red>"
 
   # ---------------------------------------------------------------
@@ -225,6 +230,7 @@ messages:
     "disable":
       "not-authenticated": "<red>Сначала авторизуйтесь на сервере, чтобы управлять 2FA.</red>"
       "not-enabled": "<yellow>На вашем аккаунте не включена двухфакторная аутентификация.</yellow>"
+      "required": "<red>2FA на сервере обязательна — отключить её нельзя. Привязку может сбросить администратор: /pass reset2fa <ник>.</red>"
       "success": "<green>✓ Двухфакторная аутентификация (TOTP 2FA) отключена для вашего аккаунта.</green>"
       "usage": "<yellow>Укажите текущий 6-значный код 2FA (или пароль): /2fa disable <код_2FA></yellow>"
       "wrong-code": "<red>Неверный 6-значный код 2FA или пароль! Отключение отменено.</red>"
@@ -241,6 +247,7 @@ messages:
       "kicked": "<red>Превышено количество неверных попыток ввода кода 2FA (%totp_max_attempts%).</red>"
       "password-first": "<yellow>Сначала введите пароль от аккаунта: /login <пароль></yellow>"
       "register-first": "<yellow>Сначала зарегистрируйте пароль: /register <пароль> <повтор></yellow>"
+      "success": "<green>✓ Код 2FA верный — вы вошли на сервер! Приятной игры!</green>"
       "throttled": "<red>Вход временно заблокирован: %reason%. Попробуйте позже.</red>"
       "wrong-code": "<red>Неверный или уже использованный 6-значный код 2FA! Повторите ввод.</red>"
     "need-login": "<yellow>Сначала введите пароль: /login <пароль></yellow>"
@@ -252,6 +259,17 @@ messages:
       "not-authenticated": "<red>Сначала полностью авторизуйтесь на сервере.</red>"
       "sent": "<green>✓ Карта с QR-кодом выдана в инвентарь (при полном инвентаре — выпала рядом). Возьмите карту в руку и наведите камеру приложения-аутентификатора на экран.</green>"
     "reminder": "<aqua>Подтвердите 2FA: /2fa <6-значный_код></aqua>"
+    "required":
+      "header": "<gold><bold>Обязательная двухфакторная защита</bold></gold>"
+      "intro": "<aqua>На сервере включена обязательная 2FA. Пока к аккаунту не привязано приложение-аутентификатор, вход в игру закрыт — это защита от угона пароля.</aqua>"
+      "prompt": "<aqua>Вход закрыт: привяжите 2FA — /2fa setup, затем подтвердите кодом: /2fa confirm <код></aqua>"
+      "qr-unavailable": "<gray>Карта с QR-кодом недоступна до входа — инвентарь заблокирован. Введите ключ в приложение вручную или скопируйте его кнопкой выше.</gray>"
+      "reminder": "<aqua>Привяжите 2FA, чтобы войти: /2fa setup</aqua>"
+      "session": "<green>IP-сессия подтверждена.</green> <aqua>Осталось привязать 2FA — инструкция ниже.</aqua>"
+      "success": "<green>✓ 2FA привязана! Вы вошли на сервер. Приятной игры!</green>"
+      "title-subtitle": "<yellow>Привяжите 2FA: /2fa setup</yellow>"
+    "reset-enrollment": "<yellow>Администратор сбросил 2FA. Привяжите приложение заново — инструкция ниже.</yellow>"
+    "reset-login-complete": "<green>✓ Вход завершён: администратор сбросил 2FA.</green>"
     "reset-not-enabled": "<red>У игрока %target_name% не включена двухфакторная аутентификация.</red>"
     "reset-players-only": "<red>Эта команда доступна только игрокам. Для сброса 2FA игрока используйте: /pass reset2fa <ник></red>"
     "reset-success": "<green>✓ TOTP 2FA для игрока %target_name% сброшена.</green>"
@@ -592,7 +610,10 @@ messages:
     "health-stats": "<gray>Опросов: %attempts% (успешных %ok%, сбоев %fail%), uptime %uptime%%; латентность API ~%avg_ms% мс (пик %max_ms% мс)</gray>"
     "health-stats2": "<gray>Транзакций обработано: %processed%; ждут решения: %pending%%stale%</gray>"
     "health-footer": "<gray>Журнал: /%label% donations | Очередь: /%label% pending | Форс-опрос: /%label% recheck</gray>"
+    "note": 
+      "test-payment": "🧪 тестовый платёж — оплата не реальная"
     "testpay-granted": "<green>[ТЕСТ] Донат на %amount% ₽ (игроку «%name%») обработан движком: проходка продлена до %until% (+%days% дн.).</green>"
+    "testpay-group-skipped": "<gray>[ТЕСТ] Группа проходки «%group%» не выдана: тестовая оплата не считается покупкой.</gray>"
     "testpay-pending": "<yellow>[ТЕСТ] Донат %amount% ₽ от «%donor%» ушёл в очередь решений (%status%: %note%) — смотрите /%label% pending.</yellow>"
     "testpay-rejected": "<red>[ТЕСТ] Донат %amount% ₽ отклонён движком: %note%.</red>"
     "testpaylive-notready": "<red>DonatePay не настроен (нет donatepay.api-token) — живой тест невозможен.</red>"
@@ -734,6 +755,7 @@ messages:
     "blocked-no-pass": "<red>Чат заблокирован до покупки проходки!</red>"
     "blocked-register": "<red>Чат заблокирован! Зарегистрируйтесь: /register <пароль> <повтор></red>"
     "blocked-two-factor": "<red>Чат заблокирован! Подтвердите вход кодом 2FA: /2fa <6-значный_код></red>"
+    "blocked-two-factor-setup": "<red>Чат заблокирован! Привяжите 2FA, чтобы войти: /2fa setup</red>"
     "broadcast-prefix": "&8[&cОбъявление&8] &r"
     "caps-fixed": "<yellow>Пожалуйста, не пишите капсом — сообщение было исправлено.</yellow>"
     "cleared-all": "<green>Чат очищен для всех игроков.</green>"

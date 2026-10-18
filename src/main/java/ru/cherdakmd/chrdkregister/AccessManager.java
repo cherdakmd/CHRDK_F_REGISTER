@@ -63,6 +63,8 @@ public final class AccessManager {
         NEEDS_REGISTER,
         NEEDS_LOGIN,
         NEEDS_2FA,
+        /** Пароль верный, но обязательная 2FA ещё не привязана: в игру не пускаем. */
+        NEEDS_2FA_SETUP,
         AUTHENTICATED
     }
 
@@ -560,7 +562,18 @@ public final class AccessManager {
         if (config.totpEnabled() && store.isTotpEnabled(playerName) && passwordVerifiedPlayers.contains(uuid)) {
             return PlayerStage.NEEDS_2FA;
         }
+        if (requiresTotpEnrollment(playerName) && passwordVerifiedPlayers.contains(uuid)) {
+            return PlayerStage.NEEDS_2FA_SETUP;
+        }
         return PlayerStage.NEEDS_LOGIN;
+    }
+
+    /**
+     * Нужна ли игроку привязка TOTP, чтобы попасть в игру: 2FA включена и обязательна
+     * ({@code totp.required: true}), а аутентификатор у аккаунта ещё не настроен.
+     */
+    public boolean requiresTotpEnrollment(String playerName) {
+        return config.totpEnabled() && config.totpRequired() && !store.isTotpEnabled(playerName);
     }
 
     public boolean isBlocked(Player player) {
@@ -617,13 +630,26 @@ public final class AccessManager {
         if (store.hasValidIpSession(name, uuid, ip, now, sessionDurationMillis, config.sessionRequireSameUuid())) {
             store.touchSession(name, uuid, ip, now);
             player.clearTitle();
-            if (config.totpEnabled() && store.isTotpEnabled(name) && !config.sessionSkips2fa()) {
-                // Security first: a stored IP session restores the password step only, 2FA is still required.
+            // Security first: a stored IP session restores the password step only, 2FA is still
+            // required. Обязательная 2FA (totp.required) не пропускается сессией никогда, а если
+            // аутентификатор ещё не привязан — игрок проходит привязку до входа в игру.
+            boolean totpEnrolled = config.totpEnabled() && store.isTotpEnabled(name);
+            boolean secondStepRequired = totpEnrolled
+                    ? (!config.sessionSkips2fa() || config.totpRequired())
+                    : requiresTotpEnrollment(name);
+            if (secondStepRequired) {
                 passwordVerifiedPlayers.add(uuid);
-                authSource.put(uuid, "session+2fa");
-                audit.log(AuditLog.SESSION_RESTORE, name, name, ip,
-                        AuditLog.details("twoFactorRequired", true));
-                sendTwoFactorPrompt(player, true);
+                if (totpEnrolled) {
+                    authSource.put(uuid, "session+2fa");
+                    audit.log(AuditLog.SESSION_RESTORE, name, name, ip,
+                            AuditLog.details("twoFactorRequired", true));
+                    sendTwoFactorPrompt(player, true);
+                } else {
+                    authSource.put(uuid, "session+enroll");
+                    audit.log(AuditLog.SESSION_RESTORE, name, name, ip,
+                            AuditLog.details("twoFactorEnrollment", true));
+                    beginForcedEnrollment(player, "two-factor.required.session");
+                }
                 return;
             }
             String multialtBlock = enforceAntiMultiAlt(player, name, ip, now);
@@ -711,7 +737,8 @@ public final class AccessManager {
             sendNoPassPrompt(player, false);
             return true;
         }
-        if (stage == PlayerStage.NEEDS_LOGIN || stage == PlayerStage.NEEDS_2FA) {
+        if (stage == PlayerStage.NEEDS_LOGIN || stage == PlayerStage.NEEDS_2FA
+                || stage == PlayerStage.NEEDS_2FA_SETUP) {
             messages.send(player, "register.already-registered");
             return true;
         }
@@ -751,7 +778,8 @@ public final class AccessManager {
         RegistrationStore.PlayerAccount account = store.getAccount(player.getName()).orElseThrow();
         if (account.trialGrantedAt == now && "trial".equals(account.lastGrantSource)) {
             messages.send(player, "trial.granted", "days", config.trialDays(), "until", formatTimestamp(account.passUntil));
-            plugin.luckPermsPassSync().onPassGranted(player.getName());
+            // Тестовый период — не покупка: группа проходки выдаётся только после оплаты.
+            plugin.luckPermsPassSync().onPassGranted(player.getName(), false);
             fireEventSync(new PassGrantedEvent(player.getName(), account.passUntil, config.trialDays(), "trial"));
             audit.log(AuditLog.ADMIN_COMMAND, player.getName(), player.getName(), ip,
                     AuditLog.details("action", "trial.granted", "days", config.trialDays(), "passUntil", account.passUntil));
@@ -759,7 +787,11 @@ public final class AccessManager {
                     messages.plain("trial.notify-desc", "player", player.getName(), "days", config.trialDays(),
                             "until", formatTimestamp(account.passUntil)), "good");
         }
-        completeAuthentication(player, "register.success");
+        if (requiresTotpEnrollment(player.getName())) {
+            beginForcedEnrollment(player, "register.success-two-factor");
+        } else {
+            completeAuthentication(player, "register.success");
+        }
         if (config.passwordStrengthHint()) {
             messages.send(player, "password.strength-ok", "strength", policy.strengthText(messages));
         }
@@ -810,6 +842,14 @@ public final class AccessManager {
             messages.send(player, "login.two-factor-pending");
             return true;
         }
+        if (stage == PlayerStage.NEEDS_2FA_SETUP) {
+            if (optionalTotpCode != null && !optionalTotpCode.isBlank()) {
+                return handleTwoFactorConfirmSetup(player, optionalTotpCode);
+            }
+            messages.send(player, "login.two-factor-setup-pending");
+            sendTotpEnrollmentPrompt(player, true);
+            return true;
+        }
 
         AuthThrottle.Result throttleResult = throttle.check(player.getName(), getPlayerIp(player), now);
         if (throttleResult.blocked()) {
@@ -839,6 +879,14 @@ public final class AccessManager {
                 }
                 sendTwoFactorPrompt(player, true);
                 player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.2f);
+                return true;
+            }
+            if (requiresTotpEnrollment(player.getName())) {
+                passwordVerifiedPlayers.add(uuid);
+                if (optionalTotpCode != null && TotpService.isValidCodeFormat(optionalTotpCode)) {
+                    return handleTwoFactorConfirmSetup(player, optionalTotpCode);
+                }
+                beginForcedEnrollment(player, "login.password-ok-two-factor");
                 return true;
             }
 
@@ -934,6 +982,10 @@ public final class AccessManager {
             messages.send(player, "two-factor.login.already-authenticated");
             return true;
         }
+        if (stage == PlayerStage.NEEDS_2FA_SETUP) {
+            // Обязательная привязка: тот же код подтверждает секрет и завершает вход.
+            return handleTwoFactorConfirmSetup(player, rawCode);
+        }
 
         if (!TotpService.isValidCodeFormat(rawCode)) {
             messages.send(player, "two-factor.login.bad-format");
@@ -963,7 +1015,7 @@ public final class AccessManager {
             }
             store.touchSession(player.getName(), uuid, getPlayerIp(player), now);
             authSource.put(uuid, "2fa");
-            completeAuthentication(player, "✓ Код 2FA подтверждён! Вы успешно вошли на сервер! Приятной игры!");
+            completeAuthentication(player, "two-factor.login.success");
             logger.info("Player " + player.getName() + " logged in with TOTP 2FA.");
             if (config.auditLogLogins()) {
                 audit.log(AuditLog.LOGIN_SUCCESS, player.getName(), player.getName(), getPlayerIp(player),
@@ -987,10 +1039,12 @@ public final class AccessManager {
     }
 
     /**
-     * Starts TOTP 2FA enrollment for an authenticated player by generating a pending Base32 secret.
+     * Starts (or re-shows) TOTP 2FA enrollment: works for an authenticated player and for
+     * the mandatory-enrollment stage, where the same secret is reused instead of regenerated.
      */
     public boolean handleTwoFactorSetup(Player player) {
-        if (getStage(player) != PlayerStage.AUTHENTICATED) {
+        PlayerStage stage = getStage(player);
+        if (stage != PlayerStage.AUTHENTICATED && stage != PlayerStage.NEEDS_2FA_SETUP) {
             messages.send(player, "two-factor.setup.not-authenticated");
             return true;
         }
@@ -1003,13 +1057,28 @@ public final class AccessManager {
             return true;
         }
 
-        String secret = TotpService.generateSecret();
-        pendingTotpSecrets.put(player.getUniqueId(), secret);
-        sendTotpSetupInstructions(player, secret);
+        // Повторный /2fa setup показывает тот же ключ: уже отсканированный секрет не сгорает.
+        // Новый ключ — только после /2fa cancel (или если ожидающего секрета нет).
+        String secret = pendingTotpSecrets.get(player.getUniqueId());
+        if (secret == null || secret.isBlank()) {
+            secret = TotpService.generateSecret();
+            pendingTotpSecrets.put(player.getUniqueId(), secret);
+        }
+        sendTotpSetupInstructions(player, secret, stage == PlayerStage.AUTHENTICATED);
         return true;
     }
 
     public void sendTotpSetupInstructions(Player player, String secret) {
+        sendTotpSetupInstructions(player, secret, true);
+    }
+
+    /**
+     * Инструкция по привязке TOTP.
+     *
+     * @param includeQrMap выдавать ли карту с QR: до входа инвентарь заблокирован, поэтому
+     *                     при обязательной привязке QR не выдаётся — только ключ и otpauth-ссылка
+     */
+    public void sendTotpSetupInstructions(Player player, String secret, boolean includeQrMap) {
         String formattedSecret = TotpService.formatSecretForDisplay(secret);
         String otpAuthUri = TotpService.buildOtpAuthUri(config.totpIssuer(), player.getName(), secret);
 
@@ -1043,21 +1112,33 @@ public final class AccessManager {
         player.sendMessage(messages.get("two-factor.setup-instructions.step3-input").append(confirmCommandHint));
         messages.send(player, "two-factor.setup-instructions.footer-line");
         if (config.totpQrMap()) {
-            giveTotpQrMap(player);
-            messages.send(player, "two-factor.setup-instructions.qr-map");
+            if (includeQrMap) {
+                giveTotpQrMap(player);
+                messages.send(player, "two-factor.setup-instructions.qr-map");
+            } else {
+                messages.send(player, "two-factor.required.qr-unavailable");
+            }
         }
     }
 
     /**
      * Re-sends the 2FA binding QR map while a setup is pending ({@code /2fa qr}).
+     * Before authentication the inventory is locked, so the mandatory-enrollment stage
+     * answers with the copyable key hint instead of a map.
      */
     public boolean handleTwoFactorQrMap(Player player) {
-        if (getStage(player) != PlayerStage.AUTHENTICATED) {
+        PlayerStage stage = getStage(player);
+        if (stage != PlayerStage.AUTHENTICATED && stage != PlayerStage.NEEDS_2FA_SETUP) {
             messages.send(player, "two-factor.qr.not-authenticated");
             return true;
         }
         if (!config.totpEnabled() || !config.totpQrMap()) {
             messages.send(player, "two-factor.qr.disabled");
+            return true;
+        }
+        if (stage == PlayerStage.NEEDS_2FA_SETUP) {
+            // Инвентарь до входа заблокирован: карту не взять в руку, поэтому — ключ в чате.
+            messages.send(player, "two-factor.required.qr-unavailable");
             return true;
         }
         if (store.isTotpEnabled(player.getName())) {
@@ -1142,7 +1223,8 @@ public final class AccessManager {
      * Confirms pending TOTP 2FA setup using a 6-digit code from the player's authenticator app.
      */
     public boolean handleTwoFactorConfirmSetup(Player player, String rawCode) {
-        if (getStage(player) != PlayerStage.AUTHENTICATED) {
+        PlayerStage stage = getStage(player);
+        if (stage != PlayerStage.AUTHENTICATED && stage != PlayerStage.NEEDS_2FA_SETUP) {
             return handleTwoFactorLoginCode(player, rawCode);
         }
         if (store.isTotpEnabled(player.getName())) {
@@ -1177,7 +1259,13 @@ public final class AccessManager {
         pendingTotpSecrets.remove(uuid);
         store.touchSession(player.getName(), uuid, getPlayerIp(player), now);
         player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
-        messages.send(player, "two-factor.confirm.success");
+        if (stage == PlayerStage.NEEDS_2FA_SETUP) {
+            // Обязательная привязка выполнена — только теперь пускаем в игру.
+            authSource.put(uuid, "2fa-enrolled");
+            completeAuthentication(player, "two-factor.required.success");
+        } else {
+            messages.send(player, "two-factor.confirm.success");
+        }
         logger.info("Player " + player.getName() + " enabled TOTP 2FA.");
         audit.log(AuditLog.TOTP_ENABLE, player.getName(), player.getName(), getPlayerIp(player));
         notifications.notify("totp.enabled", "Включена 2FA",
@@ -1195,6 +1283,11 @@ public final class AccessManager {
         }
         if (!store.isTotpEnabled(player.getName())) {
             messages.send(player, "two-factor.disable.not-enabled");
+            return true;
+        }
+        if (config.totpRequired()) {
+            // Обязательную 2FA игрок не отключает сам: только /pass reset2fa от администратора.
+            messages.send(player, "two-factor.disable.required");
             return true;
         }
         if (verificationInput == null || verificationInput.isBlank()) {
@@ -1222,7 +1315,8 @@ public final class AccessManager {
     }
 
     public boolean handleTwoFactorCancel(Player player) {
-        if (getStage(player) != PlayerStage.AUTHENTICATED) {
+        PlayerStage stage = getStage(player);
+        if (stage != PlayerStage.AUTHENTICATED && stage != PlayerStage.NEEDS_2FA_SETUP) {
             messages.send(player, "two-factor.cancel.not-authenticated");
             return true;
         }
@@ -1231,6 +1325,10 @@ public final class AccessManager {
             messages.send(player, "two-factor.cancel.nothing-pending");
         } else {
             messages.send(player, "two-factor.cancel.success");
+        }
+        if (stage == PlayerStage.NEEDS_2FA_SETUP) {
+            // Отмена не отменяет обязательную 2FA — просто даёт новый ключ через /2fa setup.
+            sendTotpEnrollmentPrompt(player, false);
         }
         return true;
     }
@@ -1403,7 +1501,17 @@ public final class AccessManager {
      * Callback used by {@link DonationService} when a payment extends someone's pass.
      */
     public void onPassGranted(String playerName, long passUntil, String sourceDescription) {
-        plugin.luckPermsPassSync().onPassGranted(playerName);
+        onPassGranted(playerName, passUntil, sourceDescription, true);
+    }
+
+    /**
+     * Callback used by {@link DonationService} when a payment extends someone's pass.
+     *
+     * @param paid {@code false} for a test payment ({@code /pass testpay}) — the pass is extended,
+     *             but the LuckPerms pass group is not granted because nothing was bought
+     */
+    public void onPassGranted(String playerName, long passUntil, String sourceDescription, boolean paid) {
+        plugin.luckPermsPassSync().onPassGranted(playerName, paid);
         int days = Math.max(0, (int) ((passUntil - System.currentTimeMillis()) / 86_400_000L));
         fireEventSync(new PassGrantedEvent(playerName, passUntil, days, sourceDescription));
         Player online = Bukkit.getPlayerExact(playerName);
@@ -1485,19 +1593,28 @@ public final class AccessManager {
 
     /**
      * Resets only TOTP 2FA for a player while keeping their pass and password intact.
+     *
+     * <p>IP-сессии при этом завершаются: сброс — подтверждение личности через администратора,
+     * а не бесплатный вход тому, кто окажется на том же IP. При обязательной 2FA игрок
+     * (в том числе уже находящийся в игре) сразу возвращается к привязке.</p>
      */
     public boolean resetTwoFactor(String targetPlayerName) {
         boolean disabled = store.disableTotp(targetPlayerName);
         if (!disabled) return false;
+        store.clearSessions(targetPlayerName);
 
         Player onlinePlayer = Bukkit.getPlayerExact(targetPlayerName);
         if (onlinePlayer != null) {
             UUID uuid = onlinePlayer.getUniqueId();
             pendingTotpSecrets.remove(uuid);
             messages.send(onlinePlayer, "pass.two-factor-reset");
-            if (passwordVerifiedPlayers.remove(uuid) && !authenticatedPlayers.contains(uuid)) {
+            boolean wasWaitingForCode = passwordVerifiedPlayers.remove(uuid);
+            if (requiresTotpEnrollment(onlinePlayer.getName())) {
+                // Обязательная 2FA: после сброса привязка нужна заново и сразу, а не «когда-нибудь».
+                beginForcedEnrollment(onlinePlayer, "two-factor.reset-enrollment");
+            } else if (wasWaitingForCode && !authenticatedPlayers.contains(uuid)) {
                 store.touchSession(onlinePlayer.getName(), uuid, getPlayerIp(onlinePlayer), System.currentTimeMillis());
-                completeAuthentication(onlinePlayer, "✓ Вход завершён (2FA была отключена администратором).");
+                completeAuthentication(onlinePlayer, "two-factor.reset-login-complete");
             }
         }
         logger.info("TOTP 2FA reset for player " + targetPlayerName + " by administrator.");
@@ -1548,7 +1665,10 @@ public final class AccessManager {
         if (!store.isRegistered(player.getName())) {
             sendRegisterPrompt(player, true);
         } else if (!authenticatedPlayers.contains(uuid)) {
-            if (config.totpEnabled() && store.isTotpEnabled(player.getName()) && passwordVerifiedPlayers.contains(uuid)) {
+            boolean passwordConfirmed = passwordVerifiedPlayers.contains(uuid);
+            if (passwordConfirmed && requiresTotpEnrollment(player.getName())) {
+                beginForcedEnrollment(player, null);
+            } else if (config.totpEnabled() && store.isTotpEnabled(player.getName()) && passwordConfirmed) {
                 sendTwoFactorPrompt(player, true);
             } else {
                 sendLoginPrompt(player, true);
@@ -1600,10 +1720,18 @@ public final class AccessManager {
             }
 
             if (authenticatedPlayers.contains(uuid)) {
+                // Обязательную 2FA включили на живом сервере (/pass reload): игрока в игре
+                // без аутентификатора отправляем на привязку, а не ждём его следующего входа.
+                if (requiresTotpEnrollment(player.getName())) {
+                    beginForcedEnrollment(player, null);
+                }
                 continue;
             }
 
-            if (config.totpEnabled() && store.isTotpEnabled(player.getName()) && passwordVerifiedPlayers.contains(uuid)) {
+            if (requiresTotpEnrollment(player.getName()) && passwordVerifiedPlayers.contains(uuid)) {
+                sendTotpEnrollmentReminder(player, now);
+            } else if (config.totpEnabled() && store.isTotpEnabled(player.getName())
+                    && passwordVerifiedPlayers.contains(uuid)) {
                 sendTwoFactorReminder(player, now);
             } else {
                 sendLoginReminder(player, now);
@@ -1717,6 +1845,16 @@ public final class AccessManager {
         }
     }
 
+    /** Напоминание тому, кто подтвердил пароль, но ещё не привязал обязательную 2FA. */
+    private void sendTotpEnrollmentReminder(Player player, long now) {
+        player.sendActionBar(messages.get("two-factor.required.reminder"));
+        long lastChat = lastChatReminderAt.getOrDefault(player.getUniqueId(), 0L);
+        if (now - lastChat >= CHAT_REMINDER_INTERVAL_MILLIS) {
+            lastChatReminderAt.put(player.getUniqueId(), now);
+            sendTotpEnrollmentPrompt(player, false);
+        }
+    }
+
     public void sendNoPassPrompt(Player player, boolean showTitle) {
         if (!config.passEnabled()) {
             return; // стена проходки выключена (pass.enabled: false) — подсказок не шлём
@@ -1812,6 +1950,52 @@ public final class AccessManager {
         if (showTitle) {
             showAuthDialog(player, PlayerStage.NEEDS_2FA);
         }
+    }
+
+    /** Короткая подсказка «привяжите 2FA» для стадии {@link PlayerStage#NEEDS_2FA_SETUP}. */
+    public void sendTotpEnrollmentPrompt(Player player, boolean showTitle) {
+        messages.sendList(player, "two-factor.required.prompt");
+        if (showTitle) {
+            Title title = Title.title(
+                    messages.get("two-factor.title"),
+                    messages.get("two-factor.required.title-subtitle"),
+                    Title.Times.times(Duration.ofMillis(200), Duration.ofSeconds(5), Duration.ofMillis(500))
+            );
+            player.showTitle(title);
+        }
+    }
+
+    /**
+     * Переводит игрока, уже подтвердившего пароль, в стадию обязательной привязки TOTP:
+     * снимает полный доступ, готовит секрет и выдаёт инструкцию. Используется при регистрации,
+     * входе, восстановлении IP-сессии и при включении {@code totp.required} на живом сервере.
+     *
+     * @param introKey сообщение-переход («пароль верный», «сессия восстановлена») либо {@code null}
+     */
+    public void beginForcedEnrollment(Player player, String introKey) {
+        if (player == null || !player.isOnline()) return;
+        UUID uuid = player.getUniqueId();
+        authenticatedPlayers.remove(uuid);
+        passwordVerifiedPlayers.add(uuid);
+        freezeLocations.putIfAbsent(uuid, player.getLocation().clone());
+        lastChatReminderAt.put(uuid, System.currentTimeMillis());
+        authSource.put(uuid, "2fa-enrollment");
+
+        player.clearTitle();
+        if (introKey != null) {
+            messages.send(player, introKey);
+        }
+        messages.send(player, "two-factor.required.header");
+        messages.sendList(player, "two-factor.required.intro");
+        String secret = pendingTotpSecrets.computeIfAbsent(uuid, ignored -> TotpService.generateSecret());
+        sendTotpSetupInstructions(player, secret, false);
+        player.sendActionBar(messages.get("two-factor.required.reminder"));
+        player.showTitle(Title.title(
+                messages.get("two-factor.title"),
+                messages.get("two-factor.required.title-subtitle"),
+                Title.Times.times(Duration.ofMillis(200), Duration.ofSeconds(6), Duration.ofMillis(500))));
+        player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.2f);
+        logger.info("Player " + player.getName() + " must enroll TOTP 2FA before entering the game.");
     }
 
     /** Итог опроса DonatePay: сколько новых транзакций обработали (или текст ошибки). */
@@ -2426,7 +2610,8 @@ public final class AccessManager {
     public DonationService.Outcome simulateDonation(String playerName, int amountRubles, String source) {
         long now = System.currentTimeMillis();
         DonatePayClient.Transaction transaction = new DonatePayClient.Transaction(
-                -now, playerName, BigDecimal.valueOf(Math.max(0, amountRubles)), "success", "donation", now);
+                -now, playerName, BigDecimal.valueOf(Math.max(0, amountRubles)), "success", "donation",
+                now, true);
         DonationService.Outcome outcome = donations.process(transaction, now, false, source);
         runDonateActions(transaction, outcome); // прогоняем и donation-actions для обкатки шаблонов
         return outcome;

@@ -63,6 +63,7 @@ final class PlaceholderValues {
             case NEEDS_REGISTER -> "регистрация";
             case NEEDS_LOGIN -> "вход";
             case NEEDS_2FA -> "код 2FA";
+            case NEEDS_2FA_SETUP -> "привязка 2FA";
             case AUTHENTICATED -> "в игре";
         };
     }
