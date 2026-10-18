@@ -23,7 +23,7 @@ class PotionRefreshTest {
                 PotionRefresh.durationTicks(0, false));
         assertEquals(1, PotionRefresh.durationTicks(200, true), "мгновенный — раз за пульс");
         assertEquals(240, PotionRefresh.durationTicks(200, false));
-        assertEquals(90, PotionRefresh.durationTicks(40, false));
+        assertEquals(80, PotionRefresh.durationTicks(40, false));
     }
 
     @Test
@@ -37,7 +37,9 @@ class PotionRefreshTest {
     void sameOrWeakerEffectIsToppedUp() {
         assertTrue(PotionRefresh.shouldApply(false, 0, 0, 0, 300), "эффекта нет — вешаем");
         assertTrue(PotionRefresh.shouldApply(true, 0, 20, 0, 300), "свой эффект догоняем");
-        assertTrue(PotionRefresh.shouldApply(true, 0, 400, 0, 300), "остаток меньше — обновляем");
+        assertTrue(PotionRefresh.shouldApply(true, 0, 100, 0, 300), "остаток меньше — обновляем");
+        assertFalse(PotionRefresh.shouldApply(true, 0, 400, 0, 300),
+                "чужой длинный эффект не укорачиваем");
         assertTrue(PotionRefresh.shouldApply(true, -1, 400, 0, 300), "чужой дебафф заменяем своим");
     }
 }

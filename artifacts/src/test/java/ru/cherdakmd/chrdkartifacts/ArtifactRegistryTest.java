@@ -94,7 +94,7 @@ class ArtifactRegistryTest {
             for (var spec : ArtifactEffects.passivePotions(def.id())) {
                 assertTrue(spec.amplifier() >= 0 && spec.amplifier() <= 100,
                         def.id() + ": амплификатор " + spec.amplifier() + " вне 0..100");
-                assertTrue(Potions.resolve(spec.type()) != null,
+                assertTrue(Potions.isKnown(spec.type()),
                         def.id() + ": неизвестный эффект " + spec.type());
             }
         }

@@ -28,8 +28,9 @@ class CombatMathTest {
     void reviveHealthIsHalfButNeverBelowOneHeart() {
         assertEquals(10.0, CombatMath.reviveHealth(20.0, 0.5), 1e-9);
         assertEquals(1.0, CombatMath.reviveHealth(1.0, 0.5), 1e-9);
-        assertEquals(20.0, CombatMath.reviveHealth(0.0, 0.5), 1e-9, "нулевой максимум — 20");
-        assertEquals(20.0, CombatMath.reviveHealth(-5.0, 0.5), 1e-9);
+        assertEquals(10.0, CombatMath.reviveHealth(0.0, 0.5), 1e-9,
+                "нулевой максимум трактуется как 20, берётся половина");
+        assertEquals(10.0, CombatMath.reviveHealth(-5.0, 0.5), 1e-9);
         assertEquals(10.0, CombatMath.reviveHealth(20.0, 2.0), 1e-9, "доля clamp 1.0");
     }
 
