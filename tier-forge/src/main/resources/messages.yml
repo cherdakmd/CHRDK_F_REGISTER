@@ -67,12 +67,15 @@ tiers:
   admin-bad-amount: "<red>Количество %amount% — не число. Укажите 1-64.</red>"
   admin-bad-upgrades: "<red>Не понял улучшения: %list%. Формат — edge:3,crit:2 (или - без улучшений).</red>"
   admin-given-forged: "<green>С ковкой для %player%: %list%.</green>"
+  admin-exported: "<green>Статистика выгружена в %file% (игроков: %rows%).</green>"
+  admin-export-failed: "<red>Не удалось выгрузить статистику: %error%</red>"
   admin-unidentified-off: "<red>Режим неопознанных предметов выключен (identify.enabled: false).</red>"
   admin-usage:
     - "<gray><yellow>/tiersadmin give <ник> <материал> <тир> [кол-во] [улучшения] [кличка]</yellow> — выдать тир-предмет; улучшения вида edge:3,crit:2</gray>"
     - "<gray><yellow>/tiersadmin give-unidentified <ник> <материал> [кол-во]</yellow> — выдать неопознанный предмет</gray>"
     - "<gray><yellow>/tiersadmin stats <ник></yellow> — находки игрока за всё время</gray>"
     - "<gray><yellow>/tiersadmin resetstats <ник></yellow> — обнулить счётчик игрока</gray>"
+    - "<gray><yellow>/tiersadmin export</yellow> — выгрузить статистику в stats-export.csv</gray>"
     - "<gray><yellow>/tiersadmin reload</yellow> — перечитать конфиг</gray>"
   tier:
     cursed:

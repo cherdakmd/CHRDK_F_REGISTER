@@ -10,7 +10,11 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import ru.cherdakmd.chrdkregister.Messages;
 
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -229,6 +233,37 @@ public final class TierCommandHandler implements TabExecutor {
         return player.toString().substring(0, 8);
     }
 
+    /**
+     * `/tiersadmin export` — записать `stats-export.csv` в папку аддона (1.4.99).
+     * UTF-8 с BOM: так Excel открывает кириллицу в никах без «кракозябр».
+     */
+    private boolean exportStats(CommandSender sender) {
+        File file = new File(plugin.getDataFolder(), StatsCsv.fileName());
+        Map<UUID, Map<String, Integer>> snapshot = plugin.stats().snapshot();
+        Map<UUID, String> names = new HashMap<>();
+        for (UUID player : snapshot.keySet()) {
+            String name = Bukkit.getOfflinePlayer(player).getName();
+            if (name != null && !name.isBlank()) {
+                names.put(player, name);
+            }
+        }
+        try {
+            File parent = file.getParentFile();
+            if (parent != null && !parent.isDirectory() && !parent.mkdirs()) {
+                throw new java.io.IOException("папка плагина недоступна");
+            }
+            Files.writeString(file.toPath(), "\uFEFF" + StatsCsv.render(snapshot, names),
+                    StandardCharsets.UTF_8);
+        } catch (Exception exception) {
+            plugin.messages().send(sender, "admin-export-failed",
+                    "error", String.valueOf(exception.getMessage()));
+            return true;
+        }
+        plugin.messages().send(sender, "admin-exported",
+                "file", file.getName(), "rows", snapshot.size());
+        return true;
+    }
+
     /** UUID из аргумента (null — это ник или опечатка). */
     private static UUID parseUuid(String raw) {
         try {
@@ -283,6 +318,10 @@ public final class TierCommandHandler implements TabExecutor {
             plugin.reloadTierConfig();
             plugin.messages().send(sender, "admin-reloaded");
             return true;
+        }
+        // 1.4.99: выгрузка статистики в CSV для таблиц и Discord.
+        if (args.length >= 1 && "export".equalsIgnoreCase(args[0])) {
+            return exportStats(sender);
         }
         if (args.length >= 2 && ("stats".equalsIgnoreCase(args[0])
                 || "resetstats".equalsIgnoreCase(args[0]))) {
@@ -441,7 +480,7 @@ public final class TierCommandHandler implements TabExecutor {
         if ("tiersadmin".equalsIgnoreCase(command.getName())) {
             boolean unidentified = "give-unidentified".equalsIgnoreCase(args[0]);
             if (args.length == 1) {
-                List.of("give", "give-unidentified", "reload", "stats", "resetstats").stream()
+                List.of("give", "give-unidentified", "reload", "stats", "resetstats", "export").stream()
                         .filter(x -> x.startsWith(prefix)).forEach(matches::add);
             } else if (args.length == 2 && ("give".equalsIgnoreCase(args[0]) || unidentified
                     || "stats".equalsIgnoreCase(args[0])
