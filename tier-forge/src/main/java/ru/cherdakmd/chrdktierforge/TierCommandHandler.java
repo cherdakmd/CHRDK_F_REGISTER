@@ -8,10 +8,12 @@ import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
+import ru.cherdakmd.chrdkregister.Messages;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -42,8 +44,17 @@ public final class TierCommandHandler implements TabExecutor {
             plugin.messages().send(player, "need-auth");
             return true;
         }
+        // 1.4.85: chrdktierforge.use объявлен в plugin.yml, но не проверялся —
+        // права, выданные менеджером разрешений, игнорировались.
+        if (!player.hasPermission("chrdktierforge.use")) {
+            plugin.messages().send(player, "no-perm");
+            return true;
+        }
         if (args.length >= 1 && "stats".equalsIgnoreCase(args[0])) {
             return handleStats(player, args.length >= 2 && "reset".equalsIgnoreCase(args[1]));
+        }
+        if (args.length >= 1 && "info".equalsIgnoreCase(args[0])) {
+            return handleInfo(player);
         }
         return handleTiers(player);
     }
@@ -68,6 +79,97 @@ public final class TierCommandHandler implements TabExecutor {
                 "own_count", plugin.stats().total(player.getUniqueId()),
                 "total_count", plugin.stats().grandTotal());
         return true;
+    }
+
+    /**
+     * /tiers info — разбор предмета в руке (1.4.84): тир, кличка, источник,
+     * все кузнечные улучшения с описанием, цена слияния и переката.
+     */
+    private boolean handleInfo(Player player) {
+        ItemStack item = player.getInventory().getItemInMainHand();
+        if (item == null || item.getType().isAir()) {
+            plugin.messages().send(player, "info-empty");
+            return true;
+        }
+        boolean unidentified = plugin.items().isUnidentified(item);
+        String tierId = plugin.items().tierOf(item);
+        if (!unidentified && tierId == null) {
+            plugin.messages().send(player, "info-empty");
+            return true;
+        }
+        String itemTag = TierInfoFormat.languageTag(item.getType());
+        plugin.messages().send(player, "info-header");
+        if (unidentified) {
+            plugin.messages().send(player, "info-unidentified",
+                    "item", Messages.trusted(itemTag),
+                    "source", sourceLabel(plugin.items().unidentifiedSource(item)));
+            return true;
+        }
+
+        String color = plugin.messages().raw("tier." + tierId + ".color");
+        String name = plugin.messages().raw("tier." + tierId + ".name");
+        plugin.messages().send(player, "info-line",
+                "item", Messages.trusted(itemTag),
+                "tier", Messages.trusted(color + name));
+        String source = plugin.items().unidentifiedSource(item);
+        if (!source.isBlank()) {
+            plugin.messages().send(player, "info-source", "source", sourceLabel(source));
+        }
+        String forgeName = plugin.items().forgeNameOf(item);
+        if (!forgeName.isBlank()) {
+            plugin.messages().send(player, "info-forge-name", "name", forgeName);
+        }
+
+        Map<ForgeUpgrade.Def, Integer> upgrades = plugin.items().upgradesOf(item);
+        if (upgrades.isEmpty()) {
+            plugin.messages().send(player, "info-no-upgrades");
+        } else {
+            plugin.messages().send(player, "info-upgrades-header", "count", upgrades.size());
+            for (Map.Entry<ForgeUpgrade.Def, Integer> entry : upgrades.entrySet()) {
+                plugin.messages().send(player, "info-upgrade",
+                        "name", entry.getKey().displayName(),
+                        "level", ForgeUpgrade.roman(entry.getValue()),
+                        "effect", ForgeUpgrade.describe(entry.getKey(), entry.getValue()));
+            }
+        }
+
+        if (!plugin.config().anvilEnabled()) {
+            plugin.messages().send(player, "info-anvil-off");
+            return true;
+        }
+        String next = TierDef.next(tierId);
+        if (next == null) {
+            plugin.messages().send(player, "info-merge-max");
+        } else {
+            plugin.messages().send(player, "info-merge",
+                    "next", Messages.trusted(plugin.messages().raw("tier." + next + ".color")
+                            + plugin.messages().raw("tier." + next + ".name")),
+                    "xp", TierMath.upgradeXpCost(plugin.config().anvilBaseXp(),
+                            TierDef.indexOf(next)));
+        }
+        if (plugin.config().rerollEnabled()) {
+            plugin.messages().send(player,
+                    plugin.config().rerollNoDowngrade() ? "info-reroll-safe" : "info-reroll",
+                    "xp", TierMath.rerollXpCost(plugin.config().rerollBaseXp(),
+                            TierDef.indexOf(tierId)),
+                    "catalyst", Messages.trusted(TierInfoFormat.languageTag(
+                            Material.matchMaterial(plugin.config().rerollCatalyst()))));
+        }
+        return true;
+    }
+
+    /** UUID из аргумента (null — это ник или опечатка). */
+    private static UUID parseUuid(String raw) {
+        try {
+            return UUID.fromString(raw);
+        } catch (IllegalArgumentException exception) {
+            return null;
+        }
+    }
+
+    /** Читаемое название источника происхождения тира (ключи messages.yml). */
+    private String sourceLabel(String source) {
+        return plugin.messages().plain(TierInfoFormat.sourceKey(source));
     }
 
     /** /tiers stats [reset] — личные находки за всё время (1.4.81). */
@@ -113,18 +215,22 @@ public final class TierCommandHandler implements TabExecutor {
         }
         if (args.length >= 2 && ("stats".equalsIgnoreCase(args[0])
                 || "resetstats".equalsIgnoreCase(args[0]))) {
-            Player target = Bukkit.getPlayerExact(args[1]);
-            if (target == null) {
+            // 1.4.85: принимаем и UUID из stats.yml — иначе офлайн-статистику
+            // (без онлайна игрока) посмотреть было нечем.
+            Player online = Bukkit.getPlayerExact(args[1]);
+            UUID targetId = online != null ? online.getUniqueId() : parseUuid(args[1]);
+            if (targetId == null) {
                 plugin.messages().send(sender, "admin-offline", "player", args[1]);
                 return true;
             }
+            String name = online != null ? online.getName() : args[1];
             if ("resetstats".equalsIgnoreCase(args[0])) {
-                plugin.stats().reset(target.getUniqueId());
-                plugin.messages().send(sender, "admin-stats-reset", "player", target.getName());
+                plugin.stats().reset(targetId);
+                plugin.messages().send(sender, "admin-stats-reset", "player", name);
                 return true;
             }
-            return showStats(sender, target.getUniqueId(), "admin-stats-header",
-                    "admin-stats-empty", target.getName());
+            return showStats(sender, targetId, "admin-stats-header",
+                    "admin-stats-empty", name);
         }
         if (args.length >= 4 && "give".equalsIgnoreCase(args[0])) {
             Player target = Bukkit.getPlayerExact(args[1]);
@@ -156,6 +262,12 @@ public final class TierCommandHandler implements TabExecutor {
                 }
             }
             TierDef.Snapshot tier = plugin.config().find(tierId);
+            if (tier == null) {
+                plugin.messages().send(sender, "admin-bad-tier", "tier", args[3],
+                        "tiers", plugin.config().tiers().stream()
+                                .map(TierDef.Snapshot::id).collect(Collectors.joining(", ")));
+                return true;
+            }
             giveItems(target, material, amount, item -> plugin.items().apply(item, tier));
             plugin.messages().send(sender, "admin-given",
                     "material", material.name(), "tier", tier.id(),
@@ -222,7 +334,8 @@ public final class TierCommandHandler implements TabExecutor {
         String prefix = args[args.length - 1].toLowerCase(Locale.ROOT);
         if ("tiers".equalsIgnoreCase(command.getName())) {
             if (args.length == 1) {
-                List.of("stats").stream().filter(x -> x.startsWith(prefix)).forEach(matches::add);
+                List.of("info", "stats").stream()
+                        .filter(x -> x.startsWith(prefix)).forEach(matches::add);
             } else if (args.length == 2 && "stats".equalsIgnoreCase(args[0])) {
                 List.of("reset").stream().filter(x -> x.startsWith(prefix)).forEach(matches::add);
             }

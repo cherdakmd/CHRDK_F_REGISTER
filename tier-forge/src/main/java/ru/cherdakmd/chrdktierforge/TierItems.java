@@ -126,12 +126,15 @@ public final class TierItems {
         item.setItemMeta(meta);
     }
 
-    /** Снять «маску» неопознанного: вернуть стандартное имя/пустой лор (тир наносится отдельно). */
+    /**
+     * Снять «маску» неопознанного: вернуть стандартное имя/пустой лор (тир
+     * наносится отдельно). Источник ({@code item_tier_source}) с 1.4.84 остаётся
+     * в PDC — его показывает {@code /tiers info}.
+     */
     public void clearUnidentified(ItemStack item) {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
         meta.getPersistentDataContainer().remove(unidentifiedKey);
-        meta.getPersistentDataContainer().remove(sourceKey);
         meta.displayName(null);
         meta.lore(null);
         item.setItemMeta(meta);

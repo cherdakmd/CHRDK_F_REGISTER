@@ -47,9 +47,15 @@ public final class TierAnvilListener implements Listener {
     public void onPrepareAnvil(PrepareAnvilEvent event) {
         ItemStack left = event.getInventory().getItem(0);
         ItemStack right = event.getInventory().getItem(1);
-        if (left == null || right == null) return;
         Player player = event.getView().getPlayer() instanceof Player p ? p : null;
         if (player == null) return;
+        if (left == null || right == null) {
+            // 1.4.85: слот опустел — ссылка на «последний ключ» больше не нужна.
+            // Сам отложенный ролл в CraftRollKeeper остаётся: вернув предмет,
+            // игрок увидит тот же результат (анти-эксплойт), но карта не растёт.
+            previewKeys.remove(player.getUniqueId());
+            return;
+        }
 
         // 1.4.80: anvil.enabled — мастер-выключатель ВСЕХ механик наковальни
         // (улучшение, перекат, слияние). Раньше он гасил только слияние, а ковка
