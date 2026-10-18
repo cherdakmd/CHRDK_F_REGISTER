@@ -2,10 +2,16 @@ package ru.cherdakmd.chrdktierforge;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 
+import java.io.File;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 /**
@@ -26,12 +32,17 @@ public final class TierForgePlugin extends JavaPlugin {
     private org.bukkit.scheduler.BukkitTask identifyScanTask;
     /** Таймер пассивного пульса кузни (регенерация/зрение/магнит), гасим при перезагрузке. */
     private org.bukkit.scheduler.BukkitTask forgePulseTask;
+    /** stats.yml — находки переживают перезапуск (1.4.81). */
+    private File statsFile;
+    private org.bukkit.scheduler.BukkitTask statsSaveTask;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
         reloadTierConfig();
         this.items = new TierItems(this);
+        loadStats();
+        startStatsSave();
 
         Bukkit.getPluginManager().registerEvents(new TierCraftListener(this), this);
         Bukkit.getPluginManager().registerEvents(new TierAnvilListener(this), this);
@@ -85,6 +96,72 @@ public final class TierForgePlugin extends JavaPlugin {
         if (forgePulseTask != null) {
             forgePulseTask.cancel();
             forgePulseTask = null;
+        }
+        if (statsSaveTask != null) {
+            statsSaveTask.cancel();
+            statsSaveTask = null;
+        }
+        saveStats(); // последний сейв — синхронно, чтобы не потерять сессию
+    }
+
+    /* ------------------------------ статистика (1.4.81) ------------------------------ */
+
+    /** Читает stats.yml при старте; битый файл не роняет плагин. */
+    private void loadStats() {
+        this.statsFile = new File(getDataFolder(), "stats.yml");
+        if (!statsFile.isFile()) {
+            return;
+        }
+        try {
+            YamlConfiguration yaml = YamlConfiguration.loadConfiguration(statsFile);
+            ConfigurationSection root = yaml.getConfigurationSection("players");
+            if (root != null) {
+                stats.load(root);
+            }
+            getLogger().info("CHRDK_TierForge: статистика находок загружена ("
+                    + stats.players() + " игроков, " + stats.grandTotal() + " находок).");
+        } catch (RuntimeException exception) {
+            getLogger().warning("CHRDK_TierForge: не удалось прочитать stats.yml — "
+                    + exception.getMessage() + "; начинаем с пустых счётчиков");
+        }
+    }
+
+    /** Фоновый сейв раз в 5 минут (6000 тиков). */
+    private void startStatsSave() {
+        if (statsSaveTask != null) {
+            statsSaveTask.cancel();
+        }
+        statsSaveTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
+                this, this::saveStats, 6000L, 6000L);
+    }
+
+    /**
+     * Атомарная запись stats.yml: временный файл + move. Вызывается из async-таски
+     * и из onDisable (там — синхронно, файл крошечный).
+     */
+    private void saveStats() {
+        File file = statsFile;
+        if (file == null) {
+            return;
+        }
+        File parent = file.getParentFile();
+        if (parent != null && !parent.isDirectory() && !parent.mkdirs()) {
+            getLogger().warning("CHRDK_TierForge: папка плагина недоступна, stats.yml не сохранён");
+            return;
+        }
+        try {
+            YamlConfiguration yaml = new YamlConfiguration();
+            stats.writeTo(yaml.createSection("players"));
+            File temp = new File(parent, file.getName() + ".tmp");
+            yaml.save(temp);
+            try {
+                Files.move(temp.toPath(), file.toPath(),
+                        StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException exception) {
+                Files.move(temp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+        } catch (Exception exception) {
+            getLogger().warning("CHRDK_TierForge: не удалось сохранить stats.yml — " + exception);
         }
     }
 

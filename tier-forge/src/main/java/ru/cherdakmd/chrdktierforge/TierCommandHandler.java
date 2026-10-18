@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /** /tiers — таблица редкости + личная статистика; /tiersadmin give|give-unidentified|reload. */
@@ -42,7 +43,7 @@ public final class TierCommandHandler implements TabExecutor {
             return true;
         }
         if (args.length >= 1 && "stats".equalsIgnoreCase(args[0])) {
-            return handleStats(player);
+            return handleStats(player, args.length >= 2 && "reset".equalsIgnoreCase(args[1]));
         }
         return handleTiers(player);
     }
@@ -69,34 +70,61 @@ public final class TierCommandHandler implements TabExecutor {
         return true;
     }
 
-    /** /tiers stats — личные находки по тирам за сессию. */
-    private boolean handleStats(Player player) {
-        plugin.messages().send(player, "stats-header");
+    /** /tiers stats [reset] — личные находки за всё время (1.4.81). */
+    private boolean handleStats(Player player, boolean reset) {
+        if (reset) {
+            plugin.stats().reset(player.getUniqueId());
+            plugin.messages().send(player, "stats-reset");
+            return true;
+        }
+        return showStats(player, player.getUniqueId(), "stats-header", "stats-empty", null);
+    }
+
+    /** Печать таблицы находок; {@code playerName != null} — админский вариант с ником. */
+    private boolean showStats(CommandSender sender, UUID playerId, String headerKey,
+                              String emptyKey, String playerName) {
+        String nameArg = playerName == null ? "" : playerName;
+        plugin.messages().send(sender, headerKey, "player", nameArg);
         int shown = 0;
         for (TierDef.Snapshot tier : plugin.config().tiers()) {
-            int count = plugin.stats().totalOf(player.getUniqueId(), tier.id());
+            int count = plugin.stats().totalOf(playerId, tier.id());
             if (count <= 0) continue;
             shown++;
             String color = plugin.messages().raw("tier." + tier.id() + ".color");
             String name = plugin.messages().raw("tier." + tier.id() + ".name");
-            plugin.messages().send(player, "stats-row",
+            plugin.messages().send(sender, "stats-row",
                     "color", color, "name", name, "count", count);
         }
         if (shown == 0) {
-            plugin.messages().send(player, "stats-empty");
+            plugin.messages().send(sender, emptyKey, "player", nameArg);
         }
         return true;
     }
 
     private boolean handleAdmin(CommandSender sender, String[] args) {
         if (!sender.hasPermission("chrdktierforge.admin")) {
-            plugin.messages().send(sender, "usage");
+            plugin.messages().send(sender, "admin-no-perm");
             return true;
         }
         if (args.length >= 1 && "reload".equalsIgnoreCase(args[0])) {
             plugin.reloadTierConfig();
             plugin.messages().send(sender, "admin-reloaded");
             return true;
+        }
+        if (args.length >= 2 && ("stats".equalsIgnoreCase(args[0])
+                || "resetstats".equalsIgnoreCase(args[0]))) {
+            Player target = Bukkit.getPlayerExact(args[1]);
+            if (target == null) {
+                plugin.messages().send(sender, "admin-offline", "player", args[1]);
+                return true;
+            }
+            if ("resetstats".equalsIgnoreCase(args[0])) {
+                plugin.stats().reset(target.getUniqueId());
+                plugin.messages().send(sender, "admin-stats-reset", "player", target.getName());
+                return true;
+            }
+            return showStats(sender, target.getUniqueId(), "admin-stats-header",
+                    "admin-stats-empty", target.getName());
         }
         if (args.length >= 4 && "give".equalsIgnoreCase(args[0])) {
             Player target = Bukkit.getPlayerExact(args[1]);
@@ -188,19 +216,26 @@ public final class TierCommandHandler implements TabExecutor {
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
                                      @NotNull String label, String @NotNull [] args) {
         List<String> matches = new ArrayList<>();
+        if (args.length == 0) {
+            return matches;
+        }
         String prefix = args[args.length - 1].toLowerCase(Locale.ROOT);
         if ("tiers".equalsIgnoreCase(command.getName())) {
             if (args.length == 1) {
                 List.of("stats").stream().filter(x -> x.startsWith(prefix)).forEach(matches::add);
+            } else if (args.length == 2 && "stats".equalsIgnoreCase(args[0])) {
+                List.of("reset").stream().filter(x -> x.startsWith(prefix)).forEach(matches::add);
             }
             return matches;
         }
         if ("tiersadmin".equalsIgnoreCase(command.getName())) {
             boolean unidentified = "give-unidentified".equalsIgnoreCase(args[0]);
             if (args.length == 1) {
-                List.of("give", "give-unidentified", "reload").stream()
+                List.of("give", "give-unidentified", "reload", "stats", "resetstats").stream()
                         .filter(x -> x.startsWith(prefix)).forEach(matches::add);
-            } else if (args.length == 2 && ("give".equalsIgnoreCase(args[0]) || unidentified)) {
+            } else if (args.length == 2 && ("give".equalsIgnoreCase(args[0]) || unidentified
+                    || "stats".equalsIgnoreCase(args[0])
+                    || "resetstats".equalsIgnoreCase(args[0]))) {
                 Bukkit.getOnlinePlayers().stream().map(Player::getName)
                         .filter(name -> name.toLowerCase(Locale.ROOT).startsWith(prefix))
                         .forEach(matches::add);

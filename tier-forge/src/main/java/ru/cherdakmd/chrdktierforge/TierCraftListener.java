@@ -76,6 +76,8 @@ public final class TierCraftListener implements Listener {
         TierDef.Snapshot consumed = rollKeeper.consume(
                 player.getUniqueId(), current.getType().name());
         if (tier == null || consumed == null) return;
+        // 1.4.81: находки считаются и в «старом» флоу (раньше — только при опознании).
+        plugin.stats().count(player.getUniqueId(), consumed.id());
         notifyRolled(player, consumed);
     }
 

@@ -47,6 +47,11 @@ public final class TierMobDropListener implements Listener {
             TierDef.Snapshot roll = TierRoller.roll(plugin.config().tiers(), random);
             if (roll != null) {
                 plugin.items().apply(drop, roll);
+                // 1.4.81: находку засчитываем убийце (в identify-флоу — тому,
+                // кто потом опознает предмет: тир до опознания ещё не известен).
+                if (event.getEntity().getKiller() instanceof org.bukkit.entity.Player killer) {
+                    plugin.stats().count(killer.getUniqueId(), roll.id());
+                }
             }
         }
     }
