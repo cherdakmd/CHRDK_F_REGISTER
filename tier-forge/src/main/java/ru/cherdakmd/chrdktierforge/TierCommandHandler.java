@@ -87,7 +87,7 @@ public final class TierCommandHandler implements TabExecutor {
      */
     private boolean handleInfo(Player player) {
         ItemStack item = player.getInventory().getItemInMainHand();
-        if (item == null || item.getType().isAir()) {
+        if (item == null || item.getType() == Material.AIR) {
             plugin.messages().send(player, "info-empty");
             return true;
         }

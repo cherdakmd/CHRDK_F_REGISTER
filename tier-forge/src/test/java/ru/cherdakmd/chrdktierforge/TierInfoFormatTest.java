@@ -29,14 +29,18 @@ class TierInfoFormatTest {
     }
 
     @Test
-    void blockMaterialsUseBlockLanguageNamespace() {
-        assertEquals("<lang:block.minecraft.stone>",
-                TierInfoFormat.languageTag(Material.STONE));
+    void materialKeyPathIsUsedVerbatim() {
+        // Тиры ставятся только на снаряжение, поэтому пространство имён всегда
+        // предметное; путь — нижний регистр имени материала.
+        assertEquals("<lang:item.minecraft.amethyst_shard>",
+                TierInfoFormat.languageTag(Material.AMETHYST_SHARD));
     }
 
     @Test
     void airAndNullAreEmpty() {
         assertEquals("", TierInfoFormat.languageTag(null));
         assertEquals("", TierInfoFormat.languageTag(Material.AIR));
+        assertEquals("", TierInfoFormat.languageTag(Material.CAVE_AIR));
+        assertEquals("", TierInfoFormat.languageTag(Material.VOID_AIR));
     }
 }

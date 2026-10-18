@@ -27,16 +27,21 @@ final class TierInfoFormat {
 
     /**
      * Тег языка клиента для материала: {@code <lang:item.minecraft.diamond_sword>}.
-     * Пространство имён выбирается по {@link Material#isBlock()}: у блоков
-     * перевод живёт в {@code block.minecraft.*}, у предметов — в
-     * {@code item.minecraft.*} (у камня есть предметная форма, но ключ — блочный).
-     * Пустой материал/воздух — пустая строка (линию просто не показываем).
+     *
+     * <p>Пространство имён всегда {@code item.*}: тир-предметы — это броня, оружие
+     * и инструменты, у которых перевод предметный; катализатор переката по
+     * умолчанию тоже предмет. Проверять {@code Material#isBlock()} здесь нельзя:
+     * на Paper он лезет в {@code Registry} и требует живого сервера, а этот класс
+     * обязан оставаться чистым (юнит-тесты).
+     *
+     * <p>Пустой материал и воздух — пустая строка (линию просто не показываем).
      */
     static String languageTag(Material material) {
-        if (material == null || material.isAir()) {
+        if (material == null || material == Material.AIR
+                || material == Material.CAVE_AIR || material == Material.VOID_AIR) {
             return "";
         }
         String path = material.name().toLowerCase(Locale.ROOT);
-        return "<lang:" + (material.isBlock() ? "block" : "item") + ".minecraft." + path + ">";
+        return "<lang:item.minecraft." + path + ">";
     }
 }
