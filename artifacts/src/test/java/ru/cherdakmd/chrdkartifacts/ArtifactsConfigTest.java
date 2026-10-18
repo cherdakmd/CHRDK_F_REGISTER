@@ -11,14 +11,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ArtifactsConfigTest {
 
-    private static ArtifactsConfig parse(String yaml) {
+    private static ArtifactsConfig parse(String yaml) throws Exception {
         YamlConfiguration cfg = new YamlConfiguration();
         cfg.loadFromString(yaml);
         return ArtifactsConfig.parse(cfg, Logger.getLogger("ArtifactsConfigTest"));
     }
 
     @Test
-    void lootTableShortNameIsLastSegment() {
+    void lootTableShortNameIsLastSegment() throws Exception {
         assertEquals("ancient_city", ArtifactsConfig.shortName("minecraft:chests/ancient_city"));
         assertEquals("ancient_city", ArtifactsConfig.shortName("mine_treasure:chests/ancient_city"));
         assertEquals("ancient_city", ArtifactsConfig.shortName("ANCIENT_CITY"));
@@ -27,7 +27,7 @@ class ArtifactsConfigTest {
     }
 
     @Test
-    void datapackNamespaceMatchesByShortName() {
+    void datapackNamespaceMatchesByShortName() throws Exception {
         ArtifactsConfig config = parse("""
                 sources:
                   chests:
@@ -41,7 +41,7 @@ class ArtifactsConfigTest {
     }
 
     @Test
-    void worldPolicyDefaultsAndOverrides() {
+    void worldPolicyDefaultsAndOverrides() throws Exception {
         assertTrue(parse("").worldPolicy().allowsWeather("world"));
         assertTrue(parse("").worldPolicy().allowsTime("world"));
 
@@ -57,7 +57,7 @@ class ArtifactsConfigTest {
     }
 
     @Test
-    void overridesAreClamped() {
+    void overridesAreClamped() throws Exception {
         ArtifactsConfig config = parse("""
                 general:
                   passive-refresh-ticks: 9999
