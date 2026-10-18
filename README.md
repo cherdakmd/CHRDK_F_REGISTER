@@ -1159,6 +1159,9 @@ public void onEnable() {
 зависимость: без него работает всё, кроме «Хартии чар».
 «Глиняная душа» гасит прыжок атрибутом `jump_strength`, а не переполненным
 уровнем эффекта; пассивные зелья не понижают эффекты, полученные извне.
+Телепорты активных артефактов выбирают безопасную точку (без лавы, воды и крыши
+Нижнего мира); грозу и ночь проклятых артефактов можно ограничить секцией
+`world-effects` или списком миров.
 
 Изначальная база (1.4.15): 15 светлых и 15 проклятых реликвий, работающих из
 инвентаря. Пассивные горят постоянно (Солнечный оберег гасит огонь, Слеза вдовы тянет
@@ -1255,20 +1258,20 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.103.jar`, аддон
-CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.103.jar`, реферальный —
-`referrals/build/libs/chrdk-referrals-1.4.103.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.103.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.103.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.103.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.103.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.103.jar` (хартия чар — при установленном аддоне чар), общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.103.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.103.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.103.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.103.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.103.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.103.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.104.jar`, аддон
+CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.104.jar`, реферальный —
+`referrals/build/libs/chrdk-referrals-1.4.104.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.104.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.104.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.104.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.104.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.104.jar` (хартия чар — при установленном аддоне чар), общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.104.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.104.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.104.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.104.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.104.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.104.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). Оба JAR прикладываются к каждому релизу на GitHub.
 
 ---
@@ -1613,7 +1616,7 @@ plugins/<Addon>/messages.yml — удалите их после обновлен
 проклятого до легендарного, накат при крафте брони/оружия/инструментов, апгрейд двух
 одинаковых тирированных предметов на наковальне, перенос тира через апгрейд в незерит.
 
-**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-tier-forge-1.4.103.jar`
+**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-tier-forge-1.4.104.jar`
 рядом с ядром (≥ 1.4.6), перезапуск. Шансы/бонусы тиров — в `plugins/CHRDK_TierForge/config.yml`.
 
 ---
@@ -2890,3 +2893,34 @@ Discord-интеграция и её настройки не изменены.
 `PotionRefreshTest` (по 4 проверки), `ArtifactRegistryTest` расширен до 8 —
 всего 36 `@Test` в 8 классах.
 Версия 1.4.103, полный перезапуск.
+
+### CHRDK_Artifacts: безопасные телепорты и мировой покой — 1.4.104
+
+Четвёртая волна аудита `docs/ARTIFACTS_AUDIT.md` — перемещения и влияние на мир.
+
+- **«Ключ странника» действительно ищет.** В релизе 1.4.73 цикл из 12 попыток
+  был мёртвым кодом: телепорт на первый же кандидат и `return`. Теперь до 16
+  кандидатов, и каждый проверяется на безопасность.
+- **Без лавы, воды и кактусов.** Точка годится, только если ноги и голова
+  свободны, под ногами твёрдый блок, а сам блок не лава, магма, огонь, кактус,
+  костёр, рыхлый снег или куст сладких ягод.
+- **Нижний мир без крыши.** В Нижнем мире «высочайший блок» — это бедроковый
+  потолок; телепорт больше не выносит на крышу, а ищет пещеру ниже.
+- **Границы мира.** Кандидаты вне world border отбрасываются.
+- **Честный отказ.** Если безопасного места нет, артефакт не тратит кулдаун и
+  опыт, а пишет `teleport-failed`.
+- **Мировые эффекты — под контролем.** Новая секция `world-effects`: можно
+  выключить погоду и/или время и ограничить список миров. «Раковина тоски» и
+  «Часы дурошлёпа»/«Расколотая Луна» уважают настройку; молния в носителя и
+  личные дебаффы остаются.
+- **Совместимость с датапаками.** Шанс сундука теперь сравнивается и по
+  последнему сегменту таблицы: таблица `mine_treasure:chests/ancient_city`
+  подхватывает шанс от `minecraft:chests/ancient_city`.
+
+Новые ключи конфига — `world-effects.weather`, `world-effects.time`,
+`world-effects.worlds` (по умолчанию всё разрешено, как раньше). Контракт
+`messages.yml` — 242 ключа и 41 литерал (+`teleport-failed`,
+`world-effect-blocked`). Новые классы `TeleportSafety` и `WorldPolicy`; тесты
+`TeleportSafetyTest` (5), `WorldPolicyTest` (4), `ArtifactsConfigTest` (4) —
+всего 49 `@Test` в 11 классах.
+Версия 1.4.104, полный перезапуск.

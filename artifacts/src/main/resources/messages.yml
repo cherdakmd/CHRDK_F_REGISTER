@@ -8,6 +8,8 @@ messages:
   not-enough-levels: "<red>Не хватает уровней опыта: нужно %need%.</red>"
   item-protected: "<gray>Артефакт нельзя поставить, съесть или использовать как обычный предмет.</gray>"
   dash-blocked: "<red>Тайга не пускает: впереди толща.</red>"
+  teleport-failed: "<red>Артефакт не нашёл безопасного места для перехода. Попробуйте ещё раз.</red>"
+  world-effect-blocked: "<gray>Погода и время этого мира не подчиняются артефакту.</gray>"
   revealed: "<light_purple>✦ Линза обнажила %count% существ вокруг.</light_purple>"
   enchant-needs-item: "<red>Хартия ждёт предмет во второй руке.</red>"
   enchant-failed: "<red>Письмена хартии не проступили. Архив чар недоступен.</red>"

@@ -3,6 +3,7 @@ package ru.cherdakmd.chrdkartifacts;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
 import org.bukkit.entity.EntityType;
@@ -23,6 +24,7 @@ import org.bukkit.util.Vector;
 
 import java.util.Objects;
 import java.util.Random;
+import java.util.Set;
 
 /**
  * Активные артефакты: ПКМ предметом → проверки (вкл, авторизация, кулдаун, уровни опыта)
@@ -33,6 +35,11 @@ public final class ActiveEffectsListener implements Listener {
 
     private static final int TARGET_REACH = 30;
     private static final int DASH_BLOCKS = 8;
+    /** Блоки, на которых стоять нельзя: телепорт туда — это урон или смерть. */
+    private static final Set<Material> HAZARDOUS_GROUND = Set.of(
+            Material.LAVA, Material.MAGMA_BLOCK, Material.CACTUS, Material.FIRE,
+            Material.SOUL_FIRE, Material.CAMPFIRE, Material.SOUL_CAMPFIRE,
+            Material.POWDER_SNOW, Material.SWEET_BERRY_BUSH);
 
     private final ArtifactsPlugin plugin;
     private final Random random = new Random();
@@ -327,7 +334,12 @@ public final class ActiveEffectsListener implements Listener {
 
     /** Расколотая Луна: миру — полночь, чужим — свечение позора. */
     private boolean moonShatter(Player player) {
-        player.getWorld().setTime(18000);
+        World world = player.getWorld();
+        if (plugin.config().worldPolicy().allowsTime(world.getName())) {
+            world.setTime(18000);
+        } else {
+            plugin.messages().send(player, "world-effect-blocked");
+        }
         for (Player other : player.getWorld().getPlayers()) {
             if (!other.equals(player)) {
                 other.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 20 * 15, 0,
@@ -465,20 +477,63 @@ public final class ActiveEffectsListener implements Listener {
         return true;
     }
 
+    /**
+     * Ключ странника: безопасная случайная точка в 60–300 блоках. Раньше цикл из
+     * 12 попыток был мёртвым кодом (телепорт и return в первой итерации), а точка
+     * могла оказаться в лаве, воде или на крыше Нижнего мира. Теперь кандидаты
+     * перебираются по-настоящему, а при полном провале артефакт не тратит
+     * кулдаун и честно сообщает об отказе.
+     */
     private boolean randomTeleport(Player player) {
-        for (int attempt = 0; attempt < 12; attempt++) {
+        World world = player.getWorld();
+        for (int attempt = 0; attempt < TeleportSafety.ATTEMPTS; attempt++) {
             double angle = random.nextDouble() * Math.PI * 2;
             double dist = 60 + random.nextDouble() * 240;
-            Location loc = player.getLocation().clone()
-                    .add(Math.cos(angle) * dist, 0, Math.sin(angle) * dist);
-            loc.setY(player.getWorld().getHighestBlockYAt(loc) + 1);
-            if (!loc.getBlock().getType().isSolid() || loc.getY() > player.getWorld().getMaxHeight() - 2) {
-                loc.add(0, -1, 0);
+            Location base = player.getLocation();
+            double x = base.getX() + Math.cos(angle) * dist;
+            double z = base.getZ() + Math.sin(angle) * dist;
+            Location spot = safeSurface(world, x, z);
+            if (spot == null || !world.getWorldBorder().isInside(spot)) {
+                continue;
             }
-            player.teleport(loc);
+            player.teleport(spot);
             return true;
         }
-        return true;
+        plugin.messages().send(player, "teleport-failed");
+        return false;
+    }
+
+    /**
+     * Безопасная точка в колонне x/z или null, если приземляться некуда. В
+     * обычном мире берём поверхность; в Нижнем — спускаемся от потолка вниз,
+     * потому что «высочайший блок» там и есть бедроковая крыша.
+     */
+    private Location safeSurface(World world, double x, double z) {
+        boolean nether = world.getEnvironment() == World.Environment.NETHER;
+        int highest = world.getHighestBlockYAt((int) Math.floor(x), (int) Math.floor(z));
+        int start = TeleportSafety.surfaceY(highest, world.getMinHeight(), world.getMaxHeight());
+        if (TeleportSafety.isOnNetherRoof(nether, start)) {
+            start = TeleportSafety.NETHER_CEILING_Y - 1;
+        }
+        int lowest = nether ? Math.max(world.getMinHeight() + 1, start - 90) : start;
+        for (int y = start; y >= lowest; y--) {
+            Location feet = new Location(world, x, y, z);
+            if (isSafeColumn(feet)) {
+                return feet;
+            }
+        }
+        return null;
+    }
+
+    private boolean isSafeColumn(Location feet) {
+        Block at = feet.getBlock();
+        Block head = feet.clone().add(0, 1, 0).getBlock();
+        Block below = feet.clone().subtract(0, 1, 0).getBlock();
+        return TeleportSafety.isSafeSpot(
+                at.isPassable() && !at.isLiquid(),
+                head.isPassable() && !head.isLiquid(),
+                below.getType().isSolid() && !below.isLiquid(),
+                HAZARDOUS_GROUND.contains(below.getType()));
     }
 
     private boolean reveal(Player player) {
@@ -537,22 +592,44 @@ public final class ActiveEffectsListener implements Listener {
         return true;
     }
 
+    /**
+     * Мембрана призрака: дикий телепорт без выбора игрока, но не в лаву и не на
+     * крышу Нижнего мира — иначе «дикость» означала бы смерть за один клик.
+     */
     private boolean wildTeleport(Player player) {
-        double angle = random.nextDouble() * Math.PI * 2;
-        double dist = 10 + random.nextDouble() * 24;
-        Location loc = player.getLocation().clone()
-                .add(Math.cos(angle) * dist, 0, Math.sin(angle) * dist);
-        loc.setY(player.getWorld().getHighestBlockYAt(loc) + 1);
-        player.teleport(loc.add(0, 1, 0));
-        player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 100, 0, true, false, true));
-        return true;
+        World world = player.getWorld();
+        for (int attempt = 0; attempt < TeleportSafety.ATTEMPTS; attempt++) {
+            double angle = random.nextDouble() * Math.PI * 2;
+            double dist = 10 + random.nextDouble() * 24;
+            Location base = player.getLocation();
+            Location spot = safeSurface(world, base.getX() + Math.cos(angle) * dist,
+                    base.getZ() + Math.sin(angle) * dist);
+            if (spot == null || !world.getWorldBorder().isInside(spot)) {
+                continue;
+            }
+            player.teleport(spot);
+            player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 100, 0,
+                    true, false, true));
+            return true;
+        }
+        plugin.messages().send(player, "teleport-failed");
+        return false;
     }
 
+    /**
+     * Раковина тоски: молния бьёт в носителя всегда, а грозу на весь мир —
+     * только если администратор разрешил мировые эффекты (`world-effects`).
+     */
     private boolean griefStorm(Player player) {
-        player.getWorld().setStorm(true);
-        player.getWorld().setThundering(true);
-        player.getWorld().setWeatherDuration(20 * 120);
-        player.getWorld().strikeLightning(player.getLocation());
+        World world = player.getWorld();
+        if (plugin.config().worldPolicy().allowsWeather(world.getName())) {
+            world.setStorm(true);
+            world.setThundering(true);
+            world.setWeatherDuration(20 * 120);
+        } else {
+            plugin.messages().send(player, "world-effect-blocked");
+        }
+        world.strikeLightning(player.getLocation());
         return true;
     }
 
@@ -568,7 +645,12 @@ public final class ActiveEffectsListener implements Listener {
     }
 
     private boolean nightClock(Player player) {
-        player.getWorld().setTime(18000);
+        World world = player.getWorld();
+        if (plugin.config().worldPolicy().allowsTime(world.getName())) {
+            world.setTime(18000);
+        } else {
+            plugin.messages().send(player, "world-effect-blocked");
+        }
         player.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 600, 0, true, false, true));
         return true;
     }

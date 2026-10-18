@@ -23,10 +23,12 @@ public final class ArtifactsConfig {
     private final Map<String, Double> mobChances;
     private final double fishingTreasurePercent;
     private final int goodSideWeightPercent;
+    private final WorldPolicy worldPolicy;
 
     private ArtifactsConfig(boolean requiresAuth, int refreshTicks, Map<String, Override> overrides,
                             Map<String, Double> chestChances, Map<String, Double> mobChances,
-                            double fishingTreasurePercent, int goodSideWeightPercent) {
+                            double fishingTreasurePercent, int goodSideWeightPercent,
+                            WorldPolicy worldPolicy) {
         this.requiresAuth = requiresAuth;
         this.refreshTicks = refreshTicks;
         this.overrides = overrides;
@@ -34,6 +36,7 @@ public final class ArtifactsConfig {
         this.mobChances = mobChances;
         this.fishingTreasurePercent = fishingTreasurePercent;
         this.goodSideWeightPercent = goodSideWeightPercent;
+        this.worldPolicy = worldPolicy;
     }
 
     public static ArtifactsConfig parse(FileConfiguration cfg, Logger logger) {
@@ -69,8 +72,12 @@ public final class ArtifactsConfig {
                 cfg.getConfigurationSection("sources.mobs"), logger, "mobs");
         double fishing = clampPercent(cfg.getDouble("sources.fishing-treasure-percent", 3));
         int goodWeight = clamp(cfg.getInt("sources.good-side-chance-percent", 70), 0, 100);
+        WorldPolicy worldPolicy = new WorldPolicy(
+                cfg.getBoolean("world-effects.weather", true),
+                cfg.getBoolean("world-effects.time", true),
+                new java.util.HashSet<>(cfg.getStringList("world-effects.worlds")));
         return new ArtifactsConfig(requiresAuth, refreshTicks, Map.copyOf(overrides),
-                Map.copyOf(chestChances), Map.copyOf(mobChances), fishing, goodWeight);
+                Map.copyOf(chestChances), Map.copyOf(mobChances), fishing, goodWeight, worldPolicy);
     }
 
     private static Map<String, Double> readChances(ConfigurationSection section, Logger logger,
@@ -117,16 +124,38 @@ public final class ArtifactsConfig {
         return ov == null ? def.xpCostLevels() : ov.xpCostLevels();
     }
 
-    /** Шанс найти артефакт в сундуке типа таблицы (%): подходит и полное namespaced-имя. */
+    /**
+     * Шанс найти артефакт в сундуке типа таблицы (%): подходит и полное
+     * namespaced-имя, и короткое имя последнего сегмента. Короткое имя важно для
+     * таблиц датапаков (например, датапак с сокровищами при рудокопке кладёт лут
+     * в свои таблицы): `mine_treasure:chests/ancient_city` совпадёт с
+     * `minecraft:chests/ancient_city` из конфига.
+     */
     public double chestChancePercent(String lootTableKey) {
+        if (lootTableKey == null) {
+            return 0.0;
+        }
         Double direct = chestChances.get(lootTableKey);
         if (direct != null) {
             return direct;
         }
-        // сокращённое имя (chests/ancient_city → ancient_city)
-        String shortName = lootTableKey == null ? ""
-                : lootTableKey.substring(lootTableKey.lastIndexOf('/') + 1);
-        return chestChances.getOrDefault(shortName, 0.0);
+        String shortName = shortName(lootTableKey);
+        Double byFullShort = chestChances.get(shortName);
+        if (byFullShort != null) {
+            return byFullShort;
+        }
+        for (Map.Entry<String, Double> entry : chestChances.entrySet()) {
+            if (shortName(entry.getKey()).equals(shortName)) {
+                return entry.getValue();
+            }
+        }
+        return 0.0;
+    }
+
+    /** Последний сегмент ключа таблицы: `minecraft:chests/ancient_city` → `ancient_city`. */
+    static String shortName(String lootTableKey) {
+        return lootTableKey.substring(lootTableKey.lastIndexOf('/') + 1)
+                .toLowerCase(java.util.Locale.ROOT);
     }
 
     /** Шанс дропа артефакта с типа существа (%). */
@@ -140,6 +169,11 @@ public final class ArtifactsConfig {
 
     public int goodSideWeightPercent() {
         return goodSideWeightPercent;
+    }
+
+    /** Политика мировых эффектов (погода/время) из {@code world-effects}. */
+    public WorldPolicy worldPolicy() {
+        return worldPolicy;
     }
 
     private static int clamp(int value, int min, int max) {
