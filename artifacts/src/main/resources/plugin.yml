@@ -2,7 +2,7 @@ name: CHRDK_Artifacts
 version: ${version}
 main: ru.cherdakmd.chrdkartifacts.ArtifactsPlugin
 api-version: '26.3'
-description: "30 артефактов (15 светлых и 15 проклятых), работающих из инвентаря: пассивные и активные"
+description: "65 артефактов (33 светлых и 32 проклятых), работающих из инвентаря: пассивные и активные"
 author: cherdakmd
 depend: [CHRDK_Core, CHRDK_Enchants]
 commands:

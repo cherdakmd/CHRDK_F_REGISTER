@@ -12,7 +12,9 @@ import org.bukkit.entity.Skeleton;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
@@ -41,10 +43,20 @@ public final class ActiveEffectsListener implements Listener {
         this.plugin = plugin;
     }
 
+    /**
+     * ПКМ активным артефактом. Клик по интерактивному блоку (сундук, дверь,
+     * верстак, наковальня…) и клик в приседе артефакт не перехватывает — их
+     * обслуживает игра. В остальных случаях событие отменяется, чтобы артефакт
+     * нельзя было случайно поставить блоком или съесть, а уже потом решаются
+     * права, авторизация, кулдаун и цена в уровнях.
+     */
     @EventHandler
     public void onInteract(PlayerInteractEvent event) {
         Action action = event.getAction();
-        if (action != Action.RIGHT_CLICK_AIR && action != Action.RIGHT_CLICK_BLOCK) {
+        if (!ArtifactUseRules.isRightClick(action)) {
+            return;
+        }
+        if (event.getHand() != EquipmentSlot.HAND && event.getHand() != EquipmentSlot.OFF_HAND) {
             return;
         }
         ItemStack held = event.getItem();
@@ -56,11 +68,13 @@ public final class ActiveEffectsListener implements Listener {
         if (def == null || def.mode() != ArtifactDef.Mode.ACTIVE) {
             return;
         }
-        event.setCancelled(true);
-        if (event.getHand() != EquipmentSlot.HAND && event.getHand() != EquipmentSlot.OFF_HAND) {
+        Player player = event.getPlayer();
+        Block clicked = event.getClickedBlock();
+        boolean interactable = clicked != null && clicked.getType().isInteractable();
+        if (ArtifactUseRules.passesToBlock(action, interactable, player.isSneaking())) {
             return;
         }
-        Player player = event.getPlayer();
+        event.setCancelled(true);
         if (!player.hasPermission("chrdkartifacts.use") || !plugin.config().isEnabled(id)) {
             return;
         }
@@ -91,6 +105,30 @@ public final class ActiveEffectsListener implements Listener {
         plugin.cooldowns().start(player.getUniqueId(), id, now, plugin.config().cooldownSeconds(def));
         plugin.messages().send(player, "activated",
                 "name", plugin.messages().raw("art." + id + ".name"));
+    }
+
+    /**
+     * Артефакт — не строительный материал. Приседание перед блоком отдаёт клик
+     * игре, поэтому размещение (руда, обсидиан, снег, паутина…) отсекается
+     * отдельно: иначе предмет с меткой PDC исчез бы навсегда.
+     */
+    @EventHandler(ignoreCancelled = true)
+    public void onBlockPlace(BlockPlaceEvent event) {
+        if (plugin.items().idOf(event.getItemInHand()) == null) {
+            return;
+        }
+        event.setCancelled(true);
+        plugin.messages().send(event.getPlayer(), "item-protected");
+    }
+
+    /** Съедобные материалы (например, плод хоруса) тоже не должны уничтожать артефакт. */
+    @EventHandler(ignoreCancelled = true)
+    public void onConsume(PlayerItemConsumeEvent event) {
+        if (plugin.items().idOf(event.getItem()) == null) {
+            return;
+        }
+        event.setCancelled(true);
+        plugin.messages().send(event.getPlayer(), "item-protected");
     }
 
     /** Предмет «клиента» для эффектов вроде хартии: предмет в другой руке, если он не артефакт. */

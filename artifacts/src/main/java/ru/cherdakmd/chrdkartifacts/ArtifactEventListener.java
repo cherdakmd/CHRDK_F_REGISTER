@@ -1,5 +1,6 @@
 package ru.cherdakmd.chrdkartifacts;
 
+import org.bukkit.GameMode;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -12,7 +13,9 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
+import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Событийная половина суперспособностей доброй волны (1.4.58): Перо Феникса
@@ -33,6 +36,12 @@ public final class ArtifactEventListener implements Listener {
     static final double RETALIATE_DAMAGE = 2.0;
 
     private final ArtifactsPlugin plugin;
+    /**
+     * Кто уже отвечает ударом в текущей цепочке событий. Два игрока в «Тернистом
+     * Плаще» иначе обмениваются ответными ударами внутри одного и того же удара:
+     * каждый ответ запускает новое событие, и оба умирают одновременно.
+     */
+    private final Set<UUID> retaliating = new HashSet<>();
 
     public ArtifactEventListener(ArtifactsPlugin plugin) {
         this.plugin = plugin;
@@ -89,10 +98,25 @@ public final class ArtifactEventListener implements Listener {
             return;
         }
         LivingEntity damager = event.getDamager() instanceof LivingEntity d ? d : null;
-        if (damager == null || damager.equals(victim)) {
+        if (damager == null || damager.equals(victim) || damager.isDead()) {
             return;
         }
-        damager.damage(RETALIATE_DAMAGE, victim);
+        if (damager instanceof Player attacker
+                && (attacker.getGameMode() == GameMode.CREATIVE
+                || attacker.getGameMode() == GameMode.SPECTATOR)) {
+            return;
+        }
+        // Если у нападавшего тоже плащ, его ответный удар вернётся сюда же — второй
+        // раз в той же цепочке не отвечаем, иначе плащи убивают друг друга мгновенно.
+        UUID damagerId = damager.getUniqueId();
+        if (!retaliating.add(damagerId)) {
+            return;
+        }
+        try {
+            damager.damage(RETALIATE_DAMAGE, victim);
+        } finally {
+            retaliating.remove(damagerId);
+        }
     }
 
     /** Есть ли у игрока артефакт с нужным идом (и включён ли он конфигом/входом). */

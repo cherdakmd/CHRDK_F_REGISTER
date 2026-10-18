@@ -13,6 +13,7 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * {@code /artifacts} — каталог из messages.yml (светлые/проклятые, с подсветкой носимых);
@@ -104,11 +105,22 @@ public final class ArtifactCommandHandler implements CommandExecutor, TabComplet
                 }
             }
             ItemStack stack = plugin.items().build(def, amount);
-            target.getInventory().addItem(stack);
+            // Полный инвентарь не должен «съедать» выдачу: излишек падает под ноги.
+            Map<Integer, ItemStack> leftover = target.getInventory().addItem(stack);
+            int dropped = 0;
+            for (ItemStack left : leftover.values()) {
+                dropped += left.getAmount();
+                target.getWorld().dropItemNaturally(target.getLocation(), left);
+            }
             plugin.messages().send(sender, "admin-given",
                     "player", target.getName(),
                     "name", plugin.messages().raw("art." + def.id() + ".name"),
                     "amount", String.valueOf(amount));
+            if (dropped > 0) {
+                plugin.messages().send(sender, "admin-given-dropped",
+                        "player", target.getName(),
+                        "amount", String.valueOf(dropped));
+            }
             plugin.messages().send(target, "admin-received",
                     "name", plugin.messages().raw("art." + def.id() + ".name"));
             return true;
