@@ -36,6 +36,11 @@ public final class TierItems {
     public static final String PDC_FORGE_NAME = "forge_name";
     /** Префикс PDC-уровня улучшения: up_edge, up_lifesteal, … */
     public static final String PDC_UPGRADE_PREFIX = "up_";
+    /**
+     * Битовая карта стоящих улучшений (1.4.82): два long-слова вместо перебора
+     * всех 85 PDC-ключей на каждый предмет.
+     */
+    public static final String PDC_UPGRADE_INDEX = "up_index";
     /** Маркер лор-строк улучшений (пересборка лора снимает строки по этому знаку). */
     public static final String FORGE_LORE_MARKER = "✦";
 
@@ -44,6 +49,7 @@ public final class TierItems {
     private final NamespacedKey unidentifiedKey;
     private final NamespacedKey sourceKey;
     private final NamespacedKey forgeNameKey;
+    private final NamespacedKey indexKey;
     private final Random random = new Random();
 
     public TierItems(TierForgePlugin plugin) {
@@ -52,6 +58,7 @@ public final class TierItems {
         this.unidentifiedKey = new NamespacedKey(plugin, PDC_UNIDENTIFIED);
         this.sourceKey = new NamespacedKey(plugin, PDC_SOURCE);
         this.forgeNameKey = new NamespacedKey(plugin, PDC_FORGE_NAME);
+        this.indexKey = new NamespacedKey(plugin, PDC_UPGRADE_INDEX);
     }
 
     /** Читает id тира предмета (null — предмет без тира). */
@@ -74,6 +81,7 @@ public final class TierItems {
         clearTierModifiers(meta);
         clearForgeModifiers(meta);
         ensureForgeName(item, meta);
+        refreshUpgradeIndex(meta); // 1.4.82: индекс строится при каждой пересборке
         applyModifiers(item, meta, tier);
         applyUpgradeModifiers(item, meta);
         decorateName(item, meta, tier);
@@ -156,19 +164,63 @@ public final class TierItems {
         return level == null ? 0 : level;
     }
 
-    /** Все улучшения предмета (Def → уровень), в порядке реестра. */
+    /**
+     * Все улучшения предмета (Def → уровень), в порядке реестра. С 1.4.82 читает
+     * {@code up_index} и трогает только стоящие ключи; предметы старых версий без
+     * индекса по-прежнему перебираются целиком (и получат индекс при следующей
+     * пересборке через {@link #apply}).
+     */
     public Map<ForgeUpgrade.Def, Integer> upgradesOf(ItemStack item) {
         Map<ForgeUpgrade.Def, Integer> result = new LinkedHashMap<>();
         if (item == null || !item.hasItemMeta()) {
             return result;
         }
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) {
+            return result;
+        }
+        long[] index = meta.getPersistentDataContainer()
+                .get(indexKey, PersistentDataType.LONG_ARRAY);
+        if (index != null && UpgradeIndex.any(index)) {
+            for (int i = 0; i < ForgeUpgrade.ALL.size(); i++) {
+                if (!UpgradeIndex.has(index, i)) {
+                    continue;
+                }
+                ForgeUpgrade.Def def = ForgeUpgrade.ALL.get(i);
+                Integer level = meta.getPersistentDataContainer()
+                        .get(upgradeKey(def.id()), PersistentDataType.INTEGER);
+                if (level != null && level > 0) {
+                    result.put(def, level);
+                }
+            }
+            return result;
+        }
         for (ForgeUpgrade.Def def : ForgeUpgrade.ALL) {
-            int level = upgradeLevel(item, def.id());
-            if (level > 0) {
+            Integer level = meta.getPersistentDataContainer()
+                    .get(upgradeKey(def.id()), PersistentDataType.INTEGER);
+            if (level != null && level > 0) {
                 result.put(def, level);
             }
         }
         return result;
+    }
+
+    /** Пересобирает {@code up_index} по фактическим PDC-уровням (1.4.82). */
+    private void refreshUpgradeIndex(ItemMeta meta) {
+        long[] words = UpgradeIndex.empty();
+        for (int i = 0; i < ForgeUpgrade.ALL.size(); i++) {
+            Integer level = meta.getPersistentDataContainer()
+                    .get(upgradeKey(ForgeUpgrade.ALL.get(i).id()), PersistentDataType.INTEGER);
+            if (level != null && level > 0) {
+                UpgradeIndex.set(words, i);
+            }
+        }
+        if (UpgradeIndex.any(words)) {
+            meta.getPersistentDataContainer()
+                    .set(indexKey, PersistentDataType.LONG_ARRAY, words);
+        } else {
+            meta.getPersistentDataContainer().remove(indexKey);
+        }
     }
 
     /**
@@ -251,7 +303,9 @@ public final class TierItems {
         ItemKind kind = ItemKind.classify(item.getType().name());
         if (kind == null) return;
         EquipmentSlotGroup slot = slotGroupFor(kind);
-        for (Map.Entry<ForgeUpgrade.Def, Integer> entry : upgradesOf(item).entrySet()) {
+        // 1.4.82: читаем уже открытую мету, а не заново собираем её из предмета
+        // (раньше на каждую пересборку приходился лишний getItemMeta()).
+        for (Map.Entry<ForgeUpgrade.Def, Integer> entry : upgradesFromMeta(meta).entrySet()) {
             ForgeUpgrade.Def def = entry.getKey();
             double total = def.perLevel() * entry.getValue();
             String tag = "fu_" + def.id();

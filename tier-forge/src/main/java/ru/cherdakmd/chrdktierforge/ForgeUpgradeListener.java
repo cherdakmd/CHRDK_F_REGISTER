@@ -26,6 +26,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerExpChangeEvent;
 import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.player.PlayerItemDamageEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
@@ -66,12 +67,16 @@ public final class ForgeUpgradeListener implements Listener {
     private final Map<UUID, Long> adrenalineCooldown = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastStandCooldown = new ConcurrentHashMap<>();
     private final Map<UUID, java.util.List<ItemStack>> soulboundReturns = new ConcurrentHashMap<>();
-    /** Флаг реентера внутри «Забойщика»: ломаемые нами блоки не рождают новых залпов. */
-    private boolean zoneBreaking;
+    /**
+     * Флаг реентера внутри «Забойщика»: ломаемые нами блоки не рождают новых залпов.
+     * ThreadLocal, а не общий boolean: на Folia события разных игроков идут в разных
+     * региональных потоках, и общий флаг одной ветки глушил бы чужую (1.4.82).
+     */
+    private final ThreadLocal<Boolean> zoneBreaking = ThreadLocal.withInitial(() -> Boolean.FALSE);
     /** Последнее боевое действие игрока (дал или получил урон) — для «Ветра». */
     private final Map<UUID, Long> lastCombat = new ConcurrentHashMap<>();
-    /** Флаг реентера внутри «Медовника»/«Стойкого»: пере-применённые зелья не масштабируем. */
-    private boolean effectShifting;
+    /** Флаг реентера внутри «Медовника»/«Стойкого»; ThreadLocal — по той же причине. */
+    private final ThreadLocal<Boolean> effectShifting = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
     public ForgeUpgradeListener(TierForgePlugin plugin) {
         this.plugin = plugin;
@@ -460,16 +465,17 @@ public final class ForgeUpgradeListener implements Listener {
 
         // Забойщик: кирка выбивает колонну того же блока (ур I — сверху, II — и снизу)
         int hewer = levelOf(ups, ForgeUpgrade.Effect.ZONE_BREAK);
-        if (hewer > 0 && !zoneBreaking && ItemKind.classify(tool.getType().name()) == ItemKind.PICKAXE
+        if (hewer > 0 && !zoneBreaking.get()
+                && ItemKind.classify(tool.getType().name()) == ItemKind.PICKAXE
                 && type.isBlock() && type.getHardness() >= 0 && type.getHardness() < 50) {
-            zoneBreaking = true;
+            zoneBreaking.set(true);
             try {
                 breakColumnSibling(event.getBlock(), 1, type, tool);
                 if (hewer >= 2) {
                     breakColumnSibling(event.getBlock(), -1, type, tool);
                 }
             } finally {
-                zoneBreaking = false;
+                zoneBreaking.set(false);
             }
         }
     }
@@ -666,7 +672,7 @@ public final class ForgeUpgradeListener implements Listener {
     /** Медовник/Стойкий: масштабируем длительность новых эффектов на владельце брони. */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPotionEffect(EntityPotionEffectEvent event) {
-        if (effectShifting || !(event.getEntity() instanceof Player player)
+        if (effectShifting.get() || !(event.getEntity() instanceof Player player)
                 || event.getAction() != EntityPotionEffectEvent.Action.ADDED
                 || event.getCause() == EntityPotionEffectEvent.Cause.BEACON) {
             return;
@@ -692,13 +698,13 @@ public final class ForgeUpgradeListener implements Listener {
             return;
         }
         event.setCancelled(true); // иначе подадим стоковую длительность
-        effectShifting = true;    // наш же повторный эффект не масштабируем вновь
+        effectShifting.set(true); // наш же повторный эффект не масштабируем вновь
         try {
             int duration = Math.max(1, (int) Math.round(fresh.getDuration() * multiplier));
             player.addPotionEffect(new PotionEffect(fresh.getType(), duration,
                     fresh.getAmplifier(), fresh.isAmbient(), fresh.hasParticles(), fresh.hasIcon()));
         } finally {
-            effectShifting = false;
+            effectShifting.set(false);
         }
     }
 
@@ -825,7 +831,11 @@ public final class ForgeUpgradeListener implements Listener {
         return below == Material.DIRT_PATH || below == Material.GRASS_BLOCK;
     }
 
-    /** Магнит: притягиваем до 6 ближайших дропов к игроку (радиус 1.5 + 0.5×ур). */
+    /**
+     * Магнит: подтягиваем до 6 ближайших дропов к игроку (радиус 1.5 + 0.5×ур).
+     * С 1.4.82 — импульсом скорости, а не {@code teleport}: дроп не проваливается
+     * в блок/под пол и не «моргает» сквозь стены.
+     */
     private void pullDrops(Player player, double levels) {
         double radius = Math.min(5.5, 1.5 + 0.5 * levels);
         int pulled = 0;
@@ -833,11 +843,30 @@ public final class ForgeUpgradeListener implements Listener {
             if (!(entity instanceof Item drop) || drop.isDead() || drop.getPickupDelay() > 0) {
                 continue;
             }
-            drop.teleport(player.getLocation());
+            org.bukkit.util.Vector pull = player.getLocation().toVector()
+                    .subtract(drop.getLocation().toVector());
+            double distance = pull.length();
+            if (distance < 1.2) {
+                continue; // уже у ног — подбирать будет ваниль
+            }
+            double speed = Math.min(0.85, 0.22 + distance * 0.14);
+            drop.setVelocity(pull.normalize().multiply(speed));
             if (++pulled >= 6) {
                 break;
             }
         }
+    }
+
+    /**
+     * Выход игрока: чистим кулдауны и боевые метки (1.4.82). Очередь «привязки
+     * души» не трогаем — она нужна респауну.
+     */
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        UUID player = event.getPlayer().getUniqueId();
+        adrenalineCooldown.remove(player);
+        lastStandCooldown.remove(player);
+        lastCombat.remove(player);
     }
 
     /* ------------------------------- подсчёты ------------------------------- */
