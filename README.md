@@ -1157,6 +1157,8 @@ public void onEnable() {
 ракушка, седло), а не с палки или кости; предмет и сообщения не остаются безымянными,
 даже если секция `art.<ид>` удалена из `messages.yml`. Аддон чар — мягкая
 зависимость: без него работает всё, кроме «Хартии чар».
+«Глиняная душа» гасит прыжок атрибутом `jump_strength`, а не переполненным
+уровнем эффекта; пассивные зелья не понижают эффекты, полученные извне.
 
 Изначальная база (1.4.15): 15 светлых и 15 проклятых реликвий, работающих из
 инвентаря. Пассивные горят постоянно (Солнечный оберег гасит огонь, Слеза вдовы тянет
@@ -1253,20 +1255,20 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.102.jar`, аддон
-CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.102.jar`, реферальный —
-`referrals/build/libs/chrdk-referrals-1.4.102.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.102.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.102.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.102.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.102.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.102.jar` (хартия чар — при установленном аддоне чар), общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.102.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.102.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.102.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.102.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.102.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.102.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.103.jar`, аддон
+CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.103.jar`, реферальный —
+`referrals/build/libs/chrdk-referrals-1.4.103.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.103.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.103.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.103.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.103.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.103.jar` (хартия чар — при установленном аддоне чар), общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.103.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.103.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.103.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.103.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.103.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.103.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). Оба JAR прикладываются к каждому релизу на GitHub.
 
 ---
@@ -1611,7 +1613,7 @@ plugins/<Addon>/messages.yml — удалите их после обновлен
 проклятого до легендарного, накат при крафте брони/оружия/инструментов, апгрейд двух
 одинаковых тирированных предметов на наковальне, перенос тира через апгрейд в незерит.
 
-**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-tier-forge-1.4.102.jar`
+**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-tier-forge-1.4.103.jar`
 рядом с ядром (≥ 1.4.6), перезапуск. Шансы/бонусы тиров — в `plugins/CHRDK_TierForge/config.yml`.
 
 ---
@@ -2860,3 +2862,31 @@ Discord-интеграция и её настройки не изменены.
 (+`enchant-applied`). Новый класс `ArtifactText` (тест `ArtifactTextTest`, 5
 проверок), `TreasureLootTest` расширен до 3; всего 26 `@Test` в 6 классах.
 Версия 1.4.102, полный перезапуск.
+
+### CHRDK_Artifacts: проклятия без хаков и честный Феникс — 1.4.103
+
+Третья волна аудита `docs/ARTIFACTS_AUDIT.md` — эффекты и спасение от смерти.
+
+- **«Глиняная душа» — на атрибут.** Прыжок больше не выключается эффектом
+  `jump_boost` с амплификатором 250 (переполнение знакового байта: десинк на
+  1.20+, обходится на 1.21.5). Теперь пульс ставит transient-модификатор на
+  `Attribute.JUMP_STRENGTH`, вычитающий базовое значение, — прыжок ровно ноль;
+  артефакт убрали — модификатор снимается.
+- **Пассивные зелья не моргают.** Длительность считается от
+  `general.passive-refresh-ticks` плюс запас, поэтому эффект живёт между
+  пульсами даже на максимальном периоде в 10 секунд.
+- **Чужой эффект не понижается.** Если у игрока уже есть более сильное или
+  более долгое зелье (Speed II из бутылки, маяк, другой плагин), артефакт его
+  не перебивает своим слабым.
+- **Феникс уступает тотему.** Ванильный тотем бессмертия срабатывает первым:
+  если он в руке, «Перо» не тратит десятиминутный кулдаун.
+- **Щиты считаются.** Удар, целиком погашенный поглощением, смертельным не
+  считается — кулдаун не сгорает зря (`CombatMath`).
+- **Воскрешение без исключений.** Доля здоровья зажата в разумных пределах,
+  а вырожденный максимум (0 или отрицательный) трактуется как 20.
+
+Новых настроек и сообщений нет (240 ключей, 39 литералов). Новые классы
+`CombatMath`, `PotionRefresh`, `JumpLimiter`; тесты `CombatMathTest` и
+`PotionRefreshTest` (по 4 проверки), `ArtifactRegistryTest` расширен до 8 —
+всего 36 `@Test` в 8 классах.
+Версия 1.4.103, полный перезапуск.

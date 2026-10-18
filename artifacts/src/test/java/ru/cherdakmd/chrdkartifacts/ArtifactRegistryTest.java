@@ -36,7 +36,7 @@ class ArtifactRegistryTest {
         assertNotNull(ArtifactRegistry.byId("sfera-pobega"));
         // Суперспособности: у каждого пассива-особняка — свой SpecialKind
         for (String id : new String[]{"pero-feniksa", "zhnej-dush", "ledyanaya-aura",
-                "ternistyj-plasch", "magnit-opyta"}) {
+                "ternistyj-plasch", "magnit-opyta", "glinyanaya-dusha"}) {
             assertNotNull(ArtifactEffects.passiveSpecial(id),
                     "суперспособность не привязана к " + id);
         }
@@ -72,6 +72,32 @@ class ArtifactRegistryTest {
                 .filter(a -> a.mode() == ArtifactDef.Mode.ACTIVE).count();
         assertEquals(ArtifactEffects.ActiveKind.values().length, actives,
                 "каждый вид активного эффекта должен иметь ровно один артефакт");
+    }
+
+    @Test
+    void jumpWardHasNoPotionHack() {
+        // «Глиняная душа» больше не носит jump_boost с переполненным амплификатором:
+        // прыжок гасится атрибутом jump_strength в PassiveEffectsService.
+        assertEquals(ArtifactEffects.SpecialKind.JUMP_WARD,
+                ArtifactEffects.passiveSpecial("glinyanaya-dusha"));
+        assertTrue(ArtifactEffects.passivePotions("glinyanaya-dusha").isEmpty(),
+                "у JUMP_WARD не должно быть зельевых эффектов");
+        for (var spec : ArtifactEffects.passivePotions("sapogi-vetra")) {
+            assertTrue(spec.amplifier() <= 100,
+                    "амплификатор " + spec.type() + " выглядит как переполнение");
+        }
+    }
+
+    @Test
+    void everyPotionAmplifierIsSane() {
+        for (ArtifactDef def : ArtifactRegistry.all()) {
+            for (var spec : ArtifactEffects.passivePotions(def.id())) {
+                assertTrue(spec.amplifier() >= 0 && spec.amplifier() <= 100,
+                        def.id() + ": амплификатор " + spec.amplifier() + " вне 0..100");
+                assertTrue(Potions.resolve(spec.type()) != null,
+                        def.id() + ": неизвестный эффект " + spec.type());
+            }
+        }
     }
 
     @Test

@@ -1,6 +1,7 @@
 package ru.cherdakmd.chrdkartifacts;
 
 import org.bukkit.GameMode;
+import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -47,11 +48,26 @@ public final class ArtifactEventListener implements Listener {
         this.plugin = plugin;
     }
 
-    /** Перо Феникса: смертельный урон → крылья пламени и половина здоровья. */
+    /**
+     * Перо Феникса: смертельный урон → крылья пламени и половина здоровья.
+     *
+     * <p>Проверка идёт на {@code HIGHEST} и уже после того, как сработал
+     * ванильный тотем бессмертия: если тотем взял смерть на себя, перо молчит и
+     * не сжигает десятиминутный кулдаун. Удар, который целиком погасили щиты
+     * поглощения, смертельным не считается ({@link CombatMath}).</p>
+     */
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onFatalDamage(EntityDamageEvent event) {
-        if (!(event.getEntity() instanceof Player victim)
-                || event.getFinalDamage() < victim.getHealth()) {
+        if (!(event.getEntity() instanceof Player victim) || event.getDamage() <= 0) {
+            return;
+        }
+        if (!CombatMath.isLethal(victim.getHealth(), event.getFinalDamage(),
+                victim.getAbsorptionAmount())) {
+            return;
+        }
+        // Тотем бессмертия Paper обработал раньше (LOWEST/HIGH): перо не дублирует спасение.
+        if (victim.getInventory().getItemInMainHand().getType() == Material.TOTEM_OF_UNDYING
+                || victim.getInventory().getItemInOffHand().getType() == Material.TOTEM_OF_UNDYING) {
             return;
         }
         if (!carries(victim, "pero-feniksa")) {
@@ -64,7 +80,7 @@ public final class ArtifactEventListener implements Listener {
         double max = victim.getAttribute(Attribute.MAX_HEALTH) != null
                 ? victim.getAttribute(Attribute.MAX_HEALTH).getValue() : 20.0;
         event.setDamage(0.0);
-        victim.setHealth(Math.max(1.0, max * PHOENIX_HEAL_FRACTION));
+        victim.setHealth(CombatMath.reviveHealth(max, PHOENIX_HEAL_FRACTION));
         victim.setFireTicks(0);
         victim.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 80, 1,
                 true, false, true));

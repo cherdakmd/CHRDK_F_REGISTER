@@ -89,8 +89,6 @@ public final class ArtifactEffects {
             Map.entry("smolyanoj-mrak", List.of(new PotionSpec("darkness", 0))),
             Map.entry("krivoe-zerkalo", List.of(new PotionSpec("nausea", 0))),
             Map.entry("rzhavyj-gvozd", List.of(new PotionSpec("mining_fatigue", 0))),
-            // «Глиняная душа»: прыжок выключен — очень большой усилитель jump_boost.
-            Map.entry("glinyanaya-dusha", List.of(new PotionSpec("jump_boost", 250))),
             // --- добрая волна (1.4.58) ---
             Map.entry("travjanoj-eliksir", List.of(new PotionSpec("regeneration", 0))),
             Map.entry("sapogi-vetra", List.of(new PotionSpec("jump_boost", 0))),
@@ -121,7 +119,8 @@ public final class ArtifactEffects {
             "zhnej-dush", SpecialKind.SOUL_THIEF,
             "ledyanaya-aura", SpecialKind.FROST_AURA,
             "ternistyj-plasch", SpecialKind.THORNS_RETALIATE,
-            "magnit-opyta", SpecialKind.XP_MAGNET
+            "magnit-opyta", SpecialKind.XP_MAGNET,
+            "glinyanaya-dusha", SpecialKind.JUMP_WARD
     );
 
     private static final Map<String, ActiveKind> ACTIVE_KINDS = Map.ofEntries(
@@ -180,7 +179,11 @@ public final class ArtifactEffects {
         return PASSIVE_SPECIALS.get(id);
     }
 
-    /** Целостность: у каждого пассива — зелья, триггер или суперспособность; у активного — скрипт. */
+    /**
+     * Целостность: у каждого пассива — зелья, триггер или суперспособность; у
+     * активного — скрипт. «Глиняная душа» держится только суперспособностью
+     * JUMP_WARD (атрибут), зельевого взгляда у неё больше нет.
+     */
     public static boolean isComplete(ArtifactDef def) {
         if (def.mode() == ArtifactDef.Mode.PASSIVE) {
             return PASSIVE_POTIONS.containsKey(def.id()) || PASSIVE_TRIGGERS.containsKey(def.id())

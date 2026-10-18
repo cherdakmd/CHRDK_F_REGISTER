@@ -16,16 +16,19 @@ import java.util.Set;
  */
 public final class PassiveEffectsService {
 
-    private static final int POTION_BUFFER_TICKS = 60;
+    /** Ид «Глиняной души» — единственный артефакт с атрибутным лимитом прыжка. */
+    static final String JUMP_WARD_ID = "glinyanaya-dusha";
     private static final int IGNITE_TICKS = 80;
     private static final int POISON_TICKS = 160;
 
     private final ArtifactsPlugin plugin;
     private final Random random = new Random();
+    private final JumpLimiter jumpLimiter;
     private BukkitTask task;
 
     public PassiveEffectsService(ArtifactsPlugin plugin) {
         this.plugin = plugin;
+        this.jumpLimiter = new JumpLimiter(plugin);
     }
 
     public void start() {
@@ -39,6 +42,11 @@ public final class PassiveEffectsService {
             task.cancel();
             task = null;
         }
+        // Лимит прыжка — модификатор игрока, а не эффект: без снятия он держался бы
+        // до конца сессии. Снимаем у всех, кто онлайн.
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            jumpLimiter.clear(player);
+        }
     }
 
     private void pulse() {
@@ -49,9 +57,12 @@ public final class PassiveEffectsService {
             }
             if (plugin.config().requiresAuth()
                     && (plugin.coreApi() == null || !plugin.coreApi().isAuthenticated(player))) {
+                // Неавторизованному артефакты не работают — лимит прыжка тоже снимаем.
+                jumpLimiter.clear(player);
                 continue;
             }
             Set<String> ids = plugin.items().carriedIds(player);
+            boolean jumpWard = false;
             for (String id : ids) {
                 ArtifactDef def = ArtifactRegistry.byId(id);
                 if (def == null || def.mode() != ArtifactDef.Mode.PASSIVE
@@ -61,21 +72,43 @@ public final class PassiveEffectsService {
                 applyPotions(player, id);
                 rollTrigger(player, id);
                 runSpecial(player, id);
+                jumpWard |= id.equals(JUMP_WARD_ID);
+            }
+            // «Глиняную душу» держим атрибутом, а не эффектом с переполнением:
+            // снимаем, как только артефакт убрали из инвентаря.
+            if (jumpWard) {
+                jumpLimiter.apply(player);
+            } else {
+                jumpLimiter.clear(player);
             }
         }
     }
 
     private void applyPotions(Player player, String id) {
+        int refresh = plugin.config().refreshTicks();
         for (ArtifactEffects.PotionSpec spec : ArtifactEffects.passivePotions(id)) {
             PotionEffectType type = Potions.resolve(spec.type());
             if (type == null) {
                 continue;
             }
-            // мгновенные эффекты (сытость) тикают раз за пульс, а не каждый тик запаса
-            int duration = type.isInstant() ? 1 : POTION_BUFFER_TICKS;
+            int duration = PotionRefresh.durationTicks(refresh, type.isInstant());
+            if (!shouldApplyPotion(player, type, spec.amplifier(), duration)) {
+                continue;
+            }
             player.addPotionEffect(new PotionEffect(type, duration,
                     spec.amplifier(), true, false, true));
         }
+    }
+
+    /** Не понижаем и не укорачиваем эффект, полученный игроком извне. */
+    private static boolean shouldApplyPotion(Player player, PotionEffectType type,
+                                             int amplifier, int duration) {
+        PotionEffect current = player.getPotionEffect(type);
+        if (current == null) {
+            return true;
+        }
+        return PotionRefresh.shouldApply(true, current.getAmplifier(),
+                current.getDuration(), amplifier, duration);
     }
 
     private void rollTrigger(Player player, String id) {
@@ -150,6 +183,9 @@ public final class PassiveEffectsService {
                         mob.setFreezeTicks(Math.max(mob.getFreezeTicks(), 40));
                     }
                 }
+            }
+            case JUMP_WARD -> {
+                // атрибут ставится общим проходом пульса (jumpLimiter.apply) — здесь только учёт
             }
             default -> {
                 // PHOENIX_REVIVE/SOUL_THIEF/THORNS_RETALIATE обслуживает ArtifactEventListener
