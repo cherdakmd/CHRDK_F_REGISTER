@@ -22,7 +22,14 @@ public final class TierCraftListener implements Listener {
 
     private final TierForgePlugin plugin;
     private final Random random = new Random();
-    private final CraftRollKeeper rollKeeper = new CraftRollKeeper();
+    /** Отложенный ролл тира (старый флоу, без неопознанных). */
+    private final CraftRollKeeper<TierDef.Snapshot> rollKeeper = new CraftRollKeeper<>();
+    /**
+     * 1.4.89: отложенное решение «крафт будет неопознанным». Раньше шанс в
+     * identify-флоу пересчитывался на КАЖДОЕ превью: игрок дёргал ингредиенты,
+     * пока не выпадал тир, и только потом крафтил — шанс превращался в 100%.
+     */
+    private final CraftRollKeeper<Boolean> identifyKeeper = new CraftRollKeeper<>();
 
     public TierCraftListener(TierForgePlugin plugin) {
         this.plugin = plugin;
@@ -46,8 +53,14 @@ public final class TierCraftListener implements Listener {
 
         // --- Новый флоу (1.4.44): редкость скрывается до попадания в инвентарь ---
         if (plugin.config().identifyUnidentified()) {
-            int chance = craftChance(player, kind);
-            if (chance > 0 && random.nextInt(100) < chance) {
+            // 1.4.89: решение отложено до реального крафта (см. CraftRollKeeper) —
+            // иначе перебор ингредиентов давал бесконечные попытки без траты материалов.
+            Boolean marked = identifyKeeper.preview(player.getUniqueId(),
+                    result.getType().name(), () -> {
+                        int chance = craftChance(player, kind);
+                        return chance > 0 && random.nextInt(100) < chance;
+                    });
+            if (Boolean.TRUE.equals(marked)) {
                 plugin.items().markUnidentified(result, "craft",
                         plugin.messages().get("unidentified-name"),
                         java.util.List.of(plugin.messages().get("unidentified-lore")));
@@ -71,7 +84,11 @@ public final class TierCraftListener implements Listener {
         if (event.getRecipe() == null) return;
         ItemStack current = event.getCurrentItem();
         if (current == null) return;
-        if (plugin.config().identifyUnidentified()) return; // оповещение — на опознании
+        if (plugin.config().identifyUnidentified()) {
+            // 1.4.89: крафт состоялся — следующее превью этой пары роллит заново.
+            identifyKeeper.consume(player.getUniqueId(), current.getType().name());
+            return; // оповещение — на опознании
+        }
         String tier = plugin.items().tierOf(current);
         TierDef.Snapshot consumed = rollKeeper.consume(
                 player.getUniqueId(), current.getType().name());
@@ -84,6 +101,7 @@ public final class TierCraftListener implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         rollKeeper.clear(event.getPlayer().getUniqueId());
+        identifyKeeper.clear(event.getPlayer().getUniqueId());
     }
 
     /** Кузнечный стол: апгрейд в незерит сохраняет накатанный тир. */

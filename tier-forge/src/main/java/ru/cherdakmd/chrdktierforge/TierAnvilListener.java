@@ -32,7 +32,7 @@ import java.util.UUID;
 public final class TierAnvilListener implements Listener {
 
     private final TierForgePlugin plugin;
-    private final CraftRollKeeper rerollKeeper = new CraftRollKeeper();
+    private final CraftRollKeeper<TierDef.Snapshot> rerollKeeper = new CraftRollKeeper<>();
     private final Random random = new Random();
     /** Последний показанный в превью ключ переката, чтобы изъять ролл на клике. */
     private final Map<UUID, String> previewKeys = new HashMap<>();
@@ -60,8 +60,11 @@ public final class TierAnvilListener implements Listener {
         // 1.4.80: anvil.enabled — мастер-выключатель ВСЕХ механик наковальни
         // (улучшение, перекат, слияние). Раньше он гасил только слияние, а ковка
         // и перекат продолжали работать вопреки документации.
+        // 1.4.89: проверка поднята выше стража неопознанных — при выключенном
+        // аддоне наковальня должна оставаться полностью ванильной.
         if (!plugin.config().anvilEnabled()) {
             notices.reset(player.getUniqueId());
+            previewKeys.remove(player.getUniqueId());
             return;
         }
 
@@ -137,12 +140,16 @@ public final class TierAnvilListener implements Listener {
         if (leftTier == null || rightTier == null
                 || !leftTier.equals(rightTier)
                 || left.getType() != right.getType()) {
+            // 1.4.89: ключ переката больше не актуален — иначе клик по результату
+            // слияния мог изъять чужой отложенный ролл.
+            previewKeys.remove(player.getUniqueId());
             notify(player, "mismatch:" + left.getType().name() + ":" + leftTier
                     + "|" + right.getType().name() + ":" + rightTier, "up-mismatch");
             return;
         }
         String next = TierDef.next(leftTier);
         if (next == null) {
+            previewKeys.remove(player.getUniqueId());
             notify(player, "max:" + leftTier, "up-max");
             return;
         }
@@ -150,6 +157,10 @@ public final class TierAnvilListener implements Listener {
         if (target == null) return;
 
         ItemStack result = left.clone();
+        // 1.4.89: наковальня всегда отдаёт один предмет — стек не должен расти,
+        // даже если сторонний плагин разрешил стакать экипировку.
+        result.setAmount(1);
+        previewKeys.remove(player.getUniqueId());
         plugin.items().apply(result, target);
         event.setResult(result);
         event.getInventory().setRepairCost(

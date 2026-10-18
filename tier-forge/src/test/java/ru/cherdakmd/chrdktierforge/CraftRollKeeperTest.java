@@ -14,7 +14,7 @@ class CraftRollKeeperTest {
 
     @Test
     void previewIsStableUntilConsumed() {
-        CraftRollKeeper keeper = new CraftRollKeeper();
+        CraftRollKeeper<TierDef.Snapshot> keeper = new CraftRollKeeper<>();
         UUID player = UUID.randomUUID();
         AtomicInteger rolls = new AtomicInteger();
 
@@ -39,7 +39,7 @@ class CraftRollKeeperTest {
 
     @Test
     void emptyRollAlsoSticksAndRequiresCraftToReroll() {
-        CraftRollKeeper keeper = new CraftRollKeeper();
+        CraftRollKeeper<TierDef.Snapshot> keeper = new CraftRollKeeper<>();
         UUID player = UUID.randomUUID();
         AtomicInteger rolls = new AtomicInteger();
 
@@ -58,7 +58,7 @@ class CraftRollKeeperTest {
 
     @Test
     void rollsAreScopedPerPlayerAndPerResultType() {
-        CraftRollKeeper keeper = new CraftRollKeeper();
+        CraftRollKeeper<TierDef.Snapshot> keeper = new CraftRollKeeper<>();
         UUID first = UUID.randomUUID();
         UUID second = UUID.randomUUID();
 
@@ -77,8 +77,33 @@ class CraftRollKeeperTest {
     }
 
     @Test
+    void booleanDecisionsArePinnedToo() {
+        // 1.4.89: identify-флоу хранит в том же хранителе решение «будет ли метка».
+        CraftRollKeeper<Boolean> keeper = new CraftRollKeeper<>();
+        UUID player = UUID.randomUUID();
+        AtomicInteger rolls = new AtomicInteger();
+
+        assertTrue(keeper.preview(player, "IRON_HELMET", () -> {
+            rolls.incrementAndGet();
+            return true;
+        }), "первое превью вычислило успех");
+        assertTrue(keeper.preview(player, "IRON_HELMET", () -> {
+            rolls.incrementAndGet();
+            return false;
+        }), "успешная метка закреплена до крафта — дёрганье сетки не пересчитывает шанс");
+        assertEquals(1, rolls.get());
+
+        assertTrue(keeper.consume(player, "IRON_HELMET"));
+        assertFalse(keeper.preview(player, "IRON_HELMET", () -> {
+            rolls.incrementAndGet();
+            return false;
+        }), "после крафта — честная новая попытка");
+        assertEquals(2, rolls.get());
+    }
+
+    @Test
     void clearDropsEverything() {
-        CraftRollKeeper keeper = new CraftRollKeeper();
+        CraftRollKeeper<TierDef.Snapshot> keeper = new CraftRollKeeper<>();
         UUID player = UUID.randomUUID();
         keeper.preview(player, "IRON_HELMET", () -> RARE);
         assertTrue(keeper.hasPending(player, "IRON_HELMET"));
