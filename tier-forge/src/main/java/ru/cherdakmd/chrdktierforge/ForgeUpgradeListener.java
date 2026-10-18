@@ -43,6 +43,7 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
@@ -484,9 +485,9 @@ public final class ForgeUpgradeListener implements Listener {
                 && type.isBlock() && type.getHardness() >= 0 && type.getHardness() < 50) {
             zoneBreaking.set(true);
             try {
-                breakColumnSibling(event.getBlock(), 1, type, tool);
+                breakColumnSibling(event.getBlock(), 1, type, tool, event.getPlayer());
                 if (hewer >= 2) {
-                    breakColumnSibling(event.getBlock(), -1, type, tool);
+                    breakColumnSibling(event.getBlock(), -1, type, tool, event.getPlayer());
                 }
             } finally {
                 zoneBreaking.set(false);
@@ -494,11 +495,27 @@ public final class ForgeUpgradeListener implements Listener {
         }
     }
 
-    /** Добить соседний по вертикали блок того же типа этим же инструментом. */
-    private void breakColumnSibling(Block origin, int dy, Material type, ItemStack tool) {
+    /**
+     * Добить соседний по вертикали блок того же типа этим же инструментом (1.4.92).
+     *
+     * <p>Раньше блок ломался напрямую через {@code breakNaturally} — в обход
+     * {@code BlockBreakEvent}. На сервере с приватами это позволяло выбить колонну
+     * под чужим регионом, а лог-плагины не видели второй блок. Теперь запрос
+     * проходит обычным событием: защита и права могут его отменить.
+     */
+    private void breakColumnSibling(Block origin, int dy, Material type, ItemStack tool,
+                                    Player player) {
         Block sibling = origin.getRelative(0, dy, 0);
         if (sibling.getType() != type) {
             return;
+        }
+        BlockBreakEvent request = new BlockBreakEvent(sibling, player);
+        org.bukkit.Bukkit.getPluginManager().callEvent(request);
+        if (request.isCancelled()) {
+            return;
+        }
+        if (sibling.getType() != type) {
+            return; // другой плагин мог заменить блок, пока шёл обработчик
         }
         sibling.breakNaturally(tool);
     }
@@ -539,18 +556,13 @@ public final class ForgeUpgradeListener implements Listener {
                 stack = dropEntity.getItemStack();
             }
             if (crop && gardener > 0 && random.nextDouble() < cropChance) {
-                stack.setAmount(stack.getAmount() * 2);
-                dropEntity.setItemStack(stack);
+                doubleDrop(dropEntity);
             }
             if (log && logger > 0 && random.nextDouble() < logChance) {
-                stack = dropEntity.getItemStack();
-                stack.setAmount(stack.getAmount() * 2);
-                dropEntity.setItemStack(stack);
+                doubleDrop(dropEntity);
             }
             if (deep && random.nextDouble() < deepChance) {
-                stack = dropEntity.getItemStack();
-                stack.setAmount(stack.getAmount() * 2);
-                dropEntity.setItemStack(stack);
+                doubleDrop(dropEntity);
             }
         }
         // Златолюб: крупица золота поверх дропа камня
@@ -560,6 +572,27 @@ public final class ForgeUpgradeListener implements Listener {
             event.getBlock().getWorld().dropItemNaturally(
                     event.getBlock().getLocation().add(0.5, 0.5, 0.5),
                     new ItemStack(Material.GOLD_NUGGET));
+        }
+    }
+
+    /**
+     * Удвоить дроп в существующей Item-сущности, не превышая maxStackSize:
+     * излишек выкладывается отдельными стопками рядом (1.4.92).
+     */
+    private static void doubleDrop(Item dropEntity) {
+        ItemStack stack = dropEntity.getItemStack();
+        List<Integer> parts = DropAmounts.split(stack.getAmount() * 2,
+                stack.getType().getMaxStackSize());
+        if (parts.isEmpty()) {
+            return;
+        }
+        ItemStack first = stack.clone();
+        first.setAmount(parts.get(0));
+        dropEntity.setItemStack(first);
+        for (int i = 1; i < parts.size(); i++) {
+            ItemStack extra = stack.clone();
+            extra.setAmount(parts.get(i));
+            dropEntity.getWorld().dropItemNaturally(dropEntity.getLocation(), extra);
         }
     }
 
