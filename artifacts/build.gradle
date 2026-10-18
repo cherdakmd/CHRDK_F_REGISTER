@@ -25,7 +25,8 @@ dependencies {
     compileOnly "org.purpurmc.purpur:purpur-api:${project.purpur_api_version}"
     // Ядро CHRDK_F_REGISTER: публичный API (ru.cherdakmd.chrdkregister.api) и Messages.
     compileOnly project(':')
-    // Аддон чар: реальная жёсткая зависимость (hartiya-char зовёт EnchantService).
+    // Аддон чар: мягкая зависимость (softdepend) — только «Хартия чар» ходит
+    // через EnchantBridge; без JAR чар остальные 64 артефакта работают.
     compileOnly project(':enchants')
     compileOnly "com.google.code.gson:gson:2.11.0"
 

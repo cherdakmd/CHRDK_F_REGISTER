@@ -20,8 +20,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
-import ru.cherdakmd.chrdkenchants.EnchantService;
-import ru.cherdakmd.chrdkenchants.EnchantsPlugin;
 
 import java.util.Objects;
 import java.util.Random;
@@ -103,8 +101,7 @@ public final class ActiveEffectsListener implements Listener {
             player.setLevel(player.getLevel() - xpCost);
         }
         plugin.cooldowns().start(player.getUniqueId(), id, now, plugin.config().cooldownSeconds(def));
-        plugin.messages().send(player, "activated",
-                "name", plugin.messages().raw("art." + id + ".name"));
+        plugin.messages().send(player, "activated", "name", plugin.items().nameOf(def));
     }
 
     /**
@@ -502,22 +499,26 @@ public final class ActiveEffectsListener implements Listener {
             plugin.messages().send(player, "enchant-needs-item");
             return false;
         }
-        EnchantsPlugin enchants = EnchantsPlugin.getPlugin(EnchantsPlugin.class);
-        EnchantService service = enchants == null ? null : enchants.service();
-        if (service == null) {
-            plugin.messages().send(player, "enchant-failed");
-            return false;
+        EnchantBridge.Result result = EnchantBridge.roll(target);
+        switch (result.status()) {
+            case UNAVAILABLE -> {
+                plugin.messages().send(player, "enchant-failed");
+                return false;
+            }
+            case NO_ROOM -> {
+                plugin.messages().send(player, "enchant-no-room");
+                return false;
+            }
+            case OK -> {
+                EnchantBridge.Rolled rolled = result.rolled();
+                plugin.messages().send(player, "enchant-applied",
+                        "name", rolled.name(), "level", roman(rolled.level()));
+                return true;
+            }
+            default -> {
+                return false;
+            }
         }
-        EnchantService.RollResult roll = service.rollOnto(target, 2);
-        if (roll == null) {
-            plugin.messages().send(player, "enchant-no-room");
-            return false;
-        }
-        String name = enchants.messages().raw("en." + roll.def().id() + ".name");
-        player.sendMessage(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage()
-                .deserialize("<light_purple>✦ Хартия вписала: <yellow>" + name
-                        + " <white>" + roman(roll.level()) + "</white></yellow></light_purple>"));
-        return true;
     }
 
     private boolean darkBargain(Player player) {

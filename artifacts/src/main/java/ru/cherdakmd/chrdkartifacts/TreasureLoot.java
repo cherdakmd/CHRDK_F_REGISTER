@@ -4,30 +4,34 @@ import org.bukkit.Material;
 
 import java.util.Set;
 
-/** Ванильный «сокровенный» улов рыбалки: определение по материалу пойманного предмета. */
+/**
+ * Ванильная категория «сокровище» рыбалки. В Java Edition в неё входят ровно
+ * шесть предметов — зачарованный лук, зачарованная книга, зачарованная
+ * удочка, бирка, раковина наутилуса и седло (по 1/6 внутри категории, 5 %
+ * улова без «Морской удачи»). Мусор (палка, кость, миска, гнилая плоть,
+ * чернильный мешок, кувшинка, крюк, нить, кожаная обувь, бутылочка воды)
+ * сокровищем не считается: раньше он тоже открывал бонусный артефакт, и
+ * находка «с сокровища» падала с обычной палки.
+ */
 public final class TreasureLoot {
 
+    /** Зачарованные варианты приходят теми же материалами. */
     private static final Set<Material> TREASURE = Set.of(
-            Material.ENCHANTED_BOOK,
             Material.BOW,
+            Material.ENCHANTED_BOOK,
             Material.FISHING_ROD,
-            Material.SADDLE,
             Material.NAME_TAG,
             Material.NAUTILUS_SHELL,
-            Material.LILY_PAD,
-            Material.LEATHER_BOOTS,
-            Material.STICK,
-            Material.STRING,
-            Material.POTION,          // water bottle — ловится как обычное зелье
-            Material.BONE,
-            Material.INK_SAC,
-            Material.TRIPWIRE_HOOK,
-            Material.BOWL,
-            Material.ROTTEN_FLESH
+            Material.SADDLE
     );
 
     public static boolean isTreasure(Material material) {
-        return TREASURE.contains(material);
+        return material != null && TREASURE.contains(material);
+    }
+
+    /** Полный набор ванильных сокровищ (для тестов и диагностики). */
+    public static Set<Material> vanillaTreasure() {
+        return TREASURE;
     }
 
     private TreasureLoot() {

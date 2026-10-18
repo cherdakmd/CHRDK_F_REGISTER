@@ -1153,6 +1153,10 @@ public void onEnable() {
 ПКМ артефактом по сундуку, двери, верстаку, наковальне или кафедре работает как
 обычно — активация срабатывает по воздуху и «пустым» блокам; поставить артефакт
 блоком или съесть его нельзя.
+Находка с рыбалки падает только с настоящего сокровища (лук, книга, удочка, бирка,
+ракушка, седло), а не с палки или кости; предмет и сообщения не остаются безымянными,
+даже если секция `art.<ид>` удалена из `messages.yml`. Аддон чар — мягкая
+зависимость: без него работает всё, кроме «Хартии чар».
 
 Изначальная база (1.4.15): 15 светлых и 15 проклятых реликвий, работающих из
 инвентаря. Пассивные горят постоянно (Солнечный оберег гасит огонь, Слеза вдовы тянет
@@ -1249,20 +1253,20 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.101.jar`, аддон
-CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.101.jar`, реферальный —
-`referrals/build/libs/chrdk-referrals-1.4.101.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.101.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.101.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.101.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.101.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.101.jar` (зависит от аддона чар), общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.101.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.101.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.101.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.101.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.101.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.101.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.102.jar`, аддон
+CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.102.jar`, реферальный —
+`referrals/build/libs/chrdk-referrals-1.4.102.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.102.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.102.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.102.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.102.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.102.jar` (хартия чар — при установленном аддоне чар), общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.102.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.102.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.102.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.102.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.102.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.102.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). Оба JAR прикладываются к каждому релизу на GitHub.
 
 ---
@@ -1607,7 +1611,7 @@ plugins/<Addon>/messages.yml — удалите их после обновлен
 проклятого до легендарного, накат при крафте брони/оружия/инструментов, апгрейд двух
 одинаковых тирированных предметов на наковальне, перенос тира через апгрейд в незерит.
 
-**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-tier-forge-1.4.101.jar`
+**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-tier-forge-1.4.102.jar`
 рядом с ядром (≥ 1.4.6), перезапуск. Шансы/бонусы тиров — в `plugins/CHRDK_TierForge/config.yml`.
 
 ---
@@ -2828,3 +2832,31 @@ Discord-интеграция и её настройки не изменены.
 (+`item-protected`, `admin-given-dropped`). Новый класс `ArtifactUseRules` и
 тест `ArtifactUseRulesTest` — 6 проверок; всего 19 `@Test` в 5 классах.
 Версия 1.4.101, полный перезапуск.
+
+### CHRDK_Artifacts: честная добыча и тексты — 1.4.102
+
+Вторая волна аудита `docs/ARTIFACTS_AUDIT.md` — добыча, тексты и зависимости.
+
+- **Сокровище — это сокровище.** Бонусный артефакт с рыбалки падал с ванильной
+  категории «treasure»: раньше в неё ошибочно входили палка, кость, миска,
+  гнилая плоть, чернильный мешок, кувшинка, крюк, нить, кожаная обувь и
+  бутылочка воды. Теперь список ровно ванильный — лук, зачарованная книга,
+  удочка, бирка, раковина наутилуса, седло.
+- **Находка не тонет.** Артефакт выкладывается у пойманного предмета (у
+  поплавка), а не под ноги рыбаку: на берегу и в лодке находка больше не уходит
+  в воду.
+- **Нет безымянных предметов.** Если секция `art.<ид>` удалена из
+  `messages.yml` или переведена не полностью, имя собирается из ида
+  («Koren Zhizni»), а пустая строка лора просто не показывается.
+- **Право действует везде.** `chrdkartifacts.use` проверяется не только на ПКМ,
+  но и у пассивных артефактов и у каталога `/artifacts`.
+- **Чары — мягкая зависимость.** `CHRDK_Enchants` переведён из `depend` в
+  `softdepend`: без него включаются все 64 артефакта, а «Хартия чар» отвечает
+  «Архив чар недоступен»; в консоль при старте уходит понятное предупреждение.
+- **Текст хартии — в messages.yml.** Строка «Хартия вписала…» больше не зашита
+  в Java (`enchant-applied`), имя чары по-прежнему подставляется из аддона чар.
+
+Новых настроек нет. Контракт `messages.yml` — 240 ключей и 39 литералов
+(+`enchant-applied`). Новый класс `ArtifactText` (тест `ArtifactTextTest`, 5
+проверок), `TreasureLootTest` расширен до 3; всего 26 `@Test` в 6 классах.
+Версия 1.4.102, полный перезапуск.

@@ -11,15 +11,13 @@ import org.bukkit.event.world.LootGenerateEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.loot.LootTable;
 
-import java.util.Locale;
-import java.util.Map;
 import java.util.Random;
 
 /**
  * Природная добыча артефактов:
  *  • генерация сундуков (LootGenerateEvent): шанс по типу таблицы лута;
  *  • убийства «серьёзных» мобов: индивидуальный шанс по типу существа;
- *  • рыбалка на сокровище (CAUGHT_TREASURE): небольшой шанс бонусной находки.
+ *  • рыбалка на сокровище (ванильная категория treasure): шанс бонусной находки.
  */
 public final class ArtifactLootListener implements Listener {
 
@@ -64,7 +62,7 @@ public final class ArtifactLootListener implements Listener {
         ItemStack drop = plugin.items().build(def, 1);
         event.getDrops().add(drop);
         plugin.messages().send(killer, "dropped",
-                "name", plugin.messages().raw("art." + def.id() + ".name"));
+                "name", plugin.items().nameOf(def));
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -83,8 +81,10 @@ public final class ArtifactLootListener implements Listener {
             return;
         }
         Player player = event.getPlayer();
-        player.getWorld().dropItem(player.getLocation(), plugin.items().build(def, 1));
+        // Выкладываем у пойманного предмета (у поплавка), а не под ноги рыбаку:
+        // на берегу или в лодке находка иначе уходит в воду и тонет.
+        player.getWorld().dropItem(item.getLocation(), plugin.items().build(def, 1));
         plugin.messages().send(player, "dropped",
-                "name", plugin.messages().raw("art." + def.id() + ".name"));
+                "name", plugin.items().nameOf(def));
     }
 }

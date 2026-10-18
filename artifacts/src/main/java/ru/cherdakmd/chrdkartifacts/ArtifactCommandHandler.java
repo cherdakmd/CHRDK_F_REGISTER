@@ -46,6 +46,10 @@ public final class ArtifactCommandHandler implements CommandExecutor, TabComplet
             plugin.messages().send(sender, "player-only");
             return true;
         }
+        if (!player.hasPermission("chrdkartifacts.use")) {
+            plugin.messages().send(sender, "no-permission");
+            return true;
+        }
         if (plugin.coreApi() == null || !plugin.coreApi().isAuthenticated(player)) {
             plugin.messages().send(sender, "need-auth");
             return true;
@@ -62,7 +66,7 @@ public final class ArtifactCommandHandler implements CommandExecutor, TabComplet
 
     private void sendGroup(Player player, List<ArtifactDef> defs, java.util.Set<String> carried) {
         for (ArtifactDef def : defs) {
-            String name = plugin.messages().raw("art." + def.id() + ".name");
+            String name = plugin.items().nameOf(def);
             String colorHex = switch (def.side()) {
                 case GOOD -> def.mode() == ArtifactDef.Mode.ACTIVE ? "#FFD700" : "#FFEE88";
                 case CURSED -> def.mode() == ArtifactDef.Mode.ACTIVE ? "#8B0000" : "#CC4444";
@@ -114,7 +118,7 @@ public final class ArtifactCommandHandler implements CommandExecutor, TabComplet
             }
             plugin.messages().send(sender, "admin-given",
                     "player", target.getName(),
-                    "name", plugin.messages().raw("art." + def.id() + ".name"),
+                    "name", plugin.items().nameOf(def),
                     "amount", String.valueOf(amount));
             if (dropped > 0) {
                 plugin.messages().send(sender, "admin-given-dropped",
@@ -122,7 +126,7 @@ public final class ArtifactCommandHandler implements CommandExecutor, TabComplet
                         "amount", String.valueOf(dropped));
             }
             plugin.messages().send(target, "admin-received",
-                    "name", plugin.messages().raw("art." + def.id() + ".name"));
+                    "name", plugin.items().nameOf(def));
             return true;
         }
         plugin.messages().send(sender, "admin-usage");

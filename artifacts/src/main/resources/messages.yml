@@ -12,6 +12,7 @@ messages:
   enchant-needs-item: "<red>Хартия ждёт предмет во второй руке.</red>"
   enchant-failed: "<red>Письмена хартии не проступили. Архив чар недоступен.</red>"
   enchant-no-room: "<red>На предмете не осталось места для новых чар.</red>"
+  enchant-applied: "<light_purple>✦ Хартия вписала: <yellow>%name% <white>%level%</white></yellow></light_purple>"
   curse-ignite: "<dark_red>✖ Пепел погрома вспыхнул на вас!</dark_red>"
   curse-poison: "<dark_red>✖ Сушёный глаз недобро посмотрел: в жилах яд.</dark_red>"
   curse-bleed: "<dark_red>✖ Кровавая связь натянулась: капля капает изнутри.</dark_red>"

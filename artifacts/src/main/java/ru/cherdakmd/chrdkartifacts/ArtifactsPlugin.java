@@ -10,9 +10,9 @@ import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
  * CHRDK_Artifacts — 65 артефактов (33 светлых, 32 проклятых; 30 базовых + 35
  * «по мотивам CHRDK_REBORN»), работающих из инвентаря. Пассивные вешают зельевые
  * эффекты пульсом или отвечают на игровые события; активные срабатывают по ПКМ за
- * уровни опыта и кулдаун. Жёстко зависит от ядра и CHRDK_Enchants (хартия чар
- * выкатывает случайную кастомную чару). Хранилища нет: метки артефактов живут в
- * PDC предметов, кулдауны — в памяти.
+ * уровни опыта и кулдаун. Жёстко зависит только от ядра; CHRDK_Enchants —
+ * мягкая зависимость (без него молчит одна «Хартия чар», остальные работают).
+ * Хранилища нет: метки артефактов живут в PDC предметов, кулдауны — в памяти.
  */
 public final class ArtifactsPlugin extends JavaPlugin {
 
@@ -44,6 +44,10 @@ public final class ArtifactsPlugin extends JavaPlugin {
         if (admin != null) {
             admin.setExecutor(commands);
             admin.setTabCompleter(commands);
+        }
+        if (!EnchantBridge.available()) {
+            getLogger().warning("CHRDK_Enchants не найден: «Хартия чар» не сможет накатывать"
+                    + " чары, остальные артефакты работают как обычно.");
         }
         getLogger().info("CHRDK_Artifacts включён: артефактов в каталоге " + ArtifactRegistry.size()
                 + " (светлых " + ArtifactRegistry.bySide(ArtifactDef.Side.GOOD).size()

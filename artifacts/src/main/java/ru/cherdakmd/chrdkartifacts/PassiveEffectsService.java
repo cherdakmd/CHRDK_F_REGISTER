@@ -43,7 +43,8 @@ public final class PassiveEffectsService {
 
     private void pulse() {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            if (player.isDead() || !player.isOnline()) {
+            if (player.isDead() || !player.isOnline()
+                    || !player.hasPermission("chrdkartifacts.use")) {
                 continue;
             }
             if (plugin.config().requiresAuth()

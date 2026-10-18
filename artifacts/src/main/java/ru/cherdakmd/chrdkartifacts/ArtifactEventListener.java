@@ -121,7 +121,7 @@ public final class ArtifactEventListener implements Listener {
 
     /** Есть ли у игрока артефакт с нужным идом (и включён ли он конфигом/входом). */
     private boolean carries(Player player, String id) {
-        if (!plugin.config().isEnabled(id)) {
+        if (!player.hasPermission("chrdkartifacts.use") || !plugin.config().isEnabled(id)) {
             return false;
         }
         if (plugin.config().requiresAuth()

@@ -4,7 +4,9 @@ main: ru.cherdakmd.chrdkartifacts.ArtifactsPlugin
 api-version: '26.3'
 description: "65 артефактов (33 светлых и 32 проклятых), работающих из инвентаря: пассивные и активные"
 author: cherdakmd
-depend: [CHRDK_Core, CHRDK_Enchants]
+depend: [CHRDK_Core]
+# Хартия чар работает только рядом с CHRDK_Enchants; без него модуль живёт дальше.
+softdepend: [CHRDK_Enchants]
 commands:
   artifacts:
     description: Каталог артефактов и статус носимых

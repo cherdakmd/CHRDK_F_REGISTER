@@ -34,8 +34,8 @@ public final class ArtifactItems {
         ItemStack stack = new ItemStack(def.material(),
                 Math.max(1, Math.min(amount, def.material().getMaxStackSize())));
         ItemMeta meta = stack.getItemMeta();
-        String name = plugin.messages().raw("art." + def.id() + ".name");
-        meta.displayName(Component.text(name, color(def)).decoration(TextDecoration.ITALIC, false));
+        meta.displayName(Component.text(nameOf(def), color(def))
+                .decoration(TextDecoration.ITALIC, false));
         meta.lore(buildLore(def));
         if (def.side() == ArtifactDef.Side.GOOD) {
             meta.setEnchantmentGlintOverride(Boolean.TRUE);
@@ -43,6 +43,16 @@ public final class ArtifactItems {
         meta.getPersistentDataContainer().set(idKey, PersistentDataType.STRING, def.id());
         stack.setItemMeta(meta);
         return stack;
+    }
+
+    /**
+     * Имя артефакта для предмета и сообщений: строка из messages.yml, а если её
+     * нет (удалённая секция, неполный перевод) — читаемое имя из ида. Так игрок
+     * никогда не видит безымянный предмет и пустое место в шаблоне.
+     */
+    public String nameOf(ArtifactDef def) {
+        return ArtifactText.orFallback(
+                plugin.messages().raw("art." + def.id() + ".name"), def.id());
     }
 
     /** Ид артефакта из PDC предмета (null для обычных предметов). */
@@ -93,8 +103,10 @@ public final class ArtifactItems {
                     ? "line-cursed-passive" : "line-cursed-active";
         };
         lore.add(plugin.messages().get(lineKey));
-        String desc = plugin.messages().raw("art." + def.id() + ".lore");
-        lore.add(plugin.messages().get("lore-desc", "text", desc));
+        String desc = ArtifactText.loreOrEmpty(plugin.messages().raw("art." + def.id() + ".lore"));
+        if (!desc.isEmpty()) {
+            lore.add(plugin.messages().get("lore-desc", "text", desc));
+        }
         if (def.mode() == ArtifactDef.Mode.ACTIVE) {
             lore.add(plugin.messages().get("lore-active-info",
                     "cooldown", String.valueOf(plugin.config().cooldownSeconds(def)),
