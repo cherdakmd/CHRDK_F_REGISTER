@@ -39,6 +39,7 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
     private volatile ClaimsConfig config;
     private ClaimStore store;
     private ClaimsService service;
+    private ClaimAudit audit;
     private final Set<UUID> bypass = ConcurrentHashMap.newKeySet();
     /** Активные подсветки границ: игрок → задача (чтобы не плодить таймеры). */
     private final Map<UUID, BukkitTask> borderTasks = new ConcurrentHashMap<>();
@@ -52,6 +53,7 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         saveDefaultConfig();
         this.store = new ClaimStore(getDataFolder().toPath(), getLogger());
         store.load();
+        this.audit = new ClaimAudit(getDataFolder().toPath(), getLogger());
         this.service = new ClaimsService(this);
         reloadClaimsConfig();
         if (coreApi == null) {
@@ -275,6 +277,18 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
 
     public ClaimStore store() {
         return store;
+    }
+
+    /** Журнал операций (может быть {@code null} до включения плагина). */
+    public ClaimAudit auditLog() {
+        return audit;
+    }
+
+    /** Пишет событие в журнал, если он включён в конфиге. */
+    public void audit(String action, String details) {
+        if (audit != null && config != null && config.auditLog) {
+            audit.write(action, details);
+        }
     }
 
     public ClaimsService service() {

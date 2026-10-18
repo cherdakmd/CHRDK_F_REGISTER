@@ -17,7 +17,8 @@ import java.util.Map;
 public final class ClaimsAdminCommandHandler implements CommandExecutor, TabCompleter {
 
     private static final List<String> SUBS = List.of("reload", "bypass", "delete", "deleteall",
-            "info", "give", "transfer", "limit", "transferall", "purge", "rent", "stats");
+            "info", "give", "transfer", "limit", "transferall", "backup", "audit",
+            "purge", "rent", "stats");
 
     private final ClaimsPlugin plugin;
 
@@ -46,6 +47,8 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
             case "transfer" -> transfer(sender, args);
             case "limit" -> limit(sender, args);
             case "transferall" -> transferAll(sender, args);
+            case "backup" -> backup(sender, args);
+            case "audit" -> audit(sender, args);
             case "purge" -> purge(sender, args);
             case "rent" -> rent(sender);
             case "stats" -> stats(sender);
@@ -92,6 +95,8 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
             return;
         }
         plugin.store().remove(claim);
+        plugin.audit("admin-delete", player.getName() + " " + claim.where()
+                + " owner=" + claim.owner);
         plugin.messages().send(player, "admin-deleted", "owner", claim.owner);
     }
 
@@ -114,6 +119,8 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
         for (Claim claim : new ArrayList<>(claims)) {
             plugin.store().remove(claim);
         }
+        plugin.audit("admin-deleteall", sender.getName() + " -> " + name
+                + " count=" + claims.size());
         plugin.messages().send(sender, "admin-deleteall-done",
                 "name", name, "count", String.valueOf(claims.size()));
         Player online = Bukkit.getPlayerExact(name);
@@ -198,6 +205,7 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
         if (raw.equalsIgnoreCase("сброс") || raw.equalsIgnoreCase("reset")
                 || raw.equalsIgnoreCase("default")) {
             if (plugin.store().clearLimitOverride(name)) {
+                plugin.audit("admin-limit-clear", sender.getName() + " -> " + name);
                 plugin.messages().send(sender, "admin-limit-cleared",
                         "name", name, "limit", String.valueOf(plugin.service().limitOf(name)));
             } else {
@@ -212,6 +220,7 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
             return;
         }
         plugin.store().setLimitOverride(name, value);
+        plugin.audit("admin-limit", sender.getName() + " -> " + name + " limit=" + value);
         plugin.messages().send(sender, "admin-limit-set", "name", name,
                 "limit", String.valueOf(value));
         Player online = Bukkit.getPlayerExact(name);
@@ -242,6 +251,8 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
             return;
         }
         ClaimStore.TransferSummary summary = plugin.store().transferAll(from, to);
+        plugin.audit("admin-transferall", sender.getName() + " " + from + " -> " + to
+                + " claims=" + summary.claims() + " treasury=" + summary.treasury());
         if (summary.claims() == 0 && summary.treasury() == 0
                 && summary.notices() == 0 && !summary.limitMoved()) {
             plugin.messages().send(sender, "admin-transferall-none", "name", from);
@@ -264,6 +275,86 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
                     "treasury", String.valueOf(summary.treasury()));
         } else {
             plugin.store().addNotice(to, notice);
+        }
+    }
+
+    /** Резервные копии: `backup`/`list` — показать, `restore <файл> confirm` — восстановить. */
+    private void backup(CommandSender sender, String[] args) {
+        if (args.length < 2 || args[1].equalsIgnoreCase("list")
+                || args[1].equalsIgnoreCase("список")) {
+            listBackups(sender);
+            return;
+        }
+        if (!args[1].equalsIgnoreCase("restore") && !args[1].equalsIgnoreCase("восстановить")) {
+            plugin.messages().send(sender, "admin-backup-usage");
+            return;
+        }
+        if (args.length < 3) {
+            plugin.messages().send(sender, "admin-backup-usage");
+            return;
+        }
+        if (!confirmed(args, 3)) {
+            plugin.messages().send(sender, "admin-confirm-needed",
+                    "command", "/claimadmin backup restore " + args[2] + " confirm");
+            return;
+        }
+        ClaimStore.RestoreResult result = plugin.store().restoreFrom(args[2]);
+        switch (result) {
+            case OK -> {
+                plugin.messages().send(sender, "admin-backup-restored", "file", args[2]);
+                plugin.audit("backup-restore", sender.getName() + " <- " + args[2]);
+            }
+            case NOT_FOUND -> plugin.messages().send(sender, "admin-backup-not-found",
+                    "file", args[2]);
+            case INVALID -> plugin.messages().send(sender, "admin-backup-invalid",
+                    "file", args[2]);
+            default -> plugin.messages().send(sender, "admin-backup-failed");
+        }
+    }
+
+    private void listBackups(CommandSender sender) {
+        List<ClaimStore.BackupEntry> entries = plugin.store().backups();
+        if (entries.isEmpty()) {
+            plugin.messages().send(sender, "admin-backup-none");
+            return;
+        }
+        plugin.messages().send(sender, "admin-backup-header",
+                "count", String.valueOf(entries.size()));
+        int shown = 0;
+        for (ClaimStore.BackupEntry entry : entries) {
+            if (++shown > 10) {
+                break;
+            }
+            plugin.messages().send(sender, "admin-backup-line",
+                    "name", entry.name(),
+                    "size", String.valueOf(Math.max(1, entry.size() / 1024)),
+                    "date", plugin.service().formatDate(entry.modified()));
+        }
+        if (entries.size() > shown) {
+            plugin.messages().send(sender, "admin-backup-more",
+                    "count", String.valueOf(entries.size() - shown));
+        }
+    }
+
+    /** Хвост журнала операций: `/claimadmin audit [строк]` (1..50). */
+    private void audit(CommandSender sender, String[] args) {
+        int lines = ClaimAudit.DEFAULT_TAIL;
+        if (args.length > 1) {
+            Integer parsed = parseAmount(args[1]);
+            if (parsed != null) {
+                lines = Math.min(50, Math.max(1, parsed));
+            }
+        }
+        List<String> tail = plugin.auditLog() == null
+                ? List.of()
+                : plugin.auditLog().tail(lines);
+        if (tail.isEmpty()) {
+            plugin.messages().send(sender, "admin-audit-empty");
+            return;
+        }
+        plugin.messages().send(sender, "admin-audit-header", "count", String.valueOf(tail.size()));
+        for (String line : tail) {
+            plugin.messages().send(sender, "admin-audit-line", "text", line);
         }
     }
 
@@ -300,6 +391,7 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
             plugin.messages().send(sender, "admin-purge-none", "world", world);
             return;
         }
+        plugin.audit("admin-purge", sender.getName() + " world=" + world + " count=" + count);
         plugin.messages().send(sender, "admin-purge-done",
                 "world", world, "count", String.valueOf(count));
     }
@@ -382,6 +474,26 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
         }
         if (args.length == 3 && (args[0].equalsIgnoreCase("deleteall")
                 || args[0].equalsIgnoreCase("purge"))) {
+            result.add("confirm");
+            return result;
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("backup")) {
+            result.add("list");
+            result.add("restore");
+            return result;
+        }
+        if (args.length == 3 && args[0].equalsIgnoreCase("backup")
+                && args[1].equalsIgnoreCase("restore")) {
+            String prefix = args[2].toLowerCase(Locale.ROOT);
+            for (ClaimStore.BackupEntry entry : plugin.store().backups()) {
+                if (entry.name().toLowerCase(Locale.ROOT).startsWith(prefix)) {
+                    result.add(entry.name());
+                }
+            }
+            return result;
+        }
+        if (args.length == 4 && args[0].equalsIgnoreCase("backup")
+                && args[1].equalsIgnoreCase("restore")) {
             result.add("confirm");
             return result;
         }

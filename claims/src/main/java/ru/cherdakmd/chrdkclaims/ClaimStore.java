@@ -363,6 +363,98 @@ public final class ClaimStore {
     private record Snapshot(Map<String, Object> data, long revision) {
     }
 
+    // ------------------------------------------------------------ backups --
+
+    /** Файл резервной копии для списка администратора. */
+    public record BackupEntry(String name, long size, long modified) {
+    }
+
+    /** Все копии рядом с данными: `.bak`, `.corrupt-*`, `.pre-restore-*` (свежие первыми). */
+    public synchronized List<BackupEntry> backups() {
+        Path parent = file.getParent();
+        List<BackupEntry> entries = new ArrayList<>();
+        if (parent == null || !Files.isDirectory(parent)) {
+            return entries;
+        }
+        try (var stream = Files.list(parent)) {
+            stream.filter(Files::isRegularFile)
+                    .filter(path -> path.getFileName().toString().startsWith("claims-data.json"))
+                    .forEach(path -> {
+                        try {
+                            entries.add(new BackupEntry(path.getFileName().toString(),
+                                    Files.size(path), Files.getLastModifiedTime(path).toMillis()));
+                        } catch (IOException exception) {
+                            logger.log(Level.WARNING, "[CHRDK_Claims] Не удалось прочитать "
+                                    + path.getFileName() + ": " + exception.getMessage());
+                        }
+                    });
+        } catch (IOException exception) {
+            logger.log(Level.WARNING, "[CHRDK_Claims] Не удалось перечислить резервные копии: "
+                    + exception.getMessage(), exception);
+            return entries;
+        }
+        entries.sort((left, right) -> Long.compare(right.modified(), left.modified()));
+        return entries;
+    }
+
+    /** Итог восстановления: успех, файла нет, имя недопустимо или файл нечитаем. */
+    public enum RestoreResult {
+        OK, NOT_FOUND, INVALID, IO_ERROR
+    }
+
+    /**
+     * Восстанавливает данные из копии рядом с {@code claims-data.json}.
+     *
+     * <p>Имя принимается только как имя файла в папке данных (без путей и «..»),
+     * содержимое сначала проверяется разбором JSON, текущие данные сохраняются как
+     * {@code claims-data.json.pre-restore-<millis>}. Так неудачное восстановление
+     * не может уничтожить рабочий файл.</p>
+     */
+    public synchronized RestoreResult restoreFrom(String fileName) {
+        if (fileName == null || fileName.isBlank()) {
+            return RestoreResult.INVALID;
+        }
+        String name = fileName.trim();
+        if (name.contains("/") || name.contains("\\") || name.contains("..")
+                || !name.startsWith("claims-data.json")) {
+            return RestoreResult.INVALID;
+        }
+        Path source = file.resolveSibling(name);
+        if (source.equals(file) || !Files.isRegularFile(source)) {
+            return RestoreResult.NOT_FOUND;
+        }
+        if (!isReadableData(source)) {
+            return RestoreResult.INVALID;
+        }
+        try {
+            if (Files.isRegularFile(file)) {
+                Files.copy(file, file.resolveSibling(
+                                "claims-data.json.pre-restore-" + System.currentTimeMillis()),
+                        StandardCopyOption.REPLACE_EXISTING);
+            }
+            Files.copy(source, file, StandardCopyOption.REPLACE_EXISTING);
+            load();
+            logger.info("[CHRDK_Claims] Данные восстановлены из " + name + ".");
+            return RestoreResult.OK;
+        } catch (IOException exception) {
+            logger.log(Level.SEVERE, "[CHRDK_Claims] Не удалось восстановить данные из "
+                    + name + ": " + exception.getMessage(), exception);
+            return RestoreResult.IO_ERROR;
+        }
+    }
+
+    /** Проверка, что файл — корректный JSON-объект данных (до подмены рабочего файла). */
+    private boolean isReadableData(Path source) {
+        try (Reader reader = Files.newBufferedReader(source, StandardCharsets.UTF_8)) {
+            Map<String, Object> data = GSON.fromJson(reader, DATA_TYPE);
+            return data != null;
+        } catch (IOException | RuntimeException exception) {
+            logger.warning("[CHRDK_Claims] Копия " + source.getFileName()
+                    + " не читается как данные приватов: " + exception.getMessage());
+            return false;
+        }
+    }
+
     // -------------------------------------------------------------- claims --
 
     public synchronized Claim claimAt(String world, int chunkX, int chunkZ) {

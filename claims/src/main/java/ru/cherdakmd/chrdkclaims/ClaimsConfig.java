@@ -43,6 +43,8 @@ public final class ClaimsConfig {
     public final boolean notifyRent;
     /** Показывать строку действия при входе на чужой приват. */
     public final boolean enterNotice;
+    /** Вести журнал операций claims-audit.log. */
+    public final boolean auditLog;
 
     public final boolean pvp;
     public final boolean fire;
@@ -78,6 +80,7 @@ public final class ClaimsConfig {
                 ClaimMap.MIN_RADIUS, ClaimMap.MAX_RADIUS);
         borderSeconds = clamped(cfg, logger, "general.border-seconds", 10, 3, 60);
         enterNotice = cfg.getBoolean("general.enter-notice", true);
+        auditLog = cfg.getBoolean("general.audit-log", true);
         notifyRent = cfg.getBoolean("general.notify-rent", true);
 
         timezone = cfg.getString("general.timezone", "").trim();

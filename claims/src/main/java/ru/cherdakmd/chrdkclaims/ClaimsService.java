@@ -50,6 +50,11 @@ public final class ClaimsService {
         return override != null ? override : baseLimitOf(playerName);
     }
 
+    /** Короткая запись в журнал операций (действие + подробности). */
+    private void audit(String action, String details) {
+        plugin.audit(action, details);
+    }
+
     public String formatDate(long millis) {
         return plugin.config().formatDate(millis);
     }
@@ -171,6 +176,7 @@ public final class ClaimsService {
                 player.getName(), System.currentTimeMillis() + ClaimMath.DAY_MILLIS);
         plugin.store().add(claim);
         plugin.store().addDiamondsSpent(price);
+        audit("buy", player.getName() + " " + claim.where() + " price=" + price);
         plugin.messages().send(player, "bought",
                 "price", String.valueOf(price),
                 "upkeep", String.valueOf(upkeep),
@@ -202,6 +208,7 @@ public final class ClaimsService {
             return;
         }
         plugin.store().remove(claim);
+        audit("unclaim", player.getName() + " " + claim.where());
         plugin.messages().send(player, "unclaimed");
     }
 
@@ -214,6 +221,7 @@ public final class ClaimsService {
         int reward = ClaimMath.sellbackReward(
                 plugin.config().priceIn(claim.world), plugin.config().sellbackPercent);
         plugin.store().remove(claim);
+        audit("sellback", player.getName() + " " + claim.where() + " reward=" + reward);
         int dropped = reward > 0 ? DiamondItems.give(player, reward) : 0;
         plugin.messages().send(player, "sellback-done", "reward", String.valueOf(reward));
         if (dropped > 0) {
@@ -231,6 +239,8 @@ public final class ClaimsService {
         }
         claim.salePrice = Math.max(0, price);
         plugin.store().markDirty();
+        audit(price > 0 ? "sale-set" : "sale-clear",
+                player.getName() + " " + claim.where() + " price=" + claim.salePrice);
         if (price > 0) {
             plugin.messages().send(player, "sell-set", "price", String.valueOf(price));
         } else {
@@ -277,6 +287,8 @@ public final class ClaimsService {
         claim.salePrice = 0;
         claim.debtDays = 0;
         plugin.store().markDirty();
+        audit("sale", player.getName() + " <- " + seller + " " + claim.where()
+                + " price=" + price + " tax=" + tax);
 
         plugin.messages().send(player, "buy-done",
                 "seller", seller, "price", String.valueOf(price), "tax", String.valueOf(tax));
@@ -335,6 +347,9 @@ public final class ClaimsService {
             changed++;
         }
         plugin.store().markDirty();
+        if (changed > 0) {
+            audit("member-add", player.getName() + " -> " + name + " count=" + changed);
+        }
         if (changed == 0) {
             plugin.messages().send(player, "add-already", "name", name);
             return true;
@@ -375,6 +390,9 @@ public final class ClaimsService {
             changed += claim.members.removeIf(member -> member.equalsIgnoreCase(name)) ? 1 : 0;
         }
         plugin.store().markDirty();
+        if (changed > 0) {
+            audit("member-remove", player.getName() + " -> " + name + " count=" + changed);
+        }
         if (changed == 0) {
             plugin.messages().send(player, "remove-not-member", "name", name);
             return true;
@@ -473,6 +491,7 @@ public final class ClaimsService {
         Claim created = new Claim(chunk.getWorld().getName(), chunk.getX(), chunk.getZ(),
                 targetName, System.currentTimeMillis() + ClaimMath.DAY_MILLIS);
         plugin.store().add(created);
+        audit("admin-give", admin.getName() + " -> " + targetName + " " + created.where());
         plugin.messages().send(admin, "admin-give-done", "name", targetName);
         Player target = Bukkit.getPlayerExact(targetName);
         if (target != null && authenticated(target)) {
@@ -508,6 +527,8 @@ public final class ClaimsService {
         claim.members.clear();
         claim.salePrice = 0;
         plugin.store().markDirty();
+        audit(admin ? "admin-transfer" : "transfer",
+                actor.getName() + " " + oldOwner + " -> " + targetName + " " + claim.where());
 
         if (admin) {
             plugin.messages().send(actor, "admin-transfer-done", "name", targetName, "old", oldOwner);
@@ -561,6 +582,7 @@ public final class ClaimsService {
             return;
         }
         int balance = plugin.store().addTreasury(player.getName(), collected);
+        audit("deposit", player.getName() + " amount=" + collected + " balance=" + balance);
         plugin.messages().send(player, "deposit-done",
                 "amount", String.valueOf(collected), "balance", String.valueOf(balance));
     }
@@ -571,6 +593,7 @@ public final class ClaimsService {
                     "balance", String.valueOf(plugin.store().treasuryOf(player.getName())));
             return;
         }
+        audit("withdraw", player.getName() + " amount=" + amount);
         int dropped = DiamondItems.give(player, amount);
         plugin.messages().send(player, "withdraw-done",
                 "amount", String.valueOf(amount),
@@ -685,6 +708,8 @@ public final class ClaimsService {
             });
         }
         if (chargedTotal > 0 || releasedTotal > 0) {
+            audit("rent", "charged=" + chargedTotal + " released=" + releasedTotal
+                    + " debt=" + debtClaims);
             plugin.getLogger().info("[CHRDK_Claims] Рента: списано " + chargedTotal
                     + " ⛁, освобождено чанков " + releasedTotal + ".");
         }

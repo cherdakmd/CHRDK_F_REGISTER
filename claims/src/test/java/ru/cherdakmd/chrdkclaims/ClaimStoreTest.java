@@ -213,6 +213,59 @@ class ClaimStoreTest {
     }
 
     @Test
+    void backupsAreListedNewestFirst() {
+        ClaimStore store = store();
+        store.addTreasury("Steve", 5);
+        store.save();
+        store.addTreasury("Steve", 1);
+        store.save();
+        List<ClaimStore.BackupEntry> entries = store.backups();
+        assertTrue(entries.stream().anyMatch(entry -> entry.name().equals("claims-data.json.bak")),
+                "резервная копия должна быть в списке");
+        assertTrue(entries.stream().anyMatch(entry -> entry.name().equals("claims-data.json")));
+        for (int index = 1; index < entries.size(); index++) {
+            assertTrue(entries.get(index - 1).modified() >= entries.get(index).modified(),
+                    "свежие копии первыми");
+        }
+    }
+
+    @Test
+    void restoreFromBackupBringsDataBackAndKeepsPreRestoreCopy() throws IOException {
+        ClaimStore store = store();
+        store.addTreasury("Steve", 5);
+        store.save();
+        store.addTreasury("Steve", 4);
+        store.save();
+        assertEquals(9, store.treasuryOf("Steve"));
+
+        assertEquals(ClaimStore.RestoreResult.OK, store.restoreFrom("claims-data.json.bak"));
+        assertEquals(5, store.treasuryOf("Steve"), "вернулось состояние до последнего сохранения");
+        try (var files = Files.list(dir)) {
+            assertTrue(files.anyMatch(path -> path.getFileName().toString()
+                    .startsWith("claims-data.json.pre-restore-")),
+                    "текущее состояние сохраняется перед восстановлением");
+        }
+    }
+
+    @Test
+    void restoreRejectsPathsMissingFilesAndBrokenCopies() throws IOException {
+        ClaimStore store = store();
+        store.addTreasury("Steve", 7);
+        store.save();
+
+        assertEquals(ClaimStore.RestoreResult.INVALID, store.restoreFrom("../claims-data.json.bak"));
+        assertEquals(ClaimStore.RestoreResult.INVALID, store.restoreFrom(null));
+        assertEquals(ClaimStore.RestoreResult.NOT_FOUND, store.restoreFrom("claims-data.json.missing"));
+        assertEquals(ClaimStore.RestoreResult.NOT_FOUND, store.restoreFrom("claims-data.json"));
+
+        Files.writeString(dir.resolve("claims-data.json.broken"), "{ это не json",
+                StandardCharsets.UTF_8);
+        assertEquals(ClaimStore.RestoreResult.INVALID, store.restoreFrom("claims-data.json.broken"),
+                "нечитаемая копия не подменяет рабочий файл");
+        assertEquals(7, store.treasuryOf("Steve"), "данные не тронуты");
+    }
+
+    @Test
     void removingWorldDropsOnlyItsClaims() {
         ClaimStore store = store();
         store.add(new Claim("world", 0, 0, "A", 1));
