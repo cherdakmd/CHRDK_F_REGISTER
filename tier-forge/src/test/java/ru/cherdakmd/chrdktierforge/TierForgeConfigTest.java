@@ -227,6 +227,17 @@ class TierForgeConfigTest {
     }
 
     @Test
+    void statsBackupCopiesAreClamped() {
+        assertEquals(3, parse(empty()).config().statsBackupCopies(), "по умолчанию три копии");
+        YamlConfiguration none = empty();
+        none.set("stats.backup-copies", -5);
+        assertEquals(0, parse(none).config().statsBackupCopies(), "минус — копии выключены");
+        YamlConfiguration many = empty();
+        many.set("stats.backup-copies", 99);
+        assertEquals(StatsBackup.MAX_COPIES, parse(many).config().statsBackupCopies());
+    }
+
+    @Test
     void brokenCatalystDisablesReroll() {
         YamlConfiguration yaml = empty();
         yaml.set("reroll.catalyst", "NOT_A_MATERIAL");

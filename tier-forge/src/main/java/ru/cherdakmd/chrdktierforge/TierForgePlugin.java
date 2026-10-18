@@ -155,6 +155,16 @@ public final class TierForgePlugin extends JavaPlugin {
             stats.writeTo(yaml.createSection("players"));
             File temp = new File(parent, file.getName() + ".tmp");
             yaml.save(temp);
+            // 1.4.95: атомарная замена не спасает от битого или подменённого файла —
+            // перед ней сохраняем предыдущую версию в stats.yml.bakN.
+            try {
+                TierForgeConfig current = this.config;
+                new StatsBackup(file.toPath(), current == null ? 3 : current.statsBackupCopies())
+                        .rotate();
+            } catch (Exception backupFailure) {
+                getLogger().warning("CHRDK_TierForge: резервная копия stats.yml не сделана — "
+                        + backupFailure.getMessage());
+            }
             try {
                 Files.move(temp.toPath(), file.toPath(),
                         StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
