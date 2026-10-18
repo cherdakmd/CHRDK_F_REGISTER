@@ -23,13 +23,19 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockDropItemEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.EntityPotionEffectEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerExpChangeEvent;
 import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.player.PlayerItemDamageEvent;
+import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -45,8 +51,9 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Событийная половина кузнечных свойств: бой, добыча, прочность, пассивный пульс
  * и «привязка души». Атрибутная половина живёт в {@link TierItems}. Уровни
- * читаются из PDC предмета в руке/на теле в момент события — кэшей предметов нет,
- * только кулдауны по игрокам и очередь воскрешения.
+ * читаются из PDC предмета в руке/на теле в момент события — кэшей самих предметов
+ * нет. С 1.4.91 есть только кэш «есть ли ковка в экипировке» для пульса
+ * ({@link ForgeGearCache}) плюс кулдауны по игрокам и очередь воскрешения.
  */
 public final class ForgeUpgradeListener implements Listener {
 
@@ -81,6 +88,9 @@ public final class ForgeUpgradeListener implements Listener {
     private final Map<UUID, Long> lastCombat = new ConcurrentHashMap<>();
     /** Флаг реентера внутри «Медовника»/«Стойкого»; ThreadLocal — по той же причине. */
     private final ThreadLocal<Boolean> effectShifting = ThreadLocal.withInitial(() -> Boolean.FALSE);
+    /** 1.4.91: не сканировать PDC экипировки у тех, у кого ковки заведомо нет. */
+    private static final long GEAR_CACHE_TTL_MS = 30_000L;
+    private final ForgeGearCache gearCache = new ForgeGearCache(GEAR_CACHE_TTL_MS);
 
     public ForgeUpgradeListener(TierForgePlugin plugin) {
         this.plugin = plugin;
@@ -717,6 +727,7 @@ public final class ForgeUpgradeListener implements Listener {
     /** Смерть: привязанные вещи не падают — уходят в очередь воскрешения. */
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onPlayerDeath(PlayerDeathEvent event) {
+        gearCache.invalidate(event.getEntity().getUniqueId());
         if (Boolean.TRUE.equals(event.getEntity().getWorld().getGameRuleValue(GameRule.KEEP_INVENTORY))) {
             return; // keepInventory сам всё сохранит — дубли нам не нужны
         }
@@ -738,6 +749,7 @@ public final class ForgeUpgradeListener implements Listener {
     /** Респаун: вернуть привязанные вещи в инвентарь (лишнее — под ноги). */
     @EventHandler(priority = EventPriority.NORMAL)
     public void onPlayerRespawn(PlayerRespawnEvent event) {
+        gearCache.invalidate(event.getPlayer().getUniqueId());
         soulboundLocations.remove(event.getPlayer().getUniqueId());
         java.util.List<ItemStack> keepsakes = soulboundReturns.remove(event.getPlayer().getUniqueId());
         if (keepsakes == null || keepsakes.isEmpty()) {
@@ -758,9 +770,24 @@ public final class ForgeUpgradeListener implements Listener {
      * дешёвые — из PDC экипировки онлайн-игроков.
      */
     public void pulse() {
+        long now = System.currentTimeMillis();
         for (Player player : org.bukkit.Bukkit.getOnlinePlayers()) {
             if (player.isDead()) {
                 continue;
+            }
+            // 1.4.91: у кого ковки нет — скан PDC не нужен (кэш сбрасывают события
+            // инвентаря, TTL 30 с страхует от пропущенного события).
+            UUID playerId = player.getUniqueId();
+            Boolean forged = gearCache.fresh(playerId, now);
+            if (Boolean.FALSE.equals(forged)) {
+                continue;
+            }
+            if (forged == null) {
+                boolean hasForge = hasForgeGear(player);
+                gearCache.put(playerId, hasForge, now);
+                if (!hasForge) {
+                    continue;
+                }
             }
             double regen = 0;
             double magnetLevels = 0;
@@ -770,12 +797,7 @@ public final class ForgeUpgradeListener implements Listener {
             int haste = 0;
             boolean pathSpeed = false;
             boolean roamSpeed = false;
-            // Arrays.asList — armorContents содержит null-ячейки, List.of бросил бы NPE
-            java.util.List<ItemStack> pieces = new ArrayList<>(java.util.Arrays.asList(
-                    player.getInventory().getArmorContents()));
-            pieces.add(player.getInventory().getItemInMainHand());
-            pieces.add(player.getInventory().getItemInOffHand());
-            for (ItemStack piece : pieces) {
+            for (ItemStack piece : gearPieces(player)) {
                 Map<ForgeUpgrade.Def, Integer> ups = plugin.items().upgradesOf(piece);
                 regen += sumAbs(ups, ForgeUpgrade.Effect.REGEN_PULSE);
                 magnetLevels += levelOf(ups, ForgeUpgrade.Effect.MAGNET);
@@ -838,6 +860,26 @@ public final class ForgeUpgradeListener implements Listener {
         return below == Material.DIRT_PATH || below == Material.GRASS_BLOCK;
     }
 
+    /** Экипировка, которую видит пульс: броня, основная и левая рука. */
+    private static java.util.List<ItemStack> gearPieces(Player player) {
+        // Arrays.asList — armorContents содержит null-ячейки, List.of бросил бы NPE
+        java.util.List<ItemStack> pieces = new ArrayList<>(java.util.Arrays.asList(
+                player.getInventory().getArmorContents()));
+        pieces.add(player.getInventory().getItemInMainHand());
+        pieces.add(player.getInventory().getItemInOffHand());
+        return pieces;
+    }
+
+    /** Есть ли хоть одно кузнечное улучшение в надетой экипировке (1.4.91). */
+    private boolean hasForgeGear(Player player) {
+        for (ItemStack piece : gearPieces(player)) {
+            if (!plugin.items().upgradesOf(piece).isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * Магнит: подтягиваем до 6 ближайших дропов к игроку (радиус 1.5 + 0.5×ур).
      * С 1.4.82 — импульсом скорости, а не {@code teleport}: дроп не проваливается
@@ -874,12 +916,54 @@ public final class ForgeUpgradeListener implements Listener {
         adrenalineCooldown.remove(player);
         lastStandCooldown.remove(player);
         lastCombat.remove(player);
+        gearCache.invalidate(player);
         // 1.4.86: вышел, не дождавшись респауна — привязанные вещи не теряем,
         // а аккуратно выкладываем в точке смерти (иначе они висели бы только в RAM
         // и исчезли бы при перезапуске).
         if (soulboundReturns.containsKey(player)) {
             dropSoulbound(player);
         }
+    }
+
+    /* --------------------- инвалидация кэша ковки (1.4.91) --------------------- */
+
+    /** Изменение инвентаря: следующий пульс пересканирует экипировку. */
+    private void invalidateGear(org.bukkit.entity.HumanEntity human) {
+        if (human instanceof Player player) {
+            gearCache.invalidate(player.getUniqueId());
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onInventoryClick(InventoryClickEvent event) {
+        invalidateGear(event.getWhoClicked());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onInventoryClose(InventoryCloseEvent event) {
+        invalidateGear(event.getPlayer());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onItemHeld(PlayerItemHeldEvent event) {
+        gearCache.invalidate(event.getPlayer().getUniqueId());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onSwapHands(PlayerSwapHandItemsEvent event) {
+        gearCache.invalidate(event.getPlayer().getUniqueId());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onPickupForCache(EntityPickupItemEvent event) {
+        if (event.getEntity() instanceof Player player) {
+            gearCache.invalidate(player.getUniqueId());
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onDropForCache(PlayerDropItemEvent event) {
+        gearCache.invalidate(event.getPlayer().getUniqueId());
     }
 
     /** Выключение сервера: подвешенные «привязанные» вещи тоже возвращаем в мир. */
