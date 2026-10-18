@@ -56,6 +56,14 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         this.audit = new ClaimAudit(getDataFolder().toPath(), getLogger());
         this.service = new ClaimsService(this);
         reloadClaimsConfig();
+        // Ядро 1.4.106+: случайный спавн спрашивает, занят ли чанк и есть ли у игрока приват.
+        // Через отдельный мост: со старым ядром модуль продолжает работать без этой связи.
+        try {
+            ClaimsSpawnBridge.register(this);
+        } catch (Throwable throwable) {
+            getLogger().warning("[CHRDK_Claims] мост случайного спавна недоступен "
+                    + "(нужно ядро 1.4.106+): " + throwable);
+        }
         if (coreApi == null) {
             getLogger().warning("[CHRDK_Claims] API CHRDK_Core не найден (нужно ядро 1.4.6+): "
                     + "проверка авторизации и бонус лимита за проходку недоступны.");

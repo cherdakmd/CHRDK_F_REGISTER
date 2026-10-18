@@ -67,4 +67,19 @@ class ResourcesYamlTest {
             fail("Обрывок payment-code на корневом уровне config.yml — ключ должен жить внутри donatepay");
         }
     }
+
+    @Test
+    void spawnSectionContainsEveryKey() throws Exception {
+        // Контракт SpawnSettings.parse: ключи секции spawn; отсутствие секции включает дефолты.
+        YamlConfiguration config = YamlConfiguration.loadConfiguration(
+                new StringReader(Files.readString(Path.of("src/main/resources/config.yml"))));
+        for (String key : List.of("enabled", "on-first-join", "on-death", "world",
+                "use-world-spawn-center", "center-x", "center-z", "radius-blocks",
+                "min-radius-blocks", "max-attempts", "avoid-claims", "respect-claims",
+                "respect-homes", "other-dimensions")) {
+            if (!config.isSet("spawn." + key)) {
+                fail("В config.yml секции spawn нет ключа " + key);
+            }
+        }
+    }
 }

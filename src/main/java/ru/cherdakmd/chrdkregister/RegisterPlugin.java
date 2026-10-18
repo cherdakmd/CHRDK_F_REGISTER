@@ -28,6 +28,7 @@ public final class RegisterPlugin extends JavaPlugin {
     private ExternalHooks externalHooks;
     private LuckPermsPassSync luckPermsPassSync;
     private UpdateChecker updateChecker;
+    private SpawnService spawnService;
     private RegistrationStore store;
     private ExecutionService executor;
     private RegisterCommandHandler commandHandler;
@@ -76,6 +77,12 @@ public final class RegisterPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(passwordKeypad, this);
         getServer().getPluginManager().registerEvents(tabListService, this);
         tabListService.reload();
+
+        this.spawnService = new SpawnService(this, accessManager,
+                new SpawnStore(getDataFolder().toPath(), getLogger()),
+                SpawnSettings.parse(getConfig(), getLogger()));
+        getServer().getPluginManager().registerEvents(spawnService, this);
+        spawnService.start();
 
         this.pluginUpdater = new PluginUpdateService(getDataFolder().getParentFile().toPath(),
                 getServer().getUpdateFolderFile().toPath(), getDataFolder().toPath(),
@@ -160,6 +167,10 @@ public final class RegisterPlugin extends JavaPlugin {
             chatService.shutdown();
             chatService = null;
         }
+        if (spawnService != null) {
+            spawnService.shutdown();
+            spawnService = null;
+        }
         if (accessManager != null) {
             accessManager.shutdown();
             accessManager = null;
@@ -187,6 +198,9 @@ public final class RegisterPlugin extends JavaPlugin {
         }
         if (externalHooks != null) {
             externalHooks.resolve();
+        }
+        if (spawnService != null) {
+            spawnService.reload(SpawnSettings.parse(getConfig(), getLogger()));
         }
     }
 
@@ -238,6 +252,11 @@ public final class RegisterPlugin extends JavaPlugin {
 
     public RegistrationStore store() {
         return store;
+    }
+
+    /** Случайный спавн новичков и после смерти ({@code spawn.*}). */
+    public SpawnService spawn() {
+        return spawnService;
     }
 
     /** Инвентарное меню {@code /pass menu} (иконки вместо текстовых справок). */

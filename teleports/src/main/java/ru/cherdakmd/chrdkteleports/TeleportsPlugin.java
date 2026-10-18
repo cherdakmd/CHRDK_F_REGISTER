@@ -32,6 +32,14 @@ public final class TeleportsPlugin extends JavaPlugin {
         reloadTeleportsConfig();
         this.store = new HomeStore(getDataFolder().toPath(), getLogger());
         this.store.load();
+        // Ядро 1.4.106+: случайный спавн не трогает игрока, у которого уже есть дом.
+        // Через отдельный мост: со старым ядром модуль продолжает работать без этой связи.
+        try {
+            TeleportsSpawnBridge.register(this);
+        } catch (Throwable throwable) {
+            getLogger().warning("[CHRDK_Teleports] мост случайного спавна недоступен "
+                    + "(нужно ядро 1.4.106+): " + throwable);
+        }
         this.teleports = new TeleportService(this);
         this.tpaRequests = new TpaRequests();
         this.commandHandler = new TeleportCommandHandler(this);
