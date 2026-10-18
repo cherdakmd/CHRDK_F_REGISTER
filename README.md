@@ -1246,20 +1246,20 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.97.jar`, аддон
-CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.97.jar`, реферальный —
-`referrals/build/libs/chrdk-referrals-1.4.97.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.97.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.97.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.97.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.97.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.97.jar` (зависит от аддона чар), общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.97.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.97.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.97.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.97.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.97.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.97.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.98.jar`, аддон
+CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.98.jar`, реферальный —
+`referrals/build/libs/chrdk-referrals-1.4.98.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.98.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.98.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.98.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.98.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.98.jar` (зависит от аддона чар), общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.98.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.98.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.98.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.98.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.98.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.98.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). Оба JAR прикладываются к каждому релизу на GitHub.
 
 ---
@@ -1604,7 +1604,7 @@ plugins/<Addon>/messages.yml — удалите их после обновлен
 проклятого до легендарного, накат при крафте брони/оружия/инструментов, апгрейд двух
 одинаковых тирированных предметов на наковальне, перенос тира через апгрейд в незерит.
 
-**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-tier-forge-1.4.97.jar`
+**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-tier-forge-1.4.98.jar`
 рядом с ядром (≥ 1.4.6), перезапуск. Шансы/бонусы тиров — в `plugins/CHRDK_TierForge/config.yml`.
 
 ---
@@ -2741,3 +2741,22 @@ Discord-интеграция и её настройки не изменены.
 (+`top-header`, `top-scope-all`, `top-row`, `top-empty`). Рейтинг покрыт тремя
 новыми тестами `TierStatsKeeperTest` (всего 10); всего 84 `@Test` в 17 классах.
 Версия 1.4.97, полный перезапуск.
+
+### CHRDK_TierForge: «Последний рубеж» считает итоговый урон — 1.4.98
+
+Девятнадцатая волна аудита `docs/TIER_FORGE_AUDIT.md`. Свойство «Последний
+рубеж» (смертельный удар → 1 HP + Сопротивление II, раз в 60 секунд) проверяло
+смертельность раньше, чем отрабатывали парирование и срезы урона, и не видело
+щиты поглощения. Из-за этого удар, который прошёл бы в ноль, всё равно сжигал
+кулдаун и оставлял игрока с 1 HP.
+
+- **Правильный порядок.** «Последний рубеж» проверяется после парирования,
+  «Стойкости», «Сапёра» и «Антимага» — по тому урону, который реально дойдёт.
+- **Щиты в расчёте.** Поглощение вычитается из урона: с полными щитами смертельный
+  номинально удар спасателя не тратит.
+- **Без падения.** Вырожденный максимум здоровья (0 или отрицательный) больше не
+  приводит к исключению `setHealth`.
+
+Новых настроек и сообщений нет (92 ключа, 52 литерала). Новый тест
+`SurvivalMathTest` — 4 проверки; всего 88 `@Test` в 18 классах.
+Версия 1.4.98, полный перезапуск.

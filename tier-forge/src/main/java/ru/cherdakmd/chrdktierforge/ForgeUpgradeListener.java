@@ -334,15 +334,6 @@ public final class ForgeUpgradeListener implements Listener {
             return;
         }
 
-        // Последний рубеж: смертельный удар → 1 HP + Сопротивление II (раз в 60 с)
-        if (lastStand && event.getFinalDamage() >= victim.getHealth()
-                && cooldownReady(lastStandCooldown, victim.getUniqueId(), LASTSTAND_CD_MS)) {
-            event.setDamage(0);
-            victim.setHealth(Math.min(1.0, maxHealth(victim)));
-            applyFresh(victim, PotionEffectType.RESISTANCE, 100, 1);
-            return;
-        }
-
         // Парирование: полностью гасим удар с суммарным шансом (потолок 25%)
         if (parryChance > 0 && random.nextDouble() < Math.min(CAP_PARRY, parryChance)) {
             event.setDamage(0);
@@ -366,6 +357,23 @@ public final class ForgeUpgradeListener implements Listener {
             }
             default -> { }
         }
+        // Последний рубеж: смертельный удар → 1 HP + Сопротивление II (раз в 60 с).
+        // 1.4.98: проверяем ПОСЛЕ парирования и срезов и с учётом поглощения —
+        // раньше спасатель срабатывал на удар, который прошёл бы в ноль, сжигал
+        // кулдаун и оставлял игрока с 1 HP без причины.
+        if (lastStand && SurvivalMath.isLethal(victim.getHealth(),
+                victim.getAbsorptionAmount(), event.getFinalDamage())
+                && cooldownReady(lastStandCooldown, victim.getUniqueId(), LASTSTAND_CD_MS)) {
+            double rescue = Math.min(1.0, maxHealth(victim));
+            if (rescue <= 0) {
+                return; // вырожденный максимум здоровья: setHealth бросил бы исключение
+            }
+            event.setDamage(0);
+            victim.setHealth(rescue);
+            applyFresh(victim, PotionEffectType.RESISTANCE, 100, 1);
+            return;
+        }
+
         LivingEntity damager = event.getDamager() instanceof LivingEntity d ? d : null;
         if (damager != null) {
             // Терновник: вернуть четверть полученного урона (килл-кредит — жертве)
