@@ -73,11 +73,18 @@ final class ConfigReport {
         return value ? "вкл." : "выкл.";
     }
 
-    /** Целое без лишних нулей: 2.0 → «2», 2.5 → «2.5». */
+    /** Число без лишних нулей: 2.0 → «2», 2.5 → «2.5», 1.25 → «1.25». */
     static String trim(double value) {
         if (value == Math.rint(value)) {
             return String.valueOf((long) value);
         }
-        return String.format(Locale.ROOT, "%.2f", value);
+        String text = String.format(Locale.ROOT, "%.2f", value);
+        while (text.endsWith("0")) {
+            text = text.substring(0, text.length() - 1);
+        }
+        if (text.endsWith(".")) {
+            text = text.substring(0, text.length() - 1);
+        }
+        return text;
     }
 }
