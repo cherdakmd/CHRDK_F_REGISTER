@@ -1,0 +1,62 @@
+package ru.cherdakmd.chrdktierforge;
+
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.logging.Logger;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/** Сводка действующих настроек в консоль (1.4.100). */
+class ConfigReportTest {
+
+    private static TierForgeConfig parse(YamlConfiguration yaml) {
+        return TierForgeConfig.parse(yaml, Logger.getLogger("ConfigReportTest"));
+    }
+
+    @Test
+    void defaultsAreReportedAsEnabled() {
+        List<String> lines = ConfigReport.lines(parse(new YamlConfiguration()));
+        assertEquals(5, lines.size(), "пять строк: крафт, опознание, наковальня, дроп, прочее");
+        assertTrue(lines.get(0).contains("100%"), lines.get(0));
+        assertTrue(lines.get(1).contains("включено"), lines.get(1));
+        assertTrue(lines.get(2).contains("перекат вкл."), lines.get(2));
+        assertTrue(lines.get(3).contains("общий 15%"), lines.get(3));
+        assertTrue(lines.get(3).contains("босс ×2"), "множитель без хвоста .0: " + lines.get(3));
+    }
+
+    @Test
+    void disabledFeaturesAreSpelledOut() {
+        YamlConfiguration yaml = new YamlConfiguration();
+        yaml.set("roll-on-craft-chance-percent", 0);
+        yaml.set("anvil.enabled", false);
+        yaml.set("reroll.enabled", false);
+        yaml.set("mob-drop.enabled", false);
+        yaml.set("identify.enabled", false);
+        List<String> lines = ConfigReport.lines(parse(yaml));
+        assertTrue(lines.get(0).contains("выключен"), lines.get(0));
+        assertTrue(lines.get(1).contains("тир виден сразу"), lines.get(1));
+        assertTrue(lines.get(3).contains("выключен"), lines.get(3));
+    }
+
+    @Test
+    void perKindChancesAndFractionalBossMultiplier() {
+        YamlConfiguration yaml = new YamlConfiguration();
+        yaml.set("mob-drop.weapons-chance-percent", 40);
+        yaml.set("mob-drop.armor-chance-percent", 0);
+        yaml.set("mob-drop.boss-multiplier", 2.5);
+        String drop = ConfigReport.lines(parse(yaml)).get(3);
+        assertTrue(drop.contains("оружие 40%"), drop);
+        assertTrue(drop.contains("броня выкл."), drop);
+        assertTrue(drop.contains("×2.5"), drop);
+    }
+
+    @Test
+    void nullConfigAndNumberTrimming() {
+        assertEquals(List.of("конфиг не загружен"), ConfigReport.lines(null));
+        assertEquals("2", ConfigReport.trim(2.0));
+        assertEquals("1.5", ConfigReport.trim(1.5));
+        assertEquals("0", ConfigReport.trim(0.0));
+    }
+}

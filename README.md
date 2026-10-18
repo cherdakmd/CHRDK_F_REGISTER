@@ -1246,20 +1246,20 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.99.jar`, аддон
-CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.99.jar`, реферальный —
-`referrals/build/libs/chrdk-referrals-1.4.99.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.99.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.99.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.99.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.99.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.99.jar` (зависит от аддона чар), общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.99.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.99.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.99.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.99.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.99.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.99.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.100.jar`, аддон
+CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.100.jar`, реферальный —
+`referrals/build/libs/chrdk-referrals-1.4.100.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.100.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.100.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.100.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.100.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.100.jar` (зависит от аддона чар), общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.100.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.100.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.100.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.100.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.100.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.100.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). Оба JAR прикладываются к каждому релизу на GitHub.
 
 ---
@@ -1604,7 +1604,7 @@ plugins/<Addon>/messages.yml — удалите их после обновлен
 проклятого до легендарного, накат при крафте брони/оружия/инструментов, апгрейд двух
 одинаковых тирированных предметов на наковальне, перенос тира через апгрейд в незерит.
 
-**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-tier-forge-1.4.99.jar`
+**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-tier-forge-1.4.100.jar`
 рядом с ядром (≥ 1.4.6), перезапуск. Шансы/бонусы тиров — в `plugins/CHRDK_TierForge/config.yml`.
 
 ---
@@ -2780,3 +2780,22 @@ Discord-интеграция и её настройки не изменены.
 (+`admin-exported`, `admin-export-failed`). Новый тест `StatsCsvTest` — 4
 проверки; всего 92 `@Test` в 19 классах.
 Версия 1.4.99, полный перезапуск.
+
+### CHRDK_TierForge: сводка действующих настроек в логе — 1.4.100
+
+Двадцать первая волна аудита `docs/TIER_FORGE_AUDIT.md`. Аддон читает десятки
+ключей с клампами и фолбэками, поэтому после правки `config.yml` понять, «что
+реально включено», можно было только опытом.
+
+- **Пять строк в консоли при старте.** Шанс крафта и группы, режим опознания с
+  периодом скана, механики наковальни с ценой, дроп с мобов (общий процент,
+  шансы по видам, множитель босса) и число копий `stats.yml`.
+- **Повтор после `/tiersadmin reload`.** Сводка печатается заново — сразу видно,
+  какие значения применились после правок.
+- **Без «магии».** Выключенные механики так и подписаны, фолбэк шанса вида на
+  общий виден по конкретному проценту.
+
+Новых настроек и сообщений нет (94 ключа, 54 литерала); тексты сводки —
+консольные, поэтому `messages.yml` не менялся. Новый тест `ConfigReportTest` —
+4 проверки; всего 96 `@Test` в 20 классах.
+Версия 1.4.100, полный перезапуск.

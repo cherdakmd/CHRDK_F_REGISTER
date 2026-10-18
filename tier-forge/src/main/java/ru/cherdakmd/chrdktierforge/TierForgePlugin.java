@@ -176,6 +176,21 @@ public final class TierForgePlugin extends JavaPlugin {
         }
     }
 
+    /**
+     * Печать действующих настроек (1.4.100). Без неё после правки `config.yml`
+     * приходилось выяснять клампы и фолбэки опытом.
+     */
+    public void logEffectiveConfig() {
+        TierForgeConfig current = this.config;
+        if (current == null) {
+            return;
+        }
+        getLogger().info("CHRDK_TierForge: действующие настройки");
+        for (String line : ConfigReport.lines(current)) {
+            getLogger().info("  • " + line);
+        }
+    }
+
     /** Перечитывает config.yml/messages.yml. */
     public void reloadTierConfig() {
         reloadConfig();
@@ -192,6 +207,8 @@ public final class TierForgePlugin extends JavaPlugin {
                     () -> identification.scanBatch(config.identifyScanPlayersPerTick()),
                     config.identifyScanTicks(), config.identifyScanTicks());
         }
+        // 1.4.100: и при старте, и после /tiersadmin reload — что реально применилось.
+        logEffectiveConfig();
     }
 
     public ChrdkRegisterApi coreApi() {
