@@ -236,9 +236,9 @@ messages:
       "wrong-code": "<red>Неверный 6-значный код 2FA или пароль! Отключение отменено.</red>"
     "help": |-
       <gold>Команды двухфакторной защиты (TOTP 2FA):</gold>
-      <yellow>/%label% setup</yellow><gray> — сгенерировать секретный ключ для приложения-аутентификатора</gray>
+      <yellow>/%label% setup</yellow><gray> — показать секретный ключ для приложения-аутентификатора (повторно — тот же ключ)</gray>
       <yellow>/%label% confirm <код></yellow><gray> — подтвердить ключ 6-значным кодом и включить 2FA</gray>
-      <yellow>/%label% disable <код></yellow><gray> — отключить 2FA (по текущему коду или паролю)</gray>
+      <yellow>/%label% disable <код></yellow><gray> — отключить 2FA (по текущему коду или паролю; при обязательной 2FA недоступно)</gray>
       <yellow>/%label% cancel</yellow><gray> — отменить незавершённую настройку 2FA</gray>
       <yellow>/%label% qr</yellow><gray> — повторно выдать карту с QR-кодом привязки</gray>
     "login":
