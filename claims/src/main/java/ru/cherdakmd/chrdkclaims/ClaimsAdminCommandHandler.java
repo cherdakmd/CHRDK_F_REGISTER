@@ -100,6 +100,11 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
             usage(sender);
             return;
         }
+        if (!confirmed(args, 2)) {
+            plugin.messages().send(sender, "admin-confirm-needed",
+                    "command", "/claimadmin deleteall " + args[1] + " confirm");
+            return;
+        }
         String name = args[1];
         List<Claim> claims = plugin.store().ofOwner(name);
         if (claims.isEmpty()) {
@@ -262,6 +267,15 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
         }
     }
 
+    /** Токен подтверждения необратимой операции: «confirm» или «подтвердить». */
+    private static boolean confirmed(String[] args, int index) {
+        if (args.length <= index) {
+            return false;
+        }
+        String token = args[index];
+        return token.equalsIgnoreCase("confirm") || token.equalsIgnoreCase("подтвердить");
+    }
+
     private Integer parseAmount(String raw) {
         try {
             return Integer.valueOf(raw);
@@ -273,6 +287,11 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
     private void purge(CommandSender sender, String[] args) {
         if (args.length < 2) {
             usage(sender);
+            return;
+        }
+        if (!confirmed(args, 2)) {
+            plugin.messages().send(sender, "admin-confirm-needed",
+                    "command", "/claimadmin purge " + args[1] + " confirm");
             return;
         }
         String world = args[1];
@@ -359,6 +378,11 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
         }
         if (args.length == 3 && args[0].equalsIgnoreCase("limit")) {
             result.add("сброс");
+            return result;
+        }
+        if (args.length == 3 && (args[0].equalsIgnoreCase("deleteall")
+                || args[0].equalsIgnoreCase("purge"))) {
+            result.add("confirm");
             return result;
         }
         if (args.length == 2 && (args[0].equalsIgnoreCase("give")

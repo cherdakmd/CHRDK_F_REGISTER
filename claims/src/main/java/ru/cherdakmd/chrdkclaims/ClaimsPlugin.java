@@ -8,6 +8,7 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
@@ -41,6 +42,8 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
     private final Set<UUID> bypass = ConcurrentHashMap.newKeySet();
     /** Активные подсветки границ: игрок → задача (чтобы не плодить таймеры). */
     private final Map<UUID, BukkitTask> borderTasks = new ConcurrentHashMap<>();
+    /** Последний чанк игрока «мир:x:z» — чтобы строка действия срабатывала на границе. */
+    private final Map<UUID, String> lastChunk = new ConcurrentHashMap<>();
     private BukkitTask saveTask;
     private BukkitTask upkeepTask;
 
@@ -138,8 +141,50 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-        bypass.remove(event.getPlayer().getUniqueId());
-        cancelBorders(event.getPlayer().getUniqueId());
+        UUID id = event.getPlayer().getUniqueId();
+        bypass.remove(id);
+        cancelBorders(id);
+        lastChunk.remove(id);
+    }
+
+    /**
+     * Строка действия при входе на чужой приват: владелец и цена, если чанк продаётся.
+     * Обработчик вызывается на каждое движение, поэтому сначала сравниваются чанки —
+     * карта «последний чанк» трогается только на реальной границе.
+     */
+    @EventHandler(ignoreCancelled = true)
+    public void onMove(PlayerMoveEvent event) {
+        Location from = event.getFrom();
+        Location to = event.getTo();
+        if (to == null) {
+            return;
+        }
+        if (!to.getWorld().equals(from.getWorld())
+                || (from.getBlockX() >> 4) != (to.getBlockX() >> 4)
+                || (from.getBlockZ() >> 4) != (to.getBlockZ() >> 4)) {
+            String key = to.getWorld().getName() + ':' + (to.getBlockX() >> 4)
+                    + ':' + (to.getBlockZ() >> 4);
+            UUID id = event.getPlayer().getUniqueId();
+            boolean same = key.equals(lastChunk.put(id, key));
+            if (same || !config.enterNotice) {
+                return;
+            }
+            Player player = event.getPlayer();
+            if (!service.isAllowed(player)) {
+                return;
+            }
+            Claim claim = store.claimAt(to.getWorld().getName(),
+                    to.getBlockX() >> 4, to.getBlockZ() >> 4);
+            if (claim == null || claim.isOwner(player.getName())) {
+                return;
+            }
+            if (claim.salePrice > 0) {
+                player.sendActionBar(messages().get("enter-for-sale",
+                        "owner", claim.owner, "price", String.valueOf(claim.salePrice)));
+            } else {
+                player.sendActionBar(messages().get("enter-foreign", "owner", claim.owner));
+            }
+        }
     }
 
     /**

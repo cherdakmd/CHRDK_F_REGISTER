@@ -85,6 +85,22 @@ class ClaimMathTest {
     }
 
     @Test
+    void worldMultiplierScalesAndNeverZeroesThePrice() {
+        assertEquals(16, ClaimMath.scaled(16, 1.0));
+        assertEquals(8, ClaimMath.scaled(16, 0.5));
+        assertEquals(24, ClaimMath.scaled(16, 1.5), "округление к ближайшему");
+        assertEquals(32, ClaimMath.scaled(16, 2.0));
+        assertEquals(1, ClaimMath.scaled(1, 0.5), "цена не может стать нулевой");
+        assertEquals(0, ClaimMath.scaled(0, 2.0), "нулевая база остаётся нулевой");
+        assertEquals(16, ClaimMath.scaled(16, 0), "множитель 0 не выключает экономику");
+        assertEquals(16, ClaimMath.scaled(16, -3));
+        assertEquals(16, ClaimMath.scaled(16, Double.NaN));
+        assertEquals(16, ClaimMath.scaled(16, Double.POSITIVE_INFINITY));
+        assertEquals(Integer.MAX_VALUE, ClaimMath.scaled(Integer.MAX_VALUE, 10.0),
+                "переполнение зажимается");
+    }
+
+    @Test
     void daysUntilRoundsDownAndNeverNegative() {
         long now = 5_000_000_000L;
         assertEquals(0, ClaimMath.daysUntil(now, now));

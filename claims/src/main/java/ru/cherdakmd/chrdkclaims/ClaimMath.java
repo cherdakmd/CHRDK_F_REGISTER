@@ -78,6 +78,22 @@ public final class ClaimMath {
         return (int) Math.floor(chunkPrice * percent / 100.0);
     }
 
+    /**
+     * Цена/рента с множителем мира: округление к ближайшему, но не меньше единицы
+     * для ненулевой базы. Некорректный множитель (0, отрицательный, NaN) трактуется
+     * как «без изменений» — конфиг не должен случайно обнулять экономику.
+     */
+    public static int scaled(int base, double multiplier) {
+        if (base <= 0) {
+            return 0;
+        }
+        if (!Double.isFinite(multiplier) || multiplier <= 0) {
+            return base;
+        }
+        long value = Math.round(base * multiplier);
+        return (int) Math.min(Integer.MAX_VALUE, Math.max(1, value));
+    }
+
     /** Фактический лимит чанков игрока. */
     public static int effectiveLimit(int base, int passBonus, boolean hasPass) {
         return base + (hasPass ? passBonus : 0);

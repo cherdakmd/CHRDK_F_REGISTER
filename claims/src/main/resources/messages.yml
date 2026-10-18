@@ -105,6 +105,9 @@ claims:
   map-header: "<gold>═══ Карта приватов (чанк = знак) ═══</gold>"
   map-line: "<gray>%row%</gray>"
   map-legend: "<gray>@ ваш · # чужой · $ продаётся · . свободен · X вы здесь</gray>"
+  # вход на чужую территорию (строка действия)
+  enter-foreign: "<gray>Приват <yellow>%owner%</yellow> · /claim info</gray>"
+  enter-for-sale: "<gray>Приват <yellow>%owner%</yellow> продаётся за <yellow>%price% ⛁</yellow> · /claim buy</gray>"
   # защита
   denied-break: "<red>Чужой приват (%owner%): ломать нельзя.</red>"
   denied-place: "<red>Чужой приват (%owner%): ставить нельзя.</red>"
@@ -148,6 +151,7 @@ claims:
   admin-transferall-none: "<red>У %name% нет приватов, казны или вестей — переносить нечего.</red>"
   admin-transferall-received: "<aqua>Администрация перенесла на вас %claims% приватов и %treasury% ⛁ казны от %from%.</aqua>"
   admin-transferall-self: "<red>Ники совпадают — переносить нечего.</red>"
+  admin-confirm-needed: "<red>Операция необратима. Повторите с подтверждением: <yellow>%command%</yellow></red>"
   admin-purge-done: "<green>Из мира %world% удалено приватов: %count%.</green>"
   admin-purge-none: "<gray>В мире %world% приватов нет.</gray>"
   admin-rent-done: "<green>Рента: списано %charged% ⛁, освобождено чанков %released%, с долгом %debt%.</green>"
@@ -156,4 +160,4 @@ claims:
   admin-stats-general: "<gray>Чанков: %claims% · владельцев: %owners% · казна: %treasury% ⛁ · с долгом: %debt%</gray>"
   admin-stats-economy: "<gray>Куплено за всё время: %bought% · потрачено: %spent% ⛁ · налоги сожжены: %tax% ⛁</gray>"
   admin-stats-top: "<gray>%place%. %name% — %count% чанк(ов)</gray>"
-  admin-usage: "<yellow>/claimadmin reload | bypass | delete | deleteall <ник> | info <ник> | give <ник> | transfer <ник> | limit <ник> [n|сброс] | transferall <от> <кому> | purge <мир> | rent | stats</yellow>"
+  admin-usage: "<yellow>/claimadmin reload | bypass | delete | deleteall <ник> confirm | info <ник> | give <ник> | transfer <ник> | limit <ник> [n|сброс] | transferall <от> <кому> | purge <мир> confirm | rent | stats</yellow>"

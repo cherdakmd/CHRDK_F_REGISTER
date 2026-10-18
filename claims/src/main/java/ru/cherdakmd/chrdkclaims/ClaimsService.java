@@ -128,7 +128,7 @@ public final class ClaimsService {
         if (plugin.store().count(player.getName()) >= limit) {
             return "limit-reached";
         }
-        if (available(player) < cfg.chunkPrice) {
+        if (available(player) < cfg.priceIn(chunk.getWorld().getName())) {
             return "not-enough";
         }
         return null;
@@ -138,6 +138,9 @@ public final class ClaimsService {
     public void buy(Player player) {
         ClaimsConfig cfg = plugin.config();
         Chunk chunk = player.getLocation().getChunk();
+        String world = chunk.getWorld().getName();
+        int price = cfg.priceIn(world);
+        int upkeep = cfg.upkeepIn(world);
         Claim existing = plugin.store().claimAt(chunk.getWorld().getName(), chunk.getX(), chunk.getZ());
         String refusal = checkBuyable(player, chunk);
         if (refusal != null) {
@@ -153,24 +156,24 @@ public final class ClaimsService {
                         "margin", String.valueOf(cfg.spawnMargin));
                 case "limit-reached" -> sendLimit(player, player.getName());
                 default -> plugin.messages().send(player, "not-enough",
-                        "need", String.valueOf(cfg.chunkPrice),
+                        "need", String.valueOf(price),
                         "have", String.valueOf(available(player)));
             }
             return;
         }
-        if (!charge(player, cfg.chunkPrice)) {
+        if (!charge(player, price)) {
             plugin.messages().send(player, "not-enough",
-                    "need", String.valueOf(cfg.chunkPrice),
+                    "need", String.valueOf(price),
                     "have", String.valueOf(available(player)));
             return;
         }
         Claim claim = new Claim(chunk.getWorld().getName(), chunk.getX(), chunk.getZ(),
                 player.getName(), System.currentTimeMillis() + ClaimMath.DAY_MILLIS);
         plugin.store().add(claim);
-        plugin.store().addDiamondsSpent(cfg.chunkPrice);
+        plugin.store().addDiamondsSpent(price);
         plugin.messages().send(player, "bought",
-                "price", String.valueOf(cfg.chunkPrice),
-                "upkeep", String.valueOf(cfg.upkeepPerDay),
+                "price", String.valueOf(price),
+                "upkeep", String.valueOf(upkeep),
                 "paid", formatDate(claim.paidUntil));
     }
 
@@ -208,7 +211,8 @@ public final class ClaimsService {
         if (claim == null) {
             return;
         }
-        int reward = ClaimMath.sellbackReward(plugin.config().chunkPrice, plugin.config().sellbackPercent);
+        int reward = ClaimMath.sellbackReward(
+                plugin.config().priceIn(claim.world), plugin.config().sellbackPercent);
         plugin.store().remove(claim);
         int dropped = reward > 0 ? DiamondItems.give(player, reward) : 0;
         plugin.messages().send(player, "sellback-done", "reward", String.valueOf(reward));
@@ -597,6 +601,10 @@ public final class ClaimsService {
             if (!cfg.worldEnabled(claim.world)) {
                 continue;
             }
+            int rent = cfg.upkeepIn(claim.world);
+            if (rent <= 0) {
+                continue; // рента в этом мире отключена
+            }
             long overdue = ClaimMath.overdueDays(claim.paidUntil, now);
             if (overdue <= 0) {
                 // Долг мог остаться с прошлых суток: как только казна пополнена,
@@ -604,9 +612,9 @@ public final class ClaimsService {
                 if (claim.debtDays > 0) {
                     int charged = 0;
                     while (claim.debtDays > 0
-                            && plugin.store().takeTreasury(claim.owner, cfg.upkeepPerDay)) {
+                            && plugin.store().takeTreasury(claim.owner, rent)) {
                         claim.debtDays--;
-                        charged += cfg.upkeepPerDay;
+                        charged += rent;
                     }
                     if (charged > 0) {
                         chargedTotal += charged;
@@ -627,7 +635,7 @@ public final class ClaimsService {
             boolean released = false;
             for (long day = 0; day < overdue; day++) {
                 ClaimMath.RentStep step = ClaimMath.settleRentDay(
-                        plugin.store().treasuryOf(claim.owner), cfg.upkeepPerDay,
+                        plugin.store().treasuryOf(claim.owner), rent,
                         claim.debtDays, cfg.graceDays);
                 if (step.charged() > 0) {
                     plugin.store().takeTreasury(claim.owner, step.charged());
@@ -711,7 +719,7 @@ public final class ClaimsService {
     /** Предупреждение после входа: казны не хватает на ближайшую ренту. */
     public void sendRentReminder(Player player) {
         ClaimsConfig cfg = plugin.config();
-        if (!cfg.notifyRent || cfg.upkeepPerDay <= 0) {
+        if (!cfg.notifyRent) {
             return;
         }
         List<Claim> claims = plugin.store().ofOwner(player.getName());
@@ -721,20 +729,24 @@ public final class ClaimsService {
         long now = System.currentTimeMillis();
         long earliest = Long.MAX_VALUE;
         int chunks = 0;
-        long dueDays = 0;
+        long needTotal = 0;
         for (Claim claim : claims) {
             if (!cfg.worldEnabled(claim.world)) {
                 continue;
             }
+            int rent = cfg.upkeepIn(claim.world);
+            if (rent <= 0) {
+                continue;
+            }
             chunks++;
-            dueDays += 1L + Math.max(0, claim.debtDays);
+            needTotal += (long) rent * (1L + Math.max(0, claim.debtDays));
             earliest = Math.min(earliest, claim.paidUntil);
         }
         if (chunks == 0) {
             return;
         }
         int balance = plugin.store().treasuryOf(player.getName());
-        int need = (int) Math.min(Integer.MAX_VALUE, dueDays * cfg.upkeepPerDay);
+        int need = (int) Math.min(Integer.MAX_VALUE, needTotal);
         if (balance >= need) {
             return;
         }

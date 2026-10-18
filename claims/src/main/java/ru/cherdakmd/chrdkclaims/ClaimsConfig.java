@@ -1,14 +1,17 @@
 package ru.cherdakmd.chrdkclaims;
 
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -38,6 +41,8 @@ public final class ClaimsConfig {
     /** Сколько секунд держится подсветка границ /claim borders. */
     public final int borderSeconds;
     public final boolean notifyRent;
+    /** Показывать строку действия при входе на чужой приват. */
+    public final boolean enterNotice;
 
     public final boolean pvp;
     public final boolean fire;
@@ -53,6 +58,9 @@ public final class ClaimsConfig {
 
     private final Set<String> enabledWorlds;
     private final Set<String> disabledWorlds;
+    /** Множители цены чанка и ренты по мирам (мир в нижнем регистре). */
+    private final Map<String, Double> priceMultipliers;
+    private final Map<String, Double> upkeepMultipliers;
 
     private ClaimsConfig(FileConfiguration cfg, Logger logger) {
         requireAuth = cfg.getBoolean("general.require-auth", true);
@@ -69,6 +77,7 @@ public final class ClaimsConfig {
         mapRadius = clamped(cfg, logger, "general.map-radius", ClaimMap.RADIUS,
                 ClaimMap.MIN_RADIUS, ClaimMap.MAX_RADIUS);
         borderSeconds = clamped(cfg, logger, "general.border-seconds", 10, 3, 60);
+        enterNotice = cfg.getBoolean("general.enter-notice", true);
         notifyRent = cfg.getBoolean("general.notify-rent", true);
 
         timezone = cfg.getString("general.timezone", "").trim();
@@ -76,6 +85,8 @@ public final class ClaimsConfig {
 
         enabledWorlds = worlds(cfg.getStringList("worlds.enabled"));
         disabledWorlds = worlds(cfg.getStringList("worlds.disabled"));
+        priceMultipliers = multipliers(cfg, logger, "worlds.price-multiplier");
+        upkeepMultipliers = multipliers(cfg, logger, "worlds.upkeep-multiplier");
 
         pvp = cfg.getBoolean("protect.pvp", false);
         fire = cfg.getBoolean("protect.fire", true);
@@ -112,6 +123,24 @@ public final class ClaimsConfig {
         return enabledWorlds.isEmpty() || enabledWorlds.contains("*") || enabledWorlds.contains(key);
     }
 
+    /** Цена чанка в конкретном мире (с множителем `worlds.price-multiplier`). */
+    public int priceIn(String world) {
+        return ClaimMath.scaled(chunkPrice, multiplier(priceMultipliers, world));
+    }
+
+    /** Рента за сутки в конкретном мире (с множителем `worlds.upkeep-multiplier`). */
+    public int upkeepIn(String world) {
+        return ClaimMath.scaled(upkeepPerDay, multiplier(upkeepMultipliers, world));
+    }
+
+    private static double multiplier(Map<String, Double> table, String world) {
+        if (table.isEmpty() || world == null) {
+            return 1.0;
+        }
+        Double value = table.get(world.toLowerCase(Locale.ROOT));
+        return value == null ? 1.0 : value;
+    }
+
     public Set<String> enabledWorlds() {
         return Set.copyOf(enabledWorlds);
     }
@@ -136,6 +165,28 @@ public final class ClaimsConfig {
                     + "' не распознан (" + exception.getMessage() + ") — используется пояс сервера.");
             return ZoneId.systemDefault();
         }
+    }
+
+    /** Читает секцию «мир → множитель», зажимая значения в 0.1..10. */
+    private static Map<String, Double> multipliers(FileConfiguration cfg, Logger logger, String path) {
+        Map<String, Double> result = new LinkedHashMap<>();
+        ConfigurationSection section = cfg.getConfigurationSection(path);
+        if (section == null) {
+            return result;
+        }
+        for (String key : section.getKeys(false)) {
+            if (key == null || key.isBlank()) {
+                continue;
+            }
+            double raw = section.getDouble(key, 1.0);
+            double value = Math.min(10.0, Math.max(0.1, raw));
+            if (Double.compare(value, raw) != 0) {
+                logger.warning("[CHRDK_Claims] " + path + "." + key + "=" + raw
+                        + " вне диапазона 0.1..10 — используется " + value + ".");
+            }
+            result.put(key.trim().toLowerCase(Locale.ROOT), value);
+        }
+        return result;
     }
 
     private static Set<String> worlds(List<String> raw) {

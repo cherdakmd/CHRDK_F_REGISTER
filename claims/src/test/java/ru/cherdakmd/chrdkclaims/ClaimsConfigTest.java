@@ -39,6 +39,7 @@ class ClaimsConfigTest {
         assertTrue(config.notifyRent);
         assertEquals(ClaimMap.RADIUS, config.mapRadius);
         assertEquals(10, config.borderSeconds);
+        assertTrue(config.enterNotice, "уведомление о входе на чужой приват включено");
         assertEquals("", config.timezone);
     }
 
@@ -100,6 +101,38 @@ class ClaimsConfigTest {
                 """);
         assertTrue(config.worldEnabled("world"));
         assertFalse(config.worldEnabled("world_the_end"));
+    }
+
+    @Test
+    void worldEconomyMultipliersAreApplied() {
+        ClaimsConfig config = parse("""
+                pricing: {chunk-price: 16, upkeep-per-day: 2}
+                worlds:
+                  price-multiplier:
+                    world_nether: 0.5
+                    WORLD_THE_END: 2.0
+                  upkeep-multiplier:
+                    world_nether: 0.5
+                """);
+        assertEquals(16, config.priceIn("world"), "без множителя — базовая цена");
+        assertEquals(8, config.priceIn("world_nether"));
+        assertEquals(32, config.priceIn("world_the_end"), "мир ищется без учёта регистра");
+        assertEquals(16, config.priceIn(null));
+        assertEquals(2, config.upkeepIn("world"));
+        assertEquals(1, config.upkeepIn("world_nether"));
+        assertEquals(2, config.upkeepIn("world_the_end"), "нет множителя ренты — база");
+    }
+
+    @Test
+    void multiplierOutOfRangeIsClamped() {
+        ClaimsConfig config = parse("""
+                pricing: {chunk-price: 16}
+                worlds:
+                  price-multiplier: {world: 50}
+                  upkeep-multiplier: {world: 0}
+                """);
+        assertEquals(160, config.priceIn("world"), "максимум множителя 10: 16 × 10");
+        assertEquals(1, config.upkeepIn("world"), "минимум множителя 0.1, рента не обнуляется");
     }
 
     @Test

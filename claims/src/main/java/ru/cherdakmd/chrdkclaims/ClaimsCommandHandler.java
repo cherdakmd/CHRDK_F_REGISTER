@@ -104,9 +104,10 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
                 "world", chunk.getWorld().getName());
         Claim claim = service().claimHere(player);
         if (claim == null) {
+            String world = chunk.getWorld().getName();
             plugin.messages().send(player, "info-free",
-                    "price", String.valueOf(plugin.config().chunkPrice),
-                    "upkeep", String.valueOf(plugin.config().upkeepPerDay));
+                    "price", String.valueOf(plugin.config().priceIn(world)),
+                    "upkeep", String.valueOf(plugin.config().upkeepIn(world)));
             return;
         }
         plugin.messages().send(player, "info-owner",
@@ -262,11 +263,12 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
         List<Claim> claims = plugin.store().ofOwner(player.getName());
         boolean debt = claims.stream().anyMatch(claim -> claim.debtDays > 0);
         int treasury = plugin.store().treasuryOf(player.getName());
+        String here = player.getWorld().getName();
         plugin.messages().send(player, "balance-line",
                 "treasury", String.valueOf(treasury),
                 "claims", String.valueOf(claims.size()),
                 "limit", String.valueOf(service().limitOf(player.getName())),
-                "upkeep", String.valueOf(plugin.config().upkeepPerDay),
+                "upkeep", String.valueOf(plugin.config().upkeepIn(here)),
                 "debt", debt ? plugin.messages().raw("balance-debt") : "");
         long earliest = Long.MAX_VALUE;
         long need = 0;
@@ -275,7 +277,7 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
                 continue;
             }
             earliest = Math.min(earliest, claim.paidUntil);
-            need += (long) plugin.config().upkeepPerDay * (1L + claim.debtDays);
+            need += (long) plugin.config().upkeepIn(claim.world) * (1L + claim.debtDays);
         }
         if (!claims.isEmpty() && earliest != Long.MAX_VALUE) {
             plugin.messages().send(player, "balance-due",
