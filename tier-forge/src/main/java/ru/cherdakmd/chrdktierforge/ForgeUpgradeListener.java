@@ -5,6 +5,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.AbstractSkeleton;
 import org.bukkit.entity.Animals;
@@ -895,13 +896,48 @@ public final class ForgeUpgradeListener implements Listener {
         if (items == null || items.isEmpty() || at == null || at.getWorld() == null) {
             return;
         }
+        Location dropAt = safeDropLocation(at);
         for (ItemStack item : items) {
             if (item != null) {
-                at.getWorld().dropItemNaturally(at, item);
+                dropAt.getWorld().dropItemNaturally(dropAt, item);
             }
         }
         plugin.getLogger().info("Tier-привязка души: вещи игрока " + player
-                + " выложены в точке смерти (выход/выключение сервера).");
+                + " выложены в точке " + dropAt.getBlockX() + " " + dropAt.getBlockY() + " "
+                + dropAt.getBlockZ() + " (" + dropAt.getWorld().getName()
+                + ", выход/выключение сервера).");
+    }
+
+    /**
+     * Безопасная точка выкладки (1.4.88): точка смерти, если там можно стоять;
+     * иначе — соседний Y в пределах ±4; иначе — спавн мира. Настройка
+     * {@code improve.soulbound-safe-drop: false} оставляет точку смерти как есть.
+     */
+    private Location safeDropLocation(Location at) {
+        if (at == null || at.getWorld() == null || !plugin.config().improveSoulboundSafeDrop()) {
+            return at;
+        }
+        World world = at.getWorld();
+        int x = at.getBlockX();
+        int z = at.getBlockZ();
+        int y = SoulboundDrop.safeY(at.getBlockY(), world.getMinHeight(), world.getMaxHeight(), 4,
+                candidate -> canStandAt(world, x, candidate, z));
+        Location safe = new Location(world, x + 0.5, y, z + 0.5, at.getYaw(), at.getPitch());
+        if (canStandAt(world, x, y, z)) {
+            return safe;
+        }
+        return world.getSpawnLocation();
+    }
+
+    /** Можно ли поставить дроп: свободные ноги и твёрдая не-жидкость под ними. */
+    private static boolean canStandAt(World world, int x, int y, int z) {
+        if (y <= world.getMinHeight() || y >= world.getMaxHeight()) {
+            return false;
+        }
+        Block feet = world.getBlockAt(x, y, z);
+        Block below = world.getBlockAt(x, y - 1, z);
+        return feet.isPassable() && !feet.isLiquid()
+                && below.getType().isSolid() && !below.isLiquid();
     }
 
     /* ------------------------------- подсчёты ------------------------------- */
