@@ -34,7 +34,8 @@ public final class ArtifactEffects {
         SOUL_THIEF,       // убийство моба возвращает здоровье
         FROST_AURA,       // замедляет мобов вокруг носителя (пульс)
         THORNS_RETALIATE, // нападавший по игроку получает ответный шок
-        XP_MAGNET         // опытные шары вокруг летят к носителю (пульс)
+        XP_MAGNET,        // опытные шары вокруг летят к носителю (пульс)
+        JUMP_WARD         // «Глиняная душа»: прыжок гасится атрибутом jump_strength
     }
 
     /** Скрипт активного артефакта. */
@@ -113,7 +114,7 @@ public final class ArtifactEffects {
             Map.entry("koltso-usmerti", new TriggerSpec(TriggerSpec.Kind.WITHER_PROC, 0.04))
     );
 
-    /** Пассивные суперспособности доброй волны (1.4.58). */
+    /** Пассивные суперспособности: добрая волна 1.4.58 + атрибутный лимит прыжка. */
     private static final Map<String, SpecialKind> PASSIVE_SPECIALS = Map.of(
             "pero-feniksa", SpecialKind.PHOENIX_REVIVE,
             "zhnej-dush", SpecialKind.SOUL_THIEF,
@@ -182,7 +183,7 @@ public final class ArtifactEffects {
     /**
      * Целостность: у каждого пассива — зелья, триггер или суперспособность; у
      * активного — скрипт. «Глиняная душа» держится только суперспособностью
-     * JUMP_WARD (атрибут), зельевого взгляда у неё больше нет.
+     * JUMP_WARD (атрибут), зельевой записи у неё больше нет.
      */
     public static boolean isComplete(ArtifactDef def) {
         if (def.mode() == ArtifactDef.Mode.PASSIVE) {
