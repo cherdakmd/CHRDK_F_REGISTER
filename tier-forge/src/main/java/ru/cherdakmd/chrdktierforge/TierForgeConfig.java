@@ -21,6 +21,8 @@ public record TierForgeConfig(
         int rerollBaseXp,
         boolean mobDropEnabled,
         int mobDropChancePercent,
+        java.util.Set<String> mobWorldBlacklist,
+        boolean mobPlayerKillOnly,
         boolean identifyUnidentified,
         int identifyScanTicks,
         boolean identifySounds,
@@ -77,6 +79,15 @@ public record TierForgeConfig(
                     Double.isFinite(bossMultiplier) ? bossMultiplier : 2.0));
         }
 
+        // 1.4.83: миры, где дроп не получает накат, и требование «убил игрок».
+        java.util.Set<String> mobWorlds = new java.util.HashSet<>();
+        for (String world : config.getStringList("mob-drop.world-blacklist")) {
+            if (world != null && !world.isBlank()) {
+                mobWorlds.add(world.trim().toLowerCase(Locale.ROOT));
+            }
+        }
+        boolean mobKillOnly = config.getBoolean("mob-drop.player-kill-only", false);
+
         java.util.Set<String> blacklist = new java.util.HashSet<>();
         for (String material : config.getStringList("craft.material-blacklist")) {
             if (material != null && !material.isBlank()) {
@@ -113,7 +124,7 @@ public record TierForgeConfig(
                 config.getBoolean("craft.armor", true),
                 config.getBoolean("craft.weapons", true),
                 config.getBoolean("craft.tools", true),
-                reroll, catalyst, rerollXp, mobDrop, mobChance,
+                reroll, catalyst, rerollXp, mobDrop, mobChance, mobWorlds, mobKillOnly,
                 config.getBoolean("identify.enabled", true),
                 // 1.4.80: верхняя граница и внятное предупреждение — скан «раз в тик»
                 // ронял TPS, а нулевой/крошечный период молча не применялся.
@@ -158,6 +169,11 @@ public record TierForgeConfig(
     /** Материал в чёрном списке (накат запрещён)? */
     public boolean materialBlocked(Material material) {
         return material != null && materialBlacklist.contains(material.name());
+    }
+
+    /** Мир в чёрном списке для дропа с мобов (регистр не важен)? */
+    public boolean mobWorldBlocked(String worldName) {
+        return worldName != null && mobWorldBlacklist.contains(worldName.toLowerCase(Locale.ROOT));
     }
 
     /** Разрешён ли накат для вида предмета согласно флагам craft.*. */

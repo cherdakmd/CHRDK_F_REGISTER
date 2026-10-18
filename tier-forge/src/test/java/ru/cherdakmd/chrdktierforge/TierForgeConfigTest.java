@@ -164,6 +164,22 @@ class TierForgeConfigTest {
     }
 
     @Test
+    void mobDropWorldsAndKillOnly() {
+        YamlConfiguration worlds = empty();
+        worlds.set("mob-drop.world-blacklist", List.of(" World_Nether ", "", "CREATIVE"));
+        TierForgeConfig config = parse(worlds).config();
+        assertTrue(config.mobWorldBlocked("world_nether"), "регистр не важен");
+        assertTrue(config.mobWorldBlocked("CREATIVE"));
+        assertFalse(config.mobWorldBlocked("world"));
+        assertFalse(config.mobWorldBlocked(null));
+        assertFalse(config.mobPlayerKillOnly(), "по умолчанию — старое поведение");
+
+        YamlConfiguration killOnly = empty();
+        killOnly.set("mob-drop.player-kill-only", true);
+        assertTrue(parse(killOnly).config().mobPlayerKillOnly());
+    }
+
+    @Test
     void brokenCatalystDisablesReroll() {
         YamlConfiguration yaml = empty();
         yaml.set("reroll.catalyst", "NOT_A_MATERIAL");

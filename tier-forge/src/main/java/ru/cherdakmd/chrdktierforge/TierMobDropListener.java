@@ -1,5 +1,9 @@
 package ru.cherdakmd.chrdktierforge;
 
+import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Boss;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDeathEvent;
@@ -24,10 +28,19 @@ public final class TierMobDropListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onEntityDeath(EntityDeathEvent event) {
         if (!plugin.config().mobDropEnabled()) return;
+        LivingEntity entity = event.getEntity();
+        // Стойки и (на всякий случай) игроки не «мертвецы» для этой лотереи (1.4.83).
+        if (entity instanceof ArmorStand || entity instanceof Player) return;
+        if (plugin.config().mobWorldBlocked(entity.getWorld().getName())) return;
         int chance = plugin.config().mobDropChancePercent();
         if (chance <= 0) return;
+        if (plugin.config().mobPlayerKillOnly() && entity.getKiller() == null) return;
         double multiplier = plugin.config().mobBossMultiplier();
-        boolean boss = multiplier > 1.0 && event.getEntity().getCustomName() != null;
+        // 1.4.83: настоящие боссы (визер/дракон) считаются боссами и без имени;
+        // именной моб остаётся «мини-боссом» как и раньше.
+        boolean boss = multiplier > 1.0
+                && (entity instanceof Boss
+                || (entity.getCustomName() != null && !entity.getCustomName().isBlank()));
         int effectiveChance = Math.min(100, (int) Math.round(chance * (boss ? multiplier : 1.0)));
         boolean identify = plugin.config().identifyUnidentified();
         for (ItemStack drop : event.getDrops()) {
@@ -49,7 +62,7 @@ public final class TierMobDropListener implements Listener {
                 plugin.items().apply(drop, roll);
                 // 1.4.81: находку засчитываем убийце (в identify-флоу — тому,
                 // кто потом опознает предмет: тир до опознания ещё не известен).
-                if (event.getEntity().getKiller() instanceof org.bukkit.entity.Player killer) {
+                if (entity.getKiller() instanceof Player killer) {
                     plugin.stats().count(killer.getUniqueId(), roll.id());
                 }
             }
