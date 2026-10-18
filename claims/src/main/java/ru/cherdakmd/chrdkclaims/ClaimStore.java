@@ -444,15 +444,27 @@ public final class ClaimStore {
 
     // ------------------------------------------------------------ treasury --
 
+    /**
+     * Баланс казны. Ник сравнивается без учёта регистра: администратор может
+     * передать «steve», пока в данных записан «Steve».
+     */
     public synchronized int treasuryOf(String name) {
-        return treasury.getOrDefault(name, 0);
+        if (name == null) {
+            return 0;
+        }
+        Integer balance = treasury.get(keyIgnoreCase(treasury, name));
+        return balance == null ? 0 : balance;
     }
 
     /** @return новый баланс (не больше {@link Integer#MAX_VALUE}). */
     public synchronized int addTreasury(String name, int amount) {
+        if (name == null || name.isBlank()) {
+            return 0;
+        }
         long sum = (long) treasuryOf(name) + Math.max(0, amount);
         int balance = (int) Math.min(Integer.MAX_VALUE, sum);
-        treasury.put(name, balance);
+        String key = keyIgnoreCase(treasury, name);
+        treasury.put(key == null ? name : key, balance);
         touch();
         return balance;
     }
@@ -461,11 +473,15 @@ public final class ClaimStore {
         if (amount <= 0) {
             return true;
         }
-        int balance = treasuryOf(name);
+        String key = keyIgnoreCase(treasury, name);
+        if (key == null) {
+            return false;
+        }
+        int balance = treasury.get(key);
         if (balance < amount) {
             return false;
         }
-        treasury.put(name, balance - amount);
+        treasury.put(key, balance - amount);
         touch();
         return true;
     }
@@ -484,7 +500,9 @@ public final class ClaimStore {
         if (name == null || name.isBlank() || text == null || text.isBlank()) {
             return;
         }
-        List<String> lines = notices.computeIfAbsent(name, key -> new ArrayList<>());
+        String existing = keyIgnoreCase(notices, name);
+        List<String> lines = notices.computeIfAbsent(
+                existing == null ? name : existing, key -> new ArrayList<>());
         lines.add(text);
         trimNotices(lines);
         touch();
@@ -498,7 +516,10 @@ public final class ClaimStore {
 
     /** Забирает (и очищает) вести игрока. */
     public synchronized List<String> pollNotices(String name) {
-        List<String> lines = notices.remove(name);
+        if (name == null) {
+            return List.of();
+        }
+        List<String> lines = notices.remove(keyIgnoreCase(notices, name));
         if (lines == null) {
             return List.of();
         }
@@ -510,7 +531,7 @@ public final class ClaimStore {
 
     /** Персональный лимит администратора или {@code null}, если действует общий. */
     public synchronized Integer limitOverride(String name) {
-        return name == null ? null : limits.get(name);
+        return name == null ? null : limits.get(keyIgnoreCase(limits, name));
     }
 
     /** Назначает персональный лимит (1..100000) — он главнее базы и бонуса проходки. */
@@ -518,15 +539,18 @@ public final class ClaimStore {
         if (name == null || name.isBlank()) {
             return;
         }
-        limits.put(name, clamp(limit, 1, 100_000));
+        String key = keyIgnoreCase(limits, name);
+        limits.put(key == null ? name : key, clamp(limit, 1, 100_000));
         touch();
     }
 
     /** Снимает персональный лимит. @return был ли он назначен */
     public synchronized boolean clearLimitOverride(String name) {
-        if (name == null || limits.remove(name) == null) {
+        String key = name == null ? null : keyIgnoreCase(limits, name);
+        if (key == null) {
             return false;
         }
+        limits.remove(key);
         touch();
         return true;
     }
@@ -607,6 +631,9 @@ public final class ClaimStore {
     }
 
     private static <V> String keyIgnoreCase(Map<String, V> map, String name) {
+        if (name == null) {
+            return null;
+        }
         for (String key : map.keySet()) {
             if (key.equalsIgnoreCase(name)) {
                 return key;

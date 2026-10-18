@@ -190,6 +190,29 @@ class ClaimStoreTest {
     }
 
     @Test
+    void playerKeysAreCaseInsensitive() {
+        ClaimStore store = store();
+        store.addTreasury("Steve", 12);
+        assertEquals(12, store.treasuryOf("steve"));
+        assertEquals(17, store.addTreasury("STEVE", 5), "второй кошелёк не создаётся");
+        assertEquals(17, store.treasuryOf("Steve"));
+        assertTrue(store.takeTreasury("sTeVe", 7));
+        assertEquals(10, store.treasuryOf("Steve"));
+        assertFalse(store.takeTreasury("Nobody", 1));
+
+        store.setLimitOverride("Steve", 30);
+        assertEquals(Integer.valueOf(30), store.limitOverride("steve"));
+        store.setLimitOverride("steve", 35);
+        assertEquals(1, store.limitOverrides().size(), "лимит не дублируется по регистру");
+        assertEquals(Integer.valueOf(35), store.limitOverride("STEVE"));
+        assertTrue(store.clearLimitOverride("sTeVe"));
+        assertNull(store.limitOverride("Steve"));
+
+        store.addNotice("Steve", "привет");
+        assertEquals(List.of("привет"), store.pollNotices("sTeVe"));
+    }
+
+    @Test
     void removingWorldDropsOnlyItsClaims() {
         ClaimStore store = store();
         store.add(new Claim("world", 0, 0, "A", 1));
