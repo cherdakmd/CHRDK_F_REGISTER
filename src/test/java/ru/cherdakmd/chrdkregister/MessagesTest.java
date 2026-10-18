@@ -46,7 +46,12 @@ class MessagesTest {
             "password.error.", "password.hint.", "password.strength.", "donation.", "pass.menu.item-");
     private static final Set<String> INDIRECT_KEYS = Set.of(
             "register.success", "login.success", "chat.broadcast-prefix",
-            "dialog.password-missing", "dialog.confirm-mismatch", "dialog.code-missing");
+            "dialog.password-missing", "dialog.confirm-mismatch", "dialog.code-missing",
+            // 1.4.105: передаются вспомогательным методам — beginForcedEnrollment(player, introKey)
+            // и completeAuthentication(player, successKey), а не в вызов messages.* напрямую.
+            "register.success-two-factor", "login.password-ok-two-factor",
+            "two-factor.login.success", "two-factor.required.session", "two-factor.required.success",
+            "two-factor.reset-enrollment", "two-factor.reset-login-complete");
 
     private static final String RESOURCE_PATH = "src/main/resources/messages.yml";
 
