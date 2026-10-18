@@ -35,6 +35,8 @@ public final class ClaimsConfig {
     public final String timezone;
     public final ZoneId zone;
     public final int mapRadius;
+    /** Сколько секунд держится подсветка границ /claim borders. */
+    public final int borderSeconds;
     public final boolean notifyRent;
 
     public final boolean pvp;
@@ -66,6 +68,7 @@ public final class ClaimsConfig {
         spawnMargin = clamped(cfg, logger, "worlds.spawn-margin", 64, 0, 100_000);
         mapRadius = clamped(cfg, logger, "general.map-radius", ClaimMap.RADIUS,
                 ClaimMap.MIN_RADIUS, ClaimMap.MAX_RADIUS);
+        borderSeconds = clamped(cfg, logger, "general.border-seconds", 10, 3, 60);
         notifyRent = cfg.getBoolean("general.notify-rent", true);
 
         timezone = cfg.getString("general.timezone", "").trim();

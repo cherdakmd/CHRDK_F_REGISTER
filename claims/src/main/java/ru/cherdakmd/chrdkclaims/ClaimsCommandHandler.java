@@ -16,7 +16,8 @@ import java.util.Locale;
 public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter {
 
     private static final List<String> SUBS = List.of("help", "info", "map", "list", "unclaim",
-            "add", "remove", "deposit", "withdraw", "balance", "sell", "sellback", "buy", "transfer");
+            "add", "remove", "deposit", "withdraw", "balance", "sell", "sellback", "buy",
+            "transfer", "forsale", "borders");
 
     private final ClaimsPlugin plugin;
 
@@ -43,7 +44,9 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
             case "help" -> plugin.messages().send(player, "usage");
             case "info" -> info(player);
             case "map" -> map(player);
-            case "list" -> list(player);
+            case "list" -> list(player, args);
+            case "forsale" -> forsale(player, args);
+            case "borders" -> borders(player);
             case "unclaim" -> {
                 if (ready(player)) {
                     service().unclaim(player);
@@ -116,6 +119,14 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
                         ? plugin.messages().raw("info-debt",
                                 "debt-days", String.valueOf(claim.debtDays))
                         : "");
+        if (claim.debtDays <= 0) {
+            long left = ClaimMath.daysUntil(claim.paidUntil, System.currentTimeMillis());
+            if (left > 0) {
+                plugin.messages().send(player, "info-left", "days", String.valueOf(left));
+            } else {
+                plugin.messages().send(player, "info-left-today");
+            }
+        }
         if (claim.salePrice > 0) {
             plugin.messages().send(player, "info-sale", "price", String.valueOf(claim.salePrice));
         }
@@ -149,16 +160,18 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
         plugin.messages().send(player, "map-legend");
     }
 
-    private void list(Player player) {
-        List<Claim> claims = plugin.store().ofOwner(player.getName());
+    private void list(Player player, String[] args) {
+        List<Claim> claims = service().ownedSorted(player.getName());
         if (claims.isEmpty()) {
             plugin.messages().send(player, "list-none");
             return;
         }
+        int pages = Pagination.pageCount(claims.size(), Pagination.PAGE_SIZE);
+        int page = Pagination.clampPage(pageArg(args, 1), pages);
         plugin.messages().send(player, "list-header",
                 "count", String.valueOf(claims.size()),
                 "limit", String.valueOf(service().limitOf(player.getName())));
-        for (Claim claim : claims) {
+        for (Claim claim : Pagination.slice(claims, page, Pagination.PAGE_SIZE)) {
             plugin.messages().send(player, "list-line",
                     "world", claim.world, "x", String.valueOf(claim.x),
                     "z", String.valueOf(claim.z),
@@ -168,6 +181,81 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
                                     "price", String.valueOf(claim.salePrice))
                             : "");
         }
+        sendPageLine(player, "list-page", page, pages, "list");
+    }
+
+    /** Витрина чужих чанков, выставленных на продажу: свой мир и ближние — первыми. */
+    private void forsale(Player player, String[] args) {
+        Chunk chunk = player.getLocation().getChunk();
+        String world = chunk.getWorld().getName();
+        List<ClaimMarket.Offer> offers = new ArrayList<>();
+        for (Claim claim : plugin.store().all()) {
+            if (claim.salePrice > 0 && plugin.config().worldEnabled(claim.world)) {
+                offers.add(new ClaimMarket.Offer(claim.world, claim.x, claim.z,
+                        claim.owner, claim.salePrice));
+            }
+        }
+        if (offers.isEmpty()) {
+            plugin.messages().send(player, "forsale-none");
+            return;
+        }
+        List<ClaimMarket.Offer> sorted = ClaimMarket.sorted(offers, world, chunk.getX(), chunk.getZ());
+        int pages = Pagination.pageCount(sorted.size(), Pagination.PAGE_SIZE);
+        int page = Pagination.clampPage(pageArg(args, 1), pages);
+        plugin.messages().send(player, "forsale-header", "count", String.valueOf(sorted.size()));
+        for (ClaimMarket.Offer offer : Pagination.slice(sorted, page, Pagination.PAGE_SIZE)) {
+            int distance = ClaimMarket.distance(offer, world, chunk.getX(), chunk.getZ());
+            plugin.messages().send(player, "forsale-line",
+                    "world", offer.world(), "x", String.valueOf(offer.x()),
+                    "z", String.valueOf(offer.z()), "price", String.valueOf(offer.price()),
+                    "owner", offer.owner(),
+                    "dist", distance == Integer.MAX_VALUE
+                            ? ""
+                            : plugin.messages().raw("forsale-distance",
+                                    "dist", String.valueOf(distance)));
+        }
+        sendPageLine(player, "forsale-page", page, pages, "forsale");
+    }
+
+    /** Подсветка границ текущего чанка частицами (только для этого игрока). */
+    private void borders(Player player) {
+        boolean enabled = plugin.toggleBorders(player);
+        if (!enabled) {
+            plugin.messages().send(player, "borders-off");
+            return;
+        }
+        Claim claim = service().claimHere(player);
+        String seconds = String.valueOf(plugin.config().borderSeconds);
+        if (claim == null) {
+            plugin.messages().send(player, "borders-on-free", "seconds", seconds);
+        } else {
+            plugin.messages().send(player, "borders-on", "seconds", seconds, "owner", claim.owner);
+        }
+    }
+
+    /** Номер страницы из аргумента; мусор и отсутствие аргумента — первая страница. */
+    private static int pageArg(String[] args, int index) {
+        if (args.length <= index) {
+            return 1;
+        }
+        try {
+            return Integer.parseInt(args[index]);
+        } catch (NumberFormatException exception) {
+            return 1;
+        }
+    }
+
+    /** Строка «страница N/M · далее» с кликабельным переходом; на одной странице не нужна. */
+    private void sendPageLine(Player player, String key, int page, int pages, String command) {
+        if (pages <= 1) {
+            return;
+        }
+        int next = page >= pages ? 1 : page + 1;
+        plugin.messages().send(player, key,
+                "page", String.valueOf(page),
+                "pages", String.valueOf(pages),
+                "next", String.valueOf(next),
+                "command", command);
     }
 
     private void balance(Player player) {

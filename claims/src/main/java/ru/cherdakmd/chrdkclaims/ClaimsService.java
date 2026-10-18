@@ -37,10 +37,17 @@ public final class ClaimsService {
         return plugin.coreApi() == null || plugin.coreApi().isAuthenticated(player);
     }
 
-    public int limitOf(String playerName) {
+    /** Общий лимит игрока: база + бонус активной проходки, без персональных правок. */
+    public int baseLimitOf(String playerName) {
         boolean hasPass = plugin.coreApi() != null && plugin.coreApi().hasActivePass(playerName);
         return ClaimMath.effectiveLimit(plugin.config().baseChunks,
                 plugin.config().passBonusChunks, hasPass);
+    }
+
+    /** Фактический лимит: персональный лимит администратора главнее общего. */
+    public int limitOf(String playerName) {
+        Integer override = plugin.store().limitOverride(playerName);
+        return override != null ? override : baseLimitOf(playerName);
     }
 
     public String formatDate(long millis) {
@@ -174,6 +181,9 @@ public final class ClaimsService {
     }
 
     private boolean hasNoPass(String name) {
+        if (plugin.store().limitOverride(name) != null) {
+            return false; // лимит выдан вручную — подсказка про проходку не нужна
+        }
         return plugin.coreApi() == null || !plugin.coreApi().hasActivePass(name);
     }
 
@@ -735,6 +745,23 @@ public final class ClaimsService {
     }
 
     // ------------------------------------------------------------- others --
+
+    /** Приваты игрока в стабильном порядке (мир, x, z) — чтобы страницы списка не «прыгали». */
+    public List<Claim> ownedSorted(String playerName) {
+        List<Claim> claims = plugin.store().ofOwner(playerName);
+        claims.sort((left, right) -> {
+            int byWorld = left.world.compareTo(right.world);
+            if (byWorld != 0) {
+                return byWorld;
+            }
+            int byX = Integer.compare(left.x, right.x);
+            if (byX != 0) {
+                return byX;
+            }
+            return Integer.compare(left.z, right.z);
+        });
+        return claims;
+    }
 
     public Claim claimHere(Player player) {
         Chunk chunk = player.getLocation().getChunk();

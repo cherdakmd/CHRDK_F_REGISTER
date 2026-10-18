@@ -16,6 +16,8 @@ general:
   timezone: "Europe/Moscow"
   # Радиус карты /claim map в чанках (2..8; 5 = 11×11).
   map-radius: 5
+  # Сколько секунд горит подсветка границ /claim borders (3..60).
+  border-seconds: 10
   # Сообщать игрокам о списании ренты, долге и освобождении чанка.
   notify-rent: true
 

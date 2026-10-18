@@ -9,9 +9,10 @@ commands:
   claim:
     description: "Приваты: купить чанк, члены, казна, продажа, карта"
     aliases: [parcel, land]
-    usage: "/claim [info|map|list|unclaim|add|remove|deposit|withdraw|balance|sell|sellback|buy|help]"
+    usage: "/claim [info|map|list [стр]|forsale [стр]|borders|unclaim|add|remove|deposit|withdraw|balance|sell|sellback|buy|transfer|help]"
   claimadmin:
-    description: "Администрирование приватов"
+    description: "Администрирование приватов: выдача, лимиты, перенос, рента, статистика"
+    usage: "/claimadmin [reload|bypass|delete|deleteall|info|give|transfer|limit|transferall|purge|rent|stats]"
     permission: chrdkclaims.admin
 permissions:
   chrdkclaims.use:

@@ -38,6 +38,7 @@ class ClaimsConfigTest {
         assertTrue(config.workstations, "вёрстаки защищаются по умолчанию");
         assertTrue(config.notifyRent);
         assertEquals(ClaimMap.RADIUS, config.mapRadius);
+        assertEquals(10, config.borderSeconds);
         assertEquals("", config.timezone);
     }
 
@@ -47,7 +48,7 @@ class ClaimsConfigTest {
                 pricing: {chunk-price: -5, upkeep-per-day: 99999999, grace-days: -1, sellback-percent: 140}
                 taxes: {sale-tax-percent: 120}
                 limits: {base-chunks: 0, pass-bonus-chunks: -3, members-per-chunk: 900}
-                general: {map-radius: 99}
+                general: {map-radius: 99, border-seconds: 1}
                 """);
         assertEquals(1, config.chunkPrice);
         assertEquals(100_000, config.upkeepPerDay);
@@ -58,6 +59,7 @@ class ClaimsConfigTest {
         assertEquals(0, config.passBonusChunks);
         assertEquals(128, config.membersPerChunk);
         assertEquals(ClaimMap.MAX_RADIUS, config.mapRadius);
+        assertEquals(3, config.borderSeconds, "подсветка не короче трёх секунд");
     }
 
     @Test

@@ -52,6 +52,8 @@ public final class ClaimStore {
     private final Map<String, Map<Long, Claim>> claims = new HashMap<>();
     private final Map<String, Integer> treasury = new LinkedHashMap<>();
     private final Map<String, List<String>> notices = new LinkedHashMap<>();
+    /** Персональные лимиты чанков, выданные администратором (ник → чанков). */
+    private final Map<String, Integer> limits = new LinkedHashMap<>();
     private final AtomicBoolean saving = new AtomicBoolean();
     private final Object writeLock = new Object();
 
@@ -145,6 +147,7 @@ public final class ClaimStore {
         claims.clear();
         treasury.clear();
         notices.clear();
+        limits.clear();
         chunksClaimedTotal = 0;
         diamondsSpent = 0;
         taxBurned = 0;
@@ -248,6 +251,18 @@ public final class ClaimStore {
                 }
             }
         }
+        if (data.get("limits") instanceof Map<?, ?> map) {
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                if (entry.getKey() == null) {
+                    continue;
+                }
+                String name = String.valueOf(entry.getKey()).trim();
+                int limit = clamp((int) longOf(entry.getValue()), 1, 100_000);
+                if (!name.isEmpty()) {
+                    limits.put(name, limit);
+                }
+            }
+        }
         if (data.get("stats") instanceof Map<?, ?> stats) {
             chunksClaimedTotal = Math.max(0, longOf(stats.get("chunksClaimedTotal")));
             diamondsSpent = Math.max(0, longOf(stats.get("diamondsSpent")));
@@ -278,6 +293,9 @@ public final class ClaimStore {
             }
             data.put("claims", claimsList);
             data.put("treasury", new LinkedHashMap<>(treasury));
+            if (!limits.isEmpty()) {
+                data.put("limits", new LinkedHashMap<>(limits));
+            }
             if (!notices.isEmpty()) {
                 Map<String, List<String>> copy = new LinkedHashMap<>();
                 notices.forEach((name, lines) -> copy.put(name, new ArrayList<>(lines)));
@@ -486,6 +504,115 @@ public final class ClaimStore {
         }
         touch();
         return List.copyOf(lines);
+    }
+
+    // -------------------------------------------------------------- limits --
+
+    /** Персональный лимит администратора или {@code null}, если действует общий. */
+    public synchronized Integer limitOverride(String name) {
+        return name == null ? null : limits.get(name);
+    }
+
+    /** Назначает персональный лимит (1..100000) — он главнее базы и бонуса проходки. */
+    public synchronized void setLimitOverride(String name, int limit) {
+        if (name == null || name.isBlank()) {
+            return;
+        }
+        limits.put(name, clamp(limit, 1, 100_000));
+        touch();
+    }
+
+    /** Снимает персональный лимит. @return был ли он назначен */
+    public synchronized boolean clearLimitOverride(String name) {
+        if (name == null || limits.remove(name) == null) {
+            return false;
+        }
+        touch();
+        return true;
+    }
+
+    /** Все персональные лимиты (для админской статистики/диагностики). */
+    public synchronized Map<String, Integer> limitOverrides() {
+        return Map.copyOf(limits);
+    }
+
+    // ------------------------------------------------------------ transfer --
+
+    /** Итог переноса владений: приваты, казна, отложенные вести, персональный лимит. */
+    public record TransferSummary(int claims, int treasury, int notices, boolean limitMoved) {
+    }
+
+    /**
+     * Переносит всё с одного ника на другой — сценарий смены ника игрока.
+     *
+     * <p>Переносятся приваты (владение), казна, отложенные вести и персональный
+     * лимит; ники сравниваются без учёта регистра. Если получатель был участником
+     * чужого привата, из списка участников он удаляется — он теперь владелец.</p>
+     */
+    public synchronized TransferSummary transferAll(String from, String to) {
+        if (from == null || to == null || from.isBlank() || to.isBlank()
+                || from.equalsIgnoreCase(to)) {
+            return new TransferSummary(0, 0, 0, false);
+        }
+        int movedClaims = 0;
+        for (Claim claim : all()) {
+            if (!claim.isOwner(from)) {
+                continue;
+            }
+            claim.owner = to;
+            claim.members.removeIf(member -> member.equalsIgnoreCase(to));
+            movedClaims++;
+        }
+
+        int movedTreasury = 0;
+        String fromTreasury = keyIgnoreCase(treasury, from);
+        if (fromTreasury != null) {
+            movedTreasury = treasury.remove(fromTreasury);
+        }
+        if (movedTreasury > 0) {
+            String toTreasury = keyIgnoreCase(treasury, to);
+            String key = toTreasury == null ? to : toTreasury;
+            int current = treasury.getOrDefault(key, 0);
+            treasury.put(key, (int) Math.min(Integer.MAX_VALUE, (long) current + movedTreasury));
+        }
+
+        int movedNotices = 0;
+        String fromNotices = keyIgnoreCase(notices, from);
+        if (fromNotices != null) {
+            List<String> pending = notices.remove(fromNotices);
+            movedNotices = pending == null ? 0 : pending.size();
+            if (movedNotices > 0) {
+                String toNotices = keyIgnoreCase(notices, to);
+                List<String> target = notices.computeIfAbsent(
+                        toNotices == null ? to : toNotices, key -> new ArrayList<>());
+                target.addAll(pending);
+                trimNotices(target);
+            }
+        }
+
+        boolean limitMoved = false;
+        String fromLimit = keyIgnoreCase(limits, from);
+        if (fromLimit != null) {
+            Integer override = limits.remove(fromLimit);
+            if (override != null) {
+                limits.put(to, override);
+                limitMoved = true;
+            }
+        }
+
+        if (movedClaims > 0 || movedTreasury > 0 || movedNotices > 0 || limitMoved) {
+            touch();
+        }
+        return new TransferSummary(movedClaims, movedTreasury, movedNotices, limitMoved);
+    }
+
+    private static <V> String keyIgnoreCase(Map<String, V> map, String name) {
+        for (String key : map.keySet()) {
+            if (key.equalsIgnoreCase(name)) {
+                return key;
+            }
+        }
+        return null;
     }
 
     // --------------------------------------------------------------- stats --

@@ -123,6 +123,73 @@ class ClaimStoreTest {
     }
 
     @Test
+    void limitOverridesSurviveReloadAndCanBeCleared() {
+        ClaimStore store = store();
+        store.setLimitOverride("Steve", 40);
+        store.save();
+
+        ClaimStore loaded = store();
+        loaded.load();
+        assertEquals(Integer.valueOf(40), loaded.limitOverride("Steve"));
+        assertEquals(1, loaded.limitOverrides().size());
+        assertTrue(loaded.clearLimitOverride("Steve"));
+        assertNull(loaded.limitOverride("Steve"));
+        assertFalse(loaded.clearLimitOverride("Steve"), "повторное снятие ничего не делает");
+    }
+
+    @Test
+    void transferAllMovesClaimsTreasuryNoticesAndLimit() {
+        ClaimStore store = store();
+        store.add(new Claim("world", 0, 0, "OldName", 1));
+        store.add(new Claim("world_nether", 2, 2, "OldName", 1));
+        store.add(new Claim("world", 5, 5, "Other", 1));
+        store.addTreasury("OldName", 12);
+        store.addTreasury("NewName", 3);
+        store.addNotice("OldName", "весть");
+        store.setLimitOverride("OldName", 40);
+
+        ClaimStore.TransferSummary summary = store.transferAll("OldName", "NewName");
+        assertEquals(2, summary.claims());
+        assertEquals(12, summary.treasury());
+        assertEquals(1, summary.notices());
+        assertTrue(summary.limitMoved());
+        assertEquals(15, store.treasuryOf("NewName"), "казна суммируется с остатком получателя");
+        assertEquals(0, store.treasuryOf("OldName"));
+        assertEquals(2, store.count("NewName"));
+        assertEquals(1, store.count("Other"));
+        assertEquals(List.of("весть"), store.pollNotices("NewName"));
+        assertEquals(Integer.valueOf(40), store.limitOverride("NewName"));
+        assertNull(store.limitOverride("OldName"));
+    }
+
+    @Test
+    void transferAllIgnoresSameNickAndKeepsData() {
+        ClaimStore store = store();
+        store.add(new Claim("world", 0, 0, "A", 1));
+        store.addTreasury("A", 7);
+
+        ClaimStore.TransferSummary summary = store.transferAll("A", "a");
+        assertEquals(0, summary.claims());
+        assertEquals(0, summary.treasury());
+        assertEquals(1, store.count("A"));
+        assertEquals(7, store.treasuryOf("A"));
+    }
+
+    @Test
+    void transferAllDropsTargetFromMembersOfMovedClaim() {
+        ClaimStore store = store();
+        Claim claim = new Claim("world", 1, 1, "Old", 1);
+        claim.members.add("New");
+        claim.members.add("Friend");
+        store.add(claim);
+
+        store.transferAll("Old", "New");
+        Claim moved = store.claimAt("world", 1, 1);
+        assertEquals("New", moved.owner);
+        assertEquals(List.of("Friend"), moved.members, "новый владелец больше не участник");
+    }
+
+    @Test
     void removingWorldDropsOnlyItsClaims() {
         ClaimStore store = store();
         store.add(new Claim("world", 0, 0, "A", 1));

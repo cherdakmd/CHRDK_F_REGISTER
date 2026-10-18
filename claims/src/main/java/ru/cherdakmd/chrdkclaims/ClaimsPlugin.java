@@ -1,6 +1,9 @@
 package ru.cherdakmd.chrdkclaims;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Particle;
+import org.bukkit.World;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -14,6 +17,7 @@ import ru.cherdakmd.chrdkregister.api.events.PassExpiredEvent;
 import ru.cherdakmd.chrdkregister.api.events.PlayerAuthCompletedEvent;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,6 +30,8 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
 
     private static final long SAVE_INTERVAL_TICKS = 20L * 60; // минута
     private static final long UPKEEP_INTERVAL_TICKS = 20L * 60 * 60; // час
+    /** Период перерисовки границ: два импульса в секунду. */
+    private static final long BORDER_PERIOD_TICKS = 10L;
 
     private volatile ChrdkRegisterApi coreApi;
     private volatile Messages messages;
@@ -33,6 +39,8 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
     private ClaimStore store;
     private ClaimsService service;
     private final Set<UUID> bypass = ConcurrentHashMap.newKeySet();
+    /** Активные подсветки границ: игрок → задача (чтобы не плодить таймеры). */
+    private final Map<UUID, BukkitTask> borderTasks = new ConcurrentHashMap<>();
     private BukkitTask saveTask;
     private BukkitTask upkeepTask;
 
@@ -82,6 +90,8 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         if (saveTask != null) {
             saveTask.cancel();
         }
+        borderTasks.values().forEach(BukkitTask::cancel);
+        borderTasks.clear();
         if (store != null) {
             store.markDirty();
             store.save();
@@ -129,6 +139,68 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         bypass.remove(event.getPlayer().getUniqueId());
+        cancelBorders(event.getPlayer().getUniqueId());
+    }
+
+    /**
+     * Включает/выключает подсветку границ текущего чанка.
+     *
+     * @return {@code true}, если подсветка включена, {@code false} — выключена
+     */
+    public boolean toggleBorders(Player player) {
+        UUID id = player.getUniqueId();
+        BukkitTask active = borderTasks.remove(id);
+        if (active != null) {
+            active.cancel();
+            return false;
+        }
+        int pulses = Math.max(1, config.borderSeconds * 2);
+        int[] left = {pulses};
+        BukkitTask task = Bukkit.getScheduler().runTaskTimer(this, () -> {
+            if (!player.isOnline() || left[0]-- <= 0) {
+                cancelBorders(id);
+                return;
+            }
+            drawBorder(player);
+        }, 0L, BORDER_PERIOD_TICKS);
+        borderTasks.put(id, task);
+        return true;
+    }
+
+    private void cancelBorders(UUID id) {
+        BukkitTask task = borderTasks.remove(id);
+        if (task != null) {
+            task.cancel();
+        }
+    }
+
+    /** Рисует контур чанка на двух уровнях — видно и на неровном рельефе. */
+    private void drawBorder(Player player) {
+        Location base = player.getLocation();
+        World world = base.getWorld();
+        int minX = (base.getBlockX() >> 4) << 4;
+        int minZ = (base.getBlockZ() >> 4) << 4;
+        int y = base.getBlockY();
+        for (int offset = 0; offset <= 16; offset += 2) {
+            player.spawnParticle(Particle.END_ROD,
+                    new Location(world, minX + offset, y + 0.2, minZ), 1);
+            player.spawnParticle(Particle.END_ROD,
+                    new Location(world, minX + offset, y + 0.2, minZ + 16), 1);
+            player.spawnParticle(Particle.END_ROD,
+                    new Location(world, minX, y + 0.2, minZ + offset), 1);
+            player.spawnParticle(Particle.END_ROD,
+                    new Location(world, minX + 16, y + 0.2, minZ + offset), 1);
+            if (offset % 4 == 0) {
+                player.spawnParticle(Particle.END_ROD,
+                        new Location(world, minX + offset, y + 2.2, minZ), 1);
+                player.spawnParticle(Particle.END_ROD,
+                        new Location(world, minX + offset, y + 2.2, minZ + 16), 1);
+                player.spawnParticle(Particle.END_ROD,
+                        new Location(world, minX, y + 2.2, minZ + offset), 1);
+                player.spawnParticle(Particle.END_ROD,
+                        new Location(world, minX + 16, y + 2.2, minZ + offset), 1);
+            }
+        }
     }
 
     public boolean isBypassing(Player player) {

@@ -17,7 +17,7 @@ import java.util.Map;
 public final class ClaimsAdminCommandHandler implements CommandExecutor, TabCompleter {
 
     private static final List<String> SUBS = List.of("reload", "bypass", "delete", "deleteall",
-            "info", "give", "transfer", "purge", "rent", "stats");
+            "info", "give", "transfer", "limit", "transferall", "purge", "rent", "stats");
 
     private final ClaimsPlugin plugin;
 
@@ -44,6 +44,8 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
             case "info" -> info(sender, args);
             case "give" -> give(sender, args);
             case "transfer" -> transfer(sender, args);
+            case "limit" -> limit(sender, args);
+            case "transferall" -> transferAll(sender, args);
             case "purge" -> purge(sender, args);
             case "rent" -> rent(sender);
             case "stats" -> stats(sender);
@@ -168,6 +170,106 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
         plugin.service().adminTransferHere(player, args[1]);
     }
 
+    /** Персональный лимит: без числа — показать, «сброс» — вернуть общий. */
+    private void limit(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            usage(sender);
+            return;
+        }
+        String name = args[1];
+        int base = plugin.service().baseLimitOf(name);
+        if (args.length < 3) {
+            Integer override = plugin.store().limitOverride(name);
+            plugin.messages().send(sender, "admin-limit-info",
+                    "name", name,
+                    "limit", String.valueOf(plugin.service().limitOf(name)),
+                    "base", String.valueOf(base),
+                    "override", override == null
+                            ? ""
+                            : plugin.messages().raw("admin-limit-override-part"));
+            return;
+        }
+        String raw = args[2];
+        if (raw.equalsIgnoreCase("сброс") || raw.equalsIgnoreCase("reset")
+                || raw.equalsIgnoreCase("default")) {
+            if (plugin.store().clearLimitOverride(name)) {
+                plugin.messages().send(sender, "admin-limit-cleared",
+                        "name", name, "limit", String.valueOf(plugin.service().limitOf(name)));
+            } else {
+                plugin.messages().send(sender, "admin-limit-none",
+                        "name", name, "limit", String.valueOf(base));
+            }
+            return;
+        }
+        Integer value = parseAmount(raw);
+        if (value == null || value < 1 || value > 100_000) {
+            plugin.messages().send(sender, "admin-limit-invalid");
+            return;
+        }
+        plugin.store().setLimitOverride(name, value);
+        plugin.messages().send(sender, "admin-limit-set", "name", name,
+                "limit", String.valueOf(value));
+        Player online = Bukkit.getPlayerExact(name);
+        int claims = plugin.store().count(name);
+        if (claims <= value) {
+            return;
+        }
+        String notice = plugin.messages().plain("admin-limit-notice",
+                "limit", String.valueOf(value), "claims", String.valueOf(claims));
+        if (online != null && plugin.service().isAllowed(online)) {
+            plugin.messages().send(online, "admin-limit-notice",
+                    "limit", String.valueOf(value), "claims", String.valueOf(claims));
+        } else {
+            plugin.store().addNotice(name, notice);
+        }
+    }
+
+    /** Массовая передача всех приватов, казны и вестей — сценарий смены ника. */
+    private void transferAll(CommandSender sender, String[] args) {
+        if (args.length < 3) {
+            usage(sender);
+            return;
+        }
+        String from = args[1];
+        String to = args[2];
+        if (from.equalsIgnoreCase(to)) {
+            plugin.messages().send(sender, "admin-transferall-self");
+            return;
+        }
+        ClaimStore.TransferSummary summary = plugin.store().transferAll(from, to);
+        if (summary.claims() == 0 && summary.treasury() == 0
+                && summary.notices() == 0 && !summary.limitMoved()) {
+            plugin.messages().send(sender, "admin-transferall-none", "name", from);
+            return;
+        }
+        plugin.messages().send(sender, "admin-transferall-done",
+                "from", from, "name", to,
+                "claims", String.valueOf(summary.claims()),
+                "treasury", String.valueOf(summary.treasury()),
+                "notices", String.valueOf(summary.notices()));
+        String notice = plugin.messages().plain("admin-transferall-received",
+                "from", from,
+                "claims", String.valueOf(summary.claims()),
+                "treasury", String.valueOf(summary.treasury()));
+        Player online = Bukkit.getPlayerExact(to);
+        if (online != null && plugin.service().isAllowed(online)) {
+            plugin.messages().send(online, "admin-transferall-received",
+                    "from", from,
+                    "claims", String.valueOf(summary.claims()),
+                    "treasury", String.valueOf(summary.treasury()));
+        } else {
+            plugin.store().addNotice(to, notice);
+        }
+    }
+
+    private Integer parseAmount(String raw) {
+        try {
+            return Integer.valueOf(raw);
+        } catch (NumberFormatException exception) {
+            return null;
+        }
+    }
+
     private void purge(CommandSender sender, String[] args) {
         if (args.length < 2) {
             usage(sender);
@@ -246,8 +348,23 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
             }
             return result;
         }
+        if (args.length == 3 && args[0].equalsIgnoreCase("transferall")) {
+            String prefix = args[2].toLowerCase(Locale.ROOT);
+            for (Player online : Bukkit.getOnlinePlayers()) {
+                if (online.getName().toLowerCase(Locale.ROOT).startsWith(prefix)) {
+                    result.add(online.getName());
+                }
+            }
+            return result;
+        }
+        if (args.length == 3 && args[0].equalsIgnoreCase("limit")) {
+            result.add("сброс");
+            return result;
+        }
         if (args.length == 2 && (args[0].equalsIgnoreCase("give")
                 || args[0].equalsIgnoreCase("transfer")
+                || args[0].equalsIgnoreCase("transferall")
+                || args[0].equalsIgnoreCase("limit")
                 || args[0].equalsIgnoreCase("deleteall")
                 || args[0].equalsIgnoreCase("info"))) {
             String prefix = args[1].toLowerCase(Locale.ROOT);
