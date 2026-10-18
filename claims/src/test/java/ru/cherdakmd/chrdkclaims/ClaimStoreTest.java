@@ -266,6 +266,34 @@ class ClaimStoreTest {
     }
 
     @Test
+    void memberRolesSurviveReloadAndUnknownRolesAreIgnored() throws IOException {
+        ClaimStore store = store();
+        Claim claim = new Claim("world", 2, 3, "Owner", 1);
+        claim.members.add("Guest");
+        claim.members.add("Builder");
+        claim.setRole("Guest", Claim.Role.ACCESS);
+        store.add(claim);
+        store.save();
+
+        ClaimStore loaded = store();
+        loaded.load();
+        Claim back = loaded.claimAt("world", 2, 3);
+        assertEquals(Claim.Role.ACCESS, back.roleOf("Guest"));
+        assertEquals(Claim.Role.BUILD, back.roleOf("Builder"));
+        assertEquals(1, back.explicitRoles().size(), "полный доступ не пишется в файл");
+
+        Files.writeString(dir.resolve("claims-data.json"), """
+                {"claims":[{"w":"world","x":1,"z":1,"o":"A","p":1,
+                  "m":["B","C"],"mr":{"B":"ACCESS","C":"SUPERUSER"}}]}
+                """, StandardCharsets.UTF_8);
+        ClaimStore broken = store();
+        broken.load();
+        Claim parsed = broken.claimAt("world", 1, 1);
+        assertEquals(Claim.Role.ACCESS, parsed.roleOf("B"));
+        assertEquals(Claim.Role.BUILD, parsed.roleOf("C"), "неизвестная роль — полный доступ");
+    }
+
+    @Test
     void removingWorldDropsOnlyItsClaims() {
         ClaimStore store = store();
         store.add(new Claim("world", 0, 0, "A", 1));

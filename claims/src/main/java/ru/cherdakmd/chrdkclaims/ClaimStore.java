@@ -206,6 +206,19 @@ public final class ClaimStore {
                         claim.members.add(name);
                     }
                 }
+                // Роли участников: только известные значения, только для участников.
+                if (map.get("mr") instanceof Map<?, ?> roleMap) {
+                    for (Map.Entry<?, ?> roleEntry : roleMap.entrySet()) {
+                        if (roleEntry.getKey() == null || roleEntry.getValue() == null) {
+                            continue;
+                        }
+                        String member = String.valueOf(roleEntry.getKey()).trim();
+                        Claim.Role role = parseRole(String.valueOf(roleEntry.getValue()).trim());
+                        if (role != null) {
+                            claim.applyRole(member, role);
+                        }
+                    }
+                }
                 Claim previous = claims.computeIfAbsent(world, key -> new HashMap<>())
                         .putIfAbsent(claim.key(), claim);
                 if (previous != null) {
@@ -287,6 +300,12 @@ public final class ClaimStore {
                     entry.put("s", claim.salePrice);
                     if (!claim.members.isEmpty()) {
                         entry.put("m", new ArrayList<>(claim.members));
+                        Map<String, Claim.Role> explicit = claim.explicitRoles();
+                        if (!explicit.isEmpty()) {
+                            Map<String, String> saved = new LinkedHashMap<>();
+                            explicit.forEach((name, role) -> saved.put(name, role.name()));
+                            entry.put("mr", saved);
+                        }
                     }
                     claimsList.add(entry);
                 }
@@ -768,6 +787,20 @@ public final class ClaimStore {
     }
 
     // ----------------------------------------------------------- helpers ----
+
+    /** Разбор роли из JSON/команды; неизвестное значение — {@code null}. */
+    static Claim.Role parseRole(String value) {
+        if (value == null) {
+            return null;
+        }
+        String key = value.trim().toUpperCase(Locale.ROOT);
+        return switch (key) {
+            case "ACCESS", "ДОСТУП" -> Claim.Role.ACCESS;
+            case "CONTAINER", "СУНДУКИ", "КОНТЕЙНЕРЫ" -> Claim.Role.CONTAINER;
+            case "BUILD", "ПОЛНЫЙ", "ПОЛНЫЙ_ДОСТУП" -> Claim.Role.BUILD;
+            default -> null;
+        };
+    }
 
     private static String str(Object value) {
         return value == null ? null : String.valueOf(value).trim();

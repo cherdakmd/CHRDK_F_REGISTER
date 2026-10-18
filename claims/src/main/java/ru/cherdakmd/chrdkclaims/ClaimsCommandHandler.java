@@ -134,8 +134,12 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
         if (claim.members.isEmpty()) {
             plugin.messages().send(player, "info-members-none");
         } else {
+            List<String> rendered = new ArrayList<>();
+            for (String member : claim.members) {
+                rendered.add(member + " (" + service().roleName(claim.roleOf(member)) + ")");
+            }
             plugin.messages().send(player, "info-members",
-                    "members", String.join(", ", claim.members));
+                    "members", String.join(", ", rendered));
         }
         if (claim.isOwner(player.getName())) {
             plugin.messages().send(player, "info-you-owner");
@@ -325,18 +329,33 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
             plugin.messages().send(player, "usage");
             return;
         }
-        boolean everywhere = args.length > 2
-                && (args[2].equalsIgnoreCase("все") || args[2].equalsIgnoreCase("all"));
         if (!ready(player)) {
             return;
         }
         String name = args[1];
+        Claim.Role role = Claim.Role.BUILD;
+        boolean everywhere = false;
+        for (int index = 2; index < args.length; index++) {
+            String token = args[index];
+            if (token.equalsIgnoreCase("все") || token.equalsIgnoreCase("all")) {
+                everywhere = true;
+                continue;
+            }
+            if (add) {
+                Claim.Role parsed = ClaimStore.parseRole(token);
+                if (parsed == null) {
+                    plugin.messages().send(player, "role-unknown", "role", token);
+                    return;
+                }
+                role = parsed;
+            }
+        }
         if (add && name.equalsIgnoreCase(player.getName())) {
             plugin.messages().send(player, "add-self");
             return;
         }
         if (add) {
-            service().addMember(player, name, everywhere);
+            service().addMember(player, name, everywhere, role);
         } else {
             service().removeMember(player, name, everywhere);
         }

@@ -151,17 +151,25 @@ public final class ClaimProtectionListener implements Listener {
 
     /** Может ли игрок действовать в чанке блока (с учётом обхода админа). */
     private boolean may(Player player, Claim claim) {
+        return may(player, claim, Claim.Role.BUILD);
+    }
+
+    /**
+     * Проверка с требуемым уровнем доступа: стройка/урожай/животные — полный,
+     * контейнеры — контейнерный, двери и механизмы — базовый доступ участника.
+     */
+    private boolean may(Player player, Claim claim, Claim.Role required) {
         if (claim == null) {
             return true;
         }
-        return claim.canBuild(player.getName()) || plugin.isBypassing(player);
+        return claim.allows(player.getName(), required) || plugin.isBypassing(player);
     }
 
     /** Первый чужой приват среди блоков (для ведра: клик и соседняя клетка). */
     private Claim foreignAt(Player player, Block... blocks) {
         for (Block block : blocks) {
             Claim claim = claimAt(block);
-            if (claim != null && !may(player, claim)) {
+            if (claim != null && !may(player, claim, Claim.Role.BUILD)) {
                 return claim;
             }
         }
@@ -169,7 +177,7 @@ public final class ClaimProtectionListener implements Listener {
     }
 
     private void deny(Player player, Claim claim, Block block, String messageKey) {
-        if (claim == null || may(player, claim)) {
+        if (claim == null || plugin.isBypassing(player)) {
             return;
         }
         long now = System.currentTimeMillis();
@@ -296,29 +304,34 @@ public final class ClaimProtectionListener implements Listener {
             return;
         }
         Material type = block.getType();
-        if (plugin.config().workstations && isWorkstation(type)) {
+        if (plugin.config().workstations && isWorkstation(type)
+                && !may(event.getPlayer(), claim, Claim.Role.ACCESS)) {
             event.setCancelled(true);
             deny(event.getPlayer(), claim, block, "denied-interact");
             return;
         }
         // контейнеры (сундуки, печки, стойки варки, кафедры и т.п.)
         BlockState state = block.getState(false);
-        if (state instanceof InventoryHolder || type == Material.LECTERN) {
+        if ((state instanceof InventoryHolder || type == Material.LECTERN)
+                && !may(event.getPlayer(), claim, Claim.Role.CONTAINER)) {
             event.setCancelled(true);
             deny(event.getPlayer(), claim, block, "denied-container");
             return;
         }
-        if (plugin.config().doors && DOORS.contains(type)) {
+        if (plugin.config().doors && DOORS.contains(type)
+                && !may(event.getPlayer(), claim, Claim.Role.ACCESS)) {
             event.setCancelled(true);
             deny(event.getPlayer(), claim, block, "denied-interact");
             return;
         }
-        if (plugin.config().redstone && REDSTONE.contains(type)) {
+        if (plugin.config().redstone && REDSTONE.contains(type)
+                && !may(event.getPlayer(), claim, Claim.Role.ACCESS)) {
             event.setCancelled(true);
             deny(event.getPlayer(), claim, block, "denied-interact");
             return;
         }
-        if (plugin.config().entities && isSpawnEgg(event.getItem())) {
+        if (plugin.config().entities && isSpawnEgg(event.getItem())
+                && !may(event.getPlayer(), claim, Claim.Role.BUILD)) {
             event.setCancelled(true);
             deny(event.getPlayer(), claim, block, "denied-entity");
         }
@@ -327,7 +340,7 @@ public final class ClaimProtectionListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onSignOpen(PlayerSignOpenEvent event) {
         Claim claim = claimAt(event.getSign().getBlock());
-        if (!may(event.getPlayer(), claim)) {
+        if (!may(event.getPlayer(), claim, Claim.Role.ACCESS)) {
             event.setCancelled(true);
             deny(event.getPlayer(), claim, event.getSign().getBlock(), "denied-sign");
         }
@@ -338,7 +351,7 @@ public final class ClaimProtectionListener implements Listener {
     public void onLecternTake(PlayerTakeLecternBookEvent event) {
         Block block = event.getLectern().getBlock();
         Claim claim = claimAt(block);
-        if (!may(event.getPlayer(), claim)) {
+        if (!may(event.getPlayer(), claim, Claim.Role.CONTAINER)) {
             event.setCancelled(true);
             deny(event.getPlayer(), claim, block, "denied-container");
         }

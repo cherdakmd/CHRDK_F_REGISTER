@@ -6,7 +6,7 @@ claims:
   need-auth: "<red>Сначала войдите на сервер (/login).</red>"
   no-permission: "<red>Недостаточно прав.</red>"
   unknown-sub: "<red>Неизвестная подкоманда. Смотрите /claim help.</red>"
-  usage: "<gray>/claim — купить чанк · info · map · list · unclaim · add/remove <ник> [все] · transfer <ник> · deposit [n|все] · withdraw <n> · balance · sell <цена|снять> · sellback · buy · help</gray>"
+  usage: "<gray>/claim — купить чанк · info · map · list [стр] · forsale · borders · unclaim · add/remove <ник> [доступ|контейнеры|полный] [все] · transfer <ник> · deposit [n|все] · withdraw <n> · balance · sell <цена|снять> · sellback · buy · help</gray>"
   # покупка/продажа
   bought: "<green>Чанк приватизирован за %price% ⛁! Рента %upkeep% ⛁/сутки, оплачен до %paid%. Участники: /claim add <ник>.</green>"
   already-claimed: "<red>Этот чанк уже занят (%owner%). Границы — /claim map.</red>"
@@ -51,8 +51,13 @@ claims:
   # возврат серверу
   sellback-done: "<green>Сервер выкупил чанк за %reward% ⛁ (выдано предметами).</green>"
   # участники
-  add-done: "<green>%name% теперь участник этого привата.</green>"
-  add-all-done: "<green>%name% добавлен в %count% ваших приватов.</green>"
+  add-done: "<green>%name% теперь участник этого привата с ролью «%role%».</green>"
+  add-all-done: "<green>%name% добавлен в %count% ваших приватов с ролью «%role%».</green>"
+  role-updated: "<green>Роль %name% изменена на «%role%».</green>"
+  role-unknown: "<red>Неизвестная роль «%role%». Доступны: доступ, контейнеры, полный.</red>"
+  role-access: "доступ"
+  role-container: "контейнеры"
+  role-build: "полный"
   add-already: "<yellow>%name% уже участник.</yellow>"
   add-full: "<red>В привате максимум %max% участников.</red>"
   add-self: "<yellow>Вы и так владелец.</yellow>"

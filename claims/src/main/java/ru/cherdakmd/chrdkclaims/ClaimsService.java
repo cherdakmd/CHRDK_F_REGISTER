@@ -196,6 +196,20 @@ public final class ClaimsService {
         return plugin.coreApi() == null || !plugin.coreApi().hasActivePass(name);
     }
 
+    /** Ключ сообщения с названием роли (для подстановки %role%). */
+    public String roleKey(Claim.Role role) {
+        return switch (role) {
+            case ACCESS -> "role-access";
+            case CONTAINER -> "role-container";
+            default -> "role-build";
+        };
+    }
+
+    /** Название роли без разметки — для сообщений и журнала. */
+    public String roleName(Claim.Role role) {
+        return plugin.messages().plain(roleKey(role));
+    }
+
     /** Отказ от привата без компенсации. */
     public void unclaim(Player player) {
         Claim claim = claimHere(player);
@@ -283,7 +297,7 @@ public final class ClaimsService {
 
         List<String> formerMembers = new ArrayList<>(claim.members);
         claim.owner = player.getName();
-        claim.members.clear();
+        claim.clearMembers();
         claim.salePrice = 0;
         claim.debtDays = 0;
         plugin.store().markDirty();
@@ -320,7 +334,7 @@ public final class ClaimsService {
 
     // ------------------------------------------------------------ members --
 
-    public boolean addMember(Player player, String name, boolean everywhere) {
+    public boolean addMember(Player player, String name, boolean everywhere, Claim.Role role) {
         List<Claim> targets = targets(player, everywhere);
         if (targets == null) {
             return false;
@@ -330,9 +344,21 @@ public final class ClaimsService {
             plugin.messages().send(player, "add-unknown", "name", name);
             return false;
         }
+        if (role == null) {
+            role = Claim.Role.BUILD;
+        }
+        String roleText = plugin.messages().plain(roleKey(role));
         int changed = 0;
+        int updated = 0;
         for (Claim claim : targets) {
-            if (claim.isMember(name) || claim.isOwner(name)) {
+            if (claim.isOwner(name)) {
+                continue;
+            }
+            if (claim.isMember(name)) {
+                if (claim.roleOf(name) != role) {
+                    claim.setRole(name, role);
+                    updated++;
+                }
                 continue;
             }
             if (claim.members.size() >= plugin.config().membersPerChunk) {
@@ -344,20 +370,31 @@ public final class ClaimsService {
                 continue;
             }
             claim.members.add(name);
+            claim.setRole(name, role);
             changed++;
         }
         plugin.store().markDirty();
         if (changed > 0) {
-            audit("member-add", player.getName() + " -> " + name + " count=" + changed);
+            audit("member-add", player.getName() + " -> " + name
+                    + " role=" + role.name() + " count=" + changed);
         }
-        if (changed == 0) {
+        if (updated > 0) {
+            audit("member-role", player.getName() + " -> " + name
+                    + " role=" + role.name() + " count=" + updated);
+        }
+        if (changed == 0 && updated == 0) {
             plugin.messages().send(player, "add-already", "name", name);
             return true;
         }
+        if (updated > 0 && changed == 0) {
+            plugin.messages().send(player, "role-updated", "name", name, "role", roleText);
+            return true;
+        }
         if (everywhere) {
-            plugin.messages().send(player, "add-all-done", "name", name, "count", String.valueOf(changed));
+            plugin.messages().send(player, "add-all-done", "name", name,
+                    "count", String.valueOf(changed), "role", roleText);
         } else {
-            plugin.messages().send(player, "add-done", "name", name);
+            plugin.messages().send(player, "add-done", "name", name, "role", roleText);
         }
         Claim first = targets.get(0);
         if (target != null) {
@@ -387,7 +424,7 @@ public final class ClaimsService {
         }
         int changed = 0;
         for (Claim claim : targets) {
-            changed += claim.members.removeIf(member -> member.equalsIgnoreCase(name)) ? 1 : 0;
+            changed += claim.removeMember(name) ? 1 : 0;
         }
         plugin.store().markDirty();
         if (changed > 0) {
@@ -524,7 +561,7 @@ public final class ClaimsService {
         int z = claim.z;
         List<String> formerMembers = new ArrayList<>(claim.members);
         claim.owner = targetName;
-        claim.members.clear();
+        claim.clearMembers();
         claim.salePrice = 0;
         plugin.store().markDirty();
         audit(admin ? "admin-transfer" : "transfer",
