@@ -427,13 +427,16 @@ public final class ClaimStore {
             return RestoreResult.INVALID;
         }
         try {
-            if (Files.isRegularFile(file)) {
-                Files.copy(file, file.resolveSibling(
-                                "claims-data.json.pre-restore-" + System.currentTimeMillis()),
-                        StandardCopyOption.REPLACE_EXISTING);
+            // Тот же лок, что у save(): незавершённая запись не перезапишет восстановленное.
+            synchronized (writeLock) {
+                if (Files.isRegularFile(file)) {
+                    Files.copy(file, file.resolveSibling(
+                                    "claims-data.json.pre-restore-" + System.currentTimeMillis()),
+                            StandardCopyOption.REPLACE_EXISTING);
+                }
+                Files.copy(source, file, StandardCopyOption.REPLACE_EXISTING);
+                load();
             }
-            Files.copy(source, file, StandardCopyOption.REPLACE_EXISTING);
-            load();
             logger.info("[CHRDK_Claims] Данные восстановлены из " + name + ".");
             return RestoreResult.OK;
         } catch (IOException exception) {
