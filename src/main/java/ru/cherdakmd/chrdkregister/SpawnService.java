@@ -203,9 +203,11 @@ public final class SpawnService implements Listener {
                 continue;
             }
             Material ground = world.getBlockAt(x, y, z).getType();
+            boolean groundSolid = ground.isSolid();
             Material feet = world.getBlockAt(x, y + 1, z).getType();
             Material head = world.getBlockAt(x, y + 2, z).getType();
-            if (!SpawnSafety.isSafeSpot(ground, feet, head, y, world.getMinHeight(), world.getMaxHeight())) {
+            if (!SpawnSafety.isSafeSpot(ground, groundSolid, feet, head,
+                    y, world.getMinHeight(), world.getMaxHeight())) {
                 continue;
             }
             if (!border.isInside(new Location(world, x + 0.5D, y, z + 0.5D))) {

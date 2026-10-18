@@ -51,7 +51,9 @@ class MessagesTest {
             // и completeAuthentication(player, successKey), а не в вызов messages.* напрямую.
             "register.success-two-factor", "login.password-ok-two-factor",
             "two-factor.login.success", "two-factor.required.session", "two-factor.required.success",
-            "two-factor.reset-enrollment", "two-factor.reset-login-complete");
+            "two-factor.reset-enrollment", "two-factor.reset-login-complete",
+            // 1.4.106: передаётся переменной messageKey в SpawnService#teleport.
+            "spawn.teleported");
 
     private static final String RESOURCE_PATH = "src/main/resources/messages.yml";
 
