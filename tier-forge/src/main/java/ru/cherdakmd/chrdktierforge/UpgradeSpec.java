@@ -33,6 +33,11 @@ final class UpgradeSpec {
         }
     }
 
+    /** Короткие псевдонимы для ручного ввода: полный id остаётся каноничным. */
+    private static final Map<String, String> ALIASES = Map.of(
+            "crit", "critical",
+            "mend", "selfmend");
+
     private UpgradeSpec() {
     }
 
@@ -54,7 +59,7 @@ final class UpgradeSpec {
             }
             String id = token.substring(0, colon).trim().toLowerCase(Locale.ROOT);
             String levelText = token.substring(colon + 1).trim();
-            ForgeUpgrade.Def def = ForgeUpgrade.byId(id);
+            ForgeUpgrade.Def def = ForgeUpgrade.byId(ALIASES.getOrDefault(id, id));
             if (def == null) {
                 rejected.add(token);
                 continue;
