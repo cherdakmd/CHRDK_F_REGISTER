@@ -63,7 +63,6 @@ class TierForgeConfigTest {
         assertEquals("AMETHYST_SHARD", config.rerollCatalyst());
         assertEquals(10, config.identifyScanTicks());
         assertEquals(5, config.identifyScanPlayersPerTick());
-        assertTrue(config.improveSoulboundSafeDrop(), "по умолчанию — безопасная точка");
         assertEquals(15, config.mobDropChanceFor(ItemKind.SWORD));
         assertEquals(15, config.mobDropChanceFor(ItemKind.CHESTPLATE));
         assertEquals(15, config.mobDropChanceFor(ItemKind.PICKAXE));
@@ -225,13 +224,6 @@ class TierForgeConfigTest {
         YamlConfiguration killOnly = empty();
         killOnly.set("mob-drop.player-kill-only", true);
         assertTrue(parse(killOnly).config().mobPlayerKillOnly());
-    }
-
-    @Test
-    void soulboundSafeDropCanBeDisabled() {
-        YamlConfiguration yaml = empty();
-        yaml.set("improve.soulbound-safe-drop", false);
-        assertFalse(parse(yaml).config().improveSoulboundSafeDrop());
     }
 
     @Test

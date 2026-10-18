@@ -39,7 +39,6 @@ public record TierForgeConfig(
         boolean rerollNoDowngrade,
         boolean improveEnabled,
         int improveBaseXp,
-        boolean improveSoulboundSafeDrop,
         java.util.Map<String, String> improveMaterials,
         boolean namesEnabled,
         java.util.List<String> namesWeapons,
@@ -111,8 +110,6 @@ public record TierForgeConfig(
         boolean improve = config.getBoolean("improve.enabled", true);
         int improveXp = clamp(config.getInt("improve.base-xp-cost", 3), 1, 38, logger,
                 "improve.base-xp-cost");
-        // 1.4.88: безопасная точка для вещей «привязки души» (не в лаву/пустоту).
-        boolean soulboundSafeDrop = config.getBoolean("improve.soulbound-safe-drop", true);
         java.util.Map<String, String> improveMaterials = new java.util.HashMap<>();
         org.bukkit.configuration.ConfigurationSection materialsSection =
                 config.getConfigurationSection("improve.materials");
@@ -161,7 +158,7 @@ public record TierForgeConfig(
                 blacklist,
                 bossMultiplier,
                 config.getBoolean("reroll.no-downgrade", true),
-                improve, improveXp, soulboundSafeDrop, improveMaterials, naming,
+                improve, improveXp, improveMaterials, naming,
                 readNames(config, "names.weapons", ForgeNamePool.DEFAULT_WEAPONS),
                 readNames(config, "names.armor", ForgeNamePool.DEFAULT_ARMOR),
                 readNames(config, "names.tools", ForgeNamePool.DEFAULT_TOOLS));

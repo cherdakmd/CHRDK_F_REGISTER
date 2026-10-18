@@ -1,11 +1,8 @@
 package ru.cherdakmd.chrdktierforge;
 
-import org.bukkit.GameRule;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.attribute.Attribute;
-import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.AbstractSkeleton;
 import org.bukkit.entity.Animals;
@@ -34,7 +31,6 @@ import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.player.PlayerItemDamageEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
@@ -76,9 +72,7 @@ public final class ForgeUpgradeListener implements Listener {
     private final Random random = new Random();
     private final Map<UUID, Long> adrenalineCooldown = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastStandCooldown = new ConcurrentHashMap<>();
-    private final Map<UUID, java.util.List<ItemStack>> soulboundReturns = new ConcurrentHashMap<>();
     /** Где умер владелец — туда вернём вещи, если он выйдет, не дождавшись респауна (1.4.86). */
-    private final Map<UUID, Location> soulboundLocations = new ConcurrentHashMap<>();
     /**
      * Флаг реентера внутри «Забойщика»: ломаемые нами блоки не рождают новых залпов.
      * ThreadLocal, а не общий boolean: на Folia события разных игроков идут в разных
@@ -757,41 +751,30 @@ public final class ForgeUpgradeListener implements Listener {
 
     /* ------------------------------- привязка души ------------------------------- */
 
-    /** Смерть: привязанные вещи не падают — уходят в очередь воскрешения. */
-    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+    /**
+     * Смерть: «привязанные» вещи остаются в инвентаре штатным механизмом Paper
+     * (1.4.93). Предмет убирается из {@code getDrops()} и кладётся в
+     * {@code getItemsToKeep()} — он сохраняет свой слот (броня остаётся надетой),
+     * не дублируется при {@code keepInventory} от другого плагина и не требует
+     * аварийной выкладки в мир, если игрок вышел с экрана смерти.
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerDeath(PlayerDeathEvent event) {
         gearCache.invalidate(event.getEntity().getUniqueId());
-        if (Boolean.TRUE.equals(event.getEntity().getWorld().getGameRuleValue(GameRule.KEEP_INVENTORY))) {
-            return; // keepInventory сам всё сохранит — дубли нам не нужны
+        if (event.getKeepInventory()) {
+            return; // инвентарь и так сохраняется — второй раз не добавляем
         }
-        java.util.List<ItemStack> keepsakes = new ArrayList<>();
+        List<ItemStack> keepsakes = new ArrayList<>();
         event.getDrops().removeIf(drop -> {
-            if (drop != null && levelOf(plugin.items().upgradesOf(drop), ForgeUpgrade.Effect.SOULBOUND) > 0) {
-                keepsakes.add(drop.clone());
+            if (drop != null
+                    && levelOf(plugin.items().upgradesOf(drop), ForgeUpgrade.Effect.SOULBOUND) > 0) {
+                keepsakes.add(drop);
                 return true;
             }
             return false;
         });
         if (!keepsakes.isEmpty()) {
-            soulboundReturns.put(event.getEntity().getUniqueId(), keepsakes);
-            soulboundLocations.put(event.getEntity().getUniqueId(),
-                    event.getEntity().getLocation().clone());
-        }
-    }
-
-    /** Респаун: вернуть привязанные вещи в инвентарь (лишнее — под ноги). */
-    @EventHandler(priority = EventPriority.NORMAL)
-    public void onPlayerRespawn(PlayerRespawnEvent event) {
-        gearCache.invalidate(event.getPlayer().getUniqueId());
-        soulboundLocations.remove(event.getPlayer().getUniqueId());
-        java.util.List<ItemStack> keepsakes = soulboundReturns.remove(event.getPlayer().getUniqueId());
-        if (keepsakes == null || keepsakes.isEmpty()) {
-            return;
-        }
-        for (ItemStack keepsake : keepsakes) {
-            Map<Integer, ItemStack> overflow = event.getPlayer().getInventory().addItem(keepsake);
-            overflow.values().forEach(rest -> event.getPlayer().getWorld()
-                    .dropItemNaturally(event.getPlayer().getLocation(), rest));
+            event.getItemsToKeep().addAll(keepsakes);
         }
     }
 
@@ -950,12 +933,6 @@ public final class ForgeUpgradeListener implements Listener {
         lastStandCooldown.remove(player);
         lastCombat.remove(player);
         gearCache.invalidate(player);
-        // 1.4.86: вышел, не дождавшись респауна — привязанные вещи не теряем,
-        // а аккуратно выкладываем в точке смерти (иначе они висели бы только в RAM
-        // и исчезли бы при перезапуске).
-        if (soulboundReturns.containsKey(player)) {
-            dropSoulbound(player);
-        }
     }
 
     /* --------------------- инвалидация кэша ковки (1.4.91) --------------------- */
@@ -997,64 +974,6 @@ public final class ForgeUpgradeListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onDropForCache(PlayerDropItemEvent event) {
         gearCache.invalidate(event.getPlayer().getUniqueId());
-    }
-
-    /** Выключение сервера: подвешенные «привязанные» вещи тоже возвращаем в мир. */
-    public void flushSoulbound() {
-        for (UUID player : new java.util.ArrayList<>(soulboundReturns.keySet())) {
-            dropSoulbound(player);
-        }
-    }
-
-    /** Выкладывает ожидающие вещи в точку смерти и чистит обе карты. */
-    private void dropSoulbound(UUID player) {
-        java.util.List<ItemStack> items = soulboundReturns.remove(player);
-        Location at = soulboundLocations.remove(player);
-        if (items == null || items.isEmpty() || at == null || at.getWorld() == null) {
-            return;
-        }
-        Location dropAt = safeDropLocation(at);
-        for (ItemStack item : items) {
-            if (item != null) {
-                dropAt.getWorld().dropItemNaturally(dropAt, item);
-            }
-        }
-        plugin.getLogger().info("Tier-привязка души: вещи игрока " + player
-                + " выложены в точке " + dropAt.getBlockX() + " " + dropAt.getBlockY() + " "
-                + dropAt.getBlockZ() + " (" + dropAt.getWorld().getName()
-                + ", выход/выключение сервера).");
-    }
-
-    /**
-     * Безопасная точка выкладки (1.4.88): точка смерти, если там можно стоять;
-     * иначе — соседний Y в пределах ±4; иначе — спавн мира. Настройка
-     * {@code improve.soulbound-safe-drop: false} оставляет точку смерти как есть.
-     */
-    private Location safeDropLocation(Location at) {
-        if (at == null || at.getWorld() == null || !plugin.config().improveSoulboundSafeDrop()) {
-            return at;
-        }
-        World world = at.getWorld();
-        int x = at.getBlockX();
-        int z = at.getBlockZ();
-        int y = SoulboundDrop.safeY(at.getBlockY(), world.getMinHeight(), world.getMaxHeight(), 4,
-                candidate -> canStandAt(world, x, candidate, z));
-        Location safe = new Location(world, x + 0.5, y, z + 0.5, at.getYaw(), at.getPitch());
-        if (canStandAt(world, x, y, z)) {
-            return safe;
-        }
-        return world.getSpawnLocation();
-    }
-
-    /** Можно ли поставить дроп: свободные ноги и твёрдая не-жидкость под ними. */
-    private static boolean canStandAt(World world, int x, int y, int z) {
-        if (y <= world.getMinHeight() || y >= world.getMaxHeight()) {
-            return false;
-        }
-        Block feet = world.getBlockAt(x, y, z);
-        Block below = world.getBlockAt(x, y - 1, z);
-        return feet.isPassable() && !feet.isLiquid()
-                && below.getType().isSolid() && !below.isLiquid();
     }
 
     /* ------------------------------- подсчёты ------------------------------- */

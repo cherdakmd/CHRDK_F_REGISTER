@@ -103,10 +103,6 @@ public final class TierForgePlugin extends JavaPlugin {
             statsSaveTask = null;
         }
         saveStats(); // последний сейв — синхронно, чтобы не потерять сессию
-        if (forgeUpgrades != null) {
-            // 1.4.86: вещи «привязки души» не должны исчезнуть вместе с сервером.
-            forgeUpgrades.flushSoulbound();
-        }
     }
 
     /* ------------------------------ статистика (1.4.81) ------------------------------ */
