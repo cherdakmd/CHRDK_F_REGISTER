@@ -32,8 +32,6 @@ public final class TierMobDropListener implements Listener {
         // Стойки и (на всякий случай) игроки не «мертвецы» для этой лотереи (1.4.83).
         if (entity instanceof ArmorStand || entity instanceof Player) return;
         if (plugin.config().mobWorldBlocked(entity.getWorld().getName())) return;
-        int chance = plugin.config().mobDropChancePercent();
-        if (chance <= 0) return;
         if (plugin.config().mobPlayerKillOnly() && entity.getKiller() == null) return;
         double multiplier = plugin.config().mobBossMultiplier();
         // 1.4.83: настоящие боссы (визер/дракон) считаются боссами и без имени;
@@ -41,7 +39,6 @@ public final class TierMobDropListener implements Listener {
         boolean boss = multiplier > 1.0
                 && (entity instanceof Boss
                 || (entity.getCustomName() != null && !entity.getCustomName().isBlank()));
-        int effectiveChance = Math.min(100, (int) Math.round(chance * (boss ? multiplier : 1.0)));
         boolean identify = plugin.config().identifyUnidentified();
         for (ItemStack drop : event.getDrops()) {
             if (drop == null) continue;
@@ -49,6 +46,12 @@ public final class TierMobDropListener implements Listener {
             if (!plugin.config().kindAllowed(kind)) continue;
             if (plugin.config().materialBlocked(drop.getType())) continue;
             if (plugin.items().tierOf(drop) != null) continue;
+            // 1.4.87: шанс считается для КАЖДОГО дропа по его виду, а не один общий
+            // на весь труп — оружие, броню и инструменты можно настроить отдельно.
+            int chance = plugin.config().mobDropChanceFor(kind);
+            if (chance <= 0) continue;
+            int effectiveChance = Math.min(100,
+                    (int) Math.round(chance * (boss ? multiplier : 1.0)));
             if (random.nextInt(100) >= effectiveChance) continue;
             if (identify) {
                 // новый флоу: ярлык скрыт до инвентаря; игрок-ловец найдёт амбиции позже

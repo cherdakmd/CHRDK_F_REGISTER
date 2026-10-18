@@ -63,6 +63,10 @@ class TierForgeConfigTest {
         assertEquals("AMETHYST_SHARD", config.rerollCatalyst());
         assertEquals(10, config.identifyScanTicks());
         assertEquals(5, config.identifyScanPlayersPerTick());
+        assertEquals(15, config.mobDropChanceFor(ItemKind.SWORD));
+        assertEquals(15, config.mobDropChanceFor(ItemKind.CHESTPLATE));
+        assertEquals(15, config.mobDropChanceFor(ItemKind.PICKAXE));
+        assertEquals(0, config.mobDropChanceFor(null));
         assertEquals(2.0, config.mobBossMultiplier(), 1e-9);
     }
 
@@ -177,6 +181,33 @@ class TierForgeConfigTest {
         assertFalse(config.kindAllowed(ItemKind.CHESTPLATE));
         assertFalse(config.kindAllowed(ItemKind.PICKAXE));
         assertFalse(config.kindAllowed(null));
+    }
+
+    @Test
+    void mobDropChancePerKind() {
+        YamlConfiguration yaml = empty();
+        yaml.set("mob-drop.chance-percent", 10);
+        yaml.set("mob-drop.weapons-chance-percent", 0);
+        yaml.set("mob-drop.armor-chance-percent", 50);
+        yaml.set("mob-drop.tools-chance-percent", -1);
+        TierForgeConfig config = parse(yaml).config();
+
+        assertEquals(0, config.mobDropChanceFor(ItemKind.SWORD), "0 — группе выключено");
+        assertEquals(50, config.mobDropChanceFor(ItemKind.HELMET));
+        assertEquals(10, config.mobDropChanceFor(ItemKind.PICKAXE), "-1 = общий шанс");
+    }
+
+    @Test
+    void mobDropChancePerKindIsClamped() {
+        YamlConfiguration yaml = empty();
+        yaml.set("mob-drop.chance-percent", 20);
+        yaml.set("mob-drop.weapons-chance-percent", 150);
+        yaml.set("mob-drop.armor-chance-percent", -9);
+        TierForgeConfig config = parse(yaml).config();
+
+        assertEquals(100, config.mobDropChanceFor(ItemKind.SWORD));
+        assertEquals(20, config.mobDropChanceFor(ItemKind.HELMET),
+                "-9 → -1 → общий шанс, не отрицательный");
     }
 
     @Test

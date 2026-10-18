@@ -21,6 +21,9 @@ public record TierForgeConfig(
         int rerollBaseXp,
         boolean mobDropEnabled,
         int mobDropChancePercent,
+        int mobWeaponsChancePercent,
+        int mobArmorChancePercent,
+        int mobToolsChancePercent,
         java.util.Set<String> mobWorldBlacklist,
         boolean mobPlayerKillOnly,
         boolean identifyUnidentified,
@@ -70,6 +73,13 @@ public record TierForgeConfig(
         boolean mobDrop = config.getBoolean("mob-drop.enabled", true);
         int mobChance = clamp(config.getInt("mob-drop.chance-percent", 15), 0, 100, logger,
                 "mob-drop.chance-percent");
+        // 1.4.87: свой шанс дропа для группы (−1 = общий).
+        int mobWeapons = kindChance(config.getInt("mob-drop.weapons-chance-percent", -1), logger,
+                "mob-drop.weapons-chance-percent");
+        int mobArmor = kindChance(config.getInt("mob-drop.armor-chance-percent", -1), logger,
+                "mob-drop.armor-chance-percent");
+        int mobTools = kindChance(config.getInt("mob-drop.tools-chance-percent", -1), logger,
+                "mob-drop.tools-chance-percent");
         // 1.4.80: множитель босса больше не принимает 0/отрицательные и абсурдные
         // значения (NaN из YAML тоже отсекаем) — иначе шанс дропа молча становился нулевым.
         double bossMultiplier = config.getDouble("mob-drop.boss-multiplier", 2.0);
@@ -125,7 +135,8 @@ public record TierForgeConfig(
                 config.getBoolean("craft.armor", true),
                 config.getBoolean("craft.weapons", true),
                 config.getBoolean("craft.tools", true),
-                reroll, catalyst, rerollXp, mobDrop, mobChance, mobWorlds, mobKillOnly,
+                reroll, catalyst, rerollXp, mobDrop, mobChance,
+                mobWeapons, mobArmor, mobTools, mobWorlds, mobKillOnly,
                 config.getBoolean("identify.enabled", true),
                 // 1.4.80: верхняя граница и внятное предупреждение — скан «раз в тик»
                 // ронял TPS, а нулевой/крошечный период молча не применялся.
@@ -174,6 +185,21 @@ public record TierForgeConfig(
     /** Материал в чёрном списке (накат запрещён)? */
     public boolean materialBlocked(Material material) {
         return material != null && materialBlacklist.contains(material.name());
+    }
+
+    /**
+     * Шанс тир-дропа для вида предмета: свой из {@code mob-drop.*-chance-percent}
+     * или общий {@code mob-drop.chance-percent} (1.4.87).
+     */
+    public int mobDropChanceFor(ItemKind kind) {
+        if (kind == null) return 0;
+        if (kind.isWeapon()) {
+            return mobWeaponsChancePercent >= 0 ? mobWeaponsChancePercent : mobDropChancePercent;
+        }
+        if (kind.isArmor()) {
+            return mobArmorChancePercent >= 0 ? mobArmorChancePercent : mobDropChancePercent;
+        }
+        return mobToolsChancePercent >= 0 ? mobToolsChancePercent : mobDropChancePercent;
     }
 
     /** Мир в чёрном списке для дропа с мобов (регистр не важен)? */

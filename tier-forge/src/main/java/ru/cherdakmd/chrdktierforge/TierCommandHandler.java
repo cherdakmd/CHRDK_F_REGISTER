@@ -67,6 +67,12 @@ public final class TierCommandHandler implements TabExecutor {
                 "weapons", plugin.config().craftChanceFor(ItemKind.SWORD),
                 "armor", plugin.config().craftChanceFor(ItemKind.CHESTPLATE),
                 "tools", plugin.config().craftChanceFor(ItemKind.PICKAXE));
+        if (plugin.config().mobDropEnabled()) {
+            plugin.messages().send(player, "list-drop-chances",
+                    "weapons", plugin.config().mobDropChanceFor(ItemKind.SWORD),
+                    "armor", plugin.config().mobDropChanceFor(ItemKind.CHESTPLATE),
+                    "tools", plugin.config().mobDropChanceFor(ItemKind.PICKAXE));
+        }
         for (TierDef.Snapshot tier : plugin.config().tiers()) {
             String color = plugin.messages().raw("tier." + tier.id() + ".color");
             String name = plugin.messages().raw("tier." + tier.id() + ".name");

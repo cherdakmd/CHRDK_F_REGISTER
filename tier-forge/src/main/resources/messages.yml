@@ -21,6 +21,7 @@ tiers:
   improve-max: "<gold>%name% уже на пределе — выше не поднять.</gold>"
   list-header: "<gray>═══ Редкость крафта ═══</gray>"
   list-chances: "<gray>Шанс наката: оружие <white>%weapons%%</white>, броня <white>%armor%%</white>, инструменты <white>%tools%%</white>.</gray>"
+  list-drop-chances: "<gray>Дроп с мобов (на предмет): оружие <white>%weapons%%</white>, броня <white>%armor%%</white>, инструменты <white>%tools%%</white>.</gray>"
   list-footer: "<gray>Слияние: два одинаковых тир-предмета → тир выше (максимум Легендарный). Перекат: тир-предмет + аметистовый осколок → новый тир. Ковка: тир-предмет + материал улучшения → +1 уровень свойства (85 видов, реестр — improve.materials в config.yml аддона). Тир-экипировка падает и с мобов. Ваши находки: %own_count% · всего на сервере: %total_count%.</gray>"
   info-header: "<gray>═══ Разбор предмета ═══</gray>"
   info-empty: "<gray>Возьмите тир-предмет в руку и повторите /tiers info.</gray>"

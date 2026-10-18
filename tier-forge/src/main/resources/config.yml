@@ -48,6 +48,11 @@ mob-drop:
   # уже с накатом редкости. Шанс считается на каждый подходящий дроп отдельно.
   enabled: true
   chance-percent: 15
+  # Свой шанс для группы (−1 = общий chance-percent, 0 = группе накат не выдаётся).
+  # Значения вне −1..100 клампятся с предупреждением в лог.
+  weapons-chance-percent: -1
+  armor-chance-percent: -1
+  tools-chance-percent: -1
   # Множитель шанса для «именных» мобов и настоящих боссов (визер, дракон):
   # drop-chance × boss-multiplier. 1.0 = выключено (допустимо 1.0..20.0).
   boss-multiplier: 2.0
