@@ -25,6 +25,7 @@ public record TierForgeConfig(
         boolean mobPlayerKillOnly,
         boolean identifyUnidentified,
         int identifyScanTicks,
+        int identifyScanPlayersPerTick,
         boolean identifySounds,
         int passBonusCraftPercent,
         int weaponsChancePercent,
@@ -130,6 +131,10 @@ public record TierForgeConfig(
                 // ронял TPS, а нулевой/крошечный период молча не применялся.
                 clamp(config.getInt("identify.scan-ticks", 10), 10, 1200, logger,
                         "identify.scan-ticks"),
+                // 1.4.86: скан идёт порциями, а не «все игроки разом» — иначе на
+                // большом онлайне один тик сканировал сотни инвентарей.
+                clamp(config.getInt("identify.scan-players-per-tick", 5), 1, 100, logger,
+                        "identify.scan-players-per-tick"),
                 config.getBoolean("identify.sounds", true),
                 clamp(config.getInt("identify.pass-bonus-chance-percent", 0), 0, 100, logger,
                         "identify.pass-bonus-chance-percent"),

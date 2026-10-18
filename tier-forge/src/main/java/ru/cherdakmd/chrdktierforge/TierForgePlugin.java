@@ -57,7 +57,8 @@ public final class TierForgePlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(identification, this);
         if (config.identifyUnidentified()) {
             this.identifyScanTask = Bukkit.getScheduler().runTaskTimer(this,
-                    identification::scanAll, config.identifyScanTicks(), config.identifyScanTicks());
+                    () -> identification.scanBatch(config.identifyScanPlayersPerTick()),
+                    config.identifyScanTicks(), config.identifyScanTicks());
             getLogger().info("CHRDK_TierForge: режим неопознанных предметов включён "
                     + "(редкость открывается в инвентаре; скан каждые "
                     + config.identifyScanTicks() + " тиков).");
@@ -102,6 +103,10 @@ public final class TierForgePlugin extends JavaPlugin {
             statsSaveTask = null;
         }
         saveStats(); // последний сейв — синхронно, чтобы не потерять сессию
+        if (forgeUpgrades != null) {
+            // 1.4.86: вещи «привязки души» не должны исчезнуть вместе с сервером.
+            forgeUpgrades.flushSoulbound();
+        }
     }
 
     /* ------------------------------ статистика (1.4.81) ------------------------------ */
@@ -178,7 +183,8 @@ public final class TierForgePlugin extends JavaPlugin {
         }
         if (identification != null && config.identifyUnidentified()) {
             this.identifyScanTask = Bukkit.getScheduler().runTaskTimer(this,
-                    identification::scanAll, config.identifyScanTicks(), config.identifyScanTicks());
+                    () -> identification.scanBatch(config.identifyScanPlayersPerTick()),
+                    config.identifyScanTicks(), config.identifyScanTicks());
         }
     }
 

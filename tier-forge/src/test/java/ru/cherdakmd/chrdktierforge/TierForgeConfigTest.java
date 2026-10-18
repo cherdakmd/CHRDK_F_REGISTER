@@ -62,6 +62,7 @@ class TierForgeConfigTest {
         assertTrue(config.rerollEnabled());
         assertEquals("AMETHYST_SHARD", config.rerollCatalyst());
         assertEquals(10, config.identifyScanTicks());
+        assertEquals(5, config.identifyScanPlayersPerTick());
         assertEquals(2.0, config.mobBossMultiplier(), 1e-9);
     }
 
@@ -111,6 +112,21 @@ class TierForgeConfigTest {
         YamlConfiguration fine = empty();
         fine.set("identify.scan-ticks", 40);
         assertEquals(40, parse(fine).config().identifyScanTicks());
+    }
+
+    @Test
+    void scanPlayersPerTickIsClamped() {
+        YamlConfiguration low = empty();
+        low.set("identify.scan-players-per-tick", 0);
+        assertEquals(1, parse(low).config().identifyScanPlayersPerTick());
+
+        YamlConfiguration high = empty();
+        high.set("identify.scan-players-per-tick", 500);
+        assertEquals(100, parse(high).config().identifyScanPlayersPerTick());
+
+        YamlConfiguration fine = empty();
+        fine.set("identify.scan-players-per-tick", 25);
+        assertEquals(25, parse(fine).config().identifyScanPlayersPerTick());
     }
 
     @Test

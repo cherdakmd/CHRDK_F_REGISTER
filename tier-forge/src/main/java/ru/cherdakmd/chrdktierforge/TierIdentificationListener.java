@@ -8,7 +8,10 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Сервис идентификации: «неопознанный» предмет превращается в тир-предмет ТОЛЬКО
@@ -43,13 +46,27 @@ public final class TierIdentificationListener implements Listener {
         event.getItem().setItemStack(stack);
     }
 
-    /** Периодический скан: ловит крафт, воронки, сундуки, торговлю, наковальн-смитинг. */
-    public void scanAll() {
+    /** Курсор кругового скана: каждый тик обрабатывается следующая порция игроков. */
+    private final AtomicInteger scanCursor = new AtomicInteger();
+
+    /**
+     * Периодический скан: ловит крафт, воронки, сундуки, торговлю, наковальн-смитинг.
+     * С 1.4.86 обходит не всех сразу, а порцию — размер задаёт
+     * {@code identify.scan-players-per-tick}; так стоимость тика не растёт с онлайном.
+     */
+    public void scanBatch(int playersPerTick) {
         if (!plugin.config().identifyUnidentified()) {
             return;
         }
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            scanPlayer(player);
+        List<Player> online = new ArrayList<>(Bukkit.getOnlinePlayers());
+        if (online.isEmpty()) {
+            return;
+        }
+        int size = online.size();
+        int budget = Math.min(Math.max(1, playersPerTick), size);
+        int start = Math.floorMod(scanCursor.getAndAdd(budget), size);
+        for (int i = 0; i < budget; i++) {
+            scanPlayer(online.get((start + i) % size));
         }
     }
 

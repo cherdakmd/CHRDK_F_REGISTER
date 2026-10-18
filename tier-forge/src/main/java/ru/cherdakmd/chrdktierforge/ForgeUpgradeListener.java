@@ -1,6 +1,7 @@
 package ru.cherdakmd.chrdktierforge;
 
 import org.bukkit.GameRule;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.attribute.Attribute;
@@ -67,6 +68,8 @@ public final class ForgeUpgradeListener implements Listener {
     private final Map<UUID, Long> adrenalineCooldown = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastStandCooldown = new ConcurrentHashMap<>();
     private final Map<UUID, java.util.List<ItemStack>> soulboundReturns = new ConcurrentHashMap<>();
+    /** Где умер владелец — туда вернём вещи, если он выйдет, не дождавшись респауна (1.4.86). */
+    private final Map<UUID, Location> soulboundLocations = new ConcurrentHashMap<>();
     /**
      * Флаг реентера внутри «Забойщика»: ломаемые нами блоки не рождают новых залпов.
      * ThreadLocal, а не общий boolean: на Folia события разных игроков идут в разных
@@ -726,12 +729,15 @@ public final class ForgeUpgradeListener implements Listener {
         });
         if (!keepsakes.isEmpty()) {
             soulboundReturns.put(event.getEntity().getUniqueId(), keepsakes);
+            soulboundLocations.put(event.getEntity().getUniqueId(),
+                    event.getEntity().getLocation().clone());
         }
     }
 
     /** Респаун: вернуть привязанные вещи в инвентарь (лишнее — под ноги). */
     @EventHandler(priority = EventPriority.NORMAL)
     public void onPlayerRespawn(PlayerRespawnEvent event) {
+        soulboundLocations.remove(event.getPlayer().getUniqueId());
         java.util.List<ItemStack> keepsakes = soulboundReturns.remove(event.getPlayer().getUniqueId());
         if (keepsakes == null || keepsakes.isEmpty()) {
             return;
@@ -867,6 +873,35 @@ public final class ForgeUpgradeListener implements Listener {
         adrenalineCooldown.remove(player);
         lastStandCooldown.remove(player);
         lastCombat.remove(player);
+        // 1.4.86: вышел, не дождавшись респауна — привязанные вещи не теряем,
+        // а аккуратно выкладываем в точке смерти (иначе они висели бы только в RAM
+        // и исчезли бы при перезапуске).
+        if (soulboundReturns.containsKey(player)) {
+            dropSoulbound(player);
+        }
+    }
+
+    /** Выключение сервера: подвешенные «привязанные» вещи тоже возвращаем в мир. */
+    public void flushSoulbound() {
+        for (UUID player : new java.util.ArrayList<>(soulboundReturns.keySet())) {
+            dropSoulbound(player);
+        }
+    }
+
+    /** Выкладывает ожидающие вещи в точку смерти и чистит обе карты. */
+    private void dropSoulbound(UUID player) {
+        java.util.List<ItemStack> items = soulboundReturns.remove(player);
+        Location at = soulboundLocations.remove(player);
+        if (items == null || items.isEmpty() || at == null || at.getWorld() == null) {
+            return;
+        }
+        for (ItemStack item : items) {
+            if (item != null) {
+                at.getWorld().dropItemNaturally(at, item);
+            }
+        }
+        plugin.getLogger().info("Tier-привязка души: вещи игрока " + player
+                + " выложены в точке смерти (выход/выключение сервера).");
     }
 
     /* ------------------------------- подсчёты ------------------------------- */
