@@ -1331,20 +1331,20 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.108.jar`, аддон
-CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.108.jar`, реферальный —
-`referrals/build/libs/chrdk-referrals-1.4.108.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.108.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.108.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.108.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.108.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.108.jar` (хартия чар — при установленном аддоне чар), общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.108.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.108.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.108.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.108.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.108.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.108.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.109-SNAPSHOT.jar`, аддон
+CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.109-SNAPSHOT.jar`, реферальный —
+`referrals/build/libs/chrdk-referrals-1.4.109-SNAPSHOT.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.109-SNAPSHOT.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.109-SNAPSHOT.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.109-SNAPSHOT.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.109-SNAPSHOT.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.109-SNAPSHOT.jar` (хартия чар — при установленном аддоне чар), общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.109-SNAPSHOT.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.109-SNAPSHOT.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.109-SNAPSHOT.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.109-SNAPSHOT.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.109-SNAPSHOT.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.109-SNAPSHOT.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). Оба JAR прикладываются к каждому релизу на GitHub.
 
 ---
@@ -1484,9 +1484,12 @@ CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.108.jar
   (`access-pass-only: true`) — никакого P2W, чистая визуальщина.
 
 - **CHRDK_BattlePass** (`battlepass/`): сезоны с недельными волнами заданий
-  (`MINE/KILL/CRAFT/FISH`) и двумя ветками наград — бесплатной и VIP для
-  владельцев проходки. Награды — дни через API ядра, `/battlepass` показывает
-  прогресс, `claim` забирает, старые волны доступны весь сезон.
+  (`MINE/PLACE/KILL/BREED/CRAFT/SMELT/ENCHANT/FISH`) и двумя ветками наград —
+  бесплатной и VIP для владельцев проходки. Награды — дни через API ядра;
+  `/battlepass` показывает прогресс, `menu` — то же меню с кликами, `claim`
+  забирает всё готовое, `top` — рейтинг по очкам, `info` — детали задания.
+  Старые волны доступны весь сезон, после `season-end` прогресс замораживается,
+  а награды остаются.
 
 Все конфиги — русские, с комментариями; messages.yml-контракт соблюдён.
 Ядро не менялось — обновлять его не обязательно.
@@ -3145,3 +3148,103 @@ Discord-интеграция и её настройки не изменены.
   199 `@Test` в 34 классах (без изменений).
 
 Версия 1.4.108, полный перезапуск. Заменить `chrdk-battlepass-1.4.108.jar`.
+
+### CHRDK_BattlePass: снапшот 1.4.109-SNAPSHOT — 25 улучшений
+
+**Это снапшот, а не релиз.** Версия в `gradle.properties` — `1.4.109-SNAPSHOT`,
+JAR-файлы собираются как `chrdk-*-1.4.109-SNAPSHOT.jar`. Тег и GitHub-релиз не
+создаются; сборка доступна как артефакт CI и в `build/libs` после `./gradlew build`.
+Обновлять прод-сервер снапшотом стоит только для проверки — после проверки
+выпустим обычный релиз.
+
+Что сделано в аддоне батлпасса (25 пунктов):
+
+1. **Автосохранение прогресса.** `battlepass.autosave-seconds` (по умолчанию 300):
+   прогресс пишется на диск периодически, при выходе игрока и при выключении
+   сервера. Раньше данные сохранялись только в `onDisable` — падение сервера
+   теряло весь заход.
+2. **Ники игроков в `battlepass-data.json`.** Нужны для рейтинга и админ-команд:
+   оффлайн-игрока видно по нику, а не по UUID.
+3. **`/battlepass top`** — рейтинг сезона по очкам: место, ник, очки, число
+   выполненных заданий. Показывается своё место и сколько игроков всего.
+4. **Очки за задания.** Ключ `points` у задания (по умолчанию 10), очки
+   начисляются за выполнение, а не за получение награды — игрок без проходки
+   тоже участвует в рейтинге.
+5. **`/battlepass info <id>`** — подробности задания: волна, тип, прогресс с
+   полосой и процентом, награды, очки, ограничения по мирам и правам, статус.
+6. **`/battlepass help`** — справка по всем командам одной командой.
+7. **Меню `/battlepass menu`.** Задания иконками, полоса прогресса и награды в
+   описании, клик по готовому заданию забирает награду, страницы — стрелками,
+   сводка сезона — звездой. Раскладка вынесена в чистую логику и покрыта тестами.
+8. **Новый тип `PLACE`** — поставить блоки (пример в конфиге: 128 блоков).
+9. **Новый тип `SMELT`** — выплавить предметы в печи; засчитывается при выемке,
+   с учётом количества из события.
+10. **Новый тип `ENCHANT`** — зачаровать предметы на столе.
+11. **Новый тип `BREED`** — развести животных (засчитывается тому, кто кормил).
+12. **Несколько целей в одном задании:** `material: "ZOMBIE|HUSK|DROWNED"` или
+    `"STONE, DEEPSLATE"` — разделители `|` и `,`.
+13. **Варианты блоков:** глубокосланцевая руда засчитывается как руда, обтёсанное
+    бревно — как то же дерево (`match-variants: true`). При этом
+    `DEEPSLATE_BRICKS` не считается за `BRICKS`, а `OAK_LOG` — за `BIRCH_LOG`.
+14. **Фильтр миров задания** — `worlds: ["world_nether"]`; прогресс вне этих
+    миров не идёт (пример — задание «добыть 256 блоков в Нижнем мире»).
+15. **Право на задание** — `permission: chrdkbp.nether`: без права задание не
+    считается, но остаётся видимым.
+16. **Креатив не засчитывается** (`fair-play.count-creative: false`): прогресс
+    идёт только в выживании/приключении.
+17. **Защита от накрутки «поставил-сломал».** Плагин помнит недавно поставленные
+    блоки (по умолчанию 10 минут) и не засчитывает их разрушение
+    (`fair-play.ignore-player-placed`).
+18. **Настраиваемая полоса прогресса** — `display.bar-width` (3–16 секций),
+    используется и в списке, и в меню, и в `/battlepass info`.
+19. **Звуки и подсказки над хотбаром** — `display.sounds`, `display.actionbar`:
+    выполнение задания, получение награды, новая волна.
+20. **Оповещение об открытии волны** — при входе и в игре, один раз на волну;
+    новичку первая волна не «открывается» отдельным сообщением.
+21. **Дата конца сезона** — `season-end`: после неё прогресс замораживается,
+    а награды за выполненные задания остаются доступными.
+22. **`/bpadmin addprogress|setprogress <ник> <id> <n>`** — правка прогресса
+    оффлайн-игрока, значение зажимается в `0..цель`.
+23. **`/bpadmin resetall`** — сброс сезона целиком с числом затронутых игроков.
+24. **`/bpadmin stats` и `/bpadmin list`** — сводка сезона (игроки, выполненные
+    задания, очки, забранные награды, готовые к получению у онлайна) и список
+    всех заданий с целями, наградами и очками.
+25. **`/bpadmin validate`** — диагностика конфига: неизвестный тип, пустая цель,
+    отсутствующий материал/сущность, дубликат id, пустая волна. Проблемы также
+    пишутся в лог и показываются после `/bpadmin reload`.
+
+Изменения в конфиге (`battlepass/`) — все ключи необязательные, старый
+`config.yml` продолжает работать:
+
+```yaml
+battlepass:
+  season-end: ""              # пусто — бессрочный сезон
+  autosave-seconds: 300       # 30–3600
+  match-variants: true
+  fair-play:
+    count-creative: false
+    ignore-player-placed: true
+    placed-memory-seconds: 600
+  display:
+    bar-width: 8
+    sounds: true
+    actionbar: true
+    announce-new-waves: true
+    menu: true
+```
+
+Тексты — `battlepass/src/main/resources/messages.yml`: 91 ключ, добавлены
+`top-*`, `info-*`, `menu-*`, `admin-*`, `actionbar-*`, `wave-opened`,
+`points-footer`, `season-ended`. Старые ключи не переименованы, поэтому
+пользовательский `messages.yml` можно не трогать.
+
+**Тесты:** `BattlePassVariantsTest` (варианты блоков), `BattlePassSettingsTest`
+(значения по умолчанию и зажим), `BattlePassScoreTest` (очки и рейтинг),
+`BattlePassMenuLayoutTest` (страницы и клики), `BattlePassRecentPlacesTest`
+(анти-накрутка), плюс расширены `BattlePassConfigTest` (новые типы, фильтры,
+конец сезона, диагностика) и `BattlePassStoreTest` (ники, волна, старый формат
+данных, `setProgress`, `resetAll`). Батлпасс — 50 `@Test` в 9 классах, ядро —
+199 `@Test` в 34 классах (не менялось).
+
+CI собирает снапшот как обычный пуш в ветку; тег `v1.4.109` и GitHub-релиз не
+создаются до отдельной команды на релиз.

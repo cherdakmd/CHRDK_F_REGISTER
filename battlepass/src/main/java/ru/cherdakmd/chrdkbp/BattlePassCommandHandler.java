@@ -8,7 +8,6 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.cherdakmd.chrdkregister.Messages;
-import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -16,13 +15,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 
 /**
- * {@code /battlepass [claim [id|all]]} — прогресс сезона и получение наград.
- *
- * <p>Награды обеих веток за один заход выдаются одним вызовом ядра: игрок видит
- * одно сообщение об активации проходки, а не по одному на каждую награду.</p>
+ * {@code /battlepass [menu|top|info <id>|help|claim [id|all]]} — прогресс сезона,
+ * рейтинг, справка и получение наград.
  */
 final class BattlePassCommandHandler implements CommandExecutor, TabCompleter {
 
@@ -30,6 +28,8 @@ final class BattlePassCommandHandler implements CommandExecutor, TabCompleter {
             .withZone(ZoneId.systemDefault());
     private static final DateTimeFormatter SHORT_DATE = DateTimeFormatter.ofPattern("dd.MM")
             .withZone(ZoneId.systemDefault());
+    private static final List<String> SUBCOMMANDS =
+            List.of("claim", "menu", "top", "info", "help");
 
     private final BattlePassPlugin plugin;
 
@@ -40,86 +40,104 @@ final class BattlePassCommandHandler implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
-        Messages messages = plugin.messages();
         if (!(sender instanceof Player player)) {
-            messages.send(sender, "usage", "label", label);
+            plugin.messages().send(sender, "usage", "label", label);
             return true;
         }
         if (!player.hasPermission("chrdkbp.use")) {
-            messages.send(player, "no-permission");
+            plugin.messages().send(player, "no-permission");
             return true;
         }
         if (args.length == 0) {
             showProgress(player, label);
             return true;
         }
-        if ("claim".equalsIgnoreCase(args[0])) {
-            if (args.length == 1 || (args.length == 2 && "all".equalsIgnoreCase(args[1]))) {
-                claimAll(player, label);
-            } else if (args.length == 2) {
-                claimOne(player, args[1]);
-            } else {
-                messages.send(player, "usage", "label", label);
+        switch (args[0].toLowerCase(Locale.ROOT)) {
+            case "claim" -> {
+                if (args.length == 1 || (args.length == 2 && "all".equalsIgnoreCase(args[1]))) {
+                    plugin.claims().claimAll(player);
+                } else if (args.length == 2) {
+                    plugin.claims().claimOne(player, args[1]);
+                } else {
+                    plugin.messages().send(player, "usage", "label", label);
+                }
             }
-            return true;
+            case "menu", "gui" -> {
+                if (!plugin.settings().menuEnabled()) {
+                    plugin.messages().send(player, "menu-disabled");
+                    return true;
+                }
+                plugin.menu().open(player, 0);
+            }
+            case "top", "rating" -> showTop(player, label);
+            case "info" -> {
+                if (args.length < 2) {
+                    plugin.messages().send(player, "usage", "label", label);
+                } else {
+                    showInfo(player, args[1]);
+                }
+            }
+            case "help", "?" -> plugin.messages().sendList(player, "help", "label", label);
+            default -> plugin.messages().send(player, "usage", "label", label);
         }
-        messages.send(player, "usage", "label", label);
         return true;
     }
 
     // ------------------------------------------------------------- прогресс --
 
     private void showProgress(Player player, String label) {
-        Messages messages = plugin.messages();
         BattlePassConfig.Season season = plugin.season();
         if (season == null || season.empty()) {
-            messages.send(player, "no-season");
+            plugin.messages().send(player, "no-season");
             return;
         }
         long now = System.currentTimeMillis();
         int current = BattlePassConfig.currentWeek(season, now);
-        // week/weeks_total передаём и в шапку: в старых messages.yml они были именно там.
-        messages.send(player, "header",
-                "season", described(season.name()),
+        plugin.messages().send(player, "header",
+                "season", BattlePassScreen.described(season.name()),
                 "week", Math.max(1, current), "weeks_total", season.weeks().size());
         if (current <= 0) {
-            messages.send(player, "season-not-started",
+            plugin.messages().send(player, "season-not-started",
                     "date", DATE.format(Instant.ofEpochMilli(season.startEpochMillis())));
             return;
         }
-        messages.send(player, "subheader",
+        if (season.ended(now)) {
+            plugin.messages().send(player, "season-ended",
+                    "date", DATE.format(Instant.ofEpochMilli(season.endEpochMillis())));
+        }
+        plugin.messages().send(player, "subheader",
                 "week", current,
                 "weeks_total", season.weeks().size(),
                 "next", nextWeek(season, current, now));
 
-        long until = passUntil(player);
+        long until = plugin.passUntil(player);
         boolean vipActive = until > now;
         if (vipActive) {
-            messages.send(player, "vip-active",
+            plugin.messages().send(player, "vip-active",
                     "until", DATE.format(Instant.ofEpochMilli(until)));
         } else {
-            messages.send(player, "vip-none");
+            plugin.messages().send(player, "vip-none");
         }
 
         int ready = 0;
         int vipLocked = 0;
         for (int index = 0; index < season.weeks().size(); index++) {
             if (!BattlePassConfig.isUnlocked(season, index, now)) {
-                messages.send(player, "week-locked",
+                plugin.messages().send(player, "week-locked",
                         "week", index + 1,
                         "days", BattlePassConfig.daysUntilUnlock(season, index, now),
                         "date", SHORT_DATE.format(
                                 Instant.ofEpochMilli(BattlePassConfig.unlockAt(season, index))));
                 break;
             }
-            List<BattlePassView.Mission> views = missionsOf(player, season, index, vipActive);
+            List<BattlePassView.Mission> views = views(player, season.weeks().get(index), vipActive);
             int total = views.stream().mapToInt(BattlePassView.Mission::totalTracks).sum();
             int claimed = views.stream().mapToInt(BattlePassView.Mission::claimedTracks).sum();
             if (total > 0 && claimed >= total) {
-                messages.send(player, "week-complete", "week", index + 1);
+                plugin.messages().send(player, "week-complete", "week", index + 1);
                 continue;
             }
-            messages.send(player, "week-title",
+            plugin.messages().send(player, "week-title",
                     "week", index + 1, "claimed", claimed, "total", total);
             for (BattlePassView.Mission view : views) {
                 player.sendMessage(plugin.screen().mission(label, view));
@@ -131,12 +149,17 @@ final class BattlePassCommandHandler implements CommandExecutor, TabCompleter {
             }
         }
         if (ready > 0) {
-            messages.send(player, "footer-claimable", "count", ready, "label", label);
+            plugin.messages().send(player, "footer-claimable",
+                    "count", ready, "label", label);
         } else if (vipLocked > 0) {
-            messages.send(player, "footer-vip-locked", "count", vipLocked);
+            plugin.messages().send(player, "footer-vip-locked", "count", vipLocked);
         } else {
-            messages.send(player, "footer-idle");
+            plugin.messages().send(player, "footer-idle");
         }
+        Map<String, Integer> progress = plugin.store().progressMap(player.getUniqueId());
+        plugin.messages().send(player, "points-footer",
+                "points", BattlePassScore.points(season, progress),
+                "completed", BattlePassScore.completed(season, progress));
     }
 
     /** Хвост подзаголовка про следующую волну или пустая строка. */
@@ -151,11 +174,11 @@ final class BattlePassCommandHandler implements CommandExecutor, TabCompleter {
         return Messages.trusted(Messages.legacyToMini(text));
     }
 
-    private List<BattlePassView.Mission> missionsOf(Player player, BattlePassConfig.Season season,
-                                                    int weekIndex, boolean vipActive) {
+    private List<BattlePassView.Mission> views(Player player, BattlePassConfig.WeekDef week,
+                                               boolean vipActive) {
         UUID uuid = player.getUniqueId();
         List<BattlePassView.Mission> views = new ArrayList<>();
-        for (BattlePassConfig.MissionDef mission : season.weeks().get(weekIndex).missions()) {
+        for (BattlePassConfig.MissionDef mission : week.missions()) {
             views.add(new BattlePassView.Mission(mission,
                     plugin.store().progressOf(uuid, mission.id()),
                     plugin.store().isClaimed(uuid, mission.id(), "FREE"),
@@ -165,178 +188,134 @@ final class BattlePassCommandHandler implements CommandExecutor, TabCompleter {
         return views;
     }
 
-    // --------------------------------------------------------------- награды --
+    // -------------------------------------------------------------- рейтинг --
 
-    /** Забрать всё, что готово: бесплатные ветки всем, VIP — при активной проходке. */
-    private void claimAll(Player player, String label) {
-        Messages messages = plugin.messages();
+    private void showTop(Player player, String label) {
         BattlePassConfig.Season season = plugin.season();
         if (season == null || season.empty()) {
-            messages.send(player, "no-season");
+            plugin.messages().send(player, "no-season");
             return;
         }
-        ChrdkRegisterApi api = plugin.coreApi();
-        if (api == null) {
-            messages.send(player, "no-core");
+        List<BattlePassScore.Entry> all = BattlePassScore.leaderboard(
+                season,
+                plugin.store().progressSnapshot(),
+                plugin.store().namesSnapshot(),
+                plugin.store().claimsSnapshot(),
+                0);
+        if (all.isEmpty()) {
+            plugin.messages().send(player, "top-empty");
             return;
         }
-        long now = System.currentTimeMillis();
-        boolean vipActive = api.passUntil(player.getName()) > now;
-        UUID uuid = player.getUniqueId();
-
-        int rewards = 0;
-        int days = 0;
-        int vipSkipped = 0;
-        for (int index = 0; index < season.weeks().size(); index++) {
-            if (!BattlePassConfig.isUnlocked(season, index, now)) {
-                break;
-            }
-            for (BattlePassConfig.MissionDef mission : season.weeks().get(index).missions()) {
-                if (plugin.store().progressOf(uuid, mission.id()) < mission.target()) {
-                    continue;
-                }
-                boolean freeLeft = mission.freeDays() > 0
-                        && !plugin.store().isClaimed(uuid, mission.id(), "FREE");
-                boolean vipLeft = mission.vipDays() > 0
-                        && !plugin.store().isClaimed(uuid, mission.id(), "VIP");
-                if (freeLeft && plugin.store().markClaimed(uuid, mission.id(), "FREE")) {
-                    rewards++;
-                    days += mission.freeDays();
-                }
-                if (!vipLeft) {
-                    continue;
-                }
-                if (vipActive) {
-                    if (plugin.store().markClaimed(uuid, mission.id(), "VIP")) {
-                        rewards++;
-                        days += mission.vipDays();
-                    }
-                } else {
-                    vipSkipped++;
-                }
-            }
+        plugin.messages().send(player, "top-header", "count", all.size());
+        int shown = Math.min(all.size(), 10);
+        for (int index = 0; index < shown; index++) {
+            BattlePassScore.Entry entry = all.get(index);
+            plugin.messages().send(player, "top-line",
+                    "place", index + 1,
+                    "player", entry.name(),
+                    "points", entry.points(),
+                    "completed", entry.completed());
         }
-
-        if (rewards == 0) {
-            if (vipSkipped > 0) {
-                messages.send(player, "claim-all-vip-only", "count", vipSkipped, "label", label);
-            } else {
-                messages.send(player, "claim-all-empty", "count", vipSkipped, "label", label);
-            }
-            return;
+        if (all.size() > shown) {
+            plugin.messages().send(player, "top-more", "rest", all.size() - shown);
         }
-        api.grantPass(player.getName(), days, "battlepass:claim-all");
-        messages.send(player, "claim-all-summary",
-                "count", rewards, "days", days,
-                "until", DATE.format(Instant.ofEpochMilli(api.passUntil(player.getName()))));
-        if (vipSkipped > 0) {
-            messages.send(player, "claim-all-vip-skipped", "count", vipSkipped);
+        int place = BattlePassScore.position(all, player.getUniqueId());
+        if (place > 0) {
+            BattlePassScore.Entry own = all.get(place - 1);
+            plugin.messages().send(player, "top-self",
+                    "place", place, "total", all.size(), "points", own.points());
+        } else {
+            plugin.messages().send(player, "top-none-self", "label", label);
         }
     }
 
-    /** Забрать награды одного задания (обе доступные ветки одним платежом). */
-    private void claimOne(Player player, String rawId) {
-        Messages messages = plugin.messages();
+    // ------------------------------------------------------------- задание --
+
+    private void showInfo(Player player, String rawId) {
         BattlePassConfig.Season season = plugin.season();
         if (season == null || season.empty()) {
-            messages.send(player, "no-season");
+            plugin.messages().send(player, "no-season");
             return;
         }
         BattlePassConfig.Found found = BattlePassConfig.find(season, rawId);
         if (found == null) {
-            messages.send(player, "unknown", "id", rawId);
-            return;
-        }
-        long now = System.currentTimeMillis();
-        if (!BattlePassConfig.isUnlocked(season, found.weekIndex(), now)) {
-            messages.send(player, "locked", "id", found.mission().id());
+            plugin.messages().send(player, "unknown", "id", rawId);
             return;
         }
         BattlePassConfig.MissionDef mission = found.mission();
         UUID uuid = player.getUniqueId();
-        int progress = plugin.store().progressOf(uuid, mission.id());
-        if (progress < mission.target()) {
-            messages.send(player, "not-ready",
-                    "progress", progress, "target", mission.target(),
-                    "id", mission.id(), "desc", described(mission.description()));
-            return;
+        int progress = Math.min(plugin.store().progressOf(uuid, mission.id()), mission.target());
+        int percent = mission.target() <= 0 ? 0 : progress * 100 / mission.target();
+        BattlePassView.Mission view = new BattlePassView.Mission(mission, progress,
+                plugin.store().isClaimed(uuid, mission.id(), "FREE"),
+                plugin.store().isClaimed(uuid, mission.id(), "VIP"),
+                plugin.vipActive(player));
+        plugin.messages().send(player, "info-header",
+                "desc", BattlePassScreen.described(mission));
+        plugin.messages().send(player, "info-line",
+                "week", found.weekIndex() + 1,
+                "type", mission.type().name(),
+                "id", mission.id());
+        plugin.messages().send(player, "info-progress",
+                "bar", plugin.screen().bar(view),
+                "progress", progress, "target", mission.target(), "percent", percent);
+        plugin.messages().send(player, "info-rewards",
+                "reward", plugin.screen().reward(mission),
+                "points", mission.points());
+        if (mission.restrictedWorld()) {
+            plugin.messages().send(player, "info-worlds",
+                    "worlds", String.join(", ", mission.worlds()));
         }
-        ChrdkRegisterApi api = plugin.coreApi();
-        if (api == null) {
-            messages.send(player, "no-core");
-            return;
+        if (mission.restrictedPermission()) {
+            plugin.messages().send(player, "info-permission",
+                    "permission", mission.permission());
         }
-
-        boolean vipActive = api.passUntil(player.getName()) > now;
-        boolean freeLeft = mission.freeDays() > 0
-                && !plugin.store().isClaimed(uuid, mission.id(), "FREE");
-        boolean vipLeft = mission.vipDays() > 0
-                && !plugin.store().isClaimed(uuid, mission.id(), "VIP");
-        if (!freeLeft && !vipLeft) {
-            messages.send(player, "already-claimed", "desc", described(mission.description()));
-            return;
-        }
-
-        int days = 0;
-        if (freeLeft && plugin.store().markClaimed(uuid, mission.id(), "FREE")) {
-            days += mission.freeDays();
-        }
-        boolean vipSkipped = vipLeft && !vipActive;
-        if (vipLeft && vipActive
-                && plugin.store().markClaimed(uuid, mission.id(), "VIP")) {
-            days += mission.vipDays();
-        }
-        if (days <= 0) {
-            messages.send(player, "vip-denied", "days", mission.vipDays(),
-                    "id", mission.id(), "desc", described(mission.description()));
-            return;
-        }
-        api.grantPass(player.getName(), days, "battlepass:" + mission.id());
-        messages.send(player, "reward",
-                "days", days,
-                "until", DATE.format(Instant.ofEpochMilli(api.passUntil(player.getName()))),
-                "id", mission.id(), "desc", described(mission.description()));
-        if (vipSkipped) {
-            messages.send(player, "vip-denied", "days", mission.vipDays(),
-                    "id", mission.id(), "desc", described(mission.description()));
+        plugin.messages().send(player, "info-status",
+                "state", plugin.screen().state(view.state()),
+                "label", "battlepass");
+        if (view.state() == BattlePassView.State.READY) {
+            plugin.messages().send(player, "info-hint",
+                    "label", "battlepass", "id", mission.id());
+        } else if (view.state() == BattlePassView.State.VIP_LOCKED) {
+            plugin.messages().send(player, "menu-lore-vip");
         }
     }
 
-    // -------------------------------------------------------------- служебное --
-
-    private long passUntil(Player player) {
-        ChrdkRegisterApi api = plugin.coreApi();
-        return api == null ? 0L : api.passUntil(player.getName());
-    }
-
-    /** Описание задания из конфига: разметка уже готова, экранировать её нельзя. */
-    private static Messages.Trusted described(String text) {
-        return Messages.trusted(Messages.legacyToMini(text));
-    }
+    // ------------------------------------------------------------ автодополнение
 
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender,
                                                 @NotNull Command command,
                                                 @NotNull String alias, @NotNull String[] args) {
+        BattlePassConfig.Season season = plugin.season();
         if (args.length == 1) {
-            return "claim".startsWith(args[0].toLowerCase(Locale.ROOT))
-                    ? List.of("claim") : List.of();
-        }
-        if (args.length == 2 && "claim".equalsIgnoreCase(args[0]) && plugin.season() != null) {
-            String prefix = args[1].toLowerCase(Locale.ROOT);
-            List<String> ids = new ArrayList<>();
-            if ("all".startsWith(prefix)) {
-                ids.add("all");
+            String prefix = args[0].toLowerCase(Locale.ROOT);
+            List<String> matches = new ArrayList<>();
+            for (String sub : SUBCOMMANDS) {
+                if (sub.startsWith(prefix)) {
+                    matches.add(sub);
+                }
             }
-            for (BattlePassConfig.WeekDef week : plugin.season().weeks()) {
+            return matches;
+        }
+        if (args.length != 2 || season == null) {
+            return List.of();
+        }
+        String sub = args[0].toLowerCase(Locale.ROOT);
+        String prefix = args[1].toLowerCase(Locale.ROOT);
+        List<String> ids = new ArrayList<>();
+        if ("claim".equals(sub) && "all".startsWith(prefix)) {
+            ids.add("all");
+        }
+        if ("claim".equals(sub) || "info".equals(sub)) {
+            for (BattlePassConfig.WeekDef week : season.weeks()) {
                 for (BattlePassConfig.MissionDef mission : week.missions()) {
-                    if (mission.id().startsWith(prefix)) {
+                    if (mission.id().startsWith(prefix) && !ids.contains(mission.id())) {
                         ids.add(mission.id());
                     }
                 }
             }
-            return ids;
         }
-        return List.of();
+        return ids;
     }
 }

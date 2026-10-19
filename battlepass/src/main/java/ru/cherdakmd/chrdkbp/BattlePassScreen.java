@@ -14,16 +14,26 @@ import ru.cherdakmd.chrdkregister.Messages;
  */
 final class BattlePassScreen {
 
-    /** Длина полосы прогресса в секциях. */
-    static final int BAR_WIDTH = 8;
+    /** Ширина полосы прогресса по умолчанию (переопределяется в config.yml). */
+    static final int DEFAULT_BAR_WIDTH = 8;
 
     private static final String FILLED = "▰";
     private static final String EMPTY = "▱";
 
     private final Messages messages;
+    private final int barWidth;
 
     BattlePassScreen(Messages messages) {
+        this(messages, DEFAULT_BAR_WIDTH);
+    }
+
+    BattlePassScreen(Messages messages, BattlePassSettings settings) {
+        this(messages, settings == null ? DEFAULT_BAR_WIDTH : settings.barWidth());
+    }
+
+    private BattlePassScreen(Messages messages, int barWidth) {
         this.messages = messages;
+        this.barWidth = Math.max(1, barWidth);
     }
 
     /** Строка задания с иконкой состояния, прогрессом, наградой и кнопкой. */
@@ -58,7 +68,8 @@ final class BattlePassScreen {
                 "desc", described(mission));
     }
 
-    private Messages.Trusted state(BattlePassView.State state) {
+    /** Иконка состояния для строки задания. */
+    Messages.Trusted state(BattlePassView.State state) {
         return switch (state) {
             case PROGRESS -> trustedRaw(messages.raw("state-progress"));
             case READY -> trustedRaw(messages.raw("state-ready"));
@@ -68,15 +79,15 @@ final class BattlePassScreen {
     }
 
     /** Полоса прогресса: закрашенная часть одним цветом, пустая — другим. */
-    private Messages.Trusted bar(BattlePassView.Mission view) {
-        int filled = BattlePassView.filledSegments(view.progress(), view.def().target(), BAR_WIDTH);
+    Messages.Trusted bar(BattlePassView.Mission view) {
+        int filled = BattlePassView.filledSegments(view.progress(), view.def().target(), barWidth);
         String bar = messages.raw("bar-filled", "bars", FILLED.repeat(filled))
-                + messages.raw("bar-empty", "bars", EMPTY.repeat(BAR_WIDTH - filled));
+                + messages.raw("bar-empty", "bars", EMPTY.repeat(barWidth - filled));
         return trustedRaw(bar);
     }
 
     /** Награды задания: «+1 дн.», «VIP +2 дн.» или обе ветки сразу. */
-    private Messages.Trusted reward(BattlePassConfig.MissionDef mission) {
+    Messages.Trusted reward(BattlePassConfig.MissionDef mission) {
         boolean free = mission.freeDays() > 0;
         boolean vip = mission.vipDays() > 0;
         String text;
@@ -94,7 +105,7 @@ final class BattlePassScreen {
     }
 
     /** Кнопка «забрать» для готовой награды или подсказка «нужна проходка». */
-    private Messages.Trusted hint(String label, BattlePassView.Mission view) {
+    Messages.Trusted hint(String label, BattlePassView.Mission view) {
         return switch (view.state()) {
             case READY -> trustedRaw(messages.raw("mission-claim-hint",
                     "label", label, "id", view.def().id()));
@@ -104,15 +115,20 @@ final class BattlePassScreen {
     }
 
     /** Описание задания из конфига: MiniMessage и старые &-коды. */
-    private static Messages.Trusted described(BattlePassConfig.MissionDef mission) {
+    static Messages.Trusted described(BattlePassConfig.MissionDef mission) {
         return trustedRaw(mission.description());
+    }
+
+    /** То же для произвольной строки из конфига (название сезона, описание задания). */
+    static Messages.Trusted described(String text) {
+        return trustedRaw(text);
     }
 
     /**
      * Значение из конфига или из нашего шаблона — уже с разметкой.
      * Старые &-коды поддерживаем для совместимости с прошлыми messages.yml.
      */
-    private static Messages.Trusted trustedRaw(String miniMessage) {
+    static Messages.Trusted trustedRaw(String miniMessage) {
         return Messages.trusted(Messages.legacyToMini(miniMessage));
     }
 }
