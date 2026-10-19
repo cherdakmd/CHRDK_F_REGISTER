@@ -399,6 +399,7 @@ messages:
       <yellow>/%label% status</yellow><gray> — общая статистика плагина</gray>
       <yellow>/%label% add <ник> [дней]</yellow><gray> — выдать/продлить проходку на произвольный срок</gray>
       <yellow>/%label% gift <ник> <дней></yellow><gray> — подарить проходку</gray>
+      <yellow>/%label% shoppay <ник> <сумма></yellow><gray> — покупка из магазина TradeMC: журнал, тариф, выдача</gray>
       <yellow>/%label% pending</yellow><gray> — нераспознанные донаты</gray>
       <yellow>/%label% donations [фильтр] [лимит]</yellow><gray> — журнал всех донатов (выданные/ожидание/отклонённые)</gray>
       <yellow>/%label% health</yellow><gray> — состояние донатных сервисов, счётчики опросов</gray>

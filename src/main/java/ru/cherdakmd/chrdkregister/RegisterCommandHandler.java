@@ -824,7 +824,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 return true;
             }
             case "shoppay" -> {
-                // Хук магазина TradeMC: панель шлёт по RCON 'chrdkregister pass shoppay <ник> <сумма_руб>'
+                // Хук магазина TradeMC: панель шлёт по RCON 'pass shoppay <ник> <сумма_руб>'
                 // после оплаты товара — проводим покупку полным донат-конвейером (журнал, тарифы, действия).
                 if (args.length < 3) {
                     messages.send(sender, "usage.pass-shoppay", "label", label);
