@@ -79,9 +79,9 @@ final class BattlePassView {
             return (hasFree() ? 1 : 0) + (hasVip() ? 1 : 0);
         }
 
-        /** Прогресс для показа: не больше цели. */
+        /** Прогресс для показа: от 0 до цели (битые данные не ломают строку). */
         int shownProgress() {
-            return Math.min(progress, def.target());
+            return Math.max(0, Math.min(progress, def.target()));
         }
     }
 
