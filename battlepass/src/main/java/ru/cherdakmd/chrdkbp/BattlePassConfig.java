@@ -61,16 +61,19 @@ final class BattlePassConfig {
         return open;
     }
 
+    /** Момент открытия волны (индекс 0-based), epoch millis. */
+    static long unlockAt(Season season, int weekIndex) {
+        return season.startEpochMillis() + season.weeks().get(weekIndex).unlockDay() * 86_400_000L;
+    }
+
     /** Открыта ли волна (индекс 0-based) на момент времени. */
     static boolean isUnlocked(Season season, int weekIndex, long nowMillis) {
-        WeekDef week = season.weeks().get(weekIndex);
-        return nowMillis >= season.startEpochMillis()
-                + week.unlockDay() * 86_400_000L;
+        return nowMillis >= unlockAt(season, weekIndex);
     }
 
     /** Сколько суток осталось до открытия волны (для сообщения), минимум 1. */
     static long daysUntilUnlock(Season season, int weekIndex, long nowMillis) {
-        long at = season.startEpochMillis() + season.weeks().get(weekIndex).unlockDay() * 86_400_000L;
+        long at = unlockAt(season, weekIndex);
         long diff = at - nowMillis;
         if (diff <= 0) {
             return 0;

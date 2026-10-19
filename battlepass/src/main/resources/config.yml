@@ -1,9 +1,13 @@
 battlepass:
-  # Имя сезона (MiniMessage/&-коды), показывается в /battlepass.
+  # Имя сезона (MiniMessage или старые &-коды), показывается в /battlepass.
+  # Плагин вставляет его как готовую разметку, поэтому <gold>…</gold> здесь — цвет,
+  # а не текст.
   season-name: "<gold>Сезон «Первая стужа»</gold>"
   # Дата старта сезона (UTC). От неё считаются волны.
   season-start: "2026-10-13"
   # Награды за задания: дни проходки. free — всем, vip — дополнительно владельцам активной проходки.
+  # id задания — короткое имя для /battlepass claim <id>; desc — строка в списке заданий
+  # (MiniMessage или &-коды, как у season-name).
   # Виды заданий (type):
   #   MINE <материал>   — добыть блоки (material: DIAMOND_ORE, ANCIENT_DEBRIS…)
   #   KILL <сущность>   — победить мобов (entity: ZOMBIE, SKELETON, ANY…)

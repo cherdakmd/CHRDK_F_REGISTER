@@ -29,6 +29,7 @@ import java.util.Map;
 public final class BattlePassPlugin extends JavaPlugin implements Listener {
 
     private volatile Messages messages;
+    private volatile BattlePassScreen screen;
     private volatile BattlePassConfig.Season season;
     private volatile ChrdkRegisterApi coreApi;
     private BattlePassStore store;
@@ -69,6 +70,7 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
     public void reloadBattlePassConfig() {
         reloadConfig();
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
+        this.screen = new BattlePassScreen(this.messages);
 
         List<Map<?, ?>> rawWeeks = new ArrayList<>();
         if (getConfig().getList("battlepass.weeks") != null) {
@@ -163,8 +165,7 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
                         delta, mission.target());
                 if (before < mission.target() && after >= mission.target()) {
                     completedNow.add(mission);
-                    messages().send(player, "mission-done",
-                            "desc", mission.description(), "id", mission.id(), "label", "bp");
+                    player.sendMessage(screen.missionDone("battlepass", mission));
                 }
             }
         }
@@ -173,6 +174,10 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
 
     public Messages messages() {
         return messages;
+    }
+
+    public BattlePassScreen screen() {
+        return screen;
     }
 
     public BattlePassConfig.Season season() {

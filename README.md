@@ -1331,20 +1331,20 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.107.jar`, аддон
-CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.107.jar`, реферальный —
-`referrals/build/libs/chrdk-referrals-1.4.107.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.107.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.107.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.107.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.107.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.107.jar` (хартия чар — при установленном аддоне чар), общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.107.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.107.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.107.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.107.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.107.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.107.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.108.jar`, аддон
+CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.108.jar`, реферальный —
+`referrals/build/libs/chrdk-referrals-1.4.108.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.108.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.108.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.108.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.108.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.108.jar` (хартия чар — при установленном аддоне чар), общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.108.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.108.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.108.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.108.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.108.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.108.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). Оба JAR прикладываются к каждому релизу на GitHub.
 
 ---
@@ -1689,7 +1689,7 @@ plugins/<Addon>/messages.yml — удалите их после обновлен
 проклятого до легендарного, накат при крафте брони/оружия/инструментов, апгрейд двух
 одинаковых тирированных предметов на наковальне, перенос тира через апгрейд в незерит.
 
-**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-tier-forge-1.4.107.jar`
+**Важно при обновлении:** ядро — заменой JAR. Аддон опционален: `chrdk-tier-forge-1.4.108.jar`
 рядом с ядром (≥ 1.4.6), перезапуск. Шансы/бонусы тиров — в `plugins/CHRDK_TierForge/config.yml`.
 
 ---
@@ -3108,3 +3108,40 @@ Discord-интеграция и её настройки не изменены.
   проверка секции `guide` в `ResourcesYamlTest`. Всего 199 `@Test` в 34 классах.
 
 Версия 1.4.107, полный перезапуск.
+
+### CHRDK_BattlePass: читаемые надписи и все награды одной командой — 1.4.108
+
+Аддон батлпасса. Остальные аддоны не менялись; в ядре поправлен только текст
+поздравления о проходке (`наградой батлпасса` вместо `администратором`).
+
+- **Исправлено главное: в `/battlepass` больше не видно literal-тегов.** Название
+  сезона и описания заданий из `config.yml` (`<gold>…</gold>`, `<gray>…</gray>`)
+  раньше подставлялись как обычный текст и экранировались — в чате появлялось
+  `<gray>Добыть алмазную руду</gray>`. Теперь разметка из конфига вставляется как
+  готовая; служебные подписи (иконки состояния, полоса, награды, кнопки) тоже
+  собираются из `messages.yml`. Поддерживаются и старые `&`-коды.
+- **Список заданий стал читаемым:** у каждого задания иконка состояния, полоса
+  прогресса (`▰▰▰▱▱▱▱▱`), счётчик `8/16` и награды (`+1 дн.`, `VIP +2 дн.`).
+- **Понятные состояния:** `•` — в работе; зелёная `✔` — награда готова и рядом
+  кнопка `[забрать]`; `◆` — осталась только VIP-награда, кнопка `[нужна проходка]`
+  ведёт в `/pass menu`; серая `✔` — всё забрано, задание зачёркнуто.
+- **`/battlepass claim` без аргументов забирает все готовые награды** сразу —
+  не нужно вводить id каждого задания. `/battlepass claim <id>` и
+  `/battlepass claim all` тоже работают. Награды за один заход выдаются одним
+  платежом: одно поздравление ядра и одна сводка «Забрано наград: N ·
+  +X дн. проходки до DD.MM.YYYY», а не по сообщению на каждую награду.
+- **Волны:** заголовок «Волна N · забрано X из Y наград», полностью закрытая
+  волна сворачивается в одну строку, закрытая — показывает дату открытия и
+  сколько ждать. В шапке — сезон, текущая волна, дата следующей и статус
+  проходки (до какого числа активна или что VIP-награды закрыты), внизу —
+  сколько наград готово и кнопка `[забрать всё]`.
+- **Права:** `/battlepass` уважает `chrdkbp.use` (по умолчанию у всех).
+- **Тексты** — `battlepass/src/main/resources/messages.yml` (48 ключей,
+  комментарии на русском). Старые `season-name` и `desc` из `config.yml`
+  править не нужно — они совместимы.
+- **Тесты:** `BattlePassViewTest` (состояния, полоса прогресса, ветки наград) и
+  `BattlePassScreenTest` (рендер без literal-тегов, кнопки «забрать»,
+  VIP-подсказка, забранные задания). Батлпасс — 17 `@Test` в 4 классах; ядро —
+  199 `@Test` в 34 классах (без изменений).
+
+Версия 1.4.108, полный перезапуск. Заменить `chrdk-battlepass-1.4.108.jar`.

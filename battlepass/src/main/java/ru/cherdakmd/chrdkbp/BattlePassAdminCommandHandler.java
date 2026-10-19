@@ -9,6 +9,7 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.cherdakmd.chrdkregister.Messages;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -48,7 +49,7 @@ final class BattlePassAdminCommandHandler implements CommandExecutor, TabComplet
                 BattlePassConfig.Season season = plugin.season();
                 long now = System.currentTimeMillis();
                 plugin.messages().send(sender, "admin-info",
-                        "season", season.name(),
+                        "season", Messages.trusted(Messages.legacyToMini(season.name())),
                         "start", DATE.format(Instant.ofEpochMilli(season.startEpochMillis())),
                         "week", Math.max(1, BattlePassConfig.currentWeek(season, now)),
                         "weeks_total", season.weeks().size());

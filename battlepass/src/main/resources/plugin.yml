@@ -7,9 +7,9 @@ author: cherdakmd
 depend: [CHRDK_Core]
 commands:
   battlepass:
-    description: "Батлпасс: задания сезона и награды"
+    description: "Батлпасс: задания сезона, прогресс и награды"
     aliases: [bp, pass2]
-    usage: "/battlepass [claim <id>]"
+    usage: "/battlepass [claim [id|all]]"
   bpadmin:
     description: "Администрирование батлпасса"
     permission: chrdkbp.admin

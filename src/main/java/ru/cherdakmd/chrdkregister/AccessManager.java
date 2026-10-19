@@ -1514,9 +1514,16 @@ public final class AccessManager {
         RegistrationStore.PlayerAccount account =
                 store.grantPassManual(targetPlayerName, now, durationMillis, source);
 
-        String description = source != null && source.startsWith("gift")
-                ? "подарком"
-                : "администратором";
+        // Источник виден игроку в поздравлении «Проходка активирована (%source%)».
+        // Награды батлпасса не должны представляться выдачей администратора.
+        String description;
+        if (source != null && source.startsWith("gift")) {
+            description = "подарком";
+        } else if (source != null && source.startsWith("battlepass")) {
+            description = "наградой батлпасса";
+        } else {
+            description = "администратором";
+        }
         Player onlinePlayer = Bukkit.getPlayerExact(targetPlayerName);
         if (onlinePlayer != null) {
             notifyOnlinePassActivated(onlinePlayer, account.passUntil, description);
