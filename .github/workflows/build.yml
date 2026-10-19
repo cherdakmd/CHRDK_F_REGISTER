@@ -67,3 +67,16 @@ jobs:
           path: build/libs/*.jar
           if-no-files-found: error
           retention-days: 14
+
+      # Снапшот всей сборки: ядро и все аддоны одним архивом. Нужен, чтобы
+      # промежуточную версию (например, 1.4.109-SNAPSHOT) можно было поставить
+      # на тестовый сервер, не собирая репозиторий локально и не создавая релиз.
+      - name: Upload all module JARs
+        uses: actions/upload-artifact@v4
+        with:
+          name: chrdk-plugins-${{ github.sha }}
+          path: |
+            build/libs/*.jar
+            */build/libs/*.jar
+          if-no-files-found: error
+          retention-days: 14
