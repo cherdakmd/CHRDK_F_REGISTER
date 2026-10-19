@@ -237,12 +237,15 @@ final class BattlePassConfig {
             return null;
         }
         MissionType type;
-        String rawType = norm(raw.get("type"));
+        Object rawTypeValue = raw.get("type");
+        String rawType = norm(rawTypeValue).toUpperCase(Locale.ROOT);
         try {
-            type = MissionType.valueOf(rawType.toUpperCase(Locale.ROOT));
+            type = MissionType.valueOf(rawType);
         } catch (RuntimeException exception) {
+            // Показываем значение так, как его написал администратор: «WALK» понятнее «walk».
             problems.add("волна " + weekNumber + ": «" + id + "» — неизвестный тип задания «"
-                    + rawType + "» (доступны: " + types() + ")");
+                    + (rawTypeValue == null ? "" : rawTypeValue) + "» (доступны: "
+                    + types() + ")");
             return null;
         }
         String matchKey = switch (type) {
