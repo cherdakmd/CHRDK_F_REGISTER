@@ -4,8 +4,12 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import net.kyori.adventure.text.Component;
+import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.MapMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.map.MapCanvas;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
@@ -41,27 +45,71 @@ public final class TotpQrMapService {
     private static final int MAX_SCALE = 4;
 
     private final AccessManager accessManager;
+    private final NamespacedKey itemKey;
     private final Logger logger;
     private volatile MapView mapView;
 
-    public TotpQrMapService(AccessManager accessManager, Logger logger) {
+    public TotpQrMapService(AccessManager accessManager, NamespacedKey itemKey, Logger logger) {
         this.accessManager = accessManager;
+        this.itemKey = itemKey;
         this.logger = logger;
     }
 
     /**
      * Создаёт выданную игроку карту с QR-кодом его привязки 2FA. MapView общий и
      * лениво создаётся один раз (в первом мире, где её попросили).
+     *
+     * <p>Карта помечается {@link NamespacedKey}-тегом: по нему её можно найти в инвентаре
+     * игрока (переложить в руку до входа и убрать после привязки), не трогая чужие карты.</p>
+     *
+     * @param displayName название предмета (может быть {@code null})
+     * @param lore        описание предмета (может быть пустым)
      */
-    public ItemStack createMapItem(World world) {
+    public ItemStack createMapItem(World world, Component displayName, List<Component> lore) {
         ItemStack item = new ItemStack(Material.FILLED_MAP);
         if (!(item.getItemMeta() instanceof MapMeta meta)) {
             logger.warning("MapMeta недоступен — карта QR-кода 2FA не выдана");
             return item;
         }
         meta.setMapView(ensureMapView(world));
+        if (displayName != null) {
+            meta.displayName(displayName);
+        }
+        if (lore != null && !lore.isEmpty()) {
+            meta.lore(lore);
+        }
+        meta.getPersistentDataContainer().set(itemKey, PersistentDataType.BYTE, (byte) 1);
         item.setItemMeta(meta);
         return item;
+    }
+
+    /** Является ли предмет выданной нами картой QR-кода 2FA. */
+    public boolean isQrMap(ItemStack item) {
+        if (item == null || item.getType() != Material.FILLED_MAP || !item.hasItemMeta()) {
+            return false;
+        }
+        return item.getItemMeta().getPersistentDataContainer().has(itemKey, PersistentDataType.BYTE);
+    }
+
+    /**
+     * Убирает выданные карты из инвентаря и с курсора (после привязки, отмены или выхода).
+     *
+     * @return сколько предметов убрано
+     */
+    public int removeMaps(Player player) {
+        if (player == null) {
+            return 0;
+        }
+        int removed = 0;
+        PlayerInventory inventory = player.getInventory();
+        ItemStack[] contents = inventory.getContents();
+        for (int slot = 0; slot < contents.length; slot++) {
+            if (isQrMap(contents[slot])) {
+                inventory.setItem(slot, null);
+                removed++;
+            }
+        }
+        return removed;
     }
 
     private MapView ensureMapView(World world) {

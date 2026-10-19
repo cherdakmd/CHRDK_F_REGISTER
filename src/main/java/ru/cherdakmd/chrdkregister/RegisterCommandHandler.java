@@ -68,8 +68,28 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             case "pass" -> handlePass(sender, label, args);
             case "logout" -> handleLogout(sender);
             case "session" -> handleSession(sender, args);
+            case "guide" -> handleGuide(sender);
             default -> false;
         };
+    }
+
+    /** {@code /guide} — повторно выдать книгу-путеводитель. */
+    private boolean handleGuide(CommandSender sender) {
+        if (!(sender instanceof Player player)) {
+            messages.send(sender, "error.players-only");
+            return true;
+        }
+        if (!player.hasPermission("chrdkregister.guide")) {
+            messages.send(player, "error.no-permission");
+            return true;
+        }
+        GuideBookService guide = plugin.guide();
+        if (guide == null) {
+            messages.send(player, "guide.disabled");
+            return true;
+        }
+        guide.give(player, true);
+        return true;
     }
 
     private boolean handleLogout(CommandSender sender) {

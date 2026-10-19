@@ -67,6 +67,9 @@ commands:
     description: Показать активные сессии аккаунта (IP, последний вход)
     usage: /<command> [end]
     aliases: [sessions]
+  guide:
+    description: Получить книгу-путеводитель по серверу
+    usage: /<command>
   mute:
     description: Запретить игроку писать в чат на заданное время
     usage: /<command> <ник> <10m|2h|1d> [причина]
@@ -81,6 +84,9 @@ permissions:
   chrdkregister.admin:
     description: Доступ к ручному добавлению игроков и управлению плагином
     default: op
+  chrdkregister.guide:
+    description: Получать книгу-путеводитель командой /guide
+    default: true
   chrdkregister.chat.color:
     description: Использование цветовых кодов (&c, &l и т.п.) в чате и личных сообщениях
     default: op

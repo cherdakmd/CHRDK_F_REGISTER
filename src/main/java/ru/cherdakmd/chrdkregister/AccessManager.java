@@ -9,9 +9,11 @@ import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.event.Event;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.cherdakmd.chrdkregister.api.events.PassExpiredEvent;
@@ -160,7 +162,8 @@ public final class AccessManager {
         this.luckPermsBootstrap = new LuckPermsBootstrap(plugin.externalHooks(), this::config);
         this.logMasker = new LogMasker(logger);
         this.authDialogs = createAuthDialogs(plugin);
-        this.totpQrMaps = new TotpQrMapService(this, logger);
+        this.totpQrMaps = new TotpQrMapService(this,
+                new NamespacedKey(plugin, "totp_qr_card"), logger);
         this.boostyManager = new BoostyManager(plugin, store, config);
     }
 
@@ -721,6 +724,7 @@ public final class AccessManager {
         }
         passwordVerifiedPlayers.remove(uuid);
         pendingTotpSecrets.remove(uuid);
+        clearTotpQrMaps(player); // карта с QR не должна занимать слот следующей сессии
         freezeLocations.remove(uuid);
         lastChatReminderAt.remove(uuid);
         joinedAt.remove(uuid);
@@ -1064,21 +1068,12 @@ public final class AccessManager {
             secret = TotpService.generateSecret();
             pendingTotpSecrets.put(player.getUniqueId(), secret);
         }
-        sendTotpSetupInstructions(player, secret, stage == PlayerStage.AUTHENTICATED);
+        sendTotpSetupInstructions(player, secret);
         return true;
     }
 
+    /** Инструкция по привязке TOTP: ключ, otpauth-ссылка и (если включено) карта с QR-кодом. */
     public void sendTotpSetupInstructions(Player player, String secret) {
-        sendTotpSetupInstructions(player, secret, true);
-    }
-
-    /**
-     * Инструкция по привязке TOTP.
-     *
-     * @param includeQrMap выдавать ли карту с QR: до входа инвентарь заблокирован, поэтому
-     *                     при обязательной привязке QR не выдаётся — только ключ и otpauth-ссылка
-     */
-    public void sendTotpSetupInstructions(Player player, String secret, boolean includeQrMap) {
         String formattedSecret = TotpService.formatSecretForDisplay(secret);
         String otpAuthUri = TotpService.buildOtpAuthUri(config.totpIssuer(), player.getName(), secret);
 
@@ -1112,8 +1107,7 @@ public final class AccessManager {
         player.sendMessage(messages.get("two-factor.setup-instructions.step3-input").append(confirmCommandHint));
         messages.send(player, "two-factor.setup-instructions.footer-line");
         if (config.totpQrMap()) {
-            if (includeQrMap) {
-                giveTotpQrMap(player);
+            if (giveTotpQrMap(player)) {
                 messages.send(player, "two-factor.setup-instructions.qr-map");
             } else {
                 messages.send(player, "two-factor.required.qr-unavailable");
@@ -1122,9 +1116,9 @@ public final class AccessManager {
     }
 
     /**
-     * Re-sends the 2FA binding QR map while a setup is pending ({@code /2fa qr}).
-     * Before authentication the inventory is locked, so the mandatory-enrollment stage
-     * answers with the copyable key hint instead of a map.
+     * Выдаёт карту с QR-кодом привязки ({@code /2fa qr}) — и до входа, и после него.
+     * Карта кладётся в свободный слот хотбара и сразу берётся в руку; если хотбар занят,
+     * её можно переложить: до привязки разрешены клики только с этой картой.
      */
     public boolean handleTwoFactorQrMap(Player player) {
         PlayerStage stage = getStage(player);
@@ -1136,11 +1130,6 @@ public final class AccessManager {
             messages.send(player, "two-factor.qr.disabled");
             return true;
         }
-        if (stage == PlayerStage.NEEDS_2FA_SETUP) {
-            // Инвентарь до входа заблокирован: карту не взять в руку, поэтому — ключ в чате.
-            messages.send(player, "two-factor.required.qr-unavailable");
-            return true;
-        }
         if (store.isTotpEnabled(player.getName())) {
             messages.send(player, "two-factor.setup.already-enabled");
             return true;
@@ -1149,8 +1138,11 @@ public final class AccessManager {
             messages.send(player, "two-factor.qr.no-pending");
             return true;
         }
-        giveTotpQrMap(player);
-        messages.send(player, "two-factor.qr.sent");
+        if (giveTotpQrMap(player)) {
+            messages.send(player, "two-factor.qr.sent");
+        } else {
+            messages.send(player, "two-factor.required.qr-unavailable");
+        }
         return true;
     }
 
@@ -1206,17 +1198,59 @@ public final class AccessManager {
         return true;
     }
 
-    /** Hands the player a map with their personal otpauth:// QR (dropped at feet on full inventory). */
-    private void giveTotpQrMap(Player player) {
+    /**
+     * Выдаёт карту с QR-кодом и, если получилось, сразу берёт её в руку: карта видна
+     * только в главной руке, а до входа игрок не может свободно двигать инвентарь.
+     *
+     * @return {@code true}, если карта оказалась в инвентаре игрока
+     */
+    private boolean giveTotpQrMap(Player player) {
         try {
-            ItemStack mapItem = totpQrMaps.createMapItem(player.getWorld());
-            Map<Integer, ItemStack> leftover = player.getInventory().addItem(mapItem);
+            totpQrMaps.removeMaps(player);
+            ItemStack mapItem = totpQrMaps.createMapItem(player.getWorld(),
+                    messages.get("two-factor.qr.item-name"),
+                    messages.getList("two-factor.qr.item-lore"));
+            PlayerInventory inventory = player.getInventory();
+            int slot = firstEmptyHotbarSlot(inventory);
+            if (slot >= 0) {
+                inventory.setItem(slot, mapItem);
+                if (getStage(player) != PlayerStage.AUTHENTICATED) {
+                    // До входа карту надо сразу взять в руку: открыть инвентарь и выбрать слот
+                    // игрок не может (кроме карты). После входа слот игрока не трогаем.
+                    inventory.setHeldItemSlot(slot);
+                }
+                return true;
+            }
+            Map<Integer, ItemStack> leftover = inventory.addItem(mapItem);
             leftover.values().forEach(rest ->
                     player.getWorld().dropItemNaturally(player.getLocation(), rest));
+            return leftover.isEmpty();
         } catch (Throwable throwable) {
             logger.log(Level.WARNING, "Не удалось выдать карту с QR-кодом 2FA игроку "
                     + player.getName(), throwable);
+            return false;
         }
+    }
+
+    /** Первый свободный слот хотбара (0–8) или {@code -1}. */
+    private static int firstEmptyHotbarSlot(PlayerInventory inventory) {
+        for (int slot = 0; slot < 9; slot++) {
+            ItemStack item = inventory.getItem(slot);
+            if (item == null || item.getType().isAir()) {
+                return slot;
+            }
+        }
+        return -1;
+    }
+
+    /** Карта с QR-кодом 2FA? Используется ограничениями инвентаря до входа. */
+    public boolean isTotpQrMap(ItemStack item) {
+        return totpQrMaps.isQrMap(item);
+    }
+
+    /** Убирает выданные карты QR-кода (после привязки или отмены настройки). */
+    public void clearTotpQrMaps(Player player) {
+        totpQrMaps.removeMaps(player);
     }
 
     /**
@@ -1321,6 +1355,7 @@ public final class AccessManager {
             return true;
         }
         String removed = pendingTotpSecrets.remove(player.getUniqueId());
+        clearTotpQrMaps(player); // старый QR-код больше не действителен
         if (removed == null) {
             messages.send(player, "two-factor.cancel.nothing-pending");
         } else {
@@ -1626,6 +1661,8 @@ public final class AccessManager {
 
     private void completeAuthentication(Player player, String successKey) {
         UUID uuid = player.getUniqueId();
+        // Карта с QR больше не нужна: секрет привязан, картинка на ней уже «закрыта».
+        clearTotpQrMaps(player);
         authenticatedPlayers.add(uuid);
         passwordVerifiedPlayers.remove(uuid);
         freezeLocations.remove(uuid);
@@ -1988,7 +2025,7 @@ public final class AccessManager {
         messages.send(player, "two-factor.required.header");
         messages.sendList(player, "two-factor.required.intro");
         String secret = pendingTotpSecrets.computeIfAbsent(uuid, ignored -> TotpService.generateSecret());
-        sendTotpSetupInstructions(player, secret, false);
+        sendTotpSetupInstructions(player, secret);
         player.sendActionBar(messages.get("two-factor.required.reminder"));
         player.showTitle(Title.title(
                 messages.get("two-factor.title"),

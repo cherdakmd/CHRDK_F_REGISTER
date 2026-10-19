@@ -20,6 +20,7 @@ import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
@@ -249,18 +250,54 @@ public final class PlayerRestrictionListener implements Listener {
         }
     }
 
+    /**
+     * До входа игрок не открывает чужие интерфейсы, но собственный инвентарь ему нужен:
+     * на стадии привязки 2FA там лежит карта с QR-кодом, и её надо переложить в хотбар.
+     */
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onInventoryOpen(InventoryOpenEvent event) {
         if (event.getPlayer() instanceof Player player && accessManager.isBlocked(player)) {
-            event.setCancelled(true);
+            event.setCancelled(!isOwnInventoryForTotp(player, event));
         }
     }
 
+    /**
+     * Клики по инвентарю до входа запрещены, кроме одного случая: на стадии привязки 2FA
+     * разрешено двигать только выданную карту с QR-кодом. Так игрок может взять её в руку,
+     * но не может ничего выбросить, передать или спрятать.
+     */
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onInventoryClick(InventoryClickEvent event) {
-        if (event.getWhoClicked() instanceof Player player && accessManager.isBlocked(player)) {
-            event.setCancelled(true);
+        if (!(event.getWhoClicked() instanceof Player player) || !accessManager.isBlocked(player)) {
+            return;
         }
+        if (isTotpSetupStage(player) && touchesTotpQrMap(event)) {
+            return;
+        }
+        event.setCancelled(true);
+    }
+
+    /** Своя ли это инвентарная вьюха (не сундук, не меню плагина). */
+    private boolean isOwnInventoryForTotp(Player player, InventoryOpenEvent event) {
+        if (!isTotpSetupStage(player)) {
+            return false;
+        }
+        if (event.getInventory().getHolder() instanceof Player holder
+                && holder.getUniqueId().equals(player.getUniqueId())) {
+            return true;
+        }
+        return event.getView().getTopInventory().getType() == InventoryType.CRAFTING;
+    }
+
+    private boolean isTotpSetupStage(Player player) {
+        AccessManager.PlayerStage stage = accessManager.getStage(player);
+        return stage == AccessManager.PlayerStage.NEEDS_2FA_SETUP
+                || stage == AccessManager.PlayerStage.NEEDS_2FA;
+    }
+
+    private boolean touchesTotpQrMap(InventoryClickEvent event) {
+        return accessManager.isTotpQrMap(event.getCurrentItem())
+                || accessManager.isTotpQrMap(event.getCursor());
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
@@ -279,9 +316,15 @@ public final class PlayerRestrictionListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onPickupItem(EntityPickupItemEvent event) {
-        if (event.getEntity() instanceof Player player && accessManager.isBlocked(player)) {
-            event.setCancelled(true);
+        if (!(event.getEntity() instanceof Player player) || !accessManager.isBlocked(player)) {
+            return;
         }
+        // Карту с QR-кодом 2FA можно поднять, если она выпала при выдаче (полный инвентарь).
+        if (isTotpSetupStage(player)
+                && accessManager.isTotpQrMap(event.getItem().getItemStack())) {
+            return;
+        }
+        event.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
@@ -291,11 +334,20 @@ public final class PlayerRestrictionListener implements Listener {
         }
     }
 
+    /**
+     * До входа слот в руке обычно зафиксирован, но на стадии привязки 2FA игрок должен
+     * дотянуться до карты с QR-кодом — переключение хотбара там безопасно (использовать
+     * предметы всё равно нельзя: взаимодействия и выброс заблокированы).
+     */
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onItemHeld(PlayerItemHeldEvent event) {
-        if (accessManager.isBlocked(event.getPlayer())) {
-            event.setCancelled(true);
+        if (!accessManager.isBlocked(event.getPlayer())) {
+            return;
         }
+        if (isTotpSetupStage(event.getPlayer())) {
+            return;
+        }
+        event.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)

@@ -82,4 +82,16 @@ class ResourcesYamlTest {
             }
         }
     }
+
+    @Test
+    void guideSectionContainsBothKeys() throws Exception {
+        // Контракт GuideBookSettings.parse: книга работает и без секции, но в ресурсе она должна быть.
+        YamlConfiguration config = YamlConfiguration.loadConfiguration(
+                new StringReader(Files.readString(Path.of("src/main/resources/config.yml"))));
+        for (String key : List.of("enabled", "give-on-first-join")) {
+            if (!config.isSet("guide." + key)) {
+                fail("В config.yml секции guide нет ключа " + key);
+            }
+        }
+    }
 }

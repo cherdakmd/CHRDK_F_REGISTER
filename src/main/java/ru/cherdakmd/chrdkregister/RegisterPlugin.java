@@ -29,6 +29,7 @@ public final class RegisterPlugin extends JavaPlugin {
     private LuckPermsPassSync luckPermsPassSync;
     private UpdateChecker updateChecker;
     private SpawnService spawnService;
+    private GuideBookService guideBookService;
     private RegistrationStore store;
     private ExecutionService executor;
     private RegisterCommandHandler commandHandler;
@@ -84,6 +85,12 @@ public final class RegisterPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(spawnService, this);
         spawnService.start();
 
+        this.guideBookService = new GuideBookService(this,
+                new GuideStore(getDataFolder().toPath(), getLogger()),
+                GuideBookSettings.parse(getConfig()));
+        getServer().getPluginManager().registerEvents(guideBookService, this);
+        guideBookService.start();
+
         this.pluginUpdater = new PluginUpdateService(getDataFolder().getParentFile().toPath(),
                 getServer().getUpdateFolderFile().toPath(), getDataFolder().toPath(),
                 () -> accessManager.config().updatesRepo(), getServer().getBukkitVersion());
@@ -103,7 +110,8 @@ public final class RegisterPlugin extends JavaPlugin {
                 return true;
             });
         }
-        for (String commandName : List.of("register", "login", "changepassword", "2fa", "pass", "logout", "session", "captcha")) {
+        for (String commandName : List.of("register", "login", "changepassword", "2fa", "pass",
+                "logout", "session", "captcha", "guide")) {
             PluginCommand pluginCommand = getCommand(commandName);
             if (pluginCommand != null) {
                 pluginCommand.setExecutor(this.commandHandler);
@@ -167,6 +175,10 @@ public final class RegisterPlugin extends JavaPlugin {
             chatService.shutdown();
             chatService = null;
         }
+        if (guideBookService != null) {
+            guideBookService.shutdown();
+            guideBookService = null;
+        }
         if (spawnService != null) {
             spawnService.shutdown();
             spawnService = null;
@@ -201,6 +213,9 @@ public final class RegisterPlugin extends JavaPlugin {
         }
         if (spawnService != null) {
             spawnService.reload(SpawnSettings.parse(getConfig(), getLogger()));
+        }
+        if (guideBookService != null) {
+            guideBookService.reload(GuideBookSettings.parse(getConfig()));
         }
     }
 
@@ -257,6 +272,11 @@ public final class RegisterPlugin extends JavaPlugin {
     /** Случайный спавн новичков и после смерти ({@code spawn.*}). */
     public SpawnService spawn() {
         return spawnService;
+    }
+
+    /** Книга-путеводитель для новичков ({@code guide.*}, команда {@code /guide}). */
+    public GuideBookService guide() {
+        return guideBookService;
     }
 
     /** Инвентарное меню {@code /pass menu} (иконки вместо текстовых справок). */
