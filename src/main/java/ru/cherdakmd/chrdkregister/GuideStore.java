@@ -62,7 +62,9 @@ public final class GuideStore {
             }
             readInto(root.get("given"), given);
             readInto(root.get("pending"), pending);
-            given.removeAll(pending);
+            // Инвариант: «выдана» важнее «ожидает». Если ник попал в оба списка
+            // (ручная правка файла, сбой между записями), книгу повторно не выдаём.
+            pending.removeAll(given);
             dirty = false;
         } catch (IOException | RuntimeException exception) {
             logger.warning("Не удалось прочитать guide-data.json: " + exception
