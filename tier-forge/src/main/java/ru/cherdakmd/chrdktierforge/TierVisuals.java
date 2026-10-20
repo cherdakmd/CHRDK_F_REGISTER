@@ -138,22 +138,22 @@ public record TierVisuals(boolean enabled, int intervalTicks, boolean selfOnly, 
     private static Map<String, Style> buildDefaults() {
         Map<String, Style> styles = new LinkedHashMap<>();
         styles.put("cursed", new Style(Glint.OFF, List.of(
-                dust(0x6A0F14, 1.1, 2, 0.32, 0.0),
+                dust(0x6A0F14, 1.1f, 2, 0.32, 0.0),
                 plain(Particle.SMOKE, 1, 0.35, 0.01))));
         styles.put("weak", new Style(Glint.INHERIT, List.of(
-                dust(0x9A9A9A, 1.0, 1, 0.28, 0.0))));
+                dust(0x9A9A9A, 1.0f, 1, 0.28, 0.0))));
         styles.put("common", new Style(Glint.INHERIT, List.of(
-                dust(0xE8E8E8, 0.9, 1, 0.22, 0.0))));
+                dust(0xE8E8E8, 0.9f, 1, 0.22, 0.0))));
         styles.put("fine", new Style(Glint.INHERIT, List.of(
-                dust(0x49B04F, 1.0, 2, 0.30, 0.0))));
+                dust(0x49B04F, 1.0f, 2, 0.30, 0.0))));
         styles.put("rare", new Style(Glint.INHERIT, List.of(
-                dust(0x2FD3E0, 1.05, 2, 0.30, 0.0),
+                dust(0x2FD3E0, 1.05f, 2, 0.30, 0.0),
                 plain(Particle.BUBBLE, 1, 0.30, 0.02))));
         styles.put("epic", new Style(Glint.ON, List.of(
-                dust(0xB165F0, 1.15, 3, 0.34, 0.0),
+                dust(0xB165F0, 1.15f, 3, 0.34, 0.0),
                 plain(Particle.PORTAL, 1, 0.40, 0.05))));
         styles.put("legendary", new Style(Glint.ON, List.of(
-                dust(0xFFC53D, 1.20, 3, 0.38, 0.0),
+                dust(0xFFC53D, 1.20f, 3, 0.38, 0.0),
                 plain(Particle.FLAME, 1, 0.24, 0.005),
                 plain(Particle.END_ROD, 1, 0.34, 0.01))));
         return Collections.unmodifiableMap(styles);
