@@ -28,8 +28,18 @@ class StreamConfigTest {
         assertEquals(10, config.maxCreditMinutes());
         assertTrue(config.requireOnline());
         assertTrue(config.requireVerified());
+        assertTrue(config.verifyOnPoll(), "канал подтверждается сам, без /stream check");
+        assertEquals(30, config.checkCooldownSeconds());
+        assertEquals(60, config.statusCacheSeconds());
         assertEquals(0, config.minViewers());
         assertEquals(2, config.maxChannels(), "по умолчанию Twitch + VK Play Live");
+        assertEquals(50, config.viewers().maxPerStreamer());
+        assertEquals(72, config.viewers().requestTtlHours());
+        assertEquals(72 * 3_600_000L, config.viewers().requestTtlMillis());
+        assertEquals(5, config.viewers().maxCodeAttempts());
+        assertEquals(5, config.viewers().codeLockMinutes());
+        assertEquals(5 * 60_000L, config.viewers().codeLockMillis());
+        assertTrue(config.viewers().announceCode());
         assertTrue(config.announce());
         assertEquals(10 * StreamRewards.MINUTE_MILLIS, config.maxCreditMillis());
     }
@@ -60,6 +70,40 @@ class StreamConfigTest {
         assertEquals(1, parse("streams:\n  max-channels: 1\n").maxChannels());
         assertEquals(2, parse("streams:\n  max-channels: 7\n").maxChannels());
         assertEquals(StreamConfig.MAX_CHANNELS, parse("").maxChannels());
+    }
+
+    @Test
+    void antiFraudSettingsAreClamped() throws Exception {
+        StreamConfig config = parse("""
+                streams:
+                  check-cooldown-seconds: 99999
+                  status-cache-seconds: -10
+                  viewers:
+                    max-per-streamer: 100000
+                    request-ttl-hours: -1
+                    max-code-attempts: 999
+                    code-lock-minutes: 0
+                """);
+
+        assertEquals(StreamConfig.MAX_CHECK_COOLDOWN_SECONDS, config.checkCooldownSeconds());
+        assertEquals(0, config.statusCacheSeconds());
+        assertEquals(StreamConfig.Viewers.MAX_PER_STREAMER_LIMIT,
+                config.viewers().maxPerStreamer());
+        assertEquals(0, config.viewers().requestTtlHours(), "0 — заявки не истекают");
+        assertEquals(0L, config.viewers().requestTtlMillis());
+        assertEquals(StreamConfig.Viewers.MAX_CODE_ATTEMPTS_LIMIT,
+                config.viewers().maxCodeAttempts());
+        assertEquals(1, config.viewers().codeLockMinutes(), "блокировка не может быть нулевой");
+    }
+
+    @Test
+    void verificationCanBeSwitchedToManual() throws Exception {
+        StreamConfig config = parse("""
+                streams:
+                  verify-on-poll: false
+                """);
+
+        assertFalse(config.verifyOnPoll());
     }
 
     @Test

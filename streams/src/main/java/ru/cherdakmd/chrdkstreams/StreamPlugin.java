@@ -3,6 +3,7 @@ package ru.cherdakmd.chrdkstreams;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
@@ -21,6 +22,11 @@ import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
  */
 public final class StreamPlugin extends JavaPlugin {
 
+    /** Ключ автосохранения: прогресс не должен теряться при падении сервера. */
+    static final String AUTO_SAVE_KEY = "general.auto-save-minutes";
+    static final int DEFAULT_AUTO_SAVE_MINUTES = 5;
+    static final int MAX_AUTO_SAVE_MINUTES = 60;
+
     private volatile Messages messages;
     private volatile StreamConfig config;
     private volatile ChrdkRegisterApi coreApi;
@@ -30,6 +36,7 @@ public final class StreamPlugin extends JavaPlugin {
     private ViewerStore viewerStore;
     private ViewerService viewerService;
     private StreamerTagService tagService;
+    private BukkitTask autoSaveTask;
 
     @Override
     public void onEnable() {
@@ -57,6 +64,7 @@ public final class StreamPlugin extends JavaPlugin {
 
         service.start();
         viewerService.start();
+        restartAutoSave();
         tagService.update(config, manageTabNames());
         registerNameTag();
         logStartup();
@@ -65,6 +73,7 @@ public final class StreamPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        stopAutoSave();
         unregisterNameTag();
         if (tagService != null) {
             tagService.stop();
@@ -93,8 +102,50 @@ public final class StreamPlugin extends JavaPlugin {
         this.service.update(config);
         this.viewerService.update(config);
         this.tagService.update(config, manageTabNames());
+        restartAutoSave();
         registerNameTag();
         logStartup();
+    }
+
+    /**
+     * Периодическая запись данных: события сохраняются сразу, но прогресс,
+     * накопленный в памяти между ними, до диска доходит только здесь. При
+     * падении сервера теряется максимум {@code general.auto-save-minutes}.
+     * {@code 0} — выключить (тогда сохранение только по событиям и при stop).
+     */
+    private void restartAutoSave() {
+        stopAutoSave();
+        int minutes = Math.clamp(getConfig().getInt(AUTO_SAVE_KEY, DEFAULT_AUTO_SAVE_MINUTES),
+                0, MAX_AUTO_SAVE_MINUTES);
+        if (minutes <= 0) {
+            getLogger().info("[Streams] Автосохранение выключено (general.auto-save-minutes: 0).");
+            return;
+        }
+        long ticks = minutes * 60L * 20L;
+        autoSaveTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
+                this, this::saveAllSafely, ticks, ticks);
+        getLogger().info("[Streams] Автосохранение каждые " + minutes + " мин.");
+    }
+
+    private void stopAutoSave() {
+        if (autoSaveTask != null) {
+            autoSaveTask.cancel();
+            autoSaveTask = null;
+        }
+    }
+
+    private void saveAllSafely() {
+        try {
+            if (store != null) {
+                store.save();
+            }
+            if (viewerStore != null) {
+                viewerStore.save();
+            }
+        } catch (RuntimeException exception) {
+            getLogger().log(java.util.logging.Level.WARNING,
+                    "[Streams] Ошибка автосохранения", exception);
+        }
     }
 
     private void logStartup() {

@@ -178,6 +178,21 @@ class StreamStoreTest {
     }
 
     @Test
+    void byChannelNameFindsAnyPlatform() {
+        StreamStore store = store();
+        store.put(binding(PLAYER, "Steve", StreamRewards.State.empty(),
+                channel(StreamPlatform.TWITCH, "chrdk", "CHRDK-AAAA", 0L),
+                channel(StreamPlatform.VKPLAY, "chrdk_vk", "CHRDK-BBBB", 0L)));
+
+        assertTrue(store.byChannelName("chrdk").isPresent());
+        assertTrue(store.byChannelName("CHRDK_VK").isPresent(),
+                "зритель может знать канал, а не ник стримера");
+        assertTrue(store.byChannelName("other").isEmpty());
+        assertTrue(store.byChannelName("  ").isEmpty());
+        assertTrue(store.byChannelName(null).isEmpty());
+    }
+
+    @Test
     void removeDeletesBinding() {
         StreamStore store = store();
         store.put(binding(PLAYER, "Steve", StreamRewards.State.empty(),

@@ -20,8 +20,11 @@ import java.util.Locale;
  * @param maxCreditMinutes максимум минут за один опрос (защита от простоя)
  * @param requireOnline  считать эфир только пока игрок на сервере
  * @param requireVerified требовать код в названии эфира
+ * @param verifyOnPoll   подтверждать канал автоматически, как только код появился в эфире
  * @param minViewers     минимум зрителей для зачёта (0 — любой)
  * @param maxChannels    сколько каналов может привязать стример (1..число площадок: по одному на площадку)
+ * @param checkCooldownSeconds пауза между ручными проверками канала (0 — без паузы)
+ * @param statusCacheSeconds сколько секунд /stream status доверяет последнему опросу
  * @param announce       писать игроку о награде
  * @param tags           оформление ника стримера
  * @param viewers        награды зрителям за просмотр
@@ -35,8 +38,11 @@ record StreamConfig(
         int maxCreditMinutes,
         boolean requireOnline,
         boolean requireVerified,
+        boolean verifyOnPoll,
         int minViewers,
         int maxChannels,
+        int checkCooldownSeconds,
+        int statusCacheSeconds,
         boolean announce,
         Twitch twitch,
         VkPlay vkplay,
@@ -49,6 +55,8 @@ record StreamConfig(
     static final int MIN_CREDIT_MINUTES = 1;
     static final int MAX_CREDIT_MINUTES = 240;
     static final int MAX_VIEWERS = 100_000;
+    static final int MAX_CHECK_COOLDOWN_SECONDS = 600;
+    static final int MAX_STATUS_CACHE_SECONDS = 3600;
     /** Больше площадок, чем есть, привязать нельзя: у площадки один канал. */
     static final int MAX_CHANNELS = StreamPlatform.values().length;
     static final int MAX_TAG_LENGTH = 16;
@@ -112,12 +120,29 @@ record StreamConfig(
         }
     }
 
-    /** Награды зрителям: 120 минут просмотра = сутки, не больше 1 в день и 30 всего. */
+    /**
+     * Награды зрителям: 120 минут просмотра = сутки, не больше 1 в день и 30 всего.
+     *
+     * <p>Зрительская программа — это не только награда, но и противодействие
+     * накрутке: короткий код легко подобрать, заявок может быть сколько угодно,
+     * а панель стримера не резиновая. Поэтому здесь свои потолки:
+     * {@code maxPerStreamer} (сколько зрителей можно подтвердить),
+     * {@code requestTtlHours} (сколько живёт заявка),
+     * {@code maxCodeAttempts}/{@code codeLockMinutes} (блокировка за перебор кода).</p>
+     */
     record Viewers(boolean enabled, int minutesPerDay, int maxDaysPerDay, int maxTotalDays,
-                   int codeWindowMinutes, int checkinMinMinutes, boolean requireApproval) {
+                   int codeWindowMinutes, int checkinMinMinutes, boolean requireApproval,
+                   int maxPerStreamer, int requestTtlHours, int maxCodeAttempts,
+                   int codeLockMinutes, boolean announceCode) {
+
+        static final int MAX_PER_STREAMER_LIMIT = 500;
+        static final int MAX_REQUEST_TTL_HOURS = 720;
+        static final int MAX_CODE_ATTEMPTS_LIMIT = 20;
+        static final int MAX_CODE_LOCK_MINUTES = 60;
 
         static Viewers defaults() {
-            return new Viewers(true, 120, 1, 30, 10, 5, true);
+            return new Viewers(true, 120, 1, 30, 10, 5, true, 50, 72,
+                    CodeGuard.DEFAULT_MAX_ATTEMPTS, 5, true);
         }
 
         Viewers {
@@ -128,6 +153,25 @@ record StreamConfig(
             codeWindowMinutes = Math.clamp(codeWindowMinutes,
                     ViewerCodes.MIN_WINDOW_MINUTES, ViewerCodes.MAX_WINDOW_MINUTES);
             checkinMinMinutes = Math.clamp(checkinMinMinutes, 1, codeWindowMinutes);
+            maxPerStreamer = Math.clamp(maxPerStreamer, 0, MAX_PER_STREAMER_LIMIT);
+            requestTtlHours = Math.clamp(requestTtlHours, 0, MAX_REQUEST_TTL_HOURS);
+            maxCodeAttempts = Math.clamp(maxCodeAttempts, 0, MAX_CODE_ATTEMPTS_LIMIT);
+            codeLockMinutes = Math.clamp(codeLockMinutes, 1, MAX_CODE_LOCK_MINUTES);
+        }
+
+        /** Срок жизни неподтверждённой заявки; {@code 0} — бессрочно. */
+        long requestTtlMillis() {
+            return ViewerRequests.ttlMillis(requestTtlHours);
+        }
+
+        /** Длина блокировки ввода кода после перебора. */
+        long codeLockMillis() {
+            return codeLockMinutes * 60_000L;
+        }
+
+        /** Есть ли лимит зрителей у одного стримера. */
+        boolean limitsViewers() {
+            return maxPerStreamer > 0;
         }
 
         StreamRewards.Rule rule() {
@@ -152,6 +196,8 @@ record StreamConfig(
         maxCreditMinutes = Math.clamp(maxCreditMinutes, MIN_CREDIT_MINUTES, MAX_CREDIT_MINUTES);
         minViewers = Math.clamp(minViewers, 0, MAX_VIEWERS);
         maxChannels = Math.clamp(maxChannels, 1, MAX_CHANNELS);
+        checkCooldownSeconds = Math.clamp(checkCooldownSeconds, 0, MAX_CHECK_COOLDOWN_SECONDS);
+        statusCacheSeconds = Math.clamp(statusCacheSeconds, 0, MAX_STATUS_CACHE_SECONDS);
         tags = tags == null ? Tags.defaults() : tags;
         viewers = viewers == null ? Viewers.defaults() : viewers;
     }
@@ -164,6 +210,16 @@ record StreamConfig(
     /** Максимум миллисекунд эфира, который засчитывается за один опрос. */
     long maxCreditMillis() {
         return (long) maxCreditMinutes * StreamRewards.MINUTE_MILLIS;
+    }
+
+    /** Пауза между ручными проверками канала в миллисекундах. */
+    long checkCooldownMillis() {
+        return checkCooldownSeconds * 1000L;
+    }
+
+    /** Сколько живёт запись кэша опроса. */
+    long statusCacheMillis() {
+        return statusCacheSeconds * 1000L;
     }
 
     /** Площадки, которые реально можно опрашивать (включены и с ключами). */
@@ -201,8 +257,11 @@ record StreamConfig(
                 config.getInt("streams.max-credit-minutes", 10),
                 config.getBoolean("streams.require-online", true),
                 config.getBoolean("streams.require-verified", true),
+                config.getBoolean("streams.verify-on-poll", true),
                 config.getInt("streams.min-viewers", 0),
                 config.getInt("streams.max-channels", 2),
+                config.getInt("streams.check-cooldown-seconds", 30),
+                config.getInt("streams.status-cache-seconds", 60),
                 config.getBoolean("streams.announce", true),
                 new Twitch(
                         config.getBoolean("streams.twitch.enabled", true),
@@ -228,12 +287,18 @@ record StreamConfig(
                         config.getInt("streams.viewers.max-total-days", 30),
                         config.getInt("streams.viewers.code-window-minutes", 10),
                         config.getInt("streams.viewers.checkin-min-minutes", 5),
-                        config.getBoolean("streams.viewers.require-approval", true)));
+                        config.getBoolean("streams.viewers.require-approval", true),
+                        config.getInt("streams.viewers.max-per-streamer", 50),
+                        config.getInt("streams.viewers.request-ttl-hours", 72),
+                        config.getInt("streams.viewers.max-code-attempts", 5),
+                        config.getInt("streams.viewers.code-lock-minutes", 5),
+                        config.getBoolean("streams.viewers.announce-code", true)));
     }
 
     /** Значения по умолчанию: обе площадки включены, но Twitch без ключей выключится сам. */
     static StreamConfig defaults() {
-        return new StreamConfig(true, 60, 6, 365, 120, 10, true, true, 0, 2, true,
+        return new StreamConfig(true, 60, 6, 365, 120, 10, true, true, true, 0, 2,
+                30, 60, true,
                 Twitch.disabled(), new VkPlay(true, VkPlayClient.DEFAULT_API_URL),
                 Tags.defaults(), Viewers.defaults());
     }

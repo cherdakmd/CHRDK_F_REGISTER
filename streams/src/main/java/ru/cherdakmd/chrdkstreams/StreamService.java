@@ -11,10 +11,12 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -36,6 +38,11 @@ import java.util.logging.Logger;
  *       опросами: первый опрос после офлайна/паузы ничего не добавляет;</li>
  *   <li>дневной и общий потолки считаются в {@link StreamRewards}.</li>
  * </ul>
+ *
+ * <p>С 1.4.122 подтверждение канала не обязательно запускать вручную: если
+ * включён {@code streams.verify-on-poll}, опрос сам замечает код в названии
+ * эфира и подтверждает канал. Там же заполняется {@link ProbeCache} — по нему
+ * {@code /stream status} отвечает без лишних запросов к площадкам.</p>
  */
 final class StreamService {
 
@@ -52,6 +59,8 @@ final class StreamService {
 
     /** Последний момент, когда эфир был подтверждён — копим только за этот интервал. */
     private final Map<UUID, Long> lastLive = new ConcurrentHashMap<>();
+    /** Последние ответы площадок: /stream status не должен ждать сеть каждый раз. */
+    private final ProbeCache cache = new ProbeCache();
     private final AtomicBoolean polling = new AtomicBoolean(false);
 
     private volatile StreamConfig config;
@@ -90,6 +99,7 @@ final class StreamService {
             task = null;
         }
         lastLive.clear();
+        cache.clear();
     }
 
     private void restart() {
@@ -151,7 +161,9 @@ final class StreamService {
             if (!binding.linked()) {
                 continue;
             }
-            if (cfg.requireVerified() && !binding.verified()) {
+            // Без подтверждения канал не участвует в наградах, но при verify-on-poll
+            // его всё равно опрашиваем: код в названии эфира подтвердит канал сам.
+            if (cfg.requireVerified() && !binding.verified() && !cfg.verifyOnPoll()) {
                 lastLive.remove(binding.uuid());
                 continue;
             }
@@ -163,12 +175,12 @@ final class StreamService {
             // Эфир считается, если стримит хотя бы один канал; зрители суммируются,
             // а минуты кредитуются один раз на игрока — прогресс общий для площадок.
             StreamProbe probe = StreamProbe.OFFLINE;
+            StreamBinding working = binding;
+            List<StreamBinding.Channel> verifiedNow = new ArrayList<>();
             for (StreamBinding.Channel channel : binding.channels()) {
-                if (cfg.requireVerified() && !channel.verified()) {
-                    continue;
-                }
+                boolean verified = !cfg.requireVerified() || channel.verified();
                 StreamClient client = active.get(channel.platform());
-                if (client == null) {
+                if (client == null || (!verified && !cfg.verifyOnPoll())) {
                     continue;
                 }
                 LiveStream live;
@@ -181,7 +193,26 @@ final class StreamService {
                     logger.fine("[Streams] " + channel.label() + ": " + exception.getMessage());
                     continue;
                 }
-                probe = probe.plus(live);
+                long fetchedAt = System.currentTimeMillis();
+                cache.put(binding.uuid(), channel.platform(), live, fetchedAt);
+                if (!verified && live.live()
+                        && StreamVerification.matches(live.title(), channel.code())) {
+                    working = working.markVerified(channel.platform(), channel.channel(), fetchedAt);
+                    verifiedNow.add(channel);
+                    verified = true;
+                }
+                if (verified) {
+                    probe = probe.plus(live);
+                }
+            }
+            if (!verifiedNow.isEmpty()) {
+                store.put(working);
+                dirty = true;
+                for (StreamBinding.Channel channel : verifiedNow) {
+                    logger.info("[Streams] Канал подтверждён автоматически: "
+                            + binding.playerName() + " → " + channel.label());
+                    notifyVerified(binding.uuid(), channel);
+                }
             }
             if (!probe.passes(cfg.minViewers())) {
                 lastLive.remove(binding.uuid());
@@ -204,8 +235,8 @@ final class StreamService {
                 continue;
             }
             // Привязку могли поменять, пока шёл сетевой запрос: не затираем новый канал.
-            StreamBinding current = store.get(binding.uuid()).orElse(binding);
-            if (!current.channels().equals(binding.channels())) {
+            StreamBinding current = store.get(binding.uuid()).orElse(working);
+            if (!current.channels().equals(working.channels())) {
                 continue;
             }
             store.put(current.withState(decision.state()).renamed(name));
@@ -256,6 +287,18 @@ final class StreamService {
                     "days", decision.awardDays(), "today", today, "max", cfg.maxDaysPerDay());
             if (until > 0) {
                 plugin.messages().send(player, "awarded-until", "until", until(until));
+            }
+        });
+    }
+
+    /** Сообщить стримеру, что канал подтвердился сам (отправка — на главной нити). */
+    private void notifyVerified(UUID uuid, StreamBinding.Channel channel) {
+        String platform = channel.platform().displayName();
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            Player player = Bukkit.getPlayer(uuid);
+            if (player != null) {
+                plugin.messages().send(player, "auto-verified",
+                        "platform", platform, "channel", channel.channel());
             }
         });
     }
@@ -327,6 +370,18 @@ final class StreamService {
     /** Сбросить отметку «эфир подтверждён» — при смене или отвязке канала. */
     void forget(UUID uuid) {
         lastLive.remove(uuid);
+        cache.forget(uuid);
+    }
+
+    /** Свежий ответ площадки из кэша последнего опроса; пусто — данных нет. */
+    Optional<LiveStream> cached(UUID uuid, StreamPlatform platform, long nowMillis) {
+        return cache.fresh(uuid, platform, nowMillis, config.statusCacheMillis())
+                .map(ProbeCache.Entry::stream);
+    }
+
+    /** Сумма зрителей по свежим записям кэша — строка «сейчас смотрят». */
+    StreamProbe cachedProbe(UUID uuid, long nowMillis) {
+        return cache.aggregate(uuid, nowMillis, config.statusCacheMillis());
     }
 
     StreamConfig config() {

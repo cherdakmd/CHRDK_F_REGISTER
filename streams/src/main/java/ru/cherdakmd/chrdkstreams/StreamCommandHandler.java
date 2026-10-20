@@ -12,7 +12,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Команда {@code /stream}: привязка канала, проверка эфира, статус, отвязка,
@@ -29,6 +31,8 @@ public final class StreamCommandHandler implements TabExecutor {
 
     private final StreamPlugin plugin;
     private final StreamService service;
+    /** Когда игрок последний раз запускал проверку канала — для антиспама API. */
+    private final Map<UUID, Long> lastCheck = new ConcurrentHashMap<>();
 
     public StreamCommandHandler(StreamPlugin plugin, StreamService service) {
         this.plugin = plugin;
@@ -67,6 +71,14 @@ public final class StreamCommandHandler implements TabExecutor {
                 }
             }
             case "unlink" -> unlink(sender, args, label);
+            case "top" -> top(sender, args, label);
+            case "admin" -> {
+                if (!admin) {
+                    plugin.messages().send(sender, "no-permission");
+                } else {
+                    admin(sender, args, label);
+                }
+            }
             case "watch" -> watch(sender, args, label);
             case "watching" -> watching(sender);
             case "code" -> code(sender, args, label);
@@ -117,7 +129,18 @@ public final class StreamCommandHandler implements TabExecutor {
             return;
         }
         if (args.length < 3) {
-            usage(sender, label, false);
+            plugin.messages().send(sender, "link-help",
+                    "label", label,
+                    "platforms", StreamPlatform.ids(config.platforms()),
+                    "max", config.maxChannels());
+            if (args.length >= 2) {
+                Optional<StreamPlatform> only = StreamPlatform.parse(args[1]);
+                if (only.isPresent()) {
+                    plugin.messages().send(sender, "link-platform-hint",
+                            "platform", only.get().displayName(),
+                            "channel", only.get().urlFor("ник"));
+                }
+            }
             return;
         }
         Optional<StreamPlatform> parsed = StreamPlatform.parse(args[1]);
@@ -133,7 +156,8 @@ public final class StreamCommandHandler implements TabExecutor {
                     "list", StreamPlatform.ids(config.platforms()));
             return;
         }
-        String channel = StreamPlatform.normalizeChannel(args[2]);
+        // Принимаем и ник, и ссылку на канал: стримеры копируют адрес из браузера.
+        String channel = StreamPlatform.extractChannel(args[2]);
         if (!StreamPlatform.validChannel(channel)) {
             plugin.messages().send(sender, "link-invalid-channel");
             return;
@@ -240,6 +264,14 @@ public final class StreamCommandHandler implements TabExecutor {
                 return;
             }
         }
+        long now = System.currentTimeMillis();
+        long waitSeconds = Cooldown.remainingSeconds(
+                lastCheck.getOrDefault(player.getUniqueId(), 0L),
+                config.checkCooldownMillis(), now);
+        if (waitSeconds > 0L) {
+            plugin.messages().send(sender, "check-cooldown", "seconds", waitSeconds);
+            return;
+        }
         List<StreamBinding.Channel> targets = new ArrayList<>();
         boolean blocked = false;
         for (StreamBinding.Channel channel : binding.channels()) {
@@ -263,6 +295,12 @@ public final class StreamCommandHandler implements TabExecutor {
                 plugin.messages().send(sender, "check-already");
             }
             return;
+        }
+        // Пауза стартует только за реальный запрос: «уже подтверждён» её не тратит.
+        lastCheck.put(player.getUniqueId(), now);
+        if (lastCheck.size() > 1_000) {
+            // Память не должна расти от игроков, которые больше не заходят.
+            lastCheck.entrySet().removeIf(entry -> now - entry.getValue() > 600_000L);
         }
         for (StreamBinding.Channel channel : targets) {
             plugin.messages().send(sender, "check-live",
@@ -405,6 +443,10 @@ public final class StreamCommandHandler implements TabExecutor {
             plugin.messages().send(sender, "players-only");
             return;
         }
+        if (args.length >= 2 && "list".equalsIgnoreCase(args[1])) {
+            viewerList(player);
+            return;
+        }
         if (args.length < 3 || !("accept".equalsIgnoreCase(args[1])
                 || "deny".equalsIgnoreCase(args[1]))) {
             plugin.messages().send(sender, "viewers-usage", "label", label);
@@ -414,6 +456,31 @@ public final class StreamCommandHandler implements TabExecutor {
             plugin.viewerService().accept(player, args[2]);
         } else {
             plugin.viewerService().deny(player, args[2]);
+        }
+    }
+
+    /**
+     * {@code /stream viewer list} — подтверждённые зрители стримера и их прогресс.
+     * Стример видит, кто реально смотрит и сколько уже заработал: это и ответ на
+     * вопрос «кого я подтвердил», и повод отозвать случайные заявки.
+     */
+    private void viewerList(Player streamer) {
+        List<ViewerBinding> accepted = plugin.viewerStore().viewersOf(streamer.getUniqueId());
+        if (accepted.isEmpty()) {
+            plugin.messages().send(streamer, "viewer-list-empty", "label", "stream");
+            return;
+        }
+        plugin.messages().send(streamer, "viewer-list-header", "count", accepted.size());
+        int shown = 0;
+        for (ViewerBinding binding : accepted) {
+            if (shown++ >= STATS_LIMIT) {
+                break;
+            }
+            StreamRewards.State state = plugin.viewerStore().progress(binding.uuid());
+            plugin.messages().send(streamer, "viewer-list-line",
+                    "player", binding.playerName(),
+                    "minutes", StreamRewards.pendingMinutes(state, plugin.config().viewers().rule()),
+                    "days", state.totalDays());
         }
     }
 
@@ -445,6 +512,17 @@ public final class StreamCommandHandler implements TabExecutor {
                 "today", binding.state().awardedToday(),
                 "max", config.maxDaysPerDay());
         plugin.messages().send(player, "status-total", "days", binding.state().totalDays());
+        long now = System.currentTimeMillis();
+        long eta = StreamRewards.etaMillis(binding.state(), rule, now);
+        if (eta < 0L) {
+            plugin.messages().send(player, "status-capped");
+        } else {
+            plugin.messages().send(player, "status-eta", "time", StreamService.until(eta));
+        }
+        StreamProbe cached = service.cachedProbe(player.getUniqueId(), now);
+        if (cached.live() || cached.viewers() > 0L) {
+            plugin.messages().send(player, "status-viewers", "viewers", cached.viewers());
+        }
         if (config.requireOnline()) {
             plugin.messages().send(player, "status-online-hint");
         }
@@ -460,39 +538,142 @@ public final class StreamCommandHandler implements TabExecutor {
             plugin.messages().send(player, "status-no-platform");
             return;
         }
+        // Часть каналов уже опрашивалась недавно: показываем ответ сразу, без сети.
+        List<CheckResult> results = new ArrayList<>(Math.min(checkable.size(), 8));
+        List<StreamBinding.Channel> missing = new ArrayList<>();
+        for (StreamBinding.Channel channel : checkable) {
+            Optional<LiveStream> recent = service.cached(player.getUniqueId(),
+                    channel.platform(), now);
+            if (recent.isPresent()) {
+                results.add(new CheckResult(channel, recent.get(), null, false));
+            } else {
+                missing.add(channel);
+            }
+        }
+        for (CheckResult result : results) {
+            reportStatus(player, result);
+        }
+        if (missing.isEmpty()) {
+            return;
+        }
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            List<CheckResult> results = new ArrayList<>(checkable.size());
-            for (StreamBinding.Channel channel : checkable) {
+            List<CheckResult> fetched = new ArrayList<>(missing.size());
+            for (StreamBinding.Channel channel : missing) {
                 try {
-                    results.add(new CheckResult(channel,
+                    fetched.add(new CheckResult(channel,
                             service.fetchLive(channel.platform(), channel.channel()), null, false));
                 } catch (InterruptedException exception) {
                     Thread.currentThread().interrupt();
                     return;
                 } catch (IOException | RuntimeException exception) {
-                    results.add(new CheckResult(channel, null, exception.getMessage(), false));
+                    fetched.add(new CheckResult(channel, null, exception.getMessage(), false));
                 }
             }
             Bukkit.getScheduler().runTask(plugin, () -> {
-                for (CheckResult result : results) {
-                    StreamBinding.Channel channel = result.channel();
-                    if (result.error() != null) {
-                        plugin.messages().send(player, "status-error",
-                                "platform", channel.platform().displayName(),
-                                "channel", channel.channel());
-                    } else if (result.live().live()) {
-                        plugin.messages().send(player, "status-live",
-                                "platform", channel.platform().displayName(),
-                                "channel", channel.channel(),
-                                "viewers", result.live().viewers());
-                    } else {
-                        plugin.messages().send(player, "status-offline",
-                                "platform", channel.platform().displayName(),
-                                "channel", channel.channel());
-                    }
+                for (CheckResult result : fetched) {
+                    reportStatus(player, result);
                 }
             });
         });
+    }
+
+    /** Строка состояния одного канала: эфир, офлайн или ошибка площадки. */
+    private void reportStatus(Player player, CheckResult result) {
+        StreamBinding.Channel channel = result.channel();
+        if (result.error() != null) {
+            plugin.messages().send(player, "status-error",
+                    "platform", channel.platform().displayName(),
+                    "channel", channel.channel());
+        } else if (result.live().live()) {
+            plugin.messages().send(player, "status-live",
+                    "platform", channel.platform().displayName(),
+                    "channel", channel.channel(),
+                    "viewers", result.live().viewers());
+        } else {
+            plugin.messages().send(player, "status-offline",
+                    "platform", channel.platform().displayName(),
+                    "channel", channel.channel());
+        }
+    }
+
+    /* --------------------------------- top --------------------------------- */
+
+    /** {@code /stream top [n]} — кто больше всех получил дней за эфир. */
+    private void top(CommandSender sender, String[] args, String label) {
+        int limit = StreamBoard.MAX_ROWS;
+        if (args.length >= 2) {
+            try {
+                limit = Integer.parseInt(args[1]);
+            } catch (NumberFormatException exception) {
+                plugin.messages().send(sender, "top-usage", "label", label,
+                        "max", StreamBoard.MAX_ROWS);
+                return;
+            }
+        }
+        List<StreamBoard.Row> rows = StreamBoard.top(service.store().all(), limit);
+        if (rows.isEmpty()) {
+            plugin.messages().send(sender, "top-empty");
+            return;
+        }
+        plugin.messages().send(sender, "top-header", "count", rows.size());
+        int place = 1;
+        for (StreamBoard.Row row : rows) {
+            plugin.messages().send(sender, "top-line",
+                    "place", place,
+                    "player", row.playerName(),
+                    "days", row.totalDays(),
+                    "channels", row.channels());
+            place++;
+        }
+    }
+
+    /* -------------------------------- admin -------------------------------- */
+
+    /** {@code /stream admin unlink <ник> [площадка]} — снять привязки игрока. */
+    private void admin(CommandSender sender, String[] args, String label) {
+        if (args.length < 3 || !"unlink".equalsIgnoreCase(args[1])) {
+            plugin.messages().send(sender, "admin-usage", "label", label);
+            return;
+        }
+        String playerName = args[2];
+        Optional<StreamBinding> found = service.store().byName(playerName);
+        if (found.isEmpty()) {
+            plugin.messages().send(sender, "admin-unlink-none", "player", playerName);
+            return;
+        }
+        StreamBinding binding = found.get();
+        if (args.length >= 4) {
+            Optional<StreamPlatform> parsed = StreamPlatform.parse(args[3]);
+            if (parsed.isEmpty()) {
+                plugin.messages().send(sender, "link-unknown-platform",
+                        "name", args[3], "list", StreamPlatform.ids());
+                return;
+            }
+            if (binding.find(parsed.get()).isEmpty()) {
+                plugin.messages().send(sender, "not-linked-platform",
+                        "platform", parsed.get().displayName());
+                return;
+            }
+            StreamBinding updated = binding.without(parsed.get());
+            if (updated.linked()) {
+                service.store().put(updated);
+            } else {
+                service.store().remove(binding.uuid());
+            }
+            service.forget(binding.uuid());
+            saveAsync();
+            plugin.messages().send(sender, "admin-unlink-platform",
+                    "player", binding.playerName(),
+                    "channels", updated.channels().size(),
+                    "platform", parsed.get().displayName());
+            return;
+        }
+        service.store().remove(binding.uuid());
+        service.forget(binding.uuid());
+        saveAsync();
+        plugin.messages().send(sender, "admin-unlink-done",
+                "player", binding.playerName(),
+                "channels", binding.channels().size());
     }
 
     /* -------------------------------- unlink -------------------------------- */
@@ -545,11 +726,11 @@ public final class StreamCommandHandler implements TabExecutor {
                 "left", updated.channels().size());
     }
 
-    /* -------------------------------- admin -------------------------------- */
+    /* ------------------------------ статистика ------------------------------ */
 
     private void stats(CommandSender sender) {
         List<StreamBinding> all = new ArrayList<>(service.store().all());
-        int channels = all.stream().mapToInt(binding -> binding.channels().size()).sum();
+        int channels = StreamBoard.channelCount(all);
         plugin.messages().send(sender, "stats-header",
                 "count", all.size(), "channels", channels);
         plugin.messages().send(sender, "stats-viewers",
@@ -558,6 +739,12 @@ public final class StreamCommandHandler implements TabExecutor {
         if (all.isEmpty()) {
             plugin.messages().send(sender, "stats-empty");
             return;
+        }
+        for (StreamBoard.PlatformRow row : StreamBoard.platforms(all)) {
+            plugin.messages().send(sender, "stats-platform-line",
+                    "platform", row.platform().displayName(),
+                    "channels", row.channels(),
+                    "verified", row.verified());
         }
         int shown = 0;
         stats:
@@ -606,11 +793,12 @@ public final class StreamCommandHandler implements TabExecutor {
         boolean admin = sender.hasPermission("chrdkstreams.admin");
         if (args.length == 1) {
             List<String> options = new ArrayList<>(List.of(
-                    "link", "check", "status", "unlink",
+                    "link", "check", "status", "unlink", "top",
                     "watch", "watching", "code", "viewers", "viewer"));
             if (admin) {
                 options.add("stats");
                 options.add("reload");
+                options.add("admin");
             }
             return filter(options, args[0]);
         }
@@ -635,7 +823,23 @@ public final class StreamCommandHandler implements TabExecutor {
             return filter(List.of("on", "off"), args[1]);
         }
         if (args.length == 2 && "viewer".equalsIgnoreCase(args[0])) {
-            return filter(List.of("accept", "deny"), args[1]);
+            return filter(List.of("accept", "deny", "list"), args[1]);
+        }
+        if (args.length == 2 && "admin".equalsIgnoreCase(args[0])) {
+            return filter(List.of("unlink"), args[1]);
+        }
+        if (args.length == 3 && "admin".equalsIgnoreCase(args[0])
+                && "unlink".equalsIgnoreCase(args[1])) {
+            List<String> names = new ArrayList<>();
+            for (StreamBinding binding : service.store().all()) {
+                names.add(binding.playerName());
+            }
+            return filter(names, args[2]);
+        }
+        if (args.length == 4 && "admin".equalsIgnoreCase(args[0])
+                && "unlink".equalsIgnoreCase(args[1])) {
+            return filter(service.config().platforms().stream()
+                    .map(StreamPlatform::id).toList(), args[3]);
         }
         if (args.length == 3 && "viewer".equalsIgnoreCase(args[0])
                 && sender instanceof Player player) {

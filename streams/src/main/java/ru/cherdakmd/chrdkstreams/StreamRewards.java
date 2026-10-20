@@ -133,6 +133,27 @@ final class StreamRewards {
         return (left + MINUTE_MILLIS - 1) / MINUTE_MILLIS;
     }
 
+    /**
+     * Когда примерно будет следующая награда, если эфир не прервётся.
+     *
+     * <p>Возвращает {@code now}, если порог уже набран (награда придёт на
+     * следующем опросе), и {@code -1}, если действует потолок — считать нечего.
+     * Для подсказки «следующие сутки примерно в HH:mm».</p>
+     */
+    static long etaMillis(State state, Rule rule, long nowMillis) {
+        long threshold = rule.dayThresholdMillis();
+        if (threshold <= 0) {
+            return -1L;
+        }
+        int remaining = Math.min(rule.remainingToday(state.awardedToday()),
+                rule.remainingTotal(state.totalDays()));
+        if (remaining <= 0) {
+            return -1L;
+        }
+        long left = Math.max(0L, threshold - Math.max(0L, state.pendingMillis()));
+        return nowMillis + left;
+    }
+
     /** Минут накоплено (для /stream status): всегда меньше порога одного дня. */
     static long pendingMinutes(State state, Rule rule) {
         long threshold = rule.dayThresholdMillis();

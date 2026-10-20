@@ -2,12 +2,14 @@ package ru.cherdakmd.chrdkstreams;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -47,6 +49,10 @@ final class ViewerService {
 
     /** Защита от двойного чек-ина, пока идёт запрос к площадке. */
     private final Set<UUID> checking = ConcurrentHashMap.newKeySet();
+    /** Счётчик неверных кодов и блокировка ввода — от перебора WATCH-XXXX. */
+    private final Map<UUID, CodeGuard.State> guard = new ConcurrentHashMap<>();
+    private BukkitTask rotationTask;
+    private BukkitTask expiryTask;
 
     private volatile StreamConfig config;
 
@@ -61,14 +67,46 @@ final class ViewerService {
 
     void start() {
         checking.clear();
+        guard.clear();
+        startTasks();
     }
 
     void stop() {
         checking.clear();
+        guard.clear();
+        stopTasks();
+    }
+
+    /**
+     * Фоновые задачи зрительской программы.
+     *
+     * <p>Ротация кодов идёт раз в минуту: так код в эфире меняется ровно по окну,
+     * даже если стример не открывал панель, а стример получает новый код
+     * сообщением. Чистка заявок — раз в 20 минут: просроченные заявки не должны
+     * копиться в панели.</p>
+     */
+    private synchronized void startTasks() {
+        stopTasks();
+        rotationTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
+                plugin, this::rotateSafely, 20L * 60L, 20L * 60L);
+        expiryTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
+                plugin, this::expireSafely, 20L * 60L * 5L, 20L * 60L * 20L);
+    }
+
+    private synchronized void stopTasks() {
+        if (rotationTask != null) {
+            rotationTask.cancel();
+            rotationTask = null;
+        }
+        if (expiryTask != null) {
+            expiryTask.cancel();
+            expiryTask = null;
+        }
     }
 
     void update(StreamConfig newConfig) {
         this.config = newConfig;
+        startTasks();
     }
 
     /* ------------------------------ стример ------------------------------ */
@@ -144,6 +182,11 @@ final class ViewerService {
             plugin.messages().send(streamer, "viewer-none", "player", viewerName);
             return;
         }
+        if (full(streamer.getUniqueId())) {
+            plugin.messages().send(streamer, "viewer-limit",
+                    "max", config.viewers().maxPerStreamer());
+            return;
+        }
         ViewerBinding accepted = pending.get().accept();
         viewers.putViewer(accepted);
         saveAsync();
@@ -177,7 +220,9 @@ final class ViewerService {
             plugin.messages().send(viewer, "watch-disabled");
             return;
         }
+        // Ищем и по нику на сервере, и по имени канала: зритель чаще знает канал.
         Optional<StreamBinding> target = store.byName(streamerName)
+                .or(() -> store.byChannelName(streamerName))
                 .filter(StreamBinding::verified);
         if (target.isEmpty()) {
             plugin.messages().send(viewer, "watch-no-streamer", "player", streamerName);
@@ -203,6 +248,14 @@ final class ViewerService {
                 plugin.messages().send(viewer, "watch-pending",
                         "streamer", target.get().playerName());
             }
+            return;
+        }
+        if (config.viewers().limitsViewers()
+                && viewers.viewersOf(target.get().uuid()).size()
+                        >= config.viewers().maxPerStreamer()) {
+            plugin.messages().send(viewer, "watch-streamer-full",
+                    "streamer", target.get().playerName(),
+                    "max", config.viewers().maxPerStreamer());
             return;
         }
         boolean acceptedNow = !config.viewers().requireApproval();
@@ -254,12 +307,28 @@ final class ViewerService {
                     "streamer", binding.streamerName());
             return;
         }
-        ViewerSettings current = rotate(settings.get());
-        if (!ViewerCodes.matches(rawCode, current.code())) {
-            plugin.messages().send(viewer, "watch-code-wrong");
+        long now = System.currentTimeMillis();
+        CodeGuard.State state = guard.getOrDefault(viewer.getUniqueId(), CodeGuard.State.empty());
+        if (state.locked(now)) {
+            long minutes = Math.max(1L, (state.lockRemainingMillis(now) + 59_999L) / 60_000L);
+            plugin.messages().send(viewer, "watch-code-locked", "minutes", minutes);
             return;
         }
-        long now = System.currentTimeMillis();
+        ViewerSettings current = rotate(settings.get());
+        if (!ViewerCodes.matches(rawCode, current.code())) {
+            CodeGuard.State failed = CodeGuard.failure(state,
+                    config.viewers().maxCodeAttempts(), config.viewers().codeLockMillis(), now);
+            guard.put(viewer.getUniqueId(), failed);
+            if (failed.locked(now)) {
+                plugin.messages().send(viewer, "watch-code-locked",
+                        "minutes", config.viewers().codeLockMinutes());
+            } else {
+                plugin.messages().send(viewer, "watch-code-wrong-left",
+                        "left", CodeGuard.attemptsLeft(failed, config.viewers().maxCodeAttempts()));
+            }
+            return;
+        }
+        guard.remove(viewer.getUniqueId());
         long since = binding.lastCheckIn() <= 0L ? 0L : now - binding.lastCheckIn();
         if (since > 0L && since < config.viewers().checkinMinMillis()) {
             long minutes = Math.max(1L,
@@ -354,6 +423,10 @@ final class ViewerService {
                 "today", state.awardedToday(),
                 "max", config.viewers().maxDaysPerDay());
         plugin.messages().send(viewer, "watch-status-total", "days", state.totalDays());
+        long left = StreamRewards.minutesToNextDay(state, config.viewers().rule());
+        if (left > 0L) {
+            plugin.messages().send(viewer, "watch-status-left", "left", left);
+        }
         if (!binding.accepted()) {
             plugin.messages().send(viewer, "watch-pending", "streamer", binding.streamerName());
             return;
@@ -430,6 +503,69 @@ final class ViewerService {
         viewers.putSettings(updated);
         saveAsync();
         return updated;
+    }
+
+    /** Ротация кодов всех стримеров: новый код — по окну, даже без открытой панели. */
+    private void rotateSafely() {
+        try {
+            StreamConfig cfg = config;
+            if (!cfg.enabled() || !cfg.viewers().enabled()) {
+                return;
+            }
+            long now = System.currentTimeMillis();
+            boolean changed = false;
+            for (ViewerSettings settings : viewers.allStreamers()) {
+                if (!settings.enabled() || !ViewerCodes.expired(settings.codeUntil(), now)) {
+                    continue;
+                }
+                ViewerSettings updated = settings.withCode(ViewerCodes.generate(),
+                        now + cfg.viewers().codeWindowMillis());
+                viewers.putSettings(updated);
+                changed = true;
+                if (cfg.viewers().announceCode()) {
+                    tell(updated.streamer(), "viewers-code-rotated",
+                            "code", updated.code(),
+                            "minutes", cfg.viewers().codeWindowMinutes());
+                }
+            }
+            if (changed) {
+                viewers.save();
+            }
+        } catch (RuntimeException exception) {
+            plugin.getLogger().log(Level.WARNING, "[Streams] Ошибка ротации кодов", exception);
+        }
+    }
+
+    /** Удаление заявок, которые стример так и не подтвердил за отведённый срок. */
+    private void expireSafely() {
+        try {
+            StreamConfig cfg = config;
+            long ttl = cfg.viewers().requestTtlMillis();
+            if (ttl <= 0L) {
+                return;
+            }
+            long now = System.currentTimeMillis();
+            boolean changed = false;
+            for (ViewerBinding binding : viewers.allViewers()) {
+                if (!ViewerRequests.expired(binding, ttl, now)) {
+                    continue;
+                }
+                viewers.removeViewer(binding.uuid());
+                changed = true;
+                tell(binding.uuid(), "watch-request-expired", "streamer", binding.streamerName());
+            }
+            if (changed) {
+                viewers.save();
+            }
+        } catch (RuntimeException exception) {
+            plugin.getLogger().log(Level.WARNING, "[Streams] Ошибка чистки заявок", exception);
+        }
+    }
+
+    /** Достигнут ли лимит подтверждённых зрителей у стримера. */
+    private boolean full(UUID streamer) {
+        return config.viewers().limitsViewers()
+                && viewers.viewersOf(streamer).size() >= config.viewers().maxPerStreamer();
     }
 
     private long minutesLeft(long codeUntil) {

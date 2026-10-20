@@ -180,6 +180,27 @@ final class StreamStore {
         return Optional.empty();
     }
 
+    /**
+     * Игрок, у которого есть канал с таким именем на любой площадке.
+     *
+     * <p>Нужно для заявок зрителей: человек знает не ник стримера на сервере, а
+     * имя его канала ({@code /stream watch chrdk}). Регистр не важен.</p>
+     */
+    synchronized Optional<StreamBinding> byChannelName(String channel) {
+        String wanted = channel == null ? "" : channel.trim();
+        if (wanted.isEmpty()) {
+            return Optional.empty();
+        }
+        for (StreamBinding binding : bindings.values()) {
+            for (StreamBinding.Channel linked : binding.channels()) {
+                if (linked.channel().equalsIgnoreCase(wanted)) {
+                    return Optional.of(binding);
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
     /** Привязка по нику игрока (регистр не важен) — для заявок зрителей и метки в чате. */
     synchronized Optional<StreamBinding> byName(String playerName) {
         String wanted = playerName == null ? "" : playerName.trim();

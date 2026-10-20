@@ -129,6 +129,36 @@ class StreamRewardsTest {
     }
 
     @Test
+    void etaCountsDownRemainingMinutes() {
+        StreamRewards.State state = new StreamRewards.State(
+                StreamRewards.dayOf(NOW), 1, 20 * MINUTE, 4);
+
+        long eta = StreamRewards.etaMillis(state, HOURLY, NOW);
+
+        assertEquals(NOW + 40 * MINUTE, eta, "до суток не хватает 40 минут эфира");
+    }
+
+    @Test
+    void etaIsNowWhenThresholdAlreadyReached() {
+        StreamRewards.State state = new StreamRewards.State(
+                StreamRewards.dayOf(NOW), 0, 70 * MINUTE, 0);
+
+        assertEquals(NOW, StreamRewards.etaMillis(state, HOURLY, NOW),
+                "награда придёт на следующем опросе");
+    }
+
+    @Test
+    void etaIsNegativeWhenCapped() {
+        StreamRewards.State daily = new StreamRewards.State(
+                StreamRewards.dayOf(NOW), 6, 0L, 6);
+        StreamRewards.State total = new StreamRewards.State(
+                StreamRewards.dayOf(NOW), 0, 0L, 365);
+
+        assertEquals(-1L, StreamRewards.etaMillis(daily, HOURLY, NOW), "дневной потолок");
+        assertEquals(-1L, StreamRewards.etaMillis(total, HOURLY, NOW), "общий потолок");
+    }
+
+    @Test
     void ruleClampsBrokenConfig() {
         StreamRewards.Rule rule = StreamRewards.Rule.of(0, 100, -5);
 

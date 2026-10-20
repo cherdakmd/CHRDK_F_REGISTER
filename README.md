@@ -1373,21 +1373,21 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.121-SNAPSHOT.jar`, аддон
-CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.121-SNAPSHOT.jar`, реферальный —
-`referrals/build/libs/chrdk-referrals-1.4.121-SNAPSHOT.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.121-SNAPSHOT.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.121-SNAPSHOT.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.121-SNAPSHOT.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.121-SNAPSHOT.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.121-SNAPSHOT.jar` (хартия чар — при установленном аддоне чар), общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.121-SNAPSHOT.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.121-SNAPSHOT.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.121-SNAPSHOT.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.121-SNAPSHOT.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.121-SNAPSHOT.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.121-SNAPSHOT.jar`, стримерская программа —
-`streams/build/libs/chrdk-streams-1.4.121-SNAPSHOT.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.122-SNAPSHOT.jar`, аддон
+CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.122-SNAPSHOT.jar`, реферальный —
+`referrals/build/libs/chrdk-referrals-1.4.122-SNAPSHOT.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.122-SNAPSHOT.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.122-SNAPSHOT.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.122-SNAPSHOT.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.122-SNAPSHOT.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.122-SNAPSHOT.jar` (хартия чар — при установленном аддоне чар), общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.122-SNAPSHOT.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.122-SNAPSHOT.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.122-SNAPSHOT.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.122-SNAPSHOT.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.122-SNAPSHOT.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.122-SNAPSHOT.jar`, стримерская программа —
+`streams/build/libs/chrdk-streams-1.4.122-SNAPSHOT.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). Оба JAR прикладываются к каждому релизу на GitHub.
 
 ---
@@ -3293,6 +3293,87 @@ battlepass:
 
 CI собирает снапшот как обычный пуш в ветку; тег `v1.4.109` и GitHub-релиз не
 создаются до отдельной команды на релиз.
+
+---
+
+### CHRDK_Streams: 15 улучшений программы — снапшот 1.4.122-SNAPSHOT
+
+Волна 13: программа стала удобнее для стримера, честнее для зрителя и спокойнее
+для API площадок. Правило «час эфира = сутки проходки» и потолки не менялись —
+всё ниже про то, как эти сутки получаются и проверяются.
+
+**1. Ссылка вместо ника.** `/stream link twitch https://www.twitch.tv/ник`,
+`twitch.tv/ник`, `@ник` — всё принимается: из адреса берётся имя канала,
+отбрасываются `?ysclid=…`, `/videos` и служебные разделы (`/directory`,
+`/settings`). `/stream link` без аргументов показывает памятку из трёх шагов.
+
+**2. Канал подтверждается сам.** `streams.verify-on-poll: true` — обычный опрос
+раз в `poll-seconds` находит код в названии эфира, подтверждает канал и пишет
+стримеру «подтверждён автоматически». Ручной `/stream check` больше не обязателен.
+
+**3. Пауза на ручную проверку.** `streams.check-cooldown-seconds: 30` — `/stream
+check` не будет молотить API площадок по кругу; ответ «повторите через N с».
+
+**4. Статус без ожидания сети.** Ответы площадок складываются в кэш на
+`streams.status-cache-seconds: 60`; `/stream status` показывает известное сразу и
+спрашивает API только про каналы, о которых данных нет.
+
+**5. Статус говорит о награде.** Добавлены строки «Следующие сутки примерно в
+HH:mm» (или «потолок достигнут») и «Сейчас в эфире зрителей: N» — по сумме
+живых каналов из кэша.
+
+**6. `/stream top [n]`** — топ стримеров по дням за эфир: место, ник, дни,
+сколько каналов. Равные дни сортируются по нику, чтобы порядок не «прыгал».
+
+**7. `/stream viewer list`** — стример видит всех подтверждённых зрителей, их
+минуты до следующих суток и сколько дней они уже получили.
+
+**8. `/stream watch` по имени канала.** Зритель часто знает не ник на сервере, а
+канал: теперь `/stream watch chrdk` находит стримера и по каналу (любая площадка).
+
+**9. `/stream watching` считает остаток.** Строка «До следующих суток: N мин.
+просмотра» — понятно, сколько ещё смотреть.
+
+**10. Заявки истекают.** `viewers.request-ttl-hours: 72`: неподтверждённая заявка
+удаляется, зритель получает уведомление и может подать заново. Прогресс зрителя
+не сбрасывается — он живёт отдельно.
+
+**11. Защита от перебора кода.** `viewers.max-code-attempts: 5` и
+`code-lock-minutes: 5`: после пяти ошибок ввод `WATCH-…` блокируется, в подсказке
+видны оставшиеся попытки. Успешный ввод счётчик сбрасывает.
+
+**12. Лимит зрителей у стримера.** `viewers.max-per-streamer: 50` (0 — без
+лимита): подтвердить бесконечный поток заявок нельзя. Зритель видит «набрался
+лимит», стример — что делать (`viewer-limit`).
+
+**13. Код меняется по таймеру.** Раз в минуту плагин проверяет окна кодов и
+выдаёт новые; при `viewers.announce-code: true` стример получает в чат «Новый код
+для зрителей: WATCH-XXXX» — не нужно открывать панель, чтобы узнать актуальный.
+
+**14. Админ-инструменты.** `/stream admin unlink <ник> [площадка]` снимает
+привязки игрока (полностью или одну площадку, право `chrdkstreams.admin`);
+`/stream stats` получил строку по каждой площадке: каналов и подтверждено.
+
+**15. Автосохранение.** `general.auto-save-minutes: 5`: минуты, накопленные между
+событиями, пишутся на диск по таймеру. При падении сервера теряется не больше
+одного интервала (0 — выключить, сохранять только по событиям).
+
+**Конфиг:** новые ключи — `general.auto-save-minutes`, `streams.verify-on-poll`,
+`streams.check-cooldown-seconds`, `streams.status-cache-seconds`,
+`streams.viewers.{max-per-streamer, request-ttl-hours, max-code-attempts,
+code-lock-minutes, announce-code}`. Все со значениями по умолчанию: без правки
+файла программа работает по описанным правилам.
+
+**Тесты:** аддон — 141 `@Test` в 18 классах (+42): новые `StreamPlatformLinkTest`
+(ссылки и `@ник`), `CooldownTest`, `ProbeCacheTest`, `StreamBoardTest` (топ и
+статистика площадок), `CodeGuardTest`, `ViewerRequestsTest`, плюс кейсы ETA в
+`StreamRewardsTest`, зажима новых настроек в `StreamConfigTest` и поиска по каналу
+в `StreamStoreTest`.
+
+**Обновление:** версия 1.4.122, перезапуск сервера. Старые `config.yml` и
+`messages.yml` продолжают работать: незаданные ключи берут значения по умолчанию.
+
+Снапшот 1.4.122 не тегируется: тег и GitHub-релиз создаются отдельной командой.
 
 ---
 

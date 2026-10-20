@@ -3,6 +3,7 @@ package ru.cherdakmd.chrdkstreams;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -68,6 +69,61 @@ public enum StreamPlatform {
      */
     public static String normalizeChannel(String channel) {
         return channel == null ? "" : channel.trim();
+    }
+
+    /** Служебные разделы сайтов, которые нельзя принять за имя канала. */
+    private static final Set<String> RESERVED = Set.of(
+            "directory", "videos", "video", "settings", "subscriptions", "inventory",
+            "wallet", "friends", "search", "downloads", "turbo", "jobs", "store",
+            "login", "signup", "embed", "clip", "clips", "category", "categories");
+
+    /**
+     * Имя канала из того, что ввёл игрок.
+     *
+     * <p>Стримеры привыкли копировать ссылку, а не ник, поэтому принимаем и её:
+     * {@code https://www.twitch.tv/ник}, {@code twitch.tv/ник}, {@code vkplay.live/ник},
+     * {@code @ник}. Из адреса берётся первый осмысленный сегмент пути: хвосты
+     * вида {@code /videos} и параметры {@code ?ysclid=…} отбрасываются. Если
+     * человек всё же вставил служебный раздел ({@code twitch.tv/directory}) —
+     * возвращается пустая строка, и проверка канала покажет понятную ошибку.</p>
+     */
+    public static String extractChannel(String raw) {
+        String value = raw == null ? "" : raw.trim();
+        if (value.isEmpty()) {
+            return "";
+        }
+        int fragment = value.indexOf('#');
+        if (fragment >= 0) {
+            value = value.substring(0, fragment);
+        }
+        int query = value.indexOf('?');
+        if (query >= 0) {
+            value = value.substring(0, query);
+        }
+        int scheme = value.indexOf("://");
+        if (scheme >= 0) {
+            value = value.substring(scheme + 3);
+        }
+        if (value.startsWith("@")) {
+            return normalizeChannel(value.substring(1));
+        }
+        int slash = value.indexOf('/');
+        if (slash < 0) {
+            return normalizeChannel(value);
+        }
+        String rest = value.substring(slash + 1);
+        for (String segment : rest.split("/")) {
+            String candidate = normalizeChannel(segment);
+            if (candidate.isEmpty()) {
+                continue;
+            }
+            String key = candidate.toLowerCase(Locale.ROOT);
+            if (RESERVED.contains(key)) {
+                return "";
+            }
+            return candidate;
+        }
+        return "";
     }
 
     /** Список id площадок для сообщения «доступны: …». */
