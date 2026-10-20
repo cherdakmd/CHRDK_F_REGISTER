@@ -75,10 +75,14 @@ class EnchantRegistryTest {
         for (ItemGroup group : ItemGroup.values()) {
             assertTrue(used.contains(group), "нет чары для " + group);
         }
-        assertEquals(15, EnchantRegistry.all().stream().filter(def ->
-                def.supports().contains(ItemGroup.SWORD)).count(), "ближний бой: 12 светлых + 3 проклятия");
-        assertEquals(9, EnchantRegistry.all().stream().filter(def ->
-                def.supports().contains(ItemGroup.PICKAXE)).count(), "кирка: 6 светлых + 3 проклятия");
+        // 16 явных мечевых + 4 «на любой предмет» (Книжник и три проклятия).
+        assertEquals(20, EnchantRegistry.all().stream().filter(def ->
+                def.supports().contains(ItemGroup.SWORD)).count(),
+                "меч: 9 старых + 4 светлых + 3 проклятия + 4 любых");
+        // 9 явных кирковых + те же 4 «на любой предмет».
+        assertEquals(13, EnchantRegistry.all().stream().filter(def ->
+                def.supports().contains(ItemGroup.PICKAXE)).count(),
+                "кирка: 6 светлых + 3 проклятия + 4 любых");
     }
 
     @Test
