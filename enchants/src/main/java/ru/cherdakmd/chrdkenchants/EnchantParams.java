@@ -1,8 +1,12 @@
 package ru.cherdakmd.chrdkenchants;
 
 /**
- * Числовые параметры всех 30 чар (единый источник истины; индекс массива = уровень-1).
+ * Числовые параметры всех чар (единый источник истины; индекс массива = уровень-1).
  * Чистые константы — в тестах проверяются без сервера.
+ *
+ * <p>1.4.128: добавлены 15 светлых чар и 15 проклятий. У проклятий те же методы,
+ * но значения всегда «в минус» для игрока: обработчик сам решает, вычитать
+ * процент или прибавлять.</p>
  */
 public final class EnchantParams {
 
@@ -27,8 +31,51 @@ public final class EnchantParams {
             case "retribution" -> at(new int[]{8, 12, 16}, level);
             case "fortified" -> at(new int[]{6, 9, 12}, level);
             case "headhunter" -> 15;
+            // --- светлые чары 1.4.128 ---
+            case "keen_edge" -> at(new int[]{4, 6, 8}, level);
+            case "duelist" -> at(new int[]{8, 12, 16}, level);
+            case "steady_aim" -> at(new int[]{8, 12, 16}, level);
+            case "quickdraw" -> at(new int[]{8, 12, 16}, level);
+            case "bulwark" -> at(new int[]{5, 7, 9}, level);
+            case "second_skin" -> at(new int[]{4, 6, 8}, level);
+            case "grounded" -> at(new int[]{10, 15, 20}, level);
+            case "featherstep" -> at(new int[]{8, 12, 16}, level);
+            case "scholar" -> at(new int[]{5, 8, 11}, level);
+            case "plunder" -> at(new int[]{10, 15, 20}, level);
+            case "frenzy" -> at(new int[]{10, 15, 20}, level);
+            case "fortunate" -> at(new int[]{10, 18}, level);
+            case "prospector" -> at(new int[]{8, 12, 16}, level);
+            // --- проклятия 1.4.128 ---
+            case "dull_blade" -> at(new int[]{5, 8, 11}, level);
+            case "weak_draw" -> at(new int[]{8, 12, 16}, level);
+            case "sluggish_shot" -> at(new int[]{10, 20}, level);
+            case "brittle" -> at(new int[]{15, 25, 35}, level);
+            case "thin_padding" -> at(new int[]{4, 6, 8}, level);
+            case "exposed" -> at(new int[]{8, 12, 16}, level);
+            case "heavy_hull" -> at(new int[]{10, 15, 20}, level);
+            case "fire_prone" -> at(new int[]{15, 25, 35}, level);
+            case "fragile_bones" -> at(new int[]{10, 15, 20}, level);
+            case "gluttony" -> at(new int[]{20, 35, 50}, level);
+            case "slow_learner" -> at(new int[]{10, 18, 25}, level);
+            case "cursed_blood" -> at(new int[]{25, 50, 75}, level);
+            case "clumsy_swing" -> at(new int[]{8, 12, 16}, level);
+            case "dull_pick" -> at(new int[]{10, 18, 25}, level);
+            case "jinxed" -> at(new int[]{8, 14, 20}, level);
             default -> 0;
         };
+    }
+
+    /** Дробные величины: регенерация «Второго дыхания» — сердца за импульс. */
+    public static double fraction(String id, int level) {
+        return switch (id) {
+            case "vitality" -> at(new double[]{0.5, 0.75, 1.0}, level);
+            default -> 0.0;
+        };
+    }
+
+    /** Уровень эффекта «Спешка» для frenzy/prospector: I, затем II (не III). */
+    public static int hasteAmplifier(int level) {
+        return Math.min(1, Math.max(0, level - 1));
     }
 
     /** Множитель урона (казнь). */
@@ -50,6 +97,8 @@ public final class EnchantParams {
             case "iceward" -> at(new int[]{2, 3}, level);
             case "phoenix-resist" -> 5;
             case "laststand" -> 25;
+            // 1.4.128: светлая чара «Лёгкая поступь» — скорость после убийства
+            case "lightfoot" -> at(new int[]{4, 6, 8}, level);
             default -> 0;
         };
     }

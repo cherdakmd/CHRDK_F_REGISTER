@@ -7,7 +7,27 @@ import java.util.Set;
  * на одном предмете.
  */
 public record EnchantDef(String id, Rarity rarity, int maxLevel, String conflictGroup,
-                         Set<ItemGroup> supports) {
+                         Set<ItemGroup> supports, Polarity polarity) {
+
+    /** Знак чары: светлая (обычная награда) или проклятие (риск). */
+    public enum Polarity {
+        LIGHT,
+        CURSE;
+
+        public boolean curse() {
+            return this == CURSE;
+        }
+
+        /** Ключ строки лора и имени книги. */
+        public String labelKey() {
+            return curse() ? "polarity-curse" : "polarity-light";
+        }
+    }
+
+    /** Проклятие ли эта чара. */
+    public boolean curse() {
+        return polarity != null && polarity.curse();
+    }
 
     public enum Rarity {
         COMMON(45), RARE(30), EPIC(17), LEGENDARY(8);

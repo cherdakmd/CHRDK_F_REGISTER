@@ -28,9 +28,20 @@ public final class EnchantService {
 
     /** Все активные в конфиге чары для материала, которые ещё можно добавить. */
     public List<EnchantDef> applicableTo(ItemStack item) {
+        return applicableTo(item, null);
+    }
+
+    /**
+     * То же, но только одного знака: {@code LIGHT} — награда, {@code CURSE} —
+     * проклятие, {@code null} — любой (книги, админ-выдача).
+     */
+    public List<EnchantDef> applicableTo(ItemStack item, EnchantDef.Polarity polarity) {
         String material = item.getType().name();
         Map<String, Integer> present = items.read(item);
-        return EnchantRoller.applicable(plugin.config().enabledEnchants(), material, present,
+        List<EnchantDef> pool = plugin.config().enabledEnchants().stream()
+                .filter(def -> polarity == null || def.polarity() == polarity)
+                .toList();
+        return EnchantRoller.applicable(pool, material, present,
                 plugin.config().maxPerItem(), plugin.config().maxLegendaryPerItem());
     }
 
@@ -41,7 +52,15 @@ public final class EnchantService {
      * @return добавленная чара и уровень, null = выдасть не удалось (нет кандидатов)
      */
     public RollResult rollOnto(ItemStack item, int costTier) {
-        List<EnchantDef> candidates = applicableTo(item);
+        return rollOnto(item, costTier, null);
+    }
+
+    /**
+     * Пытается вогнать случайную чару выбранного знака. Проклятие ищет только
+     * по пулу проклятий, светлая — только по светлому пулу; {@code null} — любой.
+     */
+    public RollResult rollOnto(ItemStack item, int costTier, EnchantDef.Polarity polarity) {
+        List<EnchantDef> candidates = applicableTo(item, polarity);
         EnchantDef picked = EnchantRoller.pickWeighted(candidates, random);
         if (picked == null) {
             return null;
@@ -53,7 +72,15 @@ public final class EnchantService {
 
     /** Случайная чара для книги (учитывает только вкл/выкл; применимость не важна). */
     public RollResult rollBook(int costTier) {
-        EnchantDef picked = EnchantRoller.pickWeighted(plugin.config().enabledEnchants(), random);
+        return rollBook(costTier, EnchantDef.Polarity.LIGHT);
+    }
+
+    /** Случайная книга выбранного знака: жители продают только светлые. */
+    public RollResult rollBook(int costTier, EnchantDef.Polarity polarity) {
+        List<EnchantDef> pool = plugin.config().enabledEnchants().stream()
+                .filter(def -> polarity == null || def.polarity() == polarity)
+                .toList();
+        EnchantDef picked = EnchantRoller.pickWeighted(pool, random);
         if (picked == null) {
             return null;
         }

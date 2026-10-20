@@ -1,5 +1,9 @@
-# CHRDK_Enchants — 30 кастомных эпичных чар. Предметы с ними живут в NBT (PDC) и
-# сохраняются в инвентарях игроков — отдельного хранилища нет.
+# CHRDK_Enchants — 60 кастомных чар: 45 светлых и 15 проклятий. Предметы с ними
+# живут в NBT (PDC) и сохраняются в инвентарях игроков — отдельного хранилища нет.
+#
+# 1.4.128: проклятия — это отдельный полюс. Они реально мешают (минус к урону,
+# броне, скорости, опыту, износу), но никогда не выпадают «вместо награды»:
+# проклятие приходит только с тем же шансом, что и светлая чара, отдельным броском.
 
 general:
   locale: ru
@@ -11,6 +15,8 @@ sources:
     enabled: true
     # Базовый шанс (%) при полной стойке книг (3 лазурита); при меньшей цене — пропорционально.
     chance-percent: 35
+    # Из сработавших случаев столько процентов дают проклятие вместо светлой чары (0 — только светлые).
+    curse-chance-percent: 25
   villager:
     # У библиотекарей книга в трейде может замениться на книгу кастомной чары.
     enabled: true
@@ -21,6 +27,9 @@ rules:
   max-per-item: 3
   # Не более одной легендарной чары на предмет.
   max-legendary-per-item: 1
+  # Мастер-выключатель проклятий: false — новые проклятия не выпадают ниоткуда,
+  # но уже лежащие на предметах продолжают работать (снять их можно только наковальней).
+  curses-enabled: true
 
 # Отключение отдельных чар (id: enabled).
 enchants:
@@ -54,3 +63,35 @@ enchants:
   veinminer: {enabled: true}          # Жилодробитель
   excavator: {enabled: true}          # Дробитель
   midas: {enabled: true}              # Рука Мидаса
+  # --- 15 светлых чар (1.4.128) ---
+  keen_edge: {enabled: true}           # Острый край — +урон оружия
+  frenzy: {enabled: true}              # Ярость — урон на низком здоровье
+  plunder: {enabled: true}             # Мародёр — больше добычи
+  duelist: {enabled: true}             # Дуэлянт — урон по игрокам
+  steady_aim: {enabled: true}          # Верный прицел — урон стрел
+  quickdraw: {enabled: true}           # Скорый выстрел — скорость снаряда
+  bulwark: {enabled: true}             # Оплот — +броня
+  second_skin: {enabled: true}         # Вторая кожа — мягче входящий урон
+  vitality: {enabled: true}            # Живучесть — самовосстановление
+  grounded: {enabled: true}            # Устойчивость — мягче падение
+  lightfoot: {enabled: true}           # Лёгкая поступь — скорость после убийства
+  featherstep: {enabled: true}         # Пёрышко — +скорость передвижения
+  prospector: {enabled: true}          # Старатель — спешка
+  fortunate: {enabled: true}           # Золотая жила — удвоение руды
+  scholar: {enabled: true}             # Книжник — +опыт
+  # --- 15 проклятий (1.4.128) ---
+  dull_blade: {enabled: true}          # Тупое лезвие
+  clumsy_swing: {enabled: true}        # Неуклюжий замах
+  brittle: {enabled: true}             # Хрупкость
+  weak_draw: {enabled: true}           # Слабый натяг
+  sluggish_shot: {enabled: true}       # Вялый выстрел
+  thin_padding: {enabled: true}        # Тонкая подкладка
+  exposed: {enabled: true}             # Открытость
+  heavy_hull: {enabled: true}          # Тяжёлый корпус
+  fire_prone: {enabled: true}          # Боязнь огня
+  fragile_bones: {enabled: true}       # Хрупкие кости
+  dull_pick: {enabled: true}           # Тупой резец
+  jinxed: {enabled: true}              # Порча
+  gluttony: {enabled: true}            # Обжорство
+  slow_learner: {enabled: true}        # Тугодум
+  cursed_blood: {enabled: true}        # Проклятая кровь

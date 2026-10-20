@@ -4,28 +4,55 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeModifier;
+import org.bukkit.inventory.EquipmentSlotGroup;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Работа с предметами: PDC-метка чар ("id:level;..."), книга чары как предмет и
- * аккуратная перерисовка лора (наши строки помечаются маркером «✦ »).
- * Только серверный рантайм — в юнит-тестах не использовать.
+ * Работа с предметами: PDC-метка чар ("id:level;..."), книга чары как предмет,
+ * аккуратная перерисовка лора (наши строки помечаются маркером «✶ ») и
+ * атрибутные модификаторы светлых чар/проклятий (1.4.128).
+ *
+ * <p>Атрибуты живут на предмете под ключами {@code ench_<id>_<level>} в
+ * пространстве имён плагина: они не конфликтуют с тирами и ковкой и снимаются
+ * только нами при пересборке чар.</p>
+ *
+ * <p>Только серверный рантайм — в юнит-тестах не использовать.</p>
  */
 public final class EnchantItems {
 
     public static final String PDC_KEY = "custom_enchants";
-    /** Маркер строк лора, созданных плагином (по нему узнаём свои строки при перерисовке). */
-    public static final String LORE_MARKER = "✦ ";
+    /**
+     * Маркер строк лора чар. С 1.4.128 — «✶ », а не «✦ »: ровно этим маркером
+     * TierForge помечает строки своих свойств, и общий символ заставлял бы
+     * аддоны стирать лор друг друга при пересборке предмета.
+     */
+    public static final String LORE_MARKER = "✶ ";
+    /** Маркер прежних версий (1.4.13–1.4.127): снимаем только «свои» строки. */
+    public static final String LEGACY_LORE_MARKER = "✦ ";
+    /** Префикс ключей атрибутных модификаторов чар. */
+    public static final String ATTRIBUTE_PREFIX = "ench_";
+
+    /** Атрибуты, которые модуль трогает: снимаются одним проходом при пересборке. */
+    private static final Map<EnchantAttributeMap.Target, Attribute> ATTRIBUTES = Map.of(
+            EnchantAttributeMap.Target.ATTACK_DAMAGE, Attribute.ATTACK_DAMAGE,
+            EnchantAttributeMap.Target.ATTACK_SPEED, Attribute.ATTACK_SPEED,
+            EnchantAttributeMap.Target.ARMOR, Attribute.ARMOR,
+            EnchantAttributeMap.Target.MOVEMENT_SPEED, Attribute.MOVEMENT_SPEED);
 
     private final EnchantsPlugin plugin;
     private final NamespacedKey key;
+    /** Кэш имён чар — нужен, чтобы отличить старые строки чар от строк свойств тира. */
+    private List<String> cachedNames;
 
     public EnchantItems(EnchantsPlugin plugin) {
         this.plugin = plugin;
@@ -62,6 +89,25 @@ public final class EnchantItems {
         } else {
             meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, encoded);
         }
+        applyAttributes(meta, item.getType().name(), enchants);
+        refreshLore(meta, enchants);
+        item.setItemMeta(meta);
+    }
+
+    /**
+     * Перерисовка без изменения набора: лор и атрибуты восстанавливаются из PDC.
+     * Нужна тир-предметам — их пересборка пересоздаёт лор с нуля.
+     */
+    public void refresh(ItemStack item) {
+        if (item == null || !item.hasItemMeta()) {
+            return;
+        }
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) {
+            return;
+        }
+        Map<String, Integer> enchants = read(item);
+        applyAttributes(meta, item.getType().name(), enchants);
         refreshLore(meta, enchants);
         item.setItemMeta(meta);
     }
@@ -79,7 +125,8 @@ public final class EnchantItems {
         apply(book, def, level);
         ItemMeta meta = book.getItemMeta();
         if (meta != null) {
-            meta.displayName(plugin.messages().get("gui-book-name",
+            meta.displayName(plugin.messages().get(
+                    def.curse() ? "gui-book-name-curse" : "gui-book-name",
                     "name", plugin.messages().raw("en." + def.id() + ".name")));
             book.setItemMeta(meta);
         }
@@ -133,19 +180,140 @@ public final class EnchantItems {
     private void refreshLore(ItemMeta meta, Map<String, Integer> enchants) {
         List<Component> lore = meta.hasLore() && meta.lore() != null
                 ? new ArrayList<>(meta.lore()) : new ArrayList<>();
-        lore.removeIf(EnchantItems::isOurs);
+        lore.removeIf(this::isOurs);
         for (Map.Entry<String, Integer> entry : new LinkedHashMap<>(enchants).entrySet()) {
             EnchantDef def = EnchantRegistry.byId(entry.getKey());
             if (def == null) continue;
-            lore.add(plugin.messages().get("lore-line",
+            // 1.4.128: проклятия пишутся красным — по лору видно, что это минус
+            lore.add(plugin.messages().get(def.curse() ? "lore-line-curse" : "lore-line",
                     "name", plugin.messages().raw("en." + def.id() + ".name"),
                     "levelroman", EnchantCodec.roman(entry.getValue())));
         }
         meta.lore(lore.isEmpty() ? null : lore);
     }
 
-    private static boolean isOurs(Component line) {
-        String plain = PlainTextComponentSerializer.plainText().serialize(line);
-        return plain.startsWith(LORE_MARKER);
+    /**
+     * Пересобирает атрибутные модификаторы чар: сначала снимает все наши
+     * ({@code ench_*}), затем кладёт актуальные из {@link EnchantAttributeMap}.
+     * Слот выбирается по виду предмета: оружие — рука, броня — своя деталь.
+     */
+    private void applyAttributes(ItemMeta meta, String materialName, Map<String, Integer> enchants) {
+        clearAttributes(meta);
+        if (enchants.isEmpty() || meta == null) {
+            return;
+        }
+        EquipmentSlotGroup slot = slotGroupFor(ItemGroup.classify(materialName));
+        if (slot == null) {
+            return;
+        }
+        for (Map.Entry<String, Integer> entry : enchants.entrySet()) {
+            EnchantDef def = EnchantRegistry.byId(entry.getKey());
+            if (def == null) {
+                continue;
+            }
+            for (EnchantAttributeMap.Modifier modifier
+                    : EnchantAttributeMap.modifiers(def.id(), entry.getValue())) {
+                Attribute attribute = ATTRIBUTES.get(modifier.target());
+                if (attribute == null) {
+                    continue;
+                }
+                NamespacedKey modifierKey = new NamespacedKey(plugin,
+                        ATTRIBUTE_PREFIX + def.id() + "_" + entry.getValue());
+                AttributeModifier.Operation operation = modifier.kind()
+                        == EnchantAttributeMap.Kind.PERCENT
+                        ? AttributeModifier.Operation.MULTIPLY_SCALAR_1
+                        : AttributeModifier.Operation.ADD_NUMBER;
+                AttributeModifier built = new AttributeModifier(modifierKey,
+                        modifier.amount(), operation, slot);
+                try {
+                    meta.addAttributeModifier(attribute, built);
+                } catch (IllegalArgumentException ignored) {
+                    // кривая комбинация атрибут/слот не должна ломать выдачу чары
+                }
+            }
+        }
+    }
+
+    /** Снимает все наши модификаторы чар со всех четырёх атрибутов. */
+    private void clearAttributes(ItemMeta meta) {
+        if (meta == null || !meta.hasAttributeModifiers()) {
+            return;
+        }
+        String namespace = key.getNamespace();
+        for (Attribute attribute : ATTRIBUTES.values()) {
+            Collection<AttributeModifier> present = meta.getAttributeModifiers(attribute);
+            if (present == null || present.isEmpty()) {
+                continue;
+            }
+            List<AttributeModifier> ours = new ArrayList<>();
+            for (AttributeModifier existing : present) {
+                NamespacedKey existingKey = existing.getKey();
+                if (existingKey.getNamespace().equals(namespace)
+                        && existingKey.getKey().startsWith(ATTRIBUTE_PREFIX)) {
+                    ours.add(existing);
+                }
+            }
+            for (AttributeModifier existing : ours) {
+                meta.removeAttributeModifier(attribute, existing);
+            }
+        }
+    }
+
+    /** Слот, к которому привязан модификатор: оружие — рука, броня — своя деталь. */
+    private static EquipmentSlotGroup slotGroupFor(ItemGroup group) {
+        if (group == null) {
+            return null;
+        }
+        return switch (group) {
+            case SWORD, AXE, BOW, CROSSBOW, PICKAXE, SHOVEL, HOE -> EquipmentSlotGroup.MAINHAND;
+            case HELMET -> EquipmentSlotGroup.HEAD;
+            case CHESTPLATE -> EquipmentSlotGroup.CHEST;
+            case LEGGINGS -> EquipmentSlotGroup.LEGS;
+            case BOOTS -> EquipmentSlotGroup.FEET;
+        };
+    }
+
+    /**
+     * Наша ли строка лора. Новые строки узнаются по «✶ ». Старые («✦ ») снимаем
+     * только если после маркера стоит имя известной чары и римский уровень:
+     * у TierForge тот же символ, но за ним идут названия свойств и числа.
+     */
+    private boolean isOurs(Component line) {
+        String plain = PlainTextComponentSerializer.plainText().serialize(line).trim();
+        if (plain.startsWith(LORE_MARKER)) {
+            return true;
+        }
+        if (!plain.startsWith(LEGACY_LORE_MARKER)) {
+            return false;
+        }
+        String rest = plain.substring(LEGACY_LORE_MARKER.length()).trim();
+        for (String name : enchantNames()) {
+            if (!rest.startsWith(name)) {
+                continue;
+            }
+            String tail = rest.substring(name.length()).trim();
+            if (tail.isEmpty() || tail.matches("[IVX]+")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Имена всех чар в текущей локали (кэш до перезагрузки плагина). */
+    private List<String> enchantNames() {
+        List<String> names = cachedNames;
+        if (names != null) {
+            return names;
+        }
+        List<String> built = new ArrayList<>();
+        for (EnchantDef def : EnchantRegistry.all()) {
+            String name = plugin.messages().plain("en." + def.id() + ".name").trim();
+            if (!name.isEmpty()) {
+                built.add(name);
+            }
+        }
+        built.sort((left, right) -> right.length() - left.length());
+        cachedNames = List.copyOf(built);
+        return cachedNames;
     }
 }

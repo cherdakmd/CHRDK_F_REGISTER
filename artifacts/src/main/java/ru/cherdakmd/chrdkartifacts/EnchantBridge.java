@@ -2,6 +2,7 @@ package ru.cherdakmd.chrdkartifacts;
 
 import org.bukkit.Bukkit;
 import org.bukkit.inventory.ItemStack;
+import ru.cherdakmd.chrdkenchants.EnchantDef;
 import ru.cherdakmd.chrdkenchants.EnchantService;
 import ru.cherdakmd.chrdkenchants.EnchantsPlugin;
 
@@ -41,7 +42,12 @@ final class EnchantBridge {
         return Bukkit.getPluginManager().isPluginEnabled("CHRDK_Enchants");
     }
 
-    /** Накатывает случайную кастомную чару второго ценового тира на предмет. */
+    /**
+     * Накатывает случайную кастомную чару второго ценового тира на предмет.
+     *
+     * <p>1.4.128: только светлые чары. «Хартия» — награда, и подсунуть ею
+     * проклятие было бы обманом; проклятия выпадают лишь со стола чар.</p>
+     */
     static Result roll(ItemStack item) {
         if (!available()) {
             return Result.unavailable();
@@ -51,7 +57,7 @@ final class EnchantBridge {
         if (service == null) {
             return Result.unavailable();
         }
-        EnchantService.RollResult rolled = service.rollOnto(item, 2);
+        EnchantService.RollResult rolled = service.rollOnto(item, 2, EnchantDef.Polarity.LIGHT);
         if (rolled == null) {
             return Result.noRoom();
         }

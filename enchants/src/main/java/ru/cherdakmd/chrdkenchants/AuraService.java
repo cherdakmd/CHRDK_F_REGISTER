@@ -21,12 +21,17 @@ import java.util.Map;
 /**
  * Периодические ауры: стремительные лапки, лягушачьи ноги, провидец (ночное зрение),
  * орлиный глаз (поджигает скрытых), лавоступ (магматическая корка по лаве).
+ *
+ * <p>1.4.128: сюда же переехали чары и проклятия, которым нужен «пульс» —
+ * «Живучесть» (регенерация), «Старатель» (спешка), «Тупой резец» (усталость),
+ * «Обжорство» (ускоренный голод) и «Проклятая кровь» (периодический урон).</p>
  */
 public final class AuraService {
 
     private static final long LAVA_CRUST_MILLIS = 10_000L;
 
     private final EnchantsPlugin plugin;
+    private final java.util.Random random = new java.util.Random();
     private BukkitTask task;
     /** Лава → магма (блок → момент возврата обратно). */
     private final Map<Block, Long> lavaCrust = new HashMap<>();
@@ -60,7 +65,86 @@ public final class AuraService {
         for (Player player : Bukkit.getOnlinePlayers()) {
             applyBootsAuras(player);
             applyHelmetAuras(player);
+            applyGearAuras(player);
         }
+    }
+
+    /* --------------------------- светлые чары и проклятия --------------------------- */
+
+    /**
+     * Ауры экипировки: жизнь, спешка, усталость, голод и проклятая кровь.
+     * Уровни брони берутся по максимуму — четыре «Живучести» не складываются.
+     */
+    private void applyGearAuras(Player player) {
+        Map<String, Integer> armor = new HashMap<>();
+        for (ItemStack piece : player.getInventory().getArmorContents()) {
+            if (piece == null) {
+                continue;
+            }
+            plugin.items().read(piece).forEach((id, level) ->
+                    armor.merge(id, level, Math::max));
+        }
+
+        // Живучесть: тихий регенерационный пульс, пока здоровье не полное
+        int vitality = armor.getOrDefault("vitality", 0);
+        if (vitality > 0 && player.getHealth() > 0 && player.getHealth() < maxHealth(player)) {
+            double heal = EnchantParams.fraction("vitality", vitality);
+            player.setHealth(Math.min(maxHealth(player), player.getHealth() + heal));
+        }
+
+        ItemStack hand = player.getInventory().getItemInMainHand();
+        Map<String, Integer> held = plugin.items().read(hand);
+
+        // Старатель: спешка при работе инструментом в руке
+        int prospector = held.getOrDefault("prospector", 0);
+        if (prospector > 0) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, 60,
+                    EnchantParams.hasteAmplifier(prospector), true, false, false));
+        }
+        // Тупой резец: инструмент тянет руки вниз
+        int dull = held.getOrDefault("dull_pick", 0);
+        if (dull > 0) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.MINING_FATIGUE, 60,
+                    EnchantParams.hasteAmplifier(dull), true, false, false));
+        }
+
+        // Обжорство: сытость тает быстрее (4.0 истощения = одно очко голода)
+        int gluttony = bestOnGear(player, "gluttony");
+        if (gluttony > 0) {
+            player.setExhaustion(Math.min(4.0f,
+                    player.getExhaustion() + EnchantParams.percent("gluttony", gluttony) / 400.0f));
+        }
+
+        // Проклятая кровь: раз в 5 секунд шанс потерять полсердца
+        int cursedBlood = bestOnGear(player, "cursed_blood");
+        if (cursedBlood > 0 && tickCounter % 5 == 0
+                && player.getHealth() > 1 && !player.isDead()) {
+            if (random.nextDouble() * 100 < EnchantParams.percent("cursed_blood", cursedBlood)) {
+                player.damage(1.0);
+                player.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR,
+                        player.getLocation().add(0, 1.2, 0), 6, 0.3, 0.3, 0.3, 0.02);
+            }
+        }
+    }
+
+    /** Лучший уровень чары по всей экипировке (броня + обе руки). */
+    private int bestOnGear(Player player, String id) {
+        int best = 0;
+        for (ItemStack piece : player.getInventory().getArmorContents()) {
+            if (piece != null) {
+                best = Math.max(best, plugin.items().read(piece).getOrDefault(id, 0));
+            }
+        }
+        best = Math.max(best, plugin.items().read(
+                player.getInventory().getItemInMainHand()).getOrDefault(id, 0));
+        best = Math.max(best, plugin.items().read(
+                player.getInventory().getItemInOffHand()).getOrDefault(id, 0));
+        return best;
+    }
+
+    private static double maxHealth(Player player) {
+        return player.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH) != null
+                ? player.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue() : 20.0;
     }
 
     /* ------------------------------- ботинки ------------------------------- */

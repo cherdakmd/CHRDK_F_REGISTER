@@ -1,14 +1,22 @@
 package ru.cherdakmd.chrdkenchants;
 
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.PrepareAnvilEvent;
 import org.bukkit.inventory.ItemStack;
+
+import java.util.Map;
 
 /**
  * Наковальня: предмет + книга кастомной чары = предмет с чарой. Проверки лимитов/конфликтов —
  * в {@link EnchantService#canApplyFromBook}; цена опыта зависит от редкости.
+ *
+ * <p>1.4.128: проклятие с наковальни накладывается так же, как светлая чара, но
+ * предупреждает игрока. Снять проклятие наковальней или другой книгой нельзя —
+ * для этого у админа есть {@code /enchantsadmin purify}.</p>
  */
 public final class AnvilApplyListener implements Listener {
 
@@ -51,5 +59,37 @@ public final class AnvilApplyListener implements Listener {
                 })
                 .mapToInt(Integer::intValue).max().orElse(2);
         event.getInventory().setRepairCost(rarityCost * maxLevel + 3);
+    }
+
+    /**
+     * Предупреждение в момент, когда игрок забирает из наковальни предмет,
+     * получивший новое проклятие. Считаем разницу «было → стало», поэтому
+     * повторная починка того же проклятия предупреждение не повторяет.
+     */
+    @EventHandler(ignoreCancelled = true)
+    public void onTakeResult(InventoryClickEvent event) {
+        if (!(event.getInventory() instanceof org.bukkit.inventory.AnvilInventory)) {
+            return;
+        }
+        if (event.getRawSlot() != 2 || !(event.getWhoClicked() instanceof Player player)) {
+            return;
+        }
+        ItemStack result = event.getCurrentItem();
+        ItemStack left = event.getInventory().getItem(0);
+        if (result == null || left == null || !result.hasItemMeta()) {
+            return;
+        }
+        Map<String, Integer> before = plugin.items().read(left);
+        Map<String, Integer> after = plugin.items().read(result);
+        boolean newCurse = after.entrySet().stream()
+                .anyMatch(entry -> EnchantRegistry.byId(entry.getKey()) != null
+                        && EnchantRegistry.byId(entry.getKey()).curse()
+                        && entry.getValue() > before.getOrDefault(entry.getKey(), 0));
+        if (!newCurse) {
+            return;
+        }
+        // клик ещё не перенёс предмет — предупреждаем следующим тиком
+        Bukkit.getScheduler().runTask(plugin,
+                () -> plugin.messages().send(player, "anvil-curse-applied"));
     }
 }

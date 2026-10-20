@@ -9,10 +9,12 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
-/** /enchants (книга-справочник, info по id) и /enchantsadmin (give, reload). */
+/** /enchants (книга-справочник, info по id) и /enchantsadmin (give, purify, reload). */
 public final class EnchantCommandHandler implements TabExecutor {
 
     private final EnchantsPlugin plugin;
@@ -60,11 +62,16 @@ public final class EnchantCommandHandler implements TabExecutor {
                 "name", plugin.messages().raw("en." + def.id() + ".name"),
                 "rarity", plugin.messages().raw(def.rarity().labelKey()),
                 "maxlevel", def.maxLevel());
+        plugin.messages().send(player, "info-polarity",
+                "polarity", plugin.messages().raw(def.polarity().labelKey()));
         plugin.messages().send(player, "info-items",
                 "items", plugin.gui().supportedLabel(def));
         if (def.conflictGroup() != null) {
             plugin.messages().send(player, "info-conflicts",
                     "conflicts", "");
+        }
+        if (def.curse()) {
+            plugin.messages().send(player, "info-curse-warning");
         }
         for (net.kyori.adventure.text.Component line
                 : plugin.messages().getList("en." + def.id() + ".lore")) {
@@ -111,6 +118,36 @@ public final class EnchantCommandHandler implements TabExecutor {
                     "level", level, "player", target.getName());
             return true;
         }
+        if (args.length >= 2 && "purify".equalsIgnoreCase(args[0])) {
+            Player target = Bukkit.getPlayerExact(args[1]);
+            if (target == null) {
+                plugin.messages().send(sender, "admin-offline", "player", args[1]);
+                return true;
+            }
+            ItemStack held = target.getInventory().getItemInMainHand();
+            if (held.getType().isAir()) {
+                plugin.messages().send(sender, "admin-purify-empty", "player", target.getName());
+                return true;
+            }
+            Map<String, Integer> enchants = new LinkedHashMap<>(plugin.items().read(held));
+            List<String> lifted = new ArrayList<>();
+            enchants.keySet().removeIf(id -> {
+                EnchantDef def = EnchantRegistry.byId(id);
+                if (def != null && def.curse()) {
+                    lifted.add(id);
+                    return true;
+                }
+                return false;
+            });
+            if (lifted.isEmpty()) {
+                plugin.messages().send(sender, "admin-purify-empty", "player", target.getName());
+                return true;
+            }
+            plugin.items().write(held, enchants);
+            plugin.messages().send(sender, "admin-purified",
+                    "count", lifted.size(), "player", target.getName());
+            return true;
+        }
         plugin.messages().sendList(sender, "admin-usage");
         return true;
     }
@@ -130,8 +167,10 @@ public final class EnchantCommandHandler implements TabExecutor {
             return matches;
         }
         if (args.length == 1) {
-            List.of("give", "reload").stream().filter(x -> x.startsWith(prefix)).forEach(matches::add);
-        } else if (args.length == 2 && "give".equalsIgnoreCase(args[0])) {
+            List.of("give", "purify", "reload").stream()
+                    .filter(x -> x.startsWith(prefix)).forEach(matches::add);
+        } else if (args.length == 2 && ("give".equalsIgnoreCase(args[0])
+                || "purify".equalsIgnoreCase(args[0]))) {
             Bukkit.getOnlinePlayers().stream().map(Player::getName)
                     .filter(name -> name.toLowerCase(Locale.ROOT).startsWith(prefix))
                     .forEach(matches::add);

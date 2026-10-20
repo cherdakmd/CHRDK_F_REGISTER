@@ -1,10 +1,12 @@
-# CHRDK_Enchants — имена/описания 30 чар (en.<id>.name, en.<id>.lore) и тексты UI.
+# CHRDK_Enchants — имена/описания 60 чар (en.<id>.name, en.<id>.lore) и тексты UI.
+# Проклятия лежат в той же секции en, цвет и знак задаются полярностью чары.
 enchants:
   no-api: "<red>Ядро CHRDK_F_REGISTER не найдено — чары недоступны.</red>"
   need-auth: "<red>Сначала войдите на сервер (/login).</red>"
-  table-added: "<light_purple>✦ Стол дарует эпическую чару: %name%!</light_purple>"
+  table-added: "<light_purple>✦ Стол дарует эпическую чару: %name% %levelroman%!</light_purple>"
+  table-cursed: "<dark_red>☠ Стол выплеснул проклятие: %name% %levelroman%!</dark_red>"
   anvil-capped: "<red>На предмете уже максимум чар (%max%) или они конфликтуют.</red>"
-  usage: "<gray>/enchants — книга с описанием всех 30 чар; /enchants info <id></gray>"
+  usage: "<gray>/enchants — книга всех 60 чар (светлые и проклятия); /enchants info <id></gray>"
   info-header: "<light_purple>✦ %name% <gray>(%rarity%, ур. I–%maxlevel%)</gray>"
   info-items: "<gray>Накладывается на: <yellow>%items%</yellow></gray>"
   info-conflicts: "<gray>Конфликтует с: <red>%conflicts%</red></gray>"
@@ -16,16 +18,30 @@ enchants:
   admin-reloaded: "<green>Конфигурация чар перезагружена.</green>"
   admin-usage:
     - "<gray><yellow>/enchantsadmin give <ник> <id> [уровень]</yellow> — выдать книгу</gray>"
+    - "<gray><yellow>/enchantsadmin purify <ник></yellow> — снять проклятия с предмета в руке</gray>"
     - "<gray><yellow>/enchantsadmin reload</yellow> — перечитать конфиг</gray>"
+  admin-purified: "<green>С предмета игрока %player% снято проклятий: %count%.</green>"
+  admin-purify-empty: "<gray>На предмете в руке игрока %player% нет проклятий.</gray>"
+  anvil-curse-applied: "<dark_red>☠ Проклятие вросло в предмет: снять его наковальней нельзя.</dark_red>"
   phoenix-armed: "<gold>✦ Феникс готов вспыхнуть.</gold>"
   phoenix-consumed: "<gold>☀ Феникс воскресил вас! Перезарядка %seconds% сек.</gold>"
   laststand-triggered: "<yellow>✦ Последний шанс: держитесь! (перезарядка %seconds% сек)</yellow>"
-  gui-title: "Эпичные чары — 30 шт."
+  gui-title: "Чары CHRDK — стр. %page%/%pages%"
+  gui-enchant-lore-polarity: "<gray>Тип: %polarity%</gray>"
   gui-enchant-lore-rarity: "<gray>Редкость: %rarity% · макс. ур.: %maxlevel%</gray>"
   gui-enchant-lore-items: "<gray>На: %items%</gray>"
   gui-book-name: "<light_purple>✦ Книга чар: %name%</light_purple>"
-  lore-line: "<dark_purple>✦ %name% <gray>%levelroman%</gray>"
-  gui-footer: "<gray>Источники: стол зачарований и жители-библиотекари.</gray>"
+  gui-book-name-curse: "<dark_red>☠ Книга проклятия: %name%</dark_red>"
+  lore-line: "<dark_purple>✶ %name% <gray>%levelroman%</gray>"
+  lore-line-curse: "<dark_red>✶ %name% <gray>%levelroman%</gray></dark_red>"
+  gui-footer: "<gray>Источники: стол зачарований и жители-библиотекари. Стрелки — страницы.</gray>"
+  gui-prev: "<yellow>← Светлые чары</yellow>"
+  gui-next: "<red>Проклятия →</red>"
+  info-polarity: "<gray>Тип: %polarity%</gray>"
+  info-curse-warning: "<dark_red>Осторожно: проклятие вешает на предмет постоянный минус.</dark_red>"
+  curse-jinxed: "<dark_red>☠ Порча: добыча рассыпалась в прах.</dark_red>"
+  polarity-light: "<light_purple>светлая чара</light_purple>"
+  polarity-curse: "<dark_red>проклятие</dark_red>"
   rarity-common: "<gray>Обычная</gray>"
   rarity-rare: "<aqua>Редкая</aqua>"
   rarity-epic: "<light_purple>Эпическая</light_purple>"
@@ -38,6 +54,8 @@ enchants:
   item-boots: "ботинки"
   item-armor: "любая броня"
   item-tool: "кирки/лопаты/топоры"
+  item-any: "любой предмет"
+  item-crossbow: "арбалеты"
   # --- 30 чар ---
   en:
     thunderstrike:
@@ -130,3 +148,97 @@ enchants:
     midas:
       name: "Рука Мидаса"
       lore: "<gold>Иногда удваивает добычу минералов.</gold>"
+
+    # --- 15 светлых чар (1.4.128) ---
+    keen_edge:
+      name: "Острый край"
+      lore: "<gray>+4–8% к урону оружия.</gray>"
+    frenzy:
+      name: "Ярость"
+      lore: "<gray>На последних сердцах (ниже половины) бьёт заметно сильнее.</gray>"
+    plunder:
+      name: "Мародёр"
+      lore: "<gray>С убитых падает больше добычи.</gray>"
+    duelist:
+      name: "Дуэлянт"
+      lore: "<gray>+8–16% урона по игрокам — для честных дуэлей.</gray>"
+    steady_aim:
+      name: "Верный прицел"
+      lore: "<gray>+8–16% к урону стрел.</gray>"
+    quickdraw:
+      name: "Скорый выстрел"
+      lore: "<gray>Снаряд летит быстрее — цель не успевает уйти.</gray>"
+    bulwark:
+      name: "Оплот"
+      lore: "<gray>+5–9% к броне.</gray>"
+    second_skin:
+      name: "Вторая кожа"
+      lore: "<gray>Любой входящий урон мягче на 4–8%.</gray>"
+    vitality:
+      name: "Живучесть"
+      lore: "<gray>Сердце по капле восстанавливается само.</gray>"
+    grounded:
+      name: "Устойчивость"
+      lore: "<gray>Урон от падения ниже на 10–20%.</gray>"
+    lightfoot:
+      name: "Лёгкая поступь"
+      lore: "<gray>После убийства дарует скорость на несколько секунд.</gray>"
+    featherstep:
+      name: "Пёрышко"
+      lore: "<gray>+4–8% к скорости передвижения.</gray>"
+    prospector:
+      name: "Старатель"
+      lore: "<gray>Спешка, пока инструмент в руке.</gray>"
+    fortunate:
+      name: "Золотая жила"
+      lore: "<gray>Шанс удвоить добычу руды.</gray>"
+    scholar:
+      name: "Книжник"
+      lore: "<gray>+5–11% к получаемому опыту.</gray>"
+
+    # --- 15 проклятий (1.4.128) ---
+    dull_blade:
+      name: "Тупое лезвие"
+      lore: "<red>−5–11% к урону оружия.</red>"
+    clumsy_swing:
+      name: "Неуклюжий замах"
+      lore: "<red>−8–16% к скорости атаки.</red>"
+    brittle:
+      name: "Хрупкость"
+      lore: "<red>Предмет изнашивается на 15–35% быстрее.</red>"
+    weak_draw:
+      name: "Слабый натяг"
+      lore: "<red>−8–16% к урону стрел.</red>"
+    sluggish_shot:
+      name: "Вялый выстрел"
+      lore: "<red>Снаряд летит медленнее.</red>"
+    thin_padding:
+      name: "Тонкая подкладка"
+      lore: "<red>−4–8% к броне.</red>"
+    exposed:
+      name: "Открытость"
+      lore: "<red>+8–16% входящего урона.</red>"
+    heavy_hull:
+      name: "Тяжёлый корпус"
+      lore: "<red>−10–20% к скорости передвижения.</red>"
+    fire_prone:
+      name: "Боязнь огня"
+      lore: "<red>Огонь и лава жгут сильнее и дольше.</red>"
+    fragile_bones:
+      name: "Хрупкие кости"
+      lore: "<red>Урон от падения выше на 10–20%.</red>"
+    dull_pick:
+      name: "Тупой резец"
+      lore: "<red>Усталость при работе инструментом.</red>"
+    jinxed:
+      name: "Порча"
+      lore: "<red>Добыча может рассыпаться в прах.</red>"
+    gluttony:
+      name: "Обжорство"
+      lore: "<red>Голод наступает быстрее.</red>"
+    slow_learner:
+      name: "Тугодум"
+      lore: "<red>−10–25% к получаемому опыту.</red>"
+    cursed_blood:
+      name: "Проклятая кровь"
+      lore: "<red>Раз в пять секунд кровь может отнять полсердца.</red>"

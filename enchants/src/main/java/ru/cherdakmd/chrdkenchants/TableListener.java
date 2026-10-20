@@ -10,6 +10,11 @@ import org.bukkit.inventory.ItemStack;
 /**
  * Источник: зачаровательный стол. При ванильном зачаровании с шансом
  * (масштабируется ценой 1..3 лазурита) добавляется одна кастомная чара.
+ *
+ * <p>1.4.128: после срабатывания шанса отдельный бросок решает, будет ли это
+ * светлая чара или проклятие ({@code sources.table.curse-chance-percent}).
+ * Если подходящих проклятий нет (выключены или предмет не тот), честно
+ * откатываемся на светлый пул — игрок не остаётся без награды.</p>
  */
 public final class TableListener implements Listener {
 
@@ -30,11 +35,21 @@ public final class TableListener implements Listener {
         if (plugin.service().random().nextDouble() >= chance) return;
 
         ItemStack item = event.getItem();
-        EnchantService.RollResult roll = plugin.service().rollOnto(item, tier);
+        EnchantDef.Polarity polarity = EnchantDef.Polarity.LIGHT;
+        if (plugin.config().cursesEnabled()
+                && plugin.service().random().nextInt(100)
+                < plugin.config().tableCurseChancePercent()) {
+            polarity = EnchantDef.Polarity.CURSE;
+        }
+        EnchantService.RollResult roll = plugin.service().rollOnto(item, tier, polarity);
+        if (roll == null && polarity == EnchantDef.Polarity.CURSE) {
+            // проклятий под этот предмет нет — не наказываем игрока пустотой
+            roll = plugin.service().rollOnto(item, tier, EnchantDef.Polarity.LIGHT);
+        }
         if (roll == null) return;
-        plugin.messages().send(player, "table-added",
+        plugin.messages().send(player, roll.def().curse() ? "table-cursed" : "table-added",
                 "name", plugin.messages().raw("en." + roll.def().id() + ".name"),
-                "levelroman", "I");
+                "levelroman", EnchantCodec.roman(roll.level()));
         // маленький колдовской флёр: убираем известную гибель удачи
         try {
             player.spawnParticle(org.bukkit.Particle.WITCH, player.getLocation().add(0, 1.2, 0),

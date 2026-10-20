@@ -11,6 +11,7 @@ import org.bukkit.inventory.EquipmentSlotGroup;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
+import ru.cherdakmd.chrdkregister.api.ChrdkEnchantsApi;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,6 +36,8 @@ import java.util.Random;
  * а не затирают друг друга. Волна 17 — универсальные аффиксы (15 хороших и
  * 15 плохих, строки ◆/✖, детерминированы по uid и тиру) и случайные ванильные
  * зачарования, которые предмет иногда получает вместе с редкостью.
+ * С 1.4.128 (волна 18) — ещё и кастомные чары CHRDK_Enchants через мягкую
+ * зависимость {@link ChrdkEnchantsApi}: светлые и, на высоких тирах, проклятия.
  */
 public final class TierItems {
 
@@ -172,6 +175,9 @@ public final class TierItems {
         meta.getPersistentDataContainer().set(modifiersKey, PersistentDataType.STRING,
                 modifierStamp());
         item.setItemMeta(meta);
+        // волна 18: кастомные чары — после setItemMeta, потому что API аддона
+        // читает и пишет готовый ItemStack, а не ItemMeta
+        applyCustomEnchants(item, tier, uid);
     }
 
     /** Предмет — «неопознанный» (редкость скрыта до попадания в инвентарь)? */
@@ -789,6 +795,37 @@ public final class TierItems {
         }
         meta.getPersistentDataContainer()
                 .set(enchantStampKey, PersistentDataType.STRING, marker);
+    }
+
+    /**
+     * Кастомные чары CHRDK_Enchants (волна 18): один-два броска с шансом выше
+     * для старших тиров. Бросок детерминирован по uid и тиру, поэтому превью
+     * крафта не переролливается.
+     *
+     * <p>Проклятия выдаются только с {@code enchantments.custom.curse-min-tier}
+     * (по умолчанию эпический) и только если сам аддон чар их не выключил:
+     * список {@code curseIds()} пуст при {@code rules.curses-enabled: false}.
+     * Предмет, у которого кастомные чары уже есть (выданы раньше или наложены
+     * игроком), не трогаем — ни добавляем, ни снимаем.</p>
+     */
+    private void applyCustomEnchants(ItemStack item, TierDef.Snapshot tier, String uid) {
+        TierEnchantConfig config = plugin.config().enchants();
+        ChrdkEnchantsApi api = plugin.enchantsApi();
+        if (api == null || config.customItemLimit() <= 0 || uid == null || uid.isBlank()) {
+            return;
+        }
+        ItemKind kind = ItemKind.classify(item.getType().name());
+        if (kind == null || api.count(item) > 0) {
+            return;
+        }
+        int tierIndex = TierDef.indexOf(tier.id());
+        Random random = new Random(TierAffixes.seed(uid, tier.id(), kind, 0x43A5EEDL));
+        List<TierCustomEnchants.Pick> picks = TierCustomEnchants.roll(tierIndex, random,
+                api.lightIds(), api.curseIds(), config, api::maxLevel);
+        for (TierCustomEnchants.Pick pick : picks) {
+            // отказ (вид предмета, лимит аддона, конфликт) — просто пропускаем кандидата
+            api.apply(item, pick.id(), pick.level());
+        }
     }
 
     /** Зачарование по ключу реестра ({@code sharpness}); null — такого нет. */

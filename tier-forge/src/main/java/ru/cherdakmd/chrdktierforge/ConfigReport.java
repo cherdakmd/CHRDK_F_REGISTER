@@ -69,6 +69,15 @@ final class ConfigReport {
                 + config.enchants().maxPerItem() + " чар уровня ≤ "
                 + config.enchants().maxLevel()
                 : "выключены"));
+        out.add("кастомные чары (CHRDK_Enchants): " + (config.enchants().customItemLimit() <= 0
+                ? "выключены"
+                : "шанс от " + config.enchants().customChancePercent() + "% (+"
+                + TierEnchants.PER_TIER_BONUS + "% за тир), до "
+                + config.enchants().customItemLimit() + " на предмет"
+                + (config.enchants().customCurseChancePercent() <= 0
+                ? ", без проклятий"
+                : ", проклятия " + config.enchants().customCurseChancePercent()
+                + "% с тира " + TierDef.LADDER.get(config.enchants().customCurseMinTier()))));
         out.add("эффекты тиров: " + (config.visuals().enabled()
                 ? "аура каждые " + config.visuals().intervalTicks() + " тиков, "
                 + config.visuals().tiersWithParticles() + " тиров с частицами"

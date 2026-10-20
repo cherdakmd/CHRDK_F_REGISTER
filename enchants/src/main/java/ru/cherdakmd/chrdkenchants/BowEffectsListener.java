@@ -60,6 +60,19 @@ public final class BowEffectsListener implements Listener {
         if (enchants.containsKey("sniper")) {
             arrowOrigins.put(arrow.getUniqueId(), shooter.getLocation().clone());
         }
+        // 1.4.128: «Скорый выстрел» разгоняет снаряд, «Вялый выстрел» — тормозит.
+        double speed = 1.0;
+        int quickdraw = enchants.getOrDefault("quickdraw", 0);
+        if (quickdraw > 0) {
+            speed += EnchantParams.percent("quickdraw", quickdraw) / 200.0;
+        }
+        int sluggish = enchants.getOrDefault("sluggish_shot", 0);
+        if (sluggish > 0) {
+            speed -= EnchantParams.percent("sluggish_shot", sluggish) / 100.0;
+        }
+        if (speed != 1.0) {
+            arrow.setVelocity(arrow.getVelocity().multiply(Math.max(0.35, speed)));
+        }
     }
 
     /** Бонус снайпера и охотника за головами — при уроне от стрелы. */
@@ -88,6 +101,19 @@ public final class BowEffectsListener implements Listener {
                 && event.getEntity() instanceof Player) {
             event.setDamage(event.getDamage() * (1
                     + EnchantParams.percent("headhunter", 1) / 100.0));
+        }
+        // 1.4.128: «Верный прицел» усиливает стрелы, «Слабый натяг» — ослабляет.
+        double aim = 1.0;
+        int steady = enchants.getOrDefault("steady_aim", 0);
+        if (steady > 0) {
+            aim += EnchantParams.percent("steady_aim", steady) / 100.0;
+        }
+        int weak = enchants.getOrDefault("weak_draw", 0);
+        if (weak > 0) {
+            aim -= EnchantParams.percent("weak_draw", weak) / 100.0;
+        }
+        if (aim != 1.0) {
+            event.setDamage(event.getDamage() * Math.max(0.25, aim));
         }
     }
 

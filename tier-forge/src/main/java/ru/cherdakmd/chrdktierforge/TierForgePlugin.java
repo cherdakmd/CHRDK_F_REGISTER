@@ -6,6 +6,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.cherdakmd.chrdkregister.Messages;
+import ru.cherdakmd.chrdkregister.api.ChrdkEnchantsApi;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 
 import java.io.File;
@@ -241,6 +242,23 @@ public final class TierForgePlugin extends JavaPlugin {
 
     public ChrdkRegisterApi coreApi() {
         return coreApi;
+    }
+
+    /**
+     * Кастомные чары CHRDK_Enchants (1.4.128) — мягкая зависимость.
+     *
+     * <p>Сервис ищется при каждом обращении: аддон чар может загрузиться позже
+     * тир-форджа, выгрузиться при {@code /reload} или вообще отсутствовать.
+     * {@code null} — кастомных чар на тир-предметах не будет, остальной тир
+     * работает как обычно.</p>
+     */
+    public ChrdkEnchantsApi enchantsApi() {
+        try {
+            return Bukkit.getServicesManager().load(ChrdkEnchantsApi.class);
+        } catch (RuntimeException | LinkageError error) {
+            // аддон чар старой версии без API — тир просто остаётся без кастомных чар
+            return null;
+        }
     }
 
     public Messages messages() {

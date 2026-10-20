@@ -5,6 +5,7 @@ api-version: '26.3'
 description: "Тир-предметы в духе Terraria: случайная редкость крафта брони, оружия и инструментов"
 author: cherdakmd
 depend: [CHRDK_Core]
+softdepend: [CHRDK_Enchants]
 commands:
   tiers:
     description: Таблица редкостей крафта и шансов
