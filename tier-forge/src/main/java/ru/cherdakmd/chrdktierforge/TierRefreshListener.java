@@ -15,7 +15,8 @@ import org.bukkit.inventory.ItemStack;
  * предметы «задним числом» в сундуках нельзя, поэтому атрибуты пересобираются
  * лениво: при входе игрока (весь инвентарь, включая броню и левую руку) и при
  * смене слота. Имя, лор, кличка и уровни улучшений при этом не трогаются —
- * {@link TierItems#refreshTierModifiers} правит только модификаторы.</p>
+ * {@link TierItems#refreshTierModifiers} правит только модификаторы. С 1.4.119
+ * тот же проход ставит блеск по стилю тира — без пересборки имени и лора.</p>
  */
 public final class TierRefreshListener implements Listener {
 
