@@ -2,7 +2,9 @@ package ru.cherdakmd.chrdkcosmetics;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.function.Predicate;
 
 /** Определения косметических эффектов из config.yml — чистый парсинг для тестов. */
 final class CosmeticsDefs {
@@ -10,9 +12,15 @@ final class CosmeticsDefs {
     private CosmeticsDefs() {
     }
 
-    /** Один шлейф частиц. id нормализуется в нижний регистр. */
+    /**
+     * Один шлейф частиц. id нормализуется в нижний регистр.
+     *
+     * <p>{@code product} — id товара каталога ядра, который открывает шлейф
+     * ({@code /pass shopbuy}). Если в конфиге поле не задано, берётся
+     * {@code trail-<id>}: так товары и шлейфы совпадают без лишней настройки.</p>
+     */
     record TrailDef(String id, String displayName, String particle, int count,
-                    double spread, double speed) {
+                    double spread, double speed, String product) {
     }
 
     /** Параметры входа-торжества. */
@@ -36,13 +44,17 @@ final class CosmeticsDefs {
             }
             Object nameRaw = entry.get("name");
             String name = nameRaw == null ? id : String.valueOf(nameRaw);
+            String product = norm(entry.get("product"));
+            if (product.isEmpty()) {
+                product = "trail-" + id;
+            }
             int count = clamp(intOf(entry.get("count"), 2), 1, 50);
             double spread = doubleOf(entry.get("spread"), 0.2);
             double speed = doubleOf(entry.get("speed"), 0.0);
             if (out.stream().anyMatch(def -> def.id().equals(id))) {
                 continue; // дубликаты id молча игнорируем
             }
-            out.add(new TrailDef(id, name, particle, count, spread, speed));
+            out.add(new TrailDef(id, name, particle, count, spread, speed, product));
         }
         return List.copyOf(out);
     }
@@ -72,11 +84,40 @@ final class CosmeticsDefs {
         return null;
     }
 
+    /**
+     * Открыт ли шлейф игроку — чистая логика для теста.
+     *
+     * <p>Порядок: проходка открывает всё (как и раньше), покупка открывает один
+     * шлейф или весь набор. {@code passOnly: false} — косметика бесплатна для всех.</p>
+     *
+     * @param owned проверка «куплен ли товар с таким id и не истёк ли срок»
+     * @param packProducts товары-наборы, открывающие сразу все шлейфы
+     */
+    static boolean unlocked(TrailDef def, boolean passOnly, boolean hasPass,
+                            Predicate<String> owned, List<String> packProducts) {
+        if (!passOnly || hasPass) {
+            return true;
+        }
+        if (def == null || owned == null) {
+            return false;
+        }
+        if (!def.product().isEmpty() && owned.test(def.product())) {
+            return true;
+        }
+        if (packProducts != null) {
+            for (String pack : packProducts) {
+                if (pack != null && !pack.isBlank()
+                        && owned.test(pack.trim().toLowerCase(Locale.ROOT))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     /** Решение о показе шлейфа за тик — чистая логика для теста. */
-    static boolean trailAllowed(boolean trailsEnabled, boolean passOnly, boolean hasPass,
-                                String selectedId) {
-        return trailsEnabled && selectedId != null && !selectedId.isBlank()
-                && (!passOnly || hasPass);
+    static boolean trailAllowed(boolean trailsEnabled, boolean unlocked, String selectedId) {
+        return trailsEnabled && unlocked && selectedId != null && !selectedId.isBlank();
     }
 
     private static String norm(Object value) {

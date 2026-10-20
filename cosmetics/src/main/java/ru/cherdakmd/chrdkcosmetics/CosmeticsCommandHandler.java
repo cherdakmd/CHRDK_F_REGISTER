@@ -32,12 +32,6 @@ final class CosmeticsCommandHandler implements CommandExecutor, TabCompleter {
             plugin.messages().send(sender, "usage");
             return true;
         }
-        if (plugin.config().passOnly()
-                && (plugin.coreApi() == null
-                || !plugin.coreApi().hasActivePass(player.getName()))) {
-            plugin.messages().send(sender, "denied");
-            return true;
-        }
         if (args.length == 0 || "list".equalsIgnoreCase(args[0])) {
             showList(player);
             return true;
@@ -56,6 +50,11 @@ final class CosmeticsCommandHandler implements CommandExecutor, TabCompleter {
             plugin.messages().send(sender, "unknown", "id", args[0]);
             return true;
         }
+        // Сначала доступ: иначе игрок без проходки включил бы шлейф и удивился тишине.
+        if (!plugin.unlocked(player.getName(), def)) {
+            plugin.messages().send(sender, "locked", "name", def.displayName());
+            return true;
+        }
         if (def.id().equals(plugin.store().selectionOf(player.getUniqueId()))) {
             plugin.messages().send(sender, "already");
             return true;
@@ -72,11 +71,18 @@ final class CosmeticsCommandHandler implements CommandExecutor, TabCompleter {
             return;
         }
         String selected = plugin.store().selectionOf(player.getUniqueId());
+        boolean hasLocked = false;
         for (CosmeticsDefs.TrailDef def : plugin.config().trails()) {
-            plugin.messages().send(player, "line",
+            boolean open = plugin.unlocked(player.getName(), def);
+            hasLocked |= !open;
+            String key = open ? "line" : "line-locked";
+            plugin.messages().send(player, key,
                     "state", plugin.messages().raw(
-                            def.id().equals(selected) ? "state-on" : "state-off"),
+                            !open ? "state-locked" : def.id().equals(selected) ? "state-on" : "state-off"),
                     "name", def.displayName(), "id", def.id());
+        }
+        if (hasLocked) {
+            plugin.messages().send(player, "hint-locked");
         }
     }
 

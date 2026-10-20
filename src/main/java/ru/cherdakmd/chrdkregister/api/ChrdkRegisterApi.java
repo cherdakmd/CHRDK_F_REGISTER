@@ -28,7 +28,7 @@ import java.util.Optional;
 public interface ChrdkRegisterApi {
 
     /** Версия контракта API. Растёт при расширении (добавлении методов/событий). */
-    int API_VERSION = 3;
+    int API_VERSION = 4;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -77,6 +77,28 @@ public interface ChrdkRegisterApi {
      * Default no-op keeps third-party API implementations source compatible. No webhook credentials leave the core.
      */
     default void notifyEvent(String event, String title, String description, String severity) { }
+
+    /* --------------------------- покупки каталога --------------------------- */
+
+    /**
+     * Срок действия покупки каталога ({@code shop.products}) в миллисекундах Unix.
+     * Работает и для оффлайн-ников. {@code 0} — товар не куплен или уже истёк.
+     *
+     * <p>Метод появился в API v4; значение по умолчанию {@code 0} сохраняет
+     * совместимость со сторонними реализациями интерфейса.</p>
+     */
+    default long entitlementUntil(String playerName, String productId) {
+        return 0L;
+    }
+
+    /**
+     * Активна ли покупка каталога: товар куплен и срок ещё не вышел.
+     * Аддоны используют это для своих возможностей — например, CHRDK_Cosmetics
+     * открывает по покупке отдельный шлейф.
+     */
+    default boolean hasEntitlement(String playerName, String productId) {
+        return entitlementUntil(playerName, productId) > System.currentTimeMillis();
+    }
 
     /* ------------------------------ интеграции ------------------------------ */
 

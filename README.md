@@ -1333,20 +1333,20 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.110-SNAPSHOT.jar`, аддон
-CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.110-SNAPSHOT.jar`, реферальный —
-`referrals/build/libs/chrdk-referrals-1.4.110-SNAPSHOT.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.110-SNAPSHOT.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.110-SNAPSHOT.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.110-SNAPSHOT.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.110-SNAPSHOT.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.110-SNAPSHOT.jar` (хартия чар — при установленном аддоне чар), общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.110-SNAPSHOT.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.110-SNAPSHOT.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.110-SNAPSHOT.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.110-SNAPSHOT.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.110-SNAPSHOT.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.110-SNAPSHOT.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.111-SNAPSHOT.jar`, аддон
+CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.111-SNAPSHOT.jar`, реферальный —
+`referrals/build/libs/chrdk-referrals-1.4.111-SNAPSHOT.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.111-SNAPSHOT.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.111-SNAPSHOT.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.111-SNAPSHOT.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.111-SNAPSHOT.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.111-SNAPSHOT.jar` (хартия чар — при установленном аддоне чар), общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.111-SNAPSHOT.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.111-SNAPSHOT.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.111-SNAPSHOT.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.111-SNAPSHOT.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.111-SNAPSHOT.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.111-SNAPSHOT.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). Оба JAR прикладываются к каждому релизу на GitHub.
 
 ---
@@ -3154,7 +3154,7 @@ Discord-интеграция и её настройки не изменены.
 ### CHRDK_BattlePass: снапшот 1.4.109-SNAPSHOT — 25 улучшений
 
 **Это снапшот, а не релиз.** Версия в `gradle.properties` — `1.4.109-SNAPSHOT`,
-JAR-файлы собираются как `chrdk-*-1.4.110-SNAPSHOT.jar`. Тег и GitHub-релиз не
+JAR-файлы собираются как `chrdk-*-1.4.109-SNAPSHOT.jar`. Тег и GitHub-релиз не
 создаются; сборка доступна как артефакт CI и в `build/libs` после `./gradlew build`.
 Обновлять прод-сервер снапшотом стоит только для проверки — после проверки
 выпустим обычный релиз. Готовые JAR-файлы всех модулей этой версии лежат одним
@@ -3345,3 +3345,75 @@ shop:
 **Чего здесь нет и не будет:** продажи ресурсов, алмазов, снаряжения,
 зачарований и влияния на исход PvP/ивентов. Потолки на дома и сроки — часть
 правила, а не временная настройка.
+
+### CHRDK_Cosmetics: шлейфы поштучно — снапшот 1.4.111-SNAPSHOT
+
+Волна 2 монетизации: косметика стала товаром. Раньше все шлейфы открывала
+только проходка — теперь любой шлейф можно купить отдельно, а набор из пяти
+дешевле поштучной покупки. Игровой силы это не даёт: частицы видны только
+владельцу и не влияют ни на бой, ни на скрытность.
+
+**Товары** (секция `shop.products` в ядре)
+
+| id | Цена | Срок | Что открывает |
+|---|---|---|---|
+| `trail-flame` | 59 ₽ | 30 дн. | огненный шлейф |
+| `trail-hearts` | 59 ₽ | 30 дн. | сердечки |
+| `trail-notes` | 59 ₽ | 30 дн. | ноты |
+| `trail-sparkles` | 69 ₽ | 30 дн. | искры Энда |
+| `trail-magic` | 69 ₽ | 30 дн. | ведьмина магия |
+| `trails-pack` | 199 ₽ | 30 дн. | все пять шлейфов (поштучно — 315 ₽) |
+
+Карточки на витрине TradeMC получают команды:
+
+```
+pass shopbuy %username% trail-flame
+pass shopbuy %username% trail-hearts
+pass shopbuy %username% trail-notes
+pass shopbuy %username% trail-sparkles
+pass shopbuy %username% trail-magic
+pass shopbuy %username% trails-pack
+```
+
+**Как это работает**
+
+- Товар косметики — «чистое право»: ни группы LuckPerms, ни разметки ника.
+  Срок хранится в аккаунте, как у остальных товаров каталога.
+- Аддон `CHRDK_Cosmetics` спрашивает у ядра `hasEntitlement(player, product)`
+  (API v4). Купил шлейф — он открыт и без проходки; проходка по-прежнему
+  открывает все шлейфы сразу.
+- Набор задаётся в `cosmetics/config.yml` → `shop.pack-products`; шлейф знает
+  свой товар через поле `product` (по умолчанию `trail-<id>`).
+- `/cosmetics list` показывает замок 🔒 у закрытых шлейфов и подсказку, где их
+  купить. Список открыт всем — витрина должна продавать.
+- Кончился срок — шлейф просто перестаёт рисоваться, выбор игрока сохраняется:
+  после продления эффект включается сам.
+- Выключить продажу косметики можно двумя способами: `cosmetics.shop.enabled:
+  false` (покупки не учитываются) или убрать товары из каталога ядра.
+
+**Конфиг аддона**
+
+```yaml
+cosmetics:
+  access-pass-only: true      # проходка открывает все шлейфы
+  shop:
+    enabled: true             # учитывать покупки каталога ядра
+    pack-products:            # товары-наборы: открывают сразу всё
+      - trails-pack
+  trail:
+    defs:
+      - id: flame
+        product: trail-flame  # id товара из shop.products ядра
+        particle: flame
+```
+
+**Тексты:** `locked`, `line-locked`, `state-locked`, `hint-locked` в
+`cosmetics/messages.yml`. Ключ `denied` убран: список шлейфов теперь виден
+всем, а отказ выдаётся только при выборе закрытого эффекта.
+
+**Тесты:** `CosmeticsDefsTest` — разбор `product`, приоритет проходки, покупка
+одного шлейфа, набор, свободный режим (12 `@Test` в двух классах аддона).
+Проверка разметки ника и методы API покрыты тестами ядра.
+
+**Что осталось за кадром:** косметика не продаёт преимуществ — шлейф виден
+только самому игроку, частицы не мешают другим и не выдают позицию в PvP.

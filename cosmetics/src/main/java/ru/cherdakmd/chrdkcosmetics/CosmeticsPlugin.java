@@ -32,7 +32,8 @@ public final class CosmeticsPlugin extends JavaPlugin implements Listener {
     private BukkitTask trailTask;
 
     /** Неизменяемый снимок конфига. */
-    record CosmeticsConfig(boolean passOnly, List<CosmeticsDefs.TrailDef> trails,
+    record CosmeticsConfig(boolean passOnly, boolean shopEnabled, List<String> packProducts,
+                           List<CosmeticsDefs.TrailDef> trails,
                            int everyTicks, CosmeticsDefs.JoinEffect joinEffect) {
     }
 
@@ -52,6 +53,7 @@ public final class CosmeticsPlugin extends JavaPlugin implements Listener {
             command.setTabCompleter(handler);
         }
         getLogger().info("CHRDK_Cosmetics включён: шлейфов " + config.trails().size()
+                + ", покупки " + (config.shopEnabled() ? "вкл" : "выкл")
                 + ", вход-эффект " + (config.joinEffect().enabled() ? "вкл" : "выкл") + ".");
     }
 
@@ -86,8 +88,17 @@ public final class CosmeticsPlugin extends JavaPlugin implements Listener {
                 ? getConfig().getConfigurationSection("cosmetics.join-effect").getValues(false)
                 : Map.of();
 
+        List<String> packs = new ArrayList<>();
+        for (String pack : getConfig().getStringList("cosmetics.shop.pack-products")) {
+            if (pack != null && !pack.isBlank()) {
+                packs.add(pack.trim().toLowerCase(java.util.Locale.ROOT));
+            }
+        }
+
         this.config = new CosmeticsConfig(
                 getConfig().getBoolean("cosmetics.access-pass-only", true),
+                getConfig().getBoolean("cosmetics.shop.enabled", true),
+                List.copyOf(packs),
                 trails,
                 Math.max(2, getConfig().getInt("cosmetics.trail.every-ticks", 4)),
                 CosmeticsDefs.parseJoinEffect(joinRaw));
@@ -109,13 +120,12 @@ public final class CosmeticsPlugin extends JavaPlugin implements Listener {
     private void spawnTrails() {
         for (Player player : Bukkit.getOnlinePlayers()) {
             String selection = store.selectionOf(player.getUniqueId());
-            boolean hasPass = coreApi != null && coreApi.hasActivePass(player.getName());
-            if (!CosmeticsDefs.trailAllowed(!config.trails().isEmpty(), config.passOnly(),
-                    hasPass, selection)) {
-                continue;
-            }
             CosmeticsDefs.TrailDef def = CosmeticsDefs.find(config.trails(), selection);
             if (def == null || player.isInsideVehicle()) {
+                continue;
+            }
+            if (!CosmeticsDefs.trailAllowed(!config.trails().isEmpty(),
+                    unlocked(player.getName(), def), selection)) {
                 continue;
             }
             Particle particle = resolveParticle(def.particle());
@@ -152,6 +162,18 @@ public final class CosmeticsPlugin extends JavaPlugin implements Listener {
                         effect.particleCount(), 0.4, 0.8, 0.4, 0.05);
             }
         });
+    }
+
+    /**
+     * Открыт ли шлейф игроку: проходка (если {@code access-pass-only}) либо покупка
+     * в каталоге ядра. Покупки проверяются через API v4 — оффлайн-данные, без Bukkit.
+     */
+    boolean unlocked(String playerName, CosmeticsDefs.TrailDef def) {
+        boolean hasPass = coreApi != null && coreApi.hasActivePass(playerName);
+        boolean shop = config.shopEnabled() && coreApi != null;
+        return CosmeticsDefs.unlocked(def, config.passOnly(), hasPass,
+                id -> shop && coreApi.hasEntitlement(playerName, id),
+                shop ? config.packProducts() : List.of());
     }
 
     static Particle resolveParticle(String id) {

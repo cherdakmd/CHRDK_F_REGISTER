@@ -81,6 +81,16 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
     }
 
     @Override
+    public long entitlementUntil(String playerName, String productId) {
+        return accessManager.store().entitlementUntil(playerName, productId);
+    }
+
+    @Override
+    public boolean hasEntitlement(String playerName, String productId) {
+        return entitlementUntil(playerName, productId) > System.currentTimeMillis();
+    }
+
+    @Override
     public void notifyEvent(String event, String title, String description, String severity) {
         accessManager.notifications().notify(event, title, description, severity);
     }

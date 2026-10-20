@@ -60,16 +60,61 @@ class CosmeticsDefsTest {
     }
 
     @Test
-    void trailGateRespectsPassOnlyFlag() {
+    void trailGateRespectsEnabledAndSelection() {
         // отключено админом — никому
-        assertFalse(CosmeticsDefs.trailAllowed(false, true, true, "flame"));
-        // pass-only: без проходки — нет
-        assertFalse(CosmeticsDefs.trailAllowed(true, true, false, "flame"));
-        assertTrue(CosmeticsDefs.trailAllowed(true, true, true, "flame"));
-        // свободный доступ: всем, кто выбрал эффект
-        assertTrue(CosmeticsDefs.trailAllowed(true, false, false, "flame"));
+        assertFalse(CosmeticsDefs.trailAllowed(false, true, "flame"));
+        // не открыт — нет
+        assertFalse(CosmeticsDefs.trailAllowed(true, false, "flame"));
+        assertTrue(CosmeticsDefs.trailAllowed(true, true, "flame"));
         // без выбранного эффекта — нет
-        assertFalse(CosmeticsDefs.trailAllowed(true, false, true, null));
-        assertFalse(CosmeticsDefs.trailAllowed(true, false, true, " "));
+        assertFalse(CosmeticsDefs.trailAllowed(true, true, null));
+        assertFalse(CosmeticsDefs.trailAllowed(true, true, " "));
+    }
+
+    @Test
+    void trailProductDefaultsToPrefixedIdAndCanBeOverridden() {
+        var trails = CosmeticsDefs.parseTrails(List.of(
+                Map.of("id", "flame", "particle", "flame"),
+                Map.of("id", "magic", "particle", "witch", "product", "Trail-Magic-90")), true);
+        assertEquals("trail-flame", trails.get(0).product(), "по умолчанию товар = trail-<id>");
+        assertEquals("trail-magic-90", trails.get(1).product(), "product нормализуется");
+    }
+
+    private static CosmeticsDefs.TrailDef flame() {
+        return new CosmeticsDefs.TrailDef("flame", "Огонь", "flame", 3, 0.1, 0.0, "trail-flame");
+    }
+
+    private static java.util.function.Predicate<String> owns(String... ids) {
+        var set = java.util.Set.of(ids);
+        return set::contains;
+    }
+
+    @Test
+    void passUnlocksEverything() {
+        assertTrue(CosmeticsDefs.unlocked(flame(), true, true, owns(), List.of()));
+    }
+
+    @Test
+    void singlePurchaseUnlocksTrailWithoutPass() {
+        assertFalse(CosmeticsDefs.unlocked(flame(), true, false, owns(), List.of()),
+                "без проходки и без покупки шлейф закрыт");
+        assertTrue(CosmeticsDefs.unlocked(flame(), true, false, owns("trail-flame"), List.of()),
+                "купленный шлейф открыт без проходки");
+        assertFalse(CosmeticsDefs.unlocked(flame(), true, false, owns("trail-hearts"), List.of()),
+                "чужой товар ничего не открывает");
+    }
+
+    @Test
+    void packUnlocksEveryTrail() {
+        assertTrue(CosmeticsDefs.unlocked(flame(), true, false,
+                owns("trails-pack"), List.of("trails-pack")));
+        assertFalse(CosmeticsDefs.unlocked(flame(), true, false,
+                owns("trails-pack"), List.of()),
+                "набор учитывается только из конфига pack-products");
+    }
+
+    @Test
+    void freeModeIgnoresPurchases() {
+        assertTrue(CosmeticsDefs.unlocked(flame(), false, false, owns(), List.of()));
     }
 }

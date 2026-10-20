@@ -269,6 +269,73 @@ shop:
       permissions: []
       commands: []
 
+    # --- Косметика поштучно -------------------------------------------------
+    # Товары без группы и без разметки ника: это «право на эффект», которое
+    # проверяет аддон CHRDK_Cosmetics через API ядра (hasEntitlement). Владелец
+    # проходки видит все шлейфы и так; покупка открывает один шлейф без проходки.
+    # id товара и поле product шлейфа в cosmetics/config.yml должны совпадать.
+    - id: trail-flame
+      name: "<red>Огненный шлейф</red>"
+      price: 59
+      days: 30
+      group: ""
+      description: "Шлейф огня за спиной — 30 дней"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: trail-hearts
+      name: "<light_purple>Сердечки</light_purple>"
+      price: 59
+      days: 30
+      group: ""
+      description: "Шлейф сердечек за спиной — 30 дней"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: trail-notes
+      name: "<aqua>Ноты</aqua>"
+      price: 59
+      days: 30
+      group: ""
+      description: "Шлейф нот за спиной — 30 дней"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: trail-sparkles
+      name: "<yellow>Искры Энда</yellow>"
+      price: 69
+      days: 30
+      group: ""
+      description: "Шлейф искр Энда за спиной — 30 дней"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: trail-magic
+      name: "<dark_purple>Ведьмина магия</dark_purple>"
+      price: 69
+      days: 30
+      group: ""
+      description: "Шлейф ведьминой магии за спиной — 30 дней"
+      tag: ""
+      permissions: []
+      commands: []
+
+    # Набор выгоднее поштучной покупки: 199 ₽ вместо 315 ₽ за пять шлейфов.
+    # Открывает все шлейфы сразу; список наборов задан в cosmetics/config.yml.
+    - id: trails-pack
+      name: "<gold>Набор шлейфов</gold>"
+      price: 199
+      days: 30
+      group: ""
+      description: "Все пять шлейфов сразу — выгоднее на 116 ₽"
+      tag: ""
+      permissions: []
+      commands: []
+
 # Главное меню сервера /menu (GUI, конфиг-driven): ядро про аддоны не знает —
 # вы сами решаете, какие пункты видят игроки. Каждый пункт: slot (0-53; -1 = авто,
 # раскладка рядами по центру), icon (материал Bukkit), name/lore (MiniMessage),

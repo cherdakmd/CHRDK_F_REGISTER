@@ -1,6 +1,15 @@
 cosmetics:
-  # Косметика только для владельцев активной проходки (рекомендуется — это витрина доната).
+  # Проходка открывает все шлейфы. Покупки в каталоге ядра работают и без неё:
+  # один шлейф или весь набор. false — косметика бесплатна для всех.
   access-pass-only: true
+  # Покупки каталога CHRDK_Core (секция shop в config.yml ядра).
+  shop:
+    # Учитывать покупки: шлейф открыт, если куплен его товар (поле product ниже)
+    # и срок ещё не истёк. Товары продаются командой /pass shopbuy.
+    enabled: true
+    # Товары-наборы: открывают сразу все шлейфы.
+    pack-products:
+      - trails-pack
   # Шлейф частиц за игроком при ходьбе/беге.
   trail:
     enabled: true
@@ -10,30 +19,36 @@ cosmetics:
     defs:
       - id: flame
         name: "<red>Огненный шлейф</red>"
+        # Товар каталога ядра, открывающий шлейф без проходки (shop.products).
+        product: trail-flame
         particle: flame
         count: 3
         spread: 0.15
         speed: 0.0
       - id: hearts
         name: "<light_purple>Сердечки</light_purple>"
+        product: trail-hearts
         particle: heart
         count: 1
         spread: 0.25
         speed: 0.0
       - id: notes
         name: "<aqua>Ноты</aqua>"
+        product: trail-notes
         particle: note
         count: 2
         spread: 0.3
         speed: 1.0
       - id: sparkles
         name: "<yellow>Искры Энда</yellow>"
+        product: trail-sparkles
         particle: end_rod
         count: 2
         spread: 0.2
         speed: 0.0
       - id: magic
         name: "<dark_purple>Ведьмина магия</dark_purple>"
+        product: trail-magic
         particle: witch
         count: 4
         spread: 0.25
