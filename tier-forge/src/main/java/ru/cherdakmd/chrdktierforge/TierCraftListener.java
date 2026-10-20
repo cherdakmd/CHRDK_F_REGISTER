@@ -38,6 +38,12 @@ public final class TierCraftListener implements Listener {
      * можно было бы бесплатно выбирать удачное свойство при том же тире.
      */
     private final CraftRollKeeper<List<TierProperty>> propertyKeeper = new CraftRollKeeper<>();
+    /**
+     * Отложенный суффикс предмета (волна 17): аффиксы и зачарования выводятся из
+     * uid, а результат крафта сервер пересоздаёт на каждое движение ингредиентов.
+     * Без стабильного uid хорошие аффиксы можно было бы «рыбачить» бесплатно.
+     */
+    private final CraftRollKeeper<String> uidKeeper = new CraftRollKeeper<>();
 
     public TierCraftListener(TierForgePlugin plugin) {
         this.plugin = plugin;
@@ -84,7 +90,9 @@ public final class TierCraftListener implements Listener {
         if (roll == null) return;
         List<TierProperty> properties = propertyKeeper.preview(player.getUniqueId(),
                 result.getType().name(), () -> plugin.items().rollFor(roll, kind));
-        plugin.items().apply(result, roll, properties);
+        String uid = uidKeeper.preview(player.getUniqueId(), result.getType().name(),
+                () -> TierModifierIds.newUid(random));
+        plugin.items().apply(result, roll, properties, uid);
     }
 
     /** Результат забран: отложенный ролл сгорает, следующее превью роллит заново. */
@@ -103,6 +111,7 @@ public final class TierCraftListener implements Listener {
         TierDef.Snapshot consumed = rollKeeper.consume(
                 player.getUniqueId(), current.getType().name());
         propertyKeeper.consume(player.getUniqueId(), current.getType().name());
+        uidKeeper.consume(player.getUniqueId(), current.getType().name());
         if (tier == null || consumed == null) return;
         // 1.4.81: находки считаются и в «старом» флоу (раньше — только при опознании).
         plugin.stats().count(player.getUniqueId(), consumed.id());
@@ -114,6 +123,7 @@ public final class TierCraftListener implements Listener {
         rollKeeper.clear(event.getPlayer().getUniqueId());
         identifyKeeper.clear(event.getPlayer().getUniqueId());
         propertyKeeper.clear(event.getPlayer().getUniqueId());
+        uidKeeper.clear(event.getPlayer().getUniqueId());
     }
 
     /** Кузнечный стол: апгрейд в незерит сохраняет накатанный тир. */

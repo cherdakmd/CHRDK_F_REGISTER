@@ -47,7 +47,9 @@ public record TierForgeConfig(
         java.util.List<String> namesTools,
         boolean propertiesEnabled,
         int propertiesPerItem,
-        TierVisuals visuals) {
+        TierVisuals visuals,
+        TierAffixConfig affixes,
+        TierEnchantConfig enchants) {
 
     public TierDef.Snapshot find(String id) {
         return tiers.stream().filter(s -> s.id().equals(id)).findFirst().orElse(null);
@@ -151,6 +153,10 @@ public record TierForgeConfig(
         // --- визуальный образ тиров (1.4.119) ---
         TierVisuals visuals = TierVisuals.parse(config, logger);
 
+        // --- универсальные аффиксы и случайные зачарования (волна 17) ---
+        TierAffixConfig affixes = TierAffixConfig.parse(config, logger);
+        TierEnchantConfig enchants = TierEnchantConfig.parse(config, logger);
+
         return new TierForgeConfig(chance, tiers, anvil, baseXp,
                 config.getBoolean("craft.armor", true),
                 config.getBoolean("craft.weapons", true),
@@ -182,7 +188,7 @@ public record TierForgeConfig(
                 readNames(config, "names.weapons", ForgeNamePool.DEFAULT_WEAPONS),
                 readNames(config, "names.armor", ForgeNamePool.DEFAULT_ARMOR),
                 readNames(config, "names.tools", ForgeNamePool.DEFAULT_TOOLS),
-                properties, propertiesPerItem, visuals);
+                properties, propertiesPerItem, visuals, affixes, enchants);
     }
 
     /** Список имён из конфига с дефолтом (пустая/битая секция = умолчание). */

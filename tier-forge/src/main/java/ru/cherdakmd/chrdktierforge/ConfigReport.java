@@ -59,6 +59,16 @@ final class ConfigReport {
                 + ", свойства тиров " + (config.propertiesEnabled()
                 ? config.propertiesPerItem() + " на предмет" : "выкл.")
                 + ", копий stats.yml — " + config.statsBackupCopies());
+        out.add("аффиксы: " + (config.affixes().enabled()
+                ? "до " + config.affixes().maxGood() + " бонусов ◆ и до "
+                + config.affixes().maxBad() + " дефектов ✖"
+                : "выключены")
+                + "; зачарования: " + (config.enchants().enabled()
+                ? "шанс от " + config.enchants().chancePercent() + "% (+"
+                + TierEnchants.PER_TIER_BONUS + "% за тир), до "
+                + config.enchants().maxPerItem() + " чар уровня ≤ "
+                + config.enchants().maxLevel()
+                : "выключены"));
         out.add("эффекты тиров: " + (config.visuals().enabled()
                 ? "аура каждые " + config.visuals().intervalTicks() + " тиков, "
                 + config.visuals().tiersWithParticles() + " тиров с частицами"

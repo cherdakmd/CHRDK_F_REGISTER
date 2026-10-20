@@ -188,6 +188,51 @@ class TierForgeConfigTest {
     }
 
     @Test
+    void affixesAndEnchantmentsHaveSaneDefaults() {
+        TierForgeConfig config = parse(empty()).config();
+
+        assertTrue(config.affixes().enabled(), "аффиксы включены по умолчанию");
+        assertEquals(2, config.affixes().maxGood());
+        assertEquals(2, config.affixes().maxBad());
+        assertEquals(2, config.affixes().goodLimit());
+        assertEquals(2, config.affixes().badLimit());
+
+        assertTrue(config.enchants().enabled(), "зачарования включены по умолчанию");
+        assertEquals(20, config.enchants().chancePercent());
+        assertEquals(2, config.enchants().itemLimit());
+        assertEquals(3, config.enchants().levelLimit());
+    }
+
+    @Test
+    void affixAndEnchantSettingsAreClamped() {
+        YamlConfiguration yaml = empty();
+        yaml.set("affixes.enabled", false);
+        yaml.set("affixes.max-good", 99);
+        yaml.set("affixes.max-bad", -4);
+        yaml.set("enchantments.enabled", false);
+        yaml.set("enchantments.chance-percent", 250);
+        yaml.set("enchantments.max-per-item", 9);
+        yaml.set("enchantments.max-level", 0);
+        Parsed parsed = parse(yaml);
+        TierForgeConfig config = parsed.config();
+
+        assertFalse(config.affixes().enabled());
+        assertEquals(0, config.affixes().goodLimit(), "выключенные аффиксы не считаются");
+        assertEquals(0, config.affixes().badLimit());
+        assertEquals(TierAffixes.MAX_PER_SIGN, config.affixes().maxGood(), "потолок 3");
+        assertEquals(0, config.affixes().maxBad(), "минус → 0");
+
+        assertFalse(config.enchants().enabled());
+        assertEquals(100, config.enchants().chancePercent());
+        assertEquals(3, config.enchants().maxPerItem());
+        assertEquals(1, config.enchants().maxLevel(), "ниже I не бывает");
+        assertEquals(0, config.enchants().itemLimit(), "выключено — 0 чар");
+
+        assertTrue(parsed.warnings().stream().anyMatch(w -> w.contains("affixes.max-good")));
+        assertTrue(parsed.warnings().stream().anyMatch(w -> w.contains("enchantments.max-level")));
+    }
+
+    @Test
     void kindChanceHelperAcceptsOnlyMinusOneToHundred() {
         Logger silent = Logger.getAnonymousLogger();
         assertEquals(-1, TierForgeConfig.kindChance(-1, silent, "k"));

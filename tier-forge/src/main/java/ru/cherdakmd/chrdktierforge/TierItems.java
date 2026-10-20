@@ -3,8 +3,10 @@ package ru.cherdakmd.chrdktierforge;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.EquipmentSlotGroup;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -30,7 +32,9 @@ import java.util.Random;
  * смене; событийная половина работает через {@link ForgeUpgradeListener}.
  * С 1.4.124 у каждого предмета свой суффикс id модификаторов
  * ({@code modifier_uid}), поэтому бонусы четырёх деталей брони складываются,
- * а не затирают друг друга.
+ * а не затирают друг друга. Волна 17 — универсальные аффиксы (15 хороших и
+ * 15 плохих, строки ◆/✖, детерминированы по uid и тиру) и случайные ванильные
+ * зачарования, которые предмет иногда получает вместе с редкостью.
  */
 public final class TierItems {
 
@@ -54,6 +58,16 @@ public final class TierItems {
     public static final String PDC_PROPERTIES = "tier_properties";
     /** Маркер лор-строк свойств тира — по нему лор и пересобирается. */
     public static final String PROPERTY_LORE_MARKER = "✧";
+    /** Маркер строки хорошего аффикса (волна 17). */
+    public static final String AFFIX_GOOD_MARKER = "◆";
+    /** Маркер строки плохого аффикса (дефекта). */
+    public static final String AFFIX_BAD_MARKER = "✖";
+    /**
+     * PDC-метка «зачарования по тиру уже раскатаны»: {@code <тир>:<uid>}.
+     * Нужна, чтобы пересборка не добавляла чары повторно и не возвращала их
+     * после точильного камня.
+     */
+    public static final String PDC_ENCHANT_STAMP = "tier_enchant_stamp";
     /**
      * Отпечаток визуального стиля тира (1.4.119): блеск и его источник. По нему
      * старые предметы получают блеск один раз, а правка {@code visuals} в конфиге
@@ -79,6 +93,7 @@ public final class TierItems {
     private final NamespacedKey visualsKey;
     private final NamespacedKey modifierUidKey;
     private final NamespacedKey modifiersKey;
+    private final NamespacedKey enchantStampKey;
     private final Random random = new Random();
 
     public TierItems(TierForgePlugin plugin) {
@@ -92,6 +107,7 @@ public final class TierItems {
         this.visualsKey = new NamespacedKey(plugin, PDC_VISUALS);
         this.modifierUidKey = new NamespacedKey(plugin, PDC_MODIFIER_UID);
         this.modifiersKey = new NamespacedKey(plugin, PDC_MODIFIERS);
+        this.enchantStampKey = new NamespacedKey(plugin, PDC_ENCHANT_STAMP);
     }
 
     /** Читает id тира предмета (null — предмет без тира). */
@@ -107,7 +123,7 @@ public final class TierItems {
 
     /** Полное применение тира: модификаторы, PDC, имя, лор, блеск. */
     public void apply(ItemStack item, TierDef.Snapshot tier) {
-        apply(item, tier, null);
+        apply(item, tier, null, null);
     }
 
     /**
@@ -116,12 +132,29 @@ public final class TierItems {
      * можно было бы «рыбачить» бесплатно. {@code null} — обычный бросок.
      */
     public void apply(ItemStack item, TierDef.Snapshot tier, List<TierProperty> preset) {
+        apply(item, tier, preset, null);
+    }
+
+    /**
+     * Полная пересборка с заранее выбранным суффиксом предмета.
+     *
+     * <p>Волна 17: аффиксы и зачарования выводятся из {@code modifier_uid}, тира
+     * и вида. В превью крафта результат пересобирается на каждое движение
+     * ингредиентов — с новым uid это позволяло бы «рыбачить» хорошие аффиксы
+     * бесплатно. Поэтому {@code TierCraftListener} держит uid в
+     * {@link CraftRollKeeper} и передаёт его сюда; уже записанный в предмет uid
+     * всегда важнее переданного.</p>
+     *
+     * @param uidPreset стабильный суффикс превью; {@code null} — сгенерировать
+     */
+    public void apply(ItemStack item, TierDef.Snapshot tier, List<TierProperty> preset,
+                      String uidPreset) {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
         meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, tier.id());
         // 1.4.124: id модификаторов уникальны для предмета — иначе четыре детали
         // брони делят один модификатор, и складывается только одна.
-        String uid = ensureModifierUid(meta);
+        String uid = ensureModifierUid(meta, uidPreset);
 
         clearTierModifiers(meta);
         clearForgeModifiers(meta);
@@ -131,11 +164,13 @@ public final class TierItems {
         applyModifiers(item, meta, tier, uid);
         applyUpgradeModifiers(item, meta, uid);
         applyPropertyModifiers(item, meta, uid);
+        applyAffixModifiers(item, meta, uid); // волна 17: хорошие и плохие аффиксы
+        applyEnchantments(item, meta, tier, uid); // волна 17: иногда — зачарования
         decorateName(item, meta, tier);
         replaceLore(meta, tier, ItemKind.classify(item.getType().name()));
         stampVisuals(meta, tier); // 1.4.119: свой блеск у каждого тира
         meta.getPersistentDataContainer().set(modifiersKey, PersistentDataType.STRING,
-                TierModifierIds.STAMP);
+                modifierStamp());
         item.setItemMeta(meta);
     }
 
@@ -238,7 +273,7 @@ public final class TierItems {
         if (!modifiers && !visuals) {
             return false;
         }
-        if (modifiers && !TierModifierIds.STAMP.equals(modifiersStamp(meta))) {
+        if (modifiers && !modifierStamp().equals(modifiersStamp(meta))) {
             // 1.4.124: отпечаток старее текущего — пересобираем предмет целиком:
             // уникальные id, новые формулы и все модификаторы ковки/свойств.
             // Свойства тира при том же тире сохраняются (syncProperties).
@@ -247,7 +282,7 @@ public final class TierItems {
         }
         if (modifiers) {
             clearTierModifiers(meta);
-            applyModifiers(item, meta, tier, ensureModifierUid(meta));
+            applyModifiers(item, meta, tier, ensureModifierUid(meta, null));
         }
         stampVisuals(meta, tier);
         item.setItemMeta(meta);
@@ -259,7 +294,7 @@ public final class TierItems {
      * инструментов или отсутствие скорости добычи у инструмента.
      */
     private boolean needsModifierRefresh(ItemMeta meta, ItemKind kind, TierDef.Snapshot tier) {
-        if (!TierModifierIds.STAMP.equals(modifiersStamp(meta))) {
+        if (!modifierStamp().equals(modifiersStamp(meta))) {
             return true; // раскладка до 1.4.124: общие id и старые формулы
         }
         if (hasTierModifier(meta, "attack_tool", Attribute.ATTACK_DAMAGE)
@@ -270,21 +305,56 @@ public final class TierItems {
                 && !hasTierModifier(meta, "minespeed", Attribute.BLOCK_BREAK_SPEED);
     }
 
+    /**
+     * Отпечаток раскладки. Волна 17: в него входят и переключатели аффиксов/
+     * зачарований — иначе {@code affixes.enabled: false} оставлял бы на старых
+     * предметах уже навешенные модификаторы: событийные эффекты гаснут сразу,
+     * а атрибуты ждали бы пересборки, которой без смены отпечатка не будет.
+     */
+    private String modifierStamp() {
+        TierForgeConfig config = plugin.config();
+        if (config == null) {
+            return TierModifierIds.STAMP;
+        }
+        return TierModifierIds.stamp(config.affixes().enabled(),
+                config.affixes().goodLimit(), config.affixes().badLimit(),
+                config.enchants().enabled());
+    }
+
     /** Отпечаток раскладки модификаторов на предмете (null — версия до 1.4.124). */
     private String modifiersStamp(ItemMeta meta) {
         return meta.getPersistentDataContainer().get(modifiersKey, PersistentDataType.STRING);
     }
 
-    /** Читает стабильный суффикс предмета, создавая его при первом накате. */
-    private String ensureModifierUid(ItemMeta meta) {
+    /**
+     * Читает стабильный суффикс предмета, создавая его при первом накате.
+     * Уже записанный важнее подсказки из превью, иначе — подсказка, иначе
+     * новый случайный.
+     */
+    private String ensureModifierUid(ItemMeta meta, String preset) {
         String uid = meta.getPersistentDataContainer()
                 .get(modifierUidKey, PersistentDataType.STRING);
         if (!TierModifierIds.validUid(uid)) {
-            uid = TierModifierIds.newUid(random);
+            uid = TierModifierIds.validUid(preset) ? preset : TierModifierIds.newUid(random);
             meta.getPersistentDataContainer()
                     .set(modifierUidKey, PersistentDataType.STRING, uid);
         }
         return uid;
+    }
+
+    /**
+     * Ванильные зачарования предмета (волна 17) — для диагностики
+     * {@code /tiers info}. Пустая карта — предмет не зачарован.
+     */
+    public Map<Enchantment, Integer> enchantmentsOf(ItemStack item) {
+        if (item == null || !item.hasItemMeta()) {
+            return Map.of();
+        }
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null || !meta.hasEnchants()) {
+            return Map.of();
+        }
+        return new LinkedHashMap<>(meta.getEnchants());
     }
 
     /** Есть ли на предмете модификатор тира с данным ключом у атрибута. */
@@ -397,10 +467,40 @@ public final class TierItems {
     }
 
     /**
-     * Все кузнечные эффекты предмета: улучшения ({@code up_*}) плюс уникальные
-     * свойства тира. Свойство приходит как «улучшение» I уровня, поэтому
-     * событийная половина ({@link ForgeUpgradeListener}) обрабатывает его тем же
-     * кодом и под теми же потолками, что и ковку.
+     * Универсальные аффиксы предмета (волна 17). В отличие от свойств тира они
+     * не хранятся в PDC: набор детерминированно выводится из {@code modifier_uid},
+     * тира и вида предмета. Поэтому предпросмотр наковальни не переролливается,
+     * а старые предметы получают аффиксы без миграции.
+     */
+    public List<TierAffix> affixesOf(ItemStack item) {
+        if (item == null || !item.hasItemMeta()) {
+            return List.of();
+        }
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) {
+            return List.of();
+        }
+        return affixesFromMeta(meta, ItemKind.classify(item.getType().name()));
+    }
+
+    /** Аффиксы по ещё не записанной в предмет мете (внутри пересборки). */
+    private List<TierAffix> affixesFromMeta(ItemMeta meta, ItemKind kind) {
+        TierAffixConfig config = plugin.config().affixes();
+        if (!config.enabled() || config.goodLimit() + config.badLimit() <= 0
+                || meta == null || kind == null) {
+            return List.of();
+        }
+        String uid = meta.getPersistentDataContainer().get(modifierUidKey, PersistentDataType.STRING);
+        String tierId = meta.getPersistentDataContainer().get(key, PersistentDataType.STRING);
+        return TierAffixes.forItem(uid, tierId, kind, config.goodLimit(), config.badLimit());
+    }
+
+    /**
+     * Все кузнечные эффекты предмета: улучшения ({@code up_*}), уникальные
+     * свойства тира и универсальные аффиксы (волна 17). Свойство и аффикс
+     * приходят как «улучшение» I уровня, поэтому событийная половина
+     * ({@link ForgeUpgradeListener}) обрабатывает их тем же кодом и под теми же
+     * потолками, что и ковку.
      */
     public Map<ForgeUpgrade.Def, Integer> effectsOf(ItemStack item) {
         if (item == null || !item.hasItemMeta()) {
@@ -413,6 +513,10 @@ public final class TierItems {
         Map<ForgeUpgrade.Def, Integer> result = new LinkedHashMap<>(upgradesFromMeta(meta));
         for (TierProperty property : propertiesFromMeta(meta)) {
             result.put(property.asDef(), 1);
+        }
+        // волна 17: аффиксы идут тем же путём, что свойства и ковка
+        for (TierAffix affix : affixesFromMeta(meta, ItemKind.classify(item.getType().name()))) {
+            result.put(affix.asDef(), 1);
         }
         return result;
     }
@@ -551,6 +655,20 @@ public final class TierItems {
             target.getPersistentDataContainer()
                     .set(propertiesKey, PersistentDataType.STRING, properties);
         }
+        // Волна 17: uid задаёт аффиксы и зачарования. Незеритовый апгрейд — тот же
+        // предмет, поэтому набор должен переехать, а не перероллиться.
+        String uid = source.getPersistentDataContainer()
+                .get(modifierUidKey, PersistentDataType.STRING);
+        if (uid != null && !uid.isBlank()) {
+            target.getPersistentDataContainer()
+                    .set(modifierUidKey, PersistentDataType.STRING, uid);
+            String stamp = source.getPersistentDataContainer()
+                    .get(enchantStampKey, PersistentDataType.STRING);
+            if (stamp != null && !stamp.isBlank()) {
+                target.getPersistentDataContainer()
+                        .set(enchantStampKey, PersistentDataType.STRING, stamp);
+            }
+        }
         to.setItemMeta(target);
     }
 
@@ -616,6 +734,67 @@ public final class TierItems {
             applyDefModifiers(meta, property.asDef(), property.value(),
                     "pr_" + property.id(), slot, uid);
         }
+    }
+
+    /**
+     * Атрибутная часть универсальных аффиксов (волна 17). Работает через тот же
+     * {@link #applyDefModifiers}, что ковка и свойства тира, поэтому «+3% урона»
+     * от аффикса и «+2% урона» от ковки складываются, а не затирают друг друга.
+     */
+    private void applyAffixModifiers(ItemStack item, ItemMeta meta, String uid) {
+        ItemKind kind = ItemKind.classify(item.getType().name());
+        if (kind == null) return;
+        EquipmentSlotGroup slot = slotGroupFor(kind);
+        for (TierAffix affix : affixesFromMeta(meta, kind)) {
+            applyDefModifiers(meta, affix.asDef(), affix.value(),
+                    TierModifierIds.AFFIX_PREFIX + affix.id(), slot, uid);
+        }
+    }
+
+    /**
+     * Случайные ванильные зачарования (волна 17): один раз на предмет, только
+     * если он ещё не зачарован. Бросок детерминирован по uid и тиру, поэтому
+     * предпросмотр наковальни и кузнечного стола не переролливается.
+     */
+    private void applyEnchantments(ItemStack item, ItemMeta meta, TierDef.Snapshot tier, String uid) {
+        TierEnchantConfig config = plugin.config().enchants();
+        if (!config.enabled() || config.itemLimit() <= 0 || uid == null || uid.isBlank()) {
+            return;
+        }
+        ItemKind kind = ItemKind.classify(item.getType().name());
+        if (kind == null) {
+            return;
+        }
+        String marker = tier.id() + ":" + uid;
+        String stamped = meta.getPersistentDataContainer()
+                .get(enchantStampKey, PersistentDataType.STRING);
+        if (marker.equals(stamped)) {
+            return;
+        }
+        if (meta.hasEnchants()) {
+            // игрок зачаровал предмет сам — плагин не добавляет и не снимает чары
+            meta.getPersistentDataContainer()
+                    .set(enchantStampKey, PersistentDataType.STRING, marker);
+            return;
+        }
+        Random enchantRandom = new Random(
+                TierAffixes.seed(uid, tier.id(), kind, 0x5DEECE66DL));
+        for (TierEnchants.Roll roll : TierEnchants.roll(kind, TierDef.indexOf(tier.id()),
+                enchantRandom, config.chancePercent(), config.itemLimit(), config.levelLimit())) {
+            Enchantment enchantment = enchantment(roll.key());
+            if (enchantment == null || !enchantment.canEnchantItem(item)) {
+                continue;
+            }
+            meta.addEnchant(enchantment, roll.level(), true);
+        }
+        meta.getPersistentDataContainer()
+                .set(enchantStampKey, PersistentDataType.STRING, marker);
+    }
+
+    /** Зачарование по ключу реестра ({@code sharpness}); null — такого нет. */
+    @SuppressWarnings("deprecation")
+    private static Enchantment enchantment(String key) {
+        return Registry.ENCHANTMENT.get(NamespacedKey.minecraft(key));
     }
 
     /**
@@ -710,8 +889,9 @@ public final class TierItems {
      * Minecraft применял только один модификатор.
      */
     private NamespacedKey modifierKey(String tag, String uid) {
-        // fu_/pr_ — наши собственные ключи ковки и свойств, остальное — модификаторы тира
-        boolean own = tag.startsWith("fu_") || tag.startsWith("pr_");
+        // fu_/pr_/af_ — наши ключи ковки, свойств и аффиксов, остальное — модификаторы тира
+        boolean own = tag.startsWith("fu_") || tag.startsWith("pr_")
+                || tag.startsWith(TierModifierIds.AFFIX_PREFIX);
         return new NamespacedKey(plugin, TierModifierIds.key(own ? tag : "tier_" + tag, uid));
     }
 
@@ -826,7 +1006,8 @@ public final class TierItems {
                     continue;
                 }
                 String tag = existingKey.getKey();
-                if (tag.startsWith("fu_") || tag.startsWith("pr_")) {
+                if (tag.startsWith("fu_") || tag.startsWith("pr_")
+                        || tag.startsWith(TierModifierIds.AFFIX_PREFIX)) {
                     ours.add(existing);
                 }
             }
@@ -931,10 +1112,15 @@ public final class TierItems {
         lore.removeIf(this::isTierLine);
         lore.removeIf(this::isForgeLine);
         lore.removeIf(this::isPropertyLine);
+        lore.removeIf(this::isAffixLine);
         lore.add(tierLine(tier, kind));
         // уникальные свойства тира — сразу под плашкой, в порядке выдачи
         for (TierProperty property : propertiesFromMeta(meta)) {
             lore.add(propertyLine(property));
+        }
+        // волна 17: аффиксы — отдельными строками ◆ (бонус) и ✖ (дефект)
+        for (TierAffix affix : affixesFromMeta(meta, kind)) {
+            lore.add(affixLine(affix));
         }
         // строки свойств улучшений — после, в порядке реестра
         for (Map.Entry<ForgeUpgrade.Def, Integer> entry : upgradesFromMeta(meta).entrySet()) {
@@ -1002,6 +1188,15 @@ public final class TierItems {
                         + " <gray>— " + property.describe() + "</gray>");
     }
 
+    /** Строка аффикса: «◆ Жажда — вампиризм 2% урона» или «✖ Скол — -0.5 к урону». */
+    private Component affixLine(TierAffix affix) {
+        String color = affix.good() ? "green" : "red";
+        return net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(
+                "<" + color + ">" + affix.polarity().marker() + " " + affix.name()
+                        + "</" + color + ">"
+                        + " <gray>— " + affix.describe() + "</gray>");
+    }
+
     private boolean isTierLine(Component line) {
         String plain = PlainTextComponentSerializer.plainText().serialize(line);
         for (String id : TierDef.LADDER) {
@@ -1022,5 +1217,11 @@ public final class TierItems {
     private boolean isPropertyLine(Component line) {
         return PlainTextComponentSerializer.plainText().serialize(line).trim()
                 .startsWith(PROPERTY_LORE_MARKER);
+    }
+
+    /** Своя строка аффикса — по маркерам ◆ (бонус) и ✖ (дефект). */
+    private boolean isAffixLine(Component line) {
+        String plain = PlainTextComponentSerializer.plainText().serialize(line).trim();
+        return plain.startsWith(AFFIX_GOOD_MARKER) || plain.startsWith(AFFIX_BAD_MARKER);
     }
 }

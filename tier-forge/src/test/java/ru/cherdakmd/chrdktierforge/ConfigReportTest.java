@@ -18,13 +18,16 @@ class ConfigReportTest {
     @Test
     void defaultsAreReportedAsEnabled() {
         List<String> lines = ConfigReport.lines(parse(new YamlConfiguration()));
-        assertEquals(6, lines.size(),
-                "шесть строк: крафт, опознание, наковальня, дроп, прочее, эффекты");
+        assertEquals(7, lines.size(),
+                "семь строк: крафт, опознание, наковальня, дроп, прочее, "
+                        + "аффиксы/зачарования, эффекты");
         assertTrue(lines.get(0).contains("100%"), lines.get(0));
         assertTrue(lines.get(1).contains("включено"), lines.get(1));
         assertTrue(lines.get(2).contains("перекат вкл."), lines.get(2));
         assertTrue(lines.get(3).contains("общий 15%"), lines.get(3));
         assertTrue(lines.get(3).contains("босс ×2"), "множитель без хвоста .0: " + lines.get(3));
+        assertTrue(lines.get(5).contains("до 2 бонусов"), lines.get(5));
+        assertTrue(lines.get(5).contains("шанс от 20%"), lines.get(5));
     }
 
     @Test
@@ -56,14 +59,14 @@ class ConfigReportTest {
     @Test
     void visualsLineShowsMasterSwitch() {
         List<String> enabled = ConfigReport.lines(parse(new YamlConfiguration()));
-        assertEquals(6, enabled.size(), enabled.toString());
-        assertTrue(enabled.get(5).contains("аура каждые 10 тиков"), enabled.get(5));
-        assertTrue(enabled.get(5).contains("7 тиров с частицами"), enabled.get(5));
+        assertEquals(7, enabled.size(), enabled.toString());
+        assertTrue(enabled.get(6).contains("аура каждые 10 тиков"), enabled.get(6));
+        assertTrue(enabled.get(6).contains("7 тиров с частицами"), enabled.get(6));
 
         YamlConfiguration yaml = new YamlConfiguration();
         yaml.set("visuals.enabled", false);
-        assertTrue(ConfigReport.lines(parse(yaml)).get(5).contains("выключены"),
-                ConfigReport.lines(parse(yaml)).get(5));
+        assertTrue(ConfigReport.lines(parse(yaml)).get(6).contains("выключены"),
+                ConfigReport.lines(parse(yaml)).get(6));
     }
 
     @Test

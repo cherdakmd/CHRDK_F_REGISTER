@@ -202,6 +202,38 @@ public final class TierCommandHandler implements TabExecutor {
             }
         }
 
+        // Волна 17: универсальные аффиксы — бонусы ◆ и дефекты ✖ отдельными блоками
+        java.util.List<TierAffix> affixes = plugin.items().affixesOf(item);
+        java.util.List<TierAffix> good = affixes.stream().filter(TierAffix::good).toList();
+        java.util.List<TierAffix> bad = affixes.stream().filter(affix -> !affix.good()).toList();
+        if (!good.isEmpty()) {
+            plugin.messages().send(player, "info-affixes-good-header", "count", good.size());
+            for (TierAffix affix : good) {
+                plugin.messages().send(player, "info-affix-good",
+                        "name", affix.name(), "effect", affix.describe());
+            }
+        }
+        if (!bad.isEmpty()) {
+            plugin.messages().send(player, "info-affixes-bad-header", "count", bad.size());
+            for (TierAffix affix : bad) {
+                plugin.messages().send(player, "info-affix-bad",
+                        "name", affix.name(), "effect", affix.describe());
+            }
+        }
+
+        // Волна 17: зачарования, выпавшие вместе с тиром (или поставленные игроком)
+        java.util.Map<org.bukkit.enchantments.Enchantment, Integer> enchants =
+                plugin.items().enchantmentsOf(item);
+        if (!enchants.isEmpty()) {
+            plugin.messages().send(player, "info-enchants-header", "count", enchants.size());
+            for (java.util.Map.Entry<org.bukkit.enchantments.Enchantment, Integer> entry
+                    : enchants.entrySet()) {
+                plugin.messages().send(player, "info-enchant",
+                        "name", TierEnchants.displayName(entry.getKey().getKey().getKey()),
+                        "level", ForgeUpgrade.roman(entry.getValue()));
+            }
+        }
+
         if (!plugin.config().anvilEnabled()) {
             plugin.messages().send(player, "info-anvil-off");
             return true;

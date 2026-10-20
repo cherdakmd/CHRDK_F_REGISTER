@@ -19,15 +19,30 @@ final class TierModifierIds {
     /**
      * Версия раскладки модификаторов. Старые предметы без отпечатка пересобираются
      * один раз при входе/смене слота (см. {@link TierItems#refreshTierModifiers}).
+     * Версия 2 (волна 17) добавляет аффиксы и случайные зачарования — предметы
+     * прошлых волн пересобираются один раз, чтобы получить их.
      */
-    static final String STAMP = "1";
+    static final String STAMP = "2";
 
     static final String TIER_PREFIX = "tier_";
     static final String UPGRADE_PREFIX = "fu_";
     static final String PROPERTY_PREFIX = "pr_";
+    /** Префикс ключей универсальных аффиксов (волна 17). */
+    static final String AFFIX_PREFIX = "af_";
 
     /** 12 hex-символов ≈ 48 бит: коллизия между предметами практически невозможна. */
     static final int UID_LENGTH = 12;
+
+    /**
+     * Отпечаток раскладки с учётом переключателей волны 17. Аффиксы и
+     * зачарования меняют не только лор, но и набор атрибутов, поэтому
+     * {@code affixes.enabled}/{@code enchantments.enabled} и потолки входят в
+     * отпечаток: их правка запускает пересборку старых предметов, а не оставляет
+     * на них «повисшие» модификаторы.
+     */
+    static String stamp(boolean affixes, int maxGood, int maxBad, boolean enchants) {
+        return STAMP + (affixes ? "-a" + maxGood + maxBad : "-A") + (enchants ? "-e" : "-E");
+    }
 
     private TierModifierIds() {
     }
@@ -58,7 +73,7 @@ final class TierModifierIds {
             return false;
         }
         return key.startsWith(TIER_PREFIX) || key.startsWith(UPGRADE_PREFIX)
-                || key.startsWith(PROPERTY_PREFIX);
+                || key.startsWith(PROPERTY_PREFIX) || key.startsWith(AFFIX_PREFIX);
     }
 
     /** Похож ли суффикс на сгенерированный нами (для чтения PDC). */

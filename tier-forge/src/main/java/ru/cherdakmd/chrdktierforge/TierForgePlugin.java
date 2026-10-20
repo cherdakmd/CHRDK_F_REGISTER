@@ -84,6 +84,10 @@ public final class TierForgePlugin extends JavaPlugin {
         getLogger().info("CHRDK_TierForge включён: " + config.tiers().size() + " тиров"
                 + (config.improveEnabled() ? ", ковка улучшений (" + ForgeUpgrade.ALL.size() + " видов)" : "")
                 + (config.namesEnabled() ? ", имён в пуле: " + namePool.totalCount() : "")
+                + (config.affixes().enabled()
+                ? ", аффиксов: " + TierAffixes.all().size()
+                + " (◆" + TierAffixes.GOOD_TOTAL + "/✖" + TierAffixes.BAD_TOTAL + ")" : "")
+                + (config.enchants().enabled() ? ", случайные зачарования" : "")
                 + ".");
     }
 
