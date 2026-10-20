@@ -24,9 +24,9 @@ public final class TierMath {
         return percent / 200.0;
     }
 
-    /** Множитель скорости атаки инструментов (треть процента). */
-    public static double attackSpeedScalar(int percent) {
-        return percent / 300.0;
+    /** Множитель скорости добычи инструментов (1.4.117: вместо скорости атаки). */
+    public static double miningScalar(int percent) {
+        return percent / 100.0;
     }
 
     /** Множитель скорости бега (легендарная броня — маленький косметический штрих). */

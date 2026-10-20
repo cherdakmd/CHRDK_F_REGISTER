@@ -150,6 +150,75 @@ public final class TierItems {
         item.setItemMeta(meta);
     }
 
+    /**
+     * Догоняющее обновление старого тир-предмета под правила 1.4.117:
+     * инструменты больше не носят урон/скорость атаки, зато получают скорость
+     * добычи. Пересобираются только атрибуты: имя, лор, кличка и уровни
+     * улучшений остаются как были.
+     *
+     * @return {@code true} — предмет обновлён (инвентарь стоит перерисовать)
+     */
+    public boolean refreshTierModifiers(ItemStack item) {
+        if (item == null) {
+            return false;
+        }
+        String tierId = tierOf(item);
+        if (tierId == null) {
+            return false;
+        }
+        TierDef.Snapshot tier = plugin.config().find(tierId);
+        if (tier == null) {
+            return false;
+        }
+        ItemKind kind = ItemKind.classify(item.getType().name());
+        if (kind == null) {
+            return false;
+        }
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) {
+            return false;
+        }
+        if (!needsModifierRefresh(meta, kind, tier)) {
+            return false;
+        }
+        clearTierModifiers(meta);
+        applyModifiers(item, meta, tier);
+        if ("legendary".equals(tier.id())) {
+            // clearTierModifiers снимает наш блеск — легенде он положен снова
+            meta.setEnchantmentGlintOverride(true);
+        }
+        item.setItemMeta(meta);
+        return true;
+    }
+
+    /** Нужно ли пересобрать атрибуты: старые ключи инструментов или нет добычи. */
+    private boolean needsModifierRefresh(ItemMeta meta, ItemKind kind, TierDef.Snapshot tier) {
+        if (hasTierModifier(meta, "attack_tool", Attribute.ATTACK_DAMAGE)
+                || hasTierModifier(meta, "attackspeed", Attribute.ATTACK_SPEED)) {
+            return true; // ключи версий до 1.4.117 — таких бонусов больше нет ни у кого
+        }
+        return tier.percent() != 0 && kind.isTool()
+                && !hasTierModifier(meta, "minespeed", Attribute.BLOCK_BREAK_SPEED);
+    }
+
+    /** Есть ли на предмете модификатор тира с данным ключом у атрибута. */
+    private boolean hasTierModifier(ItemMeta meta, String tag, Attribute attribute) {
+        if (!meta.hasAttributeModifiers()) {
+            return false;
+        }
+        Collection<AttributeModifier> mods = meta.getAttributeModifiers(attribute);
+        if (mods == null) {
+            return false;
+        }
+        NamespacedKey key = modifierKey(tag);
+        for (AttributeModifier modifier : mods) {
+            if (modifier.getKey().equals(key)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /* ----------------------------- улучшения (PDC) ----------------------------- */
 
     private NamespacedKey upgradeKey(String id) {
@@ -275,29 +344,35 @@ public final class TierItems {
 
     /* ------------------------------- атрибуты ------------------------------- */
 
+    /**
+     * Бонусы тира по виду предмета (1.4.117): оружию — урон, броне — защита,
+     * инструментам — скорость добычи. Топор получает и урон, и добычу: им и в
+     * бою машут, и брёвна рубят. Урон/скорость атаки инструментам больше не
+     * выдаются.
+     */
     private void applyModifiers(ItemStack item, ItemMeta meta, TierDef.Snapshot tier) {
         ItemKind kind = ItemKind.classify(item.getType().name());
         if (kind == null) return;
         int percent = tier.percent();
         if (percent == 0) return;
         EquipmentSlotGroup slot = slotGroupFor(kind);
-        if (kind.isWeapon()) {
-            add(meta, Attribute.ATTACK_DAMAGE, "attack", TierMath.damageScalar(percent), slot);
-        }
-        if (kind.isArmor()) {
-            add(meta, Attribute.ARMOR, "armor", TierMath.defenseScalar(percent) * 0.5, slot);
-            add(meta, Attribute.ARMOR_TOUGHNESS, "toughness",
-                    TierMath.toughnessScalar(percent), slot);
-            if (percent > 0) {
-                add(meta, Attribute.MOVEMENT_SPEED, "movespeed",
-                        TierMath.movementScalar(percent), slot);
+        for (TierBonus bonus : TierBonus.forKind(kind)) {
+            switch (bonus) {
+                case ATTACK_DAMAGE -> add(meta, Attribute.ATTACK_DAMAGE, "attack",
+                        TierMath.damageScalar(percent), slot);
+                case ARMOR -> add(meta, Attribute.ARMOR, "armor",
+                        TierMath.defenseScalar(percent) * 0.5, slot);
+                case ARMOR_TOUGHNESS -> add(meta, Attribute.ARMOR_TOUGHNESS, "toughness",
+                        TierMath.toughnessScalar(percent), slot);
+                case MOVEMENT_SPEED -> {
+                    if (percent > 0) {
+                        add(meta, Attribute.MOVEMENT_SPEED, "movespeed",
+                                TierMath.movementScalar(percent), slot);
+                    }
+                }
+                case MINING_SPEED -> add(meta, Attribute.BLOCK_BREAK_SPEED, "minespeed",
+                        TierMath.miningScalar(percent), slot);
             }
-        }
-        if (kind.isTool()) {
-            add(meta, Attribute.ATTACK_DAMAGE, "attack_tool",
-                    TierMath.damageScalar(percent), slot);
-            add(meta, Attribute.ATTACK_SPEED, "attackspeed",
-                    TierMath.attackSpeedScalar(percent), slot);
         }
     }
 
@@ -390,11 +465,14 @@ public final class TierItems {
 
     private void clearTierModifiers(ItemMeta meta) {
         if (meta.hasAttributeModifiers()) {
+            // attack_tool/attackspeed — ключи версий до 1.4.117: инструменты носили
+            // боевые модификаторы. Их надо снимать и у старых предметов.
             for (String tag : List.of("attack", "armor", "toughness", "movespeed",
-                    "attack_tool", "attackspeed")) {
+                    "minespeed", "attack_tool", "attackspeed")) {
                 NamespacedKey key = modifierKey(tag);
                 for (Attribute attribute : List.of(Attribute.ATTACK_DAMAGE, Attribute.ARMOR,
-                        Attribute.ARMOR_TOUGHNESS, Attribute.MOVEMENT_SPEED, Attribute.ATTACK_SPEED)) {
+                        Attribute.ARMOR_TOUGHNESS, Attribute.MOVEMENT_SPEED, Attribute.ATTACK_SPEED,
+                        Attribute.BLOCK_BREAK_SPEED)) {
                     Collection<AttributeModifier> mods = meta.getAttributeModifiers(attribute);
                     if (mods == null) {
                         continue;

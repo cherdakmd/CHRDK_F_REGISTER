@@ -47,6 +47,8 @@ public final class TierForgePlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new TierCraftListener(this), this);
         Bukkit.getPluginManager().registerEvents(new TierAnvilListener(this), this);
         Bukkit.getPluginManager().registerEvents(new TierMobDropListener(this), this);
+        // 1.4.117: старые тир-инструменты носили урон/скорость атаки — правим на месте.
+        Bukkit.getPluginManager().registerEvents(new TierRefreshListener(this), this);
         if (forgeUpgrades == null) {
             this.forgeUpgrades = new ForgeUpgradeListener(this);
             Bukkit.getPluginManager().registerEvents(forgeUpgrades, this);

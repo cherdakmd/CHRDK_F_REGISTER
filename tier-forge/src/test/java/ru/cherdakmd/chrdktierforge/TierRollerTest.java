@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -49,7 +50,10 @@ class TierRollerTest {
         assertEquals(0.06, TierMath.damageScalar(6), 0.0001);
         assertEquals(-0.12, TierMath.defenseScalar(-12), 0.0001);
         assertEquals(0.15, TierMath.toughnessScalar(30), 0.0001);
-        assertEquals(14 / 300.0, TierMath.attackSpeedScalar(14), 0.0001);
+        assertEquals(0.14, TierMath.miningScalar(14), 0.0001,
+                "инструмент получает процент тира прямо в скорость добычи");
+        assertEquals(-0.12, TierMath.miningScalar(-12), 0.0001,
+                "проклятый инструмент копает медленнее");
         assertEquals(0.0, TierMath.movementScalar(-12), 0.0001, "штраф скорости бега не даём");
         assertEquals(0.05, TierMath.movementScalar(30), 0.0001);
         assertEquals(4 * 3, TierMath.upgradeXpCost(3, 3));
@@ -66,5 +70,8 @@ class TierRollerTest {
         assertTrue(ItemKind.TRIDENT.isWeapon());
         assertTrue(ItemKind.AXE.isTool() && ItemKind.AXE.isWeapon(), "топор — и то, и другое");
         assertTrue(ItemKind.BOOTS.isArmor());
+        assertFalse(ItemKind.PICKAXE.isWeapon(), "кирка — не оружие");
+        assertFalse(ItemKind.SHOVEL.isWeapon() || ItemKind.HOE.isWeapon(),
+                "лопата и мотыга — не оружие");
     }
 }

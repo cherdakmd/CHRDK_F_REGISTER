@@ -74,6 +74,8 @@ public final class TierCommandHandler implements TabExecutor {
                 "weapons", plugin.config().craftChanceFor(ItemKind.SWORD),
                 "armor", plugin.config().craftChanceFor(ItemKind.CHESTPLATE),
                 "tools", plugin.config().craftChanceFor(ItemKind.PICKAXE));
+        // 1.4.117: инструменты больше не получают урон — игрок должен видеть, что даёт тир.
+        plugin.messages().send(player, "list-bonuses");
         if (plugin.config().mobDropEnabled()) {
             plugin.messages().send(player, "list-drop-chances",
                     "weapons", plugin.config().mobDropChanceFor(ItemKind.SWORD),
