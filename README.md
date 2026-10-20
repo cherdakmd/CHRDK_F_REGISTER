@@ -3417,8 +3417,9 @@ CI собирает снапшот как обычный пуш в ветку; �
 Конфиги и данные совместимы: `claims-data.json`, `streams-data.json`,
 `streams-viewers.json` и `shop-data.json` читаются по ключам, битые строки
 пропускаются, тир-предметы обновляются сами при входе или смене слота. Новые
-секции (`claims.menu`, `claims.teleport`, `tier-forge.properties`,
-`tier-forge.visuals`) не обязательны — без них работают значения по умолчанию.
+секции и ключи конфигов (в `claims`: `menu`, `teleport`, `general.notice-*`;
+в `tier-forge`: `properties`, `visuals`) не обязательны — без них работают
+значения по умолчанию.
 Чтобы получить новый каталог магазина на уже настроенном сервере, замените
 секцию `items` в `plugins/CHRDK_DiamondShop/config.yml` (или удалите файл —
 плагин создаст его заново) и выполните `/shopadmin reload`. Откат — вернуть
