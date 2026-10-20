@@ -439,3 +439,6 @@ plugin.items().apply(result, snapshot);
 **Совместимость:** лестница, веса и клампы `tiers.percent` не менялись; новых
 ключей конфига нет. Предметы и `config.yml` старых версий читаются без миграции,
 старые тир-предметы пересобираются сами при входе и смене слота.
+
+**Сборка:** GitHub Actions run 39496823071 (Purpur 1.21.11 / Java 21) — success;
+`:tier-forge:test` зелёный, JAR `chrdk-tier-forge-1.4.124-SNAPSHOT.jar`.
