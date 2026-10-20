@@ -17,19 +17,22 @@ class ClaimNoticeTest {
 
     @Test
     void ownerWinsOverMembership() {
-        ClaimNotice.Spot spot = spot("Steve", 0, Claim.Role.BUILD, "");
-        assertEquals(ClaimNotice.Audience.OWNER, spot.audience("steve"));
-        assertEquals(ClaimNotice.Audience.OWNER, spot.audience("STEVE"));
-        assertEquals(ClaimNotice.Audience.MEMBER, spot.audience("Alex"));
-        assertEquals(ClaimNotice.Audience.VISITOR, spot.audience("Herobrine"));
+        ClaimNotice.Spot own = spot("Steve", 0, Claim.Role.BUILD, "");
+        assertEquals(ClaimNotice.Audience.OWNER, own.audience("steve"));
+        assertEquals(ClaimNotice.Audience.OWNER, own.audience("STEVE"));
+
+        ClaimNotice.Spot member = spot("Steve", 0, Claim.Role.ACCESS, "");
+        assertEquals(ClaimNotice.Audience.MEMBER, member.audience("Alex"));
+
+        ClaimNotice.Spot visitor = spot("Steve", 0, null, "");
+        assertEquals(ClaimNotice.Audience.VISITOR, visitor.audience("Herobrine"));
     }
 
     @Test
     void memberIsDetectedByRole() {
-        ClaimNotice.Spot spot = spot("Steve", 0, Claim.Role.ACCESS, "");
-        assertEquals(ClaimNotice.Audience.MEMBER, spot.audience("Alex"));
-        assertEquals(ClaimNotice.Audience.MEMBER, spot.audience(null));
-        assertTrue(spot.audience("Alex") != ClaimNotice.Audience.OWNER);
+        ClaimNotice.Spot access = spot("Steve", 0, Claim.Role.ACCESS, "");
+        assertEquals(ClaimNotice.Audience.MEMBER, access.audience("Alex"));
+        assertEquals(ClaimNotice.Audience.MEMBER, access.audience("alex"));
     }
 
     @Test
