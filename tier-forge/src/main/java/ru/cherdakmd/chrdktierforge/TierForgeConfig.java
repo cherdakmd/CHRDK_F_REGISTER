@@ -44,7 +44,9 @@ public record TierForgeConfig(
         boolean namesEnabled,
         java.util.List<String> namesWeapons,
         java.util.List<String> namesArmor,
-        java.util.List<String> namesTools) {
+        java.util.List<String> namesTools,
+        boolean propertiesEnabled,
+        int propertiesPerItem) {
 
     public TierDef.Snapshot find(String id) {
         return tiers.stream().filter(s -> s.id().equals(id)).findFirst().orElse(null);
@@ -139,6 +141,12 @@ public record TierForgeConfig(
         // --- клички кованных предметов (1.4.55) ---
         boolean naming = config.getBoolean("names.enabled", true);
 
+        // --- уникальные свойства тиров (1.4.118) ---
+        boolean properties = config.getBoolean("properties.enabled", true);
+        int propertiesPerItem = clamp(config.getInt("properties.per-item",
+                        TierProperties.DEFAULT_PER_ITEM), 1, TierProperties.MAX_PER_ITEM,
+                logger, "properties.per-item");
+
         return new TierForgeConfig(chance, tiers, anvil, baseXp,
                 config.getBoolean("craft.armor", true),
                 config.getBoolean("craft.weapons", true),
@@ -169,7 +177,8 @@ public record TierForgeConfig(
                 improve, improveXp, statsBackupCopies, improveMaterials, naming,
                 readNames(config, "names.weapons", ForgeNamePool.DEFAULT_WEAPONS),
                 readNames(config, "names.armor", ForgeNamePool.DEFAULT_ARMOR),
-                readNames(config, "names.tools", ForgeNamePool.DEFAULT_TOOLS));
+                readNames(config, "names.tools", ForgeNamePool.DEFAULT_TOOLS),
+                properties, propertiesPerItem);
     }
 
     /** Список имён из конфига с дефолтом (пустая/битая секция = умолчание). */

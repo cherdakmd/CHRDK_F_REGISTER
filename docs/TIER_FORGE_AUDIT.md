@@ -286,8 +286,9 @@ plugin.items().apply(result, snapshot);
   `World#getMinHeight()/getMaxHeight()` по `Block#isPassable()`, не-жидкости и
   твёрдой подошве, с откатом на `World#getSpawnLocation()`.
 - **PDC** (`PersistentDataContainer`) — хранилище модуля. Ключи: `item_tier`,
-  `item_unidentified`, `item_tier_source`, `forge_name`, `up_<id>`; атрибуты
-  `tier_*` и `fu_*`.
+  `item_unidentified`, `item_tier_source`, `forge_name`, `up_<id>`, `up_index`;
+  с 1.4.118 — `tier_properties` (id свойств через запятую); атрибуты `tier_*`,
+  `fu_*` и `pr_*` (уникальные свойства тира).
 
 ## 7. Волны 1.4.80–1.4.100 и что осталось
 

@@ -56,6 +56,8 @@ final class ConfigReport {
                 : "выключен"));
         out.add("настройки: проходка +" + config.passBonusCraftPercent()
                 + "% к крафту, клички " + onOff(config.namesEnabled())
+                + ", свойства тиров " + (config.propertiesEnabled()
+                ? config.propertiesPerItem() + " на предмет" : "выкл.")
                 + ", копий stats.yml — " + config.statsBackupCopies());
         return out;
     }

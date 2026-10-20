@@ -107,7 +107,7 @@ public final class ForgeUpgradeListener implements Listener {
             return;
         }
         ItemStack weapon = attacker.getInventory().getItemInMainHand();
-        Map<ForgeUpgrade.Def, Integer> ups = plugin.items().upgradesOf(weapon);
+        Map<ForgeUpgrade.Def, Integer> ups = plugin.items().effectsOf(weapon);
         if (ups.isEmpty()) {
             return;
         }
@@ -310,7 +310,7 @@ public final class ForgeUpgradeListener implements Listener {
         int adrenaline = 0;
         boolean lastStand = false;
         for (ItemStack piece : victim.getInventory().getArmorContents()) {
-            Map<ForgeUpgrade.Def, Integer> ups = plugin.items().upgradesOf(piece);
+            Map<ForgeUpgrade.Def, Integer> ups = plugin.items().effectsOf(piece);
             thornChance += sumFraction(ups, ForgeUpgrade.Effect.THORNS);
             reduction += sumFraction(ups, ForgeUpgrade.Effect.DAMAGE_TAKEN_PERCENT);
             parryChance += sumFraction(ups, ForgeUpgrade.Effect.PARRY);
@@ -406,7 +406,7 @@ public final class ForgeUpgradeListener implements Listener {
     private int catcherLevel(Player victim) {
         int total = 0;
         for (ItemStack piece : victim.getInventory().getArmorContents()) {
-            total += levelOf(plugin.items().upgradesOf(piece), ForgeUpgrade.Effect.CATCHER);
+            total += levelOf(plugin.items().effectsOf(piece), ForgeUpgrade.Effect.CATCHER);
         }
         return total;
     }
@@ -430,7 +430,7 @@ public final class ForgeUpgradeListener implements Listener {
             return;
         }
         Map<ForgeUpgrade.Def, Integer> ups =
-                plugin.items().upgradesOf(killer.getInventory().getItemInMainHand());
+                plugin.items().effectsOf(killer.getInventory().getItemInMainHand());
         int hunter = levelOf(ups, ForgeUpgrade.Effect.HUNTER_XP);
         if (hunter > 0 && event.getDroppedExp() > 0) {
             double bonus = hunter * fraction(ups, ForgeUpgrade.Effect.HUNTER_XP);
@@ -455,7 +455,7 @@ public final class ForgeUpgradeListener implements Listener {
     public void onOreBreak(BlockBreakEvent event) {
         Material type = event.getBlock().getType();
         ItemStack tool = event.getPlayer().getInventory().getItemInMainHand();
-        Map<ForgeUpgrade.Def, Integer> ups = plugin.items().upgradesOf(tool);
+        Map<ForgeUpgrade.Def, Integer> ups = plugin.items().effectsOf(tool);
         if (ups.isEmpty()) {
             return;
         }
@@ -529,7 +529,7 @@ public final class ForgeUpgradeListener implements Listener {
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onBlockDrops(BlockDropItemEvent event) {
         ItemStack tool = event.getPlayer().getInventory().getItemInMainHand();
-        Map<ForgeUpgrade.Def, Integer> ups = plugin.items().upgradesOf(tool);
+        Map<ForgeUpgrade.Def, Integer> ups = plugin.items().effectsOf(tool);
         if (ups.isEmpty()) {
             return;
         }
@@ -650,7 +650,7 @@ public final class ForgeUpgradeListener implements Listener {
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onItemDamage(PlayerItemDamageEvent event) {
-        Map<ForgeUpgrade.Def, Integer> ups = plugin.items().upgradesOf(event.getItem());
+        Map<ForgeUpgrade.Def, Integer> ups = plugin.items().effectsOf(event.getItem());
         int tempered = levelOf(ups, ForgeUpgrade.Effect.DURABILITY_SAVE);
         if (tempered > 0
                 && random.nextDouble() < tempered * fraction(ups, ForgeUpgrade.Effect.DURABILITY_SAVE)) {
@@ -671,7 +671,7 @@ public final class ForgeUpgradeListener implements Listener {
         pieces.add(event.getPlayer().getInventory().getItemInMainHand());
         pieces.add(event.getPlayer().getInventory().getItemInOffHand());
         for (ItemStack piece : pieces) {
-            Map<ForgeUpgrade.Def, Integer> ups = plugin.items().upgradesOf(piece);
+            Map<ForgeUpgrade.Def, Integer> ups = plugin.items().effectsOf(piece);
             int selfmend = levelOf(ups, ForgeUpgrade.Effect.XP_REPAIR);
             if (selfmend <= 0 || !(piece.getItemMeta() instanceof Damageable state) || state.getDamage() <= 0) {
                 continue;
@@ -693,7 +693,7 @@ public final class ForgeUpgradeListener implements Listener {
         // Эрудит: +% к получаемому опыту со всей экипировки
         double scholarBonus = 0;
         for (ItemStack piece : pieces) {
-            scholarBonus += sumFraction(plugin.items().upgradesOf(piece), ForgeUpgrade.Effect.XP_GAIN);
+            scholarBonus += sumFraction(plugin.items().effectsOf(piece), ForgeUpgrade.Effect.XP_GAIN);
         }
         if (scholarBonus > 0) {
             event.setAmount(Math.max(1, (int) Math.round(amount * (1.0 + scholarBonus))));
@@ -708,7 +708,7 @@ public final class ForgeUpgradeListener implements Listener {
             return;
         }
         Map<ForgeUpgrade.Def, Integer> ups =
-                plugin.items().upgradesOf(event.getPlayer().getInventory().getItemInMainHand());
+                plugin.items().effectsOf(event.getPlayer().getInventory().getItemInMainHand());
         int sailor = levelOf(ups, ForgeUpgrade.Effect.FISH_DOUBLE);
         if (sailor <= 0 || random.nextDouble()
                 >= Math.min(CAP_PROC, sailor * fraction(ups, ForgeUpgrade.Effect.FISH_DOUBLE))) {
@@ -733,7 +733,7 @@ public final class ForgeUpgradeListener implements Listener {
         double longer = 0;
         double shorter = 0;
         for (ItemStack piece : player.getInventory().getArmorContents()) {
-            Map<ForgeUpgrade.Def, Integer> ups = plugin.items().upgradesOf(piece);
+            Map<ForgeUpgrade.Def, Integer> ups = plugin.items().effectsOf(piece);
             longer += sumFraction(ups, ForgeUpgrade.Effect.GOOD_EFFECTS_LONGER);
             shorter += sumFraction(ups, ForgeUpgrade.Effect.BAD_EFFECTS_SHORTER);
         }
@@ -775,7 +775,7 @@ public final class ForgeUpgradeListener implements Listener {
         List<ItemStack> keepsakes = new ArrayList<>();
         event.getDrops().removeIf(drop -> {
             if (drop != null
-                    && levelOf(plugin.items().upgradesOf(drop), ForgeUpgrade.Effect.SOULBOUND) > 0) {
+                    && levelOf(plugin.items().effectsOf(drop), ForgeUpgrade.Effect.SOULBOUND) > 0) {
                 keepsakes.add(drop);
                 return true;
             }
@@ -822,7 +822,7 @@ public final class ForgeUpgradeListener implements Listener {
             boolean pathSpeed = false;
             boolean roamSpeed = false;
             for (ItemStack piece : gearPieces(player)) {
-                Map<ForgeUpgrade.Def, Integer> ups = plugin.items().upgradesOf(piece);
+                Map<ForgeUpgrade.Def, Integer> ups = plugin.items().effectsOf(piece);
                 regen += sumAbs(ups, ForgeUpgrade.Effect.REGEN_PULSE);
                 magnetLevels += levelOf(ups, ForgeUpgrade.Effect.MAGNET);
                 nightVision |= levelOf(ups, ForgeUpgrade.Effect.NIGHT_VISION) > 0;
@@ -897,7 +897,7 @@ public final class ForgeUpgradeListener implements Listener {
     /** Есть ли хоть одно кузнечное улучшение в надетой экипировке (1.4.91). */
     private boolean hasForgeGear(Player player) {
         for (ItemStack piece : gearPieces(player)) {
-            if (!plugin.items().upgradesOf(piece).isEmpty()) {
+            if (!plugin.items().effectsOf(piece).isEmpty()) {
                 return true;
             }
         }
@@ -987,7 +987,7 @@ public final class ForgeUpgradeListener implements Listener {
     /* ------------------------------- подсчёты ------------------------------- */
 
     /** Суммарный уровень всех улучшений с нужным эффектом (наборы могут наслаиваться). */
-    private static int levelOf(Map<ForgeUpgrade.Def, Integer> ups, ForgeUpgrade.Effect effect) {
+    static int levelOf(Map<ForgeUpgrade.Def, Integer> ups, ForgeUpgrade.Effect effect) {
         int total = 0;
         for (Map.Entry<ForgeUpgrade.Def, Integer> entry : ups.entrySet()) {
             if (entry.getKey().effect() == effect) {
@@ -997,14 +997,25 @@ public final class ForgeUpgradeListener implements Listener {
         return total;
     }
 
-    /** Доля от единицы за один уровень по КОНКРЕТНОМУ свойству (perLevel/100). */
-    private static double fraction(Map<ForgeUpgrade.Def, Integer> ups, ForgeUpgrade.Effect effect) {
+    /**
+     * Средняя доля за один уровень по эффекту: Σ(уровень×perLevel)/Σуровней/100.
+     *
+     * <p>Вызовы всегда умножают её на суммарный уровень, поэтому произведение
+     * точно равно Σ(уровень×perLevel)/100. Это важно с 1.4.118: у уникального
+     * свойства тира и кузнечного улучшения может совпасть эффект, и тогда доли
+     * должны складываться, а не подменять друг друга (раньше брался perLevel
+     * первого попавшегося определения).</p>
+     */
+    static double fraction(Map<ForgeUpgrade.Def, Integer> ups, ForgeUpgrade.Effect effect) {
+        double weighted = 0;
+        int levels = 0;
         for (Map.Entry<ForgeUpgrade.Def, Integer> entry : ups.entrySet()) {
             if (entry.getKey().effect() == effect) {
-                return entry.getKey().perLevel() / 100.0;
+                weighted += entry.getKey().perLevel() * entry.getValue();
+                levels += entry.getValue();
             }
         }
-        return 0;
+        return levels == 0 ? 0 : weighted / levels / 100.0;
     }
 
     /** Шанс-эффект со всех вещей: сумма уровень×perLevel/100 (для броневого стека). */

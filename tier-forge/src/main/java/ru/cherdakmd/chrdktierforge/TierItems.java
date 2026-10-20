@@ -23,7 +23,10 @@ import java.util.Random;
  * (translatable — следует языку клиента), лор-плашка, блеск у легенд.
  * С 1.4.55 — ещё и кузнечные слои: случайная кличка из пула 35 имён (один раз,
  * живёт в PDC), уровни улучшений (up_&lt;id&gt;, атрибуты fu_&lt;id&gt;),
- * лор-строки свойств с маркером ✦. Только серверный рантайм.
+ * лор-строки свойств с маркером ✦. С 1.4.118 — уникальные свойства тира:
+ * по 15 на тир, один-три на предмет, в PDC ({@code tier_properties}) и лоре
+ * с маркером ✧. Свойство живёт вместе с тиром и пересбрасывается при его
+ * смене; событийная половина работает через {@link ForgeUpgradeListener}.
  */
 public final class TierItems {
 
@@ -43,6 +46,10 @@ public final class TierItems {
     public static final String PDC_UPGRADE_INDEX = "up_index";
     /** Маркер лор-строк улучшений (пересборка лора снимает строки по этому знаку). */
     public static final String FORGE_LORE_MARKER = "✦";
+    /** PDC-строка уникальных свойств тира: id через запятую (1.4.118). */
+    public static final String PDC_PROPERTIES = "tier_properties";
+    /** Маркер лор-строк свойств тира — по нему лор и пересобирается. */
+    public static final String PROPERTY_LORE_MARKER = "✧";
 
     private final TierForgePlugin plugin;
     private final NamespacedKey key;
@@ -50,6 +57,7 @@ public final class TierItems {
     private final NamespacedKey sourceKey;
     private final NamespacedKey forgeNameKey;
     private final NamespacedKey indexKey;
+    private final NamespacedKey propertiesKey;
     private final Random random = new Random();
 
     public TierItems(TierForgePlugin plugin) {
@@ -59,6 +67,7 @@ public final class TierItems {
         this.sourceKey = new NamespacedKey(plugin, PDC_SOURCE);
         this.forgeNameKey = new NamespacedKey(plugin, PDC_FORGE_NAME);
         this.indexKey = new NamespacedKey(plugin, PDC_UPGRADE_INDEX);
+        this.propertiesKey = new NamespacedKey(plugin, PDC_PROPERTIES);
     }
 
     /** Читает id тира предмета (null — предмет без тира). */
@@ -74,6 +83,15 @@ public final class TierItems {
 
     /** Полное применение тира: модификаторы, PDC, имя, лор, блеск. */
     public void apply(ItemStack item, TierDef.Snapshot tier) {
+        apply(item, tier, null);
+    }
+
+    /**
+     * То же, но с заранее выбранными свойствами тира. Нужно превью наковальни:
+     * без этого свойства переролливались бы на каждое движение в окне, и хорошее
+     * можно было бы «рыбачить» бесплатно. {@code null} — обычный бросок.
+     */
+    public void apply(ItemStack item, TierDef.Snapshot tier, List<TierProperty> preset) {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
         meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, tier.id());
@@ -82,8 +100,10 @@ public final class TierItems {
         clearForgeModifiers(meta);
         ensureForgeName(item, meta);
         refreshUpgradeIndex(meta); // 1.4.82: индекс строится при каждой пересборке
+        syncProperties(item, meta, tier, preset); // 1.4.118: свойство живёт вместе с тиром
         applyModifiers(item, meta, tier);
         applyUpgradeModifiers(item, meta);
+        applyPropertyModifiers(item, meta);
         decorateName(item, meta, tier);
         replaceLore(meta, tier);
         if ("legendary".equals(tier.id())) {
@@ -145,6 +165,7 @@ public final class TierItems {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
         meta.getPersistentDataContainer().remove(key);
+        meta.getPersistentDataContainer().remove(propertiesKey);
         clearTierModifiers(meta);
         clearForgeModifiers(meta);
         item.setItemMeta(meta);
@@ -243,14 +264,19 @@ public final class TierItems {
      * пересборке через {@link #apply}).
      */
     public Map<ForgeUpgrade.Def, Integer> upgradesOf(ItemStack item) {
-        Map<ForgeUpgrade.Def, Integer> result = new LinkedHashMap<>();
         if (item == null || !item.hasItemMeta()) {
-            return result;
+            return new LinkedHashMap<>();
         }
         ItemMeta meta = item.getItemMeta();
         if (meta == null) {
-            return result;
+            return new LinkedHashMap<>();
         }
+        return upgradesFromMeta(meta);
+    }
+
+    /** Улучшения из уже открытой меты: {@code up_index}, старые предметы — перебором. */
+    private Map<ForgeUpgrade.Def, Integer> upgradesFromMeta(ItemMeta meta) {
+        Map<ForgeUpgrade.Def, Integer> result = new LinkedHashMap<>();
         long[] index = meta.getPersistentDataContainer()
                 .get(indexKey, PersistentDataType.LONG_ARRAY);
         if (index != null && UpgradeIndex.any(index)) {
@@ -275,6 +301,111 @@ public final class TierItems {
             }
         }
         return result;
+    }
+
+    /* --------------------------- свойства тира (1.4.118) --------------------------- */
+
+    /**
+     * Уникальные свойства предмета (пустой список — их нет или они отключены).
+     * Свойства принадлежат тиру: чужой тир их не покажет — при смене тира
+     * {@link #apply} пересобирает набор.
+     */
+    public List<TierProperty> propertiesOf(ItemStack item) {
+        if (item == null || !item.hasItemMeta()) {
+            return List.of();
+        }
+        ItemMeta meta = item.getItemMeta();
+        return meta == null ? List.of() : propertiesFromMeta(meta);
+    }
+
+    private List<TierProperty> propertiesFromMeta(ItemMeta meta) {
+        return TierProperties.parse(meta.getPersistentDataContainer()
+                .get(propertiesKey, PersistentDataType.STRING));
+    }
+
+    /**
+     * Все кузнечные эффекты предмета: улучшения ({@code up_*}) плюс уникальные
+     * свойства тира. Свойство приходит как «улучшение» I уровня, поэтому
+     * событийная половина ({@link ForgeUpgradeListener}) обрабатывает его тем же
+     * кодом и под теми же потолками, что и ковку.
+     */
+    public Map<ForgeUpgrade.Def, Integer> effectsOf(ItemStack item) {
+        if (item == null || !item.hasItemMeta()) {
+            return new LinkedHashMap<>();
+        }
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) {
+            return new LinkedHashMap<>();
+        }
+        Map<ForgeUpgrade.Def, Integer> result = new LinkedHashMap<>(upgradesFromMeta(meta));
+        for (TierProperty property : propertiesFromMeta(meta)) {
+            result.put(property.asDef(), 1);
+        }
+        return result;
+    }
+
+    /**
+     * Бросок свойств по конфигу: столько, сколько разрешает {@code properties.per-item},
+     * из пула тира под вид предмета. Пустой список — свойства выключены или вид
+     * предмета не подошёл. Используется превью крафта/наковальни/кузнечного стола.
+     */
+    public List<TierProperty> rollFor(TierDef.Snapshot tier, ItemKind kind) {
+        if (tier == null || kind == null || !plugin.config().propertiesEnabled()) {
+            return List.of();
+        }
+        return TierProperties.roll(tier.id(), kind, desiredProperties(), random);
+    }
+
+    /** Сколько свойств положено предмету по конфигу (1..MAX_PER_ITEM). */
+    private int desiredProperties() {
+        return Math.max(1, Math.min(TierProperties.MAX_PER_ITEM,
+                plugin.config().propertiesPerItem()));
+    }
+
+    /**
+     * Сводит свойства с тиром. Тот же тир — набор сохраняется (per-item вырос —
+     * добираем новые, не трогая старые); другой тир или неподходящий вид — бросок
+     * заново. Поэтому свойство не «прилипает» к чужому тиру ни при перекате, ни
+     * при слиянии, ни на наковальне.
+     *
+     * @param preset заранее выбранный набор превью (наковальня); {@code null} —
+     *               взять текущий из PDC или бросить заново
+     */
+    private void syncProperties(ItemStack item, ItemMeta meta, TierDef.Snapshot tier,
+                                List<TierProperty> preset) {
+        ItemKind kind = ItemKind.classify(item.getType().name());
+        if (!plugin.config().propertiesEnabled() || kind == null) {
+            if (!propertiesFromMeta(meta).isEmpty()) {
+                meta.getPersistentDataContainer().remove(propertiesKey);
+            }
+            return;
+        }
+        List<TierProperty> current = preset != null && !preset.isEmpty()
+                ? preset : propertiesFromMeta(meta);
+        int wanted = desiredProperties();
+        boolean sameTier = !current.isEmpty();
+        for (TierProperty property : current) {
+            if (!property.tier().equals(tier.id()) || !property.fits(kind)) {
+                sameTier = false;
+                break;
+            }
+        }
+        List<TierProperty> result;
+        if (sameTier) {
+            result = new ArrayList<>(current.subList(0, Math.min(current.size(), wanted)));
+            if (result.size() < wanted) {
+                result.addAll(TierProperties.roll(tier.id(), kind, wanted - result.size(),
+                        random, result));
+            }
+        } else {
+            result = TierProperties.roll(tier.id(), kind, wanted, random);
+        }
+        if (result.isEmpty()) {
+            meta.getPersistentDataContainer().remove(propertiesKey);
+        } else {
+            meta.getPersistentDataContainer().set(propertiesKey, PersistentDataType.STRING,
+                    TierProperties.serialize(result));
+        }
     }
 
     /** Пересобирает {@code up_index} по фактическим PDC-уровням (1.4.82). */
@@ -339,6 +470,14 @@ public final class TierItems {
                         .set(upgradeKey(def.id()), PersistentDataType.INTEGER, level);
             }
         }
+        // 1.4.118: свойство тира переезжает вместе с остальным прогрессом. Если тир
+        // при этом сменился, apply() всё равно пересбросит набор на новый пул.
+        String properties = source.getPersistentDataContainer()
+                .get(propertiesKey, PersistentDataType.STRING);
+        if (properties != null && !properties.isBlank()) {
+            target.getPersistentDataContainer()
+                    .set(propertiesKey, PersistentDataType.STRING, properties);
+        }
         to.setItemMeta(target);
     }
 
@@ -385,49 +524,68 @@ public final class TierItems {
         // (раньше на каждую пересборку приходился лишний getItemMeta()).
         for (Map.Entry<ForgeUpgrade.Def, Integer> entry : upgradesFromMeta(meta).entrySet()) {
             ForgeUpgrade.Def def = entry.getKey();
-            double total = def.perLevel() * entry.getValue();
-            String tag = "fu_" + def.id();
-            switch (def.effect()) {
-                case ATTACK_PERCENT -> add(meta, Attribute.ATTACK_DAMAGE, tag, total / 100.0, slot);
-                case ATTACK_SPEED_PERCENT -> add(meta, Attribute.ATTACK_SPEED, tag, total / 100.0, slot);
-                case ARMOR_PERCENT -> add(meta, Attribute.ARMOR, tag, total / 100.0, slot);
-                case MOVE_SPEED_PERCENT -> add(meta, Attribute.MOVEMENT_SPEED, tag, total / 100.0, slot);
-                case MAX_HEALTH -> addAbsolute(meta, Attribute.MAX_HEALTH, tag, total, slot);
-                case DIG_SPEED_PERCENT -> add(meta, Attribute.BLOCK_BREAK_SPEED, tag,
-                        total / 100.0, slot);
-                // --- 1.4.56: атрибутная часть новых фишек ---
-                case RAW_DAMAGE -> addAbsolute(meta, Attribute.ATTACK_DAMAGE, tag, total, slot);
-                case ATTACK_KNOCKBACK -> addAbsolute(meta, Attribute.ATTACK_KNOCKBACK, tag, total, slot);
-                case REACH -> addAbsolute(meta, Attribute.ENTITY_INTERACTION_RANGE, tag, total, slot);
-                case SWEEP_RATIO -> addAbsolute(meta, Attribute.SWEEPING_DAMAGE_RATIO, tag, total, slot);
-                case KB_RESIST -> addAbsolute(meta, Attribute.KNOCKBACK_RESISTANCE, tag, total, slot);
-                case SAFE_FALL -> addAbsolute(meta, Attribute.SAFE_FALL_DISTANCE, tag, total, slot);
-                case STEP_HEIGHT -> addAbsolute(meta, Attribute.STEP_HEIGHT, tag, total, slot);
-                case OXYGEN -> addAbsolute(meta, Attribute.OXYGEN_BONUS, tag, total, slot);
-                case SWIM_SPEED -> addAbsolute(meta, Attribute.WATER_MOVEMENT_EFFICIENCY, tag,
-                        total, slot);
-                case SNEAK_SPEED -> add(meta, Attribute.SNEAKING_SPEED, tag, total / 100.0, slot);
-                case BURN_TIME -> add(meta, Attribute.BURNING_TIME, tag, -total / 100.0, slot);
-                case EXPLOSION_RESIST -> addAbsolute(meta, Attribute.EXPLOSION_KNOCKBACK_RESISTANCE,
-                        tag, total, slot);
-                case LUCK -> addAbsolute(meta, Attribute.LUCK, tag, total, slot);
-                case MINING_EFFICIENCY -> addAbsolute(meta, Attribute.MINING_EFFICIENCY, tag,
-                        total, slot);
-                case BLOCK_REACH -> addAbsolute(meta, Attribute.BLOCK_INTERACTION_RANGE, tag,
-                        total, slot);
-                case SCALE_UP -> add(meta, Attribute.SCALE, tag, total / 100.0, slot);
-                // --- 1.4.57: атрибутная часть третьей ковки ---
-                case ATTACK_SPEED_FLAT -> addAbsolute(meta, Attribute.ATTACK_SPEED, tag, total, slot);
-                case TOUGHNESS_FLAT -> addAbsolute(meta, Attribute.ARMOR_TOUGHNESS, tag, total, slot);
-                case JUMP -> add(meta, Attribute.JUMP_STRENGTH, tag, total / 100.0, slot);
-                case GRAVITY_DOWN -> add(meta, Attribute.GRAVITY, tag, -total / 100.0, slot);
-                case FALL_DAMAGE_DOWN -> add(meta, Attribute.FALL_DAMAGE_MULTIPLIER, tag,
-                        -total / 100.0, slot);
-                case WALK_EFFICIENCY -> addAbsolute(meta, Attribute.MOVEMENT_EFFICIENCY, tag,
-                        total, slot);
-                default -> {
-                    // событийные свойства (крит/вампиризм/терновник/…) — атрибутов не требуют
-                }
+            applyDefModifiers(meta, def, def.perLevel() * entry.getValue(),
+                    "fu_" + def.id(), slot);
+        }
+    }
+
+    /** Атрибутная половина свойств тира (событийная живёт в ForgeUpgradeListener). */
+    private void applyPropertyModifiers(ItemStack item, ItemMeta meta) {
+        ItemKind kind = ItemKind.classify(item.getType().name());
+        if (kind == null) return;
+        EquipmentSlotGroup slot = slotGroupFor(kind);
+        for (TierProperty property : propertiesFromMeta(meta)) {
+            applyDefModifiers(meta, property.asDef(), property.value(),
+                    "pr_" + property.id(), slot);
+        }
+    }
+
+    /**
+     * Модификаторы одного эффекта с данным ключом — общий путь ковки и свойств
+     * тира: свойство начисляется ровно так же, как улучшение того же эффекта.
+     */
+    private void applyDefModifiers(ItemMeta meta, ForgeUpgrade.Def def, double total, String tag,
+                                   EquipmentSlotGroup slot) {
+        switch (def.effect()) {
+            case ATTACK_PERCENT -> add(meta, Attribute.ATTACK_DAMAGE, tag, total / 100.0, slot);
+            case ATTACK_SPEED_PERCENT -> add(meta, Attribute.ATTACK_SPEED, tag, total / 100.0, slot);
+            case ARMOR_PERCENT -> add(meta, Attribute.ARMOR, tag, total / 100.0, slot);
+            case MOVE_SPEED_PERCENT -> add(meta, Attribute.MOVEMENT_SPEED, tag, total / 100.0, slot);
+            case MAX_HEALTH -> addAbsolute(meta, Attribute.MAX_HEALTH, tag, total, slot);
+            case DIG_SPEED_PERCENT -> add(meta, Attribute.BLOCK_BREAK_SPEED, tag,
+                    total / 100.0, slot);
+            // --- 1.4.56: атрибутная часть новых фишек ---
+            case RAW_DAMAGE -> addAbsolute(meta, Attribute.ATTACK_DAMAGE, tag, total, slot);
+            case ATTACK_KNOCKBACK -> addAbsolute(meta, Attribute.ATTACK_KNOCKBACK, tag, total, slot);
+            case REACH -> addAbsolute(meta, Attribute.ENTITY_INTERACTION_RANGE, tag, total, slot);
+            case SWEEP_RATIO -> addAbsolute(meta, Attribute.SWEEPING_DAMAGE_RATIO, tag, total, slot);
+            case KB_RESIST -> addAbsolute(meta, Attribute.KNOCKBACK_RESISTANCE, tag, total, slot);
+            case SAFE_FALL -> addAbsolute(meta, Attribute.SAFE_FALL_DISTANCE, tag, total, slot);
+            case STEP_HEIGHT -> addAbsolute(meta, Attribute.STEP_HEIGHT, tag, total, slot);
+            case OXYGEN -> addAbsolute(meta, Attribute.OXYGEN_BONUS, tag, total, slot);
+            case SWIM_SPEED -> addAbsolute(meta, Attribute.WATER_MOVEMENT_EFFICIENCY, tag,
+                    total, slot);
+            case SNEAK_SPEED -> add(meta, Attribute.SNEAKING_SPEED, tag, total / 100.0, slot);
+            case BURN_TIME -> add(meta, Attribute.BURNING_TIME, tag, -total / 100.0, slot);
+            case EXPLOSION_RESIST -> addAbsolute(meta, Attribute.EXPLOSION_KNOCKBACK_RESISTANCE,
+                    tag, total, slot);
+            case LUCK -> addAbsolute(meta, Attribute.LUCK, tag, total, slot);
+            case MINING_EFFICIENCY -> addAbsolute(meta, Attribute.MINING_EFFICIENCY, tag,
+                    total, slot);
+            case BLOCK_REACH -> addAbsolute(meta, Attribute.BLOCK_INTERACTION_RANGE, tag,
+                    total, slot);
+            case SCALE_UP -> add(meta, Attribute.SCALE, tag, total / 100.0, slot);
+            // --- 1.4.57: атрибутная часть третьей ковки ---
+            case ATTACK_SPEED_FLAT -> addAbsolute(meta, Attribute.ATTACK_SPEED, tag, total, slot);
+            case TOUGHNESS_FLAT -> addAbsolute(meta, Attribute.ARMOR_TOUGHNESS, tag, total, slot);
+            case JUMP -> add(meta, Attribute.JUMP_STRENGTH, tag, total / 100.0, slot);
+            case GRAVITY_DOWN -> add(meta, Attribute.GRAVITY, tag, -total / 100.0, slot);
+            case FALL_DAMAGE_DOWN -> add(meta, Attribute.FALL_DAMAGE_MULTIPLIER, tag,
+                    -total / 100.0, slot);
+            case WALK_EFFICIENCY -> addAbsolute(meta, Attribute.MOVEMENT_EFFICIENCY, tag,
+                    total, slot);
+            default -> {
+                // событийные свойства (крит/вампиризм/терновник/…) — атрибутов не требуют
             }
         }
     }
@@ -460,7 +618,9 @@ public final class TierItems {
     }
 
     private NamespacedKey modifierKey(String tag) {
-        return new NamespacedKey(plugin, tag.startsWith("fu_") ? tag : "tier_" + tag);
+        // fu_/pr_ — наши собственные ключи ковки и свойств, остальное — модификаторы тира
+        boolean own = tag.startsWith("fu_") || tag.startsWith("pr_");
+        return new NamespacedKey(plugin, own ? tag : "tier_" + tag);
     }
 
     private void clearTierModifiers(ItemMeta meta) {
@@ -507,23 +667,34 @@ public final class TierItems {
             Attribute.GRAVITY, Attribute.FALL_DAMAGE_MULTIPLIER,
             Attribute.MOVEMENT_EFFICIENCY);
 
-    /** Снимает модификаторы улучшений (fu_<id>) со всех атрибутов. */
+    /**
+     * Снимает модификаторы улучшений ({@code fu_<id>}) и свойств тира
+     * ({@code pr_<id>}) со всех атрибутов. Один проход по атрибутам вместо
+     * перебора 85 улучшений × 26 атрибутов: свойств ещё 105, и старый способ
+     * заметно тормозил бы пересборку.
+     */
     private void clearForgeModifiers(ItemMeta meta) {
         if (!meta.hasAttributeModifiers()) {
             return;
         }
-        for (ForgeUpgrade.Def def : ForgeUpgrade.ALL) {
-            NamespacedKey fuKey = modifierKey("fu_" + def.id());
-            for (Attribute attribute : FORGE_ATTRIBUTES) {
-                Collection<AttributeModifier> mods = meta.getAttributeModifiers(attribute);
-                if (mods == null) {
+        for (Attribute attribute : FORGE_ATTRIBUTES) {
+            Collection<AttributeModifier> mods = meta.getAttributeModifiers(attribute);
+            if (mods == null || mods.isEmpty()) {
+                continue;
+            }
+            List<AttributeModifier> ours = new ArrayList<>();
+            for (AttributeModifier existing : mods) {
+                NamespacedKey existingKey = existing.getKey();
+                if (!existingKey.getNamespace().equals(propertiesKey.getNamespace())) {
                     continue;
                 }
-                for (AttributeModifier existing : mods) {
-                    if (existing.getKey().equals(fuKey)) {
-                        meta.removeAttributeModifier(attribute, existing);
-                    }
+                String tag = existingKey.getKey();
+                if (tag.startsWith("fu_") || tag.startsWith("pr_")) {
+                    ours.add(existing);
                 }
+            }
+            for (AttributeModifier existing : ours) {
+                meta.removeAttributeModifier(attribute, existing);
             }
         }
     }
@@ -622,24 +793,17 @@ public final class TierItems {
                 ? new ArrayList<>(meta.lore()) : new ArrayList<>();
         lore.removeIf(this::isTierLine);
         lore.removeIf(this::isForgeLine);
+        lore.removeIf(this::isPropertyLine);
         lore.add(tierLine(tier));
-        // строки свойств улучшений — после плашки тира, в порядке реестра
+        // уникальные свойства тира — сразу под плашкой, в порядке выдачи
+        for (TierProperty property : propertiesFromMeta(meta)) {
+            lore.add(propertyLine(property));
+        }
+        // строки свойств улучшений — после, в порядке реестра
         for (Map.Entry<ForgeUpgrade.Def, Integer> entry : upgradesFromMeta(meta).entrySet()) {
             lore.add(upgradeLine(entry.getKey(), entry.getValue()));
         }
         meta.lore(lore);
-    }
-
-    /** Улучшения уже из меты (вызывается из replaceLore после записи PDC). */
-    private Map<ForgeUpgrade.Def, Integer> upgradesFromMeta(ItemMeta meta) {
-        Map<ForgeUpgrade.Def, Integer> result = new LinkedHashMap<>();
-        for (ForgeUpgrade.Def def : ForgeUpgrade.ALL) {
-            Integer level = meta.getPersistentDataContainer().get(upgradeKey(def.id()), PersistentDataType.INTEGER);
-            if (level != null && level > 0) {
-                result.put(def, level);
-            }
-        }
-        return result;
     }
 
     /** Цветная плашка тира в лоре (собирается напрямую: цвет — тег MiniMessage). */
@@ -657,6 +821,13 @@ public final class TierItems {
                         + " <gray>— " + ForgeUpgrade.describe(def, level) + "</gray>");
     }
 
+    /** Строка свойства тира: «✧ Ржавчина — -6% урона». */
+    private Component propertyLine(TierProperty property) {
+        return net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(
+                "<aqua>" + PROPERTY_LORE_MARKER + " " + property.name() + "</aqua>"
+                        + " <gray>— " + property.describe() + "</gray>");
+    }
+
     private boolean isTierLine(Component line) {
         String plain = PlainTextComponentSerializer.plainText().serialize(line);
         for (String id : TierDef.LADDER) {
@@ -671,5 +842,11 @@ public final class TierItems {
     private boolean isForgeLine(Component line) {
         return PlainTextComponentSerializer.plainText().serialize(line).trim()
                 .startsWith(FORGE_LORE_MARKER);
+    }
+
+    /** Своя строка свойства тира — по маркеру ✧. */
+    private boolean isPropertyLine(Component line) {
+        return PlainTextComponentSerializer.plainText().serialize(line).trim()
+                .startsWith(PROPERTY_LORE_MARKER);
     }
 }

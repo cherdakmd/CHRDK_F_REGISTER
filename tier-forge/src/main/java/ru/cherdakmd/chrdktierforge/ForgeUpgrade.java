@@ -375,25 +375,25 @@ public final class ForgeUpgrade {
         double total = def.perLevel() * level;
         String value = fmt(total);
         return switch (def.effect()) {
-            case ATTACK_PERCENT -> "+" + value + "% урона";
-            case ATTACK_SPEED_PERCENT -> "+" + value + "% скорости атаки";
+            case ATTACK_PERCENT -> signed(total) + "% урона";
+            case ATTACK_SPEED_PERCENT -> signed(total) + "% скорости атаки";
             case LIFESTEAL -> "вампиризм " + value + "% урона";
             case CRIT_CHANCE -> "крит ×1.5 — шанс " + value + "%";
             case EXECUTE -> "+" + value + "% урона по целям ниже 30% HP";
             case HUNTER_XP -> "+" + value + "% опыта с мобов";
             case SMITE -> "+" + value + "% урона нежити";
-            case ARMOR_PERCENT -> "+" + value + "% брони";
-            case MOVE_SPEED_PERCENT -> "+" + value + "% скорости";
-            case MAX_HEALTH -> "+" + value + "❤ к здоровью";
+            case ARMOR_PERCENT -> signed(total) + "% брони";
+            case MOVE_SPEED_PERCENT -> signed(total) + "% скорости";
+            case MAX_HEALTH -> signed(total) + "❤ к здоровью";
             case THORNS -> value + "% шанс вернуть 25% урона";
             case DAMAGE_TAKEN_PERCENT -> "-" + value + "% входящего урона";
             case ORE_DOUBLE -> value + "% шанс дубля руды";
-            case DIG_SPEED_PERCENT -> "+" + value + "% скорости добычи";
+            case DIG_SPEED_PERCENT -> signed(total) + "% скорости добычи";
             case DURABILITY_SAVE -> value + "% шанс сберечь прочность";
-            case RAW_DAMAGE -> "+" + value + " к урону";
-            case ATTACK_KNOCKBACK -> "+" + value + " к отброску";
-            case REACH -> "+" + value + " м дальности удара";
-            case SWEEP_RATIO -> "+" + Math.round(total * 100) + "% урона веером";
+            case RAW_DAMAGE -> signed(total) + " к урону";
+            case ATTACK_KNOCKBACK -> signed(total) + " к отброску";
+            case REACH -> signed(total) + " м дальности удара";
+            case SWEEP_RATIO -> signed(Math.round(total * 100)) + "% урона веером";
             case IGNITE -> value + "% поджечь врага";
             case SLOW_HIT -> value + "% замедлить цель";
             case POISON_HIT -> value + "% отравить цель";
@@ -401,22 +401,22 @@ public final class ForgeUpgrade {
             case FIRST_STRIKE -> "+" + value + "% по нетронутым";
             case ARMOR_PIERCE -> "+" + value + "% по бронированным";
             case RAGE -> "ярость за потерянные ❤ (до 30%)";
-            case KB_RESIST -> "+" + Math.round(total * 100) + "% отпора отбросу";
-            case SAFE_FALL -> "+" + value + " м мягкости падения";
-            case STEP_HEIGHT -> "+" + value + " м авто-шаг";
-            case OXYGEN -> "+" + Math.round(total * 100) + "% воздуха под водой";
-            case SWIM_SPEED -> "+" + Math.round(total * 100) + "% скорости плавания";
-            case SNEAK_SPEED -> "+" + value + "% скорости красться";
+            case KB_RESIST -> signed(Math.round(total * 100)) + "% отпора отбросу";
+            case SAFE_FALL -> signed(total) + " м мягкости падения";
+            case STEP_HEIGHT -> signed(total) + " м авто-шаг";
+            case OXYGEN -> signed(Math.round(total * 100)) + "% воздуха под водой";
+            case SWIM_SPEED -> signed(Math.round(total * 100)) + "% скорости плавания";
+            case SNEAK_SPEED -> signed(total) + "% скорости красться";
             case BURN_TIME -> "-" + value + "% времени горения";
-            case EXPLOSION_RESIST -> "+" + Math.round(total * 100) + "% отпора взрыву";
-            case LUCK -> "+" + value + " удачи";
+            case EXPLOSION_RESIST -> signed(Math.round(total * 100)) + "% отпора взрыву";
+            case LUCK -> signed(total) + " удачи";
             case PARRY -> value + "% парировать удар";
             case REGEN_PULSE -> "+" + value + "❤/2с регенерации";
             case CATCHER -> value + "% поймать нападавшего";
             case ADRENALINE -> "скорость при HP ниже 30% (раз в 10 с)";
             case LAST_STAND -> "смертельный удар не убьёт (раз в 60 с)";
-            case MINING_EFFICIENCY -> "+" + value + " к темпу добычи";
-            case BLOCK_REACH -> "+" + value + " м дальности руки";
+            case MINING_EFFICIENCY -> signed(total) + " к темпу добычи";
+            case BLOCK_REACH -> signed(total) + " м дальности руки";
             case SMELT_ORE -> value + "% переплавить дроп руды";
             case BLOCK_XP -> "+" + value + "% опыта с блоков";
             case ZONE_BREAK -> "копает колонну боков";
@@ -433,14 +433,14 @@ public final class ForgeUpgrade {
             case DEBUFF_DAMAGE -> "+" + value + "% по ослабленным";
             case PVP_DAMAGE -> "+" + value + "% урона игрокам";
             case ANIMAL_DAMAGE -> "+" + value + "% урона животным";
-            case ATTACK_SPEED_FLAT -> "+" + value + " к скорости ударов";
+            case ATTACK_SPEED_FLAT -> signed(total) + " к скорости ударов";
             case CLEANSE_HIT -> value + "% снять магию с цели";
             case FREEZE_HIT -> value + "% заморозить цель";
-            case TOUGHNESS_FLAT -> "+" + value + " к прочности брони";
-            case JUMP -> "+" + value + "% к прыжку";
+            case TOUGHNESS_FLAT -> signed(total) + " к прочности брони";
+            case JUMP -> signed(total) + "% к прыжку";
             case GRAVITY_DOWN -> "-" + value + "% гравитации";
             case FALL_DAMAGE_DOWN -> "-" + value + "% урона падения";
-            case WALK_EFFICIENCY -> "+" + Math.round(total * 100) + "% лёгкости ходьбы";
+            case WALK_EFFICIENCY -> signed(Math.round(total * 100)) + "% лёгкости ходьбы";
             case ABSORB_PROC -> value + "% шанс поглощения от удара";
             case RESIST_PROC -> value + "% шанс стойкости от удара";
             case EXPLOSION_DAMAGE_DOWN -> "-" + value + "% урона взрывов";
@@ -462,6 +462,20 @@ public final class ForgeUpgrade {
             case ROAM_SPEED -> "скорость вне боя (после 5 с тишины)";
             case SNIPE -> "+" + value + "% урона стрелам";
         };
+    }
+
+    /**
+     * Знак перед числом: «+6», «-6», «0». Нужен свойствам тира: у проклятого
+     * тира бонусы отрицательные, и «+-6% урона» читалось бы как опечатка.
+     */
+    static String signed(double value) {
+        String text = fmt(value);
+        return value > 0 ? "+" + text : text;
+    }
+
+    /** То же для округлённых процентов ({@code Math.round}). */
+    static String signed(long value) {
+        return value > 0 ? "+" + value : Long.toString(value);
     }
 
     /** Целое без хвоста, иначе один знак после запятой (1.5 → «1.5», 3.0 → «3»). */

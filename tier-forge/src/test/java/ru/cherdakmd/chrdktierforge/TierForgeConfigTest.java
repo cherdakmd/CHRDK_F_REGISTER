@@ -71,6 +71,29 @@ class TierForgeConfigTest {
     }
 
     @Test
+    void propertiesDefaultsAndClamp() {
+        TierForgeConfig config = parse(empty()).config();
+        assertTrue(config.propertiesEnabled(), "свойства включены по умолчанию");
+        assertEquals(TierProperties.DEFAULT_PER_ITEM, config.propertiesPerItem());
+
+        YamlConfiguration off = empty();
+        off.set("properties.enabled", false);
+        off.set("properties.per-item", 99);
+        Parsed parsed = parse(off);
+        assertFalse(parsed.config().propertiesEnabled());
+        assertEquals(TierProperties.MAX_PER_ITEM, parsed.config().propertiesPerItem(),
+                "больше трёх свойств не выдаём");
+        assertTrue(parsed.warnings().stream().anyMatch(w -> w.contains("properties.per-item")));
+
+        YamlConfiguration zero = empty();
+        zero.set("properties.per-item", 0);
+        Parsed zeroParsed = parse(zero);
+        assertEquals(1, zeroParsed.config().propertiesPerItem(), "0 → хотя бы одно свойство");
+        assertTrue(zeroParsed.warnings().stream()
+                .anyMatch(w -> w.contains("properties.per-item")));
+    }
+
+    @Test
     void perKindChanceOverridesGlobal() {
         YamlConfiguration yaml = empty();
         yaml.set("roll-on-craft-chance-percent", 40);

@@ -163,6 +163,17 @@ public final class TierCommandHandler implements TabExecutor {
             }
         }
 
+        // 1.4.118: уникальные свойства тира — отдельным блоком после улучшений
+        java.util.List<TierProperty> properties = plugin.items().propertiesOf(item);
+        if (!properties.isEmpty()) {
+            plugin.messages().send(player, "info-properties-header", "count", properties.size());
+            for (TierProperty property : properties) {
+                plugin.messages().send(player, "info-property",
+                        "name", property.name(),
+                        "effect", property.describe());
+            }
+        }
+
         if (!plugin.config().anvilEnabled()) {
             plugin.messages().send(player, "info-anvil-off");
             return true;

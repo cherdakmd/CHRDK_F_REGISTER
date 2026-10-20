@@ -10,6 +10,7 @@ import org.bukkit.inventory.AnvilInventory;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
@@ -33,9 +34,17 @@ public final class TierAnvilListener implements Listener {
 
     private final TierForgePlugin plugin;
     private final CraftRollKeeper<TierDef.Snapshot> rerollKeeper = new CraftRollKeeper<>();
+    /**
+     * Свойства тира тоже отложены на «игрок + ключ» (1.4.118): иначе перекат и
+     * слияние переролливали бы их на каждое движение в окне, и удачное свойство
+     * можно было бы выбрать бесплатно.
+     */
+    private final CraftRollKeeper<List<TierProperty>> propertyKeeper = new CraftRollKeeper<>();
     private final Random random = new Random();
     /** Последний показанный в превью ключ переката, чтобы изъять ролл на клике. */
     private final Map<UUID, String> previewKeys = new HashMap<>();
+    /** То же для слияния: ключ отложенных свойств (сам тир детерминирован). */
+    private final Map<UUID, String> mergeKeys = new HashMap<>();
     /** Анти-спам: одна и та же подсказка на каждое движение в окне — только раз (1.4.80). */
     private final AnvilNoticeGate notices = new AnvilNoticeGate();
 
@@ -121,10 +130,13 @@ public final class TierAnvilListener implements Listener {
                             ? rollNotWorseThan(leftTier)
                             : TierRoller.roll(plugin.config().tiers(), random));
             if (roll == null) return;
+            List<TierProperty> properties = propertyKeeper.preview(player.getUniqueId(), key,
+                    () -> plugin.items().rollFor(roll, ItemKind.classify(left.getType().name())));
             ItemStack result = left.clone();
             result.setAmount(1);
-            plugin.items().apply(result, roll);
+            plugin.items().apply(result, roll, properties);
             event.setResult(result);
+            mergeKeys.remove(player.getUniqueId());
             event.getInventory().setRepairCost(TierMath.rerollXpCost(
                     plugin.config().rerollBaseXp(), TierDef.indexOf(leftTier)));
             previewKeys.put(player.getUniqueId(), key);
@@ -156,12 +168,16 @@ public final class TierAnvilListener implements Listener {
         TierDef.Snapshot target = plugin.config().find(next);
         if (target == null) return;
 
+        String mergeKey = "merge:" + left.getType().name() + ":" + next;
+        List<TierProperty> properties = propertyKeeper.preview(player.getUniqueId(), mergeKey,
+                () -> plugin.items().rollFor(target, ItemKind.classify(left.getType().name())));
         ItemStack result = left.clone();
         // 1.4.89: наковальня всегда отдаёт один предмет — стек не должен расти,
         // даже если сторонний плагин разрешил стакать экипировку.
         result.setAmount(1);
         previewKeys.remove(player.getUniqueId());
-        plugin.items().apply(result, target);
+        mergeKeys.put(player.getUniqueId(), mergeKey);
+        plugin.items().apply(result, target, properties);
         event.setResult(result);
         event.getInventory().setRepairCost(
                 TierMath.upgradeXpCost(plugin.config().anvilBaseXp(), TierDef.indexOf(next)));
@@ -181,7 +197,9 @@ public final class TierAnvilListener implements Listener {
     public void onQuit(org.bukkit.event.player.PlayerQuitEvent event) {
         UUID player = event.getPlayer().getUniqueId();
         previewKeys.remove(player);
+        mergeKeys.remove(player);
         rerollKeeper.clear(player);
+        propertyKeeper.clear(player);
         notices.clear(player);
     }
 
@@ -191,8 +209,13 @@ public final class TierAnvilListener implements Listener {
         if (!(event.getInventory() instanceof AnvilInventory)) return;
         if (event.getRawSlot() != 2) return; // слот результата
         if (!(event.getWhoClicked() instanceof Player player)) return;
+        String mergeKey = mergeKeys.remove(player.getUniqueId());
+        if (mergeKey != null) {
+            propertyKeeper.consume(player.getUniqueId(), mergeKey);
+        }
         String key = previewKeys.remove(player.getUniqueId());
         if (key == null) return;
+        propertyKeeper.consume(player.getUniqueId(), key);
         TierDef.Snapshot consumed = rerollKeeper.consume(player.getUniqueId(), key);
         ItemStack taken = event.getCurrentItem();
         String tier = taken == null ? null : plugin.items().tierOf(taken);

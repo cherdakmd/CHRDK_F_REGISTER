@@ -6,9 +6,11 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.event.inventory.PrepareSmithingEvent;
+import org.bukkit.event.inventory.SmithItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -30,6 +32,12 @@ public final class TierCraftListener implements Listener {
      * пока не выпадал тир, и только потом крафтил — шанс превращался в 100%.
      */
     private final CraftRollKeeper<Boolean> identifyKeeper = new CraftRollKeeper<>();
+    /**
+     * Отложенные свойства тира (1.4.118): сервер пересоздаёт результат крафта
+     * при каждом изменении сетки, поэтому без этого «дёрганьем ингредиентов»
+     * можно было бы бесплатно выбирать удачное свойство при том же тире.
+     */
+    private final CraftRollKeeper<List<TierProperty>> propertyKeeper = new CraftRollKeeper<>();
 
     public TierCraftListener(TierForgePlugin plugin) {
         this.plugin = plugin;
@@ -74,7 +82,9 @@ public final class TierCraftListener implements Listener {
         TierDef.Snapshot roll = rollKeeper.preview(
                 player.getUniqueId(), result.getType().name(), () -> rollFresh(player, kind));
         if (roll == null) return;
-        plugin.items().apply(result, roll);
+        List<TierProperty> properties = propertyKeeper.preview(player.getUniqueId(),
+                result.getType().name(), () -> plugin.items().rollFor(roll, kind));
+        plugin.items().apply(result, roll, properties);
     }
 
     /** Результат забран: отложенный ролл сгорает, следующее превью роллит заново. */
@@ -92,6 +102,7 @@ public final class TierCraftListener implements Listener {
         String tier = plugin.items().tierOf(current);
         TierDef.Snapshot consumed = rollKeeper.consume(
                 player.getUniqueId(), current.getType().name());
+        propertyKeeper.consume(player.getUniqueId(), current.getType().name());
         if (tier == null || consumed == null) return;
         // 1.4.81: находки считаются и в «старом» флоу (раньше — только при опознании).
         plugin.stats().count(player.getUniqueId(), consumed.id());
@@ -102,6 +113,7 @@ public final class TierCraftListener implements Listener {
     public void onQuit(PlayerQuitEvent event) {
         rollKeeper.clear(event.getPlayer().getUniqueId());
         identifyKeeper.clear(event.getPlayer().getUniqueId());
+        propertyKeeper.clear(event.getPlayer().getUniqueId());
     }
 
     /** Кузнечный стол: апгрейд в незерит сохраняет накатанный тир. */
@@ -117,9 +129,37 @@ public final class TierCraftListener implements Listener {
         if (snapshot == null) return;
         // 1.4.80: незеритовый апгрейд переносит и кузнечное состояние — кличку и
         // уровни всех улучшений (раньше они молча сгорали вместе со старым предметом).
+        // Старый предмет без свойства: свойство превью тоже откладываем, иначе
+        // его можно было бы выбирать, дёргая слоты кузнечного стола бесплатно.
+        List<TierProperty> preset = null;
+        if (plugin.items().propertiesOf(base).isEmpty() && plugin.config().propertiesEnabled()) {
+            Player player = event.getView().getPlayer() instanceof Player p ? p : null;
+            if (player != null) {
+                ItemKind kind = ItemKind.classify(result.getType().name());
+                String propertyKey = smithPropertyKey(result, tier);
+                preset = propertyKeeper.preview(player.getUniqueId(), propertyKey,
+                        () -> plugin.items().rollFor(snapshot, kind));
+            }
+        }
         plugin.items().copyForgeState(base, result);
-        plugin.items().apply(result, snapshot);
+        plugin.items().apply(result, snapshot, preset);
         event.setResult(result);
+    }
+
+    /** Результат кузнечного стола забран: отложенное свойство сгорает. */
+    @EventHandler(ignoreCancelled = true)
+    public void onSmith(SmithItemEvent event) {
+        if (!(event.getWhoClicked() instanceof Player player)) return;
+        ItemStack result = event.getCurrentItem();
+        if (result == null) return;
+        String tier = plugin.items().tierOf(result);
+        if (tier == null) return;
+        propertyKeeper.consume(player.getUniqueId(), smithPropertyKey(result, tier));
+    }
+
+    /** Ключ отложенного свойства для кузнечного стола. */
+    private static String smithPropertyKey(ItemStack result, String tier) {
+        return "smith:" + result.getType().name() + ":" + tier;
     }
 
     /**
