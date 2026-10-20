@@ -507,5 +507,5 @@ CI (`.github/workflows/build.yml`) дополнительно прогоняет
 ### 17.4. Проверки
 
 - `ClaimTeleportTest`, `ClaimMenuModelTest`, новые кейсы `ClaimsConfigTest`.
-- Контракт сообщений: новые ключи `menu-*` (16) и `tp-*` (13), проверка
+- Контракт сообщений: новые ключи `menu-*` (21) и `tp-*` (14), проверка
   `.github/scripts/check_messages.py` проходит.
