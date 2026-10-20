@@ -46,6 +46,21 @@ public final class ClaimsConfig {
     /** Вести журнал операций claims-audit.log. */
     public final boolean auditLog;
 
+    /** Графическое меню приватов /claim menu. */
+    public final boolean menuEnabled;
+    /** Показывать в меню вкладку чанков, выставленных на продажу. */
+    public final boolean menuShowForSale;
+    /** Телепорт к приватам /claim tp и по клику в меню. */
+    public final boolean teleportEnabled;
+    /** Сколько секунд игрок стоит на месте до телепорта (0 — сразу). */
+    public final int teleportWarmup;
+    /** Кулдаун между телепортами, секунд (0 — без кулдауна). */
+    public final int teleportCooldown;
+    /** Радиус поиска безопасной площадки вокруг центра чанка, блоков. */
+    public final int teleportRadius;
+    public final boolean teleportCancelMove;
+    public final boolean teleportCancelDamage;
+
     public final boolean pvp;
     public final boolean fire;
     public final boolean explosions;
@@ -82,6 +97,16 @@ public final class ClaimsConfig {
         enterNotice = cfg.getBoolean("general.enter-notice", true);
         auditLog = cfg.getBoolean("general.audit-log", true);
         notifyRent = cfg.getBoolean("general.notify-rent", true);
+
+        menuEnabled = cfg.getBoolean("menu.enabled", true);
+        menuShowForSale = cfg.getBoolean("menu.show-for-sale", true);
+        teleportEnabled = cfg.getBoolean("teleport.enabled", true);
+        teleportWarmup = clamped(cfg, logger, "teleport.warmup-seconds", 5, 0, 30);
+        teleportCooldown = clamped(cfg, logger, "teleport.cooldown-seconds", 10, 0, 600);
+        teleportRadius = clamped(cfg, logger, "teleport.search-radius", 3,
+                ClaimTeleport.MIN_RADIUS, ClaimTeleport.MAX_RADIUS);
+        teleportCancelMove = cfg.getBoolean("teleport.cancel-on-move", true);
+        teleportCancelDamage = cfg.getBoolean("teleport.cancel-on-damage", true);
 
         timezone = cfg.getString("general.timezone", "").trim();
         zone = resolveZone(timezone, logger);

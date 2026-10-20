@@ -7,9 +7,9 @@ author: cherdakmd
 depend: [CHRDK_Core]
 commands:
   claim:
-    description: "Приваты: купить чанк, члены, казна, продажа, карта"
+    description: "Приваты: покупка, меню, телепорт, члены, казна, продажа, карта"
     aliases: [parcel, land]
-    usage: "/claim [info [x z]|map|list [стр]|forsale [стр]|borders|unclaim|add|remove <ник> [доступ|контейнеры|полный]|deposit|withdraw|balance|sell|sellback|buy [x z]|transfer|help]"
+    usage: "/claim [menu [стр]|tp [x z]|info [x z]|map|list [стр]|forsale [стр]|borders|unclaim|add|remove <ник> [доступ|контейнеры|полный]|deposit|withdraw|balance|sell|sellback|buy [x z]|transfer|help]"
   claimadmin:
     description: "Администрирование приватов: выдача, лимиты, перенос, рента, статистика"
     usage: "/claimadmin [reload|bypass|delete|deleteall|info|give|transfer|limit|transferall|purge|rent|stats]"
@@ -17,6 +17,12 @@ commands:
 permissions:
   chrdkclaims.use:
     description: "Пользоваться приватами и командой /claim"
+    default: true
+  chrdkclaims.menu:
+    description: "Открывать меню приватов /claim menu"
+    default: true
+  chrdkclaims.teleport:
+    description: "Телепортироваться к своим приватам и лотам на продажу"
     default: true
   chrdkclaims.admin:
     description: "Администрирование приватов"

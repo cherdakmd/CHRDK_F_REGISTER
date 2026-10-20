@@ -12,12 +12,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/** /claim — покупка, управление, казна, продажа, карта приватов. */
+/** /claim — покупка, управление, казна, продажа, карта приватов, меню и телепорт. */
 public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter {
 
-    private static final List<String> SUBS = List.of("help", "info", "map", "list", "unclaim",
-            "add", "remove", "deposit", "withdraw", "balance", "sell", "sellback", "buy",
-            "transfer", "forsale", "borders");
+    private static final List<String> SUBS = List.of("help", "menu", "tp", "info", "map", "list",
+            "unclaim", "add", "remove", "deposit", "withdraw", "balance", "sell", "sellback",
+            "buy", "transfer", "forsale", "borders");
 
     private final ClaimsPlugin plugin;
 
@@ -42,6 +42,8 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
         String sub = args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
             case "help" -> plugin.messages().send(player, "usage");
+            case "menu" -> menu(player, args);
+            case "tp" -> teleport(player, args);
             case "info" -> info(player, args);
             case "map" -> map(player);
             case "list" -> list(player, args);
@@ -103,6 +105,43 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
     }
 
     // ---------------------------------------------------------------- view --
+
+    /** /claim menu [страница] — графическое меню приватов. */
+    private void menu(Player player, String[] args) {
+        if (!ready(player)) {
+            return;
+        }
+        plugin.menu().open(player, ClaimMenuModel.Tab.MINE, pageArg(args, 1));
+    }
+
+    /**
+     * /claim tp [x z] — телепорт к привату. Без координат (и с одним числом —
+     * номером страницы) открывает меню, из которого телепорт делается кликом.
+     */
+    private void teleport(Player player, String[] args) {
+        if (!ready(player)) {
+            return;
+        }
+        if (args.length < 3) {
+            if (!plugin.config().menuEnabled) {
+                plugin.messages().send(player, "tp-usage");
+                return;
+            }
+            plugin.menu().open(player, ClaimMenuModel.Tab.MINE, pageArg(args, 1));
+            return;
+        }
+        Integer[] parsed = parseCoords(player, args);
+        if (parsed == null || parsed.length < 2) {
+            return;
+        }
+        Claim claim = plugin.store().claimAt(player.getWorld().getName(), parsed[0], parsed[1]);
+        if (claim == null) {
+            plugin.messages().send(player, "tp-no-claim",
+                    "x", String.valueOf(parsed[0]), "z", String.valueOf(parsed[1]));
+            return;
+        }
+        plugin.teleports().request(player, claim);
+    }
 
     private void info(Player player, String[] args) {
         String world = player.getWorld().getName();

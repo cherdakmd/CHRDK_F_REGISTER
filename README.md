@@ -455,7 +455,7 @@ server-menu:
     - {"slot": 21, "icon": "ENDER_CHEST", "name": "<gold><bold>Почта аукциона</bold></gold>", "lore": "<gray>Купленные товары и возврат непроданного</gray>\n<gray>Выручка: /ah money</gray>", "command": "auction mail", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
     - {"slot": 22, "icon": "SUNFLOWER", "name": "<gold><bold>Лотерея недели</bold></gold>", "lore": "<gray>Банк, ваш шанс и время розыгрыша</gray>\n<gray>Билеты покупаются отдельно: /lottery buy</gray>", "command": "lottery info", "plugin": "CHRDK_Lottery", "permission": "chrdklottery.use"}
     - {"slot": 23, "icon": "GOLD_BLOCK", "name": "<gold><bold>Результат лотереи</bold></gold>", "lore": "<gray>Прошлый победитель</gray>\n<gray>Призы: /lottery claim</gray>", "command": "lottery last", "plugin": "CHRDK_Lottery", "permission": "chrdklottery.use"}
-    - {"slot": 24, "icon": "MAP", "name": "<gold><bold>Ваши территории</bold></gold>", "lore": "<gray>Список принадлежащих вам чанков</gray>", "command": "claim list", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
+    - {"slot": 24, "icon": "MAP", "name": "<gold><bold>Ваши территории</bold></gold>", "lore": "<gray>Меню приватов: клик — телепорт</gray>\n<gray>Список чанков и витрина продаж</gray>", "command": "claim menu", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
     - {"slot": 25, "icon": "CHEST", "name": "<gold><bold>Казна приватов</bold></gold>", "lore": "<gray>Баланс казны для ренты</gray>\n<gray>Следите за ежедневными расходами</gray>", "command": "claim balance", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
     - {"slot": 28, "icon": "COMPASS", "name": "<gold><bold>Дома</bold></gold>", "lore": "<gray>Список точек дома</gray>\n<gray>Установить точку: /sethome имя</gray>", "command": "homes", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
     - {"slot": 29, "icon": "ENDER_PEARL", "name": "<gold><bold>Случайный телепорт</bold></gold>", "lore": "<gray>Запустить RTP за алмазы</gray>\n<gray>Стоимость задаётся настройками телепортов</gray>", "command": "rtp", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
@@ -1308,6 +1308,19 @@ PvP по умолчанию не запрещено (флаг `protect.pvp`). К
 `/claim borders` подсвечивает границы текущего чанка частицами (только вам, 10 секунд,
 `general.border-seconds`), повторный вызов выключает.
 
+С версии 1.4.120 приваты открываются **меню**: `/claim menu` (или `/claim tp` без
+координат) — карточки чанков по 28 на страницу, вкладки «мои приваты» и «на продажу»,
+свой мир и ближние чанки первыми. Левый клик по карточке — **телепорт** к привату,
+правый — сводка в чат. Телепорт есть и командой `/claim tp <x> <z>` (мир — текущий):
+точка ищется у центра чанка, радиус поиска `teleport.search-radius` (0..7 — дальше
+нельзя, иначе поиск вышел бы за приват), проверяются твёрдая земля и два свободных
+блока над ней. Перед телепортом — разбег `teleport.warmup-seconds` (5 секунд, движение
+и урон отменяют), кулдаун `teleport.cooldown-seconds` (10 секунд) срабатывает только
+после удачного телепорта. Телепорт доступен владельцу и участникам, а также на лоты,
+выставленные на продажу (осмотр перед покупкой); чужие закрытые приваты — нет.
+Меню выключается `menu.enabled`, вкладка продаж — `menu.show-for-sale`; отдельные
+права — `chrdkclaims.menu` и `chrdkclaims.teleport`.
+
 При входе на чужой чанк в строке действия показывается владелец и цена, если чанк
 продаётся (`general.enter-notice`). Цену покупки и ренту можно менять по мирам:
 `worlds.price-multiplier` / `worlds.upkeep-multiplier` (0.1..10, например ресурсный
@@ -1360,21 +1373,21 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.119-SNAPSHOT.jar`, аддон
-CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.119-SNAPSHOT.jar`, реферальный —
-`referrals/build/libs/chrdk-referrals-1.4.119-SNAPSHOT.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.119-SNAPSHOT.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.119-SNAPSHOT.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.119-SNAPSHOT.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.119-SNAPSHOT.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.119-SNAPSHOT.jar` (хартия чар — при установленном аддоне чар), общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.119-SNAPSHOT.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.119-SNAPSHOT.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.119-SNAPSHOT.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.119-SNAPSHOT.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.119-SNAPSHOT.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.119-SNAPSHOT.jar`, стримерская программа —
-`streams/build/libs/chrdk-streams-1.4.119-SNAPSHOT.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.120-SNAPSHOT.jar`, аддон
+CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.120-SNAPSHOT.jar`, реферальный —
+`referrals/build/libs/chrdk-referrals-1.4.120-SNAPSHOT.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.120-SNAPSHOT.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.120-SNAPSHOT.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.120-SNAPSHOT.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.120-SNAPSHOT.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.120-SNAPSHOT.jar` (хартия чар — при установленном аддоне чар), общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.120-SNAPSHOT.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.120-SNAPSHOT.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.120-SNAPSHOT.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.120-SNAPSHOT.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.120-SNAPSHOT.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.120-SNAPSHOT.jar`, стримерская программа —
+`streams/build/libs/chrdk-streams-1.4.120-SNAPSHOT.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). Оба JAR прикладываются к каждому релизу на GitHub.
 
 ---
@@ -3280,6 +3293,56 @@ battlepass:
 
 CI собирает снапшот как обычный пуш в ветку; тег `v1.4.109` и GitHub-релиз не
 создаются до отдельной команды на релиз.
+
+---
+
+### CHRDK_Claims: меню приватов и телепорт к ним — снапшот 1.4.120-SNAPSHOT
+
+Волна 11: приваты перестали быть командой «вспомни координаты». `/claim menu`
+(и `/claim tp` без координат) открывает меню, из которого к своему привату можно
+телепортироваться одним кликом.
+
+**Что видно в игре**
+
+- Сетка карточек 7×4 (28 приватов на страницу), стрелки листают без переоткрытия окна.
+- Две вкладки: «мои приваты» (владения игрока) и «на продажу» (витрина лотов);
+  свой мир и ближние чанки — первыми.
+- ЛКМ по карточке — телепорт с разбегом, ПКМ — сводка в чат (владелец, оплата, цена).
+- Карточка показывает мир, координаты, владельца, дату оплаты и цену лота;
+  шапка — лимит, свободные чанки и казна.
+- Кнопка «Ваши территории» в серверном меню теперь открывает это меню.
+
+**Телепорт**
+
+- `/claim tp <x> <z>` — телепорт к привату в текущем мире; без координат — меню.
+- Точка — безопасная площадка у центра чанка (`x*16+8`), поиск идёт от центра
+  кольцами в радиусе `teleport.search-radius` (0..7 блоков), проверяются твёрдая
+  земля и два свободных блока над ней; вода, лава, огонь, паутина и крона деревьев
+  площадкой не считаются.
+- Разбег `teleport.warmup-seconds` (по умолчанию 5 секунд, 0..30): движение и урон
+  отменяют телепорт. Кулдаун `teleport.cooldown-seconds` (по умолчанию 10, 0..600)
+  срабатывает только после удачного телепорта, так что отмена его не съедает.
+- Телепорт доступен владельцу и участникам, а также на лоты, выставленные на
+  продажу, — осмотреть чанк перед покупкой. Чужой закрытый приват — отказ.
+
+**Конфиг и совместимость**
+
+- `menu.enabled`, `menu.show-for-sale`; `teleport.enabled`, `teleport.warmup-seconds`,
+  `teleport.cooldown-seconds`, `teleport.search-radius`, `teleport.cancel-on-move`,
+  `teleport.cancel-on-damage` — все значения зажимаются в допустимый диапазон
+  с предупреждением в лог.
+- Права `chrdkclaims.menu` и `chrdkclaims.teleport` (по умолчанию `true`).
+- Загрузка чанка — асинхронная (`World#getChunkAtAsync`), телепорт — `teleportAsync`;
+  главная нить не блокируется даже на дальних приватах.
+- Данные и формат `claims-data.json` не менялись: волна только читает приваты.
+
+**Тесты:** новый `ClaimTeleportTest` (центр чанка, порядок колец, клампы радиуса,
+все кандидаты остаются внутри привата), `ClaimMenuModelTest` (вкладки, фильтры,
+сортировка, страницы, расстояния), плюс два кейса в `ClaimsConfigTest` (умолчания
+и зажим настроек телепорта). Приваты — 79 `@Test` в 11 классах, ядро — 258 `@Test`
+в 40 классах (не менялось).
+
+Снапшот 1.4.120 не тегируется: тег и GitHub-релиз создаются отдельной командой.
 
 ---
 

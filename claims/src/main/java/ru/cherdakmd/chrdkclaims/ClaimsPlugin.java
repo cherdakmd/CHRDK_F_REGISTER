@@ -40,6 +40,8 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
     private ClaimStore store;
     private ClaimsService service;
     private ClaimAudit audit;
+    private ClaimMenuGui menu;
+    private ClaimTeleportService teleports;
     private final Set<UUID> bypass = ConcurrentHashMap.newKeySet();
     /** Активные подсветки границ: игрок → задача (чтобы не плодить таймеры). */
     private final Map<UUID, BukkitTask> borderTasks = new ConcurrentHashMap<>();
@@ -70,6 +72,11 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         }
 
         Bukkit.getPluginManager().registerEvents(new ClaimProtectionListener(this), this);
+        // Меню приватов и телепорт к ним: оба слушателя живут до выключения плагина.
+        this.menu = new ClaimMenuGui(this);
+        this.teleports = new ClaimTeleportService(this);
+        Bukkit.getPluginManager().registerEvents(menu, this);
+        Bukkit.getPluginManager().registerEvents(teleports, this);
         Bukkit.getPluginManager().registerEvents(this, this);
 
         PluginCommand claim = getCommand("claim");
@@ -97,6 +104,9 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        if (teleports != null) {
+            teleports.shutdown();
+        }
         if (upkeepTask != null) {
             upkeepTask.cancel();
         }
@@ -301,5 +311,15 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
 
     public ClaimsService service() {
         return service;
+    }
+
+    /** Меню приватов (/claim menu). */
+    public ClaimMenuGui menu() {
+        return menu;
+    }
+
+    /** Телепорт к приватам (/claim tp и клик в меню). */
+    public ClaimTeleportService teleports() {
+        return teleports;
     }
 }

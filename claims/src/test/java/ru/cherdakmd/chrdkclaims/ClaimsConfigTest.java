@@ -136,6 +136,42 @@ class ClaimsConfigTest {
     }
 
     @Test
+    void menuAndTeleportDefaultsAreSafe() {
+        ClaimsConfig config = parse("general: {}\n");
+        assertTrue(config.menuEnabled, "меню включено по умолчанию");
+        assertTrue(config.menuShowForSale, "витрина продаж видна в меню");
+        assertTrue(config.teleportEnabled);
+        assertEquals(5, config.teleportWarmup);
+        assertEquals(10, config.teleportCooldown);
+        assertEquals(3, config.teleportRadius);
+        assertTrue(config.teleportCancelMove);
+        assertTrue(config.teleportCancelDamage);
+    }
+
+    @Test
+    void teleportSettingsAreClamped() {
+        ClaimsConfig config = parse("""
+                menu: {enabled: false, show-for-sale: false}
+                teleport:
+                  enabled: false
+                  warmup-seconds: 90
+                  cooldown-seconds: -5
+                  search-radius: 12
+                  cancel-on-move: false
+                  cancel-on-damage: false
+                """);
+        assertFalse(config.menuEnabled);
+        assertFalse(config.menuShowForSale);
+        assertFalse(config.teleportEnabled);
+        assertEquals(30, config.teleportWarmup, "разбег не дольше 30 секунд");
+        assertEquals(0, config.teleportCooldown, "отрицательный кулдаун — без кулдауна");
+        assertEquals(ClaimTeleport.MAX_RADIUS, config.teleportRadius,
+                "поиск площадки не выходит за приват");
+        assertFalse(config.teleportCancelMove);
+        assertFalse(config.teleportCancelDamage);
+    }
+
+    @Test
     void timezoneIsResolvedAndBadZoneFallsBack() {
         ClaimsConfig moscow = parse("general: {timezone: Europe/Moscow}\n");
         assertEquals("Europe/Moscow", moscow.timezone);
