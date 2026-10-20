@@ -1458,6 +1458,10 @@ public final class AccessManager {
                         "boosty", outcome.subscriber().name(),
                         "level", outcome.subscriber().levelName(),
                         "until", formatTimestamp(until));
+                ShopDiscount discount = config().shopDiscount();
+                if (discount.usable()) {
+                    messages.send(player, "shop.boosty-perk", "percent", discount.percent());
+                }
             }
             case NOT_FOUND -> messages.send(player, "pass.boost-not-found", "boosty", typedName);
             case INACTIVE -> messages.send(player, "pass.boost-inactive",

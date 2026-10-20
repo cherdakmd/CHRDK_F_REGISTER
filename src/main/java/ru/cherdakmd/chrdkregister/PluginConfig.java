@@ -53,6 +53,9 @@ public final class PluginConfig {
     /** Каталог товаров из секции shop (сеттится из load(), не часть ctor). */
     private ShopCatalog shop = ShopCatalog.empty(false);
 
+    /** Скидка подписчикам Boosty в каталоге (shop.boosty-bonus, из load()). */
+    private ShopDiscount shopDiscount = ShopDiscount.DISABLED;
+
     /** Мастер-флаг донат-стены проходки (seed из load()). */
     private boolean passEnabled = true;
 
@@ -436,6 +439,7 @@ public final class PluginConfig {
         parsed.updatesNotifyAdmins = config.getBoolean("updates.notify-admins", true);
         parsed.motd = MotdSettings.from(config);
         parsed.shop = ShopCatalog.from(config);
+        parsed.shopDiscount = ShopDiscount.from(config);
         parsed.passEnabled = config.getBoolean("pass.enabled", true);
         parsed.donateActions = DonateAction.parseList(config.getMapList("donation-actions"));
         parsed.donatePayShowBalance = config.getBoolean("donatepay.show-balance", true);
@@ -516,6 +520,10 @@ public final class PluginConfig {
     /** Настройки серверного меню {@code /menu}. */
     public ServerMenuSettings serverMenu() {
         return serverMenu;
+    }
+
+    public ShopDiscount shopDiscount() {
+        return shopDiscount;
     }
 
     public BoostySettings boosty() {
@@ -1040,7 +1048,7 @@ public final class PluginConfig {
     /** Настройки подписочного провайдера Boosty.to (boosty:<key> секция). */
     public static final class BoostySettings {
         public static final BoostySettings DISABLED = new BoostySettings(
-                false, "", "", "", "", "", 300, 30, 24, false, false);
+                false, "", "", "", "", "", 300, 30, 24, false, false, 48);
 
         private final boolean enabled;
         private final String blog;
@@ -1053,10 +1061,12 @@ public final class PluginConfig {
         private final int recheckHours;
         private final boolean dryRun;
         private final boolean debugLog;
+        /** Сколько часов скидка каталога живёт после последнего подтверждения подписки. */
+        private final int perkGraceHours;
 
         BoostySettings(boolean enabled, String blog, String blogUrl, String token, String refreshToken,
                        String deviceId, int minLevelPrice, int daysPerPeriod, int recheckHours,
-                       boolean dryRun, boolean debugLog) {
+                       boolean dryRun, boolean debugLog, int perkGraceHours) {
             this.enabled = enabled;
             this.blog = blog;
             this.blogUrl = blogUrl;
@@ -1068,6 +1078,7 @@ public final class PluginConfig {
             this.recheckHours = recheckHours;
             this.dryRun = dryRun;
             this.debugLog = debugLog;
+            this.perkGraceHours = perkGraceHours;
         }
 
         static BoostySettings from(FileConfiguration config) {
@@ -1082,7 +1093,8 @@ public final class PluginConfig {
                     Math.clamp(config.getInt("boosty.days-per-period", 30), 1, 365),
                     Math.clamp(config.getInt("boosty.recheck-hours", 24), 1, 168),
                     config.getBoolean("boosty.dry-run", false),
-                    config.getBoolean("boosty.debug-log", false));
+                    config.getBoolean("boosty.debug-log", false),
+                    Math.clamp(config.getInt("boosty.perk-grace-hours", 48), 1, ShopDiscount.MAX_GRACE_HOURS));
         }
 
         public boolean enabled() { return enabled; }
@@ -1095,6 +1107,7 @@ public final class PluginConfig {
         public int daysPerPeriod() { return daysPerPeriod; }
         public int recheckHours() { return recheckHours; }
         public boolean dryRun() { return dryRun; }
+        public int perkGraceHours() { return perkGraceHours; }
         public boolean debugLog() { return debugLog; }
 
         /** Есть хотя бы одна пара авторизации (access ИЛИ refresh+device). */

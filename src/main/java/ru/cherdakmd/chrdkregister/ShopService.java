@@ -38,10 +38,21 @@ public final class ShopService {
     }
 
     public record Result(Status status, String playerName, ShopProduct product,
-                         long untilMillis, int days, List<String> included) {
+                         long untilMillis, int days, List<String> included, int bonusDays) {
 
         public Result {
             included = included == null ? List.of() : List.copyOf(included);
+        }
+
+        /** Совместимый конструктор без скидки. */
+        public Result(Status status, String playerName, ShopProduct product,
+                      long untilMillis, int days, List<String> included) {
+            this(status, playerName, product, untilMillis, days, included, 0);
+        }
+
+        /** Скидка подписчика Boosty сработала. */
+        public boolean hasBonus() {
+            return bonusDays > 0;
         }
 
         public boolean granted() {
@@ -54,7 +65,7 @@ public final class ShopService {
         }
 
         public static Result failure(Status status, String playerName) {
-            return new Result(status, playerName, null, 0L, 0, List.of());
+            return new Result(status, playerName, null, 0L, 0, List.of(), 0);
         }
     }
 
@@ -148,18 +159,25 @@ public final class ShopService {
                 .filter(name -> name != null && !name.isBlank())
                 .orElse(playerName);
 
+        // Скидка — про покупку: за награды аддонов (recordSale = false) бонус не даём,
+        // иначе бесплатные выдачи раздували бы срок за счёт подписки.
+        ShopDiscount discount = recordSale ? discountFor(canonical) : ShopDiscount.DISABLED;
+        int bonusDays = 0;
         long until = product.isBundle()
                 ? 0L
-                : grantOne(canonical, product, now, length);
+                : grantOne(canonical, product, now, length, discount);
+        bonusDays += discount.bonusFor(length);
         List<String> included = new ArrayList<>();
         if (product.isBundle()) {
             until = now;
+            bonusDays = 0;
             for (String partId : product.resolvedIncludes()) {
                 ShopProduct part = catalog.find(partId).orElse(null);
                 if (part == null) {
                     continue; // набор пережил правку конфига — выдаём то, что ещё существует
                 }
-                until = Math.max(until, grantOne(canonical, part, now, part.days()));
+                until = Math.max(until, grantOne(canonical, part, now, part.days(), discount));
+                bonusDays += discount.bonusFor(part.days());
                 included.add(part.id());
             }
             if (product.hasPassDays()) {
@@ -181,7 +199,8 @@ public final class ShopService {
                 canonical, "",
                 AuditLog.details("product", product.id(), "days", length,
                         "until", until, "price", recordSale ? product.priceRubles() : 0,
-                        "included", String.join(",", included)));
+                        "included", String.join(",", included),
+                        "bonus", bonusDays));
 
         Player online = Bukkit.getPlayerExact(canonical);
         if (online != null) {
@@ -194,13 +213,17 @@ public final class ShopService {
                         "name", product.name(),
                         "until", AccessManager.formatTimestamp(until));
             }
+            if (bonusDays > 0) {
+                plugin.messages().send(online, "shop.received-bonus",
+                        "days", bonusDays, "percent", discount.percent());
+            }
         }
         logger.info("Товар '" + product.id() + (gift ? "' подарен " + canonical + " от " + giftFrom.trim()
                 : "' выдан " + canonical) + " на " + length + " дн. (до "
                 + AccessManager.formatTimestamp(until) + ", цена " + product.priceRubles()
                 + " ₽, источник: " + (actor == null ? "console" : actor) + ")."
                 + (included.isEmpty() ? "" : " Набор: " + String.join(", ", included) + "."));
-        return new Result(Status.GRANTED, canonical, product, until, length, included);
+        return new Result(Status.GRANTED, canonical, product, until, length, included, bonusDays);
     }
 
     /**
@@ -208,9 +231,10 @@ public final class ShopService {
      *
      * @return момент окончания срока
      */
-    private long grantOne(String playerName, ShopProduct product, long now, int days) {
+    private long grantOne(String playerName, ShopProduct product, long now, int days,
+                          ShopDiscount discount) {
         long until = access.store().grantEntitlement(
-                playerName, product.id(), now, days, catalog().maxTotalDays());
+                playerName, product.id(), now, days + discount.bonusFor(days), catalog().maxTotalDays());
         applyGroup(playerName, product, now, until);
         runCommands(playerName, product);
         return until;
@@ -390,6 +414,34 @@ public final class ShopService {
                         () -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command));
             }
         }
+    }
+
+    /**
+     * Настроена ли скидка так, чтобы когда-нибудь сработать: включена в каталоге и
+     * Boosty не выключен и не в холостом прогоне. Нужна витрине, чтобы не обещать
+     * бонус, которого не будет.
+     */
+    public boolean bonusAvailable() {
+        PluginConfig config = access.config();
+        return config.shopDiscount().usable() && config.boosty().enabled() && !config.boosty().dryRun();
+    }
+
+    /**
+     * Скидка, которая действует для игрока прямо сейчас.
+     *
+     * <p>Ноль, если скидка выключена в конфиге, Boosty недоступен, игрок не привязан
+     * или подписка не подтверждалась дольше окна {@code boosty.perk-grace-hours}.</p>
+     */
+    public ShopDiscount discountFor(String playerName) {
+        ShopDiscount discount = access.config().shopDiscount();
+        if (!discount.usable() || playerName == null || playerName.isBlank()) {
+            return ShopDiscount.DISABLED;
+        }
+        BoostyManager boosty = access.boostyManager();
+        if (boosty == null || !boosty.perkActive(playerName, access.config().boosty())) {
+            return ShopDiscount.DISABLED;
+        }
+        return discount;
     }
 
     private static UUID parseUuid(String raw) {

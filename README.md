@@ -1333,20 +1333,20 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.113-SNAPSHOT.jar`, аддон
-CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.113-SNAPSHOT.jar`, реферальный —
-`referrals/build/libs/chrdk-referrals-1.4.113-SNAPSHOT.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.113-SNAPSHOT.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.113-SNAPSHOT.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.113-SNAPSHOT.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.113-SNAPSHOT.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.113-SNAPSHOT.jar` (хартия чар — при установленном аддоне чар), общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.113-SNAPSHOT.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.113-SNAPSHOT.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.113-SNAPSHOT.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.113-SNAPSHOT.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.113-SNAPSHOT.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.113-SNAPSHOT.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.114-SNAPSHOT.jar`, аддон
+CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.114-SNAPSHOT.jar`, реферальный —
+`referrals/build/libs/chrdk-referrals-1.4.114-SNAPSHOT.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.114-SNAPSHOT.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.114-SNAPSHOT.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.114-SNAPSHOT.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.114-SNAPSHOT.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.114-SNAPSHOT.jar` (хартия чар — при установленном аддоне чар), общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.114-SNAPSHOT.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.114-SNAPSHOT.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.114-SNAPSHOT.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.114-SNAPSHOT.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.114-SNAPSHOT.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.114-SNAPSHOT.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). Оба JAR прикладываются к каждому релизу на GitHub.
 
 ---
@@ -3254,6 +3254,72 @@ CI собирает снапшот как обычный пуш в ветку; �
 создаются до отдельной команды на релиз.
 
 ---
+
+### CHRDK_Core: скидка подписчикам Boosty — снапшот 1.4.114-SNAPSHOT
+
+Волна 5: подписка на Boosty стала выгодной в магазине. Витрина TradeMC продаёт
+по фиксированной цене карточки, поэтому «−15 %» на сайте показать нельзя.
+Честный эквивалент, который целиком считается на сервере: **подписчик получает
+больше дней за ту же цену**. 149 ₽ за 30 дней превращаются в 149 ₽ за 35 дней —
+это и есть те же 15 %.
+
+**Как это выглядит для игрока**
+
+- `/pass boost <ник на Boosty>` — привязка, как раньше; после успеха приходит
+  «подписка подтверждена: +15 % дней к покупкам в магазине».
+- `/pass shop` внизу показывает строку Boosty: подписчику — «бонус уже
+  действует», остальным — «подписчикам +15 % дней».
+- После покупки: «Бонус подписки Boosty: +5 дн. к покупке (15 %)».
+- `/pass my` показывает статус: «подписка активна, бонус +15 % дней».
+
+**Как это устроено**
+
+- Бонус считается при выдаче товара: `shopbuy` из RCON всё так же вызывает
+  ядро, а ядро добавляет дни по проценту. Цена на витрине не меняется —
+  меняется срок, который получает игрок.
+- Скидка действует на все товары каталога, включая наборы (каждый товар набора
+  получает свой бонус). Награды аддонов (`grantEntitlement`, премиум-трек
+  батлпасса) бонус не получают: там нет покупки.
+- Срок всё равно режется общим потолком `shop.max-total-days` — подписка не
+  обходит правило «навсегда не продаётся».
+- Подписка подтверждается фоновой перепроверкой (`boosty.recheck-hours`).
+  Скидка живёт ещё `boosty.perk-grace-hours` после последнего подтверждения:
+  одна пропущенная проверка (сеть, 502) не отбирает бонус у честного
+  подписчика, а просроченная подписка перестаёт давать скидку не мгновенно.
+- `boosty.dry-run: true` скидку не включает: холостой прогон ничего не
+  подтверждает.
+
+**Настройки**
+
+```yaml
+shop:
+  boosty-bonus:
+    enabled: true
+    percent: 15     # процент дней; больше 50 не бывает
+    max-days: 30    # потолок бонуса за одну покупку; 0 — без отдельного потолка
+
+boosty:
+  perk-grace-hours: 48   # сколько часов скидка живёт после подтверждения
+```
+
+Битые значения не роняют плагин: отрицательный процент выключает скидку,
+процент больше 50 срезается, потолок дней зажимается в `0..365`. Бонус никогда
+не больше самого срока покупки — иначе однодневный товар удваивался бы.
+
+**Диагностика**
+
+`/pass doctor` предупреждает, если скидка включена, а Boosty выключен или
+работает в `dry-run`: настройка выглядит рабочей, но дни никто не получит.
+
+**Честность**
+
+Скидка не даёт игровой силы: каталог продаёт удобство и оформление (очередь,
+дома в пределах потолка, ник, шлейфы, боевой пропуск). Подписка просто делает
+те же покупки чуть длиннее — это скидка, а не новый товар.
+
+**Тесты:** `ShopDiscountTest` — 14 тестов: округление вверх, потолок процента и
+дней, защита от однодневного удвоения, выключатели, разбор конфига с опечатками,
+окно подтверждения (границы, dry-run, зажим окна). Ядро — 247 `@Test` в 38 классах.
 
 ### CHRDK_BattlePass: премиум-трек — снапшот 1.4.113-SNAPSHOT
 

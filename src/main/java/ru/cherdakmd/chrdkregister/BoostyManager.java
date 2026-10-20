@@ -76,7 +76,21 @@ public final class BoostyManager {
      *  Привязка
      * ------------------------------------------------------------------ */
 
-    public record Binding(String mcName, String boostyName, long boostyUserId, long linkedAtMillis) {
+    /**
+     * Привязка «игрок ⇄ Boosty».
+     *
+     * @param lastConfirmedAtMillis последнее успешное подтверждение подписки;
+     *                              {@code 0} — ещё не подтверждалась. От этого поля
+     *                              зависит скидка в каталоге: она живёт окно
+     *                              {@code boosty.perk-grace-hours} после подтверждения
+     */
+    public record Binding(String mcName, String boostyName, long boostyUserId, long linkedAtMillis,
+                          long lastConfirmedAtMillis) {
+
+        /** Старая запись без времени подтверждения. */
+        public Binding(String mcName, String boostyName, long boostyUserId, long linkedAtMillis) {
+            this(mcName, boostyName, boostyUserId, linkedAtMillis, 0L);
+        }
     }
 
     public record BindOutcome(Kind kind, BoostyClient.Subscriber subscriber, String holder) {
@@ -136,7 +150,8 @@ public final class BoostyManager {
             plugin.getLogger().info("[Boosty] DRY-RUN: привязка " + mcName + " ⇄ " + found.name() + " не сохранена.");
             return new BindOutcome(BindOutcome.Kind.LINKED, found, null);
         }
-        bindings.put(key(mcName), new Binding(mcName, found.name(), found.id(), System.currentTimeMillis()));
+        long now = System.currentTimeMillis();
+        bindings.put(key(mcName), new Binding(mcName, found.name(), found.id(), now, now));
         saveBindings();
         renewPass(mcName, bs.daysPerPeriod(), found.name());
         return new BindOutcome(changed ? BindOutcome.Kind.CHANGED : BindOutcome.Kind.LINKED, found, null);
@@ -182,6 +197,7 @@ public final class BoostyManager {
         PluginConfig.BoostySettings bs = config.boosty();
         int extended = 0;
         int lapsed = 0;
+        boolean revalidated = false;
         List<String> revived = new ArrayList<>();
         for (Binding binding : new ArrayList<>(bindings.values())) {
             BoostyClient.Subscriber subscriber = byName.get(binding.boostyName().toLowerCase(Locale.ROOT));
@@ -196,6 +212,11 @@ public final class BoostyManager {
                     if (wasExpired) {
                         revived.add(binding.mcName()); // сгорал → возродился: нужно LuckPerms/венты
                     }
+                    // Подписка подтверждена — продлеваем право на скидку в каталоге.
+                    bindings.put(key(binding.mcName()), new Binding(binding.mcName(),
+                            binding.boostyName(), binding.boostyUserId(), binding.linkedAtMillis(),
+                            System.currentTimeMillis()));
+                    revalidated = true;
                 }
                 extended++;
             } else {
@@ -203,6 +224,9 @@ public final class BoostyManager {
                 log.warning("[Boosty] Подписка игрока " + binding.mcName() + " (Boosty: " + binding.boostyName()
                         + ") НЕ подтверждена — проходка догорит по своему сроку.");
             }
+        }
+        if (revalidated) {
+            saveBindings(); // один сброс на прогон, а не запись файла на каждого игрока
         }
         return new RecheckStats(extended, lapsed, total, revived);
     }
@@ -214,6 +238,25 @@ public final class BoostyManager {
         RegistrationStore.PlayerAccount account = store.renewPassUntil(mcName, now, targetUntil,
                 BoostyClient.SOURCE + " (" + boostyName + ")");
         return account == null ? 0L : account.passUntil;
+    }
+
+    /**
+     * Действует ли скидка подписчика прямо сейчас.
+     *
+     * <p>Сеть не дёргаем: смотрим на время последнего подтверждения из фоновой
+     * перепроверки. Пока окно {@code boosty.perk-grace-hours} не вышло, честный
+     * подписчик сохраняет скидку даже при сбое одной проверки.</p>
+     */
+    public synchronized boolean perkActive(String mcName, PluginConfig.BoostySettings bs) {
+        if (bs == null || !bs.enabled() || bs.dryRun()) {
+            return false;
+        }
+        Binding binding = bindings.get(key(mcName));
+        if (binding == null) {
+            return false;
+        }
+        return ShopDiscount.confirmed(bs.enabled(), bs.dryRun(),
+                binding.lastConfirmedAtMillis(), System.currentTimeMillis(), bs.perkGraceHours());
     }
 
     /* ------------------------------------------------------------------ *
@@ -236,7 +279,8 @@ public final class BoostyManager {
                         BoostyTokenStore.optString(entry, "mcName", ""),
                         BoostyTokenStore.optString(entry, "boostyName", ""),
                         entry.has("boostyUserId") ? entry.get("boostyUserId").getAsLong() : 0L,
-                        entry.has("linkedAt") ? entry.get("linkedAt").getAsLong() : 0L);
+                        entry.has("linkedAt") ? entry.get("linkedAt").getAsLong() : 0L,
+                        entry.has("lastConfirmedAt") ? entry.get("lastConfirmedAt").getAsLong() : 0L);
                 if (!binding.mcName().isBlank()) {
                     bindings.put(key(binding.mcName()), binding);
                 }
@@ -254,6 +298,7 @@ public final class BoostyManager {
             entry.addProperty("boostyName", binding.boostyName());
             entry.addProperty("boostyUserId", binding.boostyUserId());
             entry.addProperty("linkedAt", binding.linkedAtMillis());
+            entry.addProperty("lastConfirmedAt", binding.lastConfirmedAtMillis());
             array.add(entry);
         }
         JsonObject json = new JsonObject();

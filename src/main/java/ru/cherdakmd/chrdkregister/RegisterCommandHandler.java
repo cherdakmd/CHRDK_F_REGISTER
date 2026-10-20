@@ -1168,6 +1168,12 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             check(sender, "Каталог: замечания", false,
                     String.join("; ", shop.problems().stream().limit(3).toList()));
         }
+        ShopDiscount discount = accessManager.config().shopDiscount();
+        if (discount.usable()) {
+            var boosty = accessManager.config().boosty();
+            check(sender, "Скидка подписки", boosty.enabled() && !boosty.dryRun(),
+                    "shop.boosty-bonus включён, но Boosty выключен или в dry-run — бонус не начислится");
+        }
         long bundles = shop.products().stream().filter(ShopProduct::isBundle).count();
         if (bundles > 0) {
             check(sender, "Каталог: наборы", true, "наборов: " + bundles + " — состав раскрыт при выдаче");
@@ -1456,6 +1462,14 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                         "items", describeContents(product, catalog));
             }
         }
+        ShopDiscount discount = accessManager.config().shopDiscount();
+        if (plugin.shop().bonusAvailable()) {
+            boolean active = sender instanceof Player player
+                    && plugin.shop().discountFor(player.getName()).usable();
+            messages.send(sender, active ? "shop.boosty-active" : "shop.boosty-footer",
+                    "percent", discount.percent(),
+                    "url", accessManager.config().boosty().linkForPlayers());
+        }
         messages.send(sender, "shop.footer", "label", label);
     }
 
@@ -1488,6 +1502,10 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         }
         var active = plugin.shop().active(target);
         messages.send(sender, "shop.my-header", "player", target);
+        ShopDiscount discount = plugin.shop().discountFor(target);
+        if (discount.usable()) {
+            messages.send(sender, "shop.my-boosty", "percent", discount.percent());
+        }
         if (active.isEmpty()) {
             messages.send(sender, "shop.my-empty", "label", label);
             return;
@@ -1534,6 +1552,9 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 if (result.isBundle()) {
                     messages.send(sender, "shop.granted-includes",
                             "items", String.join(", ", result.included()));
+                }
+                if (result.hasBonus()) {
+                    messages.send(sender, "shop.granted-bonus", "days", result.bonusDays());
                 }
             }
             case UNKNOWN_PRODUCT -> messages.send(sender, "shop.unknown-product",
