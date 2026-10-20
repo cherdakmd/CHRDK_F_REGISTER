@@ -152,6 +152,19 @@ class StreamConfigTest {
     }
 
     @Test
+    void unknownColorFallsBackInsteadOfBreakingMessages() throws Exception {
+        StreamConfig config = parse("""
+                streams:
+                  tags:
+                    chat-color: "неон"
+                    color-a: "#FF8800"
+                """);
+
+        assertEquals("red", config.tags().chatColor(), "опечатка не должна ломать разметку");
+        assertEquals("#ff8800", config.tags().colorA());
+    }
+
+    @Test
     void labelLengthIsCapped() throws Exception {
         StreamConfig config = parse("""
                 streams:

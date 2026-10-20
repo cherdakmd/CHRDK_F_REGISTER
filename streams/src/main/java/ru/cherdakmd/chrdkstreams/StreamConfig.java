@@ -236,11 +236,15 @@ record StreamConfig(
         return value == null ? "" : value.trim();
     }
 
-    /** Имя цвета MiniMessage: без угловых скобок, строчными; пустое — запасной вариант. */
+    /**
+     * Имя цвета MiniMessage: без угловых скобок и строчными. Принимаем только
+     * известные имена и {@code #rrggbb}: опечатка в конфиге не должна ронять
+     * разбор сообщений (MiniMessage на неизвестном теге бросает исключение).
+     */
     private static String colorName(String raw, String fallback) {
         String value = text(raw).replace("<", "").replace(">", "")
                 .replace("/", "").toLowerCase(Locale.ROOT);
-        return value.isEmpty() ? fallback : value;
+        return StreamerTags.safeColor(value, fallback);
     }
 
     /** Адрес API: только http(s) и обязательно с {@code %channel%} или путём. */

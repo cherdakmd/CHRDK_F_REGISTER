@@ -136,8 +136,11 @@ final class ViewerService {
         plugin.messages().send(streamer, "viewers-enabled", "code", state.code());
         plugin.messages().send(streamer, "viewers-howto",
                 "minutes", cfg.viewers().codeWindowMinutes());
-        plugin.messages().send(streamer,
-                cfg.viewers().requireApproval() ? "viewers-approval-on" : "viewers-approval-off");
+        if (cfg.viewers().requireApproval()) {
+            plugin.messages().send(streamer, "viewers-approval-on");
+        } else {
+            plugin.messages().send(streamer, "viewers-approval-off");
+        }
     }
 
     /** Панель стримера: код, счётчики и заявки на подтверждение. */
@@ -432,10 +435,11 @@ final class ViewerService {
         ViewerBinding binding = found.get();
         StreamRewards.State state = store.progress(viewer.getUniqueId());
         plugin.messages().send(viewer, "watch-status-header", "player", viewer.getName());
+        Object stateMark = binding.accepted()
+                ? Messages.trusted(plugin.messages().raw("watch-state-accepted"))
+                : Messages.trusted(plugin.messages().raw("watch-state-pending"));
         plugin.messages().send(viewer, "watch-status-streamer",
-                "streamer", binding.streamerName(),
-                "state", Messages.trusted(plugin.messages().raw(binding.accepted()
-                        ? "watch-state-accepted" : "watch-state-pending")));
+                "streamer", binding.streamerName(), "state", stateMark);
         plugin.messages().send(viewer, "watch-status-progress",
                 "minutes", StreamRewards.pendingMinutes(state, cfg.viewers().rule()),
                 "needed", cfg.viewers().minutesPerDay(),

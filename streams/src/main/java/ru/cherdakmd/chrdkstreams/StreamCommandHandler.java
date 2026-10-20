@@ -431,8 +431,10 @@ public final class StreamCommandHandler implements TabExecutor {
     /* ------------------------------ помощники ------------------------------ */
 
     private Object trustedState(boolean verified) {
-        return Messages.trusted(plugin.messages().raw(verified
-                ? "stats-state-verified" : "stats-state-unverified"));
+        if (verified) {
+            return Messages.trusted(plugin.messages().raw("stats-state-verified"));
+        }
+        return Messages.trusted(plugin.messages().raw("stats-state-unverified"));
     }
 
     /** Сохранить данные вне основного потока: запись на диск не должна тормозить тик. */

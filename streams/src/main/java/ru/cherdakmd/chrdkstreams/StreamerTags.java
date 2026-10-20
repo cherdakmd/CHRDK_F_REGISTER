@@ -22,7 +22,7 @@ final class StreamerTags {
      */
     static String markup(String decoratedName, String playerName, String label, String color) {
         String base = decoratedName == null ? "" : decoratedName;
-        String safeColor = color == null || color.isBlank() ? "red" : color;
+        String safeColor = safeColor(color);
         String tag = "<" + safeColor + ">[" + safeLabel(label) + "]</" + safeColor + ">";
         return boldName(base, playerName) + " " + tag;
     }
@@ -54,7 +54,31 @@ final class StreamerTags {
 
     /** Цвет для текущей фазы мигания. */
     static String blinkColor(boolean phase, String colorA, String colorB) {
-        return phase ? (colorA == null || colorA.isBlank() ? "red" : colorA)
-                : (colorB == null || colorB.isBlank() ? "dark_gray" : colorB);
+        return phase ? safeColor(colorA, "red") : safeColor(colorB, "dark_gray");
+    }
+
+    /** Имена цветов MiniMessage — единственное, что можно подставить в тег. */
+    private static final java.util.Set<String> COLORS = java.util.Set.of(
+            "black", "dark_blue", "dark_green", "dark_aqua", "dark_red", "dark_purple",
+            "gold", "gray", "dark_gray", "blue", "green", "aqua", "red",
+            "light_purple", "yellow", "white");
+
+    /** Только имя цвета или {@code #rrggbb}: остальное — запасной цвет, а не тег. */
+    static String safeColor(String color) {
+        return safeColor(color, "red");
+    }
+
+    /**
+     * Проверка цвета: имя из палитры MiniMessage или {@code #rrggbb}.
+     * Опечатка в конфиге не должна превращаться в неизвестный тег — MiniMessage
+     * на нём бросает исключение, и сообщение игроку не отправится.
+     */
+    static String safeColor(String color, String fallback) {
+        String value = color == null ? "" : color.trim().toLowerCase(java.util.Locale.ROOT);
+        if (value.length() == 7 && value.charAt(0) == '#'
+                && value.substring(1).chars().allMatch(symbol -> Character.digit(symbol, 16) >= 0)) {
+            return value;
+        }
+        return COLORS.contains(value) ? value : fallback;
     }
 }

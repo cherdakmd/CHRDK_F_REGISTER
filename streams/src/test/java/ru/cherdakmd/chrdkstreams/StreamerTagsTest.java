@@ -41,6 +41,17 @@ class StreamerTagsTest {
     }
 
     @Test
+    void unsafeColorFallsBackToRed() {
+        assertEquals("<bold>Steve</bold> <red>[СТРИМ]</red>",
+                StreamerTags.markup("Steve", "Steve", "СТРИМ", "<script>"));
+        assertEquals("red", StreamerTags.blinkColor(true, "red; click", "dark_gray"));
+        assertEquals("<bold>Steve</bold> <#ff8800>[СТРИМ]</#ff8800>",
+                StreamerTags.markup("Steve", "Steve", "СТРИМ", "#FF8800"));
+        assertEquals("dark_gray", StreamerTags.safeColor("dark_gray"));
+        assertEquals("red", StreamerTags.safeColor("notacolor"));
+    }
+
+    @Test
     void blinkAlternatesColors() {
         assertEquals("red", StreamerTags.blinkColor(true, "red", "dark_gray"));
         assertEquals("dark_gray", StreamerTags.blinkColor(false, "red", "dark_gray"));
