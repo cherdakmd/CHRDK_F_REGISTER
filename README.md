@@ -1373,21 +1373,21 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.120-SNAPSHOT.jar`, аддон
-CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.120-SNAPSHOT.jar`, реферальный —
-`referrals/build/libs/chrdk-referrals-1.4.120-SNAPSHOT.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.120-SNAPSHOT.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.120-SNAPSHOT.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.120-SNAPSHOT.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.120-SNAPSHOT.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.120-SNAPSHOT.jar` (хартия чар — при установленном аддоне чар), общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.120-SNAPSHOT.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.120-SNAPSHOT.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.120-SNAPSHOT.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.120-SNAPSHOT.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.120-SNAPSHOT.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.120-SNAPSHOT.jar`, стримерская программа —
-`streams/build/libs/chrdk-streams-1.4.120-SNAPSHOT.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.121-SNAPSHOT.jar`, аддон
+CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.121-SNAPSHOT.jar`, реферальный —
+`referrals/build/libs/chrdk-referrals-1.4.121-SNAPSHOT.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.121-SNAPSHOT.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.121-SNAPSHOT.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.121-SNAPSHOT.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.121-SNAPSHOT.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.121-SNAPSHOT.jar` (хартия чар — при установленном аддоне чар), общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.121-SNAPSHOT.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.121-SNAPSHOT.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.121-SNAPSHOT.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.121-SNAPSHOT.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.121-SNAPSHOT.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.121-SNAPSHOT.jar`, стримерская программа —
+`streams/build/libs/chrdk-streams-1.4.121-SNAPSHOT.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). Оба JAR прикладываются к каждому релизу на GitHub.
 
 ---
@@ -3296,6 +3296,70 @@ CI собирает снапшот как обычный пуш в ветку; �
 
 ---
 
+### CHRDK_Streams: несколько каналов у одного стримера — снапшот 1.4.121-SNAPSHOT
+
+Волна 12 закрывает главный недостаток программы: раньше у стримера был **только
+один** прикреплённый канал, и `/stream link vkplay` после Twitch молча заменял
+первую привязку. Теперь каналов до двух — по одному на площадку, — и программой
+учитываются **все**.
+
+**Что изменилось для стримера**
+
+- `/stream link twitch ник`, затем `/stream link vkplay ник`: обе привязки живут
+  одновременно и не затирают друг друга.
+- `/stream check [площадка]` проверяет все неподтверждённые каналы за один проход:
+  у каждого свой код, свой ответ площадки и своя строка в чате. `/stream check
+  vkplay` — только одна площадка.
+- `/stream status` показывает список каналов с личной отметкой (✔ / ⚠ и код), затем
+  общий прогресс и состояние каждого эфира: идёт / нет / платформа не ответила.
+- `/stream unlink twitch` отвязывает одну площадку, прогресс сохраняется;
+  `/stream unlink` без аргумента отвязывает всё и честно предупреждает, что прогресс
+  сброшен.
+- `/stream stats` для админа: число стримеров и каналов, отдельная строка на каждый
+  канал.
+
+**Как считаются минуты и награды**
+
+- Эфир идёт, если жив **хотя бы один** подтверждённый канал.
+- `min-viewers` сравнивается с **суммой** зрителей всех живых каналов: два эфира по
+  3 зрителя проходят порог 5.
+- Минуты кредитуются **один раз на игрока**, а не на канал: одновременный стрим на
+  Twitch и VK Play Live не удваивает проходку. Прогресс (`pendingMillis`,
+  `awardedToday`, `totalDays`) общий.
+- Зрительский чек-ин засчитывается, если в эфире любой из подтверждённых каналов
+  стримера.
+
+**Конфиг и совместимость**
+
+- `streams.max-channels: 2` (допустимо 1..2, значение зажимается): `1` — только один
+  канал, `2` — Twitch + VK Play Live. На одной площадке канал всегда один: повторный
+  `link` той же площадки заменяет канал, а не добавляет второй.
+- Новый формат `streams-data.json`: `"channels":[{"platform","channel","code",
+  "verifiedAt"}, …]`. Плоские поля (`platform`, `channel`, `code`, `verifiedAt`)
+  пишутся рядом как основной канал — откат на 1.4.120 прочитает хотя бы его. Новый
+  код читает массив, а файл без массива (≤1.4.120) — как один канал.
+- Плейсхолдеры: `%chrdkstreams_channel%` и `_platform%` — основной канал (первый
+  подтверждённый, иначе первый привязанный); новый `%chrdkstreams_channels%` — все
+  каналы: `twitch/foo, vkplay/bar`.
+- Новые ключи сообщений: `link-limit`, `link-summary`, `check-no-channel-platform`,
+  `status-channel`, `status-no-platform`, `unlinked-platform`,
+  `not-linked-platform`; `link-replaced` теперь называет площадку.
+
+**Тесты:** аддон — 99 `@Test` в 12 классах; добавились `StreamBindingTest`
+(сосуществование площадок, замена канала той же площадки, общий прогресс),
+`StreamProbeTest` (эфир по любому живому каналу, сумма зрителей и порог
+`min-viewers`) и кейсы `StreamStoreTest` (два канала в JSON, миграция плоского
+формата, приоритет массива, дубли плоских полей для отката), плюс
+`StreamConfigTest.maxChannelsIsClampedToOneOrTwo`.
+
+**Обновление:** версия 1.4.121, перезапуск сервера. Данные читаются без ручной
+миграции; новый формат записывается при первом сохранении, прогресс игроков
+сохраняется.
+
+Снапшот 1.4.121 не тегируется: тег и GitHub-релиз создаются отдельной командой.
+
+---
+
 ### CHRDK_Claims: меню приватов и телепорт к ним — снапшот 1.4.120-SNAPSHOT
 
 Волна 11: приваты перестали быть командой «вспомни координаты». `/claim menu`
@@ -3488,6 +3552,9 @@ id, покрытие видов, бросок без дублей и с искл
 ---
 
 ### CHRDK_Streams: жирный ник стримера и дни проходки зрителям — 1.4.116
+
+> Правило «один канал на стримера» отменено в 1.4.121: каналов до двух (Twitch и
+> VK Play Live), см. раздел 1.4.121 выше.
 
 Волна 7: стример виден в чате и в списке игроков, а зрители получают дни
 проходки **за просмотр** — но только те, кто действительно смотрит эфир,

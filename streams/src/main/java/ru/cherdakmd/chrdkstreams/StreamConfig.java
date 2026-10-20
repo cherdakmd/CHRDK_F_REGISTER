@@ -21,6 +21,7 @@ import java.util.Locale;
  * @param requireOnline  считать эфир только пока игрок на сервере
  * @param requireVerified требовать код в названии эфира
  * @param minViewers     минимум зрителей для зачёта (0 — любой)
+ * @param maxChannels    сколько каналов может привязать стример (1..число площадок: по одному на площадку)
  * @param announce       писать игроку о награде
  * @param tags           оформление ника стримера
  * @param viewers        награды зрителям за просмотр
@@ -35,6 +36,7 @@ record StreamConfig(
         boolean requireOnline,
         boolean requireVerified,
         int minViewers,
+        int maxChannels,
         boolean announce,
         Twitch twitch,
         VkPlay vkplay,
@@ -47,6 +49,8 @@ record StreamConfig(
     static final int MIN_CREDIT_MINUTES = 1;
     static final int MAX_CREDIT_MINUTES = 240;
     static final int MAX_VIEWERS = 100_000;
+    /** Больше площадок, чем есть, привязать нельзя: у площадки один канал. */
+    static final int MAX_CHANNELS = StreamPlatform.values().length;
     static final int MAX_TAG_LENGTH = 16;
 
     /** Twitch: приложение из dev.twitch.tv/console/apps. */
@@ -147,6 +151,7 @@ record StreamConfig(
         pollSeconds = Math.clamp(pollSeconds, MIN_POLL_SECONDS, MAX_POLL_SECONDS);
         maxCreditMinutes = Math.clamp(maxCreditMinutes, MIN_CREDIT_MINUTES, MAX_CREDIT_MINUTES);
         minViewers = Math.clamp(minViewers, 0, MAX_VIEWERS);
+        maxChannels = Math.clamp(maxChannels, 1, MAX_CHANNELS);
         tags = tags == null ? Tags.defaults() : tags;
         viewers = viewers == null ? Viewers.defaults() : viewers;
     }
@@ -197,6 +202,7 @@ record StreamConfig(
                 config.getBoolean("streams.require-online", true),
                 config.getBoolean("streams.require-verified", true),
                 config.getInt("streams.min-viewers", 0),
+                config.getInt("streams.max-channels", 2),
                 config.getBoolean("streams.announce", true),
                 new Twitch(
                         config.getBoolean("streams.twitch.enabled", true),
@@ -227,7 +233,7 @@ record StreamConfig(
 
     /** Значения по умолчанию: обе площадки включены, но Twitch без ключей выключится сам. */
     static StreamConfig defaults() {
-        return new StreamConfig(true, 60, 6, 365, 120, 10, true, true, 0, true,
+        return new StreamConfig(true, 60, 6, 365, 120, 10, true, true, 0, 2, true,
                 Twitch.disabled(), new VkPlay(true, VkPlayClient.DEFAULT_API_URL),
                 Tags.defaults(), Viewers.defaults());
     }

@@ -70,23 +70,56 @@ final class StreamStore {
         JsonObject entry = element.getAsJsonObject();
         try {
             UUID uuid = UUID.fromString(string(entry, "uuid"));
-            Optional<StreamPlatform> platform = StreamPlatform.parse(string(entry, "platform"));
-            String channel = string(entry, "channel");
-            if (platform.isEmpty() || channel.isEmpty()) {
+            List<StreamBinding.Channel> channels = readChannels(entry);
+            if (channels.isEmpty()) {
                 return null;
             }
-            String code = string(entry, "code");
-            long verifiedAt = longOf(entry, "verifiedAt");
             StreamRewards.State state = new StreamRewards.State(
                     (int) longOf(entry, "day"),
                     (int) longOf(entry, "awardedToday"),
                     longOf(entry, "pendingMillis"),
                     (int) longOf(entry, "totalDays"));
-            return new StreamBinding(uuid, string(entry, "name"), platform.get(),
-                    channel, code, verifiedAt, state);
+            return new StreamBinding(uuid, string(entry, "name"), channels, state);
         } catch (RuntimeException exception) {
             return null; // битая строка — пропускаем, остальные важнее
         }
+    }
+
+    /**
+     * Каналы записи. Новый формат — массив {@code channels}; старый (до 1.4.121)
+     * хранил один канал в полях верхнего уровня, его читаем как один элемент.
+     */
+    private static List<StreamBinding.Channel> readChannels(JsonObject entry) {
+        List<StreamBinding.Channel> result = new ArrayList<>();
+        if (entry.has("channels") && entry.get("channels").isJsonArray()) {
+            for (JsonElement element : entry.getAsJsonArray("channels")) {
+                StreamBinding.Channel channel = readChannel(element);
+                if (channel != null) {
+                    result.add(channel);
+                }
+            }
+        }
+        if (result.isEmpty()) {
+            StreamBinding.Channel legacy = readChannel(entry);
+            if (legacy != null) {
+                result.add(legacy);
+            }
+        }
+        return result;
+    }
+
+    private static StreamBinding.Channel readChannel(JsonElement element) {
+        if (element == null || !element.isJsonObject()) {
+            return null;
+        }
+        JsonObject entry = element.getAsJsonObject();
+        Optional<StreamPlatform> platform = StreamPlatform.parse(string(entry, "platform"));
+        String channel = string(entry, "channel");
+        if (platform.isEmpty() || channel.isEmpty()) {
+            return null;
+        }
+        return new StreamBinding.Channel(platform.get(), channel, string(entry, "code"),
+                longOf(entry, "verifiedAt"));
     }
 
     synchronized void save() {
@@ -95,10 +128,25 @@ final class StreamStore {
             JsonObject entry = new JsonObject();
             entry.addProperty("uuid", binding.uuid().toString());
             entry.addProperty("name", binding.playerName());
-            entry.addProperty("platform", binding.platform().id());
-            entry.addProperty("channel", binding.channel());
-            entry.addProperty("code", binding.code());
-            entry.addProperty("verifiedAt", binding.verifiedAt());
+            JsonArray channels = new JsonArray();
+            for (StreamBinding.Channel channel : binding.channels()) {
+                JsonObject item = new JsonObject();
+                item.addProperty("platform", channel.platform().id());
+                item.addProperty("channel", channel.channel());
+                item.addProperty("code", channel.code());
+                item.addProperty("verifiedAt", channel.verifiedAt());
+                channels.add(item);
+            }
+            entry.add("channels", channels);
+            // Плоские поля основного канала остаются для отката на версию до 1.4.121:
+            // она прочитает хотя бы один канал вместо пустой привязки.
+            StreamBinding.Channel primary = binding.primary().orElse(null);
+            if (primary != null) {
+                entry.addProperty("platform", primary.platform().id());
+                entry.addProperty("channel", primary.channel());
+                entry.addProperty("code", primary.code());
+                entry.addProperty("verifiedAt", primary.verifiedAt());
+            }
             entry.addProperty("day", binding.state().day());
             entry.addProperty("awardedToday", binding.state().awardedToday());
             entry.addProperty("pendingMillis", binding.state().pendingMillis());
@@ -124,9 +172,8 @@ final class StreamStore {
 
     /** Игрок с таким каналом на этой площадке (канал принадлежит только одному). */
     synchronized Optional<StreamBinding> byChannel(StreamPlatform platform, String channel) {
-        String wanted = channel == null ? "" : channel.trim();
         for (StreamBinding binding : bindings.values()) {
-            if (binding.platform() == platform && binding.channel().equalsIgnoreCase(wanted)) {
+            if (binding.has(platform, channel)) {
                 return Optional.of(binding);
             }
         }

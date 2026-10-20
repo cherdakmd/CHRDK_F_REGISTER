@@ -29,6 +29,7 @@ class StreamConfigTest {
         assertTrue(config.requireOnline());
         assertTrue(config.requireVerified());
         assertEquals(0, config.minViewers());
+        assertEquals(2, config.maxChannels(), "по умолчанию Twitch + VK Play Live");
         assertTrue(config.announce());
         assertEquals(10 * StreamRewards.MINUTE_MILLIS, config.maxCreditMillis());
     }
@@ -51,6 +52,14 @@ class StreamConfigTest {
         assertEquals(StreamConfig.MIN_POLL_SECONDS, config.pollSeconds());
         assertEquals(StreamConfig.MIN_CREDIT_MINUTES, config.maxCreditMinutes());
         assertEquals(0, config.minViewers());
+    }
+
+    @Test
+    void maxChannelsIsClampedToOneOrTwo() throws Exception {
+        assertEquals(1, parse("streams:\n  max-channels: 0\n").maxChannels());
+        assertEquals(1, parse("streams:\n  max-channels: 1\n").maxChannels());
+        assertEquals(2, parse("streams:\n  max-channels: 7\n").maxChannels());
+        assertEquals(StreamConfig.MAX_CHANNELS, parse("").maxChannels());
     }
 
     @Test

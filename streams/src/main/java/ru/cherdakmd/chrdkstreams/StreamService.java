@@ -13,6 +13,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -147,8 +148,7 @@ final class StreamService {
         Collection<StreamBinding> snapshot = store.all();
         boolean dirty = false;
         for (StreamBinding binding : snapshot) {
-            StreamClient client = active.get(binding.platform());
-            if (client == null) {
+            if (!binding.linked()) {
                 continue;
             }
             if (cfg.requireVerified() && !binding.verified()) {
@@ -160,19 +160,30 @@ final class StreamService {
                 lastLive.remove(binding.uuid());
                 continue;
             }
-            LiveStream live;
-            try {
-                live = client.fetch(binding.channel());
-            } catch (InterruptedException exception) {
-                Thread.currentThread().interrupt();
-                return;
-            } catch (IOException | RuntimeException exception) {
-                lastLive.remove(binding.uuid());
-                logger.fine("[Streams] " + binding.platform().id() + "/" + binding.channel()
-                        + ": " + exception.getMessage());
-                continue;
+            // Эфир считается, если стримит хотя бы один канал; зрители суммируются,
+            // а минуты кредитуются один раз на игрока — прогресс общий для площадок.
+            StreamProbe probe = StreamProbe.OFFLINE;
+            for (StreamBinding.Channel channel : binding.channels()) {
+                if (cfg.requireVerified() && !channel.verified()) {
+                    continue;
+                }
+                StreamClient client = active.get(channel.platform());
+                if (client == null) {
+                    continue;
+                }
+                LiveStream live;
+                try {
+                    live = client.fetch(channel.channel());
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                    return;
+                } catch (IOException | RuntimeException exception) {
+                    logger.fine("[Streams] " + channel.label() + ": " + exception.getMessage());
+                    continue;
+                }
+                probe = probe.plus(live);
             }
-            if (!live.live() || live.viewers() < cfg.minViewers()) {
+            if (!probe.passes(cfg.minViewers())) {
                 lastLive.remove(binding.uuid());
                 continue;
             }
@@ -192,7 +203,12 @@ final class StreamService {
                 // Награду выдать не удалось — состояние не сохраняем, повторим на следующем опросе.
                 continue;
             }
-            store.put(binding.withState(decision.state()).renamed(name));
+            // Привязку могли поменять, пока шёл сетевой запрос: не затираем новый канал.
+            StreamBinding current = store.get(binding.uuid()).orElse(binding);
+            if (!current.channels().equals(binding.channels())) {
+                continue;
+            }
+            store.put(current.withState(decision.state()).renamed(name));
             dirty = true;
             if (decision.awarded()) {
                 announce(binding.uuid(), name, decision);
@@ -260,7 +276,8 @@ final class StreamService {
     /* ------------------------------- запросы из команд ------------------------------- */
 
     /**
-     * Свежий снимок эфира — для {@code /stream check} и {@code /stream status}.
+     * Свежий снимок эфира одного канала — для {@code /stream check} и
+     * {@code /stream status}.
      *
      * @throws IOException платформа не ответила или не настроена
      */
@@ -271,6 +288,40 @@ final class StreamService {
             throw new IOException("платформа не настроена");
         }
         return client.fetch(channel);
+    }
+
+    /**
+     * Первый живой эфир среди каналов привязки — для зрительского чек-ина.
+     * Если ни один канал не в эфире, возвращается {@link LiveStream#offline()};
+     * ошибка пробрасывается только когда ни одна площадка не ответила.
+     */
+    LiveStream fetchFirstLive(StreamBinding binding)
+            throws IOException, InterruptedException {
+        IOException lastError = null;
+        boolean answered = false;
+        // Зрительский чек-ин засчитывается только по каналам, прошедшим проверку кодом.
+        List<StreamBinding.Channel> channels = config.requireVerified()
+                ? binding.verifiedChannels()
+                : binding.channels();
+        for (StreamBinding.Channel channel : channels) {
+            StreamClient client = clients.get(channel.platform());
+            if (client == null) {
+                continue;
+            }
+            try {
+                LiveStream live = client.fetch(channel.channel());
+                answered = true;
+                if (live.live()) {
+                    return live;
+                }
+            } catch (IOException exception) {
+                lastError = exception;
+            }
+        }
+        if (!answered && lastError != null) {
+            throw lastError;
+        }
+        return LiveStream.offline();
     }
 
     /** Сбросить отметку «эфир подтверждён» — при смене или отвязке канала. */

@@ -16,8 +16,9 @@ import java.util.UUID;
  * запрашиваться десятки раз в секунду, и опрос Twitch там недопустим.</p>
  *
  * <ul>
- *   <li>{@code %chrdkstreams_channel%} — канал или {@code —};</li>
+ *   <li>{@code %chrdkstreams_channel%} — основной канал или {@code —};</li>
  *   <li>{@code %chrdkstreams_platform%} — Twitch / VK Play Live;</li>
+ *   <li>{@code %chrdkstreams_channels%} — все каналы: {@code twitch/foo, vkplay/bar};</li>
  *   <li>{@code %chrdkstreams_verified%} — «да» / «нет»;</li>
  *   <li>{@code %chrdkstreams_pending%} — минут накоплено до следующих суток;</li>
  *   <li>{@code %chrdkstreams_today%} — суток получено сегодня;</li>
@@ -80,7 +81,7 @@ public final class StreamPlaceholders extends PlaceholderExpansion {
         Optional<StreamBinding> found = plugin.store().get(player.getUniqueId());
         if (found.isEmpty()) {
             return switch (key) {
-                case "channel", "platform" -> NONE;
+                case "channel", "platform", "channels" -> NONE;
                 case "verified" -> "нет";
                 case "pending", "today", "days" -> "0";
                 default -> null;
@@ -88,8 +89,10 @@ public final class StreamPlaceholders extends PlaceholderExpansion {
         }
         StreamBinding binding = found.get();
         return switch (key) {
-            case "channel" -> binding.channel();
-            case "platform" -> binding.platform().displayName();
+            case "channel" -> binding.channel().isEmpty() ? NONE : binding.channel();
+            case "platform" -> binding.primary()
+                    .map(channel -> channel.platform().displayName()).orElse(NONE);
+            case "channels" -> binding.labels().isEmpty() ? NONE : binding.labels();
             case "verified" -> binding.verified() ? "да" : "нет";
             case "pending" -> Long.toString(
                     StreamRewards.pendingMinutes(binding.state(), config.rule()));

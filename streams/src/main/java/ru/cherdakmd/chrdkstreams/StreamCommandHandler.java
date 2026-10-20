@@ -51,22 +51,22 @@ public final class StreamCommandHandler implements TabExecutor {
             usage(sender, label, admin);
             if (sender instanceof Player player
                     && service.store().get(player.getUniqueId()).isPresent()) {
-                status(player);
+                status(player, label);
             }
             return true;
         }
         String sub = args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
             case "link" -> link(sender, args, label);
-            case "check" -> check(sender);
+            case "check" -> check(sender, args, label);
             case "status" -> {
                 if (sender instanceof Player player) {
-                    status(player);
+                    status(player, label);
                 } else {
                     plugin.messages().send(sender, "players-only");
                 }
             }
-            case "unlink" -> unlink(sender);
+            case "unlink" -> unlink(sender, args, label);
             case "watch" -> watch(sender, args, label);
             case "watching" -> watching(sender);
             case "code" -> code(sender, args, label);
@@ -144,53 +144,69 @@ public final class StreamCommandHandler implements TabExecutor {
             plugin.messages().send(sender, "link-taken-player", "channel", channel);
             return;
         }
-        Optional<StreamBinding> current = store.get(player.getUniqueId());
-        boolean same = current.isPresent()
-                && current.get().platform() == platform
-                && current.get().channel().equalsIgnoreCase(channel);
-        if (same) {
-            if (current.get().verified()) {
+        StreamBinding current = store.get(player.getUniqueId())
+                .orElseGet(() -> new StreamBinding(player.getUniqueId(), player.getName(),
+                        List.of(), StreamRewards.State.empty()));
+        // Этот же канал уже привязан: подтверждён — подсказываем статус, нет — повторяем код.
+        if (current.has(platform, channel)) {
+            StreamBinding.Channel existing = current.find(platform).orElse(null);
+            if (existing != null && existing.verified()) {
                 plugin.messages().send(sender, "check-already");
-            } else {
-                showCode(player, current.get(), label);
+            } else if (existing != null) {
+                showCode(player, existing, label);
             }
             return;
         }
-        boolean replaced = current.isPresent();
-        String code = StreamVerification.generate();
-        StreamRewards.State state = current.map(StreamBinding::state)
-                .orElse(StreamRewards.State.empty());
+        // На площадке уже есть канал: заменяем его, лимит каналов не тратится.
+        StreamBinding.Channel previous = current.find(platform).orElse(null);
+        if (previous == null && current.channels().size() >= config.maxChannels()) {
+            plugin.messages().send(sender, "link-limit",
+                    "max", config.maxChannels(),
+                    "channels", current.labels(),
+                    "label", label);
+            return;
+        }
         // Без проверки кодом канал доверенный — подтверждаем сразу.
         long verifiedAt = config.requireVerified() ? 0L : System.currentTimeMillis();
-        StreamBinding binding = new StreamBinding(player.getUniqueId(), player.getName(),
-                platform, channel, code, verifiedAt, state);
+        StreamBinding.Channel fresh = new StreamBinding.Channel(platform, channel,
+                StreamVerification.generate(), verifiedAt);
+        StreamBinding binding = current.renamed(player.getName()).withChannel(fresh);
         store.put(binding);
         service.forget(player.getUniqueId());
         saveAsync();
 
         plugin.messages().send(player, "link-header", "platform", platform.displayName());
-        if (replaced) {
+        if (previous != null) {
             plugin.messages().send(player, "link-replaced",
-                    "channel", current.get().channel());
+                    "channel", previous.channel(), "platform", platform.displayName());
         }
-        plugin.messages().send(player, "link-created", "channel", channel);
-        if (binding.verified()) {
+        plugin.messages().send(player, "link-created",
+                "channel", channel, "platform", platform.displayName());
+        if (binding.channels().size() > 1) {
+            plugin.messages().send(player, "link-summary", "channels", binding.labels());
+        }
+        if (fresh.verified()) {
             plugin.messages().send(player, "link-trusted");
         } else {
-            showCode(player, binding, label);
+            showCode(player, fresh, label);
         }
     }
 
-    private void showCode(Player player, StreamBinding binding, String label) {
-        plugin.messages().send(player, "link-code", "code", binding.code());
+    private void showCode(Player player, StreamBinding.Channel channel, String label) {
+        plugin.messages().send(player, "link-code", "code", channel.code());
         plugin.messages().send(player, "link-howto",
-                "platform", binding.platform().displayName(), "label", label);
-        plugin.messages().send(player, "link-url", "url", binding.url());
+                "platform", channel.platform().displayName(), "label", label);
+        plugin.messages().send(player, "link-url", "url", channel.url());
     }
 
     /* -------------------------------- check -------------------------------- */
 
-    private void check(CommandSender sender) {
+    /**
+     * {@code /stream check [площадка]} — проверка всех неподтверждённых каналов.
+     * Площадки опрашиваются в одном фоновом проходе, ответы показываются на
+     * главной нити: чат и инвентарь из чужого потока трогать нельзя.
+     */
+    private void check(CommandSender sender, String[] args, String label) {
         if (!(sender instanceof Player player)) {
             plugin.messages().send(sender, "players-only");
             return;
@@ -205,48 +221,125 @@ public final class StreamCommandHandler implements TabExecutor {
             return;
         }
         StreamBinding binding = service.store().get(player.getUniqueId()).orElse(null);
-        if (binding == null) {
-            plugin.messages().send(sender, "check-no-channel");
+        if (binding == null || !binding.linked()) {
+            plugin.messages().send(sender, "check-no-channel", "label", label);
             return;
         }
-        if (binding.verified()) {
-            plugin.messages().send(sender, "check-already");
+        StreamPlatform filter = null;
+        if (args.length >= 2) {
+            Optional<StreamPlatform> parsed = StreamPlatform.parse(args[1]);
+            if (parsed.isEmpty()) {
+                plugin.messages().send(sender, "link-unknown-platform",
+                        "name", args[1], "list", StreamPlatform.ids());
+                return;
+            }
+            filter = parsed.get();
+            if (binding.find(filter).isEmpty()) {
+                plugin.messages().send(sender, "check-no-channel-platform",
+                        "platform", filter.displayName());
+                return;
+            }
+        }
+        List<StreamBinding.Channel> targets = new ArrayList<>();
+        boolean blocked = false;
+        for (StreamBinding.Channel channel : binding.channels()) {
+            if (filter != null && channel.platform() != filter) {
+                continue;
+            }
+            if (channel.verified()) {
+                continue;
+            }
+            if (!config.available(channel.platform())) {
+                plugin.messages().send(sender, "no-platform",
+                        "name", channel.platform().displayName(),
+                        "list", StreamPlatform.ids(config.platforms()));
+                blocked = true;
+                continue;
+            }
+            targets.add(channel);
+        }
+        if (targets.isEmpty()) {
+            if (!blocked) {
+                plugin.messages().send(sender, "check-already");
+            }
             return;
         }
-        if (!config.available(binding.platform())) {
-            plugin.messages().send(sender, "no-platform",
-                    "name", binding.platform().displayName(),
-                    "list", StreamPlatform.ids(config.platforms()));
-            return;
+        for (StreamBinding.Channel channel : targets) {
+            plugin.messages().send(sender, "check-live",
+                    "channel", channel.channel(),
+                    "platform", channel.platform().displayName());
         }
-        plugin.messages().send(sender, "check-live", "channel", binding.channel());
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            LiveStream live;
-            try {
-                live = service.fetchLive(binding.platform(), binding.channel());
-            } catch (InterruptedException exception) {
-                Thread.currentThread().interrupt();
-                return;
-            } catch (IOException exception) {
-                plugin.messages().send(player, "check-error", "error", exception.getMessage());
-                return;
+            List<CheckResult> results = new ArrayList<>(targets.size());
+            StreamBinding current = service.store().get(player.getUniqueId()).orElse(binding);
+            boolean changed = false;
+            for (StreamBinding.Channel channel : targets) {
+                LiveStream live;
+                try {
+                    live = service.fetchLive(channel.platform(), channel.channel());
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                    return;
+                } catch (IOException | RuntimeException exception) {
+                    results.add(new CheckResult(channel, null, exception.getMessage(), false));
+                    continue;
+                }
+                boolean verified = live.live()
+                        && StreamVerification.matches(live.title(), channel.code());
+                if (verified) {
+                    // Пока шёл запрос, привязку могли отвязать: подтверждаем только живой канал.
+                    StreamBinding latest = service.store().get(player.getUniqueId()).orElse(current);
+                    if (latest.has(channel.platform(), channel.channel())) {
+                        current = latest.markVerified(channel.platform(), channel.channel(),
+                                System.currentTimeMillis());
+                        changed = true;
+                    }
+                }
+                results.add(new CheckResult(channel, live, null, verified));
             }
-            if (!live.live()) {
-                plugin.messages().send(player, "check-offline", "code", binding.code());
-                return;
+            if (changed) {
+                service.store().put(current);
+                service.store().save();
             }
-            if (!StreamVerification.matches(live.title(), binding.code())) {
-                plugin.messages().send(player, "check-no-code",
-                        "title", live.title().isBlank() ? "—" : live.title(),
-                        "code", binding.code());
-                return;
-            }
-            service.store().put(binding.markVerified(System.currentTimeMillis()));
-            saveAsync();
-            plugin.getLogger().info("[Streams] Канал подтверждён: " + binding.playerName()
-                    + " → " + binding.platform().id() + "/" + binding.channel());
-            plugin.messages().send(player, "check-verified");
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                for (CheckResult result : results) {
+                    reportCheck(player, result);
+                }
+            });
         });
+    }
+
+    /** Итог проверки одного канала: ответ площадки, ошибка или подтверждение. */
+    private record CheckResult(StreamBinding.Channel channel, LiveStream live,
+                               String error, boolean verified) {
+    }
+
+    private void reportCheck(Player player, CheckResult result) {
+        StreamBinding.Channel channel = result.channel();
+        if (result.error() != null) {
+            plugin.messages().send(player, "check-error",
+                    "platform", channel.platform().displayName(), "error", result.error());
+            return;
+        }
+        LiveStream live = result.live();
+        if (!live.live()) {
+            plugin.messages().send(player, "check-offline",
+                    "platform", channel.platform().displayName(),
+                    "channel", channel.channel(), "code", channel.code());
+            return;
+        }
+        if (!result.verified()) {
+            plugin.messages().send(player, "check-no-code",
+                    "platform", channel.platform().displayName(),
+                    "channel", channel.channel(),
+                    "title", live.title().isBlank() ? "—" : live.title(),
+                    "code", channel.code());
+            return;
+        }
+        plugin.getLogger().info("[Streams] Канал подтверждён: " + player.getName()
+                + " → " + channel.label());
+        plugin.messages().send(player, "check-verified",
+                "platform", channel.platform().displayName(), "channel", channel.channel());
     }
 
     /* ------------------------------- зрители ------------------------------- */
@@ -326,24 +419,24 @@ public final class StreamCommandHandler implements TabExecutor {
 
     /* -------------------------------- status -------------------------------- */
 
-    private void status(Player player) {
+    private void status(Player player, String label) {
         StreamConfig config = service.config();
         if (!config.enabled()) {
             plugin.messages().send(player, "disabled");
         }
         StreamBinding binding = service.store().get(player.getUniqueId()).orElse(null);
-        if (binding == null) {
-            plugin.messages().send(player, "not-linked", "label", "stream");
+        if (binding == null || !binding.linked()) {
+            plugin.messages().send(player, "not-linked", "label", label);
             return;
         }
         plugin.messages().send(player, "status-header", "player", player.getName());
-        plugin.messages().send(player, "status-line",
-                "channel", binding.channel(),
-                "platform", binding.platform().displayName());
-        if (binding.verified()) {
-            plugin.messages().send(player, "status-verified");
-        } else {
-            plugin.messages().send(player, "status-unverified", "code", binding.code());
+        for (StreamBinding.Channel channel : binding.channels()) {
+            String stateKey = channel.verified() ? "status-verified" : "status-unverified";
+            Object state = Messages.trusted(plugin.messages().raw(stateKey, "code", channel.code()));
+            plugin.messages().send(player, "status-channel",
+                    "channel", channel.channel(),
+                    "platform", channel.platform().displayName(),
+                    "state", state);
         }
         StreamRewards.Rule rule = config.rule();
         plugin.messages().send(player, "status-progress",
@@ -357,47 +450,108 @@ public final class StreamCommandHandler implements TabExecutor {
         }
         plugin.messages().send(player, "status-footer",
                 "minutes", config.minutesPerDay(), "max", config.maxDaysPerDay());
-        if (!config.available(binding.platform())) {
-            plugin.messages().send(player, "status-error");
+        List<StreamBinding.Channel> checkable = new ArrayList<>();
+        for (StreamBinding.Channel channel : binding.channels()) {
+            if (config.available(channel.platform())) {
+                checkable.add(channel);
+            }
+        }
+        if (checkable.isEmpty()) {
+            plugin.messages().send(player, "status-no-platform");
             return;
         }
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            try {
-                LiveStream live = service.fetchLive(binding.platform(), binding.channel());
-                if (live.live()) {
-                    plugin.messages().send(player, "status-live", "viewers", live.viewers());
-                } else {
-                    plugin.messages().send(player, "status-offline");
+            List<CheckResult> results = new ArrayList<>(checkable.size());
+            for (StreamBinding.Channel channel : checkable) {
+                try {
+                    results.add(new CheckResult(channel,
+                            service.fetchLive(channel.platform(), channel.channel()), null, false));
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                    return;
+                } catch (IOException | RuntimeException exception) {
+                    results.add(new CheckResult(channel, null, exception.getMessage(), false));
                 }
-            } catch (InterruptedException exception) {
-                Thread.currentThread().interrupt();
-            } catch (IOException exception) {
-                plugin.messages().send(player, "status-error");
             }
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                for (CheckResult result : results) {
+                    StreamBinding.Channel channel = result.channel();
+                    if (result.error() != null) {
+                        plugin.messages().send(player, "status-error",
+                                "platform", channel.platform().displayName(),
+                                "channel", channel.channel());
+                    } else if (result.live().live()) {
+                        plugin.messages().send(player, "status-live",
+                                "platform", channel.platform().displayName(),
+                                "channel", channel.channel(),
+                                "viewers", result.live().viewers());
+                    } else {
+                        plugin.messages().send(player, "status-offline",
+                                "platform", channel.platform().displayName(),
+                                "channel", channel.channel());
+                    }
+                }
+            });
         });
     }
 
     /* -------------------------------- unlink -------------------------------- */
 
-    private void unlink(CommandSender sender) {
+    /**
+     * {@code /stream unlink [площадка]} — отвязка одного канала или всех сразу.
+     * Площадка без аргумента означает «всё»: так привычнее по прежнему поведению.
+     */
+    private void unlink(CommandSender sender, String[] args, String label) {
         if (!(sender instanceof Player player)) {
             plugin.messages().send(sender, "players-only");
             return;
         }
-        if (!service.store().remove(player.getUniqueId())) {
-            plugin.messages().send(sender, "not-linked", "label", "stream");
+        StreamBinding binding = service.store().get(player.getUniqueId()).orElse(null);
+        if (binding == null || !binding.linked()) {
+            plugin.messages().send(sender, "not-linked", "label", label);
             return;
+        }
+        if (args.length < 2) {
+            service.store().remove(player.getUniqueId());
+            service.forget(player.getUniqueId());
+            saveAsync();
+            plugin.messages().send(sender, "unlinked", "label", label);
+            return;
+        }
+        Optional<StreamPlatform> parsed = StreamPlatform.parse(args[1]);
+        if (parsed.isEmpty()) {
+            plugin.messages().send(sender, "link-unknown-platform",
+                    "name", args[1], "list", StreamPlatform.ids());
+            return;
+        }
+        StreamPlatform platform = parsed.get();
+        StreamBinding.Channel removed = binding.find(platform).orElse(null);
+        if (removed == null) {
+            plugin.messages().send(sender, "not-linked-platform",
+                    "platform", platform.displayName());
+            return;
+        }
+        StreamBinding updated = binding.without(platform);
+        if (updated.linked()) {
+            service.store().put(updated);
+        } else {
+            service.store().remove(player.getUniqueId());
         }
         service.forget(player.getUniqueId());
         saveAsync();
-        plugin.messages().send(sender, "unlinked");
+        plugin.messages().send(sender, "unlinked-platform",
+                "platform", platform.displayName(),
+                "channel", removed.channel(),
+                "left", updated.channels().size());
     }
 
     /* -------------------------------- admin -------------------------------- */
 
     private void stats(CommandSender sender) {
         List<StreamBinding> all = new ArrayList<>(service.store().all());
-        plugin.messages().send(sender, "stats-header", "count", all.size());
+        int channels = all.stream().mapToInt(binding -> binding.channels().size()).sum();
+        plugin.messages().send(sender, "stats-header",
+                "count", all.size(), "channels", channels);
         plugin.messages().send(sender, "stats-viewers",
                 "count", plugin.viewerService().viewerCount(),
                 "streamers", plugin.viewerService().streamerCount());
@@ -406,17 +560,20 @@ public final class StreamCommandHandler implements TabExecutor {
             return;
         }
         int shown = 0;
+        stats:
         for (StreamBinding binding : all) {
-            if (shown >= STATS_LIMIT) {
-                break;
+            for (StreamBinding.Channel channel : binding.channels()) {
+                if (shown >= STATS_LIMIT) {
+                    break stats;
+                }
+                plugin.messages().send(sender, "stats-line",
+                        "player", binding.playerName(),
+                        "platform", channel.platform().displayName(),
+                        "channel", channel.channel(),
+                        "state", trustedState(channel.verified()),
+                        "days", binding.state().totalDays());
+                shown++;
             }
-            plugin.messages().send(sender, "stats-line",
-                    "player", binding.playerName(),
-                    "platform", binding.platform().displayName(),
-                    "channel", binding.channel(),
-                    "state", trustedState(binding.verified()),
-                    "days", binding.state().totalDays());
-            shown++;
         }
     }
 
@@ -458,6 +615,11 @@ public final class StreamCommandHandler implements TabExecutor {
             return filter(options, args[0]);
         }
         if (args.length == 2 && "link".equalsIgnoreCase(args[0])) {
+            return filter(service.config().platforms().stream()
+                    .map(StreamPlatform::id).toList(), args[1]);
+        }
+        if (args.length == 2 && ("check".equalsIgnoreCase(args[0])
+                || "unlink".equalsIgnoreCase(args[0]))) {
             return filter(service.config().platforms().stream()
                     .map(StreamPlatform::id).toList(), args[1]);
         }

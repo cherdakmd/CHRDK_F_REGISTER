@@ -270,15 +270,13 @@ final class ViewerService {
         }
         Optional<StreamBinding> channel = store.get(binding.streamer())
                 .filter(StreamBinding::verified);
-        if (channel.isEmpty() || !config.available(channel.get().platform())) {
+        if (channel.isEmpty() || config.platforms().isEmpty()) {
             plugin.messages().send(viewer, "watch-streamer-off",
                     "streamer", binding.streamerName());
             return;
         }
         UUID uuid = viewer.getUniqueId();
         String name = viewer.getName();
-        StreamPlatform platform = channel.get().platform();
-        String channelName = channel.get().channel();
         if (!checking.add(uuid)) {
             plugin.messages().send(viewer, "watch-busy");
             return;
@@ -286,7 +284,8 @@ final class ViewerService {
         plugin.messages().send(viewer, "watch-checking");
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
-                LiveStream live = service.fetchLive(platform, channelName);
+                // Любой подтверждённый канал стримера в эфире — просмотр засчитывается.
+                LiveStream live = service.fetchFirstLive(channel.get());
                 if (!live.live()) {
                     tell(uuid, "watch-offline");
                     return;
