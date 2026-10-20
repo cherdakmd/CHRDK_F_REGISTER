@@ -34,7 +34,7 @@ public record TierEnchantConfig(boolean enabled, int chancePercent, int maxPerIt
 
     /** По умолчанию: 20% на проклятом, до 2 чар, уровень не выше III. */
     public static final TierEnchantConfig DEFAULT =
-            new TierEnchantConfig(true, 20, 2, 3, true, 30, 1, 15, 5);
+            new TierEnchantConfig(true, 20, 2, 3, true, 18, 1, 15, 5);
 
     /** Разбор секции {@code enchantments.*}; кривые значения клампятся. */
     public static TierEnchantConfig parse(FileConfiguration config, Logger logger) {
