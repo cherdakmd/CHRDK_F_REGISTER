@@ -42,6 +42,15 @@ class AddonApiContractTest {
     }
 
     @Test
+    void nameTagsAreAdditive() throws Exception {
+        assertTrue(ChrdkRegisterApi.API_VERSION >= 6);
+        assertTrue(ChrdkRegisterApi.class.getMethod("registerNameTag", String.class,
+                ChrdkRegisterApi.NameTagProvider.class).isDefault(),
+                "старые реализации API не должны ломаться");
+        assertTrue(ChrdkRegisterApi.class.getMethod("unregisterNameTag", String.class).isDefault());
+    }
+
+    @Test
     void authStagesKeepStableOrder() {
         // Аддоны полагаются на то, что значения не переименовываются/не удаляются.
         assertEquals("NO_PASS", ApiAuthStage.values()[0].name());

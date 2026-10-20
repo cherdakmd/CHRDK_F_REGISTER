@@ -64,6 +64,7 @@ public final class RegisterPlugin extends JavaPlugin {
         this.donateMenuService.setAdminJournalOpener(player -> adminDonationsGui.openMenu(player));
         this.passwordKeypad = new PasswordKeypadService(this, accessManager, messages);
         this.tabListService = new TabListService(this, accessManager);
+        this.tabListService.setNameDecorator(chatService::decoratedName);
         this.luckPermsPassSync = new LuckPermsPassSync(externalHooks, store, accessManager::config, getLogger());
         this.shopService = new ShopService(this, accessManager, externalHooks, getLogger());
         this.chatService.setTagResolver(shopService::tagOf);
@@ -71,7 +72,8 @@ public final class RegisterPlugin extends JavaPlugin {
         shopService.cleanupExpired();
         shopService.logProblems();
         getServer().getServicesManager().register(ChrdkRegisterApi.class,
-                new ChrdkRegisterApiImpl(this, accessManager, externalHooks, shopService), this, ServicePriority.Normal);
+                new ChrdkRegisterApiImpl(this, accessManager, externalHooks, shopService,
+                        chatService.nameTags()), this, ServicePriority.Normal);
 
         getServer().getPluginManager().registerEvents(new PlayerRestrictionListener(accessManager), this);
         getServer().getPluginManager().registerEvents(chatService, this);

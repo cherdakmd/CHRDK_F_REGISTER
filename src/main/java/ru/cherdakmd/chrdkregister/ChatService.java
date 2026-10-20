@@ -72,6 +72,8 @@ public final class ChatService implements Listener {
     private final Map<UUID, UUID> lastPrivatePartners = new ConcurrentHashMap<>();
     /** Оформление ника из каталога товаров (цветной ник, плашка мецената). */
     private volatile java.util.function.Function<String, String> tagResolver = name -> "";
+    /** Оформление ников от аддонов (метка стримера и т.п.). */
+    private final NameTags nameTags;
     private final Map<UUID, Set<String>> ignoreCache = new ConcurrentHashMap<>();
     private final Set<UUID> socialSpy = ConcurrentHashMap.newKeySet();
 
@@ -87,6 +89,7 @@ public final class ChatService implements Listener {
         this.config = config;
         this.messages = messages;
         this.logger = logger;
+        this.nameTags = new NameTags(logger);
     }
 
     /**
@@ -97,11 +100,20 @@ public final class ChatService implements Listener {
         this.tagResolver = resolver == null ? name -> "" : resolver;
     }
 
-    /** Ник с оформлением товара: {@code <gold>Nick</gold>} или просто ник. */
-    private String decorated(String playerName) {
+    /** Ник с оформлением товара и метками аддонов: {@code <gold>Nick</gold> [СТРИМ]}. */
+    public String decoratedName(String playerName) {
         java.util.function.Function<String, String> resolver = tagResolver;
         String tag = resolver == null ? "" : resolver.apply(playerName);
-        return ShopEntitlements.decorate(playerName, tag);
+        return nameTags.decorate(playerName, ShopEntitlements.decorate(playerName, tag));
+    }
+
+    /** Реестр оформления ников — его получает реализация публичного API. */
+    NameTags nameTags() {
+        return nameTags;
+    }
+
+    private String decorated(String playerName) {
+        return decoratedName(playerName);
     }
 
     /** Заменяет тексты из {@code messages.yml} (используется при {@code /pass reload}). */

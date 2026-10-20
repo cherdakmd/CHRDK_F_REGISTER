@@ -133,6 +133,20 @@ final class StreamStore {
         return Optional.empty();
     }
 
+    /** Привязка по нику игрока (регистр не важен) — для заявок зрителей и метки в чате. */
+    synchronized Optional<StreamBinding> byName(String playerName) {
+        String wanted = playerName == null ? "" : playerName.trim();
+        if (wanted.isEmpty()) {
+            return Optional.empty();
+        }
+        for (StreamBinding binding : bindings.values()) {
+            if (binding.playerName().equalsIgnoreCase(wanted)) {
+                return Optional.of(binding);
+            }
+        }
+        return Optional.empty();
+    }
+
     synchronized void put(StreamBinding binding) {
         if (binding == null) {
             return;

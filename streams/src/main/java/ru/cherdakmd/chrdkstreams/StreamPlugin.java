@@ -2,6 +2,7 @@ package ru.cherdakmd.chrdkstreams;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
@@ -26,6 +27,9 @@ public final class StreamPlugin extends JavaPlugin {
 
     private StreamStore store;
     private StreamService service;
+    private ViewerStore viewerStore;
+    private ViewerService viewerService;
+    private StreamerTagService tagService;
 
     @Override
     public void onEnable() {
@@ -37,8 +41,12 @@ public final class StreamPlugin extends JavaPlugin {
 
         this.store = new StreamStore(getDataFolder().toPath(), getLogger());
         store.load();
+        this.viewerStore = new ViewerStore(getDataFolder().toPath(), getLogger());
+        viewerStore.load();
 
         this.service = new StreamService(this, store, config);
+        this.viewerService = new ViewerService(this, viewerStore, store, service, config);
+        this.tagService = new StreamerTagService(this, store, config);
 
         PluginCommand command = getCommand("stream");
         if (command != null) {
@@ -48,17 +56,30 @@ public final class StreamPlugin extends JavaPlugin {
         }
 
         service.start();
+        viewerService.start();
+        tagService.update(config, manageTabNames());
+        registerNameTag();
         logStartup();
         registerPlaceholders();
     }
 
     @Override
     public void onDisable() {
+        unregisterNameTag();
+        if (tagService != null) {
+            tagService.stop();
+        }
+        if (viewerService != null) {
+            viewerService.stop();
+        }
         if (service != null) {
             service.stop();
         }
         if (store != null) {
             store.save();
+        }
+        if (viewerStore != null) {
+            viewerStore.save();
         }
         getLogger().info("CHRDK_Streams выключен.");
     }
@@ -70,6 +91,9 @@ public final class StreamPlugin extends JavaPlugin {
                 getConfig().getString("general.locale", "ru"), getLogger());
         this.config = StreamConfig.from(getConfig());
         this.service.update(config);
+        this.viewerService.update(config);
+        this.tagService.update(config, manageTabNames());
+        registerNameTag();
         logStartup();
     }
 
@@ -79,7 +103,7 @@ public final class StreamPlugin extends JavaPlugin {
             getLogger().info("[Streams] Программа выключена (streams.enabled: false).");
             return;
         }
-        if (coreApi == null) {
+        if (coreApi() == null) {
             getLogger().warning("[Streams] CHRDK_Core не найден: награды выдавать некуда. "
                     + "Проверьте, что ядро загружается раньше аддона.");
         }
@@ -96,6 +120,66 @@ public final class StreamPlugin extends JavaPlugin {
         getLogger().info("[Streams] Готово: " + cfg.platforms() + ", "
                 + cfg.minutesPerDay() + " мин. эфира = 1 сутки, максимум "
                 + cfg.maxDaysPerDay() + " суток в день, привязок " + store.size() + ".");
+        if (cfg.tags().enabled()) {
+            getLogger().info("[Streams] Метка стримера: [" + cfg.tags().label() + "]"
+                    + (manageTabNames() ? " в чате и TAB."
+                    : " в чате, TAB ведёт ядро (добавьте %player_tagged% в tablist)."));
+        }
+        if (cfg.viewers().enabled()) {
+            getLogger().info("[Streams] Просмотр зрителей: " + cfg.viewers().minutesPerDay()
+                    + " мин. = 1 сутки, до " + cfg.viewers().maxDaysPerDay() + "/день, "
+                    + cfg.viewers().maxTotalDays() + " всего, код раз в "
+                    + cfg.viewers().codeWindowMinutes() + " мин.");
+        }
+    }
+
+    /** id оформления ника в API ядра: повторная регистрация заменяет прежнюю. */
+    static final String NAME_TAG_ID = "streams";
+
+    /** Подключает метку стримера к чату/личным сообщениям ядра. */
+    private void registerNameTag() {
+        ChrdkRegisterApi api = coreApi();
+        if (api == null || tagService == null) {
+            return;
+        }
+        try {
+            api.registerNameTag(NAME_TAG_ID, tagService::decorate);
+        } catch (LinkageError error) {
+            // Ядро старше API v6: метода нет. Аддон обязан работать дальше —
+            // без метки в чате, но с наградами.
+            getLogger().warning("[Streams] Ядро не поддерживает оформление ников (API v6): "
+                    + "метка стримера в чате отключена. Обновите CHRDK_Core.");
+        }
+    }
+
+    /** Снимает метку при выключении/перезагрузке; старые ядра просто пропускаем. */
+    private void unregisterNameTag() {
+        ChrdkRegisterApi api = coreApi();
+        if (api == null) {
+            return;
+        }
+        try {
+            api.unregisterNameTag(NAME_TAG_ID);
+        } catch (LinkageError error) {
+            // API v5 и старше — снимать нечего.
+        }
+    }
+
+    /**
+     * Можно ли управлять именем в TAB: ядро не должно красить имя своим
+     * {@code tablist.player-name-format}, иначе оно перезапишет метку.
+     */
+    private boolean manageTabNames() {
+        StreamConfig cfg = config;
+        if (!cfg.tags().enabled() || !cfg.tags().tab()) {
+            return false;
+        }
+        Plugin core = Bukkit.getPluginManager().getPlugin("CHRDK_Core");
+        if (core instanceof JavaPlugin corePlugin) {
+            String format = corePlugin.getConfig().getString("tablist.player-name-format", "");
+            return format == null || format.isBlank();
+        }
+        return true;
     }
 
     /** PlaceholderAPI — мягкая интеграция: без плагина аддон работает как обычно. */
@@ -122,6 +206,18 @@ public final class StreamPlugin extends JavaPlugin {
 
     public StreamService service() {
         return service;
+    }
+
+    public ViewerService viewerService() {
+        return viewerService;
+    }
+
+    public ViewerStore viewerStore() {
+        return viewerStore;
+    }
+
+    public StreamerTagService tagService() {
+        return tagService;
     }
 
     public StreamStore store() {

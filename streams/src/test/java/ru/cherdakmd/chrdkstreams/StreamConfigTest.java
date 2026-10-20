@@ -122,10 +122,89 @@ class StreamConfigTest {
     }
 
     @Test
+    void tagsDefaultToBoldBlinkingLabel() throws Exception {
+        StreamConfig config = parse("");
+
+        assertTrue(config.tags().enabled());
+        assertEquals("СТРИМ", config.tags().label());
+        assertEquals("red", config.tags().chatColor());
+        assertEquals(15, config.tags().blinkTicks());
+        assertEquals("red", config.tags().colorA());
+        assertEquals("dark_gray", config.tags().colorB());
+        assertTrue(config.tags().tab());
+    }
+
+    @Test
+    void tagIsSanitizedAndBlinkIsClamped() throws Exception {
+        StreamConfig config = parse("""
+                streams:
+                  tags:
+                    text: "<red>В ЭФИРЕ</red>"
+                    blink-ticks: 1
+                    color-a: "<red>"
+                    color-b: ""
+                """);
+
+        assertEquals("В ЭФИРЕ", config.tags().label());
+        assertEquals(StreamConfig.Tags.MIN_BLINK_TICKS, config.tags().blinkTicks());
+        assertEquals("red", config.tags().colorA());
+        assertEquals("dark_gray", config.tags().colorB());
+    }
+
+    @Test
+    void labelLengthIsCapped() throws Exception {
+        StreamConfig config = parse("""
+                streams:
+                  tags:
+                    text: "ОЧЕНЬДЛИННОЕИМЯМЕТКИ"
+                """);
+
+        assertEquals(StreamConfig.MAX_TAG_LENGTH, config.tags().label().length());
+    }
+
+    @Test
+    void viewersDefaultToTwoHoursPerPassDay() throws Exception {
+        StreamConfig config = parse("");
+
+        assertTrue(config.viewers().enabled());
+        assertEquals(120, config.viewers().minutesPerDay());
+        assertEquals(1, config.viewers().maxDaysPerDay());
+        assertEquals(30, config.viewers().maxTotalDays());
+        assertEquals(10, config.viewers().codeWindowMinutes());
+        assertEquals(5, config.viewers().checkinMinMinutes());
+        assertTrue(config.viewers().requireApproval());
+        assertEquals(10 * StreamRewards.MINUTE_MILLIS, config.viewers().codeWindowMillis());
+        assertEquals(5 * StreamRewards.MINUTE_MILLIS, config.viewers().checkinMinMillis());
+        assertEquals(StreamRewards.Rule.of(120, 1, 30), config.viewers().rule());
+    }
+
+    @Test
+    void viewerNumbersAreClamped() throws Exception {
+        StreamConfig config = parse("""
+                streams:
+                  viewers:
+                    minutes-per-day: 0
+                    max-days-per-day: 99
+                    max-total-days: 99999
+                    code-window-minutes: 1
+                    checkin-min-minutes: 999
+                """);
+
+        assertEquals(StreamRewards.MIN_MINUTES_PER_DAY, config.viewers().minutesPerDay());
+        assertEquals(StreamRewards.MAX_DAYS_PER_DAY, config.viewers().maxDaysPerDay());
+        assertEquals(StreamRewards.MAX_TOTAL_DAYS, config.viewers().maxTotalDays());
+        assertEquals(ViewerCodes.MIN_WINDOW_MINUTES, config.viewers().codeWindowMinutes());
+        assertEquals(ViewerCodes.MIN_WINDOW_MINUTES, config.viewers().checkinMinMinutes(),
+                "чек-ин не может быть реже окна кода");
+    }
+
+    @Test
     void defaultsMatchShippedConfigKeys() {
         StreamConfig config = StreamConfig.defaults();
 
         assertEquals(60, config.minutesPerDay());
         assertEquals(StreamRewards.Rule.of(60, 6, 365), config.rule());
+        assertEquals(StreamConfig.Tags.defaults(), config.tags());
+        assertEquals(StreamConfig.Viewers.defaults(), config.viewers());
     }
 }

@@ -28,7 +28,7 @@ import java.util.Optional;
 public interface ChrdkRegisterApi {
 
     /** Версия контракта API. Растёт при расширении (добавлении методов/событий). */
-    int API_VERSION = 5;
+    int API_VERSION = 6;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -114,6 +114,43 @@ public interface ChrdkRegisterApi {
      */
     default boolean hasEntitlement(String playerName, String productId) {
         return entitlementUntil(playerName, productId) > System.currentTimeMillis();
+    }
+
+    /* ------------------------------ оформление ника ------------------------------ */
+
+    /**
+     * Оформление ника в чате и личных сообщениях.
+     *
+     * <p>Провайдер получает ник без разметки и уже оформленное имя (с тегом
+     * каталога) и возвращает новое — MiniMessage-строку. Так аддон может
+     * сделать ник жирным, добавить метку «СТРИМ» и т.п.</p>
+     */
+    @FunctionalInterface
+    interface NameTagProvider {
+
+        /**
+         * @param playerName    ник игрока без разметки
+         * @param decoratedName имя, уже оформленное ядром (MiniMessage)
+         * @return новое имя; {@code null} — оставить как было
+         */
+        String decorate(String playerName, String decoratedName);
+    }
+
+    /**
+     * Добавляет оформление ника (API v6). Ядро применяет провайдеров в порядке
+     * регистрации; повторная регистрация с тем же id заменяет прежнюю.
+     *
+     * <p>По умолчанию ничего не делает: старые реализации API остаются
+     * совместимыми. Сбой провайдера логируется и не ломает чат.</p>
+     *
+     * @param id       уникальное имя аддона, например {@code streams}
+     * @param provider сборка имени; {@code null} игнорируется
+     */
+    default void registerNameTag(String id, NameTagProvider provider) {
+    }
+
+    /** Убирает оформление, зарегистрированное аддоном под этим id (API v6). */
+    default void unregisterNameTag(String id) {
     }
 
     /* ------------------------------ интеграции ------------------------------ */

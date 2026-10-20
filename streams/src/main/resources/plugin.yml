@@ -10,10 +10,10 @@ commands:
   stream:
     description: "Стримерская программа: привязка канала, статус, награды"
     aliases: [streams, strimer]
-    usage: "/stream <link <twitch|vkplay> <канал> | check | status | unlink | stats | reload>"
+    usage: "/stream <link <twitch|vkplay> <канал> | check | status | unlink | viewers [on|off] | viewer <accept|deny> <ник> | watch <стример> | watching | code <код> | stats | reload>"
 permissions:
   chrdkstreams.use:
-    description: "Участвовать в стримерской программе (/stream link, status, check)"
+    description: "Стримерская программа и просмотр (/stream link, check, status, viewers, watch, code)"
     default: true
   chrdkstreams.admin:
     description: "Управление программой (/stream stats, reload)"

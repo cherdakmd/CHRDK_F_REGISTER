@@ -4,6 +4,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Настройки стримерской программы ({@code streams:} в config.yml).
@@ -21,6 +22,8 @@ import java.util.List;
  * @param requireVerified требовать код в названии эфира
  * @param minViewers     минимум зрителей для зачёта (0 — любой)
  * @param announce       писать игроку о награде
+ * @param tags           оформление ника стримера
+ * @param viewers        награды зрителям за просмотр
  */
 record StreamConfig(
         boolean enabled,
@@ -34,7 +37,9 @@ record StreamConfig(
         int minViewers,
         boolean announce,
         Twitch twitch,
-        VkPlay vkplay
+        VkPlay vkplay,
+        Tags tags,
+        Viewers viewers
 ) {
 
     static final int MIN_POLL_SECONDS = 60;
@@ -42,6 +47,7 @@ record StreamConfig(
     static final int MIN_CREDIT_MINUTES = 1;
     static final int MAX_CREDIT_MINUTES = 240;
     static final int MAX_VIEWERS = 100_000;
+    static final int MAX_TAG_LENGTH = 16;
 
     /** Twitch: приложение из dev.twitch.tv/console/apps. */
     record Twitch(boolean enabled, String clientId, String clientSecret, String token) {
@@ -68,6 +74,71 @@ record StreamConfig(
         }
     }
 
+    /**
+     * Метка стримера: жирный ник и «[СТРИМ]» после него.
+     *
+     * <p>В чате метка статичная (сообщение нельзя «мигать» задним числом),
+     * в TAB цвета {@code color-a}/{@code color-b} чередуются каждые
+     * {@code blink-ticks} — это и есть мигание.</p>
+     */
+    record Tags(boolean enabled, String label, String chatColor, int blinkTicks,
+                String colorA, String colorB, boolean tab) {
+
+        static final int MIN_BLINK_TICKS = 4;
+        static final int MAX_BLINK_TICKS = 100;
+
+        static Tags defaults() {
+            return new Tags(true, "СТРИМ", "red", 15, "red", "dark_gray", true);
+        }
+
+        Tags {
+            String safeLabel = label == null ? "" : label.replaceAll("<[^>]*>", "")
+                    .replace("<", "").replace(">", "").replaceAll("[\\n\\r]", "").trim();
+            if (safeLabel.isEmpty()) {
+                safeLabel = "СТРИМ";
+            }
+            if (safeLabel.length() > MAX_TAG_LENGTH) {
+                safeLabel = safeLabel.substring(0, MAX_TAG_LENGTH);
+            }
+            label = safeLabel;
+            chatColor = colorName(chatColor, "red");
+            colorA = colorName(colorA, "red");
+            colorB = colorName(colorB, "dark_gray");
+            blinkTicks = Math.clamp(blinkTicks, MIN_BLINK_TICKS, MAX_BLINK_TICKS);
+        }
+    }
+
+    /** Награды зрителям: 120 минут просмотра = сутки, не больше 1 в день и 30 всего. */
+    record Viewers(boolean enabled, int minutesPerDay, int maxDaysPerDay, int maxTotalDays,
+                   int codeWindowMinutes, int checkinMinMinutes, boolean requireApproval) {
+
+        static Viewers defaults() {
+            return new Viewers(true, 120, 1, 30, 10, 5, true);
+        }
+
+        Viewers {
+            minutesPerDay = Math.clamp(minutesPerDay, StreamRewards.MIN_MINUTES_PER_DAY,
+                    StreamRewards.MAX_MINUTES_PER_DAY);
+            maxDaysPerDay = Math.clamp(maxDaysPerDay, 0, StreamRewards.MAX_DAYS_PER_DAY);
+            maxTotalDays = Math.clamp(maxTotalDays, 0, StreamRewards.MAX_TOTAL_DAYS);
+            codeWindowMinutes = Math.clamp(codeWindowMinutes,
+                    ViewerCodes.MIN_WINDOW_MINUTES, ViewerCodes.MAX_WINDOW_MINUTES);
+            checkinMinMinutes = Math.clamp(checkinMinMinutes, 1, codeWindowMinutes);
+        }
+
+        StreamRewards.Rule rule() {
+            return StreamRewards.Rule.of(minutesPerDay, maxDaysPerDay, maxTotalDays);
+        }
+
+        long codeWindowMillis() {
+            return ViewerCodes.windowMillis(codeWindowMinutes);
+        }
+
+        long checkinMinMillis() {
+            return (long) checkinMinMinutes * StreamRewards.MINUTE_MILLIS;
+        }
+    }
+
     StreamConfig {
         minutesPerDay = Math.clamp(minutesPerDay, StreamRewards.MIN_MINUTES_PER_DAY,
                 StreamRewards.MAX_MINUTES_PER_DAY);
@@ -76,6 +147,8 @@ record StreamConfig(
         pollSeconds = Math.clamp(pollSeconds, MIN_POLL_SECONDS, MAX_POLL_SECONDS);
         maxCreditMinutes = Math.clamp(maxCreditMinutes, MIN_CREDIT_MINUTES, MAX_CREDIT_MINUTES);
         minViewers = Math.clamp(minViewers, 0, MAX_VIEWERS);
+        tags = tags == null ? Tags.defaults() : tags;
+        viewers = viewers == null ? Viewers.defaults() : viewers;
     }
 
     /** Правила начисления для {@link StreamRewards}. */
@@ -133,17 +206,41 @@ record StreamConfig(
                 new VkPlay(
                         config.getBoolean("streams.vkplay.enabled", true),
                         apiUrl(config.getString("streams.vkplay.api-url",
-                                VkPlayClient.DEFAULT_API_URL))));
+                                VkPlayClient.DEFAULT_API_URL))),
+                new Tags(
+                        config.getBoolean("streams.tags.enabled", true),
+                        text(config.getString("streams.tags.text", "СТРИМ")),
+                        text(config.getString("streams.tags.chat-color", "red")),
+                        config.getInt("streams.tags.blink-ticks", 15),
+                        text(config.getString("streams.tags.color-a", "red")),
+                        text(config.getString("streams.tags.color-b", "dark_gray")),
+                        config.getBoolean("streams.tags.tab", true)),
+                new Viewers(
+                        config.getBoolean("streams.viewers.enabled", true),
+                        config.getInt("streams.viewers.minutes-per-day", 120),
+                        config.getInt("streams.viewers.max-days-per-day", 1),
+                        config.getInt("streams.viewers.max-total-days", 30),
+                        config.getInt("streams.viewers.code-window-minutes", 10),
+                        config.getInt("streams.viewers.checkin-min-minutes", 5),
+                        config.getBoolean("streams.viewers.require-approval", true)));
     }
 
     /** Значения по умолчанию: обе площадки включены, но Twitch без ключей выключится сам. */
     static StreamConfig defaults() {
         return new StreamConfig(true, 60, 6, 365, 120, 10, true, true, 0, true,
-                Twitch.disabled(), new VkPlay(true, VkPlayClient.DEFAULT_API_URL));
+                Twitch.disabled(), new VkPlay(true, VkPlayClient.DEFAULT_API_URL),
+                Tags.defaults(), Viewers.defaults());
     }
 
     private static String text(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    /** Имя цвета MiniMessage: без угловых скобок, строчными; пустое — запасной вариант. */
+    private static String colorName(String raw, String fallback) {
+        String value = text(raw).replace("<", "").replace(">", "")
+                .replace("/", "").toLowerCase(Locale.ROOT);
+        return value.isEmpty() ? fallback : value;
     }
 
     /** Адрес API: только http(s) и обязательно с {@code %channel%} или путём. */

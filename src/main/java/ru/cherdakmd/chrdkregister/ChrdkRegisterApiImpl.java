@@ -17,13 +17,15 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
     private final AccessManager accessManager;
     private final ExternalHooks hooks;
     private final ShopService shop;
+    private final NameTags nameTags;
 
     ChrdkRegisterApiImpl(JavaPlugin plugin, AccessManager accessManager, ExternalHooks hooks,
-                         ShopService shop) {
+                         ShopService shop, NameTags nameTags) {
         this.plugin = plugin;
         this.accessManager = accessManager;
         this.hooks = hooks;
         this.shop = shop;
+        this.nameTags = nameTags;
     }
 
     @Override
@@ -96,6 +98,16 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
     @Override
     public boolean hasEntitlement(String playerName, String productId) {
         return entitlementUntil(playerName, productId) > System.currentTimeMillis();
+    }
+
+    @Override
+    public void registerNameTag(String id, ChrdkRegisterApi.NameTagProvider provider) {
+        nameTags.register(id, provider);
+    }
+
+    @Override
+    public void unregisterNameTag(String id) {
+        nameTags.unregister(id);
     }
 
     @Override

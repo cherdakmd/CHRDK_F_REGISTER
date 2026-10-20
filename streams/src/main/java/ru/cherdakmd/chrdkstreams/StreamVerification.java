@@ -34,9 +34,20 @@ final class StreamVerification {
         return generate(SECURE);
     }
 
+    /** Код с другим префиксом — для кода зрителей ({@code WATCH-XXXX}). */
+    static String generate(String prefix) {
+        return generate(prefix, SECURE);
+    }
+
     /** Генерация с явным источником случайности — для тестов. */
     static String generate(Random random) {
-        StringBuilder builder = new StringBuilder(PREFIX).append('-');
+        return generate(PREFIX, random);
+    }
+
+    /** Генерация кода с произвольным префиксом. */
+    static String generate(String prefix, Random random) {
+        String head = prefix == null || prefix.isBlank() ? PREFIX : prefix.trim().toUpperCase(Locale.ROOT);
+        StringBuilder builder = new StringBuilder(head).append('-');
         for (int index = 0; index < RANDOM_LENGTH; index++) {
             builder.append(ALPHABET.charAt(random.nextInt(ALPHABET.length())));
         }

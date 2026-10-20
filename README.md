@@ -1333,21 +1333,21 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.114-SNAPSHOT.jar`, аддон
-CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.114-SNAPSHOT.jar`, реферальный —
-`referrals/build/libs/chrdk-referrals-1.4.114-SNAPSHOT.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.114-SNAPSHOT.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.114-SNAPSHOT.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.114-SNAPSHOT.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.114-SNAPSHOT.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.114-SNAPSHOT.jar` (хартия чар — при установленном аддоне чар), общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.114-SNAPSHOT.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.114-SNAPSHOT.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.114-SNAPSHOT.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.114-SNAPSHOT.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.114-SNAPSHOT.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.114-SNAPSHOT.jar`, стримерская программа —
-`streams/build/libs/chrdk-streams-1.4.114-SNAPSHOT.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.116-SNAPSHOT.jar`, аддон
+CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.116-SNAPSHOT.jar`, реферальный —
+`referrals/build/libs/chrdk-referrals-1.4.116-SNAPSHOT.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.116-SNAPSHOT.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.116-SNAPSHOT.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.116-SNAPSHOT.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.116-SNAPSHOT.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.116-SNAPSHOT.jar` (хартия чар — при установленном аддоне чар), общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.116-SNAPSHOT.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.116-SNAPSHOT.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.116-SNAPSHOT.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.116-SNAPSHOT.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.116-SNAPSHOT.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.116-SNAPSHOT.jar`, стримерская программа —
+`streams/build/libs/chrdk-streams-1.4.116-SNAPSHOT.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). Оба JAR прикладываются к каждому релизу на GitHub.
 
 ---
@@ -3253,6 +3253,124 @@ battlepass:
 
 CI собирает снапшот как обычный пуш в ветку; тег `v1.4.109` и GitHub-релиз не
 создаются до отдельной команды на релиз.
+
+---
+
+### CHRDK_Streams: жирный ник стримера и дни проходки зрителям — снапшот 1.4.116-SNAPSHOT
+
+Волна 7: стример виден в чате и в списке игроков, а зрители получают дни
+проходки **за просмотр** — но только те, кто действительно смотрит эфир,
+подтверждён стримером и подписан на его каналы. Никакой игровой силы: награда —
+только дни проходки и только в потолках.
+
+**Как выглядит ник стримера**
+
+- У подтверждённого канала ник **жирный**, после него — мигающая метка
+  `[СТРИМ]`: цвета `streams.tags.color-a`/`color-b` чередуются каждые
+  `streams.tags.blink-ticks` (по умолчанию 15 тиков).
+- Чат и личные сообщения — метка статичная (`chat-color`): сообщение нельзя
+  «мигать» задним числом.
+- Список игроков (TAB) — метка мигает. Если в ядре задан
+  `tablist.player-name-format`, аддон не трогает имена (ядро всё равно
+  перезапишет): добавьте `%player_tagged%` в формат — это ник с метками
+  аддонов, разметка доверенная.
+- Имя над головой в Minecraft строится из команд scoreboard, а ядро использует
+  их для сортировки TAB, поэтому аддон намеренно не трогает команды.
+- Метку можно выключить (`streams.tags.enabled: false`) или переименовать
+  (`streams.tags.text`, до 16 символов), не выключая программу.
+
+**Как зритель получает дни**
+
+1. Стример с подтверждённым каналом включает просмотр:
+   `/stream viewers on` — плагин выдаёт код `WATCH-XXXX` и показывает, как его
+   показать (оверлей/название эфира). Код меняется каждые
+   `code-window-minutes` (по умолчанию 10), поэтому «один раз подсмотрел» не
+   работает.
+2. Зритель подаёт заявку: `/stream watch <стример>`. Стример видит её во
+   `/stream viewers` и подтверждает только тех, кто подписан на его каналы:
+   `/stream viewer accept <ник>` (или `deny`).
+   **Почему вручную:** Twitch не отдаёт список фолловеров без OAuth каждого
+   зрителя, а у VK Play Live официального API подписчиков нет. Подтверждение
+   стримером — это и есть проверка фолловера, а код в эфире — проверка
+   просмотра. При `streams.viewers.require-approval: false` заявки принимаются
+   автоматически (для доверенных серверов).
+3. Зритель вводит код из эфира: `/stream code WATCH-XXXX`. Плагин в этот момент
+   спрашивает площадку, идёт ли эфир, и только тогда начисляет минуты.
+4. Минуты копятся в дни проходки по правилам просмотра: `120` минут = `1`
+   сутки, не больше `1` в календарные сутки (UTC) и `30` всего. Прогресс
+   хранится на зрителя, поэтому смена канала или отписка не сбрасывает
+   дневной потолок.
+
+**Антифрод и потолки (всё в `streams/config.yml`)**
+
+- `code-window-minutes: 10` — код живёт 10 минут и меняется; старый код не
+  принимается.
+- `checkin-min-minutes: 5` — не чаще одного чек-ина в 5 минут, то есть один
+  код нельзя вбить десять раз подряд.
+- Кредит за чек-ин не больше окна кода: вернулся через час — получил максимум
+  10 минут, а не час.
+- Эфир проверяется на площадке в момент чек-ина: офлайн-канал не засчитывается.
+- Фолловер-проверка — подтверждение стримером (см. выше).
+- Потолки: `minutes-per-day: 120`, `max-days-per-day: 1`, `max-total-days: 30`.
+  Значения по умолчанию намеренно скромные: просмотр — приятный бонус, а не
+  способ играть бесплатно круглосуточно. Награда зрителям никогда не выше
+  стримерской (час эфира = сутки) и не даёт ни ресурсов, ни снаряжения, ни
+  преимуществ в бою.
+- Зритель в любой момент может отписаться: `/stream watch stop` — прогресс
+  сохраняется, накопленные минуты не сгорают.
+
+**Команды зрителей и стримера**
+
+| Команда | Кто | Что делает |
+| --- | --- | --- |
+| `/stream watch <стример>` | зритель | подать заявку на просмотр |
+| `/stream watch stop` | зритель | перестать смотреть (прогресс сохраняется) |
+| `/stream watching` | зритель | канал, статус заявки, минуты, сегодня/всего |
+| `/stream code <код>` | зритель | ввести код из эфира и получить минуты |
+| `/stream viewers [on\|off]` | стример | включить/выключить просмотр, показать код и заявки |
+| `/stream viewer <accept\|deny> <ник>` | стример | подтвердить/отклонить зрителя |
+
+Права — прежние: `chrdkstreams.use` (по умолчанию всем) и `chrdkstreams.admin`.
+
+**API v6 для аддонов**
+
+- `ChrdkRegisterApi.API_VERSION = 6`.
+- `NameTagProvider { String decorate(String playerName, String decoratedName); }`:
+  получает ник и уже оформленное ядром имя, возвращает новое (`null` — не
+  менять). Так аддон добавляет жирный ник и метку, не переписывая чат ядра.
+- `registerNameTag(id, provider)` / `unregisterNameTag(id)` — `default`-методы:
+  старые реализации API не ломаются, аддон на старом ядре просто не получает
+  метку (вызов защищён от `LinkageError`).
+- Несколько провайдеров применяются в порядке регистрации, повторный id
+  заменяет прежний, исключение провайдера логируется и не ломает чат.
+- `%player_tagged%` в `tablist.*` — доверенная разметка; `%player%` по-прежнему
+  экранируется, поэтому ник с `<` не может внедрить теги.
+
+**Что внутри**
+
+- `NameTags` в ядре — реестр оформления; `ChatService.decoratedName` собирает
+  тег каталога, затем метки аддонов. `TabListService` получил
+  `setNameDecorator` и подстановку `%player_tagged%` (старые конструкторы
+  `TabContext` сохранены).
+- `StreamerTagService` (аддон) — жирный ник и мигающая метка в TAB; в чате
+  работает через `NameTagProvider`. `StreamerTags` — чистая сборка строк,
+  проверяется тестами.
+- `streams-viewers.json` — включённые каналы, текущие коды, заявки и прогресс
+  зрителей; атомарная запись (temp + move), битые записи пропускаются.
+  Прогресс лежит на зрителе: потолки нельзя обойти сменой канала.
+- `ViewerService` — заявки, подтверждение, ротация кодов и чек-ины.
+  `ViewerCodes` (`WATCH-…`, окно 3–120 минут) и `ViewerBinding` — чистые,
+  покрыты юнит-тестами.
+
+**Тесты:** ядро — `NameTagsTest` (порядок, замена по id, сбой провайдера,
+`null`), `AddonApiContractTest.nameTagsAreAdditive` (методы остались
+`default`), `TabListServiceTest.taggedNameIsRenderedAsMarkup`. Стримерская
+программа — `StreamerTagsTest`, `ViewerCodesTest`, `ViewerStoreTest`,
+`ViewerBindingTest` плюс расширенный `StreamConfigTest` (метка и правила
+просмотра). Итого: ядро — 258 `@Test` в 40 классах (+8 к 1.4.115), аддон —
+77 `@Test` в 10 классах (+30).
+
+Снапшот 1.4.116 не тегируется: тег и GitHub-релиз создаются отдельной командой.
 
 ---
 

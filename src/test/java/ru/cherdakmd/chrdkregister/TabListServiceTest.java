@@ -49,6 +49,16 @@ class TabListServiceTest {
     }
 
     @Test
+    void taggedNameIsRenderedAsMarkup() {
+        var ctx = new TabListService.TabContext("Steve", 1, 1, 20.0, 0, "w", "", "", 0,
+                new PresentationContext("", "", "", "", ""),
+                "<bold>Steve</bold> <red>[СТРИМ]</red>");
+        Component line = TabListService.renderName(messages(), "%player_tagged% / %player%", ctx);
+        assertEquals("Steve [СТРИМ] / Steve", PLAIN.serialize(line),
+                "%player_tagged% — доверенная разметка, %player% по-прежнему экранируется");
+    }
+
+    @Test
     void maliciousNickCannotBreakMarkup() {
         var hacker = new TabListService.TabContext("X<red>HAZED", 1, 1, 20.0, 0, "w", "", "", 0);
         Component line = TabListService.renderLines(messages(),

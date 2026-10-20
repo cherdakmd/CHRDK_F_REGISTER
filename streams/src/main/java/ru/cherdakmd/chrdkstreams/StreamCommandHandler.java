@@ -16,7 +16,8 @@ import java.util.Optional;
 
 /**
  * Команда {@code /stream}: привязка канала, проверка эфира, статус, отвязка,
- * админская статистика и перечитывание конфига.
+ * зрительские заявки и чек-ины, панель стримера, админская статистика
+ * и перечитывание конфига.
  *
  * <p>Сетевые запросы уходят в отдельный поток: основной поток не ждёт Twitch и
  * VK Play Live, а ответ игрок получает, когда площадка ответила.</p>
@@ -65,6 +66,11 @@ public final class StreamCommandHandler implements TabExecutor {
                 }
             }
             case "unlink" -> unlink(sender);
+            case "watch" -> watch(sender, args, label);
+            case "watching" -> watching(sender);
+            case "code" -> code(sender, args, label);
+            case "viewers" -> viewers(sender, args, label);
+            case "viewer" -> viewer(sender, args, label);
             case "stats" -> {
                 if (!admin) {
                     plugin.messages().send(sender, "no-permission");
@@ -87,6 +93,7 @@ public final class StreamCommandHandler implements TabExecutor {
 
     private void usage(CommandSender sender, String label, boolean admin) {
         plugin.messages().send(sender, "usage", "label", label);
+        plugin.messages().send(sender, "usage-viewer", "label", label);
         if (admin) {
             plugin.messages().send(sender, "usage-admin", "label", label);
         }
@@ -241,6 +248,81 @@ public final class StreamCommandHandler implements TabExecutor {
         });
     }
 
+    /* ------------------------------- зрители ------------------------------- */
+
+    private void watch(CommandSender sender, String[] args, String label) {
+        if (!(sender instanceof Player player)) {
+            plugin.messages().send(sender, "players-only");
+            return;
+        }
+        if (args.length >= 2 && ("stop".equalsIgnoreCase(args[1]) || "off".equalsIgnoreCase(args[1]))) {
+            plugin.viewerService().leave(player);
+            return;
+        }
+        if (args.length < 2) {
+            plugin.viewerService().watching(player);
+            return;
+        }
+        plugin.viewerService().apply(player, args[1]);
+    }
+
+    private void watching(CommandSender sender) {
+        if (!(sender instanceof Player player)) {
+            plugin.messages().send(sender, "players-only");
+            return;
+        }
+        plugin.viewerService().watching(player);
+    }
+
+    private void code(CommandSender sender, String[] args, String label) {
+        if (!(sender instanceof Player player)) {
+            plugin.messages().send(sender, "players-only");
+            return;
+        }
+        if (args.length < 2) {
+            plugin.messages().send(sender, "watch-usage", "label", label);
+            return;
+        }
+        plugin.viewerService().checkIn(player, args[1]);
+    }
+
+    private void viewers(CommandSender sender, String[] args, String label) {
+        if (!(sender instanceof Player player)) {
+            plugin.messages().send(sender, "players-only");
+            return;
+        }
+        if (args.length >= 2 && "on".equalsIgnoreCase(args[1])) {
+            plugin.viewerService().enable(player, true);
+            return;
+        }
+        if (args.length >= 2 && "off".equalsIgnoreCase(args[1])) {
+            plugin.viewerService().enable(player, false);
+            return;
+        }
+        if (args.length >= 2) {
+            plugin.messages().send(sender, "viewers-usage", "label", label);
+            return;
+        }
+        plugin.viewerService().panel(player);
+    }
+
+    private void viewer(CommandSender sender, String[] args, String label) {
+        if (!(sender instanceof Player player)) {
+            plugin.messages().send(sender, "players-only");
+            return;
+        }
+        if (args.length < 3 || !("accept".equalsIgnoreCase(args[1])
+                || "deny".equalsIgnoreCase(args[1]))) {
+            plugin.messages().send(sender, "viewers-usage", "label", label);
+            return;
+        }
+        if ("accept".equalsIgnoreCase(args[1])) {
+            plugin.viewerService().accept(player, args[2]);
+        } else {
+            plugin.viewerService().deny(player, args[2]);
+        }
+    }
+
     /* -------------------------------- status -------------------------------- */
 
     private void status(Player player) {
@@ -315,6 +397,9 @@ public final class StreamCommandHandler implements TabExecutor {
     private void stats(CommandSender sender) {
         List<StreamBinding> all = new ArrayList<>(service.store().all());
         plugin.messages().send(sender, "stats-header", "count", all.size());
+        plugin.messages().send(sender, "stats-viewers",
+                "count", plugin.viewerService().viewerCount(),
+                "streamers", plugin.viewerService().streamerCount());
         if (all.isEmpty()) {
             plugin.messages().send(sender, "stats-empty");
             return;
@@ -346,10 +431,8 @@ public final class StreamCommandHandler implements TabExecutor {
     /* ------------------------------ помощники ------------------------------ */
 
     private Object trustedState(boolean verified) {
-        if (verified) {
-            return Messages.trusted(plugin.messages().raw("stats-state-verified"));
-        }
-        return Messages.trusted(plugin.messages().raw("stats-state-unverified"));
+        return Messages.trusted(plugin.messages().raw(verified
+                ? "stats-state-verified" : "stats-state-unverified"));
     }
 
     /** Сохранить данные вне основного потока: запись на диск не должна тормозить тик. */
@@ -362,7 +445,9 @@ public final class StreamCommandHandler implements TabExecutor {
                                       @NotNull String alias, String @NotNull [] args) {
         boolean admin = sender.hasPermission("chrdkstreams.admin");
         if (args.length == 1) {
-            List<String> options = new ArrayList<>(List.of("link", "check", "status", "unlink"));
+            List<String> options = new ArrayList<>(List.of(
+                    "link", "check", "status", "unlink",
+                    "watch", "watching", "code", "viewers", "viewer"));
             if (admin) {
                 options.add("stats");
                 options.add("reload");
@@ -372,6 +457,24 @@ public final class StreamCommandHandler implements TabExecutor {
         if (args.length == 2 && "link".equalsIgnoreCase(args[0])) {
             return filter(service.config().platforms().stream()
                     .map(StreamPlatform::id).toList(), args[1]);
+        }
+        if (args.length == 2 && "watch".equalsIgnoreCase(args[0])) {
+            List<String> names = new ArrayList<>();
+            for (Player online : Bukkit.getOnlinePlayers()) {
+                names.add(online.getName());
+            }
+            names.add("stop");
+            return filter(names, args[1]);
+        }
+        if (args.length == 2 && "viewers".equalsIgnoreCase(args[0])) {
+            return filter(List.of("on", "off"), args[1]);
+        }
+        if (args.length == 2 && "viewer".equalsIgnoreCase(args[0])) {
+            return filter(List.of("accept", "deny"), args[1]);
+        }
+        if (args.length == 3 && "viewer".equalsIgnoreCase(args[0])
+                && sender instanceof Player player) {
+            return filter(plugin.viewerService().pendingNames(player.getUniqueId()), args[2]);
         }
         return List.of();
     }

@@ -40,11 +40,18 @@ public final class TabListService implements Listener {
 
     /** Значения подстановок одного игрока — ровно то, что знает юнит-тест. */
     record TabContext(String playerName, int online, int maxPlayers, double tps, int ping,
-                      String world, String passStatus, String passLeft, long passDaysLeft, PresentationContext presentation) {
+                      String world, String passStatus, String passLeft, long passDaysLeft,
+                      PresentationContext presentation, String taggedName) {
+        TabContext(String playerName, int online, int maxPlayers, double tps, int ping, String world,
+                   String passStatus, String passLeft, long passDaysLeft, PresentationContext presentation) {
+            this(playerName, online, maxPlayers, tps, ping, world, passStatus, passLeft, passDaysLeft,
+                    presentation, playerName);
+        }
+
         TabContext(String playerName, int online, int maxPlayers, double tps, int ping, String world,
                    String passStatus, String passLeft, long passDaysLeft) {
             this(playerName, online, maxPlayers, tps, ping, world, passStatus, passLeft, passDaysLeft,
-                    new PresentationContext("", "", "", "", ""));
+                    new PresentationContext("", "", "", "", ""), playerName);
         }
 
         /** Пары «ключ-значение» для Messages.fill: ключ → строковое значение. */
@@ -58,7 +65,9 @@ public final class TabListService implements Listener {
                     "world", world,
                     "pass_status", passStatus,
                     "pass_left", passLeft,
-                    "pass_days", passDaysLeft};
+                    "pass_days", passDaysLeft,
+                    // Ник с метками аддонов — доверенная разметка, поэтому Trusted, а не строка.
+                    "player_tagged", Messages.trusted(taggedName)};
             Object[] extra = presentation.placeholders();
             Object[] result = java.util.Arrays.copyOf(base, base.length + extra.length);
             System.arraycopy(extra, 0, result, base.length, extra.length);
@@ -72,10 +81,17 @@ public final class TabListService implements Listener {
     private BukkitTask refreshTask;
     private final java.util.Set<java.util.UUID> managedNames = new java.util.HashSet<>();
     private final java.util.Set<java.util.UUID> managedHeaders = new java.util.HashSet<>();
+    /** Оформление ника из ядра (тег каталога + метки аддонов) для {@code %player_tagged%}. */
+    private volatile java.util.function.Function<String, String> nameDecorator = Messages::escape;
 
     public TabListService(RegisterPlugin plugin, AccessManager accessManager) {
         this.plugin = plugin;
         this.accessManager = accessManager;
+    }
+
+    /** Подключает оформление ников (вызывается один раз при включении ядра). */
+    public void setNameDecorator(java.util.function.Function<String, String> decorator) {
+        this.nameDecorator = decorator == null ? name -> name : decorator;
     }
 
     /** Перечитывает {@code tablist.*} из конфига, пересоздаёт задачу и применяет к онлайну. */
@@ -293,7 +309,8 @@ public final class TabListService implements Listener {
                         : 0,
                 PresentationContext.of(account, accessManager.getStage(player), nowMillis,
                         accessManager.config().trialEnabled() && accessManager.store().isTrialEligible(player.getName(), player.getUniqueId()),
-                        accessManager.config().trialDays(), plugin.messages(), navigation(player)));
+                        accessManager.config().trialDays(), plugin.messages(), navigation(player)),
+                nameDecorator.apply(player.getName()));
     }
 
     private String navigation(Player player) {
