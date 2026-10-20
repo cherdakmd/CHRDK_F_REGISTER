@@ -1416,21 +1416,21 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.125.jar`, аддон
-CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.125.jar`, реферальный —
-`referrals/build/libs/chrdk-referrals-1.4.125.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.125.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.125.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.125.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.125.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.125.jar` (хартия чар — при установленном аддоне чар), общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.125.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.125.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.125.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.125.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.125.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.125.jar`, стримерская программа —
-`streams/build/libs/chrdk-streams-1.4.125.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.126-SNAPSHOT.jar`, аддон
+CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.126-SNAPSHOT.jar`, реферальный —
+`referrals/build/libs/chrdk-referrals-1.4.126-SNAPSHOT.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.126-SNAPSHOT.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.126-SNAPSHOT.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.126-SNAPSHOT.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.126-SNAPSHOT.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.126-SNAPSHOT.jar` (хартия чар — при установленном аддоне чар), общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.126-SNAPSHOT.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.126-SNAPSHOT.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.126-SNAPSHOT.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.126-SNAPSHOT.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.126-SNAPSHOT.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.126-SNAPSHOT.jar`, стримерская программа —
+`streams/build/libs/chrdk-streams-1.4.126-SNAPSHOT.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). Оба JAR прикладываются к каждому релизу на GitHub.
 
 ---
@@ -3336,6 +3336,33 @@ battlepass:
 
 CI собирает снапшот как обычный пуш в ветку; тег `v1.4.109` и GitHub-релиз не
 создаются до отдельной команды на релиз.
+
+---
+
+### CHRDK_TierForge: исправление NPE на обычных предметах — снапшот 1.4.126-SNAPSHOT
+
+Хотфикс к 1.4.125. В консоли каждую секунду появлялось
+`Could not pass event PlayerItemHeldEvent to CHRDK_TierForge` и
+`Task #32 … generated an exception` с `NullPointerException` в
+`TierDef.isTier`.
+
+**Причина.** `TierDef.LADDER` — неизменяемый `List.of(...)`, а его `contains(null)`
+бросает NPE (в отличие от `ArrayList`). В `isTier` приходит результат
+`TierItems.tierOf` — для обычного предмета без PDC-метки это `null`. Поэтому
+переключение слота на любой незачарованный предмет и тик визуальной ауры падали.
+
+**Что исправлено.**
+
+- `TierDef.isTier(null)` → `false`, `TierDef.indexOf(null)` → `-1`;
+  `TierDef.next(null)` → `null`. Проверка стоит в одном месте, поэтому
+  `tierOf`, аура (`TierVisualService`), наковальня, `/tiers` и дропы мобов
+  больше не падают на предметах без тира.
+- Новый `TierDefTest` (4 `@Test`): порядок лестницы, `null`, неизвестный id и
+  шаг `next` с потолком.
+
+**Обновление:** заменить `tier-forge/build/libs/chrdk-tier-forge-1.4.126-SNAPSHOT.jar`
+и перезапустить сервер. Конфиг, предметы и данные не меняются; уже выданные
+тиры и свойства остаются на месте.
 
 ---
 

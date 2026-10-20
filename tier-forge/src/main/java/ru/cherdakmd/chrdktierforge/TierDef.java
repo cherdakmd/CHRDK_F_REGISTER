@@ -42,13 +42,18 @@ public final class TierDef {
         DEFAULT_WEIGHTS.put("legendary", 5);
     }
 
+    /**
+     * Является ли строка id тира. {@code null} — не тир: {@link List#of} бросает
+     * NPE на {@code contains(null)}, а сюда приходит результат чтения PDC у
+     * обычного предмета (1.4.126).
+     */
     public static boolean isTier(String id) {
-        return LADDER.contains(id);
+        return id != null && LADDER.contains(id);
     }
 
-    /** Индекс тира в лестнице (0..6), -1 — не тир. */
+    /** Индекс тира в лестнице (0..6), -1 — не тир или {@code null}. */
     public static int indexOf(String id) {
-        return LADDER.indexOf(id);
+        return id == null ? -1 : LADDER.indexOf(id);
     }
 
     /** Тир выше, или null на потолке. */
