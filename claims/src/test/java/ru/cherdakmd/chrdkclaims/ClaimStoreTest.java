@@ -58,6 +58,23 @@ class ClaimStoreTest {
     }
 
     @Test
+    void greetingSurvivesRoundTripAndStaysOptional() {
+        ClaimStore store = store();
+        Claim withGreeting = new Claim("world", 1, 1, "Steve", 1_700_000_000_000L);
+        withGreeting.greeting = "Добро пожаловать!";
+        Claim without = new Claim("world", 2, 2, "Alex", 1_700_000_000_000L);
+        store.add(withGreeting);
+        store.add(without);
+        store.save();
+
+        ClaimStore loaded = store();
+        loaded.load();
+        assertEquals("Добро пожаловать!", loaded.claimAt("world", 1, 1).greeting);
+        assertEquals("", loaded.claimAt("world", 2, 2).greeting,
+                "приват без приветствия читается как пустой, старые файлы совместимы");
+    }
+
+    @Test
     void saveKeepsPreviousVersionAsBackup() {
         ClaimStore store = store();
         store.addTreasury("Steve", 5);

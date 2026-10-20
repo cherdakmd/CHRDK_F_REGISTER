@@ -9,6 +9,7 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -17,7 +18,7 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
 
     private static final List<String> SUBS = List.of("help", "menu", "tp", "info", "map", "list",
             "unclaim", "add", "remove", "deposit", "withdraw", "balance", "sell", "sellback",
-            "buy", "transfer", "forsale", "borders");
+            "buy", "transfer", "forsale", "borders", "near", "notices", "greeting");
 
     private final ClaimsPlugin plugin;
 
@@ -45,15 +46,14 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
             case "menu" -> menu(player, args);
             case "tp" -> teleport(player, args);
             case "info" -> info(player, args);
-            case "map" -> map(player);
+            case "map" -> map(player, args);
             case "list" -> list(player, args);
             case "forsale" -> forsale(player, args);
             case "borders" -> borders(player);
-            case "unclaim" -> {
-                if (ready(player)) {
-                    service().unclaim(player);
-                }
-            }
+            case "unclaim" -> unclaim(player, args);
+            case "near" -> near(player, args);
+            case "notices" -> notices(player, args);
+            case "greeting" -> greeting(player, args);
             case "sell" -> sell(player, args);
             case "sellback" -> {
                 if (ready(player)) {
@@ -201,18 +201,33 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
             plugin.messages().send(player, "info-members",
                     "members", String.join(", ", rendered));
         }
+        if (claim.hasGreeting()) {
+            plugin.messages().send(player, "info-greeting", "text", claim.greeting);
+        }
         if (claim.isOwner(player.getName())) {
             plugin.messages().send(player, "info-you-owner");
         } else if (claim.isMember(player.getName())) {
-            plugin.messages().send(player, "info-you-member");
+            plugin.messages().send(player, "info-you-role",
+                    "role", service().roleName(claim.roleOf(player.getName())));
         }
     }
 
-    private void map(Player player) {
+    private void map(Player player, String[] args) {
+        int radius = plugin.config().mapRadius;
+        if (args.length > 1) {
+            Integer parsed = parseAmount(args[1]);
+            if (parsed == null) {
+                plugin.messages().send(player, "map-usage",
+                        "min", String.valueOf(ClaimMap.MIN_RADIUS),
+                        "max", String.valueOf(ClaimMap.MAX_RADIUS));
+                return;
+            }
+            radius = Math.min(ClaimMap.MAX_RADIUS, Math.max(ClaimMap.MIN_RADIUS, parsed));
+        }
         Chunk chunk = player.getLocation().getChunk();
         String me = player.getName();
         plugin.messages().send(player, "map-header");
-        for (String row : ClaimMap.render(chunk.getX(), chunk.getZ(), plugin.config().mapRadius,
+        for (String row : ClaimMap.render(chunk.getX(), chunk.getZ(), radius,
                 (cx, cz) -> {
                     Claim claim = plugin.store().claimAt(chunk.getWorld().getName(), cx, cz);
                     if (claim == null) {
@@ -244,6 +259,10 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
                     "sale", claim.salePrice > 0
                             ? plugin.messages().raw("list-sale",
                                     "price", String.valueOf(claim.salePrice))
+                            : "",
+                    "debt", claim.debtDays > 0
+                            ? plugin.messages().raw("list-debt",
+                                    "days", String.valueOf(claim.debtDays))
                             : "");
         }
         sendPageLine(player, "list-page", page, pages, "list");
@@ -296,6 +315,122 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
         } else {
             plugin.messages().send(player, "borders-on", "seconds", seconds, "owner", claim.owner);
         }
+    }
+
+    /** /claim unclaim [all [confirm]] — снять текущий приват или все сразу. */
+    private void unclaim(Player player, String[] args) {
+        if (!ready(player)) {
+            return;
+        }
+        if (args.length >= 2 && args[1].equalsIgnoreCase("all")) {
+            if (args.length >= 3 && args[2].equalsIgnoreCase("confirm")) {
+                service().unclaimAll(player);
+            } else {
+                int count = plugin.store().count(player.getName());
+                if (count == 0) {
+                    plugin.messages().send(player, "unclaim-all-none");
+                    return;
+                }
+                plugin.messages().send(player, "unclaim-all-confirm",
+                        "count", String.valueOf(count));
+            }
+            return;
+        }
+        service().unclaim(player);
+    }
+
+    /** /claim near [радиус] — чужие приваты вокруг, ближние первыми. */
+    private void near(Player player, String[] args) {
+        int radius = ClaimNear.DEFAULT_RADIUS;
+        if (args.length > 1) {
+            Integer parsed = parseAmount(args[1]);
+            if (parsed == null) {
+                plugin.messages().send(player, "near-usage",
+                        "min", String.valueOf(ClaimNear.MIN_RADIUS),
+                        "max", String.valueOf(ClaimNear.MAX_RADIUS),
+                        "default", String.valueOf(ClaimNear.DEFAULT_RADIUS));
+                return;
+            }
+            radius = ClaimNear.clampRadius(parsed);
+        }
+        Chunk chunk = player.getLocation().getChunk();
+        ClaimNear.Result result = ClaimNear.search(plugin.store().all(),
+                chunk.getWorld().getName(), chunk.getX(), chunk.getZ(), radius, player.getName());
+        if (result.entries().isEmpty()) {
+            plugin.messages().send(player, "near-none", "radius", String.valueOf(radius));
+            return;
+        }
+        plugin.messages().send(player, "near-header",
+                "count", String.valueOf(result.total()), "radius", String.valueOf(radius));
+        for (ClaimNear.Entry entry : result.entries()) {
+            Claim claim = entry.claim();
+            plugin.messages().send(player, "near-line",
+                    "x", String.valueOf(claim.x), "z", String.valueOf(claim.z),
+                    "owner", claim.owner, "dist", String.valueOf(entry.distance()),
+                    "sale", claim.salePrice > 0
+                            ? plugin.messages().raw("near-sale",
+                                    "price", String.valueOf(claim.salePrice))
+                            : "");
+        }
+    }
+
+    /** /claim notices [on|off] — личный выключатель уведомлений о границах. */
+    private void notices(Player player, String[] args) {
+        if (!player.hasPermission("chrdkclaims.notices")
+                && !player.hasPermission("chrdkclaims.admin")) {
+            plugin.messages().send(player, "no-permission");
+            return;
+        }
+        String mode = args.length > 1 ? args[1].toLowerCase(Locale.ROOT) : "";
+        boolean enabled;
+        if (mode.isEmpty()) {
+            enabled = plugin.toggleNotices(player);
+        } else if (mode.equals("on") || mode.equals("вкл") || mode.equals("включить")) {
+            enabled = plugin.setNotices(player, true);
+        } else if (mode.equals("off") || mode.equals("выкл") || mode.equals("выключить")) {
+            enabled = plugin.setNotices(player, false);
+        } else {
+            plugin.messages().send(player, "notices-usage");
+            return;
+        }
+        plugin.messages().send(player, enabled ? "notices-on" : "notices-off");
+    }
+
+    /** /claim greeting [текст|снять] — приветствие гостям текущего привата. */
+    private void greeting(Player player, String[] args) {
+        if (!ready(player)) {
+            return;
+        }
+        if (args.length < 2) {
+            Claim claim = service().claimHere(player);
+            if (claim == null) {
+                plugin.messages().send(player, "unclaim-none");
+                return;
+            }
+            if (!claim.isOwner(player.getName())) {
+                plugin.messages().send(player, "greeting-not-yours");
+                return;
+            }
+            if (claim.hasGreeting()) {
+                plugin.messages().send(player, "greeting-current", "text", claim.greeting);
+            } else {
+                plugin.messages().send(player, "greeting-usage",
+                        "max", String.valueOf(Claim.MAX_GREETING));
+            }
+            return;
+        }
+        String text = String.join(" ", Arrays.copyOfRange(args, 1, args.length)).trim();
+        if (text.equalsIgnoreCase("снять") || text.equalsIgnoreCase("off")
+                || text.equals("-")) {
+            service().setGreeting(player, "");
+            return;
+        }
+        if (text.length() > Claim.MAX_GREETING) {
+            plugin.messages().send(player, "greeting-invalid",
+                    "max", String.valueOf(Claim.MAX_GREETING));
+            return;
+        }
+        service().setGreeting(player, text);
     }
 
     /**
@@ -512,6 +647,28 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("sell")) {
             result.add("снять");
+            return result;
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("unclaim")) {
+            result.add("all");
+            return result;
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("notices")) {
+            result.add("on");
+            result.add("off");
+            return result;
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("near")) {
+            result.add(String.valueOf(ClaimNear.DEFAULT_RADIUS));
+            return result;
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("greeting")) {
+            result.add("снять");
+            return result;
+        }
+        if (args.length == 3 && args[0].equalsIgnoreCase("unclaim")
+                && args[1].equalsIgnoreCase("all")) {
+            result.add("confirm");
             return result;
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("deposit")) {

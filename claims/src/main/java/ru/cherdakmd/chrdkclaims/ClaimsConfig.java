@@ -41,8 +41,50 @@ public final class ClaimsConfig {
     /** Сколько секунд держится подсветка границ /claim borders. */
     public final int borderSeconds;
     public final boolean notifyRent;
-    /** Показывать строку действия при входе на чужой приват. */
+    /** Канал уведомлений о границах приватов. */
+    public enum NoticeMode {
+        ACTIONBAR,
+        CHAT,
+        BOTH;
+
+        /** Сообщение в чат (в режиме BOTH — тоже). */
+        public boolean chat() {
+            return this == CHAT || this == BOTH;
+        }
+
+        /** Строка действия над хотбаром. */
+        public boolean actionBar() {
+            return this == ACTIONBAR || this == BOTH;
+        }
+
+        /** Неизвестное значение — строка действия, как было по умолчанию. */
+        public static NoticeMode parse(String raw, Logger logger) {
+            if (raw == null || raw.isBlank()) {
+                return ACTIONBAR;
+            }
+            try {
+                return valueOf(raw.trim().toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException exception) {
+                if (logger != null) {
+                    logger.warning("[CHRDK_Claims] general.notice-mode='" + raw
+                            + "' не распознан (actionbar|chat|both) — используется actionbar.");
+                }
+                return ACTIONBAR;
+            }
+        }
+    }
+
+    /** Показывать уведомление при входе на приват (свой и чужой). */
     public final boolean enterNotice;
+    /** Показывать уведомление при выходе из привата. */
+    public final boolean leaveNotice;
+    /** Показывать уведомления на собственных приватах (дата оплаты). */
+    public final boolean noticeOwn;
+    /** Показывать уведомления участникам приватов (роль в тексте). */
+    public final boolean noticeMembers;
+    /** Кулдаун повтора уведомления об одном чанке, секунд (0 — без ограничения). */
+    public final int noticeCooldown;
+    public final NoticeMode noticeMode;
     /** Вести журнал операций claims-audit.log. */
     public final boolean auditLog;
 
@@ -95,6 +137,11 @@ public final class ClaimsConfig {
                 ClaimMap.MIN_RADIUS, ClaimMap.MAX_RADIUS);
         borderSeconds = clamped(cfg, logger, "general.border-seconds", 10, 3, 60);
         enterNotice = cfg.getBoolean("general.enter-notice", true);
+        leaveNotice = cfg.getBoolean("general.leave-notice", true);
+        noticeOwn = cfg.getBoolean("general.notice-own", false);
+        noticeMembers = cfg.getBoolean("general.notice-members", true);
+        noticeCooldown = clamped(cfg, logger, "general.notice-cooldown-seconds", 2, 0, 60);
+        noticeMode = NoticeMode.parse(cfg.getString("general.notice-mode", "actionbar"), logger);
         auditLog = cfg.getBoolean("general.audit-log", true);
         notifyRent = cfg.getBoolean("general.notify-rent", true);
 

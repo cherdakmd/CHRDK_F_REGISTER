@@ -40,6 +40,11 @@ class ClaimsConfigTest {
         assertEquals(ClaimMap.RADIUS, config.mapRadius);
         assertEquals(10, config.borderSeconds);
         assertTrue(config.enterNotice, "уведомление о входе на чужой приват включено");
+        assertTrue(config.leaveNotice);
+        assertFalse(config.noticeOwn);
+        assertTrue(config.noticeMembers);
+        assertEquals(2, config.noticeCooldown);
+        assertEquals(ClaimsConfig.NoticeMode.ACTIONBAR, config.noticeMode);
         assertEquals("", config.timezone);
     }
 
@@ -61,6 +66,33 @@ class ClaimsConfigTest {
         assertEquals(128, config.membersPerChunk);
         assertEquals(ClaimMap.MAX_RADIUS, config.mapRadius);
         assertEquals(3, config.borderSeconds, "подсветка не короче трёх секунд");
+    }
+
+    @Test
+    void noticeSettingsParseClampAndFallback() {
+        ClaimsConfig chat = parse("""
+                general: {notice-mode: "CHAT", leave-notice: false, notice-own: true,
+                          notice-members: false, notice-cooldown-seconds: 999}
+                """);
+        assertEquals(ClaimsConfig.NoticeMode.CHAT, chat.noticeMode);
+        assertTrue(chat.noticeMode.chat());
+        assertFalse(chat.noticeMode.actionBar());
+        assertFalse(chat.leaveNotice);
+        assertTrue(chat.noticeOwn);
+        assertFalse(chat.noticeMembers);
+        assertEquals(60, chat.noticeCooldown, "кулдаун зажимается до 60 секунд");
+
+        ClaimsConfig broken = parse("""
+                general: {notice-mode: "sidebar", notice-cooldown-seconds: -5}
+                """);
+        assertEquals(ClaimsConfig.NoticeMode.ACTIONBAR, broken.noticeMode,
+                "неизвестный канал не ломает конфиг — прежняя строка действия");
+        assertEquals(0, broken.noticeCooldown);
+
+        ClaimsConfig both = parse("general: {notice-mode: both}");
+        assertEquals(ClaimsConfig.NoticeMode.BOTH, both.noticeMode);
+        assertTrue(both.noticeMode.chat());
+        assertTrue(both.noticeMode.actionBar());
     }
 
     @Test

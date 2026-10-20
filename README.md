@@ -1321,8 +1321,25 @@ PvP по умолчанию не запрещено (флаг `protect.pvp`). К
 Меню выключается `menu.enabled`, вкладка продаж — `menu.show-for-sale`; отдельные
 права — `chrdkclaims.menu` и `chrdkclaims.teleport`.
 
-При входе на чужой чанк в строке действия показывается владелец и цена, если чанк
-продаётся (`general.enter-notice`). Цену покупки и ренту можно менять по мирам:
+**Границы приватов** озвучиваются при входе и при выходе: владелец, координаты,
+ваша роль (для участника), дата оплаты (для своего чанка) и цена (для лота на
+продаже). Канал — `general.notice-mode`: `actionbar` (по умолчанию), `chat` или
+`both`; вход, выход, свои приваты и уведомления участникам включаются отдельно
+(`enter-notice`, `leave-notice`, `notice-own`, `notice-members`). Повтор о том же
+чанке гасится кулдауном `general.notice-cooldown-seconds` (2 секунды), а смерть и
+телепорт сбрасывают память границ — «выход» из привата, покинутого прыжком, не
+приходит. Личный выключатель — `/claim notices [on|off]` (хранится в данных игрока,
+право `chrdkclaims.notices`). Владелец может задать приветствие гостям:
+`/claim greeting <текст>` (до 80 символов, `снять` — убрать) — оно показывается
+при входе в чат-режиме и в `/claim info`.
+
+**Новые команды.** `/claim near [радиус 1..16]` — чужие приваты вокруг (по
+умолчанию 8 чанков, до 10 строк: расстояние, владелец, цена); `/claim map [радиус
+2..8]` — карта с переопределением радиуса; `/claim unclaim all` показывает, сколько
+приватов будет снято, и требует `/claim unclaim all confirm`; `/claim info` пишет
+роль участника и приветствие; `/claim list` отмечает долг по чанку. Выставить на
+продажу приват с долгом нельзя — сначала `/claim deposit`: покупатель не наследует
+чужие долги. Цену покупки и ренту можно менять по мирам:
 `worlds.price-multiplier` / `worlds.upkeep-multiplier` (0.1..10, например ресурсный
 мир дешевле).
 
@@ -1373,21 +1390,21 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.122-SNAPSHOT.jar`, аддон
-CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.122-SNAPSHOT.jar`, реферальный —
-`referrals/build/libs/chrdk-referrals-1.4.122-SNAPSHOT.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.122-SNAPSHOT.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.122-SNAPSHOT.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.122-SNAPSHOT.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.122-SNAPSHOT.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.122-SNAPSHOT.jar` (хартия чар — при установленном аддоне чар), общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.122-SNAPSHOT.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.122-SNAPSHOT.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.122-SNAPSHOT.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.122-SNAPSHOT.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.122-SNAPSHOT.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.122-SNAPSHOT.jar`, стримерская программа —
-`streams/build/libs/chrdk-streams-1.4.122-SNAPSHOT.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.123-SNAPSHOT.jar`, аддон
+CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.123-SNAPSHOT.jar`, реферальный —
+`referrals/build/libs/chrdk-referrals-1.4.123-SNAPSHOT.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.123-SNAPSHOT.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.123-SNAPSHOT.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.123-SNAPSHOT.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.123-SNAPSHOT.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.123-SNAPSHOT.jar` (хартия чар — при установленном аддоне чар), общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.123-SNAPSHOT.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.123-SNAPSHOT.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.123-SNAPSHOT.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.123-SNAPSHOT.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.123-SNAPSHOT.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.123-SNAPSHOT.jar`, стримерская программа —
+`streams/build/libs/chrdk-streams-1.4.123-SNAPSHOT.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). Оба JAR прикладываются к каждому релизу на GitHub.
 
 ---
@@ -3293,6 +3310,88 @@ battlepass:
 
 CI собирает снапшот как обычный пуш в ветку; тег `v1.4.109` и GitHub-релиз не
 создаются до отдельной команды на релиз.
+
+---
+
+### CHRDK_Claims: вход и выход из приватов + 15 улучшений — снапшот 1.4.123-SNAPSHOT
+
+Волна 14: приваты перестали «молчать» на границе. Раньше при входе на чужой чанк
+была только строка действия, а выход не показывался вовсе; теперь у границы есть
+полноценный вход и выход, настройка канала, антиспам и личный выключатель. Экономика,
+лимиты и защита не менялись.
+
+**1. Вход на приват.** Уведомление говорит, куда вы вошли: владелец, координаты
+чанка, ваша роль для участника, цена для лота на продажу. Ключи `enter-own`,
+`enter-member`, `enter-foreign`, `enter-for-sale`.
+
+**2. Выход с привата.** Новые `leave-own`, `leave-member`, `leave-foreign`,
+`leave-for-sale`: «Вы покинули приват … [x, z]». Выход срабатывает и при шаге за
+границу, и при прыжке в другой чанк.
+
+**3. Канал уведомлений.** `general.notice-mode: actionbar | chat | both`. В `chat`
+текст приходит сообщением, в `both` — и в чат, и строкой действия. Неизвестное
+значение не ломает конфиг: остаётся `actionbar`.
+
+**4. Свой приват.** `general.notice-own: false` — по умолчанию свои чанки молчат;
+если включить, при входе показывается дата оплаты (`enter-own`).
+
+**5. Участники.** `general.notice-members: true` — участник видит приват, в который
+имеет доступ, и свою роль (`enter-member`, `leave-member`).
+
+**6. Антиспам на границе.** `general.notice-cooldown-seconds: 2` (0..60, 0 — без
+ограничения): повторное сообщение об одном и том же чанке гасится, а другой чанк
+не блокируется. Смерть и телепорт сбрасывают запомненный чанк, поэтому «выход» из
+привата, покинутого телепортом, не приходит, а кулдаун при этом сохраняется.
+
+**7. `/claim notices [on|off]`.** Личный выключатель уведомлений; без аргумента —
+переключение. Состояние хранится в данных игрока (PersistentDataContainer), переживает
+перезапуск и не требует правки конфига. Право `chrdkclaims.notices` (по умолчанию
+всем).
+
+**8. Приветствие привата.** `/claim greeting <текст>` задаёт приветствие текущему
+привату владельца, `/claim greeting снять` убирает его, `/claim greeting` показывает
+текущее. Одна строка до 80 символов, теги MiniMessage экранируются. Поле `g` в
+`claims-data.json` необязательное — старые файлы читаются как есть.
+
+**9. Приветствие в жизни.** Гости видят приветствие при входе (в чат-режиме) и в
+`/claim info` (`info-greeting`); владельцу оно не показывается при входе.
+
+**10. `/claim near [радиус]`.** Чужие приваты вокруг: до 10 ближайших в радиусе
+1..16 чанков (по умолчанию 8), расстояние по Чебышёву, владелец и цена продажи.
+Свои приваты не дублируются — для них есть `/claim list`.
+
+**11. `/claim unclaim all`.** Массовое снятие приватов с подтверждением: первый
+вызов показывает количество, второй (`confirm`) снимает все чанки и пишет итог в
+журнал операций. Казна и оплата не возвращаются — это сказано в предупреждении.
+
+**12. Роль в `/claim info`.** Участник видит не просто «вы участник», а конкретную
+роль: доступ, контейнеры или полный (`info-you-role`).
+
+**13. Долг в `/claim list`.** Строка чанка помечается красным «долг N сут.» —
+проблему видно, не заходя в `/claim info` (`list-debt`).
+
+**14. Продажа с долгом запрещена.** `/claim sell` на чанке с долгом отвечает
+`sell-debt` и предлагает пополнить казну; покупатель не получает чужой долг.
+
+**15. `/claim map [радиус]`.** Радиус карты можно задать аргументом (2..8) поверх
+`general.map-radius`; мусор в аргументе показывает памятку `map-usage`.
+
+**Конфиг:** новые ключи — `general.notice-mode`, `leave-notice`, `notice-own`,
+`notice-members`, `notice-cooldown-seconds`. Значения по умолчанию сохраняют
+привычное поведение (строка действия), кроме нового текста выхода — он включён.
+Старые `config.yml`/`messages.yml` читаются без миграции, недостающие ключи берут
+значения из ресурса.
+
+**Тесты:** аддон — 107 `@Test` в 15 классах (+28): новые `ClaimNoticeTest`
+(ключи и аудитория), `ClaimNoticeTrackerTest` (вход/выход, кулдаун, телепорт),
+`ClaimNearTest` (радиус, сортировка, лимит строк), `ClaimGreetingTest`
+(нормализация и обрезка), плюс кейс приветствия в `ClaimStoreTest` и настройки
+уведомлений в `ClaimsConfigTest`.
+
+**Обновление:** версия 1.4.123, перезапуск сервера. JAR —
+`claims/build/libs/chrdk-claims-1.4.123-SNAPSHOT.jar`.
+
+Снапшот 1.4.123 не тегируется: тег и GitHub-релиз создаются отдельной командой.
 
 ---
 

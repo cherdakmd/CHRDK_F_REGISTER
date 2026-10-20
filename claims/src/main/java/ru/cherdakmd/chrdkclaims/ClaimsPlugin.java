@@ -2,14 +2,18 @@ package ru.cherdakmd.chrdkclaims;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.World;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
@@ -45,8 +49,10 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
     private final Set<UUID> bypass = ConcurrentHashMap.newKeySet();
     /** Активные подсветки границ: игрок → задача (чтобы не плодить таймеры). */
     private final Map<UUID, BukkitTask> borderTasks = new ConcurrentHashMap<>();
-    /** Последний чанк игрока «мир:x:z» — чтобы строка действия срабатывала на границе. */
-    private final Map<UUID, String> lastChunk = new ConcurrentHashMap<>();
+    /** Последний приват игрока и кулдаун уведомлений о границах. */
+    private final ClaimNoticeTracker claimNotices = new ClaimNoticeTracker();
+    /** Персональный выключатель уведомлений (/claim notices) хранится в данных игрока. */
+    private NamespacedKey noticesKey;
     private BukkitTask saveTask;
     private BukkitTask upkeepTask;
 
@@ -71,6 +77,7 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
                     + "проверка авторизации и бонус лимита за проходку недоступны.");
         }
 
+        this.noticesKey = new NamespacedKey(this, "notices");
         Bukkit.getPluginManager().registerEvents(new ClaimProtectionListener(this), this);
         // Меню приватов и телепорт к ним: оба слушателя живут до выключения плагина.
         this.menu = new ClaimMenuGui(this);
@@ -164,13 +171,27 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         UUID id = event.getPlayer().getUniqueId();
         bypass.remove(id);
         cancelBorders(id);
-        lastChunk.remove(id);
+        claimNotices.clear(id);
+    }
+
+    /** Телепорт не должен присылать «выход» из привата, который игрок уже покинул прыжком. */
+    @EventHandler(ignoreCancelled = true)
+    public void onTeleport(PlayerTeleportEvent event) {
+        claimNotices.forget(event.getPlayer().getUniqueId());
+    }
+
+    /** После смерти игрок появится на спавне — прежний приват считать текущим нельзя. */
+    @EventHandler
+    public void onDeath(PlayerDeathEvent event) {
+        if (event.getEntity() != null) {
+            claimNotices.forget(event.getEntity().getUniqueId());
+        }
     }
 
     /**
-     * Строка действия при входе на чужой приват: владелец и цена, если чанк продаётся.
-     * Обработчик вызывается на каждое движение, поэтому сначала сравниваются чанки —
-     * карта «последний чанк» трогается только на реальной границе.
+     * Уведомления на границе приватов: вход и выход, свой чанк, участник или
+     * посторонний. Обработчик вызывается на каждое движение, поэтому сначала
+     * сравниваются чанки — память трогается только на реальной границе.
      */
     @EventHandler(ignoreCancelled = true)
     public void onMove(PlayerMoveEvent event) {
@@ -182,29 +203,94 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         if (!to.getWorld().equals(from.getWorld())
                 || (from.getBlockX() >> 4) != (to.getBlockX() >> 4)
                 || (from.getBlockZ() >> 4) != (to.getBlockZ() >> 4)) {
-            String key = to.getWorld().getName() + ':' + (to.getBlockX() >> 4)
-                    + ':' + (to.getBlockZ() >> 4);
-            UUID id = event.getPlayer().getUniqueId();
-            boolean same = key.equals(lastChunk.put(id, key));
-            if (same || !config.enterNotice) {
-                return;
-            }
-            Player player = event.getPlayer();
-            if (!service.isAllowed(player)) {
-                return;
-            }
-            Claim claim = store.claimAt(to.getWorld().getName(),
-                    to.getBlockX() >> 4, to.getBlockZ() >> 4);
-            if (claim == null || claim.isOwner(player.getName())) {
-                return;
-            }
-            if (claim.salePrice > 0) {
-                player.sendActionBar(messages().get("enter-for-sale",
-                        "owner", claim.owner, "price", String.valueOf(claim.salePrice)));
-            } else {
-                player.sendActionBar(messages().get("enter-foreign", "owner", claim.owner));
-            }
+            updateClaimNotice(event.getPlayer(), to);
         }
+    }
+
+    /** Пересчитывает приват в новом чанке и отправляет уведомления о переходе. */
+    private void updateClaimNotice(Player player, Location to) {
+        if (!config.enterNotice && !config.leaveNotice) {
+            return;
+        }
+        if (!service.isAllowed(player)) {
+            return;
+        }
+        String world = to.getWorld().getName();
+        int chunkX = to.getBlockX() >> 4;
+        int chunkZ = to.getBlockZ() >> 4;
+        Claim claim = config.worldEnabled(world) ? store.claimAt(world, chunkX, chunkZ) : null;
+        ClaimNotice.Spot spot = claim == null ? null : new ClaimNotice.Spot(
+                world, chunkX, chunkZ, claim.owner, claim.salePrice,
+                claim.roleOf(player.getName()), claim.paidUntil, claim.greeting);
+        long cooldown = config.noticeCooldown * 1000L;
+        for (ClaimNoticeTracker.Notice notice : claimNotices.update(
+                player.getUniqueId(), System.currentTimeMillis(), spot, cooldown)) {
+            sendClaimNotice(player, notice);
+        }
+    }
+
+    /** Отправляет одно уведомление в выбранный канал (actionbar/chat/both). */
+    private void sendClaimNotice(Player player, ClaimNoticeTracker.Notice notice) {
+        boolean entering = notice.entering();
+        if (entering ? !config.enterNotice : !config.leaveNotice) {
+            return;
+        }
+        ClaimNotice.Spot spot = notice.spot();
+        ClaimNotice.Audience audience = spot.audience(player.getName());
+        if (audience == ClaimNotice.Audience.OWNER && !config.noticeOwn) {
+            return;
+        }
+        if (audience == ClaimNotice.Audience.MEMBER && !config.noticeMembers) {
+            return;
+        }
+        if (!noticesEnabled(player)) {
+            return;
+        }
+        String key = ClaimNotice.key(
+                entering ? ClaimNotice.Kind.ENTER : ClaimNotice.Kind.LEAVE,
+                audience, spot.forSale());
+        Object[] placeholders = {
+                "owner", spot.owner(),
+                "x", String.valueOf(spot.x()),
+                "z", String.valueOf(spot.z()),
+                "world", spot.world(),
+                "price", String.valueOf(spot.salePrice()),
+                "role", spot.role() == null ? "" : service.roleName(spot.role()),
+                "paid", spot.paidUntil() > 0 ? config.formatDate(spot.paidUntil()) : ""
+        };
+        if (config.noticeMode.chat()) {
+            messages().send(player, key, placeholders);
+        }
+        if (config.noticeMode.actionBar()) {
+            player.sendActionBar(messages().get(key, placeholders));
+        }
+        if (entering && audience != ClaimNotice.Audience.OWNER
+                && config.noticeMode.chat() && !spot.greeting().isBlank()) {
+            messages().send(player, "enter-greeting", "text", spot.greeting());
+        }
+    }
+
+    /** Включены ли у игрока уведомления о границах (по умолчанию — да). */
+    public boolean noticesEnabled(Player player) {
+        if (noticesKey == null) {
+            return true;
+        }
+        Byte value = player.getPersistentDataContainer().get(noticesKey, PersistentDataType.BYTE);
+        return value == null || value != 0;
+    }
+
+    /** Переключает уведомления и возвращает новое состояние. */
+    public boolean toggleNotices(Player player) {
+        return setNotices(player, !noticesEnabled(player));
+    }
+
+    /** Явно включает/выключает уведомления; состояние переживает перезапуск сервера. */
+    public boolean setNotices(Player player, boolean enabled) {
+        if (noticesKey != null) {
+            player.getPersistentDataContainer().set(noticesKey, PersistentDataType.BYTE,
+                    (byte) (enabled ? 1 : 0));
+        }
+        return enabled;
     }
 
     /**

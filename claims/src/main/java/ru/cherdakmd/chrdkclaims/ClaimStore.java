@@ -192,6 +192,7 @@ public final class ClaimStore {
                 Claim claim = new Claim(world, x, z, owner, paidUntil);
                 claim.debtDays = clamp((int) longOf(map.get("d")), 0, 100_000);
                 claim.salePrice = clamp((int) longOf(map.get("s")), 0, 1_000_000);
+                claim.greeting = Claim.normalizeGreeting(str(map.get("g")));
                 Set<String> seenMembers = new LinkedHashSet<>();
                 if (map.get("m") instanceof List<?> members) {
                     for (Object member : members) {
@@ -298,6 +299,9 @@ public final class ClaimStore {
                     entry.put("p", claim.paidUntil);
                     entry.put("d", claim.debtDays);
                     entry.put("s", claim.salePrice);
+                    if (claim.hasGreeting()) {
+                        entry.put("g", claim.greeting);
+                    }
                     if (!claim.members.isEmpty()) {
                         entry.put("m", new ArrayList<>(claim.members));
                         Map<String, Claim.Role> explicit = claim.explicitRoles();

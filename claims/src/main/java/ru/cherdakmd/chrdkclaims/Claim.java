@@ -9,6 +9,9 @@ import java.util.Map;
 /** Приват: чанк (world + x/z), владелец, участники с ролями, оплата и выставленная цена. */
 public final class Claim {
 
+    /** Максимальная длина приветствия привата (символы). */
+    public static final int MAX_GREETING = 80;
+
     /**
      * Уровень доступа участника. Владелец всегда {@link #BUILD}.
      * Порядок объявления важен: доступ проверяется через {@link #ordinal()}.
@@ -35,6 +38,8 @@ public final class Claim {
     public int debtDays;
     /** Цена продажи игрокам (0 — не продаётся). */
     public int salePrice;
+    /** Приветствие для гостей: показывается при входе в приват (пусто — нет). */
+    public String greeting = "";
 
     public Claim(String world, int x, int z, String owner, long paidUntil) {
         this.world = world;
@@ -129,6 +134,22 @@ public final class Claim {
         if (name != null && role != null && role != Role.BUILD && isMember(name)) {
             roles.put(name.toLowerCase(Locale.ROOT), role);
         }
+    }
+
+    /** Приветствие без переводов строк и в пределах {@link #MAX_GREETING}. */
+    public static String normalizeGreeting(String raw) {
+        if (raw == null) {
+            return "";
+        }
+        String text = raw.replace('\n', ' ').replace('\r', ' ').replace('\t', ' ').trim();
+        if (text.length() > MAX_GREETING) {
+            text = text.substring(0, MAX_GREETING).trim();
+        }
+        return text;
+    }
+
+    public boolean hasGreeting() {
+        return greeting != null && !greeting.isBlank();
     }
 
     public String where() {

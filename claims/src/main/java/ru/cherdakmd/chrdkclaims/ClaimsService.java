@@ -235,6 +235,59 @@ public final class ClaimsService {
         plugin.messages().send(player, "unclaimed");
     }
 
+    /** Снимает все приваты игрока (после подтверждения /claim unclaim all confirm). */
+    public void unclaimAll(Player player) {
+        List<Claim> claims = plugin.store().ofOwner(player.getName());
+        if (claims.isEmpty()) {
+            plugin.messages().send(player, "unclaim-all-none");
+            return;
+        }
+        for (Claim claim : claims) {
+            plugin.store().remove(claim);
+        }
+        plugin.store().markDirty();
+        audit("unclaim-all", player.getName() + " count=" + claims.size());
+        plugin.messages().send(player, "unclaim-all-done",
+                "count", String.valueOf(claims.size()));
+    }
+
+    /**
+     * Ставит приветствие текущему привату владельца; пустая строка снимает его.
+     * Текст проходит через {@link Claim#normalizeGreeting} — без переводов строк
+     * и не длиннее {@link Claim#MAX_GREETING}.
+     */
+    public void setGreeting(Player player, String text) {
+        Claim claim = claimHere(player);
+        if (claim == null) {
+            plugin.messages().send(player, "unclaim-none");
+            return;
+        }
+        if (!claim.isOwner(player.getName())) {
+            plugin.messages().send(player, "greeting-not-yours");
+            return;
+        }
+        String normalized = Claim.normalizeGreeting(text);
+        if (normalized.isEmpty()) {
+            if (!claim.hasGreeting()) {
+                plugin.messages().send(player, "greeting-none");
+                return;
+            }
+            claim.greeting = "";
+            plugin.store().markDirty();
+            audit("greeting-clear", player.getName() + " " + claim.where());
+            plugin.messages().send(player, "greeting-cleared");
+            return;
+        }
+        if (normalized.equals(claim.greeting)) {
+            plugin.messages().send(player, "greeting-same");
+            return;
+        }
+        claim.greeting = normalized;
+        plugin.store().markDirty();
+        audit("greeting-set", player.getName() + " " + claim.where() + " text=" + normalized);
+        plugin.messages().send(player, "greeting-set", "text", normalized);
+    }
+
     /** Мгновенный обратный выкуп сервером за sellbackPercent от цены. */
     public void sellback(Player player) {
         Claim claim = ownClaimHere(player, "sell-not-yours");
@@ -258,6 +311,12 @@ public final class ClaimsService {
     public void setSale(Player player, int price) {
         Claim claim = ownClaimHere(player, "sell-not-yours");
         if (claim == null) {
+            return;
+        }
+        if (price > 0 && claim.debtDays > 0) {
+            // Покупатель не должен унаследовать чужие долги: сначала гасим их.
+            plugin.messages().send(player, "sell-debt",
+                    "days", String.valueOf(claim.debtDays));
             return;
         }
         claim.salePrice = Math.max(0, price);
