@@ -208,9 +208,14 @@ final class ViewerService {
             return;
         }
         Optional<ViewerBinding> existing = store.viewer(viewer.getUniqueId());
-        if (existing.isPresent() && existing.get().streamer().equals(target.get().uuid())
-                && existing.get().accepted()) {
-            plugin.messages().send(viewer, "watch-already", "streamer", target.get().playerName());
+        if (existing.isPresent() && existing.get().streamer().equals(target.get().uuid())) {
+            if (existing.get().accepted()) {
+                plugin.messages().send(viewer, "watch-already",
+                        "streamer", target.get().playerName());
+            } else {
+                plugin.messages().send(viewer, "watch-pending",
+                        "streamer", target.get().playerName());
+            }
             return;
         }
         boolean acceptedNow = !cfg.viewers().requireApproval();
