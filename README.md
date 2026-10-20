@@ -3429,9 +3429,10 @@ CI собирает снапшот как обычный пуш в ветку; �
 **6. Тесты.** Enchants — 20 `@Test` в 3 классах (+10): переписан
 `EnchantRegistryTest` под 60 чар (45/15, группы поддержки, смешанная `ward`),
 добавлен `EnchantAttributeMapTest` (знаки, шкалы уровней, событийные чары без
-атрибутов). TierForge — 168 `@Test` в 29 классах (+10): `TierCustomEnchantsTest`
-(детерминизм, пулы по полярности, потолки, пустой пул проклятий) и
-`TierEnchantConfigTest` (`enchantments.custom.*`, клампы, порог тира).
+атрибутов). TierForge — 169 `@Test` в 29 классах (+11): `TierCustomEnchantsTest`
+(детерминизм, пулы по полярности, потолки, пустой пул проклятий),
+`TierEnchantConfigTest` (`enchantments.custom.*`, клампы, порог тира) и строка
+кастомных чар в `ConfigReportTest`.
 
 **Обновление:** версия 1.4.128, перезапуск сервера. JAR — `enchants/build/libs/
 chrdk-enchants-1.4.128-SNAPSHOT.jar` и `tier-forge/build/libs/

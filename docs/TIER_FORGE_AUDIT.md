@@ -550,6 +550,6 @@ TierForge помечает строки свойств улучшений. На 
 «Хартия чар» теперь явно просит светлую полярность и проклятий не выдаёт.
 
 **Тесты:** Enchants — 20 `@Test` в 3 классах (было 10 в 2): `EnchantRegistryTest`
-переписан под 60 чар, добавлен `EnchantAttributeMapTest`. TierForge — 168 `@Test`
-в 29 классах (было 158 в 27): `TierCustomEnchantsTest` (6) и
-`TierEnchantConfigTest` (4). Контракт `check_messages.py` зелёный.
+переписан под 60 чар, добавлен `EnchantAttributeMapTest`. TierForge — 169 `@Test`
+в 29 классах (было 158 в 27): `TierCustomEnchantsTest` (6),
+`TierEnchantConfigTest` (4) и восьмая строка `ConfigReportTest`. Контракт `check_messages.py` зелёный.
