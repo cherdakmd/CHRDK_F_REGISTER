@@ -119,8 +119,14 @@ final class BattlePassCommandHandler implements CommandExecutor, TabCompleter {
             plugin.messages().send(player, "vip-none");
         }
 
+        boolean premiumActive = plugin.premiumActive(player);
+        if (BattlePassPremium.anyRewards(season)) {
+            plugin.messages().send(player, premiumActive ? "premium-active" : "premium-none");
+        }
+
         int ready = 0;
         int vipLocked = 0;
+        int premiumLocked = 0;
         for (int index = 0; index < season.weeks().size(); index++) {
             if (!BattlePassConfig.isUnlocked(season, index, now)) {
                 plugin.messages().send(player, "week-locked",
@@ -130,8 +136,9 @@ final class BattlePassCommandHandler implements CommandExecutor, TabCompleter {
                                 Instant.ofEpochMilli(BattlePassConfig.unlockAt(season, index))));
                 break;
             }
-            List<BattlePassView.Mission> views = views(player, season.weeks().get(index), vipActive);
-            int total = views.stream().mapToInt(BattlePassView.Mission::totalTracks).sum();
+            List<BattlePassView.Mission> views = views(player, season.weeks().get(index),
+                    vipActive, premiumActive);
+            int total = views.stream().mapToInt(BattlePassView.Mission::availableTracks).sum();
             int claimed = views.stream().mapToInt(BattlePassView.Mission::claimedTracks).sum();
             if (total > 0 && claimed >= total) {
                 plugin.messages().send(player, "week-complete", "week", index + 1);
@@ -143,6 +150,8 @@ final class BattlePassCommandHandler implements CommandExecutor, TabCompleter {
                 player.sendMessage(plugin.screen().mission(label, view));
                 if (view.state() == BattlePassView.State.READY) {
                     ready++;
+                } else if (view.state() == BattlePassView.State.PREMIUM_LOCKED) {
+                    premiumLocked++;
                 } else if (view.state() == BattlePassView.State.VIP_LOCKED) {
                     vipLocked++;
                 }
@@ -151,6 +160,8 @@ final class BattlePassCommandHandler implements CommandExecutor, TabCompleter {
         if (ready > 0) {
             plugin.messages().send(player, "footer-claimable",
                     "count", ready, "label", label);
+        } else if (premiumLocked > 0) {
+            plugin.messages().send(player, "footer-premium-locked", "count", premiumLocked);
         } else if (vipLocked > 0) {
             plugin.messages().send(player, "footer-vip-locked", "count", vipLocked);
         } else {
@@ -175,7 +186,7 @@ final class BattlePassCommandHandler implements CommandExecutor, TabCompleter {
     }
 
     private List<BattlePassView.Mission> views(Player player, BattlePassConfig.WeekDef week,
-                                               boolean vipActive) {
+                                               boolean vipActive, boolean premiumActive) {
         UUID uuid = player.getUniqueId();
         List<BattlePassView.Mission> views = new ArrayList<>();
         for (BattlePassConfig.MissionDef mission : week.missions()) {
@@ -183,7 +194,9 @@ final class BattlePassCommandHandler implements CommandExecutor, TabCompleter {
                     plugin.store().progressOf(uuid, mission.id()),
                     plugin.store().isClaimed(uuid, mission.id(), "FREE"),
                     plugin.store().isClaimed(uuid, mission.id(), "VIP"),
-                    vipActive));
+                    vipActive,
+                    plugin.store().isClaimed(uuid, mission.id(), "PREMIUM"),
+                    premiumActive));
         }
         return views;
     }
@@ -249,7 +262,9 @@ final class BattlePassCommandHandler implements CommandExecutor, TabCompleter {
         BattlePassView.Mission view = new BattlePassView.Mission(mission, progress,
                 plugin.store().isClaimed(uuid, mission.id(), "FREE"),
                 plugin.store().isClaimed(uuid, mission.id(), "VIP"),
-                plugin.vipActive(player));
+                plugin.vipActive(player),
+                plugin.store().isClaimed(uuid, mission.id(), "PREMIUM"),
+                plugin.premiumActive(player));
         plugin.messages().send(player, "info-header",
                 "desc", BattlePassScreen.described(mission));
         plugin.messages().send(player, "info-line",
@@ -278,6 +293,8 @@ final class BattlePassCommandHandler implements CommandExecutor, TabCompleter {
                     "label", "battlepass", "id", mission.id());
         } else if (view.state() == BattlePassView.State.VIP_LOCKED) {
             plugin.messages().send(player, "menu-lore-vip");
+        } else if (view.state() == BattlePassView.State.PREMIUM_LOCKED) {
+            plugin.messages().send(player, "menu-lore-premium");
         }
     }
 

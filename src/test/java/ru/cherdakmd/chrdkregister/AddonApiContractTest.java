@@ -31,6 +31,17 @@ class AddonApiContractTest {
     }
 
     @Test
+    void shopEntitlementsAreAdditive() throws Exception {
+        assertTrue(ChrdkRegisterApi.API_VERSION >= 5);
+        assertTrue(ChrdkRegisterApi.class.getMethod("hasEntitlement", String.class, String.class)
+                .isDefault(), "старые реализации API не должны ломаться");
+        assertTrue(ChrdkRegisterApi.class.getMethod("entitlementUntil", String.class, String.class)
+                .isDefault());
+        assertTrue(ChrdkRegisterApi.class.getMethod("grantEntitlement", String.class, String.class,
+                int.class, String.class).isDefault());
+    }
+
+    @Test
     void authStagesKeepStableOrder() {
         // Аддоны полагаются на то, что значения не переименовываются/не удаляются.
         assertEquals("NO_PASS", ApiAuthStage.values()[0].name());

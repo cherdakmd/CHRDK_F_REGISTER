@@ -71,7 +71,7 @@ public final class RegisterPlugin extends JavaPlugin {
         shopService.cleanupExpired();
         shopService.logProblems();
         getServer().getServicesManager().register(ChrdkRegisterApi.class,
-                new ChrdkRegisterApiImpl(this, accessManager, externalHooks), this, ServicePriority.Normal);
+                new ChrdkRegisterApiImpl(this, accessManager, externalHooks, shopService), this, ServicePriority.Normal);
 
         getServer().getPluginManager().registerEvents(new PlayerRestrictionListener(accessManager), this);
         getServer().getPluginManager().registerEvents(chatService, this);

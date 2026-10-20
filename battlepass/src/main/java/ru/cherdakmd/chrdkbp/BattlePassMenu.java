@@ -98,6 +98,7 @@ final class BattlePassMenu implements Listener {
     private List<Entry> entries(Player player, BattlePassConfig.Season season) {
         long now = System.currentTimeMillis();
         boolean vipActive = plugin.vipActive(player);
+        boolean premiumActive = plugin.premiumActive(player);
         UUID uuid = player.getUniqueId();
         List<Entry> entries = new ArrayList<>();
         for (int index = 0; index < season.weeks().size(); index++) {
@@ -110,7 +111,9 @@ final class BattlePassMenu implements Listener {
                         plugin.store().progressOf(uuid, mission.id()),
                         plugin.store().isClaimed(uuid, mission.id(), "FREE"),
                         plugin.store().isClaimed(uuid, mission.id(), "VIP"),
-                        vipActive)));
+                        vipActive,
+                        plugin.store().isClaimed(uuid, mission.id(), "PREMIUM"),
+                        premiumActive)));
             }
         }
         return entries;
@@ -135,6 +138,7 @@ final class BattlePassMenu implements Listener {
         switch (view.state()) {
             case READY -> lore.add(plugin.messages().get("menu-lore-claim"));
             case VIP_LOCKED -> lore.add(plugin.messages().get("menu-lore-vip"));
+            case PREMIUM_LOCKED -> lore.add(plugin.messages().get("menu-lore-premium"));
             case CLAIMED -> lore.add(plugin.messages().get("menu-lore-claimed"));
             default -> { /* в работе — подсказка не нужна */ }
         }

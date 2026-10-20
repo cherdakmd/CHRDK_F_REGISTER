@@ -213,4 +213,59 @@ class BattlePassConfigTest {
                 "f", "d", BattlePassConfig.MissionType.FISH, "any", 1, 0, 0);
         assertTrue(BattlePassConfig.matchesTypeKey(any, "pufferfish"));
     }
+
+    /** Задание с премиум-полями: карта собирается изменяемой, чтобы не путать скобки. */
+    private static BattlePassConfig.ParseResult parsePremium(Object premiumDays,
+                                                             Object premiumProducts) {
+        java.util.Map<String, Object> mission = new java.util.LinkedHashMap<>();
+        mission.put("id", "prem");
+        mission.put("type", "MINE");
+        mission.put("material", "STONE");
+        mission.put("target", 10);
+        mission.put("premium-days", premiumDays);
+        mission.put("premium-products", premiumProducts);
+        return BattlePassConfig.parseWeeksDetailed(List.of(
+                Map.of("unlock-day", 0, "missions", List.of(mission))));
+    }
+
+    @Test
+    void premiumRewardsAreParsed() {
+        BattlePassConfig.ParseResult result = parsePremium(3,
+                List.of("trail-flame", " Trail-Flame ", "NICK-COLOR"));
+        BattlePassConfig.MissionDef mission = result.weeks().get(0).missions().get(0);
+        assertTrue(mission.hasPremium());
+        assertEquals(3, mission.premiumDays());
+        assertEquals(List.of("trail-flame", "nick-color"), mission.premiumProducts(),
+                "id нормализуются, дубли убраны");
+        assertTrue(result.problems().isEmpty(), () -> result.problems().toString());
+    }
+
+    @Test
+    void premiumRewardsTolerateTypos() {
+        BattlePassConfig.ParseResult result = parsePremium(99_999, List.of("Плохой Id", "ok-id"));
+        BattlePassConfig.MissionDef mission = result.weeks().get(0).missions().get(0);
+        assertEquals(0, mission.premiumDays(), "слишком большой срок отброшен");
+        assertEquals(List.of("ok-id"), mission.premiumProducts(), "кривой id пропущен");
+        assertTrue(result.problems().stream().anyMatch(text -> text.contains("premium-days")));
+        assertTrue(result.problems().stream().anyMatch(text -> text.contains("premium-products")));
+    }
+
+    @Test
+    void premiumProductListIsCapped() {
+        BattlePassConfig.ParseResult result = parsePremium(0,
+                List.of("a1", "b2", "c3", "d4", "e5", "f6", "g7"));
+        assertEquals(BattlePassConfig.MAX_PREMIUM_PRODUCTS,
+                result.weeks().get(0).missions().get(0).premiumProducts().size());
+        assertTrue(result.problems().stream().anyMatch(text -> text.contains("больше")));
+    }
+
+    @Test
+    void nothingToSellWhenPremiumMissing() {
+        BattlePassConfig.MissionDef plain = BattlePassConfig.parseWeeks(List.of(
+                Map.of("unlock-day", 0, "missions", List.of(
+                        Map.of("id", "plain", "type", "MINE", "material", "STONE", "target", 1)))))
+                .get(0).missions().get(0);
+        assertFalse(plain.hasPremium());
+        assertTrue(plain.premiumProducts().isEmpty());
+    }
 }

@@ -404,6 +404,23 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
         return passUntil(player) > System.currentTimeMillis();
     }
 
+    /**
+     * Активен ли боевой пропуск: куплен товар каталога из настроек премиум-трека.
+     *
+     * <p>Каталог может измениться после покупки — срок живёт в аккаунте ядра,
+     * поэтому батлпасс каждый раз спрашивает ядро, а не помнит флаг у себя.</p>
+     */
+    boolean premiumActive(Player player) {
+        BattlePassSettings cfg = settings;
+        ChrdkRegisterApi api = coreApi;
+        if (cfg == null || !cfg.premiumEnabled() || api == null || player == null) {
+            return false;
+        }
+        return BattlePassPremium.active(true,
+                api.entitlementUntil(player.getName(), cfg.premiumProduct()),
+                System.currentTimeMillis());
+    }
+
     /** До какого момента активна проходка игрока; 0 — ядро недоступно. */
     long passUntil(Player player) {
         ChrdkRegisterApi api = coreApi;

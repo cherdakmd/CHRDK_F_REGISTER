@@ -28,7 +28,7 @@ import java.util.Optional;
 public interface ChrdkRegisterApi {
 
     /** Версия контракта API. Растёт при расширении (добавлении методов/событий). */
-    int API_VERSION = 4;
+    int API_VERSION = 5;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -88,6 +88,22 @@ public interface ChrdkRegisterApi {
      * совместимость со сторонними реализациями интерфейса.</p>
      */
     default long entitlementUntil(String playerName, String productId) {
+        return 0L;
+    }
+
+    /**
+     * Выдаёт покупку каталога как награду: срок, группа и команды товара, без записи
+     * продажи в журнале донатов. Нужно аддонам, которые награждают товаром каталога, —
+     * например, премиум-трек батлпасса выдаёт косметику.
+     *
+     * <p>Появился в API v5; реализация по умолчанию ничего не выдаёт и возвращает
+     * {@code 0}, поэтому сторонние реализации интерфейса остаются совместимыми.</p>
+     *
+     * @param days срок в днях; {@code <= 0} — срок из карточки товара
+     * @param source метка источника для аудита ({@code battlepass:mission_id})
+     * @return момент окончания срока; {@code 0} — товар не выдан
+     */
+    default long grantEntitlement(String playerName, String productId, int days, String source) {
         return 0L;
     }
 

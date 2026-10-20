@@ -92,4 +92,34 @@ class BattlePassSettingsTest {
         assertEquals(BattlePassSettings.MAX_MEMORY_SECONDS, tooBig.placedMemorySeconds());
         assertEquals(BattlePassSettings.MAX_BAR_WIDTH, tooBig.barWidth());
     }
+
+    @Test
+    void premiumDefaultsOn() throws Exception {
+        BattlePassSettings settings = parse("battlepass:\n  season-start: \"2026-01-01\"\n");
+        assertTrue(settings.premiumEnabled());
+        assertEquals("battlepass-premium", settings.premiumProduct());
+    }
+
+    @Test
+    void premiumSectionIsParsed() throws Exception {
+        BattlePassSettings settings = parse("""
+                battlepass:
+                  premium:
+                    enabled: false
+                    product: " Season-Pass "
+                """);
+        assertFalse(settings.premiumEnabled());
+        assertEquals("season-pass", settings.premiumProduct());
+    }
+
+    @Test
+    void brokenPremiumProductFallsBack() throws Exception {
+        BattlePassSettings settings = parse("""
+                battlepass:
+                  premium:
+                    product: "плохой id!"
+                """);
+        assertEquals("battlepass-premium", settings.premiumProduct(),
+                "кривой id не должен ломать выдачу наград");
+    }
 }

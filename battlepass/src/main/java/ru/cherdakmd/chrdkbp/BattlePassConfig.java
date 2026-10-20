@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Конфиг сезона батлпасса. Чистый парсинг + арифметика волн — покрыто тестами.
@@ -20,6 +21,10 @@ final class BattlePassConfig {
 
     /** Очки за задание, если в конфиге не указано иное. */
     static final int DEFAULT_POINTS = 10;
+    /** Сколько товаров каталога может выдавать одно задание премиум-трека. */
+    static final int MAX_PREMIUM_PRODUCTS = 5;
+    /** Допустимый id товара каталога: те же правила, что у shop.products в ядре. */
+    private static final Pattern PRODUCT_ID = Pattern.compile("[a-z0-9][a-z0-9_-]{0,31}");
 
     private BattlePassConfig() {
     }
@@ -36,16 +41,36 @@ final class BattlePassConfig {
      * @param worlds      миры, где задание считается (пусто — все)
      * @param permission  право, без которого прогресс не идёт (пусто — всем)
      * @param icon        материал иконки в меню (пусто — по типу задания)
+     * @param premiumDays дни проходки в премиум-треке (0 — премиум-награды нет)
+     * @param premiumProducts товары каталога ядра, которые выдаёт премиум-трек
      */
     record MissionDef(String id, String description, MissionType type, String matchKey,
                       int target, int freeDays, int vipDays, int points,
-                      List<String> worlds, String permission, String icon) {
+                      List<String> worlds, String permission, String icon,
+                      int premiumDays, List<String> premiumProducts) {
+
+        MissionDef {
+            premiumProducts = premiumProducts == null ? List.of() : List.copyOf(premiumProducts);
+            premiumDays = Math.max(0, premiumDays);
+        }
 
         /** Совместимый конструктор для тестов и старых вызовов. */
         MissionDef(String id, String description, MissionType type, String matchKey,
                    int target, int freeDays, int vipDays) {
             this(id, description, type, matchKey, target, freeDays, vipDays,
-                    DEFAULT_POINTS, List.of(), "", "");
+                    DEFAULT_POINTS, List.of(), "", "", 0, List.of());
+        }
+
+        MissionDef(String id, String description, MissionType type, String matchKey,
+                   int target, int freeDays, int vipDays, int points,
+                   List<String> worlds, String permission, String icon) {
+            this(id, description, type, matchKey, target, freeDays, vipDays,
+                    points, worlds, permission, icon, 0, List.of());
+        }
+
+        /** В задании есть премиум-награда. */
+        boolean hasPremium() {
+            return premiumDays > 0 || !premiumProducts.isEmpty();
         }
 
         boolean restrictedWorld() {
@@ -275,7 +300,53 @@ final class BattlePassConfig {
                 Math.max(0, intOf(raw.get("points"), DEFAULT_POINTS)),
                 worlds(raw.get("worlds")),
                 String.valueOf(raw.get("permission") == null ? "" : raw.get("permission")).trim(),
-                norm(raw.get("icon")).toUpperCase(Locale.ROOT));
+                norm(raw.get("icon")).toUpperCase(Locale.ROOT),
+                premiumDays(raw, id, weekNumber, problems),
+                premiumProducts(raw, id, weekNumber, problems));
+    }
+
+    /** Дни премиум-трека: отрицательные и слишком большие отбрасываются. */
+    private static int premiumDays(Map<?, ?> raw, String id, int weekNumber, List<String> problems) {
+        int days = intOf(raw.get("premium-days"), 0);
+        if (days < 0 || days > 3650) {
+            problems.add("волна " + weekNumber + ": «" + id + "» — premium-days " + days
+                    + " вне диапазона 0..3650, награда не выдаётся");
+            return 0;
+        }
+        return days;
+    }
+
+    /** Товары каталога в премиум-треке: чистим id и ограничиваем список. */
+    private static List<String> premiumProducts(Map<?, ?> raw, String id, int weekNumber,
+                                                List<String> problems) {
+        Object value = raw.get("premium-products");
+        if (value == null) {
+            return List.of();
+        }
+        List<String> result = new ArrayList<>();
+        Iterable<?> list = value instanceof Iterable<?> iterable
+                ? iterable
+                : List.of(String.valueOf(value));
+        for (Object entry : list) {
+            String product = norm(entry);
+            if (product.isEmpty()) {
+                continue;
+            }
+            if (!PRODUCT_ID.matcher(product).matches()) {
+                problems.add("волна " + weekNumber + ": «" + id + "» — premium-products: id «"
+                        + product + "» недопустим (a-z, 0-9, '-' и '_'), пропущен");
+                continue;
+            }
+            if (!result.contains(product)) {
+                result.add(product);
+            }
+        }
+        if (result.size() > MAX_PREMIUM_PRODUCTS) {
+            problems.add("волна " + weekNumber + ": «" + id + "» — в premium-products больше "
+                    + MAX_PREMIUM_PRODUCTS + " товаров, лишние отброшены");
+            return List.copyOf(result.subList(0, MAX_PREMIUM_PRODUCTS));
+        }
+        return List.copyOf(result);
     }
 
     private static List<String> worlds(Object raw) {

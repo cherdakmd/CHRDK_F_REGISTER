@@ -107,4 +107,32 @@ class BattlePassScreenTest {
         assertTrue(line.contains("забрать"), line);
         assertFalse(line.contains("<"), "в тексте остались теги: " + line);
     }
+
+    private static BattlePassConfig.MissionDef premium() {
+        return new BattlePassConfig.MissionDef("prem", "<gray>Добыть камень</gray>",
+                BattlePassConfig.MissionType.MINE, "stone", 10, 1, 0,
+                BattlePassConfig.DEFAULT_POINTS, List.of(), "", "", 3,
+                List.of("trail-flame", "nick-color"));
+    }
+
+    @Test
+    void premiumRewardIsShownWithProductsAndDays() throws Exception {
+        String line = plain(screen().mission("bp",
+                new BattlePassView.Mission(premium(), 10, false, false, false, false, true)));
+        assertTrue(line.contains("+1 дн."), "бесплатная награда потерялась: " + line);
+        assertTrue(line.contains("★ +3 дн."), "нет дней премиум-трека: " + line);
+        assertTrue(line.contains("★ подарок"), "нет отметки о товаре: " + line);
+        assertTrue(line.contains("забрать"), "премиум-награда должна быть доступна: " + line);
+        assertFalse(line.contains("<"), "в тексте остались теги: " + line);
+    }
+
+    @Test
+    void premiumLockedLineSendsToShop() throws Exception {
+        String line = plain(screen().mission("bp",
+                new BattlePassView.Mission(premium(), 10, true, false, false, false, false)));
+        assertTrue(line.contains("нужен боевой пропуск"),
+                "нет подсказки про боевой пропуск: " + line);
+        assertFalse(line.contains("забрать"), "без пропуска кнопки быть не должно: " + line);
+        assertFalse(line.contains("<"), "в тексте остались теги: " + line);
+    }
 }

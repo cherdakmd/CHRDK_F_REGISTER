@@ -72,4 +72,58 @@ class BattlePassViewTest {
         assertEquals(0, BattlePassView.filledSegments(5, 0, 8), "нулевая цель не делит на ноль");
         assertEquals(0, BattlePassView.filledSegments(5, 10, 0));
     }
+
+    private static BattlePassConfig.MissionDef premiumOnly() {
+        return new BattlePassConfig.MissionDef("prem_mission", "<gray>Добыть камень</gray>",
+                BattlePassConfig.MissionType.MINE, "stone", 10, 0, 0,
+                BattlePassConfig.DEFAULT_POINTS, java.util.List.of(), "", "", 2,
+                java.util.List.of("trail-flame"));
+    }
+
+    @Test
+    void premiumRewardNeedsPremium() {
+        assertEquals(BattlePassView.State.PREMIUM_LOCKED,
+                new BattlePassView.Mission(premiumOnly(), 10, false, false, false, false, false).state());
+        assertEquals(BattlePassView.State.READY,
+                new BattlePassView.Mission(premiumOnly(), 10, false, false, false, false, true).state());
+        assertEquals(BattlePassView.State.CLAIMED,
+                new BattlePassView.Mission(premiumOnly(), 10, false, false, false, true, false).state());
+    }
+
+    @Test
+    void premiumDoesNotHideFreeReward() {
+        BattlePassView.Mission mission = new BattlePassView.Mission(
+                new BattlePassConfig.MissionDef("mix", "d", BattlePassConfig.MissionType.MINE, "stone",
+                        10, 1, 0, BattlePassConfig.DEFAULT_POINTS, java.util.List.of(), "", "",
+                        2, java.util.List.of()),
+                10, false, false, false, false, false);
+        assertEquals(BattlePassView.State.READY, mission.state(),
+                "бесплатную награду можно забрать без боевого пропуска");
+        assertEquals(2, mission.totalTracks(), "веток две: бесплатная и премиум");
+    }
+
+    @Test
+    void premiumCountsAsTrack() {
+        BattlePassView.Mission mission = new BattlePassView.Mission(
+                premiumOnly(), 10, false, false, false, true, false);
+        assertEquals(1, mission.totalTracks());
+        assertEquals(1, mission.claimedTracks());
+        assertTrue(mission.hasPremium());
+        assertFalse(mission.premiumLeft());
+    }
+
+    @Test
+    void availableTracksSkipLockedPremium() {
+        BattlePassView.Mission locked = new BattlePassView.Mission(
+                new BattlePassConfig.MissionDef("mix", "d", BattlePassConfig.MissionType.MINE,
+                        "stone", 10, 1, 0, BattlePassConfig.DEFAULT_POINTS, java.util.List.of(),
+                        "", "", 2, java.util.List.of()),
+                0, false, false, false, false, false);
+        assertEquals(1, locked.availableTracks(), "без пропуска доступна только бесплатная ветка");
+        assertEquals(2, locked.totalTracks(), "но всего веток две");
+
+        BattlePassView.Mission active = new BattlePassView.Mission(locked.def(), 0,
+                false, false, false, false, true);
+        assertEquals(2, active.availableTracks(), "с боевым пропуском доступны обе");
+    }
 }

@@ -209,6 +209,7 @@ final class BattlePassAdminCommandHandler implements CommandExecutor, TabComplet
                         "target", mission.target(),
                         "free", mission.freeDays(),
                         "vip", mission.vipDays(),
+                        "premium", mission.premiumDays(),
                         "points", mission.points());
             }
         }

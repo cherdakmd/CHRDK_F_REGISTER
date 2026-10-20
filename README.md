@@ -1333,20 +1333,20 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.112-SNAPSHOT.jar`, аддон
-CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.112-SNAPSHOT.jar`, реферальный —
-`referrals/build/libs/chrdk-referrals-1.4.112-SNAPSHOT.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.112-SNAPSHOT.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.112-SNAPSHOT.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.112-SNAPSHOT.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.112-SNAPSHOT.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.112-SNAPSHOT.jar` (хартия чар — при установленном аддоне чар), общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.112-SNAPSHOT.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.112-SNAPSHOT.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.112-SNAPSHOT.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.112-SNAPSHOT.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.112-SNAPSHOT.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.112-SNAPSHOT.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.113-SNAPSHOT.jar`, аддон
+CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.113-SNAPSHOT.jar`, реферальный —
+`referrals/build/libs/chrdk-referrals-1.4.113-SNAPSHOT.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.113-SNAPSHOT.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.113-SNAPSHOT.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.113-SNAPSHOT.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.113-SNAPSHOT.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.113-SNAPSHOT.jar` (хартия чар — при установленном аддоне чар), общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.113-SNAPSHOT.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.113-SNAPSHOT.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.113-SNAPSHOT.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.113-SNAPSHOT.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.113-SNAPSHOT.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.113-SNAPSHOT.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). Оба JAR прикладываются к каждому релизу на GitHub.
 
 ---
@@ -3255,6 +3255,89 @@ CI собирает снапшот как обычный пуш в ветку; �
 
 ---
 
+### CHRDK_BattlePass: премиум-трек — снапшот 1.4.113-SNAPSHOT
+
+Волна 4: у заданий сезона появилась третья колонка наград — золотая. Её
+открывает боевой пропуск, купленный на витрине каталога. Игровой силы награды
+не дают: это дни проходки и товары каталога (косметика, оформление), те же,
+что продаются поштучно.
+
+**Товар**
+
+| id | Цена | Срок | Что открывает |
+|---|---|---|---|
+| `battlepass-premium` | 249 ₽ | 90 дн. | премиум-колонку наград всех заданий сезона |
+
+90 дней — длина сезона; срок складывается с продлением и живёт в аккаунте
+ядра, поэтому переживает рестарт. Команда витрины:
+`pass shopbuy %username% battlepass-premium`.
+
+**Награды**
+
+У задания появились два необязательных ключа:
+
+```yaml
+        - id: hunt_zombies
+          desc: "<gray>Победить зомби</gray>"
+          type: KILL
+          entity: "ZOMBIE|HUSK|DROWNED"
+          target: 40
+          free-days: 1         # всем
+          vip-days: 1          # владельцам проходки
+          premium-days: 2      # владельцам боевого пропуска
+          premium-products: [trail-flame, nick-color]   # до 5 товаров каталога
+```
+
+- `premium-days` — дни проходки. Складываются с остальными ветками и выдаются
+  одним вызовом ядра, чтобы игрок получил одно поздравление, а не пачку.
+- `premium-products` — id товаров каталога. Выдаются через API v5
+  (`grantEntitlement`) без записи продажи: это награда, а не покупка, иначе
+  бесплатные выдачи раздували бы выручку. В аудите — событие `shop.grant`,
+  в `data.json` — обычный срок товара, поэтому `/pass my` показывает подарок.
+- Опечатки не роняют конфиг: кривой id товара, больше пяти товаров или
+  `premium-days` вне `0..3650` отбрасываются с пояснением в `/bpadmin validate`.
+
+**Как игрок это видит**
+
+- В `/battlepass` и меню у задания три состояния: доступно (✔), нужна проходка
+  (◆) и нужен боевой пропуск (★). Кнопка «забрать» появляется, когда доступна
+  хотя бы одна ветка.
+- Награда показывается целиком — `+1 дн. VIP +1 дн. ★ +2 дн. ★ подарок` — даже
+  без пропуска: витрина должна объяснять, за что платят.
+- В шапке — статус боевого пропуска; если что-то готово, но закрыто, внизу
+  строка «Готово к выдаче золотых наград: N».
+- `claim all` забирает всё доступное сразу и отдельно сообщает, сколько
+  премиум-наград пропущено.
+
+**Настройки**
+
+```yaml
+battlepass:
+  premium:
+    enabled: true                  # false — колонка не показывается и не выдаётся
+    product: battlepass-premium    # id товара в shop.products ядра
+```
+
+`premium.enabled: false` важнее купленных сроков: выключили — награды не
+выдаются, даже если у игрока оплаченный пропуск.
+
+**Совместимость**
+
+- Сезон без `premium-*` ключей выглядит и работает как раньше.
+- Старые `messages.yml` не ломаются: новые ключи (`premium-*`, `mission-premium`,
+  `state-premium`, `reward-premium-*`) читаются с диска, а при отсутствии
+  строки выводятся как есть.
+- Статистика `/bpadmin stats` и рейтинг считают премиум-награды отдельной
+  веткой; `/bpadmin list` показывает `★ +N`.
+
+**Тесты:** `BattlePassPremiumTest` (доступ по сроку, выключатель, подсчёт
+наград), `BattlePassConfigTest` (+4: разбор, опечатки, лимит товаров, пустая
+секция), `BattlePassViewTest` (+4: премиум-состояния, счёт веток),
+`BattlePassSettingsTest` (+3: значения по умолчанию, разбор, кривой id),
+`BattlePassScreenTest` (+2: рендер золотой награды и подсказки про пропуск),
+плюс `AddonApiContractTest` проверяет, что методы API v5 остаются
+`default`-методами.
+
 ### CHRDK_Core: наборы и подарки — снапшот 1.4.112-SNAPSHOT
 
 Волна 3: покупки стали собираться в наборы, а подарок — отличаться от обычной
@@ -3362,8 +3445,9 @@ pass shopbuy %username% trails-pack
 - Товар косметики — «чистое право»: ни группы LuckPerms, ни разметки ника.
   Срок хранится в аккаунте, как у остальных товаров каталога.
 - Аддон `CHRDK_Cosmetics` спрашивает у ядра `hasEntitlement(player, product)`
-  (API v4). Купил шлейф — он открыт и без проходки; проходка по-прежнему
-  открывает все шлейфы сразу.
+  (API v4; в 1.4.113 API вырос до v5 — там же появилась выдача товара аддоном).
+  Купил шлейф — он открыт и без проходки; проходка по-прежнему открывает все
+  шлейфы сразу.
 - Набор задаётся в `cosmetics/config.yml` → `shop.pack-products`; шлейф знает
   свой товар через поле `product` (по умолчанию `trail-<id>`).
 - `/cosmetics list` показывает замок 🔒 у закрытых шлейфов и подсказку, где их

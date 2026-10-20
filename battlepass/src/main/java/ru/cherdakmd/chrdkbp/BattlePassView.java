@@ -20,6 +20,8 @@ final class BattlePassView {
         READY,
         /** Цель достигнута, осталась только VIP-награда, а проходки нет. */
         VIP_LOCKED,
+        /** Осталась только премиум-награда, а боевой пропуск не куплен. */
+        PREMIUM_LOCKED,
         /** Все доступные награды уже забраны. */
         CLAIMED
     }
@@ -32,9 +34,18 @@ final class BattlePassView {
      * @param freeClaimed бесплатная награда уже забрана
      * @param vipClaimed  VIP-награда уже забрана
      * @param vipActive   у игрока есть активная проходка
+     * @param premiumClaimed премиум-награда уже забрана
+     * @param premiumActive  у игрока есть активный боевой пропуск
      */
     record Mission(BattlePassConfig.MissionDef def, int progress,
-                   boolean freeClaimed, boolean vipClaimed, boolean vipActive) {
+                   boolean freeClaimed, boolean vipClaimed, boolean vipActive,
+                   boolean premiumClaimed, boolean premiumActive) {
+
+        /** Совместимый конструктор: задание без премиум-трека. */
+        Mission(BattlePassConfig.MissionDef def, int progress,
+                boolean freeClaimed, boolean vipClaimed, boolean vipActive) {
+            this(def, progress, freeClaimed, vipClaimed, vipActive, false, false);
+        }
 
         boolean goalReached() {
             return progress >= def.target();
@@ -56,12 +67,23 @@ final class BattlePassView {
             return hasVip() && !vipClaimed;
         }
 
+        boolean hasPremium() {
+            return def.hasPremium();
+        }
+
+        boolean premiumLeft() {
+            return hasPremium() && !premiumClaimed;
+        }
+
         State state() {
             if (!goalReached()) {
                 return State.PROGRESS;
             }
-            if (freeLeft() || (vipLeft() && vipActive)) {
+            if (freeLeft() || (vipLeft() && vipActive) || (premiumLeft() && premiumActive)) {
                 return State.READY;
+            }
+            if (premiumLeft()) {
+                return State.PREMIUM_LOCKED;
             }
             if (vipLeft()) {
                 return State.VIP_LOCKED;
@@ -69,14 +91,24 @@ final class BattlePassView {
             return State.CLAIMED;
         }
 
-        /** Сколько наград этой ветки уже забрано (0..2). */
+        /** Сколько наград этой ветки уже забрано (0..3). */
         int claimedTracks() {
-            return (hasFree() && freeClaimed ? 1 : 0) + (hasVip() && vipClaimed ? 1 : 0);
+            return (hasFree() && freeClaimed ? 1 : 0) + (hasVip() && vipClaimed ? 1 : 0)
+                    + (hasPremium() && premiumClaimed ? 1 : 0);
         }
 
-        /** Сколько наград всего в задании (0..2). */
+        /** Сколько наград всего в задании (0..3). */
         int totalTracks() {
-            return (hasFree() ? 1 : 0) + (hasVip() ? 1 : 0);
+            return (hasFree() ? 1 : 0) + (hasVip() ? 1 : 0) + (hasPremium() ? 1 : 0);
+        }
+
+        /**
+         * Сколько наград доступно этому игроку: премиум-ветка считается только
+         * с боевым пропуском, иначе «волна пройдена» не наступила бы никогда.
+         */
+        int availableTracks() {
+            return (hasFree() ? 1 : 0) + (hasVip() ? 1 : 0)
+                    + (hasPremium() && premiumActive ? 1 : 0);
         }
 
         /** Прогресс для показа: от 0 до цели (битые данные не ломают строку). */

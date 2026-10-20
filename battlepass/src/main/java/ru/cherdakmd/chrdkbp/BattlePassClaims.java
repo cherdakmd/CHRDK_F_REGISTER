@@ -7,6 +7,8 @@ import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -27,6 +29,33 @@ final class BattlePassClaims {
         this.plugin = plugin;
     }
 
+    /**
+     * Выдаёт товары каталога, не записывая их в журнал продаж: это награда, а не покупка.
+     *
+     * @return сколько товаров реально выдано (каталог мог измениться после рестарта)
+     */
+    private int grantProducts(Player player, List<String> products, String source) {
+        if (products.isEmpty()) {
+            return 0;
+        }
+        ChrdkRegisterApi api = plugin.coreApi();
+        if (api == null) {
+            return 0;
+        }
+        int granted = 0;
+        for (String product : products) {
+            long until = api.grantEntitlement(player.getName(), product, 0, source);
+            if (until <= 0) {
+                plugin.getLogger().warning("Премиум-трек: товар «" + product
+                        + "» не выдан игроку " + player.getName()
+                        + " — товара нет в каталоге ядра или каталог выключен.");
+                continue;
+            }
+            granted++;
+        }
+        return granted;
+    }
+
     /** Забрать все готовые награды. Возвращает число выданных наград (0 — нечего). */
     int claimAll(Player player) {
         Messages messages = plugin.messages();
@@ -42,11 +71,14 @@ final class BattlePassClaims {
         }
         long now = System.currentTimeMillis();
         boolean vipActive = api.passUntil(player.getName()) > now;
+        boolean premiumActive = plugin.premiumActive(player);
         UUID uuid = player.getUniqueId();
 
         int rewards = 0;
         int days = 0;
         int vipSkipped = 0;
+        int premiumSkipped = 0;
+        List<String> products = new ArrayList<>();
         for (int index = 0; index < season.weeks().size(); index++) {
             if (!BattlePassConfig.isUnlocked(season, index, now)) {
                 break;
@@ -59,36 +91,64 @@ final class BattlePassClaims {
                         && !plugin.store().isClaimed(uuid, mission.id(), "FREE");
                 boolean vipLeft = mission.vipDays() > 0
                         && !plugin.store().isClaimed(uuid, mission.id(), "VIP");
+                boolean premiumLeft = mission.hasPremium()
+                        && !plugin.store().isClaimed(uuid, mission.id(), "PREMIUM");
                 if (freeLeft && plugin.store().markClaimed(uuid, mission.id(), "FREE")) {
                     rewards++;
                     days += mission.freeDays();
                 }
-                if (!vipLeft) {
-                    continue;
-                }
-                if (vipActive) {
-                    if (plugin.store().markClaimed(uuid, mission.id(), "VIP")) {
+                if (vipLeft) {
+                    if (vipActive && plugin.store().markClaimed(uuid, mission.id(), "VIP")) {
                         rewards++;
                         days += mission.vipDays();
+                    } else if (!vipActive) {
+                        vipSkipped++;
                     }
-                } else {
-                    vipSkipped++;
+                }
+                if (!premiumLeft) {
+                    continue;
+                }
+                if (!premiumActive) {
+                    premiumSkipped++;
+                } else if (plugin.store().markClaimed(uuid, mission.id(), "PREMIUM")) {
+                    rewards++;
+                    days += mission.premiumDays();
+                    for (String product : mission.premiumProducts()) {
+                        if (!products.contains(product)) {
+                            products.add(product);
+                        }
+                    }
                 }
             }
         }
 
         if (rewards == 0) {
-            if (vipSkipped > 0) {
+            if (premiumSkipped > 0) {
+                messages.send(player, "claim-all-premium-only", "count", premiumSkipped);
+            } else if (vipSkipped > 0) {
                 messages.send(player, "claim-all-vip-only", "count", vipSkipped);
             } else {
                 messages.send(player, "claim-all-empty");
             }
             return 0;
         }
-        api.grantPass(player.getName(), days, "battlepass:claim-all");
-        messages.send(player, "claim-all-summary",
-                "count", rewards, "days", days,
-                "until", DATE.format(Instant.ofEpochMilli(api.passUntil(player.getName()))));
+        if (days > 0) {
+            api.grantPass(player.getName(), days, "battlepass:claim-all");
+        }
+        int granted = grantProducts(player, products, "battlepass:claim-all");
+        if (days > 0) {
+            messages.send(player, "claim-all-summary",
+                    "count", rewards, "days", days,
+                    "until", DATE.format(Instant.ofEpochMilli(api.passUntil(player.getName()))));
+        } else {
+            messages.send(player, "claim-all-products", "count", rewards);
+        }
+        if (granted > 0) {
+            messages.send(player, "premium-products-granted", "count", granted);
+        }
+        if (premiumSkipped > 0) {
+            messages.send(player, "claim-all-premium-skipped", "count", premiumSkipped);
+        }
         if (vipSkipped > 0) {
             messages.send(player, "claim-all-vip-skipped", "count", vipSkipped);
         }
@@ -130,11 +190,14 @@ final class BattlePassClaims {
         }
 
         boolean vipActive = api.passUntil(player.getName()) > now;
+        boolean premiumActive = plugin.premiumActive(player);
         boolean freeLeft = mission.freeDays() > 0
                 && !plugin.store().isClaimed(uuid, mission.id(), "FREE");
         boolean vipLeft = mission.vipDays() > 0
                 && !plugin.store().isClaimed(uuid, mission.id(), "VIP");
-        if (!freeLeft && !vipLeft) {
+        boolean premiumLeft = mission.hasPremium()
+                && !plugin.store().isClaimed(uuid, mission.id(), "PREMIUM");
+        if (!freeLeft && !vipLeft && !premiumLeft) {
             messages.send(player, "already-claimed",
                     "desc", BattlePassScreen.described(mission));
             return false;
@@ -149,18 +212,45 @@ final class BattlePassClaims {
                 && plugin.store().markClaimed(uuid, mission.id(), "VIP")) {
             days += mission.vipDays();
         }
-        if (days <= 0) {
-            messages.send(player, "vip-denied", "days", mission.vipDays(),
-                    "id", mission.id(), "desc", BattlePassScreen.described(mission));
+        boolean premiumSkipped = premiumLeft && !premiumActive;
+        List<String> products = new ArrayList<>();
+        if (premiumLeft && premiumActive
+                && plugin.store().markClaimed(uuid, mission.id(), "PREMIUM")) {
+            days += mission.premiumDays();
+            products.addAll(mission.premiumProducts());
+        }
+        if (days <= 0 && products.isEmpty()) {
+            if (premiumSkipped) {
+                messages.send(player, "premium-denied",
+                        "id", mission.id(), "desc", BattlePassScreen.described(mission));
+            } else {
+                messages.send(player, "vip-denied", "days", mission.vipDays(),
+                        "id", mission.id(), "desc", BattlePassScreen.described(mission));
+            }
             return false;
         }
-        api.grantPass(player.getName(), days, "battlepass:" + mission.id());
-        messages.send(player, "reward",
-                "days", days,
-                "until", DATE.format(Instant.ofEpochMilli(api.passUntil(player.getName()))),
-                "id", mission.id(), "desc", BattlePassScreen.described(mission));
+        if (days > 0) {
+            api.grantPass(player.getName(), days, "battlepass:" + mission.id());
+        }
+        int granted = grantProducts(player, products, "battlepass:" + mission.id());
+        if (days > 0) {
+            messages.send(player, "reward",
+                    "days", days,
+                    "until", DATE.format(Instant.ofEpochMilli(api.passUntil(player.getName()))),
+                    "id", mission.id(), "desc", BattlePassScreen.described(mission));
+        } else {
+            messages.send(player, "reward-products",
+                    "id", mission.id(), "desc", BattlePassScreen.described(mission));
+        }
+        if (granted > 0) {
+            messages.send(player, "premium-products-granted", "count", granted);
+        }
         if (vipSkipped) {
             messages.send(player, "vip-denied", "days", mission.vipDays(),
+                    "id", mission.id(), "desc", BattlePassScreen.described(mission));
+        }
+        if (premiumSkipped) {
+            messages.send(player, "premium-denied",
                     "id", mission.id(), "desc", BattlePassScreen.described(mission));
         }
         plugin.fx().claimed(player, days);

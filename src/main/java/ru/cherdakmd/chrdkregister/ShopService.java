@@ -109,6 +109,27 @@ public final class ShopService {
      *                 только журналом, аудитом и поздравлением получателя
      */
     public Result grant(String playerName, String productId, int days, String actor, String giftFrom) {
+        return grant(playerName, productId, days, actor, giftFrom, true);
+    }
+
+    /**
+     * Выдаёт товар без записи в журнал продаж: награда аддона или компенсация.
+     *
+     * <p>Срок, группа, команды и аудит — те же, что у покупки. Отличие одно: в журнале
+     * донатов не появляется строка с ценой, иначе бесплатные выдачи раздували бы выручку
+     * и ломали сверку с витриной. Событие аудита — {@link AuditLog#SHOP_GRANT}.</p>
+     *
+     * @param source откуда пришла выдача, например {@code battlepass:mine_diamonds}
+     * @return момент окончания срока; {@code 0} — товар не выдан
+     */
+    public long grantInternal(String playerName, String productId, int days, String source) {
+        Result result = grant(playerName, productId, days,
+                source == null || source.isBlank() ? "internal" : source, "", false);
+        return result.granted() ? result.untilMillis() : 0L;
+    }
+
+    private Result grant(String playerName, String productId, int days, String actor,
+                         String giftFrom, boolean recordSale) {
         ShopCatalog catalog = catalog();
         if (!catalog.usable()) {
             return Result.failure(Status.DISABLED, playerName);
@@ -149,13 +170,17 @@ public final class ShopService {
         }
 
         boolean gift = giftFrom != null && !giftFrom.isBlank();
-        access.store().recordShopSale(canonical, product.id(), product.priceRubles(), now,
-                gift ? "gift:" + giftFrom.trim() : "");
-        access.audit().log(gift ? AuditLog.SHOP_GIFT : AuditLog.SHOP_BUY,
+        if (recordSale) {
+            access.store().recordShopSale(canonical, product.id(), product.priceRubles(), now,
+                    gift ? "gift:" + giftFrom.trim() : "");
+        }
+        String event = !recordSale ? AuditLog.SHOP_GRANT
+                : gift ? AuditLog.SHOP_GIFT : AuditLog.SHOP_BUY;
+        access.audit().log(event,
                 gift ? giftFrom.trim() : actor == null || actor.isBlank() ? "console" : actor,
                 canonical, "",
                 AuditLog.details("product", product.id(), "days", length,
-                        "until", until, "price", product.priceRubles(),
+                        "until", until, "price", recordSale ? product.priceRubles() : 0,
                         "included", String.join(",", included)));
 
         Player online = Bukkit.getPlayerExact(canonical);

@@ -48,7 +48,7 @@ final class BattlePassScore {
         return count;
     }
 
-    /** Сколько наград забрано (обе ветки считаются отдельно). */
+    /** Сколько наград забрано (каждая ветка — бесплатная, VIP, премиум — отдельно). */
     static int claimed(BattlePassConfig.Season season, Set<String> marks) {
         int count = 0;
         for (BattlePassConfig.WeekDef week : season.weeks()) {
@@ -57,6 +57,9 @@ final class BattlePassScore {
                     count++;
                 }
                 if (marks.contains(mission.id() + ":VIP")) {
+                    count++;
+                }
+                if (marks.contains(mission.id() + ":PREMIUM")) {
                     count++;
                 }
             }

@@ -23,7 +23,9 @@ public record BattlePassSettings(
         boolean actionbar,
         boolean announceNewWaves,
         boolean menuEnabled,
-        int autosaveSeconds) {
+        int autosaveSeconds,
+        boolean premiumEnabled,
+        String premiumProduct) {
 
     public static final int MIN_BAR_WIDTH = 3;
     public static final int MAX_BAR_WIDTH = 16;
@@ -34,7 +36,8 @@ public record BattlePassSettings(
 
     /** Значения по умолчанию: честная игра включена, всё остальное — удобства. */
     public static BattlePassSettings defaults() {
-        return new BattlePassSettings(false, true, 600, true, 8, true, true, true, true, 300);
+        return new BattlePassSettings(false, true, 600, true, 8, true, true, true, true, 300,
+                true, "battlepass-premium");
     }
 
     public static BattlePassSettings parse(FileConfiguration config) {
@@ -45,6 +48,7 @@ public record BattlePassSettings(
         }
         ConfigurationSection fair = root.getConfigurationSection("fair-play");
         ConfigurationSection display = root.getConfigurationSection("display");
+        ConfigurationSection premium = root.getConfigurationSection("premium");
         return new BattlePassSettings(
                 fair != null && fair.getBoolean("count-creative", false),
                 fair == null || fair.getBoolean("ignore-player-placed", true),
@@ -58,7 +62,16 @@ public record BattlePassSettings(
                 display == null || display.getBoolean("announce-new-waves", true),
                 display == null || display.getBoolean("menu", true),
                 clamp(root.getInt("autosave-seconds", 300),
-                        MIN_AUTOSAVE_SECONDS, MAX_AUTOSAVE_SECONDS));
+                        MIN_AUTOSAVE_SECONDS, MAX_AUTOSAVE_SECONDS),
+                premium == null || premium.getBoolean("enabled", true),
+                product(premium == null ? "battlepass-premium"
+                        : premium.getString("product", "battlepass-premium")));
+    }
+
+    /** id товара каталога: только безопасные символы, иначе — значение по умолчанию. */
+    private static String product(String raw) {
+        String value = raw == null ? "" : raw.trim().toLowerCase(java.util.Locale.ROOT);
+        return value.matches("[a-z0-9][a-z0-9_-]{0,31}") ? value : "battlepass-premium";
     }
 
     private static int clamp(int value, int min, int max) {

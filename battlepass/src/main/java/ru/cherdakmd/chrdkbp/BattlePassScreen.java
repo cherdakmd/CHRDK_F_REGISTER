@@ -54,6 +54,7 @@ final class BattlePassScreen {
             case PROGRESS -> messages.get("mission", placeholders);
             case READY -> messages.get("mission-ready", placeholders);
             case VIP_LOCKED -> messages.get("mission-vip", placeholders);
+            case PREMIUM_LOCKED -> messages.get("mission-premium", placeholders);
             case CLAIMED -> messages.get("mission-claimed", placeholders);
         };
     }
@@ -74,6 +75,7 @@ final class BattlePassScreen {
             case PROGRESS -> trustedRaw(messages.raw("state-progress"));
             case READY -> trustedRaw(messages.raw("state-ready"));
             case VIP_LOCKED -> trustedRaw(messages.raw("state-vip"));
+            case PREMIUM_LOCKED -> trustedRaw(messages.raw("state-premium"));
             case CLAIMED -> trustedRaw(messages.raw("state-claimed"));
         };
     }
@@ -86,22 +88,54 @@ final class BattlePassScreen {
         return trustedRaw(bar);
     }
 
-    /** Награды задания: «+1 дн.», «VIP +2 дн.» или обе ветки сразу. */
+    /**
+     * Награды задания: «+1 дн.», «VIP +2 дн.», «★ +3 дн. и товар» — все ветки сразу.
+     *
+     * <p>Премиум-награда показывается всегда, даже без боевого пропуска: витрина
+     * должна объяснять, за что платят. Доступность видна по иконке состояния.</p>
+     */
     Messages.Trusted reward(BattlePassConfig.MissionDef mission) {
-        boolean free = mission.freeDays() > 0;
-        boolean vip = mission.vipDays() > 0;
-        String text;
-        if (free && vip) {
-            text = messages.raw("reward-both",
-                    "free", mission.freeDays(), "vip", mission.vipDays());
-        } else if (free) {
-            text = messages.raw("reward-free", "days", mission.freeDays());
-        } else if (vip) {
-            text = messages.raw("reward-vip", "days", mission.vipDays());
-        } else {
-            return Messages.trusted("");
+        if (!mission.hasPremium()) {
+            boolean free = mission.freeDays() > 0;
+            boolean vip = mission.vipDays() > 0;
+            String text;
+            if (free && vip) {
+                text = messages.raw("reward-both",
+                        "free", mission.freeDays(), "vip", mission.vipDays());
+            } else if (free) {
+                text = messages.raw("reward-free", "days", mission.freeDays());
+            } else if (vip) {
+                text = messages.raw("reward-vip", "days", mission.vipDays());
+            } else {
+                return Messages.trusted("");
+            }
+            return trustedRaw(text);
         }
-        return trustedRaw(text);
+
+        StringBuilder text = new StringBuilder();
+        if (mission.freeDays() > 0) {
+            text.append(messages.raw("reward-free", "days", mission.freeDays()));
+        }
+        if (mission.vipDays() > 0) {
+            if (text.length() > 0) {
+                text.append(' ');
+            }
+            text.append(messages.raw("reward-vip", "days", mission.vipDays()));
+        }
+        if (text.length() > 0) {
+            text.append(' ');
+        }
+        if (mission.premiumDays() > 0) {
+            text.append(messages.raw("reward-premium-days", "days", mission.premiumDays()));
+        }
+        if (!mission.premiumProducts().isEmpty()) {
+            if (mission.premiumDays() > 0) {
+                text.append(' ');
+            }
+            text.append(messages.raw("reward-premium-item",
+                    "count", mission.premiumProducts().size()));
+        }
+        return trustedRaw(text.toString());
     }
 
     /** Кнопка «забрать» для готовой награды или подсказка «нужна проходка». */
@@ -110,6 +144,7 @@ final class BattlePassScreen {
             case READY -> trustedRaw(messages.raw("mission-claim-hint",
                     "label", label, "id", view.def().id()));
             case VIP_LOCKED -> trustedRaw(messages.raw("mission-vip-hint"));
+            case PREMIUM_LOCKED -> trustedRaw(messages.raw("mission-premium-hint"));
             default -> Messages.trusted("");
         };
     }

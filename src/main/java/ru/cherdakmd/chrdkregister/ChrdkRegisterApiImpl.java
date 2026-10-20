@@ -16,11 +16,14 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
     private final JavaPlugin plugin;
     private final AccessManager accessManager;
     private final ExternalHooks hooks;
+    private final ShopService shop;
 
-    ChrdkRegisterApiImpl(JavaPlugin plugin, AccessManager accessManager, ExternalHooks hooks) {
+    ChrdkRegisterApiImpl(JavaPlugin plugin, AccessManager accessManager, ExternalHooks hooks,
+                         ShopService shop) {
         this.plugin = plugin;
         this.accessManager = accessManager;
         this.hooks = hooks;
+        this.shop = shop;
     }
 
     @Override
@@ -83,6 +86,11 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
     @Override
     public long entitlementUntil(String playerName, String productId) {
         return accessManager.store().entitlementUntil(playerName, productId);
+    }
+
+    @Override
+    public long grantEntitlement(String playerName, String productId, int days, String source) {
+        return shop.grantInternal(playerName, productId, days, source);
     }
 
     @Override
