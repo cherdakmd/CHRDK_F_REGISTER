@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Плейсхолдеры PlaceholderAPI для таб-листа и скорбордов.
@@ -22,7 +23,12 @@ import java.util.Optional;
  *   <li>{@code %chrdkstreams_today%} — суток получено сегодня;</li>
  *   <li>{@code %chrdkstreams_days%} — суток получено всего;</li>
  *   <li>{@code %chrdkstreams_rule%} — минут эфира за сутки (из конфига);</li>
- *   <li>{@code %chrdkstreams_max_today%} — дневной потолок.</li>
+ *   <li>{@code %chrdkstreams_max_today%} — дневной потолок;</li>
+ *   <li>{@code %chrdkstreams_watching%} — чей эфир смотрит игрок (или {@code —});</li>
+ *   <li>{@code %chrdkstreams_watch_pending%} — минут просмотра до следующих суток;</li>
+ *   <li>{@code %chrdkstreams_watch_today%} — суток за просмотр сегодня;</li>
+ *   <li>{@code %chrdkstreams_watch_days%} — суток за просмотр всего;</li>
+ *   <li>{@code %chrdkstreams_watchers%} — подтверждённых зрителей у стримера.</li>
  * </ul>
  */
 public final class StreamPlaceholders extends PlaceholderExpansion {
@@ -68,6 +74,9 @@ public final class StreamPlaceholders extends PlaceholderExpansion {
         if (player == null) {
             return "";
         }
+        if (isViewerKey(key)) {
+            return viewerValue(player.getUniqueId(), key);
+        }
         Optional<StreamBinding> found = plugin.store().get(player.getUniqueId());
         if (found.isEmpty()) {
             return switch (key) {
@@ -86,6 +95,35 @@ public final class StreamPlaceholders extends PlaceholderExpansion {
                     StreamRewards.pendingMinutes(binding.state(), config.rule()));
             case "today" -> Integer.toString(binding.state().awardedToday());
             case "days" -> Integer.toString(binding.state().totalDays());
+            default -> null;
+        };
+    }
+
+    private static boolean isViewerKey(String key) {
+        return "watching".equals(key) || "watchers".equals(key) || key.startsWith("watch_");
+    }
+
+    /** Зрительские плейсхолдеры: только сохранённые данные, без запросов к площадкам. */
+    private String viewerValue(UUID uuid, String key) {
+        if ("watchers".equals(key)) {
+            return Integer.toString(plugin.viewerStore().viewersOf(uuid).size());
+        }
+        Optional<ViewerBinding> found = plugin.viewerStore().viewer(uuid);
+        if (found.isEmpty()) {
+            return switch (key) {
+                case "watching" -> NONE;
+                case "watch_pending", "watch_today", "watch_days" -> "0";
+                default -> null;
+            };
+        }
+        ViewerBinding binding = found.get();
+        StreamRewards.State state = plugin.viewerStore().progress(uuid);
+        StreamRewards.Rule rule = plugin.config().viewers().rule();
+        return switch (key) {
+            case "watching" -> binding.streamerName().isBlank() ? NONE : binding.streamerName();
+            case "watch_pending" -> Long.toString(StreamRewards.pendingMinutes(state, rule));
+            case "watch_today" -> Integer.toString(state.awardedToday());
+            case "watch_days" -> Integer.toString(state.totalDays());
             default -> null;
         };
     }

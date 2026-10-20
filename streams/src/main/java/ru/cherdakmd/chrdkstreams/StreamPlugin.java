@@ -45,7 +45,7 @@ public final class StreamPlugin extends JavaPlugin {
         viewerStore.load();
 
         this.service = new StreamService(this, store, config);
-        this.viewerService = new ViewerService(this, viewerStore, store, service, config);
+        this.viewerService = new ViewerService(this, store, viewerStore, service, config);
         this.tagService = new StreamerTagService(this, store, config);
 
         PluginCommand command = getCommand("stream");
@@ -121,8 +121,10 @@ public final class StreamPlugin extends JavaPlugin {
                 + cfg.minutesPerDay() + " мин. эфира = 1 сутки, максимум "
                 + cfg.maxDaysPerDay() + " суток в день, привязок " + store.size() + ".");
         if (cfg.tags().enabled()) {
+            // manageTabNames() опрашивает Bukkit — только из основного потока.
+            boolean tab = manageTabNames();
             getLogger().info("[Streams] Метка стримера: [" + cfg.tags().label() + "]"
-                    + (manageTabNames() ? " в чате и TAB."
+                    + (tab ? " в чате и TAB."
                     : " в чате, TAB ведёт ядро (добавьте %player_tagged% в tablist)."));
         }
         if (cfg.viewers().enabled()) {

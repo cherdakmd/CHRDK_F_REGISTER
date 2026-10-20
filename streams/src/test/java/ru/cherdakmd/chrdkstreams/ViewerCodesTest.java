@@ -49,14 +49,13 @@ class ViewerCodesTest {
     @Test
     void creditIsCappedByCodeWindow() {
         long window = 10 * 60_000L;
-        assertEquals(0L, ViewerCodes.creditMillis(60 * 60_000L, 0L, window),
-                "первый чек-ин ничего не даёт");
-        assertEquals(5 * 60_000L,
-                ViewerCodes.creditMillis(6 * 60_000L, 1 * 60_000L, window));
-        assertEquals(window, ViewerCodes.creditMillis(60 * 60_000L, 1L, window),
+        assertEquals(0L, ViewerCodes.creditMillis(0L, window),
+                "первый чек-ин ничего не даёт — он только запускает счёт");
+        assertEquals(5 * 60_000L, ViewerCodes.creditMillis(5 * 60_000L, window));
+        assertEquals(window, ViewerCodes.creditMillis(60 * 60_000L, window),
                 "час отсутствия не превращается в час просмотра");
-        assertEquals(0L, ViewerCodes.creditMillis(1_000L, 1_000L, window));
-        assertEquals(0L, ViewerCodes.creditMillis(500L, 1_000L, window));
+        assertEquals(0L, ViewerCodes.creditMillis(-1L, window));
+        assertEquals(0L, ViewerCodes.creditMillis(5 * 60_000L, 0L));
     }
 
     @Test

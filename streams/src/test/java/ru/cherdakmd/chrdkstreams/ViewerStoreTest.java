@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** streams-viewers.json: стримеры, заявки и прогресс зрителей переживают перезапуск. */
+/** streams-viewers.json: настройки стримера, заявки и прогресс зрителей переживают перезапуск. */
 class ViewerStoreTest {
 
     private static final Logger LOGGER = Logger.getLogger("ViewerStoreTest");
@@ -28,9 +28,9 @@ class ViewerStoreTest {
     }
 
     @Test
-    void roundTripKeepsStreamerViewerAndProgress() {
+    void roundTripKeepsSettingsViewerAndProgress() {
         ViewerStore store = store();
-        store.putStreamer(new ViewerStore.StreamerState(STREAMER, "Streamer", true,
+        store.putSettings(new ViewerSettings(STREAMER, "Streamer", true,
                 "WATCH-7K2M", 1_800_000_600_000L));
         store.putViewer(new ViewerBinding(VIEWER, "Steve", STREAMER, "Streamer",
                 true, 1_800_000_000_000L, 1_800_000_300_000L));
@@ -40,10 +40,10 @@ class ViewerStoreTest {
         ViewerStore loaded = store();
         loaded.load();
 
-        ViewerStore.StreamerState state = loaded.streamer(STREAMER).orElseThrow();
-        assertTrue(state.enabled());
-        assertEquals("WATCH-7K2M", state.code());
-        assertEquals(1_800_000_600_000L, state.codeUntil());
+        ViewerSettings settings = loaded.settings(STREAMER).orElseThrow();
+        assertTrue(settings.enabled());
+        assertEquals("WATCH-7K2M", settings.code());
+        assertEquals(1_800_000_600_000L, settings.codeUntil());
 
         ViewerBinding binding = loaded.viewer(VIEWER).orElseThrow();
         assertTrue(binding.accepted());
@@ -55,18 +55,20 @@ class ViewerStoreTest {
     }
 
     @Test
-    void removeStreamerDropsViewersButKeepsProgress() {
+    void disablingStreamerKeepsViewersAndTheirProgress() {
         ViewerStore store = store();
-        store.putStreamer(new ViewerStore.StreamerState(STREAMER, "Streamer", true, "WATCH-ABCD", 0L));
+        store.putSettings(new ViewerSettings(STREAMER, "Streamer", true, "WATCH-ABCD", 0L));
         store.putViewer(new ViewerBinding(VIEWER, "Steve", STREAMER, "Streamer", true, 1L, 2L));
         store.putProgress(VIEWER, new StreamRewards.State(1, 1, 0L, 3));
 
-        assertEquals(1, store.removeStreamer(STREAMER));
+        assertTrue(store.removeSettings(STREAMER));
 
-        assertTrue(store.streamer(STREAMER).isEmpty());
-        assertTrue(store.viewer(VIEWER).isEmpty());
+        assertTrue(store.settings(STREAMER).isEmpty());
+        assertTrue(store.viewer(VIEWER).isPresent(),
+                "прогресс и привязка зрителя не должны сгорать из-за выключения");
         assertEquals(3, store.progress(VIEWER).totalDays(),
-                "дневной потолок нельзя сбросить отпиской");
+                "дневной потолок нельзя сбросить переподключением");
+        assertEquals(0, store.streamerCount());
     }
 
     @Test
@@ -78,7 +80,7 @@ class ViewerStoreTest {
         assertTrue(store.pendingByName(STREAMER, "STEVE").isPresent());
         assertTrue(store.pendingByName(STREAMER, "Alex").isEmpty());
 
-        store.putViewer(store.viewer(VIEWER).orElseThrow().accept(5L));
+        store.putViewer(store.viewer(VIEWER).orElseThrow().accept());
         assertTrue(store.pendingByName(STREAMER, "Steve").isEmpty(),
                 "подтверждённая заявка уже не «ждёт»");
     }

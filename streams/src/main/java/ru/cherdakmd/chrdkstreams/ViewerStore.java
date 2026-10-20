@@ -24,15 +24,14 @@ import java.util.logging.Logger;
 /**
  * Хранилище зрительской программы: {@code streams-viewers.json}.
  *
- * <p>Три независимых раздела:</p>
+ * <p>Две независимые коллекции:</p>
  * <ul>
- *   <li>{@code streamers} — у кого включён просмотр, какой код сейчас показан;</li>
- *   <li>{@code viewers} — кто смотрит чей канал и подтверждён ли он;</li>
- *   <li>{@code progress} — накопленные минуты и выданные сутки <b>на зрителя</b>,
- *       а не на канал: смена канала или отписка не сбрасывает дневной потолок.</li>
+ *   <li>{@code streamers} — у кого включён просмотр и какой код сейчас показан;</li>
+ *   <li>{@code viewers} — привязки зрителей: заявка, подтверждение и прогресс.</li>
  * </ul>
  *
- * <p>Запись атомарная (temp + move), битые строки пропускаются.</p>
+ * <p>Формат — явные ключи, чтение терпимое (битая строка пропускается), запись
+ * атомарная: temp + move.</p>
  */
 final class ViewerStore {
 
@@ -40,30 +39,14 @@ final class ViewerStore {
 
     private final Path file;
     private final Logger logger;
-    private final Map<UUID, StreamerState> streamers = new LinkedHashMap<>();
+    private final Map<UUID, ViewerSettings> streamers = new LinkedHashMap<>();
     private final Map<UUID, ViewerBinding> viewers = new LinkedHashMap<>();
+    /** Прогресс зрителя: живёт отдельно от привязки, поэтому отписка его не сбрасывает. */
     private final Map<UUID, StreamRewards.State> progress = new LinkedHashMap<>();
 
     ViewerStore(Path dataFolder, Logger logger) {
         this.file = dataFolder.resolve("streams-viewers.json");
         this.logger = logger;
-    }
-
-    /** Настройки просмотра у стримера. */
-    record StreamerState(UUID streamer, String name, boolean enabled, String code, long codeUntil) {
-
-        StreamerState {
-            name = name == null ? "" : name.trim();
-            code = code == null ? "" : code.trim();
-        }
-
-        StreamerState withCode(String newCode, long untilMillis) {
-            return new StreamerState(streamer, name, enabled, newCode, untilMillis);
-        }
-
-        StreamerState renamed(String newName) {
-            return new StreamerState(streamer, newName, enabled, code, codeUntil);
-        }
     }
 
     /* ------------------------------ чтение/запись ------------------------------ */
@@ -81,14 +64,29 @@ final class ViewerStore {
                 return;
             }
             JsonObject object = root.getAsJsonObject();
-            for (JsonElement element : array(object, "streamers")) {
-                readStreamer(element).ifPresent(state -> streamers.put(state.streamer(), state));
+            if (object.has("streamers") && object.get("streamers").isJsonArray()) {
+                for (JsonElement element : object.getAsJsonArray("streamers")) {
+                    ViewerSettings settings = readSettings(element);
+                    if (settings != null) {
+                        streamers.put(settings.streamer(), settings);
+                    }
+                }
             }
-            for (JsonElement element : array(object, "viewers")) {
-                readViewer(element).ifPresent(binding -> viewers.put(binding.uuid(), binding));
+            if (object.has("viewers") && object.get("viewers").isJsonArray()) {
+                for (JsonElement element : object.getAsJsonArray("viewers")) {
+                    ViewerBinding binding = readBinding(element);
+                    if (binding != null) {
+                        viewers.put(binding.uuid(), binding);
+                    }
+                }
             }
-            for (JsonElement element : array(object, "progress")) {
-                readProgress(element).ifPresent(entry -> progress.put(entry.uuid(), entry.state()));
+            if (object.has("progress") && object.get("progress").isJsonArray()) {
+                for (JsonElement element : object.getAsJsonArray("progress")) {
+                    Map.Entry<UUID, StreamRewards.State> entry = readProgress(element);
+                    if (entry != null) {
+                        progress.put(entry.getKey(), entry.getValue());
+                    }
+                }
             }
         } catch (IOException | RuntimeException exception) {
             logger.warning("[Streams] Не удалось прочитать streams-viewers.json: "
@@ -98,20 +96,20 @@ final class ViewerStore {
 
     synchronized void save() {
         JsonArray streamerArray = new JsonArray();
-        for (StreamerState state : streamers.values()) {
+        for (ViewerSettings settings : streamers.values()) {
             JsonObject entry = new JsonObject();
-            entry.addProperty("uuid", state.streamer().toString());
-            entry.addProperty("name", state.name());
-            entry.addProperty("enabled", state.enabled());
-            entry.addProperty("code", state.code());
-            entry.addProperty("codeUntil", state.codeUntil());
+            entry.addProperty("uuid", settings.streamer().toString());
+            entry.addProperty("name", settings.streamerName());
+            entry.addProperty("enabled", settings.enabled());
+            entry.addProperty("code", settings.code());
+            entry.addProperty("codeUntil", settings.codeUntil());
             streamerArray.add(entry);
         }
         JsonArray viewerArray = new JsonArray();
         for (ViewerBinding binding : viewers.values()) {
             JsonObject entry = new JsonObject();
             entry.addProperty("uuid", binding.uuid().toString());
-            entry.addProperty("name", binding.name());
+            entry.addProperty("name", binding.playerName());
             entry.addProperty("streamer", binding.streamer().toString());
             entry.addProperty("streamerName", binding.streamerName());
             entry.addProperty("accepted", binding.accepted());
@@ -120,14 +118,14 @@ final class ViewerStore {
             viewerArray.add(entry);
         }
         JsonArray progressArray = new JsonArray();
-        for (Map.Entry<UUID, StreamRewards.State> entry : progress.entrySet()) {
-            JsonObject object = new JsonObject();
-            object.addProperty("uuid", entry.getKey().toString());
-            object.addProperty("day", entry.getValue().day());
-            object.addProperty("awardedToday", entry.getValue().awardedToday());
-            object.addProperty("pendingMillis", entry.getValue().pendingMillis());
-            object.addProperty("totalDays", entry.getValue().totalDays());
-            progressArray.add(object);
+        for (Map.Entry<UUID, StreamRewards.State> state : progress.entrySet()) {
+            JsonObject entry = new JsonObject();
+            entry.addProperty("uuid", state.getKey().toString());
+            entry.addProperty("day", state.getValue().day());
+            entry.addProperty("awardedToday", state.getValue().awardedToday());
+            entry.addProperty("pendingMillis", state.getValue().pendingMillis());
+            entry.addProperty("totalDays", state.getValue().totalDays());
+            progressArray.add(entry);
         }
         JsonObject root = new JsonObject();
         root.add("streamers", streamerArray);
@@ -144,94 +142,68 @@ final class ViewerStore {
         }
     }
 
-    private static JsonArray array(JsonObject root, String key) {
-        return root.has(key) && root.get(key).isJsonArray()
-                ? root.getAsJsonArray(key) : new JsonArray();
-    }
-
-    private static Optional<StreamerState> readStreamer(JsonElement element) {
+    private static ViewerSettings readSettings(JsonElement element) {
         if (element == null || !element.isJsonObject()) {
-            return Optional.empty();
+            return null;
         }
         JsonObject entry = element.getAsJsonObject();
         try {
-            return Optional.of(new StreamerState(
+            return new ViewerSettings(
                     UUID.fromString(string(entry, "uuid")),
                     string(entry, "name"),
                     bool(entry, "enabled"),
                     string(entry, "code"),
-                    longOf(entry, "codeUntil")));
+                    longOf(entry, "codeUntil"));
         } catch (RuntimeException exception) {
-            return Optional.empty();
+            return null;
         }
     }
 
-    private static Optional<ViewerBinding> readViewer(JsonElement element) {
+    private static ViewerBinding readBinding(JsonElement element) {
         if (element == null || !element.isJsonObject()) {
-            return Optional.empty();
+            return null;
         }
         JsonObject entry = element.getAsJsonObject();
         try {
-            return Optional.of(new ViewerBinding(
-                    UUID.fromString(string(entry, "uuid")),
-                    string(entry, "name"),
-                    UUID.fromString(string(entry, "streamer")),
-                    string(entry, "streamerName"),
-                    bool(entry, "accepted"),
-                    longOf(entry, "requestedAt"),
-                    longOf(entry, "lastCheckIn")));
+            UUID streamer = UUID.fromString(string(entry, "streamer"));
+            UUID viewer = UUID.fromString(string(entry, "uuid"));
+            return new ViewerBinding(viewer, string(entry, "name"), streamer,
+                    string(entry, "streamerName"), bool(entry, "accepted"),
+                    longOf(entry, "requestedAt"), longOf(entry, "lastCheckIn"));
         } catch (RuntimeException exception) {
-            return Optional.empty();
+            return null; // битая строка — пропускаем
         }
-    }
-
-    private static Optional<ProgressEntry> readProgress(JsonElement element) {
-        if (element == null || !element.isJsonObject()) {
-            return Optional.empty();
-        }
-        JsonObject entry = element.getAsJsonObject();
-        try {
-            return Optional.of(new ProgressEntry(
-                    UUID.fromString(string(entry, "uuid")),
-                    new StreamRewards.State(
-                            (int) longOf(entry, "day"),
-                            (int) longOf(entry, "awardedToday"),
-                            longOf(entry, "pendingMillis"),
-                            (int) longOf(entry, "totalDays"))));
-        } catch (RuntimeException exception) {
-            return Optional.empty();
-        }
-    }
-
-    private record ProgressEntry(UUID uuid, StreamRewards.State state) {
     }
 
     /* ------------------------------ стримеры ------------------------------ */
 
-    synchronized Optional<StreamerState> streamer(UUID streamer) {
+    synchronized Optional<ViewerSettings> settings(UUID streamer) {
         return Optional.ofNullable(streamers.get(streamer));
     }
 
-    synchronized void putStreamer(StreamerState state) {
-        if (state != null) {
-            streamers.put(state.streamer(), state);
+    synchronized void putSettings(ViewerSettings settings) {
+        if (settings != null) {
+            streamers.put(settings.streamer(), settings);
         }
     }
 
-    synchronized Collection<StreamerState> allStreamers() {
+    /** Выключить просмотр у стримера. Привязки зрителей остаются: их прогресс не сгорает. */
+    synchronized boolean removeSettings(UUID streamer) {
+        return streamers.remove(streamer) != null;
+    }
+
+    synchronized Collection<ViewerSettings> allStreamers() {
         return List.copyOf(new ArrayList<>(streamers.values()));
     }
 
-    /**
-     * Выключает просмотр у стримера и убирает его зрителей.
-     *
-     * @return сколько заявок удалено
-     */
-    synchronized int removeStreamer(UUID streamer) {
-        streamers.remove(streamer);
-        int before = viewers.size();
-        viewers.values().removeIf(binding -> binding.streamer().equals(streamer));
-        return before - viewers.size();
+    synchronized int streamerCount() {
+        int count = 0;
+        for (ViewerSettings settings : streamers.values()) {
+            if (settings.enabled()) {
+                count++;
+            }
+        }
+        return count;
     }
 
     /* ------------------------------ зрители ------------------------------ */
@@ -246,22 +218,25 @@ final class ViewerStore {
         }
     }
 
-    /** Убрать заявку зрителя (прогресс при этом сохраняется). */
-    synchronized Optional<ViewerBinding> removeViewer(UUID viewer) {
-        return Optional.ofNullable(viewers.remove(viewer));
+    synchronized boolean removeViewer(UUID viewer) {
+        return viewers.remove(viewer) != null;
     }
 
-    synchronized Collection<ViewerBinding> viewersOf(UUID streamer) {
+    synchronized Collection<ViewerBinding> allViewers() {
+        return List.copyOf(new ArrayList<>(viewers.values()));
+    }
+
+    synchronized List<ViewerBinding> viewersOf(UUID streamer) {
         List<ViewerBinding> result = new ArrayList<>();
         for (ViewerBinding binding : viewers.values()) {
-            if (binding.streamer().equals(streamer)) {
+            if (binding.streamer().equals(streamer) && binding.accepted()) {
                 result.add(binding);
             }
         }
         return List.copyOf(result);
     }
 
-    synchronized Collection<ViewerBinding> pendingOf(UUID streamer) {
+    synchronized List<ViewerBinding> pendingOf(UUID streamer) {
         List<ViewerBinding> result = new ArrayList<>();
         for (ViewerBinding binding : viewers.values()) {
             if (binding.streamer().equals(streamer) && !binding.accepted()) {
@@ -271,12 +246,24 @@ final class ViewerStore {
         return List.copyOf(result);
     }
 
-    /** Зритель по нику среди заявок конкретного стримера. */
+    /** Привязки всех стримеров, которые сейчас подключены к просмотру. */
+    synchronized List<ViewerBinding> viewersOfEnabledStreamers() {
+        List<ViewerBinding> result = new ArrayList<>();
+        for (ViewerBinding binding : viewers.values()) {
+            ViewerSettings settings = streamers.get(binding.streamer());
+            if (settings != null && settings.enabled()) {
+                result.add(binding);
+            }
+        }
+        return List.copyOf(result);
+    }
+
+    /** Заявка от конкретного игрока к конкретному стримеру (для идемпотентности). */
     synchronized Optional<ViewerBinding> pendingByName(UUID streamer, String playerName) {
         String wanted = playerName == null ? "" : playerName.trim();
         for (ViewerBinding binding : viewers.values()) {
             if (binding.streamer().equals(streamer) && !binding.accepted()
-                    && binding.name().equalsIgnoreCase(wanted)) {
+                    && binding.playerName().equalsIgnoreCase(wanted)) {
                 return Optional.of(binding);
             }
         }
@@ -290,19 +277,37 @@ final class ViewerStore {
     /* ------------------------------ прогресс ------------------------------ */
 
     synchronized StreamRewards.State progress(UUID viewer) {
-        return progress.getOrDefault(viewer, StreamRewards.State.empty());
+        StreamRewards.State state = progress.get(viewer);
+        return state == null ? StreamRewards.State.empty() : state;
     }
 
     synchronized void putProgress(UUID viewer, StreamRewards.State state) {
-        if (viewer == null || state == null) {
+        if (viewer == null || state == null || state.equals(StreamRewards.State.empty())) {
+            progress.remove(viewer);
             return;
         }
-        if (state.equals(StreamRewards.State.empty())) {
-            progress.remove(viewer);
-        } else {
-            progress.put(viewer, state);
+        progress.put(viewer, state);
+    }
+
+    private static Map.Entry<UUID, StreamRewards.State> readProgress(JsonElement element) {
+        if (element == null || !element.isJsonObject()) {
+            return null;
+        }
+        JsonObject entry = element.getAsJsonObject();
+        try {
+            UUID uuid = UUID.fromString(string(entry, "uuid"));
+            StreamRewards.State state = new StreamRewards.State(
+                    (int) longOf(entry, "day"),
+                    (int) longOf(entry, "awardedToday"),
+                    longOf(entry, "pendingMillis"),
+                    (int) longOf(entry, "totalDays"));
+            return Map.entry(uuid, state);
+        } catch (RuntimeException exception) {
+            return null;
         }
     }
+
+    /* ------------------------------ разбор JSON ------------------------------ */
 
     private static String string(JsonObject object, String key) {
         return object.has(key) && object.get(key).isJsonPrimitive()

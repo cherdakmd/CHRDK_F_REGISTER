@@ -2,7 +2,6 @@ package ru.cherdakmd.chrdkstreams;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 
@@ -18,181 +17,167 @@ import java.util.logging.Level;
 /**
  * Награды зрителям за просмотр.
  *
- * <p>Цепочка такая:</p>
+ * <p>Правила программы:</p>
  * <ol>
- *   <li>стример включает просмотр ({@code /stream viewers on}) — плагин выдаёт
- *       код {@code WATCH-XXXX}, который стример показывает на экране эфира;</li>
- *   <li>зритель подаёт заявку ({@code /stream watch <стример>}); стример
- *       подтверждает её, если человек подписан на его каналы (проверка
- *       фолловера вручную — официального API для неё нет);</li>
- *   <li>зритель вводит код из эфира ({@code /stream code <код>}) — это и есть
- *       доказательство, что он смотрит сейчас, а не «зашёл однажды»;</li>
- *   <li>за каждый ввод начисляются минуты, но не больше окна кода и не чаще
- *       {@code checkin-min-minutes}; минуты копятся в сутки проходки по тем же
- *       правилам и потолкам, что у стримера.</li>
+ *   <li>зритель подаёт заявку ({@code /stream watch <стример>});</li>
+ *   <li>стример подтверждает её, проверив по панели канала, что человек
+ *       подписан на его каналы ({@code /stream viewer accept <ник>});</li>
+ *   <li>стример включает код ({@code /stream viewers on}) и показывает его в
+ *       эфире; код меняется каждые {@code code-window-minutes};</li>
+ *   <li>зритель вводит код ({@code /stream code <код>}) — плагин проверяет,
+ *       что эфир действительно идёт, и засчитывает время с прошлого чек-ина, но
+ *       не больше окна кода;</li>
+ *   <li>минуты копятся в дни проходки по отдельным, более строгим потолкам,
+ *       чем у стримера.</li>
  * </ol>
  *
- * <p>Код меняется каждые {@code code-window-minutes}: если зритель перестал
- * смотреть, он пропустит смену и перестанет получать минуты.</p>
+ * <p>Проверить фолловера автоматически нельзя: Twitch не отдаёт список
+ * подписчиков без входа каждого зрителя, у VK Play Live такого API нет. Поэтому
+ * подписку подтверждает стример, а просмотр доказывает код в эфире.</p>
  */
 final class ViewerService {
 
-    /** Источник в аудите: начинается с {@code streams}, поэтому подпись — «наградой стримерской программы». */
+    /** Источник в аудите ядра: начинается с {@code streams} — подпись «наградой стримерской программы». */
     static final String SOURCE = "streams:watch";
-    private static final String LABEL = "stream";
 
     private final StreamPlugin plugin;
-    private final ViewerStore store;
-    private final StreamStore streams;
-    private final StreamService streamService;
+    private final StreamStore store;
+    private final ViewerStore viewers;
+    private final StreamService service;
 
-    /** Защита от двойного чек-ина одного зрителя (команда + сеть). */
+    /** Защита от двойного чек-ина, пока идёт запрос к площадке. */
     private final Set<UUID> checking = ConcurrentHashMap.newKeySet();
 
     private volatile StreamConfig config;
-    private BukkitTask rotateTask;
 
-    ViewerService(StreamPlugin plugin, ViewerStore store, StreamStore streams,
-                  StreamService streamService, StreamConfig config) {
+    ViewerService(StreamPlugin plugin, StreamStore store, ViewerStore viewers,
+                  StreamService service, StreamConfig config) {
         this.plugin = plugin;
         this.store = store;
-        this.streams = streams;
-        this.streamService = streamService;
+        this.viewers = viewers;
+        this.service = service;
         this.config = config;
     }
 
-    /* ------------------------------ жизненный цикл ------------------------------ */
-
-    synchronized void start() {
-        stopTask();
-        rotateTask = Bukkit.getScheduler().runTaskTimer(plugin, this::rotateCodes, 20L, 20L);
-    }
-
-    synchronized void stop() {
-        stopTask();
+    void start() {
         checking.clear();
     }
 
-    synchronized void update(StreamConfig newConfig) {
+    void stop() {
+        checking.clear();
+    }
+
+    void update(StreamConfig newConfig) {
         this.config = newConfig;
     }
 
-    private void stopTask() {
-        if (rotateTask != null) {
-            rotateTask.cancel();
-            rotateTask = null;
-        }
-    }
+    /* ------------------------------ стример ------------------------------ */
 
-    /** Раз в секунду: у включённых стримеров истекает окно кода — выдаём новый. */
-    private void rotateCodes() {
-        StreamConfig cfg = config;
-        if (!cfg.enabled() || !cfg.viewers().enabled()) {
-            return;
-        }
-        long now = System.currentTimeMillis();
-        long window = cfg.viewers().codeWindowMillis();
-        boolean changed = false;
-        for (ViewerStore.StreamerState state : store.allStreamers()) {
-            if (!state.enabled()) {
-                continue;
-            }
-            if (!state.code().isBlank() && !ViewerCodes.expired(now, state.codeUntil())) {
-                continue;
-            }
-            store.putStreamer(state.withCode(ViewerCodes.generate(), now + window));
-            changed = true;
-        }
-        if (changed) {
-            store.save();
-        }
-    }
-
-    /* ------------------------------ настройки стримера ------------------------------ */
-
-    /** Включить/выключить просмотр у своего канала. */
+    /** Включить или выключить награды за просмотр у своего канала. */
     void enable(Player streamer, boolean enabled) {
-        StreamConfig cfg = config;
-        if (!cfg.enabled() || !cfg.viewers().enabled()) {
-            plugin.messages().send(streamer, "watch-disabled");
+        if (!ready(streamer)) {
             return;
         }
-        if (streams.get(streamer.getUniqueId()).filter(StreamBinding::verified).isEmpty()) {
-            plugin.messages().send(streamer, "viewers-no-channel");
-            return;
-        }
+        UUID uuid = streamer.getUniqueId();
         if (!enabled) {
-            int removed = store.removeStreamer(streamer.getUniqueId());
-            store.save();
-            plugin.messages().send(streamer, "viewers-disabled", "count", removed);
+            int attached = viewers.viewersOf(uuid).size();
+            viewers.removeSettings(uuid);
+            saveAsync();
+            plugin.messages().send(streamer, "viewers-disabled", "count", attached);
             return;
         }
         long now = System.currentTimeMillis();
-        ViewerStore.StreamerState state = new ViewerStore.StreamerState(
-                streamer.getUniqueId(), streamer.getName(), true,
-                ViewerCodes.generate(), now + cfg.viewers().codeWindowMillis());
-        store.putStreamer(state);
-        store.save();
-        plugin.messages().send(streamer, "viewers-enabled", "code", state.code());
+        ViewerSettings settings = new ViewerSettings(uuid, streamer.getName(), true,
+                ViewerCodes.generate(), now + config.viewers().codeWindowMillis());
+        viewers.putSettings(settings);
+        saveAsync();
+        plugin.messages().send(streamer, "viewers-enabled", "code", settings.code());
         plugin.messages().send(streamer, "viewers-howto",
-                "minutes", cfg.viewers().codeWindowMinutes());
-        if (cfg.viewers().requireApproval()) {
+                "minutes", config.viewers().codeWindowMinutes());
+        if (config.viewers().requireApproval()) {
             plugin.messages().send(streamer, "viewers-approval-on");
         } else {
             plugin.messages().send(streamer, "viewers-approval-off");
         }
     }
 
-    /** Панель стримера: код, счётчики и заявки на подтверждение. */
+    /** Панель стримера: код, сколько зрителей и кто ждёт подтверждения. */
     void panel(Player streamer) {
-        StreamConfig cfg = config;
-        if (!cfg.enabled() || !cfg.viewers().enabled()) {
-            plugin.messages().send(streamer, "watch-disabled");
+        if (!ready(streamer)) {
             return;
         }
-        if (streams.get(streamer.getUniqueId()).filter(StreamBinding::verified).isEmpty()) {
-            plugin.messages().send(streamer, "viewers-no-channel");
+        UUID uuid = streamer.getUniqueId();
+        Optional<ViewerSettings> settings = viewers.settings(uuid);
+        if (settings.isEmpty() || !settings.get().enabled()) {
+            plugin.messages().send(streamer, "viewers-off-hint", "label", "stream");
             return;
         }
-        Optional<ViewerStore.StreamerState> state = store.streamer(streamer.getUniqueId());
-        if (state.isEmpty() || !state.get().enabled()) {
-            plugin.messages().send(streamer, "viewers-off-hint", "label", LABEL);
-            return;
-        }
-        List<ViewerBinding> viewers = new ArrayList<>(store.viewersOf(streamer.getUniqueId()));
-        List<ViewerBinding> pending = new ArrayList<>(store.pendingOf(streamer.getUniqueId()));
-        int accepted = viewers.size() - pending.size();
+        ViewerSettings current = rotate(settings.get());
+        List<ViewerBinding> accepted = viewers.viewersOf(uuid);
+        List<ViewerBinding> pending = viewers.pendingOf(uuid);
         plugin.messages().send(streamer, "viewers-panel-header",
-                "accepted", accepted, "pending", pending.size());
-        long leftMinutes = Math.max(0L,
-                (state.get().codeUntil() - System.currentTimeMillis() + 59_999L) / 60_000L);
+                "accepted", accepted.size(), "pending", pending.size());
         plugin.messages().send(streamer, "viewers-code",
-                "code", state.get().code(), "minutes", leftMinutes);
+                "code", current.code(), "minutes", minutesLeft(current.codeUntil()));
         if (pending.isEmpty()) {
             plugin.messages().send(streamer, "viewers-pending-empty");
-        } else {
-            plugin.messages().send(streamer, "viewers-pending-header");
-            int shown = 0;
-            for (ViewerBinding request : pending) {
-                if (shown++ >= 10) {
-                    break;
-                }
-                plugin.messages().send(streamer, "viewers-pending-line",
-                        "player", request.name(), "label", LABEL);
+            return;
+        }
+        plugin.messages().send(streamer, "viewers-pending-header");
+        int shown = 0;
+        for (ViewerBinding request : pending) {
+            if (shown++ >= 10) {
+                break;
             }
+            plugin.messages().send(streamer, "viewers-pending-line",
+                    "player", request.playerName(), "label", "stream");
         }
     }
 
-    /* ------------------------------ заявка зрителя ------------------------------ */
+    /** Подтвердить зрителя: стример проверил, что тот подписан на его каналы. */
+    void accept(Player streamer, String viewerName) {
+        if (!ready(streamer)) {
+            return;
+        }
+        Optional<ViewerBinding> pending = viewers.pendingByName(streamer.getUniqueId(), viewerName);
+        if (pending.isEmpty()) {
+            plugin.messages().send(streamer, "viewer-none", "player", viewerName);
+            return;
+        }
+        ViewerBinding accepted = pending.get().accept();
+        viewers.putViewer(accepted);
+        saveAsync();
+        plugin.messages().send(streamer, "viewer-accepted", "player", accepted.playerName());
+        tell(accepted.uuid(), "watch-approved", "streamer", streamer.getName());
+        tell(accepted.uuid(), "watch-accepted",
+                "streamer", streamer.getName(), "label", "stream");
+    }
 
-    /** Зритель просит доступ к просмотру канала. */
+    /** Отклонить заявку: она удаляется, прогресс зрителя остаётся. */
+    void deny(Player streamer, String viewerName) {
+        if (!ready(streamer)) {
+            return;
+        }
+        Optional<ViewerBinding> pending = viewers.pendingByName(streamer.getUniqueId(), viewerName);
+        if (pending.isEmpty()) {
+            plugin.messages().send(streamer, "viewer-none", "player", viewerName);
+            return;
+        }
+        viewers.removeViewer(pending.get().uuid());
+        saveAsync();
+        plugin.messages().send(streamer, "viewer-denied", "player", pending.get().playerName());
+        tell(pending.get().uuid(), "watch-denied", "streamer", streamer.getName());
+    }
+
+    /* ------------------------------ зритель ------------------------------ */
+
+    /** Подать заявку на просмотр канала стримера. */
     void apply(Player viewer, String streamerName) {
-        StreamConfig cfg = config;
-        if (!cfg.enabled() || !cfg.viewers().enabled()) {
+        if (!enabled()) {
             plugin.messages().send(viewer, "watch-disabled");
             return;
         }
-        Optional<StreamBinding> target = streams.byName(streamerName)
+        Optional<StreamBinding> target = store.byName(streamerName)
                 .filter(StreamBinding::verified);
         if (target.isEmpty()) {
             plugin.messages().send(viewer, "watch-no-streamer", "player", streamerName);
@@ -202,12 +187,14 @@ final class ViewerService {
             plugin.messages().send(viewer, "watch-self");
             return;
         }
-        Optional<ViewerStore.StreamerState> state = store.streamer(target.get().uuid());
-        if (state.isEmpty() || !state.get().enabled()) {
-            plugin.messages().send(viewer, "watch-streamer-off");
+        Optional<ViewerSettings> settings = viewers.settings(target.get().uuid());
+        if (settings.isEmpty() || !settings.get().enabled()) {
+            plugin.messages().send(viewer, "watch-streamer-off",
+                    "streamer", target.get().playerName());
             return;
         }
-        Optional<ViewerBinding> existing = store.viewer(viewer.getUniqueId());
+        UUID uuid = viewer.getUniqueId();
+        Optional<ViewerBinding> existing = viewers.viewer(uuid);
         if (existing.isPresent() && existing.get().streamer().equals(target.get().uuid())) {
             if (existing.get().accepted()) {
                 plugin.messages().send(viewer, "watch-already",
@@ -218,99 +205,42 @@ final class ViewerService {
             }
             return;
         }
-        boolean acceptedNow = !cfg.viewers().requireApproval();
+        boolean acceptedNow = !config.viewers().requireApproval();
         long now = System.currentTimeMillis();
-        ViewerBinding binding = new ViewerBinding(viewer.getUniqueId(), viewer.getName(),
-                target.get().uuid(), target.get().playerName(), acceptedNow, now,
-                acceptedNow ? now : 0L);
-        store.putViewer(binding);
-        store.save();
-        if (existing.isPresent() && !existing.get().streamer().equals(target.get().uuid())) {
+        ViewerBinding binding = existing
+                .map(old -> old.moveTo(target.get().uuid(), target.get().playerName(),
+                        acceptedNow, now).renamed(viewer.getName()))
+                .orElseGet(() -> new ViewerBinding(uuid, viewer.getName(), target.get().uuid(),
+                        target.get().playerName(), acceptedNow, now, acceptedNow ? now : 0L));
+        viewers.putViewer(binding);
+        saveAsync();
+        if (existing.isPresent()) {
             plugin.messages().send(viewer, "watch-replaced",
                     "streamer", existing.get().streamerName());
         }
         if (acceptedNow) {
             plugin.messages().send(viewer, "watch-accepted",
-                    "streamer", target.get().playerName(), "label", LABEL);
+                    "streamer", target.get().playerName(), "label", "stream");
         } else {
             plugin.messages().send(viewer, "watch-requested",
                     "streamer", target.get().playerName());
-            Player onlineStreamer = Bukkit.getPlayer(target.get().uuid());
-            if (onlineStreamer != null) {
-                plugin.messages().send(onlineStreamer, "viewer-request",
-                        "player", viewer.getName(), "label", LABEL);
+            Player streamer = Bukkit.getPlayer(target.get().uuid());
+            if (streamer != null) {
+                plugin.messages().send(streamer, "viewer-request",
+                        "player", viewer.getName(), "label", "stream");
             }
         }
     }
 
-    /* ------------------------------ подтверждение стримером ------------------------------ */
-
-    void accept(Player streamer, String viewerName) {
-        if (!viewerModeReady(streamer)) {
-            return;
-        }
-        Optional<ViewerBinding> pending = store.pendingByName(streamer.getUniqueId(), viewerName);
-        if (pending.isEmpty()) {
-            plugin.messages().send(streamer, "viewer-none", "player", viewerName);
-            return;
-        }
-        ViewerBinding accepted = pending.get().accept(System.currentTimeMillis());
-        store.putViewer(accepted);
-        store.save();
-        plugin.messages().send(streamer, "viewer-accepted", "player", accepted.name());
-        Player onlineViewer = Bukkit.getPlayer(accepted.uuid());
-        if (onlineViewer != null) {
-            plugin.messages().send(onlineViewer, "watch-approved", "streamer", streamer.getName());
-            plugin.messages().send(onlineViewer, "watch-accepted",
-                    "streamer", streamer.getName(), "label", LABEL);
-        }
-    }
-
-    void deny(Player streamer, String viewerName) {
-        if (!viewerModeReady(streamer)) {
-            return;
-        }
-        Optional<ViewerBinding> pending = store.pendingByName(streamer.getUniqueId(), viewerName);
-        if (pending.isEmpty()) {
-            plugin.messages().send(streamer, "viewer-none", "player", viewerName);
-            return;
-        }
-        store.removeViewer(pending.get().uuid());
-        store.save();
-        plugin.messages().send(streamer, "viewer-denied", "player", pending.get().name());
-        Player onlineViewer = Bukkit.getPlayer(pending.get().uuid());
-        if (onlineViewer != null) {
-            plugin.messages().send(onlineViewer, "watch-denied", "streamer", streamer.getName());
-        }
-    }
-
-    private boolean viewerModeReady(Player streamer) {
-        StreamConfig cfg = config;
-        if (!cfg.enabled() || !cfg.viewers().enabled()) {
-            plugin.messages().send(streamer, "watch-disabled");
-            return false;
-        }
-        Optional<ViewerStore.StreamerState> state = store.streamer(streamer.getUniqueId());
-        if (state.isEmpty() || !state.get().enabled()) {
-            plugin.messages().send(streamer, "viewers-off-hint", "label", LABEL);
-            return false;
-        }
-        return true;
-    }
-
-    /* ------------------------------ чек-ин ------------------------------ */
-
-    /** Зритель ввёл код из эфира. */
+    /** Ввести код из эфира: доказательство просмотра и начисление минут. */
     void checkIn(Player viewer, String rawCode) {
-        StreamConfig cfg = config;
-        if (!cfg.enabled() || !cfg.viewers().enabled()) {
+        if (!enabled()) {
             plugin.messages().send(viewer, "watch-disabled");
             return;
         }
-        UUID uuid = viewer.getUniqueId();
-        Optional<ViewerBinding> found = store.viewer(uuid);
+        Optional<ViewerBinding> found = viewers.viewer(viewer.getUniqueId());
         if (found.isEmpty()) {
-            plugin.messages().send(viewer, "watch-none-hint", "label", LABEL);
+            plugin.messages().send(viewer, "watch-none-hint", "label", "stream");
             return;
         }
         ViewerBinding binding = found.get();
@@ -318,84 +248,200 @@ final class ViewerService {
             plugin.messages().send(viewer, "watch-pending", "streamer", binding.streamerName());
             return;
         }
-        Optional<ViewerStore.StreamerState> state = store.streamer(binding.streamer());
-        if (state.isEmpty() || !state.get().enabled()) {
-            plugin.messages().send(viewer, "watch-streamer-off");
+        Optional<ViewerSettings> settings = viewers.settings(binding.streamer());
+        if (settings.isEmpty() || !settings.get().enabled()) {
+            plugin.messages().send(viewer, "watch-streamer-off",
+                    "streamer", binding.streamerName());
             return;
         }
-        if (!ViewerCodes.matches(rawCode, state.get().code())) {
+        ViewerSettings current = rotate(settings.get());
+        if (!ViewerCodes.matches(rawCode, current.code())) {
             plugin.messages().send(viewer, "watch-code-wrong");
             return;
         }
         long now = System.currentTimeMillis();
-        long since = now - Math.max(0L, binding.lastCheckIn());
-        if (since < cfg.viewers().checkinMinMillis()) {
-            long left = (cfg.viewers().checkinMinMillis() - since + 59_999L) / 60_000L;
+        long since = binding.lastCheckIn() <= 0L ? 0L : now - binding.lastCheckIn();
+        if (since > 0L && since < config.viewers().checkinMinMillis()) {
+            long minutes = Math.max(1L,
+                    (config.viewers().checkinMinMillis() - since + 59_999L) / 60_000L);
             plugin.messages().send(viewer, "watch-too-soon",
-                    "minutes", Math.max(1L, left),
-                    "window", cfg.viewers().checkinMinMinutes());
+                    "minutes", minutes, "window", config.viewers().checkinMinMinutes());
             return;
         }
-        Optional<StreamBinding> streamer = streams.get(binding.streamer())
+        Optional<StreamBinding> channel = store.get(binding.streamer())
                 .filter(StreamBinding::verified);
-        if (streamer.isEmpty()) {
-            plugin.messages().send(viewer, "watch-no-streamer", "player", binding.streamerName());
+        if (channel.isEmpty() || !config.available(channel.get().platform())) {
+            plugin.messages().send(viewer, "watch-streamer-off",
+                    "streamer", binding.streamerName());
             return;
         }
-        if (!checking.add(uuid)) {
-            plugin.messages().send(viewer, "watch-too-soon",
-                    "minutes", 1L, "window", cfg.viewers().checkinMinMinutes());
-            return;
-        }
+        UUID uuid = viewer.getUniqueId();
         String name = viewer.getName();
+        StreamPlatform platform = channel.get().platform();
+        String channelName = channel.get().channel();
+        if (!checking.add(uuid)) {
+            plugin.messages().send(viewer, "watch-busy");
+            return;
+        }
+        plugin.messages().send(viewer, "watch-checking");
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
-                LiveStream live = streamService.fetchLive(streamer.get().platform(),
-                        streamer.get().channel());
+                LiveStream live = service.fetchLive(platform, channelName);
                 if (!live.live()) {
-                    plugin.messages().send(viewer, "watch-offline");
+                    tell(uuid, "watch-offline");
                     return;
                 }
-                ViewerBinding current = store.viewer(uuid).orElse(null);
-                if (current == null || !current.accepted()) {
-                    plugin.messages().send(viewer, "watch-none-hint", "label", LABEL);
-                    return;
-                }
-                long credit = ViewerCodes.creditMillis(now, current.lastCheckIn(),
-                        cfg.viewers().codeWindowMillis());
-                if (credit <= 0) {
-                    return;
-                }
-                StreamRewards.Decision decision = StreamRewards.advance(
-                        store.progress(uuid), credit, now, cfg.viewers().rule());
-                if (decision.awarded() && !grant(name, decision.awardDays())) {
-                    return; // состояние не сохраняем — повторим на следующем коде
-                }
-                store.putProgress(uuid, decision.state());
-                store.putViewer(current.checkedIn(now).renamed(name));
-                store.save();
-                plugin.messages().send(viewer, "watch-tick",
-                        "minutes", Math.max(1L, credit / StreamRewards.MINUTE_MILLIS),
-                        "left", StreamRewards.minutesToNextDay(decision.state(), cfg.viewers().rule()),
-                        "today", decision.state().awardedToday(),
-                        "max", cfg.viewers().maxDaysPerDay());
-                if (decision.awarded()) {
-                    announce(viewer, decision);
-                }
+                credit(uuid, name, since, now);
             } catch (InterruptedException exception) {
                 Thread.currentThread().interrupt();
             } catch (IOException exception) {
-                plugin.messages().send(viewer, "watch-error", "error", exception.getMessage());
+                tell(uuid, "watch-error", "error", exception.getMessage());
             } finally {
                 checking.remove(uuid);
             }
         });
     }
 
+    /** Начислить минуты за подтверждённый чек-ин. Вызывается асинхронно. */
+    private void credit(UUID uuid, String name, long since, long now) {
+        Optional<ViewerBinding> found = viewers.viewer(uuid);
+        if (found.isEmpty()) {
+            return;
+        }
+        ViewerBinding binding = found.get();
+        long credit = ViewerCodes.creditMillis(since, config.viewers().codeWindowMillis());
+        StreamRewards.Decision decision = StreamRewards.advance(
+                viewers.progress(uuid), credit, now, config.viewers().rule());
+        if (decision.awarded() && !grant(name, decision.awardDays())) {
+            // Награда не выдана — прогресс не сохраняем, повторим на следующем коде.
+            return;
+        }
+        viewers.putProgress(uuid, decision.state());
+        viewers.putViewer(binding.checkedIn(now).renamed(name));
+        saveAsync();
+        long minutes = credit / StreamRewards.MINUTE_MILLIS;
+        if (minutes <= 0L) {
+            tell(uuid, "watch-code-accepted");
+        } else {
+            tell(uuid, "watch-tick",
+                    "minutes", minutes,
+                    "left", StreamRewards.minutesToNextDay(decision.state(),
+                            config.viewers().rule()),
+                    "today", decision.state().awardedToday(),
+                    "max", config.viewers().maxDaysPerDay());
+        }
+        if (decision.awarded()) {
+            announce(uuid, name, decision);
+        }
+    }
+
+    /** Статус зрителя: кого смотрит, сколько накоплено, что делать дальше. */
+    void watching(Player viewer) {
+        Optional<ViewerBinding> found = viewers.viewer(viewer.getUniqueId());
+        if (found.isEmpty()) {
+            plugin.messages().send(viewer, "watch-none-hint", "label", "stream");
+            return;
+        }
+        ViewerBinding binding = found.get();
+        StreamRewards.State state = viewers.progress(viewer.getUniqueId());
+        plugin.messages().send(viewer, "watch-status-header", "player", viewer.getName());
+        plugin.messages().send(viewer, "watch-status-streamer",
+                "streamer", binding.streamerName(),
+                "state", Messages.trusted(plugin.messages().raw(binding.accepted()
+                        ? "watch-state-accepted" : "watch-state-pending")));
+        plugin.messages().send(viewer, "watch-status-progress",
+                "minutes", StreamRewards.pendingMinutes(state, config.viewers().rule()),
+                "needed", config.viewers().minutesPerDay(),
+                "today", state.awardedToday(),
+                "max", config.viewers().maxDaysPerDay());
+        plugin.messages().send(viewer, "watch-status-total", "days", state.totalDays());
+        if (!binding.accepted()) {
+            plugin.messages().send(viewer, "watch-pending", "streamer", binding.streamerName());
+            return;
+        }
+        Optional<ViewerSettings> settings = viewers.settings(binding.streamer());
+        if (settings.isEmpty() || !settings.get().enabled()) {
+            plugin.messages().send(viewer, "watch-status-off");
+            return;
+        }
+        plugin.messages().send(viewer, "watch-status-code", "label", "stream");
+        plugin.messages().send(viewer, "watch-status-window",
+                "window", config.viewers().codeWindowMinutes());
+    }
+
+    /** Отписаться от стримера. Прогресс и потолки остаются. */
+    void leave(Player viewer) {
+        Optional<ViewerBinding> removed = viewers.viewer(viewer.getUniqueId());
+        if (removed.isEmpty()) {
+            plugin.messages().send(viewer, "watch-none-hint", "label", "stream");
+            return;
+        }
+        viewers.removeViewer(viewer.getUniqueId());
+        saveAsync();
+        plugin.messages().send(viewer, "watch-left", "streamer", removed.get().streamerName());
+    }
+
+    /* ------------------------------ помощники ------------------------------ */
+
+    /** Имена в заявках — для автодополнения. */
+    List<String> pendingNames(UUID streamer) {
+        List<String> names = new ArrayList<>();
+        for (ViewerBinding binding : viewers.pendingOf(streamer)) {
+            names.add(binding.playerName());
+        }
+        return List.copyOf(names);
+    }
+
+    int streamerCount() {
+        return viewers.streamerCount();
+    }
+
+    int viewerCount() {
+        return viewers.viewerCount();
+    }
+
+    private boolean ready(Player streamer) {
+        if (!config.enabled()) {
+            plugin.messages().send(streamer, "disabled");
+            return false;
+        }
+        if (!config.viewers().enabled()) {
+            plugin.messages().send(streamer, "watch-disabled");
+            return false;
+        }
+        if (store.get(streamer.getUniqueId()).filter(StreamBinding::verified).isEmpty()) {
+            plugin.messages().send(streamer, "viewers-no-channel", "label", "stream");
+            return false;
+        }
+        return true;
+    }
+
+    private boolean enabled() {
+        return config.enabled() && config.viewers().enabled();
+    }
+
+    /** Выдать новый код, если окно истекло; сохранение — асинхронно. */
+    private ViewerSettings rotate(ViewerSettings settings) {
+        long now = System.currentTimeMillis();
+        if (!settings.code().isBlank() && !ViewerCodes.expired(settings.codeUntil(), now)) {
+            return settings;
+        }
+        ViewerSettings updated = settings.withCode(ViewerCodes.generate(),
+                now + config.viewers().codeWindowMillis());
+        viewers.putSettings(updated);
+        saveAsync();
+        return updated;
+    }
+
+    private long minutesLeft(long codeUntil) {
+        long remaining = ViewerCodes.remainingMillis(codeUntil, System.currentTimeMillis());
+        return Math.max(1L, (remaining + 59_999L) / 60_000L);
+    }
+
     private boolean grant(String name, int days) {
         ChrdkRegisterApi api = plugin.coreApi();
         if (api == null) {
-            plugin.getLogger().warning("[Streams] Ядро недоступно — награда зрителю "
+            plugin.getLogger().warning("[Streams] Ядро CHRDK_Core недоступно — награда зрителю "
                     + name + " не выдана.");
             return false;
         }
@@ -403,100 +449,42 @@ final class ViewerService {
             api.grantPass(name, days, SOURCE);
             return true;
         } catch (RuntimeException exception) {
-            plugin.getLogger().log(Level.WARNING,
-                    "[Streams] Не удалось выдать " + days + " дн. зрителю " + name, exception);
-            Player online = Bukkit.getPlayerExact(name);
-            if (online != null) {
-                plugin.messages().send(online, "watch-award-error",
-                        "error", exception.getMessage() == null ? "" : exception.getMessage());
-            }
+            plugin.getLogger().log(Level.WARNING, "[Streams] Не удалось выдать " + days
+                    + " дн. зрителю " + name, exception);
+            String error = exception.getMessage() == null ? "" : exception.getMessage();
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                Player online = Bukkit.getPlayerExact(name);
+                if (online != null) {
+                    plugin.messages().send(online, "watch-award-error", "error", error);
+                }
+            });
             return false;
         }
     }
 
-    private void announce(Player viewer, StreamRewards.Decision decision) {
+    private void announce(UUID uuid, String name, StreamRewards.Decision decision) {
         ChrdkRegisterApi api = plugin.coreApi();
-        String name = viewer.getName();
         long until = api == null ? 0L : api.passUntil(name);
-        plugin.messages().send(viewer, "watch-awarded",
+        tell(uuid, "watch-awarded",
                 "days", decision.awardDays(),
                 "today", decision.state().awardedToday(),
                 "max", config.viewers().maxDaysPerDay());
-        if (until > 0) {
-            plugin.messages().send(viewer, "watch-awarded-until",
-                    "until", StreamService.until(until));
+        if (until > 0L) {
+            tell(uuid, "watch-awarded-until", "until", StreamService.until(until));
         }
     }
 
-    /* ------------------------------ статус зрителя ------------------------------ */
-
-    void watching(Player viewer) {
-        StreamConfig cfg = config;
-        Optional<ViewerBinding> found = store.viewer(viewer.getUniqueId());
-        if (found.isEmpty()) {
-            plugin.messages().send(viewer, "watch-none-hint", "label", LABEL);
-            return;
-        }
-        ViewerBinding binding = found.get();
-        StreamRewards.State state = store.progress(viewer.getUniqueId());
-        plugin.messages().send(viewer, "watch-status-header", "player", viewer.getName());
-        Object stateMark = binding.accepted()
-                ? Messages.trusted(plugin.messages().raw("watch-state-accepted"))
-                : Messages.trusted(plugin.messages().raw("watch-state-pending"));
-        plugin.messages().send(viewer, "watch-status-streamer",
-                "streamer", binding.streamerName(), "state", stateMark);
-        plugin.messages().send(viewer, "watch-status-progress",
-                "minutes", StreamRewards.pendingMinutes(state, cfg.viewers().rule()),
-                "needed", cfg.viewers().minutesPerDay(),
-                "today", state.awardedToday(),
-                "max", cfg.viewers().maxDaysPerDay());
-        plugin.messages().send(viewer, "watch-status-total", "days", state.totalDays());
-        if (!binding.accepted()) {
-            plugin.messages().send(viewer, "watch-pending", "streamer", binding.streamerName());
-            return;
-        }
-        Optional<ViewerStore.StreamerState> streamerState = store.streamer(binding.streamer());
-        if (streamerState.isEmpty() || !streamerState.get().enabled()) {
-            plugin.messages().send(viewer, "watch-status-off");
-            return;
-        }
-        plugin.messages().send(viewer, "watch-status-code", "label", LABEL);
-        plugin.messages().send(viewer, "watch-status-window",
-                "window", cfg.viewers().codeWindowMinutes());
-    }
-
-    void leave(Player viewer) {
-        Optional<ViewerBinding> removed = store.removeViewer(viewer.getUniqueId());
-        if (removed.isEmpty()) {
-            plugin.messages().send(viewer, "watch-none-hint", "label", LABEL);
-            return;
-        }
-        store.save();
-        plugin.messages().send(viewer, "watch-left", "streamer", removed.get().streamerName());
-    }
-
-    /* ------------------------------ вспомогательное ------------------------------ */
-
-    /** Имена заявок стримера — для автодополнения {@code /stream viewer accept}. */
-    List<String> pendingNames(UUID streamer) {
-        List<String> names = new ArrayList<>();
-        for (ViewerBinding binding : store.pendingOf(streamer)) {
-            names.add(binding.name());
-        }
-        return List.copyOf(names);
-    }
-
-    int viewerCount() {
-        return store.viewerCount();
-    }
-
-    int streamerCount() {
-        int count = 0;
-        for (ViewerStore.StreamerState state : store.allStreamers()) {
-            if (state.enabled()) {
-                count++;
+    /** Сообщение игроку из любого потока: отправка — на основном. */
+    private void tell(UUID uuid, String key, Object... placeholders) {
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            Player player = Bukkit.getPlayer(uuid);
+            if (player != null) {
+                plugin.messages().send(player, key, placeholders);
             }
-        }
-        return count;
+        });
+    }
+
+    private void saveAsync() {
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, viewers::save);
     }
 }

@@ -20,37 +20,37 @@ class ViewerBindingTest {
     }
 
     @Test
-    void acceptStartsTheClock() {
-        ViewerBinding accepted = pending().accept(5_000L);
+    void acceptDoesNotStartTheClock() {
+        ViewerBinding accepted = pending().accept();
 
         assertTrue(accepted.accepted());
-        assertEquals(5_000L, accepted.lastCheckIn(),
-                "первый чек-ин не должен засчитывать время до подтверждения");
+        assertEquals(0L, accepted.lastCheckIn(),
+                "подтверждение не является чек-ином: первый код начнёт счёт");
         assertEquals(1_000L, accepted.requestedAt(), "время заявки сохраняется");
         assertFalse(pending().accepted(), "исходная заявка не меняется");
     }
 
     @Test
     void checkInMovesOnlyTheTimestamp() {
-        ViewerBinding binding = pending().accept(5_000L).checkedIn(65_000L);
+        ViewerBinding binding = pending().accept().checkedIn(65_000L);
 
         assertEquals(65_000L, binding.lastCheckIn());
         assertEquals(1_000L, binding.requestedAt(), "время заявки не переписывается чек-ином");
         assertTrue(binding.accepted());
-        assertEquals("Steve", binding.name());
+        assertEquals("Steve", binding.playerName());
     }
 
     @Test
     void renameDoesNotResetProgress() {
-        ViewerBinding renamed = pending().accept(5_000L).checkedIn(65_000L).renamed("Alex");
+        ViewerBinding renamed = pending().accept().checkedIn(65_000L).renamed("Alex");
 
-        assertEquals("Alex", renamed.name());
+        assertEquals("Alex", renamed.playerName());
         assertEquals(65_000L, renamed.lastCheckIn());
     }
 
     @Test
     void movingToAnotherStreamerNeedsApprovalAgain() {
-        ViewerBinding moved = pending().accept(5_000L).checkedIn(65_000L)
+        ViewerBinding moved = pending().accept().checkedIn(65_000L)
                 .moveTo(UUID.randomUUID(), "Other", false, 70_000L);
 
         assertFalse(moved.accepted());
@@ -60,11 +60,12 @@ class ViewerBindingTest {
     }
 
     @Test
-    void movingWithoutApprovalKeepsTheClock() {
+    void movingWithoutApprovalStillWaitsForFirstCode() {
         ViewerBinding moved = pending().moveTo(UUID.randomUUID(), "Other", true, 70_000L);
 
         assertTrue(moved.accepted());
-        assertEquals(70_000L, moved.lastCheckIn());
+        assertEquals(0L, moved.lastCheckIn(),
+                "новый канал — новый счёт: первый код даёт 0 минут");
     }
 
     @Test
@@ -72,8 +73,8 @@ class ViewerBindingTest {
         ViewerBinding binding = new ViewerBinding(VIEWER, "  Steve ", STREAMER, " Streamer ",
                 false, 0L, 0L);
 
-        assertEquals("Steve", binding.name());
+        assertEquals("Steve", binding.playerName());
         assertEquals("Streamer", binding.streamerName());
-        assertEquals("", new ViewerBinding(VIEWER, null, STREAMER, null, false, 0L, 0L).name());
+        assertEquals("", new ViewerBinding(VIEWER, null, STREAMER, null, false, 0L, 0L).playerName());
     }
 }
