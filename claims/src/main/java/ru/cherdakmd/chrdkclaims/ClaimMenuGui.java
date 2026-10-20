@@ -228,7 +228,7 @@ public final class ClaimMenuGui implements Listener {
         }
         int slot = event.getSlot();
         if (slot == SLOT_CLOSE) {
-            plugin.getServer().getScheduler().runTask(plugin, player::closeInventory);
+            plugin.getServer().getScheduler().runTask(plugin, () -> player.closeInventory());
             return;
         }
         boolean left = event.isLeftClick();
