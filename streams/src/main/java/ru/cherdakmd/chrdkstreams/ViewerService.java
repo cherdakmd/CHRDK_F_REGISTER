@@ -322,6 +322,9 @@ final class ViewerService {
             if (failed.locked(now)) {
                 plugin.messages().send(viewer, "watch-code-locked",
                         "minutes", config.viewers().codeLockMinutes());
+            } else if (config.viewers().maxCodeAttempts() <= 0) {
+                // Ограничение отключено в конфиге — не показываем «осталось 2 147 483 647».
+                plugin.messages().send(viewer, "watch-code-wrong");
             } else {
                 plugin.messages().send(viewer, "watch-code-wrong-left",
                         "left", CodeGuard.attemptsLeft(failed, config.viewers().maxCodeAttempts()));
