@@ -168,10 +168,12 @@ class StreamStoreTest {
                 channel(StreamPlatform.TWITCH, "chrdk", "CHRDK-ABCD", 0L),
                 channel(StreamPlatform.VKPLAY, "chrdk_vk", "CHRDK-BBBB", 0L)));
 
-        assertTrue(store.byChannel(StreamPlatform.VKPLAY, "chrdk").isPresent());
+        assertTrue(store.byChannel(StreamPlatform.TWITCH, "CHRDK").isPresent(),
+                "регистр канала не важен");
         assertTrue(store.byChannel(StreamPlatform.VKPLAY, "CHRDK_VK").isPresent(),
                 "второй канал тоже должен находиться");
-        assertFalse(store.byChannel(StreamPlatform.TWITCH, "chrdk_vk").isPresent());
+        assertFalse(store.byChannel(StreamPlatform.TWITCH, "chrdk_vk").isPresent(),
+                "каналы разных площадок не путаются");
         assertFalse(store.byChannel(StreamPlatform.TWITCH, "other").isPresent());
     }
 

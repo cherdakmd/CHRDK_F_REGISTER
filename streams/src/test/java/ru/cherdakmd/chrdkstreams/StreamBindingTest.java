@@ -58,7 +58,8 @@ class StreamBindingTest {
 
         assertEquals(2, updated.channels().size());
         assertEquals(original.state(), updated.state(), "прогресс общий, а не на канал");
-        assertEquals(1, updated.state().totalDays());
+        assertEquals(4, updated.state().totalDays(), "второй канал не обнуляет счётчики");
+        assertEquals(1, updated.state().awardedToday());
     }
 
     @Test
