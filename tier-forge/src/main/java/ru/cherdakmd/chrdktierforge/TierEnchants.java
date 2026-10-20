@@ -162,9 +162,16 @@ public final class TierEnchants {
         };
     }
 
-    /** Шанс зачарования для тира: база из конфига + {@value #PER_TIER_BONUS}% за тир. */
+    /**
+     * Шанс зачарования для тира: база из конфига + {@value #PER_TIER_BONUS}% за
+     * тир. База 0 — «выключено»: тир не должен «дорисовывать» процент к нулю,
+     * иначе {@code chance-percent: 0} не отключал бы зачарования.
+     */
     public static int chanceFor(int tierIndex, int basePercent) {
-        int base = Math.max(0, Math.min(100, basePercent));
+        if (basePercent <= 0) {
+            return 0;
+        }
+        int base = Math.min(100, basePercent);
         if (tierIndex <= 0) {
             return base;
         }
