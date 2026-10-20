@@ -34,7 +34,10 @@ public record TpConfig(
         int tpaTimeoutSeconds,
         int tpaCooldownSeconds,
         int homesMaxNormal,
-        int homesMaxVip) {
+        int homesMaxVip,
+        String homesExtraPermission,
+        int homesExtraLimit,
+        int homesHardCap) {
 
     public boolean worldAllowed(String worldName) {
         return allowedWorlds.isEmpty() || allowedWorlds.contains(worldName.toLowerCase(Locale.ROOT));
@@ -42,7 +45,30 @@ public record TpConfig(
 
     /** Лимит точек дома для игрока. */
     public int homeLimit(boolean vip) {
-        return vip ? homesMaxVip : homesMaxNormal;
+        return homeLimit(vip, false);
+    }
+
+    /**
+     * Лимит точек дома с учётом купленного товара «дополнительные дома».
+     *
+     * <p>Право {@code homes.extra-permission} выдаётся ядром на срок (группа LuckPerms),
+     * поэтому лимит живёт ровно столько, сколько оплачено. Независимо от способа получения
+     * лимит не превышает {@code homes.hard-cap}: выше потолка не продаётся ничего.</p>
+     *
+     * @param vip   действует ли проходка
+     * @param extra есть ли право на дополнительные дома
+     */
+    public int homeLimit(boolean vip, boolean extra) {
+        int limit = vip ? homesMaxVip : homesMaxNormal;
+        if (extra && !homesExtraPermission.isBlank()) {
+            limit = Math.max(limit, homesExtraLimit);
+        }
+        return Math.min(limit, homesHardCap);
+    }
+
+    /** Есть ли у игрока дополнительный лимит по праву (пустое право = товар выключен). */
+    public boolean grantsExtraHomes(boolean hasPermission) {
+        return hasPermission && !homesExtraPermission.isBlank();
     }
 
     public static TpConfig parse(FileConfiguration config, Logger logger) {
@@ -83,12 +109,16 @@ public record TpConfig(
         ConfigurationSection homes = config.getConfigurationSection("homes");
         int maxNormal = clamp(section(homes, "max-normal", 3), 0, 100, logger, "homes.max-normal");
         int maxVip = clamp(section(homes, "max-vip", 8), maxNormal, 100, logger, "homes.max-vip");
+        String extraPermission = section(homes, "extra-permission", "chrdktele.homes.plus").trim();
+        int extraLimit = clamp(section(homes, "extra-limit", 8), maxVip, 100, logger, "homes.extra-limit");
+        int hardCap = clamp(section(homes, "hard-cap", 12), maxNormal, 100,
+                logger, "homes.hard-cap");
 
         return new TpConfig(
                 Set.copyOf(worlds), delay, cancelMove, cancelDamage, discount,
                 costRtp, costTpa, costHome, costSethome,
                 radius, minRadius, useSpawn, centerX, centerZ, rtpWorld, attempts, rtpCooldown,
-                timeout, tpaCooldown, maxNormal, maxVip);
+                timeout, tpaCooldown, maxNormal, maxVip, extraPermission, extraLimit, hardCap);
     }
 
     /* ------------------------------- утилиты ------------------------------- */

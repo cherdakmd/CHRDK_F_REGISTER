@@ -1333,20 +1333,20 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.109-SNAPSHOT.jar`, аддон
-CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.109-SNAPSHOT.jar`, реферальный —
-`referrals/build/libs/chrdk-referrals-1.4.109-SNAPSHOT.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.109-SNAPSHOT.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.109-SNAPSHOT.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.109-SNAPSHOT.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.109-SNAPSHOT.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.109-SNAPSHOT.jar` (хартия чар — при установленном аддоне чар), общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.109-SNAPSHOT.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.109-SNAPSHOT.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.109-SNAPSHOT.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.109-SNAPSHOT.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.109-SNAPSHOT.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.109-SNAPSHOT.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.110-SNAPSHOT.jar`, аддон
+CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.110-SNAPSHOT.jar`, реферальный —
+`referrals/build/libs/chrdk-referrals-1.4.110-SNAPSHOT.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.110-SNAPSHOT.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.110-SNAPSHOT.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.110-SNAPSHOT.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.110-SNAPSHOT.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.110-SNAPSHOT.jar` (хартия чар — при установленном аддоне чар), общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.110-SNAPSHOT.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.110-SNAPSHOT.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.110-SNAPSHOT.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.110-SNAPSHOT.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.110-SNAPSHOT.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.110-SNAPSHOT.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). Оба JAR прикладываются к каждому релизу на GitHub.
 
 ---
@@ -3154,7 +3154,7 @@ Discord-интеграция и её настройки не изменены.
 ### CHRDK_BattlePass: снапшот 1.4.109-SNAPSHOT — 25 улучшений
 
 **Это снапшот, а не релиз.** Версия в `gradle.properties` — `1.4.109-SNAPSHOT`,
-JAR-файлы собираются как `chrdk-*-1.4.109-SNAPSHOT.jar`. Тег и GitHub-релиз не
+JAR-файлы собираются как `chrdk-*-1.4.110-SNAPSHOT.jar`. Тег и GitHub-релиз не
 создаются; сборка доступна как артефакт CI и в `build/libs` после `./gradlew build`.
 Обновлять прод-сервер снапшотом стоит только для проверки — после проверки
 выпустим обычный релиз. Готовые JAR-файлы всех модулей этой версии лежат одним
@@ -3252,3 +3252,96 @@ battlepass:
 
 CI собирает снапшот как обычный пуш в ветку; тег `v1.4.109` и GitHub-релиз не
 создаются до отдельной команды на релиз.
+
+---
+
+### CHRDK_Core: каталог товаров — снапшот 1.4.110-SNAPSHOT
+
+**Это снова снапшот, не релиз.** Версия в `gradle.properties` —
+`1.4.110-SNAPSHOT`; тег и GitHub-релиз не создаются. Номер шагнул с 1.4.109,
+хотя 1.4.109 не выходил: предыдущая волна осталась снапшотом, а сквозная
+нумерация позволяет отличать сборки в артефактах CI.
+
+До этой версии продавать можно было только проходку: у ядра был один хук
+`pass shoppay`. Всё остальное — вход без очереди, дома, косметика — уже
+существовало в коде, но выдать это из витрины было нечем. Каталог это меняет:
+товары описываются в `config.yml`, а панель TradeMC выдаёт их той же
+RCON-командой, что и проходку.
+
+**Команды**
+
+| Команда | Кто | Что делает |
+|---|---|---|
+| `pass shopbuy <ник> <товар> [дней]` | консоль/RCON, админ | выдать или продлить товар |
+| `pass shoprevoke <ник> <товар>` | консоль/RCON, админ | снять товар и его группу |
+| `pass shop` | игрок | витрина: название, цена, срок, описание |
+| `pass my [ник]` | игрок (свой ник), админ (любой) | активные покупки и остаток дней |
+
+**Товары по умолчанию** (все — удобство/оформление, без ресурсов и влияния на бои):
+
+| Товар | Цена | Срок | Действие |
+|---|---|---|---|
+| `vip-queue` — вход без очереди | 149 ₽ | 30 дн. | временная группа `vip`; очередь читает её из `queue.config` |
+| `homes-plus` — дополнительные дома | 99 ₽ | 30 дн. | группа `homes` с правом `chrdktele.homes.plus`; лимит домов 8 |
+| `nick-color` — цветной ник | 149 ₽ | 30 дн. | MiniMessage-тег `<gold>` на ник в общем и локальном чате |
+| `sponsor` — меценат | 499 ₽ | 90 дн. | золотой градиент на нике + отдельная строка в `/pass my` |
+
+Карточки на витрине TradeMC получают команды:
+
+```
+pass shopbuy %username% vip-queue
+pass shopbuy %username% homes-plus
+pass shopbuy %username% nick-color
+pass shopbuy %username% sponsor
+```
+
+`%username%` — плейсхолдер ника TradeMC (как и для `pass shoppay`).
+
+**Как это устроено**
+
+- Срок живёт в аккаунте (`data.json` → `entitlements`), покупки складываются:
+  повторная покупка добавляет дни, а не обнуляет остаток. Потолок —
+  `shop.max-total-days` (365): «навсегда» не продаётся даже при опечатке в цене.
+- Действие товара — временная группа LuckPerms на тот же срок. LuckPerms снимает
+  её сам; плагин при старте чистит истёкшие записи, чтобы файл не рос.
+- Если игрок купил товар до первого входа (UUID ещё не известен), группа
+  досылается при входе — идемпотентно, старые узлы заменяются одним новым.
+- `/pass luckperms setup` теперь создаёт и группы товаров: `vip`, `homes` и
+  любые другие, указанные в каталоге, — вместе с их правами.
+- Продажи пишутся в общий журнал донатов с отрицательными id (положительные
+  принадлежат DonatePay/EasyDonate), поэтому `/pass stats` и `/pass donations`
+  видят выручку каталога. Аудит: `shop.buy` и `shop.revoke`.
+- Тексты — `messages.yml`, ключи `shop.*` и `usage.pass-shop*`. Старые ключи не
+  переименованы: пользовательский файл можно не трогать.
+
+**Конфиг**
+
+```yaml
+shop:
+  enabled: true
+  max-total-days: 365      # потолок суммарного срока одного товара
+  products:
+    - id: vip-queue
+      name: "<gold>Вход без очереди</gold>"
+      price: 149
+      days: 30
+      group: "vip"          # временная группа LuckPerms
+      description: "Проход на переполненный сервер вперёд очереди"
+      tag: ""               # MiniMessage-разметка ника
+      permissions: []       # права группы (создаются /pass luckperms setup)
+      commands: []          # консольные команды, %player% → ник
+```
+
+**Телепорты: честный лимит домов.** Право на дополнительные дома больше не
+привязано к проходке: `homes.extra-permission` (`chrdktele.homes.plus`),
+`homes.extra-limit` (8) и `homes.hard-cap` (12). Потолок жёсткий — выше него не
+поднимает ни проходка, ни товар, ни выданное вручную право.
+
+**Тесты:** `ShopCatalogTest` (разбор, опечатки, диагностика), `ShopEntitlementsTest`
+(сложение сроков, потолок, остаток, оформление ника), плюс расширен
+`TpConfigTest` (дополнительные дома и жёсткий потолок). Ядро — 226 `@Test`
+в 37 классах, телепорты — 21 `@Test` в 5 классах.
+
+**Чего здесь нет и не будет:** продажи ресурсов, алмазов, снаряжения,
+зачарований и влияния на исход PvP/ивентов. Потолки на дома и сроки — часть
+правила, а не временная настройка.

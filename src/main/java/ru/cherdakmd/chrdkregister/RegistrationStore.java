@@ -604,6 +604,140 @@ public final class RegistrationStore {
         markDirty();
     }
 
+    /* ------------------------------------------------------------------ *
+     *  Каталог товаров (1.4.110)
+     * ------------------------------------------------------------------ */
+
+    /**
+     * Выдаёт или продлевает товар каталога.
+     *
+     * <p>Срок складывается с текущим (повторная покупка не сгорает), но не выходит за
+     * {@code now + maxTotalDays}. Возвращает момент окончания.</p>
+     */
+    public synchronized long grantEntitlement(
+            String playerName,
+            String productId,
+            long nowMillis,
+            int days,
+            int maxTotalDays
+    ) {
+        if (playerName == null || playerName.isBlank() || productId == null || productId.isBlank()) {
+            return 0L;
+        }
+        String key = canonicalName(playerName);
+        PlayerAccount account = data.accounts.computeIfAbsent(key, ignored -> new PlayerAccount());
+        account.canonicalName = key;
+        if (account.playerName == null || account.playerName.isBlank()) {
+            account.playerName = playerName;
+        }
+        if (account.entitlements == null) {
+            account.entitlements = new LinkedHashMap<>();
+        }
+        long current = account.entitlements.getOrDefault(productId, 0L);
+        long until = ShopEntitlements.extend(nowMillis, current, days, maxTotalDays);
+        account.entitlements.put(productId, until);
+        markDirtyNow();
+        return until;
+    }
+
+    /** Момент окончания товара; {@code 0}, если товар никогда не покупался. */
+    public synchronized long entitlementUntil(String playerName, String productId) {
+        if (playerName == null || playerName.isBlank() || productId == null || productId.isBlank()) {
+            return 0L;
+        }
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        if (account == null || account.entitlements == null) {
+            return 0L;
+        }
+        return account.entitlements.getOrDefault(productId, 0L);
+    }
+
+    /** Копия карты «товар → срок» — для витрины и тестов. */
+    public synchronized Map<String, Long> entitlementsOf(String playerName) {
+        if (playerName == null || playerName.isBlank()) {
+            return Map.of();
+        }
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        if (account == null || account.entitlements == null) {
+            return Map.of();
+        }
+        Map<String, Long> result = new LinkedHashMap<>();
+        for (Map.Entry<String, Long> entry : account.entitlements.entrySet()) {
+            if (entry.getKey() != null && entry.getValue() != null) {
+                result.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return Map.copyOf(result);
+    }
+
+    /** Снимает товар полностью (ручной отзыв, возврат). */
+    public synchronized boolean revokeEntitlement(String playerName, String productId) {
+        if (playerName == null || playerName.isBlank() || productId == null || productId.isBlank()) {
+            return false;
+        }
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        if (account == null || account.entitlements == null) {
+            return false;
+        }
+        boolean removed = account.entitlements.remove(productId) != null;
+        if (removed) {
+            markDirtyNow();
+        }
+        return removed;
+    }
+
+    /**
+     * Убирает из аккаунтов истёкшие товары: файл не должен расти вечно.
+     *
+     * @return сколько записей удалено
+     */
+    public synchronized int cleanupEntitlements(long nowMillis) {
+        int removed = 0;
+        for (PlayerAccount account : data.accounts.values()) {
+            if (account == null || account.entitlements == null || account.entitlements.isEmpty()) {
+                continue;
+            }
+            int before = account.entitlements.size();
+            account.entitlements.entrySet().removeIf(entry -> entry.getValue() == null
+                    || entry.getValue() <= nowMillis);
+            removed += before - account.entitlements.size();
+        }
+        if (removed > 0) {
+            markDirtyNow();
+        }
+        return removed;
+    }
+
+    /**
+     * Пишет продажу каталога в общий журнал донатов.
+     *
+     * <p>Id отрицательный и берётся из отдельного счётчика: положительные id принадлежат
+     * DonatePay/EasyDonate, и путать их нельзя. Срок в записи — {@code 0}: журнал донатов
+     * считает дни проходки, а товар продлевает не проходку.</p>
+     */
+    public synchronized DonationRecord recordShopSale(
+            String playerName,
+            String productId,
+            int priceRubles,
+            long nowMillis
+    ) {
+        DonationRecord record = new DonationRecord();
+        record.id = --data.shopSaleSequence;
+        record.source = DONATION_SOURCE_TRADEMC;
+        record.donorName = playerName == null ? "" : playerName;
+        record.amountKopecks = Math.max(0, priceRubles) * 100L;
+        record.amountRaw = Integer.toString(Math.max(0, priceRubles));
+        record.createdAt = nowMillis;
+        record.detectedAt = nowMillis;
+        record.status = DonationStatus.GRANTED.name();
+        record.note = "shop:" + (productId == null ? "" : productId);
+        record.grantedTo = record.donorName;
+        record.decidedBy = "shop";
+        record.decidedAt = nowMillis;
+        record.days = 0;
+        return recordDonation(record);
+    }
+
     /** Revokes a player's active pass while keeping their registered password intact. */
     public synchronized boolean revokePass(String playerName) {
         if (playerName == null || playerName.isBlank()) return false;
@@ -1261,7 +1395,9 @@ public final class RegistrationStore {
         if (existing.isPresent()) return copyDonation(existing.get());
         data.donations.add(record.copy());
         if (data.donations.size() > MAX_JOURNAL_ENTRIES) {
-            data.donations.sort(Comparator.comparingLong(entry -> entry.id));
+            // Режем по времени, а не по id: у продаж каталога id отрицательные,
+            // и сортировка по id выбрасывала бы их первыми, хотя они самые свежие.
+            data.donations.sort(Comparator.comparingLong(entry -> entry.createdAt));
             while (data.donations.size() > MAX_JOURNAL_ENTRIES) {
                 data.donations.remove(0);
             }
@@ -1607,6 +1743,9 @@ public final class RegistrationStore {
         result.expiryWarningsSent = source.expiryWarningsSent == null
                 ? new LinkedHashSet<>()
                 : new LinkedHashSet<>(source.expiryWarningsSent);
+        result.entitlements = source.entitlements == null
+                ? new LinkedHashMap<>()
+                : new LinkedHashMap<>(source.entitlements);
         result.mute = source.mute == null ? null : copyMute(source.mute);
         return result;
     }
@@ -1758,6 +1897,13 @@ public final class RegistrationStore {
         public long totalPaidKopecks;
         public int paymentsCount;
         public long lastPaymentAt;
+        /**
+         * Купленные товары каталога: id товара → момент окончания (мс).
+         *
+         * <p>Поле появилось в 1.4.110; у старых файлов его нет, поэтому все методы
+         * {@link RegistrationStore} проверяют карту на {@code null}.</p>
+         */
+        public Map<String, Long> entitlements = new LinkedHashMap<>();
 
         public boolean isTrialOnly() {
             return trialGrantedAt > 0 && "trial".equals(lastGrantSource) && paymentsCount == 0;
@@ -1789,5 +1935,7 @@ public final class RegistrationStore {
         Map<String, AttemptRecord> ipAttempts = new LinkedHashMap<>();
         List<DonationRecord> donations = new ArrayList<>();
         Map<String, String> paymentCodes = new LinkedHashMap<>();
+        /** Сквозной счётчик продаж каталога: id в журнале отрицательные, чтобы не путать с донатами. */
+        long shopSaleSequence;
     }
 }

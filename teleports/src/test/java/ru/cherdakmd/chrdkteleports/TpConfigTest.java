@@ -55,6 +55,37 @@ class TpConfigTest {
     }
 
     @Test
+    void extraHomesFromShopRespectHardCap() {
+        TpConfig config = parse("""
+                homes:
+                  max-normal: 3
+                  max-vip: 8
+                  extra-permission: "chrdktele.homes.plus"
+                  extra-limit: 10
+                  hard-cap: 9
+                """);
+        assertEquals(3, config.homeLimit(false, false));
+        assertEquals(8, config.homeLimit(true, false));
+        assertEquals(9, config.homeLimit(false, true), "extra-limit 10 урезан потолком 9");
+        assertEquals(9, config.homeLimit(true, true));
+        assertEquals("chrdktele.homes.plus", config.homesExtraPermission());
+        assertTrue(config.grantsExtraHomes(true));
+        assertFalse(config.grantsExtraHomes(false), "без права товар не даёт домов");
+    }
+
+    @Test
+    void emptyPermissionTurnsExtraHomesOff() {
+        TpConfig config = parse("""
+                homes:
+                  max-normal: 3
+                  max-vip: 8
+                  extra-permission: ""
+                """);
+        assertFalse(config.grantsExtraHomes(true));
+        assertEquals(3, config.homeLimit(false, true), "право без настроенного товара ничего не даёт");
+    }
+
+    @Test
     void emptyConfigYieldsSafeDefaults() {
         TpConfig config = parse("");
         assertEquals(10000, config.rtpRadius());

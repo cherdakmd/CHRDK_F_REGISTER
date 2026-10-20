@@ -130,11 +130,27 @@ public final class LuckPermsBootstrap {
 
     /** Полная схема из конфига (имена/права подстраиваются). */
     public List<GroupSpec> scheme() {
-        return List.of(
-                new GroupSpec("default", 0, null, DEFAULT_PERMS),
-                new GroupSpec(passGroupName(), 10, "default",
-                        List.copyOf(config.get().passGroupPermissions())),
-                new GroupSpec("admin", 100, "default", ADMIN_PERMS));
+        List<GroupSpec> specs = new ArrayList<>();
+        specs.add(new GroupSpec("default", 0, null, DEFAULT_PERMS));
+        specs.add(new GroupSpec(passGroupName(), 10, "default",
+                List.copyOf(config.get().passGroupPermissions())));
+        specs.add(new GroupSpec("admin", 100, "default", ADMIN_PERMS));
+        // Группы товаров каталога: вес выше проходки, но ниже админа. Права товара
+        // («+8 домов» и подобные) выдаются вместе с группой на срок покупки.
+        for (ShopProduct product : config.get().shop().products()) {
+            if (!product.hasGroup()) {
+                continue;
+            }
+            String name = product.group().toLowerCase(Locale.ROOT);
+            boolean taken = name.equals("default") || name.equals("admin")
+                    || name.equals(passGroupName().toLowerCase(Locale.ROOT))
+                    || specs.stream().anyMatch(spec -> spec.name().equalsIgnoreCase(name));
+            if (taken) {
+                continue;
+            }
+            specs.add(new GroupSpec(name, 20, "default", product.permissions()));
+        }
+        return List.copyOf(specs);
     }
 
     /** Создать/достроить все группы схемы (асинхронно). */

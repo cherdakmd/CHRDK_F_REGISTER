@@ -31,6 +31,7 @@ public final class RegisterPlugin extends JavaPlugin {
     private SpawnService spawnService;
     private GuideBookService guideBookService;
     private RegistrationStore store;
+    private ShopService shopService;
     private ExecutionService executor;
     private RegisterCommandHandler commandHandler;
     private volatile Messages messages;
@@ -64,6 +65,11 @@ public final class RegisterPlugin extends JavaPlugin {
         this.passwordKeypad = new PasswordKeypadService(this, accessManager, messages);
         this.tabListService = new TabListService(this, accessManager);
         this.luckPermsPassSync = new LuckPermsPassSync(externalHooks, store, accessManager::config, getLogger());
+        this.shopService = new ShopService(this, accessManager, externalHooks, getLogger());
+        this.chatService.setTagResolver(shopService::tagOf);
+        getServer().getPluginManager().registerEvents(new ShopListener(shopService), this);
+        shopService.cleanupExpired();
+        shopService.logProblems();
         getServer().getServicesManager().register(ChrdkRegisterApi.class,
                 new ChrdkRegisterApiImpl(this, accessManager, externalHooks), this, ServicePriority.Normal);
 
@@ -217,6 +223,9 @@ public final class RegisterPlugin extends JavaPlugin {
         if (guideBookService != null) {
             guideBookService.reload(GuideBookSettings.parse(getConfig()));
         }
+        if (shopService != null) {
+            shopService.logProblems();
+        }
     }
 
     /** Тексты плагина из {@code messages.yml}. */
@@ -224,6 +233,11 @@ public final class RegisterPlugin extends JavaPlugin {
 
     public Messages messages() {
         return messages;
+    }
+
+    /** Каталог товаров: выдача, отзыв и список покупок. */
+    public ShopService shop() {
+        return shopService;
     }
 
     /**

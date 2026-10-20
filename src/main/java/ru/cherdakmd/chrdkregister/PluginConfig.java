@@ -50,6 +50,9 @@ public final class PluginConfig {
     /** Динамический MOTD (сеттится из load(), как и Boosty). */
     private MotdSettings motd = MotdSettings.DISABLED;
 
+    /** Каталог товаров из секции shop (сеттится из load(), не часть ctor). */
+    private ShopCatalog shop = ShopCatalog.empty(false);
+
     /** Мастер-флаг донат-стены проходки (seed из load()). */
     private boolean passEnabled = true;
 
@@ -432,6 +435,7 @@ public final class PluginConfig {
         parsed.updatesIntervalHours = Math.max(1, Math.min(720, config.getInt("updates.interval-hours", 6)));
         parsed.updatesNotifyAdmins = config.getBoolean("updates.notify-admins", true);
         parsed.motd = MotdSettings.from(config);
+        parsed.shop = ShopCatalog.from(config);
         parsed.passEnabled = config.getBoolean("pass.enabled", true);
         parsed.donateActions = DonateAction.parseList(config.getMapList("donation-actions"));
         parsed.donatePayShowBalance = config.getBoolean("donatepay.show-balance", true);
@@ -551,6 +555,11 @@ public final class PluginConfig {
     /** Интервал проверки обновлений, часов (минимум 1). */
     public int updatesIntervalHours() {
         return updatesIntervalHours;
+    }
+
+    /** Каталог товаров (пустой, если секция shop не настроена). */
+    public ShopCatalog shop() {
+        return shop;
     }
 
     /** Показывать ли уведомления о новой версии администраторам в игре. */

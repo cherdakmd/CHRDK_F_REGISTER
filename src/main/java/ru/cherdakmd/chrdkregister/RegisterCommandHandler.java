@@ -30,11 +30,12 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             List.of("add", "remove", "check", "unregister", "reset2fa", "status", "reload",
                     "pending", "donations", "health", "approve", "reject", "sessions", "logoutall", "stats", "doctor", "audit",
                     "backup", "gift", "testpay", "testpay-live", "shoppay", "recheck", "donationsgui",
-                    "luckperms", "update");
+                    "luckperms", "update", "shopbuy", "shoprevoke");
     private static final List<String> MUTE_DURATIONS = List.of("10m", "30m", "1h", "6h", "1d", "7d");
     private static final List<String> TWO_FACTOR_SUBCOMMANDS =
             List.of("setup", "confirm", "disable", "status", "cancel", "qr");
-    private static final List<String> PLAYER_SUBCOMMANDS = List.of("menu", "gui", "claim", "donate");
+    private static final List<String> PLAYER_SUBCOMMANDS =
+            List.of("menu", "gui", "claim", "donate", "shop", "my");
 
     private final RegisterPlugin plugin;
     private final AccessManager accessManager;
@@ -408,6 +409,14 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             } else {
                 messages.send(player, errorKey, "id", id);
             }
+            return true;
+        }
+        if ("shop".equals(sub) || "catalog".equals(sub)) {
+            showShop(sender, label);
+            return true;
+        }
+        if ("my".equals(sub) || "purchases".equals(sub)) {
+            showPurchases(sender, args, label);
             return true;
         }
         if (!sender.hasPermission("chrdkregister.admin")) {
@@ -862,6 +871,14 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 }
                 return true;
             }
+            case "shopbuy" -> {
+                handleShopBuy(sender, label, args);
+                return true;
+            }
+            case "shoprevoke" -> {
+                handleShopRevoke(sender, label, args);
+                return true;
+            }
             case "update" -> {
                 handleUpdate(sender, label, args);
                 return true;
@@ -1140,6 +1157,13 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 cfg.passGroup().isBlank()
                         ? "LuckPerms не установлен (опционально — нужен для integrations.pass-group)"
                         : "задан integrations.pass-group, но LuckPerms не найден — группы не синхронизируются!");
+        ShopCatalog shop = cfg.shop();
+        check(sender, "Каталог товаров", !shop.enabled() || shop.usable(),
+                "shop.enabled: true, но ни один товар не прошёл проверку — смотрите лог и shop.products");
+        if (!shop.problems().isEmpty()) {
+            check(sender, "Каталог: замечания", false,
+                    String.join("; ", shop.problems().stream().limit(3).toList()));
+        }
         messages.send(sender, "doctor.footer");
     }
 
@@ -1402,6 +1426,108 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                         : Messages.trusted(messages.raw("common.disabled-many")));
     }
 
+    /* ------------------------------ каталог товаров ------------------------------ */
+
+    /** {@code /pass shop} — витрина: что можно купить и сколько это стоит. */
+    private void showShop(CommandSender sender, String label) {
+        ShopCatalog catalog = accessManager.config().shop();
+        if (!catalog.usable()) {
+            messages.send(sender, "shop.disabled");
+            return;
+        }
+        messages.send(sender, "shop.header",
+                "url", accessManager.config().effectiveDonateUrl());
+        for (ShopProduct product : catalog.products()) {
+            messages.send(sender, "shop.entry",
+                    "name", product.name(),
+                    "price", product.priceRubles(),
+                    "days", product.days(),
+                    "description", product.description());
+        }
+        messages.send(sender, "shop.footer", "label", label);
+    }
+
+    /** {@code /pass my [ник]} — активные покупки игрока (админ может посмотреть чужого). */
+    private void showPurchases(CommandSender sender, String[] args, String label) {
+        String target;
+        if (args.length >= 2) {
+            if (!sender.hasPermission("chrdkregister.admin")) {
+                messages.send(sender, "error.no-permission");
+                return;
+            }
+            target = args[1];
+        } else if (sender instanceof Player player) {
+            target = player.getName();
+        } else {
+            messages.send(sender, "usage.pass-my", "label", label);
+            return;
+        }
+        var active = plugin.shop().active(target);
+        messages.send(sender, "shop.my-header", "player", target);
+        if (active.isEmpty()) {
+            messages.send(sender, "shop.my-empty", "label", label);
+            return;
+        }
+        for (var purchase : active) {
+            messages.send(sender, "shop.my-entry",
+                    "name", purchase.product().name(),
+                    "until", AccessManager.formatTimestamp(purchase.untilMillis()),
+                    "left", ShopEntitlements.remainingDays(purchase.untilMillis(), System.currentTimeMillis()));
+        }
+        messages.send(sender, "shop.my-footer", "count", active.size());
+    }
+
+    /** {@code /pass shopbuy <ник> <товар> [дней]} — RCON-хук магазина и ручная выдача. */
+    private void handleShopBuy(CommandSender sender, String label, String[] args) {
+        if (args.length < 3) {
+            messages.send(sender, "usage.pass-shopbuy", "label", label);
+            return;
+        }
+        String playerName = args[1].trim();
+        String productId = args[2].trim();
+        int days = 0;
+        if (args.length >= 4) {
+            try {
+                days = Integer.parseInt(args[3].trim());
+            } catch (NumberFormatException exception) {
+                messages.send(sender, "error.amount-number");
+                return;
+            }
+            if (days <= 0) {
+                messages.send(sender, "error.amount-number");
+                return;
+            }
+        }
+        ShopService.Result result = plugin.shop().grant(playerName, productId, days,
+                sender.getName());
+        switch (result.status()) {
+            case GRANTED -> messages.send(sender, "shop.granted",
+                    "player", result.playerName(),
+                    "name", result.product().name(),
+                    "days", result.days(),
+                    "until", AccessManager.formatTimestamp(result.untilMillis()));
+            case UNKNOWN_PRODUCT -> messages.send(sender, "shop.unknown-product",
+                    "id", productId, "list", String.join(", ", plugin.shop().catalog().ids()));
+            default -> messages.send(sender, "shop.disabled");
+        }
+    }
+
+    /** {@code /pass shoprevoke <ник> <товар>} — снять товар и его группу. */
+    private void handleShopRevoke(CommandSender sender, String label, String[] args) {
+        if (args.length < 3) {
+            messages.send(sender, "usage.pass-shoprevoke", "label", label);
+            return;
+        }
+        String playerName = args[1].trim();
+        String productId = args[2].trim();
+        if (!plugin.shop().revoke(playerName, productId, sender.getName())) {
+            messages.send(sender, "shop.not-active", "player", playerName, "id", productId);
+            return;
+        }
+        String name = plugin.shop().product(productId).map(ShopProduct::name).orElse(productId);
+        messages.send(sender, "shop.revoked", "player", playerName, "name", name);
+    }
+
     private void handleUpdate(CommandSender sender, String label, String[] args) {
         String action = args.length == 2 ? args[1].toLowerCase(Locale.ROOT) : "";
         if (!action.equals("check") && !action.equals("download")) {
@@ -1546,10 +1672,21 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 return (canDownloadUpdates(sender) ? List.of("check", "download") : List.of("check"))
                         .stream().filter(value -> value.startsWith(prefix)).toList();
             }
+            if ("shopbuy".equals(sub) || "shoprevoke".equals(sub) || "my".equals(sub)) {
+                return completePlayerNames(args[1]);
+            }
         }
         if (args.length == 3) {
             String sub = args[0].toLowerCase(Locale.ROOT);
             String action = args[1].toLowerCase(Locale.ROOT);
+            if ("shopbuy".equals(sub) || "shoprevoke".equals(sub)) {
+                String prefix = args[2].toLowerCase(Locale.ROOT);
+                return plugin.shop().catalog().ids().stream()
+                        .filter(id -> id.startsWith(prefix)).toList();
+            }
+            if ("my".equals(sub)) {
+                return List.of();
+            }
             if ("gift".equals(sub) || ("add".equals(sub) && args[2].isBlank())) {
                 return List.of("30", "90", "365");
             }

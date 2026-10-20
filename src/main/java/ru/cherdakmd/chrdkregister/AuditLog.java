@@ -63,6 +63,10 @@ public final class AuditLog {
     public static final String CHAT_FILTER = "chat.filter";
     public static final String CHAT_BROADCAST = "chat.broadcast";
     public static final String ADMIN_COMMAND = "admin.command";
+    /** Покупка товара каталога (витрина TradeMC или ручная выдача). */
+    public static final String SHOP_BUY = "shop.buy";
+    /** Отзыв товара каталога администратором. */
+    public static final String SHOP_REVOKE = "shop.revoke";
 
     private static final Gson GSON = new Gson();
     private static final DateTimeFormatter FILE_STAMP = DateTimeFormatter.ofPattern("yyyy-MM-dd");

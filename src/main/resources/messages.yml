@@ -98,6 +98,9 @@ messages:
     "pass-testpay": "<yellow>Использование: /%label% testpay <ник> [сумма_руб] [сервис] — тестовый платёж (donatepay/easydonate/trademc): полный цикл выдачи (журнал, аудит, уведомления).</yellow>"
     "pass-testpaylive": "<yellow>Использование: /%label% testpay-live <ник> <сумма_руб> [комментарий] — ЖИВОЙ тест: запись о донате отправится в ваш кошелёк DonatePay (set_notification).</yellow>"
     "pass-shoppay": "<yellow>Использование: /%label% shoppay <ник> <сумма_руб> — RCON-хук магазина TradeMC: провести покупку как донат (журнал, выдача по тарифам).</yellow>"
+    "pass-shopbuy": "<yellow>Использование: /%label% shopbuy <ник> <товар> [дней] — выдать товар каталога (RCON-хук витрины TradeMC).</yellow>"
+    "pass-shoprevoke": "<yellow>Использование: /%label% shoprevoke <ник> <товар> — снять товар и его группу.</yellow>"
+    "pass-my": "<yellow>Использование: /%label% my [ник] — активные покупки.</yellow>"
     "pass-luckperms": "<yellow>Использование: /%label% luckperms [setup|status] — авто-настройка групп LuckPerms (default → проходка → admin) или просмотр схемы.</yellow>"
     "pass-reset2fa": "<yellow>Использование: /%label% reset2fa <ник></yellow>"
     "pass-sessions": "<yellow>Использование: /%label% sessions <ник></yellow>"
@@ -969,3 +972,22 @@ messages:
     "title": "<gold>Меню сервера</gold>"
     "disabled": "<red>Меню сервера отключено в конфигурации.</red>"
     "player-only": "<red>Меню доступно только игрокам.</red>"
+
+  # ---------------------------------------------------------------
+  # shop — каталог товаров (1.4.110)
+  # ---------------------------------------------------------------
+  "shop":
+    "disabled": "<red>Каталог товаров сейчас выключен.</red>"
+    "header": "<gold><b>Каталог товаров</b></gold> <gray>— покупки на витрине</gray> <aqua>%url%</aqua>"
+    "entry": "<yellow>%name%</yellow> <gray>—</gray> <white>%price% ₽</white> <gray>/ %days% дн.</gray> <dark_gray>·</dark_gray> <gray>%description%</gray>"
+    "footer": "<gray>Купили? Товар активируется сам. Свои покупки: <yellow>/%label% my</yellow></gray>"
+    "received": "<green>Покупка активирована: %name% <gray>до</gray> %until%<green>.</green></green>"
+    "granted": "<green>[Магазин] %player% получил «%name%» на %days% дн. (до %until%).</green>"
+    "revoked": "<yellow>[Магазин] У %player% отозван товар «%name%».</yellow>"
+    "revoked-player": "<yellow>Товар «%name%» больше не действует.</yellow>"
+    "not-active": "<red>У %player% нет активного товара «%id%».</red>"
+    "unknown-product": "<red>Товар «%id%» не найден. Доступно: %list%</red>"
+    "my-header": "<gold><b>Мои покупки</b></gold> <gray>(%player%)</gray>"
+    "my-entry": "<yellow>%name%</yellow> <gray>— до %until%, осталось %left% дн.</gray>"
+    "my-empty": "<gray>Активных покупок нет. Каталог: /%label% shop</gray>"
+    "my-footer": "<gray>Всего активно: %count%</gray>"

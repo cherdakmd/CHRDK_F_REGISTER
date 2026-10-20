@@ -75,6 +75,13 @@ public final class TeleportCommandHandler implements TabExecutor {
 
     /* ------------------------------- общие проверки ------------------------------- */
 
+    /** Действует ли купленный товар «дополнительные дома» (право выдаётся ядром на срок). */
+    private boolean extraHomes(Player player) {
+        String permission = plugin.config().homesExtraPermission();
+        return plugin.config().grantsExtraHomes(
+                permission != null && !permission.isBlank() && player.hasPermission(permission));
+    }
+
     private boolean vip(Player player) {
         return plugin.coreApi() != null && plugin.coreApi().hasActivePass(player.getName());
     }
@@ -314,7 +321,7 @@ public final class TeleportCommandHandler implements TabExecutor {
         }
         HomeStore store = plugin.store();
         boolean exists = store.get(player.getUniqueId(), HomeStore.normalize(name)) != null;
-        int max = plugin.config().homeLimit(vip(player));
+        int max = plugin.config().homeLimit(vip(player), extraHomes(player));
         if (!exists && store.count(player.getUniqueId()) >= max) {
             plugin.messages().send(player, "home.limit", "max", max);
             return true;
@@ -366,7 +373,7 @@ public final class TeleportCommandHandler implements TabExecutor {
         }
         List<String> names = new ArrayList<>();
         list.forEach(home -> names.add(home.name()));
-        int max = plugin.config().homeLimit(vip(player));
+        int max = plugin.config().homeLimit(vip(player), extraHomes(player));
         plugin.messages().send(player, "home.list",
                 "homes", String.join(", ", names), "used", list.size(), "max", max);
         return true;

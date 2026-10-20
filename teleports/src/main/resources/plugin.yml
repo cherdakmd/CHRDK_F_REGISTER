@@ -33,6 +33,9 @@ permissions:
   chrdktele.use:
     description: Телепортация (RTP/TPA/дома)
     default: true
+  chrdktele.homes.plus:
+    description: Дополнительные точки дома (товар каталога «Дополнительные дома»)
+    default: false
   chrdktele.admin:
     description: Администрирование телепортов
     default: op

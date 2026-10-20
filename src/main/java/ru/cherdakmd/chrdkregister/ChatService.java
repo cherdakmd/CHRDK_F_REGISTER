@@ -70,6 +70,8 @@ public final class ChatService implements Listener {
     private final Map<UUID, Long> lastMessageAt = new ConcurrentHashMap<>();
     private final Map<UUID, String> lastMessageText = new ConcurrentHashMap<>();
     private final Map<UUID, UUID> lastPrivatePartners = new ConcurrentHashMap<>();
+    /** Оформление ника из каталога товаров (цветной ник, плашка мецената). */
+    private volatile java.util.function.Function<String, String> tagResolver = name -> "";
     private final Map<UUID, Set<String>> ignoreCache = new ConcurrentHashMap<>();
     private final Set<UUID> socialSpy = ConcurrentHashMap.newKeySet();
 
@@ -85,6 +87,21 @@ public final class ChatService implements Listener {
         this.config = config;
         this.messages = messages;
         this.logger = logger;
+    }
+
+    /**
+     * Подключает источник оформления ников: ник → MiniMessage-тег (пусто — без оформления).
+     * Вызывается один раз при включении плагина и переживает {@code /pass reload}.
+     */
+    public void setTagResolver(java.util.function.Function<String, String> resolver) {
+        this.tagResolver = resolver == null ? name -> "" : resolver;
+    }
+
+    /** Ник с оформлением товара: {@code <gold>Nick</gold>} или просто ник. */
+    private String decorated(String playerName) {
+        java.util.function.Function<String, String> resolver = tagResolver;
+        String tag = resolver == null ? "" : resolver.apply(playerName);
+        return ShopEntitlements.decorate(playerName, tag);
     }
 
     /** Заменяет тексты из {@code messages.yml} (используется при {@code /pass reload}). */
@@ -250,7 +267,7 @@ public final class ChatService implements Listener {
         boolean colorAllowed = cfg.allowColorCodes() && player.hasPermission(PERMISSION_COLOR);
         String format = channel == ChatConfig.Channel.GLOBAL ? cfg.globalFormat() : cfg.localFormat();
         Map<String, String> placeholders = new LinkedHashMap<>();
-        placeholders.put("%player%", player.getName());
+        placeholders.put("%player%", decorated(player.getName()));
         placeholders.put("%world%", player.getWorld().getName());
         String[] segments = splitFormat(format, placeholders);
         NamedTextColor bodyColor = extractTrailingColor(segments[0], NamedTextColor.WHITE);
@@ -944,7 +961,7 @@ public final class ChatService implements Listener {
         boolean colorAllowed = cfg.allowColorCodes()
                 && (!(sender instanceof Player senderPlayer) || senderPlayer.hasPermission(PERMISSION_COLOR));
         Map<String, String> placeholders = new LinkedHashMap<>();
-        placeholders.put("%sender%", senderName);
+        placeholders.put("%sender%", sender instanceof Player ? decorated(senderName) : senderName);
         placeholders.put("%target%", target.getName());
 
         String[] receive = splitFormat(cfg.privateReceiveFormat(), placeholders);
