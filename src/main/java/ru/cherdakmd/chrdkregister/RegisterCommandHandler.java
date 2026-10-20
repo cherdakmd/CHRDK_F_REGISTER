@@ -1168,9 +1168,8 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             check(sender, "Каталог: замечания", false,
                     String.join("; ", shop.problems().stream().limit(3).toList()));
         }
-        ShopDiscount discount = accessManager.config().shopDiscount();
+        ShopDiscount discount = cfg.shopDiscount();
         if (discount.usable()) {
-            var boosty = accessManager.config().boosty();
             check(sender, "Скидка подписки", boosty.enabled() && !boosty.dryRun(),
                     "shop.boosty-bonus включён, но Boosty выключен или в dry-run — бонус не начислится");
         }
