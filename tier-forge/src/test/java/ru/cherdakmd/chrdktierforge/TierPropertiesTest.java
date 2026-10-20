@@ -49,8 +49,8 @@ class TierPropertiesTest {
                     "повторный ключ улучшения: " + property.asDef().id());
             assertTrue(property.asDef().id().startsWith("prop_"),
                     "ключ свойства должен быть в своём пространстве: " + property.asDef().id());
-            assertEquals(1.0, property.asDef().perLevel(), 1e-9,
-                    "свойство всегда одного уровня — величина живёт в value");
+            assertEquals(property.value(), property.asDef().perLevel(), 1e-9,
+                    "величина свойства живёт в perLevel определения");
             assertNotNull(TierProperties.byId(property.id()));
             assertEquals(property, TierProperties.byId(property.id()));
         }
