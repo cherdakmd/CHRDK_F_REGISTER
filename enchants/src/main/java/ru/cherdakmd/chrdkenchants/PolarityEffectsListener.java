@@ -132,14 +132,14 @@ public final class PolarityEffectsListener implements Listener {
         Player player = event.getPlayer();
         double bonus = 0;
         for (ItemStack piece : gearPieces(player)) {
-            Map<String, Integer> enchants = plugin.items().read(piece);
-            enchants.forEach((id, level) -> {
-                if (id.equals("scholar")) {
+            for (Map.Entry<String, Integer> entry : plugin.items().read(piece).entrySet()) {
+                int level = entry.getValue();
+                if ("scholar".equals(entry.getKey())) {
                     bonus += EnchantParams.percent("scholar", level) / 100.0;
-                } else if (id.equals("slow_learner")) {
+                } else if ("slow_learner".equals(entry.getKey())) {
                     bonus -= EnchantParams.percent("slow_learner", level) / 100.0;
                 }
-            });
+            }
         }
         if (bonus != 0) {
             double multiplier = Math.max(0.1, 1 + bonus);
