@@ -35,7 +35,7 @@ class ViewerBindingTest {
         ViewerBinding binding = pending().accept(5_000L).checkedIn(65_000L);
 
         assertEquals(65_000L, binding.lastCheckIn());
-        assertEquals(5_000L, binding.requestedAt());
+        assertEquals(1_000L, binding.requestedAt(), "время заявки не переписывается чек-ином");
         assertTrue(binding.accepted());
         assertEquals("Steve", binding.name());
     }
