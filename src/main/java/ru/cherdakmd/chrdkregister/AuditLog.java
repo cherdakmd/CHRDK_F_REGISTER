@@ -67,6 +67,8 @@ public final class AuditLog {
     public static final String SHOP_BUY = "shop.buy";
     /** Отзыв товара каталога администратором. */
     public static final String SHOP_REVOKE = "shop.revoke";
+    /** Подарок из каталога: платит один игрок, товар получает другой. */
+    public static final String SHOP_GIFT = "shop.gift";
 
     private static final Gson GSON = new Gson();
     private static final DateTimeFormatter FILE_STAMP = DateTimeFormatter.ofPattern("yyyy-MM-dd");

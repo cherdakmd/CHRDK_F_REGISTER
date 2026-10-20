@@ -35,7 +35,7 @@ commands:
     aliases: [totp, twofactor]
   pass:
     description: Проверка статуса проходки и управление проходками
-    usage: /<command> [menu|shop|my|add|remove|check|unregister|reset2fa|status|reload|shopbuy|shoprevoke] [ник]
+    usage: /<command> [menu|shop|my|add|remove|check|unregister|reset2fa|status|reload|shopbuy|shoprevoke|shopgift] [ник]
     aliases: [fregister, prohodka]
   chat:
     description: Управление чатом — локальный/глобальный режим, очистка, объявления

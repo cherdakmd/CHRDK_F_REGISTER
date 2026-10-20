@@ -145,4 +145,89 @@ class ShopCatalogTest {
         assertFalse(ShopCatalog.balanced("</gold>"), "закрывающий без открывающего");
         assertFalse(ShopCatalog.balanced(">"), "мусор вне тега");
     }
+
+    /* ------------------------------ наборы ------------------------------ */
+
+    private static Map<String, Object> bundle(String id, Object price, List<String> includes) {
+        Map<String, Object> entry = product(id, price, 30);
+        entry.put("includes", includes);
+        return entry;
+    }
+
+    @Test
+    void bundleKeepsDeclaredListAndResolvesLeaves() {
+        ShopCatalog catalog = ShopCatalog.parse(true, 365, List.of(
+                product("trail-flame", 59, 30),
+                product("trail-hearts", 59, 30),
+                bundle("trails-pack", 99, List.of("trail-flame", "trail-hearts"))));
+
+        ShopProduct pack = catalog.find("trails-pack").orElseThrow();
+        assertTrue(pack.isBundle());
+        assertEquals(List.of("trail-flame", "trail-hearts"), pack.includes(), "витрина показывает заявленный состав");
+        assertEquals(List.of("trail-flame", "trail-hearts"), pack.resolvedIncludes());
+    }
+
+    @Test
+    void nestedBundleFlattensToLeaves() {
+        ShopCatalog catalog = ShopCatalog.parse(true, 365, List.of(
+                product("trail-flame", 59, 30),
+                bundle("trails-pack", 49, List.of("trail-flame")),
+                bundle("start-kit", 39, List.of("trails-pack"))));
+
+        ShopProduct kit = catalog.find("start-kit").orElseThrow();
+        assertEquals(List.of("trails-pack"), kit.includes(), "заявлено вложение набора");
+        assertEquals(List.of("trail-flame"), kit.resolvedIncludes(), "выдаётся лист, а не набор");
+    }
+
+    @Test
+    void bundleIgnoresUnknownSelfAndCyclicLinks() {
+        ShopCatalog catalog = ShopCatalog.parse(true, 365, List.of(
+                product("trail-flame", 59, 30),
+                bundle("a", 10, List.of("ghost", "a", "b", "trail-flame")),
+                bundle("b", 10, List.of("a"))));
+
+        ShopProduct a = catalog.find("a").orElseThrow();
+        assertEquals(List.of("trail-flame"), a.resolvedIncludes(),
+                "неизвестный товар, ссылка на себя и цикл отброшены");
+        assertTrue(catalog.problems().stream().anyMatch(line -> line.contains("неизвестный")),
+                () -> catalog.problems().toString());
+        assertTrue(catalog.problems().stream().anyMatch(line -> line.contains("сам себя")),
+                () -> catalog.problems().toString());
+    }
+
+    @Test
+    void bundleWithoutDiscountIsReported() {
+        ShopCatalog catalog = ShopCatalog.parse(true, 365, List.of(
+                product("trail-flame", 59, 30),
+                product("trail-hearts", 59, 30),
+                bundle("bad-pack", 200, List.of("trail-flame", "trail-hearts"))));
+
+        assertTrue(catalog.problems().stream().anyMatch(line -> line.contains("Скидки нет")),
+                () -> catalog.problems().toString());
+    }
+
+    @Test
+    void bundleWithPassDaysIsABundle() {
+        Map<String, Object> entry = bundle("start-kit", 299, List.of("trail-flame"));
+        entry.put("pass-days", 30);
+        ShopCatalog catalog = ShopCatalog.parse(true, 365, List.of(
+                product("trail-flame", 59, 30), entry));
+
+        ShopProduct kit = catalog.find("start-kit").orElseThrow();
+        assertTrue(kit.isBundle());
+        assertTrue(kit.hasPassDays());
+        assertEquals(30, kit.passDays());
+    }
+
+    @Test
+    void passDaysOutOfRangeAreDropped() {
+        Map<String, Object> entry = bundle("kit", 99, List.of("trail-flame"));
+        entry.put("pass-days", 10_000);
+        ShopCatalog catalog = ShopCatalog.parse(true, 365, List.of(
+                product("trail-flame", 59, 30), entry));
+
+        assertFalse(catalog.find("kit").orElseThrow().hasPassDays());
+        assertTrue(catalog.problems().stream().anyMatch(line -> line.contains("pass-days")),
+                () -> catalog.problems().toString());
+    }
 }

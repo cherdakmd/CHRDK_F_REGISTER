@@ -27,6 +27,8 @@ public final class ShopCatalog {
     public static final int DEFAULT_MAX_TOTAL_DAYS = 365;
     /** Разумный потолок цены: защита от опечатки «149000» вместо «149». */
     public static final int MAX_PRICE_RUBLES = 100_000;
+    /** Насколько глубоко набор может включать другие наборы. */
+    public static final int MAX_BUNDLE_DEPTH = 3;
     private static final Pattern ID_PATTERN = Pattern.compile("[a-z0-9][a-z0-9_-]{0,31}");
 
     private final boolean enabled;
@@ -136,18 +138,130 @@ public final class ShopCatalog {
                 tag = "";
             }
 
+            int passDays = intOf(entry.get("pass-days"), 0);
+            if (passDays < 0 || passDays > MAX_PRODUCT_DAYS) {
+                problems.add("shop.products[" + index + "] (" + id + "): pass-days " + passDays
+                        + " вне диапазона 1.." + MAX_PRODUCT_DAYS + " — дни проходки не выданы");
+                passDays = 0;
+            }
+
+            List<String> includes = ids(strings(entry.get("includes")));
             List<String> permissions = strings(entry.get("permissions"));
             List<String> commands = strings(entry.get("commands"));
 
             ShopProduct product = new ShopProduct(id, name, text(entry.get("description")),
-                    price, days, group, tag, permissions, commands);
+                    price, days, group, tag, permissions, commands, includes, List.of(), passDays);
             seen.put(id, product);
             products.add(product);
         }
         if (enabled && products.isEmpty()) {
             problems.add("shop.enabled: true, но ни один товар не настроен — каталог пуст");
         }
-        return new ShopCatalog(enabled, cap, products, problems);
+        List<ShopProduct> resolved = resolveBundles(products, seen, problems);
+        return new ShopCatalog(enabled, cap, resolved, problems);
+    }
+
+    /**
+     * Раскрывает вложенные наборы в плоский список товаров и проверяет ссылки.
+     *
+     * <p>Результат детерминирован: {@code includes} остаётся тем, что написал админ
+     * (для витрины), {@code resolvedIncludes} — листья, которые реально выдаются.
+     * Циклы, ссылки на себя и на несуществующие товары отбрасываются с пояснением,
+     * а не роняют каталог.</p>
+     */
+    private static List<ShopProduct> resolveBundles(List<ShopProduct> products,
+                                                    Map<String, ShopProduct> byId,
+                                                    List<String> problems) {
+        List<ShopProduct> result = new ArrayList<>(products.size());
+        for (ShopProduct product : products) {
+            if (product.includes().isEmpty()) {
+                result.add(product);
+                continue;
+            }
+            List<String> leaves = new ArrayList<>();
+            List<String> visited = new ArrayList<>();
+            collectLeaves(product, byId, leaves, visited, problems, 0);
+            if (leaves.isEmpty()) {
+                problems.add("shop.products (" + product.id() + "): набор не содержит ни одного "
+                        + "существующего товара — покупка выдаст только сам набор");
+            }
+            result.add(new ShopProduct(product.id(), product.name(), product.description(),
+                    product.priceRubles(), product.days(), product.group(), product.tag(),
+                    product.permissions(), product.commands(), product.includes(), leaves,
+                    product.passDays()));
+        }
+        for (ShopProduct bundle : result) {
+            if (bundle.resolvedIncludes().isEmpty() || bundle.hasPassDays()) {
+                // Набор с днями проходки не проверяем: у проходки своя цена по тарифам,
+                // и любая оценка здесь была бы выдумкой.
+                continue;
+            }
+            int partsPrice = 0;
+            boolean complete = true;
+            for (String id : bundle.includes()) {
+                ShopProduct part = byId.get(id);
+                if (part == null) {
+                    complete = false;
+                    break;
+                }
+                partsPrice += part.priceRubles();
+            }
+            if (complete && bundle.priceRubles() >= partsPrice) {
+                problems.add("shop.products (" + bundle.id() + "): набор стоит "
+                        + bundle.priceRubles() + " ₽, а те же товары по отдельности — " + partsPrice
+                        + " ₽. Скидки нет, покупатель выберет поштучно");
+            }
+        }
+        return result;
+    }
+
+    /** Рекурсивно собирает листья набора; глубина ограничена, циклы отсекаются. */
+    private static void collectLeaves(ShopProduct bundle, Map<String, ShopProduct> byId,
+                                      List<String> leaves, List<String> visited,
+                                      List<String> problems, int depth) {
+        if (depth > MAX_BUNDLE_DEPTH) {
+            problems.add("shop.products (" + bundle.id() + "): вложенность наборов больше "
+                    + MAX_BUNDLE_DEPTH + " — лишние уровни пропущены");
+            return;
+        }
+        for (String include : bundle.includes()) {
+            if (include.equals(bundle.id())) {
+                problems.add("shop.products (" + bundle.id() + "): набор включает сам себя — ссылка пропущена");
+                continue;
+            }
+            ShopProduct part = byId.get(include);
+            if (part == null) {
+                problems.add("shop.products (" + bundle.id() + "): в includes указан неизвестный "
+                        + "товар '" + include + "' — пропущен");
+                continue;
+            }
+            if (part.includes().isEmpty()) {
+                if (!leaves.contains(part.id())) {
+                    leaves.add(part.id());
+                }
+                continue;
+            }
+            if (visited.contains(part.id())) {
+                problems.add("shop.products (" + bundle.id() + "): циклическая ссылка на набор '"
+                        + part.id() + "' — пропущена");
+                continue;
+            }
+            visited.add(part.id());
+            collectLeaves(part, byId, leaves, visited, problems, depth + 1);
+            visited.remove(visited.size() - 1);
+        }
+    }
+
+    /** Нормализует список id: нижний регистр, без пустых и повторов. */
+    private static List<String> ids(List<String> raw) {
+        List<String> result = new ArrayList<>(raw.size());
+        for (String id : raw) {
+            String normalized = id.trim().toLowerCase(Locale.ROOT);
+            if (!normalized.isEmpty() && !result.contains(normalized)) {
+                result.add(normalized);
+            }
+        }
+        return List.copyOf(result);
     }
 
     public boolean enabled() {

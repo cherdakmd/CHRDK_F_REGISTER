@@ -30,7 +30,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             List.of("add", "remove", "check", "unregister", "reset2fa", "status", "reload",
                     "pending", "donations", "health", "approve", "reject", "sessions", "logoutall", "stats", "doctor", "audit",
                     "backup", "gift", "testpay", "testpay-live", "shoppay", "recheck", "donationsgui",
-                    "luckperms", "update", "shopbuy", "shoprevoke");
+                    "luckperms", "update", "shopbuy", "shoprevoke", "shopgift");
     private static final List<String> MUTE_DURATIONS = List.of("10m", "30m", "1h", "6h", "1d", "7d");
     private static final List<String> TWO_FACTOR_SUBCOMMANDS =
             List.of("setup", "confirm", "disable", "status", "cancel", "qr");
@@ -879,6 +879,10 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 handleShopRevoke(sender, label, args);
                 return true;
             }
+            case "shopgift" -> {
+                handleShopGift(sender, label, args);
+                return true;
+            }
             case "update" -> {
                 handleUpdate(sender, label, args);
                 return true;
@@ -1164,6 +1168,10 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             check(sender, "Каталог: замечания", false,
                     String.join("; ", shop.problems().stream().limit(3).toList()));
         }
+        long bundles = shop.products().stream().filter(ShopProduct::isBundle).count();
+        if (bundles > 0) {
+            check(sender, "Каталог: наборы", true, "наборов: " + bundles + " — состав раскрыт при выдаче");
+        }
         messages.send(sender, "doctor.footer");
     }
 
@@ -1438,16 +1446,32 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         messages.send(sender, "shop.header",
                 "url", accessManager.config().effectiveDonateUrl());
         for (ShopProduct product : catalog.products()) {
-            messages.send(sender, "shop.entry",
+            messages.send(sender, product.isBundle() ? "shop.entry-bundle" : "shop.entry",
                     "name", product.name(),
                     "price", product.priceRubles(),
                     "days", product.days(),
                     "description", product.description());
+            if (product.isBundle()) {
+                messages.send(sender, "shop.entry-includes",
+                        "items", describeContents(product, catalog));
+            }
         }
         messages.send(sender, "shop.footer", "label", label);
     }
 
     /** {@code /pass my [ник]} — активные покупки игрока (админ может посмотреть чужого). */
+    /** Состав набора для витрины: «Шлейф огня, …» плюс дни проходки, если есть. */
+    private String describeContents(ShopProduct product, ShopCatalog catalog) {
+        java.util.List<String> parts = new java.util.ArrayList<>();
+        for (String id : product.includes()) {
+            parts.add(catalog.find(id).map(ShopProduct::name).orElse(id));
+        }
+        if (product.hasPassDays()) {
+            parts.add(plugin.messages().raw("shop.includes-pass", "days", product.passDays()));
+        }
+        return String.join(", ", parts);
+    }
+
     private void showPurchases(CommandSender sender, String[] args, String label) {
         String target;
         if (args.length >= 2) {
@@ -1501,11 +1525,52 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         ShopService.Result result = plugin.shop().grant(playerName, productId, days,
                 sender.getName());
         switch (result.status()) {
-            case GRANTED -> messages.send(sender, "shop.granted",
-                    "player", result.playerName(),
-                    "name", result.product().name(),
-                    "days", result.days(),
-                    "until", AccessManager.formatTimestamp(result.untilMillis()));
+            case GRANTED -> {
+                messages.send(sender, "shop.granted",
+                        "player", result.playerName(),
+                        "name", result.product().name(),
+                        "days", result.days(),
+                        "until", AccessManager.formatTimestamp(result.untilMillis()));
+                if (result.isBundle()) {
+                    messages.send(sender, "shop.granted-includes",
+                            "items", String.join(", ", result.included()));
+                }
+            }
+            case UNKNOWN_PRODUCT -> messages.send(sender, "shop.unknown-product",
+                    "id", productId, "list", String.join(", ", plugin.shop().catalog().ids()));
+            default -> messages.send(sender, "shop.disabled");
+        }
+    }
+
+    /**
+     * {@code /pass shopgift <ник> <товар> [даритель]} — подарить товар.
+     *
+     * <p>Отличается от {@code shopbuy} только журналом, аудитом и поздравлением:
+     * получатель видит, что вещь подарена, а в журнале продаж остаётся имя дарителя.
+     * Платёж всё равно проходит на витрине — команда лишь фиксирует, кто платил.</p>
+     */
+    private void handleShopGift(CommandSender sender, String label, String[] args) {
+        if (args.length < 3) {
+            messages.send(sender, "usage.pass-shopgift", "label", label);
+            return;
+        }
+        String playerName = args[1].trim();
+        String productId = args[2].trim();
+        String giver = args.length >= 4 && !args[3].isBlank()
+                ? args[3].trim()
+                : sender.getName();
+        ShopService.Result result = plugin.shop().grant(playerName, productId, 0, sender.getName(), giver);
+        switch (result.status()) {
+            case GRANTED -> {
+                messages.send(sender, "shop.gift-sent",
+                        "player", result.playerName(),
+                        "name", result.product().name(),
+                        "until", AccessManager.formatTimestamp(result.untilMillis()));
+                if (result.isBundle()) {
+                    messages.send(sender, "shop.granted-includes",
+                            "items", String.join(", ", result.included()));
+                }
+            }
             case UNKNOWN_PRODUCT -> messages.send(sender, "shop.unknown-product",
                     "id", productId, "list", String.join(", ", plugin.shop().catalog().ids()));
             default -> messages.send(sender, "shop.disabled");
@@ -1672,14 +1737,15 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 return (canDownloadUpdates(sender) ? List.of("check", "download") : List.of("check"))
                         .stream().filter(value -> value.startsWith(prefix)).toList();
             }
-            if ("shopbuy".equals(sub) || "shoprevoke".equals(sub) || "my".equals(sub)) {
+            if ("shopbuy".equals(sub) || "shoprevoke".equals(sub) || "shopgift".equals(sub)
+                    || "my".equals(sub)) {
                 return completePlayerNames(args[1]);
             }
         }
         if (args.length == 3) {
             String sub = args[0].toLowerCase(Locale.ROOT);
             String action = args[1].toLowerCase(Locale.ROOT);
-            if ("shopbuy".equals(sub) || "shoprevoke".equals(sub)) {
+            if ("shopbuy".equals(sub) || "shoprevoke".equals(sub) || "shopgift".equals(sub)) {
                 String prefix = args[2].toLowerCase(Locale.ROOT);
                 return plugin.shop().catalog().ids().stream()
                         .filter(id -> id.startsWith(prefix)).toList();

@@ -38,13 +38,23 @@ public final class ShopService {
     }
 
     public record Result(Status status, String playerName, ShopProduct product,
-                         long untilMillis, int days) {
+                         long untilMillis, int days, List<String> included) {
+
+        public Result {
+            included = included == null ? List.of() : List.copyOf(included);
+        }
+
         public boolean granted() {
             return status == Status.GRANTED;
         }
 
+        /** Набор выдал не только себя: перечислить состав в тексте. */
+        public boolean isBundle() {
+            return !included.isEmpty();
+        }
+
         public static Result failure(Status status, String playerName) {
-            return new Result(status, playerName, null, 0L, 0);
+            return new Result(status, playerName, null, 0L, 0, List.of());
         }
     }
 
@@ -84,6 +94,21 @@ public final class ShopService {
      * @return результат выдачи
      */
     public Result grant(String playerName, String productId, int days, String actor) {
+        return grant(playerName, productId, days, actor, "");
+    }
+
+    /**
+     * Выдаёт товар и, если он набор, всё его содержимое.
+     *
+     * <p>Набор — рецепт покупки: отдельных записей в аккаунте он не создаёт, игрок
+     * получает ровно перечисленные товары, каждый со своим сроком. Поэтому витрина
+     * {@code /pass my} показывает состав, а не «набор», и продление одной вещи
+     * из набора не задевает остальные.</p>
+     *
+     * @param giftFrom ник дарителя; пусто — обычная покупка. Подарок отличается
+     *                 только журналом, аудитом и поздравлением получателя
+     */
+    public Result grant(String playerName, String productId, int days, String actor, String giftFrom) {
         ShopCatalog catalog = catalog();
         if (!catalog.usable()) {
             return Result.failure(Status.DISABLED, playerName);
@@ -96,35 +121,74 @@ public final class ShopService {
                 ? Math.min(days, ShopCatalog.MAX_PRODUCT_DAYS)
                 : product.days();
         long now = System.currentTimeMillis();
-        long until = access.store().grantEntitlement(
-                playerName, product.id(), now, length, catalog.maxTotalDays());
 
         String canonical = access.store().getAccount(playerName)
                 .map(account -> account.playerName)
                 .filter(name -> name != null && !name.isBlank())
                 .orElse(playerName);
 
-        applyGroup(canonical, product, now, until);
-        runCommands(canonical, product);
+        long until = product.isBundle()
+                ? 0L
+                : grantOne(canonical, product, now, length);
+        List<String> included = new ArrayList<>();
+        if (product.isBundle()) {
+            until = now;
+            for (String partId : product.resolvedIncludes()) {
+                ShopProduct part = catalog.find(partId).orElse(null);
+                if (part == null) {
+                    continue; // набор пережил правку конфига — выдаём то, что ещё существует
+                }
+                until = Math.max(until, grantOne(canonical, part, now, part.days()));
+                included.add(part.id());
+            }
+            if (product.hasPassDays()) {
+                RegistrationStore.PlayerAccount account = access.grantPassManually(
+                        canonical, product.passDays(), "shop:" + product.id());
+                until = Math.max(until, account.passUntil);
+            }
+        }
 
-        access.store().recordShopSale(canonical, product.id(), product.priceRubles(), now);
-        access.audit().log(AuditLog.SHOP_BUY,
-                actor == null || actor.isBlank() ? "console" : actor,
+        boolean gift = giftFrom != null && !giftFrom.isBlank();
+        access.store().recordShopSale(canonical, product.id(), product.priceRubles(), now,
+                gift ? "gift:" + giftFrom.trim() : "");
+        access.audit().log(gift ? AuditLog.SHOP_GIFT : AuditLog.SHOP_BUY,
+                gift ? giftFrom.trim() : actor == null || actor.isBlank() ? "console" : actor,
                 canonical, "",
                 AuditLog.details("product", product.id(), "days", length,
-                        "until", until, "price", product.priceRubles()));
+                        "until", until, "price", product.priceRubles(),
+                        "included", String.join(",", included)));
 
         Player online = Bukkit.getPlayerExact(canonical);
         if (online != null) {
-            plugin.messages().send(online, "shop.received",
-                    "name", product.name(),
-                    "until", AccessManager.formatTimestamp(until));
+            if (gift) {
+                plugin.messages().send(online, "shop.gift-received",
+                        "name", product.name(), "from", giftFrom.trim(),
+                        "until", AccessManager.formatTimestamp(until));
+            } else {
+                plugin.messages().send(online, "shop.received",
+                        "name", product.name(),
+                        "until", AccessManager.formatTimestamp(until));
+            }
         }
-        logger.info("Товар '" + product.id() + "' выдан " + canonical + " на " + length
-                + " дн. (до " + AccessManager.formatTimestamp(until)
-                + ", цена " + product.priceRubles() + " ₽, источник: "
-                + (actor == null ? "console" : actor) + ").");
-        return new Result(Status.GRANTED, canonical, product, until, length);
+        logger.info("Товар '" + product.id() + (gift ? "' подарен " + canonical + " от " + giftFrom.trim()
+                : "' выдан " + canonical) + " на " + length + " дн. (до "
+                + AccessManager.formatTimestamp(until) + ", цена " + product.priceRubles()
+                + " ₽, источник: " + (actor == null ? "console" : actor) + ")."
+                + (included.isEmpty() ? "" : " Набор: " + String.join(", ", included) + "."));
+        return new Result(Status.GRANTED, canonical, product, until, length, included);
+    }
+
+    /**
+     * Выдаёт один товар: запись срока, группа, разметка и команды.
+     *
+     * @return момент окончания срока
+     */
+    private long grantOne(String playerName, ShopProduct product, long now, int days) {
+        long until = access.store().grantEntitlement(
+                playerName, product.id(), now, days, catalog().maxTotalDays());
+        applyGroup(playerName, product, now, until);
+        runCommands(playerName, product);
+        return until;
     }
 
     /**
@@ -137,18 +201,34 @@ public final class ShopService {
                 .map(account -> account.playerName)
                 .filter(name -> name != null && !name.isBlank())
                 .orElse(playerName);
-        boolean removed = access.store().revokeEntitlement(canonical, productId);
+        ShopProduct product = catalog().find(productId).orElse(null);
+        boolean removed;
+        if (product != null && product.isBundle()) {
+            // У набора нет собственной записи: снимаем всё, что он выдал. Время,
+            // купленное отдельно, тоже уйдёт — это инструмент возврата, а не пауза.
+            removed = false;
+            // Набор мог быть куплен до 1.4.112, когда он записывался одной записью.
+            removed |= access.store().revokeEntitlement(canonical, product.id());
+            for (String partId : product.resolvedIncludes()) {
+                removed |= access.store().revokeEntitlement(canonical, partId);
+                catalog().find(partId).filter(ShopProduct::hasGroup)
+                        .ifPresent(part -> removeGroup(canonical, part));
+            }
+        } else {
+            removed = access.store().revokeEntitlement(canonical, productId);
+            if (removed && product != null && product.hasGroup()) {
+                removeGroup(canonical, product);
+            }
+        }
         if (!removed) {
             return false;
         }
-        catalog().find(productId).filter(ShopProduct::hasGroup)
-                .ifPresent(product -> removeGroup(canonical, product));
         access.audit().log(AuditLog.SHOP_REVOKE,
                 actor == null || actor.isBlank() ? "console" : actor,
                 canonical, "", AuditLog.details("product", productId));
         Player online = Bukkit.getPlayerExact(canonical);
         if (online != null) {
-            String name = catalog().find(productId).map(ShopProduct::name).orElse(productId);
+            String name = product == null ? productId : product.name();
             plugin.messages().send(online, "shop.revoked-player", "name", name);
         }
         logger.info("Товар '" + productId + "' отозван у " + canonical

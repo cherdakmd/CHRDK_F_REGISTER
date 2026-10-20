@@ -1333,20 +1333,20 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.111-SNAPSHOT.jar`, аддон
-CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.111-SNAPSHOT.jar`, реферальный —
-`referrals/build/libs/chrdk-referrals-1.4.111-SNAPSHOT.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.111-SNAPSHOT.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.111-SNAPSHOT.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.111-SNAPSHOT.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.111-SNAPSHOT.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.111-SNAPSHOT.jar` (хартия чар — при установленном аддоне чар), общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.111-SNAPSHOT.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.111-SNAPSHOT.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.111-SNAPSHOT.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.111-SNAPSHOT.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.111-SNAPSHOT.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.111-SNAPSHOT.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.112-SNAPSHOT.jar`, аддон
+CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.112-SNAPSHOT.jar`, реферальный —
+`referrals/build/libs/chrdk-referrals-1.4.112-SNAPSHOT.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.112-SNAPSHOT.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.112-SNAPSHOT.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.112-SNAPSHOT.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.112-SNAPSHOT.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.112-SNAPSHOT.jar` (хартия чар — при установленном аддоне чар), общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.112-SNAPSHOT.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.112-SNAPSHOT.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.112-SNAPSHOT.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.112-SNAPSHOT.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.112-SNAPSHOT.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.112-SNAPSHOT.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). Оба JAR прикладываются к каждому релизу на GitHub.
 
 ---
@@ -3255,6 +3255,151 @@ CI собирает снапшот как обычный пуш в ветку; �
 
 ---
 
+### CHRDK_Core: наборы и подарки — снапшот 1.4.112-SNAPSHOT
+
+Волна 3: покупки стали собираться в наборы, а подарок — отличаться от обычной
+покупки в журнале и в поздравлении. Новых сущностей в данных не появилось:
+набор — это рецепт выдачи, подарок — пометка к продаже.
+
+**Наборы** (`includes` и `pass-days` в `shop.products`)
+
+| id | Цена | Что внутри |
+|---|---|---|
+| `trails-pack` | 199 ₽ | пять шлейфов (поштучно 315 ₽) |
+| `start-kit` | 299 ₽ | проходка на 30 дней + все пять шлейфов |
+
+`trails-pack` теперь настоящий набор: раньше он открывал шлейфы только через
+`cosmetics.shop.pack-products`, и покупка ломалась, стоило убрать набор из
+конфига аддона. Теперь покупатель получает пять отдельных записей — по одной на
+шлейф, со своим сроком; `pack-products` остаётся для тех, кто купил набор до
+обновления.
+
+**Как устроен набор**
+
+- `includes` — список id товаров. Вложенность разрешена до трёх уровней: набор
+  может ссылаться на набор (`start-kit` → `trails-pack` → шлейфы), при загрузке
+  всё раскрывается в плоский список листьев.
+- Ссылка на себя, неизвестный id и цикл отбрасываются с пояснением в логе и
+  `/pass doctor` — каталог продолжает работать.
+- Если набор стоит столько же или дороже, чем его содержимое по отдельности,
+  `doctor` предупреждает: скидки нет, покупатель выберет поштучно.
+- `pass-days: 30` добавляет к набору дни проходки. Они выдаются обычным путём
+  (`grantPassManually` с источником `shop:<id>`), поэтому игрок видит
+  «Проходка активирована (покупкой в магазине)», а не «выдана администратором».
+- Набор не создаёт собственной записи в аккаунте: `/pass my` показывает ровно то,
+  что куплено, — пять шлейфов и проходку. Поэтому продление одного шлейфа не
+  задевает остальные.
+- `shoprevoke <ник> <набор>` снимает весь состав (и старую запись `trails-pack`,
+  если набор куплен до 1.4.112). Это инструмент возврата: время, купленное
+  отдельно, тоже снимется.
+
+**Подарки**
+
+```
+pass shopgift %username% trails-pack          # даритель = отправитель команды
+pass shopgift %username% start-kit Василий    # даритель указан явно
+```
+
+Подарок отличается тремя вещами: получатель видит «Вам подарок от …», аудит
+пишет `shop.gift` с дарителем в поле `actor`, а в журнале продаж у записи
+появляется хвост `gift:<ник>`. Деньги при этом приходят на витрину, поэтому
+команда вызывается из RCON после успешного платежа — как `shopbuy`.
+
+**Витрина**
+
+- `/pass shop` помечает наборы звездой и печатает состав строкой
+  «внутри: Набор шлейфов, проходка на 30 дн.».
+- `/pass shopbuy` после выдачи набора пишет «Выдано из набора: …», чтобы
+  администратор видел, что именно ушло игроку.
+
+**Конфиг**
+
+```yaml
+    - id: trails-pack
+      price: 199
+      includes: [trail-flame, trail-hearts, trail-notes, trail-sparkles, trail-magic]
+    - id: start-kit
+      price: 299
+      pass-days: 30
+      includes: [trails-pack]
+```
+
+**Тесты:** `ShopCatalogTest` — раскрытие вложенных наборов, отсечение цикла,
+ссылки на себя и неизвестных id, проверка скидки, `pass-days`; `ShopStoreTest` —
+пометка подарка в журнале. Ядро — 232 `@Test` в 37 классах.
+
+### CHRDK_Cosmetics: шлейфы поштучно — снапшот 1.4.111-SNAPSHOT
+
+Волна 2 монетизации: косметика стала товаром. Раньше все шлейфы открывала
+только проходка — теперь любой шлейф можно купить отдельно, а набор из пяти
+дешевле поштучной покупки. Игровой силы это не даёт: частицы видны только
+владельцу и не влияют ни на бой, ни на скрытность.
+
+**Товары** (секция `shop.products` в ядре)
+
+| id | Цена | Срок | Что открывает |
+|---|---|---|---|
+| `trail-flame` | 59 ₽ | 30 дн. | огненный шлейф |
+| `trail-hearts` | 59 ₽ | 30 дн. | сердечки |
+| `trail-notes` | 59 ₽ | 30 дн. | ноты |
+| `trail-sparkles` | 69 ₽ | 30 дн. | искры Энда |
+| `trail-magic` | 69 ₽ | 30 дн. | ведьмина магия |
+| `trails-pack` | 199 ₽ | 30 дн. | все пять шлейфов (поштучно — 315 ₽) |
+
+Карточки на витрине TradeMC получают команды:
+
+```
+pass shopbuy %username% trail-flame
+pass shopbuy %username% trail-hearts
+pass shopbuy %username% trail-notes
+pass shopbuy %username% trail-sparkles
+pass shopbuy %username% trail-magic
+pass shopbuy %username% trails-pack
+```
+
+**Как это работает**
+
+- Товар косметики — «чистое право»: ни группы LuckPerms, ни разметки ника.
+  Срок хранится в аккаунте, как у остальных товаров каталога.
+- Аддон `CHRDK_Cosmetics` спрашивает у ядра `hasEntitlement(player, product)`
+  (API v4). Купил шлейф — он открыт и без проходки; проходка по-прежнему
+  открывает все шлейфы сразу.
+- Набор задаётся в `cosmetics/config.yml` → `shop.pack-products`; шлейф знает
+  свой товар через поле `product` (по умолчанию `trail-<id>`).
+- `/cosmetics list` показывает замок 🔒 у закрытых шлейфов и подсказку, где их
+  купить. Список открыт всем — витрина должна продавать.
+- Кончился срок — шлейф просто перестаёт рисоваться, выбор игрока сохраняется:
+  после продления эффект включается сам.
+- Выключить продажу косметики можно двумя способами: `cosmetics.shop.enabled:
+  false` (покупки не учитываются) или убрать товары из каталога ядра.
+
+**Конфиг аддона**
+
+```yaml
+cosmetics:
+  access-pass-only: true      # проходка открывает все шлейфы
+  shop:
+    enabled: true             # учитывать покупки каталога ядра
+    pack-products:            # товары-наборы: открывают сразу всё
+      - trails-pack
+  trail:
+    defs:
+      - id: flame
+        product: trail-flame  # id товара из shop.products ядра
+        particle: flame
+```
+
+**Тексты:** `locked`, `line-locked`, `state-locked`, `hint-locked` в
+`cosmetics/messages.yml`. Ключ `denied` убран: список шлейфов теперь виден
+всем, а отказ выдаётся только при выборе закрытого эффекта.
+
+**Тесты:** `CosmeticsDefsTest` — разбор `product`, приоритет проходки, покупка
+одного шлейфа, набор, свободный режим (12 `@Test` в двух классах аддона).
+Проверка разметки ника и методы API покрыты тестами ядра.
+
+**Что осталось за кадром:** косметика не продаёт преимуществ — шлейф виден
+только самому игроку, частицы не мешают другим и не выдают позицию в PvP.
+
 ### CHRDK_Core: каталог товаров — снапшот 1.4.110-SNAPSHOT
 
 **Это снова снапшот, не релиз.** Версия в `gradle.properties` —
@@ -3345,75 +3490,3 @@ shop:
 **Чего здесь нет и не будет:** продажи ресурсов, алмазов, снаряжения,
 зачарований и влияния на исход PvP/ивентов. Потолки на дома и сроки — часть
 правила, а не временная настройка.
-
-### CHRDK_Cosmetics: шлейфы поштучно — снапшот 1.4.111-SNAPSHOT
-
-Волна 2 монетизации: косметика стала товаром. Раньше все шлейфы открывала
-только проходка — теперь любой шлейф можно купить отдельно, а набор из пяти
-дешевле поштучной покупки. Игровой силы это не даёт: частицы видны только
-владельцу и не влияют ни на бой, ни на скрытность.
-
-**Товары** (секция `shop.products` в ядре)
-
-| id | Цена | Срок | Что открывает |
-|---|---|---|---|
-| `trail-flame` | 59 ₽ | 30 дн. | огненный шлейф |
-| `trail-hearts` | 59 ₽ | 30 дн. | сердечки |
-| `trail-notes` | 59 ₽ | 30 дн. | ноты |
-| `trail-sparkles` | 69 ₽ | 30 дн. | искры Энда |
-| `trail-magic` | 69 ₽ | 30 дн. | ведьмина магия |
-| `trails-pack` | 199 ₽ | 30 дн. | все пять шлейфов (поштучно — 315 ₽) |
-
-Карточки на витрине TradeMC получают команды:
-
-```
-pass shopbuy %username% trail-flame
-pass shopbuy %username% trail-hearts
-pass shopbuy %username% trail-notes
-pass shopbuy %username% trail-sparkles
-pass shopbuy %username% trail-magic
-pass shopbuy %username% trails-pack
-```
-
-**Как это работает**
-
-- Товар косметики — «чистое право»: ни группы LuckPerms, ни разметки ника.
-  Срок хранится в аккаунте, как у остальных товаров каталога.
-- Аддон `CHRDK_Cosmetics` спрашивает у ядра `hasEntitlement(player, product)`
-  (API v4). Купил шлейф — он открыт и без проходки; проходка по-прежнему
-  открывает все шлейфы сразу.
-- Набор задаётся в `cosmetics/config.yml` → `shop.pack-products`; шлейф знает
-  свой товар через поле `product` (по умолчанию `trail-<id>`).
-- `/cosmetics list` показывает замок 🔒 у закрытых шлейфов и подсказку, где их
-  купить. Список открыт всем — витрина должна продавать.
-- Кончился срок — шлейф просто перестаёт рисоваться, выбор игрока сохраняется:
-  после продления эффект включается сам.
-- Выключить продажу косметики можно двумя способами: `cosmetics.shop.enabled:
-  false` (покупки не учитываются) или убрать товары из каталога ядра.
-
-**Конфиг аддона**
-
-```yaml
-cosmetics:
-  access-pass-only: true      # проходка открывает все шлейфы
-  shop:
-    enabled: true             # учитывать покупки каталога ядра
-    pack-products:            # товары-наборы: открывают сразу всё
-      - trails-pack
-  trail:
-    defs:
-      - id: flame
-        product: trail-flame  # id товара из shop.products ядра
-        particle: flame
-```
-
-**Тексты:** `locked`, `line-locked`, `state-locked`, `hint-locked` в
-`cosmetics/messages.yml`. Ключ `denied` убран: список шлейфов теперь виден
-всем, а отказ выдаётся только при выборе закрытого эффекта.
-
-**Тесты:** `CosmeticsDefsTest` — разбор `product`, приоритет проходки, покупка
-одного шлейфа, набор, свободный режим (12 `@Test` в двух классах аддона).
-Проверка разметки ника и методы API покрыты тестами ядра.
-
-**Что осталось за кадром:** косметика не продаёт преимуществ — шлейф виден
-только самому игроку, частицы не мешают другим и не выдают позицию в PvP.

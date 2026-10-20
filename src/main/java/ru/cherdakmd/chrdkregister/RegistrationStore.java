@@ -721,6 +721,22 @@ public final class RegistrationStore {
             int priceRubles,
             long nowMillis
     ) {
+        return recordShopSale(playerName, productId, priceRubles, nowMillis, "");
+    }
+
+    /**
+     * Продажа каталога с пометкой источника.
+     *
+     * @param extra хвост примечания: {@code gift:Ник} для подарка, пусто — обычная покупка.
+     *              Хвост попадает в {@code note} после товара и не мешает фильтрам журнала
+     */
+    public synchronized DonationRecord recordShopSale(
+            String playerName,
+            String productId,
+            int priceRubles,
+            long nowMillis,
+            String extra
+    ) {
         DonationRecord record = new DonationRecord();
         record.id = --data.shopSaleSequence;
         record.source = DONATION_SOURCE_TRADEMC;
@@ -730,7 +746,8 @@ public final class RegistrationStore {
         record.createdAt = nowMillis;
         record.detectedAt = nowMillis;
         record.status = DonationStatus.GRANTED.name();
-        record.note = "shop:" + (productId == null ? "" : productId);
+        record.note = "shop:" + (productId == null ? "" : productId)
+                + (extra == null || extra.isBlank() ? "" : ":" + extra.trim());
         record.grantedTo = record.donorName;
         record.decidedBy = "shop";
         record.decidedAt = nowMillis;

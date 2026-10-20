@@ -1521,6 +1521,8 @@ public final class AccessManager {
             description = "подарком";
         } else if (source != null && source.startsWith("battlepass")) {
             description = "наградой батлпасса";
+        } else if (source != null && source.startsWith("shop")) {
+            description = "покупкой в магазине";
         } else {
             description = "администратором";
         }

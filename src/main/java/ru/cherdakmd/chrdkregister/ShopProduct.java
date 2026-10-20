@@ -16,6 +16,12 @@ import java.util.List;
  * <p>{@code permissions} — права, которые получает группа товара. Они нужны, когда товар
  * выдаёт возможность, а не отдельную группу: например, «+8 домов» — это право
  * {@code chrdktele.homes.plus} в группе {@code homes}.</p>
+ *
+ * <p><b>Набор.</b> Товар может включать другие товары ({@code includes}) и дни проходки
+ * ({@code pass-days}). Набор — это рецепт покупки, а не отдельная сущность: покупатель
+ * получает ровно те товары, что перечислены, каждый со своим сроком. {@code includes}
+ * хранит то, что написал администратор (для витрины), {@code resolvedIncludes} — плоский
+ * список после раскрытия вложенных наборов (для выдачи).</p>
  */
 public record ShopProduct(
         String id,
@@ -26,16 +32,29 @@ public record ShopProduct(
         String group,
         String tag,
         List<String> permissions,
-        List<String> commands
+        List<String> commands,
+        List<String> includes,
+        List<String> resolvedIncludes,
+        int passDays
 ) {
+
+    /** Товар без набора: прежний конструктор, чтобы не менять существующие вызовы. */
+    public ShopProduct(String id, String name, String description, int priceRubles, int days,
+                       String group, String tag, List<String> permissions, List<String> commands) {
+        this(id, name, description, priceRubles, days, group, tag, permissions, commands,
+                List.of(), List.of(), 0);
+    }
 
     public ShopProduct {
         permissions = permissions == null ? List.of() : List.copyOf(permissions);
         commands = commands == null ? List.of() : List.copyOf(commands);
+        includes = includes == null ? List.of() : List.copyOf(includes);
+        resolvedIncludes = resolvedIncludes == null ? List.of() : List.copyOf(resolvedIncludes);
         group = group == null ? "" : group.trim();
         tag = tag == null ? "" : tag.trim();
         description = description == null ? "" : description.trim();
         name = name == null || name.isBlank() ? id : name.trim();
+        passDays = Math.max(0, passDays);
     }
 
     /** Товар выдаёт временную группу LuckPerms. */
@@ -51,6 +70,16 @@ public record ShopProduct(
     /** У товара есть консольные действия. */
     public boolean hasCommands() {
         return !commands.isEmpty();
+    }
+
+    /** Набор: включает другие товары или дни проходки. */
+    public boolean isBundle() {
+        return !includes.isEmpty() || passDays > 0;
+    }
+
+    /** В набор входят дни проходки. */
+    public boolean hasPassDays() {
+        return passDays > 0;
     }
 
     /** Срок в днях, подставленный в текст («30», «90»). */

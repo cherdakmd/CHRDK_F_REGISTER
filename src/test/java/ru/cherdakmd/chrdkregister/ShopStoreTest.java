@@ -88,8 +88,12 @@ class ShopStoreTest {
         assertEquals(0, sale.days, "товар не продлевает проходку — дни в журнале нулевые");
         assertTrue(sale.note.contains("vip-queue"));
 
+        var gift = store.recordShopSale("Friend", "trails-pack", 199, NOW + 2, "gift:Buyer");
+        assertTrue(gift.note.contains("trails-pack"), "товар остаётся в примечании");
+        assertTrue(gift.note.endsWith("gift:Buyer"), "даритель дописан в конец примечания");
+
         var second = store.recordShopSale("Buyer", "nick-color", 149, NOW + 1);
         assertTrue(second.id < sale.id, "каждая продажа получает свой отрицательный id");
-        assertEquals(2, store.listDonations("granted", 0).size());
+        assertEquals(3, store.listDonations("granted", 0).size());
     }
 }
