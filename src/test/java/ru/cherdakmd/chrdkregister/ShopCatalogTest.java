@@ -138,11 +138,11 @@ class ShopCatalogTest {
 
     @Test
     void balancedTagCheckHandlesGradient() {
-        assertTrue(ShopCatalog.balanced("<gradient:#ffd700:#ff8800>"));
+        assertTrue(ShopCatalog.balanced("<gradient:#ffd700:#ff8800>"), "префикс закрывается автоматически");
         assertTrue(ShopCatalog.balanced("<bold><gold>Ник</gold></bold>"));
-        assertFalse(ShopCatalog.balanced("<bold><gold>"));
-        assertFalse(ShopCatalog.balanced("<gold"));
-        assertFalse(ShopCatalog.balanced("</gold>"));
-        assertFalse(ShopCatalog.balanced(">"));
+        assertTrue(ShopCatalog.balanced("<bold><gold>"), "незакрытые открывающие допустимы");
+        assertFalse(ShopCatalog.balanced("<gold"), "обрыв тега");
+        assertFalse(ShopCatalog.balanced("</gold>"), "закрывающий без открывающего");
+        assertFalse(ShopCatalog.balanced(">"), "мусор вне тега");
     }
 }

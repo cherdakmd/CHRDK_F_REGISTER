@@ -63,10 +63,10 @@ public final class ShopEntitlements {
         if (tag == null || tag.isBlank()) {
             return name;
         }
-        String trimmed = tag.trim();
-        if (trimmed.indexOf('<') < 0) {
-            return trimmed + name; // обычный текстовый префикс, не тег
+        if (tag.indexOf('<') < 0) {
+            return tag + name; // обычный текстовый префикс: пробелы значимы
         }
+        String trimmed = tag.trim();
         java.util.ArrayDeque<String> open = new java.util.ArrayDeque<>();
         int index = 0;
         while (index < trimmed.length()) {

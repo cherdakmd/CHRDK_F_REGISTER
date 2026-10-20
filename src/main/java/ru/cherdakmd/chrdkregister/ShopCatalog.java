@@ -233,22 +233,37 @@ public final class ShopCatalog {
     }
 
     /**
-     * Грубая проверка парности {@code <...>} в разметке: полноценный парсер здесь не нужен,
-     * но забытый закрывающий тег превратил бы весь чат игрока в мусор.
+     * Проверка разметки ника: незакрытые <b>открывающие</b> теги допустимы — их закроет
+     * {@link ShopEntitlements#decorate(String, String)}, а вот лишний закрывающий тег или
+     * обрыв {@code <gold} без {@code >} сломали бы разбор всего сообщения.
      */
     static boolean balanced(String tag) {
-        int open = 0;
-        for (int index = 0; index < tag.length(); index++) {
-            char current = tag.charAt(index);
-            if (current == '<') {
-                open++;
-            } else if (current == '>') {
-                open--;
-                if (open < 0) {
-                    return false;
-                }
+        java.util.ArrayDeque<String> open = new java.util.ArrayDeque<>();
+        int index = 0;
+        while (index < tag.length()) {
+            int start = tag.indexOf('<', index);
+            if (start < 0) {
+                break;
             }
+            int end = tag.indexOf('>', start);
+            if (end < 0) {
+                return false; // обрыв тега
+            }
+            String inside = tag.substring(start + 1, end).trim();
+            if (inside.isEmpty() || inside.indexOf('<') >= 0) {
+                return false;
+            }
+            if (inside.startsWith("/")) {
+                if (open.isEmpty()) {
+                    return false; // закрывающий тег без открывающего
+                }
+                open.pop();
+            } else {
+                open.push(inside);
+            }
+            index = end + 1;
         }
-        return open == 0;
+        int stray = tag.indexOf('>', index);
+        return stray < 0; // '>' вне тега — мусор
     }
 }
