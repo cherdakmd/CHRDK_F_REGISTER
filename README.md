@@ -1333,21 +1333,21 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.116-SNAPSHOT.jar`, аддон
-CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.116-SNAPSHOT.jar`, реферальный —
-`referrals/build/libs/chrdk-referrals-1.4.116-SNAPSHOT.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.116-SNAPSHOT.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.116-SNAPSHOT.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.116-SNAPSHOT.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.116-SNAPSHOT.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.116-SNAPSHOT.jar` (хартия чар — при установленном аддоне чар), общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.116-SNAPSHOT.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.116-SNAPSHOT.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.116-SNAPSHOT.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.116-SNAPSHOT.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.116-SNAPSHOT.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.116-SNAPSHOT.jar`, стримерская программа —
-`streams/build/libs/chrdk-streams-1.4.116-SNAPSHOT.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.116.jar`, аддон
+CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.116.jar`, реферальный —
+`referrals/build/libs/chrdk-referrals-1.4.116.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.116.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.116.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.116.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.116.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.116.jar` (хартия чар — при установленном аддоне чар), общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.116.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.116.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.116.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.116.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.116.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.116.jar`, стримерская программа —
+`streams/build/libs/chrdk-streams-1.4.116.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). Оба JAR прикладываются к каждому релизу на GitHub.
 
 ---
@@ -3256,7 +3256,7 @@ CI собирает снапшот как обычный пуш в ветку; �
 
 ---
 
-### CHRDK_Streams: жирный ник стримера и дни проходки зрителям — снапшот 1.4.116-SNAPSHOT
+### CHRDK_Streams: жирный ник стримера и дни проходки зрителям — 1.4.116
 
 Волна 7: стример виден в чате и в списке игроков, а зрители получают дни
 проходки **за просмотр** — но только те, кто действительно смотрит эфир,
@@ -3381,7 +3381,12 @@ CI собирает снапшот как обычный пуш в ветку; �
 просмотра). Итого: ядро — 258 `@Test` в 40 классах (+8 к 1.4.115), аддон —
 79 `@Test` в 10 классах (+32).
 
-Снапшот 1.4.116 не тегируется: тег и GitHub-релиз создаются отдельной командой.
+**Обновление:** версия 1.4.116, полный перезапуск. Заменить JAR всего набора
+(в релизе 17 JAR + ZIP). Если обновляетесь с 1.4.108 — менялись ядро (API v6,
+`%player_tagged%` в TAB), `battlepass`, `cosmetics`, `teleports` и новый
+`streams`. Новые секции `streams.tags.*` и `streams.viewers.*` не обязательны:
+без них работают значения по умолчанию — чтобы менять, добавьте их из
+`config.yml` в JAR.
 
 ---
 
