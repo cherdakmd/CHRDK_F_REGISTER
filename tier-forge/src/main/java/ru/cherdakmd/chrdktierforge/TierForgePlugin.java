@@ -26,8 +26,11 @@ public final class TierForgePlugin extends JavaPlugin {
     private volatile TierForgeConfig config;
     private volatile ForgeNamePool namePool;
     private TierItems items;
+    /** Аура редкости (1.4.119): частицы и блеск по тиру предмета. */
+    private TierVisualService visuals;
     private final TierStatsKeeper stats = new TierStatsKeeper();
     private TierIdentificationListener identification;
+    private TierRefreshListener refreshListener;
     private ForgeUpgradeListener forgeUpgrades;
     private org.bukkit.scheduler.BukkitTask identifyScanTask;
     /** Таймер пассивного пульса кузни (регенерация/зрение/магнит), гасим при перезагрузке. */
@@ -41,6 +44,8 @@ public final class TierForgePlugin extends JavaPlugin {
         saveDefaultConfig();
         reloadTierConfig();
         this.items = new TierItems(this);
+        this.visuals = new TierVisualService(this);
+        this.visuals.restart();
         loadStats();
         startStatsSave();
 
@@ -48,7 +53,9 @@ public final class TierForgePlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new TierAnvilListener(this), this);
         Bukkit.getPluginManager().registerEvents(new TierMobDropListener(this), this);
         // 1.4.117: старые тир-инструменты носили урон/скорость атаки — правим на месте.
-        Bukkit.getPluginManager().registerEvents(new TierRefreshListener(this), this);
+        // 1.4.119: тот же проход лениво ставит блеск тира.
+        this.refreshListener = new TierRefreshListener(this);
+        Bukkit.getPluginManager().registerEvents(refreshListener, this);
         if (forgeUpgrades == null) {
             this.forgeUpgrades = new ForgeUpgradeListener(this);
             Bukkit.getPluginManager().registerEvents(forgeUpgrades, this);
@@ -92,6 +99,9 @@ public final class TierForgePlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (visuals != null) {
+            visuals.stop();
+        }
         if (identifyScanTask != null) {
             identifyScanTask.cancel();
             identifyScanTask = null;
@@ -209,6 +219,18 @@ public final class TierForgePlugin extends JavaPlugin {
                     () -> identification.scanBatch(config.identifyScanPlayersPerTick()),
                     config.identifyScanTicks(), config.identifyScanTicks());
         }
+        // 1.4.119: таймер ауры пересобирается под новый interval-ticks,
+        // а надетые вещи получают новый блеск без перезахода.
+        if (visuals != null) {
+            visuals.restart();
+        }
+        if (refreshListener != null) {
+            Bukkit.getScheduler().runTask(this, () -> {
+                for (org.bukkit.entity.Player player : Bukkit.getOnlinePlayers()) {
+                    refreshListener.refreshAll(player);
+                }
+            });
+        }
         // 1.4.100: и при старте, и после /tiersadmin reload — что реально применилось.
         logEffectiveConfig();
     }
@@ -232,6 +254,11 @@ public final class TierForgePlugin extends JavaPlugin {
 
     public TierItems items() {
         return items;
+    }
+
+    /** Аура редкости и переключатель игрока (1.4.119). */
+    public TierVisualService visuals() {
+        return visuals;
     }
 
     public TierStatsKeeper stats() {

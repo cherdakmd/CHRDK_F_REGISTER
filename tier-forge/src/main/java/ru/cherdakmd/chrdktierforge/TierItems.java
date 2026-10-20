@@ -50,6 +50,12 @@ public final class TierItems {
     public static final String PDC_PROPERTIES = "tier_properties";
     /** Маркер лор-строк свойств тира — по нему лор и пересобирается. */
     public static final String PROPERTY_LORE_MARKER = "✧";
+    /**
+     * Отпечаток визуального стиля тира (1.4.119): блеск и его источник. По нему
+     * старые предметы получают блеск один раз, а правка {@code visuals} в конфиге
+     * не требует пересборки всего инвентаря.
+     */
+    public static final String PDC_VISUALS = "visuals_stamp";
 
     private final TierForgePlugin plugin;
     private final NamespacedKey key;
@@ -58,6 +64,7 @@ public final class TierItems {
     private final NamespacedKey forgeNameKey;
     private final NamespacedKey indexKey;
     private final NamespacedKey propertiesKey;
+    private final NamespacedKey visualsKey;
     private final Random random = new Random();
 
     public TierItems(TierForgePlugin plugin) {
@@ -68,6 +75,7 @@ public final class TierItems {
         this.forgeNameKey = new NamespacedKey(plugin, PDC_FORGE_NAME);
         this.indexKey = new NamespacedKey(plugin, PDC_UPGRADE_INDEX);
         this.propertiesKey = new NamespacedKey(plugin, PDC_PROPERTIES);
+        this.visualsKey = new NamespacedKey(plugin, PDC_VISUALS);
     }
 
     /** Читает id тира предмета (null — предмет без тира). */
@@ -106,9 +114,7 @@ public final class TierItems {
         applyPropertyModifiers(item, meta);
         decorateName(item, meta, tier);
         replaceLore(meta, tier);
-        if ("legendary".equals(tier.id())) {
-            meta.setEnchantmentGlintOverride(true);
-        }
+        stampVisuals(meta, tier); // 1.4.119: свой блеск у каждого тира
         item.setItemMeta(meta);
     }
 
@@ -199,15 +205,17 @@ public final class TierItems {
         if (meta == null) {
             return false;
         }
-        if (!needsModifierRefresh(meta, kind, tier)) {
+        boolean modifiers = needsModifierRefresh(meta, kind, tier);
+        // 1.4.119: старые предметы получают и новый блеск — лениво, при входе/смене слота.
+        boolean visuals = needsVisualRefresh(meta, tier);
+        if (!modifiers && !visuals) {
             return false;
         }
-        clearTierModifiers(meta);
-        applyModifiers(item, meta, tier);
-        if ("legendary".equals(tier.id())) {
-            // clearTierModifiers снимает наш блеск — легенде он положен снова
-            meta.setEnchantmentGlintOverride(true);
+        if (modifiers) {
+            clearTierModifiers(meta);
+            applyModifiers(item, meta, tier);
         }
+        stampVisuals(meta, tier);
         item.setItemMeta(meta);
         return true;
     }
@@ -645,12 +653,49 @@ public final class TierItems {
                 }
             }
         }
-        // снятие нашего блеска: если глайнт стоял через оверрайд — вернуть к стандартному.
-        // На 1.21.5+ геттер падает, если компонента нет — сначала hasEnchantmentGlintOverride()
-        if (meta.hasEnchantmentGlintOverride()
-                && Boolean.TRUE.equals(meta.getEnchantmentGlintOverride())) {
+        // Снятие нашего блеска: оверрайд мог быть и true (легенда/эпик), и false
+        // (проклятый). На 1.21.5+ геттер падает, если компонента нет, — сначала
+        // проверяем hasEnchantmentGlintOverride(). Отпечаток стиля тоже чистим:
+        // следующий stampVisuals поставит актуальный.
+        if (meta.hasEnchantmentGlintOverride()) {
             meta.setEnchantmentGlintOverride(null);
         }
+        meta.getPersistentDataContainer().remove(visualsKey);
+    }
+
+    /** Нужно ли обновить блеск предмета под текущий {@code visuals} конфиг. */
+    private boolean needsVisualRefresh(ItemMeta meta, TierDef.Snapshot tier) {
+        String stamp = meta.getPersistentDataContainer().get(visualsKey, PersistentDataType.STRING);
+        return !plugin.config().visuals().stampFor(tier.id()).equals(stamp);
+    }
+
+    /**
+     * Ставит блеск тира и запоминает отпечаток стиля. Вызывается после
+     * {@link #clearTierModifiers(ItemMeta)} — то есть оверрайд уже снят.
+     * Если визуалы выключены, поведение прежних версий: блестит только легенда.
+     */
+    private void stampVisuals(ItemMeta meta, TierDef.Snapshot tier) {
+        TierVisuals visuals = plugin.config().visuals();
+        TierVisuals.Glint glint;
+        if (visuals.enabled()) {
+            TierVisuals.Style style = visuals.styleFor(tier.id());
+            glint = style == null ? TierVisuals.Glint.INHERIT : style.glint();
+        } else {
+            glint = "legendary".equals(tier.id()) ? TierVisuals.Glint.ON : TierVisuals.Glint.INHERIT;
+        }
+        // INHERIT у старого предмета без отпечатка не трогает чужой оверрайд
+        // (ресурспак/другой плагин): снимаем только то, что ставили сами.
+        String previous = meta.getPersistentDataContainer()
+                .get(visualsKey, PersistentDataType.STRING);
+        if (glint != TierVisuals.Glint.INHERIT || previous != null) {
+            meta.setEnchantmentGlintOverride(switch (glint) {
+                case ON -> Boolean.TRUE;
+                case OFF -> Boolean.FALSE;
+                case INHERIT -> null;
+            });
+        }
+        meta.getPersistentDataContainer().set(visualsKey, PersistentDataType.STRING,
+                visuals.stampFor(tier.id()));
     }
 
     /** Все атрибуты, которые могут нести модификаторы улучшений. */

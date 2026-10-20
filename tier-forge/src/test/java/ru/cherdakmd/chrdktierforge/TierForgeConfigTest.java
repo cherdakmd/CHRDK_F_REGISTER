@@ -94,6 +94,21 @@ class TierForgeConfigTest {
     }
 
     @Test
+    void visualsAreParsedWithConfig() {
+        TierForgeConfig config = parse(empty()).config();
+        assertTrue(config.visuals().enabled(), "аура включена по умолчанию");
+        assertEquals(7, config.visuals().tiers().size());
+
+        YamlConfiguration yaml = empty();
+        yaml.set("visuals.enabled", false);
+        yaml.set("visuals.interval-ticks", 30);
+        TierVisuals visuals = parse(yaml).config().visuals();
+        assertFalse(visuals.enabled());
+        assertEquals(30, visuals.intervalTicks());
+        assertEquals(7, visuals.tiers().size(), "стили читаются и при выключенной ауре");
+    }
+
+    @Test
     void perKindChanceOverridesGlobal() {
         YamlConfiguration yaml = empty();
         yaml.set("roll-on-craft-chance-percent", 40);

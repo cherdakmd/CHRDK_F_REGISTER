@@ -34,6 +34,113 @@ properties:
   # 2–3 — для серверов, где редкость должна ощущаться сильнее.
   per-item: 1
 
+# Визуальный образ тира (1.4.119): блеск предмета и аура частиц вокруг игрока.
+# Аура рисуется за САМЫЙ СИЛЬНЫЙ тир из рук и надетой брони — одна на игрока,
+# поэтому полный сет не превращается в облако. Инвентарь не светится: эффект
+# виден только у взятого в руки/надетого предмета.
+visuals:
+  # false — без аур; блеск остаётся прежним (только у легендарного предмета).
+  enabled: true
+  # Как часто обновлять ауру, в тиках (5..40). 10 = два раза в секунду.
+  interval-ticks: 10
+  # true — частицы видит только сам владелец; false — все игроки рядом.
+  self-only: false
+  # Учитывать надетую броню при выборе тира для ауры.
+  armor: true
+  # Стили по тирам.
+  #   glint: inherit — как в ванили (блеск только у зачарованных);
+  #          on      — блестит всегда; off — блеска нет даже у зачарованных.
+  #   particles — до трёх слоёв. type — частица Bukkit; DUST (цветная пыль)
+  #               дополнительно понимает color: "#RRGGBB" и size: 0.1..4.
+  #               count 1..8, spread 0..2, speed 0..1.
+  #               Поддерживаются частицы без данных и DUST; остальные
+  #               (ITEM, BLOCK, SCULK_CHARGE …) пропускаются с предупреждением.
+  #   Пустой список particles: [] — тир без ауры.
+  tiers:
+    cursed:
+      glint: "off"
+      particles:
+        - type: DUST
+          color: "#6A0F14"
+          size: 1.1
+          count: 2
+          spread: 0.32
+          speed: 0.0
+        - type: SMOKE
+          count: 1
+          spread: 0.35
+          speed: 0.01
+    weak:
+      glint: inherit
+      particles:
+        - type: DUST
+          color: "#9A9A9A"
+          size: 1.0
+          count: 1
+          spread: 0.28
+          speed: 0.0
+    common:
+      glint: inherit
+      particles:
+        - type: DUST
+          color: "#E8E8E8"
+          size: 0.9
+          count: 1
+          spread: 0.22
+          speed: 0.0
+    fine:
+      glint: inherit
+      particles:
+        - type: DUST
+          color: "#49B04F"
+          size: 1.0
+          count: 2
+          spread: 0.30
+          speed: 0.0
+    rare:
+      glint: inherit
+      particles:
+        - type: DUST
+          color: "#2FD3E0"
+          size: 1.05
+          count: 2
+          spread: 0.30
+          speed: 0.0
+        - type: BUBBLE
+          count: 1
+          spread: 0.30
+          speed: 0.02
+    epic:
+      glint: "on"
+      particles:
+        - type: DUST
+          color: "#B165F0"
+          size: 1.15
+          count: 3
+          spread: 0.34
+          speed: 0.0
+        - type: PORTAL
+          count: 1
+          spread: 0.40
+          speed: 0.05
+    legendary:
+      glint: "on"
+      particles:
+        - type: DUST
+          color: "#FFC53D"
+          size: 1.20
+          count: 3
+          spread: 0.38
+          speed: 0.0
+        - type: FLAME
+          count: 1
+          spread: 0.24
+          speed: 0.005
+        - type: END_ROD
+          count: 1
+          spread: 0.34
+          speed: 0.01
+
 # Статистика находок (stats.yml в папке аддона).
 stats:
   # Сколько резервных копий хранить перед каждой перезаписью: stats.yml.bak1 …

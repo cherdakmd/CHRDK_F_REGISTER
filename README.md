@@ -1149,8 +1149,9 @@ public void onEnable() {
 ★ Легендарный. Тир решает бонусы (оружие — урон, броня — защиту и твёрдость + тонкую
 скорость бега у плюс-тиров, инструменты — скорость добычи, топор — и урон, и добычу;
 с 1.4.117 инструментам урон и скорость атаки не выдаются), цвет имени
-(следует языку клиента) и блеск у легенд (glint). С 1.4.118 у каждого тира есть ещё
-и собственный пул **15 уникальных свойств** — предмет получает одно из них.
+(следует языку клиента), свой блеск (glint) и аура частиц. С 1.4.118 у каждого тира
+есть ещё и собственный пул **15 уникальных свойств**, а с 1.4.119 — свой визуальный
+образ: проклятый дымится тёмно-красным, легендарный горит золотом.
 
 ### Механики
 
@@ -1212,6 +1213,16 @@ public void onEnable() {
   те же `ForgeUpgrade.Effect`, что у ковки, поэтому работают через общий
   `ForgeUpgradeListener` и под теми же потолками (крит ≤ 60%, терновник ≤ 40%,
   проки ≤ 75%). Реестр — `TierProperties` (чистый Java), PDC-ключ `tier_properties`.
+- **Визуальный образ тира (1.4.119)**: у каждого тира свой блеск и своя аура
+  частиц — проклятый дымится тёмно-красным, легендарный горит золотом с искрами.
+  Аура рисуется за **самый сильный** тир из обеих рук и надетой брони (одна на
+  игрока, чтобы полный сет не превращался в облако), частицы видны только у
+  взятого в руки/надетого предмета. Стили настраиваются в `visuals.tiers.*`
+  (`glint: inherit|on|off`, до трёх слоёв `particles` с цветом для `DUST`),
+  период — `visuals.interval-ticks` (5..40), учёт брони — `visuals.armor`.
+  `/tiers effects` — личный выключатель ауры (флаг в PDC игрока),
+  `visuals.enabled: false` — серверный; при нём блестит только легендарный,
+  как в версиях до 1.4.119.
 - **Кузнечный апгрейд в незерит** бережно переносит тир, кличку и все уровни
   кузнечных улучшений (1.4.80) — прогресс предмета не сгорает.
 - **Старые тир-предметы (1.4.117)** обновляются сами: при входе игрока и смене
@@ -1349,21 +1360,21 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.118-SNAPSHOT.jar`, аддон
-CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.118-SNAPSHOT.jar`, реферальный —
-`referrals/build/libs/chrdk-referrals-1.4.118-SNAPSHOT.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.118-SNAPSHOT.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.118-SNAPSHOT.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.118-SNAPSHOT.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.118-SNAPSHOT.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.118-SNAPSHOT.jar` (хартия чар — при установленном аддоне чар), общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.118-SNAPSHOT.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.118-SNAPSHOT.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.118-SNAPSHOT.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.118-SNAPSHOT.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.118-SNAPSHOT.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.118-SNAPSHOT.jar`, стримерская программа —
-`streams/build/libs/chrdk-streams-1.4.118-SNAPSHOT.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.119-SNAPSHOT.jar`, аддон
+CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.119-SNAPSHOT.jar`, реферальный —
+`referrals/build/libs/chrdk-referrals-1.4.119-SNAPSHOT.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.119-SNAPSHOT.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.119-SNAPSHOT.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.119-SNAPSHOT.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.119-SNAPSHOT.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.119-SNAPSHOT.jar` (хартия чар — при установленном аддоне чар), общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.119-SNAPSHOT.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.119-SNAPSHOT.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.119-SNAPSHOT.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.119-SNAPSHOT.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.119-SNAPSHOT.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.119-SNAPSHOT.jar`, стримерская программа —
+`streams/build/libs/chrdk-streams-1.4.119-SNAPSHOT.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). Оба JAR прикладываются к каждому релизу на GitHub.
 
 ---
@@ -3269,6 +3280,57 @@ battlepass:
 
 CI собирает снапшот как обычный пуш в ветку; тег `v1.4.109` и GitHub-релиз не
 создаются до отдельной команды на релиз.
+
+---
+
+### CHRDK_TierForge: у каждого тира свой визуальный образ — снапшот 1.4.119-SNAPSHOT
+
+Волна 10: редкость стало видно без наведения на предмет. У каждого из семи
+тиров — свой цвет ауры и своё поведение блеска; аура рисуется за самый сильный
+тир из рук и надетой брони.
+
+**Что видно в игре**
+
+| Тир | Блеск | Аура |
+| --- | --- | --- |
+| ✖ Проклятый | нет (даже у зачарованных) | тёмно-красная пыль + дым |
+| Слабый | как в ванили | серая пыль |
+| Простой | как в ванили | белая пыль |
+| Хороший | как в ванили | зелёная пыль |
+| Редкий | как в ванили | бирюзовая пыль + пузырьки |
+| Эпический | всегда | фиолетовая пыль + портал |
+| ★ Легендарный | всегда | золотая пыль + пламя + искры |
+
+- Аура — одна на игрока: выбирается самый сильный тир из обеих рук и брони,
+  поэтому полный сет не превращается в облако частиц.
+- Частицы видны только у взятого в руки/надетого предмета; инвентарь не светится.
+- `/tiers effects [on|off]` — личный выключатель, флаг хранится в PDC игрока
+  и переживает перезапуск.
+- `visuals.enabled: false` — серверный выключатель; блеск возвращается к
+  прежнему правилу «только легендарный».
+
+**Конфиг и совместимость**
+
+- `visuals.interval-ticks` (5..40), `visuals.self-only`, `visuals.armor`,
+  `visuals.tiers.<тир>`: `glint: inherit|on|off` и до трёх слоёв `particles`
+  (`type`, `count` 1..8, `spread` 0..2, `speed` 0..1; для `DUST` — цвет
+  `color: "#RRGGBB"` и `size`).
+- Поддерживаются частицы без данных и цветная `DUST`; «датовые» (`ITEM`,
+  `BLOCK` …) и неизвестные имена пропускаются с предупреждением — конфиг не
+  может уронить отрисовку.
+- Старые предметы получают новый блеск лениво: при входе и смене слота
+  (`refreshTierModifiers` обновляет и визуальный отпечаток), аура работает
+  сразу для всех предметов.
+- В сводку при старте добавлена строка «эффекты тиров: …».
+
+**Тесты:** новый `TierVisualsTest` (12 `@Test`: стили всех семи тиров,
+уникальность цветов, умолчания, клампы, пустой список, неизвестные и «датовые»
+частицы, цвет `DUST`, битый цвет, неизвестный glint, отпечаток стиля), плюс
+`TierForgeConfigTest.visualsAreParsedWithConfig` и
+`ConfigReportTest.visualsLineShowsMasterSwitch`. Тир-крафт — 128 `@Test`
+в 23 классах, ядро — 258 `@Test` в 40 классах (не менялось).
+
+Снапшот 1.4.119 не тегируется: тег и GitHub-релиз создаются отдельной командой.
 
 ---
 

@@ -59,6 +59,12 @@ final class ConfigReport {
                 + ", свойства тиров " + (config.propertiesEnabled()
                 ? config.propertiesPerItem() + " на предмет" : "выкл.")
                 + ", копий stats.yml — " + config.statsBackupCopies());
+        out.add("эффекты тиров: " + (config.visuals().enabled()
+                ? "аура каждые " + config.visuals().intervalTicks() + " тиков, "
+                + config.visuals().tiersWithParticles() + " тиров с частицами"
+                + (config.visuals().armor() ? ", броня учтена" : "")
+                + (config.visuals().selfOnly() ? ", только владельцу" : ", видят все рядом")
+                : "выключены"));
         return out;
     }
 

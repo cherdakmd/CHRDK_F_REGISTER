@@ -18,7 +18,8 @@ class ConfigReportTest {
     @Test
     void defaultsAreReportedAsEnabled() {
         List<String> lines = ConfigReport.lines(parse(new YamlConfiguration()));
-        assertEquals(5, lines.size(), "пять строк: крафт, опознание, наковальня, дроп, прочее");
+        assertEquals(6, lines.size(),
+                "шесть строк: крафт, опознание, наковальня, дроп, прочее, эффекты");
         assertTrue(lines.get(0).contains("100%"), lines.get(0));
         assertTrue(lines.get(1).contains("включено"), lines.get(1));
         assertTrue(lines.get(2).contains("перекат вкл."), lines.get(2));
@@ -50,6 +51,19 @@ class ConfigReportTest {
         assertTrue(drop.contains("оружие 40%"), drop);
         assertTrue(drop.contains("броня выкл."), drop);
         assertTrue(drop.contains("×2.5"), drop);
+    }
+
+    @Test
+    void visualsLineShowsMasterSwitch() {
+        List<String> enabled = ConfigReport.lines(parse(new YamlConfiguration()));
+        assertEquals(6, enabled.size(), enabled.toString());
+        assertTrue(enabled.get(5).contains("аура каждые 10 тиков"), enabled.get(5));
+        assertTrue(enabled.get(5).contains("7 тиров с частицами"), enabled.get(5));
+
+        YamlConfiguration yaml = new YamlConfiguration();
+        yaml.set("visuals.enabled", false);
+        assertTrue(ConfigReport.lines(parse(yaml)).get(5).contains("выключены"),
+                ConfigReport.lines(parse(yaml)).get(5));
     }
 
     @Test

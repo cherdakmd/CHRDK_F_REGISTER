@@ -63,6 +63,9 @@ public final class TierCommandHandler implements TabExecutor {
         if (args.length >= 1 && "top".equalsIgnoreCase(args[0])) {
             return handleTop(player, args.length >= 2 ? args[1].toLowerCase(Locale.ROOT) : null);
         }
+        if (args.length >= 1 && "effects".equalsIgnoreCase(args[0])) {
+            return handleEffects(player, args.length >= 2 ? args[1] : null);
+        }
         return handleTiers(player);
     }
 
@@ -95,6 +98,31 @@ public final class TierCommandHandler implements TabExecutor {
         plugin.messages().send(player, "list-footer",
                 "own_count", plugin.stats().total(player.getUniqueId()),
                 "total_count", plugin.stats().grandTotal());
+        return true;
+    }
+
+    /**
+     * /tiers effects [on|off] — личный выключатель ауры редкости (1.4.119).
+     * Без аргумента переключает; флаг хранится в PDC игрока и переживает
+     * перезапуск. Серверный выключатель — {@code visuals.enabled}.
+     */
+    private boolean handleEffects(Player player, String mode) {
+        if (!plugin.config().visuals().enabled()) {
+            plugin.messages().send(player, "effects-disabled");
+            return true;
+        }
+        boolean hidden;
+        if (mode == null || mode.isBlank()) {
+            hidden = plugin.visuals().toggle(player);
+        } else if ("on".equalsIgnoreCase(mode)) {
+            hidden = plugin.visuals().setHidden(player, false);
+        } else if ("off".equalsIgnoreCase(mode)) {
+            hidden = plugin.visuals().setHidden(player, true);
+        } else {
+            plugin.messages().send(player, "effects-usage");
+            return true;
+        }
+        plugin.messages().send(player, hidden ? "effects-off" : "effects-on");
         return true;
     }
 
@@ -480,7 +508,10 @@ public final class TierCommandHandler implements TabExecutor {
         String prefix = args[args.length - 1].toLowerCase(Locale.ROOT);
         if ("tiers".equalsIgnoreCase(command.getName())) {
             if (args.length == 1) {
-                List.of("info", "stats", "top").stream()
+                List.of("info", "stats", "top", "effects").stream()
+                        .filter(x -> x.startsWith(prefix)).forEach(matches::add);
+            } else if (args.length == 2 && "effects".equalsIgnoreCase(args[0])) {
+                List.of("on", "off").stream()
                         .filter(x -> x.startsWith(prefix)).forEach(matches::add);
             } else if (args.length == 2 && "stats".equalsIgnoreCase(args[0])) {
                 List.of("reset").stream().filter(x -> x.startsWith(prefix)).forEach(matches::add);
