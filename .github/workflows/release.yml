@@ -80,6 +80,7 @@ jobs:
           echo "auction_jar=auction/build/libs/chrdk-auction-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
           echo "lottery_jar=lottery/build/libs/chrdk-lottery-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
           echo "queue_jar=queue/build/libs/chrdk-queue-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
+          echo "streams_jar=streams/build/libs/chrdk-streams-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
 
       - name: Attach the Purpur plugin JAR
         env:
@@ -151,6 +152,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.queue_jar }}" --clobber
 
+      - name: Attach the CHRDK_Streams addon JAR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.streams_jar }}" --clobber
+
       - name: Attach lottery plugin JAR
         env:
           GH_TOKEN: ${{ github.token }}
@@ -180,6 +186,7 @@ jobs:
             "${{ steps.verify-version.outputs.cosmetics_jar }}" \
             "${{ steps.verify-version.outputs.battlepass_jar }}" \
             "${{ steps.verify-version.outputs.queue_jar }}" \
+            "${{ steps.verify-version.outputs.streams_jar }}" \
             "${{ steps.verify-version.outputs.lottery_jar }}" \
             "${{ steps.verify-version.outputs.auction_jar }}"
           echo "zip=chrdk-plugins-${plugin_version}.zip" >> "$GITHUB_ENV"

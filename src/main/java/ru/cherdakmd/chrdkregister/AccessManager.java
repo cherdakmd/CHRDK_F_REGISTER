@@ -1519,17 +1519,8 @@ public final class AccessManager {
                 store.grantPassManual(targetPlayerName, now, durationMillis, source);
 
         // Источник виден игроку в поздравлении «Проходка активирована (%source%)».
-        // Награды батлпасса не должны представляться выдачей администратора.
-        String description;
-        if (source != null && source.startsWith("gift")) {
-            description = "подарком";
-        } else if (source != null && source.startsWith("battlepass")) {
-            description = "наградой батлпасса";
-        } else if (source != null && source.startsWith("shop")) {
-            description = "покупкой в магазине";
-        } else {
-            description = "администратором";
-        }
+        // Награды аддонов не должны представляться выдачей администратора.
+        String description = describeGrantSource(source);
         Player onlinePlayer = Bukkit.getPlayerExact(targetPlayerName);
         if (onlinePlayer != null) {
             notifyOnlinePassActivated(onlinePlayer, account.passUntil, description);
@@ -1538,11 +1529,51 @@ public final class AccessManager {
                 + " days (until " + formatTimestamp(account.passUntil) + ", source: " + source + ").");
         audit.log(AuditLog.PASS_GRANT_MANUAL, "admin", targetPlayerName, "",
                 AuditLog.details("days", lengthDays, "source", source, "passUntil", account.passUntil));
-        notifications.notify("pass.granted", "Проходка выдана вручную",
+        notifications.notify("pass.granted", notificationTitle(source),
                 "Игрок: " + targetPlayerName + "\nДней: " + lengthDays + "\nИсточник: " + source, "good");
         plugin.luckPermsPassSync().onPassGranted(targetPlayerName);
         fireEventSync(new PassGrantedEvent(targetPlayerName, account.passUntil, lengthDays, source));
         return account;
+    }
+
+    /**
+     * Человеческое описание источника проходки для поздравления игроку.
+     * Аддоны передают метку вида {@code streams:...}, {@code battlepass:...} и т.п.
+     */
+    static String describeGrantSource(String source) {
+        if (source == null || source.isBlank()) {
+            return "администратором";
+        }
+        if (source.startsWith("gift")) {
+            return "подарком";
+        }
+        if (source.startsWith("battlepass")) {
+            return "наградой батлпасса";
+        }
+        if (source.startsWith("shop")) {
+            return "покупкой в магазине";
+        }
+        if (source.startsWith("streams")) {
+            return "наградой стримерской программы";
+        }
+        if (source.startsWith("daily-rewards")) {
+            return "наградой ежедневного входа";
+        }
+        if (source.startsWith("referral")) {
+            return "бонусом за приглашённого друга";
+        }
+        return "администратором";
+    }
+
+    /** Заголовок уведомления в Discord: ручная выдача или награда аддона. */
+    static String notificationTitle(String source) {
+        if (source != null && source.startsWith("streams")) {
+            return "Проходка продлена по стримерской программе";
+        }
+        if (source != null && source.startsWith("battlepass")) {
+            return "Проходка выдана за батлпасс";
+        }
+        return "Проходка выдана вручную";
     }
 
     /**

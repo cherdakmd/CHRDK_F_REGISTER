@@ -127,8 +127,8 @@ class PluginUpdateServiceTest {
         try (var updater = fixture.service()) {
             var result = updater.execute(true, "1.4.72");
             assertTrue(result.staged());
-            assertEquals(16, result.count());
-            try (var files = Files.list(result.updateDirectory())) { assertEquals(16, files.count()); }
+            assertEquals(17, result.count());
+            try (var files = Files.list(result.updateDirectory())) { assertEquals(17, files.count()); }
             for (var entry : originals.entrySet()) {
                 assertArrayEquals(entry.getValue(), Files.readAllBytes(entry.getKey()));
                 assertArrayEquals(entry.getValue(), Files.readAllBytes(result.backup().resolve(entry.getKey().getFileName())));
@@ -142,7 +142,7 @@ class PluginUpdateServiceTest {
         }
     }
 
-    @Test void validatesAllSixteenButOnlyStagesInstalledAddonsAndCanSynchronizeMixedVersions() throws Exception {
+    @Test void validatesAllModulesButOnlyStagesInstalledAddonsAndCanSynchronizeMixedVersions() throws Exception {
         Fixture fixture = new Fixture();
         fixture.install("CHRDK_Core", VERSION);
         fixture.install("CHRDK_Queue", "1.4.72");
@@ -315,7 +315,7 @@ class PluginUpdateServiceTest {
         }
         CommandSender generic = (CommandSender) Proxy.newProxyInstance(CommandSender.class.getClassLoader(), new Class<?>[]{CommandSender.class}, (p, m, a) -> null);
         assertFalse(RegisterCommandHandler.canDownloadUpdates(generic));
-        assertEquals(16, PluginUpdateService.MODULES.size());
+        assertEquals(17, PluginUpdateService.MODULES.size());
         Set<String> actual = new HashSet<>();
         List<Path> descriptors = new ArrayList<>();
         descriptors.add(Path.of("src/main/resources/plugin.yml"));
