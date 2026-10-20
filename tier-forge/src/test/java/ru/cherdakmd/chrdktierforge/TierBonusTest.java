@@ -15,11 +15,22 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class TierBonusTest {
 
     @Test
-    void weaponsGetDamageOnly() {
-        for (ItemKind kind : List.of(ItemKind.SWORD, ItemKind.BOW,
-                ItemKind.CROSSBOW, ItemKind.TRIDENT)) {
+    void meleeWeaponsGetDamageOnly() {
+        for (ItemKind kind : List.of(ItemKind.SWORD, ItemKind.TRIDENT)) {
             assertEquals(List.of(TierBonus.ATTACK_DAMAGE), TierBonus.forKind(kind),
-                    kind + " — оружие, только урон");
+                    kind + " — оружие ближнего боя, только урон");
+            assertTrue(TierBonus.hasCombatBonus(kind));
+            assertFalse(TierBonus.hasMiningBonus(kind));
+        }
+    }
+
+    @Test
+    void bowsGetProjectileDamageOnly() {
+        // 1.4.124: ATTACK_DAMAGE не влияет на стрелу — лук получает отдельный бонус,
+        // который начисляется по попаданию снаряда.
+        for (ItemKind kind : List.of(ItemKind.BOW, ItemKind.CROSSBOW)) {
+            assertEquals(List.of(TierBonus.PROJECTILE_DAMAGE), TierBonus.forKind(kind),
+                    kind + " — урон стрел, а не рукояти");
             assertTrue(TierBonus.hasCombatBonus(kind));
             assertFalse(TierBonus.hasMiningBonus(kind));
         }

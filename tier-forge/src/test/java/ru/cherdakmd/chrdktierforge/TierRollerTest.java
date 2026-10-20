@@ -47,15 +47,25 @@ class TierRollerTest {
 
     @Test
     void tierMath() {
-        assertEquals(0.06, TierMath.damageScalar(6), 0.0001);
+        // 1.4.124: сила тира удвоена для урона, утроена для добычи, бег ощутимее
+        assertEquals(0.12, TierMath.damageScalar(6), 0.0001);
+        assertEquals(-0.24, TierMath.damageScalar(-12), 0.0001,
+                "проклятое оружие бьёт заметно слабее");
+        assertEquals(0.60, TierMath.damageScalar(30), 0.0001,
+                "легендарный клинок — +60% урона");
+        assertEquals(0.60, TierMath.projectileScalar(30), 0.0001,
+                "урон стрел считается по той же шкале");
         assertEquals(-0.12, TierMath.defenseScalar(-12), 0.0001);
         assertEquals(0.15, TierMath.toughnessScalar(30), 0.0001);
-        assertEquals(0.14, TierMath.miningScalar(14), 0.0001,
-                "инструмент получает процент тира прямо в скорость добычи");
-        assertEquals(-0.12, TierMath.miningScalar(-12), 0.0001,
+        assertEquals(0.42, TierMath.miningScalar(14), 0.0001,
+                "инструмент получает утроенный процент тира в скорость добычи");
+        assertEquals(-0.36, TierMath.miningScalar(-12), 0.0001,
                 "проклятый инструмент копает медленнее");
+        assertEquals(0.90, TierMath.miningScalar(30), 0.0001,
+                "легендарная кирка — +90% скорости добычи");
         assertEquals(0.0, TierMath.movementScalar(-12), 0.0001, "штраф скорости бега не даём");
-        assertEquals(0.05, TierMath.movementScalar(30), 0.0001);
+        assertEquals(0.06, TierMath.movementScalar(30), 0.0001,
+                "легендарная деталь брони — +6% бега");
         assertEquals(4 * 3, TierMath.upgradeXpCost(3, 3));
         assertEquals(0 >= 1 ? 1 : 1, TierMath.upgradeXpCost(-9, 0));
     }

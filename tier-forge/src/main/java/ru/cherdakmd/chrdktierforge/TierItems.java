@@ -28,6 +28,9 @@ import java.util.Random;
  * по 15 на тир, один-три на предмет, в PDC ({@code tier_properties}) и лоре
  * с маркером ✧. Свойство живёт вместе с тиром и пересбрасывается при его
  * смене; событийная половина работает через {@link ForgeUpgradeListener}.
+ * С 1.4.124 у каждого предмета свой суффикс id модификаторов
+ * ({@code modifier_uid}), поэтому бонусы четырёх деталей брони складываются,
+ * а не затирают друг друга.
  */
 public final class TierItems {
 
@@ -57,6 +60,14 @@ public final class TierItems {
      * не требует пересборки всего инвентаря.
      */
     public static final String PDC_VISUALS = "visuals_stamp";
+    /**
+     * Стабильный суффикс id модификаторов предмета (1.4.124). Без него четыре
+     * детали брони носили один и тот же {@code tier_movespeed}, и Minecraft
+     * применял только один модификатор — сет не давал скорости и защиты.
+     */
+    public static final String PDC_MODIFIER_UID = "modifier_uid";
+    /** Отпечаток раскладки модификаторов: старые предметы пересобираются один раз. */
+    public static final String PDC_MODIFIERS = "modifiers_stamp";
 
     private final TierForgePlugin plugin;
     private final NamespacedKey key;
@@ -66,6 +77,8 @@ public final class TierItems {
     private final NamespacedKey indexKey;
     private final NamespacedKey propertiesKey;
     private final NamespacedKey visualsKey;
+    private final NamespacedKey modifierUidKey;
+    private final NamespacedKey modifiersKey;
     private final Random random = new Random();
 
     public TierItems(TierForgePlugin plugin) {
@@ -77,6 +90,8 @@ public final class TierItems {
         this.indexKey = new NamespacedKey(plugin, PDC_UPGRADE_INDEX);
         this.propertiesKey = new NamespacedKey(plugin, PDC_PROPERTIES);
         this.visualsKey = new NamespacedKey(plugin, PDC_VISUALS);
+        this.modifierUidKey = new NamespacedKey(plugin, PDC_MODIFIER_UID);
+        this.modifiersKey = new NamespacedKey(plugin, PDC_MODIFIERS);
     }
 
     /** Читает id тира предмета (null — предмет без тира). */
@@ -104,18 +119,23 @@ public final class TierItems {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
         meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, tier.id());
+        // 1.4.124: id модификаторов уникальны для предмета — иначе четыре детали
+        // брони делят один модификатор, и складывается только одна.
+        String uid = ensureModifierUid(meta);
 
         clearTierModifiers(meta);
         clearForgeModifiers(meta);
         ensureForgeName(item, meta);
         refreshUpgradeIndex(meta); // 1.4.82: индекс строится при каждой пересборке
         syncProperties(item, meta, tier, preset); // 1.4.118: свойство живёт вместе с тиром
-        applyModifiers(item, meta, tier);
-        applyUpgradeModifiers(item, meta);
-        applyPropertyModifiers(item, meta);
+        applyModifiers(item, meta, tier, uid);
+        applyUpgradeModifiers(item, meta, uid);
+        applyPropertyModifiers(item, meta, uid);
         decorateName(item, meta, tier);
-        replaceLore(meta, tier);
+        replaceLore(meta, tier, ItemKind.classify(item.getType().name()));
         stampVisuals(meta, tier); // 1.4.119: свой блеск у каждого тира
+        meta.getPersistentDataContainer().set(modifiersKey, PersistentDataType.STRING,
+                TierModifierIds.STAMP);
         item.setItemMeta(meta);
     }
 
@@ -173,16 +193,22 @@ public final class TierItems {
         if (meta == null) return;
         meta.getPersistentDataContainer().remove(key);
         meta.getPersistentDataContainer().remove(propertiesKey);
+        meta.getPersistentDataContainer().remove(modifierUidKey);
+        meta.getPersistentDataContainer().remove(modifiersKey);
         clearTierModifiers(meta);
         clearForgeModifiers(meta);
         item.setItemMeta(meta);
     }
 
     /**
-     * Догоняющее обновление старого тир-предмета под правила 1.4.117:
-     * инструменты больше не носят урон/скорость атаки, зато получают скорость
-     * добычи. Пересобираются только атрибуты: имя, лор, кличка и уровни
-     * улучшений остаются как были.
+     * Догоняющее обновление старого тир-предмета: миграция ключей и формул.
+     *
+     * <p>С 1.4.117 инструменты не носят урон/скорость атаки, зато получают
+     * скорость добычи. С 1.4.124 у каждого предмета свой суффикс id модификаторов
+     * (иначе сет брони «склеивался» в один бонус), а формулы стали сильнее —
+     * поэтому предмет без актуального {@code modifiers_stamp} пересобирается
+     * целиком. Кличка, лор, уровни улучшений и уже выданные свойства тира
+     * сохраняются.</p>
      *
      * @return {@code true} — предмет обновлён (инвентарь стоит перерисовать)
      */
@@ -212,23 +238,53 @@ public final class TierItems {
         if (!modifiers && !visuals) {
             return false;
         }
+        if (modifiers && !TierModifierIds.STAMP.equals(modifiersStamp(meta))) {
+            // 1.4.124: отпечаток старее текущего — пересобираем предмет целиком:
+            // уникальные id, новые формулы и все модификаторы ковки/свойств.
+            // Свойства тира при том же тире сохраняются (syncProperties).
+            apply(item, tier);
+            return true;
+        }
         if (modifiers) {
             clearTierModifiers(meta);
-            applyModifiers(item, meta, tier);
+            applyModifiers(item, meta, tier, ensureModifierUid(meta));
         }
         stampVisuals(meta, tier);
         item.setItemMeta(meta);
         return true;
     }
 
-    /** Нужно ли пересобрать атрибуты: старые ключи инструментов или нет добычи. */
+    /**
+     * Нужно ли пересобрать атрибуты: устаревший отпечаток раскладки, старые ключи
+     * инструментов или отсутствие скорости добычи у инструмента.
+     */
     private boolean needsModifierRefresh(ItemMeta meta, ItemKind kind, TierDef.Snapshot tier) {
+        if (!TierModifierIds.STAMP.equals(modifiersStamp(meta))) {
+            return true; // раскладка до 1.4.124: общие id и старые формулы
+        }
         if (hasTierModifier(meta, "attack_tool", Attribute.ATTACK_DAMAGE)
                 || hasTierModifier(meta, "attackspeed", Attribute.ATTACK_SPEED)) {
             return true; // ключи версий до 1.4.117 — таких бонусов больше нет ни у кого
         }
         return tier.percent() != 0 && kind.isTool()
                 && !hasTierModifier(meta, "minespeed", Attribute.BLOCK_BREAK_SPEED);
+    }
+
+    /** Отпечаток раскладки модификаторов на предмете (null — версия до 1.4.124). */
+    private String modifiersStamp(ItemMeta meta) {
+        return meta.getPersistentDataContainer().get(modifiersKey, PersistentDataType.STRING);
+    }
+
+    /** Читает стабильный суффикс предмета, создавая его при первом накате. */
+    private String ensureModifierUid(ItemMeta meta) {
+        String uid = meta.getPersistentDataContainer()
+                .get(modifierUidKey, PersistentDataType.STRING);
+        if (!TierModifierIds.validUid(uid)) {
+            uid = TierModifierIds.newUid(random);
+            meta.getPersistentDataContainer()
+                    .set(modifierUidKey, PersistentDataType.STRING, uid);
+        }
+        return uid;
     }
 
     /** Есть ли на предмете модификатор тира с данным ключом у атрибута. */
@@ -240,9 +296,17 @@ public final class TierItems {
         if (mods == null) {
             return false;
         }
-        NamespacedKey key = modifierKey(tag);
+        String uid = meta.getPersistentDataContainer()
+                .get(modifierUidKey, PersistentDataType.STRING);
+        String modern = uid == null ? null : TierModifierIds.key("tier_" + tag, uid);
+        String legacy = "tier_" + tag;
+        String namespace = key.getNamespace();
         for (AttributeModifier modifier : mods) {
-            if (modifier.getKey().equals(key)) {
+            if (!modifier.getKey().getNamespace().equals(namespace)) {
+                continue;
+            }
+            String name = modifier.getKey().getKey();
+            if (legacy.equals(name) || (modern != null && modern.equals(name))) {
                 return true;
             }
         }
@@ -498,7 +562,7 @@ public final class TierItems {
      * бою машут, и брёвна рубят. Урон/скорость атаки инструментам больше не
      * выдаются.
      */
-    private void applyModifiers(ItemStack item, ItemMeta meta, TierDef.Snapshot tier) {
+    private void applyModifiers(ItemStack item, ItemMeta meta, TierDef.Snapshot tier, String uid) {
         ItemKind kind = ItemKind.classify(item.getType().name());
         if (kind == null) return;
         int percent = tier.percent();
@@ -507,25 +571,30 @@ public final class TierItems {
         for (TierBonus bonus : TierBonus.forKind(kind)) {
             switch (bonus) {
                 case ATTACK_DAMAGE -> add(meta, Attribute.ATTACK_DAMAGE, "attack",
-                        TierMath.damageScalar(percent), slot);
+                        TierMath.damageScalar(percent), slot, uid);
+                case PROJECTILE_DAMAGE -> {
+                    // Урон стрел нельзя повесить атрибутом на лук: ATTACK_DAMAGE
+                    // влияет только на ближний бой. Бонус начисляет слушатель
+                    // попаданий (ForgeUpgradeListener) по тиру оружия в руке.
+                }
                 case ARMOR -> add(meta, Attribute.ARMOR, "armor",
-                        TierMath.defenseScalar(percent) * 0.5, slot);
+                        TierMath.defenseScalar(percent) * 0.5, slot, uid);
                 case ARMOR_TOUGHNESS -> add(meta, Attribute.ARMOR_TOUGHNESS, "toughness",
-                        TierMath.toughnessScalar(percent), slot);
+                        TierMath.toughnessScalar(percent), slot, uid);
                 case MOVEMENT_SPEED -> {
                     if (percent > 0) {
                         add(meta, Attribute.MOVEMENT_SPEED, "movespeed",
-                                TierMath.movementScalar(percent), slot);
+                                TierMath.movementScalar(percent), slot, uid);
                     }
                 }
                 case MINING_SPEED -> add(meta, Attribute.BLOCK_BREAK_SPEED, "minespeed",
-                        TierMath.miningScalar(percent), slot);
+                        TierMath.miningScalar(percent), slot, uid);
             }
         }
     }
 
     /** Атрибутная половина улучшений (событийная половина живёт в ForgeUpgradeListener). */
-    private void applyUpgradeModifiers(ItemStack item, ItemMeta meta) {
+    private void applyUpgradeModifiers(ItemStack item, ItemMeta meta, String uid) {
         ItemKind kind = ItemKind.classify(item.getType().name());
         if (kind == null) return;
         EquipmentSlotGroup slot = slotGroupFor(kind);
@@ -534,18 +603,18 @@ public final class TierItems {
         for (Map.Entry<ForgeUpgrade.Def, Integer> entry : upgradesFromMeta(meta).entrySet()) {
             ForgeUpgrade.Def def = entry.getKey();
             applyDefModifiers(meta, def, def.perLevel() * entry.getValue(),
-                    "fu_" + def.id(), slot);
+                    "fu_" + def.id(), slot, uid);
         }
     }
 
     /** Атрибутная половина свойств тира (событийная живёт в ForgeUpgradeListener). */
-    private void applyPropertyModifiers(ItemStack item, ItemMeta meta) {
+    private void applyPropertyModifiers(ItemStack item, ItemMeta meta, String uid) {
         ItemKind kind = ItemKind.classify(item.getType().name());
         if (kind == null) return;
         EquipmentSlotGroup slot = slotGroupFor(kind);
         for (TierProperty property : propertiesFromMeta(meta)) {
             applyDefModifiers(meta, property.asDef(), property.value(),
-                    "pr_" + property.id(), slot);
+                    "pr_" + property.id(), slot, uid);
         }
     }
 
@@ -554,45 +623,54 @@ public final class TierItems {
      * тира: свойство начисляется ровно так же, как улучшение того же эффекта.
      */
     private void applyDefModifiers(ItemMeta meta, ForgeUpgrade.Def def, double total, String tag,
-                                   EquipmentSlotGroup slot) {
+                                   EquipmentSlotGroup slot, String uid) {
         switch (def.effect()) {
-            case ATTACK_PERCENT -> add(meta, Attribute.ATTACK_DAMAGE, tag, total / 100.0, slot);
-            case ATTACK_SPEED_PERCENT -> add(meta, Attribute.ATTACK_SPEED, tag, total / 100.0, slot);
-            case ARMOR_PERCENT -> add(meta, Attribute.ARMOR, tag, total / 100.0, slot);
-            case MOVE_SPEED_PERCENT -> add(meta, Attribute.MOVEMENT_SPEED, tag, total / 100.0, slot);
-            case MAX_HEALTH -> addAbsolute(meta, Attribute.MAX_HEALTH, tag, total, slot);
+            case ATTACK_PERCENT -> add(meta, Attribute.ATTACK_DAMAGE, tag, total / 100.0, slot, uid);
+            case ATTACK_SPEED_PERCENT -> add(meta, Attribute.ATTACK_SPEED, tag, total / 100.0,
+                    slot, uid);
+            case ARMOR_PERCENT -> add(meta, Attribute.ARMOR, tag, total / 100.0, slot, uid);
+            case MOVE_SPEED_PERCENT -> add(meta, Attribute.MOVEMENT_SPEED, tag, total / 100.0,
+                    slot, uid);
+            case MAX_HEALTH -> addAbsolute(meta, Attribute.MAX_HEALTH, tag, total, slot, uid);
             case DIG_SPEED_PERCENT -> add(meta, Attribute.BLOCK_BREAK_SPEED, tag,
-                    total / 100.0, slot);
+                    total / 100.0, slot, uid);
             // --- 1.4.56: атрибутная часть новых фишек ---
-            case RAW_DAMAGE -> addAbsolute(meta, Attribute.ATTACK_DAMAGE, tag, total, slot);
-            case ATTACK_KNOCKBACK -> addAbsolute(meta, Attribute.ATTACK_KNOCKBACK, tag, total, slot);
-            case REACH -> addAbsolute(meta, Attribute.ENTITY_INTERACTION_RANGE, tag, total, slot);
-            case SWEEP_RATIO -> addAbsolute(meta, Attribute.SWEEPING_DAMAGE_RATIO, tag, total, slot);
-            case KB_RESIST -> addAbsolute(meta, Attribute.KNOCKBACK_RESISTANCE, tag, total, slot);
-            case SAFE_FALL -> addAbsolute(meta, Attribute.SAFE_FALL_DISTANCE, tag, total, slot);
-            case STEP_HEIGHT -> addAbsolute(meta, Attribute.STEP_HEIGHT, tag, total, slot);
-            case OXYGEN -> addAbsolute(meta, Attribute.OXYGEN_BONUS, tag, total, slot);
+            case RAW_DAMAGE -> addAbsolute(meta, Attribute.ATTACK_DAMAGE, tag, total, slot, uid);
+            case ATTACK_KNOCKBACK -> addAbsolute(meta, Attribute.ATTACK_KNOCKBACK, tag, total,
+                    slot, uid);
+            case REACH -> addAbsolute(meta, Attribute.ENTITY_INTERACTION_RANGE, tag, total,
+                    slot, uid);
+            case SWEEP_RATIO -> addAbsolute(meta, Attribute.SWEEPING_DAMAGE_RATIO, tag, total,
+                    slot, uid);
+            case KB_RESIST -> addAbsolute(meta, Attribute.KNOCKBACK_RESISTANCE, tag, total,
+                    slot, uid);
+            case SAFE_FALL -> addAbsolute(meta, Attribute.SAFE_FALL_DISTANCE, tag, total,
+                    slot, uid);
+            case STEP_HEIGHT -> addAbsolute(meta, Attribute.STEP_HEIGHT, tag, total, slot, uid);
+            case OXYGEN -> addAbsolute(meta, Attribute.OXYGEN_BONUS, tag, total, slot, uid);
             case SWIM_SPEED -> addAbsolute(meta, Attribute.WATER_MOVEMENT_EFFICIENCY, tag,
-                    total, slot);
-            case SNEAK_SPEED -> add(meta, Attribute.SNEAKING_SPEED, tag, total / 100.0, slot);
-            case BURN_TIME -> add(meta, Attribute.BURNING_TIME, tag, -total / 100.0, slot);
+                    total, slot, uid);
+            case SNEAK_SPEED -> add(meta, Attribute.SNEAKING_SPEED, tag, total / 100.0, slot, uid);
+            case BURN_TIME -> add(meta, Attribute.BURNING_TIME, tag, -total / 100.0, slot, uid);
             case EXPLOSION_RESIST -> addAbsolute(meta, Attribute.EXPLOSION_KNOCKBACK_RESISTANCE,
-                    tag, total, slot);
-            case LUCK -> addAbsolute(meta, Attribute.LUCK, tag, total, slot);
+                    tag, total, slot, uid);
+            case LUCK -> addAbsolute(meta, Attribute.LUCK, tag, total, slot, uid);
             case MINING_EFFICIENCY -> addAbsolute(meta, Attribute.MINING_EFFICIENCY, tag,
-                    total, slot);
+                    total, slot, uid);
             case BLOCK_REACH -> addAbsolute(meta, Attribute.BLOCK_INTERACTION_RANGE, tag,
-                    total, slot);
-            case SCALE_UP -> add(meta, Attribute.SCALE, tag, total / 100.0, slot);
+                    total, slot, uid);
+            case SCALE_UP -> add(meta, Attribute.SCALE, tag, total / 100.0, slot, uid);
             // --- 1.4.57: атрибутная часть третьей ковки ---
-            case ATTACK_SPEED_FLAT -> addAbsolute(meta, Attribute.ATTACK_SPEED, tag, total, slot);
-            case TOUGHNESS_FLAT -> addAbsolute(meta, Attribute.ARMOR_TOUGHNESS, tag, total, slot);
-            case JUMP -> add(meta, Attribute.JUMP_STRENGTH, tag, total / 100.0, slot);
-            case GRAVITY_DOWN -> add(meta, Attribute.GRAVITY, tag, -total / 100.0, slot);
+            case ATTACK_SPEED_FLAT -> addAbsolute(meta, Attribute.ATTACK_SPEED, tag, total,
+                    slot, uid);
+            case TOUGHNESS_FLAT -> addAbsolute(meta, Attribute.ARMOR_TOUGHNESS, tag, total,
+                    slot, uid);
+            case JUMP -> add(meta, Attribute.JUMP_STRENGTH, tag, total / 100.0, slot, uid);
+            case GRAVITY_DOWN -> add(meta, Attribute.GRAVITY, tag, -total / 100.0, slot, uid);
             case FALL_DAMAGE_DOWN -> add(meta, Attribute.FALL_DAMAGE_MULTIPLIER, tag,
-                    -total / 100.0, slot);
+                    -total / 100.0, slot, uid);
             case WALK_EFFICIENCY -> addAbsolute(meta, Attribute.MOVEMENT_EFFICIENCY, tag,
-                    total, slot);
+                    total, slot, uid);
             default -> {
                 // событийные свойства (крит/вампиризм/терновник/…) — атрибутов не требуют
             }
@@ -600,8 +678,8 @@ public final class TierItems {
     }
 
     private void add(ItemMeta meta, Attribute attribute, String tag, double amount,
-                     EquipmentSlotGroup slot) {
-        AttributeModifier modifier = new AttributeModifier(modifierKey(tag), amount,
+                     EquipmentSlotGroup slot, String uid) {
+        AttributeModifier modifier = new AttributeModifier(modifierKey(tag, uid), amount,
                 AttributeModifier.Operation.MULTIPLY_SCALAR_1, slot);
         // 1.4.25-аудит: addAttributeModifier кидает при кривой комбинации
         // атрибут/слот/операция — крафт не должен падать из-за одного бонуса
@@ -615,8 +693,8 @@ public final class TierItems {
 
     /** MAX_HEALTH кладётся ADD_NUMBER (абсолютные сердца) — у неё свой конструктор-путь. */
     private void addAbsolute(ItemMeta meta, Attribute attribute, String tag, double amount,
-                             EquipmentSlotGroup slot) {
-        AttributeModifier modifier = new AttributeModifier(modifierKey(tag), amount,
+                             EquipmentSlotGroup slot, String uid) {
+        AttributeModifier modifier = new AttributeModifier(modifierKey(tag, uid), amount,
                 AttributeModifier.Operation.ADD_NUMBER, slot);
         try {
             meta.addAttributeModifier(attribute, modifier);
@@ -626,31 +704,44 @@ public final class TierItems {
         }
     }
 
-    private NamespacedKey modifierKey(String tag) {
+    /**
+     * Ключ модификатора с суффиксом предмета (1.4.124). Раньше ключ был общим
+     * ({@code chrdk:tier_movespeed}), и на полном сете из четырёх деталей
+     * Minecraft применял только один модификатор.
+     */
+    private NamespacedKey modifierKey(String tag, String uid) {
         // fu_/pr_ — наши собственные ключи ковки и свойств, остальное — модификаторы тира
         boolean own = tag.startsWith("fu_") || tag.startsWith("pr_");
-        return new NamespacedKey(plugin, own ? tag : "tier_" + tag);
+        return new NamespacedKey(plugin, TierModifierIds.key(own ? tag : "tier_" + tag, uid));
     }
 
+    /** Атрибуты, которые могут нести бонусы самого тира. */
+    private static final List<Attribute> TIER_ATTRIBUTES = List.of(
+            Attribute.ATTACK_DAMAGE, Attribute.ARMOR, Attribute.ARMOR_TOUGHNESS,
+            Attribute.MOVEMENT_SPEED, Attribute.ATTACK_SPEED, Attribute.BLOCK_BREAK_SPEED);
+
+    /**
+     * Снимает все модификаторы тира — и новые с суффиксом предмета, и старые
+     * общие ключи (включая {@code attack_tool}/{@code attackspeed} до 1.4.117).
+     */
     private void clearTierModifiers(ItemMeta meta) {
         if (meta.hasAttributeModifiers()) {
-            // attack_tool/attackspeed — ключи версий до 1.4.117: инструменты носили
-            // боевые модификаторы. Их надо снимать и у старых предметов.
-            for (String tag : List.of("attack", "armor", "toughness", "movespeed",
-                    "minespeed", "attack_tool", "attackspeed")) {
-                NamespacedKey key = modifierKey(tag);
-                for (Attribute attribute : List.of(Attribute.ATTACK_DAMAGE, Attribute.ARMOR,
-                        Attribute.ARMOR_TOUGHNESS, Attribute.MOVEMENT_SPEED, Attribute.ATTACK_SPEED,
-                        Attribute.BLOCK_BREAK_SPEED)) {
-                    Collection<AttributeModifier> mods = meta.getAttributeModifiers(attribute);
-                    if (mods == null) {
-                        continue;
+            String namespace = key.getNamespace();
+            for (Attribute attribute : TIER_ATTRIBUTES) {
+                Collection<AttributeModifier> mods = meta.getAttributeModifiers(attribute);
+                if (mods == null || mods.isEmpty()) {
+                    continue;
+                }
+                List<AttributeModifier> ours = new ArrayList<>();
+                for (AttributeModifier existing : mods) {
+                    NamespacedKey existingKey = existing.getKey();
+                    if (existingKey.getNamespace().equals(namespace)
+                            && existingKey.getKey().startsWith(TierModifierIds.TIER_PREFIX)) {
+                        ours.add(existing);
                     }
-                    for (AttributeModifier existing : mods) {
-                        if (existing.getKey().equals(key)) {
-                            meta.removeAttributeModifier(attribute, existing);
-                        }
-                    }
+                }
+                for (AttributeModifier existing : ours) {
+                    meta.removeAttributeModifier(attribute, existing);
                 }
             }
         }
@@ -834,13 +925,13 @@ public final class TierItems {
         }
     }
 
-    private void replaceLore(ItemMeta meta, TierDef.Snapshot tier) {
+    private void replaceLore(ItemMeta meta, TierDef.Snapshot tier, ItemKind kind) {
         List<Component> lore = meta.hasLore() && meta.lore() != null
                 ? new ArrayList<>(meta.lore()) : new ArrayList<>();
         lore.removeIf(this::isTierLine);
         lore.removeIf(this::isForgeLine);
         lore.removeIf(this::isPropertyLine);
-        lore.add(tierLine(tier));
+        lore.add(tierLine(tier, kind));
         // уникальные свойства тира — сразу под плашкой, в порядке выдачи
         for (TierProperty property : propertiesFromMeta(meta)) {
             lore.add(propertyLine(property));
@@ -852,11 +943,48 @@ public final class TierItems {
         meta.lore(lore);
     }
 
-    /** Цветная плашка тира в лоре (собирается напрямую: цвет — тег MiniMessage). */
-    private Component tierLine(TierDef.Snapshot tier) {
+    /**
+     * Цветная плашка тира в лоре (собирается напрямую: цвет — тег MiniMessage).
+     * С 1.4.124 рядом с именем тира стоит его реальная сила — «+60% к урону»,
+     * чтобы игрок видел, что даёт редкость, не открывая {@code /tiers info}.
+     */
+    private Component tierLine(TierDef.Snapshot tier, ItemKind kind) {
         String color = plugin.messages().raw("tier." + tier.id() + ".color");
         String name = plugin.messages().raw("tier." + tier.id() + ".name");
-        return net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(color + name);
+        String bonus = bonusText(kind, tier.percent());
+        String line = bonus.isEmpty()
+                ? color + name
+                : color + name + " <dark_gray>·</dark_gray> <gray>" + bonus + "</gray>";
+        return net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(line);
+    }
+
+    /** Человеческое описание бонуса тира для лора: «+60% к урону, +90% к добыче». */
+    private String bonusText(ItemKind kind, int percent) {
+        if (kind == null || percent == 0) {
+            return "";
+        }
+        List<String> parts = new ArrayList<>(2);
+        for (TierBonus bonus : TierBonus.forKind(kind)) {
+            switch (bonus) {
+                case ATTACK_DAMAGE -> parts.add(plugin.messages().raw("tier-bonus-damage",
+                        "value", TierMath.signedPercent(TierMath.damageScalar(percent))));
+                case PROJECTILE_DAMAGE -> parts.add(plugin.messages().raw("tier-bonus-projectile",
+                        "value", TierMath.signedPercent(TierMath.projectileScalar(percent))));
+                case MINING_SPEED -> parts.add(plugin.messages().raw("tier-bonus-mining",
+                        "value", TierMath.signedPercent(TierMath.miningScalar(percent))));
+                case MOVEMENT_SPEED -> {
+                    double scalar = TierMath.movementScalar(percent);
+                    if (scalar > 0) {
+                        parts.add(plugin.messages().raw("tier-bonus-movement",
+                                "value", TierMath.signedPercent(scalar)));
+                    }
+                }
+                default -> {
+                    // броня/твёрдость — мелкий пассив, в плашку не выносим
+                }
+            }
+        }
+        return String.join(plugin.messages().raw("tier-bonus-separator"), parts);
     }
 
     /** Строка свойства улучшения: «✦ Кромка III — +6% урона». */

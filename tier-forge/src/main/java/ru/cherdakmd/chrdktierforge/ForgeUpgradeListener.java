@@ -108,13 +108,20 @@ public final class ForgeUpgradeListener implements Listener {
         }
         ItemStack weapon = attacker.getInventory().getItemInMainHand();
         Map<ForgeUpgrade.Def, Integer> ups = plugin.items().effectsOf(weapon);
-        if (ups.isEmpty()) {
+        // 1.4.124: лук/арбалет/трезубец не получают урон стрелы от ATTACK_DAMAGE —
+        // процент тира начисляется здесь, по факту попадания снаряда.
+        TierDef.Snapshot tier = projectileHit ? rangedTier(weapon) : null;
+        if (ups.isEmpty() && tier == null) {
             return;
         }
         lastCombat.put(attacker.getUniqueId(), System.currentTimeMillis());
 
-        // Снаряды («Снайпер»): оружие — лук в момент попадания; проки ближнего боя не работают
+        // Снаряды: сначала процент тира, затем «Снайпер». Проки ближнего боя не работают
         if (projectileHit) {
+            if (tier != null && tier.percent() != 0) {
+                event.setDamage(event.getDamage()
+                        * (1.0 + TierMath.projectileScalar(tier.percent())));
+            }
             int snipe = levelOf(ups, ForgeUpgrade.Effect.SNIPE);
             if (snipe > 0) {
                 event.setDamage(event.getDamage()
@@ -288,6 +295,24 @@ public final class ForgeUpgradeListener implements Listener {
             return;
         }
         target.addPotionEffect(new PotionEffect(type, ticks, amplifier, false, true, true));
+    }
+
+    /**
+     * Тир оружия, которым выпущен снаряд. Урон стрел идёт мимо атрибута
+     * ATTACK_DAMAGE, поэтому бонус тира считается здесь. Смотрим только на
+     * действительно стрелковое/метательное оружие: меч в руке в момент прилёта
+     * чужой стрелы бонуса не даёт.
+     */
+    private TierDef.Snapshot rangedTier(ItemStack weapon) {
+        if (weapon == null || weapon.getType().isAir()) {
+            return null;
+        }
+        Material type = weapon.getType();
+        if (type != Material.BOW && type != Material.CROSSBOW && type != Material.TRIDENT) {
+            return null;
+        }
+        String tierId = plugin.items().tierOf(weapon);
+        return tierId == null ? null : plugin.config().find(tierId);
     }
 
     /* ------------------------------- игрока бьют ------------------------------- */
