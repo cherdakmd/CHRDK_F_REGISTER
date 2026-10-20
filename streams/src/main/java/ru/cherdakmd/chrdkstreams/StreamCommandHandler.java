@@ -47,10 +47,10 @@ public final class StreamCommandHandler implements TabExecutor {
             return true;
         }
         if (args.length == 0) {
-            if (sender instanceof Player player) {
+            usage(sender, label, admin);
+            if (sender instanceof Player player
+                    && service.store().get(player.getUniqueId()).isPresent()) {
                 status(player);
-            } else {
-                usage(sender, label, admin);
             }
             return true;
         }

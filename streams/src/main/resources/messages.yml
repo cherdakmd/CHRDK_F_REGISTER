@@ -3,7 +3,7 @@ streams:
   "usage": "<yellow>Стример: /%label% <link <twitch|vkplay> <канал> | check | status | unlink | viewers [on|off]></yellow>"
   "usage-viewer": "<yellow>Зритель: /%label% <watch <стример> | watching | code <код> | watch stop></yellow>"
   "usage-admin": "<yellow>Админ: /%label% <stats | reload></yellow>"
-  "players-only": "<red>Это команда для игроков: привязка канала идёт от своего лица.</red>"
+  "players-only": "<red>Это команда только для игроков: привязка канала и просмотр идут от своего лица.</red>"
   "no-permission": "<red>Недостаточно прав для этой команды.</red>"
   "disabled": "<yellow>Стримерская программа сейчас выключена.</yellow>"
   "no-core": "<red>Ядро CHRDK_Core недоступно — награды выдать некому.</red>"
