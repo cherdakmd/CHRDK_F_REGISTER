@@ -34,9 +34,9 @@ class ViewerCodesTest {
 
     @Test
     void windowExpiresWhenTimeIsUp() {
-        assertTrue(ViewerCodes.expired(1_000L, 1_000L));
-        assertTrue(ViewerCodes.expired(1_001L, 1_000L));
-        assertFalse(ViewerCodes.expired(999L, 1_000L));
+        assertTrue(ViewerCodes.expired(1_000L, 1_000L), "ровно в момент смены код уже не действует");
+        assertTrue(ViewerCodes.expired(1_000L, 1_001L));
+        assertFalse(ViewerCodes.expired(1_000L, 999L));
     }
 
     @Test
