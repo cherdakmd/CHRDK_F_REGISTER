@@ -974,7 +974,7 @@ public final class TierItems {
                         "value", TierMath.signedPercent(TierMath.miningScalar(percent))));
                 case MOVEMENT_SPEED -> {
                     double scalar = TierMath.movementScalar(percent);
-                    if (scalar > 0) {
+                    if (TierMath.percentOf(scalar) > 0) {
                         parts.add(plugin.messages().raw("tier-bonus-movement",
                                 "value", TierMath.signedPercent(scalar)));
                     }
