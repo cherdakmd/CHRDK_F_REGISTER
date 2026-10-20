@@ -49,7 +49,7 @@ public record TierEnchantConfig(boolean enabled, int chancePercent, int maxPerIt
         int maxLevel = clamp(config.getInt("enchantments.max-level", 3), 1, 5, logger,
                 "enchantments.max-level");
         boolean customEnabled = config.getBoolean("enchantments.custom.enabled", true);
-        int customChance = clamp(config.getInt("enchantments.custom.chance-percent", 30),
+        int customChance = clamp(config.getInt("enchantments.custom.chance-percent", 18),
                 0, 100, logger, "enchantments.custom.chance-percent");
         int customMaxPerItem = clamp(config.getInt("enchantments.custom.max-per-item", 1),
                 0, 2, logger, "enchantments.custom.max-per-item");
