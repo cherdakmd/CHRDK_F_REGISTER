@@ -5,10 +5,12 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Logger;
 
 /**
@@ -17,9 +19,19 @@ import java.util.logging.Logger;
  */
 public final class ShopConfig {
 
-    /** Один торгуемый товар. */
+    /**
+     * Один торгуемый товар.
+     *
+     * @param material       имя материала Bukkit в верхнем регистре
+     * @param category       id раздела ({@link ShopCategory#id()}), у старых конфигов — {@code misc}
+     * @param basePrice      базовая цена за единицу в алмазах
+     * @param refStock       эталонный запас для динамической цены
+     * @param minMultiplier  нижняя граница множителя цены
+     * @param maxMultiplier  верхняя граница множителя цены
+     */
     public record ShopItem(
             String material,
+            String category,
             double basePrice,
             long refStock,
             double minMultiplier,
@@ -82,9 +94,18 @@ public final class ShopConfig {
         long historyInterval = Math.clamp(config.getLong("pricing.history-interval-minutes", 60), 5, 1440) * 60_000L;
 
         List<ShopItem> items = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
         for (Map<?, ?> raw : config.getMapList("items")) {
             ShopItem item = parseItem(raw, minMult, maxMult, logger);
-            if (item != null) items.add(item);
+            if (item == null) {
+                continue;
+            }
+            if (!seen.add(item.material())) {
+                logger.warning("[DiamondShop] items: дубликат товара '" + item.material()
+                        + "' — вторая запись пропущена.");
+                continue;
+            }
+            items.add(item);
         }
         return new ShopConfigData(rates, recovery, maxWithdraw, minMult, maxMult, List.copyOf(items),
                 spread, dailyLimit, historyPoints, historyInterval);
@@ -108,7 +129,25 @@ public final class ShopConfig {
         long refStock = Math.max(1, (long) numberOf(raw.get("ref-stock"), 1000));
         double minMult = Math.clamp(numberOf(raw.get("min-multiplier"), defMin), 0.01, 1d);
         double maxMult = Math.clamp(numberOf(raw.get("max-multiplier"), defMax), 1d, 100d);
-        return new ShopItem(material, basePrice, refStock, minMult, maxMult);
+        return new ShopItem(material, categoryOf(raw.get("category"), logger, material),
+                basePrice, refStock, minMult, maxMult);
+    }
+
+    /**
+     * Раздел товара из конфига. Пустое поле — тихий фолбэк в {@code misc}
+     * (совместимость со старыми конфигами), неизвестное значение — с предупреждением.
+     */
+    private static String categoryOf(Object raw, Logger logger, String material) {
+        if (raw == null || String.valueOf(raw).isBlank()) {
+            return ShopCategory.DEFAULT.id();
+        }
+        Optional<ShopCategory> parsed = ShopCategory.byId(String.valueOf(raw));
+        if (parsed.isEmpty() || parsed.get() == ShopCategory.ALL) {
+            logger.warning("[DiamondShop] items." + material + ": неизвестный раздел '" + raw
+                    + "' — товар попадёт в '" + ShopCategory.DEFAULT.id() + "'.");
+            return ShopCategory.DEFAULT.id();
+        }
+        return parsed.get().id();
     }
 
     private static double numberOf(Object value, double fallback) {

@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ShopStoreTest {
 
     private static ShopConfig.ShopItem item(String name, long ref) {
-        return new ShopConfig.ShopItem(name, 1.0, ref, 0.25, 4.0);
+        return new ShopConfig.ShopItem(name, ShopCategory.MINERALS.id(), 1.0, ref, 0.25, 4.0);
     }
 
     private ShopStore newStore(Path dir) {

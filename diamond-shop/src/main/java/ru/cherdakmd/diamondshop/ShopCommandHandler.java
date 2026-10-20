@@ -9,6 +9,7 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -59,6 +60,7 @@ public final class ShopCommandHandler implements TabExecutor {
             case "deposit", "dep" -> handleDeposit(player, args);
             case "withdraw", "draw" -> handleWithdraw(player, args);
             case "price" -> handlePrice(player, args);
+            case "find", "search" -> handleFind(player, args);
             case "buy" -> handleBuy(player, args);
             case "sell" -> handleSell(player, args);
             case "sellall" -> handleSellAll(player);
@@ -126,6 +128,37 @@ public final class ShopCommandHandler implements TabExecutor {
             plugin.messages().send(player, "shop.price-history",
                     "history", PriceEngine.sparkline(history),
                     "trend", PriceEngine.trend(history));
+        }
+    }
+
+    /** Поиск товара по фрагменту имени материала: до 10 совпадений с ценами. */
+    private void handleFind(Player player, String[] args) {
+        if (args.length < 2) {
+            plugin.messages().send(player, "shop.usage");
+            return;
+        }
+        String query = String.join(" ", Arrays.copyOfRange(args, 1, args.length)).trim();
+        ShopService service = plugin.shopService();
+        List<ShopConfig.ShopItem> matches = ShopCatalog.search(service.config().items(), query);
+        if (matches.isEmpty()) {
+            plugin.messages().send(player, "shop.find-empty", "query", query);
+            return;
+        }
+        plugin.messages().send(player, "shop.find-header",
+                "query", query, "count", matches.size());
+        int shown = Math.min(ShopCatalog.SEARCH_LIMIT, matches.size());
+        for (int index = 0; index < shown; index++) {
+            ShopConfig.ShopItem item = matches.get(index);
+            ShopCategory category = ShopCategory.byId(item.category()).orElse(ShopCategory.DEFAULT);
+            plugin.messages().send(player, "shop.find-line",
+                    "material", item.material().toLowerCase(Locale.ROOT),
+                    "ask", PriceEngine.round(service.askPrice(item)),
+                    "bid", PriceEngine.round(service.bidPrice(item)),
+                    "category", plugin.messages().plain(category.messageKey()));
+        }
+        if (matches.size() > shown) {
+            plugin.messages().send(player, "shop.find-more",
+                    "shown", shown, "count", matches.size());
         }
     }
 
@@ -333,10 +366,11 @@ public final class ShopCommandHandler implements TabExecutor {
         }
         switch (args.length) {
             case 1 -> addMatches(matches, prefix,
-                    List.of("balance", "deposit", "withdraw", "price", "buy", "sell", "sellall", "stats"));
+                    List.of("balance", "deposit", "withdraw", "price", "find", "buy", "sell",
+                            "sellall", "stats"));
             case 2 -> {
                 if ("price".equalsIgnoreCase(args[0]) || "buy".equalsIgnoreCase(args[0])
-                        || "sell".equalsIgnoreCase(args[0])) {
+                        || "sell".equalsIgnoreCase(args[0]) || "find".equalsIgnoreCase(args[0])) {
                     addItemMatches(matches, prefix);
                 } else if ("deposit".equalsIgnoreCase(args[0])) {
                     addMatches(matches, prefix, List.of("all", "hand"));
