@@ -38,7 +38,7 @@ class TreasureOverridesTest {
     }
 
     @Test
-    void setWritesFileAndSurvivesReload() {
+    void setWritesFileAndSurvivesReload() throws Exception {
         TreasureOverrides overrides = overrides();
         assertEquals(0.5, overrides.set(TreasureTier.LEGENDARY, 0.5), 1e-9);
         Path file = folder.resolve(TreasureOverrides.FILE_NAME);
