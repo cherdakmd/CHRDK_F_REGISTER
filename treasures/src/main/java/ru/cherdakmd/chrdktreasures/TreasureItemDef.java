@@ -48,7 +48,7 @@ public record TreasureItemDef(String id, TreasureTier tier, TreasureRegion regio
         }
     }
 
-    /** Подпись для логов и админской информации: ид, редкость и бонусы. */
+    /** Есть ли у предмета активная способность по правому клику. */
     public boolean active() {
         return ability != null;
     }

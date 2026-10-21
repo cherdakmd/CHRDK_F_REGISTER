@@ -452,6 +452,16 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
         plugin.messages().send(sender, "stats-streak",
                 "streak", String.valueOf(service.streak(target)),
                 "best", String.valueOf(service.bestStreak(target)));
+        TreasureSet activeSet = plugin.config().setsEnabled() ? plugin.sets().active(target) : null;
+        if (activeSet == null) {
+            plugin.messages().send(sender, "stats-set-none");
+        } else {
+            plugin.messages().send(sender, "stats-set",
+                    "set", Messages.trusted(plugin.messages().raw(
+                            "region." + activeSet.region().id())),
+                    "pieces", String.valueOf(plugin.sets().pieces(target, activeSet.region())),
+                    "total", String.valueOf(TreasureSet.FULL_PIECES));
+        }
         String next = service.nextTierHint(target);
         plugin.messages().send(sender, next.isBlank() ? "stats-next-none" : "stats-next",
                 "hint", Messages.trusted(next));

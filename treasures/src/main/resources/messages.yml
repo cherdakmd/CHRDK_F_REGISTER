@@ -333,6 +333,8 @@ messages:
   stats-rank-progress: "<gray>До звания %next%: <white>%remaining%</white> находок</gray>"
   stats-rank-max: "<green>Высшее звание достигнуто.</green>"
   stats-streak: "<gray>Серия: <white>%streak%</white> · рекорд: <white>%best%</white></gray>"
+  stats-set: "<gray>Сет: %set% <dark_gray>·</dark_gray> <white>%pieces%/%total%</white></gray>"
+  stats-set-none: "<gray>Сет: не собран</gray>"
   stats-next: "<gray>До следующей редкости: %hint%</gray>"
   stats-next-none: "<green>Все редкости открыты.</green>"
   stats-next-tier: "<white>%tier%</white> <gray>через</gray> <white>%blocks%</white> <gray>блоков</gray>"
