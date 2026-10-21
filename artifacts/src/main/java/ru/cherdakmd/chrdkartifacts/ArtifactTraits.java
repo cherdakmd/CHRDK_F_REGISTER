@@ -148,7 +148,6 @@ public final class ArtifactTraits {
         bad("hrupkaya-oprava", Kind.ARMOR, 4, 6, 8);
         bad("slaboe-serdce", Kind.MAX_HEALTH, 1, 1, 2);
         bad("zlye-ogljadki", Kind.LUCK, 1, 1, 2);
-        bad("durnaya-stojkost", Kind.KNOCKBACK_RESISTANCE, 0.05, 0.08, 0.12);
         bad("korotkaya-ruka", Kind.REACH, 0.2, 0.35, 0.5);
         badRaw("zharkoe-plamya", Kind.BURNING_TIME, 15, 25, 35);
         bad("vysokoe-padenie", Kind.SAFE_FALL, 0.5, 1.0, 1.5);
