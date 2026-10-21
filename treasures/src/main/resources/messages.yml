@@ -259,6 +259,7 @@ messages:
   loot-region-line-locked: "<gray>·</gray> %material% <dark_gray>×%min%–%max% · после %blocks% блоков</dark_gray>"
   loot-hint: "<gray>Шанс — доля записи в пуле редкости с учётом вашего прогресса. Шанс клада на блок — в <yellow>config.yml → blocks</yellow>.</gray>"
   loot-empty: "<gray>Здесь пока пусто.</gray>"
+  loot-truncated: "<gray>…и ещё <white>%count%</white> записей: полный список — в <yellow>loot.yml</yellow>.</gray>"
   loot-item-name: "<!italic><white>%name%</white>"
   loot-item-lore: "<dark_gray>Именная находка из клада</dark_gray>"
 

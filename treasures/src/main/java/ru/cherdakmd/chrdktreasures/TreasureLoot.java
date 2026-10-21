@@ -12,10 +12,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.logging.Logger;
 
 /**
@@ -37,6 +39,13 @@ public final class TreasureLoot {
 
     /** Имя файла с таблицами в папке плагина. */
     public static final String FILE_NAME = "loot.yml";
+
+    /**
+     * Версия формата таблиц. Файл без {@code version} считается первой
+     * версией: плагин дополняет его новыми записями из ресурса, не трогая
+     * правки администратора.
+     */
+    public static final int CURRENT_VERSION = 2;
 
     /**
      * Запись пула: материал, диапазон количества, вес, порог прогресса и,
@@ -105,6 +114,7 @@ public final class TreasureLoot {
         private final Map<TreasureRegion, Map<TreasureTier, List<LootEntry>>> regional =
                 new EnumMap<>(TreasureRegion.class);
         private final int size;
+        private final int version;
 
         public Table() {
             for (TreasureTier tier : TreasureTier.values()) {
@@ -118,10 +128,12 @@ public final class TreasureLoot {
                 regional.put(region, tiers);
             }
             this.size = 0;
+            this.version = 0;
         }
 
         private Table(Map<TreasureTier, List<LootEntry>> global,
-                      Map<TreasureRegion, Map<TreasureTier, List<LootEntry>>> regional) {
+                      Map<TreasureRegion, Map<TreasureTier, List<LootEntry>>> regional,
+                      int version) {
             this.global.putAll(global);
             this.regional.putAll(regional);
             int count = 0;
@@ -134,6 +146,7 @@ public final class TreasureLoot {
                 }
             }
             this.size = count;
+            this.version = version;
         }
 
         /** Общий пул редкости. */
@@ -176,10 +189,68 @@ public final class TreasureLoot {
         public int size() {
             return size;
         }
+
+        /** Версия формата: 0 — таблица собрана вручную, 2 — с версии 1.4.136. */
+        public int version() {
+            return version;
+        }
+
+        /**
+         * Дополняет таблицу записями из {@code source}, которых в ней нет.
+         *
+         * <p>Так обновление плагина приносит новые предметы даже в старый
+         * {@code loot.yml}: совпадающие по материалу и имени записи остаются
+         * как есть, а правки и удаления администратора не откатываются.</p>
+         */
+        public Table withMissing(Table source) {
+            if (source == null || source.size == 0) {
+                return this;
+            }
+            Map<TreasureTier, List<LootEntry>> mergedGlobal = new EnumMap<>(TreasureTier.class);
+            for (TreasureTier tier : TreasureTier.values()) {
+                List<LootEntry> entries = new ArrayList<>(global(tier));
+                Set<String> keys = new HashSet<>();
+                for (LootEntry entry : entries) {
+                    keys.add(keyOf(entry));
+                }
+                for (LootEntry entry : source.global(tier)) {
+                    if (keys.add(keyOf(entry))) {
+                        entries.add(entry);
+                    }
+                }
+                mergedGlobal.put(tier, List.copyOf(entries));
+            }
+            Map<TreasureRegion, Map<TreasureTier, List<LootEntry>>> mergedRegional =
+                    new EnumMap<>(TreasureRegion.class);
+            for (TreasureRegion region : TreasureRegion.values()) {
+                Map<TreasureTier, List<LootEntry>> tiers = new EnumMap<>(TreasureTier.class);
+                for (TreasureTier tier : TreasureTier.values()) {
+                    List<LootEntry> entries = new ArrayList<>(regional(region, tier));
+                    Set<String> keys = new HashSet<>();
+                    for (LootEntry entry : entries) {
+                        keys.add(keyOf(entry));
+                    }
+                    for (LootEntry entry : source.regional(region, tier)) {
+                        if (keys.add(keyOf(entry))) {
+                            entries.add(entry);
+                        }
+                    }
+                    tiers.put(tier, List.copyOf(entries));
+                }
+                mergedRegional.put(region, tiers);
+            }
+            return new Table(mergedGlobal, mergedRegional,
+                    Math.max(version, source.version));
+        }
+
+        private static String keyOf(LootEntry entry) {
+            return entry.material() + '\u0000' + entry.name();
+        }
     }
 
     private static final Table BUILTIN = buildBuiltin();
-    private static volatile Table active = shipped();
+    private static final Table RESOURCE = loadResource();
+    private static volatile Table active = RESOURCE.size() == 0 ? BUILTIN : RESOURCE;
 
     private TreasureLoot() {
     }
@@ -201,16 +272,22 @@ public final class TreasureLoot {
         return BUILTIN;
     }
 
-    /** Таблица из ресурса JAR: используется, пока плагин не подставил свою. */
-    private static Table shipped() {
+    /**
+     * Таблицы из ресурса JAR: полный актуальный набор. Нужны, чтобы дополнять
+     * старый {@code loot.yml} новыми записями после обновления плагина.
+     */
+    public static Table resource() {
+        return RESOURCE;
+    }
+
+    private static Table loadResource() {
         try (InputStream stream = TreasureLoot.class.getResourceAsStream("/" + FILE_NAME)) {
             if (stream == null) {
-                return BUILTIN;
+                return new Table();
             }
-            Table table = load(stream, null);
-            return table.size() == 0 ? BUILTIN : table;
+            return load(stream, null);
         } catch (IOException | RuntimeException exception) {
-            return BUILTIN;
+            return new Table();
         }
     }
 
@@ -265,7 +342,7 @@ public final class TreasureLoot {
             }
             regional.put(region, tiers);
         }
-        return new Table(global, regional);
+        return new Table(global, regional, Math.max(1, yaml.getInt("version", 1)));
     }
 
     private static List<LootEntry> readEntries(ConfigurationSection section, String key,
@@ -370,7 +447,7 @@ public final class TreasureLoot {
                 entry("BLAZE_POWDER", 2, 5)));
         regional.put(TreasureRegion.END, builtinRegion(entry("ENDER_PEARL", 1, 3),
                 entry("CHORUS_FRUIT", 2, 5)));
-        return new Table(global, regional);
+        return new Table(global, regional, CURRENT_VERSION);
     }
 
     private static Map<TreasureTier, List<LootEntry>> builtinRegion(LootEntry... entries) {

@@ -60,7 +60,7 @@ class TreasureLootTest {
     @Test
     void shippedTablesAreRichAndContainNamedFinds() {
         TreasureLoot.Table table = shipped();
-        assertTrue(table.size() >= 300, "слишком мало записей: " + table.size());
+        assertTrue(table.size() >= 900, "слишком мало записей: " + table.size());
         Set<String> names = new HashSet<>();
         for (TreasureTier tier : TreasureTier.values()) {
             for (TreasureLoot.LootEntry entry : table.global(tier)) {
@@ -78,7 +78,7 @@ class TreasureLootTest {
                 }
             }
         }
-        assertTrue(names.size() >= 15, "именных находок слишком мало: " + names.size());
+        assertTrue(names.size() >= 40, "именных находок слишком мало: " + names.size());
         assertTrue(names.contains("Кровавый суп"));
         assertTrue(names.contains("Зависть пиглина"));
         assertTrue(names.contains("Обычный амулет"));
@@ -103,7 +103,7 @@ class TreasureLootTest {
                 assertValidItem(entry);
             }
         }
-        assertTrue(materials.size() >= 30, "слишком мало разных материалов: " + materials.size());
+        assertTrue(materials.size() >= 300, "слишком мало разных материалов: " + materials.size());
     }
 
     private static void assertValidItem(TreasureLoot.LootEntry entry) {
@@ -118,6 +118,60 @@ class TreasureLootTest {
         assertTrue(entry.max() <= 64, "стек больше 64: " + entry.material());
         assertTrue(entry.weight() >= 1);
         assertTrue(entry.unlock() >= 0);
+    }
+
+    @Test
+    void everyRegionTierPoolIsFilled() {
+        TreasureLoot.Table table = shipped();
+        for (TreasureTier tier : TreasureTier.values()) {
+            assertTrue(table.global(tier).size() >= 15,
+                    "общий пул " + tier.id() + " слишком мал: " + table.global(tier).size());
+        }
+        for (TreasureRegion region : TreasureRegion.values()) {
+            for (TreasureTier tier : TreasureTier.values()) {
+                int size = table.regional(region, tier).size();
+                assertTrue(size >= 4,
+                        "пул " + region.id() + "/" + tier.id() + " слишком мал: " + size);
+            }
+        }
+    }
+
+    @Test
+    void shippedTablesDeclareCurrentVersion() {
+        assertEquals(TreasureLoot.CURRENT_VERSION, shipped().version());
+    }
+
+    @Test
+    void oldFileGetsNewEntriesButKeepsAdminEdits() {
+        TreasureLoot.Table old = table("""
+                global:
+                  common:
+                    - { material: COAL, min: 1, max: 2, weight: 4, unlock: 0 }
+                """);
+        assertEquals(1, old.size());
+        assertEquals(1, old.version(), "файл без version считается старым");
+
+        TreasureLoot.Table merged = old.withMissing(shipped());
+        assertTrue(merged.size() > 900, "старый файл не пополнился: " + merged.size());
+
+        List<TreasureLoot.LootEntry> coal = merged.global(TreasureTier.COMMON).stream()
+                .filter(entry -> entry.material().equals("COAL"))
+                .toList();
+        assertEquals(1, coal.size(), "запись администратора задвоилась");
+        assertEquals(1, coal.get(0).min(), "правка администратора потерялась");
+        assertEquals(TreasureLoot.CURRENT_VERSION, merged.version());
+    }
+
+    @Test
+    void versionInFileIsReadFromYaml() {
+        TreasureLoot.Table table = table("""
+                version: 2
+                global:
+                  rare:
+                    - { material: DIAMOND, min: 1, max: 1, weight: 1, unlock: 0 }
+                """);
+        assertEquals(2, table.version());
+        assertEquals(1, table.size());
     }
 
     @Test

@@ -198,7 +198,20 @@ public final class TreasuresPlugin extends JavaPlugin {
             if (!Files.isRegularFile(file)) {
                 saveResource(TreasureLoot.FILE_NAME, false);
             }
-            TreasureLoot.install(TreasureLoot.load(file, getLogger()));
+            TreasureLoot.Table table = TreasureLoot.load(file, getLogger());
+            if (table.version() < TreasureLoot.CURRENT_VERSION) {
+                // Старый файл не перезаписываем: дополняем его новыми записями,
+                // чтобы обновление принесло предметы и сохранило правки админа.
+                int before = table.size();
+                table = table.withMissing(TreasureLoot.resource());
+                int added = table.size() - before;
+                if (added > 0) {
+                    getLogger().info("[CHRDK_Treasures] loot.yml от старой версии: добавлено "
+                            + added + " записей. Полный новый файл — в JAR; чтобы заменить,"
+                            + " удалите plugins/CHRDK_Treasures/loot.yml и перезапустите сервер.");
+                }
+            }
+            TreasureLoot.install(table);
         } catch (RuntimeException exception) {
             getLogger().warning("[CHRDK_Treasures] Не удалось загрузить "
                     + TreasureLoot.FILE_NAME + ": " + exception.getMessage());

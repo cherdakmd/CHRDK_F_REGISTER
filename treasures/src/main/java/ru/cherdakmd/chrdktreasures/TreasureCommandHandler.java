@@ -204,6 +204,9 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
 
     /* ----------------------------------- лут ---------------------------------- */
 
+    /** Сколько строк пула показывать за раз: 1009 записей не должны флудить чат. */
+    private static final int LOOT_LINES = 40;
+
     /**
      * Показывает лут-таблицы: сводку, общий пул редкости или региональный пул.
      * Шансы считаются по действующим весам и прогрессу игрока, а не «на глазок».
@@ -233,7 +236,12 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
                 plugin.messages().send(player, "loot-empty");
                 return true;
             }
+            int shown = 0;
             for (TreasureLoot.LootEntry entry : entries) {
+                if (shown >= LOOT_LINES) {
+                    break;
+                }
+                shown++;
                 double chance = TreasureLoot.chance(tier, null, entry, mined);
                 if (entry.unlock() > 0) {
                     plugin.messages().send(player, "loot-line-locked",
@@ -250,6 +258,10 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
                             "chance", formatPercent(chance));
                 }
             }
+            if (entries.size() > shown) {
+                plugin.messages().send(player, "loot-truncated",
+                        "count", String.valueOf(entries.size() - shown));
+            }
             plugin.messages().send(player, "loot-hint");
             return true;
         }
@@ -258,16 +270,25 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
             plugin.messages().send(player, "loot-region-header",
                     "region", Messages.trusted(plugin.messages().raw("region." + region.id())));
             boolean any = false;
+            int shown = 0;
+            int total = TreasureLoot.active().regional(region).size();
             for (TreasureTier itemTier : TreasureTier.values()) {
                 var entries = TreasureLoot.active().regional(region, itemTier);
                 if (entries.isEmpty()) {
                     continue;
                 }
                 any = true;
+                if (shown >= LOOT_LINES) {
+                    continue;
+                }
                 plugin.messages().send(player, "loot-region-tier",
                         "tier", Messages.trusted(plugin.messages().raw("tier." + itemTier.id())),
                         "count", String.valueOf(entries.size()));
                 for (TreasureLoot.LootEntry entry : entries) {
+                    if (shown >= LOOT_LINES) {
+                        break;
+                    }
+                    shown++;
                     if (entry.unlock() > 0) {
                         plugin.messages().send(player, "loot-region-line-locked",
                                 "material", label(entry),
@@ -284,6 +305,9 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
             }
             if (!any) {
                 plugin.messages().send(player, "loot-empty");
+            } else if (total > shown) {
+                plugin.messages().send(player, "loot-truncated",
+                        "count", String.valueOf(total - shown));
             }
             plugin.messages().send(player, "loot-hint");
             return true;
