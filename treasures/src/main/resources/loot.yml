@@ -83,8 +83,8 @@ global:
     - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 7, unlock: 20000 }
     - { material: TOTEM_OF_UNDYING, min: 1, max: 2, weight: 6, unlock: 25000 }
     - { material: NETHER_STAR, min: 1, max: 1, weight: 5, unlock: 30000 }
-    - { material: NETHERITE_BLOCK, min: 1, max: 1, weight: 3, unlock: 45000 }
-    - { material: ELYTRA, min: 1, max: 1, weight: 2, unlock: 50000 }
+    - { material: NETHERITE_BLOCK, min: 1, max: 1, weight: 3, unlock: 100000 }
+    - { material: ELYTRA, min: 1, max: 1, weight: 2, unlock: 300000 }
     - { material: DRAGON_BREATH, min: 2, max: 4, weight: 4, unlock: 20000 }
 
 regions:
@@ -491,7 +491,7 @@ regions:
       - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 3, unlock: 20000 }
     mythical:
       - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 6, unlock: 20000 }
-      - { material: ELYTRA, min: 1, max: 1, weight: 2, unlock: 50000 }
+      - { material: ELYTRA, min: 1, max: 1, weight: 2, unlock: 300000 }
       - { material: NETHER_STAR, min: 1, max: 1, weight: 4, unlock: 30000 }
       - { material: DRAGON_BREATH, min: 3, max: 6, weight: 5, unlock: 20000 }
 
