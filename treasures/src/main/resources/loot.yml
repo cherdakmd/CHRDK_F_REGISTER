@@ -315,6 +315,12 @@ regions:
       - { material: DIAMOND_BLOCK, min: 1, max: 1, weight: 8, unlock: 25000 }
       - { material: EMERALD_BLOCK, min: 1, max: 1, weight: 7, unlock: 15000 }
       - { material: NETHERITE_SCRAP, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 6, unlock: 15000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 5, unlock: 15000 }
     mythical:
       - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 8, unlock: 20000 }
       - { material: GOLDEN_APPLE, min: 4, max: 8, weight: 6, unlock: 20000 }
@@ -322,6 +328,10 @@ regions:
       - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
       - { material: NETHERITE_SCRAP, min: 2, max: 4, weight: 6, unlock: 20000 }
       - { material: DIAMOND_BLOCK, min: 1, max: 2, weight: 6, unlock: 25000 }
+      - { material: NETHERITE_HOE, min: 1, max: 1, weight: 5, unlock: 20000 }
+      - { material: NETHERITE_HELMET, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_BOOTS, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: BEACON, min: 1, max: 1, weight: 3, unlock: 100000 }
 
   # лес: брёвна, грибы, книги и охотничье снаряжение.
   forest:
@@ -389,11 +399,20 @@ regions:
       - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 2, unlock: 25000 }
       - { material: DIAMOND_BLOCK, min: 1, max: 1, weight: 8, unlock: 25000 }
       - { material: NETHERITE_SCRAP, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 5, unlock: 15000 }
     mythical:
       - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 7, unlock: 20000 }
       - { material: NETHERITE_AXE, min: 1, max: 1, weight: 4, unlock: 20000 }
       - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 20000 }
       - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+      - { material: NETHERITE_HELMET, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_BOOTS, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: BEACON, min: 1, max: 1, weight: 4, unlock: 100000 }
 
   # тайга: ель, папоротники, ягоды и меховые обноски.
   taiga:
@@ -451,11 +470,22 @@ regions:
       - { material: DIAMOND_BLOCK, min: 1, max: 1, weight: 3, unlock: 25000 }
       - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 2, unlock: 25000 }
       - { material: NETHERITE_SCRAP, min: 1, max: 1, weight: 8, unlock: 15000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: PACKED_ICE, min: 4, max: 12, weight: 7, unlock: 15000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 5, unlock: 15000 }
     mythical:
       - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 7, unlock: 20000 }
       - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 20000 }
       - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
       - { material: NETHERITE_SCRAP, min: 2, max: 3, weight: 4, unlock: 10000 }
+      - { material: NETHERITE_CHESTPLATE, min: 1, max: 1, weight: 5, unlock: 20000 }
+      - { material: NETHERITE_HELMET, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_BOOTS, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: BEACON, min: 1, max: 1, weight: 4, unlock: 100000 }
 
   # снега: лёд, снежки, синяя изморозь и тёплые вещи.
   snow:
@@ -511,11 +541,20 @@ regions:
       - { material: DIAMOND_BLOCK, min: 1, max: 1, weight: 8, unlock: 25000 }
       - { material: NETHERITE_SCRAP, min: 1, max: 1, weight: 8, unlock: 15000 }
       - { material: BLUE_ICE, min: 1, max: 1, weight: 3, unlock: 15000, name: "Ледяное сердце" }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 5, unlock: 15000 }
     mythical:
       - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 7, unlock: 20000 }
       - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 20000 }
       - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
       - { material: DIAMOND_BLOCK, min: 2, max: 3, weight: 4, unlock: 25000 }
+      - { material: NETHERITE_BOOTS, min: 1, max: 1, weight: 5, unlock: 20000 }
+      - { material: NETHERITE_HELMET, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: BEACON, min: 1, max: 1, weight: 4, unlock: 100000 }
 
   # пустыня: песок, терракота, золото и древние гончарные черепки.
   desert:
@@ -573,11 +612,22 @@ regions:
       - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 2, unlock: 25000 }
       - { material: DIAMOND_BLOCK, min: 1, max: 1, weight: 8, unlock: 25000 }
       - { material: GOLD_BLOCK, min: 2, max: 4, weight: 8, unlock: 15000 }
+      - { material: DIAMOND_SHOVEL, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 5, unlock: 15000 }
     mythical:
       - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 7, unlock: 20000 }
       - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 20000 }
       - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
       - { material: GOLD_BLOCK, min: 2, max: 4, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_SHOVEL, min: 1, max: 1, weight: 5, unlock: 20000 }
+      - { material: NETHERITE_HELMET, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_BOOTS, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: BEACON, min: 1, max: 1, weight: 4, unlock: 100000 }
 
   # саванна: акация, бахча, тростник и снаряжение охотника.
   savanna:
@@ -626,11 +676,22 @@ regions:
       - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 2, unlock: 25000 }
       - { material: DIAMOND_BLOCK, min: 1, max: 1, weight: 8, unlock: 25000 }
       - { material: NETHERITE_SCRAP, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: DIAMOND_HORSE_ARMOR, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 7, unlock: 15000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 5, unlock: 15000 }
     mythical:
       - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 7, unlock: 20000 }
       - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 20000 }
       - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
       - { material: NETHERITE_SCRAP, min: 2, max: 3, weight: 4, unlock: 10000 }
+      - { material: NETHERITE_SWORD, min: 1, max: 1, weight: 5, unlock: 20000 }
+      - { material: NETHERITE_HELMET, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_BOOTS, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: BEACON, min: 1, max: 1, weight: 4, unlock: 100000 }
 
   # джунгли: бамбук, лианы, какао и светящиеся ягоды.
   jungle:
@@ -682,11 +743,22 @@ regions:
       - { material: NETHERITE_SCRAP, min: 1, max: 2, weight: 3, unlock: 10000 }
       - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 2, unlock: 25000 }
       - { material: DIAMOND_BLOCK, min: 1, max: 1, weight: 8, unlock: 25000 }
+      - { material: DIAMOND_SWORD, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 7, unlock: 15000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 5, unlock: 15000 }
     mythical:
       - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 7, unlock: 20000 }
       - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 20000 }
       - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
       - { material: DIAMOND_BLOCK, min: 2, max: 3, weight: 4, unlock: 25000 }
+      - { material: NETHERITE_SWORD, min: 1, max: 1, weight: 5, unlock: 20000 }
+      - { material: NETHERITE_HELMET, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_BOOTS, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: BEACON, min: 1, max: 1, weight: 4, unlock: 100000 }
 
   # болото: ил, мангровые корни, слизь и болотные огни.
   swamp:
@@ -739,11 +811,21 @@ regions:
       - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
       - { material: NETHERITE_SCRAP, min: 1, max: 2, weight: 3, unlock: 10000 }
       - { material: DIAMOND_BLOCK, min: 1, max: 1, weight: 8, unlock: 25000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 7, unlock: 15000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 5, unlock: 15000 }
     mythical:
       - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 7, unlock: 20000 }
       - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 20000 }
       - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
       - { material: SLIME_BLOCK, min: 3, max: 6, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 20000 }
+      - { material: NETHERITE_HELMET, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_BOOTS, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: BEACON, min: 1, max: 1, weight: 4, unlock: 100000 }
 
   # горы: камень, руда, аметист и рог горного козла.
   mountain:
@@ -793,12 +875,21 @@ regions:
       - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 2, unlock: 25000 }
       - { material: DIAMOND_BLOCK, min: 1, max: 1, weight: 8, unlock: 25000 }
       - { material: NETHERITE_SCRAP, min: 1, max: 1, weight: 8, unlock: 15000 }
+      - { material: DIAMOND_PICKAXE, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 5, unlock: 15000 }
     mythical:
       - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 7, unlock: 20000 }
       - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 20000 }
       - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
       - { material: NETHERITE_SCRAP, min: 2, max: 3, weight: 4, unlock: 10000 }
       - { material: NETHERITE_PICKAXE, min: 1, max: 1, weight: 6, unlock: 20000 }
+      - { material: NETHERITE_HELMET, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_BOOTS, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: BEACON, min: 1, max: 1, weight: 4, unlock: 100000 }
 
   # океан: водоросли, призмарин, ракушки и морские сокровища.
   ocean:
@@ -863,6 +954,12 @@ regions:
       - { material: DIAMOND, min: 3, max: 6, weight: 6, unlock: 15000 }
       - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 3, unlock: 20000 }
       - { material: DIAMOND_BLOCK, min: 1, max: 1, weight: 8, unlock: 25000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: HEART_OF_THE_SEA, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 5, unlock: 15000 }
     mythical:
       - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 7, unlock: 20000 }
       - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
@@ -870,6 +967,9 @@ regions:
       - { material: TRIDENT, min: 1, max: 1, weight: 4, unlock: 20000 }
       - { material: CONDUIT, min: 1, max: 1, weight: 6, unlock: 30000 }
       - { material: HEART_OF_THE_SEA, min: 2, max: 3, weight: 5, unlock: 20000 }
+      - { material: NETHERITE_HELMET, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_BOOTS, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: BEACON, min: 1, max: 1, weight: 3, unlock: 100000 }
 
   # глубины: сланец, вагонетки, рельсы и шахтёрский инструмент.
   deep:
@@ -940,12 +1040,21 @@ regions:
       - { material: NETHERITE_SCRAP, min: 1, max: 2, weight: 4, unlock: 10000 }
       - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 3, unlock: 20000 }
       - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 7, unlock: 25000 }
+      - { material: DIAMOND_PICKAXE, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 5, unlock: 15000 }
     mythical:
       - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 7, unlock: 20000 }
       - { material: NETHERITE_SCRAP, min: 2, max: 4, weight: 5, unlock: 10000 }
       - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 4, unlock: 20000 }
       - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
       - { material: NETHERITE_PICKAXE, min: 1, max: 1, weight: 6, unlock: 20000 }
+      - { material: NETHERITE_HELMET, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_BOOTS, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: BEACON, min: 1, max: 1, weight: 4, unlock: 100000 }
 
   # глубокая тьма: скалк, эхо-осколки и осколки пластинок.
   deep_dark:
@@ -999,12 +1108,21 @@ regions:
       - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 3, unlock: 20000 }
       - { material: DIAMOND_BLOCK, min: 1, max: 1, weight: 8, unlock: 25000 }
       - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 7, unlock: 25000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 5, unlock: 15000 }
     mythical:
       - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 6, unlock: 20000 }
       - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 4, unlock: 20000 }
       - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
       - { material: NETHER_STAR, min: 1, max: 1, weight: 2, unlock: 30000 }
       - { material: NETHERITE_CHESTPLATE, min: 1, max: 1, weight: 6, unlock: 20000 }
+      - { material: ECHO_SHARD, min: 2, max: 4, weight: 5, unlock: 20000 }
+      - { material: NETHERITE_HELMET, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_BOOTS, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: BEACON, min: 1, max: 1, weight: 4, unlock: 100000 }
 
   # Нижний мир: незерак, кварц, лава и снаряжение пиглинов.
   nether:
@@ -1086,6 +1204,13 @@ regions:
       - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 7, unlock: 25000 }
       - { material: PIGLIN_HEAD, min: 1, max: 1, weight: 7, unlock: 15000 }
       - { material: WITHER_SKELETON_SKULL, min: 1, max: 1, weight: 3, unlock: 30000, name: "Череп мертвеца" }
+      - { material: DIAMOND_SWORD, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: ANCIENT_DEBRIS, min: 1, max: 2, weight: 6, unlock: 15000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 4, unlock: 15000 }
     mythical:
       - { material: NETHERITE_INGOT, min: 1, max: 2, weight: 7, unlock: 20000 }
       - { material: NETHERITE_SCRAP, min: 3, max: 5, weight: 5, unlock: 10000 }
@@ -1096,6 +1221,8 @@ regions:
       - { material: NETHERITE_CHESTPLATE, min: 1, max: 1, weight: 6, unlock: 20000 }
       - { material: BEACON, min: 1, max: 1, weight: 5, unlock: 100000 }
       - { material: PIGLIN_HEAD, min: 1, max: 1, weight: 5, unlock: 20000 }
+      - { material: NETHERITE_HELMET, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_BOOTS, min: 1, max: 1, weight: 3, unlock: 20000 }
 
   # Край: эндстоун, пурпур, хорус и эндер-редкости.
   end:
@@ -1153,6 +1280,13 @@ regions:
       - { material: DRAGON_HEAD, min: 1, max: 1, weight: 8, unlock: 50000 }
       - { material: NETHERITE_SCRAP, min: 1, max: 2, weight: 8, unlock: 15000 }
       - { material: DIAMOND_BLOCK, min: 1, max: 1, weight: 7, unlock: 25000 }
+      - { material: DIAMOND_SWORD, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: SHULKER_SHELL, min: 1, max: 2, weight: 6, unlock: 15000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 5, unlock: 15000 }
     mythical:
       - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 6, unlock: 20000 }
       - { material: ELYTRA, min: 1, max: 1, weight: 2, unlock: 300000 }
@@ -1160,3 +1294,7 @@ regions:
       - { material: DRAGON_BREATH, min: 3, max: 6, weight: 5, unlock: 20000 }
       - { material: DRAGON_HEAD, min: 1, max: 1, weight: 6, unlock: 50000 }
       - { material: BEACON, min: 1, max: 1, weight: 5, unlock: 100000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 5, unlock: 25000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_HELMET, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_BOOTS, min: 1, max: 1, weight: 4, unlock: 20000 }
