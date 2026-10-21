@@ -1,4 +1,6 @@
-# CHRDK_Artifacts — имена/описания 65 артефактов (art.<id>.name, art.<id>.lore) и тексты.
+# CHRDK_Artifacts — имена/описания 65 артефактов (art.<id>.name, art.<id>.lore),
+# 15 полезных и 15 вредных свойств (trait.<id>.name, trait.<id>.desc) и тексты UI.
+# Свойства пишутся в лор маркерами ▲ (польза) и ▼ (вред).
 messages:
   player-only: "<red>Эта команда только для игроков.</red>"
   need-auth: "<red>Артефакты слушаются лишь авторизованного хозяина. Войдите сначала.</red>"
@@ -33,6 +35,17 @@ messages:
   line-cursed-active: "<dark_red>✖ Проклятый артефакт · активный (ПКМ)</dark_red>"
   lore-desc: "<gray>%text%</gray>"
   lore-active-info: "<yellow>ПКМ — активировать · КД %cooldown%с · цена %xp% ур.</yellow>"
+  trait-line-good: "<green>▲ %name% %levelroman%</green> <dark_gray>— %desc%</dark_gray>"
+  trait-line-bad: "<red>▼ %name% %levelroman%</red> <dark_gray>— %desc%</dark_gray>"
+  trait-good: "<green>польза</green>"
+  trait-bad: "<red>вред</red>"
+  traits-header: "<gold>══════ Свойства артефактов ══════</gold>"
+  traits-header-good: "<green>▲ Полезные свойства</green>"
+  traits-header-bad: "<red>▼ Вредные свойства</red>"
+  traits-line-good: "<green>▲</green> <yellow>%name%</yellow> <gray>— %desc%</gray>"
+  traits-line-bad: "<red>▼</red> <yellow>%name%</yellow> <gray>— %desc%</gray>"
+  traits-footer: "<gray>Свойства выпадают при получении артефакта: до %max% шт., шанс %chance%, уровень I–%level%. Редко бывает «чужая» полярность.</gray>"
+  traits-hint: "<gray>Свойства артефактов: <yellow>/artifacts traits</yellow></gray>"
   list-header-good: "<gold>══════ Светлые артефакты ══════</gold>"
   list-header-cursed: "<dark_red>══════ Проклятые артефакты ══════</dark_red>"
   admin-reloaded: "<green>Конфигурация артефактов перечитана.</green>"
@@ -244,3 +257,97 @@ messages:
     svist-gadov:
       name: "Свист Гадов"
       lore: "Когти гремят где-то под ногами. На свист."
+
+  # --- 15 полезных свойств ▲ (1.4.129) ---
+  trait.silnyj-zahvat:
+    name: "Сильный захват"
+    desc: "+4–8% к урону"
+  trait.tverdost-kozh:
+    name: "Твёрдость кожи"
+    desc: "+5–9% к броне"
+  trait.legkij-shag:
+    name: "Лёгкий шаг"
+    desc: "+3–5% к скорости"
+  trait.bytroe-serdce:
+    name: "Быстрое сердце"
+    desc: "+4–10% к скорости атаки"
+  trait.zapas-sil:
+    name: "Запас сил"
+    desc: "+1–2 к максимуму здоровья"
+  trait.udacha-talismana:
+    name: "Удача талисмана"
+    desc: "+1–2 к удаче"
+  trait.ustojchivost:
+    name: "Устойчивость"
+    desc: "+0.05–0.12 к сопротивлению отбросу"
+  trait.glubokoe-dyhanie:
+    name: "Глубокое дыхание"
+    desc: "+1–3 к запасу воздуха"
+  trait.myagkoe-padenie:
+    name: "Мягкое падение"
+    desc: "−0.5–1.5 м урона от падения"
+  trait.bystraya-kopka:
+    name: "Быстрая копка"
+    desc: "+5–12% к скорости разрушения блоков"
+  trait.tihaya-postup:
+    name: "Тихая поступь"
+    desc: "+10–20% к скорости красться"
+  trait.regeneraciya:
+    name: "Регенерация"
+    desc: "Медленно лечит носителя"
+  trait.noschnoe-zrenie:
+    name: "Ночное зрение"
+    desc: "Видно в темноте"
+  trait.plavuchest:
+    name: "Плавучесть"
+    desc: "Дыхание под водой"
+  trait.ognezashchita:
+    name: "Огнестойкость"
+    desc: "Огонь и лава не жгут"
+
+  # --- 15 вредных свойств ▼ (1.4.129) ---
+  trait.tyazhelyj-gruz:
+    name: "Тяжёлый груз"
+    desc: "−3–7% к скорости"
+  trait.slabaya-ruka:
+    name: "Слабая рука"
+    desc: "−4–8% к урону"
+  trait.zamedlennyj-zamah:
+    name: "Замедленный замах"
+    desc: "−5–12% к скорости атаки"
+  trait.hrupkaya-oprava:
+    name: "Хрупкая оправа"
+    desc: "−4–8% к броне"
+  trait.slaboe-serdce:
+    name: "Слабое сердце"
+    desc: "−1–2 к максимуму здоровья"
+  trait.zlye-ogljadki:
+    name: "Злые оглядки"
+    desc: "−1–2 к удаче"
+  trait.zharkoe-plamya:
+    name: "Жаркое пламя"
+    desc: "+15–35% ко времени горения"
+  trait.korotkaya-ruka:
+    name: "Короткая рука"
+    desc: "−0.2–0.5 м к дальности удара"
+  trait.vysokoe-padenie:
+    name: "Высокое падение"
+    desc: "+0.5–1.5 м урона от падения"
+  trait.dolgaya-kopka:
+    name: "Долгая копка"
+    desc: "−5–12% к скорости разрушения блоков"
+  trait.skolzkij-shag:
+    name: "Скользкий шаг"
+    desc: "−10–20% к скорости красться"
+  trait.tormoz:
+    name: "Тормоз"
+    desc: "Замедление"
+  trait.slabost:
+    name: "Слабость"
+    desc: "Слабее бьёт в ближнем бою"
+  trait.tyazhelye-ruki:
+    name: "Тяжёлые руки"
+    desc: "Усталость при работе инструментом"
+  trait.vechnyj-golod:
+    name: "Вечный голод"
+    desc: "Голод наступает быстрее"

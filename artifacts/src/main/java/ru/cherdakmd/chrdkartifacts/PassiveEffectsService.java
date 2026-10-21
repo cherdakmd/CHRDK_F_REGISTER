@@ -13,6 +13,10 @@ import java.util.Set;
  * Пульс пассивных артефактов: каждые {@code general.passive-refresh-ticks} тиков
  * перевешивает зельевые эффекты носителям (длительность с запасом — эффект не моргает)
  * и крутит случайные триггеры проклятий (поджог/яд).
+ *
+ * <p>1.4.129: тот же пульс держит уникальные свойства артефактов — атрибутные
+ * модификаторы ставит и снимает {@link ArtifactTraitService}. Свойства работают
+ * и у активных артефактов: они «фон» предмета, а не его ПКМ-способность.</p>
  */
 public final class PassiveEffectsService {
 
@@ -43,9 +47,12 @@ public final class PassiveEffectsService {
             task = null;
         }
         // Лимит прыжка — модификатор игрока, а не эффект: без снятия он держался бы
-        // до конца сессии. Снимаем у всех, кто онлайн.
+        // до конца сессии. Снимаем у всех, кто онлайн. Свойства артефактов тоже.
         for (Player player : Bukkit.getOnlinePlayers()) {
             jumpLimiter.clear(player);
+            if (plugin.traits() != null) {
+                plugin.traits().clear(player);
+            }
         }
     }
 
@@ -59,6 +66,7 @@ public final class PassiveEffectsService {
                     && (plugin.coreApi() == null || !plugin.coreApi().isAuthenticated(player))) {
                 // Неавторизованному артефакты не работают — лимит прыжка тоже снимаем.
                 jumpLimiter.clear(player);
+                plugin.traits().clear(player);
                 continue;
             }
             Set<String> ids = plugin.items().carriedIds(player);
@@ -81,6 +89,8 @@ public final class PassiveEffectsService {
             } else {
                 jumpLimiter.clear(player);
             }
+            // 1.4.129: свойства ▲/▼ всех носимых артефактов (и пассивных, и активных)
+            plugin.traits().apply(player, plugin.items().carriedTraitLevels(player));
         }
     }
 

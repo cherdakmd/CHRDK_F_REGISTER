@@ -18,6 +18,33 @@ class ArtifactsConfigTest {
     }
 
     @Test
+    void traitDefaultsAndCustomSection() throws Exception {
+        assertEquals(ArtifactsConfig.Traits.DEFAULT, parse("").traits());
+
+        ArtifactsConfig custom = parse("""
+                traits:
+                  enabled: false
+                  chance-percent: 20
+                  max-per-item: 1
+                  max-level: 2
+                  cross-chance-percent: 50
+                """);
+        assertEquals(new ArtifactsConfig.Traits(false, 20, 1, 2, 50), custom.traits());
+    }
+
+    @Test
+    void traitValuesAreClamped() throws Exception {
+        ArtifactsConfig clamped = parse("""
+                traits:
+                  chance-percent: 500
+                  max-per-item: 9
+                  max-level: 0
+                  cross-chance-percent: -5
+                """);
+        assertEquals(new ArtifactsConfig.Traits(true, 100, 3, 1, 0), clamped.traits());
+    }
+
+    @Test
     void lootTableShortNameIsLastSegment() throws Exception {
         assertEquals("ancient_city", ArtifactsConfig.shortName("minecraft:chests/ancient_city"));
         assertEquals("ancient_city", ArtifactsConfig.shortName("mine_treasure:chests/ancient_city"));

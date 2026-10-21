@@ -8,12 +8,28 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 /**
- * Разбор config.yml: по-артефактные настройки (вкл/кулдаун/цена в уровнях).
+ * Разбор config.yml: по-артефактные настройки (вкл/кулдаун/цена в уровнях),
+ * источники и уникальные свойства артефактов (волна 19).
  * Дефолты — из {@link ArtifactRegistry}; значения из файла клампятся.
  */
 public final class ArtifactsConfig {
 
     public record Override(boolean enabled, int cooldownSeconds, int xpCostLevels) {
+    }
+
+    /**
+     * Настройки уникальных свойств артефактов (1.4.129).
+     *
+     * @param enabled            включены ли свойства вообще
+     * @param chancePercent      0..100 — шанс, что артефакт получит свойство
+     * @param maxPerItem         0..3 — потолок свойств на предмет
+     * @param maxLevel           1..3 — потолок уровня свойства
+     * @param crossChancePercent 0..100 — шанс «чужой» полярности
+     */
+    public record Traits(boolean enabled, int chancePercent, int maxPerItem, int maxLevel,
+                         int crossChancePercent) {
+
+        public static final Traits DEFAULT = new Traits(true, 55, 2, 3, 12);
     }
 
     private final boolean requiresAuth;
@@ -24,11 +40,12 @@ public final class ArtifactsConfig {
     private final double fishingTreasurePercent;
     private final int goodSideWeightPercent;
     private final WorldPolicy worldPolicy;
+    private final Traits traits;
 
     private ArtifactsConfig(boolean requiresAuth, int refreshTicks, Map<String, Override> overrides,
                             Map<String, Double> chestChances, Map<String, Double> mobChances,
                             double fishingTreasurePercent, int goodSideWeightPercent,
-                            WorldPolicy worldPolicy) {
+                            WorldPolicy worldPolicy, Traits traits) {
         this.requiresAuth = requiresAuth;
         this.refreshTicks = refreshTicks;
         this.overrides = overrides;
@@ -37,6 +54,7 @@ public final class ArtifactsConfig {
         this.fishingTreasurePercent = fishingTreasurePercent;
         this.goodSideWeightPercent = goodSideWeightPercent;
         this.worldPolicy = worldPolicy;
+        this.traits = traits;
     }
 
     public static ArtifactsConfig parse(FileConfiguration cfg, Logger logger) {
@@ -77,7 +95,39 @@ public final class ArtifactsConfig {
                 cfg.getBoolean("world-effects.time", true),
                 new java.util.HashSet<>(cfg.getStringList("world-effects.worlds")));
         return new ArtifactsConfig(requiresAuth, refreshTicks, Map.copyOf(overrides),
-                Map.copyOf(chestChances), Map.copyOf(mobChances), fishing, goodWeight, worldPolicy);
+                Map.copyOf(chestChances), Map.copyOf(mobChances), fishing, goodWeight,
+                worldPolicy, parseTraits(cfg, logger));
+    }
+
+    /** Секция {@code traits.*} (1.4.129): дефолты при отсутствии, клампы при кривых значениях. */
+    static Traits parseTraits(FileConfiguration cfg, Logger logger) {
+        if (cfg == null) {
+            return Traits.DEFAULT;
+        }
+        boolean enabled = cfg.getBoolean("traits.enabled", true);
+        int chance = clamp(cfg.getInt("traits.chance-percent", 55), 0, 100);
+        int maxPerItem = clamp(cfg.getInt("traits.max-per-item", 2), 0, 3);
+        int maxLevel = clamp(cfg.getInt("traits.max-level", 3), 1, 3);
+        int cross = clamp(cfg.getInt("traits.cross-chance-percent", 12), 0, 100);
+        if (logger != null) {
+            warnIfClamped(logger, "traits.chance-percent", cfg.getInt("traits.chance-percent", 55),
+                    0, 100, chance);
+            warnIfClamped(logger, "traits.max-per-item", cfg.getInt("traits.max-per-item", 2),
+                    0, 3, maxPerItem);
+            warnIfClamped(logger, "traits.max-level", cfg.getInt("traits.max-level", 3),
+                    1, 3, maxLevel);
+            warnIfClamped(logger, "traits.cross-chance-percent",
+                    cfg.getInt("traits.cross-chance-percent", 12), 0, 100, cross);
+        }
+        return new Traits(enabled, chance, maxPerItem, maxLevel, cross);
+    }
+
+    private static void warnIfClamped(Logger logger, String key, int value, int min, int max,
+                                      int applied) {
+        if (value != applied) {
+            logger.warning("[CHRDK_Artifacts] " + key + " = " + value + " вне " + min + ".."
+                    + max + " — использую " + applied);
+        }
     }
 
     private static Map<String, Double> readChances(ConfigurationSection section, Logger logger,
@@ -174,6 +224,11 @@ public final class ArtifactsConfig {
     /** Политика мировых эффектов (погода/время) из {@code world-effects}. */
     public WorldPolicy worldPolicy() {
         return worldPolicy;
+    }
+
+    /** Уникальные свойства артефактов (1.4.129). */
+    public Traits traits() {
+        return traits;
     }
 
     private static int clamp(int value, int min, int max) {

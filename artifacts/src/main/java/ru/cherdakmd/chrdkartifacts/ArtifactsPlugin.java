@@ -13,6 +13,9 @@ import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
  * уровни опыта и кулдаун. Жёстко зависит только от ядра; CHRDK_Enchants —
  * мягкая зависимость (без него молчит одна «Хартия чар», остальные работают).
  * Хранилища нет: метки артефактов живут в PDC предметов, кулдауны — в памяти.
+ * С 1.4.129 (волна 19) каждый артефакт при выдаче получает 0–2 уникальных
+ * свойства «▲/▼» из каталога {@link ArtifactTraits}: два одинаковых предмета
+ * больше не обязаны быть одинаковыми.
  */
 public final class ArtifactsPlugin extends JavaPlugin {
 
@@ -21,6 +24,7 @@ public final class ArtifactsPlugin extends JavaPlugin {
     private volatile ArtifactsConfig config;
     private ArtifactItems items;
     private Cooldowns cooldowns;
+    private ArtifactTraitService traits;
     private PassiveEffectsService passives;
 
     @Override
@@ -28,6 +32,7 @@ public final class ArtifactsPlugin extends JavaPlugin {
         saveDefaultConfig();
         this.items = new ArtifactItems(this);
         this.cooldowns = new Cooldowns();
+        this.traits = new ArtifactTraitService(this);
         this.passives = new PassiveEffectsService(this);
         reloadArtifactsConfig();
 
@@ -51,7 +56,10 @@ public final class ArtifactsPlugin extends JavaPlugin {
         }
         getLogger().info("CHRDK_Artifacts включён: артефактов в каталоге " + ArtifactRegistry.size()
                 + " (светлых " + ArtifactRegistry.bySide(ArtifactDef.Side.GOOD).size()
-                + ", проклятых " + ArtifactRegistry.bySide(ArtifactDef.Side.CURSED).size() + ").");
+                + ", проклятых " + ArtifactRegistry.bySide(ArtifactDef.Side.CURSED).size()
+                + "), свойств артефактов " + ArtifactTraits.size()
+                + " (польза " + ArtifactTraits.good().size()
+                + ", вред " + ArtifactTraits.bad().size() + ").");
     }
 
     @Override
@@ -94,5 +102,10 @@ public final class ArtifactsPlugin extends JavaPlugin {
 
     public Cooldowns cooldowns() {
         return cooldowns;
+    }
+
+    /** Уникальные свойства артефактов (1.4.129). */
+    public ArtifactTraitService traits() {
+        return traits;
     }
 }

@@ -33,6 +33,9 @@ public final class ArtifactCommandHandler implements CommandExecutor, TabComplet
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (command.getName().equalsIgnoreCase("artifacts")) {
+            if (args.length >= 1 && args[0].equalsIgnoreCase("traits")) {
+                return handleTraits(sender);
+            }
             return handleList(sender);
         }
         if (command.getName().equalsIgnoreCase("artifactsadmin")) {
@@ -61,6 +64,45 @@ public final class ArtifactCommandHandler implements CommandExecutor, TabComplet
         sendGroup(player, ArtifactRegistry.bySide(ArtifactDef.Side.CURSED), carried);
         plugin.messages().send(player, "sources-header");
         plugin.messages().send(player, "sources-line");
+        plugin.messages().send(player, "traits-hint");
+        return true;
+    }
+
+    /**
+     * Каталог свойств артефактов (1.4.129): 15 полезных ▲ и 15 вредных ▼.
+     * Показывает имя, краткое описание и действующие лимиты из конфига.
+     */
+    private boolean handleTraits(CommandSender sender) {
+        if (!(sender instanceof Player player)) {
+            plugin.messages().send(sender, "player-only");
+            return true;
+        }
+        if (!player.hasPermission("chrdkartifacts.use")) {
+            plugin.messages().send(player, "no-permission");
+            return true;
+        }
+        if (plugin.coreApi() == null || !plugin.coreApi().isAuthenticated(player)) {
+            plugin.messages().send(player, "need-auth");
+            return true;
+        }
+        plugin.messages().send(player, "traits-header");
+        plugin.messages().send(player, "traits-header-good");
+        for (ArtifactTraits.Def trait : ArtifactTraits.good()) {
+            plugin.messages().send(player, "traits-line-good",
+                    "name", plugin.messages().raw("trait." + trait.id() + ".name"),
+                    "desc", plugin.messages().raw("trait." + trait.id() + ".desc"));
+        }
+        plugin.messages().send(player, "traits-header-bad");
+        for (ArtifactTraits.Def trait : ArtifactTraits.bad()) {
+            plugin.messages().send(player, "traits-line-bad",
+                    "name", plugin.messages().raw("trait." + trait.id() + ".name"),
+                    "desc", plugin.messages().raw("trait." + trait.id() + ".desc"));
+        }
+        ArtifactsConfig.Traits config = plugin.config().traits();
+        plugin.messages().send(player, "traits-footer",
+                "max", String.valueOf(config.maxPerItem()),
+                "chance", String.valueOf(config.chancePercent()),
+                "level", String.valueOf(config.maxLevel()));
         return true;
     }
 
@@ -135,6 +177,12 @@ public final class ArtifactCommandHandler implements CommandExecutor, TabComplet
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (command.getName().equalsIgnoreCase("artifacts")) {
+            if (args.length == 1 && "traits".startsWith(args[0].toLowerCase(java.util.Locale.ROOT))) {
+                return List.of("traits");
+            }
+            return List.of();
+        }
         if (!command.getName().equalsIgnoreCase("artifactsadmin")) {
             return List.of();
         }
