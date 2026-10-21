@@ -141,7 +141,7 @@ public final class PluginUpdateService implements AutoCloseable {
         Path backup = null;
         boolean published = false;
         try {
-            // All sixteen JARs must be valid, even when only some addons are installed.
+            // All eighteen JARs must be valid, even when only some addons are installed.
             unpackAndVerify(zip, release, prepared);
             for (var entry : installed.entrySet()) {
                 Path source = prepared.resolve(release.jars().get(entry.getKey()).name());
@@ -334,6 +334,7 @@ public final class PluginUpdateService implements AutoCloseable {
     private static Map<String, String> modules() {
         Map<String, String> result = new TreeMap<>();
         result.put("CHRDK_Core", "chrdk-core");
+        result.put("CHRDK_Achievements", "chrdk-achievements");
         result.put("CHRDK_Artifacts", "chrdk-artifacts");
         result.put("CHRDK_Auction", "chrdk-auction");
         result.put("CHRDK_BattlePass", "chrdk-battlepass");

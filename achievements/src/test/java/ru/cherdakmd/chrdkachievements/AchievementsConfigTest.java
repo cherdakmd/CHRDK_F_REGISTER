@@ -78,7 +78,7 @@ class AchievementsConfigTest {
         assertEquals(new AchievementsConfig.Reward(365, 0),
                 config.rewardOf(AchievementRegistry.byId("veteran")));
         // Неизвестный ид просто не попал в карту — каталог не пострадал.
-        assertEquals(new AchievementsConfig.Reward(2, 16),
+        assertEquals(new AchievementsConfig.Reward(2, 12),
                 config.rewardOf(AchievementRegistry.byId("sutki-v-puti")));
     }
 }

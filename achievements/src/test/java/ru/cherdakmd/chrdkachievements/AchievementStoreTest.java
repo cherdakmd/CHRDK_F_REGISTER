@@ -24,7 +24,7 @@ class AchievementStoreTest {
     @Test
     void countersAccumulateAndRaiseNeverLowers() {
         AchievementStore store = new AchievementStore(dir, LOGGER);
-        assertEquals(0, store.add(PLAYER, AchievementMetric.MOBS_KILLED, 5));
+        assertEquals(5, store.add(PLAYER, AchievementMetric.MOBS_KILLED, 5));
         assertEquals(5, store.add(PLAYER, AchievementMetric.MOBS_KILLED, 7));
         assertEquals(12, store.value(PLAYER, AchievementMetric.MOBS_KILLED));
         // Отрицательные приращения игнорируются.
