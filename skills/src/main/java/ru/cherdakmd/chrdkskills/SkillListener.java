@@ -270,7 +270,8 @@ public final class SkillListener implements Listener {
         }
         double chance = service.perksFor(player, SkillType.ARCHERY)
                 .value(SkillPerk.Kind.ARROW_KEEP);
-        if (!roll(chance)) {
+        if (!roll(chance) || hasInfinity(event.getBow())) {
+            // с «Бесконечностью» стрела и так не тратится — возвращать нечего
             return;
         }
         ItemStack consumable = event.getConsumable();
@@ -428,6 +429,24 @@ public final class SkillListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent event) {
         plugin.effects().clear(event.getPlayer());
+    }
+
+    /**
+     * Есть ли на луке «Бесконечность». Смотрим ключ зачарования, а не константу
+     * {@code Enchantment.INFINITY}: в новых API зачарования — реестр, и
+     * статическая константа может сменить имя, а ключ {@code minecraft:infinity}
+     * стабилен.
+     */
+    private static boolean hasInfinity(ItemStack bow) {
+        if (bow == null || bow.getType().isAir()) {
+            return false;
+        }
+        for (Enchantment enchantment : bow.getEnchantments().keySet()) {
+            if ("infinity".equals(enchantment.getKey().getKey())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Бросок на шанс; значения вне 0..1 трактуются как «всегда/никогда». */
