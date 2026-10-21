@@ -178,30 +178,44 @@ class TreasureLootTest {
     }
 
     @Test
-    void namedEntriesStaySeparateAndKeepTheirNames() {
+    void namedEntriesKeepTheirNamesThroughParsingAndRoll() {
         TreasureLoot.install(table("""
                 global:
                   common:
-                    - { material: MUSHROOM_STEW, min: 1, max: 1, weight: 1, unlock: 0,
-                        name: "Кровавый суп" }
+                    - { material: MUSHROOM_STEW, min: 1, max: 1, weight: 1, unlock: 0, name: "Кровавый суп" }
+                """));
+        List<TreasureLoot.LootEntry> pool = TreasureLoot.poolOf(TreasureTier.COMMON);
+        assertEquals(1, pool.size());
+        assertEquals("Кровавый суп", pool.get(0).name());
+        for (int seed = 0; seed < 5; seed++) {
+            List<TreasureLoot.LootStack> loot = TreasureLoot.roll(
+                    TreasureTier.COMMON, null, new Random(seed), 0);
+            assertEquals(1, loot.size());
+            assertEquals("MUSHROOM_STEW", loot.get(0).material());
+            assertEquals("Кровавый суп", loot.get(0).name());
+        }
+    }
+
+    @Test
+    void namedAndPlainStacksAreNotMerged() {
+        TreasureLoot.install(table("""
+                global:
+                  rare:
+                    - { material: MUSHROOM_STEW, min: 1, max: 1, weight: 1, unlock: 0, name: "Кровавый суп" }
                     - { material: MUSHROOM_STEW, min: 1, max: 1, weight: 1, unlock: 0 }
                 """));
-        boolean named = false;
-        boolean plain = false;
-        for (int seed = 0; seed < 20; seed++) {
-            for (TreasureLoot.LootStack stack : TreasureLoot.roll(
-                    TreasureTier.COMMON, null, new Random(seed), 0)) {
-                assertEquals("MUSHROOM_STEW", stack.material());
-                if (stack.name().isBlank()) {
-                    plain = true;
-                } else {
-                    assertEquals("Кровавый суп", stack.name());
-                    named = true;
-                }
+        boolean separate = false;
+        for (int seed = 0; seed < 100 && !separate; seed++) {
+            List<TreasureLoot.LootStack> loot = TreasureLoot.roll(
+                    TreasureTier.RARE, null, new Random(seed), 0);
+            if (loot.size() == 2) {
+                assertEquals(1, loot.stream().filter(stack -> stack.name().isBlank()).count());
+                assertEquals(1, loot.stream()
+                        .filter(stack -> "Кровавый суп".equals(stack.name())).count());
+                separate = true;
             }
         }
-        assertTrue(named, "именная миска не выпала");
-        assertTrue(plain, "обычная миска не выпала");
+        assertTrue(separate, "броски не дали одновременно именную и обычную миску");
     }
 
     @Test
