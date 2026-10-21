@@ -3,6 +3,7 @@ package ru.cherdakmd.chrdkartifacts;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -42,6 +43,54 @@ class ArtifactsConfigTest {
                   cross-chance-percent: -5
                 """);
         assertEquals(new ArtifactsConfig.Traits(true, 100, 3, 1, 0), clamped.traits());
+    }
+
+    @Test
+    void collectionDefaultsAndCustomRewards() throws Exception {
+        assertEquals(ArtifactsConfig.Collection.DEFAULT, parse("").collection());
+
+        ArtifactsConfig custom = parse("""
+                collection:
+                  enabled: false
+                  rewards:
+                    80: {pass-days: 5, diamonds: 40}
+                    20: {pass-days: 1, diamonds: 4}
+                """);
+        assertEquals(new ArtifactsConfig.Collection(false, List.of(
+                new CollectionRewards.Tier(20, 1, 4),
+                new CollectionRewards.Tier(80, 5, 40))), custom.collection());
+    }
+
+    @Test
+    void collectionRewardsAreClampedAndBadKeysSkipped() throws Exception {
+        ArtifactsConfig config = parse("""
+                collection:
+                  rewards:
+                    250: {pass-days: 99999, diamonds: -5}
+                    abc: {pass-days: 1, diamonds: 1}
+                    50: {pass-days: 2, diamonds: 16}
+                """);
+        assertEquals(2, config.collection().rewards().size());
+        CollectionRewards.Tier capped = config.collection().rewards().get(0);
+        assertEquals(100, capped.percent());
+        assertEquals(365, capped.passDays());
+        assertEquals(0, capped.diamonds());
+        assertEquals(50, config.collection().rewards().get(1).percent());
+    }
+
+    @Test
+    void feedbackDefaultsAndOverrides() throws Exception {
+        assertEquals(ArtifactsConfig.Feedback.DEFAULT, parse("").feedback());
+        assertEquals(new ArtifactsConfig.Feedback(false, false, 0), parse("""
+                feedback:
+                  actionbar: false
+                  sounds: false
+                  curse-message-seconds: 0
+                """).feedback());
+        assertEquals(3600, parse("""
+                feedback:
+                  curse-message-seconds: 99999
+                """).feedback().curseMessageSeconds());
     }
 
     @Test

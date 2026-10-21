@@ -1,7 +1,10 @@
 package ru.cherdakmd.chrdkartifacts;
 
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Таблица эффектов артефактов (чистые данные, без привязки к Bukkit-типам, чтобы
@@ -178,6 +181,20 @@ public final class ArtifactEffects {
     /** Пассивная суперспособность артефакта (null — обычный зельевый/триггерный). */
     public static SpecialKind passiveSpecial(String id) {
         return PASSIVE_SPECIALS.get(id);
+    }
+
+    /**
+     * Все иды, для которых объявлен хотя бы один эффект. Нужен проверке
+     * целостности (аудит A-20): таблицы не должны ссылаться на артефакты,
+     * которых нет в каталоге, и наоборот.
+     */
+    public static Set<String> effectIds() {
+        Set<String> ids = new LinkedHashSet<>();
+        ids.addAll(PASSIVE_POTIONS.keySet());
+        ids.addAll(PASSIVE_TRIGGERS.keySet());
+        ids.addAll(PASSIVE_SPECIALS.keySet());
+        ids.addAll(ACTIVE_KINDS.keySet());
+        return Collections.unmodifiableSet(ids);
     }
 
     /**

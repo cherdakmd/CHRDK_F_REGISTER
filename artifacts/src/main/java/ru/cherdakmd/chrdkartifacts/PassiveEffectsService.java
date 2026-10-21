@@ -134,42 +134,58 @@ public final class PassiveEffectsService {
         switch (trigger.kind()) {
             case IGNITE -> {
                 player.setFireTicks(IGNITE_TICKS);
-                plugin.messages().send(player, "curse-ignite");
+                curseNotice(player, id, "curse-ignite");
             }
             case POISON -> {
                 player.addPotionEffect(new PotionEffect(PotionEffectType.POISON,
                         POISON_TICKS, 0, true, false, true));
-                plugin.messages().send(player, "curse-poison");
+                curseNotice(player, id, "curse-poison");
             }
             case BLEED -> {
                 if (player.getHealth() > 1.0) {
                     player.damage(1.0);
-                    plugin.messages().send(player, "curse-bleed");
+                    curseNotice(player, id, "curse-bleed");
                 }
             }
             case WATER_HURT -> {
                 if (player.isInWater()) {
                     player.damage(1.0);
-                    plugin.messages().send(player, "curse-water");
+                    curseNotice(player, id, "curse-water");
                 }
             }
             case BLINDNESS_PROC -> {
                 player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS,
                         60, 0, true, false, true));
-                plugin.messages().send(player, "curse-blind");
+                curseNotice(player, id, "curse-blind");
             }
             case XP_DRAIN -> {
                 if (player.getTotalExperience() > 10) {
                     player.giveExp(-10);
-                    plugin.messages().send(player, "curse-xp");
+                    curseNotice(player, id, "curse-xp");
                 }
             }
             case WITHER_PROC -> {
                 player.addPotionEffect(new PotionEffect(PotionEffectType.WITHER,
                         80, 0, true, false, true));
-                plugin.messages().send(player, "curse-wither");
+                curseNotice(player, id, "curse-wither");
             }
         }
+    }
+
+    /**
+     * Сообщение о сработавшем проклятии (1.4.130, аудит A-21).
+     *
+     * <p>Раньше каждое срабатывание писало строку в чат: при шансе до 15 %
+     * каждые два секунды чат превращался в поток. Теперь первое сообщение
+     * уходит в чат, а повторы в пределах {@code feedback.curse-message-seconds}
+     * — только короткой строкой над хотбаром.</p>
+     */
+    private void curseNotice(Player player, String id, String key) {
+        if (plugin.feedback().allowCurseChat(player, id)) {
+            plugin.messages().send(player, key);
+            return;
+        }
+        plugin.feedback().curse(player, ArtifactRegistry.byId(id));
     }
 
     /** Пульсовая половина суперспособностей: Магнит Опыта и Ледяная Аура. */

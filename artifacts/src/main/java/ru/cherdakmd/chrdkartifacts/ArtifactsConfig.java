@@ -3,7 +3,9 @@ package ru.cherdakmd.chrdkartifacts;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -32,6 +34,31 @@ public final class ArtifactsConfig {
         public static final Traits DEFAULT = new Traits(true, 55, 2, 3, 12);
     }
 
+    /**
+     * Обратная связь при использовании артефактов (1.4.130).
+     *
+     * @param actionbar           показывать экшнбар при активации, отказе и проклятии
+     * @param sounds              проигрывать звуки активации/отказа/находки
+     * @param curseMessageSeconds не чаще одного сообщения о проклятии в чат (сек);
+     *                            0 — без ограничения (каждый сработавший триггер)
+     */
+    public record Feedback(boolean actionbar, boolean sounds, int curseMessageSeconds) {
+
+        public static final Feedback DEFAULT = new Feedback(true, true, 10);
+    }
+
+    /**
+     * Коллекция артефактов (1.4.130).
+     *
+     * @param enabled включена ли коллекция и её награды
+     * @param rewards пороги наград (процент каталога → дни проходки + алмазы)
+     */
+    public record Collection(boolean enabled, List<CollectionRewards.Tier> rewards) {
+
+        public static final Collection DEFAULT =
+                new Collection(true, CollectionRewards.defaults());
+    }
+
     private final boolean requiresAuth;
     private final int refreshTicks;
     private final Map<String, Override> overrides;
@@ -41,11 +68,14 @@ public final class ArtifactsConfig {
     private final int goodSideWeightPercent;
     private final WorldPolicy worldPolicy;
     private final Traits traits;
+    private final Feedback feedback;
+    private final Collection collection;
 
     private ArtifactsConfig(boolean requiresAuth, int refreshTicks, Map<String, Override> overrides,
                             Map<String, Double> chestChances, Map<String, Double> mobChances,
                             double fishingTreasurePercent, int goodSideWeightPercent,
-                            WorldPolicy worldPolicy, Traits traits) {
+                            WorldPolicy worldPolicy, Traits traits, Feedback feedback,
+                            Collection collection) {
         this.requiresAuth = requiresAuth;
         this.refreshTicks = refreshTicks;
         this.overrides = overrides;
@@ -55,6 +85,8 @@ public final class ArtifactsConfig {
         this.goodSideWeightPercent = goodSideWeightPercent;
         this.worldPolicy = worldPolicy;
         this.traits = traits;
+        this.feedback = feedback;
+        this.collection = collection;
     }
 
     public static ArtifactsConfig parse(FileConfiguration cfg, Logger logger) {
@@ -96,7 +128,8 @@ public final class ArtifactsConfig {
                 new java.util.HashSet<>(cfg.getStringList("world-effects.worlds")));
         return new ArtifactsConfig(requiresAuth, refreshTicks, Map.copyOf(overrides),
                 Map.copyOf(chestChances), Map.copyOf(mobChances), fishing, goodWeight,
-                worldPolicy, parseTraits(cfg, logger));
+                worldPolicy, parseTraits(cfg, logger), parseFeedback(cfg, logger),
+                parseCollection(cfg, logger));
     }
 
     /** Секция {@code traits.*} (1.4.129): дефолты при отсутствии, клампы при кривых значениях. */
@@ -120,6 +153,63 @@ public final class ArtifactsConfig {
                     cfg.getInt("traits.cross-chance-percent", 12), 0, 100, cross);
         }
         return new Traits(enabled, chance, maxPerItem, maxLevel, cross);
+    }
+
+    /** Секция {@code feedback.*} (1.4.130): экшнбар, звуки и антиспам проклятий. */
+    static Feedback parseFeedback(FileConfiguration cfg, Logger logger) {
+        if (cfg == null) {
+            return Feedback.DEFAULT;
+        }
+        boolean actionbar = cfg.getBoolean("feedback.actionbar", true);
+        boolean sounds = cfg.getBoolean("feedback.sounds", true);
+        int curse = cfg.getInt("feedback.curse-message-seconds", 10);
+        int applied = clamp(curse, 0, 3600);
+        if (logger != null) {
+            warnIfClamped(logger, "feedback.curse-message-seconds", curse, 0, 3600, applied);
+        }
+        return new Feedback(actionbar, sounds, applied);
+    }
+
+    /** Секция {@code collection.*} (1.4.130): включена ли коллекция и её пороги наград. */
+    static Collection parseCollection(FileConfiguration cfg, Logger logger) {
+        if (cfg == null) {
+            return Collection.DEFAULT;
+        }
+        boolean enabled = cfg.getBoolean("collection.enabled", true);
+        ConfigurationSection rewards = cfg.getConfigurationSection("collection.rewards");
+        List<CollectionRewards.Tier> tiers = new ArrayList<>();
+        if (rewards != null) {
+            for (String key : rewards.getKeys(false)) {
+                Integer percent = parseInt(key);
+                if (percent == null) {
+                    if (logger != null) {
+                        logger.warning("[CHRDK_Artifacts] collection.rewards." + key
+                                + ": ключ должен быть процентом (1..100) — пропускаю.");
+                    }
+                    continue;
+                }
+                int days = rewards.getInt(key + ".pass-days", 0);
+                int diamonds = rewards.getInt(key + ".diamonds", 0);
+                if (logger != null) {
+                    warnIfClamped(logger, "collection.rewards." + key + ".pass-days", days,
+                            0, 365, Math.max(0, Math.min(365, days)));
+                    warnIfClamped(logger, "collection.rewards." + key + ".diamonds", diamonds,
+                            0, 576, Math.max(0, Math.min(576, diamonds)));
+                }
+                tiers.add(new CollectionRewards.Tier(percent, days, diamonds));
+            }
+        }
+        List<CollectionRewards.Tier> normalized = CollectionRewards.normalize(tiers);
+        return new Collection(enabled,
+                normalized.isEmpty() ? CollectionRewards.defaults() : normalized);
+    }
+
+    private static Integer parseInt(String value) {
+        try {
+            return Integer.parseInt(value == null ? "" : value.trim());
+        } catch (NumberFormatException exception) {
+            return null;
+        }
     }
 
     private static void warnIfClamped(Logger logger, String key, int value, int min, int max,
@@ -229,6 +319,16 @@ public final class ArtifactsConfig {
     /** Уникальные свойства артефактов (1.4.129). */
     public Traits traits() {
         return traits;
+    }
+
+    /** Обратная связь артефактов (1.4.130). */
+    public Feedback feedback() {
+        return feedback;
+    }
+
+    /** Коллекция артефактов и награды (1.4.130). */
+    public Collection collection() {
+        return collection;
     }
 
     private static int clamp(int value, int min, int max) {

@@ -90,13 +90,15 @@ public final class ActiveEffectsListener implements Listener {
         }
         long now = System.currentTimeMillis();
         if (plugin.cooldowns().isCoolingDown(player.getUniqueId(), id, now)) {
-            plugin.messages().send(player, "on-cooldown", "seconds",
-                    String.valueOf(plugin.cooldowns().remainingSeconds(player.getUniqueId(), id, now)));
+            int remaining = plugin.cooldowns().remainingSeconds(player.getUniqueId(), id, now);
+            plugin.messages().send(player, "on-cooldown", "seconds", String.valueOf(remaining));
+            plugin.feedback().cooldown(player, remaining);
             return;
         }
         int xpCost = plugin.config().xpCostLevels(def);
         if (xpCost > 0 && player.getLevel() < xpCost) {
             plugin.messages().send(player, "not-enough-levels", "need", String.valueOf(xpCost));
+            plugin.feedback().notEnoughLevels(player, xpCost);
             return;
         }
         ItemStack target = counterpartHandItem(event.getHand(), player);
@@ -109,6 +111,7 @@ public final class ActiveEffectsListener implements Listener {
         }
         plugin.cooldowns().start(player.getUniqueId(), id, now, plugin.config().cooldownSeconds(def));
         plugin.messages().send(player, "activated", "name", plugin.items().nameOf(def));
+        plugin.feedback().activated(player, def);
     }
 
     /**

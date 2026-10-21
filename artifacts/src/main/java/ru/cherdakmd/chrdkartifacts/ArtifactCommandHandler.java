@@ -1,7 +1,5 @@
 package ru.cherdakmd.chrdkartifacts;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -10,19 +8,28 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import ru.cherdakmd.chrdkregister.Messages;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
- * {@code /artifacts} — каталог из messages.yml (светлые/проклятые, с подсветкой носимых);
- * {@code /artifactsadmin} — give/reload. Динамические цвета собираются MiniMessage
- * напрямую (плейсхолдеры Messages экранируют теги).
+ * {@code /artifacts} — каталог с пагинацией, карточка артефакта, коллекция и
+ * справочник свойств; {@code /artifactsadmin} — give/reload.
+ *
+ * <p>1.4.130: каталог больше не печатает 65 строк одним залпом (аудит A-18),
+ * у каждого артефакта появилась карточка {@code /artifacts <ид>} (A-19), а
+ * {@code /artifacts collection} открывает GUI коллекции. Динамические цвета
+ * собираются MiniMessage напрямую: плейсхолдеры Messages экранируют теги,
+ * а имена артефактов уже содержат разметку из messages.yml.</p>
  */
 public final class ArtifactCommandHandler implements CommandExecutor, TabCompleter {
 
     private static final MiniMessage MINI = MiniMessage.miniMessage();
+    /** Строк каталога на страницу: 65 артефактов → 6 страниц. */
+    static final int PAGE_SIZE = 12;
 
     private final ArtifactsPlugin plugin;
 
@@ -33,10 +40,7 @@ public final class ArtifactCommandHandler implements CommandExecutor, TabComplet
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (command.getName().equalsIgnoreCase("artifacts")) {
-            if (args.length >= 1 && args[0].equalsIgnoreCase("traits")) {
-                return handleTraits(sender);
-            }
-            return handleList(sender);
+            return handleArtifacts(sender, args);
         }
         if (command.getName().equalsIgnoreCase("artifactsadmin")) {
             return handleAdmin(sender, args);
@@ -44,35 +48,9 @@ public final class ArtifactCommandHandler implements CommandExecutor, TabComplet
         return false;
     }
 
-    private boolean handleList(CommandSender sender) {
-        if (!(sender instanceof Player player)) {
-            plugin.messages().send(sender, "player-only");
-            return true;
-        }
-        if (!player.hasPermission("chrdkartifacts.use")) {
-            plugin.messages().send(sender, "no-permission");
-            return true;
-        }
-        if (plugin.coreApi() == null || !plugin.coreApi().isAuthenticated(player)) {
-            plugin.messages().send(sender, "need-auth");
-            return true;
-        }
-        var carried = plugin.items().carriedIds(player);
-        plugin.messages().send(player, "list-header-good");
-        sendGroup(player, ArtifactRegistry.bySide(ArtifactDef.Side.GOOD), carried);
-        plugin.messages().send(player, "list-header-cursed");
-        sendGroup(player, ArtifactRegistry.bySide(ArtifactDef.Side.CURSED), carried);
-        plugin.messages().send(player, "sources-header");
-        plugin.messages().send(player, "sources-line");
-        plugin.messages().send(player, "traits-hint");
-        return true;
-    }
+    /* ------------------------------- /artifacts ------------------------------- */
 
-    /**
-     * Каталог свойств артефактов (1.4.129): 15 полезных ▲ и 15 вредных ▼.
-     * Показывает имя, краткое описание и действующие лимиты из конфига.
-     */
-    private boolean handleTraits(CommandSender sender) {
+    private boolean handleArtifacts(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
             plugin.messages().send(sender, "player-only");
             return true;
@@ -85,6 +63,118 @@ public final class ArtifactCommandHandler implements CommandExecutor, TabComplet
             plugin.messages().send(player, "need-auth");
             return true;
         }
+        if (args.length == 0) {
+            return handleList(player, 1);
+        }
+        String arg = args[0];
+        if (arg.equalsIgnoreCase("traits")) {
+            return handleTraits(player);
+        }
+        if (arg.equalsIgnoreCase("collection")) {
+            return handleCollection(player);
+        }
+        ArtifactDef def = ArtifactRegistry.byId(arg);
+        if (def != null) {
+            return handleCard(player, def);
+        }
+        Integer page = parseInt(arg);
+        if (page != null) {
+            return handleList(player, page);
+        }
+        plugin.messages().send(player, "list-bad-argument");
+        return true;
+    }
+
+    /** Каталог: страница из {@value #PAGE_SIZE} строк, свежие артефакты сверху порядка реестра. */
+    private boolean handleList(Player player, int page) {
+        List<ArtifactDef> defs = ordered();
+        int pages = Math.max(1, (defs.size() + PAGE_SIZE - 1) / PAGE_SIZE);
+        int current = Math.max(1, Math.min(page, pages));
+        Set<String> carried = plugin.items().carriedIds(player);
+        plugin.messages().send(player, "list-header",
+                "page", String.valueOf(current),
+                "pages", String.valueOf(pages),
+                "found", String.valueOf(plugin.collection().count(player)),
+                "total", String.valueOf(plugin.collection().total()));
+        int from = (current - 1) * PAGE_SIZE;
+        for (int index = from; index < Math.min(from + PAGE_SIZE, defs.size()); index++) {
+            ArtifactDef def = defs.get(index);
+            sendLine(player, def, carried.contains(def.id()));
+        }
+        plugin.messages().send(player, "list-footer",
+                "page", String.valueOf(current),
+                "pages", String.valueOf(pages),
+                "found", String.valueOf(plugin.collection().count(player)),
+                "total", String.valueOf(plugin.collection().total()));
+        return true;
+    }
+
+    private void sendLine(Player player, ArtifactDef def, boolean carried) {
+        String name = plugin.items().nameOf(def);
+        String colorHex = switch (def.side()) {
+            case GOOD -> def.mode() == ArtifactDef.Mode.ACTIVE ? "#FFD700" : "#FFEE88";
+            case CURSED -> def.mode() == ArtifactDef.Mode.ACTIVE ? "#8B0000" : "#CC4444";
+        };
+        String mark = carried ? " <green>✔</green>" : "";
+        String modeTag = def.mode() == ArtifactDef.Mode.ACTIVE ? "⌛" : "∞";
+        player.sendMessage(MINI.deserialize(
+                "<color:" + colorHex + ">" + modeTag + " " + name + "</color>"
+                        + " <gray><dark_gray>(</dark_gray>" + def.id() + "<dark_gray>)</dark_gray></gray>"
+                        + mark));
+    }
+
+    private List<ArtifactDef> ordered() {
+        List<ArtifactDef> defs = new ArrayList<>(ArtifactRegistry.bySide(ArtifactDef.Side.GOOD));
+        defs.addAll(ArtifactRegistry.bySide(ArtifactDef.Side.CURSED));
+        return defs;
+    }
+
+    /** Карточка артефакта: сторона, режим, цена, источник и статус коллекции. */
+    private boolean handleCard(Player player, ArtifactDef def) {
+        player.sendMessage(MINI.deserialize("<gold>══════ " + plugin.items().nameOf(def)
+                + " ══════</gold>"));
+        plugin.messages().send(player, switch (def.side()) {
+            case GOOD -> def.mode() == ArtifactDef.Mode.ACTIVE
+                    ? "card-good-active" : "card-good-passive";
+            case CURSED -> def.mode() == ArtifactDef.Mode.ACTIVE
+                    ? "card-cursed-active" : "card-cursed-passive";
+        });
+        String desc = ArtifactText.loreOrEmpty(
+                plugin.messages().raw("art." + def.id() + ".lore"));
+        if (!desc.isEmpty()) {
+            plugin.messages().send(player, "card-desc", "text", Messages.trusted(desc));
+        }
+        if (def.mode() == ArtifactDef.Mode.ACTIVE) {
+            plugin.messages().send(player, "card-active",
+                    "cooldown", String.valueOf(plugin.config().cooldownSeconds(def)),
+                    "xp", String.valueOf(plugin.config().xpCostLevels(def)));
+        }
+        plugin.messages().send(player, "card-source");
+        if (!plugin.config().isEnabled(def.id())) {
+            plugin.messages().send(player, "card-disabled");
+        }
+        plugin.messages().send(player, plugin.collection().isDiscovered(player, def.id())
+                ? "card-collection-found" : "card-collection-unknown");
+        plugin.messages().send(player, "card-footer");
+        return true;
+    }
+
+    /** Коллекция: скан инвентаря на случай предметов, полученных до 1.4.130, и GUI. */
+    private boolean handleCollection(Player player) {
+        if (!plugin.config().collection().enabled()) {
+            plugin.messages().send(player, "collection-disabled");
+            return true;
+        }
+        plugin.collection().scan(player);
+        plugin.collectionGui().open(player, 0);
+        return true;
+    }
+
+    /**
+     * Каталог свойств артефактов (1.4.129): 15 полезных ▲ и 15 вредных ▼.
+     * Показывает имя, краткое описание и действующие лимиты из конфига.
+     */
+    private boolean handleTraits(Player player) {
         plugin.messages().send(player, "traits-header");
         plugin.messages().send(player, "traits-header-good");
         for (ArtifactTraits.Def trait : ArtifactTraits.good()) {
@@ -106,20 +196,7 @@ public final class ArtifactCommandHandler implements CommandExecutor, TabComplet
         return true;
     }
 
-    private void sendGroup(Player player, List<ArtifactDef> defs, java.util.Set<String> carried) {
-        for (ArtifactDef def : defs) {
-            String name = plugin.items().nameOf(def);
-            String colorHex = switch (def.side()) {
-                case GOOD -> def.mode() == ArtifactDef.Mode.ACTIVE ? "#FFD700" : "#FFEE88";
-                case CURSED -> def.mode() == ArtifactDef.Mode.ACTIVE ? "#8B0000" : "#CC4444";
-            };
-            String mark = carried.contains(def.id()) ? " <green>✔</green>" : "";
-            String modeTag = def.mode() == ArtifactDef.Mode.ACTIVE ? "⌛" : "∞";
-            player.sendMessage(MINI.deserialize(
-                    "<color:" + colorHex + ">" + modeTag + " " + name + "</color>"
-                            + " <gray><dark_gray>(</dark_gray>" + def.id() + "<dark_gray>)</dark_gray></gray>" + mark));
-        }
-    }
+    /* ----------------------------- /artifactsadmin ---------------------------- */
 
     private boolean handleAdmin(CommandSender sender, String[] args) {
         if (!sender.hasPermission("chrdkartifacts.admin")) {
@@ -158,6 +235,8 @@ public final class ArtifactCommandHandler implements CommandExecutor, TabComplet
                 dropped += left.getAmount();
                 target.getWorld().dropItemNaturally(target.getLocation(), left);
             }
+            // Выдача администратора тоже открывает артефакт в коллекции.
+            plugin.collection().record(target, def.id());
             plugin.messages().send(sender, "admin-given",
                     "player", target.getName(),
                     "name", plugin.items().nameOf(def),
@@ -175,11 +254,21 @@ public final class ArtifactCommandHandler implements CommandExecutor, TabComplet
         return true;
     }
 
+    /* ------------------------------- tab-complete ----------------------------- */
+
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (command.getName().equalsIgnoreCase("artifacts")) {
-            if (args.length == 1 && "traits".startsWith(args[0].toLowerCase(java.util.Locale.ROOT))) {
-                return List.of("traits");
+            if (args.length == 1) {
+                List<String> options = new ArrayList<>(List.of("collection", "traits"));
+                int pages = Math.max(1, (ArtifactRegistry.size() + PAGE_SIZE - 1) / PAGE_SIZE);
+                for (int page = 2; page <= pages; page++) {
+                    options.add(String.valueOf(page));
+                }
+                for (ArtifactDef def : ArtifactRegistry.all()) {
+                    options.add(def.id());
+                }
+                return filter(options, args[0]);
             }
             return List.of();
         }
@@ -202,6 +291,14 @@ public final class ArtifactCommandHandler implements CommandExecutor, TabComplet
             return filter(ids, args[2]);
         }
         return List.of();
+    }
+
+    private static Integer parseInt(String value) {
+        try {
+            return Integer.parseInt(value == null ? "" : value.trim());
+        } catch (NumberFormatException exception) {
+            return null;
+        }
     }
 
     private static List<String> filter(List<String> options, String prefix) {
