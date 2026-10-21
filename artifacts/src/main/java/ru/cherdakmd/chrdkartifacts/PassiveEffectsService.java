@@ -58,8 +58,13 @@ public final class PassiveEffectsService {
 
     private void pulse() {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            if (player.isDead() || !player.isOnline()
-                    || !player.hasPermission("chrdkartifacts.use")) {
+            if (player.isDead() || !player.isOnline()) {
+                continue;
+            }
+            if (!player.hasPermission("chrdkartifacts.use")) {
+                // права отозвали — снимаем и лимит прыжка, и свойства артефактов
+                jumpLimiter.clear(player);
+                plugin.traits().clear(player);
                 continue;
             }
             if (plugin.config().requiresAuth()
