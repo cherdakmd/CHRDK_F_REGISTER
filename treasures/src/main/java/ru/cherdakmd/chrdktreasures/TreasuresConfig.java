@@ -190,6 +190,11 @@ public final class TreasuresConfig {
         return itemChances.getOrDefault(tier, 0.0);
     }
 
+    /** Шансы всех редкостей одной картой — чтобы не собирать её на каждый блок. */
+    public Map<TreasureTier, Double> chances() {
+        return chances;
+    }
+
     /** Множитель блока; 0 — блок не может содержать клад. */
     public double blockMultiplier(String material) {
         if (material == null) {

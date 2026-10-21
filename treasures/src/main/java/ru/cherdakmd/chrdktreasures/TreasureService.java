@@ -9,7 +9,6 @@ import org.bukkit.inventory.ItemStack;
 import ru.cherdakmd.chrdkregister.Messages;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -147,11 +146,8 @@ public final class TreasureService {
         }
         double depth = TreasureRates.depthBonus(y,
                 plugin.config().depthPerBlock(), plugin.config().depthMaxBonus());
-        Map<TreasureTier, Double> chances = new LinkedHashMap<>();
-        for (TreasureTier tier : TreasureTier.values()) {
-            chances.put(tier, plugin.config().chance(tier));
-        }
-        return TreasureRates.pick(random, chances, multiplier, depth, mined(player));
+        return TreasureRates.pick(random, plugin.config().chances(),
+                multiplier, depth, mined(player));
     }
 
     /** Бросает содержимое клада выбранной редкости. */
@@ -201,6 +197,7 @@ public final class TreasureService {
         }
         giveStack(player, stack);
         store.recordTreasure(key(player), def.tier(), def.id());
+        checkMilestones(player);
         return true;
     }
 
@@ -245,11 +242,7 @@ public final class TreasureService {
             granted.add(threshold);
             int diamonds = entry.getValue().diamonds();
             if (diamonds > 0) {
-                ItemStack reward = new ItemStack(Material.DIAMOND, Math.min(64, diamonds));
-                Map<Integer, ItemStack> leftover = player.getInventory().addItem(reward);
-                for (ItemStack rest : leftover.values()) {
-                    player.getWorld().dropItemNaturally(player.getLocation(), rest);
-                }
+                giveDiamonds(player, diamonds);
             }
             plugin.messages().send(player, "collection-milestone",
                     "found", String.valueOf(threshold),
@@ -257,6 +250,20 @@ public final class TreasureService {
                     "diamonds", String.valueOf(diamonds));
         }
         return List.copyOf(granted);
+    }
+
+    /** Выдаёт алмазы стеками по 64: веха на 96 не должна терять 32 алмаза. */
+    private void giveDiamonds(Player player, int amount) {
+        int left = amount;
+        while (left > 0) {
+            int stack = Math.min(64, left);
+            left -= stack;
+            Map<Integer, ItemStack> leftover =
+                    player.getInventory().addItem(new ItemStack(Material.DIAMOND, stack));
+            for (ItemStack rest : leftover.values()) {
+                player.getWorld().dropItemNaturally(player.getLocation(), rest);
+            }
+        }
     }
 
     /* ----------------------------------- топ ---------------------------------- */
@@ -285,6 +292,9 @@ public final class TreasureService {
         // Ближайшая закрытая редкость — по возрастанию порога, а не от самой
         // редкой: иначе новичку показывали бы «легендарный через 15 000».
         for (TreasureTier tier : TreasureTier.values()) {
+            if (plugin.config().chance(tier) <= 0.0) {
+                continue;
+            }
             if (tier.minMined() > mined) {
                 String name = plugin.messages().raw("tier." + tier.id());
                 return plugin.messages().raw("stats-next-tier",
