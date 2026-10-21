@@ -184,19 +184,33 @@ public final class TreasureService {
         if (player == null || material == null) {
             return null;
         }
+        double depth = TreasureRates.depthBonus(y,
+                plugin.config().depthPerBlock(), plugin.config().depthMaxBonus());
+        // Таблица блока (точные проценты по редкостям) важнее множителя:
+        // в ней уже заложено, насколько порода «кладоносная».
+        Map<TreasureTier, Double> table = plugin.config().blockChances(material.name());
+        if (table != null) {
+            return TreasureRates.pick(random, table, 1.0, depth, mined(player));
+        }
         double multiplier = plugin.config().blockMultiplier(material.name());
         if (multiplier <= 0.0) {
             return null;
         }
-        double depth = TreasureRates.depthBonus(y,
-                plugin.config().depthPerBlock(), plugin.config().depthMaxBonus());
         return TreasureRates.pick(random, plugin.config().chances(),
                 multiplier, depth, mined(player));
     }
 
-    /** Бросает содержимое клада выбранной редкости. */
+    /** Бросает содержимое клада выбранной редкости без учёта прогресса. */
     public TreasureRoll.Roll rollContent(TreasureTier tier, TreasureRegion region) {
-        return TreasureRoll.roll(tier, region, plugin.config().itemChance(tier), random);
+        return rollContent(tier, region, Long.MAX_VALUE);
+    }
+
+    /**
+     * Бросает содержимое клада с учётом прогресса: лут-таблицы открывают
+     * дорогие записи только после порога добытых блоков.
+     */
+    public TreasureRoll.Roll rollContent(TreasureTier tier, TreasureRegion region, long mined) {
+        return TreasureRoll.roll(tier, region, plugin.config().itemChance(tier), random, mined);
     }
 
     /* --------------------------------- выдача --------------------------------- */
@@ -251,7 +265,8 @@ public final class TreasureService {
         }
         // Нулевой шанс именной находки: бонус — только ресурсы, иначе серия
         // превращалась бы во второй бросок коллекции.
-        TreasureRoll.Roll extra = TreasureRoll.roll(tier, region, 0.0, random);
+        TreasureRoll.Roll extra = TreasureRoll.roll(tier, region, 0.0, random,
+                mined(player));
         for (TreasureLoot.LootStack stack : extra.loot()) {
             ItemStack itemStack = stackOf(stack);
             if (itemStack != null) {
@@ -314,6 +329,12 @@ public final class TreasureService {
             plugin.getLogger().warning("[CHRDK_Treasures] Неизвестный материал добычи: "
                     + stack.material());
             return null;
+        }
+        if (stack.name() != null && !stack.name().isBlank()) {
+            ItemStack named = plugin.items().named(material, stack.name(), stack.amount());
+            if (named != null) {
+                return named;
+            }
         }
         return new ItemStack(material, Math.max(1, Math.min(64, stack.amount())));
     }

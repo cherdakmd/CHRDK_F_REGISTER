@@ -10,6 +10,8 @@ import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Locale;
 
 /**
@@ -127,6 +129,7 @@ public final class TreasuresPlugin extends JavaPlugin {
         }
         this.config = TreasuresConfig.parse(getConfig(),
                 overrides == null ? java.util.Map.of() : overrides.asMap(), getLogger());
+        reloadLootTable();
         if (listener != null) {
             listener.reloadAntiCheat();
         }
@@ -183,6 +186,26 @@ public final class TreasuresPlugin extends JavaPlugin {
     public void registerApi() {
         Bukkit.getServicesManager().register(ChrdkTreasuresApi.class,
                 new TreasuresApiImpl(service, items), this, ServicePriority.Normal);
+    }
+
+    /**
+     * Перечитывает {@code loot.yml}; при отсутствии создаёт файл из ресурса.
+     * Пустая или битая таблица не остаётся без добычи — включается встроенная.
+     */
+    private void reloadLootTable() {
+        try {
+            Path file = getDataFolder().toPath().resolve(TreasureLoot.FILE_NAME);
+            if (!Files.isRegularFile(file)) {
+                saveResource(TreasureLoot.FILE_NAME, false);
+            }
+            TreasureLoot.install(TreasureLoot.load(file, getLogger()));
+        } catch (RuntimeException exception) {
+            getLogger().warning("[CHRDK_Treasures] Не удалось загрузить "
+                    + TreasureLoot.FILE_NAME + ": " + exception.getMessage());
+            TreasureLoot.install(TreasureLoot.builtin());
+        }
+        getLogger().info("[CHRDK_Treasures] Лут-таблиц: "
+                + TreasureLoot.active().size() + ".");
     }
 
     /** PlaceholderAPI — мягкая интеграция: без плагина аддон работает как обычно. */

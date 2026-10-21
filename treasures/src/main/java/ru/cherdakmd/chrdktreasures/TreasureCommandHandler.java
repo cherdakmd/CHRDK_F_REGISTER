@@ -76,6 +76,7 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
             }
             case "list" -> list(player, args.length > 1 ? args[1] : null);
             case "top" -> top(player);
+            case "loot" -> loot(player, args.length > 1 ? args[1] : null);
             case "stats" -> playerStats(player, args.length > 1 ? args[1] : null);
             case "toggle" -> toggle(player, args.length > 1 ? args[1] : null);
             default -> {
@@ -92,6 +93,7 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
         plugin.messages().send(player, "help-stats");
         plugin.messages().send(player, "help-stats-other");
         plugin.messages().send(player, "help-top");
+        plugin.messages().send(player, "help-loot");
         plugin.messages().send(player, "help-toggle");
         plugin.messages().send(player, "help-footer");
     }
@@ -198,6 +200,114 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
                     "total", String.valueOf(TreasureCatalog.size()));
         }
         return true;
+    }
+
+    /* ----------------------------------- лут ---------------------------------- */
+
+    /**
+     * Показывает лут-таблицы: сводку, общий пул редкости или региональный пул.
+     * Шансы считаются по действующим весам и прогрессу игрока, а не «на глазок».
+     */
+    private boolean loot(Player player, String filter) {
+        long mined = service.mined(player);
+        if (filter == null || filter.isBlank() || filter.equalsIgnoreCase("all")) {
+            plugin.messages().send(player, "loot-header");
+            plugin.messages().send(player, "loot-summary",
+                    "entries", String.valueOf(TreasureLoot.active().size()),
+                    "regions", String.valueOf(TreasureRegion.values().length),
+                    "tiers", String.valueOf(TreasureTier.values().length));
+            for (TreasureTier tier : TreasureTier.values()) {
+                plugin.messages().send(player, "loot-tier-count",
+                        "tier", Messages.trusted(plugin.messages().raw("tier." + tier.id())),
+                        "count", String.valueOf(TreasureLoot.poolOf(tier).size()));
+            }
+            plugin.messages().send(player, "loot-hint");
+            return true;
+        }
+        TreasureTier tier = TreasureTier.byId(filter);
+        if (tier != null) {
+            plugin.messages().send(player, "loot-tier-header",
+                    "tier", Messages.trusted(plugin.messages().raw("tier." + tier.id())));
+            var entries = TreasureLoot.poolOf(tier);
+            if (entries.isEmpty()) {
+                plugin.messages().send(player, "loot-empty");
+                return true;
+            }
+            for (TreasureLoot.LootEntry entry : entries) {
+                double chance = TreasureLoot.chance(tier, null, entry, mined);
+                if (entry.unlock() > 0) {
+                    plugin.messages().send(player, "loot-line-locked",
+                            "material", label(entry),
+                            "min", String.valueOf(entry.min()),
+                            "max", String.valueOf(entry.max()),
+                            "chance", formatPercent(chance),
+                            "blocks", String.valueOf(entry.unlock()));
+                } else {
+                    plugin.messages().send(player, "loot-line",
+                            "material", label(entry),
+                            "min", String.valueOf(entry.min()),
+                            "max", String.valueOf(entry.max()),
+                            "chance", formatPercent(chance));
+                }
+            }
+            plugin.messages().send(player, "loot-hint");
+            return true;
+        }
+        TreasureRegion region = TreasureRegion.byId(filter);
+        if (region != null) {
+            plugin.messages().send(player, "loot-region-header",
+                    "region", Messages.trusted(plugin.messages().raw("region." + region.id())));
+            boolean any = false;
+            for (TreasureTier itemTier : TreasureTier.values()) {
+                var entries = TreasureLoot.active().regional(region, itemTier);
+                if (entries.isEmpty()) {
+                    continue;
+                }
+                any = true;
+                plugin.messages().send(player, "loot-region-tier",
+                        "tier", Messages.trusted(plugin.messages().raw("tier." + itemTier.id())),
+                        "count", String.valueOf(entries.size()));
+                for (TreasureLoot.LootEntry entry : entries) {
+                    if (entry.unlock() > 0) {
+                        plugin.messages().send(player, "loot-region-line-locked",
+                                "material", label(entry),
+                                "min", String.valueOf(entry.min()),
+                                "max", String.valueOf(entry.max()),
+                                "blocks", String.valueOf(entry.unlock()));
+                    } else {
+                        plugin.messages().send(player, "loot-region-line",
+                                "material", label(entry),
+                                "min", String.valueOf(entry.min()),
+                                "max", String.valueOf(entry.max()));
+                    }
+                }
+            }
+            if (!any) {
+                plugin.messages().send(player, "loot-empty");
+            }
+            plugin.messages().send(player, "loot-hint");
+            return true;
+        }
+        plugin.messages().send(player, "loot-empty");
+        return true;
+    }
+
+    /** Подпись записи: особое имя, если оно есть, иначе читаемый материал. */
+    private static String label(TreasureLoot.LootEntry entry) {
+        return entry.name() == null || entry.name().isBlank()
+                ? pretty(entry.material()) : entry.name();
+    }
+
+    private static String pretty(String material) {
+        return material.toLowerCase(Locale.ROOT).replace('_', ' ');
+    }
+
+    private static String formatPercent(double fraction) {
+        double percent = Math.max(0.0, Math.min(1.0, fraction)) * 100.0;
+        if (percent >= 1.0) {
+            return String.valueOf(Math.round(percent * 10.0) / 10.0);
+        }
+        return String.valueOf(Math.round(percent * 100.0) / 100.0);
     }
 
     /* --------------------------------- статистика ------------------------------ */
@@ -406,7 +516,8 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
                     "items", String.valueOf(TreasureCatalog.size()),
                     "regions", String.valueOf(TreasureRegion.values().length),
                     "tiers", String.valueOf(TreasureTier.values().length),
-                    "blocks", String.valueOf(plugin.config().blocks().size()));
+                    "blocks", String.valueOf(plugin.config().blockCount()),
+                    "loot", String.valueOf(TreasureLoot.active().size()));
             return true;
         }
         plugin.messages().send(sender, "admin-usage");
@@ -455,13 +566,25 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
             return List.of();
         }
         if (args.length == 1) {
-            return filter(List.of("menu", "list", "stats", "top", "toggle", "help"), args[0]);
+            return filter(List.of("menu", "list", "stats", "top", "loot", "toggle", "help"),
+                    args[0]);
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("toggle")) {
             return filter(List.of("sounds", "particles", "announce"), args[1]);
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("stats")) {
             return filter(onlineNames(), args[1]);
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("loot")) {
+            List<String> options = new ArrayList<>();
+            for (TreasureTier tier : TreasureTier.values()) {
+                options.add(tier.id());
+            }
+            for (TreasureRegion region : TreasureRegion.values()) {
+                options.add(region.id());
+            }
+            options.add("all");
+            return filter(options, args[1]);
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("list")) {
             List<String> options = new ArrayList<>();

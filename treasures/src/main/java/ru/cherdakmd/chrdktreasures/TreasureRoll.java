@@ -29,7 +29,16 @@ public final class TreasureRoll {
      */
     public static Roll roll(TreasureTier tier, TreasureRegion region,
                             double itemChance, Random random) {
-        return Roll.roll(tier, region, itemChance, random);
+        return Roll.roll(tier, region, itemChance, random, Long.MAX_VALUE);
+    }
+
+    /**
+     * Бросает содержимое с учётом прогресса игрока: записи лут-таблицы с
+     * порогом выше {@code mined} не выпадают.
+     */
+    public static Roll roll(TreasureTier tier, TreasureRegion region, double itemChance,
+                            Random random, long mined) {
+        return Roll.roll(tier, region, itemChance, random, mined);
     }
 
     /**
@@ -63,6 +72,14 @@ public final class TreasureRoll {
      */
     public static Roll roll(TreasureTier tier, TreasureRegion region,
                             double itemChance, Random random) {
+        return roll(tier, region, itemChance, random, Long.MAX_VALUE);
+    }
+
+    /**
+     * @param mined сколько блоков добыл игрок: записи с большим порогом не выпадают
+     */
+    public static Roll roll(TreasureTier tier, TreasureRegion region,
+                            double itemChance, Random random, long mined) {
         if (tier == null) {
             return null;
         }
@@ -78,7 +95,7 @@ public final class TreasureRoll {
                 return new Roll(tier, region, item, List.of());
             }
         }
-        return new Roll(tier, region, null, TreasureLoot.roll(tier, region, random));
+        return new Roll(tier, region, null, TreasureLoot.roll(tier, region, random, mined));
     }
 
     private static TreasureItemDef pickMythical(Random random) {

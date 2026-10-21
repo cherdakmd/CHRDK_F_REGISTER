@@ -1,0 +1,497 @@
+# CHRDK_Treasures — лут-таблицы кладов (с версии 1.4.135).
+#
+# Здесь лежит обычная добыча: материалы, количества и веса. Находки с
+# эффектами живут в каталоге (TreasureCatalog) и выпадают отдельным броском.
+# Поле name превращает ванильный предмет в именную находку («Кровавый суп»,
+# «Зависть пиглина») — такие предметы не входят в коллекцию, но приходят с
+# собственным названием, как в оригинальных таблицах.
+#
+# Как читается запись:
+#   material — имя материала Bukkit (COAL, IRON_INGOT, ...);
+#   min/max  — сколько выпадет за один выбор, 1..64;
+#   weight   — вес записи в пуле (чем больше, тем чаще);
+#   unlock   — сколько блоков игрок должен добыть, чтобы запись стала доступна;
+#   name     — необязательное особое имя предмета (в кавычках).
+#
+# Бросок берёт общий пул редкости (global) и пул региона (regions), причём
+# региональные записи весят вдвое больше: клад должен пахнуть местом, где он
+# найден. Записи с unlock выше прогресса игрока не участвуют в броске.
+#
+# Правки применяются после /treasuresadmin reload. Порядок записей не важен.
+
+global:
+  # обычный клад: общие ресурсы, которые встречаются в любом регионе.
+  common:
+    - { material: COAL, min: 4, max: 12, weight: 10, unlock: 0 }
+    - { material: RAW_IRON, min: 2, max: 6, weight: 10, unlock: 0 }
+    - { material: RAW_COPPER, min: 3, max: 8, weight: 8, unlock: 0 }
+    - { material: TORCH, min: 4, max: 12, weight: 8, unlock: 0 }
+    - { material: BREAD, min: 1, max: 4, weight: 6, unlock: 0 }
+    - { material: ARROW, min: 8, max: 24, weight: 6, unlock: 0 }
+    - { material: RAIL, min: 6, max: 16, weight: 5, unlock: 0 }
+    - { material: COBBLESTONE, min: 8, max: 24, weight: 4, unlock: 0 }
+    - { material: BONE, min: 2, max: 6, weight: 4, unlock: 0 }
+    - { material: STRING, min: 2, max: 6, weight: 4, unlock: 0 }
+    - { material: IRON_INGOT, min: 1, max: 3, weight: 5, unlock: 2000 }
+
+  # редкий клад: общие ресурсы, которые встречаются в любом регионе.
+    # «Амулеты» — сквозные находки-обереги: в оригинале они есть почти в
+    # каждом биоме. Имя отделяет их от обычного золота в том же стеке.
+    - { material: GOLD_NUGGET, min: 1, max: 1, weight: 3, unlock: 0, name: "Обычный амулет" }
+  rare:
+    - { material: IRON_INGOT, min: 2, max: 6, weight: 10, unlock: 250 }
+    - { material: GOLD_INGOT, min: 2, max: 5, weight: 8, unlock: 250 }
+    - { material: LAPIS_LAZULI, min: 4, max: 10, weight: 7, unlock: 250 }
+    - { material: AMETHYST_SHARD, min: 3, max: 8, weight: 7, unlock: 250 }
+    - { material: EXPERIENCE_BOTTLE, min: 3, max: 8, weight: 8, unlock: 250 }
+    - { material: SLIME_BALL, min: 2, max: 5, weight: 5, unlock: 250 }
+    - { material: FIRE_CHARGE, min: 2, max: 6, weight: 5, unlock: 250 }
+    - { material: GLOWSTONE_DUST, min: 4, max: 10, weight: 5, unlock: 250 }
+    - { material: NAME_TAG, min: 1, max: 1, weight: 2, unlock: 250 }
+    - { material: SADDLE, min: 1, max: 1, weight: 2, unlock: 250 }
+    - { material: DIAMOND, min: 1, max: 2, weight: 3, unlock: 5000 }
+
+  # эпический клад: общие ресурсы, которые встречаются в любом регионе.
+    - { material: GOLD_INGOT, min: 1, max: 1, weight: 2, unlock: 250, name: "Редкий амулет" }
+  epic:
+    - { material: DIAMOND, min: 1, max: 3, weight: 10, unlock: 2000 }
+    - { material: EMERALD, min: 1, max: 3, weight: 8, unlock: 2000 }
+    - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 8, unlock: 2000 }
+    - { material: EXPERIENCE_BOTTLE, min: 6, max: 14, weight: 6, unlock: 2000 }
+    - { material: ENDER_PEARL, min: 1, max: 3, weight: 6, unlock: 2000 }
+    - { material: BLAZE_POWDER, min: 2, max: 6, weight: 5, unlock: 2000 }
+    - { material: GOLD_BLOCK, min: 1, max: 1, weight: 3, unlock: 2000 }
+    - { material: DIAMOND_BLOCK, min: 1, max: 1, weight: 2, unlock: 10000 }
+    - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 2, unlock: 20000 }
+
+  # легендарный клад: общие ресурсы, которые встречаются в любом регионе.
+    - { material: DIAMOND, min: 1, max: 1, weight: 1, unlock: 2000, name: "Эпический амулет" }
+  legendary:
+    - { material: DIAMOND, min: 3, max: 6, weight: 10, unlock: 15000 }
+    - { material: EMERALD, min: 3, max: 6, weight: 7, unlock: 15000 }
+    - { material: NETHERITE_SCRAP, min: 1, max: 2, weight: 6, unlock: 10000 }
+    - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 5, unlock: 20000 }
+    - { material: DIAMOND_BLOCK, min: 1, max: 2, weight: 5, unlock: 25000 }
+    - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+    - { material: NETHER_STAR, min: 1, max: 1, weight: 1, unlock: 30000 }
+
+  # мифический клад: общие ресурсы, которые встречаются в любом регионе.
+    - { material: EMERALD, min: 1, max: 1, weight: 1, unlock: 15000, name: "Легендарный амулет" }
+  mythical:
+    - { material: NETHERITE_INGOT, min: 1, max: 2, weight: 10, unlock: 20000 }
+    - { material: NETHERITE_SCRAP, min: 2, max: 4, weight: 8, unlock: 10000 }
+    - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 7, unlock: 20000 }
+    - { material: TOTEM_OF_UNDYING, min: 1, max: 2, weight: 6, unlock: 25000 }
+    - { material: NETHER_STAR, min: 1, max: 1, weight: 5, unlock: 30000 }
+    - { material: NETHERITE_BLOCK, min: 1, max: 1, weight: 3, unlock: 45000 }
+    - { material: ELYTRA, min: 1, max: 1, weight: 2, unlock: 50000 }
+    - { material: DRAGON_BREATH, min: 2, max: 4, weight: 4, unlock: 20000 }
+
+regions:
+  # Равнины
+  plains:
+    common:
+      - { material: WHEAT, min: 4, max: 12, weight: 8, unlock: 0 }
+      - { material: HAY_BLOCK, min: 1, max: 3, weight: 5, unlock: 0 }
+      - { material: EGG, min: 2, max: 6, weight: 5, unlock: 0 }
+      - { material: PUMPKIN, min: 1, max: 4, weight: 4, unlock: 0 }
+    rare:
+      - { material: GOLDEN_CARROT, min: 2, max: 6, weight: 8, unlock: 250 }
+      - { material: HONEY_BOTTLE, min: 1, max: 3, weight: 6, unlock: 250 }
+      - { material: LEATHER, min: 2, max: 6, weight: 6, unlock: 250 }
+      - { material: BOOK, min: 1, max: 2, weight: 4, unlock: 250 }
+    epic:
+      - { material: HONEY_BLOCK, min: 1, max: 2, weight: 6, unlock: 2000 }
+      - { material: IRON_BLOCK, min: 1, max: 1, weight: 5, unlock: 2000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 6, unlock: 2000 }
+      - { material: EXPERIENCE_BOTTLE, min: 6, max: 12, weight: 5, unlock: 2000 }
+    legendary:
+      - { material: GOLD_BLOCK, min: 1, max: 2, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_HORSE_ARMOR, min: 1, max: 1, weight: 4, unlock: 15000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 2, unlock: 25000 }
+    mythical:
+      - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 8, unlock: 20000 }
+      - { material: GOLDEN_APPLE, min: 4, max: 8, weight: 6, unlock: 20000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+
+  # Лес
+  forest:
+    common:
+      - { material: OAK_LOG, min: 6, max: 16, weight: 8, unlock: 0 }
+      - { material: APPLE, min: 2, max: 6, weight: 6, unlock: 0 }
+      - { material: BROWN_MUSHROOM, min: 2, max: 6, weight: 4, unlock: 0 }
+      - { material: RED_MUSHROOM, min: 2, max: 6, weight: 4, unlock: 0 }
+      - { material: ITEM_FRAME, min: 1, max: 1, weight: 1, unlock: 200000, name: "Невидимая рамка" }
+    rare:
+      - { material: HONEYCOMB, min: 2, max: 6, weight: 6, unlock: 250 }
+      - { material: COBWEB, min: 2, max: 6, weight: 4, unlock: 250 }
+      - { material: BOW, min: 1, max: 1, weight: 4, unlock: 250 }
+      - { material: ARROW, min: 12, max: 32, weight: 6, unlock: 250 }
+    epic:
+      - { material: BOOKSHELF, min: 1, max: 3, weight: 6, unlock: 2000 }
+      - { material: LANTERN, min: 1, max: 3, weight: 5, unlock: 2000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 2000 }
+      - { material: IRON_BLOCK, min: 1, max: 1, weight: 4, unlock: 2000 }
+    legendary:
+      - { material: DIAMOND_AXE, min: 1, max: 1, weight: 4, unlock: 15000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: DIAMOND, min: 3, max: 6, weight: 6, unlock: 15000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 2, unlock: 25000 }
+    mythical:
+      - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 7, unlock: 20000 }
+      - { material: NETHERITE_AXE, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+
+  # Тайга
+  taiga:
+    common:
+      - { material: SPRUCE_LOG, min: 6, max: 16, weight: 8, unlock: 0 }
+      - { material: SWEET_BERRIES, min: 4, max: 10, weight: 6, unlock: 0 }
+      - { material: RABBIT_HIDE, min: 2, max: 5, weight: 4, unlock: 0 }
+      - { material: LEATHER, min: 2, max: 5, weight: 4, unlock: 0 }
+    rare:
+      - { material: HONEY_BOTTLE, min: 1, max: 3, weight: 5, unlock: 250 }
+      - { material: CROSSBOW, min: 1, max: 1, weight: 4, unlock: 250 }
+      - { material: ARROW, min: 12, max: 32, weight: 6, unlock: 250 }
+      - { material: RABBIT_FOOT, min: 1, max: 2, weight: 3, unlock: 250 }
+    epic:
+      - { material: CAMPFIRE, min: 1, max: 2, weight: 5, unlock: 2000 }
+      - { material: LANTERN, min: 1, max: 3, weight: 5, unlock: 2000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 2000 }
+      - { material: IRON_BLOCK, min: 1, max: 1, weight: 4, unlock: 2000 }
+    legendary:
+      - { material: DIAMOND, min: 3, max: 6, weight: 6, unlock: 15000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: DIAMOND_BLOCK, min: 1, max: 1, weight: 3, unlock: 25000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 2, unlock: 25000 }
+    mythical:
+      - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 7, unlock: 20000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+      - { material: NETHERITE_SCRAP, min: 2, max: 3, weight: 4, unlock: 10000 }
+
+  # Снега
+  snow:
+    common:
+      - { material: SNOWBALL, min: 8, max: 20, weight: 8, unlock: 0 }
+      - { material: ICE, min: 2, max: 6, weight: 5, unlock: 0 }
+      - { material: SNOW_BLOCK, min: 2, max: 6, weight: 5, unlock: 0 }
+      - { material: RABBIT_HIDE, min: 2, max: 5, weight: 4, unlock: 0 }
+    rare:
+      - { material: PACKED_ICE, min: 2, max: 5, weight: 6, unlock: 250 }
+      - { material: LEATHER, min: 2, max: 6, weight: 5, unlock: 250 }
+      - { material: POWDER_SNOW_BUCKET, min: 1, max: 1, weight: 3, unlock: 250 }
+      - { material: TURTLE_SCUTE, min: 1, max: 2, weight: 3, unlock: 250 }
+    epic:
+      - { material: BLUE_ICE, min: 1, max: 3, weight: 6, unlock: 2000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 2000 }
+      - { material: DIAMOND, min: 1, max: 2, weight: 5, unlock: 2000 }
+      - { material: EXPERIENCE_BOTTLE, min: 6, max: 12, weight: 4, unlock: 2000 }
+    legendary:
+      - { material: DIAMOND, min: 3, max: 6, weight: 6, unlock: 15000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: BLUE_ICE, min: 4, max: 8, weight: 3, unlock: 15000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 2, unlock: 25000 }
+    mythical:
+      - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 7, unlock: 20000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+      - { material: DIAMOND_BLOCK, min: 2, max: 3, weight: 4, unlock: 25000 }
+
+  # Пустыня
+  desert:
+    common:
+      - { material: SAND, min: 8, max: 20, weight: 8, unlock: 0 }
+      - { material: SANDSTONE, min: 4, max: 10, weight: 5, unlock: 0 }
+      - { material: CACTUS, min: 2, max: 6, weight: 5, unlock: 0 }
+      - { material: DEAD_BUSH, min: 2, max: 6, weight: 3, unlock: 0 }
+      # Именные находки пустошей (в оригинале — Badlands).
+      - { material: POTION, min: 1, max: 1, weight: 2, unlock: 0, name: "Зелье поглощения" }
+      - { material: GOLDEN_HOE, min: 1, max: 1, weight: 2, unlock: 0, name: "Редкая золотая мотыга" }
+    rare:
+      - { material: TERRACOTTA, min: 4, max: 10, weight: 6, unlock: 250 }
+      - { material: GOLD_NUGGET, min: 6, max: 16, weight: 6, unlock: 250 }
+      - { material: GOLD_INGOT, min: 2, max: 4, weight: 6, unlock: 250 }
+      - { material: EMERALD, min: 1, max: 2, weight: 3, unlock: 250 }
+    epic:
+      - { material: GOLD_BLOCK, min: 1, max: 2, weight: 6, unlock: 2000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 2000 }
+      - { material: DIAMOND, min: 1, max: 2, weight: 4, unlock: 2000 }
+      - { material: EXPERIENCE_BOTTLE, min: 6, max: 12, weight: 5, unlock: 2000 }
+    legendary:
+      - { material: DIAMOND, min: 3, max: 6, weight: 6, unlock: 15000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_SCRAP, min: 1, max: 2, weight: 4, unlock: 10000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 2, unlock: 25000 }
+    mythical:
+      - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 7, unlock: 20000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+      - { material: GOLD_BLOCK, min: 2, max: 4, weight: 4, unlock: 20000 }
+
+  # Саванна
+  savanna:
+    common:
+      - { material: ACACIA_LOG, min: 6, max: 16, weight: 8, unlock: 0 }
+      - { material: MELON_SLICE, min: 4, max: 10, weight: 6, unlock: 0 }
+      - { material: SUGAR_CANE, min: 4, max: 10, weight: 5, unlock: 0 }
+      - { material: LEATHER, min: 2, max: 5, weight: 4, unlock: 0 }
+    rare:
+      - { material: EGG, min: 3, max: 8, weight: 5, unlock: 250 }
+      - { material: GOLDEN_CARROT, min: 2, max: 6, weight: 6, unlock: 250 }
+      - { material: HONEY_BOTTLE, min: 1, max: 3, weight: 5, unlock: 250 }
+      - { material: BOOK, min: 1, max: 2, weight: 3, unlock: 250 }
+    epic:
+      - { material: HAY_BLOCK, min: 2, max: 5, weight: 5, unlock: 2000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 2000 }
+      - { material: IRON_BLOCK, min: 1, max: 1, weight: 4, unlock: 2000 }
+      - { material: EXPERIENCE_BOTTLE, min: 6, max: 12, weight: 4, unlock: 2000 }
+    legendary:
+      - { material: DIAMOND, min: 3, max: 6, weight: 6, unlock: 15000 }
+      - { material: GOLD_BLOCK, min: 1, max: 2, weight: 5, unlock: 15000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 2, unlock: 25000 }
+    mythical:
+      - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 7, unlock: 20000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+      - { material: NETHERITE_SCRAP, min: 2, max: 3, weight: 4, unlock: 10000 }
+
+  # Джунгли
+  jungle:
+    common:
+      - { material: BAMBOO, min: 8, max: 20, weight: 8, unlock: 0 }
+      - { material: COCOA_BEANS, min: 3, max: 8, weight: 6, unlock: 0 }
+      - { material: JUNGLE_LOG, min: 6, max: 16, weight: 5, unlock: 0 }
+      - { material: MELON_SLICE, min: 4, max: 10, weight: 5, unlock: 0 }
+    rare:
+      - { material: VINE, min: 4, max: 10, weight: 5, unlock: 250 }
+      - { material: COOKIE, min: 4, max: 10, weight: 4, unlock: 250 }
+      - { material: BOOK, min: 1, max: 2, weight: 4, unlock: 250 }
+      - { material: EXPERIENCE_BOTTLE, min: 3, max: 8, weight: 5, unlock: 250 }
+    epic:
+      - { material: BAMBOO_BLOCK, min: 2, max: 6, weight: 5, unlock: 2000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 2000 }
+      - { material: DIAMOND, min: 1, max: 2, weight: 5, unlock: 2000 }
+      - { material: IRON_BLOCK, min: 1, max: 1, weight: 4, unlock: 2000 }
+    legendary:
+      - { material: DIAMOND, min: 3, max: 6, weight: 6, unlock: 15000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_SCRAP, min: 1, max: 2, weight: 3, unlock: 10000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 2, unlock: 25000 }
+    mythical:
+      - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 7, unlock: 20000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+      - { material: DIAMOND_BLOCK, min: 2, max: 3, weight: 4, unlock: 25000 }
+
+  # Болото
+  swamp:
+    common:
+      - { material: SLIME_BALL, min: 2, max: 6, weight: 7, unlock: 0 }
+      - { material: LILY_PAD, min: 3, max: 8, weight: 5, unlock: 0 }
+      - { material: CLAY_BALL, min: 4, max: 10, weight: 5, unlock: 0 }
+      - { material: SEA_PICKLE, min: 2, max: 6, weight: 4, unlock: 0 }
+    rare:
+      - { material: BROWN_MUSHROOM, min: 3, max: 8, weight: 5, unlock: 250 }
+      - { material: SPIDER_EYE, min: 2, max: 6, weight: 4, unlock: 250 }
+      - { material: GLOW_INK_SAC, min: 1, max: 3, weight: 4, unlock: 250 }
+      - { material: SLIME_BLOCK, min: 1, max: 2, weight: 3, unlock: 250 }
+    epic:
+      - { material: FERMENTED_SPIDER_EYE, min: 2, max: 5, weight: 4, unlock: 2000 }
+      - { material: DIAMOND, min: 1, max: 2, weight: 6, unlock: 2000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 2000 }
+      - { material: EXPERIENCE_BOTTLE, min: 6, max: 12, weight: 4, unlock: 2000 }
+    legendary:
+      - { material: DIAMOND, min: 3, max: 6, weight: 6, unlock: 15000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+      - { material: NETHERITE_SCRAP, min: 1, max: 2, weight: 3, unlock: 10000 }
+    mythical:
+      - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 7, unlock: 20000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+      - { material: SLIME_BLOCK, min: 3, max: 6, weight: 4, unlock: 20000 }
+
+  # Горы
+  mountain:
+    common:
+      - { material: COBBLESTONE, min: 8, max: 24, weight: 8, unlock: 0 }
+      - { material: TUFF, min: 6, max: 16, weight: 6, unlock: 0 }
+      - { material: CALCITE, min: 4, max: 10, weight: 5, unlock: 0 }
+      - { material: RAW_IRON, min: 2, max: 6, weight: 6, unlock: 0 }
+    rare:
+      - { material: IRON_INGOT, min: 2, max: 6, weight: 7, unlock: 250 }
+      - { material: EMERALD, min: 1, max: 2, weight: 5, unlock: 250 }
+      - { material: GOAT_HORN, min: 1, max: 1, weight: 2, unlock: 1000 }
+      - { material: RAW_GOLD, min: 2, max: 5, weight: 4, unlock: 250 }
+    epic:
+      - { material: EMERALD_BLOCK, min: 1, max: 1, weight: 5, unlock: 2000 }
+      - { material: DIAMOND, min: 1, max: 2, weight: 5, unlock: 2000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 4, unlock: 2000 }
+      - { material: IRON_BLOCK, min: 1, max: 1, weight: 4, unlock: 2000 }
+    legendary:
+      - { material: DIAMOND, min: 3, max: 6, weight: 6, unlock: 15000 }
+      - { material: EMERALD_BLOCK, min: 1, max: 2, weight: 4, unlock: 15000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 2, unlock: 25000 }
+    mythical:
+      - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 7, unlock: 20000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+      - { material: NETHERITE_SCRAP, min: 2, max: 3, weight: 4, unlock: 10000 }
+
+  # Океан
+  ocean:
+    common:
+      - { material: KELP, min: 6, max: 16, weight: 7, unlock: 0 }
+      - { material: COD, min: 2, max: 6, weight: 5, unlock: 0 }
+      - { material: SALMON, min: 2, max: 6, weight: 5, unlock: 0 }
+      - { material: SEA_PICKLE, min: 2, max: 6, weight: 4, unlock: 0 }
+    rare:
+      - { material: PRISMARINE_SHARD, min: 2, max: 6, weight: 6, unlock: 250 }
+      - { material: PRISMARINE_CRYSTALS, min: 2, max: 5, weight: 5, unlock: 250 }
+      - { material: NAUTILUS_SHELL, min: 1, max: 2, weight: 3, unlock: 250 }
+      - { material: TROPICAL_FISH, min: 1, max: 2, weight: 3, unlock: 250 }
+    epic:
+      - { material: HEART_OF_THE_SEA, min: 1, max: 1, weight: 4, unlock: 10000 }
+      - { material: SPONGE, min: 1, max: 2, weight: 4, unlock: 2000 }
+      - { material: DIAMOND, min: 1, max: 2, weight: 5, unlock: 2000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 4, unlock: 2000 }
+    legendary:
+      - { material: CONDUIT, min: 1, max: 1, weight: 3, unlock: 25000 }
+      - { material: TRIDENT, min: 1, max: 1, weight: 3, unlock: 20000 }
+      - { material: DIAMOND, min: 3, max: 6, weight: 6, unlock: 15000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 3, unlock: 20000 }
+    mythical:
+      - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 7, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 4, unlock: 20000 }
+      - { material: TRIDENT, min: 1, max: 1, weight: 4, unlock: 20000 }
+
+  # Глубины
+  deep:
+    common:
+      - { material: DEEPSLATE, min: 8, max: 24, weight: 8, unlock: 0 }
+      - { material: COBBLED_DEEPSLATE, min: 6, max: 16, weight: 6, unlock: 0 }
+      - { material: REDSTONE, min: 4, max: 10, weight: 6, unlock: 0 }
+      - { material: RAW_GOLD, min: 2, max: 6, weight: 4, unlock: 0 }
+    rare:
+      - { material: LAPIS_LAZULI, min: 4, max: 10, weight: 6, unlock: 250 }
+      - { material: IRON_INGOT, min: 2, max: 6, weight: 6, unlock: 250 }
+      - { material: GOLD_INGOT, min: 2, max: 5, weight: 5, unlock: 250 }
+      - { material: REDSTONE_BLOCK, min: 1, max: 2, weight: 3, unlock: 250 }
+    epic:
+      - { material: DIAMOND, min: 1, max: 2, weight: 6, unlock: 2000 }
+      - { material: LAPIS_BLOCK, min: 1, max: 2, weight: 4, unlock: 2000 }
+      - { material: REDSTONE_BLOCK, min: 2, max: 4, weight: 4, unlock: 2000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 4, unlock: 2000 }
+    legendary:
+      - { material: DIAMOND, min: 3, max: 6, weight: 7, unlock: 15000 }
+      - { material: DIAMOND_BLOCK, min: 1, max: 2, weight: 5, unlock: 25000 }
+      - { material: NETHERITE_SCRAP, min: 1, max: 2, weight: 4, unlock: 10000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 3, unlock: 20000 }
+    mythical:
+      - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 7, unlock: 20000 }
+      - { material: NETHERITE_SCRAP, min: 2, max: 4, weight: 5, unlock: 10000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 4, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+
+  # Глубокая тьма
+  deep_dark:
+    common:
+      - { material: SCULK, min: 4, max: 10, weight: 7, unlock: 0 }
+      - { material: SCULK_VEIN, min: 4, max: 10, weight: 5, unlock: 0 }
+      - { material: CALCITE, min: 4, max: 10, weight: 4, unlock: 0 }
+      - { material: AMETHYST_SHARD, min: 2, max: 6, weight: 5, unlock: 0 }
+    rare:
+      - { material: ECHO_SHARD, min: 1, max: 2, weight: 5, unlock: 250 }
+      - { material: AMETHYST_BLOCK, min: 1, max: 2, weight: 4, unlock: 250 }
+      - { material: SCULK_CATALYST, min: 1, max: 1, weight: 2, unlock: 250 }
+      - { material: DISC_FRAGMENT_5, min: 1, max: 2, weight: 3, unlock: 250 }
+    epic:
+      - { material: ECHO_SHARD, min: 2, max: 4, weight: 5, unlock: 2000 }
+      - { material: DIAMOND, min: 1, max: 2, weight: 4, unlock: 2000 }
+      - { material: SCULK_SHRIEKER, min: 1, max: 1, weight: 2, unlock: 2000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 4, unlock: 2000 }
+      - { material: NETHERITE_CHESTPLATE, min: 1, max: 1, weight: 1, unlock: 2000, name: "Чёрная броня" }
+    legendary:
+      - { material: DIAMOND, min: 3, max: 6, weight: 6, unlock: 15000 }
+      - { material: ECHO_SHARD, min: 3, max: 6, weight: 3, unlock: 15000 }
+      - { material: NETHERITE_SCRAP, min: 1, max: 2, weight: 4, unlock: 10000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 3, unlock: 20000 }
+    mythical:
+      - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 6, unlock: 20000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 4, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+      - { material: NETHER_STAR, min: 1, max: 1, weight: 2, unlock: 30000 }
+
+  # Нижний мир
+  nether:
+    common:
+      - { material: NETHERRACK, min: 8, max: 20, weight: 7, unlock: 0 }
+      - { material: QUARTZ, min: 4, max: 12, weight: 7, unlock: 0 }
+      - { material: GLOWSTONE_DUST, min: 4, max: 10, weight: 5, unlock: 0 }
+      - { material: NETHER_WART, min: 3, max: 8, weight: 4, unlock: 0 }
+    rare:
+      - { material: BLAZE_POWDER, min: 2, max: 6, weight: 6, unlock: 250 }
+      - { material: MAGMA_CREAM, min: 2, max: 6, weight: 5, unlock: 250 }
+      - { material: GOLD_NUGGET, min: 8, max: 20, weight: 5, unlock: 250 }
+      - { material: GILDED_BLACKSTONE, min: 1, max: 3, weight: 4, unlock: 250 }
+      # Именные находки багрового леса: еда и снаряжение пиглинов.
+      - { material: MUSHROOM_STEW, min: 1, max: 1, weight: 3, unlock: 250, name: "Кровавый суп" }
+      - { material: GOLDEN_APPLE, min: 1, max: 1, weight: 2, unlock: 250, name: "Суперсильное лечение" }
+      - { material: RESPAWN_ANCHOR, min: 1, max: 1, weight: 1, unlock: 250, name: "Полный якорь возрождения" }
+    epic:
+      - { material: GOLD_BLOCK, min: 1, max: 2, weight: 5, unlock: 2000 }
+      - { material: GLOWSTONE, min: 1, max: 3, weight: 4, unlock: 2000 }
+      - { material: ANCIENT_DEBRIS, min: 1, max: 2, weight: 4, unlock: 2000 }
+      - { material: GHAST_TEAR, min: 1, max: 3, weight: 4, unlock: 2000 }
+      - { material: IRON_SWORD, min: 1, max: 1, weight: 2, unlock: 2000, name: "Заточенный меч" }
+      - { material: POTION, min: 1, max: 1, weight: 2, unlock: 2000, name: "Зелье Нижнего мира" }
+    legendary:
+      - { material: NETHERITE_SCRAP, min: 2, max: 4, weight: 6, unlock: 10000 }
+      - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: WITHER_SKELETON_SKULL, min: 1, max: 1, weight: 2, unlock: 25000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 3, unlock: 20000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 1, unlock: 15000, name: "Нагрудник багрового леса" }
+      - { material: NETHERITE_HOE, min: 1, max: 1, weight: 1, unlock: 15000, name: "Супер-мотыга страйдера" }
+      - { material: POTION, min: 1, max: 1, weight: 1, unlock: 15000, name: "Демоническое зелье" }
+      - { material: GOLDEN_HELMET, min: 1, max: 1, weight: 1, unlock: 200000, name: "Зависть пиглина" }
+    mythical:
+      - { material: NETHERITE_INGOT, min: 1, max: 2, weight: 7, unlock: 20000 }
+      - { material: NETHERITE_SCRAP, min: 3, max: 5, weight: 5, unlock: 10000 }
+      - { material: NETHER_STAR, min: 1, max: 1, weight: 3, unlock: 30000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+
+  # Край
+  end:
+    common:
+      - { material: END_STONE, min: 8, max: 20, weight: 7, unlock: 0 }
+      - { material: CHORUS_FRUIT, min: 4, max: 10, weight: 6, unlock: 0 }
+      - { material: POPPED_CHORUS_FRUIT, min: 4, max: 10, weight: 4, unlock: 0 }
+      - { material: ENDER_PEARL, min: 1, max: 3, weight: 6, unlock: 0 }
+    rare:
+      - { material: ENDER_EYE, min: 1, max: 3, weight: 5, unlock: 250 }
+      - { material: PURPUR_BLOCK, min: 2, max: 6, weight: 4, unlock: 250 }
+      - { material: SHULKER_SHELL, min: 1, max: 2, weight: 3, unlock: 250 }
+      - { material: EXPERIENCE_BOTTLE, min: 3, max: 8, weight: 4, unlock: 250 }
+    epic:
+      - { material: ENDER_PEARL, min: 3, max: 8, weight: 4, unlock: 2000 }
+      - { material: SHULKER_SHELL, min: 2, max: 4, weight: 4, unlock: 2000 }
+      - { material: DIAMOND, min: 1, max: 2, weight: 5, unlock: 2000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 4, unlock: 2000 }
+    legendary:
+      - { material: END_CRYSTAL, min: 1, max: 2, weight: 4, unlock: 20000 }
+      - { material: DRAGON_BREATH, min: 2, max: 4, weight: 4, unlock: 20000 }
+      - { material: DIAMOND, min: 3, max: 6, weight: 5, unlock: 15000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 3, unlock: 20000 }
+    mythical:
+      - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 6, unlock: 20000 }
+      - { material: ELYTRA, min: 1, max: 1, weight: 2, unlock: 50000 }
+      - { material: NETHER_STAR, min: 1, max: 1, weight: 4, unlock: 30000 }
+      - { material: DRAGON_BREATH, min: 3, max: 6, weight: 5, unlock: 20000 }
+

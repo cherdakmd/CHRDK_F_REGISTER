@@ -112,7 +112,7 @@ public final class TreasureListener implements Listener {
             return;
         }
         TreasureRegion region = service.regionOf(block);
-        TreasureRoll.Roll roll = service.rollContent(tier, region);
+        TreasureRoll.Roll roll = service.rollContent(tier, region, service.mined(player));
         lastTreasure.put(player.getUniqueId(), now);
         TreasureService.Found found = service.give(player, tier, region, roll);
         celebrate(player, block.getLocation(), found);

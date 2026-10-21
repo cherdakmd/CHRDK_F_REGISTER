@@ -3,10 +3,11 @@
 # глубины, биома и накопленной добычи игрока.
 #
 # Как считается шанс одного блока:
-#   шанс = chance-percent редкости × множитель породы × (1 + бонус глубины)
-# Значения chance-percent — в процентах (1.0 = один клад на 100 блоков этой
-# породы при нулевой глубине). Итог проверяется от редкого к обычному, поэтому
-# за один блок выпадает не больше одного клада.
+#   шанс = проценты редкости из blocks.<блок>.<редкость> × (1 + бонус глубины)
+# Если у блока записан один множитель, он умножает chance-percent редкости.
+# Значения — в процентах (1.0 = один клад на 100 блоков при нулевой глубине).
+# Итог проверяется от редкого к обычному: за блок выпадает не больше одного
+# клада, а редкость закрыта, пока игрок не добыл нужное число блоков.
 #
 # Прогрессия: редкие клады закрыты, пока игрок не добыл нужное число блоков
 # (250 — редкий, 2 000 — эпический, 15 000 — легендарный). Мифический клад
@@ -47,45 +48,243 @@ chances:
     chance-percent: 0.0008
     item-chance: 1.0
 
-# Множитель шанса по породе. Секция полностью заменяет встроенный список:
-# уберите строку — блок перестанет давать клады. 0 тоже выключает блок.
-# Руда ценнее камня, незерит — самый «кладоносный».
+# Шанс клада на блок, проценты по редкостям — как в таблицах Mine Treasure.
+# Каждая запись — секция из пяти редкостей; 1.0 значит «один клад этой
+# редкости на 100 таких блоков при нулевой глубине». Проверка идёт от
+# мифического к обычному, поэтому за блок выпадает не больше одного клада.
+# Блока нет в списке — кладов он не даёт.
+#
+# Короткая запись числом (DIAMOND_ORE: 2.0) — старый формат: множитель к
+# chances.<редкость>.chance-percent. Форматы можно смешивать.
+#
+# Секция полностью заменяет встроенный список. Уберите строку — блок
+# перестанет давать клады.
 blocks:
-  STONE: 1.0
-  COBBLESTONE: 1.0
-  DEEPSLATE: 1.0
-  COBBLED_DEEPSLATE: 1.1
-  TUFF: 1.0
-  GRANITE: 1.0
-  DIORITE: 1.0
-  ANDESITE: 1.0
-  CALCITE: 1.0
-  SMOOTH_BASALT: 1.0
-  BASALT: 1.1
-  NETHERRACK: 1.1
-  BLACKSTONE: 1.2
-  END_STONE: 1.2
-  OBSIDIAN: 1.5
-  CRYING_OBSIDIAN: 1.5
-  COAL_ORE: 2.0
-  DEEPSLATE_COAL_ORE: 2.0
-  IRON_ORE: 2.0
-  DEEPSLATE_IRON_ORE: 2.0
-  COPPER_ORE: 2.0
-  DEEPSLATE_COPPER_ORE: 2.0
-  GOLD_ORE: 2.0
-  DEEPSLATE_GOLD_ORE: 2.0
-  REDSTONE_ORE: 2.0
-  DEEPSLATE_REDSTONE_ORE: 2.0
-  LAPIS_ORE: 2.0
-  DEEPSLATE_LAPIS_ORE: 2.0
-  DIAMOND_ORE: 2.0
-  DEEPSLATE_DIAMOND_ORE: 2.0
-  EMERALD_ORE: 2.0
-  DEEPSLATE_EMERALD_ORE: 2.0
-  NETHER_GOLD_ORE: 2.0
-  NETHER_QUARTZ_ORE: 2.0
-  ANCIENT_DEBRIS: 4.0
+  # Камень и глубинные породы: база, на которой стоит вся таблица — 1 %
+  # обычного клада на блок. Редкий вчетверо реже обычного, эпический —
+  # в 31 раз реже, легендарный вдвое реже эпического, мифический — в 8 раз
+  # реже эпического.
+  STONE:
+    common: 1
+    rare: 0.25
+    epic: 0.032
+    legendary: 0.016
+    mythical: 0.004
+  COBBLESTONE:
+    common: 1
+    rare: 0.25
+    epic: 0.032
+    legendary: 0.016
+    mythical: 0.004
+  DEEPSLATE:
+    common: 1.6
+    rare: 0.4
+    epic: 0.0512
+    legendary: 0.0256
+    mythical: 0.0064
+  COBBLED_DEEPSLATE:
+    common: 1.2
+    rare: 0.3
+    epic: 0.0384
+    legendary: 0.0192
+    mythical: 0.0048
+  TUFF:
+    common: 1
+    rare: 0.25
+    epic: 0.032
+    legendary: 0.016
+    mythical: 0.004
+  SMOOTH_BASALT:
+    common: 1
+    rare: 0.25
+    epic: 0.032
+    legendary: 0.016
+    mythical: 0.004
+  BASALT:
+    common: 1
+    rare: 0.25
+    epic: 0.032
+    legendary: 0.016
+    mythical: 0.004
+  CALCITE:
+    common: 0.75
+    rare: 0.1875
+    epic: 0.024
+    legendary: 0.012
+    mythical: 0.003
+
+  # Гранит и андезит беднее камня, диорит — наоборот: его гнёзда крупнее,
+  # поэтому обычный клад выпадает чаще.
+  GRANITE:
+    common: 0.8
+    rare: 0.2
+    epic: 0.0256
+    legendary: 0.0128
+    mythical: 0.0032
+  ANDESITE:
+    common: 0.8
+    rare: 0.2
+    epic: 0.0256
+    legendary: 0.0128
+    mythical: 0.0032
+  DIORITE:
+    common: 1.5
+    rare: 0.2
+    epic: 0.048
+    legendary: 0.024
+    mythical: 0.006
+
+  # Нижний мир и Энд: адский камень встречается сплошняком и потому беднее,
+  # чернокамень и эндстоун ценятся выше камня.
+  NETHERRACK:
+    common: 0.75
+    rare: 0.1875
+    epic: 0.024
+    legendary: 0.012
+    mythical: 0.003
+  BLACKSTONE:
+    common: 1
+    rare: 0.25
+    epic: 0.032
+    legendary: 0.016
+    mythical: 0.004
+  END_STONE:
+    common: 1.4
+    rare: 0.35
+    epic: 0.0448
+    legendary: 0.0224
+    mythical: 0.0056
+  OBSIDIAN:
+    common: 1.5
+    rare: 0.375
+    epic: 0.048
+    legendary: 0.024
+    mythical: 0.006
+  CRYING_OBSIDIAN:
+    common: 1.5
+    rare: 0.375
+    epic: 0.048
+    legendary: 0.024
+    mythical: 0.006
+
+  # Руды: каждая даёт клад чаще камня, глубинные варианты — чуть чаще
+  # обычных, потому что добывать их дольше.
+  COAL_ORE:
+    common: 1.4
+    rare: 0.35
+    epic: 0.0448
+    legendary: 0.0224
+    mythical: 0.0056
+  DEEPSLATE_COAL_ORE:
+    common: 1.6
+    rare: 0.4
+    epic: 0.0512
+    legendary: 0.0256
+    mythical: 0.0064
+  IRON_ORE:
+    common: 1.4
+    rare: 0.35
+    epic: 0.0448
+    legendary: 0.0224
+    mythical: 0.0056
+  DEEPSLATE_IRON_ORE:
+    common: 1.6
+    rare: 0.4
+    epic: 0.0512
+    legendary: 0.0256
+    mythical: 0.0064
+  COPPER_ORE:
+    common: 1.4
+    rare: 0.35
+    epic: 0.0448
+    legendary: 0.0224
+    mythical: 0.0056
+  DEEPSLATE_COPPER_ORE:
+    common: 1.6
+    rare: 0.4
+    epic: 0.0512
+    legendary: 0.0256
+    mythical: 0.0064
+  GOLD_ORE:
+    common: 1.4
+    rare: 0.35
+    epic: 0.0448
+    legendary: 0.0224
+    mythical: 0.0056
+  DEEPSLATE_GOLD_ORE:
+    common: 1.6
+    rare: 0.4
+    epic: 0.0512
+    legendary: 0.0256
+    mythical: 0.0064
+  REDSTONE_ORE:
+    common: 1.4
+    rare: 0.35
+    epic: 0.0448
+    legendary: 0.0224
+    mythical: 0.0056
+  DEEPSLATE_REDSTONE_ORE:
+    common: 1.6
+    rare: 0.4
+    epic: 0.0512
+    legendary: 0.0256
+    mythical: 0.0064
+  LAPIS_ORE:
+    common: 1.4
+    rare: 0.35
+    epic: 0.0448
+    legendary: 0.0224
+    mythical: 0.0056
+  DEEPSLATE_LAPIS_ORE:
+    common: 1.6
+    rare: 0.4
+    epic: 0.0512
+    legendary: 0.0256
+    mythical: 0.0064
+  NETHER_GOLD_ORE:
+    common: 1.4
+    rare: 0.35
+    epic: 0.0448
+    legendary: 0.0224
+    mythical: 0.0056
+  NETHER_QUARTZ_ORE:
+    common: 1.4
+    rare: 0.35
+    epic: 0.0448
+    legendary: 0.0224
+    mythical: 0.0056
+
+  # Алмаз, изумруд и незеритовый лом — самые «кладоносные» блоки игры.
+  DIAMOND_ORE:
+    common: 2
+    rare: 0.5
+    epic: 0.064
+    legendary: 0.032
+    mythical: 0.008
+  DEEPSLATE_DIAMOND_ORE:
+    common: 2
+    rare: 0.5
+    epic: 0.064
+    legendary: 0.032
+    mythical: 0.008
+  EMERALD_ORE:
+    common: 2
+    rare: 0.5
+    epic: 0.064
+    legendary: 0.032
+    mythical: 0.008
+  DEEPSLATE_EMERALD_ORE:
+    common: 2
+    rare: 0.5
+    epic: 0.064
+    legendary: 0.032
+    mythical: 0.008
+  ANCIENT_DEBRIS:
+    common: 2
+    rare: 0.5
+    epic: 0.064
+    legendary: 0.032
+    mythical: 0.008
 
 # Глубина: каждый блок ниже нуля добавляет per-block-bonus к множителю,
 # но не больше max-bonus. 0.002 и 0.5 — на глубине −64 шанс выше на 12.8 %,

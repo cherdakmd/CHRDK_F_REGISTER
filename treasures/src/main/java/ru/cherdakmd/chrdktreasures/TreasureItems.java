@@ -95,6 +95,28 @@ public final class TreasureItems {
         return item;
     }
 
+    /**
+     * Предмет из лут-таблицы с особым именем: «Кровавый суп» остаётся миской,
+     * но приходит со своим названием и пометкой, что это находка из клада.
+     * Ид в PDC не ставится — такие предметы не входят в коллекцию.
+     */
+    public ItemStack named(Material material, String name, int amount) {
+        if (material == null || material.isAir() || name == null || name.isBlank()) {
+            return null;
+        }
+        ItemStack item = new ItemStack(material, Math.max(1, Math.min(64, amount)));
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) {
+            return item;
+        }
+        meta.displayName(plugin.messages().get("loot-item-name",
+                "name", Messages.escape(name)));
+        meta.lore(List.of(plugin.messages().get("loot-item-lore")));
+        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+        item.setItemMeta(meta);
+        return item;
+    }
+
     private void applyAttributes(ItemMeta meta, TreasureItemDef def) {
         EquipmentSlotGroup slot = slotFor(def);
         for (TreasureEffect effect : def.effects()) {

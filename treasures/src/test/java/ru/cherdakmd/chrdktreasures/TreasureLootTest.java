@@ -1,8 +1,16 @@
 package ru.cherdakmd.chrdktreasures;
 
 import org.bukkit.Material;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.io.Reader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -15,6 +23,31 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TreasureLootTest {
 
+    @TempDir
+    Path folder;
+
+    @AfterEach
+    void restoreShippedTables() {
+        TreasureLoot.install(shipped());
+    }
+
+    private static TreasureLoot.Table shipped() {
+        try (var stream = TreasureLootTest.class.getClassLoader()
+                .getResourceAsStream(TreasureLoot.FILE_NAME)) {
+            assertNotNull(stream, "loot.yml не найден в ресурсах");
+            try (Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
+                return TreasureLoot.parse(YamlConfiguration.loadConfiguration(reader), null);
+            }
+        } catch (Exception exception) {
+            throw new AssertionError("не удалось прочитать loot.yml", exception);
+        }
+    }
+
+    private static TreasureLoot.Table table(String yaml) {
+        return TreasureLoot.parse(YamlConfiguration.loadConfiguration(
+                new java.io.StringReader(yaml)), null);
+    }
+
     @Test
     void everyTierHasItsOwnNumberOfRolls() {
         assertEquals(1, TreasureLoot.rolls(TreasureTier.COMMON));
@@ -22,6 +55,33 @@ class TreasureLootTest {
         assertEquals(2, TreasureLoot.rolls(TreasureTier.EPIC));
         assertEquals(3, TreasureLoot.rolls(TreasureTier.LEGENDARY));
         assertEquals(4, TreasureLoot.rolls(TreasureTier.MYTHICAL));
+    }
+
+    @Test
+    void shippedTablesAreRichAndContainNamedFinds() {
+        TreasureLoot.Table table = shipped();
+        assertTrue(table.size() >= 300, "слишком мало записей: " + table.size());
+        Set<String> names = new HashSet<>();
+        for (TreasureTier tier : TreasureTier.values()) {
+            for (TreasureLoot.LootEntry entry : table.global(tier)) {
+                if (!entry.name().isBlank()) {
+                    names.add(entry.name());
+                }
+            }
+        }
+        for (TreasureRegion region : TreasureRegion.values()) {
+            for (TreasureTier tier : TreasureTier.values()) {
+                for (TreasureLoot.LootEntry entry : table.regional(region, tier)) {
+                    if (!entry.name().isBlank()) {
+                        names.add(entry.name());
+                    }
+                }
+            }
+        }
+        assertTrue(names.size() >= 15, "именных находок слишком мало: " + names.size());
+        assertTrue(names.contains("Кровавый суп"));
+        assertTrue(names.contains("Зависть пиглина"));
+        assertTrue(names.contains("Обычный амулет"));
     }
 
     @Test
@@ -57,6 +117,7 @@ class TreasureLootTest {
         assertTrue(entry.min() >= 1 && entry.max() >= entry.min());
         assertTrue(entry.max() <= 64, "стек больше 64: " + entry.material());
         assertTrue(entry.weight() >= 1);
+        assertTrue(entry.unlock() >= 0);
     }
 
     @Test
@@ -64,12 +125,13 @@ class TreasureLootTest {
         Random random = new Random(42L);
         for (TreasureTier tier : TreasureTier.values()) {
             for (TreasureRegion region : TreasureRegion.values()) {
-                List<TreasureLoot.LootStack> loot = TreasureLoot.roll(tier, region, random);
+                List<TreasureLoot.LootStack> loot = TreasureLoot.roll(
+                        tier, region, random, Long.MAX_VALUE);
                 assertFalse(loot.isEmpty(), "пустой клад " + tier.id() + "/" + region.id());
-                Set<String> materials = new HashSet<>();
+                Set<String> keys = new HashSet<>();
                 for (TreasureLoot.LootStack stack : loot) {
-                    assertTrue(materials.add(stack.material()),
-                            "материал не сложился: " + stack.material());
+                    assertTrue(keys.add(stack.material() + '\u0000' + stack.name()),
+                            "запись не сложилась: " + stack.material());
                     assertTrue(stack.amount() >= 1 && stack.amount() <= 64,
                             "кривое количество " + stack.amount());
                     assertNotNull(Material.valueOf(stack.material()));
@@ -83,5 +145,118 @@ class TreasureLootTest {
         List<TreasureLoot.LootStack> loot = TreasureLoot.roll(
                 TreasureTier.MYTHICAL, null, new Random(7L));
         assertFalse(loot.isEmpty());
+    }
+
+    @Test
+    void unlockHidesExpensiveEntriesUntilProgress() {
+        TreasureLoot.install(table("""
+                global:
+                  common:
+                    - { material: COAL, min: 1, max: 1, weight: 1, unlock: 0 }
+                    - { material: DIAMOND, min: 1, max: 1, weight: 1000, unlock: 100 }
+                """));
+        for (int seed = 0; seed < 50; seed++) {
+            for (TreasureLoot.LootStack stack : TreasureLoot.roll(
+                    TreasureTier.COMMON, null, new Random(seed), 0)) {
+                assertEquals("COAL", stack.material(), "алмаз выпал до порога");
+            }
+        }
+        TreasureLoot.LootEntry diamond = TreasureLoot.poolOf(TreasureTier.COMMON).stream()
+                .filter(entry -> entry.material().equals("DIAMOND"))
+                .findFirst().orElseThrow();
+        assertEquals(0.0, TreasureLoot.chance(TreasureTier.COMMON, null, diamond, 0), 1e-9);
+        assertTrue(TreasureLoot.chance(TreasureTier.COMMON, null, diamond, 100) > 0.9);
+
+        boolean seen = false;
+        for (int seed = 0; seed < 20 && !seen; seed++) {
+            for (TreasureLoot.LootStack stack : TreasureLoot.roll(
+                    TreasureTier.COMMON, null, new Random(seed), 100)) {
+                seen |= stack.material().equals("DIAMOND");
+            }
+        }
+        assertTrue(seen, "после порога алмаз так и не выпал");
+    }
+
+    @Test
+    void namedEntriesStaySeparateAndKeepTheirNames() {
+        TreasureLoot.install(table("""
+                global:
+                  common:
+                    - { material: MUSHROOM_STEW, min: 1, max: 1, weight: 1, unlock: 0,
+                        name: "Кровавый суп" }
+                    - { material: MUSHROOM_STEW, min: 1, max: 1, weight: 1, unlock: 0 }
+                """));
+        boolean named = false;
+        boolean plain = false;
+        for (int seed = 0; seed < 20; seed++) {
+            for (TreasureLoot.LootStack stack : TreasureLoot.roll(
+                    TreasureTier.COMMON, null, new Random(seed), 0)) {
+                assertEquals("MUSHROOM_STEW", stack.material());
+                if (stack.name().isBlank()) {
+                    plain = true;
+                } else {
+                    assertEquals("Кровавый суп", stack.name());
+                    named = true;
+                }
+            }
+        }
+        assertTrue(named, "именная миска не выпала");
+        assertTrue(plain, "обычная миска не выпала");
+    }
+
+    @Test
+    void brokenRowsAreSkippedInsteadOfBreakingTheTable() {
+        TreasureLoot.Table parsed = table("""
+                global:
+                  common:
+                    - { material: NOT_A_MATERIAL, min: 1, max: 1, weight: 1 }
+                    - { material: COAL, min: 0, max: 1, weight: 1 }
+                    - { material: COAL, min: 2, max: 1, weight: 1 }
+                    - { material: COAL, min: 1, max: 2, weight: 0 }
+                    - { material: COAL, min: 1, max: 2, weight: 5 }
+                    - { min: 1, max: 2, weight: 5 }
+                """);
+        assertEquals(1, parsed.global(TreasureTier.COMMON).size());
+        assertEquals("COAL", parsed.global(TreasureTier.COMMON).get(0).material());
+    }
+
+    @Test
+    void brokenOrEmptyFileFallsBackToBuiltinTable() throws Exception {
+        // SnakeYAML не бросает исключение на мусор: Bukkit отдаёт пустой конфиг.
+        Path broken = folder.resolve("broken.yml");
+        Files.writeString(broken, "}{ это не yaml");
+        Path empty = folder.resolve("empty.yml");
+        Files.writeString(empty, "");
+        for (Path file : List.of(broken, empty)) {
+            TreasureLoot.Table parsed = TreasureLoot.load(file, null);
+            // Bukkit на мусоре отдаёт пустой конфиг, но загрузчик может и сразу
+            // подставить встроенный набор — оба исхода допустимы.
+            assertTrue(parsed.size() == 0 || parsed.size() == TreasureLoot.builtin().size(),
+                    "неожиданный размер таблицы у " + file.getFileName() + ": " + parsed.size());
+            TreasureLoot.install(parsed);
+            assertEquals(TreasureLoot.builtin().size(), TreasureLoot.active().size(),
+                    "пустая таблица не должна оставлять игроков без добычи");
+        }
+        assertEquals(TreasureLoot.builtin().size(),
+                TreasureLoot.load(folder.resolve("missing.yml"), null).size(),
+                "отсутствующий файл сразу даёт встроенный набор");
+    }
+
+    @Test
+    void regionalEntriesWeighTwiceInCombinedPool() {
+        TreasureLoot.Table parsed = table("""
+                global:
+                  common:
+                    - { material: COAL, min: 1, max: 1, weight: 10, unlock: 0 }
+                regions:
+                  plains:
+                    common:
+                      - { material: WHEAT, min: 1, max: 1, weight: 10, unlock: 0 }
+                """);
+        List<TreasureLoot.LootEntry> combined = parsed.combined(
+                TreasureTier.COMMON, TreasureRegion.PLAINS);
+        assertEquals(2, combined.size());
+        assertEquals(10, combined.get(0).weight());
+        assertEquals(20, combined.get(1).weight(), "биомная запись весит вдвое");
     }
 }

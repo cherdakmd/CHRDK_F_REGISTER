@@ -52,7 +52,11 @@ class TreasureMessagesTest {
             "rank-up", "rank-up-broadcast", "title-found", "title-found-named",
             "title-found-loot", "actionbar-found", "admin-resetall", "admin-resetall-confirm",
             "admin-chance-set", "admin-chance-reset", "admin-chance-unknown-tier",
-            "admin-chance-invalid");
+            "admin-chance-invalid", "help-loot", "loot-header", "loot-summary",
+            "loot-tier-count", "loot-tier-header", "loot-line", "loot-line-locked",
+            "loot-region-header", "loot-region-tier", "loot-region-line",
+            "loot-region-line-locked", "loot-hint", "loot-empty", "loot-item-name",
+            "loot-item-lore");
 
     private static ConfigurationSection messages() {
         try (var stream = TreasureMessagesTest.class.getClassLoader()

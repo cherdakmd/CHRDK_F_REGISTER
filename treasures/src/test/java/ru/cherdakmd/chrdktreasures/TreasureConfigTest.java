@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TreasureConfigTest {
@@ -39,6 +40,7 @@ class TreasureConfigTest {
         assertEquals(1.0, config.chance(TreasureTier.COMMON), 1e-9);
         assertEquals(0.45, config.itemChance(TreasureTier.COMMON), 1e-9);
         assertEquals(TreasuresConfig.defaultBlocks().size(), config.blocks().size());
+        assertEquals(TreasuresConfig.defaultBlocks().size(), config.blockCount());
         assertEquals(3_000L, config.cooldownMillis());
         assertEquals(4, config.milestones().size());
         assertEquals(8, config.milestones().get(10).diamonds());
@@ -54,11 +56,21 @@ class TreasureConfigTest {
         assertEquals(0.220, config.chance(TreasureTier.RARE), 1e-9);
         assertEquals(0.0008, config.chance(TreasureTier.MYTHICAL), 1e-9);
         assertEquals(1.0, config.itemChance(TreasureTier.MYTHICAL), 1e-9);
-        assertEquals(35, config.blocks().size(), "в config.yml должно быть 35 блоков");
-        assertEquals(2.0, config.blockMultiplier("diamond_ore"), 1e-9);
-        assertEquals(4.0, config.blockMultiplier("ANCIENT_DEBRIS"), 1e-9);
-        assertEquals(2.0, config.blockMultiplier("nether_quartz_ore"), 1e-9);
+        assertEquals(35, config.blockCount(), "в config.yml должно быть 35 блоков");
+        assertEquals(0, config.blocks().size(), "в новом формате все блоки — таблицы");
+        Map<TreasureTier, Double> diamond = config.blockChances("diamond_ore");
+        assertNotNull(diamond, "у алмазной руды должна быть таблица шансов");
+        assertEquals(2.0, diamond.get(TreasureTier.COMMON), 1e-9);
+        assertEquals(0.5, diamond.get(TreasureTier.RARE), 1e-9);
+        assertEquals(0.064, diamond.get(TreasureTier.EPIC), 1e-9);
+        assertEquals(0.032, diamond.get(TreasureTier.LEGENDARY), 1e-9);
+        assertEquals(0.008, diamond.get(TreasureTier.MYTHICAL), 1e-9);
+        assertEquals(1.6, config.blockChances("DEEPSLATE").get(TreasureTier.COMMON), 1e-9);
+        assertEquals(0.2, config.blockChances("DIORITE").get(TreasureTier.RARE), 1e-9);
+        assertNull(config.blockChances("DIRT"));
         assertEquals(0.0, config.blockMultiplier("DIRT"), 1e-9);
+        assertTrue(config.mineable("diamond_ore"));
+        assertFalse(config.mineable("DIRT"));
         assertEquals(1.02, TreasureRates.depthBonus(-10,
                 config.depthPerBlock(), config.depthMaxBonus()), 1e-9);
         assertEquals(4, config.milestones().size());
@@ -97,11 +109,48 @@ class TreasureConfigTest {
         cfg.set("blocks.STONE", 0.0);
         TreasuresConfig config = TreasuresConfig.parse(cfg, LOGGER);
         assertEquals(1, config.blocks().size());
+        assertEquals(1, config.blockCount());
         assertEquals(3.0, config.blockMultiplier("diamond_ore"), 1e-9);
         assertFalse(config.mineable("STONE"));
         assertFalse(config.mineable("DIRT"));
         assertTrue(config.mineable("DIAMOND_ORE"));
         assertFalse(config.mineable(null));
+    }
+
+    @Test
+    void blockTableFormatMixesWithMultipliers() {
+        YamlConfiguration cfg = new YamlConfiguration();
+        cfg.set("blocks.GOLD_ORE.common", 1.4);
+        cfg.set("blocks.GOLD_ORE.rare", 0.35);
+        cfg.set("blocks.GOLD_ORE.epic", 0.0448);
+        cfg.set("blocks.GOLD_ORE.legendary", 0.0224);
+        cfg.set("blocks.GOLD_ORE.mythical", 0.0056);
+        cfg.set("blocks.GRANITE", 1.5);
+        TreasuresConfig config = TreasuresConfig.parse(cfg, LOGGER);
+        assertEquals(2, config.blockCount());
+        assertEquals(1, config.blocks().size());
+        Map<TreasureTier, Double> gold = config.blockChances("gold_ore");
+        assertNotNull(gold);
+        assertEquals(5, gold.size());
+        assertEquals(1.4, gold.get(TreasureTier.COMMON), 1e-9);
+        assertEquals(0.0056, gold.get(TreasureTier.MYTHICAL), 1e-9);
+        assertEquals(1.5, config.blockMultiplier("granite"), 1e-9);
+        assertEquals(0.0, config.blockMultiplier("gold_ore"), 1e-9);
+        assertTrue(config.mineable("GOLD_ORE"));
+        assertTrue(config.mineable("GRANITE"));
+        assertFalse(config.mineable("DIRT"));
+        assertNull(config.blockChances("GRANITE"));
+    }
+
+    @Test
+    void emptyBlockTableIsIgnoredAndCannotBreakMining() {
+        YamlConfiguration cfg = new YamlConfiguration();
+        cfg.set("blocks.STONE.common", 0.0);
+        cfg.set("blocks.STONE.rare", 0.0);
+        TreasuresConfig config = TreasuresConfig.parse(cfg, LOGGER);
+        assertEquals(TreasuresConfig.defaultBlocks().size(), config.blockCount(),
+                "пустая таблица не должна отключать весь список блоков");
+        assertNull(config.blockChances("STONE"));
     }
 
     @Test

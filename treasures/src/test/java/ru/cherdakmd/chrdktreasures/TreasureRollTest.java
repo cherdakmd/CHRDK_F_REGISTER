@@ -58,6 +58,34 @@ class TreasureRollTest {
     }
 
     @Test
+    void progressionGatesNamedLootEntries() {
+        // «Зависть пиглина» открывается после 200 000 блоков — новичку не выпадет.
+        for (int seed = 0; seed < 200; seed++) {
+            TreasureRoll.Roll roll = TreasureRoll.roll(TreasureTier.LEGENDARY,
+                    TreasureRegion.NETHER, 0.0, new Random(seed), 0);
+            for (TreasureLoot.LootStack stack : roll.loot()) {
+                assertFalse("Зависть пиглина".equals(stack.name()),
+                        "закрытая запись выпала новичку");
+            }
+        }
+    }
+
+    @Test
+    void highProgressUnlocksNamedLoot() {
+        boolean seen = false;
+        for (int seed = 0; seed < 500 && !seen; seed++) {
+            TreasureRoll.Roll roll = TreasureRoll.roll(TreasureTier.LEGENDARY,
+                    TreasureRegion.NETHER, 0.0, new Random(seed), Long.MAX_VALUE);
+            for (TreasureLoot.LootStack stack : roll.loot()) {
+                if (!stack.name().isBlank()) {
+                    seen = true;
+                }
+            }
+        }
+        assertTrue(seen, "на большом прогрессе именная добыча так и не выпала");
+    }
+
+    @Test
     void lootIsAlwaysImmutable() {
         TreasureRoll.Roll roll = new TreasureRoll.Roll(TreasureTier.COMMON,
                 TreasureRegion.PLAINS, null, null);

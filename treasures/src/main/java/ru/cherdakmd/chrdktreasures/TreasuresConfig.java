@@ -19,6 +19,12 @@ import java.util.logging.Logger;
  * (камень, глубинные породы, руды, незерит), а если есть — конфиг полностью
  * заменяет его, чтобы админ мог убрать лишнее.</p>
  *
+ * <p>Запись блока бывает двух видов. Число — множитель базовых шансов
+ * редкостей (старый формат). Секция с редкостями — точные проценты на блок
+ * для каждой редкости, как в таблицах Mine Treasure; такие значения уже не
+ * зависят от {@code chances.<редкость>.chance-percent} и умножаются только на
+ * бонус глубины.</p>
+ *
  * <p>Шансы редкостей можно переопределить файлом {@code chances.yml} (его
  * пишет {@code /treasuresadmin chance}); переопределение применяется поверх
  * {@code config.yml} и не трогает комментарии основного файла.</p>
@@ -40,6 +46,7 @@ public final class TreasuresConfig {
     private final Map<TreasureTier, Double> chances;
     private final Map<TreasureTier, Double> itemChances;
     private final Map<String, Double> blocks;
+    private final Map<String, Map<TreasureTier, Double>> blockTables;
     private final double depthPerBlock;
     private final double depthMaxBonus;
     private final long placedBlockTtlSeconds;
@@ -57,7 +64,9 @@ public final class TreasuresConfig {
     private TreasuresConfig(boolean enabled, int auraRefreshTicks, int topSize,
                             Map<TreasureTier, Double> chances,
                             Map<TreasureTier, Double> itemChances,
-                            Map<String, Double> blocks, double depthPerBlock,
+                            Map<String, Double> blocks,
+                            Map<String, Map<TreasureTier, Double>> blockTables,
+                            double depthPerBlock,
                             double depthMaxBonus, long placedBlockTtlSeconds,
                             int placedBlockMaxEntries, long cooldownMillis,
                             Map<Integer, Milestone> milestones,
@@ -70,6 +79,7 @@ public final class TreasuresConfig {
         this.chances = chances;
         this.itemChances = itemChances;
         this.blocks = blocks;
+        this.blockTables = blockTables;
         this.depthPerBlock = depthPerBlock;
         this.depthMaxBonus = depthMaxBonus;
         this.placedBlockTtlSeconds = placedBlockTtlSeconds;
@@ -117,16 +127,32 @@ public final class TreasuresConfig {
         }
 
         Map<String, Double> blocks = new LinkedHashMap<>();
+        Map<String, Map<TreasureTier, Double>> blockTables = new LinkedHashMap<>();
         ConfigurationSection blockRoot = cfg.getConfigurationSection("blocks");
         if (blockRoot != null) {
             for (String key : blockRoot.getKeys(false)) {
+                String material = key.trim().toUpperCase(java.util.Locale.ROOT);
+                if (blockRoot.isConfigurationSection(key)) {
+                    ConfigurationSection table = blockRoot.getConfigurationSection(key);
+                    Map<TreasureTier, Double> values = new EnumMap<>(TreasureTier.class);
+                    boolean positive = false;
+                    for (TreasureTier tier : TreasureTier.values()) {
+                        double percent = clamp(table.getDouble(tier.id(), 0.0), 0.0, 100.0);
+                        values.put(tier, percent);
+                        positive |= percent > 0.0;
+                    }
+                    if (positive) {
+                        blockTables.put(material, Collections.unmodifiableMap(values));
+                    }
+                    continue;
+                }
                 double multiplier = clamp(blockRoot.getDouble(key, 1.0), 0.0, 100.0);
                 if (multiplier > 0.0) {
-                    blocks.put(key.trim().toUpperCase(java.util.Locale.ROOT), multiplier);
+                    blocks.put(material, multiplier);
                 }
             }
         }
-        if (blocks.isEmpty()) {
+        if (blocks.isEmpty() && blockTables.isEmpty()) {
             blocks = defaultBlocks();
         }
 
@@ -189,7 +215,9 @@ public final class TreasuresConfig {
         return new TreasuresConfig(enabled, auraTicks, topSize,
                 Collections.unmodifiableMap(chances),
                 Collections.unmodifiableMap(itemChances),
-                Collections.unmodifiableMap(blocks), depthPerBlock, depthMax, ttl, maxEntries,
+                Collections.unmodifiableMap(blocks),
+                Collections.unmodifiableMap(blockTables),
+                depthPerBlock, depthMax, ttl, maxEntries,
                 cooldown, Collections.unmodifiableMap(milestones),
                 broadcastLegendary, broadcastMythical, broadcastLegend,
                 streakWindow, streakBonusEvery,
@@ -269,12 +297,30 @@ public final class TreasuresConfig {
         return blocks.getOrDefault(material.toUpperCase(java.util.Locale.ROOT), 0.0);
     }
 
-    public boolean mineable(String material) {
-        return blockMultiplier(material) > 0.0;
+    /**
+     * Точные проценты на блок для всех редкостей или {@code null}, если у блока
+     * задан только множитель. Карта неизменяемая — её можно кэшировать.
+     */
+    public Map<TreasureTier, Double> blockChances(String material) {
+        if (material == null) {
+            return null;
+        }
+        return blockTables.get(material.toUpperCase(java.util.Locale.ROOT));
     }
 
+    /** Блок может дать клад: задан либо множитель, либо таблица процентов. */
+    public boolean mineable(String material) {
+        return blockMultiplier(material) > 0.0 || blockChances(material) != null;
+    }
+
+    /** Множители блоков старого формата. */
     public Map<String, Double> blocks() {
         return blocks;
+    }
+
+    /** Всего блоков-кладоносцев: множители и таблицы вместе. */
+    public int blockCount() {
+        return blocks.size() + blockTables.size();
     }
 
     public double depthPerBlock() {

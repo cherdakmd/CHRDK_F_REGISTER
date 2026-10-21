@@ -245,6 +245,23 @@ messages:
   top-entry-name: "<gold>%place%.</gold> <white>%name%</white>"
   top-entry-lore: "<gray>Кладов: <white>%found%</white> · коллекция: <white>%collection%/%total%</white></gray>"
 
+  # ----------------------------------- лут -----------------------------------
+  help-loot: "<yellow>/treasures loot [редкость|регион|all]</yellow> <gray>— что лежит в кладах и с каким шансом</gray>"
+  loot-header: "<gold>Лут-таблицы кладов</gold>"
+  loot-summary: "<gray>Записей: <white>%entries%</white> · регионов: <white>%regions%</white> · редкостей: <white>%tiers%</white></gray>"
+  loot-tier-count: "%tier% <dark_gray>·</dark_gray> <white>%count%</white> <gray>записей в общем пуле</gray>"
+  loot-tier-header: "<gold>Общий пул:</gold> %tier%"
+  loot-line: "<gray>·</gray> %material% <dark_gray>×%min%–%max%</dark_gray> <gray>· шанс <white>%chance%%</white></gray>"
+  loot-line-locked: "<dark_gray>· %material% ×%min%–%max% · откроется после %blocks% блоков · шанс %chance%%</dark_gray>"
+  loot-region-header: "<gold>Регион:</gold> %region%"
+  loot-region-tier: "%tier% <dark_gray>·</dark_gray> <white>%count%</white> <gray>записей</gray>"
+  loot-region-line: "<gray>·</gray> %material% <dark_gray>×%min%–%max%</dark_gray>"
+  loot-region-line-locked: "<gray>·</gray> %material% <dark_gray>×%min%–%max% · после %blocks% блоков</dark_gray>"
+  loot-hint: "<gray>Шанс — доля записи в пуле редкости с учётом вашего прогресса. Шанс клада на блок — в <yellow>config.yml → blocks</yellow>.</gray>"
+  loot-empty: "<gray>Здесь пока пусто.</gray>"
+  loot-item-name: "<!italic><white>%name%</white>"
+  loot-item-lore: "<dark_gray>Именная находка из клада</dark_gray>"
+
   # --------------------------------- команды ---------------------------------
   help-header: "<gold>Клады · команды</gold>"
   help-menu: "<yellow>/treasures</yellow> <gray>— коллекция находок</gray>"
@@ -295,5 +312,5 @@ messages:
   admin-chance-reset: "<green>Шанс %tier% снова из config.yml.</green>"
   admin-chance-unknown-tier: "<red>Неизвестная редкость «%tier%».</red>"
   admin-chance-invalid: "<red>Нужен шанс от 0 до 100 (например, 0.05) или reset.</red>"
-  admin-info: "<gold>Клады:</gold> <gray>находок <white>%items%</white>, регионов <white>%regions%</white>, редкостей <white>%tiers%</white>, кладоносных блоков <white>%blocks%</white>.</gray>"
+  admin-info: "<gold>Клады:</gold> <gray>находок <white>%items%</white>, регионов <white>%regions%</white>, редкостей <white>%tiers%</white>, блоков <white>%blocks%</white>, лут-записей <white>%loot%</white>.</gray>"
   admin-usage: "<yellow>/treasuresadmin <reload|info|give <ник> <ид>|reset <ник>|resetall confirm|chance <редкость> <процент|reset>|stats <ник>></yellow>"
