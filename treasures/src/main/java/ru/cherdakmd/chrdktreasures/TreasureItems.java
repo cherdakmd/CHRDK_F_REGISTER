@@ -82,7 +82,7 @@ public final class TreasureItems {
                     "value", format(effect)));
         }
         if (def.ability() != null) {
-            String abilityName = Messages.trusted(plugin.messages().raw(
+            Messages.Trusted abilityName = Messages.trusted(plugin.messages().raw(
                     def.ability().kind().textKey()));
             String abilityKey = bowLike(def.material()) ? "item-ability-bow" : "item-ability";
             lore.add(plugin.messages().get(abilityKey,

@@ -100,6 +100,72 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
         plugin.messages().send(player, "help-footer");
     }
 
+    /* ---------------------------------- сеты ---------------------------------- */
+
+    /**
+     * Показывает сетовые бонусы: сводку по всем регионам или разбор одного.
+     * Прогресс считается по находкам в инвентаре, а не по коллекции: сет — это
+     * награда за собранный набор, а не за факт находки.
+     */
+    private boolean sets(Player player, String filter) {
+        if (!plugin.config().setsEnabled()) {
+            plugin.messages().send(player, "set-disabled");
+            return true;
+        }
+        if (filter == null || filter.isBlank() || filter.equalsIgnoreCase("all")) {
+            plugin.messages().send(player, "set-header");
+            for (TreasureSet set : TreasureSets.all()) {
+                int pieces = plugin.sets().pieces(player, set.region());
+                plugin.messages().send(player, "set-line",
+                        "region", Messages.trusted(plugin.messages().raw(
+                                "region." + set.region().id())),
+                        "pieces", String.valueOf(pieces),
+                        "total", String.valueOf(TreasureSet.FULL_PIECES));
+            }
+            TreasureSet active = plugin.sets().active(player);
+            if (active == null) {
+                plugin.messages().send(player, "set-none");
+            } else {
+                plugin.messages().send(player, "set-active",
+                        "region", Messages.trusted(plugin.messages().raw(
+                                "region." + active.region().id())));
+            }
+            plugin.messages().send(player, "set-hint");
+            return true;
+        }
+        TreasureRegion region = TreasureRegion.byId(filter);
+        TreasureSet set = TreasureSets.of(region);
+        if (set == null) {
+            plugin.messages().send(player, "unknown-filter", "filter", filter);
+            return true;
+        }
+        int pieces = plugin.sets().pieces(player, region);
+        plugin.messages().send(player, "set-detail-header",
+                "region", Messages.trusted(plugin.messages().raw("region." + region.id())));
+        plugin.messages().send(player, "set-detail-progress",
+                "pieces", String.valueOf(pieces),
+                "total", String.valueOf(TreasureSet.FULL_PIECES));
+        plugin.messages().send(player, "set-partial",
+                "pieces", String.valueOf(TreasureSet.PARTIAL_PIECES),
+                "bonus", Messages.trusted(describe(set.partial())));
+        plugin.messages().send(player, "set-full",
+                "pieces", String.valueOf(TreasureSet.FULL_PIECES),
+                "bonus", Messages.trusted(describe(set.full())));
+        return true;
+    }
+
+    /** Строка бонуса из тех же текстов эффектов, что и лор предмета. */
+    private String describe(List<TreasureEffect> effects) {
+        List<String> parts = new ArrayList<>(effects.size());
+        for (TreasureEffect effect : effects) {
+            String key = "item-effect-"
+                    + effect.kind().name().toLowerCase(Locale.ROOT).replace('_', '-');
+            parts.add(plugin.messages().raw(key)
+                    .replace("%value%", TreasureItems.format(effect)));
+        }
+        return String.join(" <dark_gray>·</dark_gray> ", parts);
+    }
+
     /* ---------------------------------- список -------------------------------- */
 
     private boolean list(Player player, String filter) {

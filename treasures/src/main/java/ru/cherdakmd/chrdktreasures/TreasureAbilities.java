@@ -178,7 +178,7 @@ public final class TreasureAbilities {
         }
     }
 
-    private String abilityName(TreasureAbility ability) {
+    private Messages.Trusted abilityName(TreasureAbility ability) {
         return Messages.trusted(plugin.messages().raw(ability.kind().textKey()));
     }
 
