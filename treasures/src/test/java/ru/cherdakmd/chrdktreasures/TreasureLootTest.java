@@ -163,6 +163,26 @@ class TreasureLootTest {
     }
 
     @Test
+    void poolsDoNotRepeatTheSameItem() {
+        TreasureLoot.Table table = shipped();
+        for (TreasureTier tier : TreasureTier.values()) {
+            assertNoRepeats("global/" + tier.id(), table.global(tier));
+            for (TreasureRegion region : TreasureRegion.values()) {
+                assertNoRepeats(region.id() + "/" + tier.id(), table.regional(region, tier));
+            }
+        }
+    }
+
+    private static void assertNoRepeats(String where, List<TreasureLoot.LootEntry> entries) {
+        Set<String> keys = new HashSet<>();
+        for (TreasureLoot.LootEntry entry : entries) {
+            String key = entry.material() + '\u0000' + entry.name();
+            assertTrue(keys.add(key), "повтор в пуле " + where + ": " + entry.material()
+                    + " / " + entry.name());
+        }
+    }
+
+    @Test
     void versionInFileIsReadFromYaml() {
         TreasureLoot.Table table = table("""
                 version: 2
