@@ -178,7 +178,7 @@ public final class TreasureLoot {
         }
     }
 
-    private static final Table BUILTIN = builtin();
+    private static final Table BUILTIN = buildBuiltin();
     private static volatile Table active = shipped();
 
     private TreasureLoot() {
@@ -227,7 +227,7 @@ public final class TreasureLoot {
             return BUILTIN;
         }
         try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
-            return load(YamlConfiguration.loadConfiguration(reader), logger);
+            return parse(YamlConfiguration.loadConfiguration(reader), logger);
         } catch (IOException | RuntimeException exception) {
             if (logger != null) {
                 logger.severe("[CHRDK_Treasures] Не удалось прочитать " + file + ": "
@@ -240,7 +240,7 @@ public final class TreasureLoot {
     /** Читает таблицы из потока (ресурс JAR). */
     public static Table load(InputStream stream, Logger logger) throws IOException {
         try (Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
-            return load(YamlConfiguration.loadConfiguration(reader), logger);
+            return parse(YamlConfiguration.loadConfiguration(reader), logger);
         }
     }
 
@@ -322,7 +322,7 @@ public final class TreasureLoot {
 
     /* ------------------------------- встроенный ------------------------------- */
 
-    private static Table builtin() {
+    private static Table buildBuiltin() {
         Map<TreasureTier, List<LootEntry>> global = new EnumMap<>(TreasureTier.class);
         global.put(TreasureTier.COMMON, List.of(
                 entry("COAL", 3, 8), entry("IRON_INGOT", 1, 3),
