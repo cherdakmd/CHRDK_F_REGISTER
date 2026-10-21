@@ -58,8 +58,9 @@ class CooldownsTest {
         long now = 10_000L;
         cooldowns.start(player, "rog-tajgi", now, 45);
         cooldowns.start(player, "grozovoj-kolokol", now, 90);
-        assertEquals(0, cooldowns.prune(now + 50_000L));
-        assertEquals(1, cooldowns.prune(now + 60_000L));
+        // На +10 с живы оба, на +50 с «Рог тайги» (45 с) уже истёк.
+        assertEquals(0, cooldowns.prune(now + 10_000L));
+        assertEquals(1, cooldowns.prune(now + 50_000L));
         assertTrue(cooldowns.isCoolingDown(player, "grozovoj-kolokol", now + 60_000L));
         assertFalse(cooldowns.isCoolingDown(player, "rog-tajgi", now + 60_000L));
     }

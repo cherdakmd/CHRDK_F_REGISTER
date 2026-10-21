@@ -71,11 +71,12 @@ class ArtifactsConfigTest {
                     50: {pass-days: 2, diamonds: 16}
                 """);
         assertEquals(2, config.collection().rewards().size());
-        CollectionRewards.Tier capped = config.collection().rewards().get(0);
+        // Список нормализуется по возрастанию: сначала 50, затем ужатый до 100 порог.
+        assertEquals(50, config.collection().rewards().get(0).percent());
+        CollectionRewards.Tier capped = config.collection().rewards().get(1);
         assertEquals(100, capped.percent());
         assertEquals(365, capped.passDays());
         assertEquals(0, capped.diamonds());
-        assertEquals(50, config.collection().rewards().get(1).percent());
     }
 
     @Test
