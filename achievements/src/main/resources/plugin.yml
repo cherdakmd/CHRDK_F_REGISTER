@@ -1,0 +1,23 @@
+name: CHRDK_Achievements
+version: ${version}
+main: ru.cherdakmd.chrdkachievements.AchievementsPlugin
+api-version: '26.3'
+description: "24 достижения в четырёх разделах: прогресс из событий и API ядра, награды проходкой и алмазами, бейджи в нике"
+author: cherdakmd
+depend: [CHRDK_Core]
+commands:
+  achievements:
+    description: "Достижения: витрина, список и выбор бейджа"
+    aliases: [ach]
+    usage: "/achievements [menu|list|badge <ид|off>]"
+  achadmin:
+    description: "Администрирование достижений"
+    permission: chrdkachievements.admin
+    usage: "/achadmin <reload|grant <ник> <ид>|reset <ник>>"
+permissions:
+  chrdkachievements.use:
+    description: "Смотреть достижения и выбирать бейдж"
+    default: true
+  chrdkachievements.admin:
+    description: "Администрирование достижений"
+    default: op

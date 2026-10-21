@@ -72,6 +72,7 @@ jobs:
           echo "enchants_jar=enchants/build/libs/chrdk-enchants-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
           echo "tier_forge_jar=tier-forge/build/libs/chrdk-tier-forge-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
           echo "artifacts_jar=artifacts/build/libs/chrdk-artifacts-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
+          echo "achievements_jar=achievements/build/libs/chrdk-achievements-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
           echo "goals_jar=common-goals/build/libs/chrdk-common-goals-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
           echo "claims_jar=claims/build/libs/chrdk-claims-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
           echo "ranks_jar=ranks/build/libs/chrdk-ranks-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
@@ -121,6 +122,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.artifacts_jar }}" --clobber
+
+      - name: Attach the CHRDK_Achievements addon JAR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.achievements_jar }}" --clobber
 
       - name: Attach the CHRDK_CommonGoals addon JAR
         env:
@@ -180,6 +186,7 @@ jobs:
             "${{ steps.verify-version.outputs.enchants_jar }}" \
             "${{ steps.verify-version.outputs.tier_forge_jar }}" \
             "${{ steps.verify-version.outputs.artifacts_jar }}" \
+            "${{ steps.verify-version.outputs.achievements_jar }}" \
             "${{ steps.verify-version.outputs.goals_jar }}" \
             "${{ steps.verify-version.outputs.claims_jar }}" \
             "${{ steps.verify-version.outputs.ranks_jar }}" \
