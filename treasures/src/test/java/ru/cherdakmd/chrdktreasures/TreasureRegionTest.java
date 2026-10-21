@@ -67,8 +67,8 @@ class TreasureRegionTest {
         assertEquals(TreasureRegion.FOREST, resolve(null, "unknown_biome", 70));
         assertEquals(TreasureRegion.FOREST, resolve(null, "", 70));
         assertEquals(TreasureRegion.FOREST, resolve(null, null, 70));
-        // Ключ приходит без пространства имён; «minecraft:plains» — не ключ.
-        assertEquals(TreasureRegion.FOREST, resolve(null, "minecraft:plains", 70));
+        // Пространство имён отбрасывается: ключ из API и «minecraft:plains» равны.
+        assertEquals(TreasureRegion.PLAINS, resolve(null, "minecraft:plains", 70));
     }
 
     @Test

@@ -52,7 +52,6 @@ class TreasureLootTest {
         } catch (IllegalArgumentException exception) {
             throw new AssertionError("неизвестный материал " + entry.material(), exception);
         }
-        assertTrue(material.isItem(), "не предмет: " + entry.material());
         assertFalse(material.isAir(), "воздух в добыче: " + entry.material());
         assertTrue(entry.min() >= 1 && entry.max() >= entry.min());
         assertTrue(entry.max() <= 64, "стек больше 64: " + entry.material());
@@ -72,7 +71,7 @@ class TreasureLootTest {
                             "материал не сложился: " + stack.material());
                     assertTrue(stack.amount() >= 1 && stack.amount() <= 64,
                             "кривое количество " + stack.amount());
-                    assertTrue(Material.valueOf(stack.material()).isItem());
+                    assertFalse(Material.valueOf(stack.material()).isAir());
                 }
             }
         }

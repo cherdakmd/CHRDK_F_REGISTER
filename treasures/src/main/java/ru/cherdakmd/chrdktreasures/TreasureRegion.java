@@ -67,6 +67,10 @@ public enum TreasureRegion {
             return END;
         }
         String key = biomeKey == null ? "" : biomeKey.toLowerCase(Locale.ROOT);
+        int namespace = key.indexOf(':');
+        if (namespace >= 0 && namespace + 1 < key.length()) {
+            key = key.substring(namespace + 1);
+        }
         if (key.equals("deep_dark")) {
             return DEEP_DARK;
         }
