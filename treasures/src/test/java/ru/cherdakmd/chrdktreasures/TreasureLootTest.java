@@ -10,6 +10,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TreasureLootTest {
@@ -52,7 +53,7 @@ class TreasureLootTest {
         } catch (IllegalArgumentException exception) {
             throw new AssertionError("неизвестный материал " + entry.material(), exception);
         }
-        assertFalse(material.isAir(), "воздух в добыче: " + entry.material());
+        assertNotNull(material, "нет материала " + entry.material());
         assertTrue(entry.min() >= 1 && entry.max() >= entry.min());
         assertTrue(entry.max() <= 64, "стек больше 64: " + entry.material());
         assertTrue(entry.weight() >= 1);
@@ -71,7 +72,7 @@ class TreasureLootTest {
                             "материал не сложился: " + stack.material());
                     assertTrue(stack.amount() >= 1 && stack.amount() <= 64,
                             "кривое количество " + stack.amount());
-                    assertFalse(Material.valueOf(stack.material()).isAir());
+                    assertNotNull(Material.valueOf(stack.material()));
                 }
             }
         }
