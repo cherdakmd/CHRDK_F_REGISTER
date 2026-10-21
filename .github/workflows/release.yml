@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   build-and-upload:
-    name: Build JAR and attach to release
+    name: Build plugins and attach the archive
     runs-on: ubuntu-latest
     steps:
       - name: Check out tagged source
@@ -17,7 +17,7 @@ jobs:
         with:
           ref: ${{ github.event.release.tag_name }}
 
-      - name: Set up Java 21
+      - name: Set up Java
         uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -27,7 +27,7 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build plugin
+      - name: Build plugins
         shell: bash
         run: |
           set +e
@@ -64,154 +64,75 @@ jobs:
             echo "Release tag $GITHUB_REF_NAME does not match plugin version $plugin_version" >&2
             exit 1
           fi
-          echo "jar=build/libs/chrdk-core-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
-          echo "shop_jar=diamond-shop/build/libs/chrdk-diamond-shop-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
-          echo "ref_jar=referrals/build/libs/chrdk-referrals-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
-          echo "daily_jar=daily-rewards/build/libs/chrdk-daily-rewards-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
-          echo "teleports_jar=teleports/build/libs/chrdk-teleports-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
-          echo "enchants_jar=enchants/build/libs/chrdk-enchants-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
-          echo "tier_forge_jar=tier-forge/build/libs/chrdk-tier-forge-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
-          echo "artifacts_jar=artifacts/build/libs/chrdk-artifacts-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
-          echo "achievements_jar=achievements/build/libs/chrdk-achievements-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
-          echo "skills_jar=skills/build/libs/chrdk-skills-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
-          echo "treasures_jar=treasures/build/libs/chrdk-treasures-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
-          echo "goals_jar=common-goals/build/libs/chrdk-common-goals-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
-          echo "claims_jar=claims/build/libs/chrdk-claims-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
-          echo "ranks_jar=ranks/build/libs/chrdk-ranks-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
-          echo "cosmetics_jar=cosmetics/build/libs/chrdk-cosmetics-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
-          echo "battlepass_jar=battlepass/build/libs/chrdk-battlepass-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
-          echo "auction_jar=auction/build/libs/chrdk-auction-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
-          echo "lottery_jar=lottery/build/libs/chrdk-lottery-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
-          echo "queue_jar=queue/build/libs/chrdk-queue-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
-          echo "streams_jar=streams/build/libs/chrdk-streams-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
+          echo "version=$plugin_version" >> "$GITHUB_OUTPUT"
 
-      - name: Attach the Purpur plugin JAR
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.jar }}" --clobber
-
-      - name: Attach the DiamondShop addon JAR
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.shop_jar }}" --clobber
-
-      - name: Attach the Referrals addon JAR
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.ref_jar }}" --clobber
-
-      - name: Attach the DailyRewards addon JAR
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.daily_jar }}" --clobber
-
-      - name: Attach the CHRDK_Teleports addon JAR
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.teleports_jar }}" --clobber
-
-      - name: Attach the CHRDK_Enchants addon JAR
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.enchants_jar }}" --clobber
-
-      - name: Attach the CHRDK_TierForge addon JAR
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.tier_forge_jar }}" --clobber
-
-      - name: Attach the CHRDK_Artifacts addon JAR
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.artifacts_jar }}" --clobber
-
-      - name: Attach the CHRDK_Achievements addon JAR
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.achievements_jar }}" --clobber
-
-      - name: Attach the CHRDK_Skills addon JAR
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.skills_jar }}" --clobber
-
-      - name: Attach the CHRDK_Treasures addon JAR
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.treasures_jar }}" --clobber
-
-      - name: Attach the CHRDK_CommonGoals addon JAR
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.goals_jar }}" --clobber
-
-      - name: Attach the CHRDK_Claims addon JAR
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.claims_jar }}" --clobber
-
-      - name: Attach the CHRDK_Ranks addon JAR
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.ranks_jar }}" --clobber
-
-      - name: Attach the CHRDK_Cosmetics addon JAR
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.cosmetics_jar }}" --clobber
-
-      - name: Attach the CHRDK_BattlePass addon JAR
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.battlepass_jar }}" --clobber
-
-      - name: Attach the CHRDK_Queue addon JAR
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.queue_jar }}" --clobber
-
-      - name: Attach the CHRDK_Streams addon JAR
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.streams_jar }}" --clobber
-
-      - name: Attach lottery plugin JAR
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.lottery_jar }}" --clobber
-
-      - name: Attach auction plugin JAR
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.auction_jar }}" --clobber
-
-      - name: Pack all plugin JARs into one ZIP archive
+      - name: Pack all plugin JARs and the update memo into one ZIP
         shell: bash
         run: |
-          plugin_version="$(sed -n 's/^plugin_version=//p' gradle.properties)"
-          zip -j "chrdk-plugins-${plugin_version}.zip" \
-            "${{ steps.verify-version.outputs.jar }}" \
-            "${{ steps.verify-version.outputs.shop_jar }}" \
-            "${{ steps.verify-version.outputs.ref_jar }}" \
-            "${{ steps.verify-version.outputs.daily_jar }}" \
-            "${{ steps.verify-version.outputs.teleports_jar }}" \
-            "${{ steps.verify-version.outputs.enchants_jar }}" \
-            "${{ steps.verify-version.outputs.tier_forge_jar }}" \
-            "${{ steps.verify-version.outputs.artifacts_jar }}" \
-            "${{ steps.verify-version.outputs.achievements_jar }}" \
-            "${{ steps.verify-version.outputs.skills_jar }}" \
-            "${{ steps.verify-version.outputs.goals_jar }}" \
-            "${{ steps.verify-version.outputs.claims_jar }}" \
-            "${{ steps.verify-version.outputs.ranks_jar }}" \
-            "${{ steps.verify-version.outputs.cosmetics_jar }}" \
-            "${{ steps.verify-version.outputs.battlepass_jar }}" \
-            "${{ steps.verify-version.outputs.queue_jar }}" \
-            "${{ steps.verify-version.outputs.streams_jar }}" \
-            "${{ steps.verify-version.outputs.lottery_jar }}" \
-            "${{ steps.verify-version.outputs.auction_jar }}"
-          echo "zip=chrdk-plugins-${plugin_version}.zip" >> "$GITHUB_ENV"
+          set -euo pipefail
+          version="${{ steps.verify-version.outputs.version }}"
+          mkdir -p release
+          find . -path '*/build/libs/*.jar' -type f \
+            ! -name '*-sources.jar' ! -name '*-javadoc.jar' ! -name '*-dev.jar' \
+            -exec cp '{}' release/ \;
+          count="$(find release -maxdepth 1 -name '*.jar' | wc -l)"
+          echo "Собрано JAR: $count"
+          find release -maxdepth 1 -name '*.jar' -printf '%f\n' | sort
+          if [[ "$count" -lt 1 ]]; then
+            echo 'Не найден ни один JAR — архив не собран.' >&2
+            exit 1
+          fi
+          cat > 'release/ОБНОВЛЕНИЕ.txt' <<'MEMO'
+          CHRDK — обновление плагинов
+          ===========================
 
-      - name: Attach the all-in-one ZIP archive
+          Что в архиве
+          ------------
+          Все JAR-ы CHRDK одной версии: ядро CHRDK_Core и аддоны
+          (DiamondShop, Referrals, DailyRewards, Teleports, Enchants, TierForge,
+          Artifacts, Achievements, Skills, Treasures, CommonGoals, Claims, Ranks,
+          Cosmetics, BattlePass, Queue, Streams, Lottery, Auction).
+          Отдельные JAR-ы к релизу больше не прикладываются — только этот архив.
+
+          Порядок обновления
+          ------------------
+          1. Остановите сервер командой stop и дождитесь полной остановки.
+          2. Сделайте резервную копию папки plugins/ (достаточно копии целиком)
+             и мира. Это обязательный шаг: откат без копии невозможен.
+          3. Удалите из plugins/ старые JAR-ы CHRDK (файлы *.jar этой сборки).
+             Папки плагинов (plugins/CHRDK_*/) НЕ удаляйте: в них конфиги,
+             сообщения, loot.yml, chances.yml и данные игроков.
+          4. Распакуйте все JAR-ы из этого архива в plugins/ (без подпапок).
+          5. Запустите сервер и дождитесь строки «CHRDK_... включён» в консоли.
+          6. Проверьте /plugins: ядро и все аддоны должны быть зелёными (не red).
+             Красный аддон = нет ядра нужной версии или он не загрузился.
+          7. Проверьте консоль на предупреждения CHRDK: битый YAML или
+             неизвестный ключ видны сразу.
+
+          Что происходит с конфигами
+          --------------------------
+          Новые ключи добавляются в конфиг автоматически при первом запуске,
+          существующие значения сохраняются. Комментарии в старом config.yml
+          могут остаться прежними — для полного набора новых комментариев
+          удалите конкретный config.yml (только файл, не папку) перед запуском.
+          loot.yml обновлять не нужно: старый файл дополняется новыми записями
+          из JAR, ваши правки остаются. Данные игроков (JSON) мигрируют сами.
+
+          Откат
+          -----
+          Верните старые JAR-ы из резервной копии на место, верните папку
+          plugins/CHRDK_*/ из копии и запустите сервер. Данные, записанные
+          новой версией, старые сборки могут не прочитать — поэтому копия
+          делается до запуска.
+
+          Полный список изменений и инструкция — в описании релиза на GitHub
+          и в README репозитория.
+          MEMO
+          zip -j -9 "chrdk-plugins-${version}.zip" release/*.jar 'release/ОБНОВЛЕНИЕ.txt'
+          unzip -l "chrdk-plugins-${version}.zip"
+          echo "zip=chrdk-plugins-${version}.zip" >> "$GITHUB_ENV"
+
+      - name: Attach the all-in-one archive
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "${{ github.event.release.tag_name }}" "${{ env.zip }}" --clobber
