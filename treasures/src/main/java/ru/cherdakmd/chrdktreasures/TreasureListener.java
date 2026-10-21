@@ -14,13 +14,16 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import ru.cherdakmd.chrdkregister.Messages;
@@ -91,8 +94,11 @@ public final class TreasureListener implements Listener {
             return;
         }
 
+        // Проклятия проверяются на любом добытом блоке, а не только на руде.
+        plugin.curses().onMine(player);
+
         // Бонус опыта — первым: он меняет ванильный выпавший опыт, пока блок цел.
-        double xpBonus = plugin.items().sum(player, TreasureEffect.Kind.XP_BONUS);
+        double xpBonus = plugin.sets().total(player, TreasureEffect.Kind.XP_BONUS);
         if (xpBonus > 0.0 && event.getExpToDrop() > 0) {
             event.setExpToDrop((int) Math.round(event.getExpToDrop() * (1.0 + xpBonus)));
         }
@@ -123,7 +129,7 @@ public final class TreasureListener implements Listener {
         if (!ore(block.getType())) {
             return;
         }
-        double chance = plugin.items().sum(player, TreasureEffect.Kind.DOUBLE_ORE);
+        double chance = plugin.sets().total(player, TreasureEffect.Kind.DOUBLE_ORE);
         if (chance <= 0.0 || random.nextDouble() >= Math.min(1.0, chance)) {
             return;
         }
@@ -172,16 +178,19 @@ public final class TreasureListener implements Listener {
                 || victim instanceof org.bukkit.entity.ArmorStand || !honest(player)) {
             return;
         }
+        plugin.curses().onHit(player);
         TreasureItemDef weapon = plugin.items().defOf(
                 player.getInventory().getItemInMainHand());
-        if (weapon == null) {
-            return;
-        }
-        double lifesteal = weapon.value(TreasureEffect.Kind.LIFESTEAL);
+        double lifesteal = (weapon == null ? 0.0 : weapon.value(TreasureEffect.Kind.LIFESTEAL))
+                + plugin.sets().bonus(player, TreasureEffect.Kind.LIFESTEAL);
         if (lifesteal > 0.0) {
             heal(player, event.getFinalDamage() * Math.min(0.5, lifesteal));
         }
-        double flame = weapon.value(TreasureEffect.Kind.FLAME);
+        if (weapon == null) {
+            return;
+        }
+        double flame = weapon.value(TreasureEffect.Kind.FLAME)
+                + plugin.sets().bonus(player, TreasureEffect.Kind.FLAME);
         if (flame > 0.0 && random.nextDouble() < Math.min(1.0, flame)) {
             victim.setFireTicks(Math.max(victim.getFireTicks(), 100));
         }
@@ -242,9 +251,55 @@ public final class TreasureListener implements Listener {
             return;
         }
         double reduction = Math.min(0.8,
-                plugin.items().sum(player, TreasureEffect.Kind.FALL_REDUCTION));
+                plugin.sets().total(player, TreasureEffect.Kind.FALL_REDUCTION));
         if (reduction > 0.0) {
             event.setDamage(event.getDamage() * (1.0 - reduction));
+        }
+    }
+
+    /* ------------------------------ способности ------------------------------- */
+
+    /**
+     * Правая кнопка: активная способность находки.
+     *
+     * <p>Клик по сундуку, двери или верстаку не перехватывается — иначе
+     * легендарный клинок мешал бы играть. У лука и арбалета способность
+     * срабатывает только в приседе: обычный выстрел остаётся обычным.</p>
+     */
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onInteract(PlayerInteractEvent event) {
+        if (event.getHand() != EquipmentSlot.HAND) {
+            return;
+        }
+        Action action = event.getAction();
+        if (action != Action.RIGHT_CLICK_AIR && action != Action.RIGHT_CLICK_BLOCK) {
+            return;
+        }
+        if (action == Action.RIGHT_CLICK_BLOCK) {
+            Block block = event.getClickedBlock();
+            if (block != null && block.getType().isInteractable()) {
+                return;
+            }
+        }
+        Player player = event.getPlayer();
+        if (!honest(player)) {
+            return;
+        }
+        TreasureItemDef def = plugin.items().defOf(
+                player.getInventory().getItemInMainHand());
+        if (def == null || def.ability() == null) {
+            return;
+        }
+        if (plugin.abilities().use(player, def)) {
+            event.setCancelled(true);
+        }
+    }
+
+    /** Проклятия при получении урона: проверяются после расчёта урона. */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onPlayerDamaged(EntityDamageEvent event) {
+        if (event.getEntity() instanceof Player player && honest(player)) {
+            plugin.curses().onDamaged(player);
         }
     }
 
@@ -259,6 +314,8 @@ public final class TreasureListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent event) {
         lastTreasure.remove(event.getPlayer().getUniqueId());
+        plugin.abilities().forget(event.getPlayer().getUniqueId());
+        plugin.curses().forget(event.getPlayer().getUniqueId());
         minedBlocks.prune(System.currentTimeMillis());
     }
 

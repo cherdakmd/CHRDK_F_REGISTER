@@ -16,9 +16,12 @@ import java.util.Locale;
  * @param material имя материала Bukkit
  * @param effects  эффекты предмета
  * @param weight   вес в таблице своей редкости (для будущих переопределений)
+ * @param ability  активная способность по ПКМ; {@code null} — предмет пассивный
+ * @param curse    проклятие-расплата; {@code null} — предмет без цены
  */
 public record TreasureItemDef(String id, TreasureTier tier, TreasureRegion region,
-                              String material, List<TreasureEffect> effects, int weight) {
+                              String material, List<TreasureEffect> effects, int weight,
+                              TreasureAbility ability, TreasureCurse curse) {
 
     public TreasureItemDef {
         if (id == null || id.isBlank()) {
@@ -43,6 +46,16 @@ public record TreasureItemDef(String id, TreasureTier tier, TreasureRegion regio
         if (weight < 1) {
             throw new IllegalArgumentException("вес предмета меньше единицы: " + id);
         }
+    }
+
+    /** Подпись для логов и админской информации: ид, редкость и бонусы. */
+    public boolean active() {
+        return ability != null;
+    }
+
+    /** Есть ли у предмета проклятие. */
+    public boolean cursed() {
+        return curse != null;
     }
 
     /** Есть ли у предмета эффект этого вида. */

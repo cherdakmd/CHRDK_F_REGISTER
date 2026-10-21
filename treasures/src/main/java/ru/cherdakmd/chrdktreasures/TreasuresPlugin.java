@@ -31,8 +31,10 @@ import java.util.Locale;
  * <p>Поверх находок работают звания ({@link TreasureRank}), серии
  * ({@link TreasureStreak}) и оформление ({@link TreasureShowcase}); шансы
  * можно переопределить файлом {@code chances.yml}, не трогая комментарии
- * {@code config.yml}. PlaceholderAPI — мягкая интеграция: без плагина аддон
- * работает как обычно.</p>
+ * {@code config.yml}. У сильных находок есть активные способности по ПКМ
+ * ({@link TreasureAbilities}), проклятия-расплаты ({@link TreasureCurses}) и
+ * сетовые бонусы за 2 и 4 предмета региона ({@link TreasureSets}).
+ * PlaceholderAPI — мягкая интеграция: без плагина аддон работает как обычно.</p>
  */
 public final class TreasuresPlugin extends JavaPlugin {
 
@@ -44,7 +46,10 @@ public final class TreasuresPlugin extends JavaPlugin {
     private TreasureShowcase showcase;
     private TreasureItems items;
     private TreasureService service;
+    private TreasureSets sets;
     private TreasureAuras auras;
+    private TreasureAbilities abilities;
+    private TreasureCurses curses;
     private TreasureListener listener;
     private TreasuresGui gui;
     private BukkitTask saveTask;
@@ -62,7 +67,10 @@ public final class TreasuresPlugin extends JavaPlugin {
         // Конфиг читается до листенера: антинакрутка берёт из него TTL и лимит.
         reloadTreasuresConfig();
         this.service = new TreasureService(this, store);
+        this.sets = new TreasureSets(this);
         this.auras = new TreasureAuras(this);
+        this.abilities = new TreasureAbilities(this);
+        this.curses = new TreasureCurses(this);
         this.listener = new TreasureListener(this, service);
         this.gui = new TreasuresGui(this, service);
 
@@ -185,7 +193,7 @@ public final class TreasuresPlugin extends JavaPlugin {
     /** Регистрация публичного API: снаружи виден только интерфейс. */
     public void registerApi() {
         Bukkit.getServicesManager().register(ChrdkTreasuresApi.class,
-                new TreasuresApiImpl(service, items), this, ServicePriority.Normal);
+                new TreasuresApiImpl(service, items, sets, abilities), this, ServicePriority.Normal);
     }
 
     /**
@@ -259,6 +267,18 @@ public final class TreasuresPlugin extends JavaPlugin {
         return showcase;
     }
 
+    public TreasureSets sets() {
+        return sets;
+    }
+
+    public TreasureAbilities abilities() {
+        return abilities;
+    }
+
+    public TreasureCurses curses() {
+        return curses;
+    }
+
     public TreasureItems items() {
         return items;
     }
@@ -276,7 +296,8 @@ public final class TreasuresPlugin extends JavaPlugin {
     }
 
     /** Тонкая обёртка: аддоны не видят состояние и не могут его испортить. */
-    private record TreasuresApiImpl(TreasureService service, TreasureItems items)
+    private record TreasuresApiImpl(TreasureService service, TreasureItems items,
+                                    TreasureSets sets, TreasureAbilities abilities)
             implements ChrdkTreasuresApi {
 
         @Override
@@ -349,6 +370,27 @@ public final class TreasuresPlugin extends JavaPlugin {
         @Override
         public int bestStreak(Player player) {
             return service.bestStreak(player);
+        }
+
+        @Override
+        public String activeSet(Player player) {
+            TreasureSet set = sets.active(player);
+            return set == null ? null : set.region().id();
+        }
+
+        @Override
+        public int setPieces(Player player, String regionId) {
+            TreasureRegion region = TreasureRegion.byId(regionId);
+            return region == null ? 0 : sets.pieces(player, region);
+        }
+
+        @Override
+        public long abilityCooldown(Player player, String itemId) {
+            TreasureItemDef def = TreasureCatalog.find(itemId);
+            if (def == null || def.ability() == null) {
+                return 0L;
+            }
+            return abilities.remaining(player, def);
         }
 
         @Override

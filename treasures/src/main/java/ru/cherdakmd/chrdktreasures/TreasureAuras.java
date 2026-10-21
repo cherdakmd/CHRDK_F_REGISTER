@@ -5,15 +5,20 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 /**
- * Ауры находок: регенерация, дыхание под водой и огнестойкость.
+ * Ауры находок и сетовых бонусов: регенерация, дыхание под водой, огнестойкость,
+ * скорость, спешка, сопротивление, медленное падение, ночное зрение, прыгучесть
+ * и дельфинья грация.
  *
  * <p>Эти эффекты нельзя повесить атрибутом, поэтому раз в
  * {@code general.aura-refresh-ticks} плагин пересобирает их по надетым
- * находкам. Длительность берётся с запасом в 40 тиков, чтобы эффект не
- * мигал между пульсами; чужой более сильный эффект не понижается.</p>
+ * находкам и действующему сету. Длительность берётся с запасом в 40 тиков,
+ * чтобы эффект не мигал между пульсами; чужой более сильный эффект не
+ * понижается.</p>
  *
- * <p>Ауры работают только от надетых предметов: держать «Венец бездны» в
- * рюкзаке бесполезно.</p>
+ * <p>Ауры предметов работают только от надетых вещей: держать «Венец бездны»
+ * в рюкзаке бесполезно. Ауры сета — наоборот, от набора в инвентаре: четыре
+ * находки одного региона не обязаны быть надеты. Если игрок убрал сет, его
+ * аура доживает свой срок — не дольше одного пульса с запасом.</p>
  */
 public final class TreasureAuras {
 
@@ -26,18 +31,25 @@ public final class TreasureAuras {
         this.plugin = plugin;
     }
 
-    /** Пересобирает ауры игрока по текущей экипировке. */
+    /** Пересобирает ауры игрока по текущей экипировке и сету. */
     public void apply(Player player) {
         if (player == null || !player.isOnline() || !plugin.config().enabled()) {
             return;
         }
-        apply(player, TreasureEffect.Kind.REGENERATION, PotionEffectType.REGENERATION);
-        apply(player, TreasureEffect.Kind.WATER_BREATHING, PotionEffectType.WATER_BREATHING);
-        apply(player, TreasureEffect.Kind.FIRE_RESISTANCE, PotionEffectType.FIRE_RESISTANCE);
+        TreasureSets.Snapshot set = plugin.sets().snapshot(player);
+        for (TreasureEffect.Kind kind : TreasureEffect.Kind.values()) {
+            if (!kind.aura()) {
+                continue;
+            }
+            PotionEffectType type = potionOf(kind);
+            if (type == null) {
+                continue;
+            }
+            apply(player, type, plugin.items().sum(player, kind) + set.value(kind));
+        }
     }
 
-    private void apply(Player player, TreasureEffect.Kind kind, PotionEffectType type) {
-        double level = plugin.items().sum(player, kind);
+    private void apply(Player player, PotionEffectType type, double level) {
         if (level <= 0.0) {
             return;
         }
@@ -54,5 +66,25 @@ public final class TreasureAuras {
         }
         player.addPotionEffect(new PotionEffect(type, duration, amplifier,
                 true, false, true));
+    }
+
+    /** Эффект-зелье для вида ауры; {@code null} — вид не является аурой. */
+    public static PotionEffectType potionOf(TreasureEffect.Kind kind) {
+        if (kind == null) {
+            return null;
+        }
+        return switch (kind) {
+            case REGENERATION -> PotionEffectType.REGENERATION;
+            case WATER_BREATHING -> PotionEffectType.WATER_BREATHING;
+            case FIRE_RESISTANCE -> PotionEffectType.FIRE_RESISTANCE;
+            case SPEED -> PotionEffectType.SPEED;
+            case HASTE -> PotionEffectType.HASTE;
+            case RESISTANCE -> PotionEffectType.RESISTANCE;
+            case SLOW_FALLING -> PotionEffectType.SLOW_FALLING;
+            case NIGHT_VISION -> PotionEffectType.NIGHT_VISION;
+            case JUMP_BOOST -> PotionEffectType.JUMP_BOOST;
+            case DOLPHINS_GRACE -> PotionEffectType.DOLPHINS_GRACE;
+            default -> null;
+        };
     }
 }

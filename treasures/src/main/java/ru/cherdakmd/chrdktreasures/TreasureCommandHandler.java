@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * {@code /treasures} — витрина, коллекция, статистика, топ и настройки;
+ * {@code /treasures} — витрина, коллекция, статистика, топ, сеты и настройки;
  * {@code /treasuresadmin} — выдача, сброс, шансы, полная очистка и reload.
  *
  * <p>Игровые подкоманды не раскрывают названия ненайденных предметов: до
@@ -77,6 +77,7 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
             case "list" -> list(player, args.length > 1 ? args[1] : null);
             case "top" -> top(player);
             case "loot" -> loot(player, args.length > 1 ? args[1] : null);
+            case "set", "sets", "сет", "сеты" -> sets(player, args.length > 1 ? args[1] : null);
             case "stats" -> playerStats(player, args.length > 1 ? args[1] : null);
             case "toggle" -> toggle(player, args.length > 1 ? args[1] : null);
             default -> {
@@ -94,6 +95,7 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
         plugin.messages().send(player, "help-stats-other");
         plugin.messages().send(player, "help-top");
         plugin.messages().send(player, "help-loot");
+        plugin.messages().send(player, "help-set");
         plugin.messages().send(player, "help-toggle");
         plugin.messages().send(player, "help-footer");
     }
@@ -536,12 +538,25 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
             return true;
         }
         if (args.length == 1 && args[0].equalsIgnoreCase("info")) {
+            int abilities = 0;
+            int curses = 0;
+            for (TreasureItemDef def : TreasureCatalog.all()) {
+                if (def.ability() != null) {
+                    abilities++;
+                }
+                if (def.curse() != null) {
+                    curses++;
+                }
+            }
             plugin.messages().send(sender, "admin-info",
                     "items", String.valueOf(TreasureCatalog.size()),
                     "regions", String.valueOf(TreasureRegion.values().length),
                     "tiers", String.valueOf(TreasureTier.values().length),
                     "blocks", String.valueOf(plugin.config().blockCount()),
-                    "loot", String.valueOf(TreasureLoot.active().size()));
+                    "loot", String.valueOf(TreasureLoot.active().size()),
+                    "abilities", String.valueOf(abilities),
+                    "sets", String.valueOf(TreasureSets.all().size()),
+                    "curses", String.valueOf(curses));
             return true;
         }
         plugin.messages().send(sender, "admin-usage");
@@ -590,8 +605,8 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
             return List.of();
         }
         if (args.length == 1) {
-            return filter(List.of("menu", "list", "stats", "top", "loot", "toggle", "help"),
-                    args[0]);
+            return filter(List.of("menu", "list", "stats", "top", "loot", "set", "toggle",
+                    "help"), args[0]);
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("toggle")) {
             return filter(List.of("sounds", "particles", "announce"), args[1]);
@@ -604,6 +619,14 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
             for (TreasureTier tier : TreasureTier.values()) {
                 options.add(tier.id());
             }
+            for (TreasureRegion region : TreasureRegion.values()) {
+                options.add(region.id());
+            }
+            options.add("all");
+            return filter(options, args[1]);
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("set")) {
+            List<String> options = new ArrayList<>();
             for (TreasureRegion region : TreasureRegion.values()) {
                 options.add(region.id());
             }

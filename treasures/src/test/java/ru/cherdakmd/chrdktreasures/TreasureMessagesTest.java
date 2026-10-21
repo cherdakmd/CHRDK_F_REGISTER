@@ -56,7 +56,11 @@ class TreasureMessagesTest {
             "loot-tier-count", "loot-tier-header", "loot-line", "loot-line-locked",
             "loot-region-header", "loot-region-tier", "loot-region-line",
             "loot-region-line-locked", "loot-hint", "loot-empty", "loot-truncated",
-            "loot-item-name", "loot-item-lore");
+            "loot-item-name", "loot-item-lore", "item-ability", "item-ability-bow",
+            "item-curse", "item-set", "ability-used", "ability-cooldown", "curse-trigger",
+            "help-set", "set-header", "set-line", "set-active", "set-none", "set-hint",
+            "set-disabled", "set-detail-header", "set-detail-progress", "set-partial",
+            "set-full");
 
     private static ConfigurationSection messages() {
         try (var stream = TreasureMessagesTest.class.getClassLoader()
@@ -120,6 +124,36 @@ class TreasureMessagesTest {
         }
         assertText(root, "item-desc");
         assertTrue(root.getString("item-desc").contains("%text%"));
+    }
+
+    @Test
+    void abilitiesCursesAndSetsAreLocalised() {
+        ConfigurationSection root = messages();
+        Set<String> abilityNames = new HashSet<>();
+        for (TreasureAbility.Kind kind : TreasureAbility.Kind.values()) {
+            assertText(root, kind.textKey());
+            assertTrue(abilityNames.add(root.getString(kind.textKey())),
+                    "повторяющееся имя способности: " + kind.id());
+        }
+        Set<String> curseNames = new HashSet<>();
+        for (TreasureCurse.Kind kind : TreasureCurse.Kind.values()) {
+            assertText(root, kind.textKey());
+            assertTrue(curseNames.add(root.getString(kind.textKey())),
+                    "повторяющееся имя проклятия: " + kind.id());
+        }
+        for (TreasureRegion region : TreasureRegion.values()) {
+            assertText(root, "region." + region.id());
+        }
+        assertEquals(TreasureAbility.Kind.values().length, abilityNames.size());
+        assertEquals(TreasureCurse.Kind.values().length, curseNames.size());
+        assertTrue(root.getString("item-ability").contains("%name%"));
+        assertTrue(root.getString("item-ability").contains("%cooldown%"));
+        assertTrue(root.getString("item-curse").contains("%name%"));
+        assertTrue(root.getString("item-set").contains("%set%"));
+        assertTrue(root.getString("ability-used").contains("%name%"));
+        assertTrue(root.getString("ability-cooldown").contains("%seconds%"));
+        assertTrue(root.getString("set-line").contains("%pieces%"));
+        assertTrue(root.getString("set-partial").contains("%bonus%"));
     }
 
     @Test

@@ -48,7 +48,21 @@ public record TreasureEffect(Kind kind, double value) {
         /** Аура подводного дыхания, уровень I..II. */
         WATER_BREATHING(false, false),
         /** Аура огнестойкости, уровень I..II. */
-        FIRE_RESISTANCE(false, false);
+        FIRE_RESISTANCE(false, false),
+        /** Аура скорости, уровень I..II. */
+        SPEED(false, false),
+        /** Аура спешки, уровень I..II. */
+        HASTE(false, false),
+        /** Аура сопротивления урону, уровень I..II. */
+        RESISTANCE(false, false),
+        /** Аура медленного падения, уровень I..II. */
+        SLOW_FALLING(false, false),
+        /** Аура ночного зрения, уровень I..II. */
+        NIGHT_VISION(false, false),
+        /** Аура прыгучести, уровень I..II. */
+        JUMP_BOOST(false, false),
+        /** Аура дельфиньей грации, уровень I..II. */
+        DOLPHINS_GRACE(false, false);
 
         private final boolean percent;
         private final boolean attribute;
@@ -66,6 +80,19 @@ public record TreasureEffect(Kind kind, double value) {
         /** Ложится ли эффект атрибутом на сам предмет. */
         public boolean attribute() {
             return attribute;
+        }
+
+        /**
+         * Аура ли это: эффект, который пересобирается пульсом, а не атрибутом.
+         * Ауры есть только у сетовых бонусов — предметы их не носят.
+         */
+        public boolean aura() {
+            return switch (this) {
+                case REGENERATION, WATER_BREATHING, FIRE_RESISTANCE, SPEED, HASTE,
+                     RESISTANCE, SLOW_FALLING, NIGHT_VISION, JUMP_BOOST,
+                     DOLPHINS_GRACE -> true;
+                default -> false;
+            };
         }
     }
 

@@ -103,6 +103,31 @@ class TreasureConfigTest {
     }
 
     @Test
+    void abilitiesSetsAndCursesAreOnByDefault() {
+        TreasuresConfig defaults = TreasuresConfig.parse(new YamlConfiguration(), LOGGER);
+        assertTrue(defaults.abilitiesEnabled());
+        assertTrue(defaults.cursesEnabled());
+        assertTrue(defaults.setsEnabled());
+
+        YamlConfiguration cfg = new YamlConfiguration();
+        cfg.set("abilities.enabled", false);
+        cfg.set("curses.enabled", false);
+        cfg.set("sets.enabled", false);
+        TreasuresConfig off = TreasuresConfig.parse(cfg, LOGGER);
+        assertFalse(off.abilitiesEnabled());
+        assertFalse(off.cursesEnabled());
+        assertFalse(off.setsEnabled());
+    }
+
+    @Test
+    void shippedConfigKeepsNewSystemsOn() {
+        TreasuresConfig config = TreasuresConfig.parse(shipped(), LOGGER);
+        assertTrue(config.abilitiesEnabled(), "в config.yml способности выключены");
+        assertTrue(config.cursesEnabled(), "в config.yml проклятия выключены");
+        assertTrue(config.setsEnabled(), "в config.yml сеты выключены");
+    }
+
+    @Test
     void blocksSectionReplacesDefaults() {
         YamlConfiguration cfg = new YamlConfiguration();
         cfg.set("blocks.DIAMOND_ORE", 3.0);

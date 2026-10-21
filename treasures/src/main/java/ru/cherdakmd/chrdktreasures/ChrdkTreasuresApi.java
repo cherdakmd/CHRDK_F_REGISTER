@@ -59,4 +59,16 @@ public interface ChrdkTreasuresApi {
 
     /** Регион клада в точке ({@code plains}..{@code end}) или {@code null}. */
     String region(Location location);
+
+    /**
+     * Регион действующего сета игрока ({@code plains}..{@code end}) или
+     * {@code null}, если собрано меньше двух предметов одного биома.
+     */
+    String activeSet(Player player);
+
+    /** Сколько предметов сета региона надето на игрока. */
+    int setPieces(Player player, String regionId);
+
+    /** Готова ли активная способность предмета: остаток перезарядки в секундах. */
+    long abilityCooldown(Player player, String itemId);
 }

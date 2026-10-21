@@ -81,6 +81,25 @@ public final class TreasureItems {
             lore.add(plugin.messages().get("item-effect-" + key(effect.kind()),
                     "value", format(effect)));
         }
+        if (def.ability() != null) {
+            String abilityName = Messages.trusted(plugin.messages().raw(
+                    def.ability().kind().textKey()));
+            String abilityKey = bowLike(def.material()) ? "item-ability-bow" : "item-ability";
+            lore.add(plugin.messages().get(abilityKey,
+                    "name", abilityName,
+                    "cooldown", String.valueOf(def.ability().cooldownSeconds())));
+        }
+        if (def.curse() != null) {
+            lore.add(plugin.messages().get("item-curse",
+                    "name", Messages.trusted(plugin.messages().raw(
+                            def.curse().kind().textKey()))));
+        }
+        if (def.region() != null) {
+            lore.add(plugin.messages().get("item-set",
+                    "set", Messages.trusted(plugin.messages().raw(
+                            "region." + def.region().id())),
+                    "pieces", String.valueOf(TreasureSet.FULL_PIECES)));
+        }
         lore.add(net.kyori.adventure.text.Component.empty());
         lore.add(plugin.messages().get("item-tier-" + def.tier().id()));
         meta.lore(lore);
@@ -139,6 +158,12 @@ public final class TreasureItems {
         }
     }
 
+    /** Лук и арбалет: их способность срабатывает только в приседе, иначе ломается выстрел. */
+    public static boolean bowLike(String material) {
+        return material != null && (material.endsWith("_BOW") || material.equals("BOW")
+                || material.equals("CROSSBOW"));
+    }
+
     private static EquipmentSlotGroup slotFor(TreasureItemDef def) {
         String name = def.material().toUpperCase(Locale.ROOT);
         for (Map.Entry<String, EquipmentSlotGroup> entry : SLOTS.entrySet()) {
@@ -168,10 +193,9 @@ public final class TreasureItems {
         if (effect.kind().percent()) {
             return Math.round(effect.value() * 100.0) + " %";
         }
-        if (effect.kind() == TreasureEffect.Kind.REGENERATION
-                || effect.kind() == TreasureEffect.Kind.WATER_BREATHING
-                || effect.kind() == TreasureEffect.Kind.FIRE_RESISTANCE) {
-            return effect.value() >= 2.0 ? "II" : "I";
+        if (effect.kind().aura()) {
+            int level = Math.max(1, (int) Math.round(effect.value()));
+            return level >= 3 ? "III" : level == 2 ? "II" : "I";
         }
         double value = effect.value();
         if (Math.abs(value - Math.rint(value)) < 1e-9) {
@@ -195,6 +219,27 @@ public final class TreasureItems {
     /** Определение находки по предмету или {@code null}. */
     public TreasureItemDef defOf(ItemStack item) {
         return TreasureCatalog.find(idOf(item));
+    }
+
+    /**
+     * Находки в инвентаре: рюкзак, броня, руки. Нужны сетам — четыре предмета
+     * одного региона не обязаны быть надеты, их можно нести с собой.
+     * Дубликаты одного ида не учитываются дважды.
+     */
+    public List<TreasureItemDef> carried(Player player) {
+        if (player == null) {
+            return List.of();
+        }
+        Map<String, TreasureItemDef> found = new LinkedHashMap<>();
+        for (ItemStack item : player.getInventory().getContents()) {
+            collect(found, item);
+        }
+        for (ItemStack item : player.getInventory().getArmorContents()) {
+            collect(found, item);
+        }
+        collect(found, player.getInventory().getItemInOffHand());
+        collect(found, player.getInventory().getItemInMainHand());
+        return List.copyOf(found.values());
     }
 
     /**

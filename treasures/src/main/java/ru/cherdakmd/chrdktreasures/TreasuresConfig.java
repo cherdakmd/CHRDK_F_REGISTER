@@ -60,6 +60,9 @@ public final class TreasuresConfig {
     private final int streakBonusEvery;
     private final Map<TreasureRank, Integer> rankRewards;
     private final Effects effects;
+    private final boolean abilitiesEnabled;
+    private final boolean cursesEnabled;
+    private final boolean setsEnabled;
 
     private TreasuresConfig(boolean enabled, int auraRefreshTicks, int topSize,
                             Map<TreasureTier, Double> chances,
@@ -72,7 +75,9 @@ public final class TreasuresConfig {
                             Map<Integer, Milestone> milestones,
                             boolean broadcastLegendary, boolean broadcastMythical,
                             boolean broadcastLegend, int streakWindowSeconds, int streakBonusEvery,
-                            Map<TreasureRank, Integer> rankRewards, Effects effects) {
+                            Map<TreasureRank, Integer> rankRewards, Effects effects,
+                            boolean abilitiesEnabled, boolean cursesEnabled,
+                            boolean setsEnabled) {
         this.enabled = enabled;
         this.auraRefreshTicks = auraRefreshTicks;
         this.topSize = topSize;
@@ -93,6 +98,9 @@ public final class TreasuresConfig {
         this.streakBonusEvery = streakBonusEvery;
         this.rankRewards = rankRewards;
         this.effects = effects;
+        this.abilitiesEnabled = abilitiesEnabled;
+        this.cursesEnabled = cursesEnabled;
+        this.setsEnabled = setsEnabled;
     }
 
     /** Разбор без переопределений: значения шансов берутся только из config.yml. */
@@ -221,7 +229,10 @@ public final class TreasuresConfig {
                 cooldown, Collections.unmodifiableMap(milestones),
                 broadcastLegendary, broadcastMythical, broadcastLegend,
                 streakWindow, streakBonusEvery,
-                Collections.unmodifiableMap(rankRewards), effects);
+                Collections.unmodifiableMap(rankRewards), effects,
+                cfg.getBoolean("abilities.enabled", true),
+                cfg.getBoolean("curses.enabled", true),
+                cfg.getBoolean("sets.enabled", true));
     }
 
     private static TreasureTier parseTier(String raw, TreasureTier fallback) {
@@ -387,6 +398,21 @@ public final class TreasuresConfig {
 
     public Effects effects() {
         return effects;
+    }
+
+    /** Работают ли активные способности находок по ПКМ. */
+    public boolean abilitiesEnabled() {
+        return abilitiesEnabled;
+    }
+
+    /** Срабатывают ли проклятия легендарных и мифических находок. */
+    public boolean cursesEnabled() {
+        return cursesEnabled;
+    }
+
+    /** Действуют ли сетовые бонусы за 2 и 4 предмета региона. */
+    public boolean setsEnabled() {
+        return setsEnabled;
     }
 
     private static Integer parseInt(String value) {
