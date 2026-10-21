@@ -8,8 +8,8 @@ depend: [CHRDK_Core]
 softdepend: [PlaceholderAPI]
 commands:
   treasures:
-    description: "Коллекция кладов: витрина, список, статистика, топ и настройки"
-    usage: "/treasures [menu|list [фильтр]|stats [ник]|top|toggle <sounds|particles|announce>]"
+    description: "Клады: витрина, список, статистика, топ, лут-таблицы и настройки"
+    usage: "/treasures [menu|list [фильтр]|loot [фильтр]|stats [ник]|top|toggle <sounds|particles|announce>]"
   treasuresadmin:
     description: "Администрирование кладов"
     permission: chrdktreasures.admin
