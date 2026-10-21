@@ -3500,7 +3500,7 @@ API ядра (`hasActivePass`, `isRegistered`, `isTwoFactorEnabled`) при вх
 в ServicesManager (`addProgress`, `unlockedCount`, `isUnlocked`, `grant`) —
 другие аддоны могут двигать счётчики, не завися от внутренних классов.
 
-**9. Тесты.** 25 `@Test` в 4 классах: `AchievementRegistryTest` (6: 24 = 6×4,
+**9. Тесты.** 23 `@Test` в 4 классах: `AchievementRegistryTest` (6: 24 = 6×4,
 уникальность, «Легенда», два бейджа, ключи messages.yml, рост порогов),
 `AchievementRulesTest` (7: проценты, порог, отображение, новые открытия,
 флаги, полоса, метрики), `AchievementStoreTest` (6: накопление, идемпотентность,
