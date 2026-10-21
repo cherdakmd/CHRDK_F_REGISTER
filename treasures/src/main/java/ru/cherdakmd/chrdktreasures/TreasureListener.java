@@ -120,6 +120,9 @@ public final class TreasureListener implements Listener {
 
     /** Шанс второй порции добычи из блока — эффект DOUBLE_ORE. */
     private void doubleDrop(Player player, Block block) {
+        if (!ore(block.getType())) {
+            return;
+        }
         double chance = plugin.items().sum(player, TreasureEffect.Kind.DOUBLE_ORE);
         if (chance <= 0.0 || random.nextDouble() >= Math.min(1.0, chance)) {
             return;
@@ -144,6 +147,14 @@ public final class TreasureListener implements Listener {
         }
     }
 
+    /** Руда ли это: двойная добыча не должна дублировать песок и бревна. */
+    private static boolean ore(Material material) {
+        if (material == null) {
+            return false;
+        }
+        return material == Material.ANCIENT_DEBRIS || material.name().endsWith("_ORE");
+    }
+
     /** Запоминаем поставленные блоки — с них клада не будет. */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event) {
@@ -158,7 +169,7 @@ public final class TreasureListener implements Listener {
     public void onMelee(EntityDamageByEntityEvent event) {
         if (!(event.getDamager() instanceof Player player)
                 || !(event.getEntity() instanceof LivingEntity victim)
-                || victim instanceof Player || !honest(player)) {
+                || victim instanceof org.bukkit.entity.ArmorStand || !honest(player)) {
             return;
         }
         TreasureItemDef weapon = plugin.items().defOf(

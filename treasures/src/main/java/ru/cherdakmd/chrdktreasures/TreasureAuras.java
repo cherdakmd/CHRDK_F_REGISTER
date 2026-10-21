@@ -28,7 +28,7 @@ public final class TreasureAuras {
 
     /** Пересобирает ауры игрока по текущей экипировке. */
     public void apply(Player player) {
-        if (player == null || !player.isOnline()) {
+        if (player == null || !player.isOnline() || !plugin.config().enabled()) {
             return;
         }
         apply(player, TreasureEffect.Kind.REGENERATION, PotionEffectType.REGENERATION);

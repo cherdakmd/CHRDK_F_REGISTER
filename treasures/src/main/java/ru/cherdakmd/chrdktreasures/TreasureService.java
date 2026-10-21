@@ -282,7 +282,9 @@ public final class TreasureService {
     /** Подсказка игроку о том, что даёт следующая редкость. */
     public String nextTierHint(Player player) {
         long mined = mined(player);
-        for (TreasureTier tier : TreasureTier.fromRarest()) {
+        // Ближайшая закрытая редкость — по возрастанию порога, а не от самой
+        // редкой: иначе новичку показывали бы «легендарный через 15 000».
+        for (TreasureTier tier : TreasureTier.values()) {
             if (tier.minMined() > mined) {
                 String name = plugin.messages().raw("tier." + tier.id());
                 return plugin.messages().raw("stats-next-tier",
