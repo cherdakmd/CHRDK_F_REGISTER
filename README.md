@@ -1449,21 +1449,21 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.129-SNAPSHOT.jar`, аддон
-CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.129-SNAPSHOT.jar`, реферальный —
-`referrals/build/libs/chrdk-referrals-1.4.129-SNAPSHOT.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.129-SNAPSHOT.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.129-SNAPSHOT.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.129-SNAPSHOT.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.129-SNAPSHOT.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.129-SNAPSHOT.jar` (хартия чар — при установленном аддоне чар), общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.129-SNAPSHOT.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.129-SNAPSHOT.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.129-SNAPSHOT.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.129-SNAPSHOT.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.129-SNAPSHOT.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.129-SNAPSHOT.jar`, стримерская программа —
-`streams/build/libs/chrdk-streams-1.4.129-SNAPSHOT.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.129.jar`, аддон
+CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.129.jar`, реферальный —
+`referrals/build/libs/chrdk-referrals-1.4.129.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.129.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.129.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.129.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.129.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.129.jar` (хартия чар — при установленном аддоне чар), общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.129.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.129.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.129.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.129.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.129.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.129.jar`, стримерская программа —
+`streams/build/libs/chrdk-streams-1.4.129.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). Оба JAR прикладываются к каждому релизу на GitHub.
 
 ---
@@ -3372,7 +3372,7 @@ CI собирает снапшот как обычный пуш в ветку; �
 
 ---
 
-### CHRDK_Artifacts: 15 полезных и 15 вредных свойств — снапшот 1.4.129-SNAPSHOT
+### CHRDK_Artifacts: 15 полезных и 15 вредных свойств — релиз 1.4.129
 
 Волна 19 — та же идея вариативности, теперь для артефактов. Раньше каталог был
 набором фиксированных предметов: два «Камня стойкости» всегда одинаковы. Теперь
@@ -3430,9 +3430,13 @@ PDC предмета — две копии одного ида могут быт
 два теста секции `traits.*` в `ArtifactsConfigTest`.
 
 **Обновление:** версия 1.4.129, перезапуск сервера. JAR —
-`artifacts/build/libs/chrdk-artifacts-1.4.129-SNAPSHOT.jar`. Конфиг старых версий
-читается без миграции: секция `traits` необязательна. Снапшот 1.4.129 не
-тегируется — тег и GitHub-релиз создаются отдельной командой.
+`artifacts/build/libs/chrdk-artifacts-1.4.129.jar`. Конфиг старых версий
+читается без миграции: секция `traits` необязательна.
+
+**Релиз 1.4.129** собирает три волны подряд: 1.4.127 — 15+15 аффиксов и
+случайные зачарования тир-предметов; 1.4.128 — 15 светлых чар, 15 проклятий и
+публичный API чар; 1.4.129 — 15+15 свойств артефактов. Тег `v1.4.129` и полный
+набор JAR (ядро + все аддоны) — в GitHub-релизе.
 
 ---
 
