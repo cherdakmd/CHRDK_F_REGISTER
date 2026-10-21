@@ -4,20 +4,44 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Содержимое одного клада.
+ * Держатель содержимого клада: снаружи используется {@link Roll}, а статические
+ * {@link #roll} и {@link #empty} — точка входа для слушателей.
  *
  * <p>Сначала решается, именная это находка или ванильная добыча: шанс именного
  * предмета растёт с редкостью (у обычного 45 %, у легендарного 90 %). Если
  * именной предмет выпал, ванильной добычи нет — иначе легендарный клад
  * превращался бы в «клинок плюс алмазы», и ценность предмета размывалась.</p>
- *
- * @param tier   редкость
- * @param region регион (у мифического — регион находки, для статистики)
- * @param item   именной предмет или {@code null}
- * @param loot   ванильная добыча (пустая, если выпал предмет)
  */
-public record Roll(TreasureTier tier, TreasureRegion region, TreasureItemDef item,
-                   List<TreasureLoot.LootStack> loot) {
+public final class TreasureRoll {
+
+    private TreasureRoll() {
+    }
+
+    /** Пустой результат — на всякий случай для админских путей. */
+    public static Roll empty(TreasureTier tier, TreasureRegion region) {
+        return Roll.empty(tier, region);
+    }
+
+    /**
+     * Бросает содержимое клада.
+     *
+     * @param itemChance шанс именного предмета 0..1
+     */
+    public static Roll roll(TreasureTier tier, TreasureRegion region,
+                            double itemChance, Random random) {
+        return Roll.roll(tier, region, itemChance, random);
+    }
+
+    /**
+     * Содержимое одного клада.
+     *
+     * @param tier   редкость
+     * @param region регион (у мифического — регион находки, для статистики)
+     * @param item   именной предмет или {@code null}
+     * @param loot   ванильная добыча (пустая, если выпал предмет)
+     */
+    public record Roll(TreasureTier tier, TreasureRegion region, TreasureItemDef item,
+                       List<TreasureLoot.LootStack> loot) {
 
     public Roll {
         loot = List.copyOf(loot == null ? List.of() : loot);
@@ -64,4 +88,5 @@ public record Roll(TreasureTier tier, TreasureRegion region, TreasureItemDef ite
         }
         return pool.get(random.nextInt(pool.size()));
     }
+}
 }
