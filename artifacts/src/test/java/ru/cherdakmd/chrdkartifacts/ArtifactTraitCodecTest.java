@@ -34,7 +34,7 @@ class ArtifactTraitCodecTest {
         source.put("tormoz", 0);
         assertEquals("silnyj-zahvat:2;vechnyj-golod:1", ArtifactTraitCodec.encode(source));
         assertEquals("", ArtifactTraitCodec.encode(Map.of()));
-        assertEquals("", ArtifactTraitCodec.encode(null));
+        assertEquals("", ArtifactTraitCodec.encode((Map<String, Integer>) null));
     }
 
     @Test
