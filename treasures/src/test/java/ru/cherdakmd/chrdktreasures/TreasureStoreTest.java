@@ -157,6 +157,60 @@ class TreasureStoreTest {
         assertTrue(Files.isRegularFile(folder.resolve("treasures.json")));
     }
 
+
+    @Test
+    void streakExtendsWithinWindowAndResetsAfterPause() {
+        TreasureStore store = store();
+        String player = UUID.randomUUID().toString();
+        long start = 1_000_000L;
+        assertEquals(1, store.recordTreasure(player, TreasureTier.COMMON, null,
+                start, 10_000L));
+        assertEquals(2, store.recordTreasure(player, TreasureTier.RARE, null,
+                start + 5_000L, 10_000L));
+        assertEquals(3, store.recordTreasure(player, TreasureTier.EPIC, null,
+                start + 15_000L, 10_000L));
+        assertEquals(1, store.recordTreasure(player, TreasureTier.COMMON, null,
+                start + 40_000L, 10_000L));
+        assertEquals(1, store.streak(player));
+        assertEquals(3, store.bestStreak(player));
+        assertEquals(start + 40_000L, store.lastFind(player));
+    }
+
+    @Test
+    void streakSurvivesReloadAndResetClearsIt() throws Exception {
+        String player = UUID.randomUUID().toString();
+        TreasureStore store = store();
+        long now = 1_700_000_000_000L;
+        store.recordTreasure(player, TreasureTier.COMMON, null, now - 1_000L, 600_000L);
+        assertEquals(2, store.recordTreasure(player, TreasureTier.COMMON, null,
+                now, 600_000L));
+        store.saveNow();
+
+        TreasureStore reloaded = store();
+        assertEquals(2, reloaded.streak(player));
+        assertEquals(2, reloaded.bestStreak(player));
+        assertEquals(now, reloaded.lastFind(player));
+
+        reloaded.reset(player);
+        assertEquals(0, reloaded.streak(player));
+        assertEquals(0, reloaded.bestStreak(player));
+        assertEquals(0L, reloaded.lastFind(player));
+    }
+
+    @Test
+    void resetAllClearsEveryProfile() {
+        TreasureStore store = store();
+        String first = UUID.randomUUID().toString();
+        String second = UUID.randomUUID().toString();
+        store.recordTreasure(first, TreasureTier.COMMON, "plains-reap-hook");
+        store.recordTreasure(second, TreasureTier.RARE, null);
+        assertEquals(2, store.resetAll());
+        assertEquals(0L, store.found(first));
+        assertEquals(0L, store.found(second));
+        assertTrue(store.isDirty());
+        assertEquals(0, store.resetAll());
+    }
+
     @Test
     void brokenFileDoesNotCrashLoad() throws Exception {
         Files.writeString(folder.resolve("treasures.json"), "{ это не json ");

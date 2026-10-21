@@ -48,6 +48,15 @@ public interface ChrdkTreasuresApi {
      */
     boolean give(Player player, String itemId);
 
+    /** Звание кладоискателя: {@code novice}..{@code legend}. */
+    String rank(Player player);
+
+    /** Текущая серия находок (0 — серии нет). */
+    int streak(Player player);
+
+    /** Личный рекорд серии. */
+    int bestStreak(Player player);
+
     /** Регион клада в точке ({@code plains}..{@code end}) или {@code null}. */
     String region(Location location);
 }

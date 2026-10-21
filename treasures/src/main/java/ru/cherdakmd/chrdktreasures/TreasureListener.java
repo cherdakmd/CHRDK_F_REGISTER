@@ -276,6 +276,7 @@ public final class TreasureListener implements Listener {
         if (plugin.store().sounds(player.getUniqueId().toString())) {
             player.playSound(player.getLocation(), soundOf(found.tier()), 0.9f, 1.0f);
         }
+        plugin.showcase().show(player, found);
         if (plugin.store().announce(player.getUniqueId().toString())) {
             if (found.named()) {
                 plugin.messages().send(player, "treasure-found-named",

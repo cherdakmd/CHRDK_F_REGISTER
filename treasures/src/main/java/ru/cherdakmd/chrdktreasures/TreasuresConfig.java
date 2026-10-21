@@ -18,11 +18,20 @@ import java.util.logging.Logger;
  * задаётся секцией {@code blocks}: если её нет, используется встроенный список
  * (камень, глубинные породы, руды, незерит), а если есть — конфиг полностью
  * заменяет его, чтобы админ мог убрать лишнее.</p>
+ *
+ * <p>Шансы редкостей можно переопределить файлом {@code chances.yml} (его
+ * пишет {@code /treasuresadmin chance}); переопределение применяется поверх
+ * {@code config.yml} и не трогает комментарии основного файла.</p>
  */
 public final class TreasuresConfig {
 
     /** Награда за количество найденных именных предметов. */
     public record Milestone(int found, int diamonds) {
+    }
+
+    /** Оформление находки: заголовок, строка действия и фейерверк. */
+    public record Effects(boolean titles, boolean actionbar, boolean fireworks,
+                          TreasureTier titleMinTier, TreasureTier fireworkMinTier) {
     }
 
     private final boolean enabled;
@@ -39,6 +48,11 @@ public final class TreasuresConfig {
     private final Map<Integer, Milestone> milestones;
     private final boolean broadcastLegendary;
     private final boolean broadcastMythical;
+    private final boolean broadcastLegend;
+    private final int streakWindowSeconds;
+    private final int streakBonusEvery;
+    private final Map<TreasureRank, Integer> rankRewards;
+    private final Effects effects;
 
     private TreasuresConfig(boolean enabled, int auraRefreshTicks, int topSize,
                             Map<TreasureTier, Double> chances,
@@ -47,7 +61,9 @@ public final class TreasuresConfig {
                             double depthMaxBonus, long placedBlockTtlSeconds,
                             int placedBlockMaxEntries, long cooldownMillis,
                             Map<Integer, Milestone> milestones,
-                            boolean broadcastLegendary, boolean broadcastMythical) {
+                            boolean broadcastLegendary, boolean broadcastMythical,
+                            boolean broadcastLegend, int streakWindowSeconds, int streakBonusEvery,
+                            Map<TreasureRank, Integer> rankRewards, Effects effects) {
         this.enabled = enabled;
         this.auraRefreshTicks = auraRefreshTicks;
         this.topSize = topSize;
@@ -62,9 +78,25 @@ public final class TreasuresConfig {
         this.milestones = milestones;
         this.broadcastLegendary = broadcastLegendary;
         this.broadcastMythical = broadcastMythical;
+        this.broadcastLegend = broadcastLegend;
+        this.streakWindowSeconds = streakWindowSeconds;
+        this.streakBonusEvery = streakBonusEvery;
+        this.rankRewards = rankRewards;
+        this.effects = effects;
     }
 
+    /** Разбор без переопределений: значения шансов берутся только из config.yml. */
     public static TreasuresConfig parse(FileConfiguration cfg, Logger logger) {
+        return parse(cfg, Map.of(), logger);
+    }
+
+    /**
+     * Разбор с переопределениями шансов из {@code chances.yml}.
+     *
+     * @param overrides шансы в процентах поверх config.yml; пустая карта — без правок
+     */
+    public static TreasuresConfig parse(FileConfiguration cfg,
+                                        Map<TreasureTier, Double> overrides, Logger logger) {
         boolean enabled = cfg.getBoolean("general.enabled", true);
         int auraTicks = (int) clamp(cfg.getLong("general.aura-refresh-ticks", 60L), 20L, 200L);
         int topSize = (int) clamp(cfg.getLong("general.top-size", 10L), 3L, 50L);
@@ -76,6 +108,10 @@ public final class TreasuresConfig {
                     tier.defaultChancePercent()), 0.0, 100.0);
             double item = clamp(cfg.getDouble("chances." + tier.id() + ".item-chance",
                     tier.defaultItemChance()), 0.0, 1.0);
+            Double override = overrides == null ? null : overrides.get(tier);
+            if (override != null && !override.isNaN()) {
+                chance = clamp(override, 0.0, 100.0);
+            }
             chances.put(tier, chance);
             itemChances.put(tier, item);
         }
@@ -126,13 +162,43 @@ public final class TreasuresConfig {
 
         boolean broadcastLegendary = cfg.getBoolean("feedback.broadcast-legendary", true);
         boolean broadcastMythical = cfg.getBoolean("feedback.broadcast-mythical", true);
+        boolean broadcastLegend = cfg.getBoolean("feedback.broadcast-legend", true);
+
+        int streakWindow = (int) clamp(cfg.getLong("streak.window-seconds", 600L),
+                10L, 86_400L);
+        int streakBonusEvery = (int) clamp(cfg.getLong("streak.bonus-every", 5L), 0L, 100L);
+
+        Map<TreasureRank, Integer> rankRewards = new EnumMap<>(TreasureRank.class);
+        for (TreasureRank rank : TreasureRank.values()) {
+            if (rank == TreasureRank.NOVICE) {
+                continue;
+            }
+            int diamonds = (int) clamp(
+                    cfg.getLong("ranks." + rank.id() + ".diamonds", rank.diamonds()),
+                    0L, 576L);
+            rankRewards.put(rank, diamonds);
+        }
+
+        Effects effects = new Effects(
+                cfg.getBoolean("effects.titles", true),
+                cfg.getBoolean("effects.actionbar", true),
+                cfg.getBoolean("effects.fireworks", true),
+                parseTier(cfg.getString("effects.title-min-tier"), TreasureTier.EPIC),
+                parseTier(cfg.getString("effects.firework-min-tier"), TreasureTier.LEGENDARY));
 
         return new TreasuresConfig(enabled, auraTicks, topSize,
                 Collections.unmodifiableMap(chances),
                 Collections.unmodifiableMap(itemChances),
                 Collections.unmodifiableMap(blocks), depthPerBlock, depthMax, ttl, maxEntries,
                 cooldown, Collections.unmodifiableMap(milestones),
-                broadcastLegendary, broadcastMythical);
+                broadcastLegendary, broadcastMythical, broadcastLegend,
+                streakWindow, streakBonusEvery,
+                Collections.unmodifiableMap(rankRewards), effects);
+    }
+
+    private static TreasureTier parseTier(String raw, TreasureTier fallback) {
+        TreasureTier tier = TreasureTier.byId(raw);
+        return tier == null ? fallback : tier;
     }
 
     /** Встроенный набор блоков-кладоносцев. */
@@ -241,6 +307,40 @@ public final class TreasuresConfig {
 
     public boolean broadcastMythical() {
         return broadcastMythical;
+    }
+
+    /** Объявлять всему серверу достижение ранга «Легенда». */
+    public boolean broadcastLegend() {
+        return broadcastLegend;
+    }
+
+    /** Окно серии в миллисекундах; 0 — серии выключены (каждая находка новая). */
+    public long streakWindowMillis() {
+        return streakWindowSeconds * 1000L;
+    }
+
+    public int streakWindowSeconds() {
+        return streakWindowSeconds;
+    }
+
+    /** Каждая N-я находка серии даёт бонус; 0 — бонусов нет. */
+    public int streakBonusEvery() {
+        return streakBonusEvery;
+    }
+
+    public int rankReward(TreasureRank rank) {
+        if (rank == null || rank == TreasureRank.NOVICE) {
+            return 0;
+        }
+        return rankRewards.getOrDefault(rank, rank.diamonds());
+    }
+
+    public Map<TreasureRank, Integer> rankRewards() {
+        return rankRewards;
+    }
+
+    public Effects effects() {
+        return effects;
     }
 
     private static Integer parseInt(String value) {

@@ -27,12 +27,24 @@ import java.util.Random;
  */
 public final class TreasureService {
 
-    /** Итог одного найденного клада. */
+    /**
+     * Итог одного найденного клада.
+     *
+     * <p>{@code bonus} — дополнительная добыча за серию находок (может быть
+     * пустой), {@code streak} — длина серии после этой находки, {@code rank} —
+     * звание игрока уже с учётом находки.</p>
+     */
     public record Found(TreasureTier tier, TreasureRegion region, TreasureItemDef item,
-                        List<TreasureLoot.LootStack> loot, List<Integer> milestones) {
+                        List<TreasureLoot.LootStack> loot, List<Integer> milestones,
+                        int streak, TreasureRank rank,
+                        List<TreasureLoot.LootStack> bonus) {
 
         public boolean named() {
             return item != null;
+        }
+
+        public boolean bonusGranted() {
+            return !bonus.isEmpty();
         }
     }
 
@@ -75,6 +87,33 @@ public final class TreasureService {
         return TreasureCatalog.size();
     }
 
+    /** Текущее звание кладоискателя. */
+    public TreasureRank rank(Player player) {
+        return TreasureRank.of(found(player));
+    }
+
+    /** Следующее звание или {@code null}, если игрок уже легенда. */
+    public TreasureRank nextRank(Player player) {
+        return rank(player).next();
+    }
+
+    public int streak(Player player) {
+        return player == null ? 0 : store.streak(key(player));
+    }
+
+    public int bestStreak(Player player) {
+        return player == null ? 0 : store.bestStreak(key(player));
+    }
+
+    /** Сколько миллисекунд осталось жить серии (0 — уже прервана). */
+    public long streakRemaining(Player player) {
+        if (player == null) {
+            return 0L;
+        }
+        return TreasureStreak.remainingMillis(store.lastFind(key(player)),
+                System.currentTimeMillis(), plugin.config().streakWindowMillis());
+    }
+
     /** Сколько блоков осталось до следующей редкости (0 — всё открыто). */
     public long blocksToNextTier(Player player) {
         long mined = mined(player);
@@ -105,6 +144,11 @@ public final class TreasureService {
         if (player != null) {
             store.reset(key(player));
         }
+    }
+
+    /** Сбрасывает прогресс всех игроков; возвращает число профилей. */
+    public int resetAll() {
+        return store.resetAll();
     }
 
     public void rememberName(Player player) {
@@ -165,8 +209,10 @@ public final class TreasureService {
     public Found give(Player player, TreasureTier tier, TreasureRegion region,
                       TreasureRoll.Roll roll) {
         if (player == null || tier == null || roll == null) {
-            return new Found(tier, region, null, List.of(), List.of());
+            return new Found(tier, region, null, List.of(), List.of(), 0,
+                    TreasureRank.NOVICE, List.of());
         }
+        TreasureRank before = rank(player);
         store.setName(key(player), player.getName());
         TreasureItemDef item = roll.item();
         if (item != null) {
@@ -181,9 +227,64 @@ public final class TreasureService {
                 giveStack(player, itemStack);
             }
         }
-        store.recordTreasure(key(player), tier, item == null ? null : item.id());
+        int streak = store.recordTreasure(key(player), tier,
+                item == null ? null : item.id(), System.currentTimeMillis(),
+                plugin.config().streakWindowMillis());
         List<Integer> milestones = checkMilestones(player);
-        return new Found(tier, region, item, roll.loot(), milestones);
+        List<TreasureLoot.LootStack> bonus = grantStreakBonus(player, tier, region, streak);
+        checkRank(player, before);
+        return new Found(tier, region, item, roll.loot(), milestones, streak,
+                rank(player), bonus);
+    }
+
+    /**
+     * Бонус за серию: дополнительная порция добычи без именной находки.
+     *
+     * <p>Именные предметы в бонус не попадают намеренно — иначе серия стала бы
+     * вторым, скрытым броском коллекции и обесценила бы редкость. Бонус — это
+     * ресурсы, и он честно объявляется игроку.</p>
+     */
+    private List<TreasureLoot.LootStack> grantStreakBonus(Player player, TreasureTier tier,
+                                                          TreasureRegion region, int streak) {
+        if (!TreasureStreak.bonusDue(streak, plugin.config().streakBonusEvery())) {
+            return List.of();
+        }
+        // Нулевой шанс именной находки: бонус — только ресурсы, иначе серия
+        // превращалась бы во второй бросок коллекции.
+        TreasureRoll.Roll extra = TreasureRoll.roll(tier, region, 0.0, random);
+        for (TreasureLoot.LootStack stack : extra.loot()) {
+            ItemStack itemStack = stackOf(stack);
+            if (itemStack != null) {
+                giveStack(player, itemStack);
+            }
+        }
+        if (!extra.loot().isEmpty()) {
+            plugin.messages().send(player, "streak-bonus", "streak", String.valueOf(streak));
+        }
+        return extra.loot();
+    }
+
+    /** Объявляет новый ранг и выдаёт награду. */
+    private void checkRank(Player player, TreasureRank before) {
+        TreasureRank after = rank(player);
+        if (after == null || before == null || after.ordinal() <= before.ordinal()) {
+            return;
+        }
+        int diamonds = plugin.config().rankReward(after);
+        if (diamonds > 0) {
+            giveDiamonds(player, diamonds);
+        }
+        String rankName = plugin.messages().raw("rank." + after.id());
+        plugin.messages().send(player, "rank-up",
+                "rank", Messages.trusted(rankName),
+                "diamonds", String.valueOf(diamonds));
+        if (after == TreasureRank.LEGEND && plugin.config().broadcastLegend()) {
+            for (Player online : plugin.getServer().getOnlinePlayers()) {
+                plugin.messages().send(online, "rank-up-broadcast",
+                        "player", player.getName(),
+                        "rank", Messages.trusted(rankName));
+            }
+        }
     }
 
     /** Принудительная выдача находки (админская команда). */
@@ -195,9 +296,12 @@ public final class TreasureService {
         if (stack == null) {
             return false;
         }
+        TreasureRank before = rank(player);
         giveStack(player, stack);
-        store.recordTreasure(key(player), def.tier(), def.id());
+        store.recordTreasure(key(player), def.tier(), def.id(), System.currentTimeMillis(),
+                plugin.config().streakWindowMillis());
         checkMilestones(player);
+        checkRank(player, before);
         return true;
     }
 

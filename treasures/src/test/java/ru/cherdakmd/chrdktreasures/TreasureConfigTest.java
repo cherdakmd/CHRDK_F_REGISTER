@@ -120,6 +120,64 @@ class TreasureConfigTest {
         assertEquals(TreasuresConfig.defaultMilestones(), fallback.milestones());
     }
 
+
+    @Test
+    void overridesReplaceChancesOnTopOfConfig() {
+        YamlConfiguration cfg = new YamlConfiguration();
+        cfg.set("chances.legendary.chance-percent", 0.008);
+        TreasuresConfig config = TreasuresConfig.parse(cfg,
+                Map.of(TreasureTier.LEGENDARY, 0.5, TreasureTier.RARE, 150.0), LOGGER);
+        assertEquals(0.5, config.chance(TreasureTier.LEGENDARY), 1e-9);
+        assertEquals(100.0, config.chance(TreasureTier.RARE), 1e-9);
+        assertEquals(1.0, config.chance(TreasureTier.COMMON), 1e-9);
+        assertEquals(0.008, TreasuresConfig.parse(cfg, LOGGER)
+                .chance(TreasureTier.LEGENDARY), 1e-9);
+    }
+
+    @Test
+    void streakRankAndEffectDefaultsAreDocumented() {
+        TreasuresConfig config = TreasuresConfig.parse(new YamlConfiguration(), LOGGER);
+        assertEquals(600, config.streakWindowSeconds());
+        assertEquals(600_000L, config.streakWindowMillis());
+        assertEquals(5, config.streakBonusEvery());
+        assertEquals(4, config.rankReward(TreasureRank.SEEKER));
+        assertEquals(80, config.rankReward(TreasureRank.LEGEND));
+        assertEquals(0, config.rankReward(TreasureRank.NOVICE));
+        assertTrue(config.effects().titles());
+        assertTrue(config.effects().actionbar());
+        assertTrue(config.effects().fireworks());
+        assertEquals(TreasureTier.EPIC, config.effects().titleMinTier());
+        assertEquals(TreasureTier.LEGENDARY, config.effects().fireworkMinTier());
+        assertTrue(config.broadcastLegend());
+    }
+
+    @Test
+    void shippedConfigCarriesNewSections() {
+        TreasuresConfig config = TreasuresConfig.parse(shipped(), LOGGER);
+        assertEquals(600, config.streakWindowSeconds());
+        assertEquals(5, config.streakBonusEvery());
+        assertEquals(4, config.rankReward(TreasureRank.SEEKER));
+        assertEquals(80, config.rankReward(TreasureRank.LEGEND));
+        assertTrue(config.effects().fireworks());
+        assertTrue(config.broadcastLegend());
+    }
+
+    @Test
+    void newValuesAreClampedAndBadTiersFallBack() {
+        YamlConfiguration cfg = new YamlConfiguration();
+        cfg.set("streak.window-seconds", 1);
+        cfg.set("streak.bonus-every", 500);
+        cfg.set("ranks.legend.diamonds", 5000);
+        cfg.set("effects.title-min-tier", "нет-такой");
+        cfg.set("effects.firework-min-tier", "common");
+        TreasuresConfig config = TreasuresConfig.parse(cfg, LOGGER);
+        assertEquals(10, config.streakWindowSeconds());
+        assertEquals(100, config.streakBonusEvery());
+        assertEquals(576, config.rankReward(TreasureRank.LEGEND));
+        assertEquals(TreasureTier.EPIC, config.effects().titleMinTier());
+        assertEquals(TreasureTier.COMMON, config.effects().fireworkMinTier());
+    }
+
     @Test
     void defaultsAreImmutableAndPositive() {
         Map<String, Double> blocks = TreasuresConfig.defaultBlocks();

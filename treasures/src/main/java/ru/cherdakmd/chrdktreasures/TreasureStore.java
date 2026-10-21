@@ -27,7 +27,11 @@ import java.util.logging.Logger;
  *
  * <p>Формат: {@code {"version":1,"players":{"<uuid>":{"name":"Steve",
  * "mined":123,"tiers":{"common":2},"items":{"plains-reap-hook":1},
- * "settings":{"announce":true},"milestones":[10]}}}}.</p>
+ * "settings":{"announce":true},"milestones":[10],"streak":4,
+ * "best_streak":9,"last_find":1730000000000}}}}.</p>
+ *
+ * <p>Поля серии необязательны: старые файлы читаются без них, а новые поля
+ * пишутся рядом — версия формата остаётся 1, ломать чужие данные не нужно.</p>
  *
  * <p>Счётчик добытых блоков — топливо прогрессии: он растёт на каждом
  * подходящем блоке, даже если клад не выпал. Число находок по редкостям нужно
@@ -48,6 +52,11 @@ public final class TreasureStore {
         public boolean announce = true;
         public boolean particles = true;
         public boolean sounds = true;
+        /** Текущая серия находок и личный рекорд. */
+        public int streak;
+        public int bestStreak;
+        /** Время последней находки в миллисекундах (0 — находок не было). */
+        public long lastFindAt;
 
         public long found() {
             long total = 0L;
@@ -125,6 +134,11 @@ public final class TreasureStore {
                         }
                     }
                 }
+                player.streak = (int) Math.min(Integer.MAX_VALUE, number(row.get("streak")));
+                player.bestStreak = (int) Math.min(Integer.MAX_VALUE,
+                        number(row.get("best_streak")));
+                player.bestStreak = Math.max(player.bestStreak, player.streak);
+                player.lastFindAt = number(row.get("last_find"));
                 players.put(String.valueOf(entry.getKey()), player);
             }
             logger.info("[CHRDK_Treasures] Загружено кладоискателей: " + players.size() + ".");
@@ -181,7 +195,7 @@ public final class TreasureStore {
     }
 
     /**
-     * Сбрасывает прогресс игрока: добычу, находки, коллекцию и вехи.
+     * Сбрасывает прогресс игрока: добычу, находки, коллекцию, вехи и серию.
      * Имя и настройки оформления остаются — после сброса игроку не нужно
      * заново выключать чужие поздравления.
      */
@@ -194,20 +208,70 @@ public final class TreasureStore {
         data.tiers.clear();
         data.items.clear();
         data.milestones.clear();
+        data.streak = 0;
+        data.bestStreak = 0;
+        data.lastFindAt = 0L;
         dirty = true;
+    }
+
+    /**
+     * Сбрасывает прогресс всех игроков.
+     *
+     * @return сколько профилей было удалено
+     */
+    public synchronized int resetAll() {
+        int removed = players.size();
+        if (removed == 0) {
+            return 0;
+        }
+        players.clear();
+        dirty = true;
+        return removed;
     }
 
     /** Отмечает находку: редкость и, если повезло, именной предмет. */
     public synchronized void recordTreasure(String playerKey, TreasureTier tier, String itemId) {
+        recordTreasure(playerKey, tier, itemId, System.currentTimeMillis(), 0L);
+    }
+
+    /**
+     * Отмечает находку и продлевает (или начинает заново) серию.
+     *
+     * @param now          время находки в миллисекундах
+     * @param windowMillis допустимая пауза серии; 0 — серия всегда начинается с 1
+     * @return длина серии после этой находки
+     */
+    public synchronized int recordTreasure(String playerKey, TreasureTier tier, String itemId,
+                                           long now, long windowMillis) {
         if (playerKey == null || tier == null) {
-            return;
+            return 0;
         }
         PlayerData data = data(playerKey);
         data.tiers.merge(tier, 1L, Long::sum);
         if (itemId != null && !itemId.isBlank()) {
             data.items.merge(itemId, 1, Integer::sum);
         }
+        long stamp = now > 0L ? now : System.currentTimeMillis();
+        data.streak = TreasureStreak.next(data.streak, data.lastFindAt, stamp, windowMillis);
+        data.lastFindAt = stamp;
+        data.bestStreak = Math.max(data.bestStreak, data.streak);
         dirty = true;
+        return data.streak;
+    }
+
+    public synchronized int streak(String playerKey) {
+        PlayerData data = players.get(playerKey);
+        return data == null ? 0 : data.streak;
+    }
+
+    public synchronized int bestStreak(String playerKey) {
+        PlayerData data = players.get(playerKey);
+        return data == null ? 0 : data.bestStreak;
+    }
+
+    public synchronized long lastFind(String playerKey) {
+        PlayerData data = players.get(playerKey);
+        return data == null ? 0L : data.lastFindAt;
     }
 
     public synchronized long found(String playerKey) {
@@ -330,6 +394,9 @@ public final class TreasureStore {
             settings.put("sounds", player.sounds);
             fields.put("settings", settings);
             fields.put("milestones", new ArrayList<>(player.milestones));
+            fields.put("streak", player.streak);
+            fields.put("best_streak", player.bestStreak);
+            fields.put("last_find", player.lastFindAt);
             rows.put(key, fields);
         });
         data.put("players", rows);

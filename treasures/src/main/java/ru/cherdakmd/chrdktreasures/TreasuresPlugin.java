@@ -25,6 +25,12 @@ import java.util.Locale;
  * ауры (регенерация, дыхание, огнестойкость) пересобираются раз в
  * {@code general.aura-refresh-ticks}. Прогресс и коллекция живут в
  * {@code treasures.json} по UUID и пишутся асинхронно.</p>
+ *
+ * <p>Поверх находок работают звания ({@link TreasureRank}), серии
+ * ({@link TreasureStreak}) и оформление ({@link TreasureShowcase}); шансы
+ * можно переопределить файлом {@code chances.yml}, не трогая комментарии
+ * {@code config.yml}. PlaceholderAPI — мягкая интеграция: без плагина аддон
+ * работает как обычно.</p>
  */
 public final class TreasuresPlugin extends JavaPlugin {
 
@@ -32,6 +38,8 @@ public final class TreasuresPlugin extends JavaPlugin {
     private volatile TreasuresConfig config;
     private volatile ChrdkRegisterApi coreApi;
     private TreasureStore store;
+    private TreasureOverrides overrides;
+    private TreasureShowcase showcase;
     private TreasureItems items;
     private TreasureService service;
     private TreasureAuras auras;
@@ -45,7 +53,10 @@ public final class TreasuresPlugin extends JavaPlugin {
         saveDefaultConfig();
         this.store = new TreasureStore(getDataFolder().toPath(), getLogger());
         this.store.load();
+        this.overrides = new TreasureOverrides(getDataFolder().toPath(), getLogger());
+        this.overrides.load();
         this.items = new TreasureItems(this);
+        this.showcase = new TreasureShowcase(this);
         // Конфиг читается до листенера: антинакрутка берёт из него TTL и лимит.
         reloadTreasuresConfig();
         this.service = new TreasureService(this, store);
@@ -69,6 +80,7 @@ public final class TreasuresPlugin extends JavaPlugin {
         }
 
         registerApi();
+        registerPlaceholders();
         startTasks();
 
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -110,7 +122,11 @@ public final class TreasuresPlugin extends JavaPlugin {
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"),
                 getLogger());
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
-        this.config = TreasuresConfig.parse(getConfig(), getLogger());
+        if (overrides != null) {
+            overrides.load();
+        }
+        this.config = TreasuresConfig.parse(getConfig(),
+                overrides == null ? java.util.Map.of() : overrides.asMap(), getLogger());
         if (listener != null) {
             listener.reloadAntiCheat();
         }
@@ -169,6 +185,20 @@ public final class TreasuresPlugin extends JavaPlugin {
                 new TreasuresApiImpl(service, items), this, ServicePriority.Normal);
     }
 
+    /** PlaceholderAPI — мягкая интеграция: без плагина аддон работает как обычно. */
+    private void registerPlaceholders() {
+        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") == null) {
+            return;
+        }
+        try {
+            new TreasurePlaceholders(this).register();
+            getLogger().info("[CHRDK_Treasures] PlaceholderAPI: доступны %chrdktreasures_...%.");
+        } catch (RuntimeException exception) {
+            getLogger().warning("[CHRDK_Treasures] Не удалось зарегистрировать PlaceholderAPI: "
+                    + exception.getMessage());
+        }
+    }
+
     public Messages messages() {
         return messages;
     }
@@ -183,6 +213,14 @@ public final class TreasuresPlugin extends JavaPlugin {
 
     public TreasureStore store() {
         return store;
+    }
+
+    public TreasureOverrides overrides() {
+        return overrides;
+    }
+
+    public TreasureShowcase showcase() {
+        return showcase;
     }
 
     public TreasureItems items() {
@@ -260,6 +298,21 @@ public final class TreasuresPlugin extends JavaPlugin {
         public boolean give(Player player, String itemId) {
             TreasureItemDef def = TreasureCatalog.find(itemId);
             return def != null && service.giveItem(player, def);
+        }
+
+        @Override
+        public String rank(Player player) {
+            return service.rank(player).id();
+        }
+
+        @Override
+        public int streak(Player player) {
+            return service.streak(player);
+        }
+
+        @Override
+        public int bestStreak(Player player) {
+            return service.bestStreak(player);
         }
 
         @Override

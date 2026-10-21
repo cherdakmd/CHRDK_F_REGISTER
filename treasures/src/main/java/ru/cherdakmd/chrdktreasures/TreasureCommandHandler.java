@@ -13,8 +13,8 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * {@code /treasures} — витрина, коллекция, топ и настройки;
- * {@code /treasuresadmin} — выдача, сброс и reload.
+ * {@code /treasures} — витрина, коллекция, статистика, топ и настройки;
+ * {@code /treasuresadmin} — выдача, сброс, шансы, полная очистка и reload.
  *
  * <p>Игровые подкоманды не раскрывают названия ненайденных предметов: до
  * находки виден только ид и редкость, иначе витрина потеряла бы смысл.
@@ -76,7 +76,7 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
             }
             case "list" -> list(player, args.length > 1 ? args[1] : null);
             case "top" -> top(player);
-            case "stats" -> stats(player, player);
+            case "stats" -> playerStats(player, args.length > 1 ? args[1] : null);
             case "toggle" -> toggle(player, args.length > 1 ? args[1] : null);
             default -> {
                 plugin.messages().send(player, "unknown-subcommand", "sub", args[0]);
@@ -90,6 +90,7 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
         plugin.messages().send(player, "help-menu");
         plugin.messages().send(player, "help-list");
         plugin.messages().send(player, "help-stats");
+        plugin.messages().send(player, "help-stats-other");
         plugin.messages().send(player, "help-top");
         plugin.messages().send(player, "help-toggle");
         plugin.messages().send(player, "help-footer");
@@ -201,6 +202,23 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
 
     /* --------------------------------- статистика ------------------------------ */
 
+    /** Статистика себя или другого игрока (право {@code chrdktreasures.stats.others}). */
+    private boolean playerStats(Player sender, String name) {
+        Player target = sender;
+        if (name != null && !name.isBlank()) {
+            if (!sender.hasPermission("chrdktreasures.stats.others")) {
+                plugin.messages().send(sender, "no-permission");
+                return true;
+            }
+            target = Bukkit.getPlayerExact(name);
+            if (target == null) {
+                plugin.messages().send(sender, "admin-player-not-found");
+                return true;
+            }
+        }
+        return stats(sender, target);
+    }
+
     private boolean stats(CommandSender sender, Player target) {
         plugin.messages().send(sender, "stats-header", "player", target.getName());
         plugin.messages().send(sender, "stats-mined",
@@ -217,6 +235,21 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
         plugin.messages().send(sender, "stats-unlocked",
                 "unlocked", String.valueOf(service.unlockedTiers(target)),
                 "all", String.valueOf(TreasureTier.values().length));
+        TreasureRank rank = service.rank(target);
+        plugin.messages().send(sender, "stats-rank",
+                "rank", Messages.trusted(plugin.messages().raw("rank." + rank.id())),
+                "found", String.valueOf(service.found(target)));
+        TreasureRank nextRank = rank.next();
+        if (nextRank == null) {
+            plugin.messages().send(sender, "stats-rank-max");
+        } else {
+            plugin.messages().send(sender, "stats-rank-progress",
+                    "next", Messages.trusted(plugin.messages().raw("rank." + nextRank.id())),
+                    "remaining", String.valueOf(rank.remaining(service.found(target))));
+        }
+        plugin.messages().send(sender, "stats-streak",
+                "streak", String.valueOf(service.streak(target)),
+                "best", String.valueOf(service.bestStreak(target)));
         String next = service.nextTierHint(target);
         plugin.messages().send(sender, next.isBlank() ? "stats-next-none" : "stats-next",
                 "hint", Messages.trusted(next));
@@ -321,6 +354,53 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
             }
             return stats(sender, target);
         }
+        if (args.length == 3 && args[0].equalsIgnoreCase("chance")) {
+            TreasureTier tier = TreasureTier.byId(args[1]);
+            if (tier == null) {
+                plugin.messages().send(sender, "admin-chance-unknown-tier", "tier", args[1]);
+                return true;
+            }
+            if (args[2].equalsIgnoreCase("reset")) {
+                plugin.overrides().clear(tier);
+                plugin.reloadTreasuresConfig();
+                plugin.messages().send(sender, "admin-chance-reset",
+                        "tier", Messages.trusted(plugin.messages().raw("tier." + tier.id())));
+                plugin.getLogger().info("[CHRDK_Treasures] " + sender.getName()
+                        + " вернул шанс " + tier.id() + " к config.yml");
+                return true;
+            }
+            double percent;
+            try {
+                percent = Double.parseDouble(args[2].replace(',', '.'));
+            } catch (NumberFormatException exception) {
+                plugin.messages().send(sender, "admin-chance-invalid");
+                return true;
+            }
+            if (percent < 0.0 || percent > 100.0) {
+                plugin.messages().send(sender, "admin-chance-invalid");
+                return true;
+            }
+            double applied = plugin.overrides().set(tier, percent);
+            plugin.reloadTreasuresConfig();
+            plugin.messages().send(sender, "admin-chance-set",
+                    "tier", Messages.trusted(plugin.messages().raw("tier." + tier.id())),
+                    "percent", formatChance(applied));
+            plugin.getLogger().info("[CHRDK_Treasures] " + sender.getName()
+                    + " установил шанс " + tier.id() + ": " + applied + " %");
+            return true;
+        }
+        if (args.length >= 1 && args[0].equalsIgnoreCase("resetall")) {
+            if (args.length < 2 || !args[1].equalsIgnoreCase("confirm")) {
+                plugin.messages().send(sender, "admin-resetall-confirm");
+                return true;
+            }
+            int removed = service.resetAll();
+            plugin.messages().send(sender, "admin-resetall",
+                    "players", String.valueOf(removed));
+            plugin.getLogger().warning("[CHRDK_Treasures] " + sender.getName()
+                    + " сбросил прогресс всех кладоискателей (" + removed + " профилей)");
+            return true;
+        }
         if (args.length == 1 && args[0].equalsIgnoreCase("info")) {
             plugin.messages().send(sender, "admin-info",
                     "items", String.valueOf(TreasureCatalog.size()),
@@ -343,10 +423,24 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
                 return List.of();
             }
             if (args.length == 1) {
-                return filter(List.of("reload", "give", "reset", "stats", "info"), args[0]);
+                return filter(List.of("reload", "give", "reset", "resetall", "stats",
+                        "chance", "info"), args[0]);
+            }
+            if (args.length == 2 && args[0].equalsIgnoreCase("chance")) {
+                List<String> tiers = new ArrayList<>();
+                for (TreasureTier tier : TreasureTier.values()) {
+                    tiers.add(tier.id());
+                }
+                return filter(tiers, args[1]);
+            }
+            if (args.length == 2 && args[0].equalsIgnoreCase("resetall")) {
+                return filter(List.of("confirm"), args[1]);
             }
             if (args.length == 2) {
                 return filter(onlineNames(), args[1]);
+            }
+            if (args.length == 3 && args[0].equalsIgnoreCase("chance")) {
+                return filter(List.of("reset", "0.01", "0.05", "0.1", "1"), args[2]);
             }
             if (args.length == 3 && args[0].equalsIgnoreCase("give")) {
                 List<String> ids = new ArrayList<>();
@@ -365,6 +459,9 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("toggle")) {
             return filter(List.of("sounds", "particles", "announce"), args[1]);
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("stats")) {
+            return filter(onlineNames(), args[1]);
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("list")) {
             List<String> options = new ArrayList<>();

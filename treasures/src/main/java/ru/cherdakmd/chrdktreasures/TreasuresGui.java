@@ -185,6 +185,12 @@ public final class TreasuresGui implements Listener {
         lore.add(plugin.messages().get("menu-summary-collection",
                 "found", String.valueOf(found),
                 "total", String.valueOf(total)));
+        lore.add(plugin.messages().get("menu-summary-rank",
+                "rank", Messages.trusted(plugin.messages().raw(
+                        "rank." + service.rank(player).id()))));
+        lore.add(plugin.messages().get("menu-summary-streak",
+                "streak", String.valueOf(service.streak(player)),
+                "best", String.valueOf(service.bestStreak(player))));
         lore.add(next.isBlank()
                 ? plugin.messages().get("menu-summary-next-none")
                 : plugin.messages().get("menu-summary-next", "hint", Messages.trusted(next)));

@@ -46,7 +46,13 @@ class TreasureMessagesTest {
             "feature-announce", "collection-milestone", "treasure-found-named",
             "treasure-found-loot", "treasure-broadcast-named", "treasure-broadcast-loot",
             "double-ore", "admin-reloaded", "admin-player-not-found", "admin-unknown-item",
-            "admin-give-failed", "admin-gave", "admin-reset", "admin-info", "admin-usage");
+            "admin-give-failed", "admin-gave", "admin-reset", "admin-info", "admin-usage",
+            "menu-summary-rank", "menu-summary-streak", "help-stats-other", "stats-rank",
+            "stats-rank-progress", "stats-rank-max", "stats-streak", "streak-bonus",
+            "rank-up", "rank-up-broadcast", "title-found", "title-found-named",
+            "title-found-loot", "actionbar-found", "admin-resetall", "admin-resetall-confirm",
+            "admin-chance-set", "admin-chance-reset", "admin-chance-unknown-tier",
+            "admin-chance-invalid");
 
     private static ConfigurationSection messages() {
         try (var stream = TreasureMessagesTest.class.getClassLoader()
@@ -110,6 +116,18 @@ class TreasureMessagesTest {
         }
         assertText(root, "item-desc");
         assertTrue(root.getString("item-desc").contains("%text%"));
+    }
+
+    @Test
+    void ranksAreLocalisedAndUnique() {
+        ConfigurationSection root = messages();
+        Set<String> names = new HashSet<>();
+        for (TreasureRank rank : TreasureRank.values()) {
+            assertText(root, "rank." + rank.id());
+            assertTrue(names.add(root.getString("rank." + rank.id())),
+                    "повторяющееся имя звания: " + rank.id());
+        }
+        assertEquals(TreasureRank.values().length, names.size());
     }
 
     @Test

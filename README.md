@@ -1441,7 +1441,7 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
 
 ---
 
-## Аддон CHRDK_Treasures — русские клады (с версии 1.4.133)
+## Аддон CHRDK_Treasures — русские клады (с версии 1.4.133; звания и серии — 1.4.134)
 
 **62 именные находки, 5 редкостей и 14 биомных регионов.** Механика выросла из
 запроса «плагин с функционалом датапака Mine Treasure, но наш, русский»: идея
@@ -1474,6 +1474,22 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
   мифическая страница, сводка прогресса и переключатели звука, частиц и
   сообщений. Вехи коллекции (10/25/40/62 находки) выдают 8/24/48/96 алмазов
   один раз.
+- **Звания.** Шесть ступеней за общее число кладов: Новичок (0), Искатель (5),
+  Кладоискатель (15), Знаток (35), Мастер (75), Легенда (150). Переход даёт
+  алмазы (4/10/20/40/80 по умолчанию), объявляется игроку, а «Легенда» — и
+  всему серверу. Награды настраиваются в `ranks`.
+- **Серии находок.** Клады подряд без паузы дольше `streak.window-seconds`
+  (по умолчанию 10 минут) продлевают серию; каждая пятая находка серии даёт
+  дополнительную порцию обычной добычи. Личный рекорд хранится в профиле и
+  виден в статистике и витрине.
+- **Оформление находки.** Эпический клад показывает заголовок на экране,
+  легендарный и мифический — ещё и фейерверк; строка над хотбаром показывает
+  серию и прогресс коллекции. Пороги и выключатели — в `effects`, уважаются
+  `/treasures toggle announce|particles`.
+- **Настройка шансов без правки конфига.** `/treasuresadmin chance <редкость>
+  <процент>` пишет отдельный `chances.yml` поверх `config.yml`; `reset`
+  возвращает значение из основного файла. Комментарии `config.yml` при этом
+  не теряются.
 - **Честная игра.** Блок, поставленный игроком, не даёт клада 5 минут; креатив
   и спектатор прогрессию не качают; между кладами одного игрока — пауза 3
   секунды. Это защита от «поставь-сломай» и от конвейера на зачарованной кирке.
@@ -1491,30 +1507,37 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
 |---|---|
 | `/treasures` | витрина коллекции: регионы, мифические находки, сводка |
 | `/treasures list [редкость\|регион\|all]` | найденное и закрытые позиции |
-| `/treasures stats` | добыча, находки по редкостям, шансы, прогрессия |
+| `/treasures stats [ник]` | добыча, звание, серия, находки по редкостям, шансы, прогрессия |
 | `/treasures top` | топ кладоискателей по числу кладов |
 | `/treasures toggle <sounds\|particles\|announce>` | оформление находок |
 | `/treasuresadmin reload` | перечитать config.yml и messages.yml |
 | `/treasuresadmin info` | каталог: находки, регионы, редкости, блоки |
 | `/treasuresadmin give <ник> <ид>` | выдать находку и записать в коллекцию |
 | `/treasuresadmin reset <ник>` | сбросить прогресс, сохранив настройки |
+| `/treasuresadmin resetall confirm` | стереть прогресс всех кладоискателей |
+| `/treasuresadmin chance <редкость> <процент\|reset>` | переопределить шанс в `chances.yml` |
 | `/treasuresadmin stats <ник>` | статистика другого игрока |
 
-Права: `chrdktreasures.use` (по умолчанию всем) и `chrdktreasures.admin` (OP).
+Права: `chrdktreasures.use` (по умолчанию всем), `chrdktreasures.stats.others`
+(чужая статистика, по умолчанию всем) и `chrdktreasures.admin` (OP).
+PlaceholderAPI — мягкая интеграция: `%chrdktreasures_found%`, `_mined%`,
+`_rank%`, `_rank_name%`, `_collection%`, `_total%`, `_streak%`, `_best_streak%`,
+`_next%`, `_tier_<редкость>%`, `_chance_<редкость>%`.
 
 ### Публичный API
 
 `ChrdkTreasuresApi` регистрируется в `ServicesManager`:
 `mined`, `found`, `tierFound`, `collection`, `totalItems`, `itemCount`,
-`hasItem`, `effect`, `give`, `region`. Иды — строки каталога; неизвестный ид
+`hasItem`, `effect`, `give`, `rank`, `streak`, `bestStreak`, `region`. Иды — строки каталога; неизвестный ид
 возвращает 0/`false`, а не исключение. Квест или ивент может выдать находку и
 сразу увидеть её в коллекции игрока.
 
 ### Установка
 
-Рядом с ядром положить `chrdk-treasures-1.4.133.jar`; зависимость —
-`CHRDK_Core`. Конфиг и тексты создаются при первом запуске, старые версии
-читаются без миграции.
+Рядом с ядром положить `chrdk-treasures-1.4.134.jar`; зависимость —
+`CHRDK_Core`, необязательная — `PlaceholderAPI`. Конфиг и тексты создаются при
+первом запуске, старые версии читаются без миграции; `chances.yml` появляется
+только после первой команды `chance`.
 
 ---
 
@@ -1526,26 +1549,26 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.133.jar`,
-аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.133.jar`,
-реферальный — `referrals/build/libs/chrdk-referrals-1.4.133.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.133.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.133.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.133.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.133.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.133.jar` (хартия чар — при установленном аддоне чар),
-достижения — `achievements/build/libs/chrdk-achievements-1.4.133.jar`, навыки —
-`skills/build/libs/chrdk-skills-1.4.133.jar`, клады —
-`treasures/build/libs/chrdk-treasures-1.4.133.jar`, общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.133.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.133.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.133.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.133.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.133.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.133.jar`, стримерская программа —
-`streams/build/libs/chrdk-streams-1.4.133.jar`, лотерея —
-`lottery/build/libs/chrdk-lottery-1.4.133.jar`, аукцион —
-`auction/build/libs/chrdk-auction-1.4.133.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.134.jar`,
+аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.134.jar`,
+реферальный — `referrals/build/libs/chrdk-referrals-1.4.134.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.134.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.134.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.134.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.134.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.134.jar` (хартия чар — при установленном аддоне чар),
+достижения — `achievements/build/libs/chrdk-achievements-1.4.134.jar`, навыки —
+`skills/build/libs/chrdk-skills-1.4.134.jar`, клады —
+`treasures/build/libs/chrdk-treasures-1.4.134.jar`, общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.134.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.134.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.134.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.134.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.134.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.134.jar`, стримерская программа —
+`streams/build/libs/chrdk-streams-1.4.134.jar`, лотерея —
+`lottery/build/libs/chrdk-lottery-1.4.134.jar`, аукцион —
+`auction/build/libs/chrdk-auction-1.4.134.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). Все 20 JAR прикладываются к каждому релизу на GitHub.
 
 ---
@@ -3522,7 +3545,7 @@ PDC предмета — две копии одного ида могут быт
 
 ---
 
-### CHRDK_Treasures: 62 находки, 5 редкостей и 14 регионов — снапшот 1.4.133-SNAPSHOT
+### CHRDK_Treasures: звания, серии и эффекты находок — снапшот 1.4.134-SNAPSHOT
 
 Волна 23 — ответ на запрос «есть датапак Mine Treasure, хочу плагин с его
 функционалом, но наш, русский». Идея оригинала сохранена: клады за добычу,
