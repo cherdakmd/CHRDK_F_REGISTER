@@ -74,6 +74,7 @@ jobs:
           echo "artifacts_jar=artifacts/build/libs/chrdk-artifacts-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
           echo "achievements_jar=achievements/build/libs/chrdk-achievements-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
           echo "skills_jar=skills/build/libs/chrdk-skills-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
+          echo "treasures_jar=treasures/build/libs/chrdk-treasures-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
           echo "goals_jar=common-goals/build/libs/chrdk-common-goals-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
           echo "claims_jar=claims/build/libs/chrdk-claims-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
           echo "ranks_jar=ranks/build/libs/chrdk-ranks-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
@@ -133,6 +134,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.skills_jar }}" --clobber
+
+      - name: Attach the CHRDK_Treasures addon JAR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.treasures_jar }}" --clobber
 
       - name: Attach the CHRDK_CommonGoals addon JAR
         env:

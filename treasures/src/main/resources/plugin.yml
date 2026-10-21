@@ -1,0 +1,22 @@
+name: CHRDK_Treasures
+version: ${version}
+main: ru.cherdakmd.chrdktreasures.TreasuresPlugin
+api-version: '26.3'
+description: "Русские клады: 5 редкостей, 14 биомных регионов и 62 именных находки с прогрессией, коллекцией и публичным API"
+author: cherdakmd
+depend: [CHRDK_Core]
+commands:
+  treasures:
+    description: "Коллекция кладов: витрина, список, статистика, топ и настройки"
+    usage: "/treasures [menu|list [фильтр]|stats|top|toggle <sounds|particles|announce>]"
+  treasuresadmin:
+    description: "Администрирование кладов"
+    permission: chrdktreasures.admin
+    usage: "/treasuresadmin <reload|info|give <ник> <ид>|reset <ник>|stats <ник>>"
+permissions:
+  chrdktreasures.use:
+    description: "Открывать коллекцию, смотреть список, статистику и топ"
+    default: true
+  chrdktreasures.admin:
+    description: "Выдача находок, сброс прогресса и reload"
+    default: op
