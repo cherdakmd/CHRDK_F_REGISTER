@@ -40,12 +40,13 @@ import static ru.cherdakmd.chrdktreasures.TreasureEffect.Kind.WATER_BREATHING;
 import static ru.cherdakmd.chrdktreasures.TreasureEffect.Kind.XP_BONUS;
 
 /**
- * Каталог именных находок: 62 предмета.
+ * Каталог именных находок: 124 предмета.
  *
- * <p>14 регионов по 4 предмета (обычный, редкий, эпический, легендарный) и
- * 6 мифических, не привязанных к биому. Так у каждой локации есть своя
- * лестница: первая находка в пустыне — кирка, а легендарная — клинок фараона,
- * и это видно по названию, а не по случайному набору цифр.</p>
+ * <p>14 регионов по 8 предметов (по две находки на каждую редкость: обычную,
+ * редкую, эпическую и легендарную) и 12 мифических, не привязанных к биому.
+ * Так у каждой локации есть своя лестница, а внутри редкости — выбор: первая
+ * находка в пустыне — кирка, вторая — очки, легендарные — клинок фараона и
+ * шлем полудня, и это видно по названию, а не по случайному набору цифр.</p>
  *
  * <p>Числа подобраны так, чтобы легендарный предмет был лучше алмазного, но не
  * отменял незерит: максимум +22 % урона и +30 % скорости копания, ауры только
@@ -58,9 +59,9 @@ import static ru.cherdakmd.chrdktreasures.TreasureEffect.Kind.XP_BONUS;
  */
 public final class TreasureCatalog {
 
-    public static final int EXPECTED_ITEMS = 62;
-    public static final int PER_REGION = 4;
-    public static final int MYTHICAL_ITEMS = 6;
+    public static final int EXPECTED_ITEMS = 124;
+    public static final int PER_REGION = 8;
+    public static final int MYTHICAL_ITEMS = 12;
 
     private static final List<TreasureItemDef> ALL = new ArrayList<>();
     private static final Map<String, TreasureItemDef> BY_ID = new HashMap<>();
@@ -100,6 +101,17 @@ public final class TreasureCatalog {
         add("plains-golden-scythe", TreasureTier.LEGENDARY, TreasureRegion.PLAINS, "NETHERITE_SWORD",
                 ability(BLAST, 6, 5, 45), curse(HUNGER, 0.15),
                 effect(ATTACK_DAMAGE, 0.16), effect(LIFESTEAL, 0.05), effect(FLAME, 0.1));
+        // ---- 1.4.141: вторая находка каждой редкости ----
+        add("plains-bee-veil", TreasureTier.COMMON, TreasureRegion.PLAINS, "LEATHER_HELMET",
+                effect(ARMOR, 1), effect(XP_BONUS, 0.1));
+        add("plains-hay-fork", TreasureTier.RARE, TreasureRegion.PLAINS, "IRON_HOE",
+                effect(MINING_SPEED, 0.06), effect(XP_BONUS, 0.15));
+        add("plains-harvest-hammer", TreasureTier.EPIC, TreasureRegion.PLAINS, "DIAMOND_AXE",
+                ability(HEAL,4,0,60), null,
+                effect(ATTACK_DAMAGE, 0.09), effect(MINING_SPEED, 0.08));
+        add("plains-sun-crown", TreasureTier.LEGENDARY, TreasureRegion.PLAINS, "NETHERITE_HELMET",
+                ability(SHIELD,14,0,50), curse(WEAKNESS,0.1),
+                effect(ARMOR, 3), effect(MAX_HEALTH, 3));
     }
 
     private static void region_forest() {
@@ -113,6 +125,17 @@ public final class TreasureCatalog {
         add("forest-root-guard", TreasureTier.LEGENDARY, TreasureRegion.FOREST, "NETHERITE_AXE",
                 ability(BLAST, 6, 5, 45), curse(SLOWNESS, 0.12),
                 effect(MINING_SPEED, 0.18), effect(DOUBLE_ORE, 0.15), effect(XP_BONUS, 0.25));
+        // ---- 1.4.141: вторая находка каждой редкости ----
+        add("forest-moss-leggings", TreasureTier.COMMON, TreasureRegion.FOREST, "CHAINMAIL_LEGGINGS",
+                effect(ARMOR, 1), effect(KNOCKBACK_RESISTANCE, 0.05));
+        add("forest-trapline-bow", TreasureTier.RARE, TreasureRegion.FOREST, "BOW",
+                effect(RANGED_DAMAGE, 0.1), effect(MOVEMENT_SPEED, 0.02));
+        add("forest-heartwood-bow", TreasureTier.EPIC, TreasureRegion.FOREST, "BOW",
+                ability(SENSE,12,14,60), null,
+                effect(RANGED_DAMAGE, 0.16), effect(LUCK, 1));
+        add("forest-greenwarden", TreasureTier.LEGENDARY, TreasureRegion.FOREST, "NETHERITE_CHESTPLATE",
+                ability(SHIELD,16,0,45), curse(SLOWNESS,0.12),
+                effect(ARMOR, 4), effect(REGENERATION, 1));
     }
 
     private static void region_taiga() {
@@ -126,6 +149,17 @@ public final class TreasureCatalog {
         add("taiga-winter-axe", TreasureTier.LEGENDARY, TreasureRegion.TAIGA, "NETHERITE_AXE",
                 ability(FROST_NOVA, 6, 6, 40), curse(GLOWING, 0.08),
                 effect(ATTACK_DAMAGE, 0.12), effect(FLAME, 0.08), effect(MINING_SPEED, 0.1));
+        // ---- 1.4.141: вторая находка каждой редкости ----
+        add("taiga-woodcutter-gloves", TreasureTier.COMMON, TreasureRegion.TAIGA, "LEATHER_LEGGINGS",
+                effect(ARMOR, 1), effect(MOVEMENT_SPEED, 0.01));
+        add("taiga-hunter-knife", TreasureTier.RARE, TreasureRegion.TAIGA, "IRON_SWORD",
+                effect(ATTACK_DAMAGE, 0.07));
+        add("taiga-thaw-pick", TreasureTier.EPIC, TreasureRegion.TAIGA, "DIAMOND_PICKAXE",
+                ability(FROST_NOVA,5,5,55), null,
+                effect(MINING_SPEED, 0.12), effect(DOUBLE_ORE, 0.08));
+        add("taiga-wolf-fang", TreasureTier.LEGENDARY, TreasureRegion.TAIGA, "NETHERITE_SWORD",
+                ability(DASH,1.3,0,25), curse(GLOWING,0.1),
+                effect(ATTACK_DAMAGE, 0.16), effect(LIFESTEAL, 0.05));
     }
 
     private static void region_snow() {
@@ -139,6 +173,17 @@ public final class TreasureCatalog {
         add("snow-frost-blade", TreasureTier.LEGENDARY, TreasureRegion.SNOW, "NETHERITE_SWORD",
                 ability(FROST_NOVA, 7, 7, 40), curse(SLOWNESS, 0.15),
                 effect(ATTACK_DAMAGE, 0.14), effect(LIFESTEAL, 0.04), effect(KNOCKBACK_RESISTANCE, 0.1));
+        // ---- 1.4.141: вторая находка каждой редкости ----
+        add("snow-fur-hood", TreasureTier.COMMON, TreasureRegion.SNOW, "LEATHER_HELMET",
+                effect(ARMOR, 1), effect(MOVEMENT_SPEED, 0.01));
+        add("snow-ice-axe", TreasureTier.RARE, TreasureRegion.SNOW, "IRON_AXE",
+                effect(ATTACK_DAMAGE, 0.06), effect(MINING_SPEED, 0.06));
+        add("snow-glacier-pick", TreasureTier.EPIC, TreasureRegion.SNOW, "DIAMOND_PICKAXE",
+                ability(FROST_NOVA,5,5,55), null,
+                effect(MINING_SPEED, 0.13), effect(KNOCKBACK_RESISTANCE, 0.1));
+        add("snow-winter-crown", TreasureTier.LEGENDARY, TreasureRegion.SNOW, "NETHERITE_HELMET",
+                ability(FROST_NOVA,7,6,40), curse(BLINDNESS,0.06),
+                effect(ARMOR, 3), effect(MAX_HEALTH, 2));
     }
 
     private static void region_desert() {
@@ -152,6 +197,17 @@ public final class TreasureCatalog {
         add("desert-pharaoh-blade", TreasureTier.LEGENDARY, TreasureRegion.DESERT, "NETHERITE_SWORD",
                 ability(FLAME_NOVA, 8, 6, 35), curse(WEAKNESS, 0.15),
                 effect(ATTACK_DAMAGE, 0.16), effect(FLAME, 0.15), effect(LUCK, 2));
+        // ---- 1.4.141: вторая находка каждой редкости ----
+        add("desert-sand-goggles", TreasureTier.COMMON, TreasureRegion.DESERT, "LEATHER_HELMET",
+                effect(ARMOR, 1), effect(LUCK, 1));
+        add("desert-cactus-hoe", TreasureTier.RARE, TreasureRegion.DESERT, "IRON_HOE",
+                effect(MINING_SPEED, 0.06), effect(XP_BONUS, 0.1));
+        add("desert-mirage-bow", TreasureTier.EPIC, TreasureRegion.DESERT, "BOW",
+                ability(DASH,1.1,0,30), null,
+                effect(RANGED_DAMAGE, 0.15), effect(MOVEMENT_SPEED, 0.02));
+        add("desert-sun-helm", TreasureTier.LEGENDARY, TreasureRegion.DESERT, "NETHERITE_HELMET",
+                ability(FLAME_NOVA,9,6,35), curse(WEAKNESS,0.12),
+                effect(ARMOR, 3), effect(FIRE_RESISTANCE, 1));
     }
 
     private static void region_savanna() {
@@ -165,6 +221,17 @@ public final class TreasureCatalog {
         add("savanna-fang", TreasureTier.LEGENDARY, TreasureRegion.SAVANNA, "NETHERITE_SWORD",
                 ability(DASH, 1.4, 0, 25), curse(BLINDNESS, 0.08),
                 effect(ATTACK_DAMAGE, 0.15), effect(LIFESTEAL, 0.06), effect(MOVEMENT_SPEED, 0.03));
+        // ---- 1.4.141: вторая находка каждой редкости ----
+        add("savanna-drum-vest", TreasureTier.COMMON, TreasureRegion.SAVANNA, "LEATHER_CHESTPLATE",
+                effect(ARMOR, 1), effect(KNOCKBACK_RESISTANCE, 0.03));
+        add("savanna-bone-dagger", TreasureTier.RARE, TreasureRegion.SAVANNA, "IRON_SWORD",
+                effect(ATTACK_DAMAGE, 0.07));
+        add("savanna-lion-axe", TreasureTier.EPIC, TreasureRegion.SAVANNA, "DIAMOND_AXE",
+                ability(DASH,1.2,0,30), null,
+                effect(ATTACK_DAMAGE, 0.1), effect(MOVEMENT_SPEED, 0.02));
+        add("savanna-pride-blade", TreasureTier.LEGENDARY, TreasureRegion.SAVANNA, "NETHERITE_SWORD",
+                ability(DASH,1.6,0,22), curse(BLINDNESS,0.07),
+                effect(ATTACK_DAMAGE, 0.17), effect(LIFESTEAL, 0.06));
     }
 
     private static void region_jungle() {
@@ -178,6 +245,17 @@ public final class TreasureCatalog {
         add("jungle-jaguar-fang", TreasureTier.LEGENDARY, TreasureRegion.JUNGLE, "NETHERITE_SWORD",
                 ability(LEAP, 1.2, 0, 25), curse(GLOWING, 0.1),
                 effect(ATTACK_DAMAGE, 0.17), effect(LIFESTEAL, 0.07), effect(LUCK, 2));
+        // ---- 1.4.141: вторая находка каждой редкости ----
+        add("jungle-parrot-feather", TreasureTier.COMMON, TreasureRegion.JUNGLE, "LEATHER_HELMET",
+                effect(MOVEMENT_SPEED, 0.02), effect(FALL_REDUCTION, 0.1));
+        add("jungle-blowpipe", TreasureTier.RARE, TreasureRegion.JUNGLE, "BOW",
+                effect(RANGED_DAMAGE, 0.1));
+        add("jungle-python-bow", TreasureTier.EPIC, TreasureRegion.JUNGLE, "BOW",
+                ability(SENSE,10,12,55), null,
+                effect(RANGED_DAMAGE, 0.15), effect(MOVEMENT_SPEED, 0.01));
+        add("jungle-serpent-crown", TreasureTier.LEGENDARY, TreasureRegion.JUNGLE, "NETHERITE_HELMET",
+                ability(LEAP,1.2,0,25), curse(GLOWING,0.1),
+                effect(ARMOR, 3), effect(LUCK, 2));
     }
 
     private static void region_swamp() {
@@ -191,6 +269,17 @@ public final class TreasureCatalog {
         add("swamp-mire-blade", TreasureTier.LEGENDARY, TreasureRegion.SWAMP, "NETHERITE_SWORD",
                 ability(AQUA, 20, 0, 45), curse(SLOWNESS, 0.12),
                 effect(ATTACK_DAMAGE, 0.13), effect(LIFESTEAL, 0.05), effect(WATER_BREATHING, 1));
+        // ---- 1.4.141: вторая находка каждой редкости ----
+        add("swamp-leech-boots", TreasureTier.COMMON, TreasureRegion.SWAMP, "LEATHER_BOOTS",
+                effect(WATER_BREATHING, 1), effect(MOVEMENT_SPEED, 0.02));
+        add("swamp-reed-hoe", TreasureTier.RARE, TreasureRegion.SWAMP, "IRON_HOE",
+                effect(MINING_SPEED, 0.06), effect(WATER_BREATHING, 1));
+        add("swamp-bog-bow", TreasureTier.EPIC, TreasureRegion.SWAMP, "BOW",
+                ability(AQUA,12,0,55), null,
+                effect(RANGED_DAMAGE, 0.15));
+        add("swamp-witch-crown", TreasureTier.LEGENDARY, TreasureRegion.SWAMP, "NETHERITE_HELMET",
+                ability(AQUA,22,0,45), curse(SLOWNESS,0.12),
+                effect(ARMOR, 3), effect(REGENERATION, 1));
     }
 
     private static void region_mountain() {
@@ -204,6 +293,17 @@ public final class TreasureCatalog {
         add("mountain-peak-hammer", TreasureTier.LEGENDARY, TreasureRegion.MOUNTAIN, "NETHERITE_PICKAXE",
                 ability(BLAST, 8, 6, 45), curse(HUNGER, 0.18),
                 effect(MINING_SPEED, 0.2), effect(DOUBLE_ORE, 0.18), effect(XP_BONUS, 0.3));
+        // ---- 1.4.141: вторая находка каждой редкости ----
+        add("mountain-climber-helm", TreasureTier.COMMON, TreasureRegion.MOUNTAIN, "LEATHER_HELMET",
+                effect(ARMOR, 1), effect(FALL_REDUCTION, 0.15));
+        add("mountain-chisel", TreasureTier.RARE, TreasureRegion.MOUNTAIN, "IRON_PICKAXE",
+                effect(MINING_SPEED, 0.07));
+        add("mountain-avalanche-axe", TreasureTier.EPIC, TreasureRegion.MOUNTAIN, "DIAMOND_AXE",
+                ability(BLAST,6,5,50), null,
+                effect(ATTACK_DAMAGE, 0.1), effect(MINING_SPEED, 0.1));
+        add("mountain-summit-plate", TreasureTier.LEGENDARY, TreasureRegion.MOUNTAIN, "NETHERITE_CHESTPLATE",
+                ability(SHIELD,18,0,45), curse(HUNGER,0.15),
+                effect(ARMOR, 4), effect(KNOCKBACK_RESISTANCE, 0.15));
     }
 
     private static void region_ocean() {
@@ -217,6 +317,17 @@ public final class TreasureCatalog {
         add("ocean-spear", TreasureTier.LEGENDARY, TreasureRegion.OCEAN, "TRIDENT",
                 ability(SHIELD, 15, 0, 40), curse(LEVITATION, 0.06),
                 effect(ATTACK_DAMAGE, 0.16), effect(LIFESTEAL, 0.05), effect(WATER_BREATHING, 1));
+        // ---- 1.4.141: вторая находка каждой редкости ----
+        add("ocean-fisher-gloves", TreasureTier.COMMON, TreasureRegion.OCEAN, "LEATHER_LEGGINGS",
+                effect(ARMOR, 1), effect(LUCK, 1));
+        add("ocean-reef-trident", TreasureTier.RARE, TreasureRegion.OCEAN, "TRIDENT",
+                effect(ATTACK_DAMAGE, 0.08), effect(WATER_BREATHING, 1));
+        add("ocean-current-bow", TreasureTier.EPIC, TreasureRegion.OCEAN, "BOW",
+                ability(AQUA,14,0,55), null,
+                effect(RANGED_DAMAGE, 0.16));
+        add("ocean-abyss-crown", TreasureTier.LEGENDARY, TreasureRegion.OCEAN, "NETHERITE_HELMET",
+                ability(AQUA,28,0,40), curse(LEVITATION,0.06),
+                effect(REGENERATION, 1), effect(WATER_BREATHING, 1), effect(LUCK, 2));
     }
 
     private static void region_deep() {
@@ -230,6 +341,17 @@ public final class TreasureCatalog {
         add("deep-core-drill", TreasureTier.LEGENDARY, TreasureRegion.DEEP, "NETHERITE_PICKAXE",
                 ability(BLAST, 8, 6, 40), curse(HUNGER, 0.2),
                 effect(MINING_SPEED, 0.22), effect(DOUBLE_ORE, 0.2), effect(XP_BONUS, 0.35));
+        // ---- 1.4.141: вторая находка каждой редкости ----
+        add("deep-mole-helm", TreasureTier.COMMON, TreasureRegion.DEEP, "IRON_HELMET",
+                effect(ARMOR, 2), effect(MINING_SPEED, 0.02));
+        add("deep-quartz-pick", TreasureTier.RARE, TreasureRegion.DEEP, "IRON_PICKAXE",
+                effect(MINING_SPEED, 0.08));
+        add("deep-crystal-pick", TreasureTier.EPIC, TreasureRegion.DEEP, "DIAMOND_PICKAXE",
+                ability(SENSE,12,14,60), null,
+                effect(MINING_SPEED, 0.14), effect(DOUBLE_ORE, 0.1));
+        add("deep-magma-axe", TreasureTier.LEGENDARY, TreasureRegion.DEEP, "NETHERITE_AXE",
+                ability(BLAST,8,6,40), curse(HUNGER,0.2),
+                effect(ATTACK_DAMAGE, 0.12), effect(MINING_SPEED, 0.16));
     }
 
     private static void region_deep_dark() {
@@ -243,6 +365,17 @@ public final class TreasureCatalog {
         add("deep-dark-echo-blade", TreasureTier.LEGENDARY, TreasureRegion.DEEP_DARK, "NETHERITE_SWORD",
                 ability(SENSE, 14, 16, 45), curse(BLINDNESS, 0.1),
                 effect(ATTACK_DAMAGE, 0.18), effect(LIFESTEAL, 0.06), effect(LUCK, 2));
+        // ---- 1.4.141: вторая находка каждой редкости ----
+        add("deep-dark-sculk-boots", TreasureTier.COMMON, TreasureRegion.DEEP_DARK, "CHAINMAIL_BOOTS",
+                effect(ARMOR, 1), effect(MOVEMENT_SPEED, 0.01));
+        add("deep-dark-sculk-pick", TreasureTier.RARE, TreasureRegion.DEEP_DARK, "IRON_PICKAXE",
+                effect(MINING_SPEED, 0.07));
+        add("deep-dark-echo-bow", TreasureTier.EPIC, TreasureRegion.DEEP_DARK, "BOW",
+                ability(SENSE,14,16,50), null,
+                effect(RANGED_DAMAGE, 0.17));
+        add("deep-dark-veil", TreasureTier.LEGENDARY, TreasureRegion.DEEP_DARK, "NETHERITE_HELMET",
+                ability(SHIELD,16,0,50), curse(BLINDNESS,0.1),
+                effect(ARMOR, 4), effect(MAX_HEALTH, 2));
     }
 
     private static void region_nether() {
@@ -256,6 +389,17 @@ public final class TreasureCatalog {
         add("nether-flame-blade", TreasureTier.LEGENDARY, TreasureRegion.NETHER, "NETHERITE_SWORD",
                 ability(FLAME_NOVA, 10, 7, 30), curse(HUNGER, 0.12),
                 effect(ATTACK_DAMAGE, 0.17), effect(FLAME, 0.2), effect(FIRE_RESISTANCE, 1));
+        // ---- 1.4.141: вторая находка каждой редкости ----
+        add("nether-ash-boots", TreasureTier.COMMON, TreasureRegion.NETHER, "GOLDEN_BOOTS",
+                effect(ARMOR, 1), effect(FIRE_RESISTANCE, 1));
+        add("nether-quartz-hoe", TreasureTier.RARE, TreasureRegion.NETHER, "GOLDEN_HOE",
+                effect(MINING_SPEED, 0.07));
+        add("nether-ember-bow", TreasureTier.EPIC, TreasureRegion.NETHER, "BOW",
+                ability(FLAME_NOVA,6,5,45), null,
+                effect(RANGED_DAMAGE, 0.16), effect(FLAME, 0.15));
+        add("nether-inferno-crown", TreasureTier.LEGENDARY, TreasureRegion.NETHER, "NETHERITE_HELMET",
+                ability(FLAME_NOVA,10,7,30), curse(HUNGER,0.12),
+                effect(ARMOR, 3), effect(FIRE_RESISTANCE, 1), effect(MAX_HEALTH, 2));
     }
 
     private static void region_end() {
@@ -269,6 +413,17 @@ public final class TreasureCatalog {
         add("end-void-blade", TreasureTier.LEGENDARY, TreasureRegion.END, "NETHERITE_SWORD",
                 ability(DASH, 1.5, 0, 25), curse(LEVITATION, 0.08),
                 effect(ATTACK_DAMAGE, 0.18), effect(LIFESTEAL, 0.07));
+        // ---- 1.4.141: вторая находка каждой редкости ----
+        add("end-pearl-boots", TreasureTier.COMMON, TreasureRegion.END, "LEATHER_BOOTS",
+                effect(FALL_REDUCTION, 0.2), effect(MOVEMENT_SPEED, 0.02));
+        add("end-chorus-pick", TreasureTier.RARE, TreasureRegion.END, "IRON_PICKAXE",
+                effect(MINING_SPEED, 0.08));
+        add("end-void-bow", TreasureTier.EPIC, TreasureRegion.END, "BOW",
+                ability(LEAP,1,0,35), null,
+                effect(RANGED_DAMAGE, 0.17));
+        add("end-dragon-crown", TreasureTier.LEGENDARY, TreasureRegion.END, "NETHERITE_HELMET",
+                ability(DASH,1.6,0,25), curse(LEVITATION,0.08),
+                effect(ARMOR, 3), effect(LUCK, 3));
     }
 
     private static void mythic() {
@@ -290,6 +445,25 @@ public final class TreasureCatalog {
         add("mythic-bow-of-providence", TreasureTier.MYTHICAL, null, "BOW",
                 ability(SENSE, 15, 20, 45), curse(GLOWING, 0.15),
                 effect(RANGED_DAMAGE, 0.25), effect(FLAME, 0.2));
+        // ---- 1.4.141: вторая находка каждой редкости ----
+        add("mythic-sunforged-blade", TreasureTier.MYTHICAL, null, "NETHERITE_SWORD",
+                ability(BLAST,8,6,35), curse(WEAKNESS,0.12),
+                effect(ATTACK_DAMAGE, 0.2), effect(LIFESTEAL, 0.07));
+        add("mythic-tidecaller", TreasureTier.MYTHICAL, null, "TRIDENT",
+                ability(AQUA,30,0,40), curse(SLOWNESS,0.15),
+                effect(ATTACK_DAMAGE, 0.18), effect(WATER_BREATHING, 1));
+        add("mythic-storm-bow", TreasureTier.MYTHICAL, null, "BOW",
+                ability(SENSE,20,25,45), curse(GLOWING,0.15),
+                effect(RANGED_DAMAGE, 0.3));
+        add("mythic-earthbreaker-pick", TreasureTier.MYTHICAL, null, "NETHERITE_PICKAXE",
+                ability(BLAST,12,8,35), curse(HUNGER,0.25),
+                effect(MINING_SPEED, 0.32), effect(DOUBLE_ORE, 0.3));
+        add("mythic-warden-crown", TreasureTier.MYTHICAL, null, "NETHERITE_HELMET",
+                ability(SHIELD,25,0,40), curse(BLINDNESS,0.12),
+                effect(ARMOR, 4), effect(MAX_HEALTH, 4));
+        add("mythic-phantom-leggings", TreasureTier.MYTHICAL, null, "NETHERITE_LEGGINGS",
+                ability(LEAP,1.5,0,20), curse(LEVITATION,0.1),
+                effect(ARMOR, 3), effect(MOVEMENT_SPEED, 0.06), effect(FALL_REDUCTION, 0.4));
     }
 
     private static TreasureEffect effect(TreasureEffect.Kind kind, double value) {
@@ -320,8 +494,10 @@ public final class TreasureCatalog {
         if (tier == TreasureTier.MYTHICAL) {
             MYTHICAL.add(def);
         } else {
+            // 1.4.141: на пару «регион + редкость» приходится две находки;
+            // forRegionTier остаётся первой (стабильной) из них.
             REGIONAL.computeIfAbsent(region, key -> new EnumMap<>(TreasureTier.class))
-                    .put(tier, def);
+                    .putIfAbsent(tier, def);
         }
     }
 
@@ -337,7 +513,31 @@ public final class TreasureCatalog {
         return id == null ? null : BY_ID.get(id);
     }
 
-    /** Именная находка региона и редкости; {@code null} — нет такой. */
+    /**
+     * Все находки региона и редкости. С 1.4.141 их по две на каждую пару —
+     * бросок обязан видеть обе, иначе вторая половина каталога никогда бы не
+     * выпадала.
+     */
+    public static List<TreasureItemDef> pool(TreasureRegion region, TreasureTier tier) {
+        if (tier == null) {
+            return List.of();
+        }
+        if (tier == TreasureTier.MYTHICAL) {
+            return mythical();
+        }
+        if (region == null) {
+            return List.of();
+        }
+        List<TreasureItemDef> out = new ArrayList<>(2);
+        for (TreasureItemDef def : ALL) {
+            if (def.region() == region && def.tier() == tier) {
+                out.add(def);
+            }
+        }
+        return List.copyOf(out);
+    }
+
+    /** Первая именная находка региона и редкости; {@code null} — нет такой. */
     public static TreasureItemDef forRegionTier(TreasureRegion region, TreasureTier tier) {
         if (region == null || tier == null) {
             return null;

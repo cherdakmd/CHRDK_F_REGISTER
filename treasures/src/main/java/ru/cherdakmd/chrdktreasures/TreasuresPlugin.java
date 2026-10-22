@@ -9,14 +9,15 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
+import ru.cherdakmd.chrdkregister.api.ChrdkTierApi;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 
 /**
- * CHRDK_Treasures — русские клады: 5 редкостей, 14 регионов и 98 находок
- * (62 классические и 36 вещей арсенала Mine Treasure).
+ * CHRDK_Treasures — русские клады: 5 редкостей, 14 регионов и 196 находок
+ * (124 классические и 72 вещи арсенала Mine Treasure).
  *
  * <p>Клад выпадает за честную добычу блока. Редкость зависит от породы, глубины
  * и биома, а также от прогрессии: редкие клады открываются после накопленного
@@ -255,6 +256,19 @@ public final class TreasuresPlugin extends JavaPlugin {
 
     public ChrdkRegisterApi coreApi() {
         return coreApi;
+    }
+
+    /**
+     * Тир-система CHRDK_TierForge (1.4.141) — мягкая зависимость: аддон может
+     * загрузиться позже, выгрузиться при {@code /reload} или отсутствовать.
+     * {@code null} — находки выдаются без тира, весь остальной клад работает.
+     */
+    public ChrdkTierApi tierApi() {
+        try {
+            return Bukkit.getServicesManager().load(ChrdkTierApi.class);
+        } catch (RuntimeException | LinkageError error) {
+            return null;
+        }
     }
 
     public TreasureStore store() {

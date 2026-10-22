@@ -173,10 +173,10 @@ public final class TierProperties {
                 ForgeUpgrade.Effect.ATTACK_PERCENT, -6);
         add(list, "leaden_grip", "cursed", "Свинцовый хват", ForgeUpgrade.Target.WEAPON,
                 ForgeUpgrade.Effect.ATTACK_SPEED_PERCENT, -10);
-        add(list, "blunt_edge", "cursed", "Затупленное лезвие", ForgeUpgrade.Target.WEAPON,
-                ForgeUpgrade.Effect.RAW_DAMAGE, -1.5);
-        add(list, "short_reach", "cursed", "Короткая рукоять", ForgeUpgrade.Target.WEAPON,
-                ForgeUpgrade.Effect.REACH, -0.3);
+        add(list, "slack_string", "cursed", "Провисшая тетива", ForgeUpgrade.Target.WEAPON,
+                ForgeUpgrade.Effect.SNIPE, -8);
+        add(list, "heavy_string", "cursed", "Тяжёлая тетива", ForgeUpgrade.Target.WEAPON,
+                ForgeUpgrade.Effect.MOVE_SPEED_PERCENT, -4);
         add(list, "weak_swing", "cursed", "Слабый замах", ForgeUpgrade.Target.WEAPON,
                 ForgeUpgrade.Effect.ATTACK_KNOCKBACK, -0.2);
 
@@ -244,10 +244,10 @@ public final class TierProperties {
                 ForgeUpgrade.Effect.SMITE, 3);
         add(list, "finisher", "common", "Добивание", ForgeUpgrade.Target.WEAPON,
                 ForgeUpgrade.Effect.EXECUTE, 3);
-        add(list, "spark", "common", "Искра", ForgeUpgrade.Target.WEAPON,
-                ForgeUpgrade.Effect.IGNITE, 8);
-        add(list, "long_handle", "common", "Длинная рукоять", ForgeUpgrade.Target.WEAPON,
-                ForgeUpgrade.Effect.REACH, 0.15);
+        add(list, "true_shot", "common", "Точный выстрел", ForgeUpgrade.Target.WEAPON,
+                ForgeUpgrade.Effect.SNIPE, 5);
+        add(list, "trophy_bag", "common", "Трофейная сумка", ForgeUpgrade.Target.WEAPON,
+                ForgeUpgrade.Effect.LOOT_DOUBLE, 4);
 
         add(list, "plating", "common", "Пластины", ForgeUpgrade.Target.ARMOR,
                 ForgeUpgrade.Effect.ARMOR_PERCENT, 3);
@@ -274,10 +274,10 @@ public final class TierProperties {
         // ----------------------------------------------------------------- хороший
         add(list, "wing", "fine", "Крыло", ForgeUpgrade.Target.WEAPON,
                 ForgeUpgrade.Effect.ATTACK_PERCENT, 4);
-        add(list, "crit_edge", "fine", "Грань крита", ForgeUpgrade.Target.WEAPON,
-                ForgeUpgrade.Effect.CRIT_CHANCE, 3);
-        add(list, "drinker", "fine", "Кровопийца", ForgeUpgrade.Target.WEAPON,
-                ForgeUpgrade.Effect.LIFESTEAL, 1.5);
+        add(list, "hawk_eye", "fine", "Соколиный глаз", ForgeUpgrade.Target.WEAPON,
+                ForgeUpgrade.Effect.SNIPE, 6);
+        add(list, "trapper", "fine", "Ловчий", ForgeUpgrade.Target.WEAPON,
+                ForgeUpgrade.Effect.HUNTER_XP, 6);
         add(list, "piercer", "fine", "Пронзатель", ForgeUpgrade.Target.WEAPON,
                 ForgeUpgrade.Effect.ARMOR_PIERCE, 3);
         add(list, "frost_mark", "fine", "Морозная метка", ForgeUpgrade.Target.WEAPON,
@@ -302,22 +302,22 @@ public final class TierProperties {
                 ForgeUpgrade.Effect.ZONE_BREAK, 1);
         add(list, "zeal", "fine", "Запал", ForgeUpgrade.Target.TOOL,
                 ForgeUpgrade.Effect.PULSE_HASTE, 1);
-        add(list, "gold_nose", "fine", "Золотое чутьё", ForgeUpgrade.Target.TOOL,
-                ForgeUpgrade.Effect.GOLD_FIND, 4);
+        add(list, "fletcher", "fine", "Лучный мастер", ForgeUpgrade.Target.WEAPON,
+                ForgeUpgrade.Effect.LOOT_DOUBLE, 5);
 
         // ------------------------------------------------------------------- редкий
         add(list, "razor", "rare", "Бритва", ForgeUpgrade.Target.WEAPON,
                 ForgeUpgrade.Effect.ATTACK_PERCENT, 6);
         add(list, "heavy_blade", "rare", "Тяжёлый клинок", ForgeUpgrade.Target.WEAPON,
                 ForgeUpgrade.Effect.RAW_DAMAGE, 1);
-        add(list, "duelist", "rare", "Дуэлянт", ForgeUpgrade.Target.WEAPON,
-                ForgeUpgrade.Effect.PVP_DAMAGE, 5);
-        add(list, "beast_slayer", "rare", "Зверобой", ForgeUpgrade.Target.WEAPON,
-                ForgeUpgrade.Effect.ANIMAL_DAMAGE, 4);
+        add(list, "hunter_instinct", "rare", "Охотничий инстинкт", ForgeUpgrade.Target.WEAPON,
+                ForgeUpgrade.Effect.HUNTER_XP, 8);
+        add(list, "marksman", "rare", "Меткий стрелок", ForgeUpgrade.Target.WEAPON,
+                ForgeUpgrade.Effect.SNIPE, 8);
         add(list, "frost_bite", "rare", "Ледяной укус", ForgeUpgrade.Target.WEAPON,
                 ForgeUpgrade.Effect.FREEZE_HIT, 6);
-        add(list, "grapple", "rare", "Крюк", ForgeUpgrade.Target.WEAPON,
-                ForgeUpgrade.Effect.HOOK, 5);
+        add(list, "trophy_hunter", "rare", "Трофейщик", ForgeUpgrade.Target.WEAPON,
+                ForgeUpgrade.Effect.LOOT_DOUBLE, 6);
 
         add(list, "rune_plate", "rare", "Рунная броня", ForgeUpgrade.Target.ARMOR,
                 ForgeUpgrade.Effect.ARMOR_PERCENT, 5);
@@ -342,12 +342,12 @@ public final class TierProperties {
         // ----------------------------------------------------------------- эпический
         add(list, "soul_edge", "epic", "Клинок душ", ForgeUpgrade.Target.WEAPON,
                 ForgeUpgrade.Effect.ATTACK_PERCENT, 8);
-        add(list, "crit_master", "epic", "Мастер крита", ForgeUpgrade.Target.WEAPON,
-                ForgeUpgrade.Effect.CRIT_CHANCE, 5);
         add(list, "vampire", "epic", "Вампир", ForgeUpgrade.Target.WEAPON,
                 ForgeUpgrade.Effect.LIFESTEAL, 3);
-        add(list, "stormcaller", "epic", "Громовержец", ForgeUpgrade.Target.WEAPON,
-                ForgeUpgrade.Effect.THUNDER, 5);
+        add(list, "deadeye", "epic", "Без промаха", ForgeUpgrade.Target.WEAPON,
+                ForgeUpgrade.Effect.SNIPE, 10);
+        add(list, "beast_hunter", "epic", "Ловчий зверя", ForgeUpgrade.Target.WEAPON,
+                ForgeUpgrade.Effect.HUNTER_XP, 10);
         add(list, "withering", "epic", "Иссушение", ForgeUpgrade.Target.WEAPON,
                 ForgeUpgrade.Effect.WITHER_HEX, 6);
         add(list, "plunder", "epic", "Мародёр", ForgeUpgrade.Target.WEAPON,
@@ -380,12 +380,12 @@ public final class TierProperties {
                 ForgeUpgrade.Effect.RAW_DAMAGE, 2);
         add(list, "fate_crit", "legendary", "Воля судьбы", ForgeUpgrade.Target.WEAPON,
                 ForgeUpgrade.Effect.CRIT_CHANCE, 7);
-        add(list, "skywrath", "legendary", "Гнев небес", ForgeUpgrade.Target.WEAPON,
-                ForgeUpgrade.Effect.THUNDER, 8);
+        add(list, "legend_hunter", "legendary", "Легендарный охотник", ForgeUpgrade.Target.WEAPON,
+                ForgeUpgrade.Effect.HUNTER_XP, 12);
         add(list, "legend_sniper", "legendary", "Легендарный снайпер", ForgeUpgrade.Target.WEAPON,
                 ForgeUpgrade.Effect.SNIPE, 10);
-        add(list, "wind_sweep", "legendary", "Ветреный размах", ForgeUpgrade.Target.WEAPON,
-                ForgeUpgrade.Effect.SWEEP_RATIO, 0.2);
+        add(list, "trophy_lord", "legendary", "Владыка трофеев", ForgeUpgrade.Target.WEAPON,
+                ForgeUpgrade.Effect.LOOT_DOUBLE, 12);
 
         add(list, "sanctuary", "legendary", "Святилище", ForgeUpgrade.Target.ARMOR,
                 ForgeUpgrade.Effect.ARMOR_PERCENT, 10);

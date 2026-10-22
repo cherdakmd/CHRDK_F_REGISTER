@@ -1,5 +1,5 @@
-# CHRDK_Treasures — русские клады: 5 редкостей, 14 биомных регионов и 98
-# именных находок (62 классические и 36 из арсенала Mine Treasure). Клад
+# CHRDK_Treasures — русские клады: 5 редкостей, 14 биомных регионов и 196
+# именных находок (124 классические и 72 из арсенала Mine Treasure). Клад
 # выпадает за добычу блока; редкость зависит от породы, глубины, биома и
 # накопленной добычи игрока.
 #
@@ -12,7 +12,7 @@
 #
 # Прогрессия: редкие клады закрыты, пока игрок не добыл нужное число блоков
 # (250 — редкий, 2 000 — эпический, 15 000 — легендарный). Мифический клад
-# доступен сразу, но его шанс ничтожен — 0.0008 %.
+# доступен сразу, но его шанс ничтожен — 0.0016 %.
 #
 # Шансы можно менять командой /treasuresadmin chance <редкость> <процент>:
 # она пишет отдельный chances.yml и не трогает комментарии этого файла.
@@ -32,22 +32,35 @@ general:
 # блок с множителем 1.0; item-chance — доля кладов, в которых лежит именная
 # находка (остальное — ванильная добыча). 0 выключает редкость, не ломая
 # прогрессию: её просто нельзя найти.
+# 1.4.141: базовые шансы удвоены — находки выпадают вдвое чаще.
 chances:
   common:
-    chance-percent: 1.0
+    chance-percent: 2.0
     item-chance: 0.45
   rare:
-    chance-percent: 0.220
+    chance-percent: 0.440
     item-chance: 0.55
   epic:
-    chance-percent: 0.050
+    chance-percent: 0.100
     item-chance: 0.70
   legendary:
-    chance-percent: 0.008
+    chance-percent: 0.016
     item-chance: 0.90
   mythical:
-    chance-percent: 0.0008
+    chance-percent: 0.0016
     item-chance: 1.0
+
+# Тир CHRDK_TierForge у найденной вещи (1.4.141). Шанс зависит от редкости
+# самой находки: чем она реже, тем вероятнее тир. 100 — тир всегда, 0 —
+# никогда. Если аддон тиров не установлен, находки выдаются как раньше.
+tiers:
+  enabled: true
+  chance-percent:
+    common: 20
+    rare: 40
+    epic: 60
+    legendary: 80
+    mythical: 100
 
 # Шанс клада на блок, проценты по редкостям — как в таблицах Mine Treasure.
 # Каждая запись — секция из пяти редкостей; 1.0 значит «один клад этой
@@ -61,231 +74,231 @@ chances:
 # Секция полностью заменяет встроенный список. Уберите строку — блок
 # перестанет давать клады.
 blocks:
-  # Камень и глубинные породы: база, на которой стоит вся таблица — 1 %
+  # Камень и глубинные породы: база, на которой стоит вся таблица — 2 %
   # обычного клада на блок. Редкий вчетверо реже обычного, эпический —
   # в 31 раз реже, легендарный вдвое реже эпического, мифический — в 8 раз
   # реже эпического.
   STONE:
-    common: 1
-    rare: 0.25
-    epic: 0.032
-    legendary: 0.016
-    mythical: 0.004
+    common: 2
+    rare: 0.5
+    epic: 0.064
+    legendary: 0.032
+    mythical: 0.008
   COBBLESTONE:
-    common: 1
-    rare: 0.25
-    epic: 0.032
-    legendary: 0.016
-    mythical: 0.004
+    common: 2
+    rare: 0.5
+    epic: 0.064
+    legendary: 0.032
+    mythical: 0.008
   DEEPSLATE:
-    common: 1.6
-    rare: 0.4
-    epic: 0.0512
-    legendary: 0.0256
-    mythical: 0.0064
+    common: 3.2
+    rare: 0.8
+    epic: 0.1024
+    legendary: 0.0512
+    mythical: 0.0128
   COBBLED_DEEPSLATE:
-    common: 1.2
-    rare: 0.3
-    epic: 0.0384
-    legendary: 0.0192
-    mythical: 0.0048
+    common: 2.4
+    rare: 0.6
+    epic: 0.0768
+    legendary: 0.0384
+    mythical: 0.0096
   TUFF:
-    common: 1
-    rare: 0.25
-    epic: 0.032
-    legendary: 0.016
-    mythical: 0.004
+    common: 2
+    rare: 0.5
+    epic: 0.064
+    legendary: 0.032
+    mythical: 0.008
   SMOOTH_BASALT:
-    common: 1
-    rare: 0.25
-    epic: 0.032
-    legendary: 0.016
-    mythical: 0.004
+    common: 2
+    rare: 0.5
+    epic: 0.064
+    legendary: 0.032
+    mythical: 0.008
   BASALT:
-    common: 1
-    rare: 0.25
-    epic: 0.032
-    legendary: 0.016
-    mythical: 0.004
+    common: 2
+    rare: 0.5
+    epic: 0.064
+    legendary: 0.032
+    mythical: 0.008
   CALCITE:
-    common: 0.75
-    rare: 0.1875
-    epic: 0.024
-    legendary: 0.012
-    mythical: 0.003
+    common: 1.5
+    rare: 0.375
+    epic: 0.048
+    legendary: 0.024
+    mythical: 0.006
 
   # Гранит и андезит беднее камня, диорит — наоборот: его гнёзда крупнее,
   # поэтому обычный клад выпадает чаще.
   GRANITE:
-    common: 0.8
-    rare: 0.2
-    epic: 0.0256
-    legendary: 0.0128
-    mythical: 0.0032
+    common: 1.6
+    rare: 0.4
+    epic: 0.0512
+    legendary: 0.0256
+    mythical: 0.0064
   ANDESITE:
-    common: 0.8
-    rare: 0.2
-    epic: 0.0256
-    legendary: 0.0128
-    mythical: 0.0032
+    common: 1.6
+    rare: 0.4
+    epic: 0.0512
+    legendary: 0.0256
+    mythical: 0.0064
   DIORITE:
-    common: 1.5
-    rare: 0.2
-    epic: 0.048
-    legendary: 0.024
-    mythical: 0.006
+    common: 3
+    rare: 0.4
+    epic: 0.096
+    legendary: 0.048
+    mythical: 0.012
 
   # Нижний мир и Энд: адский камень встречается сплошняком и потому беднее,
   # чернокамень и эндстоун ценятся выше камня.
   NETHERRACK:
-    common: 0.75
-    rare: 0.1875
-    epic: 0.024
-    legendary: 0.012
-    mythical: 0.003
+    common: 1.5
+    rare: 0.375
+    epic: 0.048
+    legendary: 0.024
+    mythical: 0.006
   BLACKSTONE:
-    common: 1
-    rare: 0.25
-    epic: 0.032
-    legendary: 0.016
-    mythical: 0.004
+    common: 2
+    rare: 0.5
+    epic: 0.064
+    legendary: 0.032
+    mythical: 0.008
   END_STONE:
-    common: 1.4
-    rare: 0.35
-    epic: 0.0448
-    legendary: 0.0224
-    mythical: 0.0056
+    common: 2.8
+    rare: 0.7
+    epic: 0.0896
+    legendary: 0.0448
+    mythical: 0.0112
   OBSIDIAN:
-    common: 1.5
-    rare: 0.375
-    epic: 0.048
-    legendary: 0.024
-    mythical: 0.006
+    common: 3
+    rare: 0.75
+    epic: 0.096
+    legendary: 0.048
+    mythical: 0.012
   CRYING_OBSIDIAN:
-    common: 1.5
-    rare: 0.375
-    epic: 0.048
-    legendary: 0.024
-    mythical: 0.006
+    common: 3
+    rare: 0.75
+    epic: 0.096
+    legendary: 0.048
+    mythical: 0.012
 
   # Руды: каждая даёт клад чаще камня, глубинные варианты — чуть чаще
   # обычных, потому что добывать их дольше.
   COAL_ORE:
-    common: 1.4
-    rare: 0.35
-    epic: 0.0448
-    legendary: 0.0224
-    mythical: 0.0056
+    common: 2.8
+    rare: 0.7
+    epic: 0.0896
+    legendary: 0.0448
+    mythical: 0.0112
   DEEPSLATE_COAL_ORE:
-    common: 1.6
-    rare: 0.4
-    epic: 0.0512
-    legendary: 0.0256
-    mythical: 0.0064
+    common: 3.2
+    rare: 0.8
+    epic: 0.1024
+    legendary: 0.0512
+    mythical: 0.0128
   IRON_ORE:
-    common: 1.4
-    rare: 0.35
-    epic: 0.0448
-    legendary: 0.0224
-    mythical: 0.0056
+    common: 2.8
+    rare: 0.7
+    epic: 0.0896
+    legendary: 0.0448
+    mythical: 0.0112
   DEEPSLATE_IRON_ORE:
-    common: 1.6
-    rare: 0.4
-    epic: 0.0512
-    legendary: 0.0256
-    mythical: 0.0064
+    common: 3.2
+    rare: 0.8
+    epic: 0.1024
+    legendary: 0.0512
+    mythical: 0.0128
   COPPER_ORE:
-    common: 1.4
-    rare: 0.35
-    epic: 0.0448
-    legendary: 0.0224
-    mythical: 0.0056
+    common: 2.8
+    rare: 0.7
+    epic: 0.0896
+    legendary: 0.0448
+    mythical: 0.0112
   DEEPSLATE_COPPER_ORE:
-    common: 1.6
-    rare: 0.4
-    epic: 0.0512
-    legendary: 0.0256
-    mythical: 0.0064
+    common: 3.2
+    rare: 0.8
+    epic: 0.1024
+    legendary: 0.0512
+    mythical: 0.0128
   GOLD_ORE:
-    common: 1.4
-    rare: 0.35
-    epic: 0.0448
-    legendary: 0.0224
-    mythical: 0.0056
+    common: 2.8
+    rare: 0.7
+    epic: 0.0896
+    legendary: 0.0448
+    mythical: 0.0112
   DEEPSLATE_GOLD_ORE:
-    common: 1.6
-    rare: 0.4
-    epic: 0.0512
-    legendary: 0.0256
-    mythical: 0.0064
+    common: 3.2
+    rare: 0.8
+    epic: 0.1024
+    legendary: 0.0512
+    mythical: 0.0128
   REDSTONE_ORE:
-    common: 1.4
-    rare: 0.35
-    epic: 0.0448
-    legendary: 0.0224
-    mythical: 0.0056
+    common: 2.8
+    rare: 0.7
+    epic: 0.0896
+    legendary: 0.0448
+    mythical: 0.0112
   DEEPSLATE_REDSTONE_ORE:
-    common: 1.6
-    rare: 0.4
-    epic: 0.0512
-    legendary: 0.0256
-    mythical: 0.0064
+    common: 3.2
+    rare: 0.8
+    epic: 0.1024
+    legendary: 0.0512
+    mythical: 0.0128
   LAPIS_ORE:
-    common: 1.4
-    rare: 0.35
-    epic: 0.0448
-    legendary: 0.0224
-    mythical: 0.0056
+    common: 2.8
+    rare: 0.7
+    epic: 0.0896
+    legendary: 0.0448
+    mythical: 0.0112
   DEEPSLATE_LAPIS_ORE:
-    common: 1.6
-    rare: 0.4
-    epic: 0.0512
-    legendary: 0.0256
-    mythical: 0.0064
+    common: 3.2
+    rare: 0.8
+    epic: 0.1024
+    legendary: 0.0512
+    mythical: 0.0128
   NETHER_GOLD_ORE:
-    common: 1.4
-    rare: 0.35
-    epic: 0.0448
-    legendary: 0.0224
-    mythical: 0.0056
+    common: 2.8
+    rare: 0.7
+    epic: 0.0896
+    legendary: 0.0448
+    mythical: 0.0112
   NETHER_QUARTZ_ORE:
-    common: 1.4
-    rare: 0.35
-    epic: 0.0448
-    legendary: 0.0224
-    mythical: 0.0056
+    common: 2.8
+    rare: 0.7
+    epic: 0.0896
+    legendary: 0.0448
+    mythical: 0.0112
 
   # Алмаз, изумруд и незеритовый лом — самые «кладоносные» блоки игры.
   DIAMOND_ORE:
-    common: 2
-    rare: 0.5
-    epic: 0.064
-    legendary: 0.032
-    mythical: 0.008
+    common: 4
+    rare: 1
+    epic: 0.128
+    legendary: 0.064
+    mythical: 0.016
   DEEPSLATE_DIAMOND_ORE:
-    common: 2
-    rare: 0.5
-    epic: 0.064
-    legendary: 0.032
-    mythical: 0.008
+    common: 4
+    rare: 1
+    epic: 0.128
+    legendary: 0.064
+    mythical: 0.016
   EMERALD_ORE:
-    common: 2
-    rare: 0.5
-    epic: 0.064
-    legendary: 0.032
-    mythical: 0.008
+    common: 4
+    rare: 1
+    epic: 0.128
+    legendary: 0.064
+    mythical: 0.016
   DEEPSLATE_EMERALD_ORE:
-    common: 2
-    rare: 0.5
-    epic: 0.064
-    legendary: 0.032
-    mythical: 0.008
+    common: 4
+    rare: 1
+    epic: 0.128
+    legendary: 0.064
+    mythical: 0.016
   ANCIENT_DEBRIS:
-    common: 2
-    rare: 0.5
-    epic: 0.064
-    legendary: 0.032
-    mythical: 0.008
+    common: 4
+    rare: 1
+    epic: 0.128
+    legendary: 0.064
+    mythical: 0.016
 
 # Глубина: каждый блок ниже нуля добавляет per-block-bonus к множителю,
 # но не больше max-bonus. 0.002 и 0.5 — на глубине −64 шанс выше на 12.8 %,

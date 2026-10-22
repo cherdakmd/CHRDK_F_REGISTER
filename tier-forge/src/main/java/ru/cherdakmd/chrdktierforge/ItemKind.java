@@ -29,9 +29,18 @@ public enum ItemKind {
         return this == HELMET || this == CHESTPLATE || this == LEGGINGS || this == BOOTS;
     }
 
+    /** Оружие ближнего боя: меч, топор (он же инструмент) и трезубец. */
+    public boolean isMelee() {
+        return this == SWORD || this == AXE || this == TRIDENT;
+    }
+
+    /** Дальний бой: лук и арбалет. Их бонусы работают только на стрелы. */
+    public boolean isRanged() {
+        return this == BOW || this == CROSSBOW;
+    }
+
     public boolean isWeapon() {
-        return this == SWORD || this == AXE || this == TRIDENT
-                || this == BOW || this == CROSSBOW;
+        return isMelee() || isRanged();
     }
 
     public boolean isTool() {

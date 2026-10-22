@@ -18,25 +18,28 @@ import java.util.Locale;
  */
 public enum TreasureTier {
 
-    COMMON("common", 0, true, 1.000, 0.45),
-    RARE("rare", 250, true, 0.220, 0.55),
-    EPIC("epic", 2_000, true, 0.050, 0.70),
-    LEGENDARY("legendary", 15_000, true, 0.008, 0.90),
-    MYTHICAL("mythical", 0, false, 0.0008, 1.00);
+    COMMON("common", 0, true, 2.000, 0.45, 20),
+    RARE("rare", 250, true, 0.440, 0.55, 40),
+    EPIC("epic", 2_000, true, 0.100, 0.70, 60),
+    LEGENDARY("legendary", 15_000, true, 0.016, 0.90, 80),
+    MYTHICAL("mythical", 0, false, 0.0016, 1.00, 100);
 
     private final String id;
     private final int minMined;
     private final boolean regional;
     private final double defaultChancePercent;
     private final double defaultItemChance;
+    private final double defaultTierChance;
 
     TreasureTier(String id, int minMined, boolean regional,
-                 double defaultChancePercent, double defaultItemChance) {
+                 double defaultChancePercent, double defaultItemChance,
+                 double defaultTierChance) {
         this.id = id;
         this.minMined = minMined;
         this.regional = regional;
         this.defaultChancePercent = defaultChancePercent;
         this.defaultItemChance = defaultItemChance;
+        this.defaultTierChance = defaultTierChance;
     }
 
     public String id() {
@@ -60,6 +63,15 @@ public enum TreasureTier {
     /** Шанс, что вместо ванильной добычи выпадет именной предмет редкости. */
     public double defaultItemChance() {
         return defaultItemChance;
+    }
+
+    /**
+     * Шанс в процентах, что найденный предмет получит тир CHRDK_TierForge.
+     * Чем реже находка, тем выше шанс: обычная — 20 %, мифическая — 100 %.
+     * Значение переопределяется в config.yml ({@code tiers.chance-percent.<ид>}).
+     */
+    public double defaultTierChance() {
+        return defaultTierChance;
     }
 
     /** Редкости от самой редкой к обычной — в этом порядке идёт бросок. */

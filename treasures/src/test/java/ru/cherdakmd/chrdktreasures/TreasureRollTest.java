@@ -19,8 +19,9 @@ class TreasureRollTest {
         assertNotNull(roll);
         assertTrue(roll.named());
         assertTrue(roll.loot().isEmpty(), "именная находка не должна дублироваться добычей");
-        assertEquals(TreasureCatalog.forRegionTier(TreasureRegion.PLAINS, TreasureTier.COMMON),
-                roll.item());
+        // 1.4.141: в каталоге по две находки на редкость — подходит любая из пула.
+        assertTrue(TreasureCatalog.pool(TreasureRegion.PLAINS, TreasureTier.COMMON)
+                .contains(roll.item()), "выпала находка не из пула: " + roll.item().id());
         assertEquals(TreasureTier.COMMON, roll.tier());
         assertEquals(TreasureRegion.PLAINS, roll.region());
     }
@@ -91,8 +92,8 @@ class TreasureRollTest {
         for (int seed = 0; seed < 50; seed++) {
             TreasureRoll.Roll classic = TreasureRoll.roll(TreasureTier.LEGENDARY,
                     TreasureRegion.DESERT, 1.0, new Random(seed), Long.MAX_VALUE, 0.0);
-            assertEquals(TreasureCatalog.forRegionTier(TreasureRegion.DESERT,
-                    TreasureTier.LEGENDARY), classic.item());
+            assertTrue(TreasureCatalog.pool(TreasureRegion.DESERT, TreasureTier.LEGENDARY)
+                    .contains(classic.item()), "выпала не классика: " + classic.item().id());
             TreasureRoll.Roll arsenal = TreasureRoll.roll(TreasureTier.LEGENDARY,
                     TreasureRegion.DESERT, 1.0, new Random(seed), Long.MAX_VALUE, 1.0);
             assertNotNull(arsenal.item());
@@ -108,8 +109,8 @@ class TreasureRollTest {
             TreasureRoll.Roll roll = TreasureRoll.roll(TreasureTier.COMMON,
                     TreasureRegion.PLAINS, 1.0, new Random(seed), Long.MAX_VALUE, 1.0);
             assertTrue(roll.named());
-            assertEquals(TreasureCatalog.forRegionTier(TreasureRegion.PLAINS, TreasureTier.COMMON),
-                    roll.item());
+            assertTrue(TreasureCatalog.pool(TreasureRegion.PLAINS, TreasureTier.COMMON)
+                    .contains(roll.item()), "выпала находка не из пула: " + roll.item().id());
         }
     }
 

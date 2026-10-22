@@ -125,6 +125,28 @@ public final class TierItems {
         return TierDef.isTier(tier) ? tier : null;
     }
 
+    /** Есть ли на предмете тир (для моста {@code ChrdkTierApi}). */
+    public boolean isTierItem(ItemStack item) {
+        return tierOf(item) != null;
+    }
+
+    /**
+     * Записывает источник тира ({@code item_tier_source}) без пересборки имени:
+     * витрина {@code /tiers info} показывает, откуда пришла редкость.
+     */
+    public void setSource(ItemStack item, String source) {
+        if (item == null || source == null || source.isBlank() || !item.hasItemMeta()) {
+            return;
+        }
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) {
+            return;
+        }
+        meta.getPersistentDataContainer().set(sourceKey, PersistentDataType.STRING,
+                source.trim().toLowerCase(java.util.Locale.ROOT));
+        item.setItemMeta(meta);
+    }
+
     /** Полное применение тира: модификаторы, PDC, имя, лор, блеск. */
     public void apply(ItemStack item, TierDef.Snapshot tier) {
         apply(item, tier, null, null);
@@ -155,6 +177,7 @@ public final class TierItems {
                       String uidPreset) {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
+        ItemKind kind = ItemKind.classify(item.getType().name());
         meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, tier.id());
         // 1.4.124: id модификаторов уникальны для предмета — иначе четыре детали
         // брони делят один модификатор, и складывается только одна.
@@ -163,7 +186,7 @@ public final class TierItems {
         clearTierModifiers(meta);
         clearForgeModifiers(meta);
         ensureForgeName(item, meta);
-        refreshUpgradeIndex(meta); // 1.4.82: индекс строится при каждой пересборке
+        refreshUpgradeIndex(meta, kind); // 1.4.82: индекс строится при каждой пересборке
         syncProperties(item, meta, tier, preset); // 1.4.118: свойство живёт вместе с тиром
         applyModifiers(item, meta, tier, uid);
         applyUpgradeModifiers(item, meta, uid);
@@ -171,7 +194,7 @@ public final class TierItems {
         applyAffixModifiers(item, meta, uid); // волна 17: хорошие и плохие аффиксы
         applyEnchantments(item, meta, tier, uid); // волна 17: иногда — зачарования
         decorateName(item, meta, tier);
-        replaceLore(meta, tier, ItemKind.classify(item.getType().name()));
+        replaceLore(meta, tier, kind);
         stampVisuals(meta, tier); // 1.4.119: свой блеск у каждого тира
         meta.getPersistentDataContainer().set(modifiersKey, PersistentDataType.STRING,
                 modifierStamp());
@@ -428,11 +451,21 @@ public final class TierItems {
         if (meta == null) {
             return new LinkedHashMap<>();
         }
-        return upgradesFromMeta(meta);
+        return upgradesFromMeta(meta, ItemKind.classify(item.getType().name()));
     }
 
-    /** Улучшения из уже открытой меты: {@code up_index}, старые предметы — перебором. */
-    private Map<ForgeUpgrade.Def, Integer> upgradesFromMeta(ItemMeta meta) {
+    /**
+     * Улучшения из уже открытой меты: {@code up_index}, старые предметы — перебором.
+     *
+     * <p>Волна 1.4.141: чужие улучшения отбрасываются. До этого предмет получал
+     * «Кромку» вместе с луком или «Снайпера» вместе с мечом, потому что цель
+     * {@code WEAPON} покрывала всё оружие; теперь пара «цель + эффект» режется
+     * по виду, и старый предмет честно теряет бесполезную строку.</p>
+     *
+     * <p>Неизвестный вид ({@code null}) ничего не отсекает: у щита или удочки
+     * тир-система не знает ролей, и стирать чужие улучшения там нельзя.</p>
+     */
+    private Map<ForgeUpgrade.Def, Integer> upgradesFromMeta(ItemMeta meta, ItemKind kind) {
         Map<ForgeUpgrade.Def, Integer> result = new LinkedHashMap<>();
         long[] index = meta.getPersistentDataContainer()
                 .get(indexKey, PersistentDataType.LONG_ARRAY);
@@ -444,7 +477,7 @@ public final class TierItems {
                 ForgeUpgrade.Def def = ForgeUpgrade.ALL.get(i);
                 Integer level = meta.getPersistentDataContainer()
                         .get(upgradeKey(def.id()), PersistentDataType.INTEGER);
-                if (level != null && level > 0) {
+                if (level != null && level > 0 && (kind == null || def.fits(kind))) {
                     result.put(def, level);
                 }
             }
@@ -453,7 +486,7 @@ public final class TierItems {
         for (ForgeUpgrade.Def def : ForgeUpgrade.ALL) {
             Integer level = meta.getPersistentDataContainer()
                     .get(upgradeKey(def.id()), PersistentDataType.INTEGER);
-            if (level != null && level > 0) {
+            if (level != null && level > 0 && (kind == null || def.fits(kind))) {
                 result.put(def, level);
             }
         }
@@ -472,10 +505,30 @@ public final class TierItems {
             return List.of();
         }
         ItemMeta meta = item.getItemMeta();
-        return meta == null ? List.of() : propertiesFromMeta(meta);
+        return meta == null ? List.of()
+                : propertiesFromMeta(meta, ItemKind.classify(item.getType().name()));
     }
 
-    private List<TierProperty> propertiesFromMeta(ItemMeta meta) {
+    /**
+     * Свойства из меты с отсечением чужих виду. Сырой список нужен только
+     * сверке тира: если в PDC лежит свойство «не для этого предмета», набор
+     * считается устаревшим и переролливается целиком.
+     */
+    private List<TierProperty> propertiesFromMeta(ItemMeta meta, ItemKind kind) {
+        List<TierProperty> all = rawPropertiesFromMeta(meta);
+        if (kind == null || all.isEmpty()) {
+            return kind == null ? all : List.of();
+        }
+        List<TierProperty> result = new ArrayList<>(all.size());
+        for (TierProperty property : all) {
+            if (property.fits(kind)) {
+                result.add(property);
+            }
+        }
+        return result;
+    }
+
+    private List<TierProperty> rawPropertiesFromMeta(ItemMeta meta) {
         return TierProperties.parse(meta.getPersistentDataContainer()
                 .get(propertiesKey, PersistentDataType.STRING));
     }
@@ -524,12 +577,13 @@ public final class TierItems {
         if (meta == null) {
             return new LinkedHashMap<>();
         }
-        Map<ForgeUpgrade.Def, Integer> result = new LinkedHashMap<>(upgradesFromMeta(meta));
-        for (TierProperty property : propertiesFromMeta(meta)) {
+        ItemKind kind = ItemKind.classify(item.getType().name());
+        Map<ForgeUpgrade.Def, Integer> result = new LinkedHashMap<>(upgradesFromMeta(meta, kind));
+        for (TierProperty property : propertiesFromMeta(meta, kind)) {
             result.put(property.asDef(), 1);
         }
         // волна 17: аффиксы идут тем же путём, что свойства и ковка
-        for (TierAffix affix : affixesFromMeta(meta, ItemKind.classify(item.getType().name()))) {
+        for (TierAffix affix : affixesFromMeta(meta, kind)) {
             result.put(affix.asDef(), 1);
         }
         return result;
@@ -566,14 +620,16 @@ public final class TierItems {
                                 List<TierProperty> preset) {
         ItemKind kind = ItemKind.classify(item.getType().name());
         if (!plugin.config().propertiesEnabled() || kind == null) {
-            if (!propertiesFromMeta(meta).isEmpty()) {
+            if (!rawPropertiesFromMeta(meta).isEmpty()) {
                 meta.getPersistentDataContainer().remove(propertiesKey);
             }
             return;
         }
         List<TierProperty> current = preset != null && !preset.isEmpty()
-                ? preset : propertiesFromMeta(meta);
+                ? preset : rawPropertiesFromMeta(meta);
         int wanted = desiredProperties();
+        // Сырой набор сверяем и с тиром, и с видом: свойство «меча» на лопате
+        // (или наоборот) — повод перероллить, а не тащить его в лор.
         boolean sameTier = !current.isEmpty();
         for (TierProperty property : current) {
             if (!property.tier().equals(tier.id()) || !property.fits(kind)) {
@@ -599,15 +655,25 @@ public final class TierItems {
         }
     }
 
-    /** Пересобирает {@code up_index} по фактическим PDC-уровням (1.4.82). */
-    private void refreshUpgradeIndex(ItemMeta meta) {
+    /**
+     * Пересобирает {@code up_index} по фактическим PDC-уровням (1.4.82) и
+     * заодно стирает улучшения, которые этому виду предмета не подходят
+     * (1.4.141): иначе чужая строка осталась бы в лоре навсегда.
+     */
+    private void refreshUpgradeIndex(ItemMeta meta, ItemKind kind) {
         long[] words = UpgradeIndex.empty();
         for (int i = 0; i < ForgeUpgrade.ALL.size(); i++) {
+            ForgeUpgrade.Def def = ForgeUpgrade.ALL.get(i);
             Integer level = meta.getPersistentDataContainer()
-                    .get(upgradeKey(ForgeUpgrade.ALL.get(i).id()), PersistentDataType.INTEGER);
-            if (level != null && level > 0) {
-                UpgradeIndex.set(words, i);
+                    .get(upgradeKey(def.id()), PersistentDataType.INTEGER);
+            if (level == null || level <= 0) {
+                continue;
             }
+            if (kind != null && !def.fits(kind)) {
+                meta.getPersistentDataContainer().remove(upgradeKey(def.id()));
+                continue;
+            }
+            UpgradeIndex.set(words, i);
         }
         if (UpgradeIndex.any(words)) {
             meta.getPersistentDataContainer()
@@ -732,7 +798,7 @@ public final class TierItems {
         EquipmentSlotGroup slot = slotGroupFor(kind);
         // 1.4.82: читаем уже открытую мету, а не заново собираем её из предмета
         // (раньше на каждую пересборку приходился лишний getItemMeta()).
-        for (Map.Entry<ForgeUpgrade.Def, Integer> entry : upgradesFromMeta(meta).entrySet()) {
+        for (Map.Entry<ForgeUpgrade.Def, Integer> entry : upgradesFromMeta(meta, kind).entrySet()) {
             ForgeUpgrade.Def def = entry.getKey();
             applyDefModifiers(item, meta, def, def.perLevel() * entry.getValue(),
                     "fu_" + def.id(), slot, uid);
@@ -744,7 +810,7 @@ public final class TierItems {
         ItemKind kind = ItemKind.classify(item.getType().name());
         if (kind == null) return;
         EquipmentSlotGroup slot = slotGroupFor(kind);
-        for (TierProperty property : propertiesFromMeta(meta)) {
+        for (TierProperty property : propertiesFromMeta(meta, kind)) {
             applyDefModifiers(item, meta, property.asDef(), property.value(),
                     "pr_" + property.id(), slot, uid);
         }
@@ -1165,7 +1231,7 @@ public final class TierItems {
         lore.removeIf(this::isAffixLine);
         lore.add(tierLine(tier, kind));
         // уникальные свойства тира — сразу под плашкой, в порядке выдачи
-        for (TierProperty property : propertiesFromMeta(meta)) {
+        for (TierProperty property : propertiesFromMeta(meta, kind)) {
             lore.add(propertyLine(property));
         }
         // волна 17: аффиксы — отдельными строками ◆ (бонус) и ✖ (дефект)
@@ -1173,7 +1239,7 @@ public final class TierItems {
             lore.add(affixLine(affix));
         }
         // строки свойств улучшений — после, в порядке реестра
-        for (Map.Entry<ForgeUpgrade.Def, Integer> entry : upgradesFromMeta(meta).entrySet()) {
+        for (Map.Entry<ForgeUpgrade.Def, Integer> entry : upgradesFromMeta(meta, kind).entrySet()) {
             lore.add(upgradeLine(entry.getKey(), entry.getValue()));
         }
         meta.lore(lore);

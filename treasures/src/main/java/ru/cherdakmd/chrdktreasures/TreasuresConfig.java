@@ -64,6 +64,9 @@ public final class TreasuresConfig {
     private final boolean cursesEnabled;
     private final boolean setsEnabled;
     private final double arsenalShare;
+    /** 1.4.141: шанс тира CHRDK_TierForge по редкости находки, проценты. */
+    private final boolean tiersEnabled;
+    private final Map<TreasureTier, Double> tierChances;
 
     private TreasuresConfig(boolean enabled, int auraRefreshTicks, int topSize,
                             Map<TreasureTier, Double> chances,
@@ -78,7 +81,8 @@ public final class TreasuresConfig {
                             boolean broadcastLegend, int streakWindowSeconds, int streakBonusEvery,
                             Map<TreasureRank, Integer> rankRewards, Effects effects,
                             boolean abilitiesEnabled, boolean cursesEnabled,
-                            boolean setsEnabled, double arsenalShare) {
+                            boolean setsEnabled, double arsenalShare,
+                            boolean tiersEnabled, Map<TreasureTier, Double> tierChances) {
         this.enabled = enabled;
         this.auraRefreshTicks = auraRefreshTicks;
         this.topSize = topSize;
@@ -103,6 +107,8 @@ public final class TreasuresConfig {
         this.cursesEnabled = cursesEnabled;
         this.setsEnabled = setsEnabled;
         this.arsenalShare = arsenalShare;
+        this.tiersEnabled = tiersEnabled;
+        this.tierChances = tierChances;
     }
 
     /** Разбор без переопределений: значения шансов берутся только из config.yml. */
@@ -177,6 +183,16 @@ public final class TreasuresConfig {
 
         double arsenalShare = clamp(cfg.getDouble("arsenal.share", 0.35), 0.0, 1.0);
 
+        // 1.4.141: тир у находки. Шанс зависит от редкости самой находки:
+        // обычная 20 %, мифическая 100 %. 0 выключает тир для этой редкости,
+        // tiers.enabled: false — для всех сразу.
+        boolean tiersEnabled = cfg.getBoolean("tiers.enabled", true);
+        Map<TreasureTier, Double> tierChances = new EnumMap<>(TreasureTier.class);
+        for (TreasureTier tier : TreasureTier.values()) {
+            tierChances.put(tier, clamp(cfg.getDouble("tiers.chance-percent." + tier.id(),
+                    tier.defaultTierChance()), 0.0, 100.0));
+        }
+
         Map<Integer, Milestone> milestones = new TreeMap<>();
         ConfigurationSection milestoneRoot = cfg.getConfigurationSection("milestones");
         if (milestoneRoot != null) {
@@ -237,7 +253,8 @@ public final class TreasuresConfig {
                 cfg.getBoolean("abilities.enabled", true),
                 cfg.getBoolean("curses.enabled", true),
                 cfg.getBoolean("sets.enabled", true),
-                arsenalShare);
+                arsenalShare, tiersEnabled,
+                Collections.unmodifiableMap(tierChances));
     }
 
     private static TreasureTier parseTier(String raw, TreasureTier fallback) {
@@ -272,12 +289,13 @@ public final class TreasuresConfig {
 
     static Map<Integer, Milestone> defaultMilestones() {
         Map<Integer, Milestone> out = new LinkedHashMap<>();
-        out.put(10, new Milestone(10, 8));
-        out.put(25, new Milestone(25, 24));
-        out.put(40, new Milestone(40, 48));
+        // 1.4.141: коллекция выросла вдвое, вехи сдвинуты вместе с ней.
+        out.put(20, new Milestone(20, 8));
+        out.put(50, new Milestone(50, 24));
+        out.put(80, new Milestone(80, 48));
         out.put(TreasureCatalog.EXPECTED_ITEMS,
                 new Milestone(TreasureCatalog.EXPECTED_ITEMS, 96));
-        out.put(80, new Milestone(80, 128));
+        out.put(160, new Milestone(160, 128));
         out.put(TreasureRegistry.size(), new Milestone(TreasureRegistry.size(), 192));
         return out;
     }
@@ -300,6 +318,16 @@ public final class TreasuresConfig {
 
     public double itemChance(TreasureTier tier) {
         return itemChances.getOrDefault(tier, 0.0);
+    }
+
+    /** Включены ли тиры CHRDK_TierForge у находок. */
+    public boolean tiersEnabled() {
+        return tiersEnabled;
+    }
+
+    /** Шанс в процентах, что находка этой редкости получит тир. */
+    public double tierChance(TreasureTier tier) {
+        return tierChances.getOrDefault(tier, 0.0);
     }
 
     /** Шансы всех редкостей одной картой — чтобы не собирать её на каждый блок. */

@@ -37,13 +37,13 @@ class TreasureConfigTest {
         assertTrue(config.enabled());
         assertEquals(60, config.auraRefreshTicks());
         assertEquals(10, config.topSize());
-        assertEquals(1.0, config.chance(TreasureTier.COMMON), 1e-9);
+        assertEquals(2.0, config.chance(TreasureTier.COMMON), 1e-9);
         assertEquals(0.45, config.itemChance(TreasureTier.COMMON), 1e-9);
         assertEquals(TreasuresConfig.defaultBlocks().size(), config.blocks().size());
         assertEquals(TreasuresConfig.defaultBlocks().size(), config.blockCount());
         assertEquals(3_000L, config.cooldownMillis());
         assertEquals(6, config.milestones().size());
-        assertEquals(8, config.milestones().get(10).diamonds());
+        assertEquals(8, config.milestones().get(20).diamonds());
         assertEquals(96, config.milestones().get(TreasureCatalog.EXPECTED_ITEMS).diamonds());
         assertEquals(192, config.milestones().get(TreasureRegistry.size()).diamonds());
         assertTrue(config.broadcastLegendary());
@@ -53,21 +53,21 @@ class TreasureConfigTest {
     @Test
     void shippedConfigParsesToDocumentedValues() {
         TreasuresConfig config = TreasuresConfig.parse(shipped(), LOGGER);
-        assertEquals(1.0, config.chance(TreasureTier.COMMON), 1e-9);
-        assertEquals(0.220, config.chance(TreasureTier.RARE), 1e-9);
-        assertEquals(0.0008, config.chance(TreasureTier.MYTHICAL), 1e-9);
+        assertEquals(2.0, config.chance(TreasureTier.COMMON), 1e-9);
+        assertEquals(0.440, config.chance(TreasureTier.RARE), 1e-9);
+        assertEquals(0.0016, config.chance(TreasureTier.MYTHICAL), 1e-9);
         assertEquals(1.0, config.itemChance(TreasureTier.MYTHICAL), 1e-9);
         assertEquals(35, config.blockCount(), "в config.yml должно быть 35 блоков");
         assertEquals(0, config.blocks().size(), "в новом формате все блоки — таблицы");
         Map<TreasureTier, Double> diamond = config.blockChances("diamond_ore");
         assertNotNull(diamond, "у алмазной руды должна быть таблица шансов");
-        assertEquals(2.0, diamond.get(TreasureTier.COMMON), 1e-9);
-        assertEquals(0.5, diamond.get(TreasureTier.RARE), 1e-9);
-        assertEquals(0.064, diamond.get(TreasureTier.EPIC), 1e-9);
-        assertEquals(0.032, diamond.get(TreasureTier.LEGENDARY), 1e-9);
-        assertEquals(0.008, diamond.get(TreasureTier.MYTHICAL), 1e-9);
-        assertEquals(1.6, config.blockChances("DEEPSLATE").get(TreasureTier.COMMON), 1e-9);
-        assertEquals(0.2, config.blockChances("DIORITE").get(TreasureTier.RARE), 1e-9);
+        assertEquals(4.0, diamond.get(TreasureTier.COMMON), 1e-9);
+        assertEquals(1.0, diamond.get(TreasureTier.RARE), 1e-9);
+        assertEquals(0.128, diamond.get(TreasureTier.EPIC), 1e-9);
+        assertEquals(0.064, diamond.get(TreasureTier.LEGENDARY), 1e-9);
+        assertEquals(0.016, diamond.get(TreasureTier.MYTHICAL), 1e-9);
+        assertEquals(3.2, config.blockChances("DEEPSLATE").get(TreasureTier.COMMON), 1e-9);
+        assertEquals(0.4, config.blockChances("DIORITE").get(TreasureTier.RARE), 1e-9);
         assertNull(config.blockChances("DIRT"));
         assertEquals(0.0, config.blockMultiplier("DIRT"), 1e-9);
         assertTrue(config.mineable("diamond_ore"));
@@ -205,7 +205,7 @@ class TreasureConfigTest {
                 Map.of(TreasureTier.LEGENDARY, 0.5, TreasureTier.RARE, 150.0), LOGGER);
         assertEquals(0.5, config.chance(TreasureTier.LEGENDARY), 1e-9);
         assertEquals(100.0, config.chance(TreasureTier.RARE), 1e-9);
-        assertEquals(1.0, config.chance(TreasureTier.COMMON), 1e-9);
+        assertEquals(2.0, config.chance(TreasureTier.COMMON), 1e-9);
         assertEquals(0.008, TreasuresConfig.parse(cfg, LOGGER)
                 .chance(TreasureTier.LEGENDARY), 1e-9);
     }
@@ -269,5 +269,25 @@ class TreasureConfigTest {
         } catch (UnsupportedOperationException expected) {
             // так и должно быть
         }
+    }
+
+    @Test
+    void tierChanceGrowsWithRarityAndIsConfigurable() {
+        TreasuresConfig defaults = TreasuresConfig.parse(new YamlConfiguration(), LOGGER);
+        assertTrue(defaults.tiersEnabled());
+        assertEquals(20.0, defaults.tierChance(TreasureTier.COMMON), 1e-9);
+        assertEquals(40.0, defaults.tierChance(TreasureTier.RARE), 1e-9);
+        assertEquals(60.0, defaults.tierChance(TreasureTier.EPIC), 1e-9);
+        assertEquals(80.0, defaults.tierChance(TreasureTier.LEGENDARY), 1e-9);
+        assertEquals(100.0, defaults.tierChance(TreasureTier.MYTHICAL), 1e-9);
+
+        YamlConfiguration cfg = new YamlConfiguration();
+        cfg.set("tiers.enabled", false);
+        cfg.set("tiers.chance-percent.common", 150);
+        cfg.set("tiers.chance-percent.legendary", -1);
+        TreasuresConfig custom = TreasuresConfig.parse(cfg, LOGGER);
+        assertFalse(custom.tiersEnabled());
+        assertEquals(100.0, custom.tierChance(TreasureTier.COMMON), 1e-9);
+        assertEquals(0.0, custom.tierChance(TreasureTier.LEGENDARY), 1e-9);
     }
 }

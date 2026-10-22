@@ -4,10 +4,12 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkEnchantsApi;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
+import ru.cherdakmd.chrdkregister.api.ChrdkTierApi;
 
 import java.io.File;
 import java.nio.file.AtomicMoveNotSupportedException;
@@ -36,6 +38,11 @@ public final class TierForgePlugin extends JavaPlugin {
     private org.bukkit.scheduler.BukkitTask identifyScanTask;
     /** Таймер пассивного пульса кузни (регенерация/зрение/магнит), гасим при перезагрузке. */
     private org.bukkit.scheduler.BukkitTask forgePulseTask;
+    /**
+     * Мост для чужих аддонов (1.4.141): клады выдают предметы с тиром, не
+     * завися от классов этого плагина.
+     */
+    private TierApiBridge tierApi;
     /** stats.yml — находки переживают перезапуск (1.4.81). */
     private File statsFile;
     private org.bukkit.scheduler.BukkitTask statsSaveTask;
@@ -62,6 +69,12 @@ public final class TierForgePlugin extends JavaPlugin {
             Bukkit.getPluginManager().registerEvents(forgeUpgrades, this);
             startForgePulse();
         }
+
+        // 1.4.141: публичный мост «TierForge → клады/квесты». Регистрируется
+        // последним, когда items/config уже готовы.
+        this.tierApi = new TierApiBridge(this);
+        Bukkit.getServicesManager().register(ChrdkTierApi.class, tierApi, this,
+                ServicePriority.Normal);
 
         this.identification = new TierIdentificationListener(this);
         Bukkit.getPluginManager().registerEvents(identification, this);
@@ -104,6 +117,10 @@ public final class TierForgePlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (tierApi != null) {
+            Bukkit.getServicesManager().unregister(ChrdkTierApi.class, tierApi);
+            tierApi = null;
+        }
         if (visuals != null) {
             visuals.stop();
         }

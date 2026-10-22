@@ -123,9 +123,7 @@ public final class TreasureRoll {
      */
     private static TreasureItemDef pick(TreasureTier tier, TreasureRegion region,
                                         Random random, double arsenalShare) {
-        List<TreasureItemDef> classic = tier == TreasureTier.MYTHICAL
-                ? TreasureCatalog.mythical()
-                : singleton(TreasureCatalog.forRegionTier(region, tier));
+        List<TreasureItemDef> classic = TreasureCatalog.pool(region, tier);
         List<TreasureItemDef> arsenal = TreasureArsenal.pool(region, tier);
         double share = Double.isFinite(arsenalShare)
                 ? Math.max(0.0, Math.min(1.0, arsenalShare)) : 0.0;
@@ -141,8 +139,5 @@ public final class TreasureRoll {
         return pool.get(random.nextInt(pool.size()));
     }
 
-    private static List<TreasureItemDef> singleton(TreasureItemDef def) {
-        return def == null ? List.of() : List.of(def);
-    }
 }
 }

@@ -16,29 +16,33 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class TreasureCatalogTest {
 
     @Test
-    void catalogueHasSixtyTwoItems() {
-        assertEquals(62, TreasureCatalog.EXPECTED_ITEMS);
+    void catalogueHasOneHundredTwentyFourItems() {
+        assertEquals(124, TreasureCatalog.EXPECTED_ITEMS);
         assertEquals(TreasureCatalog.EXPECTED_ITEMS, TreasureCatalog.size());
-        assertEquals(6, TreasureCatalog.MYTHICAL_ITEMS);
+        assertEquals(12, TreasureCatalog.MYTHICAL_ITEMS);
         assertEquals(14, TreasureRegion.values().length);
-        assertEquals(4, TreasureCatalog.PER_REGION);
+        assertEquals(8, TreasureCatalog.PER_REGION);
         assertEquals(TreasureRegion.values().length * TreasureCatalog.PER_REGION
                 + TreasureCatalog.MYTHICAL_ITEMS, TreasureCatalog.size());
     }
 
     @Test
-    void everyRegionHasExactlyOneItemPerRarity() {
+    void everyRegionHasTwoItemsPerRarity() {
         for (TreasureRegion region : TreasureRegion.values()) {
             int count = 0;
             for (TreasureTier tier : TreasureTier.values()) {
                 if (!tier.regional()) {
                     continue;
                 }
-                TreasureItemDef def = TreasureCatalog.forRegionTier(region, tier);
-                assertNotNull(def, "у региона " + region.id() + " нет находки " + tier.id());
-                assertEquals(tier, def.tier(), "редкость не совпала у " + def.id());
-                assertEquals(region, def.region(), "регион не совпал у " + def.id());
-                count++;
+                List<TreasureItemDef> pool = TreasureCatalog.all().stream()
+                        .filter(def -> def.region() == region && def.tier() == tier)
+                        .toList();
+                assertEquals(2, pool.size(), "у региона " + region.id()
+                        + " должно быть две находки " + tier.id());
+                TreasureItemDef first = TreasureCatalog.forRegionTier(region, tier);
+                assertNotNull(first, "у региона " + region.id() + " нет находки " + tier.id());
+                assertTrue(pool.contains(first), "forRegionTier вернул чужой предмет");
+                count += pool.size();
             }
             assertEquals(TreasureCatalog.PER_REGION, count);
         }
@@ -57,10 +61,10 @@ class TreasureCatalogTest {
 
     @Test
     void rarityCountsMatchCatalogTable() {
-        assertEquals(14, TreasureCatalog.byTier(TreasureTier.COMMON).size());
-        assertEquals(14, TreasureCatalog.byTier(TreasureTier.RARE).size());
-        assertEquals(14, TreasureCatalog.byTier(TreasureTier.EPIC).size());
-        assertEquals(14, TreasureCatalog.byTier(TreasureTier.LEGENDARY).size());
+        assertEquals(28, TreasureCatalog.byTier(TreasureTier.COMMON).size());
+        assertEquals(28, TreasureCatalog.byTier(TreasureTier.RARE).size());
+        assertEquals(28, TreasureCatalog.byTier(TreasureTier.EPIC).size());
+        assertEquals(28, TreasureCatalog.byTier(TreasureTier.LEGENDARY).size());
         assertEquals(TreasureCatalog.MYTHICAL_ITEMS,
                 TreasureCatalog.byTier(TreasureTier.MYTHICAL).size());
     }

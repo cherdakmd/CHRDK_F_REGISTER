@@ -269,7 +269,8 @@ public final class TreasuresGui implements Listener {
             locked.setItemMeta(meta);
             return locked;
         }
-        ItemStack item = plugin.items().create(def);
+        // Витрина не роллит тир: иначе редкость менялась бы на каждое открытие.
+        ItemStack item = plugin.items().create(def, false);
         if (item == null) {
             return new ItemStack(Material.BARRIER);
         }

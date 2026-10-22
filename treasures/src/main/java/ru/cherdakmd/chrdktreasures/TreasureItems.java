@@ -11,6 +11,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import ru.cherdakmd.chrdkregister.Messages;
+import ru.cherdakmd.chrdkregister.api.ChrdkTierApi;
 import ru.cherdakmd.chrdkregister.item.ItemAttributes;
 
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 
 /**
  * Сборка и распознавание именных находок.
@@ -36,6 +38,8 @@ public final class TreasureItems {
 
     private final TreasuresPlugin plugin;
     private final NamespacedKey idKey;
+    /** 1.4.141: тир находки — бросок на каждый созданный предмет. */
+    private final Random random = new Random();
 
     public TreasureItems(TreasuresPlugin plugin) {
         this.plugin = plugin;
@@ -54,6 +58,17 @@ public final class TreasureItems {
 
     /** Собирает предмет по каталогу. {@code null}, если материал неизвестен. */
     public ItemStack create(TreasureItemDef def) {
+        return create(def, true);
+    }
+
+    /**
+     * Собирает предмет по каталогу.
+     *
+     * @param withTier накладывать ли тир CHRDK_TierForge по шансу редкости;
+     *                 витрина передаёт {@code false}, чтобы не переролливать
+     *                 редкость на каждое открытие меню
+     */
+    public ItemStack create(TreasureItemDef def, boolean withTier) {
         if (def == null) {
             return null;
         }
@@ -112,7 +127,34 @@ public final class TreasureItems {
         applyAttributes(item, meta, def);
         meta.getPersistentDataContainer().set(idKey, PersistentDataType.STRING, def.id());
         item.setItemMeta(meta);
+        if (withTier) {
+            applyTier(item, def);
+        }
         return item;
+    }
+
+    /**
+     * Накладывает тир по шансу редкости находки (1.4.141).
+     *
+     * <p>Шанс живёт в {@code tiers.chance-percent.<редкость>}: обычная находка
+     * получает тир в 20 % случаев, мифическая — всегда. Тир-фордж может быть
+     * не установлен или выключен: тогда предмет просто остаётся без тира, и
+     * клад работает как раньше.</p>
+     */
+    private void applyTier(ItemStack item, TreasureItemDef def) {
+        TreasuresConfig config = plugin.config();
+        if (config == null || !config.tiersEnabled() || item == null) {
+            return;
+        }
+        double chance = config.tierChance(def.tier());
+        if (chance <= 0.0 || random.nextDouble() * 100.0 >= chance) {
+            return;
+        }
+        ChrdkTierApi api = plugin.tierApi();
+        if (api == null) {
+            return;
+        }
+        api.applyRandomTier(item, "treasure");
     }
 
     /**

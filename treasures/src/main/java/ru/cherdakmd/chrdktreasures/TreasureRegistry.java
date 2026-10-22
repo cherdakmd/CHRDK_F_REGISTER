@@ -80,7 +80,7 @@ public final class TreasureRegistry {
         return List.copyOf(BY_REGION.getOrDefault(region, List.of()));
     }
 
-    /** Пулы региона и редкости: классическая находка и арсенал. */
+    /** Пулы региона и редкости: классический каталог и арсенал. */
     public static List<TreasureItemDef> pool(TreasureRegion region, TreasureTier tier) {
         if (tier == null) {
             return List.of();
@@ -88,11 +88,8 @@ public final class TreasureRegistry {
         if (tier == TreasureTier.MYTHICAL) {
             return mythical();
         }
-        List<TreasureItemDef> out = new ArrayList<>(2);
-        TreasureItemDef classic = TreasureCatalog.forRegionTier(region, tier);
-        if (classic != null) {
-            out.add(classic);
-        }
+        List<TreasureItemDef> out = new ArrayList<>(4);
+        out.addAll(TreasureCatalog.pool(region, tier));
         out.addAll(TreasureArsenal.pool(region, tier));
         return List.copyOf(out);
     }

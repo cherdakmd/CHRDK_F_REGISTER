@@ -7,7 +7,7 @@ package ru.cherdakmd.chrdktierforge;
  * <p>В отличие от {@link TierProperty}, аффикс не привязан к тиру: пулы хороших
  * и плохих аффиксов общие, а тир решает только, <b>сколько</b> их получит
  * предмет (см. {@link TierAffixes}). Поэтому один и тот же легендарный клинок
- * может быть «Золочёная кромка + Жажда крови», а другой — «Ястребиный глаз +
+ * может быть «Оплётка + Жажда крови», а другой — «Ястребиный глаз +
  * Костолом»: комбинаций в разы больше, чем при одном свойстве.</p>
  *
  * <p>Эффект переиспользует кузнечную механику {@link ForgeUpgrade.Effect} —
@@ -60,9 +60,9 @@ public record TierAffix(String id, String name, Polarity polarity,
         return ForgeUpgrade.describe(asDef(), 1);
     }
 
-    /** Подходит ли аффикс виду предмета. */
+    /** Подходит ли аффикс виду предмета: и цель, и сам эффект. */
     public boolean fits(ItemKind kind) {
-        return kind != null && target.matches(kind);
+        return kind != null && target.matches(kind) && effect.fits(kind);
     }
 
     public boolean good() {

@@ -208,12 +208,54 @@ public final class ForgeUpgrade {
         /** Скорость вне боя — 5 секунд тишины (пульс). */
         ROAM_SPEED,
         /** +% урона стрелам и снарядам владельца (событие). */
-        SNIPE
+        SNIPE;
+
+        /**
+         * Эффекты, которые имеют смысл только в ближнем бою: урон атаки,
+         * скорость замаха, кровопийца, крит, поджог и прочие проки по удару
+         * рукой. На луке и арбалете они либо не работают вовсе, либо висят
+         * мёртвой строкой в лоре — поэтому не выдаются дальнему бою.
+         */
+        private static final java.util.Set<Effect> MELEE_ONLY = java.util.EnumSet.of(
+                ATTACK_PERCENT, ATTACK_SPEED_PERCENT, LIFESTEAL, CRIT_CHANCE, EXECUTE,
+                SMITE, RAW_DAMAGE, ATTACK_KNOCKBACK, REACH, SWEEP_RATIO, IGNITE,
+                SLOW_HIT, POISON_HIT, BLIND_HIT, FIRST_STRIKE, ARMOR_PIERCE, RAGE,
+                THUNDER, WITHER_HEX, DEBUFF_DAMAGE, PVP_DAMAGE, ANIMAL_DAMAGE,
+                CLEANSE_HIT, FREEZE_HIT, HOOK, ATTACK_SPEED_FLAT, PARRY);
+
+        /**
+         * Работает ли эффект на предмете этого вида. Цель ({@link Target})
+         * отсекает чужие классы (броня/инструмент/оружие), а здесь режется
+         * разница внутри оружия: ближний бой против стрельбы.
+         */
+        public boolean fits(ItemKind kind) {
+            if (kind == null) {
+                return false;
+            }
+            if (kind.isRanged()) {
+                return !MELEE_ONLY.contains(this);
+            }
+            // «Снайпер» — только для стрел: мечу и топору он ничего не даёт.
+            return this != SNIPE;
+        }
     }
 
-    /** Описание одного улучшения. */
+    /**
+     * Описание одного улучшения.
+     *
+     * <p>{@link #fits(ItemKind)} — полная проверка: мало совпасть цели
+     * ({@link Target}), эффект тоже должен работать на этом виде. Например,
+     * «Снайпер» целится в любое оружие, но полезен только луку и арбалету, а
+     * «Кромка» — только ближнему бою; раньше лук мог получить кромку, а меч —
+     * снайпера (1.4.141).</p>
+     */
     public record Def(String id, String displayName, Target target, Effect effect,
                       double perLevel, int maxLevel, String material) {
+
+        /** Подходит ли улучшение предмету: и цель, и сам эффект. */
+        public boolean fits(ItemKind kind) {
+            return target.matches(kind) && effect.fits(kind);
+        }
     }
 
     /** 85 улучшений в фиксированном порядке (id — ключи PDC/конфига, не переименовывать). */
@@ -341,7 +383,7 @@ public final class ForgeUpgrade {
         for (Def def : ALL) {
             String effective = overrides != null
                     ? overrides.getOrDefault(def.id(), def.material()) : def.material();
-            if (wanted.equalsIgnoreCase(effective) && def.target().matches(kind)) {
+            if (wanted.equalsIgnoreCase(effective) && def.fits(kind)) {
                 return def;
             }
         }
@@ -460,7 +502,7 @@ public final class ForgeUpgrade {
             case PULSE_MEND -> "чинит себя: " + fmt(def.perLevel()) + " прочности/2с";
             case PATH_SPEED -> "скорость на тропинках и траве";
             case ROAM_SPEED -> "скорость вне боя (после 5 с тишины)";
-            case SNIPE -> "+" + value + "% урона стрелам";
+            case SNIPE -> signed(total) + "% урона стрелам";
         };
     }
 

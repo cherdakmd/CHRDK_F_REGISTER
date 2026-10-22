@@ -35,8 +35,8 @@ public record TierProperty(String id, String tier, String name,
         return ForgeUpgrade.describe(asDef(), 1);
     }
 
-    /** Подходит ли свойство виду предмета. */
+    /** Подходит ли свойство виду предмета: и цель, и сам эффект. */
     public boolean fits(ItemKind kind) {
-        return kind != null && target.matches(kind);
+        return kind != null && target.matches(kind) && effect.fits(kind);
     }
 }

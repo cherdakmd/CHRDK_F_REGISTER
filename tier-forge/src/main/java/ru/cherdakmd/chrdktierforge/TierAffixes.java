@@ -218,16 +218,16 @@ public final class TierAffixes {
         List<TierAffix> list = new ArrayList<>(GOOD_TOTAL + BAD_TOTAL);
 
         // ------------------------------------------------------------------ хорошие
-        add(list, TierAffix.Polarity.GOOD, "gilded_edge", "Золочёная кромка",
-                ForgeUpgrade.Target.WEAPON, ForgeUpgrade.Effect.ATTACK_PERCENT, 3);
+        add(list, TierAffix.Polarity.GOOD, "fletching", "Оплётка",
+                ForgeUpgrade.Target.WEAPON, ForgeUpgrade.Effect.SNIPE, 3);
         add(list, TierAffix.Polarity.GOOD, "thirst", "Жажда",
                 ForgeUpgrade.Target.WEAPON, ForgeUpgrade.Effect.LIFESTEAL, 2);
         add(list, TierAffix.Polarity.GOOD, "hawk_eye", "Ястребиный глаз",
                 ForgeUpgrade.Target.WEAPON, ForgeUpgrade.Effect.CRIT_CHANCE, 2.5);
         add(list, TierAffix.Polarity.GOOD, "bone_crusher", "Костолом",
                 ForgeUpgrade.Target.WEAPON, ForgeUpgrade.Effect.ARMOR_PIERCE, 3);
-        add(list, TierAffix.Polarity.GOOD, "ember_touch", "Тлеющее касание",
-                ForgeUpgrade.Target.WEAPON, ForgeUpgrade.Effect.IGNITE, 8);
+        add(list, TierAffix.Polarity.GOOD, "hunter", "Промысловик",
+                ForgeUpgrade.Target.WEAPON, ForgeUpgrade.Effect.HUNTER_XP, 6);
 
         add(list, TierAffix.Polarity.GOOD, "iron_hide", "Железная шкура",
                 ForgeUpgrade.Target.ARMOR, ForgeUpgrade.Effect.ARMOR_PERCENT, 3);
@@ -258,8 +258,8 @@ public final class TierAffixes {
                 ForgeUpgrade.Target.WEAPON, ForgeUpgrade.Effect.RAW_DAMAGE, -0.5);
         add(list, TierAffix.Polarity.BAD, "blunt", "Затупление",
                 ForgeUpgrade.Target.WEAPON, ForgeUpgrade.Effect.ATTACK_PERCENT, -4);
-        add(list, TierAffix.Polarity.BAD, "heavy_swing", "Тяжёлый замах",
-                ForgeUpgrade.Target.WEAPON, ForgeUpgrade.Effect.ATTACK_SPEED_PERCENT, -6);
+        add(list, TierAffix.Polarity.BAD, "heavy_bow", "Тяжёлая тетива",
+                ForgeUpgrade.Target.WEAPON, ForgeUpgrade.Effect.MOVE_SPEED_PERCENT, -4);
         add(list, TierAffix.Polarity.BAD, "short_haft", "Короткое древко",
                 ForgeUpgrade.Target.WEAPON, ForgeUpgrade.Effect.REACH, -0.2);
         add(list, TierAffix.Polarity.BAD, "slick_grip", "Скользкая рукоять",

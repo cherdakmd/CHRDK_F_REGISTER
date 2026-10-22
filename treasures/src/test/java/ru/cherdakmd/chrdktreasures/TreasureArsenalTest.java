@@ -23,12 +23,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class TreasureArsenalTest {
 
     @Test
-    void arsenalCarriesThirtySixItemsFromPack() {
-        assertEquals(36, TreasureArsenal.EXPECTED_SIZE);
+    void arsenalCarriesSeventyTwoItems() {
+        assertEquals(72, TreasureArsenal.EXPECTED_SIZE);
         assertEquals(TreasureArsenal.EXPECTED_SIZE, TreasureArsenal.size());
         assertEquals(TreasureArsenal.EXPECTED_SIZE, TreasureArsenal.all().size());
-        assertEquals(1, TreasureArsenal.mythical().size(),
-                "из арсенала мифический только Гига-бур");
+        assertEquals(2, TreasureArsenal.mythical().size(),
+                "из арсенала два мифических: Гига-бур и Клинок рассвета");
     }
 
     @Test
@@ -112,7 +112,7 @@ class TreasureArsenalTest {
     @Test
     void registryJoinsBothPoolsWithoutLosingClassics() {
         assertEquals(TreasureCatalog.size() + TreasureArsenal.size(), TreasureRegistry.size());
-        assertEquals(98, TreasureRegistry.size());
+        assertEquals(196, TreasureRegistry.size());
         for (TreasureItemDef def : TreasureCatalog.all()) {
             assertSame(def, TreasureRegistry.find(def.id()));
         }
@@ -129,9 +129,10 @@ class TreasureArsenalTest {
                 TreasureTier.LEGENDARY);
         assertEquals(TreasureCatalog.forRegionTier(TreasureRegion.DESERT, TreasureTier.LEGENDARY),
                 desert.get(0));
-        assertTrue(desert.size() >= 2, "в пуле пустыни нет арсенала");
+        assertTrue(desert.size() >= 3, "в пуле пустыни нет арсенала");
+        // 1.4.141: в каталоге по две находки на редкость плюс арсенал.
         assertEquals(desert.size(), TreasureArsenal.pool(TreasureRegion.DESERT,
-                TreasureTier.LEGENDARY).size() + 1);
+                TreasureTier.LEGENDARY).size() + 2);
 
         List<TreasureItemDef> mythical = TreasureRegistry.pool(TreasureRegion.END,
                 TreasureTier.MYTHICAL);
