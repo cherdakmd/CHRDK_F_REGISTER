@@ -315,7 +315,7 @@ class PluginUpdateServiceTest {
         }
         CommandSender generic = (CommandSender) Proxy.newProxyInstance(CommandSender.class.getClassLoader(), new Class<?>[]{CommandSender.class}, (p, m, a) -> null);
         assertFalse(RegisterCommandHandler.canDownloadUpdates(generic));
-        assertEquals(20, PluginUpdateService.MODULES.size());
+        assertEquals(21, PluginUpdateService.MODULES.size());
         Set<String> actual = new HashSet<>();
         List<Path> descriptors = new ArrayList<>();
         descriptors.add(Path.of("src/main/resources/plugin.yml"));
