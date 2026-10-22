@@ -29,6 +29,12 @@ class TierEnchantsTest {
     @Test
     void everyKindHasAPool() {
         for (ItemKind kind : EnumSet.allOf(ItemKind.class)) {
+            if (kind == ItemKind.UTILITY) {
+                // 1.4.142: рог, осколок эха и фонарь душ в ванилле не зачаровываются.
+                assertTrue(TierEnchants.pool(kind).isEmpty(),
+                        "у утилиты не должно быть пула зачарований");
+                continue;
+            }
             List<TierEnchants.Roll> pool = TierEnchants.pool(kind);
             assertFalse(pool.isEmpty(), "пустой пул зачарований для " + kind);
             Set<String> keys = new HashSet<>();
@@ -99,6 +105,10 @@ class TierEnchantsTest {
             assertTrue(TierEnchants.roll(kind, 6, random, 0, 2, 3).isEmpty(),
                     "шанс 0% не должен ничего выдавать: " + kind);
             List<TierEnchants.Roll> rolls = TierEnchants.roll(kind, 6, random, 100, 1, 3);
+            if (kind == ItemKind.UTILITY) {
+                assertTrue(rolls.isEmpty(), "у утилиты нет чар вовсе");
+                continue;
+            }
             assertEquals(1, rolls.size(), "шанс 100% и max 1 = ровно одно: " + kind);
             assertTrue(rolls.get(0).level() >= 1);
         }

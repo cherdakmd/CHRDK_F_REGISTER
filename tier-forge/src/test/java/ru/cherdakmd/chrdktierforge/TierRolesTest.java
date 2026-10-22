@@ -138,6 +138,49 @@ class TierRolesTest {
     }
 
     @Test
+    void utilityGetsNoCombatMiningOrArmorProfile() {
+        // 1.4.142: утилита (щит, рог, фонарь, тотем) — четвёртая роль. Ей можно
+        // тир, но нельзя чужие бонусы: проверяем и проценты, и все три пула.
+        assertEquals(List.of(TierBonus.MOVEMENT_SPEED, TierBonus.LUCK),
+                TierBonus.forKind(ItemKind.UTILITY));
+        assertFalse(TierBonus.hasCombatBonus(ItemKind.UTILITY));
+        assertFalse(TierBonus.hasMiningBonus(ItemKind.UTILITY));
+
+        for (String tier : TierDef.LADDER) {
+            for (TierProperty property : TierProperties.candidates(tier, ItemKind.UTILITY)) {
+                assertEquals(ForgeUpgrade.Target.ANY, property.target(),
+                        property.id() + " — утилите досталось свойство чужой роли");
+                assertFalse(MELEE_ONLY.contains(property.effect()),
+                        property.id() + " — боевое свойство на утилите");
+                assertFalse(OFFENSIVE.contains(property.effect()),
+                        property.id() + " — усиление атаки на утилите");
+                assertFalse(property.effect() == ForgeUpgrade.Effect.DIG_SPEED_PERCENT
+                                || property.effect() == ForgeUpgrade.Effect.MINING_EFFICIENCY
+                                || property.effect() == ForgeUpgrade.Effect.ORE_DOUBLE,
+                        property.id() + " — добыча на утилите");
+            }
+        }
+        for (TierAffix affix : TierAffixes.all()) {
+            if (!affix.fits(ItemKind.UTILITY)) {
+                continue;
+            }
+            assertEquals(ForgeUpgrade.Target.ANY, affix.target(),
+                    affix.id() + " — аффикс чужой роли на утилите");
+            assertFalse(MELEE_ONLY.contains(affix.effect()),
+                    affix.id() + " — боевой аффикс на утилите");
+        }
+        for (ForgeUpgrade.Def def : ForgeUpgrade.ALL) {
+            if (!def.fits(ItemKind.UTILITY)) {
+                continue;
+            }
+            assertEquals(ForgeUpgrade.Target.ANY, def.target(),
+                    def.id() + " — ковка чужой роли на утилите");
+        }
+        assertTrue(TierEnchants.pool(ItemKind.UTILITY).isEmpty(),
+                "утилита не зачаровывается — чары на ней были бы мёртвой строкой");
+    }
+
+    @Test
     void propertyPoolsCoverRangedInEveryTier() {
         for (String tier : TierDef.LADDER) {
             assertTrue(TierProperties.countFor(tier, ItemKind.BOW) >= 3,

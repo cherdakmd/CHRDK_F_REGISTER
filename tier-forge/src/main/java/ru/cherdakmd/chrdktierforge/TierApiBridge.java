@@ -80,8 +80,12 @@ final class TierApiBridge implements ChrdkTierApi {
 
     /**
      * Поддерживает ли тир-система этот предмет. Проверяем и конфиг, и вид:
-     * щит, элитра или еда получат {@code null} из {@link ItemKind#classify} и
-     * останутся без тира — иначе в лоре появилась бы плашка без бонусов.
+     * элитра, еда или ведро получат {@code null} из {@link ItemKind#classify}
+     * и останутся без тира — иначе в лоре появилась бы плашка без бонусов.
+     *
+     * <p>С 1.4.142 щит, рог и фонарь — это {@link ItemKind#UTILITY}: они тир
+     * получают, но по своей, утилитарной раскладке (скорость и удача) и только
+     * если в конфиге не выключен {@code craft.utilities}.</p>
      */
     private boolean supported(ItemStack item) {
         if (item == null || item.getType().isAir() || plugin.config() == null

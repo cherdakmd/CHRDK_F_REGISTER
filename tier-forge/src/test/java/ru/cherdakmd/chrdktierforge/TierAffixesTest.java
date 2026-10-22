@@ -70,6 +70,23 @@ class TierAffixesTest {
     }
 
     @Test
+    void utilityGetsOnlySharedAffixes() {
+        // 1.4.142: своих аффиксов у утилиты нет — ей достаются только общие
+        // (цель ANY): «Ночной глаз» и «Падальщик» сверху, «Неудача» и «Хилое»
+        // снизу. Все четыре реально работают на предмете в руке.
+        List<TierAffix> good = TierAffixes.candidates(TierAffix.Polarity.GOOD, ItemKind.UTILITY);
+        List<TierAffix> bad = TierAffixes.candidates(TierAffix.Polarity.BAD, ItemKind.UTILITY);
+        assertEquals(2, good.size(), good.toString());
+        assertEquals(2, bad.size(), bad.toString());
+        for (TierAffix affix : good) {
+            assertEquals(ForgeUpgrade.Target.ANY, affix.target(), affix.id());
+        }
+        for (TierAffix affix : bad) {
+            assertEquals(ForgeUpgrade.Target.ANY, affix.target(), affix.id());
+        }
+    }
+
+    @Test
     void tierDecidesTheCount() {
         assertEquals(0, TierAffixes.goodCount("cursed", 2));
         assertEquals(2, TierAffixes.badCount("cursed", 2));

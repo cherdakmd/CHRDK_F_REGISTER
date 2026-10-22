@@ -34,7 +34,8 @@ final class ConfigReport {
                 : "выключен")
                 + ", группы — оружие " + onOff(config.craftWeapons())
                 + ", броня " + onOff(config.craftArmor())
-                + ", инструменты " + onOff(config.craftTools()));
+                + ", инструменты " + onOff(config.craftTools())
+                + ", утилита " + onOff(config.craftUtilities()));
         out.add("опознание: " + (config.identifyUnidentified()
                 ? "включено (скан каждые " + config.identifyScanTicks()
                 + " тиков, " + config.identifyScanPlayersPerTick() + " игрок(ов) за тик)"
@@ -51,6 +52,7 @@ final class ConfigReport {
                 + chance(config, ItemKind.SWORD)
                 + ", броня " + chance(config, ItemKind.CHESTPLATE)
                 + ", инструменты " + chance(config, ItemKind.PICKAXE)
+                + ", утилита " + chance(config, ItemKind.UTILITY)
                 + ", босс ×" + trim(config.mobBossMultiplier())
                 + (config.mobPlayerKillOnly() ? ", только убийство игроком" : "")
                 : "выключен"));

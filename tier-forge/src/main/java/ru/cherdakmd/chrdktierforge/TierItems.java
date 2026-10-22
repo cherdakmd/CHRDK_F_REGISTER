@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 
@@ -26,7 +25,7 @@ import java.util.Random;
  * Применение тира к предмету: PDC-метка, модификаторы атрибутов, окраска имени
  * (translatable — следует языку клиента), лор-плашка и блеск по стилю тира
  * (с 1.4.119 — свой у каждого, отпечаток в {@code visuals_stamp}).
- * С 1.4.55 — ещё и кузнечные слои: случайная кличка из пула 35 имён (один раз,
+ * С 1.4.55 — ещё и кузнечные слои: случайная кличка из пула 45 имён (один раз,
  * живёт в PDC), уровни улучшений (up_&lt;id&gt;, атрибуты fu_&lt;id&gt;),
  * лор-строки свойств с маркером ✦. С 1.4.118 — уникальные свойства тира:
  * по 15 на тир, один-три на предмет, в PDC ({@code tier_properties}) и лоре
@@ -787,6 +786,12 @@ public final class TierItems {
                 }
                 case MINING_SPEED -> add(item, meta, Attribute.BLOCK_BREAK_SPEED, "minespeed",
                         TierMath.miningScalar(percent), slot, uid);
+                case LUCK -> {
+                    double luck = TierMath.luckAmount(percent);
+                    if (luck != 0.0) {
+                        addAbsolute(item, meta, Attribute.LUCK, "luck", luck, slot, uid);
+                    }
+                }
             }
         }
     }
@@ -889,7 +894,10 @@ public final class TierItems {
             return;
         }
         ItemKind kind = ItemKind.classify(item.getType().name());
-        if (kind == null || api.count(item) > 0) {
+        // 1.4.142: утилита не зачаровывается вовсе — ни ванильными, ни
+        // кастомными чарами. Рог, осколок эха и фонарь душ в ванилле чар не
+        // принимают, а «Прочность» на них висела бы мёртвой строкой.
+        if (kind == null || kind.isUtility() || api.count(item) > 0) {
             return;
         }
         int tierIndex = TierDef.indexOf(tier.id());
@@ -1014,7 +1022,11 @@ public final class TierItems {
     /** Атрибуты, которые могут нести бонусы самого тира. */
     private static final List<Attribute> TIER_ATTRIBUTES = List.of(
             Attribute.ATTACK_DAMAGE, Attribute.ARMOR, Attribute.ARMOR_TOUGHNESS,
-            Attribute.MOVEMENT_SPEED, Attribute.ATTACK_SPEED, Attribute.BLOCK_BREAK_SPEED);
+            Attribute.MOVEMENT_SPEED, Attribute.ATTACK_SPEED, Attribute.BLOCK_BREAK_SPEED,
+            // 1.4.142: удача — второй атрибут, который может нести утилита
+            // (первый — скорость бега). Без него перекат оставлял бы старый
+            // модификатор удачи на предмете навсегда.
+            Attribute.LUCK);
 
     /**
      * Снимает все модификаторы тира — и новые с суффиксом предмета, и старые
@@ -1139,6 +1151,9 @@ public final class TierItems {
             case CHESTPLATE -> EquipmentSlotGroup.CHEST;
             case LEGGINGS -> EquipmentSlotGroup.LEGS;
             case BOOTS -> EquipmentSlotGroup.FEET;
+            // 1.4.142: утилиту носят и в основной, и в левой руке (щит — почти
+            // всегда в левой), поэтому группа HAND, а не MAINHAND.
+            case UTILITY -> EquipmentSlotGroup.HAND;
             default -> EquipmentSlotGroup.MAINHAND;
         };
     }
@@ -1147,7 +1162,7 @@ public final class TierItems {
 
     /**
      * Разовая выдача клички: если пул включён, у предмета подходящего вида ещё нет
-     * клички в PDC и игрок её не переименовывал — тянем случайное имя из пула 35.
+     * клички в PDC и игрок её не переименовывал — тянем случайное имя из пула 45.
      */
     private void ensureForgeName(ItemStack item, ItemMeta meta) {
         if (!plugin.config().namesEnabled() || plugin.namePool() == null) {
@@ -1208,10 +1223,10 @@ public final class TierItems {
                     .deserialize(color + forgeName));
             return;
         }
-        String translation = "item.minecraft."
-                + item.getType().name().toLowerCase(Locale.ROOT);
+        // 1.4.142: ключ перевода берём из общего помощника — у подсолнуха и
+        // фонаря душ он блочный (block.minecraft.*), а не предметный.
         Component name = net.kyori.adventure.text.minimessage.MiniMessage.miniMessage()
-                .deserialize(color + "<lang:" + translation + ">");
+                .deserialize(color + TierInfoFormat.languageTag(item.getType()));
         if (meta.hasCustomName() && meta.customName() != null) {
             // кастомное имя игрока сохраняем, красим в цвет тира
             Component colored = net.kyori.adventure.text.minimessage.MiniMessage
@@ -1279,6 +1294,14 @@ public final class TierItems {
                     if (TierMath.percentOf(scalar) > 0) {
                         parts.add(plugin.messages().raw("tier-bonus-movement",
                                 "value", TierMath.signedPercent(scalar)));
+                    }
+                }
+                case LUCK -> {
+                    // 1.4.142: удача утилиты может быть и минусом (проклятый тир).
+                    double luck = TierMath.luckAmount(percent);
+                    if (Math.abs(luck) >= 1.0) {
+                        parts.add(plugin.messages().raw("tier-bonus-luck",
+                                "value", (luck > 0 ? "+" : "") + (int) luck));
                     }
                 }
                 default -> {

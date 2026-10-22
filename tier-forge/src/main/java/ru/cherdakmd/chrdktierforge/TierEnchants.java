@@ -140,7 +140,10 @@ public final class TierEnchants {
     private TierEnchants() {
     }
 
-    /** Пул зачарований для вида предмета (пустой — вид не тир-предмет). */
+    /**
+     * Пул зачарований для вида предмета (пустой — вид не тир-предмет или,
+     * как утилита с 1.4.142, не зачаровывается вовсе).
+     */
     public static List<Roll> pool(ItemKind kind) {
         return entries(kind).stream().map(entry -> new Roll(entry.key(), entry.maxLevel())).toList();
     }
@@ -159,6 +162,11 @@ public final class TierEnchants {
             case HELMET -> HELMET_POOL;
             case CHESTPLATE, LEGGINGS -> BODY_POOL;
             case BOOTS -> BOOTS_POOL;
+            // 1.4.142: утилита не зачаровывается. Рог, осколок эха и фонарь
+            // душ в ванилле вообще не принимают чар, а «Прочность» на них
+            // висела бы мёртвой строкой: ломаться там нечему. Щит — исключение,
+            // но ради одного материала держать пул смысла нет.
+            case UTILITY -> List.of();
         };
     }
 

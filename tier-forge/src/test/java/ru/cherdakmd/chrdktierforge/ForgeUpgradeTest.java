@@ -40,6 +40,26 @@ class ForgeUpgradeTest {
     }
 
     @Test
+    void utilityOnlyGetsTheSharedUpgrades() {
+        // 1.4.142: щит, рог, фонарь и тотем получают только общие улучшения —
+        // те, что не привязаны ни к оружию, ни к броне, ни к инструменту.
+        Set<String> forUtility = new HashSet<>();
+        for (ForgeUpgrade.Def def : ForgeUpgrade.ALL) {
+            if (def.fits(ItemKind.UTILITY)) {
+                assertEquals(ForgeUpgrade.Target.ANY, def.target(),
+                        def.id() + " — ковка чужой роли на утилите");
+                forUtility.add(def.id());
+            }
+        }
+        assertEquals(Set.of("tempered", "soulbind", "selfmend", "lantern", "magnet",
+                "scholar", "mender", "pathwalker", "breeze"), forUtility);
+        assertNull(ForgeUpgrade.forMaterial("QUARTZ", ItemKind.UTILITY, null),
+                "мечевая ковка не должна ставиться на щит");
+        assertNotNull(ForgeUpgrade.forMaterial("PAPER", ItemKind.UTILITY, null),
+                "общая ковка ставится на утилиту");
+    }
+
+    @Test
     void defaultMaterialsUniqueAndSafeForAnvil() {
         Set<String> materials = new HashSet<>();
         for (ForgeUpgrade.Def def : ForgeUpgrade.ALL) {

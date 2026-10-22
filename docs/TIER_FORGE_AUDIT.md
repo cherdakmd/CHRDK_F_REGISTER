@@ -553,3 +553,45 @@ TierForge помечает строки свойств улучшений. На 
 переписан под 60 чар, добавлен `EnchantAttributeMapTest`. TierForge — 169 `@Test`
 в 29 классах (было 158 в 27): `TierCustomEnchantsTest` (6),
 `TierEnchantConfigTest` (4) и восьмая строка `ConfigReportTest`. Контракт `check_messages.py` зелёный.
+
+## Роль «утилита» (1.4.142)
+
+Аудит арсенала кладов показал дыру: девять носимых находок (`SHIELD`,
+`GOAT_HORN`, `ECHO_SHARD`, `HEART_OF_THE_SEA`, `SOUL_LANTERN`, `CLOCK`,
+`POINTED_DRIPSTONE`, `WITHER_SKELETON_SKULL`, `SUNFLOWER`) давали в
+`ItemKind.classify` значение `null`. Мод не накладывал на них тир вообще —
+даже при шансе 100 % у мифической находки. Это не «дизайн», а пропуск: предмет
+арсенала выпадал с плашкой редкости, но без тира, свойств и ковки.
+
+**Что добавлено.**
+
+| Слой | Решение |
+|---|---|
+| `ItemKind` | новая константа `UTILITY` и закрытый список из 12 материалов (+ `COMPASS`, `RECOVERY_COMPASS`, `TOTEM_OF_UNDYING` — их тоже носят в руке) |
+| `TierBonus` | `UTILITY_ITEM = [MOVEMENT_SPEED, LUCK]`: скорость бега по формуле брони и удача `luckAmount` (+1 за 10 %, от −1 до +3) |
+| `TierMath` | `luckAmount(int percent)` — чистая формула с клампом |
+| `ForgeUpgrade.Effect` | белый список `UTILITY_SAFE` из 11 эффектов, которые реально работают на предмете в руке |
+| `TierProperties` | своего пула нет: утилите достаётся ровно одно общее свойство тира (цель `ANY`) |
+| `TierAffixes` | только общие аффиксы: «Ночной глаз», «Падальщик», «Неудача», «Хилое» |
+| `ForgeUpgrade` | только 9 общих улучшений (`Target.ANY`), мечевые/броневые/инструментальные не подходят |
+| `TierEnchants` | пул пуст: рог, осколок и фонарь в ванилле не зачаровываются |
+| `ForgeNamePool` | четвёртая группа `UTILITIES` и 10 имён (`names.utilities`) |
+| `TierForgeConfig` | `craft.utilities`, `craft.utilities-chance-percent`, `mob-drop.utilities-chance-percent`, `names.utilities` |
+
+**Почему именно эти эффекты.** Каждый эффект из `UTILITY_SAFE` проверен по
+`ForgeUpgradeListener` и `TierItems`: атрибутные (скорость, здоровье, удача)
+применяются, пока предмет в руке; пульсовые (ночное зрение, магнит,
+самопочинка, скорость в пути, сытость) читаются из `gearPieces` — броня **и
+обе руки**; событийные (бережливость, привязка души, опыт) приходят из
+основной руки. Броневые проки (`THORNS`, `PARRY`, `RESIST_PROC`,
+`DAMAGE_TAKEN_PERCENT`, `LAST_STAND`), боевые и добывающие эффекты в список не
+входят: на щите они висели бы мёртвой строкой в лоре.
+
+**Совместимость.** Уже выданные предметы не пересобираются — у утилиты тира
+раньше не было, чинить нечего. `modifiers_stamp` не менялся, раскладка
+существующих видов (оружие, броня, инструменты) осталась прежней: 15 свойств
+на тир, 85 улучшений, 30 аффиксов, формулы урона и добычи не тронуты.
+
+**Тесты.** Новый `ItemKindTest`; расширены `TierBonusTest`, `TierMathTest`,
+`TierRolesTest`, `TierPropertiesTest`, `TierAffixesTest`, `ForgeUpgradeTest`,
+`ForgeNamePoolTest`, `TierEnchantsTest`, `TierForgeConfigTest`.

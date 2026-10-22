@@ -30,10 +30,30 @@ class TierInfoFormatTest {
 
     @Test
     void materialKeyPathIsUsedVerbatim() {
-        // Тиры ставятся только на снаряжение, поэтому пространство имён всегда
-        // предметное; путь — нижний регистр имени материала.
+        // Путь — нижний регистр имени материала.
         assertEquals("<lang:item.minecraft.amethyst_shard>",
                 TierInfoFormat.languageTag(Material.AMETHYST_SHARD));
+    }
+
+    @Test
+    void blockShapedUtilitiesUseBlockNamespace() {
+        // 1.4.142: подсолнух, фонарь душ, шипы и череп лежат в инвентаре
+        // предметом, но в клиенте называются блоком — иначе игрок увидел бы
+        // сырой ключ «item.minecraft.soul_lantern».
+        assertEquals("<lang:block.minecraft.sunflower>",
+                TierInfoFormat.languageTag(Material.SUNFLOWER));
+        assertEquals("<lang:block.minecraft.soul_lantern>",
+                TierInfoFormat.languageTag(Material.SOUL_LANTERN));
+        assertEquals("<lang:block.minecraft.pointed_dripstone>",
+                TierInfoFormat.languageTag(Material.POINTED_DRIPSTONE));
+        assertEquals("<lang:block.minecraft.wither_skeleton_skull>",
+                TierInfoFormat.languageTag(Material.WITHER_SKELETON_SKULL));
+        // Остальная утилита — обычные предметы.
+        assertEquals("<lang:item.minecraft.shield>", TierInfoFormat.languageTag(Material.SHIELD));
+        assertEquals("<lang:item.minecraft.goat_horn>",
+                TierInfoFormat.languageTag(Material.GOAT_HORN));
+        assertEquals("<lang:item.minecraft.totem_of_undying>",
+                TierInfoFormat.languageTag(Material.TOTEM_OF_UNDYING));
     }
 
     @Test

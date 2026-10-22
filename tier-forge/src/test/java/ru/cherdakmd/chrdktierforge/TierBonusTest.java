@@ -67,6 +67,18 @@ class TierBonusTest {
     }
 
     @Test
+    void utilityGetsSpeedAndLuckOnly() {
+        // 1.4.142: щит, рог, фонарь и тотем не бьют и не копают — тир даёт им
+        // лёгкий шаг и удачу, и ничего боевого.
+        assertEquals(List.of(TierBonus.MOVEMENT_SPEED, TierBonus.LUCK),
+                TierBonus.forKind(ItemKind.UTILITY));
+        assertFalse(TierBonus.hasCombatBonus(ItemKind.UTILITY),
+                "утилите урон от тира не нужен");
+        assertFalse(TierBonus.hasMiningBonus(ItemKind.UTILITY),
+                "утилите скорость добычи не нужна");
+    }
+
+    @Test
     void unknownKindGetsNothing() {
         assertTrue(TierBonus.forKind(null).isEmpty());
         assertTrue(TierBonus.forKind(ItemKind.classify("APPLE")).isEmpty(),

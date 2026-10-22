@@ -17,7 +17,9 @@ import java.util.Set;
  *   <li>свойство всегда принадлежит тиру предмета: проклятому не выпадет
  *       легендарное;</li>
  *   <li>свойство подбирается под вид предмета (оружие / броня / инструмент);
- *       «любое» подходит всем;</li>
+ *       «любое» подходит всем, включая утилиту (1.4.142): своего пула у неё
+ *       нет, поэтому щит, рог и фонарь получают ровно одно общее свойство
+ *       тира — оно и есть её «уникальность»;</li>
  *   <li>в одном предмете не бывает двух одинаковых свойств;</li>
  *   <li>при перекате, слиянии и смене тира свойство пересбрасывается — новый
  *       тир приносит свой пул.</li>
@@ -298,8 +300,11 @@ public final class TierProperties {
                 ForgeUpgrade.Effect.DIG_SPEED_PERCENT, 6);
         add(list, "prospector", "fine", "Рудознатец", ForgeUpgrade.Target.TOOL,
                 ForgeUpgrade.Effect.ORE_DOUBLE, 6);
-        add(list, "column", "fine", "Колонный ход", ForgeUpgrade.Target.TOOL,
-                ForgeUpgrade.Effect.ZONE_BREAK, 1);
+        // 1.4.142: «Колонный ход» переехал в эпический/легендарный пул (там
+        // ZONE_BREAK II–III), а на его место встало общее свойство — оно
+        // единственное, что может получить утилита.
+        add(list, "handy", "fine", "Бережливая рука", ForgeUpgrade.Target.ANY,
+                ForgeUpgrade.Effect.DURABILITY_SAVE, 4);
         add(list, "zeal", "fine", "Запал", ForgeUpgrade.Target.TOOL,
                 ForgeUpgrade.Effect.PULSE_HASTE, 1);
         add(list, "fletcher", "fine", "Лучный мастер", ForgeUpgrade.Target.WEAPON,
@@ -308,8 +313,11 @@ public final class TierProperties {
         // ------------------------------------------------------------------- редкий
         add(list, "razor", "rare", "Бритва", ForgeUpgrade.Target.WEAPON,
                 ForgeUpgrade.Effect.ATTACK_PERCENT, 6);
-        add(list, "heavy_blade", "rare", "Тяжёлый клинок", ForgeUpgrade.Target.WEAPON,
-                ForgeUpgrade.Effect.RAW_DAMAGE, 1);
+        // 1.4.142: у редкого тира появилось общее свойство — удача. Плоский
+        // урон «Тяжёлого клинка» дублировал «Кромку» обычного тира, а бонус к
+        // урону редкому оружию и так даёт «Бритва».
+        add(list, "treasure_hunter", "rare", "Кладоискатель", ForgeUpgrade.Target.ANY,
+                ForgeUpgrade.Effect.LUCK, 1);
         add(list, "hunter_instinct", "rare", "Охотничий инстинкт", ForgeUpgrade.Target.WEAPON,
                 ForgeUpgrade.Effect.HUNTER_XP, 8);
         add(list, "marksman", "rare", "Меткий стрелок", ForgeUpgrade.Target.WEAPON,

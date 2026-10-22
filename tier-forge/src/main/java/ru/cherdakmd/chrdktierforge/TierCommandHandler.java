@@ -73,17 +73,20 @@ public final class TierCommandHandler implements TabExecutor {
         plugin.messages().send(player, "list-header");
         // 1.4.80: показываем ДЕЙСТВУЮЩИЙ шанс каждой группы, а не только общий —
         // craft.weapons/armor/tools-chance-percent раньше никак не отражались в UI.
+        // 1.4.142: четвёртая группа — утилита (щит, рог, фонарь, тотем).
         plugin.messages().send(player, "list-chances",
                 "weapons", plugin.config().craftChanceFor(ItemKind.SWORD),
                 "armor", plugin.config().craftChanceFor(ItemKind.CHESTPLATE),
-                "tools", plugin.config().craftChanceFor(ItemKind.PICKAXE));
+                "tools", plugin.config().craftChanceFor(ItemKind.PICKAXE),
+                "utilities", plugin.config().craftChanceFor(ItemKind.UTILITY));
         // 1.4.117: инструменты больше не получают урон — игрок должен видеть, что даёт тир.
         plugin.messages().send(player, "list-bonuses");
         if (plugin.config().mobDropEnabled()) {
             plugin.messages().send(player, "list-drop-chances",
                     "weapons", plugin.config().mobDropChanceFor(ItemKind.SWORD),
                     "armor", plugin.config().mobDropChanceFor(ItemKind.CHESTPLATE),
-                    "tools", plugin.config().mobDropChanceFor(ItemKind.PICKAXE));
+                    "tools", plugin.config().mobDropChanceFor(ItemKind.PICKAXE),
+                    "utilities", plugin.config().mobDropChanceFor(ItemKind.UTILITY));
         }
         for (TierDef.Snapshot tier : plugin.config().tiers()) {
             // 1.4.90: строка тира тоже живёт в messages.yml — раньше русский текст

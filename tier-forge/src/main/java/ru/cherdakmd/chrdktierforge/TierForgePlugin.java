@@ -18,9 +18,9 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 /**
- * CHRDK_TierForge — крафтовый накат редкости (Terraria-style): броня, оружие и инструменты
- * выходят с тиром от проклятого до легендарного; два одинаково-редких на наковальне
- * сливаются в тир выше.
+ * CHRDK_TierForge — крафтовый накат редкости (Terraria-style): броня, оружие, инструменты
+ * и утилита выходят с тиром от проклятого до легендарного; два одинаково-редких на
+ * наковальне сливаются в тир выше.
  */
 public final class TierForgePlugin extends JavaPlugin {
 
@@ -231,7 +231,8 @@ public final class TierForgePlugin extends JavaPlugin {
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
         this.config = TierForgeConfig.parse(getConfig(), getLogger());
-        this.namePool = new ForgeNamePool(config.namesWeapons(), config.namesArmor(), config.namesTools());
+        this.namePool = new ForgeNamePool(config.namesWeapons(), config.namesArmor(),
+                config.namesTools(), config.namesUtilities());
         if (identifyScanTask != null) {
             identifyScanTask.cancel();
             identifyScanTask = null;

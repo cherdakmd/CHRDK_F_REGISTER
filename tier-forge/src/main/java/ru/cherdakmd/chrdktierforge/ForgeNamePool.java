@@ -30,9 +30,14 @@ public final class ForgeNamePool {
             "Крот", "Землерой", "Горный ключ", "Дедова рука", "Звон руды",
             "Камнетёс", "Голос штольни", "Рудный пёс", "Продавец гор", "Верный друг");
 
+    /** 10 имён утилиты (1.4.142): щит, рог, фонарь, тотем. */
+    public static final List<String> DEFAULT_UTILITIES = List.of(
+            "Тихий ветер", "Огонёк", "Ночной друг", "Дорожный оберег", "Лунный свет",
+            "Верный знак", "Счастливчик", "Тихий сторож", "Медный глаз", "Попутчик");
+
     /** Группа пула по виду предмета (топор → оружие: кличат прежде всего боевое). */
     public enum Group {
-        WEAPONS, ARMOR, TOOLS;
+        WEAPONS, ARMOR, TOOLS, UTILITIES;
 
         /** Пул для вида предмета; null — вид не кличется. */
         public static Group of(ItemKind kind) {
@@ -45,6 +50,9 @@ public final class ForgeNamePool {
             if (kind.isArmor()) {
                 return ARMOR;
             }
+            if (kind.isUtility()) {
+                return UTILITIES;
+            }
             return kind.isTool() ? TOOLS : null;
         }
     }
@@ -52,11 +60,19 @@ public final class ForgeNamePool {
     private final List<String> weapons;
     private final List<String> armor;
     private final List<String> tools;
+    private final List<String> utilities;
 
+    /** Пул без имён утилиты: она кличется только если пул задан явно. */
     public ForgeNamePool(List<String> weapons, List<String> armor, List<String> tools) {
+        this(weapons, armor, tools, List.of());
+    }
+
+    public ForgeNamePool(List<String> weapons, List<String> armor, List<String> tools,
+                         List<String> utilities) {
         this.weapons = List.copyOf(weapons);
         this.armor = List.copyOf(armor);
         this.tools = List.copyOf(tools);
+        this.utilities = List.copyOf(utilities);
     }
 
     /** Пулы из конфига: пустая/отсутствующая секция = дефолт. */
@@ -64,7 +80,8 @@ public final class ForgeNamePool {
         return new ForgeNamePool(
                 readList(config, "names.weapons", DEFAULT_WEAPONS),
                 readList(config, "names.armor", DEFAULT_ARMOR),
-                readList(config, "names.tools", DEFAULT_TOOLS));
+                readList(config, "names.tools", DEFAULT_TOOLS),
+                readList(config, "names.utilities", DEFAULT_UTILITIES));
     }
 
     private static List<String> readList(FileConfiguration config, String key, List<String> fallback) {
@@ -86,6 +103,7 @@ public final class ForgeNamePool {
             case WEAPONS -> weapons;
             case ARMOR -> armor;
             case TOOLS -> tools;
+            case UTILITIES -> utilities;
         };
         if (pool.isEmpty()) {
             return null;
@@ -95,6 +113,11 @@ public final class ForgeNamePool {
 
     /** Всего имён во всех пулах (лог/тесты). */
     public int totalCount() {
-        return weapons.size() + armor.size() + tools.size();
+        return weapons.size() + armor.size() + tools.size() + utilities.size();
+    }
+
+    /** Пул утилиты (для диагностики и тестов). */
+    public List<String> utilities() {
+        return utilities;
     }
 }

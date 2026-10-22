@@ -32,6 +32,19 @@ class TierMathTest {
     }
 
     @Test
+    void utilityLuckFollowsTheTier() {
+        // 1.4.142: удача утилиты — +1 за каждые 10% тира, от −1 до +3.
+        assertEquals(-1.0, TierMath.luckAmount(-12), 1e-9, "проклятый — минус удачи");
+        assertEquals(0.0, TierMath.luckAmount(-5), 1e-9);
+        assertEquals(0.0, TierMath.luckAmount(0), 1e-9);
+        assertEquals(1.0, TierMath.luckAmount(6), 1e-9);
+        assertEquals(1.0, TierMath.luckAmount(12), 1e-9);
+        assertEquals(2.0, TierMath.luckAmount(20), 1e-9);
+        assertEquals(3.0, TierMath.luckAmount(30), 1e-9);
+        assertEquals(3.0, TierMath.luckAmount(60), 1e-9, "потолок +3");
+    }
+
+    @Test
     void percentFormattingMatchesLore() {
         assertEquals(60, TierMath.percentOf(0.6));
         assertEquals("+60", TierMath.signedPercent(0.6));

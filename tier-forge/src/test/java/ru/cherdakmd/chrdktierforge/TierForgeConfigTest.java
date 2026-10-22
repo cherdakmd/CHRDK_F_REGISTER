@@ -57,6 +57,8 @@ class TierForgeConfigTest {
         assertEquals(100, config.craftChanceFor(ItemKind.SWORD));
         assertEquals(100, config.craftChanceFor(ItemKind.CHESTPLATE));
         assertEquals(100, config.craftChanceFor(ItemKind.PICKAXE));
+        assertEquals(100, config.craftChanceFor(ItemKind.UTILITY),
+                "утилита получает тир по умолчанию");
         assertEquals(0, config.craftChanceFor(null), "без вида наката нет");
         assertTrue(config.anvilEnabled());
         assertTrue(config.rerollEnabled());
@@ -66,6 +68,7 @@ class TierForgeConfigTest {
         assertEquals(15, config.mobDropChanceFor(ItemKind.SWORD));
         assertEquals(15, config.mobDropChanceFor(ItemKind.CHESTPLATE));
         assertEquals(15, config.mobDropChanceFor(ItemKind.PICKAXE));
+        assertEquals(15, config.mobDropChanceFor(ItemKind.UTILITY));
         assertEquals(0, config.mobDropChanceFor(null));
         assertEquals(2.0, config.mobBossMultiplier(), 1e-9);
     }
@@ -264,6 +267,35 @@ class TierForgeConfigTest {
         assertFalse(config.kindAllowed(ItemKind.CHESTPLATE));
         assertFalse(config.kindAllowed(ItemKind.PICKAXE));
         assertFalse(config.kindAllowed(null));
+    }
+
+    @Test
+    void utilityIsItsOwnCraftGroup() {
+        // 1.4.142: у утилиты свой флаг — щит и рог не должны зависеть от
+        // настройки инструментов или брони.
+        assertTrue(parse(empty()).config().kindAllowed(ItemKind.UTILITY),
+                "по умолчанию утилита получает тир");
+        assertEquals(ForgeNamePool.DEFAULT_UTILITIES,
+                parse(empty()).config().namesUtilities(),
+                "имена утилиты по умолчанию — из реестра пула");
+        YamlConfiguration yaml = empty();
+        yaml.set("craft.utilities", false);
+        assertFalse(parse(yaml).config().kindAllowed(ItemKind.UTILITY));
+
+        YamlConfiguration chance = empty();
+        chance.set("roll-on-craft-chance-percent", 40);
+        chance.set("craft.utilities-chance-percent", 7);
+        assertEquals(7, parse(chance).config().craftChanceFor(ItemKind.UTILITY));
+        chance.set("craft.utilities-chance-percent", -1);
+        assertEquals(40, parse(chance).config().craftChanceFor(ItemKind.UTILITY),
+                "-1 = общий шанс");
+
+        YamlConfiguration drop = empty();
+        drop.set("mob-drop.chance-percent", 10);
+        drop.set("mob-drop.utilities-chance-percent", 35);
+        assertEquals(35, parse(drop).config().mobDropChanceFor(ItemKind.UTILITY));
+        drop.set("mob-drop.utilities-chance-percent", -1);
+        assertEquals(10, parse(drop).config().mobDropChanceFor(ItemKind.UTILITY));
     }
 
     @Test

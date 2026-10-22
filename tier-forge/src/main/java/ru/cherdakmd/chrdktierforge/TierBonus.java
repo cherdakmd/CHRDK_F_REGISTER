@@ -14,7 +14,10 @@ import java.util.List;
  *       не влияет, поэтому бонус начисляется по попаданию (1.4.124);</li>
  *   <li>броня — броня, твёрдость и скорость бега (только плюс-тиры);</li>
  *   <li>инструменты — скорость добычи;</li>
- *   <li>топор — и оружие, и инструмент: урон <b>и</b> скорость добычи.</li>
+ *   <li>топор — и оружие, и инструмент: урон <b>и</b> скорость добычи;</li>
+ *   <li>утилита (щит, рог, фонарь, тотем) — скорость бега и удача: у неё нет
+ *       ни удара, ни забоя, ни защиты, поэтому боевых бонусов она не получает
+ *       вообще (1.4.142).</li>
  * </ul>
  *
  * <p>Класс чистый — ни Bukkit, ни конфига: раскладка проверяется юнит-тестами,
@@ -33,7 +36,12 @@ public enum TierBonus {
     /** +% к скорости бега (броня, только плюс-тиры). */
     MOVEMENT_SPEED,
     /** +% к скорости добычи блоков (инструменты). */
-    MINING_SPEED;
+    MINING_SPEED,
+    /**
+     * +N удачи (утилита): качество добычи в лут-таблицах — прежде всего
+     * рыбалка, — а не бой. Второй «мягкий» бонус утилиты после скорости бега.
+     */
+    LUCK;
 
     private static final List<TierBonus> WEAPON = List.of(ATTACK_DAMAGE);
     /** Лук и арбалет бьют стрелой, а не рукоятью — урон считается по попаданию. */
@@ -43,6 +51,12 @@ public enum TierBonus {
     private static final List<TierBonus> WEAPON_TOOL = List.of(ATTACK_DAMAGE, MINING_SPEED);
     private static final List<TierBonus> ARMOR_SET =
             List.of(ARMOR, ARMOR_TOUGHNESS, MOVEMENT_SPEED);
+    /**
+     * Утилита: ни урона, ни добычи, ни брони — только лёгкий шаг и удача.
+     * Скорость считается той же формулой, что у брони (плюс-тиры), удача —
+     * {@link TierMath#luckAmount(int)}: от −1 у проклятой до +3 у легендарной.
+     */
+    private static final List<TierBonus> UTILITY_ITEM = List.of(MOVEMENT_SPEED, LUCK);
 
     /** Бонусы вида предмета в порядке применения. Пустой список — вид не поддержан. */
     public static List<TierBonus> forKind(ItemKind kind) {
@@ -55,6 +69,7 @@ public enum TierBonus {
             case BOW, CROSSBOW -> RANGED;
             case AXE -> WEAPON_TOOL;
             case PICKAXE, SHOVEL, HOE -> TOOL;
+            case UTILITY -> UTILITY_ITEM;
         };
     }
 

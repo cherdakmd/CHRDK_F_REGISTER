@@ -58,6 +58,18 @@ public final class TierMath {
         return clamp(Math.max(0, percent) / 500.0, 0.0, 0.08);
     }
 
+    /**
+     * Удача утилиты: +1 за каждые 10 % тира, от −1 до +3 (1.4.142).
+     *
+     * <p>Удача в Minecraft — не «шанс крита», а качество добычи в лут-таблицах
+     * (прежде всего рыбалка). Поэтому это честный бонус для щита или фонаря и
+     * никакого боевого преимущества не даёт. Проклятый тир (−12 %) даёт −1 —
+     * штраф ощутимый, но не ломающий игру.</p>
+     */
+    public static double luckAmount(int percent) {
+        return clamp(Math.round(percent / 10.0), -1, 3);
+    }
+
     /** Процент из множителя для лора и {@code /tiers}: 0.6 → 60. */
     public static int percentOf(double scalar) {
         return (int) Math.round(scalar * 100.0);

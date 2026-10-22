@@ -75,6 +75,11 @@ class TierPropertiesTest {
                 assertTrue(count >= 3, tier + "/" + target + " — слишком мало свойств: " + count);
             }
             for (ItemKind kind : ALL_KINDS) {
+                if (kind == ItemKind.UTILITY) {
+                    // 1.4.142: у утилиты нет своего пула — ей достаётся ровно
+                    // одно общее свойство тира (см. utilityGetsTheSharedProperty).
+                    continue;
+                }
                 assertTrue(TierProperties.countFor(tier, kind) >= 3,
                         tier + "/" + kind + " — не из чего выбирать");
             }
@@ -84,13 +89,31 @@ class TierPropertiesTest {
     }
 
     @Test
+    void utilityGetsTheSharedPropertyOfItsTier() {
+        // 1.4.142: щит, рог, фонарь и тотем не бьют, не копают и не носятся
+        // бронёй — им положено ровно одно общее свойство тира (цель ANY).
+        for (String tier : TierDef.LADDER) {
+            List<TierProperty> candidates = TierProperties.candidates(tier, ItemKind.UTILITY);
+            assertEquals(1, candidates.size(), tier + " — у утилиты должно быть одно свойство");
+            assertEquals(ForgeUpgrade.Target.ANY, candidates.get(0).target(),
+                    tier + " — утилите досталось чужое свойство: " + candidates.get(0).id());
+            assertEquals(candidates, TierProperties.roll(tier, ItemKind.UTILITY,
+                    TierProperties.MAX_PER_ITEM, new Random(5L)),
+                    tier + " — больше общего пула не выдать");
+        }
+    }
+
+    @Test
     void rollReturnsOnlyFittingPropertiesWithoutDuplicates() {
         Random random = new Random(20261020L);
         for (String tier : TierDef.LADDER) {
             for (ItemKind kind : ALL_KINDS) {
                 for (int count = 1; count <= TierProperties.MAX_PER_ITEM; count++) {
                     List<TierProperty> rolled = TierProperties.roll(tier, kind, count, random);
-                    assertEquals(count, rolled.size(), tier + "/" + kind + " — просили " + count);
+                    int expected = Math.min(count, TierProperties.countFor(tier, kind));
+                    assertEquals(expected, rolled.size(), tier + "/" + kind
+                            + " — просили " + count + ", а в пуле "
+                            + TierProperties.countFor(tier, kind));
                     assertEquals(rolled.size(), new HashSet<>(rolled).size(),
                             "дубль в броске: " + rolled);
                     for (TierProperty property : rolled) {

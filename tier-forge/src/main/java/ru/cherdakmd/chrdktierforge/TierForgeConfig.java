@@ -16,6 +16,7 @@ public record TierForgeConfig(
         boolean craftArmor,
         boolean craftWeapons,
         boolean craftTools,
+        boolean craftUtilities,
         boolean rerollEnabled,
         String rerollCatalyst,
         int rerollBaseXp,
@@ -24,6 +25,7 @@ public record TierForgeConfig(
         int mobWeaponsChancePercent,
         int mobArmorChancePercent,
         int mobToolsChancePercent,
+        int mobUtilitiesChancePercent,
         java.util.Set<String> mobWorldBlacklist,
         boolean mobPlayerKillOnly,
         boolean identifyUnidentified,
@@ -34,6 +36,7 @@ public record TierForgeConfig(
         int weaponsChancePercent,
         int armorChancePercent,
         int toolsChancePercent,
+        int utilitiesChancePercent,
         java.util.Set<String> materialBlacklist,
         double mobBossMultiplier,
         boolean rerollNoDowngrade,
@@ -45,6 +48,7 @@ public record TierForgeConfig(
         java.util.List<String> namesWeapons,
         java.util.List<String> namesArmor,
         java.util.List<String> namesTools,
+        java.util.List<String> namesUtilities,
         boolean propertiesEnabled,
         int propertiesPerItem,
         TierVisuals visuals,
@@ -86,6 +90,11 @@ public record TierForgeConfig(
                 "mob-drop.armor-chance-percent");
         int mobTools = kindChance(config.getInt("mob-drop.tools-chance-percent", -1), logger,
                 "mob-drop.tools-chance-percent");
+        // 1.4.142: у утилиты свой шанс — щит или рог не должны зависеть от
+        // настройки инструментов.
+        int mobUtilities = kindChance(
+                config.getInt("mob-drop.utilities-chance-percent", -1), logger,
+                "mob-drop.utilities-chance-percent");
         // 1.4.80: множитель босса больше не принимает 0/отрицательные и абсурдные
         // значения (NaN из YAML тоже отсекаем) — иначе шанс дропа молча становился нулевым.
         double bossMultiplier = config.getDouble("mob-drop.boss-multiplier", 2.0);
@@ -161,8 +170,9 @@ public record TierForgeConfig(
                 config.getBoolean("craft.armor", true),
                 config.getBoolean("craft.weapons", true),
                 config.getBoolean("craft.tools", true),
+                config.getBoolean("craft.utilities", true),
                 reroll, catalyst, rerollXp, mobDrop, mobChance,
-                mobWeapons, mobArmor, mobTools, mobWorlds, mobKillOnly,
+                mobWeapons, mobArmor, mobTools, mobUtilities, mobWorlds, mobKillOnly,
                 config.getBoolean("identify.enabled", true),
                 // 1.4.80: верхняя граница и внятное предупреждение — скан «раз в тик»
                 // ронял TPS, а нулевой/крошечный период молча не применялся.
@@ -181,6 +191,8 @@ public record TierForgeConfig(
                         "craft.armor-chance-percent"),
                 kindChance(config.getInt("craft.tools-chance-percent", -1), logger,
                         "craft.tools-chance-percent"),
+                kindChance(config.getInt("craft.utilities-chance-percent", -1), logger,
+                        "craft.utilities-chance-percent"),
                 blacklist,
                 bossMultiplier,
                 config.getBoolean("reroll.no-downgrade", true),
@@ -188,6 +200,7 @@ public record TierForgeConfig(
                 readNames(config, "names.weapons", ForgeNamePool.DEFAULT_WEAPONS),
                 readNames(config, "names.armor", ForgeNamePool.DEFAULT_ARMOR),
                 readNames(config, "names.tools", ForgeNamePool.DEFAULT_TOOLS),
+                readNames(config, "names.utilities", ForgeNamePool.DEFAULT_UTILITIES),
                 properties, propertiesPerItem, visuals, affixes, enchants);
     }
 
@@ -206,6 +219,9 @@ public record TierForgeConfig(
         if (kind == null) return 0;
         if (kind.isWeapon()) return weaponsChancePercent >= 0 ? weaponsChancePercent : rollOnCraftChancePercent;
         if (kind.isArmor()) return armorChancePercent >= 0 ? armorChancePercent : rollOnCraftChancePercent;
+        if (kind.isUtility()) {
+            return utilitiesChancePercent >= 0 ? utilitiesChancePercent : rollOnCraftChancePercent;
+        }
         return toolsChancePercent >= 0 ? toolsChancePercent : rollOnCraftChancePercent;
     }
 
@@ -226,6 +242,9 @@ public record TierForgeConfig(
         if (kind.isArmor()) {
             return mobArmorChancePercent >= 0 ? mobArmorChancePercent : mobDropChancePercent;
         }
+        if (kind.isUtility()) {
+            return mobUtilitiesChancePercent >= 0 ? mobUtilitiesChancePercent : mobDropChancePercent;
+        }
         return mobToolsChancePercent >= 0 ? mobToolsChancePercent : mobDropChancePercent;
     }
 
@@ -239,6 +258,7 @@ public record TierForgeConfig(
         if (kind == null) return false;
         if (kind.isWeapon() && craftWeapons) return true;
         if (kind.isArmor() && craftArmor) return true;
+        if (kind.isUtility()) return craftUtilities;
         return kind.isTool() && craftTools && !kind.isWeapon();
     }
 
