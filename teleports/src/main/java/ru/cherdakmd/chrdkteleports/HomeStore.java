@@ -27,6 +27,9 @@ import java.util.regex.Pattern;
  */
 public final class HomeStore {
 
+    /** Имя точки «кровать»: её ставит сервер сам, когда игрок ложится спать. */
+    public static final String BED = "bed";
+
     private static final Pattern NAME_PATTERN = Pattern.compile("[\\p{L}\\p{N}_-]{1,16}");
 
     private final Gson gson = new GsonBuilder().disableHtmlEscaping().create();
@@ -46,6 +49,21 @@ public final class HomeStore {
 
     public static String normalize(String name) {
         return name.toLowerCase(Locale.ROOT);
+    }
+
+    /** Кровать ли это (точка {@value #BED}). */
+    public static boolean isBedName(String name) {
+        return name != null && BED.equalsIgnoreCase(name.trim());
+    }
+
+    /**
+     * Можно ли игроку занять это имя через {@code /sethome}.
+     *
+     * <p>{@code bed} зарезервировано: точку ставит сервер, когда игрок ложится
+     * спать, и игрок не должен затирать её вручную, не понимая, что делает.</p>
+     */
+    public static boolean isPlayerNameAllowed(String name) {
+        return isValidName(name) && !isBedName(name);
     }
 
     public synchronized Map<String, HomeLocation> of(UUID uuid) {
@@ -80,6 +98,20 @@ public final class HomeStore {
 
     public synchronized int count(UUID uuid) {
         return homes.getOrDefault(uuid, Map.of()).size();
+    }
+
+    /**
+     * Сколько у игрока «своих» точек дома. Кровать не считается: её ставит
+     * сервер, и она не должна съедать слот из лимита.
+     */
+    public synchronized int countPlayerHomes(UUID uuid) {
+        int total = 0;
+        for (String key : homes.getOrDefault(uuid, Map.of()).keySet()) {
+            if (!isBedName(key)) {
+                total++;
+            }
+        }
+        return total;
     }
 
     public boolean isDirty() {

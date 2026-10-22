@@ -5,7 +5,7 @@ tp:
   player-only: "<red>Команда доступна только игрокам.</red>"
   permission: "<red>Недостаточно прав.</red>"
   usage-tpa: "<gray>Используйте: <yellow>/tpa <ник></yellow> или <yellow>/tpahere <ник></yellow>.</gray>"
-  usage-home: "<gray>Используйте: <yellow>/home <имя></yellow>, <yellow>/sethome <имя></yellow>, <yellow>/delhome <имя></yellow>.</gray>"
+  usage-home: "<gray>Используйте: <yellow>/home [имя]</yellow>, <yellow>/sethome <имя></yellow>, <yellow>/delhome <имя></yellow>. Без имени — ближайший дом или кровать.</gray>"
   cooldown: "<red>Подождите ещё %seconds% сек.</red>"
   world-denied: "<red>В этом мире телепортация отключена.</red>"
   in-progress: "<red>Сначала дождитесь текущей телепортации (или отойдите для отмены).</red>"
@@ -51,6 +51,14 @@ home:
   list: "<gray>Ваши дома (%used%/%max%): <yellow>%homes%</yellow></gray>"
   list-empty: "<yellow>Точек дома пока нет — <green>/sethome <имя></green></yellow>"
   here: "<green>Вы дома. Списано %cost% алмазов%vip-suffix%.</green>"
+  # Кровать: точка ставится сама, когда игрок ложится спать.
+  bed-saved: "<green>Кровать запомнена как дом. Теперь <yellow>/home bed</yellow> вернёт вас сюда, а смерть — возродит рядом.</green>"
+  bed-reserved: "<red>Имя <yellow>bed</yellow> занято кроватью: точку ставит сервер, когда вы ложитесь спать.</red>"
+  bed-none: "<yellow>Кровать ещё не запомнена — просто лягте спать, и точка появится сама.</yellow>"
+  bed-here: "<green>Вы у своей кровати. Списано %cost% алмазов%vip-suffix%.</green>"
+  bed-deleted: "<yellow>Кровать больше не дом: возрождение вернётся к ванильному. Точка удалена.</yellow>"
+  default-none: "<yellow>Дома ещё нет. <green>/sethome &lt;имя&gt;</green> или лягте спать.</yellow>"
+  default-many: "<gray>Домов несколько — выберите: <yellow>%homes%</yellow>. Кровать — <yellow>/home bed</yellow>.</gray>"
 admin:
   reloaded: "<green>Конфигурация телепортов перезагружена.</green>"
   usage:

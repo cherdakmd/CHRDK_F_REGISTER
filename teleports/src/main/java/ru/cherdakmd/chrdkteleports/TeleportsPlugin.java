@@ -45,6 +45,8 @@ public final class TeleportsPlugin extends JavaPlugin {
         this.commandHandler = new TeleportCommandHandler(this);
 
         Bukkit.getPluginManager().registerEvents(teleports, this);
+        // Кровать = дом: точка ставится при сне, смерть возвращает к ней.
+        Bukkit.getPluginManager().registerEvents(new BedHomeListener(this), this);
 
         for (String name : List.of("rtp", "tpa", "tpahere", "tpaccept", "tpdeny", "tpcancel",
                 "home", "sethome", "delhome", "homes", "tpadmin")) {

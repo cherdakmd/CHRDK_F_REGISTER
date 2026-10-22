@@ -315,6 +315,10 @@ public final class TeleportCommandHandler implements TabExecutor {
             return true;
         }
         String name = args[0];
+        if (HomeStore.isBedName(name)) {
+            plugin.messages().send(player, "home.bed-reserved");
+            return true;
+        }
         if (!HomeStore.isValidName(name)) {
             plugin.messages().send(player, "home.bad-name");
             return true;
@@ -322,7 +326,8 @@ public final class TeleportCommandHandler implements TabExecutor {
         HomeStore store = plugin.store();
         boolean exists = store.get(player.getUniqueId(), HomeStore.normalize(name)) != null;
         int max = plugin.config().homeLimit(vip(player), extraHomes(player));
-        if (!exists && store.count(player.getUniqueId()) >= max) {
+        // Кровать слот не занимает: считаем только точки, поставленные игроком.
+        if (!exists && store.countPlayerHomes(player.getUniqueId()) >= max) {
             plugin.messages().send(player, "home.limit", "max", max);
             return true;
         }
@@ -335,7 +340,7 @@ public final class TeleportCommandHandler implements TabExecutor {
         store.put(player.getUniqueId(), new HomeLocation(name,
                 player.getWorld().getName(),
                 loc.getX(), loc.getY(), loc.getZ(), loc.getYaw(), loc.getPitch()));
-        int used = store.count(player.getUniqueId());
+        int used = store.countPlayerHomes(player.getUniqueId());
         if (chargedCost(player, plugin.config().costSethome()) > 0) {
             plugin.messages().send(player, "home.saved-paid",
                     "name", name, "used", used, "max", max,
@@ -357,10 +362,12 @@ public final class TeleportCommandHandler implements TabExecutor {
             return true;
         }
         boolean removed = plugin.store().remove(player.getUniqueId(), HomeStore.normalize(args[0]));
-        if (removed) {
-            plugin.messages().send(player, "home.deleted", "name", args[0]);
-        } else {
+        if (!removed) {
             plugin.messages().send(player, "home.not-found", "name", args[0]);
+        } else if (HomeStore.isBedName(args[0])) {
+            plugin.messages().send(player, "home.bed-deleted");
+        } else {
+            plugin.messages().send(player, "home.deleted", "name", args[0]);
         }
         return true;
     }
@@ -375,18 +382,53 @@ public final class TeleportCommandHandler implements TabExecutor {
         list.forEach(home -> names.add(home.name()));
         int max = plugin.config().homeLimit(vip(player), extraHomes(player));
         plugin.messages().send(player, "home.list",
-                "homes", String.join(", ", names), "used", list.size(), "max", max);
+                "homes", String.join(", ", names),
+                "used", plugin.store().countPlayerHomes(player.getUniqueId()), "max", max);
         return true;
     }
 
+    /**
+     * {@code /home} без имени ведёт к кровати, если она запомнена, иначе — к
+     * единственному дому. Если домов несколько, игрок видит список: молча
+     * выбирать за него нельзя.
+     */
     private boolean handleHome(Player player, String[] args) {
-        if (args.length < 1) {
-            plugin.messages().send(player, "tp.usage-home");
-            return true;
+        HomeStore store = plugin.store();
+        String requested;
+        if (args.length >= 1) {
+            requested = args[0];
+        } else {
+            HomeLocation bed = store.get(player.getUniqueId(), HomeStore.BED);
+            if (bed != null) {
+                requested = HomeStore.BED;
+            } else {
+                List<HomeLocation> all = store.list(player.getUniqueId());
+                if (all.isEmpty()) {
+                    plugin.messages().send(player, "home.default-none");
+                    return true;
+                }
+                if (all.size() > 1) {
+                    List<String> names = new ArrayList<>();
+                    all.forEach(home -> names.add(home.name()));
+                    plugin.messages().send(player, "home.default-many",
+                            "homes", String.join(", ", names));
+                    return true;
+                }
+                requested = all.get(0).name();
+            }
         }
-        HomeLocation home = plugin.store().get(player.getUniqueId(), HomeStore.normalize(args[0]));
+        HomeLocation found = store.get(player.getUniqueId(), HomeStore.normalize(requested));
+        if (found != null && HomeStore.isBedName(requested) && !plugin.config().bedSpawnEnabled()) {
+            // Админ выключил кровать: старая запись не должна работать в обход настройки.
+            found = null;
+        }
+        final HomeLocation home = found;
         if (home == null) {
-            plugin.messages().send(player, "home.not-found", "name", args[0]);
+            if (HomeStore.isBedName(requested)) {
+                plugin.messages().send(player, "home.bed-none");
+            } else {
+                plugin.messages().send(player, "home.not-found", "name", requested);
+            }
             return true;
         }
         World world = Bukkit.getWorld(home.world());
@@ -409,10 +451,18 @@ public final class TeleportCommandHandler implements TabExecutor {
             plugin.messages().send(player, "tp.world-denied");
             return;
         }
+        boolean bed = BedHome.isBed(home);
+        // Кровать могли сломать или застроить: тогда встаём рядом, а не внутрь блока.
+        Location target = bed
+                ? BedHome.safeSpot(world, home)
+                : new Location(world, home.x(), home.y(), home.z(), home.yaw(), home.pitch());
+        if (target == null) {
+            plugin.messages().send(player, "home.world-missing", "world", home.world());
+            return;
+        }
         if (!charge(player, plugin.config().costHome())) return;
-        player.teleport(new Location(world, home.x(), home.y(), home.z(),
-                home.yaw(), home.pitch()));
-        plugin.messages().send(player, "home.here",
+        player.teleport(target);
+        plugin.messages().send(player, bed ? "home.bed-here" : "home.here",
                 "cost", chargedCost(player, plugin.config().costHome()),
                 "vip-suffix", vipSuffix(player));
     }

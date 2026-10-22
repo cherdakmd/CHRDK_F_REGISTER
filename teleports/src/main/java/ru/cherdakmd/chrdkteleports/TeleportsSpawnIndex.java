@@ -17,6 +17,10 @@ public final class TeleportsSpawnIndex implements SpawnHomeIndex {
         this.plugin = plugin;
     }
 
+    /**
+     * Есть ли у игрока сохранённое место. Кровать считается: после первого сна
+     * у игрока появляется дом, и ядро не должно уводить его в случайную точку.
+     */
     @Override
     public boolean hasHome(UUID playerId) {
         HomeStore store = plugin.store();

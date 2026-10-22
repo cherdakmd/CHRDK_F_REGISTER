@@ -19,7 +19,8 @@ commands:
   tpcancel:
     description: Отозвать свой исходящий запрос
   home:
-    description: Телепорт в точку дома
+    description: "Телепорт в точку дома (без имени — кровать или единственный дом)"
+    usage: "/home [имя]"
   sethome:
     description: Установить точку дома
   delhome:

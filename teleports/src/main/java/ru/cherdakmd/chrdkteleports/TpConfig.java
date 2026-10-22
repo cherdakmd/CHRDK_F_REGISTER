@@ -37,7 +37,8 @@ public record TpConfig(
         int homesMaxVip,
         String homesExtraPermission,
         int homesExtraLimit,
-        int homesHardCap) {
+        int homesHardCap,
+        boolean bedSpawnEnabled) {
 
     public boolean worldAllowed(String worldName) {
         return allowedWorlds.isEmpty() || allowedWorlds.contains(worldName.toLowerCase(Locale.ROOT));
@@ -113,12 +114,14 @@ public record TpConfig(
         int extraLimit = clamp(section(homes, "extra-limit", 8), maxVip, 100, logger, "homes.extra-limit");
         int hardCap = clamp(section(homes, "hard-cap", 12), maxNormal, 100,
                 logger, "homes.hard-cap");
+        boolean bedSpawn = section(homes, "bed-spawn", true);
 
         return new TpConfig(
                 Set.copyOf(worlds), delay, cancelMove, cancelDamage, discount,
                 costRtp, costTpa, costHome, costSethome,
                 radius, minRadius, useSpawn, centerX, centerZ, rtpWorld, attempts, rtpCooldown,
-                timeout, tpaCooldown, maxNormal, maxVip, extraPermission, extraLimit, hardCap);
+                timeout, tpaCooldown, maxNormal, maxVip, extraPermission, extraLimit, hardCap,
+                bedSpawn);
     }
 
     /* ------------------------------- утилиты ------------------------------- */

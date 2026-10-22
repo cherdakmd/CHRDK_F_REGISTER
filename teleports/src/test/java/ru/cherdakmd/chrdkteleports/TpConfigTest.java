@@ -55,6 +55,24 @@ class TpConfigTest {
     }
 
     @Test
+    void bedSpawnIsOnByDefaultAndCanBeSwitchedOff() {
+        assertTrue(parse("""
+                homes:
+                  max-normal: 3
+                """).bedSpawnEnabled(), "кровать включена по умолчанию");
+
+        assertFalse(parse("""
+                homes:
+                  bed-spawn: false
+                """).bedSpawnEnabled(), "ключ выключает и точку, и возрождение");
+
+        assertTrue(parse("""
+                homes:
+                  bed-spawn: true
+                """).bedSpawnEnabled());
+    }
+
+    @Test
     void extraHomesFromShopRespectHardCap() {
         TpConfig config = parse("""
                 homes:
