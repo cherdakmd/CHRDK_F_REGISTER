@@ -1,0 +1,71 @@
+# CHRDK_Pets — тексты питомцев. Разметка MiniMessage, подстановки — %имя%.
+# Файл целиком лежит в секции messages:, поэтому в коде ключи короткие.
+messages:
+  # ------------------------------- общее -------------------------------
+  player-only: "<red>Эта команда только для игроков.</red>"
+  no-permission: "<red>Недостаточно прав.</red>"
+  pets-disabled: "<red>Питомцы выключены администрацией.</red>"
+  usage: "<yellow>Использование: /pet [help|list|top|name <имя>]</yellow>"
+  no-pet: "<yellow>Рядом нет твоего питомца. Приручи кошку или волка и попробуй снова.</yellow>"
+
+  # ---------------------------- виды и имена ----------------------------
+  species-wolf: "волк"
+  species-cat: "кошка"
+  default-wolf-name: "Волк"
+  default-cat-name: "Кошка"
+  max-label: "макс."
+  # Имя над головой питомца: кличка и уровень.
+  name-format: "<gold>%name%</gold> <dark_gray>·</dark_gray> <white>ур. %level%</white>"
+  # То же без уровня (names.show-level: false).
+  name-format-plain: "<gold>%name%</gold>"
+
+  # ------------------------------- события ------------------------------
+  adopted: "<green>✦ Питомец принят: <white>%name%</white>. Смотри карточку — /pet</green>"
+  level-up: "<gold>✦ <white>%name%</white> достиг <yellow>%level%</yellow> уровня!</gold>"
+  pet-died: "<red>☠ Питомец <white>%name%</white> погиб на %level% уровне. Он останется в /pet list.</red>"
+
+  # ------------------------------- карточка -----------------------------
+  card-header: "<gold><bold>Питомец</bold></gold>"
+  card-name: "<white>%name%</white> <dark_gray>(%species%)</dark_gray>"
+  card-level: "<gray>Уровень:</gray> <yellow>%level%</yellow> <dark_gray>(%progress%)</dark_gray>"
+  card-bar: "<gray>%bar%</gray> <white>%percent%%</white>"
+  card-max: "<green>Максимальный уровень — дальше только компания.</green>"
+  card-health: "<gray>Питомцу: <white>+%health% HP</white> · <white>+%speed%% скорости</white></gray>"
+  card-damage: "<gray>Питомцу: <white>+%damage% урона</white></gray>"
+  card-aura-speed: "<gray>Аура хозяину: <aqua>+%speed%% скорости</aqua></gray>"
+  card-aura-luck: "<gray>Аура хозяину: <aqua>+%luck% удачи</aqua></gray>"
+  card-aura-none: "<gray>Аура хозяину: пока нет — расти дальше.</gray>"
+
+  # -------------------------------- список ------------------------------
+  list-header: "<gold><bold>Питомцы</bold></gold> <dark_gray>(%alive% живых из %total%)</dark_gray>"
+  list-line: "<green>●</green> <white>%name%</white> <dark_gray>·</dark_gray> <gray>%species%</gray> <dark_gray>·</dark_gray> <yellow>%level%</yellow> <dark_gray>(%progress%)</dark_gray>"
+  list-line-dead: "<dark_gray>☠ %name% · %species% · погиб на %level% уровне</dark_gray>"
+  list-empty: "<yellow>У тебя пока нет питомцев. Приручи кошку или волка.</yellow>"
+  list-footer: "<dark_gray>Переименовать: /pet name <имя></dark_gray>"
+
+  # --------------------------------- топ --------------------------------
+  top-header: "<gold><bold>Топ питомцев</bold></gold>"
+  top-line: "<gray>%place%.</gray> <white>%name%</white> <dark_gray>·</dark_gray> <gray>%species%</gray> <dark_gray>·</dark_gray> <yellow>%level%</yellow> <dark_gray>·</dark_gray> <white>%owner%</white>"
+  top-empty: "<yellow>Пока никто не вырастил питомца.</yellow>"
+
+  # ------------------------------- кличка -------------------------------
+  name-changed: "<green>Питомец теперь зовётся <white>%name%</white>.</green>"
+  name-invalid: "<red>Кличка должна быть от %min% до %max% символов: буквы, цифры, пробел, дефис.</red>"
+  name-same: "<yellow>У питомца уже такая кличка.</yellow>"
+
+  # -------------------------------- помощь -------------------------------
+  help-header: "<gold><bold>Питомцы</bold></gold>"
+  help-card: "<gray>/pet</gray> <dark_gray>—</dark_gray> <white>карточка ближайшего питомца</white>"
+  help-list: "<gray>/pet list</gray> <dark_gray>—</dark_gray> <white>все питомцы и их уровни</white>"
+  help-name: "<gray>/pet name <имя></gray> <dark_gray>—</dark_gray> <white>дать кличку</white>"
+  help-top: "<gray>/pet top</gray> <dark_gray>—</dark_gray> <white>лучшие питомцы сервера</white>"
+  help-footer: "<dark_gray>Питомец получает опыт за бой рядом, рыбалку и утренний сон.</dark_gray>"
+
+  # --------------------------------- админ -------------------------------
+  admin-usage: "<yellow>Использование: /petsadmin <reload|setlevel <ник> <уровень>|info <ник>></yellow>"
+  admin-reloaded: "<green>Питомцы перечитаны: записей %pets%, живых %alive%.</green>"
+  admin-bad-level: "<red>Уровень должен быть числом.</red>"
+  admin-unknown-player: "<red>Игрок «%player%» не найден ни в сети, ни в данных питомцев.</red>"
+  admin-no-pets: "<red>У игрока «%player%» нет живых питомцев.</red>"
+  admin-setlevel: "<green>Питомцам игрока <white>%player%</white> выставлен <yellow>%level%</yellow> уровень (шт.: %count%).</green>"
+  admin-info: "<gray>%player%: живых <white>%alive%</white>, погибших <white>%dead%</white>, лучший уровень <white>%best%</white>, всего опыта <white>%xp%</white>.</gray>"

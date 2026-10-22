@@ -27,4 +27,6 @@ include 'streams'
 
 include 'lottery'
 
+include 'pets'
+
 include 'auction'
