@@ -10,8 +10,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -132,6 +134,12 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
     /** Перечитывает config.yml/messages.yml. */
     public void reloadClaimsConfig() {
         reloadConfig();
+        // Старый config.yml получает новые стоковые значения уведомлений один раз.
+        // Файл правится построчно: комментарии и порядок ключей сохраняются.
+        if (ClaimNoticeMigration.apply(getDataFolder().toPath().resolve("config.yml"),
+                getDataFolder().toPath(), getLogger())) {
+            reloadConfig();
+        }
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
         this.config = ClaimsConfig.parse(getConfig(), getLogger());
@@ -141,6 +149,8 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
     @EventHandler
     public void onAuthCompleted(PlayerAuthCompletedEvent event) {
         Player player = event.getPlayer();
+        // Стоящий на привате игрок должен увидеть, куда попал, не делая шага.
+        refreshNoticeLater(player);
         List<String> notices = store.pollNotices(player.getName());
         if (!notices.isEmpty()) {
             messages().send(player, "notices-join", "count", String.valueOf(notices.size()));
@@ -166,6 +176,16 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         }
     }
 
+    /**
+     * Вход на сервер: через секунду сообщаем, на чьей земле игрок оказался.
+     * Задержка нужна и для серверов без обязательной авторизации, и чтобы
+     * ядро успело перенести новичка на случайную точку.
+     */
+    @EventHandler
+    public void onJoin(PlayerJoinEvent event) {
+        refreshNoticeLater(event.getPlayer(), 20L);
+    }
+
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         UUID id = event.getPlayer().getUniqueId();
@@ -174,18 +194,32 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         claimNotices.clear(id);
     }
 
-    /** Телепорт не должен присылать «выход» из привата, который игрок уже покинул прыжком. */
+    /**
+     * Телепорт — тоже переход границы: после прыжка сообщаем и о выходе из
+     * прежнего привата, и о входе в новый. Точка читается следующим тиком,
+     * когда сервер уже перенёс игрока.
+     */
     @EventHandler(ignoreCancelled = true)
     public void onTeleport(PlayerTeleportEvent event) {
-        claimNotices.forget(event.getPlayer().getUniqueId());
+        refreshNoticeLater(event.getPlayer());
     }
 
-    /** После смерти игрок появится на спавне — прежний приват считать текущим нельзя. */
+    /**
+     * Смерть сама точку не меняет, но запоминать приват смерти бесполезно:
+     * возрождение всё равно произойдёт в другом месте, и «выход» из привата,
+     * где игрок погиб, сообщится уже там.
+     */
     @EventHandler
     public void onDeath(PlayerDeathEvent event) {
         if (event.getEntity() != null) {
             claimNotices.forget(event.getEntity().getUniqueId());
         }
+    }
+
+    /** Возрождение: игрок появился в новой точке — сообщаем, где он оказался. */
+    @EventHandler
+    public void onRespawn(PlayerRespawnEvent event) {
+        refreshNoticeLater(event.getPlayer());
     }
 
     /**
@@ -205,6 +239,27 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
                 || (from.getBlockZ() >> 4) != (to.getBlockZ() >> 4)) {
             updateClaimNotice(event.getPlayer(), to);
         }
+    }
+
+    /**
+     * Пересчитывает уведомление следующим тиком. Нужно там, где позиция игрока
+     * ещё не финальная в момент события: телепорт, возрождение, вход на сервер.
+     * Два тика — чтобы ядро успело перенести игрока после авторизации.
+     */
+    private void refreshNoticeLater(Player player) {
+        refreshNoticeLater(player, 2L);
+    }
+
+    /** То же с явной задержкой: вход на сервер ждёт секунду, события — два тика. */
+    private void refreshNoticeLater(Player player, long delayTicks) {
+        if (player == null) {
+            return;
+        }
+        Bukkit.getScheduler().runTaskLater(this, () -> {
+            if (player.isOnline()) {
+                updateClaimNotice(player, player.getLocation());
+            }
+        }, delayTicks);
     }
 
     /** Пересчитывает приват в новом чанке и отправляет уведомления о переходе. */
@@ -249,6 +304,7 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         String key = ClaimNotice.key(
                 entering ? ClaimNotice.Kind.ENTER : ClaimNotice.Kind.LEAVE,
                 audience, spot.forSale());
+        String paid = spot.paidUntil() > 0 ? config.formatDate(spot.paidUntil()) : "";
         Object[] placeholders = {
                 "owner", spot.owner(),
                 "x", String.valueOf(spot.x()),
@@ -256,7 +312,9 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
                 "world", spot.world(),
                 "price", String.valueOf(spot.salePrice()),
                 "role", spot.role() == null ? "" : service.roleName(spot.role()),
-                "paid", spot.paidUntil() > 0 ? config.formatDate(spot.paidUntil()) : ""
+                "paid", paid,
+                // Для своего привата дописываем дату оплаты, только если она известна.
+                "paid-note", paid.isEmpty() ? "" : " · оплачен до " + paid
         };
         if (config.noticeMode.chat()) {
             messages().send(player, key, placeholders);

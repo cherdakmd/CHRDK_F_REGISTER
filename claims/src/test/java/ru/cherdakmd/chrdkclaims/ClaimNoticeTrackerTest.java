@@ -67,6 +67,38 @@ class ClaimNoticeTrackerTest {
     }
 
     @Test
+    void nextChunkOfSameOwnerIsSilent() {
+        ClaimNoticeTracker tracker = new ClaimNoticeTracker();
+        tracker.update(PLAYER, 0L, spot("Steve", 0, 0), 0L);
+        assertTrue(tracker.update(PLAYER, 1_000L, spot("Steve", 1, 0), 0L).isEmpty(),
+                "соседний чанк того же владельца — та же территория");
+        assertTrue(tracker.update(PLAYER, 2_000L, spot("steve", 1, 1), 0L).isEmpty(),
+                "регистр ника не делает владельца другим");
+        // «Выход» называет чанк, из которого игрок действительно ушёл.
+        List<ClaimNoticeTracker.Notice> leave = tracker.update(PLAYER, 3_000L, null, 0L);
+        assertEquals(1, leave.size());
+        assertEquals(1, leave.get(0).spot().x());
+        assertEquals(1, leave.get(0).spot().z());
+    }
+
+    @Test
+    void otherWorldOrOwnerStillNotifies() {
+        ClaimNoticeTracker tracker = new ClaimNoticeTracker();
+        tracker.update(PLAYER, 0L, spot("Steve", 0, 0), 0L);
+        List<ClaimNoticeTracker.Notice> crossed =
+                tracker.update(PLAYER, 1_000L, spot("Alex", 1, 0), 0L);
+        assertEquals(2, crossed.size(), "другой владелец — выход и вход");
+        assertFalse(crossed.get(0).entering());
+        assertTrue(crossed.get(1).entering());
+
+        ClaimNotice.Spot nether =
+                new ClaimNotice.Spot("world_nether", 1, 0, "Alex", 0, null, 0L, "");
+        List<ClaimNoticeTracker.Notice> worlds = tracker.update(PLAYER, 2_000L, nether, 0L);
+        assertEquals(2, worlds.size(), "другой мир — тоже граница");
+        assertEquals("world", worlds.get(0).spot().world());
+    }
+
+    @Test
     void leavingClaimSendsLeaveOnly() {
         ClaimNoticeTracker tracker = new ClaimNoticeTracker();
         tracker.update(PLAYER, 0L, spot("Steve", 0, 0), 5_000L);

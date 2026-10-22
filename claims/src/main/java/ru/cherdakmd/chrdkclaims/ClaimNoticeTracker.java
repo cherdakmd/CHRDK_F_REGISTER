@@ -14,6 +14,8 @@ import java.util.UUID;
  *
  * <p>Кулдаун нужен из-за бега вдоль границы: без него игрок получает шквал
  * сообщений, когда чанк меняется туда-обратно несколько раз в секунду.
+ * Переход между чанками одного владельца границей не считается —
+ * это одна территория.
  * Память о последних приватах ограничена, поэтому карта не растёт бесконечно.</p>
  */
 public final class ClaimNoticeTracker {
@@ -49,6 +51,12 @@ public final class ClaimNoticeTracker {
             if (spot != null) {
                 last.put(playerId, spot);
             }
+            return List.of();
+        }
+        if (sameTerritory(previous, spot)) {
+            // Соседний чанк того же владельца — та же территория: границы нет,
+            // сообщать нечего, но снимок обновляем для будущего «выхода».
+            last.put(playerId, spot);
             return List.of();
         }
         List<Notice> notices = new ArrayList<>(2);
@@ -91,6 +99,18 @@ public final class ClaimNoticeTracker {
     /** Сколько игроков сейчас отслеживается (для диагностики). */
     public int tracked() {
         return last.size();
+    }
+
+    /**
+     * Та же территория: оба снимка — приват одного владельца в одном мире.
+     * Просторный приват из десятка чанков не должен «здороваться» на каждом
+     * чанке, иначе в чат-режиме он заливает чат при обычном беге.
+     */
+    private static boolean sameTerritory(ClaimNotice.Spot left, ClaimNotice.Spot right) {
+        if (left == null || right == null) {
+            return left == right;
+        }
+        return left.world().equals(right.world()) && left.owner().equalsIgnoreCase(right.owner());
     }
 
     private static boolean sameChunk(ClaimNotice.Spot left, ClaimNotice.Spot right) {

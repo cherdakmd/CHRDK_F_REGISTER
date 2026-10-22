@@ -57,19 +57,19 @@ public final class ClaimsConfig {
             return this == ACTIONBAR || this == BOTH;
         }
 
-        /** Неизвестное значение — строка действия, как было по умолчанию. */
+        /** Неизвестное значение — «и туда, и туда»: сообщение не должно теряться. */
         public static NoticeMode parse(String raw, Logger logger) {
             if (raw == null || raw.isBlank()) {
-                return ACTIONBAR;
+                return BOTH;
             }
             try {
                 return valueOf(raw.trim().toUpperCase(Locale.ROOT));
             } catch (IllegalArgumentException exception) {
                 if (logger != null) {
                     logger.warning("[CHRDK_Claims] general.notice-mode='" + raw
-                            + "' не распознан (actionbar|chat|both) — используется actionbar.");
+                            + "' не распознан (actionbar|chat|both) — используется both.");
                 }
-                return ACTIONBAR;
+                return BOTH;
             }
         }
     }
@@ -138,10 +138,10 @@ public final class ClaimsConfig {
         borderSeconds = clamped(cfg, logger, "general.border-seconds", 10, 3, 60);
         enterNotice = cfg.getBoolean("general.enter-notice", true);
         leaveNotice = cfg.getBoolean("general.leave-notice", true);
-        noticeOwn = cfg.getBoolean("general.notice-own", false);
+        noticeOwn = cfg.getBoolean("general.notice-own", true);
         noticeMembers = cfg.getBoolean("general.notice-members", true);
         noticeCooldown = clamped(cfg, logger, "general.notice-cooldown-seconds", 2, 0, 60);
-        noticeMode = NoticeMode.parse(cfg.getString("general.notice-mode", "actionbar"), logger);
+        noticeMode = NoticeMode.parse(cfg.getString("general.notice-mode", "both"), logger);
         auditLog = cfg.getBoolean("general.audit-log", true);
         notifyRent = cfg.getBoolean("general.notify-rent", true);
 

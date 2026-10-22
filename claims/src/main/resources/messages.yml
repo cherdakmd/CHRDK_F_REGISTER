@@ -165,11 +165,11 @@ claims:
   map-header: "<gold>═══ Карта приватов (чанк = знак) ═══</gold>"
   map-line: "<gray>%row%</gray>"
   map-legend: "<gray>@ ваш · # чужой · $ продаётся · . свободен · X вы здесь</gray>"
-  # вход на чужую территорию (строка действия)
-  enter-own: "<gray>Свой приват <yellow>[%x%, %z%]</yellow> · оплачен до <aqua>%paid%</aqua></gray>"
-  enter-member: "<gray>Приват <yellow>%owner%</yellow> <dark_gray>[%x%, %z%]</dark_gray> · роль «%role%» · /claim info</gray>"
-  enter-foreign: "<gray>Приват <yellow>%owner%</yellow> <dark_gray>[%x%, %z%]</dark_gray> · /claim info</gray>"
-  enter-for-sale: "<gray>Приват <yellow>%owner%</yellow> продаётся за <yellow>%price% ⛁</yellow> · /claim buy</gray>"
+  # границы приватов: вход и выход, свой приват, участник, чужой, лот на продажу
+  enter-own: "<gray>Вы вошли в свой приват <yellow>[%x%, %z%]</yellow>%paid-note%</gray>"
+  enter-member: "<gray>Вы вошли в приват <yellow>%owner%</yellow> <dark_gray>[%x%, %z%]</dark_gray> · роль «%role%» · /claim info</gray>"
+  enter-foreign: "<gray>Вы вошли на чужой приват <yellow>%owner%</yellow> <dark_gray>[%x%, %z%]</dark_gray> · /claim info</gray>"
+  enter-for-sale: "<gray>Чужой приват <yellow>%owner%</yellow> <dark_gray>[%x%, %z%]</dark_gray> продаётся за <yellow>%price% ⛁</yellow> · /claim buy</gray>"
   enter-greeting: "<gray>↳ <white>%text%</white></gray>"
   leave-own: "<gray>Вы покинули свой приват <yellow>[%x%, %z%]</yellow>.</gray>"
   leave-member: "<gray>Вы покинули приват <yellow>%owner%</yellow> <dark_gray>[%x%, %z%]</dark_gray>.</gray>"

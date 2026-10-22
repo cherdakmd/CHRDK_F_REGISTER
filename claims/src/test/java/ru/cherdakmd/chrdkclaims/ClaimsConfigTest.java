@@ -41,10 +41,11 @@ class ClaimsConfigTest {
         assertEquals(10, config.borderSeconds);
         assertTrue(config.enterNotice, "уведомление о входе на чужой приват включено");
         assertTrue(config.leaveNotice);
-        assertFalse(config.noticeOwn);
+        assertTrue(config.noticeOwn, "свои приваты тоже сообщаются по умолчанию");
         assertTrue(config.noticeMembers);
         assertEquals(2, config.noticeCooldown);
-        assertEquals(ClaimsConfig.NoticeMode.ACTIONBAR, config.noticeMode);
+        assertEquals(ClaimsConfig.NoticeMode.BOTH, config.noticeMode,
+                "по умолчанию сообщение идёт и в чат, и в строку действия");
         assertEquals("", config.timezone);
     }
 
@@ -85,8 +86,8 @@ class ClaimsConfigTest {
         ClaimsConfig broken = parse("""
                 general: {notice-mode: "sidebar", notice-cooldown-seconds: -5}
                 """);
-        assertEquals(ClaimsConfig.NoticeMode.ACTIONBAR, broken.noticeMode,
-                "неизвестный канал не ломает конфиг — прежняя строка действия");
+        assertEquals(ClaimsConfig.NoticeMode.BOTH, broken.noticeMode,
+                "неизвестный канал не ломает конфиг — оба канала по умолчанию");
         assertEquals(0, broken.noticeCooldown);
 
         ClaimsConfig both = parse("general: {notice-mode: both}");
