@@ -17,14 +17,14 @@ import java.util.logging.Logger;
 public final class PetsConfig {
 
     /** Опыт за события. {@code catMultiplier} касается только мирных событий. */
-    public record Xp(int perKill, int perAssist, int perFish, int perSleep,
+    public record Xp(int kill, int assist, int fish, int sleep,
                      double catMultiplier, int maxPerMinute) {
 
         public Xp {
-            perKill = clamp(perKill, 0, 100);
-            perAssist = clamp(perAssist, 0, 100);
-            perFish = clamp(perFish, 0, 100);
-            perSleep = clamp(perSleep, 0, 500);
+            kill = clamp(kill, 0, 100);
+            assist = clamp(assist, 0, 100);
+            fish = clamp(fish, 0, 100);
+            sleep = clamp(sleep, 0, 500);
             catMultiplier = clamp(catMultiplier, 1.0, 3.0);
             maxPerMinute = clamp(maxPerMinute, 0, 10_000);
         }

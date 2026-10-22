@@ -170,8 +170,8 @@ class PetsConfigTest {
         assertEquals(100, config.curve().maxLevel());
         assertEquals(1L, config.curve().baseXp());
         assertEquals(0.0, config.curve().growth(), 1.0e-9);
-        assertEquals(100, config.xp().perKill());
-        assertEquals(0, config.xp().perAssist());
+        assertEquals(100, config.xp().kill());
+        assertEquals(0, config.xp().assist());
         assertEquals(3.0, config.xp().catMultiplier(), 1.0e-9);
         assertEquals(0, config.xp().maxPerMinute());
         assertEquals(32, config.minNameLength());
