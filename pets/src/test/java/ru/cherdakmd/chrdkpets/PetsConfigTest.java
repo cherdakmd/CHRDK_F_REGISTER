@@ -37,8 +37,8 @@ class PetsConfigTest {
         assertEquals(defaults.minNameLength(), config.minNameLength());
         assertEquals(defaults.maxNameLength(), config.maxNameLength());
         assertEquals(defaults.keepDeadDays(), config.keepDeadDays());
-        assertEquals(defaults.wolf(), config.wolf());
-        assertEquals(defaults.cat(), config.cat());
+        assertEquals(defaults.species(PetSpecies.WOLF), config.species(PetSpecies.WOLF));
+        assertEquals(defaults.species(PetSpecies.CAT), config.species(PetSpecies.CAT));
     }
 
     @Test
