@@ -263,7 +263,7 @@ public final class TreasureArsenal {
         add("dp-depth-charm", TreasureTier.EPIC, TreasureRegion.DEEP_DARK, "ECHO_SHARD",
                 ability(SENSE,16,20,60),
                 effect(MINING_SPEED, 0.1));
-        add("dp-storm-horn", TreasureTier.LEGENDARY, TreasureRegion.MOUNTAIN, "GOAT_HORN",
+        add("dp-storm-horn", TreasureTier.LEGENDARY, TreasureRegion.SAVANNA, "GOAT_HORN",
                 ability(HORN,12,12,90),
                 effect(MOVEMENT_SPEED, 0.04));
         add("dp-healing-spring", TreasureTier.EPIC, TreasureRegion.OCEAN, "HEART_OF_THE_SEA",
