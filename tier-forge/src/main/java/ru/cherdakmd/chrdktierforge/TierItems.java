@@ -12,6 +12,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import ru.cherdakmd.chrdkregister.api.ChrdkEnchantsApi;
+import ru.cherdakmd.chrdkregister.item.ItemAttributes;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -238,6 +239,10 @@ public final class TierItems {
         meta.getPersistentDataContainer().remove(modifiersKey);
         clearTierModifiers(meta);
         clearForgeModifiers(meta);
+        // 1.4.140: если после снятия наших бонусов компонент атрибутов опустел,
+        // он всё равно перекрывал бы ванильные значения — возвращаем базу.
+        ItemAttributes.keep(item, meta);
+        ItemAttributes.dropEmpty(meta);
         item.setItemMeta(meta);
     }
 
@@ -291,6 +296,9 @@ public final class TierItems {
             applyModifiers(item, meta, tier, ensureModifierUid(meta, null));
         }
         stampVisuals(meta, tier);
+        // 1.4.140: пустой компонент атрибутов перекрывает ванильные значения —
+        // если своих бонусов не осталось, убираем его совсем.
+        ItemAttributes.dropEmpty(meta);
         item.setItemMeta(meta);
         return true;
     }
@@ -694,24 +702,24 @@ public final class TierItems {
         EquipmentSlotGroup slot = slotGroupFor(kind);
         for (TierBonus bonus : TierBonus.forKind(kind)) {
             switch (bonus) {
-                case ATTACK_DAMAGE -> add(meta, Attribute.ATTACK_DAMAGE, "attack",
+                case ATTACK_DAMAGE -> add(item, meta, Attribute.ATTACK_DAMAGE, "attack",
                         TierMath.damageScalar(percent), slot, uid);
                 case PROJECTILE_DAMAGE -> {
                     // Урон стрел нельзя повесить атрибутом на лук: ATTACK_DAMAGE
                     // влияет только на ближний бой. Бонус начисляет слушатель
                     // попаданий (ForgeUpgradeListener) по тиру оружия в руке.
                 }
-                case ARMOR -> add(meta, Attribute.ARMOR, "armor",
+                case ARMOR -> add(item, meta, Attribute.ARMOR, "armor",
                         TierMath.defenseScalar(percent) * 0.5, slot, uid);
-                case ARMOR_TOUGHNESS -> add(meta, Attribute.ARMOR_TOUGHNESS, "toughness",
+                case ARMOR_TOUGHNESS -> add(item, meta, Attribute.ARMOR_TOUGHNESS, "toughness",
                         TierMath.toughnessScalar(percent), slot, uid);
                 case MOVEMENT_SPEED -> {
                     if (percent > 0) {
-                        add(meta, Attribute.MOVEMENT_SPEED, "movespeed",
+                        add(item, meta, Attribute.MOVEMENT_SPEED, "movespeed",
                                 TierMath.movementScalar(percent), slot, uid);
                     }
                 }
-                case MINING_SPEED -> add(meta, Attribute.BLOCK_BREAK_SPEED, "minespeed",
+                case MINING_SPEED -> add(item, meta, Attribute.BLOCK_BREAK_SPEED, "minespeed",
                         TierMath.miningScalar(percent), slot, uid);
             }
         }
@@ -726,7 +734,7 @@ public final class TierItems {
         // (раньше на каждую пересборку приходился лишний getItemMeta()).
         for (Map.Entry<ForgeUpgrade.Def, Integer> entry : upgradesFromMeta(meta).entrySet()) {
             ForgeUpgrade.Def def = entry.getKey();
-            applyDefModifiers(meta, def, def.perLevel() * entry.getValue(),
+            applyDefModifiers(item, meta, def, def.perLevel() * entry.getValue(),
                     "fu_" + def.id(), slot, uid);
         }
     }
@@ -737,7 +745,7 @@ public final class TierItems {
         if (kind == null) return;
         EquipmentSlotGroup slot = slotGroupFor(kind);
         for (TierProperty property : propertiesFromMeta(meta)) {
-            applyDefModifiers(meta, property.asDef(), property.value(),
+            applyDefModifiers(item, meta, property.asDef(), property.value(),
                     "pr_" + property.id(), slot, uid);
         }
     }
@@ -752,7 +760,7 @@ public final class TierItems {
         if (kind == null) return;
         EquipmentSlotGroup slot = slotGroupFor(kind);
         for (TierAffix affix : affixesFromMeta(meta, kind)) {
-            applyDefModifiers(meta, affix.asDef(), affix.value(),
+            applyDefModifiers(item, meta, affix.asDef(), affix.value(),
                     TierModifierIds.AFFIX_PREFIX + affix.id(), slot, uid);
         }
     }
@@ -838,54 +846,54 @@ public final class TierItems {
      * Модификаторы одного эффекта с данным ключом — общий путь ковки и свойств
      * тира: свойство начисляется ровно так же, как улучшение того же эффекта.
      */
-    private void applyDefModifiers(ItemMeta meta, ForgeUpgrade.Def def, double total, String tag,
-                                   EquipmentSlotGroup slot, String uid) {
+    private void applyDefModifiers(ItemStack item, ItemMeta meta, ForgeUpgrade.Def def, double total,
+                                   String tag, EquipmentSlotGroup slot, String uid) {
         switch (def.effect()) {
-            case ATTACK_PERCENT -> add(meta, Attribute.ATTACK_DAMAGE, tag, total / 100.0, slot, uid);
-            case ATTACK_SPEED_PERCENT -> add(meta, Attribute.ATTACK_SPEED, tag, total / 100.0,
+            case ATTACK_PERCENT -> add(item, meta, Attribute.ATTACK_DAMAGE, tag, total / 100.0, slot, uid);
+            case ATTACK_SPEED_PERCENT -> add(item, meta, Attribute.ATTACK_SPEED, tag, total / 100.0,
                     slot, uid);
-            case ARMOR_PERCENT -> add(meta, Attribute.ARMOR, tag, total / 100.0, slot, uid);
-            case MOVE_SPEED_PERCENT -> add(meta, Attribute.MOVEMENT_SPEED, tag, total / 100.0,
+            case ARMOR_PERCENT -> add(item, meta, Attribute.ARMOR, tag, total / 100.0, slot, uid);
+            case MOVE_SPEED_PERCENT -> add(item, meta, Attribute.MOVEMENT_SPEED, tag, total / 100.0,
                     slot, uid);
-            case MAX_HEALTH -> addAbsolute(meta, Attribute.MAX_HEALTH, tag, total, slot, uid);
-            case DIG_SPEED_PERCENT -> add(meta, Attribute.BLOCK_BREAK_SPEED, tag,
+            case MAX_HEALTH -> addAbsolute(item, meta, Attribute.MAX_HEALTH, tag, total, slot, uid);
+            case DIG_SPEED_PERCENT -> add(item, meta, Attribute.BLOCK_BREAK_SPEED, tag,
                     total / 100.0, slot, uid);
             // --- 1.4.56: атрибутная часть новых фишек ---
-            case RAW_DAMAGE -> addAbsolute(meta, Attribute.ATTACK_DAMAGE, tag, total, slot, uid);
-            case ATTACK_KNOCKBACK -> addAbsolute(meta, Attribute.ATTACK_KNOCKBACK, tag, total,
+            case RAW_DAMAGE -> addAbsolute(item, meta, Attribute.ATTACK_DAMAGE, tag, total, slot, uid);
+            case ATTACK_KNOCKBACK -> addAbsolute(item, meta, Attribute.ATTACK_KNOCKBACK, tag, total,
                     slot, uid);
-            case REACH -> addAbsolute(meta, Attribute.ENTITY_INTERACTION_RANGE, tag, total,
+            case REACH -> addAbsolute(item, meta, Attribute.ENTITY_INTERACTION_RANGE, tag, total,
                     slot, uid);
-            case SWEEP_RATIO -> addAbsolute(meta, Attribute.SWEEPING_DAMAGE_RATIO, tag, total,
+            case SWEEP_RATIO -> addAbsolute(item, meta, Attribute.SWEEPING_DAMAGE_RATIO, tag, total,
                     slot, uid);
-            case KB_RESIST -> addAbsolute(meta, Attribute.KNOCKBACK_RESISTANCE, tag, total,
+            case KB_RESIST -> addAbsolute(item, meta, Attribute.KNOCKBACK_RESISTANCE, tag, total,
                     slot, uid);
-            case SAFE_FALL -> addAbsolute(meta, Attribute.SAFE_FALL_DISTANCE, tag, total,
+            case SAFE_FALL -> addAbsolute(item, meta, Attribute.SAFE_FALL_DISTANCE, tag, total,
                     slot, uid);
-            case STEP_HEIGHT -> addAbsolute(meta, Attribute.STEP_HEIGHT, tag, total, slot, uid);
-            case OXYGEN -> addAbsolute(meta, Attribute.OXYGEN_BONUS, tag, total, slot, uid);
-            case SWIM_SPEED -> addAbsolute(meta, Attribute.WATER_MOVEMENT_EFFICIENCY, tag,
+            case STEP_HEIGHT -> addAbsolute(item, meta, Attribute.STEP_HEIGHT, tag, total, slot, uid);
+            case OXYGEN -> addAbsolute(item, meta, Attribute.OXYGEN_BONUS, tag, total, slot, uid);
+            case SWIM_SPEED -> addAbsolute(item, meta, Attribute.WATER_MOVEMENT_EFFICIENCY, tag,
                     total, slot, uid);
-            case SNEAK_SPEED -> add(meta, Attribute.SNEAKING_SPEED, tag, total / 100.0, slot, uid);
-            case BURN_TIME -> add(meta, Attribute.BURNING_TIME, tag, -total / 100.0, slot, uid);
-            case EXPLOSION_RESIST -> addAbsolute(meta, Attribute.EXPLOSION_KNOCKBACK_RESISTANCE,
+            case SNEAK_SPEED -> add(item, meta, Attribute.SNEAKING_SPEED, tag, total / 100.0, slot, uid);
+            case BURN_TIME -> add(item, meta, Attribute.BURNING_TIME, tag, -total / 100.0, slot, uid);
+            case EXPLOSION_RESIST -> addAbsolute(item, meta, Attribute.EXPLOSION_KNOCKBACK_RESISTANCE,
                     tag, total, slot, uid);
-            case LUCK -> addAbsolute(meta, Attribute.LUCK, tag, total, slot, uid);
-            case MINING_EFFICIENCY -> addAbsolute(meta, Attribute.MINING_EFFICIENCY, tag,
+            case LUCK -> addAbsolute(item, meta, Attribute.LUCK, tag, total, slot, uid);
+            case MINING_EFFICIENCY -> addAbsolute(item, meta, Attribute.MINING_EFFICIENCY, tag,
                     total, slot, uid);
-            case BLOCK_REACH -> addAbsolute(meta, Attribute.BLOCK_INTERACTION_RANGE, tag,
+            case BLOCK_REACH -> addAbsolute(item, meta, Attribute.BLOCK_INTERACTION_RANGE, tag,
                     total, slot, uid);
-            case SCALE_UP -> add(meta, Attribute.SCALE, tag, total / 100.0, slot, uid);
+            case SCALE_UP -> add(item, meta, Attribute.SCALE, tag, total / 100.0, slot, uid);
             // --- 1.4.57: атрибутная часть третьей ковки ---
-            case ATTACK_SPEED_FLAT -> addAbsolute(meta, Attribute.ATTACK_SPEED, tag, total,
+            case ATTACK_SPEED_FLAT -> addAbsolute(item, meta, Attribute.ATTACK_SPEED, tag, total,
                     slot, uid);
-            case TOUGHNESS_FLAT -> addAbsolute(meta, Attribute.ARMOR_TOUGHNESS, tag, total,
+            case TOUGHNESS_FLAT -> addAbsolute(item, meta, Attribute.ARMOR_TOUGHNESS, tag, total,
                     slot, uid);
-            case JUMP -> add(meta, Attribute.JUMP_STRENGTH, tag, total / 100.0, slot, uid);
-            case GRAVITY_DOWN -> add(meta, Attribute.GRAVITY, tag, -total / 100.0, slot, uid);
-            case FALL_DAMAGE_DOWN -> add(meta, Attribute.FALL_DAMAGE_MULTIPLIER, tag,
+            case JUMP -> add(item, meta, Attribute.JUMP_STRENGTH, tag, total / 100.0, slot, uid);
+            case GRAVITY_DOWN -> add(item, meta, Attribute.GRAVITY, tag, -total / 100.0, slot, uid);
+            case FALL_DAMAGE_DOWN -> add(item, meta, Attribute.FALL_DAMAGE_MULTIPLIER, tag,
                     -total / 100.0, slot, uid);
-            case WALK_EFFICIENCY -> addAbsolute(meta, Attribute.MOVEMENT_EFFICIENCY, tag,
+            case WALK_EFFICIENCY -> addAbsolute(item, meta, Attribute.MOVEMENT_EFFICIENCY, tag,
                     total, slot, uid);
             default -> {
                 // событийные свойства (крит/вампиризм/терновник/…) — атрибутов не требуют
@@ -893,8 +901,12 @@ public final class TierItems {
         }
     }
 
-    private void add(ItemMeta meta, Attribute attribute, String tag, double amount,
+    private void add(ItemStack item, ItemMeta meta, Attribute attribute, String tag, double amount,
                      EquipmentSlotGroup slot, String uid) {
+        // 1.4.140: свои модификаторы пишут компонент атрибутов целиком, поэтому
+        // сперва возвращаем в него ванильные значения предмета (базовый урон,
+        // скорость атаки, защиту) — иначе меч бьёт на «полсердечка».
+        ItemAttributes.keep(item, meta);
         AttributeModifier modifier = new AttributeModifier(modifierKey(tag, uid), amount,
                 AttributeModifier.Operation.MULTIPLY_SCALAR_1, slot);
         // 1.4.25-аудит: addAttributeModifier кидает при кривой комбинации
@@ -908,8 +920,9 @@ public final class TierItems {
     }
 
     /** MAX_HEALTH кладётся ADD_NUMBER (абсолютные сердца) — у неё свой конструктор-путь. */
-    private void addAbsolute(ItemMeta meta, Attribute attribute, String tag, double amount,
-                             EquipmentSlotGroup slot, String uid) {
+    private void addAbsolute(ItemStack item, ItemMeta meta, Attribute attribute, String tag,
+                             double amount, EquipmentSlotGroup slot, String uid) {
+        ItemAttributes.keep(item, meta); // 1.4.140: база предмета — до своих бонусов
         AttributeModifier modifier = new AttributeModifier(modifierKey(tag, uid), amount,
                 AttributeModifier.Operation.ADD_NUMBER, slot);
         try {

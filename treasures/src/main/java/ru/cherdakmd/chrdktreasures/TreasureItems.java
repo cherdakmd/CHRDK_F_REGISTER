@@ -11,6 +11,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import ru.cherdakmd.chrdkregister.Messages;
+import ru.cherdakmd.chrdkregister.item.ItemAttributes;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -108,7 +109,7 @@ public final class TreasureItems {
         if (def.tier() == TreasureTier.LEGENDARY || def.tier() == TreasureTier.MYTHICAL) {
             meta.setEnchantmentGlintOverride(true);
         }
-        applyAttributes(meta, def);
+        applyAttributes(item, meta, def);
         meta.getPersistentDataContainer().set(idKey, PersistentDataType.STRING, def.id());
         item.setItemMeta(meta);
         return item;
@@ -136,12 +137,23 @@ public final class TreasureItems {
         return item;
     }
 
-    private void applyAttributes(ItemMeta meta, TreasureItemDef def) {
+    /**
+     * Атрибутные эффекты находки. Перед первым своим модификатором в мету
+     * возвращаются ванильные значения материала (1.4.140): компонент атрибутов
+     * пишется целиком, и без этого базовый урон меча/топора терялся — предмет
+     * с «+12% к урону» бил на «полсердечка».
+     */
+    private void applyAttributes(ItemStack item, ItemMeta meta, TreasureItemDef def) {
         EquipmentSlotGroup slot = slotFor(def);
+        boolean defaultsKept = false;
         for (TreasureEffect effect : def.effects()) {
             Attribute attribute = attributeOf(effect.kind());
             if (attribute == null) {
                 continue;
+            }
+            if (!defaultsKept) {
+                ItemAttributes.keep(item, meta);
+                defaultsKept = true;
             }
             AttributeModifier.Operation operation = effect.kind().percent()
                     ? AttributeModifier.Operation.MULTIPLY_SCALAR_1
@@ -202,6 +214,38 @@ public final class TreasureItems {
             return String.valueOf((int) Math.rint(value));
         }
         return String.valueOf(Math.round(value * 100.0) / 100.0);
+    }
+
+    /**
+     * Возвращает находке ванильную базу атрибутов, если она потерялась до
+     * 1.4.140. Чинит уже выданные предметы: вызывается при входе игрока.
+     *
+     * @return {@code true} — предмет изменён
+     */
+    public boolean repairAttributes(ItemStack item) {
+        if (item == null || idOf(item) == null) {
+            return false;
+        }
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null || !ItemAttributes.keep(item, meta)) {
+            return false;
+        }
+        item.setItemMeta(meta);
+        return true;
+    }
+
+    /** Чинит все находки в инвентаре игрока (включая броню и левую руку). */
+    public boolean repairAttributes(Player player) {
+        if (player == null) {
+            return false;
+        }
+        boolean changed = false;
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (repairAttributes(item)) {
+                changed = true;
+            }
+        }
+        return changed;
     }
 
     /** Ид находки в предмете или {@code null}. */

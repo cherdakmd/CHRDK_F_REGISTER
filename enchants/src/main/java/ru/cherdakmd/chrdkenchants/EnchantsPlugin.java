@@ -56,6 +56,8 @@ public final class EnchantsPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new ArmorEffectsListener(this), this);
         Bukkit.getPluginManager().registerEvents(new ToolEffectsListener(this), this);
         Bukkit.getPluginManager().registerEvents(new PolarityEffectsListener(this), this);
+        // 1.4.140: старые предметы с чарами потеряли ванильный урон — чиним на входе.
+        Bukkit.getPluginManager().registerEvents(new AttributeRepairListener(this), this);
         Bukkit.getPluginManager().registerEvents(gui, this);
         auras.start();
         this.apiBridge = new EnchantsApiBridge(this);

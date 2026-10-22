@@ -47,11 +47,11 @@ class TierModifierIdsTest {
     @Test
     void stampReflectsAffixAndEnchantSwitches() {
         String defaults = TierModifierIds.stamp(true, 2, 2, true);
-        assertEquals("2-a22-e", defaults);
-        assertEquals("2-a22-E", TierModifierIds.stamp(true, 2, 2, false),
+        assertEquals("3-a22-e", defaults);
+        assertEquals("3-a22-E", TierModifierIds.stamp(true, 2, 2, false),
                 "выключенные зачарования — другой отпечаток, иначе старые предметы"
                         + " не пересоберутся");
-        assertEquals("2-A-e", TierModifierIds.stamp(false, 2, 2, true));
+        assertEquals("3-A-e", TierModifierIds.stamp(false, 2, 2, true));
         assertFalse(defaults.equals(TierModifierIds.stamp(true, 3, 2, true)),
                 "новый потолок аффиксов запускает пересборку");
         assertFalse(defaults.equals(TierModifierIds.stamp(true, 2, 1, true)));

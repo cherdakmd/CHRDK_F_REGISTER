@@ -10,6 +10,7 @@ import org.bukkit.inventory.EquipmentSlotGroup;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
+import ru.cherdakmd.chrdkregister.item.ItemAttributes;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -89,7 +90,7 @@ public final class EnchantItems {
         } else {
             meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, encoded);
         }
-        applyAttributes(meta, item.getType().name(), enchants);
+        applyAttributes(item, meta, enchants);
         refreshLore(meta, enchants);
         item.setItemMeta(meta);
     }
@@ -107,9 +108,30 @@ public final class EnchantItems {
             return;
         }
         Map<String, Integer> enchants = read(item);
-        applyAttributes(meta, item.getType().name(), enchants);
+        applyAttributes(item, meta, enchants);
         refreshLore(meta, enchants);
         item.setItemMeta(meta);
+    }
+
+    /**
+     * Возвращает предмету ванильную базу атрибутов, если она потерялась раньше
+     * (1.4.140). До исправления первый же атрибутный модификатор чары писал
+     * компонент {@code attribute_modifiers} целиком и стирал ванильный урон
+     * меча — предмет с «+4% к урону» бил на «полсердечка». Чинит уже выданные
+     * предметы: вызывается при входе игрока.
+     *
+     * @return {@code true} — предмет изменён (инвентарь стоит перерисовать)
+     */
+    public boolean repairAttributes(ItemStack item) {
+        if (item == null || !item.hasItemMeta() || read(item).isEmpty()) {
+            return false;
+        }
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null || !ItemAttributes.keep(item, meta)) {
+            return false;
+        }
+        item.setItemMeta(meta);
+        return true;
     }
 
     /** Добавляет чару с уровнем (правила применимости — на вызывающем). */
@@ -196,16 +218,25 @@ public final class EnchantItems {
      * Пересобирает атрибутные модификаторы чар: сначала снимает все наши
      * ({@code ench_*}), затем кладёт актуальные из {@link EnchantAttributeMap}.
      * Слот выбирается по виду предмета: оружие — рука, броня — своя деталь.
+     *
+     * <p>Перед первым своим модификатором в мету возвращаются ванильные
+     * значения предмета (1.4.140): иначе компонент атрибутов перекрывал бы
+     * базовый урон и скорость атаки.</p>
      */
-    private void applyAttributes(ItemMeta meta, String materialName, Map<String, Integer> enchants) {
+    private void applyAttributes(ItemStack item, ItemMeta meta, Map<String, Integer> enchants) {
         clearAttributes(meta);
         if (enchants.isEmpty() || meta == null) {
+            // своих модификаторов не осталось — пустой компонент не должен
+            // перекрывать ванильные атрибуты предмета (1.4.140)
+            ItemAttributes.dropEmpty(meta);
             return;
         }
-        EquipmentSlotGroup slot = slotGroupFor(ItemGroup.classify(materialName));
+        EquipmentSlotGroup slot = slotGroupFor(ItemGroup.classify(item.getType().name()));
         if (slot == null) {
+            ItemAttributes.dropEmpty(meta);
             return;
         }
+        boolean defaultsKept = false;
         for (Map.Entry<String, Integer> entry : enchants.entrySet()) {
             EnchantDef def = EnchantRegistry.byId(entry.getKey());
             if (def == null) {
@@ -225,6 +256,10 @@ public final class EnchantItems {
                         : AttributeModifier.Operation.ADD_NUMBER;
                 AttributeModifier built = new AttributeModifier(modifierKey,
                         modifier.amount(), operation, slot);
+                if (!defaultsKept) {
+                    ItemAttributes.keep(item, meta);
+                    defaultsKept = true;
+                }
                 try {
                     meta.addAttributeModifier(attribute, built);
                 } catch (IllegalArgumentException ignored) {

@@ -309,6 +309,11 @@ public final class TreasureListener implements Listener {
     public void onJoin(PlayerJoinEvent event) {
         service.rememberName(event.getPlayer());
         plugin.auras().apply(event.getPlayer());
+        // 1.4.140: находки, выданные до исправления, потеряли ванильный урон
+        // и защиту — возвращаем базу при входе, не дожидаясь пересоздания.
+        if (plugin.items().repairAttributes(event.getPlayer())) {
+            event.getPlayer().updateInventory();
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
