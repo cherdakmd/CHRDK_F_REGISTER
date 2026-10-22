@@ -229,7 +229,7 @@ public final class PluginUpdateService implements AutoCloseable {
                 }
             }
         }
-        if (seen.size() != MODULES.size()) throw new IOException("ZIP не содержит все 16 плагинов.");
+        if (seen.size() != MODULES.size()) throw new IOException("ZIP не содержит все плагины сборки.");
     }
 
     private Map<String, Installed> installed() throws IOException {
