@@ -30,9 +30,8 @@ class TierCollectionTitlesTest {
         assertEquals("affixes", TierCollectionTitles.best(progress(
                 TierDef.LADDER.size(), 0, TierCollectionConfig.AFFIX_TOTAL)));
         assertEquals("properties", TierCollectionTitles.best(progress(
-                TierDef.LADDER.size(), TierCollectionConfig.PROPERTY_TOTAL,
-                TierCollectionConfig.AFFIX_TOTAL)),
-                "свойства весомее аффиксов");
+                0, TierCollectionConfig.PROPERTY_TOTAL, TierCollectionConfig.AFFIX_TOTAL)),
+                "свойства весомее аффиксов, пока не закрыта вся кузня");
         assertEquals("all", TierCollectionTitles.best(progress(
                 TierCollectionBook.TIER_TOTAL, TierCollectionConfig.PROPERTY_TOTAL,
                 TierCollectionConfig.AFFIX_TOTAL)));
