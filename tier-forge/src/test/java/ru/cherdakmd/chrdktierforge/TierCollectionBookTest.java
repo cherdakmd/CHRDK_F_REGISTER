@@ -158,6 +158,6 @@ class TierCollectionBookTest {
                 pool.subList(0, 2), List.of(TierAffixes.good().get(0).id(), TierAffixes.bad().get(0).id()));
         assertEquals(2, discovery.properties().size());
         assertEquals(2, discovery.affixes().size());
-        assertEquals(4, discovery.total(), "редкость + 2 свойства + 2 аффикса = 4");
+        assertEquals(5, discovery.total(), "редкость + 2 свойства + 2 аффикса = 5 позиций");
     }
 }
