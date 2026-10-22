@@ -148,21 +148,25 @@ class TierPropertiesTest {
 
     @Test
     void describeCarriesTheSignOfTheValue() {
+        // Знак берётся из величины, а не из названия: штраф всегда
+        // читается с минусом, бонус — там, где описание начинается с числа.
         TierProperty rust = TierProperties.byId("rust");
         assertNotNull(rust);
         assertTrue(rust.describe().startsWith("-"), "проклятое свойство читается как минус: "
                 + rust.describe());
 
-        TierProperty positive = null;
-        for (TierProperty property : TierProperties.byTier("epic")) {
-            if (property.effect() == ForgeUpgrade.Effect.ATTACK_PERCENT) {
-                positive = property;
-                break;
+        int signedBonuses = 0;
+        for (TierProperty property : TierProperties.all()) {
+            String text = property.describe();
+            assertFalse(text.isBlank(), property.id() + " без описания");
+            if (property.value() < 0) {
+                assertTrue(text.startsWith("-"), "штраф без минуса: " + property.id()
+                        + " → " + text);
+            } else if (text.startsWith("+")) {
+                signedBonuses++;
             }
         }
-        assertNotNull(positive);
-        assertTrue(positive.describe().startsWith("+"), "бонус читается как плюс: "
-                + positive.describe());
+        assertTrue(signedBonuses > 0, "ни один бонус не читается с плюсом");
     }
 
     @Test
@@ -197,31 +201,36 @@ class TierPropertiesTest {
 
     @Test
     void propertyAndUpgradeOfTheSameEffectAddUp() {
-        // Критический шанс есть и у ковки, и у свойства «Мастер крита» (epic).
-        // Доли должны складываться, а не брать perLevel первого определения.
-        ForgeUpgrade.Def critUpgrade = null;
-        for (ForgeUpgrade.Def def : ForgeUpgrade.ALL) {
-            if (def.effect() == ForgeUpgrade.Effect.CRIT_CHANCE) {
-                critUpgrade = def;
+        // С 1.4.118 у свойства тира и кузнечного улучшения может совпасть
+        // эффект: доли обязаны складываться, а не брать perLevel первого
+        // определения. Пару ищем по факту, а не по имени свойства — пул
+        // тиров меняется от волны к волне.
+        ForgeUpgrade.Def upgrade = null;
+        TierProperty property = null;
+        for (TierProperty candidate : TierProperties.byTier("epic")) {
+            if (candidate.value() <= 0) {
+                continue;
+            }
+            for (ForgeUpgrade.Def def : ForgeUpgrade.ALL) {
+                if (def.effect() == candidate.effect() && def.perLevel() > 0) {
+                    upgrade = def;
+                    property = candidate;
+                    break;
+                }
+            }
+            if (property != null) {
                 break;
             }
         }
-        assertNotNull(critUpgrade);
-        TierProperty critProperty = null;
-        for (TierProperty property : TierProperties.byTier("epic")) {
-            if (property.effect() == ForgeUpgrade.Effect.CRIT_CHANCE) {
-                critProperty = property;
-                break;
-            }
-        }
-        assertNotNull(critProperty);
+        assertNotNull(upgrade, "в эпическом пуле нет эффекта, который есть и в ковке");
+        assertNotNull(property);
 
         Map<ForgeUpgrade.Def, Integer> effects = new LinkedHashMap<>();
-        effects.put(critUpgrade, 2);
-        effects.put(critProperty.asDef(), 1);
-        double expected = (critUpgrade.perLevel() * 2 + critProperty.value()) / 100.0;
-        double chance = ForgeUpgradeListener.levelOf(effects, ForgeUpgrade.Effect.CRIT_CHANCE)
-                * ForgeUpgradeListener.fraction(effects, ForgeUpgrade.Effect.CRIT_CHANCE);
+        effects.put(upgrade, 2);
+        effects.put(property.asDef(), 1);
+        double expected = (upgrade.perLevel() * 2 + property.value()) / 100.0;
+        double chance = ForgeUpgradeListener.levelOf(effects, property.effect())
+                * ForgeUpgradeListener.fraction(effects, property.effect());
         assertEquals(expected, chance, 1e-9);
     }
 
