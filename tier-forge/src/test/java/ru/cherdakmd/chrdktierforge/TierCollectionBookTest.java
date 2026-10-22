@@ -148,6 +148,52 @@ class TierCollectionBookTest {
     }
 
     @Test
+    void progressCountsSectionsAndPercent() {
+        TierCollectionBook book = new TierCollectionBook();
+        assertEquals(0, book.progress().total());
+        assertEquals(0, book.progress().sectionPercent("tiers"));
+
+        for (String tier : TierDef.LADDER) {
+            book.discover(tier, List.of(), List.of());
+        }
+        TierCollectionBook.Progress progress = book.progress();
+        assertEquals(7, progress.tiers());
+        assertEquals(7, progress.total());
+        assertTrue(progress.complete("tiers"));
+        assertFalse(progress.complete("affixes"));
+        assertFalse(progress.complete("properties"));
+        assertFalse(progress.complete("all"));
+        assertEquals(7, progress.count("all"));
+        assertEquals(100, progress.sectionPercent("tiers"));
+        assertEquals(4, progress.sectionPercent("all"), "7 из 142 — это 4%");
+        assertEquals(0, progress.count("unknown"));
+
+        TierCollectionBook.Snapshot snapshot = book.snapshot();
+        assertEquals(progress, snapshot.progress());
+        assertTrue(snapshot.complete("tiers"));
+    }
+
+    @Test
+    void progressComparesWithThresholds() {
+        TierCollectionBook.Progress empty = TierCollectionBook.Progress.EMPTY;
+        assertEquals(0, empty.total());
+        assertEquals(0, empty.percent());
+        assertFalse(empty.complete("all"));
+        assertEquals(0, empty.sectionPercent("all"));
+
+        TierCollectionBook.Progress full = new TierCollectionBook.Progress(
+                TierCollectionBook.TIER_TOTAL,
+                TierCollectionConfig.PROPERTY_TOTAL,
+                TierCollectionConfig.AFFIX_TOTAL);
+        assertTrue(full.complete("tiers"));
+        assertTrue(full.complete("affixes"));
+        assertTrue(full.complete("properties"));
+        assertTrue(full.complete("all"));
+        assertEquals(100, full.percent());
+        assertEquals(TierCollectionBook.CATALOG_TOTAL, full.total());
+    }
+
+    @Test
     void discoveryKeepsAllNewPositionsOfOneItem() {
         TierCollectionBook book = new TierCollectionBook();
         List<String> pool = new ArrayList<>();

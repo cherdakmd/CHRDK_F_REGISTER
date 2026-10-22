@@ -2,7 +2,10 @@ package ru.cherdakmd.chrdktierforge;
 
 import org.bukkit.configuration.ConfigurationSection;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,8 +32,18 @@ public final class TierCollectionKeeper {
         if (player == null) {
             return TierCollectionBook.Discovery.EMPTY;
         }
-        return books.computeIfAbsent(player, ignored -> new TierCollectionBook())
-                .discover(tierId, propertyIds, affixIds);
+        TierCollectionBook existing = books.get(player);
+        if (existing != null) {
+            return existing.discover(tierId, propertyIds, affixIds);
+        }
+        // Новую книгу заводим только под реальную находку: пустые книги не
+        // должны попадать в stats.yml и в рейтинг.
+        TierCollectionBook fresh = new TierCollectionBook();
+        TierCollectionBook.Discovery discovery = fresh.discover(tierId, propertyIds, affixIds);
+        if (!discovery.isEmpty()) {
+            books.putIfAbsent(player, fresh);
+        }
+        return discovery;
     }
 
     /** Пытается закрыть веху; {@code true} — награда ещё не выдавалась. */
@@ -48,6 +61,50 @@ public final class TierCollectionKeeper {
     public TierCollectionBook.Snapshot snapshot(UUID player) {
         TierCollectionBook book = player == null ? null : books.get(player);
         return book == null ? TierCollectionBook.Snapshot.EMPTY : book.snapshot();
+    }
+
+    /** Голые счётчики книги; неизвестный игрок — нули, а не {@code null}. */
+    public TierCollectionBook.Progress progress(UUID player) {
+        TierCollectionBook book = player == null ? null : books.get(player);
+        return book == null ? TierCollectionBook.Progress.EMPTY : book.progress();
+    }
+
+    /** Строка рейтинга: игрок и его счётчики. */
+    public record Row(UUID player, TierCollectionBook.Progress progress) {
+
+        public int total() {
+            return progress.total();
+        }
+    }
+
+    /**
+     * Рейтинг самых полных книг (1.4.151).
+     *
+     * <p>Сортировка: всего собрано, затем редкости, затем свойства, затем UUID —
+     * так порядок стабилен и не зависит от обхода {@link ConcurrentHashMap}.
+     * Пустые книги в рейтинг не попадают.</p>
+     *
+     * @param limit сколько строк вернуть; {@code <= 0} — пустой список
+     */
+    public List<Row> top(int limit) {
+        int max = Math.max(0, limit);
+        if (max == 0) {
+            return List.of();
+        }
+        List<Row> rows = new ArrayList<>();
+        books.forEach((player, book) -> {
+            TierCollectionBook.Progress progress = book.progress();
+            if (progress.total() > 0) {
+                rows.add(new Row(player, progress));
+            }
+        });
+        rows.sort(Comparator.comparingInt(Row::total).reversed()
+                .thenComparing(Comparator.comparingInt(
+                        (Row row) -> row.progress().tiers()).reversed())
+                .thenComparing(Comparator.comparingInt(
+                        (Row row) -> row.progress().properties()).reversed())
+                .thenComparing(row -> row.player().toString()));
+        return List.copyOf(rows.subList(0, Math.min(max, rows.size())));
     }
 
     /** Сколько игроков вообще что-то собрали (для стартового лога). */

@@ -1,5 +1,6 @@
 package ru.cherdakmd.chrdktierforge;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -12,16 +13,17 @@ import java.util.UUID;
 
 /**
  * Коллекция кузни: отмечает, что игрок впервые увидел, объявляет новинки и
- * выплачивает награды за вехи (1.4.150).
+ * платит за вехи и закрытые разделы (1.4.150–1.4.151).
  *
  * <p>Вызывается там, где предмет окончательно получил тир: крафт (старый
  * флоу), опознание, дроп с моба и результат наковальни. В режиме неопознанных
  * предметов крафт ничего не записывает — редкость ещё скрыта, и «коллекция по
  * превью» была бы бесплатной разведкой.</p>
  *
- * <p>Награда за веху выдаётся ровно один раз: отметка {@code claimed} пишется
- * в книгу вместе с прогрессом, поэтому сбой между выплатой и сохранением не
- * удвоит дни проходки.</p>
+ * <p>Награда выдаётся ровно один раз: отметка {@code claimed} пишется в книгу
+ * вместе с прогрессом, поэтому сбой между выплатой и сохранением не удвоит
+ * дни проходки. За полностью закрытый раздел платится крупнее и выдаётся
+ * титул — он надевается рядом с ником через {@code NameTagProvider} ядра.</p>
  */
 public final class TierCollectionService {
 
@@ -33,7 +35,7 @@ public final class TierCollectionService {
         this.keeper = keeper;
     }
 
-    /** Отмечает предмет, если он тир-предмет и коллекция включена. */
+    /** Отмечает собранное по предмету; вызывать после наката/опознания. */
     public void record(Player player, ItemStack item) {
         if (player == null || item == null) {
             return;
@@ -63,16 +65,17 @@ public final class TierCollectionService {
             announce(player, discovery);
         }
         grantMilestones(player, config);
+        grantSections(player, config);
     }
 
-    /** Снимок книги игрока — для GUI и текстовой сводки. */
     public TierCollectionBook.Snapshot snapshot(Player player) {
-        return keeper.snapshot(player == null ? null : player.getUniqueId());
+        return player == null
+                ? TierCollectionBook.Snapshot.EMPTY
+                : keeper.snapshot(player.getUniqueId());
     }
 
-    /** Снимок по UUID — нужен админской статистике офлайн-игрока. */
-    public TierCollectionBook.Snapshot snapshot(UUID player) {
-        return keeper.snapshot(player);
+    public TierCollectionBook.Progress progress(UUID player) {
+        return keeper.progress(player);
     }
 
     public TierCollectionKeeper keeper() {
@@ -89,7 +92,78 @@ public final class TierCollectionService {
         return config != null && config.enabled();
     }
 
-    /* ------------------------------- сообщения ------------------------------- */
+    /* -------------------------------- титулы -------------------------------- */
+
+    /** Титул игрока в виде готовой MiniMessage-строки или {@code null}. */
+    public String titleOf(Player player) {
+        return player == null ? null : titleFor(player.getUniqueId());
+    }
+
+    /** Титул по UUID — нужен витрине, статистике и рейтингу. */
+    public String titleFor(UUID player) {
+        TierCollectionConfig config = config();
+        if (config == null || !config.titles()) {
+            return null;
+        }
+        return titleText(TierCollectionTitles.best(keeper.progress(player)));
+    }
+
+    /** Текст титула по ид раздела; ключи перечислены явно, чтобы их видел контракт. */
+    private String titleText(String section) {
+        if (section == null) {
+            return null;
+        }
+        return switch (section) {
+            case "tiers" -> plugin.messages().raw("title.tiers");
+            case "affixes" -> plugin.messages().raw("title.affixes");
+            case "properties" -> plugin.messages().raw("title.properties");
+            case "all" -> plugin.messages().raw("title.all");
+            default -> null;
+        };
+    }
+
+    /** Человеческое имя раздела для сообщений и витрины. */
+    public String sectionName(String section) {
+        if (section == null) {
+            return "";
+        }
+        return switch (section) {
+            case "tiers" -> plugin.messages().raw("collection-section-tiers");
+            case "affixes" -> plugin.messages().raw("collection-section-affixes");
+            case "properties" -> plugin.messages().raw("collection-section-properties");
+            case "all" -> plugin.messages().raw("collection-section-all");
+            default -> section;
+        };
+    }
+
+    /**
+     * Титул по нику — точка входа для {@code NameTagProvider} ядра. Ник в чате
+     * всегда принадлежит онлайну, поэтому дополнительных запросов к профилям нет.
+     */
+    public String titleOfName(String playerName) {
+        if (playerName == null || playerName.isBlank()) {
+            return null;
+        }
+        Player online = Bukkit.getPlayerExact(playerName);
+        return online == null ? null : titleOf(online);
+    }
+
+    /** Строка «Ник [титул]» для провайдера оформления ников. */
+    public String decorateName(String playerName, String decoratedName) {
+        String title = titleOfName(playerName);
+        if (title == null) {
+            return null;
+        }
+        String format = plugin.messages().raw("title-format");
+        if (format == null || format.isBlank()) {
+            return decoratedName + " " + title;
+        }
+        return plugin.messages().raw("title-format",
+                "name", Messages.trusted(decoratedName),
+                "title", Messages.trusted(title));
+    }
+
+    /* ------------------------------ сообщения ------------------------------ */
 
     private void announce(Player player, TierCollectionBook.Discovery discovery) {
         List<String> parts = new ArrayList<>(3);
@@ -107,18 +181,13 @@ public final class TierCollectionService {
                     "count", discovery.affixes().size()));
         }
         String joined = String.join(plugin.messages().raw("collection-part-separator"), parts);
-        plugin.messages().send(player, "collection-found",
-                "parts", Messages.trusted(joined));
+        plugin.messages().send(player, "collection-found", "parts", Messages.trusted(joined));
     }
 
-    /* -------------------------------- награды -------------------------------- */
+    /* ------------------------------- награды ------------------------------- */
 
     private void grantMilestones(Player player, TierCollectionConfig config) {
         TierCollectionBook.Snapshot snapshot = snapshot(player);
-        if (snapshot.tierCount() >= TierCollectionBook.TIER_TOTAL) {
-            claim(player, "tiers", config.tiers(),
-                    plugin.messages().raw("collection-milestone-tiers"));
-        }
         for (TierCollectionConfig.Milestone milestone : config.properties()) {
             if (snapshot.propertyCount() >= milestone.count()) {
                 claim(player, "properties:" + milestone.count(), milestone,
@@ -135,28 +204,55 @@ public final class TierCollectionService {
         }
     }
 
+    /** Закрытые разделы: крупная награда и титул, по одному разу на раздел. */
+    private void grantSections(Player player, TierCollectionConfig config) {
+        TierCollectionBook.Progress progress = keeper.progress(player.getUniqueId());
+        for (String section : TierCollectionConfig.SECTIONS) {
+            if (!progress.complete(section)) {
+                continue;
+            }
+            if (!keeper.claim(player.getUniqueId(), "section:" + section)) {
+                continue;
+            }
+            TierCollectionConfig.SectionReward reward = config.section(section);
+            pay(player, "section:" + section, reward.passDays(), reward.diamonds());
+            plugin.messages().send(player, "collection-section",
+                    "name", Messages.trusted(sectionName(section)),
+                    "reward", Messages.trusted(rewardText(reward.passDays(),
+                            reward.diamonds())));
+            if (config.titles()) {
+                String title = titleText(section);
+                if (title != null) {
+                    plugin.messages().send(player, "collection-section-title",
+                            "title", Messages.trusted(title));
+                }
+            }
+        }
+    }
+
     private void claim(Player player, String key, TierCollectionConfig.Milestone milestone,
                        String name) {
         if (!keeper.claim(player.getUniqueId(), key)) {
             return; // веха уже выплачена
         }
-        pay(player, key, milestone);
+        pay(player, key, milestone.passDays(), milestone.diamonds());
         plugin.messages().send(player, "collection-milestone",
                 "name", Messages.trusted(name),
-                "reward", Messages.trusted(rewardText(milestone)));
+                "reward", Messages.trusted(rewardText(milestone.passDays(),
+                        milestone.diamonds())));
     }
 
-    private void pay(Player player, String key, TierCollectionConfig.Milestone milestone) {
-        if (milestone.passDays() > 0) {
+    private void pay(Player player, String key, int passDays, int diamonds) {
+        if (passDays > 0) {
             if (plugin.coreApi() != null) {
-                plugin.coreApi().grantPass(player.getName(), milestone.passDays(),
+                plugin.coreApi().grantPass(player.getName(), passDays,
                         "tierforge:collection:" + key);
             } else {
                 plugin.getLogger().warning("Ядро недоступно: награда коллекции " + key
                         + " не выдана игроку " + player.getName());
             }
         }
-        int remaining = milestone.diamonds();
+        int remaining = diamonds;
         while (remaining > 0) {
             int amount = Math.min(64, remaining);
             remaining -= amount;
@@ -169,15 +265,15 @@ public final class TierCollectionService {
     }
 
     /** Человеческий текст награды для чата. */
-    String rewardText(TierCollectionConfig.Milestone milestone) {
+    String rewardText(int passDays, int diamonds) {
         List<String> parts = new ArrayList<>(2);
-        if (milestone.passDays() > 0) {
+        if (passDays > 0) {
             parts.add(plugin.messages().raw("collection-reward-days",
-                    "days", milestone.passDays()));
+                    "days", passDays));
         }
-        if (milestone.diamonds() > 0) {
+        if (diamonds > 0) {
             parts.add(plugin.messages().raw("collection-reward-diamonds",
-                    "count", milestone.diamonds()));
+                    "count", diamonds));
         }
         if (parts.isEmpty()) {
             return plugin.messages().raw("collection-reward-none");

@@ -106,6 +106,58 @@ class TierCollectionKeeperTest {
     }
 
     @Test
+    void progressIsCheapAndSafe() {
+        TierCollectionKeeper keeper = new TierCollectionKeeper();
+        UUID player = UUID.randomUUID();
+        assertEquals(TierCollectionBook.Progress.EMPTY, keeper.progress(player));
+        assertEquals(TierCollectionBook.Progress.EMPTY, keeper.progress(null));
+
+        keeper.record(player, "rare", List.of(TierProperties.byTier("rare").get(0).id()), List.of());
+        TierCollectionBook.Progress progress = keeper.progress(player);
+        assertEquals(1, progress.tiers());
+        assertEquals(1, progress.properties());
+        assertEquals(0, progress.affixes());
+        assertEquals(2, progress.total());
+        assertEquals(1, progress.sectionPercent("all"), "2 из 142 — 1%");
+    }
+
+    @Test
+    void topRanksByTotalThenTiers() {
+        TierCollectionKeeper keeper = new TierCollectionKeeper();
+        UUID small = UUID.randomUUID();
+        UUID big = UUID.randomUUID();
+        UUID tieTiers = UUID.randomUUID();
+        UUID tieProps = UUID.randomUUID();
+
+        keeper.record(small, "cursed", List.of(), List.of());
+        keeper.record(big, "cursed", List.of(TierProperties.byTier("cursed").get(0).id()),
+                List.of(TierAffixes.all().get(0).id()));
+        // Равное «всего» (2), но у tieTiers обе позиции — редкости.
+        keeper.record(tieTiers, "rare", List.of(), List.of());
+        keeper.record(tieTiers, "epic", List.of(), List.of());
+        keeper.record(tieProps, "rare", List.of(TierProperties.byTier("rare").get(1).id()),
+                List.of());
+
+        List<TierCollectionKeeper.Row> rows = keeper.top(10);
+        assertEquals(4, rows.size());
+        assertEquals(big, rows.get(0).player(), "3 позиции — первое место");
+        assertEquals(3, rows.get(0).total());
+        assertEquals(tieTiers, rows.get(1).player(), "при равенстве выигрывает больше редкостей");
+        assertEquals(tieProps, rows.get(2).player());
+        assertEquals(small, rows.get(3).player());
+
+        assertEquals(2, keeper.top(2).size());
+        assertTrue(keeper.top(0).isEmpty());
+    }
+
+    @Test
+    void emptyBooksDoNotEnterTop() {
+        TierCollectionKeeper keeper = new TierCollectionKeeper();
+        keeper.record(UUID.randomUUID(), null, List.of(), List.of());
+        assertTrue(keeper.top(10).isEmpty(), "книга без находок в рейтинг не попадает");
+    }
+
+    @Test
     void emptyBooksAreNotRestored() {
         YamlConfiguration yaml = new YamlConfiguration();
         UUID empty = UUID.randomUUID();

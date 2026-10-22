@@ -221,20 +221,27 @@ collection:
   enabled: true
   # Объявлять в чат каждую новинку (только счётчики, без спойлеров).
   announce-finds: true
+  # Титулы за закрытые разделы надеваются рядом с ником в чате
+  # (оформление берёт на себя ядро, текст — messages.yml, ключи title.*).
+  titles:
+    enabled: true
   rewards:
-    # Все семь редкостей.
-    tiers: {pass-days: 3, diamonds: 16}
-    # Вехи по уникальным свойствам тиров: ключ — сколько собрать.
+    # Награды за ПОЛНОСТЬЮ закрытый раздел: все 7 редкостей, все 30 аффиксов,
+    # все 105 свойств или вся кузня (142). Выдаются один раз, вместе с титулом.
+    sections:
+      tiers: {pass-days: 3, diamonds: 16}
+      affixes: {pass-days: 5, diamonds: 24}
+      properties: {pass-days: 8, diamonds: 48}
+      all: {pass-days: 15, diamonds: 96}
+    # Промежуточные вехи по уникальным свойствам тиров: ключ — сколько собрать.
     properties:
       15: {pass-days: 2, diamonds: 8}
       45: {pass-days: 4, diamonds: 16}
       75: {pass-days: 7, diamonds: 32}
-      105: {pass-days: 12, diamonds: 64}
-    # Вехи по аффиксам (15 хороших + 15 плохих).
+    # Промежуточные вехи по аффиксам (15 хороших + 15 плохих).
     affixes:
       10: {pass-days: 2, diamonds: 8}
       20: {pass-days: 4, diamonds: 16}
-      30: {pass-days: 6, diamonds: 24}
 
 anvil:
   # Мастер-выключатель всех механик наковальни: слияние тиров, перекат и ковка

@@ -103,7 +103,7 @@ public final class TierCollectionMenu implements Listener {
                 plugin.messages().get("collection-tab-affixes"),
                 snapshot.affixCount(), TierCollectionConfig.AFFIX_TOTAL,
                 currentTab == Tab.AFFIXES));
-        holder.inventory.setItem(SLOT_PROGRESS, progressIcon(snapshot));
+        holder.inventory.setItem(SLOT_PROGRESS, progressIcon(player, snapshot));
         if (pages > 1) {
             int previous = current <= 1 ? pages : current - 1;
             int next = current >= pages ? 1 : current + 1;
@@ -238,7 +238,7 @@ public final class TierCollectionMenu implements Listener {
         return item;
     }
 
-    private ItemStack progressIcon(TierCollectionBook.Snapshot snapshot) {
+    private ItemStack progressIcon(Player player, TierCollectionBook.Snapshot snapshot) {
         ItemStack item = new ItemStack(Material.BOOK);
         ItemMeta meta = item.getItemMeta();
         if (meta == null) {
@@ -261,15 +261,29 @@ public final class TierCollectionMenu implements Listener {
                 "name", Messages.trusted(plugin.messages().raw("collection-tab-affixes")),
                 "found", snapshot.affixCount(),
                 "total", TierCollectionConfig.AFFIX_TOTAL));
+        // 1.4.151: титулы за закрытые разделы — заработанный и ближайший.
+        TierCollectionBook.Progress progress = snapshot.progress();
+        String earnedTitle = service.titleOf(player);
+        if (earnedTitle != null) {
+            lore.add(plugin.messages().get("collection-progress-title",
+                    "title", Messages.trusted(earnedTitle)));
+        }
+        String nextTitle = TierCollectionTitles.next(progress);
+        if (nextTitle != null) {
+            lore.add(plugin.messages().get("collection-progress-next-title",
+                    "name", Messages.trusted(service.sectionName(nextTitle)),
+                    "found", progress.count(nextTitle),
+                    "count", TierCollectionConfig.threshold(nextTitle)));
+        }
         TierCollectionConfig config = service.config();
         if (config != null) {
             MilestoneText next = nextMilestone(config, snapshot);
-            if (next == null) {
-                lore.add(plugin.messages().get("collection-progress-done"));
-            } else {
+            if (next != null) {
                 lore.add(plugin.messages().get("collection-progress-next",
                         "name", Messages.trusted(next.name()),
                         "found", next.found(), "count", next.count()));
+            } else if (snapshot.total() >= TierCollectionBook.CATALOG_TOTAL) {
+                lore.add(plugin.messages().get("collection-progress-done"));
             }
         }
         meta.lore(lore);
@@ -280,13 +294,11 @@ public final class TierCollectionMenu implements Listener {
     private record MilestoneText(String name, int found, int count) {
     }
 
-    /** Ближайшая незакрытая веха по порядку: свойства, аффиксы, редкости. */
+    /** Ближайшая незакрытая веха по порядку: свойства, затем аффиксы. */
     private MilestoneText nextMilestone(TierCollectionConfig config,
                                         TierCollectionBook.Snapshot snapshot) {
-        if (snapshot.tierCount() < TierCollectionBook.TIER_TOTAL) {
-            return new MilestoneText(plugin.messages().raw("collection-milestone-tiers"),
-                    snapshot.tierCount(), TierCollectionBook.TIER_TOTAL);
-        }
+        // Разделы (включая «все редкости») показывает строка «следующий титул»,
+        // здесь — только промежуточные вехи, за которые платят дни и алмазы.
         for (TierCollectionConfig.Milestone milestone : config.properties()) {
             if (snapshot.propertyCount() < milestone.count()) {
                 return new MilestoneText(plugin.messages().raw("collection-milestone-properties",

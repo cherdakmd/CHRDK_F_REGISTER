@@ -68,6 +68,9 @@ public final class TierCommandHandler implements TabExecutor {
         }
         // 1.4.150: витрина «Коллекция кузни» — редкости, свойства и аффиксы.
         if (args.length >= 1 && "collection".equalsIgnoreCase(args[0])) {
+            if (args.length >= 2 && "top".equalsIgnoreCase(args[1])) {
+                return handleCollectionTop(player, args.length >= 3 ? args[2] : null);
+            }
             if (plugin.collectionMenu() == null) {
                 plugin.messages().send(player, "collection-disabled");
                 return true;
@@ -309,6 +312,44 @@ public final class TierCommandHandler implements TabExecutor {
         return true;
     }
 
+    /**
+     * `/tiers collection top [сколько]` — самые полные книги сервера (1.4.151).
+     *
+     * <p>Рейтинг строится по числу собранных позиций, при равенстве — по
+     * редкостям и свойствам. Титул показывается рядом с ником, если он есть.</p>
+     */
+    private boolean handleCollectionTop(Player player, String rawLimit) {
+        int limit = 10;
+        if (rawLimit != null && !rawLimit.isBlank()) {
+            try {
+                limit = Math.max(1, Math.min(25, Integer.parseInt(rawLimit)));
+            } catch (NumberFormatException ignored) {
+                limit = 10;
+            }
+        }
+        plugin.messages().send(player, "collection-top-header", "limit", limit);
+        List<TierCollectionKeeper.Row> rows = plugin.collection().keeper().top(limit);
+        if (rows.isEmpty()) {
+            plugin.messages().send(player, "collection-top-empty");
+            return true;
+        }
+        int place = 1;
+        for (TierCollectionKeeper.Row row : rows) {
+            String title = plugin.collection().titleFor(row.player());
+            plugin.messages().send(player, "collection-top-row",
+                    "place", place++,
+                    "player", leaderboardName(row.player()),
+                    "title", Messages.trusted(title == null ? "" : " " + title),
+                    "found", row.total(),
+                    "total", TierCollectionBook.CATALOG_TOTAL,
+                    "percent", TierCollectionBook.percentOf(row.total()));
+        }
+        plugin.messages().send(player, "collection-top-footer",
+                "players", plugin.collection().keeper().players(),
+                "total", TierCollectionBook.CATALOG_TOTAL);
+        return true;
+    }
+
     /** Ник для рейтинга: серверный профиль, иначе первые 8 символов UUID. */
     private static String leaderboardName(UUID player) {
         String name = Bukkit.getOfflinePlayer(player).getName();
@@ -395,9 +436,12 @@ public final class TierCommandHandler implements TabExecutor {
         TierCollectionService collection = plugin.collection();
         if (collection != null && collection.enabled()) {
             TierCollectionBook.Snapshot snapshot = collection.snapshot(playerId);
-            plugin.messages().send(sender, "stats-collection",
+            String title = collection.titleFor(playerId);
+            plugin.messages().send(sender, title == null
+                            ? "stats-collection" : "stats-collection-title",
                     "found", snapshot.total(), "total", TierCollectionBook.CATALOG_TOTAL,
-                    "percent", snapshot.percent());
+                    "percent", snapshot.percent(),
+                    "title", title == null ? "" : Messages.trusted(title));
         }
         return true;
     }
@@ -562,6 +606,12 @@ public final class TierCommandHandler implements TabExecutor {
             if (args.length == 1) {
                 List.of("info", "stats", "top", "effects", "collection").stream()
                         .filter(x -> x.startsWith(prefix)).forEach(matches::add);
+            } else if (args.length == 2 && "collection".equalsIgnoreCase(args[0])) {
+                List.of("top").stream().filter(x -> x.startsWith(prefix)).forEach(matches::add);
+            } else if (args.length == 3 && "collection".equalsIgnoreCase(args[0])
+                    && "top".equalsIgnoreCase(args[1])) {
+                List.of("5", "10", "25").stream().filter(x -> x.startsWith(prefix))
+                        .forEach(matches::add);
             } else if (args.length == 2 && "effects".equalsIgnoreCase(args[0])) {
                 List.of("on", "off").stream()
                         .filter(x -> x.startsWith(prefix)).forEach(matches::add);

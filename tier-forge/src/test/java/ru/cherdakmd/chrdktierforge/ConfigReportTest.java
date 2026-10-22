@@ -32,7 +32,9 @@ class ConfigReportTest {
         assertTrue(lines.get(6).contains("шанс от 18%"), lines.get(6));
         assertTrue(lines.get(6).contains("проклятия 15% с тира epic"), lines.get(6));
         assertTrue(lines.get(8).contains("коллекция кузни: включена"), lines.get(8));
-        assertTrue(lines.get(8).contains("аффиксы 3"), "три вехи по аффиксам: " + lines.get(8));
+        assertTrue(lines.get(8).contains("вехи 5"), "три свойства + две аффиксные: " + lines.get(8));
+        assertTrue(lines.get(8).contains("разделов 4"), lines.get(8));
+        assertTrue(lines.get(8).contains("титулы вкл."), lines.get(8));
     }
 
     @Test

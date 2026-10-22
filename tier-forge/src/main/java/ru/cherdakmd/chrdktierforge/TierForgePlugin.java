@@ -36,6 +36,8 @@ public final class TierForgePlugin extends JavaPlugin {
     private final TierCollectionKeeper collection = new TierCollectionKeeper();
     private TierCollectionService collectionService;
     private TierCollectionMenu collectionMenu;
+    /** Титулы коллекции зарегистрированы в оформлении ников ядра (1.4.151). */
+    private boolean nameTagRegistered;
     private TierIdentificationListener identification;
     private TierRefreshListener refreshListener;
     private ForgeUpgradeListener forgeUpgrades;
@@ -94,6 +96,9 @@ public final class TierForgePlugin extends JavaPlugin {
                     + config.identifyScanTicks() + " тиков).");
         }
 
+        // 1.4.151: титулы за закрытые разделы коллекции — рядом с ником в чате.
+        registerCollectionNameTag();
+
         TierCommandHandler handler = new TierCommandHandler(this);
         for (String name : List.of("tiers", "tiersadmin")) {
             PluginCommand command = getCommand(name);
@@ -112,6 +117,36 @@ public final class TierForgePlugin extends JavaPlugin {
                 + ".");
     }
 
+    /**
+     * Подключает титулы коллекции к оформлению ников ядра (1.4.151).
+     *
+     * <p>Провайдер читает книгу в момент сообщения, поэтому титул появляется
+     * сразу после закрытия раздела — перезаход не нужен. Ядро применяет
+     * провайдеров по id и само снимает сбой, но мы всё равно не бросаем
+     * исключений: пустая книга — просто {@code null}.</p>
+     */
+    private void registerCollectionNameTag() {
+        ChrdkRegisterApi api = coreApi();
+        if (api == null) {
+            return;
+        }
+        api.registerNameTag("tierforge", (playerName, decoratedName) ->
+                collection().decorateName(playerName, decoratedName));
+        nameTagRegistered = true;
+        getLogger().info("CHRDK_TierForge: титулы коллекции подключены к оформлению ников.");
+    }
+
+    private void unregisterCollectionNameTag() {
+        if (!nameTagRegistered) {
+            return;
+        }
+        ChrdkRegisterApi api = coreApi();
+        if (api != null) {
+            api.unregisterNameTag("tierforge");
+        }
+        nameTagRegistered = false;
+    }
+
     /** Пульс кузни раз в 2 секунды (тихий no-op, если ковка выключена). */
     private void startForgePulse() {
         this.forgePulseTask = Bukkit.getScheduler().runTaskTimer(this, () -> {
@@ -124,6 +159,7 @@ public final class TierForgePlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        unregisterCollectionNameTag();
         if (tierApi != null) {
             Bukkit.getServicesManager().unregister(ChrdkTierApi.class, tierApi);
             tierApi = null;

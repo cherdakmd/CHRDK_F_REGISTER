@@ -86,10 +86,12 @@ final class ConfigReport {
                 + (config.visuals().armor() ? ", броня учтена" : "")
                 + (config.visuals().selfOnly() ? ", только владельцу" : ", видят все рядом")
                 : "выключены"));
-        out.add("коллекция кузни: " + (config.collection().enabled()
-                ? "включена (вехи: редкости " + config.collection().tiers().count()
-                + ", свойства " + config.collection().properties().size()
-                + ", аффиксы " + config.collection().affixes().size() + ")"
+        TierCollectionConfig collection = config.collection();
+        out.add("коллекция кузни: " + (collection.enabled()
+                ? "включена (вехи " + (collection.properties().size()
+                + collection.affixes().size())
+                + ", разделов " + collection.sections().size()
+                + ", титулы " + onOff(collection.titles()) + ")"
                 : "выключена"));
         return out;
     }

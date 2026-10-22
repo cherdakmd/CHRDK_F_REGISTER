@@ -57,6 +57,49 @@ public final class TierCollectionBook {
         }
     }
 
+    /**
+     * Голые счётчики книги — без копирования множеств. Нужны там, где важна
+     * только цифра: титул в чате, строка `/tiers stats`, рейтинг.
+     */
+    public record Progress(int tiers, int properties, int affixes) {
+
+        public static final Progress EMPTY = new Progress(0, 0, 0);
+
+        public int total() {
+            return tiers + properties + affixes;
+        }
+
+        public int percent() {
+            return percentOf(total());
+        }
+
+        /** Сколько собрано в разделе {@code tiers|affixes|properties|all}. */
+        public int count(String section) {
+            if (section == null) {
+                return 0;
+            }
+            return switch (section) {
+                case "tiers" -> tiers;
+                case "properties" -> properties;
+                case "affixes" -> affixes;
+                case "all" -> total();
+                default -> 0;
+            };
+        }
+
+        /** Закрыт ли раздел целиком. */
+        public boolean complete(String section) {
+            int threshold = TierCollectionConfig.threshold(section);
+            return threshold > 0 && count(section) >= threshold;
+        }
+
+        /** Процент закрытия раздела (0..100). */
+        public int sectionPercent(String section) {
+            int threshold = TierCollectionConfig.threshold(section);
+            return threshold <= 0 ? 0 : (int) (Math.min(count(section), threshold) * 100L / threshold);
+        }
+    }
+
     /** Неизменяемый снимок для GUI и команд: можно читать из любого потока. */
     public record Snapshot(Set<String> tiers, Set<String> properties, Set<String> affixes) {
 
@@ -94,6 +137,15 @@ public final class TierCollectionBook {
 
         public int total() {
             return tiers.size() + properties.size() + affixes.size();
+        }
+
+        /** Счётчики без копий — для титулов и рейтинга. */
+        public Progress progress() {
+            return new Progress(tiers.size(), properties.size(), affixes.size());
+        }
+
+        public boolean complete(String section) {
+            return progress().complete(section);
         }
 
         /** Процент собранного от всего каталога (округление вниз). */
@@ -178,6 +230,11 @@ public final class TierCollectionBook {
 
     public synchronized int percent() {
         return percentOf(total());
+    }
+
+    /** Голые счётчики — дешёвая альтернатива {@link #snapshot()}. */
+    public synchronized Progress progress() {
+        return new Progress(tiers.size(), properties.size(), affixes.size());
     }
 
     /**
