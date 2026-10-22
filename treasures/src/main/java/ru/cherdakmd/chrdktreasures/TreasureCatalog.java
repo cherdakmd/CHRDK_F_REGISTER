@@ -453,7 +453,7 @@ public final class TreasureCatalog {
                 ability(AQUA,30,0,40), curse(SLOWNESS,0.15),
                 effect(ATTACK_DAMAGE, 0.18), effect(WATER_BREATHING, 1));
         add("mythic-storm-bow", TreasureTier.MYTHICAL, null, "BOW",
-                ability(SENSE,20,25,45), curse(GLOWING,0.15),
+                ability(SENSE,20,24,45), curse(GLOWING,0.15),
                 effect(RANGED_DAMAGE, 0.3));
         add("mythic-earthbreaker-pick", TreasureTier.MYTHICAL, null, "NETHERITE_PICKAXE",
                 ability(BLAST,12,8,35), curse(HUNGER,0.25),
