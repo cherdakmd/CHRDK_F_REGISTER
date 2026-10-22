@@ -75,6 +75,10 @@ class TreasureConfigTest {
         assertEquals(1.02, TreasureRates.depthBonus(-10,
                 config.depthPerBlock(), config.depthMaxBonus()), 1e-9);
         assertEquals(6, config.milestones().size());
+        // Вехи в поставляемом config.yml должны совпадать с умолчаниями кода:
+        // иначе новая установка получает алмазы за половину коллекции.
+        assertEquals(TreasuresConfig.defaultMilestones(), config.milestones(),
+                "вехи коллекции в config.yml разошлись с умолчаниями кода");
         assertEquals(0.35, config.arsenalShare(), 1e-9);
     }
 
