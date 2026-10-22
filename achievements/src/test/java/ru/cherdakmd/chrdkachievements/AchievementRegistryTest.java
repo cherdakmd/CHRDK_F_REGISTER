@@ -17,13 +17,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class AchievementRegistryTest {
 
     @Test
-    void catalogueHasFortyEightTwelvePerCategory() {
+    void catalogueHasSeventyTwoEighteenPerCategory() {
         assertEquals(AchievementRegistry.EXPECTED_SIZE, AchievementRegistry.size());
-        assertEquals(48, AchievementRegistry.size());
+        assertEquals(72, AchievementRegistry.size());
         for (AchievementDef.Category category : AchievementDef.Category.values()) {
             assertEquals(AchievementRegistry.PER_CATEGORY,
                     AchievementRegistry.byCategory(category).size(),
-                    "в разделе " + category.id() + " должно быть ровно 12 достижений");
+                    "в разделе " + category.id() + " должно быть ровно 18 достижений");
         }
     }
 
@@ -44,24 +44,32 @@ class AchievementRegistryTest {
     }
 
     @Test
-    void legendRequiresAllOtherAchievements() {
+    void legendKeepsItsHistoricalGoalAndMasterNeedsEverything() {
         AchievementDef legend = AchievementRegistry.byId("legenda");
         assertNotNull(legend);
         assertEquals(AchievementMetric.ACHIEVEMENTS, legend.metric());
-        assertEquals(AchievementRegistry.EXPECTED_SIZE - 1, legend.goal());
+        assertEquals(AchievementRegistry.LEGEND_GOAL, legend.goal());
+        assertEquals(47, legend.goal(), "рубеж «Легенды» не растёт вместе с каталогом");
+
+        AchievementDef master = AchievementRegistry.byId("legenda-legend");
+        assertNotNull(master);
+        assertEquals(AchievementMetric.ACHIEVEMENTS, master.metric());
+        assertEquals(AchievementRegistry.EXPECTED_SIZE - 1, master.goal());
+        assertEquals(71, master.goal(), "«Легенда легенд» требует все остальные достижения");
     }
 
     @Test
-    void onlyTwoAchievementsGrantBadges() {
+    void onlyThreeAchievementsGrantBadges() {
         int badges = 0;
         for (AchievementDef def : AchievementRegistry.all()) {
             if (def.badge() != null) {
                 badges++;
-                assertTrue(def.id().equals("veteran") || def.id().equals("legenda"),
+                assertTrue(def.id().equals("veteran") || def.id().equals("legenda")
+                                || def.id().equals("legenda-legend"),
                         "неожиданный бейдж у " + def.id());
             }
         }
-        assertEquals(2, badges);
+        assertEquals(3, badges);
     }
 
     @Test
@@ -73,7 +81,7 @@ class AchievementRegistryTest {
             assertTrue(messages.isString("messages.ach." + def.id() + ".desc"),
                     "нет описания для " + def.id());
         }
-        for (String badge : new String[]{"veteran", "legenda"}) {
+        for (String badge : new String[]{"veteran", "legenda", "legenda-legend"}) {
             assertTrue(messages.isString("messages.badge." + badge),
                     "нет текста бейджа " + badge);
         }

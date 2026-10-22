@@ -45,20 +45,33 @@ import static ru.cherdakmd.chrdkachievements.AchievementMetric.REGISTERED;
 import static ru.cherdakmd.chrdkachievements.AchievementMetric.TWO_FACTOR;
 
 /**
- * Каталог достижений: 48 записей, по 12 в каждом разделе.
+ * Каталог достижений: 72 записи, по 18 в каждом разделе.
  *
  * <p>Пороги подобраны так, чтобы путь от «первого шага» до «легенды» занимал
- * недели, а не часы: 100 часов игры, 50 км, 5 000 мобов, 50 000 блоков.
- * Награды — дни проходки и алмазы; мета-достижение «Легенда» открывается,
- * когда открыты все остальные 23, и единственное выдаёт бейдж-трофей
- * (второй бейдж — у «Ветерана»).</p>
+ * недели, а не часы: 200 часов игры, 100 км, 25 000 мобов, 250 000 блоков.
+ * Награды — дни проходки и алмазы. Мета-достижений два: «Легенда» осталась
+ * на историческом рубеже 47 (её не отнимают у тех, кто уже близок), а
+ * «Легенда легенд» требует все остальные 71 и выдаёт третий бейдж-трофей.
+ * Второй бейдж — у «Ветерана».</p>
+ *
+ * <p>Волна 1.4.149 добавила по шесть достижений в каждый раздел: длинные
+ * дистанции, боссов, руду, рыбалку, зачарования, зелья, банк и питомцев.
+ * Метрики не менялись — старый прогресс продолжает считаться.</p>
  */
 public final class AchievementRegistry {
 
-    public static final int EXPECTED_SIZE = 48;
-    public static final int PER_CATEGORY = 12;
-    /** Сколько достижений нужно для мета-достижения «Легенда». */
-    public static final int LEGEND_GOAL = EXPECTED_SIZE - 1;
+    public static final int EXPECTED_SIZE = 72;
+    public static final int PER_CATEGORY = 18;
+
+    /**
+     * Рубеж «Легенды» — 47 из 48 достижений каталога 1.4.138. Он намеренно не
+     * растёт вместе с каталогом: игрок, который шёл к «Легенде» годами, не
+     * должен обнаружить, что цель уехала вперёд после обновления.
+     */
+    public static final int LEGEND_GOAL = 47;
+
+    /** «Легенда легенд» — все остальные достижения текущего каталога. */
+    public static final int MASTER_GOAL = EXPECTED_SIZE - 1;
 
     private static final Map<String, AchievementDef> REGISTRY = new LinkedHashMap<>();
 
@@ -77,6 +90,14 @@ public final class AchievementRegistry {
         register("za-porogom", PATH, NETHER_VISITS, 1, 1, 8);
         register("kraj-sveta", PATH, END_VISITS, 1, 2, 16);
 
+        /* --------------------------- путь: волна 1.4.149 --------------------------- */
+        register("postoyannyj-zhitel", PATH, JOINS, 500, 2, 16);
+        register("letopisec", PATH, PLAY_SECONDS, 720_000, 3, 24);
+        register("krugosvetka", PATH, DISTANCE_BLOCKS, 100_000, 3, 24);
+        register("hranitel-snov", PATH, BEDS_SLEPT, 250, 2, 12);
+        register("nizhnij-dom", PATH, NETHER_VISITS, 100, 2, 16);
+        register("gost-kraya", PATH, END_VISITS, 25, 2, 16);
+
         /* ---------------------------------- бой ----------------------------------- */
         register("ohotnik", COMBAT, MOBS_KILLED, 100, 1, 4);
         register("opytnyj-ohotnik", COMBAT, MOBS_KILLED, 1_000, 2, 16);
@@ -90,6 +111,14 @@ public final class AchievementRegistry {
         register("upornyj", COMBAT, DEATHS, 25, 1, 10);
         register("sniper", COMBAT, ARROWS_SHOT, 1_000, 2, 12);
         register("shchitonosec", COMBAT, SHIELD_BLOCKS, 100, 1, 8);
+
+        /* -------------------------- бой: волна 1.4.149 ----------------------------- */
+        register("istrebitel", COMBAT, MOBS_KILLED, 25_000, 4, 32);
+        register("palach-bossov", COMBAT, BOSSES_KILLED, 50, 5, 40);
+        register("sokrushitel", COMBAT, DAMAGE_DEALT, 1_000_000, 4, 32);
+        register("neprobivaemyj", COMBAT, DAMAGE_TAKEN, 500_000, 3, 20);
+        register("dozhd-strel", COMBAT, ARROWS_SHOT, 10_000, 3, 20);
+        register("zhivoj-shchit", COMBAT, SHIELD_BLOCKS, 1_000, 2, 16);
 
         /* -------------------------------- ремесло --------------------------------- */
         register("kamenschik", CRAFT, BLOCKS_MINED, 1_000, 1, 4);
@@ -105,6 +134,14 @@ public final class AchievementRegistry {
         register("alhimik", CRAFT, POTIONS_BREWED, 100, 2, 12);
         register("instrument", CRAFT, TOOLS_BROKEN, 100, 1, 8);
 
+        /* -------------------------- ремесло: волна 1.4.149 -------------------------- */
+        register("glubokij-rudnik", CRAFT, ORES_MINED, 5_000, 4, 28);
+        register("rudnaya-imperiya", CRAFT, ORES_MINED, 25_000, 5, 40);
+        register("rybackij-flot", CRAFT, FISH_CAUGHT, 1_000, 2, 16);
+        register("zaklinatel", CRAFT, ITEMS_ENCHANTED, 1_000, 3, 24);
+        register("velikij-alhimik", CRAFT, POTIONS_BREWED, 1_000, 3, 24);
+        register("manufaktura", CRAFT, ITEMS_CRAFTED, 25_000, 4, 32);
+
         /* ------------------------------- сообщество ------------------------------- */
         register("svoi-chelovek", SOCIAL, PASS_ACTIVE, 1, 1, 8);
         register("nadezhnyj-akkaunt", SOCIAL, REGISTERED, 1, 0, 4);
@@ -118,6 +155,14 @@ public final class AchievementRegistry {
         register("torgovec", SOCIAL, VILLAGER_TRADES, 100, 1, 8);
         register("gurman", SOCIAL, FOOD_EATEN, 500, 1, 8);
         register("dressirovshchik", SOCIAL, ANIMALS_TAMED, 10, 1, 8);
+
+        /* ------------------------ сообщество: волна 1.4.149 ------------------------- */
+        register("dusha-kompanii", SOCIAL, CHAT_MESSAGES, 10_000, 3, 24);
+        register("bankir-imperii", SOCIAL, BANK_BALANCE, 100_000, 4, 32);
+        register("torgovyj-korol", SOCIAL, VILLAGER_TRADES, 1_000, 2, 16);
+        register("gurman-bez-granic", SOCIAL, FOOD_EATEN, 5_000, 2, 12);
+        register("povelitel-zverej", SOCIAL, ANIMALS_TAMED, 50, 2, 16);
+        register("legenda-legend", SOCIAL, ACHIEVEMENTS, MASTER_GOAL, 10, 96, "legenda-legend");
     }
 
     private AchievementRegistry() {

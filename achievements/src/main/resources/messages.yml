@@ -1,4 +1,4 @@
-# CHRDK_Achievements — тексты 48 достижений: имена и описания (ach.<id>.name|desc),
+# CHRDK_Achievements — тексты 72 достижений: имена и описания (ach.<id>.name|desc),
 # разделы, витрина (со страницами), бейджи и админские команды.
 messages:
   player-only: "<red>Эта команда только для игроков.</red>"
@@ -58,6 +58,7 @@ messages:
   badges-disabled: "<red>Бейджи выключены в config.yml.</red>"
   badge.veteran: "<gold>⭐</gold><yellow>ВЕТЕРАН</yellow>"
   badge.legenda: "<gold>🏆</gold><yellow>ЛЕГЕНДА</yellow>"
+  badge.legenda-legend: "<gold>👑</gold><yellow>ЛЕГЕНДА ЛЕГЕНД</yellow>"
 
   # -------------------------------- список --------------------------------
   list-header: "<gold>══════ Достижения: %unlocked%/%total% ══════</gold>"
@@ -182,3 +183,63 @@ messages:
   ach.gurman.desc: "Съесть пятьсот единиц еды."
   ach.dressirovshchik.name: "Дрессировщик"
   ach.dressirovshchik.desc: "Приручить десять животных."
+
+  # ===================== волна 1.4.149: ещё 24 достижения =====================
+  # По шесть в каждом разделе. Метрики прежние — это дальние рубежи уже
+  # знакомых счётчиков, поэтому старый прогресс сразу виден в новой витрине.
+
+  # ----------------------------- путь: дальние рубежи -----------------------------
+  ach.postoyannyj-zhitel.name: "Постоянный житель"
+  ach.postoyannyj-zhitel.desc: "Заходить на сервер пятьсот раз — это уже не случайность."
+  ach.letopisec.name: "Летописец"
+  ach.letopisec.desc: "Провести в игре двести часов."
+  ach.krugosvetka.name: "Кругосветка"
+  ach.krugosvetka.desc: "Пройти сто тысяч блоков — два с половиной раза вокруг мира."
+  ach.hranitel-snov.name: "Хранитель снов"
+  ach.hranitel-snov.desc: "Переночевать в кровати двести пятьдесят раз."
+  ach.nizhnij-dom.name: "Нижний дом"
+  ach.nizhnij-dom.desc: "Сходить в Нижний мир сто раз — он уже почти родной."
+  ach.gost-kraya.name: "Гость Края"
+  ach.gost-kraya.desc: "Побывать в Краю двадцать пять раз."
+
+  # ------------------------------- бой: до предела -------------------------------
+  ach.istrebitel.name: "Истребитель"
+  ach.istrebitel.desc: "Убить двадцать пять тысяч мобов."
+  ach.palach-bossov.name: "Палач боссов"
+  ach.palach-bossov.desc: "Победить пятьдесят боссов."
+  ach.sokrushitel.name: "Сокрушитель"
+  ach.sokrushitel.desc: "Нанести миллион урона монстрам."
+  ach.neprobivaemyj.name: "Неубиваемый"
+  ach.neprobivaemyj.desc: "Получить пятьсот тысяч урона и всё равно встать."
+  ach.dozhd-strel.name: "Дождь стрел"
+  ach.dozhd-strel.desc: "Выпустить десять тысяч стрел."
+  ach.zhivoj-shchit.name: "Живой щит"
+  ach.zhivoj-shchit.desc: "Принять тысячу ударов на щит."
+
+  # ---------------------------- ремесло: промышленность ----------------------------
+  ach.glubokij-rudnik.name: "Глубинный рудник"
+  ach.glubokij-rudnik.desc: "Добыть пять тысяч алмазных руд и древних обломков."
+  ach.rudnaya-imperiya.name: "Рудная империя"
+  ach.rudnaya-imperiya.desc: "Добыть двадцать пять тысяч руд — целая промышленность."
+  ach.rybackij-flot.name: "Рыбацкий флот"
+  ach.rybackij-flot.desc: "Поймать тысячу рыб."
+  ach.zaklinatel.name: "Заклинатель"
+  ach.zaklinatel.desc: "Зачаровать тысячу предметов."
+  ach.velikij-alhimik.name: "Великий алхимик"
+  ach.velikij-alhimik.desc: "Сварить тысячу зелий."
+  ach.manufaktura.name: "Мануфактура"
+  ach.manufaktura.desc: "Скрафтить двадцать пять тысяч предметов."
+
+  # --------------------------- сообщество: свой круг ---------------------------
+  ach.dusha-kompanii.name: "Душа компании"
+  ach.dusha-kompanii.desc: "Написать десять тысяч сообщений в чат."
+  ach.bankir-imperii.name: "Банкир империи"
+  ach.bankir-imperii.desc: "Накопить сто тысяч алмазов на счёте банка."
+  ach.torgovyj-korol.name: "Торговый король"
+  ach.torgovyj-korol.desc: "Провести тысячу сделок с жителями."
+  ach.gurman-bez-granic.name: "Гурман без границ"
+  ach.gurman-bez-granic.desc: "Съесть пять тысяч единиц еды."
+  ach.povelitel-zverej.name: "Повелитель зверей"
+  ach.povelitel-zverej.desc: "Приручить пятьдесят животных."
+  ach.legenda-legend.name: "Легенда легенд"
+  ach.legenda-legend.desc: "Открыть все остальные достижения обновлённого каталога. Даёт бейдж «Легенда легенд»."

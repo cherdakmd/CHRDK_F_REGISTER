@@ -60,7 +60,7 @@ class TreasureLootTest {
     @Test
     void shippedTablesAreRichAndContainNamedFinds() {
         TreasureLoot.Table table = shipped();
-        assertTrue(table.size() >= 1240, "слишком мало записей: " + table.size());
+        assertTrue(table.size() >= 1390, "слишком мало записей: " + table.size());
         Set<String> names = new HashSet<>();
         for (TreasureTier tier : TreasureTier.values()) {
             for (TreasureLoot.LootEntry entry : table.global(tier)) {
@@ -142,10 +142,9 @@ class TreasureLootTest {
     }
 
     @Test
-    void oneHundredNewEntriesArrivedIn148() {
+    void entriesOf148StayInPlace() {
         TreasureLoot.Table table = shipped();
-        assertEquals(1247, table.size(), "1.4.148 добавила ровно сто записей к 1147");
-        // Новые записи есть и в общих пулах, и в биомных.
+        // Новые записи 1.4.148 есть и в общих пулах, и в биомных.
         assertTrue(table.global(TreasureTier.COMMON).stream()
                 .anyMatch(entry -> entry.material().equals("TORCHFLOWER")));
         assertTrue(table.global(TreasureTier.MYTHICAL).stream()
@@ -154,6 +153,32 @@ class TreasureLootTest {
                 .anyMatch(entry -> entry.material().equals("TURTLE_HELMET")));
         assertTrue(table.regional(TreasureRegion.NETHER, TreasureTier.EPIC).stream()
                 .anyMatch(entry -> entry.material().equals("DIAMOND_SWORD")));
+    }
+
+    @Test
+    void oneHundredFiftyThreeNewEntriesArrivedIn149() {
+        TreasureLoot.Table table = shipped();
+        assertEquals(1400, table.size(), "1.4.149 добавила 153 записи к 1247");
+        // Общие пулы получили бытовые мелочи, броню и морские трофеи.
+        assertTrue(table.global(TreasureTier.COMMON).stream()
+                .anyMatch(entry -> entry.material().equals("COOKIE")));
+        assertTrue(table.global(TreasureTier.LEGENDARY).stream()
+                .anyMatch(entry -> entry.material().equals("DIAMOND_HELMET")));
+        assertTrue(table.global(TreasureTier.MYTHICAL).stream()
+                .anyMatch(entry -> entry.material().equals("HEART_OF_THE_SEA")));
+        // В биомных пулах — по девять новых записей и четырнадцать новых имён.
+        assertEquals(1, table.regional(TreasureRegion.PLAINS, TreasureTier.COMMON).stream()
+                .filter(entry -> entry.material().equals("OAK_FENCE")).count());
+        assertEquals(32, table.regional(TreasureRegion.PLAINS, TreasureTier.COMMON).size(),
+                "пул равнин вырос с 29 до 32 записей");
+        assertTrue(table.regional(TreasureRegion.PLAINS, TreasureTier.RARE).stream()
+                .anyMatch(entry -> "Соломенная шляпа".equals(entry.name())));
+        assertTrue(table.regional(TreasureRegion.NETHER, TreasureTier.RARE).stream()
+                .anyMatch(entry -> entry.material().equals("LODESTONE")));
+        assertTrue(table.regional(TreasureRegion.END, TreasureTier.COMMON).stream()
+                .anyMatch(entry -> entry.material().equals("PHANTOM_MEMBRANE")));
+        assertTrue(table.regional(TreasureRegion.OCEAN, TreasureTier.RARE).stream()
+                .anyMatch(entry -> "Компас капитана".equals(entry.name())));
     }
 
     @Test
@@ -167,7 +192,7 @@ class TreasureLootTest {
         assertEquals(1, old.version(), "файл без version считается старым");
 
         TreasureLoot.Table merged = old.withMissing(shipped());
-        assertTrue(merged.size() >= 1240, "старый файл не пополнился: " + merged.size());
+        assertTrue(merged.size() >= 1390, "старый файл не пополнился: " + merged.size());
 
         List<TreasureLoot.LootEntry> coal = merged.global(TreasureTier.COMMON).stream()
                 .filter(entry -> entry.material().equals("COAL"))

@@ -444,7 +444,7 @@ server-menu:
     # ---------------------------- прогресс -------------------------------
     - {"category": "progress", "icon": "FIREWORK_STAR", "name": "<gold><bold>Боевой пропуск</bold></gold>", "lore": "<gray>Задания сезона и получение наград</gray>", "command": "battlepass", "plugin": "CHRDK_BattlePass", "permission": "chrdkbp.use"}
     - {"category": "progress", "icon": "NETHER_STAR", "name": "<gold><bold>Звания</bold></gold>", "lore": "<gray>Прогресс по наигранному времени</gray>", "command": "ranks", "plugin": "CHRDK_Ranks", "permission": "chrdkranks.use"}
-    - {"category": "progress", "icon": "DRAGON_EGG", "name": "<gold><bold>Достижения</bold></gold>", "lore": "<gray>48 целей, бейджи и награды</gray>\n<gray>Витрина: /achievements</gray>", "command": "achievements", "plugin": "CHRDK_Achievements", "permission": "chrdkachievements.use"}
+    - {"category": "progress", "icon": "DRAGON_EGG", "name": "<gold><bold>Достижения</bold></gold>", "lore": "<gray>72 цели, бейджи и награды</gray>\n<gray>Витрина: /achievements</gray>", "command": "achievements", "plugin": "CHRDK_Achievements", "permission": "chrdkachievements.use"}
     - {"category": "progress", "icon": "AMETHYST_CLUSTER", "name": "<gold><bold>Навыки</bold></gold>", "lore": "<gray>10 навыков, 60 перков и уровни</gray>", "command": "skills", "plugin": "CHRDK_Skills", "permission": "chrdkskills.use"}
     - {"category": "progress", "icon": "CHEST", "name": "<gold><bold>Клады</bold></gold>", "lore": "<gray>196 находок: 124 классических и 72 из арсенала</gray>\n<gray>Копайте — клад найдёт вас сам</gray>", "command": "treasures", "plugin": "CHRDK_Treasures", "permission": "chrdktreasures.use"}
     - {"category": "progress", "icon": "BEACON", "name": "<gold><bold>Общие цели</bold></gold>", "lore": "<gray>Вклад в цели всего сообщества</gray>", "command": "goals", "plugin": "CHRDK_CommonGoals", "permission": "chrdkgoals.use"}
@@ -796,7 +796,7 @@ auto-messages:
     - {"text": "<gray>Хотите поддержать проект? <white>/pass donate</white> откроет ссылку на оплату и продление.</gray>"}
     # --- прогресс ---
     - {"text": "<gray>Задания сезона и награды: <white>/battlepass</white>. Прогресс не сгорает при перезапуске.</gray>", "plugin": "CHRDK_BattlePass", "permission": "chrdkbp.use"}
-    - {"text": "<gray>48 достижений ждут своего героя: <white>/achievements</white>. Бейджи открываются вместе с целями.</gray>", "plugin": "CHRDK_Achievements", "permission": "chrdkachievements.use"}
+    - {"text": "<gray>72 достижения ждут своего героя: <white>/achievements</white>. Бейджи открываются вместе с целями.</gray>", "plugin": "CHRDK_Achievements", "permission": "chrdkachievements.use"}
     - {"text": "<gray>Десять навыков и 60 перков: <white>/skills</white>. Уровни растут от обычной игры — копайте, бейте, варите.</gray>", "plugin": "CHRDK_Skills", "permission": "chrdkskills.use"}
     - {"text": "<gray>Клад можно найти в любом камне: <white>/treasures</white>. Способности по ПКМ, сеты и проклятия — в лоре находок.</gray>", "plugin": "CHRDK_Treasures", "permission": "chrdktreasures.use"}
     - {"text": "<gray>Артефакты собираются в коллекцию: <white>/artifacts collection</white>. За полноту каталога — дни проходки и алмазы.</gray>", "plugin": "CHRDK_Artifacts", "permission": "chrdkartifacts.use"}
