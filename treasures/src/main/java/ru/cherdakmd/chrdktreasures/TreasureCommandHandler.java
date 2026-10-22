@@ -172,23 +172,21 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
         if (filter == null || filter.isBlank() || filter.equalsIgnoreCase("all")) {
             plugin.messages().send(player, "list-header");
             for (TreasureRegion region : TreasureRegion.values()) {
+                List<TreasureItemDef> items = TreasureRegistry.region(region);
                 int found = 0;
-                for (TreasureTier tier : TreasureTier.values()) {
-                    if (!tier.regional()) {
-                        continue;
-                    }
-                    TreasureItemDef def = TreasureCatalog.forRegionTier(region, tier);
-                    if (def != null && service.hasItem(player, def.id())) {
+                for (TreasureItemDef def : items) {
+                    if (service.hasItem(player, def.id())) {
                         found++;
                     }
                 }
                 plugin.messages().send(player, "list-region-line",
                         "region", Messages.trusted(plugin.messages().raw("region." + region.id())),
                         "found", String.valueOf(found),
-                        "total", String.valueOf(TreasureCatalog.PER_REGION));
+                        "total", String.valueOf(items.size()));
             }
+            List<TreasureItemDef> mythical = TreasureRegistry.mythical();
             int mythic = 0;
-            for (TreasureItemDef def : TreasureCatalog.mythical()) {
+            for (TreasureItemDef def : mythical) {
                 if (service.hasItem(player, def.id())) {
                     mythic++;
                 }
@@ -196,7 +194,7 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
             plugin.messages().send(player, "list-region-line",
                     "region", Messages.trusted(plugin.messages().raw("tier.mythical")),
                     "found", String.valueOf(mythic),
-                    "total", String.valueOf(TreasureCatalog.MYTHICAL_ITEMS));
+                    "total", String.valueOf(mythical.size()));
             plugin.messages().send(player, "list-footer");
             return true;
         }
@@ -204,7 +202,7 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
         if (tier != null) {
             plugin.messages().send(player, "list-header");
             int shown = 0;
-            for (TreasureItemDef def : TreasureCatalog.byTier(tier)) {
+            for (TreasureItemDef def : TreasureRegistry.byTier(tier)) {
                 itemLine(player, def);
                 shown++;
             }
@@ -217,14 +215,8 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
         TreasureRegion region = TreasureRegion.byId(filter);
         if (region != null) {
             plugin.messages().send(player, "list-header");
-            for (TreasureTier itemTier : TreasureTier.values()) {
-                if (!itemTier.regional()) {
-                    continue;
-                }
-                TreasureItemDef def = TreasureCatalog.forRegionTier(region, itemTier);
-                if (def != null) {
-                    itemLine(player, def);
-                }
+            for (TreasureItemDef def : TreasureRegistry.region(region)) {
+                itemLine(player, def);
             }
             plugin.messages().send(player, "list-footer");
             return true;
@@ -265,7 +257,7 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
                     "name", entry.name(),
                     "found", String.valueOf(entry.found()),
                     "collection", String.valueOf(entry.items()),
-                    "total", String.valueOf(TreasureCatalog.size()));
+                    "total", String.valueOf(TreasureRegistry.size()));
         }
         return true;
     }
@@ -433,7 +425,7 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
         }
         plugin.messages().send(sender, "stats-collection",
                 "found", String.valueOf(service.foundItems(target)),
-                "total", String.valueOf(TreasureCatalog.size()));
+                "total", String.valueOf(TreasureRegistry.size()));
         plugin.messages().send(sender, "stats-unlocked",
                 "unlocked", String.valueOf(service.unlockedTiers(target)),
                 "all", String.valueOf(TreasureTier.values().length));
@@ -542,7 +534,7 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
                 plugin.messages().send(sender, "admin-player-not-found");
                 return true;
             }
-            TreasureItemDef def = TreasureCatalog.find(args[2]);
+            TreasureItemDef def = TreasureRegistry.find(args[2]);
             if (def == null) {
                 plugin.messages().send(sender, "admin-unknown-item", "id", args[2]);
                 return true;
@@ -616,7 +608,7 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
         if (args.length == 1 && args[0].equalsIgnoreCase("info")) {
             int abilities = 0;
             int curses = 0;
-            for (TreasureItemDef def : TreasureCatalog.all()) {
+            for (TreasureItemDef def : TreasureRegistry.all()) {
                 if (def.ability() != null) {
                     abilities++;
                 }
@@ -625,7 +617,7 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
                 }
             }
             plugin.messages().send(sender, "admin-info",
-                    "items", String.valueOf(TreasureCatalog.size()),
+                    "items", String.valueOf(TreasureRegistry.size()),
                     "regions", String.valueOf(TreasureRegion.values().length),
                     "tiers", String.valueOf(TreasureTier.values().length),
                     "blocks", String.valueOf(plugin.config().blockCount()),
@@ -670,7 +662,7 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
             }
             if (args.length == 3 && args[0].equalsIgnoreCase("give")) {
                 List<String> ids = new ArrayList<>();
-                for (TreasureItemDef def : TreasureCatalog.all()) {
+                for (TreasureItemDef def : TreasureRegistry.all()) {
                     ids.add(def.id());
                 }
                 return filter(ids, args[2]);

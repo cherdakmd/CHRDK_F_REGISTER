@@ -77,4 +77,51 @@ class ServerMenuLayoutTest {
         assertEquals(new HashSet<>(layout.slots()).size(), layout.slots().size(),
                 "слоты не должны совпадать");
     }
+
+    @Test
+    void categoryPageKeepsBackButtonAndFitsTwelveItems() {
+        List<Integer> requested = new ArrayList<>();
+        for (int i = 0; i < 12; i++) requested.add(-1);
+        requested.add(49); // кнопка «Назад» с явным слотом
+        ServerMenuService.MenuLayout layout = ServerMenuService.layoutSlots(requested);
+        assertEquals(54, layout.size(), "страница категории — полный сундук");
+        assertEquals(49, layout.slots().get(12));
+        assertEquals(13, new HashSet<>(layout.slots()).size(), "слоты уникальны: " + layout.slots());
+        assertFalse(layout.slots().contains(-1));
+    }
+
+    @Test
+    void groupedMenuSplitsItemsByCategory() {
+        var entries = List.of(
+                new ServerMenuSettings.Entry(-1, Material.PAPER, "a", "", "pass", "", "", "account"),
+                new ServerMenuSettings.Entry(-1, Material.PAPER, "b", "", "shop", "", "", "economy"),
+                new ServerMenuSettings.Entry(-1, Material.PAPER, "c", "", "bal", "", "", ""));
+        var settings = new ServerMenuSettings(true, "t", "t", 49, Material.ARROW, "back",
+                List.of(new ServerMenuSettings.Category("account", Material.PAPER, "A", "", 10, "", ""),
+                        new ServerMenuSettings.Category("economy", Material.DIAMOND, "E", "", 11, "", "")),
+                entries);
+        assertTrue(settings.grouped());
+        assertEquals(1, settings.entriesOf("account").size());
+        assertEquals("b", settings.entriesOf("economy").getFirst().name());
+        assertEquals(1, settings.looseEntries().size());
+        assertEquals("c", settings.looseEntries().getFirst().name());
+    }
+
+    @Test
+    void flatConfigStaysSinglePage() {
+        var settings = new ServerMenuSettings(true, "t", "t", 49, Material.ARROW, "back", List.of(),
+                List.of(new ServerMenuSettings.Entry(-1, Material.PAPER, "a", "", "pass")));
+        assertFalse(settings.grouped(), "без категорий меню остаётся плоским");
+    }
+
+    @Test
+    void categoryHidesWhenPluginOrPermissionMissing() {
+        var category = new ServerMenuSettings.Category("gear", Material.ANVIL, "Снаряжение", "",
+                14, "CHRDK_Enchants", "chrdkenchants.use");
+        assertFalse(category.available(plugin -> false, permission -> true));
+        assertFalse(category.available(plugin -> true, permission -> false));
+        assertTrue(category.available(plugin -> true, permission -> true));
+        var open = new ServerMenuSettings.Category("social", Material.BELL, "Общество", "", 15, "", "");
+        assertTrue(open.available(plugin -> false, permission -> false), "без условий категория видна");
+    }
 }

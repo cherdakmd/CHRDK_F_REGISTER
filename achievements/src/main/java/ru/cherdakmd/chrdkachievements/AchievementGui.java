@@ -22,7 +22,8 @@ import java.util.UUID;
 /**
  * Витрина достижений (`/achievements`).
  *
- * <p>45 слотов под достижения (24 записи помещаются целиком), нижний ряд —
+ * <p>45 слотов под достижения на страницу (в каталоге 48 записей, поэтому
+ * «Все» листается стрелками), нижний ряд —
  * вкладки разделов, сводка прогресса и закрытие. Открытые достижения
  * показываются материалом своего раздела, закрытые — серым красителем с
  * прогресс-баром, чтобы игрок видел, сколько осталось.</p>
@@ -43,7 +44,11 @@ public final class AchievementGui implements Listener {
     private static final int SLOT_SOCIAL = 48;
     private static final int SLOT_ALL = 49;
     private static final int SLOT_PROGRESS = 50;
+    private static final int SLOT_PREV = 51;
+    private static final int SLOT_NEXT = 52;
     private static final int SLOT_CLOSE = 53;
+    /** Сколько достижений помещается на одну страницу. */
+    private static final int PAGE_SIZE = SLOTS;
 
     private final AchievementsPlugin plugin;
     private final AchievementService service;
@@ -54,6 +59,15 @@ public final class AchievementGui implements Listener {
     }
 
     public void open(Player player, AchievementDef.Category category) {
+        open(player, category, 1);
+    }
+
+    /**
+     * Открывает раздел на нужной странице.
+     *
+     * @param page номер страницы с 1; вне диапазона приводится к ближайшей
+     */
+    public void open(Player player, AchievementDef.Category category, int page) {
         if (player == null) {
             return;
         }
@@ -61,16 +75,19 @@ public final class AchievementGui implements Listener {
             plugin.messages().send(player, "achievements-disabled");
             return;
         }
-        Holder holder = new Holder(player.getUniqueId(), category);
+        List<AchievementDef> defs = service.byCategory(category);
+        int pages = Math.max(1, (defs.size() + PAGE_SIZE - 1) / PAGE_SIZE);
+        int current = Math.clamp(page, 1, pages);
+        Holder holder = new Holder(player.getUniqueId(), category, current);
         String categoryName = category == null
                 ? plugin.messages().raw("category.all")
                 : plugin.messages().raw("category." + category.id());
         holder.inventory = Bukkit.createInventory(holder, 54,
                 plugin.messages().get("achievements-title",
                         "category", Messages.trusted(categoryName)));
-        List<AchievementDef> defs = service.byCategory(category);
-        for (int index = 0; index < Math.min(SLOTS, defs.size()); index++) {
-            holder.inventory.setItem(index, icon(player, defs.get(index)));
+        int from = (current - 1) * PAGE_SIZE;
+        for (int index = from; index < Math.min(defs.size(), from + PAGE_SIZE); index++) {
+            holder.inventory.setItem(index - from, icon(player, defs.get(index)));
         }
         holder.inventory.setItem(SLOT_PATH, tab(Material.GRASS_BLOCK, "tab-path",
                 category == AchievementDef.Category.PATH));
@@ -82,6 +99,12 @@ public final class AchievementGui implements Listener {
                 category == AchievementDef.Category.SOCIAL));
         holder.inventory.setItem(SLOT_ALL, tab(Material.COMPASS, "tab-all", category == null));
         holder.inventory.setItem(SLOT_PROGRESS, progressIcon(player));
+        if (pages > 1) {
+            holder.inventory.setItem(SLOT_PREV, pageButton(Material.ARROW, "page-prev",
+                    current <= 1 ? pages : current - 1, current, pages));
+            holder.inventory.setItem(SLOT_NEXT, pageButton(Material.ARROW, "page-next",
+                    current >= pages ? 1 : current + 1, current, pages));
+        }
         holder.inventory.setItem(SLOT_CLOSE, button(Material.BARRIER, "gui-close"));
         player.openInventory(holder.inventory);
     }
@@ -156,6 +179,17 @@ public final class AchievementGui implements Listener {
         return item;
     }
 
+    private ItemStack pageButton(Material material, String key, int target, int page, int pages) {
+        ItemStack item = new ItemStack(material);
+        ItemMeta meta = item.getItemMeta();
+        meta.displayName(plugin.messages().get(key, "page", String.valueOf(target),
+                "current", String.valueOf(page), "pages", String.valueOf(pages)));
+        meta.lore(List.of(plugin.messages().get("page-info",
+                "current", String.valueOf(page), "pages", String.valueOf(pages))));
+        item.setItemMeta(meta);
+        return item;
+    }
+
     private ItemStack tab(Material material, String key, boolean active) {
         ItemStack item = new ItemStack(active ? material : Material.GRAY_STAINED_GLASS_PANE);
         ItemMeta meta = item.getItemMeta();
@@ -200,13 +234,16 @@ public final class AchievementGui implements Listener {
             case SLOT_COMBAT -> open(player, AchievementDef.Category.COMBAT);
             case SLOT_CRAFT -> open(player, AchievementDef.Category.CRAFT);
             case SLOT_SOCIAL -> open(player, AchievementDef.Category.SOCIAL);
-            case SLOT_ALL -> open(player, null);
+            case SLOT_ALL -> open(player, null, holder.page);
+            case SLOT_PREV -> open(player, holder.category, holder.page - 1);
+            case SLOT_NEXT -> open(player, holder.category, holder.page + 1);
             case SLOT_CLOSE -> player.closeInventory();
             default -> {
                 if (slot < SLOTS) {
                     List<AchievementDef> defs = service.byCategory(holder.category);
-                    if (slot < defs.size()) {
-                        wearBadge(player, defs.get(slot), holder.category);
+                    int index = (holder.page - 1) * PAGE_SIZE + slot;
+                    if (index >= 0 && index < defs.size()) {
+                        wearBadge(player, defs.get(index), holder.category, holder.page);
                     }
                 }
             }
@@ -214,7 +251,7 @@ public final class AchievementGui implements Listener {
     }
 
     /** Клик по открытому достижению с бейджем надевает или снимает его. */
-    private void wearBadge(Player player, AchievementDef def, AchievementDef.Category category) {
+    private void wearBadge(Player player, AchievementDef def, AchievementDef.Category category, int page) {
         if (def.badge() == null || !plugin.config().badges()) {
             return;
         }
@@ -229,7 +266,7 @@ public final class AchievementGui implements Listener {
         }
         plugin.messages().send(player, wearing ? "badge-removed" : "badge-worn",
                 "name", Messages.trusted(nameOf(def)));
-        open(player, category);
+        open(player, category, page);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -243,11 +280,13 @@ public final class AchievementGui implements Listener {
 
         private final UUID owner;
         private final AchievementDef.Category category;
+        private final int page;
         private Inventory inventory;
 
-        private Holder(UUID owner, AchievementDef.Category category) {
+        private Holder(UUID owner, AchievementDef.Category category, int page) {
             this.owner = owner;
             this.category = category;
+            this.page = page;
         }
 
         @Override

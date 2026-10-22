@@ -17,13 +17,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class AchievementRegistryTest {
 
     @Test
-    void catalogueHasTwentyFourSixPerCategory() {
+    void catalogueHasFortyEightTwelvePerCategory() {
         assertEquals(AchievementRegistry.EXPECTED_SIZE, AchievementRegistry.size());
-        assertEquals(24, AchievementRegistry.size());
+        assertEquals(48, AchievementRegistry.size());
         for (AchievementDef.Category category : AchievementDef.Category.values()) {
             assertEquals(AchievementRegistry.PER_CATEGORY,
                     AchievementRegistry.byCategory(category).size(),
-                    "в разделе " + category.id() + " должно быть ровно 6 достижений");
+                    "в разделе " + category.id() + " должно быть ровно 12 достижений");
         }
     }
 

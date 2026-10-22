@@ -33,18 +33,21 @@ public final class PlaceholderIntegration extends PlaceholderExpansion {
     private final AccessManager accessManager;
     private final ChatService chatService;
     private final RegistrationStore store;
+    private final BankStore bank;
     private final String version;
 
     public PlaceholderIntegration(
             String pluginVersion,
             AccessManager accessManager,
             ChatService chatService,
-            RegistrationStore store
+            RegistrationStore store,
+            BankStore bank
     ) {
         this.version = pluginVersion;
         this.accessManager = accessManager;
         this.chatService = chatService;
         this.store = store;
+        this.bank = bank;
     }
 
     @Override
@@ -108,6 +111,16 @@ public final class PlaceholderIntegration extends PlaceholderExpansion {
             case "registered" -> PlaceholderValues.yesNo(account != null && account.isRegistered());
             case "2fa" -> PlaceholderValues.yesNo(account != null && account.isTotpEnabled());
             case "muted" -> PlaceholderValues.yesNo(PlaceholderValues.isMuted(account, now));
+            case "balance" -> bank == null ? "0" : BankService.format(bank.balanceOf(name));
+            case "balance_raw" -> Long.toString(bank == null ? 0L : bank.balanceOf(name));
+            case "bank_sent" -> {
+                java.util.UUID id = bank == null ? null : bank.idByName(name);
+                yield Long.toString(id == null ? 0L : bank.sentOf(id));
+            }
+            case "bank_received" -> {
+                java.util.UUID id = bank == null ? null : bank.idByName(name);
+                yield Long.toString(id == null ? 0L : bank.receivedOf(id));
+            }
             default -> null; // неизвестный плейсхолдер — PlaceholderAPI оставит его как есть
         };
     }

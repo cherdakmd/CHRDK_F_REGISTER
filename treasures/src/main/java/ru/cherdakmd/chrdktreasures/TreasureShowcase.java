@@ -53,7 +53,7 @@ public final class TreasureShowcase {
                     "tier", Messages.trusted(plugin.messages().raw("tier." + tier.id())),
                     "streak", String.valueOf(Math.max(1, found.streak())),
                     "found", String.valueOf(plugin.treasures().foundItems(player)),
-                    "total", String.valueOf(TreasureCatalog.size())));
+                    "total", String.valueOf(TreasureRegistry.size())));
         }
         if (announce && effects.titles() && atLeast(tier, effects.titleMinTier())) {
             Component subtitle = found.named()

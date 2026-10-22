@@ -1044,6 +1044,14 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 showPluginStatus(sender);
                 return true;
             }
+            case "bank", "bal" -> {
+                handleAdminBank(sender, args);
+                return true;
+            }
+            case "automessages", "automessage", "am" -> {
+                handleAutoMessages(sender, args, label);
+                return true;
+            }
             case "reload" -> {
                 plugin.reloadPluginConfig();
                 java.util.List<String> problems = plugin.reloadMessages();
@@ -1398,6 +1406,178 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
     }
     }
 
+    /**
+     * {@code /pass automessages [list|next|test <номер>]} — проверка автосообщений.
+     *
+     * <p>{@code list} показывает настроенные тексты и их условия, {@code next}
+     * немедленно отправляет следующее сообщение подходящим игрокам, {@code test}
+     * присылает выбранный текст только администратору — удобно проверять
+     * разметку, не дожидаясь интервала.</p>
+     */
+    private void handleAutoMessages(CommandSender sender, String[] args, String label) {
+        ChatService chat = plugin.chatService();
+        if (chat == null) {
+            messages.send(sender, "automessages.disabled");
+            return;
+        }
+        String action = args.length >= 2 ? args[1].toLowerCase(Locale.ROOT) : "list";
+        switch (action) {
+            case "list" -> {
+                List<AutoMessage> entries = chat.autoMessageEntries();
+                messages.send(sender, "automessages.list-header",
+                        "count", String.valueOf(entries.size()),
+                        "seconds", String.valueOf(accessManager.config().chat().autoMessagesIntervalSeconds()));
+                for (int index = 0; index < entries.size(); index++) {
+                    AutoMessage entry = entries.get(index);
+                    String condition = entry.condition().equals("always")
+                            ? messages.raw("automessages.condition-always") : entry.condition();
+                    messages.send(sender, "automessages.list-line",
+                            "number", String.valueOf(index + 1),
+                            "condition", condition,
+                            "target", targetOf(entry));
+                }
+                messages.send(sender, "automessages.list-footer", "label", label);
+            }
+            case "next", "send" -> {
+                int delivered = chat.broadcastAutoMessageNow();
+                if (delivered <= 0) {
+                    messages.send(sender, "automessages.sent-none");
+                } else {
+                    messages.send(sender, "automessages.sent", "count", String.valueOf(delivered));
+                }
+            }
+            case "test" -> {
+                if (!(sender instanceof Player player)) {
+                    messages.send(sender, "common.player-only");
+                    return;
+                }
+                if (args.length < 3) {
+                    messages.send(sender, "automessages.usage", "label", label);
+                    return;
+                }
+                int index;
+                try {
+                    index = Integer.parseInt(args[2]);
+                } catch (NumberFormatException exception) {
+                    messages.send(sender, "automessages.usage", "label", label);
+                    return;
+                }
+                if (chat.previewAutoMessage(player, index)) {
+                    messages.send(sender, "automessages.test-sent", "number", String.valueOf(index));
+                } else {
+                    messages.send(sender, "automessages.test-unknown",
+                            "number", String.valueOf(index),
+                            "count", String.valueOf(chat.autoMessageCount()));
+                }
+            }
+            case "help", "?" -> messages.send(sender, "automessages.usage", "label", label);
+            default -> messages.send(sender, "automessages.usage", "label", label);
+        }
+    }
+
+    /** Кому адресовано сообщение — для {@code /pass automessages list}. */
+    private String targetOf(AutoMessage entry) {
+        List<String> parts = new java.util.ArrayList<>(2);
+        if (!entry.plugin().isBlank()) {
+            parts.add(entry.plugin());
+        }
+        if (!entry.permission().isBlank()) {
+            parts.add(entry.permission());
+        }
+        if (entry.minOnline() > 0) {
+            parts.add("online>=" + entry.minOnline());
+        }
+        return parts.isEmpty() ? messages.plain("automessages.target-all") : String.join(", ", parts);
+    }
+
+    /**
+     * {@code /pass bank <give|take|set|reset|info> <ник> [сумма]} — админское
+     * управление счетами. Каждая операция пишется в аудит: счёт — это собственность
+     * игрока, и любое его изменение должно быть объяснимо.
+     */
+    private void handleAdminBank(CommandSender sender, String[] args) {
+        BankService bank = plugin.bank();
+        if (bank == null || !bank.enabled()) {
+            messages.send(sender, "economy.disabled");
+            return;
+        }
+        if (args.length < 2) {
+            messages.send(sender, "economy.admin-usage", "label", "pass");
+            return;
+        }
+        String action = args[1].toLowerCase(Locale.ROOT);
+        if (action.equals("info") || action.equals("top")) {
+            var entries = bank.store().top(20);
+            messages.send(sender, "economy.admin-summary",
+                    "accounts", String.valueOf(bank.store().accountCount()),
+                    "total", BankService.format(bank.store().total()));
+            for (BankStore.Entry entry : entries) {
+                messages.send(sender, "economy.admin-summary-line",
+                        "player", entry.name(), "balance", BankService.format(entry.balance()));
+            }
+            return;
+        }
+        if (args.length < 3) {
+            messages.send(sender, "economy.admin-usage", "label", "pass");
+            return;
+        }
+        String targetName = args[2].trim();
+        if (!AccessManager.isValidMinecraftName(targetName)) {
+            messages.send(sender, "error.invalid-nickname", "target_name", targetName);
+            return;
+        }
+        Player online = org.bukkit.Bukkit.getPlayerExact(targetName);
+        java.util.UUID targetId = online != null ? online.getUniqueId() : bank.store().idByName(targetName);
+        if (targetId == null) {
+            messages.send(sender, "economy.unknown-player", "player", targetName);
+            return;
+        }
+        String display = online != null ? online.getName() : targetName;
+        if (action.equals("reset") || action.equals("zero")) {
+            bank.store().setBalance(targetId, display, 0L);
+            auditBank(sender, targetName, "reset", 0L, 0L);
+            messages.send(sender, "economy.admin-done", "player", display,
+                    "balance", BankService.format(0L));
+            return;
+        }
+        if (args.length < 4) {
+            messages.send(sender, "economy.admin-usage", "label", "pass");
+            return;
+        }
+        long amount = BankService.parseAmount(args[3]);
+        if (amount <= 0L) {
+            messages.send(sender, "economy.invalid-amount");
+            return;
+        }
+        long before = bank.store().balance(targetId);
+        long after;
+        switch (action) {
+            case "give", "add" -> after = bank.store().deposit(targetId, display, amount) < 0L
+                    ? before : bank.store().balance(targetId);
+            case "take", "remove" -> {
+                boolean taken = bank.store().withdraw(targetId, Math.min(amount, before));
+                after = taken ? bank.store().balance(targetId) : before;
+            }
+            case "set" -> after = bank.store().setBalance(targetId, display, amount);
+            default -> {
+                messages.send(sender, "economy.admin-usage", "label", "pass");
+                return;
+            }
+        }
+        auditBank(sender, targetName, action, amount, after - before);
+        messages.send(sender, "economy.admin-done", "player", display,
+                "balance", BankService.format(after));
+    }
+
+    private void auditBank(CommandSender sender, String target, String action, long amount, long delta) {
+        try {
+            accessManager.audit().log("BANK_ADMIN", sender.getName(), target, null,
+                    java.util.Map.of("action", action, "amount", amount, "delta", delta));
+        } catch (RuntimeException ignored) {
+            // аудит — вспомогательный канал, операция уже выполнена
+        }
+    }
+
     private void showPluginStatus(CommandSender sender) {
         long now = System.currentTimeMillis();
         RegistrationStore store = accessManager.store();
@@ -1435,7 +1615,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 "value", cfg.chat().autoMessagesEnabled()
                         ? Messages.trusted(messages.raw("status.auto-messages-value",
                                 "seconds", cfg.chat().autoMessagesIntervalSeconds(),
-                                "count", cfg.chat().autoMessages().size()))
+                                "count", cfg.chat().autoMessageEntries().size()))
                         : Messages.trusted(messages.raw("common.disabled-many")));
     }
 

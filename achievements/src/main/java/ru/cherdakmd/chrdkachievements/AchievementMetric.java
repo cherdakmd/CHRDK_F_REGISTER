@@ -39,7 +39,46 @@ public enum AchievementMetric {
     /** Привязана 2FA (0/1). */
     TWO_FACTOR("two-factor"),
     /** Служебная: сколько достижений уже открыто (для мета-достижения). */
-    ACHIEVEMENTS("achievements");
+    ACHIEVEMENTS("achievements"),
+
+    /* ------------------- волна 28: 24 новых достижения (1.4.138) ------------------- */
+
+    /** Поставленные блоки (строительство). */
+    BLOCKS_PLACED("blocks-placed"),
+    /** Зачарованные предметы (стол или наковальня). */
+    ITEMS_ENCHANTED("items-enchanted"),
+    /** Сваренные зелья (завершённая варка). */
+    POTIONS_BREWED("potions-brewed"),
+    /** Удачные сделки с жителями. */
+    VILLAGER_TRADES("villager-trades"),
+    /** Съеденная еда. */
+    FOOD_EATEN("food-eaten"),
+    /** Прирученные животные. */
+    ANIMALS_TAMED("animals-tamed"),
+    /** Ночи, проведённые в кровати (успешный сон). */
+    BEDS_SLEPT("beds-slept"),
+    /** Переходы в Нижний мир. */
+    NETHER_VISITS("nether-visits"),
+    /** Переходы в Край. */
+    END_VISITS("end-visits"),
+    /** Выпущенные стрелы и болты. */
+    ARROWS_SHOT("arrows-shot"),
+    /** Нанесённый урон (по мобам, без PvP). */
+    DAMAGE_DEALT("damage-dealt"),
+    /** Полученный урон (любой источник). */
+    DAMAGE_TAKEN("damage-taken"),
+    /** Смерти: «упорный» возвращается, а не бросает сервер. */
+    DEATHS("deaths"),
+    /** Удары, принятые на щит. */
+    SHIELD_BLOCKS("shield-blocks"),
+    /** Сломанные от износа инструменты. */
+    TOOLS_BROKEN("tools-broken"),
+    /** Пиковый баланс банка (максимум, а не сумма). */
+    BANK_BALANCE("bank-balance"),
+    /** Сумма переводов, отправленных игроком. */
+    BANK_SENT("bank-sent"),
+    /** Сумма переводов, полученных игроком. */
+    BANK_RECEIVED("bank-received");
 
     private final String id;
 

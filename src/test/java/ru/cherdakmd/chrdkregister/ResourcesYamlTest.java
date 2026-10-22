@@ -20,9 +20,9 @@ import static org.junit.jupiter.api.Assertions.fail;
 class ResourcesYamlTest {
 
     private static final List<String> MODULES = List.of(
-            "", "artifacts", "battlepass", "claims", "common-goals", "cosmetics",
-            "daily-rewards", "diamond-shop", "enchants", "queue", "ranks",
-            "referrals", "streams", "teleports", "tier-forge");
+            "", "achievements", "artifacts", "auction", "battlepass", "claims", "common-goals",
+            "cosmetics", "daily-rewards", "diamond-shop", "enchants", "lottery", "queue",
+            "ranks", "referrals", "skills", "streams", "teleports", "tier-forge", "treasures");
 
     @Test
     void allResourceYamlsParse() throws Exception {

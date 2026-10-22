@@ -67,6 +67,20 @@ public final class AchievementService {
     }
 
     /**
+     * Поднимает счётчик до значения (максимум), а не прибавляет: нужно для
+     * «пиковых» метрик — например, максимального баланса банка.
+     *
+     * @return сколько достижений открылось
+     */
+    public int raise(Player player, AchievementMetric metric, long value) {
+        if (player == null || metric == null || value <= 0L || !enabled()) {
+            return 0;
+        }
+        store.raise(key(player), metric, value);
+        return check(player);
+    }
+
+    /**
      * Проверяет все достижения игрока и выдаёт награды за новые.
      *
      * <p>Мета-достижение зависит от числа уже открытых, поэтому после каждой

@@ -18,14 +18,33 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
     private final ExternalHooks hooks;
     private final ShopService shop;
     private final NameTags nameTags;
+    private final BankStore bank;
 
     ChrdkRegisterApiImpl(JavaPlugin plugin, AccessManager accessManager, ExternalHooks hooks,
-                         ShopService shop, NameTags nameTags) {
+                         ShopService shop, NameTags nameTags, BankStore bank) {
         this.plugin = plugin;
         this.accessManager = accessManager;
         this.hooks = hooks;
         this.shop = shop;
         this.nameTags = nameTags;
+        this.bank = bank;
+    }
+
+    @Override
+    public long bankBalance(String playerName) {
+        return bank == null ? 0L : bank.balanceOf(playerName);
+    }
+
+    @Override
+    public long bankSent(String playerName) {
+        java.util.UUID id = bank == null ? null : bank.idByName(playerName);
+        return id == null ? 0L : bank.sentOf(id);
+    }
+
+    @Override
+    public long bankReceived(String playerName) {
+        java.util.UUID id = bank == null ? null : bank.idByName(playerName);
+        return id == null ? 0L : bank.receivedOf(id);
     }
 
     @Override

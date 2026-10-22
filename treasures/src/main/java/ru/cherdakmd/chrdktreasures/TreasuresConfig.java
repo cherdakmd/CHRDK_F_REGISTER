@@ -63,6 +63,7 @@ public final class TreasuresConfig {
     private final boolean abilitiesEnabled;
     private final boolean cursesEnabled;
     private final boolean setsEnabled;
+    private final double arsenalShare;
 
     private TreasuresConfig(boolean enabled, int auraRefreshTicks, int topSize,
                             Map<TreasureTier, Double> chances,
@@ -77,7 +78,7 @@ public final class TreasuresConfig {
                             boolean broadcastLegend, int streakWindowSeconds, int streakBonusEvery,
                             Map<TreasureRank, Integer> rankRewards, Effects effects,
                             boolean abilitiesEnabled, boolean cursesEnabled,
-                            boolean setsEnabled) {
+                            boolean setsEnabled, double arsenalShare) {
         this.enabled = enabled;
         this.auraRefreshTicks = auraRefreshTicks;
         this.topSize = topSize;
@@ -101,6 +102,7 @@ public final class TreasuresConfig {
         this.abilitiesEnabled = abilitiesEnabled;
         this.cursesEnabled = cursesEnabled;
         this.setsEnabled = setsEnabled;
+        this.arsenalShare = arsenalShare;
     }
 
     /** Разбор без переопределений: значения шансов берутся только из config.yml. */
@@ -173,15 +175,17 @@ public final class TreasuresConfig {
         long cooldown = clamp(cfg.getLong("limits.min-seconds-between-treasures", 3L),
                 0L, 3_600L) * 1000L;
 
+        double arsenalShare = clamp(cfg.getDouble("arsenal.share", 0.35), 0.0, 1.0);
+
         Map<Integer, Milestone> milestones = new TreeMap<>();
         ConfigurationSection milestoneRoot = cfg.getConfigurationSection("milestones");
         if (milestoneRoot != null) {
             for (String key : milestoneRoot.getKeys(false)) {
                 Integer found = parseInt(key);
-                if (found == null || found < 1 || found > TreasureCatalog.EXPECTED_ITEMS) {
+                if (found == null || found < 1 || found > TreasureRegistry.size()) {
                     if (logger != null) {
                         logger.warning("[CHRDK_Treasures] milestones." + key
-                                + ": ключ должен быть числом 1.." + TreasureCatalog.EXPECTED_ITEMS
+                                + ": ключ должен быть числом 1.." + TreasureRegistry.size()
                                 + " — пропускаю.");
                     }
                     continue;
@@ -232,7 +236,8 @@ public final class TreasuresConfig {
                 Collections.unmodifiableMap(rankRewards), effects,
                 cfg.getBoolean("abilities.enabled", true),
                 cfg.getBoolean("curses.enabled", true),
-                cfg.getBoolean("sets.enabled", true));
+                cfg.getBoolean("sets.enabled", true),
+                arsenalShare);
     }
 
     private static TreasureTier parseTier(String raw, TreasureTier fallback) {
@@ -272,6 +277,8 @@ public final class TreasuresConfig {
         out.put(40, new Milestone(40, 48));
         out.put(TreasureCatalog.EXPECTED_ITEMS,
                 new Milestone(TreasureCatalog.EXPECTED_ITEMS, 96));
+        out.put(80, new Milestone(80, 128));
+        out.put(TreasureRegistry.size(), new Milestone(TreasureRegistry.size(), 192));
         return out;
     }
 
@@ -408,6 +415,11 @@ public final class TreasuresConfig {
     /** Срабатывают ли проклятия легендарных и мифических находок. */
     public boolean cursesEnabled() {
         return cursesEnabled;
+    }
+
+    /** Доля арсенала Mine Treasure среди именных находок 0..1. */
+    public double arsenalShare() {
+        return arsenalShare;
     }
 
     /** Действуют ли сетовые бонусы за 2 и 4 предмета региона. */

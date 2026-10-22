@@ -21,6 +21,9 @@ public final class RegisterPlugin extends JavaPlugin {
     private PassMenuService passMenuService;
     private DonateMenuService donateMenuService;
     private ServerMenuService serverMenuService;
+    private BankStore bankStore;
+    private BankService bankService;
+    private BankCommandHandler bankCommands;
     private AdminDonationsGuiService adminDonationsGui;
     private PasswordKeypadService passwordKeypad;
     private TabListService tabListService;
@@ -60,6 +63,13 @@ public final class RegisterPlugin extends JavaPlugin {
         this.passMenuService = new PassMenuService(accessManager, messages);
         this.donateMenuService = new DonateMenuService(accessManager, messages);
         this.serverMenuService = new ServerMenuService(this, accessManager, messages);
+        this.bankStore = new BankStore(getDataFolder().toPath(), getLogger());
+        this.bankStore.load();
+        this.bankService = new BankService(this, bankStore, () -> accessManager.config().economy());
+        this.bankService.start();
+        // Автосообщения показывают баланс банка: подстановка %balance%.
+        this.chatService.setPlaceholderProvider((player, values) ->
+                values.put("balance", BankService.format(bankStore.balance(player.getUniqueId()))));
         this.adminDonationsGui = new AdminDonationsGuiService(accessManager, messages, this);
         this.donateMenuService.setAdminJournalOpener(player -> adminDonationsGui.openMenu(player));
         this.passwordKeypad = new PasswordKeypadService(this, accessManager, messages);
@@ -73,7 +83,7 @@ public final class RegisterPlugin extends JavaPlugin {
         shopService.logProblems();
         getServer().getServicesManager().register(ChrdkRegisterApi.class,
                 new ChrdkRegisterApiImpl(this, accessManager, externalHooks, shopService,
-                        chatService.nameTags()), this, ServicePriority.Normal);
+                        chatService.nameTags(), bankStore), this, ServicePriority.Normal);
 
         getServer().getPluginManager().registerEvents(new PlayerRestrictionListener(accessManager), this);
         getServer().getPluginManager().registerEvents(chatService, this);
@@ -127,6 +137,15 @@ public final class RegisterPlugin extends JavaPlugin {
             }
         }
 
+        this.bankCommands = new BankCommandHandler(this, bankService, messages);
+        for (String commandName : List.of("bal", "pay", "baltop")) {
+            PluginCommand pluginCommand = getCommand(commandName);
+            if (pluginCommand != null) {
+                pluginCommand.setExecutor(bankCommands);
+                pluginCommand.setTabCompleter(bankCommands);
+            }
+        }
+
         ChatCommandHandler chatCommandHandler = new ChatCommandHandler(chatService);
         for (String commandName : List.of("chat", "msg", "reply", "ignore", "unignore", "socialspy", "mute", "unmute")) {
             PluginCommand pluginCommand = getCommand(commandName);
@@ -171,6 +190,10 @@ public final class RegisterPlugin extends JavaPlugin {
     public void onDisable() {
         if (pluginUpdater != null) pluginUpdater.close();
         if (serverMenuService != null) serverMenuService.shutdown();
+        if (bankService != null) {
+            bankService.shutdown();
+            bankService = null;
+        }
         if (updateChecker != null) {
             updateChecker.shutdown();
             updateChecker = null;
@@ -263,6 +286,9 @@ public final class RegisterPlugin extends JavaPlugin {
         if (serverMenuService != null) {
             serverMenuService.setMessages(messages);
         }
+        if (bankCommands != null) {
+            bankCommands.setMessages(messages);
+        }
         if (adminDonationsGui != null) {
             adminDonationsGui.setMessages(messages);
         }
@@ -308,6 +334,16 @@ public final class RegisterPlugin extends JavaPlugin {
         return serverMenuService;
     }
 
+    /** Банк алмазов: /bal, /pay, /baltop и депозиты. */
+    public BankService bank() {
+        return bankService;
+    }
+
+    /** Чат и автосообщения ({@code /pass automessages}). */
+    public ChatService chatService() {
+        return chatService;
+    }
+
     public AdminDonationsGuiService adminDonationsGui() {
         return adminDonationsGui;
     }
@@ -335,7 +371,7 @@ public final class RegisterPlugin extends JavaPlugin {
         if (!getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) return;
         try {
             String version = getPluginMeta().getVersion();
-            new PlaceholderIntegration(version, accessManager, chatService, store).register();
+            new PlaceholderIntegration(version, accessManager, chatService, store, bankStore).register();
             getLogger().info("PlaceholderAPI обнаружен: плейсхолдеры %chrdk_*% зарегистрированы.");
         } catch (Throwable throwable) {
             getLogger().log(Level.WARNING, "Не удалось зарегистрировать плейсхолдеры PlaceholderAPI", throwable);

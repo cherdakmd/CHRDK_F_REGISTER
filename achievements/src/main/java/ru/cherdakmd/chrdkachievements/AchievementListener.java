@@ -3,16 +3,32 @@ package ru.cherdakmd.chrdkachievements;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.enchantment.EnchantItemEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.EntityShootBowEvent;
+import org.bukkit.event.entity.EntityTameEvent;
+import org.bukkit.event.inventory.BrewEvent;
 import org.bukkit.event.inventory.CraftItemEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.event.player.PlayerBedEnterEvent;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
+import org.bukkit.event.player.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerFishEvent;
+import org.bukkit.event.player.PlayerItemBreakEvent;
+import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -50,6 +66,8 @@ public final class AchievementListener implements Listener {
     private final AchievementService service;
     /** Накопленная дистанция до следующего сброса: uuid → блоки. */
     private final Map<UUID, Double> pendingDistance = new ConcurrentHashMap<>();
+    /** Кто открыл варочную стойку: позиция → uuid (BrewEvent не знает игрока). */
+    private final Map<org.bukkit.Location, UUID> brewingStandOwners = new ConcurrentHashMap<>();
 
     public AchievementListener(AchievementsPlugin plugin, AchievementService service) {
         this.plugin = plugin;
@@ -176,10 +194,188 @@ public final class AchievementListener implements Listener {
             if (plugin.coreApi().isTwoFactorEnabled(player.getName())) {
                 service.setFlag(player, AchievementMetric.TWO_FACTOR);
             }
+            // Банк (API v7): пиковый баланс и суммы переводов из ядра.
+            long balance = plugin.coreApi().bankBalance(player.getName());
+            if (balance > 0L) {
+                service.raise(player, AchievementMetric.BANK_BALANCE, balance);
+            }
+            long sent = plugin.coreApi().bankSent(player.getName());
+            if (sent > 0L) {
+                service.raise(player, AchievementMetric.BANK_SENT, sent);
+            }
+            long received = plugin.coreApi().bankReceived(player.getName());
+            if (received > 0L) {
+                service.raise(player, AchievementMetric.BANK_RECEIVED, received);
+            }
         } catch (RuntimeException exception) {
             plugin.getLogger().warning("Не удалось опросить ядро для достижений: "
                     + exception.getMessage());
         }
+    }
+
+    /* ------------------------- волна 28: новые счётчики ------------------------ */
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBlockPlace(BlockPlaceEvent event) {
+        Player player = event.getPlayer();
+        if (honest(player)) {
+            service.addProgress(player, AchievementMetric.BLOCKS_PLACED, 1L);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onEnchant(EnchantItemEvent event) {
+        Player player = event.getEnchanter();
+        if (honest(player)) {
+            service.addProgress(player, AchievementMetric.ITEMS_ENCHANTED, 1L);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onBrewOpen(org.bukkit.event.inventory.InventoryOpenEvent event) {
+        if (event.getInventory().getType() == InventoryType.BREWING
+                && event.getInventory().getLocation() != null
+                && event.getPlayer() instanceof Player) {
+            brewingStandOwners.put(event.getInventory().getLocation(), event.getPlayer().getUniqueId());
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onBrewClose(org.bukkit.event.inventory.InventoryCloseEvent event) {
+        if (event.getInventory().getType() == InventoryType.BREWING
+                && event.getInventory().getLocation() != null) {
+            brewingStandOwners.remove(event.getInventory().getLocation());
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onBrew(BrewEvent event) {
+        // Одна варка даёт до трёх зелий: считаем фактический результат.
+        var contents = event.getContents();
+        int brewed = 0;
+        for (int slot = 0; slot < 3; slot++) {
+            var item = contents.getItem(slot);
+            if (item == null) {
+                continue;
+            }
+            Material type = item.getType();
+            if (type == Material.POTION || type == Material.SPLASH_POTION
+                    || type == Material.LINGERING_POTION) {
+                brewed++;
+            }
+        }
+        if (brewed == 0) {
+            return;
+        }
+        UUID owner = event.getBlock() == null ? null
+                : brewingStandOwners.get(event.getBlock().getLocation());
+        Player player = owner == null ? null : org.bukkit.Bukkit.getPlayer(owner);
+        if (player != null && honest(player)) {
+            service.addProgress(player, AchievementMetric.POTIONS_BREWED, brewed);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onVillagerTrade(InventoryClickEvent event) {
+        if (event.getView().getTopInventory().getType() != InventoryType.MERCHANT
+                || event.getRawSlot() != 2 || event.getCurrentItem() == null
+                || event.getCurrentItem().getType().isAir()) {
+            return;
+        }
+        if (event.getWhoClicked() instanceof Player player && honest(player)) {
+            service.addProgress(player, AchievementMetric.VILLAGER_TRADES, 1L);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onConsume(PlayerItemConsumeEvent event) {
+        Player player = event.getPlayer();
+        if (event.getItem().getType().isEdible() && honest(player)) {
+            service.addProgress(player, AchievementMetric.FOOD_EATEN, 1L);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onTame(EntityTameEvent event) {
+        if (event.getOwner() instanceof Player player && honest(player)) {
+            service.addProgress(player, AchievementMetric.ANIMALS_TAMED, 1L);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBedEnter(PlayerBedEnterEvent event) {
+        if (event.getBedEnterResult() == PlayerBedEnterEvent.BedEnterResult.OK
+                && honest(event.getPlayer())) {
+            service.addProgress(event.getPlayer(), AchievementMetric.BEDS_SLEPT, 1L);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onChangedWorld(PlayerChangedWorldEvent event) {
+        World world = event.getPlayer().getWorld();
+        if (world.getEnvironment() == World.Environment.NETHER) {
+            service.addProgress(event.getPlayer(), AchievementMetric.NETHER_VISITS, 1L);
+        } else if (world.getEnvironment() == World.Environment.THE_END) {
+            service.addProgress(event.getPlayer(), AchievementMetric.END_VISITS, 1L);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onShootBow(EntityShootBowEvent event) {
+        if (event.getEntity() instanceof Player player && event.getProjectile() != null
+                && honest(player)) {
+            service.addProgress(player, AchievementMetric.ARROWS_SHOT, 1L);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onDamageDealt(EntityDamageByEntityEvent event) {
+        Player attacker = attackerOf(event.getDamager());
+        if (attacker == null || event.getEntity() instanceof Player || !honest(attacker)) {
+            return;
+        }
+        long damage = Math.max(1L, Math.round(event.getFinalDamage()));
+        service.addProgress(attacker, AchievementMetric.DAMAGE_DEALT, damage);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onDamageTaken(EntityDamageEvent event) {
+        if (!(event.getEntity() instanceof Player player) || !honest(player)) {
+            return;
+        }
+        try {
+            if (event.getDamage(EntityDamageEvent.DamageModifier.BLOCKING) < 0d) {
+                service.addProgress(player, AchievementMetric.SHIELD_BLOCKS, 1L);
+            }
+        } catch (RuntimeException ignored) {
+            // Модификатор не применим к этому урону — это не ошибка.
+        }
+        long damage = Math.max(1L, Math.round(event.getFinalDamage()));
+        service.addProgress(player, AchievementMetric.DAMAGE_TAKEN, damage);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onDeath(PlayerDeathEvent event) {
+        service.addProgress(event.getEntity(), AchievementMetric.DEATHS, 1L);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onItemBreak(PlayerItemBreakEvent event) {
+        if (honest(event.getPlayer())) {
+            service.addProgress(event.getPlayer(), AchievementMetric.TOOLS_BROKEN, 1L);
+        }
+    }
+
+    /** Атакующий: сам игрок или выпущенный им снаряд. */
+    private Player attackerOf(org.bukkit.entity.Entity damager) {
+        if (damager instanceof Player player) {
+            return player;
+        }
+        if (damager instanceof Projectile projectile
+                && projectile.getShooter() instanceof Player player) {
+            return player;
+        }
+        return null;
     }
 
     private boolean honest(Player player) {

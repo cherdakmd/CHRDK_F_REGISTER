@@ -28,7 +28,7 @@ import java.util.Optional;
 public interface ChrdkRegisterApi {
 
     /** Версия контракта API. Растёт при расширении (добавлении методов/событий). */
-    int API_VERSION = 6;
+    int API_VERSION = 7;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -114,6 +114,29 @@ public interface ChrdkRegisterApi {
      */
     default boolean hasEntitlement(String playerName, String productId) {
         return entitlementUntil(playerName, productId) > System.currentTimeMillis();
+    }
+
+    /* -------------------------------- банк алмазов ------------------------------- */
+
+    /**
+     * Баланс алмазного банка игрока ({@code /bal}); {@code 0} для неизвестного ника.
+     *
+     * <p>Появился в API v7: аддоны (достижения, квесты) могут строить награды и
+     * условия на реальном счёте игрока. Реализация по умолчанию возвращает
+     * {@code 0}, поэтому сторонние реализации интерфейса не ломаются.</p>
+     */
+    default long bankBalance(String playerName) {
+        return 0L;
+    }
+
+    /** Сумма всех переводов игрока (API v7). */
+    default long bankSent(String playerName) {
+        return 0L;
+    }
+
+    /** Сумма всех полученных переводов игрока (API v7). */
+    default long bankReceived(String playerName) {
+        return 0L;
     }
 
     /* ------------------------------ оформление ника ------------------------------ */

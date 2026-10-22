@@ -93,7 +93,7 @@ class TreasureMessagesTest {
     void everyTreasureHasNameAndDescription() {
         ConfigurationSection root = messages();
         Set<String> names = new HashSet<>();
-        for (TreasureItemDef def : TreasureCatalog.all()) {
+        for (TreasureItemDef def : TreasureRegistry.all()) {
             assertText(root, "treasure." + def.id() + ".name");
             assertText(root, "treasure." + def.id() + ".desc");
             assertTrue(names.add(root.getString("treasure." + def.id() + ".name")),
@@ -101,7 +101,7 @@ class TreasureMessagesTest {
             assertTrue(root.getString("treasure." + def.id() + ".desc").length() >= 26,
                     "слишком короткое описание у " + def.id());
         }
-        assertEquals(TreasureCatalog.size(), names.size());
+        assertEquals(TreasureRegistry.size(), names.size());
     }
 
     @Test

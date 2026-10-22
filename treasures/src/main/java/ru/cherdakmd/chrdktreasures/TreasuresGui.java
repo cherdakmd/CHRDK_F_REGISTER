@@ -42,7 +42,12 @@ public final class TreasuresGui implements Listener {
     private static final int PARTICLE_SLOT = 49;
     private static final int ANNOUNCE_SLOT = 50;
     private static final int CLOSE_SLOT = 53;
-    private static final int[] ITEM_SLOTS = {10, 11, 12, 13, 14, 15};
+    /**
+     * Сетка страницы региона и мифической витрины: два ряда по семь слотов.
+     * Классические находки идут первыми, за ними — вещи арсенала.
+     */
+    private static final int[] ITEM_SLOTS = {10, 11, 12, 13, 14, 15, 16,
+            19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34};
     private static final int PAGE_BACK = 45;
     private static final int PAGE_CLOSE = 53;
     private static final int TOP_LIMIT = 45;
@@ -113,17 +118,14 @@ public final class TreasuresGui implements Listener {
     }
 
     private ItemStack regionIcon(Player player, TreasureRegion region) {
+        List<TreasureItemDef> items = TreasureRegistry.region(region);
         int found = 0;
-        for (TreasureTier tier : TreasureTier.values()) {
-            if (!tier.regional()) {
-                continue;
-            }
-            TreasureItemDef def = TreasureCatalog.forRegionTier(region, tier);
-            if (def != null && service.hasItem(player, def.id())) {
+        for (TreasureItemDef def : items) {
+            if (service.hasItem(player, def.id())) {
                 found++;
             }
         }
-        int total = TreasureCatalog.PER_REGION;
+        int total = items.size();
         ItemStack item = new ItemStack(materialOf(region));
         ItemMeta meta = item.getItemMeta();
         if (meta == null) {
@@ -143,13 +145,14 @@ public final class TreasuresGui implements Listener {
     }
 
     private ItemStack mythicIcon(Player player) {
+        List<TreasureItemDef> items = TreasureRegistry.mythical();
         int found = 0;
-        for (TreasureItemDef def : TreasureCatalog.mythical()) {
+        for (TreasureItemDef def : items) {
             if (service.hasItem(player, def.id())) {
                 found++;
             }
         }
-        int total = TreasureCatalog.MYTHICAL_ITEMS;
+        int total = items.size();
         ItemStack item = new ItemStack(Material.DRAGON_EGG);
         ItemMeta meta = item.getItemMeta();
         if (meta == null) {
@@ -168,7 +171,7 @@ public final class TreasuresGui implements Listener {
     private ItemStack summary(Player player) {
         long mined = service.mined(player);
         int found = service.foundItems(player);
-        int total = TreasureCatalog.size();
+        int total = TreasureRegistry.size();
         String next = service.nextTierHint(player);
         ItemStack item = new ItemStack(Material.BOOK);
         ItemMeta meta = item.getItemMeta();
@@ -221,13 +224,9 @@ public final class TreasuresGui implements Listener {
         holder.inventory = Bukkit.createInventory(holder, 54,
                 plugin.messages().get("region-title",
                         "region", Messages.trusted(plugin.messages().raw("region." + region.id()))));
-        int slot = 0;
-        for (TreasureTier tier : TreasureTier.values()) {
-            if (!tier.regional() || slot >= ITEM_SLOTS.length) {
-                continue;
-            }
-            TreasureItemDef def = TreasureCatalog.forRegionTier(region, tier);
-            holder.inventory.setItem(ITEM_SLOTS[slot++], itemIcon(player, def));
+        List<TreasureItemDef> items = TreasureRegistry.region(region);
+        for (int index = 0; index < Math.min(ITEM_SLOTS.length, items.size()); index++) {
+            holder.inventory.setItem(ITEM_SLOTS[index], itemIcon(player, items.get(index)));
         }
         holder.inventory.setItem(PAGE_BACK, button(Material.ARROW, "menu-back", null));
         holder.inventory.setItem(PAGE_CLOSE, button(Material.BARRIER, "menu-close", null));
@@ -243,7 +242,7 @@ public final class TreasuresGui implements Listener {
         Holder holder = new Holder(player.getUniqueId(), View.MYTHIC, null);
         holder.inventory = Bukkit.createInventory(holder, 54,
                 plugin.messages().get("mythic-title"));
-        List<TreasureItemDef> items = TreasureCatalog.mythical();
+        List<TreasureItemDef> items = TreasureRegistry.mythical();
         for (int index = 0; index < Math.min(ITEM_SLOTS.length, items.size()); index++) {
             holder.inventory.setItem(ITEM_SLOTS[index], itemIcon(player, items.get(index)));
         }
@@ -312,7 +311,7 @@ public final class TreasuresGui implements Listener {
             meta.lore(List.of(plugin.messages().get("top-entry-lore",
                     "found", String.valueOf(entry.found()),
                     "collection", String.valueOf(entry.items()),
-                    "total", String.valueOf(TreasureCatalog.size()))));
+                    "total", String.valueOf(TreasureRegistry.size()))));
             head.setItemMeta(meta);
             holder.inventory.setItem(place - 1, head);
             place++;

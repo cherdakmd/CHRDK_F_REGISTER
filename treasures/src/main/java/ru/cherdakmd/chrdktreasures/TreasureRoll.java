@@ -42,6 +42,17 @@ public final class TreasureRoll {
     }
 
     /**
+     * Бросает содержимое с долей арсенала: часть именных находок берётся из
+     * пула, перенесённого из датапака.
+     *
+     * @param arsenalShare доля арсенала среди именных находок 0..1
+     */
+    public static Roll roll(TreasureTier tier, TreasureRegion region, double itemChance,
+                            Random random, long mined, double arsenalShare) {
+        return Roll.roll(tier, region, itemChance, random, mined, arsenalShare);
+    }
+
+    /**
      * Содержимое одного клада.
      *
      * @param tier   редкость
@@ -80,6 +91,15 @@ public final class TreasureRoll {
      */
     public static Roll roll(TreasureTier tier, TreasureRegion region,
                             double itemChance, Random random, long mined) {
+        return roll(tier, region, itemChance, random, mined, 0.0);
+    }
+
+    /**
+     * @param arsenalShare доля арсенала среди именных находок 0..1;
+     *                     пустой пул арсенала всегда уступает классике
+     */
+    public static Roll roll(TreasureTier tier, TreasureRegion region, double itemChance,
+                            Random random, long mined, double arsenalShare) {
         if (tier == null) {
             return null;
         }
@@ -88,9 +108,7 @@ public final class TreasureRoll {
         }
         double chance = Math.max(0.0, Math.min(1.0, itemChance));
         if (random.nextDouble() < chance) {
-            TreasureItemDef item = tier == TreasureTier.MYTHICAL
-                    ? pickMythical(random)
-                    : TreasureCatalog.forRegionTier(region, tier);
+            TreasureItemDef item = pick(tier, region, random, arsenalShare);
             if (item != null) {
                 return new Roll(tier, region, item, List.of());
             }
@@ -98,12 +116,33 @@ public final class TreasureRoll {
         return new Roll(tier, region, null, TreasureLoot.roll(tier, region, random, mined));
     }
 
-    private static TreasureItemDef pickMythical(Random random) {
-        List<TreasureItemDef> pool = TreasureCatalog.mythical();
+    /**
+     * Выбирает именную находку: с вероятностью {@code arsenalShare} — из
+     * арсенала, иначе из классического каталога. Пустой пул одной стороны
+     * уступает другой, чтобы находка не терялась из-за настройки.
+     */
+    private static TreasureItemDef pick(TreasureTier tier, TreasureRegion region,
+                                        Random random, double arsenalShare) {
+        List<TreasureItemDef> classic = tier == TreasureTier.MYTHICAL
+                ? TreasureCatalog.mythical()
+                : singleton(TreasureCatalog.forRegionTier(region, tier));
+        List<TreasureItemDef> arsenal = TreasureArsenal.pool(region, tier);
+        double share = Double.isFinite(arsenalShare)
+                ? Math.max(0.0, Math.min(1.0, arsenalShare)) : 0.0;
+        boolean preferArsenal = !arsenal.isEmpty()
+                && (classic.isEmpty() || random.nextDouble() < share);
+        List<TreasureItemDef> pool = preferArsenal ? arsenal : classic;
+        if (pool.isEmpty()) {
+            pool = preferArsenal ? classic : arsenal;
+        }
         if (pool.isEmpty()) {
             return null;
         }
         return pool.get(random.nextInt(pool.size()));
+    }
+
+    private static List<TreasureItemDef> singleton(TreasureItemDef def) {
+        return def == null ? List.of() : List.of(def);
     }
 }
 }

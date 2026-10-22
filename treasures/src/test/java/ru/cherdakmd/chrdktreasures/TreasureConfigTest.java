@@ -42,9 +42,10 @@ class TreasureConfigTest {
         assertEquals(TreasuresConfig.defaultBlocks().size(), config.blocks().size());
         assertEquals(TreasuresConfig.defaultBlocks().size(), config.blockCount());
         assertEquals(3_000L, config.cooldownMillis());
-        assertEquals(4, config.milestones().size());
+        assertEquals(6, config.milestones().size());
         assertEquals(8, config.milestones().get(10).diamonds());
         assertEquals(96, config.milestones().get(TreasureCatalog.EXPECTED_ITEMS).diamonds());
+        assertEquals(192, config.milestones().get(TreasureRegistry.size()).diamonds());
         assertTrue(config.broadcastLegendary());
         assertTrue(config.broadcastMythical());
     }
@@ -73,7 +74,8 @@ class TreasureConfigTest {
         assertFalse(config.mineable("DIRT"));
         assertEquals(1.02, TreasureRates.depthBonus(-10,
                 config.depthPerBlock(), config.depthMaxBonus()), 1e-9);
-        assertEquals(4, config.milestones().size());
+        assertEquals(6, config.milestones().size());
+        assertEquals(0.35, config.arsenalShare(), 1e-9);
     }
 
     @Test
@@ -244,12 +246,14 @@ class TreasureConfigTest {
         cfg.set("ranks.legend.diamonds", 5000);
         cfg.set("effects.title-min-tier", "нет-такой");
         cfg.set("effects.firework-min-tier", "common");
+        cfg.set("arsenal.share", 5);
         TreasuresConfig config = TreasuresConfig.parse(cfg, LOGGER);
         assertEquals(10, config.streakWindowSeconds());
         assertEquals(100, config.streakBonusEvery());
         assertEquals(576, config.rankReward(TreasureRank.LEGEND));
         assertEquals(TreasureTier.EPIC, config.effects().titleMinTier());
         assertEquals(TreasureTier.COMMON, config.effects().fireworkMinTier());
+        assertEquals(1.0, config.arsenalShare(), 1e-9);
     }
 
     @Test

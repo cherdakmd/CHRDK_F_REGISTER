@@ -19,14 +19,17 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Полноценное серверное меню {@code /menu} для игроков: конфиг-driven инвентарь,
- * из которого одним кликом уходят в меню проходки, донатов, ежедневок, телепортов
- * и любых аддонов — ядро про аддоны не знает, пункты задаются в
- * {@code server-menu.items} (slot/icon/name/lore/command).
+ * Серверное меню {@code /menu}: главная страница с категориями и страницы
+ * категорий. Пункты конфиг-driven, ядро об аддонах ничего не знает — клик
+ * просто выполняет команду от имени игрока.
  *
  * <p>Авто-раскладка: явные слоты уважаются, остальные иконки встают рядами
  * 10..16 / 19..25 / 28..34 / 37..43 / 46..52. Размер инвентаря подбирается
- * минимальный, куда всё помещается (27/36/45/54).</p>
+ * минимальный, куда всё помещается (27/36/45/54); страницы категорий всегда 54
+ * слота — в нижнем ряду живёт кнопка «Назад».</p>
+ *
+ * <p>Категория, все пункты которой скрыты (аддон выключен или нет права),
+ * пропадает с главной страницы: игрок не попадает в пустой инвентарь.</p>
  */
 public final class ServerMenuService implements Listener {
 
@@ -37,6 +40,11 @@ public final class ServerMenuService implements Listener {
             28, 29, 30, 31, 32, 33, 34,
             37, 38, 39, 40, 41, 42, 43,
             46, 47, 48, 49, 50, 51, 52};
+
+    /** Кнопка меню: категория (переход) или команда. */
+    private record Button(int slot, Material icon, String name, String lore, String command,
+                          String category) {
+    }
 
     /** Итог раскладки: размер инвентаря и слот каждого пункта. */
     public record MenuLayout(int size, List<Integer> slots) {
@@ -57,23 +65,30 @@ public final class ServerMenuService implements Listener {
         this.messages = messages;
     }
 
+    /* --------------------------------- раскладка -------------------------------- */
+
     /**
      * Раскладка пунктов по слотам: явный слот достаётся первому претенденту,
      * остальные берут ближайшие свободные из {@link #AUTO_SLOTS} по порядку.
-     * Размер — минимальный сундук, куда влезают и явные слоты, и авто-иконки.
-     * Отделена для юнит-тестов.
      */
     public static MenuLayout layout(List<ServerMenuSettings.Entry> entries) {
-        if (entries == null || entries.isEmpty()) {
+        if (entries == null) {
             return new MenuLayout(27, List.of());
         }
-        java.util.List<Integer> slots = new java.util.ArrayList<>(
-                java.util.Collections.nCopies(entries.size(), (Integer) null));
-        java.util.Set<Integer> taken = new java.util.HashSet<>();
+        return layoutSlots(entries.stream().map(ServerMenuSettings.Entry::slot).toList());
+    }
+
+    /** Раскладка по списку запрошенных слотов ({@code -1} — авто). */
+    public static MenuLayout layoutSlots(List<Integer> requested) {
+        if (requested == null || requested.isEmpty()) {
+            return new MenuLayout(27, List.of());
+        }
+        List<Integer> slots = new ArrayList<>(java.util.Collections.nCopies(requested.size(), (Integer) null));
+        Set<Integer> taken = new HashSet<>();
         int maxExplicit = -1;
-        for (int i = 0; i < entries.size(); i++) {
-            int slot = entries.get(i).slot();
-            if (slot >= 0 && taken.add(slot)) {
+        for (int i = 0; i < requested.size(); i++) {
+            Integer slot = requested.get(i);
+            if (slot != null && slot >= 0 && taken.add(slot)) {
                 slots.set(i, slot);
                 maxExplicit = Math.max(maxExplicit, slot);
             }
@@ -109,12 +124,11 @@ public final class ServerMenuService implements Listener {
                 slots.set(i, -1); // совсем не влезло — иконку пропускаем
             }
         }
-        return new MenuLayout(size, java.util.List.copyOf(slots));
+        return new MenuLayout(size, List.copyOf(slots));
     }
 
     /** Минимальный размер сундука, куда влезают все явные слоты. */
     static int sizeFor(int maxExplicitSlot) {
-        if (maxExplicitSlot < 0) return 27;
         if (maxExplicitSlot < 27) return 27;
         if (maxExplicitSlot < 36) return 36;
         if (maxExplicitSlot < 45) return 45;
@@ -130,44 +144,137 @@ public final class ServerMenuService implements Listener {
         return capacity;
     }
 
+    /* ------------------------------ главная страница ----------------------------- */
+
     /** Открывает серверное меню игроку ({@code /menu}). */
     public void openMenu(Player player) {
-        if (!player.hasPermission("chrdkregister.menu")) { messages.send(player, "server-menu.no-permission"); return; }
+        if (!player.hasPermission("chrdkregister.menu")) {
+            messages.send(player, "server-menu.no-permission");
+            return;
+        }
         if (accessManager.getStage(player) != AccessManager.PlayerStage.AUTHENTICATED) {
-            messages.send(player, "server-menu.need-auth"); return;
+            messages.send(player, "server-menu.need-auth");
+            return;
         }
         ServerMenuSettings settings = accessManager.config().serverMenu();
-        if (settings == null || !settings.enabled() || settings.entries().isEmpty()) {
+        if (settings == null || !settings.enabled()) {
             messages.send(player, "server-menu.disabled");
             return;
         }
-        List<ServerMenuSettings.Entry> entries = settings.entries().stream().filter(entry -> available(entry, player)).toList();
-        if (entries.isEmpty()) { messages.send(player, "server-menu.disabled"); return; }
-        MenuLayout layout = layout(entries);
-        ServerMenuHolder holder = new ServerMenuHolder(player.getUniqueId(), layout.slots(), entries);
-        Inventory inventory = Bukkit.createInventory(holder, layout.size(),
-                messages.get("server-menu.title"));
-        holder.bind(inventory);
-        for (int i = 0; i < entries.size() && i < layout.slots().size(); i++) {
-            int slot = layout.slots().get(i);
-            if (slot < 0 || slot >= inventory.getSize()) continue;
-            inventory.setItem(slot, icon(entries.get(i), player));
+        List<Button> buttons = mainButtons(settings, player);
+        if (buttons.isEmpty()) {
+            messages.send(player, "server-menu.disabled");
+            return;
         }
+        MenuLayout layout = layoutSlots(buttons.stream().map(Button::slot).toList());
+        ServerMenuHolder holder = new ServerMenuHolder(player.getUniqueId(), null, layout.slots(), buttons);
+        Inventory inventory = Bukkit.createInventory(holder, layout.size(),
+                messages.renderTemplate(settings.title(), menuPlaceholders(player)));
+        holder.bind(inventory);
+        paint(inventory, layout, buttons, player);
         player.openInventory(inventory);
+    }
+
+    /** Кнопки главной страницы: категории + пункты без категории. */
+    private List<Button> mainButtons(ServerMenuSettings settings, Player player) {
+        List<Button> buttons = new ArrayList<>();
+        if (settings.grouped()) {
+            for (ServerMenuSettings.Category category : settings.categories()) {
+                List<ServerMenuSettings.Entry> available = availableEntries(settings, category.id(), player);
+                if (available.isEmpty()
+                        || !category.available(name -> Bukkit.getPluginManager().isPluginEnabled(name),
+                        player::hasPermission)) {
+                    continue;
+                }
+                buttons.add(new Button(category.slot(), category.icon(), category.name(), category.lore(),
+                        null, category.id()));
+            }
+        }
+        boolean grouped = settings.grouped();
+        if (!grouped) {
+            // Плоский режим 1.4.49: все пункты на одной странице, в порядке конфига.
+            for (ServerMenuSettings.Entry entry : settings.entries()) {
+                if (available(entry, player)) {
+                    buttons.add(new Button(entry.slot(), entry.icon(), entry.name(), entry.lore(),
+                            entry.command(), null));
+                }
+            }
+            return buttons;
+        }
+        for (ServerMenuSettings.Entry entry : settings.looseEntries()) {
+            if (available(entry, player)) {
+                buttons.add(new Button(entry.slot(), entry.icon(), entry.name(), entry.lore(),
+                        entry.command(), null));
+            }
+        }
+        return buttons;
+    }
+
+    /** Открывает страницу категории. */
+    public void openCategory(Player player, String categoryId) {
+        ServerMenuSettings settings = accessManager.config().serverMenu();
+        if (settings == null || !settings.enabled()) {
+            messages.send(player, "server-menu.disabled");
+            return;
+        }
+        ServerMenuSettings.Category category = settings.categories().stream()
+                .filter(candidate -> candidate.id().equals(categoryId)).findFirst().orElse(null);
+        if (category == null) {
+            messages.send(player, "server-menu.changed");
+            return;
+        }
+        List<ServerMenuSettings.Entry> entries = availableEntries(settings, category.id(), player);
+        if (entries.isEmpty()) {
+            messages.send(player, "server-menu.empty");
+            return;
+        }
+        List<Button> buttons = new ArrayList<>();
+        for (ServerMenuSettings.Entry entry : entries) {
+            buttons.add(new Button(entry.slot(), entry.icon(), entry.name(), entry.lore(),
+                    entry.command(), null));
+        }
+        // Кнопка «Назад» — обычный пункт с командой /menu и явным слотом.
+        buttons.add(new Button(settings.backSlot(), settings.backIcon(), settings.backName(), "",
+                "menu", null));
+        MenuLayout layout = layoutSlots(buttons.stream().map(Button::slot).toList());
+        ServerMenuHolder holder = new ServerMenuHolder(player.getUniqueId(), category.id(),
+                layout.slots(), buttons);
+        String title = settings.categoryTitle().replace("%category%", category.name());
+        Inventory inventory = Bukkit.createInventory(holder, layout.size(),
+                messages.renderTemplate(title, menuPlaceholders(player)));
+        holder.bind(inventory);
+        paint(inventory, layout, buttons, player);
+        player.openInventory(inventory);
+    }
+
+    private List<ServerMenuSettings.Entry> availableEntries(ServerMenuSettings settings,
+                                                           String categoryId, Player player) {
+        return settings.entriesOf(categoryId).stream().filter(entry -> available(entry, player)).toList();
     }
 
     private boolean available(ServerMenuSettings.Entry entry, Player player) {
         return entry.available(name -> Bukkit.getPluginManager().isPluginEnabled(name), player::hasPermission);
     }
 
-    private ItemStack icon(ServerMenuSettings.Entry entry, Player player) {
-        Material material = entry.icon() == null ? Material.PAPER : entry.icon();
+    private void paint(Inventory inventory, MenuLayout layout, List<Button> buttons, Player player) {
+        for (int i = 0; i < buttons.size() && i < layout.slots().size(); i++) {
+            int slot = layout.slots().get(i);
+            if (slot < 0 || slot >= inventory.getSize()) {
+                continue;
+            }
+            inventory.setItem(slot, icon(buttons.get(i), player));
+        }
+    }
+
+    private ItemStack icon(Button button, Player player) {
+        Material material = button.icon() == null ? Material.PAPER : button.icon();
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.displayName(messages.renderTemplate(entry.name(), menuPlaceholders(player)));
-            if (!entry.lore().isBlank()) {
-                meta.lore(java.util.Arrays.stream(entry.lore().split("\\R")).map(line -> messages.renderTemplate(line, menuPlaceholders(player))).toList());
+            meta.displayName(messages.renderTemplate(button.name(), menuPlaceholders(player)));
+            if (!button.lore().isBlank()) {
+                meta.lore(java.util.Arrays.stream(button.lore().split("\\R"))
+                        .map(line -> messages.renderTemplate(line, menuPlaceholders(player))).toList());
             }
             item.setItemMeta(meta);
         }
@@ -182,27 +289,47 @@ public final class ServerMenuService implements Listener {
                 "trial_days", accessManager.config().trialDays()};
     }
 
+    /* ---------------------------------- клики ---------------------------------- */
+
     @EventHandler(priority = org.bukkit.event.EventPriority.HIGHEST)
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getView().getTopInventory().getHolder() instanceof ServerMenuHolder holder)) return;
         event.setCancelled(true); // also bottom inventory/shift/hotbar/double-click
         if (!(event.getWhoClicked() instanceof Player player) || !holder.owner.equals(player.getUniqueId())) return;
-        if (event.getClick() != org.bukkit.event.inventory.ClickType.LEFT && event.getClick() != org.bukkit.event.inventory.ClickType.RIGHT) return;
+        if (event.getClick() != org.bukkit.event.inventory.ClickType.LEFT
+                && event.getClick() != org.bukkit.event.inventory.ClickType.RIGHT) return;
         for (int i = 0; i < holder.slots.size(); i++) {
             if (holder.slots.get(i) != event.getRawSlot()) continue;
-            ServerMenuSettings.Entry entry = holder.entries.get(i);
+            Button button = holder.buttons.get(i);
+            if (button.category() != null) {
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    if (!player.isOnline()) {
+                        return;
+                    }
+                    if (!accessManager.config().serverMenu().enabled()) {
+                        player.closeInventory();
+                        messages.send(player, "server-menu.changed");
+                        return;
+                    }
+                    openCategory(player, button.category());
+                });
+                return;
+            }
             Bukkit.getScheduler().runTask(plugin, () -> {
                 if (!player.isOnline() || player.getOpenInventory().getTopInventory() != holder.inventory) return;
-                if (!accessManager.config().serverMenu().enabled()
-                        || !accessManager.config().serverMenu().entries().contains(entry)) {
-                    player.closeInventory(); messages.send(player, "server-menu.changed"); return;
+                if (!accessManager.config().serverMenu().enabled()) {
+                    player.closeInventory();
+                    messages.send(player, "server-menu.changed");
+                    return;
                 }
-                if (!player.hasPermission("chrdkregister.menu") || !available(entry, player)
+                if (!player.hasPermission("chrdkregister.menu")
                         || accessManager.getStage(player) != AccessManager.PlayerStage.AUTHENTICATED) {
-                    player.closeInventory(); messages.send(player, "server-menu.unavailable"); return;
+                    player.closeInventory();
+                    messages.send(player, "server-menu.unavailable");
+                    return;
                 }
                 player.closeInventory();
-                player.performCommand(entry.command());
+                player.performCommand(button.command());
             });
             return;
         }
@@ -218,17 +345,19 @@ public final class ServerMenuService implements Listener {
             if (player.getOpenInventory().getTopInventory().getHolder() instanceof ServerMenuHolder) player.closeInventory();
     }
 
-    /** Маркержолдер: отличает наше меню от чужих инвентарей, хранит слоты кликов. */
+    /** Маркерный холдер: отличает наше меню от чужих инвентарей, хранит слоты кликов. */
     static final class ServerMenuHolder implements InventoryHolder {
+        private final String category;
         private final List<Integer> slots;
-        private final List<ServerMenuSettings.Entry> entries;
+        private final List<Button> buttons;
         private final java.util.UUID owner;
         private Inventory inventory;
 
-        ServerMenuHolder(java.util.UUID owner, List<Integer> slots, List<ServerMenuSettings.Entry> entries) {
+        ServerMenuHolder(java.util.UUID owner, String category, List<Integer> slots, List<Button> buttons) {
             this.owner = owner;
+            this.category = category;
             this.slots = List.copyOf(slots);
-            this.entries = List.copyOf(entries);
+            this.buttons = List.copyOf(buttons);
         }
 
         void bind(Inventory inventory) {
@@ -237,6 +366,10 @@ public final class ServerMenuService implements Listener {
 
         List<Integer> slots() {
             return slots;
+        }
+
+        String category() {
+            return category;
         }
 
         Inventory inventory() {

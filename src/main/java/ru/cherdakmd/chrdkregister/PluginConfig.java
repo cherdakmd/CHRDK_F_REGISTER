@@ -67,6 +67,8 @@ public final class PluginConfig {
 
     /** server-menu.* (не часть ctor): конфиг-driven серверное меню /menu. */
     private ServerMenuSettings serverMenu = ServerMenuSettings.DISABLED;
+    /** economy.* (не часть ctor): банк алмазов /bal /pay /baltop. */
+    private EconomySettings economy = EconomySettings.DEFAULTS;
     private final boolean donatePayEnabled;
     private final boolean strictCaseMatch;
     private final boolean donateReviewUnmatched;
@@ -444,6 +446,7 @@ public final class PluginConfig {
         parsed.donateActions = DonateAction.parseList(config.getMapList("donation-actions"));
         parsed.donatePayShowBalance = config.getBoolean("donatepay.show-balance", true);
         parsed.serverMenu = ServerMenuSettings.from(config);
+        parsed.economy = EconomySettings.from(config);
         return parsed;
     }
 
@@ -520,6 +523,11 @@ public final class PluginConfig {
     /** Настройки серверного меню {@code /menu}. */
     public ServerMenuSettings serverMenu() {
         return serverMenu;
+    }
+
+    /** Настройки банка алмазов (/bal, /pay, /baltop). */
+    public EconomySettings economy() {
+        return economy;
     }
 
     public ShopDiscount shopDiscount() {

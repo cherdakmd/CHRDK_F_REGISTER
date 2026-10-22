@@ -80,6 +80,10 @@ public final class ChatService implements Listener {
     private BukkitTask autoMessageTask;
     private int autoMessageIndex;
     private String lastAutoMessage = "";
+    /** Последние отправленные автосообщения: случайный выбор не повторяет их подряд. */
+    private final java.util.Deque<String> recentAutoMessages = new java.util.ArrayDeque<>();
+    /** Дополнительные подстановки от других сервисов ядра (баланс банка и т.п.). */
+    private volatile java.util.function.BiConsumer<Player, java.util.Map<String, Object>> placeholderProvider;
     private volatile long lastGlobalMessageAt;
 
     public ChatService(JavaPlugin plugin, AccessManager accessManager, ChatConfig config,
@@ -476,53 +480,161 @@ public final class ChatService implements Listener {
      *  Automatic messages
      * ------------------------------------------------------------------ */
 
+    /**
+     * Дополнительные подстановки для автосообщений: сервис получает игрока и
+     * карту подстановок и может добавить свои (например, {@code balance}).
+     */
+    public void setPlaceholderProvider(java.util.function.BiConsumer<Player, java.util.Map<String, Object>> provider) {
+        this.placeholderProvider = provider;
+    }
+
     private void scheduleAutoMessages() {
         ChatConfig cfg = this.config;
-        if (!cfg.enabled() || !cfg.autoMessagesEnabled() || cfg.autoMessages().isEmpty()) return;
+        if (!cfg.enabled() || !cfg.autoMessagesEnabled() || cfg.autoMessageEntries().isEmpty()) return;
         long intervalTicks = Math.max(20L * 30L, cfg.autoMessagesIntervalSeconds() * 20L);
         autoMessageTask = Bukkit.getScheduler().runTaskTimer(
                 plugin, this::sendNextAutoMessage, intervalTicks, intervalTicks);
         logger.info("Automatic chat messages enabled: every " + cfg.autoMessagesIntervalSeconds()
-                + " second(s), " + cfg.autoMessages().size() + " message(s).");
+                + " second(s), " + cfg.autoMessageEntries().size() + " message(s).");
     }
 
-    private void sendNextAutoMessage() {
+    /** Сколько автосообщений настроено (для {@code /pass automessages list}). */
+    public int autoMessageCount() {
+        return config.autoMessageEntries().size();
+    }
+
+    /** Настроенные автосообщения в порядке конфига. */
+    public List<AutoMessage> autoMessageEntries() {
+        return config.autoMessageEntries();
+    }
+
+    /**
+     * Принудительно отправляет следующее автосообщение всей аудитории.
+     *
+     * @return сколько игроков его получили (0 — некому или нет подходящих текстов)
+     */
+    public int broadcastAutoMessageNow() {
+        return sendNextAutoMessage();
+    }
+
+    /**
+     * Отправляет конкретное сообщение одному игроку в обход условий — это
+     * предпросмотр для администратора, а не рассылка.
+     *
+     * @param index номер в списке, начиная с 1
+     * @return {@code true}, если сообщение найдено и отправлено
+     */
+    public boolean previewAutoMessage(Player player, int index) {
+        List<AutoMessage> entries = config.autoMessageEntries();
+        if (player == null || index < 1 || index > entries.size()) {
+            return false;
+        }
+        deliver(entries.get(index - 1), player, Bukkit.getOnlinePlayers().size());
+        return true;
+    }
+
+    private int sendNextAutoMessage() {
         ChatConfig cfg = this.config;
-        if (!cfg.enabled() || !cfg.autoMessagesEnabled()) return;
+        if (!cfg.enabled() || !cfg.autoMessagesEnabled()) return 0;
         List<? extends Player> audience = Bukkit.getOnlinePlayers().stream()
                 .filter(p -> p.hasPermission(PERMISSION_AUTO_MESSAGE)
                         && accessManager.getStage(p) == AccessManager.PlayerStage.AUTHENTICATED).toList();
-        if (audience.isEmpty() || audience.size() < cfg.autoMessagesMinimumPlayers()) return;
+        if (audience.isEmpty() || audience.size() < cfg.autoMessagesMinimumPlayers()) return 0;
+        int online = audience.size();
         List<AutoMessage> candidates = cfg.autoMessageEntries().stream()
-                .filter(entry -> audience.stream().anyMatch(p -> eligible(entry, p))).toList();
-        if (candidates.isEmpty()) return;
-        AutoMessage chosen;
-        if (cfg.autoMessagesRandomOrder()) {
-            List<AutoMessage> different = candidates.stream().filter(entry -> !entry.text().equals(lastAutoMessage)).toList();
-            List<AutoMessage> pool = different.isEmpty() ? candidates : different;
-            chosen = pool.get(ThreadLocalRandom.current().nextInt(pool.size()));
-        } else {
-            chosen = candidates.get(Math.floorMod(autoMessageIndex++, candidates.size()));
-        }
+                .filter(entry -> audience.stream().anyMatch(p -> eligible(entry, p, online))).toList();
+        if (candidates.isEmpty()) return 0;
+        AutoMessage chosen = pick(candidates);
         lastAutoMessage = chosen.text();
-        long now = System.currentTimeMillis();
+        rememberSent(chosen.text());
+        int delivered = 0;
         for (Player player : audience) {
-            if (!eligible(chosen, player)) continue;
-            var account = accessManager.store().getAccount(player.getName()).orElse(null);
-            player.sendMessage(messages.renderTemplate(cfg.autoMessagesPrefix() + chosen.text(),
-                    "online", audience.size(), "player", player.getName(),
-                    "pass_left", PlaceholderValues.passLeft(account, now),
-                    "trial_days", accessManager.config().trialDays()));
+            if (!eligible(chosen, player, online)) continue;
+            deliver(chosen, player, online);
+            delivered++;
+        }
+        return delivered;
+    }
+
+    /** Выбор сообщения: по кругу или случайно, без повторов подряд. */
+    private AutoMessage pick(List<AutoMessage> candidates) {
+        if (!config.autoMessagesRandomOrder()) {
+            AutoMessage chosen = candidates.get(Math.floorMod(autoMessageIndex++, candidates.size()));
+            // Список кандидатов мог сузиться (игрок без аддона) — не повторяем предыдущее.
+            if (candidates.size() > 1 && chosen.text().equals(lastAutoMessage)) {
+                chosen = candidates.get(Math.floorMod(autoMessageIndex++, candidates.size()));
+            }
+            return chosen;
+        }
+        List<AutoMessage> fresh = candidates.stream()
+                .filter(entry -> !recentAutoMessages.contains(entry.text())).toList();
+        List<AutoMessage> pool = fresh.isEmpty() ? candidates : fresh;
+        List<AutoMessage> different = pool.stream()
+                .filter(entry -> !entry.text().equals(lastAutoMessage)).toList();
+        if (!different.isEmpty()) {
+            pool = different;
+        }
+        return pool.get(java.util.concurrent.ThreadLocalRandom.current().nextInt(pool.size()));
+    }
+
+    /** Хранит до пяти последних текстов — этого хватает, чтобы не повторяться. */
+    private void rememberSent(String text) {
+        recentAutoMessages.addLast(text);
+        while (recentAutoMessages.size() > 5) {
+            recentAutoMessages.removeFirst();
         }
     }
 
-    private boolean eligible(AutoMessage entry, Player player) {
+    /** Подстановки автосообщения: базовые + от других сервисов (баланс банка). */
+    private void deliver(AutoMessage message, Player player, int online) {
+        ChatConfig cfg = this.config;
         var account = accessManager.store().getAccount(player.getName()).orElse(null);
         long now = System.currentTimeMillis();
-        boolean trial = account != null && account.hasActivePass(now) && "trial".equals(account.lastGrantSource)
+        java.util.Map<String, Object> values = new java.util.LinkedHashMap<>();
+        values.put("online", online);
+        values.put("max", Bukkit.getMaxPlayers());
+        values.put("player", player.getName());
+        values.put("world", player.getWorld().getName());
+        values.put("pass_left", PlaceholderValues.passLeft(account, now));
+        values.put("pass_days", account == null ? 0 : PlaceholderValues.wholeDaysLeft(account.passUntil, now));
+        values.put("trial_days", accessManager.config().trialDays());
+        values.put("pass_type", passType(account, now));
+        var provider = placeholderProvider;
+        if (provider != null) {
+            try {
+                provider.accept(player, values);
+            } catch (RuntimeException exception) {
+                logger.warning("Автосообщение: поставщик подстановок упал: " + exception.getMessage());
+            }
+        }
+        Object[] placeholders = new Object[values.size() * 2];
+        int index = 0;
+        for (java.util.Map.Entry<String, Object> entry : values.entrySet()) {
+            placeholders[index++] = entry.getKey();
+            placeholders[index++] = entry.getValue();
+        }
+        player.sendMessage(messages.renderTemplate(cfg.autoMessagesPrefix() + message.text(), placeholders));
+    }
+
+    /** Подпись состояния проходки для {@code %pass_type%}. */
+    private String passType(RegistrationStore.PlayerAccount account, long now) {
+        if (account == null || !account.hasActivePass(now)) {
+            return messages.plain("presentation.no-pass");
+        }
+        boolean trial = "trial".equals(account.lastGrantSource) && account.passUntil == account.trialUntil;
+        return messages.plain(trial ? "presentation.trial" : "presentation.pass");
+    }
+
+    private boolean eligible(AutoMessage entry, Player player, int online) {
+        var account = accessManager.store().getAccount(player.getName()).orElse(null);
+        long now = System.currentTimeMillis();
+        boolean hasPass = account != null && account.hasActivePass(now);
+        boolean trial = hasPass && "trial".equals(account.lastGrantSource)
                 && account.trialUntil == account.passUntil;
+        boolean paid = hasPass && !trial;
         boolean unsecured = accessManager.config().totpEnabled() && (account == null || !account.isTotpEnabled());
-        return entry.eligible(name -> Bukkit.getPluginManager().isPluginEnabled(name), player::hasPermission, trial, unsecured);
+        return entry.eligible(name -> Bukkit.getPluginManager().isPluginEnabled(name), player::hasPermission,
+                trial, unsecured, hasPass, paid, online);
     }
 
     /* ------------------------------------------------------------------ *

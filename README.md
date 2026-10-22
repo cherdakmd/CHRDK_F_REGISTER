@@ -434,42 +434,45 @@ pass:
   gui-menu: true
 
 # Главное меню сервера /menu (GUI, конфиг-driven): ядро про аддоны не знает —
-# вы сами решаете, какие пункты видят игроки. Каждый пункт: slot (0-53; -1 = авто,
-# раскладка рядами по центру), icon (материал Bukkit), name/lore (MiniMessage),
-# command (выполняется ОТ ИГРОКА по клику — как если бы он написал её сам).
-# Уважает флаг pass.gui-menu? Нет — server-menu живёт сам по себе.
+# вы сами решаете, какие пункты видят игроки.
+#
+# Меню двухуровневое (1.4.139): главная страница — категории и «быстрые» пункты
+# без категории, страница категории — её пункты и кнопка «Назад». Пункт без
+# поля category остаётся на главной странице; без categories меню работает
+# одной страницей, как в 1.4.49–1.4.137.
+#
+# Поля пункта: slot (0-53; -1 = авто), icon, name/lore (MiniMessage),
+# command (выполняется ОТ ИГРОКА по клику), plugin (скрыт, если аддон выключен),
+# permission (скрыт, если нет права). Админские команды сюда не ставить.
 server-menu:
   enabled: true
-  # plugin/permission: пункт скрыт, если аддон выключен или нет права.
-  # Команды выполняются только от игрока; административных действий здесь нет.
+  title: "<gold>Меню сервера</gold>"
+  category-title: "<gold>%category%</gold>"
+  # Кнопка «Назад» на страницах категорий.
+  back-slot: 49
+  back-icon: "ARROW"
+  back-name: "<gray>◀ Назад в меню</gray>"
+  # Шесть категорий: аккаунт, прогресс, экономика, мир, снаряжение, сообщество.
+  # Категория без доступных пунктов автоматически исчезает с главной страницы.
+  categories:
+    - {"id": "account", "slot": 10, "icon": "PAPER", "name": "<gold><bold>Аккаунт и проходка</bold></gold>", "lore": "<gray>Статус, оплата, 2FA, сессии и награды входа</gray>"}
+    - {"id": "progress", "slot": 11, "icon": "NETHER_STAR", "name": "<gold><bold>Прогресс и награды</bold></gold>", "lore": "<gray>Сезон, звания, достижения, навыки и клады</gray>"}
+    - {"id": "economy", "slot": 12, "icon": "DIAMOND", "name": "<gold><bold>Экономика</bold></gold>", "lore": "<gray>Банк алмазов, магазин, аукцион и лотерея</gray>"}
+    - {"id": "world", "slot": 13, "icon": "GRASS_BLOCK", "name": "<gold><bold>Мир и территории</bold></gold>", "lore": "<gray>Приваты, дома, телепорты и случайный поиск</gray>"}
+    - {"id": "gear", "slot": 14, "icon": "ANVIL", "name": "<gold><bold>Снаряжение и коллекции</bold></gold>", "lore": "<gray>Чары, тиры, артефакты и косметика</gray>"}
+    - {"id": "social", "slot": 15, "icon": "BELL", "name": "<gold><bold>Общение и сообщество</bold></gold>", "lore": "<gray>Чат, очередь входа и стримерская программа</gray>"}
+  # Пункты: 5 быстрых на главной + по 3–8 в каждой категории (всего 42).
+  # Полный список с иконками и лорами — в config.yml ресурса плагина.
   items:
-    - {"slot": 10, "icon": "PAPER", "name": "<gold><bold>Проходка и аккаунт</bold></gold>", "lore": "<gray>Осталось: %pass_left%</gray>\n<gray>Статус, тарифы и настройки аккаунта</gray>", "command": "pass menu"}
-    - {"slot": 11, "icon": "EMERALD", "name": "<gold><bold>Поддержать сервер</bold></gold>", "lore": "<gray>Ссылка на оплату и продление</gray>\n<gray>Пробный срок не требует оплаты заранее</gray>", "command": "pass donate"}
-    - {"slot": 12, "icon": "CLOCK", "name": "<gold><bold>Ежедневные награды</bold></gold>", "lore": "<gray>Календарь, стрик и награда дня</gray>", "command": "daily", "plugin": "CHRDK_DailyRewards", "permission": "chrdkdaily.use"}
-    - {"slot": 13, "icon": "EXPERIENCE_BOTTLE", "name": "<gold><bold>Боевой пропуск</bold></gold>", "lore": "<gray>Задания сезона и получение наград</gray>", "command": "battlepass", "plugin": "CHRDK_BattlePass", "permission": "chrdkbp.use"}
-    - {"slot": 14, "icon": "NETHER_STAR", "name": "<gold><bold>Звания</bold></gold>", "lore": "<gray>Прогресс по наигранному времени</gray>", "command": "ranks", "plugin": "CHRDK_Ranks", "permission": "chrdkranks.use"}
-    - {"slot": 15, "icon": "BEACON", "name": "<gold><bold>Общие цели</bold></gold>", "lore": "<gray>Вклад в цели всего сообщества</gray>", "command": "goals", "plugin": "CHRDK_CommonGoals", "permission": "chrdkgoals.use"}
-    - {"slot": 16, "icon": "PLAYER_HEAD", "name": "<gold><bold>Пригласить друга</bold></gold>", "lore": "<gray>Реферальный статус и бонусные дни</gray>", "command": "ref", "plugin": "CHRDK_Referrals", "permission": "chrdkref.use"}
-    - {"slot": 19, "icon": "DIAMOND", "name": "<gold><bold>Алмазный магазин</bold></gold>", "lore": "<gray>Обмен ресурсов и динамические цены</gray>\n<gray>Счёт магазина отделён от выручки аукциона</gray>", "command": "shop", "plugin": "CHRDK_DiamondShop", "permission": "chrdkshop.use"}
-    - {"slot": 20, "icon": "GOLD_INGOT", "name": "<gold><bold>Аукцион игроков</bold></gold>", "lore": "<gray>Лоты, цены и подтверждение покупки</gray>\n<gray>Выставление: /ah sell цена</gray>", "command": "auction", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
-    - {"slot": 21, "icon": "ENDER_CHEST", "name": "<gold><bold>Почта аукциона</bold></gold>", "lore": "<gray>Купленные товары и возврат непроданного</gray>\n<gray>Выручка: /ah money</gray>", "command": "auction mail", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
-    - {"slot": 22, "icon": "SUNFLOWER", "name": "<gold><bold>Лотерея недели</bold></gold>", "lore": "<gray>Банк, ваш шанс и время розыгрыша</gray>\n<gray>Билеты покупаются отдельно: /lottery buy</gray>", "command": "lottery info", "plugin": "CHRDK_Lottery", "permission": "chrdklottery.use"}
-    - {"slot": 23, "icon": "GOLD_BLOCK", "name": "<gold><bold>Результат лотереи</bold></gold>", "lore": "<gray>Прошлый победитель</gray>\n<gray>Призы: /lottery claim</gray>", "command": "lottery last", "plugin": "CHRDK_Lottery", "permission": "chrdklottery.use"}
-    - {"slot": 24, "icon": "MAP", "name": "<gold><bold>Ваши территории</bold></gold>", "lore": "<gray>Меню приватов: клик — телепорт</gray>\n<gray>Список чанков и витрина продаж</gray>", "command": "claim menu", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
-    - {"slot": 25, "icon": "CHEST", "name": "<gold><bold>Казна приватов</bold></gold>", "lore": "<gray>Баланс казны для ренты</gray>\n<gray>Следите за ежедневными расходами</gray>", "command": "claim balance", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
-    - {"slot": 28, "icon": "COMPASS", "name": "<gold><bold>Дома</bold></gold>", "lore": "<gray>Список точек дома</gray>\n<gray>Установить точку: /sethome имя</gray>", "command": "homes", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
-    - {"slot": 29, "icon": "ENDER_PEARL", "name": "<gold><bold>Случайный телепорт</bold></gold>", "lore": "<gray>Запустить RTP за алмазы</gray>\n<gray>Стоимость задаётся настройками телепортов</gray>", "command": "rtp", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
-    - {"slot": 30, "icon": "OAK_DOOR", "name": "<gold><bold>Телепорты к игрокам</bold></gold>", "lore": "<gray>Запрос: /tpa ник</gray>\n<gray>Принять запрос: /tpaccept</gray>", "command": "tpa", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
-    - {"slot": 31, "icon": "GRASS_BLOCK", "name": "<gold><bold>Как приватить</bold></gold>", "lore": "<gray>Справка по покупке, членам и ренте</gray>\n<gray>Эта кнопка НЕ покупает чанк</gray>", "command": "claim help", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
-    - {"slot": 32, "icon": "FILLED_MAP", "name": "<gold><bold>Карта приватов</bold></gold>", "lore": "<gray>Карта чанков вокруг вас</gray>", "command": "claim map", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
-    - {"slot": 33, "icon": "ENCHANTED_BOOK", "name": "<gold><bold>Кастомные чары</bold></gold>", "lore": "<gray>Каталог чар и описания</gray>\n<gray>Получение через игровую механику</gray>", "command": "enchants", "plugin": "CHRDK_Enchants", "permission": "chrdkenchants.use"}
-    - {"slot": 34, "icon": "ANVIL", "name": "<gold><bold>Редкости снаряжения</bold></gold>", "lore": "<gray>Тиры крафта и характеристики</gray>", "command": "tiers", "plugin": "CHRDK_TierForge", "permission": "chrdktierforge.use"}
-    - {"slot": 37, "icon": "TOTEM_OF_UNDYING", "name": "<gold><bold>Артефакты</bold></gold>", "lore": "<gray>Каталог, носимые артефакты и источники</gray>\n<gray>Добывайте их в мире</gray>", "command": "artifacts", "plugin": "CHRDK_Artifacts", "permission": "chrdkartifacts.use"}
-    - {"slot": 38, "icon": "FIREWORK_ROCKET", "name": "<gold><bold>Косметика</bold></gold>", "lore": "<gray>Список эффектов и шлейфов</gray>", "command": "cosmetics list", "plugin": "CHRDK_Cosmetics", "permission": "chrdkcosmetics.use"}
-    - {"slot": 39, "icon": "TRIPWIRE_HOOK", "name": "<gold><bold>Защита 2FA</bold></gold>", "lore": "<gray>Статус двухфакторной защиты</gray>\n<gray>Подключение: /2fa setup</gray>", "command": "2fa status"}
-    - {"slot": 40, "icon": "BOOK", "name": "<gold><bold>Сессии входа</bold></gold>", "lore": "<gray>Проверить активные сессии аккаунта</gray>", "command": "session"}
-    - {"slot": 41, "icon": "HOPPER", "name": "<gold><bold>Очередь входа</bold></gold>", "lore": "<gray>Статус и сведения об очереди</gray>\n<gray>VIP-приоритет зависит от настроек сервера</gray>", "command": "queue info", "plugin": "CHRDK_Queue", "permission": "chrdkqueue.use"}
-    - {"slot": 42, "icon": "WRITABLE_BOOK", "name": "<gold><bold>Чат</bold></gold>", "lore": "<gray>Текущий режим и переключение</gray>\n<gray>/chat — локальный / глобальный</gray>", "command": "chat"}
+    - {"slot": 20, "icon": "PAPER", "name": "<gold><bold>Проходка и аккаунт</bold></gold>", "lore": "<gray>Осталось: %pass_left%</gray>", "command": "pass menu"}
+    - {"slot": 21, "icon": "EMERALD", "name": "<gold><bold>Поддержать сервер</bold></gold>", "lore": "<gray>Ссылка на оплату и продление</gray>", "command": "pass donate"}
+    - {"slot": 22, "icon": "GOLD_INGOT", "name": "<gold><bold>Мой баланс</bold></gold>", "lore": "<gray>Счёт банка и алмазы в инвентаре</gray>", "command": "bal"}
+    - {"slot": 23, "icon": "DIAMOND", "name": "<gold><bold>Топ богачей</bold></gold>", "lore": "<gray>Кто копит алмазы усерднее всех</gray>", "command": "baltop"}
+    - {"category": "progress", "icon": "DRAGON_EGG", "name": "<gold><bold>Достижения</bold></gold>", "lore": "<gray>48 целей, бейджи и награды</gray>", "command": "achievements", "plugin": "CHRDK_Achievements", "permission": "chrdkachievements.use"}
+    - {"category": "progress", "icon": "AMETHYST_CLUSTER", "name": "<gold><bold>Навыки</bold></gold>", "lore": "<gray>10 навыков, 60 перков и уровни</gray>", "command": "skills", "plugin": "CHRDK_Skills", "permission": "chrdkskills.use"}
+    - {"category": "progress", "icon": "CHEST", "name": "<gold><bold>Клады</bold></gold>", "lore": "<gray>98 находок: 62 классических и 36 из арсенала</gray>", "command": "treasures", "plugin": "CHRDK_Treasures", "permission": "chrdktreasures.use"}
+    - {"category": "gear", "icon": "ITEM_FRAME", "name": "<gold><bold>Коллекция артефактов</bold></gold>", "lore": "<gray>Собранное, прогресс и награды за полноту</gray>", "command": "artifacts collection", "plugin": "CHRDK_Artifacts", "permission": "chrdkartifacts.use"}
+    - {"category": "social", "icon": "JUKEBOX", "name": "<gold><bold>Стримерская программа</bold></gold>", "lore": "<gray>Twitch и VK Play Live: статус и награды</gray>", "command": "stream status", "plugin": "CHRDK_Streams", "permission": "chrdkstreams.use"}
 
 # Интеграции со сторонними плагинами (мягкие зависимости — без них плагин работает как обычно)
 integrations:
@@ -732,36 +735,27 @@ private-messages:
 auto-messages:
   enabled: true
   interval-seconds: 240
-  # Случайный выбор без немедленного повтора; учитываются доступность и права.
+  # Случайный порядок без повтора последних пяти текстов; false — строго по списку.
   random-order: true
   # Минимум авторизованных получателей с правом automessage.receive.
   minimum-players: 1
   prefix: "<dark_gray>[<gold>CHRDK</gold>]</dark_gray> "
-  # Старые строки поддерживаются. Карты: text, plugin, permission, condition.
-  # condition: always (по умолчанию), trial, unsecured.
+  # Карта: text, plugin, permission, condition, min-online.
+  # condition: always (по умолчанию), trial, unsecured, no-pass, paid.
+  # Подстановки: %player%, %online%, %max%, %world%, %pass_left%, %pass_days%,
+  # %pass_type%, %trial_days%, %balance%.
+  # Проверка без ожидания: /pass automessages list|next|test <номер>.
   messages:
-    - {"text": "<gray>Все возможности сервера собраны в /menu. Начните с ежедневной награды и целей сезона.</gray>"}
-    - {"text": "<gray>Ваш пробный период активен. Осталось %pass_left%. Статус и продление — /pass menu.</gray>", "condition": "trial"}
-    - {"text": "<gray>Защитите аккаунт: /2fa setup, затем подтвердите код приложения. Не сообщайте никому пароль и коды.</gray>", "condition": "unsecured"}
-    - {"text": "<gray>Забирайте ежедневную награду: /daily. Сохраняйте стрик входов.</gray>", "plugin": "CHRDK_DailyRewards", "permission": "chrdkdaily.use"}
-    - {"text": "<gray>Проверьте задания сезона и доступные награды: /battlepass.</gray>", "plugin": "CHRDK_BattlePass", "permission": "chrdkbp.use"}
-    - {"text": "<gray>Помогите общим целям сервера: /goals — ваш вклад и прогресс сообщества.</gray>", "plugin": "CHRDK_CommonGoals", "permission": "chrdkgoals.use"}
-    - {"text": "<gray>Звание растёт вместе с наигранным временем. Ваш прогресс — /ranks.</gray>", "plugin": "CHRDK_Ranks", "permission": "chrdkranks.use"}
-    - {"text": "<gray>Обмен ресурсов и актуальные цены: /shop. Счёт магазина и выручка аукциона — разные хранилища.</gray>", "plugin": "CHRDK_DiamondShop", "permission": "chrdkshop.use"}
-    - {"text": "<gray>Продайте весь стак из руки: /ah sell цена. Покупка через /ah требует подтверждения, комиссия указана в лоте.</gray>", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
-    - {"text": "<gray>Купленные и возвращённые лоты ждут в /ah mail. Выручку забирайте через /ah money.</gray>", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
-    - {"text": "<gray>Лотерея: /lottery — банк, шанс и точное время. Билеты — /lottery buy, выигрыш — /lottery claim.</gray>", "plugin": "CHRDK_Lottery", "permission": "chrdklottery.use"}
-    - {"text": "<gray>Защитите постройки: /claim help. Не забывайте казну для ежедневной ренты: /claim balance.</gray>", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
-    - {"text": "<gray>Точки дома: /homes и /sethome имя. Запрос к игроку: /tpa ник. Телепорты могут стоить алмазы.</gray>", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
-    - {"text": "<gray>Изучайте кастомные чары: /enchants. Они доступны через игровые способы получения.</gray>", "plugin": "CHRDK_Enchants", "permission": "chrdkenchants.use"}
-    - {"text": "<gray>Редкости снаряжения и ваши находки: /tiers и /tiers stats.</gray>", "plugin": "CHRDK_TierForge", "permission": "chrdktierforge.use"}
-    - {"text": "<gray>Артефакты добываются в мире. Каталог, носимые предметы и источники — /artifacts.</gray>", "plugin": "CHRDK_Artifacts", "permission": "chrdkartifacts.use"}
-    - {"text": "<gray>Выберите косметический шлейф: /cosmetics list. Выключить эффект: /cosmetics off.</gray>", "plugin": "CHRDK_Cosmetics", "permission": "chrdkcosmetics.use"}
-    - {"text": "<gray>Приглашайте друзей: /ref — статус и условия бонуса. Если вас позвал друг, до первого непробного продления: /ref use его_ник.</gray>", "plugin": "CHRDK_Referrals", "permission": "chrdkref.use"}
-    - {"text": "<gray>Сведения об очереди входа: /queue info. Приоритет определяется настройками VIP-групп.</gray>", "plugin": "CHRDK_Queue", "permission": "chrdkqueue.use"}
-    - {"text": "<gray>Переключение локального и общего чата — /chat. Личное сообщение — /msg ник текст, ответ — /r текст.</gray>"}
-    - {"text": "<gray>Проверьте сессии входа: /session. Для выхода из аккаунта используйте /logout.</gray>"}
-    - {"text": "<gray>Хотите поддержать проект? /pass donate откроет ссылку на оплату и продление.</gray>"}
+    - {"text": "<gray>Все возможности сервера собраны в <white>/menu</white>: аккаунт, прогресс, экономика, приваты и коллекции.</gray>"}
+    - {"text": "<gray>Ваш баланс банка: <white>%balance%</white> алмазов. Перевод другу — <white>/pay ник сумма</white>, топ — <white>/baltop</white>.</gray>"}
+    - {"text": "<gray>Алмазы можно хранить в банке: <white>/bal deposit</white> и <white>/bal withdraw</white>. Счёт не теряется при смерти.</gray>"}
+    - {"text": "<gray>Ваш пробный период активен: осталось <white>%pass_left%</white>. Статус и продление — <white>/pass menu</white>.</gray>", "condition": "trial"}
+    - {"text": "<gray>Проходка закончилась. Продлить и вернуть доступ — <white>/pass menu</white>.</gray>", "condition": "no-pass"}
+    - {"text": "<gray>Спасибо за поддержку сервера! Ваша проходка активна: <white>%pass_left%</white>.</gray>", "condition": "paid"}
+    - {"text": "<gray>Защитите аккаунт: <white>/2fa setup</white>. Никому не сообщайте пароль и коды.</gray>", "condition": "unsecured"}
+    - {"text": "<gray>48 достижений ждут своего героя: <white>/achievements</white>.</gray>", "plugin": "CHRDK_Achievements", "permission": "chrdkachievements.use"}
+    - {"text": "<gray>Клад можно найти в любом камне: <white>/treasures</white>.</gray>", "plugin": "CHRDK_Treasures", "permission": "chrdktreasures.use"}
+    - {"text": "<gray>Общие цели сервера: <white>/goals</white>. Сейчас на сервере <white>%online%</white> игроков.</gray>", "plugin": "CHRDK_CommonGoals", "permission": "chrdkgoals.use", "min-online": 3}
 
 tablist:
   # Таб-лист (TAB): шапка/подвал списка игроков и формат имени в нём.
@@ -807,6 +801,44 @@ tablist:
 
 ---
 
+## Банк алмазов: `/bal`, `/pay`, `/baltop` (1.4.139)
+
+Валюта сервера — **алмазы**: обычный предмет в инвентаре и счёт в банке. Курс
+фиксированный (алмазный блок = 9 алмазов), поэтому депозит и снятие ничего не
+теряют. Переводы идут **по счёту**, а не предметами: получатель может быть
+офлайн, а сумма не зависит от свободного места в инвентаре.
+
+| Команда | Что делает |
+|---|---|
+| `/bal` | Баланс счёта, алмазы в инвентаре и сумма |
+| `/bal <ник>` | Баланс другого игрока |
+| `/bal deposit [all\|hand\|сумма]` | Положить алмазы и блоки в банк |
+| `/bal withdraw <сумма>` | Снять алмазы в инвентарь (проверяется место) |
+| `/pay <ник> <сумма>` | Перевод другому игроку, в том числе офлайн |
+| `/baltop [страница]` | Топ счетов (10 строк на страницу) |
+
+Что важно знать:
+
+- **Счёт переживает смерть и перезапуск**, данные лежат в
+  `plugins/CHRDK_Core/bank.json`; ник — не ключ, поэтому смена ника не теряет
+  баланс.
+- **Депозит принимает только обычные алмазы и алмазные блоки**: именованные и
+  зачарованные предметы не трогаются. Снятие сначала проверяет место и лишь
+  потом списывает — «алмазы в дроп» не уходят.
+- **Комиссия и пауза** настраиваются в `economy`: `pay-tax-percent` (0 — без
+  потерь), `pay-cooldown-seconds`, `min-pay`/`max-pay`, `allow-offline-pay`.
+  Комиссия не зачисляется никому — это сдерживающий налог, а не доход сервера.
+- **Администратор** управляет счетами через
+  `/pass bank <give|take|set|reset|info> <ник> [сумма]`; каждая операция
+  пишется в аудит (`BANK_ADMIN`). Верхняя граница счёта — 1 000 000 000
+  алмазов, переполнение отклоняется вместо «минуса».
+- **`/bal` — отдельный счёт от «счёта магазина»** CHRDK_DiamondShop: магазин
+  считает в алмазном эквиваленте с курсами материалов, банк хранит именно
+  алмазы. Деньги аукциона и казна приватов тоже живут отдельно, у каждого
+  аддона своя касса.
+
+---
+
 ## Права (permissions)
 
 | Право | По умолчанию | Описание |
@@ -820,6 +852,10 @@ tablist:
 | `chrdkregister.automessage.receive` | все | Получение автосообщений сервера |
 | `chrdkregister.chat.mute` | OP | Муты (`/mute`, `/unmute`) и медленный режим `/chat slow` |
 | `chrdkregister.chat.history` | OP | История чата `/chat history` |
+| `chrdkregister.bal` | все | Банк алмазов: `/bal`, депозит и снятие |
+| `chrdkregister.bal.others` | все | Чужой баланс: `/bal <ник>` |
+| `chrdkregister.pay` | все | Переводы алмазов: `/pay <ник> <сумма>` |
+| `chrdkregister.baltop` | все | Топ счетов: `/baltop` |
 
 ---
 
@@ -839,6 +875,10 @@ tablist:
 | `%chrdk_auth_stage_id%` | Стадия входа, машиночитаемая | `no_pass`, `needs_register`, `needs_login`, `needs_2fa`, `authenticated` |
 | `%chrdk_chat_channel%` | Текущий канал чата игрока (только онлайн) | `локальный`, `глобальный` |
 | `%chrdk_chat_channel_id%` | Канал, машиночитаемый | `local`, `global` |
+| `%chrdk_balance%` | Баланс банка с разрядами | `1 234` |
+| `%chrdk_balance_raw%` | Баланс банка числом | `1234` |
+| `%chrdk_bank_sent%` | Сумма отправленных переводов | `500` |
+| `%chrdk_bank_received%` | Сумма полученных переводов | `250` |
 | `%chrdk_registered%` | Зарегистрирован ли аккаунт | `да` / `нет` |
 | `%chrdk_2fa%` | Включена ли TOTP 2FA | `да` / `нет` |
 | `%chrdk_muted%` | Действует ли сейчас мут | `да` / `нет` |
@@ -1441,9 +1481,9 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
 
 ---
 
-## Аддон CHRDK_Treasures — русские клады (с версии 1.4.133; звания и серии — 1.4.134; лут-таблицы — 1.4.135–1.4.136; способности, сеты и проклятия — 1.4.137)
+## Аддон CHRDK_Treasures — русские клады (с версии 1.4.133; звания и серии — 1.4.134; лут-таблицы — 1.4.135–1.4.136; способности, сеты и проклятия — 1.4.137; арсенал Mine Treasure — 1.4.139)
 
-**62 именные находки, 5 редкостей и 14 биомных регионов.** Механика выросла из
+**98 именных находок (62 классические и 36 из арсенала Mine Treasure), 5 редкостей и 14 биомных регионов.** Механика выросла из
 запроса «плагин с функционалом датапака Mine Treasure, но наш, русский»: идея
 (клады за добычу, редкости, биомные таблицы, коллекция, прогрессия) сохранена,
 а код, тексты и оформление написаны с нуля — оригинал не копировался.
@@ -1464,18 +1504,29 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
   Регион определяется по измерению, биому и высоте: вода и побережье важнее
   глубины, `deep_dark` важнее всего, ниже −8 поверхностный биом уступает
   «глубинам», а Нижний мир и Край не зависят от биома.
-- **62 находки.** По четыре в каждом регионе (обычная, редкая, эпическая,
-  легендарная) плюс шесть мифических без привязки к биому. У каждой находки
-  свой материал, лор, редкость и 1–3 эффекта: урон, броня, здоровье, скорость,
+- **98 находок.** 62 классические — по четыре в каждом регионе (обычная,
+  редкая, эпическая, легендарная) плюс шесть мифических без привязки к биому,
+  — и 36 вещей арсенала Mine Treasure (см. ниже). У каждой находки свой
+  материал, лор, редкость и 1–3 эффекта: урон, броня, здоровье, скорость,
   копание, удача, вампиризм, поджог, двойная руда, опыт, ауры регенерации,
   дыхания и огнестойкости.
+- **Арсенал Mine Treasure — 36 вещей и 12 способностей (1.4.139).** Из
+  датапака Mine Treasure 1.6.5 перенесены оружие (клинки убийцы, урагана и
+  иссушения, топоры варвара и грома, ледяной меч, ядовитое мачете, луки
+  бродяги и искажённый, океанический трезубец), броня десяти биомов и утилиты
+  (исцеляющий цветок, горный рог, чувство тревоги, шипы под ногами,
+  некромантия, гига-бур). Механики переписаны нативно на Bukkit: JSON-функции
+  и loot-таблицы датапака не копируются (лицензия `LicenseRef-MT`), а
+  воспроизводятся своими способностями. Доля арсенала среди именных находок —
+  `arsenal.share` (по умолчанию 35 %), поэтому классический каталог не
+  вытесняется. Все тексты, названия и подсказки — русские.
 - **Прогрессия.** Редкие клады закрыты, пока игрок не добыл 250 блоков,
   эпические — 2 000, легендарные — 15 000. Мифические доступны сразу, но их
   шанс ничтожен. Прогресс считается по каждому игроку и не сбрасывается.
-- **Коллекция и награды.** `/treasures` — витрина по регионам, отдельная
-  мифическая страница, сводка прогресса и переключатели звука, частиц и
-  сообщений. Вехи коллекции (10/25/40/62 находки) выдают 8/24/48/96 алмазов
-  один раз.
+- **Коллекция и награды.** `/treasures` — витрина по регионам (классические
+  находки и арсенал в одной сетке), отдельная мифическая страница, сводка
+  прогресса и переключатели звука, частиц и сообщений. Вехи коллекции
+  (10/25/40/62/80/98 находок) выдают 8/24/48/96/128/192 алмазов один раз.
 - **Звания.** Шесть ступеней за общее число кладов: Новичок (0), Искатель (5),
   Кладоискатель (15), Знаток (35), Мастер (75), Легенда (150). Переход даёт
   алмазы (4/10/20/40/80 по умолчанию), объявляется игроку, а «Легенда» — и
@@ -1520,6 +1571,26 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
   способности нельзя раскачать. Способности бьют только враждебных мобов, не
   трогают игроков и мир; у лука и арбалета ПКМ работает в приседе, чтобы
   обычный выстрел оставался обычным. Право — `chrdktreasures.ability`.
+- **Арсенал Mine Treasure (1.4.139).** 36 вещей из датапака Mine Treasure
+  1.6.5 с русскими названиями и описаниями: 10 единиц оружия (клинки убийцы,
+  урагана и иссушения, топоры варвара и грома, ледяной меч, ядовитое мачете,
+  луки бродяги и искажённый, океанический трезубец), 19 предметов брони по
+  биомам (шлемы пустошей, цветочный, капельников,
+  искажённый, Шлем душ и шлем саванны; нагрудники пустыни, тёмного леса,
+  трясины, ветра, океана и багровый; горные поножи, штаны пышных пещер и
+  тайги; ледяные, базальтовые и краевые ботинки; ботинки джунглей; грибной
+  щит) и 5 утилит (исцеляющий цветок, горный рог, чувство тревоги, шипы под
+  ногами, некромантия) плюс мифический гига-бур. У 16 из них
+  активная способность — 12 новых видов: взрыв, ледяной удар, иссушение, яд,
+  прилив, перенос, порыв ветра, боевое безумие, бур, шипы, некромантия и
+  горн.
+  Механики переписаны нативно: JSON-функции и loot-таблицы датапака
+  (лицензия `LicenseRef-MT`) не копируются, а воспроизводятся Bukkit-кодом.
+  Арсенал — второй пул тех же регионов и редкостей; `arsenal.share` задаёт
+  долю арсенала среди именных находок (по умолчанию 0,35), поэтому классика
+  не вытесняется. Вещи арсенала входят в коллекцию (98 позиций), учитываются
+  в региональных сетах и видны в витрине, `/treasures list` и админской
+  выдаче по идам `dp-*`.
 - **Сетовые бонусы.** Четыре находки одного региона в инвентаре — это сет:
   2 предмета дают частичный бонус, 4 — полный (надевать весь набор не нужно:
   в нём есть кирки и клинки). Всего 14 сетов: равнины ускоряют и добавляют
@@ -1588,7 +1659,7 @@ PlaceholderAPI — мягкая интеграция: `%chrdktreasures_found%`, 
 
 ### Установка
 
-Рядом с ядром положить `chrdk-treasures-1.4.137.jar`; зависимость —
+Рядом с ядром положить `chrdk-treasures-1.4.139.jar`; зависимость —
 `CHRDK_Core`, необязательная — `PlaceholderAPI`. Конфиг, тексты и `loot.yml`
 создаются при первом запуске, старые версии читаются без миграции:
 `chances.yml` появляется только после первой команды `chance`, а блоки старого
@@ -1604,26 +1675,26 @@ PlaceholderAPI — мягкая интеграция: `%chrdktreasures_found%`, 
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.137.jar`,
-аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.137.jar`,
-реферальный — `referrals/build/libs/chrdk-referrals-1.4.137.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.137.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.137.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.137.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.137.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.137.jar` (хартия чар — при установленном аддоне чар),
-достижения — `achievements/build/libs/chrdk-achievements-1.4.137.jar`, навыки —
-`skills/build/libs/chrdk-skills-1.4.137.jar`, клады —
-`treasures/build/libs/chrdk-treasures-1.4.137.jar`, общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.137.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.137.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.137.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.137.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.137.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.137.jar`, стримерская программа —
-`streams/build/libs/chrdk-streams-1.4.137.jar`, лотерея —
-`lottery/build/libs/chrdk-lottery-1.4.137.jar`, аукцион —
-`auction/build/libs/chrdk-auction-1.4.137.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.139.jar`,
+аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.139.jar`,
+реферальный — `referrals/build/libs/chrdk-referrals-1.4.139.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.139.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.139.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.139.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.139.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.139.jar` (хартия чар — при установленном аддоне чар),
+достижения — `achievements/build/libs/chrdk-achievements-1.4.139.jar`, навыки —
+`skills/build/libs/chrdk-skills-1.4.139.jar`, клады —
+`treasures/build/libs/chrdk-treasures-1.4.139.jar`, общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.139.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.139.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.139.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.139.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.139.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.139.jar`, стримерская программа —
+`streams/build/libs/chrdk-streams-1.4.139.jar`, лотерея —
+`lottery/build/libs/chrdk-lottery-1.4.139.jar`, аукцион —
+`auction/build/libs/chrdk-auction-1.4.139.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). К релизу на GitHub прикладывается **один архив**
 `chrdk-plugins-<версия>.zip`: ядро и все 20 аддонов одной версии плюс памятка
 `ОБНОВЛЕНИЕ.txt`. Отдельные JAR больше не публикуются.
@@ -3638,6 +3709,104 @@ PDC предмета — две копии одного ида могут быт
 набор JAR (ядро + все аддоны) — в GitHub-релизе.
 
 ---
+
+### Арсенал Mine Treasure: 36 вещей и 12 новых видов способностей — релиз 1.4.139
+
+Волна 29 — перенос датапака Mine Treasure 1.6.5 в наш плагин: предметы и их
+функции переписаны нативно на Bukkit, все названия, описания и подсказки —
+русские. Код, JSON-функции и loot-таблицы датапака не копировались: лицензия
+`LicenseRef-MT` разрешает идеи и механики, но не ассеты и не код.
+
+**1. 36 новых находок и второй пул.** Арсенал — это 10 единиц оружия (клинки
+убийцы, урагана и иссушения, топоры варвара и грома, ледяной меч, ядовитое
+мачете, луки бродяги и искажённый, океанический трезубец), 19 предметов брони
+по биомам и 5 утилит (исцеляющий цветок, горный рог, чувство
+тревоги, шипы под ногами, некромантия) плюс грибной щит и мифический гига-бур. Вещи живут в
+пулах тех же регионов и редкостей и не вытесняют классические 62 находки:
+`arsenal.share` (по умолчанию 0,35) задаёт долю арсенала среди именных
+находок. Пустой пул одной стороны всегда уступает другой, поэтому находка не
+теряется из-за настройки.
+
+**2. 12 новых активных способностей.** Взрыв, ледяной удар, иссушение, яд,
+прилив, перенос по взгляду, порыв ветра, боевое безумие, бур, шипы,
+некромантия и горн. Правила те же, что у каталога: урон получают только
+враждебные мобы, блоки не разрушаются, мир не поджигается, радиус и сила
+зашиты в предмет, перезарядка 30–120 секунд и считается отдельно по каждому
+иду. У луков способность срабатывает только в приседе, чтобы обычный выстрел
+оставался обычным.
+
+**3. Коллекция выросла до 98 позиций.** Реестр находок объединяет каталог и
+арсенал: витрина региона показывает классические четыре находки и вещи
+арсенала в одной сетке (до 21 слота), мифическая страница — шесть
+классических и гига-бур. Вехи коллекции теперь 10/25/40/62/80/98 находок и
+выдают 8/24/48/96/128/192 алмазов. Вещи арсенала учитываются в региональных
+сетах (четыре предмета региона, как и раньше) и распознаются по PDC, поэтому
+работают в чужих руках, сундуках и на аукционе.
+
+**4. Тексты и настройки.** В `messages.yml` — 36 пар «название/описание» и 12
+названий способностей; в `config.yml` — секция `arsenal.share` с русскими
+комментариями и обновлённые вехи. Проклятий у арсенала нет: это чистая сила,
+а не сделка. Выключить арсенал можно, поставив `arsenal.share: 0` — классика
+останется нетронутой, а уже выданные вещи продолжат работать.
+
+**5. Исправления.** `/pass status` больше не занижает число автосообщений
+(показывал 4 вместо 30 из-за старого счётчика строк). В релиз также целиком
+вошла волна 1.4.138 — двухуровневое меню, 30 автосообщений, банк алмазов
+`/bal` `/pay` `/baltop` и 48 достижений; её раздел идёт ниже.
+
+**Обновление:** версия 1.4.139, перезапуск сервера. Возьмите
+`chrdk-plugins-1.4.139.zip`, распакуйте JAR-ы в `plugins/` (инструкция — в
+`ОБНОВЛЕНИЕ.txt` внутри архива). Существующие `config.yml`, `loot.yml` и
+`messages.yml` читаются без миграции: новые ключи добавятся при первом
+запуске, вехи дополнятся сами, счётчики коллекции не сбросятся.
+
+### Меню, автосообщения, банк алмазов и 48 достижений — волна 1.4.138 (в релизе 1.4.139)
+
+Волна 28 — «витрина и деньги»: главное меню перестало быть одной простынёй,
+автосообщения научились говорить по делу, у сервера появился настоящий банк
+алмазов, а достижений стало вдвое больше.
+
+**1. Меню `/menu` — две страницы вместо одной.** Главная показывает шесть
+категорий (аккаунт, прогресс, экономика, мир, снаряжение, сообщество) и пять
+быстрых кнопок; внутри категории — её пункты и кнопка «Назад». Категория, у
+которой не осталось доступных пунктов, исчезает сама, поэтому игрок не попадает
+в пустой инвентарь. Пункты по-прежнему конфиг-driven: `plugin` скрывает кнопку
+без аддона, `permission` — без права. Старые плоские конфиги работают как
+раньше; стоковый набор обновляется автоматически (снимок прошлой версии лежит
+рядом). В меню добавлены все новые волны: достижения, навыки, клады, коллекция
+артефактов, стримерская программа, банк и топ.
+
+**2. Автосообщения — 30 сообщений и новые условия.** Появились `condition:
+no-pass` (проходки нет) и `condition: paid` (активная непробная проходка),
+`min-online` (показывать только на «живом» сервере), подстановки `%balance%`,
+`%pass_type%`, `%world%`, `%max%`. Случайный порядок больше не повторяет
+последние пять текстов, а последовательный — не повторяет предыдущее сообщение,
+если список кандидатов сузился. Новые тексты покрывают банк, достижения, навыки,
+клады, артефакты, стримы и ежедневки; все они уважают аддон и право.
+Администратору — `/pass automessages list|next|test <номер>`: посмотреть
+настройки, отправить следующее немедленно или проверить один текст только себе.
+
+**3. Банк алмазов: `/bal`, `/pay`, `/baltop`.** Счёт в алмазах, депозит и
+снятие по курсу блока, переводы по счёту (работают офлайн-получателю), топ
+счетов постранично. Комиссия, пауза, границы суммы и офлайн-переводы — в секции
+`economy`. API ядра вырос до v7: `bankBalance`, `bankSent`, `bankReceived`;
+PlaceholderAPI получил `%chrdk_balance%`, `%chrdk_balance_raw%`,
+`%chrdk_bank_sent%`, `%chrdk_bank_received%`. Админ — `/pass bank ...` с записью
+в аудит.
+
+**4. Достижений 48: по 12 в каждом разделе.** Новые счётчики: поставленные
+блоки, зачарования, варка зелий, сделки с жителями, еда, приручение, сон,
+переходы в Нижний мир и Край, стрелы, нанесённый и полученный урон, смерти,
+удары по щиту, сношенные инструменты и банк (пиковый баланс, отправлено,
+получено). Витрина `Все` листается стрелками, награды прежние — дни проходки и
+алмазы, «Легенда» требует остальные 47.
+
+**Обновление:** всё перечисленное вошло в релиз 1.4.139 (см. раздел выше),
+перезапуск сервера. Возьмите `chrdk-plugins-1.4.139.zip`, распакуйте JAR-ы в `plugins/` (инструкция — в
+`ОБНОВЛЕНИЕ.txt` внутри архива). Существующие конфиги не ломаются: новые ключи
+добавятся при первом запуске, стоковые секции меню и автосообщений обновятся
+сами, если их не правили, а счета банка начинаются с нуля — алмазы в инвентарях
+не тронуты.
 
 ### CHRDK_Treasures: способности по ПКМ, сеты и проклятия — релиз 1.4.137
 

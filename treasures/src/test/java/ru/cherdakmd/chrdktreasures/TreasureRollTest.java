@@ -86,6 +86,50 @@ class TreasureRollTest {
     }
 
     @Test
+    void arsenalShareSwitchesThePool() {
+        // Пустыня, легендарная редкость: в арсенале есть «Клинок убийцы».
+        for (int seed = 0; seed < 50; seed++) {
+            TreasureRoll.Roll classic = TreasureRoll.roll(TreasureTier.LEGENDARY,
+                    TreasureRegion.DESERT, 1.0, new Random(seed), Long.MAX_VALUE, 0.0);
+            assertEquals(TreasureCatalog.forRegionTier(TreasureRegion.DESERT,
+                    TreasureTier.LEGENDARY), classic.item());
+            TreasureRoll.Roll arsenal = TreasureRoll.roll(TreasureTier.LEGENDARY,
+                    TreasureRegion.DESERT, 1.0, new Random(seed), Long.MAX_VALUE, 1.0);
+            assertNotNull(arsenal.item());
+            assertTrue(arsenal.item().id().startsWith("dp-"),
+                    "при доле 1.0 выпала классика: " + arsenal.item().id());
+        }
+    }
+
+    @Test
+    void emptyArsenalPoolFallsBackToClassic() {
+        // У обычной редкости арсенала нет: доля 1.0 не должна оставить без находки.
+        for (int seed = 0; seed < 50; seed++) {
+            TreasureRoll.Roll roll = TreasureRoll.roll(TreasureTier.COMMON,
+                    TreasureRegion.PLAINS, 1.0, new Random(seed), Long.MAX_VALUE, 1.0);
+            assertTrue(roll.named());
+            assertEquals(TreasureCatalog.forRegionTier(TreasureRegion.PLAINS, TreasureTier.COMMON),
+                    roll.item());
+        }
+    }
+
+    @Test
+    void mythicalArsenalJoinsTheSharedPool() {
+        boolean arsenal = false;
+        boolean classic = false;
+        for (int seed = 0; seed < 200; seed++) {
+            TreasureRoll.Roll roll = TreasureRoll.roll(TreasureTier.MYTHICAL,
+                    TreasureRegion.END, 1.0, new Random(seed), Long.MAX_VALUE, 0.5);
+            assertNotNull(roll.item());
+            assertEquals(TreasureTier.MYTHICAL, roll.item().tier());
+            arsenal |= roll.item().id().startsWith("dp-");
+            classic |= !roll.item().id().startsWith("dp-");
+        }
+        assertTrue(arsenal, "мифическая вещь арсенала так и не выпала");
+        assertTrue(classic, "классические мифические находки перестали выпадать");
+    }
+
+    @Test
     void lootIsAlwaysImmutable() {
         TreasureRoll.Roll roll = new TreasureRoll.Roll(TreasureTier.COMMON,
                 TreasureRegion.PLAINS, null, null);

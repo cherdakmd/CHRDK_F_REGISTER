@@ -84,7 +84,7 @@ public final class TreasureService {
     }
 
     public int totalItems() {
-        return TreasureCatalog.size();
+        return TreasureRegistry.size();
     }
 
     /** Текущее звание кладоискателя. */
@@ -210,7 +210,8 @@ public final class TreasureService {
      * дорогие записи только после порога добытых блоков.
      */
     public TreasureRoll.Roll rollContent(TreasureTier tier, TreasureRegion region, long mined) {
-        return TreasureRoll.roll(tier, region, plugin.config().itemChance(tier), random, mined);
+        return TreasureRoll.roll(tier, region, plugin.config().itemChance(tier), random, mined,
+                plugin.config().arsenalShare());
     }
 
     /* --------------------------------- выдача --------------------------------- */
@@ -371,7 +372,7 @@ public final class TreasureService {
             }
             plugin.messages().send(player, "collection-milestone",
                     "found", String.valueOf(threshold),
-                    "total", String.valueOf(TreasureCatalog.size()),
+                    "total", String.valueOf(TreasureRegistry.size()),
                     "diamonds", String.valueOf(diamonds));
         }
         return List.copyOf(granted);

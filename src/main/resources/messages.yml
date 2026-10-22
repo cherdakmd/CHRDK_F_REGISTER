@@ -48,6 +48,8 @@ messages:
   # common — Общие слова состояния (используются в разных сообщениях)
   # ---------------------------------------------------------------
   "common":
+    "no-permission": "<red>Недостаточно прав.</red>"
+    "player-only": "<red>Эта команда доступна только игрокам.</red>"
     "connected": "<green>подключён</green>"
     "console": "<gray>консоль</gray>"
     "disabled": "<yellow><bold>ОТКЛЮЧЕНА</bold></yellow>"
@@ -963,6 +965,60 @@ messages:
   # ---------------------------------------------------------------
   "logout":
     "success": "<green>✓ Вы вышли из аккаунта. Сессия по IP сброшена, пароль потребуется снова.</green>"
+
+
+  # ---------------------------------------------------------------
+  # automessages — проверка автосообщений (1.4.138)
+  # ---------------------------------------------------------------
+  "automessages":
+    "disabled": "<red>Чат выключен в config.yml — автосообщения не отправляются.</red>"
+    "usage": "<yellow>/%label% automessages [list|next|test <номер>]</yellow>"
+    "list-header": "<gold>Автосообщения: <white>%count%</white>, интервал <white>%seconds%</white> с</gold>"
+    "list-line": "<gray>%number%. <white>%condition%</white> <dark_gray>·</dark_gray> <gray>%target%</gray>"
+    "list-footer": "<dark_gray>Отправить следующее: /%label% automessages next · проверить текст: /%label% automessages test 1</dark_gray>"
+    "condition-always": "всегда"
+    "target-all": "всем"
+    "sent": "<green>Автосообщение отправлено игрокам: %count%.</green>"
+    "sent-none": "<yellow>Сейчас некому отправлять: нет авторизованных игроков или подходящих текстов.</yellow>"
+    "test-sent": "<green>Сообщение №%number% отправлено только вам.</green>"
+    "test-unknown": "<red>Сообщения №%number% нет: настроено %count%.</red>"
+
+  # ---------------------------------------------------------------
+  # economy — банк алмазов, /bal, /pay, /baltop (1.4.138)
+  # ---------------------------------------------------------------
+  "economy":
+    "disabled": "<red>Банк выключен в config.yml (economy.enabled).</red>"
+    "help": "<gold>Банк алмазов</gold>\n<gray>/bal — баланс счёта и алмазов в инвентаре</gray>\n<gray>/bal <ник> — баланс другого игрока</gray>\n<gray>/bal deposit [all|hand|сумма] — положить алмазы в банк</gray>\n<gray>/bal withdraw <сумма> — снять алмазы в инвентарь</gray>\n<gray>/pay <ник> <сумма> — перевод (работает и для офлайн-игрока)</gray>\n<gray>/baltop [страница] — топ счетов</gray>"
+    "balance": "<gold>Баланс: <white>%balance%</white> алмазов</gold> <dark_gray>·</dark_gray> <gray>в инвентаре: <white>%inventory%</white> <dark_gray>·</dark_gray> всего: <white>%total%</white></gray>"
+    "balance-other": "<gold>Баланс игрока <white>%player%</white>: <white>%balance%</white> алмазов</gold>"
+    "balance-hint": "<dark_gray>Депозит: /bal deposit · снятие: /bal withdraw · перевод: /pay ник сумма</dark_gray>"
+    "unknown-player": "<red>Игрок %player% не найден: он не заходил после установки банка.</red>"
+    "invalid-amount": "<red>Сумма должна быть целым числом алмазов: 100, 1 000, 1k, 1.5k.</red>"
+    "usage-deposit": "<yellow>/bal deposit [all|hand|сумма]</yellow>"
+    "usage-withdraw": "<yellow>/bal withdraw <сумма></yellow>"
+    "usage-pay": "<yellow>/pay <ник> <сумма></yellow>"
+    "nothing-to-deposit": "<yellow>В инвентаре нет обычных алмазов или алмазных блоков.</yellow>"
+    "not-enough-items": "<red>В инвентаре меньше <white>%amount%</white> обычных алмазов.</red>"
+    "deposit-done": "<green>В банк положено <white>%amount%</white> алмазов. Баланс: <white>%balance%</white>.</green>"
+    "withdraw-done": "<green>Со счёта снято <white>%amount%</white> алмазов. Баланс: <white>%balance%</white>.</green>"
+    "not-enough-balance": "<red>На счёте только <white>%balance%</white> алмазов — нужно <white>%amount%</white>.</red>"
+    "no-space": "<red>В инвентаре не хватает места. Освободите слоты и повторите.</red>"
+    "pay-limits": "<yellow>Сумма перевода — от <white>%min%</white> до <white>%max%</white> алмазов.</yellow>"
+    "pay-self": "<red>Перевести алмазы самому себе нельзя.</red>"
+    "pay-sent": "<green>Переведено <white>%amount%</white> алмазов игроку <white>%player%</white> (зачислено <white>%credited%</white>). Баланс: <white>%balance%</white>.</green>"
+    "pay-tax": "<gray>Комиссия перевода: <white>%tax%</white> алмазов.</gray>"
+    "pay-received": "<green>Игрок <white>%player%</white> перевёл вам <white>%amount%</white> алмазов.</green>"
+    "pay-cooldown": "<yellow>Переводы подряд ограничены: подождите <white>%seconds%</white> с.</yellow>"
+    "pay-limit-target": "<red>Счёт получателя достиг верхнего предела банка.</red>"
+    "baltop-title": "<gold>Топ банка <dark_gray>·</dark_gray> <gray>стр. %page%/%pages%</gray></gold>"
+    "baltop-line": "<gray>%place%. <white>%player%</white> <dark_gray>—</dark_gray> <aqua>%balance%</aqua>"
+    "baltop-footer": "<dark_gray>Следующая страница: /baltop %next%</dark_gray>"
+    "baltop-empty": "<yellow>В банке пока нет ненулевых счетов.</yellow>"
+    "admin-usage": "<yellow>/%label% bank <give|take|set|reset|info> <ник> [сумма]</yellow>"
+    "admin-done": "<green>Счёт игрока <white>%player%</white>: <white>%balance%</white> алмазов.</green>"
+    "admin-summary": "<gold>Банк: <white>%accounts%</white> счетов, в обороте <white>%total%</white> алмазов.</gold>"
+    "admin-summary-line": "<gray>%player% <dark_gray>—</dark_gray> <aqua>%balance%</aqua>"
+
   # ---------------------------------------------------------------
   # Серверное меню /menu (GUI, конфиг-driven; иконки/тексты берутся из config.yml)
   "server-menu":
@@ -973,6 +1029,7 @@ messages:
     "title": "<gold>Меню сервера</gold>"
     "disabled": "<red>Меню сервера отключено в конфигурации.</red>"
     "player-only": "<red>Меню доступно только игрокам.</red>"
+    "empty": "<yellow>В этом разделе пока нет доступных пунктов: проверьте аддоны и права.</yellow>"
 
   # ---------------------------------------------------------------
   # shop — каталог товаров (1.4.110)

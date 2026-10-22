@@ -15,7 +15,8 @@ import java.nio.file.Path;
 import java.util.Locale;
 
 /**
- * CHRDK_Treasures — русские клады: 5 редкостей, 14 регионов и 62 находки.
+ * CHRDK_Treasures — русские клады: 5 редкостей, 14 регионов и 98 находок
+ * (62 классические и 36 вещей арсенала Mine Treasure).
  *
  * <p>Клад выпадает за честную добычу блока. Редкость зависит от породы, глубины
  * и биома, а также от прогрессии: редкие клады открываются после накопленного
@@ -98,7 +99,8 @@ public final class TreasuresPlugin extends JavaPlugin {
             auras.apply(player);
         }
 
-        getLogger().info("CHRDK_Treasures включён: находок " + TreasureCatalog.size()
+        getLogger().info("CHRDK_Treasures включён: находок " + TreasureRegistry.size()
+                + " (арсенал " + TreasureArsenal.size() + ")"
                 + ", регионов " + TreasureRegion.values().length
                 + ", редкостей " + TreasureTier.values().length
                 + ", добыча кладов " + (config.enabled() ? "включена" : "выключена") + ".");
@@ -323,7 +325,7 @@ public final class TreasuresPlugin extends JavaPlugin {
 
         @Override
         public int totalItems() {
-            return TreasureCatalog.size();
+            return TreasureRegistry.size();
         }
 
         @Override
@@ -353,7 +355,7 @@ public final class TreasuresPlugin extends JavaPlugin {
 
         @Override
         public boolean give(Player player, String itemId) {
-            TreasureItemDef def = TreasureCatalog.find(itemId);
+            TreasureItemDef def = TreasureRegistry.find(itemId);
             return def != null && service.giveItem(player, def);
         }
 
@@ -386,7 +388,7 @@ public final class TreasuresPlugin extends JavaPlugin {
 
         @Override
         public long abilityCooldown(Player player, String itemId) {
-            TreasureItemDef def = TreasureCatalog.find(itemId);
+            TreasureItemDef def = TreasureRegistry.find(itemId);
             if (def == null || def.ability() == null) {
                 return 0L;
             }

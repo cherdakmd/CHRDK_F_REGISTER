@@ -76,10 +76,34 @@ commands:
   unmute:
     description: Снять мут с игрока
     usage: /<command> <ник>
+  bal:
+    description: Баланс алмазного банка, депозит и снятие
+    usage: /<command> [ник|deposit [all|hand|сумма]|withdraw <сумма>]
+    aliases: [balance, money, bank]
+  pay:
+    description: Перевести алмазы другому игроку
+    usage: /<command> <ник> <сумма>
+    aliases: [payto]
+  baltop:
+    description: Топ игроков по балансу банка
+    usage: /<command> [страница]
+    aliases: [balancetop, topbal]
 
 permissions:
   chrdkregister.menu:
     description: Главное меню сервера /menu (GUI)
+    default: true
+  chrdkregister.bal:
+    description: Банк алмазов — /bal, депозит и снятие
+    default: true
+  chrdkregister.bal.others:
+    description: Смотреть чужой баланс через /bal <ник>
+    default: true
+  chrdkregister.pay:
+    description: Переводы алмазов через /pay
+    default: true
+  chrdkregister.baltop:
+    description: Топ балансов /baltop
     default: true
   chrdkregister.admin:
     description: Доступ к ручному добавлению игроков и управлению плагином

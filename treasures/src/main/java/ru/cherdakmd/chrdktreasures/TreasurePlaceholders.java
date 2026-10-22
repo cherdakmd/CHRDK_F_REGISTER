@@ -59,7 +59,7 @@ public final class TreasurePlaceholders extends PlaceholderExpansion {
     public @Nullable String onRequest(OfflinePlayer player, @NotNull String params) {
         String key = params.toLowerCase(Locale.ROOT);
         if ("total".equals(key)) {
-            return Integer.toString(TreasureCatalog.size());
+            return Integer.toString(TreasureRegistry.size());
         }
         if (key.startsWith("chance_")) {
             TreasureTier tier = TreasureTier.byId(key.substring("chance_".length()));

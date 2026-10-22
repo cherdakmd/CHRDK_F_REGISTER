@@ -51,6 +51,15 @@ class AddonApiContractTest {
     }
 
     @Test
+    void bankMetricsAreAdditive() throws Exception {
+        assertTrue(ChrdkRegisterApi.API_VERSION >= 7);
+        for (String method : new String[]{"bankBalance", "bankSent", "bankReceived"}) {
+            assertTrue(ChrdkRegisterApi.class.getMethod(method, String.class).isDefault(),
+                    method + " должен иметь реализацию по умолчанию");
+        }
+    }
+
+    @Test
     void authStagesKeepStableOrder() {
         // Аддоны полагаются на то, что значения не переименовываются/не удаляются.
         assertEquals("NO_PASS", ApiAuthStage.values()[0].name());

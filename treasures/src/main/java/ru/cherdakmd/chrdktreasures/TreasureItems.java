@@ -218,7 +218,7 @@ public final class TreasureItems {
 
     /** Определение находки по предмету или {@code null}. */
     public TreasureItemDef defOf(ItemStack item) {
-        return TreasureCatalog.find(idOf(item));
+        return TreasureRegistry.find(idOf(item));
     }
 
     /**

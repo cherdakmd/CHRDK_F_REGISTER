@@ -2,7 +2,7 @@ name: CHRDK_Treasures
 version: ${version}
 main: ru.cherdakmd.chrdktreasures.TreasuresPlugin
 api-version: '26.3'
-description: "Русские клады: 5 редкостей, 14 биомных регионов, 62 именные находки со способностями по ПКМ, сетами и проклятиями"
+description: "Русские клады: 5 редкостей, 14 биомных регионов, 98 находок (62 классические и 36 из арсенала Mine Treasure), 21 вид способностей по ПКМ, сеты и проклятия"
 author: cherdakmd
 depend: [CHRDK_Core]
 softdepend: [PlaceholderAPI]

@@ -43,7 +43,34 @@ public record TreasureAbility(Kind kind, double power, int radius, int cooldownS
         /** Замедлить мобов вокруг; сила — секунды замедления. */
         FROST_NOVA("морозная волна", Unit.SECONDS),
         /** Дыхание под водой и скорость в воде; сила — секунды. */
-        AQUA("дыхание глубин", Unit.SECONDS);
+        AQUA("дыхание глубин", Unit.SECONDS),
+
+        /* ------------------- перенос из датапака Mine Treasure ------------------- */
+
+        /** Взрыв без разрушения блоков: урон и отброс мобов; сила — урон. */
+        EXPLOSION("взрыв", Unit.DAMAGE),
+        /** Ледяной удар: урон и замедление мобов; сила — урон. */
+        FROST_STRIKE("ледяной удар", Unit.DAMAGE),
+        /** Иссушение: урон и «Иссушение» мобам; сила — урон. */
+        WITHER_STRIKE("иссушение", Unit.DAMAGE),
+        /** Яд: урон и отравление мобов; сила — урон. */
+        VENOM("яд", Unit.DAMAGE),
+        /** Прилив: притянуть мобов и замедлить; сила — урон касания. */
+        TIDE("прилив", Unit.DAMAGE),
+        /** Перенос вперёд по взгляду; сила — дальность в блоках. */
+        BLINK("перенос", Unit.BLOCKS),
+        /** Порыв ветра: отброс и слабость мобам; сила — урон. */
+        GUST("порыв ветра", Unit.DAMAGE),
+        /** Боевое безумие: сила и скорость себе; сила — секунды. */
+        FRENZY("боевое безумие", Unit.SECONDS),
+        /** Бур: спешка и ночное зрение; сила — секунды. */
+        BORE("бур", Unit.SECONDS),
+        /** Шипы: зона урона вокруг игрока; сила — секунды. */
+        SPIKES("шипы", Unit.SECONDS),
+        /** Некромантия: временные волки-союзники; сила — секунды. */
+        NECROMANCY("некромантия", Unit.SECONDS),
+        /** Горн: бафф союзникам и отброс мобов; сила — секунды. */
+        HORN("горн", Unit.SECONDS);
 
         private final String title;
         private final Unit unit;
@@ -70,8 +97,12 @@ public record TreasureAbility(Kind kind, double power, int radius, int cooldownS
 
         /** Нужна ли цель: способность бьёт по мобам, а не по игроку. */
         public boolean targeted() {
-            return this == SENSE || this == BLAST
-                    || this == FLAME_NOVA || this == FROST_NOVA;
+            return switch (this) {
+                case SENSE, BLAST, FLAME_NOVA, FROST_NOVA,
+                        EXPLOSION, FROST_STRIKE, WITHER_STRIKE, VENOM, TIDE, GUST, HORN,
+                        SPIKES -> true;
+                default -> false;
+            };
         }
 
         /** Русская подпись вида — для логов и админской информации. */
@@ -89,7 +120,9 @@ public record TreasureAbility(Kind kind, double power, int radius, int cooldownS
         /** Урон в половинах сердца. */
         DAMAGE,
         /** Скорость рывка или прыжка. */
-        VELOCITY
+        VELOCITY,
+        /** Дальность переноса в блоках. */
+        BLOCKS
     }
 
     public TreasureAbility {
@@ -116,6 +149,9 @@ public record TreasureAbility(Kind kind, double power, int radius, int cooldownS
         }
         if (kind.unit() == Unit.VELOCITY && power > 4.0) {
             throw new IllegalArgumentException("скорость рывка слишком велика: " + power);
+        }
+        if (kind == Kind.BLINK && power > 24.0) {
+            throw new IllegalArgumentException("дальность переноса больше 24 блоков: " + power);
         }
     }
 }
