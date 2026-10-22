@@ -14,13 +14,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -32,12 +29,6 @@ import java.util.logging.Logger;
  * вид, кличка, опыт и отметка о смерти; уровень никогда не хранится — он
  * выводится из опыта через {@link PetCurve}. Смена кривой в конфиге не требует
  * миграции.</p>
- *
- * <p>С версии 1.4.144 запись хранит ещё и заботу: сытость, настроение, режим,
- * счётчики (убийства, рыбалка, минуты рядом, смерти), выученные трюки,
- * достижения, косметику (ошейник, свечение), отметки кулдаунов и дневник.
- * Старый файл без этих полей читается без миграции: отсутствующие значения
- * берутся из дефолтов, а версия файла просто становится 2.</p>
  *
  * <p>Паттерн записи общий для репозитория: мутации на главном потоке,
  * {@link #snapshotJson()} и асинхронная запись {@link #saveNow()}; синхронизация
@@ -57,28 +48,6 @@ public final class PetStore {
         private boolean dead;
         private final long created;
         private long diedAt;
-
-        /* 1.4.144: забота, прогресс и косметика. */
-        private int satiety = PetCare.Settings.DEFAULT.startSatiety();
-        private int mood = PetCare.Settings.DEFAULT.moodNeutral();
-        private long careAt;
-        private PetMode mode = PetMode.FOLLOW;
-        private int kills;
-        private int fish;
-        private int deaths;
-        private int bestLevel = 1;
-        private long togetherSeconds;
-        private String collar = "";
-        private boolean glow;
-        private long lastFed;
-        private long lastPetted;
-        private long lastTrick;
-        private long lastCalled;
-        private long lastHealed;
-        private long lastRenamed;
-        private final Set<String> tricks = new LinkedHashSet<>();
-        private final Set<String> achievements = new LinkedHashSet<>();
-        private List<String> diary = new ArrayList<>();
 
         private PetData(UUID id, UUID ownerId, String ownerName, PetSpecies species,
                         String name, long xp, boolean dead, long created, long diedAt) {
@@ -130,100 +99,14 @@ public final class PetStore {
             return diedAt;
         }
 
-        public int satiety() {
-            return satiety;
+        @Override
+        public boolean equals(Object other) {
+            return other instanceof PetData data && id.equals(data.id);
         }
 
-        public int mood() {
-            return mood;
-        }
-
-        public long careAt() {
-            return careAt;
-        }
-
-        public PetMode mode() {
-            return mode;
-        }
-
-        public int kills() {
-            return kills;
-        }
-
-        public int fish() {
-            return fish;
-        }
-
-        public int deaths() {
-            return deaths;
-        }
-
-        /** Лучший достигнутый уровень; переживает падение уровня админом. */
-        public int bestLevel() {
-            return bestLevel;
-        }
-
-        public long togetherSeconds() {
-            return togetherSeconds;
-        }
-
-        public long minutesTogether() {
-            return togetherSeconds / 60L;
-        }
-
-        /** Выученные трюки (копия: снаружи набор не меняется). */
-        public Set<String> tricks() {
-            return Set.copyOf(tricks);
-        }
-
-        public boolean hasTrick(String trick) {
-            return trick != null && tricks.contains(trick);
-        }
-
-        public Set<String> achievements() {
-            return Set.copyOf(achievements);
-        }
-
-        public boolean hasAchievement(String achievement) {
-            return achievement != null && achievements.contains(achievement);
-        }
-
-        /** Идентификатор ошейника; пустая строка — ванильный цвет. */
-        public String collar() {
-            return collar;
-        }
-
-        public boolean glow() {
-            return glow;
-        }
-
-        public long lastFed() {
-            return lastFed;
-        }
-
-        public long lastPetted() {
-            return lastPetted;
-        }
-
-        public long lastTrick() {
-            return lastTrick;
-        }
-
-        public long lastCalled() {
-            return lastCalled;
-        }
-
-        public long lastHealed() {
-            return lastHealed;
-        }
-
-        public long lastRenamed() {
-            return lastRenamed;
-        }
-
-        /** Лента событий в формате {@link PetDiary}. */
-        public List<String> diary() {
-            return List.copyOf(diary);
+        @Override
+        public int hashCode() {
+            return id.hashCode();
         }
     }
 
@@ -232,6 +115,9 @@ public final class PetStore {
     }.getType();
     private static final Comparator<PetData> NEWEST_FIRST =
             Comparator.comparingLong(PetData::created).reversed();
+    private static final Comparator<PetData> TOP_ORDER =
+            Comparator.comparingLong(PetData::xp).reversed()
+                    .thenComparingLong(PetData::created);
 
     private final Path file;
     private final Logger logger;
@@ -247,6 +133,7 @@ public final class PetStore {
         return file;
     }
 
+    /** Читает файл; битые строки пропускаются с предупреждением. */
     public synchronized void load() {
         if (!Files.isRegularFile(file)) {
             return;
@@ -269,7 +156,7 @@ public final class PetStore {
                     skipped++;
                     continue;
                 }
-                PetData pet = new PetData(
+                pets.put(id, new PetData(
                         id,
                         ownerId,
                         string(row.get("owner-name")),
@@ -278,9 +165,7 @@ public final class PetStore {
                         number(row.get("xp")),
                         bool(row.get("dead")),
                         number(row.get("created")),
-                        number(row.get("died")));
-                readExtras(pet, row);
-                pets.put(id, pet);
+                        number(row.get("died"))));
             }
             if (skipped > 0) {
                 logger.warning("[CHRDK_Pets] Пропущено записей pets.json: " + skipped + ".");
@@ -291,32 +176,6 @@ public final class PetStore {
             logger.severe("[CHRDK_Pets] Не удалось прочитать " + file + ": "
                     + exception.getMessage());
         }
-    }
-
-    /** Дочитывает поля версии 2; всё отсутствующее остаётся дефолтным. */
-    private static void readExtras(PetData pet, Map<?, ?> row) {
-        pet.satiety = clampInt(intNumber(row.get("satiety")),
-                PetCare.Settings.DEFAULT.startSatiety());
-        pet.mood = clampInt(intNumber(row.get("mood")), PetCare.Settings.DEFAULT.moodNeutral());
-        pet.careAt = number(row.get("care-at"));
-        pet.mode = PetMode.byId(string(row.get("mode")));
-        pet.kills = (int) Math.min(Integer.MAX_VALUE, number(row.get("kills")));
-        pet.fish = (int) Math.min(Integer.MAX_VALUE, number(row.get("fish")));
-        pet.deaths = (int) Math.min(Integer.MAX_VALUE, number(row.get("deaths")));
-        pet.bestLevel = Math.max(1, (int) Math.min(Integer.MAX_VALUE, number(row.get("best-level"))));
-        pet.togetherSeconds = number(row.get("together-seconds"));
-        pet.collar = string(row.get("collar"));
-        pet.glow = bool(row.get("glow"));
-        pet.lastFed = number(row.get("last-fed"));
-        pet.lastPetted = number(row.get("last-petted"));
-        pet.lastTrick = number(row.get("last-trick"));
-        pet.lastCalled = number(row.get("last-called"));
-        pet.lastHealed = number(row.get("last-healed"));
-        pet.lastRenamed = number(row.get("last-renamed"));
-        pet.tricks.addAll(strings(row.get("tricks")));
-        pet.achievements.addAll(strings(row.get("achievements")));
-        List<String> diary = strings(row.get("diary"));
-        pet.diary = new ArrayList<>(diary);
     }
 
     /** Регистрирует нового питомца. Повторный вызов с тем же UUID возвращает старую запись. */
@@ -332,7 +191,6 @@ public final class PetStore {
         long created = now <= 0L ? System.currentTimeMillis() : now;
         PetData data = new PetData(id, ownerId, ownerName, species, name, 0L, false,
                 created, 0L);
-        data.careAt = created;
         pets.put(id, data);
         dirty = true;
         return data;
@@ -389,31 +247,32 @@ public final class PetStore {
             }
             out.add(data);
         }
-        out.sort(Comparator.comparingLong(PetData::xp).reversed()
-                .thenComparing(PetData::created));
+        out.sort(TOP_ORDER);
         int size = Math.max(0, Math.min(limit, out.size()));
         return List.copyOf(out.subList(0, size));
     }
 
+    /** Начисляет опыт живому питомцу; отрицательные значения игнорируются. */
     public synchronized void addXp(UUID id, long amount) {
         PetData data = get(id);
         if (data == null || data.dead || amount <= 0L) {
             return;
         }
-        long next = data.xp + amount;
-        if (next < 0L) {
-            next = Long.MAX_VALUE;
-        }
-        data.xp = next;
+        data.xp = data.xp > Long.MAX_VALUE - amount ? Long.MAX_VALUE : data.xp + amount;
         dirty = true;
     }
 
+    /** Устанавливает опыт напрямую (админская команда, тесты). */
     public synchronized void setXp(UUID id, long xp) {
         PetData data = get(id);
         if (data == null) {
             return;
         }
-        data.xp = Math.max(0L, xp);
+        long next = Math.max(0L, xp);
+        if (next == data.xp) {
+            return;
+        }
+        data.xp = next;
         dirty = true;
     }
 
@@ -422,7 +281,7 @@ public final class PetStore {
         if (data == null) {
             return;
         }
-        String next = name == null ? "" : name;
+        String next = name == null ? "" : name.trim();
         if (next.equals(data.name)) {
             return;
         }
@@ -445,10 +304,11 @@ public final class PetStore {
         if (ownerId == null || name == null || name.isBlank()) {
             return 0;
         }
+        String clean = name.trim();
         int changed = 0;
         for (PetData data : pets.values()) {
-            if (ownerId.equals(data.ownerId) && !name.equals(data.ownerName)) {
-                data.ownerName = name;
+            if (ownerId.equals(data.ownerId) && !clean.equals(data.ownerName)) {
+                data.ownerName = clean;
                 changed++;
             }
         }
@@ -465,168 +325,6 @@ public final class PetStore {
         }
         data.dead = true;
         data.diedAt = when <= 0L ? System.currentTimeMillis() : when;
-        dirty = true;
-    }
-
-    /* ------------------------------------------------------------ забота и прогресс */
-
-    /** Сохраняет шкалы заботы и время расчёта. */
-    public synchronized void setCare(UUID id, int satiety, int mood, long at) {
-        PetData data = get(id);
-        if (data == null) {
-            return;
-        }
-        int nextSatiety = clampInt(satiety, data.satiety);
-        int nextMood = clampInt(mood, data.mood);
-        long nextAt = at <= 0L ? data.careAt : at;
-        if (nextSatiety == data.satiety && nextMood == data.mood && nextAt == data.careAt) {
-            return;
-        }
-        data.satiety = nextSatiety;
-        data.mood = nextMood;
-        data.careAt = nextAt;
-        dirty = true;
-    }
-
-    public synchronized void setMode(UUID id, PetMode mode) {
-        PetData data = get(id);
-        if (data == null || mode == null || mode == data.mode) {
-            return;
-        }
-        data.mode = mode;
-        dirty = true;
-    }
-
-    public synchronized void addKill(UUID id) {
-        PetData data = get(id);
-        if (data == null || data.dead) {
-            return;
-        }
-        data.kills++;
-        dirty = true;
-    }
-
-    public synchronized void addFish(UUID id) {
-        PetData data = get(id);
-        if (data == null || data.dead) {
-            return;
-        }
-        data.fish++;
-        dirty = true;
-    }
-
-    public synchronized void addDeath(UUID id) {
-        PetData data = get(id);
-        if (data == null) {
-            return;
-        }
-        data.deaths++;
-        dirty = true;
-    }
-
-    /** Поднимает планку лучшего уровня (вниз не опускается). */
-    public synchronized void setBestLevel(UUID id, int level) {
-        PetData data = get(id);
-        if (data == null) {
-            return;
-        }
-        int next = Math.max(data.bestLevel, Math.max(1, level));
-        if (next == data.bestLevel) {
-            return;
-        }
-        data.bestLevel = next;
-        dirty = true;
-    }
-
-    public synchronized void addTogetherSeconds(UUID id, long seconds) {
-        PetData data = get(id);
-        if (data == null || data.dead || seconds <= 0L) {
-            return;
-        }
-        data.togetherSeconds = Math.min(Long.MAX_VALUE, data.togetherSeconds + seconds);
-        dirty = true;
-    }
-
-    /** Учит трюку; {@code true} — трюк новый. */
-    public synchronized boolean learnTrick(UUID id, String trick) {
-        PetData data = get(id);
-        if (data == null || data.dead || trick == null || trick.isBlank()) {
-            return false;
-        }
-        if (!data.tricks.add(trick.trim())) {
-            return false;
-        }
-        dirty = true;
-        return true;
-    }
-
-    /** Закрывает достижение; {@code true} — оно новое. */
-    public synchronized boolean unlockAchievement(UUID id, String achievement) {
-        PetData data = get(id);
-        if (data == null || achievement == null || achievement.isBlank()) {
-            return false;
-        }
-        if (!data.achievements.add(achievement.trim())) {
-            return false;
-        }
-        dirty = true;
-        return true;
-    }
-
-    public synchronized void setCollar(UUID id, String collar) {
-        PetData data = get(id);
-        if (data == null) {
-            return;
-        }
-        String next = collar == null ? "" : collar.trim();
-        if (next.equals(data.collar)) {
-            return;
-        }
-        data.collar = next;
-        dirty = true;
-    }
-
-    public synchronized void setGlow(UUID id, boolean glow) {
-        PetData data = get(id);
-        if (data == null || data.glow == glow) {
-            return;
-        }
-        data.glow = glow;
-        dirty = true;
-    }
-
-    /**
-     * Отмечает кулдаун действия: {@code fed}, {@code petted}, {@code trick},
-     * {@code called}, {@code healed}, {@code renamed}. Неизвестное имя игнорируется.
-     */
-    public synchronized void markAction(UUID id, String action, long when) {
-        PetData data = get(id);
-        if (data == null || action == null) {
-            return;
-        }
-        long stamp = when <= 0L ? System.currentTimeMillis() : when;
-        switch (action) {
-            case "fed" -> data.lastFed = stamp;
-            case "petted" -> data.lastPetted = stamp;
-            case "trick" -> data.lastTrick = stamp;
-            case "called" -> data.lastCalled = stamp;
-            case "healed" -> data.lastHealed = stamp;
-            case "renamed" -> data.lastRenamed = stamp;
-            default -> {
-                return;
-            }
-        }
-        dirty = true;
-    }
-
-    /** Добавляет событие в дневник, обрезая ленту до {@code limit}. */
-    public synchronized void addDiary(UUID id, long at, String code, String arg, int limit) {
-        PetData data = get(id);
-        if (data == null || code == null || code.isBlank()) {
-            return;
-        }
-        data.diary = PetDiary.append(data.diary,
-                new PetDiary.Entry(at <= 0L ? System.currentTimeMillis() : at, code, arg), limit);
         dirty = true;
     }
 
@@ -680,15 +378,6 @@ public final class PetStore {
         return total;
     }
 
-    /** Сколько трюков выучено всеми питомцами — для админской сводки. */
-    public synchronized int trickCount() {
-        int total = 0;
-        for (PetData data : pets.values()) {
-            total += data.tricks.size();
-        }
-        return total;
-    }
-
     public synchronized boolean isDirty() {
         return dirty;
     }
@@ -696,7 +385,7 @@ public final class PetStore {
     /** Снимок для асинхронной записи; сбрасывает флаг «грязно». */
     public synchronized String snapshotJson() {
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("version", 2);
+        data.put("version", 1);
         Map<String, Object> rows = new LinkedHashMap<>();
         for (PetData pet : pets.values()) {
             Map<String, Object> fields = new LinkedHashMap<>();
@@ -710,41 +399,11 @@ public final class PetStore {
             if (pet.dead) {
                 fields.put("died", pet.diedAt);
             }
-            fields.put("satiety", pet.satiety);
-            fields.put("mood", pet.mood);
-            fields.put("care-at", pet.careAt);
-            fields.put("mode", pet.mode.id());
-            fields.put("kills", pet.kills);
-            fields.put("fish", pet.fish);
-            fields.put("deaths", pet.deaths);
-            fields.put("best-level", pet.bestLevel);
-            fields.put("together-seconds", pet.togetherSeconds);
-            fields.put("tricks", List.copyOf(pet.tricks));
-            fields.put("achievements", List.copyOf(pet.achievements));
-            if (!pet.collar.isEmpty()) {
-                fields.put("collar", pet.collar);
-            }
-            fields.put("glow", pet.glow);
-            putStamp(fields, "last-fed", pet.lastFed);
-            putStamp(fields, "last-petted", pet.lastPetted);
-            putStamp(fields, "last-trick", pet.lastTrick);
-            putStamp(fields, "last-called", pet.lastCalled);
-            putStamp(fields, "last-healed", pet.lastHealed);
-            putStamp(fields, "last-renamed", pet.lastRenamed);
-            if (!pet.diary.isEmpty()) {
-                fields.put("diary", List.copyOf(pet.diary));
-            }
             rows.put(pet.id.toString(), fields);
         }
         data.put("pets", rows);
         dirty = false;
         return GSON.toJson(data);
-    }
-
-    private static void putStamp(Map<String, Object> fields, String key, long value) {
-        if (value > 0L) {
-            fields.put(key, value);
-        }
     }
 
     /** Пишет файл, если есть изменения (или его ещё нет). */
@@ -795,10 +454,6 @@ public final class PetStore {
         }
     }
 
-    private static int clampInt(int value, int fallback) {
-        return Math.max(0, Math.min(100, value < 0 ? fallback : value));
-    }
-
     private static UUID parseUuid(Object value) {
         if (value == null) {
             return null;
@@ -818,24 +473,7 @@ public final class PetStore {
         return value instanceof Number number ? Math.max(0L, number.longValue()) : 0L;
     }
 
-    private static int intNumber(Object value) {
-        return value instanceof Number number ? number.intValue() : Integer.MIN_VALUE;
-    }
-
     private static boolean bool(Object value) {
         return value instanceof Boolean flag && flag;
-    }
-
-    private static List<String> strings(Object value) {
-        if (!(value instanceof Collection<?> collection)) {
-            return List.of();
-        }
-        List<String> out = new ArrayList<>();
-        for (Object item : collection) {
-            if (item != null) {
-                out.add(String.valueOf(item));
-            }
-        }
-        return out;
     }
 }

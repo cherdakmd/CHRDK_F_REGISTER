@@ -1687,27 +1687,27 @@ PlaceholderAPI — мягкая интеграция: `%chrdktreasures_found%`, 
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.144.jar`,
-аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.144.jar`,
-реферальный — `referrals/build/libs/chrdk-referrals-1.4.144.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.144.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.144.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.144.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.144.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.144.jar` (хартия чар — при установленном аддоне чар),
-достижения — `achievements/build/libs/chrdk-achievements-1.4.144.jar`, навыки —
-`skills/build/libs/chrdk-skills-1.4.144.jar`, клады —
-`treasures/build/libs/chrdk-treasures-1.4.144.jar`, общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.144.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.144.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.144.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.144.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.144.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.144.jar`, стримерская программа —
-`streams/build/libs/chrdk-streams-1.4.144.jar`, лотерея —
-`lottery/build/libs/chrdk-lottery-1.4.144.jar`, аукцион —
-`auction/build/libs/chrdk-auction-1.4.144.jar`, питомцы —
-`pets/build/libs/chrdk-pets-1.4.144.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.145.jar`,
+аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.145.jar`,
+реферальный — `referrals/build/libs/chrdk-referrals-1.4.145.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.145.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.145.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.145.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.145.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.145.jar` (хартия чар — при установленном аддоне чар),
+достижения — `achievements/build/libs/chrdk-achievements-1.4.145.jar`, навыки —
+`skills/build/libs/chrdk-skills-1.4.145.jar`, клады —
+`treasures/build/libs/chrdk-treasures-1.4.145.jar`, общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.145.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.145.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.145.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.145.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.145.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.145.jar`, стримерская программа —
+`streams/build/libs/chrdk-streams-1.4.145.jar`, лотерея —
+`lottery/build/libs/chrdk-lottery-1.4.145.jar`, аукцион —
+`auction/build/libs/chrdk-auction-1.4.145.jar`, питомцы —
+`pets/build/libs/chrdk-pets-1.4.145.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). К релизу на GitHub прикладывается **один архив**
 `chrdk-plugins-<версия>.zip`: ядро и все 20 аддонов одной версии плюс памятка
 `ОБНОВЛЕНИЕ.txt`. Отдельные JAR больше не публикуются.
@@ -3821,6 +3821,57 @@ PDC предмета — две копии одного ида могут быт
 `xp.disabled-worlds`, `general.max-pets`, `names.auto-*`) появятся только в
 свежем файле: удалите `plugins/CHRDK_Pets/config.yml` и `messages.yml` перед
 первым запуском либо добавьте секции вручную. Ядро и все аддоны — одной версии.
+
+### Питомцы: простая версия — релиз 1.4.145
+
+В 1.4.144 питомцы обросли двадцатью пятью механиками: забота, трюки, режимы,
+косметика, дневник, достижения и API v2. Волна получилась честной, но тяжёлой:
+11 секций конфига, ~190 ключей сообщений, 24 класса и 78 тестов — против одной
+строчки «приручил и играю». На практике игрок открывал карточку, смотрел
+уровень и шёл дальше; полировать было нечего, а поддерживать — дорого.
+
+**1.4.145 — намеренное упрощение.** Убраны забота (сытость, настроение,
+кормление, поглаживание, лечение), трюки, режимы `follow|stay`, вызов, поиск,
+титулы, счётчики, достижения, дневник, автоимена, кулдауны, косметика
+(ошейник, свечение) и множители опыта «близость/ночь/выходные». Осталось ядро,
+которое видно каждый вечер:
+
+- **уровень и опыт** — кривая 1..10 (1 260 опыта на весь путь), опыт только за
+  враждебных мобов, рыбалку и утренний сон, минутный потолок 120 на питомца;
+- **кличка** — `/pet name <имя>`, очистка разметки и запрещённых символов,
+  имя и уровень над головой;
+- **бонусы питомцу** — здоровье, урон волку, скорость; потолки `max-*`;
+- **аура хозяину** — от одного ближайшего питомца: до +2.7 % скорости от волка,
+  до +0.9 удачи от кошки;
+- **память** — погибший питомец остаётся в `/pet list` на 30 дней;
+- **команды** — `/pet`, `/pet help`, `/pet list`, `/pet top`, `/pet name`,
+  `/petsadmin reload|setlevel|info`.
+
+**2. Что стало меньше.** Секций конфига — 6 вместо 11 (`general`, `species`,
+`levels`, `xp`, `names`, `storage`), ключей сообщений — 51 вместо ~190, классов
+— 14 вместо 24, тестов — 44 в 5 классах вместо 78 в 16. `pets.json` снова
+версии 1: владелец, вид, кличка, опыт, смерть. Старый файл 1.4.144 читается без
+миграции — поля заботы просто игнорируются, опыт и клички сохраняются.
+
+**3. Что осталось за кадром.** Игровая логика не поменялась: питомец по-прежнему
+только ванильная приручённая кошка или волк, приём идёт с приручения, загрузки
+чанка и старта; здоровье растёт базовым значением `MAX_HEALTH` (с запоминанием
+ванильной базы в PDC), урон и скорость — транзитными модификаторами; при
+выключении модуля бонусы снимаются. Публичный `PetsApi` сузился до семи
+методов: `isPet`, `levelOf`, `xpOf`, `displayNameOf`, `petsOf`,
+`ownerSpeedBonusOf`, `ownerLuckBonusOf`.
+
+**4. Опыт и антинакрутка.** Как и раньше: волк добил моба — 8, хозяин добил
+рядом — 5, поймал рыбу — 6, проспал ночь — 25; кошке «уютные» события идут с
+множителем 1.5 (8 / 9 / 38). Животные, игроки и чужие питомцы опыта не дают,
+а минутный потолок не позволяет ферме кур разогнать прокачку.
+
+**Обновление:** версия 1.4.145, перезапуск сервера. Возьмите
+`chrdk-plugins-1.4.145.zip` из GitHub-релиза, распакуйте JAR-ы в `plugins/`.
+Перед первым запуском **удалите** `plugins/CHRDK_Pets/config.yml` и
+`messages.yml`: набор ключей изменился, и старые файлы дадут пустые строки
+вместо новых сообщений. `pets.json` удалять не нужно — прогресс сохранится.
+Полное описание модуля — `docs/PETS.md`.
 
 ### Питомцы из кошек и волков — релиз 1.4.143
 

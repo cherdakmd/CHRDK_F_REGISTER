@@ -1,8 +1,6 @@
 package ru.cherdakmd.chrdkpets;
 
-import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
@@ -11,83 +9,65 @@ import ru.cherdakmd.chrdkregister.Messages;
 import java.util.UUID;
 
 /**
- * CHRDK_Pets — кошки и волки, которых игрок уже приручил, получают уровни,
- * клички и бонусы. Новых сущностей модуль не спавнит: он работает с ванильным
- * поголовьем и не мешает ни клаймам, ни квестам.
+ * CHRDK_Pets — уровни, клички и бонусы для уже приручённых ванильных кошек и
+ * волков.
  *
- * <p>Прогресс живёт в {@code pets.json} по UUID сущности, уровень выводится из
- * опыта. Бонусы питомца — базовое здоровье и транзитные модификаторы урона и
- * скорости; аура хозяина пересчитывается пульсом раз в
- * {@code general.refresh-ticks} тиков и снимается, как только питомец ушёл,
- * погиб или модуль выключили.</p>
+ * <p>Модуль не спавнит питомцев: он подбирает существующих и ведёт их прогресс
+ * в {@code pets.json}. Поэтому установка не меняет мир, удаление не оставляет
+ * за собой сущностей, а прогресс не теряется при выключении аддона.</p>
  */
 public final class PetsPlugin extends JavaPlugin {
 
-    private volatile Messages messages;
-    private volatile PetsConfig config;
+    private PetsConfig config;
+    private Messages messages;
     private PetStore store;
     private PetService service;
     private PetAura aura;
-    private BukkitTask auraTask;
+    private BukkitTask refreshTask;
     private BukkitTask saveTask;
 
     @Override
     public void onEnable() {
-        saveDefaultConfig();
-        this.store = new PetStore(getDataFolder().toPath(), getLogger());
-        this.store.load();
-        reloadPetsConfig();
-
-        int purged = store.purgeDead(config.keepDeadDays(), System.currentTimeMillis());
-        if (purged > 0) {
-            getLogger().info("Удалено записей о погибших питомцах: " + purged + ".");
+        try {
+            saveDefaultConfig();
+            this.config = PetsConfig.parse(getConfig(), getLogger());
+            this.messages = Messages.load(this, config.locale(), getLogger());
+            this.store = new PetStore(getDataFolder().toPath(), getLogger());
+            store.load();
+            int purged = store.purgeDead(config.keepDeadDays(), System.currentTimeMillis());
+            if (purged > 0) {
+                getLogger().info("Удалено записей о погибших питомцах: " + purged);
+            }
+            this.service = new PetService(this);
+            this.aura = new PetAura(this);
+            getServer().getPluginManager().registerEvents(new PetListener(this), this);
+            registerCommand("pet");
+            registerCommand("petsadmin");
+            getServer().getServicesManager().register(PetsApi.class, new PetsApiImpl(this),
+                    this, ServicePriority.Normal);
+            int adopted = service.adoptLoaded();
+            scheduleTasks();
+            getLogger().info("CHRDK_Pets включён: питомцев в базе " + store.size()
+                    + ", подобрано при старте " + adopted + ", максимум уровня "
+                    + config.curve().maxLevel() + ".");
+        } catch (RuntimeException exception) {
+            getLogger().severe("CHRDK_Pets не смог запуститься: " + exception.getMessage());
+            exception.printStackTrace();
+            getServer().getPluginManager().disablePlugin(this);
         }
-
-        this.service = new PetService(this);
-        this.aura = new PetAura(this);
-
-        Bukkit.getPluginManager().registerEvents(new PetListener(this), this);
-        PetCommandHandler commands = new PetCommandHandler(this);
-        PluginCommand pet = getCommand("pet");
-        PluginCommand admin = getCommand("petsadmin");
-        if (pet != null) {
-            pet.setExecutor(commands);
-            pet.setTabCompleter(commands);
-        }
-        if (admin != null) {
-            admin.setExecutor(commands);
-            admin.setTabCompleter(commands);
-        }
-
-        registerApi();
-        this.saveTask = Bukkit.getScheduler().runTaskTimerAsynchronously(this,
-                this::saveState, config.saveIntervalSeconds() * 20L, config.saveIntervalSeconds() * 20L);
-        this.auraTask = Bukkit.getScheduler().runTaskTimer(this, this::refreshAuras,
-                config.refreshTicks(), config.refreshTicks());
-
-        service.adoptLoaded();
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            aura.refresh(player);
-        }
-
-        getLogger().info("CHRDK_Pets включён: питомцев " + store.size()
-                + " (живых " + store.aliveCount() + "), видов "
-                + (config.species(PetSpecies.WOLF).enabled() ? "волк " : "")
-                + (config.species(PetSpecies.CAT).enabled() ? "кошка" : ""));
     }
 
     @Override
     public void onDisable() {
-        if (auraTask != null) {
-            auraTask.cancel();
-            auraTask = null;
-        }
-        if (saveTask != null) {
-            saveTask.cancel();
-            saveTask = null;
-        }
+        cancelTasks();
         if (aura != null) {
             aura.clearAll();
+        }
+        if (service != null) {
+            int released = service.releaseBonuses();
+            if (released > 0) {
+                getLogger().info("Снято бонусов с питомцев: " + released + ".");
+            }
         }
         if (store != null) {
             store.flush();
@@ -95,59 +75,78 @@ public final class PetsPlugin extends JavaPlugin {
         getLogger().info("CHRDK_Pets выключен.");
     }
 
-    /** Перечитывает config.yml/messages.yml и переставляет бонусы загруженным питомцам. */
-    public void reloadPetsConfig() {
+    /** Перечитывает config.yml и messages.yml, пересобирает пульс и ауру. */
+    public int reloadAll() {
+        cancelTasks();
         reloadConfig();
-        this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"),
-                getLogger());
         this.config = PetsConfig.parse(getConfig(), getLogger());
-        if (service != null) {
-            service.adoptLoaded();
-            if (aura != null) {
-                for (Player player : Bukkit.getOnlinePlayers()) {
-                    aura.refresh(player);
-                }
-            }
+        this.messages = Messages.load(this, config.locale(), getLogger());
+        int adopted = service == null ? 0 : service.adoptLoaded();
+        scheduleTasks();
+        if (aura != null) {
+            aura.refreshAll();
         }
+        return adopted;
     }
 
-    private void refreshAuras() {
-        if (!config.enabled()) {
-            aura.clearAll();
+    private void registerCommand(String name) {
+        PluginCommand command = getCommand(name);
+        if (command == null) {
+            getLogger().warning("Команда " + name + " не объявлена в plugin.yml — модуль без неё.");
             return;
         }
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            try {
-                aura.refresh(player);
-            } catch (RuntimeException exception) {
-                getLogger().warning("Не удалось обновить ауру " + player.getName()
-                        + ": " + exception.getMessage());
-            }
+        PetCommandHandler handler = new PetCommandHandler(this);
+        command.setExecutor(handler);
+        command.setTabCompleter(handler);
+    }
+
+    private void scheduleTasks() {
+        this.refreshTask = getServer().getScheduler().runTaskTimer(this,
+                () -> {
+                    try {
+                        aura.refreshAll();
+                    } catch (RuntimeException exception) {
+                        getLogger().warning("Ошибка ауры питомцев: " + exception.getMessage());
+                    }
+                }, 20L, Math.max(10, config.refreshTicks()));
+        long period = Math.max(5, config.saveIntervalSeconds()) * 20L;
+        this.saveTask = getServer().getScheduler().runTaskTimerAsynchronously(this,
+                this::saveNow, period, period);
+    }
+
+    private void cancelTasks() {
+        if (refreshTask != null) {
+            refreshTask.cancel();
+            this.refreshTask = null;
+        }
+        if (saveTask != null) {
+            saveTask.cancel();
+            this.saveTask = null;
         }
     }
 
-    private void saveState() {
+    private void saveNow() {
         try {
-            if (store.isDirty()) {
+            if (store != null && store.isDirty()) {
                 store.saveNow();
             }
         } catch (RuntimeException exception) {
-            getLogger().warning("Не удалось сохранить питомцев: " + exception.getMessage());
+            getLogger().warning("Не удалось сохранить pets.json: " + exception.getMessage());
         }
     }
 
-    /** Регистрация публичного API: другие аддоны видят только интерфейс. */
-    public void registerApi() {
-        Bukkit.getServicesManager().register(PetsApi.class,
-                new PetsApiImpl(this), this, ServicePriority.Normal);
-    }
-
-    public Messages messages() {
-        return messages;
+    /** Уровень питомца по UUID; 0 — записи нет. */
+    public int levelOf(UUID petId) {
+        PetStore.PetData data = store.get(petId);
+        return data == null ? 0 : PetCurve.levelFor(data.xp(), config.curve());
     }
 
     public PetsConfig config() {
         return config;
+    }
+
+    public Messages messages() {
+        return messages;
     }
 
     public PetStore store() {
@@ -160,11 +159,5 @@ public final class PetsPlugin extends JavaPlugin {
 
     public PetAura aura() {
         return aura;
-    }
-
-    /** Уровень питомца по UUID — для API (без Bukkit-сущности). */
-    int levelOf(UUID petId) {
-        PetStore.PetData data = store.get(petId);
-        return data == null ? 0 : PetCurve.levelFor(data.xp(), config.curve());
     }
 }

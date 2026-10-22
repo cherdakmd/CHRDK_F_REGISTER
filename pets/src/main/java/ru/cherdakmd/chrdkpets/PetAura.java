@@ -1,44 +1,46 @@
 package ru.cherdakmd.chrdkpets;
 
+import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
 /**
- * Аура хозяина: небольшой бонус, пока рядом живёт его питомец.
+ * Аура хозяина: мягкий бонус, пока рядом живёт его питомец.
  *
- * <p>Правила намеренно жёсткие, чтобы питомцы не превратились в стопку
- * баффов: аура действует только на владельца, только от <b>одного</b>
- * ближайшего живого питомца и только в радиусе {@code general.owner-radius}.
- * Ушёл питомец, погиб, выключили модуль — модификаторы снимаются следующим
- * пульсом. Опыт и уровни за это не продаются: питомца нельзя купить, его
- * можно только приручить и вырастить.</p>
+ * <p>Аура намеренно маленькая и не складывается: у игрока может быть пять
+ * волков, но бонус считается только от ближайшего живого питомца. Иначе ферма
+ * питомцев стала бы способом получить бесконечную скорость. Значения растут с
+ * уровнем и упираются в потолки из конфига.</p>
+ *
+ * <p>Модификаторы транзитные (не попадают в NBT): перезаход или рестарт их
+ * снимает, а следующий пульс ставит заново. Поэтому выключение модуля никогда
+ * не оставляет игроку «вечную» скорость.</p>
  */
-final class PetAura {
-
-    private static final String SPEED_KEY = "aura_speed";
-    private static final String LUCK_KEY = "aura_luck";
+public final class PetAura {
 
     private final PetsPlugin plugin;
     private final NamespacedKey speedKey;
     private final NamespacedKey luckKey;
-    private final Map<UUID, UUID> activePet = new HashMap<>();
 
     PetAura(PetsPlugin plugin) {
         this.plugin = plugin;
-        this.speedKey = new NamespacedKey(plugin, SPEED_KEY);
-        this.luckKey = new NamespacedKey(plugin, LUCK_KEY);
+        this.speedKey = new NamespacedKey(plugin, "aura_speed");
+        this.luckKey = new NamespacedKey(plugin, "aura_luck");
     }
 
-    /** Переставляет ауру по текущему питомцу игрока. */
-    void refresh(Player player) {
-        if (player == null) {
+    /** Пересчитывает ауру всем онлайн-игрокам. Вызывается пульсом и при reload. */
+    public void refreshAll() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            refresh(player);
+        }
+    }
+
+    /** Пересчитывает ауру одного игрока. */
+    public void refresh(Player player) {
+        if (player == null || !player.isOnline()) {
             return;
         }
         if (!plugin.config().enabled()) {
@@ -47,37 +49,31 @@ final class PetAura {
         }
         LivingEntity pet = plugin.service().nearestOwned(player, plugin.config().ownerRadius());
         PetStore.PetData data = pet == null ? null : plugin.service().data(pet);
-        if (data == null) {
+        if (data == null || data.dead()) {
             clear(player);
             return;
         }
-        activePet.put(player.getUniqueId(), data.id());
-        plugin.service().tickTogether(data);
         PetBuffs.Stats stats = PetBuffs.stats(
                 plugin.config().species(data.species()).buffs(),
-                plugin.service().level(data));
-        PetAttributes.set(player, Attribute.MOVEMENT_SPEED, speedKey,
+                plugin.levelOf(pet.getUniqueId()));
+        PetAttributes.apply(player, Attribute.MOVEMENT_SPEED, speedKey,
                 stats.ownerSpeedScalar(), AttributeModifier.Operation.MULTIPLY_SCALAR_1);
-        PetAttributes.set(player, Attribute.LUCK, luckKey,
-                stats.ownerLuck(), AttributeModifier.Operation.ADD_NUMBER);
+        PetAttributes.apply(player, Attribute.LUCK, luckKey, stats.ownerLuck(),
+                AttributeModifier.Operation.ADD_NUMBER);
     }
 
-    /** Снимает ауру с игрока. */
-    void clear(Player player) {
+    /** Снимает ауру с игрока (выход, смерть питомца, выключение модуля). */
+    public void clear(Player player) {
         if (player == null) {
             return;
         }
         PetAttributes.remove(player, Attribute.MOVEMENT_SPEED, speedKey);
         PetAttributes.remove(player, Attribute.LUCK, luckKey);
-        UUID petId = activePet.remove(player.getUniqueId());
-        if (petId != null) {
-            plugin.service().forgetTogether(petId);
-        }
     }
 
-    /** Снимает ауру со всех онлайн-игроков (выключение, reload). */
-    void clearAll() {
-        for (Player player : plugin.getServer().getOnlinePlayers()) {
+    /** Снимает ауру со всех онлайн-игроков. */
+    public void clearAll() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
             clear(player);
         }
     }

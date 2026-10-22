@@ -2,10 +2,9 @@ package ru.cherdakmd.chrdkpets;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
-/** Реализация {@link PetsApi} поверх {@link PetStore} и текущей кривой. */
+/** Реализация {@link PetsApi} поверх хранилища и текущего конфига. */
 final class PetsApiImpl implements PetsApi {
 
     private final PetsPlugin plugin;
@@ -31,9 +30,9 @@ final class PetsApiImpl implements PetsApi {
     }
 
     @Override
-    public String nameOf(UUID petId) {
+    public String displayNameOf(UUID petId) {
         PetStore.PetData data = plugin.store().get(petId);
-        return data == null ? null : data.name();
+        return data == null ? "" : plugin.service().displayName(data);
     }
 
     @Override
@@ -46,35 +45,21 @@ final class PetsApiImpl implements PetsApi {
     }
 
     @Override
-    public int moodOf(UUID petId) {
-        PetStore.PetData data = plugin.store().get(petId);
-        return data == null ? -1 : data.mood();
+    public double ownerSpeedBonusOf(UUID petId) {
+        return stats(petId).ownerSpeedScalar();
     }
 
     @Override
-    public int satietyOf(UUID petId) {
-        PetStore.PetData data = plugin.store().get(petId);
-        return data == null ? -1 : data.satiety();
+    public double ownerLuckBonusOf(UUID petId) {
+        return stats(petId).ownerLuck();
     }
 
-    @Override
-    public Set<String> tricksOf(UUID petId) {
+    private PetBuffs.Stats stats(UUID petId) {
         PetStore.PetData data = plugin.store().get(petId);
-        return data == null ? Set.of() : data.tricks();
-    }
-
-    @Override
-    public Set<String> achievementsOf(UUID petId) {
-        PetStore.PetData data = plugin.store().get(petId);
-        return data == null ? Set.of() : data.achievements();
-    }
-
-    @Override
-    public List<UUID> top(int limit) {
-        List<UUID> out = new ArrayList<>();
-        for (PetStore.PetData data : plugin.store().top(limit)) {
-            out.add(data.id());
+        if (data == null) {
+            return PetBuffs.Stats.NONE;
         }
-        return List.copyOf(out);
+        return PetBuffs.stats(plugin.config().species(data.species()).buffs(),
+                plugin.levelOf(petId));
     }
 }

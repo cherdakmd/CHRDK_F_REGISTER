@@ -11,46 +11,45 @@ class PetNamesTest {
     @Test
     void miniMessageTagsAreRemoved() {
         assertEquals("Барсик", PetNames.sanitize("<red>Барсик</red>", 16));
-        assertEquals("Барсик", PetNames.sanitize("<gradient:red:gold>Барсик</gradient>", 16));
+        assertEquals("Бар сик", PetNames.sanitize("Бар<bold>сик", 16));
     }
 
     @Test
-    void legacyColorCodesAreRemoved() {
-        assertEquals("Барсик", PetNames.sanitize("§cБарсик", 16));
-        assertEquals("Барсик", PetNames.sanitize("&cБарсик", 16));
+    void legacyCodesAreRemoved() {
+        assertEquals("Барсик", PetNames.sanitize("§aБарсик", 16));
+        assertEquals("Барсик", PetNames.sanitize("&6Барсик", 16));
+    }
+
+    @Test
+    void cyrillicAndAllowedPunctuationSurvive() {
+        assertEquals("Том-Кот_2", PetNames.sanitize("Том-Кот_2", 16));
+        assertEquals("Джек'с", PetNames.sanitize("Джек'с", 16));
     }
 
     @Test
     void forbiddenCharactersBecomeSpaces() {
-        assertEquals("Бар сик", PetNames.sanitize("Бар*сик", 16));
-        assertEquals("Барсик", PetNames.sanitize("Бар\u0007сик", 16));
+        assertEquals("Бар сик", PetNames.sanitize("Бар@#$сик", 16));
+        assertEquals("Волк", PetNames.sanitize("  Волк  ", 16));
     }
 
     @Test
-    void spacesAreCollapsedAndTrimmed() {
-        assertEquals("Барсик", PetNames.sanitize("  Барсик   ", 16));
-        assertEquals("Тихий сторож", PetNames.sanitize("Тихий   сторож", 16));
+    void spacesCollapse() {
+        assertEquals("Серый Волк", PetNames.sanitize("Серый   \t Волк", 16));
     }
 
     @Test
-    void lengthIsClamped() {
-        assertEquals("Бар", PetNames.sanitize("Барсик", 3));
-        assertEquals(16, PetNames.sanitize("ОченьДлиннаяКличкаПитомца", 16).length());
+    void lengthIsClampedToLimit() {
+        assertEquals("Барсик", PetNames.sanitize("Барсик", 6));
+        assertEquals("Барсик", PetNames.sanitize("Барсик", 100).substring(0, 6));
+        assertEquals(5, PetNames.sanitize("Барсик", 5).length());
     }
 
     @Test
-    void emptyNameWhenNothingIsLeft() {
-        assertEquals("", PetNames.sanitize("<red>§c***</red>", 16));
-        assertEquals("", PetNames.sanitize(null, 16));
-        assertEquals("", PetNames.sanitize("   ", 16));
-    }
-
-    @Test
-    void validChecksBounds() {
+    void validityChecksLengthAndEmptiness() {
         assertTrue(PetNames.valid("Барсик", 2, 16));
-        assertTrue(PetNames.valid("Бо", 2, 16));
-        assertFalse(PetNames.valid("Б", 2, 16));
+        assertFalse(PetNames.valid("А", 2, 16));
         assertFalse(PetNames.valid("", 1, 16));
-        assertFalse(PetNames.valid("ОченьДлиннаяКличка", 2, 16));
+        assertFalse(PetNames.valid(null, 1, 16));
+        assertFalse(PetNames.valid("Барсик", 2, 3));
     }
 }

@@ -2,25 +2,25 @@ name: CHRDK_Pets
 version: ${version}
 main: ru.cherdakmd.chrdkpets.PetsPlugin
 api-version: '26.3'
-description: "Питомцы из ванильных кошек и волков: уровни, клички, забота, трюки, бонусы и мягкая аура хозяину (аддон CHRDK_Core)"
+description: "Уровни, клички и бонусы для уже приручённых ванильных кошек и волков"
 author: cherdakmd
 depend: [CHRDK_Core]
 commands:
   pet:
-    description: "Питомцы: карточка, забота, трюки, топ и кличка"
+    description: "Карточка питомца, список и кличка"
     aliases: [pets]
-    usage: "/pet [help|list|top|name|feed|pat|heal|trick|mode|call|stats|achievements|diary|collar|glow|locate]"
+    usage: "/pet [help|list|top|name <имя>]"
   petsadmin:
     description: "Администрирование питомцев"
     permission: chrdkpets.admin
-    usage: "/petsadmin <reload|setlevel <ник> <уровень>|mood <ник> <0..100>|info <ник>|stats>"
+    usage: "/petsadmin <reload|setlevel <ник> <уровень>|info <ник>>"
 permissions:
   chrdkpets.use:
-    description: "Смотреть карточку, список и топ питомцев, заботиться о них"
+    description: "Просмотр карточки, списка и топа питомцев"
     default: true
   chrdkpets.name:
-    description: "Давать питомцам клички"
+    description: "Переименование своих питомцев"
     default: true
   chrdkpets.admin:
-    description: "Администрирование питомцев"
+    description: "Перезагрузка конфига, выдача уровней и диагностика питомцев"
     default: op

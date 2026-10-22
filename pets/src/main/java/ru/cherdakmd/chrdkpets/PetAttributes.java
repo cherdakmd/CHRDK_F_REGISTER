@@ -17,8 +17,7 @@ import java.util.List;
  * никогда не оставляет «зашитых» в сущность сердец и скорости.</p>
  *
  * <p>Ключ модификатора всегда один и тот же для своей роли: перед установкой
- * старый удаляется, поэтому повторный вызов идемпотентен и не плодит дубликаты
- * (та же причина, по которой в тир-форже ключи получили суффикс предмета).</p>
+ * старый удаляется, поэтому повторный вызов идемпотентен и не плодит дубликаты.</p>
  */
 final class PetAttributes {
 
@@ -26,9 +25,9 @@ final class PetAttributes {
     }
 
     /** Ставит модификатор или снимает его, если величина нулевая. */
-    static void set(LivingEntity entity, Attribute attribute, NamespacedKey key,
-                    double amount, AttributeModifier.Operation operation) {
-        if (entity == null || attribute == null || key == null) {
+    static void apply(LivingEntity entity, Attribute attribute, NamespacedKey key,
+                      double amount, AttributeModifier.Operation operation) {
+        if (entity == null || attribute == null || key == null || operation == null) {
             return;
         }
         AttributeInstance instance = entity.getAttribute(attribute);

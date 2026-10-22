@@ -1,233 +1,71 @@
-# CHRDK_Pets — тексты питомцев. Разметка MiniMessage, подстановки — %имя%.
-# Файл целиком лежит в секции messages:, поэтому в коде ключи короткие.
+# CHRDK_Pets — сообщения модуля. Разметка MiniMessage, подстановки — %имя%.
+#
+# Файл обёрнут в секцию messages: — так модуль читается через общий Messages
+# ядра (одна верхняя секция разворачивается в плоские ключи).
 messages:
-  # ------------------------------- общее -------------------------------
-  player-only: "<red>Эта команда только для игроков.</red>"
+  # --- общее ---
+  player-only: "<red>Эта команда доступна только игрокам.</red>"
   no-permission: "<red>Недостаточно прав.</red>"
   pets-disabled: "<red>Питомцы выключены администрацией.</red>"
-  care-disabled: "<red>Забота о питомцах выключена администрацией.</red>"
-  usage: "<yellow>Использование: /pet [help|list|top|name|feed|pat|heal|trick|mode|call|stats|achievements|diary|collar|glow|locate]</yellow>"
-  no-pet: "<yellow>Рядом нет твоего питомца. Приручи кошку или волка и попробуй снова.</yellow>"
-  limit-reached: "<red>У тебя уже %max% питомцев — больше модуль не примет. Назови или отпусти одного.</red>"
+  no-pet: "<yellow>Рядом нет твоего приручённого питомца.</yellow>"
+  usage: "<yellow>/pet [help|list|top|name <имя>]</yellow>"
 
-  # ---------------------------- виды и имена ----------------------------
-  species-wolf: "волк"
-  species-cat: "кошка"
+  # --- виды и имена ---
+  species-wolf: "Волк"
+  species-cat: "Кошка"
   default-wolf-name: "Волк"
   default-cat-name: "Кошка"
-  max-label: "макс."
-  # Имя над головой питомца: кличка и уровень.
   name-format: "<gold>%name%</gold> <dark_gray>·</dark_gray> <white>ур. %level%</white>"
-  # То же без уровня (names.show-level: false).
   name-format-plain: "<gold>%name%</gold>"
+  name-changed: "<green>Питомец теперь зовётся <white>%name%</white>.</green>"
+  name-length: "<red>Кличка должна быть от %min% до %max% символов.</red>"
+  name-same: "<yellow>У питомца уже такая кличка.</yellow>"
 
-  # ------------------------------- титулы ------------------------------
-  title-baby: "Малыш"
-  title-friend: "Друг"
-  title-loyal: "Верный"
-  title-guardian: "Страж"
-  title-legend: "Легенда"
+  # --- события ---
+  pet-adopted: "<green>%name% теперь твой питомец: уровень %level%. Карточка — /pet.</green>"
+  level-up: "<gold>%name% достиг %level% уровня!</gold>"
+  pet-died: "<red>%name% (%level% ур.) погиб. Память останется в /pet list.</red>"
 
-  # ------------------------------- события ------------------------------
-  adopted: "<green>✦ Питомец принят: <white>%name%</white>. Смотри карточку — /pet</green>"
-  level-up: "<gold>✦ <white>%name%</white> достиг <yellow>%level%</yellow> уровня!</gold>"
-  pet-died: "<red>☠ Питомец <white>%name%</white> погиб на %level% уровне. Он останется в /pet list.</red>"
-  name-auto: "<green>✦ Безымянный питомец получил кличку <white>%name%</white>. Переименовать: /pet name <имя></green>"
-  achievement-unlocked: "<gold>🏆 <white>%name%</white> закрыл достижение <yellow>%achievement%</yellow>!</gold>"
-
-  # ------------------------------- карточка -----------------------------
+  # --- карточка /pet ---
   card-header: "<gold><bold>Питомец</bold></gold>"
   card-name: "<white>%name%</white> <dark_gray>(%species%)</dark_gray>"
-  card-title: "<gray>Титул:</gray> <gold>%title%</gold>"
-  card-level: "<gray>Уровень:</gray> <yellow>%level%</yellow> <dark_gray>(%progress%)</dark_gray>"
-  card-bar: "<gray>%bar%</gray> <white>%percent%%</white>"
-  card-max: "<green>Максимальный уровень — дальше только компания.</green>"
-  card-care: "<gray>Настроение: <white>%mood%%</white> %moodbar% · сытость: <white>%satiety%%</white> %satietybar%</gray>"
-  card-health: "<gray>Питомцу: <white>+%health% HP</white> · <white>+%speed%% скорости</white></gray>"
-  card-damage: "<gray>Питомцу: <white>+%damage% урона</white></gray>"
-  card-aura-speed: "<gray>Аура хозяину: <aqua>+%speed%% скорости</aqua></gray>"
-  card-aura-luck: "<gray>Аура хозяину: <aqua>+%luck% удачи</aqua></gray>"
-  card-aura-none: "<gray>Аура хозяину: пока нет — расти дальше.</gray>"
-  card-mode: "<gray>Режим: <white>%mode%</white> · вместе: <white>%minutes%</white> мин</gray>"
-  card-look: "<gray>Ошейник: <white>%collar%</white> · свечение: <white>%glow%</white></gray>"
-  card-progress: "<gray>Трюки: <white>%tricks%/%trickmax%</white> · достижения: <white>%achievements%/%achievementmax%</white></gray>"
+  card-level: "<gray>Уровень:</gray> <yellow>%level%</yellow> <dark_gray>(%xp% опыта всего)</dark_gray>"
+  card-progress: "<gray>До следующего:</gray> %bar% <white>%into%/%need%</white>"
+  card-max: "<green>Максимальный уровень — вершина пройдена.</green>"
+  card-bonus-none: "<dark_gray>Бонусов пока нет: они начинаются со 2-го уровня.</dark_gray>"
+  card-bonus-health: "<gray>Питомцу: <white>+%health% HP</white> · <white>+%speed%% скорости</white></gray>"
+  card-bonus-damage: "<gray>Урон питомца: <white>+%damage%</white></gray>"
+  card-aura-speed: "<gray>Аура хозяину: <white>+%speed%% скорости</white></gray>"
+  card-aura-luck: "<gray>Аура хозяину: <white>+%luck% удачи</white></gray>"
+  card-aura-none: "<dark_gray>Аура хозяину: пока нет</dark_gray>"
+  card-footer: "<dark_gray>/pet list · /pet top · /pet name <имя></dark_gray>"
 
-  # -------------------------------- список ------------------------------
-  list-header: "<gold><bold>Питомцы</bold></gold> <dark_gray>(%alive% живых из %total%)</dark_gray>"
-  list-line: "<green>●</green> <white>%name%</white> <dark_gray>·</dark_gray> <gold>%title%</gold> <dark_gray>·</dark_gray> <gray>%species%</gray> <dark_gray>·</dark_gray> <yellow>%level%</yellow> <dark_gray>(%progress%)</dark_gray>"
-  list-line-dead: "<dark_gray>☠ %name% · %species% · погиб на %level% уровне</dark_gray>"
-  list-empty: "<yellow>У тебя пока нет питомцев. Приручи кошку или волка.</yellow>"
-  list-footer: "<dark_gray>Переименовать: /pet name <имя> · забота: /pet feed</dark_gray>"
-
-  # --------------------------------- топ --------------------------------
-  top-header: "<gold><bold>Топ питомцев</bold></gold>"
-  top-header-filter: "<gold><bold>Топ питомцев</bold></gold> <dark_gray>·</dark_gray> <gray>%species%</gray>"
-  top-line: "<gray>%place%.</gray> <white>%name%</white> <dark_gray>·</dark_gray> <gray>%species%</gray> <dark_gray>·</dark_gray> <yellow>%level%</yellow> <dark_gray>·</dark_gray> <white>%owner%</white>"
-  top-empty: "<yellow>Пока никто не вырастил питомца.</yellow>"
-  top-unknown-species: "<red>Неизвестный вид «%species%». Доступны: wolf, cat.</red>"
-
-  # ------------------------------- кличка -------------------------------
-  name-changed: "<green>Питомец теперь зовётся <white>%name%</white>.</green>"
-  name-invalid: "<red>Кличка должна быть от %min% до %max% символов: буквы, цифры, пробел, дефис.</red>"
-  name-same: "<yellow>У питомца уже такая кличка.</yellow>"
-  name-cooldown: "<yellow>Кличку можно менять раз в минуту. Осталось %seconds% с.</yellow>"
-
-  # Названия еды для сообщений о кормлении.
-  item-cod: "сырая треска"
-  item-salmon: "сырой лосось"
-  item-tropical_fish: "тропическая рыба"
-  item-pufferfish: "рыба-фугу"
-  item-cooked_cod: "жареная треска"
-  item-cooked_salmon: "жареный лосось"
-  item-beef: "сырая говядина"
-  item-cooked_beef: "стейк"
-  item-porkchop: "сырая свинина"
-  item-cooked_porkchop: "жареная свинина"
-  item-chicken: "сырая курица"
-  item-cooked_chicken: "жареная курица"
-  item-mutton: "сырая баранина"
-  item-cooked_mutton: "жареная баранина"
-  item-rabbit: "сырой кролик"
-  item-cooked_rabbit: "жареный кролик"
-  item-rotten_flesh: "гнилая плоть"
-
-  # -------------------------------- забота ------------------------------
-  feed-ok: "<green>%name% поел: <white>%item%</white> (+%xp% опыта, сытость %satiety%%, настроение %mood%%).</green>"
-  feed-no-food: "<yellow>Возьми в руку рыбу или мясо: кошка любит рыбу, волк — мясо.</yellow>"
-  feed-cooldown: "<yellow>Питомец ещё не голоден. Подожди %seconds% с.</yellow>"
-  pat-ok: "<green>Ты погладил <white>%name%</white>. Настроение: %mood%%.</green>"
-  pat-cooldown: "<yellow>Питомец ещё не хочет ласки. Подожди %seconds% с.</yellow>"
-  heal-ok: "<green>%name% подлечился: <white>%health%/%max%</white> HP.</green>"
-  heal-cooldown: "<yellow>Лечение ещё не готово. Подожди %seconds% с.</yellow>"
-
-  # -------------------------------- трюки -------------------------------
-  trick-sit: "сидеть"
-  trick-paw: "дать лапу"
-  trick-spin: "круг"
-  trick-fetch: "апорт"
-  trick-jump: "прыжок"
-  trick-list-header: "<gold><bold>Трюки</bold></gold> <dark_gray>(%learned% из %total%)</dark_gray>"
-  trick-list-line: "%state% <white>%trick%</white> <dark_gray>· нужно настроение %mood%</dark_gray>"
-  trick-list-footer: "<dark_gray>Учить: /pet trick learn <трюк> · показать: /pet trick <трюк></dark_gray>"
-  trick-state-known: "<green>✔</green>"
-  trick-state-open: "<yellow>○</yellow>"
-  trick-state-locked: "<dark_gray>✖</dark_gray>"
-  trick-unknown: "<red>Неизвестный трюк «%trick%». Список: /pet trick.</red>"
-  trick-known: "<yellow>%trick% уже выучен.</yellow>"
-  trick-locked: "<red>%trick% пока не даётся: нужно настроение %need%, сейчас %mood%.</red>"
-  trick-usage: "<yellow>Использование: /pet trick learn <трюк> или /pet trick <трюк></yellow>"
-  trick-failed: "<yellow>%name% не понял, чего ты хочешь. Шанс был %chance%%, попробуй ещё раз с угощением.</yellow>"
-  trick-learned: "<green>✦ <white>%name%</white> выучил трюк <yellow>%trick%</yellow>!</green>"
-  trick-not-learned: "<red>%trick% ещё не выучен. Список и обучение: /pet trick</red>"
-  trick-cooldown: "<yellow>Трюк можно показывать раз в минуту. Осталось %seconds% с.</yellow>"
-  trick-used: "<gray>%name% показывает «%trick%».</gray>"
-
-  # -------------------------------- режим -------------------------------
-  mode-follow: "идти за хозяином"
-  mode-stay: "ждать на месте"
-  mode-set: "<green>%name% теперь будет %mode%.</green>"
-  mode-current: "<gray>Режим: <white>%mode%</white>. Сменить: /pet mode follow|stay</gray>"
-  mode-usage: "<yellow>Использование: /pet mode <follow|stay></yellow>"
-
-  # -------------------------------- вызов -------------------------------
-  call-ok: "<green>%name% прибежал на зов.</green>"
-  call-no-pet: "<yellow>Питомца нет в загруженных чанках — подойди ближе или позови позже.</yellow>"
-  call-cooldown: "<yellow>%name% отдыхает после зова. Осталось %seconds% с.</yellow>"
-  call-combat: "<red>В бою питомца не позвать. Подожди %seconds% с.</red>"
-  call-world: "<red>%name% в другом мире — телепорт между мирами не работает.</red>"
-  call-failed: "<red>%name% не смог телепортироваться. Попробуй ещё раз.</red>"
-
-  # ------------------------------ статистика ----------------------------
-  stats-header: "<gold><bold>%name%</bold></gold> <dark_gray>·</dark_gray> <gold>%title%</gold>"
-  stats-progress: "<gray>Уровень <yellow>%level%</yellow> (лучший %best%) <dark_gray>(%progress%)</dark_gray></gray>"
-  stats-counters: "<gray>Убийств: <white>%kills%</white> · рыбалок: <white>%fish%</white> · рядом: <white>%minutes%</white> мин · смертей: <white>%deaths%</white></gray>"
-  stats-life: "<gray>Вместе: <white>%days%</white> дн. · трюков: <white>%tricks%</white> · достижений: <white>%achievements%</white></gray>"
-  stats-care: "<gray>Настроение: <white>%mood%%</white> · сытость: <white>%satiety%%</white></gray>"
-
-  # ------------------------------ достижения ----------------------------
-  achievements-header: "<gold><bold>Достижения питомца</bold></gold> <dark_gray>(%done% из %total%)</dark_gray>"
-  achievement-line: "%state% <white>%achievement%</white>"
-  achievement-state-done: "<green>✔</green>"
-  achievement-state-open: "<dark_gray>○</dark_gray>"
-  achievements-footer: "<dark_gray>Вехи закрываются сами: уровни, охота, рыбалка и время рядом.</dark_gray>"
-  achievement-first-level: "Первый рубеж — второй уровень"
-  achievement-veteran: "Ветеран — пятый уровень"
-  achievement-legend: "Легенда — максимальный уровень"
-  achievement-hunter: "Охотник — 25 побед над монстрами"
-  achievement-fisher: "Рыбак — 25 рыб вместе"
-  achievement-companion: "Компаньон — час рядом"
-
-  # -------------------------------- дневник -----------------------------
-  diary-header: "<gold><bold>Дневник</bold></gold> <dark_gray>·</dark_gray> <white>%name%</white>"
-  diary-line: "<dark_gray>%date%</dark_gray> %event%"
-  diary-empty: "<yellow>Дневник пока пуст: поиграй с питомцем.</yellow>"
-  diary-adopted: "принят в семью"
-  diary-level: "новый уровень: %arg%"
-  diary-kill: "победил монстра"
-  diary-fish: "рыбачил вместе с хозяином"
-  diary-fed: "съел %arg%"
-  diary-trick: "выучил трюк «%arg%»"
-  diary-died: "погиб на %arg% уровне"
-  diary-called: "прибежал на зов"
-  diary-rename: "получил кличку «%arg%»"
-  diary-mode: "новый режим: %arg%"
-  diary-achievement: "достижение «%arg%»"
-
-  # ------------------------------- косметика ----------------------------
-  collar-disabled: "<yellow>Смена ошейника выключена администрацией.</yellow>"
-  collar-list: "<gold><bold>Цвета ошейника</bold></gold> <gray>%colors%</gray> <dark_gray>· /pet collar <цвет></dark_gray>"
-  collar-default: "ванильный"
-  collar-invalid: "<red>Неизвестный цвет. /pet collar покажет список.</red>"
-  collar-set: "<green>Ошейник <white>%name%</white> теперь <white>%color%</white>.</green>"
-  glow-disabled: "<yellow>Свечение выключено администрацией.</yellow>"
-  glow-on: "<green>%name% теперь светится.</green>"
-  glow-off: "<green>%name% больше не светится.</green>"
-  state-on: "вкл"
-  state-off: "выкл"
-  color-white: "белый"
-  color-orange: "оранжевый"
-  color-magenta: "пурпурный"
-  color-light_blue: "голубой"
-  color-yellow: "жёлтый"
-  color-lime: "лаймовый"
-  color-pink: "розовый"
-  color-gray: "серый"
-  color-light_gray: "светло-серый"
-  color-cyan: "бирюзовый"
-  color-purple: "фиолетовый"
-  color-blue: "синий"
-  color-brown: "коричневый"
-  color-green: "зелёный"
-  color-red: "красный"
-  color-black: "чёрный"
-
-  # --------------------------------- поиск -------------------------------
-  locate-header: "<gold><bold>Где питомцы</bold></gold>"
-  locate-line: "<white>%name%</white> <dark_gray>·</dark_gray> <gray>%world% %x%, %y%, %z%</gray> <dark_gray>·</dark_gray> <white>%distance%</white> <gray>бл.</gray>"
-  locate-unloaded: "<dark_gray>%name% · чанк не загружен</dark_gray>"
-  locate-empty: "<yellow>Живых питомцев нет.</yellow>"
-
-  # -------------------------------- помощь -------------------------------
+  # --- помощь ---
   help-header: "<gold><bold>Питомцы</bold></gold>"
-  help-card: "<gray>/pet</gray> <dark_gray>—</dark_gray> <white>карточка ближайшего питомца</white>"
-  help-care: "<gray>/pet feed · /pet pat · /pet heal</gray> <dark_gray>—</dark_gray> <white>покормить, погладить, подлечить</white>"
-  help-trick: "<gray>/pet trick [learn|трюк]</gray> <dark_gray>—</dark_gray> <white>трюки питомца</white>"
-  help-mode: "<gray>/pet mode <follow|stay></gray> <dark_gray>—</dark_gray> <white>режим поведения</white>"
-  help-call: "<gray>/pet call</gray> <dark_gray>—</dark_gray> <white>позвать питомца к себе</white>"
-  help-info: "<gray>/pet stats · /pet achievements · /pet diary · /pet locate</gray> <dark_gray>—</dark_gray> <white>прогресс и память</white>"
-  help-cosmetics: "<gray>/pet collar <цвет> · /pet glow [on|off]</gray> <dark_gray>—</dark_gray> <white>косметика</white>"
-  help-name: "<gray>/pet name <имя></gray> <dark_gray>—</dark_gray> <white>дать кличку</white>"
-  help-top: "<gray>/pet list · /pet top [wolf|cat]</gray> <dark_gray>—</dark_gray> <white>все питомцы и лучшие на сервере</white>"
-  help-footer: "<dark_gray>Питомец получает опыт за бой рядом, рыбалку и утренний сон. Опыт растёт быстрее, если питомец сыт, счастлив и находится рядом.</dark_gray>"
+  help-card: "<gray>/pet</gray> — карточка ближайшего питомца"
+  help-list: "<gray>/pet list</gray> — все твои питомцы, включая погибших"
+  help-top: "<gray>/pet top</gray> — лучшие питомцы сервера"
+  help-name: "<gray>/pet name <имя></gray> — дать кличку"
+  help-footer: "<dark_gray>Питомец растёт за бой рядом, рыбалку и утренний сон.</dark_gray>"
 
-  # --------------------------------- админ -------------------------------
-  admin-usage: "<yellow>Использование: /petsadmin <reload|setlevel <ник> <уровень>|mood <ник> <0..100>|info <ник>|stats></yellow>"
-  admin-reloaded: "<green>Питомцы перечитаны: записей %pets%, живых %alive%.</green>"
-  admin-bad-level: "<red>Уровень должен быть числом.</red>"
-  admin-bad-mood: "<red>Настроение должно быть числом от 0 до 100.</red>"
-  admin-unknown-player: "<red>Игрок «%player%» не найден ни в сети, ни в данных питомцев.</red>"
-  admin-no-pets: "<red>У игрока «%player%» нет живых питомцев.</red>"
-  admin-setlevel: "<green>Питомцам игрока <white>%player%</white> выставлен <yellow>%level%</yellow> уровень (шт.: %count%).</green>"
-  admin-mood-set: "<green>Питомцам игрока <white>%player%</white> выставлено настроение <yellow>%mood%</yellow> (шт.: %count%).</green>"
-  admin-info: "<gray>%player%: живых <white>%alive%</white>, погибших <white>%dead%</white>, лучший уровень <white>%best%</white>, всего опыта <white>%xp%</white>.</gray>"
-  admin-stats: "<gray>Питомцы: всего <white>%total%</white>, живых <white>%alive%</white>, погибших <white>%dead%</white>, лучший уровень <white>%best%</white>, опыта <white>%xp%</white>, трюков <white>%tricks%</white>.</gray>"
+  # --- список ---
+  list-header: "<gold><bold>Питомцы</bold></gold> <dark_gray>(%count%)</dark_gray>"
+  list-line: "<white>%name%</white> <dark_gray>·</dark_gray> <gray>%species%</gray> <dark_gray>·</dark_gray> <yellow>%level% ур.</yellow> <dark_gray>(%xp% опыта)</dark_gray>"
+  list-line-dead: "<dark_gray>☠ %name% · %species% · %level% ур. · погиб %date%</dark_gray>"
+  list-empty: "<yellow>У тебя пока нет питомцев. Приручи кошку или волка.</yellow>"
+  list-footer: "<dark_gray>Всего: %count%</dark_gray>"
+
+  # --- топ ---
+  top-header: "<gold><bold>Топ питомцев сервера</bold></gold> <dark_gray>(%count%)</dark_gray>"
+  top-line: "<yellow>%place%.</yellow> <white>%name%</white> <dark_gray>·</dark_gray> <gray>%species%</gray> <dark_gray>·</dark_gray> <yellow>%level% ур.</yellow> <dark_gray>·</dark_gray> <white>%owner%</white>"
+  top-empty: "<yellow>Пока никто не вырастил питомца.</yellow>"
+
+  # --- администрирование ---
+  admin-usage: "<yellow>/petsadmin <reload|setlevel <ник> <уровень>|info <ник>></yellow>"
+  admin-reloaded: "<green>Конфиг перечитан. Питомцев в памяти: %count%, подобрано при перечитывании: %adopted%.</green>"
+  admin-setlevel: "<green>Питомцам %player% выставлен %level% уровень (шт.: %count%).</green>"
+  admin-setlevel-none: "<yellow>У %player% нет живых питомцев.</yellow>"
+  admin-bad-number: "<red>%value% — не число.</red>"
+  admin-level-range: "<red>Уровень должен быть от %min% до %max%.</red>"
+  admin-unknown-player: "<red>Игрок %player% не найден.</red>"
+  admin-info: "<gray>%player%: живых %alive%, погибших %dead%, макс. уровень %level%, всего опыта %xp%.</gray>"

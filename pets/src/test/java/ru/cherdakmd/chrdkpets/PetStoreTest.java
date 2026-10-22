@@ -3,6 +3,7 @@ package ru.cherdakmd.chrdkpets;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -13,7 +14,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PetStoreTest {
@@ -22,145 +22,187 @@ class PetStoreTest {
     private static final long DAY = 86_400_000L;
 
     @Test
-    void createIsIdempotentByPetUuid(@TempDir Path dir) {
+    void createAndGetPet(@TempDir Path dir) {
         PetStore store = new PetStore(dir, LOGGER);
-        UUID pet = UUID.randomUUID();
+        UUID id = UUID.randomUUID();
         UUID owner = UUID.randomUUID();
-        PetStore.PetData first = store.create(pet, owner, "Steve", PetSpecies.WOLF, "Барсик", 1000L);
-        PetStore.PetData second = store.create(pet, owner, "Alex", PetSpecies.CAT, "Мурка", 2000L);
-        assertNotNull(first);
-        assertSame(first, second);
+        PetStore.PetData data = store.create(id, owner, "Steve", PetSpecies.WOLF, "Барсик", 1000L);
+        assertNotNull(data);
+        assertEquals(id, data.id());
+        assertEquals(owner, data.ownerId());
+        assertEquals("Steve", data.ownerName());
+        assertEquals(PetSpecies.WOLF, data.species());
+        assertEquals("Барсик", data.name());
+        assertEquals(0L, data.xp());
+        assertEquals(1000L, data.created());
+        assertFalse(data.dead());
+        assertTrue(store.has(id));
         assertEquals(1, store.size());
-        assertEquals("Барсик", store.get(pet).name());
+        assertEquals(1, store.aliveCount());
     }
 
     @Test
-    void xpAndOwnerQueries(@TempDir Path dir) {
+    void createIsIdempotentAndRejectsBrokenInput(@TempDir Path dir) {
+        PetStore store = new PetStore(dir, LOGGER);
+        UUID id = UUID.randomUUID();
+        UUID owner = UUID.randomUUID();
+        PetStore.PetData first = store.create(id, owner, "Steve", PetSpecies.WOLF, "", 1L);
+        store.addXp(id, 100L);
+        PetStore.PetData second = store.create(id, owner, "Steve", PetSpecies.WOLF, "Другой", 2L);
+        assertEquals(first, second);
+        assertEquals(100L, second.xp());
+        assertEquals("", second.name());
+        assertNull(store.create(null, owner, "Steve", PetSpecies.WOLF, "", 1L));
+        assertNull(store.create(id, null, "Steve", PetSpecies.WOLF, "", 1L));
+        assertNull(store.create(UUID.randomUUID(), owner, "Steve", null, "", 1L));
+    }
+
+    @Test
+    void xpChangesAreClamped(@TempDir Path dir) {
+        PetStore store = new PetStore(dir, LOGGER);
+        UUID id = UUID.randomUUID();
+        store.create(id, UUID.randomUUID(), "Steve", PetSpecies.CAT, "", 1L);
+        store.addXp(id, 50L);
+        store.addXp(id, -10L);
+        assertEquals(50L, store.get(id).xp());
+        store.setXp(id, -100L);
+        assertEquals(0L, store.get(id).xp());
+        store.markDead(id, 10L);
+        store.addXp(id, 50L);
+        assertEquals(0L, store.get(id).xp());
+    }
+
+    @Test
+    void ownerNamesFollowThePlayer(@TempDir Path dir) {
         PetStore store = new PetStore(dir, LOGGER);
         UUID owner = UUID.randomUUID();
+        UUID pet = UUID.randomUUID();
+        store.create(pet, owner, "Old", PetSpecies.WOLF, "", 1L);
+        assertEquals(1, store.touchOwnerName(owner, "New"));
+        assertEquals(0, store.touchOwnerName(owner, "New"));
+        assertEquals(0, store.touchOwnerName(owner, "   "));
+        assertEquals("New", store.get(pet).ownerName());
+    }
+
+    @Test
+    void petsAreSeparatedByOwner(@TempDir Path dir) {
+        PetStore store = new PetStore(dir, LOGGER);
         UUID first = UUID.randomUUID();
         UUID second = UUID.randomUUID();
-        store.create(first, owner, "Steve", PetSpecies.WOLF, "", 1L);
-        store.create(second, owner, "Steve", PetSpecies.CAT, "Мурка", 2L);
-        store.addXp(first, 106L);
-        store.addXp(second, 40L);
-
-        assertEquals(106L, store.get(first).xp());
-        assertEquals(2, store.alivePetsOf(owner).size());
-        assertEquals(2, store.petsOf(owner).size());
-        assertEquals(first, store.top(1).get(0).id());
-        assertEquals(3, PetCurve.levelFor(106L, PetCurve.Params.DEFAULT));
+        UUID a = UUID.randomUUID();
+        UUID b = UUID.randomUUID();
+        store.create(first, a, "A", PetSpecies.WOLF, "", 1L);
+        store.create(second, b, "B", PetSpecies.CAT, "", 2L);
+        assertEquals(List.of(first), store.petsOf(a).stream().map(PetStore.PetData::id).toList());
+        assertEquals(List.of(second), store.petsOf(b).stream().map(PetStore.PetData::id).toList());
+        assertTrue(store.petsOf(UUID.randomUUID()).isEmpty());
+        assertTrue(store.petsOf(null).isEmpty());
     }
 
     @Test
-    void negativeXpIsIgnored(@TempDir Path dir) {
+    void topIgnoresDeadPets(@TempDir Path dir) {
+        PetStore store = new PetStore(dir, LOGGER);
+        UUID owner = UUID.randomUUID();
+        UUID low = UUID.randomUUID();
+        UUID high = UUID.randomUUID();
+        UUID dead = UUID.randomUUID();
+        store.create(low, owner, "A", PetSpecies.WOLF, "", 1L);
+        store.create(high, owner, "A", PetSpecies.WOLF, "", 2L);
+        store.create(dead, owner, "A", PetSpecies.WOLF, "", 3L);
+        store.addXp(low, 100L);
+        store.addXp(high, 500L);
+        store.addXp(dead, 900L);
+        store.markDead(dead, 10L);
+        List<PetStore.PetData> top = store.top(2);
+        assertEquals(2, top.size());
+        assertEquals(high, top.get(0).id());
+        assertEquals(low, top.get(1).id());
+        assertEquals(1, store.top(2).size() - 1);
+    }
+
+    @Test
+    void deadPetsAreRememberedThenPurged(@TempDir Path dir) {
+        PetStore store = new PetStore(dir, LOGGER);
+        UUID old = UUID.randomUUID();
+        UUID fresh = UUID.randomUUID();
+        UUID owner = UUID.randomUUID();
+        long now = 2_000_000_000_000L;
+        store.create(old, owner, "A", PetSpecies.CAT, "", now - 100 * DAY);
+        store.create(fresh, owner, "A", PetSpecies.CAT, "", now - 100 * DAY);
+        store.markDead(old, now - 31 * DAY);
+        store.markDead(fresh, now - DAY);
+        assertEquals(1, store.purgeDead(30, now));
+        assertNull(store.get(old));
+        assertNotNull(store.get(fresh));
+        assertEquals(1, store.purgeDead(0, now));
+        assertEquals(0, store.size());
+    }
+
+    @Test
+    void renameAndOwnerTransfer(@TempDir Path dir) {
         PetStore store = new PetStore(dir, LOGGER);
         UUID pet = UUID.randomUUID();
-        store.create(pet, UUID.randomUUID(), "Steve", PetSpecies.WOLF, "", 1L);
-        store.addXp(pet, 50L);
-        store.addXp(pet, -100L);
-        assertEquals(50L, store.get(pet).xp());
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+        store.create(pet, first, "A", PetSpecies.WOLF, "", 1L);
+        store.rename(pet, "Новый");
+        assertEquals("Новый", store.get(pet).name());
+        store.rename(pet, null);
+        assertEquals("", store.get(pet).name());
+        store.setOwner(pet, second, "B");
+        assertEquals(second, store.get(pet).ownerId());
+        assertEquals("B", store.get(pet).ownerName());
+        store.setOwner(pet, null, "C");
+        assertEquals(second, store.get(pet).ownerId());
     }
 
     @Test
-    void deathMovesPetOutOfAliveAndTop(@TempDir Path dir) {
+    void jsonRoundTripKeepsEverything(@TempDir Path dir) {
         PetStore store = new PetStore(dir, LOGGER);
         UUID pet = UUID.randomUUID();
         UUID owner = UUID.randomUUID();
-        store.create(pet, owner, "Steve", PetSpecies.WOLF, "Барсик", 1L);
-        store.addXp(pet, 500L);
-        assertEquals(1, store.alivePetsOf(owner).size());
-        store.markDead(pet, 10_000L);
-        assertTrue(store.get(pet).dead());
-        assertEquals(10_000L, store.get(pet).diedAt());
-        assertTrue(store.alivePetsOf(owner).isEmpty());
-        assertTrue(store.top(10).isEmpty());
-        assertEquals(1, store.petsOf(owner).size());
-    }
-
-    @Test
-    void ownerNameIsRemembered(@TempDir Path dir) {
-        PetStore store = new PetStore(dir, LOGGER);
-        UUID owner = UUID.randomUUID();
-        store.create(UUID.randomUUID(), owner, "", PetSpecies.CAT, "", 1L);
-        assertEquals(1, store.touchOwnerName(owner, "Steve"));
-        assertEquals("Steve", store.petsOf(owner).get(0).ownerName());
-        assertEquals(0, store.touchOwnerName(owner, "Steve"));
-    }
-
-    @Test
-    void snapshotRoundTripsThroughFile(@TempDir Path dir) {
-        PetStore store = new PetStore(dir, LOGGER);
-        UUID pet = UUID.randomUUID();
-        UUID owner = UUID.randomUUID();
-        store.create(pet, owner, "Стив", PetSpecies.CAT, "Мурка", 123L);
+        store.create(pet, owner, "Steve", PetSpecies.CAT, "Мурка", 1000L);
         store.addXp(pet, 777L);
-        store.markDead(UUID.randomUUID(), 1L);
+        store.markDead(pet, 5000L);
         store.flush();
-        assertTrue(Files.isRegularFile(dir.resolve("pets.json")));
 
         PetStore loaded = new PetStore(dir, LOGGER);
         loaded.load();
         PetStore.PetData data = loaded.get(pet);
         assertNotNull(data);
         assertEquals(owner, data.ownerId());
-        assertEquals("Стив", data.ownerName());
+        assertEquals("Steve", data.ownerName());
         assertEquals(PetSpecies.CAT, data.species());
         assertEquals("Мурка", data.name());
         assertEquals(777L, data.xp());
-        assertFalse(data.dead());
+        assertEquals(1000L, data.created());
+        assertTrue(data.dead());
+        assertEquals(5000L, data.diedAt());
     }
 
     @Test
-    void purgeRemovesOnlyOldMemorials(@TempDir Path dir) {
-        PetStore store = new PetStore(dir, LOGGER);
-        long now = 1_700_000_000_000L;
-        UUID old = UUID.randomUUID();
-        UUID recent = UUID.randomUUID();
-        UUID owner = UUID.randomUUID();
-        store.create(old, owner, "Steve", PetSpecies.WOLF, "", now - 40 * DAY);
-        store.markDead(old, now - 40 * DAY);
-        store.create(recent, owner, "Steve", PetSpecies.CAT, "", now - 10 * DAY);
-        store.markDead(recent, now - 10 * DAY);
+    void brokenJsonDoesNotCrashAndSkipsBadRows(@TempDir Path dir) throws Exception {
+        Files.writeString(dir.resolve("pets.json"), "{ not json", StandardCharsets.UTF_8);
+        PetStore broken = new PetStore(dir, LOGGER);
+        broken.load();
+        assertEquals(0, broken.size());
 
-        assertEquals(1, store.purgeDead(30, now));
-        assertNull(store.get(old));
-        assertNotNull(store.get(recent));
+        UUID good = UUID.randomUUID();
+        String json = """
+                {
+                  "version": 1,
+                  "pets": {
+                    "not-a-uuid": {"owner": "x", "species": "wolf"},
+                    "%s": {"owner": "%s", "species": "dragon"},
+                    "%s": {"owner": "%s", "owner-name": "Steve", "species": "wolf",
+                           "name": "Барсик", "xp": 40, "created": 1000, "dead": false}
+                  }
+                }
+                """.formatted(good, UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
+        Files.writeString(dir.resolve("pets.json"), json, StandardCharsets.UTF_8);
+        PetStore store = new PetStore(dir, LOGGER);
+        store.load();
         assertEquals(1, store.size());
-    }
-
-    @Test
-    void purgeZeroDaysDropsAllMemorials(@TempDir Path dir) {
-        PetStore store = new PetStore(dir, LOGGER);
-        UUID pet = UUID.randomUUID();
-        store.create(pet, UUID.randomUUID(), "Steve", PetSpecies.WOLF, "", 1L);
-        store.markDead(pet, 2L);
-        assertEquals(1, store.purgeDead(0, System.currentTimeMillis()));
-        assertEquals(0, store.size());
-    }
-
-    @Test
-    void dirtyFlagFollowsMutations(@TempDir Path dir) {
-        PetStore store = new PetStore(dir, LOGGER);
-        UUID pet = UUID.randomUUID();
-        store.create(pet, UUID.randomUUID(), "Steve", PetSpecies.WOLF, "", 1L);
-        assertTrue(store.isDirty());
-        store.snapshotJson();
-        assertFalse(store.isDirty());
-        store.rename(pet, "Барсик");
-        assertTrue(store.isDirty());
-    }
-
-    @Test
-    void petsAreOrderedNewestFirst(@TempDir Path dir) {
-        PetStore store = new PetStore(dir, LOGGER);
-        UUID owner = UUID.randomUUID();
-        UUID first = UUID.randomUUID();
-        UUID second = UUID.randomUUID();
-        store.create(first, owner, "Steve", PetSpecies.WOLF, "", 1L);
-        store.create(second, owner, "Steve", PetSpecies.CAT, "", 2L);
-        List<PetStore.PetData> pets = store.petsOf(owner);
-        assertEquals(second, pets.get(0).id());
-        assertEquals(first, pets.get(1).id());
+        assertEquals("Барсик", store.all().get(0).name());
     }
 }
