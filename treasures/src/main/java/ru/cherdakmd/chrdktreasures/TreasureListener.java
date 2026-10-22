@@ -21,6 +21,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
@@ -312,6 +313,18 @@ public final class TreasureListener implements Listener {
         // 1.4.140: находки, выданные до исправления, потеряли ванильный урон
         // и защиту — возвращаем базу при входе, не дожидаясь пересоздания.
         if (plugin.items().repairAttributes(event.getPlayer())) {
+            event.getPlayer().updateInventory();
+        }
+    }
+
+    /**
+     * Смена слота (1.4.140): старая находка, потерявшая ванильную базу урона,
+     * чинится сразу, как только игрок взял её в руку, — без перезахода.
+     */
+    @EventHandler
+    public void onHeld(PlayerItemHeldEvent event) {
+        ItemStack stack = event.getPlayer().getInventory().getItem(event.getNewSlot());
+        if (plugin.items().repairAttributes(stack)) {
             event.getPlayer().updateInventory();
         }
     }
