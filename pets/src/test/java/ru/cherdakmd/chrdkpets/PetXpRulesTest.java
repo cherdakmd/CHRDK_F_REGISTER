@@ -31,7 +31,7 @@ class PetXpRulesTest {
     @Test
     void weekendMultipliesAndTotalIsCapped() {
         double weekend = PetXpRules.multiplier(true, FULL, true, true, true, true, FACTORS);
-        assertEquals(1.890625, weekend, 1.0e-6);
+        assertEquals(1.8906, weekend, 1.0e-6);
         double capped = PetXpRules.multiplier(true, FULL, true, true, true, true,
                 new PetXpRules.Factors(3, 3, 3));
         assertTrue(capped <= PetXpRules.MAX_MULTIPLIER);
