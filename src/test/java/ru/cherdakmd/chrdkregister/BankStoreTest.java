@@ -42,7 +42,8 @@ class BankStoreTest {
         assertFalse(store.withdraw(steve, 51L), "нельзя уйти в минус");
         assertEquals(50L, store.balance(steve));
         assertFalse(store.withdraw(steve, 0L));
-        assertEquals(0L, store.deposit(steve, "Steve", 0L));
+        // Нулевой депозит — no-op: возвращается текущий баланс, счёт не меняется.
+        assertEquals(50L, store.deposit(steve, "Steve", 0L));
     }
 
     @Test
