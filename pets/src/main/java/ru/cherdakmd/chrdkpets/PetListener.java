@@ -148,10 +148,15 @@ public final class PetListener implements Listener {
         sleepers.clear();
     }
 
-    /** Вход: ауру считаем после того, как игрок окончательно появился в мире. */
+    /**
+     * Вход: запоминаем актуальный ник владельца и считаем ауру после того, как
+     * игрок окончательно появился в мире.
+     */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
-        Bukkit.getScheduler().runTask(plugin, () -> plugin.aura().refresh(event.getPlayer()));
+        Player player = event.getPlayer();
+        plugin.store().touchOwnerName(player.getUniqueId(), player.getName());
+        Bukkit.getScheduler().runTask(plugin, () -> plugin.aura().refresh(player));
     }
 
     /** Выход: снимаем ауру, чтобы модификаторы не остались «висеть». */
