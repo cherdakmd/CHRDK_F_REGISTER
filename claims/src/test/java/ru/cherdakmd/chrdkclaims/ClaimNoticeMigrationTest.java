@@ -38,7 +38,7 @@ class ClaimNoticeMigrationTest {
         List<String> lines = result.lines();
         assertEquals(STOCK.size(), lines.size(), "число строк не меняется");
         assertEquals("  notice-mode: \"both\"", lines.get(3));
-        assertEquals("  notice-own: true   # свои приваты молчат", lines.get(5),
+        assertEquals("  notice-own: true # свои приваты молчат", lines.get(5),
                 "инлайн-комментарий остаётся");
         assertEquals(STOCK.get(2), lines.get(2), "комментарии и остальные ключи не тронуты");
     }
@@ -85,7 +85,7 @@ class ClaimNoticeMigrationTest {
         assertTrue(ClaimNoticeMigration.apply(config, dir, null), "файл изменён");
         List<String> after = Files.readAllLines(config, StandardCharsets.UTF_8);
         assertEquals("  notice-mode: \"both\"", after.get(3));
-        assertEquals("  notice-own: true   # свои приваты молчат", after.get(5));
+        assertEquals("  notice-own: true # свои приваты молчат", after.get(5));
         assertTrue(Files.exists(dir.resolve(ClaimNoticeMigration.MARKER)));
 
         // Владелец вернул тишину на своих приватах — повторный запуск не спорит.
