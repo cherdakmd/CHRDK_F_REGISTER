@@ -1,8 +1,6 @@
 package ru.cherdakmd.chrdktreasures;
 
 import org.bukkit.Material;
-import ru.cherdakmd.chrdkregister.Messages;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -14,6 +12,10 @@ import java.util.Locale;
  * из материала, а тегом {@code <lang:item.minecraft.diamond>}: MiniMessage
  * развернёт его в название на языке игрока. Именные находки («Кровавый суп»)
  * показываются своим названием — они и так написаны по-русски.</p>
+ *
+ * <p>Класс намеренно не знает про ядро и {@code Messages}: он остаётся чистой
+ * логикой и проверяется юнит-тестами без сервера. Строка для чата собирается
+ * в {@link TreasureLootMarkup}.</p>
  *
  * <p>Список обрезается: в одной строке чата не должно быть двадцати предметов.
  * Сколько показывать, решает {@code feedback.loot-details-max}; остальное
@@ -71,6 +73,20 @@ public final class TreasureLootText {
     }
 
     /**
+     * Экранирует разметку в имени находки: имя приходит из {@code loot.yml},
+     * и «<» в нём не должен превращать текст в MiniMessage-тег.
+     */
+    static String escape(String value) {
+        if (value == null) {
+            return "";
+        }
+        if (value.indexOf('<') < 0 && value.indexOf('\\') < 0) {
+            return value;
+        }
+        return value.replace("\\", "\\\\").replace("<", "\\<");
+    }
+
+    /**
      * Готовит список к показу.
      *
      * @param stacks добыча клада в порядке броска
@@ -108,38 +124,9 @@ public final class TreasureLootText {
         }
         String name = stack.name();
         if (name != null && !name.isBlank()) {
-            return new Part(Messages.escape(name), name, stack.amount());
+            return new Part(escape(name), name, stack.amount());
         }
         return new Part(languageTag(stack.material()), stack.material(), stack.amount());
-    }
-
-    /**
-     * Собирает строку добычи из шаблонов messages.yml.
-     *
-     * <p>Имя предмета приходит уже готовой разметкой (тег языка клиента или
-     * экранированное имя находки), поэтому подставляется как доверенное.
-     * Пустая добыча даёт пустую строку — вызывающий код тогда выбирает
-     * короткий вариант сообщения.</p>
-     */
-    public static String markup(Messages messages, Summary summary) {
-        if (messages == null || summary == null || summary.isEmpty()) {
-            return "";
-        }
-        StringBuilder out = new StringBuilder();
-        String separator = messages.raw("loot-list-separator");
-        for (Part part : summary.parts()) {
-            if (out.length() > 0) {
-                out.append(separator);
-            }
-            out.append(messages.raw("loot-list-entry",
-                    "name", Messages.trusted(part.markup()),
-                    "amount", String.valueOf(part.amount())));
-        }
-        if (summary.hidden() > 0) {
-            out.append(messages.raw("loot-list-more",
-                    "count", String.valueOf(summary.hidden())));
-        }
-        return out.toString();
     }
 
     /**

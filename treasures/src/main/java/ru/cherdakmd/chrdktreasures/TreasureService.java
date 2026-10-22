@@ -277,7 +277,7 @@ public final class TreasureService {
         if (!extra.loot().isEmpty()) {
             // 1.4.148: бонус тоже называет состав, иначе игрок снова лезет в инвентарь.
             String loot = plugin.config().showLoot()
-                    ? TreasureLootText.markup(plugin.messages(), TreasureLootText.summarize(
+                    ? TreasureLootMarkup.markup(plugin.messages(), TreasureLootText.summarize(
                             extra.loot(), plugin.config().lootDetailsMax()))
                     : "";
             if (loot.isEmpty()) {

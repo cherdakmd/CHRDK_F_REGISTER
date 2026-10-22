@@ -357,7 +357,7 @@ public final class TreasureListener implements Listener {
         TreasureLootText.Summary summary = plugin.config().showLoot()
                 ? TreasureLootText.summarize(found.loot(), plugin.config().lootDetailsMax())
                 : TreasureLootText.summarize(List.of(), 1);
-        String loot = TreasureLootText.markup(plugin.messages(), summary);
+        String loot = TreasureLootMarkup.markup(plugin.messages(), summary);
 
         if (plugin.store().announce(player.getUniqueId().toString())) {
             if (found.named()) {
