@@ -60,7 +60,7 @@ class TreasureLootTest {
     @Test
     void shippedTablesAreRichAndContainNamedFinds() {
         TreasureLoot.Table table = shipped();
-        assertTrue(table.size() >= 900, "слишком мало записей: " + table.size());
+        assertTrue(table.size() >= 1240, "слишком мало записей: " + table.size());
         Set<String> names = new HashSet<>();
         for (TreasureTier tier : TreasureTier.values()) {
             for (TreasureLoot.LootEntry entry : table.global(tier)) {
@@ -142,6 +142,21 @@ class TreasureLootTest {
     }
 
     @Test
+    void oneHundredNewEntriesArrivedIn148() {
+        TreasureLoot.Table table = shipped();
+        assertEquals(1247, table.size(), "1.4.148 добавила ровно сто записей к 1147");
+        // Новые записи есть и в общих пулах, и в биомных.
+        assertTrue(table.global(TreasureTier.COMMON).stream()
+                .anyMatch(entry -> entry.material().equals("TORCHFLOWER")));
+        assertTrue(table.global(TreasureTier.MYTHICAL).stream()
+                .anyMatch(entry -> entry.material().equals("DRAGON_EGG")));
+        assertTrue(table.regional(TreasureRegion.OCEAN, TreasureTier.RARE).stream()
+                .anyMatch(entry -> entry.material().equals("TURTLE_HELMET")));
+        assertTrue(table.regional(TreasureRegion.NETHER, TreasureTier.EPIC).stream()
+                .anyMatch(entry -> entry.material().equals("DIAMOND_SWORD")));
+    }
+
+    @Test
     void oldFileGetsNewEntriesButKeepsAdminEdits() {
         TreasureLoot.Table old = table("""
                 global:
@@ -152,7 +167,7 @@ class TreasureLootTest {
         assertEquals(1, old.version(), "файл без version считается старым");
 
         TreasureLoot.Table merged = old.withMissing(shipped());
-        assertTrue(merged.size() > 900, "старый файл не пополнился: " + merged.size());
+        assertTrue(merged.size() >= 1240, "старый файл не пополнился: " + merged.size());
 
         List<TreasureLoot.LootEntry> coal = merged.global(TreasureTier.COMMON).stream()
                 .filter(entry -> entry.material().equals("COAL"))

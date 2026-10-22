@@ -519,12 +519,19 @@ messages:
 
   # ------------------------------- уведомления -------------------------------
   treasure-found-named: "<gold>Клад!</gold> %tier% <dark_gray>·</dark_gray> %name%"
-  treasure-found-loot: "<gold>Клад!</gold> %tier% <gray>— добыча уже в инвентаре.</gray>"
+  treasure-found-loot: "<gold>Клад!</gold> %tier% <gray>— добыча:</gray> %loot%"
+  treasure-found-empty: "<gold>Клад!</gold> %tier% <gray>— добыча уже в инвентаре.</gray>"
   treasure-broadcast-named: "<gold>%player%</gold> <gray>нашёл</gray> %tier% <gray>находку</gray> %name%<gray>!</gray>"
-  treasure-broadcast-loot: "<gold>%player%</gold> <gray>нашёл</gray> %tier% <gray>клад.</gray>"
+  treasure-broadcast-loot: "<gold>%player%</gold> <gray>нашёл</gray> %tier% <gray>клад:</gray> %loot%"
+  treasure-broadcast-empty: "<gold>%player%</gold> <gray>нашёл</gray> %tier% <gray>клад.</gray>"
+  # список добычи в строке находки: «Алмаз ×3, Уголь ×8 и ещё 2»
+  loot-list-entry: "<white>%name%</white> <dark_gray>×%amount%</dark_gray>"
+  loot-list-separator: "<gray>, </gray>"
+  loot-list-more: "<gray> и ещё <white>%count%</white></gray>"
   double-ore: "<gray>Двойная руда!</gray>"
   collection-milestone: "<gold>Коллекция: <white>%found%/%total%</white> находок! Награда — <aqua>%diamonds% алмазов</aqua>.</gold>"
   streak-bonus: "<gold>Серия %streak%!</gold> <gray>Бонусная добыча уже в инвентаре.</gray>"
+  streak-bonus-loot: "<gold>Серия %streak%!</gold> <gray>Бонус:</gray> %loot%"
   rank-up: "<gold>Новый ранг:</gold> %rank% <gray>· награда <aqua>%diamonds% алмазов</aqua></gray>"
   rank-up-broadcast: "<gold>%player%</gold> <gray>достиг звания</gray> %rank%<gray>!</gray>"
   title-found: "<gold>Клад!</gold> %tier%"

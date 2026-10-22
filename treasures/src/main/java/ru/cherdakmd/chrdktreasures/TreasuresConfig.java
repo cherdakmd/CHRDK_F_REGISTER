@@ -56,6 +56,12 @@ public final class TreasuresConfig {
     private final boolean broadcastLegendary;
     private final boolean broadcastMythical;
     private final boolean broadcastLegend;
+    /** 1.4.148: писать в чат, что именно выпало из клада. */
+    private final boolean showLoot;
+    /** Сколько позиций добычи перечислять в строке (1..12). */
+    private final int lootDetailsMax;
+    /** Дублировать каждую находку в консоль сервера с составом. */
+    private final boolean logFinds;
     private final int streakWindowSeconds;
     private final int streakBonusEvery;
     private final Map<TreasureRank, Integer> rankRewards;
@@ -78,7 +84,8 @@ public final class TreasuresConfig {
                             int placedBlockMaxEntries, long cooldownMillis,
                             Map<Integer, Milestone> milestones,
                             boolean broadcastLegendary, boolean broadcastMythical,
-                            boolean broadcastLegend, int streakWindowSeconds, int streakBonusEvery,
+                            boolean broadcastLegend, boolean showLoot, int lootDetailsMax,
+                            boolean logFinds, int streakWindowSeconds, int streakBonusEvery,
                             Map<TreasureRank, Integer> rankRewards, Effects effects,
                             boolean abilitiesEnabled, boolean cursesEnabled,
                             boolean setsEnabled, double arsenalShare,
@@ -99,6 +106,9 @@ public final class TreasuresConfig {
         this.broadcastLegendary = broadcastLegendary;
         this.broadcastMythical = broadcastMythical;
         this.broadcastLegend = broadcastLegend;
+        this.showLoot = showLoot;
+        this.lootDetailsMax = lootDetailsMax;
+        this.logFinds = logFinds;
         this.streakWindowSeconds = streakWindowSeconds;
         this.streakBonusEvery = streakBonusEvery;
         this.rankRewards = rankRewards;
@@ -217,6 +227,13 @@ public final class TreasuresConfig {
         boolean broadcastLegendary = cfg.getBoolean("feedback.broadcast-legendary", true);
         boolean broadcastMythical = cfg.getBoolean("feedback.broadcast-mythical", true);
         boolean broadcastLegend = cfg.getBoolean("feedback.broadcast-legend", true);
+        // 1.4.148: список добычи в чате. Клампим 1..12 — длиннее строка не нужна,
+        // короче одной позиции список потерял бы смысл.
+        boolean showLoot = cfg.getBoolean("feedback.show-loot", true);
+        int lootDetailsMax = (int) clamp(
+                cfg.getLong("feedback.loot-details-max", TreasureLootText.DEFAULT_LIMIT),
+                1L, TreasureLootText.MAX_LIMIT);
+        boolean logFinds = cfg.getBoolean("feedback.log-finds", true);
 
         int streakWindow = (int) clamp(cfg.getLong("streak.window-seconds", 600L),
                 10L, 86_400L);
@@ -248,6 +265,7 @@ public final class TreasuresConfig {
                 depthPerBlock, depthMax, ttl, maxEntries,
                 cooldown, Collections.unmodifiableMap(milestones),
                 broadcastLegendary, broadcastMythical, broadcastLegend,
+                showLoot, lootDetailsMax, logFinds,
                 streakWindow, streakBonusEvery,
                 Collections.unmodifiableMap(rankRewards), effects,
                 cfg.getBoolean("abilities.enabled", true),
@@ -404,6 +422,21 @@ public final class TreasuresConfig {
     /** Объявлять всему серверу достижение ранга «Легенда». */
     public boolean broadcastLegend() {
         return broadcastLegend;
+    }
+
+    /** Перечислять в чате, что именно выпало из клада. */
+    public boolean showLoot() {
+        return showLoot;
+    }
+
+    /** Сколько позиций добычи показывать в одной строке (1..12). */
+    public int lootDetailsMax() {
+        return lootDetailsMax;
+    }
+
+    /** Писать каждую находку с составом в консоль сервера. */
+    public boolean logFinds() {
+        return logFinds;
     }
 
     /** Окно серии в миллисекундах; 0 — серии выключены (каждая находка новая). */

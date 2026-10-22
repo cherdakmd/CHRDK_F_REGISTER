@@ -232,6 +232,33 @@ class TreasureConfigTest {
     }
 
     @Test
+    void lootDetailsAreOnByDefaultAndClamped() {
+        TreasuresConfig defaults = TreasuresConfig.parse(new YamlConfiguration(), LOGGER);
+        assertTrue(defaults.showLoot(), "состав клада показывается по умолчанию");
+        assertEquals(TreasureLootText.DEFAULT_LIMIT, defaults.lootDetailsMax());
+        assertTrue(defaults.logFinds());
+
+        TreasuresConfig shipped = TreasuresConfig.parse(shipped(), LOGGER);
+        assertTrue(shipped.showLoot());
+        assertEquals(TreasureLootText.DEFAULT_LIMIT, shipped.lootDetailsMax());
+        assertTrue(shipped.logFinds());
+
+        YamlConfiguration cfg = new YamlConfiguration();
+        cfg.set("feedback.show-loot", false);
+        cfg.set("feedback.loot-details-max", 500);
+        cfg.set("feedback.log-finds", false);
+        TreasuresConfig clamped = TreasuresConfig.parse(cfg, LOGGER);
+        assertFalse(clamped.showLoot());
+        assertEquals(TreasureLootText.MAX_LIMIT, clamped.lootDetailsMax(),
+                "длиннее строки не показываем");
+        assertFalse(clamped.logFinds());
+
+        cfg.set("feedback.loot-details-max", -3);
+        assertEquals(1, TreasuresConfig.parse(cfg, LOGGER).lootDetailsMax(),
+                "хотя бы один предмет показывается всегда");
+    }
+
+    @Test
     void shippedConfigCarriesNewSections() {
         TreasuresConfig config = TreasuresConfig.parse(shipped(), LOGGER);
         assertEquals(600, config.streakWindowSeconds());

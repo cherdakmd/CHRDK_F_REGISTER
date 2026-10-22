@@ -352,13 +352,24 @@ public final class TreasureListener implements Listener {
             player.playSound(player.getLocation(), soundOf(found.tier()), 0.9f, 1.0f);
         }
         plugin.showcase().show(player, found);
+        // 1.4.148: «что именно выпало». Список готовится один раз — он нужен и
+        // игроку, и объявлению, и журналу сервера.
+        TreasureLootText.Summary summary = plugin.config().showLoot()
+                ? TreasureLootText.summarize(found.loot(), plugin.config().lootDetailsMax())
+                : TreasureLootText.summarize(List.of(), 1);
+        String loot = TreasureLootText.markup(plugin.messages(), summary);
+
         if (plugin.store().announce(player.getUniqueId().toString())) {
             if (found.named()) {
                 plugin.messages().send(player, "treasure-found-named",
                         "tier", Messages.trusted(tierName),
                         "name", Messages.trusted(itemName));
-            } else {
+            } else if (!loot.isEmpty()) {
                 plugin.messages().send(player, "treasure-found-loot",
+                        "tier", Messages.trusted(tierName),
+                        "loot", Messages.trusted(loot));
+            } else {
+                plugin.messages().send(player, "treasure-found-empty",
                         "tier", Messages.trusted(tierName));
             }
         }
@@ -366,16 +377,34 @@ public final class TreasureListener implements Listener {
         boolean broadcast = found.tier() == TreasureTier.MYTHICAL && plugin.config().broadcastMythical()
                 || found.tier() == TreasureTier.LEGENDARY && plugin.config().broadcastLegendary();
         if (broadcast) {
-            String message = found.named() ? "treasure-broadcast-named" : "treasure-broadcast-loot";
+            String message = found.named() ? "treasure-broadcast-named"
+                    : loot.isEmpty() ? "treasure-broadcast-empty" : "treasure-broadcast-loot";
             for (Player online : plugin.getServer().getOnlinePlayers()) {
                 plugin.messages().send(online, message,
                         "player", player.getName(),
                         "tier", Messages.trusted(tierName),
-                        "name", Messages.trusted(itemName));
+                        "name", Messages.trusted(itemName),
+                        "loot", Messages.trusted(loot));
             }
-            plugin.getLogger().info("[CHRDK_Treasures] " + player.getName()
-                    + " нашёл " + found.tier().id() + (found.named() ? ": " + found.item().id() : ""));
         }
+        logFind(player, found, summary);
+    }
+
+    /**
+     * Пишет находку в консоль сервера: без разметки и тегов языка, с составом.
+     * Журнал не зависит от витрины и переключателя объявлений — администратор
+     * всегда увидит, что и кому выпало.
+     */
+    private void logFind(Player player, TreasureService.Found found,
+                         TreasureLootText.Summary summary) {
+        if (!plugin.config().logFinds()) {
+            return;
+        }
+        String detail = found.named()
+                ? plugin.messages().plain("treasure." + found.item().id() + ".name")
+                : summary.plain();
+        plugin.getLogger().info("[CHRDK_Treasures] " + player.getName() + " · "
+                + found.tier().id() + (detail.isEmpty() ? "" : " · " + detail));
     }
 
     private void particles(Location location, TreasureTier tier) {

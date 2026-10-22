@@ -275,7 +275,18 @@ public final class TreasureService {
             }
         }
         if (!extra.loot().isEmpty()) {
-            plugin.messages().send(player, "streak-bonus", "streak", String.valueOf(streak));
+            // 1.4.148: бонус тоже называет состав, иначе игрок снова лезет в инвентарь.
+            String loot = plugin.config().showLoot()
+                    ? TreasureLootText.markup(plugin.messages(), TreasureLootText.summarize(
+                            extra.loot(), plugin.config().lootDetailsMax()))
+                    : "";
+            if (loot.isEmpty()) {
+                plugin.messages().send(player, "streak-bonus", "streak", String.valueOf(streak));
+            } else {
+                plugin.messages().send(player, "streak-bonus-loot",
+                        "streak", String.valueOf(streak),
+                        "loot", Messages.trusted(loot));
+            }
         }
         return extra.loot();
     }
