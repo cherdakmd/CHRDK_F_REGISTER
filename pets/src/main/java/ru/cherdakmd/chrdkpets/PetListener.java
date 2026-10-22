@@ -106,6 +106,7 @@ public final class PetListener implements Listener {
         if (pet != null) {
             if (damager instanceof LivingEntity living) {
                 plugin.service().addXp(living, plugin.config().xp().perKill());
+                plugin.service().noteKill(pet);
             }
             return;
         }
@@ -128,6 +129,7 @@ public final class PetListener implements Listener {
                 plugin.config().xpRadius());
         if (pet != null) {
             plugin.service().addXp(pet, plugin.config().xp().perFish());
+            plugin.service().noteFish(plugin.service().data(pet));
         }
     }
 
@@ -170,6 +172,19 @@ public final class PetListener implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         plugin.aura().clear(event.getPlayer());
+    }
+
+    /* -------------------------------------------------------------------- бой */
+
+    /**
+     * Любой урон игрока блокирует {@code /pet call} на несколько секунд: иначе
+     * питомца можно было бы телепортировать прямо из драки как эвакуатор.
+     */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onPlayerDamage(EntityDamageEvent event) {
+        if (event.getEntity() instanceof Player player) {
+            plugin.service().noteCombat(player);
+        }
     }
 
     /* --------------------------------------------------------------- внутреннее */

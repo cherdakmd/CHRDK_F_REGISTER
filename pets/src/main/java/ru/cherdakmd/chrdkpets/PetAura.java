@@ -6,6 +6,10 @@ import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 /**
  * Аура хозяина: небольшой бонус, пока рядом живёт его питомец.
  *
@@ -24,6 +28,7 @@ final class PetAura {
     private final PetsPlugin plugin;
     private final NamespacedKey speedKey;
     private final NamespacedKey luckKey;
+    private final Map<UUID, UUID> activePet = new HashMap<>();
 
     PetAura(PetsPlugin plugin) {
         this.plugin = plugin;
@@ -46,6 +51,8 @@ final class PetAura {
             clear(player);
             return;
         }
+        activePet.put(player.getUniqueId(), data.id());
+        plugin.service().tickTogether(data);
         PetBuffs.Stats stats = PetBuffs.stats(
                 plugin.config().species(data.species()).buffs(),
                 plugin.service().level(data));
@@ -62,6 +69,10 @@ final class PetAura {
         }
         PetAttributes.remove(player, Attribute.MOVEMENT_SPEED, speedKey);
         PetAttributes.remove(player, Attribute.LUCK, luckKey);
+        UUID petId = activePet.remove(player.getUniqueId());
+        if (petId != null) {
+            plugin.service().forgetTogether(petId);
+        }
     }
 
     /** Снимает ауру со всех онлайн-игроков (выключение, reload). */
