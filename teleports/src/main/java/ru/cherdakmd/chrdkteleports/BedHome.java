@@ -2,6 +2,7 @@ package ru.cherdakmd.chrdkteleports;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Tag;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -103,20 +104,28 @@ public final class BedHome {
         return base;
     }
 
-    /** Можно ли поставить игрока в этот блок: ноги и голова свободны, опора твёрдая. */
+    /**
+     * Можно ли поставить игрока в этот блок: опора твёрдая (или это сама
+     * кровать), ноги и голова свободны, жидкостей и опасных блоков нет.
+     */
     static boolean standable(Block feet) {
         if (feet == null) {
             return false;
         }
-        Material ground = feet.getRelative(BlockFace.DOWN).getType();
-        if (ground.isAir() || ground.isLiquid() || DANGEROUS.contains(ground)) {
+        Block ground = feet.getRelative(BlockFace.DOWN);
+        Material groundType = ground.getType();
+        if (groundType.isAir() || ground.isLiquid() || DANGEROUS.contains(groundType)) {
             return false;
         }
-        Material at = feet.getType();
-        Material head = feet.getRelative(BlockFace.UP).getType();
-        if (at.isSolid() || head.isSolid() || at.isLiquid() || head.isLiquid()) {
+        if (!groundType.isSolid() && !Tag.BEDS.isTagged(groundType)) {
             return false;
         }
-        return !DANGEROUS.contains(at);
+        return free(feet) && free(feet.getRelative(BlockFace.UP));
+    }
+
+    /** Блок не мешает стоять: не твёрдый, не жидкость и не из опасного списка. */
+    private static boolean free(Block block) {
+        Material type = block.getType();
+        return !type.isSolid() && !block.isLiquid() && !DANGEROUS.contains(type);
     }
 }
