@@ -67,6 +67,7 @@ public final class TierMobDropListener implements Listener {
                 // кто потом опознает предмет: тир до опознания ещё не известен).
                 if (entity.getKiller() instanceof Player killer) {
                     plugin.stats().count(killer.getUniqueId(), roll.id());
+                    plugin.collection().record(killer, drop);
                 }
             }
         }

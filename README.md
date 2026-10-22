@@ -1202,7 +1202,7 @@ public void onEnable() {
 
 ---
 
-## Аддон CHRDK_TierForge — крафтовая редкость (с версии 1.4.14)
+## Аддон CHRDK_TierForge — крафтовая редкость (с версии 1.4.14; коллекция кузни — 1.4.150)
 
 Крафты в духе Terraria: любая сшитая броня, оружие, инструменты и утилита (щит, рог,
 фонарь, тотем — с 1.4.142) могут выйти с **накатом
@@ -1215,7 +1215,8 @@ public void onEnable() {
 есть ещё и собственный пул **15 уникальных свойств**, а с 1.4.119 — свой визуальный
 образ: проклятый дымится тёмно-красным, легендарный горит золотом. С 1.4.127 поверх
 свойства ложится случайный набор **аффиксов** ◆/✖ (15 хороших и 15 плохих на весь
-модуль), а сам предмет иногда приходит уже **зачарованным**.
+модуль), а сам предмет иногда приходит уже **зачарованным**. С 1.4.150 всё
+встреченное складывается в **коллекцию кузни** — 142 позиции и награды за вехи.
 
 ### Механики
 
@@ -1319,6 +1320,19 @@ public void onEnable() {
   `affixes.enabled: false` снимает набор при ближайшей пересборке (вход, смена
   слота, перекат), а включение и смена потолков так же запускают пересборку —
   отпечаток раскладки учитывает обе настройки.
+- **Коллекция кузни (1.4.150)**: `/tiers collection` открывает витрину из трёх
+  разделов — 7 редкостей, 105 свойств тиров и 30 аффиксов (всего 142 позиции).
+  Первое появление позиции — крафт, опознание, дроп с моба или забранный
+  результат наковальни — отмечается навсегда: книга живёт в `stats.yml` рядом
+  со счётчиками находок, ключ — UUID, поэтому смена ника прогресс не теряет.
+  Открытые позиции витрина показывает в цвете и с эффектом, закрытые — серым
+  красителем без спойлеров. За вехи (`collection.rewards.*`) начисляются дни
+  проходки и алмазы: 15/45/75/105 свойств, 10/20/30 аффиксов и все семь
+  редкостей. Награда выдаётся ровно один раз — отметка `claimed` сохраняется
+  вместе с прогрессом, поэтому сбой между выплатой и сейвом не удвоит дни.
+  `collection.enabled: false` закрывает витрину, но книгу не стирает;
+  `collection.announce-finds` управляет объявлением новинок в чат. Прогресс
+  также виден строкой в `/tiers stats`, в том числе админской — по офлайн-игроку.
 - **Случайные зачарования (1.4.127)**: тир-предмет **иногда** приходит уже
   зачарованным. Шанс — `enchantments.chance-percent` (20%) плюс **+8% за тир**:
   проклятый 20%, легендарный 68%; `0` отключает броски полностью. Уровень ограничен тиром (I–II внизу, III
@@ -1355,7 +1369,8 @@ public void onEnable() {
 - Хранилище — PDC предметов; команда `/tiers` показывает лестницу и шансы,
   `/tiers info` разбирает предмет в руке (тир, кличка, источник, свойства тира, улучшения и цены),
   `/tiers stats` — находки за всё время (счётчики живут в `stats.yml`, 1.4.81),
-  `/tiers stats reset` — сброс своего счётчика; `/tiersadmin give <ник> <материал>
+  `/tiers stats reset` — сброс своего счётчика, `/tiers collection` — коллекция кузни;
+  `/tiersadmin give <ник> <материал>
   <тир>`, `give-unidentified`, `stats|resetstats <ник>` и `reload` — админские.
 
 ---
@@ -1701,7 +1716,7 @@ PlaceholderAPI — мягкая интеграция: `%chrdktreasures_found%`, 
 
 ### Установка
 
-Рядом с ядром положить `chrdk-treasures-1.4.149.jar`; зависимость —
+Рядом с ядром положить `chrdk-treasures-1.4.150.jar`; зависимость —
 `CHRDK_Core`, необязательная — `PlaceholderAPI`. Конфиг, тексты и `loot.yml`
 создаются при первом запуске, старые версии читаются без миграции:
 `chances.yml` появляется только после первой команды `chance`, а блоки старого
@@ -1717,27 +1732,27 @@ PlaceholderAPI — мягкая интеграция: `%chrdktreasures_found%`, 
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.149.jar`,
-аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.149.jar`,
-реферальный — `referrals/build/libs/chrdk-referrals-1.4.149.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.149.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.149.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.149.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.149.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.149.jar` (хартия чар — при установленном аддоне чар),
-достижения — `achievements/build/libs/chrdk-achievements-1.4.149.jar`, навыки —
-`skills/build/libs/chrdk-skills-1.4.149.jar`, клады —
-`treasures/build/libs/chrdk-treasures-1.4.149.jar`, общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.149.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.149.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.149.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.149.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.149.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.149.jar`, стримерская программа —
-`streams/build/libs/chrdk-streams-1.4.149.jar`, лотерея —
-`lottery/build/libs/chrdk-lottery-1.4.149.jar`, аукцион —
-`auction/build/libs/chrdk-auction-1.4.149.jar`, питомцы —
-`pets/build/libs/chrdk-pets-1.4.149.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.150.jar`,
+аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.150.jar`,
+реферальный — `referrals/build/libs/chrdk-referrals-1.4.150.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.150.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.150.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.150.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.150.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.150.jar` (хартия чар — при установленном аддоне чар),
+достижения — `achievements/build/libs/chrdk-achievements-1.4.150.jar`, навыки —
+`skills/build/libs/chrdk-skills-1.4.150.jar`, клады —
+`treasures/build/libs/chrdk-treasures-1.4.150.jar`, общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.150.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.150.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.150.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.150.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.150.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.150.jar`, стримерская программа —
+`streams/build/libs/chrdk-streams-1.4.150.jar`, лотерея —
+`lottery/build/libs/chrdk-lottery-1.4.150.jar`, аукцион —
+`auction/build/libs/chrdk-auction-1.4.150.jar`, питомцы —
+`pets/build/libs/chrdk-pets-1.4.150.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). К релизу на GitHub прикладывается **один архив**
 `chrdk-plugins-<версия>.zip`: ядро и все 20 аддонов одной версии плюс памятка
 `ОБНОВЛЕНИЕ.txt`. Отдельные JAR больше не публикуются.

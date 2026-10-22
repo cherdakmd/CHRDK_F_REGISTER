@@ -18,9 +18,9 @@ class ConfigReportTest {
     @Test
     void defaultsAreReportedAsEnabled() {
         List<String> lines = ConfigReport.lines(parse(new YamlConfiguration()));
-        assertEquals(8, lines.size(),
-                "восемь строк: крафт, опознание, наковальня, дроп, прочее, "
-                        + "аффиксы/зачарования, кастомные чары, эффекты");
+        assertEquals(9, lines.size(),
+                "девять строк: крафт, опознание, наковальня, дроп, прочее, "
+                        + "аффиксы/зачарования, кастомные чары, эффекты, коллекция");
         assertTrue(lines.get(0).contains("100%"), lines.get(0));
         assertTrue(lines.get(1).contains("включено"), lines.get(1));
         assertTrue(lines.get(2).contains("перекат вкл."), lines.get(2));
@@ -31,6 +31,16 @@ class ConfigReportTest {
         assertTrue(lines.get(6).contains("кастомные чары (CHRDK_Enchants)"), lines.get(6));
         assertTrue(lines.get(6).contains("шанс от 18%"), lines.get(6));
         assertTrue(lines.get(6).contains("проклятия 15% с тира epic"), lines.get(6));
+        assertTrue(lines.get(8).contains("коллекция кузни: включена"), lines.get(8));
+        assertTrue(lines.get(8).contains("аффиксы 3"), "три вехи по аффиксам: " + lines.get(8));
+    }
+
+    @Test
+    void collectionLineShowsDisabledState() {
+        YamlConfiguration yaml = new YamlConfiguration();
+        yaml.set("collection.enabled", false);
+        List<String> lines = ConfigReport.lines(parse(yaml));
+        assertEquals("коллекция кузни: выключена", lines.get(8));
     }
 
     @Test
@@ -62,7 +72,7 @@ class ConfigReportTest {
     @Test
     void visualsLineShowsMasterSwitch() {
         List<String> enabled = ConfigReport.lines(parse(new YamlConfiguration()));
-        assertEquals(8, enabled.size(), enabled.toString());
+        assertEquals(9, enabled.size(), enabled.toString());
         assertTrue(enabled.get(7).contains("аура каждые 10 тиков"), enabled.get(7));
         assertTrue(enabled.get(7).contains("7 тиров с частицами"), enabled.get(7));
 

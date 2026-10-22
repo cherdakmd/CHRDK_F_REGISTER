@@ -115,6 +115,7 @@ public final class TierCraftListener implements Listener {
         if (tier == null || consumed == null) return;
         // 1.4.81: находки считаются и в «старом» флоу (раньше — только при опознании).
         plugin.stats().count(player.getUniqueId(), consumed.id());
+        plugin.collection().record(player, current);
         notifyRolled(player, consumed);
     }
 

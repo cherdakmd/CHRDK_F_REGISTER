@@ -214,12 +214,19 @@ public final class TierAnvilListener implements Listener {
             propertyKeeper.consume(player.getUniqueId(), mergeKey);
         }
         String key = previewKeys.remove(player.getUniqueId());
-        if (key == null) return;
-        propertyKeeper.consume(player.getUniqueId(), key);
-        TierDef.Snapshot consumed = rerollKeeper.consume(player.getUniqueId(), key);
+        TierDef.Snapshot consumed = null;
+        if (key != null) {
+            propertyKeeper.consume(player.getUniqueId(), key);
+            consumed = rerollKeeper.consume(player.getUniqueId(), key);
+        }
         ItemStack taken = event.getCurrentItem();
         String tier = taken == null ? null : plugin.items().tierOf(taken);
-        if (consumed == null || tier == null || !consumed.id().equals(tier)) return;
+        // 1.4.150: забранный результат — новая находка для коллекции кузни.
+        // Превью не считаем: оно пересобирается на каждое движение в окне.
+        if (taken != null && tier != null && (mergeKey != null || key != null)) {
+            plugin.collection().record(player, taken);
+        }
+        if (key == null || consumed == null || tier == null || !consumed.id().equals(tier)) return;
         if ("cursed".equals(consumed.id())) {
             plugin.messages().send(player, "rerolled-cursed");
         } else if (consumed.percent() != 0) {

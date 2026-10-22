@@ -86,6 +86,11 @@ final class ConfigReport {
                 + (config.visuals().armor() ? ", броня учтена" : "")
                 + (config.visuals().selfOnly() ? ", только владельцу" : ", видят все рядом")
                 : "выключены"));
+        out.add("коллекция кузни: " + (config.collection().enabled()
+                ? "включена (вехи: редкости " + config.collection().tiers().count()
+                + ", свойства " + config.collection().properties().size()
+                + ", аффиксы " + config.collection().affixes().size() + ")"
+                : "выключена"));
         return out;
     }
 

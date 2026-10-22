@@ -32,6 +32,10 @@ public final class TierForgePlugin extends JavaPlugin {
     /** Аура редкости (1.4.119): частицы и блеск по тиру предмета. */
     private TierVisualService visuals;
     private final TierStatsKeeper stats = new TierStatsKeeper();
+    /** Коллекция кузни (1.4.150): редкости, свойства и аффиксы, встреченные игроком. */
+    private final TierCollectionKeeper collection = new TierCollectionKeeper();
+    private TierCollectionService collectionService;
+    private TierCollectionMenu collectionMenu;
     private TierIdentificationListener identification;
     private TierRefreshListener refreshListener;
     private ForgeUpgradeListener forgeUpgrades;
@@ -56,6 +60,9 @@ public final class TierForgePlugin extends JavaPlugin {
         this.visuals.restart();
         loadStats();
         startStatsSave();
+        this.collectionService = new TierCollectionService(this, collection);
+        this.collectionMenu = new TierCollectionMenu(this, collectionService);
+        Bukkit.getPluginManager().registerEvents(collectionMenu, this);
 
         Bukkit.getPluginManager().registerEvents(new TierCraftListener(this), this);
         Bukkit.getPluginManager().registerEvents(new TierAnvilListener(this), this);
@@ -153,8 +160,14 @@ public final class TierForgePlugin extends JavaPlugin {
             if (root != null) {
                 stats.load(root);
             }
+            // 1.4.150: книги коллекции лежат в том же файле, отдельного хранилища нет.
+            ConfigurationSection books = yaml.getConfigurationSection("collection");
+            if (books != null) {
+                collection.load(books);
+            }
             getLogger().info("CHRDK_TierForge: статистика находок загружена ("
-                    + stats.players() + " игроков, " + stats.grandTotal() + " находок).");
+                    + stats.players() + " игроков, " + stats.grandTotal() + " находок; "
+                    + "коллекция — " + collection.players() + " игроков).");
         } catch (RuntimeException exception) {
             getLogger().warning("CHRDK_TierForge: не удалось прочитать stats.yml — "
                     + exception.getMessage() + "; начинаем с пустых счётчиков");
@@ -187,6 +200,7 @@ public final class TierForgePlugin extends JavaPlugin {
         try {
             YamlConfiguration yaml = new YamlConfiguration();
             stats.writeTo(yaml.createSection("players"));
+            collection.writeTo(yaml.createSection("collection"));
             File temp = new File(parent, file.getName() + ".tmp");
             yaml.save(temp);
             // 1.4.95: атомарная замена не спасает от битого или подменённого файла —
@@ -303,5 +317,25 @@ public final class TierForgePlugin extends JavaPlugin {
 
     public TierStatsKeeper stats() {
         return stats;
+    }
+
+    /**
+     * Коллекция кузни: отметки находок, награды и витрина (1.4.150).
+     * Ленивая инициализация — слушатели не зависят от порядка регистрации.
+     */
+    public TierCollectionService collection() {
+        if (collectionService == null) {
+            collectionService = new TierCollectionService(this, collection);
+        }
+        return collectionService;
+    }
+
+    /** Хранилище книг — нужно только сейву и тестам. */
+    public TierCollectionKeeper collectionKeeper() {
+        return collection;
+    }
+
+    public TierCollectionMenu collectionMenu() {
+        return collectionMenu;
     }
 }

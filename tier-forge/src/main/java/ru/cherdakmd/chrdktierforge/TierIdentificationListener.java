@@ -118,6 +118,7 @@ public final class TierIdentificationListener implements Listener {
             }
             plugin.items().apply(stack, roll);
             plugin.stats().count(player.getUniqueId(), roll.id());
+            plugin.collection().record(player, stack);
             logHighTier(player, stack, roll, source, channel);
             rolls.add(roll);
         }

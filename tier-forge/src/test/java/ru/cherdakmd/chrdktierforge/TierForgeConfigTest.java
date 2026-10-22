@@ -51,6 +51,19 @@ class TierForgeConfigTest {
     }
 
     @Test
+    void collectionSectionIsWiredIntoConfig() {
+        YamlConfiguration yaml = empty();
+        yaml.set("collection.enabled", false);
+        yaml.set("collection.rewards.properties.15.pass-days", 5);
+        yaml.set("collection.rewards.properties.15.diamonds", 7);
+        TierForgeConfig config = parse(yaml).config();
+        assertFalse(config.collection().enabled(), "флаг из collection.enabled доходит до снимка");
+        assertEquals(1, config.collection().properties().size());
+        assertEquals(5, config.collection().properties().get(0).passDays());
+        assertEquals(7, config.collection().properties().get(0).diamonds());
+    }
+
+    @Test
     void defaultsAreSane() {
         TierForgeConfig config = parse(empty()).config();
         assertEquals(100, config.rollOnCraftChancePercent());

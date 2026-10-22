@@ -53,7 +53,8 @@ public record TierForgeConfig(
         int propertiesPerItem,
         TierVisuals visuals,
         TierAffixConfig affixes,
-        TierEnchantConfig enchants) {
+        TierEnchantConfig enchants,
+        TierCollectionConfig collection) {
 
     public TierDef.Snapshot find(String id) {
         return tiers.stream().filter(s -> s.id().equals(id)).findFirst().orElse(null);
@@ -165,6 +166,8 @@ public record TierForgeConfig(
         // --- универсальные аффиксы и случайные зачарования (волна 17) ---
         TierAffixConfig affixes = TierAffixConfig.parse(config, logger);
         TierEnchantConfig enchants = TierEnchantConfig.parse(config, logger);
+        // 1.4.150: коллекция кузни — редкости, свойства и аффиксы с наградами за вехи.
+        TierCollectionConfig collection = TierCollectionConfig.parse(config, logger);
 
         return new TierForgeConfig(chance, tiers, anvil, baseXp,
                 config.getBoolean("craft.armor", true),
@@ -201,7 +204,7 @@ public record TierForgeConfig(
                 readNames(config, "names.armor", ForgeNamePool.DEFAULT_ARMOR),
                 readNames(config, "names.tools", ForgeNamePool.DEFAULT_TOOLS),
                 readNames(config, "names.utilities", ForgeNamePool.DEFAULT_UTILITIES),
-                properties, propertiesPerItem, visuals, affixes, enchants);
+                properties, propertiesPerItem, visuals, affixes, enchants, collection);
     }
 
     /** Список имён из конфига с дефолтом (пустая/битая секция = умолчание). */

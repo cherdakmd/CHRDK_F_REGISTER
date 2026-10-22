@@ -66,6 +66,15 @@ public final class TierCommandHandler implements TabExecutor {
         if (args.length >= 1 && "effects".equalsIgnoreCase(args[0])) {
             return handleEffects(player, args.length >= 2 ? args[1] : null);
         }
+        // 1.4.150: витрина «Коллекция кузни» — редкости, свойства и аффиксы.
+        if (args.length >= 1 && "collection".equalsIgnoreCase(args[0])) {
+            if (plugin.collectionMenu() == null) {
+                plugin.messages().send(player, "collection-disabled");
+                return true;
+            }
+            plugin.collectionMenu().open(player);
+            return true;
+        }
         return handleTiers(player);
     }
 
@@ -382,6 +391,14 @@ public final class TierCommandHandler implements TabExecutor {
         if (shown == 0) {
             plugin.messages().send(sender, emptyKey, "player", nameArg);
         }
+        // 1.4.150: рядом с находками — прогресс коллекции кузни.
+        TierCollectionService collection = plugin.collection();
+        if (collection != null && collection.enabled()) {
+            TierCollectionBook.Snapshot snapshot = collection.snapshot(playerId);
+            plugin.messages().send(sender, "stats-collection",
+                    "found", snapshot.total(), "total", TierCollectionBook.CATALOG_TOTAL,
+                    "percent", snapshot.percent());
+        }
         return true;
     }
 
@@ -543,7 +560,7 @@ public final class TierCommandHandler implements TabExecutor {
         String prefix = args[args.length - 1].toLowerCase(Locale.ROOT);
         if ("tiers".equalsIgnoreCase(command.getName())) {
             if (args.length == 1) {
-                List.of("info", "stats", "top", "effects").stream()
+                List.of("info", "stats", "top", "effects", "collection").stream()
                         .filter(x -> x.startsWith(prefix)).forEach(matches::add);
             } else if (args.length == 2 && "effects".equalsIgnoreCase(args[0])) {
                 List.of("on", "off").stream()
