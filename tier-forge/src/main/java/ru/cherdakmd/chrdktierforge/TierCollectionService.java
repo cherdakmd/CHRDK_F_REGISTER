@@ -74,6 +74,11 @@ public final class TierCollectionService {
                 : keeper.snapshot(player.getUniqueId());
     }
 
+    /** Снимок по UUID — админская статистика офлайн-игрока. */
+    public TierCollectionBook.Snapshot snapshot(UUID player) {
+        return player == null ? TierCollectionBook.Snapshot.EMPTY : keeper.snapshot(player);
+    }
+
     public TierCollectionBook.Progress progress(UUID player) {
         return keeper.progress(player);
     }
