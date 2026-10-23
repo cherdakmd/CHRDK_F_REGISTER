@@ -160,7 +160,8 @@ public final class TierForgePlugin extends JavaPlugin {
         } catch (RuntimeException | LinkageError error) {
             getLogger().warning("CHRDK_TierForge: PlaceholderAPI не подключился — "
                     + error.getMessage());
-            this.placeholders = null;
+            // Регистрация могла успеть наполовину: снимаем, что успели.
+            unregisterPlaceholders();
         }
     }
 
