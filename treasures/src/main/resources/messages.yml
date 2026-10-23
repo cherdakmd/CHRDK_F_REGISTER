@@ -613,7 +613,6 @@ messages:
   map-found: "<gold>Тайник найден!</gold> <gray>%tier% · %region%</gray>"
   map-hint: "<gray>Клад: <white>%distance%</white> блоков на <white>%direction%</white> · копать <white>%left%</white></gray>"
   map-hint-zone: "<green>Вы в зоне клада! Осталось раскопать: <white>%left%</white></green>"
-  map-hint-world: "<gray>Клад в другом мире: <white>%world%</white></gray>"
   map-disabled: "<red>Клад-карты выключены в config.yml (maps.enabled).</red>"
   menu-maps-name: "<gold>Клад-карты</gold>"
   menu-maps-lore: "<gray>Активных: <white>%count%</white></gray>"

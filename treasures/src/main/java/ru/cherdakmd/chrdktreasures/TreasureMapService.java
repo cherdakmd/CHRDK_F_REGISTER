@@ -414,7 +414,6 @@ public final class TreasureMapService {
         }
         TreasureMapHint best = null;
         TreasureMap bestMap = null;
-        TreasureMap otherWorld = null;
         long now = System.currentTimeMillis();
         for (Slot slot : active(player)) {
             TreasureMap map = slot.map();
@@ -423,11 +422,9 @@ public final class TreasureMapService {
             }
             TreasureMapHint hint = TreasureMapHint.of(map, player.getWorld().getName(),
                     player.getLocation().getBlockX(), player.getLocation().getBlockZ());
+            // Карта в другом мире в экшен-баре молчит: иначе игрок, держащий
+            // нижнемирскую карту, получал бы напоминание каждые две секунды.
             if (!hint.sameWorld()) {
-                // Другой мир: подсказка нужна, только если в этом мире карт нет.
-                if (otherWorld == null) {
-                    otherWorld = map;
-                }
                 continue;
             }
             int limit = settings().hintDistance();
@@ -440,10 +437,6 @@ public final class TreasureMapService {
             }
         }
         if (best == null || bestMap == null) {
-            if (otherWorld != null) {
-                player.sendActionBar(plugin.messages().get("map-hint-world",
-                        "world", otherWorld.world()));
-            }
             return;
         }
         if (best.inZone()) {

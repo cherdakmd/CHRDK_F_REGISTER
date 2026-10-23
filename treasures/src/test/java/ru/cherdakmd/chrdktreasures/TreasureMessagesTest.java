@@ -69,7 +69,7 @@ class TreasureMessagesTest {
             "map-item-zone", "map-item-dig", "map-item-expire", "map-item-hint",
             "map-given", "map-given-dropped", "map-expired", "map-none", "map-header",
             "map-row", "map-row-world", "map-footer", "map-info", "map-info-world",
-            "map-found", "map-hint", "map-hint-zone", "map-hint-world", "map-disabled",
+            "map-found", "map-hint", "map-hint-zone", "map-disabled",
             "menu-maps-name", "menu-maps-lore", "menu-maps-empty", "menu-maps-hint",
             "help-map", "admin-map-given", "admin-unknown-tier");
 
