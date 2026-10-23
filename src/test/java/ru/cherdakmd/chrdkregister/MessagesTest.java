@@ -53,7 +53,10 @@ class MessagesTest {
             "two-factor.login.success", "two-factor.required.session", "two-factor.required.success",
             "two-factor.reset-enrollment", "two-factor.reset-login-complete",
             // 1.4.106: передаётся переменной messageKey в SpawnService#teleport.
-            "spawn.teleported");
+            "spawn.teleported",
+            // 1.4.156: кнопки меню /profile — ключи передаются в ProfileService#button.
+            "profile.to-chat", "profile.to-chat-lore", "profile.refresh",
+            "profile.refresh-lore", "profile.close");
 
     private static final String RESOURCE_PATH = "src/main/resources/messages.yml";
 
