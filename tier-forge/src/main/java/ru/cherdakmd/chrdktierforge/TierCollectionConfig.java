@@ -117,6 +117,8 @@ public record TierCollectionConfig(boolean enabled, boolean announceFinds, Title
     }
 
     public TierCollectionConfig {
+        // null-секция титулов — умолчания: старые конфиги и тесты не должны падать.
+        titles = titles == null ? Titles.DEFAULT : titles;
         properties = List.copyOf(properties == null ? List.of() : properties);
         affixes = List.copyOf(affixes == null ? List.of() : affixes);
         // Порядок разделов важен для показа — Map.copyOf его не гарантирует.
