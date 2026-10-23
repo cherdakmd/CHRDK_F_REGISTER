@@ -68,13 +68,11 @@ class OrdersMessagesTest {
     @Test
     void rankNamesCoverDefaultRanks() throws Exception {
         ConfigurationSection section = load();
-        // Ключи званий записаны плоско («rank.novice»), как в остальных аддонах:
-        // читаем сырую карту, потому что путь с точкой Bukkit трактует как секцию.
-        Map<String, Object> values = section.getValues(false);
+        // Ключи записаны как «rank.novice»: Bukkit при загрузке разворачивает
+        // точку в секцию, поэтому читаем обычным путём.
         for (String rank : OrdersConfig.defaultRanks().values()) {
-            Object text = values.get("rank." + rank);
-            assertNotNull(text, "нет звания: " + rank);
-            assertFalse(String.valueOf(text).isBlank(), "пустое звание: " + rank);
+            String text = section.getString("rank." + rank, "");
+            assertFalse(text.isBlank(), "нет звания: " + rank);
         }
         assertNull(section.getString("menu-order-greeting"),
                 "старый ключ переименован в menu-order-quote");

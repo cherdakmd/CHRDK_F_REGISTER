@@ -190,7 +190,8 @@ class OrdersStoreTest {
         assertEquals("Аня", rows.get(1).name());
         assertEquals(3, rows.get(0).completed());
         assertEquals(6, rows.get(0).reputation());
-        assertEquals(1, store.top(0).size());
+        assertEquals(0, store.top(0).size(), "нулевой лимит — пустой топ");
+        assertEquals(0, store.top(-5).size(), "отрицательный лимит не ломает выборку");
         assertEquals(3, store.top(10).size());
     }
 
