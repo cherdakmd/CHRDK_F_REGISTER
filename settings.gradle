@@ -30,3 +30,5 @@ include 'lottery'
 include 'pets'
 
 include 'auction'
+
+include 'orders'

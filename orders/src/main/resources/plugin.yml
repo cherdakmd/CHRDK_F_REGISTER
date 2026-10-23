@@ -1,0 +1,24 @@
+name: CHRDK_Orders
+version: ${version}
+main: ru.cherdakmd.chrdkorders.OrdersPlugin
+api-version: '26.3'
+description: "Доска заказов от ботов: случайные цели, награда алмазами и репутация у заказчиков"
+author: cherdakmd
+depend: [CHRDK_Core]
+softdepend: [PlaceholderAPI]
+commands:
+  orders:
+    description: "Доска заказов: список, сдача предметов, статистика и рейтинг"
+    aliases: [order, zakaz, board]
+    usage: "/orders [list|deliver <номер>|stats [ник]|top|help]"
+  ordersadmin:
+    description: "Управление доской заказов"
+    permission: chrdkorders.admin
+    usage: "/ordersadmin [reload|new [категория]|clear|give <ник> <репутация>|info]"
+permissions:
+  chrdkorders.use:
+    description: "Просмотр доски и сдача заказов"
+    default: true
+  chrdkorders.admin:
+    description: "Перезагрузка конфига, выдача заказов и репутации"
+    default: op
