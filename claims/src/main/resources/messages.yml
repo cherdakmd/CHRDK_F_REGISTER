@@ -2,6 +2,11 @@
 # MiniMessage: <red>, <gradient:#...>, <click:...>; старые &-коды тоже работают.
 # Подстановки %ключ% экранируются — ник игрока не сломает разметку.
 claims:
+  # -------------------------------- профиль ----------------------------------
+  profile-title: "Приваты"
+  profile-claims: "<gray>Приватов: </gray><white>%used%/%limit%</white>"
+  profile-treasury: "<gray>Казна: </gray><aqua>%amount%</aqua> <gray>алмазов</gray>"
+
   player-only: "<red>Команда доступна только игрокам.</red>"
   need-auth: "<red>Сначала войдите на сервер (/login).</red>"
   no-permission: "<red>Недостаточно прав.</red>"

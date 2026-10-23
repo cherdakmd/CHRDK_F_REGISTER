@@ -1,4 +1,11 @@
 ranks:
+  # -------------------------------- профиль ----------------------------------
+  profile-title: "Стаж"
+  profile-playtime: "<gray>Наиграно: </gray><white>%hours% ч.</white>"
+  profile-rank: "<gray>Звание: </gray>%rank%"
+  profile-no-rank: "<gray>Звание: </gray><white>пока нет</white>"
+  profile-next: "<gray>До «%rank%»: </gray><white>%hours% ч.</white>"
+
   "header": "<gold><bold>Звания за наигранное время</bold></gold>"
   "line": "%rank% <dark_gray>—</dark_gray> от <yellow>%hours%</yellow> ч."
   "your-rank": "<gray>Ваше звание: </gray>%rank% <dark_gray>|</dark_gray> наиграно: <aqua>%playtime%</aqua>"

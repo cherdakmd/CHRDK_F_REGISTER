@@ -12,6 +12,10 @@ messages:
     "info": "<gray>Стрик: %streak% дн., всего наград: %total%, статус сегодняшней: %claimed%</gray>"
     "claimed-yes": "<green>взята</green>"
     "claimed-no": "<yellow>не взята — /daily claim</yellow>"
+    "profile-title": "Ежедневные награды"
+    "profile-streak": "<gray>Стрик: </gray><yellow>%streak% дн.</yellow>"
+    "profile-total": "<gray>Наград забрано: </gray><white>%total%</white>"
+    "profile-ready": "<green>Сегодняшняя награда ждёт — /daily claim</green>"
     "gui":
       "title": "<gold>Ежедневные награды</gold>"
       "day-name": "<yellow>День %day%</yellow>"

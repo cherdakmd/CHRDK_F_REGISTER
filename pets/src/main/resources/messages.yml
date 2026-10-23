@@ -26,6 +26,11 @@ messages:
   level-up: "<gold>%name% достиг %level% уровня!</gold>"
   pet-died: "<red>%name% (%level% ур.) погиб. Память останется в /pet list.</red>"
 
+  # --- профиль ---
+  profile-title: "Питомцы"
+  profile-count: "<gray>Живых питомцев: </gray><white>%count%</white>"
+  profile-best: "<gray>Старший питомец: </gray><white>%name%</white> <gray>(ур. %level%)</gray>"
+
   # --- карточка /pet ---
   card-header: "<gold><bold>Питомец</bold></gold>"
   card-name: "<white>%name%</white> <dark_gray>(%species%)</dark_gray>"

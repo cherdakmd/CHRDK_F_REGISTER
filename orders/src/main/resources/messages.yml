@@ -64,6 +64,12 @@ orders:
   menu-info-cooldown: "<gray>Пауза перед следующей сдачей: <white>%seconds% с</white></gray>"
   menu-close: "<red>Закрыть</red>"
 
+  # -------------------------------- профиль ----------------------------------
+  profile-title: "Заказы"
+  profile-reputation: "<gray>Репутация: </gray><white>%reputation%</white> <dark_gray>·</dark_gray> %rank%"
+  profile-completed: "<gray>Сдано заказов: </gray><white>%completed%</white>"
+  profile-today: "<gray>Сегодня: </gray><white>%today%/%limit%</white>"
+
   # ------------------------------- статистика --------------------------------
   stats-header: "<gold>Заказы</gold> <dark_gray>·</dark_gray> <white>%player%</white>"
   stats-completed: "<gray>Сдано заказов: <white>%completed%</white></gray>"

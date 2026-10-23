@@ -23,6 +23,8 @@ public final class RegisterPlugin extends JavaPlugin {
     private ServerMenuService serverMenuService;
     private BankStore bankStore;
     private BankService bankService;
+    private ProfileRegistry profileRegistry;
+    private ProfileService profileService;
     private BankCommandHandler bankCommands;
     private AdminDonationsGuiService adminDonationsGui;
     private PasswordKeypadService passwordKeypad;
@@ -67,6 +69,9 @@ public final class RegisterPlugin extends JavaPlugin {
         this.bankStore.load();
         this.bankService = new BankService(this, bankStore, () -> accessManager.config().economy());
         this.bankService.start();
+        this.profileRegistry = new ProfileRegistry(getLogger());
+        this.profileService = new ProfileService(this, accessManager, bankStore, profileRegistry);
+        getServer().getPluginManager().registerEvents(profileService, this);
         // Автосообщения показывают баланс банка: подстановка %balance%.
         this.chatService.setPlaceholderProvider((player, values) ->
                 values.put("balance", BankService.format(bankStore.balance(player.getUniqueId()))));
@@ -83,7 +88,8 @@ public final class RegisterPlugin extends JavaPlugin {
         shopService.logProblems();
         getServer().getServicesManager().register(ChrdkRegisterApi.class,
                 new ChrdkRegisterApiImpl(this, accessManager, externalHooks, shopService,
-                        chatService.nameTags(), bankStore), this, ServicePriority.Normal);
+                        chatService.nameTags(), bankStore, profileRegistry),
+                this, ServicePriority.Normal);
 
         getServer().getPluginManager().registerEvents(new PlayerRestrictionListener(accessManager), this);
         getServer().getPluginManager().registerEvents(chatService, this);
@@ -113,6 +119,22 @@ public final class RegisterPlugin extends JavaPlugin {
                 getServer().getUpdateFolderFile().toPath(), getDataFolder().toPath(),
                 () -> accessManager.config().updatesRepo(), getServer().getBukkitVersion());
         this.commandHandler = new RegisterCommandHandler(this, accessManager);
+        PluginCommand profileCommand = getCommand("profile");
+        if (profileCommand != null) {
+            profileCommand.setExecutor((sender, command, label, args) -> {
+                boolean chat = args.length > 0 && args[0].equalsIgnoreCase("chat");
+                String target = chat
+                        ? (args.length > 1 ? args[1] : null)
+                        : (args.length > 0 ? args[0] : null);
+                if (args.length > (chat ? 2 : 1)) {
+                    messages.send(sender, "profile.usage");
+                    return true;
+                }
+                return profileService.show(sender, chat, target);
+            });
+            profileCommand.setTabCompleter((sender, command, alias, args) ->
+                    profileService.complete(sender, args));
+        }
         PluginCommand menuCommand = getCommand("menu");
         if (menuCommand != null) {
             menuCommand.setExecutor((sender, command, label, args) -> {
@@ -337,6 +359,16 @@ public final class RegisterPlugin extends JavaPlugin {
     /** Банк алмазов: /bal, /pay, /baltop и депозиты. */
     public BankService bank() {
         return bankService;
+    }
+
+    /** Разделы аддонов для {@code /profile} (API v8). */
+    public ProfileRegistry profileRegistry() {
+        return profileRegistry;
+    }
+
+    /** Карточка игрока {@code /profile}. */
+    public ProfileService profile() {
+        return profileService;
     }
 
     /** Чат и автосообщения ({@code /pass automessages}). */

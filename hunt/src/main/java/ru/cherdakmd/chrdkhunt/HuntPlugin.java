@@ -5,6 +5,7 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
+import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 
 /**
  * CHRDK_Hunt — охота на мобов: монеты, осколки, трофеи и ключи (1.4.155).
@@ -27,6 +28,7 @@ public final class HuntPlugin extends JavaPlugin {
     private BukkitTask saveTask;
     private BukkitTask queuedSave;
     private boolean saveQueued;
+    private ChrdkRegisterApi coreApi;
 
     @Override
     public void onEnable() {
@@ -42,6 +44,15 @@ public final class HuntPlugin extends JavaPlugin {
             this.gui = new HuntGui(this);
             this.shopGui = new HuntShopGui(this);
             this.trophyGui = new HuntTrophyGui(this);
+            this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
+            if (coreApi != null) {
+                try {
+                    coreApi.registerProfile("hunt", new HuntProfile(this));
+                } catch (RuntimeException | LinkageError error) {
+                    getLogger().warning("[CHRDK_Hunt] раздел профиля недоступен "
+                            + "(нужно ядро 1.4.156+): " + error);
+                }
+            }
             getServer().getPluginManager().registerEvents(new HuntListener(this), this);
             getServer().getPluginManager().registerEvents(gui, this);
             getServer().getPluginManager().registerEvents(shopGui, this);
@@ -63,6 +74,14 @@ public final class HuntPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (coreApi != null) {
+            try {
+                coreApi.unregisterProfile("hunt");
+            } catch (RuntimeException | LinkageError ignored) {
+                // Ядро старше API v8 — снимать нечего.
+            }
+            this.coreApi = null;
+        }
         cancelTasks();
         if (gui != null) {
             gui.closeAll();

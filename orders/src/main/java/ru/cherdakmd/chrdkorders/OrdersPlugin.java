@@ -38,6 +38,14 @@ public final class OrdersPlugin extends JavaPlugin {
             this.store = new OrdersStore(getDataFolder().toPath(), getLogger());
             store.load();
             this.service = new OrdersService(this);
+            if (coreApi != null) {
+                try {
+                    coreApi.registerProfile("orders", new OrdersProfile(this));
+                } catch (RuntimeException | LinkageError error) {
+                    getLogger().warning("[CHRDK_Orders] раздел профиля недоступен "
+                            + "(нужно ядро 1.4.156+): " + error);
+                }
+            }
             this.gui = new OrdersGui(this);
             getServer().getPluginManager().registerEvents(gui, this);
             registerCommands();
@@ -61,6 +69,13 @@ public final class OrdersPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (coreApi != null) {
+            try {
+                coreApi.unregisterProfile("orders");
+            } catch (RuntimeException | LinkageError ignored) {
+                // Ядро старше API v8 — снимать нечего.
+            }
+        }
         cancelTasks();
         if (gui != null) {
             gui.closeAll();

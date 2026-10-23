@@ -2,6 +2,11 @@ battlepass:
   # Тексты CHRDK_BattlePass. Разметка — MiniMessage; %ключи% подставляются плагином.
   # Название сезона и описания заданий берутся из config.yml и тоже могут содержать
   # MiniMessage (или старые &-коды) — они вставляются как готовая разметка.
+  # --------------------------------- профиль ----------------------------------
+  "profile-title": "Боевой пропуск"
+  "profile-points": "<gray>Очков сезона: </gray><gold>%points%</gold>"
+  "profile-missions": "<gray>Заданий выполнено: </gray><white>%done%/%total%</white>"
+  "profile-claimed": "<gray>Наград забрано: </gray><white>%claimed%</white>"
   "header": "<gold><bold>Боевой пропуск</bold></gold> <dark_gray>·</dark_gray> %season%"
   "subheader": "<gray>Волна %week% из %weeks_total%</gray>%next%"
   "next-week": " <dark_gray>·</dark_gray> <gray>следующая через %days% дн. (%date%)</gray>"

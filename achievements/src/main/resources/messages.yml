@@ -6,6 +6,12 @@ messages:
   usage: "<yellow>/achievements [menu|list|badge <ид|off>]</yellow>"
   achievements-disabled: "<red>Достижения выключены в config.yml.</red>"
 
+  # -------------------------------- профиль ----------------------------------
+  profile-title: "Достижения"
+  profile-progress: "<gray>Открыто: </gray><white>%unlocked%/%total%</white>"
+  profile-claimed: "<gray>Наград получено: </gray><white>%claimed%</white>"
+  profile-badge: "<gray>Бейдж: </gray>%badge%"
+
   # ------------------------------- витрина --------------------------------
   achievements-title: "<gold>Достижения · %category%</gold>"
   category.path: "<green>Путь</green>"

@@ -63,6 +63,15 @@ public final class SkillsPlugin extends JavaPlugin {
             admin.setTabCompleter(commands);
         }
 
+        if (coreApi != null) {
+            try {
+                coreApi.registerProfile("skills", new SkillsProfile(this));
+            } catch (RuntimeException | LinkageError error) {
+                getLogger().warning("[CHRDK_Skills] раздел профиля недоступен "
+                        + "(нужно ядро 1.4.156+): " + error);
+            }
+        }
+
         registerApi();
         this.saveTask = Bukkit.getScheduler().runTaskTimerAsynchronously(this,
                 this::saveState, 100L, 100L);
@@ -81,6 +90,13 @@ public final class SkillsPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (coreApi != null) {
+            try {
+                coreApi.unregisterProfile("skills");
+            } catch (RuntimeException | LinkageError ignored) {
+                // Ядро старше API v8 — снимать нечего.
+            }
+        }
         if (saveTask != null) {
             saveTask.cancel();
             saveTask = null;

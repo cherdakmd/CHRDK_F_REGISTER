@@ -82,12 +82,27 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
             admin.setTabCompleter(handler);
         }
         startTasks();
+        if (coreApi != null) {
+            try {
+                coreApi.registerProfile("battlepass", new BattlePassProfile(this));
+            } catch (RuntimeException | LinkageError error) {
+                getLogger().warning("[CHRDK_BattlePass] раздел профиля недоступен "
+                        + "(нужно ядро 1.4.156+): " + error);
+            }
+        }
         getLogger().info("CHRDK_BattlePass включён: волн " + season.weeks().size()
                 + ", заданий " + missionCount() + ".");
     }
 
     @Override
     public void onDisable() {
+        if (coreApi != null) {
+            try {
+                coreApi.unregisterProfile("battlepass");
+            } catch (RuntimeException | LinkageError ignored) {
+                // Ядро старше API v8 — снимать нечего.
+            }
+        }
         if (autosaveTask != null) {
             autosaveTask.cancel();
             autosaveTask = null;

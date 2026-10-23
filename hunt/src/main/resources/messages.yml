@@ -118,6 +118,13 @@ hunt:
   stats-footer: "<gray>Меню: <yellow>/hunt</yellow> · лавка: <yellow>/hunt shop</yellow> · сундуки: <yellow>/hunt keys</yellow></gray>"
   stats-player-not-found: "<red>Игрок «%player%» не найден в базе охоты.</red>"
 
+  # ------------------------------- профиль ----------------------------------
+  profile-title: "Охота"
+  profile-coins: "<gray>Монеты: </gray><gold>%coins%</gold> <dark_gray>(всего %earned%)</dark_gray>"
+  profile-rank: "<gray>Звание: </gray>%rank% <dark_gray>(%earned% монет)</dark_gray>"
+  profile-kills: "<gray>Убийств: </gray><white>%kills%</white> <dark_gray>·</dark_gray> <gray>трофеев </gray><white>%trophies%/%total%</white>"
+  profile-stock: "<gray>Осколки: </gray><white>%shards%</white> <dark_gray>·</dark_gray> <gray>ключи: </gray><white>%keys%</white>"
+
   # --------------------------------- рейтинг --------------------------------
   top-header: "<gold>Лучшие охотники</gold> <dark_gray>·</dark_gray> <gray>по заработанным монетам</gray>"
   top-row: "<gray>%num%.</gray> <white>%player%</white> <dark_gray>·</dark_gray> <gold>%earned% монет</gold> <gray>· %kills% побед · трофеи %trophies% ·</gray> %rank%"

@@ -1,10 +1,12 @@
 package ru.cherdakmd.chrdkpets;
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
+import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 
 import java.util.UUID;
 
@@ -19,6 +21,7 @@ import java.util.UUID;
 public final class PetsPlugin extends JavaPlugin {
 
     private PetsConfig config;
+    private ChrdkRegisterApi coreApi;
     private Messages messages;
     private PetStore store;
     private PetService service;
@@ -45,6 +48,15 @@ public final class PetsPlugin extends JavaPlugin {
             registerCommand("petsadmin");
             getServer().getServicesManager().register(PetsApi.class, new PetsApiImpl(this),
                     this, ServicePriority.Normal);
+            this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
+            if (coreApi != null) {
+                try {
+                    coreApi.registerProfile("pets", new PetsProfile(this));
+                } catch (RuntimeException | LinkageError error) {
+                    getLogger().warning("[CHRDK_Pets] раздел профиля недоступен "
+                            + "(нужно ядро 1.4.156+): " + error);
+                }
+            }
             int adopted = service.adoptLoaded();
             scheduleTasks();
             getLogger().info("CHRDK_Pets включён: питомцев в базе " + store.size()
@@ -59,6 +71,14 @@ public final class PetsPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (coreApi != null) {
+            try {
+                coreApi.unregisterProfile("pets");
+            } catch (RuntimeException | LinkageError ignored) {
+                // Ядро старше API v8 — снимать нечего.
+            }
+            this.coreApi = null;
+        }
         cancelTasks();
         if (aura != null) {
             aura.clearAll();

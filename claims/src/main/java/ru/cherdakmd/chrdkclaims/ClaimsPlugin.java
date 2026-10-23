@@ -66,6 +66,14 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         this.audit = new ClaimAudit(getDataFolder().toPath(), getLogger());
         this.service = new ClaimsService(this);
         reloadClaimsConfig();
+        if (coreApi != null) {
+            try {
+                coreApi.registerProfile("claims", new ClaimsProfile(this));
+            } catch (RuntimeException | LinkageError error) {
+                getLogger().warning("[CHRDK_Claims] раздел профиля недоступен "
+                        + "(нужно ядро 1.4.156+): " + error);
+            }
+        }
         // Ядро 1.4.106+: случайный спавн спрашивает, занят ли чанк и есть ли у игрока приват.
         // Через отдельный мост: со старым ядром модуль продолжает работать без этой связи.
         try {
@@ -113,6 +121,13 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        if (coreApi != null) {
+            try {
+                coreApi.unregisterProfile("claims");
+            } catch (RuntimeException | LinkageError ignored) {
+                // Ядро старше API v8 — снимать нечего.
+            }
+        }
         if (teleports != null) {
             teleports.shutdown();
         }

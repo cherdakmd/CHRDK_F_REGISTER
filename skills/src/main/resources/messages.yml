@@ -18,6 +18,11 @@ messages:
   enchant-bonus: "<light_purple>Зачарование: чара усилена на уровень.</light_purple>"
   enchant-refund: "<green>Зачарование: возвращено <white>%levels%</white> уровней опыта.</green>"
 
+  # -------------------------------- профиль ----------------------------------
+  profile-title: "Навыки"
+  profile-level: "<gray>Суммарный уровень: </gray><white>%level%</white> <dark_gray>·</dark_gray> <gray>опыт </gray><white>%xp%</white>"
+  profile-best: "<gray>Лучший навык: </gray><white>%skill%</white> <gray>(ур. %level%)</gray>"
+
   # -------------------------------- витрина --------------------------------
   menu-title: "<gold>Навыки</gold>"
   menu-top: "<gold>Топ игроков</gold>"

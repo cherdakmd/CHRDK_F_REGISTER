@@ -60,6 +60,22 @@ class AddonApiContractTest {
     }
 
     @Test
+    void profileSectionsAreAdditive() throws Exception {
+        assertTrue(ChrdkRegisterApi.API_VERSION >= 8);
+        assertTrue(ChrdkRegisterApi.class.getMethod("registerProfile", String.class,
+                        ChrdkRegisterApi.ProfileProvider.class).isDefault(),
+                "старые реализации API не должны ломаться");
+        assertTrue(ChrdkRegisterApi.class.getMethod("unregisterProfile", String.class).isDefault());
+        assertEquals(100, new ChrdkRegisterApi.ProfileProvider() {
+            @Override
+            public ChrdkRegisterApi.ProfileSection section(
+                    ChrdkRegisterApi.ProfileContext context) {
+                return null;
+            }
+        }.order(), "раздел без порядка встаёт в конец");
+    }
+
+    @Test
     void authStagesKeepStableOrder() {
         // Аддоны полагаются на то, что значения не переименовываются/не удаляются.
         assertEquals("NO_PASS", ApiAuthStage.values()[0].name());

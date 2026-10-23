@@ -74,6 +74,15 @@ public final class AchievementsPlugin extends JavaPlugin {
             });
         }
 
+        if (coreApi != null) {
+            try {
+                coreApi.registerProfile("achievements", new AchievementsProfile(this));
+            } catch (RuntimeException | LinkageError error) {
+                getLogger().warning("[CHRDK_Achievements] раздел профиля недоступен "
+                        + "(нужно ядро 1.4.156+): " + error);
+            }
+        }
+
         registerApi();
         this.saveTask = Bukkit.getScheduler().runTaskTimerAsynchronously(this,
                 this::saveState, 100L, 100L);
@@ -94,6 +103,13 @@ public final class AchievementsPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (coreApi != null) {
+            try {
+                coreApi.unregisterProfile("achievements");
+            } catch (RuntimeException | LinkageError ignored) {
+                // Ядро старше API v8 — снимать нечего.
+            }
+        }
         if (saveTask != null) {
             saveTask.cancel();
             saveTask = null;

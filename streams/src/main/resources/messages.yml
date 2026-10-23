@@ -1,5 +1,10 @@
 streams:
   # Тексты CHRDK_Streams. Разметка — MiniMessage; %ключи% подставляются плагином.
+  # --------------------------------- профиль ----------------------------------
+  "profile-title": "Стримы"
+  "profile-days": "<gray>Дней проходки за эфиры: </gray><aqua>%days%</aqua>"
+  "profile-pending": "<gray>До следующего дня эфира: </gray><white>%minutes% мин</white>"
+  "profile-channels": "<gray>Привязано каналов: </gray><white>%count%</white>"
   "usage": "<yellow>Стример: /%label% <link <twitch|vkplay> <канал или ссылка> | check [площадка] | status | unlink [площадка] | top | viewers [on|off]></yellow>"
   "usage-viewer": "<yellow>Зритель: /%label% <watch <стример> | watching | code <код> | watch stop></yellow>"
   "usage-admin": "<yellow>Админ: /%label% <stats | reload | admin unlink <ник> [площадка]></yellow>"

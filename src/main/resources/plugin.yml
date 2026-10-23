@@ -19,6 +19,10 @@ commands:
     description: Войти в аккаунт по паролю (и коду 2FA, если подключена)
     usage: /<command> <пароль> [код_2FA]
     aliases: [l]
+  profile:
+    description: "Карточка игрока: проходка, банк и разделы аддонов одной страницей"
+    usage: /<command> [chat] [ник]
+    aliases: [prof]
   menu:
     description: "Главное меню сервера (GUI): аккаунт, награды, экономика, приваты, развитие и защита"
     usage: /<command>
@@ -135,3 +139,9 @@ permissions:
   chrdkregister.chat.history:
     description: Просмотр истории чата командой /chat history
     default: op
+  chrdkregister.profile:
+    description: "Открывать свою карточку /profile"
+    default: true
+  chrdkregister.profile.others:
+    description: "Смотреть /profile других игроков"
+    default: true

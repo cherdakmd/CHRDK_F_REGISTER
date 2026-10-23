@@ -62,6 +62,14 @@ public final class StreamPlugin extends JavaPlugin {
             command.setTabCompleter(handler);
         }
 
+        if (coreApi != null) {
+            try {
+                coreApi.registerProfile("streams", new StreamsProfile(this));
+            } catch (RuntimeException | LinkageError error) {
+                getLogger().warning("[CHRDK_Streams] раздел профиля недоступен "
+                        + "(нужно ядро 1.4.156+): " + error);
+            }
+        }
         service.start();
         viewerService.start();
         restartAutoSave();
@@ -73,6 +81,13 @@ public final class StreamPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (coreApi != null) {
+            try {
+                coreApi.unregisterProfile("streams");
+            } catch (RuntimeException | LinkageError ignored) {
+                // Ядро старше API v8 — снимать нечего.
+            }
+        }
         stopAutoSave();
         unregisterNameTag();
         if (tagService != null) {

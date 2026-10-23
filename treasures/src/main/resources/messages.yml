@@ -4,6 +4,12 @@
 # позиции каталога и 72 вещи арсенала Mine Treasure (всего 196). Здесь меняются только
 # подписи; значения экранируются ядром, разметка — MiniMessage.
 messages:
+  # -------------------------------- профиль ----------------------------------
+  profile-title: "Клады"
+  profile-found: "<gray>Найдено кладов: </gray><white>%found%</white>"
+  profile-collection: "<gray>Коллекция: </gray><white>%items%/%total%</white>"
+  profile-streak: "<gray>Лучшая серия: </gray><white>%streak%</white>"
+
   player-only: "<red>Эта команда только для игроков.</red>"
   no-permission: "<red>Недостаточно прав.</red>"
   treasures-disabled: "<red>Клады выключены в config.yml.</red>"

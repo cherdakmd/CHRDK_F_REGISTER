@@ -1,8 +1,12 @@
 package ru.cherdakmd.chrdkregister.api;
 
+import net.kyori.adventure.text.Component;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Публичный API основного плагина CHRDK_Core для аддонов (v1.4.6).
@@ -28,7 +32,7 @@ import java.util.Optional;
 public interface ChrdkRegisterApi {
 
     /** Версия контракта API. Растёт при расширении (добавлении методов/событий). */
-    int API_VERSION = 7;
+    int API_VERSION = 8;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -174,6 +178,78 @@ public interface ChrdkRegisterApi {
 
     /** Убирает оформление, зарегистрированное аддоном под этим id (API v6). */
     default void unregisterNameTag(String id) {
+    }
+
+    /* -------------------------------- профиль -------------------------------- */
+
+    /**
+     * Контекст, для которого аддон собирает раздел профиля (API v8).
+     *
+     * @param playerId   UUID игрока (для оффлайн-профиля — сохранённый или
+     *                   вычисленный по нику)
+     * @param playerName ник в том виде, в каком его знает сервер
+     * @param online     игрок сейчас на сервере
+     * @param self       профиль открывает сам игрок
+     */
+    record ProfileContext(UUID playerId, String playerName, boolean online, boolean self) {
+    }
+
+    /**
+     * Готовый раздел профиля (API v8): заголовок, иконка и строки описания.
+     *
+     * <p>Строки — уже собранные компоненты из {@code messages.yml} аддона.
+     * Пустой раздел ядро не показывает, поэтому аддон может спокойно вернуть
+     * {@code lines = List.of()} для игрока без прогресса.</p>
+     *
+     * @param title заголовок раздела (MiniMessage)
+     * @param icon  материал иконки в меню
+     * @param lines строки для меню и чата
+     */
+    record ProfileSection(String title, Material icon, List<Component> lines) {
+
+        public ProfileSection {
+            title = title == null || title.isBlank() ? "?" : title;
+            icon = icon == null ? Material.PAPER : icon;
+            lines = lines == null ? List.of() : List.copyOf(lines);
+        }
+    }
+
+    /**
+     * Поставщик раздела профиля (API v8). Аддон регистрирует его в
+     * {@code onEnable} и снимает в {@code onDisable}.
+     *
+     * <p>{@link #order()} задаёт место в меню: меньше — выше. Ядро сортирует
+     * разделы по порядку, затем по id; исключение внутри провайдера
+     * логируется и не ломает остальные разделы.</p>
+     */
+    @FunctionalInterface
+    interface ProfileProvider {
+
+        /** Место раздела в меню: меньше — выше. */
+        default int order() {
+            return 100;
+        }
+
+        /** Раздел для игрока; {@code null} или пустые строки — раздел скрыт. */
+        ProfileSection section(ProfileContext context);
+    }
+
+    /**
+     * Добавляет раздел в {@code /profile} (API v8). Повторная регистрация с тем
+     * же id заменяет прежний раздел, поэтому перезагрузка аддона не плодит
+     * дубликаты.
+     *
+     * <p>По умолчанию ничего не делает: сторонние реализации API остаются
+     * совместимыми.</p>
+     *
+     * @param id       уникальный id аддона, например {@code hunt}
+     * @param provider сборка раздела; {@code null} игнорируется
+     */
+    default void registerProfile(String id, ProfileProvider provider) {
+    }
+
+    /** Убирает раздел, зарегистрированный под этим id (API v8). */
+    default void unregisterProfile(String id) {
     }
 
     /* ------------------------------ интеграции ------------------------------ */

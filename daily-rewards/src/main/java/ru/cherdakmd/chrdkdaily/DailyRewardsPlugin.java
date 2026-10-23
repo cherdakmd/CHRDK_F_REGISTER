@@ -50,6 +50,15 @@ public final class DailyRewardsPlugin extends JavaPlugin {
             }
         }
 
+        if (coreApi != null) {
+            try {
+                coreApi.registerProfile("daily", new DailyProfile(this));
+            } catch (RuntimeException | LinkageError error) {
+                getLogger().warning("[CHRDK_DailyRewards] раздел профиля недоступен "
+                        + "(нужно ядро 1.4.156+): " + error);
+            }
+        }
+
         this.saveTask = Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
             if (store.isDirty()) {
                 store.saveNow();
@@ -61,6 +70,13 @@ public final class DailyRewardsPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (coreApi != null) {
+            try {
+                coreApi.unregisterProfile("daily");
+            } catch (RuntimeException | LinkageError ignored) {
+                // Ядро старше API v8 — снимать нечего.
+            }
+        }
         if (saveTask != null) {
             saveTask.cancel();
             saveTask = null;

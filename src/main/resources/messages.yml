@@ -375,7 +375,7 @@ messages:
       - "<yellow><bold>Защита дома</bold></yellow><newline><gray>Купите приват: /claim — это чанк 16×16. Пополняйте казну: /claim deposit, проверка: /claim balance. Команды и карта: /claim help.</gray>"
       - "<aqua><bold>Дом и перемещения</bold></aqua><newline><gray>/sethome дом — сохранить точку, /home дом — вернуться, /homes — список. Позвать к себе: /tpahere ник, прийти к игроку: /tpa ник. Ответ: /tpaccept.</gray>"
       - "<light_purple><bold>Экономика</bold></light_purple><newline><gray>Магазин: /shop. Аукцион: /ah. Лотерея: /lottery. Ежедневная награда: /daily — не пропускайте стрик. Валюта — алмазы.</gray>"
-      - "<red><bold>Развитие</bold></red><newline><gray>Редкости снаряжения: /tiers. Артефакты: /artifacts. Чары: /enchants. Звания за стаж: /ranks. Сезон: /battlepass. Общие цели: /goals.</gray>"
+      - "<red><bold>Развитие</bold></red><newline><gray>Редкости снаряжения: /tiers. Артефакты: /artifacts. Чары: /enchants. Звания за стаж: /ranks. Сезон: /battlepass. Общие цели: /goals. Вся карточка прогресса: /profile.</gray>"
       - "<white><bold>Общение и помощь</bold></white><newline><gray>/chat — локальный и общий чат. /msg ник текст — личное сообщение, /r — ответ. Главное меню: /menu. Эта книга снова: /guide.</gray>"
 
   # ---------------------------------------------------------------
@@ -1029,6 +1029,46 @@ messages:
     "disabled": "<red>Меню сервера отключено в конфигурации.</red>"
     "player-only": "<red>Меню доступно только игрокам.</red>"
     "empty": "<yellow>В этом разделе пока нет доступных пунктов: проверьте аддоны и права.</yellow>"
+
+  # ---------------------------------------------------------------
+  # profile — карточка игрока (1.4.156)
+  # ---------------------------------------------------------------
+  "profile":
+    "no-permission": "<red>Нет права chrdkregister.profile.</red>"
+    "others-denied": "<red>Профили других игроков доступны с правом chrdkregister.profile.others.</red>"
+    "player-only": "<red>Из консоли укажите ник: /profile <ник>.</red>"
+    "not-found": "<red>Игрок «%player%» не найден.</red>"
+    "usage": "<yellow>/profile [ник]</yellow> <gray>— карточка, </gray><yellow>/profile chat [ник]</yellow> <gray>— текстом.</gray>"
+    "title": "<dark_gray>Профиль</dark_gray> <gold>%player%</gold>"
+    "head-name": "<gold><b>%player%</b></gold>"
+    "head-lore-pass": "<gray>Проходка: </gray><green>%days% дн.</green>"
+    "head-lore-trial": "<gray>Проходка: </gray><yellow>пробная, %days% дн.</yellow>"
+    "head-lore-no-pass": "<gray>Проходка: </gray><red>нет</red>"
+    "head-lore-bank": "<gray>Банк: </gray><aqua>%amount%</aqua>"
+    "head-lore-more": "<dark_gray>Ещё разделов: %count% — смотрите в чате</dark_gray>"
+    "head-lore-hint": "<dark_gray>Клик по разделу — подробности в чат</dark_gray>"
+    "section-core": "Аккаунт и банк"
+    "section-hint": "<dark_gray>Клик — показать в чате</dark_gray>"
+    "core-pass": "<gray>Проходка: </gray><green>активна, осталось %days% дн.</green>"
+    "core-trial": "<gray>Проходка: </gray><yellow>пробная, осталось %days% дн.</yellow>"
+    "core-no-pass": "<gray>Проходка: </gray><red>нет</red>"
+    "core-registered": "<gray>Аккаунт: </gray><white>пароль установлен</white>"
+    "core-not-registered": "<gray>Аккаунт: </gray><red>без пароля</red>"
+    "core-two-factor": "<gray>2FA: </gray><green>включена</green>"
+    "core-two-factor-off": "<gray>2FA: </gray><yellow>выключена</yellow>"
+    "core-bank": "<gray>Банк: </gray><aqua>%balance%</aqua> <dark_gray>·</dark_gray> <gray>переводы </gray><white>%sent%/%received%</white>"
+    "core-entitlements": "<gray>Активных покупок каталога: </gray><white>%count%</white>"
+    "core-own": "<dark_gray>Это ваш профиль.</dark_gray>"
+    "chat-header": "<dark_gray>━━━</dark_gray> <gold><b>Профиль %player%</b></gold> <dark_gray>━━━</dark_gray>"
+    "chat-section": "<gold>▍ %title%</gold>"
+    "chat-line-prefix": "<gray>  </gray>"
+    "chat-empty": "<gray>  Пока нет данных: модули не добавили разделы.</gray>"
+    "chat-footer": "<dark_gray>Разделов: %sections%</dark_gray>"
+    "to-chat": "<gold>В чат</gold>"
+    "to-chat-lore": "<gray>Показать весь профиль текстом</gray>"
+    "refresh": "<yellow>Обновить</yellow>"
+    "refresh-lore": "<gray>Пересобрать карточку</gray>"
+    "close": "<red>Закрыть</red>"
 
   # ---------------------------------------------------------------
   # shop — каталог товаров (1.4.110)

@@ -19,15 +19,18 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
     private final ShopService shop;
     private final NameTags nameTags;
     private final BankStore bank;
+    private final ProfileRegistry profiles;
 
     ChrdkRegisterApiImpl(JavaPlugin plugin, AccessManager accessManager, ExternalHooks hooks,
-                         ShopService shop, NameTags nameTags, BankStore bank) {
+                         ShopService shop, NameTags nameTags, BankStore bank,
+                         ProfileRegistry profiles) {
         this.plugin = plugin;
         this.accessManager = accessManager;
         this.hooks = hooks;
         this.shop = shop;
         this.nameTags = nameTags;
         this.bank = bank;
+        this.profiles = profiles;
     }
 
     @Override
@@ -127,6 +130,20 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
     @Override
     public void unregisterNameTag(String id) {
         nameTags.unregister(id);
+    }
+
+    @Override
+    public void registerProfile(String id, ChrdkRegisterApi.ProfileProvider provider) {
+        if (profiles != null) {
+            profiles.register(id, provider);
+        }
+    }
+
+    @Override
+    public void unregisterProfile(String id) {
+        if (profiles != null) {
+            profiles.unregister(id);
+        }
     }
 
     @Override

@@ -96,6 +96,14 @@ public final class TreasuresPlugin extends JavaPlugin {
 
         registerApi();
         registerPlaceholders();
+        if (coreApi != null) {
+            try {
+                coreApi.registerProfile("treasures", new TreasuresProfile(this));
+            } catch (RuntimeException | LinkageError error) {
+                getLogger().warning("[CHRDK_Treasures] раздел профиля недоступен "
+                        + "(нужно ядро 1.4.156+): " + error);
+            }
+        }
         startTasks();
 
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -113,6 +121,13 @@ public final class TreasuresPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (coreApi != null) {
+            try {
+                coreApi.unregisterProfile("treasures");
+            } catch (RuntimeException | LinkageError ignored) {
+                // Ядро старше API v8 — снимать нечего.
+            }
+        }
         if (saveTask != null) {
             saveTask.cancel();
             saveTask = null;

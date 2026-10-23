@@ -10,6 +10,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
+import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +25,7 @@ public final class RanksPlugin extends JavaPlugin implements Listener {
     private volatile Messages messages;
     private volatile RanksConfig config;
     private PlaytimeStore store;
+    private ChrdkRegisterApi coreApi;
     private RanksService service;
     private BukkitTask tickTask;
 
@@ -39,6 +41,15 @@ public final class RanksPlugin extends JavaPlugin implements Listener {
         store.load();
         this.service = new RanksService(this);
         reloadRanksConfig();
+        this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
+        if (coreApi != null) {
+            try {
+                coreApi.registerProfile("ranks", new RanksProfile(this));
+            } catch (RuntimeException | LinkageError error) {
+                getLogger().warning("[CHRDK_Ranks] раздел профиля недоступен "
+                        + "(нужно ядро 1.4.156+): " + error);
+            }
+        }
 
         Bukkit.getPluginManager().registerEvents(this, this);
 
@@ -62,6 +73,14 @@ public final class RanksPlugin extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        if (coreApi != null) {
+            try {
+                coreApi.unregisterProfile("ranks");
+            } catch (RuntimeException | LinkageError ignored) {
+                // Ядро старше API v8 — снимать нечего.
+            }
+            this.coreApi = null;
+        }
         if (tickTask != null) {
             tickTask.cancel();
         }
