@@ -229,7 +229,8 @@ collection:
     # tablist.player-name-format. Если ядро задаёт формат с %player_tagged%,
     # титул уже там — аддон имена не трогает (дважды никто не пишет).
     # Если список игроков ведёт сторонний TAB-плагин — выключите эту опцию
-    # и поставьте в его конфиге %chrdktierforge_title%.
+    # и поставьте в его конфиге %chrdktierforge_title%. Уже занятое чужими
+    # плагинами имя (метка стримера) аддон не перебивает: уступает и ждёт.
     tab:
       enabled: true
       name-format: "<white>%player%</white> <dark_gray>·</dark_gray> %title%"

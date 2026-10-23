@@ -11,7 +11,8 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
 
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -31,6 +32,13 @@ import java.util.UUID;
  * {@code collection.titles.tab.refresh-ticks} тиков, и сразу — при смене
  * выбора, выдаче нового титула и входе игрока. Игрокам без титула имя не
  * подменяется: снимаем только то, что поставили сами.</p>
+ *
+ * <p>Список игроков делят и другие аддоны: CHRDK_Streams пишет туда жирный
+ * ник с мигающей меткой «СТРИМ». Поэтому имя, которое аддон не ставил, он не
+ * перебивает: если в табе стоит чужое оформленное имя, аддон уступает и
+ * возвращается только когда имя снова станет обычным. Так метка стримера не
+ * мигает в такт двум таймерам, а титул стримера остаётся в чате через реестр
+ * ядра.</p>
  */
 public final class TierCollectionTabService implements Listener {
 
@@ -48,7 +56,8 @@ public final class TierCollectionTabService implements Listener {
 
     private final TierForgePlugin plugin;
     private final TierCollectionService collection;
-    private final Set<UUID> managed = new HashSet<>();
+    /** Имя, которое поставил аддон: UUID → ровно то, что записали в таб. */
+    private final Map<UUID, Component> applied = new HashMap<>();
     private BukkitTask task;
     private Mode lastMode = Mode.OFF;
     private boolean warnedMissingTag;
@@ -102,14 +111,14 @@ public final class TierCollectionTabService implements Listener {
             task = null;
         }
         // Возвращаем имена, которые подменили сами, — иначе после выключения
-        // плагина в табе остались бы «висящие» титулы.
-        for (UUID id : Set.copyOf(managed)) {
+        // плагина в табе остались бы «висящие» титулы. Чужие не трогаем.
+        for (UUID id : Set.copyOf(applied.keySet())) {
             Player player = Bukkit.getPlayer(id);
             if (player != null) {
                 player.playerListName(null);
             }
         }
-        managed.clear();
+        applied.clear();
     }
 
     /**
@@ -124,7 +133,7 @@ public final class TierCollectionTabService implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-        managed.remove(event.getPlayer().getUniqueId());
+        applied.remove(event.getPlayer().getUniqueId());
     }
 
     /** Обновляет имя одного игрока — после выбора титула или новой находки. */
@@ -145,11 +154,23 @@ public final class TierCollectionTabService implements Listener {
     }
 
     private void apply(Player player) {
-        String title = collection.titleFor(player.getUniqueId());
+        UUID id = player.getUniqueId();
+        Component current = player.playerListName();
+        Component ours = applied.get(id);
+        // Bukkit отдаёт Component.text(ник), когда имя никто не задавал, —
+        // «обычное» имя не считается чужим. Всё остальное, что стоит не нами,
+        // принадлежит другому плагину (стримерская метка, сторонний TAB):
+        // не воюем, иначе два таймера будут перебивать друг друга каждый тик.
+        boolean untouched = current == null || current.equals(Component.text(player.getName()));
+        if (!untouched && (ours == null || !current.equals(ours))) {
+            applied.remove(id);
+            return;
+        }
+        String title = collection.titleFor(id);
         // Титул — готовая MiniMessage-строка; пустой после снятия тегов значит
         // «титула нет»: имя такому игроку не подменяем вовсе.
         if (title == null || stripTags(title).isEmpty()) {
-            if (managed.remove(player.getUniqueId())) {
+            if (applied.remove(id) != null) {
                 player.playerListName(null);
             }
             return;
@@ -159,7 +180,7 @@ public final class TierCollectionTabService implements Listener {
                 "player", player.getName(),
                 "title", Messages.trusted(title));
         player.playerListName(name);
-        managed.add(player.getUniqueId());
+        applied.put(id, name);
     }
 
     private void applyMode(Mode mode) {
