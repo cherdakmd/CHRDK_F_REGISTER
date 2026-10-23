@@ -80,7 +80,7 @@ class TreasureElixirTest {
         TreasureElixir swiftness = TreasureElixir.byId(" SWIFTNESS ");
         assertNotNull(swiftness);
         assertEquals("swiftness", swiftness.id());
-        assertEquals(" HAste ", TreasureElixir.byId(" HAste ").id());
+        assertEquals("haste", TreasureElixir.byId(" HAste ").id());
     }
 
     @Test

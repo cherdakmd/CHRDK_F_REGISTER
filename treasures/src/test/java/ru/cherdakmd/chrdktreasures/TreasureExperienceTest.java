@@ -128,7 +128,7 @@ class TreasureExperienceTest {
         TreasureExperience.Rule rule = new TreasureExperience.Rule(true,
                 Map.of(TreasureTier.COMMON, new TreasureExperience.Range(-2, -1)),
                 500, -20, 0);
-        assertEquals(0, rule.bonusChancePercent(), "шанс зажат в 0..100");
+        assertEquals(100, rule.bonusChancePercent(), "шанс зажат в 0..100");
         assertEquals(0, rule.bonusMultiplierPercent());
         assertEquals(1, rule.maxPerTreasure(), "потолок не может быть нулевым");
         assertEquals(TreasureExperience.Range.NONE, rule.range(TreasureTier.COMMON));
