@@ -159,7 +159,7 @@ public final class ProfileService implements Listener {
             plugin.messages().send(sender, "profile.not-found", "player", name);
             return null;
         }
-        UUID id = account.map(RegistrationStore.PlayerAccount::uuid)
+        UUID id = account.map(value -> value.uuid)
                 .map(ProfileService::parseUuid)
                 .orElse(null);
         if (id == null && offline != null) {
