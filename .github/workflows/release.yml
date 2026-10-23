@@ -91,7 +91,7 @@ jobs:
           Все JAR-ы CHRDK одной версии: ядро CHRDK_Core и аддоны
           (DiamondShop, Referrals, DailyRewards, Teleports, Enchants, TierForge,
           Artifacts, Achievements, Skills, Treasures, CommonGoals, Claims, Ranks,
-          Cosmetics, BattlePass, Queue, Streams, Lottery, Auction, Pets, Orders).
+          Cosmetics, BattlePass, Queue, Streams, Lottery, Auction, Pets, Orders, Hunt).
           Отдельные JAR-ы к релизу больше не прикладываются — только этот архив.
 
           Порядок обновления

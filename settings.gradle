@@ -32,3 +32,5 @@ include 'pets'
 include 'auction'
 
 include 'orders'
+
+include 'hunt'
