@@ -46,7 +46,7 @@ public record BotOrder(String id, String botId, String botName, String category,
 
     /** Материал заказа или {@code null}, если в текущей версии игры его нет. */
     public Material materialOrNull() {
-        return Material.matchMaterial(material);
+        return Materials.resolve(material);
     }
 
     /** Бот ушёл: заказ больше нельзя сдать. */
