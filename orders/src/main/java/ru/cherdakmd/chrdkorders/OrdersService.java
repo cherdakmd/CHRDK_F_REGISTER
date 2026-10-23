@@ -344,7 +344,7 @@ public final class OrdersService {
      * {@link ItemMeta}, и {@code isSimilar} его не видит.</p>
      */
     public static boolean isPlain(ItemStack stack) {
-        if (stack == null || stack.getType().isAir() || stack.getAmount() <= 0) {
+        if (stack == null || stack.getType() == Material.AIR || stack.getAmount() <= 0) {
             return false;
         }
         ItemMeta meta = stack.getItemMeta();
