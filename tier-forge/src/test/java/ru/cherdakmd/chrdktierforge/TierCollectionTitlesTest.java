@@ -3,7 +3,9 @@ package ru.cherdakmd.chrdktierforge;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Выбор титула за закрытые разделы коллекции (1.4.150). */
 class TierCollectionTitlesTest {
