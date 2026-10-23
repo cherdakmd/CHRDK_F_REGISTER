@@ -321,4 +321,70 @@ class TreasureConfigTest {
         assertEquals(100.0, custom.tierChance(TreasureTier.COMMON), 1e-9);
         assertEquals(0.0, custom.tierChance(TreasureTier.LEGENDARY), 1e-9);
     }
+
+    @Test
+    void mapsHaveSafeDefaults() {
+        TreasuresConfig.Maps maps = TreasuresConfig.parse(new YamlConfiguration(), LOGGER).maps();
+        assertTrue(maps.enabled());
+        assertEquals(12.0, maps.dropChancePercent(), 1e-9);
+        assertEquals(0.12, maps.dropChance(), 1e-9);
+        assertEquals(3, maps.maxActive());
+        assertEquals(8, maps.digsMin());
+        assertEquals(20, maps.digsMax());
+        assertEquals(24, maps.radius());
+        assertEquals(240, maps.expireMinutes());
+        assertEquals(240L * 60_000L, maps.expireMillis());
+        assertEquals(1.5, maps.namedChanceMultiplier(), 1e-9);
+        assertEquals(120, maps.distanceMin());
+        assertEquals(480, maps.distanceMax());
+        assertEquals(40, maps.hintTicks());
+        assertEquals(256, maps.hintDistance());
+        assertEquals(TreasureTier.values().length, maps.tierWeights().size(),
+                "вес задан для каждой редкости тайника");
+        assertFalse(TreasuresConfig.Maps.DISABLED.enabled());
+    }
+
+    @Test
+    void mapsConfigIsClamped() {
+        YamlConfiguration cfg = new YamlConfiguration();
+        cfg.set("maps.enabled", false);
+        cfg.set("maps.drop-chance-percent", 500);
+        cfg.set("maps.max-active", 0);
+        cfg.set("maps.digs-min", 1000);
+        cfg.set("maps.digs-max", 1);
+        cfg.set("maps.radius", 5000);
+        cfg.set("maps.expire-minutes", 9999);
+        cfg.set("maps.named-chance-multiplier", 10);
+        cfg.set("maps.distance-min", 100_000);
+        cfg.set("maps.distance-max", 1);
+        cfg.set("maps.hint-ticks", 1);
+        cfg.set("maps.hint-distance", -5);
+        cfg.set("maps.tier-chance-percent.epic", 0);
+        TreasuresConfig.Maps maps = TreasuresConfig.parse(cfg, LOGGER).maps();
+        assertFalse(maps.enabled());
+        assertEquals(100.0, maps.dropChancePercent(), 1e-9);
+        assertEquals(1, maps.maxActive(), "одна карта — минимум");
+        assertEquals(TreasureMap.MAX_DIGS, maps.digsMin());
+        assertEquals(TreasureMap.MAX_DIGS, maps.digsMax());
+        assertEquals(TreasureMap.MAX_RADIUS, maps.radius());
+        assertEquals(1440, maps.expireMinutes(), "сутки — потолок срока");
+        assertEquals(3.0, maps.namedChanceMultiplier(), 1e-9);
+        assertEquals(2000, maps.distanceMin());
+        assertEquals(2000, maps.distanceMax(), "максимум не может быть меньше минимума");
+        assertEquals(20, maps.hintTicks());
+        assertEquals(0, maps.hintDistance());
+        assertEquals(0.0, maps.tierWeights().get(TreasureTier.EPIC), 1e-9);
+    }
+
+    @Test
+    void shippedConfigDescribesMaps() {
+        TreasuresConfig.Maps maps = TreasuresConfig.parse(shipped(), LOGGER).maps();
+        assertTrue(maps.enabled());
+        assertEquals(12.0, maps.dropChancePercent(), 1e-9);
+        assertEquals(24, maps.radius());
+        assertEquals(8, maps.digsMin());
+        assertEquals(20, maps.digsMax());
+        assertEquals(45.0, maps.tierWeights().get(TreasureTier.COMMON), 1e-9);
+        assertEquals(0.5, maps.tierWeights().get(TreasureTier.MYTHICAL), 1e-9);
+    }
 }

@@ -24,7 +24,10 @@ import java.util.Locale;
  *   <li>{@code streak} / {@code best_streak} — текущая серия и рекорд;</li>
  *   <li>{@code next} — блоков до следующей редкости;</li>
  *   <li>{@code tier_<ид>} — находок этой редкости;</li>
- *   <li>{@code chance_<ид>} — шанс редкости в процентах с блока.</li>
+ *   <li>{@code chance_<ид>} — шанс редкости в процентах с блока;</li>
+ *   <li>{@code maps} — сколько активных клад-карт (1.4.153);</li>
+ *   <li>{@code map_digs} — сколько блоков ещё копать по всем картам;</li>
+ *   <li>{@code map_distance} — блоков до ближайшей карты в этом мире (пусто — нет).</li>
  * </ul>
  */
 public final class TreasurePlaceholders extends PlaceholderExpansion {
@@ -80,6 +83,8 @@ public final class TreasurePlaceholders extends PlaceholderExpansion {
                         plugin.store().streak(player.getUniqueId().toString()));
                 case "best_streak" -> Integer.toString(
                         plugin.store().bestStreak(player.getUniqueId().toString()));
+                // Карты лежат в инвентаре: без онлайна их просто не прочитать.
+                case "maps", "map_digs", "map_distance" -> "0";
                 default -> "";
             };
         }
@@ -94,8 +99,41 @@ public final class TreasurePlaceholders extends PlaceholderExpansion {
             case "best_streak" -> Integer.toString(service.bestStreak(online));
             case "streak_left" -> Long.toString(service.streakRemaining(online) / 1000L);
             case "next" -> Long.toString(service.blocksToNextTier(online));
+            case "maps" -> Integer.toString(plugin.maps().activeCount(online));
+            case "map_digs" -> Integer.toString(digsLeft(online));
+            case "map_distance" -> mapDistance(online);
             default -> tierValue(online, key);
         };
+    }
+
+    /** Сколько блоков копать по всем живым картам игрока. */
+    private int digsLeft(Player player) {
+        int left = 0;
+        long now = System.currentTimeMillis();
+        for (TreasureMapService.Slot slot : plugin.maps().active(player)) {
+            if (!slot.map().expired(now)) {
+                left += slot.map().remaining();
+            }
+        }
+        return left;
+    }
+
+    /** Блоков до ближайшей карты в текущем мире; пусто — карт нет. */
+    private String mapDistance(Player player) {
+        TreasureMapHint best = null;
+        long now = System.currentTimeMillis();
+        String world = player.getWorld().getName();
+        for (TreasureMapService.Slot slot : plugin.maps().active(player)) {
+            if (slot.map().expired(now)) {
+                continue;
+            }
+            TreasureMapHint hint = TreasureMapHint.of(slot.map(), world,
+                    player.getLocation().getBlockX(), player.getLocation().getBlockZ());
+            if (hint.sameWorld() && (best == null || hint.distance() < best.distance())) {
+                best = hint;
+            }
+        }
+        return best == null ? "" : Integer.toString(best.distance());
     }
 
     private String tierValue(Player player, String key) {

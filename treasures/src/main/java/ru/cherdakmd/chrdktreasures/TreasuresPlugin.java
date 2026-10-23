@@ -54,6 +54,8 @@ public final class TreasuresPlugin extends JavaPlugin {
     private TreasureCurses curses;
     private TreasureListener listener;
     private TreasuresGui gui;
+    /** 1.4.153: клад-карты — выдача, раскопки и подсказки. */
+    private TreasureMapService maps;
     private BukkitTask saveTask;
     private BukkitTask auraTask;
 
@@ -74,6 +76,7 @@ public final class TreasuresPlugin extends JavaPlugin {
         this.abilities = new TreasureAbilities(this);
         this.curses = new TreasureCurses(this);
         this.listener = new TreasureListener(this, service);
+        this.maps = new TreasureMapService(this);
         this.gui = new TreasuresGui(this, service);
 
         Bukkit.getPluginManager().registerEvents(listener, this);
@@ -104,7 +107,8 @@ public final class TreasuresPlugin extends JavaPlugin {
                 + " (арсенал " + TreasureArsenal.size() + ")"
                 + ", регионов " + TreasureRegion.values().length
                 + ", редкостей " + TreasureTier.values().length
-                + ", добыча кладов " + (config.enabled() ? "включена" : "выключена") + ".");
+                + ", добыча кладов " + (config.enabled() ? "включена" : "выключена")
+                + ", клад-карты: " + (maps == null ? "нет" : maps.summary()) + ".");
     }
 
     @Override
@@ -116,6 +120,9 @@ public final class TreasuresPlugin extends JavaPlugin {
         if (auraTask != null) {
             auraTask.cancel();
             auraTask = null;
+        }
+        if (maps != null) {
+            maps.stop();
         }
         if (store != null) {
             store.flush();
@@ -152,6 +159,10 @@ public final class TreasuresPlugin extends JavaPlugin {
         if (saveTask != null) {
             startTasks();
         }
+        if (maps != null) {
+            // 1.4.153: период подсказок и зона могли поменяться.
+            maps.restart();
+        }
     }
 
     /** Асинхронное сохранение и пульс аур; вызывается при старте и после reload. */
@@ -167,6 +178,9 @@ public final class TreasuresPlugin extends JavaPlugin {
         long period = Math.max(1, config.auraRefreshTicks());
         this.auraTask = Bukkit.getScheduler().runTaskTimer(this, this::refreshAuras,
                 period, period);
+        if (maps != null) {
+            maps.restart();
+        }
     }
 
     private void refreshAuras() {
@@ -309,6 +323,16 @@ public final class TreasuresPlugin extends JavaPlugin {
 
     public TreasuresGui gui() {
         return gui;
+    }
+
+    /** Клад-карты (1.4.153). */
+    public TreasureMapService maps() {
+        return maps;
+    }
+
+    /** Слушатель кладов: сервису карт нужен общий «праздник» находки. */
+    public TreasureListener listener() {
+        return listener;
     }
 
     /** Тонкая обёртка: аддоны не видят состояние и не могут его испортить. */

@@ -63,7 +63,15 @@ class TreasureMessagesTest {
             "item-curse", "item-set", "ability-used", "ability-cooldown", "curse-trigger",
             "help-set", "set-header", "set-line", "set-active", "set-none", "set-hint",
             "set-disabled", "set-detail-header", "set-detail-progress", "set-partial",
-            "set-full");
+            "set-full",
+            // 1.4.153: клад-карты.
+            "map-item-name", "map-item-tier", "map-item-region", "map-item-world",
+            "map-item-zone", "map-item-dig", "map-item-expire", "map-item-hint",
+            "map-given", "map-given-dropped", "map-expired", "map-none", "map-header",
+            "map-row", "map-row-world", "map-footer", "map-info", "map-info-world",
+            "map-found", "map-hint", "map-hint-zone", "map-hint-world", "map-disabled",
+            "menu-maps-name", "menu-maps-lore", "menu-maps-empty", "menu-maps-hint",
+            "help-map", "admin-map-given", "admin-unknown-tier");
 
     private static ConfigurationSection messages() {
         try (var stream = TreasureMessagesTest.class.getClassLoader()

@@ -78,6 +78,8 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
             case "top" -> top(player);
             case "loot" -> loot(player, args.length > 1 ? args[1] : null);
             case "set", "sets", "сет", "сеты" -> sets(player, args.length > 1 ? args[1] : null);
+            // 1.4.153: активные клад-карты и подсказки по ним.
+            case "map", "maps", "карта", "карты" -> maps(player);
             case "stats" -> playerStats(player, args.length > 1 ? args[1] : null);
             case "toggle" -> toggle(player, args.length > 1 ? args[1] : null);
             default -> {
@@ -85,6 +87,16 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
                 yield true;
             }
         };
+    }
+
+    /** {@code /treasures map} — активные карты, направления и остаток раскопок. */
+    private boolean maps(Player player) {
+        if (!plugin.config().maps().enabled()) {
+            plugin.messages().send(player, "map-disabled");
+            return true;
+        }
+        plugin.maps().list(player);
+        return true;
     }
 
     private void help(Player player) {
@@ -96,6 +108,7 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
         plugin.messages().send(player, "help-top");
         plugin.messages().send(player, "help-loot");
         plugin.messages().send(player, "help-set");
+        plugin.messages().send(player, "help-map");
         plugin.messages().send(player, "help-toggle");
         plugin.messages().send(player, "help-footer");
     }
@@ -550,6 +563,36 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
                     + " выдал " + def.id() + " игроку " + target.getName());
             return true;
         }
+        if (args.length >= 2 && args[0].equalsIgnoreCase("map")) {
+            if (!plugin.config().maps().enabled()) {
+                plugin.messages().send(sender, "map-disabled");
+                return true;
+            }
+            Player target = Bukkit.getPlayerExact(args[1]);
+            if (target == null) {
+                plugin.messages().send(sender, "admin-player-not-found");
+                return true;
+            }
+            TreasureTier tier = TreasureTier.COMMON;
+            if (args.length >= 3) {
+                TreasureTier parsed = TreasureTier.byId(args[2]);
+                if (parsed == null) {
+                    plugin.messages().send(sender, "admin-unknown-tier", "tier", args[2]);
+                    return true;
+                }
+                tier = parsed;
+            }
+            if (!plugin.maps().giveTier(target, tier)) {
+                plugin.messages().send(sender, "admin-give-failed");
+                return true;
+            }
+            plugin.messages().send(sender, "admin-map-given",
+                    "player", target.getName(),
+                    "tier", Messages.trusted(plugin.messages().raw("tier." + tier.id())));
+            plugin.getLogger().info("[CHRDK_Treasures] " + sender.getName()
+                    + " выдал клад-карту (" + tier.id() + ") игроку " + target.getName());
+            return true;
+        }
         if (args.length == 2 && args[0].equalsIgnoreCase("stats")) {
             Player target = Bukkit.getPlayerExact(args[1]);
             if (target == null) {
@@ -624,7 +667,8 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
                     "loot", String.valueOf(TreasureLoot.active().size()),
                     "abilities", String.valueOf(abilities),
                     "sets", String.valueOf(TreasureSets.all().size()),
-                    "curses", String.valueOf(curses));
+                    "curses", String.valueOf(curses),
+                    "maps", plugin.maps().summary());
             return true;
         }
         plugin.messages().send(sender, "admin-usage");
@@ -642,7 +686,7 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
             }
             if (args.length == 1) {
                 return filter(List.of("reload", "give", "reset", "resetall", "stats",
-                        "chance", "info"), args[0]);
+                        "chance", "map", "info"), args[0]);
             }
             if (args.length == 2 && args[0].equalsIgnoreCase("chance")) {
                 List<String> tiers = new ArrayList<>();
@@ -660,6 +704,13 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
             if (args.length == 3 && args[0].equalsIgnoreCase("chance")) {
                 return filter(List.of("reset", "0.01", "0.05", "0.1", "1"), args[2]);
             }
+            if (args.length == 3 && args[0].equalsIgnoreCase("map")) {
+                List<String> tiers = new ArrayList<>();
+                for (TreasureTier tier : TreasureTier.values()) {
+                    tiers.add(tier.id());
+                }
+                return filter(tiers, args[2]);
+            }
             if (args.length == 3 && args[0].equalsIgnoreCase("give")) {
                 List<String> ids = new ArrayList<>();
                 for (TreasureItemDef def : TreasureRegistry.all()) {
@@ -673,8 +724,8 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
             return List.of();
         }
         if (args.length == 1) {
-            return filter(List.of("menu", "list", "stats", "top", "loot", "set", "toggle",
-                    "help"), args[0]);
+            return filter(List.of("menu", "list", "stats", "top", "loot", "set", "map",
+                    "toggle", "help"), args[0]);
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("toggle")) {
             return filter(List.of("sounds", "particles", "announce"), args[1]);

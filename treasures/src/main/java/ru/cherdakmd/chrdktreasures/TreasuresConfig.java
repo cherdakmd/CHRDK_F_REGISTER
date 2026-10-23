@@ -40,6 +40,83 @@ public final class TreasuresConfig {
                           TreasureTier titleMinTier, TreasureTier fireworkMinTier) {
     }
 
+    /**
+     * Клад-карты (1.4.153): как часто они выпадают, сколько копать и где.
+     *
+     * <p>Все числа клампятся здесь, а не в момент использования: админ,
+     * поставивший {@code radius: 5000}, должен увидеть в логе границу, а не
+     * получить зону на полмира. Нулевой шанс выпадения — законный способ
+     * оставить карты только за награды и админскую выдачу.</p>
+     *
+     * @param enabled               включены ли карты вообще
+     * @param dropChancePercent     шанс, что к найденному кладу приложится карта
+     * @param maxActive             сколько карт может быть у одного игрока
+     * @param digsMin               минимум блоков для раскопок
+     * @param digsMax               максимум блоков для раскопок
+     * @param radius                радиус зоны поиска, блоки
+     * @param expireMinutes         срок жизни карты в минутах; 0 — бессрочно
+     * @param namedChanceMultiplier множитель шанса именной находки в тайнике
+     * @param distanceMin           минимальное расстояние от игрока до тайника
+     * @param distanceMax           максимальное расстояние от игрока до тайника
+     * @param hintTicks             период подсказки в экшен-баре, тики
+     * @param hintDistance          дальше этого расстояния подсказку не показывать (0 — всегда)
+     * @param tierWeights           веса редкостей тайника (нормализуются)
+     */
+    public record Maps(boolean enabled, double dropChancePercent, int maxActive,
+                       int digsMin, int digsMax, int radius, int expireMinutes,
+                       double namedChanceMultiplier, int distanceMin, int distanceMax,
+                       int hintTicks, int hintDistance,
+                       Map<TreasureTier, Double> tierWeights) {
+
+        /** Карты выключены: сервис не создаёт и не выдаёт ни одной. */
+        public static final Maps DISABLED = new Maps(false, 0.0, 3, 8, 20, 24, 0,
+                1.5, 120, 480, 40, 256, defaultTierWeights());
+
+        public Maps {
+            tierWeights = tierWeights == null || tierWeights.isEmpty()
+                    ? defaultTierWeights()
+                    : Collections.unmodifiableMap(new EnumMap<>(tierWeights));
+            radius = Math.clamp(radius, TreasureMap.MIN_RADIUS, TreasureMap.MAX_RADIUS);
+            digsMin = Math.clamp(digsMin, 3, TreasureMap.MAX_DIGS);
+            digsMax = Math.clamp(digsMax, digsMin, TreasureMap.MAX_DIGS);
+            maxActive = Math.clamp(maxActive, 1, 9);
+            expireMinutes = Math.clamp(expireMinutes, 0, 1440);
+            distanceMin = Math.clamp(distanceMin, 32, 2000);
+            distanceMax = Math.clamp(distanceMax, distanceMin, 4000);
+            hintTicks = Math.clamp(hintTicks, 20, 200);
+            hintDistance = Math.clamp(hintDistance, 0, 1024);
+            dropChancePercent = Math.clamp(dropChancePercent, 0.0, 100.0);
+            namedChanceMultiplier = Math.clamp(namedChanceMultiplier, 0.5, 3.0);
+        }
+
+        /** Шанс выпадения как доля 0..1. */
+        public double dropChance() {
+            return Math.clamp(dropChancePercent, 0.0, 100.0) / 100.0;
+        }
+
+        /** Срок жизни в миллисекундах; 0 — карта не сгорает. */
+        public long expireMillis() {
+            return expireMinutes * 60_000L;
+        }
+
+        /** Веса по умолчанию: обычный тайник — самый частый. */
+        public static Map<TreasureTier, Double> defaultTierWeights() {
+            Map<TreasureTier, Double> out = new EnumMap<>(TreasureTier.class);
+            out.put(TreasureTier.COMMON, 45.0);
+            out.put(TreasureTier.RARE, 34.0);
+            out.put(TreasureTier.EPIC, 15.0);
+            out.put(TreasureTier.LEGENDARY, 5.5);
+            out.put(TreasureTier.MYTHICAL, 0.5);
+            return Collections.unmodifiableMap(out);
+        }
+
+        /** Вес редкости по умолчанию — для разбора конфига. */
+        public static double defaultWeight(TreasureTier tier) {
+            Double weight = defaultTierWeights().get(tier);
+            return weight == null ? 0.0 : weight;
+        }
+    }
+
     private final boolean enabled;
     private final int auraRefreshTicks;
     private final int topSize;
@@ -73,6 +150,8 @@ public final class TreasuresConfig {
     /** 1.4.141: шанс тира CHRDK_TierForge по редкости находки, проценты. */
     private final boolean tiersEnabled;
     private final Map<TreasureTier, Double> tierChances;
+    /** 1.4.153: клад-карты — шанс выпадения, зона и срок жизни. */
+    private final Maps maps;
 
     private TreasuresConfig(boolean enabled, int auraRefreshTicks, int topSize,
                             Map<TreasureTier, Double> chances,
@@ -89,7 +168,8 @@ public final class TreasuresConfig {
                             Map<TreasureRank, Integer> rankRewards, Effects effects,
                             boolean abilitiesEnabled, boolean cursesEnabled,
                             boolean setsEnabled, double arsenalShare,
-                            boolean tiersEnabled, Map<TreasureTier, Double> tierChances) {
+                            boolean tiersEnabled, Map<TreasureTier, Double> tierChances,
+                            Maps maps) {
         this.enabled = enabled;
         this.auraRefreshTicks = auraRefreshTicks;
         this.topSize = topSize;
@@ -119,6 +199,7 @@ public final class TreasuresConfig {
         this.arsenalShare = arsenalShare;
         this.tiersEnabled = tiersEnabled;
         this.tierChances = tierChances;
+        this.maps = maps == null ? Maps.DISABLED : maps;
     }
 
     /** Разбор без переопределений: значения шансов берутся только из config.yml. */
@@ -272,7 +353,8 @@ public final class TreasuresConfig {
                 cfg.getBoolean("curses.enabled", true),
                 cfg.getBoolean("sets.enabled", true),
                 arsenalShare, tiersEnabled,
-                Collections.unmodifiableMap(tierChances));
+                Collections.unmodifiableMap(tierChances),
+                parseMaps(cfg));
     }
 
     private static TreasureTier parseTier(String raw, TreasureTier fallback) {
@@ -486,6 +568,38 @@ public final class TreasuresConfig {
     /** Действуют ли сетовые бонусы за 2 и 4 предмета региона. */
     public boolean setsEnabled() {
         return setsEnabled;
+    }
+
+    /** Настройки клад-карт (1.4.153). */
+    public Maps maps() {
+        return maps;
+    }
+
+    /**
+     * Разбор секции {@code maps.*}. Значения вне диапазона зажимаются в
+     * конструкторе {@link Maps}, поэтому здесь только чтение с умолчаниями.
+     */
+    private static Maps parseMaps(FileConfiguration cfg) {
+        Map<TreasureTier, Double> weights = new EnumMap<>(TreasureTier.class);
+        for (TreasureTier tier : TreasureTier.values()) {
+            weights.put(tier, clamp(cfg.getDouble("maps.tier-chance-percent." + tier.id(),
+                    Maps.defaultWeight(tier)), 0.0, 100.0));
+        }
+        return new Maps(
+                cfg.getBoolean("maps.enabled", true),
+                clamp(cfg.getDouble("maps.drop-chance-percent", 12.0), 0.0, 100.0),
+                (int) clamp(cfg.getLong("maps.max-active", 3L), 1L, 9L),
+                (int) clamp(cfg.getLong("maps.digs-min", 8L), 3L, TreasureMap.MAX_DIGS),
+                (int) clamp(cfg.getLong("maps.digs-max", 20L), 3L, TreasureMap.MAX_DIGS),
+                (int) clamp(cfg.getLong("maps.radius", 24L),
+                        TreasureMap.MIN_RADIUS, TreasureMap.MAX_RADIUS),
+                (int) clamp(cfg.getLong("maps.expire-minutes", 240L), 0L, 1440L),
+                clamp(cfg.getDouble("maps.named-chance-multiplier", 1.5), 0.5, 3.0),
+                (int) clamp(cfg.getLong("maps.distance-min", 120L), 32L, 2000L),
+                (int) clamp(cfg.getLong("maps.distance-max", 480L), 32L, 4000L),
+                (int) clamp(cfg.getLong("maps.hint-ticks", 40L), 20L, 200L),
+                (int) clamp(cfg.getLong("maps.hint-distance", 256L), 0L, 1024L),
+                weights);
     }
 
     private static Integer parseInt(String value) {

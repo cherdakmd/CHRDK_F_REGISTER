@@ -87,11 +87,18 @@ public final class TreasureListener implements Listener {
         }
         Block block = event.getBlock();
         Material material = block.getType();
-        if (!plugin.config().mineable(material.name())) {
-            return;
-        }
+        // Антинакрутка общая для кладов и клад-карт: поставленный игроком блок
+        // не считается ни там, ни там.
         if (minedBlocks.consume(player.getUniqueId(), block.getWorld().getName(),
                 block.getX(), block.getY(), block.getZ(), System.currentTimeMillis())) {
+            return;
+        }
+        // 1.4.153: раскопка по карте идёт до проверки «кладоносной» породы —
+        // тайник закапывают и в земле, и в песке, а не только в камне.
+        if (!plugin.maps().dig(player, block).isEmpty()) {
+            return;
+        }
+        if (!plugin.config().mineable(material.name())) {
             return;
         }
 
@@ -123,6 +130,9 @@ public final class TreasureListener implements Listener {
         lastTreasure.put(player.getUniqueId(), now);
         TreasureService.Found found = service.give(player, tier, region, roll);
         celebrate(player, block.getLocation(), found);
+        // 1.4.153: к находке иногда прикладывается клад-карта. Тайник из самой
+        // карты карту не выдаёт — цепочки «карта из карты» нет.
+        plugin.maps().maybeDrop(player);
     }
 
     /** Шанс второй порции добычи из блока — эффект DOUBLE_ORE. */
@@ -296,6 +306,29 @@ public final class TreasureListener implements Listener {
         }
     }
 
+    /**
+     * Правая кнопка по клад-карте: подсказка по этой карте (1.4.153).
+     *
+     * <p>Клик не отменяется: карта не открывает инвентарь и не мешает
+     * взаимодействию с сундуком или дверью, на которую игрок смотрит.</p>
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onMapInteract(PlayerInteractEvent event) {
+        if (event.getHand() != EquipmentSlot.HAND) {
+            return;
+        }
+        Action action = event.getAction();
+        if (action != Action.RIGHT_CLICK_AIR && action != Action.RIGHT_CLICK_BLOCK) {
+            return;
+        }
+        Player player = event.getPlayer();
+        TreasureMap map = plugin.maps().read(
+                player.getInventory().getItemInMainHand());
+        if (map != null) {
+            plugin.maps().describe(player, map);
+        }
+    }
+
     /** Проклятия при получении урона: проверяются после расчёта урона. */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerDamaged(EntityDamageEvent event) {
@@ -339,7 +372,7 @@ public final class TreasureListener implements Listener {
 
     /* --------------------------------- события -------------------------------- */
 
-    private void celebrate(Player player, Location location, TreasureService.Found found) {
+    void celebrate(Player player, Location location, TreasureService.Found found) {
         String tierName = plugin.messages().raw("tier." + found.tier().id());
         String itemName = found.named()
                 ? plugin.messages().raw("treasure." + found.item().id() + ".name")

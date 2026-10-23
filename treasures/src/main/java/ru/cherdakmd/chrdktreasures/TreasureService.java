@@ -164,13 +164,33 @@ public final class TreasureService {
         if (block == null) {
             return TreasureRegion.FOREST;
         }
-        TreasureRegion.Dimension dimension = switch (block.getWorld().getEnvironment()) {
+        return regionOf(block.getWorld(), block.getX(), block.getY(), block.getZ());
+    }
+
+    /**
+     * Регион по координатам — без создания блока (1.4.153: точку клад-карты
+     * нельзя превратить в {@link Block}, не загрузив чанк).
+     */
+    public TreasureRegion regionOf(World world, int x, int y, int z) {
+        if (world == null) {
+            return TreasureRegion.FOREST;
+        }
+        TreasureRegion.Dimension dimension = switch (world.getEnvironment()) {
             case NETHER -> TreasureRegion.Dimension.NETHER;
             case THE_END -> TreasureRegion.Dimension.END;
             default -> TreasureRegion.Dimension.OVERWORLD;
         };
-        String biomeKey = block.getBiome().getKey().getKey();
-        return TreasureRegion.resolve(dimension, biomeKey, block.getY());
+        String biomeKey = world.getBiome(x, y, z).getKey().getKey();
+        return TreasureRegion.resolve(dimension, biomeKey, y);
+    }
+
+    /** Регион точки, где стоит игрок. */
+    public TreasureRegion regionOf(Location location) {
+        if (location == null || location.getWorld() == null) {
+            return TreasureRegion.FOREST;
+        }
+        return regionOf(location.getWorld(), location.getBlockX(),
+                location.getBlockY(), location.getBlockZ());
     }
 
     /**

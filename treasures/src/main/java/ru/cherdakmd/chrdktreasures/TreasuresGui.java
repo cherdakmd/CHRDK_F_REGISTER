@@ -38,6 +38,8 @@ public final class TreasuresGui implements Listener {
     private static final int MYTHIC_SLOT = 31;
     private static final int SUMMARY_SLOT = 45;
     private static final int TOP_SLOT = 46;
+    /** 1.4.153: активные клад-карты. */
+    private static final int MAPS_SLOT = 47;
     private static final int SOUND_SLOT = 48;
     private static final int PARTICLE_SLOT = 49;
     private static final int ANNOUNCE_SLOT = 50;
@@ -107,6 +109,9 @@ public final class TreasuresGui implements Listener {
         holder.inventory.setItem(SUMMARY_SLOT, summary(player));
         holder.inventory.setItem(TOP_SLOT, button(Material.GOLD_INGOT, "menu-top-name",
                 plugin.messages().raw("menu-top-lore")));
+        if (plugin.config().maps().enabled()) {
+            holder.inventory.setItem(MAPS_SLOT, mapsButton(player));
+        }
         holder.inventory.setItem(SOUND_SLOT, toggle(player,
                 service.store().sounds(key(player)), "menu-sounds-name"));
         holder.inventory.setItem(PARTICLE_SLOT, toggle(player,
@@ -198,6 +203,23 @@ public final class TreasuresGui implements Listener {
                 ? plugin.messages().get("menu-summary-next-none")
                 : plugin.messages().get("menu-summary-next", "hint", Messages.trusted(next)));
         meta.lore(lore);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /** Кнопка клад-карт: сколько активно и что с ними делать (1.4.153). */
+    private ItemStack mapsButton(Player player) {
+        int count = plugin.maps().activeCount(player);
+        ItemStack item = new ItemStack(Material.MAP);
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) {
+            return item;
+        }
+        meta.displayName(plugin.messages().get("menu-maps-name"));
+        meta.lore(List.of(
+                plugin.messages().get(count > 0 ? "menu-maps-lore" : "menu-maps-empty",
+                        "count", count),
+                plugin.messages().get("menu-maps-hint")));
         item.setItemMeta(meta);
         return item;
     }
@@ -368,6 +390,11 @@ public final class TreasuresGui implements Listener {
         }
         if (slot == MYTHIC_SLOT) {
             openMythical(player);
+            return;
+        }
+        if (slot == MAPS_SLOT) {
+            player.closeInventory();
+            plugin.maps().list(player);
             return;
         }
         if (slot == SOUND_SLOT) {
