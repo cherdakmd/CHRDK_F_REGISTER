@@ -94,10 +94,21 @@ public final class Messages {
     /** Загружает тексты для работающего плагина: значения по умолчанию из JAR + настройки с диска. */
     public static Messages load(JavaPlugin plugin, String locale, Logger logger) {
         Map<String, String> defaults = readResource(plugin, RESOURCE_NAME, logger);
-        String fileName = locale == null || locale.isBlank() || "ru".equalsIgnoreCase(locale)
+        // Тег локали чистим от всего, кроме букв, цифр и дефиса: имя файла не
+        // должно уводить за пределы папки плагина.
+        String tag = locale == null ? "" : locale.trim().toLowerCase(Locale.ROOT)
+                .replace('_', '-').replaceAll("[^a-z0-9-]", "");
+        String fileName = tag.isEmpty() || "ru".equals(tag)
                 ? FILE_NAME
-                : "messages_" + locale.toLowerCase(Locale.ROOT) + ".yml";
-        if (!"messages.yml".equals(fileName)) {
+                : "messages_" + tag + ".yml";
+        if (!FILE_NAME.equals(fileName) && plugin.getResource(fileName) == null) {
+            // Локали нет в JAR: не роняем плагин на saveResource, а работаем по-русски.
+            if (logger != null) {
+                logger.info("Локали «" + locale + "» нет в JAR — взяты тексты " + FILE_NAME + ".");
+            }
+            fileName = FILE_NAME;
+        }
+        if (!FILE_NAME.equals(fileName)) {
             Map<String, String> localeDefaults = readResource(plugin, fileName, logger);
             if (!localeDefaults.isEmpty()) {
                 Map<String, String> merged = new LinkedHashMap<>(defaults);
