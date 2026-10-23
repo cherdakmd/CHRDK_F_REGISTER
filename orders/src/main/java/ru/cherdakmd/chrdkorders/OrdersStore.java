@@ -355,6 +355,12 @@ public final class OrdersStore {
         dirty = true;
     }
 
+    /** Админская правка репутации без смены ника: имя берётся из записи. */
+    public synchronized void setReputation(UUID id, int value) {
+        PlayerData data = player(id);
+        setReputation(id, data == null ? "" : data.name, value);
+    }
+
     /** Админская правка репутации (клампится снизу нулём). */
     public synchronized void setReputation(UUID id, String name, int value) {
         PlayerData data = ensure(id, name);
