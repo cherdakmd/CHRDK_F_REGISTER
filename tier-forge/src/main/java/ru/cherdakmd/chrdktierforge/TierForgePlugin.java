@@ -353,6 +353,9 @@ public final class TierForgePlugin extends JavaPlugin {
         if (tabService != null) {
             tabService.restart();
         }
+        // Ядро могло подключиться позже включения или перезагрузиться: повторная
+        // регистрация с тем же id заменяет прежнюю, дублей в чате не будет.
+        registerCollectionNameTag();
         if (refreshListener != null) {
             Bukkit.getScheduler().runTask(this, () -> {
                 for (org.bukkit.entity.Player player : Bukkit.getOnlinePlayers()) {
