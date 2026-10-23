@@ -64,6 +64,47 @@ class TierCollectionTitlesTest {
     }
 
     @Test
+    void choiceIsNormalisedAndValidated() {
+        assertNull(TierCollectionTitles.normalizeChoice(null));
+        assertNull(TierCollectionTitles.normalizeChoice(" "));
+        assertNull(TierCollectionTitles.normalizeChoice("auto"));
+        assertNull(TierCollectionTitles.normalizeChoice("AUTO"));
+        assertEquals("off", TierCollectionTitles.normalizeChoice("off"));
+        assertEquals("all", TierCollectionTitles.normalizeChoice("ALL"));
+        assertEquals("affixes", TierCollectionTitles.normalizeChoice(" affixes "));
+        assertNull(TierCollectionTitles.normalizeChoice("mythic"), "битое значение — авто");
+        assertTrue(TierCollectionTitles.isSection("properties"));
+        assertFalse(TierCollectionTitles.isSection("auto"));
+        assertFalse(TierCollectionTitles.isSection(null));
+    }
+
+    @Test
+    void selectionRespectsChoice() {
+        TierCollectionBook.Progress six = progress(6, 0, 0);
+        assertEquals("tiers", TierCollectionTitles.selected(progress(7, 0, 0), null),
+                "авто — лучший заработанный");
+        assertNull(TierCollectionTitles.selected(progress(7, 0, 0), "off"),
+                "off скрывает титул");
+        assertEquals("tiers", TierCollectionTitles.selected(progress(7, 0, 0), "tiers"));
+        assertEquals("tiers", TierCollectionTitles.selected(progress(
+                        TierCollectionBook.TIER_TOTAL, TierCollectionConfig.PROPERTY_TOTAL,
+                        TierCollectionConfig.AFFIX_TOTAL),
+                "tiers"), "выбор игрока важнее автоматической «Легенды кузни»");
+        assertNull(TierCollectionTitles.selected(six, "tiers"),
+                "незакрытый раздел не надевается, но и титула ещё нет");
+    }
+
+    @Test
+    void unearnedChoiceFallsBackToAuto() {
+        // Раздел закрывался, но книгу откатили: выбор остался, заслуги нет —
+        // показываем самый весомый из того, что действительно закрыто.
+        TierCollectionBook.Progress onlyTiers = progress(TierDef.LADDER.size(), 0, 0);
+        assertEquals("tiers", TierCollectionTitles.selected(onlyTiers, "all"));
+        assertNull(TierCollectionTitles.selected(progress(3, 0, 0), "all"),
+                "ничего не закрыто — титула нет вовсе");
+    }
+
+    @Test
     void nextHandlesEmptyBook() {
         String next = TierCollectionTitles.next(TierCollectionBook.Progress.EMPTY);
         assertEquals("tiers", next, "с нуля ближайшая цель — собрать все редкости");

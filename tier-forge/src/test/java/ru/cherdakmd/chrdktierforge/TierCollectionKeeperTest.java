@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Хранилище книг коллекции в stats.yml (1.4.150). */
@@ -155,6 +156,37 @@ class TierCollectionKeeperTest {
         TierCollectionKeeper keeper = new TierCollectionKeeper();
         keeper.record(UUID.randomUUID(), null, List.of(), List.of());
         assertTrue(keeper.top(10).isEmpty(), "книга без находок в рейтинг не попадает");
+    }
+
+    @Test
+    void titleChoiceNeedsABook() {
+        TierCollectionKeeper keeper = new TierCollectionKeeper();
+        UUID player = UUID.randomUUID();
+        assertFalse(keeper.chooseTitle(player, "tiers"), "без книги выбирать нечего");
+        assertNull(keeper.titleChoice(player));
+        assertFalse(keeper.chooseTitle(null, "tiers"));
+
+        keeper.record(player, "rare", List.of(), List.of());
+        assertTrue(keeper.chooseTitle(player, "off"));
+        assertEquals("off", keeper.titleChoice(player));
+        assertTrue(keeper.chooseTitle(player, "auto"));
+        assertNull(keeper.titleChoice(player));
+    }
+
+    @Test
+    void choiceSurvivesSaveAndLoad() {
+        TierCollectionKeeper keeper = new TierCollectionKeeper();
+        UUID player = UUID.randomUUID();
+        for (String tier : TierDef.LADDER) {
+            keeper.record(player, tier, List.of(), List.of());
+        }
+        assertTrue(keeper.chooseTitle(player, "tiers"));
+
+        YamlConfiguration yaml = new YamlConfiguration();
+        keeper.writeTo(yaml.createSection("collection"));
+        TierCollectionKeeper restored = new TierCollectionKeeper();
+        restored.load(yaml.getConfigurationSection("collection"));
+        assertEquals("tiers", restored.titleChoice(player));
     }
 
     @Test

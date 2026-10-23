@@ -52,6 +52,26 @@ public final class TierCollectionKeeper {
         return book != null && book.claim(milestoneKey);
     }
 
+    /** Выбор титула игрока: {@code null} — авто или книги ещё нет. */
+    public String titleChoice(UUID player) {
+        TierCollectionBook book = player == null ? null : books.get(player);
+        return book == null ? null : book.titleChoice();
+    }
+
+    /**
+     * Запоминает выбор титула.
+     *
+     * @return {@code false}, если книги нет — выбирать нечего
+     */
+    public boolean chooseTitle(UUID player, String raw) {
+        TierCollectionBook book = player == null ? null : books.get(player);
+        if (book == null) {
+            return false;
+        }
+        book.chooseTitle(raw);
+        return true;
+    }
+
     public boolean isClaimed(UUID player, String milestoneKey) {
         TierCollectionBook book = player == null ? null : books.get(player);
         return book != null && book.isClaimed(milestoneKey);

@@ -19,6 +19,10 @@ repositories {
         name = 'papermc'
         url = 'https://repo.papermc.io/repository/maven-public/'
     }
+    maven {
+        name = 'placeholderapi'
+        url = 'https://repo.extendedclip.com/content/repositories/placeholderapi/'
+    }
 }
 
 dependencies {
@@ -26,6 +30,8 @@ dependencies {
     // Ядро CHRDK_F_REGISTER: публичный API (ru.cherdakmd.chrdkregister.api) и Messages.
     compileOnly project(':')
     compileOnly "com.google.code.gson:gson:2.11.0"
+    // PlaceholderAPI — мягкая интеграция: в рантайме плагина может не быть.
+    compileOnly "me.clip:placeholderapi:2.12.3"
 
     testImplementation "org.purpurmc.purpur:purpur-api:${project.purpur_api_version}"
     testImplementation "com.google.code.gson:gson:2.11.0"

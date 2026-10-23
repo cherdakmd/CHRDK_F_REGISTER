@@ -32,12 +32,12 @@ import java.util.logging.Logger;
  *
  * @param enabled       включена ли коллекция (выключение не стирает книгу)
  * @param announceFinds объявлять в чат каждую новую находку
- * @param titles        показывать заработанные титулы рядом с ником в чате
+ * @param titles        показ заработанных титулов (чат через ядро и таб-лист)
  * @param properties    вехи по числу открытых свойств, по возрастанию
  * @param affixes       вехи по числу открытых аффиксов, по возрастанию
  * @param sections      награды за полностью закрытые разделы
  */
-public record TierCollectionConfig(boolean enabled, boolean announceFinds, boolean titles,
+public record TierCollectionConfig(boolean enabled, boolean announceFinds, Titles titles,
                                    List<Milestone> properties,
                                    List<Milestone> affixes,
                                    Map<String, SectionReward> sections) {
@@ -47,6 +47,35 @@ public record TierCollectionConfig(boolean enabled, boolean announceFinds, boole
 
         public boolean hasReward() {
             return passDays > 0 || diamonds > 0;
+        }
+    }
+
+    /**
+     * Титулы: общий выключатель и отдельная настройка таб-листа.
+     *
+     * <p>В чате титул рисует ядро (оформление ников), а таб-лист аддон ведёт
+     * сам — но только если ядро не задаёт свой формат имени (см.
+     * {@code tablist.player-name-format}). Иначе титул попадает в таб через
+     * ядро: {@code %player_tagged%} уже содержит метки аддонов.</p>
+     *
+     * @param enabled         показывать титулы вообще
+     * @param tab             вести имя в таб-листе самим
+     * @param tabFormat       шаблон имени: {@code %player%} и {@code %title%}
+     * @param tabRefreshTicks период обновления таба (20 тиков = 1 сек)
+     */
+    public record Titles(boolean enabled, boolean tab, String tabFormat, int tabRefreshTicks) {
+
+        /** Шаблон по умолчанию: «ник · титул». */
+        public static final String DEFAULT_FORMAT =
+                "<white>%player%</white> <dark_gray>·</dark_gray> %title%";
+
+        public static final Titles DEFAULT = new Titles(true, true, DEFAULT_FORMAT, 60);
+
+        public Titles {
+            // Пустой шаблон — «не трогать имена»: иначе таб потеряет ник.
+            if (tabFormat == null || tabFormat.isBlank()) {
+                tabFormat = DEFAULT_FORMAT;
+            }
         }
     }
 
@@ -69,7 +98,7 @@ public record TierCollectionConfig(boolean enabled, boolean announceFinds, boole
 
     /** Умолчания: включено, объявлять находки, титулы, три вехи и четыре раздела. */
     public static final TierCollectionConfig DEFAULT = new TierCollectionConfig(
-            true, true, true,
+            true, true, Titles.DEFAULT,
             List.of(new Milestone(15, 2, 8),
                     new Milestone(45, 4, 16),
                     new Milestone(75, 7, 32)),
@@ -103,7 +132,7 @@ public record TierCollectionConfig(boolean enabled, boolean announceFinds, boole
         }
         boolean enabled = config.getBoolean("collection.enabled", true);
         boolean announce = config.getBoolean("collection.announce-finds", true);
-        boolean titles = config.getBoolean("collection.titles.enabled", true);
+        Titles titles = parseTitles(config, logger);
         List<Milestone> properties = parseMilestones(
                 config.getConfigurationSection("collection.rewards.properties"),
                 logger, "collection.rewards.properties", PROPERTY_TOTAL, DEFAULT.properties);
@@ -113,6 +142,34 @@ public record TierCollectionConfig(boolean enabled, boolean announceFinds, boole
         Map<String, SectionReward> sections = parseSections(
                 config.getConfigurationSection("collection.rewards.sections"), logger);
         return new TierCollectionConfig(enabled, announce, titles, properties, affixes, sections);
+    }
+
+    /** Секция {@code collection.titles.*}: показ в чате и настройка таб-листа. */
+    private static Titles parseTitles(FileConfiguration config, Logger logger) {
+        boolean enabled = config.getBoolean("collection.titles.enabled", true);
+        boolean tab = config.getBoolean("collection.titles.tab.enabled", true);
+        String format = config.getString("collection.titles.tab.name-format",
+                Titles.DEFAULT_FORMAT);
+        int ticks = clamp(config.getInt("collection.titles.tab.refresh-ticks",
+                        Titles.DEFAULT.tabRefreshTicks()), 20, 1200, logger,
+                "collection.titles.tab.refresh-ticks");
+        if (format == null || format.isBlank()) {
+            loggerWarning(logger, "collection.titles.tab.name-format",
+                    "пустой шаблон — имена в табе не трогаем");
+            format = Titles.DEFAULT_FORMAT;
+        }
+        if (!format.contains("%player%")) {
+            loggerWarning(logger, "collection.titles.tab.name-format",
+                    "нет %player% — ник потеряется, добавляю его в начало");
+            format = "%player% " + format;
+        }
+        return new Titles(enabled, tab, format, ticks);
+    }
+
+    private static void loggerWarning(Logger logger, String key, String message) {
+        if (logger != null) {
+            logger.warning("config: " + key + " — " + message);
+        }
     }
 
     /** Награда раздела; неизвестный ид — «без награды», а не {@code null}. */

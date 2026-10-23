@@ -36,6 +36,8 @@ public final class TierCollectionBook {
     private final Set<String> properties = new LinkedHashSet<>();
     private final Set<String> affixes = new LinkedHashSet<>();
     private final Set<String> claimed = new LinkedHashSet<>();
+    /** Выбор титула: {@code null} — авто, {@code "off"} — не показывать, иначе ид раздела. */
+    private String titleChoice;
 
     /** Что нового открылось за одно событие. Пустые списки — дубль. */
     public record Discovery(String tier, List<String> properties, List<String> affixes) {
@@ -237,6 +239,26 @@ public final class TierCollectionBook {
         return new Progress(tiers.size(), properties.size(), affixes.size());
     }
 
+    /* ------------------------------- выбор титула ------------------------------- */
+
+    /** Текущий выбор: {@code null} — авто, {@code "off"} — скрыт, иначе ид раздела. */
+    public synchronized String titleChoice() {
+        return titleChoice;
+    }
+
+    /**
+     * Запоминает выбор титула. Незнакомое значение превращается в «авто» —
+     * битый файл не должен оставлять игрока без титула.
+     */
+    public synchronized void chooseTitle(String raw) {
+        this.titleChoice = TierCollectionTitles.normalizeChoice(raw);
+    }
+
+    /** Титул, который реально показывается с учётом выбора и прогресса. */
+    public synchronized String selectedTitle() {
+        return TierCollectionTitles.selected(progress(), titleChoice);
+    }
+
     /**
      * Отмечает веху как выплаченную. {@code true} — веха была новой, награду
      * нужно выдать; {@code false} — уже закрыта (повторной выплаты нет).
@@ -277,6 +299,8 @@ public final class TierCollectionBook {
         }
         section.set("affixes", ordered(affixes, affixOrder));
         section.set("claimed", claimed.stream().sorted().toList());
+        // Выбор титула: null — ключ убираем, файл остаётся чистым.
+        section.set("title", titleChoice);
     }
 
     /** Чтение из {@code stats.yml}; неизвестные иды отбрасываются. */
@@ -285,6 +309,7 @@ public final class TierCollectionBook {
         properties.clear();
         affixes.clear();
         claimed.clear();
+        titleChoice = null;
         if (section == null) {
             return;
         }
@@ -310,6 +335,7 @@ public final class TierCollectionBook {
                 claimed.add(key.trim());
             }
         }
+        titleChoice = TierCollectionTitles.normalizeChoice(section.getString("title"));
     }
 
     /** Иды в порядке каталога; незнакомые (из будущих версий) — в конце. */

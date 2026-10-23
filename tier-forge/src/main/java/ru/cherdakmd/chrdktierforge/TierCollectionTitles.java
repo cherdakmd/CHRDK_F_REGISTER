@@ -12,6 +12,12 @@ import java.util.List;
  */
 public final class TierCollectionTitles {
 
+    /** Значение выбора «показывать самый весомый заработанный». */
+    public static final String AUTO = "auto";
+
+    /** Значение выбора «не показывать титул вовсе». */
+    public static final String OFF = "off";
+
     /**
      * Сила титулов: от самого весомого к простому. Порядок осознанный —
      * вся кузня весомее свойств, свойства весомее аффиксов, аффиксы весомее
@@ -20,6 +26,48 @@ public final class TierCollectionTitles {
     public static final List<String> STRENGTH = List.of("all", "properties", "affixes", "tiers");
 
     private TierCollectionTitles() {
+    }
+
+    /** Ид раздела коллекции ({@code tiers|affixes|properties|all}) или {@code null}. */
+    public static boolean isSection(String id) {
+        return id != null && STRENGTH.contains(id);
+    }
+
+    /**
+     * Нормализует выбор игрока: {@code auto}/{@code null}/пусто → {@code null},
+     * {@code off} → {@code "off"}, известный раздел → его ид. Незнакомое значение
+     * тоже считается «авто», чтобы битый файл не оставлял игрока без титула.
+     */
+    public static String normalizeChoice(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        String value = raw.trim().toLowerCase(java.util.Locale.ROOT);
+        if (AUTO.equals(value)) {
+            return null;
+        }
+        if (OFF.equals(value)) {
+            return OFF;
+        }
+        return isSection(value) ? value : null;
+    }
+
+    /**
+     * Какой титул показывать с учётом выбора игрока.
+     *
+     * <p>{@code choice == null} — авто (самый весомый), {@code "off"} — ничего,
+     * закрытый раздел — именно он. Если выбранный раздел ещё не закрыт (или
+     * закрывался на другом сервере, а книгу откатили), честно возвращаем авто:
+     * титул нельзя «надеть» без заслуги.</p>
+     */
+    public static String selected(TierCollectionBook.Progress progress, String choice) {
+        if (choice != null && OFF.equals(choice)) {
+            return null;
+        }
+        if (choice != null && isSection(choice) && progress != null && progress.complete(choice)) {
+            return choice;
+        }
+        return best(progress);
     }
 
     /** Самый весомый закрытый раздел или {@code null}, если титула ещё нет. */

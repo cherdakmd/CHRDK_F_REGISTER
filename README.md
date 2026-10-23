@@ -1202,7 +1202,7 @@ public void onEnable() {
 
 ---
 
-## Аддон CHRDK_TierForge — крафтовая редкость (с версии 1.4.14; коллекция кузни — 1.4.150, титулы и рейтинг — 1.4.151)
+## Аддон CHRDK_TierForge — крафтовая редкость (с версии 1.4.14; коллекция кузни — 1.4.150, титулы и рейтинг — 1.4.151, выбор титула и таб — 1.4.152)
 
 Крафты в духе Terraria: любая сшитая броня, оружие, инструменты и утилита (щит, рог,
 фонарь, тотем — с 1.4.142) могут выйти с **накатом
@@ -1347,6 +1347,27 @@ public void onEnable() {
   полные книги сервера. Сортировка: всего собрано, затем редкости, затем
   свойства; титул показывается рядом с ником. Пустые книги в рейтинг не
   попадают, счёт стабилен между перезапусками.
+- **Свой выбор титула (1.4.152)**: `/tiers collection title` показывает, что
+  надето сейчас, какие разделы закрыты и какие титулы доступны;
+  `/tiers collection title auto|off|tiers|affixes|properties|all` меняет выбор.
+  `auto` — самый весомый закрытый раздел, `off` — скрыть титул. Надеть титул
+  незакрытого раздела нельзя: если книгу откатили или раздел ещё не собран,
+  показывается автоматический. Выбор хранится в `stats.yml` вместе с книгой
+  (ключ `title`) и переживает перезапуск. В витрине появилась четвёртая
+  вкладка «Титулы» — там же титул надевается кликом.
+- **Титул в таб-листе (1.4.152)**: имя в списке игроков — общий участок, поэтому
+  аддон пишет его **только если ядро не задаёт `tablist.player-name-format`**;
+  шаблон настраивается (`collection.titles.tab.name-format`, по умолчанию
+  «ник · титул»), период — `refresh-ticks` (20 тиков шаг). Если ядро задаёт
+  формат с `%player_tagged%`, титул попадает в таб через реестр оформления
+  ников и аддон имена не трогает; если формат есть, а `%player_tagged%` в нём
+  нет — в консоль уходит подсказка. Игрокам без титула имя не подменяется.
+- **Плейсхолдеры PlaceholderAPI (1.4.152)**: `%chrdktierforge_title%` (MiniMessage),
+  `_title_plain%` (без разметки), `_title_id%`, `_title_choice%`, `_found%`,
+  `_total%`, `_percent%`, `_tiers%`, `_properties%`, `_affixes%`, `_next%`
+  (ближайший незакрытый раздел), `_next_left%` и `_players%` (сколько книг на
+  сервере). Работают и для офлайн-ников — только память, без запросов к файлам.
+  Для TAB-плагинов достаточно `%chrdktierforge_title%` в конфиге.
 - **Случайные зачарования (1.4.127)**: тир-предмет **иногда** приходит уже
   зачарованным. Шанс — `enchantments.chance-percent` (20%) плюс **+8% за тир**:
   проклятый 20%, легендарный 68%; `0` отключает броски полностью. Уровень ограничен тиром (I–II внизу, III
@@ -1383,8 +1404,8 @@ public void onEnable() {
 - Хранилище — PDC предметов; команда `/tiers` показывает лестницу и шансы,
   `/tiers info` разбирает предмет в руке (тир, кличка, источник, свойства тира, улучшения и цены),
   `/tiers stats` — находки за всё время (счётчики живут в `stats.yml`, 1.4.81),
-  `/tiers stats reset` — сброс своего счётчика, `/tiers collection [top]` — коллекция
-  кузни и рейтинг самых полных книг;
+  `/tiers stats reset` — сброс своего счётчика, `/tiers collection [top|title]` —
+  коллекция кузни, рейтинг самых полных книг и выбор титула;
   `/tiersadmin give <ник> <материал>
   <тир>`, `give-unidentified`, `stats|resetstats <ник>` и `reload` — админские.
 
@@ -1731,7 +1752,7 @@ PlaceholderAPI — мягкая интеграция: `%chrdktreasures_found%`, 
 
 ### Установка
 
-Рядом с ядром положить `chrdk-treasures-1.4.151.jar`; зависимость —
+Рядом с ядром положить `chrdk-treasures-1.4.152.jar`; зависимость —
 `CHRDK_Core`, необязательная — `PlaceholderAPI`. Конфиг, тексты и `loot.yml`
 создаются при первом запуске, старые версии читаются без миграции:
 `chances.yml` появляется только после первой команды `chance`, а блоки старого
@@ -1747,27 +1768,27 @@ PlaceholderAPI — мягкая интеграция: `%chrdktreasures_found%`, 
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.151.jar`,
-аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.151.jar`,
-реферальный — `referrals/build/libs/chrdk-referrals-1.4.151.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.151.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.151.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.151.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.151.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.151.jar` (хартия чар — при установленном аддоне чар),
-достижения — `achievements/build/libs/chrdk-achievements-1.4.151.jar`, навыки —
-`skills/build/libs/chrdk-skills-1.4.151.jar`, клады —
-`treasures/build/libs/chrdk-treasures-1.4.151.jar`, общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.151.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.151.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.151.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.151.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.151.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.151.jar`, стримерская программа —
-`streams/build/libs/chrdk-streams-1.4.151.jar`, лотерея —
-`lottery/build/libs/chrdk-lottery-1.4.151.jar`, аукцион —
-`auction/build/libs/chrdk-auction-1.4.151.jar`, питомцы —
-`pets/build/libs/chrdk-pets-1.4.151.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.152.jar`,
+аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.152.jar`,
+реферальный — `referrals/build/libs/chrdk-referrals-1.4.152.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.152.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.152.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.152.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.152.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.152.jar` (хартия чар — при установленном аддоне чар),
+достижения — `achievements/build/libs/chrdk-achievements-1.4.152.jar`, навыки —
+`skills/build/libs/chrdk-skills-1.4.152.jar`, клады —
+`treasures/build/libs/chrdk-treasures-1.4.152.jar`, общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.152.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.152.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.152.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.152.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.152.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.152.jar`, стримерская программа —
+`streams/build/libs/chrdk-streams-1.4.152.jar`, лотерея —
+`lottery/build/libs/chrdk-lottery-1.4.152.jar`, аукцион —
+`auction/build/libs/chrdk-auction-1.4.152.jar`, питомцы —
+`pets/build/libs/chrdk-pets-1.4.152.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). К релизу на GitHub прикладывается **один архив**
 `chrdk-plugins-<версия>.zip`: ядро и все 20 аддонов одной версии плюс памятка
 `ОБНОВЛЕНИЕ.txt`. Отдельные JAR больше не публикуются.

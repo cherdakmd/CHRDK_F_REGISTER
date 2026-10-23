@@ -91,7 +91,8 @@ final class ConfigReport {
                 ? "включена (вехи " + (collection.properties().size()
                 + collection.affixes().size())
                 + ", разделов " + collection.sections().size()
-                + ", титулы " + onOff(collection.titles()) + ")"
+                + ", титулы " + onOff(collection.titles().enabled())
+                + (collection.titles().tab() ? " (+таб)" : "") + ")"
                 : "выключена"));
         return out;
     }

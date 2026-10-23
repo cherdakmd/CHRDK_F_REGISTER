@@ -68,6 +68,10 @@ public final class TierCommandHandler implements TabExecutor {
         }
         // 1.4.150: витрина «Коллекция кузни» — редкости, свойства и аффиксы.
         if (args.length >= 1 && "collection".equalsIgnoreCase(args[0])) {
+            // 1.4.152: выбор титула и его показ в табе.
+            if (args.length >= 2 && "title".equalsIgnoreCase(args[1])) {
+                return handleCollectionTitle(player, args.length >= 3 ? args[2] : null);
+            }
             if (args.length >= 2 && "top".equalsIgnoreCase(args[1])) {
                 return handleCollectionTop(player, args.length >= 3 ? args[2] : null);
             }
@@ -308,6 +312,66 @@ public final class TierCommandHandler implements TabExecutor {
                     "place", place++,
                     "player", leaderboardName(entry.player()),
                     "count", entry.count());
+        }
+        return true;
+    }
+
+    /**
+     * `/tiers collection title [auto|off|раздел]` — выбор титула (1.4.152).
+     *
+     * <p>Без аргумента показывает, что надето сейчас, какие разделы закрыты и
+     * какие титулы из них доступны. Надеть титул незакрытого раздела нельзя:
+     * награда за заслугу, а не настройка.</p>
+     */
+    private boolean handleCollectionTitle(Player player, String raw) {
+        TierCollectionService collection = plugin.collection();
+        if (collection == null) {
+            plugin.messages().send(player, "collection-disabled");
+            return true;
+        }
+        TierCollectionConfig config = collection.config();
+        if (config == null || !config.titles().enabled()) {
+            plugin.messages().send(player, "collection-titles-disabled");
+            return true;
+        }
+        if (raw == null) {
+            String title = collection.titleOf(player);
+            plugin.messages().send(player, "collection-title-header",
+                    "title", title == null
+                            ? Messages.trusted(plugin.messages().raw("collection-title-none"))
+                            : Messages.trusted(title));
+            TierCollectionBook.Progress progress = collection.progress(player.getUniqueId());
+            String choice = collection.choice(player.getUniqueId());
+            for (String section : TierCollectionConfig.SECTIONS) {
+                String name = collection.sectionName(section);
+                String titleText = plugin.messages().raw("title." + section);
+                boolean unlocked = progress.complete(section);
+                boolean chosen = choice != null && choice.equals(section);
+                plugin.messages().send(player, unlocked
+                                ? (chosen ? "collection-title-row-chosen"
+                                : "collection-title-row-unlocked")
+                                : "collection-title-row-locked",
+                        "name", Messages.trusted(name),
+                        "title", Messages.trusted(titleText),
+                        "found", progress.count(section),
+                        "count", TierCollectionConfig.threshold(section));
+            }
+            plugin.messages().send(player, "collection-title-usage");
+            return true;
+        }
+        String error = collection.chooseTitle(player, raw);
+        if (error != null) {
+            plugin.messages().send(player, error, "id", raw);
+            return true;
+        }
+        String choice = collection.choice(player.getUniqueId());
+        if (choice == null) {
+            plugin.messages().send(player, "collection-title-set-auto");
+        } else if (TierCollectionTitles.OFF.equals(choice)) {
+            plugin.messages().send(player, "collection-title-set-off");
+        } else {
+            plugin.messages().send(player, "collection-title-set",
+                    "title", Messages.trusted(plugin.messages().raw("title." + choice)));
         }
         return true;
     }
@@ -607,11 +671,18 @@ public final class TierCommandHandler implements TabExecutor {
                 List.of("info", "stats", "top", "effects", "collection").stream()
                         .filter(x -> x.startsWith(prefix)).forEach(matches::add);
             } else if (args.length == 2 && "collection".equalsIgnoreCase(args[0])) {
-                List.of("top").stream().filter(x -> x.startsWith(prefix)).forEach(matches::add);
+                List.of("top", "title").stream().filter(x -> x.startsWith(prefix))
+                        .forEach(matches::add);
             } else if (args.length == 3 && "collection".equalsIgnoreCase(args[0])
                     && "top".equalsIgnoreCase(args[1])) {
                 List.of("5", "10", "25").stream().filter(x -> x.startsWith(prefix))
                         .forEach(matches::add);
+            } else if (args.length == 3 && "collection".equalsIgnoreCase(args[0])
+                    && "title".equalsIgnoreCase(args[1])) {
+                List<String> options = new ArrayList<>(List.of(
+                        TierCollectionTitles.AUTO, TierCollectionTitles.OFF));
+                options.addAll(TierCollectionConfig.SECTIONS);
+                options.stream().filter(x -> x.startsWith(prefix)).forEach(matches::add);
             } else if (args.length == 2 && "effects".equalsIgnoreCase(args[0])) {
                 List.of("on", "off").stream()
                         .filter(x -> x.startsWith(prefix)).forEach(matches::add);

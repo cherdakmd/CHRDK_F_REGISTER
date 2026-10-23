@@ -9,6 +9,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Книга коллекции кузни: находки, вехи, сохранение (1.4.150). */
@@ -191,6 +192,56 @@ class TierCollectionBookTest {
         assertTrue(full.complete("all"));
         assertEquals(100, full.percent());
         assertEquals(TierCollectionBook.CATALOG_TOTAL, full.total());
+    }
+
+    @Test
+    void titleChoiceIsStoredAndSurvivesRestart() {
+        TierCollectionBook book = new TierCollectionBook();
+        assertNull(book.titleChoice(), "по умолчанию — авто");
+        for (String tier : TierDef.LADDER) {
+            book.discover(tier, List.of(), List.of());
+        }
+        assertEquals("tiers", book.selectedTitle());
+
+        book.chooseTitle("off");
+        assertEquals("off", book.titleChoice());
+        assertNull(book.selectedTitle(), "скрытый титул не показывается");
+
+        book.chooseTitle("tiers");
+        assertEquals("tiers", book.selectedTitle());
+
+        YamlConfiguration yaml = new YamlConfiguration();
+        book.writeTo(yaml.createSection("collection"));
+        assertEquals("tiers", yaml.getString("collection.title"));
+
+        TierCollectionBook restored = new TierCollectionBook();
+        restored.read(yaml.getConfigurationSection("collection"));
+        assertEquals("tiers", restored.titleChoice());
+        assertEquals("tiers", restored.selectedTitle());
+    }
+
+    @Test
+    void autoChoiceRemovesTitleKey() {
+        TierCollectionBook book = new TierCollectionBook();
+        book.chooseTitle("all");
+        YamlConfiguration yaml = new YamlConfiguration();
+        book.writeTo(yaml.createSection("collection"));
+        assertEquals("all", yaml.getString("collection.title"));
+
+        book.chooseTitle("auto");
+        assertNull(book.titleChoice());
+        yaml = new YamlConfiguration();
+        book.writeTo(yaml.createSection("collection"));
+        assertNull(yaml.getString("collection.title"), "авто — ключа в файле нет");
+    }
+
+    @Test
+    void brokenTitleChoiceFallsBackToAuto() {
+        YamlConfiguration yaml = new YamlConfiguration();
+        yaml.set("collection.title", "mythic");
+        TierCollectionBook book = new TierCollectionBook();
+        book.read(yaml.getConfigurationSection("collection"));
+        assertNull(book.titleChoice(), "незнакомый раздел — авто, а не поломка");
     }
 
     @Test

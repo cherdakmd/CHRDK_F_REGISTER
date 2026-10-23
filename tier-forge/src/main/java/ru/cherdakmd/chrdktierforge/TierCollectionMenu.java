@@ -40,6 +40,7 @@ public final class TierCollectionMenu implements Listener {
     private static final int SLOT_PREV = 48;
     private static final int SLOT_PROGRESS = 49;
     private static final int SLOT_NEXT = 50;
+    private static final int SLOT_TITLES = 51;
     private static final int SLOT_CLOSE = 53;
 
     private final TierForgePlugin plugin;
@@ -54,7 +55,9 @@ public final class TierCollectionMenu implements Listener {
     public enum Tab {
         TIERS,
         PROPERTIES,
-        AFFIXES
+        AFFIXES,
+        /** Выбор титула: авто, «не показывать» и четыре закрытых раздела. */
+        TITLES
     }
 
     /** Одна карточка раздела: ид, имя, тир, эффект, открыта ли. */
@@ -81,7 +84,7 @@ public final class TierCollectionMenu implements Listener {
         }
         Tab currentTab = tab == null ? Tab.TIERS : tab;
         TierCollectionBook.Snapshot snapshot = service.snapshot(player);
-        List<Entry> entries = entries(currentTab, snapshot);
+        List<Entry> entries = entries(currentTab, snapshot, player);
         int pages = Math.max(1, (entries.size() + CONTENT - 1) / CONTENT);
         int current = Math.clamp(page, 1, pages);
         Holder holder = new Holder(player.getUniqueId(), currentTab, current);
@@ -104,6 +107,9 @@ public final class TierCollectionMenu implements Listener {
                 snapshot.affixCount(), TierCollectionConfig.AFFIX_TOTAL,
                 currentTab == Tab.AFFIXES));
         holder.inventory.setItem(SLOT_PROGRESS, progressIcon(player, snapshot));
+        holder.inventory.setItem(SLOT_TITLES, tabIcon(Material.NAME_TAG,
+                plugin.messages().get("collection-tab-titles"),
+                snapshot.total(), TierCollectionBook.CATALOG_TOTAL, currentTab == Tab.TITLES));
         if (pages > 1) {
             int previous = current <= 1 ? pages : current - 1;
             int next = current >= pages ? 1 : current + 1;
@@ -124,17 +130,46 @@ public final class TierCollectionMenu implements Listener {
             case TIERS -> plugin.messages().raw("collection-tab-tiers");
             case PROPERTIES -> plugin.messages().raw("collection-tab-properties");
             case AFFIXES -> plugin.messages().raw("collection-tab-affixes");
+            case TITLES -> plugin.messages().raw("collection-tab-titles");
         };
     }
 
     /* ------------------------------- содержимое ------------------------------- */
 
-    private List<Entry> entries(Tab tab, TierCollectionBook.Snapshot snapshot) {
+    private List<Entry> entries(Tab tab, TierCollectionBook.Snapshot snapshot, Player player) {
         return switch (tab) {
             case TIERS -> tierEntries(snapshot);
             case PROPERTIES -> propertyEntries(snapshot);
             case AFFIXES -> affixEntries(snapshot);
+            case TITLES -> titleEntries(snapshot, player);
         };
+    }
+
+    /**
+     * Витрина титулов: «авто», «скрыт» и четыре раздела. Выбранный помечен
+     * зелёным красителем, незакрытый раздел — серым (надеть нельзя).
+     */
+    private List<Entry> titleEntries(TierCollectionBook.Snapshot snapshot, Player player) {
+        TierCollectionBook.Progress progress = snapshot.progress();
+        String choice = service.choice(player.getUniqueId());
+        String shown = service.shownSection(player.getUniqueId());
+        List<Entry> out = new ArrayList<>(6);
+        out.add(new Entry(TierCollectionTitles.AUTO,
+                plugin.messages().raw("collection-title-auto-name"), "", "",
+                true, choice == null));
+        out.add(new Entry(TierCollectionTitles.OFF,
+                plugin.messages().raw("collection-title-off-name"), "", "",
+                true, TierCollectionTitles.OFF.equals(choice)));
+        for (String section : TierCollectionConfig.SECTIONS) {
+            boolean unlocked = progress.complete(section);
+            out.add(new Entry(section,
+                    plugin.messages().raw("title." + section), "",
+                    plugin.messages().raw("collection-title-progress",
+                            "found", progress.count(section),
+                            "count", TierCollectionConfig.threshold(section)),
+                    unlocked, section.equals(shown)));
+        }
+        return out;
     }
 
     private List<Entry> tierEntries(TierCollectionBook.Snapshot snapshot) {
@@ -180,6 +215,8 @@ public final class TierCollectionMenu implements Listener {
             case AFFIXES -> entry.known()
                     ? (entry.good() ? Material.AMETHYST_SHARD : Material.GUNPOWDER)
                     : Material.GRAY_DYE;
+            case TITLES -> entry.good() ? Material.LIME_DYE
+                    : (entry.known() ? Material.NAME_TAG : Material.GRAY_DYE);
         };
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
@@ -191,6 +228,9 @@ public final class TierCollectionMenu implements Listener {
             meta.displayName(plugin.messages().get("collection-tier-name",
                     "color", Messages.trusted(color),
                     "name", entry.name()));
+        } else if (tab == Tab.TITLES) {
+            // Имена титулов — готовая MiniMessage-разметка из messages.yml.
+            meta.displayName(plugin.messages().renderTemplate(entry.name()));
         } else {
             meta.displayName(entry.known()
                     ? plugin.messages().get("collection-name-known", "name", entry.name())
@@ -201,6 +241,22 @@ public final class TierCollectionMenu implements Listener {
             lore.add(plugin.messages().get("collection-entry-tier-label",
                     "tier", Messages.trusted(plugin.messages()
                             .raw("tier." + entry.tier() + ".name"))));
+        }
+        if (tab == Tab.TITLES) {
+            if (!entry.known()) {
+                lore.add(plugin.messages().get("collection-title-entry-locked"));
+            } else if (entry.good()) {
+                lore.add(plugin.messages().get("collection-title-entry-worn"));
+            } else {
+                lore.add(plugin.messages().get("collection-title-entry-click"));
+            }
+            if (!entry.effect().isBlank()) {
+                lore.add(plugin.messages().get("collection-title-entry-progress",
+                        "progress", entry.effect()));
+            }
+            meta.lore(lore);
+            item.setItemMeta(meta);
+            return item;
         }
         if (tab == Tab.AFFIXES) {
             lore.add(entry.good()
@@ -375,13 +431,40 @@ public final class TierCollectionMenu implements Listener {
             case SLOT_TIERS -> open(player, Tab.TIERS, 1);
             case SLOT_PROPERTIES -> open(player, Tab.PROPERTIES, 1);
             case SLOT_AFFIXES -> open(player, Tab.AFFIXES, 1);
+            case SLOT_TITLES -> open(player, Tab.TITLES, 1);
             case SLOT_PREV -> open(player, holder.tab, holder.page - 1);
             case SLOT_NEXT -> open(player, holder.tab, holder.page + 1);
             case SLOT_CLOSE -> player.closeInventory();
             default -> {
-                // содержимое только для чтения
+                if (holder.tab == Tab.TITLES && slot < CONTENT) {
+                    chooseTitle(player, holder, slot);
+                }
+                // остальное содержимое — только для чтения
             }
         }
+    }
+
+    /** Клик по титулу: надеть, включить авто или скрыть. */
+    private void chooseTitle(Player player, Holder holder, int slot) {
+        List<Entry> entries = entries(Tab.TITLES, service.snapshot(player), player);
+        if (slot >= entries.size()) {
+            return;
+        }
+        String error = service.chooseTitle(player, entries.get(slot).id());
+        if (error != null) {
+            plugin.messages().send(player, error, "id", entries.get(slot).id());
+            return;
+        }
+        String choice = service.choice(player.getUniqueId());
+        if (choice == null) {
+            plugin.messages().send(player, "collection-title-set-auto");
+        } else if (TierCollectionTitles.OFF.equals(choice)) {
+            plugin.messages().send(player, "collection-title-set-off");
+        } else {
+            plugin.messages().send(player, "collection-title-set",
+                    "title", Messages.trusted(plugin.messages().raw("title." + choice)));
+        }
+        open(player, holder.tab, holder.page);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)

@@ -38,6 +38,9 @@ public final class TierForgePlugin extends JavaPlugin {
     private TierCollectionMenu collectionMenu;
     /** Титулы коллекции зарегистрированы в оформлении ников ядра (1.4.151). */
     private boolean nameTagRegistered;
+    /** Титулы в таб-листе (1.4.152) и мост в PlaceholderAPI. */
+    private TierCollectionTabService tabService;
+    private TierForgePlaceholders placeholders;
     private TierIdentificationListener identification;
     private TierRefreshListener refreshListener;
     private ForgeUpgradeListener forgeUpgrades;
@@ -98,6 +101,11 @@ public final class TierForgePlugin extends JavaPlugin {
 
         // 1.4.151: титулы за закрытые разделы коллекции — рядом с ником в чате.
         registerCollectionNameTag();
+        // 1.4.152: титул в таб-листе и плейсхолдеры для TAB/скорбордов.
+        this.tabService = new TierCollectionTabService(this, collectionService);
+        Bukkit.getPluginManager().registerEvents(tabService, this);
+        this.tabService.restart();
+        registerPlaceholders();
 
         TierCommandHandler handler = new TierCommandHandler(this);
         for (String name : List.of("tiers", "tiersadmin")) {
@@ -136,6 +144,45 @@ public final class TierForgePlugin extends JavaPlugin {
         getLogger().info("CHRDK_TierForge: титулы коллекции подключены к оформлению ников.");
     }
 
+    /**
+     * PlaceholderAPI — мягкая зависимость (1.4.152): без плагина аддон работает
+     * как обычно, а с ним даёт {@code %chrdktierforge_title%} и счётчики.
+     */
+    private void registerPlaceholders() {
+        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") == null) {
+            return;
+        }
+        try {
+            this.placeholders = new TierForgePlaceholders(this);
+            this.placeholders.register();
+            getLogger().info("CHRDK_TierForge: PlaceholderAPI — доступны %chrdktierforge_title% "
+                    + "и счётчики коллекции.");
+        } catch (RuntimeException | LinkageError error) {
+            getLogger().warning("CHRDK_TierForge: PlaceholderAPI не подключился — "
+                    + error.getMessage());
+            this.placeholders = null;
+        }
+    }
+
+    private void unregisterPlaceholders() {
+        if (placeholders == null) {
+            return;
+        }
+        try {
+            placeholders.unregister();
+        } catch (RuntimeException | LinkageError ignored) {
+            // плагин PlaceholderAPI уже выключен — регистрация уйдёт вместе с ним
+        }
+        placeholders = null;
+    }
+
+    /** Обновляет имя игрока в табе после новой находки или смены титула. */
+    public void refreshTab(org.bukkit.entity.Player player) {
+        if (tabService != null) {
+            tabService.refresh(player);
+        }
+    }
+
     private void unregisterCollectionNameTag() {
         if (!nameTagRegistered) {
             return;
@@ -160,6 +207,11 @@ public final class TierForgePlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         unregisterCollectionNameTag();
+        if (tabService != null) {
+            tabService.stop();
+            tabService = null;
+        }
+        unregisterPlaceholders();
         if (tierApi != null) {
             Bukkit.getServicesManager().unregister(ChrdkTierApi.class, tierApi);
             tierApi = null;
@@ -296,6 +348,10 @@ public final class TierForgePlugin extends JavaPlugin {
         // а надетые вещи получают новый блеск без перезахода.
         if (visuals != null) {
             visuals.restart();
+        }
+        // 1.4.152: настройки таба могли поменяться (выключатель, шаблон, период).
+        if (tabService != null) {
+            tabService.restart();
         }
         if (refreshListener != null) {
             Bukkit.getScheduler().runTask(this, () -> {

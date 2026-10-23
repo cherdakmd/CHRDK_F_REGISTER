@@ -26,7 +26,8 @@ class TierCollectionConfigTest {
         TierCollectionConfig config = parse(new YamlConfiguration());
         assertTrue(config.enabled());
         assertTrue(config.announceFinds());
-        assertTrue(config.titles());
+        assertTrue(config.titles().enabled());
+        assertTrue(config.titles().tab());
         assertEquals(List.of(15, 45, 75),
                 config.properties().stream().map(TierCollectionConfig.Milestone::count).toList());
         assertEquals(List.of(10, 20),
@@ -99,7 +100,7 @@ class TierCollectionConfigTest {
         TierCollectionConfig config = parse(yaml);
         assertFalse(config.enabled());
         assertFalse(config.announceFinds());
-        assertFalse(config.titles());
+        assertFalse(config.titles().enabled());
         assertEquals(30, config.section("all").passDays());
         assertEquals(100, config.section("all").diamonds());
         assertEquals(new TierCollectionConfig.SectionReward(3, 16), config.section("tiers"),
@@ -172,12 +173,39 @@ class TierCollectionConfigTest {
 
     @Test
     void constructorSanitisesNulls() {
-        TierCollectionConfig config = new TierCollectionConfig(true, false, false, null, null, null);
+        TierCollectionConfig config = new TierCollectionConfig(true, false, null, null, null, null);
         assertNotNull(config.properties());
         assertTrue(config.properties().isEmpty());
         assertTrue(config.affixes().isEmpty());
         assertTrue(config.sections().isEmpty());
         assertFalse(config.section("all").hasReward());
+        assertTrue(config.titles().enabled(), "null-секция титулов — умолчания");
+        assertEquals(TierCollectionConfig.Titles.DEFAULT.tabFormat(), config.titles().tabFormat());
+    }
+
+    @Test
+    void tabTitleSettingsAreParsedAndSanitised() {
+        YamlConfiguration yaml = new YamlConfiguration();
+        yaml.set("collection.titles.tab.enabled", false);
+        yaml.set("collection.titles.tab.name-format", "<gray>%player%</gray> — %title%");
+        yaml.set("collection.titles.tab.refresh-ticks", 5);
+        TierCollectionConfig.Titles titles = parse(yaml).titles();
+        assertFalse(titles.tab());
+        assertEquals("<gray>%player%</gray> — %title%", titles.tabFormat());
+        assertEquals(20, titles.tabRefreshTicks(), "период клампится снизу до 20 тиков");
+    }
+
+    @Test
+    void tabFormatProtectsPlayerName() {
+        YamlConfiguration yaml = new YamlConfiguration();
+        yaml.set("collection.titles.tab.name-format", "%title%");
+        assertTrue(parse(yaml).titles().tabFormat().startsWith("%player%"),
+                "без %player% ник пропал бы из таба — аддон возвращает его сам");
+
+        YamlConfiguration empty = new YamlConfiguration();
+        empty.set("collection.titles.tab.name-format", "");
+        assertEquals(TierCollectionConfig.Titles.DEFAULT.tabFormat(),
+                parse(empty).titles().tabFormat(), "пустой шаблон — умолчание");
     }
 
     @Test

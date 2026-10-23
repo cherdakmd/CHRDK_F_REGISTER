@@ -66,6 +66,8 @@ public final class TierCollectionService {
         }
         grantMilestones(player, config);
         grantSections(player, config);
+        // 1.4.152: новая находка могла дать титул — имя в табе обновляем сразу.
+        plugin.refreshTab(player);
     }
 
     public TierCollectionBook.Snapshot snapshot(Player player) {
@@ -107,10 +109,61 @@ public final class TierCollectionService {
     /** Титул по UUID — нужен витрине, статистике и рейтингу. */
     public String titleFor(UUID player) {
         TierCollectionConfig config = config();
-        if (config == null || !config.titles()) {
+        if (config == null || !config.titles().enabled()) {
             return null;
         }
-        return titleText(TierCollectionTitles.best(keeper.progress(player)));
+        return titleText(shownSection(player));
+    }
+
+    /**
+     * Раздел, титул которого игрок реально носит: выбор игрока, если раздел
+     * закрыт, иначе самый весомый заработанный. {@code null} — титула нет
+     * или он скрыт командой {@code /tiers collection title off}.
+     */
+    public String shownSection(UUID player) {
+        TierCollectionBook.Progress progress = keeper.progress(player);
+        return TierCollectionTitles.selected(progress, keeper.titleChoice(player));
+    }
+
+    /** Закрыт ли раздел — по нему команда решает, можно ли надеть титул. */
+    public boolean sectionUnlocked(UUID player, String section) {
+        return TierCollectionTitles.isSection(section)
+                && keeper.progress(player).complete(section);
+    }
+
+    /** Текущий выбор игрока: {@code null} — авто, {@code "off"} — скрыт, иначе ид. */
+    public String choice(UUID player) {
+        return keeper.titleChoice(player);
+    }
+
+    /**
+     * Меняет выбор титула.
+     *
+     * @param raw {@code auto}, {@code off} или ид закрытого раздела
+     * @return ключ сообщения об ошибке или {@code null}, если выбор применён
+     */
+    public String chooseTitle(Player player, String raw) {
+        if (player == null) {
+            return "player-only";
+        }
+        TierCollectionConfig config = config();
+        if (config == null || !config.titles().enabled()) {
+            return "collection-titles-disabled";
+        }
+        String value = raw == null ? "" : raw.trim().toLowerCase(java.util.Locale.ROOT);
+        boolean auto = value.isEmpty() || TierCollectionTitles.AUTO.equals(value);
+        boolean off = TierCollectionTitles.OFF.equals(value);
+        if (!auto && !off && !TierCollectionTitles.isSection(value)) {
+            return "collection-title-unknown";
+        }
+        if (!auto && !off && !sectionUnlocked(player.getUniqueId(), value)) {
+            return "collection-title-locked";
+        }
+        if (!keeper.chooseTitle(player.getUniqueId(), value)) {
+            return "collection-title-empty-book";
+        }
+        plugin.refreshTab(player);
+        return null;
     }
 
     /** Текст титула по ид раздела; ключи перечислены явно, чтобы их видел контракт. */
@@ -225,7 +278,7 @@ public final class TierCollectionService {
                     "name", Messages.trusted(sectionName(section)),
                     "reward", Messages.trusted(rewardText(reward.passDays(),
                             reward.diamonds())));
-            if (config.titles()) {
+            if (config.titles().enabled()) {
                 String title = titleText(section);
                 if (title != null) {
                     plugin.messages().send(player, "collection-section-title",
