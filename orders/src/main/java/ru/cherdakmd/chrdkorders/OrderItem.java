@@ -22,7 +22,9 @@ public record OrderItem(Material material, int minAmount, int maxAmount, double 
     public static final int MAX_AMOUNT = 576;
 
     public OrderItem {
-        if (material == null || material.isAir()) {
+        // Сравнение с AIR, а не material.isAir(): второй идёт через BlockType
+        // и Registry, который в тестах без сервера не поднимается.
+        if (material == null || material == Material.AIR) {
             throw new IllegalArgumentException("Материал заказа не может быть пустым");
         }
         minAmount = Math.clamp(minAmount, 1, MAX_AMOUNT);

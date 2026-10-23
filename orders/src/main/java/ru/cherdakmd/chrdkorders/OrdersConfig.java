@@ -18,7 +18,7 @@ import java.util.logging.Logger;
  *
  * <p>Все числа клампятся здесь: админ, поставивший {@code board.size: 500},
  * увидит в логе предупреждение и получит 14 заказов, а не меню на полтысячи
- * слотов. Материалы ищутся через {@link Materials#resolve(String)} — 
+ * слотов. Материалы ищутся через {@link Materials#resolve(String)} —
  * опечатка в конфиге пропускается с предупреждением, а не роняет плагин.</p>
  */
 public final class OrdersConfig {
@@ -197,7 +197,7 @@ public final class OrdersConfig {
             if (itemsSection != null) {
                 for (String materialKey : itemsSection.getKeys(false)) {
                     Material material = Materials.resolve(materialKey);
-                    if (material == null || material.isAir()) {
+                    if (material == null || material == Material.AIR) {
                         if (logger != null) {
                             logger.warning("[CHRDK_Orders] categories." + key + ".items."
                                     + materialKey + ": неизвестный материал — пропускаю.");
