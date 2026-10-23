@@ -597,6 +597,26 @@ messages:
   loot-item-name: "<!italic><white>%name%</white>"
   loot-item-lore: "<dark_gray>Именная находка из клада</dark_gray>"
 
+  # ------------------------------- эликсиры (1.4.157) -------------------------
+  # Эликсир — обычное зелье с настоящим эффектом. Названия эффектов берутся
+  # из языка клиента (<lang:effect.minecraft.speed>), поэтому отдельные
+  # переводы «Скорость» здесь не нужны.
+  elixir-name: "<!italic><light_purple>%name%</light_purple>"
+  elixir-lore-effect: "<gray>%effect% <white>%level%</white> <dark_gray>·</dark_gray> <white>%seconds% с</white></gray>"
+  elixir-lore-hint: "<dark_gray>Клад: выпей — эффект начнётся сразу</dark_gray>"
+  elixir.swiftness.name: "Эликсир скорости"
+  elixir.haste.name: "Эликсир спешки"
+  elixir.night_vision.name: "Эликсир ночного зрения"
+  elixir.water_breathing.name: "Эликсир глубин"
+  elixir.fire_resistance.name: "Эликсир огнестойкости"
+  elixir.regeneration.name: "Эликсир регенерации"
+  elixir.absorption.name: "Эликсир поглощения"
+  elixir.strength.name: "Эликсир силы"
+  elixir.leaping.name: "Эликсир прыгучести"
+  elixir.luck.name: "Эликсир удачи"
+  elixir.hero.name: "Эликсир героя"
+  elixir.insight.name: "Эликсир озарения"
+
   # ------------------------------ клад-карты (1.4.153) -----------------------
   map-item-name: "<gold>Клад-карта</gold>"
   map-item-tier: "<gray>Тайник: %tier%</gray>"

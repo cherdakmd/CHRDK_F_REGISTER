@@ -71,7 +71,9 @@ class TreasureMessagesTest {
             "map-row", "map-row-world", "map-footer", "map-info", "map-info-world",
             "map-found", "map-hint", "map-hint-zone", "map-disabled",
             "menu-maps-name", "menu-maps-lore", "menu-maps-empty", "menu-maps-hint",
-            "help-map", "admin-map-given", "admin-unknown-tier");
+            "help-map", "admin-map-given", "admin-unknown-tier",
+            // 1.4.157: эликсиры из кладов.
+            "elixir-name", "elixir-lore-effect", "elixir-lore-hint");
 
     private static ConfigurationSection messages() {
         try (var stream = TreasureMessagesTest.class.getClassLoader()
@@ -177,6 +179,32 @@ class TreasureMessagesTest {
                     "повторяющееся имя звания: " + rank.id());
         }
         assertEquals(TreasureRank.values().length, names.size());
+    }
+
+    @Test
+    void everyElixirIsNamedAndUnique() {
+        ConfigurationSection root = messages();
+        Set<String> names = new HashSet<>();
+        for (TreasureElixir elixir : TreasureElixir.all()) {
+            assertText(root, elixir.nameKey());
+            assertTrue(names.add(root.getString(elixir.nameKey())),
+                    "повторяющееся имя эликсира: " + elixir.id());
+        }
+        assertEquals(TreasureElixir.all().size(), names.size(),
+                "не у всех эликсиров есть название");
+    }
+
+    @Test
+    void elixirLoreListsEffectLevelAndDuration() {
+        ConfigurationSection root = messages();
+        String effect = root.getString("elixir-lore-effect");
+        assertNotNull(effect);
+        assertTrue(effect.contains("%effect%"), "в лоре нет эффекта");
+        assertTrue(effect.contains("%level%"), "в лоре нет уровня");
+        assertTrue(effect.contains("%seconds%"), "в лоре нет длительности");
+        assertTrue(root.getString("elixir-name").contains("%name%"),
+                "в шаблоне имени нет %name%");
+        assertFalse(root.getString("elixir-lore-hint").isBlank());
     }
 
     @Test

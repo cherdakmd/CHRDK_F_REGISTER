@@ -377,6 +377,48 @@ class TreasureConfigTest {
     }
 
     @Test
+    void shippedConfigDescribesExperience() {
+        TreasureExperience.Rule rule = TreasuresConfig.parse(shipped(), LOGGER).experience();
+        assertTrue(rule.enabled(), "склянки опыта в config.yml выключены");
+        assertEquals(new TreasureExperience.Range(1, 2), rule.range(TreasureTier.COMMON));
+        assertEquals(new TreasureExperience.Range(2, 4), rule.range(TreasureTier.RARE));
+        assertEquals(new TreasureExperience.Range(3, 6), rule.range(TreasureTier.EPIC));
+        assertEquals(new TreasureExperience.Range(5, 9), rule.range(TreasureTier.LEGENDARY));
+        assertEquals(new TreasureExperience.Range(8, 14), rule.range(TreasureTier.MYTHICAL));
+        assertEquals(25, rule.bonusChancePercent());
+        assertEquals(100, rule.bonusMultiplierPercent());
+        assertEquals(32, rule.maxPerTreasure());
+        // Поставляемый config.yml не должен расходиться с умолчаниями кода,
+        // иначе новая установка получает не тот опыт, что описано в README.
+        assertEquals(TreasureExperience.defaults(), rule);
+    }
+
+    @Test
+    void experienceFallsBackToDefaultsAndClamps() {
+        TreasureExperience.Rule defaults =
+                TreasuresConfig.parse(new YamlConfiguration(), LOGGER).experience();
+        assertEquals(TreasureExperience.defaults(), defaults);
+
+        YamlConfiguration cfg = new YamlConfiguration();
+        cfg.set("experience.enabled", false);
+        cfg.set("experience.bottles.mythical.min", 500);
+        cfg.set("experience.bottles.mythical.max", 900);
+        cfg.set("experience.bottles.common.min", -5);
+        cfg.set("experience.bottles.common.max", 5000);
+        cfg.set("experience.bonus-chance-percent", 900);
+        cfg.set("experience.bonus-multiplier-percent", -100);
+        cfg.set("experience.max-per-treasure", 0);
+        TreasureExperience.Rule rule = TreasuresConfig.parse(cfg, LOGGER).experience();
+        assertFalse(rule.enabled());
+        assertEquals(TreasureExperience.MAX_PER_TIER, rule.range(TreasureTier.MYTHICAL).max());
+        assertEquals(TreasureExperience.MAX_PER_TIER, rule.range(TreasureTier.COMMON).max());
+        assertEquals(0, rule.range(TreasureTier.COMMON).min());
+        assertEquals(100, rule.bonusChancePercent());
+        assertEquals(0, rule.bonusMultiplierPercent());
+        assertEquals(1, rule.maxPerTreasure());
+    }
+
+    @Test
     void shippedConfigDescribesMaps() {
         TreasuresConfig.Maps maps = TreasuresConfig.parse(shipped(), LOGGER).maps();
         assertTrue(maps.enabled());

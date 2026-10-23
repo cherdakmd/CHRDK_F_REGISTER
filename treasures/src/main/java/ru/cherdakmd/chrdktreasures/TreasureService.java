@@ -256,7 +256,17 @@ public final class TreasureService {
                 giveStack(player, stack);
             }
         }
-        for (TreasureLoot.LootStack stack : roll.loot()) {
+        List<TreasureLoot.LootStack> loot = new ArrayList<>(roll.loot());
+        // 1.4.157: склянки опыта — отдельным шагом поверх любой loot.yml.
+        // Клад без опыта ощущался бы пустым, а таблицы администратор правит
+        // под свой сервер: «часто» не должно зависеть от версии файла.
+        int bottles = TreasureExperience.roll(plugin.config().experience(), tier, random);
+        if (bottles > 0) {
+            // В начало списка: сообщение обрезается по feedback.loot-details-max,
+            // и опыт не должен выпасть из него последним пунктом.
+            loot.add(0, new TreasureLoot.LootStack(TreasureExperience.MATERIAL, bottles));
+        }
+        for (TreasureLoot.LootStack stack : loot) {
             ItemStack itemStack = stackOf(stack);
             if (itemStack != null) {
                 giveStack(player, itemStack);
@@ -268,7 +278,7 @@ public final class TreasureService {
         List<Integer> milestones = checkMilestones(player);
         List<TreasureLoot.LootStack> bonus = grantStreakBonus(player, tier, region, streak);
         checkRank(player, before);
-        return new Found(tier, region, item, roll.loot(), milestones, streak,
+        return new Found(tier, region, item, loot, milestones, streak,
                 rank(player), bonus);
     }
 
@@ -361,6 +371,13 @@ public final class TreasureService {
             plugin.getLogger().warning("[CHRDK_Treasures] Неизвестный материал добычи: "
                     + stack.material());
             return null;
+        }
+        if (stack.hasElixir()) {
+            ItemStack elixir = plugin.items().elixir(TreasureElixir.byId(stack.elixir()),
+                    stack.name(), stack.amount());
+            if (elixir != null) {
+                return elixir;
+            }
         }
         if (stack.name() != null && !stack.name().isBlank()) {
             ItemStack named = plugin.items().named(material, stack.name(), stack.amount());

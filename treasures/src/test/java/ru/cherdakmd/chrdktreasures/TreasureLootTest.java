@@ -158,7 +158,8 @@ class TreasureLootTest {
     @Test
     void oneHundredFiftyThreeNewEntriesArrivedIn149() {
         TreasureLoot.Table table = shipped();
-        assertEquals(1400, table.size(), "1.4.149 добавила 153 записи к 1247");
+        // 1.4.157 добавила к 1400 ещё 22 эликсир-записи — итого 1422.
+        assertEquals(1422, table.size(), "1.4.149 дала 1400 записей, 1.4.157 — ещё 22");
         // Общие пулы получили бытовые мелочи, броню и морские трофеи.
         assertTrue(table.global(TreasureTier.COMMON).stream()
                 .anyMatch(entry -> entry.material().equals("COOKIE")));
@@ -368,6 +369,148 @@ class TreasureLootTest {
         assertEquals(TreasureLoot.builtin().size(),
                 TreasureLoot.load(folder.resolve("missing.yml"), null).size(),
                 "отсутствующий файл сразу даёт встроенный набор");
+    }
+
+    /* ------------------------------- эликсиры (1.4.157) ----------------------- */
+
+    @Test
+    void shippedElixirRowsPointAtKnownElixirs() {
+        TreasureLoot.Table table = shipped();
+        Set<String> ids = new HashSet<>();
+        int rows = 0;
+        for (TreasureTier tier : TreasureTier.values()) {
+            rows += countElixirs(table.global(tier), ids);
+        }
+        for (TreasureRegion region : TreasureRegion.values()) {
+            for (TreasureTier tier : TreasureTier.values()) {
+                rows += countElixirs(table.regional(region, tier), ids);
+            }
+        }
+        assertTrue(rows >= 26, "эликсиров в loot.yml слишком мало: " + rows);
+        assertEquals(TreasureElixir.all().size(), ids.size(),
+                "в loot.yml используются не все эликсиры: " + ids);
+        for (TreasureTier tier : TreasureTier.values()) {
+            assertTrue(table.global(tier).stream().anyMatch(TreasureLoot.LootEntry::hasElixir),
+                    "в общем пуле " + tier.id() + " нет ни одного эликсира");
+        }
+    }
+
+    private static int countElixirs(List<TreasureLoot.LootEntry> entries, Set<String> ids) {
+        int rows = 0;
+        for (TreasureLoot.LootEntry entry : entries) {
+            if (!entry.hasElixir()) {
+                continue;
+            }
+            rows++;
+            assertEquals("POTION", entry.material(), "эликсир обязан быть зельем");
+            assertNotNull(TreasureElixir.byId(entry.elixir()),
+                    "неизвестный эликсир " + entry.elixir());
+            ids.add(entry.elixir());
+        }
+        return rows;
+    }
+
+    @Test
+    void elixirSurvivesParsingAndRoll() {
+        TreasureLoot.install(table("""
+                global:
+                  common:
+                    - { material: POTION, min: 1, max: 1, weight: 1, unlock: 0, name: "Эликсир скорости", elixir: swiftness }
+                """));
+        List<TreasureLoot.LootEntry> pool = TreasureLoot.poolOf(TreasureTier.COMMON);
+        assertEquals(1, pool.size());
+        assertEquals("swiftness", pool.get(0).elixir());
+        assertTrue(pool.get(0).hasElixir());
+        for (int seed = 0; seed < 5; seed++) {
+            List<TreasureLoot.LootStack> loot = TreasureLoot.roll(
+                    TreasureTier.COMMON, null, new Random(seed), 0);
+            assertEquals(1, loot.size());
+            assertTrue(loot.get(0).hasElixir(), "эликсир потерялся при броске");
+            assertEquals("swiftness", loot.get(0).elixir());
+            assertEquals("Эликсир скорости", loot.get(0).name());
+        }
+    }
+
+    @Test
+    void elixirStacksAreNotMergedWithPlainOnes() {
+        TreasureLoot.install(table("""
+                global:
+                  rare:
+                    - { material: POTION, min: 1, max: 1, weight: 1, unlock: 0, name: "Эликсир силы", elixir: strength }
+                    - { material: POTION, min: 1, max: 1, weight: 1, unlock: 0, name: "Эликсир силы" }
+                """));
+        boolean separate = false;
+        for (int seed = 0; seed < 100 && !separate; seed++) {
+            List<TreasureLoot.LootStack> loot = TreasureLoot.roll(
+                    TreasureTier.RARE, null, new Random(seed), 0);
+            if (loot.size() == 2) {
+                assertEquals(1, loot.stream().filter(TreasureLoot.LootStack::hasElixir).count());
+                separate = true;
+            }
+        }
+        assertTrue(separate, "эликсир и пустая бутылка сложились в один стек");
+    }
+
+    @Test
+    void unknownElixirFallsBackToPlainItem() {
+        List<String> warnings = new java.util.ArrayList<>();
+        java.util.logging.Logger logger = java.util.logging.Logger.getLogger(
+                "TreasureLootTest.unknown");
+        logger.setUseParentHandlers(false);
+        logger.addHandler(new java.util.logging.Handler() {
+            @Override
+            public void publish(java.util.logging.LogRecord record) {
+                warnings.add(record.getMessage());
+            }
+
+            @Override
+            public void flush() {
+            }
+
+            @Override
+            public void close() {
+            }
+        });
+        TreasureLoot.Table parsed = TreasureLoot.parse(YamlConfiguration.loadConfiguration(
+                new java.io.StringReader("""
+                        global:
+                          common:
+                            - { material: POTION, min: 1, max: 1, weight: 1, unlock: 0, elixir: not_real }
+                        """)), logger);
+        TreasureLoot.LootEntry entry = parsed.global(TreasureTier.COMMON).get(0);
+        assertEquals("", entry.elixir(), "неизвестный эликсир должен сниматься");
+        assertFalse(entry.hasElixir());
+        assertTrue(warnings.stream().anyMatch(text -> text.contains("not_real")),
+                "о неизвестном эликсире никто не предупредил: " + warnings);
+    }
+
+    @Test
+    void oldFileGainsElixirsFromShippedTable() {
+        // У администратора лежит файл 1.4.149: строка пула пустыни уже есть,
+        // но без эликсира. Слияние обязано донести эффект, не тронув правки.
+        TreasureLoot.Table old = table("""
+                regions:
+                  desert:
+                    common:
+                      - { material: POTION, min: 1, max: 1, weight: 9, unlock: 0, name: "Зелье поглощения" }
+                """);
+        List<TreasureLoot.LootEntry> before = old.regional(TreasureRegion.DESERT,
+                TreasureTier.COMMON);
+        assertEquals(1, before.size());
+        assertEquals("", before.get(0).elixir());
+
+        TreasureLoot.Table merged = old.withMissing(shipped());
+        List<TreasureLoot.LootEntry> after = merged.regional(TreasureRegion.DESERT,
+                TreasureTier.COMMON);
+        TreasureLoot.LootEntry potion = after.stream()
+                .filter(entry -> "Зелье поглощения".equals(entry.name()))
+                .findFirst().orElseThrow();
+        assertEquals("absorption", potion.elixir(), "слияние не донесло эликсир");
+        assertEquals(9, potion.weight(), "правка администратора потерялась");
+        assertEquals(1, after.stream()
+                .filter(entry -> "Зелье поглощения".equals(entry.name())).count(),
+                "запись задвоилась вместо слияния");
+        assertEquals(TreasureLoot.CURRENT_VERSION, merged.version());
     }
 
     @Test

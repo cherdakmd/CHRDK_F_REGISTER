@@ -12,12 +12,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 import java.util.logging.Logger;
 
 /**
@@ -44,9 +42,10 @@ public final class TreasureLoot {
      * Версия формата таблиц. Файл без {@code version} считается первой
      * версией: плагин дополняет его новыми записями из ресурса, не трогая
      * правки администратора. 3 — 1.4.148: +100 записей, всего 1247;
-     * 4 — 1.4.149: ещё +153 записи, всего 1400.
+     * 4 — 1.4.149: ещё +153 записи, всего 1400; 5 — 1.4.157: эликсиры
+     * ({@code elixir:}), +22 записи, всего 1422.
      */
-    public static final int CURRENT_VERSION = 4;
+    public static final int CURRENT_VERSION = 5;
 
     /**
      * Запись пула: материал, диапазон количества, вес, порог прогресса и,
@@ -57,21 +56,29 @@ public final class TreasureLoot {
      * оригинальных таблицах. Пустое имя — ванильный предмет.</p>
      */
     public record LootEntry(String material, int min, int max, int weight, int unlock,
-                            String name) {
+                            String name, String elixir) {
 
         /** Запись без порога — удобно для встроенного набора и тестов. */
         public LootEntry(String material, int min, int max, int weight) {
-            this(material, min, max, weight, 0, "");
+            this(material, min, max, weight, 0, "", "");
         }
 
         /** Запись с порогом, но без особого имени. */
         public LootEntry(String material, int min, int max, int weight, int unlock) {
-            this(material, min, max, weight, unlock, "");
+            this(material, min, max, weight, unlock, "", "");
+        }
+
+        /** Запись с особым именем, но без эликсира. */
+        public LootEntry(String material, int min, int max, int weight, int unlock, String name) {
+            this(material, min, max, weight, unlock, name, "");
         }
 
         public LootEntry {
             if (name == null) {
                 name = "";
+            }
+            if (elixir == null) {
+                elixir = "";
             }
             if (material == null || material.isBlank()) {
                 throw new IllegalArgumentException("запись добычи без материала");
@@ -86,23 +93,48 @@ public final class TreasureLoot {
                 throw new IllegalArgumentException("отрицательный порог у " + material);
             }
         }
+
+        /** Эликсир ли это: у такой записи при сборке появится эффект. */
+        public boolean hasElixir() {
+            return !elixir.isBlank();
+        }
     }
 
-    /** Готовый стек добычи; {@code name} пустой у ванильных предметов. */
-    public record LootStack(String material, int amount, String name) {
+    /**
+     * Готовый стек добычи.
+     *
+     * @param name   особое имя; пустое у ванильных предметов
+     * @param elixir ид эликсира; пустой у обычных предметов
+     */
+    public record LootStack(String material, int amount, String name, String elixir) {
 
         public LootStack(String material, int amount) {
-            this(material, amount, "");
+            this(material, amount, "", "");
+        }
+
+        public LootStack(String material, int amount, String name) {
+            this(material, amount, name, "");
         }
 
         public LootStack {
             if (name == null) {
                 name = "";
             }
+            if (elixir == null) {
+                elixir = "";
+            }
+        }
+
+        /** Эликсир ли это: у такого стека при сборке появится эффект. */
+        public boolean hasElixir() {
+            return !elixir.isBlank();
         }
 
         /** Ключ агрегации: одинаковые материалы с разными именами — разные стеки. */
         String key() {
+            if (!elixir.isBlank()) {
+                return material + '\u0000' + name + '\u0000' + elixir;
+            }
             return name.isBlank() ? material : material + '\u0000' + name;
         }
     }
@@ -181,7 +213,7 @@ public final class TreasureLoot {
             List<LootEntry> out = new ArrayList<>(global(tier));
             for (LootEntry entry : regional(region, tier)) {
                 out.add(new LootEntry(entry.material(), entry.min(), entry.max(),
-                        entry.weight() * 2, entry.unlock(), entry.name()));
+                        entry.weight() * 2, entry.unlock(), entry.name(), entry.elixir()));
             }
             return List.copyOf(out);
         }
@@ -210,14 +242,12 @@ public final class TreasureLoot {
             Map<TreasureTier, List<LootEntry>> mergedGlobal = new EnumMap<>(TreasureTier.class);
             for (TreasureTier tier : TreasureTier.values()) {
                 List<LootEntry> entries = new ArrayList<>(global(tier));
-                Set<String> keys = new HashSet<>();
-                for (LootEntry entry : entries) {
-                    keys.add(keyOf(entry));
+                Map<String, Integer> index = new HashMap<>();
+                for (int position = 0; position < entries.size(); position++) {
+                    index.put(keyOf(entries.get(position)), position);
                 }
                 for (LootEntry entry : source.global(tier)) {
-                    if (keys.add(keyOf(entry))) {
-                        entries.add(entry);
-                    }
+                    merge(entries, index, entry);
                 }
                 mergedGlobal.put(tier, List.copyOf(entries));
             }
@@ -227,14 +257,12 @@ public final class TreasureLoot {
                 Map<TreasureTier, List<LootEntry>> tiers = new EnumMap<>(TreasureTier.class);
                 for (TreasureTier tier : TreasureTier.values()) {
                     List<LootEntry> entries = new ArrayList<>(regional(region, tier));
-                    Set<String> keys = new HashSet<>();
-                    for (LootEntry entry : entries) {
-                        keys.add(keyOf(entry));
+                    Map<String, Integer> index = new HashMap<>();
+                    for (int position = 0; position < entries.size(); position++) {
+                        index.put(keyOf(entries.get(position)), position);
                     }
                     for (LootEntry entry : source.regional(region, tier)) {
-                        if (keys.add(keyOf(entry))) {
-                            entries.add(entry);
-                        }
+                        merge(entries, index, entry);
                     }
                     tiers.put(tier, List.copyOf(entries));
                 }
@@ -242,6 +270,32 @@ public final class TreasureLoot {
             }
             return new Table(mergedGlobal, mergedRegional,
                     Math.max(version, source.version));
+        }
+
+        /**
+         * Дополняет список записью из ресурса.
+         *
+         * <p>Новая запись (материал и имя не встречались) добавляется как есть.
+         * Старая запись без эликсира получает эликсир из ресурса — так
+         * «Зелье поглощения», лежавшее в файле с 1.4.135, после обновления
+         * начинает действительно действовать, но вес, количество и порог
+         * остаются админскими.</p>
+         */
+        private static void merge(List<LootEntry> entries, Map<String, Integer> index,
+                                  LootEntry entry) {
+            String key = keyOf(entry);
+            Integer position = index.get(key);
+            if (position == null) {
+                index.put(key, entries.size());
+                entries.add(entry);
+                return;
+            }
+            LootEntry existing = entries.get(position);
+            if (existing.elixir().isBlank() && !entry.elixir().isBlank()) {
+                entries.set(position, new LootEntry(existing.material(), existing.min(),
+                        existing.max(), existing.weight(), existing.unlock(),
+                        existing.name(), entry.elixir()));
+            }
         }
 
         private static String keyOf(LootEntry entry) {
@@ -363,6 +417,12 @@ public final class TreasureLoot {
             int weight = number(row.get("weight"), 1);
             int unlock = number(row.get("unlock"), 0);
             String name = string(row.get("name"));
+            String elixir = string(row.get("elixir")).toLowerCase(java.util.Locale.ROOT);
+            if (!elixir.isBlank() && TreasureElixir.byId(elixir) == null) {
+                warn(logger, where + ": неизвестный эликсир «" + elixir + "» у "
+                        + material + " — запись останется обычным предметом");
+                elixir = "";
+            }
             if (material.isBlank()) {
                 warn(logger, where + ": запись без material — пропускаю");
                 continue;
@@ -376,7 +436,7 @@ public final class TreasureLoot {
                 continue;
             }
             try {
-                out.add(new LootEntry(normalized, min, max, weight, unlock, name));
+                out.add(new LootEntry(normalized, min, max, weight, unlock, name, elixir));
             } catch (IllegalArgumentException exception) {
                 warn(logger, where + ": " + exception.getMessage());
             }
@@ -407,13 +467,16 @@ public final class TreasureLoot {
                 entry("TORCH", 8, 16), entry("BREAD", 1, 3)));
         global.put(TreasureTier.RARE, List.of(
                 entry("IRON_INGOT", 3, 6), entry("GOLD_INGOT", 2, 4),
-                entry("LAPIS_LAZULI", 4, 10), entry("AMETHYST_SHARD", 2, 5)));
+                entry("LAPIS_LAZULI", 4, 10), entry("AMETHYST_SHARD", 2, 5),
+                elixir("swiftness", 2)));
         global.put(TreasureTier.EPIC, List.of(
                 entry("DIAMOND", 1, 3), entry("EMERALD", 1, 3),
-                entry("GOLDEN_APPLE", 1, 2), entry("EXPERIENCE_BOTTLE", 4, 10)));
+                entry("GOLDEN_APPLE", 1, 2), entry("EXPERIENCE_BOTTLE", 4, 10),
+                elixir("regeneration", 3), elixir("haste", 3)));
         global.put(TreasureTier.LEGENDARY, List.of(
                 entry("DIAMOND", 3, 6), entry("NETHERITE_SCRAP", 1, 2),
-                entry("ENCHANTED_GOLDEN_APPLE", 1, 1), entry("DIAMOND_BLOCK", 1, 1)));
+                entry("ENCHANTED_GOLDEN_APPLE", 1, 1), entry("DIAMOND_BLOCK", 1, 1),
+                elixir("absorption", 3), elixir("luck", 2)));
         global.put(TreasureTier.MYTHICAL, List.of(
                 entry("NETHERITE_INGOT", 1, 2), entry("NETHERITE_SCRAP", 2, 4),
                 entry("ENCHANTED_GOLDEN_APPLE", 2, 2), entry("TOTEM_OF_UNDYING", 1, 1)));
@@ -461,6 +524,19 @@ public final class TreasureLoot {
 
     private static LootEntry entry(String material, int min, int max) {
         return new LootEntry(material, min, max, 1);
+    }
+
+    /**
+     * Запись-эликсир для встроенного набора: зелье с эффектом и русским именем
+     * из {@code TreasureElixir}. Имя нужно, чтобы предмет не слился с обычной
+     * склянкой воды в одном стеке.
+     */
+    private static LootEntry elixir(String id, int weight) {
+        TreasureElixir elixir = TreasureElixir.byId(id);
+        if (elixir == null) {
+            return entry("POTION", 1, 1);
+        }
+        return new LootEntry("POTION", 1, 1, weight, 0, "Эликсир " + elixir.id(), elixir.id());
     }
 
     /* ---------------------------------- доступ -------------------------------- */
@@ -548,17 +624,18 @@ public final class TreasureLoot {
         for (int index = 0; index < picks; index++) {
             LootEntry entry = weighted(pool, random);
             int amount = entry.min() + random.nextInt(entry.max() - entry.min() + 1);
-            LootStack stack = new LootStack(entry.material(), amount, entry.name());
+            LootStack stack = new LootStack(entry.material(), amount, entry.name(),
+                    entry.elixir());
             totals.merge(stack.key(), stack,
                     (left, right) -> new LootStack(left.material(),
-                            left.amount() + right.amount(), left.name()));
+                            left.amount() + right.amount(), left.name(), left.elixir()));
         }
         List<LootStack> out = new ArrayList<>(totals.size());
         for (LootStack stack : totals.values()) {
             int amount = stack.amount();
             while (amount > 0) {
                 int chunk = Math.min(64, amount);
-                out.add(new LootStack(stack.material(), chunk, stack.name()));
+                out.add(new LootStack(stack.material(), chunk, stack.name(), stack.elixir()));
                 amount -= chunk;
             }
         }

@@ -1,5 +1,6 @@
 # CHRDK_Treasures — лут-таблицы кладов (с версии 1.4.135; расширены в 1.4.136,
-# в 1.4.148 (+100 записей) и в 1.4.149 (+153 записи, всего 1400).
+# в 1.4.148 (+100 записей), в 1.4.149 (+153 записи) и в 1.4.157 (эликсиры,
+# всего 1422 записи).
 #
 # Здесь лежит обычная добыча: материалы, количества и веса. Находки с
 # эффектами живут в каталоге (TreasureCatalog) и выпадают отдельным броском.
@@ -12,7 +13,10 @@
 #   min/max  — сколько выпадет за один выбор, 1..64;
 #   weight   — вес записи в пуле (чем больше, тем чаще);
 #   unlock   — сколько блоков игрок должен добыть, чтобы запись стала доступна;
-#   name     — необязательное особое имя предмета (в кавычках).
+#   name     — необязательное особое имя предмета (в кавычках);
+#   elixir   — необязательный ид эликсира (1.4.157): предмет станет зельем с
+#              настоящим эффектом, см. TreasureElixir. Без поля POTION остаётся
+#              обычной бутылкой с подписью.
 #
 # Бросок берёт общий пул редкости (global) и пул региона (regions), причём
 # региональные записи весят вдвое больше: клад должен пахнуть местом, где он
@@ -22,7 +26,7 @@
 #
 # version — версия формата. Файл без version считается старым: плагин
 # дополнит его новыми записями из JAR, не трогая ваши правки.
-version: 4
+version: 5
 
 global:
   # обычный клад: общие ресурсы, которые встречаются в любом регионе.
@@ -127,6 +131,8 @@ global:
     - { material: POPPY, min: 3, max: 8, weight: 4, unlock: 0 }
 
   # редкий клад: инструменты, блоки ресурсов и полезная мелочь.
+    - { material: POTION, min: 1, max: 1, weight: 2, unlock: 0, name: "Эликсир скорости", elixir: swiftness }
+    - { material: POTION, min: 1, max: 1, weight: 1, unlock: 0, name: "Эликсир ночного зрения", elixir: night_vision }
   rare:
     - { material: IRON_INGOT, min: 2, max: 6, weight: 10, unlock: 250 }
     - { material: GOLD_INGOT, min: 2, max: 5, weight: 8, unlock: 250 }
@@ -202,6 +208,9 @@ global:
     - { material: NAUTILUS_SHELL, min: 1, max: 2, weight: 3, unlock: 250 }
 
   # эпический клад: алмазы, снаряжение, морские и эндер-редкости.
+    - { material: POTION, min: 1, max: 1, weight: 3, unlock: 250, name: "Эликсир спешки", elixir: haste }
+    - { material: POTION, min: 1, max: 1, weight: 2, unlock: 250, name: "Эликсир прыгучести", elixir: leaping }
+    - { material: POTION, min: 1, max: 1, weight: 2, unlock: 250, name: "Эликсир глубин", elixir: water_breathing }
   epic:
     - { material: DIAMOND, min: 1, max: 3, weight: 10, unlock: 2000 }
     - { material: EMERALD, min: 1, max: 3, weight: 8, unlock: 2000 }
@@ -252,6 +261,10 @@ global:
     - { material: BEE_NEST, min: 1, max: 2, weight: 4, unlock: 2000 }
 
   # легендарный клад: незерит, тотемы, звёзды и элитры.
+    - { material: POTION, min: 1, max: 1, weight: 3, unlock: 2000, name: "Эликсир регенерации", elixir: regeneration }
+    - { material: POTION, min: 1, max: 1, weight: 3, unlock: 2000, name: "Эликсир поглощения", elixir: absorption }
+    - { material: POTION, min: 1, max: 1, weight: 2, unlock: 2000, name: "Эликсир озарения", elixir: insight }
+    - { material: POTION, min: 1, max: 1, weight: 2, unlock: 2000, name: "Эликсир силы", elixir: strength }
   legendary:
     - { material: DIAMOND, min: 3, max: 6, weight: 10, unlock: 15000 }
     - { material: EMERALD, min: 3, max: 6, weight: 7, unlock: 15000 }
@@ -286,6 +299,9 @@ global:
     - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 4, unlock: 15000 }
 
   # мифический клад: незеритовая броня, маяки и головы дракона.
+    - { material: POTION, min: 1, max: 1, weight: 3, unlock: 10000, name: "Эликсир героя", elixir: hero }
+    - { material: POTION, min: 1, max: 1, weight: 2, unlock: 10000, name: "Эликсир удачи", elixir: luck }
+    - { material: POTION, min: 1, max: 1, weight: 2, unlock: 10000, name: "Эликсир огнестойкости", elixir: fire_resistance }
   mythical:
     - { material: NETHERITE_INGOT, min: 1, max: 2, weight: 10, unlock: 20000 }
     - { material: NETHERITE_SCRAP, min: 2, max: 4, weight: 8, unlock: 10000 }
@@ -314,6 +330,8 @@ global:
     - { material: CONDUIT, min: 1, max: 1, weight: 2, unlock: 50000 }
     - { material: WITHER_SKELETON_SKULL, min: 1, max: 1, weight: 1, unlock: 100000 }
 
+    - { material: POTION, min: 2, max: 2, weight: 2, unlock: 0, name: "Эликсир героя", elixir: hero }
+    - { material: POTION, min: 2, max: 2, weight: 1, unlock: 0, name: "Эликсир удачи", elixir: luck }
 regions:
   # равнины: пшеница, снопы, цветы и лошадиная упряжь.
   plains:
@@ -370,6 +388,7 @@ regions:
       - { material: MILK_BUCKET, min: 1, max: 2, weight: 6, unlock: 250, name: "Кувшин пастуха" }
       - { material: COMPASS, min: 1, max: 1, weight: 4, unlock: 250 }
       - { material: LEATHER_HELMET, min: 1, max: 1, weight: 3, unlock: 250, name: "Соломенная шляпа" }
+      - { material: POTION, min: 1, max: 1, weight: 2, unlock: 250, name: "Эликсир прыгучести", elixir: leaping }
     epic:
       - { material: HONEY_BLOCK, min: 1, max: 2, weight: 6, unlock: 2000 }
       - { material: IRON_BLOCK, min: 1, max: 1, weight: 5, unlock: 2000 }
@@ -683,7 +702,7 @@ regions:
       - { material: SANDSTONE, min: 4, max: 10, weight: 5, unlock: 0 }
       - { material: CACTUS, min: 2, max: 6, weight: 5, unlock: 0 }
       - { material: DEAD_BUSH, min: 2, max: 6, weight: 3, unlock: 0 }
-      - { material: POTION, min: 1, max: 1, weight: 2, unlock: 0, name: "Зелье поглощения" }
+      - { material: POTION, min: 1, max: 1, weight: 2, unlock: 0, name: "Зелье поглощения", elixir: absorption }
       - { material: GOLDEN_HOE, min: 1, max: 1, weight: 2, unlock: 0, name: "Редкая золотая мотыга" }
       - { material: CUT_SANDSTONE, min: 4, max: 10, weight: 14, unlock: 0 }
       - { material: SMOOTH_SANDSTONE, min: 3, max: 8, weight: 13, unlock: 0 }
@@ -724,6 +743,7 @@ regions:
       - { material: DIAMOND, min: 1, max: 1, weight: 2, unlock: 5000 }
       - { material: SADDLE, min: 1, max: 1, weight: 3, unlock: 250 }
       - { material: DECORATED_POT, min: 1, max: 1, weight: 3, unlock: 250, name: "Кувшин кочевника" }
+      - { material: POTION, min: 1, max: 1, weight: 2, unlock: 250, name: "Эликсир огнестойкости", elixir: fire_resistance }
     epic:
       - { material: GOLD_BLOCK, min: 1, max: 2, weight: 6, unlock: 2000 }
       - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 2000 }
@@ -881,6 +901,7 @@ regions:
       - { material: LEAD, min: 1, max: 2, weight: 5, unlock: 250, name: "Поводок ловца попугаев" }
       - { material: BAMBOO_RAFT, min: 1, max: 1, weight: 4, unlock: 250 }
       - { material: EMERALD, min: 1, max: 1, weight: 3, unlock: 250, name: "Изумруд джунглей" }
+      - { material: POTION, min: 1, max: 1, weight: 2, unlock: 250, name: "Эликсир регенерации", elixir: regeneration }
     epic:
       - { material: BAMBOO_BLOCK, min: 2, max: 6, weight: 5, unlock: 2000 }
       - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 2000 }
@@ -959,10 +980,11 @@ regions:
       - { material: EXPERIENCE_BOTTLE, min: 3, max: 8, weight: 10, unlock: 250 }
       - { material: MANGROVE_PROPAGULE, min: 4, max: 8, weight: 9, unlock: 250 }
       - { material: SOUL_LANTERN, min: 1, max: 1, weight: 3, unlock: 250, name: "Блуждающий огонёк" }
-      - { material: POTION, min: 1, max: 1, weight: 3, unlock: 250, name: "Болотное зелье" }
+      - { material: POTION, min: 1, max: 1, weight: 3, unlock: 250, name: "Болотное зелье", elixir: water_breathing }
       - { material: TURTLE_SCUTE, min: 1, max: 2, weight: 5, unlock: 250, name: "Щит черепахи" }
       - { material: TRIPWIRE_HOOK, min: 1, max: 2, weight: 3, unlock: 250 }
       - { material: BONE, min: 1, max: 2, weight: 3, unlock: 250, name: "Клык трясины" }
+      - { material: POTION, min: 1, max: 1, weight: 2, unlock: 250, name: "Эликсир ночного зрения", elixir: night_vision }
     epic:
       - { material: FERMENTED_SPIDER_EYE, min: 2, max: 5, weight: 4, unlock: 2000 }
       - { material: DIAMOND, min: 1, max: 2, weight: 6, unlock: 2000 }
@@ -1130,6 +1152,7 @@ regions:
       - { material: TURTLE_HELMET, min: 1, max: 1, weight: 3, unlock: 500, name: "Шлем черепашьего стража" }
       - { material: COMPASS, min: 1, max: 1, weight: 3, unlock: 250, name: "Компас капитана" }
       - { material: NAME_TAG, min: 1, max: 1, weight: 3, unlock: 250 }
+      - { material: POTION, min: 1, max: 1, weight: 3, unlock: 250, name: "Эликсир глубин", elixir: water_breathing }
     epic:
       - { material: HEART_OF_THE_SEA, min: 1, max: 1, weight: 4, unlock: 10000 }
       - { material: SPONGE, min: 1, max: 2, weight: 4, unlock: 2000 }
@@ -1325,6 +1348,7 @@ regions:
       - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 4, unlock: 2000 }
       - { material: DIAMOND_SWORD, min: 1, max: 1, weight: 5, unlock: 2000 }
       - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 5, unlock: 2000 }
+      - { material: POTION, min: 1, max: 1, weight: 3, unlock: 2000, name: "Эликсир озарения", elixir: insight }
     legendary:
       - { material: DIAMOND, min: 3, max: 6, weight: 6, unlock: 15000 }
       - { material: ECHO_SHARD, min: 3, max: 6, weight: 3, unlock: 15000 }
@@ -1413,13 +1437,14 @@ regions:
       - { material: GOLD_INGOT, min: 4, max: 10, weight: 5, unlock: 250, name: "Слиток жадности" }
       - { material: CRYING_OBSIDIAN, min: 2, max: 6, weight: 4, unlock: 250, name: "Слёзы багрового леса" }
       - { material: LODESTONE, min: 1, max: 1, weight: 3, unlock: 250 }
+      - { material: POTION, min: 1, max: 1, weight: 3, unlock: 250, name: "Эликсир силы", elixir: strength }
     epic:
       - { material: GOLD_BLOCK, min: 1, max: 2, weight: 5, unlock: 2000 }
       - { material: GLOWSTONE, min: 1, max: 3, weight: 4, unlock: 2000 }
       - { material: ANCIENT_DEBRIS, min: 1, max: 2, weight: 4, unlock: 2000 }
       - { material: GHAST_TEAR, min: 1, max: 3, weight: 4, unlock: 2000 }
       - { material: IRON_SWORD, min: 1, max: 1, weight: 2, unlock: 2000, name: "Заточенный меч" }
-      - { material: POTION, min: 1, max: 1, weight: 2, unlock: 2000, name: "Зелье Нижнего мира" }
+      - { material: POTION, min: 1, max: 1, weight: 2, unlock: 2000, name: "Зелье Нижнего мира", elixir: fire_resistance }
       - { material: NETHERITE_SCRAP, min: 1, max: 3, weight: 10, unlock: 15000 }
       - { material: PIGLIN_HEAD, min: 1, max: 1, weight: 10, unlock: 2000 }
       - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 9, unlock: 5000 }
@@ -1436,7 +1461,7 @@ regions:
       - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 3, unlock: 20000 }
       - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 1, unlock: 15000, name: "Нагрудник багрового леса" }
       - { material: NETHERITE_HOE, min: 1, max: 1, weight: 1, unlock: 15000, name: "Супер-мотыга страйдера" }
-      - { material: POTION, min: 1, max: 1, weight: 1, unlock: 15000, name: "Демоническое зелье" }
+      - { material: POTION, min: 1, max: 1, weight: 1, unlock: 15000, name: "Демоническое зелье", elixir: strength }
       - { material: GOLDEN_HELMET, min: 1, max: 1, weight: 1, unlock: 200000, name: "Зависть пиглина" }
       - { material: NETHER_STAR, min: 1, max: 1, weight: 8, unlock: 30000 }
       - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 7, unlock: 25000 }
@@ -1522,6 +1547,7 @@ regions:
       - { material: DIAMOND_PICKAXE, min: 1, max: 1, weight: 4, unlock: 2000 }
       - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 5, unlock: 2000 }
       - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 2000 }
+      - { material: POTION, min: 1, max: 1, weight: 3, unlock: 2000, name: "Эликсир героя", elixir: hero }
     legendary:
       - { material: END_CRYSTAL, min: 1, max: 2, weight: 4, unlock: 20000 }
       - { material: DRAGON_BREATH, min: 2, max: 4, weight: 4, unlock: 20000 }

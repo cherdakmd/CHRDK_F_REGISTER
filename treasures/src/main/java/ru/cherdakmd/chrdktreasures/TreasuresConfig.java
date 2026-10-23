@@ -152,6 +152,8 @@ public final class TreasuresConfig {
     private final Map<TreasureTier, Double> tierChances;
     /** 1.4.153: клад-карты — шанс выпадения, зона и срок жизни. */
     private final Maps maps;
+    /** 1.4.157: склянки опыта в каждом кладе. */
+    private final TreasureExperience.Rule experience;
 
     private TreasuresConfig(boolean enabled, int auraRefreshTicks, int topSize,
                             Map<TreasureTier, Double> chances,
@@ -169,7 +171,7 @@ public final class TreasuresConfig {
                             boolean abilitiesEnabled, boolean cursesEnabled,
                             boolean setsEnabled, double arsenalShare,
                             boolean tiersEnabled, Map<TreasureTier, Double> tierChances,
-                            Maps maps) {
+                            Maps maps, TreasureExperience.Rule experience) {
         this.enabled = enabled;
         this.auraRefreshTicks = auraRefreshTicks;
         this.topSize = topSize;
@@ -200,6 +202,7 @@ public final class TreasuresConfig {
         this.tiersEnabled = tiersEnabled;
         this.tierChances = tierChances;
         this.maps = maps == null ? Maps.DISABLED : maps;
+        this.experience = experience == null ? TreasureExperience.defaults() : experience;
     }
 
     /** Разбор без переопределений: значения шансов берутся только из config.yml. */
@@ -354,7 +357,7 @@ public final class TreasuresConfig {
                 cfg.getBoolean("sets.enabled", true),
                 arsenalShare, tiersEnabled,
                 Collections.unmodifiableMap(tierChances),
-                parseMaps(cfg));
+                parseMaps(cfg), parseExperience(cfg));
     }
 
     private static TreasureTier parseTier(String raw, TreasureTier fallback) {
@@ -573,6 +576,38 @@ public final class TreasuresConfig {
     /** Настройки клад-карт (1.4.153). */
     public Maps maps() {
         return maps;
+    }
+
+    /** Склянки опыта в каждом кладе (1.4.157). */
+    public TreasureExperience.Rule experience() {
+        return experience;
+    }
+
+    /**
+     * Разбор секции {@code experience.*}: диапазоны по редкостям, шанс бонуса
+     * и потолок. Всё, что вне границ, зажимается в
+     * {@link TreasureExperience.Rule}, поэтому здесь только чтение.
+     */
+    private static TreasureExperience.Rule parseExperience(FileConfiguration cfg) {
+        TreasureExperience.Rule defaults = TreasureExperience.defaults();
+        Map<TreasureTier, TreasureExperience.Range> ranges =
+                new EnumMap<>(TreasureTier.class);
+        for (TreasureTier tier : TreasureTier.values()) {
+            TreasureExperience.Range fallback = defaults.range(tier);
+            int min = (int) clamp(cfg.getLong("experience.bottles." + tier.id() + ".min",
+                    fallback.min()), 0L, TreasureExperience.MAX_PER_TIER);
+            int max = (int) clamp(cfg.getLong("experience.bottles." + tier.id() + ".max",
+                    fallback.max()), 0L, TreasureExperience.MAX_PER_TIER);
+            ranges.put(tier, new TreasureExperience.Range(Math.min(min, max),
+                    Math.max(min, max)));
+        }
+        return new TreasureExperience.Rule(
+                cfg.getBoolean("experience.enabled", true),
+                ranges,
+                (int) clamp(cfg.getLong("experience.bonus-chance-percent", 25L), 0L, 100L),
+                (int) clamp(cfg.getLong("experience.bonus-multiplier-percent", 100L), 0L, 400L),
+                (int) clamp(cfg.getLong("experience.max-per-treasure", 32L), 1L,
+                        TreasureExperience.MAX_PER_TREASURE));
     }
 
     /**

@@ -1,7 +1,10 @@
 package ru.cherdakmd.chrdktreasures;
 
+import net.kyori.adventure.text.Component;
+import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.entity.Player;
@@ -9,7 +12,10 @@ import org.bukkit.inventory.EquipmentSlotGroup;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkTierApi;
 import ru.cherdakmd.chrdkregister.item.ItemAttributes;
@@ -177,6 +183,85 @@ public final class TreasureItems {
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
         item.setItemMeta(meta);
         return item;
+    }
+
+    /**
+     * Эликсир из клада (1.4.157): зелье с настоящими эффектами.
+     *
+     * <p>Раньше строки {@code POTION} в {@code loot.yml} давали склянку воды с
+     * красивым именем — пить её было бесполезно. Теперь имя берётся из
+     * {@code elixir.<ид>.name}, на предмет вешаются эффекты из
+     * {@link TreasureElixir}, а в лоре перечислено, что именно игрок получит.
+     * Неизвестный ид эффекта пропускается: клиент без такого эффекта не должен
+     * терять весь эликсир.</p>
+     *
+     * @param def    описание эликсира; {@code null} — сборка невозможна
+     * @param name   запасное имя из лут-таблицы (если в messages.yml пусто)
+     * @param amount сколько зелий выдать, 1..64
+     */
+    public ItemStack elixir(TreasureElixir def, String name, int amount) {
+        if (def == null) {
+            return null;
+        }
+        ItemStack item = new ItemStack(Material.POTION, Math.max(1, Math.min(64, amount)));
+        if (!(item.getItemMeta() instanceof PotionMeta meta)) {
+            return item;
+        }
+        String text = plugin.messages().raw(def.nameKey());
+        if (text.isBlank()) {
+            text = name;
+        }
+        meta.displayName(plugin.messages().get("elixir-name",
+                "name", Messages.escape(text)));
+        List<Component> lore = new ArrayList<>();
+        for (TreasureElixir.Effect effect : def.effects()) {
+            lore.add(plugin.messages().get("elixir-lore-effect",
+                    "effect", Messages.trusted("<lang:effect.minecraft." + effect.type() + ">"),
+                    "level", effect.level(),
+                    "seconds", String.valueOf(effect.seconds())));
+        }
+        lore.add(Component.empty());
+        lore.add(plugin.messages().get("elixir-lore-hint"));
+        meta.lore(lore);
+        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+        try {
+            meta.setColor(Color.fromRGB(def.red(), def.green(), def.blue()));
+        } catch (RuntimeException | LinkageError ignored) {
+            // Клиент без цвета зелий — не повод терять эликсир.
+        }
+        int applied = 0;
+        for (TreasureElixir.Effect effect : def.effects()) {
+            PotionEffectType type = effectType(effect.type());
+            if (type == null) {
+                continue;
+            }
+            meta.addCustomEffect(new PotionEffect(type, effect.seconds() * 20,
+                    effect.amplifier(), true, true, true), true);
+            applied++;
+        }
+        if (applied == 0) {
+            // Ни один эффект не разрешился в реестре: зелье воды хуже, чем
+            // отсутствие эликсира, поэтому отдаём именованный предмет без него.
+            plugin.getLogger().warning("[CHRDK_Treasures] Эликсир " + def.id()
+                    + ": ни один эффект не найден в реестре");
+        }
+        if (def.glint()) {
+            meta.setEnchantmentGlintOverride(true);
+        }
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /** Эффект по иду Minecraft; {@code null}, если реестр такого не знает. */
+    private static PotionEffectType effectType(String id) {
+        if (id == null || id.isBlank()) {
+            return null;
+        }
+        try {
+            return Registry.EFFECT.get(NamespacedKey.minecraft(id));
+        } catch (RuntimeException | LinkageError exception) {
+            return null;
+        }
     }
 
     /**
