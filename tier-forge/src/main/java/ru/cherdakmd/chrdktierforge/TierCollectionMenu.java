@@ -82,7 +82,13 @@ public final class TierCollectionMenu implements Listener {
             plugin.messages().send(player, "collection-disabled");
             return;
         }
+        TierCollectionConfig collectionConfig = service.config();
+        boolean titlesOn = collectionConfig != null && collectionConfig.titles().enabled();
         Tab currentTab = tab == null ? Tab.TIERS : tab;
+        // Выключенные титулы не показываем даже вкладкой: незачем дразнить.
+        if (currentTab == Tab.TITLES && !titlesOn) {
+            currentTab = Tab.TIERS;
+        }
         TierCollectionBook.Snapshot snapshot = service.snapshot(player);
         List<Entry> entries = entries(currentTab, snapshot, player);
         int pages = Math.max(1, (entries.size() + CONTENT - 1) / CONTENT);
@@ -107,9 +113,11 @@ public final class TierCollectionMenu implements Listener {
                 snapshot.affixCount(), TierCollectionConfig.AFFIX_TOTAL,
                 currentTab == Tab.AFFIXES));
         holder.inventory.setItem(SLOT_PROGRESS, progressIcon(player, snapshot));
-        holder.inventory.setItem(SLOT_TITLES, tabIcon(Material.NAME_TAG,
-                plugin.messages().get("collection-tab-titles"),
-                snapshot.total(), TierCollectionBook.CATALOG_TOTAL, currentTab == Tab.TITLES));
+        if (titlesOn) {
+            holder.inventory.setItem(SLOT_TITLES, tabIcon(Material.NAME_TAG,
+                    plugin.messages().get("collection-tab-titles"),
+                    snapshot.total(), TierCollectionBook.CATALOG_TOTAL, currentTab == Tab.TITLES));
+        }
         if (pages > 1) {
             int previous = current <= 1 ? pages : current - 1;
             int next = current >= pages ? 1 : current + 1;
