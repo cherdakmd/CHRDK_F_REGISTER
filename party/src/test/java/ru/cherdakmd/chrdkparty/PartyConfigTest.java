@@ -87,8 +87,8 @@ class PartyConfigTest {
     @Test
     void defaultsAndConstantsAgree() {
         PartyConfig defaults = PartyConfig.defaults();
-        assertEquals(Party.MAX_SIZE_LIMIT, PartyConfig.MAX_SIZE_LIMIT);
-        assertTrue(defaults.maxSize() <= Party.MAX_SIZE_LIMIT);
+        assertEquals(Party.HARD_LIMIT, PartyConfig.MAX_SIZE_LIMIT);
+        assertTrue(defaults.maxSize() <= Party.HARD_LIMIT);
         assertTrue(defaults.maxBonusPercent() <= PartyConfig.MAX_BONUS_PERCENT);
         assertTrue(defaults.bonusRadius() <= PartyConfig.MAX_RADIUS);
     }
