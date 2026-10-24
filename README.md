@@ -2387,6 +2387,7 @@ messages.yml»).
 | `CHRDK_Orders` | репутация и звание, сданные заказы, сегодняшние сдачи |
 | `CHRDK_Achievements` | открыто достижений из общего числа, полученные награды, бейдж |
 | `CHRDK_Skills` | суммарный уровень, опыт и лучший навык |
+| `CHRDK_Classes` | класс, уровень, свободные очки и изученные таланты |
 | `CHRDK_Pets` | число живых питомцев и старший по уровню |
 | `CHRDK_Ranks` | наигранные часы, звание и остаток до следующего |
 | `CHRDK_Claims` | занятые приваты из лимита и казна |
@@ -2430,6 +2431,117 @@ lines)`. `ProfileContext` несёт UUID, ник, признак «онлайн
 `ProfileServiceTest` — раскладка слотов и округление остатка проходки;
 `AddonApiContractTest` — версия API и default-методы `registerProfile` и
 `unregisterProfile`.
+
+
+## Аддон CHRDK_Classes — классы и дерево талантов (1.4.164)
+
+Класс не открывает вторую прокачку. Он меняет то, как игрок держится в бою, и
+растёт вместе с навыками: уровень класса считается из суммы уровней десяти
+навыков `CHRDK_Skills`, а очки талантов — это «выданные минус потраченные».
+Отдельного счётчика уровня нет, поэтому класс и навыки не могут разъехаться, а
+смена кривой в конфиге не требует миграции.
+
+### Как это работает
+
+- **Четыре класса.** Воин (`warrior`, меч), стрелок (`archer`, лук), маг
+  (`mage`, чары) и жрец (`cleric`, поддержка). Выбор бесплатный; сменить класс
+  можно раз в `general.change-cooldown-days` (7 дней). Смена стирает дерево:
+  таланты принадлежат прежнему стилю, и оставлять их «на будущее» значило бы
+  разрешить собрать два дерева за одну прокачку.
+- **Уровень из навыков.** Один уровень класса за каждые
+  `general.levels-per-level` (30) уровней навыков; потолок — 34-й уровень при
+  1000 суммарных уровней (десять навыков по 100). За уровень даётся
+  `points-per-level` (1) очко плюс `starting-points` (1) на старте.
+- **Дерево.** Три ветки по четыре яруса у каждого класса: воин — «Стойкость»,
+  «Натиск», «Земля»; стрелок — «Меткость», «Скорость», «Выживание»; маг —
+  «Чары», «Щит», «Поток»; жрец — «Милость», «Свет», «Дорога». Ярусы стоят
+  1 / 2 / 3 / 5 очков, всё дерево — 33. Узел открывается только после
+  предыдущего в ветке и при уровне навыка 10 / 20 / 35 / 55: верхние ярусы
+  берут не «доигравшие до уровня», а прокачавшие тему.
+- **Пересборка.** `/class respec` возвращает вложенные очки и запускает
+  кулдаун `general.respec-cooldown-hours` (24 часа); класс не меняется.
+  Смена класса очков не требует и кулдаун пересборки не сбрасывает.
+- **Потолки.** Прибавки пассивные и зажаты в коде (`EffectKind`), а не в
+  конфиге: здоровье не выше 10 полусердец, броня — 12 очков, урон в ближнем
+  бою — 35 %, урон стрел — 50 %, снижение урона — 35 %, скорость — 15 %,
+  сопротивление отбрасыванию — 50 %, снижение урона от падения — 60 %,
+  лечение — 4 полусердца за такт, насыщение — 8. Регенерация и насыщение
+  работают только вне боя (`regen-out-of-combat-seconds`, 8 секунд после
+  последнего полученного урона).
+- **Никакой экономики.** Ни один талант не даёт монет, алмазов, опыта или
+  предметов: силу класса нельзя купить, только прокачать. Это то же правило,
+  что у гильдий и боевого пропуска, — платное преимущество остаётся косметикой.
+
+### Команды
+
+| Команда | Что делает |
+|---|---|
+| `/class` или `/class menu` | меню: выбор класса, дерево, пересборка |
+| `/class choose <класс>` | выбрать или сменить класс (в меню — с подтверждением) |
+| `/class info [класс]` | карточка класса: пассив, ветки, изученные таланты |
+| `/class talents` | дерево талантов: что открыто и что доступно |
+| `/class learn <талант>` | изучить узел за очки |
+| `/class respec` | вернуть очки и собрать дерево заново |
+| `/class points` | уровень, свободные и вложенные очки, сколько до следующего |
+| `/class top` | сколько игроков выбрали каждый класс |
+| `/classadmin reload` | перечитать `config.yml` и `messages.yml` |
+| `/classadmin info <ник>` | класс, уровень и очки игрока |
+| `/classadmin set <ник> <класс>` | выдать класс в обход кулдауна |
+| `/classadmin reset <ник>` | стереть класс, таланты и оба момента |
+| `/classadmin respec <ник>` | вернуть очки игроку, не трогая класс |
+
+### Права
+
+| Право | По умолчанию | Описание |
+|---|---|---|
+| `chrdkclasses.use` | все | `/class`: выбор, таланты, меню |
+| `chrdkclasses.admin` | OP | `/classadmin`: перезагрузка, выдача и сброс |
+
+### PlaceholderAPI
+
+Мягкая интеграция: `%chrdkclasses_enabled%`, `%chrdkclasses_skills%` (найдены
+ли навыки), `%chrdkclasses_class%`, `%chrdkclasses_class_id%`,
+`%chrdkclasses_level%`, `%chrdkclasses_points%`, `%chrdkclasses_spent%`,
+`%chrdkclasses_talents%`, `%chrdkclasses_skills_total%`, `%chrdkclasses_next%`
+(сколько уровней навыков до следующего), `%chrdkclasses_health%`,
+`%chrdkclasses_armor%`, `%chrdkclasses_melee%`, `%chrdkclasses_arrow%`,
+`%chrdkclasses_reduction%`, `%chrdkclasses_speed%`, `%chrdkclasses_regen%`,
+`%chrdkclasses_change_left%`, `%chrdkclasses_respec_left%`. У игрока без класса
+и у нулевых эффектов — пустая строка, а не `0`, чтобы условия в скорбордах не
+срабатывали ложно.
+
+### Конфиг
+
+- `general`: `enabled`, `locale`, `actionbar`, `levels-per-level` (5..100),
+  `points-per-level` (0..5), `starting-points` (0..10),
+  `change-cooldown-days` (0..365), `respec-cooldown-hours` (0..720),
+  `pulse-seconds` (1..60), `regen-out-of-combat-seconds` (0..60).
+- `effects.enabled` — выключает только прибавки (здоровье, броня, скорость,
+  отбрасывание): таланты и очки остаются, чтобы можно было проверить, откуда
+  взялся урон, не удаляя прогресс игроков.
+
+Числа зажимаются при чтении, а цены ярусов и потолки эффектов живут в
+`ClassCatalog`/`EffectKind`: конфиг управляет темпом, а не балансом, и его
+опечатка не может выдать лишние очки или снять потолок.
+
+### Установка
+
+Рядом с ядром положить `chrdk-classes-1.4.164.jar`; зависимость — `CHRDK_Core`,
+необязательные — `CHRDK_Skills` (без него уровень класса остаётся первым, а
+очки — стартовыми) и `PlaceholderAPI`. Конфиг и тексты создаются при первом
+запуске; выбранные классы и деревья лежат в
+`plugins/CHRDK_Classes/classes.json` (асинхронная атомарная запись через
+`.tmp`), поэтому перезапуск ничего не теряет. Битые записи файла пропускаются:
+неизвестный класс или чужой талант снимаются при чтении, а не ломают загрузку.
+
+### Тесты
+
+`ClassMathTest` (уровень, очки, потолки, форматы), `ClassCatalogTest` (четыре
+класса, три ветки по четыре яруса, цепочки, известные навыки, проходимость
+дерева за 33 очка), `ClassConfigTest` (умолчания, клампы, реальный
+`config.yml`), `TalentServiceTest` (выбор, смена, требования, очки, потолки,
+пересборка, админские команды) и `ClassStoreTest` (сохранение, битый файл,
+чужие таланты, счётчики).
 
 
 ## Аддон CHRDK_Guilds — гильдии, казна и войны (1.4.163)
@@ -2572,36 +2684,37 @@ lines)`. `ProfileContext` несёт UUID, ник, признак «онлайн
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.160.jar`,
-аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.160.jar`,
-реферальный — `referrals/build/libs/chrdk-referrals-1.4.160.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.160.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.160.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.160.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.160.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.160.jar` (хартия чар — при установленном аддоне чар),
-достижения — `achievements/build/libs/chrdk-achievements-1.4.160.jar`, навыки —
-`skills/build/libs/chrdk-skills-1.4.160.jar`, клады —
-`treasures/build/libs/chrdk-treasures-1.4.160.jar`, общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.160.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.160.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.160.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.160.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.160.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.160.jar`, стримерская программа —
-`streams/build/libs/chrdk-streams-1.4.160.jar`, лотерея —
-`lottery/build/libs/chrdk-lottery-1.4.160.jar`, аукцион —
-`auction/build/libs/chrdk-auction-1.4.160.jar`, питомцы —
-`pets/build/libs/chrdk-pets-1.4.160.jar`, заказы —
-`orders/build/libs/chrdk-orders-1.4.160.jar`, охота —
-`hunt/build/libs/chrdk-hunt-1.4.160.jar`, группы —
-`party/build/libs/chrdk-party-1.4.160.jar`, события —
-`events/build/libs/chrdk-events-1.4.160.jar`, задания —
-`quests/build/libs/chrdk-quests-1.4.163.jar`, боссы —
-`bosses/build/libs/chrdk-bosses-1.4.163.jar`, гильдии —
-`guilds/build/libs/chrdk-guilds-1.4.163.jar`. На сервер ядро обязательно, аддоны — по желанию
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.164.jar`,
+аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.164.jar`,
+реферальный — `referrals/build/libs/chrdk-referrals-1.4.164.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.164.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.164.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.164.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.164.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.164.jar` (хартия чар — при установленном аддоне чар),
+достижения — `achievements/build/libs/chrdk-achievements-1.4.164.jar`, навыки —
+`skills/build/libs/chrdk-skills-1.4.164.jar`, клады —
+`treasures/build/libs/chrdk-treasures-1.4.164.jar`, общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.164.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.164.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.164.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.164.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.164.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.164.jar`, стримерская программа —
+`streams/build/libs/chrdk-streams-1.4.164.jar`, лотерея —
+`lottery/build/libs/chrdk-lottery-1.4.164.jar`, аукцион —
+`auction/build/libs/chrdk-auction-1.4.164.jar`, питомцы —
+`pets/build/libs/chrdk-pets-1.4.164.jar`, заказы —
+`orders/build/libs/chrdk-orders-1.4.164.jar`, охота —
+`hunt/build/libs/chrdk-hunt-1.4.164.jar`, группы —
+`party/build/libs/chrdk-party-1.4.164.jar`, события —
+`events/build/libs/chrdk-events-1.4.164.jar`, задания —
+`quests/build/libs/chrdk-quests-1.4.164.jar`, боссы —
+`bosses/build/libs/chrdk-bosses-1.4.164.jar`, гильдии —
+`guilds/build/libs/chrdk-guilds-1.4.164.jar`, классы —
+`classes/build/libs/chrdk-classes-1.4.164.jar`. На сервер ядро обязательно, аддоны — по желанию
 (требуют ядро 1.4.6+). К релизу на GitHub прикладывается **один архив**
-`chrdk-plugins-<версия>.zip`: ядро и все 27 аддонов одной версии (28 JAR) плюс памятка
+`chrdk-plugins-<версия>.zip`: ядро и все 28 аддонов одной версии (29 JAR) плюс памятка
 `ОБНОВЛЕНИЕ.txt`. Отдельные JAR больше не публикуются.
 
 ---
@@ -2636,6 +2749,17 @@ lines)`. `ProfileContext` несёт UUID, ник, признак «онлайн
 (клады) — просто положите все JAR-ы из архива; недостающие создадутся при
 запуске. Ядро и аддоны должны быть **одной версии**: смешивать JAR-ы из разных
 релизов нельзя.
+
+Обновление до 1.4.164: в архиве появился новый аддон `CHRDK_Classes` — классы
+с деревом талантов. Он необязателен: без него остальные модули работают как
+раньше. Конфиг и `messages.yml` создаются при первом запуске, данные лежат в
+`plugins/CHRDK_Classes/classes.json`. Уровень класса считается из суммы уровней
+навыков, поэтому рядом нужен `CHRDK_Skills`: без него класс выбрать можно, но
+очки останутся стартовыми — в `/class` это видно по нулевому прогрессу.
+Класс не даёт ни монет, ни алмазов, ни опыта: все прибавки пассивные и с
+потолками, а платить за силу по-прежнему нельзя. Смена класса раз в неделю
+стирает дерево (очки возвращаются), пересборка `/class respec` — раз в сутки.
+Новых команд ядра нет; в `/profile` появился раздел «Класс».
 
 Обновление до 1.4.163: в архиве появился новый аддон `CHRDK_Guilds` — гильдии
 с казной в алмазах, рангами и войнами на ставку. Он необязателен: без него

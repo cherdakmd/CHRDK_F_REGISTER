@@ -44,3 +44,4 @@ include 'quests'
 include 'bosses'
 
 include 'guilds'
+include 'classes'

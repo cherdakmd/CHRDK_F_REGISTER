@@ -92,7 +92,7 @@ jobs:
           (DiamondShop, Referrals, DailyRewards, Teleports, Enchants, TierForge,
           Artifacts, Achievements, Skills, Treasures, CommonGoals, Claims, Ranks,
           Cosmetics, BattlePass, Queue, Streams, Lottery, Auction, Pets, Orders, Hunt, Party,
-          Events, Quests, Bosses, Guilds).
+          Events, Quests, Bosses, Guilds, Classes).
           Отдельные JAR-ы к релизу больше не прикладываются — только этот архив.
 
           Порядок обновления

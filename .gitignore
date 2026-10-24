@@ -2,7 +2,7 @@
 .gradle/
 build/
 out/
-classes/
+target/classes/
 *.class
 *.hprof
 *.jfr
