@@ -182,7 +182,7 @@ class ProfessionServiceTest {
         assertEquals(0, service.smithDiscount(PLAYER), "без ремесла прибавок нет");
 
         service.choose(PLAYER, "smith", NOW);
-        assertEquals(0, service.smithDiscount(PLAYER), "на первом уровне скидки ещё нет");
+        assertEquals(2, service.smithDiscount(PLAYER), "2 % уже на первом уровне");
 
         service.grantByAdmin(PLAYER, "smith", 120);
         assertEquals(4, service.smithDiscount(PLAYER), "2-й уровень: 2 % за уровень");

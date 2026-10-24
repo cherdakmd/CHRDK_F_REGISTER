@@ -42,7 +42,7 @@ class ProfessionMathTest {
         assertEquals(25, ProfessionMath.levelFor(1_000_000), "выше потолка не растёт");
 
         assertEquals(30, ProfessionMath.progress(150));
-        assertEquals(90, ProfessionMath.xpToNext(150));
+        assertEquals(150, ProfessionMath.xpToNext(150), "30 из 180 — значит до уровня 150");
         assertEquals(0, ProfessionMath.xpToNext(ProfessionMath.totalTo(25)));
         assertEquals(50, ProfessionMath.progressPercent(60));
         assertEquals(0, ProfessionMath.progressPercent(0));
