@@ -52,11 +52,8 @@ public final class QuestsCommandHandler implements CommandExecutor, TabCompleter
             return openMenu(sender);
         }
         String sub = args[0].toLowerCase(Locale.ROOT);
-        return switch (sub) {
-            case "help" -> {
-                help(sender);
-                yield true;
-            }
+        switch (sub) {
+            case "help" -> help(sender);
             case "menu" -> openMenu(sender);
             case "list" -> list(sender);
             case "info" -> info(sender, args);
@@ -67,9 +64,9 @@ public final class QuestsCommandHandler implements CommandExecutor, TabCompleter
             default -> {
                 plugin.messages().send(sender, "unknown-subcommand", "sub", args[0]);
                 help(sender);
-                yield true;
             }
-        };
+        }
+        return true;
     }
 
     /* --------------------------------- игроку --------------------------------- */

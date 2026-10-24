@@ -158,7 +158,7 @@ public final class QuestsGui implements Listener {
                 "limit", String.valueOf(plugin.config().claimsPerDay())));
         lore.add(plugin.messages().get("menu-info-ready",
                 "ready", String.valueOf(plugin.service().readyCount(id))));
-        return item(Material.WRITABLE_BOOK, "menu-info-name", lore);
+        return item(Material.WRITABLE_BOOK, "menu-info-name", null, lore);
     }
 
     private ItemStack factionItem(Player player, QuestFaction faction) {
