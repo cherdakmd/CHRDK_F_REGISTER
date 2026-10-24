@@ -236,7 +236,7 @@ class QuestServiceTest {
         service.store().addProgress(PLAYER, "elder_kill", 2, 2);
         assertSame(QuestService.Result.OK, service.claim(PLAYER, "elder_kill", 0, DAY));
         assertEquals(0, service.claimsLeft(PLAYER, DAY));
-        assertEquals(0, service.claimsLeft(PLAYER, "2026-10-25"), "новый день — снова можно");
+        assertEquals(1, service.claimsLeft(PLAYER, "2026-10-25"), "новый день — снова можно");
 
         service.store().addProgress(PLAYER, "elder_mine", 3, 3);
         assertSame(QuestService.Result.DAILY_LIMIT, service.claim(PLAYER, "elder_mine", 0, DAY));
@@ -269,8 +269,8 @@ class QuestServiceTest {
     @Test
     void dayIsUtcDate() {
         assertEquals("1970-01-01", QuestService.day(0L));
-        assertEquals("2026-10-24", QuestService.day(1_790_812_800_000L));
-        assertEquals("2026-10-23", QuestService.day(1_790_812_800_000L - 1));
+        assertEquals("2026-10-24", QuestService.day(1_792_800_000_000L));
+        assertEquals("2026-10-23", QuestService.day(1_792_800_000_000L - 1));
         assertSame("ok", QuestService.normalize(" WATCH ").equals("watch") ? "ok" : "bad");
     }
 }

@@ -58,7 +58,7 @@ class QuestStoreTest {
 
         assertEquals(30, store.addReputation(PLAYER, "watch", 30));
         assertEquals(35, store.addReputation(PLAYER, "watch", 5));
-        assertEquals(0, store.addReputation(PLAYER, "watch", -10), "минус не отнимает");
+        assertEquals(35, store.addReputation(PLAYER, "watch", -10), "минус не отнимает");
         assertEquals(35, store.reputation(PLAYER, "watch"));
 
         assertEquals(2, store.addProgress(PLAYER, "q", 2, 5));

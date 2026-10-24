@@ -100,7 +100,7 @@ class QuestConfigTest {
 
         QuestFaction broken = config.faction("broken");
         assertNotNull(broken);
-        assertSame(Material.PAPER, broken.icon(), "неизвестная иконка — бумага");
+        assertSame(Material.SHIELD, broken.icon(), "неизвестная иконка — щит по умолчанию");
         assertEquals(QuestFaction.DEFAULT_RANKS, broken.ranks(),
                 "пустая лестница заменяется стандартной");
         assertEquals("broken", broken.name(), "пустое имя заменяется идом");
@@ -152,8 +152,7 @@ class QuestConfigTest {
                         type: ПОЙМАТЬ
                         targets: [ZOMBIE]
                         xp: 10
-                      - id: no_id
-                        type: KILL
+                      - type: KILL
                         targets: [ZOMBIE]
                         xp: 10
                       - id: mining
