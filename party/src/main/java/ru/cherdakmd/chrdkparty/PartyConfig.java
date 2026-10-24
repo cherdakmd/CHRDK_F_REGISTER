@@ -60,19 +60,19 @@ public final class PartyConfig {
         String locale = blankTo(source.getString("general.locale", "ru"), "ru")
                 .toLowerCase(Locale.ROOT);
 
-        int maxSize = clamp(source.getLong("limits.max-size", 8L), 2L, MAX_SIZE_LIMIT);
+        int maxSize = (int) clamp(source.getLong("limits.max-size", 8L), 2L, MAX_SIZE_LIMIT);
         warnClamped(logger, "limits.max-size", 8L, maxSize);
-        int expire = clamp(source.getLong("limits.invite-expire-seconds", 60L), 10L, 600L);
+        int expire = (int) clamp(source.getLong("limits.invite-expire-seconds", 60L), 10L, 600L);
         warnClamped(logger, "limits.invite-expire-seconds", 60L, expire);
-        int pending = clamp(source.getLong("limits.invite-max-pending", 5L), 1L, 20L);
+        int pending = (int) clamp(source.getLong("limits.invite-max-pending", 5L), 1L, 20L);
         warnClamped(logger, "limits.invite-max-pending", 5L, pending);
 
         boolean bonusEnabled = source.getBoolean("bonus.enabled", true);
-        int radius = clamp(source.getLong("bonus.radius", 24L), 4L, MAX_RADIUS);
+        int radius = (int) clamp(source.getLong("bonus.radius", 24L), 4L, MAX_RADIUS);
         warnClamped(logger, "bonus.radius", 24L, radius);
-        int perMember = clamp(source.getLong("bonus.per-member-percent", 5L), 0L, 50L);
+        int perMember = (int) clamp(source.getLong("bonus.per-member-percent", 5L), 0L, 50L);
         warnClamped(logger, "bonus.per-member-percent", 5L, perMember);
-        int maxPercent = clamp(source.getLong("bonus.max-percent", 15L), 0L, MAX_BONUS_PERCENT);
+        int maxPercent = (int) clamp(source.getLong("bonus.max-percent", 15L), 0L, MAX_BONUS_PERCENT);
         warnClamped(logger, "bonus.max-percent", 15L, maxPercent);
         if (maxPercent < perMember && logger != null) {
             logger.warning("[CHRDK_Party] bonus.max-percent (" + maxPercent
