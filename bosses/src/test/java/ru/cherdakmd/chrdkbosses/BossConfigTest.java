@@ -81,7 +81,8 @@ class BossConfigTest {
         BossConfig config = bundled();
         assertEquals(4, config.bossList().size());
         assertEquals(3, config.zoneList().size());
-        assertEquals(3, config.activeZones().size());
+        assertEquals(0, config.activeZones().size(),
+                "зоны из примеров выключены до настройки координат");
 
         BossDefinition warden = config.boss("stone_warden");
         assertNotNull(warden);
@@ -105,7 +106,7 @@ class BossConfigTest {
         assertEquals(2, ash.effects().size());
         assertTrue(ash.harmful());
         for (DangerZone zone : config.zoneList()) {
-            assertTrue(zone.enabled(), zone.id());
+            assertFalse(zone.enabled(), "пример зоны выключен: " + zone.id());
             assertFalse(zone.world().isBlank(), zone.id());
         }
     }

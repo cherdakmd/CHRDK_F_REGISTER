@@ -255,7 +255,8 @@ zones:
   ash_fields:
     name: "Пепельные поля"
     description: "Земля здесь ещё тёплая: воздух режет горло, зато добыча щедра."
-    enabled: true
+    # Зоны выключены до настройки: координаты ниже — пример, а не место на вашей карте.
+    enabled: false
     world: "world"
     x: 400
     y: 70
@@ -273,7 +274,7 @@ zones:
   frozen_hollow:
     name: "Мёрзлая низина"
     description: "Ветер здесь не стихает: тянет силу из ног и рук."
-    enabled: true
+    enabled: false
     world: "world"
     x: -400
     y: 70
@@ -290,7 +291,7 @@ zones:
   drowned_mines:
     name: "Затонувшие шахты"
     description: "Глубина не любит света: слепота и тьма забирают по капле."
-    enabled: true
+    enabled: false
     world: "world"
     x: 0
     y: 40
