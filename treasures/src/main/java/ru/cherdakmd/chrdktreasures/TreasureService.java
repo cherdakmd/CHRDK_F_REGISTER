@@ -32,13 +32,14 @@ public final class TreasureService {
      *
      * <p>{@code bonus} — дополнительная добыча за серию находок (может быть
      * пустой), {@code streak} — длина серии после этой находки, {@code rank} —
-     * звание игрока уже с учётом находки.</p>
+     * звание игрока уже с учётом находки, {@code shards} — осколки, начисленные
+     * на баланс (1.4.166).</p>
      */
     public record Found(TreasureTier tier, TreasureRegion region, TreasureItemDef item,
                         List<TreasureLoot.LootStack> loot, List<Integer> milestones,
                         int streak, TreasureRank rank,
                         List<TreasureLoot.LootStack> bonus, boolean barrel,
-                        List<TreasureSpecial> specials) {
+                        List<TreasureSpecial> specials, int shards) {
 
         public boolean named() {
             return item != null;
@@ -51,6 +52,11 @@ public final class TreasureService {
         /** Выпали ли особые находки — реликвия или книга чар (1.4.166). */
         public boolean special() {
             return !specials.isEmpty();
+        }
+
+        /** Принесли ли осколки клады этой находки (1.4.166). */
+        public boolean sharded() {
+            return shards > 0;
         }
     }
 
@@ -269,7 +275,7 @@ public final class TreasureService {
                       TreasureRoll.Roll roll, Location origin) {
         if (player == null || tier == null || roll == null) {
             return new Found(tier, region, null, List.of(), List.of(), 0,
-                    TreasureRank.NOVICE, List.of(), false, List.of());
+                    TreasureRank.NOVICE, List.of(), false, List.of(), 0);
         }
         TreasureRank before = rank(player);
         store.setName(key(player), player.getName());
@@ -306,6 +312,12 @@ public final class TreasureService {
         // 1.4.166: реликвия или книга чар из соседних аддонов — до бочки, чтобы
         // попасть в ту же добычу и не потеряться при отказе от контейнера.
         List<TreasureSpecial> specials = plugin.specials().grant(tier, payload);
+        // 1.4.166: осколки кладов — валюта обменника. Начисляются на баланс, а
+        // не падают предметом: их нельзя потерять при смерти или забыть в бочке.
+        int shards = TreasureShardRolls.roll(plugin.config().shards(), tier, random);
+        if (shards > 0) {
+            store.addShards(key(player), shards);
+        }
         boolean barrel = origin != null && plugin.barrels() != null
                 && plugin.barrels().offer(player, origin, tier, payload);
         if (!barrel) {
@@ -313,7 +325,7 @@ public final class TreasureService {
         }
         checkRank(player, before);
         return new Found(tier, region, item, loot, milestones, streak,
-                rank(player), bonus, barrel, specials);
+                rank(player), bonus, barrel, specials, shards);
     }
 
     /**
@@ -449,6 +461,87 @@ public final class TreasureService {
         for (ItemStack rest : leftover.values()) {
             player.getWorld().dropItemNaturally(location, rest);
         }
+    }
+
+    /**
+     * Итог покупки в обменнике осколков (1.4.166).
+     *
+     * <p>Отдельные исходы нужны для честных сообщений: «не хватает осколков»,
+     * «аддон выключен» и «такого предложения больше нет» — разные ситуации, и
+     * осколки в двух последних списываться не должны.</p>
+     */
+    public enum ShardPurchase {
+        /** Оплачено и выдано. */
+        OK,
+        /** Осколков на балансе меньше цены. */
+        NOT_ENOUGH,
+        /** Награду сейчас не из чего собрать (нет аддона, пустой пул, битый материал). */
+        UNAVAILABLE,
+        /** Осколки и обменник выключены в конфиге. */
+        DISABLED
+    }
+
+    /**
+     * Покупка в обменнике: списание и выдача одного предмета.
+     *
+     * <p>Награда собирается <em>до</em> списания: если аддон выключен или пул
+     * пуст, игрок получает отказ, а баланс остаётся прежним. Списание и
+     * проверка баланса — одна операция хранилища, поэтому двойной клик не
+     * купит дважды. Покупка не считается находкой: статистика и коллекция
+     * растут только от кладов, иначе витрину можно было бы «докупить».</p>
+     */
+    public ShardPurchase buyShard(Player player, TreasureShardShop.Offer offer) {
+        if (player == null || offer == null) {
+            return ShardPurchase.UNAVAILABLE;
+        }
+        if (!plugin.config().shards().enabled()) {
+            return ShardPurchase.DISABLED;
+        }
+        ItemStack reward = shardReward(offer);
+        if (reward == null) {
+            return ShardPurchase.UNAVAILABLE;
+        }
+        if (!store.takeShards(key(player), offer.cost())) {
+            return ShardPurchase.NOT_ENOUGH;
+        }
+        giveStack(player, reward);
+        return ShardPurchase.OK;
+    }
+
+    /** Собирает предмет награды; {@code null} — предложение сейчас недоступно. */
+    private ItemStack shardReward(TreasureShardShop.Offer offer) {
+        return switch (offer.kind()) {
+            case NAMED -> {
+                List<TreasureItemDef> pool = TreasureRegistry.byTier(offer.tier());
+                if (pool.isEmpty()) {
+                    yield null;
+                }
+                yield plugin.items().create(pool.get(random.nextInt(pool.size())));
+            }
+            case ARTIFACT -> {
+                TreasureSpecials.Made made = plugin.specials().artifactFor();
+                yield made == null ? null : made.item();
+            }
+            case ENCHANT -> {
+                TreasureSpecials.Made made = plugin.specials().bookFor(offer.level());
+                yield made == null ? null : made.item();
+            }
+            case ITEM -> {
+                Material material = offer.itemMaterial();
+                yield material == null || material.isAir()
+                        ? null : new ItemStack(material, offer.amount());
+            }
+        };
+    }
+
+    /** Осколки на балансе игрока (1.4.166). */
+    public long shards(Player player) {
+        return player == null ? 0L : store.shards(key(player));
+    }
+
+    /** Сколько осколков игрок потратил за всё время. */
+    public long shardsSpent(Player player) {
+        return player == null ? 0L : store.shardsSpent(key(player));
     }
 
     /* ---------------------------------- вехи ---------------------------------- */

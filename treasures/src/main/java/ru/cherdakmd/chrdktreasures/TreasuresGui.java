@@ -43,6 +43,8 @@ public final class TreasuresGui implements Listener {
     private static final int SOUND_SLOT = 48;
     private static final int PARTICLE_SLOT = 49;
     private static final int ANNOUNCE_SLOT = 50;
+    /** 1.4.166: обменник осколков — рядом с переключателями, до закрытия. */
+    private static final int SHARDS_SLOT = 51;
     private static final int CLOSE_SLOT = 53;
     /**
      * Сетка страницы региона и мифической витрины: два ряда по семь слотов.
@@ -53,12 +55,15 @@ public final class TreasuresGui implements Listener {
     private static final int PAGE_BACK = 45;
     private static final int PAGE_CLOSE = 53;
     private static final int TOP_LIMIT = 45;
+    /** Полоса баланса в обменнике: по центру, чтобы не спорить со сеткой. */
+    private static final int SHARD_BALANCE_SLOT = 49;
 
     private enum View {
         MAIN,
         REGION,
         MYTHIC,
-        TOP
+        TOP,
+        SHARDS
     }
 
     /** Владелец инвентаря: защищает от подмены и чужих кликов. */
@@ -118,6 +123,9 @@ public final class TreasuresGui implements Listener {
                 service.store().particles(key(player)), "menu-particles-name"));
         holder.inventory.setItem(ANNOUNCE_SLOT, toggle(player,
                 service.store().announce(key(player)), "menu-announce-name"));
+        if (plugin.config().shards().enabled()) {
+            holder.inventory.setItem(SHARDS_SLOT, shardsButton(player));
+        }
         holder.inventory.setItem(CLOSE_SLOT, button(Material.BARRIER, "menu-close", null));
         player.openInventory(holder.inventory);
     }
@@ -306,6 +314,127 @@ public final class TreasuresGui implements Listener {
         return item;
     }
 
+    /* --------------------------------- обменник -------------------------------- */
+
+    /** Кнопка обменника в главном меню: баланс и подсказка. */
+    private ItemStack shardsButton(Player player) {
+        long balance = service.shards(player);
+        ItemStack item = new ItemStack(Material.AMETHYST_SHARD);
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) {
+            return item;
+        }
+        meta.displayName(plugin.messages().get("menu-shards-name",
+                "shards", String.valueOf(balance)));
+        meta.lore(List.of(
+                plugin.messages().get("menu-shards-lore",
+                        "shards", String.valueOf(balance),
+                        "spent", String.valueOf(service.shardsSpent(player))),
+                plugin.messages().get(plugin.config().shards().shopReady()
+                        ? "menu-shards-click" : "menu-shards-empty")));
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /**
+     * Экран обменника: предложения каталога и баланс.
+     *
+     * <p>Сетка та же, что у витрины региона, поэтому предложения читаются
+     * привычно. Если предложение сейчас недоступно (нет аддона), иконка всё
+     * равно показывается: игрок должен видеть, что можно купить, а не пустой
+     * экран с загадкой.</p>
+     */
+    public void openShards(Player player) {
+        if (player == null) {
+            return;
+        }
+        if (!plugin.config().shards().enabled()) {
+            plugin.messages().send(player, "shards-disabled");
+            return;
+        }
+        Holder holder = new Holder(player.getUniqueId(), View.SHARDS, null);
+        holder.inventory = Bukkit.createInventory(holder, 54,
+                plugin.messages().get("shards-title"));
+        List<TreasureShardShop.Offer> offers = plugin.config().shards().offers();
+        for (int index = 0; index < Math.min(ITEM_SLOTS.length, offers.size()); index++) {
+            holder.inventory.setItem(ITEM_SLOTS[index], offerIcon(player, offers.get(index)));
+        }
+        if (offers.isEmpty()) {
+            holder.inventory.setItem(22, button(Material.PAPER, "shards-empty", null));
+        }
+        holder.inventory.setItem(SHARD_BALANCE_SLOT, balanceIcon(player));
+        holder.inventory.setItem(PAGE_BACK, button(Material.ARROW, "menu-back", null));
+        holder.inventory.setItem(PAGE_CLOSE, button(Material.BARRIER, "menu-close", null));
+        player.openInventory(holder.inventory);
+    }
+
+    /** Иконка предложения: цена, наличие на балансе и что именно выдадут. */
+    private ItemStack offerIcon(Player player, TreasureShardShop.Offer offer) {
+        long balance = service.shards(player);
+        boolean affordable = balance >= offer.cost();
+        ItemStack item = new ItemStack(offerMaterial(offer));
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) {
+            return item;
+        }
+        meta.displayName(plugin.messages().get("shards-offer-name",
+                "name", Messages.trusted(offerName(offer)),
+                "cost", String.valueOf(offer.cost())));
+        List<Component> lore = new ArrayList<>();
+        lore.add(plugin.messages().get("shards-offer-cost",
+                "cost", String.valueOf(offer.cost()),
+                "balance", String.valueOf(balance)));
+        lore.add(plugin.messages().get(affordable
+                ? "shards-offer-buy" : "shards-offer-short",
+                "need", String.valueOf(Math.max(0L, offer.cost() - balance))));
+        meta.lore(lore);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /** Человеческое имя предложения: из конфига или собранное по виду. */
+    private String offerName(TreasureShardShop.Offer offer) {
+        if (!offer.name().isBlank()) {
+            return offer.name();
+        }
+        String key = "shards-kind." + offer.kind().id();
+        if (!plugin.messages().has(key)) {
+            return offer.describe();
+        }
+        String tier = plugin.messages().raw("tier." + offer.tier().id());
+        return plugin.messages().plain(key, "tier", tier, "level", offer.level(),
+                "amount", offer.amount(), "material", offer.material());
+    }
+
+    /** Материал иконки предложения. */
+    private Material offerMaterial(TreasureShardShop.Offer offer) {
+        return switch (offer.kind()) {
+            case NAMED -> Material.CHEST;
+            case ARTIFACT -> Material.ECHO_SHARD;
+            case ENCHANT -> Material.ENCHANTED_BOOK;
+            case ITEM -> {
+                Material material = offer.itemMaterial();
+                yield material == null ? Material.PAPER : material;
+            }
+        };
+    }
+
+    /** Полоса баланса: сколько осколков есть и сколько уже потрачено. */
+    private ItemStack balanceIcon(Player player) {
+        ItemStack item = new ItemStack(Material.AMETHYST_CLUSTER);
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) {
+            return item;
+        }
+        meta.displayName(plugin.messages().get("shards-balance-name",
+                "shards", String.valueOf(service.shards(player))));
+        meta.lore(List.of(plugin.messages().get("shards-balance-lore",
+                "shards", String.valueOf(service.shards(player)),
+                "spent", String.valueOf(service.shardsSpent(player)))));
+        item.setItemMeta(meta);
+        return item;
+    }
+
     /* ----------------------------------- топ ---------------------------------- */
 
     public void openTop(Player player) {
@@ -376,6 +505,7 @@ public final class TreasuresGui implements Listener {
                     player.closeInventory();
                 }
             }
+            case SHARDS -> clickShards(player, slot);
         }
     }
 
@@ -395,6 +525,10 @@ public final class TreasuresGui implements Listener {
         if (slot == MAPS_SLOT) {
             player.closeInventory();
             plugin.maps().list(player);
+            return;
+        }
+        if (slot == SHARDS_SLOT) {
+            openShards(player);
             return;
         }
         if (slot == SOUND_SLOT) {
@@ -418,6 +552,39 @@ public final class TreasuresGui implements Listener {
                 openRegion(player, regions[index]);
                 return;
             }
+        }
+    }
+
+    /** Клик по предложению: покупка и обновление экрана. */
+    private void clickShards(Player player, int slot) {
+        if (slot == PAGE_BACK) {
+            open(player);
+            return;
+        }
+        if (slot == PAGE_CLOSE) {
+            player.closeInventory();
+            return;
+        }
+        List<TreasureShardShop.Offer> offers = plugin.config().shards().offers();
+        for (int index = 0; index < Math.min(ITEM_SLOTS.length, offers.size()); index++) {
+            if (ITEM_SLOTS[index] != slot) {
+                continue;
+            }
+            TreasureShardShop.Offer offer = offers.get(index);
+            switch (service.buyShard(player, offer)) {
+                case OK -> plugin.messages().send(player, "shards-bought",
+                        "name", Messages.trusted(offerName(offer)),
+                        "cost", String.valueOf(offer.cost()));
+                case NOT_ENOUGH -> plugin.messages().send(player, "shards-not-enough",
+                        "cost", String.valueOf(offer.cost()),
+                        "balance", String.valueOf(service.shards(player)));
+                case DISABLED -> plugin.messages().send(player, "shards-disabled");
+                case UNAVAILABLE -> plugin.messages().send(player, "shards-unavailable",
+                        "name", Messages.trusted(offerName(offer)));
+            }
+            // Экран пересобирается в любом исходе: баланс и подписи могли измениться.
+            openShards(player);
+            return;
         }
     }
 

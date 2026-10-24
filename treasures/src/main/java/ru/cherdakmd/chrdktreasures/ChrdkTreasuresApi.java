@@ -72,4 +72,19 @@ public interface ChrdkTreasuresApi {
 
     /** Готова ли активная способность предмета: остаток перезарядки в секундах. */
     long abilityCooldown(Player player, String itemId);
+
+    /**
+     * Баланс осколков кладов (1.4.166).
+     *
+     * <p>Метод с реализацией по умолчанию: аддон, собранный против старого API,
+     * продолжает работать и просто получает 0.</p>
+     */
+    default long shards(Player player) {
+        return 0L;
+    }
+
+    /** Сколько осколков кладов игрок потратил в обменнике (1.4.166). */
+    default long shardsSpent(Player player) {
+        return 0L;
+    }
 }

@@ -424,6 +424,16 @@ public final class TreasuresPlugin extends JavaPlugin {
         }
 
         @Override
+        public long shards(Player player) {
+            return service.shards(player);
+        }
+
+        @Override
+        public long shardsSpent(Player player) {
+            return service.shardsSpent(player);
+        }
+
+        @Override
         public long tierFound(Player player, String tierId) {
             TreasureTier tier = TreasureTier.byId(tierId);
             return tier == null ? 0L : service.tierCount(player, tier);

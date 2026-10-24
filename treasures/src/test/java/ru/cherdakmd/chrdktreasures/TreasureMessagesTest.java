@@ -79,7 +79,16 @@ class TreasureMessagesTest {
             "barrel-expiring", "barrel-expired", "barrel-fallback",
             "treasure-found-barrel",
             // 1.4.166: особые находки из соседних аддонов.
-            "special-artifact", "special-artifact-cursed", "special-enchant");
+            "special-artifact", "special-artifact-cursed", "special-enchant",
+            // 1.4.166: осколки кладов и обменник.
+            "menu-shards-name", "menu-shards-lore", "menu-shards-click",
+            "menu-shards-empty", "shards-title", "shards-offer-name",
+            "shards-offer-cost", "shards-offer-buy", "shards-offer-short",
+            "shards-kind.named", "shards-kind.artifact", "shards-kind.enchant",
+            "shards-kind.item", "shards-balance-name", "shards-balance-lore",
+            "shards-empty", "shards-bought", "shards-not-enough",
+            "shards-unavailable", "shards-disabled", "shards-earned",
+            "help-shards", "admin-shards-given", "admin-shards-invalid");
 
     private static ConfigurationSection messages() {
         try (var stream = TreasureMessagesTest.class.getClassLoader()

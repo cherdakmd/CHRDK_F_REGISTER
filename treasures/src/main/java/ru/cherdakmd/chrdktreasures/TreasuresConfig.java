@@ -7,6 +7,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Logger;
@@ -248,6 +249,75 @@ public final class TreasuresConfig {
         }
     }
 
+    /**
+     * Осколки кладов (1.4.166): валюта находок и обменник за них.
+     *
+     * <p>Осколки — счётчик в профиле, а не предмет: их не теряют при смерти и
+     * не носят в рюкзаке. За клад каждой редкости выпадает свой диапазон, шанс
+     * задаётся отдельно — обычный клад иногда даёт один-два, мифический всегда
+     * приносит горсть. Тратятся они в обменнике ({@code shards.shop}): именная
+     * находка нужной редкости, книга чар, реликвия или обычный предмет.</p>
+     *
+     * @param enabled включены ли осколки и обменник
+     * @param ranges  диапазон и шанс по редкости клада
+     * @param offers  предложения обменника
+     */
+    public record Shards(boolean enabled, Map<TreasureTier, Range> ranges,
+                         List<TreasureShardShop.Offer> offers) {
+
+        /**
+         * Диапазон осколков одной редкости.
+         *
+         * @param minAmount     минимум осколков
+         * @param maxAmount     максимум осколков
+         * @param chancePercent шанс, что осколки вообще выпадут
+         */
+        public record Range(int minAmount, int maxAmount, double chancePercent) {
+
+            public Range {
+                minAmount = Math.max(0, Math.min(64, minAmount));
+                maxAmount = Math.max(minAmount, Math.min(64, maxAmount));
+                chancePercent = Math.max(0.0, Math.min(100.0, chancePercent));
+            }
+
+            /** Разбирается ли диапазон: иначе клад осколков не даёт. */
+            public boolean active() {
+                return maxAmount > 0 && chancePercent > 0.0;
+            }
+        }
+
+        /** Диапазоны по умолчанию: обычный 1–2 (55 %), мифический 12–18 (100 %). */
+        public static final int[][] DEFAULT_RANGES = {
+                {1, 2}, {2, 4}, {4, 7}, {7, 11}, {12, 18}};
+        /** Шансы по умолчанию, проценты. */
+        public static final double[] DEFAULT_CHANCE = {55.0, 75.0, 100.0, 100.0, 100.0};
+
+        public Shards {
+            Map<TreasureTier, Range> clean = new EnumMap<>(TreasureTier.class);
+            for (TreasureTier tier : TreasureTier.values()) {
+                Range range = ranges == null ? null : ranges.get(tier);
+                if (range == null) {
+                    int[] pair = DEFAULT_RANGES[tier.ordinal()];
+                    range = new Range(pair[0], pair[1], DEFAULT_CHANCE[tier.ordinal()]);
+                }
+                clean.put(tier, range);
+            }
+            ranges = Collections.unmodifiableMap(clean);
+            offers = offers == null ? List.of() : List.copyOf(offers);
+        }
+
+        /** Диапазон осколков редкости. */
+        public Range range(TreasureTier tier) {
+            Range range = ranges.get(tier);
+            return range == null ? new Range(0, 0, 0.0) : range;
+        }
+
+        /** Есть ли что покупать. */
+        public boolean shopReady() {
+            return enabled && !offers.isEmpty();
+        }
+    }
+
     private final boolean enabled;
     private final int auraRefreshTicks;
     private final int topSize;
@@ -286,6 +356,8 @@ public final class TreasuresConfig {
     private final Barrels barrels;
     /** 1.4.166: реликвии и книги чар из соседних аддонов. */
     private final Specials specials;
+    /** 1.4.166: валюта кладов и обменник. */
+    private final Shards shards;
     /** 1.4.157: склянки опыта в каждом кладе. */
     private final TreasureExperience.Rule experience;
 
@@ -305,7 +377,7 @@ public final class TreasuresConfig {
                             boolean abilitiesEnabled, boolean cursesEnabled,
                             boolean setsEnabled, double arsenalShare,
                             boolean tiersEnabled, Map<TreasureTier, Double> tierChances,
-                            Maps maps, Barrels barrels, Specials specials,
+                            Maps maps, Barrels barrels, Specials specials, Shards shards,
                             TreasureExperience.Rule experience) {
         this.enabled = enabled;
         this.auraRefreshTicks = auraRefreshTicks;
@@ -339,6 +411,7 @@ public final class TreasuresConfig {
         this.maps = maps == null ? Maps.DISABLED : maps;
         this.barrels = barrels == null ? Barrels.DISABLED : barrels;
         this.specials = specials == null ? defaultSpecials() : specials;
+        this.shards = shards == null ? defaultShards() : shards;
         this.experience = experience == null ? TreasureExperience.defaults() : experience;
     }
 
@@ -494,7 +567,8 @@ public final class TreasuresConfig {
                 cfg.getBoolean("sets.enabled", true),
                 arsenalShare, tiersEnabled,
                 Collections.unmodifiableMap(tierChances),
-                parseMaps(cfg), parseBarrels(cfg), parseSpecials(cfg), parseExperience(cfg));
+                parseMaps(cfg), parseBarrels(cfg), parseSpecials(cfg),
+                parseShards(cfg, logger), parseExperience(cfg));
     }
 
     private static TreasureTier parseTier(String raw, TreasureTier fallback) {
@@ -725,6 +799,11 @@ public final class TreasuresConfig {
         return specials;
     }
 
+    /** Осколки кладов и обменник за них (1.4.166). */
+    public Shards shards() {
+        return shards;
+    }
+
     /** Склянки опыта в каждом кладе (1.4.157). */
     public TreasureExperience.Rule experience() {
         return experience;
@@ -836,6 +915,59 @@ public final class TreasuresConfig {
                 caps,
                 (int) clamp(cfg.getLong("specials.enchantments.curse-chance-percent", 10L),
                         0L, 100L));
+    }
+
+    /** Осколки по умолчанию: те же значения, что в поставляемом config.yml. */
+    public static Shards defaultShards() {
+        return parseShards(new YamlConfiguration(), null);
+    }
+
+    /**
+     * Разбор секции {@code shards.*}: диапазоны по редкостям и каталог обменника.
+     * Битое предложение пропускается с предупреждением — из-за одной опечатки
+     * обменник не должен исчезать целиком.
+     */
+    private static Shards parseShards(FileConfiguration cfg, Logger logger) {
+        Map<TreasureTier, Shards.Range> ranges = new EnumMap<>(TreasureTier.class);
+        for (TreasureTier tier : TreasureTier.values()) {
+            int index = tier.ordinal();
+            int[] pair = Shards.DEFAULT_RANGES[index];
+            int min = (int) clamp(cfg.getLong("shards.amount." + tier.id() + ".min",
+                    pair[0]), 0L, 64L);
+            int max = (int) clamp(cfg.getLong("shards.amount." + tier.id() + ".max",
+                    pair[1]), 0L, 64L);
+            double chance = clamp(cfg.getDouble(
+                    "shards.amount." + tier.id() + ".chance-percent",
+                    Shards.DEFAULT_CHANCE[index]), 0.0, 100.0);
+            ranges.put(tier, new Shards.Range(Math.min(min, max), Math.max(min, max), chance));
+        }
+        // Списка нет вовсе — работаем со встроенным обменником; список есть, но
+        // битый — обменник пуст, и в журнале уже есть предупреждения: тихо
+        // подменять админский каталог умолчаниями нельзя.
+        ConfigurationSection section = cfg.getConfigurationSection("shards");
+        List<TreasureShardShop.Offer> offers = cfg.isSet("shards.shop") && section != null
+                ? TreasureShardShop.parse(section, logger)
+                : defaultOffers();
+        return new Shards(cfg.getBoolean("shards.enabled", true), ranges, offers);
+    }
+
+    /** Встроенный обменник: работает, даже если секции {@code shards.shop} нет. */
+    public static List<TreasureShardShop.Offer> defaultOffers() {
+        return List.of(
+                new TreasureShardShop.Offer("named-common", TreasureShardShop.Kind.NAMED,
+                        15, TreasureTier.COMMON, 1, "", 1, ""),
+                new TreasureShardShop.Offer("named-rare", TreasureShardShop.Kind.NAMED,
+                        45, TreasureTier.RARE, 1, "", 1, ""),
+                new TreasureShardShop.Offer("named-epic", TreasureShardShop.Kind.NAMED,
+                        140, TreasureTier.EPIC, 1, "", 1, ""),
+                new TreasureShardShop.Offer("book-1", TreasureShardShop.Kind.ENCHANT,
+                        60, TreasureTier.COMMON, 1, "", 1, ""),
+                new TreasureShardShop.Offer("book-3", TreasureShardShop.Kind.ENCHANT,
+                        200, TreasureTier.EPIC, 3, "", 1, ""),
+                new TreasureShardShop.Offer("artifact", TreasureShardShop.Kind.ARTIFACT,
+                        260, TreasureTier.RARE, 1, "", 1, ""),
+                new TreasureShardShop.Offer("bottles", TreasureShardShop.Kind.ITEM,
+                        10, TreasureTier.COMMON, 1, "EXPERIENCE_BOTTLE", 8, ""));
     }
 
     private static Integer parseInt(String value) {

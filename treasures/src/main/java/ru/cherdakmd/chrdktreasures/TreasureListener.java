@@ -413,6 +413,14 @@ public final class TreasureListener implements Listener {
             // 1.4.166: реликвия и книга чар называются отдельно — их имена
             // длиннее строки добычи и не должны в ней растворяться.
             specials(player, found);
+            // Осколки — на баланс, поэтому сообщение короткое: игрок должен
+            // видеть, что копится на обменник, но не путать с добычей.
+            if (found.sharded()) {
+                plugin.messages().send(player, "shards-earned",
+                        "amount", String.valueOf(found.shards()),
+                        "total", String.valueOf(plugin.store().shards(
+                                player.getUniqueId().toString())));
+            }
         }
 
         boolean broadcast = found.tier() == TreasureTier.MYTHICAL && plugin.config().broadcastMythical()
@@ -461,6 +469,9 @@ public final class TreasureListener implements Listener {
         for (TreasureSpecial special : found.specials()) {
             line.append(" · ").append(special.kind().id()).append(": ")
                     .append(special.plainName());
+        }
+        if (found.sharded()) {
+            line.append(" · осколки: ").append(found.shards());
         }
         if (found.barrel()) {
             line.append(" · бочка");

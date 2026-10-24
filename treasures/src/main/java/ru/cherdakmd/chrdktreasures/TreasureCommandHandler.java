@@ -81,12 +81,24 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
             // 1.4.153: активные клад-карты и подсказки по ним.
             case "map", "maps", "карта", "карты" -> maps(player);
             case "stats" -> playerStats(player, args.length > 1 ? args[1] : null);
+            // 1.4.166: обменник осколков кладов.
+            case "shards", "осколки" -> shards(player);
             case "toggle" -> toggle(player, args.length > 1 ? args[1] : null);
             default -> {
                 plugin.messages().send(player, "unknown-subcommand", "sub", args[0]);
                 yield true;
             }
         };
+    }
+
+    /** {@code /treasures shards} — баланс осколков и обменник (1.4.166). */
+    private boolean shards(Player player) {
+        if (!plugin.config().shards().enabled()) {
+            plugin.messages().send(player, "shards-disabled");
+            return true;
+        }
+        plugin.gui().openShards(player);
+        return true;
     }
 
     /** {@code /treasures map} — активные карты, направления и остаток раскопок. */
@@ -109,6 +121,7 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
         plugin.messages().send(player, "help-loot");
         plugin.messages().send(player, "help-set");
         plugin.messages().send(player, "help-map");
+        plugin.messages().send(player, "help-shards");
         plugin.messages().send(player, "help-toggle");
         plugin.messages().send(player, "help-footer");
     }
@@ -563,6 +576,32 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
                     + " выдал " + def.id() + " игроку " + target.getName());
             return true;
         }
+        if (args.length == 3 && args[0].equalsIgnoreCase("shards")) {
+            Player target = Bukkit.getPlayerExact(args[1]);
+            if (target == null) {
+                plugin.messages().send(sender, "admin-player-not-found");
+                return true;
+            }
+            int amount;
+            try {
+                amount = Integer.parseInt(args[2]);
+            } catch (NumberFormatException exception) {
+                plugin.messages().send(sender, "admin-shards-invalid");
+                return true;
+            }
+            if (amount <= 0) {
+                plugin.messages().send(sender, "admin-shards-invalid");
+                return true;
+            }
+            long balance = plugin.store().addShards(target.getUniqueId().toString(), amount);
+            plugin.messages().send(sender, "admin-shards-given",
+                    "player", target.getName(),
+                    "amount", String.valueOf(amount),
+                    "balance", String.valueOf(balance));
+            plugin.getLogger().info("[CHRDK_Treasures] " + sender.getName()
+                    + " выдал " + amount + " осколков игроку " + target.getName());
+            return true;
+        }
         if (args.length >= 2 && args[0].equalsIgnoreCase("map")) {
             if (!plugin.config().maps().enabled()) {
                 plugin.messages().send(sender, "map-disabled");
@@ -686,7 +725,7 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
             }
             if (args.length == 1) {
                 return filter(List.of("reload", "give", "reset", "resetall", "stats",
-                        "chance", "map", "info"), args[0]);
+                        "chance", "map", "shards", "info"), args[0]);
             }
             if (args.length == 2 && args[0].equalsIgnoreCase("chance")) {
                 List<String> tiers = new ArrayList<>();

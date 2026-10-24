@@ -28,10 +28,12 @@ import java.util.logging.Logger;
  * <p>Формат: {@code {"version":1,"players":{"<uuid>":{"name":"Steve",
  * "mined":123,"tiers":{"common":2},"items":{"plains-reap-hook":1},
  * "settings":{"announce":true},"milestones":[10],"streak":4,
- * "best_streak":9,"last_find":1730000000000}}}}.</p>
+ * "best_streak":9,"last_find":1730000000000,"shards":46,
+ * "shards_spent":12}}}}.</p>
  *
- * <p>Поля серии необязательны: старые файлы читаются без них, а новые поля
- * пишутся рядом — версия формата остаётся 1, ломать чужие данные не нужно.</p>
+ * <p>Поля серии и осколков необязательны: старые файлы читаются без них, а
+ * новые поля пишутся рядом — версия формата остаётся 1, ломать чужие данные не
+ * нужно.</p>
  *
  * <p>Счётчик добытых блоков — топливо прогрессии: он растёт на каждом
  * подходящем блоке, даже если клад не выпал. Число находок по редкостям нужно
@@ -57,6 +59,9 @@ public final class TreasureStore {
         public int bestStreak;
         /** Время последней находки в миллисекундах (0 — находок не было). */
         public long lastFindAt;
+        /** Осколки кладов: баланс обменника и сколько уже потрачено за всё время. */
+        public long shards;
+        public long shardsSpent;
 
         public long found() {
             long total = 0L;
@@ -139,6 +144,8 @@ public final class TreasureStore {
                         number(row.get("best_streak")));
                 player.bestStreak = Math.max(player.bestStreak, player.streak);
                 player.lastFindAt = number(row.get("last_find"));
+                player.shards = Math.max(0L, number(row.get("shards")));
+                player.shardsSpent = Math.max(0L, number(row.get("shards_spent")));
                 players.put(String.valueOf(entry.getKey()), player);
             }
             logger.info("[CHRDK_Treasures] Загружено кладоискателей: " + players.size() + ".");
@@ -194,6 +201,57 @@ public final class TreasureStore {
         return data.mined;
     }
 
+    /** Баланс осколков игрока. */
+    public synchronized long shards(String playerKey) {
+        PlayerData data = players.get(playerKey);
+        return data == null ? 0L : data.shards;
+    }
+
+    /** Сколько осколков игрок потратил за всё время. */
+    public synchronized long shardsSpent(String playerKey) {
+        PlayerData data = players.get(playerKey);
+        return data == null ? 0L : data.shardsSpent;
+    }
+
+    /**
+     * Начисляет осколки и возвращает новый баланс.
+     *
+     * <p>Идёт через то же хранилище, что и находки: баланс не может уехать
+     * дальше {@link Long#MAX_VALUE}, а отрицательное начисление игнорируется —
+     * списание делается только через {@link #takeShards(String, int)}.</p>
+     */
+    public synchronized long addShards(String playerKey, int amount) {
+        if (playerKey == null || amount <= 0) {
+            return shards(playerKey);
+        }
+        PlayerData data = data(playerKey);
+        data.shards = Math.min(Long.MAX_VALUE, data.shards + amount);
+        dirty = true;
+        return data.shards;
+    }
+
+    /**
+     * Списывает осколки, если их хватает.
+     *
+     * <p>Проверка и списание — одна синхронизированная операция: два быстрых
+     * клика в меню не могут купить одно предложение дважды.</p>
+     *
+     * @return {@code true} — покупка оплачена, баланс уменьшен
+     */
+    public synchronized boolean takeShards(String playerKey, int amount) {
+        if (playerKey == null || amount <= 0) {
+            return false;
+        }
+        PlayerData data = players.get(playerKey);
+        if (data == null || data.shards < amount) {
+            return false;
+        }
+        data.shards -= amount;
+        data.shardsSpent = Math.min(Long.MAX_VALUE, data.shardsSpent + amount);
+        dirty = true;
+        return true;
+    }
+
     /**
      * Сбрасывает прогресс игрока: добычу, находки, коллекцию, вехи и серию.
      * Имя и настройки оформления остаются — после сброса игроку не нужно
@@ -211,6 +269,8 @@ public final class TreasureStore {
         data.streak = 0;
         data.bestStreak = 0;
         data.lastFindAt = 0L;
+        data.shards = 0L;
+        data.shardsSpent = 0L;
         dirty = true;
     }
 
@@ -397,6 +457,8 @@ public final class TreasureStore {
             fields.put("streak", player.streak);
             fields.put("best_streak", player.bestStreak);
             fields.put("last_find", player.lastFindAt);
+            fields.put("shards", player.shards);
+            fields.put("shards_spent", player.shardsSpent);
             rows.put(key, fields);
         });
         data.put("players", rows);

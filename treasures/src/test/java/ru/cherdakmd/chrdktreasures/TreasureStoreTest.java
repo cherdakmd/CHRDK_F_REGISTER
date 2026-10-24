@@ -99,6 +99,46 @@ class TreasureStoreTest {
     }
 
     @Test
+    void shardsAccumulateSpendAndSurviveReload() throws Exception {
+        String player = UUID.randomUUID().toString();
+        TreasureStore store = store();
+        assertEquals(0L, store.shards(player));
+        store.addShards(player, 20);
+        store.addShards(player, 5);
+        store.addShards(player, 0);
+        store.addShards(player, -3);
+        assertEquals(25L, store.shards(player));
+        assertEquals(0L, store.shardsSpent(player));
+
+        assertFalse(store.takeShards(player, 30), "нельзя уйти в минус");
+        assertEquals(25L, store.shards(player));
+        assertTrue(store.takeShards(player, 25));
+        assertEquals(0L, store.shards(player));
+        assertEquals(25L, store.shardsSpent(player));
+        assertFalse(store.takeShards(player, 1), "пустой баланс не оплачивает покупку");
+        assertTrue(store.isDirty());
+
+        store.addShards(player, 7);
+        store.saveNow();
+        TreasureStore reloaded = store();
+        assertEquals(7L, reloaded.shards(player));
+        assertEquals(25L, reloaded.shardsSpent(player));
+    }
+
+    @Test
+    void shardsResetWithProgressButNotWithoutProfile() {
+        TreasureStore store = store();
+        String player = UUID.randomUUID().toString();
+        store.addShards(player, 40);
+        assertTrue(store.takeShards(player, 15));
+        store.reset(player);
+        assertEquals(0L, store.shards(player));
+        assertEquals(0L, store.shardsSpent(player));
+        assertEquals(0L, store.shards(UUID.randomUUID().toString()),
+                "чужой профиль не создаётся чтением");
+    }
+
+    @Test
     void milestoneIsGrantedOnce() {
         TreasureStore store = store();
         String player = UUID.randomUUID().toString();

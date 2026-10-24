@@ -94,21 +94,58 @@ public final class TreasureSpecials {
         }
         List<TreasureSpecial> notes = new ArrayList<>(2);
         if (plan.artifact()) {
-            TreasureSpecial note = artifact(plan.artifactCursed(), payload);
-            if (note != null) {
-                notes.add(note);
+            Made made = artifact(plan.artifactCursed());
+            if (made != null) {
+                payload.add(made.item());
+                notes.add(made.note());
             }
         }
         if (plan.enchant()) {
-            TreasureSpecial note = book(plan.enchantCursed(), plan.levelCap(), payload);
-            if (note != null) {
-                notes.add(note);
+            Made made = book(plan.enchantCursed(), plan.levelCap());
+            if (made != null) {
+                payload.add(made.item());
+                notes.add(made.note());
             }
         }
         return notes;
     }
 
-    private TreasureSpecial artifact(boolean cursed, List<ItemStack> payload) {
+    /* -------------------------------- обменник -------------------------------- */
+
+    /**
+     * Готовая особая находка: предмет и подпись к нему.
+     *
+     * <p>Обменнику нужен предмет без похода в добычу клада, а сообщению —
+     * человеческое имя. Пара возвращается одним значением, чтобы не выдать
+     * предмет, о котором потом нечего написать.</p>
+     *
+     * @param note подпись для сообщения/журнала
+     * @param item предмет для выдачи
+     */
+    record Made(TreasureSpecial note, ItemStack item) {
+    }
+
+    /** Есть ли светлые книги чар — иначе предложение обменника недоступно. */
+    boolean booked() {
+        ChrdkEnchantsApi api = enchants();
+        return api != null && !api.lightIds().isEmpty();
+    }
+
+    /** Случайная светлая реликвия для обменника; {@code null} — аддона нет. */
+    Made artifactFor() {
+        return artifact(false);
+    }
+
+    /** Светлая книга чар ровно указанного уровня; {@code null} — аддона нет. */
+    Made bookFor(int level) {
+        if (!booked()) {
+            return null;
+        }
+        int capped = Math.max(1, Math.min(level, 5));
+        return book(false, capped, capped);
+    }
+
+    private Made artifact(boolean cursed) {
         ChrdkArtifactsApi api = artifacts();
         if (api == null) {
             return null;
@@ -127,13 +164,23 @@ public final class TreasureSpecials {
         if (item == null) {
             return null;
         }
-        payload.add(item);
-        return new TreasureSpecial(
+        return new Made(new TreasureSpecial(
                 cursed ? TreasureSpecial.Kind.ARTIFACT_CURSED : TreasureSpecial.Kind.ARTIFACT,
-                api.name(id), 0);
+                api.name(id), 0), item);
     }
 
-    private TreasureSpecial book(boolean cursed, int levelCap, List<ItemStack> payload) {
+    /** Книга чар: уровень от 1 до {@code levelCap} (находка). */
+    private Made book(boolean cursed, int levelCap) {
+        return book(cursed, 0, levelCap);
+    }
+
+    /**
+     * Книга чар.
+     *
+     * @param exactLevel конкретный уровень (обменник) или 0 — бросить кубик
+     * @param levelCap   потолок уровня для находки
+     */
+    private Made book(boolean cursed, int exactLevel, int levelCap) {
         ChrdkEnchantsApi api = enchants();
         if (api == null) {
             return null;
@@ -149,12 +196,12 @@ public final class TreasureSpecials {
         }
         String id = pool.get(random.nextInt(pool.size()));
         int cap = Math.min(levelCap, Math.max(1, api.maxLevel(id)));
-        int level = TreasureSpecialRolls.level(cap, random);
+        int level = exactLevel > 0 ? Math.min(exactLevel, cap)
+                : TreasureSpecialRolls.level(cap, random);
         ItemStack book = api.book(id, level);
         if (book == null) {
             return null;
         }
-        payload.add(book);
-        return new TreasureSpecial(TreasureSpecial.Kind.ENCHANT, api.name(id), level);
+        return new Made(new TreasureSpecial(TreasureSpecial.Kind.ENCHANT, api.name(id), level), book);
     }
 }

@@ -27,7 +27,9 @@ import java.util.Locale;
  *   <li>{@code chance_<ид>} — шанс редкости в процентах с блока;</li>
  *   <li>{@code maps} — сколько активных клад-карт (1.4.153);</li>
  *   <li>{@code map_digs} — сколько блоков ещё копать по всем картам;</li>
- *   <li>{@code map_distance} — блоков до ближайшей карты в этом мире (пусто — нет).</li>
+ *   <li>{@code map_distance} — блоков до ближайшей карты в этом мире (пусто — нет);</li>
+ *   <li>{@code shards} / {@code shards_spent} — баланс осколков кладов и сколько
+ *       уже потрачено в обменнике (1.4.166).</li>
  * </ul>
  */
 public final class TreasurePlaceholders extends PlaceholderExpansion {
@@ -83,6 +85,9 @@ public final class TreasurePlaceholders extends PlaceholderExpansion {
                         plugin.store().streak(player.getUniqueId().toString()));
                 case "best_streak" -> Integer.toString(
                         plugin.store().bestStreak(player.getUniqueId().toString()));
+                case "shards" -> Long.toString(plugin.store().shards(player.getUniqueId().toString()));
+                case "shards_spent" -> Long.toString(
+                        plugin.store().shardsSpent(player.getUniqueId().toString()));
                 // Карты лежат в инвентаре: без онлайна их просто не прочитать.
                 case "maps", "map_digs", "map_distance" -> "0";
                 default -> "";
@@ -97,6 +102,8 @@ public final class TreasurePlaceholders extends PlaceholderExpansion {
                     "rank." + service.rank(online).id());
             case "streak" -> Integer.toString(service.streak(online));
             case "best_streak" -> Integer.toString(service.bestStreak(online));
+            case "shards" -> Long.toString(service.shards(online));
+            case "shards_spent" -> Long.toString(service.shardsSpent(online));
             case "streak_left" -> Long.toString(service.streakRemaining(online) / 1000L);
             case "next" -> Long.toString(service.blocksToNextTier(online));
             case "maps" -> Integer.toString(plugin.maps().activeCount(online));
