@@ -28,11 +28,24 @@ class GuildStoreTest {
     private static final UUID LEADER = UUID.fromString("00000000-0000-0000-0000-0000000000a1");
     private static final UUID MEMBER = UUID.fromString("00000000-0000-0000-0000-0000000000b2");
     private static final UUID OTHER = UUID.fromString("00000000-0000-0000-0000-0000000000c3");
+    private static final UUID RIVAL = UUID.fromString("00000000-0000-0000-0000-0000000000d4");
+    private static final UUID RIVAL_MEMBER = UUID.fromString("00000000-0000-0000-0000-0000000000e5");
+    private static final UUID INVITEE = UUID.fromString("00000000-0000-0000-0000-0000000000f6");
     private static final long NOW = 1_792_000_000_000L;
 
     private static Guild guild(String id, String name, String tag) {
         Guild guild = new Guild(id, name, tag, LEADER, NOW);
         guild.addMember(MEMBER, GuildRank.MEMBER);
+        return guild;
+    }
+
+    /**
+     * Вторая гильдия со своим составом. Общий лидер у двух гильдий невозможен:
+     * при загрузке такая запись потеряла бы участников и считалась бы брошенной.
+     */
+    private static Guild secondGuild() {
+        Guild guild = new Guild("g2", "Второй", "TWO", RIVAL, NOW);
+        guild.addMember(RIVAL_MEMBER, GuildRank.MEMBER);
         return guild;
     }
 
@@ -98,21 +111,21 @@ class GuildStoreTest {
     void invitesAreUniquePerPlayerAndExpire(@TempDir Path dir) {
         GuildStore store = new GuildStore(dir, LOGGER);
         store.add(guild("g1", "Орден", "ORD"));
-        store.add(guild("g2", "Второй", "TWO"));
-        store.addInvite(new GuildInvite("g1", "Орден", OTHER, LEADER, NOW, NOW + 60_000));
-        store.addInvite(new GuildInvite("g2", "Второй", OTHER, LEADER, NOW, NOW + 60_000));
-        assertEquals("g2", store.inviteOf(OTHER).guildId(), "новое приглашение заменяет старое");
+        store.add(secondGuild());
+        store.addInvite(new GuildInvite("g1", "Орден", INVITEE, LEADER, NOW, NOW + 60_000));
+        store.addInvite(new GuildInvite("g2", "Второй", INVITEE, RIVAL, NOW, NOW + 60_000));
+        assertEquals("g2", store.inviteOf(INVITEE).guildId(), "новое приглашение заменяет старое");
         assertEquals(0, store.pruneInvites(NOW + 1_000));
         assertEquals(1, store.pruneInvites(NOW + 61_000));
-        assertNull(store.inviteOf(OTHER));
-        assertFalse(store.removeInvite(OTHER), "удалять нечего");
+        assertNull(store.inviteOf(INVITEE));
+        assertFalse(store.removeInvite(INVITEE), "удалять нечего");
     }
 
     @Test
     void warLifecycle(@TempDir Path dir) {
         GuildStore store = new GuildStore(dir, LOGGER);
         store.add(guild("g1", "Орден", "ORD"));
-        store.add(guild("g2", "Второй", "TWO"));
+        store.add(secondGuild());
         GuildWar war = new GuildWar("w1", "g1", "g2", 64, NOW);
         store.addWar(war);
         store.addWar(war);
@@ -143,11 +156,11 @@ class GuildStoreTest {
         guild.addGlory(50);
         guild.recordWarWin();
         store.add(guild);
-        store.addInvite(new GuildInvite("g1", "Орден", OTHER, LEADER, NOW, NOW + 60_000));
+        store.addInvite(new GuildInvite("g1", "Орден", INVITEE, LEADER, NOW, NOW + 60_000));
         GuildWar war = new GuildWar("w1", "g1", "g2", 64, NOW);
         war.activate(NOW, 600);
-        war.addKill("g1", LEADER, MEMBER, false, NOW, 0L);
-        store.add(guild("g2", "Второй", "TWO"));
+        war.addKill("g1", LEADER, RIVAL_MEMBER, false, NOW, 0L);
+        store.add(secondGuild());
         store.addWar(war);
         store.closeWar(new GuildWar("old", "g1", "g2", 32, NOW), "Орден");
         store.saveNow();
@@ -165,8 +178,8 @@ class GuildStoreTest {
         assertEquals(50, back.glory());
         assertEquals(1, back.warsWon());
         assertEquals(GuildRank.MEMBER, back.rankOf(MEMBER));
-        assertNotNull(loaded.inviteOf(OTHER));
-        assertEquals(NOW + 60_000, loaded.inviteOf(OTHER).expiresAt());
+        assertNotNull(loaded.inviteOf(INVITEE));
+        assertEquals(NOW + 60_000, loaded.inviteOf(INVITEE).expiresAt());
         assertEquals(1, loaded.wars().size());
         GuildWar loadedWar = loaded.wars().get(0);
         assertTrue(loadedWar.active());

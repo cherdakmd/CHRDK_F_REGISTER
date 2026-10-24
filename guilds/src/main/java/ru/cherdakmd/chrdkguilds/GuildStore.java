@@ -283,12 +283,12 @@ final class GuildStore {
     }
 
     synchronized Guild byTag(String tag) {
-        String key = GuildMath.tag(tag);
+        String key = GuildMath.key(tag);
         if (key.isEmpty()) {
             return null;
         }
         for (Guild guild : guilds.values()) {
-            if (guild.tag().equals(key)) {
+            if (GuildMath.key(guild.tag()).equals(key)) {
                 return guild;
             }
         }

@@ -78,6 +78,6 @@ class GuildMathTest {
     void keysAreCaseInsensitive() {
         assertEquals("орден", GuildMath.key("  Орден "));
         assertEquals("", GuildMath.key(null));
-        assertEquals("AB", GuildMath.tag(" ab "));
+        assertEquals("AB", Guild.cleanTag(" ab "), "тег приводится к заглавным в модели");
     }
 }

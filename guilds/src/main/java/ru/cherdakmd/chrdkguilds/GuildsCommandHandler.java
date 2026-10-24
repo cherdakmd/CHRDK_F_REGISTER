@@ -81,7 +81,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
             case "info" -> info(sender, args);
             case "top" -> top(sender, args);
             case "members" -> members(sender);
-            case "chat" -> chat(sender, args.length > 1
+            case "chat" -> chatFrom(sender, args.length > 1
                     ? Arrays.copyOfRange(args, 1, args.length) : new String[0]);
             case "war" -> war(sender, args);
             case "rename" -> rename(sender, args);
@@ -546,6 +546,12 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
     }
 
     /* --------------------------------- гильдейский чат ------------------------- */
+
+    /** Вход из общей команды: {@code /guild chat} из консоли отвечает, а не падает. */
+    private boolean chatFrom(CommandSender sender, String[] args) {
+        Player player = player(sender);
+        return player == null || chat(player, args);
+    }
 
     private boolean chat(Player player, String[] args) {
         Guild guild = plugin.service().guildOf(player.getUniqueId());

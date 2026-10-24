@@ -326,11 +326,12 @@ class GuildServiceTest {
         assertEquals("II", result.args().get(1));
         assertEquals("14", result.args().get(3));
 
-        guild.deposit(1_000);
+        guild.deposit(2_000);
         service.upgrade(LEADER);
         service.upgrade(LEADER);
         service.upgrade(LEADER);
         assertEquals(GuildMath.MAX_LEVEL, guild.level());
+        assertEquals(656L, guild.treasury(), "192 + 384 + 768 ушли из казны");
         assertEquals("upgrade-max", service.upgrade(LEADER).key());
     }
 
@@ -367,7 +368,8 @@ class GuildServiceTest {
         assertEquals("war-busy", service.declareWar(LEADER, "Риваль", 64, NOW).key());
 
         assertEquals("war-accept-target-only", service.acceptWar(LEADER, NOW).key());
-        assertEquals("war-target-busy", service.declareWar(RIVAL, "Орден", 64, NOW).key());
+        assertEquals("war-busy", service.declareWar(RIVAL, "Орден", 64, NOW).key(),
+                "гильдия уже участвует в войне");
         assertEquals("war-accept-none", service.declineWar(LEADER, NOW).key(),
                 "объявившая сторона не может отклонить собственную войну");
 
@@ -434,7 +436,7 @@ class GuildServiceTest {
         service.acceptWar(RIVAL, NOW);
         GuildResult surrender = service.surrenderWar(LEADER, NOW + 5_000);
         assertTrue(surrender.ok(), surrender.key());
-        assertEquals("Риваль", surrender.args().get(3));
+        assertEquals("Риваль [RIV]", surrender.args().get(3), "в тексте видно тег гильдии");
         assertEquals(1, service.guildOf(RIVAL).warsWon());
     }
 
