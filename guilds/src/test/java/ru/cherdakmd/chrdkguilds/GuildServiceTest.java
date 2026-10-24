@@ -40,7 +40,7 @@ class GuildServiceTest {
 
         Purse put(UUID player, long amount) {
             balance.put(player, amount);
-            return 0;
+            return this;
         }
 
         @Override
