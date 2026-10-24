@@ -114,10 +114,16 @@ python3 localize.py build \
 
 Владелец репозитория подтвердил публикацию, поэтому перевод выложен:
 
-- прямой ZIP: `https://github.com/cherdakmd/CHRDK_F_REGISTER/raw/refs/heads/arena/faecfc92-chrdk-f-register/datapack-ru/mine-treasure-1.6.5-ru.zip`
+- прямая ссылка на ассет релиза:
+  `https://github.com/cherdakmd/CHRDK_F_REGISTER/releases/download/mine-treasure-ru-1.6.5/mine-treasure-1.6.5-ru.zip`
 - страница релиза: `https://github.com/cherdakmd/CHRDK_F_REGISTER/releases/tag/mine-treasure-ru-1.6.5`
-  (в описании релиза указаны автор, ссылки на оригинал и SHA-256).
+  (в описании указаны автор, ссылки на оригинал и SHA-256);
+- дублирующая raw-ссылка на файл в ветке:
+  `https://github.com/cherdakmd/CHRDK_F_REGISTER/raw/refs/heads/arena/faecfc92-chrdk-f-register/datapack-ru/mine-treasure-1.6.5-ru.zip`
 
-Ассет не прикреплён напрямую к релизу: `uploads.github.com` закрыт исходящим
-фаерволом песочницы, поэтому файл лежит в этой ветке и скачивается по raw-ссылке.
+Ассет прикрепляется воркфлоу `.github/workflows/publish-datapack-ru.yml`: из песочницы
+`uploads.github.com` закрыт фаерволом, поэтому загрузку выполняет раннер GitHub.
+Перед выкладкой воркфлоу сверяет SHA-256 и целостность ZIP. Триггер — изменение
+`datapack-ru/.publish-asset` или `workflow_dispatch`.
+
 Если разрешение будет отозвано — удалите релиз и выпилите ZIP из истории ветки.
