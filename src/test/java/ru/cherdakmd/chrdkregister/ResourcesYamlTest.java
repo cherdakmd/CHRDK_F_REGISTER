@@ -23,7 +23,7 @@ class ResourcesYamlTest {
             "", "achievements", "artifacts", "auction", "battlepass", "bosses", "claims", "common-goals",
             "classes", "cosmetics", "daily-rewards", "diamond-shop", "enchants", "events", "guilds",
             "hunt", "lottery",
-            "orders", "party", "pets", "quests",
+            "orders", "party", "pets", "professions", "quests",
             "queue",
             "ranks", "referrals", "skills", "streams", "teleports", "tier-forge", "treasures");
 

@@ -45,3 +45,4 @@ include 'bosses'
 
 include 'guilds'
 include 'classes'
+include 'professions'

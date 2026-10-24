@@ -2433,6 +2433,117 @@ lines)`. `ProfileContext` несёт UUID, ник, признак «онлайн
 `unregisterProfile`.
 
 
+## Аддон CHRDK_Professions — профессии ремесленника (1.4.165)
+
+Профессия — не вторая прокачка и не класс: она не даёт ни урона, ни брони, ни
+монет. Она решает, за какую работу игрок получает опыт и какая тихая прибавка у
+него включена. Сила по-прежнему только прокачивается, а профессия возвращает
+время и материалы: скидку на наковальню, лишнюю склянку, сытную еду и второй
+блок при плавке.
+
+### Как это работает
+
+- **Четыре ремесла.** Кузнец (`smith`), алхимик (`alchemist`), повар (`cook`) и
+  камнерез (`mason`). Выбор бесплатный; сменить ремесло можно раз в
+  `general.choose-cooldown-hours` (24 часа). Опыт прежнего сохраняется — вернуться
+  и продолжить выгоднее, чем начинать заново, иначе интерес к другому ремеслу
+  наказывался бы потерей прогресса.
+- **Опыт за честную работу.** Он начисляется только по событиям, которые нельзя
+  подделать клиентом: крафт в верстаке, выплавка из печи и завершённая варка.
+  Таблицы лежат в `ProfessionCatalog`: кузнец — инструменты, броня, металл и
+  механизмы (1..14 опыта за предмет), алхимик — зелья, склянки и реагенты (1..8,
+  плюс 8 за варку), повар — еда и выпечка (1..20), камнерез — камень, кирпич,
+  стекло и обжиг (1..4). Шифт-крафт даёт опыт за один результат рецепта (как
+  достижения и боевой пропуск), креатив не считается, чужое ремесло опыта не
+  получает.
+- **Уровни и ранги.** 25 уровней: 120 опыта на второй, дальше каждый следующий
+  дороже на 60, полный путь — 19 440 опыта. Уровень выводится из накопленного
+  опыта, а не хранится отдельно, поэтому «в файле 12-й, а опыта на 9-й»
+  невозможно. Ранги: новичок (1–4), подмастерье (5–9), мастер (10–19), магистр
+  (20–25).
+- **Суточный потолок.** `general.daily-xp-cap` (1200 опыта) считается по UTC,
+  чтобы смена суток не зависела от часового пояса сервера; `0` выключает
+  потолок. Об упор в потолок игрок узнаёт один раз в день, а не на каждое
+  действие, — иначе сообщение превращалось бы в спам.
+- **Четыре тихие прибавки, все с потолками.** Кузнец платит меньше уровней в
+  наковальне: 2 % за уровень, не выше 40 %. Алхимик получает шанс на лишнюю
+  склянку в свободном слоте стойки: 1 % за уровень, не выше 20 %. Повар ест
+  сытнее: +1 к насыщению с 10-го уровня и +2 с 20-го. Камнерез получает второй
+  блок при плавке: 1 % за уровень, не выше 15 %. Ни одна прибавка не выдаёт
+  алмазы, незерит или монеты.
+- **Никакой экономики.** Профессия не продаёт силу и не покупается за валюту:
+  скидка экономит уровни опыта наковальни, лишняя склянка — материал, второй
+  блок — время. Это то же правило, что у классов и гильдий, — платное
+  преимущество остаётся косметикой.
+
+### Команды
+
+| Команда | Что делает |
+|---|---|
+| `/prof` или `/prof menu` | меню: текущее ремесло и четыре карточки |
+| `/prof choose <ремесло>` | выбрать или сменить ремесло |
+| `/prof info [ремесло]` | карточка: уровень, ранг, прибавка, остаток на сегодня |
+| `/prof stats` | уровни всех четырёх ремёсел |
+| `/prof top` | сколько игроков выбрали каждое ремесло |
+| `/prof help` | справка по командам и потолкам |
+| `/profadmin reload` | перечитать `config.yml` и `messages.yml` |
+| `/profadmin info <ник>` | ремесло, уровень и опыт игрока |
+| `/profadmin set <ник> <ремесло>` | выдать ремесло в обход кулдауна |
+| `/profadmin xp <ник> <ремесло> <кол-во>` | начислить опыт без суточного потолка |
+| `/profadmin reset <ник>` | стереть ремесло, опыт и суточные счётчики |
+
+### Права
+
+| Право | По умолчанию | Описание |
+|---|---|---|
+| `chrdkprofessions.use` | все | `/prof`: выбор, карточки, меню |
+| `chrdkprofessions.admin` | OP | `/profadmin`: перезагрузка, выдача и сброс |
+
+### PlaceholderAPI
+
+Мягкая интеграция: `%chrdkprofessions_enabled%`, `%chrdkprofessions_count%`
+(сколько игроков выбрали ремесло), `%chrdkprofessions_count_smith%` и так же для
+остальных, `%chrdkprofessions_profession%`, `%chrdkprofessions_profession_id%`,
+`%chrdkprofessions_level%`, `%chrdkprofessions_rank%`, `%chrdkprofessions_xp%`,
+`%chrdkprofessions_next%`, `%chrdkprofessions_percent%`,
+`%chrdkprofessions_total%`, `%chrdkprofessions_perk%`,
+`%chrdkprofessions_daily_left%`, `%chrdkprofessions_cooldown%`. У игрока без
+ремесла и у нулевых прибавок — пустая строка, а не `0`, чтобы условия в
+скорбордах не срабатывали ложно.
+
+### Конфиг
+
+- `general`: `enabled`, `locale`, `actionbar`, `join-hint`,
+  `daily-xp-cap` (0..100000), `choose-cooldown-hours` (0..720),
+  `xp-multiplier` (0.1..5.0).
+- `perks`: общий `enabled` и четыре выключателя — `smith-anvil-discount`,
+  `alchemist-extra-bottle`, `cook-saturation`, `mason-extra-block`. Выключенная
+  прибавка оставляет опыт и уровни, но снимает скидки: удобно проверить
+  подозрительную добычу, не удаляя прогресс игроков.
+
+Таблицы опыта и потолки прибавок живут в коде (`ProfessionCatalog`,
+`ProfessionMath`): конфиг управляет темпом, а не балансом, и его опечатка не
+может выдать лишние проценты скидки или отключить суточный потолок незаметно.
+
+### Установка
+
+Рядом с ядром положить `chrdk-professions-1.4.165.jar`; зависимость —
+`CHRDK_Core`, необязательная — `PlaceholderAPI`. Конфиг и тексты создаются при
+первом запуске; ремесло, опыт и суточные счётчики лежат в
+`plugins/CHRDK_Professions/professions.json` (асинхронная атомарная запись через
+`.tmp`), поэтому перезапуск ничего не теряет. Битые записи файла пропускаются:
+неизвестное ремесло снимается при чтении, а не ломает загрузку.
+
+### Тесты
+
+`ProfessionMathTest` (кривая, ранги, потолки, форматы времени),
+`ProfessionCatalogTest` (таблицы крафта, плавки и варки, чужие предметы,
+только для чтения), `ProfessionConfigTest` (умолчания, клампы, выключатели),
+`ProfessionServiceTest` (выбор, кулдаун, суточный потолок, уровни, прибавки,
+админские команды), `ProfessionStoreTest` (сохранение, битый файл, потолок
+опыта) и `ProfessionTextTest` (иды → имена, ранги, прибавки).
+
+
 ## Аддон CHRDK_Classes — классы и дерево талантов (1.4.164)
 
 Класс не открывает вторую прокачку. Он меняет то, как игрок держится в бою, и
@@ -2684,38 +2795,40 @@ lines)`. `ProfileContext` несёт UUID, ник, признак «онлайн
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.164.jar`,
-аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.164.jar`,
-реферальный — `referrals/build/libs/chrdk-referrals-1.4.164.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.164.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.164.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.164.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.164.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.164.jar` (хартия чар — при установленном аддоне чар),
-достижения — `achievements/build/libs/chrdk-achievements-1.4.164.jar`, навыки —
-`skills/build/libs/chrdk-skills-1.4.164.jar`, клады —
-`treasures/build/libs/chrdk-treasures-1.4.164.jar`, общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.164.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.164.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.164.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.164.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.164.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.164.jar`, стримерская программа —
-`streams/build/libs/chrdk-streams-1.4.164.jar`, лотерея —
-`lottery/build/libs/chrdk-lottery-1.4.164.jar`, аукцион —
-`auction/build/libs/chrdk-auction-1.4.164.jar`, питомцы —
-`pets/build/libs/chrdk-pets-1.4.164.jar`, заказы —
-`orders/build/libs/chrdk-orders-1.4.164.jar`, охота —
-`hunt/build/libs/chrdk-hunt-1.4.164.jar`, группы —
-`party/build/libs/chrdk-party-1.4.164.jar`, события —
-`events/build/libs/chrdk-events-1.4.164.jar`, задания —
-`quests/build/libs/chrdk-quests-1.4.164.jar`, боссы —
-`bosses/build/libs/chrdk-bosses-1.4.164.jar`, гильдии —
-`guilds/build/libs/chrdk-guilds-1.4.164.jar`, классы —
-`classes/build/libs/chrdk-classes-1.4.164.jar`. На сервер ядро обязательно, аддоны — по желанию
-(требуют ядро 1.4.6+). К релизу на GitHub прикладывается **один архив**
-`chrdk-plugins-<версия>.zip`: ядро и все 28 аддонов одной версии (29 JAR) плюс памятка
-`ОБНОВЛЕНИЕ.txt`. Отдельные JAR больше не публикуются.
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.165.jar`,
+аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.165.jar`,
+реферальный — `referrals/build/libs/chrdk-referrals-1.4.165.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.165.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.165.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.165.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.165.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.165.jar` (хартия чар — при установленном аддоне чар),
+достижения — `achievements/build/libs/chrdk-achievements-1.4.165.jar`, навыки —
+`skills/build/libs/chrdk-skills-1.4.165.jar`, клады —
+`treasures/build/libs/chrdk-treasures-1.4.165.jar`, общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.165.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.165.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.165.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.165.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.165.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.165.jar`, стримерская программа —
+`streams/build/libs/chrdk-streams-1.4.165.jar`, лотерея —
+`lottery/build/libs/chrdk-lottery-1.4.165.jar`, аукцион —
+`auction/build/libs/chrdk-auction-1.4.165.jar`, питомцы —
+`pets/build/libs/chrdk-pets-1.4.165.jar`, заказы —
+`orders/build/libs/chrdk-orders-1.4.165.jar`, охота —
+`hunt/build/libs/chrdk-hunt-1.4.165.jar`, группы —
+`party/build/libs/chrdk-party-1.4.165.jar`, события —
+`events/build/libs/chrdk-events-1.4.165.jar`, задания —
+`quests/build/libs/chrdk-quests-1.4.165.jar`, боссы —
+`bosses/build/libs/chrdk-bosses-1.4.165.jar`, гильдии —
+`guilds/build/libs/chrdk-guilds-1.4.165.jar`, классы —
+`classes/build/libs/chrdk-classes-1.4.165.jar`, профессии —
+`professions/build/libs/chrdk-professions-1.4.165.jar`. На сервер ядро
+обязательно, аддоны — по желанию (требуют ядро 1.4.6+). К релизу на GitHub
+прикладывается **один архив** `chrdk-plugins-<версия>.zip`: ядро и все 29 аддонов
+одной версии (30 JAR) плюс памятка `ОБНОВЛЕНИЕ.txt`. Отдельные JAR больше не
+публикуются.
 
 ---
 
@@ -2749,6 +2862,15 @@ lines)`. `ProfileContext` несёт UUID, ник, признак «онлайн
 (клады) — просто положите все JAR-ы из архива; недостающие создадутся при
 запуске. Ядро и аддоны должны быть **одной версии**: смешивать JAR-ы из разных
 релизов нельзя.
+
+Обновление до 1.4.165: в архиве появился новый аддон `CHRDK_Professions` —
+четыре ремесла и тихие прибавки к работе. Он необязателен: без него остальные
+модули работают как раньше. Конфиг и `messages.yml` создаются при первом
+запуске, прогресс лежит в `plugins/CHRDK_Professions/professions.json` и при
+обновлении не теряется. Профессия не даёт ни урона, ни брони, ни монет: опыт
+идёт за крафт, плавку и варку, а прибавки зажаты потолками — скидка на
+наковальню 40 %, лишняя склянка 20 %, второй блок 15 %, насыщение +2. Рядом
+`CHRDK_Classes` не нужен, `PlaceholderAPI` — по желанию.
 
 Обновление до 1.4.164: в архиве появился новый аддон `CHRDK_Classes` — классы
 с деревом талантов. Он необязателен: без него остальные модули работают как
