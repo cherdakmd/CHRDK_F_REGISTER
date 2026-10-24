@@ -97,7 +97,7 @@ class EventModelTest {
         assertEquals("00:05", EventText.clock(5));
         assertEquals("04:35", EventText.clock(275));
         assertEquals("1:00:00", EventText.clock(3_600));
-        assertEquals("10:05", EventText.clock(-5), "отрицательное время — ноль");
+        assertEquals("00:00", EventText.clock(-5), "отрицательное время — ноль");
 
         assertEquals("45 с", EventText.duration(45));
         assertEquals("5 мин", EventText.duration(300));

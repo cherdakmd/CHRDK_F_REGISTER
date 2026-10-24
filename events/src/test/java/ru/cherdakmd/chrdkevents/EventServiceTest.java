@@ -170,8 +170,12 @@ class EventServiceTest {
         service.stop(due + 1_000L);
         assertNull(EventPicker.pick(List.of(only), service.cooldowns(), due + 2_000L,
                 new Random(1)));
-        assertNull(service.tryStart(due + 2_000L, 5));
-        assertEquals(due + 2_000L + EventService.RETRY_MILLIS, service.nextAt());
+        // Расписание сдвигаем в прошлое: иначе tryStart откажется по времени и не
+        // дойдёт до выбора события.
+        long retryAt = due + 2_000L + 600_000L;
+        service.planNext(due + 2_000L);
+        assertNull(service.tryStart(retryAt, 5));
+        assertEquals(retryAt + EventService.RETRY_MILLIS, service.nextAt());
     }
 
     @Test
