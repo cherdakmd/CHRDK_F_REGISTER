@@ -38,3 +38,5 @@ include 'hunt'
 include 'party'
 
 include 'events'
+
+include 'quests'

@@ -1,0 +1,26 @@
+name: CHRDK_Quests
+version: ${version}
+main: ru.cherdakmd.chrdkquests.QuestsPlugin
+api-version: '26.3'
+description: Задания персонажей, цепочки и фракции с репутацией.
+authors: [cherdakmd]
+website: https://github.com/cherdakmd/CHRDK_F_REGISTER
+depend: [CHRDK_Core]
+softdepend: [PlaceholderAPI]
+commands:
+  quests:
+    description: Меню заданий, список, сдача и фракции.
+    usage: /quests [menu|list|info|claim|join|leave|faction]
+    aliases: [quest, zadaniya]
+    permission: chrdkquests.use
+  questsadmin:
+    description: Управление заданиями и репутацией.
+    usage: /questsadmin <reload|info|grant|reset|complete>
+    permission: chrdkquests.admin
+permissions:
+  chrdkquests.use:
+    description: Смотреть задания и сдавать их.
+    default: true
+  chrdkquests.admin:
+    description: Перезагрузка, выдача репутации и сброс прогресса.
+    default: op
