@@ -68,7 +68,7 @@ public final class ProfessionCatalog {
                 Material.HOPPER, Material.CAULDRON, Material.SHEARS,
                 Material.FLINT_AND_STEEL, Material.CROSSBOW, Material.CLOCK);
         craft(Profession.SMITH, 3, Material.BUCKET, Material.LANTERN, Material.SOUL_LANTERN);
-        craft(Profession.SMITH, 2, Material.IRON_BARS, Material.CHAIN);
+        craft(Profession.SMITH, 2, Material.IRON_BARS, Material.IRON_CHAIN);
         craft(Profession.SMITH, 1, Material.RAIL);
         smelt(Profession.SMITH, 3, Material.IRON_INGOT, Material.GOLD_INGOT);
         smelt(Profession.SMITH, 4, Material.NETHERITE_SCRAP);
