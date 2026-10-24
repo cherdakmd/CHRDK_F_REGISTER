@@ -10,6 +10,9 @@ permissions:
 jobs:
   build-and-upload:
     name: Build JAR and attach to release
+    # Only plugin releases are tagged `v1.4.x`. Skip unrelated releases
+    # (e.g. the translated datapack), otherwise the version check fails.
+    if: startsWith(github.event.release.tag_name, 'v')
     runs-on: ubuntu-latest
     steps:
       - name: Check out tagged source
