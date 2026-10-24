@@ -86,7 +86,7 @@ class EventModelTest {
         WorldEvent event = new WorldEvent("e", "E", "", EventKind.EFFECT, 300, 10, 0, 0,
                 List.of(), List.of(),
                 List.of(new WorldEvent.Effect("speed", 0, 30),
-                        new WorldEvent.Effect("haste", 0, 120)), List.of(), Material.CLOCK);
+                        new WorldEvent.Effect("haste", 0, 120)), Material.CLOCK);
         assertEquals(120, event.longestEffectSeconds());
         assertEquals(0, xp(10, 100, 1).longestEffectSeconds());
     }
