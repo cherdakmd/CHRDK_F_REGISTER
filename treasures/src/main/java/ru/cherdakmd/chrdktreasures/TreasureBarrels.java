@@ -627,7 +627,7 @@ public final class TreasureBarrels implements Listener {
     }
 
     /** Убирает бочку: сначала забирает содержимое, потом ставит воздух. */
-    private void remove(Block block, boolean drop, boolean notifyOwner) {
+    private void remove(Block block, boolean deliver, boolean notifyOwner) {
         Key key = key(block);
         TreasureBarrel model = live.remove(key);
         opened.remove(key);
@@ -641,18 +641,22 @@ public final class TreasureBarrels implements Listener {
         Location center = block.getLocation().add(0.5, 0.5, 0.5);
         World world = block.getWorld();
         block.setType(Material.AIR, false);
-        if (drop) {
+        Player owner = model == null ? null : Bukkit.getPlayer(model.owner());
+        if (deliver && !contents.isEmpty()) {
+            if (owner != null) {
+                // 1.4.166: за пятнадцать секунд до игрока могло не дойти —
+                // добыча возвращается в инвентарь, а не исчезает насовсем.
+                plugin.treasures().givePayload(owner, contents);
+                contents = List.of();
+            }
             for (ItemStack stack : contents) {
                 world.dropItemNaturally(center, stack);
             }
         }
-        if (notifyOwner && model != null) {
-            Player owner = Bukkit.getPlayer(model.owner());
-            if (owner != null) {
-                plugin.messages().send(owner, "barrel-expired",
-                        "tier", Messages.trusted(plugin.messages().raw(
-                                "tier." + model.tier().id())));
-            }
+        if (notifyOwner && model != null && owner != null) {
+            plugin.messages().send(owner, "barrel-expired",
+                    "tier", Messages.trusted(plugin.messages().raw(
+                            "tier." + model.tier().id())));
         }
     }
 

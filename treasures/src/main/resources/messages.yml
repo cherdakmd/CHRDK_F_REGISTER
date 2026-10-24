@@ -647,7 +647,7 @@ messages:
   barrel-locked: "<red>Бочка с кладом принадлежит</red> <white>%player%</white><red>.</red>"
   barrel-limit: "<yellow>У тебя уже %max% бочек с кладом.</yellow> <gray>Забери добычу из старой — тогда появится новая.</gray>"
   barrel-expiring: "<yellow>Бочка с кладом исчезнет через %seconds% сек. — забери добычу!</yellow>"
-  barrel-expired: "<gray>Бочка с кладом %tier% исчезла — добыча высыпалась на землю.</gray>"
+  barrel-expired: "<gray>Бочка с кладом %tier% исчезла — добыча вернулась к тебе.</gray>"
   barrel-fallback: "<yellow>Бочку поставить не удалось</yellow> <gray>— добыча выдана в инвентарь.</gray>"
   menu-maps-name: "<gold>Клад-карты</gold>"
   menu-maps-lore: "<gray>Активных: <white>%count%</white></gray>"
