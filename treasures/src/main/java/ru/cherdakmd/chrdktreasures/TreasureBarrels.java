@@ -75,8 +75,11 @@ public final class TreasureBarrels implements Listener {
     private static final int MAX_LIVE = 4_096;
     /** Сколько позиций пробуем, прежде чем выдать клад в инвентарь. */
     private static final int MAX_PLACES = 3;
-    private static final long SWEEP_TICKS = 200L;
+    /** Раз в секунду: бочка живёт 15 секунд, и уборка должна успевать. */
+    private static final long SWEEP_TICKS = 20L;
     private static final long LID_FLICK_TICKS = 8L;
+    /** За сколько до исчезновения предупредить владельца. */
+    private static final long EXPIRE_WARN_MILLIS = 5_000L;
 
     private record Key(UUID world, int x, int y, int z) {
     }
@@ -92,6 +95,8 @@ public final class TreasureBarrels implements Listener {
     private final Set<Key> opened = ConcurrentHashMap.newKeySet();
     /** Бочки, у которых уже запланирована уборка после опустошения. */
     private final Set<Key> scheduled = ConcurrentHashMap.newKeySet();
+    /** Кому уже сказали, что бочка вот-вот исчезнет. */
+    private final Set<Key> warned = ConcurrentHashMap.newKeySet();
     /** Индекс на диске: срок жизни и лимит должны пережить перезапуск. */
     private final Path indexPath;
     private final AtomicBoolean dirty = new AtomicBoolean();
@@ -581,7 +586,7 @@ public final class TreasureBarrels implements Listener {
         }, delay);
     }
 
-    /** Раз в десять секунд убирает просроченные бочки в загруженных чанках. */
+    /** Раз в секунду предупреждает о скором исчезновении и убирает просроченные бочки. */
     private void sweep() {
         TreasuresConfig.Barrels settings = plugin.config().barrels();
         long ttl = settings.expireMillis();
@@ -591,10 +596,19 @@ public final class TreasureBarrels implements Listener {
         long now = System.currentTimeMillis();
         for (Map.Entry<Key, TreasureBarrel> entry : live.entrySet()) {
             TreasureBarrel model = entry.getValue();
-            if (!model.expired(now, ttl)) {
+            Key key = entry.getKey();
+            long left = ttl - (now - model.createdAt());
+            if (left > 0L) {
+                if (left > EXPIRE_WARN_MILLIS || !warned.add(key)) {
+                    continue;
+                }
+                Player owner = Bukkit.getPlayer(model.owner());
+                if (owner != null) {
+                    plugin.messages().send(owner, "barrel-expiring",
+                            "seconds", String.valueOf(Math.max(1L, (left + 999L) / 1000L)));
+                }
                 continue;
             }
-            Key key = entry.getKey();
             World world = Bukkit.getWorld(key.world());
             if (world == null || !world.isChunkLoaded(key.x() >> 4, key.z() >> 4)) {
                 continue;
@@ -602,6 +616,10 @@ public final class TreasureBarrels implements Listener {
             Block block = world.getBlockAt(key.x(), key.y(), key.z());
             if (block.getType() != Material.BARREL) {
                 forget(block);
+                continue;
+            }
+            // Игрок как раз забирает добычу — не выдёргиваем бочку из-под рук.
+            if (isViewed(block)) {
                 continue;
             }
             remove(block, settings.dropOnExpire(), true);
@@ -614,6 +632,8 @@ public final class TreasureBarrels implements Listener {
         TreasureBarrel model = live.remove(key);
         opened.remove(key);
         scheduled.remove(key);
+        warned.remove(key);
+        touch();
         List<ItemStack> contents = drain(block);
         if (plugin.config().barrels().animation()) {
             animateRemove(block);
@@ -644,6 +664,7 @@ public final class TreasureBarrels implements Listener {
         }
         opened.remove(key);
         scheduled.remove(key);
+        warned.remove(key);
     }
 
     private static List<ItemStack> drain(Block block) {

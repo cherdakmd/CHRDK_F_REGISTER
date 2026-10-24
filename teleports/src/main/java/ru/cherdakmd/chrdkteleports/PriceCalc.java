@@ -3,6 +3,10 @@ package ru.cherdakmd.chrdkteleports;
 /**
  * Итоговая стоимость телепорта: vip-скидка в процентах, округление в пользу игрока
  * (базовое целочисленное деление). Чистая функция.
+ *
+ * <p>Скидка режет цену, но не обнуляет её: платный телепорт стоит минимум один
+ * алмаз. Иначе 50 % от одного алмаза превращали переход в бесплатный, и скидка
+ * проходки работала как «телепорт за так».</p>
  */
 public final class PriceCalc {
 
@@ -17,6 +21,8 @@ public final class PriceCalc {
             return cost;
         }
         int clamped = Math.min(discountPercent, 100);
-        return Math.max(0, cost * (100 - clamped) / 100);
+        int discounted = cost * (100 - clamped) / 100;
+        // Минимум один алмаз: бесплатных телепортов нет даже со скидкой 100 %.
+        return Math.max(1, discounted);
     }
 }

@@ -9,6 +9,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import ru.cherdakmd.chrdkregister.Messages;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -106,13 +107,20 @@ public final class TeleportCommandHandler implements TabExecutor {
         return true;
     }
 
-    /** VIP-суффикс по messages: пусто или фраза с процентом. */
-    private String vipSuffix(Player player) {
+    /**
+     * VIP-суффикс по messages: пусто или фраза с процентом.
+     *
+     * <p>Возвращается как {@link Messages.Trusted}: суффикс содержит MiniMessage
+     * (серый цвет скобок), а обычная строка-заполнитель экранируется — и игрок
+     * видел бы в чате сырые {@code <gray>…</gray>}. Тип обязывает передавать
+     * разметку явно, чтобы такая ошибка не повторялась.</p>
+     */
+    private Messages.Trusted vipSuffix(Player player) {
         if (vip(player) && plugin.config().vipDiscountPercent() > 0) {
-            return plugin.messages().raw("tp.vip-suffix",
-                    "percent", plugin.config().vipDiscountPercent());
+            return Messages.trusted(plugin.messages().raw("tp.vip-suffix",
+                    "percent", plugin.config().vipDiscountPercent()));
         }
-        return plugin.messages().raw("tp.vip-suffix-empty");
+        return Messages.trusted(plugin.messages().raw("tp.vip-suffix-empty"));
     }
 
     /** Пытается списать стоимость; при недостатке — сообщение и false. */

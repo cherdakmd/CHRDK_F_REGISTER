@@ -116,8 +116,8 @@ class TreasureConfigTest {
         assertTrue(barrels.ownerOnly(), "чужая бочка по умолчанию заперта");
         assertTrue(barrels.animation(), "анимация по умолчанию включена");
         assertTrue(barrels.dropOnExpire(), "добыча не должна сгорать вместе с бочкой");
-        assertEquals(20, barrels.expireMinutes());
-        assertEquals(20 * 60_000L, barrels.expireMillis());
+        assertEquals(15, barrels.expireSeconds(), "бочка живёт 15 секунд");
+        assertEquals(15_000L, barrels.expireMillis());
         assertEquals(3, barrels.maxPerPlayer());
         assertEquals(60, barrels.removeEmptyTicks());
 
@@ -132,7 +132,7 @@ class TreasureConfigTest {
         YamlConfiguration cfg = new YamlConfiguration();
         cfg.set("barrels.enabled", false);
         cfg.set("barrels.owner-only", false);
-        cfg.set("barrels.expire-minutes", 99_999);
+        cfg.set("barrels.expire-seconds", 99_999);
         cfg.set("barrels.max-per-player", 0);
         cfg.set("barrels.animation", false);
         cfg.set("barrels.remove-empty-ticks", 1);
@@ -142,15 +142,15 @@ class TreasureConfigTest {
         assertFalse(barrels.ownerOnly());
         assertFalse(barrels.animation());
         assertFalse(barrels.dropOnExpire());
-        assertEquals(180, barrels.expireMinutes(), "срок жизни не должен превышать 180 минут");
+        assertEquals(3_600, barrels.expireSeconds(), "срок жизни не должен превышать час");
         assertEquals(1, barrels.maxPerPlayer());
         assertEquals(20, barrels.removeEmptyTicks());
 
-        cfg.set("barrels.expire-minutes", -5);
+        cfg.set("barrels.expire-seconds", -5);
         cfg.set("barrels.max-per-player", 500);
         cfg.set("barrels.remove-empty-ticks", 99_999);
         TreasuresConfig.Barrels other = TreasuresConfig.parse(cfg, LOGGER).barrels();
-        assertEquals(0, other.expireMinutes(), "0 — бессрочная бочка");
+        assertEquals(0, other.expireSeconds(), "0 — бессрочная бочка");
         assertEquals(0L, other.expireMillis());
         assertEquals(20, other.maxPerPlayer());
         assertEquals(600, other.removeEmptyTicks());

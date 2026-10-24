@@ -76,7 +76,8 @@ class TreasureMessagesTest {
             "elixir-name", "elixir-lore-effect", "elixir-lore-hint",
             // 1.4.166: клады в бочках.
             "barrel-placed", "barrel-hint", "barrel-locked", "barrel-limit",
-            "barrel-expired", "barrel-fallback", "treasure-found-barrel");
+            "barrel-expiring", "barrel-expired", "barrel-fallback",
+            "treasure-found-barrel");
 
     private static ConfigurationSection messages() {
         try (var stream = TreasureMessagesTest.class.getClassLoader()

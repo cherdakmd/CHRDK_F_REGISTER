@@ -128,21 +128,21 @@ public final class TreasuresConfig {
      *
      * @param enabled           включены ли бочки вместо прямой выдачи
      * @param ownerOnly         открывать может только нашедший (админ — всегда)
-     * @param expireMinutes     срок жизни бочки в минутах; 0 — бессрочно
+     * @param expireSeconds     срок жизни бочки в секундах; 0 — бессрочно
      * @param maxPerPlayer      сколько живых бочек может быть у одного игрока
      * @param animation         частицы, звуки и крышка при появлении и открытии
      * @param removeEmptyTicks  через сколько тиков убирать опустевшую бочку
      * @param dropOnExpire      высыпать содержимое при истечении срока
      */
-    public record Barrels(boolean enabled, boolean ownerOnly, int expireMinutes,
+    public record Barrels(boolean enabled, boolean ownerOnly, int expireSeconds,
                           int maxPerPlayer, boolean animation, int removeEmptyTicks,
                           boolean dropOnExpire) {
 
         /** Бочки выключены: клад выдаётся в инвентарь, как раньше. */
-        public static final Barrels DISABLED = new Barrels(false, true, 20, 3, true, 60, true);
+        public static final Barrels DISABLED = new Barrels(false, true, 15, 3, true, 60, true);
 
         public Barrels {
-            expireMinutes = clampInt(expireMinutes, 0, 180);
+            expireSeconds = clampInt(expireSeconds, 0, 3_600);
             maxPerPlayer = clampInt(maxPerPlayer, 1, 20);
             removeEmptyTicks = clampInt(removeEmptyTicks, 20, 600);
         }
@@ -153,7 +153,7 @@ public final class TreasuresConfig {
 
         /** Срок жизни в миллисекундах; 0 — бочка не исчезает. */
         public long expireMillis() {
-            return expireMinutes * 60_000L;
+            return expireSeconds * 1_000L;
         }
     }
 
@@ -694,7 +694,7 @@ public final class TreasuresConfig {
         return new Barrels(
                 cfg.getBoolean("barrels.enabled", true),
                 cfg.getBoolean("barrels.owner-only", true),
-                (int) clamp(cfg.getLong("barrels.expire-minutes", 20L), 0L, 180L),
+                (int) clamp(cfg.getLong("barrels.expire-seconds", 15L), 0L, 3_600L),
                 (int) clamp(cfg.getLong("barrels.max-per-player", 3L), 1L, 20L),
                 cfg.getBoolean("barrels.animation", true),
                 (int) clamp(cfg.getLong("barrels.remove-empty-ticks", 60L), 20L, 600L),
