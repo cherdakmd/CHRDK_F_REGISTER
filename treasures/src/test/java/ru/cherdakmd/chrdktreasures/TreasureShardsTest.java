@@ -154,9 +154,11 @@ class TreasureShardsTest {
         assertEquals(64, broken.maxAmount());
         assertEquals(100.0, broken.chancePercent(), 1e-9);
 
+        // Как и у склянок опыта: перевёрнутый диапазон не «сортируется», а
+        // подтягивает максимум к минимуму — так битая запись не даёт пустоты.
         TreasuresConfig.Shards.Range inverted = new TreasuresConfig.Shards.Range(9, 3, 10.0);
-        assertEquals(3, inverted.minAmount());
-        assertEquals(9, inverted.maxAmount());
+        assertEquals(9, inverted.minAmount());
+        assertEquals(9, inverted.maxAmount(), "максимум не может быть меньше минимума");
         assertTrue(inverted.active());
 
         TreasuresConfig.Shards.Range dead = new TreasuresConfig.Shards.Range(0, 0, 100.0);
