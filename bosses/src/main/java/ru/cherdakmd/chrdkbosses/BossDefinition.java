@@ -3,6 +3,7 @@ package ru.cherdakmd.chrdkbosses;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
 
+import java.util.List;
 import java.util.Locale;
 
 /**
