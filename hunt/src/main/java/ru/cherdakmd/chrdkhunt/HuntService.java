@@ -2,6 +2,7 @@ package ru.cherdakmd.chrdkhunt;
 
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.CreatureSpawnEvent;
@@ -109,6 +110,7 @@ public final class HuntService {
             warnCap(killer, now, config);
         }
         feedback(killer, family, coins, rolled.shards(), rolled.keys(), rule.boss(), config.actionbar());
+        recordBestiary(killer, dead.getType());
         return true;
     }
 
@@ -202,6 +204,192 @@ public final class HuntService {
             }
             player.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 0.5f, 1.4f);
         }
+    }
+
+    /* -------------------------------- бестиарий -------------------------------- */
+
+    /**
+     * Записывает убийство в бестиарий и объявляет новый вид.
+     *
+     * <p>Повторные убийства только увеличивают счётчик: сообщение на каждый
+     * удар превратило бы журнал в спам. Награда за раздел выдаётся сразу, как
+     * закрыт последний вид, — без похода в меню.</p>
+     */
+    private void recordBestiary(Player killer, EntityType type) {
+        HuntBestiary bestiary = plugin.config().bestiary();
+        if (bestiary == null || bestiary.empty() || killer == null) {
+            return;
+        }
+        HuntBestiary.Entry entry = bestiary.entryFor(type);
+        if (entry == null) {
+            return;
+        }
+        UUID id = killer.getUniqueId();
+        long kills = plugin.store().recordBestiaryKill(id, killer.getName(), entry.key());
+        if (kills != 1L) {
+            return;
+        }
+        HuntBestiary.Section section = bestiary.section(entry.familyId());
+        HuntBestiary.Progress progress = bestiary.progress(section, plugin.store().bestiaryMap(id));
+        plugin.messages().send(killer, "bestiary-new",
+                "mob", Messages.trusted(entry.translationTag()),
+                "section", section == null ? "" : section.displayName(),
+                "seen", String.valueOf(progress.seen()),
+                "total", String.valueOf(progress.total()));
+        plugin.requestSave();
+        if (progress.complete()) {
+            // Награду мог забрать и раньше — тогда молчим, а не пугаем игрока.
+            grantBestiary(killer, section, true);
+        }
+    }
+
+    /** Убийства вида по журналу ({@code 0}, если вид не открыт). */
+    public long bestiaryKills(Player player, String key) {
+        return player == null ? 0L : plugin.store().bestiaryKills(player.getUniqueId(), key);
+    }
+
+    /** Прогресс раздела для игрока. */
+    public HuntBestiary.Progress bestiaryProgress(Player player, HuntBestiary.Section section) {
+        HuntBestiary bestiary = plugin.config().bestiary();
+        if (bestiary == null || player == null) {
+            return new HuntBestiary.Progress(section == null ? "" : section.id(), 0,
+                    section == null ? 0 : section.size(), false);
+        }
+        return bestiary.progress(section, plugin.store().bestiaryMap(player.getUniqueId()));
+    }
+
+    /** Прогресс всего журнала: сколько видов открыто. */
+    public int bestiarySeen(Player player) {
+        HuntBestiary bestiary = plugin.config().bestiary();
+        if (bestiary == null || player == null) {
+            return 0;
+        }
+        return bestiary.seenTotal(plugin.store().bestiaryMap(player.getUniqueId()));
+    }
+
+    /** Награда за раздел уже выдана. */
+    public boolean bestiaryRewarded(Player player, String sectionId) {
+        return player != null && plugin.store().hasBestiaryAward(player.getUniqueId(), sectionId);
+    }
+
+    /**
+     * Выдаёт награду за закрытый раздел по запросу игрока (кнопка в меню).
+     *
+     * <p>Повторный клик ничего не дублирует: факт выдачи хранится в данных.</p>
+     */
+    public boolean claimBestiary(Player player, String sectionId) {
+        if (player == null) {
+            return false;
+        }
+        HuntBestiary bestiary = plugin.config().bestiary();
+        HuntBestiary.Section section = bestiary == null ? null : bestiary.section(sectionId);
+        if (section == null) {
+            plugin.messages().send(player, "bestiary-unknown-section",
+                    "id", sectionId == null ? "" : sectionId);
+            return false;
+        }
+        return grantBestiary(player, section, false);
+    }
+
+    /**
+     * Выдаёт награду раздела, если он закрыт и награда ещё не выдана.
+     *
+     * @param silentIfClaimed не сообщать «награда уже получена» (автовыдача)
+     */
+    private boolean grantBestiary(Player player, HuntBestiary.Section section,
+                                  boolean silentIfClaimed) {
+        HuntBestiary bestiary = plugin.config().bestiary();
+        if (player == null || section == null || bestiary == null) {
+            return false;
+        }
+        UUID id = player.getUniqueId();
+        HuntBestiary.Progress progress = bestiary.progress(section, plugin.store().bestiaryMap(id));
+        if (!progress.complete()) {
+            plugin.messages().send(player, "bestiary-section-locked",
+                    "section", section.displayName(),
+                    "seen", String.valueOf(progress.seen()),
+                    "total", String.valueOf(progress.total()));
+            return false;
+        }
+        if (!plugin.store().grantBestiaryAward(id, player.getName(), section.id())) {
+            if (!silentIfClaimed) {
+                plugin.messages().send(player, "bestiary-reward-claimed",
+                        "section", section.displayName());
+            }
+            return false;
+        }
+        HuntBestiary.Reward reward = section.reward();
+        if (reward.coins() > 0) {
+            plugin.store().addBonusCoins(id, player.getName(), reward.coins());
+        }
+        if (reward.shards() > 0) {
+            plugin.store().addShards(id, player.getName(), section.id(), reward.shards());
+        }
+        if (reward.keys() > 0) {
+            plugin.store().addKeys(id, player.getName(), section.id(), reward.keys());
+        }
+        plugin.messages().send(player, "bestiary-section-done",
+                "section", section.displayName(),
+                "total", String.valueOf(progress.total()),
+                "reward", Messages.trusted(rewardText(section)));
+        player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.7f, 1.2f);
+        plugin.requestSave();
+        announceFull(player, bestiary);
+        return true;
+    }
+
+    /** Разовая награда за весь журнал — после последнего закрытого раздела. */
+    private void announceFull(Player player, HuntBestiary bestiary) {
+        UUID id = player.getUniqueId();
+        if (!bestiary.fullyComplete(plugin.store().bestiaryMap(id))
+                || !plugin.store().grantBestiaryAward(id, player.getName(),
+                HuntBestiary.FULL_AWARD)) {
+            return;
+        }
+        if (bestiary.fullCoins() > 0) {
+            plugin.store().addBonusCoins(id, player.getName(), bestiary.fullCoins());
+        }
+        plugin.messages().send(player, "bestiary-full",
+                "coins", String.valueOf(bestiary.fullCoins()),
+                "entries", String.valueOf(bestiary.totalEntries()));
+        for (Player online : plugin.getServer().getOnlinePlayers()) {
+            if (!online.equals(player)) {
+                plugin.messages().send(online, "bestiary-full-broadcast", "player", player.getName());
+            }
+        }
+        player.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 0.6f, 1.2f);
+        plugin.requestSave();
+    }
+
+    /** Текст награды одной строкой: монеты, осколки и ключи семейства. */
+    public String rewardText(HuntBestiary.Section section) {
+        if (section == null) {
+            return plugin.messages().raw("bestiary-reward-none");
+        }
+        HuntBestiary.Reward reward = section.reward();
+        HuntFamily family = plugin.config().family(section.id());
+        String shard = family == null ? "" : family.shardName();
+        String key = family == null ? "" : family.keyName();
+        StringBuilder text = new StringBuilder();
+        if (reward.coins() > 0) {
+            text.append(plugin.messages().raw("bestiary-reward-coins",
+                    "coins", String.valueOf(reward.coins())));
+        }
+        if (reward.shards() > 0) {
+            if (!text.isEmpty()) {
+                text.append(plugin.messages().raw("kill-separator"));
+            }
+            text.append(plugin.messages().raw("bestiary-reward-shards",
+                    "shards", String.valueOf(reward.shards()), "shard", shard));
+        }
+        if (reward.keys() > 0) {
+            if (!text.isEmpty()) {
+                text.append(plugin.messages().raw("kill-separator"));
+            }
+            text.append(plugin.messages().raw("bestiary-reward-keys",
+                    "keys", String.valueOf(reward.keys()), "key", key));
+        }
+        return text.isEmpty() ? plugin.messages().raw("bestiary-reward-none") : text.toString();
     }
 
     /* --------------------------------- обмен ---------------------------------- */

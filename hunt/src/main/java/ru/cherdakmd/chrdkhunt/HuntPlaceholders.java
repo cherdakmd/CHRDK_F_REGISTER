@@ -24,6 +24,9 @@ import java.util.UUID;
  *   <li>{@code shards_<семейство>} / {@code keys_<семейство>} — по семейству;</li>
  *   <li>{@code kills} / {@code kills_<семейство>} — убийства;</li>
  *   <li>{@code trophies} — собрано трофеев;</li>
+ *   <li>{@code bestiary} / {@code bestiary_total} — открыто и всего видов;</li>
+ *   <li>{@code bestiary_sections} / {@code bestiary_sections_done} — разделы;</li>
+ *   <li>{@code bestiary_<моб>} — убийства вида ({@code bestiary_zombie});</li>
  *   <li>{@code today} / {@code exchange_today} / {@code exchange_limit} — сутки UTC.</li>
  * </ul>
  */
@@ -70,7 +73,11 @@ public final class HuntPlaceholders extends PlaceholderExpansion {
         if (data == null) {
             return switch (key) {
                 case "coins", "earned", "kills", "trophies", "shards", "keys",
-                     "exchange_today", "today" -> "0";
+                     "exchange_today", "today", "bestiary", "bestiary_sections_done" -> "0";
+                case "bestiary_total" -> Integer.toString(
+                        plugin.config().bestiary().totalEntries());
+                case "bestiary_sections" -> Integer.toString(
+                        plugin.config().bestiary().sectionCount());
                 case "rank" -> plugin.config().rankId(0L);
                 case "rank_name" -> plugin.messages().plain("rank." + plugin.config().rankId(0L));
                 case "next" -> Long.toString(plugin.service().coinsToNextRank(0L));
@@ -86,6 +93,27 @@ public final class HuntPlaceholders extends PlaceholderExpansion {
             HuntFamily family = plugin.config().family(key.substring("keys_".length()));
             return family == null ? "" : Long.toString(data.keys(family.id()));
         }
+        if (key.startsWith("bestiary_")) {
+            String suffix = key.substring("bestiary_".length());
+            if ("total".equals(suffix)) {
+                return Integer.toString(plugin.config().bestiary().totalEntries());
+            }
+            if ("sections".equals(suffix)) {
+                return Integer.toString(plugin.config().bestiary().sectionCount());
+            }
+            if ("sections_done".equals(suffix)) {
+                int done = 0;
+                for (HuntBestiary.Section section : plugin.config().bestiary().sections()) {
+                    if (plugin.config().bestiary().progress(section, data.bestiary()).complete()) {
+                        done++;
+                    }
+                }
+                return Integer.toString(done);
+            }
+            HuntBestiary.Entry entry = plugin.config().bestiary().entry(suffix);
+            return entry == null ? "" : Long.toString(
+                    data.bestiary().getOrDefault(entry.key(), 0L));
+        }
         if (key.startsWith("kills_")) {
             HuntFamily family = plugin.config().family(key.substring("kills_".length()));
             return family == null ? "" : Long.toString(data.kills(family.id()));
@@ -100,6 +128,8 @@ public final class HuntPlaceholders extends PlaceholderExpansion {
             case "keys" -> Long.toString(plugin.store().totalKeys(id));
             case "kills" -> Long.toString(data.killsTotal());
             case "trophies" -> Integer.toString(data.trophies().size());
+            case "bestiary" -> Integer.toString(
+                    plugin.config().bestiary().seenTotal(data.bestiary()));
             case "today" -> Long.toString(plugin.store().coinsToday(id, System.currentTimeMillis()));
             case "exchange_today" -> Long.toString(
                     plugin.store().exchangeToday(id, System.currentTimeMillis()));

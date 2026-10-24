@@ -54,6 +54,12 @@ final class HuntProfile implements ChrdkRegisterApi.ProfileProvider {
         lines.add(messages.get("profile-stock",
                 "shards", String.valueOf(plugin.store().totalShards(context.playerId())),
                 "keys", String.valueOf(plugin.store().totalKeys(context.playerId()))));
+        HuntConfig config = plugin.config();
+        if (config != null && !config.bestiary().empty()) {
+            lines.add(messages.get("profile-bestiary",
+                    "seen", String.valueOf(plugin.store().bestiarySeen(context.playerId())),
+                    "total", String.valueOf(config.bestiary().totalEntries())));
+        }
         return new ChrdkRegisterApi.ProfileSection(messages.raw("profile-title"),
                 Material.GOLD_NUGGET, lines);
     }

@@ -24,7 +24,8 @@ class HuntMessagesTest {
     private static final List<String> REQUIRED = List.of(
             "no-permission", "player-only", "disabled", "unknown-subcommand",
             "help-header", "help-stats", "help-shop", "help-buy", "help-exchange",
-            "help-keys", "help-chest", "help-trophies", "help-top", "help-footer",
+            "help-keys", "help-chest", "help-bestiary", "help-trophies", "help-top",
+            "help-footer",
             "kill-coins", "kill-separator", "kill-shards", "kill-key", "kill-dropped",
             "coins-cap", "boss-killed", "boss-broadcast",
             "exchange-closed", "exchange-limit", "exchange-min", "exchange-no-coins",
@@ -51,12 +52,28 @@ class HuntMessagesTest {
             "top-header", "top-row", "top-empty", "top-footer",
             "menu-title", "menu-info-name", "menu-info-lore", "menu-info-rank",
             "menu-info-next", "menu-info-max", "menu-info-exchange", "menu-shop",
-            "menu-shop-lore", "menu-trophies", "menu-trophies-lore", "menu-keys",
+            "menu-shop-lore", "menu-bestiary", "menu-bestiary-lore", "menu-bestiary-empty",
+            "menu-bestiary-empty-lore", "menu-trophies", "menu-trophies-lore", "menu-keys",
             "menu-keys-lore", "menu-exchange", "menu-exchange-lore", "menu-stats",
             "menu-stats-lore", "menu-top", "menu-top-lore", "menu-close",
             "admin-reloaded", "admin-given", "admin-reset", "admin-reset-missing",
             "admin-player-not-found", "admin-bad-amount", "admin-bad-kind",
-            "admin-unknown-family", "admin-usage", "admin-info");
+            "admin-unknown-family", "admin-usage", "admin-info",
+            "bestiary-title", "bestiary-section-title", "bestiary-empty",
+            "bestiary-unknown-section", "bestiary-info-name", "bestiary-info-seen",
+            "bestiary-info-sections", "bestiary-info-full", "bestiary-info-hint",
+            "bestiary-section-name", "bestiary-section-progress", "bestiary-section-reward",
+            "bestiary-section-claimed", "bestiary-section-ready", "bestiary-section-locked",
+            "bestiary-section-open", "bestiary-section-done", "bestiary-reward-claimed",
+            "bestiary-entry-name", "bestiary-entry-kills", "bestiary-entry-boss",
+            "bestiary-entry-locked", "bestiary-entry-unknown-name",
+            "bestiary-entry-hint-known", "bestiary-entry-hint-unknown", "bestiary-new",
+            "bestiary-reward-locked-name", "bestiary-reward-locked",
+            "bestiary-reward-ready-name", "bestiary-reward-ready",
+            "bestiary-reward-claimed-name", "bestiary-reward-claimed-lore",
+            "bestiary-reward-value", "bestiary-reward-coins", "bestiary-reward-shards",
+            "bestiary-reward-keys", "bestiary-reward-none", "bestiary-back",
+            "bestiary-full", "bestiary-full-broadcast", "profile-bestiary");
 
     private static ConfigurationSection load() throws Exception {
         try (InputStream stream = HuntMessagesTest.class.getResourceAsStream("/messages.yml")) {
@@ -122,6 +139,29 @@ class HuntMessagesTest {
         expected.put("admin-given", List.of("%player%", "%amount%", "%kind%"));
         expected.put("admin-info", List.of("%families%", "%mobs%", "%shop%", "%trophies%",
                 "%players%", "%earned%", "%enabled%"));
+        expected.put("bestiary-title", List.of("%seen%", "%total%"));
+        expected.put("bestiary-section-name", List.of("%section%", "%seen%", "%total%"));
+        expected.put("bestiary-section-progress", List.of("%seen%", "%total%", "%percent%"));
+        expected.put("bestiary-section-reward", List.of("%reward%"));
+        expected.put("bestiary-section-done", List.of("%section%", "%reward%", "%total%"));
+        expected.put("bestiary-section-locked", List.of("%seen%", "%total%"));
+        expected.put("bestiary-reward-claimed", List.of("%section%"));
+        expected.put("bestiary-unknown-section", List.of("%id%"));
+        expected.put("bestiary-new", List.of("%mob%", "%section%", "%seen%", "%total%"));
+        expected.put("bestiary-entry-name", List.of("%mob%"));
+        expected.put("bestiary-entry-kills", List.of("%kills%"));
+        expected.put("bestiary-entry-hint-known", List.of("%mob%", "%kills%"));
+        expected.put("bestiary-reward-coins", List.of("%coins%"));
+        expected.put("bestiary-reward-shards", List.of("%shards%", "%shard%"));
+        expected.put("bestiary-reward-keys", List.of("%keys%", "%key%"));
+        expected.put("bestiary-full", List.of("%entries%", "%coins%"));
+        expected.put("bestiary-full-broadcast", List.of("%player%"));
+        expected.put("bestiary-info-sections", List.of("%closed%", "%sections%"));
+        expected.put("bestiary-info-full", List.of("%coins%"));
+        expected.put("bestiary-reward-locked", List.of("%seen%", "%total%"));
+        expected.put("bestiary-reward-value", List.of("%reward%"));
+        expected.put("menu-bestiary", List.of("%seen%", "%total%"));
+        expected.put("profile-bestiary", List.of("%seen%", "%total%"));
         for (Map.Entry<String, List<String>> entry : expected.entrySet()) {
             String text = section.getString(entry.getKey(), "");
             for (String placeholder : entry.getValue()) {

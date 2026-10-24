@@ -55,6 +55,7 @@ public final class HuntConfig {
     private final Map<String, HuntShopOffer> shopById;
     private final List<HuntTrophy> trophies;
     private final Map<String, HuntTrophy> trophyById;
+    private final HuntBestiary bestiary;
     private final TreeMap<Integer, String> ranks;
 
     private HuntConfig(boolean enabled, String locale, int topSize, boolean actionbar,
@@ -62,7 +63,7 @@ public final class HuntConfig {
                        int coinsPerDiamond, int exchangeMin, boolean blockSpawners,
                        boolean blockEggs, boolean blockCommand, Map<String, HuntFamily> families,
                        List<MobRule> mobRules, List<HuntShopOffer> shop, List<HuntTrophy> trophies,
-                       TreeMap<Integer, String> ranks) {
+                       HuntBestiary bestiary, TreeMap<Integer, String> ranks) {
         this.enabled = enabled;
         this.locale = locale;
         this.topSize = topSize;
@@ -94,6 +95,7 @@ public final class HuntConfig {
             trophyMap.putIfAbsent(trophy.id(), trophy);
         }
         this.trophyById = Collections.unmodifiableMap(trophyMap);
+        this.bestiary = bestiary == null ? HuntBestiary.empty() : bestiary;
         this.ranks = new TreeMap<>(ranks);
     }
 
@@ -141,6 +143,7 @@ public final class HuntConfig {
         List<MobRule> mobs = parseMobs(source, families, logger);
         List<HuntShopOffer> shop = parseShop(source, logger);
         List<HuntTrophy> trophies = parseTrophies(source, families, logger);
+        HuntBestiary bestiary = parseBestiary(source, families, mobs, logger);
         TreeMap<Integer, String> ranks = parseRanks(source, logger);
 
         if (enabled && (families.isEmpty() || mobs.isEmpty())) {
@@ -157,7 +160,7 @@ public final class HuntConfig {
         }
         return new HuntConfig(enabled, locale, topSize, actionbar, disabledWorlds, coinsPerDay,
                 exchangePerDay, coinsPerDiamond, exchangeMin, blockSpawners, blockEggs,
-                blockCommand, families, mobs, shop, trophies, ranks);
+                blockCommand, families, mobs, shop, trophies, bestiary, ranks);
     }
 
     /* -------------------------------- семейства -------------------------------- */
@@ -268,6 +271,79 @@ public final class HuntConfig {
             out.add(rule);
         }
         return out;
+    }
+
+    /* -------------------------------- бестиарий -------------------------------- */
+
+    /**
+     * Разбирает секцию {@code bestiary}: награды разделов и иконки видов.
+     *
+     * <p>Разделы строятся по семействам и правилам мобов, поэтому админ не
+     * описывает журнал дважды: добавил моба в {@code mobs:} — он появился в
+     * бестиарии. Здесь задаются только награды и, при желании, иконки.</p>
+     */
+    private static HuntBestiary parseBestiary(FileConfiguration config,
+                                              Map<String, HuntFamily> families,
+                                              List<MobRule> mobs, Logger logger) {
+        if (!config.getBoolean("bestiary.enabled", true)) {
+            return HuntBestiary.empty();
+        }
+        Map<String, HuntBestiary.Reward> rewards = new LinkedHashMap<>();
+        ConfigurationSection sections = config.getConfigurationSection("bestiary.sections");
+        if (sections == null) {
+            // Старый config.yml без секции: берём встроенные награды, иначе
+            // обновление молча лишило бы игроков подарков.
+            rewards.putAll(HuntBestiary.defaultRewards());
+        } else {
+            for (String key : sections.getKeys(false)) {
+                String id = HuntFamily.normalize(key);
+                if (!families.containsKey(id)) {
+                    if (logger != null) {
+                        logger.warning("[CHRDK_Hunt] bestiary.sections." + key
+                                + ": семейства нет в families — награда пропущена.");
+                    }
+                    continue;
+                }
+                int coins = (int) clamp(sections.getLong(key + ".coins", 0L), 0L, 1_000_000L);
+                int shards = (int) clamp(sections.getLong(key + ".shards", 0L), 0L, 10_000L);
+                int keys = (int) clamp(sections.getLong(key + ".keys", 0L), 0L, 100L);
+                rewards.put(id, new HuntBestiary.Reward(coins, shards, keys));
+            }
+        }
+        Map<EntityType, Material> icons = new LinkedHashMap<>();
+        ConfigurationSection iconSection = config.getConfigurationSection("bestiary.icons");
+        if (iconSection != null) {
+            for (String key : iconSection.getKeys(false)) {
+                EntityType type;
+                try {
+                    type = EntityType.valueOf(key.trim().toUpperCase(Locale.ROOT));
+                } catch (IllegalArgumentException unknown) {
+                    if (logger != null) {
+                        logger.warning("[CHRDK_Hunt] bestiary.icons." + key
+                                + ": неизвестный моб — иконка пропущена.");
+                    }
+                    continue;
+                }
+                Material icon = HuntMaterials.resolve(iconSection.getString(key));
+                if (!HuntMaterials.isItem(icon)) {
+                    if (logger != null) {
+                        logger.warning("[CHRDK_Hunt] bestiary.icons." + key
+                                + ": неизвестный материал «" + iconSection.getString(key)
+                                + "» — взята иконка по умолчанию.");
+                    }
+                    continue;
+                }
+                icons.put(type, icon);
+            }
+        }
+        int fullCoins = (int) clamp(config.getLong("bestiary.full-coins", 1500L),
+                0L, 1_000_000L);
+        HuntBestiary bestiary = HuntBestiary.of(mobs, families, rewards, icons, fullCoins);
+        if (bestiary.empty() && !mobs.isEmpty() && logger != null) {
+            logger.warning("[CHRDK_Hunt] Бестиарий пуст: ни одно правило мобов не попало "
+                    + "в журнал. Проверьте секции families и mobs.");
+        }
+        return bestiary;
     }
 
     /* --------------------------------- лавка ----------------------------------- */
@@ -574,6 +650,11 @@ public final class HuntConfig {
             }
         }
         return out;
+    }
+
+    /** Журнал видов: разделы, награды и иконки ({@link HuntBestiary#empty()} — выключен). */
+    public HuntBestiary bestiary() {
+        return bestiary;
     }
 
     public TreeMap<Integer, String> ranks() {

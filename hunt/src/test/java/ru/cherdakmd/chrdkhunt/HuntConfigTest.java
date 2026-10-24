@@ -105,6 +105,115 @@ class HuntConfigTest {
     }
 
     @Test
+    void bestiarySectionsRewardsAndIconsAreParsed() throws Exception {
+        HuntConfig config = parse("""
+                families:
+                  undead:
+                    name: "Нежить"
+                    shard: "Осколок кости"
+                    key: "Ключ склепа"
+                  nether:
+                    name: "Нижний мир"
+                    shard: "Осколок пламени"
+                    key: "Ключ портала"
+                mobs:
+                  ZOMBIE:
+                    family: undead
+                    coins: [2, 5]
+                    shard-chance: 15
+                    shards: [1, 1]
+                  SKELETON:
+                    family: undead
+                    coins: [2, 5]
+                  BLAZE:
+                    family: nether
+                    coins: [4, 8]
+                    boss: true
+                bestiary:
+                  enabled: true
+                  full-coins: 5000
+                  sections:
+                    undead:
+                      coins: 150
+                      shards: 10
+                      keys: 1
+                    nether:
+                      coins: -50
+                      shards: 999999
+                    missing:
+                      coins: 10
+                  icons:
+                    ZOMBIE: ROTTEN_FLESH
+                    UNKNOWN_MOB: BONE
+                    SKELETON: NOT_A_MATERIAL
+                """);
+        HuntBestiary bestiary = config.bestiary();
+        assertEquals(2, bestiary.sectionCount());
+        assertEquals(3, bestiary.totalEntries());
+        assertEquals(5000, bestiary.fullCoins());
+
+        HuntBestiary.Section undead = bestiary.section("undead");
+        assertNotNull(undead);
+        assertEquals(new HuntBestiary.Reward(150, 10, 1), undead.reward());
+        assertEquals(Material.ROTTEN_FLESH, bestiary.entry("zombie").icon(),
+                "иконка из конфига переопределяет голову");
+        assertEquals(Material.SKELETON_SPAWN_EGG, bestiary.entry("skeleton").icon(),
+                "неизвестный материал — иконка по умолчанию");
+
+        HuntBestiary.Section nether = bestiary.section("nether");
+        assertNotNull(nether);
+        assertEquals(0, nether.reward().coins(), "отрицательная награда зажимается в ноль");
+        assertEquals(10_000, nether.reward().shards());
+        assertTrue(nether.entries().get(0).boss());
+    }
+
+    @Test
+    void bestiaryCanBeTurnedOff() throws Exception {
+        HuntConfig config = parse("""
+                families:
+                  undead:
+                    name: "Нежить"
+                mobs:
+                  ZOMBIE:
+                    family: undead
+                    coins: [2, 5]
+                bestiary:
+                  enabled: false
+                  full-coins: 100
+                """);
+        assertTrue(config.bestiary().empty());
+        assertEquals(0, config.bestiary().fullCoins());
+        assertEquals(1, config.mobRules().size(), "охота работает и без бестиария");
+    }
+
+    @Test
+    void oldConfigWithoutBestiaryGetsBuiltInRewards() throws Exception {
+        HuntConfig config = parse("""
+                families:
+                  undead:
+                    name: "Нежить"
+                mobs:
+                  ZOMBIE:
+                    family: undead
+                    coins: [2, 5]
+                """);
+        HuntBestiary bestiary = config.bestiary();
+        assertEquals(1, bestiary.sectionCount());
+        assertEquals(new HuntBestiary.Reward(150, 10, 1),
+                bestiary.section("undead").reward(),
+                "без секции bestiary действуют встроенные награды");
+        assertEquals(1500, bestiary.fullCoins());
+        assertEquals(5, HuntBestiary.defaultRewards().size());
+    }
+
+    @Test
+    void emptyConfigHasEmptyBestiary() throws Exception {
+        HuntConfig config = parse("");
+        assertTrue(config.bestiary().empty());
+        assertEquals(0, config.bestiary().totalEntries());
+    }
+
+    @Test
     void exchangeMinimumCannotExceedDailyLimit() throws Exception {
         HuntConfig config = parse("""
                 limits:

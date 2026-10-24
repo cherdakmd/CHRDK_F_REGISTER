@@ -18,6 +18,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -64,6 +65,8 @@ public final class HuntStore {
         private final Map<String, Long> kills = new LinkedHashMap<>();
         private final Map<String, Integer> purchases = new LinkedHashMap<>();
         private final Set<String> trophies = new LinkedHashSet<>();
+        private final Map<String, Long> bestiary = new LinkedHashMap<>();
+        private final Set<String> bestiaryAwards = new LinkedHashSet<>();
 
         private PlayerData(String name) {
             this.name = name == null ? "" : name;
@@ -126,6 +129,16 @@ public final class HuntStore {
         public Set<String> trophies() {
             return Set.copyOf(trophies);
         }
+
+        /** Журнал бестиария: ключ вида → убийства. */
+        public Map<String, Long> bestiary() {
+            return Map.copyOf(bestiary);
+        }
+
+        /** Разделы, за которые награда уже выдана. */
+        public Set<String> bestiaryAwards() {
+            return Set.copyOf(bestiaryAwards);
+        }
     }
 
     /** Строка рейтинга: без Bukkit-типов, чтобы её можно было показать где угодно. */
@@ -187,6 +200,8 @@ public final class HuntStore {
                     readCounters(row.get("shards"), player.shards, MAX_SHARDS);
                     readCounters(row.get("keys"), player.keys, MAX_KEYS);
                     readCounters(row.get("kills"), player.kills, Long.MAX_VALUE);
+                    readCounters(row.get("bestiary"), player.bestiary, Long.MAX_VALUE);
+                    readIds(row.get("bestiary-awards"), player.bestiaryAwards);
                     if (row.get("purchases") instanceof Map<?, ?> purchases) {
                         for (Map.Entry<?, ?> purchase : purchases.entrySet()) {
                             String key = string(purchase.getKey()).trim().toLowerCase(java.util.Locale.ROOT);
@@ -233,6 +248,19 @@ public final class HuntStore {
             long value = Math.clamp(number.longValue(), 0L, cap);
             if (value > 0L) {
                 target.put(key, value);
+            }
+        }
+    }
+
+    /** Читает набор идов (разделы бестиария с выданной наградой). */
+    private static void readIds(Object raw, Set<String> target) {
+        if (!(raw instanceof List<?> rows)) {
+            return;
+        }
+        for (Object value : rows) {
+            String id = string(value).trim().toLowerCase(Locale.ROOT);
+            if (!id.isEmpty()) {
+                target.add(id);
             }
         }
     }
@@ -344,6 +372,26 @@ public final class HuntStore {
         data.coins = clampAdd(data.coins, amount, MAX_COINS);
         data.earned = clampAdd(data.earned, amount, MAX_COINS);
         data.coinsToday = clampAdd(data.coinsToday, amount, MAX_COINS);
+        dirty = true;
+        return data.coins - before;
+    }
+
+    /**
+     * Начисляет монеты в обход суточного потолка — только для разовых наград
+     * (закрытый раздел бестиария). Стаж (earned) растёт, счётчик «за сегодня»
+     * не трогается: иначе награда съедала бы лимит обычной охоты.
+     */
+    public synchronized long addBonusCoins(UUID id, String name, long amount) {
+        if (amount <= 0L) {
+            return 0L;
+        }
+        PlayerData data = ensure(id, name);
+        if (data == null) {
+            return 0L;
+        }
+        long before = data.coins;
+        data.coins = clampAdd(data.coins, amount, MAX_COINS);
+        data.earned = clampAdd(data.earned, amount, MAX_COINS);
         dirty = true;
         return data.coins - before;
     }
@@ -587,6 +635,81 @@ public final class HuntStore {
         return data == null ? 0 : data.trophies.size();
     }
 
+    /* -------------------------------- бестиарий -------------------------------- */
+
+    /**
+     * Записывает убийство вида в бестиарий.
+     *
+     * @return число убийств этого вида после записи
+     */
+    public synchronized long recordBestiaryKill(UUID id, String name, String key) {
+        String normalized = HuntBestiary.normalize(key);
+        if (normalized.isEmpty()) {
+            return 0L;
+        }
+        PlayerData data = ensure(id, name);
+        if (data == null) {
+            return 0L;
+        }
+        long value = Math.clamp(data.bestiary.getOrDefault(normalized, 0L) + 1L,
+                0L, Long.MAX_VALUE);
+        data.bestiary.put(normalized, value);
+        dirty = true;
+        return value;
+    }
+
+    /** Убийства вида ({@code 0}, если вид ещё не открыт). */
+    public synchronized long bestiaryKills(UUID id, String key) {
+        PlayerData data = player(id);
+        return data == null ? 0L : data.bestiary.getOrDefault(
+                HuntBestiary.normalize(key), 0L);
+    }
+
+    /** Сколько разных видов открыто. */
+    public synchronized int bestiarySeen(UUID id) {
+        PlayerData data = player(id);
+        return data == null ? 0 : data.bestiary.size();
+    }
+
+    /** Весь журнал вида: ключ вида → убийства. */
+    public synchronized Map<String, Long> bestiaryMap(UUID id) {
+        PlayerData data = player(id);
+        return data == null ? Map.of() : Map.copyOf(data.bestiary);
+    }
+
+    /** Награда за раздел уже выдана. */
+    public synchronized boolean hasBestiaryAward(UUID id, String sectionId) {
+        PlayerData data = player(id);
+        return data != null && data.bestiaryAwards.contains(HuntBestiary.normalize(sectionId));
+    }
+
+    /**
+     * Запоминает выданную награду раздела.
+     *
+     * @return {@code true}, если награда выдана впервые
+     */
+    public synchronized boolean grantBestiaryAward(UUID id, String name, String sectionId) {
+        String key = HuntBestiary.normalize(sectionId);
+        if (key.isEmpty()) {
+            return false;
+        }
+        PlayerData data = ensure(id, name);
+        if (data == null) {
+            return false;
+        }
+        boolean added = data.bestiaryAwards.add(key);
+        if (added) {
+            dirty = true;
+        }
+        return added;
+    }
+
+    /** Все разделы, за которые награда уже выдана. */
+    public synchronized Set<String> bestiaryAwards(UUID id) {
+        PlayerData data = player(id);
+        return data == null ? Set.of() : Set.copyOf(data.bestiaryAwards);
+    }
+
     /* --------------------------------- рейтинг -------------------------------- */
 
     /** Топ по заработанным монетам, при равенстве — по убийствам. */
@@ -659,6 +782,8 @@ public final class HuntStore {
             row.put("kills", new LinkedHashMap<>(player.kills));
             row.put("purchases", new LinkedHashMap<>(player.purchases));
             row.put("trophies", new ArrayList<>(player.trophies));
+            row.put("bestiary", new LinkedHashMap<>(player.bestiary));
+            row.put("bestiary-awards", new ArrayList<>(player.bestiaryAwards));
             rows.put(entry.getKey().toString(), row);
         }
         data.put("players", rows);

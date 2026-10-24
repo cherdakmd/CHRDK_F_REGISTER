@@ -34,6 +34,7 @@ public final class HuntGui implements Listener {
     /** Слоты главного меню. */
     private static final int INFO_SLOT = 4;
     private static final int SHOP_SLOT = 19;
+    private static final int BESTIARY_SLOT = 20;
     private static final int TROPHIES_SLOT = 21;
     private static final int KEYS_SLOT = 23;
     private static final int EXCHANGE_SLOT = 25;
@@ -103,6 +104,11 @@ public final class HuntGui implements Listener {
         holder.inventory.setItem(INFO_SLOT, infoIcon(player));
         holder.inventory.setItem(SHOP_SLOT, button(Material.EMERALD,
                 "menu-shop", "menu-shop-lore"));
+        holder.inventory.setItem(BESTIARY_SLOT, plugin.config().bestiary().empty()
+                ? button(Material.GRAY_DYE, "menu-bestiary-empty", "menu-bestiary-empty-lore")
+                : button(Material.WRITTEN_BOOK, "menu-bestiary", "menu-bestiary-lore",
+                        "seen", String.valueOf(plugin.service().bestiarySeen(player)),
+                        "total", String.valueOf(plugin.config().bestiary().totalEntries())));
         holder.inventory.setItem(TROPHIES_SLOT, button(Material.BONE,
                 "menu-trophies", "menu-trophies-lore"));
         holder.inventory.setItem(KEYS_SLOT, button(Material.TRIAL_KEY,
@@ -275,6 +281,10 @@ public final class HuntGui implements Listener {
             plugin.shopGui().open(player);
             return;
         }
+        if (slot == BESTIARY_SLOT) {
+            plugin.bestiaryGui().open(player);
+            return;
+        }
         if (slot == TROPHIES_SLOT) {
             plugin.trophyGui().open(player);
             return;
@@ -341,5 +351,6 @@ public final class HuntGui implements Listener {
                 player.closeInventory();
             }
         }
+
     }
 }

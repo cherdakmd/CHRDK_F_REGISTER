@@ -25,6 +25,54 @@ class HuntStoreTest {
     private static final Logger LOGGER = Logger.getLogger("HuntStoreTest");
 
     @Test
+    void bestiaryKeepsCountsRewardsAndSurvivesReload(@TempDir Path dir) {
+        HuntStore store = new HuntStore(dir, LOGGER);
+        UUID id = UUID.randomUUID();
+        assertEquals(0L, store.recordBestiaryKill(id, "Аня", ""));
+        assertEquals(1L, store.recordBestiaryKill(id, "Аня", "ZOMBIE"));
+        assertEquals(2L, store.recordBestiaryKill(id, "Аня", "zombie"));
+        assertEquals(1L, store.recordBestiaryKill(id, "Аня", "skeleton"));
+        assertEquals(2L, store.bestiaryKills(id, "ZOMBIE"));
+        assertEquals(0L, store.bestiaryKills(id, "creeper"));
+        assertEquals(2, store.bestiarySeen(id));
+        assertEquals(2, store.bestiaryMap(id).size());
+        assertEquals(0L, store.bestiaryKills(UUID.randomUUID(), "zombie"));
+        assertEquals(0, store.bestiarySeen(UUID.randomUUID()));
+
+        assertFalse(store.hasBestiaryAward(id, "undead"));
+        assertTrue(store.grantBestiaryAward(id, "Аня", "UNDEAD"));
+        assertTrue(store.hasBestiaryAward(id, "undead"));
+        assertFalse(store.grantBestiaryAward(id, "Аня", "undead"), "награда не дублируется");
+        assertTrue(store.grantBestiaryAward(id, "Аня", HuntBestiary.FULL_AWARD));
+        assertEquals(2, store.bestiaryAwards(id).size());
+        assertFalse(store.grantBestiaryAward(id, "Аня", ""));
+
+        store.flush();
+        HuntStore reloaded = new HuntStore(dir, LOGGER);
+        reloaded.load();
+        assertEquals(2L, reloaded.bestiaryKills(id, "zombie"));
+        assertEquals(1L, reloaded.bestiaryKills(id, "skeleton"));
+        assertEquals(2, reloaded.bestiaryAwards(id).size());
+        assertTrue(reloaded.hasBestiaryAward(id, HuntBestiary.FULL_AWARD));
+    }
+
+    @Test
+    void bonusCoinsIgnoreTheDailyCap(@TempDir Path dir) {
+        HuntStore store = new HuntStore(dir, LOGGER);
+        UUID id = UUID.randomUUID();
+        long now = 20L * HuntStore.DAY_MILLIS + 1_000L;
+        store.touchDay(id, "Аня", now);
+        store.addCoins(id, "Аня", 100L);
+        assertEquals(250L, store.addBonusCoins(id, "Аня", 150L));
+        assertEquals(250L, store.coins(id));
+        assertEquals(250L, store.earned(id), "стаж растёт вместе с кошельком");
+        assertEquals(100L, store.coinsToday(id, now),
+                "награда не съедает суточный лимит охоты");
+        assertEquals(0L, store.addBonusCoins(id, "Аня", -10L));
+        assertEquals(0L, store.addBonusCoins(UUID.randomUUID(), "Борис", 0L));
+    }
+
+    @Test
     void emptyStoreStartsAtZero(@TempDir Path dir) {
         HuntStore store = new HuntStore(dir, LOGGER);
         store.load();

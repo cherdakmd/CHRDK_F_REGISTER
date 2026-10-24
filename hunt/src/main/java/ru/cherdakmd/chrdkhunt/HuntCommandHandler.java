@@ -23,7 +23,7 @@ public final class HuntCommandHandler implements CommandExecutor, TabCompleter {
 
     private static final List<String> PLAYER_SUBCOMMANDS =
             List.of("help", "stats", "shop", "buy", "exchange", "keys", "chest",
-                    "trophies", "trophy", "top");
+                    "bestiary", "trophies", "trophy", "top");
     private static final List<String> ADMIN_SUBCOMMANDS =
             List.of("reload", "give", "reset", "info");
     private static final List<String> GIVE_KINDS = List.of("coins", "shards", "keys");
@@ -66,6 +66,7 @@ public final class HuntCommandHandler implements CommandExecutor, TabCompleter {
             case "exchange" -> exchange(sender, args);
             case "keys" -> keys(sender);
             case "chest" -> chest(sender, args);
+            case "bestiary" -> bestiary(sender, args);
             case "trophies" -> trophies(sender);
             case "trophy" -> trophy(sender, args);
             case "top" -> plugin.report().top(sender);
@@ -88,6 +89,33 @@ public final class HuntCommandHandler implements CommandExecutor, TabCompleter {
             return true;
         }
         plugin.shopGui().open(player);
+        return true;
+    }
+
+    private boolean bestiary(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            plugin.messages().send(sender, "player-only");
+            return true;
+        }
+        if (!plugin.config().enabled()) {
+            plugin.messages().send(player, "disabled");
+            return true;
+        }
+        if (args.length > 1 && args[1].equalsIgnoreCase("claim")) {
+            if (args.length < 3) {
+                plugin.messages().send(player, "help-bestiary");
+                return true;
+            }
+            if (plugin.service().claimBestiary(player, args[2])) {
+                plugin.bestiaryGui().reopen(player, args[2]);
+            }
+            return true;
+        }
+        if (args.length > 1) {
+            plugin.bestiaryGui().openSection(player, args[1]);
+            return true;
+        }
+        plugin.bestiaryGui().open(player);
         return true;
     }
 
@@ -372,11 +400,20 @@ public final class HuntCommandHandler implements CommandExecutor, TabCompleter {
             return switch (args[0].toLowerCase(Locale.ROOT)) {
                 case "buy" -> filter(offerIds(), args[1]);
                 case "chest" -> filter(familyIds(), args[1]);
+                case "bestiary" -> {
+                    List<String> options = new ArrayList<>(familyIds());
+                    options.add("claim");
+                    yield filter(options, args[1]);
+                }
                 case "trophy" -> filter(trophyIds(), args[1]);
                 case "stats" -> filter(onlineNames(), args[1]);
                 case "exchange" -> filter(List.of("max"), args[1]);
                 default -> List.of();
             };
+        }
+        if (args.length == 3 && args[0].equalsIgnoreCase("bestiary")
+                && args[1].equalsIgnoreCase("claim")) {
+            return filter(familyIds(), args[2]);
         }
         return List.of();
     }

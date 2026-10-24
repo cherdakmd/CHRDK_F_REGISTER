@@ -25,6 +25,7 @@ public final class HuntPlugin extends JavaPlugin {
     private HuntGui gui;
     private HuntShopGui shopGui;
     private HuntTrophyGui trophyGui;
+    private HuntBestiaryGui bestiaryGui;
     private BukkitTask saveTask;
     private BukkitTask queuedSave;
     private boolean saveQueued;
@@ -44,6 +45,7 @@ public final class HuntPlugin extends JavaPlugin {
             this.gui = new HuntGui(this);
             this.shopGui = new HuntShopGui(this);
             this.trophyGui = new HuntTrophyGui(this);
+            this.bestiaryGui = new HuntBestiaryGui(this);
             this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
             if (coreApi != null) {
                 try {
@@ -57,6 +59,7 @@ public final class HuntPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(gui, this);
             getServer().getPluginManager().registerEvents(shopGui, this);
             getServer().getPluginManager().registerEvents(trophyGui, this);
+            getServer().getPluginManager().registerEvents(bestiaryGui, this);
             registerCommands();
             registerPlaceholders();
             scheduleTasks();
@@ -64,6 +67,7 @@ public final class HuntPlugin extends JavaPlugin {
                     + ", правил мобов " + config.mobRules().size()
                     + ", позиций лавки " + config.shop().size()
                     + ", трофеев " + config.trophies().size()
+                    + ", видов в бестиарии " + config.bestiary().totalEntries()
                     + ", охотников в базе " + store.players() + ".");
         } catch (RuntimeException exception) {
             getLogger().severe("CHRDK_Hunt не смог запуститься: " + exception.getMessage());
@@ -92,6 +96,9 @@ public final class HuntPlugin extends JavaPlugin {
         if (trophyGui != null) {
             trophyGui.closeAll();
         }
+        if (bestiaryGui != null) {
+            bestiaryGui.closeAll();
+        }
         if (store != null) {
             store.flush();
         }
@@ -115,6 +122,9 @@ public final class HuntPlugin extends JavaPlugin {
         }
         if (trophyGui != null) {
             trophyGui.closeAll();
+        }
+        if (bestiaryGui != null) {
+            bestiaryGui.closeAll();
         }
     }
 
@@ -218,5 +228,9 @@ public final class HuntPlugin extends JavaPlugin {
 
     public HuntTrophyGui trophyGui() {
         return trophyGui;
+    }
+
+    public HuntBestiaryGui bestiaryGui() {
+        return bestiaryGui;
     }
 }
