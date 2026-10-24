@@ -91,7 +91,8 @@ public final class PartyPlugin extends JavaPlugin {
         reloadConfig();
         this.config = PartyConfig.parse(getConfig(), getLogger());
         this.messages = Messages.load(this, config.locale(), getLogger());
-        this.service = new PartyService(config, store);
+        // Сервис остаётся тем же: в нём живут отправленные приглашения.
+        this.service.applyConfig(config);
     }
 
     private void registerCommands() {

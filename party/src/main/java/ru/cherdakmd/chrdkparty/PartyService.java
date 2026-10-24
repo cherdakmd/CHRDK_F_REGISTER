@@ -67,7 +67,7 @@ public final class PartyService {
         }
     }
 
-    private final PartyConfig config;
+    private volatile PartyConfig config;
     private final PartyStore store;
     private final Map<UUID, Invite> invites = new LinkedHashMap<>();
 
@@ -78,6 +78,19 @@ public final class PartyService {
 
     public PartyConfig config() {
         return config;
+    }
+
+    /**
+     * Применяет новый конфиг, не теряя приглашений.
+     *
+     * <p>Приглашения живут в этом объекте, поэтому перезагрузка конфига
+     * должна менять только числа: если бы сервис создавался заново, игроки
+     * потеряли бы уже отправленные приглашения.</p>
+     */
+    public void applyConfig(PartyConfig config) {
+        if (config != null) {
+            this.config = config;
+        }
     }
 
     public PartyStore store() {
