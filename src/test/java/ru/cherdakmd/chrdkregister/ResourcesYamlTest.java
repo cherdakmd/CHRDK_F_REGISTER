@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 class ResourcesYamlTest {
 
     private static final List<String> MODULES = List.of(
-            "", "achievements", "artifacts", "auction", "battlepass", "claims", "common-goals",
+            "", "achievements", "artifacts", "auction", "battlepass", "bosses", "claims", "common-goals",
             "cosmetics", "daily-rewards", "diamond-shop", "enchants", "events", "hunt", "lottery",
             "orders", "party", "pets", "quests",
             "queue",

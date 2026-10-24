@@ -40,3 +40,5 @@ include 'party'
 include 'events'
 
 include 'quests'
+
+include 'bosses'

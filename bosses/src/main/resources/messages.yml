@@ -1,0 +1,128 @@
+# CHRDK_Bosses — тексты боссов и зон опасности.
+#
+# Ключи без префикса: код обращается к ним как "boss-killed" и т.п.
+# Разметка — MiniMessage, подстановки — %имя%.
+bosses:
+  # ------------------------------- служебные --------------------------------
+  no-permission: "<red>Недостаточно прав.</red>"
+  player-only: "<red>Эта команда только для игроков.</red>"
+  disabled: "<red>Боссы и зоны выключены в config.yml.</red>"
+  unknown-subcommand: "<red>Неизвестная подкоманда «%sub%». Смотрите <yellow>/boss help</yellow>.</red>"
+  boss-not-found: "<red>Босса «%id%» нет в конфиге.</red>"
+
+  # --------------------------------- справка --------------------------------
+  help-header: "<gold>Боссы</gold> <dark_gray>·</dark_gray> <gray>фазы, арены и зоны опасности</gray>"
+  help-menu: "<yellow>/boss</yellow> <gray>— меню боссов и зон</gray>"
+  help-list: "<yellow>/boss list</yellow> <gray>— кто идёт сейчас и кто на паузе</gray>"
+  help-info: "<yellow>/boss info <ид></yellow> <gray>— фазы, способности и награда</gray>"
+  help-zones: "<yellow>/boss zones</yellow> <gray>— зоны опасности и надбавка к опыту</gray>"
+  help-where: "<yellow>/boss where</yellow> <gray>— где идут бои</gray>"
+
+  # ---------------------------------- список --------------------------------
+  list-empty: "<gray>Боссов нет: добавьте их в <white>config.yml</white>.</gray>"
+  list-header: "<gold>Боссы</gold> <dark_gray>·</dark_gray> <gray>%count%</gray>"
+  list-line: "<dark_gray>·</dark_gray> <white>%name%</white> <gray>(%entity%)</gray> <dark_gray>—</dark_gray> %state%"
+  list-alive: "<green>бой · %phase% · %percent%%</green>"
+  list-cooldown: "<gray>пауза %time%</gray>"
+  list-ready: "<yellow>готов к появлению</yellow>"
+
+  # ---------------------------------- бой -----------------------------------
+  boss-spawned: "<dark_red><bold>БОСС</bold></dark_red> <dark_gray>·</dark_gray> <white>%name%</white> <gray>появился на арене</gray> <white>%arena%</white>"
+  boss-name: "<dark_red>%name%</dark_red> <dark_gray>·</dark_gray> <red>%phase%</red>"
+  boss-phase: "<dark_red>%name%</dark_red> <gray>переходит в фазу</gray> <red>%phase%</red><gray>!</gray>"
+  boss-bar: "<dark_red>%name%</dark_red> <dark_gray>·</dark_gray> <red>%phase%</red> <dark_gray>·</dark_gray> <white>%health%%</white>"
+  boss-timeout: "<gray>Босс <white>%name%</white> ушёл, не дождавшись достойного боя.</gray>"
+  boss-despawned: "<gray>Босс <white>%name%</white> покинул арену.</gray>"
+  boss-killed: "<dark_red><bold>ПОБЕДА</bold></dark_red> <dark_gray>·</dark_gray> <white>%name%</white> <gray>пал от руки</gray> <white>%killer%</white> <dark_gray>·</dark_gray> <gray>участников: %participants%</gray>"
+
+  # -------------------------------- награда ----------------------------------
+  boss-reward-xp: "<green>+%xp% опыта за бой с боссом.</green>"
+  boss-reward-trophy: "<gold>Трофей ваш:</gold> <white>%name%</white> <gray>— лучший вклад в бой.</gray>"
+  boss-reward-dropped: "<yellow>Инвентарь полон — %item% выпал под ноги.</yellow>"
+  boss-trophy-name: "<gold>%name%</gold>"
+  boss-trophy-lore: "<gray>Трофей за победу над боссом</gray>\n<dark_gray>%name%</dark_gray>"
+
+  # ---------------------------------- зоны ----------------------------------
+  zone-enter: "<red>Зона опасности:</red> <white>%zone%</white> <dark_gray>·</dark_gray> <yellow>%level%</yellow>"
+  zone-left: "<green>Вы вышли из зоны</green> <white>%zone%</white><gray>.</gray>"
+  zone-actionbar: "<red>%zone%</red> <dark_gray>·</dark_gray> <yellow>%level%</yellow>"
+  zone-bonus: "<green>+%xp% опыта</green> <gray>за моба в зоне опасности</gray>"
+  zones-empty: "<gray>Зон опасности нет: добавьте их в <white>config.yml</white>.</gray>"
+  zones-header: "<gold>Зоны опасности</gold> <dark_gray>·</dark_gray> <gray>%count%</gray>"
+  zones-line: "<dark_gray>·</dark_gray> <white>%name%</white> <gray>(%level%, радиус %radius%)</gray> <dark_gray>·</dark_gray> <gray>+%bonus%% опыта</gray> <dark_gray>·</dark_gray> %state%"
+  zones-on: "<green>действует</green>"
+  zones-off: "<dark_gray>выключена</dark_gray>"
+  zone-info-header: "<gold>%name%</gold>"
+  zone-info-description: "<gray>%description%</gray>"
+  zone-info-level: "<gray>Уровень:</gray> <yellow>%level%</yellow> <dark_gray>·</dark_gray> <gray>радиус:</gray> <white>%radius%</white>"
+  zone-info-bonus: "<gray>Надбавка к опыту:</gray> <white>+%percent%%</white>"
+  zone-info-damage: "<gray>Урон в секунду:</gray> <red>%damage%</red> <gray>(не отнимает последние 2 сердца)</gray>"
+  zone-info-effect: "<gray>· эффект</gray> <white>%effect%</white> <gray>уровня</gray> <white>%level%</white> <gray>на</gray> <white>%seconds% с</white>"
+
+  # ---------------------------------- меню ----------------------------------
+  menu-title: "<dark_red>Боссы и зоны опасности</dark_red>"
+  menu-info-name: "<gold>Боссы</gold>"
+  menu-info-alive: "<gray>Идут бои:</gray> <white>%alive%</white> <gray>из %total%</gray>"
+  menu-info-kills: "<gray>Побед всего:</gray> <white>%kills%</white> <gray>(над всеми боссами: %bosses%)</gray>"
+  menu-info-zones: "<gray>Зон опасности:</gray> <white>%zones%</white>"
+  menu-info-hint: "<dark_gray>Наведите на босса, чтобы увидеть арену и награду.</dark_gray>"
+  menu-item-name: "<white>%name%</white>"
+  menu-close: "<red>Закрыть</red>"
+  menu-boss-description: "<gray>%description%</gray>"
+  menu-boss-arena: "<gray>Арена:</gray> <white>%arena%</white>"
+  menu-boss-health: "<gray>Здоровье:</gray> <white>%health%</white> <dark_gray>·</dark_gray> <gray>фаз: %phases%</gray>"
+  menu-boss-alive: "<green>Бой идёт:</green> <white>%phase%</white> <gray>(%percent%% здоровья)</gray>"
+  menu-boss-participants: "<gray>Участников:</gray> <white>%count%</white>"
+  menu-boss-cooldown: "<gray>Снова появится через</gray> <white>%time%</white>"
+  menu-boss-ready: "<yellow>Готов появиться</yellow>"
+  menu-boss-reward: "<gray>Награда:</gray> <white>%xp%</white> <gray>опыта, предметов: %items%</gray>"
+  menu-boss-click: "<dark_gray>Нажмите, чтобы увидеть фазы и способности.</dark_gray>"
+  menu-zone-description: "<gray>%description%</gray>"
+  menu-zone-level: "<gray>%level%</gray> <dark_gray>·</dark_gray> <gray>радиус:</gray> <white>%radius%</white>"
+  menu-zone-bonus: "<gray>Надбавка к опыту:</gray> <white>+%percent%%</white>"
+  menu-zone-damage: "<gray>Урон:</gray> <red>%damage%</red> <gray>в секунду</gray>"
+  menu-zone-enabled: "<green>Действует</green>"
+  menu-zone-disabled: "<dark_gray>Выключена</dark_gray>"
+
+  # ------------------------------- подробности ------------------------------
+  boss-info-header: "<gold>%name%</gold>"
+  boss-info-description: "<gray>%description%</gray>"
+  boss-info-arena: "<gray>Арена:</gray> <white>%arena%</white>"
+  boss-info-health: "<gray>Здоровье:</gray> <white>%health%</white> <dark_gray>·</dark_gray> <gray>фаз: %phases%</gray>"
+  boss-info-phase: "<gray>· с %percent%% —</gray> <white>%name%</white> <gray>(способностей: %abilities%)</gray>"
+  boss-info-alive: "<green>Бой идёт:</green> <white>%phase%</white> <gray>(%percent%% здоровья)</gray>"
+  boss-info-cooldown: "<gray>Появится через</gray> <white>%time%</white>"
+  boss-info-ready: "<yellow>Готов появиться</yellow>"
+  boss-info-reward: "<gray>Награда:</gray> <white>%xp%</white> <gray>опыта, предметов: %items%</gray>"
+  info-usage: "<gray>/boss info <yellow><ид></yellow></gray>"
+  where-empty: "<gray>Сейчас нет ни одного боя с боссом.</gray>"
+  where-line: "<dark_gray>·</dark_gray> <white>%name%</white> <gray>(%phase%)</gray> <dark_gray>—</dark_gray> <gray>%world% %x% %y% %z%</gray>"
+
+  # -------------------------------- профиль ---------------------------------
+  profile-title: "Боссы"
+  profile-kills: "<gray>Побед над боссами: <white>%kills%</white> из <white>%total%</white> видов</gray>"
+  profile-alive: "<gray>Идут бои: <white>%count%</white></gray>"
+  profile-fighting: "<green>%name% · %phase% · <white>%percent%%</white></green>"
+  profile-zone: "<red>%zone%</red> <gray>· надбавка к опыту <white>+%bonus%%</white></gray>"
+  profile-last: "<gray>Последняя победа: <white>%name%</white> · %time%</gray>"
+  profile-top: "<gray>Лучший босс: <white>%kills%</white> побед</gray>"
+
+  # ---------------------------------- админ ---------------------------------
+  admin-usage: "<gray>/bossadmin <yellow>spawn <ид></yellow> | <yellow>stop [ид|all]</yellow> | <yellow>reload</yellow> | <yellow>info <ид></yellow> | <yellow>cooldown reset <ид|all></yellow> | <yellow>history [n]</yellow> | <yellow>reset</yellow></gray>"
+  admin-spawned: "<green>Босс «%name%» выпущен на арену.</green>"
+  admin-spawn-failed: "<red>Босс «%name%» не появился: проверьте мир арены и лог сервера.</red>"
+  admin-stopped: "<green>Босс «%name%» остановлен.</green>"
+  admin-stopped-all: "<green>Остановлено боссов: %count%.</green>"
+  admin-not-alive: "<gray>Босс «%name%» сейчас не идёт.</gray>"
+  admin-reloaded: "<green>Конфиг перечитан.</green> <gray>Боссов: %bosses%, зон: %zones%.</gray>"
+  admin-state-idle: "<gray>на паузе</gray>"
+  admin-state-alive: "<green>идёт бой</green>"
+  admin-info: "<gray>%name%</gray> <dark_gray>·</dark_gray> %state% <dark_gray>·</dark_gray> <gray>побед:</gray> <white>%kills%</white> <dark_gray>·</dark_gray> <gray>следующий:</gray> <white>%next%</white> <dark_gray>·</dark_gray> <gray>%arena%</gray>"
+  admin-cooldown-usage: "<gray>/bossadmin cooldown reset <yellow><ид|all></yellow></gray>"
+  admin-cooldown: "<green>Пауза босса «%name%» снята.</green>"
+  admin-cooldown-all: "<green>Снято пауз: %count%.</green>"
+  admin-history-usage: "<red>Нужно целое число: сколько последних записей показать.</red>"
+  admin-history-empty: "<gray>История побед пока пуста.</gray>"
+  admin-history-line: "<dark_gray>·</dark_gray> <gray>%time%</gray> <white>%name%</white> <gray>—</gray> <white>%killer%</white> <gray>(участников: %participants%)</gray>"
+  admin-history-unknown: "<gray>неизвестно</gray>"
+  admin-reset: "<green>Счётчики побед и история сброшены.</green>"
