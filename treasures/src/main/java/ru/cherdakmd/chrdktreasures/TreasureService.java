@@ -37,7 +37,7 @@ public final class TreasureService {
     public record Found(TreasureTier tier, TreasureRegion region, TreasureItemDef item,
                         List<TreasureLoot.LootStack> loot, List<Integer> milestones,
                         int streak, TreasureRank rank,
-                        List<TreasureLoot.LootStack> bonus) {
+                        List<TreasureLoot.LootStack> bonus, boolean barrel) {
 
         public boolean named() {
             return item != null;
@@ -243,17 +243,37 @@ public final class TreasureService {
      */
     public Found give(Player player, TreasureTier tier, TreasureRegion region,
                       TreasureRoll.Roll roll) {
+        return give(player, tier, region, roll, null);
+    }
+
+    /**
+     * Выдаёт клад и, если возможно, материализует его бочкой.
+     *
+     * <p>1.4.166: добыча больше не «исчезает в рюкзаке». Всё, что нашлось,
+     * собирается в один список и ставится в бочку на месте находки; открытие
+     * сопровождается анимацией. Бочка ставится следующим тиком — во время
+     * {@code BlockBreakEvent} блок ещё не заменён воздухом, и поставить её
+     * прямо в обработчике нельзя. Если поставить бочку не удалось (нет места,
+     * лимит, чужой регион), {@link TreasureBarrels} сам вернёт добычу в
+     * инвентарь и сообщит игроку.</p>
+     *
+     * @param origin место находки; {@code null} — выдать в инвентарь сразу
+     */
+    public Found give(Player player, TreasureTier tier, TreasureRegion region,
+                      TreasureRoll.Roll roll, Location origin) {
         if (player == null || tier == null || roll == null) {
             return new Found(tier, region, null, List.of(), List.of(), 0,
-                    TreasureRank.NOVICE, List.of());
+                    TreasureRank.NOVICE, List.of(), false);
         }
         TreasureRank before = rank(player);
         store.setName(key(player), player.getName());
+        // 1.4.166: сначала собираем добычу, потом решаем, куда её положить.
+        List<ItemStack> payload = new ArrayList<>();
         TreasureItemDef item = roll.item();
         if (item != null) {
             ItemStack stack = plugin.items().create(item);
             if (stack != null) {
-                giveStack(player, stack);
+                payload.add(stack);
             }
         }
         List<TreasureLoot.LootStack> loot = new ArrayList<>(roll.loot());
@@ -269,17 +289,39 @@ public final class TreasureService {
         for (TreasureLoot.LootStack stack : loot) {
             ItemStack itemStack = stackOf(stack);
             if (itemStack != null) {
-                giveStack(player, itemStack);
+                payload.add(itemStack);
             }
         }
         int streak = store.recordTreasure(key(player), tier,
                 item == null ? null : item.id(), System.currentTimeMillis(),
                 plugin.config().streakWindowMillis());
         List<Integer> milestones = checkMilestones(player);
-        List<TreasureLoot.LootStack> bonus = grantStreakBonus(player, tier, region, streak);
+        List<TreasureLoot.LootStack> bonus = grantStreakBonus(player, tier, region, streak, payload);
+        boolean barrel = origin != null && plugin.barrels() != null
+                && plugin.barrels().offer(player, origin, tier, payload);
+        if (!barrel) {
+            givePayload(player, payload);
+        }
         checkRank(player, before);
         return new Found(tier, region, item, loot, milestones, streak,
-                rank(player), bonus);
+                rank(player), bonus, barrel);
+    }
+
+    /**
+     * Кладёт готовые предметы в инвентарь, а остаток — под ноги.
+     *
+     * <p>Пакетная выдача нужна и обычному пути, и отказу бочки: список уже
+     * собран, повторно считать добычу нельзя.</p>
+     */
+    void givePayload(Player player, List<ItemStack> payload) {
+        if (player == null || payload == null) {
+            return;
+        }
+        for (ItemStack stack : payload) {
+            if (stack != null) {
+                giveStack(player, stack);
+            }
+        }
     }
 
     /**
@@ -290,7 +332,8 @@ public final class TreasureService {
      * ресурсы, и он честно объявляется игроку.</p>
      */
     private List<TreasureLoot.LootStack> grantStreakBonus(Player player, TreasureTier tier,
-                                                          TreasureRegion region, int streak) {
+                                                          TreasureRegion region, int streak,
+                                                          List<ItemStack> payload) {
         if (!TreasureStreak.bonusDue(streak, plugin.config().streakBonusEvery())) {
             return List.of();
         }
@@ -301,7 +344,7 @@ public final class TreasureService {
         for (TreasureLoot.LootStack stack : extra.loot()) {
             ItemStack itemStack = stackOf(stack);
             if (itemStack != null) {
-                giveStack(player, itemStack);
+                payload.add(itemStack);
             }
         }
         if (!extra.loot().isEmpty()) {

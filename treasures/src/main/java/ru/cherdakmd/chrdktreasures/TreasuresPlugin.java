@@ -56,6 +56,8 @@ public final class TreasuresPlugin extends JavaPlugin {
     private TreasuresGui gui;
     /** 1.4.153: клад-карты — выдача, раскопки и подсказки. */
     private TreasureMapService maps;
+    /** 1.4.166: клады-бочки — появление, анимация и уборка. */
+    private TreasureBarrels barrels;
     private BukkitTask saveTask;
     private BukkitTask auraTask;
 
@@ -77,9 +79,11 @@ public final class TreasuresPlugin extends JavaPlugin {
         this.curses = new TreasureCurses(this);
         this.listener = new TreasureListener(this, service);
         this.maps = new TreasureMapService(this);
+        this.barrels = new TreasureBarrels(this);
         this.gui = new TreasuresGui(this, service);
 
         Bukkit.getPluginManager().registerEvents(listener, this);
+        Bukkit.getPluginManager().registerEvents(barrels, this);
         Bukkit.getPluginManager().registerEvents(gui, this);
 
         TreasureCommandHandler commands = new TreasureCommandHandler(this, service, gui);
@@ -116,7 +120,8 @@ public final class TreasuresPlugin extends JavaPlugin {
                 + ", регионов " + TreasureRegion.values().length
                 + ", редкостей " + TreasureTier.values().length
                 + ", добыча кладов " + (config.enabled() ? "включена" : "выключена")
-                + ", клад-карты: " + (maps == null ? "нет" : maps.summary()) + ".");
+                + ", клад-карты: " + (maps == null ? "нет" : maps.summary())
+                + ", бочки с кладом: " + (config.barrels().enabled() ? "вкл" : "выкл") + ".");
     }
 
     @Override
@@ -138,6 +143,10 @@ public final class TreasuresPlugin extends JavaPlugin {
         }
         if (maps != null) {
             maps.stop();
+        }
+        if (barrels != null) {
+            barrels.stop();
+            barrels.saveNow();
         }
         if (store != null) {
             store.flush();
@@ -196,6 +205,9 @@ public final class TreasuresPlugin extends JavaPlugin {
         if (maps != null) {
             maps.restart();
         }
+        if (barrels != null) {
+            barrels.start();
+        }
     }
 
     private void refreshAuras() {
@@ -219,6 +231,15 @@ public final class TreasuresPlugin extends JavaPlugin {
             }
         } catch (RuntimeException exception) {
             getLogger().warning("Не удалось сохранить клады: " + exception.getMessage());
+        }
+        // 1.4.166: индекс бочек — часть общего сохранения, чтобы срок жизни и
+        // лимит не сбрасывались после перезапуска.
+        if (barrels != null) {
+            try {
+                barrels.flush();
+            } catch (RuntimeException exception) {
+                getLogger().warning("Не удалось сохранить бочки: " + exception.getMessage());
+            }
         }
     }
 
@@ -343,6 +364,11 @@ public final class TreasuresPlugin extends JavaPlugin {
     /** Клад-карты (1.4.153). */
     public TreasureMapService maps() {
         return maps;
+    }
+
+    /** 1.4.166: бочки, в которых появляется клад. */
+    public TreasureBarrels barrels() {
+        return barrels;
     }
 
     /** Слушатель кладов: сервису карт нужен общий «праздник» находки. */

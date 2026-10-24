@@ -109,6 +109,54 @@ class TreasureConfigTest {
     }
 
     @Test
+    void barrelsAreOnByDefaultWithDocumentedLimits() {
+        TreasuresConfig defaults = TreasuresConfig.parse(new YamlConfiguration(), LOGGER);
+        TreasuresConfig.Barrels barrels = defaults.barrels();
+        assertTrue(barrels.enabled(), "бочки должны быть включены по умолчанию");
+        assertTrue(barrels.ownerOnly(), "чужая бочка по умолчанию заперта");
+        assertTrue(barrels.animation(), "анимация по умолчанию включена");
+        assertTrue(barrels.dropOnExpire(), "добыча не должна сгорать вместе с бочкой");
+        assertEquals(20, barrels.expireMinutes());
+        assertEquals(20 * 60_000L, barrels.expireMillis());
+        assertEquals(3, barrels.maxPerPlayer());
+        assertEquals(60, barrels.removeEmptyTicks());
+
+        // Поставляемый config.yml обязан совпадать с умолчаниями кода: иначе
+        // новая установка получает другие правила, чем описано в README.
+        assertEquals(barrels, TreasuresConfig.parse(shipped(), LOGGER).barrels(),
+                "секция barrels в config.yml разошлась с умолчаниями кода");
+    }
+
+    @Test
+    void barrelsCanBeDisabledAndStayInSaneRange() {
+        YamlConfiguration cfg = new YamlConfiguration();
+        cfg.set("barrels.enabled", false);
+        cfg.set("barrels.owner-only", false);
+        cfg.set("barrels.expire-minutes", 99_999);
+        cfg.set("barrels.max-per-player", 0);
+        cfg.set("barrels.animation", false);
+        cfg.set("barrels.remove-empty-ticks", 1);
+        cfg.set("barrels.drop-on-expire", false);
+        TreasuresConfig.Barrels barrels = TreasuresConfig.parse(cfg, LOGGER).barrels();
+        assertFalse(barrels.enabled());
+        assertFalse(barrels.ownerOnly());
+        assertFalse(barrels.animation());
+        assertFalse(barrels.dropOnExpire());
+        assertEquals(180, barrels.expireMinutes(), "срок жизни не должен превышать 180 минут");
+        assertEquals(1, barrels.maxPerPlayer());
+        assertEquals(20, barrels.removeEmptyTicks());
+
+        cfg.set("barrels.expire-minutes", -5);
+        cfg.set("barrels.max-per-player", 500);
+        cfg.set("barrels.remove-empty-ticks", 99_999);
+        TreasuresConfig.Barrels other = TreasuresConfig.parse(cfg, LOGGER).barrels();
+        assertEquals(0, other.expireMinutes(), "0 — бессрочная бочка");
+        assertEquals(0L, other.expireMillis());
+        assertEquals(20, other.maxPerPlayer());
+        assertEquals(600, other.removeEmptyTicks());
+    }
+
+    @Test
     void abilitiesSetsAndCursesAreOnByDefault() {
         TreasuresConfig defaults = TreasuresConfig.parse(new YamlConfiguration(), LOGGER);
         assertTrue(defaults.abilitiesEnabled());

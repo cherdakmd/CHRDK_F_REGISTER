@@ -363,7 +363,8 @@ public final class TreasureMapService {
         double chance = Math.min(1.0, base * settings().namedChanceMultiplier());
         TreasureRoll.Roll roll = TreasureRoll.roll(map.tier(), map.region(), chance, random,
                 service.mined(player), plugin.config().arsenalShare());
-        TreasureService.Found found = service.give(player, map.tier(), map.region(), roll);
+        TreasureService.Found found = service.give(player, map.tier(), map.region(), roll,
+                block.getLocation());
         plugin.messages().send(player, "map-found",
                 "tier", Messages.trusted(plugin.messages().raw("tier." + map.tier().id())),
                 "region", Messages.trusted(

@@ -117,6 +117,46 @@ public final class TreasuresConfig {
         }
     }
 
+    /**
+     * Клады-бочки (1.4.166): найденный клад появляется бочкой на месте блока.
+     *
+     * <p>Бочка — настоящий контейнер: добыча лежит внутри, а не выдаётся в
+     * инвентарь. Владелец открывает её сам, остальные видят замок (если включён
+     * {@code owner-only}). Срок жизни и лимит на игрока защищают мир от сотен
+     * бесхозных бочек: просроченная бочка исчезает с эффектом, а её содержимое
+     * высыпается на землю, поэтому находка не пропадает.</p>
+     *
+     * @param enabled           включены ли бочки вместо прямой выдачи
+     * @param ownerOnly         открывать может только нашедший (админ — всегда)
+     * @param expireMinutes     срок жизни бочки в минутах; 0 — бессрочно
+     * @param maxPerPlayer      сколько живых бочек может быть у одного игрока
+     * @param animation         частицы, звуки и крышка при появлении и открытии
+     * @param removeEmptyTicks  через сколько тиков убирать опустевшую бочку
+     * @param dropOnExpire      высыпать содержимое при истечении срока
+     */
+    public record Barrels(boolean enabled, boolean ownerOnly, int expireMinutes,
+                          int maxPerPlayer, boolean animation, int removeEmptyTicks,
+                          boolean dropOnExpire) {
+
+        /** Бочки выключены: клад выдаётся в инвентарь, как раньше. */
+        public static final Barrels DISABLED = new Barrels(false, true, 20, 3, true, 60, true);
+
+        public Barrels {
+            expireMinutes = clampInt(expireMinutes, 0, 180);
+            maxPerPlayer = clampInt(maxPerPlayer, 1, 20);
+            removeEmptyTicks = clampInt(removeEmptyTicks, 20, 600);
+        }
+
+        private static int clampInt(int value, int min, int max) {
+            return Math.max(min, Math.min(max, value));
+        }
+
+        /** Срок жизни в миллисекундах; 0 — бочка не исчезает. */
+        public long expireMillis() {
+            return expireMinutes * 60_000L;
+        }
+    }
+
     private final boolean enabled;
     private final int auraRefreshTicks;
     private final int topSize;
@@ -152,6 +192,7 @@ public final class TreasuresConfig {
     private final Map<TreasureTier, Double> tierChances;
     /** 1.4.153: клад-карты — шанс выпадения, зона и срок жизни. */
     private final Maps maps;
+    private final Barrels barrels;
     /** 1.4.157: склянки опыта в каждом кладе. */
     private final TreasureExperience.Rule experience;
 
@@ -171,7 +212,8 @@ public final class TreasuresConfig {
                             boolean abilitiesEnabled, boolean cursesEnabled,
                             boolean setsEnabled, double arsenalShare,
                             boolean tiersEnabled, Map<TreasureTier, Double> tierChances,
-                            Maps maps, TreasureExperience.Rule experience) {
+                            Maps maps, Barrels barrels,
+                            TreasureExperience.Rule experience) {
         this.enabled = enabled;
         this.auraRefreshTicks = auraRefreshTicks;
         this.topSize = topSize;
@@ -202,6 +244,7 @@ public final class TreasuresConfig {
         this.tiersEnabled = tiersEnabled;
         this.tierChances = tierChances;
         this.maps = maps == null ? Maps.DISABLED : maps;
+        this.barrels = barrels == null ? Barrels.DISABLED : barrels;
         this.experience = experience == null ? TreasureExperience.defaults() : experience;
     }
 
@@ -357,7 +400,7 @@ public final class TreasuresConfig {
                 cfg.getBoolean("sets.enabled", true),
                 arsenalShare, tiersEnabled,
                 Collections.unmodifiableMap(tierChances),
-                parseMaps(cfg), parseExperience(cfg));
+                parseMaps(cfg), parseBarrels(cfg), parseExperience(cfg));
     }
 
     private static TreasureTier parseTier(String raw, TreasureTier fallback) {
@@ -578,6 +621,11 @@ public final class TreasuresConfig {
         return maps;
     }
 
+    /** Клады-бочки: появление, срок жизни и анимация. */
+    public Barrels barrels() {
+        return barrels;
+    }
+
     /** Склянки опыта в каждом кладе (1.4.157). */
     public TreasureExperience.Rule experience() {
         return experience;
@@ -635,6 +683,22 @@ public final class TreasuresConfig {
                 (int) clamp(cfg.getLong("maps.hint-ticks", 40L), 20L, 200L),
                 (int) clamp(cfg.getLong("maps.hint-distance", 256L), 0L, 1024L),
                 weights);
+    }
+
+    /**
+     * Разбор секции {@code barrels.*}. Границы те же, что в конструкторе
+     * {@link Barrels}: опечатка в конфиге не может оставить бочку навсегда или
+     * разрешить сотни бочек одному игроку.
+     */
+    private static Barrels parseBarrels(FileConfiguration cfg) {
+        return new Barrels(
+                cfg.getBoolean("barrels.enabled", true),
+                cfg.getBoolean("barrels.owner-only", true),
+                (int) clamp(cfg.getLong("barrels.expire-minutes", 20L), 0L, 180L),
+                (int) clamp(cfg.getLong("barrels.max-per-player", 3L), 1L, 20L),
+                cfg.getBoolean("barrels.animation", true),
+                (int) clamp(cfg.getLong("barrels.remove-empty-ticks", 60L), 20L, 600L),
+                cfg.getBoolean("barrels.drop-on-expire", true));
     }
 
     private static Integer parseInt(String value) {

@@ -128,7 +128,8 @@ public final class TreasureListener implements Listener {
         TreasureRegion region = service.regionOf(block);
         TreasureRoll.Roll roll = service.rollContent(tier, region, service.mined(player));
         lastTreasure.put(player.getUniqueId(), now);
-        TreasureService.Found found = service.give(player, tier, region, roll);
+        TreasureService.Found found = service.give(player, tier, region, roll,
+                block.getLocation());
         celebrate(player, block.getLocation(), found);
         // 1.4.153: к находке иногда прикладывается клад-карта. Тайник из самой
         // карты карту не выдаёт — цепочки «карта из карты» нет.
@@ -401,6 +402,10 @@ public final class TreasureListener implements Listener {
                 plugin.messages().send(player, "treasure-found-loot",
                         "tier", Messages.trusted(tierName),
                         "loot", Messages.trusted(loot));
+            } else if (found.barrel()) {
+                // 1.4.166: добыча не в рюкзаке, а в бочке — говорим прямо.
+                plugin.messages().send(player, "treasure-found-barrel",
+                        "tier", Messages.trusted(tierName));
             } else {
                 plugin.messages().send(player, "treasure-found-empty",
                         "tier", Messages.trusted(tierName));
@@ -437,7 +442,8 @@ public final class TreasureListener implements Listener {
                 ? plugin.messages().plain("treasure." + found.item().id() + ".name")
                 : summary.plain();
         plugin.getLogger().info("[CHRDK_Treasures] " + player.getName() + " · "
-                + found.tier().id() + (detail.isEmpty() ? "" : " · " + detail));
+                + found.tier().id() + (detail.isEmpty() ? "" : " · " + detail)
+                + (found.barrel() ? " · бочка" : ""));
     }
 
     private void particles(Location location, TreasureTier tier) {

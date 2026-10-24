@@ -526,6 +526,7 @@ messages:
   # ------------------------------- уведомления -------------------------------
   treasure-found-named: "<gold>Клад!</gold> %tier% <dark_gray>·</dark_gray> %name%"
   treasure-found-loot: "<gold>Клад!</gold> %tier% <gray>— добыча:</gray> %loot%"
+  treasure-found-barrel: "<gold>Клад!</gold> %tier% <gray>— добыча в бочке на месте находки.</gray>"
   treasure-found-empty: "<gold>Клад!</gold> %tier% <gray>— добыча уже в инвентаре.</gray>"
   treasure-broadcast-named: "<gold>%player%</gold> <gray>нашёл</gray> %tier% <gray>находку</gray> %name%<gray>!</gray>"
   treasure-broadcast-loot: "<gold>%player%</gold> <gray>нашёл</gray> %tier% <gray>клад:</gray> %loot%"
@@ -640,6 +641,13 @@ messages:
   map-hint: "<gray>Клад: <white>%distance%</white> блоков на <white>%direction%</white> · копать <white>%left%</white></gray>"
   map-hint-zone: "<green>Вы в зоне клада! Осталось раскопать: <white>%left%</white></green>"
   map-disabled: "<red>Клад-карты выключены в config.yml (maps.enabled).</red>"
+  # 1.4.166: клад появляется бочкой.
+  barrel-placed: "<green>Клад в бочке!</green> <gray>%tier% · открой её на месте находки.</gray>"
+  barrel-hint: "<gray>ПКМ по бочке — забрать добычу.</gray>"
+  barrel-locked: "<red>Бочка с кладом принадлежит</red> <white>%player%</white><red>.</red>"
+  barrel-limit: "<yellow>У тебя уже %max% бочек с кладом.</yellow> <gray>Забери добычу из старой — тогда появится новая.</gray>"
+  barrel-expired: "<gray>Бочка с кладом %tier% исчезла — добыча высыпалась на землю.</gray>"
+  barrel-fallback: "<yellow>Бочку поставить не удалось</yellow> <gray>— добыча выдана в инвентарь.</gray>"
   menu-maps-name: "<gold>Клад-карты</gold>"
   menu-maps-lore: "<gray>Активных: <white>%count%</white></gray>"
   menu-maps-empty: "<gray>Активных карт нет</gray>"

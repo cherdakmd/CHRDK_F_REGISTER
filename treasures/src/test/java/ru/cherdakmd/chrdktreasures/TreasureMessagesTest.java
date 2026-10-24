@@ -73,7 +73,10 @@ class TreasureMessagesTest {
             "menu-maps-name", "menu-maps-lore", "menu-maps-empty", "menu-maps-hint",
             "help-map", "admin-map-given", "admin-unknown-tier",
             // 1.4.157: эликсиры из кладов.
-            "elixir-name", "elixir-lore-effect", "elixir-lore-hint");
+            "elixir-name", "elixir-lore-effect", "elixir-lore-hint",
+            // 1.4.166: клады в бочках.
+            "barrel-placed", "barrel-hint", "barrel-locked", "barrel-limit",
+            "barrel-expired", "barrel-fallback", "treasure-found-barrel");
 
     private static ConfigurationSection messages() {
         try (var stream = TreasureMessagesTest.class.getClassLoader()
