@@ -1,0 +1,60 @@
+name: Publish Mine Treasure RU asset
+
+# The sandbox that prepared the translation cannot reach uploads.github.com,
+# so the release asset is attached from a GitHub-hosted runner instead.
+on:
+  push:
+    branches:
+      - 'arena/faecfc92-chrdk-f-register'
+    paths:
+      - 'datapack-ru/.publish-asset'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to attach the asset to'
+        required: false
+        default: 'mine-treasure-ru-1.6.5'
+
+permissions:
+  contents: write
+
+jobs:
+  attach:
+    name: Attach translated datapack to release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the branch holding the ZIP
+        uses: actions/checkout@v5
+        with:
+          ref: arena/faecfc92-chrdk-f-register
+
+      - name: Verify the archive before uploading
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f datapack-ru/mine-treasure-1.6.5-ru.zip
+          python3 - <<'PY'
+          import hashlib, zipfile
+          p = 'datapack-ru/mine-treasure-1.6.5-ru.zip'
+          with open(p, 'rb') as fh:
+              data = fh.read()
+          digest = hashlib.sha256(data).hexdigest()
+          expected = '0ff4bd2ad1a5db22920db23f1f2c88d577ceff607164638d0e1a45264075bf92'
+          if digest != expected:
+              raise SystemExit(f'SHA-256 mismatch: {digest} != {expected}')
+          with zipfile.ZipFile(p) as z:
+              assert len(z.namelist()) == 3033, len(z.namelist())
+              assert z.testzip() is None
+          print(f'OK: {len(data)} bytes, 3033 entries, sha256={digest}')
+          PY
+
+      - name: Attach ZIP to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag || 'mine-treasure-ru-1.6.5' }}
+        run: |
+          gh release upload "$RELEASE_TAG" \
+            datapack-ru/mine-treasure-1.6.5-ru.zip \
+            --repo "${{ github.repository }}" --clobber
+          gh release view "$RELEASE_TAG" --repo "${{ github.repository }}" \
+            --json assets --jq '.assets[].name'
