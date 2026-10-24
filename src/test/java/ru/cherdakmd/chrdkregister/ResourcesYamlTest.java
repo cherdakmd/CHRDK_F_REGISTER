@@ -21,7 +21,8 @@ class ResourcesYamlTest {
 
     private static final List<String> MODULES = List.of(
             "", "achievements", "artifacts", "auction", "battlepass", "bosses", "claims", "common-goals",
-            "cosmetics", "daily-rewards", "diamond-shop", "enchants", "events", "hunt", "lottery",
+            "cosmetics", "daily-rewards", "diamond-shop", "enchants", "events", "guilds",
+            "hunt", "lottery",
             "orders", "party", "pets", "quests",
             "queue",
             "ranks", "referrals", "skills", "streams", "teleports", "tier-forge", "treasures");

@@ -42,3 +42,5 @@ include 'events'
 include 'quests'
 
 include 'bosses'
+
+include 'guilds'
