@@ -1,0 +1,28 @@
+name: CHRDK_Party
+version: ${version}
+main: ru.cherdakmd.chrdkparty.PartyPlugin
+api-version: '26.3'
+description: "Группы игроков: пати-чат, общий бонус опыта и защита от своих"
+author: cherdakmd
+depend: [CHRDK_Core]
+softdepend: [PlaceholderAPI]
+commands:
+  party:
+    description: "Группа: приглашения, состав, чат и выход"
+    aliases: [pt, group, gruppa]
+    usage: "/party [create|invite <ник>|accept|deny|leave|kick <ник>|disband|list|info [ник]|chat <текст>|help]"
+  pc:
+    description: "Чат группы"
+    aliases: [pchat, partychat]
+    usage: "/pc <сообщение>"
+  partyadmin:
+    description: "Управление группами"
+    permission: chrdkparty.admin
+    usage: "/partyadmin [reload|info|disband <ник>]"
+permissions:
+  chrdkparty.use:
+    description: "Группы, приглашения и пати-чат"
+    default: true
+  chrdkparty.admin:
+    description: "Перезагрузка конфига, сводка и роспуск чужих групп"
+    default: op

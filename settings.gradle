@@ -34,3 +34,5 @@ include 'auction'
 include 'orders'
 
 include 'hunt'
+
+include 'party'
