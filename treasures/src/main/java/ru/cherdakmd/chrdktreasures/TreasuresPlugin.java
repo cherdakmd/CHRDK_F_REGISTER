@@ -46,6 +46,8 @@ public final class TreasuresPlugin extends JavaPlugin {
     private TreasureStore store;
     private TreasureOverrides overrides;
     private TreasureShowcase showcase;
+    /** 1.4.166: реликвии и книги чар в кладах (мосты к соседним аддонам). */
+    private TreasureSpecials specials;
     private TreasureItems items;
     private TreasureService service;
     private TreasureSets sets;
@@ -69,6 +71,7 @@ public final class TreasuresPlugin extends JavaPlugin {
         this.overrides = new TreasureOverrides(getDataFolder().toPath(), getLogger());
         this.overrides.load();
         this.items = new TreasureItems(this);
+        this.specials = new TreasureSpecials(this);
         this.showcase = new TreasureShowcase(this);
         // Конфиг читается до листенера: антинакрутка берёт из него TTL и лимит.
         reloadTreasuresConfig();
@@ -121,7 +124,8 @@ public final class TreasuresPlugin extends JavaPlugin {
                 + ", редкостей " + TreasureTier.values().length
                 + ", добыча кладов " + (config.enabled() ? "включена" : "выключена")
                 + ", клад-карты: " + (maps == null ? "нет" : maps.summary())
-                + ", бочки с кладом: " + (config.barrels().enabled() ? "вкл" : "выкл") + ".");
+                + ", бочки с кладом: " + (config.barrels().enabled() ? "вкл" : "выкл")
+                + ", особые находки: " + specialsSummary() + ".");
     }
 
     @Override
@@ -175,6 +179,10 @@ public final class TreasuresPlugin extends JavaPlugin {
         if (listener != null) {
             listener.reloadAntiCheat();
         }
+        if (specials != null) {
+            // 1.4.166: аддоны могли включиться позже — мосты берём заново.
+            specials.reload();
+        }
         if (service != null && auras != null && config.enabled()) {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 auras.apply(player);
@@ -208,6 +216,25 @@ public final class TreasuresPlugin extends JavaPlugin {
         if (barrels != null) {
             barrels.start();
         }
+    }
+
+    /** Короткая сводка особых находок: какие источники реально доступны. */
+    private String specialsSummary() {
+        TreasuresConfig.Specials settings = config.specials();
+        if (!settings.active() || specials == null) {
+            return "выкл";
+        }
+        StringBuilder out = new StringBuilder();
+        if (settings.artifacts()) {
+            out.append(specials.artifactsAvailable() ? "реликвии" : "реликвии (нет аддона)");
+        }
+        if (settings.enchantments()) {
+            if (out.length() > 0) {
+                out.append(", ");
+            }
+            out.append(specials.enchantmentsAvailable() ? "книги чар" : "книги чар (нет аддона)");
+        }
+        return out.length() == 0 ? "выкл" : out.toString();
     }
 
     private void refreshAuras() {
@@ -369,6 +396,11 @@ public final class TreasuresPlugin extends JavaPlugin {
     /** 1.4.166: бочки, в которых появляется клад. */
     public TreasureBarrels barrels() {
         return barrels;
+    }
+
+    /** 1.4.166: реликвии и книги чар из соседних аддонов. */
+    public TreasureSpecials specials() {
+        return specials;
     }
 
     /** Слушатель кладов: сервису карт нужен общий «праздник» находки. */

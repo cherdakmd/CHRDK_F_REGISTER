@@ -641,6 +641,10 @@ messages:
   map-hint: "<gray>Клад: <white>%distance%</white> блоков на <white>%direction%</white> · копать <white>%left%</white></gray>"
   map-hint-zone: "<green>Вы в зоне клада! Осталось раскопать: <white>%left%</white></green>"
   map-disabled: "<red>Клад-карты выключены в config.yml (maps.enabled).</red>"
+  # 1.4.166: особые находки — реликвии и книги чар.
+  special-artifact: "<light_purple>✦ Таинственная реликвия:</light_purple> %name%"
+  special-artifact-cursed: "<dark_purple>✦ Проклятая реликвия:</dark_purple> %name% <dark_gray>· сила с расплатой</dark_gray>"
+  special-enchant: "<light_purple>✦ Книга чар:</light_purple> %name% <white>%level%</white>"
   # 1.4.166: клад появляется бочкой.
   barrel-placed: "<green>Клад в бочке!</green> <gray>%tier% · открой её на месте находки.</gray>"
   barrel-hint: "<gray>ПКМ по бочке — забрать добычу.</gray>"

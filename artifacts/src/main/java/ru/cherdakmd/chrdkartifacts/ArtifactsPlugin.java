@@ -5,6 +5,7 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
+import ru.cherdakmd.chrdkregister.api.ChrdkArtifactsApi;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 
 /**
@@ -33,6 +34,8 @@ public final class ArtifactsPlugin extends JavaPlugin {
     private CollectionService collection;
     private CollectionGui collectionGui;
     private ArtifactFeedback feedback;
+    /** 1.4.166: мост для других аддонов (клады выдают настоящие артефакты). */
+    private ArtifactsApiBridge apiBridge;
     private BukkitTask saveTask;
 
     @Override
@@ -68,6 +71,12 @@ public final class ArtifactsPlugin extends JavaPlugin {
             admin.setExecutor(commands);
             admin.setTabCompleter(commands);
         }
+        // 1.4.166: публичный мост — другие аддоны спрашивают каталог и выдают
+        // предметы артефактов, не завися от этого JAR.
+        this.apiBridge = new ArtifactsApiBridge(this);
+        getServer().getServicesManager().register(ChrdkArtifactsApi.class, apiBridge,
+                this, org.bukkit.plugin.ServicePriority.Normal);
+
         if (!EnchantBridge.available()) {
             getLogger().warning("CHRDK_Enchants не найден: «Хартия чар» не сможет накатывать"
                     + " чары, остальные артефакты работают как обычно.");
@@ -82,6 +91,10 @@ public final class ArtifactsPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (apiBridge != null) {
+            getServer().getServicesManager().unregister(ChrdkArtifactsApi.class, apiBridge);
+            apiBridge = null;
+        }
         if (saveTask != null) {
             saveTask.cancel();
             saveTask = null;

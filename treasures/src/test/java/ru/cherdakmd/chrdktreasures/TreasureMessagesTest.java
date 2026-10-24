@@ -77,7 +77,9 @@ class TreasureMessagesTest {
             // 1.4.166: клады в бочках.
             "barrel-placed", "barrel-hint", "barrel-locked", "barrel-limit",
             "barrel-expiring", "barrel-expired", "barrel-fallback",
-            "treasure-found-barrel");
+            "treasure-found-barrel",
+            // 1.4.166: особые находки из соседних аддонов.
+            "special-artifact", "special-artifact-cursed", "special-enchant");
 
     private static ConfigurationSection messages() {
         try (var stream = TreasureMessagesTest.class.getClassLoader()

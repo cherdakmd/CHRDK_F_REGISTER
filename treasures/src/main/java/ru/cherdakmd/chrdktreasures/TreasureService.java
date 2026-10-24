@@ -37,7 +37,8 @@ public final class TreasureService {
     public record Found(TreasureTier tier, TreasureRegion region, TreasureItemDef item,
                         List<TreasureLoot.LootStack> loot, List<Integer> milestones,
                         int streak, TreasureRank rank,
-                        List<TreasureLoot.LootStack> bonus, boolean barrel) {
+                        List<TreasureLoot.LootStack> bonus, boolean barrel,
+                        List<TreasureSpecial> specials) {
 
         public boolean named() {
             return item != null;
@@ -45,6 +46,11 @@ public final class TreasureService {
 
         public boolean bonusGranted() {
             return !bonus.isEmpty();
+        }
+
+        /** Выпали ли особые находки — реликвия или книга чар (1.4.166). */
+        public boolean special() {
+            return !specials.isEmpty();
         }
     }
 
@@ -263,7 +269,7 @@ public final class TreasureService {
                       TreasureRoll.Roll roll, Location origin) {
         if (player == null || tier == null || roll == null) {
             return new Found(tier, region, null, List.of(), List.of(), 0,
-                    TreasureRank.NOVICE, List.of(), false);
+                    TreasureRank.NOVICE, List.of(), false, List.of());
         }
         TreasureRank before = rank(player);
         store.setName(key(player), player.getName());
@@ -297,6 +303,9 @@ public final class TreasureService {
                 plugin.config().streakWindowMillis());
         List<Integer> milestones = checkMilestones(player);
         List<TreasureLoot.LootStack> bonus = grantStreakBonus(player, tier, region, streak, payload);
+        // 1.4.166: реликвия или книга чар из соседних аддонов — до бочки, чтобы
+        // попасть в ту же добычу и не потеряться при отказе от контейнера.
+        List<TreasureSpecial> specials = plugin.specials().grant(tier, payload);
         boolean barrel = origin != null && plugin.barrels() != null
                 && plugin.barrels().offer(player, origin, tier, payload);
         if (!barrel) {
@@ -304,7 +313,7 @@ public final class TreasureService {
         }
         checkRank(player, before);
         return new Found(tier, region, item, loot, milestones, streak,
-                rank(player), bonus, barrel);
+                rank(player), bonus, barrel, specials);
     }
 
     /**

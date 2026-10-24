@@ -126,4 +126,28 @@ public final class EnchantsApiBridge implements ChrdkEnchantsApi {
     public void refresh(ItemStack item) {
         plugin.items().refresh(item);
     }
+
+    /**
+     * 1.4.166: готовая книга чары для источников вне модуля (клады).
+     *
+     * <p>Правила те же, что у жителей: проклятие не выдаётся при выключенных
+     * проклятиях, выключенная в конфиге чара отсутствует, уровень зажимается
+     * максимумом. Книга собирается штатным {@code makeEnchantBook}: имя, лор
+     * и PDC совпадают с книгой со стола, поэтому наковальня принимает её без
+     * исключений.</p>
+     */
+    @Override
+    public ItemStack book(String id, int level) {
+        EnchantsConfig config = config();
+        EnchantDef def = EnchantRegistry.byId(id);
+        if (config == null || def == null || plugin.items() == null
+                || !config.isEnabled(def.id())) {
+            return null;
+        }
+        if (def.curse() && !config.cursesEnabled()) {
+            return null;
+        }
+        int clamped = Math.max(1, Math.min(def.maxLevel(), level));
+        return plugin.items().makeEnchantBook(def, clamped);
+    }
 }

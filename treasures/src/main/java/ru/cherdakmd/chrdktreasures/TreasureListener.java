@@ -410,6 +410,9 @@ public final class TreasureListener implements Listener {
                 plugin.messages().send(player, "treasure-found-empty",
                         "tier", Messages.trusted(tierName));
             }
+            // 1.4.166: реликвия и книга чар называются отдельно — их имена
+            // длиннее строки добычи и не должны в ней растворяться.
+            specials(player, found);
         }
 
         boolean broadcast = found.tier() == TreasureTier.MYTHICAL && plugin.config().broadcastMythical()
@@ -428,6 +431,15 @@ public final class TreasureListener implements Listener {
         logFind(player, found, summary);
     }
 
+    /** Строки об особых находках: вид, имя и уровень книги. */
+    private void specials(Player player, TreasureService.Found found) {
+        for (TreasureSpecial special : found.specials()) {
+            plugin.messages().send(player, special.kind().textKey(),
+                    "name", Messages.trusted(special.name()),
+                    "level", String.valueOf(Math.max(1, special.level())));
+        }
+    }
+
     /**
      * Пишет находку в консоль сервера: без разметки и тегов языка, с составом.
      * Журнал не зависит от витрины и переключателя объявлений — администратор
@@ -441,9 +453,19 @@ public final class TreasureListener implements Listener {
         String detail = found.named()
                 ? plugin.messages().plain("treasure." + found.item().id() + ".name")
                 : summary.plain();
-        plugin.getLogger().info("[CHRDK_Treasures] " + player.getName() + " · "
-                + found.tier().id() + (detail.isEmpty() ? "" : " · " + detail)
-                + (found.barrel() ? " · бочка" : ""));
+        StringBuilder line = new StringBuilder("[CHRDK_Treasures] ")
+                .append(player.getName()).append(" · ").append(found.tier().id());
+        if (!detail.isEmpty()) {
+            line.append(" · ").append(detail);
+        }
+        for (TreasureSpecial special : found.specials()) {
+            line.append(" · ").append(special.kind().id()).append(": ")
+                    .append(special.plainName());
+        }
+        if (found.barrel()) {
+            line.append(" · бочка");
+        }
+        plugin.getLogger().info(line.toString());
     }
 
     private void particles(Location location, TreasureTier tier) {

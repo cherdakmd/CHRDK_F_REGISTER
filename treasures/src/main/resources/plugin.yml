@@ -5,7 +5,7 @@ api-version: '26.3'
 description: "Русские клады: 5 редкостей, 14 биомных регионов, 196 находок (124 классические и 72 из арсенала Mine Treasure), 21 вид способностей по ПКМ, сеты, проклятия, клад-карты и клады в бочках с анимацией"
 author: cherdakmd
 depend: [CHRDK_Core]
-softdepend: [PlaceholderAPI]
+softdepend: [PlaceholderAPI, CHRDK_Artifacts, CHRDK_Enchants]
 commands:
   treasures:
     description: "Клады: витрина, список, статистика, топ, лут-таблицы, клад-карты и настройки"

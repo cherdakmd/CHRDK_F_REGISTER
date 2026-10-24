@@ -157,6 +157,48 @@ class TreasureConfigTest {
     }
 
     @Test
+    void specialsAreOnByDefaultWithTierCurve() {
+        TreasuresConfig config = TreasuresConfig.parse(new YamlConfiguration(), LOGGER);
+        TreasuresConfig.Specials specials = config.specials();
+        assertTrue(specials.enabled(), "особые находки включены по умолчанию");
+        assertTrue(specials.artifacts(), "реликвии включены по умолчанию");
+        assertTrue(specials.enchantments(), "книги чар включены по умолчанию");
+        assertTrue(specials.active(), "источники активны");
+        assertEquals(1.0, specials.artifactChance(TreasureTier.COMMON), 1e-9);
+        assertEquals(100.0, specials.artifactChance(TreasureTier.MYTHICAL), 1e-9);
+        assertEquals(5.0, specials.enchantChance(TreasureTier.COMMON), 1e-9);
+        assertEquals(1, specials.enchantLevelCap(TreasureTier.COMMON));
+        assertEquals(5, specials.enchantLevelCap(TreasureTier.MYTHICAL));
+        assertEquals(35, specials.cursedArtifactPercent());
+        assertEquals(10, specials.curseBookPercent());
+
+        // Поставляемый config.yml обязан совпадать с умолчаниями кода.
+        assertEquals(specials, TreasuresConfig.parse(shipped(), LOGGER).specials(),
+                "секция specials в config.yml разошлась с умолчаниями кода");
+    }
+
+    @Test
+    void specialsStayInSaneRange() {
+        YamlConfiguration cfg = new YamlConfiguration();
+        cfg.set("specials.enabled", false);
+        cfg.set("specials.artifacts.chance-percent.common", 500.0);
+        cfg.set("specials.artifacts.chance-percent.mythical", -20.0);
+        cfg.set("specials.artifacts.cursed-chance-percent", 999);
+        cfg.set("specials.enchantments.max-level.common", 0);
+        cfg.set("specials.enchantments.max-level.mythical", 42);
+        cfg.set("specials.enchantments.curse-chance-percent", -3);
+        TreasuresConfig.Specials specials = TreasuresConfig.parse(cfg, LOGGER).specials();
+        assertFalse(specials.enabled());
+        assertFalse(specials.active(), "главный выключатель гасит оба источника");
+        assertEquals(100.0, specials.artifactChance(TreasureTier.COMMON), 1e-9);
+        assertEquals(0.0, specials.artifactChance(TreasureTier.MYTHICAL), 1e-9);
+        assertEquals(100, specials.cursedArtifactPercent());
+        assertEquals(1, specials.enchantLevelCap(TreasureTier.COMMON));
+        assertEquals(5, specials.enchantLevelCap(TreasureTier.MYTHICAL));
+        assertEquals(0, specials.curseBookPercent());
+    }
+
+    @Test
     void abilitiesSetsAndCursesAreOnByDefault() {
         TreasuresConfig defaults = TreasuresConfig.parse(new YamlConfiguration(), LOGGER);
         assertTrue(defaults.abilitiesEnabled());

@@ -2,6 +2,7 @@ package ru.cherdakmd.chrdktreasures;
 
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.util.Collections;
 import java.util.EnumMap;
@@ -157,6 +158,96 @@ public final class TreasuresConfig {
         }
     }
 
+    /**
+     * Особые находки (1.4.166): реликвии CHRDK_Artifacts и книги чар
+     * CHRDK_Enchants прямо в кладе.
+     *
+     * <p>Оба источника — мягкие: аддона нет, мост не зарегистрирован или старая
+     * версия без нужного метода — находка просто не выпадает, а остальной клад
+     * выдаётся как обычно. Шансы заданы по редкости клада: обычный клад почти
+     * никогда не приносит реликвию, мифический — приносит всегда.</p>
+     *
+     * @param enabled              главный выключатель особых находок
+     * @param artifacts            выдавать ли реликвии
+     * @param artifactChance       шанс реликвии по редкости, проценты
+     * @param cursedArtifactPercent доля проклятых реликвий среди найденных
+     * @param enchantments         выдавать ли книги чар
+     * @param enchantChance        шанс книги по редкости, проценты
+     * @param enchantLevelCap      потолок уровня книги по редкости
+     * @param curseBookPercent     доля книг с проклятием среди найденных
+     */
+    public record Specials(boolean enabled, boolean artifacts,
+                           Map<TreasureTier, Double> artifactChance,
+                           int cursedArtifactPercent,
+                           boolean enchantments,
+                           Map<TreasureTier, Double> enchantChance,
+                           Map<TreasureTier, Integer> enchantLevelCap,
+                           int curseBookPercent) {
+
+        /** Шансы реликвий по редкости: 1 / 3 / 8 / 20 / 100 %. */
+        public static final double[] DEFAULT_ARTIFACT_CHANCE = {1.0, 3.0, 8.0, 20.0, 100.0};
+        /** Шансы книг чар: 5 / 9 / 16 / 30 / 60 %. */
+        public static final double[] DEFAULT_ENCHANT_CHANCE = {5.0, 9.0, 16.0, 30.0, 60.0};
+        /** Потолки уровня книги: обычный клад даёт I, мифический — до V. */
+        public static final int[] DEFAULT_ENCHANT_LEVEL_CAP = {1, 1, 2, 3, 5};
+
+        public Specials {
+            cursedArtifactPercent = clampInt(cursedArtifactPercent, 0, 100);
+            curseBookPercent = clampInt(curseBookPercent, 0, 100);
+            artifactChance = cleanChances(artifactChance, DEFAULT_ARTIFACT_CHANCE);
+            enchantChance = cleanChances(enchantChance, DEFAULT_ENCHANT_CHANCE);
+            enchantLevelCap = cleanLevels(enchantLevelCap);
+        }
+
+        private static int clampInt(int value, int min, int max) {
+            return Math.max(min, Math.min(max, value));
+        }
+
+        private static Map<TreasureTier, Double> cleanChances(Map<TreasureTier, Double> raw,
+                                                              double[] fallback) {
+            Map<TreasureTier, Double> out = new EnumMap<>(TreasureTier.class);
+            for (TreasureTier tier : TreasureTier.values()) {
+                Double value = raw == null ? null : raw.get(tier);
+                double base = value == null ? fallback[tier.ordinal()] : value;
+                out.put(tier, Math.max(0.0, Math.min(100.0, base)));
+            }
+            return Collections.unmodifiableMap(out);
+        }
+
+        private static Map<TreasureTier, Integer> cleanLevels(Map<TreasureTier, Integer> raw) {
+            Map<TreasureTier, Integer> out = new EnumMap<>(TreasureTier.class);
+            for (TreasureTier tier : TreasureTier.values()) {
+                Integer value = raw == null ? null : raw.get(tier);
+                int base = value == null ? DEFAULT_ENCHANT_LEVEL_CAP[tier.ordinal()] : value;
+                out.put(tier, Math.max(1, Math.min(5, base)));
+            }
+            return Collections.unmodifiableMap(out);
+        }
+
+        /** Шанс реликвии для редкости клада, проценты. */
+        public double artifactChance(TreasureTier tier) {
+            Double value = artifactChance.get(tier);
+            return value == null ? 0.0 : value;
+        }
+
+        /** Шанс книги чар для редкости клада, проценты. */
+        public double enchantChance(TreasureTier tier) {
+            Double value = enchantChance.get(tier);
+            return value == null ? 0.0 : value;
+        }
+
+        /** Потолок уровня книги для редкости клада. */
+        public int enchantLevelCap(TreasureTier tier) {
+            Integer value = enchantLevelCap.get(tier);
+            return value == null ? 1 : value;
+        }
+
+        /** Включены ли особые находки хоть одним источником. */
+        public boolean active() {
+            return enabled && (artifacts || enchantments);
+        }
+    }
+
     private final boolean enabled;
     private final int auraRefreshTicks;
     private final int topSize;
@@ -193,6 +284,8 @@ public final class TreasuresConfig {
     /** 1.4.153: клад-карты — шанс выпадения, зона и срок жизни. */
     private final Maps maps;
     private final Barrels barrels;
+    /** 1.4.166: реликвии и книги чар из соседних аддонов. */
+    private final Specials specials;
     /** 1.4.157: склянки опыта в каждом кладе. */
     private final TreasureExperience.Rule experience;
 
@@ -212,7 +305,7 @@ public final class TreasuresConfig {
                             boolean abilitiesEnabled, boolean cursesEnabled,
                             boolean setsEnabled, double arsenalShare,
                             boolean tiersEnabled, Map<TreasureTier, Double> tierChances,
-                            Maps maps, Barrels barrels,
+                            Maps maps, Barrels barrels, Specials specials,
                             TreasureExperience.Rule experience) {
         this.enabled = enabled;
         this.auraRefreshTicks = auraRefreshTicks;
@@ -245,6 +338,7 @@ public final class TreasuresConfig {
         this.tierChances = tierChances;
         this.maps = maps == null ? Maps.DISABLED : maps;
         this.barrels = barrels == null ? Barrels.DISABLED : barrels;
+        this.specials = specials == null ? defaultSpecials() : specials;
         this.experience = experience == null ? TreasureExperience.defaults() : experience;
     }
 
@@ -400,7 +494,7 @@ public final class TreasuresConfig {
                 cfg.getBoolean("sets.enabled", true),
                 arsenalShare, tiersEnabled,
                 Collections.unmodifiableMap(tierChances),
-                parseMaps(cfg), parseBarrels(cfg), parseExperience(cfg));
+                parseMaps(cfg), parseBarrels(cfg), parseSpecials(cfg), parseExperience(cfg));
     }
 
     private static TreasureTier parseTier(String raw, TreasureTier fallback) {
@@ -626,6 +720,11 @@ public final class TreasuresConfig {
         return barrels;
     }
 
+    /** Реликвии и книги чар в кладе (1.4.166). */
+    public Specials specials() {
+        return specials;
+    }
+
     /** Склянки опыта в каждом кладе (1.4.157). */
     public TreasureExperience.Rule experience() {
         return experience;
@@ -699,6 +798,44 @@ public final class TreasuresConfig {
                 cfg.getBoolean("barrels.animation", true),
                 (int) clamp(cfg.getLong("barrels.remove-empty-ticks", 60L), 20L, 600L),
                 cfg.getBoolean("barrels.drop-on-expire", true));
+    }
+
+    /** Особые находки по умолчанию: те же значения, что в поставляемом config.yml. */
+    public static Specials defaultSpecials() {
+        return parseSpecials(new YamlConfiguration());
+    }
+
+    /**
+     * Разбор секции {@code specials.*}. Шансы читаются по редкостям, потолки
+     * уровня книги тоже; всё остальное зажимается в {@link Specials}.
+     */
+    private static Specials parseSpecials(FileConfiguration cfg) {
+        Map<TreasureTier, Double> artifact = new EnumMap<>(TreasureTier.class);
+        Map<TreasureTier, Double> enchant = new EnumMap<>(TreasureTier.class);
+        Map<TreasureTier, Integer> caps = new EnumMap<>(TreasureTier.class);
+        for (TreasureTier tier : TreasureTier.values()) {
+            int index = tier.ordinal();
+            artifact.put(tier, clamp(cfg.getDouble(
+                    "specials.artifacts.chance-percent." + tier.id(),
+                    Specials.DEFAULT_ARTIFACT_CHANCE[index]), 0.0, 100.0));
+            enchant.put(tier, clamp(cfg.getDouble(
+                    "specials.enchantments.chance-percent." + tier.id(),
+                    Specials.DEFAULT_ENCHANT_CHANCE[index]), 0.0, 100.0));
+            caps.put(tier, (int) clamp(cfg.getLong(
+                    "specials.enchantments.max-level." + tier.id(),
+                    Specials.DEFAULT_ENCHANT_LEVEL_CAP[index]), 1L, 5L));
+        }
+        return new Specials(
+                cfg.getBoolean("specials.enabled", true),
+                cfg.getBoolean("specials.artifacts.enabled", true),
+                artifact,
+                (int) clamp(cfg.getLong("specials.artifacts.cursed-chance-percent", 35L),
+                        0L, 100L),
+                cfg.getBoolean("specials.enchantments.enabled", true),
+                enchant,
+                caps,
+                (int) clamp(cfg.getLong("specials.enchantments.curse-chance-percent", 10L),
+                        0L, 100L));
     }
 
     private static Integer parseInt(String value) {
