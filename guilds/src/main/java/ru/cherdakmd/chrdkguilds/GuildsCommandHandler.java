@@ -759,10 +759,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
                             "time", record.time(),
                             "challenger", record.challenger(),
                             "target", record.target(),
-                            "result", record.result().isEmpty()
-                                    ? plugin.messages().plain("admin-history-unknown")
-                                    : plugin.messages().plain("war-result."
-                                    + record.result().toLowerCase(Locale.ROOT)),
+                            "result", plugin.messages().plain(warResultKey(record.result())),
                             "wager", GuildMath.diamonds(record.wager()));
                     shown++;
                 }
@@ -773,6 +770,22 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
     }
 
     /* -------------------------------- помощники ------------------------------- */
+
+    /**
+     * Ключ текста итога войны. В истории лежит имя константы {@link GuildWar.Result},
+     * поэтому сопоставление явное: сборка ключа строкой не прошла бы контракт
+     * «код ↔ messages.yml» и молча ломалась бы при переименовании константы.
+     */
+    static String warResultKey(String result) {
+        return switch (result) {
+            case "CHALLENGER_WIN" -> "war-result.challenger_win";
+            case "TARGET_WIN" -> "war-result.target_win";
+            case "DRAW" -> "war-result.draw";
+            case "CANCELLED" -> "war-result.cancelled";
+            default -> "admin-history-unknown";
+        };
+    }
+
 
     private Player player(CommandSender sender) {
         if (sender instanceof Player player) {
