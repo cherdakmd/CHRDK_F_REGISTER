@@ -282,7 +282,7 @@ class GuildServiceTest {
         GuildResult withdraw = service.withdraw(purse, LEADER, 10);
         assertTrue(withdraw.ok());
         assertEquals(20L, service.guildOf(LEADER).treasury());
-        assertEquals(10, purse.balance.get(LEADER));
+        assertEquals(510, purse.balance.get(LEADER), "500 лежало + 10 из казны");
 
         assertEquals("deposit-no-diamonds", service.deposit(purse, SECOND, 999).key());
         assertEquals(20L, service.guildOf(LEADER).treasury(), "недостача казну не меняет");
