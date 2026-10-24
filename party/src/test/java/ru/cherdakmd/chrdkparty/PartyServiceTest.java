@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -208,14 +209,23 @@ class PartyServiceTest {
 
         assertEquals(0, service.bonusPercent(anya, 3), "один в группе — бонуса нет");
 
+        // Четверо в группе: три «своих» рядом — уже потолок, но проверяем
+        // и меньшее число, чтобы видеть, что процент считается по людям.
         UUID member = UUID.randomUUID();
         service.invite(anya, "Аня", member, "Борис", NOW);
         service.accept(member, "Борис", NOW);
+        for (String name : List.of("Вера", "Глеб")) {
+            UUID other = UUID.randomUUID();
+            service.invite(anya, "Аня", other, name, NOW);
+            service.accept(other, name, NOW);
+        }
+        assertEquals(4, service.of(anya).size());
 
         assertEquals(0, service.bonusPercent(anya, 0), "никого рядом — нет бонуса");
         assertEquals(5, service.bonusPercent(anya, 1));
         assertEquals(10, service.bonusPercent(anya, 2));
-        assertEquals(15, service.bonusPercent(anya, 5), "бонус упирается в потолок");
+        assertEquals(15, service.bonusPercent(anya, 3), "бонус упирается в потолок");
+        assertEquals(15, service.bonusPercent(anya, 5), "потолок не пробивается");
         assertEquals(0, service.bonusPercent(UUID.randomUUID(), 3),
                 "прохожий без группы бонуса не получает");
         assertTrue(service.sameParty(anya, member));
