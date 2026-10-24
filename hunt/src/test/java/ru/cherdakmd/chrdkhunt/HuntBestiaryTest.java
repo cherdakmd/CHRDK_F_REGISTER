@@ -116,8 +116,8 @@ class HuntBestiaryTest {
                         rule(EntityType.ENDER_DRAGON, "undead", true)),
                 families(), Map.of(), icons, 0);
         assertEquals(Material.ROTTEN_FLESH, bestiary.entry("zombie").icon());
-        assertEquals(Material.PAPER, bestiary.entry("ender_dragon").icon(),
-                "ни головы, ни яйца призыва у дракона нет — бумага");
+        assertEquals(Material.ENDER_DRAGON_SPAWN_EGG, bestiary.entry("ender_dragon").icon(),
+                "головы дракона нет — берётся яйцо призыва");
         assertEquals(Material.PAPER, HuntBestiary.defaultIcon(null));
         assertEquals(Material.PLAYER_HEAD, HuntBestiary.defaultIcon(EntityType.PLAYER));
     }

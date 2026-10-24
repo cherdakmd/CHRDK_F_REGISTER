@@ -63,7 +63,7 @@ class HuntStoreTest {
         long now = 20L * HuntStore.DAY_MILLIS + 1_000L;
         store.touchDay(id, "Аня", now);
         store.addCoins(id, "Аня", 100L);
-        assertEquals(250L, store.addBonusCoins(id, "Аня", 150L));
+        assertEquals(150L, store.addBonusCoins(id, "Аня", 150L), "возврат — сколько выдано");
         assertEquals(250L, store.coins(id));
         assertEquals(250L, store.earned(id), "стаж растёт вместе с кошельком");
         assertEquals(100L, store.coinsToday(id, now),
