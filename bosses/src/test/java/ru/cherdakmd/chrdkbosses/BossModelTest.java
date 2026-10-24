@@ -159,7 +159,7 @@ class BossModelTest {
         assertEquals(DangerZone.MAX_XP_BONUS_PERCENT, zone.xpBonusPercent());
         assertEquals(60, zone.effectIntervalSeconds());
         assertEquals(Material.MAGMA_BLOCK, zone.icon());
-        assertFalse(zone.harmful());
+        assertTrue(zone.harmful(), "урон делает зону опасной");
     }
 
     @Test
@@ -174,6 +174,13 @@ class BossModelTest {
                 .contains("world", 0, 64, 0), "выключенная зона не действует");
         assertTrue(zone.harmful());
         assertEquals("Опасность II", zone.levelLabel());
+    }
+
+    @Test
+    void zoneWithoutDamageAndEffectsIsHarmless() {
+        DangerZone calm = new DangerZone("calm", "Тихая", "", true, "world",
+                0, 64, 0, 10, 1, 0.0, 10, 5, List.of(), Material.MAGMA_BLOCK);
+        assertFalse(calm.harmful());
     }
 
     @Test

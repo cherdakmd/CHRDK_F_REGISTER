@@ -24,10 +24,12 @@ final class BossMath {
      * 60 %, действует первая; на 60 % включается вторая и так далее.</p>
      */
     static int phaseIndex(List<BossPhase> phases, double health, double maxHealth) {
-        if (phases == null || phases.isEmpty()) {
+        if (phases == null || phases.isEmpty() || maxHealth <= 0) {
+            // Без максимума здоровье нельзя перевести в проценты: считаем, что
+            // бой ещё в первой фазе, а не в последней.
             return 0;
         }
-        double percent = maxHealth <= 0 ? 0.0 : Math.clamp(health / maxHealth * 100.0, 0.0, 100.0);
+        double percent = Math.clamp(health / maxHealth * 100.0, 0.0, 100.0);
         int index = 0;
         for (int cursor = 0; cursor < phases.size(); cursor++) {
             if (phases.get(cursor).fromPercent() >= percent) {

@@ -153,7 +153,7 @@ bosses:
     description: "Выходец из выжженных пустошей: бьёт медленно, но наотмашь."
     entity: WITHER_SKELETON
     health: 420
-    icon: NETHERITE_AXE
+    icon: IRON_AXE
     glow: true
     arena:
       world: "world"
@@ -190,7 +190,7 @@ bosses:
       items:
         BLAZE_ROD: 10
         GILDED_BLACKSTONE: 6
-      trophy: NETHERITE_AXE
+      trophy: IRON_AXE
       trophy-name: "Топор пепельного титана"
     spawn-interval-seconds: 7200
     duration-seconds: 2400

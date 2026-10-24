@@ -229,17 +229,16 @@ public final class BossConfig {
                                           String path) {
         List<BossReward.Item> items = new ArrayList<>();
         Object raw = section.get(key + ".reward.items");
-        if (raw instanceof Map<?, ?> map) {
+        if (raw instanceof ConfigurationSection itemSection) {
+            // В YAML блок «МАТЕРИАЛ: количество» читается как секция, а не как Map —
+            // без этой ветки награда из примеров конфига молча оставалась пустой.
+            for (String name : itemSection.getKeys(false)) {
+                addRewardItem(items, name, (int) number(itemSection.get(name), 1), logger, path);
+            }
+        } else if (raw instanceof Map<?, ?> map) {
             for (Map.Entry<?, ?> entry : map.entrySet()) {
-                Material material = material(String.valueOf(entry.getKey()));
-                if (material == null || !isItem(material)) {
-                    if (logger != null) {
-                        logger.warning("[CHRDK_Bosses] " + path + ".reward.items: неизвестный "
-                                + "материал «" + entry.getKey() + "» — пропущен.");
-                    }
-                    continue;
-                }
-                items.add(new BossReward.Item(material, (int) number(entry.getValue(), 1)));
+                addRewardItem(items, String.valueOf(entry.getKey()),
+                        (int) number(entry.getValue(), 1), logger, path);
             }
         }
         Material trophy = material(section.getString(key + ".reward.trophy", ""));
@@ -248,6 +247,19 @@ public final class BossConfig {
         }
         return new BossReward((int) section.getLong(key + ".reward.xp", 0L), items,
                 trophy, section.getString(key + ".reward.trophy-name", ""));
+    }
+
+    private static void addRewardItem(List<BossReward.Item> items, String name, int amount,
+                                      Logger logger, String path) {
+        Material material = material(name);
+        if (material == null || !isItem(material)) {
+            if (logger != null) {
+                logger.warning("[CHRDK_Bosses] " + path + ".reward.items: неизвестный "
+                        + "материал «" + name + "» — пропущен.");
+            }
+            return;
+        }
+        items.add(new BossReward.Item(material, amount));
     }
 
     /* ----------------------------------- зоны --------------------------------- */
