@@ -147,7 +147,7 @@ public final class HuntBestiary {
     }
 
     /** Пустой бестиарий: разделов нет, наград нет, меню показывает заглушку. */
-    public static HuntBestiary empty() {
+    public static HuntBestiary none() {
         return new HuntBestiary(List.of(), 0);
     }
 
@@ -163,7 +163,7 @@ public final class HuntBestiary {
                                   Map<String, Reward> rewards, Map<EntityType, Material> icons,
                                   int fullCoins) {
         if (rules == null || rules.isEmpty() || families == null || families.isEmpty()) {
-            return empty();
+            return none();
         }
         Map<String, Reward> rewardsById = rewards == null ? Map.of() : rewards;
         List<Section> sections = new ArrayList<>();

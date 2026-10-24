@@ -51,7 +51,7 @@ class HuntBestiaryTest {
 
     @Test
     void emptyBestiaryHasNoSections() {
-        HuntBestiary empty = HuntBestiary.empty();
+        HuntBestiary empty = HuntBestiary.none();
         assertTrue(empty.empty());
         assertEquals(0, empty.sectionCount());
         assertEquals(0, empty.totalEntries());

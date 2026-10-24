@@ -95,7 +95,7 @@ public final class HuntConfig {
             trophyMap.putIfAbsent(trophy.id(), trophy);
         }
         this.trophyById = Collections.unmodifiableMap(trophyMap);
-        this.bestiary = bestiary == null ? HuntBestiary.empty() : bestiary;
+        this.bestiary = bestiary == null ? HuntBestiary.none() : bestiary;
         this.ranks = new TreeMap<>(ranks);
     }
 
@@ -286,7 +286,7 @@ public final class HuntConfig {
                                               Map<String, HuntFamily> families,
                                               List<MobRule> mobs, Logger logger) {
         if (!config.getBoolean("bestiary.enabled", true)) {
-            return HuntBestiary.empty();
+            return HuntBestiary.none();
         }
         Map<String, HuntBestiary.Reward> rewards = new LinkedHashMap<>();
         ConfigurationSection sections = config.getConfigurationSection("bestiary.sections");
@@ -652,7 +652,7 @@ public final class HuntConfig {
         return out;
     }
 
-    /** Журнал видов: разделы, награды и иконки ({@link HuntBestiary#empty()} — выключен). */
+    /** Журнал видов: разделы, награды и иконки ({@link HuntBestiary#none()} — выключен). */
     public HuntBestiary bestiary() {
         return bestiary;
     }
