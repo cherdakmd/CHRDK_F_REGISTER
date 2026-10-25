@@ -5,6 +5,10 @@
 заполнения — в [`SHOP-TRADEMC.md`](../SHOP-TRADEMC.md). Архив со всеми шестью
 PNG — [`chrdk-shop-images.zip`](../chrdk-shop-images.zip).
 
+Картинки также приложены к релизу
+[v1.4.169](https://github.com/cherdakmd/CHRDK_F_REGISTER/releases/tag/v1.4.169) —
+их можно скачать оттуда по одной, без клонирования репозитория.
+
 > Команда выполняется **от консоли сервера**, без слэша. `%username%` — поле
 > ника в форме товара TradeMC. Цена в команде — единственный ключ, по которому
 > ядро находит товар: поменяли цену в панели — поменяйте число в команде.
@@ -73,6 +77,13 @@ PNG — [`chrdk-shop-images.zip`](../chrdk-shop-images.zip).
 ![Покровитель](5-pokrovitel.png)
 
 ---
+
+## Где скачать
+
+- С релиза: [страница релиза v1.4.169](https://github.com/cherdakmd/CHRDK_F_REGISTER/releases/tag/v1.4.169),
+  раздел Assets — шесть PNG и архив.
+- Из репозитория: файлы лежат рядом с этим README, архив — в
+  [`docs/ranks/`](../chrdk-shop-images.zip).
 
 ## Как перерисовать
 

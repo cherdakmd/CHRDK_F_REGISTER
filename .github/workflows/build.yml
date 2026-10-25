@@ -92,7 +92,7 @@ jobs:
   # для файлов, которые уже есть в ветке по умолчанию.
   shop-images:
     name: Attach shop images to the release
-    if: ${{ inputs.release_tag != '' || github.event_name == 'push' }}
+    if: ${{ inputs.release_tag != '' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -104,7 +104,7 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ inputs.release_tag || 'v1.4.169' }}
+          TAG: ${{ inputs.release_tag }}
         run: |
           set -euo pipefail
           for file in \
@@ -128,7 +128,7 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ inputs.release_tag || 'v1.4.169' }}
+          TAG: ${{ inputs.release_tag }}
         run: |
           set -euo pipefail
           gh release upload "$TAG" \
@@ -145,5 +145,5 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ inputs.release_tag || 'v1.4.169' }}
+          TAG: ${{ inputs.release_tag }}
         run: gh release view "$TAG" --json assets --jq '.assets[] | "\(.name) \(.size) байт"'
