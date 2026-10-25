@@ -26,6 +26,12 @@ final class PlaceholderValues {
         return account.hasActivePass(nowMillis) ? "активна" : "истекла";
     }
 
+    /** Статус ранга (1.4.167): «активен», «истёк» или «нет ранга». */
+    static String rankStatus(RegistrationStore.PlayerAccount account, int level, long nowMillis) {
+        if (account == null || level <= 0) return "нет ранга";
+        return account.hasRank(nowMillis) ? "активен" : "истёк";
+    }
+
     /**
      * Осталось целых дней проходки (неполный день считается за целый, чтобы в последние
      * сутки показывалось «1», а не «0»). Без проходки — 0.

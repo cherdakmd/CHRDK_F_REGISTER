@@ -12,7 +12,10 @@ import java.util.Locale;
  * Интеграция с PlaceholderAPI (мягкая зависимость): плейсхолдеры вида {@code %chrdk_...%}
  * для таб-листа, скорбордов и голограмм:
  * <ul>
- *     <li>{@code %chrdk_pass_status%} — «активна» / «истекла» / «нет проходки»;</li>
+ *     <li>{@code %chrdk_rank%} / {@code %chrdk_rank_level%} — имя и ступень ранга (1.4.167);</li>
+ *     <li>{@code %chrdk_rank_badge%} — знак ✦❖✧★⚜, {@code %chrdk_rank_until%} — срок;</li>
+ *     <li>{@code %chrdk_rank_xp%} / {@code %chrdk_rank_drop%} / {@code %chrdk_rank_skill%} — бонусы ступени, %;</li>
+ *     <li>{@code %chrdk_pass_status%} — «активна» / «истекла» / «нет проходки» (алиас, 1.4.167);</li>
  *     <li>{@code %chrdk_pass_left%} — остаток строкой («2 дн. 3 ч.»);</li>
  *     <li>{@code %chrdk_pass_days_left%} / {@code %chrdk_pass_hours_left%} — остаток в днях/часах;</li>
  *     <li>{@code %chrdk_pass_until%} — дата окончания проходки;</li>
@@ -89,8 +92,22 @@ public final class PlaceholderIntegration extends PlaceholderExpansion {
                 : store.getAccount(name).orElse(null);
         long passUntil = account == null ? 0 : account.passUntil;
         Player live = offlinePlayer.getPlayer();
+        int rankLevel = account == null ? 0 : account.effectiveRank(now);
+        RankSettings ranks = accessManager.config().ranks();
+        RankTier tier = rankLevel <= 0 ? null : ranks.tier(rankLevel);
+        long rankUntil = account == null ? 0 : account.rankUntilMillis();
+        ru.cherdakmd.chrdkregister.api.RankBonus bonus = ranks.bonus(rankLevel);
 
         return switch (key) {
+            // 1.4.167: ранги. Старые pass_* ниже остаются алиасами.
+            case "rank" -> tier == null ? PlaceholderValues.NONE : tier.name();
+            case "rank_status" -> PlaceholderValues.rankStatus(account, rankLevel, now);
+            case "rank_level" -> Integer.toString(rankLevel);
+            case "rank_badge" -> tier == null ? "" : tier.badge();
+            case "rank_until" -> rankUntil > 0 ? accessManager.formatTime(rankUntil) : PlaceholderValues.NONE;
+            case "rank_xp" -> Integer.toString(bonus.xpPercent());
+            case "rank_drop" -> Integer.toString(bonus.dropPercent());
+            case "rank_skill" -> Integer.toString(bonus.extraSkill());
             case "pass_status" -> PlaceholderValues.passStatus(account, now);
             case "pass_left" -> PlaceholderValues.passLeft(account, now);
             case "pass_days_left" -> Long.toString(PlaceholderValues.wholeDaysLeft(passUntil, now));

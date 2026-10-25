@@ -2140,6 +2140,21 @@ public final class RegistrationStore {
             return effectiveRank(nowMillis) > 0;
         }
 
+        /** Есть ли действующий ранг (то же, что {@link #hasActivePass}, но по смыслу 1.4.167). */
+        public boolean hasRank(long nowMillis) {
+            return effectiveRank(nowMillis) > 0;
+        }
+
+        /**
+         * Момент окончания ранга: {@code 0} — навсегда или ранга нет.
+         *
+         * <p>Постоянный ранг возвращает ноль даже если рядом остался старый
+         * {@code passUntil}: «навсегда» важнее даты.</p>
+         */
+        public long rankUntilMillis() {
+            return rankPermanent ? 0L : passUntil;
+        }
+
         public boolean isRegistered() {
             return passwordHash != null && !passwordHash.isBlank();
         }
