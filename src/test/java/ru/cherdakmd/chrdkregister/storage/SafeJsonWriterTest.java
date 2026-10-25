@@ -62,7 +62,7 @@ class SafeJsonWriterTest {
     void failedWriteReportsCauseAndDoesNotThrow() throws IOException {
         // Родитель — обычный файл: создать папку невозможно, запись обязана сдаться.
         Path blocker = folder.resolve("blocked");
-        Files.writeString(blocker);
+        Files.createFile(blocker);
         Path file = blocker.resolve("state.json");
 
         assertFalse(SafeJsonWriter.write(file, "{}", logger, TAG));
@@ -77,7 +77,7 @@ class SafeJsonWriterTest {
     @Test
     void repeatedFailuresAreThrottledAndCounted() throws IOException {
         Path blocker = folder.resolve("blocked");
-        Files.writeString(blocker);
+        Files.createFile(blocker);
         Path file = blocker.resolve("state.json");
 
         assertFalse(SafeJsonWriter.write(file, "{}", logger, TAG));
@@ -90,7 +90,7 @@ class SafeJsonWriterTest {
     @Test
     void recoveryIsReportedOnce() throws IOException {
         Path folderTarget = folder.resolve("data");
-        Files.writeString(folderTarget); // папка занята файлом — запись сломана
+        Files.createFile(folderTarget); // папка занята файлом — запись сломана
         Path file = folderTarget.resolve("state.json");
         assertFalse(SafeJsonWriter.write(file, "{\"a\":1}", logger, TAG));
 
