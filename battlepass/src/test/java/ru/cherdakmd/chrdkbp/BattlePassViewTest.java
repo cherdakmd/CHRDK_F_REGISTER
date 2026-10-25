@@ -26,7 +26,7 @@ class BattlePassViewTest {
                 new BattlePassView.Mission(ORE, 16, false, false, false).state());
         assertEquals(BattlePassView.State.READY,
                 new BattlePassView.Mission(ORE, 16, true, false, true).state(),
-                "бесплатная забрана, но VIP с проходкой ещё доступна");
+                "бесплатная забрана, но VIP с рангом ещё доступна");
         assertEquals(BattlePassView.State.VIP_LOCKED,
                 new BattlePassView.Mission(ORE, 16, true, false, false).state());
         assertEquals(BattlePassView.State.CLAIMED,

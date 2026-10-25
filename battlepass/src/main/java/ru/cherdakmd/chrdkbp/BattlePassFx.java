@@ -25,7 +25,7 @@ final class BattlePassFx {
         actionbar(player, "actionbar-completed");
     }
 
-    /** Награда получена (дни проходки). */
+    /** Награда получена (дни ранга). */
     void claimed(Player player, int days) {
         play(player, Sound.ENTITY_PLAYER_LEVELUP, 0.6f, 1.2f);
         if (!plugin.settings().actionbar()) {

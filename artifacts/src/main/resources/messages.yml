@@ -85,7 +85,7 @@ messages:
   collection-reward-line: "<gray>%percent%% — %reward% · %status%</gray>"
   collection-reward-claimed: "<green>получено</green>"
   collection-reward-pending: "<yellow>ещё нет</yellow>"
-  collection-reward-days: "<aqua>%days% дн. проходки</aqua>"
+  collection-reward-days: "<aqua>%days% дн. ранга</aqua>"
   collection-reward-diamonds: "<aqua>%count% алмазов</aqua>"
   collection-reward-join: "<gray> + </gray>"
   collection-reward-none: "<gray>отметка о достижении</gray>"

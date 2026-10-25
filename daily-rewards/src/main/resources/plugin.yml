@@ -4,7 +4,7 @@ main: ru.cherdakmd.chrdkdaily.DailyRewardsPlugin
 api-version: '26.3'
 depend:
   - CHRDK_Core
-description: Ежедневные награды со стриком и VIP-веткой для обладателей проходки (аддон CHRDK_Core)
+description: Ежедневные награды со стриком и VIP-веткой для обладателей ранга (аддон CHRDK_Core)
 commands:
   daily:
     aliases: [dly, rewards, bonus]

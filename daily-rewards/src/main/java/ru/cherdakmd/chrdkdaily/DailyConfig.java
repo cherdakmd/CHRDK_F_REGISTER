@@ -20,7 +20,7 @@ public final class DailyConfig {
     public record ItemReward(String material, int amount) {
     }
 
-    /** Награда за день: обычные предметы + VIP (для обладателей активной проходки). */
+    /** Награда за день: обычные предметы + VIP (для обладателей активного ранга). */
     public record DayReward(
             int day,
             List<ItemReward> items,
@@ -111,7 +111,7 @@ public final class DailyConfig {
             passDays = fallbackPassDays.orElse(0);
         }
         if (passDays > 0) {
-            parts.add("+" + passDays + " дн. проходки");
+            parts.add("+" + passDays + " дн. ранга");
         }
         return parts.isEmpty() ? "—" : String.join(", ", parts);
     }

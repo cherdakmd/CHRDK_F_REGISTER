@@ -69,7 +69,7 @@ public record TpConfig(
         return Math.max(0, Math.min(100, rankDiscounts.get(index)));
     }
 
-    /** Лимит домов по ступени ранга: таблица модуля или старое правило проходки. */
+    /** Лимит домов по ступени ранга: таблица модуля или старое правило ранга. */
     public int homeLimit(int rank, boolean extra) {
         int limit;
         if (rank <= 0) {
@@ -92,7 +92,7 @@ public record TpConfig(
      * поэтому лимит живёт ровно столько, сколько оплачено. Независимо от способа получения
      * лимит не превышает {@code homes.hard-cap}: выше потолка не продаётся ничего.</p>
      *
-     * @param vip   действует ли проходка
+     * @param vip   действует ли ранг
      * @param extra есть ли право на дополнительные дома
      */
     public int homeLimit(boolean vip, boolean extra) {

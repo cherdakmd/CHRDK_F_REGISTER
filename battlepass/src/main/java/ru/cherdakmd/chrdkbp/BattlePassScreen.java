@@ -138,7 +138,7 @@ final class BattlePassScreen {
         return trustedRaw(text.toString());
     }
 
-    /** Кнопка «забрать» для готовой награды или подсказка «нужна проходка». */
+    /** Кнопка «забрать» для готовой награды или подсказка «нужен ранг». */
     Messages.Trusted hint(String label, BattlePassView.Mission view) {
         return switch (view.state()) {
             case READY -> trustedRaw(messages.raw("mission-claim-hint",

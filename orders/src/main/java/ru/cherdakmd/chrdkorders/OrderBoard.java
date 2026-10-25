@@ -92,7 +92,7 @@ public final class OrderBoard {
         return (int) Math.clamp(reward, low, high);
     }
 
-    /** Дни проходки по шансу категории; 0 — заказ обычный. */
+    /** Дни ранга по шансу категории; 0 — заказ обычный. */
     public static int passDays(OrderCategory category, Random random) {
         if (category == null || category.passDays() <= 0 || category.passChance() <= 0.0) {
             return 0;

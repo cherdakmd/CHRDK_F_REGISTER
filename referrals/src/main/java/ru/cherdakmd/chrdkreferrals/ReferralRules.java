@@ -27,7 +27,7 @@ public final class ReferralRules {
     /**
      * Можно ли привязать {@code invitee} к {@code inviter}.
      *
-     * @param inviteePassUntil    unix-мс окончания проходки приглашённого (0 — проходки не было никогда)
+     * @param inviteePassUntil    unix-мс окончания ранга приглашённого (0 — ранга не было никогда)
      * @param alreadyLinked       была ли у приглашённого привязка ранее
      * @param inviterRegistered   прошёл ли пригласивший регистрацию пароля
      * @param requireRegistered   требуемость регистрации пригласившего из конфига
@@ -37,7 +37,7 @@ public final class ReferralRules {
                                     boolean inviterRegistered, boolean requireRegistered) {
         if (canonical(inviter).equals(canonical(invitee))) return LinkError.SELF;
         if (alreadyLinked) return LinkError.ALREADY_LINKED;
-        if (inviteePassUntil > 0) return LinkError.TOO_LATE; // привязка только до первой проходки
+        if (inviteePassUntil > 0) return LinkError.TOO_LATE; // привязка только до первой подписки
         if (requireRegistered && !inviterRegistered) return LinkError.INVITER_UNREGISTERED;
         return LinkError.OK;
     }

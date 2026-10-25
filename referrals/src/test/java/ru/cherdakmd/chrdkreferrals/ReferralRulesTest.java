@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * Правила привязки: себя нельзя, одноразовость, только до первой проходки,
+ * Правила привязки: себя нельзя, одноразовость, только до первой подписки,
  * регистрация пригласившего по настройке.
  */
 class ReferralRulesTest {
@@ -30,7 +30,7 @@ class ReferralRulesTest {
 
     @Test
     void tooLateAfterAnyPassEver() {
-        // passUntil в прошлом — проходка уже была, привязываться поздно
+        // passUntil в прошлом — подписка уже была, привязываться поздно
         assertEquals(ReferralRules.LinkError.TOO_LATE, ReferralRules.canLink(
                 "Steve", "Alex", 1_500_000_000_000L, false, true, true));
         assertEquals(ReferralRules.LinkError.TOO_LATE, ReferralRules.canLink(

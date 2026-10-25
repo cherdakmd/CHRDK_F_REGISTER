@@ -11,7 +11,7 @@ import java.util.Map;
 
 /**
  * Выдача наград: apply конфиг-день к игроку (предметы в инвентарь + drop под ноги,
- * VIP-дни проходки — через API ядра).
+ * VIP-дни ранга — через API ядра).
  */
 public final class DailyService {
 

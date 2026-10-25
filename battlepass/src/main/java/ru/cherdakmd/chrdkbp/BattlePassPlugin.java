@@ -32,7 +32,7 @@ import java.util.Map;
 
 /**
  * CHRDK_BattlePass — сезон с волнами заданий и двумя ветками наград
- * (бесплатная + VIP для владельцев проходки). Награды — дни проходки через API ядра.
+ * (бесплатная + VIP для владельцев ранга). Награды — дни ранга через API ядра.
  *
  * <p>Версия 1.4.109-SNAPSHOT расширяет аддон: новые типы заданий (PLACE, SMELT,
  * ENCHANT, BREED), фильтры мира и права, честная игра (креатив и «поставил-сломал»),
@@ -414,7 +414,7 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
         return coreApi;
     }
 
-    /** Активна ли проходка: от неё зависит доступность VIP-наград. */
+    /** Активна ли ранг: от неё зависит доступность VIP-наград. */
     boolean vipActive(Player player) {
         return passUntil(player) > System.currentTimeMillis();
     }
@@ -439,7 +439,7 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
                 System.currentTimeMillis());
     }
 
-    /** До какого момента активна проходка игрока; 0 — ядро недоступно. */
+    /** До какого момента активна ранг игрока; 0 — ядро недоступно. */
     long passUntil(Player player) {
         ChrdkRegisterApi api = coreApi;
         return api == null || player == null ? 0L : api.passUntil(player.getName());

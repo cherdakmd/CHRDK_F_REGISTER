@@ -7,7 +7,7 @@ package ru.cherdakmd.chrdkachievements;
  * @param category раздел витрины
  * @param metric   счётчик, по которому считается прогресс
  * @param goal     порог выполнения (для флагов — 1)
- * @param passDays дни проходки в награду (0 — без дней)
+ * @param passDays дни ранга в награду (0 — без дней)
  * @param diamonds алмазы в награду (0 — без алмазов)
  * @param badge    ид бейджа из messages.yml ({@code badge.<id>}) или {@code null}
  */

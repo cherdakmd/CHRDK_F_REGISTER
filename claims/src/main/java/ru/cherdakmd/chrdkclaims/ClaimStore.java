@@ -652,7 +652,7 @@ public final class ClaimStore {
         return name == null ? null : limits.get(keyIgnoreCase(limits, name));
     }
 
-    /** Назначает персональный лимит (1..100000) — он главнее базы и бонуса проходки. */
+    /** Назначает персональный лимит (1..100000) — он главнее базы и бонуса ранга. */
     public synchronized void setLimitOverride(String name, int limit) {
         if (name == null || name.isBlank()) {
             return;

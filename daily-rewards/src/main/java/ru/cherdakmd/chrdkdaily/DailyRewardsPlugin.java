@@ -15,7 +15,7 @@ import java.util.List;
 
 /**
  * CHRDK_DailyRewards — ежедневные награды со стриком. Ветка VIP активируется активной
- * проходкой ядра ({@code api.hasActivePass}), выдача VIP-дней — через {@code api.grantPass}.
+ * рангом ядра ({@code api.hasActivePass}), выдача VIP-дней — через {@code api.grantPass}.
  * Забирать награду могут только авторизованные игроки.
  */
 public final class DailyRewardsPlugin extends JavaPlugin {

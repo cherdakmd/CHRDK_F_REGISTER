@@ -11,7 +11,7 @@ import java.util.List;
 
 /**
  * CHRDK_Referrals — реферальная система-аддон: новичок привязывается к пригласившему
- * ({@code /ref use <ник>}) до первой проходки, при его первой оплате оба получают бонусные
+ * ({@code /ref use <ник>}) до первой подписки, при его первой оплате оба получают бонусные
  * дни через API ядра ({@code PassGrantedEvent} + {@code ChrdkRegisterApi.grantPass}).
  */
 public final class ReferralsPlugin extends JavaPlugin {

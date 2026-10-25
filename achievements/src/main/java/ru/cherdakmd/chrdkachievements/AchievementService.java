@@ -23,7 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <p>Награда выдаётся ровно один раз: помимо {@code unlocked} есть отметка
  * {@code claimed}, поэтому сбой между открытием и выплатой не приведёт к
- * повторной выдаче после перезапуска. Дни проходки идут через API ядра,
+ * повторной выдаче после перезапуска. Дни ранга идут через API ядра,
  * алмазы — предметами стаками по 64.</p>
  *
  * <p>Бейджи: выбранный бейдж хранится в профиле и добавляется к нику через
@@ -57,7 +57,7 @@ public final class AchievementService {
         return check(player);
     }
 
-    /** Ставит флаг «сделано» (проходка, регистрация, 2FA). */
+    /** Ставит флаг «сделано» (ранг, регистрация, 2FA). */
     public int setFlag(Player player, AchievementMetric metric) {
         if (player == null || metric == null || !enabled()) {
             return 0;

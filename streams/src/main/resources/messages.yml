@@ -2,7 +2,7 @@ streams:
   # Тексты CHRDK_Streams. Разметка — MiniMessage; %ключи% подставляются плагином.
   # --------------------------------- профиль ----------------------------------
   "profile-title": "Стримы"
-  "profile-days": "<gray>Дней проходки за эфиры: </gray><aqua>%days%</aqua>"
+  "profile-days": "<gray>Дней ранга за эфиры: </gray><aqua>%days%</aqua>"
   "profile-pending": "<gray>До следующего дня эфира: </gray><white>%minutes% мин</white>"
   "profile-channels": "<gray>Привязано каналов: </gray><white>%count%</white>"
   "usage": "<yellow>Стример: /%label% <link <twitch|vkplay> <канал или ссылка> | check [площадка] | status | unlink [площадка] | top | viewers [on|off]></yellow>"
@@ -33,7 +33,7 @@ streams:
   "link-trusted": "<green>Канал привязан и сразу подтверждён: проверка кодом отключена администрацией.</green>"
 
   "check-live": "<gray>Проверяем эфир %platform%/%channel%…</gray>"
-  "check-verified": "<green>Канал %platform%/%channel% подтверждён: код найден в названии эфира.</green> <gray>Теперь каждый час стрима даёт сутки проходки.</gray>"
+  "check-verified": "<green>Канал %platform%/%channel% подтверждён: код найден в названии эфира.</green> <gray>Теперь каждый час стрима даёт сутки ранга.</gray>"
   "check-no-code": "<red>Эфир %platform%/%channel% идёт, но кода в названии нет.</red> <gray>Название: %title%</gray> <gray>Нужен код <white>%code%</white>.</gray>"
   "check-offline": "<yellow>Эфира на %platform%/%channel% нет.</yellow> <gray>Запустите стрим с кодом <white>%code%</white> в названии и повторите.</gray>"
   "check-error": "<red>Платформа %platform% не ответила: %error%</red> <gray>Попробуйте позже.</gray>"
@@ -57,12 +57,12 @@ streams:
   "status-error": "<dark_gray>   ○ %platform%/%channel%: платформа не ответила</dark_gray>"
   "status-no-platform": "<dark_gray>Площадки не настроены — эфир проверить нечем.</dark_gray>"
   "status-online-hint": "<gray>Награда идёт только пока вы на сервере.</gray>"
-  "status-footer": "<gray>Правило: %minutes% минут эфира — сутки проходки, до %max% суток в день.</gray>"
+  "status-footer": "<gray>Правило: %minutes% минут эфира — сутки ранга, до %max% суток в день.</gray>"
 
   "unlinked": "<yellow>Все каналы отвязаны.</yellow> <gray>Прогресс стримера сброшен.</gray> <gray>Чтобы сохранить прогресс, отвязывайте площадки по одной: <white>/%label% unlink twitch</white>.</gray>"
   "unlinked-platform": "<yellow>Привязка %platform% (%channel%) удалена.</yellow> <gray>Осталось каналов: %left%.</gray>"
   "not-linked-platform": "<red>На площадке %platform% канал не привязан.</red>"
-  "awarded": "<gold>✦ Эфир засчитан:</gold> <green>+%days% дн. проходки</green> <gray>(сегодня %today% / %max%)</gray>"
+  "awarded": "<gold>✦ Эфир засчитан:</gold> <green>+%days% дн. ранга</green> <gray>(сегодня %today% / %max%)</gray>"
   "awarded-until": "<gray>Проходка активна до %until%.</gray>"
   "award-error": "<red>Не удалось выдать награду: %error%</red>"
 
@@ -97,7 +97,7 @@ streams:
   "watch-offline": "<yellow>Эфир сейчас не идёт — засчитывать нечего.</yellow>"
   "watch-error": "<red>Платформа не ответила: %error%</red>"
   "watch-tick": "<green>+%minutes% мин. просмотра.</green> <gray>До суток: %left% мин. · сегодня: %today% / %max%</gray>"
-  "watch-awarded": "<gold>✦ Просмотр засчитан:</gold> <green>+%days% дн. проходки</green> <gray>(сегодня %today% / %max%)</gray>"
+  "watch-awarded": "<gold>✦ Просмотр засчитан:</gold> <green>+%days% дн. ранга</green> <gray>(сегодня %today% / %max%)</gray>"
   "watch-awarded-until": "<gray>Проходка активна до %until%.</gray>"
   "watch-award-error": "<red>Не удалось выдать награду: %error%</red>"
   "watch-left": "<yellow>Вы больше не смотрите канал %streamer%.</yellow> <gray>Прогресс сохранён.</gray>"

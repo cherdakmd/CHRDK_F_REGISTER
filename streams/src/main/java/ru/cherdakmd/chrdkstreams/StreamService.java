@@ -24,7 +24,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Опрос площадок и начисление проходки.
+ * Опрос площадок и начисление ранга.
  *
  * <p>Работает в отдельном потоке: раз в {@code streams.poll-seconds} берёт все
  * привязки, спрашивает у площадок «идёт ли эфир», проверяет условия (подтверждён,
@@ -46,7 +46,7 @@ import java.util.logging.Logger;
  */
 final class StreamService {
 
-    /** Источник в аудите ядра: по нему видно, за что выдана проходка. */
+    /** Источник в аудите ядра: по нему видно, за что выдана ранг. */
     static final String SOURCE = "streams";
 
     private static final DateTimeFormatter UNTIL_FORMAT =
@@ -250,7 +250,7 @@ final class StreamService {
         }
     }
 
-    /** Выдаёт дни проходки через API ядра. {@code false} — не получилось, надо повторить. */
+    /** Выдаёт дни ранга через API ядра. {@code false} — не получилось, надо повторить. */
     private boolean grant(StreamBinding binding, int days, Player online) {
         ChrdkRegisterApi api = plugin.coreApi();
         if (api == null) {

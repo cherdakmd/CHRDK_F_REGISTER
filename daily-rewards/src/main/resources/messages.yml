@@ -5,7 +5,7 @@ messages:
     "usage": "<gray>/daily — календарь наград; /daily claim — забрать сегодняшнюю</gray>"
     "claim-header": "<gold>═══ Награда за день %day% стрика ═══</gold>"
     "claim-items": "<gray>Предметы: </gray><aqua>%items%</aqua>"
-    "claim-pass-days": "<gray>Бонус проходки: </gray><green>+%days% дн.</green>"
+    "claim-pass-days": "<gray>Бонус ранга: </gray><green>+%days% дн.</green>"
     "claim-streak": "<gray>Стрик: </gray><yellow>%streak% дн.</yellow><gray>, следующая награда завтра (UTC)</gray>"
     "already-claimed": "<yellow>Сегодняшняя награда уже взята. Загляните завтра! Стрик: %streak% дн.</yellow>"
     "join-reminder": "<gold>✎ У вас ждёт ежедневная награда — откройте </gold><yellow>/daily</yellow>"

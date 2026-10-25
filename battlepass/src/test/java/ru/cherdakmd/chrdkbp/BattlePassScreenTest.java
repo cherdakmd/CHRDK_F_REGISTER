@@ -82,12 +82,12 @@ class BattlePassScreenTest {
     void vipOnlyMissionExplainsThePass() throws Exception {
         String locked = plain(screen().mission("bp",
                 new BattlePassView.Mission(vipOnly(), 40, false, false, false)));
-        assertTrue(locked.contains("нужна проходка"), "нет подсказки про проходку: " + locked);
+        assertTrue(locked.contains("нужен ранг"), "нет подсказки про ранг: " + locked);
         assertFalse(locked.contains("<light_purple>"), locked);
 
         String ready = plain(screen().mission("bp",
                 new BattlePassView.Mission(vipOnly(), 40, false, false, true)));
-        assertTrue(ready.contains("забрать"), "с проходкой награда должна быть доступна: " + ready);
+        assertTrue(ready.contains("забрать"), "с рангом награда должна быть доступна: " + ready);
     }
 
     @Test

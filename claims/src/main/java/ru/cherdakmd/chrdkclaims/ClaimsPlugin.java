@@ -84,7 +84,7 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         }
         if (coreApi == null) {
             getLogger().warning("[CHRDK_Claims] API CHRDK_Core не найден (нужно ядро 1.4.6+): "
-                    + "проверка авторизации и бонус лимита за проходку недоступны.");
+                    + "проверка авторизации и бонус лимита за ранг недоступны.");
         }
 
         this.noticesKey = new NamespacedKey(this, "notices");
@@ -176,7 +176,7 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         service.sendRentReminder(player);
     }
 
-    /** После истечения проходки лимит уменьшается: предупреждаем, если чанков стало больше нормы. */
+    /** После истечения ранга лимит уменьшается: предупреждаем, если чанков стало больше нормы. */
     @EventHandler
     public void onPassExpired(PassExpiredEvent event) {
         Player player = Bukkit.getPlayerExact(event.getPlayerName());

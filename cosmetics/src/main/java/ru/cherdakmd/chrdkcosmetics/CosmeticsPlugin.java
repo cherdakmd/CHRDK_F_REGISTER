@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * CHRDK_Cosmetics — косметика владельцев проходки: шлейфы частиц при ходьбе
+ * CHRDK_Cosmetics — косметика владельцев ранга: шлейфы частиц при ходьбе
  * и торжественный эффект входа на сервер.
  */
 public final class CosmeticsPlugin extends JavaPlugin implements Listener {
@@ -165,7 +165,7 @@ public final class CosmeticsPlugin extends JavaPlugin implements Listener {
     }
 
     /**
-     * Открыт ли шлейф игроку: проходка (если {@code access-pass-only}) либо покупка
+     * Открыт ли шлейф игроку: ранг (если {@code access-pass-only}) либо покупка
      * в каталоге ядра. Покупки проверяются через API v4 — оффлайн-данные, без Bukkit.
      */
     boolean unlocked(String playerName, CosmeticsDefs.TrailDef def) {

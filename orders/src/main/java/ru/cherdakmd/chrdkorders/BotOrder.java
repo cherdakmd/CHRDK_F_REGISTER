@@ -19,7 +19,7 @@ import java.util.Locale;
  * @param material       материал (имя {@link Material})
  * @param amount         сколько принести
  * @param rewardDiamonds сколько алмазов заплатит бот
- * @param rewardPassDays сколько дней проходки даст сверху (0 — нет)
+ * @param rewardPassDays сколько дней ранга даст сверху (0 — нет)
  * @param minReputation  требуемая репутация
  * @param reputation     сколько репутации получит сдавший
  * @param createdAt      когда заказ появился на доске
@@ -59,7 +59,7 @@ public record BotOrder(String id, String botId, String botName, String category,
         return expiresAt <= 0L ? 0L : Math.max(0L, expiresAt - now);
     }
 
-    /** Заказ может принести проходку. */
+    /** Заказ может принести ранг. */
     public boolean hasPassReward() {
         return rewardPassDays > 0;
     }

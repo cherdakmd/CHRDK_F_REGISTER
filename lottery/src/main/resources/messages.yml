@@ -9,7 +9,7 @@ messages:
   "lottery":
     "no-api": "<red>Ядро CHRDK_Core не найдено — лотерея недоступна.</red>"
     "need-auth": "<red>Сначала войдите на сервер (/login), потом играйте в лотерею.</red>"
-    "need-pass": "<red>Билеты лотереи доступны только с активной проходкой.</red>"
+    "need-pass": "<red>Билеты лотереи доступны с более высокой ступенью ранга.</red>"
     "player-only": "<red>Эта команда только для игроков.</red>"
     "usage": "<gray>/lottery info — банк и время розыгрыша; /lottery buy [n] — купить билеты; /lottery top; /lottery last; /lottery claim — забрать приз</gray>"
     "admin-usage": "<gray>/lotteryadmin reload — перечитать конфиг; /lotteryadmin drawnow confirm — провести розыгрыш сейчас</gray>"

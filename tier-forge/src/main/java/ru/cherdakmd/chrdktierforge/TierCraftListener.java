@@ -175,7 +175,7 @@ public final class TierCraftListener implements Listener {
 
     /**
      * Шанс наката для вида предмета: свой (craft.weapons/armor/tools-chance-percent)
-     * или общий, плюс бонус активной проходки. Один расчёт на оба флоу — identify
+     * или общий, плюс бонус активного ранга. Один расчёт на оба флоу — identify
      * и «старый» превью-ролл (1.4.80).
      */
     private int craftChance(Player player, ItemKind kind) {

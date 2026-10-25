@@ -14,7 +14,7 @@ tp:
   warmup-cancelled-damage: "<red>Телепортация отменена: вы получили урон.</red>"
   insufficient: "<red>Нужно столько алмазов: <yellow>%cost%</yellow> (при себе: %have%).</red>"
   teleported: "<green>Телепортируем. Списано: <yellow>%cost%</yellow> алмазов%vip-suffix%.</green>"
-  vip-suffix: " <gray>(скидка проходки %percent%%)</gray>"
+  vip-suffix: " <gray>(скидка ранга %percent%%)</gray>"
   vip-suffix-empty: ""
 rtp:
   searching: "<yellow>Ищем безопасное место в радиусе <gold>%radius%</gold> блоков…</yellow>"

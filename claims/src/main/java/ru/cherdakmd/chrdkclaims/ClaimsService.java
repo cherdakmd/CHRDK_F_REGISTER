@@ -204,7 +204,7 @@ public final class ClaimsService {
 
     private boolean hasNoPass(String name) {
         if (plugin.store().limitOverride(name) != null) {
-            return false; // лимит выдан вручную — подсказка про проходку не нужна
+            return false; // лимит выдан вручную — подсказка про ранг не нужна
         }
         return plugin.coreApi() == null || plugin.coreApi().rankLevel(name) <= 0;
     }

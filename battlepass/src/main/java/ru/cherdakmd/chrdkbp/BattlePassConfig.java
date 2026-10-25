@@ -41,7 +41,7 @@ final class BattlePassConfig {
      * @param worlds      миры, где задание считается (пусто — все)
      * @param permission  право, без которого прогресс не идёт (пусто — всем)
      * @param icon        материал иконки в меню (пусто — по типу задания)
-     * @param premiumDays дни проходки в премиум-треке (0 — премиум-награды нет)
+     * @param premiumDays дни ранга в премиум-треке (0 — премиум-награды нет)
      * @param premiumProducts товары каталога ядра, которые выдаёт премиум-трек
      */
     record MissionDef(String id, String description, MissionType type, String matchKey,

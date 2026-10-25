@@ -7,7 +7,7 @@ import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 import java.util.Optional;
 
 /**
- * Бизнес-логика рефералки: привязки, выплата бонусов по событию выдачи проходки.
+ * Бизнес-логика рефералки: привязки, выплата бонусов по событию выдачи ранга.
  * Все вызовы core API — объекты {@link ChrdkRegisterApi}, полученные из ServicesManager.
  */
 public final class ReferralService {
@@ -43,7 +43,7 @@ public final class ReferralService {
     }
 
     /**
-     * Событие выдачи/продления проходки из ядра. Если это ПЕРВАЯ оплата приглашённого —
+     * Событие выдачи/продления ранга из ядра. Если это ПЕРВАЯ оплата приглашённого —
      * платим бонусные дни обоим (через api.grantPass — событие привязки потребителя повторно
      * не стреляет, потому что link.consumed станет true ДО grant).
      */
@@ -78,7 +78,7 @@ public final class ReferralService {
                 + ", +" + inviterDays + "d / +" + inviteeDays + "d).");
     }
 
-    /** Одноразовая подсказка новичку: никогда не имел проходки и нет привязки. */
+    /** Одноразовая подсказка новичку: никогда не имел ранга и нет привязки. */
     public boolean shouldHint(String playerName) {
         ChrdkRegisterApi api = plugin.coreApi();
         return api != null

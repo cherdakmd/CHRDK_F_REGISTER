@@ -56,7 +56,7 @@ final class ConfigReport {
                 + ", босс ×" + trim(config.mobBossMultiplier())
                 + (config.mobPlayerKillOnly() ? ", только убийство игроком" : "")
                 : "выключен"));
-        out.add("настройки: проходка +" + config.passBonusCraftPercent()
+        out.add("настройки: ранг +" + config.passBonusCraftPercent()
                 + "% к крафту, клички " + onOff(config.namesEnabled())
                 + ", свойства тиров " + (config.propertiesEnabled()
                 ? config.propertiesPerItem() + " на предмет" : "выкл.")

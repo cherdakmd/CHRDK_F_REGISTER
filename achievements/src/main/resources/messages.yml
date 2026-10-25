@@ -48,7 +48,7 @@ messages:
   achievement-reward: "<green>Награда: %reward%</green>"
   achievement-hint-badges: "<gray>Витрина и бейджи: <yellow>/achievements</yellow></gray>"
   actionbar-unlocked: "<gold>✦ %name%</gold>"
-  reward-days: "<aqua>%days% дн. проходки</aqua>"
+  reward-days: "<aqua>%days% дн. ранга</aqua>"
   reward-diamonds: "<aqua>%count% алмазов</aqua>"
   reward-join: "<gray> + </gray>"
   reward-none: "<gray>без материальной награды</gray>"
@@ -166,7 +166,7 @@ messages:
 
   # ------------------------ сообщество: 12 достижений ------------------------
   ach.svoi-chelovek.name: "Свой человек"
-  ach.svoi-chelovek.desc: "Иметь действующую проходку."
+  ach.svoi-chelovek.desc: "Иметь действующий ранг."
   ach.nadezhnyj-akkaunt.name: "Надёжный аккаунт"
   ach.nadezhnyj-akkaunt.desc: "Зарегистрировать аккаунт паролем."
   ach.dvuhfaktornyj.name: "Двухфакторный"

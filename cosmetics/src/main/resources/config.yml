@@ -20,7 +20,7 @@ cosmetics:
     defs:
       - id: flame
         name: "<red>Огненный шлейф</red>"
-        # Товар каталога ядра, открывающий шлейф без проходки (shop.products).
+        # Товар каталога ядра, открывающий шлейф без ранга (shop.products).
         product: trail-flame
         particle: flame
         count: 3

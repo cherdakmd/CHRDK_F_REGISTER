@@ -32,7 +32,7 @@ public enum AchievementMetric {
     ITEMS_CRAFTED("items-crafted"),
     /** Сообщения в общий и локальный чат. */
     CHAT_MESSAGES("chat-messages"),
-    /** Действующая проходка (0/1) — опрашивается через API ядра. */
+    /** Действующий ранг (0/1) — опрашивается через API ядра. */
     PASS_ACTIVE("pass-active"),
     /** Аккаунт зарегистрирован (0/1). */
     REGISTERED("registered"),

@@ -50,7 +50,7 @@ final class CosmeticsCommandHandler implements CommandExecutor, TabCompleter {
             plugin.messages().send(sender, "unknown", "id", args[0]);
             return true;
         }
-        // Сначала доступ: иначе игрок без проходки включил бы шлейф и удивился тишине.
+        // Сначала доступ: иначе игрок без ранга включил бы шлейф и удивился тишине.
         if (!plugin.unlocked(player.getName(), def)) {
             plugin.messages().send(sender, "locked", "name", def.displayName());
             return true;

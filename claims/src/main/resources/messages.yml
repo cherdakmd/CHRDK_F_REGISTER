@@ -19,7 +19,7 @@ claims:
   already-for-sale: "<red>Чанк принадлежит %owner% и продаётся за %price% ⛁ — купить: /claim buy.</red>"
   already-yours: "<yellow>Этот чанк уже ваш.</yellow>"
   limit-reached: "<red>Лимит приватов исчерпан: %limit% чанков максимум%pass-hint%.</red>"
-  pass-hint: " (с проходкой — больше)"
+  pass-hint: " (с рангом — больше)"
   not-enough: "<red>Не хватает алмазов: нужно %need% ⛁, есть %have% ⛁ (казна + инвентарь).</red>"
   spawn-margin: "<red>Ближе %margin% блоков к спавну приватить нельзя.</red>"
   world-disabled: "<red>В мире %world% приваты отключены администрацией.</red>"

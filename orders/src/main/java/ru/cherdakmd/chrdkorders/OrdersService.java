@@ -317,14 +317,14 @@ public final class OrdersService {
         return dropped;
     }
 
-    /** Дни проходки через ядро; {@code true} — награда выдана. */
+    /** Дни ранга через ядро; {@code true} — награда выдана. */
     private boolean grantPass(Player player, BotOrder order) {
         if (!order.hasPassReward()) {
             return false;
         }
         ChrdkRegisterApi api = plugin.coreApi();
         if (api == null) {
-            plugin.getLogger().warning("Ядро недоступно: проходка за заказ " + order.id()
+            plugin.getLogger().warning("Ядро недоступно: ранг за заказ " + order.id()
                     + " не выдана игроку " + player.getName() + ".");
             return false;
         }

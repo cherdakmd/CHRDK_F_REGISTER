@@ -51,7 +51,7 @@ public final class ArtifactsConfig {
      * Коллекция артефактов (1.4.130).
      *
      * @param enabled включена ли коллекция и её награды
-     * @param rewards пороги наград (процент каталога → дни проходки + алмазы)
+     * @param rewards пороги наград (процент каталога → дни ранга + алмазы)
      */
     public record Collection(boolean enabled, List<CollectionRewards.Tier> rewards) {
 
