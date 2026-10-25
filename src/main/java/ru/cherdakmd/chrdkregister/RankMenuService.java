@@ -104,10 +104,10 @@ public final class RankMenuService implements Listener {
             }
             inventory.setItem(CARD_SLOTS[index], card(level, tier, current, player));
         }
-        inventory.setItem(SLOT_MY, button(Material.PLAYER_HEAD, "rank.button-my"));
-        inventory.setItem(SLOT_TOP, button(Material.WRITABLE_BOOK, "rank.button-top"));
-        inventory.setItem(SLOT_RULES, button(Material.BOOK, "rank.button-rules"));
-        inventory.setItem(SLOT_CLOSE, button(Material.BARRIER, "rank.button-close"));
+        inventory.setItem(SLOT_MY, button(Material.PLAYER_HEAD, messages.get("rank.button-my")));
+        inventory.setItem(SLOT_TOP, button(Material.WRITABLE_BOOK, messages.get("rank.button-top")));
+        inventory.setItem(SLOT_RULES, button(Material.BOOK, messages.get("rank.button-rules")));
+        inventory.setItem(SLOT_CLOSE, button(Material.BARRIER, messages.get("rank.button-close")));
     }
 
     /** Карточка ступени: иконка, цена, возможности и статус игрока. */
@@ -129,7 +129,7 @@ public final class RankMenuService implements Listener {
                     "year", year == null ? "—" : money(year.priceRubles())));
         }
         lore.add(Component.empty());
-        lore.addAll(messages.getList("rank.ability-" + level));
+        lore.addAll(abilityLines(level));
         lore.add(Component.empty());
         lore.add(messages.get(level == current ? "rank.card-current"
                 : (level < current ? "rank.card-lower" : "rank.card-buy")));
@@ -141,11 +141,23 @@ public final class RankMenuService implements Listener {
         return item;
     }
 
-    private ItemStack button(Material material, String key) {
+    /** Строки возможностей ступени: литералы, чтобы контракт текстов видел ключи. */
+    private List<Component> abilityLines(int level) {
+        return switch (level) {
+            case 1 -> messages.getList("rank.ability-1");
+            case 2 -> messages.getList("rank.ability-2");
+            case 3 -> messages.getList("rank.ability-3");
+            case 4 -> messages.getList("rank.ability-4");
+            case 5 -> messages.getList("rank.ability-5");
+            default -> List.of();
+        };
+    }
+
+    private ItemStack button(Material material, Component name) {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.displayName(messages.get(key));
+            meta.displayName(name);
             item.setItemMeta(meta);
         }
         return item;
