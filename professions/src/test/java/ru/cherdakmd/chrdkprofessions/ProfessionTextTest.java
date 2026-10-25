@@ -27,6 +27,7 @@ class ProfessionTextTest {
                 professions:
                   profession.smith.name: "Кузнец"
                   profession.mason.name: "Камнерез"
+                  profession.mason.hint: "камень и камнерез"
                   perk.none: "пока нет"
                   perk.smith: "Скидка %value%"
                   rank.novice: "новичок"
@@ -79,6 +80,17 @@ class ProfessionTextTest {
                 "до 10-го уровня повар ещё не кормит сытнее");
         assertEquals("", ProfessionText.perkRaw(messages, null, 10));
         assertEquals("", ProfessionText.perk(null, Profession.SMITH, 10).text());
+    }
+
+    @Test
+    void hintIsShownForKnownProfessionOnly() {
+        Messages messages = messages();
+        assertEquals("камень и камнерез",
+                ProfessionText.hintComponent(messages, Profession.MASON).text());
+        assertEquals("", ProfessionText.hintComponent(messages, Profession.SMITH).text(),
+                "без ключа текст не выдумывается");
+        assertEquals("", ProfessionText.hintComponent(null, Profession.MASON).text());
+        assertEquals("", ProfessionText.hintComponent(messages, null).text());
     }
 
     @Test

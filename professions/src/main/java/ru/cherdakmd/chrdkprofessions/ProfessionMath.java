@@ -169,7 +169,10 @@ final class ProfessionMath {
         return cookSaturation(level, MAX_LEVEL);
     }
 
-    /** Шанс камнереза получить второй блок при плавке, %: 1 за уровень, потолок 15 (+ за уровни ранга). */
+    /**
+     * Шанс камнереза получить лишний блок при плавке и распиле, %: 1 за уровень,
+     * потолок 15 (+ за уровни ранга). С 1.4.177 шанс работает и на камнерезе.
+     */
     static int masonChance(int level, int maxLevel) {
         int cap = raisedCap(MAX_EXTRA_BLOCK, 1, Math.max(0, maxLevel - MAX_LEVEL));
         return Math.clamp(Math.clamp(level, 1, Math.max(1, maxLevel)), 0, cap);

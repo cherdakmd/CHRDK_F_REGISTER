@@ -145,6 +145,8 @@ final class ProfessionsGui implements Listener {
         }
         lore.add(plugin.messages().get("menu-profession-perk",
                 "perk", ProfessionText.perk(plugin.messages(), profession, level, maxLevel)));
+        lore.add(plugin.messages().get("menu-profession-hint",
+                "hint", ProfessionText.hintComponent(plugin.messages(), profession)));
         lore.add(Component.empty());
         lore.add(profession == plugin.service().active(id)
                 ? plugin.messages().get("menu-profession-current")
@@ -226,6 +228,7 @@ final class ProfessionsGui implements Listener {
                 ProfessionText.localise(plugin.messages(), result).toArray());
         if (result.ok()) {
             plugin.requestSave();
+            plugin.hint(player, Profession.parse(professionId));
         }
         open(player);
     }

@@ -33,6 +33,20 @@ final class ProfessionText {
         return Messages.trusted(messages.raw("profession." + profession.id() + ".name"));
     }
 
+    /**
+     * Как получать опыт этого ремесла — с разметкой (1.4.177).
+     *
+     * <p>Подсказка живёт в messages.yml рядом с названием и описанием: игрок
+     * видит её до выбора (в меню) и после него, а не узнаёт из вики.</p>
+     */
+    static Messages.Trusted hintComponent(Messages messages, Profession profession) {
+        if (messages == null || profession == null) {
+            return Messages.trusted("");
+        }
+        String key = "profession." + profession.id() + ".hint";
+        return Messages.trusted(messages.has(key) ? messages.raw(key) : "");
+    }
+
     /** Ранг по уровню без разметки. */
     static String rankPlain(Messages messages, int level) {
         if (messages == null) {

@@ -56,6 +56,8 @@ final class ProfessionsProfile implements ChrdkRegisterApi.ProfileProvider {
                             plugin.service().progressPercent(context.playerId(), profession))));
             lines.add(messages.get("profile-perk", "perk",
                     Messages.trusted(ProfessionText.perkRaw(messages, profession, level, maxLevel))));
+            lines.add(messages.get("profile-hint",
+                    "hint", ProfessionText.hintComponent(messages, profession)));
             int left = plugin.service().dailyLeft(context.playerId(), profession,
                     System.currentTimeMillis());
             if (left >= 0) {

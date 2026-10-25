@@ -16,8 +16,15 @@ import java.util.Map;
  *
  * <p>Правило отбора простое: опыт даёт <b>работа</b>, а не находка. Плавка и
  * крафт считают материалы, которые игрок реально потратил; варка — один такт
- * варочной стойки. Ни одна запись не выдаёт алмазы, незерит или монеты: опыт —
+ * варочной стойки; добыча — сломанный блок; распил — снятую с камнереза
+ * плитку. Ни одна запись не выдаёт алмазы, незерит или монеты: опыт —
  * единственная награда профессии.</p>
+ *
+ * <p>1.4.177 добавила два «повседневных» источника. До неё камнерез получал
+ * опыт только за редкий крафт, а его главный инструмент — камнерез — не
+ * считался вовсе: игрок выбирал ремесло и видел тишину. Поэтому добыча и
+ * распил теперь в таблицах, и у каждого ремесла есть занятие, доступное с
+ * первого дня без редких предметов.</p>
  */
 public final class ProfessionCatalog {
 
@@ -30,11 +37,19 @@ public final class ProfessionCatalog {
             new EnumMap<>(Profession.class);
     private static final Map<Profession, Map<Material, Integer>> SMELT =
             new EnumMap<>(Profession.class);
+    /** Опыт за сломанный блок: повседневная работа каждого ремесла (1.4.177). */
+    private static final Map<Profession, Map<Material, Integer>> MINING =
+            new EnumMap<>(Profession.class);
+    /** Опыт за распил на камнерезе: результат, а не исходный блок (1.4.177). */
+    private static final Map<Profession, Map<Material, Integer>> CUT =
+            new EnumMap<>(Profession.class);
 
     static {
         for (Profession profession : Profession.values()) {
             CRAFT.put(profession, new LinkedHashMap<>());
             SMELT.put(profession, new LinkedHashMap<>());
+            MINING.put(profession, new LinkedHashMap<>());
+            CUT.put(profession, new LinkedHashMap<>());
         }
 
         /* ---------------------------------- кузнец --------------------------------- */
@@ -112,6 +127,70 @@ public final class ProfessionCatalog {
         smelt(Profession.MASON, 1,
                 Material.STONE, Material.SMOOTH_STONE, Material.GLASS,
                 Material.BRICK, Material.TERRACOTTA, Material.NETHER_BRICK);
+
+        /* -------------------------------- добыча ---------------------------------- */
+        // Повседневная работа: то, что игрок ломает каждый день. Значения те же,
+        // что у плавки — один блок это один шаг, а не награда за находку.
+        mine(Profession.SMITH, 4, Material.ANCIENT_DEBRIS);
+        mine(Profession.SMITH, 2,
+                Material.IRON_ORE, Material.DEEPSLATE_IRON_ORE,
+                Material.COPPER_ORE, Material.DEEPSLATE_COPPER_ORE,
+                Material.GOLD_ORE, Material.DEEPSLATE_GOLD_ORE,
+                Material.NETHER_QUARTZ_ORE);
+        mine(Profession.ALCHEMIST, 2, Material.AMETHYST_CLUSTER);
+        mine(Profession.ALCHEMIST, 1,
+                Material.GLOWSTONE, Material.MAGMA_BLOCK, Material.NETHER_WART);
+        mine(Profession.COOK, 1,
+                Material.WHEAT, Material.CARROTS, Material.POTATOES, Material.BEETROOTS,
+                Material.PUMPKIN, Material.MELON, Material.SUGAR_CANE, Material.COCOA,
+                Material.SWEET_BERRY_BUSH, Material.BROWN_MUSHROOM, Material.RED_MUSHROOM,
+                Material.KELP, Material.KELP_PLANT, Material.SEA_PICKLE);
+        mine(Profession.MASON, 1,
+                Material.STONE, Material.COBBLESTONE, Material.DEEPSLATE,
+                Material.COBBLED_DEEPSLATE, Material.ANDESITE, Material.DIORITE,
+                Material.GRANITE, Material.TUFF, Material.CALCITE, Material.BASALT,
+                Material.SMOOTH_BASALT, Material.BLACKSTONE, Material.DRIPSTONE_BLOCK,
+                Material.CLAY, Material.SANDSTONE, Material.RED_SANDSTONE,
+                Material.NETHERRACK);
+
+        /* -------------------------------- камнерез --------------------------------- */
+        // Камнерез не поднимает CraftItemEvent: результат режется на месте. Поэтому
+        // у камнереза своя таблица — по тому, что игрок унёс с пилы (1.4.177).
+        cut(Profession.MASON, 2,
+                Material.PRISMARINE_BRICKS, Material.DARK_PRISMARINE,
+                Material.QUARTZ_BRICKS, Material.PURPUR_BLOCK, Material.PURPUR_PILLAR);
+        cut(Profession.MASON, 1,
+                Material.STONE_BRICKS, Material.MOSSY_STONE_BRICKS,
+                Material.CRACKED_STONE_BRICKS, Material.CHISELED_STONE_BRICKS,
+                Material.SMOOTH_STONE, Material.STONE_SLAB, Material.STONE_STAIRS,
+                Material.STONE_BRICK_SLAB, Material.STONE_BRICK_STAIRS,
+                Material.STONE_BRICK_WALL, Material.COBBLESTONE_SLAB,
+                Material.COBBLESTONE_STAIRS, Material.COBBLESTONE_WALL,
+                Material.MOSSY_COBBLESTONE, Material.POLISHED_ANDESITE,
+                Material.POLISHED_ANDESITE_SLAB, Material.POLISHED_ANDESITE_STAIRS,
+                Material.POLISHED_DIORITE, Material.POLISHED_DIORITE_SLAB,
+                Material.POLISHED_GRANITE, Material.POLISHED_GRANITE_STAIRS,
+                Material.ANDESITE_SLAB, Material.DIORITE_STAIRS, Material.GRANITE_WALL,
+                Material.DEEPSLATE_BRICKS, Material.DEEPSLATE_TILES,
+                Material.POLISHED_DEEPSLATE, Material.POLISHED_DEEPSLATE_SLAB,
+                Material.DEEPSLATE_BRICK_STAIRS, Material.DEEPSLATE_TILE_WALL,
+                Material.COBBLED_DEEPSLATE_SLAB, Material.COBBLED_DEEPSLATE_STAIRS,
+                Material.COBBLED_DEEPSLATE_WALL, Material.CHISELED_DEEPSLATE,
+                Material.TUFF_BRICKS, Material.POLISHED_TUFF, Material.TUFF_SLAB,
+                Material.TUFF_STAIRS, Material.TUFF_WALL, Material.CHISELED_TUFF,
+                Material.TUFF_BRICK_SLAB, Material.TUFF_BRICK_STAIRS,
+                Material.TUFF_BRICK_WALL, Material.SANDSTONE_SLAB,
+                Material.CUT_SANDSTONE, Material.RED_SANDSTONE_STAIRS,
+                Material.CUT_RED_SANDSTONE, Material.QUARTZ_BLOCK, Material.QUARTZ_SLAB,
+                Material.QUARTZ_STAIRS, Material.QUARTZ_PILLAR,
+                Material.CHISELED_QUARTZ_BLOCK, Material.SMOOTH_QUARTZ_SLAB,
+                Material.SMOOTH_QUARTZ_STAIRS, Material.END_STONE_BRICKS,
+                Material.END_STONE_BRICK_SLAB, Material.PURPUR_SLAB,
+                Material.PURPUR_STAIRS, Material.PRISMARINE_BRICK_SLAB,
+                Material.DARK_PRISMARINE_SLAB, Material.BRICKS, Material.BRICK_SLAB,
+                Material.BRICK_STAIRS, Material.BRICK_WALL, Material.MUD_BRICKS,
+                Material.MUD_BRICK_SLAB, Material.MUD_BRICK_STAIRS,
+                Material.MUD_BRICK_WALL, Material.PACKED_MUD);
     }
 
     private static void craft(Profession profession, int xp, Material... materials) {
@@ -120,6 +199,14 @@ public final class ProfessionCatalog {
 
     private static void smelt(Profession profession, int xp, Material... materials) {
         put(SMELT, profession, xp, materials);
+    }
+
+    private static void mine(Profession profession, int xp, Material... materials) {
+        put(MINING, profession, xp, materials);
+    }
+
+    private static void cut(Profession profession, int xp, Material... materials) {
+        put(CUT, profession, xp, materials);
     }
 
     private static void put(Map<Profession, Map<Material, Integer>> table, Profession profession,
@@ -144,6 +231,16 @@ public final class ProfessionCatalog {
         return lookup(SMELT, profession, material);
     }
 
+    /** Опыт за сломанный блок (0 — этот блок не работа выбранного ремесла). */
+    public static int miningXp(Profession profession, Material material) {
+        return lookup(MINING, profession, material);
+    }
+
+    /** Опыт за распил на камнерезе: считается то, что унесли с пилы. */
+    public static int cutXp(Profession profession, Material material) {
+        return lookup(CUT, profession, material);
+    }
+
     /** Опыт за завершённую варку: только у алхимика. */
     public static int brewXp(Profession profession) {
         return profession == Profession.ALCHEMIST ? BREW_XP : 0;
@@ -166,6 +263,16 @@ public final class ProfessionCatalog {
     /** Копия таблицы плавки — только для проверок и админской справки. */
     public static Map<Material, Integer> smeltTable(Profession profession) {
         return copy(SMELT, profession);
+    }
+
+    /** Копия таблицы добычи — только для проверок и админской справки. */
+    public static Map<Material, Integer> miningTable(Profession profession) {
+        return copy(MINING, profession);
+    }
+
+    /** Копия таблицы камнереза — только для проверок и админской справки. */
+    public static Map<Material, Integer> cutTable(Profession profession) {
+        return copy(CUT, profession);
     }
 
     private static Map<Material, Integer> copy(Map<Profession, Map<Material, Integer>> table,

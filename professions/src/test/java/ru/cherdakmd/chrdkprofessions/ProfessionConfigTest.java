@@ -33,6 +33,7 @@ class ProfessionConfigTest {
         assertEquals("ru", config.locale());
         assertTrue(config.actionbar());
         assertTrue(config.joinHint());
+        assertTrue(config.xpFeedback());
         assertEquals(1200, config.dailyXpCap());
         assertEquals(24, config.chooseCooldownHours());
         assertEquals(86_400_000L, config.chooseCooldownMillis());
@@ -91,12 +92,14 @@ class ProfessionConfigTest {
                   enabled: false
                   actionbar: false
                   join-hint: false
+                  xp-feedback: false
                 perks:
                   enabled: false
                 """);
         assertFalse(config.enabled());
         assertFalse(config.actionbar());
         assertFalse(config.joinHint());
+        assertFalse(config.xpFeedback());
         assertFalse(config.perksEnabled());
         for (Profession profession : Profession.values()) {
             assertFalse(config.perkEnabled(profession), profession.id());
@@ -114,6 +117,12 @@ class ProfessionConfigTest {
         assertTrue(config.perkEnabled(Profession.COOK));
         assertFalse(config.perkEnabled(Profession.MASON));
         assertFalse(config.perkEnabled(null));
+    }
+
+    @Test
+    void feedbackCanBeTurnedOffAlone() throws Exception {
+        assertTrue(parse("").xpFeedback());
+        assertFalse(parse("general:\n  xp-feedback: false\n").xpFeedback());
     }
 
     @Test

@@ -2,6 +2,7 @@ package ru.cherdakmd.chrdkprofessions;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
@@ -138,6 +139,26 @@ public final class ProfessionsPlugin extends JavaPlugin {
         } catch (RuntimeException | LinkageError error) {
             getLogger().warning("[CHRDK_Professions] раздел профиля недоступен: " + error);
         }
+    }
+
+    /**
+     * Подсказка после выбора ремесла (1.4.177).
+     *
+     * <p>Игрок только что нажал «Выбрать» — в этот момент он должен узнать, за
+     * какую работу пойдёт опыт, а не через день и не в вики. Одна строка в чате
+     * и есть ответ на «выбрал и ничего не происходит».</p>
+     */
+    public void hint(Player player, Profession profession) {
+        if (player == null || profession == null) {
+            return;
+        }
+        Messages texts = this.messages;
+        if (texts == null) {
+            return;
+        }
+        this.messages.send(player, "chosen-hint",
+                "profession", ProfessionText.nameComponent(texts, profession),
+                "hint", ProfessionText.hintComponent(texts, profession));
     }
 
     /* --------------------------------- запись --------------------------------- */

@@ -59,6 +59,57 @@ class ProfessionCatalogTest {
     }
 
     @Test
+    void miningIsEverydayWorkForEachProfession() {
+        // 1.4.177: камень — работа камнереза, а не «ничего».
+        assertEquals(1, ProfessionCatalog.miningXp(Profession.MASON, Material.STONE));
+        assertEquals(1, ProfessionCatalog.miningXp(Profession.MASON, Material.DEEPSLATE));
+        assertEquals(1, ProfessionCatalog.miningXp(Profession.MASON, Material.COBBLESTONE));
+        assertEquals(2, ProfessionCatalog.miningXp(Profession.SMITH, Material.IRON_ORE));
+        assertEquals(2, ProfessionCatalog.miningXp(Profession.SMITH, Material.DEEPSLATE_GOLD_ORE));
+        assertEquals(4, ProfessionCatalog.miningXp(Profession.SMITH, Material.ANCIENT_DEBRIS));
+        assertEquals(1, ProfessionCatalog.miningXp(Profession.COOK, Material.WHEAT));
+        assertEquals(2, ProfessionCatalog.miningXp(Profession.ALCHEMIST,
+                Material.AMETHYST_CLUSTER));
+    }
+
+    @Test
+    void miningDoesNotLeakBetweenProfessions() {
+        assertEquals(0, ProfessionCatalog.miningXp(Profession.MASON, Material.IRON_ORE));
+        assertEquals(0, ProfessionCatalog.miningXp(Profession.COOK, Material.STONE));
+        assertEquals(0, ProfessionCatalog.miningXp(Profession.SMITH, Material.GLOWSTONE));
+        assertEquals(0, ProfessionCatalog.miningXp(Profession.ALCHEMIST, Material.WHEAT));
+        assertEquals(0, ProfessionCatalog.miningXp(Profession.MASON, Material.DIAMOND_ORE));
+        assertEquals(0, ProfessionCatalog.miningXp(null, Material.STONE));
+        assertEquals(0, ProfessionCatalog.miningXp(Profession.MASON, null));
+    }
+
+    @Test
+    void stonecutterCountsOnlyForMason() {
+        assertEquals(1, ProfessionCatalog.cutXp(Profession.MASON, Material.STONE_BRICK_STAIRS));
+        assertEquals(1, ProfessionCatalog.cutXp(Profession.MASON, Material.STONE_BRICKS));
+        assertEquals(2, ProfessionCatalog.cutXp(Profession.MASON, Material.PRISMARINE_BRICKS));
+        assertEquals(0, ProfessionCatalog.cutXp(Profession.SMITH, Material.STONE_BRICKS));
+        assertEquals(0, ProfessionCatalog.cutXp(Profession.MASON, Material.IRON_INGOT));
+        assertEquals(0, ProfessionCatalog.cutXp(null, Material.STONE_BRICKS));
+    }
+
+    @Test
+    void everyProfessionHasWorkFromTheFirstDay() {
+        // Правило 1.4.177: у ремесла должен быть повседневный источник опыта,
+        // иначе выбор выглядит как «ничего не происходит».
+        for (Profession profession : Profession.values()) {
+            Map<Material, Integer> mining = ProfessionCatalog.miningTable(profession);
+            assertFalse(mining.isEmpty(), "добыча " + profession.id());
+            assertTrue(mining.values().stream().anyMatch(xp -> xp <= 2),
+                    "доступный блок " + profession.id());
+        }
+        assertFalse(ProfessionCatalog.cutTable(Profession.MASON).isEmpty());
+        assertTrue(ProfessionCatalog.cutTable(Profession.SMITH).isEmpty());
+        assertTrue(ProfessionCatalog.cutTable(Profession.COOK).isEmpty());
+        assertTrue(ProfessionCatalog.cutTable(Profession.ALCHEMIST).isEmpty());
+    }
+
+    @Test
     void brewingBelongsToAlchemistOnly() {
         assertEquals(8, ProfessionCatalog.brewXp(Profession.ALCHEMIST));
         assertEquals(0, ProfessionCatalog.brewXp(Profession.SMITH));
@@ -72,12 +123,20 @@ class ProfessionCatalogTest {
         for (Profession profession : Profession.values()) {
             Map<Material, Integer> craft = ProfessionCatalog.craftTable(profession);
             Map<Material, Integer> smelt = ProfessionCatalog.smeltTable(profession);
+            Map<Material, Integer> mining = ProfessionCatalog.miningTable(profession);
+            Map<Material, Integer> cut = ProfessionCatalog.cutTable(profession);
             assertFalse(craft.isEmpty(), "крафт " + profession.id());
             for (int xp : craft.values()) {
                 assertTrue(xp >= 1 && xp <= ProfessionCatalog.MAX_XP, "крафт " + xp);
             }
             for (int xp : smelt.values()) {
                 assertTrue(xp >= 1 && xp <= ProfessionCatalog.MAX_XP, "плавка " + xp);
+            }
+            for (int xp : mining.values()) {
+                assertTrue(xp >= 1 && xp <= ProfessionCatalog.MAX_XP, "добыча " + xp);
+            }
+            for (int xp : cut.values()) {
+                assertTrue(xp >= 1 && xp <= ProfessionCatalog.MAX_XP, "камнерез " + xp);
             }
         }
     }
@@ -88,7 +147,13 @@ class ProfessionCatalogTest {
         assertThrows(UnsupportedOperationException.class, () -> craft.put(Material.DIRT, 99));
         Map<Material, Integer> smelt = ProfessionCatalog.smeltTable(Profession.SMITH);
         assertThrows(UnsupportedOperationException.class, () -> smelt.put(Material.DIRT, 99));
+        Map<Material, Integer> mining = ProfessionCatalog.miningTable(Profession.MASON);
+        assertThrows(UnsupportedOperationException.class, () -> mining.put(Material.DIRT, 99));
+        Map<Material, Integer> cut = ProfessionCatalog.cutTable(Profession.MASON);
+        assertThrows(UnsupportedOperationException.class, () -> cut.put(Material.DIRT, 99));
         assertTrue(ProfessionCatalog.craftTable(null).isEmpty());
         assertTrue(ProfessionCatalog.smeltTable(null).isEmpty());
+        assertTrue(ProfessionCatalog.miningTable(null).isEmpty());
+        assertTrue(ProfessionCatalog.cutTable(null).isEmpty());
     }
 }

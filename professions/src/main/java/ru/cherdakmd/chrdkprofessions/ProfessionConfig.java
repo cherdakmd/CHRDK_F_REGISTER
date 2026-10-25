@@ -25,6 +25,7 @@ public final class ProfessionConfig {
     private final String locale;
     private final boolean actionbar;
     private final boolean joinHint;
+    private final boolean xpFeedback;
     private final int dailyXpCap;
     private final int chooseCooldownHours;
     private final double xpMultiplier;
@@ -35,14 +36,15 @@ public final class ProfessionConfig {
     private final boolean perkMasonBlock;
 
     private ProfessionConfig(boolean enabled, String locale, boolean actionbar, boolean joinHint,
-                             int dailyXpCap, int chooseCooldownHours, double xpMultiplier,
-                             boolean perksEnabled, boolean perkSmithAnvil,
+                             boolean xpFeedback, int dailyXpCap, int chooseCooldownHours,
+                             double xpMultiplier, boolean perksEnabled, boolean perkSmithAnvil,
                              boolean perkAlchemistBottle, boolean perkCookSaturation,
                              boolean perkMasonBlock) {
         this.enabled = enabled;
         this.locale = locale;
         this.actionbar = actionbar;
         this.joinHint = joinHint;
+        this.xpFeedback = xpFeedback;
         this.dailyXpCap = dailyXpCap;
         this.chooseCooldownHours = chooseCooldownHours;
         this.xpMultiplier = xpMultiplier;
@@ -55,7 +57,7 @@ public final class ProfessionConfig {
 
     /** Умолчания — те же, что в ресурсном config.yml. */
     public static ProfessionConfig defaults() {
-        return new ProfessionConfig(true, "ru", true, true, 1200, 24, 1.0,
+        return new ProfessionConfig(true, "ru", true, true, true, 1200, 24, 1.0,
                 true, true, true, true, true);
     }
 
@@ -81,6 +83,7 @@ public final class ProfessionConfig {
                 locale,
                 source.getBoolean("general.actionbar", fallback.actionbar),
                 source.getBoolean("general.join-hint", fallback.joinHint),
+                source.getBoolean("general.xp-feedback", fallback.xpFeedback),
                 (int) clamp(source, "general.daily-xp-cap", fallback.dailyXpCap,
                         0, MAX_DAILY_CAP, logger),
                 (int) clamp(source, "general.choose-cooldown-hours", fallback.chooseCooldownHours,
@@ -118,6 +121,11 @@ public final class ProfessionConfig {
 
     public boolean joinHint() {
         return joinHint;
+    }
+
+    /** Короткая строка в хотбаре после каждого начисления опыта (1.4.177). */
+    public boolean xpFeedback() {
+        return xpFeedback;
     }
 
     /** Суточный потолок опыта одной профессии; 0 — без ограничения. */
