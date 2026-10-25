@@ -14,9 +14,12 @@ import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.api.SpawnClaimIndex;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 
 /**
  * Падающие звёзды события (1.4.176).
@@ -57,6 +60,8 @@ final class MeteorService {
     private final EventsPlugin plugin;
     private final Random random = new Random();
     private final List<Star> stars = new ArrayList<>();
+    /** Когда у игрока последний раз падала звезда: звёзды не должны обходить кого-то. */
+    private final Map<UUID, Long> lastTarget = new HashMap<>();
     private MeteorSpawn spawn = MeteorSpawn.NONE;
     private BukkitTask task;
     private long nextLaunchAt;
@@ -89,6 +94,7 @@ final class MeteorService {
             star.remove();
         }
         stars.clear();
+        lastTarget.clear();
         spawn = MeteorSpawn.NONE;
         nextLaunchAt = 0L;
     }
@@ -141,6 +147,7 @@ final class MeteorService {
             nextLaunchAt = System.currentTimeMillis() + RETRY_MS;
             return;
         }
+        lastTarget.put(target.getUniqueId(), System.currentTimeMillis());
         World world = target.getWorld();
         Location base = target.getLocation();
         double angle = random.nextDouble() * Math.PI * 2.0;
@@ -170,7 +177,13 @@ final class MeteorService {
         world.playSound(start, Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 0.8f, 0.9f);
     }
 
-    /** Случайный игрок в обычном мире: в Нижнем и Энде звезда упасть не может. */
+    /**
+     * Игрок, над которым упадёт следующая звезда.
+     *
+     * <p>Не просто случайный: выбирается тот, у кого звезда была раньше всех.
+     * Иначе при трёх игроках онлайн кому-то могло не достаться ни одной звезды
+     * за всё событие, а событие обещает «рядом с вами». Среди равных — жребий.</p>
+     */
     private Player pickTarget() {
         List<Player> candidates = new ArrayList<>();
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -183,7 +196,17 @@ final class MeteorService {
         if (candidates.isEmpty()) {
             return null;
         }
-        return candidates.get(random.nextInt(candidates.size()));
+        long oldest = Long.MAX_VALUE;
+        for (Player player : candidates) {
+            oldest = Math.min(oldest, lastTarget.getOrDefault(player.getUniqueId(), 0L));
+        }
+        List<Player> waiting = new ArrayList<>();
+        for (Player player : candidates) {
+            if (lastTarget.getOrDefault(player.getUniqueId(), 0L) == oldest) {
+                waiting.add(player);
+            }
+        }
+        return waiting.get(random.nextInt(waiting.size()));
     }
 
     /** Огненный след: голова звезды и хвост. */
