@@ -2,6 +2,7 @@ package ru.cherdakmd.chrdkclasses;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import ru.cherdakmd.chrdkregister.Messages;
 
 import java.util.UUID;
 
@@ -41,14 +42,19 @@ final class ClassTag {
      * @return имя с меткой или исходное имя, если класса нет
      */
     String decorate(String playerName, String decoratedName) {
-        if (playerName == null || playerName.isBlank() || !plugin.config().tagEnabled()) {
+        ClassConfig config = plugin.config();
+        Messages messages = plugin.messages();
+        // Выключение плагина и /classadmin reload идут через те же объекты:
+        // без этой проверки ник мог бы остаться без метки или уронить чат.
+        if (config == null || messages == null || !config.tagEnabled()
+                || playerName == null || playerName.isBlank()) {
             return decoratedName;
         }
         PlayerClass playerClass = classOf(playerName);
         if (playerClass == null) {
             return decoratedName;
         }
-        return prepend(plugin.messages().raw("tag." + playerClass.id()), decoratedName);
+        return prepend(messages.raw("tag." + playerClass.id()), decoratedName);
     }
 
     /**
