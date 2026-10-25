@@ -14,40 +14,48 @@ groups:
   - id: start
     title: "Начало"
     icon: compass
+    accent: "#34d399"
     description: "Вход, меню, чат и все команды на одной странице."
     pages: [index, start, menu, commands, chat, faq]
   - id: economy
     title: "Экономика"
     icon: coins
+    accent: "#fbbf24"
     description: "Алмазы, магазин, аукцион, заказы и лотерея."
     pages: [economy, shop, auction, orders, lottery, referrals]
   - id: ranks
     title: "Ранги и вход"
     icon: crown
+    accent: "#f0abfc"
     description: "Пять ступеней, стримеры и очередь на вход."
     pages: [ranks, streams, queue]
   - id: world
     title: "Мир"
     icon: map
+    accent: "#22d3ee"
     description: "Приваты, дома и телепорты за алмазы."
     pages: [claims, teleports]
   - id: progress
     title: "Прогресс"
     icon: chart
+    accent: "#2dd4bf"
     description: "Профессии, навыки, классы, задания и сезоны."
     pages: [professions, skills, classes, quests, battlepass, achievements, dailies]
   - id: adventure
     title: "Приключения"
     icon: sword
+    accent: "#fb923c"
     description: "Клады, охота, боссы и мировые события."
     pages: [treasures, hunt, bosses, events]
   - id: gear
     title: "Снаряжение"
     icon: shield
+    accent: "#a78bfa"
     description: "Зачарования, кузня, артефакты, питомцы и косметика."
     pages: [enchants, tierforge, artifacts, pets, cosmetics]
   - id: social
     title: "Сообщество"
     icon: users
+    accent: "#f472b6"
     description: "Группы, гильдии и карточка игрока."
     pages: [party, guilds, profile]
