@@ -4,6 +4,31 @@
 ценообразования и порядок добавления своих товаров. Источник истины —
 [`diamond-shop/src/main/resources/config.yml`](../diamond-shop/src/main/resources/config.yml).
 
+## Ранги гильдии (1.4.167) — не в этом каталоге
+
+Документ описывает **алмазный** магазин `CHRDK_DiamondShop`, где покупки идут
+за алмазы. Донатные ранги продаются за рубли и живут в каталоге ядра
+`plugins/CHRDK_Core/config.yml` → `shop.products` (товары с полем `rank`):
+
+| id | Цена, ₽ | Дней | Ступень |
+|---|--:|--:|:--:|
+| `rank-wanderer` | 99 | 30 | I |
+| `rank-wanderer-year` | 990 | 365 | I |
+| `rank-pathfinder` | 159 | 30 | II |
+| `rank-pathfinder-year` | 1 590 | 365 | II |
+| `rank-keeper` | 229 | 30 | III |
+| `rank-keeper-year` | 2 290 | 365 | III |
+| `rank-patron` | 299 | 30 | IV |
+| `rank-patron-year` | 2 990 | 365 | IV |
+| `rank-founder` | 365 | 30 | V |
+| `rank-founder-year` | 3 650 | 365 | V |
+
+Цены обязаны быть уникальными: панель TradeMC вызывает
+`pass shoppay <ник> <цена>`, и ядро ищет карточку по сумме (`ShopCatalog.matchingPrice`,
+тест `ShopPriceLookupTest`). Дубликат не ломает выдачу — побеждает первый товар
+каталога и в консоль уходит предупреждение, — но владельцу витрины стоит
+поправить цены. Полное описание лестницы — `docs/RANKS-DESIGN.md`.
+
 ## Что изменилось в 1.4.125
 
 - Каталог вырос с **27 до 142 товаров**.
