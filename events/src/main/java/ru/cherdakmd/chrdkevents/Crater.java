@@ -39,10 +39,12 @@ final class Crater {
     }
 
     /**
-     * Колонки воронки вокруг точки падения.
+     * Колонки воронки вокруг точки падения — ромбом.
      *
-     * <p>Центр идёт первым, затем кольца: так сокровище звезды оказывается на
-     * дне, а не на краю. Радиус 0 — пустой список, то есть «не ломать».</p>
+     * <p>Центр идёт первым, дальше кольца: так сокровище звезды оказывается на
+     * дне, а не на краю. Ромб вместо квадрата — чтобы воронка не выходила за
+     * границу участка четырьмя лишними углами. Радиус 0 — пустой список, то
+     * есть «не ломать».</p>
      *
      * @param radius радиус в блоках (0..{@link MeteorSpawn#MAX_CRATER_RADIUS})
      * @return смещения {@code [dx, dz]} от центра
@@ -51,19 +53,13 @@ final class Crater {
         if (radius <= 0) {
             return List.of();
         }
-        int limit = radius * radius + radius;
         List<int[]> out = new ArrayList<>();
-        out.add(new int[]{0, 0});
-        for (int ring = 1; ring <= radius; ring++) {
-            for (int dx = -ring; dx <= ring; dx++) {
-                for (int dz = -ring; dz <= ring; dz++) {
-                    if (Math.max(Math.abs(dx), Math.abs(dz)) != ring) {
-                        continue;
-                    }
-                    if (dx * dx + dz * dz > limit) {
-                        continue;
-                    }
-                    out.add(new int[]{dx, dz});
+        for (int distance = 0; distance <= radius; distance++) {
+            for (int dx = -distance; dx <= distance; dx++) {
+                int dz = distance - Math.abs(dx);
+                out.add(new int[]{dx, dz});
+                if (dz != 0) {
+                    out.add(new int[]{dx, -dz});
                 }
             }
         }
