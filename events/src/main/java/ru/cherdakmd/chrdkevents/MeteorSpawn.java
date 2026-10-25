@@ -92,7 +92,7 @@ public record MeteorSpawn(boolean enabled, int intervalSeconds, int radius, int 
         }
         List<Material> copy = new ArrayList<>();
         for (Material material : source) {
-            if (material != null && material != Material.AIR && !copy.contains(material)) {
+            if (EventMaterials.isItem(material) && !copy.contains(material)) {
                 copy.add(material);
             }
         }

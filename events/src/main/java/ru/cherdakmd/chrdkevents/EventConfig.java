@@ -162,8 +162,10 @@ public final class EventConfig {
      * лог и выключение: небо не должно сыпать пустыми искрами.</p>
      */
     private static MeteorSpawn meteors(ConfigurationSection section, String key, Logger logger) {
-        String path = "events." + key + ".meteors";
-        if (!section.isConfigurationSection(key + ".meteors")) {
+        // section — это уже секция events, поэтому путь внутри неё относительный.
+        String path = key + ".meteors";
+        String human = "events." + path;
+        if (!section.isConfigurationSection(path)) {
             return MeteorSpawn.NONE;
         }
         MeteorSpawn spawn = new MeteorSpawn(
@@ -173,14 +175,14 @@ public final class EventConfig {
                 clamp(section, path + ".radius", 24,
                         MeteorSpawn.MIN_RADIUS, MeteorSpawn.MAX_RADIUS, logger),
                 clamp(section, path + ".max-active", 2, 1, MeteorSpawn.MAX_ACTIVE, logger),
-                materials(section.getStringList(path + ".blocks"), logger, path + ".blocks"),
-                materials(section.getStringList(path + ".loot"), logger, path + ".loot"),
+                materials(section.getStringList(path + ".blocks"), logger, human + ".blocks"),
+                materials(section.getStringList(path + ".loot"), logger, human + ".loot"),
                 clamp(section, path + ".min-loot", 1, 1, MeteorSpawn.MAX_LOOT_PER_STAR, logger),
                 clamp(section, path + ".max-loot", 2, 1, MeteorSpawn.MAX_LOOT_PER_STAR, logger),
                 section.getBoolean(path + ".announce", true));
         if (spawn.enabled() && !spawn.usable()) {
             if (logger != null) {
-                logger.warning("[CHRDK_Events] events." + key + ".meteors: выключены — "
+                logger.warning("[CHRDK_Events] " + human + ": выключены — "
                         + "нужны хотя бы один блок в blocks и один предмет в loot.");
             }
             return MeteorSpawn.NONE;
@@ -195,8 +197,9 @@ public final class EventConfig {
      * сделать спавн бесконечным, даже если вписать туда миллион.</p>
      */
     private static HordeSpawn horde(ConfigurationSection section, String key, Logger logger) {
-        String path = "events." + key + ".horde";
-        if (!section.isConfigurationSection(key + ".horde")) {
+        String path = key + ".horde";
+        String human = "events." + path;
+        if (!section.isConfigurationSection(path)) {
             return HordeSpawn.NONE;
         }
         HordeSpawn spawn = new HordeSpawn(
@@ -214,10 +217,10 @@ public final class EventConfig {
                 clamp(section, path + ".max-distance", 24,
                         HordeSpawn.MIN_DISTANCE_FLOOR, HordeSpawn.MAX_DISTANCE_CEILING, logger),
                 section.getBoolean(path + ".only-at-night", false),
-                entityTypes(section.getStringList(path + ".mobs"), logger, path + ".mobs"));
+                entityTypes(section.getStringList(path + ".mobs"), logger, human + ".mobs"));
         if (spawn.enabled() && !spawn.usable()) {
             if (logger != null) {
-                logger.warning("[CHRDK_Events] events." + key + ".horde: выключено — "
+                logger.warning("[CHRDK_Events] " + human + ": выключено — "
                         + "в mobs нет ни одного известного моба.");
             }
             return HordeSpawn.NONE;
