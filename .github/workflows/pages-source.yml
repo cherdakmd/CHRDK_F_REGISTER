@@ -3,9 +3,13 @@ name: Pages source
 # Одноразовый помощник: переключает источник GitHub Pages на GitHub Actions.
 # Нужен, если Pages включён «Deploy from a branch» — тогда сайт собирается
 # Jekyll-ом из README, а не нашим pages.yml. Запуск: Actions → Pages source →
-# Run workflow. Файл можно удалить после переключения.
+# push (workflow_dispatch доступен только с основной ветки). Файл можно
+# удалить после переключения.
 
 on:
+  push:
+    paths:
+      - '.github/workflows/pages-source.yml'
   workflow_dispatch:
 
 permissions:
