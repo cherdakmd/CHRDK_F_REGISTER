@@ -76,14 +76,21 @@ PNG — [`chrdk-shop-images.zip`](../chrdk-shop-images.zip).
 
 ## Как перерисовать
 
-Картинки собирает [`generate.py`](generate.py) (Python 3 + Pillow, шрифт
-DejaVu Sans Bold):
+Стиль — 3D-пиксельный: металлическая табличка с римской цифрой, неоновый кант
+в цвете ступени, вокруг кубы и кристаллы. Исходный арт лежит в
+[`art/`](art/) (1024×1024, по файлу на ступень), карточки и обложку собирает
+[`compose_ai.py`](compose_ai.py) (Python 3 + Pillow, шрифт DejaVu Sans Bold):
 
 ```
-python3 docs/ranks/shop/generate.py             # все карточки и обложка
-python3 docs/ranks/shop/generate.py --card 3    # только «Хранитель»
-python3 docs/ranks/shop/generate.py --overview  # только обложка
-python3 docs/ranks/shop/generate.py --zip       # пересобрать архив для панели
+python3 docs/ranks/shop/compose_ai.py             # все карточки и обложка
+python3 docs/ranks/shop/compose_ai.py --card 3    # только «Хранитель»
+python3 docs/ranks/shop/compose_ai.py --overview  # только обложка
+python3 docs/ranks/shop/compose_ai.py --zip       # пересобрать архив для панели
 ```
 
-Цвета, цены и тексты на карточках правятся в списке `RANKS` в начале скрипта.
+Цены, бонусы и цвета плашек правятся в списке `RANKS` в начале `compose_ai.py`.
+Заменили арт — перезапустите скрипт, надписи встанут на место сами.
+
+Есть и запасной вариант — полностью векторный [`generate.py`](generate.py):
+рисует карточки целиком кодом (изометрические кубы, пиксельные эмблемы,
+блочная рамка), без готового арта.
