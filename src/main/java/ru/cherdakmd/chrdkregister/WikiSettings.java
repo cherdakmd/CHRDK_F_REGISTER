@@ -96,8 +96,13 @@ public record WikiSettings(boolean enabled, String url, List<String> pages) {
      * @return абсолютный адрес без {@code null}
      */
     public String pageUrl(String slug) {
+        if (!usable()) {
+            // Выключенная ссылка не должна отдавать адрес: команда покажет
+            // «не настроена», а не уведёт игрока на неизвестный домен.
+            return "";
+        }
         String clean = slug == null ? "" : slug.trim().toLowerCase(Locale.ROOT);
-        if (!usable() || clean.isEmpty() || !validSlug(clean)) {
+        if (clean.isEmpty() || !validSlug(clean)) {
             return url;
         }
         return url + clean + ".html";
