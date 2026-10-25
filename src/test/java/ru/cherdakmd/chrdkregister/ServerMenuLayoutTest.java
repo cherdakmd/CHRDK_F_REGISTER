@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -142,6 +143,19 @@ class ServerMenuLayoutTest {
         assertEquals(49, layout.slots().get(12));
         assertEquals(13, new HashSet<>(layout.slots()).size(), "слоты уникальны: " + layout.slots());
         assertFalse(layout.slots().contains(-1));
+    }
+
+    @Test
+    void settingsEqualityDetectsChangedMenuAfterReload() {
+        // ServerMenuService сравнивает снимок настроек: после reload с другим
+        // составом пунктов старый инвентарь не должен выполнять команду.
+        var entries = List.of(new ServerMenuSettings.Entry(10, Material.PAPER, "a", "", "menu", "", "", ""));
+        var first = new ServerMenuSettings(true, "t", "c", 40, Material.ARROW, "b", List.of(), entries);
+        var same = new ServerMenuSettings(true, "t", "c", 40, Material.ARROW, "b", List.of(), entries);
+        var changed = new ServerMenuSettings(true, "t", "c", 40, Material.ARROW, "b", List.of(),
+                List.of(new ServerMenuSettings.Entry(10, Material.PAPER, "a", "", "rank", "", "", "")));
+        assertEquals(first, same);
+        assertNotEquals(first, changed);
     }
 
     @Test

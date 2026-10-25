@@ -205,7 +205,8 @@ public final class ServerMenuService implements Listener {
             return;
         }
         MenuLayout layout = layoutSlots(buttons.stream().map(Button::slot).toList());
-        ServerMenuHolder holder = new ServerMenuHolder(player.getUniqueId(), null, layout.slots(), buttons);
+        ServerMenuHolder holder = new ServerMenuHolder(player.getUniqueId(), null, layout.slots(), buttons,
+                settings);
         Inventory inventory = Bukkit.createInventory(holder, layout.size(),
                 messages.renderTemplate(settings.title(), menuPlaceholders(player)));
         holder.bind(inventory);
@@ -278,7 +279,7 @@ public final class ServerMenuService implements Listener {
         }
         MenuLayout layout = layoutSlots(buttons.stream().map(Button::slot).toList());
         ServerMenuHolder holder = new ServerMenuHolder(player.getUniqueId(), category.id(),
-                layout.slots(), buttons);
+                layout.slots(), buttons, settings);
         String title = settings.categoryTitle().replace("%category%", category.name());
         Inventory inventory = Bukkit.createInventory(holder, layout.size(),
                 messages.renderTemplate(title, menuPlaceholders(player)));
@@ -350,6 +351,16 @@ public final class ServerMenuService implements Listener {
 
     /* ---------------------------------- клики ---------------------------------- */
 
+    /**
+     * Меню устарело, если после {@code /pass reload} изменился его состав: слоты,
+     * команды, разделы или сам флаг. Старый инвентарь в этом случае ничего не
+     * выполняет — иначе клик запустил бы команду, которую владелец уже убрал.
+     */
+    private boolean stale(ServerMenuHolder holder) {
+        ServerMenuSettings current = accessManager.config().serverMenu();
+        return current == null || !current.equals(holder.settings) || !current.enabled();
+    }
+
     @EventHandler(priority = org.bukkit.event.EventPriority.HIGHEST)
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getView().getTopInventory().getHolder() instanceof ServerMenuHolder holder)) return;
@@ -370,10 +381,11 @@ public final class ServerMenuService implements Listener {
                 }
                 case CATEGORY -> {
                     Bukkit.getScheduler().runTask(plugin, () -> {
-                        if (!player.isOnline()) {
+                        if (!player.isOnline()
+                                || player.getOpenInventory().getTopInventory() != holder.inventory) {
                             return;
                         }
-                        if (!accessManager.config().serverMenu().enabled()) {
+                        if (stale(holder)) {
                             player.closeInventory();
                             messages.send(player, "server-menu.changed");
                             return;
@@ -387,7 +399,7 @@ public final class ServerMenuService implements Listener {
                         if (!player.isOnline() || player.getOpenInventory().getTopInventory() != holder.inventory) {
                             return;
                         }
-                        if (!accessManager.config().serverMenu().enabled()) {
+                        if (stale(holder)) {
                             player.closeInventory();
                             messages.send(player, "server-menu.changed");
                             return;
@@ -425,14 +437,17 @@ public final class ServerMenuService implements Listener {
         private final String category;
         private final List<Integer> slots;
         private final List<Button> buttons;
+        private final ServerMenuSettings settings;
         private final java.util.UUID owner;
         private Inventory inventory;
 
-        ServerMenuHolder(java.util.UUID owner, String category, List<Integer> slots, List<Button> buttons) {
+        ServerMenuHolder(java.util.UUID owner, String category, List<Integer> slots, List<Button> buttons,
+                         ServerMenuSettings settings) {
             this.owner = owner;
             this.category = category;
             this.slots = List.copyOf(slots);
             this.buttons = List.copyOf(buttons);
+            this.settings = settings;
         }
 
         void bind(Inventory inventory) {
