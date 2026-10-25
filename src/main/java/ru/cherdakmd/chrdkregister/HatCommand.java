@@ -47,7 +47,7 @@ public final class HatCommand implements CommandExecutor {
         }
         int minLevel = Math.max(1, access.config().ranks().hatMinLevel());
         int level = access.store().rankLevel(player.getName(), System.currentTimeMillis());
-        if (level < minLevel && !player.hasPermission("chrdkregister.hat")) {
+        if (!allowed(level, minLevel, player.hasPermission("chrdkregister.hat"))) {
             messages.send(player, "hat.locked", "level", minLevel,
                     "rank", access.config().ranks().decorate(minLevel,
                             access.config().ranks().name(minLevel)));
@@ -69,6 +69,16 @@ public final class HatCommand implements CommandExecutor {
         inventory.setHelmet(hand);
         messages.send(player, "hat.equipped");
         return true;
+    }
+
+    /**
+     * Доступ к команде: своя ступень или право администратора.
+     *
+     * <p>Право проверяется отдельно, чтобы владелец мог выдать {@code /hat}
+     * помощнику, не поднимая его до Покровителя.</p>
+     */
+    static boolean allowed(int level, int minLevel, boolean bypass) {
+        return bypass || level >= Math.max(1, minLevel);
     }
 
     /**

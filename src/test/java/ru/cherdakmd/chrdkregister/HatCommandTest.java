@@ -1,36 +1,32 @@
 package ru.cherdakmd.chrdkregister;
 
-import org.bukkit.Material;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Что можно надеть через {@code /hat} (1.4.167).
+ * Доступ к {@code /hat} (1.4.167).
  *
- * <p>Проверка чистая: без сервера видно, что команда не превращается в лазейку
- * «спрячь в голову меч или элитру».</p>
+ * <p>Сама проверка «блок или нет» — один вызов {@code Material.isBlock()},
+ * который без сервера инициализирует реестр и падает в тестах, поэтому здесь
+ * проверяется то, что действительно можно проверить без Bukkit: ворота
+ * ступени и право-обход.</p>
  */
 class HatCommandTest {
 
     @Test
-    void blocksAreWearable() {
-        assertTrue(HatCommand.isWearable(Material.STONE));
-        assertTrue(HatCommand.isWearable(Material.PUMPKIN));
-        assertTrue(HatCommand.isWearable(Material.CARVED_PUMPKIN));
-        assertTrue(HatCommand.isWearable(Material.OAK_PLANKS));
-        assertTrue(HatCommand.isWearable(Material.GLASS));
+    void onlyTopTierOrPermissionGetsHat() {
+        assertFalse(HatCommand.allowed(0, 5, false), "без ранга /hat закрыта");
+        assertFalse(HatCommand.allowed(4, 5, false), "Меценату ещё рано");
+        assertTrue(HatCommand.allowed(5, 5, false), "Покровитель — да");
+        assertTrue(HatCommand.allowed(5, 1, false), "порог из конфига уважается");
+        assertFalse(HatCommand.allowed(1, 3, false));
     }
 
     @Test
-    void itemsAndAirAreNot() {
-        assertFalse(HatCommand.isWearable(Material.AIR));
-        assertFalse(HatCommand.isWearable(null));
-        assertFalse(HatCommand.isWearable(Material.DIAMOND_SWORD), "меч — не шляпа");
-        assertFalse(HatCommand.isWearable(Material.ELYTRA), "элитра выдавала бы полёт");
-        assertFalse(HatCommand.isWearable(Material.SHIELD));
-        assertFalse(HatCommand.isWearable(Material.GOLDEN_APPLE));
-        assertFalse(HatCommand.isWearable(Material.IRON_HELMET), "шлем надевают обычным способом");
+    void permissionBypassesTheLadder() {
+        assertTrue(HatCommand.allowed(0, 5, true), "администратору не нужен ранг");
+        assertTrue(HatCommand.allowed(1, 5, true));
     }
 }
