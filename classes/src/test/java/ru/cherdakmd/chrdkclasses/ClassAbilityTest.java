@@ -72,8 +72,10 @@ class ClassAbilityTest {
         assertEquals(16_000L, ability.cooldownMillis(1.0, 0.8), "ранг V: −20 %");
         assertEquals(20_000L, ability.cooldownMillis(1.0, 5.0),
                 "множитель больше единицы не удлиняет откат");
-        assertEquals(1_000L, ability.cooldownMillis(0.5, 0.0),
-                "откат не может стать нулевым");
+        assertEquals(5_000L, ability.cooldownMillis(0.5, 0.0),
+                "нулевой множитель ранга зажимается нижней границей, а не обнуляет откат");
+        assertTrue(ability.cooldownMillis(0.01, 0.01) >= 1_000L,
+                "даже два минимума вместе не делают умение мгновенным");
     }
 
     @Test
@@ -106,8 +108,10 @@ class ClassAbilityTest {
     @Test
     void abilityNumbersStayInsideDesignCaps() {
         for (ClassAbility ability : ClassAbility.values()) {
-            assertTrue(ability.cooldownSeconds() >= 15 && ability.cooldownSeconds() <= 30,
-                    ability.id() + ": кулдаун вне 15..30 секунд");
+            int low = ability.slot() == ClassAbility.SECOND ? 30 : 15;
+            int high = ability.slot() == ClassAbility.SECOND ? 45 : 30;
+            assertTrue(ability.cooldownSeconds() >= low && ability.cooldownSeconds() <= high,
+                    ability.key() + ": кулдаун вне " + low + ".." + high + " секунд");
             assertTrue(ability.power() > 0.0, ability.id() + ": сила должна быть положительной");
             if (ability == ClassAbility.MAGE || ability == ClassAbility.CLERIC) {
                 assertTrue(ability.radius() > 0.0, ability.id() + ": нужен радиус");

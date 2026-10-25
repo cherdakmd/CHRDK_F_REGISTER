@@ -390,6 +390,8 @@ class TalentServiceTest {
     void rankDiscountsOnlyTouchCooldowns(@TempDir Path dir) {
         ClassStore store = store(dir);
         store.setClass(PLAYER, "warrior", NOW);
+        // Пересборка отсчитывается от прошлой: без отметки остаток был бы нулевым.
+        store.clearTalents(PLAYER, NOW);
         TalentService plain = new TalentService(config("""
                 general:
                   change-cooldown-days: 7

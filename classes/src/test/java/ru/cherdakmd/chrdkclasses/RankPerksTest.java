@@ -22,8 +22,10 @@ class RankPerksTest {
         assertEquals(75, none.skillRequirement(75));
         assertEquals(30, none.levelStep(30));
         assertEquals(1.0, none.cooldownFactor(), 1.0E-9);
-        assertEquals(0L, none.changeCooldownSeconds(7L * 86_400L));
-        assertEquals(0L, none.respecCooldownSeconds(24L * 3_600L));
+        assertEquals(7L * 86_400L, none.changeCooldownSeconds(7L * 86_400L),
+                "без ранга кулдаун смены класса не меняется");
+        assertEquals(24L * 3_600L, none.respecCooldownSeconds(24L * 3_600L),
+                "и пересборка тоже");
         assertEquals(0, none.thresholdDiscount());
         assertEquals(0, none.levelStepDiscount());
     }
@@ -61,7 +63,7 @@ class RankPerksTest {
                 "шаг уровня не опускается ниже минимума конфига");
         assertEquals(0L, top.changeCooldownSeconds(0L), "скидка не делает кулдаун отрицательным");
         assertEquals(0L, top.respecCooldownSeconds(0L));
-        assertEquals(0L, RankPerks.NONE.changeCooldownSeconds(7L * 86_400L));
+        assertEquals(0L, RankPerks.NONE.changeCooldownSeconds(0L));
         assertSame(RankPerks.NONE, RankPerks.of(-3));
     }
 

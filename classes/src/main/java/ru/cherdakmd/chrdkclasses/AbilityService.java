@@ -49,12 +49,6 @@ final class AbilityService {
     /** Сколько тиков горит враг после испепеления (три секунды). */
     static final int SCORCH_FIRE_TICKS = 60;
 
-    /** Эффекты, которые оберег жреца снимает: вредные, но не смертельные. */
-    private static final PotionEffectType[] HARMFUL = {
-            PotionEffectType.SLOWNESS, PotionEffectType.WEAKNESS, PotionEffectType.POISON,
-            PotionEffectType.WITHER, PotionEffectType.NAUSEA, PotionEffectType.BLINDNESS,
-            PotionEffectType.DARKNESS, PotionEffectType.UNLUCK};
-
     private final ClassesPlugin plugin;
 
     AbilityService(ClassesPlugin plugin) {
@@ -342,7 +336,7 @@ final class AbilityService {
         for (Player target : allies(player, ability.radius())) {
             target.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 280,
                     amplifier, false, true, true));
-            for (PotionEffectType harmful : HARMFUL) {
+            for (PotionEffectType harmful : harmfulEffects()) {
                 target.removePotionEffect(harmful);
             }
             target.getWorld().spawnParticle(Particle.END_ROD,
@@ -352,6 +346,21 @@ final class AbilityService {
     }
 
     /* -------------------------------- помощники ------------------------------- */
+
+    /**
+     * Эффекты, которые снимает оберег жреца: вредные, но не смертельные.
+     *
+     * <p>Массив строится при вызове, а не при загрузке класса: в Paper типы
+     * эффектов привязаны к реестру сервера, и статическое поле сделало бы
+     * {@link AbilityService} невызываемым вне сервера — включая тесты чистой
+     * математики (конус, поглощение).</p>
+     */
+    private static PotionEffectType[] harmfulEffects() {
+        return new PotionEffectType[]{
+                PotionEffectType.SLOWNESS, PotionEffectType.WEAKNESS, PotionEffectType.POISON,
+                PotionEffectType.WITHER, PotionEffectType.NAUSEA, PotionEffectType.BLINDNESS,
+                PotionEffectType.DARKNESS, PotionEffectType.UNLUCK};
+    }
 
     /**
      * Поглощение по величине в полусердцах.
