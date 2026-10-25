@@ -132,6 +132,11 @@ final class HordeService {
         if (!horde.allowSpawnNow(true, world.isDayTime())) {
             return;
         }
+        if (!hasSkyAccess(target)) {
+            // Волна спавнит на поверхности: игроку в шахте она не видна, а мобов
+            // над головой только прибавит. Под землёй работает обычное эхо.
+            return;
+        }
         int free = horde.maxNearPlayer() - nearCount(world, target, true);
         if (free <= 0) {
             return;
@@ -277,6 +282,16 @@ final class HordeService {
             return false;
         }
         return true;
+    }
+
+    /** Видно ли игроку небо: волна спавнит только на поверхности. */
+    private static boolean hasSkyAccess(Player player) {
+        World world = player.getWorld();
+        if (world == null) {
+            return false;
+        }
+        int surface = world.getHighestBlockYAt(player.getLocation());
+        return player.getLocation().getBlockY() >= surface - 3;
     }
 
     /** Ближайший игрок в радиусе или {@code null}. */

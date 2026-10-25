@@ -158,6 +158,8 @@ final class MeteorService {
         stars.add(new Star(display, x, z, start.getY(), groundY + 1.0,
                 System.currentTimeMillis()));
         trail(start);
+        // Звук старта: игрок поднимает голову раньше, чем увидит след.
+        world.playSound(start, Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 0.8f, 0.9f);
     }
 
     /** Случайный игрок в обычном мире: в Нижнем и Энде звезда упасть не может. */
