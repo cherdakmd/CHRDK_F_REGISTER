@@ -27,10 +27,12 @@ import java.util.Random;
  * @param minLoot         минимум предметов (1..8)
  * @param maxLoot         максимум предметов (не меньше минимума)
  * @param announce        сообщать ли игрокам рядом, что звезда упала
+ * @param breakBlocks     выбивать ли воронку в точке падения (только вне приватов)
+ * @param craterRadius    радиус воронки в блоках (0 — не выбивать)
  */
 public record MeteorSpawn(boolean enabled, int intervalSeconds, int radius, int maxActive,
                           List<Material> blocks, List<Material> loot, int minLoot, int maxLoot,
-                          boolean announce) {
+                          boolean announce, boolean breakBlocks, int craterRadius) {
 
     /** Чаще раза в пять секунд небо не должно сыпаться. */
     public static final int MIN_INTERVAL_SECONDS = 5;
@@ -42,9 +44,11 @@ public record MeteorSpawn(boolean enabled, int intervalSeconds, int radius, int 
     public static final int MAX_ACTIVE = 6;
     /** Потолок добычи с одной звезды. */
     public static final int MAX_LOOT_PER_STAR = 8;
+    /** Потолок воронки: больше — уже не след звезды, а карьер. */
+    public static final int MAX_CRATER_RADIUS = 4;
     /** Выключенные звёзды: у события без секции {@code meteors}. */
     public static final MeteorSpawn NONE = new MeteorSpawn(false, 25, 24, 2,
-            List.of(), List.of(), 1, 2, true);
+            List.of(), List.of(), 1, 2, true, false, 0);
 
     public MeteorSpawn {
         intervalSeconds = clamp(intervalSeconds, MIN_INTERVAL_SECONDS, MAX_INTERVAL_SECONDS);
@@ -54,6 +58,28 @@ public record MeteorSpawn(boolean enabled, int intervalSeconds, int radius, int 
         loot = copyMaterials(loot);
         minLoot = clamp(minLoot, 1, MAX_LOOT_PER_STAR);
         maxLoot = clamp(maxLoot, minLoot, MAX_LOOT_PER_STAR);
+        craterRadius = clamp(craterRadius, 0, MAX_CRATER_RADIUS);
+        if (!breakBlocks) {
+            craterRadius = 0;
+        }
+    }
+
+    /**
+     * Настройки без воронки: прежний набор из девяти значений.
+     *
+     * <p>Оставлен, чтобы код и тесты, написанные до 1.4.176, продолжали
+     * собираться: по умолчанию звезда мир не трогает.</p>
+     */
+    public MeteorSpawn(boolean enabled, int intervalSeconds, int radius, int maxActive,
+                       List<Material> blocks, List<Material> loot, int minLoot, int maxLoot,
+                       boolean announce) {
+        this(enabled, intervalSeconds, radius, maxActive, blocks, loot, minLoot, maxLoot,
+                announce, false, 0);
+    }
+
+    /** Выбивает ли звезда воронку в этой точке. */
+    public boolean crater() {
+        return breakBlocks && craterRadius > 0;
     }
 
     /** Звезда вообще может упасть: есть из чего и что оставить на земле. */

@@ -150,6 +150,30 @@ class EventConfigTest {
         assertEquals(2, meteors.minLoot());
         assertEquals(4, meteors.maxLoot());
         assertTrue(meteors.announce(), "по умолчанию координаты объявляются");
+        assertTrue(meteors.crater(), "по умолчанию звезда выбивает воронку");
+        assertEquals(2, meteors.craterRadius(), "радиус воронки по умолчанию");
+    }
+
+    @Test
+    void craterCanBeTurnedOff() {
+        EventConfig config = parse("""
+                events:
+                  soft_stars:
+                    type: MINING
+                    weight: 10
+                    percent: 40
+                    blocks: [IRON_ORE]
+                    meteors:
+                      blocks: [AMETHYST_BLOCK]
+                      loot: [AMETHYST_SHARD]
+                      break-blocks: false
+                      crater-radius: 4
+                """);
+        WorldEvent event = config.event("soft_stars");
+        assertNotNull(event);
+        assertTrue(event.fallingStars());
+        assertFalse(event.meteors().crater(), "break-blocks: false отключает воронку");
+        assertEquals(0, event.meteors().craterRadius());
     }
 
     @Test

@@ -2,13 +2,16 @@ package ru.cherdakmd.chrdkevents;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.entity.BlockDisplay;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
+import ru.cherdakmd.chrdkregister.api.SpawnClaimIndex;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -25,9 +28,14 @@ import java.util.Random;
  * координатами.</p>
  *
  * <p>Почему display, а не {@code FallingBlock}: настоящий падающий блок при
- * посадке ставит блок в мире, то есть событие строило бы и рушило ландшафт.
- * Display ничего не меняет, не грузит чанки дольше нужного и исчезает вместе с
- * событием. Блоки в точке падения не ломаются и не появляются.</p>
+ * посадке ставит блок в мире, то есть событие строило бы ландшафт. Display
+ * ничего не ставит и не грузит чанки дольше нужного, а исчезает вместе с
+ * событием.</p>
+ *
+ * <p>Воронку звезда выбивает сама — но только там, где это безопасно
+ * (1.4.176): природные блоки, не больше двух слоёв и никогда в привате.
+ * Проверка идёт по каждому блоку через {@link SpawnClaimIndex} ядра, поэтому
+ * звезда не может «зацепить» чужой дом даже краем воронки.</p>
  */
 final class MeteorService {
 
@@ -202,6 +210,11 @@ final class MeteorService {
         world.spawnParticle(Particle.FIREWORK, at, 18, 0.7, 0.4, 0.7, 0.02);
         world.playSound(at, Sound.BLOCK_AMETHYST_BLOCK_BREAK, 1.0f, 0.8f);
         world.playSound(at, Sound.ENTITY_FIREWORK_ROCKET_LARGE_BLAST, 0.7f, 0.7f);
+        if (spawn.crater()) {
+            // Верхний блок земли: landY — это первый воздух над поверхностью.
+            crater(world, star.x, (int) Math.floor(star.landY) - 1, star.z,
+                    spawn.craterRadius());
+        }
         int stacks = spawn.lootAmount(random);
         for (int index = 0; index < stacks; index++) {
             ItemStack loot = new ItemStack(spawn.lootItem(random), 1);
@@ -209,6 +222,52 @@ final class MeteorService {
         }
         if (spawn.announce()) {
             announce(at);
+        }
+    }
+
+    /**
+     * Выбивает воронку от звезды.
+     *
+     * <p>Ломаются только природные блоки из {@link Crater} и только вне
+     * приватов: проверка идёт по каждой колонке, поэтому воронка не «залезет»
+     * за границу чужого участка. Блоки исчезают без дропа — событие не должно
+     * быть бесплатной шахтой.</p>
+     */
+    private void crater(World world, double x, int groundY, double z, int radius) {
+        int centerX = (int) Math.floor(x);
+        int centerZ = (int) Math.floor(z);
+        for (int[] column : Crater.columns(radius)) {
+            int blockX = centerX + column[0];
+            int blockZ = centerZ + column[1];
+            if (!world.isChunkLoaded(blockX >> 4, blockZ >> 4)) {
+                continue;
+            }
+            if (claimed(world, blockX, blockZ)) {
+                continue;
+            }
+            for (int depth = 0; depth < Crater.DEPTH; depth++) {
+                Block block = world.getBlockAt(blockX, groundY - depth, blockZ);
+                if (!Crater.natural(block.getType())) {
+                    break;
+                }
+                block.setType(Material.AIR, false);
+            }
+        }
+    }
+
+    /**
+     * Приват ли в этой колонке.
+     *
+     * <p>Индекс приватов регистрирует аддон CHRDK_Claims; без него приватов на
+     * сервере нет. Если проверка сломалась, отвечаем «приват» — лучше не
+     * оставить воронку, чем снести чужой дом.</p>
+     */
+    private static boolean claimed(World world, int blockX, int blockZ) {
+        try {
+            SpawnClaimIndex index = Bukkit.getServicesManager().load(SpawnClaimIndex.class);
+            return index != null && index.isClaimed(world.getName(), blockX, blockZ);
+        } catch (RuntimeException | LinkageError error) {
+            return true;
         }
     }
 

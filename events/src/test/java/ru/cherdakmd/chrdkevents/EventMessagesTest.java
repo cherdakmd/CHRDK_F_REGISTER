@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -118,6 +119,9 @@ class EventMessagesTest {
             assertNotNull(starfall, "в поставляемом конфиге есть Звездопад");
             assertTrue(starfall.fallingStars(), "у Звездопада должны падать звёзды");
             assertFalse(starfall.meteors().loot().isEmpty(), "звезда должна что-то ронять");
+            assertTrue(starfall.meteors().crater(), "звезда выбивает воронку");
+            assertTrue(starfall.meteors().craterRadius() <= MeteorSpawn.MAX_CRATER_RADIUS,
+                    "радиус воронки в пределах потолка");
 
             WorldEvent bloodMoon = config.event("blood_moon");
             assertNotNull(bloodMoon, "в поставляемом конфиге есть Кровавая луна");
@@ -129,6 +133,8 @@ class EventMessagesTest {
             WorldEvent meteorShower = config.event("meteor_shower");
             assertNotNull(meteorShower);
             assertTrue(meteorShower.fallingStars(), "у Метеоритного дождя тоже падают камни");
+            assertEquals(2, meteorShower.meteors().craterRadius(),
+                    "у крупного метеора воронка заметнее");
         }
     }
 

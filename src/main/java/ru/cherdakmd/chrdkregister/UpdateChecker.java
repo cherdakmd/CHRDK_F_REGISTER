@@ -187,10 +187,11 @@ public final class UpdateChecker implements Listener {
         if (messages == null) {
             return;
         }
+        // Имена подстановок — без процентов: Messages сам оборачивает их в %...%.
         messages.send(player, "update.admin-join",
-                "%latest%", latestVersion,
-                "%current%", currentVersion(),
-                "%url%", latestUrl);
+                "latest", latestVersion,
+                "current", currentVersion(),
+                "url", latestUrl);
     }
 
     private String currentVersion() {

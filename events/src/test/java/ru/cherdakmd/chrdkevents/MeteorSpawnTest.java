@@ -90,6 +90,27 @@ class MeteorSpawnTest {
     }
 
     @Test
+    void craterIsOffByDefaultAndClamped() {
+        assertFalse(spawn(true, 20, 24, 2, BLOCKS, LOOT, 1, 2).crater(),
+                "прежние настройки мир не трогают");
+        assertFalse(MeteorSpawn.NONE.crater());
+
+        MeteorSpawn crater = new MeteorSpawn(true, 20, 24, 2, BLOCKS, LOOT, 1, 2, true,
+                true, 2);
+        assertTrue(crater.crater());
+        assertEquals(2, crater.craterRadius());
+
+        MeteorSpawn huge = new MeteorSpawn(true, 20, 24, 2, BLOCKS, LOOT, 1, 2, true,
+                true, 999);
+        assertEquals(MeteorSpawn.MAX_CRATER_RADIUS, huge.craterRadius(), "радиус зажат");
+
+        MeteorSpawn off = new MeteorSpawn(true, 20, 24, 2, BLOCKS, LOOT, 1, 2, true,
+                false, 3);
+        assertEquals(0, off.craterRadius(), "без break-blocks радиус бессмысленен");
+        assertFalse(off.crater());
+    }
+
+    @Test
     void announcementsCanBeTurnedOff() {
         MeteorSpawn quiet = new MeteorSpawn(true, 20, 24, 2, BLOCKS, LOOT, 1, 2, false);
         assertFalse(quiet.announce());

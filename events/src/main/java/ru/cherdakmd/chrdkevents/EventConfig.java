@@ -179,7 +179,10 @@ public final class EventConfig {
                 materials(section.getStringList(path + ".loot"), logger, human + ".loot"),
                 clamp(section, path + ".min-loot", 1, 1, MeteorSpawn.MAX_LOOT_PER_STAR, logger),
                 clamp(section, path + ".max-loot", 2, 1, MeteorSpawn.MAX_LOOT_PER_STAR, logger),
-                section.getBoolean(path + ".announce", true));
+                section.getBoolean(path + ".announce", true),
+                section.getBoolean(path + ".break-blocks", true),
+                clamp(section, path + ".crater-radius", 2, 0,
+                        MeteorSpawn.MAX_CRATER_RADIUS, logger));
         if (spawn.enabled() && !spawn.usable()) {
             if (logger != null) {
                 logger.warning("[CHRDK_Events] " + human + ": выключены — "
