@@ -833,6 +833,7 @@ h2:hover .anchor, h3:hover .anchor { opacity: 1; }
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
+  max-width: none;
   margin: 4px 0 16px;
 }
 
@@ -954,6 +955,7 @@ h2:hover .anchor, h3:hover .anchor { opacity: 1; }
   list-style: none;
   display: grid;
   gap: 6px;
+  max-width: none;
   margin: 2px 0 0;
   padding: 12px 0 0;
   border-top: 1px solid var(--line-soft);
