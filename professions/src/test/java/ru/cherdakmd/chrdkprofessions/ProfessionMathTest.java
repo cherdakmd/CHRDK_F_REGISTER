@@ -90,6 +90,18 @@ class ProfessionMathTest {
     }
 
     @Test
+    void cookStepsTellWhatComesNext() {
+        assertEquals(5, ProfessionMath.nextCookStep(1), "с первого уровня следующий шаг — пятый");
+        assertEquals(5, ProfessionMath.nextCookStep(4));
+        assertEquals(15, ProfessionMath.nextCookStep(5));
+        assertEquals(30, ProfessionMath.nextCookStep(15));
+        assertEquals(0, ProfessionMath.nextCookStep(25), "без ранга дальше 25-го некуда");
+        assertEquals(30, ProfessionMath.nextCookStep(25, 35), "ранг V открывает 30-й");
+        assertEquals(0, ProfessionMath.nextCookStep(30, 35));
+        assertEquals(0, ProfessionMath.nextCookStep(35, 35));
+    }
+
+    @Test
     void ranksChangeOnThresholds() {
         assertEquals("rank.novice", ProfessionMath.rankKey(1));
         assertEquals("rank.novice", ProfessionMath.rankKey(4));

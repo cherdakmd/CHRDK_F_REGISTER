@@ -111,6 +111,21 @@
 - В консоли команда печатает голый адрес строкой. Тесты — `WikiSettingsTest`
   и `PresentationUpdateTest` (кнопка ведёт в существующую команду).
 
+## Карточка ремесла показывает рост (1.4.179)
+
+Полоса опыта и строка «Дальше» в `/prof`:
+
+- десять сегментов полосы — в главном меню, в карточке, в `/prof info` и в
+  разделе «Профессия» у `/profile`;
+- «Дальше: уровень 12 — скидка 24 %» у кузнеца, «уровень 15: +2 к насыщению» у
+  повара (у него шаг по порогам), «шанс» у алхимика и камнереза; на потолке
+  прибавки — честная строка про ранг;
+- новый плейсхолдер `%chrdkprofessions_bar%` — полоса без разметки для таба и
+  скорбордов.
+
+Формулы и потолки не менялись: это показ того, что уже посчитано. Подробности —
+`docs/releases/1.4.179.md` и `wiki/professions.md`.
+
 ## Остальные ремесла: наковальня, полная стойка, печь (1.4.178)
 
 После камнереза остались три ремесла, у которых главная работа не давала опыта
@@ -2935,7 +2950,7 @@ lines)`. `ProfileContext` несёт UUID, ник, признак «онлайн
 
 | Команда | Что делает |
 |---|---|
-| `/prof` или `/prof menu` | меню: текущее ремесло и четыре карточки |
+| `/prof` или `/prof menu` | меню: полоса опыта, «что дальше» и четыре карточки |
 | `/prof choose <ремесло>` | выбрать или сменить ремесло |
 | `/prof info [ремесло]` | карточка: уровень, ранг, прибавка, остаток на сегодня |
 | `/prof stats` | уровни всех четырёх ремёсел |
@@ -2962,7 +2977,8 @@ lines)`. `ProfileContext` несёт UUID, ник, признак «онлайн
 `%chrdkprofessions_level%`, `%chrdkprofessions_rank%`, `%chrdkprofessions_xp%`,
 `%chrdkprofessions_next%`, `%chrdkprofessions_percent%`,
 `%chrdkprofessions_total%`, `%chrdkprofessions_perk%`,
-`%chrdkprofessions_daily_left%`, `%chrdkprofessions_cooldown%`. У игрока без
+`%chrdkprofessions_daily_left%`, `%chrdkprofessions_cooldown%`,
+`%chrdkprofessions_bar%` (полоса опыта без разметки). У игрока без
 ремесла и у нулевых прибавок — пустая строка, а не `0`, чтобы условия в
 скорбордах не срабатывали ложно.
 
@@ -3254,36 +3270,36 @@ lines)`. `ProfileContext` несёт UUID, ник, признак «онлайн
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.178.jar`,
-аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.178.jar`,
-реферальный — `referrals/build/libs/chrdk-referrals-1.4.178.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.178.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.178.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.178.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.178.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.178.jar` (хартия чар — при установленном аддоне чар),
-достижения — `achievements/build/libs/chrdk-achievements-1.4.178.jar`, навыки —
-`skills/build/libs/chrdk-skills-1.4.178.jar`, клады —
-`treasures/build/libs/chrdk-treasures-1.4.178.jar`, общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.178.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.178.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.178.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.178.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.178.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.178.jar`, стримерская программа —
-`streams/build/libs/chrdk-streams-1.4.178.jar`, лотерея —
-`lottery/build/libs/chrdk-lottery-1.4.178.jar`, аукцион —
-`auction/build/libs/chrdk-auction-1.4.178.jar`, питомцы —
-`pets/build/libs/chrdk-pets-1.4.178.jar`, заказы —
-`orders/build/libs/chrdk-orders-1.4.178.jar`, охота —
-`hunt/build/libs/chrdk-hunt-1.4.178.jar`, группы —
-`party/build/libs/chrdk-party-1.4.178.jar`, события —
-`events/build/libs/chrdk-events-1.4.178.jar`, задания —
-`quests/build/libs/chrdk-quests-1.4.178.jar`, боссы —
-`bosses/build/libs/chrdk-bosses-1.4.178.jar`, гильдии —
-`guilds/build/libs/chrdk-guilds-1.4.178.jar`, классы —
-`classes/build/libs/chrdk-classes-1.4.178.jar`, профессии —
-`professions/build/libs/chrdk-professions-1.4.178.jar`. На сервер ядро
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.179.jar`,
+аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.179.jar`,
+реферальный — `referrals/build/libs/chrdk-referrals-1.4.179.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.179.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.179.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.179.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.179.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.179.jar` (хартия чар — при установленном аддоне чар),
+достижения — `achievements/build/libs/chrdk-achievements-1.4.179.jar`, навыки —
+`skills/build/libs/chrdk-skills-1.4.179.jar`, клады —
+`treasures/build/libs/chrdk-treasures-1.4.179.jar`, общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.179.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.179.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.179.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.179.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.179.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.179.jar`, стримерская программа —
+`streams/build/libs/chrdk-streams-1.4.179.jar`, лотерея —
+`lottery/build/libs/chrdk-lottery-1.4.179.jar`, аукцион —
+`auction/build/libs/chrdk-auction-1.4.179.jar`, питомцы —
+`pets/build/libs/chrdk-pets-1.4.179.jar`, заказы —
+`orders/build/libs/chrdk-orders-1.4.179.jar`, охота —
+`hunt/build/libs/chrdk-hunt-1.4.179.jar`, группы —
+`party/build/libs/chrdk-party-1.4.179.jar`, события —
+`events/build/libs/chrdk-events-1.4.179.jar`, задания —
+`quests/build/libs/chrdk-quests-1.4.179.jar`, боссы —
+`bosses/build/libs/chrdk-bosses-1.4.179.jar`, гильдии —
+`guilds/build/libs/chrdk-guilds-1.4.179.jar`, классы —
+`classes/build/libs/chrdk-classes-1.4.179.jar`, профессии —
+`professions/build/libs/chrdk-professions-1.4.179.jar`. На сервер ядро
 обязательно, аддоны — по желанию (требуют ядро 1.4.6+). К релизу на GitHub
 прикладывается **один архив** `chrdk-plugins-<версия>.zip`: ядро и все 29 аддонов
 одной версии (30 JAR) плюс памятка `ОБНОВЛЕНИЕ.txt`. Отдельные JAR больше не

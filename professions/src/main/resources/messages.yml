@@ -47,6 +47,9 @@ professions:
   info-none: "<gray>Ремесло не выбрано.</gray>"
   info-none-hint: "<gray>Выбор бесплатный: <yellow>/prof choose <smith|alchemist|cook|mason></yellow>. Смена — раз в %hours% ч.</gray>"
   info-level: "<gray>Уровень <white>%level%</white> · %rank% · опыт <white>%xp%/%needed%</white></gray>"
+  # 1.4.179: полоса опыта и что даст следующий уровень.
+  info-bar: "%bar%"
+  info-next: "%next%"
   info-perk: "<gray>Прибавка: %perk%</gray>"
   info-hint: "<gray>Опыт за:</gray> %hint%"
   # 1.4.167: ранг поднимает потолок профессии выше обычных 25 уровней.
@@ -78,6 +81,8 @@ professions:
   menu-profession-level: "<gray>Уровень <white>%level%</white> · %rank%</gray>"
   menu-profession-xp: "<gray>Опыт: <white>%xp%/%needed%</white> (%percent%)</gray>"
   menu-profession-max: "<gold>Уровень максимальный</gold>"
+  menu-progress-bar: "%bar%"
+  menu-profession-next: "%next%"
   menu-profession-perk: "<gray>Прибавка: %perk%</gray>"
   menu-profession-hint: "<gray>Опыт за:</gray> %hint%"
   menu-profession-current: "<green>Это ваше ремесло</green>"
@@ -96,10 +101,19 @@ professions:
   profile-profession: "<gray>Ремесло: <white>%profession%</white></gray>"
   profile-level: "<gray>Уровень <white>%level%</white> · %rank%</gray>"
   profile-progress: "<gray>Опыт: <white>%xp%/%needed%</white> (%percent%)</gray>"
+  profile-bar: "%bar%"
+  profile-next: "%next%"
   profile-perk: "<gray>Прибавка: %perk%</gray>"
   profile-hint: "<gray>Опыт за:</gray> %hint%"
   profile-daily: "<gray>Осталось на сегодня: <white>%left%</white></gray>"
   profile-cooldown: "<dark_gray>Смена ремесла через %time%</dark_gray>"
+
+  # ----------------------------- что дальше (1.4.179) -----------------------
+  next.smith: "<gray>Дальше: уровень <white>%level%</white> — скидка <white>%value%</white>%</gray>"
+  next.alchemist: "<gray>Дальше: уровень <white>%level%</white> — шанс <white>%value%</white>%</gray>"
+  next.mason: "<gray>Дальше: уровень <white>%level%</white> — шанс <white>%value%</white>%</gray>"
+  next.cook: "<gray>Дальше: уровень <white>%level%</white> — <white>+%value%</white> к насыщению</gray>"
+  next.max: "<dark_gray>Прибавка на потолке: следующий шаг откроется с рангом выше.</dark_gray>"
 
   # -------------------------------- ранги -----------------------------------
   rank.novice: "<gray>новичок</gray>"

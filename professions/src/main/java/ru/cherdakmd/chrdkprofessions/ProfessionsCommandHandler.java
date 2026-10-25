@@ -7,6 +7,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+import ru.cherdakmd.chrdkregister.Messages;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -132,8 +133,14 @@ public final class ProfessionsCommandHandler implements CommandExecutor, TabComp
                 "rank", ProfessionText.rankComponent(plugin.messages(), level),
                 "xp", String.valueOf(ProfessionMath.progress(plugin.service().xp(player, target), maxLevel)),
                 "needed", needed <= 0 ? "∞" : String.valueOf(needed));
+        plugin.messages().send(sender, "info-bar",
+                "bar", ProfessionText.bar(plugin.service().progressPercent(player, target)));
         plugin.messages().send(sender, "info-perk",
                 "perk", ProfessionText.perk(plugin.messages(), target, level, maxLevel));
+        String next = ProfessionText.nextStepRaw(plugin.messages(), target, level, maxLevel);
+        if (!next.isBlank()) {
+            plugin.messages().send(sender, "info-next", "next", Messages.trusted(next));
+        }
         plugin.messages().send(sender, "info-hint",
                 "hint", ProfessionText.hintComponent(plugin.messages(), target));
         if (maxLevel > ProfessionMath.MAX_LEVEL) {

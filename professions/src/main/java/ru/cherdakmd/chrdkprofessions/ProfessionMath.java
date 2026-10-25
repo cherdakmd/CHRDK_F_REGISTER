@@ -186,6 +186,27 @@ final class ProfessionMath {
     }
 
     /**
+     * Следующий порог насыщения повара (1.4.179).
+     *
+     * @return уровень следующего шага или {@code 0}, если шагов больше нет или
+     *         потолок игрока ниже него
+     */
+    static int nextCookStep(int level, int maxLevel) {
+        int cap = Math.max(1, maxLevel);
+        int safe = Math.clamp(level, 1, cap);
+        for (int step : COOK_STEPS) {
+            if (step > safe && step <= cap) {
+                return step;
+            }
+        }
+        return 0;
+    }
+
+    static int nextCookStep(int level) {
+        return nextCookStep(level, MAX_LEVEL);
+    }
+
+    /**
      * Шанс камнереза получить лишний блок при плавке и распиле, %: 1 за уровень,
      * потолок 15 (+ за уровни ранга). С 1.4.177 шанс работает и на камнерезе.
      */

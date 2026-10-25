@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Показ результатов и прибавок (1.4.165).
@@ -31,6 +32,10 @@ class ProfessionTextTest {
                   perk.none: "пока нет"
                   perk.smith: "Скидка %value%"
                   perk.cook: "+%value% сытости"
+                  next.smith: "урок %level% → %value%"
+                  next.mason: "урок %level% → %value%"
+                  next.cook: "урок %level% → %value%"
+                  next.max: "потолок"
                   rank.novice: "новичок"
                   rank.master: "мастер"
                 """;
@@ -95,6 +100,36 @@ class ProfessionTextTest {
                 "без ключа текст не выдумывается");
         assertEquals("", ProfessionText.hintComponent(null, Profession.MASON).text());
         assertEquals("", ProfessionText.hintComponent(messages, null).text());
+    }
+
+    @Test
+    void barShowsProgressInTenSegments() {
+        assertEquals("░░░░░░░░░░", ProfessionText.barPlain(0));
+        assertEquals("███░░░░░░░", ProfessionText.barPlain(30));
+        assertEquals("█████░░░░░", ProfessionText.barPlain(50));
+        assertEquals("██████████", ProfessionText.barPlain(100));
+        assertEquals("░░░░░░░░░░", ProfessionText.barPlain(-20), "ниже нуля не бывает");
+        assertEquals("██████████", ProfessionText.barPlain(140), "выше ста не бывает");
+        assertTrue(ProfessionText.barRaw(50).contains("<green>█████</green>"),
+                "заполненная часть зелёная");
+        assertTrue(ProfessionText.barRaw(50).contains("<dark_gray>░░░░░</dark_gray>"),
+                "пустая часть тёмная");
+    }
+
+    @Test
+    void nextStepTellsWhatTheLevelBrings() {
+        Messages messages = messages();
+        assertEquals("урок 2 → 2", ProfessionText.nextStepRaw(messages, Profession.MASON, 1, 25));
+        assertEquals("урок 5 → 1", ProfessionText.nextStepRaw(messages, Profession.COOK, 1, 25),
+                "у повара шаг — порог насыщения");
+        assertEquals("потолок", ProfessionText.nextStepRaw(messages, Profession.COOK, 16, 25),
+                "третий шаг открывается только с рангом");
+        assertEquals("потолок", ProfessionText.nextStepRaw(messages, Profession.SMITH, 20, 25),
+                "скидка уже на потолке");
+        assertEquals("", ProfessionText.nextStepRaw(messages, Profession.SMITH, 25, 25),
+                "на своём потолке подсказки нет");
+        assertEquals("", ProfessionText.nextStepRaw(null, Profession.SMITH, 1, 25));
+        assertEquals("", ProfessionText.nextStepRaw(messages, null, 1, 25));
     }
 
     @Test
