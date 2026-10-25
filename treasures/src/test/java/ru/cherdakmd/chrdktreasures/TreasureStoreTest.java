@@ -139,6 +139,25 @@ class TreasureStoreTest {
     }
 
     @Test
+    void rankTagChoiceSurvivesReloadAndResetKeepsIt() throws Exception {
+        String player = UUID.randomUUID().toString();
+        TreasureStore store = store();
+        assertEquals(TreasureRankTags.Choice.AUTO, store.rankTag(player),
+                "без выбора — как настроено на сервере");
+        store.setRankTag(player, TreasureRankTags.Choice.OFF);
+        store.addMined(player, 5L);
+        store.saveNow();
+
+        TreasureStore reloaded = store();
+        assertEquals(TreasureRankTags.Choice.OFF, reloaded.rankTag(player));
+        reloaded.reset(player);
+        assertEquals(TreasureRankTags.Choice.OFF, reloaded.rankTag(player),
+                "сброс прогресса не должен включать звание обратно");
+        reloaded.setRankTag(player, null);
+        assertEquals(TreasureRankTags.Choice.AUTO, reloaded.rankTag(player));
+    }
+
+    @Test
     void milestoneIsGrantedOnce() {
         TreasureStore store = store();
         String player = UUID.randomUUID().toString();

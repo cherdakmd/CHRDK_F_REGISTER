@@ -45,6 +45,8 @@ public final class TreasuresGui implements Listener {
     private static final int ANNOUNCE_SLOT = 50;
     /** 1.4.166: обменник осколков — рядом с переключателями, до закрытия. */
     private static final int SHARDS_SLOT = 51;
+    /** 1.4.166: звание рядом с ником в чате и табе. */
+    private static final int BADGE_SLOT = 52;
     private static final int CLOSE_SLOT = 53;
     /**
      * Сетка страницы региона и мифической витрины: два ряда по семь слотов.
@@ -125,6 +127,9 @@ public final class TreasuresGui implements Listener {
                 service.store().announce(key(player)), "menu-announce-name"));
         if (plugin.config().shards().enabled()) {
             holder.inventory.setItem(SHARDS_SLOT, shardsButton(player));
+        }
+        if (plugin.config().rankTag().enabled()) {
+            holder.inventory.setItem(BADGE_SLOT, badgeButton(player));
         }
         holder.inventory.setItem(CLOSE_SLOT, button(Material.BARRIER, "menu-close", null));
         player.openInventory(holder.inventory);
@@ -311,6 +316,37 @@ public final class TreasuresGui implements Listener {
             meta.lore(lore);
             item.setItemMeta(meta);
         }
+        return item;
+    }
+
+    /* ---------------------------------- звание --------------------------------- */
+
+    /**
+     * Кнопка звания: показывает, что увидят другие игроки.
+     *
+     * <p>Иконка — само звание, если оно видно, и серая звезда, если скрыто:
+     * так игрок понимает состояние до чтения лора.</p>
+     */
+    private ItemStack badgeButton(Player player) {
+        String rank = plugin.rankTags().visibleRankLabel(player);
+        boolean shown = rank != null;
+        ItemStack item = new ItemStack(shown ? Material.NAME_TAG : Material.GRAY_DYE);
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) {
+            return item;
+        }
+        meta.displayName(plugin.messages().get("menu-badge-name",
+                "rank", Messages.trusted(plugin.rankTags().rankLabel(player))));
+        List<Component> lore = new ArrayList<>();
+        lore.add(plugin.messages().get("menu-badge-state",
+                "state", Messages.trusted(plugin.rankTags().stateLabel(player))));
+        // Три состояния: видно, скрыто игроком, скрыто порогом показа.
+        boolean off = plugin.store().rankTag(player.getUniqueId().toString())
+                == TreasureRankTags.Choice.OFF;
+        lore.add(plugin.messages().get(shown ? "menu-badge-on"
+                : off ? "menu-badge-off" : "menu-badge-below"));
+        meta.lore(lore);
+        item.setItemMeta(meta);
         return item;
     }
 
@@ -529,6 +565,12 @@ public final class TreasuresGui implements Listener {
         }
         if (slot == SHARDS_SLOT) {
             openShards(player);
+            return;
+        }
+        if (slot == BADGE_SLOT) {
+            // Клик по кнопке листает авто → включено → скрыто, как команда.
+            plugin.rankTags().cycle(player);
+            open(player);
             return;
         }
         if (slot == SOUND_SLOT) {

@@ -60,6 +60,10 @@ public final class TreasuresPlugin extends JavaPlugin {
     private TreasureMapService maps;
     /** 1.4.166: клады-бочки — появление, анимация и уборка. */
     private TreasureBarrels barrels;
+    /** 1.4.166: звание кладоискателя рядом с ником в чате и табе. */
+    private TreasureRankTagService rankTags;
+    /** Зарегистрирован ли провайдер оформления ников (для честного unregister). */
+    private boolean nameTagRegistered;
     private BukkitTask saveTask;
     private BukkitTask auraTask;
 
@@ -84,10 +88,12 @@ public final class TreasuresPlugin extends JavaPlugin {
         this.maps = new TreasureMapService(this);
         this.barrels = new TreasureBarrels(this);
         this.gui = new TreasuresGui(this, service);
+        this.rankTags = new TreasureRankTagService(this, service);
 
         Bukkit.getPluginManager().registerEvents(listener, this);
         Bukkit.getPluginManager().registerEvents(barrels, this);
         Bukkit.getPluginManager().registerEvents(gui, this);
+        Bukkit.getPluginManager().registerEvents(rankTags, this);
 
         TreasureCommandHandler commands = new TreasureCommandHandler(this, service, gui);
         PluginCommand treasures = getCommand("treasures");
@@ -103,6 +109,8 @@ public final class TreasuresPlugin extends JavaPlugin {
 
         registerApi();
         registerPlaceholders();
+        registerRankTag();
+        rankTags.restart();
         if (coreApi != null) {
             try {
                 coreApi.registerProfile("treasures", new TreasuresProfile(this));
@@ -125,11 +133,16 @@ public final class TreasuresPlugin extends JavaPlugin {
                 + ", добыча кладов " + (config.enabled() ? "включена" : "выключена")
                 + ", клад-карты: " + (maps == null ? "нет" : maps.summary())
                 + ", бочки с кладом: " + (config.barrels().enabled() ? "вкл" : "выкл")
-                + ", особые находки: " + specialsSummary() + ".");
+                + ", особые находки: " + specialsSummary()
+                + ", звание в имени: " + (config.rankTag().enabled() ? "вкл" : "выкл") + ".");
     }
 
     @Override
     public void onDisable() {
+        unregisterRankTag();
+        if (rankTags != null) {
+            rankTags.stop();
+        }
         if (coreApi != null) {
             try {
                 coreApi.unregisterProfile("treasures");
@@ -195,6 +208,11 @@ public final class TreasuresPlugin extends JavaPlugin {
             // 1.4.153: период подсказок и зона могли поменяться.
             maps.restart();
         }
+        if (rankTags != null) {
+            // 1.4.166: порог, формат таба и период могли поменяться.
+            registerRankTag();
+            rankTags.restart();
+        }
     }
 
     /** Асинхронное сохранение и пульс аур; вызывается при старте и после reload. */
@@ -216,6 +234,41 @@ public final class TreasuresPlugin extends JavaPlugin {
         if (barrels != null) {
             barrels.start();
         }
+    }
+
+    /**
+     * Подключает звание к оформлению ников ядра (1.4.166).
+     *
+     * <p>Провайдер читает прогресс в момент сообщения, поэтому новое звание
+     * появляется сразу после находки — перезаход не нужен. Повторная
+     * регистрация с тем же id заменяет прежнюю: так {@code reload} подхватывает
+     * новый формат без разрыва оформления.</p>
+     */
+    private void registerRankTag() {
+        ChrdkRegisterApi api = coreApi();
+        if (api == null || config == null || !config.rankTag().enabled()) {
+            unregisterRankTag();
+            return;
+        }
+        api.registerNameTag("treasures", (playerName, decoratedName) ->
+                rankTags == null ? null : rankTags.decorate(playerName, decoratedName));
+        nameTagRegistered = true;
+    }
+
+    private void unregisterRankTag() {
+        if (!nameTagRegistered) {
+            return;
+        }
+        ChrdkRegisterApi api = coreApi();
+        if (api != null) {
+            api.unregisterNameTag("treasures");
+        }
+        nameTagRegistered = false;
+    }
+
+    /** Звание в имени: чат, таб и команда {@code /treasures badge}. */
+    public TreasureRankTagService rankTags() {
+        return rankTags;
     }
 
     /** Короткая сводка особых находок: какие источники реально доступны. */

@@ -29,7 +29,7 @@ import java.util.logging.Logger;
  * "mined":123,"tiers":{"common":2},"items":{"plains-reap-hook":1},
  * "settings":{"announce":true},"milestones":[10],"streak":4,
  * "best_streak":9,"last_find":1730000000000,"shards":46,
- * "shards_spent":12}}}}.</p>
+ * "shards_spent":12,"rank_tag":"auto"}}}}.</p>
  *
  * <p>Поля серии и осколков необязательны: старые файлы читаются без них, а
  * новые поля пишутся рядом — версия формата остаётся 1, ломать чужие данные не
@@ -62,6 +62,8 @@ public final class TreasureStore {
         /** Осколки кладов: баланс обменника и сколько уже потрачено за всё время. */
         public long shards;
         public long shardsSpent;
+        /** Показывать ли звание рядом с ником: авто, всегда, никогда (1.4.166). */
+        public TreasureRankTags.Choice rankTag = TreasureRankTags.Choice.AUTO;
 
         public long found() {
             long total = 0L;
@@ -146,6 +148,9 @@ public final class TreasureStore {
                 player.lastFindAt = number(row.get("last_find"));
                 player.shards = Math.max(0L, number(row.get("shards")));
                 player.shardsSpent = Math.max(0L, number(row.get("shards_spent")));
+                TreasureRankTags.Choice rankTag = TreasureRankTags.Choice.byId(
+                        row.get("rank_tag") == null ? null : String.valueOf(row.get("rank_tag")));
+                player.rankTag = rankTag == null ? TreasureRankTags.Choice.AUTO : rankTag;
                 players.put(String.valueOf(entry.getKey()), player);
             }
             logger.info("[CHRDK_Treasures] Загружено кладоискателей: " + players.size() + ".");
@@ -199,6 +204,19 @@ public final class TreasureStore {
         data.mined = Math.min(Long.MAX_VALUE, data.mined + amount);
         dirty = true;
         return data.mined;
+    }
+
+    /** Выбор игрока «показывать ли звание рядом с ником». */
+    public synchronized TreasureRankTags.Choice rankTag(String playerKey) {
+        PlayerData data = players.get(playerKey);
+        return data == null ? TreasureRankTags.Choice.AUTO : data.rankTag;
+    }
+
+    /** Запоминает выбор игрока; {@code null} возвращает «авто». */
+    public synchronized void setRankTag(String playerKey, TreasureRankTags.Choice choice) {
+        PlayerData data = data(playerKey);
+        data.rankTag = choice == null ? TreasureRankTags.Choice.AUTO : choice;
+        dirty = true;
     }
 
     /** Баланс осколков игрока. */
@@ -459,6 +477,7 @@ public final class TreasureStore {
             fields.put("last_find", player.lastFindAt);
             fields.put("shards", player.shards);
             fields.put("shards_spent", player.shardsSpent);
+            fields.put("rank_tag", player.rankTag.id());
             rows.put(key, fields);
         });
         data.put("players", rows);

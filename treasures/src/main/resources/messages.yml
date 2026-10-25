@@ -680,6 +680,27 @@ messages:
   shards-disabled: "<red>Осколки кладов выключены в config.yml (shards.enabled).</red>"
   shards-earned: "<gray>✦ Осколки кладов: <white>+%amount%</white> · всего <white>%total%</white></gray>"
   help-shards: "<yellow>/treasures shards</yellow> <gray>— осколки кладов и обменник</gray>"
+  # 1.4.166: звание кладоискателя рядом с ником в чате и табе.
+  # %name% — ник, уже оформленный ядром (метки аддонов, плашка мецената),
+  # %rank% — подпись звания из rank.<ид>. Одна строка на чат и таб.
+  rank-tag-format: "%name% <dark_gray>·</dark_gray> %rank%"
+  help-badge: "<yellow>/treasures badge [auto|on|off]</yellow> <gray>— звание рядом с ником в чате и табе</gray>"
+  rank-tag-disabled: "<red>Звание в имени выключено администратором (rank-tag.enabled).</red>"
+  rank-tag-current: "<gray>Звание в имени: %state% · сейчас видно: %rank%</gray>"
+  rank-tag-usage: "<gray>/treasures badge auto|on|off — как в конфиге, показывать, скрыть</gray>"
+  rank-tag-unknown: "<red>Неизвестный вариант «%value%». Доступно: auto, on, off.</red>"
+  rank-tag-set-auto: "<green>Звание снова как настроено на сервере: %rank%</green>"
+  rank-tag-set-on: "<green>Звание включено: %rank%</green>"
+  rank-tag-set-off: "<gray>Звание скрыто из чата и таба. Вернуть: <white>/treasures badge auto</white>.</gray>"
+  rank-tag-state-auto: "<gray>как на сервере</gray>"
+  rank-tag-state-on: "<green>показывать</green>"
+  rank-tag-state-off: "<red>скрыто</red>"
+  rank-tag-below: "<gray>Звание ниже порога показа — в имени его пока нет. Ваше звание: %rank%.</gray>"
+  menu-badge-name: "<gold>Звание в имени</gold> <dark_gray>·</dark_gray> %rank%"
+  menu-badge-state: "<gray>Режим: %state%</gray>"
+  menu-badge-on: "<green>Видно в чате и табе</green> <dark_gray>· клик — сменить</dark_gray>"
+  menu-badge-off: "<gray>Скрыто</gray> <dark_gray>· клик — сменить</dark_gray>"
+  menu-badge-below: "<gray>Ниже порога показа</gray> <dark_gray>· клик — сменить</dark_gray>"
 
   # ---------------------------------- сеты -----------------------------------
   help-map: "<yellow>/treasures map</yellow> <gray>— активные клад-карты и направления</gray>"

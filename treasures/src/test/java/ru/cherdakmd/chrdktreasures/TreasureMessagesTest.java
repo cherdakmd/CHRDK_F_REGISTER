@@ -88,7 +88,14 @@ class TreasureMessagesTest {
             "shards-kind.item", "shards-balance-name", "shards-balance-lore",
             "shards-empty", "shards-bought", "shards-not-enough",
             "shards-unavailable", "shards-disabled", "shards-earned",
-            "help-shards", "admin-shards-given", "admin-shards-invalid");
+            "help-shards", "admin-shards-given", "admin-shards-invalid",
+            // 1.4.166: звание рядом с ником в чате и табе.
+            "rank-tag-format", "help-badge", "rank-tag-disabled", "rank-tag-current",
+            "rank-tag-usage", "rank-tag-unknown", "rank-tag-set-auto",
+            "rank-tag-set-on", "rank-tag-set-off", "rank-tag-state-auto",
+            "rank-tag-state-on", "rank-tag-state-off", "rank-tag-below",
+            "menu-badge-name", "menu-badge-state", "menu-badge-on",
+            "menu-badge-off", "menu-badge-below");
 
     private static ConfigurationSection messages() {
         try (var stream = TreasureMessagesTest.class.getClassLoader()

@@ -393,3 +393,15 @@
     командой `/treasuresadmin shards <ник> <кол-во>`.
     Тесты: `TreasureShardsTest`, расширенные `TreasureStoreTest`,
     `TreasureConfigTest` и `TreasureMessagesTest`.
+32. **Звание в имени — 1.4.166**: заслуга стала видимой. Звание
+    кладоискателя («Искатель» … «Легенда») показывается рядом с ником в чате
+    через провайдер оформления ядра (`registerNameTag`), поэтому работает и в
+    общем чате, и в личных сообщениях, и в `%player_tagged%`. Порог
+    `rank-tag.min-rank` не пускает «Новичка» в имя, игрок управляет показом сам
+    (`/treasures badge auto|on|off` и кнопка в витрине), а таб-лист либо
+    собирается ядром (`%player_tagged%`), либо рисуется аддоном
+    (`rank-tag.tab.enabled`), либо отдаётся стороннему TAB через
+    `%chrdktreasures_rank_name%`. Чужое оформление в табе (титул кузни, метка
+    стримера) аддон не перебивает — это правило из 1.4.152.
+    Тесты: `TreasureRankTagsTest`, расширенные `TreasureStoreTest`,
+    `TreasureConfigTest` и `TreasureMessagesTest`.

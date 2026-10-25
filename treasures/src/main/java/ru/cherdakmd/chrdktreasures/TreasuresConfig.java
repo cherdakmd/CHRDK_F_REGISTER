@@ -318,6 +318,35 @@ public final class TreasuresConfig {
         }
     }
 
+    /**
+     * Звание в имени (1.4.166): ранг кладоискателя рядом с ником в чате и табе.
+     *
+     * <p>Звание выдаётся за находки и видно всем — это не покупка и не титул,
+     * который можно «надеть» без заслуги. Игрок может скрыть его у себя
+     * ({@code /treasures badge off}) или вернуть ({@code auto} — как в конфиге,
+     * {@code on} — показывать). Ниже {@code min-rank} звание не показывается:
+     * «Новичок» в имени был бы шумом, а не гордостью.</p>
+     *
+     * @param enabled        включено ли звание в имени
+     * @param defaultShown   показывать ли звание тем, кто ещё не выбирал
+     * @param minRank        с какого звания начинать показывать
+     * @param tab            рисовать ли имя в таб-листе (если ядро его не ведёт)
+     * @param tabRefreshTicks период обновления имён в табе (20..1200)
+     */
+    public record RankTag(boolean enabled, boolean defaultShown, TreasureRank minRank,
+                          boolean tab, int tabRefreshTicks) {
+
+        public RankTag {
+            minRank = minRank == null ? TreasureRank.SEEKER : minRank;
+            tabRefreshTicks = (int) Math.max(20L, Math.min(1200L, tabRefreshTicks));
+        }
+
+        /** Показывать ли звание конкретному игроку ({@code choice == null} — «авто»). */
+        public boolean shows(TreasureRank rank, TreasureRankTags.Choice choice) {
+            return TreasureRankTags.shows(enabled, defaultShown, minRank, rank, choice);
+        }
+    }
+
     private final boolean enabled;
     private final int auraRefreshTicks;
     private final int topSize;
@@ -358,6 +387,8 @@ public final class TreasuresConfig {
     private final Specials specials;
     /** 1.4.166: валюта кладов и обменник. */
     private final Shards shards;
+    /** 1.4.166: звание кладоискателя рядом с ником в чате и табе. */
+    private final RankTag rankTag;
     /** 1.4.157: склянки опыта в каждом кладе. */
     private final TreasureExperience.Rule experience;
 
@@ -378,7 +409,7 @@ public final class TreasuresConfig {
                             boolean setsEnabled, double arsenalShare,
                             boolean tiersEnabled, Map<TreasureTier, Double> tierChances,
                             Maps maps, Barrels barrels, Specials specials, Shards shards,
-                            TreasureExperience.Rule experience) {
+                            RankTag rankTag, TreasureExperience.Rule experience) {
         this.enabled = enabled;
         this.auraRefreshTicks = auraRefreshTicks;
         this.topSize = topSize;
@@ -412,6 +443,7 @@ public final class TreasuresConfig {
         this.barrels = barrels == null ? Barrels.DISABLED : barrels;
         this.specials = specials == null ? defaultSpecials() : specials;
         this.shards = shards == null ? defaultShards() : shards;
+        this.rankTag = rankTag == null ? defaultRankTag() : rankTag;
         this.experience = experience == null ? TreasureExperience.defaults() : experience;
     }
 
@@ -568,7 +600,7 @@ public final class TreasuresConfig {
                 arsenalShare, tiersEnabled,
                 Collections.unmodifiableMap(tierChances),
                 parseMaps(cfg), parseBarrels(cfg), parseSpecials(cfg),
-                parseShards(cfg, logger), parseExperience(cfg));
+                parseShards(cfg, logger), parseRankTag(cfg), parseExperience(cfg));
     }
 
     private static TreasureTier parseTier(String raw, TreasureTier fallback) {
@@ -804,6 +836,11 @@ public final class TreasuresConfig {
         return shards;
     }
 
+    /** Звание кладоискателя в имени: чат и таб-лист (1.4.166). */
+    public RankTag rankTag() {
+        return rankTag;
+    }
+
     /** Склянки опыта в каждом кладе (1.4.157). */
     public TreasureExperience.Rule experience() {
         return experience;
@@ -915,6 +952,28 @@ public final class TreasuresConfig {
                 caps,
                 (int) clamp(cfg.getLong("specials.enchantments.curse-chance-percent", 10L),
                         0L, 100L));
+    }
+
+    /** Звание в имени по умолчанию: показывать с «Искателя». */
+    public static RankTag defaultRankTag() {
+        return parseRankTag(new YamlConfiguration());
+    }
+
+    /**
+     * Разбор секции {@code rank-tag.*}.
+     *
+     * <p>Неизвестный {@code min-rank} не выключает показ целиком: берётся
+     * «Искатель» — консервативный вариант, при котором новичок не получает
+     * звание в имя, но и опытный игрок не теряет его из-за опечатки.</p>
+     */
+    private static RankTag parseRankTag(FileConfiguration cfg) {
+        TreasureRank min = TreasureRank.byId(cfg.getString("rank-tag.min-rank", "seeker"));
+        return new RankTag(
+                cfg.getBoolean("rank-tag.enabled", true),
+                cfg.getBoolean("rank-tag.default", true),
+                min == null ? TreasureRank.SEEKER : min,
+                cfg.getBoolean("rank-tag.tab.enabled", true),
+                (int) clamp(cfg.getLong("rank-tag.tab.refresh-ticks", 60L), 20L, 1200L));
     }
 
     /** Осколки по умолчанию: те же значения, что в поставляемом config.yml. */

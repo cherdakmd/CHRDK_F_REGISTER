@@ -83,12 +83,65 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
             case "stats" -> playerStats(player, args.length > 1 ? args[1] : null);
             // 1.4.166: обменник осколков кладов.
             case "shards", "осколки" -> shards(player);
+            // 1.4.166: звание рядом с ником в чате и табе.
+            case "badge", "звание", "титул" -> badge(player, args.length > 1 ? args[1] : null);
             case "toggle" -> toggle(player, args.length > 1 ? args[1] : null);
             default -> {
                 plugin.messages().send(player, "unknown-subcommand", "sub", args[0]);
                 yield true;
             }
         };
+    }
+
+    /**
+     * {@code /treasures badge [auto|on|off]} — звание рядом с ником (1.4.166).
+     *
+     * <p>Без аргумента показывает текущее состояние и подсказку. Выбор хранится
+     * в профиле, поэтому переживает перезаход и не сбрасывается при
+     * {@code /treasuresadmin reload}.</p>
+     */
+    private boolean badge(Player player, String argument) {
+        if (!plugin.config().rankTag().enabled()) {
+            plugin.messages().send(player, "rank-tag-disabled");
+            return true;
+        }
+        if (argument == null || argument.isBlank()) {
+            plugin.messages().send(player, "rank-tag-current",
+                    "state", Messages.trusted(plugin.rankTags().stateLabel(player)),
+                    "rank", Messages.trusted(shownRank(player)));
+            plugin.messages().send(player, "rank-tag-usage");
+            return true;
+        }
+        TreasureRankTags.Choice choice = switch (argument.toLowerCase(Locale.ROOT)) {
+            case "auto", "авто" -> TreasureRankTags.Choice.AUTO;
+            case "on", "вкл", "включить" -> TreasureRankTags.Choice.ON;
+            case "off", "выкл", "скрыть" -> TreasureRankTags.Choice.OFF;
+            default -> null;
+        };
+        if (choice == null) {
+            plugin.messages().send(player, "rank-tag-unknown", "value", argument);
+            return true;
+        }
+        plugin.store().setRankTag(player.getUniqueId().toString(), choice);
+        plugin.rankTags().refresh(player);
+        if (choice != TreasureRankTags.Choice.OFF
+                && plugin.rankTags().visibleRankLabel(player) == null) {
+            // Порог показа выше звания игрока: честно говорим, почему метки нет.
+            plugin.messages().send(player, "rank-tag-below",
+                    "rank", Messages.trusted(shownRank(player)));
+            return true;
+        }
+        plugin.messages().send(player, switch (choice) {
+            case AUTO -> "rank-tag-set-auto";
+            case ON -> "rank-tag-set-on";
+            case OFF -> "rank-tag-set-off";
+        }, "rank", Messages.trusted(shownRank(player)));
+        return true;
+    }
+
+    /** Звание игрока для подсказок: подпись ранга, даже если оно скрыто. */
+    private String shownRank(Player player) {
+        return plugin.rankTags().rankLabel(player);
     }
 
     /** {@code /treasures shards} — баланс осколков и обменник (1.4.166). */
@@ -122,6 +175,7 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
         plugin.messages().send(player, "help-set");
         plugin.messages().send(player, "help-map");
         plugin.messages().send(player, "help-shards");
+        plugin.messages().send(player, "help-badge");
         plugin.messages().send(player, "help-toggle");
         plugin.messages().send(player, "help-footer");
     }
@@ -764,7 +818,10 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
         }
         if (args.length == 1) {
             return filter(List.of("menu", "list", "stats", "top", "loot", "set", "map",
-                    "toggle", "help"), args[0]);
+                    "toggle", "shards", "badge", "help"), args[0]);
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("badge")) {
+            return filter(List.of("auto", "on", "off"), args[1]);
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("toggle")) {
             return filter(List.of("sounds", "particles", "announce"), args[1]);

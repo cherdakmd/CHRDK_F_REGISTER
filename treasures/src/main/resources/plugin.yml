@@ -2,14 +2,14 @@ name: CHRDK_Treasures
 version: ${version}
 main: ru.cherdakmd.chrdktreasures.TreasuresPlugin
 api-version: '26.3'
-description: "Русские клады: 5 редкостей, 14 биомных регионов, 196 находок (124 классические и 72 из арсенала Mine Treasure), 21 вид способностей по ПКМ, сеты, проклятия, клад-карты и клады в бочках с анимацией, осколки кладов и обменник"
+description: "Русские клады: 5 редкостей, 14 биомных регионов, 196 находок (124 классические и 72 из арсенала Mine Treasure), 21 вид способностей по ПКМ, сеты, проклятия, клад-карты и клады в бочках с анимацией, осколки кладов, обменник и звание в имени"
 author: cherdakmd
 depend: [CHRDK_Core]
 softdepend: [PlaceholderAPI, CHRDK_Artifacts, CHRDK_Enchants]
 commands:
   treasures:
     description: "Клады: витрина, список, статистика, топ, лут-таблицы, клад-карты, осколки и настройки"
-    usage: "/treasures [menu|list [фильтр]|loot [фильтр]|set [регион]|map|stats [ник]|top|shards|toggle <sounds|particles|announce>]"
+    usage: "/treasures [menu|list [фильтр]|loot [фильтр]|set [регион]|map|stats [ник]|top|shards|badge <auto|on|off>|toggle <sounds|particles|announce>]"
   treasuresadmin:
     description: "Администрирование кладов"
     permission: chrdktreasures.admin

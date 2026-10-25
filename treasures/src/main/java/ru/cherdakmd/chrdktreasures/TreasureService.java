@@ -396,6 +396,11 @@ public final class TreasureService {
             giveDiamonds(player, diamonds);
         }
         String rankName = plugin.messages().raw("rank." + after.id());
+        // 1.4.166: звание могло начать показываться — обновляем имя сразу,
+        // а не на следующем тике таба.
+        if (plugin.rankTags() != null) {
+            plugin.rankTags().refresh(player);
+        }
         plugin.messages().send(player, "rank-up",
                 "rank", Messages.trusted(rankName),
                 "diamonds", String.valueOf(diamonds));
