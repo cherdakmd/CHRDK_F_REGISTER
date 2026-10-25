@@ -474,6 +474,169 @@ public final class RegistrationStore {
         return new StatsSnapshot(data.accounts.size(), registered, activePass, totpEnabled);
     }
 
+    /* ------------------------------------------------------------------ *
+     *  Донатные ранги (1.4.167)
+     * ------------------------------------------------------------------ */
+
+    /** Ступень действующего ранга: 0 — нет, 1..5. Работает и для оффлайн-ников. */
+    public synchronized int rankLevel(String playerName, long nowMillis) {
+        if (playerName == null || playerName.isBlank()) {
+            return 0;
+        }
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        return account == null ? 0 : account.effectiveRank(nowMillis);
+    }
+
+    /** Момент окончания ранга; {@code 0} — ранга нет или он выдан навсегда. */
+    public synchronized long rankUntil(String playerName) {
+        if (playerName == null || playerName.isBlank()) {
+            return 0L;
+        }
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        if (account == null || account.rankPermanent) {
+            return 0L;
+        }
+        return Math.max(0L, account.passUntil);
+    }
+
+    /**
+     * Выдаёт ранг до момента {@code untilMillis}.
+     *
+     * <p>Вызывающий сам считает срок: продление того же ранга складывает дни,
+     * повышение — пересчитывает остаток по цене ({@link RankLadder#carryDays}).</p>
+     */
+    public synchronized PlayerAccount grantRankUntil(String playerName, long nowMillis, int level,
+                                                     long untilMillis, String source) {
+        PlayerAccount account = accountFor(playerName);
+        account.rankLevel = RankLadder.clampLevel(level);
+        account.rankPermanent = false;
+        account.passUntil = Math.max(nowMillis, untilMillis);
+        account.rankGrantedAt = nowMillis;
+        consumeTrial(account);
+        account.lastGrantSource = (source == null || source.isBlank()) ? "rank" : source;
+        account.lastGrantAt = nowMillis;
+        account.lastGrantDays = (int) Math.max(0, (account.passUntil - nowMillis) / 86_400_000L);
+        clearExpiryWarnings(account);
+        markDirtyNow();
+        return copy(account);
+    }
+
+    /** Выдаёт ранг навсегда (миграция, ручная выдача, акции). */
+    public synchronized PlayerAccount grantRankPermanent(String playerName, long nowMillis, int level,
+                                                         String source) {
+        PlayerAccount account = accountFor(playerName);
+        account.rankLevel = RankLadder.clampLevel(level);
+        account.rankPermanent = true;
+        account.passUntil = 0L;
+        account.rankGrantedAt = nowMillis;
+        consumeTrial(account);
+        account.lastGrantSource = (source == null || source.isBlank()) ? "rank-permanent" : source;
+        account.lastGrantAt = nowMillis;
+        account.lastGrantDays = 0;
+        clearExpiryWarnings(account);
+        markDirtyNow();
+        return copy(account);
+    }
+
+    /**
+     * Добавляет дни к действующему рангу — наградные дни квестов, батлпасса, стримов.
+     * Без ранга открывает первую ступень. Постоянный ранг продлевать не нужно.
+     *
+     * @return срок после начисления; {@code 0} — дни не начислены (ранг навсегда)
+     */
+    public synchronized long extendRankDays(String playerName, long nowMillis, int days, String source) {
+        if (days <= 0 || playerName == null || playerName.isBlank()) {
+            return 0L;
+        }
+        PlayerAccount account = accountFor(playerName);
+        if (account.rankPermanent) {
+            return 0L;
+        }
+        if (account.rankLevel <= 0) {
+            account.rankLevel = 1;
+        }
+        long base = Math.max(nowMillis, account.passUntil);
+        account.passUntil = base + Math.max(1, days) * 86_400_000L;
+        account.lastGrantSource = (source == null || source.isBlank()) ? "rank-days" : source;
+        account.lastGrantAt = nowMillis;
+        account.lastGrantDays = Math.max(1, days);
+        clearExpiryWarnings(account);
+        markDirtyNow();
+        return account.passUntil;
+    }
+
+    /** Снимает ранг полностью (ручной отзыв, возврат). */
+    public synchronized boolean revokeRank(String playerName) {
+        if (playerName == null || playerName.isBlank()) {
+            return false;
+        }
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        if (account == null) {
+            return false;
+        }
+        boolean had = account.rankLevel > 0 || account.rankPermanent || account.passUntil > 0;
+        account.rankLevel = 0;
+        account.rankPermanent = false;
+        account.passUntil = 0L;
+        account.rankGrantedAt = 0L;
+        clearExpiryWarnings(account);
+        if (had) {
+            markDirtyNow();
+        }
+        return had;
+    }
+
+    /**
+     * Одноразовая миграция с проходки (1.4.167).
+     *
+     * <p>Кто платил — получает постоянный ранг по сумме платежей (I–III), кто играл
+     * только на триале — первую ступень до конца оплаченного срока. Остальным ничего
+     * не нужно: вход на сервер уже свободный.</p>
+     *
+     * @return сколько аккаунтов получило ранг
+     */
+    public synchronized int migrateRanks(long nowMillis) {
+        if (data.rankSchemaVersion >= 1) {
+            return 0;
+        }
+        int changed = 0;
+        for (PlayerAccount account : data.accounts.values()) {
+            if (account == null || account.rankLevel > 0 || account.rankPermanent) {
+                continue;
+            }
+            int level = RankLadder.levelForLifetime(account.totalPaidKopecks);
+            if (level > 0) {
+                account.rankLevel = level;
+                account.rankPermanent = true;
+                account.passUntil = 0L;
+                account.rankGrantedAt = nowMillis;
+                account.lastGrantSource = "migration:permanent";
+                changed++;
+            } else if (account.passUntil > nowMillis) {
+                account.rankLevel = 1;
+                changed++;
+            }
+        }
+        data.rankSchemaVersion = 1;
+        if (changed > 0) {
+            markDirtyNow();
+        } else {
+            markDirty();
+        }
+        return changed;
+    }
+
+    /** Общая подготовка аккаунта: канонический ключ и ник, если его ещё нет. */
+    private PlayerAccount accountFor(String playerName) {
+        String key = canonicalName(playerName);
+        PlayerAccount account = data.accounts.computeIfAbsent(key, ignored -> new PlayerAccount());
+        account.canonicalName = key;
+        if (account.playerName == null || account.playerName.isBlank()) {
+            account.playerName = playerName;
+        }
+        return account;
+    }
+
     /** Grants or extends a pass manually with the default source tag. */
     public synchronized PlayerAccount grantPassManual(String playerName, long nowMillis, long durationMillis) {
         return grantPassManual(playerName, nowMillis, durationMillis, "manual");
@@ -495,6 +658,9 @@ public final class RegistrationStore {
         account.canonicalName = key;
         if (account.playerName == null || account.playerName.isBlank()) {
             account.playerName = playerName;
+        }
+        if (account.rankPermanent) {
+            return copy(account); // ранг навсегда продлевать не нужно
         }
         long baseTime = Math.max(nowMillis, account.passUntil);
         account.passUntil = baseTime + durationMillis;
@@ -579,6 +745,9 @@ public final class RegistrationStore {
         account.canonicalName = key;
         if (account.playerName == null || account.playerName.isBlank()) {
             account.playerName = donorName;
+        }
+        if (account.rankPermanent) {
+            return Optional.of(copy(account)); // ранг навсегда уже есть
         }
         long start = Math.max(Math.max(nowMillis, transactionCreatedAtMillis), account.passUntil);
         account.passUntil = start + durationMillis;
@@ -759,8 +928,16 @@ public final class RegistrationStore {
     public synchronized boolean revokePass(String playerName) {
         if (playerName == null || playerName.isBlank()) return false;
         PlayerAccount account = data.accounts.get(canonicalName(playerName));
-        if (account == null || account.passUntil <= 0) return false;
+        if (account == null || (account.passUntil <= 0 && account.rankLevel <= 0 && !account.rankPermanent)) {
+            return false;
+        }
+        boolean hadRank = account.rankLevel > 0 || account.rankPermanent;
         account.passUntil = 0;
+        if (hadRank) {
+            account.rankLevel = 0;
+            account.rankPermanent = false;
+            account.rankGrantedAt = 0;
+        }
         account.lastAuthIp = "";
         account.lastAuthAt = 0;
         if (account.sessions != null) account.sessions.clear();
@@ -1894,6 +2071,12 @@ public final class RegistrationStore {
         public String playerName = "";
         public String canonicalName = "";
         public long passUntil;
+        /** Ступень донатного ранга: 0 — без ранга, 1..5 (1.4.167). */
+        public int rankLevel;
+        /** Ранг выдан навсегда: миграция с проходки или ручная выдача. */
+        public boolean rankPermanent;
+        /** Когда выдан текущий ранг (мс). */
+        public long rankGrantedAt;
         public boolean trialConsumed;
         public long trialGrantedAt;
         public long trialUntil;
@@ -1926,8 +2109,25 @@ public final class RegistrationStore {
             return trialGrantedAt > 0 && "trial".equals(lastGrantSource) && paymentsCount == 0;
         }
 
+        /**
+         * Ступень действующего ранга: 0 — ранга нет, 1..5 — лестница донатных рангов.
+         *
+         * <p>Аккаунты, созданные до 1.4.167, хранят только {@code passUntil}; для них
+         * действующий срок считается первой ступенью — миграция поднимет их до
+         * постоянного ранга, но даже без неё игрок не теряет оплаченное.</p>
+         */
+        public int effectiveRank(long nowMillis) {
+            if (rankPermanent) {
+                return Math.max(1, rankLevel);
+            }
+            if (passUntil > nowMillis) {
+                return Math.max(1, rankLevel);
+            }
+            return 0;
+        }
+
         public boolean hasActivePass(long nowMillis) {
-            return passUntil > nowMillis;
+            return effectiveRank(nowMillis) > 0;
         }
 
         public boolean isRegistered() {
@@ -1941,6 +2141,8 @@ public final class RegistrationStore {
 
     private static final class StoreData {
         int version;
+        /** Версия схемы рангов: 1 — миграция с проходки выполнена (1.4.167). */
+        int rankSchemaVersion;
         Map<String, PlayerAccount> accounts = new LinkedHashMap<>();
         Set<String> trialUsedUuids = new LinkedHashSet<>();
         Set<String> processedDonationIds = new LinkedHashSet<>();

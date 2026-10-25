@@ -277,6 +277,12 @@ public final class AccessManager {
     public synchronized void start() {
         stopTasks();
         this.serverStartedAtMillis = System.currentTimeMillis();
+        long now = System.currentTimeMillis();
+        int migrated = store.migrateRanks(now);
+        if (migrated > 0) {
+            logger.info("Ранги: миграция с проходки затронула " + migrated
+                    + " аккаунт(ов) — платившим выдан постоянный ранг, триалу — первая ступень");
+        }
 
         long pollTicks = Math.max(20L * 15L, config.donatePollSeconds() * 20L);
         this.donatePollTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
@@ -548,7 +554,9 @@ public final class AccessManager {
     }
 
     public PlayerStage getStage(UUID uuid, String playerName, long nowMillis) {
-        if (!store.hasActivePass(playerName, nowMillis)) {
+        // 1.4.167: вход свободный. Ворота проходки работают только при
+        // pass.enabled: true — тогда стадия NO_PASS и подсказки остаются как были.
+        if (config.passEnabled() && !store.hasActivePass(playerName, nowMillis)) {
             authenticatedPlayers.remove(uuid);
             passwordVerifiedPlayers.remove(uuid);
             if (config.trialEnabled() && store.isTrialEligible(playerName, uuid)) return PlayerStage.NEEDS_REGISTER;
@@ -616,7 +624,8 @@ public final class AccessManager {
         joinedAt.put(uuid, now);
         hideExpiryBar(uuid);
 
-        if (!store.hasActivePass(name, now) && !(config.trialEnabled() && store.isTrialEligible(name, uuid))) {
+        if (config.passEnabled() && !store.hasActivePass(name, now)
+                && !(config.trialEnabled() && store.isTrialEligible(name, uuid))) {
             player.closeInventory();
             sendNoPassPrompt(player, true);
             return;
@@ -772,8 +781,9 @@ public final class AccessManager {
             messages.send(player, "register.password-shared");
             return true;
         }
+        int welcomeDays = config.ranks().welcomeEnabled() ? config.ranks().welcomeDays() : 0;
         boolean registered = store.registerPassword(player.getName(), player.getUniqueId(), password, ip, now,
-                config.trialEnabled() ? config.trialDays() : 0);
+                welcomeDays);
         if (!registered) {
             messages.send(player, "register.failed");
             return true;

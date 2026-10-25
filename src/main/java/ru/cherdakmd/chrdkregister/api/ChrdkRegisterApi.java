@@ -32,7 +32,7 @@ import java.util.UUID;
 public interface ChrdkRegisterApi {
 
     /** Версия контракта API. Растёт при расширении (добавлении методов/событий). */
-    int API_VERSION = 8;
+    int API_VERSION = 9;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -44,6 +44,48 @@ public interface ChrdkRegisterApi {
 
     /** Unix-время (мс) окончания проходки; {@code 0}, если проходки нет. Работает оффлайн. */
     long passUntil(String playerName);
+
+    /* ------------------------------ ранги (v9) ------------------------------ */
+
+    /**
+     * Ступень действующего донатного ранга: 0 — ранга нет, 1..5 — лестница.
+     * Работает и для оффлайн-ников.
+     *
+     * <p>Метод появился в API v9. Реализация по умолчанию выводит первую ступень
+     * из {@link #hasActivePass(String)}, поэтому сторонние реализации интерфейса
+     * остаются совместимыми.</p>
+     */
+    default int rankLevel(String playerName) {
+        return hasActivePass(playerName) ? 1 : 0;
+    }
+
+    /** Ид ступени (wanderer, pathfinder, keeper, patron, founder) или пустая строка. */
+    default String rankId(String playerName) {
+        return "";
+    }
+
+    /** Момент окончания ранга; {@code 0} — ранга нет или он выдан навсегда. */
+    default long rankUntil(String playerName) {
+        return passUntil(playerName);
+    }
+
+    /** Есть ли ранг не ниже указанной ступени. */
+    default boolean hasRank(String playerName, int minLevel) {
+        return rankLevel(playerName) >= Math.max(1, minLevel);
+    }
+
+    /** Выдаёт ранг на срок; {@code days <= 0} — срок по умолчанию из конфига ядра. */
+    default void grantRank(String playerName, int level, int days, String source) {
+    }
+
+    /** Выдаёт ранг навсегда (миграция, ручная выдача, акции). */
+    default void grantRankPermanent(String playerName, int level, String source) {
+    }
+
+    /** Снимает ранг; {@code true}, если ранг был. */
+    default boolean revokeRank(String playerName) {
+        return false;
+    }
 
     /** True when the account has only received its registration trial (no later non-trial grant).
      * Includes an expired/revoked trial. Default false preserves older API implementations.

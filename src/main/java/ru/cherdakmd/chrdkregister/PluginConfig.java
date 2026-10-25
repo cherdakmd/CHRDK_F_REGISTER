@@ -57,7 +57,10 @@ public final class PluginConfig {
     private ShopDiscount shopDiscount = ShopDiscount.DISABLED;
 
     /** Мастер-флаг донат-стены проходки (seed из load()). */
-    private boolean passEnabled = true;
+    private boolean passEnabled = false;
+
+    /** Лестница донатных рангов и оформление (seed из load(), 1.4.167). */
+    private RankSettings ranks = RankSettings.defaults();
 
     /** donation-actions: консольные команды по входящим донатам (не часть ctor — как boosty/motd). */
     private List<DonateAction> donateActions = List.of();
@@ -442,7 +445,8 @@ public final class PluginConfig {
         parsed.motd = MotdSettings.from(config);
         parsed.shop = ShopCatalog.from(config);
         parsed.shopDiscount = ShopDiscount.from(config);
-        parsed.passEnabled = config.getBoolean("pass.enabled", true);
+        parsed.passEnabled = config.getBoolean("pass.enabled", false);
+        parsed.ranks = RankSettings.from(config);
         parsed.donateActions = DonateAction.parseList(config.getMapList("donation-actions"));
         parsed.donatePayShowBalance = config.getBoolean("donatepay.show-balance", true);
         parsed.serverMenu = ServerMenuSettings.from(config);
@@ -611,6 +615,11 @@ public final class PluginConfig {
      */
     public boolean passEnabled() {
         return passEnabled;
+    }
+
+    /** Лестница донатных рангов: имена, знаки, приветственный ранг (1.4.167). */
+    public RankSettings ranks() {
+        return ranks;
     }
 
     /** Ссылка на страницу EasyDonate-магазина для игроков (пусто = не показывать). */

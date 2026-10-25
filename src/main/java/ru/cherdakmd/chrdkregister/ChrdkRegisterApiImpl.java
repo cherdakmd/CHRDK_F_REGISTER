@@ -61,6 +61,51 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
     }
 
     @Override
+    public int rankLevel(String playerName) {
+        return accessManager.store().rankLevel(playerName, System.currentTimeMillis());
+    }
+
+    @Override
+    public String rankId(String playerName) {
+        int level = rankLevel(playerName);
+        if (level <= 0) {
+            return "";
+        }
+        RankTier tier = accessManager.config().ranks().tier(level);
+        return tier == null ? "" : tier.id();
+    }
+
+    @Override
+    public long rankUntil(String playerName) {
+        return accessManager.store().rankUntil(playerName);
+    }
+
+    @Override
+    public boolean hasRank(String playerName, int minLevel) {
+        return rankLevel(playerName) >= Math.max(1, minLevel);
+    }
+
+    @Override
+    public void grantRank(String playerName, int level, int days, String source) {
+        long now = System.currentTimeMillis();
+        int safeDays = days <= 0 ? accessManager.config().grantDays() : Math.min(365, days);
+        accessManager.store().grantRankUntil(playerName, now, RankLadder.clampLevel(level),
+                now + Math.max(1, safeDays) * 86_400_000L,
+                source == null || source.isBlank() ? "addon" : source);
+    }
+
+    @Override
+    public void grantRankPermanent(String playerName, int level, String source) {
+        accessManager.store().grantRankPermanent(playerName, System.currentTimeMillis(),
+                RankLadder.clampLevel(level), source == null || source.isBlank() ? "addon" : source);
+    }
+
+    @Override
+    public boolean revokeRank(String playerName) {
+        return accessManager.store().revokeRank(playerName);
+    }
+
+    @Override
     public long passUntil(String playerName) {
         return accessManager.store().getAccount(playerName)
                 .map(account -> account.passUntil)
