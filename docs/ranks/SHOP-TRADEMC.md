@@ -16,6 +16,31 @@
 
 ---
 
+## Ссылки на картинки и команда под каждую
+
+Картинки лежат в репозитории, каждая открывается по прямой ссылке — можно
+скачать прямо из браузера (правая кнопка → «Сохранить изображение»).
+`%username%` TradeMC подставляет сам; если поле ника не включено, команда
+не выдаст ранг.
+
+| Карточка | Ссылка | 30 дней | Год |
+|---|---|---|---|
+| Обложка раздела «Ранги» | [`00-vse-ranki.png`](https://raw.githubusercontent.com/cherdakmd/CHRDK_F_REGISTER/e1a0c926128f30cbe6c25e0616a565ddc1b78182/docs/ranks/shop/00-vse-ranki.png) | — | — |
+| ✦ Странник | [`1-strannik.png`](https://raw.githubusercontent.com/cherdakmd/CHRDK_F_REGISTER/e1a0c926128f30cbe6c25e0616a565ddc1b78182/docs/ranks/shop/1-strannik.png) | `pass shoppay %username% 99` | `pass shoppay %username% 990` |
+| ❖ Следопыт | [`2-sledopyt.png`](https://raw.githubusercontent.com/cherdakmd/CHRDK_F_REGISTER/e1a0c926128f30cbe6c25e0616a565ddc1b78182/docs/ranks/shop/2-sledopyt.png) | `pass shoppay %username% 159` | `pass shoppay %username% 1590` |
+| ✧ Хранитель | [`3-khranitel.png`](https://raw.githubusercontent.com/cherdakmd/CHRDK_F_REGISTER/e1a0c926128f30cbe6c25e0616a565ddc1b78182/docs/ranks/shop/3-khranitel.png) | `pass shoppay %username% 229` | `pass shoppay %username% 2290` |
+| ★ Меценат | [`4-metsenat.png`](https://raw.githubusercontent.com/cherdakmd/CHRDK_F_REGISTER/e1a0c926128f30cbe6c25e0616a565ddc1b78182/docs/ranks/shop/4-metsenat.png) | `pass shoppay %username% 299` | `pass shoppay %username% 2990` |
+| ⚜ Покровитель | [`5-pokrovitel.png`](https://raw.githubusercontent.com/cherdakmd/CHRDK_F_REGISTER/e1a0c926128f30cbe6c25e0616a565ddc1b78182/docs/ranks/shop/5-pokrovitel.png) | `pass shoppay %username% 365` | `pass shoppay %username% 3650` |
+
+Все шесть одним архивом:
+[`chrdk-shop-images.zip`](https://raw.githubusercontent.com/cherdakmd/CHRDK_F_REGISTER/e1a0c926128f30cbe6c25e0616a565ddc1b78182/docs/ranks/chrdk-shop-images.zip).
+
+> Команда выполняется **от консоли сервера**, слэш не нужен и не ставится.
+> Цена в команде — единственный ключ, по которому ядро находит товар: если
+> в панели поменять цену, поменяйте и число в команде.
+
+---
+
 ## Как заполнить карточку в панели TradeMC
 
 1. **Магазин → Товары → Добавить товар.**
