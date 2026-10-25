@@ -1,9 +1,12 @@
 package ru.cherdakmd.chrdkprofessions;
 
+import ru.cherdakmd.chrdkregister.api.RankBonus;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.UUID;
+import java.util.function.Function;
 
 /**
  * Правила профессий (1.4.165): выбор, опыт, суточный потолок и прибавки.
@@ -17,10 +20,37 @@ public final class ProfessionService {
 
     private ProfessionConfig config;
     private final ProfessionStore store;
+    /** Бонусы донатного ранга: подставляются ядром после загрузки API (1.4.167). */
+    private volatile Function<UUID, RankBonus> rankBonus = player -> RankBonus.NONE;
 
     public ProfessionService(ProfessionConfig config, ProfessionStore store) {
         this.config = config == null ? ProfessionConfig.defaults() : config;
         this.store = store;
+    }
+
+    /**
+     * Подключает источник бонусов ранга.
+     *
+     * <p>Сервис не держит ссылку на ядро: аддон может работать без него, а тесты
+     * обходятся без Bukkit. Провайдер возвращает {@link RankBonus#NONE}, если
+     * игрок без ранга или ядро старше API v10.</p>
+     */
+    public void setRankBonus(Function<UUID, RankBonus> provider) {
+        this.rankBonus = provider == null ? player -> RankBonus.NONE : provider;
+    }
+
+    /** Бонусы ранга игрока; без провайдера — нули, а не {@code null}. */
+    public RankBonus bonus(UUID player) {
+        if (player == null) {
+            return RankBonus.NONE;
+        }
+        RankBonus value = rankBonus.apply(player);
+        return value == null ? RankBonus.NONE : value;
+    }
+
+    /** Потолок уровня профессии игрока: 25 плюс уровни навыка от ранга. */
+    public int maxLevel(UUID player) {
+        return ProfessionMath.maxLevel(bonus(player).extraSkill());
     }
 
     /** Перечитывает конфиг после {@code /profadmin reload}. */
@@ -108,7 +138,7 @@ public final class ProfessionService {
     }
 
     public int level(UUID player, Profession profession) {
-        return ProfessionMath.levelFor(xp(player, profession));
+        return ProfessionMath.levelFor(xp(player, profession), maxLevel(player));
     }
 
     public int level(UUID player) {
@@ -117,16 +147,16 @@ public final class ProfessionService {
     }
 
     public int progress(UUID player, Profession profession) {
-        return ProfessionMath.progress(xp(player, profession));
+        return ProfessionMath.progress(xp(player, profession), maxLevel(player));
     }
 
     public int needed(UUID player, Profession profession) {
         int level = level(player, profession);
-        return ProfessionMath.needed(level);
+        return ProfessionMath.needed(level, maxLevel(player));
     }
 
     public int progressPercent(UUID player, Profession profession) {
-        return ProfessionMath.progressPercent(xp(player, profession));
+        return ProfessionMath.progressPercent(xp(player, profession), maxLevel(player));
     }
 
     /* ------------------------------- суточный лимит ---------------------------- */
@@ -172,9 +202,13 @@ public final class ProfessionService {
         if (store.active(player) != profession) {
             return Award.none();
         }
+        int cap = maxLevel(player);
         int before = store.xp(player, profession);
-        int levelBefore = ProfessionMath.levelFor(before);
-        int scaled = Math.max(1, (int) Math.round(rawXp * config.xpMultiplier()));
+        int levelBefore = ProfessionMath.levelFor(before, cap);
+        // Опыт: множитель сервера × бонус ранга (1.4.167). Оба множителя
+        // умножаются до округления, чтобы 10 % ранга не терялись на мелких наградах.
+        double factor = config.xpMultiplier() * bonus(player).xpFactor();
+        int scaled = Math.max(1, (int) Math.round(rawXp * factor));
         int left = dailyLeft(player, profession, now);
         int granted = left < 0 ? scaled : Math.min(scaled, left);
         boolean capped = left >= 0 && granted < scaled;
@@ -183,7 +217,7 @@ public final class ProfessionService {
         }
         int after = store.addXp(player, profession, granted);
         int added = Math.max(0, after - before);
-        int levelAfter = ProfessionMath.levelFor(after);
+        int levelAfter = ProfessionMath.levelFor(after, cap);
         if (left >= 0 && added > 0) {
             store.setDaily(player, profession, utcDay(now), dailyUsed(player, profession, now) + added);
         }
@@ -240,7 +274,7 @@ public final class ProfessionService {
         if (store.active(player) != profession) {
             return 0;
         }
-        return ProfessionMath.perkValue(profession, level(player, profession));
+        return ProfessionMath.perkValue(profession, level(player, profession), maxLevel(player));
     }
 
     /** Включена ли прибавка профессии в конфиге (для подсказок в меню). */
@@ -276,7 +310,7 @@ public final class ProfessionService {
         int after = store.addXp(player, target, amount);
         return ProfessionResult.ok("admin-xp-done", "profession", target.id(),
                 "amount", String.valueOf(Math.max(0, after - before)),
-                "level", String.valueOf(ProfessionMath.levelFor(after)));
+                "level", String.valueOf(ProfessionMath.levelFor(after, maxLevel(player))));
     }
 
     /** Полный сброс игрока. */

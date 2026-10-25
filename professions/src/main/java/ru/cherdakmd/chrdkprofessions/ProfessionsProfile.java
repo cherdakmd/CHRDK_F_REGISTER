@@ -42,7 +42,8 @@ final class ProfessionsProfile implements ChrdkRegisterApi.ProfileProvider {
                     "hours", String.valueOf(plugin.config().chooseCooldownHours())));
         } else {
             int level = plugin.service().level(context.playerId(), profession);
-            int needed = ProfessionMath.needed(level);
+            int maxLevel = plugin.service().maxLevel(context.playerId());
+            int needed = ProfessionMath.needed(level, maxLevel);
             lines.add(messages.get("profile-profession", "profession",
                     Messages.trusted(messages.raw("profession." + profession.id() + ".name"))));
             lines.add(messages.get("profile-level",
@@ -54,7 +55,7 @@ final class ProfessionsProfile implements ChrdkRegisterApi.ProfileProvider {
                     "percent", String.valueOf(
                             plugin.service().progressPercent(context.playerId(), profession))));
             lines.add(messages.get("profile-perk", "perk",
-                    Messages.trusted(ProfessionText.perkRaw(messages, profession, level))));
+                    Messages.trusted(ProfessionText.perkRaw(messages, profession, level, maxLevel))));
             int left = plugin.service().dailyLeft(context.playerId(), profession,
                     System.currentTimeMillis());
             if (left >= 0) {

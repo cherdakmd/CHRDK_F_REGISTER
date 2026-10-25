@@ -127,7 +127,8 @@ final class ProfessionsGui implements Listener {
         UUID id = player.getUniqueId();
         int level = plugin.service().level(id, profession);
         int xp = plugin.service().xp(id, profession);
-        int needed = ProfessionMath.needed(level);
+        int maxLevel = plugin.service().maxLevel(id);
+        int needed = ProfessionMath.needed(level, maxLevel);
         List<Component> lore = new ArrayList<>();
         lore.add(plugin.messages().get("profession." + profession.id() + ".desc"));
         lore.add(Component.empty());
@@ -136,14 +137,14 @@ final class ProfessionsGui implements Listener {
                 "rank", ProfessionText.rankComponent(plugin.messages(), level)));
         if (needed > 0) {
             lore.add(plugin.messages().get("menu-profession-xp",
-                    "xp", String.valueOf(ProfessionMath.progress(xp)),
+                    "xp", String.valueOf(ProfessionMath.progress(xp, maxLevel)),
                     "needed", String.valueOf(needed),
-                    "percent", String.valueOf(ProfessionMath.progressPercent(xp))));
+                    "percent", String.valueOf(ProfessionMath.progressPercent(xp, maxLevel))));
         } else {
             lore.add(plugin.messages().get("menu-profession-max"));
         }
         lore.add(plugin.messages().get("menu-profession-perk",
-                "perk", ProfessionText.perk(plugin.messages(), profession, level)));
+                "perk", ProfessionText.perk(plugin.messages(), profession, level, maxLevel)));
         lore.add(Component.empty());
         lore.add(profession == plugin.service().active(id)
                 ? plugin.messages().get("menu-profession-current")

@@ -50,6 +50,23 @@ class ProfessionMathTest {
     }
 
     @Test
+    void rankRaisesLevelCapAndPerkCap() {
+        // Ранг V даёт +10 уровней: 25 → 35, и прибавки продолжают расти (1.4.167).
+        int cap = ProfessionMath.maxLevel(10);
+        assertEquals(35, cap);
+        assertEquals(1_560, ProfessionMath.needed(25, cap), "кривая продолжается тем же шагом");
+        assertEquals(0, ProfessionMath.needed(35, cap), "на своём потолке опыта больше не нужно");
+        assertEquals(35, ProfessionMath.levelFor(1_000_000, cap), "потолок ранга работает");
+        assertEquals(25, ProfessionMath.levelFor(1_000_000), "без ранга потолок прежний");
+
+        assertEquals(40, ProfessionMath.smithDiscount(20, cap));
+        assertEquals(60, ProfessionMath.smithDiscount(35, cap), "скидка растёт до 40 + 10×2");
+        assertEquals(30, ProfessionMath.alchemistChance(30, cap), "20 + 10 уровней");
+        assertEquals(3, ProfessionMath.cookSaturation(30, cap), "+3 насыщения на 30-м уровне");
+        assertEquals(25, ProfessionMath.masonChance(30, cap), "15 + 10 уровней");
+    }
+
+    @Test
     void perkCeilingsHold() {
         assertEquals(2, ProfessionMath.smithDiscount(1));
         assertEquals(40, ProfessionMath.smithDiscount(20));

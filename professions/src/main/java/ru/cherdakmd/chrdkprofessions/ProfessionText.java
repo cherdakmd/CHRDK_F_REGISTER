@@ -50,15 +50,30 @@ final class ProfessionText {
 
     /** Строка прибавки с разметкой: «Скидка 40 % на работу в наковальне» или «пока нет». */
     static Messages.Trusted perk(Messages messages, Profession profession, int level) {
-        return Messages.trusted(perkRaw(messages, profession, level));
+        return perk(messages, profession, level, ProfessionMath.MAX_LEVEL);
+    }
+
+    /**
+     * То же, но с потолком уровня игрока: у ранга прибавка выше (1.4.167).
+     *
+     * <p>Потолок важен для самой прибавки: без него игрок с рангом видел бы
+     * «Скидка 40 %» даже на 33-м уровне, хотя фактически получает больше.</p>
+     */
+    static Messages.Trusted perk(Messages messages, Profession profession, int level, int maxLevel) {
+        return Messages.trusted(perkRaw(messages, profession, level, maxLevel));
+    }
+
+    /** Прибавка сырым MiniMessage-текстом при обычном потолке. */
+    static String perkRaw(Messages messages, Profession profession, int level) {
+        return perkRaw(messages, profession, level, ProfessionMath.MAX_LEVEL);
     }
 
     /** Прибавка сырым MiniMessage-текстом — для подстановок в чужие шаблоны. */
-    static String perkRaw(Messages messages, Profession profession, int level) {
+    static String perkRaw(Messages messages, Profession profession, int level, int maxLevel) {
         if (messages == null || profession == null) {
             return "";
         }
-        int value = ProfessionMath.perkValue(profession, level);
+        int value = ProfessionMath.perkValue(profession, level, maxLevel);
         return value <= 0 ? messages.raw("perk.none")
                 : messages.raw("perk." + profession.id(), "value", String.valueOf(value));
     }

@@ -125,6 +125,14 @@ public final class ProfessionsPlugin extends JavaPlugin {
         if (coreApi == null) {
             return;
         }
+        // 1.4.167: бонусы ранга — опыт и дополнительные уровни навыка. Ядро может
+        // быть старше API v10: тогда rankBonus() вернёт нули (default-метод),
+        // и профессии работают как раньше.
+        service.setRankBonus(uuid -> {
+            var online = uuid == null ? null : Bukkit.getPlayer(uuid);
+            return online == null ? ru.cherdakmd.chrdkregister.api.RankBonus.NONE
+                    : coreApi.rankBonus(online.getName());
+        });
         try {
             coreApi.registerProfile("professions", new ProfessionsProfile(this));
         } catch (RuntimeException | LinkageError error) {

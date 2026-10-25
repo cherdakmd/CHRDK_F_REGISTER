@@ -29,8 +29,42 @@ class RankSettingsTest {
         assertEquals("Покровитель", defaults.name(5));
         assertEquals("✦", defaults.badge(1));
         assertEquals("⚜", defaults.badge(5));
-        assertEquals(1, defaults.welcomeDays(), "приветственный ранг — один день");
+        assertEquals(3, defaults.welcomeDays(), "приветственный ранг — три дня");
         assertEquals(1, defaults.welcomeLevel());
+    }
+
+    @Test
+    void bonusesGrowWithTierAndRespectContractCeilings() throws Exception {
+        RankSettings defaults = RankSettings.defaults();
+        assertTrue(defaults.bonus(0).empty(), "без ранга бонусов нет");
+        assertEquals(10, defaults.bonus(1).xpPercent());
+        assertEquals(50, defaults.bonus(5).xpPercent());
+        assertEquals(25, defaults.bonus(5).dropPercent());
+        assertEquals(10, defaults.bonus(5).extraSkill());
+        assertEquals(1.5, defaults.bonus(5).xpFactor(), 0.0001);
+        assertEquals(50, defaults.bonus(9).xpPercent(), "выше пятой ступени — значения пятой");
+
+        RankSettings greedy = parse("""
+                ranks:
+                  bonuses:
+                    xp-percent: [0, 100, 300]
+                    drop-percent: [0, 90]
+                    skill-levels: [0, 40]
+                """);
+        assertEquals(50, greedy.bonus(3).xpPercent(), "потолок контракта 50 %");
+        assertEquals(25, greedy.bonus(2).dropPercent(), "потолок контракта 25 %");
+        assertEquals(10, greedy.bonus(2).extraSkill(), "потолок контракта +10 уровней");
+    }
+
+    @Test
+    void brokenBonusTableFallsBackToDefaults() throws Exception {
+        RankSettings settings = parse("""
+                ranks:
+                  bonuses:
+                    xp-percent: ["много", 0]
+                """);
+        assertEquals(10, settings.bonus(1).xpPercent(), "таблица без чисел — умолчания");
+        assertEquals(5, settings.bonus(1).dropPercent(), "остальные таблицы тоже умолчания");
     }
 
     @Test

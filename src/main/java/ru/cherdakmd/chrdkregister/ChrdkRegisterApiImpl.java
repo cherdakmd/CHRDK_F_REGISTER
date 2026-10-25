@@ -86,6 +86,11 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
     }
 
     @Override
+    public ru.cherdakmd.chrdkregister.api.RankBonus rankBonus(String playerName) {
+        return accessManager.config().ranks().bonus(rankLevel(playerName));
+    }
+
+    @Override
     public void grantRank(String playerName, int level, int days, String source) {
         long now = System.currentTimeMillis();
         int safeDays = days <= 0 ? accessManager.config().grantDays() : Math.min(365, days);

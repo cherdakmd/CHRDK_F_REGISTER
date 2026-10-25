@@ -32,7 +32,7 @@ import java.util.UUID;
 public interface ChrdkRegisterApi {
 
     /** Версия контракта API. Растёт при расширении (добавлении методов/событий). */
-    int API_VERSION = 9;
+    int API_VERSION = 10;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -85,6 +85,18 @@ public interface ChrdkRegisterApi {
     /** Снимает ранг; {@code true}, если ранг был. */
     default boolean revokeRank(String playerName) {
         return false;
+    }
+
+    /**
+     * Бонусы действующего ранга: опыт, добыча и дополнительные уровни навыка (v10).
+     *
+     * <p>Аддон не должен считать проценты сам: числа живут в конфиге ядра, а
+     * потолки — в {@link RankBonus}. Реализация по умолчанию возвращает
+     * {@link RankBonus#NONE}, поэтому сторонние реализации интерфейса
+     * остаются совместимыми и просто не дают бонусов.</p>
+     */
+    default RankBonus rankBonus(String playerName) {
+        return RankBonus.NONE;
     }
 
     /** True when the account has only received its registration trial (no later non-trial grant).

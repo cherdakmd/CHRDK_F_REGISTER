@@ -73,7 +73,8 @@ public final class ProfessionsPlaceholders extends PlaceholderExpansion {
             return "";
         }
         int level = service.level(id, active);
-        int needed = ProfessionMath.needed(level);
+        int maxLevel = service.maxLevel(id);
+        int needed = ProfessionMath.needed(level, maxLevel);
         return switch (key) {
             case "level" -> Integer.toString(level);
             case "rank" -> ProfessionText.rankPlain(plugin.messages(), level);
@@ -83,7 +84,7 @@ public final class ProfessionsPlaceholders extends PlaceholderExpansion {
             case "percent" -> Integer.toString(service.progressPercent(id, active));
             case "total" -> Integer.toString(service.totalXp(id));
             case "perk" -> {
-                int value = ProfessionMath.perkValue(active, level);
+                int value = ProfessionMath.perkValue(active, level, maxLevel);
                 yield value <= 0 ? plugin.messages().plain("perk.none")
                         : plugin.messages().plain("perk." + active.id(),
                         "value", String.valueOf(value));

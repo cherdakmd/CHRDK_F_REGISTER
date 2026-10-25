@@ -48,10 +48,14 @@ public final class RankSettings {
     private final boolean announceJoin;
     private final List<RankTier> tiers;
     private final Map<Integer, RankTier> byLevel;
+    private final List<Integer> bonusXp;
+    private final List<Integer> bonusDrop;
+    private final List<Integer> bonusSkill;
 
     private RankSettings(boolean enabled, boolean showNameInChat, boolean welcomeEnabled,
                          int welcomeLevel, int welcomeDays, boolean announceJoin,
-                         List<RankTier> tiers) {
+                         List<RankTier> tiers, List<Integer> bonusXp, List<Integer> bonusDrop,
+                         List<Integer> bonusSkill) {
         this.enabled = enabled;
         this.showNameInChat = showNameInChat;
         this.welcomeEnabled = welcomeEnabled;
@@ -59,6 +63,9 @@ public final class RankSettings {
         this.welcomeDays = Math.max(0, Math.min(365, welcomeDays));
         this.announceJoin = announceJoin;
         this.tiers = List.copyOf(tiers);
+        this.bonusXp = List.copyOf(bonusXp);
+        this.bonusDrop = List.copyOf(bonusDrop);
+        this.bonusSkill = List.copyOf(bonusSkill);
         Map<Integer, RankTier> index = new LinkedHashMap<>();
         for (RankTier tier : this.tiers) {
             index.put(tier.level(), tier);
@@ -68,7 +75,8 @@ public final class RankSettings {
 
     /** Значения по умолчанию: лестница включена, приветственный ранг — 1 день. */
     public static RankSettings defaults() {
-        return new RankSettings(true, false, true, 1, 1, true, DEFAULT_TIERS);
+        return new RankSettings(true, false, true, 1, 3, true, DEFAULT_TIERS,
+                BonusDefaults.XP, BonusDefaults.DROP, BonusDefaults.SKILL);
     }
 
     public static RankSettings from(FileConfiguration config) {
@@ -87,7 +95,65 @@ public final class RankSettings {
             tiers = DEFAULT_TIERS;
         }
         return new RankSettings(enabled, showName, welcomeEnabled, welcomeLevel, welcomeDays,
-                announceJoin, tiers);
+                announceJoin, tiers,
+                intList(config, "ranks.bonuses.xp-percent", BonusDefaults.XP),
+                intList(config, "ranks.bonuses.drop-percent", BonusDefaults.DROP),
+                intList(config, "ranks.bonuses.skill-levels", BonusDefaults.SKILL));
+    }
+
+    /** Таблицы бонусов по умолчанию — те, что согласованы с владельцем (1.4.167). */
+    static final class BonusDefaults {
+        static final List<Integer> XP = List.of(0, 10, 20, 30, 40, 50);
+        static final List<Integer> DROP = List.of(0, 5, 10, 15, 20, 25);
+        static final List<Integer> SKILL = List.of(0, 2, 4, 6, 8, 10);
+
+        private BonusDefaults() {
+        }
+    }
+
+    /**
+     * Таблица чисел из конфига: пустая или битая — встроенные значения.
+     *
+     * <p>Длина таблицы не важна: ступень выше последней получает последнее
+     * значение, поэтому админ может задать и три числа, и десять.</p>
+     */
+    static List<Integer> intList(FileConfiguration config, String path, List<Integer> fallback) {
+        List<?> raw = config.getList(path, List.of());
+        if (raw.isEmpty()) {
+            return fallback;
+        }
+        List<Integer> result = new ArrayList<>();
+        for (Object value : raw) {
+            if (!(value instanceof Number number)) {
+                // Одна строка-опечатка в таблице не должна молча обнулять бонусы:
+                // берём умолчания целиком и кажем это в /pass doctor.
+                return fallback;
+            }
+            result.add(Math.max(0, number.intValue()));
+        }
+        return result.isEmpty() ? fallback : List.copyOf(result);
+    }
+
+    /**
+     * Бонусы ступени ранга (1.4.167).
+     *
+     * <p>Возвращается всегда: без ранга — {@link ru.cherdakmd.chrdkregister.api.RankBonus#NONE},
+     * выше последней ступени — значения последней. Потолки контракта применяются
+     * в самом {@code RankBonus}, поэтому конфиг не может продать больше обещанного.</p>
+     */
+    public ru.cherdakmd.chrdkregister.api.RankBonus bonus(int level) {
+        if (level <= 0) {
+            return ru.cherdakmd.chrdkregister.api.RankBonus.NONE;
+        }
+        return new ru.cherdakmd.chrdkregister.api.RankBonus(level,
+                pick(bonusXp, level), pick(bonusDrop, level), pick(bonusSkill, level));
+    }
+
+    private static int pick(List<Integer> table, int level) {
+        if (table.isEmpty()) {
+            return 0;
+        }
+        return table.get(Math.min(level, table.size() - 1));
     }
 
     /** Разбор списка ступеней; кривые записи пропускаются, дубли уровней — тоже. */

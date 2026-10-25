@@ -119,17 +119,23 @@ public final class ProfessionsCommandHandler implements CommandExecutor, TabComp
         }
         UUID player = id(sender);
         int level = plugin.service().level(player, target);
-        int needed = ProfessionMath.needed(level);
+        int maxLevel = plugin.service().maxLevel(player);
+        int needed = ProfessionMath.needed(level, maxLevel);
         plugin.messages().send(sender, "info-header", "profession",
                 ProfessionText.nameComponent(plugin.messages(), target));
         plugin.messages().send(sender, "profession." + target.id() + ".desc");
         plugin.messages().send(sender, "info-level",
                 "level", String.valueOf(level),
                 "rank", ProfessionText.rankComponent(plugin.messages(), level),
-                "xp", String.valueOf(ProfessionMath.progress(plugin.service().xp(player, target))),
+                "xp", String.valueOf(ProfessionMath.progress(plugin.service().xp(player, target), maxLevel)),
                 "needed", needed <= 0 ? "∞" : String.valueOf(needed));
         plugin.messages().send(sender, "info-perk",
-                "perk", ProfessionText.perk(plugin.messages(), target, level));
+                "perk", ProfessionText.perk(plugin.messages(), target, level, maxLevel));
+        if (maxLevel > ProfessionMath.MAX_LEVEL) {
+            plugin.messages().send(sender, "info-rank-cap",
+                    "level", String.valueOf(maxLevel),
+                    "bonus", String.valueOf(maxLevel - ProfessionMath.MAX_LEVEL));
+        }
         daily(sender, player, target);
         if (plugin.service().active(player) != target) {
             plugin.messages().send(sender, "info-not-active");
@@ -149,16 +155,17 @@ public final class ProfessionsCommandHandler implements CommandExecutor, TabComp
         }
         plugin.messages().send(sender, "stats-header");
         Profession active = plugin.service().active(player);
+        int maxLevel = plugin.service().maxLevel(player);
         for (Profession profession : Profession.values()) {
             int level = plugin.service().level(player, profession);
             int xp = plugin.service().xp(player, profession);
-            int needed = ProfessionMath.needed(level);
+            int needed = ProfessionMath.needed(level, maxLevel);
             String key = profession == active ? "stats-current" : "stats-line";
             plugin.messages().send(sender, key,
                     "profession", ProfessionText.nameComponent(plugin.messages(), profession),
                     "level", String.valueOf(level),
                     "rank", ProfessionText.rankComponent(plugin.messages(), level),
-                    "xp", String.valueOf(ProfessionMath.progress(xp)),
+                    "xp", String.valueOf(ProfessionMath.progress(xp, maxLevel)),
                     "needed", needed <= 0 ? "∞" : String.valueOf(needed));
         }
         plugin.messages().send(sender, "stats-footer");

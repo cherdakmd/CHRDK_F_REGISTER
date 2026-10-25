@@ -44,6 +44,8 @@ professions:
   info-none-hint: "<gray>Выбор бесплатный: <yellow>/prof choose <smith|alchemist|cook|mason></yellow>. Смена — раз в %hours% ч.</gray>"
   info-level: "<gray>Уровень <white>%level%</white> · %rank% · опыт <white>%xp%/%needed%</white></gray>"
   info-perk: "<gray>Прибавка: %perk%</gray>"
+  # 1.4.167: ранг поднимает потолок профессии выше обычных 25 уровней.
+  info-rank-cap: "<gold>Ранг даёт +%bonus% уровней навыка: потолок %level%.</gold>"
   info-not-active: "<dark_gray>Это не текущее ремесло: опыт за работу пока не идёт.</dark_gray>"
   info-daily: "<gray>Сегодня: <white>%used%/%cap%</white>, осталось <white>%left%</white></gray>"
   info-daily-unlimited: "<gray>Сегодня: <white>%used%</white> опыта, суточного потолка нет</gray>"
