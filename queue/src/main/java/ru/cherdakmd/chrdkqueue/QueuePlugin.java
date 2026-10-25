@@ -19,6 +19,12 @@ public final class QueuePlugin extends JavaPlugin {
     private volatile Messages messages;
     private volatile QueueService queueService;
     private volatile LuckPerms luckPerms;
+    private volatile ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi coreApi;
+
+    /** Публичный API ядра: очередь спрашивает ступень донатного ранга (1.4.167). */
+    public ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi coreApi() {
+        return coreApi;
+    }
 
     @Override
     public void onEnable() {
@@ -26,6 +32,7 @@ public final class QueuePlugin extends JavaPlugin {
         this.queueService = new QueueService(QueueConfig.from(getConfig()));
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
         this.luckPerms = Bukkit.getServicesManager().load(LuckPerms.class);
+        this.coreApi = Bukkit.getServicesManager().load(ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.class);
 
         Bukkit.getPluginManager().registerEvents(new QueueLoginListener(this), this);
 

@@ -24,7 +24,8 @@ public record LotteryConfig(
         ZoneId zone,
         List<Integer> announceMinutes,
         boolean catchUpOnStart,
-        int payoutPercent
+        int payoutPercent,
+        int minRank
 ) {
 
     private static final DayOfWeek DEFAULT_DAY = DayOfWeek.SUNDAY;
@@ -34,6 +35,7 @@ public record LotteryConfig(
 
     public static LotteryConfig parse(FileConfiguration config, Logger logger) {
         boolean requirePass = config.getBoolean("general.require-pass", false);
+        int minRank = Math.max(0, Math.min(5, config.getInt("general.min-rank", requirePass ? 1 : 0)));
         int cost = Math.max(1, Math.min(4096, config.getInt("tickets.cost-diamonds", 2)));
         int maxPerPlayer = Math.max(0, Math.min(LotteryStore.MAX_TICKETS, config.getInt("tickets.max-per-player", 64)));
         int maxPerPurchase = Math.max(1, Math.min(1024, config.getInt("tickets.max-per-purchase", 32)));
@@ -76,7 +78,7 @@ public record LotteryConfig(
         int payout = Math.max(1, Math.min(100, config.getInt("pot.payout-percent", 80)));
 
         return new LotteryConfig(requirePass, cost, maxPerPlayer, maxPerPurchase,
-                day, time, zone, List.copyOf(announce), catchUp, payout);
+                day, time, zone, List.copyOf(announce), catchUp, payout, minRank);
     }
 
     private static void warn(Logger logger, String key, String raw, String fallback) {

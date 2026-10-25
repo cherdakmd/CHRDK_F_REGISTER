@@ -20,7 +20,7 @@ final class CosmeticsDefs {
      * {@code trail-<id>}: так товары и шлейфы совпадают без лишней настройки.</p>
      */
     record TrailDef(String id, String displayName, String particle, int count,
-                    double spread, double speed, String product) {
+                    double spread, double speed, String product, int rank) {
     }
 
     /** Параметры входа-торжества. */
@@ -48,13 +48,14 @@ final class CosmeticsDefs {
             if (product.isEmpty()) {
                 product = "trail-" + id;
             }
+            int rank = clamp(intOf(entry.get("rank"), 0), 0, 5);
             int count = clamp(intOf(entry.get("count"), 2), 1, 50);
             double spread = doubleOf(entry.get("spread"), 0.2);
             double speed = doubleOf(entry.get("speed"), 0.0);
             if (out.stream().anyMatch(def -> def.id().equals(id))) {
                 continue; // дубликаты id молча игнорируем
             }
-            out.add(new TrailDef(id, name, particle, count, spread, speed, product));
+            out.add(new TrailDef(id, name, particle, count, spread, speed, product, rank));
         }
         return List.copyOf(out);
     }
@@ -87,17 +88,31 @@ final class CosmeticsDefs {
     /**
      * Открыт ли шлейф игроку — чистая логика для теста.
      *
-     * <p>Порядок: проходка открывает всё (как и раньше), покупка открывает один
-     * шлейф или весь набор. {@code passOnly: false} — косметика бесплатна для всех.</p>
+     * <p>Порядок (1.4.167): шлейф с полем {@code rank} открывает только ступень
+     * ранга не ниже своей; остальные — по старому правилу {@code passOnly} или
+     * покупкой. {@code passOnly: false} — косметика бесплатна для всех.</p>
      *
+     * @param rankLevel ступень донатного ранга игрока (0 — без ранга)
      * @param owned проверка «куплен ли товар с таким id и не истёк ли срок»
      * @param packProducts товары-наборы, открывающие сразу все шлейфы
      */
-    static boolean unlocked(TrailDef def, boolean passOnly, boolean hasPass,
+    static boolean unlocked(TrailDef def, boolean passOnly, boolean hasPass, int rankLevel,
                             Predicate<String> owned, List<String> packProducts) {
+        if (def != null && def.rank() > 0) {
+            // Ранг открывает шлейфы своей ступени и ниже (1.4.167).
+            if (rankLevel >= def.rank()) {
+                return true;
+            }
+            return purchased(def, owned, packProducts);
+        }
         if (!passOnly || hasPass) {
             return true;
         }
+        return purchased(def, owned, packProducts);
+    }
+
+    /** Шлейф куплен поштучно или входит в купленный набор. */
+    private static boolean purchased(TrailDef def, Predicate<String> owned, List<String> packProducts) {
         if (def == null || owned == null) {
             return false;
         }

@@ -53,14 +53,16 @@ public final class AuctionService implements Listener {
         if (c.blocked().contains(item.getType()) || item.getAmount() > item.getMaxStackSize()) { tell(p, "auction.blocked"); return; }
         String payload;
         try { payload = ItemCodec.encode(item); } catch (RuntimeException e) { tell(p, "auction.blocked"); return; }
-        if (store.lots().size() >= c.maxLots() || store.lots().stream().filter(l -> l.seller().equals(p.getUniqueId())).count() >= c.perPlayer()) {
+        int rank = plugin.api() == null ? 0 : plugin.api().rankLevel(p.getName());
+        int lotsLimit = c.lotsFor(rank);
+        if (store.lots().size() >= c.maxLots() || store.lots().stream().filter(l -> l.seller().equals(p.getUniqueId())).count() >= lotsLimit) {
             tell(p, "auction.limit"); return;
         }
         ItemStack[] before = ItemCodec.copy(p.getInventory().getStorageContents()), after = ItemCodec.copy(before);
         after[p.getInventory().getHeldItemSlot()] = null;
         long now = System.currentTimeMillis(); long[] id = new long[1];
         if (transfer(p, before, after, (a,b) -> id[0] = store.prepareListing(p.getUniqueId(), p.getName(), payload,
-                price, c.feePercent(), now + c.hours() * 3600000L, now, c.perPlayer(), c.maxLots(), a,b)))
+                price, c.feePercent(), now + c.hours() * 3600000L, now, lotsLimit, c.maxLots(), a,b)))
             tell(p, "auction.listed", "id", id[0], "price", price, "fee", AuctionStore.fee(price,c.feePercent()),
                     "net", price - AuctionStore.fee(price,c.feePercent()));
     }

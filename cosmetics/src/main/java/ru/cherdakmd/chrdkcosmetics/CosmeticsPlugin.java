@@ -146,8 +146,8 @@ public final class CosmeticsPlugin extends JavaPlugin implements Listener {
         }
         Player player = event.getPlayer();
         Bukkit.getScheduler().runTask(this, () -> {
-            if (config.passOnly()
-                    && (coreApi == null || !coreApi.hasActivePass(player.getName()))) {
+            int rank = coreApi == null ? 0 : coreApi.rankLevel(player.getName());
+            if (rank < getConfig().getInt("cosmetics.join-effect.min-rank", 4)) {
                 return;
             }
             Sound sound = resolveSound(effect.sound());
@@ -169,9 +169,9 @@ public final class CosmeticsPlugin extends JavaPlugin implements Listener {
      * в каталоге ядра. Покупки проверяются через API v4 — оффлайн-данные, без Bukkit.
      */
     boolean unlocked(String playerName, CosmeticsDefs.TrailDef def) {
-        boolean hasPass = coreApi != null && coreApi.hasActivePass(playerName);
+        int rankLevel = coreApi == null ? 0 : coreApi.rankLevel(playerName);
         boolean shop = config.shopEnabled() && coreApi != null;
-        return CosmeticsDefs.unlocked(def, config.passOnly(), hasPass,
+        return CosmeticsDefs.unlocked(def, config.passOnly(), rankLevel > 0, rankLevel,
                 id -> shop && coreApi.hasEntitlement(playerName, id),
                 shop ? config.packProducts() : List.of());
     }

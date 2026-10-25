@@ -81,7 +81,11 @@ class CosmeticsDefsTest {
     }
 
     private static CosmeticsDefs.TrailDef flame() {
-        return new CosmeticsDefs.TrailDef("flame", "Огонь", "flame", 3, 0.1, 0.0, "trail-flame");
+        return new CosmeticsDefs.TrailDef("flame", "Огонь", "flame", 3, 0.1, 0.0, "trail-flame", 0);
+    }
+
+    private static CosmeticsDefs.TrailDef rankTrail(int rank) {
+        return new CosmeticsDefs.TrailDef("gold", "Золотая пыль", "electric_spark", 3, 0.2, 0.0, "", rank);
     }
 
     private static java.util.function.Predicate<String> owns(String... ids) {
@@ -91,30 +95,52 @@ class CosmeticsDefsTest {
 
     @Test
     void passUnlocksEverything() {
-        assertTrue(CosmeticsDefs.unlocked(flame(), true, true, owns(), List.of()));
+        assertTrue(CosmeticsDefs.unlocked(flame(), true, true, 1, owns(), List.of()));
     }
 
     @Test
     void singlePurchaseUnlocksTrailWithoutPass() {
-        assertFalse(CosmeticsDefs.unlocked(flame(), true, false, owns(), List.of()),
-                "без проходки и без покупки шлейф закрыт");
-        assertTrue(CosmeticsDefs.unlocked(flame(), true, false, owns("trail-flame"), List.of()),
-                "купленный шлейф открыт без проходки");
-        assertFalse(CosmeticsDefs.unlocked(flame(), true, false, owns("trail-hearts"), List.of()),
+        assertFalse(CosmeticsDefs.unlocked(flame(), true, false, 0, owns(), List.of()),
+                "без ранга и без покупки шлейф закрыт");
+        assertTrue(CosmeticsDefs.unlocked(flame(), true, false, 0, owns("trail-flame"), List.of()),
+                "купленный шлейф открыт без ранга");
+        assertFalse(CosmeticsDefs.unlocked(flame(), true, false, 0, owns("trail-hearts"), List.of()),
                 "чужой товар ничего не открывает");
     }
 
     @Test
     void packUnlocksEveryTrail() {
-        assertTrue(CosmeticsDefs.unlocked(flame(), true, false,
+        assertTrue(CosmeticsDefs.unlocked(flame(), true, false, 0,
                 owns("trails-pack"), List.of("trails-pack")));
-        assertFalse(CosmeticsDefs.unlocked(flame(), true, false,
+        assertFalse(CosmeticsDefs.unlocked(flame(), true, false, 0,
                 owns("trails-pack"), List.of()),
                 "набор учитывается только из конфига pack-products");
     }
 
     @Test
     void freeModeIgnoresPurchases() {
-        assertTrue(CosmeticsDefs.unlocked(flame(), false, false, owns(), List.of()));
+        assertTrue(CosmeticsDefs.unlocked(flame(), false, false, 0, owns(), List.of()));
+    }
+
+    @Test
+    void rankOpensTrailsOfItsLevelAndBelow() {
+        assertFalse(CosmeticsDefs.unlocked(rankTrail(4), true, true, 3, owns(), List.of()),
+                "ступень ниже — шлейф закрыт даже с рангом");
+        assertTrue(CosmeticsDefs.unlocked(rankTrail(4), true, true, 4, owns(), List.of()),
+                "своя ступень открывает шлейф");
+        assertTrue(CosmeticsDefs.unlocked(rankTrail(4), true, true, 5, owns(), List.of()),
+                "старшая ступень открывает и нижние шлейфы");
+    }
+
+    @Test
+    void rankTrailStaysClosedWhenTierIsLowEvenIfPassFlagSet() {
+        // Проходка больше не открывает ранговые шлейфы: решает только ступень.
+        assertFalse(CosmeticsDefs.unlocked(rankTrail(5), true, true, 2, owns(), List.of()));
+    }
+
+    @Test
+    void rankTrailWithoutProductCannotBeBought() {
+        assertFalse(CosmeticsDefs.unlocked(rankTrail(5), true, false, 0, owns(""), List.of()),
+                "пустой product не считается покупкой");
     }
 }

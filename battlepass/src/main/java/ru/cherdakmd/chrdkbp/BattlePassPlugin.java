@@ -431,6 +431,9 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
         if (cfg == null || !cfg.premiumEnabled() || api == null || player == null) {
             return false;
         }
+        if (api.rankLevel(player.getName()) >= getConfig().getInt("battlepass.premium.min-rank", 4)) {
+            return true; // премиум-трек включён в ранги IV–V (1.4.167)
+        }
         return BattlePassPremium.active(true,
                 api.entitlementUntil(player.getName(), cfg.premiumProduct()),
                 System.currentTimeMillis());

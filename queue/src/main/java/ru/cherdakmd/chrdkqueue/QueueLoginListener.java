@@ -95,6 +95,13 @@ public final class QueueLoginListener implements Listener {
 
     private boolean isVip(AsyncPlayerPreLoginEvent event) {
         QueueConfig cfg = plugin.queueService().config();
+        // 1.4.167: обладатель любого донатного ранга заходит без очереди.
+        if (cfg.rankPriority()) {
+            var api = plugin.coreApi();
+            if (api != null && api.rankLevel(event.getName()) > 0) {
+                return true;
+            }
+        }
         LuckPerms luckPerms = plugin.luckPerms();
         if (luckPerms == null) {
             return false; // без LP все игроки — обычные

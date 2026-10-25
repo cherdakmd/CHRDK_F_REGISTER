@@ -30,6 +30,8 @@ public final class ClaimsConfig {
     public final int saleTaxPercent;
     public final int baseChunks;
     public final int passBonusChunks;
+    /** Лимит чанков по ступени ранга: индекс 0 — без ранга (1.4.167). Пусто — старое правило. */
+    public final List<Integer> rankChunks;
     public final int membersPerChunk;
     public final int withdrawMax;
     public final int spawnMargin;
@@ -130,6 +132,7 @@ public final class ClaimsConfig {
         saleTaxPercent = clamped(cfg, logger, "taxes.sale-tax-percent", 10, 0, 90);
         baseChunks = clamped(cfg, logger, "limits.base-chunks", 24, 1, 100_000);
         passBonusChunks = clamped(cfg, logger, "limits.pass-bonus-chunks", 8, 0, 100_000);
+        rankChunks = rankList(cfg, "limits.rank-chunks", logger);
         membersPerChunk = clamped(cfg, logger, "limits.members-per-chunk", 8, 0, 128);
         withdrawMax = clamped(cfg, logger, "limits.withdraw-max", 2304, 1, 1_000_000);
         spawnMargin = clamped(cfg, logger, "worlds.spawn-margin", 64, 0, 100_000);
@@ -279,6 +282,22 @@ public final class ClaimsConfig {
             }
         }
         return result;
+    }
+
+    /** Таблица лимитов по ступеням ранга: пустая — модуль работает по старым правилам. */
+    private static List<Integer> rankList(FileConfiguration cfg, String path, Logger logger) {
+        if (!cfg.isList(path)) {
+            return List.of();
+        }
+        java.util.ArrayList<Integer> result = new java.util.ArrayList<>();
+        for (Object raw : cfg.getList(path, List.of())) {
+            if (raw instanceof Number number) {
+                result.add(Math.max(0, number.intValue()));
+            } else {
+                logger.warning(path + ": значение «" + raw + "» не число — пропущено");
+            }
+        }
+        return List.copyOf(result);
     }
 
     private static int clamped(FileConfiguration cfg, Logger logger, String path, int fallback,

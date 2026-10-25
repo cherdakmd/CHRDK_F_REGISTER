@@ -37,11 +37,15 @@ public final class ClaimsService {
         return plugin.coreApi() == null || plugin.coreApi().isAuthenticated(player);
     }
 
-    /** Общий лимит игрока: база + бонус активной проходки, без персональных правок. */
+    /** Общий лимит игрока: таблица по ступени ранга, без персональных правок (1.4.167). */
     public int baseLimitOf(String playerName) {
-        boolean hasPass = plugin.coreApi() != null && plugin.coreApi().hasActivePass(playerName);
+        int level = plugin.coreApi() == null ? 0 : plugin.coreApi().rankLevel(playerName);
+        java.util.List<Integer> table = plugin.config().rankChunks;
+        if (!table.isEmpty()) {
+            return table.get(Math.min(Math.max(0, level), table.size() - 1));
+        }
         return ClaimMath.effectiveLimit(plugin.config().baseChunks,
-                plugin.config().passBonusChunks, hasPass);
+                plugin.config().passBonusChunks, level > 0);
     }
 
     /** Фактический лимит: персональный лимит администратора главнее общего. */
@@ -202,7 +206,7 @@ public final class ClaimsService {
         if (plugin.store().limitOverride(name) != null) {
             return false; // лимит выдан вручную — подсказка про проходку не нужна
         }
-        return plugin.coreApi() == null || !plugin.coreApi().hasActivePass(name);
+        return plugin.coreApi() == null || plugin.coreApi().rankLevel(name) <= 0;
     }
 
     /** Ключ сообщения с названием роли (для подстановки %role%). */

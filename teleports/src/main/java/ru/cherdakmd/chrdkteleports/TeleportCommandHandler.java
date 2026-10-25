@@ -83,8 +83,9 @@ public final class TeleportCommandHandler implements TabExecutor {
                 permission != null && !permission.isBlank() && player.hasPermission(permission));
     }
 
-    private boolean vip(Player player) {
-        return plugin.coreApi() != null && plugin.coreApi().hasActivePass(player.getName());
+    /** Ступень донатного ранга: 0 — без ранга, 1..5 (1.4.167). */
+    private int rank(Player player) {
+        return plugin.coreApi() == null ? 0 : plugin.coreApi().rankLevel(player.getName());
     }
 
     /** false = проверяющий остановлен (сообщение уже отправлено). */
@@ -116,16 +117,18 @@ public final class TeleportCommandHandler implements TabExecutor {
      * разметку явно, чтобы такая ошибка не повторялась.</p>
      */
     private Messages.Trusted vipSuffix(Player player) {
-        if (vip(player) && plugin.config().vipDiscountPercent() > 0) {
-            return Messages.trusted(plugin.messages().raw("tp.vip-suffix",
-                    "percent", plugin.config().vipDiscountPercent()));
+        int rank = rank(player);
+        int discount = plugin.config().discountFor(rank);
+        if (rank > 0 && discount > 0) {
+            return Messages.trusted(plugin.messages().raw("tp.vip-suffix", "percent", discount));
         }
         return Messages.trusted(plugin.messages().raw("tp.vip-suffix-empty"));
     }
 
     /** Пытается списать стоимость; при недостатке — сообщение и false. */
     private boolean charge(Player player, int baseCost) {
-        int cost = PriceCalc.apply(baseCost, vip(player), plugin.config().vipDiscountPercent());
+        int rank = rank(player);
+        int cost = PriceCalc.apply(baseCost, rank > 0, plugin.config().discountFor(rank));
         if (cost <= 0) {
             return true;
         }
@@ -138,7 +141,8 @@ public final class TeleportCommandHandler implements TabExecutor {
     }
 
     private int chargedCost(Player player, int baseCost) {
-        return PriceCalc.apply(baseCost, vip(player), plugin.config().vipDiscountPercent());
+        int rank = rank(player);
+        return PriceCalc.apply(baseCost, rank > 0, plugin.config().discountFor(rank));
     }
 
     /* ------------------------------- /rtp ------------------------------- */
@@ -333,7 +337,7 @@ public final class TeleportCommandHandler implements TabExecutor {
         }
         HomeStore store = plugin.store();
         boolean exists = store.get(player.getUniqueId(), HomeStore.normalize(name)) != null;
-        int max = plugin.config().homeLimit(vip(player), extraHomes(player));
+        int max = plugin.config().homeLimit(rank(player), extraHomes(player));
         // Кровать слот не занимает: считаем только точки, поставленные игроком.
         if (!exists && store.countPlayerHomes(player.getUniqueId()) >= max) {
             plugin.messages().send(player, "home.limit", "max", max);
@@ -388,7 +392,7 @@ public final class TeleportCommandHandler implements TabExecutor {
         }
         List<String> names = new ArrayList<>();
         list.forEach(home -> names.add(home.name()));
-        int max = plugin.config().homeLimit(vip(player), extraHomes(player));
+        int max = plugin.config().homeLimit(rank(player), extraHomes(player));
         plugin.messages().send(player, "home.list",
                 "homes", String.join(", ", names),
                 "used", plugin.store().countPlayerHomes(player.getUniqueId()), "max", max);

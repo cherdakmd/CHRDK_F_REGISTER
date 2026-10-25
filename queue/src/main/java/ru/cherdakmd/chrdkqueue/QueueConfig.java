@@ -16,7 +16,8 @@ public record QueueConfig(
         int reservationSeconds,
         int maxQueue,
         int expireMinutes,
-        boolean debugLog) {
+        boolean debugLog,
+        boolean rankPriority) {
 
     public static QueueConfig from(FileConfiguration config) {
         Set<String> groups = new LinkedHashSet<>();
@@ -35,6 +36,7 @@ public record QueueConfig(
                 Math.max(5, config.getInt("queue.reservation-seconds", 30)),
                 Math.max(1, config.getInt("queue.max-queue", 100)),
                 Math.max(1, config.getInt("queue.expire-minutes", 15)),
-                config.getBoolean("queue.debug-log", false));
+                config.getBoolean("queue.debug-log", false),
+                config.getBoolean("queue.rank-priority", true));
     }
 }

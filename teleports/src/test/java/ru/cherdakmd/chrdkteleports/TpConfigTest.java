@@ -132,6 +132,66 @@ class TpConfigTest {
     }
 
     @Test
+    void rankTablesDriveHomesAndDiscounts() {
+        TpConfig config = parse("""
+                costs:
+                  vip-discount-percent: 50
+                  rank-discount-percent: [0, 10, 20, 30, 40, 50]
+                homes:
+                  max-normal: 3
+                  max-vip: 8
+                  rank-limits: [3, 4, 6, 8, 10, 12]
+                """);
+        assertEquals(3, config.homeLimit(0, false), "без ранга — обычный лимит");
+        assertEquals(4, config.homeLimit(1, false));
+        assertEquals(6, config.homeLimit(2, false));
+        assertEquals(12, config.homeLimit(5, false));
+        assertEquals(12, config.homeLimit(9, false), "выше последней ступени — потолок таблицы");
+        assertEquals(0, config.discountFor(0), "без ранга скидки нет");
+        assertEquals(10, config.discountFor(1));
+        assertEquals(50, config.discountFor(5));
+        assertEquals(50, config.discountFor(42), "ступень выше таблицы — последняя скидка");
+    }
+
+    @Test
+    void emptyRankTablesFallBackToPassRules() {
+        TpConfig config = parse("""
+                costs:
+                  vip-discount-percent: 35
+                homes:
+                  max-normal: 3
+                  max-vip: 8
+                """);
+        assertEquals(8, config.homeLimit(4, false), "без таблицы любой ранг = старый vip-лимит");
+        assertEquals(3, config.homeLimit(0, false));
+        assertEquals(35, config.discountFor(3), "без таблицы скидка одна на всех");
+        assertEquals(0, config.discountFor(0), "но без ранга скидки нет");
+    }
+
+    @Test
+    void rankHomesRespectHardCap() {
+        TpConfig config = parse("""
+                homes:
+                  rank-limits: [3, 4, 6, 8, 10, 12]
+                  hard-cap: 9
+                """);
+        assertEquals(9, config.homeLimit(5, false), "потолок важнее таблицы");
+        assertEquals(8, config.homeLimit(3, false));
+    }
+
+    @Test
+    void brokenRankValuesAreSkippedNotFatal() {
+        TpConfig config = parse("""
+                costs:
+                  rank-discount-percent: [0, 10, "много", 30]
+                homes:
+                  rank-limits: [3, "семь", 8]
+                """);
+        assertEquals(8, config.homeLimit(2, false), "нечисло выпало, таблица сжалась до [3, 8]");
+        assertEquals(30, config.discountFor(3), "нечисло выпало, порядок сохранён");
+    }
+
+    @Test
     void allowedWorldsRespected() {
         TpConfig config = parse("""
                 allowed-worlds:

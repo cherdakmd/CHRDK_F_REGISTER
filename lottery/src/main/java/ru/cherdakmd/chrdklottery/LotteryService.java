@@ -83,7 +83,7 @@ public final class LotteryService implements Listener {
     public void buyTickets(Player p, int count) {
         if (!authenticated(p)) return;
         LotteryConfig c = plugin.config();
-        if (c.requirePass() && !plugin.coreApi().hasActivePass(p.getName())) {
+        if (plugin.coreApi().rankLevel(p.getName()) < c.minRank()) {
             plugin.messages().send(p, "lottery.need-pass"); return;
         }
         if (count <= 0) { plugin.messages().send(p, "lottery.buy-not-a-number"); return; }

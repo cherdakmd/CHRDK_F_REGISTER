@@ -42,7 +42,8 @@ public final class DailyService {
         if (streak < 0) return null;
 
         DailyConfig.DayReward day = plugin.config().rewardForStreakDay(streak);
-        boolean vip = api != null && api.hasActivePass(player.getName());
+        int vipRank = Math.max(1, plugin.getConfig().getInt("vip.min-rank", 2));
+        boolean vip = api != null && api.rankLevel(player.getName()) >= vipRank;
         List<DailyConfig.ItemReward> items = day.itemsFor(vip);
         for (DailyConfig.ItemReward reward : items) {
             Material material = Material.matchMaterial(reward.material());

@@ -184,7 +184,9 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
             return;
         }
         int claims = store.count(player.getName());
-        int limit = ClaimMath.effectiveLimit(config.baseChunks, config.passBonusChunks, false);
+        int limit = config.rankChunks.isEmpty()
+                ? ClaimMath.effectiveLimit(config.baseChunks, config.passBonusChunks, false)
+                : config.rankChunks.get(0);
         if (claims > limit) {
             messages().send(player, "limit-shrunk",
                     "claims", String.valueOf(claims), "limit", String.valueOf(limit));

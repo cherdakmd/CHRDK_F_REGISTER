@@ -38,7 +38,9 @@ public record TpConfig(
         String homesExtraPermission,
         int homesExtraLimit,
         int homesHardCap,
-        boolean bedSpawnEnabled) {
+        boolean bedSpawnEnabled,
+        List<Integer> rankHomes,        // лимит домов по ступени ранга: [0..5]
+        List<Integer> rankDiscounts) {  // скидка телепорта по ступени: [0..5]
 
     public boolean worldAllowed(String worldName) {
         return allowedWorlds.isEmpty() || allowedWorlds.contains(worldName.toLowerCase(Locale.ROOT));
@@ -46,7 +48,41 @@ public record TpConfig(
 
     /** Лимит точек дома для игрока. */
     public int homeLimit(boolean vip) {
-        return homeLimit(vip, false);
+        return homeLimit(vip ? 1 : 0, false);
+    }
+
+    /**
+     * Скидка на телепорты для ступени ранга (1.4.167).
+     *
+     * <p>Если таблица {@code costs.rank-discount-percent} не задана, работает
+     * старое правило: любой ранг = скидка {@code vip-discount-percent}. Так старые
+     * конфиги не меняют поведение, а новая таблица даёт разным рангам разные скидки.</p>
+     */
+    public int discountFor(int rank) {
+        if (rank <= 0) {
+            return 0;
+        }
+        if (rankDiscounts.isEmpty()) {
+            return vipDiscountPercent;
+        }
+        int index = Math.min(rank, rankDiscounts.size() - 1);
+        return Math.max(0, Math.min(100, rankDiscounts.get(index)));
+    }
+
+    /** Лимит домов по ступени ранга: таблица модуля или старое правило проходки. */
+    public int homeLimit(int rank, boolean extra) {
+        int limit;
+        if (rank <= 0) {
+            limit = homesMaxNormal;
+        } else if (rankHomes.isEmpty()) {
+            limit = Math.max(homesMaxNormal, homesMaxVip);
+        } else {
+            limit = rankHomes.get(Math.min(rank, rankHomes.size() - 1));
+        }
+        if (extra && !homesExtraPermission.isBlank()) {
+            limit = Math.max(limit, homesExtraLimit);
+        }
+        return Math.min(limit, homesHardCap);
     }
 
     /**
@@ -115,16 +151,34 @@ public record TpConfig(
         int hardCap = clamp(section(homes, "hard-cap", 12), maxNormal, 100,
                 logger, "homes.hard-cap");
         boolean bedSpawn = section(homes, "bed-spawn", true);
+        List<Integer> rankHomes = intList(homes, "rank-limits", logger);
+        List<Integer> rankDiscounts = intList(costs, "rank-discount-percent", logger);
 
         return new TpConfig(
                 Set.copyOf(worlds), delay, cancelMove, cancelDamage, discount,
                 costRtp, costTpa, costHome, costSethome,
                 radius, minRadius, useSpawn, centerX, centerZ, rtpWorld, attempts, rtpCooldown,
                 timeout, tpaCooldown, maxNormal, maxVip, extraPermission, extraLimit, hardCap,
-                bedSpawn);
+                bedSpawn, rankHomes, rankDiscounts);
     }
 
     /* ------------------------------- утилиты ------------------------------- */
+
+    /** Список чисел из конфига; пустой — таблица не задана (работает старое правило). */
+    private static List<Integer> intList(ConfigurationSection section, String key, Logger logger) {
+        if (section == null || !section.isList(key)) {
+            return List.of();
+        }
+        List<Integer> result = new java.util.ArrayList<>();
+        for (Object raw : section.getList(key, List.of())) {
+            if (raw instanceof Number number) {
+                result.add(Math.max(0, Math.min(100, number.intValue())));
+            } else {
+                logger.warning(key + ": значение «" + raw + "» не число — пропущено");
+            }
+        }
+        return List.copyOf(result);
+    }
 
     private static int section(ConfigurationSection section, String key, int fallback) {
         return section == null ? fallback : section.getInt(key, fallback);
