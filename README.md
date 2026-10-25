@@ -33,7 +33,7 @@
   Что даёт каждая ступень и как купить — `docs/RANKS-GUIDE.md`;
   дизайн и обоснование границ — `docs/RANKS-DESIGN.md`.
 
-## Меню сервера `/menu` — карта всех возможностей (1.4.170)
+## Меню сервера `/menu` — карта всех возможностей (1.4.170, кнопка вики — 1.4.171)
 
 К 1.4.169 меню разрослось до 42 пунктов: новые волны дописывались в уже
 существующие разделы, часть кнопок дублировалась (`pass menu` и `daily` были
@@ -51,9 +51,11 @@
 | Снаряжение и питомцы | чары, тиры, артефакты и коллекция, косметика, питомцы | 6 |
 | Охота и события | охота, боссы, события, клады | 4 |
 | Общество | чат, отряд, гильдия, очередь, стримерская программа | 5 |
+| Главная | карточка игрока, вики сервера, подсказка «как пользоваться» | 3 |
 
-Главная страница: карточка игрока (ник, ранг, остаток срока) в слоте 4, семь
-разделов в ряду 10–16 и подсказка «как пользоваться» в 22.
+Всего 51 пункт. Главная страница: карточка игрока (ник, ранг, остаток срока)
+в слоте 4, **«Вики сервера» в 20**, семь разделов в ряду 10–16 и подсказка
+«как пользоваться» в 22.
 
 - **Одна команда — один клик.** Пункт выполняет команду от имени игрока, как
   если бы он написал её сам; `command` в конфиге остаётся человекочитаемым.
@@ -75,9 +77,10 @@
   (он покупает чанк) и админских подкоманд: вход в приваты — через
   `claim menu`, `claim map`, `claim help`, `claim balance`.
 
-Миграция: `PresentationMigration` узнаёт стоковый набор 1.4.169 по снимку
-`presentation-legacy-1.4.169.yml` и один раз заменяет его новым вместе с
-`title`, `category-title`, `back-*`, `close-*` и `categories`. Свои пункты и
+Миграция: `PresentationMigration` узнаёт стоковые наборы 1.4.169 и 1.4.170 по
+снимкам `presentation-legacy-1.4.169.yml` и `presentation-legacy-1.4.170.yml`
+и один раз заменяет их новым вместе с `title`, `category-title`, `back-*`,
+`close-*` и `categories`. Свои пункты и
 выключенный `enabled` не трогаются; перед заменой рядом с `config.yml`
 остаётся бэкап.
 
@@ -87,6 +90,26 @@
 каждая команда и право существуют в их `plugin.yml`, страницы помещаются в
 54 слота) и `ServerMenuLayoutTest` (авто-раскладка, «Назад»/«Закрыть»,
 подсказки).
+
+## Ссылка на вики в игре `/wiki` (1.4.171)
+
+Сайт нельзя открыть из Minecraft напрямую, поэтому ядро печатает
+**кликабельную ссылку**: клик открывает браузер, вторая строка копирует адрес
+(на случай, если браузер по умолчанию не настроен).
+
+- `/wiki` — главная сайта, `/wiki ranks` — сразу нужная страница,
+  `TAB` подсказывает ходовые слаги (`start`, `menu`, `commands`, `ranks`,
+  `economy`, `treasures`, `claims`, `faq`).
+- Кнопка **«Вики сервера»** на главной `/menu` (слот 20, `BOOK`) выполняет
+  ту же команду — игроку не нужно знать синтаксис.
+- Адрес, подсказки и выключатель — секция `wiki:` в `config.yml`
+  (`enabled`, `url`, `pages`). Адрес читается при каждом вызове, поэтому
+  домен меняется через `/pass reload`, без перезапуска.
+- Адрес проверяется перед вставкой в тег: кавычки, угловые скобки, пробелы и
+  обратный слэш запрещены, слаг страницы — только `[a-z0-9-]`. Битый адрес
+  выключает ссылку и честно сообщает «не настроена», а не ломает разметку.
+- В консоли команда печатает голый адрес строкой. Тесты — `WikiSettingsTest`
+  и `PresentationUpdateTest` (кнопка ведёт в существующую команду).
 
 ## Вики для игроков (1.4.170)
 
@@ -100,6 +123,11 @@
   `site/`; в CI это делает `pages.yml`, он же выкладывает сайт на Pages.
 - **Темы:** тёмная и светлая (`#themeBtn`), поиск по всем страницам (Ctrl-K),
   оглавление, крошки, «Назад / Дальше», адаптив до телефона.
+- **Оформление:** изо-пиксель-арт обложки у главной и восьми разделов
+  (`tools/wiki/assets/img/`), у каждого раздела свой цвет-акцент, витрина
+  рангов карточками, шаги первого вечера и аккордеон вопросов на главной.
+- **Только игрок:** ни одной админской команды, конфига или права — на сайте
+  лишь то, что нужно человеку за игрой.
 - **Контроль качества:** `--check` проверяет ссылки, якоря и навигацию;
   страница без front matter или не добавленная в `config.yml` роняет сборку.
 
@@ -3015,36 +3043,36 @@ lines)`. `ProfileContext` несёт UUID, ник, признак «онлайн
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.170.jar`,
-аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.170.jar`,
-реферальный — `referrals/build/libs/chrdk-referrals-1.4.170.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.170.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.170.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.170.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.170.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.170.jar` (хартия чар — при установленном аддоне чар),
-достижения — `achievements/build/libs/chrdk-achievements-1.4.170.jar`, навыки —
-`skills/build/libs/chrdk-skills-1.4.170.jar`, клады —
-`treasures/build/libs/chrdk-treasures-1.4.170.jar`, общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.170.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.170.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.170.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.170.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.170.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.170.jar`, стримерская программа —
-`streams/build/libs/chrdk-streams-1.4.170.jar`, лотерея —
-`lottery/build/libs/chrdk-lottery-1.4.170.jar`, аукцион —
-`auction/build/libs/chrdk-auction-1.4.170.jar`, питомцы —
-`pets/build/libs/chrdk-pets-1.4.170.jar`, заказы —
-`orders/build/libs/chrdk-orders-1.4.170.jar`, охота —
-`hunt/build/libs/chrdk-hunt-1.4.170.jar`, группы —
-`party/build/libs/chrdk-party-1.4.170.jar`, события —
-`events/build/libs/chrdk-events-1.4.170.jar`, задания —
-`quests/build/libs/chrdk-quests-1.4.170.jar`, боссы —
-`bosses/build/libs/chrdk-bosses-1.4.170.jar`, гильдии —
-`guilds/build/libs/chrdk-guilds-1.4.170.jar`, классы —
-`classes/build/libs/chrdk-classes-1.4.170.jar`, профессии —
-`professions/build/libs/chrdk-professions-1.4.170.jar`. На сервер ядро
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.171.jar`,
+аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.171.jar`,
+реферальный — `referrals/build/libs/chrdk-referrals-1.4.171.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.171.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.171.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.171.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.171.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.171.jar` (хартия чар — при установленном аддоне чар),
+достижения — `achievements/build/libs/chrdk-achievements-1.4.171.jar`, навыки —
+`skills/build/libs/chrdk-skills-1.4.171.jar`, клады —
+`treasures/build/libs/chrdk-treasures-1.4.171.jar`, общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.171.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.171.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.171.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.171.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.171.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.171.jar`, стримерская программа —
+`streams/build/libs/chrdk-streams-1.4.171.jar`, лотерея —
+`lottery/build/libs/chrdk-lottery-1.4.171.jar`, аукцион —
+`auction/build/libs/chrdk-auction-1.4.171.jar`, питомцы —
+`pets/build/libs/chrdk-pets-1.4.171.jar`, заказы —
+`orders/build/libs/chrdk-orders-1.4.171.jar`, охота —
+`hunt/build/libs/chrdk-hunt-1.4.171.jar`, группы —
+`party/build/libs/chrdk-party-1.4.171.jar`, события —
+`events/build/libs/chrdk-events-1.4.171.jar`, задания —
+`quests/build/libs/chrdk-quests-1.4.171.jar`, боссы —
+`bosses/build/libs/chrdk-bosses-1.4.171.jar`, гильдии —
+`guilds/build/libs/chrdk-guilds-1.4.171.jar`, классы —
+`classes/build/libs/chrdk-classes-1.4.171.jar`, профессии —
+`professions/build/libs/chrdk-professions-1.4.171.jar`. На сервер ядро
 обязательно, аддоны — по желанию (требуют ядро 1.4.6+). К релизу на GitHub
 прикладывается **один архив** `chrdk-plugins-<версия>.zip`: ядро и все 29 аддонов
 одной версии (30 JAR) плюс памятка `ОБНОВЛЕНИЕ.txt`. Отдельные JAR больше не

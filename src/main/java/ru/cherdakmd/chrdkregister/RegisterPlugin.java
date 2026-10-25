@@ -23,6 +23,7 @@ public final class RegisterPlugin extends JavaPlugin {
     private ServerMenuService serverMenuService;
     private RankMenuService rankMenuService;
     private HatCommand hatCommand;
+    private WikiCommandHandler wikiCommand;
     private BankStore bankStore;
     private BankService bankService;
     private ProfileRegistry profileRegistry;
@@ -164,6 +165,12 @@ public final class RegisterPlugin extends JavaPlugin {
                 serverMenuService.openMenu(player);
                 return true;
             });
+        }
+        this.wikiCommand = new WikiCommandHandler(() -> accessManager.config().wiki(), messages);
+        PluginCommand wikiCommandPlugin = getCommand("wiki");
+        if (wikiCommandPlugin != null) {
+            wikiCommandPlugin.setExecutor(this.wikiCommand);
+            wikiCommandPlugin.setTabCompleter(this.wikiCommand);
         }
         for (String commandName : List.of("register", "login", "changepassword", "2fa", "pass",
                 "logout", "session", "captcha", "guide")) {
@@ -341,6 +348,9 @@ public final class RegisterPlugin extends JavaPlugin {
         }
         if (commandHandler != null) {
             commandHandler.refreshMessages(); // /pass reload сам сообщает результат уже новыми текстами
+        }
+        if (wikiCommand != null) {
+            wikiCommand.setMessages(messages);
         }
         return messages.validate();
     }

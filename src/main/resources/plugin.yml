@@ -32,6 +32,10 @@ commands:
   hat:
     description: "Надеть блок из руки на голову (преимущество Покровителя)"
     usage: /<command>
+  wiki:
+    description: "Кликабельная ссылка на вики игрока: команды, цены и лимиты сайтом"
+    usage: /<command> [страница]
+    aliases: [site]
   rankadmin:
     description: "Ручная выдача и снятие донатных рангов"
     permission: chrdkregister.admin

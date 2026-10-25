@@ -294,4 +294,19 @@
       observer.observe(heading);
     });
   }
+
+  /* ------------------------------------------------------- прогресс чтения */
+
+  var progress = document.getElementById("readProgress");
+  if (progress) {
+    var updateProgress = function () {
+      var doc = document.documentElement;
+      var max = doc.scrollHeight - window.innerHeight;
+      var value = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+      progress.style.transform = "scaleX(" + value.toFixed(4) + ")";
+    };
+    updateProgress();
+    window.addEventListener("scroll", updateProgress, { passive: true });
+    window.addEventListener("resize", updateProgress);
+  }
 })();

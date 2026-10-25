@@ -99,17 +99,6 @@ def property_value(key: str, fallback: str = "") -> str:
     return fallback
 
 
-def platform() -> str:
-    minecraft = property_value("minecraft_version", "26.3")
-    build = ROOT / "build.gradle"
-    java = "25"
-    if build.exists():
-        match = re.search(r"sourceCompatibility\s*=\s*JavaVersion\.VERSION_(\d+)", build.read_text(encoding="utf-8"))
-        if match:
-            java = match.group(1)
-    return f"Purpur {minecraft} · Java {java}"
-
-
 def addon_count() -> int:
     settings = ROOT / "settings.gradle"
     if not settings.exists():
@@ -226,6 +215,18 @@ class Renderer:
                 index += 1
                 continue
 
+            if stripped in {":::html", "::: raw"}:
+                # Блок сырого HTML для витрин, шагов и аккордеонов:
+                # открывается строкой :::html, закрывается строкой :::.
+                index += 1
+                block: list[str] = []
+                while index < total and lines[index].strip() != ":::":
+                    block.append(lines[index].rstrip())
+                    index += 1
+                index += 1  # закрывающая ::: (или конец файла)
+                out.append("\n".join(block))
+                continue
+
             if stripped.startswith("```"):
                 language = stripped[3:].strip()
                 index += 1
@@ -301,7 +302,7 @@ class Renderer:
                         if not following:
                             break
                         if (
-                            following.startswith(("```", "|", ">", "#"))
+                            following.startswith(("```", "|", ">", "#", "<"))
                             or following in {"---", "***"}
                             or re.match(r"^[-*]\s+", following)
                             or re.match(r"^\d+\.\s+", following)
@@ -323,7 +324,7 @@ class Renderer:
                 if not current:
                     break
                 if (
-                    current.startswith(("```", "|", ">", "#"))
+                    current.startswith(("```", "|", ">", "#", "<"))
                     or current in {"---", "***"}
                     or re.match(r"^[-*]\s+", current)
                     or re.match(r"^\d+\.\s+", current)
@@ -357,7 +358,7 @@ def icon_svg(name: str, size: int = 20) -> str:
 def nav_html(groups: list[dict], pages: dict[str, dict], current: str) -> str:
     out = ['<nav class="nav" aria-label="Разделы вики">']
     for group in groups:
-        out.append('<div class="nav-group">')
+        out.append(f'<div class="nav-group" style="--accent:{group.get("accent", "#a98bff")}">')
         out.append(
             f'<p class="nav-title">{icon_svg(group["icon"], 16)}<span>{html.escape(group["title"])}</span></p>'
         )
@@ -374,20 +375,31 @@ def nav_html(groups: list[dict], pages: dict[str, dict], current: str) -> str:
 def group_cards_html(groups: list[dict], pages: dict[str, dict]) -> str:
     out = ['<section class="group-cards" aria-label="Разделы вики">']
     for group in groups:
+        target = next((slug for slug in group["pages"] if slug != "index"), "index")
         links = "".join(
             f'<li><a href="{slug}.html">{html.escape(pages[slug]["meta"]["title"])}</a></li>'
             for slug in group["pages"]
             if slug != "index"
         )
+        art = art_path(group)
+        accent = group.get("accent", "#a98bff")
         out.append(
-            f'<article class="group-card"><header>{icon_svg(group["icon"], 22)}'
-            f'<h2><a href="{next((slug for slug in group["pages"] if slug != "index"), "index")}.html">{html.escape(group["title"])}</a></h2>'
+            f'<article class="group-card" style="--accent:{accent}">'
+            f'<a class="group-card-art" href="{target}.html" tabindex="-1" aria-hidden="true">'
+            f'<img src="{art}" alt="" width="1408" height="768" loading="lazy" decoding="async"></a>'
+            f'<div class="group-card-body"><header>{icon_svg(group["icon"], 22)}'
+            f'<h2><a href="{target}.html">{html.escape(group["title"])}</a></h2>'
             f'<span class="badge">{BADGE.get(group["id"], "Раздел")}</span></header>'
             f'<p>{html.escape(group.get("description", ""))}</p>'
-            f"<ul>{links}</ul></article>"
+            f"<ul>{links}</ul></div></article>"
         )
     out.append("</section>")
     return "".join(out)
+
+
+def art_path(group: dict) -> str:
+    """Обложка раздела: своя из config.yml или assets/img/<id>.jpg."""
+    return group.get("image", f"assets/img/{group['id']}.jpg")
 
 
 def toc_html(toc: list[tuple[str, str]], title: str) -> str:
@@ -408,15 +420,23 @@ PAGE_TEMPLATE = """<!doctype html>
 <meta name="description" content="{description}">
 <link rel="canonical" href="{canonical}">
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="{site}">
+<meta property="og:locale" content="ru_RU">
 <meta property="og:title" content="{title} · {site}">
 <meta property="og:description" content="{description}">
 <meta property="og:url" content="{canonical}">
+<meta property="og:image" content="{og_image}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{title} · {site}">
+<meta name="twitter:description" content="{description}">
+<meta name="twitter:image" content="{og_image}">
 <meta name="theme-color" content="#0b0d12">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/style.css">
 <script>try{{var t=localStorage.getItem("chrdk-wiki-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}}catch(e){{}}</script>
 </head>
 <body>
+<div class="read-progress" id="readProgress" aria-hidden="true"></div>
 <a class="skip-link" href="#main">Перейти к содержимому</a>
 <header class="topbar">
   <button class="icon-btn menu-btn" id="menuBtn" aria-label="Открыть меню" aria-expanded="false">{menu_icon}</button>
@@ -535,11 +555,11 @@ def build(check: bool) -> int:
         is_home = slug == "index"
 
         if is_home:
-            heading = f'<p class="eyebrow">Добро пожаловать</p><h1 class="hero-title">{html.escape(title)}</h1>'
             hero = (
                 '<section class="hero">'
                 '<div class="hero-glow" aria-hidden="true"></div>'
-                f'<p class="hero-kicker">{html.escape(platform())} · {len(groups)} разделов</p>'
+                '<div class="hero-copy">'
+                f'<p class="hero-kicker">{len(groups)} разделов · 5 рангов · вход бесплатный</p>'
                 '<h1>Всё о сервере <span>CHRDK</span> — по-русски</h1>'
                 f'<p class="hero-sub">{html.escape(site["description"])}</p>'
                 '<div class="hero-actions">'
@@ -548,10 +568,15 @@ def build(check: bool) -> int:
                 '<a class="btn btn-ghost" href="ranks.html">Ранги</a>'
                 '</div>'
                 '<div class="hero-stats">'
-                f'<div><strong>{addon_count()}</strong><span>аддонов</span></div>'
+                f'<div><strong>{len(ordered)}</strong><span>страниц</span></div>'
                 '<div><strong>5</strong><span>рангов</span></div>'
                 '<div><strong>196</strong><span>находок в кладах</span></div>'
-                '<div><strong>30</strong><span>кастомных чар</span></div>'
+                '<div><strong>60</strong><span>кастомных чар</span></div>'
+                '</div>'
+                '</div>'
+                '<div class="hero-art">'
+                f'<img src="assets/img/hero.jpg" alt="Остров CHRDK: замок, портал и алмазы" '
+                'width="1376" height="768" fetchpriority="high" decoding="async">'
                 '</div>'
                 '</section>'
             )
@@ -564,8 +589,13 @@ def build(check: bool) -> int:
             eyebrow = BADGE.get(group["id"], group["title"])
             hero = ""
             heading = (
+                f'<header class="page-head" style="--accent:{group.get("accent", "#a98bff")}">'
+                f'<img src="{art_path(group)}" alt="" width="1408" height="768" '
+                'loading="lazy" decoding="async">'
+                '<div class="page-head-copy">'
                 f'<p class="eyebrow">{html.escape(group["title"])} · {html.escape(eyebrow)}</p>'
                 f'<h1>{html.escape(title)}</h1>'
+                '</div></header>'
             )
             lead = meta["description"]
             extra = ""
@@ -595,6 +625,7 @@ def build(check: bool) -> int:
             description=html.escape(meta["description"], quote=True),
             url=site["url"],
             canonical=site["url"] if slug == "index" else f'{site["url"]}{slug}.html',
+            og_image=f'{site["url"]}{art_path(group)}',
             slug=slug,
             version=html.escape(version_str),
             github=site["github"],
