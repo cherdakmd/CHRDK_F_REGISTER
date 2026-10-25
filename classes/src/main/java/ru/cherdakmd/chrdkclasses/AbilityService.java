@@ -131,9 +131,10 @@ final class AbilityService {
     private void volley(Player player, ClassAbility ability) {
         Vector base = player.getLocation().getDirection().normalize();
         for (int index = -1; index <= 1; index++) {
-            Vector turned = rotateY(base, index * VOLLEY_STEP_DEGREES);
-            Arrow arrow = player.launchProjectile(Arrow.class,
-                    turned.multiply(2.4).setY(turned.getY() + 0.05));
+            Vector velocity = rotateY(base, index * VOLLEY_STEP_DEGREES).multiply(2.4);
+            // Чуть вверх, иначе с близкой дистанции стрелы уходят в пол.
+            velocity.setY(velocity.getY() + 0.05);
+            Arrow arrow = player.launchProjectile(Arrow.class, velocity);
             if (arrow != null) {
                 arrow.setDamage(ability.power());
                 arrow.setCritical(false);
@@ -151,7 +152,8 @@ final class AbilityService {
         int hit = 0;
         for (var entity : player.getWorld().getNearbyEntities(center, radius, radius, radius,
                 candidate -> candidate instanceof Enemy && candidate.isValid())) {
-            if (!(entity instanceof LivingEntity victim) || victim.equals(player)) {
+            // Enemy — только враждебные мобы: чужие питомцы и коровы целы.
+            if (!(entity instanceof LivingEntity victim)) {
                 continue;
             }
             victim.damage(ability.power(), player);
