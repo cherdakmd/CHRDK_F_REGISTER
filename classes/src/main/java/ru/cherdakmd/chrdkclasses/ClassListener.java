@@ -44,9 +44,15 @@ final class ClassListener implements Listener {
         Bukkit.getScheduler().runTask(plugin, () -> plugin.effects().apply(player));
         // Навыки подтягиваются не мгновенно — через десять секунд запоминаем
         // уровень ещё раз, чтобы вход не выглядел повышением класса.
-        Bukkit.getScheduler().runTaskLater(plugin,
-                () -> plugin.progress().baseline(player.getUniqueId(),
-                        plugin.service().level(player.getUniqueId())), 200L);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> baselineQuietly(player), 200L);
+    }
+
+    /** Повторная сверка уровня после входа: молча, без сообщения игроку. */
+    private void baselineQuietly(Player player) {
+        if (!plugin.isEnabled() || !player.isOnline()) {
+            return;
+        }
+        plugin.progress().baseline(player.getUniqueId(), plugin.service().level(player.getUniqueId()));
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
