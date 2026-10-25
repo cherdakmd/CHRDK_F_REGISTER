@@ -11,7 +11,6 @@ import org.bukkit.entity.BlockDisplay;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
-import ru.cherdakmd.chrdkregister.api.SpawnClaimIndex;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,8 +36,8 @@ import java.util.UUID;
  *
  * <p>Воронку звезда выбивает сама — но только там, где это безопасно
  * (1.4.176): природные блоки, не больше двух слоёв и никогда в привате.
- * Проверка идёт по каждому блоку через {@link SpawnClaimIndex} ядра, поэтому
- * звезда не может «зацепить» чужой дом даже краем воронки.</p>
+ * Точка падения проверяется заранее, а каждая колонка воронки — отдельно
+ * через {@link ClaimGuard}, поэтому чужой дом не зацепить даже краем.</p>
  */
 final class MeteorService {
 
@@ -56,6 +55,8 @@ final class MeteorService {
     private static final long RETRY_MS = 5_000L;
     /** Ближе этого к игроку звезда не падает — чтобы не бить по голове. */
     private static final double MIN_DISTANCE = 6.0;
+    /** Сколько раз пробуем найти точку вне привата, прежде чем отложить звезду. */
+    private static final int LANDING_ATTEMPTS = 8;
 
     private final EventsPlugin plugin;
     private final Random random = new Random();
@@ -148,19 +149,16 @@ final class MeteorService {
             return;
         }
         lastTarget.put(target.getUniqueId(), System.currentTimeMillis());
-        World world = target.getWorld();
-        Location base = target.getLocation();
-        double angle = random.nextDouble() * Math.PI * 2.0;
-        double distance = MIN_DISTANCE
-                + random.nextDouble() * Math.max(1.0, spawn.radius() - MIN_DISTANCE);
-        double x = base.getX() + Math.cos(angle) * distance;
-        double z = base.getZ() + Math.sin(angle) * distance;
-        if (!world.isChunkLoaded(((int) Math.floor(x)) >> 4, ((int) Math.floor(z)) >> 4)) {
+        Location ground = landing(target);
+        if (ground == null) {
+            // Все попытки пришлись на приваты или незагруженные чанки.
             nextLaunchAt = System.currentTimeMillis() + RETRY_MS;
             return;
         }
-        int groundY = world.getHighestBlockYAt((int) Math.floor(x), (int) Math.floor(z));
-        Location start = new Location(world, x, groundY + 1.0 + START_HEIGHT, z);
+        World world = ground.getWorld();
+        double x = ground.getX();
+        double z = ground.getZ();
+        Location start = ground.clone().add(0.0, START_HEIGHT, 0.0);
         BlockDisplay display = world.spawn(start, BlockDisplay.class, entity -> {
             entity.setBlock(spawn.block(random).createBlockData());
             entity.setTeleportDuration(TICK_PERIOD);
@@ -170,11 +168,42 @@ final class MeteorService {
         if (display == null) {
             return;
         }
-        stars.add(new Star(display, x, z, start.getY(), groundY + 1.0,
+        stars.add(new Star(display, x, z, start.getY(), ground.getY(),
                 System.currentTimeMillis()));
         trail(start);
         // Звук старта: игрок поднимает голову раньше, чем увидит след.
         world.playSound(start, Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 0.8f, 0.9f);
+    }
+
+    /**
+     * Точка падения рядом с игроком: случайно, но не в привате.
+     *
+     * <p>Приват проверяется до запуска звезды, а не на посадке: так событие
+     * «не влияет на приват» целиком — ни воронки, ни добычи на чужом участке.
+     * Если все попытки попали в приваты (игрок стоит в закрытом посёлке),
+     * звезда просто подождёт следующий заход.</p>
+     *
+     * @return поверхность под падение или {@code null}, если места не нашлось
+     */
+    private Location landing(Player target) {
+        World world = target.getWorld();
+        Location base = target.getLocation();
+        for (int attempt = 0; attempt < LANDING_ATTEMPTS; attempt++) {
+            double angle = random.nextDouble() * Math.PI * 2.0;
+            double distance = MIN_DISTANCE
+                    + random.nextDouble() * Math.max(1.0, spawn.radius() - MIN_DISTANCE);
+            int blockX = (int) Math.floor(base.getX() + Math.cos(angle) * distance);
+            int blockZ = (int) Math.floor(base.getZ() + Math.sin(angle) * distance);
+            if (!world.isChunkLoaded(blockX >> 4, blockZ >> 4)) {
+                continue;
+            }
+            if (ClaimGuard.claimed(world, blockX, blockZ)) {
+                continue;
+            }
+            int groundY = world.getHighestBlockYAt(blockX, blockZ);
+            return new Location(world, blockX + 0.5, groundY + 1.0, blockZ + 0.5);
+        }
+        return null;
     }
 
     /**
@@ -265,7 +294,7 @@ final class MeteorService {
             if (!world.isChunkLoaded(blockX >> 4, blockZ >> 4)) {
                 continue;
             }
-            if (claimed(world, blockX, blockZ)) {
+            if (ClaimGuard.claimed(world, blockX, blockZ)) {
                 continue;
             }
             for (int depth = 0; depth < Crater.DEPTH; depth++) {
@@ -275,22 +304,6 @@ final class MeteorService {
                 }
                 block.setType(Material.AIR, false);
             }
-        }
-    }
-
-    /**
-     * Приват ли в этой колонке.
-     *
-     * <p>Индекс приватов регистрирует аддон CHRDK_Claims; без него приватов на
-     * сервере нет. Если проверка сломалась, отвечаем «приват» — лучше не
-     * оставить воронку, чем снести чужой дом.</p>
-     */
-    private static boolean claimed(World world, int blockX, int blockZ) {
-        try {
-            SpawnClaimIndex index = Bukkit.getServicesManager().load(SpawnClaimIndex.class);
-            return index != null && index.isClaimed(world.getName(), blockX, blockZ);
-        } catch (RuntimeException | LinkageError error) {
-            return true;
         }
     }
 

@@ -31,6 +31,10 @@ import java.util.UUID;
  * только на {@code NATURAL}, поэтому рекурсии нет. Само добавление мобов
  * отложено на следующий тик: спавнить внутри обработчика спавна — плохая
  * привычка, которая ломает порядок тика мира.</p>
+ *
+ * <p>Приваты событие не трогает: ни эхо, ни волна не поднимают мобов на чужом
+ * участке ({@link ClaimGuard}). Это важнее «плотности» — базу не должно
+ * заливать мобами из-за события, которое включил сервер.</p>
  */
 final class HordeService {
 
@@ -213,6 +217,9 @@ final class HordeService {
                 world.isDayTime())) {
             return;
         }
+        if (ClaimGuard.claimed(world, location.getBlockX(), location.getBlockZ())) {
+            return;
+        }
         Player nearest = nearestPlayer(world, location, REINFORCE_RADIUS);
         if (nearest == null) {
             return;
@@ -252,6 +259,9 @@ final class HordeService {
             int x = (int) Math.floor(center.getX() + Math.cos(angle) * distance);
             int z = (int) Math.floor(center.getZ() + Math.sin(angle) * distance);
             if (!world.isChunkLoaded(x >> 4, z >> 4)) {
+                continue;
+            }
+            if (ClaimGuard.claimed(world, x, z)) {
                 continue;
             }
             int y = world.getHighestBlockYAt(x, z);
