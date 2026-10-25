@@ -677,6 +677,7 @@ public final class AccessManager {
             messages.send(player, "session.restored");
             player.sendActionBar(messages.get("session.restored-actionbar"));
             showSessionNotice(player);
+            announceRankJoin(player);
             return;
         }
 
@@ -1729,7 +1730,22 @@ public final class AccessManager {
         player.sendMessage(messages.get(successKey));
         player.sendActionBar(messages.get("auth.success-actionbar"));
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.2f);
+        announceRankJoin(player);
         fireEventSync(new PlayerAuthCompletedEvent(player));
+    }
+
+    /** Строка входа ранга III+: «Хранитель Имя вернулся в гильдию» (1.4.167). */
+    private void announceRankJoin(Player player) {
+        RankSettings ranks = config.ranks();
+        if (ranks == null || !ranks.enabled() || !ranks.announceJoin()) {
+            return;
+        }
+        int level = store.rankLevel(player.getName(), System.currentTimeMillis());
+        String line = ranks.joinLine(level, player.getName());
+        if (line.isBlank()) {
+            return;
+        }
+        Bukkit.getServer().broadcast(Messages.format(line));
     }
 
     /**

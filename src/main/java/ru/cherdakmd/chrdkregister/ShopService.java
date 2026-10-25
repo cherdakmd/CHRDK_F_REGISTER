@@ -34,7 +34,9 @@ public final class ShopService {
         /** Каталог выключен или пуст. */
         DISABLED,
         /** Такого товара нет в конфиге. */
-        UNKNOWN_PRODUCT
+        UNKNOWN_PRODUCT,
+        /** У игрока уже есть ранг не ниже — покупка не нужна. */
+        RANK_HIGHER
     }
 
     public record Result(Status status, String playerName, ShopProduct product,
@@ -162,11 +164,16 @@ public final class ShopService {
         // Скидка — про покупку: за награды аддонов (recordSale = false) бонус не даём,
         // иначе бесплатные выдачи раздували бы срок за счёт подписки.
         ShopDiscount discount = recordSale ? discountFor(canonical) : ShopDiscount.DISABLED;
-        int bonusDays = 0;
-        long until = product.isBundle()
-                ? 0L
-                : grantOne(canonical, product, now, length, discount);
-        bonusDays += discount.bonusFor(length);
+        int bonusDays = discount.bonusFor(length);
+        long until;
+        if (product.hasRank()) {
+            until = grantRankProduct(canonical, product, length, bonusDays, now);
+            if (until <= 0L) {
+                return Result.failure(Status.RANK_HIGHER, canonical);
+            }
+        } else {
+            until = product.isBundle() ? 0L : grantOne(canonical, product, now, length, discount);
+        }
         List<String> included = new ArrayList<>();
         if (product.isBundle()) {
             until = now;
@@ -224,6 +231,60 @@ public final class ShopService {
                 + " ₽, источник: " + (actor == null ? "console" : actor) + ")."
                 + (included.isEmpty() ? "" : " Набор: " + String.join(", ", included) + "."));
         return new Result(Status.GRANTED, canonical, product, until, length, included, bonusDays);
+    }
+
+    /**
+     * Выдаёт ранг из карточки каталога.
+     *
+     * <p>Повышение пересчитывает остаток по цене месячных карточек
+     * ({@link RankLadder#upgradeDays}), продление того же ранга складывает дни,
+     * понижение и покупка при уже имеющемся постоянном ранге не выдаются.</p>
+     *
+     * @return момент окончания ранга; {@code 0} — ранг не выдан
+     */
+    private long grantRankProduct(String playerName, ShopProduct product, int days, int bonusDays,
+                                  long now) {
+        int level = product.rank();
+        RegistrationStore.PlayerAccount account = access.store().getAccount(playerName).orElse(null);
+        boolean permanent = account != null && account.rankPermanent;
+        int permanentLevel = permanent ? account.rankLevel : 0;
+        int currentLevel = access.store().rankLevel(playerName, now);
+        if (permanentLevel >= level || (!permanent && currentLevel > level)) {
+            return 0L;
+        }
+        int totalDays = Math.max(1, days + bonusDays);
+        long cap = now + catalog().maxTotalDays() * ShopEntitlements.DAY_MILLIS;
+        long until;
+        if (!permanent && currentLevel == level) {
+            long base = Math.max(now, access.store().rankUntil(playerName));
+            until = Math.min(cap, base + totalDays * ShopEntitlements.DAY_MILLIS);
+        } else {
+            int remaining = 0;
+            if (!permanent && currentLevel > 0) {
+                long currentUntil = access.store().rankUntil(playerName);
+                if (currentUntil > now) {
+                    remaining = (int) Math.ceil((currentUntil - now) / (double) ShopEntitlements.DAY_MILLIS);
+                }
+            }
+            int planned = RankLadder.upgradeDays(totalDays, remaining,
+                    monthlyPrice(currentLevel), monthlyPrice(level), catalog().maxTotalDays());
+            until = now + planned * ShopEntitlements.DAY_MILLIS;
+        }
+        access.store().grantRankUntil(playerName, now, level, until, "shop:" + product.id());
+        return until;
+    }
+
+    /** Цена месячной карточки ранга — база для пересчёта остатка при повышении. */
+    private int monthlyPrice(int level) {
+        int price = 0;
+        int bestDays = Integer.MAX_VALUE;
+        for (ShopProduct product : catalog().products()) {
+            if (product.rank() == level && product.days() <= 31 && product.days() < bestDays) {
+                price = product.priceRubles();
+                bestDays = product.days();
+            }
+        }
+        return price;
     }
 
     /**

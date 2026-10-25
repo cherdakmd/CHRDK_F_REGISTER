@@ -254,9 +254,9 @@ ranks:
       join-line: "<gradient:#b388ff:#ffd700>⚜ Покровитель</gradient> <white>%player%</white> <gray>входит в летопись гильдии</gray>"
 
 # ================================================================
-#  Каталог товаров (1.4.110). Всё, что продаётся помимо проходки:
-#  вход без очереди, дополнительные дома, оформление ника, плашка
-#  мецената. Товар выдаётся по RCON-команде из витрины TradeMC:
+#  Каталог товаров (1.4.110, ранги — 1.4.167). Пять ступеней рангов,
+#  косметика поштучно и боевой пропуск. Товар выдаётся по RCON-команде
+#  из витрины TradeMC:
 #
 #      pass shopbuy <ник> <товар>          # срок из товара
 #      pass shopbuy <ник> <товар> 30       # свой срок (не больше потолка)
@@ -265,6 +265,7 @@ ranks:
 #    group       — временная группа LuckPerms (её видят очередь и аддоны);
 #    permissions — права, которые получает эта группа при /pass luckperms setup;
 #    tag         — MiniMessage-разметка ника в чате;
+#    rank        — ступень донатного ранга 1..5 (вместо записи «товар → срок»);
 #    commands    — консольные команды с %player% (анонс, выдача предметов).
 #
 #  ПРАВИЛО СЕРВЕРА: за деньги продаются удобство, оформление и статус.
@@ -290,50 +291,121 @@ shop:
     # но бонус всё равно не больше самого срока покупки.
     max-days: 30
   products:
-    # Вход без очереди: очередь читает LuckPerms-группу vip (регулируется в
-    # queue/config.yml → vip-groups). Не даёт силы — только место на входе.
-    - id: vip-queue
-      name: "<gold>Вход без очереди</gold>"
-      price: 149
-      days: 30
-      group: "vip"
-      description: "Проход на переполненный сервер вперёд очереди"
-      tag: ""
-      permissions: []
-      commands: []
-
-    # Дополнительные дома: телепорты поднимают лимит по праву, а не по проходке.
-    # Потолок задан в teleports/config.yml (homes.hard-cap), здесь только срок.
-    - id: homes-plus
-      name: "<aqua>Дополнительные дома</aqua>"
+    # --- Донатные ранги (1.4.167) -------------------------------------------
+    # Ранг — подписка на комфорт, оформление и статус. У каждой ступени свои
+    # возможности; числа (дома, приваты, скидки) живут в конфигах модулей,
+    # оформление — в секции ranks выше. Здесь только цена, срок и сама ступень.
+    # Год = десять месяцев, два в подарок.
+    #
+    # ВАЖНО: цена месячной карточки — база для пересчёта остатка при повышении
+    # ранга (см. RankLadder.carryDays). Меняйте цены парами: месяц и год.
+    - id: rank-wanderer
+      name: "<gray>Странник</gray>"
       price: 99
       days: 30
-      group: "homes"
-      description: "Лимит точек дома 8 вместо 3"
-      tag: ""
-      permissions:
-        - "chrdktele.homes.plus"
-      commands: []
-
-    # Цветной ник: только оформление в чате, без игровых преимуществ.
-    - id: nick-color
-      name: "<yellow>Цветной ник</yellow>"
-      price: 149
-      days: 30
+      rank: 1
       group: ""
-      description: "Ник золотого цвета в общем и локальном чате"
-      tag: "<gold>"
+      description: "Вход без очереди, знак ✦, 4 дома, 28 чанков, скидка 10 %"
+      tag: ""
       permissions: []
       commands: []
 
-    # Плашка мецената: статус и благодарность, никаких плюсов в игре.
-    - id: sponsor
-      name: "<gradient:#ffd700:#ff8800>Меценат</gradient>"
-      price: 499
-      days: 90
+    - id: rank-wanderer-year
+      name: "<gray>Странник — год</gray>"
+      price: 990
+      days: 365
+      rank: 1
       group: ""
-      description: "Золотой градиент на нике и благодарность в /pass my"
-      tag: "<gradient:#ffd700:#ff8800>"
+      description: "Год Странника: десять месяцев по цене, два в подарок"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: rank-pathfinder
+      name: "<green>Следопыт</green>"
+      price: 159
+      days: 30
+      rank: 2
+      group: ""
+      description: "Всё из Странника, /craft, 3 шлейфа, 6 домов, 34 чанка"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: rank-pathfinder-year
+      name: "<green>Следопыт — год</green>"
+      price: 1590
+      days: 365
+      rank: 2
+      group: ""
+      description: "Год Следопыта: десять месяцев по цене, два в подарок"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: rank-keeper
+      name: "<aqua>Хранитель</aqua>"
+      price: 229
+      days: 30
+      rank: 3
+      group: ""
+      description: "Всё из Следопыта, /ec, строка входа, 5 шлейфов, 8 домов"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: rank-keeper-year
+      name: "<aqua>Хранитель — год</aqua>"
+      price: 2290
+      days: 365
+      rank: 3
+      group: ""
+      description: "Год Хранителя: десять месяцев по цене, два в подарок"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: rank-patron
+      name: "<gradient:#ffd700:#ff8800>Меценат</gradient>"
+      price: 299
+      days: 30
+      rank: 4
+      group: ""
+      description: "Всё из Хранителя, /hat, градиент, свой шлейф, премиум-трек"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: rank-patron-year
+      name: "<gradient:#ffd700:#ff8800>Меценат — год</gradient>"
+      price: 2990
+      days: 365
+      rank: 4
+      group: ""
+      description: "Год Мецената: десять месяцев по цене, два в подарок"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: rank-founder
+      name: "<gradient:#b388ff:#ffd700>Покровитель</gradient>"
+      price: 365
+      days: 30
+      rank: 5
+      group: ""
+      description: "Всё из Мецената, свой цвет и герб, список покровителей"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: rank-founder-year
+      name: "<gradient:#b388ff:#ffd700>Покровитель — год</gradient>"
+      price: 3650
+      days: 365
+      rank: 5
+      group: ""
+      description: "Год Покровителя — вершина лестницы: 3650 ₽"
+      tag: ""
       permissions: []
       commands: []
 
@@ -427,22 +499,6 @@ shop:
         - trail-sparkles
         - trail-magic
 
-    # Стартовый набор для новичка: проходка и косметика одной покупкой.
-    # 299 ₽ вместо 349 ₽ по отдельности (проходка 150 ₽ + набор 199 ₽).
-    - id: start-kit
-      name: "<aqua>Стартовый набор</aqua>"
-      price: 299
-      days: 30
-      group: ""
-      description: "Проходка на 30 дней и все шлейфы — дешевле на 50 ₽"
-      tag: ""
-      permissions: []
-      commands: []
-      # Дни проходки: выдаются как обычная покупка проходки, без потолка
-      # shop.max-total-days (у проходки свой расчёт срока).
-      pass-days: 30
-      includes:
-        - trails-pack
 
 # Главное меню сервера /menu (GUI, конфиг-driven): ядро про аддоны не знает —
 # вы сами решаете, какие пункты видят игроки.
@@ -898,8 +954,10 @@ tablist:
     - "<gray>2FA: <white>%security%</white> <dark_gray>•</dark_gray> <yellow>%ping% мс</yellow> <dark_gray>•</dark_gray> %world%"
     - "<aqua>%navigation%</aqua>"
     - ""
-  # Пусто: не перекрашивать чужие префиксы/имена; CHRDK_Ranks управляет сортировкой.
-  player-name-format: ""
+  # %player_tagged% — ник с оформлением: знак и цвет донатного ранга, метка
+  # стримера, звание кладоискателя. Пусто — не перекрашивать чужие префиксы
+  # (сортировкой таба управляет CHRDK_Ranks, формат ей не мешает).
+  player-name-format: "%player_tagged%"
   # Никнеймы, закреплённые ВВЕРХУ списка игроков (регистр не важен).
   # Реализовано через приоритетную команду scoreboard — клиент Minecraft
   # сортирует список сначала по команде, потом по нику.

@@ -1738,6 +1738,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             }
             case UNKNOWN_PRODUCT -> messages.send(sender, "shop.unknown-product",
                     "id", productId, "list", String.join(", ", plugin.shop().catalog().ids()));
+            case RANK_HIGHER -> messages.send(sender, "shop.rank-higher", "player", result.playerName());
             default -> messages.send(sender, "shop.disabled");
         }
     }
@@ -1773,6 +1774,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             }
             case UNKNOWN_PRODUCT -> messages.send(sender, "shop.unknown-product",
                     "id", productId, "list", String.join(", ", plugin.shop().catalog().ids()));
+            case RANK_HIGHER -> messages.send(sender, "shop.rank-higher", "player", result.playerName());
             default -> messages.send(sender, "shop.disabled");
         }
     }

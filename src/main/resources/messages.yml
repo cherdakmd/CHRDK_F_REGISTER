@@ -1096,6 +1096,7 @@ messages:
     "revoked-player": "<yellow>Товар «%name%» больше не действует.</yellow>"
     "not-active": "<red>У %player% нет активного товара «%id%».</red>"
     "unknown-product": "<red>Товар «%id%» не найден. Доступно: %list%</red>"
+    "rank-higher": "<red>У %player% уже есть ранг не ниже — покупка не выдана.</red>"
     "my-header": "<gold><b>Мои покупки</b></gold> <gray>(%player%)</gray>"
     "my-entry": "<yellow>%name%</yellow> <gray>— до %until%, осталось %left% дн.</gray>"
     "my-empty": "<gray>Активных покупок нет. Каталог: /%label% shop</gray>"

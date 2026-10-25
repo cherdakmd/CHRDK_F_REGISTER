@@ -138,6 +138,17 @@ public final class ShopCatalog {
                 tag = "";
             }
 
+            int rank = intOf(entry.get("rank"), 0);
+            if (rank < 0 || rank > RankLadder.MAX_LEVEL) {
+                problems.add("shop.products[" + index + "] (" + id + "): rank " + rank
+                        + " вне диапазона 1.." + RankLadder.MAX_LEVEL + " — товар без ранга");
+                rank = 0;
+            }
+            if (rank > 0 && !strings(entry.get("includes")).isEmpty()) {
+                problems.add("shop.products[" + index + "] (" + id + "): у товара ранга не бывает "
+                        + "includes — набор проигнорирован");
+            }
+
             int passDays = intOf(entry.get("pass-days"), 0);
             if (passDays < 0 || passDays > MAX_PRODUCT_DAYS) {
                 problems.add("shop.products[" + index + "] (" + id + "): pass-days " + passDays
@@ -149,8 +160,9 @@ public final class ShopCatalog {
             List<String> permissions = strings(entry.get("permissions"));
             List<String> commands = strings(entry.get("commands"));
 
+            List<String> safeIncludes = rank > 0 ? List.of() : includes;
             ShopProduct product = new ShopProduct(id, name, text(entry.get("description")),
-                    price, days, group, tag, permissions, commands, includes, List.of(), passDays);
+                    price, days, group, tag, permissions, commands, safeIncludes, List.of(), passDays, rank);
             seen.put(id, product);
             products.add(product);
         }
@@ -188,7 +200,7 @@ public final class ShopCatalog {
             result.add(new ShopProduct(product.id(), product.name(), product.description(),
                     product.priceRubles(), product.days(), product.group(), product.tag(),
                     product.permissions(), product.commands(), product.includes(), leaves,
-                    product.passDays()));
+                    product.passDays(), product.rank()));
         }
         for (ShopProduct bundle : result) {
             if (bundle.resolvedIncludes().isEmpty() || bundle.hasPassDays()) {

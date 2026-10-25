@@ -493,7 +493,7 @@ public final class RegistrationStore {
             return 0L;
         }
         PlayerAccount account = data.accounts.get(canonicalName(playerName));
-        if (account == null || account.rankPermanent) {
+        if (account == null) {
             return 0L;
         }
         return Math.max(0L, account.passUntil);
@@ -508,8 +508,14 @@ public final class RegistrationStore {
     public synchronized PlayerAccount grantRankUntil(String playerName, long nowMillis, int level,
                                                      long untilMillis, String source) {
         PlayerAccount account = accountFor(playerName);
-        account.rankLevel = RankLadder.clampLevel(level);
-        account.rankPermanent = false;
+        int safeLevel = RankLadder.clampLevel(level);
+        if (account.rankPermanent) {
+            // Постоянный ранг не понижаем: подписка живёт поверх него отдельной ступенью.
+            account.tempRankLevel = safeLevel;
+        } else {
+            account.rankLevel = safeLevel;
+            account.tempRankLevel = 0;
+        }
         account.passUntil = Math.max(nowMillis, untilMillis);
         account.rankGrantedAt = nowMillis;
         consumeTrial(account);
@@ -527,6 +533,7 @@ public final class RegistrationStore {
         PlayerAccount account = accountFor(playerName);
         account.rankLevel = RankLadder.clampLevel(level);
         account.rankPermanent = true;
+        account.tempRankLevel = 0;
         account.passUntil = 0L;
         account.rankGrantedAt = nowMillis;
         consumeTrial(account);
@@ -549,8 +556,8 @@ public final class RegistrationStore {
             return 0L;
         }
         PlayerAccount account = accountFor(playerName);
-        if (account.rankPermanent) {
-            return 0L;
+        if (account.rankPermanent && account.tempRankLevel <= 0) {
+            return 0L; // постоянный ранг без подписки продлевать нечем
         }
         if (account.rankLevel <= 0) {
             account.rankLevel = 1;
@@ -577,6 +584,7 @@ public final class RegistrationStore {
         boolean had = account.rankLevel > 0 || account.rankPermanent || account.passUntil > 0;
         account.rankLevel = 0;
         account.rankPermanent = false;
+        account.tempRankLevel = 0;
         account.passUntil = 0L;
         account.rankGrantedAt = 0L;
         clearExpiryWarnings(account);
@@ -608,6 +616,7 @@ public final class RegistrationStore {
             if (level > 0) {
                 account.rankLevel = level;
                 account.rankPermanent = true;
+                account.tempRankLevel = 0;
                 account.passUntil = 0L;
                 account.rankGrantedAt = nowMillis;
                 account.lastGrantSource = "migration:permanent";
@@ -2075,6 +2084,8 @@ public final class RegistrationStore {
         public int rankLevel;
         /** Ранг выдан навсегда: миграция с проходки или ручная выдача. */
         public boolean rankPermanent;
+        /** Временная ступень выше постоянной (подписка поверх «навсегда»); 0 — нет. */
+        public int tempRankLevel;
         /** Когда выдан текущий ранг (мс). */
         public long rankGrantedAt;
         public boolean trialConsumed;
@@ -2117,13 +2128,12 @@ public final class RegistrationStore {
          * постоянного ранга, но даже без неё игрок не теряет оплаченное.</p>
          */
         public int effectiveRank(long nowMillis) {
-            if (rankPermanent) {
-                return Math.max(1, rankLevel);
-            }
+            int permanent = rankPermanent ? Math.max(1, rankLevel) : 0;
+            int temporary = 0;
             if (passUntil > nowMillis) {
-                return Math.max(1, rankLevel);
+                temporary = Math.max(1, tempRankLevel > 0 ? tempRankLevel : rankLevel);
             }
-            return 0;
+            return Math.max(permanent, temporary);
         }
 
         public boolean hasActivePass(long nowMillis) {

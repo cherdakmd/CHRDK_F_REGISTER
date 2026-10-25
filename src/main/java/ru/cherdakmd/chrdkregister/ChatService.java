@@ -108,7 +108,33 @@ public final class ChatService implements Listener {
     public String decoratedName(String playerName) {
         java.util.function.Function<String, String> resolver = tagResolver;
         String tag = resolver == null ? "" : resolver.apply(playerName);
-        return nameTags.decorate(playerName, ShopEntitlements.decorate(playerName, tag));
+        String base = ShopEntitlements.decorate(playerName, tag);
+        return nameTags.decorate(playerName, decorateRank(playerName, base, tag != null && !tag.isBlank()));
+    }
+
+    /**
+     * Оформление ника донатным рангом (1.4.167): знак перед ником и цвет ступени.
+     *
+     * <p>Оплаченный ранее тег каталога ({@code nick-color}, {@code sponsor}) главнее
+     * цвета ранга, пока не истёк: купленное вперёд не отбираем. Знак ранга при этом
+     * остаётся — он и есть визитная карточка ступени.</p>
+     */
+    private String decorateRank(String playerName, String name, boolean hasLegacyTag) {
+        RankSettings ranks = accessManager.config().ranks();
+        if (ranks == null || !ranks.enabled()) {
+            return name;
+        }
+        int level = accessManager.store().rankLevel(playerName, System.currentTimeMillis());
+        RankTier tier = level <= 0 ? null : ranks.tier(level);
+        if (tier == null) {
+            return name;
+        }
+        String decorated = hasLegacyTag ? name : tier.decorate(name);
+        String prefix = tier.badge().isBlank() ? "" : tier.badge() + " ";
+        if (ranks.showNameInChat()) {
+            return prefix + decorated + " <dark_gray>·</dark_gray> " + tier.decorate(tier.name());
+        }
+        return prefix + decorated;
     }
 
     /** Реестр оформления ников — его получает реализация публичного API. */
