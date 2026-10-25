@@ -58,7 +58,6 @@ public final class TreasureListener implements Listener {
     private final Random random = new Random();
     private final NamespacedKey arrowBonusKey;
     private final Map<UUID, Long> lastTreasure = new ConcurrentHashMap<>();
-
     private MinedBlocks minedBlocks;
 
     public TreasureListener(TreasuresPlugin plugin, TreasureService service) {
@@ -479,18 +478,37 @@ public final class TreasureListener implements Listener {
         plugin.getLogger().info(line.toString());
     }
 
-    private void particles(Location location, TreasureTier tier) {
-        World world = location.getWorld();
-        if (world == null) {
-            return;
-        }
-        Particle particle = switch (tier) {
+    /** Частица торжества для ступени. */
+    static Particle particleOf(TreasureTier tier) {
+        return switch (tier) {
             case COMMON -> Particle.HAPPY_VILLAGER;
             case RARE -> Particle.END_ROD;
             case EPIC -> Particle.ENCHANT;
             case LEGENDARY -> Particle.TOTEM_OF_UNDYING;
             case MYTHICAL -> Particle.DRAGON_BREATH;
         };
+    }
+
+    /**
+     * Данные, без которых частица не отрисуется.
+     *
+     * <p>1.4.170: в новых версиях Minecraft у {@code DRAGON_BREATH} появились
+     * обязательные данные Float (сила). Вызов без них бросал
+     * {@link IllegalArgumentException} «missing required data» из
+     * {@code CraftParticle}, событие добычи обрывалось — игрок не получал ни
+     * сообщения, ни витрины находки. Теперь данные передаются, если частица
+     * их требует; для простых частиц остаётся {@code null}.</p>
+     */
+    static Object dataOf(Particle particle) {
+        return TreasureParticles.dataOf(particle);
+    }
+
+    private void particles(Location location, TreasureTier tier) {
+        World world = location.getWorld();
+        if (world == null) {
+            return;
+        }
+        Particle particle = particleOf(tier);
         int count = switch (tier) {
             case COMMON -> 8;
             case RARE -> 14;
@@ -498,7 +516,10 @@ public final class TreasureListener implements Listener {
             case LEGENDARY -> 32;
             case MYTHICAL -> 48;
         };
-        world.spawnParticle(particle, location.add(0.5, 0.6, 0.5), count, 0.45, 0.45, 0.45, 0.02);
+        Location center = location.clone().add(0.5, 0.6, 0.5);
+        // Эффект не должен обрывать находку: сообщение и витрина важнее частиц.
+        TreasureParticles.spawn(world, particle, center, count, 0.45, 0.45, 0.45, 0.02,
+                plugin.getLogger());
     }
 
     private static Sound soundOf(TreasureTier tier) {

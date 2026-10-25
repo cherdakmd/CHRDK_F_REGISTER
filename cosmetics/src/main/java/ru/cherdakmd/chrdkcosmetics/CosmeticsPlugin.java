@@ -30,6 +30,9 @@ public final class CosmeticsPlugin extends JavaPlugin implements Listener {
     private volatile ChrdkRegisterApi coreApi;
     private SelectionStore store;
     private BukkitTask trailTask;
+    /** Частицы, о которых уже предупредили: не спамим в лог каждый тик. */
+    private final java.util.Set<String> warnedParticles =
+            java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     /** Неизменяемый снимок конфига. */
     record CosmeticsConfig(boolean passOnly, boolean shopEnabled, List<String> packProducts,
@@ -176,12 +179,30 @@ public final class CosmeticsPlugin extends JavaPlugin implements Listener {
                 shop ? config.packProducts() : List.of());
     }
 
-    static Particle resolveParticle(String id) {
+    /**
+     * Частица по имени из конфига.
+     *
+     * <p>1.4.170: частицы с обязательными данными ({@code dust},
+     * {@code dragon_breath}, {@code block}…) для шлейфа не подходят: вызов без
+     * данных бросает {@link IllegalArgumentException}, а шлейф рисуется каждые
+     * несколько тиков — сервер утонул бы в одинаковых ошибках. Такую настройку
+     * пропускаем и предупреждаем один раз.</p>
+     */
+    Particle resolveParticle(String id) {
         if (id == null || id.isBlank()) {
             return null;
         }
         try {
-            return Registry.PARTICLE_TYPE.get(NamespacedKey.minecraft(id));
+            Particle particle = Registry.PARTICLE_TYPE.get(NamespacedKey.minecraft(id));
+            if (particle != null && particle.getDataType() != Void.class) {
+                if (warnedParticles.add(id)) {
+                    getLogger().warning("cosmetics: частица '" + id + "' требует данных ("
+                            + particle.getDataType().getSimpleName()
+                            + ") и не подходит для шлейфа — эффект пропущен.");
+                }
+                return null;
+            }
+            return particle;
         } catch (RuntimeException exception) {
             return null;
         }

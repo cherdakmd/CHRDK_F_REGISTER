@@ -221,8 +221,12 @@ public final class TreasureAbilities {
                 // подскажет, но защита от «молча ничего не сделать» остаётся
             }
         }
-        player.getWorld().spawnParticle(particleOf(ability.kind()),
-                player.getLocation().add(0.0, 1.0, 0.0), 18, 0.6, 0.4, 0.6, 0.02);
+        // Частица способности рисуется через общий помощник: у некоторых
+        // частиц в новых версиях появились обязательные данные, и вызов без них
+        // бросал бы IllegalArgumentException прямо в момент применения.
+        TreasureParticles.spawn(player.getWorld(), particleOf(ability.kind()),
+                player.getLocation().add(0.0, 1.0, 0.0), 18, 0.6, 0.4, 0.6, 0.02,
+                plugin.getLogger());
         player.playSound(player.getLocation(), soundOf(ability.kind()), 0.9f, 1.0f);
     }
 
