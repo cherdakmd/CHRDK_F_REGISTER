@@ -94,8 +94,10 @@ class ProfessionMathTest {
         assertEquals(5, ProfessionMath.nextCookStep(1), "с первого уровня следующий шаг — пятый");
         assertEquals(5, ProfessionMath.nextCookStep(4));
         assertEquals(15, ProfessionMath.nextCookStep(5));
-        assertEquals(30, ProfessionMath.nextCookStep(15));
+        assertEquals(0, ProfessionMath.nextCookStep(15),
+                "порог 30-го уровня без ранга недоступен");
         assertEquals(0, ProfessionMath.nextCookStep(25), "без ранга дальше 25-го некуда");
+        assertEquals(30, ProfessionMath.nextCookStep(15, 35), "ранг V открывает 30-й");
         assertEquals(30, ProfessionMath.nextCookStep(25, 35), "ранг V открывает 30-й");
         assertEquals(0, ProfessionMath.nextCookStep(30, 35));
         assertEquals(0, ProfessionMath.nextCookStep(35, 35));
