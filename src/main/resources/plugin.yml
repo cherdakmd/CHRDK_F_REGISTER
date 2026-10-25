@@ -26,6 +26,13 @@ commands:
   menu:
     description: "Главное меню сервера (GUI): аккаунт, награды, экономика, приваты, развитие и защита"
     usage: /<command>
+  rank:
+    description: "Витрина донатных рангов: карточки, мой ранг, покровители, правила"
+    usage: /<command> [shop|my|top|rules]
+  rankadmin:
+    description: "Ручная выдача и снятие донатных рангов"
+    permission: chrdkregister.admin
+    usage: /<command> <give <ник> <ступень 1..5> [дней] | take <ник> | info <ник>>
   captcha:
     description: Ответ на проверку «ты не бот» после серии неудачных попыток входа
     usage: /<command> <число>

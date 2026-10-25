@@ -8,7 +8,7 @@ depend: [CHRDK_Core]
 commands:
   ranks:
     description: "Звания и наигранное время"
-    aliases: [rank, zvanie]
+    aliases: [zvanie]
     usage: "/ranks [ник]"
   ranksadmin:
     description: "Администрирование званий"

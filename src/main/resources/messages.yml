@@ -84,6 +84,7 @@ messages:
   # usage — Подсказки по синтаксису команд
   # ---------------------------------------------------------------
   "usage":
+    "rank-my": "<yellow>Использование: /%label% my [ник]</yellow>"
     "backup": "<yellow>Использование: /%label% backup <create|list|restore <файл>></yellow>"
     "backup-restore": "<yellow>Использование: /%label% backup restore <файл></yellow>"
     "login": "<yellow>Использование: /login <пароль> [код_2FA]</yellow>"
@@ -1102,3 +1103,53 @@ messages:
     "my-entry": "<yellow>%name%</yellow> <gray>— до %until%, осталось %left% дн.</gray>"
     "my-empty": "<gray>Активных покупок нет. Каталог: /%label% shop</gray>"
     "my-footer": "<gray>Всего активно: %count%</gray>"
+
+  # ---------------------------------------------------------------
+  # rank — витрина донатных рангов (1.4.167): карточки, мой ранг, топ, правила
+  # ---------------------------------------------------------------
+  "rank":
+    "menu-title": "<dark_gray>Привилегии гильдии</dark_gray>"
+    "card-name": "%badge% %rank%"
+    "card-price": "<gray>30 дней — <gold>%month% ₽</gold> · год — <gold>%year% ₽</gold></gray>"
+    "ability-1": "<gray>· Вход без очереди</gray>\n<gray>· Знак ✦ и серый ник</gray>\n<gray>· 4 дома · 28 чанков · 12 лотов</gray>\n<gray>· Скидка на телепорты 10 %</gray>"
+    "ability-2": "<gray>· Три шлейфа на выбор</gray>\n<gray>· Зелёный ник ❖</gray>\n<gray>· 6 домов · 34 чанка · 15 лотов</gray>\n<gray>· Скидка на телепорты 20 %</gray>"
+    "ability-3": "<gray>· Строка входа в чате</gray>\n<gray>· Бирюзовый ник ✧</gray>\n<gray>· 8 домов · 40 чанков · 18 лотов</gray>\n<gray>· Скидка на телепорты 30 %</gray>"
+    "ability-4": "<gray>· Премиум-трек батлпасса</gray>\n<gray>· Золотой градиент ★ и «Золотая пыль»</gray>\n<gray>· 10 домов · 44 чанка · 24 лота</gray>\n<gray>· Скидка на телепорты 40 %</gray>"
+    "ability-5": "<gray>· /hat — блок на голову</gray>\n<gray>· Свой цвет, герб и строка входа ⚜</gray>\n<gray>· 12 домов · 48 чанков · 30 лотов</gray>\n<gray>· Скидка на телепорты 50 %</gray>\n<gray>· Имя в списке покровителей</gray>"
+    "card-current": "<green>▸ Ваш ранг</green>"
+    "card-current-until": "<green>  до %until%</green>"
+    "card-lower": "<dark_gray>▸ Ниже вашего ранга</dark_gray>"
+    "card-buy": "<yellow>▸ Нажмите, чтобы открыть витрину</yellow>"
+    "button-my": "<aqua>Мой ранг</aqua>"
+    "button-top": "<gold>Покровители</gold>"
+    "button-rules": "<white>Что мы не продаём</white>"
+    "button-close": "<red>Закрыть</red>"
+    "shop-header": "<gold><b>Ранги гильдии</b></gold> <gray>— вход свободный, ранг делает жизнь приятнее</gray>"
+    "shop-entry": "%badge% %rank% <gray>—</gray> <gold>%month% ₽</gold> <gray>за 30 дней,</gray> <gold>%year% ₽</gold> <gray>за год</gray>"
+    "shop-link": "<gray>Витрина: </gray><click:open_url:'%url%'><aqua><u>%label%</u></aqua></click>"
+    "no-link": "<yellow>Витрина ещё не подключена — напишите администратору.</yellow>"
+    "my-none": "<gray>У %player% пока нет ранга. Витрина: <click:open_url:'%url%'><aqua><u>открыть</u></aqua></click></gray>"
+    "my-line": "<gray>%player%</gray> <dark_gray>·</dark_gray> %badge% %rank% <gray>— до %until%, осталось %days% дн.</gray>"
+    "top-header": "<gold><b>Покровители гильдии</b></gold> <gray>(%count%)</gray>"
+    "top-entry": "%badge% %rank% <white>%player%</white> <gray>— до %until%</gray>"
+    "top-empty": "<gray>Пока никого: список открывают Меценаты и Покровители.</gray>"
+    "rules": "<gold><b>Что мы не продаём</b></gold>\n<gray>Никакой силы: урон, здоровье, броня, удача и шанс находки.</gray>\n<gray>Никакого лута и экономики: множители алмазов, бесплатные телепорты, скидки на сбор.</gray>\n<gray>Никаких админ-команд: /fly, /god, /back, /repair.</gray>\n<gray>Никакого приоритета выше заслуг: таб сортируется по стажу.</gray>\n<gray>Ранг делает удобнее и красивее то, что и так доступно всем.</gray>"
+    "permanent": "навсегда"
+    "already-current": "<gray>Ранг %rank% уже ваш — продлить можно в витрине.</gray>"
+    "already-higher": "<gray>У вас уже есть ранг выше: %rank% младше вашего.</gray>"
+    "buy-link": "%rank% <gray>—</gray> <gold>%price% ₽</gold> <gray>за 30 дней. Витрина: </gray><click:open_url:'%url%'><aqua><u>%label%</u></aqua></click>"
+    "disabled": "<red>Витрина рангов выключена.</red>"
+    "usage": "<gold>/rank</gold> <gray>[shop|my|top|rules] — витрина, мой ранг, покровители, правила</gray>"
+
+  # ---------------------------------------------------------------
+  # rankadmin — ручная выдача рангов (1.4.167)
+  # ---------------------------------------------------------------
+  "rankadmin":
+    "usage": "<yellow>Использование: /rankadmin <give <ник> <ступень 1..5> [дней] | take <ник> | info <ник>></yellow>"
+    "bad-level": "<red>Ступень — число от 1 до 5.</red>"
+    "bad-days": "<red>Срок — целое число дней (0 или пусто — навсегда).</red>"
+    "given": "<green>%player% получил ступень %level% (%days%).</green>"
+    "taken": "<yellow>Ранг %player% снят.</yellow>"
+    "take-none": "<gray>У %player% не было ранга.</gray>"
+    "info": "<gray>%player%</gray> <dark_gray>·</dark_gray> %rank% <gray>(ступень %level%), до %until%</gray>"
+    "none": "<gray>нет ранга</gray>"

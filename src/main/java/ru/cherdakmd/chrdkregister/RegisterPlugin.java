@@ -21,6 +21,7 @@ public final class RegisterPlugin extends JavaPlugin {
     private PassMenuService passMenuService;
     private DonateMenuService donateMenuService;
     private ServerMenuService serverMenuService;
+    private RankMenuService rankMenuService;
     private BankStore bankStore;
     private BankService bankService;
     private ProfileRegistry profileRegistry;
@@ -65,6 +66,7 @@ public final class RegisterPlugin extends JavaPlugin {
         this.passMenuService = new PassMenuService(accessManager, messages);
         this.donateMenuService = new DonateMenuService(accessManager, messages);
         this.serverMenuService = new ServerMenuService(this, accessManager, messages);
+        this.rankMenuService = new RankMenuService(this, accessManager, messages);
         this.bankStore = new BankStore(getDataFolder().toPath(), getLogger());
         this.bankStore.load();
         this.bankService = new BankService(this, bankStore, () -> accessManager.config().economy());
@@ -96,6 +98,7 @@ public final class RegisterPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(passMenuService, this);
         getServer().getPluginManager().registerEvents(donateMenuService, this);
         getServer().getPluginManager().registerEvents(serverMenuService, this);
+        getServer().getPluginManager().registerEvents(rankMenuService, this);
         getServer().getPluginManager().registerEvents(adminDonationsGui, this);
         getServer().getPluginManager().registerEvents(
                 new MotdService(this, accessManager::config), this);
@@ -134,6 +137,12 @@ public final class RegisterPlugin extends JavaPlugin {
             });
             profileCommand.setTabCompleter((sender, command, alias, args) ->
                     profileService.complete(sender, args));
+        }
+        PluginCommand rankCommand = getCommand("rank");
+        if (rankCommand != null) {
+            RankCommandHandler rankHandler = new RankCommandHandler(this, accessManager, rankMenuService);
+            rankCommand.setExecutor(rankHandler);
+            rankCommand.setTabCompleter(rankHandler);
         }
         PluginCommand menuCommand = getCommand("menu");
         if (menuCommand != null) {
@@ -212,6 +221,7 @@ public final class RegisterPlugin extends JavaPlugin {
     public void onDisable() {
         if (pluginUpdater != null) pluginUpdater.close();
         if (serverMenuService != null) serverMenuService.shutdown();
+        if (rankMenuService != null) rankMenuService.shutdown();
         if (bankService != null) {
             bankService.shutdown();
             bankService = null;
@@ -308,6 +318,9 @@ public final class RegisterPlugin extends JavaPlugin {
         if (serverMenuService != null) {
             serverMenuService.setMessages(messages);
         }
+        if (rankMenuService != null) {
+            rankMenuService.setMessages(messages);
+        }
         if (bankCommands != null) {
             bankCommands.setMessages(messages);
         }
@@ -354,6 +367,11 @@ public final class RegisterPlugin extends JavaPlugin {
 
     public ServerMenuService serverMenu() {
         return serverMenuService;
+    }
+
+    /** Витрина донатных рангов {@code /rank} (1.4.167). */
+    public RankMenuService rankMenu() {
+        return rankMenuService;
     }
 
     /** Банк алмазов: /bal, /pay, /baltop и депозиты. */
