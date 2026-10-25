@@ -25,11 +25,14 @@ import java.util.Set;
  *
  * <p>Авто-раскладка: явные слоты уважаются, остальные иконки встают рядами
  * 10..16 / 19..25 / 28..34 / 37..43 / 46..52. Размер инвентаря подбирается
- * минимальный, куда всё помещается (27/36/45/54); страницы категорий всегда 54
- * слота — в нижнем ряду живёт кнопка «Назад».</p>
+ * минимальный, куда всё помещается (27/36/45/54); страницы категорий по
+ * умолчанию 45 слотов — в нижнем ряду живут кнопки «Назад» и «Закрыть».</p>
  *
  * <p>Категория, все пункты которой скрыты (аддон выключен или нет права),
  * пропадает с главной страницы: игрок не попадает в пустой инвентарь.</p>
+ *
+ * <p>Пункт без команды — подсказка: он виден, но клик по нему ничего не
+ * делает. Клик по кнопке «Закрыть» просто закрывает инвентарь.</p>
  */
 public final class ServerMenuService implements Listener {
 
@@ -41,9 +44,43 @@ public final class ServerMenuService implements Listener {
             37, 38, 39, 40, 41, 42, 43,
             46, 47, 48, 49, 50, 51, 52};
 
-    /** Кнопка меню: категория (переход) или команда. */
+    /** Что делает кнопка при клике. */
+    private enum Kind {
+        /** Выполнить команду от имени игрока. */
+        COMMAND,
+        /** Открыть страницу категории. */
+        CATEGORY,
+        /** Закрыть инвентарь. */
+        CLOSE,
+        /** Подсказка: клик игнорируется. */
+        INFO
+    }
+
+    /** Кнопка меню: категория (переход), команда, закрытие или подсказка. */
     private record Button(int slot, Material icon, String name, String lore, String command,
-                          String category) {
+                          String category, Kind kind) {
+
+        static Button command(int slot, Material icon, String name, String lore, String command) {
+            return new Button(slot, icon, name, lore, command, null, Kind.COMMAND);
+        }
+
+        static Button category(int slot, Material icon, String name, String lore, String id) {
+            return new Button(slot, icon, name, lore, null, id, Kind.CATEGORY);
+        }
+
+        static Button close(int slot, Material icon, String name) {
+            return new Button(slot, icon, name, "", null, null, Kind.CLOSE);
+        }
+
+        static Button info(int slot, Material icon, String name, String lore) {
+            return new Button(slot, icon, name, lore, null, null, Kind.INFO);
+        }
+
+        static Button of(ServerMenuSettings.Entry entry) {
+            return entry.info()
+                    ? info(entry.slot(), entry.icon(), entry.name(), entry.lore())
+                    : command(entry.slot(), entry.icon(), entry.name(), entry.lore(), entry.command());
+        }
     }
 
     /** Итог раскладки: размер инвентаря и слот каждого пункта. */
@@ -163,7 +200,8 @@ public final class ServerMenuService implements Listener {
         }
         List<Button> buttons = mainButtons(settings, player);
         if (buttons.isEmpty()) {
-            messages.send(player, "server-menu.disabled");
+            // Все разделы скрыты: игроку нечего открывать, но меню не сломано.
+            messages.send(player, "server-menu.empty");
             return;
         }
         MenuLayout layout = layoutSlots(buttons.stream().map(Button::slot).toList());
@@ -186,25 +224,17 @@ public final class ServerMenuService implements Listener {
                         player::hasPermission)) {
                     continue;
                 }
-                buttons.add(new Button(category.slot(), category.icon(), category.name(), category.lore(),
-                        null, category.id()));
+                buttons.add(Button.category(category.slot(), category.icon(), category.name(),
+                        category.lore(), category.id()));
             }
         }
-        boolean grouped = settings.grouped();
-        if (!grouped) {
-            // Плоский режим 1.4.49: все пункты на одной странице, в порядке конфига.
-            for (ServerMenuSettings.Entry entry : settings.entries()) {
-                if (available(entry, player)) {
-                    buttons.add(new Button(entry.slot(), entry.icon(), entry.name(), entry.lore(),
-                            entry.command(), null));
-                }
-            }
-            return buttons;
-        }
-        for (ServerMenuSettings.Entry entry : settings.looseEntries()) {
+        // Плоский режим 1.4.49: все пункты на одной странице, в порядке конфига.
+        List<ServerMenuSettings.Entry> loose = settings.grouped()
+                ? settings.looseEntries()
+                : settings.entries();
+        for (ServerMenuSettings.Entry entry : loose) {
             if (available(entry, player)) {
-                buttons.add(new Button(entry.slot(), entry.icon(), entry.name(), entry.lore(),
-                        entry.command(), null));
+                buttons.add(Button.of(entry));
             }
         }
         return buttons;
@@ -212,6 +242,14 @@ public final class ServerMenuService implements Listener {
 
     /** Открывает страницу категории. */
     public void openCategory(Player player, String categoryId) {
+        if (!player.hasPermission("chrdkregister.menu")) {
+            messages.send(player, "server-menu.no-permission");
+            return;
+        }
+        if (accessManager.getStage(player) != AccessManager.PlayerStage.AUTHENTICATED) {
+            messages.send(player, "server-menu.need-auth");
+            return;
+        }
         ServerMenuSettings settings = accessManager.config().serverMenu();
         if (settings == null || !settings.enabled()) {
             messages.send(player, "server-menu.disabled");
@@ -230,12 +268,14 @@ public final class ServerMenuService implements Listener {
         }
         List<Button> buttons = new ArrayList<>();
         for (ServerMenuSettings.Entry entry : entries) {
-            buttons.add(new Button(entry.slot(), entry.icon(), entry.name(), entry.lore(),
-                    entry.command(), null));
+            buttons.add(Button.of(entry));
         }
-        // Кнопка «Назад» — обычный пункт с командой /menu и явным слотом.
-        buttons.add(new Button(settings.backSlot(), settings.backIcon(), settings.backName(), "",
-                "menu", null));
+        // «Назад» — обычный пункт с командой /menu и явным слотом.
+        buttons.add(Button.command(settings.backSlot(), settings.backIcon(), settings.backName(), "", "menu"));
+        // «Закрыть» — отдельное действие: команда не выполняется, инвентарь гаснет.
+        if (settings.closeSlot() >= 0 && settings.closeSlot() != settings.backSlot()) {
+            buttons.add(Button.close(settings.closeSlot(), settings.closeIcon(), settings.closeName()));
+        }
         MenuLayout layout = layoutSlots(buttons.stream().map(Button::slot).toList());
         ServerMenuHolder holder = new ServerMenuHolder(player.getUniqueId(), category.id(),
                 layout.slots(), buttons);
@@ -257,36 +297,55 @@ public final class ServerMenuService implements Listener {
     }
 
     private void paint(Inventory inventory, MenuLayout layout, List<Button> buttons, Player player) {
+        // Подстановки читают счёт игрока: считаем их один раз на страницу, а не на строку лора.
+        Object[] placeholders = menuPlaceholders(player);
         for (int i = 0; i < buttons.size() && i < layout.slots().size(); i++) {
             int slot = layout.slots().get(i);
             if (slot < 0 || slot >= inventory.getSize()) {
                 continue;
             }
-            inventory.setItem(slot, icon(buttons.get(i), player));
+            inventory.setItem(slot, icon(buttons.get(i), placeholders));
         }
     }
 
-    private ItemStack icon(Button button, Player player) {
+    private ItemStack icon(Button button, Object[] placeholders) {
         Material material = button.icon() == null ? Material.PAPER : button.icon();
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.displayName(messages.renderTemplate(button.name(), menuPlaceholders(player)));
+            meta.displayName(messages.renderTemplate(button.name(), placeholders));
             if (!button.lore().isBlank()) {
                 meta.lore(java.util.Arrays.stream(button.lore().split("\\R"))
-                        .map(line -> messages.renderTemplate(line, menuPlaceholders(player))).toList());
+                        .map(line -> messages.renderTemplate(line, placeholders)).toList());
             }
             item.setItemMeta(meta);
         }
         return item;
     }
 
+    /**
+     * Подстановки меню. Ранг отдаётся как {@link Messages.Trusted}: имя ступени
+     * уже содержит оформление из {@code ranks.levels}, и повторное экранирование
+     * показало бы игроку теги вместо цвета.
+     */
     private Object[] menuPlaceholders(Player player) {
         var account = accessManager.store().getAccount(player.getName()).orElse(null);
+        RankSettings ranks = accessManager.config().ranks();
         long now = System.currentTimeMillis();
-        return new Object[]{"player", player.getName(), "pass_left", PlaceholderValues.passLeft(account, now),
+        int level = account == null ? 0 : account.effectiveRank(now);
+        RankTier tier = level <= 0 || ranks == null ? null : ranks.tier(level);
+        String rankName = tier == null
+                ? "нет ранга"
+                : tier.format().replace("%name%", tier.name());
+        return new Object[]{
+                "player", player.getName(),
+                "pass_left", PlaceholderValues.passLeft(account, now),
                 "pass_days", account == null ? 0 : PlaceholderValues.wholeDaysLeft(account.passUntil, now),
-                "trial_days", accessManager.config().trialDays()};
+                "trial_days", accessManager.config().trialDays(),
+                "rank", Messages.trusted(rankName),
+                "rank_badge", tier == null || tier.badge().isBlank() ? "—" : tier.badge(),
+                "rank_level", level,
+                "rank_status", PlaceholderValues.rankStatus(account, now)};
     }
 
     /* ---------------------------------- клики ---------------------------------- */
@@ -301,37 +360,53 @@ public final class ServerMenuService implements Listener {
         for (int i = 0; i < holder.slots.size(); i++) {
             if (holder.slots.get(i) != event.getRawSlot()) continue;
             Button button = holder.buttons.get(i);
-            if (button.category() != null) {
-                Bukkit.getScheduler().runTask(plugin, () -> {
-                    if (!player.isOnline()) {
-                        return;
-                    }
-                    if (!accessManager.config().serverMenu().enabled()) {
+            switch (button.kind()) {
+                case INFO -> {
+                    return; // подсказка: инвентарь уже защищён от переноса предметов
+                }
+                case CLOSE -> {
+                    Bukkit.getScheduler().runTask(plugin, player::closeInventory);
+                    return;
+                }
+                case CATEGORY -> {
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        if (!player.isOnline()) {
+                            return;
+                        }
+                        if (!accessManager.config().serverMenu().enabled()) {
+                            player.closeInventory();
+                            messages.send(player, "server-menu.changed");
+                            return;
+                        }
+                        openCategory(player, button.category());
+                    });
+                    return;
+                }
+                case COMMAND -> {
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        if (!player.isOnline() || player.getOpenInventory().getTopInventory() != holder.inventory) {
+                            return;
+                        }
+                        if (!accessManager.config().serverMenu().enabled()) {
+                            player.closeInventory();
+                            messages.send(player, "server-menu.changed");
+                            return;
+                        }
+                        if (!player.hasPermission("chrdkregister.menu")
+                                || accessManager.getStage(player) != AccessManager.PlayerStage.AUTHENTICATED) {
+                            player.closeInventory();
+                            messages.send(player, "server-menu.unavailable");
+                            return;
+                        }
                         player.closeInventory();
-                        messages.send(player, "server-menu.changed");
-                        return;
-                    }
-                    openCategory(player, button.category());
-                });
-                return;
+                        player.performCommand(button.command());
+                    });
+                    return;
+                }
+                default -> {
+                    return;
+                }
             }
-            Bukkit.getScheduler().runTask(plugin, () -> {
-                if (!player.isOnline() || player.getOpenInventory().getTopInventory() != holder.inventory) return;
-                if (!accessManager.config().serverMenu().enabled()) {
-                    player.closeInventory();
-                    messages.send(player, "server-menu.changed");
-                    return;
-                }
-                if (!player.hasPermission("chrdkregister.menu")
-                        || accessManager.getStage(player) != AccessManager.PlayerStage.AUTHENTICATED) {
-                    player.closeInventory();
-                    messages.send(player, "server-menu.unavailable");
-                    return;
-                }
-                player.closeInventory();
-                player.performCommand(button.command());
-            });
-            return;
         }
     }
 

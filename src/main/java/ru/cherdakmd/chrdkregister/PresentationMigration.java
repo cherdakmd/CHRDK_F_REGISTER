@@ -29,10 +29,14 @@ final class PresentationMigration {
     /** Настройки меню, которые должны обновиться вместе с его пунктами. */
     static final List<String> MENU_COMPANIONS = List.of("server-menu.title",
             "server-menu.category-title", "server-menu.back-slot", "server-menu.back-icon",
-            "server-menu.back-name", "server-menu.categories");
+            "server-menu.back-name", "server-menu.close-slot", "server-menu.close-icon",
+            "server-menu.close-name", "server-menu.categories");
 
-    /** Стоковые снимки прошлых версий: от нового к старому. */
-    static final List<String> LEGACY_RESOURCES = List.of(
+    /**
+     * Стоковые снимки прошлых версий: от нового к старому. Снимок 1.4.169 —
+     * последний со старой плоской структурой меню (6 разделов, 42 пункта).
+     */
+    static final List<String> LEGACY_RESOURCES = List.of("presentation-legacy-1.4.169.yml",
             "presentation-legacy-pre-1.4.138.yml", "presentation-legacy.yml");
 
     private PresentationMigration() {

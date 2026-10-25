@@ -87,7 +87,7 @@ jobs:
           retention-days: 14
 
   # Прикладывает картинки витрины рангов к уже опубликованному релизу.
-  # Запуск: Actions → Build → Run workflow, поле release_tag = v1.4.169.
+  # Запуск: Actions → Build → Run workflow, поле release_tag = v1.4.170.
   # Отдельный workflow здесь не подходит: workflow_dispatch доступен только
   # для файлов, которые уже есть в ветке по умолчанию.
   shop-images:

@@ -53,73 +53,122 @@ class PresentationUpdateTest {
         assertTrue(PresentationMigration.replacements(empty,yaml("presentation-legacy.yml"),yaml("config.yml")).isEmpty());
     }
 
-    @Test void stockMenuCoversAllAddonsWithCorrectPermissionsAndNonPurchasingClaims() throws Exception {
-        // Material.isItem() in the runtime parser needs the server registry in Purpur 26.3.
-        // Verify raw config + layout here; icon creation remains a live-server smoke test.
-        var config=yaml("config.yml");
-        var categories=config.getMapList("server-menu.categories").stream()
-                .map(map -> String.valueOf(map.get("id"))).toList();
-        assertEquals(6,categories.size(),"категории меню: "+categories);
-        assertEquals(6,new HashSet<>(categories).size(),"ид категорий уникальны");
-        var entries=config.getMapList("server-menu.items").stream().map(map ->
-                new ServerMenuSettings.Entry(map.containsKey("slot")?((Number)map.get("slot")).intValue():-1,
-                        org.bukkit.Material.valueOf(map.get("icon").toString()),
-                        map.get("name").toString(), map.containsKey("lore")?map.get("lore").toString():"",
-                        map.get("command").toString(),
-                        map.get("plugin")==null?"":map.get("plugin").toString(),
-                        map.get("permission")==null?"":map.get("permission").toString(),
-                        map.get("category")==null?"":map.get("category").toString())).toList();
-        assertEquals(42,entries.size());
-        for (var entry : entries) {
-            if (!entry.category().isBlank()) assertTrue(categories.contains(entry.category()),entry.category());
-        }
-        // Пункты одной категории должны помещаться на страницу 54 слота (вместе с «Назад»).
-        for (String category : categories) {
-            var layout=ServerMenuService.layoutSlots(java.util.stream.Stream.concat(
-                    entries.stream().filter(e -> e.category().equals(category)).map(ServerMenuSettings.Entry::slot),
-                    java.util.stream.Stream.of(49)).toList());
-            assertFalse(layout.slots().contains(-1),category+": "+layout.slots());
-            assertEquals(layout.slots().size(),new HashSet<>(layout.slots()).size());
-        }
-        var main=ServerMenuService.layoutSlots(entries.stream()
-                .filter(e -> e.category().isBlank()).map(ServerMenuSettings.Entry::slot).toList());
-        assertFalse(main.slots().contains(-1),main.slots().toString());
-        Set<String> advertised=new HashSet<>();
-        Set<String> menuAddons=new HashSet<>();
+    /** Описание аддона из plugin.yml (ядро лежит в корне и сюда не попадает). */
+    private List<YamlConfiguration> addonDescriptors() throws Exception {
+        List<YamlConfiguration> out=new ArrayList<>();
         try(var paths=Files.list(Path.of("."))) {
             for(Path folder:paths.toList()) {
                 Path descriptor=folder.resolve("src/main/resources/plugin.yml");
                 if(!Files.exists(descriptor)) continue;
-                var plugin=YamlConfiguration.loadConfiguration(descriptor.toFile());
-                menuAddons.add(plugin.getString("name"));
+                out.add(YamlConfiguration.loadConfiguration(descriptor.toFile()));
             }
         }
-        for(var entry:entries) {
-            if (!entry.plugin().isBlank()) {
-                advertised.add(entry.plugin());
-                assertTrue(menuAddons.contains(entry.plugin()),"нет аддона "+entry.plugin());
-                String command=entry.command().split(" ")[0];
-                boolean found=false;
-                try(var paths=Files.list(Path.of("."))) {
-                    for(Path folder:paths.toList()) {
-                        Path descriptor=folder.resolve("src/main/resources/plugin.yml");
-                        if(!Files.exists(descriptor)) continue;
-                        var plugin=YamlConfiguration.loadConfiguration(descriptor.toFile());
-                        if(!entry.plugin().equals(plugin.getString("name"))) continue;
-                        assertTrue(plugin.contains("permissions."+entry.permission()),entry.permission());
-                        assertTrue(plugin.contains("commands."+command),entry.command());
-                        found=true;
-                    }
+        return out;
+    }
+
+    private ServerMenuSettings.Entry menuEntry(Map<?,?> map) {
+        return new ServerMenuSettings.Entry(
+                map.containsKey("slot")?((Number)map.get("slot")).intValue():-1,
+                org.bukkit.Material.valueOf(String.valueOf(map.get("icon"))),
+                String.valueOf(map.get("name")),
+                map.get("lore")==null?"":String.valueOf(map.get("lore")),
+                map.get("command")==null?"":String.valueOf(map.get("command")),
+                map.get("plugin")==null?"":String.valueOf(map.get("plugin")),
+                map.get("permission")==null?"":String.valueOf(map.get("permission")),
+                map.get("category")==null?"":String.valueOf(map.get("category")));
+    }
+
+    @Test void stockMenuCoversEveryAddonWithWorkingCommands() throws Exception {
+        // Material.isItem() в рантайм-парсере требует реестр сервера, поэтому здесь
+        // проверяются сырой конфиг и раскладка; создание иконок — смоук-тест на сервере.
+        var config=yaml("config.yml");
+        assertTrue(config.getBoolean("server-menu.enabled"),"меню включено в стоке");
+        var categories=config.getMapList("server-menu.categories").stream()
+                .map(map -> String.valueOf(map.get("id"))).toList();
+        assertEquals(7,categories.size(),"разделы меню: "+categories);
+        assertEquals(7,new HashSet<>(categories).size(),"ид разделов уникальны");
+        var entries=config.getMapList("server-menu.items").stream().map(this::menuEntry).toList();
+        assertEquals(50,entries.size(),"пункты меню 1.4.170");
+        for (var entry : entries) {
+            if (!entry.category().isBlank()) assertTrue(categories.contains(entry.category()),entry.category());
+        }
+        for (String category : categories) {
+            assertTrue(entries.stream().anyMatch(entry -> entry.category().equals(category)),
+                    "раздел без пунктов не нужен на главной: "+category);
+        }
+        // Страница раздела = пункты + «Назад» + «Закрыть»; всё должно влезть без потерь.
+        int backSlot=config.getInt("server-menu.back-slot",40);
+        int closeSlot=config.getInt("server-menu.close-slot",44);
+        assertNotEquals(backSlot,closeSlot,"«Назад» и «Закрыть» не делят слот");
+        for (String category : categories) {
+            List<Integer> requested=new ArrayList<>();
+            for (var entry : entries) if (entry.category().equals(category)) requested.add(entry.slot());
+            requested.add(backSlot);
+            if (closeSlot>=0) requested.add(closeSlot);
+            var layout=ServerMenuService.layoutSlots(requested);
+            assertFalse(layout.slots().contains(-1),category+": "+layout.slots());
+            assertEquals(layout.slots().size(),new HashSet<>(layout.slots()).size(),category+": "+layout.slots());
+            assertTrue(layout.size()<=54,category+": "+layout.size());
+        }
+        // Главная страница: разделы и пункты без категории.
+        var main=ServerMenuService.layoutSlots(entries.stream()
+                .filter(e -> e.category().isBlank()).map(ServerMenuSettings.Entry::slot).toList());
+        assertFalse(main.slots().contains(-1),main.slots().toString());
+        assertEquals(main.slots().size(),new HashSet<>(main.slots()).size());
+
+        // Каждый пункт ведёт в существующую команду и принадлежит реальному аддону.
+        var core=yaml("plugin.yml");
+        var addons=addonDescriptors();
+        Set<String> advertised=new HashSet<>();
+        Set<String> menuAddons=new HashSet<>();
+        for (var descriptor : addons) menuAddons.add(descriptor.getString("name"));
+        for (var entry : entries) {
+            assertNotEquals("claim",entry.command(),"/claim без аргументов покупает чанк");
+            assertFalse(entry.command().endsWith("admin"),entry.command());
+            if (entry.plugin().isBlank()) {
+                if (!entry.command().isBlank()) {
+                    String command=entry.command().split(" ")[0];
+                    assertTrue(core.contains("commands."+command),"ядро: "+entry.command());
                 }
-                assertTrue(found,entry.plugin());
+                continue;
             }
-            assertNotEquals("claim",entry.command(),"/claim without args buys a chunk");
-            assertFalse(entry.command().endsWith("admin"));
+            advertised.add(entry.plugin());
+            assertTrue(menuAddons.contains(entry.plugin()),"нет аддона "+entry.plugin());
+            assertFalse(entry.permission().isBlank(),"у пункта аддона есть право: "+entry.name());
+            var descriptor=addons.stream()
+                    .filter(plugin -> entry.plugin().equals(plugin.getString("name")))
+                    .findFirst().orElseThrow();
+            assertTrue(descriptor.contains("permissions."+entry.permission()),entry.permission());
+            if (!entry.command().isBlank()) {
+                String command=entry.command().split(" ")[0];
+                assertTrue(descriptor.contains("commands."+command),entry.command());
+            }
         }
-        // Меню показывает все установленные аддоны, включая новые волны 20–27.
-        for (String addon : List.of("CHRDK_Achievements","CHRDK_Skills","CHRDK_Treasures","CHRDK_Artifacts","CHRDK_Streams")) {
-            assertTrue(advertised.contains(addon),addon);
+        // Меню — карта сервера: каждый установленный аддон должен быть в нём представлен.
+        assertEquals(menuAddons,advertised,"меню покрывает все аддоны, включая новые волны");
+    }
+
+    @Test void stock169MenuBecomesNewStructureOnce() {
+        // Сервер, обновившийся с 1.4.169, получает новые разделы и «Закрыть».
+        var snapshot=yaml("presentation-legacy-1.4.169.yml");
+        var live=yaml("presentation-legacy-1.4.169.yml");
+        var fresh=yaml("config.yml");
+        var changes=PresentationMigration.replacements(live,List.of(snapshot),fresh);
+        assertTrue(changes.contains("server-menu.items"),changes.toString());
+        assertTrue(changes.contains("server-menu.categories"),changes.toString());
+        for (String companion : PresentationMigration.MENU_COMPANIONS) {
+            assertTrue(changes.contains(companion),companion);
         }
+        // Снимок 1.4.169 не содержит auto-messages/tablist — их миграция не трогает.
+        assertFalse(changes.contains("auto-messages.messages"),changes.toString());
+        assertFalse(changes.contains("tablist.header"),changes.toString());
+        for(String key:changes) live.set(key,fresh.get(key));
+        assertTrue(PresentationMigration.replacements(live,List.of(snapshot),fresh).isEmpty());
+        // Правленые пункты не должны подменяться стоковыми.
+        var custom=yaml("presentation-legacy-1.4.169.yml");
+        custom.set("server-menu.items",List.of(Map.of("slot",10,"icon","PAPER","name","Custom","command","custom")));
+        assertFalse(PresentationMigration.replacements(custom,List.of(snapshot),fresh)
+                .contains("server-menu.items"),"пользовательские пункты сохраняются");
     }
 
     @Test void menuAvailabilityRequiresBothAddonAndPermission() {

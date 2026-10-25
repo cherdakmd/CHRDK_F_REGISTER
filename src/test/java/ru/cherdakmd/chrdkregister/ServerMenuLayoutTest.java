@@ -12,7 +12,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Серверное меню /menu (1.4.49): авто-раскладка слотов, явные слоты и размер инвентаря.
+ * Серверное меню /menu (1.4.170): авто-раскладка слотов, явные слоты, размер
+ * инвентаря и кнопки «Назад»/«Закрыть» на странице раздела.
  */
 class ServerMenuLayoutTest {
 
@@ -76,6 +77,59 @@ class ServerMenuLayoutTest {
         assertFalse(layout.slots().contains(-1), "все иконки разместились: " + layout.slots());
         assertEquals(new HashSet<>(layout.slots()).size(), layout.slots().size(),
                 "слоты не должны совпадать");
+    }
+
+    @Test
+    void infoEntryWithoutCommandIsNotClickable() {
+        var hint = new ServerMenuSettings.Entry(22, Material.KNOWLEDGE_BOOK, "hint", "text", "");
+        assertTrue(hint.info());
+        var action = new ServerMenuSettings.Entry(10, Material.PAPER, "a", "", "menu");
+        assertFalse(action.info());
+    }
+
+    @Test
+    void categoryPageFitsBackAndCloseButtons() {
+        List<Integer> requested = new ArrayList<>();
+        for (int i = 0; i < 9; i++) requested.add(-1);
+        requested.add(40); // «Назад»
+        requested.add(44); // «Закрыть»
+        ServerMenuService.MenuLayout layout = ServerMenuService.layoutSlots(requested);
+        assertEquals(45, layout.size(), "страница раздела — 45 слотов");
+        assertTrue(layout.slots().containsAll(List.of(40, 44)), layout.slots().toString());
+        assertEquals(11, new HashSet<>(layout.slots()).size(), "слоты уникальны: " + layout.slots());
+        assertFalse(layout.slots().contains(-1), layout.slots().toString());
+    }
+
+    @Test
+    void closeButtonCanBeDisabled() {
+        var settings = new ServerMenuSettings(true, "title", "%category%", 40, Material.ARROW, "back",
+                -1, Material.BARRIER, "close", List.of(), List.of());
+        assertEquals(-1, settings.closeSlot(), "минус один слот = кнопки нет");
+        assertEquals(Material.BARRIER, settings.closeIcon());
+    }
+
+    @Test
+    void categoriesDisappearWhenAllEntriesHidden() {
+        var settings = new ServerMenuSettings(true, "t", "t", 40, Material.ARROW, "back",
+                List.of(new ServerMenuSettings.Category("gear", Material.ANVIL, "Снаряжение", "", 14,
+                        "CHRDK_Enchants", "")),
+                List.of(new ServerMenuSettings.Entry(-1, Material.PAPER, "enchant", "", "enchants", "",
+                        "chrdkenchants.use", "gear")));
+        assertTrue(settings.grouped());
+        assertEquals(1, settings.entriesOf("gear").size());
+        assertTrue(settings.looseEntries().isEmpty());
+    }
+
+    @Test
+    void explicitBackSlotDoesNotCollideWithAutoLayout() {
+        List<Integer> requested = new ArrayList<>();
+        for (int i = 0; i < 28; i++) requested.add(-1);
+        requested.add(40);
+        ServerMenuService.MenuLayout layout = ServerMenuService.layoutSlots(requested);
+        assertEquals(54, layout.size(), "28 пунктов + «Назад» требуют полного сундука");
+        assertEquals(40, layout.slots().get(28).intValue());
+        assertFalse(layout.slots().contains(-1), layout.slots().toString());
+        assertEquals(layout.slots().size(), new HashSet<>(layout.slots()).size());
     }
 
     @Test

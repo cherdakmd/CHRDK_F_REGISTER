@@ -33,6 +33,59 @@
   Что даёт каждая ступень и как купить — `docs/RANKS-GUIDE.md`;
   дизайн и обоснование границ — `docs/RANKS-DESIGN.md`.
 
+## Меню сервера `/menu` — карта всех возможностей (1.4.170)
+
+К 1.4.169 меню разрослось до 42 пунктов: новые волны дописывались в уже
+существующие разделы, часть кнопок дублировалась (`pass menu` и `daily` были
+и на главной, и в «аккаунте»), а охота, боссы, события, питомцы, отряд,
+гильдии, заказы, общие цели, рефералы, класс, профессии, боевой пропуск и
+звание за стаж в навигацию вообще не попадали. Теперь меню — карта сервера:
+семь разделов, внутри — действия, а не список команд.
+
+| Раздел | Что внутри | Пунктов |
+|---|---|--:|
+| Ранг и аккаунт | карточка ранга, витрина и правила, оплата TradeMC, каталог, ежедневка, путеводитель, 2FA, сессии | 9 |
+| Прогресс и награды | боевой пропуск, достижения, звание по стажу, задания, навыки, класс, профессии, общие цели, рефералы | 9 |
+| Экономика | баланс, топ, магазин, аукцион и его почта, доска заказов, лотерея, казна приватов | 8 |
+| Мир и территории | приваты (меню/карта/справка), дома, установка дома, RTP, TPA | 7 |
+| Снаряжение и питомцы | чары, тиры, артефакты и коллекция, косметика, питомцы | 6 |
+| Охота и события | охота, боссы, события, клады | 4 |
+| Общество | чат, отряд, гильдия, очередь, стримерская программа | 5 |
+
+Главная страница: карточка игрока (ник, ранг, остаток срока) в слоте 4, семь
+разделов в ряду 10–16 и подсказка «как пользоваться» в 22.
+
+- **Одна команда — один клик.** Пункт выполняет команду от имени игрока, как
+  если бы он написал её сам; `command` в конфиге остаётся человекочитаемым.
+- **«Назад» и «Закрыть».** На каждой странице раздела — «Назад» (слот 40) и
+  «Закрыть» (44); ESC тоже работает. `close-slot: -1` убирает кнопку.
+- **Подсказки без команды.** Пункт без `command` — информационный: иконка
+  видна, клик ничего не делает. Так в меню живут инструкции вроде «поставить
+  дом: /sethome имя».
+- **Ничего мёртвого.** Раздел, у которого не осталось доступных пунктов,
+  исчезает с главной; пункт скрывается, если выключен его аддон (`plugin`) или
+  у игрока нет права (`permission`). Проверки повторяются в момент клика: если
+  игрок вышел из аккаунта, потерял право или меню выключили — команда не
+  выполнится.
+- **Инвентарь защищён.** Клики и перетаскивание отменяются на уровне события,
+  иконки нельзя вытащить в свой инвентарь, чужое меню на клики не реагирует.
+- **Только безопасные команды.** В стоковом наборе нет `/claim` без аргументов
+  (он покупает чанк) и админских подкоманд: вход в приваты — через
+  `claim menu`, `claim map`, `claim help`, `claim balance`.
+
+Миграция: `PresentationMigration` узнаёт стоковый набор 1.4.169 по снимку
+`presentation-legacy-1.4.169.yml` и один раз заменяет его новым вместе с
+`title`, `category-title`, `back-*`, `close-*` и `categories`. Свои пункты и
+выключенный `enabled` не трогаются; перед заменой рядом с `config.yml`
+остаётся бэкап.
+
+Право на меню — `chrdkregister.menu`, команда — `/menu`. Страницы аддонов
+требуют их `.use`-права, поэтому настройка прав автоматически настраивает и
+видимость разделов. Тесты: `PresentationUpdateTest` (покрыты все 29 аддонов,
+каждая команда и право существуют в их `plugin.yml`, страницы помещаются в
+54 слота) и `ServerMenuLayoutTest` (авто-раскладка, «Назад»/«Закрыть»,
+подсказки).
+
 ## Как работает плагин
 
 1. **Свободный вход после регистрации (1.4.167):**
@@ -482,46 +535,47 @@ pass:
   # Инвентарное GUI-меню /pass menu: статус, оплата, тарифы, 2FA, пароль, сессии (для админов — статистика)
   gui-menu: true
 
-# Главное меню сервера /menu (GUI, конфиг-driven): ядро про аддоны не знает —
-# вы сами решаете, какие пункты видят игроки.
+# Главное меню сервера /menu (1.4.170): разделы и действия, ядро про аддоны не знает.
 #
-# Меню двухуровневое (1.4.139): главная страница — категории и «быстрые» пункты
-# без категории, страница категории — её пункты и кнопка «Назад». Пункт без
-# поля category остаётся на главной странице; без categories меню работает
-# одной страницей, как в 1.4.49–1.4.137.
-#
-# Поля пункта: slot (0-53; -1 = авто), icon, name/lore (MiniMessage),
-# command (выполняется ОТ ИГРОКА по клику), plugin (скрыт, если аддон выключен),
-# permission (скрыт, если нет права). Админские команды сюда не ставить.
+# Главная страница — категории и «быстрые» пункты без category; страница раздела —
+# её пункты, «Назад» (back-*) и «Закрыть» (close-*). Пункт без command — подсказка:
+# иконка видна, клик ничего не делает. Категория без доступных пунктов исчезает с
+# главной, пункт скрывается, если выключен его аддон (plugin) или нет права.
+# Полный стоковый набор (7 разделов, 50 пунктов) — в config.yml ресурса плагина.
 server-menu:
   enabled: true
   title: "<gold>Меню сервера</gold>"
-  category-title: "<gold>%category%</gold>"
-  # Кнопка «Назад» на страницах категорий.
-  back-slot: 49
+  category-title: "<dark_gray>Меню · </dark_gray><gold>%category%</gold>"
+  # Кнопки нижнего ряда страницы раздела.
+  back-slot: 40
   back-icon: "ARROW"
-  back-name: "<gray>◀ Назад в меню</gray>"
-  # Шесть категорий: аккаунт, прогресс, экономика, мир, снаряжение, сообщество.
-  # Категория без доступных пунктов автоматически исчезает с главной страницы.
+  back-name: "<gray>◀ Назад</gray>"
+  close-slot: 44            # -1 — не показывать кнопку «Закрыть» (ESC работает всегда)
+  close-icon: "BARRIER"
+  close-name: "<red>✖ Закрыть</red>"
+  # Семь разделов: ранг и аккаунт, прогресс, экономика, мир, снаряжение,
+  # охота и события, общество. Порядок слотов = порядок иконок на главной.
   categories:
-    - {"id": "account", "slot": 10, "icon": "PAPER", "name": "<gold><bold>Аккаунт и проходка</bold></gold>", "lore": "<gray>Статус, оплата, 2FA, сессии и награды входа</gray>"}
-    - {"id": "progress", "slot": 11, "icon": "NETHER_STAR", "name": "<gold><bold>Прогресс и награды</bold></gold>", "lore": "<gray>Сезон, звания, достижения, навыки и клады</gray>"}
-    - {"id": "economy", "slot": 12, "icon": "DIAMOND", "name": "<gold><bold>Экономика</bold></gold>", "lore": "<gray>Банк алмазов, магазин, аукцион и лотерея</gray>"}
-    - {"id": "world", "slot": 13, "icon": "GRASS_BLOCK", "name": "<gold><bold>Мир и территории</bold></gold>", "lore": "<gray>Приваты, дома, телепорты и случайный поиск</gray>"}
-    - {"id": "gear", "slot": 14, "icon": "ANVIL", "name": "<gold><bold>Снаряжение и коллекции</bold></gold>", "lore": "<gray>Чары, тиры, артефакты и косметика</gray>"}
-    - {"id": "social", "slot": 15, "icon": "BELL", "name": "<gold><bold>Общение и сообщество</bold></gold>", "lore": "<gray>Чат, очередь входа и стримерская программа</gray>"}
-  # Пункты: 5 быстрых на главной + по 3–8 в каждой категории (всего 42).
-  # Полный список с иконками и лорами — в config.yml ресурса плагина.
+    - {"id": "account", "slot": 10, "icon": "PAPER", "name": "<gold><bold>Ранг и аккаунт</bold></gold>", "lore": "<gray>Ранг, оплата, награды входа и защита аккаунта</gray>"}
+    - {"id": "progress", "slot": 11, "icon": "EXPERIENCE_BOTTLE", "name": "<gold><bold>Прогресс и награды</bold></gold>", "lore": "<gray>Сезон, задания, навыки, класс и достижения</gray>"}
+    - {"id": "economy", "slot": 12, "icon": "DIAMOND", "name": "<gold><bold>Экономика</bold></gold>", "lore": "<gray>Банк, магазин, аукцион, заказы и лотерея</gray>"}
+    - {"id": "world", "slot": 13, "icon": "GRASS_BLOCK", "name": "<gold><bold>Мир и территории</bold></gold>", "lore": "<gray>Приваты, дома и телепорты</gray>"}
+    - {"id": "gear", "slot": 14, "icon": "ANVIL", "name": "<gold><bold>Снаряжение и питомцы</bold></gold>", "lore": "<gray>Чары, тиры, артефакты, косметика и питомцы</gray>"}
+    - {"id": "adventure", "slot": 15, "icon": "IRON_SWORD", "name": "<gold><bold>Охота и события</bold></gold>", "lore": "<gray>Охота, боссы, ивенты и клады</gray>"}
+    - {"id": "social", "slot": 16, "icon": "BELL", "name": "<gold><bold>Общество</bold></gold>", "lore": "<gray>Чат, отряд, гильдия, очередь и стримы</gray>"}
+  # Пункты: category — id раздела; без category пункт живёт на главной.
+  # Без command — подсказка (клик игнорируется).
   items:
-    - {"slot": 20, "icon": "PAPER", "name": "<gold><bold>Проходка и аккаунт</bold></gold>", "lore": "<gray>Осталось: %pass_left%</gray>", "command": "pass menu"}
-    - {"slot": 21, "icon": "EMERALD", "name": "<gold><bold>Поддержать сервер</bold></gold>", "lore": "<gray>Ссылка на оплату и продление</gray>", "command": "pass donate"}
-    - {"slot": 22, "icon": "GOLD_INGOT", "name": "<gold><bold>Мой баланс</bold></gold>", "lore": "<gray>Счёт банка и алмазы в инвентаре</gray>", "command": "bal"}
-    - {"slot": 23, "icon": "DIAMOND", "name": "<gold><bold>Топ богачей</bold></gold>", "lore": "<gray>Кто копит алмазы усерднее всех</gray>", "command": "baltop"}
-    - {"category": "progress", "icon": "DRAGON_EGG", "name": "<gold><bold>Достижения</bold></gold>", "lore": "<gray>72 цели, бейджи и награды</gray>", "command": "achievements", "plugin": "CHRDK_Achievements", "permission": "chrdkachievements.use"}
-    - {"category": "progress", "icon": "AMETHYST_CLUSTER", "name": "<gold><bold>Навыки</bold></gold>", "lore": "<gray>10 навыков, 60 перков и уровни</gray>", "command": "skills", "plugin": "CHRDK_Skills", "permission": "chrdkskills.use"}
-    - {"category": "progress", "icon": "CHEST", "name": "<gold><bold>Клады</bold></gold>", "lore": "<gray>196 находок: 124 классических и 72 из арсенала</gray>", "command": "treasures", "plugin": "CHRDK_Treasures", "permission": "chrdktreasures.use"}
-    - {"category": "gear", "icon": "ITEM_FRAME", "name": "<gold><bold>Коллекция артефактов</bold></gold>", "lore": "<gray>Собранное, прогресс и награды за полноту</gray>", "command": "artifacts collection", "plugin": "CHRDK_Artifacts", "permission": "chrdkartifacts.use"}
+    - {"slot": 4, "icon": "PLAYER_HEAD", "name": "<gold><bold>%player%</bold></gold>", "lore": "<gray>Ранг: <white>%rank%</white></gray>\n<dark_gray>Клик — карточка игрока</dark_gray>", "command": "profile"}
+    - {"slot": 22, "icon": "KNOWLEDGE_BOOK", "name": "<gray><bold>Как пользоваться</bold></gray>", "lore": "<gray>Клик по иконке открывает раздел</gray>\n<gray>«Назад» и «Закрыть» — в нижнем ряду</gray>"}
+    - {"category": "account", "icon": "NAME_TAG", "name": "<gold><bold>Мой ранг</bold></gold>", "lore": "<gray>Сейчас: <white>%rank%</white> · <white>%rank_status%</white></gray>", "command": "rank my"}
+    - {"category": "progress", "icon": "FIREWORK_ROCKET", "name": "<gold><bold>Боевой пропуск</bold></gold>", "lore": "<gray>Экран сезона: недели и награды</gray>", "command": "battlepass menu", "plugin": "CHRDK_BattlePass", "permission": "chrdkbp.use"}
+    - {"category": "economy", "icon": "GOLD_INGOT", "name": "<gold><bold>Мой баланс</bold></gold>", "lore": "<gray>Счёт банка и алмазы в инвентаре</gray>", "command": "bal", "permission": "chrdkregister.bal"}
+    - {"category": "world", "icon": "MAP", "name": "<gold><bold>Мои территории</bold></gold>", "lore": "<gray>Меню приватов: клик — телепорт</gray>", "command": "claim menu", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
+    - {"category": "gear", "icon": "ENCHANTED_BOOK", "name": "<gold><bold>Кастомные чары</bold></gold>", "lore": "<gray>Каталог чар и описания</gray>", "command": "enchants", "plugin": "CHRDK_Enchants", "permission": "chrdkenchants.use"}
+    - {"category": "adventure", "icon": "BOW", "name": "<gold><bold>Охота</bold></gold>", "lore": "<gray>Пять семейств, трофеи и моб-ключи</gray>", "command": "hunt", "plugin": "CHRDK_Hunt", "permission": "chrdkhunt.use"}
     - {"category": "social", "icon": "JUKEBOX", "name": "<gold><bold>Стримерская программа</bold></gold>", "lore": "<gray>Twitch и VK Play Live: статус и награды</gray>", "command": "stream status", "plugin": "CHRDK_Streams", "permission": "chrdkstreams.use"}
+    # ... и так далее: 4–9 пунктов в каждом разделе, всего 50.
 
 # Интеграции со сторонними плагинами (мягкие зависимости — без них плагин работает как обычно)
 integrations:
@@ -2931,36 +2985,36 @@ lines)`. `ProfileContext` несёт UUID, ник, признак «онлайн
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.169.jar`,
-аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.169.jar`,
-реферальный — `referrals/build/libs/chrdk-referrals-1.4.169.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.169.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.169.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.169.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.169.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.169.jar` (хартия чар — при установленном аддоне чар),
-достижения — `achievements/build/libs/chrdk-achievements-1.4.169.jar`, навыки —
-`skills/build/libs/chrdk-skills-1.4.169.jar`, клады —
-`treasures/build/libs/chrdk-treasures-1.4.169.jar`, общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.169.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.169.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.169.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.169.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.169.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.169.jar`, стримерская программа —
-`streams/build/libs/chrdk-streams-1.4.169.jar`, лотерея —
-`lottery/build/libs/chrdk-lottery-1.4.169.jar`, аукцион —
-`auction/build/libs/chrdk-auction-1.4.169.jar`, питомцы —
-`pets/build/libs/chrdk-pets-1.4.169.jar`, заказы —
-`orders/build/libs/chrdk-orders-1.4.169.jar`, охота —
-`hunt/build/libs/chrdk-hunt-1.4.169.jar`, группы —
-`party/build/libs/chrdk-party-1.4.169.jar`, события —
-`events/build/libs/chrdk-events-1.4.169.jar`, задания —
-`quests/build/libs/chrdk-quests-1.4.169.jar`, боссы —
-`bosses/build/libs/chrdk-bosses-1.4.169.jar`, гильдии —
-`guilds/build/libs/chrdk-guilds-1.4.169.jar`, классы —
-`classes/build/libs/chrdk-classes-1.4.169.jar`, профессии —
-`professions/build/libs/chrdk-professions-1.4.169.jar`. На сервер ядро
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.170.jar`,
+аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.170.jar`,
+реферальный — `referrals/build/libs/chrdk-referrals-1.4.170.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.170.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.170.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.170.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.170.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.170.jar` (хартия чар — при установленном аддоне чар),
+достижения — `achievements/build/libs/chrdk-achievements-1.4.170.jar`, навыки —
+`skills/build/libs/chrdk-skills-1.4.170.jar`, клады —
+`treasures/build/libs/chrdk-treasures-1.4.170.jar`, общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.170.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.170.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.170.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.170.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.170.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.170.jar`, стримерская программа —
+`streams/build/libs/chrdk-streams-1.4.170.jar`, лотерея —
+`lottery/build/libs/chrdk-lottery-1.4.170.jar`, аукцион —
+`auction/build/libs/chrdk-auction-1.4.170.jar`, питомцы —
+`pets/build/libs/chrdk-pets-1.4.170.jar`, заказы —
+`orders/build/libs/chrdk-orders-1.4.170.jar`, охота —
+`hunt/build/libs/chrdk-hunt-1.4.170.jar`, группы —
+`party/build/libs/chrdk-party-1.4.170.jar`, события —
+`events/build/libs/chrdk-events-1.4.170.jar`, задания —
+`quests/build/libs/chrdk-quests-1.4.170.jar`, боссы —
+`bosses/build/libs/chrdk-bosses-1.4.170.jar`, гильдии —
+`guilds/build/libs/chrdk-guilds-1.4.170.jar`, классы —
+`classes/build/libs/chrdk-classes-1.4.170.jar`, профессии —
+`professions/build/libs/chrdk-professions-1.4.170.jar`. На сервер ядро
 обязательно, аддоны — по желанию (требуют ядро 1.4.6+). К релизу на GitHub
 прикладывается **один архив** `chrdk-plugins-<версия>.zip`: ядро и все 29 аддонов
 одной версии (30 JAR) плюс памятка `ОБНОВЛЕНИЕ.txt`. Отдельные JAR больше не
@@ -3897,11 +3951,13 @@ CI проверяет точные 14 дней, граничный момент 
 Проверены все модули и реальные команды. Результат и ограничения:
 [анализ навигации проекта](docs/PRESENTATION-AUDIT-1.4.70.md).
 
-**/menu**: 27 действий по аккаунту, наградам/прогрессу, экономике, приватам,
-телепортам, чарам/артефактам и защите. Кнопки аддонов скрыты, если аддон выключен
-или игрок не имеет его `.use`-права. Кнопка приватов открывает `claim help` —
-не покупает чанк. Меню работает только после входа; команды выполняются от игрока.
-Устаревший GUI после reload не запускает переехавшую команду.
+**/menu**: состояние 1.4.70 — 27 действий одной страницей. С 1.4.170 меню
+переработано в семь разделов с отдельными страницами, кнопками «Назад» и
+«Закрыть» и полным покрытием аддонов; актуальное описание — в разделе
+[«Меню сервера /menu — карта всех возможностей (1.4.170)»](#меню-сервера-menu--карта-всех-возможностей-14170)
+выше. Кнопки аддонов по-прежнему скрыты, если аддон выключен или игрок не имеет
+его `.use`-права; кнопка приватов открывает `claim help`, а не покупает чанк;
+меню работает только после входа, команды выполняются от игрока.
 
 `server-menu.items` сохраняет старый формат slot/icon/name/lore/command и добавляет
 необязательные `plugin` (например CHRDK_Auction) и `permission` (chrdkauction.use).
