@@ -13,17 +13,23 @@ import java.util.Map;
  * менять опечаткой в YAML. Конфиг управляет только темпом (сколько уровней
  * навыков даёт уровень класса, сколько очков за уровень) и кулдаунами.</p>
  *
- * <p>Устройство одинаковое у всех классов: три ветки по четыре яруса. Ветка —
+ * <p>Устройство одинаковое у всех классов: три ветки по пять ярусов. Ветка —
  * это роль внутри стиля: у воина «Стойкость» (броня и здоровье), «Натиск»
  * (урон и скорость) и «Земля» (падения, отбрасывание); у стрелка «Меткость»,
  * «Скорость» и «Выживание»; у мага «Чары», «Щит» и «Поток»; у жреца «Милость»,
  * «Свет» и «Дорога». Верхний узел ветки требует уровня навыка своей темы —
  * поэтому дерево растёт вместе с игрой, а не с датой входа.</p>
+ *
+ * <p>Пятый ярус — мастерский: он стоит одно очко, но открывается только
+ * навыком 75 и предыдущим узлом ветки. Такой узел не «ещё одна ступенька»
+ * (очков на все три не хватит: дерево стоит 36, а на потолке уровня доступно
+ * 34), а выбор стиля для того, кто дошёл до конца: один мастерский узел
+ * помещается рядом с полным деревом, три — уже нет.</p>
  */
 public final class ClassCatalog {
 
-    /** Сколько талантов у каждого класса: 3 ветки × 4 яруса. */
-    public static final int TALENTS_PER_CLASS = 12;
+    /** Сколько талантов у каждого класса: 3 ветки × 5 ярусов. */
+    public static final int TALENTS_PER_CLASS = 15;
     /** Сколько веток у класса. */
     public static final int BRANCHES_PER_CLASS = 3;
     /** Навыки, на которые опираются требования (ид из {@code CHRDK_Skills}). */
@@ -64,6 +70,8 @@ public final class ClassCatalog {
                 "defense", 35, EffectKind.DAMAGE_REDUCTION, 0.04);
         talent("warrior-stoyka-4", PlayerClass.WARRIOR, "stoyka", 4, 5, "warrior-stoyka-3",
                 "defense", 55, EffectKind.MAX_HEALTH, 4);
+        talent("warrior-stoyka-5", PlayerClass.WARRIOR, "stoyka", 5, 1, "warrior-stoyka-4",
+                "defense", 75, EffectKind.ARMOR, 4);
 
         talent("warrior-natisk-1", PlayerClass.WARRIOR, "natisk", 1, 1, "",
                 "combat", 10, EffectKind.MELEE_DAMAGE, 0.03);
@@ -73,6 +81,8 @@ public final class ClassCatalog {
                 "combat", 35, EffectKind.MOVEMENT_SPEED, 0.02);
         talent("warrior-natisk-4", PlayerClass.WARRIOR, "natisk", 4, 5, "warrior-natisk-3",
                 "combat", 55, EffectKind.MELEE_DAMAGE, 0.05);
+        talent("warrior-natisk-5", PlayerClass.WARRIOR, "natisk", 5, 1, "warrior-natisk-4",
+                "combat", 75, EffectKind.MELEE_DAMAGE, 0.10);
 
         talent("warrior-zemlya-1", PlayerClass.WARRIOR, "zemlya", 1, 1, "",
                 "defense", 10, EffectKind.FALL_REDUCTION, 0.10);
@@ -82,6 +92,8 @@ public final class ClassCatalog {
                 "mining", 30, EffectKind.FALL_REDUCTION, 0.15);
         talent("warrior-zemlya-4", PlayerClass.WARRIOR, "zemlya", 4, 5, "warrior-zemlya-3",
                 "defense", 45, EffectKind.DAMAGE_REDUCTION, 0.03);
+        talent("warrior-zemlya-5", PlayerClass.WARRIOR, "zemlya", 5, 1, "warrior-zemlya-4",
+                "mining", 75, EffectKind.KNOCKBACK_RESISTANCE, 0.20);
 
         passive(PlayerClass.ARCHER,
                 new Effect(EffectKind.ARROW_DAMAGE, 0.10),
@@ -97,6 +109,8 @@ public final class ClassCatalog {
                 "archery", 35, EffectKind.ARROW_DAMAGE, 0.06);
         talent("archer-metkost-4", PlayerClass.ARCHER, "metkost", 4, 5, "archer-metkost-3",
                 "archery", 55, EffectKind.ARROW_DAMAGE, 0.08);
+        talent("archer-metkost-5", PlayerClass.ARCHER, "metkost", 5, 1, "archer-metkost-4",
+                "archery", 75, EffectKind.ARROW_DAMAGE, 0.12);
 
         talent("archer-skorost-1", PlayerClass.ARCHER, "skorost", 1, 1, "",
                 "archery", 10, EffectKind.MOVEMENT_SPEED, 0.02);
@@ -106,6 +120,8 @@ public final class ClassCatalog {
                 "archery", 35, EffectKind.MOVEMENT_SPEED, 0.02);
         talent("archer-skorost-4", PlayerClass.ARCHER, "skorost", 4, 5, "archer-skorost-3",
                 "defense", 45, EffectKind.KNOCKBACK_RESISTANCE, 0.10);
+        talent("archer-skorost-5", PlayerClass.ARCHER, "skorost", 5, 1, "archer-skorost-4",
+                "archery", 75, EffectKind.MOVEMENT_SPEED, 0.06);
 
         talent("archer-vyzhivanie-1", PlayerClass.ARCHER, "vyzhivanie", 1, 1, "",
                 "defense", 10, EffectKind.REGEN, 1);
@@ -115,6 +131,8 @@ public final class ClassCatalog {
                 "archer-vyzhivanie-2", "defense", 35, EffectKind.DAMAGE_REDUCTION, 0.03);
         talent("archer-vyzhivanie-4", PlayerClass.ARCHER, "vyzhivanie", 4, 5,
                 "archer-vyzhivanie-3", "defense", 55, EffectKind.MAX_HEALTH, 4);
+        talent("archer-vyzhivanie-5", PlayerClass.ARCHER, "vyzhivanie", 5, 1,
+                "archer-vyzhivanie-4", "defense", 75, EffectKind.REGEN, 2);
 
         passive(PlayerClass.MAGE,
                 new Effect(EffectKind.ARMOR, 2),
@@ -130,6 +148,8 @@ public final class ClassCatalog {
                 "enchanting", 35, EffectKind.DAMAGE_REDUCTION, 0.03);
         talent("mage-chary-4", PlayerClass.MAGE, "chary", 4, 5, "mage-chary-3",
                 "enchanting", 55, EffectKind.ARMOR, 2);
+        talent("mage-chary-5", PlayerClass.MAGE, "chary", 5, 1, "mage-chary-4",
+                "enchanting", 75, EffectKind.DAMAGE_REDUCTION, 0.10);
 
         talent("mage-shchit-1", PlayerClass.MAGE, "shchit", 1, 1, "",
                 "defense", 10, EffectKind.MAX_HEALTH, 2);
@@ -139,6 +159,8 @@ public final class ClassCatalog {
                 "defense", 35, EffectKind.MAX_HEALTH, 2);
         talent("mage-shchit-4", PlayerClass.MAGE, "shchit", 4, 5, "mage-shchit-3",
                 "defense", 55, EffectKind.DAMAGE_REDUCTION, 0.04);
+        talent("mage-shchit-5", PlayerClass.MAGE, "shchit", 5, 1, "mage-shchit-4",
+                "defense", 75, EffectKind.MAX_HEALTH, 4);
 
         talent("mage-potok-1", PlayerClass.MAGE, "potok", 1, 1, "",
                 "alchemy", 10, EffectKind.MOVEMENT_SPEED, 0.02);
@@ -148,6 +170,8 @@ public final class ClassCatalog {
                 "alchemy", 35, EffectKind.SATURATION, 2);
         talent("mage-potok-4", PlayerClass.MAGE, "potok", 4, 5, "mage-potok-3",
                 "alchemy", 55, EffectKind.MOVEMENT_SPEED, 0.03);
+        talent("mage-potok-5", PlayerClass.MAGE, "potok", 5, 1, "mage-potok-4",
+                "alchemy", 75, EffectKind.MOVEMENT_SPEED, 0.05);
 
         passive(PlayerClass.CLERIC,
                 new Effect(EffectKind.MAX_HEALTH, 2),
@@ -163,6 +187,8 @@ public final class ClassCatalog {
                 "alchemy", 35, EffectKind.MAX_HEALTH, 2);
         talent("cleric-milost-4", PlayerClass.CLERIC, "milost", 4, 5, "cleric-milost-3",
                 "alchemy", 55, EffectKind.REGEN, 1);
+        talent("cleric-milost-5", PlayerClass.CLERIC, "milost", 5, 1, "cleric-milost-4",
+                "alchemy", 75, EffectKind.SATURATION, 3);
 
         talent("cleric-svet-1", PlayerClass.CLERIC, "svet", 1, 1, "",
                 "defense", 10, EffectKind.MAX_HEALTH, 2);
@@ -172,6 +198,8 @@ public final class ClassCatalog {
                 "defense", 35, EffectKind.DAMAGE_REDUCTION, 0.03);
         talent("cleric-svet-4", PlayerClass.CLERIC, "svet", 4, 5, "cleric-svet-3",
                 "defense", 55, EffectKind.MAX_HEALTH, 4);
+        talent("cleric-svet-5", PlayerClass.CLERIC, "svet", 5, 1, "cleric-svet-4",
+                "defense", 75, EffectKind.ARMOR, 5);
 
         talent("cleric-doroga-1", PlayerClass.CLERIC, "doroga", 1, 1, "",
                 "farming", 10, EffectKind.SATURATION, 2);
@@ -181,6 +209,8 @@ public final class ClassCatalog {
                 "farming", 35, EffectKind.FALL_REDUCTION, 0.15);
         talent("cleric-doroga-4", PlayerClass.CLERIC, "doroga", 4, 5, "cleric-doroga-3",
                 "farming", 55, EffectKind.MOVEMENT_SPEED, 0.03);
+        talent("cleric-doroga-5", PlayerClass.CLERIC, "doroga", 5, 1, "cleric-doroga-4",
+                "farming", 75, EffectKind.MOVEMENT_SPEED, 0.05);
     }
 
     private static void passive(PlayerClass playerClass, Effect... effects) {

@@ -253,12 +253,15 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
     /**
      * Применяет умение класса и показывает исход.
      *
-     * <p>Умение не тратит очки и не пишет файл: единственное состояние —
-     * кулдаун в памяти модуля. Поэтому здесь нет {@code requestSave}.</p>
+     * <p>Умение не тратит очки и не меняет сохранённые таланты: единственное
+     * состояние — момент применения в {@code classes.json}, который пишет
+     * {@link AbilityService}. Поэтому здесь нет отдельной проверки прав: её
+     * делают команда и кнопка меню.</p>
      */
     private void useAbility(Player player) {
         ClassResult result = plugin.abilities().use(player);
-        plugin.messages().send(player, result.key(), ClassText.localise(plugin.messages(), result).toArray());
+        plugin.messages().send(player, result.key(),
+                ClassText.localise(plugin.messages(), result).toArray());
         if (!result.ok() || !plugin.config().actionbar()) {
             return;
         }
@@ -266,8 +269,9 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
         if (playerClass == null) {
             return;
         }
-        player.sendActionBar(plugin.messages().get("ability-actionbar",
-                "ability", plugin.messages().mini("ability." + playerClass.id() + ".name")));
+        player.sendActionBar(plugin.messages().get("ability-actionbar", "ability",
+                Messages.trusted(plugin.messages().raw(
+                        "ability." + playerClass.id() + ".name"))));
     }
 
     private void respec(CommandSender sender) {
@@ -507,6 +511,10 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
     public List<String> onTabComplete(CommandSender sender, Command command, String alias,
                                       String[] args) {
         String name = command.getName().toLowerCase(Locale.ROOT);
+        if (name.equals("ability")) {
+            // У команды нет аргументов: подсказывать нечего.
+            return List.of();
+        }
         boolean admin = name.equals("classadmin");
         if (admin ? !sender.hasPermission("chrdkclasses.admin")
                 : !sender.hasPermission("chrdkclasses.use")) {

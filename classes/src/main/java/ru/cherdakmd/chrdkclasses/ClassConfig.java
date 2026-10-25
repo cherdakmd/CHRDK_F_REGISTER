@@ -47,12 +47,14 @@ public final class ClassConfig {
     private final boolean abilitiesEnabled;
     private final double abilityCooldownMultiplier;
     private final boolean levelNotice;
+    private final boolean tagEnabled;
 
     private ClassConfig(boolean enabled, String locale, boolean actionbar, boolean effectsEnabled,
                         int levelsPerLevel, int pointsPerLevel, int startingPoints,
                         int changeCooldownDays, int respecCooldownHours, int pulseSeconds,
                         int outOfCombatSeconds, boolean abilitiesEnabled,
-                        double abilityCooldownMultiplier, boolean levelNotice) {
+                        double abilityCooldownMultiplier, boolean levelNotice,
+                        boolean tagEnabled) {
         this.enabled = enabled;
         this.locale = locale;
         this.actionbar = actionbar;
@@ -67,11 +69,13 @@ public final class ClassConfig {
         this.abilitiesEnabled = abilitiesEnabled;
         this.abilityCooldownMultiplier = abilityCooldownMultiplier;
         this.levelNotice = levelNotice;
+        this.tagEnabled = tagEnabled;
     }
 
     /** Умолчания — те же, что в ресурсном config.yml. */
     public static ClassConfig defaults() {
-        return new ClassConfig(true, "ru", true, true, 30, 1, 1, 7, 24, 5, 8, true, 1.0, true);
+        return new ClassConfig(true, "ru", true, true, 30, 1, 1, 7, 24, 5, 8, true, 1.0, true,
+                true);
     }
 
     /** Разбирает конфиг; {@code null} допустим — тогда действуют умолчания. */
@@ -104,7 +108,8 @@ public final class ClassConfig {
                 clampDouble(source, "abilities.cooldown-multiplier",
                         fallback.abilityCooldownMultiplier, MIN_ABILITY_MULTIPLIER,
                         MAX_ABILITY_MULTIPLIER, logger),
-                source.getBoolean("general.level-notice", fallback.levelNotice));
+                source.getBoolean("general.level-notice", fallback.levelNotice),
+                source.getBoolean("tag.enabled", fallback.tagEnabled));
     }
 
     private static long clamp(FileConfiguration source, String path, long fallback, long min,
@@ -202,5 +207,10 @@ public final class ClassConfig {
     /** Сообщать ли о повышении уровня класса. */
     public boolean levelNotice() {
         return levelNotice;
+    }
+
+    /** Показывать ли метку класса в нике (чат и TAB). */
+    public boolean tagEnabled() {
+        return tagEnabled;
     }
 }

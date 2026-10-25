@@ -199,6 +199,41 @@ class TalentServiceTest {
         assertEquals("talent-foreign", service.learn(PLAYER, "mage-chary-1").key());
     }
 
+    @Test
+    void masteryTierCostsOnePointAndOnlyOneFits(@TempDir Path dir) {
+        Skills skills = new Skills().all(80).total(1_000);
+        TalentService service = new TalentService(freeConfig(), store(dir), skills);
+        service.choose(PLAYER, "cleric", NOW);
+        for (Talent talent : ClassCatalog.talents("cleric")) {
+            if (talent.tier() < ClassMath.MAX_TIER) {
+                assertTrue(service.learn(PLAYER, talent.id()).ok(), talent.id());
+            }
+        }
+        assertEquals(1, service.availablePoints(PLAYER), "после полного дерева остаётся очко");
+
+        ClassResult first = service.learn(PLAYER, "cleric-milost-5");
+        assertTrue(first.ok(), "мастерский узел стоит одно очко: " + first.key());
+        assertEquals(0, service.availablePoints(PLAYER));
+
+        assertEquals("talent-points", service.learn(PLAYER, "cleric-svet-5").key(),
+                "на второй мастерский узел очков уже нет");
+        assertEquals("talent-points", service.learn(PLAYER, "cleric-doroga-5").key());
+    }
+
+    @Test
+    void masteryNodeWaitsForSeventyFiveSkill(@TempDir Path dir) {
+        Skills skills = new Skills().all(60).total(1_000);
+        TalentService service = new TalentService(freeConfig(), store(dir), skills);
+        service.choose(PLAYER, "cleric", NOW);
+        for (Talent talent : ClassCatalog.talents("cleric")) {
+            if (talent.tier() < ClassMath.MAX_TIER) {
+                service.learn(PLAYER, talent.id());
+            }
+        }
+        assertEquals("talent-skill", service.learn(PLAYER, "cleric-milost-5").key(),
+                "навык 60 не открывает мастерский узел");
+    }
+
     /* --------------------------------- эффекты -------------------------------- */
 
     @Test
@@ -209,15 +244,22 @@ class TalentServiceTest {
 
         assertEquals(2.0, service.effect(PLAYER, EffectKind.MAX_HEALTH), "пассив жреца");
         assertEquals(1.0, service.effect(PLAYER, EffectKind.REGEN));
+        // Дерево без мастерских узлов: 33 очка из 34 доступных.
         for (Talent talent : ClassCatalog.talents("cleric")) {
+            if (talent.tier() >= ClassMath.MAX_TIER) {
+                continue;
+            }
             ClassResult result = service.learn(PLAYER, talent.id());
             assertTrue(result.ok(), talent.id() + ": " + result.key());
         }
-        assertEquals(ClassCatalog.TALENTS_PER_CLASS, service.store().talentCount(PLAYER));
+        assertEquals(ClassCatalog.TALENTS_PER_CLASS - ClassCatalog.BRANCHES_PER_CLASS,
+                service.store().talentCount(PLAYER));
 
         Map<EffectKind, Double> expected = new EnumMap<>(EffectKind.class);
         ClassCatalog.passive("cleric").forEach((kind, value) -> expected.merge(kind, value, Double::sum));
-        for (Talent talent : ClassCatalog.talents("cleric")) {
+        for (String learned : service.store().talents(PLAYER)) {
+            Talent talent = ClassCatalog.talent(learned);
+            assertNotNull(talent, learned);
             expected.merge(talent.kind(), talent.value(), Double::sum);
         }
         Map<EffectKind, Double> capped = new EnumMap<>(EffectKind.class);

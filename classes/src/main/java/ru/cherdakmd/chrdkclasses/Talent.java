@@ -12,8 +12,8 @@ package ru.cherdakmd.chrdkclasses;
  * @param id            ид таланта ({@code warrior-natisk-2})
  * @param classId       ид класса
  * @param branch        ид ветки внутри класса
- * @param tier          ярус: 1..4, строго растёт снизу вверх
- * @param cost          цена в очках
+ * @param tier          ярус: 1..5, строго растёт снизу вверх
+ * @param cost          цена в очках (пятый ярус — 1 очко, но требует 75 навыка)
  * @param requires      ид предыдущего таланта ветки или {@code ""}
  * @param skill         ид навыка, который нужно поднять, или {@code ""}
  * @param skillLevel    требуемый уровень навыка (0 — не требуется)

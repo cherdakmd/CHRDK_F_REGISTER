@@ -24,7 +24,7 @@ import java.util.UUID;
  * Меню классов: выбор, карточка стиля и дерево талантов (1.4.164).
  *
  * <p>Три экрана: главный (кто я и кем могу стать), карточка класса (что он даёт
- * и кнопка подтверждения) и дерево (12 узлов тремя ветками). Меню ничего не
+ * и кнопка подтверждения) и дерево (15 узлов тремя ветками). Меню ничего не
  * решает само: клик зовёт {@link TalentService}, поэтому выбрать класс или
  * выучить талант в обход очков и требований нельзя.</p>
  */
@@ -60,26 +60,38 @@ final class ClassesGui implements Listener {
     private static final int INFO_SLOT = 4;
     private static final int CLOSE_SLOT = 49;
     private static final int BACK_SLOT = 45;
+    /**
+     * В дереве навигация сверху: пять ярусов занимают все нижние ряды, и
+     * кнопки в подвале отняли бы место у мастерского яруса.
+     */
+    private static final int TREE_CLOSE_SLOT = 8;
+    private static final int TREE_BACK_SLOT = 0;
     /** Четыре класса в ряд: слоты 19, 21, 23, 25. */
     private static final int[] CLASS_SLOTS = {19, 21, 23, 25};
     private static final int TALENTS_SLOT = 39;
     /** Умение класса — между деревом и пересборкой. */
     private static final int ABILITY_SLOT = 40;
     private static final int RESPEC_SLOT = 41;
-    private static final int TREE_RESPEC_SLOT = 48;
+    private static final int TREE_RESPEC_SLOT = 45;
     private static final int SUMMARY_SLOT = 46;
+    /** Карточка класса в дереве — правый нижний угол. */
+    private static final int TREE_SUMMARY_SLOT = 53;
     /** Подтверждение выбора в карточке класса. */
     private static final int CONFIRM_SLOT = 31;
     /** Превью веток в карточке класса. */
     private static final int[] PREVIEW_SLOTS = {19, 21, 23};
     /** Заголовки веток в дереве — над колонками 1, 4 и 7. */
     private static final int[] BRANCH_SLOTS = {1, 4, 7};
-    /** Ярусы дерева: четыре ряда по три колонки. */
+    /** Ярусы дерева: пять рядов по три колонки (пятый — мастерский). */
     private static final int[][] TALENT_SLOTS = {
             {10, 13, 16},
             {19, 22, 25},
             {28, 31, 34},
-            {37, 40, 43}};
+            {37, 40, 43},
+            {46, 49, 52}};
+
+    /** Ярус, который открывается только навыком 75; подсвечивается в тексте. */
+    static final int MASTERY_TIER = 5;
 
     private final ClassesPlugin plugin;
 
@@ -111,11 +123,17 @@ final class ClassesGui implements Listener {
             PlayerClass candidate = classes.get(index);
             inventory.setItem(CLASS_SLOTS[index], classItem(candidate, candidate == current));
         }
-        inventory.setItem(TALENTS_SLOT, button(Material.BOOK, "menu-talents-name",
-                List.of(current == null
-                        ? plugin.messages().get("menu-talents-none")
-                        : plugin.messages().get("menu-talents-lore",
-                        "points", String.valueOf(service.availablePoints(id))))));
+        List<Component> talentsLore = new ArrayList<>();
+        if (current == null) {
+            talentsLore.add(plugin.messages().get("menu-talents-none"));
+        } else {
+            talentsLore.add(plugin.messages().get("menu-talents-lore",
+                    "points", String.valueOf(service.availablePoints(id))));
+            talentsLore.add(plugin.messages().get("menu-talents-nodes",
+                    "count", String.valueOf(plugin.store().talentCount(id)),
+                    "max", String.valueOf(ClassCatalog.TALENTS_PER_CLASS)));
+        }
+        inventory.setItem(TALENTS_SLOT, button(Material.BOOK, "menu-talents-name", talentsLore));
         inventory.setItem(ABILITY_SLOT, abilityItem(player, current));
         inventory.setItem(RESPEC_SLOT, respecItem(id));
         inventory.setItem(CLOSE_SLOT, button(Material.BARRIER, "menu-close", List.of()));
@@ -189,10 +207,10 @@ final class ClassesGui implements Listener {
                 }
             }
         }
-        inventory.setItem(SUMMARY_SLOT, summaryItem(player, current));
-        inventory.setItem(BACK_SLOT, button(Material.ARROW, "menu-back", List.of()));
+        inventory.setItem(TREE_SUMMARY_SLOT, summaryItem(player, current));
+        inventory.setItem(TREE_BACK_SLOT, button(Material.ARROW, "menu-back", List.of()));
         inventory.setItem(TREE_RESPEC_SLOT, respecItem(player.getUniqueId()));
-        inventory.setItem(CLOSE_SLOT, button(Material.BARRIER, "menu-close", List.of()));
+        inventory.setItem(TREE_CLOSE_SLOT, button(Material.BARRIER, "menu-close", List.of()));
         player.openInventory(inventory);
     }
 
@@ -260,6 +278,9 @@ final class ClassesGui implements Listener {
         lore.add(plugin.messages().get("talent." + talent.id() + ".desc"));
         lore.add(Component.empty());
         lore.add(effectLine(talent.kind(), talent.value()));
+        if (talent.tier() >= MASTERY_TIER) {
+            lore.add(plugin.messages().get("menu-talent-mastery"));
+        }
         if (talent.needsSkill()) {
             lore.add(plugin.messages().get("menu-talent-skill",
                     "skill", Messages.trusted(plugin.messages().raw(
@@ -371,11 +392,13 @@ final class ClassesGui implements Listener {
             return;
         }
         int slot = event.getRawSlot();
-        if (slot == CLOSE_SLOT) {
+        // В дереве кнопки сверху: нижние ряды заняты ярусами.
+        boolean tree = holder.screen == Screen.TALENTS;
+        if (slot == (tree ? TREE_CLOSE_SLOT : CLOSE_SLOT)) {
             player.closeInventory();
             return;
         }
-        if (slot == BACK_SLOT) {
+        if (slot == (tree ? TREE_BACK_SLOT : BACK_SLOT)) {
             open(player);
             return;
         }

@@ -74,7 +74,7 @@ class ClassStoreTest {
                 added++;
             }
         }
-        assertEquals(ClassCatalog.TALENTS_PER_CLASS, added, "все 12 талантов одного класса");
+        assertEquals(ClassCatalog.TALENTS_PER_CLASS, added, "все таланты одного класса");
         assertEquals(ClassCatalog.TALENTS_PER_CLASS, store.talentCount(PLAYER));
         assertFalse(store.learnTalent(PLAYER, "mage-chary-1"), "тринадцатый талант не влезает");
     }

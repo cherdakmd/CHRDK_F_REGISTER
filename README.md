@@ -111,6 +111,32 @@
 - В консоли команда печатает голый адрес строкой. Тесты — `WikiSettingsTest`
   и `PresentationUpdateTest` (кнопка ведёт в существующую команду).
 
+## Мастерский ярус талантов и метка класса (1.4.174)
+
+Дерево классов выросло на ярус, а класс стало видно в чате и TAB без меню:
+
+- **Пятый ярус — мастерский.** У каждого класса 15 узлов вместо 12: в каждой
+  ветке появился мастерский узел (воин — «Живая крепость», «Сокрушение»,
+  «Корни гор»; стрелок — «Смертельный выстрел», «Ветер в спину», «Второе
+  сердце»; маг — «Печать хранителя», «Купол льда», «Поток силы»; жрец — «Хлеб
+  и соль», «Светлый доспех», «Попутный ветер»).
+- **Это выбор, а не ступенька.** Узел стоит 1 очко и открывается только
+  навыком 75 и предыдущим узлом ветки. Дерево целиком — 36 очков при 34
+  доступных на потолке: полное дерево и один мастерский узел помещаются, все
+  три — нет.
+- **Потолки прежние:** прибавки мастерских узлов подобраны внутри
+  `EffectKind`, дерево стало длиннее, но не сильнее заявленного максимума.
+- **В дереве пятый ряд отдельный**, у мастерского узла в подсказке строка
+  «Мастерский узел · пятый ярус»; кнопки дерева переехали наверх (назад — 0,
+  закрыть — 8, пересборка — 45, карточка класса — 53).
+- **Метка класса в нике:** `[Воин]`, `[Стрелок]`, `[Маг]`, `[Жрец]` перед
+  ником в чате, личных сообщениях и TAB — через реестр оформления ников ядра
+  (API v6). Плашка идёт первой, знак ранга остаётся; повторная склейка не
+  даёт двух плашек.
+- Настройки: `tag.enabled` в `config.yml`, тексты и цвета —
+  `tag.warrior`/`tag.archer`/`tag.mage`/`tag.cleric` в `messages.yml`.
+  Игрок без класса метки не получает.
+
 ## Умения классов и сообщение об уровне (1.4.173)
 
 У каждого класса появился один активный приём, а новый уровень класса больше
@@ -2878,12 +2904,16 @@ lines)`. `ProfileContext` несёт UUID, ник, признак «онлайн
   `general.levels-per-level` (30) уровней навыков; потолок — 34-й уровень при
   1000 суммарных уровней (десять навыков по 100). За уровень даётся
   `points-per-level` (1) очко плюс `starting-points` (1) на старте.
-- **Дерево.** Три ветки по четыре яруса у каждого класса: воин — «Стойкость»,
+- **Дерево.** Три ветки по пять ярусов у каждого класса: воин — «Стойкость»,
   «Натиск», «Земля»; стрелок — «Меткость», «Скорость», «Выживание»; маг —
   «Чары», «Щит», «Поток»; жрец — «Милость», «Свет», «Дорога». Ярусы стоят
   1 / 2 / 3 / 5 очков, всё дерево — 33. Узел открывается только после
   предыдущего в ветке и при уровне навыка 10 / 20 / 35 / 55: верхние ярусы
   берут не «доигравшие до уровня», а прокачавшие тему.
+- **Мастерский ярус (1.4.174).** Пятый узел ветки стоит одно очко и
+  открывается только навыком 75. Дерево целиком — 36 очков при 34 доступных на
+  потолке: полное дерево и один мастерский узел помещаются, все три — уже нет.
+  Так пятый ярус становится выбором стиля, а не ещё одной ступенькой.
 - **Пересборка.** `/class respec` возвращает вложенные очки и запускает
   кулдаун `general.respec-cooldown-hours` (24 часа); класс не меняется.
   Смена класса очков не требует и кулдаун пересборки не сбрасывает.
@@ -2963,8 +2993,8 @@ lines)`. `ProfileContext` несёт UUID, ник, признак «онлайн
 ### Тесты
 
 `ClassMathTest` (уровень, очки, потолки, форматы), `ClassCatalogTest` (четыре
-класса, три ветки по четыре яруса, цепочки, известные навыки, проходимость
-дерева за 33 очка), `ClassConfigTest` (умолчания, клампы, реальный
+класса, три ветки по пять ярусов, цепочки, известные навыки, мастерский ярус
+и его цена), `ClassConfigTest` (умолчания, клампы, реальный
 `config.yml`), `TalentServiceTest` (выбор, смена, требования, очки, потолки,
 пересборка, админские команды) и `ClassStoreTest` (сохранение, битый файл,
 чужие таланты, счётчики).
@@ -3110,36 +3140,36 @@ lines)`. `ProfileContext` несёт UUID, ник, признак «онлайн
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.173.jar`,
-аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.173.jar`,
-реферальный — `referrals/build/libs/chrdk-referrals-1.4.173.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.173.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.173.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.173.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.173.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.173.jar` (хартия чар — при установленном аддоне чар),
-достижения — `achievements/build/libs/chrdk-achievements-1.4.173.jar`, навыки —
-`skills/build/libs/chrdk-skills-1.4.173.jar`, клады —
-`treasures/build/libs/chrdk-treasures-1.4.173.jar`, общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.173.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.173.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.173.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.173.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.173.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.173.jar`, стримерская программа —
-`streams/build/libs/chrdk-streams-1.4.173.jar`, лотерея —
-`lottery/build/libs/chrdk-lottery-1.4.173.jar`, аукцион —
-`auction/build/libs/chrdk-auction-1.4.173.jar`, питомцы —
-`pets/build/libs/chrdk-pets-1.4.173.jar`, заказы —
-`orders/build/libs/chrdk-orders-1.4.173.jar`, охота —
-`hunt/build/libs/chrdk-hunt-1.4.173.jar`, группы —
-`party/build/libs/chrdk-party-1.4.173.jar`, события —
-`events/build/libs/chrdk-events-1.4.173.jar`, задания —
-`quests/build/libs/chrdk-quests-1.4.173.jar`, боссы —
-`bosses/build/libs/chrdk-bosses-1.4.173.jar`, гильдии —
-`guilds/build/libs/chrdk-guilds-1.4.173.jar`, классы —
-`classes/build/libs/chrdk-classes-1.4.173.jar`, профессии —
-`professions/build/libs/chrdk-professions-1.4.173.jar`. На сервер ядро
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.174.jar`,
+аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.174.jar`,
+реферальный — `referrals/build/libs/chrdk-referrals-1.4.174.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.174.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.174.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.174.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.174.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.174.jar` (хартия чар — при установленном аддоне чар),
+достижения — `achievements/build/libs/chrdk-achievements-1.4.174.jar`, навыки —
+`skills/build/libs/chrdk-skills-1.4.174.jar`, клады —
+`treasures/build/libs/chrdk-treasures-1.4.174.jar`, общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.174.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.174.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.174.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.174.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.174.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.174.jar`, стримерская программа —
+`streams/build/libs/chrdk-streams-1.4.174.jar`, лотерея —
+`lottery/build/libs/chrdk-lottery-1.4.174.jar`, аукцион —
+`auction/build/libs/chrdk-auction-1.4.174.jar`, питомцы —
+`pets/build/libs/chrdk-pets-1.4.174.jar`, заказы —
+`orders/build/libs/chrdk-orders-1.4.174.jar`, охота —
+`hunt/build/libs/chrdk-hunt-1.4.174.jar`, группы —
+`party/build/libs/chrdk-party-1.4.174.jar`, события —
+`events/build/libs/chrdk-events-1.4.174.jar`, задания —
+`quests/build/libs/chrdk-quests-1.4.174.jar`, боссы —
+`bosses/build/libs/chrdk-bosses-1.4.174.jar`, гильдии —
+`guilds/build/libs/chrdk-guilds-1.4.174.jar`, классы —
+`classes/build/libs/chrdk-classes-1.4.174.jar`, профессии —
+`professions/build/libs/chrdk-professions-1.4.174.jar`. На сервер ядро
 обязательно, аддоны — по желанию (требуют ядро 1.4.6+). К релизу на GitHub
 прикладывается **один архив** `chrdk-plugins-<версия>.zip`: ядро и все 29 аддонов
 одной версии (30 JAR) плюс памятка `ОБНОВЛЕНИЕ.txt`. Отдельные JAR больше не

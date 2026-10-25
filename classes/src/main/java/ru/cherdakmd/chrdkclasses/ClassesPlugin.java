@@ -35,6 +35,7 @@ public final class ClassesPlugin extends JavaPlugin {
     private SkillsBridge skillsBridge;
     private ClassEffects effects;
     private AbilityService abilities;
+    private ClassTag tag;
     private final ClassProgress progress = new ClassProgress();
     private ClassesGui gui;
     private BukkitTask saveTask;
@@ -54,6 +55,7 @@ public final class ClassesPlugin extends JavaPlugin {
             this.service = new TalentService(config, store, skillsBridge);
             this.effects = new ClassEffects(this);
             this.abilities = new AbilityService(this);
+            this.tag = new ClassTag(this);
             this.gui = new ClassesGui(this);
 
             getServer().getPluginManager().registerEvents(new ClassListener(this), this);
@@ -82,6 +84,11 @@ public final class ClassesPlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         if (coreApi != null) {
+            try {
+                coreApi.unregisterNameTag(ClassTag.ID);
+            } catch (RuntimeException | LinkageError ignored) {
+                // Ядро старше нужного API — снимать нечего.
+            }
             try {
                 coreApi.unregisterProfile("classes");
             } catch (RuntimeException | LinkageError ignored) {
@@ -140,6 +147,9 @@ public final class ClassesPlugin extends JavaPlugin {
         }
         if (!getConfig().isSet("general.level-notice")) {
             missing.add("general.level-notice");
+        }
+        if (!getConfig().isSet("tag")) {
+            missing.add("tag");
         }
         if (!missing.isEmpty()) {
             getLogger().info("[CHRDK_Classes] В config.yml нет ключей " + String.join(", ", missing)
@@ -231,6 +241,12 @@ public final class ClassesPlugin extends JavaPlugin {
             getLogger().warning("[CHRDK_Classes] раздел профиля недоступен "
                     + "(нужно ядро 1.4.156+): " + error);
         }
+        try {
+            coreApi.registerNameTag(ClassTag.ID, tag::decorate);
+        } catch (RuntimeException | LinkageError error) {
+            getLogger().warning("[CHRDK_Classes] метка класса в нике недоступна "
+                    + "(нужно ядро с API v6): " + error);
+        }
     }
 
     /* --------------------------------- запись --------------------------------- */
@@ -290,6 +306,10 @@ public final class ClassesPlugin extends JavaPlugin {
 
     public ClassProgress progress() {
         return progress;
+    }
+
+    public ClassTag tag() {
+        return tag;
     }
 
     public ClassesGui gui() {

@@ -21,7 +21,7 @@ final class ClassMath {
     /** Потолок очков талантов: защита от правки файла руками. */
     static final int MAX_POINTS = 300;
     /** Ярусов в ветке. */
-    static final int MAX_TIER = 4;
+    static final int MAX_TIER = 5;
 
     /** Уровень класса по сумме уровней навыков. */
     static int level(int totalSkill, int perLevel) {

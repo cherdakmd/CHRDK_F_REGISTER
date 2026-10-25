@@ -50,6 +50,7 @@ class ClassConfigTest {
         assertTrue(config.abilitiesEnabled());
         assertEquals(1.0, config.abilityCooldownMultiplier(), 1.0E-9);
         assertTrue(config.levelNotice());
+        assertTrue(config.tagEnabled(), "метка класса включена по умолчанию");
         ClassConfig nullConfig = ClassConfig.parse(null, LOGGER);
         assertEquals(config.levelsPerLevel(), nullConfig.levelsPerLevel());
     }
@@ -164,6 +165,8 @@ class ClassConfigTest {
             assertEquals(1.0, config.abilityCooldownMultiplier(), 1.0E-9);
             assertNotNull(yaml.getConfigurationSection("abilities"));
             assertTrue(yaml.getBoolean("general.level-notice"));
+            assertTrue(config.tagEnabled());
+            assertNotNull(yaml.getConfigurationSection("tag"));
         }
     }
 }

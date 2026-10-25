@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Каталог классов и деревьев (1.4.164).
  *
  * <p>Дерево — это баланс, а не настройка: здесь проверяется, что у каждого
- * класса ровно три ветки по четыре яруса, что родитель таланта существует и
+ * класса ровно три ветки по пять ярусов, что родитель таланта существует и
  * стоит на ярус выше, что требования ссылаются на настоящие навыки, а сумма
  * талантов не превышает потолки видов эффектов. Иначе игрок вложил бы очки в
  * прибавку, которую потом молча обрежет потолок.</p>
@@ -41,7 +41,7 @@ class ClassCatalogTest {
     }
 
     @Test
-    void everyClassHasThreeBranchesOfFourTiers() {
+    void everyClassHasThreeBranchesOfFiveTiers() {
         for (PlayerClass playerClass : PlayerClass.values()) {
             List<Talent> talents = ClassCatalog.talents(playerClass.id());
             assertEquals(ClassCatalog.TALENTS_PER_CLASS, talents.size(),
@@ -50,7 +50,7 @@ class ClassCatalogTest {
             assertEquals(ClassCatalog.BRANCHES_PER_CLASS, branches.size());
             for (String branch : branches) {
                 List<Talent> nodes = ClassCatalog.branch(playerClass.id(), branch);
-                assertEquals(4, nodes.size(), "ветка " + branch);
+                assertEquals(ClassMath.MAX_TIER, nodes.size(), "ветка " + branch);
                 for (int index = 0; index < nodes.size(); index++) {
                     assertEquals(index + 1, nodes.get(index).tier(), "ярусы по порядку");
                     assertEquals(playerClass.id(), nodes.get(index).classId());
@@ -98,7 +98,7 @@ class ClassCatalogTest {
         }
         assertNull(ClassCatalog.talent("нет-такого"));
         assertNull(ClassCatalog.talent(null));
-        assertEquals(48, ids.size());
+        assertEquals(60, ids.size());
     }
 
     @Test
@@ -121,15 +121,37 @@ class ClassCatalogTest {
     }
 
     @Test
-    void wholeTreeIsReachableAtMaximumLevel() {
-        int cost = 0;
+    void masteryTierIsACapstoneNotAStairStep() {
+        int full = 0;
+        int oldTree = 0;
         for (Talent talent : ClassCatalog.talents("warrior")) {
-            cost += talent.cost();
+            full += talent.cost();
+            if (talent.tier() < ClassMath.MAX_TIER) {
+                oldTree += talent.cost();
+            }
         }
         int points = ClassMath.points(ClassMath.level(1_000, 30), 1, 1);
-        assertTrue(cost <= points, "полное дерево " + cost + " очков при " + points
-                + " доступных на потолке уровня");
-        assertEquals(33, cost, "цена дерева фиксирована: 1+2+3+5 в каждой из трёх веток");
+        assertEquals(33, oldTree, "старое дерево: 1+2+3+5 в каждой из трёх веток");
+        assertEquals(36, full, "пятый ярус добавляет по одному очку в ветку");
+        assertEquals(34, points, "на потолке уровня доступно 34 очка");
+        assertTrue(oldTree <= points, "дерево без мастерских узлов собирается целиком");
+        assertTrue(oldTree + 1 <= points, "полное дерево и один мастерский узел — да");
+        assertTrue(oldTree + 3 > points, "три мастерских узла — уже выбор, а не добавка");
+    }
+
+    @Test
+    void masteryNodesNeedSeventyFiveSkill() {
+        for (PlayerClass playerClass : PlayerClass.values()) {
+            for (String branch : ClassCatalog.branches(playerClass.id())) {
+                List<Talent> nodes = ClassCatalog.branch(playerClass.id(), branch);
+                Talent last = nodes.get(nodes.size() - 1);
+                assertEquals(ClassMath.MAX_TIER, last.tier());
+                assertEquals(1, last.cost(), "мастерский узел стоит одно очко: " + last.id());
+                assertTrue(last.needsSkill(), "мастерский узел требует навык: " + last.id());
+                assertEquals(75, last.skillLevel(), "порог мастерского узла: " + last.id());
+                assertNotNull(ClassCatalog.parentOf(last), "у мастерского узла есть родитель");
+            }
+        }
     }
 
     @Test
