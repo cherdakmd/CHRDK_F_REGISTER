@@ -774,3 +774,4 @@ messages:
   admin-unknown-tier: "<red>Неизвестная редкость «%tier%».</red>"
   admin-shards-given: "<green>%player% получил %amount% осколков кладов (баланс: %balance%).</green>"
   admin-shards-invalid: "<red>Нужно целое количество осколков больше нуля.</red>"
+  "barrel-rank-extra": "<gold>Ранг добавил к находке: +%amount% шт.</gold>"

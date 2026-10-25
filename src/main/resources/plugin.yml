@@ -29,6 +29,9 @@ commands:
   rank:
     description: "Витрина донатных рангов: карточки, мой ранг, покровители, правила"
     usage: /<command> [shop|my|top|rules]
+  hat:
+    description: "Надеть блок из руки на голову (преимущество Покровителя)"
+    usage: /<command>
   rankadmin:
     description: "Ручная выдача и снятие донатных рангов"
     permission: chrdkregister.admin

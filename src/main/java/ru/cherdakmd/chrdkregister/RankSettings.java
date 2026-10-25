@@ -48,13 +48,15 @@ public final class RankSettings {
     private final boolean announceJoin;
     private final List<RankTier> tiers;
     private final Map<Integer, RankTier> byLevel;
+    private final int hatMinLevel;
     private final List<Integer> bonusXp;
     private final List<Integer> bonusDrop;
     private final List<Integer> bonusSkill;
 
     private RankSettings(boolean enabled, boolean showNameInChat, boolean welcomeEnabled,
                          int welcomeLevel, int welcomeDays, boolean announceJoin,
-                         List<RankTier> tiers, List<Integer> bonusXp, List<Integer> bonusDrop,
+                         List<RankTier> tiers, int hatMinLevel,
+                         List<Integer> bonusXp, List<Integer> bonusDrop,
                          List<Integer> bonusSkill) {
         this.enabled = enabled;
         this.showNameInChat = showNameInChat;
@@ -63,6 +65,7 @@ public final class RankSettings {
         this.welcomeDays = Math.max(0, Math.min(365, welcomeDays));
         this.announceJoin = announceJoin;
         this.tiers = List.copyOf(tiers);
+        this.hatMinLevel = Math.max(1, Math.min(RankLadder.MAX_LEVEL, hatMinLevel));
         this.bonusXp = List.copyOf(bonusXp);
         this.bonusDrop = List.copyOf(bonusDrop);
         this.bonusSkill = List.copyOf(bonusSkill);
@@ -75,7 +78,7 @@ public final class RankSettings {
 
     /** Значения по умолчанию: лестница включена, приветственный ранг — 1 день. */
     public static RankSettings defaults() {
-        return new RankSettings(true, false, true, 1, 3, true, DEFAULT_TIERS,
+        return new RankSettings(true, false, true, 1, 3, true, DEFAULT_TIERS, 5,
                 BonusDefaults.XP, BonusDefaults.DROP, BonusDefaults.SKILL);
     }
 
@@ -96,6 +99,7 @@ public final class RankSettings {
         }
         return new RankSettings(enabled, showName, welcomeEnabled, welcomeLevel, welcomeDays,
                 announceJoin, tiers,
+                config.getInt("ranks.hat.min-level", 5),
                 intList(config, "ranks.bonuses.xp-percent", BonusDefaults.XP),
                 intList(config, "ranks.bonuses.drop-percent", BonusDefaults.DROP),
                 intList(config, "ranks.bonuses.skill-levels", BonusDefaults.SKILL));
@@ -217,6 +221,11 @@ public final class RankSettings {
 
     public int welcomeDays() {
         return welcomeDays;
+    }
+
+    /** Со ступени ранга доступна команда {@code /hat}. */
+    public int hatMinLevel() {
+        return hatMinLevel;
     }
 
     public boolean announceJoin() {

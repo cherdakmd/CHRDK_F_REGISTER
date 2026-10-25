@@ -31,6 +31,14 @@ public final class HuntPlugin extends JavaPlugin {
     private boolean saveQueued;
     private ChrdkRegisterApi coreApi;
 
+    /**
+     * Публичный API ядра: охота спрашивает бонус добычи ранга (1.4.167).
+     * {@code null} — ядро старше API v10 или не установлено.
+     */
+    public ChrdkRegisterApi coreApi() {
+        return coreApi;
+    }
+
     @Override
     public void onEnable() {
         try {

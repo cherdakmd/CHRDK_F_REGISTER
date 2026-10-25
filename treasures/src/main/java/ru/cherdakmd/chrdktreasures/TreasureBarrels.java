@@ -410,13 +410,26 @@ public final class TreasureBarrels implements Listener {
         }
         Inventory inventory = barrel.getInventory();
         List<ItemStack> leftovers = new ArrayList<>();
+        int rankExtra = 0;
         for (ItemStack stack : contents) {
             if (stack == null) {
                 continue;
             }
+            // 1.4.167: бонус добычи ранга. Считается от количества в стопке и
+            // округляется вниз, поэтому единичные реликвии не дублируются:
+            // лишний предмет появляется только у стопок от 4 штук.
+            int extra = rankExtraDrops(owner, stack.getAmount());
+            if (extra > 0) {
+                stack = stack.clone();
+                stack.setAmount(stack.getAmount() + extra);
+                rankExtra += extra;
+            }
             for (ItemStack rest : inventory.addItem(stack.clone()).values()) {
                 leftovers.add(rest);
             }
+        }
+        if (rankExtra > 0 && owner.isOnline()) {
+            plugin.messages().send(owner, "barrel-rank-extra", "amount", String.valueOf(rankExtra));
         }
         boolean empty = true;
         for (ItemStack stack : inventory.getContents()) {
@@ -440,6 +453,18 @@ public final class TreasureBarrels implements Listener {
             block.getWorld().dropItemNaturally(block.getLocation().add(0.5, 1.0, 0.5), rest);
         }
         return true;
+    }
+
+    /**
+     * Прибавка добычи от донатного ранга (1.4.167): проценты и потолок живут
+     * в ядре ({@code RankBonus}), модуль только спрашивает.
+     */
+    private int rankExtraDrops(Player owner, int amount) {
+        if (owner == null || amount <= 0) {
+            return 0;
+        }
+        var api = plugin.coreApi();
+        return api == null ? 0 : api.rankBonus(owner.getName()).extraDrops(amount);
     }
 
     /** Держит индекс в разумных границах: самые старые записи уходят первыми. */

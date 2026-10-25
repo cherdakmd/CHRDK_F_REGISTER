@@ -22,6 +22,7 @@ public final class RegisterPlugin extends JavaPlugin {
     private DonateMenuService donateMenuService;
     private ServerMenuService serverMenuService;
     private RankMenuService rankMenuService;
+    private HatCommand hatCommand;
     private BankStore bankStore;
     private BankService bankService;
     private ProfileRegistry profileRegistry;
@@ -137,6 +138,11 @@ public final class RegisterPlugin extends JavaPlugin {
             });
             profileCommand.setTabCompleter((sender, command, alias, args) ->
                     profileService.complete(sender, args));
+        }
+        this.hatCommand = new HatCommand(this, accessManager);
+        PluginCommand hatCommandPlugin = getCommand("hat");
+        if (hatCommandPlugin != null) {
+            hatCommandPlugin.setExecutor(this.hatCommand);
         }
         PluginCommand rankCommand = getCommand("rank");
         if (rankCommand != null) {
@@ -320,6 +326,9 @@ public final class RegisterPlugin extends JavaPlugin {
         }
         if (rankMenuService != null) {
             rankMenuService.setMessages(messages);
+        }
+        if (hatCommand != null) {
+            hatCommand.refreshMessages();
         }
         if (bankCommands != null) {
             bankCommands.setMessages(messages);

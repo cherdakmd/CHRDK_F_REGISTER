@@ -219,3 +219,4 @@ hunt:
   admin-unknown-family: "<red>Семейства «%id%» нет в конфиге.</red>"
   admin-usage: "<yellow>/huntadmin <reload|give <ник> <coins|shards|keys> <кол-во> [семейство]|reset <ник>|info></yellow>"
   admin-info: "<gold>Охота:</gold> <gray>семейств <white>%families%</white>, правил мобов <white>%mobs%</white>, позиций лавки <white>%shop%</white>, трофеев <white>%trophies%</white>, охотников <white>%players%</white>, монет заработано <white>%earned%</white>, включено: <white>%enabled%</white>.</gray>"
+  "rank-extra-loot": "<gold>Ранг добавил к добыче: +%amount% шт.</gold>"

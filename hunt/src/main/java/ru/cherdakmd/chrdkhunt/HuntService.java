@@ -8,6 +8,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.inventory.ItemStack;
 import ru.cherdakmd.chrdkregister.Messages;
+import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 
 import java.util.Locale;
 import java.util.Map;
@@ -100,8 +101,14 @@ public final class HuntService {
         plugin.requestSave();
 
         int dropped = 0;
+        int rankBonus = 0;
         for (HuntDrop drop : rolled.drops()) {
-            dropped += giveOrDrop(killer, new ItemStack(drop.material(), drop.amount()));
+            int extra = rankExtraDrops(killer, drop.amount());
+            rankBonus += extra;
+            dropped += giveOrDrop(killer, new ItemStack(drop.material(), drop.amount() + extra));
+        }
+        if (rankBonus > 0) {
+            plugin.messages().send(killer, "rank-extra-loot", "amount", String.valueOf(rankBonus));
         }
         if (dropped > 0 && rule.boss()) {
             plugin.messages().send(killer, "kill-dropped", "amount", String.valueOf(dropped));
@@ -112,6 +119,26 @@ public final class HuntService {
         feedback(killer, family, coins, rolled.shards(), rolled.keys(), rule.boss(), config.actionbar());
         recordBestiary(killer, dead.getType());
         return true;
+    }
+
+    /**
+     * Прибавка добычи от донатного ранга (1.4.167).
+     *
+     * <p>Бонус считается от количества предметов и округляется вниз, поэтому
+     * одна находка не превращается в две: на вершине лестницы (+25 %) игрок
+     * получает лишний предмет с каждой четвёртой. Алмазы, монеты и осколки
+     * бонус не трогают — это валюта, а не добыча; потолок зафиксирован в
+     * {@code RankBonus.MAX_DROP_PERCENT}.</p>
+     */
+    private int rankExtraDrops(Player player, int amount) {
+        if (player == null || amount <= 0) {
+            return 0;
+        }
+        ChrdkRegisterApi api = plugin.coreApi();
+        if (api == null) {
+            return 0;
+        }
+        return api.rankBonus(player.getName()).extraDrops(amount);
     }
 
     /** Отсекает спавнеры, яйца и команды — классические фермы. */
@@ -625,8 +652,11 @@ public final class HuntService {
         if (result.diamonds() > 0) {
             dropped += payDiamonds(player, result.diamonds());
         }
+        int rankBonus = 0;
         for (HuntDrop drop : result.drops()) {
-            dropped += giveItems(player, drop.material(), drop.amount());
+            int extra = rankExtraDrops(player, drop.amount());
+            rankBonus += extra;
+            dropped += giveItems(player, drop.material(), drop.amount() + extra);
         }
         plugin.requestSave();
 
@@ -638,7 +668,10 @@ public final class HuntService {
         for (HuntDrop drop : result.drops()) {
             plugin.messages().send(player, "chest-loot-line",
                     "item", itemName(drop.material()),
-                    "amount", String.valueOf(drop.amount()));
+                    "amount", String.valueOf(drop.amount() + rankExtraDrops(player, drop.amount())));
+        }
+        if (rankBonus > 0) {
+            plugin.messages().send(player, "rank-extra-loot", "amount", String.valueOf(rankBonus));
         }
         if (result.diamonds() > 0) {
             plugin.messages().send(player, "chest-diamonds",
