@@ -84,7 +84,9 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
             case "loot" -> loot(player, args.length > 1 ? args[1] : null);
             case "set", "sets", "сет", "сеты" -> sets(player, args.length > 1 ? args[1] : null);
             // 1.4.153: активные клад-карты и подсказки по ним.
-            case "map", "maps", "карта", "карты" -> maps(player);
+            // 1.4.180: без аргумента — витрина карт, «list» — список в чат.
+            case "map", "maps", "карта", "карты" ->
+                    maps(player, args.length > 1 ? args[1] : null);
             case "stats" -> playerStats(player, args.length > 1 ? args[1] : null);
             // 1.4.166: обменник осколков кладов.
             case "shards", "осколки" -> shards(player);
@@ -159,13 +161,24 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
         return true;
     }
 
-    /** {@code /treasures map} — активные карты, направления и остаток раскопок. */
-    private boolean maps(Player player) {
+    /**
+     * {@code /treasures map [list]} — активные карты (1.4.153).
+     *
+     * <p>С 1.4.180 без аргумента открывается витрина: карточки карт с полосой
+     * раскопок и памятка «как искать». Список в чат никуда не делся —
+     * {@code /treasures map list}: он удобен, когда карт несколько.</p>
+     */
+    private boolean maps(Player player, String argument) {
         if (!plugin.config().maps().enabled()) {
             plugin.messages().send(player, "map-disabled");
             return true;
         }
-        plugin.maps().list(player);
+        if (argument != null
+                && (argument.equalsIgnoreCase("list") || argument.equalsIgnoreCase("список"))) {
+            plugin.maps().list(player);
+            return true;
+        }
+        plugin.gui().openMaps(player);
         return true;
     }
 
@@ -957,6 +970,9 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
         if (args.length == 1) {
             return filter(List.of("menu", "list", "stats", "top", "loot", "set", "map",
                     "toggle", "shards", "badge", "help"), args[0]);
+        }
+        if (args.length == 2 && (args[0].equalsIgnoreCase("map") || args[0].equalsIgnoreCase("maps"))) {
+            return filter(List.of("list"), args[1]);
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("badge")) {
             return filter(List.of("auto", "on", "off"), args[1]);

@@ -64,13 +64,19 @@ class TreasureMessagesTest {
             "help-set", "set-header", "set-line", "set-active", "set-none", "set-hint",
             "set-disabled", "set-detail-header", "set-detail-progress", "set-partial",
             "set-full",
-            // 1.4.153: клад-карты.
+            // 1.4.153: клад-карты; 1.4.180 — прогресс и инструкции.
             "map-item-name", "map-item-tier", "map-item-region", "map-item-world",
             "map-item-zone", "map-item-dig", "map-item-expire", "map-item-hint",
+            "map-item-progress", "map-item-how", "map-given-how", "map-dig",
             "map-given", "map-given-dropped", "map-expired", "map-none", "map-header",
             "map-row", "map-row-world", "map-footer", "map-info", "map-info-world",
+            "map-info-where", "map-info-progress", "map-info-how", "map-info-here",
             "map-found", "map-hint", "map-hint-zone", "map-disabled",
             "menu-maps-name", "menu-maps-lore", "menu-maps-empty", "menu-maps-hint",
+            "menu-maps-title", "menu-map-name", "menu-map-where", "menu-map-coords",
+            "menu-map-progress", "menu-map-open", "menu-maps-help-name",
+            "menu-maps-help-1", "menu-maps-help-2", "menu-maps-help-3",
+            "menu-maps-help-4", "menu-maps-none-name", "menu-maps-none-lore",
             "help-map", "admin-map-given", "admin-unknown-tier",
             // 1.4.157: эликсиры из кладов.
             "elixir-name", "elixir-lore-effect", "elixir-lore-hint",

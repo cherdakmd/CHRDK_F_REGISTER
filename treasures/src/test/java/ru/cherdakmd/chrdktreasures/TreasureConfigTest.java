@@ -432,7 +432,7 @@ class TreasureConfigTest {
         assertEquals(120, maps.distanceMin());
         assertEquals(480, maps.distanceMax());
         assertEquals(40, maps.hintTicks());
-        assertEquals(256, maps.hintDistance());
+        assertEquals(512, maps.hintDistance(), "подсказка работает на всю дальность тайника");
         assertEquals(TreasureTier.values().length, maps.tierWeights().size(),
                 "вес задан для каждой редкости тайника");
         assertFalse(TreasuresConfig.Maps.DISABLED.enabled());

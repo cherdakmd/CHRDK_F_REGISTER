@@ -1,5 +1,6 @@
 package ru.cherdakmd.chrdktreasures;
 
+import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
@@ -90,8 +91,23 @@ public final class TreasureMapService {
         if (meta == null) {
             return item;
         }
+        write(meta, map);
+        applyLore(meta, map);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /**
+     * Пересобирает имя и лор карты по её текущим данным (1.4.180).
+     *
+     * <p>До этой версии раскопки писали только метки: игрок копал блоки, а на
+     * карте всё ещё висело «Раскопать: 20 из 20». Со стороны это выглядело так,
+     * будто карта не работает. Теперь лор собирается заново при каждом
+     * изменении — вместе с полосой и остатком.</p>
+     */
+    private void applyLore(ItemMeta meta, TreasureMap map) {
         meta.displayName(plugin.messages().get("map-item-name"));
-        List<net.kyori.adventure.text.Component> lore = new ArrayList<>();
+        List<Component> lore = new ArrayList<>();
         lore.add(plugin.messages().get("map-item-tier",
                 "tier", Messages.trusted(plugin.messages().raw("tier." + map.tier().id()))));
         lore.add(plugin.messages().get("map-item-region",
@@ -101,18 +117,18 @@ public final class TreasureMapService {
         }
         lore.add(plugin.messages().get("map-item-zone",
                 "x", map.x(), "z", map.z(), "radius", map.radius()));
+        lore.add(plugin.messages().get("map-item-progress",
+                "bar", Messages.trusted(MapProgress.colored(map.dug(), map.needed()))));
         lore.add(plugin.messages().get("map-item-dig",
-                "left", map.remaining(), "needed", map.needed()));
+                "dug", map.dug(), "needed", map.needed(), "left", map.remaining()));
         long left = map.remainingMillis(System.currentTimeMillis());
         if (left > 0L) {
             lore.add(plugin.messages().get("map-item-expire",
                     "time", TreasureMapHint.duration(left)));
         }
         lore.add(plugin.messages().get("map-item-hint"));
+        lore.add(plugin.messages().get("map-item-how"));
         meta.lore(lore);
-        write(meta, map);
-        item.setItemMeta(meta);
-        return item;
     }
 
     /** Читает карту из предмета; {@code null} — это не карта. */
@@ -160,6 +176,8 @@ public final class TreasureMapService {
             return;
         }
         write(meta, map);
+        // 1.4.180: лор тоже пересобирается, иначе прогресс раскопок не виден.
+        applyLore(meta, map);
         stack.setItemMeta(meta);
     }
 
@@ -252,6 +270,8 @@ public final class TreasureMapService {
                 "tier", Messages.trusted(plugin.messages().raw("tier." + map.tier().id())),
                 "region", Messages.trusted(plugin.messages().raw("region." + map.region().id())),
                 "x", map.x(), "z", map.z(), "left", map.remaining());
+        // 1.4.180: карту без объяснения игроки не понимали — сразу говорим, что делать.
+        plugin.messages().send(player, "map-given-how");
         return placed;
     }
 
@@ -352,6 +372,13 @@ public final class TreasureMapService {
             // иначе PDC обновился бы только у временного объекта.
             write(slot.stack(), updated);
             player.getInventory().setItem(slot.index(), slot.stack());
+            // 1.4.180: за каждый блок — полоса и остаток. Без этого игрок копал
+            // в тишине и не понимал, считается ли его работа.
+            player.sendActionBar(plugin.messages().get("map-dig",
+                    "bar", Messages.trusted(MapProgress.colored(updated.percent())),
+                    "dug", updated.dug(),
+                    "needed", updated.needed(),
+                    "left", updated.remaining()));
         }
         return reveals;
     }
@@ -442,7 +469,11 @@ public final class TreasureMapService {
         }
         if (best.inZone()) {
             player.sendActionBar(plugin.messages().get("map-hint-zone",
-                    "left", bestMap.remaining()));
+                    "bar", Messages.trusted(MapProgress.colored(bestMap.percent())),
+                    "dug", bestMap.dug(),
+                    "needed", bestMap.needed(),
+                    "left", bestMap.remaining(),
+                    "distance", best.distance()));
             return;
         }
         player.sendActionBar(plugin.messages().get("map-hint",
@@ -473,12 +504,16 @@ public final class TreasureMapService {
         }
         plugin.messages().send(player, "map-info",
                 "tier", Messages.trusted(tier),
-                "region", Messages.trusted(region),
+                "region", Messages.trusted(region));
+        plugin.messages().send(player, "map-info-where",
                 "x", map.x(), "z", map.z(),
                 "distance", hint.distance(),
                 "direction", hint.direction(),
-                "left", map.remaining(),
                 "radius", map.radius());
+        plugin.messages().send(player, "map-info-progress",
+                "bar", Messages.trusted(MapProgress.colored(map.dug(), map.needed())),
+                "dug", map.dug(), "needed", map.needed(), "left", map.remaining());
+        plugin.messages().send(player, hint.inZone() ? "map-info-here" : "map-info-how");
     }
 
     /** Список активных карт в чат: `/treasures map`. */
@@ -517,6 +552,9 @@ public final class TreasureMapService {
                         "x", map.x(), "z", map.z(),
                         "distance", hint.distance(),
                         "direction", hint.direction(),
+                        "bar", Messages.trusted(MapProgress.colored(map.dug(), map.needed())),
+                        "dug", map.dug(),
+                        "needed", map.needed(),
                         "left", map.remaining());
             } else {
                 plugin.messages().send(player, "map-row-world",
@@ -525,6 +563,9 @@ public final class TreasureMapService {
                         "region", Messages.trusted(region),
                         "world", map.world(),
                         "x", map.x(), "z", map.z(),
+                        "bar", Messages.trusted(MapProgress.colored(map.dug(), map.needed())),
+                        "dug", map.dug(),
+                        "needed", map.needed(),
                         "left", map.remaining());
             }
         }

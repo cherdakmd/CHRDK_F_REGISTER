@@ -897,7 +897,7 @@ public final class TreasuresConfig {
                 (int) clamp(cfg.getLong("maps.distance-min", 120L), 32L, 2000L),
                 (int) clamp(cfg.getLong("maps.distance-max", 480L), 32L, 4000L),
                 (int) clamp(cfg.getLong("maps.hint-ticks", 40L), 20L, 200L),
-                (int) clamp(cfg.getLong("maps.hint-distance", 256L), 0L, 1024L),
+                (int) clamp(cfg.getLong("maps.hint-distance", 512L), 0L, 1024L),
                 weights);
     }
 

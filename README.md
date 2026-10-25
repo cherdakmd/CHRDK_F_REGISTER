@@ -111,6 +111,23 @@
 - В консоли команда печатает голый адрес строкой. Тесты — `WikiSettingsTest`
   и `PresentationUpdateTest` (кнопка ведёт в существующую команду).
 
+## Клад-карта объясняет себя (1.4.180)
+
+Карта выпадала с клада, но игрок не понимал, что с ней делать. Теперь:
+
+- лор карты живой: полоса раскопок, «раскопано N из M» и срок обновляются
+  после каждого блока (раньше там навсегда застывали числа на момент выдачи);
+- ПКМ по карте — путь (расстояние, румб, координаты, радиус зоны), прогресс и
+  прямая инструкция «копай любой твёрдый блок внутри круга»; в зоне — «копайте
+  здесь»;
+- за каждый блок внутри зоны — полоса и остаток в экшен-баре, а направление
+  показывается на всей дистанции тайника (120–480 блоков);
+- `/treasures map` открывает витрину карт: карточки с прогрессом и памятка из
+  четырёх шагов, клик — путь в чат; `/treasures map list` — прежний список.
+
+Шансы, зона, счётчик блоков, срок и содержимое тайника не менялись. Подробности
+— `docs/releases/1.4.180.md` и `wiki/treasures.md`.
+
 ## Карточка ремесла показывает рост (1.4.179)
 
 Полоса опыта и строка «Дальше» в `/prof`:
@@ -3270,36 +3287,36 @@ lines)`. `ProfileContext` несёт UUID, ник, признак «онлайн
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.179.jar`,
-аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.179.jar`,
-реферальный — `referrals/build/libs/chrdk-referrals-1.4.179.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.179.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.179.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.179.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.179.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.179.jar` (хартия чар — при установленном аддоне чар),
-достижения — `achievements/build/libs/chrdk-achievements-1.4.179.jar`, навыки —
-`skills/build/libs/chrdk-skills-1.4.179.jar`, клады —
-`treasures/build/libs/chrdk-treasures-1.4.179.jar`, общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.179.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.179.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.179.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.179.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.179.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.179.jar`, стримерская программа —
-`streams/build/libs/chrdk-streams-1.4.179.jar`, лотерея —
-`lottery/build/libs/chrdk-lottery-1.4.179.jar`, аукцион —
-`auction/build/libs/chrdk-auction-1.4.179.jar`, питомцы —
-`pets/build/libs/chrdk-pets-1.4.179.jar`, заказы —
-`orders/build/libs/chrdk-orders-1.4.179.jar`, охота —
-`hunt/build/libs/chrdk-hunt-1.4.179.jar`, группы —
-`party/build/libs/chrdk-party-1.4.179.jar`, события —
-`events/build/libs/chrdk-events-1.4.179.jar`, задания —
-`quests/build/libs/chrdk-quests-1.4.179.jar`, боссы —
-`bosses/build/libs/chrdk-bosses-1.4.179.jar`, гильдии —
-`guilds/build/libs/chrdk-guilds-1.4.179.jar`, классы —
-`classes/build/libs/chrdk-classes-1.4.179.jar`, профессии —
-`professions/build/libs/chrdk-professions-1.4.179.jar`. На сервер ядро
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.180.jar`,
+аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.180.jar`,
+реферальный — `referrals/build/libs/chrdk-referrals-1.4.180.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.180.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.180.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.180.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.180.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.180.jar` (хартия чар — при установленном аддоне чар),
+достижения — `achievements/build/libs/chrdk-achievements-1.4.180.jar`, навыки —
+`skills/build/libs/chrdk-skills-1.4.180.jar`, клады —
+`treasures/build/libs/chrdk-treasures-1.4.180.jar`, общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.180.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.180.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.180.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.180.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.180.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.180.jar`, стримерская программа —
+`streams/build/libs/chrdk-streams-1.4.180.jar`, лотерея —
+`lottery/build/libs/chrdk-lottery-1.4.180.jar`, аукцион —
+`auction/build/libs/chrdk-auction-1.4.180.jar`, питомцы —
+`pets/build/libs/chrdk-pets-1.4.180.jar`, заказы —
+`orders/build/libs/chrdk-orders-1.4.180.jar`, охота —
+`hunt/build/libs/chrdk-hunt-1.4.180.jar`, группы —
+`party/build/libs/chrdk-party-1.4.180.jar`, события —
+`events/build/libs/chrdk-events-1.4.180.jar`, задания —
+`quests/build/libs/chrdk-quests-1.4.180.jar`, боссы —
+`bosses/build/libs/chrdk-bosses-1.4.180.jar`, гильдии —
+`guilds/build/libs/chrdk-guilds-1.4.180.jar`, классы —
+`classes/build/libs/chrdk-classes-1.4.180.jar`, профессии —
+`professions/build/libs/chrdk-professions-1.4.180.jar`. На сервер ядро
 обязательно, аддоны — по желанию (требуют ядро 1.4.6+). К релизу на GitHub
 прикладывается **один архив** `chrdk-plugins-<версия>.zip`: ядро и все 29 аддонов
 одной версии (30 JAR) плюс памятка `ОБНОВЛЕНИЕ.txt`. Отдельные JAR больше не
