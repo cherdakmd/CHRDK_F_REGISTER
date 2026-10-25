@@ -7,6 +7,11 @@ on:
       - 'arena/**'
   pull_request:
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Приложить картинки витрины к релизу с этим тегом (пусто — обычная сборка)'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -80,3 +85,65 @@ jobs:
             */build/libs/*.jar
           if-no-files-found: error
           retention-days: 14
+
+  # Прикладывает картинки витрины рангов к уже опубликованному релизу.
+  # Запуск: Actions → Build → Run workflow, поле release_tag = v1.4.169.
+  # Отдельный workflow здесь не подходит: workflow_dispatch доступен только
+  # для файлов, которые уже есть в ветке по умолчанию.
+  shop-images:
+    name: Attach shop images to the release
+    if: ${{ inputs.release_tag != '' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Verify images and release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          for file in \
+            docs/ranks/chrdk-shop-images.zip \
+            docs/ranks/shop/00-vse-ranki.png \
+            docs/ranks/shop/1-strannik.png \
+            docs/ranks/shop/2-sledopyt.png \
+            docs/ranks/shop/3-khranitel.png \
+            docs/ranks/shop/4-metsenat.png \
+            docs/ranks/shop/5-pokrovitel.png
+          do
+            if [[ ! -f "$file" ]]; then
+              echo "Нет файла $file" >&2
+              exit 1
+            fi
+          done
+          ls -l docs/ranks/chrdk-shop-images.zip docs/ranks/shop/*.png
+          gh release view "$TAG" --json tagName --jq '.tagName'
+
+      - name: Upload images to the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          gh release upload "$TAG" \
+            docs/ranks/chrdk-shop-images.zip \
+            docs/ranks/shop/00-vse-ranki.png \
+            docs/ranks/shop/1-strannik.png \
+            docs/ranks/shop/2-sledopyt.png \
+            docs/ranks/shop/3-khranitel.png \
+            docs/ranks/shop/4-metsenat.png \
+            docs/ranks/shop/5-pokrovitel.png \
+            --clobber
+
+      - name: Show the resulting assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.release_tag }}
+        run: gh release view "$TAG" --json assets --jq '.assets[] | "\(.name) \(.size) байт"'
