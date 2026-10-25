@@ -4,19 +4,16 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
-import java.io.IOException;
 import java.io.Reader;
-import java.io.Writer;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Logger;
+import ru.cherdakmd.chrdkregister.storage.SafeJsonWriter;
 
 /**
  * Постоянные кулдауны активных артефактов (`cooldowns.json`, 1.4.130).
@@ -80,30 +77,8 @@ public final class CooldownStore {
     }
 
     private void write(String json) {
-        Path temp = file.resolveSibling(file.getFileName() + ".tmp");
-        try {
-            Files.createDirectories(file.getParent());
-            try (Writer writer = Files.newBufferedWriter(temp, StandardCharsets.UTF_8)) {
-                writer.write(json);
-            }
-            move(temp, file);
-        } catch (IOException exception) {
-            logger.severe("[CHRDK_Artifacts] Не удалось записать " + file + ": "
-                    + exception.getMessage());
-            try {
-                Files.deleteIfExists(temp);
-            } catch (IOException ignored) {
-                // мусорный .tmp не мешает следующей попытке
-            }
-        }
-    }
-
-    private static void move(Path from, Path to) throws IOException {
-        try {
-            Files.move(from, to, StandardCopyOption.REPLACE_EXISTING,
-                    StandardCopyOption.ATOMIC_MOVE);
-        } catch (AtomicMoveNotSupportedException exception) {
-            Files.move(from, to, StandardCopyOption.REPLACE_EXISTING);
-        }
+        // Флага «грязно» здесь нет: таймер отдаёт свежую карту кулдаунов
+        // каждые несколько секунд, поэтому сбой записи исправит следующая.
+        SafeJsonWriter.write(file, json, logger, "[CHRDK_Artifacts]");
     }
 }

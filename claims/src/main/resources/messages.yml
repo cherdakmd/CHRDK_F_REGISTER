@@ -170,7 +170,9 @@ claims:
   map-header: "<gold>═══ Карта приватов (чанк = знак) ═══</gold>"
   map-line: "<gray>%row%</gray>"
   map-legend: "<gray>@ ваш · # чужой · $ продаётся · . свободен · X вы здесь</gray>"
-  # границы приватов: вход и выход, свой приват, участник, чужой, лот на продажу
+  # границы приватов: вход и выход, свой приват, участник, чужой, лот на продажу.
+  # %x% и %z% здесь — координаты блока в центре привата (те же числа, что в F3 и на
+  # миникарте), а не номер чанка: чанк -139 — это блоки -2224..-2209, центр -2216.
   enter-own: "<gray>Вы вошли в свой приват <yellow>[%x%, %z%]</yellow>%paid-note%</gray>"
   enter-member: "<gray>Вы вошли в приват <yellow>%owner%</yellow> <dark_gray>[%x%, %z%]</dark_gray> · роль «%role%» · /claim info</gray>"
   enter-foreign: "<gray>Вы вошли на чужой приват <yellow>%owner%</yellow> <dark_gray>[%x%, %z%]</dark_gray> · /claim info</gray>"

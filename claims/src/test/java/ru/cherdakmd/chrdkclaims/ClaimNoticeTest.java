@@ -72,6 +72,31 @@ class ClaimNoticeTest {
         assertTrue(spot("Steve", 16, null, "").forSale());
     }
 
+    /** Игрок на блоке -2215 видел чанк -139: в чат должен уйти блок -2216. */
+    @Test
+    void noticeShowsBlockCoordinatesInsteadOfChunkNumber() {
+        ClaimNotice.Spot spot = new ClaimNotice.Spot("world", -139, -5, "Steve", 0, null, 0L, "");
+        assertEquals(-2216, spot.blockX());
+        assertEquals(-72, spot.blockZ());
+        // Номер чанка остался прежним: по нему ищется приват и сравниваются переходы.
+        assertEquals(-139, spot.x());
+        assertEquals(-5, spot.z());
+        assertEquals("world:-139:-5", spot.where());
+    }
+
+    @Test
+    void blockCenterAlwaysFallsInsideItsChunk() {
+        for (int chunk : new int[]{-140, -139, -1, 0, 1, 37}) {
+            ClaimNotice.Spot spot = new ClaimNotice.Spot("world", chunk, chunk, "Steve",
+                    0, null, 0L, "");
+            assertEquals(chunk, spot.blockX() >> 4);
+            assertEquals(chunk, spot.blockZ() >> 4);
+            // Ровно середина чанка, а не его край: телепорт ищет площадку вокруг.
+            assertEquals(chunk * 16 + 8, spot.blockX());
+            assertEquals(chunk * 16 + 8, spot.blockZ());
+        }
+    }
+
     @Test
     void whereIsStableAndCaseInsensitive() {
         ClaimNotice.Spot lower = new ClaimNotice.Spot("world", 3, -7, "Steve", 0, null, 0L, "");

@@ -6,19 +6,17 @@ import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.io.Writer;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Logger;
+import ru.cherdakmd.chrdkregister.storage.SafeJsonWriter;
 
 /**
  * История мировых событий в {@code events.json} (1.4.160).
@@ -321,22 +319,12 @@ public final class EventsStore {
     }
 
     private void write(String json) {
-        Path temp = file.resolveSibling(file.getFileName() + ".tmp");
-        try {
-            Files.createDirectories(file.getParent());
-            try (Writer writer = Files.newBufferedWriter(temp, StandardCharsets.UTF_8)) {
-                writer.write(json);
-            }
-            try {
-                Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING,
-                        StandardCopyOption.ATOMIC_MOVE);
-            } catch (AtomicMoveNotSupportedException notAtomic) {
-                Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING);
-            }
-        } catch (IOException error) {
-            if (logger != null) {
-                logger.warning("[CHRDK_Events] Не удалось записать events.json: "
-                        + error.getMessage());
+        if (!SafeJsonWriter.write(file, json, logger, "[CHRDK_Events]")) {
+            // Диск не принял данные — помечаем состояние изменённым, иначе
+            // следующее автосохранение решит, что писать нечего, и прогресс
+            // потеряется молча.
+            synchronized (this) {
+                dirty = true;
             }
         }
     }

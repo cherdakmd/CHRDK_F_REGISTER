@@ -28,6 +28,8 @@ dependencies {
     compileOnly "com.google.code.gson:gson:2.11.0"
 
     testImplementation "org.purpurmc.purpur:purpur-api:${project.purpur_api_version}"
+    // Классы ядра нужно и тестам: хранилища пишут файлы через SafeJsonWriter.
+    testImplementation project(':')
     testImplementation "com.google.code.gson:gson:2.11.0"
     testImplementation "org.junit.jupiter:junit-jupiter:5.11.3"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"

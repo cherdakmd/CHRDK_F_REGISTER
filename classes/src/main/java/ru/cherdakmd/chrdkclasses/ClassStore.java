@@ -6,13 +6,10 @@ import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.io.Writer;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -22,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Logger;
+import ru.cherdakmd.chrdkregister.storage.SafeJsonWriter;
 
 /**
  * Классы игроков в {@code classes.json} (1.4.164).
@@ -368,22 +366,12 @@ public final class ClassStore {
     }
 
     private void write(String json) {
-        Path temp = file.resolveSibling(file.getFileName() + ".tmp");
-        try {
-            Files.createDirectories(file.getParent());
-            try (Writer writer = Files.newBufferedWriter(temp, StandardCharsets.UTF_8)) {
-                writer.write(json);
-            }
-            try {
-                Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING,
-                        StandardCopyOption.ATOMIC_MOVE);
-            } catch (AtomicMoveNotSupportedException notAtomic) {
-                Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING);
-            }
-        } catch (IOException error) {
-            if (logger != null) {
-                logger.severe("[CHRDK_Classes] Не удалось записать " + file + ": "
-                        + error.getMessage());
+        if (!SafeJsonWriter.write(file, json, logger, "[CHRDK_Classes]")) {
+            // Диск не принял данные — помечаем состояние изменённым, иначе
+            // следующее автосохранение решит, что писать нечего, и прогресс
+            // потеряется молча.
+            synchronized (this) {
+                dirty = true;
             }
         }
     }
