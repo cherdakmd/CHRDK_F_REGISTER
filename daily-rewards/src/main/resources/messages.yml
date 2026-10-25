@@ -1,0 +1,40 @@
+messages:
+  "daily":
+    "no-api": "<red>Ядро CHRDK_F_REGISTER не найдено — ежедневные награды недоступны.</red>"
+    "need-auth": "<red>Сначала войдите на сервер (/login), потом забирайте награду.</red>"
+    "usage": "<gray>/daily — календарь наград; /daily claim — забрать сегодняшнюю</gray>"
+    "claim-header": "<gold>═══ Награда за день %day% стрика ═══</gold>"
+    "claim-items": "<gray>Предметы: </gray><aqua>%items%</aqua>"
+    "claim-pass-days": "<gray>Бонус ранга: </gray><green>+%days% дн.</green>"
+    "claim-streak": "<gray>Стрик: </gray><yellow>%streak% дн.</yellow><gray>, следующая награда завтра (UTC)</gray>"
+    "already-claimed": "<yellow>Сегодняшняя награда уже взята. Загляните завтра! Стрик: %streak% дн.</yellow>"
+    "join-reminder": "<gold>✎ У вас ждёт ежедневная награда — откройте </gold><yellow>/daily</yellow>"
+    "info": "<gray>Стрик: %streak% дн., всего наград: %total%, статус сегодняшней: %claimed%</gray>"
+    "claimed-yes": "<green>взята</green>"
+    "claimed-no": "<yellow>не взята — /daily claim</yellow>"
+    "profile-title": "Ежедневные награды"
+    "profile-streak": "<gray>Стрик: </gray><yellow>%streak% дн.</yellow>"
+    "profile-total": "<gray>Наград забрано: </gray><white>%total%</white>"
+    "profile-ready": "<green>Сегодняшняя награда ждёт — /daily claim</green>"
+    "gui":
+      "title": "<gold>Ежедневные награды</gold>"
+      "day-name": "<yellow>День %day%</yellow>"
+      "claimed-name": "<green>✓ День %day% — взято</green>"
+      "today-name": "<gold>★ День %day% — забрать!</gold>"
+      "locked-name": "<dark_gray>День %day% — будущее</dark_gray>"
+      "lore-claimed":
+        - "<gray>Уже получено сегодня. Стрик: %streak%</gray>"
+      "lore-today":
+        - "<green>Нажмите, чтобы забрать награду!</green>"
+        - "%rewards%"
+      "lore-locked":
+        - "<gray>Откроется через %days% дн. стрика</gray>"
+        - "%rewards%"
+      "reward-line": "<gray>• %reward%</gray>"
+      "footer-name": "<aqua>Ваш стрик: %streak% дн.</aqua>"
+  "admin":
+    "usage": "<gray>/dailyadmin lookup <ник> | set <ник> <стрик> | reload</gray>"
+    "lookup": "<gray>%player%: стрик %streak%, всего взято %total%, сегодня %claimed%</gray>"
+    "set-ok": "<green>Стрик игрока %player% установлен в %streak% (сброс последнего дня — забрать сможет завтра).</green>"
+    "reloaded": "<green>Конфигурация ежедневок перечитана.</green>"
+    "invalid-number": "<red>Некорректное число: %value%</red>"

@@ -20,6 +20,59 @@ public final class PluginConfig {
     private final String donatePayPaymentUrl;
     private final int minimumDonationRubles;
     private final int donatePollSeconds;
+    private final int donateHealthSeconds;
+    private final int donateAlertFailStreak;
+    private final boolean donateAlertAdmins;
+    private final int donateAlertRepeatMinutes;
+    private final int donatePendingNotifyHours;
+    private final boolean easyDonateEnabled;
+    private final String easyDonateShopKey;
+    private final String easyDonatePaymentUrl;
+
+    /** Подписочный провайдер Boosty (сеттится из load(), в большой ctor не входит). */
+    private BoostySettings boosty = BoostySettings.DISABLED;
+    private TradeMcSettings trademc = TradeMcSettings.DISABLED;
+    /** Дополнительные права для группы проходки из integrations.pass-group-permissions. */
+    private List<String> passGroupPermissions = List.of();
+    /** Запрещать обычным игрокам служебные команды при /pass luckperms setup (integrations.lp-command-protect). */
+    private boolean lpCommandProtect = true;
+    /** Доп. узлы для запрета обычным игрокам (integrations.lp-deny-extra). */
+    private List<String> lpDenyExtra = List.of();
+    /** Проверять обновления ядра на GitHub (updates.enabled). */
+    private boolean updatesEnabled = true;
+    /** Репозиторий релизов для проверки обновлений (updates.repo). */
+    private String updatesRepo = "cherdakmd/CHRDK_F_REGISTER";
+    /** Интервал проверки обновлений в часах (updates.interval-hours). */
+    private int updatesIntervalHours = 6;
+    /** Сообщать администраторам о новой версии (updates.notify-admins). */
+    private boolean updatesNotifyAdmins = true;
+
+    /** Динамический MOTD (сеттится из load(), как и Boosty). */
+    private MotdSettings motd = MotdSettings.DISABLED;
+
+    /** Каталог товаров из секции shop (сеттится из load(), не часть ctor). */
+    private ShopCatalog shop = ShopCatalog.empty(false);
+
+    /** Скидка подписчикам Boosty в каталоге (shop.boosty-bonus, из load()). */
+    private ShopDiscount shopDiscount = ShopDiscount.DISABLED;
+
+    /** Мастер-флаг донат-стены проходки (seed из load()). */
+    private boolean passEnabled = false;
+
+    /** Лестница донатных рангов и оформление (seed из load(), 1.4.167). */
+    private RankSettings ranks = RankSettings.defaults();
+
+    /** donation-actions: консольные команды по входящим донатам (не часть ctor — как boosty/motd). */
+    private List<DonateAction> donateActions = List.of();
+
+    /** donatepay.show-balance (не часть ctor): писать ли имя кошелька и баланс в boot-лог. */
+    private boolean donatePayShowBalance = true;
+
+    /** server-menu.* (не часть ctor): конфиг-driven серверное меню /menu. */
+    private ServerMenuSettings serverMenu = ServerMenuSettings.DISABLED;
+    /** economy.* (не часть ctor): банк алмазов /bal /pay /baltop. */
+    private EconomySettings economy = EconomySettings.DEFAULTS;
+    private final boolean donatePayEnabled;
     private final boolean strictCaseMatch;
     private final boolean donateReviewUnmatched;
     private final boolean donateFuzzyMatch;
@@ -27,19 +80,28 @@ public final class PluginConfig {
     private final int paymentCodeDigits;
     private final int donationJournalKeepDays;
 
+    private boolean trialEnabled = true;
+    private int trialDays = 14;
     private final int grantDays;
     private final List<PassTier> passTiers;
     private final List<Long> expiryWarningMinutes;
     private final boolean expiryBossBar;
     private final boolean expiryWarningSound;
     private final int kickAfterSeconds;
+    private final boolean passGuiMenu;
+    private final String passGroup;
+    private final boolean passGroupRemoveExpired;
+    private final boolean passGroupPaidOnly;
 
     private final int sessionMinutes;
     private final int minPasswordLength;
     private final int maxPasswordLength;
     private final int maxLoginAttempts;
     private final int reminderSeconds;
+    private final int captchaAfterAttempts;
     private final boolean authDialogs;
+    private final boolean buttonLogin;
+    private final String buttonLoginSymbols;
     private final boolean maskCommandsInLogs;
     private final boolean sessionSkips2fa;
     private final boolean sessionRequireSameUuid;
@@ -56,9 +118,11 @@ public final class PluginConfig {
     private final boolean bruteForceNotifyAdmins;
 
     private final boolean totpEnabled;
+    private final boolean totpRequired;
     private final String totpIssuer;
     private final int totpWindowSteps;
     private final int totpMaxAttempts;
+    private final boolean totpQrMap;
 
     private final boolean antiMultiAltEnabled;
     private final String antiMultiAltMode;
@@ -100,19 +164,21 @@ public final class PluginConfig {
         this(
                 donatePayApiToken, donatePayPaymentUrl, minimumDonationRubles, donatePollSeconds, strictCaseMatch,
                 true, true, false, 4, 365,
-                grantDays, defaultTiers(grantDays), List.of(10_080L, 4_320L, 1_440L, 60L), true, true, 0,
-                sessionMinutes, minPasswordLength, maxPasswordLength, maxLoginAttempts, reminderSeconds,
-                false, true, false, true, false, false, true,
+                grantDays, defaultTiers(grantDays), List.of(10_080L, 4_320L, 1_440L, 60L), true, true, 0, true, "", true, true,
+                sessionMinutes, minPasswordLength, maxPasswordLength, maxLoginAttempts, reminderSeconds, 3,
+                false, true, "!@#$%&*-_+=.?", true, false, true, false, false, true,
                 List.of(0, 0, 1, 2, 5, 10, 30, 60, 120, 300), maxLoginAttempts, 10, 15, 10, 15, true,
-                true, "CHRDK", 1, maxLoginAttempts,
+                true, true, "CHRDK", 1, maxLoginAttempts, true,
                 true, "notify", 3, 240,
                 5, true, 14, true,
                 true, 180, true,
-                "", List.of("pass.granted", "pass.revoked", "bruteforce.alert", "totp.reset", "donatepay.error"),
+                "", List.of("pass.granted", "pass.revoked", "bruteforce.alert", "totp.reset",
+                        "donatepay.error", "donatepay.down", "donatepay.up"),
                 List.of(),
                 true,
                 ZoneId.of("Europe/Moscow"),
-                new ChatConfig()
+                new ChatConfig(),
+                300, 10, true, 15, 24, false, "", "", true
         );
     }
 
@@ -133,12 +199,19 @@ public final class PluginConfig {
             boolean expiryBossBar,
             boolean expiryWarningSound,
             int kickAfterSeconds,
+            boolean passGuiMenu,
+            String passGroup,
+            boolean passGroupRemoveExpired,
+            boolean passGroupPaidOnly,
             int sessionMinutes,
             int minPasswordLength,
             int maxPasswordLength,
             int maxLoginAttempts,
             int reminderSeconds,
+            int captchaAfterAttempts,
             boolean authDialogs,
+            boolean buttonLogin,
+            String buttonLoginSymbols,
             boolean maskCommandsInLogs,
             boolean sessionSkips2fa,
             boolean sessionRequireSameUuid,
@@ -153,9 +226,11 @@ public final class PluginConfig {
             int tempIpBanMinutes,
             boolean bruteForceNotifyAdmins,
             boolean totpEnabled,
+            boolean totpRequired,
             String totpIssuer,
             int totpWindowSteps,
             int totpMaxAttempts,
+            boolean totpQrMap,
             boolean antiMultiAltEnabled,
             String antiMultiAltMode,
             int maxAccountsPerIp,
@@ -172,12 +247,30 @@ public final class PluginConfig {
             List<String> notificationMentions,
             boolean bStatsEnabled,
             ZoneId timeZone,
-            ChatConfig chat
+            ChatConfig chat,
+            int donateHealthSeconds,
+            int donateAlertFailStreak,
+            boolean donateAlertAdmins,
+            int donateAlertRepeatMinutes,
+            int donatePendingNotifyHours,
+            boolean easyDonateEnabled,
+            String easyDonateShopKey,
+            String easyDonatePaymentUrl,
+            boolean donatePayEnabled
     ) {
         this.donatePayApiToken = donatePayApiToken == null ? "" : donatePayApiToken.trim();
         this.donatePayPaymentUrl = sanitizeUrl(donatePayPaymentUrl);
         this.minimumDonationRubles = Math.max(1, minimumDonationRubles);
         this.donatePollSeconds = Math.max(15, donatePollSeconds);
+        this.donateHealthSeconds = Math.clamp(donateHealthSeconds, 60, 3600);
+        this.donateAlertFailStreak = Math.clamp(donateAlertFailStreak, 3, 100);
+        this.donateAlertAdmins = donateAlertAdmins;
+        this.donateAlertRepeatMinutes = Math.clamp(donateAlertRepeatMinutes, 0, 1440);
+        this.donatePendingNotifyHours = Math.clamp(donatePendingNotifyHours, 0, 8760);
+        this.easyDonateEnabled = easyDonateEnabled;
+        this.easyDonateShopKey = easyDonateShopKey == null ? "" : easyDonateShopKey.trim();
+        this.easyDonatePaymentUrl = sanitizeUrl(easyDonatePaymentUrl);
+        this.donatePayEnabled = donatePayEnabled;
         this.strictCaseMatch = strictCaseMatch;
         this.donateReviewUnmatched = donateReviewUnmatched;
         this.donateFuzzyMatch = donateFuzzyMatch;
@@ -192,13 +285,20 @@ public final class PluginConfig {
         this.expiryBossBar = expiryBossBar;
         this.expiryWarningSound = expiryWarningSound;
         this.kickAfterSeconds = Math.clamp(kickAfterSeconds, 0, 3600);
+        this.passGuiMenu = passGuiMenu;
+        this.passGroup = passGroup == null ? "" : passGroup.trim();
+        this.passGroupRemoveExpired = passGroupRemoveExpired;
+        this.passGroupPaidOnly = passGroupPaidOnly;
 
         this.sessionMinutes = Math.clamp(sessionMinutes, 0, 10080);
         this.minPasswordLength = Math.clamp(minPasswordLength, 4, 32);
         this.maxPasswordLength = Math.max(this.minPasswordLength, Math.min(128, maxPasswordLength));
         this.maxLoginAttempts = Math.clamp(maxLoginAttempts, 1, 20);
         this.reminderSeconds = Math.clamp(reminderSeconds, 2, 120);
+        this.captchaAfterAttempts = Math.clamp(captchaAfterAttempts, 0, 10);
         this.authDialogs = authDialogs;
+        this.buttonLogin = buttonLogin;
+        this.buttonLoginSymbols = buttonLoginSymbols == null ? "" : buttonLoginSymbols.trim();
         this.maskCommandsInLogs = maskCommandsInLogs;
         this.sessionSkips2fa = sessionSkips2fa;
         this.sessionRequireSameUuid = sessionRequireSameUuid;
@@ -221,9 +321,11 @@ public final class PluginConfig {
         this.bruteForceNotifyAdmins = bruteForceNotifyAdmins;
 
         this.totpEnabled = totpEnabled;
+        this.totpRequired = totpRequired;
         this.totpIssuer = (totpIssuer == null || totpIssuer.isBlank()) ? "CHRDK" : totpIssuer.trim();
         this.totpWindowSteps = Math.clamp(totpWindowSteps, 0, 10);
         this.totpMaxAttempts = Math.clamp(totpMaxAttempts, 1, 20);
+        this.totpQrMap = totpQrMap;
 
         this.antiMultiAltEnabled = antiMultiAltEnabled;
         String mode = antiMultiAltMode == null ? "notify" : antiMultiAltMode.trim().toLowerCase(Locale.ROOT);
@@ -253,7 +355,7 @@ public final class PluginConfig {
         int maxLoginAttempts = config.getInt("auth.max-login-attempts", 5);
         List<PassTier> tiers = parseTiers(config.getMapList("pass.tiers"));
         ZoneId zone = parseZone(config.getString("general.timezone", "Europe/Moscow"));
-        return new PluginConfig(
+        PluginConfig parsed = new PluginConfig(
                 config.getString("donatepay.api-token", ""),
                 config.getString("donatepay.payment-url", ""),
                 config.getInt("donatepay.minimum-rubles", 150),
@@ -270,12 +372,19 @@ public final class PluginConfig {
                 config.getBoolean("pass.expiry-bossbar", true),
                 config.getBoolean("pass.expiry-warning-sound", true),
                 config.getInt("pass.kick-after-seconds", 0),
+                config.getBoolean("pass.gui-menu", true),
+                config.getString("integrations.pass-group", ""),
+                config.getBoolean("integrations.pass-group-remove-expired", true),
+                config.getBoolean("integrations.pass-group-paid-only", true),
                 config.getInt("auth.session-minutes", 30),
                 config.getInt("auth.min-password-length", 8),
                 config.getInt("auth.max-password-length", 64),
                 maxLoginAttempts,
                 config.getInt("auth.reminder-seconds", 5),
+                config.getInt("auth.captcha-after-attempts", 3),
                 config.getBoolean("auth.dialogs", true),
+                config.getBoolean("auth.button-login", true),
+                config.getString("auth.button-login-symbols", "!@#$%&*-_+=.?"),
                 config.getBoolean("auth.mask-commands-in-logs", true),
                 config.getBoolean("auth.session-skips-2fa", false),
                 config.getBoolean("auth.session-require-same-uuid", true),
@@ -290,9 +399,11 @@ public final class PluginConfig {
                 config.getInt("auth.brute-force.temp-ip-ban-minutes", 15),
                 config.getBoolean("auth.brute-force.notify-admins", true),
                 config.getBoolean("totp.enabled", true),
+                config.getBoolean("totp.required", true),
                 config.getString("totp.issuer", "CHRDK"),
                 config.getInt("totp.window-steps", 1),
                 config.getInt("totp.max-attempts", maxLoginAttempts),
+                config.getBoolean("totp.qr-map", true),
                 config.getBoolean("anti-multialt.enabled", true),
                 config.getString("anti-multialt.mode", "notify"),
                 config.getInt("anti-multialt.max-accounts-per-ip", 3),
@@ -309,8 +420,38 @@ public final class PluginConfig {
                 config.getStringList("notifications.mentions"),
                 config.getBoolean("metrics.bstats", true),
                 zone,
-                ChatConfig.fromBukkitConfig(config)
+                ChatConfig.fromBukkitConfig(config),
+                config.getInt("donatepay.health-seconds", 300),
+                config.getInt("donatepay.alert-fail-streak", 10),
+                config.getBoolean("donatepay.alert-admins", true),
+                config.getInt("donatepay.alert-repeat-minutes", 15),
+                config.getInt("donatepay.pending-notify-hours", 24),
+                config.getBoolean("easydonate.enabled", false),
+                config.getString("easydonate.shop-key", ""),
+                config.getString("easydonate.payment-url", ""),
+                config.getBoolean("donatepay.enabled", true)
         );
+        parsed.boosty = BoostySettings.from(config);
+        parsed.trademc = TradeMcSettings.from(config);
+        parsed.passGroupPermissions = List.copyOf(config.getStringList("integrations.pass-group-permissions"));
+        parsed.lpCommandProtect = config.getBoolean("integrations.lp-command-protect", true);
+        parsed.lpDenyExtra = List.copyOf(config.getStringList("integrations.lp-deny-extra"));
+        parsed.trialEnabled = config.getBoolean("pass.trial.enabled", true);
+        parsed.trialDays = Math.max(1, Math.min(365, config.getInt("pass.trial.days", 14)));
+        parsed.updatesEnabled = config.getBoolean("updates.enabled", true);
+        parsed.updatesRepo = config.getString("updates.repo", "cherdakmd/CHRDK_F_REGISTER");
+        parsed.updatesIntervalHours = Math.max(1, Math.min(720, config.getInt("updates.interval-hours", 6)));
+        parsed.updatesNotifyAdmins = config.getBoolean("updates.notify-admins", true);
+        parsed.motd = MotdSettings.from(config);
+        parsed.shop = ShopCatalog.from(config);
+        parsed.shopDiscount = ShopDiscount.from(config);
+        parsed.passEnabled = config.getBoolean("pass.enabled", false);
+        parsed.ranks = RankSettings.from(config);
+        parsed.donateActions = DonateAction.parseList(config.getMapList("donation-actions"));
+        parsed.donatePayShowBalance = config.getBoolean("donatepay.show-balance", true);
+        parsed.serverMenu = ServerMenuSettings.from(config);
+        parsed.economy = EconomySettings.from(config);
+        return parsed;
     }
 
     /* ------------------------------------------------------------------ *
@@ -331,6 +472,159 @@ public final class PluginConfig {
 
     public int donatePollSeconds() {
         return donatePollSeconds;
+    }
+
+    /** Interval of the DonatePay connectivity heartbeat (console line, seconds). */
+    public int donateHealthSeconds() {
+        return donateHealthSeconds;
+    }
+
+    /** Сколько подряд неудачных опросов считается падением DonatePay. */
+    public int donateAlertFailStreak() {
+        return donateAlertFailStreak;
+    }
+
+    /** Дублировать тревогу о падении DonatePay онлайн-админам в чат. */
+    public boolean donateAlertAdmins() {
+        return donateAlertAdmins;
+    }
+
+    /** Повторная тревога, если отказ DonatePay тянется (минуты; 0 = без повторов). */
+    public int donateAlertRepeatMinutes() {
+        return donateAlertRepeatMinutes;
+    }
+
+    /** Напоминать админам, если донат ждёт разбора дольше N часов (0 = выкл). */
+    public int donatePendingNotifyHours() {
+        return donatePendingNotifyHours;
+    }
+
+    /** EasyDonate-провайдер включён и настроен (shop-key задан). */
+    public boolean easyDonateReady() {
+        return easyDonateEnabled && !easyDonateShopKey.isBlank();
+    }
+
+    public String easyDonateShopKey() {
+        return easyDonateShopKey;
+    }
+
+    /** Флаг включения без привязки к ключу (для doctor: «включён, но ключа нет»). */
+    public boolean easyDonateEnabled() {
+        return easyDonateEnabled;
+    }
+
+    /** Подписочный Boosty-провайдер. НИКОГДА не null. */
+    /** Консольные действия по донатам ({@code donation-actions}). */
+    public List<DonateAction> donateActions() {
+        return donateActions;
+    }
+
+    /** Показывать ли в консоли имя кошелька и баланс при рукопожатии DonatePay. */
+    public boolean donatePayShowBalance() {
+        return donatePayShowBalance;
+    }
+
+    /** Настройки серверного меню {@code /menu}. */
+    public ServerMenuSettings serverMenu() {
+        return serverMenu;
+    }
+
+    /** Настройки банка алмазов (/bal, /pay, /baltop). */
+    public EconomySettings economy() {
+        return economy;
+    }
+
+    public ShopDiscount shopDiscount() {
+        return shopDiscount;
+    }
+
+    public BoostySettings boosty() {
+        return boosty;
+    }
+
+    /** Настройки магазина TradeMC (trademc:<key> секция). */
+    public TradeMcSettings trademc() {
+        return trademc;
+    }
+
+    /** Доп. узлы прав, попадающие в группу проходки при /pass luckperms setup. */
+    public List<String> passGroupPermissions() {
+        return passGroupPermissions;
+    }
+
+    /** Защита служебных команд для обычных игроков при /pass luckperms setup. */
+    public boolean lpCommandProtect() {
+        return lpCommandProtect;
+    }
+
+    /** Доп. узлы запрета обычным игрокам (extra — поверх встроенного deny-листа). */
+    public List<String> lpDenyExtra() {
+        return lpDenyExtra;
+    }
+
+    /** Включена ли фоновая проверка обновлений ядра на GitHub. */
+    public boolean updatesEnabled() {
+        return updatesEnabled;
+    }
+
+    /** Репозиторий релизов (owner/name) для UpdateChecker. */
+    public String updatesRepo() {
+        return updatesRepo;
+    }
+
+    /** Интервал проверки обновлений, часов (минимум 1). */
+    public int updatesIntervalHours() {
+        return updatesIntervalHours;
+    }
+
+    /** Каталог товаров (пустой, если секция shop не настроена). */
+    public ShopCatalog shop() {
+        return shop;
+    }
+
+    /** Показывать ли уведомления о новой версии администраторам в игре. */
+    public boolean updatesNotifyAdmins() {
+        return updatesNotifyAdmins;
+    }
+
+    /** Ссылка, которую видит игрок как «продлить/купить проходку»: в TradeMC-режиме — ссылка магазина. */
+    public String effectiveDonateUrl() {
+        return trademc.enabled() && !trademc.paymentUrl().isBlank()
+                ? trademc.paymentUrl() : donatePayPaymentUrl;
+    }
+
+    public boolean hasEffectiveDonateUrl() {
+        return effectiveDonateUrl() != null && !effectiveDonateUrl().isBlank();
+    }
+
+    /** Подпись провайдера ссылки у игроков: «TradeMC» в RCON-режиме, иначе «DonatePay». */
+    public String effectiveDonateLabel() {
+        return trademc.enabled() ? "TradeMC" : "DonatePay";
+    }
+
+    /** Динамический MOTD. НИКОГДА не null. */
+    public MotdSettings motd() {
+        return motd;
+    }
+
+    /**
+     * Включена ли донат-стена проходки ({@code pass.enabled: true} по умолчанию).
+     * При выключении регистрация/2FA остаются, но игроки без проходки больше
+     * не получают подсказок-ссылок, actionbar и не кикаются — игровой контроль
+     * входаcделают очередь (CHRDK_Queue) и ограничения сервера.
+     */
+    public boolean passEnabled() {
+        return passEnabled;
+    }
+
+    /** Лестница донатных рангов: имена, знаки, приветственный ранг (1.4.167). */
+    public RankSettings ranks() {
+        return ranks;
+    }
+
+    /** Ссылка на страницу EasyDonate-магазина для игроков (пусто = не показывать). */
+    public String easyDonatePaymentUrl() {
+        return easyDonatePaymentUrl;
     }
 
     public boolean strictCaseMatch() {
@@ -358,7 +652,12 @@ public final class PluginConfig {
     }
 
     public boolean donatePayReady() {
-        return !donatePayApiToken.isBlank();
+        return donatePayEnabled && !donatePayApiToken.isBlank();
+    }
+
+    /** Флаг включения провайдера DonatePay (donatepay.enabled). */
+    public boolean donatePayEnabled() {
+        return donatePayEnabled;
     }
 
     public boolean hasPaymentUrl() {
@@ -368,6 +667,10 @@ public final class PluginConfig {
     /* ------------------------------------------------------------------ *
      *  Pass
      * ------------------------------------------------------------------ */
+
+    public boolean trialEnabled() { return trialEnabled; }
+
+    public int trialDays() { return trialDays; }
 
     public int grantDays() {
         return grantDays;
@@ -419,6 +722,29 @@ public final class PluginConfig {
         return kickAfterSeconds;
     }
 
+    /** Включено ли инвентарное GUI-меню {@code /pass menu}. */
+    public boolean passGuiMenu() {
+        return passGuiMenu;
+    }
+
+    /** Группа LuckPerms, синхронизируемая с активной проходкой (пусто — выключено). */
+    public String passGroup() {
+        return passGroup;
+    }
+
+    /** Снимать LuckPerms-группу при истечении проходки. */
+    public boolean passGroupRemoveExpired() {
+        return passGroupRemoveExpired;
+    }
+
+    /**
+     * Выдавать группу проходки только за реальную оплату: тестовый период и
+     * {@code /pass testpay} группу не выдают.
+     */
+    public boolean passGroupPaidOnly() {
+        return passGroupPaidOnly;
+    }
+
     /* ------------------------------------------------------------------ *
      *  Auth
      * ------------------------------------------------------------------ */
@@ -443,8 +769,26 @@ public final class PluginConfig {
         return reminderSeconds;
     }
 
+    /**
+     * Порог неудачных попыток входа, после которого включается эскалационная
+     * капча (0 — выключена).
+     */
+    public int captchaAfterAttempts() {
+        return captchaAfterAttempts;
+    }
+
     public boolean authDialogs() {
         return authDialogs;
+    }
+
+    /** Инвентарная клавиатура входа (клики вместо набора пароля в чат) для {@code /login} без аргументов. */
+    public boolean buttonLogin() {
+        return buttonLogin;
+    }
+
+    /** Дополнительные знаки на странице «цифры и знаки» кнопочной клавиатуры. */
+    public String buttonLoginSymbols() {
+        return buttonLoginSymbols;
     }
 
     public boolean maskCommandsInLogs() {
@@ -514,6 +858,15 @@ public final class PluginConfig {
         return totpEnabled;
     }
 
+    /**
+     * Обязательная привязка TOTP 2FA: без аутентификатора игрок не попадает в игру.
+     * Действует только при {@link #totpEnabled()}; включать 2FA «для всех» в обход
+     * администратора нельзя — сброс делается командой {@code /pass reset2fa}.
+     */
+    public boolean totpRequired() {
+        return totpRequired && totpEnabled;
+    }
+
     public String totpIssuer() {
         return totpIssuer;
     }
@@ -524,6 +877,11 @@ public final class PluginConfig {
 
     public int totpMaxAttempts() {
         return totpMaxAttempts;
+    }
+
+    /** Выдавать ли карту с QR-кодом otpauth:// при {@code /2fa setup} и по {@code /2fa qr}. */
+    public boolean totpQrMap() {
+        return totpQrMap;
     }
 
     /* ------------------------------------------------------------------ *
@@ -698,5 +1056,160 @@ public final class PluginConfig {
         } catch (IllegalArgumentException ignored) {
             return "";
         }
+    }
+
+    /* ------------------------------------------------------------------ *
+     *  Boosty (подписка → автопродление проходки)
+     * ------------------------------------------------------------------ */
+
+    /** Настройки подписочного провайдера Boosty.to (boosty:<key> секция). */
+    public static final class BoostySettings {
+        public static final BoostySettings DISABLED = new BoostySettings(
+                false, "", "", "", "", "", 300, 30, 24, false, false, 48);
+
+        private final boolean enabled;
+        private final String blog;
+        private final String blogUrl;
+        private final String token;
+        private final String refreshToken;
+        private final String deviceId;
+        private final int minLevelPrice;
+        private final int daysPerPeriod;
+        private final int recheckHours;
+        private final boolean dryRun;
+        private final boolean debugLog;
+        /** Сколько часов скидка каталога живёт после последнего подтверждения подписки. */
+        private final int perkGraceHours;
+
+        BoostySettings(boolean enabled, String blog, String blogUrl, String token, String refreshToken,
+                       String deviceId, int minLevelPrice, int daysPerPeriod, int recheckHours,
+                       boolean dryRun, boolean debugLog, int perkGraceHours) {
+            this.enabled = enabled;
+            this.blog = blog;
+            this.blogUrl = blogUrl;
+            this.token = token;
+            this.refreshToken = refreshToken;
+            this.deviceId = deviceId;
+            this.minLevelPrice = minLevelPrice;
+            this.daysPerPeriod = daysPerPeriod;
+            this.recheckHours = recheckHours;
+            this.dryRun = dryRun;
+            this.debugLog = debugLog;
+            this.perkGraceHours = perkGraceHours;
+        }
+
+        static BoostySettings from(FileConfiguration config) {
+            return new BoostySettings(
+                    config.getBoolean("boosty.enabled", false),
+                    config.getString("boosty.blog", "").trim(),
+                    config.getString("boosty.blog-url", "").trim(),
+                    config.getString("boosty.token", ""),
+                    config.getString("boosty.refresh-token", ""),
+                    config.getString("boosty.device-id", ""),
+                    config.getInt("boosty.min-level-price", 300),
+                    Math.clamp(config.getInt("boosty.days-per-period", 30), 1, 365),
+                    Math.clamp(config.getInt("boosty.recheck-hours", 24), 1, 168),
+                    config.getBoolean("boosty.dry-run", false),
+                    config.getBoolean("boosty.debug-log", false),
+                    Math.clamp(config.getInt("boosty.perk-grace-hours", 48), 1, ShopDiscount.MAX_GRACE_HOURS));
+        }
+
+        public boolean enabled() { return enabled; }
+        public String blog() { return blog; }
+        public String blogUrl() { return blogUrl; }
+        public String token() { return token; }
+        public String refreshToken() { return refreshToken; }
+        public String deviceId() { return deviceId; }
+        public int minLevelPrice() { return minLevelPrice; }
+        public int daysPerPeriod() { return daysPerPeriod; }
+        public int recheckHours() { return recheckHours; }
+        public boolean dryRun() { return dryRun; }
+        public int perkGraceHours() { return perkGraceHours; }
+        public boolean debugLog() { return debugLog; }
+
+        /** Есть хотя бы одна пара авторизации (access ИЛИ refresh+device). */
+        public boolean hasAuth() {
+            return !token.isBlank() || (!refreshToken.isBlank() && !deviceId.isBlank());
+        }
+
+        /** Всё ли есть, чтобы клиент реально полетел в сеть. */
+        public boolean ready() {
+            return enabled && !blog.isBlank() && hasAuth();
+        }
+
+        /** Ссылка для игроков: blog-url, иначе собираем из имени блога. */
+        public String linkForPlayers() {
+            if (!blogUrl.isBlank()) {
+                return blogUrl;
+            }
+            return blog.isBlank() ? "" : "https://boosty.to/" + blog;
+        }
+    }
+
+
+    /* ------------------------------------------------------------------ *
+     *  TradeMC — магазин с доставкой по RCON (trademc:<key> секция)
+     * ------------------------------------------------------------------ */
+
+    /** Настройки магазина TradeMC. Режим enabled выключает опросы DonatePay/EasyDonate и Boosty. */
+    public static final class TradeMcSettings {
+        public static final TradeMcSettings DISABLED = new TradeMcSettings(false, 0, "");
+
+        private final boolean enabled;
+        private final int shopId;
+        private final String paymentUrl;
+
+        TradeMcSettings(boolean enabled, int shopId, String paymentUrl) {
+            this.enabled = enabled;
+            this.shopId = shopId;
+            this.paymentUrl = paymentUrl;
+        }
+
+        static TradeMcSettings from(FileConfiguration config) {
+            return new TradeMcSettings(
+                    config.getBoolean("trademc.enabled", false),
+                    Math.max(0, config.getInt("trademc.shop-id", 0)),
+                    config.getString("trademc.payment-url", "").trim());
+        }
+
+        public boolean enabled() { return enabled; }
+        public int shopId() { return shopId; }
+        public String paymentUrl() { return paymentUrl; }
+    }
+
+
+    /* ------------------------------------------------------------------ *
+     *  Динамический MOTD (список серверов)
+     * ------------------------------------------------------------------ */
+
+    /** Настройки динамического MOTD (motd:<key> секция). */
+    public static final class MotdSettings {
+        public static final MotdSettings DISABLED = new MotdSettings(false, 60, List.of(), "rotate");
+
+        private final boolean enabled;
+        private final int rotateSeconds;
+        private final List<String> lines;
+        /** Режим выбора строки: {@code rotate} — по временному ковшу, {@code random} — случайно на пинг. */
+        private final String mode;
+
+        MotdSettings(boolean enabled, int rotateSeconds, List<String> lines, String mode) {
+            this.enabled = enabled;
+            this.rotateSeconds = rotateSeconds;
+            this.lines = List.copyOf(lines);
+            this.mode = "random".equalsIgnoreCase(mode) ? "random" : "rotate";
+        }
+
+        static MotdSettings from(FileConfiguration config) {
+            return new MotdSettings(
+                    config.getBoolean("motd.enabled", false),
+                    Math.clamp(config.getInt("motd.rotate-seconds", 60), 1, 3600),
+                    config.getStringList("motd.lines"),
+                    config.getString("motd.mode", "rotate").trim());
+        }
+
+        public boolean enabled() { return enabled; }
+        public int rotateSeconds() { return rotateSeconds; }
+        public List<String> lines() { return lines; }
+        public String mode() { return mode; }
     }
 }

@@ -13,6 +13,7 @@ import java.util.regex.PatternSyntaxException;
  * moderation (slow mode, word/link filter, mention limits) and chat history logging.
  */
 public final class ChatConfig {
+    private static final String AUTO_MESSAGES_PATH = "auto-messages.messages";
     /** Compiled moderation filter built from {@code chat.filter.*}. */
     public static final class ChatFilter {
         private final boolean enabled;
@@ -80,10 +81,10 @@ public final class ChatConfig {
     }
 
     private static final List<String> DEFAULT_AUTO_MESSAGES = List.of(
-            "&eПонравился сервер? Поддержи проект и продли проходку: &b/pass",
-            "&eВключи двухфакторную защиту аккаунта: &b/2fa setup",
-            "&eСмени пароль на надёжный: &b/changepassword",
-            "&eСейчас на сервере: &b%online% &eигроков"
+            "<gold>Все возможности сервера — в /menu.</gold>",
+            "<gray>Пробные дни не продлеваются повторным входом. Ваш остаток: %pass_left% — /pass.</gray>",
+            "<gray>Локальный и общий чат переключаются через /chat; личные сообщения — /msg ник текст.</gray>",
+            "<gray>Проверьте защиту аккаунта: /2fa status. Сессии входа: /session.</gray>"
     );
 
     private boolean enabled = true;
@@ -132,6 +133,7 @@ public final class ChatConfig {
     private int autoMessagesMinimumPlayers = 1;
     private String autoMessagesPrefix = "&8[&6CHRDK&8] &r";
     private List<String> autoMessages = List.copyOf(DEFAULT_AUTO_MESSAGES);
+    private List<AutoMessage> autoMessageEntries = DEFAULT_AUTO_MESSAGES.stream().map(AutoMessage::parse).toList();
 
     public ChatConfig() {
     }
@@ -181,6 +183,7 @@ public final class ChatConfig {
         this.autoMessagesMinimumPlayers = other.autoMessagesMinimumPlayers;
         this.autoMessagesPrefix = other.autoMessagesPrefix;
         this.autoMessages = other.autoMessages;
+        this.autoMessageEntries = other.autoMessageEntries;
     }
 
     /** Returns a copy of this configuration with a different slow-mode value. */
@@ -243,10 +246,11 @@ public final class ChatConfig {
         chat.autoMessagesRandomOrder = config.getBoolean("auto-messages.random-order", true);
         chat.autoMessagesMinimumPlayers = config.getInt("auto-messages.minimum-players", 1);
         chat.autoMessagesPrefix = config.getString("auto-messages.prefix", chat.autoMessagesPrefix);
-        List<String> configuredAutoMessages = config.getStringList("auto-messages.messages");
-        chat.autoMessages = configuredAutoMessages.isEmpty()
-                ? List.copyOf(DEFAULT_AUTO_MESSAGES)
-                : List.copyOf(configuredAutoMessages);
+        List<?> configured = config.getList(AUTO_MESSAGES_PATH);
+        if (configured != null) {
+            chat.autoMessageEntries = configured.stream().map(AutoMessage::parse).filter(java.util.Objects::nonNull).toList();
+            chat.autoMessages = chat.autoMessageEntries.stream().map(AutoMessage::text).toList();
+        }
 
         chat.validate();
         return chat;
@@ -274,7 +278,7 @@ public final class ChatConfig {
         joinMessage = sanitizeFormat(joinMessage, "&8[&a+&8] &7%player% &7присоединился к серверу");
         quitMessage = sanitizeFormat(quitMessage, "&8[&c-&8] &7%player% &7покинул сервер");
         autoMessagesPrefix = autoMessagesPrefix == null ? "" : autoMessagesPrefix;
-        if (autoMessages == null || autoMessages.isEmpty()) {
+        if (autoMessages == null) {
             autoMessages = List.copyOf(DEFAULT_AUTO_MESSAGES);
         }
         this.filter = compileFilter();
@@ -429,6 +433,8 @@ public final class ChatConfig {
     public String autoMessagesPrefix() {
         return autoMessagesPrefix;
     }
+
+    List<AutoMessage> autoMessageEntries() { return autoMessageEntries; }
 
     public List<String> autoMessages() {
         return autoMessages;

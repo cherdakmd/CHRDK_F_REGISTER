@@ -19,7 +19,23 @@ import java.util.logging.Logger;
 public final class DonationService {
     /** Callback used to notify a player whose pass was granted or extended. */
     public interface PassNotifier {
-        void onPassGranted(String playerName, long passUntil, String sourceDescription);
+        /**
+         * Проходка продлена платёжной транзакцией.
+         *
+         * @param paid {@code false} для тестовой оплаты ({@code /pass testpay}) — LuckPerms-группа
+         *             проходки в этом случае не выдаётся
+         */
+        void onPassGranted(String playerName, long passUntil, String sourceDescription, boolean paid);
+
+        /** Перегрузка для реальной оплаты. */
+        default void onPassGranted(String playerName, long passUntil, String sourceDescription) {
+            onPassGranted(playerName, passUntil, sourceDescription, true);
+        }
+    }
+
+    /** Callback used to chat with the paying player when the payment is below the auto-grant minimum. */
+    public interface PendingNotifier {
+        void onDonationPending(String donorName, String amountRubles, int minRubles);
     }
 
     /** Result of processing one transaction. */
@@ -42,6 +58,7 @@ public final class DonationService {
     private final NotificationService notifications;
     private final Logger logger;
     private final PassNotifier notifier;
+    private volatile PendingNotifier pendingNotifier;
     private volatile Messages messages;
 
     public DonationService(
@@ -67,6 +84,11 @@ public final class DonationService {
         this.messages = messages;
     }
 
+    /** Подписать внешний слушатель «донат ниже минимума» (пишет игроку в чат, если он онлайн). */
+    public void setPendingNotifier(PendingNotifier pendingNotifier) {
+        this.pendingNotifier = pendingNotifier;
+    }
+
     /** Текст по ключу из messages.yml (для уведомлений и записей журнала). */
     private String text(String key, Object... placeholders) {
         if (messages == null) return key;
@@ -78,9 +100,18 @@ public final class DonationService {
      * journals the payment with a pending status. The transaction is always marked as processed.
      */
     public Outcome process(DonatePayClient.Transaction transaction, long nowMillis, boolean pollMode) {
+        return process(transaction, nowMillis, pollMode, RegistrationStore.DONATION_SOURCE_DONATEPAY);
+    }
+
+    /** Обработка платежа от произвольного провайдера (источник записывается в журнал). */
+    public Outcome process(DonatePayClient.Transaction transaction, long nowMillis,
+                           boolean pollMode, String source) {
         PluginConfig config = configSupplier.get();
         int amountRubles = toRubles(transaction.amount());
         int days = config.daysForAmount(amountRubles);
+        // Тестовой считается и явная пометка провайдера, и синтетическая транзакция
+        // /pass testpay (отрицательный id из тестового диапазона).
+        boolean testPayment = transaction.testPayment() || transaction.id() < 0;
         List<String> suggestions = suggest(transaction.donorName(), config);
 
         RegistrationStore.DonationStatus status;
@@ -94,32 +125,54 @@ public final class DonationService {
         } else if (amountRubles < config.minimumDonationRubles()) {
             status = RegistrationStore.DonationStatus.PENDING_AMOUNT;
             note = text("donation.reason.below-minimum", "price", config.minimumDonationRubles());
-        } else if (!AccessManager.isValidMinecraftName(transaction.donorName().trim())) {
-            status = RegistrationStore.DonationStatus.PENDING_NAME;
-            note = text("donation.reason.name-mismatch");
         } else {
-            Optional<RegistrationStore.PlayerAccount> granted = store.grantPassFromDonation(
-                    transaction.donorName().trim(),
-                    transaction.createdAt(),
-                    nowMillis,
-                    days * 86_400_000L,
-                    config.strictCaseMatch());
-            if (granted.isPresent()) {
-                status = RegistrationStore.DonationStatus.GRANTED;
-                grantedTo = granted.get().playerName;
-                passUntil = granted.get().passUntil;
-                store.addPayment(grantedTo, transaction.amount()
-                        .multiply(BigDecimal.valueOf(100))
-                        .setScale(0, RoundingMode.HALF_UP)
-                        .longValueExact(), nowMillis);
+            String donorName = transaction.donorName().trim();
+            String grantName = AccessManager.isValidMinecraftName(donorName) ? donorName : null;
+            // «Nick 4821»: имя с платёжным кодом тоже матчится автоматически — иначе
+            // инструкция «укажите ник и код» вела донат в вечный pending
+            boolean viaCode = false;
+            if (grantName == null) {
+                Optional<String> coded = matchByPaymentCode(config.paymentCodeEnabled(), store, donorName);
+                if (coded.isPresent()) {
+                    grantName = coded.get();
+                    viaCode = true;
+                }
+            }
+            if (grantName == null) {
+                status = RegistrationStore.DonationStatus.PENDING_NAME;
+                note = text("donation.reason.name-mismatch");
             } else {
-                status = RegistrationStore.DonationStatus.PENDING_REVIEW;
-                note = text("donation.reason.case-mismatch");
+                Optional<RegistrationStore.PlayerAccount> granted = store.grantPassFromDonation(
+                        grantName,
+                        transaction.createdAt(),
+                        nowMillis,
+                        days * 86_400_000L,
+                        config.strictCaseMatch(),
+                        testPayment);
+                if (granted.isPresent()) {
+                    status = RegistrationStore.DonationStatus.GRANTED;
+                    grantedTo = granted.get().playerName;
+                    passUntil = granted.get().passUntil;
+                    if (viaCode) {
+                        note = text("donation.reason.code-match");
+                    }
+                    if (!testPayment) {
+                        store.addPayment(grantedTo, transaction.amount()
+                                .multiply(BigDecimal.valueOf(100))
+                                .setScale(0, RoundingMode.HALF_UP)
+                                .longValueExact(), nowMillis);
+                    }
+                } else {
+                    status = RegistrationStore.DonationStatus.PENDING_REVIEW;
+                    note = text("donation.reason.case-mismatch");
+                }
             }
         }
 
         RegistrationStore.DonationRecord journal = new RegistrationStore.DonationRecord();
         journal.id = transaction.id();
+        journal.source = source == null || source.isBlank()
+                ? RegistrationStore.DONATION_SOURCE_DONATEPAY : source;
         journal.donorName = transaction.donorName();
         journal.amountKopecks = transaction.amount()
                 .multiply(BigDecimal.valueOf(100))
@@ -130,11 +183,15 @@ public final class DonationService {
         journal.detectedAt = nowMillis;
         journal.status = status.name();
         journal.note = note;
+        if (testPayment) {
+            journal.note = text("donation.note.test-payment")
+                    + (note == null || note.isBlank() ? "" : "; " + note);
+        }
         journal.grantedTo = grantedTo;
         journal.days = status == RegistrationStore.DonationStatus.GRANTED ? days : 0;
         journal.suggestedName = suggestions.isEmpty() ? "" : suggestions.get(0);
         store.recordDonation(journal);
-        store.markDonationProcessed(transaction.id());
+        store.markDonationProcessed(journal.source, transaction.id());
         if (status == RegistrationStore.DonationStatus.GRANTED) {
             store.updateDonation(transaction.id(), status.name(), note, "", 0, grantedTo, days);
         }
@@ -144,14 +201,14 @@ public final class DonationService {
         switch (status) {
             case GRANTED -> {
                 logger.info("DonatePay pass granted to " + grantedTo + " (" + amount + " RUB, #"
-                        + transaction.id() + ", " + days + " дн.).");
+                        + transaction.id() + ", " + days + " дн." + (testPayment ? ", тест" : "") + ").");
                 audit.log(AuditLog.PASS_GRANT_DONATEPAY, "donatepay", grantedTo, "",
                         AuditLog.details("donation", transaction.id(), "amount", amount, "days", days));
                 notifications.notify("pass.granted", text("donation.notify.granted-title"),
                         messages == null ? "" : messages.raw("donation.notify.granted-body",
                                 "player", grantedTo, "amount", amount, "days", days),
                         "good");
-                notifyOnline(grantedTo, passUntil, "DonatePay " + amount + "₽");
+                notifyOnline(grantedTo, passUntil, sourceLabel(source) + " " + amount + "₽", !testPayment);
             }
             case PENDING_AMOUNT, PENDING_NAME, PENDING_REVIEW -> {
                 logger.warning("DonatePay donation #" + transaction.id() + " from '" + donor
@@ -166,6 +223,10 @@ public final class DonationService {
                                 "suggestions", suggestions.isEmpty()
                                         ? text("common.none") : String.join(", ", suggestions)),
                         "warn");
+                if (status == RegistrationStore.DonationStatus.PENDING_AMOUNT
+                        && pendingNotifier != null) {
+                    pendingNotifier.onDonationPending(donor, amount, config.minimumDonationRubles());
+                }
             }
             default -> {
                 if (pollMode) {
@@ -174,6 +235,27 @@ public final class DonationService {
             }
         }
         return new Outcome(status, grantedTo, passUntil, days, note, journal.suggestedName);
+    }
+
+    /** Допустимые фильтры журнала донатов (/pass donations). */
+    public static final List<String> JOURNAL_FILTERS =
+            List.of("all", "granted", "pending", "rejected", "name", "amount", "review");
+
+    /**
+     * Чистый матчер фильтра журнала: «pending» объединяет все очереди ожидания,
+     * «name»/«amount»/«review» — конкретные причины ручного разбора.
+     */
+    public static boolean journalFilterMatches(RegistrationStore.DonationStatus status, String filter) {
+        return switch (filter) {
+            case "all" -> true;
+            case "granted" -> status == RegistrationStore.DonationStatus.GRANTED;
+            case "pending" -> status.isPending();
+            case "rejected" -> status == RegistrationStore.DonationStatus.REJECTED;
+            case "name" -> status == RegistrationStore.DonationStatus.PENDING_NAME;
+            case "amount" -> status == RegistrationStore.DonationStatus.PENDING_AMOUNT;
+            case "review" -> status == RegistrationStore.DonationStatus.PENDING_REVIEW;
+            default -> false;
+        };
     }
 
     /** Returns pending (unmatched) journal entries, newest first. */
@@ -206,7 +288,7 @@ public final class DonationService {
         RegistrationStore.DonationRecord record = existing.get();
         int grantDays = days > 0 ? days : config.daysForAmount((int) (record.amountKopecks / 100L));
         long passUntil = store.grantPassManual(playerName, nowMillis, grantDays * 86_400_000L,
-                "donatepay:#" + donationId).passUntil;
+                record.source + ":#" + donationId).passUntil;
         store.addPayment(playerName, record.amountKopecks, nowMillis);
         store.updateDonation(donationId, RegistrationStore.DonationStatus.GRANTED.name(),
                 record.note + (record.note.isBlank() ? "" : "; ") + text("donation.label.approved"),
@@ -220,7 +302,9 @@ public final class DonationService {
                         "days", grantDays, "amount", formatRubles(record.amountKopecks)),
                 "good");
         notifyOnline(playerName, passUntil,
-                text("donation.label.approved-source", "id", donationId));
+                text("donation.label.approved-source",
+                        "service", EasyDonateClient.SOURCE.equals(record.source) ? "EasyDonate" : "DonatePay",
+                        "id", donationId), true);
         return true;
     }
 
@@ -248,16 +332,27 @@ public final class DonationService {
             return "donation.claim.not-found";
         }
         RegistrationStore.DonationRecord record = existing.get();
+        boolean viaCode = matchByPaymentCode(configSupplier.get().paymentCodeEnabled(), store, record.donorName)
+                .map(owner -> owner.equalsIgnoreCase(playerName)).orElse(false);
         if (!record.donationStatus().isPending()) {
             return "donation.claim.already-processed";
         }
-        if (!DonorNameMatcher.looksLikeDonor(record.donorName, playerName)) {
+        if (!viaCode && !DonorNameMatcher.looksLikeDonor(record.donorName, playerName)) {
             return "donation.claim.name-mismatch";
         }
         approve(donationId, playerName, 0, playerName + text("donation.label.self-claimed"), nowMillis);
         audit.log(AuditLog.DONATION_CLAIMED, playerName, playerName, ipAddress,
                 AuditLog.details("donation", donationId, "donorName", record.donorName));
         return "";
+    }
+
+    /** Платёжный код в имени донатера: игрок-владелец кода, если функция кодов включена. */
+    public static Optional<String> matchByPaymentCode(boolean codeEnabled, RegistrationStore store,
+                                                      String donorName) {
+        if (!codeEnabled || donorName == null || store == null) {
+            return Optional.empty();
+        }
+        return store.findPlayerByPaymentCode(donorName.trim());
     }
 
     /** Player-facing payment hint: either "Nick 4821" or just the nickname. */
@@ -281,10 +376,18 @@ public final class DonationService {
         return store.suggestPlayersForDonor(donorName.trim(), 3);
     }
 
-    private void notifyOnline(String playerName, long passUntil, String source) {
+    private void notifyOnline(String playerName, long passUntil, String source, boolean paid) {
         if (notifier != null) {
-            notifier.onPassGranted(playerName, passUntil, source);
+            notifier.onPassGranted(playerName, passUntil, source, paid);
         }
+    }
+
+    /** Человекочитаемое имя источника доната для нотификаций игроку («TradeMC 159₽»). */
+    private static String sourceLabel(String source) {
+        if (RegistrationStore.DONATION_SOURCE_TRADEMC.equals(source)) return "TradeMC";
+        if (EasyDonateClient.SOURCE.equals(source)) return "EasyDonate";
+        if (RegistrationStore.DONATION_SOURCE_DONATEPAY.equals(source)) return "DonatePay";
+        return source == null || source.isBlank() ? "Donation" : source;
     }
 
     private static String generateCode(int digits) {

@@ -52,6 +52,8 @@ public final class AuditLog {
     public static final String DONATION_REJECTED = "donation.rejected";
     public static final String DONATION_CLAIMED = "donation.claimed";
     public static final String DONATEPAY_ERROR = "donatepay.error";
+    public static final String DONATEPAY_DOWN = "donatepay.down";
+    public static final String DONATEPAY_UP = "donatepay.up";
     public static final String STORAGE_MIGRATION = "storage.migration";
     public static final String STORAGE_BACKUP = "storage.backup";
     public static final String STORAGE_RESTORE = "storage.restore";
@@ -61,6 +63,16 @@ public final class AuditLog {
     public static final String CHAT_FILTER = "chat.filter";
     public static final String CHAT_BROADCAST = "chat.broadcast";
     public static final String ADMIN_COMMAND = "admin.command";
+    /** Покупка товара каталога (витрина TradeMC или ручная выдача). */
+    public static final String SHOP_BUY = "shop.buy";
+    /** Покупка ступени ниже текущей: платёж ушёл в очередь ручного разбора (1.4.167). */
+    public static final String SHOP_BUY_PENDING = "shop.buy_pending";
+    /** Отзыв товара каталога администратором. */
+    public static final String SHOP_REVOKE = "shop.revoke";
+    /** Подарок из каталога: платит один игрок, товар получает другой. */
+    public static final String SHOP_GIFT = "shop.gift";
+    /** Выдача товара без продажи: награда аддона (батлпасс) или ручная компенсация. */
+    public static final String SHOP_GRANT = "shop.grant";
 
     private static final Gson GSON = new Gson();
     private static final DateTimeFormatter FILE_STAMP = DateTimeFormatter.ofPattern("yyyy-MM-dd");

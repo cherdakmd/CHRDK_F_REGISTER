@@ -1,0 +1,80 @@
+# CHRDK_Events — тексты мировых событий.
+#
+# Ключи без префикса: код обращается к ним как "active" и т.п.
+# Разметка — MiniMessage, подстановки — %имя%.
+events:
+  # ------------------------------- служебные --------------------------------
+  no-permission: "<red>Недостаточно прав.</red>"
+  disabled: "<red>Мировые события выключены в config.yml.</red>"
+  unknown-sub: "<red>Неизвестная подкоманда «%sub%».</red>"
+  player-only: "<red>Эта команда только для игроков.</red>"
+
+  # --------------------------------- справка --------------------------------
+  help-header: "<gold>Мировые события</gold> <dark_gray>·</dark_gray> <gray>сервер сам зовёт в мир</gray>"
+  help-info: "<yellow>/events</yellow> <gray>— что идёт сейчас</gray>"
+  help-next: "<yellow>/events next</yellow> <gray>— когда следующее событие</gray>"
+  help-list: "<yellow>/events list</yellow> <gray>— все события и что они дают</gray>"
+  help-admin: "<yellow>/eventsadmin force|stop|next|reload</yellow> <gray>— управление</gray>"
+
+  # --------------------------------- текущее --------------------------------
+  no-active: "<gray>Сейчас события нет.</gray>"
+  active: "<gold>%name%</gold> <dark_gray>·</dark_gray> <gray>осталось</gray> <white>%time%</white> <dark_gray>·</dark_gray> <gray>%kind%</gray>"
+  active-description: "<gray>%description%</gray>"
+  active-bonus: "<green>%bonus%</green>"
+
+  # ------------------------------- расписание -------------------------------
+  next: "<gray>Следующее событие — примерно через</gray> <white>%human%</white> <dark_gray>(%time%)</dark_gray>"
+  next-while-active: "<gray>Событие уже идёт — следующее будет после него.</gray>"
+  next-unknown: "<gray>Следующее событие ещё не запланировано.</gray>"
+  list-empty: "<red>В config.yml нет ни одного рабочего события.</red>"
+  list-header: "<gold>События</gold> <dark_gray>·</dark_gray> <gray>%count%</gray>"
+  list-line: "<dark_gray>·</dark_gray> <white>%name%</white> <gray>(%kind%, %time%)</gray> <dark_gray>—</dark_gray> %state%"
+  list-ready: "<green>готово</green>"
+  list-cooling: "<dark_gray>на паузе</dark_gray>"
+
+  # ---------------------------------- виды ----------------------------------
+  kind.xp: "опыт"
+  kind.mining: "руда"
+  kind.loot: "дроп"
+  kind.effect: "эффекты"
+
+  # ------------------------------- что даёт ---------------------------------
+  bonus-value-xp: "надбавка к опыту +%percent%%"
+  bonus-value-mining: "шанс лишней руды %percent%%"
+  bonus-value-loot: "шанс лишнего дропа %percent%%"
+  bonus-value-effect: "общие эффекты на время события"
+
+  # ------------------------------- объявления -------------------------------
+  start-broadcast: "<dark_gray>▬▬▬</dark_gray> <gold>Мировое событие: %name%</gold> <dark_gray>▬▬▬</dark_gray>\n<gray>%description%</gray>\n<gray>Продлится</gray> <white>%time%</white><gray>. Смотрите</gray> <yellow>/events</yellow><gray>.</gray>"
+  end-broadcast: "<gold>%name%</gold> <gray>закончилось. Мир возвращается в обычный ритм.</gray>"
+  bossbar: "<gold>%name%</gold> <dark_gray>·</dark_gray> <white>%time%</white>"
+  join-active: "<gold>%name%</gold> <gray>уже идёт — осталось</gray> <white>%time%</white><gray>.</gray> <yellow>/events</yellow>"
+
+  # -------------------------------- сообщения -------------------------------
+  bonus-xp: "<green>+%percent%% опыта</green> <dark_gray>·</dark_gray> <gray>%name%</gray>"
+  bonus-mining: "<green>+1 %item%</green> <dark_gray>·</dark_gray> <gray>%name%</gray>"
+  bonus-loot: "<green>+ %item%</green> <dark_gray>·</dark_gray> <gray>%name%</gray>"
+
+  # ---------------------------------- админ ---------------------------------
+  admin-usage: "<gray>/eventsadmin <yellow>force [ид]</yellow> | <yellow>stop</yellow> | <yellow>next</yellow> | <yellow>reload</yellow> | <yellow>list</yellow> | <yellow>history [n]</yellow></gray>"
+  admin-history-header: "<gold>История событий</gold> <dark_gray>·</dark_gray> <gray>записей: %count%</gray>"
+  admin-history-line: "<dark_gray>·</dark_gray> <gray>%time%</gray> <white>%name%</white> <dark_gray>—</dark_gray> <gray>%duration%</gray>"
+  admin-history-running: "идёт сейчас"
+  admin-history-empty: "<gray>История пуста — событий ещё не было.</gray>"
+  admin-history-bad-count: "<red>Сколько записей показать? Нужно число от 1 до 50.</red>"
+  admin-reloaded: "<green>Конфиг перечитан.</green> <gray>Событий: %count%, пауза %min%–%max% с.</gray>"
+  admin-force-active: "<red>Уже идёт событие «%name%». Сначала остановите: /eventsadmin stop</red>"
+  admin-force-unknown: "<red>События «%id%» нет в конфиге. Смотрите /events list.</red>"
+  admin-force-none: "<red>Нечего запускать: все события на паузе или их нет.</red>"
+  admin-force-ok: "<green>Запущено:</green> <white>%name%</white> <gray>на %time%.</gray>"
+  admin-stop-none: "<gray>Останавливать нечего — событие не идёт.</gray>"
+  admin-stop-ok: "<green>Событие «%name%» остановлено.</green>"
+  admin-next-active: "<red>Событие идёт — расписание сдвинется после него.</red>"
+  admin-next-ok: "<green>Следующее событие — через %time%.</green>"
+
+  # --------------------------------- профиль --------------------------------
+  profile-title: "Мировые события"
+  profile-active: "<gray>Сейчас:</gray> <gold>%name%</gold> <gray>· осталось %time%</gray>"
+  profile-next: "<gray>Следующее — примерно через %time%</gray>"
+  profile-none: "<gray>Сейчас события нет.</gray>"
+  profile-stats: "<dark_gray>Всего событий на сервере: %total%</dark_gray>"

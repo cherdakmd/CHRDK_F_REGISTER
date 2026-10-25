@@ -1,0 +1,24 @@
+name: CHRDK_DailyRewards
+version: '${version}'
+main: ru.cherdakmd.chrdkdaily.DailyRewardsPlugin
+api-version: '26.3'
+depend:
+  - CHRDK_Core
+description: Ежедневные награды со стриком и VIP-веткой для обладателей ранга (аддон CHRDK_Core)
+commands:
+  daily:
+    aliases: [dly, rewards, bonus]
+    description: Ежедневная награда и календарь стрика
+    usage: /<command> [claim|info]
+  dailyadmin:
+    aliases: [dlyadmin]
+    description: Администрирование ежедневных наград
+    usage: /<command> [set <ник> <стрик>|lookup <ник>|reload]
+    permission: chrdkdaily.admin
+permissions:
+  chrdkdaily.use:
+    description: Использование /daily
+    default: true
+  chrdkdaily.admin:
+    description: Управление /dailyadmin
+    default: op

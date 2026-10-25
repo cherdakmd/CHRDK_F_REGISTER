@@ -1,0 +1,87 @@
+package ru.cherdakmd.chrdktierforge;
+
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.Random;
+import java.util.Map;
+import java.util.HashMap;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+/** Взвешенный бросок и математика бонусов. */
+class TierRollerTest {
+
+    @Test
+    void rollsRespectWeights() {
+        List<TierDef.Snapshot> tiers = List.of(
+                new TierDef.Snapshot("cursed", 5, -12),
+                new TierDef.Snapshot("common", 90, 0),
+                new TierDef.Snapshot("legendary", 5, 30));
+        Random random = new Random(12);
+        Map<String, Integer> counts = new HashMap<>();
+        for (int i = 0; i < 10_000; i++) {
+            TierDef.Snapshot roll = TierRoller.roll(tiers, random);
+            counts.merge(roll.id(), 1, Integer::sum);
+        }
+        double legendaryShare = counts.getOrDefault("legendary", 0) / 10_000.0;
+        assertTrue(legendaryShare > 0.02 && legendaryShare < 0.10, "legendary ≈5%: " + legendaryShare);
+        assertEquals(10_000, counts.values().stream().mapToInt(Integer::intValue).sum());
+    }
+
+    @Test
+    void zeroWeightsNeverRoll() {
+        List<TierDef.Snapshot> tiers = List.of(
+                new TierDef.Snapshot("cursed", 0, -12),
+                new TierDef.Snapshot("legendary", 10, 30));
+        Random random = new Random(3);
+        for (int i = 0; i < 1000; i++) {
+            assertEquals("legendary", TierRoller.roll(tiers, random).id());
+        }
+        assertNull(TierRoller.roll(List.of(new TierDef.Snapshot("cursed", 0, -12)), random),
+                "сумма весов 0 → null");
+    }
+
+    @Test
+    void tierMath() {
+        // 1.4.124: сила тира удвоена для урона, утроена для добычи, бег ощутимее
+        assertEquals(0.12, TierMath.damageScalar(6), 0.0001);
+        assertEquals(-0.24, TierMath.damageScalar(-12), 0.0001,
+                "проклятое оружие бьёт заметно слабее");
+        assertEquals(0.60, TierMath.damageScalar(30), 0.0001,
+                "легендарный клинок — +60% урона");
+        assertEquals(0.60, TierMath.projectileScalar(30), 0.0001,
+                "урон стрел считается по той же шкале");
+        assertEquals(-0.12, TierMath.defenseScalar(-12), 0.0001);
+        assertEquals(0.15, TierMath.toughnessScalar(30), 0.0001);
+        assertEquals(0.42, TierMath.miningScalar(14), 0.0001,
+                "инструмент получает утроенный процент тира в скорость добычи");
+        assertEquals(-0.36, TierMath.miningScalar(-12), 0.0001,
+                "проклятый инструмент копает медленнее");
+        assertEquals(0.90, TierMath.miningScalar(30), 0.0001,
+                "легендарная кирка — +90% скорости добычи");
+        assertEquals(0.0, TierMath.movementScalar(-12), 0.0001, "штраф скорости бега не даём");
+        assertEquals(0.06, TierMath.movementScalar(30), 0.0001,
+                "легендарная деталь брони — +6% бега");
+        assertEquals(4 * 3, TierMath.upgradeXpCost(3, 3));
+        assertEquals(0 >= 1 ? 1 : 1, TierMath.upgradeXpCost(-9, 0));
+    }
+
+    @Test
+    void classifierBasics() {
+        assertEquals(ItemKind.SWORD, ItemKind.classify("NETHERITE_SWORD"));
+        assertEquals(ItemKind.HELMET, ItemKind.classify("DIAMOND_HELMET"));
+        assertEquals(ItemKind.PICKAXE, ItemKind.classify("iron_pickaxe"));
+        assertEquals(ItemKind.TRIDENT, ItemKind.classify("TRIDENT"));
+        assertNull(ItemKind.classify("APPLE"));
+        assertTrue(ItemKind.TRIDENT.isWeapon());
+        assertTrue(ItemKind.AXE.isTool() && ItemKind.AXE.isWeapon(), "топор — и то, и другое");
+        assertTrue(ItemKind.BOOTS.isArmor());
+        assertFalse(ItemKind.PICKAXE.isWeapon(), "кирка — не оружие");
+        assertFalse(ItemKind.SHOVEL.isWeapon() || ItemKind.HOE.isWeapon(),
+                "лопата и мотыга — не оружие");
+    }
+}

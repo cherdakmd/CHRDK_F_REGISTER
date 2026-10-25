@@ -1,0 +1,108 @@
+# Стоковые секции конфигурации релиза 1.4.137 (последний снапшот перед 1.4.138).
+# Нужен PresentationMigration: сервер, обновившийся до 1.4.137 включительно и не
+# правивший эти секции, получает новые пункты меню, автосообщения и TAB один раз.
+# Не подключайте этот файл к плагину — это данные миграции, а не ресурс.
+
+server-menu:
+  enabled: true
+  # plugin/permission: пункт скрыт, если аддон выключен или нет права.
+  # Команды выполняются только от игрока; административных действий здесь нет.
+  items:
+    - {"slot": 10, "icon": "PAPER", "name": "<gold><bold>Ранг и аккаунт</bold></gold>", "lore": "<gray>Осталось: %pass_left%</gray>\n<gray>Статус, тарифы и настройки аккаунта</gray>", "command": "pass menu"}
+    - {"slot": 11, "icon": "EMERALD", "name": "<gold><bold>Поддержать сервер</bold></gold>", "lore": "<gray>Ссылка на оплату и продление</gray>\n<gray>Пробный срок не требует оплаты заранее</gray>", "command": "pass donate"}
+    - {"slot": 12, "icon": "CLOCK", "name": "<gold><bold>Ежедневные награды</bold></gold>", "lore": "<gray>Календарь, стрик и награда дня</gray>", "command": "daily", "plugin": "CHRDK_DailyRewards", "permission": "chrdkdaily.use"}
+    - {"slot": 13, "icon": "EXPERIENCE_BOTTLE", "name": "<gold><bold>Боевой пропуск</bold></gold>", "lore": "<gray>Задания сезона и получение наград</gray>", "command": "battlepass", "plugin": "CHRDK_BattlePass", "permission": "chrdkbp.use"}
+    - {"slot": 14, "icon": "NETHER_STAR", "name": "<gold><bold>Звания</bold></gold>", "lore": "<gray>Прогресс по наигранному времени</gray>", "command": "ranks", "plugin": "CHRDK_Ranks", "permission": "chrdkranks.use"}
+    - {"slot": 15, "icon": "BEACON", "name": "<gold><bold>Общие цели</bold></gold>", "lore": "<gray>Вклад в цели всего сообщества</gray>", "command": "goals", "plugin": "CHRDK_CommonGoals", "permission": "chrdkgoals.use"}
+    - {"slot": 16, "icon": "PLAYER_HEAD", "name": "<gold><bold>Пригласить друга</bold></gold>", "lore": "<gray>Реферальный статус и бонусные дни</gray>", "command": "ref", "plugin": "CHRDK_Referrals", "permission": "chrdkref.use"}
+    - {"slot": 19, "icon": "DIAMOND", "name": "<gold><bold>Алмазный магазин</bold></gold>", "lore": "<gray>Обмен ресурсов и динамические цены</gray>\n<gray>Счёт магазина отделён от выручки аукциона</gray>", "command": "shop", "plugin": "CHRDK_DiamondShop", "permission": "chrdkshop.use"}
+    - {"slot": 20, "icon": "GOLD_INGOT", "name": "<gold><bold>Аукцион игроков</bold></gold>", "lore": "<gray>Лоты, цены и подтверждение покупки</gray>\n<gray>Выставление: /ah sell цена</gray>", "command": "auction", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
+    - {"slot": 21, "icon": "ENDER_CHEST", "name": "<gold><bold>Почта аукциона</bold></gold>", "lore": "<gray>Купленные товары и возврат непроданного</gray>\n<gray>Выручка: /ah money</gray>", "command": "auction mail", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
+    - {"slot": 22, "icon": "SUNFLOWER", "name": "<gold><bold>Лотерея недели</bold></gold>", "lore": "<gray>Банк, ваш шанс и время розыгрыша</gray>\n<gray>Билеты покупаются отдельно: /lottery buy</gray>", "command": "lottery info", "plugin": "CHRDK_Lottery", "permission": "chrdklottery.use"}
+    - {"slot": 23, "icon": "GOLD_BLOCK", "name": "<gold><bold>Результат лотереи</bold></gold>", "lore": "<gray>Прошлый победитель</gray>\n<gray>Призы: /lottery claim</gray>", "command": "lottery last", "plugin": "CHRDK_Lottery", "permission": "chrdklottery.use"}
+    - {"slot": 24, "icon": "MAP", "name": "<gold><bold>Ваши территории</bold></gold>", "lore": "<gray>Меню приватов: клик — телепорт</gray>\n<gray>Список чанков и витрина продаж</gray>", "command": "claim menu", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
+    - {"slot": 25, "icon": "CHEST", "name": "<gold><bold>Казна приватов</bold></gold>", "lore": "<gray>Баланс казны для ренты</gray>\n<gray>Следите за ежедневными расходами</gray>", "command": "claim balance", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
+    - {"slot": 28, "icon": "COMPASS", "name": "<gold><bold>Дома</bold></gold>", "lore": "<gray>Список точек дома</gray>\n<gray>Установить точку: /sethome имя</gray>", "command": "homes", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
+    - {"slot": 29, "icon": "ENDER_PEARL", "name": "<gold><bold>Случайный телепорт</bold></gold>", "lore": "<gray>Запустить RTP за алмазы</gray>\n<gray>Стоимость задаётся настройками телепортов</gray>", "command": "rtp", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
+    - {"slot": 30, "icon": "OAK_DOOR", "name": "<gold><bold>Телепорты к игрокам</bold></gold>", "lore": "<gray>Запрос: /tpa ник</gray>\n<gray>Принять запрос: /tpaccept</gray>", "command": "tpa", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
+    - {"slot": 31, "icon": "GRASS_BLOCK", "name": "<gold><bold>Как приватить</bold></gold>", "lore": "<gray>Справка по покупке, членам и ренте</gray>\n<gray>Эта кнопка НЕ покупает чанк</gray>", "command": "claim help", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
+    - {"slot": 32, "icon": "FILLED_MAP", "name": "<gold><bold>Карта приватов</bold></gold>", "lore": "<gray>Карта чанков вокруг вас</gray>", "command": "claim map", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
+    - {"slot": 33, "icon": "ENCHANTED_BOOK", "name": "<gold><bold>Кастомные чары</bold></gold>", "lore": "<gray>Каталог чар и описания</gray>\n<gray>Получение через игровую механику</gray>", "command": "enchants", "plugin": "CHRDK_Enchants", "permission": "chrdkenchants.use"}
+    - {"slot": 34, "icon": "ANVIL", "name": "<gold><bold>Редкости снаряжения</bold></gold>", "lore": "<gray>Тиры крафта и характеристики</gray>", "command": "tiers", "plugin": "CHRDK_TierForge", "permission": "chrdktierforge.use"}
+    - {"slot": 37, "icon": "TOTEM_OF_UNDYING", "name": "<gold><bold>Артефакты</bold></gold>", "lore": "<gray>Каталог, носимые артефакты и источники</gray>\n<gray>Добывайте их в мире</gray>", "command": "artifacts", "plugin": "CHRDK_Artifacts", "permission": "chrdkartifacts.use"}
+    - {"slot": 38, "icon": "FIREWORK_ROCKET", "name": "<gold><bold>Косметика</bold></gold>", "lore": "<gray>Список эффектов и шлейфов</gray>", "command": "cosmetics list", "plugin": "CHRDK_Cosmetics", "permission": "chrdkcosmetics.use"}
+    - {"slot": 39, "icon": "TRIPWIRE_HOOK", "name": "<gold><bold>Защита 2FA</bold></gold>", "lore": "<gray>Статус двухфакторной защиты</gray>\n<gray>Подключение: /2fa setup</gray>", "command": "2fa status"}
+    - {"slot": 40, "icon": "BOOK", "name": "<gold><bold>Сессии входа</bold></gold>", "lore": "<gray>Проверить активные сессии аккаунта</gray>", "command": "session"}
+    - {"slot": 41, "icon": "HOPPER", "name": "<gold><bold>Очередь входа</bold></gold>", "lore": "<gray>Статус и сведения об очереди</gray>\n<gray>VIP-приоритет зависит от настроек сервера</gray>", "command": "queue info", "plugin": "CHRDK_Queue", "permission": "chrdkqueue.use"}
+    - {"slot": 42, "icon": "WRITABLE_BOOK", "name": "<gold><bold>Чат</bold></gold>", "lore": "<gray>Текущий режим и переключение</gray>\n<gray>/chat — локальный / глобальный</gray>", "command": "chat"}
+
+auto-messages:
+  enabled: true
+  interval-seconds: 240
+  # Случайный выбор без немедленного повтора; учитываются доступность и права.
+  random-order: true
+  # Минимум авторизованных получателей с правом automessage.receive.
+  minimum-players: 1
+  prefix: "<dark_gray>[<gold>CHRDK</gold>]</dark_gray> "
+  # Старые строки поддерживаются. Карты: text, plugin, permission, condition.
+  # condition: always (по умолчанию), trial, unsecured.
+  messages:
+    - {"text": "<gray>Все возможности сервера собраны в /menu. Начните с ежедневной награды и целей сезона.</gray>"}
+    - {"text": "<gray>Ваш приветственный ранг активен. Осталось %pass_left%. Статус и продление — /pass menu.</gray>", "condition": "trial"}
+    - {"text": "<gray>Защитите аккаунт: /2fa setup, затем подтвердите код приложения. Не сообщайте никому пароль и коды.</gray>", "condition": "unsecured"}
+    - {"text": "<gray>Забирайте ежедневную награду: /daily. Сохраняйте стрик входов.</gray>", "plugin": "CHRDK_DailyRewards", "permission": "chrdkdaily.use"}
+    - {"text": "<gray>Проверьте задания сезона и доступные награды: /battlepass.</gray>", "plugin": "CHRDK_BattlePass", "permission": "chrdkbp.use"}
+    - {"text": "<gray>Помогите общим целям сервера: /goals — ваш вклад и прогресс сообщества.</gray>", "plugin": "CHRDK_CommonGoals", "permission": "chrdkgoals.use"}
+    - {"text": "<gray>Звание растёт вместе с наигранным временем. Ваш прогресс — /ranks.</gray>", "plugin": "CHRDK_Ranks", "permission": "chrdkranks.use"}
+    - {"text": "<gray>Обмен ресурсов и актуальные цены: /shop. Счёт магазина и выручка аукциона — разные хранилища.</gray>", "plugin": "CHRDK_DiamondShop", "permission": "chrdkshop.use"}
+    - {"text": "<gray>Продайте весь стак из руки: /ah sell цена. Покупка через /ah требует подтверждения, комиссия указана в лоте.</gray>", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
+    - {"text": "<gray>Купленные и возвращённые лоты ждут в /ah mail. Выручку забирайте через /ah money.</gray>", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
+    - {"text": "<gray>Лотерея: /lottery — банк, шанс и точное время. Билеты — /lottery buy, выигрыш — /lottery claim.</gray>", "plugin": "CHRDK_Lottery", "permission": "chrdklottery.use"}
+    - {"text": "<gray>Защитите постройки: /claim help. Не забывайте казну для ежедневной ренты: /claim balance.</gray>", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
+    - {"text": "<gray>Точки дома: /homes и /sethome имя. Запрос к игроку: /tpa ник. Телепорты могут стоить алмазы.</gray>", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
+    - {"text": "<gray>Изучайте кастомные чары: /enchants. Они доступны через игровые способы получения.</gray>", "plugin": "CHRDK_Enchants", "permission": "chrdkenchants.use"}
+    - {"text": "<gray>Редкости снаряжения и ваши находки: /tiers и /tiers stats.</gray>", "plugin": "CHRDK_TierForge", "permission": "chrdktierforge.use"}
+    - {"text": "<gray>Артефакты добываются в мире. Каталог, носимые предметы и источники — /artifacts.</gray>", "plugin": "CHRDK_Artifacts", "permission": "chrdkartifacts.use"}
+    - {"text": "<gray>Выберите косметический шлейф: /cosmetics list. Выключить эффект: /cosmetics off.</gray>", "plugin": "CHRDK_Cosmetics", "permission": "chrdkcosmetics.use"}
+    - {"text": "<gray>Приглашайте друзей: /ref — статус и условия бонуса. Если вас позвал друг, до первого непробного продления: /ref use его_ник.</gray>", "plugin": "CHRDK_Referrals", "permission": "chrdkref.use"}
+    - {"text": "<gray>Сведения об очереди входа: /queue info. Приоритет определяется настройками VIP-групп.</gray>", "plugin": "CHRDK_Queue", "permission": "chrdkqueue.use"}
+    - {"text": "<gray>Переключение локального и общего чата — /chat. Личное сообщение — /msg ник текст, ответ — /r текст.</gray>"}
+    - {"text": "<gray>Проверьте сессии входа: /session. Для выхода из аккаунта используйте /logout.</gray>"}
+    - {"text": "<gray>Хотите поддержать проект? /pass donate откроет ссылку на оплату и продление.</gray>"}
+
+tablist:
+  # Таб-лист (TAB): шапка/подвал списка игроков и формат имени в нём.
+  # Разметка — MiniMessage либо &-коды. Подстановки:
+  #   %player% — ник игрока, %online%/%max% — онлайн и лимит,
+  #   %tps% — TPS сервера, %ping% — пинг игрока, %world% — его мир,
+  #   %pass_status% — активен/истёк/нет ранга, %pass_left% — «12 дн. 3 ч.»,
+  #   %pass_days% — осталось целых дней ранга.
+  #   %pass_type% — пробная/обычная/нет, %auth_status% — состояние входа,
+  #   %auth_hint% — следующий шаг, %security% — состояние 2FA,
+  #   %navigation% — доступные ссылки после входа (до входа: пустая строка).
+  enabled: true
+  # Как часто (в тиках, 20 = 1 сек) обновлять таб-лист всем игрокам. Минимум 10.
+  refresh-ticks: 40
+  # Строки шапки списка (каждая с новой строки экрана)
+  header:
+    - ""
+    - "<gradient:gold:yellow><bold>CHERDAK • ВЫЖИВАНИЕ</bold></gradient>"
+    - "<gray>Онлайн <white>%online%/%max%</white> <dark_gray>•</dark_gray> TPS <green>%tps%</green>"
+    - "<gray>%player% <dark_gray>•</dark_gray> <white>%auth_status%</white>"
+    - ""
+  footer:
+    - ""
+    - "<gold>%pass_type%</gold> <dark_gray>•</dark_gray> <aqua>%pass_left%</aqua>"
+    - "<gray>%auth_hint%</gray>"
+    - "<gray>2FA: <white>%security%</white> <dark_gray>•</dark_gray> <yellow>%ping% мс</yellow> <dark_gray>•</dark_gray> %world%"
+    - "<aqua>%navigation%</aqua>"
+    - ""
+  # Пусто: не перекрашивать чужие префиксы/имена; CHRDK_Ranks управляет сортировкой.
+  player-name-format: ""
+  # Никнеймы, закреплённые ВВЕРХУ списка игроков (регистр не важен).
+  # Реализовано через приоритетную команду scoreboard — клиент Minecraft
+  # сортирует список сначала по команде, потом по нику.
+  # ВНИМАНИЕ: если другой плагин садит этих игроков в свою команду
+  # (префиксы/ранги), его команда имеет приоритет — TAB не перетягивает игрока обратно.
+  pinned-names:
+    - kalinin_play

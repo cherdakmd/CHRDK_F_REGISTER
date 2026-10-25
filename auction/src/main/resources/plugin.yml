@@ -1,0 +1,24 @@
+name: CHRDK_Auction
+version: '${version}'
+main: ru.cherdakmd.chrdkauction.AuctionPlugin
+api-version: '26.3'
+depend: [CHRDK_Core]
+description: Аукцион игроков за алмазы с escrow, комиссией и почтовым ящиком
+commands:
+  auction:
+    aliases: [ah, auc]
+    description: Рынок игроков
+    usage: /<command> [sell <цена>|buy <id> confirm|cancel <id>|mail|claim <id>|money|mine]
+    permission: chrdkauction.use
+  auctionadmin:
+    aliases: [ahadmin]
+    description: Настройки и диагностика аукциона
+    usage: /<command> [reload|status|recover]
+    permission: chrdkauction.admin
+permissions:
+  chrdkauction.use:
+    default: true
+    description: Торговля на аукционе
+  chrdkauction.admin:
+    default: op
+    description: Управление аукционом и восстановлением

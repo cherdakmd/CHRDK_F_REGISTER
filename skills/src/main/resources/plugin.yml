@@ -1,0 +1,22 @@
+name: CHRDK_Skills
+version: ${version}
+main: ru.cherdakmd.chrdkskills.SkillsPlugin
+api-version: '26.3'
+description: "10 навыков с уровнями 1..100, 60 перков, витрина и публичный API: опыт из честных событий, антинакрутка и транзитные атрибуты"
+author: cherdakmd
+depend: [CHRDK_Core]
+commands:
+  skills:
+    description: "Навыки: витрина, список, топ и карточка навыка"
+    usage: "/skills [menu|list|top|<навык>]"
+  skillsadmin:
+    description: "Администрирование навыков"
+    permission: chrdkskills.admin
+    usage: "/skillsadmin <reload|givexp <ник> <навык> <опыт>|setlevel <ник> <навык> <уровень>|reset <ник>>"
+permissions:
+  chrdkskills.use:
+    description: "Смотреть навыки, список и топ"
+    default: true
+  chrdkskills.admin:
+    description: "Администрирование навыков"
+    default: op

@@ -1,0 +1,48 @@
+# =====================================================================
+# CHRDK_Lottery — ТЕКСТЫ (MiniMessage, подстановки через %placeholder%)
+# Подстановки экранируются ядром — ник игрока не сломает разметку.
+# Плейсхолдеры: %pot% %payout% %burn% %count% %cost% %have% %max%
+#   %total% %tickets% %players% %player% %when% %left% %place% %price%
+# =====================================================================
+
+messages:
+  "lottery":
+    "no-api": "<red>Ядро CHRDK_Core не найдено — лотерея недоступна.</red>"
+    "need-auth": "<red>Сначала войдите на сервер (/login), потом играйте в лотерею.</red>"
+    "need-pass": "<red>Билеты лотереи доступны с более высокой ступенью ранга.</red>"
+    "player-only": "<red>Эта команда только для игроков.</red>"
+    "usage": "<gray>/lottery info — банк и время розыгрыша; /lottery buy [n] — купить билеты; /lottery top; /lottery last; /lottery claim — забрать приз</gray>"
+    "admin-usage": "<gray>/lotteryadmin reload — перечитать конфиг; /lotteryadmin drawnow confirm — провести розыгрыш сейчас</gray>"
+
+    "buy-success": "<green>Куплено билетов: %count% за %cost% 💠. Ваши билеты в этом розыгрыше: %total%.</green>"
+    "buy-no-diamonds": "<red>Не хватает алмазов: нужно %cost% 💠, у вас %have% 💠.</red>"
+    "buy-limit-player": "<red>Лимит — %max% билетов на розыгрыш (у вас уже %tickets%).</red>"
+    "buy-limit-purchase": "<red>За раз можно купить не больше %max% билетов.</red>"
+    "buy-not-a-number": "<red>Количество билетов должно быть числом: /lottery buy 5</red>"
+
+    "info": "<gray>🎰 Лотерея: банк <gold>%pot% 💠</gold>, билетов %total% от %players% игроков. Розыгрыш %when% (через %left%). Цена билета: %cost% 💠 — /lottery buy</gray>"
+    "info-yours": "<gray>Ваших билетов: <yellow>%tickets%</yellow>, шанс %chance%%.</gray>"
+    "top-header": "<gold>═══ Билеты этого розыгрыша ═══</gold>"
+    "top-line": "<gray>%place%. %player% — %tickets% билетов</gray>"
+    "top-empty": "<yellow>Билетов пока не куплено — банк пуст. Тираж ждёт смельчаков!</yellow>"
+
+    "last-none": "<yellow>Розыгрышей ещё не было — первый впереди.</yellow>"
+    "last-won": "<gold>Прошлый розыгрыш (%when%): победил <green>%player%</green> — банк %pot% 💠, выплата %payout% 💠.</gold>"
+
+    "announce-soon": "<gold>⏰ Лотерея: до розыгрыша %left%! Банк %pot% 💠, билет %cost% 💠 → /lottery buy</gold>"
+    "draw-no-tickets": "<yellow>🎰 Лотерея: ни одного билета — розыгрыш переносится на следующую неделю.</yellow>"
+    "draw-broadcast": "<gold>🏆 Лотерея: победил <green>%player%</green>! Банк %pot% 💠 → выплата <green>%payout% 💠</green> (комиссия %burn% 💠 сгорела). Разыграно билетов: %total%.</gold>"
+    "draw-winner-personal": "<gold>🏆 Поздравляем! Вы выиграли лотерею: %payout% 💠 (банк был %pot% 💠).</gold>"
+    "pending-paid": "<gold>🏆 Лотерея: Выдано %payout% 💠. Остаток приза: %remaining% 💠 — /lottery claim</gold>"
+
+    "admin-reload": "<green>Конфигурация лотереи перечитана.</green>"
+    "admin-drawnow-done": "<green>Принудительный розыгрыш выполнен.</green>"
+    "admin-no-permission": "<red>Нет права chrdklottery.admin.</red>"
+
+    "pending-ready": "<gold>Ваш приз лотереи: %payout% 💠 — /lottery claim. Освободите место в инвентаре.</gold>"
+    "no-prize": "<yellow>Невыданных призов нет.</yellow>"
+    "inventory-full": "<yellow>Инвентарь полон. Приз сохранён — освободите место и повторите /lottery claim.</yellow>"
+    "round-limit": "<yellow>Тираж достиг лимита банка или билетов. Дождитесь розыгрыша.</yellow>"
+    "storage-error": "<red>Операция не выполнена. Ошибка хранения данных — обратитесь к администратору.</red>"
+    "no-permission": "<red>Нет права chrdklottery.use.</red>"
+    "notify-title": "Лотерея недели — результат"

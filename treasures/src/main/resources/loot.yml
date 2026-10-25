@@ -1,0 +1,1580 @@
+# CHRDK_Treasures — лут-таблицы кладов (с версии 1.4.135; расширены в 1.4.136,
+# в 1.4.148 (+100 записей), в 1.4.149 (+153 записи) и в 1.4.157 (эликсиры,
+# всего 1422 записи).
+#
+# Здесь лежит обычная добыча: материалы, количества и веса. Находки с
+# эффектами живут в каталоге (TreasureCatalog) и выпадают отдельным броском.
+# Поле name превращает ванильный предмет в именную находку («Кровавый суп»,
+# «Зависть пиглина») — такие предметы не входят в коллекцию, но приходят с
+# собственным названием, как в оригинальных таблицах.
+#
+# Как читается запись:
+#   material — имя материала Bukkit (COAL, IRON_INGOT, ...);
+#   min/max  — сколько выпадет за один выбор, 1..64;
+#   weight   — вес записи в пуле (чем больше, тем чаще);
+#   unlock   — сколько блоков игрок должен добыть, чтобы запись стала доступна;
+#   name     — необязательное особое имя предмета (в кавычках);
+#   elixir   — необязательный ид эликсира (1.4.157): предмет станет зельем с
+#              настоящим эффектом, см. TreasureElixir. Без поля POTION остаётся
+#              обычной бутылкой с подписью.
+#
+# Бросок берёт общий пул редкости (global) и пул региона (regions), причём
+# региональные записи весят вдвое больше: клад должен пахнуть местом, где он
+# найден. Записи с unlock выше прогресса игрока не участвуют в броске.
+#
+# Правки применяются после /treasuresadmin reload. Порядок записей не важен.
+#
+# version — версия формата. Файл без version считается старым: плагин
+# дополнит его новыми записями из JAR, не трогая ваши правки.
+version: 5
+
+global:
+  # обычный клад: общие ресурсы, которые встречаются в любом регионе.
+  common:
+    - { material: COAL, min: 4, max: 12, weight: 10, unlock: 0 }
+    - { material: RAW_IRON, min: 2, max: 6, weight: 10, unlock: 0 }
+    - { material: RAW_COPPER, min: 3, max: 8, weight: 8, unlock: 0 }
+    - { material: TORCH, min: 4, max: 12, weight: 8, unlock: 0 }
+    - { material: BREAD, min: 1, max: 4, weight: 6, unlock: 0 }
+    - { material: ARROW, min: 8, max: 24, weight: 6, unlock: 0 }
+    - { material: RAIL, min: 6, max: 16, weight: 5, unlock: 0 }
+    - { material: COBBLESTONE, min: 8, max: 24, weight: 4, unlock: 0 }
+    - { material: BONE, min: 2, max: 6, weight: 4, unlock: 0 }
+    - { material: STRING, min: 2, max: 6, weight: 4, unlock: 0 }
+    - { material: IRON_INGOT, min: 1, max: 3, weight: 5, unlock: 2000 }
+    - { material: GOLD_NUGGET, min: 1, max: 1, weight: 3, unlock: 0, name: "Обычный амулет" }
+    - { material: COOKED_BEEF, min: 2, max: 6, weight: 14, unlock: 0 }
+    - { material: COOKED_PORKCHOP, min: 2, max: 6, weight: 14, unlock: 0 }
+    - { material: COOKED_CHICKEN, min: 2, max: 6, weight: 14, unlock: 0 }
+    - { material: COOKED_MUTTON, min: 2, max: 5, weight: 13, unlock: 0 }
+    - { material: COOKED_COD, min: 2, max: 6, weight: 13, unlock: 0 }
+    - { material: COOKED_SALMON, min: 2, max: 6, weight: 13, unlock: 0 }
+    - { material: POTATO, min: 4, max: 10, weight: 12, unlock: 0 }
+    - { material: CARROT, min: 4, max: 10, weight: 12, unlock: 0 }
+    - { material: BEETROOT, min: 3, max: 9, weight: 12, unlock: 0 }
+    - { material: WHEAT, min: 4, max: 12, weight: 11, unlock: 0 }
+    - { material: CHARCOAL, min: 4, max: 12, weight: 11, unlock: 0 }
+    - { material: STICK, min: 8, max: 20, weight: 11, unlock: 0 }
+    - { material: FLINT, min: 2, max: 6, weight: 10, unlock: 0 }
+    - { material: FEATHER, min: 3, max: 9, weight: 10, unlock: 0 }
+    - { material: GUNPOWDER, min: 2, max: 6, weight: 10, unlock: 0 }
+    - { material: GLASS, min: 4, max: 10, weight: 9, unlock: 0 }
+    - { material: BRICK, min: 4, max: 12, weight: 9, unlock: 0 }
+    - { material: CLAY_BALL, min: 4, max: 12, weight: 9, unlock: 0 }
+    - { material: LEATHER, min: 2, max: 6, weight: 8, unlock: 0 }
+    - { material: WHEAT_SEEDS, min: 4, max: 12, weight: 8, unlock: 0 }
+    - { material: BONE_MEAL, min: 4, max: 12, weight: 8, unlock: 0 }
+    - { material: LANTERN, min: 1, max: 2, weight: 7, unlock: 0 }
+    - { material: LADDER, min: 4, max: 12, weight: 7, unlock: 0 }
+    - { material: SCAFFOLDING, min: 4, max: 12, weight: 7, unlock: 0 }
+    - { material: MINECART, min: 1, max: 1, weight: 6, unlock: 0 }
+    - { material: WHITE_WOOL, min: 2, max: 6, weight: 6, unlock: 0 }
+    - { material: HONEYCOMB, min: 1, max: 3, weight: 6, unlock: 0 }
+    - { material: BEEF, min: 2, max: 6, weight: 5, unlock: 0 }
+    - { material: PORKCHOP, min: 2, max: 6, weight: 5, unlock: 0 }
+    - { material: COD, min: 2, max: 6, weight: 5, unlock: 0 }
+    - { material: SALMON, min: 2, max: 6, weight: 4, unlock: 0 }
+    - { material: PAPER, min: 8, max: 20, weight: 4, unlock: 0 }
+    - { material: WRITABLE_BOOK, min: 1, max: 2, weight: 4, unlock: 0 }
+    - { material: FLOWER_POT, min: 1, max: 2, weight: 3, unlock: 0 }
+    - { material: SOUL_TORCH, min: 4, max: 10, weight: 3, unlock: 0 }
+    - { material: REDSTONE_TORCH, min: 2, max: 6, weight: 3, unlock: 0 }
+    - { material: LEVER, min: 2, max: 6, weight: 2, unlock: 0 }
+    - { material: STONE_BUTTON, min: 2, max: 6, weight: 2, unlock: 0 }
+    - { material: STONE_PRESSURE_PLATE, min: 1, max: 3, weight: 2, unlock: 0 }
+    - { material: TRIPWIRE_HOOK, min: 1, max: 2, weight: 2, unlock: 0 }
+    - { material: COMPARATOR, min: 1, max: 1, weight: 2, unlock: 0 }
+    - { material: REPEATER, min: 1, max: 1, weight: 2, unlock: 0 }
+    - { material: OBSERVER, min: 1, max: 1, weight: 2, unlock: 0 }
+    - { material: PISTON, min: 1, max: 2, weight: 2, unlock: 0 }
+    - { material: STICKY_PISTON, min: 1, max: 2, weight: 2, unlock: 0 }
+    - { material: HOPPER, min: 1, max: 1, weight: 2, unlock: 0 }
+    - { material: DROPPER, min: 1, max: 1, weight: 2, unlock: 0 }
+    - { material: DISPENSER, min: 1, max: 1, weight: 2, unlock: 0 }
+    - { material: TARGET, min: 1, max: 1, weight: 2, unlock: 0 }
+    - { material: REDSTONE_LAMP, min: 1, max: 2, weight: 2, unlock: 0 }
+    - { material: DAYLIGHT_DETECTOR, min: 1, max: 1, weight: 2, unlock: 0 }
+    - { material: NOTE_BLOCK, min: 1, max: 1, weight: 2, unlock: 0 }
+    - { material: JUKEBOX, min: 1, max: 1, weight: 2, unlock: 0 }
+    - { material: CRAFTING_TABLE, min: 1, max: 2, weight: 2, unlock: 0 }
+    - { material: CHEST, min: 1, max: 2, weight: 2, unlock: 0 }
+    - { material: FURNACE, min: 1, max: 2, weight: 2, unlock: 0 }
+    - { material: BOOK, min: 2, max: 6, weight: 2, unlock: 0 }
+    - { material: RABBIT_STEW, min: 1, max: 2, weight: 2, unlock: 0 }
+    - { material: BEETROOT_SOUP, min: 1, max: 2, weight: 2, unlock: 0 }
+    - { material: COOKED_RABBIT, min: 2, max: 6, weight: 2, unlock: 0 }
+    - { material: RABBIT, min: 2, max: 6, weight: 2, unlock: 0 }
+    - { material: MILK_BUCKET, min: 1, max: 1, weight: 2, unlock: 0 }
+    - { material: PUMPKIN_SEEDS, min: 2, max: 6, weight: 2, unlock: 0 }
+    - { material: MELON_SEEDS, min: 2, max: 6, weight: 2, unlock: 0 }
+    - { material: BEETROOT_SEEDS, min: 2, max: 6, weight: 2, unlock: 0 }
+    - { material: SUGAR, min: 3, max: 8, weight: 2, unlock: 0 }
+    - { material: SLIME_BALL, min: 2, max: 6, weight: 2, unlock: 0 }
+    - { material: SAND, min: 6, max: 16, weight: 8, unlock: 0 }
+    - { material: GRAVEL, min: 6, max: 16, weight: 8, unlock: 0 }
+    - { material: SUGAR_CANE, min: 4, max: 12, weight: 7, unlock: 0 }
+    - { material: COCOA_BEANS, min: 2, max: 6, weight: 6, unlock: 0 }
+    - { material: PUMPKIN, min: 1, max: 4, weight: 6, unlock: 0 }
+    - { material: MELON_SLICE, min: 4, max: 12, weight: 7, unlock: 0 }
+    - { material: KELP, min: 4, max: 12, weight: 6, unlock: 0 }
+    - { material: SWEET_BERRIES, min: 4, max: 10, weight: 6, unlock: 0 }
+    - { material: VINE, min: 4, max: 12, weight: 5, unlock: 0 }
+    - { material: TORCHFLOWER, min: 1, max: 3, weight: 4, unlock: 0 }
+    - { material: COOKIE, min: 4, max: 12, weight: 6, unlock: 0 }
+    - { material: DRIED_KELP, min: 4, max: 12, weight: 5, unlock: 0 }
+    - { material: BAMBOO, min: 6, max: 16, weight: 5, unlock: 0 }
+    - { material: MOSS_CARPET, min: 4, max: 10, weight: 4, unlock: 0 }
+    - { material: PUMPKIN_PIE, min: 1, max: 2, weight: 4, unlock: 0 }
+    - { material: HONEY_BOTTLE, min: 1, max: 2, weight: 3, unlock: 0 }
+    - { material: EGG, min: 2, max: 6, weight: 4, unlock: 0 }
+    - { material: MUSHROOM_STEW, min: 1, max: 2, weight: 3, unlock: 0 }
+    - { material: POPPY, min: 3, max: 8, weight: 4, unlock: 0 }
+
+  # редкий клад: инструменты, блоки ресурсов и полезная мелочь.
+    - { material: POTION, min: 1, max: 1, weight: 2, unlock: 0, name: "Эликсир скорости", elixir: swiftness }
+    - { material: POTION, min: 1, max: 1, weight: 1, unlock: 0, name: "Эликсир ночного зрения", elixir: night_vision }
+  rare:
+    - { material: IRON_INGOT, min: 2, max: 6, weight: 10, unlock: 250 }
+    - { material: GOLD_INGOT, min: 2, max: 5, weight: 8, unlock: 250 }
+    - { material: LAPIS_LAZULI, min: 4, max: 10, weight: 7, unlock: 250 }
+    - { material: AMETHYST_SHARD, min: 3, max: 8, weight: 7, unlock: 250 }
+    - { material: EXPERIENCE_BOTTLE, min: 3, max: 8, weight: 8, unlock: 250 }
+    - { material: SLIME_BALL, min: 2, max: 5, weight: 5, unlock: 250 }
+    - { material: FIRE_CHARGE, min: 2, max: 6, weight: 5, unlock: 250 }
+    - { material: GLOWSTONE_DUST, min: 4, max: 10, weight: 5, unlock: 250 }
+    - { material: NAME_TAG, min: 1, max: 1, weight: 2, unlock: 250 }
+    - { material: SADDLE, min: 1, max: 1, weight: 2, unlock: 250 }
+    - { material: DIAMOND, min: 1, max: 2, weight: 3, unlock: 5000 }
+    - { material: GOLD_INGOT, min: 1, max: 1, weight: 2, unlock: 250, name: "Редкий амулет" }
+    - { material: IRON_BLOCK, min: 1, max: 2, weight: 12, unlock: 250 }
+    - { material: COPPER_BLOCK, min: 2, max: 4, weight: 12, unlock: 250 }
+    - { material: COAL_BLOCK, min: 1, max: 3, weight: 12, unlock: 250 }
+    - { material: LAPIS_BLOCK, min: 1, max: 2, weight: 11, unlock: 250 }
+    - { material: QUARTZ_BLOCK, min: 1, max: 3, weight: 11, unlock: 250 }
+    - { material: REDSTONE_BLOCK, min: 1, max: 3, weight: 11, unlock: 250 }
+    - { material: GLOWSTONE, min: 1, max: 3, weight: 10, unlock: 250 }
+    - { material: SEA_LANTERN, min: 1, max: 2, weight: 10, unlock: 250 }
+    - { material: AMETHYST_BLOCK, min: 1, max: 2, weight: 10, unlock: 250 }
+    - { material: HONEY_BOTTLE, min: 1, max: 2, weight: 9, unlock: 250 }
+    - { material: COMPASS, min: 1, max: 1, weight: 9, unlock: 250 }
+    - { material: CLOCK, min: 1, max: 1, weight: 9, unlock: 250 }
+    - { material: SPYGLASS, min: 1, max: 1, weight: 8, unlock: 250 }
+    - { material: MAP, min: 1, max: 1, weight: 8, unlock: 250 }
+    - { material: ITEM_FRAME, min: 1, max: 2, weight: 8, unlock: 250 }
+    - { material: PAINTING, min: 1, max: 1, weight: 7, unlock: 250 }
+    - { material: ARMOR_STAND, min: 1, max: 2, weight: 7, unlock: 250 }
+    - { material: CAULDRON, min: 1, max: 1, weight: 7, unlock: 250 }
+    - { material: ANVIL, min: 1, max: 1, weight: 6, unlock: 250 }
+    - { material: BELL, min: 1, max: 1, weight: 6, unlock: 250 }
+    - { material: SMITHING_TABLE, min: 1, max: 1, weight: 6, unlock: 250 }
+    - { material: GRINDSTONE, min: 1, max: 1, weight: 5, unlock: 250 }
+    - { material: STONECUTTER, min: 1, max: 1, weight: 5, unlock: 250 }
+    - { material: LOOM, min: 1, max: 1, weight: 5, unlock: 250 }
+    - { material: BARREL, min: 1, max: 2, weight: 4, unlock: 250 }
+    - { material: SMOKER, min: 1, max: 1, weight: 4, unlock: 250 }
+    - { material: BLAST_FURNACE, min: 1, max: 1, weight: 4, unlock: 250 }
+    - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 3, unlock: 5000 }
+    - { material: TNT, min: 2, max: 6, weight: 3, unlock: 250 }
+    - { material: OBSIDIAN, min: 3, max: 8, weight: 3, unlock: 250 }
+    - { material: LODESTONE, min: 1, max: 1, weight: 2, unlock: 250 }
+    - { material: RESPAWN_ANCHOR, min: 1, max: 1, weight: 2, unlock: 250 }
+    - { material: ENDER_CHEST, min: 1, max: 1, weight: 2, unlock: 250 }
+    - { material: IRON_BARS, min: 4, max: 10, weight: 2, unlock: 250 }
+    - { material: IRON_DOOR, min: 1, max: 2, weight: 2, unlock: 250 }
+    - { material: IRON_TRAPDOOR, min: 1, max: 2, weight: 2, unlock: 250 }
+    - { material: POWERED_RAIL, min: 4, max: 10, weight: 2, unlock: 250 }
+    - { material: DETECTOR_RAIL, min: 2, max: 4, weight: 2, unlock: 250 }
+    - { material: ACTIVATOR_RAIL, min: 2, max: 4, weight: 2, unlock: 250 }
+    - { material: REDSTONE_LAMP, min: 1, max: 2, weight: 2, unlock: 250 }
+    - { material: TARGET, min: 2, max: 4, weight: 2, unlock: 250 }
+    - { material: HOPPER, min: 1, max: 2, weight: 2, unlock: 250 }
+    - { material: DISPENSER, min: 1, max: 2, weight: 2, unlock: 250 }
+    - { material: OBSERVER, min: 1, max: 2, weight: 2, unlock: 250 }
+    - { material: TURTLE_SCUTE, min: 1, max: 3, weight: 6, unlock: 250 }
+    - { material: BLAZE_ROD, min: 1, max: 3, weight: 6, unlock: 250 }
+    - { material: GHAST_TEAR, min: 1, max: 2, weight: 5, unlock: 250 }
+    - { material: ENDER_PEARL, min: 1, max: 3, weight: 6, unlock: 250 }
+    - { material: PHANTOM_MEMBRANE, min: 1, max: 3, weight: 6, unlock: 250 }
+    - { material: RABBIT_FOOT, min: 1, max: 2, weight: 5, unlock: 250 }
+    - { material: SHULKER_SHELL, min: 1, max: 2, weight: 5, unlock: 250 }
+    - { material: HONEY_BLOCK, min: 1, max: 2, weight: 5, unlock: 250 }
+    - { material: SPONGE, min: 1, max: 2, weight: 4, unlock: 250 }
+    - { material: SLIME_BLOCK, min: 1, max: 2, weight: 4, unlock: 250 }
+    - { material: BOOKSHELF, min: 1, max: 2, weight: 5, unlock: 250 }
+    - { material: CAMPFIRE, min: 1, max: 1, weight: 4, unlock: 250 }
+    - { material: WOLF_ARMOR, min: 1, max: 1, weight: 2, unlock: 250 }
+    - { material: IRON_HORSE_ARMOR, min: 1, max: 1, weight: 2, unlock: 250 }
+    - { material: GOLDEN_HORSE_ARMOR, min: 1, max: 1, weight: 2, unlock: 5000 }
+    - { material: NAUTILUS_SHELL, min: 1, max: 2, weight: 3, unlock: 250 }
+
+  # эпический клад: алмазы, снаряжение, морские и эндер-редкости.
+    - { material: POTION, min: 1, max: 1, weight: 3, unlock: 250, name: "Эликсир спешки", elixir: haste }
+    - { material: POTION, min: 1, max: 1, weight: 2, unlock: 250, name: "Эликсир прыгучести", elixir: leaping }
+    - { material: POTION, min: 1, max: 1, weight: 2, unlock: 250, name: "Эликсир глубин", elixir: water_breathing }
+  epic:
+    - { material: DIAMOND, min: 1, max: 3, weight: 10, unlock: 2000 }
+    - { material: EMERALD, min: 1, max: 3, weight: 8, unlock: 2000 }
+    - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 8, unlock: 2000 }
+    - { material: EXPERIENCE_BOTTLE, min: 6, max: 14, weight: 6, unlock: 2000 }
+    - { material: ENDER_PEARL, min: 1, max: 3, weight: 6, unlock: 2000 }
+    - { material: BLAZE_POWDER, min: 2, max: 6, weight: 5, unlock: 2000 }
+    - { material: GOLD_BLOCK, min: 1, max: 1, weight: 3, unlock: 2000 }
+    - { material: DIAMOND_BLOCK, min: 1, max: 1, weight: 2, unlock: 10000 }
+    - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 2, unlock: 20000 }
+    - { material: DIAMOND, min: 1, max: 1, weight: 1, unlock: 2000, name: "Эпический амулет" }
+    - { material: DIAMOND_SWORD, min: 1, max: 1, weight: 10, unlock: 2000 }
+    - { material: DIAMOND_PICKAXE, min: 1, max: 1, weight: 10, unlock: 2000 }
+    - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 10, unlock: 2000 }
+    - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 9, unlock: 2000 }
+    - { material: DIAMOND_AXE, min: 1, max: 1, weight: 9, unlock: 2000 }
+    - { material: GOLDEN_CARROT, min: 4, max: 10, weight: 9, unlock: 2000 }
+    - { material: RABBIT_FOOT, min: 1, max: 2, weight: 8, unlock: 2000 }
+    - { material: PHANTOM_MEMBRANE, min: 1, max: 3, weight: 8, unlock: 2000 }
+    - { material: SHULKER_SHELL, min: 1, max: 2, weight: 8, unlock: 2000 }
+    - { material: NAUTILUS_SHELL, min: 1, max: 2, weight: 7, unlock: 2000 }
+    - { material: SPONGE, min: 1, max: 2, weight: 7, unlock: 2000 }
+    - { material: PRISMARINE_CRYSTALS, min: 2, max: 6, weight: 7, unlock: 2000 }
+    - { material: ENDER_EYE, min: 1, max: 2, weight: 6, unlock: 2000 }
+    - { material: FIREWORK_ROCKET, min: 4, max: 12, weight: 6, unlock: 2000 }
+    - { material: CRYING_OBSIDIAN, min: 2, max: 6, weight: 6, unlock: 2000 }
+    - { material: AMETHYST_CLUSTER, min: 1, max: 2, weight: 5, unlock: 2000 }
+    - { material: RECOVERY_COMPASS, min: 1, max: 1, weight: 5, unlock: 5000 }
+    - { material: GOAT_HORN, min: 1, max: 1, weight: 5, unlock: 2000 }
+    - { material: HEART_OF_THE_SEA, min: 1, max: 1, weight: 4, unlock: 10000 }
+    - { material: TRIDENT, min: 1, max: 1, weight: 4, unlock: 15000 }
+    - { material: END_CRYSTAL, min: 1, max: 1, weight: 4, unlock: 15000 }
+    - { material: WITHER_SKELETON_SKULL, min: 1, max: 1, weight: 3, unlock: 30000 }
+    - { material: DRAGON_BREATH, min: 1, max: 2, weight: 3, unlock: 2000 }
+    - { material: SHULKER_BOX, min: 1, max: 1, weight: 3, unlock: 20000 }
+    - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 5, unlock: 2000 }
+    - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 2000 }
+    - { material: DIAMOND_SHOVEL, min: 1, max: 1, weight: 6, unlock: 2000 }
+    - { material: DIAMOND_HOE, min: 1, max: 1, weight: 6, unlock: 2000 }
+    - { material: ANCIENT_DEBRIS, min: 1, max: 2, weight: 4, unlock: 5000 }
+    - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 4, unlock: 3000 }
+    - { material: TURTLE_HELMET, min: 1, max: 1, weight: 5, unlock: 2000 }
+    - { material: ECHO_SHARD, min: 2, max: 5, weight: 5, unlock: 2000 }
+    - { material: EMERALD_BLOCK, min: 1, max: 2, weight: 4, unlock: 3000 }
+    - { material: DIAMOND_HORSE_ARMOR, min: 1, max: 1, weight: 3, unlock: 5000 }
+    - { material: CONDUIT, min: 1, max: 1, weight: 2, unlock: 10000 }
+    - { material: PIGLIN_HEAD, min: 1, max: 1, weight: 2, unlock: 10000 }
+    - { material: BEE_NEST, min: 1, max: 2, weight: 4, unlock: 2000 }
+
+  # легендарный клад: незерит, тотемы, звёзды и элитры.
+    - { material: POTION, min: 1, max: 1, weight: 3, unlock: 2000, name: "Эликсир регенерации", elixir: regeneration }
+    - { material: POTION, min: 1, max: 1, weight: 3, unlock: 2000, name: "Эликсир поглощения", elixir: absorption }
+    - { material: POTION, min: 1, max: 1, weight: 2, unlock: 2000, name: "Эликсир озарения", elixir: insight }
+    - { material: POTION, min: 1, max: 1, weight: 2, unlock: 2000, name: "Эликсир силы", elixir: strength }
+  legendary:
+    - { material: DIAMOND, min: 3, max: 6, weight: 10, unlock: 15000 }
+    - { material: EMERALD, min: 3, max: 6, weight: 7, unlock: 15000 }
+    - { material: NETHERITE_SCRAP, min: 1, max: 2, weight: 6, unlock: 10000 }
+    - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 5, unlock: 20000 }
+    - { material: DIAMOND_BLOCK, min: 1, max: 2, weight: 5, unlock: 25000 }
+    - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+    - { material: NETHER_STAR, min: 1, max: 1, weight: 1, unlock: 30000 }
+    - { material: EMERALD, min: 1, max: 1, weight: 1, unlock: 15000, name: "Легендарный амулет" }
+    - { material: EMERALD_BLOCK, min: 1, max: 2, weight: 8, unlock: 15000 }
+    - { material: GOLD_BLOCK, min: 2, max: 4, weight: 8, unlock: 15000 }
+    - { material: WITHER_SKELETON_SKULL, min: 1, max: 1, weight: 7, unlock: 30000 }
+    - { material: DRAGON_BREATH, min: 1, max: 2, weight: 7, unlock: 15000 }
+    - { material: END_CRYSTAL, min: 1, max: 1, weight: 6, unlock: 15000 }
+    - { material: CONDUIT, min: 1, max: 1, weight: 6, unlock: 30000 }
+    - { material: HEART_OF_THE_SEA, min: 1, max: 1, weight: 6, unlock: 15000 }
+    - { material: TRIDENT, min: 1, max: 1, weight: 5, unlock: 15000 }
+    - { material: SHULKER_BOX, min: 1, max: 1, weight: 5, unlock: 20000 }
+    - { material: BEACON, min: 1, max: 1, weight: 4, unlock: 100000 }
+    - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 3, unlock: 20000 }
+    - { material: DRAGON_HEAD, min: 1, max: 1, weight: 3, unlock: 50000 }
+    - { material: ELYTRA, min: 1, max: 1, weight: 3, unlock: 300000 }
+    - { material: NETHERITE_UPGRADE_SMITHING_TEMPLATE, min: 1, max: 1, weight: 4, unlock: 5000 }
+    - { material: NETHERITE_AXE, min: 1, max: 1, weight: 4, unlock: 5000 }
+    - { material: NETHERITE_PICKAXE, min: 1, max: 1, weight: 4, unlock: 5000 }
+    - { material: NETHERITE_SWORD, min: 1, max: 1, weight: 4, unlock: 5000 }
+    - { material: NETHERITE_CHESTPLATE, min: 1, max: 1, weight: 3, unlock: 5000 }
+    - { material: ANCIENT_DEBRIS, min: 2, max: 4, weight: 4, unlock: 5000 }
+    - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 4, unlock: 15000 }
+    - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 3, unlock: 20000 }
+    - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 3, unlock: 20000 }
+    - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 4, unlock: 15000 }
+
+  # мифический клад: незеритовая броня, маяки и головы дракона.
+    - { material: POTION, min: 1, max: 1, weight: 3, unlock: 10000, name: "Эликсир героя", elixir: hero }
+    - { material: POTION, min: 1, max: 1, weight: 2, unlock: 10000, name: "Эликсир удачи", elixir: luck }
+    - { material: POTION, min: 1, max: 1, weight: 2, unlock: 10000, name: "Эликсир огнестойкости", elixir: fire_resistance }
+  mythical:
+    - { material: NETHERITE_INGOT, min: 1, max: 2, weight: 10, unlock: 20000 }
+    - { material: NETHERITE_SCRAP, min: 2, max: 4, weight: 8, unlock: 10000 }
+    - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 7, unlock: 20000 }
+    - { material: TOTEM_OF_UNDYING, min: 1, max: 2, weight: 6, unlock: 25000 }
+    - { material: NETHER_STAR, min: 1, max: 1, weight: 5, unlock: 30000 }
+    - { material: NETHERITE_BLOCK, min: 1, max: 1, weight: 3, unlock: 100000 }
+    - { material: ELYTRA, min: 1, max: 1, weight: 2, unlock: 300000 }
+    - { material: DRAGON_BREATH, min: 2, max: 4, weight: 4, unlock: 20000 }
+    - { material: NETHERITE_HELMET, min: 1, max: 1, weight: 6, unlock: 20000 }
+    - { material: NETHERITE_CHESTPLATE, min: 1, max: 1, weight: 6, unlock: 20000 }
+    - { material: NETHERITE_LEGGINGS, min: 1, max: 1, weight: 6, unlock: 20000 }
+    - { material: NETHERITE_BOOTS, min: 1, max: 1, weight: 5, unlock: 20000 }
+    - { material: NETHERITE_SWORD, min: 1, max: 1, weight: 5, unlock: 20000 }
+    - { material: NETHERITE_PICKAXE, min: 1, max: 1, weight: 5, unlock: 20000 }
+    - { material: NETHERITE_AXE, min: 1, max: 1, weight: 4, unlock: 20000 }
+    - { material: NETHERITE_SHOVEL, min: 1, max: 1, weight: 4, unlock: 20000 }
+    - { material: NETHERITE_HOE, min: 1, max: 1, weight: 4, unlock: 20000 }
+    - { material: BEACON, min: 1, max: 1, weight: 3, unlock: 100000 }
+    - { material: DRAGON_HEAD, min: 1, max: 1, weight: 3, unlock: 50000 }
+    - { material: DRAGON_EGG, min: 1, max: 1, weight: 3, unlock: 0 }
+    - { material: SHULKER_BOX, min: 1, max: 2, weight: 5, unlock: 0 }
+    - { material: ENCHANTED_BOOK, min: 1, max: 2, weight: 5, unlock: 0 }
+    - { material: TRIDENT, min: 1, max: 1, weight: 4, unlock: 0 }
+    - { material: HEART_OF_THE_SEA, min: 1, max: 1, weight: 2, unlock: 50000 }
+    - { material: CONDUIT, min: 1, max: 1, weight: 2, unlock: 50000 }
+    - { material: WITHER_SKELETON_SKULL, min: 1, max: 1, weight: 1, unlock: 100000 }
+
+    - { material: POTION, min: 2, max: 2, weight: 2, unlock: 0, name: "Эликсир героя", elixir: hero }
+    - { material: POTION, min: 2, max: 2, weight: 1, unlock: 0, name: "Эликсир удачи", elixir: luck }
+regions:
+  # равнины: пшеница, снопы, цветы и лошадиная упряжь.
+  plains:
+    common:
+      - { material: WHEAT, min: 4, max: 12, weight: 8, unlock: 0 }
+      - { material: HAY_BLOCK, min: 1, max: 3, weight: 5, unlock: 0 }
+      - { material: EGG, min: 2, max: 6, weight: 5, unlock: 0 }
+      - { material: PUMPKIN, min: 1, max: 4, weight: 4, unlock: 0 }
+      - { material: POTATO, min: 6, max: 14, weight: 14, unlock: 0 }
+      - { material: CARROT, min: 6, max: 14, weight: 13, unlock: 0 }
+      - { material: BEETROOT, min: 4, max: 10, weight: 13, unlock: 0 }
+      - { material: MELON_SLICE, min: 4, max: 12, weight: 12, unlock: 0 }
+      - { material: DANDELION, min: 3, max: 8, weight: 12, unlock: 0 }
+      - { material: POPPY, min: 3, max: 8, weight: 12, unlock: 0 }
+      - { material: CORNFLOWER, min: 2, max: 6, weight: 11, unlock: 0 }
+      - { material: OXEYE_DAISY, min: 2, max: 6, weight: 11, unlock: 0 }
+      - { material: AZURE_BLUET, min: 2, max: 6, weight: 11, unlock: 0 }
+      - { material: SUNFLOWER, min: 2, max: 6, weight: 10, unlock: 0 }
+      - { material: APPLE, min: 3, max: 8, weight: 10, unlock: 0 }
+      - { material: OAK_LOG, min: 4, max: 10, weight: 9, unlock: 0 }
+      - { material: OAK_PLANKS, min: 8, max: 20, weight: 9, unlock: 0 }
+      - { material: COMPOSTER, min: 1, max: 1, weight: 9, unlock: 0 }
+      - { material: CARVED_PUMPKIN, min: 1, max: 2, weight: 8, unlock: 0 }
+      - { material: BONE_MEAL, min: 6, max: 16, weight: 8, unlock: 0 }
+      - { material: WHITE_WOOL, min: 2, max: 5, weight: 8, unlock: 0 }
+      - { material: MELON, min: 1, max: 3, weight: 7, unlock: 0 }
+      - { material: LILAC, min: 1, max: 3, weight: 7, unlock: 0 }
+      - { material: ROSE_BUSH, min: 1, max: 3, weight: 7, unlock: 0 }
+      - { material: PEONY, min: 1, max: 3, weight: 6, unlock: 0 }
+      - { material: TALL_GRASS, min: 2, max: 6, weight: 6, unlock: 0 }
+      - { material: HAY_BLOCK, min: 1, max: 1, weight: 3, unlock: 0, name: "Сноп с поля" }
+      - { material: WHEAT_SEEDS, min: 8, max: 20, weight: 9, unlock: 0 }
+      - { material: PUMPKIN_SEEDS, min: 4, max: 12, weight: 7, unlock: 0 }
+      - { material: OAK_FENCE, min: 6, max: 16, weight: 6, unlock: 0 }
+      - { material: OAK_SIGN, min: 3, max: 8, weight: 5, unlock: 0 }
+      - { material: BEETROOT_SOUP, min: 1, max: 2, weight: 5, unlock: 0 }
+    rare:
+      - { material: GOLDEN_CARROT, min: 2, max: 6, weight: 8, unlock: 250 }
+      - { material: HONEY_BOTTLE, min: 1, max: 3, weight: 6, unlock: 250 }
+      - { material: LEATHER, min: 2, max: 6, weight: 6, unlock: 250 }
+      - { material: BOOK, min: 1, max: 2, weight: 4, unlock: 250 }
+      - { material: HONEYCOMB, min: 2, max: 6, weight: 12, unlock: 250 }
+      - { material: WHITE_WOOL, min: 3, max: 8, weight: 11, unlock: 250 }
+      - { material: LEAD, min: 1, max: 2, weight: 11, unlock: 250 }
+      - { material: IRON_HORSE_ARMOR, min: 1, max: 1, weight: 11, unlock: 250 }
+      - { material: GOLDEN_HORSE_ARMOR, min: 1, max: 1, weight: 10, unlock: 250 }
+      - { material: BEE_NEST, min: 1, max: 1, weight: 10, unlock: 250 }
+      - { material: CAMPFIRE, min: 1, max: 2, weight: 10, unlock: 250 }
+      - { material: LANTERN, min: 1, max: 3, weight: 9, unlock: 250 }
+      - { material: SUGAR, min: 4, max: 10, weight: 9, unlock: 250 }
+      - { material: CAKE, min: 1, max: 1, weight: 8, unlock: 250 }
+      - { material: WHEAT, min: 1, max: 1, weight: 3, unlock: 250, name: "Колос удачи" }
+      - { material: BOOKSHELF, min: 1, max: 2, weight: 5, unlock: 250 }
+      - { material: MILK_BUCKET, min: 1, max: 2, weight: 6, unlock: 250, name: "Кувшин пастуха" }
+      - { material: COMPASS, min: 1, max: 1, weight: 4, unlock: 250 }
+      - { material: LEATHER_HELMET, min: 1, max: 1, weight: 3, unlock: 250, name: "Соломенная шляпа" }
+      - { material: POTION, min: 1, max: 1, weight: 2, unlock: 250, name: "Эликсир прыгучести", elixir: leaping }
+    epic:
+      - { material: HONEY_BLOCK, min: 1, max: 2, weight: 6, unlock: 2000 }
+      - { material: IRON_BLOCK, min: 1, max: 1, weight: 5, unlock: 2000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 6, unlock: 2000 }
+      - { material: EXPERIENCE_BOTTLE, min: 6, max: 12, weight: 5, unlock: 2000 }
+      - { material: DIAMOND_HORSE_ARMOR, min: 1, max: 1, weight: 10, unlock: 5000 }
+      - { material: GOLDEN_CARROT, min: 4, max: 10, weight: 10, unlock: 2000 }
+      - { material: PUMPKIN_PIE, min: 2, max: 6, weight: 10, unlock: 2000 }
+      - { material: CAKE, min: 1, max: 1, weight: 9, unlock: 2000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 9, unlock: 5000 }
+      - { material: EMERALD, min: 1, max: 2, weight: 8, unlock: 2000 }
+      - { material: BEE_NEST, min: 2, max: 4, weight: 8, unlock: 2000 }
+      - { material: DIAMOND_HOE, min: 1, max: 1, weight: 5, unlock: 2000 }
+      - { material: BEEHIVE, min: 1, max: 1, weight: 5, unlock: 2000 }
+      - { material: DIAMOND_SHOVEL, min: 1, max: 1, weight: 5, unlock: 2000 }
+    legendary:
+      - { material: GOLD_BLOCK, min: 1, max: 2, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_HORSE_ARMOR, min: 1, max: 1, weight: 4, unlock: 15000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 2, unlock: 25000 }
+      - { material: DIAMOND_BLOCK, min: 1, max: 1, weight: 8, unlock: 25000 }
+      - { material: EMERALD_BLOCK, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: NETHERITE_SCRAP, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 6, unlock: 15000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_SWORD, min: 1, max: 1, weight: 5, unlock: 15000 }
+    mythical:
+      - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 8, unlock: 20000 }
+      - { material: GOLDEN_APPLE, min: 4, max: 8, weight: 6, unlock: 20000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+      - { material: NETHERITE_SCRAP, min: 2, max: 4, weight: 6, unlock: 20000 }
+      - { material: DIAMOND_BLOCK, min: 1, max: 2, weight: 6, unlock: 25000 }
+      - { material: NETHERITE_HOE, min: 1, max: 1, weight: 5, unlock: 20000 }
+      - { material: NETHERITE_HELMET, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_BOOTS, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: BEACON, min: 1, max: 1, weight: 3, unlock: 100000 }
+      - { material: NETHERITE_CHESTPLATE, min: 1, max: 1, weight: 4, unlock: 20000 }
+
+  # лес: брёвна, грибы, книги и охотничье снаряжение.
+  forest:
+    common:
+      - { material: OAK_LOG, min: 6, max: 16, weight: 8, unlock: 0 }
+      - { material: APPLE, min: 2, max: 6, weight: 6, unlock: 0 }
+      - { material: BROWN_MUSHROOM, min: 2, max: 6, weight: 4, unlock: 0 }
+      - { material: RED_MUSHROOM, min: 2, max: 6, weight: 4, unlock: 0 }
+      - { material: ITEM_FRAME, min: 1, max: 1, weight: 1, unlock: 200000, name: "Невидимая рамка" }
+      - { material: BIRCH_LOG, min: 6, max: 16, weight: 14, unlock: 0 }
+      - { material: DARK_OAK_LOG, min: 4, max: 12, weight: 14, unlock: 0 }
+      - { material: OAK_PLANKS, min: 8, max: 20, weight: 13, unlock: 0 }
+      - { material: BIRCH_PLANKS, min: 8, max: 20, weight: 13, unlock: 0 }
+      - { material: OAK_SAPLING, min: 2, max: 6, weight: 13, unlock: 0 }
+      - { material: BIRCH_SAPLING, min: 2, max: 6, weight: 12, unlock: 0 }
+      - { material: DARK_OAK_SAPLING, min: 2, max: 6, weight: 12, unlock: 0 }
+      - { material: COBWEB, min: 1, max: 3, weight: 11, unlock: 0 }
+      - { material: STICK, min: 8, max: 20, weight: 10, unlock: 0 }
+      - { material: CHARCOAL, min: 4, max: 12, weight: 10, unlock: 0 }
+      - { material: FERN, min: 2, max: 6, weight: 10, unlock: 0 }
+      - { material: SWEET_BERRIES, min: 3, max: 8, weight: 9, unlock: 0 }
+      - { material: MOSS_BLOCK, min: 2, max: 6, weight: 9, unlock: 0 }
+      - { material: MOSSY_COBBLESTONE, min: 4, max: 10, weight: 9, unlock: 0 }
+      - { material: OAK_LEAVES, min: 4, max: 10, weight: 8, unlock: 0 }
+      - { material: BIRCH_LEAVES, min: 4, max: 10, weight: 8, unlock: 0 }
+      - { material: LILY_OF_THE_VALLEY, min: 2, max: 6, weight: 8, unlock: 0 }
+      - { material: MOSS_CARPET, min: 2, max: 6, weight: 7, unlock: 0 }
+      - { material: AZALEA, min: 1, max: 2, weight: 7, unlock: 0 }
+      - { material: FLOWERING_AZALEA, min: 1, max: 2, weight: 7, unlock: 0 }
+      - { material: BROWN_MUSHROOM, min: 1, max: 1, weight: 3, unlock: 0, name: "Грибная настойка" }
+      - { material: GLOW_BERRIES, min: 4, max: 10, weight: 8, unlock: 0 }
+      - { material: LADDER, min: 7, max: 14, weight: 7, unlock: 0 }
+      - { material: BIRCH_BOAT, min: 1, max: 1, weight: 5, unlock: 0 }
+      - { material: BROWN_MUSHROOM_BLOCK, min: 2, max: 5, weight: 6, unlock: 0 }
+      - { material: AZALEA_LEAVES, min: 4, max: 12, weight: 6, unlock: 0 }
+    rare:
+      - { material: HONEYCOMB, min: 2, max: 6, weight: 6, unlock: 250 }
+      - { material: COBWEB, min: 2, max: 6, weight: 4, unlock: 250 }
+      - { material: BOW, min: 1, max: 1, weight: 4, unlock: 250 }
+      - { material: ARROW, min: 12, max: 32, weight: 6, unlock: 250 }
+      - { material: BOOK, min: 2, max: 6, weight: 12, unlock: 250 }
+      - { material: BOOKSHELF, min: 1, max: 2, weight: 11, unlock: 250 }
+      - { material: LECTERN, min: 1, max: 1, weight: 11, unlock: 250 }
+      - { material: CARTOGRAPHY_TABLE, min: 1, max: 1, weight: 11, unlock: 250 }
+      - { material: PAINTING, min: 1, max: 1, weight: 10, unlock: 250 }
+      - { material: ITEM_FRAME, min: 1, max: 2, weight: 10, unlock: 250 }
+      - { material: BEE_NEST, min: 1, max: 1, weight: 9, unlock: 250 }
+      - { material: CAMPFIRE, min: 1, max: 2, weight: 9, unlock: 250 }
+      - { material: LANTERN, min: 1, max: 3, weight: 9, unlock: 250 }
+      - { material: WOLF_ARMOR, min: 1, max: 1, weight: 8, unlock: 250 }
+      - { material: LEAD, min: 1, max: 2, weight: 8, unlock: 250 }
+      - { material: HONEY_BOTTLE, min: 1, max: 2, weight: 8, unlock: 250 }
+      - { material: BOW, min: 1, max: 1, weight: 3, unlock: 250, name: "Лук лесного стража" }
+      - { material: MUSHROOM_STEW, min: 1, max: 2, weight: 6, unlock: 250 }
+      - { material: SHEARS, min: 1, max: 1, weight: 5, unlock: 250, name: "Ножницы лесной ведьмы" }
+      - { material: FLETCHING_TABLE, min: 1, max: 1, weight: 4, unlock: 250 }
+      - { material: GOAT_HORN, min: 1, max: 1, weight: 2, unlock: 250, name: "Дудка лешего" }
+    epic:
+      - { material: BOOKSHELF, min: 1, max: 3, weight: 6, unlock: 2000 }
+      - { material: LANTERN, min: 1, max: 3, weight: 5, unlock: 2000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 2000 }
+      - { material: IRON_BLOCK, min: 1, max: 1, weight: 4, unlock: 2000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 10, unlock: 5000 }
+      - { material: EXPERIENCE_BOTTLE, min: 4, max: 10, weight: 10, unlock: 2000 }
+      - { material: DIAMOND_AXE, min: 1, max: 1, weight: 10, unlock: 2000 }
+      - { material: EMERALD, min: 1, max: 2, weight: 9, unlock: 2000 }
+      - { material: OBSIDIAN, min: 3, max: 6, weight: 9, unlock: 2000 }
+      - { material: AMETHYST_BLOCK, min: 1, max: 2, weight: 8, unlock: 2000 }
+      - { material: HONEY_BLOCK, min: 1, max: 2, weight: 8, unlock: 2000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 4, unlock: 2000 }
+      - { material: DIAMOND_SWORD, min: 1, max: 1, weight: 5, unlock: 2000 }
+      - { material: EMERALD_BLOCK, min: 1, max: 1, weight: 4, unlock: 3000 }
+    legendary:
+      - { material: DIAMOND_AXE, min: 1, max: 1, weight: 4, unlock: 15000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: DIAMOND, min: 3, max: 6, weight: 6, unlock: 15000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 2, unlock: 25000 }
+      - { material: DIAMOND_BLOCK, min: 1, max: 1, weight: 8, unlock: 25000 }
+      - { material: NETHERITE_SCRAP, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_PICKAXE, min: 1, max: 1, weight: 5, unlock: 15000 }
+    mythical:
+      - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 7, unlock: 20000 }
+      - { material: NETHERITE_AXE, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+      - { material: NETHERITE_HELMET, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_BOOTS, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: BEACON, min: 1, max: 1, weight: 4, unlock: 100000 }
+      - { material: NETHERITE_CHESTPLATE, min: 1, max: 1, weight: 4, unlock: 20000 }
+
+  # тайга: ель, папоротники, ягоды и меховые обноски.
+  taiga:
+    common:
+      - { material: SPRUCE_LOG, min: 6, max: 16, weight: 8, unlock: 0 }
+      - { material: SWEET_BERRIES, min: 4, max: 10, weight: 6, unlock: 0 }
+      - { material: RABBIT_HIDE, min: 2, max: 5, weight: 4, unlock: 0 }
+      - { material: LEATHER, min: 2, max: 5, weight: 4, unlock: 0 }
+      - { material: SPRUCE_PLANKS, min: 8, max: 20, weight: 14, unlock: 0 }
+      - { material: SPRUCE_SAPLING, min: 2, max: 6, weight: 14, unlock: 0 }
+      - { material: FERN, min: 3, max: 8, weight: 13, unlock: 0 }
+      - { material: LARGE_FERN, min: 1, max: 3, weight: 13, unlock: 0 }
+      - { material: MOSS_BLOCK, min: 2, max: 6, weight: 12, unlock: 0 }
+      - { material: MOSSY_COBBLESTONE, min: 4, max: 10, weight: 12, unlock: 0 }
+      - { material: PODZOL, min: 2, max: 6, weight: 12, unlock: 0 }
+      - { material: BROWN_MUSHROOM, min: 2, max: 6, weight: 11, unlock: 0 }
+      - { material: RED_MUSHROOM, min: 2, max: 6, weight: 11, unlock: 0 }
+      - { material: STICK, min: 8, max: 20, weight: 11, unlock: 0 }
+      - { material: CHARCOAL, min: 4, max: 12, weight: 10, unlock: 0 }
+      - { material: SNOWBALL, min: 4, max: 12, weight: 10, unlock: 0 }
+      - { material: SPRUCE_LEAVES, min: 4, max: 10, weight: 10, unlock: 0 }
+      - { material: ROOTED_DIRT, min: 2, max: 6, weight: 9, unlock: 0 }
+      - { material: AZALEA, min: 1, max: 2, weight: 9, unlock: 0 }
+      - { material: FLOWERING_AZALEA, min: 1, max: 2, weight: 9, unlock: 0 }
+      - { material: COARSE_DIRT, min: 4, max: 10, weight: 8, unlock: 0 }
+      - { material: LEATHER, min: 1, max: 1, weight: 3, unlock: 0, name: "Волчья шкура" }
+      - { material: BONE, min: 2, max: 6, weight: 6, unlock: 0, name: "Кость древнего волка" }
+      - { material: SNOW, min: 4, max: 12, weight: 6, unlock: 0 }
+      - { material: SPRUCE_BOAT, min: 1, max: 1, weight: 5, unlock: 0 }
+      - { material: MOSS_CARPET, min: 4, max: 10, weight: 5, unlock: 0 }
+      - { material: SPRUCE_FENCE, min: 6, max: 16, weight: 5, unlock: 0 }
+    rare:
+      - { material: HONEY_BOTTLE, min: 1, max: 3, weight: 5, unlock: 250 }
+      - { material: CROSSBOW, min: 1, max: 1, weight: 4, unlock: 250 }
+      - { material: ARROW, min: 12, max: 32, weight: 6, unlock: 250 }
+      - { material: RABBIT_FOOT, min: 1, max: 2, weight: 3, unlock: 250 }
+      - { material: WOLF_ARMOR, min: 1, max: 1, weight: 12, unlock: 250 }
+      - { material: LEATHER, min: 3, max: 8, weight: 12, unlock: 250 }
+      - { material: RABBIT_HIDE, min: 2, max: 6, weight: 12, unlock: 250 }
+      - { material: CAMPFIRE, min: 1, max: 2, weight: 11, unlock: 250 }
+      - { material: LANTERN, min: 1, max: 3, weight: 10, unlock: 250 }
+      - { material: BOW, min: 1, max: 1, weight: 10, unlock: 250 }
+      - { material: SWEET_BERRIES, min: 6, max: 14, weight: 9, unlock: 250 }
+      - { material: BOOK, min: 2, max: 6, weight: 9, unlock: 250 }
+      - { material: HONEY_BOTTLE, min: 1, max: 1, weight: 3, unlock: 250, name: "Мёд тайги" }
+      - { material: NAME_TAG, min: 1, max: 1, weight: 4, unlock: 250 }
+      - { material: SMOKER, min: 1, max: 1, weight: 3, unlock: 250 }
+      - { material: COOKED_MUTTON, min: 2, max: 6, weight: 4, unlock: 250, name: "Мясо с дымком" }
+    epic:
+      - { material: CAMPFIRE, min: 1, max: 2, weight: 5, unlock: 2000 }
+      - { material: LANTERN, min: 1, max: 3, weight: 5, unlock: 2000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 2000 }
+      - { material: IRON_BLOCK, min: 1, max: 1, weight: 4, unlock: 2000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 10, unlock: 5000 }
+      - { material: EXPERIENCE_BOTTLE, min: 4, max: 10, weight: 10, unlock: 2000 }
+      - { material: DIAMOND_AXE, min: 1, max: 1, weight: 10, unlock: 2000 }
+      - { material: EMERALD, min: 1, max: 2, weight: 9, unlock: 2000 }
+      - { material: OBSIDIAN, min: 3, max: 6, weight: 9, unlock: 2000 }
+      - { material: HONEY_BLOCK, min: 1, max: 2, weight: 8, unlock: 2000 }
+      - { material: DIAMOND_SWORD, min: 1, max: 1, weight: 4, unlock: 2000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 5, unlock: 2000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 5, unlock: 2000 }
+    legendary:
+      - { material: DIAMOND, min: 3, max: 6, weight: 6, unlock: 15000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: DIAMOND_BLOCK, min: 1, max: 1, weight: 3, unlock: 25000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 2, unlock: 25000 }
+      - { material: NETHERITE_SCRAP, min: 1, max: 1, weight: 8, unlock: 15000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: PACKED_ICE, min: 4, max: 12, weight: 7, unlock: 15000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_PICKAXE, min: 1, max: 1, weight: 5, unlock: 15000 }
+    mythical:
+      - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 7, unlock: 20000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+      - { material: NETHERITE_SCRAP, min: 2, max: 3, weight: 4, unlock: 10000 }
+      - { material: NETHERITE_CHESTPLATE, min: 1, max: 1, weight: 5, unlock: 20000 }
+      - { material: NETHERITE_HELMET, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_BOOTS, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: BEACON, min: 1, max: 1, weight: 4, unlock: 100000 }
+      - { material: NETHERITE_SWORD, min: 1, max: 1, weight: 4, unlock: 20000 }
+
+  # снега: лёд, снежки, синяя изморозь и тёплые вещи.
+  snow:
+    common:
+      - { material: SNOWBALL, min: 8, max: 20, weight: 8, unlock: 0 }
+      - { material: ICE, min: 2, max: 6, weight: 5, unlock: 0 }
+      - { material: SNOW_BLOCK, min: 2, max: 6, weight: 5, unlock: 0 }
+      - { material: RABBIT_HIDE, min: 2, max: 5, weight: 4, unlock: 0 }
+      - { material: PACKED_ICE, min: 1, max: 4, weight: 13, unlock: 0 }
+      - { material: BLUE_ICE, min: 1, max: 2, weight: 13, unlock: 0 }
+      - { material: POWDER_SNOW_BUCKET, min: 1, max: 2, weight: 13, unlock: 0 }
+      - { material: SPRUCE_LOG, min: 4, max: 10, weight: 12, unlock: 0 }
+      - { material: SPRUCE_PLANKS, min: 8, max: 16, weight: 12, unlock: 0 }
+      - { material: WHITE_WOOL, min: 2, max: 6, weight: 12, unlock: 0 }
+      - { material: SWEET_BERRIES, min: 3, max: 8, weight: 11, unlock: 0 }
+      - { material: CHARCOAL, min: 4, max: 12, weight: 11, unlock: 0 }
+      - { material: LEATHER, min: 2, max: 6, weight: 10, unlock: 0 }
+      - { material: SNOW, min: 4, max: 12, weight: 10, unlock: 0 }
+      - { material: LIGHT_BLUE_WOOL, min: 2, max: 6, weight: 10, unlock: 0 }
+      - { material: CYAN_WOOL, min: 2, max: 6, weight: 9, unlock: 0 }
+      - { material: LIGHT_BLUE_STAINED_GLASS, min: 2, max: 6, weight: 9, unlock: 0 }
+      - { material: CYAN_STAINED_GLASS, min: 2, max: 6, weight: 9, unlock: 0 }
+      - { material: FROSTED_ICE, min: 1, max: 3, weight: 8, unlock: 0 }
+      - { material: SNOWBALL, min: 1, max: 1, weight: 3, unlock: 0, name: "Снежок удачи" }
+      - { material: SPRUCE_SAPLING, min: 2, max: 6, weight: 6, unlock: 0 }
+      - { material: WHITE_STAINED_GLASS, min: 8, max: 20, weight: 5, unlock: 0 }
+      - { material: BLUE_STAINED_GLASS_PANE, min: 8, max: 20, weight: 5, unlock: 0 }
+      - { material: SPRUCE_FENCE, min: 6, max: 16, weight: 5, unlock: 0 }
+    rare:
+      - { material: PACKED_ICE, min: 2, max: 5, weight: 6, unlock: 250 }
+      - { material: LEATHER, min: 2, max: 6, weight: 5, unlock: 250 }
+      - { material: POWDER_SNOW_BUCKET, min: 1, max: 1, weight: 3, unlock: 250 }
+      - { material: TURTLE_SCUTE, min: 1, max: 2, weight: 3, unlock: 250 }
+      - { material: RABBIT_FOOT, min: 1, max: 2, weight: 12, unlock: 250 }
+      - { material: WOLF_ARMOR, min: 1, max: 1, weight: 12, unlock: 250 }
+      - { material: HONEY_BOTTLE, min: 1, max: 3, weight: 12, unlock: 250 }
+      - { material: LANTERN, min: 1, max: 3, weight: 11, unlock: 250 }
+      - { material: SOUL_LANTERN, min: 1, max: 2, weight: 11, unlock: 250 }
+      - { material: CAMPFIRE, min: 1, max: 2, weight: 11, unlock: 250 }
+      - { material: BOW, min: 1, max: 1, weight: 10, unlock: 250 }
+      - { material: ARROW, min: 8, max: 20, weight: 10, unlock: 250 }
+      - { material: BLUE_ICE, min: 2, max: 3, weight: 9, unlock: 250 }
+      - { material: COOKED_BEEF, min: 2, max: 6, weight: 7, unlock: 250 }
+      - { material: IRON_HORSE_ARMOR, min: 1, max: 1, weight: 4, unlock: 250 }
+      - { material: COOKED_MUTTON, min: 2, max: 6, weight: 4, unlock: 250 }
+      - { material: SADDLE, min: 1, max: 1, weight: 3, unlock: 250, name: "Сани с горы" }
+    epic:
+      - { material: BLUE_ICE, min: 1, max: 3, weight: 6, unlock: 2000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 2000 }
+      - { material: DIAMOND, min: 1, max: 2, weight: 5, unlock: 2000 }
+      - { material: EXPERIENCE_BOTTLE, min: 6, max: 12, weight: 4, unlock: 2000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 10, unlock: 5000 }
+      - { material: DIAMOND_AXE, min: 1, max: 1, weight: 10, unlock: 2000 }
+      - { material: EMERALD, min: 1, max: 2, weight: 9, unlock: 2000 }
+      - { material: OBSIDIAN, min: 3, max: 6, weight: 9, unlock: 2000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 5, unlock: 2000 }
+      - { material: DIAMOND_SWORD, min: 1, max: 1, weight: 5, unlock: 2000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 2000 }
+    legendary:
+      - { material: DIAMOND, min: 3, max: 6, weight: 6, unlock: 15000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: BLUE_ICE, min: 4, max: 8, weight: 3, unlock: 15000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 2, unlock: 25000 }
+      - { material: DIAMOND_BLOCK, min: 1, max: 1, weight: 8, unlock: 25000 }
+      - { material: NETHERITE_SCRAP, min: 1, max: 1, weight: 8, unlock: 15000 }
+      - { material: BLUE_ICE, min: 1, max: 1, weight: 3, unlock: 15000, name: "Ледяное сердце" }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_PICKAXE, min: 1, max: 1, weight: 5, unlock: 15000 }
+    mythical:
+      - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 7, unlock: 20000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+      - { material: DIAMOND_BLOCK, min: 2, max: 3, weight: 4, unlock: 25000 }
+      - { material: NETHERITE_BOOTS, min: 1, max: 1, weight: 5, unlock: 20000 }
+      - { material: NETHERITE_HELMET, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: BEACON, min: 1, max: 1, weight: 4, unlock: 100000 }
+      - { material: NETHERITE_SWORD, min: 1, max: 1, weight: 4, unlock: 20000 }
+
+  # пустыня: песок, терракота, золото и древние гончарные черепки.
+  desert:
+    common:
+      - { material: SAND, min: 8, max: 20, weight: 8, unlock: 0 }
+      - { material: SANDSTONE, min: 4, max: 10, weight: 5, unlock: 0 }
+      - { material: CACTUS, min: 2, max: 6, weight: 5, unlock: 0 }
+      - { material: DEAD_BUSH, min: 2, max: 6, weight: 3, unlock: 0 }
+      - { material: POTION, min: 1, max: 1, weight: 2, unlock: 0, name: "Зелье поглощения", elixir: absorption }
+      - { material: GOLDEN_HOE, min: 1, max: 1, weight: 2, unlock: 0, name: "Редкая золотая мотыга" }
+      - { material: CUT_SANDSTONE, min: 4, max: 10, weight: 14, unlock: 0 }
+      - { material: SMOOTH_SANDSTONE, min: 3, max: 8, weight: 13, unlock: 0 }
+      - { material: TERRACOTTA, min: 4, max: 12, weight: 13, unlock: 0 }
+      - { material: GOLD_NUGGET, min: 4, max: 12, weight: 12, unlock: 0 }
+      - { material: BONE, min: 2, max: 6, weight: 12, unlock: 0 }
+      - { material: SUSPICIOUS_SAND, min: 1, max: 2, weight: 11, unlock: 0 }
+      - { material: GLASS, min: 4, max: 10, weight: 11, unlock: 0 }
+      - { material: TORCH, min: 4, max: 12, weight: 11, unlock: 0 }
+      - { material: SANDSTONE_STAIRS, min: 2, max: 6, weight: 10, unlock: 0 }
+      - { material: WHITE_TERRACOTTA, min: 4, max: 12, weight: 10, unlock: 0 }
+      - { material: ORANGE_TERRACOTTA, min: 4, max: 12, weight: 10, unlock: 0 }
+      - { material: YELLOW_TERRACOTTA, min: 4, max: 12, weight: 9, unlock: 0 }
+      - { material: BROWN_TERRACOTTA, min: 4, max: 12, weight: 9, unlock: 0 }
+      - { material: RED_TERRACOTTA, min: 4, max: 12, weight: 9, unlock: 0 }
+      - { material: LIGHT_GRAY_TERRACOTTA, min: 4, max: 12, weight: 8, unlock: 0 }
+      - { material: SANDSTONE_SLAB, min: 8, max: 20, weight: 8, unlock: 0 }
+      - { material: GLASS_PANE, min: 8, max: 20, weight: 7, unlock: 0 }
+      - { material: SANDSTONE_WALL, min: 6, max: 16, weight: 5, unlock: 0 }
+      - { material: CHISELED_SANDSTONE, min: 4, max: 10, weight: 5, unlock: 0 }
+      - { material: CUT_SANDSTONE_SLAB, min: 6, max: 16, weight: 5, unlock: 0 }
+    rare:
+      - { material: TERRACOTTA, min: 4, max: 10, weight: 6, unlock: 250 }
+      - { material: GOLD_NUGGET, min: 6, max: 16, weight: 6, unlock: 250 }
+      - { material: GOLD_INGOT, min: 2, max: 4, weight: 6, unlock: 250 }
+      - { material: EMERALD, min: 1, max: 2, weight: 3, unlock: 250 }
+      - { material: ARCHER_POTTERY_SHERD, min: 1, max: 1, weight: 12, unlock: 250 }
+      - { material: DUNE_ARMOR_TRIM_SMITHING_TEMPLATE, min: 1, max: 1, weight: 12, unlock: 250 }
+      - { material: GOLD_BLOCK, min: 1, max: 2, weight: 11, unlock: 250 }
+      - { material: RABBIT_FOOT, min: 1, max: 2, weight: 11, unlock: 250 }
+      - { material: LANTERN, min: 1, max: 3, weight: 11, unlock: 250 }
+      - { material: HONEY_BOTTLE, min: 1, max: 2, weight: 10, unlock: 250 }
+      - { material: COMPASS, min: 1, max: 1, weight: 10, unlock: 250 }
+      - { material: CLOCK, min: 1, max: 1, weight: 10, unlock: 250 }
+      - { material: SUSPICIOUS_SAND, min: 2, max: 4, weight: 9, unlock: 250 }
+      - { material: CLOCK, min: 1, max: 1, weight: 3, unlock: 250, name: "Песочные часы пустыни" }
+      - { material: SKELETON_SKULL, min: 1, max: 1, weight: 3, unlock: 250, name: "Череп пустынника" }
+      - { material: DIAMOND, min: 1, max: 1, weight: 2, unlock: 5000 }
+      - { material: SADDLE, min: 1, max: 1, weight: 3, unlock: 250 }
+      - { material: DECORATED_POT, min: 1, max: 1, weight: 3, unlock: 250, name: "Кувшин кочевника" }
+      - { material: POTION, min: 1, max: 1, weight: 2, unlock: 250, name: "Эликсир огнестойкости", elixir: fire_resistance }
+    epic:
+      - { material: GOLD_BLOCK, min: 1, max: 2, weight: 6, unlock: 2000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 2000 }
+      - { material: DIAMOND, min: 1, max: 2, weight: 4, unlock: 2000 }
+      - { material: EXPERIENCE_BOTTLE, min: 6, max: 12, weight: 5, unlock: 2000 }
+      - { material: DIAMOND_SWORD, min: 1, max: 1, weight: 10, unlock: 2000 }
+      - { material: EMERALD, min: 1, max: 2, weight: 10, unlock: 2000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 9, unlock: 5000 }
+      - { material: OBSIDIAN, min: 3, max: 6, weight: 9, unlock: 2000 }
+      - { material: GOLD_BLOCK, min: 1, max: 1, weight: 3, unlock: 2000, name: "Золотой идол" }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 4, unlock: 2000 }
+      - { material: DIAMOND_PICKAXE, min: 1, max: 1, weight: 5, unlock: 2000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 2, unlock: 5000 }
+    legendary:
+      - { material: DIAMOND, min: 3, max: 6, weight: 6, unlock: 15000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_SCRAP, min: 1, max: 2, weight: 4, unlock: 10000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 2, unlock: 25000 }
+      - { material: DIAMOND_BLOCK, min: 1, max: 1, weight: 8, unlock: 25000 }
+      - { material: GOLD_BLOCK, min: 2, max: 4, weight: 8, unlock: 15000 }
+      - { material: DIAMOND_SHOVEL, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_SWORD, min: 1, max: 1, weight: 5, unlock: 15000 }
+    mythical:
+      - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 7, unlock: 20000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+      - { material: GOLD_BLOCK, min: 2, max: 4, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_SHOVEL, min: 1, max: 1, weight: 5, unlock: 20000 }
+      - { material: NETHERITE_HELMET, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_BOOTS, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: BEACON, min: 1, max: 1, weight: 4, unlock: 100000 }
+      - { material: NETHERITE_CHESTPLATE, min: 1, max: 1, weight: 4, unlock: 20000 }
+
+  # саванна: акация, бахча, тростник и снаряжение охотника.
+  savanna:
+    common:
+      - { material: ACACIA_LOG, min: 6, max: 16, weight: 8, unlock: 0 }
+      - { material: MELON_SLICE, min: 4, max: 10, weight: 6, unlock: 0 }
+      - { material: SUGAR_CANE, min: 4, max: 10, weight: 5, unlock: 0 }
+      - { material: LEATHER, min: 2, max: 5, weight: 4, unlock: 0 }
+      - { material: ACACIA_PLANKS, min: 8, max: 20, weight: 14, unlock: 0 }
+      - { material: WHEAT, min: 4, max: 12, weight: 13, unlock: 0 }
+      - { material: TALL_GRASS, min: 2, max: 6, weight: 13, unlock: 0 }
+      - { material: TORCHFLOWER, min: 1, max: 2, weight: 12, unlock: 0 }
+      - { material: BONE, min: 2, max: 6, weight: 12, unlock: 0 }
+      - { material: ACACIA_SAPLING, min: 2, max: 6, weight: 11, unlock: 0 }
+      - { material: GOLD_NUGGET, min: 4, max: 10, weight: 11, unlock: 0 }
+      - { material: ACACIA_LEAVES, min: 4, max: 10, weight: 11, unlock: 0 }
+      - { material: MELON, min: 1, max: 3, weight: 10, unlock: 0 }
+      - { material: MELON_SEEDS, min: 4, max: 12, weight: 7, unlock: 0 }
+      - { material: WHEAT_SEEDS, min: 6, max: 16, weight: 7, unlock: 0 }
+      - { material: ACACIA_FENCE, min: 6, max: 16, weight: 6, unlock: 0 }
+      - { material: ACACIA_BOAT, min: 1, max: 1, weight: 5, unlock: 0 }
+      - { material: ACACIA_FENCE_GATE, min: 2, max: 6, weight: 4, unlock: 0 }
+    rare:
+      - { material: EGG, min: 3, max: 8, weight: 5, unlock: 250 }
+      - { material: GOLDEN_CARROT, min: 2, max: 6, weight: 6, unlock: 250 }
+      - { material: HONEY_BOTTLE, min: 1, max: 3, weight: 5, unlock: 250 }
+      - { material: BOOK, min: 1, max: 2, weight: 3, unlock: 250 }
+      - { material: LEAD, min: 1, max: 2, weight: 12, unlock: 250 }
+      - { material: IRON_HORSE_ARMOR, min: 1, max: 1, weight: 12, unlock: 250 }
+      - { material: GOLDEN_HORSE_ARMOR, min: 1, max: 1, weight: 12, unlock: 250 }
+      - { material: LANTERN, min: 1, max: 3, weight: 11, unlock: 250 }
+      - { material: CAMPFIRE, min: 1, max: 2, weight: 11, unlock: 250 }
+      - { material: BOW, min: 1, max: 1, weight: 10, unlock: 250 }
+      - { material: ARROW, min: 8, max: 20, weight: 10, unlock: 250 }
+      - { material: SADDLE, min: 1, max: 1, weight: 9, unlock: 250 }
+      - { material: GOLD_NUGGET, min: 1, max: 1, weight: 3, unlock: 250, name: "Талисман охотника" }
+      - { material: COOKED_BEEF, min: 2, max: 5, weight: 5, unlock: 250 }
+      - { material: MUTTON, min: 2, max: 6, weight: 6, unlock: 250, name: "Праздничный окорок" }
+      - { material: COOKED_MUTTON, min: 2, max: 6, weight: 4, unlock: 250 }
+      - { material: GOAT_HORN, min: 1, max: 1, weight: 2, unlock: 250, name: "Рог пастуха" }
+    epic:
+      - { material: HAY_BLOCK, min: 2, max: 5, weight: 5, unlock: 2000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 2000 }
+      - { material: IRON_BLOCK, min: 1, max: 1, weight: 4, unlock: 2000 }
+      - { material: EXPERIENCE_BOTTLE, min: 6, max: 12, weight: 4, unlock: 2000 }
+      - { material: DIAMOND_HORSE_ARMOR, min: 1, max: 1, weight: 10, unlock: 5000 }
+      - { material: GOLDEN_CARROT, min: 4, max: 10, weight: 10, unlock: 2000 }
+      - { material: EMERALD, min: 1, max: 2, weight: 10, unlock: 2000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 9, unlock: 5000 }
+      - { material: IRON_SWORD, min: 1, max: 1, weight: 3, unlock: 2000, name: "Клинок вождя" }
+      - { material: DIAMOND_SWORD, min: 1, max: 1, weight: 5, unlock: 2000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 2000 }
+    legendary:
+      - { material: DIAMOND, min: 3, max: 6, weight: 6, unlock: 15000 }
+      - { material: GOLD_BLOCK, min: 1, max: 2, weight: 5, unlock: 15000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 2, unlock: 25000 }
+      - { material: DIAMOND_BLOCK, min: 1, max: 1, weight: 8, unlock: 25000 }
+      - { material: NETHERITE_SCRAP, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: DIAMOND_HORSE_ARMOR, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 7, unlock: 15000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_PICKAXE, min: 1, max: 1, weight: 5, unlock: 15000 }
+    mythical:
+      - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 7, unlock: 20000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+      - { material: NETHERITE_SCRAP, min: 2, max: 3, weight: 4, unlock: 10000 }
+      - { material: NETHERITE_SWORD, min: 1, max: 1, weight: 5, unlock: 20000 }
+      - { material: NETHERITE_HELMET, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_BOOTS, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: BEACON, min: 1, max: 1, weight: 4, unlock: 100000 }
+      - { material: NETHERITE_CHESTPLATE, min: 1, max: 1, weight: 4, unlock: 20000 }
+
+  # джунгли: бамбук, лианы, какао и светящиеся ягоды.
+  jungle:
+    common:
+      - { material: BAMBOO, min: 8, max: 20, weight: 8, unlock: 0 }
+      - { material: COCOA_BEANS, min: 3, max: 8, weight: 6, unlock: 0 }
+      - { material: JUNGLE_LOG, min: 6, max: 16, weight: 5, unlock: 0 }
+      - { material: MELON_SLICE, min: 4, max: 10, weight: 5, unlock: 0 }
+      - { material: JUNGLE_PLANKS, min: 8, max: 20, weight: 14, unlock: 0 }
+      - { material: BAMBOO_BLOCK, min: 2, max: 6, weight: 13, unlock: 0 }
+      - { material: VINE, min: 2, max: 6, weight: 13, unlock: 0 }
+      - { material: JUNGLE_SAPLING, min: 2, max: 6, weight: 12, unlock: 0 }
+      - { material: BIG_DRIPLEAF, min: 1, max: 2, weight: 12, unlock: 0 }
+      - { material: SMALL_DRIPLEAF, min: 2, max: 6, weight: 11, unlock: 0 }
+      - { material: GLOW_BERRIES, min: 3, max: 8, weight: 11, unlock: 0 }
+      - { material: SPORE_BLOSSOM, min: 1, max: 1, weight: 11, unlock: 0 }
+      - { material: MOSS_CARPET, min: 4, max: 10, weight: 10, unlock: 0 }
+      - { material: JUNGLE_LEAVES, min: 4, max: 10, weight: 10, unlock: 0 }
+      - { material: FEATHER, min: 1, max: 1, weight: 3, unlock: 0, name: "Перо попугая" }
+      - { material: GLOW_BERRIES, min: 1, max: 1, weight: 3, unlock: 0, name: "Светящаяся ягода" }
+      - { material: MELON, min: 1, max: 3, weight: 7, unlock: 0 }
+      - { material: JUNGLE_BOAT, min: 1, max: 1, weight: 5, unlock: 0 }
+      - { material: BAMBOO_MOSAIC, min: 4, max: 12, weight: 5, unlock: 0 }
+      - { material: JUNGLE_FENCE, min: 6, max: 16, weight: 5, unlock: 0 }
+    rare:
+      - { material: VINE, min: 4, max: 10, weight: 5, unlock: 250 }
+      - { material: COOKIE, min: 4, max: 10, weight: 4, unlock: 250 }
+      - { material: BOOK, min: 1, max: 2, weight: 4, unlock: 250 }
+      - { material: EXPERIENCE_BOTTLE, min: 3, max: 8, weight: 5, unlock: 250 }
+      - { material: BOW, min: 1, max: 1, weight: 12, unlock: 250 }
+      - { material: ARROW, min: 8, max: 20, weight: 12, unlock: 250 }
+      - { material: RABBIT_FOOT, min: 1, max: 2, weight: 11, unlock: 250 }
+      - { material: HONEY_BOTTLE, min: 1, max: 2, weight: 11, unlock: 250 }
+      - { material: LANTERN, min: 1, max: 3, weight: 11, unlock: 250 }
+      - { material: CAMPFIRE, min: 1, max: 2, weight: 10, unlock: 250 }
+      - { material: TROPICAL_FISH, min: 1, max: 2, weight: 10, unlock: 250 }
+      - { material: COCOA_BEANS, min: 4, max: 10, weight: 10, unlock: 250 }
+      - { material: BAMBOO, min: 12, max: 24, weight: 9, unlock: 250 }
+      - { material: GLOW_BERRIES, min: 6, max: 14, weight: 9, unlock: 250 }
+      - { material: LEAD, min: 1, max: 2, weight: 5, unlock: 250, name: "Поводок ловца попугаев" }
+      - { material: BAMBOO_RAFT, min: 1, max: 1, weight: 4, unlock: 250 }
+      - { material: EMERALD, min: 1, max: 1, weight: 3, unlock: 250, name: "Изумруд джунглей" }
+      - { material: POTION, min: 1, max: 1, weight: 2, unlock: 250, name: "Эликсир регенерации", elixir: regeneration }
+    epic:
+      - { material: BAMBOO_BLOCK, min: 2, max: 6, weight: 5, unlock: 2000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 2000 }
+      - { material: DIAMOND, min: 1, max: 2, weight: 5, unlock: 2000 }
+      - { material: IRON_BLOCK, min: 1, max: 1, weight: 4, unlock: 2000 }
+      - { material: DIAMOND_SWORD, min: 1, max: 1, weight: 10, unlock: 2000 }
+      - { material: EMERALD, min: 1, max: 2, weight: 10, unlock: 2000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 9, unlock: 5000 }
+      - { material: EXPERIENCE_BOTTLE, min: 4, max: 10, weight: 9, unlock: 2000 }
+      - { material: AMETHYST_BLOCK, min: 1, max: 2, weight: 9, unlock: 2000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 4, unlock: 2000 }
+      - { material: DIAMOND_AXE, min: 1, max: 1, weight: 4, unlock: 2000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 5, unlock: 2000 }
+      - { material: EMERALD_BLOCK, min: 1, max: 1, weight: 4, unlock: 3000 }
+    legendary:
+      - { material: DIAMOND, min: 3, max: 6, weight: 6, unlock: 15000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_SCRAP, min: 1, max: 2, weight: 3, unlock: 10000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 2, unlock: 25000 }
+      - { material: DIAMOND_BLOCK, min: 1, max: 1, weight: 8, unlock: 25000 }
+      - { material: DIAMOND_SWORD, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 7, unlock: 15000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_PICKAXE, min: 1, max: 1, weight: 5, unlock: 15000 }
+    mythical:
+      - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 7, unlock: 20000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+      - { material: DIAMOND_BLOCK, min: 2, max: 3, weight: 4, unlock: 25000 }
+      - { material: NETHERITE_SWORD, min: 1, max: 1, weight: 5, unlock: 20000 }
+      - { material: NETHERITE_HELMET, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_BOOTS, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: BEACON, min: 1, max: 1, weight: 4, unlock: 100000 }
+      - { material: NETHERITE_CHESTPLATE, min: 1, max: 1, weight: 4, unlock: 20000 }
+
+  # болото: ил, мангровые корни, слизь и болотные огни.
+  swamp:
+    common:
+      - { material: SLIME_BALL, min: 2, max: 6, weight: 7, unlock: 0 }
+      - { material: LILY_PAD, min: 3, max: 8, weight: 5, unlock: 0 }
+      - { material: CLAY_BALL, min: 4, max: 10, weight: 5, unlock: 0 }
+      - { material: SEA_PICKLE, min: 2, max: 6, weight: 4, unlock: 0 }
+      - { material: MUD, min: 6, max: 16, weight: 14, unlock: 0 }
+      - { material: PACKED_MUD, min: 2, max: 6, weight: 14, unlock: 0 }
+      - { material: MUDDY_MANGROVE_ROOTS, min: 2, max: 6, weight: 13, unlock: 0 }
+      - { material: MANGROVE_LOG, min: 4, max: 12, weight: 13, unlock: 0 }
+      - { material: MANGROVE_ROOTS, min: 2, max: 6, weight: 13, unlock: 0 }
+      - { material: MANGROVE_PROPAGULE, min: 2, max: 6, weight: 12, unlock: 0 }
+      - { material: BLUE_ORCHID, min: 2, max: 6, weight: 12, unlock: 0 }
+      - { material: SPIDER_EYE, min: 2, max: 6, weight: 11, unlock: 0 }
+      - { material: POISONOUS_POTATO, min: 2, max: 6, weight: 11, unlock: 0 }
+      - { material: SEAGRASS, min: 4, max: 10, weight: 10, unlock: 0 }
+      - { material: VINE, min: 2, max: 6, weight: 10, unlock: 0 }
+      - { material: BROWN_MUSHROOM, min: 2, max: 6, weight: 10, unlock: 0 }
+      - { material: RED_MUSHROOM, min: 3, max: 8, weight: 8, unlock: 0 }
+      - { material: SUGAR_CANE, min: 4, max: 12, weight: 9, unlock: 0 }
+      - { material: MUD_BRICKS, min: 4, max: 12, weight: 5, unlock: 0 }
+      - { material: MANGROVE_PLANKS, min: 4, max: 12, weight: 5, unlock: 0 }
+      - { material: MANGROVE_FENCE, min: 6, max: 16, weight: 5, unlock: 0 }
+    rare:
+      - { material: BROWN_MUSHROOM, min: 3, max: 8, weight: 5, unlock: 250 }
+      - { material: SPIDER_EYE, min: 2, max: 6, weight: 4, unlock: 250 }
+      - { material: GLOW_INK_SAC, min: 1, max: 3, weight: 4, unlock: 250 }
+      - { material: SLIME_BLOCK, min: 1, max: 2, weight: 3, unlock: 250 }
+      - { material: PUFFERFISH, min: 1, max: 2, weight: 12, unlock: 250 }
+      - { material: SEA_PICKLE, min: 2, max: 6, weight: 12, unlock: 250 }
+      - { material: LANTERN, min: 1, max: 3, weight: 11, unlock: 250 }
+      - { material: SOUL_LANTERN, min: 1, max: 2, weight: 11, unlock: 250 }
+      - { material: BOOK, min: 2, max: 6, weight: 11, unlock: 250 }
+      - { material: BOW, min: 1, max: 1, weight: 10, unlock: 250 }
+      - { material: ARROW, min: 8, max: 20, weight: 10, unlock: 250 }
+      - { material: EXPERIENCE_BOTTLE, min: 3, max: 8, weight: 10, unlock: 250 }
+      - { material: MANGROVE_PROPAGULE, min: 4, max: 8, weight: 9, unlock: 250 }
+      - { material: SOUL_LANTERN, min: 1, max: 1, weight: 3, unlock: 250, name: "Блуждающий огонёк" }
+      - { material: POTION, min: 1, max: 1, weight: 3, unlock: 250, name: "Болотное зелье", elixir: water_breathing }
+      - { material: TURTLE_SCUTE, min: 1, max: 2, weight: 5, unlock: 250, name: "Щит черепахи" }
+      - { material: TRIPWIRE_HOOK, min: 1, max: 2, weight: 3, unlock: 250 }
+      - { material: BONE, min: 1, max: 2, weight: 3, unlock: 250, name: "Клык трясины" }
+      - { material: POTION, min: 1, max: 1, weight: 2, unlock: 250, name: "Эликсир ночного зрения", elixir: night_vision }
+    epic:
+      - { material: FERMENTED_SPIDER_EYE, min: 2, max: 5, weight: 4, unlock: 2000 }
+      - { material: DIAMOND, min: 1, max: 2, weight: 6, unlock: 2000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 2000 }
+      - { material: EXPERIENCE_BOTTLE, min: 6, max: 12, weight: 4, unlock: 2000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 10, unlock: 5000 }
+      - { material: DIAMOND_SWORD, min: 1, max: 1, weight: 10, unlock: 2000 }
+      - { material: EMERALD, min: 1, max: 2, weight: 9, unlock: 2000 }
+      - { material: OBSIDIAN, min: 3, max: 6, weight: 9, unlock: 2000 }
+      - { material: AMETHYST_BLOCK, min: 1, max: 2, weight: 9, unlock: 2000 }
+      - { material: SLIME_BLOCK, min: 1, max: 2, weight: 4, unlock: 2000 }
+      - { material: DIAMOND_AXE, min: 1, max: 1, weight: 5, unlock: 2000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 5, unlock: 2000 }
+    legendary:
+      - { material: DIAMOND, min: 3, max: 6, weight: 6, unlock: 15000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+      - { material: NETHERITE_SCRAP, min: 1, max: 2, weight: 3, unlock: 10000 }
+      - { material: DIAMOND_BLOCK, min: 1, max: 1, weight: 8, unlock: 25000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 7, unlock: 15000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_PICKAXE, min: 1, max: 1, weight: 5, unlock: 15000 }
+    mythical:
+      - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 7, unlock: 20000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+      - { material: SLIME_BLOCK, min: 3, max: 6, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 20000 }
+      - { material: NETHERITE_HELMET, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_BOOTS, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: BEACON, min: 1, max: 1, weight: 4, unlock: 100000 }
+      - { material: NETHERITE_CHESTPLATE, min: 1, max: 1, weight: 4, unlock: 20000 }
+
+  # горы: камень, руда, аметист и рог горного козла.
+  mountain:
+    common:
+      - { material: COBBLESTONE, min: 8, max: 24, weight: 8, unlock: 0 }
+      - { material: TUFF, min: 6, max: 16, weight: 6, unlock: 0 }
+      - { material: CALCITE, min: 4, max: 10, weight: 5, unlock: 0 }
+      - { material: RAW_IRON, min: 2, max: 6, weight: 6, unlock: 0 }
+      - { material: STONE, min: 8, max: 24, weight: 14, unlock: 0 }
+      - { material: GRANITE, min: 6, max: 16, weight: 14, unlock: 0 }
+      - { material: DIORITE, min: 6, max: 16, weight: 14, unlock: 0 }
+      - { material: ANDESITE, min: 6, max: 16, weight: 13, unlock: 0 }
+      - { material: GRAVEL, min: 4, max: 12, weight: 12, unlock: 0 }
+      - { material: FLINT, min: 2, max: 6, weight: 12, unlock: 0 }
+      - { material: STONE_BRICKS, min: 4, max: 12, weight: 12, unlock: 0 }
+      - { material: IRON_CHAIN, min: 2, max: 6, weight: 11, unlock: 0 }
+      - { material: GOAT_HORN, min: 1, max: 1, weight: 11, unlock: 0 }
+      - { material: DEEPSLATE, min: 4, max: 10, weight: 10, unlock: 0 }
+      - { material: MOSSY_COBBLESTONE, min: 4, max: 12, weight: 7, unlock: 0 }
+      - { material: STONE_SLAB, min: 8, max: 20, weight: 7, unlock: 0 }
+      - { material: TUFF_BRICKS, min: 6, max: 18, weight: 5, unlock: 0 }
+      - { material: STONE_STAIRS, min: 6, max: 16, weight: 5, unlock: 0 }
+      - { material: COBBLESTONE_WALL, min: 6, max: 16, weight: 5, unlock: 0 }
+    rare:
+      - { material: IRON_INGOT, min: 2, max: 6, weight: 7, unlock: 250 }
+      - { material: EMERALD, min: 1, max: 2, weight: 5, unlock: 250 }
+      - { material: GOAT_HORN, min: 1, max: 1, weight: 2, unlock: 1000 }
+      - { material: RAW_GOLD, min: 2, max: 5, weight: 4, unlock: 250 }
+      - { material: RAW_IRON, min: 3, max: 8, weight: 12, unlock: 250 }
+      - { material: RAW_COPPER, min: 4, max: 10, weight: 12, unlock: 250 }
+      - { material: LAPIS_LAZULI, min: 4, max: 10, weight: 11, unlock: 250 }
+      - { material: AMETHYST_SHARD, min: 3, max: 8, weight: 11, unlock: 250 }
+      - { material: LANTERN, min: 1, max: 3, weight: 10, unlock: 250 }
+      - { material: COMPASS, min: 1, max: 1, weight: 10, unlock: 250 }
+      - { material: SPYGLASS, min: 1, max: 1, weight: 10, unlock: 250 }
+      - { material: IRON_CHAIN, min: 4, max: 8, weight: 9, unlock: 250 }
+      - { material: GOAT_HORN, min: 1, max: 1, weight: 3, unlock: 250, name: "Рог горного козла" }
+      - { material: AMETHYST_CLUSTER, min: 1, max: 2, weight: 5, unlock: 250, name: "Кристалл вершины" }
+      - { material: IRON_PICKAXE, min: 1, max: 1, weight: 4, unlock: 250 }
+      - { material: ECHO_SHARD, min: 1, max: 1, weight: 2, unlock: 250, name: "Эхо перевала" }
+    epic:
+      - { material: EMERALD_BLOCK, min: 1, max: 1, weight: 5, unlock: 2000 }
+      - { material: DIAMOND, min: 1, max: 2, weight: 5, unlock: 2000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 4, unlock: 2000 }
+      - { material: IRON_BLOCK, min: 1, max: 1, weight: 4, unlock: 2000 }
+      - { material: DIAMOND_PICKAXE, min: 1, max: 1, weight: 10, unlock: 2000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 9, unlock: 5000 }
+      - { material: EXPERIENCE_BOTTLE, min: 4, max: 10, weight: 9, unlock: 2000 }
+      - { material: OBSIDIAN, min: 3, max: 6, weight: 9, unlock: 2000 }
+      - { material: AMETHYST_BLOCK, min: 1, max: 2, weight: 8, unlock: 2000 }
+      - { material: DIAMOND_SHOVEL, min: 1, max: 1, weight: 4, unlock: 2000 }
+      - { material: DIAMOND_SWORD, min: 1, max: 1, weight: 5, unlock: 2000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 2000 }
+    legendary:
+      - { material: DIAMOND, min: 3, max: 6, weight: 6, unlock: 15000 }
+      - { material: EMERALD_BLOCK, min: 1, max: 2, weight: 4, unlock: 15000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 2, unlock: 25000 }
+      - { material: DIAMOND_BLOCK, min: 1, max: 1, weight: 8, unlock: 25000 }
+      - { material: NETHERITE_SCRAP, min: 1, max: 1, weight: 8, unlock: 15000 }
+      - { material: DIAMOND_PICKAXE, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_SWORD, min: 1, max: 1, weight: 5, unlock: 15000 }
+    mythical:
+      - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 7, unlock: 20000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 5, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+      - { material: NETHERITE_SCRAP, min: 2, max: 3, weight: 4, unlock: 10000 }
+      - { material: NETHERITE_PICKAXE, min: 1, max: 1, weight: 6, unlock: 20000 }
+      - { material: NETHERITE_HELMET, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_BOOTS, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: BEACON, min: 1, max: 1, weight: 4, unlock: 100000 }
+      - { material: NETHERITE_SWORD, min: 1, max: 1, weight: 4, unlock: 20000 }
+
+  # океан: водоросли, призмарин, ракушки и морские сокровища.
+  ocean:
+    common:
+      - { material: KELP, min: 6, max: 16, weight: 7, unlock: 0 }
+      - { material: COD, min: 2, max: 6, weight: 5, unlock: 0 }
+      - { material: SALMON, min: 2, max: 6, weight: 5, unlock: 0 }
+      - { material: SEA_PICKLE, min: 2, max: 6, weight: 4, unlock: 0 }
+      - { material: SEAGRASS, min: 6, max: 16, weight: 14, unlock: 0 }
+      - { material: TROPICAL_FISH, min: 1, max: 3, weight: 13, unlock: 0 }
+      - { material: PUFFERFISH, min: 1, max: 3, weight: 13, unlock: 0 }
+      - { material: PRISMARINE_SHARD, min: 3, max: 8, weight: 12, unlock: 0 }
+      - { material: PRISMARINE_CRYSTALS, min: 2, max: 6, weight: 12, unlock: 0 }
+      - { material: SPONGE, min: 1, max: 2, weight: 11, unlock: 0 }
+      - { material: WET_SPONGE, min: 1, max: 2, weight: 11, unlock: 0 }
+      - { material: TUBE_CORAL, min: 2, max: 6, weight: 11, unlock: 0 }
+      - { material: BRAIN_CORAL, min: 2, max: 6, weight: 10, unlock: 0 }
+      - { material: OAK_BOAT, min: 1, max: 1, weight: 10, unlock: 0 }
+      - { material: TURTLE_SCUTE, min: 1, max: 3, weight: 10, unlock: 0 }
+      - { material: TUBE_CORAL_BLOCK, min: 1, max: 2, weight: 9, unlock: 0 }
+      - { material: BRAIN_CORAL_BLOCK, min: 1, max: 2, weight: 9, unlock: 0 }
+      - { material: BUBBLE_CORAL_BLOCK, min: 1, max: 2, weight: 9, unlock: 0 }
+      - { material: FIRE_CORAL_BLOCK, min: 1, max: 2, weight: 8, unlock: 0 }
+      - { material: HORN_CORAL_BLOCK, min: 1, max: 2, weight: 8, unlock: 0 }
+      - { material: TUBE_CORAL_FAN, min: 2, max: 6, weight: 8, unlock: 0 }
+      - { material: BRAIN_CORAL_FAN, min: 2, max: 6, weight: 7, unlock: 0 }
+      - { material: BUBBLE_CORAL_FAN, min: 2, max: 6, weight: 7, unlock: 0 }
+      - { material: FIRE_CORAL_FAN, min: 2, max: 6, weight: 7, unlock: 0 }
+      - { material: HORN_CORAL_FAN, min: 2, max: 6, weight: 6, unlock: 0 }
+      - { material: BUBBLE_CORAL, min: 2, max: 6, weight: 6, unlock: 0 }
+      - { material: FIRE_CORAL, min: 2, max: 6, weight: 6, unlock: 0 }
+      - { material: HORN_CORAL, min: 2, max: 6, weight: 5, unlock: 0 }
+      - { material: FISHING_ROD, min: 1, max: 1, weight: 6, unlock: 0 }
+      - { material: PRISMARINE_STAIRS, min: 6, max: 16, weight: 5, unlock: 0 }
+      - { material: DARK_PRISMARINE_STAIRS, min: 6, max: 16, weight: 5, unlock: 0 }
+      - { material: DRIED_KELP_BLOCK, min: 3, max: 8, weight: 5, unlock: 0 }
+    rare:
+      - { material: PRISMARINE_SHARD, min: 2, max: 6, weight: 6, unlock: 250 }
+      - { material: PRISMARINE_CRYSTALS, min: 2, max: 5, weight: 5, unlock: 250 }
+      - { material: NAUTILUS_SHELL, min: 1, max: 2, weight: 3, unlock: 250 }
+      - { material: TROPICAL_FISH, min: 1, max: 2, weight: 3, unlock: 250 }
+      - { material: SEA_LANTERN, min: 1, max: 3, weight: 12, unlock: 250 }
+      - { material: PRISMARINE, min: 2, max: 6, weight: 12, unlock: 250 }
+      - { material: PRISMARINE_BRICKS, min: 2, max: 6, weight: 11, unlock: 250 }
+      - { material: DARK_PRISMARINE, min: 2, max: 6, weight: 11, unlock: 250 }
+      - { material: LANTERN, min: 1, max: 3, weight: 11, unlock: 250 }
+      - { material: COMPASS, min: 1, max: 1, weight: 10, unlock: 250 }
+      - { material: TURTLE_SCUTE, min: 2, max: 4, weight: 10, unlock: 250 }
+      - { material: SPONGE, min: 2, max: 4, weight: 10, unlock: 250 }
+      - { material: PRISMARINE_CRYSTALS, min: 1, max: 1, weight: 3, unlock: 250, name: "Жемчуг прилива" }
+      - { material: NAUTILUS_SHELL, min: 1, max: 1, weight: 3, unlock: 250, name: "Раковина удачи" }
+      - { material: TURTLE_HELMET, min: 1, max: 1, weight: 3, unlock: 500, name: "Шлем черепашьего стража" }
+      - { material: COMPASS, min: 1, max: 1, weight: 3, unlock: 250, name: "Компас капитана" }
+      - { material: NAME_TAG, min: 1, max: 1, weight: 3, unlock: 250 }
+      - { material: POTION, min: 1, max: 1, weight: 3, unlock: 250, name: "Эликсир глубин", elixir: water_breathing }
+    epic:
+      - { material: HEART_OF_THE_SEA, min: 1, max: 1, weight: 4, unlock: 10000 }
+      - { material: SPONGE, min: 1, max: 2, weight: 4, unlock: 2000 }
+      - { material: DIAMOND, min: 1, max: 2, weight: 5, unlock: 2000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 4, unlock: 2000 }
+      - { material: CONDUIT, min: 1, max: 1, weight: 10, unlock: 30000 }
+      - { material: TRIDENT, min: 1, max: 1, weight: 10, unlock: 15000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 9, unlock: 5000 }
+      - { material: EXPERIENCE_BOTTLE, min: 4, max: 10, weight: 9, unlock: 2000 }
+      - { material: DIAMOND_SWORD, min: 1, max: 1, weight: 9, unlock: 2000 }
+      - { material: SEA_LANTERN, min: 2, max: 4, weight: 8, unlock: 2000 }
+      - { material: NAUTILUS_SHELL, min: 2, max: 4, weight: 5, unlock: 2000 }
+      - { material: DIAMOND_AXE, min: 1, max: 1, weight: 5, unlock: 2000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 5, unlock: 2000 }
+    legendary:
+      - { material: CONDUIT, min: 1, max: 1, weight: 3, unlock: 25000 }
+      - { material: TRIDENT, min: 1, max: 1, weight: 3, unlock: 20000 }
+      - { material: DIAMOND, min: 3, max: 6, weight: 6, unlock: 15000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 3, unlock: 20000 }
+      - { material: DIAMOND_BLOCK, min: 1, max: 1, weight: 8, unlock: 25000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: HEART_OF_THE_SEA, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_SWORD, min: 1, max: 1, weight: 5, unlock: 5000 }
+      - { material: DIAMOND_PICKAXE, min: 1, max: 1, weight: 5, unlock: 15000 }
+    mythical:
+      - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 7, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 4, unlock: 20000 }
+      - { material: TRIDENT, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: CONDUIT, min: 1, max: 1, weight: 6, unlock: 30000 }
+      - { material: HEART_OF_THE_SEA, min: 2, max: 3, weight: 5, unlock: 20000 }
+      - { material: NETHERITE_HELMET, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_BOOTS, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: BEACON, min: 1, max: 1, weight: 3, unlock: 100000 }
+      - { material: NETHERITE_CHESTPLATE, min: 1, max: 1, weight: 4, unlock: 20000 }
+
+  # глубины: сланец, вагонетки, рельсы и шахтёрский инструмент.
+  deep:
+    common:
+      - { material: DEEPSLATE, min: 8, max: 24, weight: 8, unlock: 0 }
+      - { material: COBBLED_DEEPSLATE, min: 6, max: 16, weight: 6, unlock: 0 }
+      - { material: REDSTONE, min: 4, max: 10, weight: 6, unlock: 0 }
+      - { material: RAW_GOLD, min: 2, max: 6, weight: 4, unlock: 0 }
+      - { material: DEEPSLATE_BRICKS, min: 4, max: 12, weight: 14, unlock: 0 }
+      - { material: DEEPSLATE_TILES, min: 4, max: 12, weight: 13, unlock: 0 }
+      - { material: TUFF, min: 6, max: 16, weight: 13, unlock: 0 }
+      - { material: GRAVEL, min: 4, max: 12, weight: 13, unlock: 0 }
+      - { material: GLOW_LICHEN, min: 2, max: 6, weight: 12, unlock: 0 }
+      - { material: TORCH, min: 6, max: 16, weight: 12, unlock: 0 }
+      - { material: LADDER, min: 6, max: 16, weight: 12, unlock: 0 }
+      - { material: RAIL, min: 6, max: 16, weight: 11, unlock: 0 }
+      - { material: POWERED_RAIL, min: 2, max: 6, weight: 11, unlock: 0 }
+      - { material: DETECTOR_RAIL, min: 2, max: 4, weight: 11, unlock: 0 }
+      - { material: MINECART, min: 1, max: 2, weight: 10, unlock: 0 }
+      - { material: CHEST_MINECART, min: 1, max: 1, weight: 10, unlock: 0 }
+      - { material: HOPPER_MINECART, min: 1, max: 1, weight: 10, unlock: 0 }
+      - { material: FURNACE_MINECART, min: 1, max: 1, weight: 9, unlock: 0 }
+      - { material: TNT_MINECART, min: 1, max: 1, weight: 9, unlock: 0 }
+      - { material: DEEPSLATE_COAL_ORE, min: 2, max: 6, weight: 9, unlock: 0 }
+      - { material: DEEPSLATE_IRON_ORE, min: 2, max: 6, weight: 8, unlock: 0 }
+      - { material: DEEPSLATE_GOLD_ORE, min: 2, max: 4, weight: 8, unlock: 0 }
+      - { material: DEEPSLATE_REDSTONE_ORE, min: 2, max: 6, weight: 8, unlock: 0 }
+      - { material: DEEPSLATE_LAPIS_ORE, min: 2, max: 4, weight: 7, unlock: 0 }
+      - { material: DEEPSLATE_DIAMOND_ORE, min: 1, max: 2, weight: 7, unlock: 0 }
+      - { material: DEEPSLATE_EMERALD_ORE, min: 1, max: 2, weight: 7, unlock: 0 }
+      - { material: DEEPSLATE_COPPER_ORE, min: 2, max: 6, weight: 6, unlock: 0 }
+      - { material: COAL_ORE, min: 2, max: 6, weight: 6, unlock: 0 }
+      - { material: IRON_ORE, min: 2, max: 6, weight: 6, unlock: 0 }
+      - { material: COPPER_ORE, min: 2, max: 6, weight: 5, unlock: 0 }
+      - { material: REDSTONE_ORE, min: 2, max: 6, weight: 5, unlock: 0 }
+      - { material: LAPIS_ORE, min: 2, max: 4, weight: 5, unlock: 0 }
+      - { material: GOLD_ORE, min: 1, max: 3, weight: 4, unlock: 0 }
+      - { material: COAL_BLOCK, min: 1, max: 3, weight: 6, unlock: 0 }
+      - { material: SMOOTH_BASALT, min: 4, max: 12, weight: 6, unlock: 0 }
+      - { material: HOPPER, min: 1, max: 2, weight: 5, unlock: 0 }
+      - { material: DEEPSLATE_BRICK_WALL, min: 6, max: 16, weight: 5, unlock: 0 }
+      - { material: CHISELED_DEEPSLATE, min: 4, max: 12, weight: 5, unlock: 0 }
+    rare:
+      - { material: LAPIS_LAZULI, min: 4, max: 10, weight: 6, unlock: 250 }
+      - { material: IRON_INGOT, min: 2, max: 6, weight: 6, unlock: 250 }
+      - { material: GOLD_INGOT, min: 2, max: 5, weight: 5, unlock: 250 }
+      - { material: REDSTONE_BLOCK, min: 1, max: 2, weight: 3, unlock: 250 }
+      - { material: RAW_IRON, min: 3, max: 8, weight: 12, unlock: 250 }
+      - { material: RAW_GOLD, min: 2, max: 6, weight: 12, unlock: 250 }
+      - { material: RAW_COPPER, min: 4, max: 10, weight: 12, unlock: 250 }
+      - { material: REDSTONE, min: 6, max: 16, weight: 11, unlock: 250 }
+      - { material: DIAMOND, min: 1, max: 2, weight: 11, unlock: 250 }
+      - { material: IRON_PICKAXE, min: 1, max: 1, weight: 10, unlock: 250 }
+      - { material: GOLDEN_PICKAXE, min: 1, max: 1, weight: 10, unlock: 250 }
+      - { material: LANTERN, min: 1, max: 3, weight: 10, unlock: 250 }
+      - { material: SCAFFOLDING, min: 4, max: 12, weight: 9, unlock: 250 }
+      - { material: POWERED_RAIL, min: 4, max: 8, weight: 9, unlock: 250 }
+      - { material: LANTERN, min: 1, max: 1, weight: 3, unlock: 250, name: "Шахтёрский фонарь" }
+      - { material: RAW_GOLD, min: 1, max: 1, weight: 3, unlock: 250, name: "Золотая жила" }
+      - { material: GOLDEN_HELMET, min: 1, max: 1, weight: 4, unlock: 250, name: "Шлем старого шахтёра" }
+      - { material: DIAMOND_PICKAXE, min: 1, max: 1, weight: 2, unlock: 5000 }
+      - { material: TNT, min: 1, max: 3, weight: 4, unlock: 250, name: "Динамит старателя" }
+      - { material: BLAST_FURNACE, min: 1, max: 1, weight: 3, unlock: 250 }
+    epic:
+      - { material: DIAMOND, min: 1, max: 2, weight: 6, unlock: 2000 }
+      - { material: LAPIS_BLOCK, min: 1, max: 2, weight: 4, unlock: 2000 }
+      - { material: REDSTONE_BLOCK, min: 2, max: 4, weight: 4, unlock: 2000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 4, unlock: 2000 }
+      - { material: DIAMOND_PICKAXE, min: 1, max: 1, weight: 10, unlock: 2000 }
+      - { material: EMERALD, min: 1, max: 2, weight: 10, unlock: 2000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 9, unlock: 5000 }
+      - { material: EXPERIENCE_BOTTLE, min: 4, max: 10, weight: 9, unlock: 2000 }
+      - { material: OBSIDIAN, min: 3, max: 6, weight: 8, unlock: 2000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 4, unlock: 2000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 5, unlock: 2000 }
+      - { material: DIAMOND_SHOVEL, min: 1, max: 1, weight: 5, unlock: 2000 }
+    legendary:
+      - { material: DIAMOND, min: 3, max: 6, weight: 7, unlock: 15000 }
+      - { material: DIAMOND_BLOCK, min: 1, max: 2, weight: 5, unlock: 25000 }
+      - { material: NETHERITE_SCRAP, min: 1, max: 2, weight: 4, unlock: 10000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 3, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 7, unlock: 25000 }
+      - { material: DIAMOND_PICKAXE, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_SWORD, min: 1, max: 1, weight: 5, unlock: 15000 }
+    mythical:
+      - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 7, unlock: 20000 }
+      - { material: NETHERITE_SCRAP, min: 2, max: 4, weight: 5, unlock: 10000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 4, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+      - { material: NETHERITE_PICKAXE, min: 1, max: 1, weight: 6, unlock: 20000 }
+      - { material: NETHERITE_HELMET, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_BOOTS, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: BEACON, min: 1, max: 1, weight: 4, unlock: 100000 }
+      - { material: NETHERITE_SWORD, min: 1, max: 1, weight: 4, unlock: 20000 }
+
+  # глубокая тьма: скалк, эхо-осколки и осколки пластинок.
+  deep_dark:
+    common:
+      - { material: SCULK, min: 4, max: 10, weight: 7, unlock: 0 }
+      - { material: SCULK_VEIN, min: 4, max: 10, weight: 5, unlock: 0 }
+      - { material: CALCITE, min: 4, max: 10, weight: 4, unlock: 0 }
+      - { material: AMETHYST_SHARD, min: 2, max: 6, weight: 5, unlock: 0 }
+      - { material: SCULK_SENSOR, min: 1, max: 2, weight: 14, unlock: 0 }
+      - { material: SCULK_CATALYST, min: 1, max: 1, weight: 13, unlock: 0 }
+      - { material: SCULK_SHRIEKER, min: 1, max: 1, weight: 13, unlock: 0 }
+      - { material: DEEPSLATE, min: 8, max: 20, weight: 13, unlock: 0 }
+      - { material: COBBLED_DEEPSLATE, min: 8, max: 20, weight: 12, unlock: 0 }
+      - { material: DEEPSLATE_BRICKS, min: 4, max: 12, weight: 12, unlock: 0 }
+      - { material: DEEPSLATE_TILES, min: 4, max: 12, weight: 12, unlock: 0 }
+      - { material: GLOW_LICHEN, min: 2, max: 6, weight: 11, unlock: 0 }
+      - { material: AMETHYST_CLUSTER, min: 1, max: 2, weight: 11, unlock: 0 }
+      - { material: ECHO_SHARD, min: 1, max: 1, weight: 10, unlock: 5000 }
+      - { material: DISC_FRAGMENT_5, min: 1, max: 1, weight: 10, unlock: 5000 }
+      - { material: DEEPSLATE_BRICK_SLAB, min: 6, max: 16, weight: 6, unlock: 0 }
+      - { material: DEEPSLATE_BRICK_STAIRS, min: 4, max: 12, weight: 6, unlock: 0 }
+      - { material: TINTED_GLASS, min: 4, max: 10, weight: 5, unlock: 0 }
+      - { material: DEEPSLATE_TILE_STAIRS, min: 6, max: 16, weight: 5, unlock: 0 }
+      - { material: DEEPSLATE_TILE_SLAB, min: 6, max: 16, weight: 5, unlock: 0 }
+    rare:
+      - { material: ECHO_SHARD, min: 1, max: 2, weight: 5, unlock: 250 }
+      - { material: AMETHYST_BLOCK, min: 1, max: 2, weight: 4, unlock: 250 }
+      - { material: SCULK_CATALYST, min: 1, max: 1, weight: 2, unlock: 250 }
+      - { material: DISC_FRAGMENT_5, min: 1, max: 2, weight: 3, unlock: 250 }
+      - { material: RECOVERY_COMPASS, min: 1, max: 1, weight: 12, unlock: 5000 }
+      - { material: REINFORCED_DEEPSLATE, min: 1, max: 2, weight: 11, unlock: 250 }
+      - { material: DIAMOND, min: 1, max: 2, weight: 11, unlock: 250 }
+      - { material: EXPERIENCE_BOTTLE, min: 3, max: 8, weight: 10, unlock: 250 }
+      - { material: LANTERN, min: 1, max: 3, weight: 10, unlock: 250 }
+      - { material: SOUL_LANTERN, min: 1, max: 2, weight: 10, unlock: 250 }
+      - { material: COMPASS, min: 1, max: 1, weight: 9, unlock: 250 }
+      - { material: SCULK_SHRIEKER, min: 1, max: 2, weight: 9, unlock: 250 }
+      - { material: ECHO_SHARD, min: 1, max: 1, weight: 3, unlock: 250, name: "Эхо глубин" }
+      - { material: ENDER_PEARL, min: 1, max: 2, weight: 4, unlock: 250, name: "Жемчуг пустоты" }
+      - { material: AMETHYST_CLUSTER, min: 1, max: 2, weight: 4, unlock: 250, name: "Осколок тишины" }
+      - { material: GLOW_INK_SAC, min: 1, max: 3, weight: 3, unlock: 250 }
+    epic:
+      - { material: ECHO_SHARD, min: 2, max: 4, weight: 5, unlock: 2000 }
+      - { material: DIAMOND, min: 1, max: 2, weight: 4, unlock: 2000 }
+      - { material: SCULK_SHRIEKER, min: 1, max: 1, weight: 2, unlock: 2000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 4, unlock: 2000 }
+      - { material: NETHERITE_CHESTPLATE, min: 1, max: 1, weight: 1, unlock: 2000, name: "Чёрная броня" }
+      - { material: DIAMOND_PICKAXE, min: 1, max: 1, weight: 10, unlock: 2000 }
+      - { material: EMERALD, min: 1, max: 2, weight: 10, unlock: 2000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 9, unlock: 5000 }
+      - { material: EXPERIENCE_BOTTLE, min: 4, max: 10, weight: 9, unlock: 2000 }
+      - { material: OBSIDIAN, min: 3, max: 6, weight: 8, unlock: 2000 }
+      - { material: RECOVERY_COMPASS, min: 1, max: 1, weight: 8, unlock: 5000 }
+      - { material: SCULK_CATALYST, min: 1, max: 1, weight: 3, unlock: 2000, name: "Сердце скалка" }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 4, unlock: 2000 }
+      - { material: DIAMOND_SWORD, min: 1, max: 1, weight: 5, unlock: 2000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 5, unlock: 2000 }
+      - { material: POTION, min: 1, max: 1, weight: 3, unlock: 2000, name: "Эликсир озарения", elixir: insight }
+    legendary:
+      - { material: DIAMOND, min: 3, max: 6, weight: 6, unlock: 15000 }
+      - { material: ECHO_SHARD, min: 3, max: 6, weight: 3, unlock: 15000 }
+      - { material: NETHERITE_SCRAP, min: 1, max: 2, weight: 4, unlock: 10000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 3, unlock: 20000 }
+      - { material: DIAMOND_BLOCK, min: 1, max: 1, weight: 8, unlock: 25000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 7, unlock: 25000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_PICKAXE, min: 1, max: 1, weight: 5, unlock: 15000 }
+    mythical:
+      - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 6, unlock: 20000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 2, weight: 4, unlock: 20000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+      - { material: NETHER_STAR, min: 1, max: 1, weight: 2, unlock: 30000 }
+      - { material: NETHERITE_CHESTPLATE, min: 1, max: 1, weight: 6, unlock: 20000 }
+      - { material: ECHO_SHARD, min: 2, max: 4, weight: 5, unlock: 20000 }
+      - { material: NETHERITE_HELMET, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_BOOTS, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: BEACON, min: 1, max: 1, weight: 4, unlock: 100000 }
+      - { material: NETHERITE_SWORD, min: 1, max: 1, weight: 4, unlock: 20000 }
+
+  # Нижний мир: незерак, кварц, лава и снаряжение пиглинов.
+  nether:
+    common:
+      - { material: NETHERRACK, min: 8, max: 20, weight: 7, unlock: 0 }
+      - { material: QUARTZ, min: 4, max: 12, weight: 7, unlock: 0 }
+      - { material: GLOWSTONE_DUST, min: 4, max: 10, weight: 5, unlock: 0 }
+      - { material: NETHER_WART, min: 3, max: 8, weight: 4, unlock: 0 }
+      - { material: BLACKSTONE, min: 6, max: 16, weight: 14, unlock: 0 }
+      - { material: BASALT, min: 6, max: 16, weight: 14, unlock: 0 }
+      - { material: SOUL_SAND, min: 4, max: 12, weight: 13, unlock: 0 }
+      - { material: SOUL_SOIL, min: 4, max: 12, weight: 13, unlock: 0 }
+      - { material: NETHER_BRICKS, min: 4, max: 12, weight: 13, unlock: 0 }
+      - { material: MAGMA_CREAM, min: 1, max: 3, weight: 12, unlock: 0 }
+      - { material: CRIMSON_STEM, min: 4, max: 12, weight: 11, unlock: 0 }
+      - { material: WARPED_STEM, min: 4, max: 12, weight: 11, unlock: 0 }
+      - { material: CRIMSON_ROOTS, min: 2, max: 6, weight: 10, unlock: 0 }
+      - { material: WARPED_ROOTS, min: 2, max: 6, weight: 10, unlock: 0 }
+      - { material: SHROOMLIGHT, min: 1, max: 2, weight: 10, unlock: 0 }
+      - { material: BLAZE_POWDER, min: 1, max: 3, weight: 9, unlock: 0 }
+      - { material: FIRE_CHARGE, min: 1, max: 2, weight: 9, unlock: 0 }
+      - { material: GLOWSTONE, min: 1, max: 2, weight: 9, unlock: 0 }
+      - { material: NETHER_QUARTZ_ORE, min: 4, max: 12, weight: 8, unlock: 0 }
+      - { material: NETHER_GOLD_ORE, min: 4, max: 10, weight: 8, unlock: 0 }
+      - { material: CRIMSON_NYLIUM, min: 2, max: 6, weight: 8, unlock: 0 }
+      - { material: WARPED_NYLIUM, min: 2, max: 6, weight: 7, unlock: 0 }
+      - { material: CRIMSON_HYPHAE, min: 2, max: 6, weight: 7, unlock: 0 }
+      - { material: WARPED_HYPHAE, min: 2, max: 6, weight: 7, unlock: 0 }
+      - { material: NETHER_WART_BLOCK, min: 2, max: 6, weight: 6, unlock: 0 }
+      - { material: WARPED_WART_BLOCK, min: 2, max: 6, weight: 6, unlock: 0 }
+      - { material: TWISTING_VINES, min: 2, max: 6, weight: 6, unlock: 0 }
+      - { material: WEEPING_VINES, min: 2, max: 6, weight: 5, unlock: 0 }
+      - { material: NETHER_SPROUTS, min: 2, max: 6, weight: 5, unlock: 0 }
+      - { material: SOUL_TORCH, min: 2, max: 6, weight: 5, unlock: 0 }
+      - { material: GOLD_NUGGET, min: 4, max: 12, weight: 4, unlock: 0 }
+      - { material: FIRE_CHARGE, min: 1, max: 1, weight: 3, unlock: 0, name: "Огненный шар" }
+      - { material: MAGMA_BLOCK, min: 4, max: 12, weight: 8, unlock: 0 }
+      - { material: BLACKSTONE_SLAB, min: 6, max: 16, weight: 6, unlock: 0 }
+      - { material: CRIMSON_FENCE, min: 6, max: 16, weight: 5, unlock: 0 }
+      - { material: WARPED_FENCE, min: 6, max: 16, weight: 5, unlock: 0 }
+      - { material: NETHER_BRICK_FENCE, min: 6, max: 16, weight: 5, unlock: 0 }
+    rare:
+      - { material: BLAZE_POWDER, min: 2, max: 6, weight: 6, unlock: 250 }
+      - { material: MAGMA_CREAM, min: 2, max: 6, weight: 5, unlock: 250 }
+      - { material: GOLD_NUGGET, min: 8, max: 20, weight: 5, unlock: 250 }
+      - { material: GILDED_BLACKSTONE, min: 1, max: 3, weight: 4, unlock: 250 }
+      - { material: MUSHROOM_STEW, min: 1, max: 1, weight: 3, unlock: 250, name: "Кровавый суп" }
+      - { material: GOLDEN_APPLE, min: 1, max: 1, weight: 2, unlock: 250, name: "Суперсильное лечение" }
+      - { material: RESPAWN_ANCHOR, min: 1, max: 1, weight: 1, unlock: 250, name: "Полный якорь возрождения" }
+      - { material: BLAZE_ROD, min: 1, max: 3, weight: 12, unlock: 250 }
+      - { material: GHAST_TEAR, min: 1, max: 2, weight: 12, unlock: 250 }
+      - { material: QUARTZ_BLOCK, min: 1, max: 3, weight: 12, unlock: 250 }
+      - { material: CHISELED_QUARTZ_BLOCK, min: 1, max: 2, weight: 11, unlock: 250 }
+      - { material: LAVA_BUCKET, min: 1, max: 1, weight: 11, unlock: 250 }
+      - { material: MAGMA_BLOCK, min: 1, max: 2, weight: 10, unlock: 250 }
+      - { material: LANTERN, min: 1, max: 3, weight: 10, unlock: 250 }
+      - { material: SOUL_LANTERN, min: 1, max: 2, weight: 10, unlock: 250 }
+      - { material: NETHERITE_UPGRADE_SMITHING_TEMPLATE, min: 1, max: 1, weight: 9, unlock: 20000 }
+      - { material: SHROOMLIGHT, min: 2, max: 4, weight: 9, unlock: 250 }
+      - { material: BLAZE_POWDER, min: 1, max: 1, weight: 3, unlock: 250, name: "Пепел ифрита" }
+      - { material: NETHER_BRICK, min: 6, max: 16, weight: 6, unlock: 250 }
+      - { material: GOLD_INGOT, min: 4, max: 10, weight: 5, unlock: 250, name: "Слиток жадности" }
+      - { material: CRYING_OBSIDIAN, min: 2, max: 6, weight: 4, unlock: 250, name: "Слёзы багрового леса" }
+      - { material: LODESTONE, min: 1, max: 1, weight: 3, unlock: 250 }
+      - { material: POTION, min: 1, max: 1, weight: 3, unlock: 250, name: "Эликсир силы", elixir: strength }
+    epic:
+      - { material: GOLD_BLOCK, min: 1, max: 2, weight: 5, unlock: 2000 }
+      - { material: GLOWSTONE, min: 1, max: 3, weight: 4, unlock: 2000 }
+      - { material: ANCIENT_DEBRIS, min: 1, max: 2, weight: 4, unlock: 2000 }
+      - { material: GHAST_TEAR, min: 1, max: 3, weight: 4, unlock: 2000 }
+      - { material: IRON_SWORD, min: 1, max: 1, weight: 2, unlock: 2000, name: "Заточенный меч" }
+      - { material: POTION, min: 1, max: 1, weight: 2, unlock: 2000, name: "Зелье Нижнего мира", elixir: fire_resistance }
+      - { material: NETHERITE_SCRAP, min: 1, max: 3, weight: 10, unlock: 15000 }
+      - { material: PIGLIN_HEAD, min: 1, max: 1, weight: 10, unlock: 2000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 9, unlock: 5000 }
+      - { material: EXPERIENCE_BOTTLE, min: 4, max: 10, weight: 9, unlock: 2000 }
+      - { material: OBSIDIAN, min: 3, max: 6, weight: 8, unlock: 2000 }
+      - { material: BLAZE_ROD, min: 2, max: 4, weight: 8, unlock: 2000 }
+      - { material: DIAMOND_SWORD, min: 1, max: 1, weight: 4, unlock: 2000 }
+      - { material: DIAMOND_AXE, min: 1, max: 1, weight: 5, unlock: 2000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 5, unlock: 2000 }
+    legendary:
+      - { material: NETHERITE_SCRAP, min: 2, max: 4, weight: 6, unlock: 10000 }
+      - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: WITHER_SKELETON_SKULL, min: 1, max: 1, weight: 2, unlock: 25000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 3, unlock: 20000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 1, unlock: 15000, name: "Нагрудник багрового леса" }
+      - { material: NETHERITE_HOE, min: 1, max: 1, weight: 1, unlock: 15000, name: "Супер-мотыга страйдера" }
+      - { material: POTION, min: 1, max: 1, weight: 1, unlock: 15000, name: "Демоническое зелье", elixir: strength }
+      - { material: GOLDEN_HELMET, min: 1, max: 1, weight: 1, unlock: 200000, name: "Зависть пиглина" }
+      - { material: NETHER_STAR, min: 1, max: 1, weight: 8, unlock: 30000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 7, unlock: 25000 }
+      - { material: PIGLIN_HEAD, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: WITHER_SKELETON_SKULL, min: 1, max: 1, weight: 3, unlock: 30000, name: "Череп мертвеца" }
+      - { material: DIAMOND_SWORD, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: ANCIENT_DEBRIS, min: 1, max: 2, weight: 6, unlock: 15000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 4, unlock: 15000 }
+      - { material: DIAMOND_PICKAXE, min: 1, max: 1, weight: 5, unlock: 15000 }
+    mythical:
+      - { material: NETHERITE_INGOT, min: 1, max: 2, weight: 7, unlock: 20000 }
+      - { material: NETHERITE_SCRAP, min: 3, max: 5, weight: 5, unlock: 10000 }
+      - { material: NETHER_STAR, min: 1, max: 1, weight: 3, unlock: 30000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 3, unlock: 25000 }
+      - { material: NETHERITE_BLOCK, min: 1, max: 1, weight: 6, unlock: 100000 }
+      - { material: NETHERITE_SWORD, min: 1, max: 1, weight: 6, unlock: 20000 }
+      - { material: NETHERITE_CHESTPLATE, min: 1, max: 1, weight: 6, unlock: 20000 }
+      - { material: BEACON, min: 1, max: 1, weight: 5, unlock: 100000 }
+      - { material: PIGLIN_HEAD, min: 1, max: 1, weight: 5, unlock: 20000 }
+      - { material: NETHERITE_HELMET, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_BOOTS, min: 1, max: 1, weight: 3, unlock: 20000 }
+      - { material: NETHERITE_AXE, min: 1, max: 1, weight: 4, unlock: 20000 }
+
+  # Край: эндстоун, пурпур, хорус и эндер-редкости.
+  end:
+    common:
+      - { material: END_STONE, min: 8, max: 20, weight: 7, unlock: 0 }
+      - { material: CHORUS_FRUIT, min: 4, max: 10, weight: 6, unlock: 0 }
+      - { material: POPPED_CHORUS_FRUIT, min: 4, max: 10, weight: 4, unlock: 0 }
+      - { material: ENDER_PEARL, min: 1, max: 3, weight: 6, unlock: 0 }
+      - { material: END_STONE_BRICKS, min: 4, max: 12, weight: 14, unlock: 0 }
+      - { material: PURPUR_BLOCK, min: 4, max: 12, weight: 14, unlock: 0 }
+      - { material: PURPUR_PILLAR, min: 2, max: 6, weight: 13, unlock: 0 }
+      - { material: CHORUS_FLOWER, min: 1, max: 2, weight: 12, unlock: 0 }
+      - { material: END_ROD, min: 1, max: 3, weight: 12, unlock: 0 }
+      - { material: OBSIDIAN, min: 4, max: 10, weight: 12, unlock: 0 }
+      - { material: EXPERIENCE_BOTTLE, min: 3, max: 8, weight: 11, unlock: 0 }
+      - { material: SHULKER_SHELL, min: 1, max: 1, weight: 11, unlock: 0 }
+      - { material: PURPUR_STAIRS, min: 2, max: 6, weight: 10, unlock: 0 }
+      - { material: PURPUR_SLAB, min: 2, max: 6, weight: 10, unlock: 0 }
+      - { material: END_STONE_BRICK_SLAB, min: 2, max: 6, weight: 10, unlock: 0 }
+      - { material: END_STONE_BRICK_STAIRS, min: 2, max: 6, weight: 9, unlock: 0 }
+      - { material: END_STONE_BRICK_WALL, min: 2, max: 6, weight: 9, unlock: 0 }
+      - { material: CHORUS_PLANT, min: 1, max: 2, weight: 9, unlock: 0 }
+      - { material: CHORUS_FRUIT, min: 1, max: 1, weight: 3, unlock: 0, name: "Плод хоры" }
+      - { material: GLASS_BOTTLE, min: 2, max: 6, weight: 5, unlock: 0 }
+      - { material: BOOK, min: 2, max: 5, weight: 5, unlock: 0 }
+      - { material: PHANTOM_MEMBRANE, min: 1, max: 3, weight: 4, unlock: 0 }
+    rare:
+      - { material: ENDER_EYE, min: 1, max: 3, weight: 5, unlock: 250 }
+      - { material: PURPUR_BLOCK, min: 2, max: 6, weight: 4, unlock: 250 }
+      - { material: SHULKER_SHELL, min: 1, max: 2, weight: 3, unlock: 250 }
+      - { material: EXPERIENCE_BOTTLE, min: 3, max: 8, weight: 4, unlock: 250 }
+      - { material: SHULKER_BOX, min: 1, max: 1, weight: 12, unlock: 20000 }
+      - { material: ENDER_PEARL, min: 2, max: 4, weight: 11, unlock: 250 }
+      - { material: DRAGON_BREATH, min: 1, max: 1, weight: 11, unlock: 250 }
+      - { material: END_CRYSTAL, min: 1, max: 1, weight: 11, unlock: 15000 }
+      - { material: AMETHYST_SHARD, min: 3, max: 8, weight: 10, unlock: 250 }
+      - { material: SPYGLASS, min: 1, max: 1, weight: 10, unlock: 250 }
+      - { material: END_ROD, min: 2, max: 4, weight: 9, unlock: 250 }
+      - { material: ENDER_EYE, min: 1, max: 1, weight: 3, unlock: 250, name: "Око странника" }
+      - { material: ENDER_CHEST, min: 1, max: 1, weight: 5, unlock: 500, name: "Сундук скитальца" }
+      - { material: DIAMOND_AXE, min: 1, max: 1, weight: 3, unlock: 5000 }
+      - { material: FEATHER, min: 2, max: 4, weight: 3, unlock: 250, name: "Перо странника" }
+      - { material: NAME_TAG, min: 1, max: 1, weight: 3, unlock: 250 }
+    epic:
+      - { material: ENDER_PEARL, min: 3, max: 8, weight: 4, unlock: 2000 }
+      - { material: SHULKER_SHELL, min: 2, max: 4, weight: 4, unlock: 2000 }
+      - { material: DIAMOND, min: 1, max: 2, weight: 5, unlock: 2000 }
+      - { material: GOLDEN_APPLE, min: 1, max: 2, weight: 4, unlock: 2000 }
+      - { material: END_CRYSTAL, min: 1, max: 1, weight: 10, unlock: 15000 }
+      - { material: DRAGON_BREATH, min: 1, max: 2, weight: 10, unlock: 2000 }
+      - { material: SHULKER_BOX, min: 1, max: 1, weight: 10, unlock: 20000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 9, unlock: 5000 }
+      - { material: DIAMOND_SWORD, min: 1, max: 1, weight: 9, unlock: 2000 }
+      - { material: OBSIDIAN, min: 4, max: 10, weight: 9, unlock: 2000 }
+      - { material: ENDER_EYE, min: 2, max: 3, weight: 8, unlock: 2000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 4, unlock: 2000 }
+      - { material: DIAMOND_PICKAXE, min: 1, max: 1, weight: 4, unlock: 2000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 5, unlock: 2000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 2000 }
+      - { material: POTION, min: 1, max: 1, weight: 3, unlock: 2000, name: "Эликсир героя", elixir: hero }
+    legendary:
+      - { material: END_CRYSTAL, min: 1, max: 2, weight: 4, unlock: 20000 }
+      - { material: DRAGON_BREATH, min: 2, max: 4, weight: 4, unlock: 20000 }
+      - { material: DIAMOND, min: 3, max: 6, weight: 5, unlock: 15000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 3, unlock: 20000 }
+      - { material: ELYTRA, min: 1, max: 1, weight: 8, unlock: 300000 }
+      - { material: DRAGON_HEAD, min: 1, max: 1, weight: 8, unlock: 50000 }
+      - { material: NETHERITE_SCRAP, min: 1, max: 2, weight: 8, unlock: 15000 }
+      - { material: DIAMOND_BLOCK, min: 1, max: 1, weight: 7, unlock: 25000 }
+      - { material: DIAMOND_SWORD, min: 1, max: 1, weight: 7, unlock: 15000 }
+      - { material: SHULKER_SHELL, min: 1, max: 2, weight: 6, unlock: 15000 }
+      - { material: ENCHANTED_BOOK, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 6, unlock: 15000 }
+      - { material: DIAMOND_CHESTPLATE, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_LEGGINGS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_BOOTS, min: 1, max: 1, weight: 5, unlock: 15000 }
+      - { material: DIAMOND_HELMET, min: 1, max: 1, weight: 5, unlock: 5000, name: "Венец края" }
+      - { material: DIAMOND_PICKAXE, min: 1, max: 1, weight: 5, unlock: 15000 }
+    mythical:
+      - { material: NETHERITE_INGOT, min: 1, max: 1, weight: 6, unlock: 20000 }
+      - { material: ELYTRA, min: 1, max: 1, weight: 2, unlock: 300000 }
+      - { material: NETHER_STAR, min: 1, max: 1, weight: 4, unlock: 30000 }
+      - { material: DRAGON_BREATH, min: 3, max: 6, weight: 5, unlock: 20000 }
+      - { material: DRAGON_HEAD, min: 1, max: 1, weight: 6, unlock: 50000 }
+      - { material: BEACON, min: 1, max: 1, weight: 5, unlock: 100000 }
+      - { material: TOTEM_OF_UNDYING, min: 1, max: 1, weight: 5, unlock: 25000 }
+      - { material: ENCHANTED_GOLDEN_APPLE, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_HELMET, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_BOOTS, min: 1, max: 1, weight: 4, unlock: 20000 }
+      - { material: NETHERITE_CHESTPLATE, min: 1, max: 1, weight: 4, unlock: 20000 }

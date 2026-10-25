@@ -1,0 +1,307 @@
+# CHRDK_Bosses — боссы с фазами и зоны опасности (1.4.162).
+#
+# Босс — это событие в мире, а не вечный моб: он появляется на арене, живёт
+# ограниченное время и уходит, если его не убили. У босса есть фазы: на пороге
+# здоровья он меняет поведение и получает новые способности, поэтому бой не
+# сводится к «бей, пока не упадёт».
+#
+# Награда делится по нанесённому урону: опыт получают все, кто бил, трофей —
+# лучший боец. Монет боссы не выдают: экономика охоты и магазинов остаётся
+# отдельной, а босс не открывает второй источник валюты.
+#
+# Зона опасности — место, где мир сопротивляется: эффекты и капель урона в
+# обмене на надбавку к опыту за мобов, убитых внутри. Урон зоны никогда не
+# отнимает последние два сердца: убивать должен бой, а не география.
+
+general:
+  # Полностью выключает боссов и зоны. Команды и меню останутся, но всё будет
+  # отвечать «выключено».
+  enabled: true
+  # Язык сообщений: ru или en (файл messages.yml).
+  locale: ru
+  # Выпускать боссов по таймеру самому. По умолчанию выключено: координаты
+  # арен зависят от карты, и ставить босса в чужую базу нельзя. Включите после
+  # того, как проверите точки в секции bosses.
+  auto-spawn: false
+  # Полоса здоровья босса над хотбаром для игроков на арене.
+  bossbar: true
+  # Короткие сообщения над хотбаром: вход в зону и надбавка к опыту.
+  actionbar: true
+  # Как часто проверять, не пора ли выпустить босса (10..300 секунд).
+  check-seconds: 60
+
+# Боссы. id (ключ секции) используется в командах и плейсхолдерах.
+#
+# health — в единицах здоровья: 1 сердце = 2. 240 = 120 сердец.
+# arena.y: -1 — поставить на верхний блок площадки (авто).
+# spawn-interval-seconds — пауза после смерти/ухода (300..86400).
+# duration-seconds — сколько босс живёт без убийства (120..7200).
+# min-players — сколько игроков онлайн нужно для авто-спавна.
+# auto — может ли босс появляться по таймеру (ручной спавн работает всегда).
+#
+# phases: at — порог здоровья в процентах, с которого начинается фаза.
+# Первая фаза всегда 100. abilities — что босс делает в этой фазе:
+#   STOMP     — урон amount и отброс в радиусе radius;
+#   SUMMON    — призвать amount штук entity вокруг (не больше 8);
+#   FIRE_NOVA — поджечь игроков в радиусе на duration-seconds;
+#   PULL      — притянуть игроков в радиусе к себе;
+#   LEAP      — прыгнуть к случайному игроку;
+#   CURSE     — наложить effect уровня amplifier на duration-seconds;
+#   HEAL      — вылечиться на amount процентов от максимума (1..50);
+#   ENRAGE    — ускориться на duration-seconds.
+# cooldown-seconds — пауза между повторами способности (3..600).
+bosses:
+  stone_warden:
+    name: "Каменный страж"
+    description: "Древний голем, который сторожит карьер и не любит гостей."
+    entity: IRON_GOLEM
+    health: 240
+    icon: IRON_BLOCK
+    glow: true
+    arena:
+      world: "world"
+      x: 0
+      y: -1
+      z: 0
+      radius: 16
+    phases:
+      - at: 100
+        name: "Стража"
+        damage-multiplier: 1.0
+        speed-multiplier: 1.0
+        abilities:
+          - { type: STOMP, cooldown-seconds: 14, radius: 6, amount: 5 }
+          - { type: SUMMON, cooldown-seconds: 45, radius: 4, amount: 2, entity: SILVERFISH }
+      - at: 60
+        name: "Гнев камня"
+        damage-multiplier: 1.25
+        speed-multiplier: 1.1
+        abilities:
+          - { type: STOMP, cooldown-seconds: 10, radius: 7, amount: 7 }
+          - { type: PULL, cooldown-seconds: 30, radius: 8 }
+      - at: 30
+        name: "Обвал"
+        damage-multiplier: 1.5
+        speed-multiplier: 1.25
+        abilities:
+          - { type: STOMP, cooldown-seconds: 8, radius: 8, amount: 9 }
+          - { type: CURSE, cooldown-seconds: 40, radius: 8, effect: slowness, amplifier: 1, duration-seconds: 6 }
+          - { type: ENRAGE, cooldown-seconds: 60, duration-seconds: 10, amplifier: 1 }
+    reward:
+      xp: 400
+      items:
+        IRON_INGOT: 12
+        GOLDEN_APPLE: 2
+      trophy: IRON_BLOCK
+      trophy-name: "Сердце стража"
+    spawn-interval-seconds: 3600
+    duration-seconds: 1800
+    min-players: 2
+    auto: true
+
+  frost_revenant:
+    name: "Морозный выходец"
+    description: "Тот, кто замёрз в снегах и вернулся за теплом — вашим."
+    entity: STRAY
+    health: 320
+    icon: BLUE_ICE
+    glow: true
+    arena:
+      world: "world"
+      x: 0
+      y: -1
+      z: 0
+      radius: 18
+    phases:
+      - at: 100
+        name: "Стужа"
+        damage-multiplier: 1.0
+        speed-multiplier: 1.0
+        abilities:
+          - { type: CURSE, cooldown-seconds: 20, radius: 7, effect: slowness, amplifier: 2, duration-seconds: 5 }
+          - { type: SUMMON, cooldown-seconds: 50, radius: 5, amount: 3, entity: SKELETON }
+      - at: 55
+        name: "Ледяной удар"
+        damage-multiplier: 1.3
+        speed-multiplier: 1.15
+        abilities:
+          - { type: FIRE_NOVA, cooldown-seconds: 35, radius: 6, duration-seconds: 4 }
+          - { type: LEAP, cooldown-seconds: 20, radius: 12 }
+          - { type: CURSE, cooldown-seconds: 25, radius: 8, effect: weakness, amplifier: 1, duration-seconds: 8 }
+      - at: 25
+        name: "Белая смерть"
+        damage-multiplier: 1.6
+        speed-multiplier: 1.3
+        abilities:
+          - { type: HEAL, cooldown-seconds: 90, amount: 8 }
+          - { type: FIRE_NOVA, cooldown-seconds: 25, radius: 8, duration-seconds: 5 }
+          - { type: PULL, cooldown-seconds: 18, radius: 10 }
+    reward:
+      xp: 550
+      items:
+        BLUE_ICE: 8
+        SNOWBALL: 16
+      trophy: BLUE_ICE
+      trophy-name: "Осколок вечной стужи"
+    spawn-interval-seconds: 5400
+    duration-seconds: 1800
+    min-players: 2
+    auto: true
+
+  ashen_titan:
+    name: "Пепельный титан"
+    description: "Выходец из выжженных пустошей: бьёт медленно, но наотмашь."
+    entity: WITHER_SKELETON
+    health: 420
+    icon: IRON_AXE
+    glow: true
+    arena:
+      world: "world"
+      x: 0
+      y: -1
+      z: 0
+      radius: 20
+    phases:
+      - at: 100
+        name: "Тлеющий"
+        damage-multiplier: 1.1
+        speed-multiplier: 0.95
+        abilities:
+          - { type: FIRE_NOVA, cooldown-seconds: 25, radius: 6, duration-seconds: 4 }
+          - { type: STOMP, cooldown-seconds: 18, radius: 7, amount: 6 }
+      - at: 65
+        name: "Пожар"
+        damage-multiplier: 1.3
+        speed-multiplier: 1.05
+        abilities:
+          - { type: SUMMON, cooldown-seconds: 40, radius: 6, amount: 3, entity: BLAZE }
+          - { type: CURSE, cooldown-seconds: 30, radius: 8, effect: slowness, amplifier: 1, duration-seconds: 5 }
+          - { type: FIRE_NOVA, cooldown-seconds: 18, radius: 8, duration-seconds: 5 }
+      - at: 35
+        name: "Пепел"
+        damage-multiplier: 1.7
+        speed-multiplier: 1.2
+        abilities:
+          - { type: STOMP, cooldown-seconds: 9, radius: 9, amount: 11 }
+          - { type: LEAP, cooldown-seconds: 16, radius: 14 }
+          - { type: HEAL, cooldown-seconds: 120, amount: 6 }
+    reward:
+      xp: 700
+      items:
+        BLAZE_ROD: 10
+        GILDED_BLACKSTONE: 6
+      trophy: IRON_AXE
+      trophy-name: "Топор пепельного титана"
+    spawn-interval-seconds: 7200
+    duration-seconds: 2400
+    min-players: 3
+    auto: true
+
+  deep_queen:
+    name: "Королева глубин"
+    description: "Хозяйка затонувших шахт: тянет к себе и не отпускает."
+    entity: DROWNED
+    health: 360
+    icon: HEART_OF_THE_SEA
+    glow: true
+    arena:
+      world: "world"
+      x: 0
+      y: -1
+      z: 0
+      radius: 18
+    phases:
+      - at: 100
+        name: "Прилив"
+        damage-multiplier: 1.0
+        speed-multiplier: 1.0
+        abilities:
+          - { type: PULL, cooldown-seconds: 15, radius: 9 }
+          - { type: SUMMON, cooldown-seconds: 45, radius: 5, amount: 3, entity: DROWNED }
+      - at: 60
+        name: "Течение"
+        damage-multiplier: 1.25
+        speed-multiplier: 1.15
+        abilities:
+          - { type: CURSE, cooldown-seconds: 25, radius: 8, effect: slowness, amplifier: 2, duration-seconds: 6 }
+          - { type: STOMP, cooldown-seconds: 12, radius: 8, amount: 8 }
+          - { type: PULL, cooldown-seconds: 12, radius: 11 }
+      - at: 30
+        name: "Бездна"
+        damage-multiplier: 1.5
+        speed-multiplier: 1.25
+        abilities:
+          - { type: SUMMON, cooldown-seconds: 35, radius: 6, amount: 4, entity: DROWNED }
+          - { type: CURSE, cooldown-seconds: 20, radius: 9, effect: slowness, amplifier: 3, duration-seconds: 6 }
+          - { type: STOMP, cooldown-seconds: 8, radius: 9, amount: 10 }
+    reward:
+      xp: 620
+      items:
+        PRISMARINE_CRYSTALS: 12
+        KELP: 16
+      trophy: HEART_OF_THE_SEA
+      trophy-name: "Слеза королевы"
+    spawn-interval-seconds: 5400
+    duration-seconds: 1800
+    min-players: 2
+    auto: true
+
+# Зоны опасности. Радиус — от точки по горизонтали, высота проверяется тоже.
+# danger: level 1..5 — только для текста и иконок; damage-per-second 0..4;
+# xp-bonus-percent 0..50 — надбавка к опыту за мобов, убитых внутри зоны.
+# effects: type — ид эффекта (slowness, weakness, poison, blindness...),
+# duration-seconds 1..60, interval — как часто обновлять.
+zones:
+  ash_fields:
+    name: "Пепельные поля"
+    description: "Земля здесь ещё тёплая: воздух режет горло, зато добыча щедра."
+    # Зоны выключены до настройки: координаты ниже — пример, а не место на вашей карте.
+    enabled: false
+    world: "world"
+    x: 400
+    y: 70
+    z: 0
+    radius: 40
+    level: 2
+    icon: MAGMA_BLOCK
+    damage-per-second: 1.0
+    xp-bonus-percent: 15
+    effect-interval-seconds: 6
+    effects:
+      - { type: slowness, amplifier: 0, duration-seconds: 8 }
+      - { type: weakness, amplifier: 0, duration-seconds: 8 }
+
+  frozen_hollow:
+    name: "Мёрзлая низина"
+    description: "Ветер здесь не стихает: тянет силу из ног и рук."
+    enabled: false
+    world: "world"
+    x: -400
+    y: 70
+    z: 0
+    radius: 40
+    level: 3
+    icon: BLUE_ICE
+    damage-per-second: 0.5
+    xp-bonus-percent: 20
+    effect-interval-seconds: 6
+    effects:
+      - { type: slowness, amplifier: 1, duration-seconds: 6 }
+
+  drowned_mines:
+    name: "Затонувшие шахты"
+    description: "Глубина не любит света: слепота и тьма забирают по капле."
+    enabled: false
+    world: "world"
+    x: 0
+    y: 40
+    z: 400
+    radius: 36
+    level: 4
+    icon: PRISMARINE_CRYSTALS
+    damage-per-second: 1.5
+    xp-bonus-percent: 25
+    effect-interval-seconds: 8
+    effects:
+      - { type: blindness, amplifier: 0, duration-seconds: 5 }
+      - { type: slowness, amplifier: 1, duration-seconds: 8 }

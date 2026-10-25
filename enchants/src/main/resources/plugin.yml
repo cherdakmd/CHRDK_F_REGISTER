@@ -1,0 +1,21 @@
+name: CHRDK_Enchants
+version: ${version}
+main: ru.cherdakmd.chrdkenchants.EnchantsPlugin
+api-version: '26.3'
+description: "60 кастомных чар CHRDK: 45 светлых и 15 проклятий — стол, жители, книги"
+author: cherdakmd
+depend: [CHRDK_Core]
+commands:
+  enchants:
+    description: Список кастомных чар и их описания
+    aliases: [cenchant]
+  enchantsadmin:
+    description: Управление чарами (выдача книг, перезагрузка)
+    permission: chrdkenchants.admin
+permissions:
+  chrdkenchants.use:
+    description: Просмотр чар и получение их в игре
+    default: true
+  chrdkenchants.admin:
+    description: Администрирование чар
+    default: op

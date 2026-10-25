@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   build-and-upload:
-    name: Build JAR and attach to release
+    name: Build plugins and attach the archive
     runs-on: ubuntu-latest
     steps:
       - name: Check out tagged source
@@ -17,18 +17,42 @@ jobs:
         with:
           ref: ${{ github.event.release.tag_name }}
 
-      - name: Set up Java 21
+      - name: Set up Java
         uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '25'
           cache: gradle
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build plugin
-        run: ./gradlew --no-daemon build
+      - name: Build plugins
+        shell: bash
+        run: |
+          set +e
+          ./gradlew --no-daemon build 2>&1 | tee build.log
+          status=${PIPESTATUS[0]}
+          if [[ $status -ne 0 ]]; then
+            {
+              echo '### Gradle failure excerpt'
+              echo '```text'
+              tail -n 100 build.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+
+            grep -A 4 -E 'error:|Could not find|Could not resolve|What went wrong|Execution failed|FAILURE:' build.log \
+              | head -n 50 \
+              | while IFS= read -r line; do
+                  printf '::error title=Gradle build output::%s\n' "$line"
+                done
+          fi
+          exit "$status"
+
+      - name: Report test failures
+        if: always()
+        shell: bash
+        run: python3 .github/scripts/report_tests.py
 
       - name: Verify release tag matches plugin version
         id: verify-version
@@ -40,9 +64,76 @@ jobs:
             echo "Release tag $GITHUB_REF_NAME does not match plugin version $plugin_version" >&2
             exit 1
           fi
-          echo "jar=build/libs/chrdk-f-register-${plugin_version}.jar" >> "$GITHUB_OUTPUT"
+          echo "version=$plugin_version" >> "$GITHUB_OUTPUT"
 
-      - name: Attach the Purpur plugin JAR
+      - name: Pack all plugin JARs and the update memo into one ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${{ steps.verify-version.outputs.version }}"
+          mkdir -p release
+          find . -path '*/build/libs/*.jar' -type f \
+            ! -name '*-sources.jar' ! -name '*-javadoc.jar' ! -name '*-dev.jar' \
+            -exec cp '{}' release/ \;
+          count="$(find release -maxdepth 1 -name '*.jar' | wc -l)"
+          echo "Собрано JAR: $count"
+          find release -maxdepth 1 -name '*.jar' -printf '%f\n' | sort
+          if [[ "$count" -lt 1 ]]; then
+            echo 'Не найден ни один JAR — архив не собран.' >&2
+            exit 1
+          fi
+          cat > 'release/ОБНОВЛЕНИЕ.txt' <<'MEMO'
+          CHRDK — обновление плагинов
+          ===========================
+
+          Что в архиве
+          ------------
+          Все JAR-ы CHRDK одной версии: ядро CHRDK_Core и аддоны
+          (DiamondShop, Referrals, DailyRewards, Teleports, Enchants, TierForge,
+          Artifacts, Achievements, Skills, Treasures, CommonGoals, Claims, Ranks,
+          Cosmetics, BattlePass, Queue, Streams, Lottery, Auction, Pets, Orders, Hunt, Party,
+          Events, Quests, Bosses, Guilds, Classes, Professions).
+          Отдельные JAR-ы к релизу больше не прикладываются — только этот архив.
+
+          Порядок обновления
+          ------------------
+          1. Остановите сервер командой stop и дождитесь полной остановки.
+          2. Сделайте резервную копию папки plugins/ (достаточно копии целиком)
+             и мира. Это обязательный шаг: откат без копии невозможен.
+          3. Удалите из plugins/ старые JAR-ы CHRDK (файлы *.jar этой сборки).
+             Папки плагинов (plugins/CHRDK_*/) НЕ удаляйте: в них конфиги,
+             сообщения, loot.yml, chances.yml и данные игроков.
+          4. Распакуйте все JAR-ы из этого архива в plugins/ (без подпапок).
+          5. Запустите сервер и дождитесь строки «CHRDK_... включён» в консоли.
+          6. Проверьте /plugins: ядро и все аддоны должны быть зелёными (не red).
+             Красный аддон = нет ядра нужной версии или он не загрузился.
+          7. Проверьте консоль на предупреждения CHRDK: битый YAML или
+             неизвестный ключ видны сразу.
+
+          Что происходит с конфигами
+          --------------------------
+          Новые ключи добавляются в конфиг автоматически при первом запуске,
+          существующие значения сохраняются. Комментарии в старом config.yml
+          могут остаться прежними — для полного набора новых комментариев
+          удалите конкретный config.yml (только файл, не папку) перед запуском.
+          loot.yml обновлять не нужно: старый файл дополняется новыми записями
+          из JAR, ваши правки остаются. Данные игроков (JSON) мигрируют сами.
+
+          Откат
+          -----
+          Верните старые JAR-ы из резервной копии на место, верните папку
+          plugins/CHRDK_*/ из копии и запустите сервер. Данные, записанные
+          новой версией, старые сборки могут не прочитать — поэтому копия
+          делается до запуска.
+
+          Полный список изменений и инструкция — в описании релиза на GitHub
+          и в README репозитория.
+          MEMO
+          zip -j -9 "chrdk-plugins-${version}.zip" release/*.jar 'release/ОБНОВЛЕНИЕ.txt'
+          unzip -l "chrdk-plugins-${version}.zip"
+          echo "zip=chrdk-plugins-${version}.zip" >> "$GITHUB_ENV"
+
+      - name: Attach the all-in-one archive
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.verify-version.outputs.jar }}" --clobber
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ env.zip }}" --clobber

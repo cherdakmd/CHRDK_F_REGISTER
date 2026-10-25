@@ -70,11 +70,20 @@ public final class ChatService implements Listener {
     private final Map<UUID, Long> lastMessageAt = new ConcurrentHashMap<>();
     private final Map<UUID, String> lastMessageText = new ConcurrentHashMap<>();
     private final Map<UUID, UUID> lastPrivatePartners = new ConcurrentHashMap<>();
+    /** Оформление ника из каталога товаров (цветной ник, плашка мецената). */
+    private volatile java.util.function.Function<String, String> tagResolver = name -> "";
+    /** Оформление ников от аддонов (метка стримера и т.п.). */
+    private final NameTags nameTags;
     private final Map<UUID, Set<String>> ignoreCache = new ConcurrentHashMap<>();
     private final Set<UUID> socialSpy = ConcurrentHashMap.newKeySet();
 
     private BukkitTask autoMessageTask;
     private int autoMessageIndex;
+    private String lastAutoMessage = "";
+    /** Последние отправленные автосообщения: случайный выбор не повторяет их подряд. */
+    private final java.util.Deque<String> recentAutoMessages = new java.util.ArrayDeque<>();
+    /** Дополнительные подстановки от других сервисов ядра (баланс банка и т.п.). */
+    private volatile java.util.function.BiConsumer<Player, java.util.Map<String, Object>> placeholderProvider;
     private volatile long lastGlobalMessageAt;
 
     public ChatService(JavaPlugin plugin, AccessManager accessManager, ChatConfig config,
@@ -84,6 +93,57 @@ public final class ChatService implements Listener {
         this.config = config;
         this.messages = messages;
         this.logger = logger;
+        this.nameTags = new NameTags(logger);
+    }
+
+    /**
+     * Подключает источник оформления ников: ник → MiniMessage-тег (пусто — без оформления).
+     * Вызывается один раз при включении плагина и переживает {@code /pass reload}.
+     */
+    public void setTagResolver(java.util.function.Function<String, String> resolver) {
+        this.tagResolver = resolver == null ? name -> "" : resolver;
+    }
+
+    /** Ник с оформлением товара и метками аддонов: {@code <gold>Nick</gold> [СТРИМ]}. */
+    public String decoratedName(String playerName) {
+        java.util.function.Function<String, String> resolver = tagResolver;
+        String tag = resolver == null ? "" : resolver.apply(playerName);
+        String base = ShopEntitlements.decorate(playerName, tag);
+        return nameTags.decorate(playerName, decorateRank(playerName, base, tag != null && !tag.isBlank()));
+    }
+
+    /**
+     * Оформление ника донатным рангом (1.4.167): знак перед ником и цвет ступени.
+     *
+     * <p>Оплаченный ранее тег каталога ({@code nick-color}, {@code sponsor}) главнее
+     * цвета ранга, пока не истёк: купленное вперёд не отбираем. Знак ранга при этом
+     * остаётся — он и есть визитная карточка ступени.</p>
+     */
+    private String decorateRank(String playerName, String name, boolean hasLegacyTag) {
+        RankSettings ranks = accessManager.config().ranks();
+        if (ranks == null || !ranks.enabled()) {
+            return name;
+        }
+        int level = accessManager.store().rankLevel(playerName, System.currentTimeMillis());
+        RankTier tier = level <= 0 ? null : ranks.tier(level);
+        if (tier == null) {
+            return name;
+        }
+        String decorated = hasLegacyTag ? name : tier.decorate(name);
+        String prefix = tier.badge().isBlank() ? "" : tier.badge() + " ";
+        if (ranks.showNameInChat()) {
+            return prefix + decorated + " <dark_gray>·</dark_gray> " + tier.decorate(tier.name());
+        }
+        return prefix + decorated;
+    }
+
+    /** Реестр оформления ников — его получает реализация публичного API. */
+    NameTags nameTags() {
+        return nameTags;
+    }
+
+    private String decorated(String playerName) {
+        return decoratedName(playerName);
     }
 
     /** Заменяет тексты из {@code messages.yml} (используется при {@code /pass reload}). */
@@ -154,7 +214,7 @@ public final class ChatService implements Listener {
             messages.send(player, "mute.cannot-write",
                     "duration", AccessManager.describeRemaining(mute.until - now),
                     "reason", mute.reason == null || mute.reason.isBlank()
-                            ? "" : messages.raw("mute.notice-reason", "reason", mute.reason));
+                            ? "" : messages.mini("mute.notice-reason", "reason", mute.reason));
             return;
         }
 
@@ -249,7 +309,7 @@ public final class ChatService implements Listener {
         boolean colorAllowed = cfg.allowColorCodes() && player.hasPermission(PERMISSION_COLOR);
         String format = channel == ChatConfig.Channel.GLOBAL ? cfg.globalFormat() : cfg.localFormat();
         Map<String, String> placeholders = new LinkedHashMap<>();
-        placeholders.put("%player%", player.getName());
+        placeholders.put("%player%", decorated(player.getName()));
         placeholders.put("%world%", player.getWorld().getName());
         String[] segments = splitFormat(format, placeholders);
         NamedTextColor bodyColor = extractTrailingColor(segments[0], NamedTextColor.WHITE);
@@ -446,40 +506,161 @@ public final class ChatService implements Listener {
      *  Automatic messages
      * ------------------------------------------------------------------ */
 
+    /**
+     * Дополнительные подстановки для автосообщений: сервис получает игрока и
+     * карту подстановок и может добавить свои (например, {@code balance}).
+     */
+    public void setPlaceholderProvider(java.util.function.BiConsumer<Player, java.util.Map<String, Object>> provider) {
+        this.placeholderProvider = provider;
+    }
+
     private void scheduleAutoMessages() {
         ChatConfig cfg = this.config;
-        if (!cfg.enabled() || !cfg.autoMessagesEnabled() || cfg.autoMessages().isEmpty()) return;
+        if (!cfg.enabled() || !cfg.autoMessagesEnabled() || cfg.autoMessageEntries().isEmpty()) return;
         long intervalTicks = Math.max(20L * 30L, cfg.autoMessagesIntervalSeconds() * 20L);
         autoMessageTask = Bukkit.getScheduler().runTaskTimer(
                 plugin, this::sendNextAutoMessage, intervalTicks, intervalTicks);
         logger.info("Automatic chat messages enabled: every " + cfg.autoMessagesIntervalSeconds()
-                + " second(s), " + cfg.autoMessages().size() + " message(s).");
+                + " second(s), " + cfg.autoMessageEntries().size() + " message(s).");
     }
 
-    private void sendNextAutoMessage() {
+    /** Сколько автосообщений настроено (для {@code /pass automessages list}). */
+    public int autoMessageCount() {
+        return config.autoMessageEntries().size();
+    }
+
+    /** Настроенные автосообщения в порядке конфига. */
+    public List<AutoMessage> autoMessageEntries() {
+        return config.autoMessageEntries();
+    }
+
+    /**
+     * Принудительно отправляет следующее автосообщение всей аудитории.
+     *
+     * @return сколько игроков его получили (0 — некому или нет подходящих текстов)
+     */
+    public int broadcastAutoMessageNow() {
+        return sendNextAutoMessage();
+    }
+
+    /**
+     * Отправляет конкретное сообщение одному игроку в обход условий — это
+     * предпросмотр для администратора, а не рассылка.
+     *
+     * @param index номер в списке, начиная с 1
+     * @return {@code true}, если сообщение найдено и отправлено
+     */
+    public boolean previewAutoMessage(Player player, int index) {
+        List<AutoMessage> entries = config.autoMessageEntries();
+        if (player == null || index < 1 || index > entries.size()) {
+            return false;
+        }
+        deliver(entries.get(index - 1), player, Bukkit.getOnlinePlayers().size());
+        return true;
+    }
+
+    private int sendNextAutoMessage() {
         ChatConfig cfg = this.config;
-        if (!cfg.enabled() || !cfg.autoMessagesEnabled()) return;
-        List<String> messages = cfg.autoMessages();
-        if (messages.isEmpty()) return;
-
-        int onlineCount = Bukkit.getOnlinePlayers().size();
-        if (onlineCount < cfg.autoMessagesMinimumPlayers()) return;
-
-        String raw;
-        if (cfg.autoMessagesRandomOrder()) {
-            raw = messages.get(ThreadLocalRandom.current().nextInt(messages.size()));
-        } else {
-            raw = messages.get(Math.floorMod(autoMessageIndex, messages.size()));
-            autoMessageIndex++;
+        if (!cfg.enabled() || !cfg.autoMessagesEnabled()) return 0;
+        List<? extends Player> audience = Bukkit.getOnlinePlayers().stream()
+                .filter(p -> p.hasPermission(PERMISSION_AUTO_MESSAGE)
+                        && accessManager.getStage(p) == AccessManager.PlayerStage.AUTHENTICATED).toList();
+        if (audience.isEmpty() || audience.size() < cfg.autoMessagesMinimumPlayers()) return 0;
+        int online = audience.size();
+        List<AutoMessage> candidates = cfg.autoMessageEntries().stream()
+                .filter(entry -> audience.stream().anyMatch(p -> eligible(entry, p, online))).toList();
+        if (candidates.isEmpty()) return 0;
+        AutoMessage chosen = pick(candidates);
+        lastAutoMessage = chosen.text();
+        rememberSent(chosen.text());
+        int delivered = 0;
+        for (Player player : audience) {
+            if (!eligible(chosen, player, online)) continue;
+            deliver(chosen, player, online);
+            delivered++;
         }
+        return delivered;
+    }
 
-        Component line = legacy(cfg.autoMessagesPrefix())
-                .append(legacy(applyPlaceholders(raw, Map.of("%online%", Integer.toString(onlineCount)))));
-        for (Player online : Bukkit.getOnlinePlayers()) {
-            if (!online.hasPermission(PERMISSION_AUTO_MESSAGE)) continue;
-            if (accessManager.getStage(online) != AccessManager.PlayerStage.AUTHENTICATED) continue;
-            online.sendMessage(line);
+    /** Выбор сообщения: по кругу или случайно, без повторов подряд. */
+    private AutoMessage pick(List<AutoMessage> candidates) {
+        if (!config.autoMessagesRandomOrder()) {
+            AutoMessage chosen = candidates.get(Math.floorMod(autoMessageIndex++, candidates.size()));
+            // Список кандидатов мог сузиться (игрок без аддона) — не повторяем предыдущее.
+            if (candidates.size() > 1 && chosen.text().equals(lastAutoMessage)) {
+                chosen = candidates.get(Math.floorMod(autoMessageIndex++, candidates.size()));
+            }
+            return chosen;
         }
+        List<AutoMessage> fresh = candidates.stream()
+                .filter(entry -> !recentAutoMessages.contains(entry.text())).toList();
+        List<AutoMessage> pool = fresh.isEmpty() ? candidates : fresh;
+        List<AutoMessage> different = pool.stream()
+                .filter(entry -> !entry.text().equals(lastAutoMessage)).toList();
+        if (!different.isEmpty()) {
+            pool = different;
+        }
+        return pool.get(java.util.concurrent.ThreadLocalRandom.current().nextInt(pool.size()));
+    }
+
+    /** Хранит до пяти последних текстов — этого хватает, чтобы не повторяться. */
+    private void rememberSent(String text) {
+        recentAutoMessages.addLast(text);
+        while (recentAutoMessages.size() > 5) {
+            recentAutoMessages.removeFirst();
+        }
+    }
+
+    /** Подстановки автосообщения: базовые + от других сервисов (баланс банка). */
+    private void deliver(AutoMessage message, Player player, int online) {
+        ChatConfig cfg = this.config;
+        var account = accessManager.store().getAccount(player.getName()).orElse(null);
+        long now = System.currentTimeMillis();
+        java.util.Map<String, Object> values = new java.util.LinkedHashMap<>();
+        values.put("online", online);
+        values.put("max", Bukkit.getMaxPlayers());
+        values.put("player", player.getName());
+        values.put("world", player.getWorld().getName());
+        values.put("pass_left", PlaceholderValues.passLeft(account, now));
+        values.put("pass_days", account == null ? 0 : PlaceholderValues.wholeDaysLeft(account.passUntil, now));
+        values.put("trial_days", accessManager.config().trialDays());
+        values.put("pass_type", passType(account, now));
+        var provider = placeholderProvider;
+        if (provider != null) {
+            try {
+                provider.accept(player, values);
+            } catch (RuntimeException exception) {
+                logger.warning("Автосообщение: поставщик подстановок упал: " + exception.getMessage());
+            }
+        }
+        Object[] placeholders = new Object[values.size() * 2];
+        int index = 0;
+        for (java.util.Map.Entry<String, Object> entry : values.entrySet()) {
+            placeholders[index++] = entry.getKey();
+            placeholders[index++] = entry.getValue();
+        }
+        player.sendMessage(messages.renderTemplate(cfg.autoMessagesPrefix() + message.text(), placeholders));
+    }
+
+    /** Подпись состояния проходки для {@code %pass_type%}. */
+    private String passType(RegistrationStore.PlayerAccount account, long now) {
+        if (account == null || !account.hasActivePass(now)) {
+            return messages.plain("presentation.no-pass");
+        }
+        boolean trial = "trial".equals(account.lastGrantSource) && account.passUntil == account.trialUntil;
+        return messages.plain(trial ? "presentation.trial" : "presentation.pass");
+    }
+
+    private boolean eligible(AutoMessage entry, Player player, int online) {
+        var account = accessManager.store().getAccount(player.getName()).orElse(null);
+        long now = System.currentTimeMillis();
+        boolean hasPass = account != null && account.hasActivePass(now);
+        boolean trial = hasPass && "trial".equals(account.lastGrantSource)
+                && account.trialUntil == account.passUntil;
+        boolean paid = hasPass && !trial;
+        boolean unsecured = accessManager.config().totpEnabled() && (account == null || !account.isTotpEnabled());
+        return entry.eligible(name -> Bukkit.getPluginManager().isPluginEnabled(name), player::hasPermission,
+                trial, unsecured, hasPass, paid, online);
     }
 
     /* ------------------------------------------------------------------ *
@@ -676,7 +857,7 @@ public final class ChatService implements Listener {
             messages.send(sender, "mute.list-entry",
                     "player", entry.playerName,
                     "remaining", AccessManager.describeRemaining(entry.remainingMillis(System.currentTimeMillis())),
-                    "reason", entry.reason.isBlank() ? messages.raw("mute.no-reason") : entry.reason);
+                    "reason", entry.reason.isBlank() ? messages.mini("mute.no-reason") : entry.reason);
             listed = true;
         }
         if (!listed) {
@@ -717,7 +898,7 @@ public final class ChatService implements Listener {
                     "duration", AccessManager.describeRemaining(minutes * 60_000L),
                     "reason", reason == null || reason.isBlank()
                             ? ""
-                            : messages.raw("mute.notice-reason", "reason", reason));
+                            : messages.mini("mute.notice-reason", "reason", reason));
         }
         return true;
     }
@@ -898,7 +1079,7 @@ public final class ChatService implements Listener {
                         "duration", AccessManager.describeRemaining(mute.until - System.currentTimeMillis()),
                         "reason", mute.reason.isBlank()
                                 ? ""
-                                : messages.raw("mute.notice-reason", "reason", mute.reason));
+                                : messages.mini("mute.notice-reason", "reason", mute.reason));
                 return true;
             }
             if (target.getUniqueId().equals(senderPlayer.getUniqueId())) {
@@ -930,7 +1111,7 @@ public final class ChatService implements Listener {
         boolean colorAllowed = cfg.allowColorCodes()
                 && (!(sender instanceof Player senderPlayer) || senderPlayer.hasPermission(PERMISSION_COLOR));
         Map<String, String> placeholders = new LinkedHashMap<>();
-        placeholders.put("%sender%", senderName);
+        placeholders.put("%sender%", sender instanceof Player ? decorated(senderName) : senderName);
         placeholders.put("%target%", target.getName());
 
         String[] receive = splitFormat(cfg.privateReceiveFormat(), placeholders);
@@ -1019,7 +1200,7 @@ public final class ChatService implements Listener {
             socialSpy.remove(player.getUniqueId());
         }
         messages.send(player, "socialspy.state",
-                "state", messages.raw(enabled ? "common.on" : "common.off"));
+                "state", Messages.trusted(messages.raw(enabled ? "common.on" : "common.off")));
         return true;
     }
 

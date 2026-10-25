@@ -1,0 +1,179 @@
+battlepass:
+  # Имя сезона (MiniMessage или старые &-коды), показывается в /battlepass.
+  # Плагин вставляет его как готовую разметку, поэтому <gold>…</gold> здесь — цвет,
+  # а не текст.
+  season-name: "<gold>Сезон «Первая стужа»</gold>"
+  # Дата старта сезона (UTC). От неё считаются волны.
+  season-start: "2026-10-13"
+  # Дата окончания сезона (UTC). Пусто — сезон бессрочный.
+  # После этой даты прогресс замораживается (новые задания не засчитываются),
+  # но награды за уже выполненные задания можно забрать.
+  season-end: ""
+  # Как часто сохранять прогресс на диск, секунды (30–3600). Дополнительно прогресс
+  # сохраняется при выходе игрока и при выключении сервера.
+  autosave-seconds: 300
+  # Считать ли глубокосланцевую руду за обычную, а обтёсанное бревно — за то же
+  # дерево (см. BattlePassVariants). false — только точное совпадение материала.
+  match-variants: true
+
+  # Премиум-трек: дополнительная колонка наград за задания.
+  # Открывается товаром каталога ядра (секция shop в config.yml ядра), а не
+  # рангом: ранг — это комфорт и оформление, а боевой пропуск — к наградам.
+  # Награды премиум-трека не дают игровой силы: дни ранга и товары каталога
+  # (косметика, оформление) — те же, что продаются поштучно.
+  premium:
+    # Со ступени донатного ранга премиум-трек открыт без отдельной покупки (1.4.167).
+    min-rank: 4
+    # false — премиум-колонка не показывается и не выдаётся.
+    enabled: true
+    # id товара каталога ядра, который открывает премиум-трек.
+    # Товар продаётся на витрине той же командой pass shopbuy.
+    product: battlepass-premium
+
+  # Честная игра: что не должно засчитываться в задания.
+  fair-play:
+    # Считать прогресс игроков в креативе (по умолчанию нет).
+    count-creative: false
+    # Не засчитывать блок, который игрок сам поставил и тут же сломал.
+    ignore-player-placed: true
+    # Сколько секунд помнить поставленные блоки (30–7200).
+    placed-memory-seconds: 600
+
+  # Оформление и подсказки.
+  display:
+    # Длина полосы прогресса в секциях (3–16).
+    bar-width: 8
+    # Звук при выполнении задания и получении награды.
+    sounds: true
+    # Короткие подсказки над хотбаром.
+    actionbar: true
+    # Сообщать игроку, что открылась новая волна (один раз на волну).
+    announce-new-waves: true
+    # Разрешить /battlepass menu (графическое меню с кликами).
+    menu: true
+
+  # Награды за задания: дни ранга. free — всем, vip — дополнительно владельцам
+  # активного ранга. points — очки сезона для /battlepass top (по умолчанию 10).
+  #
+  # id задания — короткое имя для /battlepass claim <id>; desc — строка в списке
+  # заданий (MiniMessage или &-коды, как у season-name).
+  #
+  # Виды заданий (type):
+  #   MINE <материал>   — добыть блоки (material: DIAMOND_ORE, ANCIENT_DEBRIS…)
+  #   PLACE <материал>  — поставить блоки
+  #   KILL <сущность>   — победить мобов (entity: ZOMBIE, SKELETON, ANY…)
+  #   BREED <сущность>  — развести животных
+  #   CRAFT <материал>  — скрафтить предметы
+  #   SMELT <материал>  — выплавить в печи (засчитывается при выемке)
+  #   ENCHANT <материал> — зачаровать предметы
+  #   FISH any          — выловить рыбу (entity: ANY ловит любой улов)
+  #
+  # Несколько целей в одном задании: material/entity: "ZOMBIE|HUSK|DROWNED".
+  # Дополнительные ключи задания (все необязательные):
+  #   worlds: [world]           — считать только в этих мирах (пусто — везде)
+  #   permission: chrdkbp.vip   — задание считается только с этим правом
+  #   icon: DIAMOND             — иконка в меню (пусто — по типу задания)
+  #   premium-days: 3           — дни ранга в премиум-треке
+  #   premium-products: [nick-color] — товары каталога ядра в премиум-треке (до 5)
+  weeks:
+    - unlock-day: 0
+      missions:
+        - id: mine_diamonds
+          desc: "<gray>Добыть алмазную руду</gray>"
+          type: MINE
+          material: DIAMOND_ORE
+          target: 16
+          free-days: 1
+          vip-days: 2
+          premium-days: 2
+          points: 20
+        - id: hunt_zombies
+          desc: "<gray>Победить зомби</gray>"
+          type: KILL
+          entity: "ZOMBIE|HUSK|DROWNED"
+          target: 40
+          free-days: 1
+          vip-days: 1
+          premium-products: [trail-flame]
+          points: 20
+        - id: angler
+          desc: "<gray>Поймать рыбу</gray>"
+          type: FISH
+          entity: ANY
+          target: 10
+          free-days: 1
+          vip-days: 1
+          points: 10
+        - id: builder
+          desc: "<gray>Построить 128 блоков</gray>"
+          type: PLACE
+          material: "COBBLESTONE|STONE|OAK_PLANKS"
+          target: 128
+          free-days: 1
+          vip-days: 1
+          points: 15
+          icon: BRICKS
+    - unlock-day: 7
+      missions:
+        - id: mine_ancient
+          desc: "<gray>Добыть древние обломки</gray>"
+          type: MINE
+          material: ANCIENT_DEBRIS
+          target: 6
+          free-days: 2
+          vip-days: 3
+          premium-days: 3
+          points: 30
+        - id: craft_netherite
+          desc: "<gray>Сковать незеритовый предмет</gray>"
+          type: CRAFT
+          material: NETHERITE_INGOT
+          target: 2
+          free-days: 1
+          vip-days: 2
+          points: 25
+        - id: hunt_skeletons
+          desc: "<gray>Победить скелетов</gray>"
+          type: KILL
+          entity: "SKELETON|STRAY|BOGGED"
+          target: 60
+          free-days: 1
+          vip-days: 1
+          premium-products: [nick-color]
+          points: 20
+        - id: smelter
+          desc: "<gray>Выплавить 64 слитка</gray>"
+          type: SMELT
+          material: "IRON_INGOT|GOLD_INGOT"
+          target: 64
+          free-days: 1
+          vip-days: 2
+          points: 20
+    - unlock-day: 14
+      missions:
+        - id: enchanter
+          desc: "<gray>Зачаровать 3 предмета</gray>"
+          type: ENCHANT
+          material: "DIAMOND_SWORD|DIAMOND_PICKAXE|DIAMOND_CHESTPLATE"
+          target: 3
+          free-days: 2
+          vip-days: 2
+          premium-days: 4
+          points: 30
+        - id: farmer
+          desc: "<gray>Развести 10 животных</gray>"
+          type: BREED
+          entity: "COW|PIG|SHEEP|CHICKEN"
+          target: 10
+          free-days: 1
+          vip-days: 1
+          points: 15
+        - id: nether_miner
+          desc: "<gray>Добыть 256 блоков в Нижнем мире</gray>"
+          type: MINE
+          material: "NETHERRACK|BLACKSTONE"
+          target: 256
+          free-days: 1
+          vip-days: 2
+          points: 25
+          worlds: ["world_nether"]

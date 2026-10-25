@@ -1,31 +1,55 @@
-name: CHRDK_F_REGISTER
+name: CHRDK_Core
 version: '${version}'
 main: ru.cherdakmd.chrdkregister.RegisterPlugin
-api-version: '1.21.11'
+api-version: '26.3'
+softdepend:
+  - PlaceholderAPI
+  - Vault
+  - LuckPerms
 authors:
   - cherdakmd
-description: Плагин проходки через DonatePay (150р на 1 месяц) с регистрацией, авторизацией по паролю, TOTP 2FA и встроенным чатом (локальный/глобальный, ЛС, автосообщения) для Purpur 1.21.11
+description: Ядро CHERDAK для Purpur 26.3 — пять донатных рангов, регистрация, вход по паролю, TOTP 2FA, чат, банк и профиль игрока
 
 commands:
   register:
-    description: Зарегистрировать аккаунт паролем после получения проходки
+    description: Зарегистрировать аккаунт и активировать приветственный ранг
     usage: /<command> <пароль> <повтор>
     aliases: [reg]
   login:
     description: Войти в аккаунт по паролю (и коду 2FA, если подключена)
     usage: /<command> <пароль> [код_2FA]
     aliases: [l]
+  profile:
+    description: "Карточка игрока: ранг, банк и разделы аддонов одной страницей"
+    usage: /<command> [chat] [ник]
+    aliases: [prof]
+  menu:
+    description: "Главное меню сервера (GUI): ранг и аккаунт, прогресс, экономика, мир, снаряжение, охота и общество"
+    usage: /<command>
+  rank:
+    description: "Витрина донатных рангов: карточки, мой ранг, покровители, правила"
+    usage: /<command> [shop|my|top|rules]
+  hat:
+    description: "Надеть блок из руки на голову (преимущество Покровителя)"
+    usage: /<command>
+  rankadmin:
+    description: "Ручная выдача и снятие донатных рангов"
+    permission: chrdkregister.admin
+    usage: /<command> <give <ник> <ступень 1..5> [дней] | take <ник> | info <ник>>
+  captcha:
+    description: Ответ на проверку «ты не бот» после серии неудачных попыток входа
+    usage: /<command> <число>
   changepassword:
     description: Сменить пароль аккаунта
     usage: /<command> <старый_пароль> <новый_пароль>
     aliases: [cp, changepass]
   2fa:
     description: Двухфакторная аутентификация TOTP (Google Authenticator / 2FAS / Authy)
-    usage: /<command> [setup|confirm|disable|status|cancel|<6-значный_код>]
+    usage: /<command> [setup|qr|confirm|disable|status|cancel|<6-значный_код>]
     aliases: [totp, twofactor]
   pass:
-    description: Проверка статуса проходки и управление проходками
-    usage: /<command> [add|remove|check|unregister|reset2fa|status|reload] [ник]
+    description: Проверка статуса ранга и управление рангами
+    usage: /<command> [menu|shop|my|add|remove|check|unregister|reset2fa|status|reload|shopbuy|shoprevoke|shopgift] [ник]
     aliases: [fregister, prohodka]
   chat:
     description: Управление чатом — локальный/глобальный режим, очистка, объявления
@@ -57,17 +81,50 @@ commands:
     description: Показать активные сессии аккаунта (IP, последний вход)
     usage: /<command> [end]
     aliases: [sessions]
+  guide:
+    description: Получить книгу-путеводитель по серверу
+    usage: /<command>
   mute:
     description: Запретить игроку писать в чат на заданное время
     usage: /<command> <ник> <10m|2h|1d> [причина]
   unmute:
     description: Снять мут с игрока
     usage: /<command> <ник>
+  bal:
+    description: Баланс алмазного банка, депозит и снятие
+    usage: /<command> [ник|deposit [all|hand|сумма]|withdraw <сумма>]
+    aliases: [balance, money, bank]
+  pay:
+    description: Перевести алмазы другому игроку
+    usage: /<command> <ник> <сумма>
+    aliases: [payto]
+  baltop:
+    description: Топ игроков по балансу банка
+    usage: /<command> [страница]
+    aliases: [balancetop, topbal]
 
 permissions:
+  chrdkregister.menu:
+    description: Главное меню сервера /menu (GUI)
+    default: true
+  chrdkregister.bal:
+    description: Банк алмазов — /bal, депозит и снятие
+    default: true
+  chrdkregister.bal.others:
+    description: Смотреть чужой баланс через /bal <ник>
+    default: true
+  chrdkregister.pay:
+    description: Переводы алмазов через /pay
+    default: true
+  chrdkregister.baltop:
+    description: Топ балансов /baltop
+    default: true
   chrdkregister.admin:
     description: Доступ к ручному добавлению игроков и управлению плагином
     default: op
+  chrdkregister.guide:
+    description: Получать книгу-путеводитель командой /guide
+    default: true
   chrdkregister.chat.color:
     description: Использование цветовых кодов (&c, &l и т.п.) в чате и личных сообщениях
     default: op
@@ -92,3 +149,9 @@ permissions:
   chrdkregister.chat.history:
     description: Просмотр истории чата командой /chat history
     default: op
+  chrdkregister.profile:
+    description: "Открывать свою карточку /profile"
+    default: true
+  chrdkregister.profile.others:
+    description: "Смотреть /profile других игроков"
+    default: true

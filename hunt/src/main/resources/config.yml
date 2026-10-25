@@ -1,0 +1,658 @@
+# CHRDK_Hunt — охота на мобов: монеты, осколки пяти семейств, трофеи и ключи.
+#
+# Монеты и осколки — это кошелёк в hunt.json, а не предметы: их нельзя потерять
+# при смерти, нельзя передать другому игроку и нельзя продублировать.
+# Ванильный дроп (кость, кожа, порох и т.п.) падает обычными вещами.
+#
+# Антифарм: мобы со спавнера, из яйца и созданные командой добычи не дают.
+# Поэтому охота — это поход в мир, а не ферма на участке.
+#
+# Монеты тратятся в лавке и меняются на алмазы у скупщика с суточным потолком:
+# именно потолок не даёт охоте заменить шахту и разогнать экономику.
+#
+# Неизвестный материал или моб пропускается с предупреждением в лог, а не
+# роняет плагин. Все числа зажимаются в безопасные границы.
+
+general:
+  # Главный выключатель: false — добыча не начисляется, кошельки сохраняются.
+  enabled: true
+  locale: ru
+  # Сколько строк в /hunt top (3..50).
+  top-size: 10
+  # Показывать строку с добычей в экшен-баре.
+  actionbar: true
+  # Миры, где охота выключена (например, творческий или тестовый).
+  disabled-worlds: []
+
+limits:
+  # Сколько монет можно заработать за календарные сутки UTC (0 — без лимита).
+  # Осколки и ключи этим лимитом не ограничены: они и так падают по шансу.
+  coins-per-day: 2000
+  # Сколько алмазов можно получить за монеты за сутки UTC (0 — обмен закрыт).
+  # Это главный потолок экономики: 8 алмазов в сутки.
+  exchange-per-day: 8
+  # Курс: сколько монет стоит один алмаз (1..100000).
+  coins-per-diamond: 40
+  # Минимальный обмен в алмазах. Клик по алмазу в меню меняет ровно столько.
+  exchange-min: 1
+
+anti-farm:
+  # Мобы со спавнера (обычного и испытательного) не дают добычи.
+  block-spawners: true
+  # Мобы из яйца призыва и выброшенного яйца не дают добычи.
+  block-eggs: true
+  # Мобы, созданные командой (в том числе /summon), не дают добычи.
+  block-command: true
+
+# Семейства мобов. У каждого свой осколок, ключ и сундук.
+#   coin-multiplier — множитель монет для всех мобов семейства;
+#   shard-item/key-item — иконки в меню;
+#   chest — что выпадает за один ключ (монеты, осколки, алмазы и вещи).
+families:
+  undead:
+    name: "Нежить"
+    shard: "Осколок кости"
+    key: "Ключ склепа"
+    coin-multiplier: 1.0
+    shard-item: BONE
+    key-item: TRIAL_KEY
+    chest:
+      coins: [12, 28]
+      shards: [2, 4]
+      diamonds-chance: 8
+      diamonds: [1, 1]
+      loot:
+        - item: BONE
+          amount: [8, 16]
+          chance: 55
+        - item: ROTTEN_FLESH
+          amount: [6, 12]
+          chance: 45
+        - item: IRON_INGOT
+          amount: [1, 2]
+          chance: 12
+        - item: GOLD_NUGGET
+          amount: [2, 6]
+          chance: 20
+  beasts:
+    name: "Твари"
+    shard: "Осколок клыка"
+    key: "Ключ логова"
+    coin-multiplier: 1.0
+    shard-item: PHANTOM_MEMBRANE
+    key-item: TRIAL_KEY
+    chest:
+      coins: [15, 32]
+      shards: [2, 4]
+      diamonds-chance: 8
+      diamonds: [1, 1]
+      loot:
+        - item: LEATHER
+          amount: [3, 6]
+          chance: 45
+        - item: FEATHER
+          amount: [4, 8]
+          chance: 35
+        - item: BONE
+          amount: [4, 8]
+          chance: 30
+        - item: SLIME_BALL
+          amount: [1, 3]
+          chance: 15
+  arthropods:
+    name: "Членистоногие"
+    shard: "Осколок панциря"
+    key: "Ключ норы"
+    coin-multiplier: 0.9
+    shard-item: FERMENTED_SPIDER_EYE
+    key-item: TRIAL_KEY
+    chest:
+      coins: [10, 24]
+      shards: [2, 5]
+      diamonds-chance: 7
+      diamonds: [1, 1]
+      loot:
+        - item: STRING
+          amount: [6, 12]
+          chance: 55
+        - item: SPIDER_EYE
+          amount: [2, 4]
+          chance: 35
+        - item: FERMENTED_SPIDER_EYE
+          amount: [1, 2]
+          chance: 12
+        - item: COBWEB
+          amount: [2, 4]
+          chance: 10
+  nether:
+    name: "Нижний мир"
+    shard: "Осколок пламени"
+    key: "Ключ портала"
+    coin-multiplier: 1.15
+    shard-item: BLAZE_POWDER
+    key-item: TRIAL_KEY
+    chest:
+      coins: [25, 50]
+      shards: [3, 6]
+      diamonds-chance: 14
+      diamonds: [1, 1]
+      loot:
+        - item: BLAZE_POWDER
+          amount: [3, 6]
+          chance: 40
+        - item: GOLD_NUGGET
+          amount: [6, 12]
+          chance: 40
+        - item: MAGMA_CREAM
+          amount: [1, 2]
+          chance: 20
+        - item: QUARTZ
+          amount: [4, 8]
+          chance: 35
+  end:
+    name: "Край и глубина"
+    shard: "Осколок пустоты"
+    key: "Ключ бездны"
+    coin-multiplier: 1.2
+    shard-item: ENDER_PEARL
+    key-item: TRIAL_KEY
+    chest:
+      coins: [30, 60]
+      shards: [3, 6]
+      diamonds-chance: 16
+      diamonds: [1, 1]
+      loot:
+        - item: ENDER_PEARL
+          amount: [1, 3]
+          chance: 45
+        - item: CHORUS_FRUIT
+          amount: [2, 5]
+          chance: 35
+        - item: SHULKER_SHELL
+          amount: [1, 1]
+          chance: 8
+        - item: GOLD_INGOT
+          amount: [1, 2]
+          chance: 20
+
+# Правила добычи с мобов.
+#   family       — семейство (осколок и ключ берутся оттуда);
+#   coins        — минимум и максимум монет за убийство;
+#   shard-chance — шанс осколка в процентах, shards — сколько выпадет;
+#   key-chance   — шанс ключа в процентах;
+#   boss         — объявление в чат и громкий звук;
+#   loot         — дополнительный ванильный дроп.
+# Мирные животные (корова, свинья, курица) намеренно не в списке: охота — это бой,
+# а не забой фермы.
+mobs:
+  ZOMBIE:
+    family: undead
+    coins: [2, 5]
+    shard-chance: 15
+    shards: [1, 1]
+    key-chance: 1.0
+    loot:
+      - item: ROTTEN_FLESH
+        amount: [1, 2]
+        chance: 25
+  ZOMBIE_VILLAGER:
+    family: undead
+    coins: [2, 4]
+    shard-chance: 15
+    shards: [1, 1]
+    key-chance: 0.8
+    loot:
+      - item: ROTTEN_FLESH
+        amount: [1, 2]
+        chance: 25
+  HUSK:
+    family: undead
+    coins: [3, 6]
+    shard-chance: 18
+    shards: [1, 1]
+    key-chance: 1.2
+  DROWNED:
+    family: undead
+    coins: [3, 6]
+    shard-chance: 18
+    shards: [1, 1]
+    key-chance: 1.2
+    loot:
+      - item: ROTTEN_FLESH
+        amount: [1, 2]
+        chance: 20
+  SKELETON:
+    family: undead
+    coins: [2, 5]
+    shard-chance: 15
+    shards: [1, 1]
+    key-chance: 1.0
+    loot:
+      - item: BONE
+        amount: [1, 2]
+        chance: 30
+  STRAY:
+    family: undead
+    coins: [3, 6]
+    shard-chance: 18
+    shards: [1, 1]
+    key-chance: 1.2
+  BOGGED:
+    family: undead
+    coins: [3, 6]
+    shard-chance: 18
+    shards: [1, 1]
+    key-chance: 1.2
+  ZOMBIE_HORSE:
+    family: undead
+    coins: [2, 4]
+    shard-chance: 12
+    shards: [1, 1]
+  SKELETON_HORSE:
+    family: undead
+    coins: [2, 4]
+    shard-chance: 12
+    shards: [1, 1]
+  CREEPER:
+    family: beasts
+    coins: [4, 8]
+    shard-chance: 20
+    shards: [1, 1]
+    key-chance: 1.5
+    loot:
+      - item: GUNPOWDER
+        amount: [1, 3]
+        chance: 35
+  SLIME:
+    family: beasts
+    coins: [2, 5]
+    shard-chance: 15
+    shards: [1, 1]
+    key-chance: 1.0
+    loot:
+      - item: SLIME_BALL
+        amount: [1, 2]
+        chance: 30
+  PHANTOM:
+    family: beasts
+    coins: [5, 9]
+    shard-chance: 22
+    shards: [1, 2]
+    key-chance: 1.8
+    loot:
+      - item: PHANTOM_MEMBRANE
+        amount: [1, 2]
+        chance: 35
+  RAVAGER:
+    family: beasts
+    coins: [18, 30]
+    shard-chance: 45
+    shards: [1, 2]
+    key-chance: 6.0
+    loot:
+      - item: SADDLE
+        amount: [1, 1]
+        chance: 8
+  WITCH:
+    family: beasts
+    coins: [6, 12]
+    shard-chance: 25
+    shards: [1, 2]
+    key-chance: 2.5
+  GUARDIAN:
+    family: beasts
+    coins: [5, 9]
+    shard-chance: 20
+    shards: [1, 1]
+    key-chance: 1.8
+    loot:
+      - item: PRISMARINE_SHARD
+        amount: [2, 4]
+        chance: 40
+  SPIDER:
+    family: arthropods
+    coins: [3, 6]
+    shard-chance: 18
+    shards: [1, 1]
+    key-chance: 1.2
+    loot:
+      - item: STRING
+        amount: [1, 3]
+        chance: 35
+  CAVE_SPIDER:
+    family: arthropods
+    coins: [5, 9]
+    shard-chance: 22
+    shards: [1, 2]
+    key-chance: 1.8
+  SILVERFISH:
+    family: arthropods
+    coins: [2, 4]
+    shard-chance: 10
+    shards: [1, 1]
+    key-chance: 0.6
+  BLAZE:
+    family: nether
+    coins: [8, 14]
+    shard-chance: 30
+    shards: [1, 2]
+    key-chance: 3.0
+    loot:
+      - item: BLAZE_ROD
+        amount: [1, 2]
+        chance: 30
+  GHAST:
+    family: nether
+    coins: [10, 16]
+    shard-chance: 32
+    shards: [1, 2]
+    key-chance: 3.2
+    loot:
+      - item: GHAST_TEAR
+        amount: [1, 1]
+        chance: 15
+  MAGMA_CUBE:
+    family: nether
+    coins: [6, 10]
+    shard-chance: 25
+    shards: [1, 1]
+    key-chance: 2.0
+    loot:
+      - item: MAGMA_CREAM
+        amount: [1, 2]
+        chance: 30
+  PIGLIN:
+    family: nether
+    coins: [4, 8]
+    shard-chance: 18
+    shards: [1, 1]
+    key-chance: 1.5
+  PIGLIN_BRUTE:
+    family: nether
+    coins: [14, 22]
+    shard-chance: 38
+    shards: [1, 2]
+    key-chance: 4.0
+  HOGLIN:
+    family: nether
+    coins: [6, 10]
+    shard-chance: 22
+    shards: [1, 1]
+    key-chance: 2.0
+  ZOGLIN:
+    family: nether
+    coins: [6, 10]
+    shard-chance: 22
+    shards: [1, 1]
+    key-chance: 2.0
+  ZOMBIFIED_PIGLIN:
+    family: nether
+    coins: [4, 8]
+    shard-chance: 18
+    shards: [1, 1]
+    key-chance: 1.5
+  WITHER_SKELETON:
+    family: nether
+    coins: [12, 20]
+    shard-chance: 35
+    shards: [1, 2]
+    key-chance: 3.5
+    loot:
+      - item: COAL
+        amount: [1, 3]
+        chance: 30
+  ENDERMAN:
+    family: end
+    coins: [10, 16]
+    shard-chance: 32
+    shards: [1, 2]
+    key-chance: 3.0
+    loot:
+      - item: ENDER_PEARL
+        amount: [1, 1]
+        chance: 35
+  SHULKER:
+    family: end
+    coins: [12, 18]
+    shard-chance: 35
+    shards: [1, 2]
+    key-chance: 3.5
+    loot:
+      - item: SHULKER_SHELL
+        amount: [1, 1]
+        chance: 10
+  ENDERMITE:
+    family: end
+    coins: [4, 8]
+    shard-chance: 15
+    shards: [1, 1]
+    key-chance: 1.0
+
+  # ------------------------------- боссы ------------------------------------
+  # Боссы дают много монет, гарантированный осколок и шанс ключа.
+  ELDER_GUARDIAN:
+    family: beasts
+    coins: [60, 90]
+    shard-chance: 100
+    shards: [2, 4]
+    key-chance: 35
+    boss: true
+  WITHER:
+    family: nether
+    coins: [150, 220]
+    shard-chance: 100
+    shards: [3, 5]
+    key-chance: 45
+    boss: true
+  WARDEN:
+    family: end
+    coins: [180, 260]
+    shard-chance: 100
+    shards: [3, 6]
+    key-chance: 50
+    boss: true
+  ENDER_DRAGON:
+    family: end
+    coins: [250, 350]
+    shard-chance: 100
+    shards: [4, 6]
+    key-chance: 60
+    boss: true
+
+# Бестиарий — журнал убитых видов. Раздел = семейство, вид = моб из секции mobs.
+# Отдельный список мобов здесь не нужен: добавили моба в mobs — он появился в
+# журнале. Награда выдаётся один раз за закрытый раздел (убит каждый его вид)
+# и не входит в суточный потолок монет: это разовая награда, а не фарм.
+#   sections.<семейство> — coins/shards/keys: что дать за закрытие раздела;
+#   icons.<ТИП_МОБА> — иконка в меню (по умолчанию голова моба или яйцо призыва);
+#   full-coins — разовая награда за все закрытые разделы;
+#   enabled: false — меню бестиария выключено, счётчики не ведутся.
+bestiary:
+  enabled: true
+  full-coins: 1500
+  sections:
+    undead:
+      coins: 150
+      shards: 10
+      keys: 1
+    beasts:
+      coins: 150
+      shards: 10
+      keys: 1
+    arthropods:
+      coins: 100
+      shards: 8
+      keys: 1
+    nether:
+      coins: 200
+      shards: 12
+      keys: 1
+    end:
+      coins: 250
+      shards: 12
+      keys: 1
+  # Иконки можно переопределить, если голова моба смотрится неудачно:
+  # icons:
+  #   ZOMBIE: ROTTEN_FLESH
+  #   ENDER_DRAGON: DRAGON_BREATH
+
+# Лавка. В ней только бытовые вещи: еда, свет и расходники. Оружия, брони,
+# инструментов, зачарований и алмазов здесь нет — монеты не дают боевой силы.
+#   item   — что продаётся; amount — сколько штук в покупке; price — цена в монетах;
+#   daily-limit — сколько покупок в сутки (0 — без лимита);
+#   min-coins-earned — сколько монет нужно заработать за всё время (стаж охотника).
+shop:
+  bread:
+    item: BREAD
+    amount: 8
+    price: 18
+    daily-limit: 8
+    min-coins-earned: 0
+  beef:
+    item: COOKED_BEEF
+    amount: 4
+    price: 30
+    daily-limit: 6
+    min-coins-earned: 0
+  torch:
+    item: TORCH
+    amount: 16
+    price: 12
+    daily-limit: 10
+    min-coins-earned: 0
+  hay:
+    item: HAY_BLOCK
+    amount: 2
+    price: 24
+    daily-limit: 6
+    min-coins-earned: 0
+  bone_meal:
+    item: BONE_MEAL
+    amount: 8
+    price: 16
+    daily-limit: 8
+    min-coins-earned: 0
+  leather:
+    item: LEATHER
+    amount: 4
+    price: 40
+    daily-limit: 4
+    min-coins-earned: 300
+  glowstone:
+    item: GLOWSTONE_DUST
+    amount: 8
+    price: 36
+    daily-limit: 4
+    min-coins-earned: 300
+  honey:
+    item: HONEY_BOTTLE
+    amount: 2
+    price: 30
+    daily-limit: 4
+    min-coins-earned: 1200
+
+# Трофеи — только коллекция и предмет для рамки: никаких бонусов.
+#   family — чьи осколки нужны; shards — сколько осколков; coins — сколько монет;
+#   item — материал предмета; name/lore — MiniMessage-текст;
+#   min-coins-earned — порог стажа.
+trophies:
+  undead_skull:
+    family: undead
+    item: SKELETON_SKULL
+    name: "<gray>Череп старого сторожа</gray>"
+    lore:
+      - "<dark_gray>Он всё ещё смотрит в сторону шахты.</dark_gray>"
+    shards: 12
+    coins: 120
+    min-coins-earned: 0
+  undead_lantern:
+    family: undead
+    item: SOUL_LANTERN
+    name: "<aqua>Фонарь на костях</aqua>"
+    lore:
+      - "<dark_gray>Светит так, будто кто-то ходит рядом.</dark_gray>"
+    shards: 30
+    coins: 300
+    min-coins-earned: 300
+  beast_fang:
+    family: beasts
+    item: PHANTOM_MEMBRANE
+    name: "<white>Клык ночной твари</white>"
+    lore:
+      - "<dark_gray>Снят с того, кто боялся рассвета.</dark_gray>"
+    shards: 12
+    coins: 120
+    min-coins-earned: 0
+  beast_horn:
+    family: beasts
+    item: GOAT_HORN
+    name: "<gold>Рог ревущей горы</gold>"
+    lore:
+      - "<dark_gray>Если дунуть, отзовётся эхо в трёх долинах.</dark_gray>"
+    shards: 30
+    coins: 300
+    min-coins-earned: 300
+  spider_eye:
+    family: arthropods
+    item: FERMENTED_SPIDER_EYE
+    name: "<dark_red>Глаз старой паучихи</dark_red>"
+    lore:
+      - "<dark_gray>Восемь отражений, ни одного лица.</dark_gray>"
+    shards: 12
+    coins: 120
+    min-coins-earned: 0
+  spider_web:
+    family: arthropods
+    item: COBWEB
+    name: "<gray>Паутина-ловушка</gray>"
+    lore:
+      - "<dark_gray>Кто-то очень терпеливый плёл это годами.</dark_gray>"
+    shards: 30
+    coins: 300
+    min-coins-earned: 300
+  nether_ember:
+    family: nether
+    item: BLAZE_ROD
+    name: "<gold>Тлеющий уголь</gold>"
+    lore:
+      - "<dark_gray>Тёплый даже сквозь рамку.</dark_gray>"
+    shards: 12
+    coins: 120
+    min-coins-earned: 0
+  nether_tear:
+    family: nether
+    item: CRYING_OBSIDIAN
+    name: "<dark_purple>Слеза портала</dark_purple>"
+    lore:
+      - "<dark_gray>Плачет о тех, кто вошёл и не вернулся.</dark_gray>"
+    shards: 30
+    coins: 300
+    min-coins-earned: 300
+  end_eye:
+    family: end
+    item: ENDER_EYE
+    name: "<light_purple>Око бездны</light_purple>"
+    lore:
+      - "<dark_gray>Смотрит не на тебя, а сквозь.</dark_gray>"
+    shards: 12
+    coins: 120
+    min-coins-earned: 0
+  end_flower:
+    family: end
+    item: CHORUS_FLOWER
+    name: "<light_purple>Цветок пустоты</light_purple>"
+    lore:
+      - "<dark_gray>Растёт там, где нет ни земли, ни времени.</dark_gray>"
+    shards: 30
+    coins: 300
+    min-coins-earned: 1200
+
+# Звания охотника по монетам, заработанным за всё время. Текст звания — в
+# messages.yml, ключи rank.*. Звание даёт только статус и открывает позиции
+# лавки с порогом min-coins-earned.
+ranks:
+  0: novice
+  300: tracker
+  1200: hunter
+  4000: master
+  10000: legend

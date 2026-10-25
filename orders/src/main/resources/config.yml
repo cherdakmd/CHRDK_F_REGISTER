@@ -1,0 +1,327 @@
+# CHRDK_Orders — доска заказов от ботов.
+#
+# Боты (не игроки!) просят принести обычные предметы и платят алмазами.
+# Заказы генерируются случайно: заказчик, категория, материал, количество и
+# награда. Доска общая на весь сервер и живёт по времени: старые заказы
+# «уходят», на их место приходят новые.
+#
+# Почему от ботов: игроку не нужно ждать второго игрока в сети, а экономика не
+# зависит от чужих цен. Заказ — честный обмен «предметы → алмазы», а не
+# обещание доставки, поэтому escrow здесь не нужен.
+#
+# Сдаются только обычные (неименованные) предметы: зачарованные, переименованные
+# и прочие «особенные» заказы не принимают — так никто не сдаст случайно
+# дорогую находку вместо ресурса.
+#
+# Награда считается так:
+#   награда = количество × reward-per-item × rewards.premium × (1 ± jitter/100)
+# Дробная часть округляется, итог зажимается в rewards.min..rewards.max.
+# Алмазы выдаются предметами в инвентарь (остаток падает под ноги).
+
+general:
+  # Главный выключатель: false — доска закрыта, заказы не генерируются,
+  # репутация и прогресс сохраняются.
+  enabled: true
+  locale: ru
+  # Сколько строк в /orders top (3..50).
+  top-size: 10
+
+board:
+  # Сколько заказов висит на доске одновременно (1..14 — под размер меню).
+  size: 7
+  # Сколько часов заказ ждёт исполнителя (1..168). Настоящий срок — от 75 до
+  # 125 % этого числа, чтобы заказы не обновлялись все разом.
+  order-hours: 8
+
+rewards:
+  # Насколько бот щедрее «сырьевой» цены предмета. 1.0 — ровно цена,
+  # 1.25 — на четверть больше: за удобство и дорогу.
+  premium: 1.25
+  # Разброс награды в процентах (0..50): один и тот же заказ у разных ботов
+  # стоит по-разному.
+  jitter-percent: 20
+  # Границы награды за один заказ в алмазах (1..576).
+  min: 1
+  max: 64
+
+limits:
+  # Сколько заказов один игрок может сдать за сутки (0 — без ограничения).
+  # Считается по календарным суткам UTC, сбрасывается само.
+  max-per-day: 20
+  # Пауза между сдачами в секундах (0 — без паузы). Не даёт превратить
+  # доску в конвейер и сглаживает пики сдачи.
+  cooldown-seconds: 30
+
+# Репутация у ботов: +1 за обычный заказ, +2 за редкий (категория задаёт
+# число). Звание видно в /orders stats и в плейсхолдерах.
+reputation:
+  # Порог репутации → звание (текст — messages.yml, ключи rank.*).
+  ranks:
+    0: novice
+    5: trusted
+    15: regular
+    30: partner
+    60: master
+
+# Заказчики. Их имена и реплики видит игрок; категории определяют, что бот
+# просит. Бот без доступных категорий в выдачу не попадает.
+bots:
+  grom:
+    name: "Кузнец Гром"
+    categories: [ores, smithing]
+    thanks:
+      - "Доброе железо. Горн уже разогрет."
+      - "Вот это я понимаю — не ржавчина, а работа."
+  isa:
+    name: "Караванщица Иса"
+    categories: [farm, fishing]
+    thanks:
+      - "Караван пойдёт дальше. Держи, заслужил."
+      - "Провизия есть — значит, и путь есть."
+  vega:
+    name: "Звездочёт Вега"
+    categories: [deep, nether]
+    thanks:
+      - "Звёзды не соврали: ты пришёл."
+      - "В следующий раз я посмотрю на созвездие глубже."
+  krot:
+    name: "Старая Крот"
+    categories: [ores, deep]
+    thanks:
+      - "Вот так, глубже надо было, глубже..."
+      - "Камень не обманешь. И тебя не обману."
+  tihon:
+    name: "Рыбак Тихон"
+    categories: [fishing, farm]
+    thanks:
+      - "Уха будет. Садись, налью."
+      - "Тихая вода, верная рука — спасибо."
+  zarya:
+    name: "Травница Заря"
+    categories: [farm, nether]
+    thanks:
+      - "Вот это сбор! Пахнет, как надо."
+      - "Без этих корней зелье — просто вода."
+  shurup:
+    name: "Механик Шуруп"
+    categories: [hunt, ores]
+    thanks:
+      - "Годится. Починю, что собирался."
+      - "Крутится! Спасибо, друг."
+  mirra:
+    name: "Скупщица Мирра"
+    categories: [hunt, fishing, deep]
+    thanks:
+      - "Товар принят. Плата — как договаривались."
+      - "Хорошая партия. Приходи ещё."
+
+# Категории заказов.
+#   weight            — вес при случайном выборе (не проценты: нормализуется);
+#   min-reputation    — с какой репутации игрок может взять такой заказ;
+#   reputation        — сколько репутации даёт сдача (+1 обычный, +2 редкий);
+#   pass-days-chance  — шанс, что заказ дополнительно даст дни ранга;
+#   pass-days         — сколько дней дать при срабатывании шанса.
+# В items перечислены материалы: количество и цена за штуку в алмазах.
+# Материал, которого нет в игре, пропускается с предупреждением в лог.
+categories:
+  ores:
+    weight: 30
+    min-reputation: 0
+    reputation: 1
+    pass-days-chance: 0
+    pass-days: 0
+    items:
+      COAL:
+        amount-min: 48
+        amount-max: 64
+        reward-per-item: 0.02
+      COPPER_INGOT:
+        amount-min: 32
+        amount-max: 64
+        reward-per-item: 0.03
+      IRON_INGOT:
+        amount-min: 24
+        amount-max: 48
+        reward-per-item: 0.12
+      REDSTONE:
+        amount-min: 32
+        amount-max: 64
+        reward-per-item: 0.05
+      LAPIS_LAZULI:
+        amount-min: 16
+        amount-max: 32
+        reward-per-item: 0.10
+      QUARTZ:
+        amount-min: 24
+        amount-max: 48
+        reward-per-item: 0.05
+  farm:
+    weight: 26
+    min-reputation: 0
+    reputation: 1
+    pass-days-chance: 0
+    pass-days: 0
+    items:
+      WHEAT:
+        amount-min: 32
+        amount-max: 64
+        reward-per-item: 0.02
+      CARROT:
+        amount-min: 32
+        amount-max: 64
+        reward-per-item: 0.02
+      POTATO:
+        amount-min: 32
+        amount-max: 64
+        reward-per-item: 0.02
+      BEETROOT:
+        amount-min: 24
+        amount-max: 48
+        reward-per-item: 0.03
+      PUMPKIN:
+        amount-min: 12
+        amount-max: 24
+        reward-per-item: 0.06
+      SUGAR_CANE:
+        amount-min: 24
+        amount-max: 48
+        reward-per-item: 0.03
+      HONEY_BOTTLE:
+        amount-min: 8
+        amount-max: 16
+        reward-per-item: 0.15
+      EGG:
+        amount-min: 16
+        amount-max: 32
+        reward-per-item: 0.04
+  hunt:
+    weight: 20
+    min-reputation: 0
+    reputation: 1
+    pass-days-chance: 0
+    pass-days: 0
+    items:
+      BONE:
+        amount-min: 24
+        amount-max: 48
+        reward-per-item: 0.03
+      STRING:
+        amount-min: 24
+        amount-max: 48
+        reward-per-item: 0.05
+      GUNPOWDER:
+        amount-min: 16
+        amount-max: 32
+        reward-per-item: 0.10
+      SLIME_BALL:
+        amount-min: 12
+        amount-max: 24
+        reward-per-item: 0.15
+      ENDER_PEARL:
+        amount-min: 6
+        amount-max: 12
+        reward-per-item: 0.55
+      PHANTOM_MEMBRANE:
+        amount-min: 4
+        amount-max: 8
+        reward-per-item: 1.10
+  fishing:
+    weight: 14
+    min-reputation: 0
+    reputation: 1
+    pass-days-chance: 0
+    pass-days: 0
+    items:
+      COD:
+        amount-min: 16
+        amount-max: 32
+        reward-per-item: 0.04
+      SALMON:
+        amount-min: 16
+        amount-max: 32
+        reward-per-item: 0.04
+      PUFFERFISH:
+        amount-min: 4
+        amount-max: 8
+        reward-per-item: 0.35
+      TROPICAL_FISH:
+        amount-min: 4
+        amount-max: 8
+        reward-per-item: 0.40
+      NAUTILUS_SHELL:
+        amount-min: 3
+        amount-max: 6
+        reward-per-item: 1.20
+      PRISMARINE_SHARD:
+        amount-min: 12
+        amount-max: 24
+        reward-per-item: 0.10
+  nether:
+    weight: 8
+    min-reputation: 5
+    reputation: 1
+    pass-days-chance: 5
+    pass-days: 1
+    items:
+      BLAZE_ROD:
+        amount-min: 8
+        amount-max: 16
+        reward-per-item: 0.45
+      GHAST_TEAR:
+        amount-min: 3
+        amount-max: 6
+        reward-per-item: 0.90
+      MAGMA_CREAM:
+        amount-min: 8
+        amount-max: 16
+        reward-per-item: 0.30
+      NETHER_WART:
+        amount-min: 16
+        amount-max: 32
+        reward-per-item: 0.10
+      SOUL_SAND:
+        amount-min: 16
+        amount-max: 32
+        reward-per-item: 0.06
+  deep:
+    weight: 6
+    min-reputation: 10
+    reputation: 2
+    pass-days-chance: 8
+    pass-days: 1
+    items:
+      AMETHYST_SHARD:
+        amount-min: 12
+        amount-max: 24
+        reward-per-item: 0.12
+      ANCIENT_DEBRIS:
+        amount-min: 3
+        amount-max: 6
+        reward-per-item: 4.00
+      OBSIDIAN:
+        amount-min: 16
+        amount-max: 32
+        reward-per-item: 0.25
+      EMERALD:
+        amount-min: 4
+        amount-max: 8
+        reward-per-item: 0.90
+  smithing:
+    weight: 6
+    min-reputation: 15
+    reputation: 2
+    pass-days-chance: 10
+    pass-days: 1
+    items:
+      GOLD_INGOT:
+        amount-min: 16
+        amount-max: 32
+        reward-per-item: 0.15
+      NETHERITE_SCRAP:
+        amount-min: 2
+        amount-max: 4
+        reward-per-item: 3.00
+      OBSIDIAN:
+        amount-min: 24
+        amount-max: 48
+        reward-per-item: 0.25

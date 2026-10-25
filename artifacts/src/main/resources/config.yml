@@ -1,0 +1,172 @@
+# CHRDK_Artifacts — 65 артефактов (33 светлых, 32 проклятых). Метки артефактов и их
+# свойства ▲/▼ живут в PDC предметов; прогресс коллекции и кулдауны — в collection.json
+# и cooldowns.json рядом с этим файлом (с 1.4.130). Здесь включаемость, кулдауны и цена
+# активации в уровнях опыта для каждого артефакта, уникальные свойства, коллекция и
+# обратная связь.
+
+general:
+  locale: ru
+  # Пассивные и активные артефакты работают только для авторизованных игроков.
+  require-auth: true
+  # Период (в тиках) пульса пассивных эффектов (20 тиков = 1 сек).
+  passive-refresh-ticks: 40
+
+# Природные источники артефактов (шанс в %; 0 — источник выключен).
+sources:
+  # Вес стороны при броске артефакта: светлая vs проклятая (по умолчанию 70/30).
+  good-side-chance-percent: 70
+  # Сундуки: ключ таблицы лута (можно полный minecraft:chests/… или короткий).
+  chests:
+    minecraft:chests/ancient_city: 12
+    minecraft:chests/end_city_treasure: 15
+    minecraft:chests/bastion_treasure: 10
+    minecraft:chests/buried_treasure: 8
+    minecraft:chests/woodland_mansion: 6
+    minecraft:chests/shipwreck_treasure: 6
+    minecraft:chests/pillager_outpost: 4
+    minecraft:chests/desert_pyramid: 4
+    minecraft:chests/stronghold_corridor: 3
+    minecraft:chests/stronghold_crossing: 3
+    minecraft:chests/ruined_portal: 3
+    minecraft:chests/jungle_pyramid: 3
+    minecraft:chests/simple_dungeon: 2
+    minecraft:chests/abandoned_mineshaft: 2
+  # Мобы: шанс дропа при убийстве игроком (типы — EntityType).
+  mobs:
+    ENDER_DRAGON: 100
+    WITHER: 50
+    WARDEN: 25
+    ELDER_GUARDIAN: 12
+    RAVAGER: 3
+    EVOKER: 4
+  # Сокровище с рыбалки (ванильная категория treasure: лук, книга, удочка, бирка,
+  # ракушка, седло): дополнительная находка. Мусор (палка, кость, миска…) не считается.
+  fishing-treasure-percent: 3
+
+# Уникальные свойства артефактов (1.4.129): 15 полезных ▲ и 15 вредных ▼.
+# Свойства бросаются при выдаче предмета и живут в его PDC («artifact_traits»),
+# поэтому две копии одного артефакта могут отличаться. Светлому чаще достаётся
+# польза, проклятому — вред, но изредка бывает наоборот (cross-chance): изъян на
+# светлом артефакте и искра силы на проклятом делают предмет интереснее.
+traits:
+  # false — новые артефакты выдаются без свойств. Уже выданные свойства
+  # продолжают работать: это часть предмета, снимать её за спиной игрока нельзя.
+  enabled: true
+  # Шанс (%), что артефакт вообще получит свойство. 0 — только «чистые» предметы.
+  chance-percent: 55
+  # Потолок свойств на один предмет (0..3). Второе свойство выпадает с шансом 35%.
+  max-per-item: 2
+  # Потолок уровня свойства (1..3): I — слабый эффект, III — заметный.
+  max-level: 3
+  # Шанс «чужой» полярности, %: изъян на светлом или польза на проклятом.
+  cross-chance-percent: 12
+
+# Коллекция артефактов (1.4.130): какие артефакты игрок уже находил.
+# Открытие засчитывается, когда предмет попадает в инвентарь (подбор, выдача,
+# находка), а также разово при входе и открытии /artifacts collection.
+# Прогресс и выданные награды лежат в collection.json.
+collection:
+  enabled: true
+  # Награды за долю открытого каталога, %: дни ранга + алмазы. Выдаются
+  # один раз. Пустой блок (rewards: {}) вернёт набор по умолчанию — чтобы
+  # выключить награды, поставьте enabled: false или нули в полях.
+  rewards:
+    25: {pass-days: 1, diamonds: 8}
+    50: {pass-days: 2, diamonds: 16}
+    75: {pass-days: 3, diamonds: 24}
+    100: {pass-days: 7, diamonds: 32}
+
+# Обратная связь (1.4.130): экшнбар и звуки вместо «тонущих» строк в чате.
+feedback:
+  # Показывать активацию, остаток кулдауна и проклятия над хотбаром.
+  actionbar: true
+  # Звуки активации, отказа, находки.
+  sounds: true
+  # Проклятия не чаще одного сообщения в чат на артефакт за этот интервал (сек).
+  # 0 — писать каждый раз (старое поведение).
+  curse-message-seconds: 10
+
+# Мировые эффекты проклятых артефактов. «Раковина тоски» нагоняет грозу на весь мир,
+# «Расколотая Луна» и «Часы дурошлёпа» переводят время. На публичном сервере это
+# инструмент гриферства: выключите погоду/время или ограничьте список миров.
+world-effects:
+  weather: true
+  time: true
+  # Пусто — все миры; иначе только перечисленные (например: [world, world_nether]).
+  worlds: []
+
+# По-артефактные настройки. cooldown-seconds/xp-cost-levels имеют смысл для активных.
+artifacts:
+  # --- светлые: пассивные (работают просто из инвентаря) ---
+  solnechny-obereg: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  zhabii-kamen: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  dyhanie-gor: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  nochnoj-svetlyak: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  kamen-stojkosti: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  vetryanaya-spitsa: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  koren-zhizni: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  ruka-rudokopa: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  # --- светлые: активные (ПКМ артефактом) ---
+  grozovoj-kolokol: {enabled: true, cooldown-seconds: 90, xp-cost-levels: 2}
+  rog-tajgi: {enabled: true, cooldown-seconds: 45, xp-cost-levels: 1}
+  plamya-ochaga: {enabled: true, cooldown-seconds: 120, xp-cost-levels: 3}
+  kaplya-zhizni: {enabled: true, cooldown-seconds: 300, xp-cost-levels: 10}
+  klyuch-strannika: {enabled: true, cooldown-seconds: 180, xp-cost-levels: 5}
+  linza-providesa: {enabled: true, cooldown-seconds: 240, xp-cost-levels: 4}
+  hartiya-char: {enabled: true, cooldown-seconds: 3600, xp-cost-levels: 15}
+  # --- проклятые: пассивные ---
+  sleza-vdovy: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  golodnyj-koren: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  smolyanoj-mrak: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  krivoe-zerkalo: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  rzhavyj-gvozd: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  glinyanaya-dusha: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  pepel-pogroma: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  sushonyj-glaz: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  # --- проклятые: активные ---
+  chernaya-moneta: {enabled: true, cooldown-seconds: 300, xp-cost-levels: 0}
+  svistok-kostej: {enabled: true, cooldown-seconds: 180, xp-cost-levels: 2}
+  membrana-prizraka: {enabled: true, cooldown-seconds: 60, xp-cost-levels: 1}
+  rakovina-toski: {enabled: true, cooldown-seconds: 600, xp-cost-levels: 5}
+  zhalo-moroki: {enabled: true, cooldown-seconds: 120, xp-cost-levels: 2}
+  chasy-duroshljopa: {enabled: true, cooldown-seconds: 900, xp-cost-levels: 3}
+  porvannyj-kupon: {enabled: true, cooldown-seconds: 300, xp-cost-levels: 0}
+  # --- добрая волна (1.4.58, по мотивам CHRDK_REBORN): пассивные ---
+  pero-feniksa: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  magnit-opyta: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  zhnej-dush: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  ledyanaya-aura: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  ternistyj-plasch: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  travjanoj-eliksir: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  sapogi-vetra: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  klever-udachi: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  travyanoj-meshochek: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  serdtse-drakona: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  # --- добрая волна: активные (ПКМ) ---
+  svitok-ochischeniya: {enabled: true, cooldown-seconds: 240, xp-cost-levels: 5}
+  totem-krovi: {enabled: true, cooldown-seconds: 180, xp-cost-levels: 4}
+  sfera-pobega: {enabled: true, cooldown-seconds: 120, xp-cost-levels: 3}
+  ledyanaya-stena: {enabled: true, cooldown-seconds: 90, xp-cost-levels: 2}
+  glaz-nachala: {enabled: true, cooldown-seconds: 300, xp-cost-levels: 4}
+  korona-bezdny: {enabled: true, cooldown-seconds: 300, xp-cost-levels: 8}
+  ender-sdvig: {enabled: true, cooldown-seconds: 60, xp-cost-levels: 1}
+  oskolok-vechnosti: {enabled: true, cooldown-seconds: 600, xp-cost-levels: 12}
+  # --- тёмная волна: проклятые пассивные ---
+  okov-tyazhesti: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  pustoy-zhivot: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  slabye-kisti: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  krovavyj-svyaz: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  smertnyj-potok: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  chernye-slezy: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  ruga-zhadnosti: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  prah-marka: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  koltso-usmerti: {enabled: true, cooldown-seconds: 0, xp-cost-levels: 0}
+  # --- тёмная волна: проклятые активные ---
+  kniga-proklyatiy: {enabled: true, cooldown-seconds: 300, xp-cost-levels: 4}
+  zhertvennyj-kubok: {enabled: true, cooldown-seconds: 120, xp-cost-levels: 2}
+  raskolotaya-luna: {enabled: true, cooldown-seconds: 600, xp-cost-levels: 5}
+  shlyapa-bezdelnika: {enabled: true, cooldown-seconds: 30, xp-cost-levels: 0}
+  silok-dushi: {enabled: true, cooldown-seconds: 90, xp-cost-levels: 2}
+  oblaka-durmana: {enabled: true, cooldown-seconds: 120, xp-cost-levels: 2}
+  klyuch-propasti: {enabled: true, cooldown-seconds: 300, xp-cost-levels: 5}
+  svist-gadov: {enabled: true, cooldown-seconds: 180, xp-cost-levels: 3}

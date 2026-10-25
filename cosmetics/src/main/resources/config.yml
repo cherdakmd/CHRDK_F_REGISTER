@@ -1,0 +1,88 @@
+cosmetics:
+  # Шлейфы открываются ступенью донатного ранга (1.4.167): поле rank у шлейфа.
+  # Покупка одного шлейфа или набора работает и без ранга. access-pass-only —
+  # старое правило для шлейфов без поля rank.
+  access-pass-only: true
+  # Покупки каталога CHRDK_Core (секция shop в config.yml ядра).
+  shop:
+    # Учитывать покупки: шлейф открыт, если куплен его товар (поле product ниже)
+    # и срок ещё не истёк. Товары продаются командой /pass shopbuy.
+    enabled: true
+    # Товары-наборы: открывают сразу все шлейфы.
+    pack-products:
+      - trails-pack
+  # Шлейф частиц за игроком при ходьбе/беге.
+  trail:
+    enabled: true
+    # Как часто (тики) рисовать очередную порцию частиц. Минимум 2.
+    every-ticks: 4
+    # Доступные эффекты. particle — имя частицы из registry (flame, heart, note, end_rod, witch…).
+    defs:
+      - id: flame
+        name: "<red>Огненный шлейф</red>"
+        # Товар каталога ядра, открывающий шлейф без ранга (shop.products).
+        product: trail-flame
+        particle: flame
+        count: 3
+        spread: 0.15
+        speed: 0.0
+        rank: 1
+      - id: hearts
+        name: "<light_purple>Сердечки</light_purple>"
+        product: trail-hearts
+        particle: heart
+        count: 1
+        spread: 0.25
+        speed: 0.0
+        rank: 2
+      - id: notes
+        name: "<aqua>Ноты</aqua>"
+        product: trail-notes
+        particle: note
+        count: 2
+        spread: 0.3
+        speed: 1.0
+        rank: 2
+      - id: sparkles
+        name: "<yellow>Искры Энда</yellow>"
+        product: trail-sparkles
+        particle: end_rod
+        count: 2
+        spread: 0.2
+        speed: 0.0
+        rank: 3
+      - id: magic
+        name: "<dark_purple>Ведьмина магия</dark_purple>"
+        product: trail-magic
+        particle: witch
+        count: 4
+        spread: 0.25
+        speed: 0.0
+        rank: 3
+      # Эксклюзив Мецената и Покровителя (1.4.167): только за ранг, не продаётся поштучно.
+      - id: gold
+        name: "<gold>Золотая пыль</gold>"
+        product: ""
+        particle: electric_spark
+        count: 3
+        spread: 0.2
+        speed: 0.0
+        rank: 4
+      - id: aurora
+        name: "<gradient:#b388ff:#88ffff>Сияние</gradient>"
+        product: ""
+        particle: firework
+        count: 2
+        spread: 0.25
+        speed: 0.0
+        rank: 5
+  # Торжественный вход: звук и вспышка частиц при заходе на сервер.
+  join-effect:
+    enabled: true
+    # Со ступени ранга, которой положен торжественный вход (1.4.167).
+    min-rank: 4
+    particle: totem_of_undying
+    particle-count: 60
+    sound: entity_player_levelup
+    volume: 0.8
+    pitch: 1.2

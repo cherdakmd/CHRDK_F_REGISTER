@@ -1,0 +1,134 @@
+# CHRDK_Professions — тексты профессий, меню и команд (1.4.165).
+#
+# Ключи без префикса: код обращается к ним как "profession-chosen" и т.п.
+# Разметка — MiniMessage, подстановки — %имя%.
+# Названия и описания ремёсел лежат здесь же: profession.<ид>.name|desc,
+# прибавки — perk.<ид>, ранги — rank.<ранг>. Числа живут в ProfessionMath.
+professions:
+
+  # ------------------------------- служебные --------------------------------
+  unknown: "<red>Не получилось: неизвестное действие.</red>"
+  no-permission: "<red>Недостаточно прав.</red>"
+  player-only: "<red>Эта команда только для игроков.</red>"
+  disabled: "<red>Профессии выключены в config.yml.</red>"
+  unknown-subcommand: "<red>Неизвестная подкоманда «%sub%». Смотрите <yellow>/prof help</yellow>.</red>"
+
+  # -------------------------------- справка ---------------------------------
+  help-header: "<gold>Профессии</gold> <dark_gray>·</dark_gray> <gray>ремесло, опыт за работу и тихие прибавки</gray>"
+  help-menu: "<yellow>/prof</yellow> <gray>— меню профессий</gray>"
+  help-choose: "<yellow>/prof choose <ремесло></yellow> <gray>— выбрать или сменить ремесло</gray>"
+  help-info: "<yellow>/prof info [ремесло]</yellow> <gray>— карточка, прибавка и остаток на сегодня</gray>"
+  help-stats: "<yellow>/prof stats</yellow> <gray>— уровни всех четырёх ремёсел</gray>"
+  help-top: "<yellow>/prof top</yellow> <gray>— сколько игроков в каждом ремесле</gray>"
+  help-footer: "<gray>Опыт даёт крафт, плавка и варка. Суточный потолок: <white>%cap%</white> опыта, смена ремесла — раз в <white>%hours%</white> ч.</gray>"
+
+  # -------------------------------- выбор -----------------------------------
+  choose-usage: "<gray>/prof choose <yellow><smith|alchemist|cook|mason></yellow></gray>"
+  profession-unknown: "<red>Неизвестное ремесло «%profession%». Доступны: smith, alchemist, cook, mason.</red>"
+  profession-same: "<gray>Это ремесло уже выбрано.</gray>"
+  profession-cooldown: "<red>Сменить ремесло можно через <white>%time%</white>.</red>"
+  profession-choose-ready: "<green>Ремесло «%profession%» можно выбрать.</green>"
+  profession-change-ready: "<gray>Смена ремесла «%from%» → «%to%»: опыт прежнего сохранится.</gray>"
+  profession-chosen: "<green>Ремесло выбрано: <white>%profession%</white>. Опыт пойдёт за работу.</green>"
+  profession-changed: "<green>Ремесло сменено: <white>%from%</white> → <white>%to%</white>. Опыт обоих сохранён.</green>"
+
+  # ------------------------------ опыт и уровни ------------------------------
+  join-hint: "<gray>Ремесло ещё не выбрано: <yellow>/prof</yellow> — четыре профессии и их прибавки.</gray>"
+  level-up: "<gold>Профессия «%profession%»: уровень <white>%level%</white> — %rank%</gold>"
+  level-actionbar: "<gold>%profession% · ур. %level%</gold>"
+  daily-cap: "<gray>Суточный опыт «%profession%» получен. Продолжим завтра.</gray>"
+
+  # -------------------------------- карточка --------------------------------
+  info-header: "<gold>Профессия: <white>%profession%</white></gold>"
+  info-none: "<gray>Ремесло не выбрано.</gray>"
+  info-none-hint: "<gray>Выбор бесплатный: <yellow>/prof choose <smith|alchemist|cook|mason></yellow>. Смена — раз в %hours% ч.</gray>"
+  info-level: "<gray>Уровень <white>%level%</white> · %rank% · опыт <white>%xp%/%needed%</white></gray>"
+  info-perk: "<gray>Прибавка: %perk%</gray>"
+  # 1.4.167: ранг поднимает потолок профессии выше обычных 25 уровней.
+  info-rank-cap: "<gold>Ранг даёт +%bonus% уровней навыка: потолок %level%.</gold>"
+  info-not-active: "<dark_gray>Это не текущее ремесло: опыт за работу пока не идёт.</dark_gray>"
+  info-daily: "<gray>Сегодня: <white>%used%/%cap%</white>, осталось <white>%left%</white></gray>"
+  info-daily-unlimited: "<gray>Сегодня: <white>%used%</white> опыта, суточного потолка нет</gray>"
+  info-cooldown: "<dark_gray>Смена ремесла будет доступна через %time%</dark_gray>"
+  info-footer: "<dark_gray>Меню: /prof · все ремёсла: /prof stats</dark_gray>"
+
+  # ------------------------------- все ремёсла -------------------------------
+  stats-header: "<gold>Ремёсла игрока</gold>"
+  stats-current: "<green>✓ <white>%profession%</white></green> <dark_gray>·</dark_gray> <gray>ур. %level% · %rank% · %xp%/%needed%</gray>"
+  stats-line: "<gray>· <white>%profession%</white> <dark_gray>·</dark_gray> ур. %level% · %rank% · %xp%/%needed%</gray>"
+  stats-footer: "<dark_gray>Опыт копится только у выбранного ремесла.</dark_gray>"
+
+  # ------------------------------ распределение ------------------------------
+  top-header: "<gold>Профессии на сервере</gold> <dark_gray>·</dark_gray> <gray>выбрали %count% игроков</gray>"
+  top-line: "<gray>%place%. <white>%profession%</white> — %count%</gray>"
+
+  # -------------------------------- меню -------------------------------------
+  menu-title: "<dark_gray>Профессии</dark_gray>"
+  info-title: "<dark_gray>Профессия: %profession%</dark_gray>"
+  menu-close: "<red>Закрыть</red>"
+  menu-back: "<gray>Назад</gray>"
+  menu-current: "<gold>Текущее ремесло</gold>"
+  menu-current-none: "<gray>Ремесло не выбрано</gray>"
+  menu-current-hint: "<gray>Выберите одно из четырёх ниже</gray>"
+  menu-profession-level: "<gray>Уровень <white>%level%</white> · %rank%</gray>"
+  menu-profession-xp: "<gray>Опыт: <white>%xp%/%needed%</white> (%percent%)</gray>"
+  menu-profession-max: "<gold>Уровень максимальный</gold>"
+  menu-profession-perk: "<gray>Прибавка: %perk%</gray>"
+  menu-profession-current: "<green>Это ваше ремесло</green>"
+  menu-profession-click: "<yellow>Нажмите, чтобы посмотреть</yellow>"
+  menu-confirm-name: "<green>Выбрать ремесло</green>"
+  menu-confirm-same: "<gray>Уже выбрано</gray>"
+  menu-confirm-cooldown: "<red>Смена будет доступна через <white>%time%</white></red>"
+  menu-confirm-lore: "<gray>Выбор бесплатный и не отнимает опыт других ремёсел.</gray>"
+  menu-confirm-change-lore: "<gray>Текущее ремесло перестанет давать опыт, но его прогресс сохранится.</gray>"
+  menu-confirm-keeps: "<gray>Сохранится: <white>%profession%</white></gray>"
+
+  # ------------------------------- профиль ----------------------------------
+  profile-title: "<gold>Профессия</gold>"
+  profile-none: "<gray>Ремесло не выбрано</gray>"
+  profile-none-hint: "<gray>Выбор бесплатный: <yellow>/prof</yellow>, смена — раз в %hours% ч.</gray>"
+  profile-profession: "<gray>Ремесло: <white>%profession%</white></gray>"
+  profile-level: "<gray>Уровень <white>%level%</white> · %rank%</gray>"
+  profile-progress: "<gray>Опыт: <white>%xp%/%needed%</white> (%percent%)</gray>"
+  profile-perk: "<gray>Прибавка: %perk%</gray>"
+  profile-daily: "<gray>Осталось на сегодня: <white>%left%</white></gray>"
+  profile-cooldown: "<dark_gray>Смена ремесла через %time%</dark_gray>"
+
+  # -------------------------------- ранги -----------------------------------
+  rank.novice: "<gray>новичок</gray>"
+  rank.journeyman: "<white>подмастерье</white>"
+  rank.master: "<gold>мастер</gold>"
+  rank.magister: "<light_purple>магистр</light_purple>"
+
+  # ------------------------------- прибавки ---------------------------------
+  perk.none: "<gray>пока нет</gray>"
+  perk.smith: "<white>%value%</white>% скидки на работу в наковальне"
+  perk.alchemist: "<white>%value%</white>% шанса на лишнюю склянку"
+  perk.cook: "<white>+%value%</white> к насыщению от еды"
+  perk.mason: "<white>%value%</white>% шанса на второй блок при плавке"
+
+  # ------------------------------ ремёсла -----------------------------------
+  profession.smith.name: "<white>Кузнец</white>"
+  profession.smith.desc: "<gray>Наковальня, инструменты и броня. Опыт — за ковку, плавку металла и починку.</gray>"
+  profession.alchemist.name: "<white>Алхимик</white>"
+  profession.alchemist.desc: "<gray>Зелья и варка. Опыт — за сваренные зелья и алхимические предметы.</gray>"
+  profession.cook.name: "<white>Повар</white>"
+  profession.cook.desc: "<gray>Еда и печь. Опыт — за готовку, выпечку и плавку еды.</gray>"
+  profession.mason.name: "<white>Камнерез</white>"
+  profession.mason.desc: "<gray>Камень и плавка. Опыт — за каменные блоки, кирпич и обжиг.</gray>"
+
+  # --------------------------- администрирование ----------------------------
+  admin-usage: "<gray>/profadmin <yellow>reload</yellow> | <yellow>info <ник></yellow> | <yellow>set <ник> <ремесло></yellow> | <yellow>xp <ник> <ремесло> <кол-во></yellow> | <yellow>reset <ник></yellow></gray>"
+  admin-reloaded: "<green>Конфиг профессий перечитан: ремёсел %count%.</green>"
+  admin-target-none: "<red>Игрок «%player%» не найден.</red>"
+  admin-info-header: "<gold>Профессии игрока <white>%player%</white></gold>"
+  admin-info-line: "<gray>%profession% · уровень <white>%level%</white> · опыт <white>%xp%</white> · всего <white>%total%</white></gray>"
+  admin-info-none: "<gray>У игрока %player% ремесло не выбрано.</gray>"
+  admin-profession-set: "<green>Ремесло назначено: <white>%profession%</white>.</green>"
+  admin-set-notice: "<gold>Администратор назначил вам ремесло: <white>%profession%</white>.</gold>"
+  admin-xp-amount: "<red>Сколько опыта? От 1 до %max%.</red>"
+  admin-xp-done: "<green>%profession%: +%amount% опыта, теперь уровень <white>%level%</white>.</green>"
+  admin-xp-note: "<gray>Игроку %player% начислен опыт (без суточного потолка).</gray>"
+  admin-reset: "<green>Прогресс профессий сброшен.</green>"
+  admin-reset-none: "<gray>Сбрасывать нечего: у игрока нет прогресса профессий.</gray>"
+  admin-reset-ok: "<green>Прогресс профессий игрока <white>%player%</white> сброшен.</green>"

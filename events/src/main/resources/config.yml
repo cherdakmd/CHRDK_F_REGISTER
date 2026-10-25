@@ -1,0 +1,138 @@
+# CHRDK_Events — мировые события (1.4.160).
+#
+# Событие — это объявление на весь сервер и мягкий бонус на время: надбавка к
+# опыту, лишний кусок руды, лишний дроп с мобов или общие эффекты. Событие не
+# выдаёт монеты и не заменяет игру: игрок всё равно должен добывать и драться.
+#
+# Что настраивается здесь:
+#   general  — включено ли, язык, bossbar и порог онлайна;
+#   schedule — пауза между событиями (случайная в диапазоне);
+#   events   — список событий с весами и данными своего вида.
+
+general:
+  # Полностью выключает события. Уже запущенное событие при перезагрузке
+  # конфига заканчивается сразу.
+  enabled: true
+  # Язык сообщений: ru или en (файл messages.yml).
+  locale: ru
+  # Полоса сверху экрана с именем события и обратным отсчётом.
+  bossbar: true
+  # Сколько игроков должно быть в сети, чтобы событие началось.
+  # 1 — событие может случиться и для одного, 0 — даже на пустом сервере.
+  min-players: 2
+
+schedule:
+  # Пауза между событиями: сервер выбирает случайное число в этом диапазоне.
+  # 600..1800 — событие раз в 10–30 минут.
+  min-delay-seconds: 600
+  max-delay-seconds: 1800
+
+# Каждое событие — отдельная секция. id (ключ секции) используется в
+# командах и плейсхолдерах, поэтому не меняйте его без нужды.
+#
+# type        XP     — надбавка к опыту в процентах;
+#             MINING — шанс получить лишний предмет за сломанную руду;
+#             LOOT   — шанс получить лишний предмет за убитого моба;
+#             EFFECT — общие эффекты на время события.
+# weight      вес в случайном выборе; 0 — событие только вручную.
+# cooldown-seconds  пауза после окончания, чтобы не повторялось подряд.
+# percent     процент надбавки или шанса (для EFFECT не используется).
+events:
+  knowledge:
+    name: "Час знаний"
+    description: "Опыт за любое дело идёт с надбавкой — время качаться."
+    type: XP
+    duration-seconds: 600
+    weight: 14
+    cooldown-seconds: 2700
+    percent: 50
+    icon: EXPERIENCE_BOTTLE
+
+  golden_fair:
+    name: "Золотая ярмарка"
+    description: "Долгая и спокойная надбавка к опыту — успеете и в шахту, и на охоту."
+    type: XP
+    duration-seconds: 900
+    weight: 10
+    cooldown-seconds: 3600
+    percent: 30
+    icon: GOLD_INGOT
+
+  starfall:
+    name: "Звездопад"
+    description: "Из руды выпадает лишняя крошка — берите кирку."
+    type: MINING
+    duration-seconds: 480
+    weight: 10
+    cooldown-seconds: 3600
+    percent: 40
+    icon: AMETHYST_SHARD
+    # С какими блоками работает бонус.
+    blocks:
+      - IRON_ORE
+      - DEEPSLATE_IRON_ORE
+      - GOLD_ORE
+      - DEEPSLATE_GOLD_ORE
+      - COPPER_ORE
+      - DEEPSLATE_COPPER_ORE
+      - REDSTONE_ORE
+      - DEEPSLATE_REDSTONE_ORE
+      - LAPIS_ORE
+      - DEEPSLATE_LAPIS_ORE
+      - AMETHYST_CLUSTER
+    # Что именно падает сверху.
+    items:
+      - RAW_IRON
+      - RAW_GOLD
+      - RAW_COPPER
+      - REDSTONE
+      - LAPIS_LAZULI
+      - AMETHYST_SHARD
+
+  blood_moon:
+    name: "Кровавая луна"
+    description: "Мобы делятся добычей щедрее обычного — охота зовёт."
+    type: LOOT
+    duration-seconds: 600
+    weight: 10
+    cooldown-seconds: 3600
+    percent: 35
+    icon: REDSTONE_BLOCK
+    items:
+      - SPIDER_EYE
+      - BONE
+      - GUNPOWDER
+      - STRING
+      - ROTTEN_FLESH
+
+  meteor_shower:
+    name: "Метеоритный дождь"
+    description: "С убитых мобов падают крошки звёздного металла."
+    type: LOOT
+    duration-seconds: 420
+    weight: 8
+    cooldown-seconds: 5400
+    percent: 25
+    icon: FIREWORK_STAR
+    items:
+      - AMETHYST_SHARD
+      - GLOWSTONE_DUST
+      - BLAZE_POWDER
+      - GOLD_NUGGET
+      - IRON_NUGGET
+
+  quiet_hour:
+    name: "Тихий час"
+    description: "Сервер дышит спокойно: регенерация и ночное зрение на время события."
+    type: EFFECT
+    duration-seconds: 600
+    weight: 8
+    cooldown-seconds: 5400
+    icon: CLOCK
+    effects:
+      - type: regeneration
+        amplifier: 0
+        seconds: 120
+      - type: night_vision
+        amplifier: 0
+        seconds: 600

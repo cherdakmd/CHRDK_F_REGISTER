@@ -129,6 +129,28 @@ public final class AuthDialogs {
                         button(messages.get("dialog.cancel"), null))))));
     }
 
+    /**
+     * Эскалационная проверка «ты не бот»: диалог с кнопками-числами, из которых только одна
+     * совпадает с кодом в тексте. Каждый клик обрабатывается как ответ {@code /captcha <число>}.
+     */
+    public void showCaptcha(Player player, CaptchaChallenge challenge) {
+        List<ActionButton> buttons = new java.util.ArrayList<>();
+        for (String option : challenge.options()) {
+            buttons.add(ActionButton.create(
+                    Component.text(option, NamedTextColor.GOLD, TextDecoration.BOLD), null, BUTTON_WIDTH,
+                    DialogAction.customClick((response, audience) ->
+                            onMainThread(() -> accessManager.handleCaptchaAnswer(player, option)), singleUse())));
+        }
+        run(player, () -> player.showDialog(Dialog.create(builder -> builder.empty()
+                .base(DialogBase.builder(title(messages.get("captcha.dialog-title")))
+                        .canCloseWithEscape(false)
+                        .pause(false)
+                        .body(List.of(DialogBody.plainMessage(
+                                messages.get("captcha.dialog-body", "code", challenge.expected()))))
+                        .build())
+                .type(DialogType.multiAction(buttons, button(messages.get("dialog.cancel"), null), 2)))));
+    }
+
     private void submitLogin(Player player, DialogResponseView response) {
         String password = response.getText(KEY_PASSWORD);
         if (password == null || password.isEmpty()) {

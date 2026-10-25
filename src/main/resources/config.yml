@@ -1,8 +1,11 @@
 # =====================================================================
-# CHRDK_F_REGISTER — Настройки проходки через DonatePay, паролей, TOTP 2FA,
-# встроенного чата (локальный/глобальный, ЛС, автосообщения), защиты от
-# перебора паролей, журнала донатов и аудита.
-# Сервер: Purpur 1.21.11
+# CHRDK_F_REGISTER — настройки входа (регистрация, пароль, TOTP 2FA), донатных
+# рангов гильдии, встроенного чата (локальный/глобальный, ЛС, автосообщения),
+# защиты от перебора паролей, журнала донатов и аудита.
+# 1.4.167: вход свободный, платить за него не нужно. Секции donatepay, boosty
+# и pass остались для совместимости и для владельцев, которые захотят вернуть
+# платный вход ключом pass.enabled: true.
+# Сервер: Purpur 26.3 (Java 25)
 # =====================================================================
 
 general:
@@ -13,14 +16,51 @@ general:
   locale: "ru"
 
 donatepay:
+  # 1.4.167: продажи идут только через TradeMC (trademc.enabled: true), поэтому
+  # автопровайдер по умолчанию выключен. Включать имеет смысл лишь для приёма
+  # «пожертвований без ранга» — выдача дней продлевает ранг, но новых прав не даёт.
+  # false — сторож/опрос/health выключены, но кликабельная
+  # ссылка (payment-url ниже) показывается игрокам, пока она заполнена.
+  # Режим «оплату обрабатывает внешний плагин (EasyPayments), CHRDK — только ссылка и
+  # хранилище проходок»: выключите оба опроса и пропишите ссылку на магазин EasyDonate.
+  enabled: false
   # API-токен из личного кабинета DonatePay (https://donatepay.ru/page/api)
   api-token: ""
+  # Показывать в консоли имя кошелька DonatePay и баланс при рукопожатии (GET /user
+  # при старте/релоаде). false — в логах только «токен валиден», без имени и суммы.
+  show-balance: true
   # Ссылка на вашу страницу оплаты DonatePay (показывается игроку в чате)
   payment-url: "https://new.donatepay.ru/@your_page"
-  # Минимальная сумма доната в рублях для автоматической выдачи проходки
+  # Минимальная сумма доната в рублях для автоматической выдачи дней ранга
   minimum-rubles: 150
   # Интервал проверки новых донатов через API DonatePay в секундах (минимум 15)
   poll-seconds: 30
+  # Пульс подключения: раз в столько секунд в консоль пишется heartbeat-строка вида
+  # "DonatePay heartbeat: OK — последний успешный опрос N с назад" (60..3600)
+  health-seconds: 300
+  # Сколько подряд неудачных опросов считается падением DonatePay (тревога админам +
+  # консоль, по одному разу на эпизод; сообщение о восстановлении — после первой удачи)
+  alert-fail-streak: 10
+  # Дублировать тревогу о падении/восстановлении DonatePay онлайн-админам в чат
+  alert-admins: true
+
+# Консольные действия по входящим донатам (оба провайдера: DonatePay и EasyDonate).
+# При успешной оплате с суммой >= sum выполняется command от имени консоли.
+# Плейсхолдеры: {username} — имя из формы оплаты, {player} — ник получателя ранга
+# (или username, если не заматчился), {sum} — сумма в рублях, {message} — комментарий.
+# Донорский ввод экранируется автоматически (кавычки/слэши вырезаются).
+# Не срабатывает для backfill при первом включении и retry старых pending — только
+# новые платежи и /pass testpay (удобно обкатывать шаблоны: /pass testpay Ник 500).
+# Примеры:
+#   - sum: 50
+#     command: "broadcast <gold>{username}</gold> поддержал сервер на <yellow>{sum} ₽</yellow>!"
+#   - sum: 500
+#     command: "title @a title {\"text\":\"{username} — ЛЕГЕНДА!\",\"color\":\"gold\"}"
+  # Повторять тревогу, пока DonatePay всё ещё недоступен (интервал в минутах; 0 = только
+  # одна тревога на эпизод). Совпадение с health-seconds гармонично: 15 мин ~ 3 heartbeat линии
+  alert-repeat-minutes: 15
+  # Напоминать админам, если донат ждёт ручного разбора дольше N часов (0 = выкл; повтор — раз в N часов)
+  pending-notify-hours: 24
   # Строгая проверка регистра букв в нике донатера (false = ник сверяется без учёта регистра)
   strict-case-match: false
   # Платежи, которые не удалось сопоставить с ником, попадают в журнал и ждут решения:
@@ -35,27 +75,609 @@ donatepay:
   # Сколько дней хранить журнал донатов
   journal-keep-days: 365
 
+donation-actions: []
+
+# EasyDonate (v1.4.35) — второй провайдер донатов: опрашивается рядом с DonatePay
+# в тот же интервал poll-seconds. Отказ одного сервиса не ставит на паузу другой.
+easydonate:
+  # Включить API-опрос EasyDonate? false — опрос/сторож выключены; при желании
+  # оставить только LINK к магазину — заполните payment-url ниже (он показывается
+  # независимо от enabled). При ПЕРВОМ включении опроса идёт backfill за 24 ч.
+  enabled: false
+  # Ключ магазина EasyDonate: раздел «Магазин → Настройки → API» (заголовок Shop-Key из доков v3)
+  shop-key: ""
+  # Ссылка на страницу магазина EasyDonate — появляется игроку второй кнопкой рядом с DonatePay
+  payment-url: ""
+  # Обратите внимание: сверка ников (strict-case-match, review-unmatched, fuzzy-match,
+  # payment-code, journal-keep-days) — общие и живут в секции donatepay выше.
+
+  # ================================================================
+#  Магазин TradeMC (https://trademc.org) — режим "донат ТОЛЬКО через TradeMC"
+#  Доставка покупок — по RCON: панель магазина сама выполняет на сервере
+#  команду после оплаты. enabled: true выключает опросы DonatePay и
+#  EasyDonate и Boosty-подписки ЕДИНЫМ переключателем.
+#  Настройка в panel.trademc.org:
+#   1) Магазин → Сервера: привяжите сервер по RCON (хост/порт/пароль rcon).
+#   2) Товар ранга → поле "команда при покупке":
+#      pass shoppay %username% <цена_товара>
+#      Плейсхолдер ника у TradeMC — %username% (точное написание есть в
+#      подсказке панели). Команда выполняется от консоли, слэш не нужен.
+#      Сумма должна совпадать с ценой карточки в shop.products (поле price):
+#      по ней ядро находит ступень и срок. Если цены нет — работает старый
+#      путь донатов (donatepay), поэтому дублируйте цены один в один.
+#   3) Тест: купите товар или выполните из консоли
+#      pass shoppay TestPlayer 99
+# ================================================================
+trademc:
+  # 1.4.167: ОСНОВНОЙ режим продаж. true выключает опросы DonatePay/EasyDonate
+  # и Boosty-подписки одним переключателем; панель TradeMC после оплаты выполняет
+  # по RCON `pass shoppay <ник> <цена>` и выдаёт карточку ранга по цене.
+  # Впишите shop-id и payment-url ниже — без ссылки игрок увидит ссылку DonatePay.
+  enabled: true
+  # Числовой ID вашего магазина из панели TradeMC (идёт в логи и /pass status)
+  shop-id: 0
+  # Ссылка на вашу витрину TradeMC — игрокам в строке продления ранга
+  payment-url: ""
+
+  # ================================================================
+#  Подписка Boosty.to («дни ранга, пока жива подписка») — по умолчанию выключена
+#  Игрок пишет /pass boost <ник_на_Boosty>; пока его подписка активна,
+#  ранг ежедневно продлевается до "сейчас + days-per-period".
+#  Никаких платёжных API: подписчики читаются со страницы блога.
+# ================================================================
+boosty:
+  # Включить подписочный провайдер Boosty? У Boosty нет публичного API —
+  # используется приватный веб-API с токеном из браузера (ниже).
+  enabled: false
+  # Имя вашего блога: https://boosty.to/<blog>
+  blog: ""
+  # Ссылка, которую игроки видят в подсказке о ранге (если пустая —
+  # собирается из имени блога)
+  blog-url: ""
+  # Токены из браузера: зайдите на boosty.to под ВЛАДЕЛЬЦЕМ БЛОГА,
+  # F12 → Application → Local Storage, ключи:
+  #   "auth"       → accessToken/refreshToken/expiresAt (inside JSON)
+  #   "_clientId"  → deviceId
+  # Либо из DevTools: Network → любой запрос к api.boosty.to →
+  # заголовок Authorization: Bearer <это ваш token>.
+  # ВНИМАНИЕ: Boosty РОТИРУЕТ refresh-token при каждом обновлении — рабочие
+  # токены плагин хранит в boosty-tokens.json, config.yml нужен только для посева.
+  token: ""
+  refresh-token: ""
+  device-id: ""
+  # Минимальная цена уровня подписки (₽/мес), дающего дни ранга
+  min-level-price: 300
+  # На сколько дней хватает подтверждённой подписки (горизонт продления)
+  days-per-period: 30
+  # Как часто перепроверять подписки привязанных игроков (часы)
+  recheck-hours: 24
+  # Холостой прогон: всё проверяем, но привязки/продления не применяем
+  dry-run: false
+  # Подробное логирование Boosty в консоль
+  debug-log: false
+  # Сколько часов скидка каталога (shop.boosty-bonus) живёт после последнего
+  # подтверждения подписки. Одна пропущенная проверка не отбирает бонус.
+  perk-grace-hours: 48
+
+# ================================================================
+#  Динамический MOTD (текст в списке серверов)
+#  Выбор строки — motd.mode (rotate каждые rotate-seconds или random на пинг),
+#  MiniMessage (<color>, <gradient>, <b> и т.п.) + плейсхолдеры:
+#  %online% %max% %date% %time% %version% %players% (ники онлайн)
+#  %price% (мин. цена доната) %url% (ссылка на оплату)
+#  Для переноса строки внутри MOTD используйте \n (внутри one-linе кавычек)
+# ================================================================
+motd:
+  enabled: false
+  # Как выбирать строку из списка: rotate — ковш по времени (при повторном пинге
+  # текст один и тот же), random — случайная строка на каждый пинг.
+  mode: rotate
+  rotate-seconds: 60
+  # Плейсхолдеры: %online% %max% %date% %time% %version% %players% (ники онлайн,
+  # до 10 — дальше "+N"), %price% (мин. цена доната), %url% (ссылка на оплату).
+  lines:
+    - "<gold><b>ЧРДК</b></gold> <gray>•</gray> <green>выживание для своих</green>\n<gray>Онлайн: <white>%online%/%max%</white> — вход свободный</gray>"
+    - "<gradient:#ffcc00:#ff8800><b>ЧРДК — делаем контент вместе</b></gradient>\n<gray>Сегодня %date% · v%version% · ждём именно тебя</gray>"
+
 pass:
-  # Срок действия проходки в днях по умолчанию (1 месяц = 30 дней)
+  # Однократный приветственный ранг для нового аккаунта после первой регистрации.
+  # Отсчёт начинается с успешного /register; до регистрации доступен только вход/регистрация.
+  # Уже зарегистрированным и ранее получавшим ранг аккаунтам повторно не выдаётся.
+  # Старый пробный период больше не нужен: вход свободный, а приветственный ранг
+  # новичка настраивается в секции ranks.welcome (1.4.167).
+  trial:
+    enabled: false
+    days: 14
+  # Мастер-флаг донат-стены. С 1.4.167 по умолчанию ВЫКЛЮЧЕН: вход свободный,
+  # регистрация/пароль/2FA остаются, а игрок без ранга сразу играет.
+  # true возвращает старую стену (полезно, если когда-нибудь понадобится
+  # платный вход): стадия NO_PASS, подсказки и боссбар вернутся.
+  enabled: false
+  # Срок действия дней ранга по умолчанию (1 месяц = 30 дней)
   grant-days: 30
-  # Тарифы: сумма в рублях → количество дней. Побеждает самый дорогой подходящий тариф
+  # Устаревшие тарифы старого движка донатов: сумма в рублях → количество дней.
+  # Для рангов годы и месяцы задаются карточками shop.products.
   tiers:
     - { amount: 150, days: 30, label: "1 месяц" }
     - { amount: 400, days: 90, label: "3 месяца" }
     - { amount: 1400, days: 365, label: "Год" }
   # За сколько минут до окончания предупреждать игрока (по умолчанию: 7 дней, 3 дня, 1 день, 1 час)
   expiry-warnings-minutes: [10080, 4320, 1440, 60]
-  # Показывать над хотбаром полосу с обратным отсчётом в последний час проходки
+  # Показывать над хотбаром полосу с обратным отсчётом в последний час ранга
   expiry-bossbar: true
-  # Звук при предупреждении об окончании проходки
+  # Звук при предупреждении об окончании ранга
   expiry-warning-sound: true
   # Кикать незаавторизовавшихся игроков через N секунд (0 = не кикать)
   kick-after-seconds: 0
+  # Инвентарное GUI-меню /pass menu: статус, оплата, тарифы, 2FA, пароль, сессии (для админов — статистика)
+  gui-menu: true
+
+# ================================================================
+#  Донатные ранги (1.4.167). Пришли на смену платному входу: вход на сервер
+#  свободный, а ранг — подписка на комфорт, оформление и статус.
+#  Цены и сроки живут в каталоге shop.products (товары с полем rank),
+#  числа (дома, приваты, скидки) — в конфигах модулей. Здесь только то,
+#  что рисует ядро: имя, знак, цвет и строка входа.
+# ================================================================
+ranks:
+  enabled: true
+  # Показывать слово «Странник» рядом с ником в чате и в %player_tagged%.
+  # false — только знак и цвет; в табе название тогда добавляет %rank_tag%
+  # (см. tablist.show-rank-name), поэтому дубля нет ни в одном режиме.
+  show-name-in-chat: false
+  # Анонсировать вход в чат для ступеней, у которых задана join-line.
+  announce-join: true
+  # /hat — надеть блок из руки на голову. Со ступени ниже нужен только права
+  # chrdkregister.hat (у администраторов).
+  hat:
+    min-level: 5
+  # Бонусы ступени (1.4.167): то, ради чего берут старший ранг.
+  # Индекс — уровень: [без ранга, I, II, III, IV, V]. Здесь не сила, а темп:
+  # опыт профессий и сезонного пропуска, количество добычи, дополнительные
+  # уровни навыка сверх обычного потолка (25). Потолки контракта в RankBonus:
+  # 50 % опыта, 25 % добычи, +10 уровней навыка — выше конфиг не действует.
+  bonuses:
+    xp-percent: [0, 10, 20, 30, 40, 50]
+    drop-percent: [0, 5, 10, 15, 20, 25]
+    skill-levels: [0, 2, 4, 6, 8, 10]
+  # Приветственный ранг новичку после регистрации: три дня первой ступени.
+  # Сутки легко пропустить (зашёл вечером, вернулся через два дня) — три дня
+  # показывают оформление, очередь и шлейф хотя бы в двух-трёх заходах.
+  welcome:
+    enabled: true
+    level: 1
+    days: 3
+  # Лестница снизу вверх. format — MiniMessage-шаблон с %name%; badge — знак
+  # перед ником; join-line — строка входа (%player% — ник, пусто — не анонсировать).
+  levels:
+    - level: 1
+      id: wanderer
+      name: "Странник"
+      format: "<gray>%name%</gray>"
+      badge: "✦"
+      join-line: ""
+    - level: 2
+      id: pathfinder
+      name: "Следопыт"
+      format: "<green>%name%</green>"
+      badge: "❖"
+      join-line: ""
+    - level: 3
+      id: keeper
+      name: "Хранитель"
+      format: "<aqua>%name%</aqua>"
+      badge: "✧"
+      join-line: "<aqua>✧ Хранитель</aqua> <white>%player%</white> <gray>вернулся в гильдию</gray>"
+    - level: 4
+      id: patron
+      name: "Меценат"
+      format: "<gradient:#ffd700:#ff8800>%name%</gradient>"
+      badge: "★"
+      join-line: "<gradient:#ffd700:#ff8800>★ Меценат</gradient> <white>%player%</white> <gray>снаряжает новую экспедицию</gray>"
+    - level: 5
+      id: founder
+      name: "Покровитель"
+      format: "<gradient:#b388ff:#ffd700>%name%</gradient>"
+      badge: "⚜"
+      join-line: "<gradient:#b388ff:#ffd700>⚜ Покровитель</gradient> <white>%player%</white> <gray>входит в летопись гильдии</gray>"
+
+# ================================================================
+#  Каталог товаров (1.4.110, ранги — 1.4.167). Пять ступеней рангов,
+#  косметика поштучно и боевой пропуск. Товар выдаётся по RCON-команде
+#  из витрины TradeMC:
+#
+#      pass shopbuy <ник> <товар>          # срок из товара
+#      pass shopbuy <ник> <товар> 30       # свой срок (не больше потолка)
+#
+#  У товара три необязательных действия:
+#    group       — временная группа LuckPerms (её видят очередь и аддоны);
+#    permissions — права, которые получает эта группа при /pass luckperms setup;
+#    tag         — MiniMessage-разметка ника в чате;
+#    rank        — ступень донатного ранга 1..5 (вместо записи «товар → срок»);
+#    commands    — консольные команды с %player% (анонс, выдача предметов).
+#
+#  ПРАВИЛО СЕРВЕРА: за деньги продаются удобство, оформление и статус.
+#  Ресурсы, алмазы, снаряжение и влияние на бои — не продаются.
+# ================================================================
+shop:
+  # Выключатель витрины: false — /pass shop показывает «каталог выключен»,
+  # shopbuy ничего не выдаёт (покупки на сайте в это время лучше отключить).
+  enabled: true
+  # Потолок суммарного срока одного товара у игрока (дней). Повторные покупки
+  # складываются, но не уходят дальше этого горизонта: «навсегда» не продаётся.
+  max-total-days: 365
+  # Скидка подписчикам Boosty. Витрина TradeMC продаёт по фиксированной цене
+  # карточки, поэтому «−15 %» на сайте не покажешь; вместо этого подписчик
+  # получает больше дней за ту же цену — это тот же процент, посчитанный здесь.
+  # Работает только при boosty.enabled: true и подтверждённой подписке
+  # (проверка раз в boosty.recheck-hours, окно boosty.perk-grace-hours).
+  boosty-bonus:
+    enabled: true
+    # Процент дней. 15 % от 30 дней = 5 дней (округление вверх).
+    percent: 15
+    # Потолок бонуса за одну покупку (дней). 0 — без отдельного потолка,
+    # но бонус всё равно не больше самого срока покупки.
+    max-days: 30
+  products:
+    # --- Донатные ранги (1.4.167) -------------------------------------------
+    # Ранг — подписка на комфорт, оформление и статус. У каждой ступени свои
+    # возможности; числа (дома, приваты, скидки) живут в конфигах модулей,
+    # оформление — в секции ranks выше. Здесь только цена, срок и сама ступень.
+    # Год = десять месяцев, два в подарок.
+    #
+    # ВАЖНО: цена месячной карточки — база для пересчёта остатка при повышении
+    # ранга (см. RankLadder.carryDays). Меняйте цены парами: месяц и год.
+    - id: rank-wanderer
+      name: "<gray>Странник</gray>"
+      price: 99
+      days: 30
+      rank: 1
+      group: ""
+      description: "Вход без очереди, знак ✦, +10 % опыта, 4 дома, 28 чанков, скидка 10 %"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: rank-wanderer-year
+      name: "<gray>Странник — год</gray>"
+      price: 990
+      days: 365
+      rank: 1
+      group: ""
+      description: "Год Странника: десять месяцев по цене, два в подарок"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: rank-pathfinder
+      name: "<green>Следопыт</green>"
+      price: 159
+      days: 30
+      rank: 2
+      group: ""
+      description: "Всё из Странника, 3 шлейфа, +20 % опыта, 6 домов, 34 чанка"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: rank-pathfinder-year
+      name: "<green>Следопыт — год</green>"
+      price: 1590
+      days: 365
+      rank: 2
+      group: ""
+      description: "Год Следопыта: десять месяцев по цене, два в подарок"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: rank-keeper
+      name: "<aqua>Хранитель</aqua>"
+      price: 229
+      days: 30
+      rank: 3
+      group: ""
+      description: "Всё из Следопыта, строка входа, +30 % опыта, +15 % добычи, 8 домов"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: rank-keeper-year
+      name: "<aqua>Хранитель — год</aqua>"
+      price: 2290
+      days: 365
+      rank: 3
+      group: ""
+      description: "Год Хранителя: десять месяцев по цене, два в подарок"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: rank-patron
+      name: "<gradient:#ffd700:#ff8800>Меценат</gradient>"
+      price: 299
+      days: 30
+      rank: 4
+      group: ""
+      description: "Всё из Хранителя, градиент, свой шлейф, премиум-трек, +40 % опыта"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: rank-patron-year
+      name: "<gradient:#ffd700:#ff8800>Меценат — год</gradient>"
+      price: 2990
+      days: 365
+      rank: 4
+      group: ""
+      description: "Год Мецената: десять месяцев по цене, два в подарок"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: rank-founder
+      name: "<gradient:#b388ff:#ffd700>Покровитель</gradient>"
+      price: 365
+      days: 30
+      rank: 5
+      group: ""
+      description: "Всё из Мецената, /hat, знак ⚜, +50 % опыта, +25 % добычи, навык +10"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: rank-founder-year
+      name: "<gradient:#b388ff:#ffd700>Покровитель — год</gradient>"
+      price: 3650
+      days: 365
+      rank: 5
+      group: ""
+      description: "Год Покровителя — вершина лестницы: 3650 ₽, все бонусы максимума"
+      tag: ""
+      permissions: []
+      commands: []
+
+    # --- Косметика поштучно -------------------------------------------------
+    # Товары без группы и без разметки ника: это «право на эффект», которое
+    # проверяет аддон CHRDK_Cosmetics через API ядра (hasEntitlement). Владелец
+    # ранга видит все шлейфы и так; покупка открывает один шлейф без ранга.
+    # id товара и поле product шлейфа в cosmetics/config.yml должны совпадать.
+    - id: trail-flame
+      name: "<red>Огненный шлейф</red>"
+      price: 59
+      days: 30
+      group: ""
+      description: "Шлейф огня за спиной — 30 дней"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: trail-hearts
+      name: "<light_purple>Сердечки</light_purple>"
+      price: 59
+      days: 30
+      group: ""
+      description: "Шлейф сердечек за спиной — 30 дней"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: trail-notes
+      name: "<aqua>Ноты</aqua>"
+      price: 59
+      days: 30
+      group: ""
+      description: "Шлейф нот за спиной — 30 дней"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: trail-sparkles
+      name: "<yellow>Искры Энда</yellow>"
+      price: 69
+      days: 30
+      group: ""
+      description: "Шлейф искр Энда за спиной — 30 дней"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: trail-magic
+      name: "<dark_purple>Ведьмина магия</dark_purple>"
+      price: 69
+      days: 30
+      group: ""
+      description: "Шлейф ведьминой магии за спиной — 30 дней"
+      tag: ""
+      permissions: []
+      commands: []
+
+    # --- Батлпасс -----------------------------------------------------------
+    # Боевой пропуск сезона: открывает премиум-колонку наград в заданиях
+    # (battlepass/config.yml → premium.product должен совпадать с этим id).
+    # Награды премиум-трека — дни ранга и косметика, без игровой силы.
+    # 90 дней = длина сезона; продление складывается, потолок общий 365.
+    - id: battlepass-premium
+      name: "<gold>Боевой пропуск</gold>"
+      price: 249
+      days: 90
+      group: ""
+      description: "Золотые награды всех заданий сезона: дни ранга и косметика"
+      tag: ""
+      permissions: []
+      commands: []
+
+    # --- Наборы -------------------------------------------------------------
+    # Набор — рецепт покупки: записей в аккаунте он не создаёт, игрок получает
+    # ровно перечисленные товары, каждый со своим сроком (см. /pass my).
+    # includes раскрывается рекурсивно, циклы и опечатки отсекаются при загрузке.
+    - id: trails-pack
+      name: "<gold>Набор шлейфов</gold>"
+      price: 199
+      days: 30
+      group: ""
+      description: "Все пять шлейфов сразу — выгоднее на 116 ₽"
+      tag: ""
+      permissions: []
+      commands: []
+      includes:
+        - trail-flame
+        - trail-hearts
+        - trail-notes
+        - trail-sparkles
+        - trail-magic
+
+
+# Главное меню сервера /menu (1.4.170): игрок открывает разделы и выполняет
+# команды кликом, без знания синтаксиса. Ядро об аддонах ничего не знает —
+# состав меню целиком задаётся здесь.
+#
+# Как устроено:
+#   * главная страница — категории (ряд 10..16) и быстрые пункты без category;
+#   * страница категории — её пункты, кнопка «Назад» (back-slot) и «Закрыть» (close-slot);
+#   * пункт без command — подсказка: иконка видна, клик ничего не делает;
+#   * категория без доступных пунктов исчезает с главной страницы;
+#   * пункт скрывается, если выключен его аддон (plugin) или нет права (permission).
+#
+# Поля пункта: slot (0-53; -1 = авто), icon, name/lore (MiniMessage),
+# command (выполняется ОТ ИГРОКА по клику), plugin, permission, category.
+# Подстановки: %player%, %rank%, %rank_badge%, %rank_level%, %rank_status%,
+# %pass_left%, %pass_days%, %trial_days%. Админские команды сюда не ставить.
+server-menu:
+  enabled: true
+  title: "<gold>Меню сервера</gold>"
+  # Заголовок раздела: «Меню · <имя категории>» — видно, где игрок находится.
+  category-title: "<dark_gray>Меню · </dark_gray><gold>%category%</gold>"
+  # Кнопки нижнего ряда страницы раздела.
+  back-slot: 40
+  back-icon: "ARROW"
+  back-name: "<gray>◀ Назад</gray>"
+  # -1 — не показывать кнопку «Закрыть» (ESC работает всегда).
+  close-slot: 44
+  close-icon: "BARRIER"
+  close-name: "<red>✖ Закрыть</red>"
+  # Семь разделов: путь игрока от ранга до общества. Порядок слотов = порядок
+  # иконок на главной странице.
+  categories:
+    - {"id": "account", "slot": 10, "icon": "PAPER", "name": "<gold><bold>Ранг и аккаунт</bold></gold>", "lore": "<gray>Ранг, оплата, награды входа и защита аккаунта</gray>"}
+    - {"id": "progress", "slot": 11, "icon": "EXPERIENCE_BOTTLE", "name": "<gold><bold>Прогресс и награды</bold></gold>", "lore": "<gray>Сезон, задания, навыки, класс и достижения</gray>"}
+    - {"id": "economy", "slot": 12, "icon": "DIAMOND", "name": "<gold><bold>Экономика</bold></gold>", "lore": "<gray>Банк, магазин, аукцион, заказы и лотерея</gray>"}
+    - {"id": "world", "slot": 13, "icon": "GRASS_BLOCK", "name": "<gold><bold>Мир и территории</bold></gold>", "lore": "<gray>Приваты, дома и телепорты</gray>"}
+    - {"id": "gear", "slot": 14, "icon": "ANVIL", "name": "<gold><bold>Снаряжение и питомцы</bold></gold>", "lore": "<gray>Чары, тиры, артефакты, косметика и питомцы</gray>"}
+    - {"id": "adventure", "slot": 15, "icon": "IRON_SWORD", "name": "<gold><bold>Охота и события</bold></gold>", "lore": "<gray>Охота, боссы, ивенты и клады</gray>"}
+    - {"id": "social", "slot": 16, "icon": "BELL", "name": "<gold><bold>Общество</bold></gold>", "lore": "<gray>Чат, отряд, гильдия, очередь и стримы</gray>"}
+  # Пункты. category — id раздела; без category пункт живёт на главной странице.
+  # Без command — подсказка (клик игнорируется).
+  items:
+    # ------------------------------ главная ------------------------------
+    - {"slot": 4, "icon": "PLAYER_HEAD", "name": "<gold><bold>%player%</bold></gold>", "lore": "<gray>Ранг: <white>%rank%</white></gray>\n<gray>Осталось: <white>%pass_left%</white></gray>\n<dark_gray>Клик — карточка игрока</dark_gray>", "command": "profile", "permission": "chrdkregister.profile"}
+    - {"slot": 22, "icon": "KNOWLEDGE_BOOK", "name": "<gray><bold>Как пользоваться</bold></gray>", "lore": "<gray>Клик по иконке открывает раздел</gray>\n<gray>Внутри — кнопки с командами</gray>\n<gray>«Назад» и «Закрыть» — в нижнем ряду</gray>"}
+    # ------------------------------ аккаунт ------------------------------
+    - {"category": "account", "icon": "NAME_TAG", "name": "<gold><bold>Мой ранг</bold></gold>", "lore": "<gray>Сейчас: <white>%rank%</white> <dark_gray>·</dark_gray> <white>%rank_status%</white></gray>\n<gray>Осталось: <white>%pass_left%</white></gray>\n<dark_gray>Клик — бонусы ступени и срок</dark_gray>", "command": "rank my"}
+    - {"category": "account", "icon": "NETHER_STAR", "name": "<gold><bold>Витрина рангов</bold></gold>", "lore": "<gray>Пять ступеней: что даёт каждая</gray>\n<dark_gray>Карточки, цены и кнопка оплаты</dark_gray>", "command": "rank"}
+    - {"category": "account", "icon": "BOOK", "name": "<gold><bold>Правила рангов</bold></gold>", "lore": "<gray>Что ранг даёт и чего не даёт</gray>\n<dark_gray>Честные границы без скрытых бонусов</dark_gray>", "command": "rank rules"}
+    - {"category": "account", "icon": "EMERALD", "name": "<gold><bold>Поддержать сервер</bold></gold>", "lore": "<gray>Оплата и продление через TradeMC</gray>\n<dark_gray>Выдача автоматическая, по нику</dark_gray>", "command": "pass donate"}
+    - {"category": "account", "icon": "CHEST", "name": "<gold><bold>Каталог товаров</bold></gold>", "lore": "<gray>Ранги, наборы и боевой пропуск одной страницей</gray>\n<dark_gray>Цены и состав — в чате, оплата — на сайте</dark_gray>", "command": "pass shop"}
+    - {"category": "account", "icon": "CLOCK", "name": "<gold><bold>Ежедневная награда</bold></gold>", "lore": "<gray>Календарь, стрик и награда дня</gray>", "command": "daily", "plugin": "CHRDK_DailyRewards", "permission": "chrdkdaily.use"}
+    - {"category": "account", "icon": "WRITABLE_BOOK", "name": "<gold><bold>Путеводитель</bold></gold>", "lore": "<gray>Книга с командами и первыми шагами</gray>", "command": "guide"}
+    - {"category": "account", "icon": "TRIPWIRE_HOOK", "name": "<gold><bold>Защита 2FA</bold></gold>", "lore": "<gray>Статус двухфакторной защиты</gray>\n<dark_gray>Подключение: /2fa setup</dark_gray>", "command": "2fa status"}
+    - {"category": "account", "icon": "COMPASS", "name": "<gold><bold>Сессии входа</bold></gold>", "lore": "<gray>Активные сессии аккаунта</gray>\n<dark_gray>Выход: /logout</dark_gray>", "command": "session"}
+    # ------------------------------ прогресс ------------------------------
+    - {"category": "progress", "icon": "FIREWORK_ROCKET", "name": "<gold><bold>Боевой пропуск</bold></gold>", "lore": "<gray>Экран сезона: недели и награды</gray>\n<dark_gray>Забрать награды: /battlepass claim</dark_gray>", "command": "battlepass menu", "plugin": "CHRDK_BattlePass", "permission": "chrdkbp.use"}
+    - {"category": "progress", "icon": "DRAGON_EGG", "name": "<gold><bold>Достижения</bold></gold>", "lore": "<gray>72 цели, бейджи и награды</gray>", "command": "achievements", "plugin": "CHRDK_Achievements", "permission": "chrdkachievements.use"}
+    - {"category": "progress", "icon": "GOLDEN_HELMET", "name": "<gold><bold>Звание по стажу</bold></gold>", "lore": "<gray>Растёт от наигранного времени</gray>\n<dark_gray>Не путать с донатным рангом</dark_gray>", "command": "ranks", "plugin": "CHRDK_Ranks", "permission": "chrdkranks.use"}
+    - {"category": "progress", "icon": "PAPER", "name": "<gold><bold>Задания</bold></gold>", "lore": "<gray>Фракции, персонажи и награды</gray>\n<dark_gray>Награды — без валюты, только опыт и расходники</dark_gray>", "command": "quests menu", "plugin": "CHRDK_Quests", "permission": "chrdkquests.use"}
+    - {"category": "progress", "icon": "AMETHYST_CLUSTER", "name": "<gold><bold>Навыки</bold></gold>", "lore": "<gray>10 навыков, 60 перков и уровни</gray>", "command": "skills", "plugin": "CHRDK_Skills", "permission": "chrdkskills.use"}
+    - {"category": "progress", "icon": "IRON_SWORD", "name": "<gold><bold>Класс и таланты</bold></gold>", "lore": "<gray>Выбор класса и дерево талантов</gray>", "command": "class menu", "plugin": "CHRDK_Classes", "permission": "chrdkclasses.use"}
+    - {"category": "progress", "icon": "IRON_PICKAXE", "name": "<gold><bold>Профессии</bold></gold>", "lore": "<gray>Ремесло, опыт и прибавки</gray>", "command": "prof menu", "plugin": "CHRDK_Professions", "permission": "chrdkprofessions.use"}
+    - {"category": "progress", "icon": "BEACON", "name": "<gold><bold>Общие цели</bold></gold>", "lore": "<gray>Вклад в цели всего сообщества</gray>", "command": "goals", "plugin": "CHRDK_CommonGoals", "permission": "chrdkgoals.use"}
+    - {"category": "progress", "icon": "PLAYER_HEAD", "name": "<gold><bold>Пригласить друга</bold></gold>", "lore": "<gray>Реферальный статус и бонусные дни</gray>", "command": "ref", "plugin": "CHRDK_Referrals", "permission": "chrdkref.use"}
+    # ------------------------------ экономика ------------------------------
+    - {"category": "economy", "icon": "GOLD_INGOT", "name": "<gold><bold>Мой баланс</bold></gold>", "lore": "<gray>Счёт банка и алмазы в инвентаре</gray>\n<dark_gray>Перевод: /pay ник сумма</dark_gray>", "command": "bal", "permission": "chrdkregister.bal"}
+    - {"category": "economy", "icon": "DIAMOND", "name": "<gold><bold>Топ богачей</bold></gold>", "lore": "<gray>Кто копит алмазы усерднее всех</gray>", "command": "baltop", "permission": "chrdkregister.baltop"}
+    - {"category": "economy", "icon": "EMERALD", "name": "<gold><bold>Алмазный магазин</bold></gold>", "lore": "<gray>Обмен ресурсов и динамические цены</gray>\n<dark_gray>Счёт магазина отделён от банка</dark_gray>", "command": "shop", "plugin": "CHRDK_DiamondShop", "permission": "chrdkshop.use"}
+    - {"category": "economy", "icon": "GOLD_BLOCK", "name": "<gold><bold>Аукцион игроков</bold></gold>", "lore": "<gray>Лоты и подтверждение покупки</gray>\n<dark_gray>Выставить: /auction sell цена</dark_gray>", "command": "auction", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
+    - {"category": "economy", "icon": "ENDER_CHEST", "name": "<gold><bold>Почта аукциона</bold></gold>", "lore": "<gray>Купленное и возврат непроданного</gray>", "command": "auction mail", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
+    - {"category": "economy", "icon": "OAK_SIGN", "name": "<gold><bold>Доска заказов</bold></gold>", "lore": "<gray>Заказы от ботов: принеси и получи</gray>", "command": "orders list", "plugin": "CHRDK_Orders", "permission": "chrdkorders.use"}
+    - {"category": "economy", "icon": "SUNFLOWER", "name": "<gold><bold>Лотерея недели</bold></gold>", "lore": "<gray>Банк, шанс и время розыгрыша</gray>", "command": "lottery info", "plugin": "CHRDK_Lottery", "permission": "chrdklottery.use"}
+    - {"category": "economy", "icon": "HOPPER", "name": "<gold><bold>Казна приватов</bold></gold>", "lore": "<gray>Баланс для ежедневной ренты</gray>", "command": "claim balance", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
+    # ------------------------------ мир ------------------------------
+    - {"category": "world", "icon": "MAP", "name": "<gold><bold>Мои территории</bold></gold>", "lore": "<gray>Меню приватов: клик — телепорт</gray>\n<dark_gray>Список чанков и витрина продаж</dark_gray>", "command": "claim menu", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
+    - {"category": "world", "icon": "FILLED_MAP", "name": "<gold><bold>Карта приватов</bold></gold>", "lore": "<gray>Карта чанков вокруг вас</gray>", "command": "claim map", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
+    - {"category": "world", "icon": "OAK_FENCE", "name": "<gold><bold>Как приватить</bold></gold>", "lore": "<gray>Покупка, члены и рента</gray>\n<dark_gray>Эта кнопка не покупает чанк</dark_gray>", "command": "claim help", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
+    - {"category": "world", "icon": "COMPASS", "name": "<gold><bold>Дома</bold></gold>", "lore": "<gray>Список точек дома</gray>\n<dark_gray>Установить: /sethome имя</dark_gray>", "command": "homes", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
+    - {"category": "world", "icon": "RED_BED", "name": "<gold><bold>Поставить дом</bold></gold>", "lore": "<gray>Встаньте в нужной точке и введите</gray>\n<dark_gray>/sethome имя</dark_gray>\n<dark_gray>Лимит точек зависит от ранга</dark_gray>"}
+    - {"category": "world", "icon": "ENDER_PEARL", "name": "<gold><bold>Случайный телепорт</bold></gold>", "lore": "<gray>RTP за алмазы</gray>\n<dark_gray>Цена — в настройках телепортов</dark_gray>", "command": "rtp", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
+    - {"category": "world", "icon": "OAK_DOOR", "name": "<gold><bold>Телепорт к игроку</bold></gold>", "lore": "<gray>Запрос: /tpa ник</gray>\n<dark_gray>Принять: /tpaccept</dark_gray>", "command": "tpa", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
+    # ------------------------------ снаряжение ------------------------------
+    - {"category": "gear", "icon": "ENCHANTED_BOOK", "name": "<gold><bold>Кастомные чары</bold></gold>", "lore": "<gray>Каталог чар и описания</gray>\n<dark_gray>Получение — через игровую механику</dark_gray>", "command": "enchants", "plugin": "CHRDK_Enchants", "permission": "chrdkenchants.use"}
+    - {"category": "gear", "icon": "SMITHING_TABLE", "name": "<gold><bold>Редкости снаряжения</bold></gold>", "lore": "<gray>Тиры крафта и характеристики</gray>", "command": "tiers", "plugin": "CHRDK_TierForge", "permission": "chrdktierforge.use"}
+    - {"category": "gear", "icon": "TOTEM_OF_UNDYING", "name": "<gold><bold>Артефакты</bold></gold>", "lore": "<gray>Каталог, носимые артефакты и источники</gray>\n<dark_gray>Добывайте их в мире</dark_gray>", "command": "artifacts", "plugin": "CHRDK_Artifacts", "permission": "chrdkartifacts.use"}
+    - {"category": "gear", "icon": "ITEM_FRAME", "name": "<gold><bold>Коллекция артефактов</bold></gold>", "lore": "<gray>Собранное, прогресс и награды</gray>", "command": "artifacts collection", "plugin": "CHRDK_Artifacts", "permission": "chrdkartifacts.use"}
+    - {"category": "gear", "icon": "FIREWORK_ROCKET", "name": "<gold><bold>Косметика</bold></gold>", "lore": "<gray>Эффекты, шлейфы и оформление</gray>", "command": "cosmetics list", "plugin": "CHRDK_Cosmetics", "permission": "chrdkcosmetics.use"}
+    - {"category": "gear", "icon": "BONE", "name": "<gold><bold>Питомцы</bold></gold>", "lore": "<gray>Кошки и волки: уровни и трюки</gray>", "command": "pet list", "plugin": "CHRDK_Pets", "permission": "chrdkpets.use"}
+    # ------------------------------ охота и события ------------------------------
+    - {"category": "adventure", "icon": "BOW", "name": "<gold><bold>Охота</bold></gold>", "lore": "<gray>Пять семейств, трофеи и моб-ключи</gray>", "command": "hunt", "plugin": "CHRDK_Hunt", "permission": "chrdkhunt.use"}
+    - {"category": "adventure", "icon": "WITHER_SKELETON_SKULL", "name": "<gold><bold>Боссы</bold></gold>", "lore": "<gray>Зоны опасности и таймеры</gray>", "command": "boss menu", "plugin": "CHRDK_Bosses", "permission": "chrdkbosses.use"}
+    - {"category": "adventure", "icon": "FIREWORK_STAR", "name": "<gold><bold>События</bold></gold>", "lore": "<gray>Расписание и ближайший ивент</gray>", "command": "events", "plugin": "CHRDK_Events", "permission": "chrdkevents.use"}
+    - {"category": "adventure", "icon": "CHEST", "name": "<gold><bold>Клады</bold></gold>", "lore": "<gray>Бочки с добычей и арсенал находок</gray>\n<dark_gray>Копайте — клад найдёт вас сам</dark_gray>", "command": "treasures", "plugin": "CHRDK_Treasures", "permission": "chrdktreasures.use"}
+    # ------------------------------ общество ------------------------------
+    - {"category": "social", "icon": "FEATHER", "name": "<gold><bold>Чат</bold></gold>", "lore": "<gray>Клик — переключить канал</gray>\n<dark_gray>Локальный слышат рядом, глобальный — все</dark_gray>", "command": "chat"}
+    - {"category": "social", "icon": "SHIELD", "name": "<gold><bold>Отряд</bold></gold>", "lore": "<gray>Вместе: приглашения и общий чат</gray>", "command": "party", "plugin": "CHRDK_Party", "permission": "chrdkparty.use"}
+    - {"category": "social", "icon": "WHITE_BANNER", "name": "<gold><bold>Гильдия</bold></gold>", "lore": "<gray>Казна, ранги и войны</gray>", "command": "guild menu", "plugin": "CHRDK_Guilds", "permission": "chrdkguilds.use"}
+    - {"category": "social", "icon": "HOPPER", "name": "<gold><bold>Очередь входа</bold></gold>", "lore": "<gray>Статус очереди и приоритет</gray>", "command": "queue info", "plugin": "CHRDK_Queue", "permission": "chrdkqueue.use"}
+    - {"category": "social", "icon": "JUKEBOX", "name": "<gold><bold>Стримерская программа</bold></gold>", "lore": "<gray>Twitch и VK Play Live: статус и награды</gray>\n<dark_gray>Привязка: /stream link</dark_gray>", "command": "stream status", "plugin": "CHRDK_Streams", "permission": "chrdkstreams.use"}
+
+# Алмазный банк: /bal, /pay, /baltop (1.4.138).
+# Валюта — алмазы: предметы в инвентаре и счёт в банке. Курс фиксированный,
+# депозит и снятие ничего не теряют. Переводы идут по счёту и работают для
+# офлайн-получателей, поэтому не зависят от свободного места в инвентаре.
+economy:
+  # false — команды /bal, /pay, /baltop отключены, счета сохраняются.
+  enabled: true
+  # Сколько алмазов даёт один алмазный блок при депозите.
+  block-worth: 9
+  # Границы одного перевода /pay (в алмазах).
+  min-pay: 1
+  max-pay: 1000000
+  # Комиссия перевода в процентах: вычитается из суммы и «сгорает».
+  # 0 — переводы без потерь; 2 — сдерживающий налог на крупные суммы.
+  pay-tax-percent: 0
+  # Пауза между переводами одного игрока (секунды, 0 — без паузы).
+  pay-cooldown-seconds: 2
+  # Сколько строк показывает /baltop (3..50).
+  baltop-size: 10
+  # Разрешать переводы игрокам не в сети (счёт открывается при первом входе).
+  allow-offline-pay: true
+
+# Интеграции со сторонними плагинами (мягкие зависимости — без них плагин работает как обычно)
+integrations:
+  # Группа LuckPerms, которая выдаётся игрокам с активным рангом (пустая строка — выключено).
+  # Снимается при отзыве /pass remove и при истечении (см. ниже).
+  # С pass-group-paid-only: true (по умолчанию) группа — признак покупки: пробный период
+  # и /pass testpay её не выдают, ручная выдача и Boosty — выдают.
+  pass-group: ""
+  # Снимать группу при истечении ранга (false — группа остаётся, пока админ не отзовёт ранг)
+  pass-group-remove-expired: true
+  # Выдавать группу ТОЛЬКО за реальную оплату: тестовый период при регистрации (/register)
+  # и тестовая оплата (/pass testpay) группу не выдают — она появится после первой покупки.
+  # false = группа выдаётся при любом активном ранге, включая приветственный (старое поведение)
+  pass-group-paid-only: true
+  # Дополнительные права для группы ранга. Применяются по /pass luckperms setup:
+  # он создаёт/достраивает схему default → <pass-group> → admin (права всех chrdk*-аддонов).
+  pass-group-permissions: []
+  # Защита служебных команд от обычных игроков при /pass luckperms setup: в группу
+  # default выставляются ЯВНЫЕ запреты (/plugins, /version, /timings, /op, /ban,
+  # /whitelist, /kick и т.п.), а в admin — те же узлы разрешёнными (вес решает).
+  lp-command-protect: true
+  # Дополнительные узлы, запрещаемые обычным игрокам (добавляются к встроенному списку):
+  lp-deny-extra: []
 
 auth:
   # Время жизни сессии по IP в минутах (0 = отключить сессию, спрашивать пароль при каждом входе)
   session-minutes: 30
-  # Может ли IP-сессия пропускать код 2FA (false = код требуется всегда — безопаснее)
+  # Может ли IP-сессия пропускать код 2FA (false = код требуется всегда — безопаснее).
+  # При totp.required: true этот ключ игнорируется — второй фактор не пропускается никогда.
   session-skips-2fa: false
   # Требовать, чтобы сессия принадлежала тому же UUID игрока
   session-require-same-uuid: true
@@ -66,8 +688,17 @@ auth:
   max-login-attempts: 5
   # Интервал отправки напоминаний заблокированным игрокам (в секундах)
   reminder-seconds: 5
+  # Эскалационная проверка «ты не бот»: после N подряд неудачных попыток входа перед
+  # следующей попыткой открывается диалог с выбором правильного числа (0 = выключено)
+  captcha-after-attempts: 3
   # Показывать ввод пароля в нативном диалоге Paper 1.21.6+ вместо команды /login <пароль>
   dialogs: true
+  # Вход кнопками: /login без аргументов открывает инвентарную клавиатуру, где каждый клик
+  # добавляет символ и перетасовывает раскладку — по записи стрима пароль не восстановить.
+  # Клики не попадают ни в чат, ни в консоль, ни в логи. (false = только команда/диалог)
+  button-login: true
+  # Дополнительные знаки на странице «цифры и знаки» кнопочной клавиатуры
+  button-login-symbols: "!@#$%&*-_+=.?"
   # Маскировать аргументы /login, /register, /changepassword и /2fa в консоли и logs/latest.log
   mask-commands-in-logs: true
   # Запрещать пароли из списка самых частых и пароли из последовательных символов
@@ -91,22 +722,74 @@ auth:
     notify-admins: true
 
 anti-multialt:
-  # Отслеживать, когда с одного IP входят несколько аккаунтов с активными проходками
+  # Отслеживать, когда с одного IP входят несколько аккаунтов с активными рангами
   enabled: true
   # notify = предупредить администрацию и записать в аудит, deny = запретить вход
   mode: notify
   max-accounts-per-ip: 3
   window-minutes: 240
 
+guide:
+  # Книга-путеводитель для новичков (1.4.107): краткая инструкция по серверу в виде
+  # письменной книги. Тексты (заголовок, автор и страницы) — в messages.yml: guide.title,
+  # guide.author, guide.pages — их можно править без пересборки плагина.
+  enabled: true
+  # Выдавать книгу при первом входе после регистрации (один раз на аккаунт).
+  # Игравшим до обновления книгу не навязываем — они берут её командой /guide.
+  # false = книга не выдаётся автоматически, но /guide продолжает работать.
+  give-on-first-join: true
+
+spawn:
+  # Случайный спавн (1.4.106): новичок появляется в случайной точке мира после регистрации/входа,
+  # а погибший — вместо спавна мира. Только если у игрока нет СВОЕГО места: кровати, якоря
+  # возрождения или личной точки /spawnpoint (это не отключается), дома в CHRDK_Teleports
+  # (respect-homes) и привата в CHRDK_Claims (respect-claims).
+  enabled: true
+  # Первый заход: случайная точка после завершения входа (пароль + 2FA).
+  on-first-join: true
+  # Смерть: случайная точка вместо спавна мира при возрождении.
+  on-death: true
+  # Мир для случайной точки; пустая строка — мир игрока. Смерть в Нижнем мире/Энде
+  # переносит в случайную точку основного мира (на крыше Нижнего мира спавнить нельзя).
+  world: ""
+  # Центр поиска — спавн мира (true) или фиксированные координаты ниже.
+  use-world-spawn-center: true
+  center-x: 0
+  center-z: 0
+  # Радиус кольца в блоках: точка выбирается равномерно по площади, от min-radius до radius.
+  radius-blocks: 3000
+  min-radius-blocks: 200
+  # Сколько раз пробовать найти безопасное место. Каждая проба в неизученном чанке
+  # генерирует его — не ставьте слишком много.
+  max-attempts: 16
+  # Не выбирать точку внутри чужого привата (CHRDK_Claims).
+  avoid-claims: true
+  # Не переносить игрока, у которого уже есть свой приват / дом.
+  respect-claims: true
+  respect-homes: true
+  # Смерть в Нижнем мире/Энде: overworld — случайная точка основного мира (по умолчанию),
+  # vanilla — обычное возрождение в этом измерении (рандом там не применяется).
+  other-dimensions: "overworld"
+
 totp:
   # Включить поддержку двухфакторной аутентификации (TOTP: Google Authenticator, 2FAS, Authy, Яндекс Ключ)
   enabled: true
+  # Обязательная 2FA ДЛЯ ВСЕХ: пока игрок не привяжет приложение-аутентификатор, он не попадает
+  # в игру (доступны только /2fa, /login, /captcha). Привязка идёт сразу после пароля:
+  # /2fa setup → скан QR/ключа → /2fa confirm <код>. Отключить 2FA сам игрок не может —
+  # только администратор командой /pass reset2fa <ник> (после сброса привязка потребуется снова).
+  # При enabled: false этот ключ не действует. false = 2FA по желанию игрока (старое поведение).
+  # ВНИМАНИЕ: включение переводит в режим привязки всех, у кого 2FA ещё не настроена.
+  required: true
   # Название сервера в приложении-аутентификаторе (Issuer)
   issuer: "CHRDK"
   # Допустимое расхождение времени в 30-секундных шагах (1 = ±30 секунд)
   window-steps: 1
   # Максимальное количество неверных попыток ввода 6-значного кода 2FA до кика с сервера
   max-attempts: 5
+  # Выдавать карту с QR-кодом otpauth:// при /2fa setup (и по команде /2fa qr):
+  # привязка приложения-аутентификатора одним сканом вместо ручного ввода ключа
+  qr-map: true
 
 storage:
   # Как часто сбрасывать накопленные изменения data.json на диск (в секундах)
@@ -130,15 +813,33 @@ notifications:
   # Вебхук Discord для важных событий (пусто = уведомления выключены)
   discord-webhook-url: ""
   # Какие события отправлять: pass.granted, pass.revoked, bruteforce.alert, totp.reset, password.reset,
-  # multialt.alert, donate.pending, donatepay.error, chat.mute, totp.enabled, totp.disabled, password.change
-  events: [pass.granted, pass.revoked, bruteforce.alert, totp.reset, password.reset, donate.pending, donatepay.error]
+  # multialt.alert, donate.pending, donatepay.error, donatepay.down, donatepay.up,
+  # chat.mute, totp.enabled, totp.disabled, password.change, update.available, lottery.draw
+  events: [pass.granted, pass.revoked, bruteforce.alert, totp.reset, password.reset, donate.pending,
+          donatepay.error, donatepay.down, donatepay.up, update.available, lottery.draw]
   # Упоминания в сообщении (например, "<@&1234567890>")
   mentions: []
 
 metrics:
   # Отправлять анонимную статистику bStats (требуется числовой ID плагина с bstats.org)
   bstats: true
+  # ID выдаётся бесплатно на bstats.org (заведите там плагин CHRDK_Core); 0 = метрики выключены.
+  # Отправляются только обезличенные числа: игроки с рангами, аккаунты с 2FA, активный провайдер доната.
   bstats-id: 0
+
+# Ручные команды (независимы от enabled): /pass update check и pass update download.
+# download только из консоли/RCON; проверяет GitHub SHA-256 всех 17 JAR и общий ZIP,
+# готовит лишь установленные плагины в пустом update-folder, сохраняет исходные JAR.
+# После сообщения о готовности нужен полный перезапуск; /reload не устанавливает код.
+updates:
+  # Фоново проверять новые версии ядра на GitHub Releases (игру не тормозит)
+  enabled: true
+  # Репозиторий релизов вида owner/name
+  repo: "cherdakmd/CHRDK_F_REGISTER"
+  # Как часто проверять, в часах (1..720)
+  interval-hours: 6
+  # Сообщать администраторам (право chrdkregister.admin) — сразу при обнаружении и при входе на сервер
+  notify-admins: true
 
 chat:
   # Включить встроенный чат: локальный/глобальный каналы, упоминания, личные сообщения, автосообщения
@@ -211,19 +912,105 @@ private-messages:
   spy-format: "&8[SPY] &7%sender% &8→ &7%target%&8: &r%message%"
 
 auto-messages:
-  # Автоматические сообщения в чат через заданный интервал
   enabled: true
-  # Интервал между сообщениями в секундах (минимум 30)
+  # Интервал между сообщениями в секундах (минимум 30).
   interval-seconds: 240
-  # Отправлять сообщения в случайном порядке (false = строго по порядку списка)
+  # Случайный порядок без повтора последних пяти текстов. false — строго по
+  # списку: каждое сообщение по очереди, выбывшие пропускаются.
   random-order: true
-  # Не отправлять сообщения, если на сервере меньше указанного количества игроков
+  # Минимум авторизованных получателей с правом chrdkregister.automessage.receive.
   minimum-players: 1
-  # Префикс перед каждым автосообщением
-  prefix: "&8[&6CHRDK&8] &r"
-  # Доступна подстановка %online% — количество игроков онлайн
+  prefix: "<dark_gray>[<gold>CHRDK</gold>]</dark_gray> "
+  # Каждое сообщение — строка или карта:
+  #   text        — MiniMessage-текст;
+  #   plugin      — показывать только когда аддон включён (иначе скрыто);
+  #   permission  — показывать только владельцам права;
+  #   condition   — always (по умолчанию), trial (приветственный ранг),
+  #                 unsecured (2FA не подключена), no-pass (ранга нет),
+  #                 paid (активный оплаченный ранг);
+  #   min-online  — минимум игроков онлайн (0 — без ограничения).
+  # Подстановки: %player%, %online%, %max%, %world%, %pass_left%, %pass_days%,
+  # %pass_type%, %trial_days%, %balance% (баланс банка /bal).
+  # Проверка без ожидания: /pass automessages list|next|test <номер>.
   messages:
-    - "&eПонравился сервер? Поддержи проект и продли проходку: &b/pass"
-    - "&eВключи двухфакторную защиту аккаунта: &b/2fa setup"
-    - "&eСмени пароль на надёжный: &b/changepassword"
-    - "&eСейчас на сервере: &b%online% &eигроков"
+    # --- общее ---
+    - {"text": "<gray>Все возможности сервера собраны в <white>/menu</white>: ранг, прогресс, экономика, мир, снаряжение, охота и общество.</gray>"}
+    - {"text": "<gray>Ваш баланс банка: <white>%balance%</white> алмазов. Перевод другу — <white>/pay ник сумма</white>, топ — <white>/baltop</white>.</gray>"}
+    - {"text": "<gray>Алмазы можно хранить в банке: <white>/bal deposit</white> и <white>/bal withdraw</white>. Счёт не теряется при смерти.</gray>"}
+    - {"text": "<gray>Переключение локального и общего чата — <white>/chat</white>. Личное сообщение — <white>/msg ник текст</white>, ответ — <white>/r</white>.</gray>"}
+    # --- ранг и безопасность ---
+    - {"text": "<gray>Ваш приветственный ранг активен: осталось <white>%pass_left%</white>. Статус и продление — <white>/pass menu</white>.</gray>", "condition": "trial"}
+    - {"text": "<gray>Ранг закончился. Продлить и сохранить оформление — <white>/pass menu</white>, вопросы — в Discord сервера.</gray>", "condition": "no-pass"}
+    - {"text": "<gray>Спасибо за поддержку сервера! Ваш ранг активен до конца срока: <white>%pass_left%</white>.</gray>", "condition": "paid"}
+    - {"text": "<gray>Защитите аккаунт: <white>/2fa setup</white>, затем подтвердите код приложения. Никому не сообщайте пароль и коды.</gray>", "condition": "unsecured"}
+    - {"text": "<gray>Проверьте сессии входа: <white>/session</white>. Для выхода из аккаунта — <white>/logout</white>.</gray>"}
+    - {"text": "<gray>Хотите поддержать проект? <white>/pass donate</white> откроет ссылку на оплату и продление.</gray>"}
+    # --- прогресс ---
+    - {"text": "<gray>Задания сезона и награды: <white>/battlepass</white>. Прогресс не сгорает при перезапуске.</gray>", "plugin": "CHRDK_BattlePass", "permission": "chrdkbp.use"}
+    - {"text": "<gray>72 достижения ждут своего героя: <white>/achievements</white>. Бейджи открываются вместе с целями.</gray>", "plugin": "CHRDK_Achievements", "permission": "chrdkachievements.use"}
+    - {"text": "<gray>Десять навыков и 60 перков: <white>/skills</white>. Уровни растут от обычной игры — копайте, бейте, варите.</gray>", "plugin": "CHRDK_Skills", "permission": "chrdkskills.use"}
+    - {"text": "<gray>Клад можно найти в любом камне: <white>/treasures</white>. Способности по ПКМ, сеты и проклятия — в лоре находок.</gray>", "plugin": "CHRDK_Treasures", "permission": "chrdktreasures.use"}
+    - {"text": "<gray>Артефакты собираются в коллекцию: <white>/artifacts collection</white>. За полноту каталога — дни ранга и алмазы.</gray>", "plugin": "CHRDK_Artifacts", "permission": "chrdkartifacts.use"}
+    - {"text": "<gray>Звание растёт вместе с наигранным временем. Ваш прогресс — <white>/ranks</white>.</gray>", "plugin": "CHRDK_Ranks", "permission": "chrdkranks.use"}
+    - {"text": "<gray>Общие цели сервера: <white>/goals</white> — ваш вклад и прогресс сообщества.</gray>", "plugin": "CHRDK_CommonGoals", "permission": "chrdkgoals.use", "min-online": 3}
+    # --- экономика ---
+    - {"text": "<gray>Обмен ресурсов и актуальные цены: <white>/shop</white>. Счёт магазина отделён от банка <white>/bal</white>.</gray>", "plugin": "CHRDK_DiamondShop", "permission": "chrdkshop.use"}
+    - {"text": "<gray>Продайте стак из руки: <white>/auction sell цена</white>. Покупка требует подтверждения, комиссия видна в лоте.</gray>", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
+    - {"text": "<gray>Купленные и возвращённые лоты ждут в <white>/auction mail</white>. Выручку забирайте через <white>/auction money</white>.</gray>", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
+    - {"text": "<gray>Лотерея: <white>/lottery</white> — банк, шанс и время. Билеты — <white>/lottery buy</white>, выигрыш — <white>/lottery claim</white>.</gray>", "plugin": "CHRDK_Lottery", "permission": "chrdklottery.use"}
+    - {"text": "<gray>Защитите постройки: <white>/claim help</white>. Казна для ежедневной ренты — <white>/claim balance</white>.</gray>", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
+    # --- мир, снаряжение, сообщество ---
+    - {"text": "<gray>Точки дома: <white>/homes</white> и <white>/sethome имя</white>. Запрос к игроку — <white>/tpa ник</white>.</gray>", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
+    - {"text": "<gray>Изучайте кастомные чары: <white>/enchants</white>. Редкости снаряжения — <white>/tiers</white>.</gray>", "plugin": "CHRDK_Enchants", "permission": "chrdkenchants.use"}
+    - {"text": "<gray>Косметический шлейф: <white>/cosmetics list</white>. Выключить эффект — <white>/cosmetics off</white>.</gray>", "plugin": "CHRDK_Cosmetics", "permission": "chrdkcosmetics.use"}
+    - {"text": "<gray>Стримите на Twitch или VK Play Live? Привяжите канал: <white>/stream link</white> — час эфира даёт сутки ранга.</gray>", "plugin": "CHRDK_Streams", "permission": "chrdkstreams.use"}
+    - {"text": "<gray>Приглашайте друзей: <white>/ref</white> — статус и условия бонуса. Вас позвал друг? <white>/ref use его_ник</white>.</gray>", "plugin": "CHRDK_Referrals", "permission": "chrdkref.use"}
+    - {"text": "<gray>Сейчас на сервере <white>%online%</white> игроков. Самое время для общих целей: <white>/goals</white>.</gray>", "plugin": "CHRDK_CommonGoals", "permission": "chrdkgoals.use", "min-online": 5}
+    - {"text": "<gray>Забирайте ежедневную награду: <white>/daily</white>. Стрик входов не сбрасывается при пропуске одного дня.</gray>", "plugin": "CHRDK_DailyRewards", "permission": "chrdkdaily.use"}
+    - {"text": "<gray>Сведения об очереди входа: <white>/queue info</white>. Приоритет зависит от настроек сервера.</gray>", "plugin": "CHRDK_Queue", "permission": "chrdkqueue.use"}
+
+tablist:
+  # Таб-лист (TAB): шапка/подвал списка игроков и формат имени в нём.
+  # Разметка — MiniMessage либо &-коды. Подстановки:
+  #   %player% — ник игрока, %online%/%max% — онлайн и лимит,
+  #   %tps% — TPS сервера, %ping% — пинг игрока, %world% — его мир,
+  #   %rank_tag% — название донатного ранга в его оформлении (« · Покровитель»),
+  #   %pass_status% — активен/истёк/нет ранга, %pass_left% — «12 дн. 3 ч.»,
+  #   %pass_days% — осталось целых дней ранга.
+  #   %pass_type% — приветственный/обычный/нет, %auth_status% — состояние входа,
+  #   %auth_hint% — следующий шаг, %security% — состояние 2FA,
+  #   %navigation% — доступные ссылки после входа (до входа: пустая строка).
+  enabled: true
+  # Как часто (в тиках, 20 = 1 сек) обновлять таб-лист всем игрокам. Минимум 10.
+  refresh-ticks: 40
+  # Строки шапки списка (каждая с новой строки экрана)
+  header:
+    - ""
+    - "<gradient:gold:yellow><bold>CHERDAK • ВЫЖИВАНИЕ</bold></gradient>"
+    - "<gray>Онлайн <white>%online%/%max%</white> <dark_gray>•</dark_gray> TPS <green>%tps%</green>"
+    - "<gray>%player% <dark_gray>•</dark_gray> <white>%auth_status%</white>"
+    - ""
+  footer:
+    - ""
+    - "<gold>%pass_type%</gold> <dark_gray>•</dark_gray> <aqua>%pass_left%</aqua>"
+    - "<gray>%auth_hint%</gray>"
+    - "<gray>2FA: <white>%security%</white> <dark_gray>•</dark_gray> <yellow>%ping% мс</yellow> <dark_gray>•</dark_gray> %world%"
+    - "<aqua>%navigation%</aqua>"
+    - ""
+  # %player_tagged% — ник с оформлением: знак и цвет донатного ранга, метка
+  # стримера, звание кладоискателя. Пусто — не перекрашивать чужие префиксы
+  # (сортировкой таба управляет CHRDK_Ranks, формат ей не мешает).
+  # %rank_tag% — хвост « · Покровитель» с названием ступени (пусто без ранга).
+  # Порядок частей свободный: можно поставить %rank_tag% перед ником.
+  player-name-format: "%player_tagged%%rank_tag%"
+  # Добавлять название ранга, даже если в формате выше нет %rank_tag%.
+  # Нужно для старых конфигов: обновление подхватит название само.
+  # false — в табе останутся только знак и цвет ступени.
+  show-rank-name: true
+  # Никнеймы, закреплённые ВВЕРХУ списка игроков (регистр не важен).
+  # Реализовано через приоритетную команду scoreboard — клиент Minecraft
+  # сортирует список сначала по команде, потом по нику.
+  # ВНИМАНИЕ: если другой плагин садит этих игроков в свою команду
+  # (префиксы/ранги), его команда имеет приоритет — TAB не перетягивает игрока обратно.
+  pinned-names:
+    - kalinin_play

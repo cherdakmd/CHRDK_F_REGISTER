@@ -44,7 +44,7 @@ import java.util.zip.GZIPOutputStream;
  */
 public final class RegistrationStore {
     /** Current on-disk schema version. */
-    public static final int SCHEMA_VERSION = 3;
+    public static final int SCHEMA_VERSION = 4;
     private static final int MAX_PROCESSED_DONATIONS = 5_000;
     private static final int MAX_JOURNAL_ENTRIES = 20_000;
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
@@ -352,11 +352,17 @@ public final class RegistrationStore {
     private StoreData normalize(StoreData loaded) {
         if (loaded.accounts == null) loaded.accounts = new LinkedHashMap<>();
         if (loaded.processedDonationIds == null) loaded.processedDonationIds = new LinkedHashSet<>();
+        if (loaded.donationCursorsBySource == null) loaded.donationCursorsBySource = new LinkedHashMap<>();
         if (loaded.donations == null) loaded.donations = new ArrayList<>();
         if (loaded.accountAttempts == null) loaded.accountAttempts = new LinkedHashMap<>();
         if (loaded.ipAttempts == null) loaded.ipAttempts = new LinkedHashMap<>();
         if (loaded.paymentCodes == null) loaded.paymentCodes = new LinkedHashMap<>();
+        if (loaded.trialUsedUuids == null) loaded.trialUsedUuids = new LinkedHashSet<>();
         for (PlayerAccount account : loaded.accounts.values()) {
+            if (account.trialConsumed || account.isRegistered() || account.lastGrantAt > 0 || account.passUntil > 0) {
+                account.trialConsumed = true;
+                if (account.uuid != null && !account.uuid.isBlank()) loaded.trialUsedUuids.add(account.uuid);
+            }
             if (account.ignoredPlayers == null) account.ignoredPlayers = new LinkedHashSet<>();
             if (account.sessions == null) account.sessions = new ArrayList<>();
             if (account.expiryWarningsSent == null) account.expiryWarningsSent = new LinkedHashSet<>();
@@ -396,6 +402,9 @@ public final class RegistrationStore {
             version = 3;
             logger.info("Storage migration v2 -> v3 applied (DonatePay journal and expiry warnings added).");
         }
+        if (version < 4) {
+            logger.info("Storage migration v3 -> v4 applied (one-time registration trials; existing registered/paid accounts excluded).");
+        }
     }
 
     /* ------------------------------------------------------------------ *
@@ -411,8 +420,14 @@ public final class RegistrationStore {
         if (uuid != null) {
             account.uuid = uuid.toString();
         }
+        if (account.trialConsumed || account.lastGrantAt > 0 || account.passUntil > 0 || account.isRegistered()) consumeTrial(account);
         markDirty();
         return copy(account);
+    }
+
+    private void consumeTrial(PlayerAccount account) {
+        account.trialConsumed = true;
+        if (account.uuid != null && !account.uuid.isBlank()) data.trialUsedUuids.add(account.uuid);
     }
 
     public synchronized Optional<PlayerAccount> getAccount(String playerName) {
@@ -439,6 +454,198 @@ public final class RegistrationStore {
         return account != null && account.isTotpEnabled();
     }
 
+    /**
+     * Агрегированные счётчики по всем аккаунтам — для метрик bStats и диагностики.
+     * Только числа, без имён и персональных данных.
+     */
+    public record StatsSnapshot(int accounts, int registered, int activePass, int totpEnabled) {
+    }
+
+    /** Снимок счётчиков за один синхронизированный проход по аккаунтам. */
+    public synchronized StatsSnapshot statsSnapshot(long nowMillis) {
+        int registered = 0;
+        int activePass = 0;
+        int totpEnabled = 0;
+        for (PlayerAccount account : data.accounts.values()) {
+            if (account.isRegistered()) registered++;
+            if (account.hasActivePass(nowMillis)) activePass++;
+            if (account.isTotpEnabled()) totpEnabled++;
+        }
+        return new StatsSnapshot(data.accounts.size(), registered, activePass, totpEnabled);
+    }
+
+    /* ------------------------------------------------------------------ *
+     *  Донатные ранги (1.4.167)
+     * ------------------------------------------------------------------ */
+
+    /** Ступень действующего ранга: 0 — нет, 1..5. Работает и для оффлайн-ников. */
+    public synchronized int rankLevel(String playerName, long nowMillis) {
+        if (playerName == null || playerName.isBlank()) {
+            return 0;
+        }
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        return account == null ? 0 : account.effectiveRank(nowMillis);
+    }
+
+    /** Момент окончания ранга; {@code 0} — ранга нет или он выдан навсегда. */
+    public synchronized long rankUntil(String playerName) {
+        if (playerName == null || playerName.isBlank()) {
+            return 0L;
+        }
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        if (account == null) {
+            return 0L;
+        }
+        return Math.max(0L, account.passUntil);
+    }
+
+    /**
+     * Выдаёт ранг до момента {@code untilMillis}.
+     *
+     * <p>Вызывающий сам считает срок: продление того же ранга складывает дни,
+     * повышение — пересчитывает остаток по цене ({@link RankLadder#carryDays}).</p>
+     */
+    public synchronized PlayerAccount grantRankUntil(String playerName, long nowMillis, int level,
+                                                     long untilMillis, String source) {
+        PlayerAccount account = accountFor(playerName);
+        int safeLevel = RankLadder.clampLevel(level);
+        if (account.rankPermanent) {
+            // Постоянный ранг не понижаем: подписка живёт поверх него отдельной ступенью.
+            account.tempRankLevel = safeLevel;
+        } else {
+            account.rankLevel = safeLevel;
+            account.tempRankLevel = 0;
+        }
+        account.passUntil = Math.max(nowMillis, untilMillis);
+        account.rankGrantedAt = nowMillis;
+        consumeTrial(account);
+        account.lastGrantSource = (source == null || source.isBlank()) ? "rank" : source;
+        account.lastGrantAt = nowMillis;
+        account.lastGrantDays = (int) Math.max(0, (account.passUntil - nowMillis) / 86_400_000L);
+        clearExpiryWarnings(account);
+        markDirtyNow();
+        return copy(account);
+    }
+
+    /** Выдаёт ранг навсегда (миграция, ручная выдача, акции). */
+    public synchronized PlayerAccount grantRankPermanent(String playerName, long nowMillis, int level,
+                                                         String source) {
+        PlayerAccount account = accountFor(playerName);
+        account.rankLevel = RankLadder.clampLevel(level);
+        account.rankPermanent = true;
+        account.tempRankLevel = 0;
+        account.passUntil = 0L;
+        account.rankGrantedAt = nowMillis;
+        consumeTrial(account);
+        account.lastGrantSource = (source == null || source.isBlank()) ? "rank-permanent" : source;
+        account.lastGrantAt = nowMillis;
+        account.lastGrantDays = 0;
+        clearExpiryWarnings(account);
+        markDirtyNow();
+        return copy(account);
+    }
+
+    /**
+     * Добавляет дни к действующему рангу — наградные дни квестов, батлпасса, стримов.
+     * Без ранга открывает первую ступень. Постоянный ранг продлевать не нужно.
+     *
+     * @return срок после начисления; {@code 0} — дни не начислены (ранг навсегда)
+     */
+    public synchronized long extendRankDays(String playerName, long nowMillis, int days, String source) {
+        if (days <= 0 || playerName == null || playerName.isBlank()) {
+            return 0L;
+        }
+        PlayerAccount account = accountFor(playerName);
+        if (account.rankPermanent && account.tempRankLevel <= 0) {
+            return 0L; // постоянный ранг без подписки продлевать нечем
+        }
+        if (account.rankLevel <= 0) {
+            account.rankLevel = 1;
+        }
+        long base = Math.max(nowMillis, account.passUntil);
+        account.passUntil = base + Math.max(1, days) * 86_400_000L;
+        account.lastGrantSource = (source == null || source.isBlank()) ? "rank-days" : source;
+        account.lastGrantAt = nowMillis;
+        account.lastGrantDays = Math.max(1, days);
+        clearExpiryWarnings(account);
+        markDirtyNow();
+        return account.passUntil;
+    }
+
+    /** Снимает ранг полностью (ручной отзыв, возврат). */
+    public synchronized boolean revokeRank(String playerName) {
+        if (playerName == null || playerName.isBlank()) {
+            return false;
+        }
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        if (account == null) {
+            return false;
+        }
+        boolean had = account.rankLevel > 0 || account.rankPermanent || account.passUntil > 0;
+        account.rankLevel = 0;
+        account.rankPermanent = false;
+        account.tempRankLevel = 0;
+        account.passUntil = 0L;
+        account.rankGrantedAt = 0L;
+        clearExpiryWarnings(account);
+        if (had) {
+            markDirtyNow();
+        }
+        return had;
+    }
+
+    /**
+     * Одноразовая миграция с проходки (1.4.167).
+     *
+     * <p>Кто платил — получает постоянный ранг по сумме платежей (I–III), кто играл
+     * только на триале — первую ступень до конца оплаченного срока. Остальным ничего
+     * не нужно: вход на сервер уже свободный.</p>
+     *
+     * @return сколько аккаунтов получило ранг
+     */
+    public synchronized int migrateRanks(long nowMillis) {
+        if (data.rankSchemaVersion >= 1) {
+            return 0;
+        }
+        int changed = 0;
+        for (PlayerAccount account : data.accounts.values()) {
+            if (account == null || account.rankLevel > 0 || account.rankPermanent) {
+                continue;
+            }
+            int level = RankLadder.levelForLifetime(account.totalPaidKopecks);
+            if (level > 0) {
+                account.rankLevel = level;
+                account.rankPermanent = true;
+                account.tempRankLevel = 0;
+                account.passUntil = 0L;
+                account.rankGrantedAt = nowMillis;
+                account.lastGrantSource = "migration:permanent";
+                changed++;
+            } else if (account.passUntil > nowMillis) {
+                account.rankLevel = 1;
+                changed++;
+            }
+        }
+        data.rankSchemaVersion = 1;
+        if (changed > 0) {
+            markDirtyNow();
+        } else {
+            markDirty();
+        }
+        return changed;
+    }
+
+    /** Общая подготовка аккаунта: канонический ключ и ник, если его ещё нет. */
+    private PlayerAccount accountFor(String playerName) {
+        String key = canonicalName(playerName);
+        PlayerAccount account = data.accounts.computeIfAbsent(key, ignored -> new PlayerAccount());
+        account.canonicalName = key;
+        if (account.playerName == null || account.playerName.isBlank()) {
+            account.playerName = playerName;
+        }
+        return account;
+    }
+
     /** Grants or extends a pass manually with the default source tag. */
     public synchronized PlayerAccount grantPassManual(String playerName, long nowMillis, long durationMillis) {
         return grantPassManual(playerName, nowMillis, durationMillis, "manual");
@@ -461,11 +668,44 @@ public final class RegistrationStore {
         if (account.playerName == null || account.playerName.isBlank()) {
             account.playerName = playerName;
         }
+        if (account.rankPermanent) {
+            return copy(account); // ранг навсегда продлевать не нужно
+        }
         long baseTime = Math.max(nowMillis, account.passUntil);
         account.passUntil = baseTime + durationMillis;
+        consumeTrial(account);
         account.lastGrantSource = (source == null || source.isBlank()) ? "manual" : source;
         account.lastGrantAt = nowMillis;
         account.lastGrantDays = (int) Math.max(0, durationMillis / 86_400_000L);
+        clearExpiryWarnings(account);
+        markDirtyNow();
+        return copy(account);
+    }
+
+    /**
+     * Доводит проходку до горизонта {@code untilMillis} БЕЗ сложения: если текущий
+     * срок уже дальше — ничего не меняем (анти-компаунд для подписочных перепроверок
+     * Boosty: каждый день «поднимаем горизонт» до now+days, а не плюсуем).
+     */
+    public synchronized PlayerAccount renewPassUntil(
+            String playerName,
+            long nowMillis,
+            long untilMillis,
+            String source
+    ) {
+        String key = canonicalName(playerName);
+        PlayerAccount account = data.accounts.computeIfAbsent(key, ignored -> new PlayerAccount());
+        account.canonicalName = key;
+        if (account.playerName == null || account.playerName.isBlank()) {
+            account.playerName = playerName;
+        }
+        if (untilMillis <= account.passUntil) {
+            return copy(account); // уже дальше — подписка просто подтверждена
+        }
+        account.passUntil = untilMillis;
+        consumeTrial(account);
+        account.lastGrantSource = (source == null || source.isBlank()) ? "subscription" : source;
+        account.lastGrantAt = nowMillis;
         clearExpiryWarnings(account);
         markDirtyNow();
         return copy(account);
@@ -483,6 +723,24 @@ public final class RegistrationStore {
             long durationMillis,
             boolean strictCaseMatch
     ) {
+        return grantPassFromDonation(donorName, transactionCreatedAtMillis, nowMillis,
+                durationMillis, strictCaseMatch, false);
+    }
+
+    /**
+     * То же, но с пометкой тестовой оплаты ({@code /pass testpay}): проходка продлевается,
+     * однако покупка не засчитывается — счётчик платежей и источник выдачи не меняются,
+     * поэтому {@link PlayerAccount#isTrialOnly()} остаётся честным, а LuckPerms-группа
+     * проходки не выдаётся.
+     */
+    public synchronized Optional<PlayerAccount> grantPassFromDonation(
+            String donorName,
+            long transactionCreatedAtMillis,
+            long nowMillis,
+            long durationMillis,
+            boolean strictCaseMatch,
+            boolean testPayment
+    ) {
         if (donorName == null || donorName.isBlank()) return Optional.empty();
         String key = canonicalName(donorName);
         PlayerAccount existing = data.accounts.get(key);
@@ -497,12 +755,18 @@ public final class RegistrationStore {
         if (account.playerName == null || account.playerName.isBlank()) {
             account.playerName = donorName;
         }
+        if (account.rankPermanent) {
+            return Optional.of(copy(account)); // ранг навсегда уже есть
+        }
         long start = Math.max(Math.max(nowMillis, transactionCreatedAtMillis), account.passUntil);
         account.passUntil = start + durationMillis;
-        account.lastGrantSource = "donatepay";
-        account.lastGrantAt = nowMillis;
-        account.lastGrantDays = (int) Math.max(0, durationMillis / 86_400_000L);
-        account.paymentsCount++;
+        consumeTrial(account);
+        if (!testPayment) {
+            account.lastGrantSource = "donatepay";
+            account.lastGrantAt = nowMillis;
+            account.lastGrantDays = (int) Math.max(0, durationMillis / 86_400_000L);
+            account.paymentsCount++;
+        }
         clearExpiryWarnings(account);
         markDirtyNow();
         return Optional.of(copy(account));
@@ -518,12 +782,184 @@ public final class RegistrationStore {
         markDirty();
     }
 
+    /* ------------------------------------------------------------------ *
+     *  Каталог товаров (1.4.110)
+     * ------------------------------------------------------------------ */
+
+    /**
+     * Выдаёт или продлевает товар каталога.
+     *
+     * <p>Срок складывается с текущим (повторная покупка не сгорает), но не выходит за
+     * {@code now + maxTotalDays}. Возвращает момент окончания.</p>
+     */
+    public synchronized long grantEntitlement(
+            String playerName,
+            String productId,
+            long nowMillis,
+            int days,
+            int maxTotalDays
+    ) {
+        if (playerName == null || playerName.isBlank() || productId == null || productId.isBlank()) {
+            return 0L;
+        }
+        String key = canonicalName(playerName);
+        PlayerAccount account = data.accounts.computeIfAbsent(key, ignored -> new PlayerAccount());
+        account.canonicalName = key;
+        if (account.playerName == null || account.playerName.isBlank()) {
+            account.playerName = playerName;
+        }
+        if (account.entitlements == null) {
+            account.entitlements = new LinkedHashMap<>();
+        }
+        long current = account.entitlements.getOrDefault(productId, 0L);
+        long until = ShopEntitlements.extend(nowMillis, current, days, maxTotalDays);
+        account.entitlements.put(productId, until);
+        markDirtyNow();
+        return until;
+    }
+
+    /** Момент окончания товара; {@code 0}, если товар никогда не покупался. */
+    public synchronized long entitlementUntil(String playerName, String productId) {
+        if (playerName == null || playerName.isBlank() || productId == null || productId.isBlank()) {
+            return 0L;
+        }
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        if (account == null || account.entitlements == null) {
+            return 0L;
+        }
+        return account.entitlements.getOrDefault(productId, 0L);
+    }
+
+    /** Копия карты «товар → срок» — для витрины и тестов. */
+    public synchronized Map<String, Long> entitlementsOf(String playerName) {
+        if (playerName == null || playerName.isBlank()) {
+            return Map.of();
+        }
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        if (account == null || account.entitlements == null) {
+            return Map.of();
+        }
+        Map<String, Long> result = new LinkedHashMap<>();
+        for (Map.Entry<String, Long> entry : account.entitlements.entrySet()) {
+            if (entry.getKey() != null && entry.getValue() != null) {
+                result.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return Map.copyOf(result);
+    }
+
+    /** Снимает товар полностью (ручной отзыв, возврат). */
+    public synchronized boolean revokeEntitlement(String playerName, String productId) {
+        if (playerName == null || playerName.isBlank() || productId == null || productId.isBlank()) {
+            return false;
+        }
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        if (account == null || account.entitlements == null) {
+            return false;
+        }
+        boolean removed = account.entitlements.remove(productId) != null;
+        if (removed) {
+            markDirtyNow();
+        }
+        return removed;
+    }
+
+    /**
+     * Убирает из аккаунтов истёкшие товары: файл не должен расти вечно.
+     *
+     * @return сколько записей удалено
+     */
+    public synchronized int cleanupEntitlements(long nowMillis) {
+        int removed = 0;
+        for (PlayerAccount account : data.accounts.values()) {
+            if (account == null || account.entitlements == null || account.entitlements.isEmpty()) {
+                continue;
+            }
+            int before = account.entitlements.size();
+            account.entitlements.entrySet().removeIf(entry -> entry.getValue() == null
+                    || entry.getValue() <= nowMillis);
+            removed += before - account.entitlements.size();
+        }
+        if (removed > 0) {
+            markDirtyNow();
+        }
+        return removed;
+    }
+
+    /**
+     * Пишет продажу каталога в общий журнал донатов.
+     *
+     * <p>Id отрицательный и берётся из отдельного счётчика: положительные id принадлежат
+     * DonatePay/EasyDonate, и путать их нельзя. Срок в записи — {@code 0}: журнал донатов
+     * считает дни проходки, а товар продлевает не проходку.</p>
+     */
+    public synchronized DonationRecord recordShopSale(
+            String playerName,
+            String productId,
+            int priceRubles,
+            long nowMillis
+    ) {
+        return recordShopSale(playerName, productId, priceRubles, nowMillis, "");
+    }
+
+    /**
+     * Следующий отрицательный id продажи каталога (1.4.167).
+     *
+     * <p>Нужен, когда платёж нельзя провести обычной продажей: например, игрок
+     * купил ступень ниже своей, и ранг не понижается. Запись всё равно должна
+     * попасть в журнал, иначе деньги исчезнут без следа.</p>
+     */
+    public synchronized long nextShopSaleId() {
+        long id = --data.shopSaleSequence;
+        markDirtyNow();
+        return id;
+    }
+
+    /**
+     * Продажа каталога с пометкой источника.
+     *
+     * @param extra хвост примечания: {@code gift:Ник} для подарка, пусто — обычная покупка.
+     *              Хвост попадает в {@code note} после товара и не мешает фильтрам журнала
+     */
+    public synchronized DonationRecord recordShopSale(
+            String playerName,
+            String productId,
+            int priceRubles,
+            long nowMillis,
+            String extra
+    ) {
+        DonationRecord record = new DonationRecord();
+        record.id = --data.shopSaleSequence;
+        record.source = DONATION_SOURCE_TRADEMC;
+        record.donorName = playerName == null ? "" : playerName;
+        record.amountKopecks = Math.max(0, priceRubles) * 100L;
+        record.amountRaw = Integer.toString(Math.max(0, priceRubles));
+        record.createdAt = nowMillis;
+        record.detectedAt = nowMillis;
+        record.status = DonationStatus.GRANTED.name();
+        record.note = "shop:" + (productId == null ? "" : productId)
+                + (extra == null || extra.isBlank() ? "" : ":" + extra.trim());
+        record.grantedTo = record.donorName;
+        record.decidedBy = "shop";
+        record.decidedAt = nowMillis;
+        record.days = 0;
+        return recordDonation(record);
+    }
+
     /** Revokes a player's active pass while keeping their registered password intact. */
     public synchronized boolean revokePass(String playerName) {
         if (playerName == null || playerName.isBlank()) return false;
         PlayerAccount account = data.accounts.get(canonicalName(playerName));
-        if (account == null || account.passUntil <= 0) return false;
+        if (account == null || (account.passUntil <= 0 && account.rankLevel <= 0 && !account.rankPermanent)) {
+            return false;
+        }
+        boolean hadRank = account.rankLevel > 0 || account.rankPermanent;
         account.passUntil = 0;
+        if (hadRank) {
+            account.rankLevel = 0;
+            account.rankPermanent = false;
+            account.rankGrantedAt = 0;
+        }
         account.lastAuthIp = "";
         account.lastAuthAt = 0;
         if (account.sessions != null) account.sessions.clear();
@@ -542,9 +978,16 @@ public final class RegistrationStore {
             String ipAddress,
             long nowMillis
     ) {
+        return registerPassword(playerName, uuid, rawPassword, ipAddress, nowMillis, 0);
+    }
+
+    /** Register and consume eligibility atomically. Trial pass is created only for a fresh eligible account. */
+    public synchronized boolean registerPassword(String playerName, UUID uuid, String rawPassword,
+            String ipAddress, long nowMillis, int trialDays) {
         if (playerName == null || playerName.isBlank() || rawPassword == null || rawPassword.isEmpty()) {
             return false;
         }
+        boolean grantTrial = trialDays > 0 && isTrialEligible(playerName, uuid);
         String key = canonicalName(playerName);
         PlayerAccount account = data.accounts.computeIfAbsent(key, ignored -> new PlayerAccount());
         if (account.isRegistered()) {
@@ -557,9 +1000,29 @@ public final class RegistrationStore {
         }
         account.passwordHash = PasswordHasher.hash(rawPassword);
         account.registeredAt = nowMillis;
+        account.trialConsumed = true;
+        if (uuid != null) data.trialUsedUuids.add(uuid.toString());
+        if (grantTrial) {
+            int days = Math.max(1, Math.min(365, trialDays));
+            account.passUntil = Math.addExact(nowMillis, days * 86_400_000L);
+            account.trialGrantedAt = nowMillis;
+            account.trialUntil = account.passUntil;
+            account.lastGrantSource = "trial";
+            account.lastGrantAt = nowMillis;
+            account.lastGrantDays = days;
+            clearExpiryWarnings(account);
+        }
         addSessionEntry(account, uuid, ipAddress, nowMillis, "register");
         markDirtyNow();
         return true;
+    }
+
+    /** Admission to registration, NOT admission to gameplay. Case-insensitive account plus UUID history. */
+    public synchronized boolean isTrialEligible(String playerName, UUID uuid) {
+        if (playerName == null || playerName.isBlank() || uuid == null || data.trialUsedUuids.contains(uuid.toString())) return false;
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        return account == null || (!account.trialConsumed && !account.isRegistered() && account.registeredAt == 0
+                && account.passUntil == 0 && account.lastGrantAt == 0 && account.paymentsCount == 0);
     }
 
     public synchronized boolean verifyPassword(String playerName, String rawPassword) {
@@ -588,6 +1051,8 @@ public final class RegistrationStore {
         if (playerName == null || playerName.isBlank()) return false;
         PlayerAccount account = data.accounts.get(canonicalName(playerName));
         if (account == null || !account.isRegistered()) return false;
+        account.trialConsumed = true;
+        if (account.uuid != null && !account.uuid.isBlank()) data.trialUsedUuids.add(account.uuid);
         account.passwordHash = "";
         account.registeredAt = 0;
         account.totpSecret = "";
@@ -1041,12 +1506,70 @@ public final class RegistrationStore {
         return result;
     }
 
+    /** Идентификатор первоисточника донатов (исторический, без префиксов). */
+    public static final String DONATION_SOURCE_DONATEPAY = "donatepay";
+    /** Источник журнала: покупки магазина TradeMC, приходящие RCON-командой {@code /pass shoppay}. */
+    public static final String DONATION_SOURCE_TRADEMC = "trademc";
+
     /* ------------------------------------------------------------------ *
      *  DonatePay journal, payment codes and counters
      * ------------------------------------------------------------------ */
 
     public synchronized boolean isDonationCursorInitialized() {
         return data.donationCursorInitialized;
+    }
+
+    /** Инициализирован ли курсор для источника (donatepay — по старому полю). */
+    public synchronized boolean isDonationCursorInitialized(String source) {
+        if (RegistrationStore.DONATION_SOURCE_DONATEPAY.equals(source)) {
+            return isDonationCursorInitialized();
+        }
+        return data.donationCursorsBySource.containsKey(source);
+    }
+
+    /** Курсор опроса по источнику. */
+    public synchronized long getDonationCursor(String source) {
+        if (RegistrationStore.DONATION_SOURCE_DONATEPAY.equals(source)) {
+            return getDonationCursor();
+        }
+        return data.donationCursorsBySource.getOrDefault(source, 0L);
+    }
+
+    /** Одноразовая инициализация курсора источника. */
+    public synchronized void initializeDonationCursor(String source, long cursor) {
+        if (RegistrationStore.DONATION_SOURCE_DONATEPAY.equals(source)) {
+            initializeDonationCursor(cursor);
+            return;
+        }
+        if (data.donationCursorsBySource.containsKey(source)) return;
+        data.donationCursorsBySource.put(source, Math.max(0, cursor));
+        markDirtyNow();
+    }
+
+    /** Обработан ли платёж данного источника (старые записи без префикса = donatepay). */
+    public synchronized boolean isDonationProcessed(String source, long id) {
+        if (RegistrationStore.DONATION_SOURCE_DONATEPAY.equals(source)) {
+            return isDonationProcessed(id);
+        }
+        return data.processedDonationIds.contains(source + ":" + id);
+    }
+
+    /** Пометить платёж обработанным; курсор источника поднимается не ниже id. */
+    public synchronized void markDonationProcessed(String source, long id) {
+        if (RegistrationStore.DONATION_SOURCE_DONATEPAY.equals(source)) {
+            markDonationProcessed(id);
+            return;
+        }
+        String key = source + ":" + id;
+        data.processedDonationIds.remove(key);
+        data.processedDonationIds.add(key);
+        data.donationCursorsBySource.put(source,
+                Math.max(data.donationCursorsBySource.getOrDefault(source, 0L), id));
+        while (data.processedDonationIds.size() > MAX_PROCESSED_DONATIONS) {
+            String first = data.processedDonationIds.iterator().next();
+            data.processedDonationIds.remove(first);
+        }
+        markDirty();
     }
 
     public synchronized long getDonationCursor() {
@@ -1088,7 +1611,9 @@ public final class RegistrationStore {
         if (existing.isPresent()) return copyDonation(existing.get());
         data.donations.add(record.copy());
         if (data.donations.size() > MAX_JOURNAL_ENTRIES) {
-            data.donations.sort(Comparator.comparingLong(entry -> entry.id));
+            // Режем по времени, а не по id: у продаж каталога id отрицательные,
+            // и сортировка по id выбрасывала бы их первыми, хотя они самые свежие.
+            data.donations.sort(Comparator.comparingLong(entry -> entry.createdAt));
             while (data.donations.size() > MAX_JOURNAL_ENTRIES) {
                 data.donations.remove(0);
             }
@@ -1141,6 +1666,31 @@ public final class RegistrationStore {
             if (record == null) continue;
             if (filter != null && DonationStatus.parse(record.status) != filter) continue;
             result.add(copyDonation(record));
+        }
+        result.sort(Comparator.comparingLong((DonationRecord record) -> record.createdAt).reversed());
+        if (limit > 0 && result.size() > limit) {
+            return new ArrayList<>(result.subList(0, limit));
+        }
+        return result;
+    }
+
+    /**
+     * Донаты конкретного игрока (для GUI {@code /pass donate}): запись относится к игроку,
+     * если совпал {@code grantedTo} ИЛИ имя донатора по форме (без учёта регистра).
+     * Сортировка — от новых к старым, {@code limit} обрезает сверху.
+     */
+    public synchronized List<DonationRecord> listDonationsOf(String playerName, int limit) {
+        if (playerName == null || playerName.isBlank()) {
+            return List.of();
+        }
+        List<DonationRecord> result = new ArrayList<>();
+        for (DonationRecord record : data.donations) {
+            if (record == null) continue;
+            boolean mine = (record.grantedTo != null && record.grantedTo.equalsIgnoreCase(playerName))
+                    || (record.donorName != null && record.donorName.trim().equalsIgnoreCase(playerName));
+            if (mine) {
+                result.add(copyDonation(record));
+            }
         }
         result.sort(Comparator.comparingLong((DonationRecord record) -> record.createdAt).reversed());
         if (limit > 0 && result.size() > limit) {
@@ -1381,6 +1931,9 @@ public final class RegistrationStore {
         result.playerName = source.playerName;
         result.canonicalName = source.canonicalName;
         result.passUntil = source.passUntil;
+        result.trialConsumed = source.trialConsumed;
+        result.trialGrantedAt = source.trialGrantedAt;
+        result.trialUntil = source.trialUntil;
         result.lastGrantSource = source.lastGrantSource;
         result.lastGrantAt = source.lastGrantAt;
         result.lastGrantDays = source.lastGrantDays;
@@ -1406,6 +1959,9 @@ public final class RegistrationStore {
         result.expiryWarningsSent = source.expiryWarningsSent == null
                 ? new LinkedHashSet<>()
                 : new LinkedHashSet<>(source.expiryWarningsSent);
+        result.entitlements = source.entitlements == null
+                ? new LinkedHashMap<>()
+                : new LinkedHashMap<>(source.entitlements);
         result.mute = source.mute == null ? null : copyMute(source.mute);
         return result;
     }
@@ -1433,6 +1989,7 @@ public final class RegistrationStore {
     private static DonationRecord copyDonation(DonationRecord source) {
         DonationRecord copy = new DonationRecord();
         copy.id = source.id;
+        copy.source = source.source;
         copy.donorName = source.donorName;
         copy.amountKopecks = source.amountKopecks;
         copy.amountRaw = source.amountRaw;
@@ -1501,6 +2058,8 @@ public final class RegistrationStore {
     public static final class DonationRecord {
         public long id;
         public String donorName = "";
+        /** Источник доната: donatepay (пусто/отсутствует у старых записей) или easydonate. */
+        public String source = DONATION_SOURCE_DONATEPAY;
         public long amountKopecks;
         public String amountRaw = "";
         public long createdAt;
@@ -1534,6 +2093,17 @@ public final class RegistrationStore {
         public String playerName = "";
         public String canonicalName = "";
         public long passUntil;
+        /** Ступень донатного ранга: 0 — без ранга, 1..5 (1.4.167). */
+        public int rankLevel;
+        /** Ранг выдан навсегда: миграция с проходки или ручная выдача. */
+        public boolean rankPermanent;
+        /** Временная ступень выше постоянной (подписка поверх «навсегда»); 0 — нет. */
+        public int tempRankLevel;
+        /** Когда выдан текущий ранг (мс). */
+        public long rankGrantedAt;
+        public boolean trialConsumed;
+        public long trialGrantedAt;
+        public long trialUntil;
         public String lastGrantSource = "";
         public long lastGrantAt;
         public int lastGrantDays;
@@ -1551,9 +2121,51 @@ public final class RegistrationStore {
         public long totalPaidKopecks;
         public int paymentsCount;
         public long lastPaymentAt;
+        /**
+         * Купленные товары каталога: id товара → момент окончания (мс).
+         *
+         * <p>Поле появилось в 1.4.110; у старых файлов его нет, поэтому все методы
+         * {@link RegistrationStore} проверяют карту на {@code null}.</p>
+         */
+        public Map<String, Long> entitlements = new LinkedHashMap<>();
+
+        public boolean isTrialOnly() {
+            return trialGrantedAt > 0 && "trial".equals(lastGrantSource) && paymentsCount == 0;
+        }
+
+        /**
+         * Ступень действующего ранга: 0 — ранга нет, 1..5 — лестница донатных рангов.
+         *
+         * <p>Аккаунты, созданные до 1.4.167, хранят только {@code passUntil}; для них
+         * действующий срок считается первой ступенью — миграция поднимет их до
+         * постоянного ранга, но даже без неё игрок не теряет оплаченное.</p>
+         */
+        public int effectiveRank(long nowMillis) {
+            int permanent = rankPermanent ? Math.max(1, rankLevel) : 0;
+            int temporary = 0;
+            if (passUntil > nowMillis) {
+                temporary = Math.max(1, tempRankLevel > 0 ? tempRankLevel : rankLevel);
+            }
+            return Math.max(permanent, temporary);
+        }
 
         public boolean hasActivePass(long nowMillis) {
-            return passUntil > nowMillis;
+            return effectiveRank(nowMillis) > 0;
+        }
+
+        /** Есть ли действующий ранг (то же, что {@link #hasActivePass}, но по смыслу 1.4.167). */
+        public boolean hasRank(long nowMillis) {
+            return effectiveRank(nowMillis) > 0;
+        }
+
+        /**
+         * Момент окончания ранга: {@code 0} — навсегда или ранга нет.
+         *
+         * <p>Постоянный ранг возвращает ноль даже если рядом остался старый
+         * {@code passUntil}: «навсегда» важнее даты.</p>
+         */
+        public long rankUntilMillis() {
+            return rankPermanent ? 0L : passUntil;
         }
 
         public boolean isRegistered() {
@@ -1567,13 +2179,20 @@ public final class RegistrationStore {
 
     private static final class StoreData {
         int version;
+        /** Версия схемы рангов: 1 — миграция с проходки выполнена (1.4.167). */
+        int rankSchemaVersion;
         Map<String, PlayerAccount> accounts = new LinkedHashMap<>();
+        Set<String> trialUsedUuids = new LinkedHashSet<>();
         Set<String> processedDonationIds = new LinkedHashSet<>();
         long donationCursor;
         boolean donationCursorInitialized;
+        /** Курсоры опроса по источникам (donatepay живёт в старых полях — обратная совместимость). */
+        Map<String, Long> donationCursorsBySource = new LinkedHashMap<>();
         Map<String, AttemptRecord> accountAttempts = new LinkedHashMap<>();
         Map<String, AttemptRecord> ipAttempts = new LinkedHashMap<>();
         List<DonationRecord> donations = new ArrayList<>();
         Map<String, String> paymentCodes = new LinkedHashMap<>();
+        /** Сквозной счётчик продаж каталога: id в журнале отрицательные, чтобы не путать с донатами. */
+        long shopSaleSequence;
     }
 }

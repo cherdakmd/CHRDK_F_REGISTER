@@ -1,0 +1,399 @@
+# CHRDK_Artifacts — имена/описания 65 артефактов (art.<id>.name, art.<id>.lore),
+# 15 полезных и 15 вредных свойств (trait.<id>.name, trait.<id>.desc), тексты UI,
+# карточки артефактов и коллекция (с 1.4.130).
+# Свойства пишутся в лор маркерами ▲ (польза) и ▼ (вред).
+messages:
+  player-only: "<red>Эта команда только для игроков.</red>"
+  need-auth: "<red>Артефакты слушаются лишь авторизованного хозяина. Войдите сначала.</red>"
+  no-permission: "<red>Недостаточно прав.</red>"
+  activated: "<gold>✦ Артефакт пробудился: %name%</gold>"
+  on-cooldown: "<gray>Артефакт ещё спит: %seconds% сек.</gray>"
+  not-enough-levels: "<red>Не хватает уровней опыта: нужно %need%.</red>"
+  item-protected: "<gray>Артефакт нельзя поставить, съесть или использовать как обычный предмет.</gray>"
+  dash-blocked: "<red>Тайга не пускает: впереди толща.</red>"
+  teleport-failed: "<red>Артефакт не нашёл безопасного места для перехода. Попробуйте ещё раз.</red>"
+  world-effect-blocked: "<gray>Погода и время этого мира не подчиняются артефакту.</gray>"
+  revealed: "<light_purple>✦ Линза обнажила %count% существ вокруг.</light_purple>"
+  enchant-needs-item: "<red>Хартия ждёт предмет во второй руке.</red>"
+  enchant-failed: "<red>Письмена хартии не проступили. Архив чар недоступен.</red>"
+  enchant-no-room: "<red>На предмете не осталось места для новых чар.</red>"
+  enchant-applied: "<light_purple>✦ Хартия вписала: <yellow>%name% <white>%level%</white></yellow></light_purple>"
+  curse-ignite: "<dark_red>✖ Пепел погрома вспыхнул на вас!</dark_red>"
+  curse-poison: "<dark_red>✖ Сушёный глаз недобро посмотрел: в жилах яд.</dark_red>"
+  curse-bleed: "<dark_red>✖ Кровавая связь натянулась: капля капает изнутри.</dark_red>"
+  curse-water: "<dark_red>✖ Смертный поток тянет на дно: глоток боли в воде.</dark_red>"
+  curse-blind: "<dark_red>✖ Чёрные слёзы застили взор на мгновение.</dark_red>"
+  curse-xp: "<dark_red>✖ Руна жадности высосала частицу опыта.</dark_red>"
+  curse-wither: "<dark_red>✖ Кольцо усмерти сжалось: иссушающий озноб.</dark_red>"
+  phoenix-saved: "<gold>✦ Перо Феникса вспыхнуло: смерть отшатнулась! Вы воскресли наполовину.</gold>"
+  cleansed: "<light_purple>✦ Свиток очищения смыл %count% болезней и чар.</light_purple>"
+  cleanse-none: "<gray>Очищать пока нечего — душа чиста.</gray>"
+  home-missing: "<red>Сфера побега не нашла дорогу домой.</red>"
+  blood-donate-low: "<red>Кубок не примет жертву: крови у вас и так на дне.</red>"
+  line-good-passive: "<yellow>★ Светлый артефакт · пассивный</yellow>"
+  line-good-active: "<gold>★ Светлый артефакт · активный (ПКМ)</gold>"
+  line-cursed-passive: "<red>✖ Проклятый артефакт · пассивный</red>"
+  line-cursed-active: "<dark_red>✖ Проклятый артефакт · активный (ПКМ)</dark_red>"
+  lore-desc: "<gray>%text%</gray>"
+  lore-active-info: "<yellow>ПКМ — активировать · КД %cooldown%с · цена %xp% ур.</yellow>"
+  trait-line-good: "<green>▲ %name% %levelroman%</green> <dark_gray>— %desc%</dark_gray>"
+  trait-line-bad: "<red>▼ %name% %levelroman%</red> <dark_gray>— %desc%</dark_gray>"
+  trait-good: "<green>польза</green>"
+  trait-bad: "<red>вред</red>"
+  traits-header: "<gold>══════ Свойства артефактов ══════</gold>"
+  traits-header-good: "<green>▲ Полезные свойства</green>"
+  traits-header-bad: "<red>▼ Вредные свойства</red>"
+  traits-line-good: "<green>▲</green> <yellow>%name%</yellow> <gray>— %desc%</gray>"
+  traits-line-bad: "<red>▼</red> <yellow>%name%</yellow> <gray>— %desc%</gray>"
+  traits-footer: "<gray>Свойства выпадают при получении артефакта: до %max% шт., шанс %chance%, уровень I–%level%. Редко бывает «чужая» полярность.</gray>"
+  traits-hint: "<gray>Свойства артефактов: <yellow>/artifacts traits</yellow></gray>"
+  list-header: "<gold>══════ Каталог артефактов · стр. %page%/%pages% ══════</gold>"
+  list-footer: "<gray>Коллекция: <yellow>%found%/%total%</yellow> · стр. %page%/%pages% · <yellow>/artifacts collection</yellow> · <yellow>/artifacts <ид></yellow> · <yellow>/artifacts traits</yellow></gray>"
+  list-bad-argument: "<red>Неизвестный артефакт или страница.</red> <gray>/artifacts [страница|ид|collection|traits]</gray>"
+  card-good-passive: "<yellow>★ Светлый · пассивный</yellow>"
+  card-good-active: "<gold>★ Светлый · активный (ПКМ)</gold>"
+  card-cursed-passive: "<red>✖ Проклятый · пассивный</red>"
+  card-cursed-active: "<dark_red>✖ Проклятый · активный (ПКМ)</dark_red>"
+  card-desc: "<gray>%text%</gray>"
+  card-active: "<yellow>Кулдаун: %cooldown% с · цена: %xp% ур.</yellow>"
+  card-source: "<gray>Источник: сундуки данжей, боссы, рыбалка на сокровище, выдача администратора.</gray>"
+  card-disabled: "<red>Артефакт выключен в config.yml.</red>"
+  card-collection-found: "<green>Коллекция: открыт ✔</green>"
+  card-collection-unknown: "<gray>Коллекция: ещё не открыт</gray>"
+  card-footer: "<gray>Свойства: <yellow>/artifacts traits</yellow> · коллекция: <yellow>/artifacts collection</yellow></gray>"
+  actionbar-activated: "<gold>✦ %name%</gold>"
+  actionbar-cooldown: "<gray>КД: %seconds% с</gray>"
+  actionbar-no-xp: "<red>Нужно %need% ур.</red>"
+  actionbar-curse: "<dark_red>✖ %name%</dark_red>"
+  collection-title: "<gold>Коллекция артефактов · %page%/%pages%</gold>"
+  collection-progress-name: "<gold>Открыто: %found% из %total% (%percent%)</gold>"
+  collection-progress-line: "<green>%bar%</green> <gray>%percent%%</gray>"
+  collection-progress-hint: "<gray>Артефакт засчитывается, когда попадает в инвентарь: подбор, выдача, находка.</gray>"
+  collection-prev: "<gold>← Назад</gold>"
+  collection-next: "<gold>Вперёд →</gold>"
+  collection-close: "<red>Закрыть</red>"
+  collection-unknown-name: "<dark_gray>???</dark_gray>"
+  collection-unknown-lore: "<dark_gray>Ещё не найден. Ищите в сундуках, у боссов и на рыбалке.</dark_gray>"
+  collection-entry-name: "%name%"
+  collection-entry-good-passive: "<yellow>★ Светлый · пассивный</yellow>"
+  collection-entry-good-active: "<gold>★ Светлый · активный (ПКМ)</gold>"
+  collection-entry-cursed-passive: "<red>✖ Проклятый · пассивный</red>"
+  collection-entry-cursed-active: "<dark_red>✖ Проклятый · активный (ПКМ)</dark_red>"
+  collection-entry-active: "<yellow>ПКМ · КД %cooldown%с · %xp% ур.</yellow>"
+  collection-entry-found: "<green>✔ Открыт</green>"
+  collection-rewards-name: "<gold>Награды за коллекцию</gold>"
+  collection-reward-line: "<gray>%percent%% — %reward% · %status%</gray>"
+  collection-reward-claimed: "<green>получено</green>"
+  collection-reward-pending: "<yellow>ещё нет</yellow>"
+  collection-reward-days: "<aqua>%days% дн. ранга</aqua>"
+  collection-reward-diamonds: "<aqua>%count% алмазов</aqua>"
+  collection-reward-join: "<gray> + </gray>"
+  collection-reward-none: "<gray>отметка о достижении</gray>"
+  collection-discovered: "<gold>✦ Коллекция пополнилась: %name% <gray>(%found%/%total%)</gray></gold>"
+  collection-scan: "<gold>✦ Новые артефакты в коллекции: %count%. Всего %found%/%total%.</gold>"
+  collection-reward-granted: "<green>✦ Награда за %percent%% коллекции: %reward%</green>"
+  collection-done: "<gold>✦ Коллекция собрана полностью: %total% из %total%!</gold>"
+  collection-disabled: "<red>Коллекция артефактов выключена в config.yml.</red>"
+  admin-reloaded: "<green>Конфигурация артефактов перечитана.</green>"
+  admin-player-not-found: "<red>Игрок не найден (должен быть онлайн).</red>"
+  admin-unknown-artifact: "<red>Неизвестный ид артефакта (см. /artifacts).</red>"
+  admin-given: "<green>Выдан артефакт: %name% <gray>x%amount%</gray> игроку %player%.</green>"
+  admin-given-dropped: "<gray>Часть выдачи (%amount%) не поместилась в инвентарь игрока %player% и выпала под ноги.</gray>"
+  admin-received: "<gold>✦ Вам вручён артефакт: %name%</gold>"
+  admin-usage: "<yellow>/artifactsadmin give <игрок> <ид> [кол-во] | /artifactsadmin reload</yellow>"
+  dropped: "<gold>⚑ Судьба одарила вас артефактом: %name%!</gold>"
+  sources-header: "<gray>────── Где добыть ──────</gray>"
+  sources-line: "<gray>• Данжи и сокровищницы ● Боссы (дракон, визер, варден) ● Рыбалка на сокровище ● Или у админов событий</gray>"
+
+  art:
+    solnechny-obereg:
+      name: "Солнечный оберег"
+      lore: "Покуда при себе — огонь не страшен и удача ближе."
+    zhabii-kamen:
+      name: "Жабий камень"
+      lore: "Дышит вместо тебя под водой и гонит волну."
+    dyhanie-gor:
+      name: "Дыхание гор"
+      lore: "Падение становится неторопливым планированием."
+    nochnoj-svetlyak:
+      name: "Ночной светляк"
+      lore: "Тьма расступается вокруг носителя."
+    kamen-stojkosti:
+      name: "Камень стойкости"
+      lore: "Чужие удары тупятся об камень."
+    vetryanaya-spitsa:
+      name: "Ветряная спица"
+      lore: "Ноги сами плетут дорогу."
+    koren-zhizni:
+      name: "Корень жизни"
+      lore: "Сердцевина мира делится сердцем."
+    ruka-rudokopa:
+      name: "Рука рудокопа"
+      lore: "Кирка летит быстрее мысли."
+    grozovoj-kolokol:
+      name: "Грозовой колокол"
+      lore: "Звонит — и небо бьёт трижды."
+    rog-tajgi:
+      name: "Рог тайги"
+      lore: "Один вдох — и ты уже за восемь шагов дальше."
+    plamya-ochaga:
+      name: "Пламя очага"
+      lore: "Теплосытость дома взамен уровня опыта."
+    kaplya-zhizni:
+      name: "Капля жизни"
+      lore: "Последняя слеза родника: лечит всё до дна."
+    klyuch-strannika:
+      name: "Ключ странника"
+      lore: "Всегда открывает дверь куда-то ещё."
+    linza-providesa:
+      name: "Линза провидца"
+      lore: "Сквозь неё не спрятаться злым тварям."
+    hartiya-char:
+      name: "Хартия чар"
+      lore: "Клеймо мастера само вписывает чару в предмет во второй руке."
+    sleza-vdovy:
+      name: "Слеза вдовы"
+      lore: "Тяжесть чужого горя в кармане."
+    golodnyj-koren:
+      name: "Голодный корень"
+      lore: "Сосёт силы тише, чем хлеб даёт."
+    smolyanoj-mrak:
+      name: "Смоляной мрак"
+      lore: "Капля ночи, что не смывается."
+    krivoe-zerkalo:
+      name: "Кривое зеркало"
+      lore: "Мир плывёт перед очами."
+    rzhavyj-gvozd:
+      name: "Ржавый гвоздь"
+      lore: "Руки помнят его тяжесть при каждом ударе кирки."
+    glinyanaya-dusha:
+      name: "Глиняная душа"
+      lore: "Ноги прирастают к земле."
+    pepel-pogroma:
+      name: "Пепел погрома"
+      lore: "То и дело вспыхивает заново."
+    sushonyj-glaz:
+      name: "Сушёный глаз"
+      lore: "Недобро смотрит на тебя."
+    chernaya-moneta:
+      name: "Чёрная монета"
+      lore: "Сила по сходной цене: расплата тут же."
+    svistok-kostej:
+      name: "Свисток костей"
+      lore: "Слышат лишь мертвяки. И бегут на звук."
+    membrana-prizraka:
+      name: "Мембрана призрака"
+      lore: "Рвёт пространство, не глядя куда."
+    rakovina-toski:
+      name: "Раковина тоски"
+      lore: "Шумит бурей и зовёт молнию на голову."
+    zhalo-moroki:
+      name: "Жало мороки"
+      lore: "Сковывает чужих, слепит своего."
+    chasy-duroshljopa:
+      name: "Часы дурошлёпа"
+      lore: "Вечно показывают полночь."
+    porvannyj-kupon:
+      name: "Порванный купон"
+      lore: "Кто-то уже расплатился. Тобой."
+    # ---- добрая волна (1.4.58, по мотивам CHRDK_REBORN) ----
+    pero-feniksa:
+      name: "Перо Феникса"
+      lore: "Смертельный удар отшатнётся (раз в 10 минут). Не выпадает при смерти."
+    magnit-opyta:
+      name: "Магнит Опыта"
+      lore: "Опытные шары слышат зов кармана и летят к нему."
+    zhnej-dush:
+      name: "Жнец Душ"
+      lore: "Душа каждого павшего подкрепляет жнеца."
+    ledyanaya-aura:
+      name: "Ледяная Аура"
+      lore: "Злое зверьё вокруг носителя стынет и вяжет ногами."
+    ternistyj-plasch:
+      name: "Тернистый Плащ"
+      lore: "Кто ударит — обломает шило о колючки."
+    travjanoj-eliksir:
+      name: "Травяной Эликсир"
+      lore: "Отвар бабушкиных опушек: раны дышат и дышат."
+    sapogi-vetra:
+      name: "Сапоги Ветра"
+      lore: "Прыжок становится подскоком, подскок — парением."
+    klever-udachi:
+      name: "Клевер Удачи"
+      lore: "Четыре лепестка, один лишний: судьба в деталях."
+    travyanoj-meshochek:
+      name: "Травяной Мешочек"
+      lore: "Пахучая щепоть трав сытит идущего тропой."
+    serdtse-drakona:
+      name: "Сердце Дракона"
+      lore: "Кровь дракона бьёт ударом в десять сердец."
+    svitok-ochischeniya:
+      name: "Свиток Очищения"
+      lore: "Смывает с себя злые чары, болезни и огонь."
+    totem-krovi:
+      name: "Тотем Крови"
+      lore: "Красный щит и ладья кожи на минуту вперёд."
+    sfera-pobega:
+      name: "Сфера Побега"
+      lore: "Ломится туда, откуда ноги растут. Домой."
+    ledyanaya-stena:
+      name: "Ледяная Стена"
+      lore: "Разгерметизация зимы: зверьё вокруг вмерзает в пол."
+    glaz-nachala:
+      name: "Глаз Начала"
+      lore: "Все истинные владыки окрестностей обнажаются взглядом."
+    korona-bezdny:
+      name: "Корона Бездны"
+      lore: "Сила бездны на полминуты. Голова кружит от перспектив."
+    ender-sdvig:
+      name: "Эндер-сдвиг"
+      lore: "Сдвигает пространство по направлению взгляда. Даже сквозь воздух."
+    oskolok-vechnosti:
+      name: "Осколок Вечности"
+      lore: "Щепка застывшего времени: запас жизни на полторы минуты."
+    # ---- тёмная волна (1.4.58) ----
+    okov-tyazhesti:
+      name: "Оковы Тяжести"
+      lore: "Каждый шаг гремит и плавится в молоко."
+    pustoy-zhivot:
+      name: "Пустой Живот"
+      lore: "Кормит ложкой, забирает ковшом."
+    slabye-kisti:
+      name: "Слабые Кисти"
+      lore: "Кулаки висят как ветошь."
+    krovavyj-svyaz:
+      name: "Кровавая Связь"
+      lore: "Пуповинатая нить к чужой боли."
+    smertnyj-potok:
+      name: "Смертный Поток"
+      lore: "Вода становится шершавой глоткой яда."
+    chernye-slezy:
+      name: "Чёрные Слёзы"
+      lore: "Чернильно плачет прямо на ваши глаза."
+    ruga-zhadnosti:
+      name: "Руна Жадности"
+      lore: "Замысел опирается на осколки чужого опыта."
+    prah-marka:
+      name: "Прах Марка"
+      lore: "Столб невезучей пыли: удача в минус."
+    koltso-usmerti:
+      name: "Кольцо Усмерти"
+      lore: "Стынет тихим зудом. Иногда — иссушающей злобой."
+    kniga-proklyatiy:
+      name: "Книга Проклятий"
+      lore: "Страница срывается: чужие глаза и ноги отнимаются."
+    zhertvennyj-kubok:
+      name: "Жертвенный Кубок"
+      lore: "Щека крови равно щит из красного стекла."
+    raskolotaya-luna:
+      name: "Расколотая Луна"
+      lore: "Половинка светила зажигает ночь на всех чужаках."
+    shlyapa-bezdelnika:
+      name: "Шляпа Бездельника"
+      lore: "Летать она не научит, но парить — запросто."
+    silok-dushi:
+      name: "Силок Души"
+      lore: "Зымья чужих душ сами просятся в капкан."
+    oblaka-durmana:
+      name: "Облака Дурмана"
+      lore: "Грядка дымных трав: все хмурятся, вы поете."
+    klyuch-propasti:
+      name: "Ключ Пропасти"
+      lore: "Отпирает форточку в ближайшую пещеру. Прямо вниз."
+    svist-gadov:
+      name: "Свист Гадов"
+      lore: "Когти гремят где-то под ногами. На свист."
+
+  # --- 15 полезных свойств ▲ (1.4.129) ---
+  trait.silnyj-zahvat:
+    name: "Сильный захват"
+    desc: "+4–8% к урону"
+  trait.tverdost-kozh:
+    name: "Твёрдость кожи"
+    desc: "+5–9% к броне"
+  trait.legkij-shag:
+    name: "Лёгкий шаг"
+    desc: "+3–5% к скорости"
+  trait.bytroe-serdce:
+    name: "Быстрое сердце"
+    desc: "+4–10% к скорости атаки"
+  trait.zapas-sil:
+    name: "Запас сил"
+    desc: "+1–2 к максимуму здоровья"
+  trait.udacha-talismana:
+    name: "Удача талисмана"
+    desc: "+1–2 к удаче"
+  trait.ustojchivost:
+    name: "Устойчивость"
+    desc: "+0.05–0.12 к сопротивлению отбросу"
+  trait.glubokoe-dyhanie:
+    name: "Глубокое дыхание"
+    desc: "+1–3 к запасу воздуха"
+  trait.myagkoe-padenie:
+    name: "Мягкое падение"
+    desc: "−0.5–1.5 м урона от падения"
+  trait.bystraya-kopka:
+    name: "Быстрая копка"
+    desc: "+5–12% к скорости разрушения блоков"
+  trait.tihaya-postup:
+    name: "Тихая поступь"
+    desc: "+10–20% к скорости красться"
+  trait.regeneraciya:
+    name: "Регенерация"
+    desc: "Медленно лечит носителя"
+  trait.noschnoe-zrenie:
+    name: "Ночное зрение"
+    desc: "Видно в темноте"
+  trait.plavuchest:
+    name: "Плавучесть"
+    desc: "Дыхание под водой"
+  trait.ognezashchita:
+    name: "Огнестойкость"
+    desc: "Огонь и лава не жгут"
+
+  # --- 15 вредных свойств ▼ (1.4.129) ---
+  trait.tyazhelyj-gruz:
+    name: "Тяжёлый груз"
+    desc: "−3–7% к скорости"
+  trait.slabaya-ruka:
+    name: "Слабая рука"
+    desc: "−4–8% к урону"
+  trait.zamedlennyj-zamah:
+    name: "Замедленный замах"
+    desc: "−5–12% к скорости атаки"
+  trait.hrupkaya-oprava:
+    name: "Хрупкая оправа"
+    desc: "−4–8% к броне"
+  trait.slaboe-serdce:
+    name: "Слабое сердце"
+    desc: "−1–2 к максимуму здоровья"
+  trait.zlye-ogljadki:
+    name: "Злые оглядки"
+    desc: "−1–2 к удаче"
+  trait.zharkoe-plamya:
+    name: "Жаркое пламя"
+    desc: "+15–35% ко времени горения"
+  trait.korotkaya-ruka:
+    name: "Короткая рука"
+    desc: "−0.2–0.5 м к дальности удара"
+  trait.vysokoe-padenie:
+    name: "Высокое падение"
+    desc: "+0.5–1.5 м урона от падения"
+  trait.dolgaya-kopka:
+    name: "Долгая копка"
+    desc: "−5–12% к скорости разрушения блоков"
+  trait.skolzkij-shag:
+    name: "Скользкий шаг"
+    desc: "−10–20% к скорости красться"
+  trait.tormoz:
+    name: "Тормоз"
+    desc: "Замедление"
+  trait.slabost:
+    name: "Слабость"
+    desc: "Слабее бьёт в ближнем бою"
+  trait.tyazhelye-ruki:
+    name: "Тяжёлые руки"
+    desc: "Усталость при работе инструментом"
+  trait.vechnyj-golod:
+    name: "Вечный голод"
+    desc: "Голод наступает быстрее"

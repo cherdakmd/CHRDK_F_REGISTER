@@ -1,0 +1,269 @@
+# CHRDK_Quests — задания персонажей и фракции (1.4.161).
+#
+# Задание — это цель в мире: убить, добыть или принести. За сдачу дают опыт,
+# предметы и очки фракции. Монет и алмазов квесты не выдают: экономика охоты и
+# магазинов остаётся отдельной, а квесты не открывают второй источник валюты.
+#
+# Фракция — выбор игрока, а не класс: вступить можно только в одну, но
+# репутация каждой хранится отдельно и не сгорает при выходе.
+
+general:
+  # Полностью выключает задания. Меню и команды останутся, но всё будет
+  # отвечать «выключено».
+  enabled: true
+  # Язык сообщений: ru или en (файл messages.yml).
+  locale: ru
+  # Показывать короткие сообщения о прогрессе над хотбаром.
+  actionbar: true
+  # Префикс фракции в чате (оформляется через API ядра).
+  faction-prefix: true
+  # С какого номера ранга показывать префикс: 1 — сразу после вступления.
+  prefix-from-rank: 1
+  # Сколько заданий можно сдать за сутки (граница — полночь UTC).
+  # Квесты одноразовые, поэтому лимит только страхует от разовых всплесков.
+  claims-per-day: 10
+
+# Фракции. id (ключ секции) используется в командах и конфиге NPC.
+# ranks — порог репутации → ид ранга; текст ранга лежит в messages.yml
+# (ключи rank.newcomer, rank.fighter и т.д.).
+factions:
+  watch:
+    name: "Орден Стража"
+    description: "Держит дороги и стены: ночные обходы, разбойники, нежить."
+    icon: SHIELD
+    prefix: "<red>[Страж]</red> "
+    ranks:
+      0: newcomer
+      250: fighter
+      750: veteran
+      1500: captain
+      3000: marshal
+
+  guild:
+    name: "Гильдия рудокопов"
+    description: "Живёт глубиной: железо, уголь, камень и всё, что под ним."
+    icon: IRON_PICKAXE
+    prefix: "<gold>[Рудокоп]</gold> "
+    ranks:
+      0: newcomer
+      250: fighter
+      750: veteran
+      1500: captain
+      3000: marshal
+
+  circle:
+    name: "Круг травников"
+    description: "Собирает травы, грибы и всё, что растёт без приказа."
+    icon: WHEAT
+    prefix: "<green>[Травник]</green> "
+    ranks:
+      0: newcomer
+      250: fighter
+      750: veteran
+      1500: captain
+      3000: marshal
+
+# Персонажи. Цепочка идёт по порядку: первое задание открыто сразу, следующее —
+# после сдачи предыдущего. Персонаж без faction (или с пустой строкой) —
+# нейтральный: его задания доступны всем, а очки идут текущей фракции игрока.
+#
+# Задание:
+#   id            — уникальный ид во всём файле (ключ прогресса);
+#   type          — KILL (убить мобов), MINE (сломать блоки), GATHER (принести и сдать);
+#   targets       — список мобов (KILL) или предметов (MINE/GATHER);
+#   amount        — сколько нужно;
+#   xp            — опыт за сдачу;
+#   reputation    — очки фракции за сдачу;
+#   items         — предметы в награду (необязательно);
+#   min-rank      — минимальный номер ранга фракции (1 — первый; 0 — без требования).
+npcs:
+  elder:
+    name: "Старейшина Мир"
+    description: "Помнит, как строилась деревня, и просит помочь с тем, что важнее золота."
+    icon: OAK_SIGN
+    faction: ""
+    quests:
+      - id: elder_first_steps
+        name: "Первые шаги"
+        description: "У околицы неспокойно. Проверьте тропу и уберите то, что по ней ходит."
+        type: KILL
+        targets: [ZOMBIE, SKELETON, HUSK]
+        amount: 10
+        xp: 100
+        reputation: 10
+        items:
+          BREAD: 4
+      - id: elder_stone
+        name: "Камень для стен"
+        description: "Стена деревни просела. Нужен камень — простой, но крепкий."
+        type: MINE
+        targets: [STONE, COBBLESTONE]
+        amount: 64
+        xp: 120
+        reputation: 10
+        items:
+          TORCH: 16
+      - id: elder_harvest
+        name: "Урожай для деревни"
+        description: "Соберите пшеницу и морковь к общему столу."
+        type: GATHER
+        targets: [WHEAT, CARROT]
+        amount: 16
+        xp: 120
+        reputation: 10
+        items:
+          BREAD: 6
+      - id: elder_creepers
+        name: "Тишина у околицы"
+        description: "Тишина дороже золота: избавьтесь от того, что взрывается."
+        type: KILL
+        targets: [CREEPER]
+        amount: 5
+        xp: 200
+        reputation: 20
+        items:
+          ARROW: 16
+
+  brock:
+    name: "Кузнец Брок"
+    description: "Говорит мало, работает много. Уважает только твёрдый камень и верный удар."
+    icon: ANVIL
+    faction: guild
+    quests:
+      - id: brock_iron
+        name: "Железная жила"
+        description: "Горн остыл без руды. Принесите железной — и не первую попавшуюся."
+        type: MINE
+        targets: [IRON_ORE, DEEPSLATE_IRON_ORE]
+        amount: 24
+        xp: 150
+        reputation: 25
+        items:
+          TORCH: 16
+      - id: brock_coal
+        name: "Уголь для горна"
+        description: "Уголь — это жар. Без жара горн — просто ящик с камнями."
+        type: GATHER
+        targets: [COAL]
+        amount: 32
+        xp: 150
+        reputation: 25
+        items:
+          BREAD: 4
+      - id: brock_deepslate
+        name: "Глубина"
+        description: "Ниже камня начинается тёмный сланец. Проверьте, что он держит."
+        type: MINE
+        targets: [DEEPSLATE, COBBLED_DEEPSLATE]
+        amount: 64
+        xp: 200
+        reputation: 30
+        items:
+          TORCH: 24
+      - id: brock_gold
+        name: "Золото для оправы"
+        description: "Хорошая вещь держится золотом. Принесите слитки — остальное дело рук."
+        type: GATHER
+        targets: [GOLD_INGOT]
+        amount: 8
+        xp: 250
+        reputation: 40
+        min-rank: 2
+        items:
+          COOKED_BEEF: 4
+
+  lea:
+    name: "Травница Лея"
+    description: "Знает, что растёт под ногами и когда это собирать. Ненавидит сорняки на грядках."
+    icon: POPPY
+    faction: circle
+    quests:
+      - id: lea_meadow
+        name: "Луговая сборка"
+        description: "Корзина пуста, а отвар нужен к вечеру. Наберите цветов с луга."
+        type: GATHER
+        targets: [DANDELION, POPPY, CORNFLOWER]
+        amount: 16
+        xp: 120
+        reputation: 20
+        items:
+          BREAD: 4
+      - id: lea_mushrooms
+        name: "Лесные грибы"
+        description: "Под старыми деревьями растёт то, что не продаётся на рынке."
+        type: GATHER
+        targets: [BROWN_MUSHROOM, RED_MUSHROOM]
+        amount: 16
+        xp: 150
+        reputation: 25
+        items:
+          HONEY_BOTTLE: 2
+      - id: lea_silk
+        name: "Паутина"
+        description: "Пауки плетут в темноте, куда не заходит солнце. Размотайте пару сетей."
+        type: KILL
+        targets: [SPIDER, CAVE_SPIDER]
+        amount: 12
+        xp: 180
+        reputation: 25
+        items:
+          STRING: 8
+      - id: lea_apples
+        name: "Яблоки для отвара"
+        description: "Осенние яблоки слаще летних — не спрашивайте почему, просто принесите."
+        type: GATHER
+        targets: [APPLE]
+        amount: 8
+        xp: 200
+        reputation: 30
+        items:
+          COOKED_BEEF: 4
+
+  kay:
+    name: "Странник Кей"
+    description: "Пришёл из-за горизонта и говорит, что там не безопаснее. Учит держать удар."
+    icon: COMPASS
+    faction: watch
+    quests:
+      - id: kay_night
+        name: "Ночная стража"
+        description: "Ночь — время тех, кто не спит. Пройдитесь по дороге и уберите лишних."
+        type: KILL
+        targets: [ZOMBIE, DROWNED]
+        amount: 15
+        xp: 180
+        reputation: 25
+        items:
+          TORCH: 16
+      - id: kay_bones
+        name: "Кости для стрел"
+        description: "Стрелы делают из дерева, а летят они ровно благодаря костям."
+        type: GATHER
+        targets: [BONE]
+        amount: 24
+        xp: 180
+        reputation: 25
+        items:
+          ARROW: 24
+      - id: kay_pillagers
+        name: "Разбойники"
+        description: "Серые знамёна видели у реки. Пока они там — дорога закрыта."
+        type: KILL
+        targets: [PILLAGER, VINDICATOR]
+        amount: 6
+        xp: 250
+        reputation: 35
+        min-rank: 1
+        items:
+          ARROW: 32
+      - id: kay_ingots
+        name: "Железо для отряда"
+        description: "Отряд идёт далеко. Каждому нужен свой клинок и своя пряжка."
+        type: GATHER
+        targets: [IRON_INGOT]
+        amount: 8
+        xp: 250
+        reputation: 35
+        min-rank: 2
+        items:
+          COOKED_BEEF: 6
