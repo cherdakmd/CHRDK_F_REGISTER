@@ -292,7 +292,7 @@ class MessagesTest {
         String prompt = ChatService.plainText(messages.getList("trial.register-prompt").get(0));
         assertEquals("Зарегистрируйте пароль командой: /register <пароль> <повтор>", prompt);
         assertFalse(prompt.contains("&lt;"));
-        assertFalse(prompt.contains("Проходка активна"));
+        assertFalse(prompt.contains("Ранг активен"));
         assertEquals(prompt, messages.plain("register.prompt"));
     }
 

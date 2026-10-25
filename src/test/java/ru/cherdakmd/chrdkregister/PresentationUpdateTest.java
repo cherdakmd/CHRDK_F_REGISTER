@@ -152,9 +152,9 @@ class PresentationUpdateTest {
         long now=1800000000000L;var a=new RegistrationStore.PlayerAccount();
         a.passUntil=now+10000;a.trialUntil=a.passUntil;a.lastGrantSource="trial";
         var ctx=PresentationContext.of(a,AccessManager.PlayerStage.AUTHENTICATED,now,false,14,messages(),"/menu • /ah");
-        assertEquals("Пробная проходка",ctx.passType());assertEquals("/menu • /ah",ctx.navigation());
+        assertEquals("Приветственный ранг",ctx.passType());assertEquals("/menu • /ah",ctx.navigation());
         a.lastGrantSource="manual";a.passUntil+=86400000;
-        assertEquals("Проходка активна",PresentationContext.of(a,AccessManager.PlayerStage.AUTHENTICATED,now,false,14,messages(),"/menu").passType());
+        assertEquals("Ранг активен",PresentationContext.of(a,AccessManager.PlayerStage.AUTHENTICATED,now,false,14,messages(),"/menu").passType());
         var reg=PresentationContext.of(null,AccessManager.PlayerStage.NEEDS_REGISTER,now,true,14,messages(),"/ah");
         assertTrue(reg.authHint().contains("14"));assertTrue(reg.navigation().isEmpty());assertFalse(reg.navigation().contains("/ah"));
         var login=PresentationContext.of(a,AccessManager.PlayerStage.NEEDS_LOGIN,now,false,14,messages(),"/ah");
@@ -169,10 +169,10 @@ class PresentationUpdateTest {
     }
     @Test void newTabPlaceholdersAndMiniMessageAutoHintsAreEscaped() {
         var ctx=new TabListService.TabContext("X<red>",3,100,20,50,"world","активна","14 дн.",14,
-                new PresentationContext("Пробная проходка","в игре","/menu","включена","/menu • /ah"));
+                new PresentationContext("Приветственный ранг","в игре","/menu","включена","/menu • /ah"));
         var line=TabListService.renderName(messages(),"<gold>%player% %pass_type% %auth_status% %security% %navigation%</gold>",ctx);
         String plain=PlainTextComponentSerializer.plainText().serialize(line);
-        assertTrue(plain.contains("X<red>"));assertTrue(plain.contains("Пробная проходка"));assertFalse(plain.contains("%navigation%"));
+        assertTrue(plain.contains("X<red>"));assertTrue(plain.contains("Приветственный ранг"));assertFalse(plain.contains("%navigation%"));
         var cfg=ChatConfig.fromBukkitConfig(yaml("config.yml"));
         for(var entry:cfg.autoMessageEntries()) {
             String text=PlainTextComponentSerializer.plainText().serialize(messages().renderTemplate(cfg.autoMessagesPrefix()+entry.text(),
