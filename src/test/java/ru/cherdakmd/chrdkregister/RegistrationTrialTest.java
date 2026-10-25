@@ -22,6 +22,18 @@ class RegistrationTrialTest {
         assertTrue(PlayerRestrictionListener.isCommandAllowed(AccessManager.PlayerStage.NEEDS_REGISTER,"register"));
         assertFalse(PlayerRestrictionListener.isCommandAllowed(AccessManager.PlayerStage.NEEDS_REGISTER,"ah"));
     }
+    @Test void welcomeRankIsThreeDaysOfTheFirstTier() {
+        var s=store(); s.recordPlayerSeen(UUID1,"Newbie");
+        assertTrue(s.registerPassword("Newbie",UUID1,"StrongPassword123","127.0.0.1",NOW,3));
+        var a=s.getAccount("newbie").orElseThrow();
+        assertEquals(3,a.lastGrantDays,"приветственный ранг — три дня");
+        assertEquals(1,a.effectiveRank(NOW),"ступень берётся из старых данных о сроке");
+        assertTrue(a.hasRank(NOW));
+        assertTrue(a.hasRank(NOW+3*86_400_000L-1));
+        assertFalse(a.hasRank(NOW+3*86_400_000L),"через три дня ранг заканчивается");
+        assertEquals(0,a.effectiveRank(NOW+3*86_400_000L));
+    }
+
     @Test void registrationGrantsExactlyFourteenDaysAndPersistsTogether() {
         var s=store(); s.recordPlayerSeen(UUID1,"Newbie");
         assertTrue(s.registerPassword("Newbie",UUID1,"StrongPassword123","127.0.0.1",NOW,14));

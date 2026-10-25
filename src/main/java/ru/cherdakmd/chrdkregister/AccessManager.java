@@ -792,14 +792,17 @@ public final class AccessManager {
 
         RegistrationStore.PlayerAccount account = store.getAccount(player.getName()).orElseThrow();
         if (account.trialGrantedAt == now && "trial".equals(account.lastGrantSource)) {
-            messages.send(player, "trial.granted", "days", config.trialDays(), "until", formatTimestamp(account.passUntil));
-            // Тестовый период — не покупка: группа проходки выдаётся только после оплаты.
+            // Приветственный ранг: дни берём из ranks.welcome (3), а не из старого
+            // pass.trial.days (14) — иначе игрок читал бы «14 дней» про 3-дневный ранг.
+            int grantedDays = account.lastGrantDays > 0 ? account.lastGrantDays : welcomeDays;
+            messages.send(player, "trial.granted", "days", grantedDays, "until", formatTimestamp(account.passUntil));
+            // Приветственный ранг — не покупка: группа проходки выдаётся только после оплаты.
             plugin.luckPermsPassSync().onPassGranted(player.getName(), false);
-            fireEventSync(new PassGrantedEvent(player.getName(), account.passUntil, config.trialDays(), "trial"));
+            fireEventSync(new PassGrantedEvent(player.getName(), account.passUntil, grantedDays, "trial"));
             audit.log(AuditLog.ADMIN_COMMAND, player.getName(), player.getName(), ip,
-                    AuditLog.details("action", "trial.granted", "days", config.trialDays(), "passUntil", account.passUntil));
+                    AuditLog.details("action", "trial.granted", "days", grantedDays, "passUntil", account.passUntil));
             notifications.notify("pass.granted", messages.plain("trial.notify-title"),
-                    messages.plain("trial.notify-desc", "player", player.getName(), "days", config.trialDays(),
+                    messages.plain("trial.notify-desc", "player", player.getName(), "days", grantedDays,
                             "until", formatTimestamp(account.passUntil)), "good");
         }
         if (requiresTotpEnrollment(player.getName())) {
