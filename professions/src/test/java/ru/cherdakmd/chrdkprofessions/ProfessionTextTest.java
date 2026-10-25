@@ -30,6 +30,7 @@ class ProfessionTextTest {
                   profession.mason.hint: "камень и камнерез"
                   perk.none: "пока нет"
                   perk.smith: "Скидка %value%"
+                  perk.cook: "+%value% сытости"
                   rank.novice: "новичок"
                   rank.master: "мастер"
                 """;
@@ -76,8 +77,11 @@ class ProfessionTextTest {
         assertEquals("Скидка 20",
                 ProfessionText.perk(messages, Profession.SMITH, 10).text());
         assertEquals("пока нет",
+                ProfessionText.perk(messages, Profession.COOK, 4).text(),
+                "до 5-го уровня повар ещё не кормит сытнее");
+        assertEquals("+1 сытости",
                 ProfessionText.perk(messages, Profession.COOK, 5).text(),
-                "до 10-го уровня повар ещё не кормит сытнее");
+                "1.4.178: первый шаг насыщения — с 5-го уровня");
         assertEquals("", ProfessionText.perkRaw(messages, null, 10));
         assertEquals("", ProfessionText.perk(null, Profession.SMITH, 10).text());
     }
