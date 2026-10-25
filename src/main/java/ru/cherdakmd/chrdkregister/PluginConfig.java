@@ -70,6 +70,9 @@ public final class PluginConfig {
 
     /** server-menu.* (не часть ctor): конфиг-driven серверное меню /menu. */
     private ServerMenuSettings serverMenu = ServerMenuSettings.DISABLED;
+
+    /** wiki.* (не часть ctor): ссылка на сайт игрока для /wiki и кнопки меню. */
+    private WikiSettings wiki = WikiSettings.DISABLED;
     /** economy.* (не часть ctor): банк алмазов /bal /pay /baltop. */
     private EconomySettings economy = EconomySettings.DEFAULTS;
     private final boolean donatePayEnabled;
@@ -450,6 +453,7 @@ public final class PluginConfig {
         parsed.donateActions = DonateAction.parseList(config.getMapList("donation-actions"));
         parsed.donatePayShowBalance = config.getBoolean("donatepay.show-balance", true);
         parsed.serverMenu = ServerMenuSettings.from(config);
+        parsed.wiki = WikiSettings.from(config);
         parsed.economy = EconomySettings.from(config);
         return parsed;
     }
@@ -527,6 +531,11 @@ public final class PluginConfig {
     /** Настройки серверного меню {@code /menu}. */
     public ServerMenuSettings serverMenu() {
         return serverMenu;
+    }
+
+    /** Ссылка на вики игрока (/wiki и кнопка «Вики сервера» в /menu). */
+    public WikiSettings wiki() {
+        return wiki;
     }
 
     /** Настройки банка алмазов (/bal, /pay, /baltop). */

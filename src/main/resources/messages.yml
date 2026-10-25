@@ -377,7 +377,7 @@ messages:
       - "<aqua><bold>Дом и перемещения</bold></aqua><newline><gray>/sethome дом — сохранить точку, /home дом — вернуться, /homes — список. Позвать к себе: /tpahere ник, прийти к игроку: /tpa ник. Ответ: /tpaccept.</gray>"
       - "<light_purple><bold>Экономика</bold></light_purple><newline><gray>Магазин: /shop. Аукцион: /ah. Лотерея: /lottery. Ежедневная награда: /daily — не пропускайте стрик. Валюта — алмазы.</gray>"
       - "<red><bold>Развитие</bold></red><newline><gray>Редкости снаряжения: /tiers. Артефакты: /artifacts. Чары: /enchants. Звания за стаж: /ranks. Сезон: /battlepass. Общие цели: /goals. Вся карточка прогресса: /profile.</gray>"
-      - "<white><bold>Общение и помощь</bold></white><newline><gray>/chat — локальный и общий чат. /msg ник текст — личное сообщение, /r — ответ. Главное меню: /menu. Эта книга снова: /guide.</gray>"
+      - "<white><bold>Общение и помощь</bold></white><newline><gray>/chat — локальный и общий чат. /msg ник текст — личное сообщение, /r — ответ. Главное меню: /menu, весь сайт с ценами: /wiki. Эта книга снова: /guide.</gray>"
 
   # ---------------------------------------------------------------
   # spawn — Случайный спавн новичка и после смерти (1.4.106)
@@ -1024,6 +1024,21 @@ messages:
 
   # ---------------------------------------------------------------
   # Серверное меню /menu (GUI, конфиг-driven; иконки/тексты берутся из config.yml)
+  # ---------------------------------------------------------------
+  # /wiki — ссылка на сайт с командами, ценами и лимитами (1.4.171)
+  # %url% — адрес страницы, %page% — слаг, %pages% — список подсказок,
+  # %label% — как игрок написал команду. Клик открывает браузер,
+  # вторая строка копирует адрес: на некоторых клиентах open_url молчит.
+  # ---------------------------------------------------------------
+  "wiki":
+    "link": "<gray>Вики сервера: <click:open_url:'%url%'><hover:show_text:'<green>Открыть в браузере</green>'><aqua><u>%url%</u></aqua></hover></click></gray>"
+    "page": "<gray>Вики · <white>%page%</white>: <click:open_url:'%url%'><hover:show_text:'<green>Открыть в браузере</green>'><aqua><u>%url%</u></aqua></hover></click></gray>"
+    "copy": "<dark_gray>Ссылка не открывается? <click:copy_to_clipboard:'%url%'><hover:show_text:'<green>Скопировать адрес</green>'><u>скопируйте её</u></click> и вставьте в браузер.</dark_gray>"
+    "console": "<gray>Вики сервера: %url%</gray>"
+    "unknown": "<red>Страницы «%page%» нет. Попробуйте: %pages%.</red>"
+    "usage": "<yellow>/%label% [страница]</yellow> <gray>— ссылка на вики в чат. Без страницы откроется главная.</gray>"
+    "disabled": "<red>Ссылка на вики не настроена: администрация может указать её в config.yml.</red>"
+
   "server-menu":
     "no-permission": "<red>Нет права chrdkregister.menu.</red>"
     "need-auth": "<yellow>Сначала завершите регистрацию и вход. Подсказка доступна в TAB.</yellow>"
