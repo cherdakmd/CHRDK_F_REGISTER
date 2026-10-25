@@ -35,7 +35,7 @@ import ru.cherdakmd.chrdkregister.storage.SafeJsonWriter;
 public final class ClassStore {
 
     /** Версия формата файла. */
-    public static final int VERSION = 1;
+    public static final int VERSION = 2;
     /** Потолок числа игроков в файле: защита от мусора. */
     public static final int MAX_PLAYERS = 200_000;
 
@@ -52,6 +52,7 @@ public final class ClassStore {
         private long changedAt;
         private long respecAt;
         private long abilityAt;
+        private long ability2At;
 
         Player(UUID id, String name) {
             this.id = id;
@@ -127,6 +128,7 @@ public final class ClassStore {
         player.changedAt = Math.max(0L, number(row.get("changed-at")));
         player.respecAt = Math.max(0L, number(row.get("respec-at")));
         player.abilityAt = Math.max(0L, number(row.get("ability-at")));
+        player.ability2At = Math.max(0L, number(row.get("ability2-at")));
         return player;
     }
 
@@ -200,6 +202,27 @@ public final class ClassStore {
         long value = Math.max(0L, at);
         if (player.abilityAt != value) {
             player.abilityAt = value;
+            dirty = true;
+        }
+    }
+
+    /**
+     * Когда игрок применял второе умение (1.4.175); 0 — никогда.
+     *
+     * <p>У умений свои откаты, поэтому и моменты разные: иначе после «Рывка»
+     * нельзя было бы сразу ударить «Кличем». Оба поля живут в файле по той же
+     * причине, что и первое.</p>
+     */
+    public synchronized long ability2At(UUID id) {
+        return of(id).ability2At;
+    }
+
+    /** Запоминает момент применения второго умения. */
+    public synchronized void setAbility2At(UUID id, long at) {
+        Player player = of(id);
+        long value = Math.max(0L, at);
+        if (player.ability2At != value) {
+            player.ability2At = value;
             dirty = true;
         }
     }
@@ -367,6 +390,9 @@ public final class ClassStore {
             }
             if (player.abilityAt > 0) {
                 row.put("ability-at", player.abilityAt);
+            }
+            if (player.ability2At > 0) {
+                row.put("ability2-at", player.ability2At);
             }
             rows.put(player.id.toString(), row);
         }

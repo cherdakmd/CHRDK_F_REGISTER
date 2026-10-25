@@ -111,6 +111,34 @@
 - В консоли команда печатает голый адрес строкой. Тесты — `WikiSettingsTest`
   и `PresentationUpdateTest` (кнопка ведёт в существующую команду).
 
+## Второе умение, очки за достижения и плюшки рангов (1.4.175)
+
+Третья волна по классам — сразу три вещи, которые меняют игру, но не продают
+силу:
+
+- **У каждого класса два умения.** Воин получил «Боевой клич» (поглощение и
+  стойкость себе и союзникам), стрелок — «Прицельный выстрел» (пробивающая
+  стрела на 6 урона), маг — «Испепеление» (конус огня), жрец — «Оберег»
+  (поглощение и снятие слабости, слепоты и яда). Второе умение реже первого
+  (30–40 с против 18–25) и висит на отдельной кнопке в меню (слот 42);
+  `/ability` — первое, `/ability 2` — второе.
+- **Откаты независимы и переживают перезаход:** момент применения второго
+  умения — отдельное поле `ability2-at` в `classes.json` (версия 2). Сброс
+  класса и пересборка дерева откаты не обнуляют.
+- **Очки за достижения.** Каждые 15 открытых достижений дают +1 очко таланта,
+  максимум два (`points.achievement-every`, `points.achievement-max`).
+  Достижения — прогресс, а не покупка: потолки эффектов и цена дерева не
+  меняются. С двумя очками дерево (36) закрывается целиком — но только у тех,
+  кто собрал 30 достижений.
+- **Свой темп у каждого донатного ранга.** Порог навыка для узлов ниже на
+  ступень ранга (мастерский узел: 75 → 70 у Покровителя), шаг уровня класса
+  меньше (30 → 25), откат умений короче (до −20 %), смена класса — от 7 до 2
+  дней, пересборка — от 24 до 12 часов. Полы защищают баланс: откат не меньше
+  секунды, шаг не меньше пяти уровней. Выключатель — `ranks.enabled: false`.
+- `/class points` показывает бонус за достижения и плюшки ранга числами, а не
+  «где-то в конфиге». Подробности — `docs/releases/1.4.175.md` и
+  `wiki/classes.md`.
+
 ## Мастерский ярус талантов и метка класса (1.4.174)
 
 Дерево классов выросло на ярус, а класс стало видно в чате и TAB без меню:
@@ -3140,36 +3168,36 @@ lines)`. `ProfileContext` несёт UUID, ник, признак «онлайн
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.174.jar`,
-аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.174.jar`,
-реферальный — `referrals/build/libs/chrdk-referrals-1.4.174.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.174.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.174.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.174.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.174.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.174.jar` (хартия чар — при установленном аддоне чар),
-достижения — `achievements/build/libs/chrdk-achievements-1.4.174.jar`, навыки —
-`skills/build/libs/chrdk-skills-1.4.174.jar`, клады —
-`treasures/build/libs/chrdk-treasures-1.4.174.jar`, общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.174.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.174.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.174.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.174.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.174.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.174.jar`, стримерская программа —
-`streams/build/libs/chrdk-streams-1.4.174.jar`, лотерея —
-`lottery/build/libs/chrdk-lottery-1.4.174.jar`, аукцион —
-`auction/build/libs/chrdk-auction-1.4.174.jar`, питомцы —
-`pets/build/libs/chrdk-pets-1.4.174.jar`, заказы —
-`orders/build/libs/chrdk-orders-1.4.174.jar`, охота —
-`hunt/build/libs/chrdk-hunt-1.4.174.jar`, группы —
-`party/build/libs/chrdk-party-1.4.174.jar`, события —
-`events/build/libs/chrdk-events-1.4.174.jar`, задания —
-`quests/build/libs/chrdk-quests-1.4.174.jar`, боссы —
-`bosses/build/libs/chrdk-bosses-1.4.174.jar`, гильдии —
-`guilds/build/libs/chrdk-guilds-1.4.174.jar`, классы —
-`classes/build/libs/chrdk-classes-1.4.174.jar`, профессии —
-`professions/build/libs/chrdk-professions-1.4.174.jar`. На сервер ядро
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.175.jar`,
+аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.175.jar`,
+реферальный — `referrals/build/libs/chrdk-referrals-1.4.175.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.175.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.175.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.175.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.175.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.175.jar` (хартия чар — при установленном аддоне чар),
+достижения — `achievements/build/libs/chrdk-achievements-1.4.175.jar`, навыки —
+`skills/build/libs/chrdk-skills-1.4.175.jar`, клады —
+`treasures/build/libs/chrdk-treasures-1.4.175.jar`, общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.175.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.175.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.175.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.175.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.175.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.175.jar`, стримерская программа —
+`streams/build/libs/chrdk-streams-1.4.175.jar`, лотерея —
+`lottery/build/libs/chrdk-lottery-1.4.175.jar`, аукцион —
+`auction/build/libs/chrdk-auction-1.4.175.jar`, питомцы —
+`pets/build/libs/chrdk-pets-1.4.175.jar`, заказы —
+`orders/build/libs/chrdk-orders-1.4.175.jar`, охота —
+`hunt/build/libs/chrdk-hunt-1.4.175.jar`, группы —
+`party/build/libs/chrdk-party-1.4.175.jar`, события —
+`events/build/libs/chrdk-events-1.4.175.jar`, задания —
+`quests/build/libs/chrdk-quests-1.4.175.jar`, боссы —
+`bosses/build/libs/chrdk-bosses-1.4.175.jar`, гильдии —
+`guilds/build/libs/chrdk-guilds-1.4.175.jar`, классы —
+`classes/build/libs/chrdk-classes-1.4.175.jar`, профессии —
+`professions/build/libs/chrdk-professions-1.4.175.jar`. На сервер ядро
 обязательно, аддоны — по желанию (требуют ядро 1.4.6+). К релизу на GitHub
 прикладывается **один архив** `chrdk-plugins-<версия>.zip`: ядро и все 29 аддонов
 одной версии (30 JAR) плюс памятка `ОБНОВЛЕНИЕ.txt`. Отдельные JAR больше не

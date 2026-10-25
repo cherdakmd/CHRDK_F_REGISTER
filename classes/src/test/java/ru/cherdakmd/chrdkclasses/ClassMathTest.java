@@ -88,4 +88,16 @@ class ClassMathTest {
         assertEquals("1 мин", ClassMath.clockMillis(60_000L));
         assertEquals("0 с", ClassMath.clockMillis(-5_000L), "минус не должен печататься");
     }
+
+    @Test
+    void achievementBonusHasACeiling() {
+        assertEquals(0, ClassMath.achievementBonus(0, 15, 2));
+        assertEquals(0, ClassMath.achievementBonus(14, 15, 2));
+        assertEquals(1, ClassMath.achievementBonus(15, 15, 2));
+        assertEquals(2, ClassMath.achievementBonus(30, 15, 2));
+        assertEquals(2, ClassMath.achievementBonus(10_000, 15, 2), "потолок важнее числа достижений");
+        assertEquals(0, ClassMath.achievementBonus(100, 0, 2), "выключено — очков нет");
+        assertEquals(0, ClassMath.achievementBonus(100, 15, 0), "нулевой потолок — очков нет");
+        assertEquals(0, ClassMath.achievementBonus(-5, 15, 2));
+    }
 }

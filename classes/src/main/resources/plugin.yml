@@ -2,20 +2,20 @@ name: CHRDK_Classes
 version: ${version}
 main: ru.cherdakmd.chrdkclasses.ClassesPlugin
 api-version: '26.3'
-description: "Классы с деревом талантов поверх навыков — четыре стиля игры, пассивные эффекты, активные умения и очки за уровни навыков, без новых источников алмазов"
+description: "Классы с деревом талантов поверх навыков — четыре стиля игры, два активных умения у каждого, очки за уровни и достижения, плюшки донатных рангов, без новых источников алмазов"
 authors: [cherdakmd]
 website: https://github.com/cherdakmd/CHRDK_F_REGISTER
 depend: [CHRDK_Core]
-softdepend: [CHRDK_Skills, PlaceholderAPI]
+softdepend: [CHRDK_Skills, CHRDK_Achievements, PlaceholderAPI]
 commands:
   class:
     description: "Класс, дерево талантов и очки"
-    usage: "/class [menu|choose <класс>|info [класс]|talents|learn <талант>|respec|points|top|ability]"
+    usage: "/class [menu|choose <класс>|info [класс]|talents|learn <талант>|respec|points|top|ability [1|2]]"
     aliases: [classes, klass, klassy]
     permission: chrdkclasses.use
   ability:
-    description: "Умение своего класса — рывок, залп, вспышка или исцеление"
-    usage: "/<command>"
+    description: "Умение своего класса: /ability — первое, /ability 2 — второе"
+    usage: "/<command> [1|2]"
     aliases: [sposobnost, umenie]
     permission: chrdkclasses.ability
   classadmin:

@@ -33,6 +33,8 @@ public final class ClassesPlugin extends JavaPlugin {
     private ClassStore store;
     private TalentService service;
     private SkillsBridge skillsBridge;
+    private RanksBridge ranksBridge;
+    private AchievementsBridge achievementsBridge;
     private ClassEffects effects;
     private AbilityService abilities;
     private ClassTag tag;
@@ -52,7 +54,10 @@ public final class ClassesPlugin extends JavaPlugin {
             this.store = new ClassStore(getDataFolder().toPath(), getLogger());
             store.load();
             this.skillsBridge = new SkillsBridge(this);
-            this.service = new TalentService(config, store, skillsBridge);
+            this.ranksBridge = new RanksBridge(this);
+            this.achievementsBridge = new AchievementsBridge(this);
+            this.service = new TalentService(config, store, skillsBridge, ranksBridge,
+                    achievementsBridge);
             this.effects = new ClassEffects(this);
             this.abilities = new AbilityService(this);
             this.tag = new ClassTag(this);
@@ -73,7 +78,9 @@ public final class ClassesPlugin extends JavaPlugin {
             getLogger().info("CHRDK_Classes включён: классов " + ClassCatalog.classes().size()
                     + ", талантов " + (ClassCatalog.classes().size()
                     * ClassCatalog.TALENTS_PER_CLASS)
-                    + ", навыки: " + (skillsBridge.available() ? "да" : "нет"));
+                    + ", навыки: " + (skillsBridge.available() ? "да" : "нет")
+                    + ", достижения: " + (achievementsBridge.available() ? "да" : "нет")
+                    + ", ранги: " + (ranksBridge.available() ? "да" : "нет"));
         } catch (RuntimeException exception) {
             getLogger().severe("CHRDK_Classes не смог запуститься: " + exception.getMessage());
             exception.printStackTrace();
@@ -125,8 +132,10 @@ public final class ClassesPlugin extends JavaPlugin {
         this.config = ClassConfig.parse(getConfig(), getLogger());
         this.messages = Messages.load(this, config.locale(), getLogger());
         service.applyConfig(config);
-        // Навыки могли включиться после старта — ищем сервис заново.
+        // Навыки, ранги и достижения могли включиться после старта — ищем сервисы заново.
         skillsBridge.reset();
+        ranksBridge.reset();
+        achievementsBridge.reset();
         for (Player player : Bukkit.getOnlinePlayers()) {
             effects.apply(player);
         }
@@ -150,6 +159,12 @@ public final class ClassesPlugin extends JavaPlugin {
         }
         if (!getConfig().isSet("tag")) {
             missing.add("tag");
+        }
+        if (!getConfig().isSet("points")) {
+            missing.add("points");
+        }
+        if (!getConfig().isSet("ranks")) {
+            missing.add("ranks");
         }
         if (!missing.isEmpty()) {
             getLogger().info("[CHRDK_Classes] В config.yml нет ключей " + String.join(", ", missing)
@@ -294,6 +309,16 @@ public final class ClassesPlugin extends JavaPlugin {
 
     public SkillsBridge skillsBridge() {
         return skillsBridge;
+    }
+
+    /** Мост рангов: нужен команде, чтобы показать источник плюшек. */
+    RanksBridge ranksBridge() {
+        return ranksBridge;
+    }
+
+    /** Мост достижений: {@code null} или недоступен — бонусных очков нет. */
+    AchievementsBridge achievements() {
+        return achievementsBridge;
     }
 
     public ClassEffects effects() {

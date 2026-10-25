@@ -155,6 +155,26 @@ class ClassStoreTest {
     }
 
     @Test
+    void secondAbilityMomentIsSeparateAndSurvivesRestart(@TempDir Path dir) {
+        ClassStore store = new ClassStore(dir, LOGGER);
+        store.setClass(PLAYER, "mage", NOW);
+        store.setAbilityAt(PLAYER, NOW + 1_000L);
+        assertEquals(0L, store.ability2At(PLAYER), "второе умение ещё не применяли");
+        store.setAbility2At(PLAYER, NOW + 2_000L);
+        assertEquals(NOW + 1_000L, store.abilityAt(PLAYER), "откаты не мешают друг другу");
+        assertEquals(NOW + 2_000L, store.ability2At(PLAYER));
+        store.setAbility2At(PLAYER, -1L);
+        assertEquals(0L, store.ability2At(PLAYER), "отрицательный момент не пишется");
+
+        store.setAbility2At(PLAYER, NOW + 3_000L);
+        store.saveNow();
+        ClassStore reloaded = new ClassStore(dir, LOGGER);
+        reloaded.load();
+        assertEquals(NOW + 3_000L, reloaded.ability2At(PLAYER));
+        assertEquals(2, ClassStore.VERSION, "формат файла вырос вместе с новым полем");
+    }
+
+    @Test
     void saveAndLoadRoundTrip(@TempDir Path dir) {
         ClassStore store = new ClassStore(dir, LOGGER);
         store.rename(PLAYER, "Чердак");

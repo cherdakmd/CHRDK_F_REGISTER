@@ -17,6 +17,8 @@ public final class ClassConfig {
 
     /** Потолок шага «сколько уровней навыков на уровень класса». */
     public static final int MAX_LEVELS_PER_LEVEL = 100;
+    /** Нижняя граница шага: мельче — уровень класса растёт быстрее скилла. */
+    public static final int MIN_LEVELS_PER_LEVEL = 5;
     /** Потолок очков за уровень. */
     public static final int MAX_POINTS_PER_LEVEL = 5;
     /** Потолок стартовых очков. */
@@ -29,6 +31,14 @@ public final class ClassConfig {
     public static final int MAX_PULSE_SECONDS = 60;
     /** Потолок «вне боя» в секундах. */
     public static final int MAX_OUT_OF_COMBAT_SECONDS = 60;
+    /** Потолок «сколько достижений за одно очко»: чаще одного за достижение — нельзя. */
+    public static final int MAX_ACHIEVEMENT_EVERY = 100;
+    /**
+     * Потолок очков за достижения: дерево целиком стоит 36, а на 34-м уровне
+     * доступно 34 — два очка и есть «добрать дерево до конца». Больше некуда
+     * тратить, поэтому верхняя граница совпадает со смыслом.
+     */
+    public static final int MAX_ACHIEVEMENT_BONUS = 2;
     /** Границы множителя кулдауна умений. */
     public static final double MIN_ABILITY_MULTIPLIER = 0.5;
     public static final double MAX_ABILITY_MULTIPLIER = 3.0;
@@ -48,13 +58,17 @@ public final class ClassConfig {
     private final double abilityCooldownMultiplier;
     private final boolean levelNotice;
     private final boolean tagEnabled;
+    private final int achievementEvery;
+    private final int achievementMaxBonus;
+    private final boolean ranksEnabled;
 
     private ClassConfig(boolean enabled, String locale, boolean actionbar, boolean effectsEnabled,
                         int levelsPerLevel, int pointsPerLevel, int startingPoints,
                         int changeCooldownDays, int respecCooldownHours, int pulseSeconds,
                         int outOfCombatSeconds, boolean abilitiesEnabled,
                         double abilityCooldownMultiplier, boolean levelNotice,
-                        boolean tagEnabled) {
+                        boolean tagEnabled, int achievementEvery, int achievementMaxBonus,
+                        boolean ranksEnabled) {
         this.enabled = enabled;
         this.locale = locale;
         this.actionbar = actionbar;
@@ -70,12 +84,15 @@ public final class ClassConfig {
         this.abilityCooldownMultiplier = abilityCooldownMultiplier;
         this.levelNotice = levelNotice;
         this.tagEnabled = tagEnabled;
+        this.achievementEvery = achievementEvery;
+        this.achievementMaxBonus = achievementMaxBonus;
+        this.ranksEnabled = ranksEnabled;
     }
 
     /** Умолчания — те же, что в ресурсном config.yml. */
     public static ClassConfig defaults() {
         return new ClassConfig(true, "ru", true, true, 30, 1, 1, 7, 24, 5, 8, true, 1.0, true,
-                true);
+                true, 15, 2, true);
     }
 
     /** Разбирает конфиг; {@code null} допустим — тогда действуют умолчания. */
@@ -91,7 +108,7 @@ public final class ClassConfig {
                 source.getBoolean("general.actionbar", fallback.actionbar),
                 source.getBoolean("effects.enabled", fallback.effectsEnabled),
                 (int) clamp(source, "general.levels-per-level", fallback.levelsPerLevel,
-                        5, MAX_LEVELS_PER_LEVEL, logger),
+                        MIN_LEVELS_PER_LEVEL, MAX_LEVELS_PER_LEVEL, logger),
                 (int) clamp(source, "general.points-per-level", fallback.pointsPerLevel,
                         0, MAX_POINTS_PER_LEVEL, logger),
                 (int) clamp(source, "general.starting-points", fallback.startingPoints,
@@ -109,7 +126,12 @@ public final class ClassConfig {
                         fallback.abilityCooldownMultiplier, MIN_ABILITY_MULTIPLIER,
                         MAX_ABILITY_MULTIPLIER, logger),
                 source.getBoolean("general.level-notice", fallback.levelNotice),
-                source.getBoolean("tag.enabled", fallback.tagEnabled));
+                source.getBoolean("tag.enabled", fallback.tagEnabled),
+                (int) clamp(source, "points.achievement-every", fallback.achievementEvery,
+                        0, MAX_ACHIEVEMENT_EVERY, logger),
+                (int) clamp(source, "points.achievement-max", fallback.achievementMaxBonus,
+                        0, MAX_ACHIEVEMENT_BONUS, logger),
+                source.getBoolean("ranks.enabled", fallback.ranksEnabled));
     }
 
     private static long clamp(FileConfiguration source, String path, long fallback, long min,
@@ -212,5 +234,20 @@ public final class ClassConfig {
     /** Показывать ли метку класса в нике (чат и TAB). */
     public boolean tagEnabled() {
         return tagEnabled;
+    }
+
+    /** Через сколько открытых достижений даётся очко таланта (0 — не давать). */
+    public int achievementEvery() {
+        return achievementEvery;
+    }
+
+    /** Потолок очков за достижения. */
+    public int achievementMaxBonus() {
+        return achievementMaxBonus;
+    }
+
+    /** Включены ли плюшки донатных рангов (пороги, откаты, пересборка). */
+    public boolean ranksEnabled() {
+        return ranksEnabled;
     }
 }

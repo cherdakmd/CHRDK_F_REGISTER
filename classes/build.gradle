@@ -31,6 +31,9 @@ dependencies {
     compileOnly project(':')
     // Публичный API навыков: класс выводится из прокачки, а не из отдельного счётчика.
     compileOnly project(':skills')
+    // Публичный API достижений: очки за достижения (1.4.175). Мягкая зависимость —
+    // аддона может не быть, тогда бонус просто ноль.
+    compileOnly project(':achievements')
     compileOnly "com.google.code.gson:gson:2.11.0"
     // PlaceholderAPI — мягкая интеграция: в рантайме плагина может не быть.
     compileOnly "me.clip:placeholderapi:2.12.3"

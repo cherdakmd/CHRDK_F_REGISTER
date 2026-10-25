@@ -167,6 +167,48 @@ class ClassConfigTest {
             assertTrue(yaml.getBoolean("general.level-notice"));
             assertTrue(config.tagEnabled());
             assertNotNull(yaml.getConfigurationSection("tag"));
+            assertNotNull(yaml.getConfigurationSection("points"), "секция очков за достижения");
+            assertNotNull(yaml.getConfigurationSection("ranks"), "секция плюшек рангов");
+            assertEquals(15, config.achievementEvery());
+            assertEquals(2, config.achievementMaxBonus());
+            assertTrue(config.ranksEnabled());
         }
+    }
+
+    @Test
+    void achievementPointsRespectTheirLimits() {
+        ClassConfig defaults = parse("general: {}\n");
+        assertEquals(ClassConfig.defaults().achievementEvery(), defaults.achievementEvery());
+        assertEquals(ClassConfig.defaults().achievementMaxBonus(), defaults.achievementMaxBonus());
+        assertTrue(defaults.ranksEnabled(), "плюшки рангов включены по умолчанию");
+
+        ClassConfig low = parse("""
+                points:
+                  achievement-every: -5
+                  achievement-max: -5
+                ranks:
+                  enabled: false
+                """);
+        assertEquals(0, low.achievementEvery(), "отрицательное значение — бонус выключен");
+        assertEquals(0, low.achievementMaxBonus());
+        assertFalse(low.ranksEnabled());
+
+        ClassConfig high = parse("""
+                points:
+                  achievement-every: 999
+                  achievement-max: 999
+                """);
+        assertEquals(ClassConfig.MAX_ACHIEVEMENT_EVERY, high.achievementEvery());
+        assertEquals(ClassConfig.MAX_ACHIEVEMENT_BONUS, high.achievementMaxBonus(),
+                "потолок очков за достижения не даёт купить всё дерево дважды");
+    }
+
+    @Test
+    void levelStepNeverCollapsesToOne() {
+        ClassConfig low = parse("""
+                general:
+                  levels-per-level: 1
+                """);
+        assertEquals(ClassConfig.MIN_LEVELS_PER_LEVEL, low.levelsPerLevel());
     }
 }

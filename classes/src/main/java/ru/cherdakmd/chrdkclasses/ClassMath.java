@@ -38,6 +38,21 @@ final class ClassMath {
         return (int) Math.clamp(total, 0L, MAX_POINTS);
     }
 
+    /**
+     * Очки талантов за открытые достижения (1.4.175).
+     *
+     * <p>Достижения — единственный источник очков сверх уровней, и он не
+     * продаётся: очко даётся за каждые {@code every} открытых, но не больше
+     * {@code max}. Верхняя граница нужна, чтобы дерево оставалось деревом:
+     * даже с бонусом очков хватает ровно на все 36.</p>
+     */
+    static int achievementBonus(int unlocked, int every, int max) {
+        if (every <= 0 || max <= 0 || unlocked <= 0) {
+            return 0;
+        }
+        return Math.clamp(unlocked / every, 0, Math.max(0, max));
+    }
+
     /** Сколько очков осталось после изученных талантов. */
     static int available(int points, int spent) {
         return Math.max(0, points - Math.max(0, spent));

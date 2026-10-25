@@ -68,6 +68,44 @@ class TalentServiceTest {
         }
     }
 
+    /** Заглушка рангов: ступень фиксирована, ядро «есть». */
+    private static final class Ranks implements RankSource {
+        private int level;
+
+        Ranks(int level) {
+            this.level = level;
+        }
+
+        @Override
+        public boolean available() {
+            return true;
+        }
+
+        @Override
+        public int rankLevel(UUID player) {
+            return level;
+        }
+    }
+
+    /** Заглушка достижений: открыто ровно столько, сколько задано. */
+    private static final class Achievements implements AchievementSource {
+        private int unlocked;
+
+        Achievements(int unlocked) {
+            this.unlocked = unlocked;
+        }
+
+        @Override
+        public boolean available() {
+            return true;
+        }
+
+        @Override
+        public int unlockedCount(UUID player) {
+            return unlocked;
+        }
+    }
+
     private static ClassConfig config(String yaml) {
         YamlConfiguration source = new YamlConfiguration();
         try {
@@ -326,6 +364,89 @@ class TalentServiceTest {
         assertEquals(0, service.store().talentCount(PLAYER));
         assertEquals("admin-reset-none", service.resetByAdmin(OTHER).key());
         assertEquals("class-unknown", service.setByAdmin(PLAYER, "паладин", NOW).key());
+    }
+
+    /* ------------------------ ранги и достижения (1.4.175) ------------------------ */
+
+    @Test
+    void rankShortensPathsAndCooldownsButNotCaps(@TempDir Path dir) {
+        Skills skills = new Skills().total(300);
+        TalentService service = new TalentService(freeConfig(), store(dir), skills,
+                new Ranks(5), new Achievements(0));
+        service.choose(PLAYER, "warrior", NOW);
+
+        assertEquals(5, service.rankLevel(PLAYER));
+        assertEquals(25, service.levelStep(PLAYER), "шаг уровня: 30 − 5");
+        assertEquals(1 + 300 / 25, service.level(PLAYER));
+        assertEquals(70, service.requiredSkill(PLAYER, ClassCatalog.talent("warrior-stoyka-5")),
+                "мастерский узел открывается навыком 70, а не 75");
+        assertEquals(1, ClassCatalog.talent("warrior-stoyka-5").cost(),
+                "цена мастерского узла от ранга не меняется");
+        assertEquals(EffectKind.ARMOR.cap(), ClassMath.total(EffectKind.ARMOR, 999.0),
+                "потолки эффектов рангом не поднимаются");
+    }
+
+    @Test
+    void rankDiscountsOnlyTouchCooldowns(@TempDir Path dir) {
+        ClassStore store = store(dir);
+        store.setClass(PLAYER, "warrior", NOW);
+        TalentService plain = new TalentService(config("""
+                general:
+                  change-cooldown-days: 7
+                  respec-cooldown-hours: 24
+                """), store, new Skills(), new Ranks(3), new Achievements(0));
+        assertEquals(4L * 86_400L, plain.changeCooldownLeft(PLAYER, NOW),
+                "Хранитель: смена класса через 4 дня, а не 7");
+        assertEquals(18L * 3_600L, plain.respecCooldownLeft(PLAYER, NOW),
+                "и пересборка через 18 часов, а не 24");
+
+        TalentService off = new TalentService(config("""
+                general:
+                  change-cooldown-days: 7
+                  respec-cooldown-hours: 24
+                ranks:
+                  enabled: false
+                """), store, new Skills(), new Ranks(3), new Achievements(0));
+        assertEquals(7L * 86_400L, off.changeCooldownLeft(PLAYER, NOW),
+                "выключенные плюшки возвращают базовые правила");
+        assertEquals(24L * 3_600L, off.respecCooldownLeft(PLAYER, NOW));
+    }
+
+    @Test
+    void achievementsGiveCappedPoints(@TempDir Path dir) {
+        Skills skills = new Skills().total(0);
+        TalentService service = new TalentService(freeConfig(), store(dir), skills,
+                new Ranks(0), new Achievements(30));
+        service.choose(PLAYER, "warrior", NOW);
+        assertEquals(30, service.unlockedAchievements(PLAYER));
+        assertEquals(2, service.achievementBonus(PLAYER), "каждые 15 достижений — очко, потолок 2");
+        assertEquals(1 + 2, service.earnedPoints(PLAYER), "уровень плюс достижения");
+        assertEquals(3, service.availablePoints(PLAYER));
+
+        TalentService capped = new TalentService(config("""
+                points:
+                  achievement-every: 5
+                  achievement-max: 1
+                """), store(dir), new Skills(), null, new Achievements(100));
+        capped.choose(OTHER, "warrior", NOW);
+        assertEquals(1, capped.achievementBonus(OTHER), "потолок важнее числа достижений");
+    }
+
+    @Test
+    void missingBridgesAndBrokenDataAreSafe(@TempDir Path dir) {
+        TalentService service = new TalentService(freeConfig(), store(dir), new Skills(),
+                null, null);
+        service.choose(PLAYER, "warrior", NOW);
+        assertEquals(0, service.rankLevel(PLAYER));
+        assertEquals(30, service.levelStep(PLAYER));
+        assertEquals(0, service.achievementBonus(PLAYER));
+        assertEquals(0, service.unlockedAchievements(PLAYER));
+
+        TalentService broken = new TalentService(freeConfig(), store(dir), new Skills(),
+                new Ranks(-4), new Achievements(-10));
+        broken.choose(OTHER, "mage", NOW);
+        assertEquals(0, broken.rankLevel(OTHER), "мусорный ранг не даёт плюшек");
+        assertEquals(0, broken.achievementBonus(OTHER), "минус достижений — ноль очков");
     }
 
     @Test

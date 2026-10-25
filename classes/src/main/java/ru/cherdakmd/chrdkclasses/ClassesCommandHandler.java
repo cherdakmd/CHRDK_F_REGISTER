@@ -57,7 +57,7 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
                 plugin.messages().send(sender, "player-only");
                 return true;
             }
-            useAbility(player);
+            useAbility(player, abilitySlot(args));
             return true;
         }
         if (!sender.hasPermission("chrdkclasses.use")) {
@@ -90,7 +90,7 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
             case "ability" -> {
                 Player player = player(sender);
                 if (player != null) {
-                    useAbility(player);
+                    useAbility(player, abilitySlot(args.length > 1 ? new String[]{args[1]} : new String[0]));
                 }
             }
             default -> {
@@ -196,8 +196,7 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
         plugin.messages().send(sender, "info-level",
                 "level", String.valueOf(service.level(id)),
                 "total", String.valueOf(service.totalSkill(id)),
-                "next", String.valueOf(ClassMath.nextLevelIn(service.totalSkill(id),
-                        plugin.config().levelsPerLevel())));
+                "next", String.valueOf(service.nextLevelIn(id)));
         plugin.messages().send(sender, "info-points",
                 "points", String.valueOf(service.availablePoints(id)),
                 "spent", String.valueOf(service.spentPoints(id)));
@@ -253,25 +252,47 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
     /**
      * Применяет умение класса и показывает исход.
      *
+     * <p>У команды один необязательный аргумент — номер умения: без него
+     * срабатывает первое, {@code /ability 2} — второе. Это нужно, чтобы оба
+     * умения можно было повесить на разные горячие клавиши: в меню у них две
+     * отдельные кнопки, а в бою меню не открывают.</p>
+     *
      * <p>Умение не тратит очки и не меняет сохранённые таланты: единственное
      * состояние — момент применения в {@code classes.json}, который пишет
      * {@link AbilityService}. Поэтому здесь нет отдельной проверки прав: её
      * делают команда и кнопка меню.</p>
      */
-    private void useAbility(Player player) {
-        ClassResult result = plugin.abilities().use(player);
+    private void useAbility(Player player, int slot) {
+        ClassResult result = plugin.abilities().use(player, slot);
         plugin.messages().send(player, result.key(),
                 ClassText.localise(plugin.messages(), result).toArray());
         if (!result.ok() || !plugin.config().actionbar()) {
             return;
         }
         PlayerClass playerClass = plugin.service().classOf(player.getUniqueId());
-        if (playerClass == null) {
+        ClassAbility ability = ClassAbility.of(playerClass, slot);
+        if (ability == null) {
             return;
         }
         player.sendActionBar(plugin.messages().get("ability-actionbar", "ability",
                 Messages.trusted(plugin.messages().raw(
-                        "ability." + playerClass.id() + ".name"))));
+                        "ability." + ability.key() + ".name"))));
+    }
+
+    /**
+     * Номер умения из аргументов: {@code 2} — второе, всё остальное — первое.
+     *
+     * <p>Молчаливое приведение, а не ошибка: {@code /ability fire} должен
+     * просто сработать первым умением, иначе игрок в бою получит лекцию о
+     * синтаксисе вместо удара.</p>
+     */
+    static int abilitySlot(String[] args) {
+        if (args == null || args.length == 0) {
+            return ClassAbility.FIRST;
+        }
+        String raw = args[0] == null ? "" : args[0].trim();
+        return raw.equals("2") || raw.equalsIgnoreCase("second") || raw.equalsIgnoreCase("vtoroe")
+                ? ClassAbility.SECOND : ClassAbility.FIRST;
     }
 
     private void respec(CommandSender sender) {
@@ -302,11 +323,45 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
         plugin.messages().send(sender, "info-level",
                 "level", String.valueOf(service.level(id)),
                 "total", String.valueOf(service.totalSkill(id)),
-                "next", String.valueOf(ClassMath.nextLevelIn(service.totalSkill(id),
-                        plugin.config().levelsPerLevel())));
+                "next", String.valueOf(service.nextLevelIn(id)));
         plugin.messages().send(sender, "info-points",
                 "points", String.valueOf(service.availablePoints(id)),
                 "spent", String.valueOf(service.spentPoints(id)));
+        showAchievements(sender, id);
+        showRank(sender, id);
+    }
+
+    /** Строка о бонусе за достижения: сколько открыто и сколько это даёт очков. */
+    private void showAchievements(CommandSender sender, UUID id) {
+        TalentService service = plugin.service();
+        if (plugin.achievements() == null || !plugin.achievements().available()) {
+            plugin.messages().send(sender, "info-achievements-none");
+            return;
+        }
+        plugin.messages().send(sender, "info-achievements",
+                "count", String.valueOf(service.unlockedAchievements(id)),
+                "bonus", String.valueOf(service.achievementBonus(id)),
+                "max", String.valueOf(plugin.config().achievementMaxBonus()));
+    }
+
+    /** Строка о плюшках ранга: что именно ранг меняет — числами, без обещаний. */
+    private void showRank(CommandSender sender, UUID id) {
+        if (!plugin.config().ranksEnabled()) {
+            plugin.messages().send(sender, "info-rank-off");
+            return;
+        }
+        RankPerks perks = plugin.service().perks(id);
+        if (perks == RankPerks.NONE) {
+            plugin.messages().send(sender, "info-rank-none");
+            return;
+        }
+        plugin.messages().send(sender, "info-rank",
+                "level", String.valueOf(perks.level()),
+                "skill", String.valueOf(perks.thresholdDiscount()),
+                "step", String.valueOf(perks.levelStepDiscount()),
+                "cooldown", String.valueOf(Math.round((1.0 - perks.cooldownFactor()) * 100.0)),
+                "change", String.valueOf(perks.changeDaysOff()),
+                "respec", String.valueOf(perks.respecHoursOff()));
     }
 
     private void top(CommandSender sender) {
@@ -512,8 +567,9 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
                                       String[] args) {
         String name = command.getName().toLowerCase(Locale.ROOT);
         if (name.equals("ability")) {
-            // У команды нет аргументов: подсказывать нечего.
-            return List.of();
+            // Единственный аргумент — номер умения; подсказываем оба.
+            return args.length <= 1 ? filter(List.of("1", "2"), args.length == 0 ? "" : args[0])
+                    : List.of();
         }
         boolean admin = name.equals("classadmin");
         if (admin ? !sender.hasPermission("chrdkclasses.admin")
@@ -528,6 +584,7 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
             return switch (sub) {
                 case "choose", "info" -> filter(classIds(), args[1]);
                 case "learn" -> filter(learnable(sender), args[1]);
+                case "ability" -> filter(List.of("1", "2"), args[1]);
                 case "set", "reset", "respec" -> filter(playerNames(), args[1]);
                 default -> List.of();
             };
