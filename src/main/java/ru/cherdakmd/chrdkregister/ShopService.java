@@ -310,6 +310,44 @@ public final class ShopService {
         return until;
     }
 
+    /**
+     * Платёж за ступень ниже текущей: деньги не теряются (1.4.167).
+     *
+     * <p>Витрина TradeMC присылает только сумму, поэтому игрок с Покровителем
+     * вполне может купить Мецената — по ошибке или из любопытства. Ранг не
+     * понижается, и без записи в журнал такой платёж просто исчез бы: человек
+     * заплатил и не получил ничего. Кладём покупку в очередь ручного разбора
+     * ({@code /pass pending}), чтобы владелец вернул деньги или зачёл их сам.</p>
+     *
+     * @return запись журнала со статусом ожидания
+     */
+    public RegistrationStore.DonationRecord rejectLowerRank(String playerName, ShopProduct product,
+                                                            int currentLevel) {
+        long now = System.currentTimeMillis();
+        RegistrationStore.DonationRecord record = new RegistrationStore.DonationRecord();
+        record.id = access.store().nextShopSaleId();
+        record.source = RegistrationStore.DONATION_SOURCE_TRADEMC;
+        record.donorName = playerName == null ? "" : playerName;
+        record.amountKopecks = Math.max(0, product.priceRubles()) * 100L;
+        record.amountRaw = Integer.toString(Math.max(0, product.priceRubles()));
+        record.createdAt = now;
+        record.detectedAt = now;
+        record.status = RegistrationStore.DonationStatus.PENDING_REVIEW.name();
+        record.note = "shop:" + product.id() + ":ниже текущей ступени " + currentLevel;
+        record.grantedTo = "";
+        record.decidedBy = "";
+        record.decidedAt = 0L;
+        record.days = 0;
+        access.store().recordDonation(record);
+        access.audit().log(AuditLog.SHOP_BUY_PENDING, "trademc", record.donorName, "",
+                AuditLog.details("product", product.id(), "price", product.priceRubles(),
+                        "currentLevel", currentLevel));
+        logger.warning("Витрина: " + record.donorName + " оплатил «" + product.id() + "» ("
+                + product.priceRubles() + " ₽), но у него уже ступень " + currentLevel
+                + ". Платёж в очереди /pass pending — верните деньги или зачтите вручную.");
+        return record;
+    }
+
     /** Цена месячной карточки ранга — база для пересчёта остатка при повышении. */
     private int monthlyPrice(int level) {
         int price = 0;

@@ -865,8 +865,16 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                                 "name", result.playerName(),
                                 "days", result.days(),
                                 "until", AccessManager.formatTimestamp(result.untilMillis()));
-                        case RANK_HIGHER -> messages.send(sender, "shop.rank-higher",
-                                "player", result.playerName());
+                        case RANK_HIGHER -> {
+                            // Деньги уже пришли: не теряем их, а кладём платёж в очередь
+                            // ручного разбора, чтобы владелец вернул сумму или зачёл её сам.
+                            int current = accessManager.store().rankLevel(result.playerName());
+                            plugin.shop().rejectLowerRank(result.playerName(), card, current);
+                            messages.send(sender, "donation.shoppay-lower-rank",
+                                    "amount", amount, "name", result.playerName(),
+                                    "product", Messages.stripTags(card.name()),
+                                    "level", current, "label", label);
+                        }
                         default -> messages.send(sender, "donation.shoppay-rejected",
                                 "amount", amount, "note", result.status().name());
                     }

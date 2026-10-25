@@ -65,6 +65,8 @@ public final class AuditLog {
     public static final String ADMIN_COMMAND = "admin.command";
     /** Покупка товара каталога (витрина TradeMC или ручная выдача). */
     public static final String SHOP_BUY = "shop.buy";
+    /** Покупка ступени ниже текущей: платёж ушёл в очередь ручного разбора (1.4.167). */
+    public static final String SHOP_BUY_PENDING = "shop.buy_pending";
     /** Отзыв товара каталога администратором. */
     public static final String SHOP_REVOKE = "shop.revoke";
     /** Подарок из каталога: платит один игрок, товар получает другой. */
