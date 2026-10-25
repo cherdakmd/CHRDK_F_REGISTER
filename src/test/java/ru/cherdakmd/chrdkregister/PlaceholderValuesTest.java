@@ -24,12 +24,12 @@ class PlaceholderValuesTest {
 
     @Test
     void passStatusCoversMissingActiveAndExpiredPass() {
-        assertEquals("нет проходки", PlaceholderValues.passStatus(null, NOW));
-        assertEquals("нет проходки", PlaceholderValues.passStatus(accountWithPass(0), NOW));
-        assertEquals("нет проходки", PlaceholderValues.passStatus(accountWithPass(-1), NOW));
-        assertEquals("активна", PlaceholderValues.passStatus(accountWithPass(NOW + 1), NOW));
-        assertEquals("истекла", PlaceholderValues.passStatus(accountWithPass(NOW), NOW));
-        assertEquals("истекла", PlaceholderValues.passStatus(accountWithPass(NOW - 1), NOW));
+        assertEquals("нет ранга", PlaceholderValues.rankStatus(null, NOW));
+        assertEquals("нет ранга", PlaceholderValues.rankStatus(accountWithPass(0), NOW));
+        assertEquals("нет ранга", PlaceholderValues.rankStatus(accountWithPass(-1), NOW));
+        assertEquals("активен", PlaceholderValues.rankStatus(accountWithPass(NOW + 1), NOW));
+        assertEquals("активен", PlaceholderValues.passStatus(accountWithPass(NOW + 1), NOW));
+        assertEquals("нет ранга", PlaceholderValues.passStatus(accountWithPass(NOW - 1), NOW), "истёкшая дата без ступени — ранга нет");
     }
 
     @Test
@@ -54,9 +54,13 @@ class PlaceholderValuesTest {
 
     @Test
     void passLeftDescribesRemainingTime() {
-        assertEquals("нет проходки", PlaceholderValues.passLeft(null, NOW));
-        assertEquals("истекла", PlaceholderValues.passLeft(accountWithPass(NOW - 1), NOW));
+        assertEquals("нет ранга", PlaceholderValues.passLeft(null, NOW));
+        assertEquals("нет ранга", PlaceholderValues.passLeft(accountWithPass(NOW - 1), NOW));
         assertEquals("2 дн. 0 ч.", PlaceholderValues.passLeft(accountWithPass(NOW + TimeUnit.DAYS.toMillis(2)), NOW));
+        RegistrationStore.PlayerAccount permanent = accountWithPass(0);
+        permanent.rankLevel = 3;
+        permanent.rankPermanent = true;
+        assertEquals("бессрочно", PlaceholderValues.passLeft(permanent, NOW));
     }
 
     @Test
@@ -65,7 +69,7 @@ class PlaceholderValuesTest {
             assertEquals(stage.name().toLowerCase(java.util.Locale.ROOT), PlaceholderValues.stageId(stage));
             assertFalse(PlaceholderValues.describeStage(stage).isBlank());
         }
-        assertEquals("нет проходки", PlaceholderValues.describeStage(AccessManager.PlayerStage.NO_PASS));
+        assertEquals("нет ранга", PlaceholderValues.describeStage(AccessManager.PlayerStage.NO_PASS));
         assertEquals("в игре", PlaceholderValues.describeStage(AccessManager.PlayerStage.AUTHENTICATED));
     }
 

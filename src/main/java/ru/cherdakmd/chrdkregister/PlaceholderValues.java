@@ -20,16 +20,25 @@ final class PlaceholderValues {
         return value ? "да" : "нет";
     }
 
-    /** Статус проходки: «активна», «истекла» или «нет проходки». */
+    /**
+     * Статус старой проходки: «активен», «истёк» или «нет ранга».
+     *
+     * <p>С 1.4.167 проходки как отдельной сущности нет, поэтому «нет проходки»
+     * читалось бы как «у тебя вообще ничего нет». Алиас возвращает «нет ранга»,
+     * чтобы таблички не врали; текст совпадает с {@code %chrdk_rank_status%}.</p>
+     */
     static String passStatus(RegistrationStore.PlayerAccount account, long nowMillis) {
-        if (account == null || account.passUntil <= 0) return "нет проходки";
-        return account.hasActivePass(nowMillis) ? "активна" : "истекла";
+        if (account == null || account.effectiveRank(nowMillis) <= 0) {
+            return account != null && account.rankLevel > 0 ? "истёк" : "нет ранга";
+        }
+        return "активен";
     }
 
     /** Статус ранга (1.4.167): «активен», «истёк» или «нет ранга». */
-    static String rankStatus(RegistrationStore.PlayerAccount account, int level, long nowMillis) {
-        if (account == null || level <= 0) return "нет ранга";
-        return account.hasRank(nowMillis) ? "активен" : "истёк";
+    static String rankStatus(RegistrationStore.PlayerAccount account, long nowMillis) {
+        if (account == null) return "нет ранга";
+        if (account.effectiveRank(nowMillis) > 0) return "активен";
+        return account.rankLevel > 0 ? "истёк" : "нет ранга";
     }
 
     /**
@@ -51,9 +60,12 @@ final class PlaceholderValues {
         return (diff + unitMillis - 1) / unitMillis;
     }
 
-    /** Остаток проходки строкой вида «2 дн. 3 ч.»; «истекла» / «нет проходки» по ситуации. */
+    /** Остаток ранга строкой вида «2 дн. 3 ч.»; «бессрочно» / «истёк» / «нет ранга» по ситуации. */
     static String passLeft(RegistrationStore.PlayerAccount account, long nowMillis) {
-        if (account == null || account.passUntil <= 0) return "нет проходки";
+        if (account == null || account.effectiveRank(nowMillis) <= 0) {
+            return account != null && account.rankLevel > 0 ? "истёк" : "нет ранга";
+        }
+        if (account.rankPermanent) return "бессрочно";
         return AccessManager.formatRemainingTime(account.passUntil, nowMillis);
     }
 
@@ -65,7 +77,7 @@ final class PlaceholderValues {
     /** Короткое русское название стадии авторизации для таб-листа и скорбордов. */
     static String describeStage(AccessManager.PlayerStage stage) {
         return switch (stage) {
-            case NO_PASS -> "нет проходки";
+            case NO_PASS -> "нет ранга";
             case NEEDS_REGISTER -> "регистрация";
             case NEEDS_LOGIN -> "вход";
             case NEEDS_2FA -> "код 2FA";

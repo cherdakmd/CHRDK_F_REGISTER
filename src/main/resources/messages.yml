@@ -25,9 +25,9 @@
 
 messages:
   "presentation":
-    "trial": "Пробная проходка"
+    "trial": "Приветственный ранг"
     "pass": "Проходка активна"
-    "no-pass": "Нет активной проходки"
+    "no-pass": "Нет активного ранга"
     "register-trial": "Зарегистрируйтесь — %days% бесплатных дней: /register пароль пароль"
     "register": "Создайте пароль: /register пароль пароль"
     "login": "Войдите в аккаунт: /login"
@@ -39,9 +39,9 @@ messages:
     "unsecured": "не подключена"
   "trial":
     "register-prompt": "<yellow>Зарегистрируйте пароль командой: </yellow><click:suggest_command:'/register '><hover:show_text:'<green>Подставить команду в чат</green>'><gold><bold>/register \\<пароль> \\<повтор></bold></gold></hover></click>"
-    "welcome": "<gold>Добро пожаловать! Зарегистрируйтесь — получите %days% дней бесплатной проходки. /register пароль пароль</gold>"
-    "granted": "<green>Пробная проходка на %days% дней активирована! Действует до %until%. Приятной игры!</green>"
-    "notify-title": "Пробная проходка активирована"
+    "welcome": "<gold>Добро пожаловать! Зарегистрируйтесь — получите приветственный ранг на %days% дней. /register пароль пароль</gold>"
+    "granted": "<green>Приветственный ранг на %days% дней активирован! Действует до %until%. Приятной игры!</green>"
+    "notify-title": "Приветственный ранг активирован"
     "notify-desc": "Игрок: %player%. Пробный период: %days% дней, до %until%."
 
   # ---------------------------------------------------------------
@@ -105,7 +105,7 @@ messages:
     "pass-shoprevoke": "<yellow>Использование: /%label% shoprevoke <ник> <товар> — снять товар и его группу.</yellow>"
     "pass-shopgift": "<yellow>Использование: /%label% shopgift <ник> <товар> [даритель] — подарить товар каталога.</yellow>"
     "pass-my": "<yellow>Использование: /%label% my [ник] — активные покупки.</yellow>"
-    "pass-luckperms": "<yellow>Использование: /%label% luckperms [setup|status] — авто-настройка групп LuckPerms (default → проходка → admin) или просмотр схемы.</yellow>"
+    "pass-luckperms": "<yellow>Использование: /%label% luckperms [setup|status] — авто-настройка групп LuckPerms (default → ранг → admin) или просмотр схемы.</yellow>"
     "pass-reset2fa": "<yellow>Использование: /%label% reset2fa <ник></yellow>"
     "pass-sessions": "<yellow>Использование: /%label% sessions <ник></yellow>"
     "pass-unregister": "<yellow>Использование: /%label% unregister <ник></yellow>"
@@ -116,11 +116,11 @@ messages:
   # ---------------------------------------------------------------
   "restriction":
     "command-login": "<red>Сначала войдите в аккаунт: /login \\<пароль></red>"
-    "command-no-pass": "<red>Команды заблокированы! Сначала приобретите проходку (%price% ₽, укажите ник %player% в имени донатера).</red>"
+    "command-no-pass": "<red>Команды заблокированы! Сначала оформите ранг (%price% ₽, укажите ник %player% в имени донатера).</red>"
     "command-register": "<red>Сначала зарегистрируйте пароль: /register \\<пароль> \\<повтор></red>"
     "command-two-factor": "<red>Подтвердите вход кодом двухфакторной аутентификации: /2fa \\<6-значный_код></red>"
     "command-two-factor-setup": "<red>Сначала привяжите 2FA, чтобы войти в игру: /2fa setup</red>"
-    "too-many-accounts": "<red>С вашего IP уже играет слишком много аккаунтов с проходками. Обратитесь к администрации.</red>"
+    "too-many-accounts": "<red>С вашего IP уже играет слишком много аккаунтов с рангами. Обратитесь к администрации.</red>"
 
   # ---------------------------------------------------------------
   # password — Пароли: ошибки, надёжность, подсказки
@@ -343,17 +343,17 @@ messages:
     "restored-actionbar": "<green>Авторизация подтверждена</green>"
 
   # ---------------------------------------------------------------
-  # no-pass — Нет проходки (страница оплаты подставляется по включённым провайдерам)
+  # no-pass — Нет ранга (страница оплаты подставляется по включённым провайдерам)
   # ---------------------------------------------------------------
   "no-pass":
     "prompt": |-
       <red>==============================================</red>
-      <red><bold>У вас нет активной проходки на сервер!</bold></red>
-      <gray>Стоимость проходки: </gray><gold><bold>%price% ₽</bold></gold><gray> (выдаётся на </gray><aqua>%days% дней</aqua><gray>)</gray>
+      <red><bold>У вас нет активного ранга на сервере!</bold></red>
+      <gray>Цена ранга: </gray><gold><bold>%price% ₽</bold></gold><gray> (выдаётся на </gray><aqua>%days% дней</aqua><gray>)</gray>
       <yellow>ВАЖНО: В поле «Ваше имя» (имя донатера) укажите ваш точный ник: </yellow><green><bold>%player%</bold></green>
       <gray>Проходка активируется автоматически сразу после оплаты (не выходя с сервера).</gray>
       <red>==============================================</red>
-    "reminder": "<red>Нет проходки! Оплатите %price%₽ на странице оплаты (укажите ник %player% в имени донатера)</red>"
+    "reminder": "<red>Нет ранга! Оформите его за %price% ₽ на странице оплаты (укажите ник %player% в имени донатера)</red>"
     "title": "<red><bold>НЕТ ПРОХОДКИ</bold></red>"
     "title-subtitle": "<yellow>Донат %price%₽ (ник: %player%)</yellow>"
 
@@ -369,9 +369,9 @@ messages:
     # Перенос строки внутри страницы — тег <newline>, цвета — обычная разметка MiniMessage.
     # Страницы должны оставаться ОДНОЙ строкой: список разбивается по строкам файла.
     "pages":
-      - "<gold><bold>Добро пожаловать на CHERDAK!</bold></gold><newline><gray>Это выживание с защитой построек, экономикой и проходкой. В книге — короткий маршрут новичка: что сделать в первый час и куда смотреть дальше.</gray>"
+      - "<gold><bold>Добро пожаловать на CHERDAK!</bold></gold><newline><gray>Это выживание с защитой построек, экономикой и рангами. В книге — короткий маршрут новичка: что сделать в первый час и куда смотреть дальше.</gray>"
       - "<aqua><bold>Вход на сервер</bold></aqua><newline><gray>1. /register пароль пароль — пароль от аккаунта.<newline>2. /2fa setup — отсканируйте QR-карту из руки.<newline>3. /2fa confirm код — привязка готова.<newline>Дальше: /login пароль. Выход: /logout.</gray>"
-      - "<gold><bold>Проходка</bold></gold><newline><gray>Играть можно только с проходкой. Проверить срок: /pass status. Продлить: /pass donate — там страница оплаты. После оплаты заходить заново не нужно, доступ включится сразу.</gray>"
+      - "<gold><bold>Ранг гильдии</bold></gold><newline><gray>Вход свободный: играть можно сразу после регистрации. Ранг — это комфорт и оформление: очередь, дома, приваты, скидки, множители опыта и добычи. Посмотреть: /rank. Проверить срок: /pass status.</gray>"
       - "<green><bold>Первые шаги</bold></green><newline><gray>Не стройтесь у спавна: /rtp перенесёт в случайную точку мира (стоит алмазы). Осмотритесь и поставьте кровать — после смерти вы вернётесь к ней.</gray>"
       - "<yellow><bold>Защита дома</bold></yellow><newline><gray>Купите приват: /claim — это чанк 16×16. Пополняйте казну: /claim deposit, проверка: /claim balance. Команды и карта: /claim help.</gray>"
       - "<aqua><bold>Дом и перемещения</bold></aqua><newline><gray>/sethome дом — сохранить точку, /home дом — вернуться, /homes — список. Позвать к себе: /tpahere ник, прийти к игроку: /tpa ник. Ответ: /tpaccept.</gray>"
@@ -397,20 +397,20 @@ messages:
       <gray>Срок действия до: </gray><aqua>%until%</aqua>
       <gold>==============================================</gold>
     "admin-help": |-
-      <gold>Команды управления проходками:</gold>
-      <yellow>/%label% add <ник></yellow><gray> — выдать/продлить проходку на %grant_days% дней</gray>
-      <yellow>/%label% remove <ник></yellow><gray> — отозвать проходку игрока</gray>
-      <yellow>/%label% check <ник></yellow><gray> — проверить статус проходки, пароля и 2FA игрока</gray>
+      <gold>Команды управления рангами:</gold>
+      <yellow>/%label% add <ник></yellow><gray> — выдать/продлить ранг на %grant_days% дней</gray>
+      <yellow>/%label% remove <ник></yellow><gray> — отозвать ранг игрока</gray>
+      <yellow>/%label% check <ник></yellow><gray> — проверить статус ранга, пароля и 2FA игрока</gray>
       <yellow>/%label% unregister <ник></yellow><gray> — сбросить пароль и 2FA игрока</gray>
       <yellow>/%label% reset2fa <ник></yellow><gray> — сбросить только TOTP 2FA игрока</gray>
       <yellow>/%label% status</yellow><gray> — общая статистика плагина</gray>
-      <yellow>/%label% add <ник> [дней]</yellow><gray> — выдать/продлить проходку на произвольный срок</gray>
-      <yellow>/%label% gift <ник> <дней></yellow><gray> — подарить проходку</gray>
+      <yellow>/%label% add <ник> [дней]</yellow><gray> — выдать/продлить ранг на произвольный срок</gray>
+      <yellow>/%label% gift <ник> <дней></yellow><gray> — подарить ранг</gray>
       <yellow>/%label% shoppay <ник> <сумма></yellow><gray> — покупка из магазина TradeMC: журнал, тариф, выдача</gray>
       <yellow>/%label% pending</yellow><gray> — нераспознанные донаты</gray>
       <yellow>/%label% donations [фильтр] [лимит]</yellow><gray> — журнал всех донатов (выданные/ожидание/отклонённые)</gray>
       <yellow>/%label% health</yellow><gray> — состояние донатных сервисов, счётчики опросов</gray>
-      <yellow>/%label% approve <id> [ник] [дней]</yellow><gray> — подтвердить платёж и выдать проходку</gray>
+      <yellow>/%label% approve <id> [ник] [дней]</yellow><gray> — подтвердить платёж и выдать ранг</gray>
       <yellow>/%label% reject <id> [причина]</yellow><gray> — отклонить платёж</gray>
       <yellow>/%label% sessions <ник></yellow><gray> — активные сессии и IP игрока</gray>
       <yellow>/%label% logoutall <ник></yellow><gray> — завершить все сессии игрока</gray>
@@ -418,15 +418,15 @@ messages:
       <yellow>/%label% doctor</yellow><gray> — самопроверка конфигурации</gray>
       <yellow>/%label% audit [ник] [N]</yellow><gray> — последние записи аудита</gray>
       <yellow>/%label% backup <create|list|restore></yellow><gray> — резервные копии данных</gray>
-      <yellow>/%label% luckperms [setup|status]</yellow><gray> — авто-настройка групп LuckPerms (default → проходка → admin)</gray>
+      <yellow>/%label% luckperms [setup|status]</yellow><gray> — авто-настройка групп LuckPerms (default → ранг → admin)</gray>
       <yellow>/%label% update check|download</yellow><gray> — проверить релиз / подготовить обновление (download только из консоли)</gray>
       <yellow>/%label% reload</yellow><gray> — перезагрузить config.yml</gray>
-    "claim-success": "<green>✓ Платёж #%id% подтверждён, проходка активирована!</green>"
-    "expired": "<red>Срок вашей месячной проходки истёк! Продлите проходку на странице оплаты сервера.</red>"
+    "claim-success": "<green>✓ Платёж #%id% подтверждён, ранг активирован!</green>"
+    "expired": "<red>Срок вашего ранга истёк! Продлить можно в витрине: /rank</red>"
     "expiring": "<gold>Внимание! Проходка заканчивается через %remaining% (до %until%). Продлить: %renew%</gold>"
     "expiry-bar": "<yellow>Проходка заканчивается через %remaining%</yellow>"
-    "gift-notice": "<green>Вам подарили проходку на %days% дн. от %sender%!</green>"
-    "gifted": "<green>✓ Подарок отправлен: <gold>%player%</gold> получил %days% дн. проходки.</green>"
+    "gift-notice": "<green>Вам подарили ранг на %days% дн. от %sender%!</green>"
+    "gifted": "<green>✓ Подарок отправлен: <gold>%player%</gold> получил %days% дн. ранга.</green>"
     "granted": "<green>✓ Проходка выдана игроку <gold><bold>%player%</bold></gold> на %days% дн. (до %until%).</green>"
     "info":
       "active": "<green><bold>АКТИВНА</bold></green>"
@@ -439,7 +439,7 @@ messages:
       "payment-code-value": "<gold><bold>%code%</bold></gold>"
       "registered": "<gray>Регистрация пароля: </gray>%value%"
       "renew": "<gray>Продлить: </gray><aqua>%url%</aqua><dark_gray> · Сессии: /session · Выйти: /logout</dark_gray>"
-      "status": "<gray>Статус проходки: </gray>"
+      "status": "<gray>Статус ранга: </gray>"
       "two-factor": "<gray>Защита TOTP 2FA: </gray>%value%"
       "until-label": "<gray>Действует до: </gray>"
       "until-value": "<yellow> (осталось %now%)</yellow>"
@@ -451,20 +451,20 @@ messages:
       "item-password-lore": "<gray>подсказка по смене пароля</gray>"
       "item-password-name": "<yellow><bold>Сменить пароль</bold></yellow>"
       "item-payment-lore": "<gray>ссылка на страницу оплаты</gray>"
-      "item-payment-name": "<gold><bold>Оплатить / продлить проходку</bold></gold>"
+      "item-payment-name": "<gold><bold>Оплатить / продлить ранг</bold></gold>"
       "item-sessions-lore": "<gray>устройства, IP, завершение сессий</gray>"
       "item-sessions-name": "<green><bold>Активные сессии</bold></green>"
       "item-stats-lore": "<gray>выручка, очередь, конверсия</gray>"
       "item-stats-name": "<gold><bold>Статистика (админ)</bold></gold>"
-      "item-status-lore": "<gray>срок проходки, входы, 2FA</gray>"
-      "item-status-name": "<yellow><bold>Статус проходки</bold></yellow>"
-      "item-tiers-lore": "<gray>цены и длительность проходки</gray>"
+      "item-status-lore": "<gray>срок ранга, входы, 2FA</gray>"
+      "item-status-name": "<yellow><bold>Статус ранга</bold></yellow>"
+      "item-tiers-lore": "<gray>цены и длительность ранга</gray>"
       "item-tiers-name": "<aqua><bold>Тарифы</bold></aqua>"
-      "tiers-header": "<gold>Тарифы проходки:</gold>"
-      "title": "<gold>Меню проходки и аккаунта</gold>"
+      "tiers-header": "<gold>Тарифы ранга:</gold>"
+      "title": "<gold>Меню ранга и аккаунта</gold>"
     "donate":
       "title": "<gold>Донат: тарифы и ваша история</gold>"
-      "pay-name": "<gold><bold>Оплатить / продлить проходку</bold></gold>"
+      "pay-name": "<gold><bold>Оплатить / продлить ранг</bold></gold>"
       "pay-lore": "<gray>Клик — ссылка на страницу оплаты в чат.</gray>"
       "tier-name": "<yellow><bold>%label%</bold></yellow>"
       "tier-lore": "<gray>%amount% ₽ → %days% дн. прохода · клик — ссылка на оплату.</gray>"
@@ -491,7 +491,7 @@ messages:
       "item-name": "<white>#%id% · %amount% ₽</white>"
       "item-line-status": "<gray>%status% · %date% · источник: %source%</gray>"
       "item-line-donor": "<dark_gray>донатер: %donor% → %player% · %days% дн.</dark_gray>"
-      "item-lore-approve": "<green>ЛКМ — выдать проходку</green>"
+      "item-lore-approve": "<green>ЛКМ — выдать ранг</green>"
       "item-lore-reject": "<red>ПКМ — отклонить</red>"
       "status-name": "<gold><bold>Сервисы и баланс</bold></gold>"
       "status-line": "<gray>%service%: %state% · курсор #%cursor% · ~%latency% мс</gray>"
@@ -511,11 +511,11 @@ messages:
       "status-error-line": "<red> последняя ошибка: %error%</red>"
       "status-balance-age": "<dark_gray> обновлено %ago% назад</dark_gray>"
       "balance-wait": "<yellow>Окно API DonatePay занято: баланс обновится через ~%seconds% с (правило — один вызов в 20 с).</yellow>"
-    "not-active": "<red>У игрока %target_name% не найдено активной проходки.</red>"
+    "not-active": "<red>У игрока %target_name% не найдено активного ранга.</red>"
     "not-registered": "<red>Игрок %target_name% ещё не регистрировал пароль.</red>"
     "password-reset": "<yellow>Ваш пароль был сброшен администратором. Зарегистрируйте новый пароль!</yellow>"
     "password-reset-notice": "<green>✓ Пароль (и 2FA) игрока %target_name% сброшены. Проходка сохранена.</green>"
-    "revoked": "<red>Ваша проходка была отозвана администратором.</red>"
+    "revoked": "<red>Ваш ранг был отозван администратором.</red>"
     "revoked-notice": "<green>✓ Проходка игрока %target_name% отозвана.</green>"
     "tier-line": "<yellow>%price% ₽</yellow><gray> → </gray><aqua>%days% дн.%label%</aqua>"
     "two-factor-not-enabled": "<red>У игрока %target_name% не включена двухфакторная аутентификация.</red>"
@@ -525,13 +525,13 @@ messages:
   # ---------------------------------------------------------------
   # ---------------------------------------------------------------
     "boost-checking": "<gray>Проверяем подписку Boosty для %boosty%…</gray>"
-    "boost-linked": "<green>✓ Привязка к Boosty <gold>%boosty%</gold> (%level%) создана — проходка активна до <aqua>%until%</aqua>.</green>"
+    "boost-linked": "<green>✓ Привязка к Boosty <gold>%boosty%</gold> (%level%) создана — подписка идёт до <aqua>%until%</aqua>.</green>"
     "boost-changed": "<green>✓ Привязка обновлена: теперь Boosty <gold>%boosty%</gold> (%level%). Проходка до <aqua>%until%</aqua>.</green>"
     "boost-not-found": "<red>Подписчика <gold>%boosty%</gold> на Boosty не нашли. Проверьте ник в точности как на сайте boosty.to.</red>"
     "boost-inactive": "<red>Подписка Boosty <gold>%boosty%</gold> сейчас не активна. Если вы только что оформили — подождите пару минут и повторите.</red>"
     "boost-low-level": "<red>Уровень «%level%» дешевле требуемых %min% ₽/мес. Оформите подходящий уровень на Boosty.</red>"
     "boost-taken": "<red>Этот Boosty-аккаунт уже привязан к игроку <gold>%player%</gold>.</red>"
-    "boost-unbound": "<yellow>Привязка Boosty снята. Текущая проходка догорит по своему сроку.</yellow>"
+    "boost-unbound": "<yellow>Привязка Boosty снята. Текущая подписка догорит по своему сроку.</yellow>"
     "boost-not-bound": "<yellow>У вас нет привязки Boosty — сначала /pass boost <ник_на_Boosty>.</yellow>"
     "boost-error": "<red>Boosty не отвечает — попробуйте через пару минут. Админу: смотреть консоль.</red>"
 
@@ -589,7 +589,7 @@ messages:
   # ---------------------------------------------------------------
   "donation":
     "approve-failed": "<red>Не удалось подтвердить платёж #%id%.</red>"
-    "approved": "<green>✓ Платёж #%id% подтверждён, проходка выдана игроку %target_name%.</green>"
+    "approved": "<green>✓ Платёж #%id% подтверждён, ранг выдан игроку %target_name%.</green>"
     "claim":
       "already-processed": "<yellow>Этот платёж уже обработан администрацией.</yellow>"
       "name-mismatch": "<red>Имя донатера в платеже не совпадает с вашим ником — обратитесь к администрации.</red>"
@@ -655,8 +655,8 @@ messages:
     "health-footer": "<gray>Журнал: /%label% donations | Очередь: /%label% pending | Форс-опрос: /%label% recheck</gray>"
     "note": 
       "test-payment": "🧪 тестовый платёж — оплата не реальная"
-    "testpay-granted": "<green>[ТЕСТ] Донат на %amount% ₽ (игроку «%name%») обработан движком: проходка продлена до %until% (+%days% дн.).</green>"
-    "testpay-group-skipped": "<gray>[ТЕСТ] Группа проходки «%group%» не выдана: тестовая оплата не считается покупкой.</gray>"
+    "testpay-granted": "<green>[ТЕСТ] Донат на %amount% ₽ (игроку «%name%») обработан движком: ранг продлён до %until% (+%days% дн.).</green>"
+    "testpay-group-skipped": "<gray>[ТЕСТ] Группа ранга «%group%» не выдана: тестовая оплата не считается покупкой.</gray>"
     "testpay-pending": "<yellow>[ТЕСТ] Донат %amount% ₽ от «%donor%» ушёл в очередь решений (%status%: %note%) — смотрите /%label% pending.</yellow>"
     "testpay-rejected": "<red>[ТЕСТ] Донат %amount% ₽ отклонён движком: %note%.</red>"
     "testpaylive-notready": "<red>DonatePay не настроен (нет donatepay.api-token) — живой тест невозможен.</red>"
@@ -705,7 +705,7 @@ messages:
   # ---------------------------------------------------------------
   "lp":
     "unavailable": "<red>LuckPerms не найден на сервере — авто-настройка групп невозможна.</red>"
-    "setup-start": "<gray>Настраиваю группы LuckPerms по схеме default → проходка → admin…</gray>"
+    "setup-start": "<gray>Настраиваю группы LuckPerms по схеме default → ранг → admin…</gray>"
     "setup-done": "<green>✓ LuckPerms настроен: группы %groups% (создано: %created%, узлов выставлено: %nodes%).</green>"
     "setup-fail": "<red>Авто-настройка LuckPerms не удалась: %error%</red>"
     "setup-hint-pass": "<yellow>Группа '%group%' создана. Включите авто-выдачу проходным: integrations.pass-group: \"%group%\" в config.yml + /pass reload.</yellow>"
@@ -796,7 +796,7 @@ messages:
   # ---------------------------------------------------------------
   "chat":
     "blocked-login": "<red>Чат заблокирован! Авторизуйтесь: /login <пароль></red>"
-    "blocked-no-pass": "<red>Чат заблокирован до покупки проходки!</red>"
+    "blocked-no-pass": "<red>Чат заблокирован до оформления ранга!</red>"
     "blocked-register": "<red>Чат заблокирован! Зарегистрируйтесь: /register <пароль> <повтор></red>"
     "blocked-two-factor": "<red>Чат заблокирован! Подтвердите вход кодом 2FA: /2fa <6-значный_код></red>"
     "blocked-two-factor-setup": "<red>Чат заблокирован! Привяжите 2FA, чтобы войти: /2fa setup</red>"
@@ -924,7 +924,7 @@ messages:
   # bruteforce — Защита от перебора
   # ---------------------------------------------------------------
   "bruteforce":
-    "multi-alt": "<yellow>[CHRDK] С одного IP (%ip%) заходят несколько аккаунтов с проходками: %sharing%</yellow>"
+    "multi-alt": "<yellow>[CHRDK] С одного IP (%ip%) заходят несколько аккаунтов с рангами: %sharing%</yellow>"
     "multi-alt-body": |-
       IP: %ip%
       Аккаунты: %accounts%
@@ -1093,7 +1093,7 @@ messages:
     "granted-includes": "<gray>  Выдано из набора: %items%</gray>"
     "gift-sent": "<green>[Магазин] Подарок для %player%: «%name%» (до %until%).</green>"
     "gift-received": "<gold>✦ Вам подарок от %from%: %name% <gray>до</gray> %until%<gold>.</gold>"
-    "includes-pass": "проходка на %days% дн."
+    "includes-pass": "ранг на %days% дн."
     "revoked": "<yellow>[Магазин] У %player% отозван товар «%name%».</yellow>"
     "revoked-player": "<yellow>Товар «%name%» больше не действует.</yellow>"
     "not-active": "<red>У %player% нет активного товара «%id%».</red>"
