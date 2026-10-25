@@ -28,7 +28,10 @@ public record RankTier(int level, String id, String name, String format, String 
 
     /** Имя игрока в оформлении этого ранга. */
     public String decorate(String playerName) {
-        return format.replace("%name%", playerName == null ? "" : playerName);
+        if (playerName == null || playerName.isBlank()) {
+            return "";
+        }
+        return format.replace("%name%", playerName);
     }
 
     /** {@code true}, если ранг анонсирует вход. */

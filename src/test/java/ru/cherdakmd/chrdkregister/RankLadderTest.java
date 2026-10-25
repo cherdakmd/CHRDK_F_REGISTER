@@ -37,7 +37,7 @@ class RankLadderTest {
         // 200 дней Следопыта (199 ₽) при повышении до Мецената (599 ₽): 200*199/599 = 66.
         assertEquals(66, RankLadder.carryDays(200, 199, 599));
         // Остаток дороже нового ранга не даёт «лишних» дней: не больше, чем осталось.
-        assertEquals(10, RankLadder.carryDays(10, 0, 599), "без цены — без переноса");
+        assertEquals(0, RankLadder.carryDays(10, 0, 599), "без цены — без переноса");
         assertEquals(0, RankLadder.carryDays(0, 199, 599));
         assertEquals(0, RankLadder.carryDays(30, 999, 599), "понижения не бывает");
     }
