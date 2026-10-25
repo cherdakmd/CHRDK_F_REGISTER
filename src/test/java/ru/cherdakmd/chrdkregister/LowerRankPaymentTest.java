@@ -53,7 +53,7 @@ class LowerRankPaymentTest {
         record.note = "shop:rank-patron:ниже текущей ступени 5";
         store.recordDonation(record);
 
-        var pending = store.listDonations("pending", 10);
+        var pending = store.listDonations(null, 0).stream().filter(r -> r.donationStatus().isPending()).toList();
         assertEquals(1, pending.size(), "платёж должен ждать разбора, а не исчезнуть");
         RegistrationStore.DonationRecord saved = pending.get(0);
         assertEquals("Patron", saved.donorName);
@@ -88,7 +88,8 @@ class LowerRankPaymentTest {
         store.recordDonation(record);
 
         RegistrationStore reloaded = store();
-        List<RegistrationStore.DonationRecord> pending = reloaded.listDonations("pending", 10);
+        List<RegistrationStore.DonationRecord> pending = reloaded.listDonations(null, 0).stream()
+                .filter(r -> r.donationStatus().isPending()).toList();
         assertEquals(1, pending.size(), "после перезапуска платёж на месте");
         assertEquals("Patron", pending.get(0).donorName);
     }

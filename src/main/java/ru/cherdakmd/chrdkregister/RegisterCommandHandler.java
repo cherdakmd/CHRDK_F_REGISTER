@@ -868,7 +868,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                         case RANK_HIGHER -> {
                             // Деньги уже пришли: не теряем их, а кладём платёж в очередь
                             // ручного разбора, чтобы владелец вернул сумму или зачёл её сам.
-                            int current = accessManager.store().rankLevel(result.playerName());
+                            int current = accessManager.store().rankLevel(result.playerName(), System.currentTimeMillis());
                             plugin.shop().rejectLowerRank(result.playerName(), card, current);
                             messages.send(sender, "donation.shoppay-lower-rank",
                                     "amount", amount, "name", result.playerName(),
