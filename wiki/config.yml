@@ -1,0 +1,53 @@
+# Сайт вики. Сборка: python3 tools/wiki/build.py
+site:
+  title: "CHRDK — вики сервера"
+  short: "CHRDK"
+  tagline: "Русский сервер с кладами, рангами и Character-прогрессом"
+  description: "Полная вики для игроков: команды, экономика, ранги, приваты, клады, охота, боссы, зачарования и всё остальное."
+  url: "https://cherdakmd.github.io/CHRDK_F_REGISTER/"
+  github: "https://github.com/cherdakmd/CHRDK_F_REGISTER"
+  releases: "https://github.com/cherdakmd/CHRDK_F_REGISTER/releases"
+  telegram: ""
+
+# Порядок разделов в меню и карточках на главной.
+groups:
+  - id: start
+    title: "Начало"
+    icon: compass
+    description: "Вход, меню, чат и все команды на одной странице."
+    pages: [index, start, menu, commands, chat, faq]
+  - id: economy
+    title: "Экономика"
+    icon: coins
+    description: "Алмазы, магазин, аукцион, заказы и лотерея."
+    pages: [economy, shop, auction, orders, lottery, referrals]
+  - id: ranks
+    title: "Ранги и вход"
+    icon: crown
+    description: "Пять ступеней, стримеры и очередь на вход."
+    pages: [ranks, streams, queue]
+  - id: world
+    title: "Мир"
+    icon: map
+    description: "Приваты, дома и телепорты за алмазы."
+    pages: [claims, teleports]
+  - id: progress
+    title: "Прогресс"
+    icon: chart
+    description: "Профессии, навыки, классы, задания и сезоны."
+    pages: [professions, skills, classes, quests, battlepass, achievements, dailies]
+  - id: adventure
+    title: "Приключения"
+    icon: sword
+    description: "Клады, охота, боссы и мировые события."
+    pages: [treasures, hunt, bosses, events]
+  - id: gear
+    title: "Снаряжение"
+    icon: shield
+    description: "Зачарования, кузня, артефакты, питомцы и косметика."
+    pages: [enchants, tierforge, artifacts, pets, cosmetics]
+  - id: social
+    title: "Сообщество"
+    icon: users
+    description: "Группы, гильдии и карточка игрока."
+    pages: [party, guilds, profile]

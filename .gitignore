@@ -27,3 +27,6 @@ config/chrdk_f_register.json
 config/chrdk_f_register-data.json
 .env
 *.pyc
+
+# Собранный вики-сайт (GitHub Pages собирает его в Actions)
+/site/
