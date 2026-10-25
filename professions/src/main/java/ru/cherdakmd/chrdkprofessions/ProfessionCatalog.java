@@ -25,11 +25,23 @@ import java.util.Map;
  * считался вовсе: игрок выбирал ремесло и видел тишину. Поэтому добыча и
  * распил теперь в таблицах, и у каждого ремесла есть занятие, доступное с
  * первого дня без редких предметов.</p>
+ *
+ * <p>1.4.178 добрала остальные ремесла: кузнец получает опыт за наковальню и
+ * стол кузнеца (его главные инструменты), алхимик — за полную варочную стойку,
+ * повар — за выпечку чуть больше, чтобы печь не отставала от шахты.</p>
  */
 public final class ProfessionCatalog {
 
     /** Опыт за одну завершённую варку: стойка превращает до трёх склянок. */
     public static final int BREW_XP = 8;
+    /** Прибавка за каждую склянку сверх первой: полная стойка выгоднее (1.4.178). */
+    public static final int BREW_BOTTLE_XP = 2;
+    /** Опыт за ковку в столе кузнеца: апгрейд на незерит или узор. */
+    public static final int SMITHING_XP = 10;
+    /** Сколько уровней стоимости наковальни добавляют один опыт (1.4.178). */
+    private static final int ANVIL_LEVELS_PER_XP = 5;
+    /** Потолок опыта за одну работу в наковальне. */
+    public static final int MAX_ANVIL_XP = 10;
     /** Потолок значения в таблице: защита от случайной правки на порядок. */
     public static final int MAX_XP = 30;
 
@@ -107,11 +119,11 @@ public final class ProfessionCatalog {
                 Material.BREAD, Material.MUSHROOM_STEW, Material.BEETROOT_SOUP,
                 Material.GOLDEN_CARROT);
         craft(Profession.COOK, 1, Material.COOKIE);
-        smelt(Profession.COOK, 2,
+        smelt(Profession.COOK, 3,
                 Material.COOKED_PORKCHOP, Material.COOKED_BEEF, Material.COOKED_CHICKEN,
                 Material.COOKED_MUTTON, Material.COOKED_RABBIT,
                 Material.COOKED_COD, Material.COOKED_SALMON);
-        smelt(Profession.COOK, 1,
+        smelt(Profession.COOK, 2,
                 Material.BAKED_POTATO, Material.DRIED_KELP, Material.POPPED_CHORUS_FRUIT);
 
         /* -------------------------------- камнерез --------------------------------- */
@@ -139,7 +151,8 @@ public final class ProfessionCatalog {
                 Material.NETHER_QUARTZ_ORE);
         mine(Profession.ALCHEMIST, 2, Material.AMETHYST_CLUSTER);
         mine(Profession.ALCHEMIST, 1,
-                Material.GLOWSTONE, Material.MAGMA_BLOCK, Material.NETHER_WART);
+                Material.GLOWSTONE, Material.MAGMA_BLOCK, Material.NETHER_WART,
+                Material.SUGAR_CANE, Material.BROWN_MUSHROOM, Material.RED_MUSHROOM);
         mine(Profession.COOK, 1,
                 Material.WHEAT, Material.CARROTS, Material.POTATOES, Material.BEETROOTS,
                 Material.PUMPKIN, Material.MELON, Material.SUGAR_CANE, Material.COCOA,
@@ -243,7 +256,39 @@ public final class ProfessionCatalog {
 
     /** Опыт за завершённую варку: только у алхимика. */
     public static int brewXp(Profession profession) {
-        return profession == Profession.ALCHEMIST ? BREW_XP : 0;
+        return brewXp(profession, 1);
+    }
+
+    /**
+     * Опыт за варку с числом готовых склянок (1.4.178).
+     *
+     * <p>Полная стойка — это три зелья за один цикл, а не одно: опыт растёт на
+     * {@link #BREW_BOTTLE_XP} за каждую склянку сверх первой. Так алхимик видит
+     * смысл загружать все три слота, а не гонять по одной.</p>
+     */
+    public static int brewXp(Profession profession, int bottles) {
+        if (profession != Profession.ALCHEMIST) {
+            return 0;
+        }
+        return BREW_XP + BREW_BOTTLE_XP * Math.clamp(bottles - 1, 0, 2);
+    }
+
+    /**
+     * Опыт за работу в наковальне: починка, объединение или переименование.
+     *
+     * <p>Стоимость в уровнях — единственный честный измеритель работы: починка
+     * алмазного меча и переименование палки не могут стоить одинаково. Два опыта
+     * за любое действие, дальше по одному за каждые пять уровней стоимости,
+     * потолок — {@link #MAX_ANVIL_XP}.</p>
+     */
+    public static int anvilXp(int repairCost) {
+        int cost = Math.max(0, repairCost);
+        return Math.clamp(2 + cost / ANVIL_LEVELS_PER_XP, 2, MAX_ANVIL_XP);
+    }
+
+    /** Опыт за ковку в столе кузнеца: только кузнецу. */
+    public static int smithingXp(Profession profession) {
+        return profession == Profession.SMITH ? SMITHING_XP : 0;
     }
 
     private static int lookup(Map<Profession, Map<Material, Integer>> table, Profession profession,

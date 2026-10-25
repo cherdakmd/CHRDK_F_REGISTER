@@ -50,8 +50,8 @@ class ProfessionCatalogTest {
         assertEquals(3, ProfessionCatalog.smeltXp(Profession.SMITH, Material.GOLD_INGOT));
         assertEquals(4, ProfessionCatalog.smeltXp(Profession.SMITH, Material.NETHERITE_SCRAP));
         assertEquals(1, ProfessionCatalog.smeltXp(Profession.SMITH, Material.COPPER_INGOT));
-        assertEquals(2, ProfessionCatalog.smeltXp(Profession.COOK, Material.COOKED_BEEF));
-        assertEquals(1, ProfessionCatalog.smeltXp(Profession.COOK, Material.BAKED_POTATO));
+        assertEquals(3, ProfessionCatalog.smeltXp(Profession.COOK, Material.COOKED_BEEF));
+        assertEquals(2, ProfessionCatalog.smeltXp(Profession.COOK, Material.BAKED_POTATO));
         assertEquals(1, ProfessionCatalog.smeltXp(Profession.MASON, Material.GLASS));
         assertEquals(0, ProfessionCatalog.smeltXp(Profession.ALCHEMIST, Material.IRON_INGOT));
         assertEquals(0, ProfessionCatalog.smeltXp(Profession.SMITH, Material.COOKED_BEEF));
@@ -70,6 +70,9 @@ class ProfessionCatalogTest {
         assertEquals(1, ProfessionCatalog.miningXp(Profession.COOK, Material.WHEAT));
         assertEquals(2, ProfessionCatalog.miningXp(Profession.ALCHEMIST,
                 Material.AMETHYST_CLUSTER));
+        // 1.4.178: у алхимика есть работа до Нижнего мира.
+        assertEquals(1, ProfessionCatalog.miningXp(Profession.ALCHEMIST, Material.SUGAR_CANE));
+        assertEquals(1, ProfessionCatalog.miningXp(Profession.ALCHEMIST, Material.RED_MUSHROOM));
     }
 
     @Test
@@ -116,6 +119,38 @@ class ProfessionCatalogTest {
         assertEquals(0, ProfessionCatalog.brewXp(Profession.COOK));
         assertEquals(0, ProfessionCatalog.brewXp(Profession.MASON));
         assertEquals(0, ProfessionCatalog.brewXp(null));
+    }
+
+    @Test
+    void fullBrewingStandPaysMore() {
+        // 1.4.178: три склянки за цикл — 12 опыта, а не 8.
+        assertEquals(8, ProfessionCatalog.brewXp(Profession.ALCHEMIST, 1));
+        assertEquals(10, ProfessionCatalog.brewXp(Profession.ALCHEMIST, 2));
+        assertEquals(12, ProfessionCatalog.brewXp(Profession.ALCHEMIST, 3));
+        assertEquals(8, ProfessionCatalog.brewXp(Profession.ALCHEMIST, 0), "склянок нет — платим базовый опыт");
+        assertEquals(12, ProfessionCatalog.brewXp(Profession.ALCHEMIST, 9), "потолок — три склянки");
+        assertEquals(0, ProfessionCatalog.brewXp(Profession.MASON, 3));
+        assertEquals(0, ProfessionCatalog.brewXp(null, 3));
+    }
+
+    @Test
+    void anvilPaysForTheWorkInLevels() {
+        // 1.4.178: наковальня — главный инструмент кузнеца, опыт за неё.
+        assertEquals(2, ProfessionCatalog.anvilXp(0), "переименование и мелкая работа — 2");
+        assertEquals(2, ProfessionCatalog.anvilXp(-5), "отрицательная стоимость не ломает формулу");
+        assertEquals(3, ProfessionCatalog.anvilXp(5));
+        assertEquals(4, ProfessionCatalog.anvilXp(10));
+        assertEquals(ProfessionCatalog.MAX_ANVIL_XP, ProfessionCatalog.anvilXp(1000));
+    }
+
+    @Test
+    void smithingTableBelongsToSmith() {
+        assertEquals(ProfessionCatalog.SMITHING_XP,
+                ProfessionCatalog.smithingXp(Profession.SMITH));
+        assertEquals(0, ProfessionCatalog.smithingXp(Profession.MASON));
+        assertEquals(0, ProfessionCatalog.smithingXp(Profession.ALCHEMIST));
+        assertEquals(0, ProfessionCatalog.smithingXp(Profession.COOK));
+        assertEquals(0, ProfessionCatalog.smithingXp(null));
     }
 
     @Test

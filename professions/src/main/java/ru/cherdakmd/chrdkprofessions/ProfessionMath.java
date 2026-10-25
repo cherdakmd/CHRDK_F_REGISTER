@@ -158,11 +158,27 @@ final class ProfessionMath {
         return alchemistChance(level, MAX_LEVEL);
     }
 
-    /** Прибавка повара к насыщению: +1 с 10-го уровня, +2 с 20-го, +3 с 30-го (ранг V). */
+    /** Пороги прибавки повара: +1 с 5-го, +2 с 15-го, +3 с 30-го (только с рангом). */
+    private static final int[] COOK_STEPS = {5, 15, 30};
+
+    /**
+     * Прибавка повара к насыщению; с 1.4.178 пороги ниже.
+     *
+     * <p>Раньше первый шаг был на 10-м уровне: до него прибавка равнялась нулю, и
+     * повар честно не понимал, зачем выбрал ремесло. Теперь +1 уже с 5-го, +2 с
+     * 15-го, а третий шаг остаётся наградой за 30-й уровень, который открывает
+     * только ранг V. Потолок прежний: +2 без ранга.</p>
+     */
     static int cookSaturation(int level, int maxLevel) {
         int safe = Math.clamp(level, 1, Math.max(1, maxLevel));
+        int bonus = 0;
+        for (int step : COOK_STEPS) {
+            if (safe >= step) {
+                bonus++;
+            }
+        }
         int cap = MAX_SATURATION + Math.max(0, maxLevel - MAX_LEVEL) / 10;
-        return Math.clamp(safe / 10, 0, Math.max(MAX_SATURATION, cap));
+        return Math.min(bonus, Math.max(MAX_SATURATION, cap));
     }
 
     static int cookSaturation(int level) {

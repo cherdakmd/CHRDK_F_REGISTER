@@ -75,10 +75,11 @@ class ProfessionMathTest {
         assertEquals(1, ProfessionMath.alchemistChance(1));
         assertEquals(20, ProfessionMath.alchemistChance(25));
 
-        assertEquals(0, ProfessionMath.cookSaturation(1));
-        assertEquals(1, ProfessionMath.cookSaturation(10));
-        assertEquals(1, ProfessionMath.cookSaturation(19));
-        assertEquals(2, ProfessionMath.cookSaturation(20));
+        assertEquals(0, ProfessionMath.cookSaturation(1), "до 5-го уровня прибавки нет");
+        assertEquals(0, ProfessionMath.cookSaturation(4));
+        assertEquals(1, ProfessionMath.cookSaturation(5), "1.4.178: первый шаг с 5-го уровня");
+        assertEquals(1, ProfessionMath.cookSaturation(14));
+        assertEquals(2, ProfessionMath.cookSaturation(15));
         assertEquals(2, ProfessionMath.cookSaturation(25));
 
         assertEquals(15, ProfessionMath.masonChance(15));

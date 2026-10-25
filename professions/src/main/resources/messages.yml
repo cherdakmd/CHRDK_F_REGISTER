@@ -20,7 +20,7 @@ professions:
   help-info: "<yellow>/prof info [ремесло]</yellow> <gray>— карточка, прибавка и остаток на сегодня</gray>"
   help-stats: "<yellow>/prof stats</yellow> <gray>— уровни всех четырёх ремёсел</gray>"
   help-top: "<yellow>/prof top</yellow> <gray>— сколько игроков в каждом ремесле</gray>"
-  help-footer: "<gray>Опыт даёт работа: крафт, плавка, варка, добыча блоков и камнерез. Суточный потолок: <white>%cap%</white> опыта, смена ремесла — раз в <white>%hours%</white> ч.</gray>"
+  help-footer: "<gray>Опыт даёт работа: крафт, печь, варка, добыча, камнерез, наковальня и стол кузнеца. Суточный потолок: <white>%cap%</white> опыта, смена ремесла — раз в <white>%hours%</white> ч.</gray>"
 
   # -------------------------------- выбор -----------------------------------
   choose-usage: "<gray>/prof choose <yellow><smith|alchemist|cook|mason></yellow></gray>"
@@ -116,10 +116,10 @@ professions:
 
   # ------------------------------ ремёсла -----------------------------------
   profession.smith.name: "<white>Кузнец</white>"
-  profession.smith.hint: "<gray>ковка, плавка металла, руда</gray>"
-  profession.smith.desc: "<gray>Наковальня, инструменты и броня. Опыт — за ковку, плавку металла и добычу руды.</gray>"
+  profession.smith.hint: "<gray>ковка, наковальня, плавка металла, руда</gray>"
+  profession.smith.desc: "<gray>Наковальня, инструменты и броня. Опыт — за ковку, работу в наковальне, плавку металла и добычу руды.</gray>"
   profession.alchemist.name: "<white>Алхимик</white>"
-  profession.alchemist.hint: "<gray>варка зелий, реагенты, светокамень и аметист</gray>"
+  profession.alchemist.hint: "<gray>варка зелий, реагенты, тростник и аметист</gray>"
   profession.alchemist.desc: "<gray>Зелья и варка. Опыт — за сваренные зелья, реагенты и алхимические предметы.</gray>"
   profession.cook.name: "<white>Повар</white>"
   profession.cook.hint: "<gray>готовка и печь, урожай с грядок</gray>"

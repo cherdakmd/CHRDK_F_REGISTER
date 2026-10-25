@@ -19,6 +19,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.inventory.PrepareAnvilEvent;
+import org.bukkit.event.inventory.SmithItemEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -63,6 +64,8 @@ final class ProfessionListener implements Listener {
     /** Слот входа и слот результата камнереза (1.4.177). */
     private static final int STONECUTTER_INPUT = 0;
     private static final int STONECUTTER_RESULT = 1;
+    /** Слот результата наковальни: через него кузнец забирает работу (1.4.178). */
+    private static final int ANVIL_RESULT = 2;
     /** Сколько тиков копим опыт перед одной строкой над хотбаром. */
     private static final long FEEDBACK_DELAY_TICKS = 10L;
 
@@ -132,15 +135,21 @@ final class ProfessionListener implements Listener {
             return;
         }
         award(player, active, per * Math.clamp(event.getItemAmount(), 1, 64));
+        if (active == Profession.MASON) {
+            extraFurnaceBlock(player, event.getItemType());
+        }
+    }
 
-        if (active != Profession.MASON || !plugin.config().perkMasonBlock()) {
+    /** Прибавка камнереза: шанс на второй блок при плавке (печь, печь-домна, коптильня). */
+    private void extraFurnaceBlock(Player player, Material material) {
+        if (!plugin.config().perkMasonBlock()) {
             return;
         }
         int chance = plugin.service().masonChance(player.getUniqueId());
         if (chance <= 0 || random.nextInt(100) >= chance) {
             return;
         }
-        ItemStack extra = new ItemStack(event.getItemType(), 1);
+        ItemStack extra = new ItemStack(material, 1);
         Bukkit.getScheduler().runTask(plugin, () -> give(player, extra));
     }
 
@@ -160,7 +169,7 @@ final class ProfessionListener implements Listener {
         if (active != Profession.ALCHEMIST) {
             return;
         }
-        award(player, active, ProfessionCatalog.brewXp(active));
+        award(player, active, ProfessionCatalog.brewXp(active, bottles(event.getResults())));
 
         if (!plugin.config().perkAlchemistBottle()) {
             return;
@@ -306,6 +315,81 @@ final class ProfessionListener implements Listener {
             return;
         }
         give(player, bonus);
+    }
+
+    /**
+     * Наковальня: опыт за починку, объединение и переименование (1.4.178).
+     *
+     * <p>Наковальня — главный инструмент кузнеца, а опыта за неё не было вовсе:
+     * игрок чинил инструменты, платил уровни и видел только скидку. Опыт
+     * начисляется за клик по слоту результата и подтверждается на следующем
+     * тике по списанным уровням — так отказ «не хватает опыта» и отменённый
+     * клик ничего не дают.</p>
+     */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onAnvilTake(InventoryClickEvent event) {
+        if (!(event.getWhoClicked() instanceof Player player) || !honest(player)) {
+            return;
+        }
+        if (event.getRawSlot() != ANVIL_RESULT
+                || event.getView().getTopInventory().getType() != InventoryType.ANVIL) {
+            return;
+        }
+        ItemStack result = event.getCurrentItem();
+        if (result == null || result.getType().isAir()) {
+            return;
+        }
+        Profession active = plugin.service().active(player.getUniqueId());
+        if (active != Profession.SMITH) {
+            return;
+        }
+        int cost = event.getView() instanceof AnvilView anvil
+                ? Math.max(0, anvil.getRepairCost()) : 0;
+        int levelBefore = player.getLevel();
+        Bukkit.getScheduler().runTask(plugin, () -> checkAnvil(player, active, levelBefore, cost));
+    }
+
+    /** Проверяет, что наковальня списала уровни, и начисляет опыт за работу. */
+    private void checkAnvil(Player player, Profession active, int levelBefore, int cost) {
+        if (!player.isOnline()) {
+            return;
+        }
+        // Списание уровней — самый честный признак: отказ сервер не проводит.
+        boolean paid = player.getLevel() < levelBefore;
+        boolean taken = false;
+        InventoryView view = player.getOpenInventory();
+        if (view.getTopInventory().getType() == InventoryType.ANVIL) {
+            ItemStack left = view.getTopInventory().getItem(ANVIL_RESULT);
+            taken = left == null || left.getType().isAir();
+        }
+        if (!paid && !(cost <= 0 && taken)) {
+            return;
+        }
+        if (plugin.service().active(player.getUniqueId()) != active) {
+            return;
+        }
+        award(player, active, ProfessionCatalog.anvilXp(cost));
+    }
+
+    /**
+     * Стол кузнеца: незеритовый апгрейд и узоры — тоже работа кузнеца (1.4.178).
+     *
+     * <p>Событие приходит до выдачи результата, поэтому слушаем на
+     * {@code MONITOR} и после отмены: отменённый апгрейд опыта не даёт.</p>
+     */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onSmithItem(SmithItemEvent event) {
+        if (!(event.getWhoClicked() instanceof Player player) || !honest(player)) {
+            return;
+        }
+        Profession active = plugin.service().active(player.getUniqueId());
+        if (active == null) {
+            return;
+        }
+        int xp = ProfessionCatalog.smithingXp(active);
+        if (xp > 0) {
+            award(player, active, xp);
+        }
     }
 
     /* --------------------------------- прибавки -------------------------------- */
@@ -490,6 +574,20 @@ final class ProfessionListener implements Listener {
         cappedNotice.put(player.getUniqueId(), today);
         plugin.messages().send(player, "daily-cap",
                 "profession", ProfessionText.nameComponent(plugin.messages(), profession));
+    }
+
+    /** Сколько склянок реально вышло из стойки: полная стойка выгоднее (1.4.178). */
+    private static int bottles(List<ItemStack> results) {
+        if (results == null) {
+            return 1;
+        }
+        int count = 0;
+        for (ItemStack stack : results) {
+            if (stack != null && !stack.getType().isAir()) {
+                count++;
+            }
+        }
+        return Math.max(1, count);
     }
 
     /** Копия первого зелья в свободный слот стойки; {@code false}, если места нет. */
