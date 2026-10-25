@@ -98,6 +98,35 @@ public final class ShopService {
     }
 
     /**
+     * Товар витрины по сумме платежа — для карточек TradeMC (1.4.167).
+     *
+     * <p>Панель магазина присылает только сумму ({@code pass shoppay <ник> <руб>}),
+     * поэтому товар ищется по цене. Цены в каталоге обязаны быть уникальными:
+     * если две карточки стоят одинаково, выбор неоднозначен — берём первую
+     * и пишем предупреждение, чтобы владелец поправил витрину.</p>
+     *
+     * @param rubles сумма платежа в рублях
+     * @return товар или пусто, если такой цены в каталоге нет
+     */
+    public Optional<ShopProduct> productByPrice(int rubles) {
+        if (rubles <= 0) {
+            return Optional.empty();
+        }
+        List<ShopProduct> matches = catalog().products().stream()
+                .filter(product -> product.priceRubles() == rubles)
+                .toList();
+        if (matches.isEmpty()) {
+            return Optional.empty();
+        }
+        if (matches.size() > 1) {
+            logger.warning("Витрина: цена " + rubles + " ₽ у нескольких товаров ("
+                    + String.join(", ", matches.stream().map(ShopProduct::id).toList())
+                    + ") — выдан первый, поправьте shop.products");
+        }
+        return Optional.of(matches.get(0));
+    }
+
+    /**
      * Выдаёт товар игроку.
      *
      * @param playerName ник покупателя (может быть оффлайн)

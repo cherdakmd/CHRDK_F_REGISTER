@@ -150,6 +150,16 @@ public final class Messages {
         return result;
     }
 
+    /**
+     * Убирает MiniMessage-разметку из произвольной строки.
+     *
+     * <p>Нужно для имён из конфига (например, названий товаров): в чат они идут
+     * как разметка, а в консоль и в строку журнала — обычным текстом.</p>
+     */
+    public static String stripTags(String raw) {
+        return raw == null ? "" : raw.replaceAll("<[^>]+>", "").trim();
+    }
+
     /** Текст без разметки — для логов, консоли и сравнений. */
     public String plain(String key, Object... placeholders) {
         return PlainTextComponentSerializer.plainText().serialize(get(key, placeholders));

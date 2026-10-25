@@ -79,7 +79,7 @@ public final class RankSettings {
         boolean showName = config.getBoolean("ranks.show-name-in-chat", false);
         boolean welcomeEnabled = config.getBoolean("ranks.welcome.enabled", true);
         int welcomeLevel = config.getInt("ranks.welcome.level", 1);
-        int welcomeDays = config.getInt("ranks.welcome.days", 1);
+        int welcomeDays = config.getInt("ranks.welcome.days", 3);
         boolean announceJoin = config.getBoolean("ranks.announce-join", true);
 
         List<RankTier> tiers = parseTiers(config.getMapList("ranks.levels"));

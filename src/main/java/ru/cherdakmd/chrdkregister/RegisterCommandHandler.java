@@ -851,6 +851,27 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                     messages.send(sender, "error.amount-number");
                     return true;
                 }
+                // 1.4.167: сначала карточка витрины по цене. Панель TradeMC присылает
+                // только сумму, поэтому «Странник, год» за 990 ₽ должен найтись в
+                // каталоге, а не превратиться в дни старого тарифа.
+                ShopProduct card = plugin.shop().productByPrice(amount).orElse(null);
+                if (card != null) {
+                    ShopService.Result result = plugin.shop().grant(donorName, card.id(), 0,
+                            RegistrationStore.DONATION_SOURCE_TRADEMC + ":" + amount);
+                    switch (result.status()) {
+                        case GRANTED -> messages.send(sender, "donation.shoppay-card",
+                                "amount", amount,
+                                "product", Messages.stripTags(card.name()),
+                                "name", result.playerName(),
+                                "days", result.days(),
+                                "until", AccessManager.formatTimestamp(result.untilMillis()));
+                        case RANK_HIGHER -> messages.send(sender, "shop.rank-higher",
+                                "player", result.playerName());
+                        default -> messages.send(sender, "donation.shoppay-rejected",
+                                "amount", amount, "note", result.status().name());
+                    }
+                    return true;
+                }
                 DonationService.Outcome outcome = accessManager.simulateDonation(
                         donorName, amount, RegistrationStore.DONATION_SOURCE_TRADEMC);
                 switch (outcome.status()) {
