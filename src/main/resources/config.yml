@@ -419,7 +419,7 @@ shop:
       days: 30
       rank: 5
       group: ""
-      description: "Всё из Мецената, /hat, герб, +50 % опыта, +25 % добычи, навык +10"
+      description: "Всё из Мецената, /hat, знак ⚜, +50 % опыта, +25 % добычи, навык +10"
       tag: ""
       permissions: []
       commands: []

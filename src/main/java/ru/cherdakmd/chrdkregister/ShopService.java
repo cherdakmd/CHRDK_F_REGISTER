@@ -27,6 +27,9 @@ import java.util.logging.Logger;
  */
 public final class ShopService {
 
+    /** Со ступени, чья покупка попадает в «летопись» (Discord): Меценат и Покровитель. */
+    private static final int SPONSOR_LEVEL = 4;
+
     /** Итог выдачи товара — для команды и текстов. */
     public enum Status {
         /** Товар выдан или продлён. */
@@ -245,6 +248,18 @@ public final class ShopService {
                 plugin.messages().send(online, "shop.received-bonus",
                         "days", bonusDays, "percent", discount.percent());
             }
+        }
+        if (product.hasRank() && product.rank() >= SPONSOR_LEVEL) {
+            // 1.4.167: Меценат и Покровитель попадают в «летопись» — тот же вебхук,
+            // что у pass.granted. Гасится штатным троттлингом уведомлений.
+            String title = plugin.messages().raw("rank.legend-title");
+            access.notifications().notify("pass.granted", title,
+                    plugin.messages().plain("rank.legend-desc",
+                            "player", canonical,
+                            "rank", Messages.stripTags(product.name()),
+                            "until", AccessManager.formatTimestamp(until),
+                            "gift", gift ? giftFrom.trim() : "—"),
+                    "good");
         }
         logger.info("Товар '" + product.id() + (gift ? "' подарен " + canonical + " от " + giftFrom.trim()
                 : "' выдан " + canonical) + " на " + length + " дн. (до "

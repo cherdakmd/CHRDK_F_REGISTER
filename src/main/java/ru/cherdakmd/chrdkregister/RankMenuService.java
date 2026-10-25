@@ -136,6 +136,11 @@ public final class RankMenuService implements Listener {
         if (level == current) {
             lore.add(messages.get("rank.card-current-until", "until", untilText(player)));
         }
+        if (level > current) {
+            lore.add(messages.get("rank.card-how", "player", player.getName()));
+        } else if (level == current) {
+            lore.add(messages.get("rank.card-how-renew", "player", player.getName()));
+        }
         meta.lore(lore);
         item.setItemMeta(meta);
         return item;
