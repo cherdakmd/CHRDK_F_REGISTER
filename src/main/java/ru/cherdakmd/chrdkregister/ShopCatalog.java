@@ -302,6 +302,26 @@ public final class ShopCatalog {
         return problems;
     }
 
+    /**
+     * Товары с ценой {@code rubles} (1.4.167): поиск карточки витрины TradeMC по сумме.
+     *
+     * <p>Вынесено из {@link ShopService}, чтобы правило «цена → товар» проверялось
+     * юнит-тестом без сервера: панель магазина присылает только сумму, и ошибка
+     * в уникальности цен ломает выдачу рангов.</p>
+     *
+     * @param products товары каталога (может быть пустым)
+     * @param rubles   сумма платежа в рублях; {@code <= 0} — пусто
+     * @return все совпадения в порядке каталога; больше одного — владелец ошибся с ценами
+     */
+    public static List<ShopProduct> matchingPrice(List<ShopProduct> products, int rubles) {
+        if (products == null || products.isEmpty() || rubles <= 0) {
+            return List.of();
+        }
+        return products.stream()
+                .filter(product -> product != null && product.priceRubles() == rubles)
+                .toList();
+    }
+
     public Optional<ShopProduct> find(String id) {
         if (id == null || id.isBlank()) {
             return Optional.empty();

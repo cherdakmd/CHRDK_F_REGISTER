@@ -2621,7 +2621,7 @@ lines)`. `ProfileContext` несёт UUID, ник, признак «онлайн
 
 ### Установка
 
-Рядом с ядром положить `chrdk-professions-1.4.165.jar`; зависимость —
+Рядом с ядром положить `chrdk-professions-<версия>.jar`; зависимость —
 `CHRDK_Core`, необязательная — `PlaceholderAPI`. Конфиг и тексты создаются при
 первом запуске; ремесло, опыт и суточные счётчики лежат в
 `plugins/CHRDK_Professions/professions.json` (асинхронная атомарная запись через
@@ -2889,36 +2889,36 @@ lines)`. `ProfileContext` несёт UUID, ник, признак «онлайн
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.165.jar`,
-аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.165.jar`,
-реферальный — `referrals/build/libs/chrdk-referrals-1.4.165.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.165.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.165.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.165.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.165.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.165.jar` (хартия чар — при установленном аддоне чар),
-достижения — `achievements/build/libs/chrdk-achievements-1.4.165.jar`, навыки —
-`skills/build/libs/chrdk-skills-1.4.165.jar`, клады —
-`treasures/build/libs/chrdk-treasures-1.4.165.jar`, общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.165.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.165.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.165.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.165.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.165.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.165.jar`, стримерская программа —
-`streams/build/libs/chrdk-streams-1.4.165.jar`, лотерея —
-`lottery/build/libs/chrdk-lottery-1.4.165.jar`, аукцион —
-`auction/build/libs/chrdk-auction-1.4.165.jar`, питомцы —
-`pets/build/libs/chrdk-pets-1.4.165.jar`, заказы —
-`orders/build/libs/chrdk-orders-1.4.165.jar`, охота —
-`hunt/build/libs/chrdk-hunt-1.4.165.jar`, группы —
-`party/build/libs/chrdk-party-1.4.165.jar`, события —
-`events/build/libs/chrdk-events-1.4.165.jar`, задания —
-`quests/build/libs/chrdk-quests-1.4.165.jar`, боссы —
-`bosses/build/libs/chrdk-bosses-1.4.165.jar`, гильдии —
-`guilds/build/libs/chrdk-guilds-1.4.165.jar`, классы —
-`classes/build/libs/chrdk-classes-1.4.165.jar`, профессии —
-`professions/build/libs/chrdk-professions-1.4.165.jar`. На сервер ядро
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.167.jar`,
+аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.167.jar`,
+реферальный — `referrals/build/libs/chrdk-referrals-1.4.167.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.167.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.167.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.167.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.167.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.167.jar` (хартия чар — при установленном аддоне чар),
+достижения — `achievements/build/libs/chrdk-achievements-1.4.167.jar`, навыки —
+`skills/build/libs/chrdk-skills-1.4.167.jar`, клады —
+`treasures/build/libs/chrdk-treasures-1.4.167.jar`, общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.167.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.167.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.167.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.167.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.167.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.167.jar`, стримерская программа —
+`streams/build/libs/chrdk-streams-1.4.167.jar`, лотерея —
+`lottery/build/libs/chrdk-lottery-1.4.167.jar`, аукцион —
+`auction/build/libs/chrdk-auction-1.4.167.jar`, питомцы —
+`pets/build/libs/chrdk-pets-1.4.167.jar`, заказы —
+`orders/build/libs/chrdk-orders-1.4.167.jar`, охота —
+`hunt/build/libs/chrdk-hunt-1.4.167.jar`, группы —
+`party/build/libs/chrdk-party-1.4.167.jar`, события —
+`events/build/libs/chrdk-events-1.4.167.jar`, задания —
+`quests/build/libs/chrdk-quests-1.4.167.jar`, боссы —
+`bosses/build/libs/chrdk-bosses-1.4.167.jar`, гильдии —
+`guilds/build/libs/chrdk-guilds-1.4.167.jar`, классы —
+`classes/build/libs/chrdk-classes-1.4.167.jar`, профессии —
+`professions/build/libs/chrdk-professions-1.4.167.jar`. На сервер ядро
 обязательно, аддоны — по желанию (требуют ядро 1.4.6+). К релизу на GitHub
 прикладывается **один архив** `chrdk-plugins-<версия>.zip`: ядро и все 29 аддонов
 одной версии (30 JAR) плюс памятка `ОБНОВЛЕНИЕ.txt`. Отдельные JAR больше не
@@ -2956,6 +2956,24 @@ lines)`. `ProfileContext` несёт UUID, ник, признак «онлайн
 (клады) — просто положите все JAR-ы из архива; недостающие создадутся при
 запуске. Ядро и аддоны должны быть **одной версии**: смешивать JAR-ы из разных
 релизов нельзя.
+
+Обновление до 1.4.167: вход стал бесплатным, а вместо проходки появились
+пять рангов гильдии — Странник, Следопыт, Хранитель, Меценат и Покровитель.
+Секция `ranks` в конфиге ядра задаёт знаки, цвета, строки входа, приветственный
+ранг (3 дня) и таблицы бонусов (`bonuses.xp-percent`, `drop-percent`,
+`skill-levels`). Товары рангов — в `shop.products` с полем `rank`; цены
+рангов (99/159/229/299/365 ₽ за 30 дней и 990/1 590/2 290/2 990/3 650 ₽ за
+год) должны совпадать с карточками витрины TradeMC. Мастер-флаг платного входа
+`pass.enabled` по умолчанию выключен, триал проходки (`pass.trial`) — тоже:
+его заменил `ranks.welcome`. Модули читают новые таблицы `rank-limits`,
+`rank-chunks`, `rank-lots`, `rank-discount-percent`, `rank-priority`,
+`min-rank` — все необязательны. Лимиты: дома 3/4/6/8/10/12, приваты
+24/28/34/40/44/48, лоты 10/12/15/18/24/30, скидка телепорта до 50 % при
+минимуме один алмаз. Бонусы ступени: опыт до +50 %, добыча до +25 %, навык до
++10 уровней; потолки зашиты в код, валюта и шанс находки не меняются.
+Команды: `/rank` (витрина), `/rank shop|my|top|rules`, `/rankadmin give|take|info`,
+`/hat` у Покровителя. Плейсхолдеры `%chrdk_rank_*%`; старые `%chrdk_pass_*%`
+работают как алиасы. Подробности — `docs/UPGRADE-1.4.167.md`.
 
 Обновление до 1.4.166: клады теперь появляются бочками. На месте находки
 встаёт бочка с добычей, появление и открытие сопровождаются частицами,

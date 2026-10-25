@@ -109,21 +109,13 @@ public final class ShopService {
      * @return товар или пусто, если такой цены в каталоге нет
      */
     public Optional<ShopProduct> productByPrice(int rubles) {
-        if (rubles <= 0) {
-            return Optional.empty();
-        }
-        List<ShopProduct> matches = catalog().products().stream()
-                .filter(product -> product.priceRubles() == rubles)
-                .toList();
-        if (matches.isEmpty()) {
-            return Optional.empty();
-        }
+        List<ShopProduct> matches = ShopCatalog.matchingPrice(catalog().products(), rubles);
         if (matches.size() > 1) {
             logger.warning("Витрина: цена " + rubles + " ₽ у нескольких товаров ("
                     + String.join(", ", matches.stream().map(ShopProduct::id).toList())
                     + ") — выдан первый, поправьте shop.products");
         }
-        return Optional.of(matches.get(0));
+        return matches.isEmpty() ? Optional.empty() : Optional.of(matches.get(0));
     }
 
     /**
