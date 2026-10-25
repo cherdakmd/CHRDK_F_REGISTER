@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Клады: бросок редкости, выдача добычи, прогрессия и коллекция.
@@ -63,6 +64,8 @@ public final class TreasureService {
     private final TreasuresPlugin plugin;
     private final TreasureStore store;
     private final Random random = new Random();
+    /** Предупреждение о пустой лут-таблице — один раз за запуск, не в чат. */
+    private final AtomicBoolean fallbackWarned = new AtomicBoolean();
 
     public TreasureService(TreasuresPlugin plugin, TreasureStore store) {
         this.plugin = plugin;
@@ -318,6 +321,7 @@ public final class TreasureService {
         if (shards > 0) {
             store.addShards(key(player), shards);
         }
+        ensureNotEmpty(payload);
         boolean barrel = origin != null && plugin.barrels() != null
                 && plugin.barrels().offer(player, origin, tier, payload);
         if (!barrel) {
@@ -326,6 +330,72 @@ public final class TreasureService {
         checkRank(player, before);
         return new Found(tier, region, item, loot, milestones, streak,
                 rank(player), bonus, barrel, specials, shards);
+    }
+
+    /**
+     * Клад не может быть пустым (1.4.169).
+     *
+     * <p>Пустой список получался, если лут-таблица не дала ни одной записи,
+     * склянки опыта выключены, а именная находка не выпала. В этом случае в
+     * бочку вставал воздух: игрок открывал её и ничего не получал. Теперь
+     * добавляется страховочный набор из склянок, а в лог пишется одна строка —
+     * администратору есть за что зацепиться, игроку нечего терять.</p>
+     */
+    private void ensureNotEmpty(List<ItemStack> payload) {
+        if (payload == null || !payload.isEmpty()) {
+            return;
+        }
+        List<ItemStack> filler = new ArrayList<>();
+        for (TreasureLoot.LootStack stack : TreasureFallback.roll(random)) {
+            ItemStack itemStack = stackOf(stack);
+            if (itemStack != null) {
+                filler.add(itemStack);
+            }
+        }
+        if (filler.isEmpty()) {
+            // Материал склянки не разрешился — это уже поломка API Bukkit.
+            return;
+        }
+        if (fallbackWarned.compareAndSet(false, true)) {
+            plugin.getLogger().warning("[CHRDK_Treasures] Клад собрался пустым: "
+                    + "лут-таблица не дала записей, именная находка не выпала, "
+                    + "склянки опыта выключены. Выдаю страховочный набор — "
+                    + "проверьте loot.yml и experience.enabled.");
+        }
+        payload.addAll(filler);
+    }
+
+    /**
+     * Добыча для админской тестовой бочки: настоящий бросок редкости без
+     * записи в статистику, серию и коллекцию.
+     */
+    List<ItemStack> samplePayload(TreasureTier tier) {
+        TreasureTier safe = tier == null ? TreasureTier.COMMON : tier;
+        List<ItemStack> payload = new ArrayList<>();
+        TreasureRoll.Roll roll = rollContent(safe, TreasureRegion.PLAINS, 0);
+        if (roll != null) {
+            if (roll.item() != null) {
+                ItemStack named = plugin.items().create(roll.item());
+                if (named != null) {
+                    payload.add(named);
+                }
+            }
+            int bottles = TreasureExperience.roll(plugin.config().experience(), safe, random);
+            if (bottles > 0) {
+                Material material = Material.matchMaterial(TreasureExperience.MATERIAL);
+                if (material != null) {
+                    payload.add(new ItemStack(material, bottles));
+                }
+            }
+            for (TreasureLoot.LootStack stack : roll.loot()) {
+                ItemStack itemStack = stackOf(stack);
+                if (itemStack != null) {
+                    payload.add(itemStack);
+                }
+            }
+        }
+        ensureNotEmpty(payload);
+        return payload;
     }
 
     /**

@@ -132,9 +132,21 @@ public final class TreasuresPlugin extends JavaPlugin {
                 + ", редкостей " + TreasureTier.values().length
                 + ", добыча кладов " + (config.enabled() ? "включена" : "выключена")
                 + ", клад-карты: " + (maps == null ? "нет" : maps.summary())
-                + ", бочки с кладом: " + (config.barrels().enabled() ? "вкл" : "выкл")
+                + ", бочки с кладом: " + barrelsSummary()
                 + ", особые находки: " + specialsSummary()
                 + ", звание в имени: " + (config.rankTag().enabled() ? "вкл" : "выкл") + ".");
+    }
+
+    /** Строка о бочках в журнале: админу сразу видно срок, лимит и остаток. */
+    private String barrelsSummary() {
+        if (!config.barrels().enabled()) {
+            return "выкл";
+        }
+        TreasuresConfig.Barrels settings = config.barrels();
+        String ttl = settings.expireSeconds() <= 0
+                ? "бессрочно" : settings.expireSeconds() + " с";
+        return "вкл (срок " + ttl + ", лимит " + settings.maxPerPlayer()
+                + ", в индексе " + (barrels == null ? 0 : barrels.liveCount()) + ")";
     }
 
     @Override

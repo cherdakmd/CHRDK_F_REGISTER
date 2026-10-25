@@ -78,6 +78,11 @@ class TreasureMessagesTest {
             "barrel-placed", "barrel-hint", "barrel-locked", "barrel-limit",
             "barrel-expiring", "barrel-expired", "barrel-fallback",
             "treasure-found-barrel",
+            // 1.4.169: переполнение бочки, честный текст истечения и админ-отчёт.
+            "barrel-overflow", "barrel-expired-gone", "barrels-disabled",
+            "admin-barrels-summary", "admin-barrels-line", "admin-barrels-empty",
+            "admin-barrels-more", "admin-barrels-cleared", "admin-barrels-clear-confirm",
+            "admin-barrel-test", "admin-barrel-test-failed",
             // 1.4.166: особые находки из соседних аддонов.
             "special-artifact", "special-artifact-cursed", "special-enchant",
             // 1.4.166: осколки кладов и обменник.

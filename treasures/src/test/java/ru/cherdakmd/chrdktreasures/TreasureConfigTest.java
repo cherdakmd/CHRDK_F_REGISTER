@@ -116,6 +116,8 @@ class TreasureConfigTest {
         assertTrue(barrels.ownerOnly(), "чужая бочка по умолчанию заперта");
         assertTrue(barrels.animation(), "анимация по умолчанию включена");
         assertTrue(barrels.dropOnExpire(), "добыча не должна сгорать вместе с бочкой");
+        assertTrue(barrels.overflowToOwner(),
+                "остаток добычи по умолчанию идёт владельцу, а не лежит у бочки");
         assertEquals(15, barrels.expireSeconds(), "бочка живёт 15 секунд");
         assertEquals(15_000L, barrels.expireMillis());
         assertEquals(3, barrels.maxPerPlayer());
@@ -137,11 +139,13 @@ class TreasureConfigTest {
         cfg.set("barrels.animation", false);
         cfg.set("barrels.remove-empty-ticks", 1);
         cfg.set("barrels.drop-on-expire", false);
+        cfg.set("barrels.overflow-to-owner", false);
         TreasuresConfig.Barrels barrels = TreasuresConfig.parse(cfg, LOGGER).barrels();
         assertFalse(barrels.enabled());
         assertFalse(barrels.ownerOnly());
         assertFalse(barrels.animation());
         assertFalse(barrels.dropOnExpire());
+        assertFalse(barrels.overflowToOwner());
         assertEquals(3_600, barrels.expireSeconds(), "срок жизни не должен превышать час");
         assertEquals(1, barrels.maxPerPlayer());
         assertEquals(20, barrels.removeEmptyTicks());

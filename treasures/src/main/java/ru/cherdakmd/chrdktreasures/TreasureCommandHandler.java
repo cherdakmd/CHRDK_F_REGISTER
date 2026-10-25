@@ -1,11 +1,13 @@
 package ru.cherdakmd.chrdktreasures;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import ru.cherdakmd.chrdkregister.Messages;
 
 import java.util.ArrayList;
@@ -22,6 +24,9 @@ import java.util.Locale;
  * неотличим от найденного в коллекции, и по логу видно, откуда он взялся.</p>
  */
 public final class TreasureCommandHandler implements CommandExecutor, TabCompleter {
+
+    /** Сколько строк отчёта о бочках показывать: чат не резиновый. */
+    private static final int BARREL_LIST_LIMIT = 10;
 
     private final TreasuresPlugin plugin;
     private final TreasureService service;
@@ -741,6 +746,12 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
                     + " сбросил прогресс всех кладоискателей (" + removed + " профилей)");
             return true;
         }
+        if (args.length >= 1 && args[0].equalsIgnoreCase("barrels")) {
+            return barrels(sender, args);
+        }
+        if (args.length >= 1 && args[0].equalsIgnoreCase("barrel")) {
+            return barrel(sender, args);
+        }
         if (args.length == 1 && args[0].equalsIgnoreCase("info")) {
             int abilities = 0;
             int curses = 0;
@@ -768,6 +779,116 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
         return true;
     }
 
+    /* ----------------------------- бочки с кладом ------------------------------ */
+
+    /**
+     * {@code /treasuresadmin barrels [list|clear]} — диагностика живых бочек.
+     *
+     * <p>Команда появилась после жалобы «бочки пустые»: администратору нужно
+     * видеть, что бочка вообще учтена, кому принадлежит и сколько ей осталось.
+     * Без этого остаётся гадать по логам и координатам.</p>
+     */
+    private boolean barrels(CommandSender sender, String[] args) {
+        TreasureBarrels barrels = plugin.barrels();
+        if (barrels == null) {
+            plugin.messages().send(sender, "barrels-disabled");
+            return true;
+        }
+        TreasuresConfig.Barrels settings = plugin.config().barrels();
+        if (args.length >= 2 && args[1].equalsIgnoreCase("clear")) {
+            // Уборка всех бочек — разрушительная операция: требуем confirm,
+            // как у resetall. Иначе один промах в табе сметёт живые клады.
+            if (args.length < 3 || !args[2].equalsIgnoreCase("confirm")) {
+                plugin.messages().send(sender, "admin-barrels-clear-confirm");
+                return true;
+            }
+            int cleared = barrels.clearAll(true);
+            plugin.messages().send(sender, "admin-barrels-cleared",
+                    "count", String.valueOf(cleared));
+            plugin.getLogger().warning("[CHRDK_Treasures] " + sender.getName()
+                    + " убрал бочки с кладом: " + cleared);
+            return true;
+        }
+        plugin.messages().send(sender, "admin-barrels-summary",
+                "live", String.valueOf(barrels.liveCount()),
+                "expired", String.valueOf(barrels.expiredCount()),
+                "limit", String.valueOf(settings.maxPerPlayer()),
+                "seconds", settings.expireSeconds() <= 0
+                        ? "∞" : String.valueOf(settings.expireSeconds()));
+        if (args.length < 2 || !args[1].equalsIgnoreCase("list")) {
+            return true;
+        }
+        List<TreasureBarrels.Live> rows = barrels.snapshot();
+        if (rows.isEmpty()) {
+            plugin.messages().send(sender, "admin-barrels-empty");
+            return true;
+        }
+        long now = System.currentTimeMillis();
+        int shown = 0;
+        for (TreasureBarrels.Live row : rows) {
+            if (shown >= BARREL_LIST_LIMIT) {
+                break;
+            }
+            String left;
+            if (settings.expireMillis() <= 0L) {
+                left = "∞";
+            } else {
+                long millis = Math.max(0L, settings.expireMillis() - (now - row.createdAt()));
+                left = (millis + 999L) / 1000L + " с";
+            }
+            plugin.messages().send(sender, "admin-barrels-line",
+                    "world", row.world(),
+                    "x", String.valueOf(row.x()), "y", String.valueOf(row.y()),
+                    "z", String.valueOf(row.z()),
+                    "owner", row.ownerName(),
+                    "tier", Messages.trusted(plugin.messages().raw("tier." + row.tier().id())),
+                    "left", left);
+            shown++;
+        }
+        if (rows.size() > shown) {
+            plugin.messages().send(sender, "admin-barrels-more",
+                    "count", String.valueOf(rows.size() - shown));
+        }
+        return true;
+    }
+
+    /**
+     * {@code /treasuresadmin barrel test [редкость]} — поставить бочку с
+     * настоящей добычей перед собой и проверить, что внутри не пусто.
+     */
+    private boolean barrel(CommandSender sender, String[] args) {
+        TreasureBarrels barrels = plugin.barrels();
+        if (barrels == null) {
+            plugin.messages().send(sender, "barrels-disabled");
+            return true;
+        }
+        if (args.length < 2 || !args[1].equalsIgnoreCase("test")) {
+            plugin.messages().send(sender, "admin-usage");
+            return true;
+        }
+        if (!(sender instanceof Player player)) {
+            plugin.messages().send(sender, "player-only");
+            return true;
+        }
+        TreasureTier tier = args.length > 2 ? TreasureTier.byId(args[2]) : TreasureTier.COMMON;
+        if (tier == null) {
+            plugin.messages().send(sender, "admin-unknown-tier", "tier", args[2]);
+            return true;
+        }
+        List<ItemStack> payload = service.samplePayload(tier);
+        Location target = player.getLocation().clone();
+        target.setY(player.getLocation().getBlockY());
+        target.add(player.getLocation().getDirection().setY(0).normalize().multiply(2.0));
+        if (barrels.spawn(player, target, tier, payload)) {
+            plugin.messages().send(sender, "admin-barrel-test",
+                    "tier", Messages.trusted(plugin.messages().raw("tier." + tier.id())));
+        } else {
+            plugin.messages().send(sender, "admin-barrel-test-failed");
+            service.givePayload(player, payload);
+        }
+        return true;
+    }
+
     /* ---------------------------------- tab ----------------------------------- */
 
     @Override
@@ -779,7 +900,7 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
             }
             if (args.length == 1) {
                 return filter(List.of("reload", "give", "reset", "resetall", "stats",
-                        "chance", "map", "shards", "info"), args[0]);
+                        "chance", "map", "shards", "info", "barrels", "barrel"), args[0]);
             }
             if (args.length == 2 && args[0].equalsIgnoreCase("chance")) {
                 List<String> tiers = new ArrayList<>();
@@ -790,6 +911,23 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
             }
             if (args.length == 2 && args[0].equalsIgnoreCase("resetall")) {
                 return filter(List.of("confirm"), args[1]);
+            }
+            if (args.length == 2 && args[0].equalsIgnoreCase("barrels")) {
+                return filter(List.of("list", "clear"), args[1]);
+            }
+            if (args.length == 3 && args[0].equalsIgnoreCase("barrels")
+                    && args[1].equalsIgnoreCase("clear")) {
+                return filter(List.of("confirm"), args[2]);
+            }
+            if (args.length == 2 && args[0].equalsIgnoreCase("barrel")) {
+                return filter(List.of("test"), args[1]);
+            }
+            if (args.length == 3 && args[0].equalsIgnoreCase("barrel")) {
+                List<String> tiers = new ArrayList<>();
+                for (TreasureTier tier : TreasureTier.values()) {
+                    tiers.add(tier.id());
+                }
+                return filter(tiers, args[2]);
             }
             if (args.length == 2) {
                 return filter(onlineNames(), args[1]);

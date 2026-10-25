@@ -138,10 +138,11 @@ public final class TreasuresConfig {
      */
     public record Barrels(boolean enabled, boolean ownerOnly, int expireSeconds,
                           int maxPerPlayer, boolean animation, int removeEmptyTicks,
-                          boolean dropOnExpire) {
+                          boolean dropOnExpire, boolean overflowToOwner) {
 
         /** Бочки выключены: клад выдаётся в инвентарь, как раньше. */
-        public static final Barrels DISABLED = new Barrels(false, true, 15, 3, true, 60, true);
+        public static final Barrels DISABLED =
+                new Barrels(false, true, 15, 3, true, 60, true, true);
 
         public Barrels {
             expireSeconds = clampInt(expireSeconds, 0, 3_600);
@@ -913,7 +914,8 @@ public final class TreasuresConfig {
                 (int) clamp(cfg.getLong("barrels.max-per-player", 3L), 1L, 20L),
                 cfg.getBoolean("barrels.animation", true),
                 (int) clamp(cfg.getLong("barrels.remove-empty-ticks", 60L), 20L, 600L),
-                cfg.getBoolean("barrels.drop-on-expire", true));
+                cfg.getBoolean("barrels.drop-on-expire", true),
+                cfg.getBoolean("barrels.overflow-to-owner", true));
     }
 
     /** Особые находки по умолчанию: те же значения, что в поставляемом config.yml. */

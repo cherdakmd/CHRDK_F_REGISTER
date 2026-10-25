@@ -1626,7 +1626,7 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
 
 ---
 
-## Аддон CHRDK_Treasures — русские клады (с версии 1.4.133; звания и серии — 1.4.134; лут-таблицы — 1.4.135–1.4.136; способности, сеты и проклятия — 1.4.137; арсенал Mine Treasure — 1.4.139; +100 записей и список добычи — 1.4.148; 1400 записей — 1.4.149; клад-карты — 1.4.153; склянки опыта и эликсиры — 1.4.157; клады в бочках, осколки кладов и звание в имени — 1.4.166)
+## Аддон CHRDK_Treasures — русские клады (с версии 1.4.133; звания и серии — 1.4.134; лут-таблицы — 1.4.135–1.4.136; способности, сеты и проклятия — 1.4.137; арсенал Mine Treasure — 1.4.139; +100 записей и список добычи — 1.4.148; 1400 записей — 1.4.149; клад-карты — 1.4.153; склянки опыта и эликсиры — 1.4.157; клады в бочках, осколки кладов и звание в имени — 1.4.166; надёжность бочек, страховочный лут и админ-диагностика — 1.4.169)
 
 **196 именных находок (124 классические и 72 из арсенала Mine Treasure), 5 редкостей и 14 биомных регионов.** Механика выросла из
 запроса «плагин с функционалом датапака Mine Treasure, но наш, русский»: идея
@@ -1693,12 +1693,29 @@ backup [list|restore <файл> confirm] | audit [n] | purge <мир> confirm | 
   `expire-seconds: 15` держит бочку недолго — клад забирают сразу, а за 5 секунд
   до исчезновения приходит предупреждение `barrel-expiring`; просроченная
   бочка исчезает, а добыча высыпается на землю у её места (`drop-on-expire`;
-  `false` — исчезает вместе с бочкой). Пустая
+  `false` — исчезает вместе с бочкой и пишет `barrel-expired-gone`, а не
+  обещает высыпавшуюся добычу). Пустая
   бочка тихо убирается через `remove-empty-ticks`. Владелец и срок жизни
   записаны в PDC самой бочки, поэтому выгрузка чанка их не теряет, а индекс
   живых бочек лежит в `plugins/CHRDK_Treasures/barrels.tsv` — после перезапуска
   лимит и срок жизни не сбрасываются. В консольном журнале находка помечается
   словом «бочка».
+  - **1.4.169: бочка не бывает пустой.** Если лут-таблица не дала ни одной
+    записи, именная находка не выпала, а склянки опыта выключены, в бочку
+    кладётся страховочный набор из 2–4 склянок (`TreasureFallback`), а в лог
+    уходит одна строка с подсказкой проверить `loot.yml` и
+    `experience.enabled`. Игрок больше не открывает «пустой клад».
+  - **1.4.169: переполнение.** Бочка вмещает 27 стаков. Если добычи больше
+    (серия, набор ранга, бонус стрика), остаток по умолчанию уходит владельцу
+    в инвентарь с сообщением `barrel-overflow`; рюкзак полон — предметы
+    падают под ноги рядом с бочкой. `barrels.overflow-to-owner: false`
+    возвращает прежнее поведение «высыпать у бочки».
+  - **1.4.169: диагностика.** `/treasuresadmin barrels` показывает число живых
+    и просроченных бочек, лимит и срок; `barrels list` — до десяти координат с
+    владельцем, редкостью и остатком времени; `barrels clear confirm` убирает бочки в
+    загруженных чанках (в незагруженных их снимет обычный срок);
+    `barrel test [редкость]` ставит перед админом бочку с настоящим броском
+    добычи — быстрый способ проверить, что внутри не пусто.
 - **Клад-карты (1.4.153).** К найденному кладу иногда прикладывается карта
   (`maps.drop-chance-percent`, по умолчанию 12 %). На ней записаны регион,
   редкость тайника, точка и зона в 24 блока: игрок копает в круге, и каждый
@@ -2914,36 +2931,36 @@ lines)`. `ProfileContext` несёт UUID, ник, признак «онлайн
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.167.jar`,
-аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.167.jar`,
-реферальный — `referrals/build/libs/chrdk-referrals-1.4.167.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.167.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.167.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.167.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.167.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.167.jar` (хартия чар — при установленном аддоне чар),
-достижения — `achievements/build/libs/chrdk-achievements-1.4.167.jar`, навыки —
-`skills/build/libs/chrdk-skills-1.4.167.jar`, клады —
-`treasures/build/libs/chrdk-treasures-1.4.167.jar`, общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.167.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.167.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.167.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.167.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.167.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.167.jar`, стримерская программа —
-`streams/build/libs/chrdk-streams-1.4.167.jar`, лотерея —
-`lottery/build/libs/chrdk-lottery-1.4.167.jar`, аукцион —
-`auction/build/libs/chrdk-auction-1.4.167.jar`, питомцы —
-`pets/build/libs/chrdk-pets-1.4.167.jar`, заказы —
-`orders/build/libs/chrdk-orders-1.4.167.jar`, охота —
-`hunt/build/libs/chrdk-hunt-1.4.167.jar`, группы —
-`party/build/libs/chrdk-party-1.4.167.jar`, события —
-`events/build/libs/chrdk-events-1.4.167.jar`, задания —
-`quests/build/libs/chrdk-quests-1.4.167.jar`, боссы —
-`bosses/build/libs/chrdk-bosses-1.4.167.jar`, гильдии —
-`guilds/build/libs/chrdk-guilds-1.4.167.jar`, классы —
-`classes/build/libs/chrdk-classes-1.4.167.jar`, профессии —
-`professions/build/libs/chrdk-professions-1.4.167.jar`. На сервер ядро
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.169.jar`,
+аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.169.jar`,
+реферальный — `referrals/build/libs/chrdk-referrals-1.4.169.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.169.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.169.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.169.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.169.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.169.jar` (хартия чар — при установленном аддоне чар),
+достижения — `achievements/build/libs/chrdk-achievements-1.4.169.jar`, навыки —
+`skills/build/libs/chrdk-skills-1.4.169.jar`, клады —
+`treasures/build/libs/chrdk-treasures-1.4.169.jar`, общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.169.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.169.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.169.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.169.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.169.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.169.jar`, стримерская программа —
+`streams/build/libs/chrdk-streams-1.4.169.jar`, лотерея —
+`lottery/build/libs/chrdk-lottery-1.4.169.jar`, аукцион —
+`auction/build/libs/chrdk-auction-1.4.169.jar`, питомцы —
+`pets/build/libs/chrdk-pets-1.4.169.jar`, заказы —
+`orders/build/libs/chrdk-orders-1.4.169.jar`, охота —
+`hunt/build/libs/chrdk-hunt-1.4.169.jar`, группы —
+`party/build/libs/chrdk-party-1.4.169.jar`, события —
+`events/build/libs/chrdk-events-1.4.169.jar`, задания —
+`quests/build/libs/chrdk-quests-1.4.169.jar`, боссы —
+`bosses/build/libs/chrdk-bosses-1.4.169.jar`, гильдии —
+`guilds/build/libs/chrdk-guilds-1.4.169.jar`, классы —
+`classes/build/libs/chrdk-classes-1.4.169.jar`, профессии —
+`professions/build/libs/chrdk-professions-1.4.169.jar`. На сервер ядро
 обязательно, аддоны — по желанию (требуют ядро 1.4.6+). К релизу на GitHub
 прикладывается **один архив** `chrdk-plugins-<версия>.zip`: ядро и все 29 аддонов
 одной версии (30 JAR) плюс памятка `ОБНОВЛЕНИЕ.txt`. Отдельные JAR больше не

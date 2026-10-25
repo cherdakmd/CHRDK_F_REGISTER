@@ -194,6 +194,77 @@ public final class TreasureBarrels implements Listener {
     }
 
     /**
+     * Сколько бочек уже просрочено, но ещё не убрано.
+     *
+     * <p>Просроченная бочка в незагруженном чанке остаётся в индексе: высыпать
+     * добычу некуда, пока мир не загрузит участок. Команда
+     * {@code /treasuresadmin barrels} показывает это число отдельно — по нему
+     * видно, что уборка не «зависла», а ждёт загрузки чанка.</p>
+     */
+    public int expiredCount() {
+        long ttl = plugin.config().barrels().expireMillis();
+        if (ttl <= 0L) {
+            return 0;
+        }
+        long now = System.currentTimeMillis();
+        int count = 0;
+        for (TreasureBarrel model : live.values()) {
+            if (model.expired(now, ttl)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /** Строка отчёта для {@code /treasuresadmin barrels list}. */
+    public record Live(String world, int x, int y, int z, String ownerName,
+                       UUID owner, TreasureTier tier, long createdAt) {
+    }
+
+    /** Снимок индекса для админской диагностики: от старых бочек к новым. */
+    public List<Live> snapshot() {
+        List<Live> rows = new ArrayList<>(live.size());
+        for (Map.Entry<Key, TreasureBarrel> entry : live.entrySet()) {
+            Key key = entry.getKey();
+            TreasureBarrel model = entry.getValue();
+            World world = Bukkit.getWorld(key.world());
+            rows.add(new Live(world == null ? key.world().toString() : world.getName(),
+                    key.x(), key.y(), key.z(), model.ownerName(), model.owner(),
+                    model.tier(), model.createdAt()));
+        }
+        rows.sort(Comparator.comparingLong(Live::createdAt));
+        return rows;
+    }
+
+    /**
+     * Убирает все бочки в загруженных чанках.
+     *
+     * <p>Незагруженные пропускаются: править блок в выгруженном мире нельзя, а
+     * «забыть» запись недостаточно — при загрузке чанка бочка снова усыновится
+     * по PDC. Такие бочки дождутся своей очереди в {@link #sweep()}.</p>
+     *
+     * @return сколько бочек убрано
+     */
+    public int clearAll(boolean drop) {
+        int cleared = 0;
+        for (Map.Entry<Key, TreasureBarrel> entry : List.copyOf(live.entrySet())) {
+            Key key = entry.getKey();
+            World world = Bukkit.getWorld(key.world());
+            if (world == null || !world.isChunkLoaded(key.x() >> 4, key.z() >> 4)) {
+                continue;
+            }
+            Block block = world.getBlockAt(key.x(), key.y(), key.z());
+            if (block.getType() == Material.BARREL) {
+                remove(block, drop, false);
+            } else {
+                forget(block);
+            }
+            cleared++;
+        }
+        return cleared;
+    }
+
+    /**
      * Сколько живых бочек принадлежит игроку.
      *
      * <p>Просроченные бочки в незагруженных чанках ещё висят в индексе (содержимое
@@ -338,7 +409,8 @@ public final class TreasureBarrels implements Listener {
         }
         block.setType(Material.BARREL, false);
         orient(block, owner);
-        if (!fill(block, owner, tier, contents)) {
+        List<ItemStack> overflow = fill(block, owner, tier, contents);
+        if (overflow == null) {
             block.setType(Material.AIR, false);
             return false;
         }
@@ -348,7 +420,31 @@ public final class TreasureBarrels implements Listener {
         touch();
         trim();
         animateSpawn(block, tier);
+        giveOverflow(block, owner, overflow, settings);
         return true;
+    }
+
+    /**
+     * Добыча, которая не влезла в 27 стаков бочки.
+     *
+     * <p>Раньше остаток падал сверху бочки и мог потеряться в листве или воде.
+     * Теперь по умолчанию он уходит владельцу в инвентарь (а если рюкзак полон —
+     * под ноги рядом с бочкой), с отдельным сообщением. {@code
+     * barrels.overflow-to-owner: false} возвращает прежнее поведение —
+     * высыпать у бочки.</p>
+     */
+    private void giveOverflow(Block block, Player owner, List<ItemStack> overflow,
+                              TreasuresConfig.Barrels settings) {
+        if (overflow == null || overflow.isEmpty()) {
+            return;
+        }
+        if (!settings.overflowToOwner()) {
+            drop(block.getLocation(), overflow);
+            return;
+        }
+        plugin.treasures().givePayload(owner, overflow);
+        plugin.messages().send(owner, "barrel-overflow",
+                "stacks", String.valueOf(overflow.size()));
     }
 
     /** Ищет свободную позицию: место блока, два блока над ним, затем ноги игрока. */
@@ -401,16 +497,22 @@ public final class TreasureBarrels implements Listener {
         block.setBlockData(barrel, false);
     }
 
-    /** Кладёт добычу в бочку и записывает владельца в сам блок. */
-    private boolean fill(Block block, Player owner, TreasureTier tier,
-                         List<ItemStack> contents) {
+    /**
+     * Кладёт добычу в бочку и записывает владельца в сам блок.
+     *
+     * @return остаток, который не влез в 27 стаков (пустой список — всё внутри);
+     *         {@code null} — бочку заполнить не удалось, вызывающий обязан
+     *         выдать клад в инвентарь и убрать блок
+     */
+    private List<ItemStack> fill(Block block, Player owner, TreasureTier tier,
+                                 List<ItemStack> contents) {
         // getState() без аргумента — СНИМОК блока. Инвентарь в нём пуст, а
         // следующий update() копирует снимок обратно в блок и затирает только
         // что положенную добычу: бочка оставалась пустой. Живое состояние
         // (useSnapshot = false) пишет прямо в блок и переживает update().
         BlockState state = block.getState(false);
         if (!(state instanceof Barrel barrel)) {
-            return false;
+            return null;
         }
         Inventory inventory = barrel.getInventory();
         List<ItemStack> leftovers = new ArrayList<>();
@@ -443,7 +545,7 @@ public final class TreasureBarrels implements Listener {
             }
         }
         if (empty) {
-            return false;
+            return null;
         }
         PersistentDataContainer data = barrel.getPersistentDataContainer();
         data.set(ownerKey, PersistentDataType.STRING, owner.getUniqueId().toString());
@@ -453,17 +555,34 @@ public final class TreasureBarrels implements Listener {
         data.set(createdKey, PersistentDataType.LONG, System.currentTimeMillis());
         barrel.update(true, false);
         // Страховка от регрессии: если блок почему-то не принял добычу, честно
-        // возвращаем false — spawn уберёт бочку, а offer выдаст клад в руки.
+        // возвращаем null — spawn уберёт бочку, а offer выдаст клад в руки.
         if (isEmpty(block)) {
             plugin.getLogger().warning("Клад-бочка " + describe(block)
                     + " не приняла добычу — выдаю её в инвентарь.");
+            return null;
+        }
+        if (!boundTo(block, owner)) {
+            // Предметы на месте, а владелец не записался: бочка не попадёт под
+            // срок жизни и защиту. Клад не трогаем — пусть игрок его заберёт,
+            // но след в лог оставляем: это сигнал о проблеме с PDC.
+            plugin.getLogger().warning("Клад-бочка " + describe(block)
+                    + ": владелец не записался в PDC — бочка не под охраной срока.");
+        }
+        return leftovers;
+    }
+
+    /** Проверяет по свежему снимку, что владелец действительно записан в блок. */
+    private boolean boundTo(Block block, Player owner) {
+        try {
+            if (!(block.getState() instanceof Barrel fresh)) {
+                return false;
+            }
+            String stored = fresh.getPersistentDataContainer()
+                    .get(ownerKey, PersistentDataType.STRING);
+            return owner.getUniqueId().toString().equals(stored);
+        } catch (RuntimeException unloaded) {
             return false;
         }
-        // Добыча не должна исчезнуть даже в невероятном случае переполнения.
-        for (ItemStack rest : leftovers) {
-            block.getWorld().dropItemNaturally(block.getLocation().add(0.5, 1.0, 0.5), rest);
-        }
-        return true;
     }
 
     /**
@@ -693,7 +812,9 @@ public final class TreasureBarrels implements Listener {
         if (notifyOwner && model != null) {
             Player owner = Bukkit.getPlayer(model.owner());
             if (owner != null) {
-                plugin.messages().send(owner, "barrel-expired",
+                // Текст зависит от настройки: обещать «добыча высыпалась»,
+                // когда drop-on-expire выключен, нельзя.
+                plugin.messages().send(owner, drop ? "barrel-expired" : "barrel-expired-gone",
                         "tier", Messages.trusted(plugin.messages().raw(
                                 "tier." + model.tier().id())));
             }
