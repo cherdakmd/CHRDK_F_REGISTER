@@ -134,6 +134,7 @@ public final class EventsCommandHandler implements CommandExecutor, TabCompleter
             plugin.messages().send(sender, "list-line",
                     "name", event.name(),
                     "kind", kindName(event.kind()),
+                    "bonus", bonusText(event),
                     "time", EventText.duration(event.durationSeconds()),
                     "state", state);
         }
@@ -260,9 +261,15 @@ public final class EventsCommandHandler implements CommandExecutor, TabCompleter
         return plugin.messages().has(key) ? plugin.messages().plain(key) : kind.id();
     }
 
-    /** Короткая строка «что даёт»: для информации о текущем событии. */
+    /**
+     * Короткая строка «что даёт»: для текущего события и списка.
+     *
+     * <p>К надбавке вида (1.4.176) добавляется его «физическая» половина:
+     * падающие звёзды и нашествие мобов. Без этого список обещал бы только
+     * проценты, а игрок видел бы в небе незнакомые искры.</p>
+     */
     private String bonusText(WorldEvent event) {
-        return switch (event.kind()) {
+        String base = switch (event.kind()) {
             case XP -> plugin.messages().plain("bonus-value-xp", "percent",
                     String.valueOf(event.percent()));
             case MINING -> plugin.messages().plain("bonus-value-mining", "percent",
@@ -271,6 +278,14 @@ public final class EventsCommandHandler implements CommandExecutor, TabCompleter
                     String.valueOf(event.percent()));
             case EFFECT -> plugin.messages().plain("bonus-value-effect");
         };
+        StringBuilder out = new StringBuilder(base);
+        if (event.fallingStars()) {
+            out.append(" · ").append(plugin.messages().plain("bonus-extra-meteors"));
+        }
+        if (event.hordeActive()) {
+            out.append(" · ").append(plugin.messages().plain("bonus-extra-horde"));
+        }
+        return out.toString();
     }
 
     @Override

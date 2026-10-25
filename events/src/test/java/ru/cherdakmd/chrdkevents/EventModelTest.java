@@ -1,6 +1,7 @@
 package ru.cherdakmd.chrdkevents;
 
 import org.bukkit.Material;
+import org.bukkit.entity.EntityType;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -60,6 +61,31 @@ class EventModelTest {
     void longestDurationIsClampedToo() {
         WorldEvent event = xp(50, 1_000_000, 10);
         assertEquals(WorldEvent.MAX_DURATION_SECONDS, event.durationSeconds());
+    }
+
+    @Test
+    void supportsAreOffUnlessConfigured() {
+        WorldEvent event = xp(50, 300, 10);
+        assertSame(MeteorSpawn.NONE, event.meteors(), "без секции meteors звёзд нет");
+        assertSame(HordeSpawn.NONE, event.horde(), "без секции horde нашествия нет");
+        assertFalse(event.fallingStars());
+        assertFalse(event.hordeActive());
+    }
+
+    @Test
+    void supportsAreKept() {
+        MeteorSpawn meteors = new MeteorSpawn(true, 20, 24, 2,
+                List.of(Material.AMETHYST_BLOCK), List.of(Material.AMETHYST_SHARD), 1, 2, true);
+        HordeSpawn horde = new HordeSpawn(true, 2.0, 40, 4, 32, 10, 20, false,
+                List.of(EntityType.ZOMBIE));
+        WorldEvent event = new WorldEvent("star", "Звездопад", "", EventKind.MINING, 300, 10, 0,
+                40, List.of(Material.IRON_ORE), List.of(Material.RAW_IRON), List.of(),
+                Material.AMETHYST_SHARD, meteors, horde);
+        assertTrue(event.usable());
+        assertTrue(event.fallingStars());
+        assertTrue(event.hordeActive());
+        assertSame(meteors, event.meteors());
+        assertSame(horde, event.horde());
     }
 
     @Test

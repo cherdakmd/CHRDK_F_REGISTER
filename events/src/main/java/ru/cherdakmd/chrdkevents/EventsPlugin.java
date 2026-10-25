@@ -7,6 +7,8 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.Registry;
 import org.bukkit.Sound;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
@@ -15,6 +17,11 @@ import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
@@ -39,6 +46,8 @@ public final class EventsPlugin extends JavaPlugin {
     private EventConfig config;
     private Messages messages;
     private EventService service;
+    private MeteorService meteors;
+    private HordeService horde;
     private EventsStore store;
     private BossBar bar;
     private BukkitTask tickTask;
@@ -54,11 +63,14 @@ public final class EventsPlugin extends JavaPlugin {
     public void onEnable() {
         try {
             saveDefaultConfig();
+            applyBundledDefaults();
             this.config = EventConfig.parse(getConfig(), getLogger());
             this.messages = Messages.load(this, config.locale(), getLogger());
             this.store = new EventsStore(getDataFolder().toPath(), getLogger());
             store.load();
             this.service = new EventService(config, random);
+            this.meteors = new MeteorService(this);
+            this.horde = new HordeService(this);
             service.restoreSchedule(store.nextAt(), store.cooldowns(), System.currentTimeMillis());
             getServer().getPluginManager().registerEvents(new EventsListener(this), this);
             registerCommands();
@@ -109,6 +121,7 @@ public final class EventsPlugin extends JavaPlugin {
             queuedSave = null;
         }
         hideBar();
+        stopSupports();
         if (store != null && service != null) {
             long now = System.currentTimeMillis();
             // Событие, которое шло в момент выключения, в историю закрывается,
@@ -128,6 +141,7 @@ public final class EventsPlugin extends JavaPlugin {
     /** Перечитывает конфиг и тексты; текущее событие не обрывается. */
     public void reloadEvents() {
         reloadConfig();
+        applyBundledDefaults();
         this.config = EventConfig.parse(getConfig(), getLogger());
         this.messages = Messages.load(this, config.locale(), getLogger());
         service.applyConfig(config);
@@ -139,10 +153,65 @@ public final class EventsPlugin extends JavaPlugin {
                 requestSave();
             }
             hideBar();
+            stopSupports();
         }
         if (!config.enabled() || config.events().isEmpty()) {
             hideBar();
         }
+    }
+
+    /** Секции, появившиеся в 1.4.176: их и подставляем в старый config.yml. */
+    private static final List<String[]> NEW_SECTIONS = List.of(
+            new String[]{"starfall", "meteors"},
+            new String[]{"meteor_shower", "meteors"},
+            new String[]{"blood_moon", "horde"});
+
+    /**
+     * Дополняет конфиг новыми секциями из ресурса, не перезаписывая файл.
+     *
+     * <p>С 1.4.176 у событий появились секции {@code meteors} и {@code horde}.
+     * Если на сервере лежит config.yml с прошлой версии, без этого приёма
+     * звёзды и нашествие не включились бы до ручной правки файла — «Звездопад»
+     * снова остался бы только надбавкой к руде.</p>
+     *
+     * <p>Копируются ровно три секции и только если само событие у владельца
+     * есть: удалённое из конфига событие не воскрешается, а комментарии и
+     * значения файла остаются нетронутыми — мы правим конфиг в памяти.</p>
+     */
+    private void applyBundledDefaults() {
+        try (InputStream stream = getResource("config.yml")) {
+            if (stream == null) {
+                return;
+            }
+            YamlConfiguration bundled = YamlConfiguration.loadConfiguration(
+                    new InputStreamReader(stream, StandardCharsets.UTF_8));
+            for (String[] section : NEW_SECTIONS) {
+                copySection(bundled, section[0], section[1]);
+            }
+        } catch (IOException | RuntimeException error) {
+            getLogger().warning("[CHRDK_Events] Не удалось дополнить config.yml значениями "
+                    + "по умолчанию: " + error);
+        }
+    }
+
+    /** Копирует {@code events.<id>.<section>} из ресурса, если её нет у владельца. */
+    private void copySection(YamlConfiguration bundled, String eventId, String section) {
+        String path = "events." + eventId + "." + section;
+        if (!getConfig().isConfigurationSection("events." + eventId) || getConfig().isSet(path)) {
+            return;
+        }
+        ConfigurationSection source = bundled.getConfigurationSection(path);
+        if (source == null) {
+            return;
+        }
+        getConfig().createSection(path);
+        for (String key : source.getKeys(true)) {
+            if (!source.isConfigurationSection(key)) {
+                getConfig().set(path + "." + key, source.get(key));
+            }
+        }
+        getLogger().info("[CHRDK_Events] config.yml: секция " + path
+                + " взята из ресурса (файл не изменён).");
     }
 
     private void registerCommands() {
@@ -180,6 +249,7 @@ public final class EventsPlugin extends JavaPlugin {
         if (ended != null) {
             announceEnd(ended);
             hideBar();
+            stopSupports();
             store.recordStop(ended, now);
             store.setCooldowns(service.cooldowns());
             store.setNextAt(service.nextAt());
@@ -223,6 +293,7 @@ public final class EventsPlugin extends JavaPlugin {
         }
         announceEnd(stopped);
         hideBar();
+        stopSupports();
         store.recordStop(stopped, now);
         store.setCooldowns(service.cooldowns());
         store.setNextAt(service.nextAt());
@@ -234,9 +305,33 @@ public final class EventsPlugin extends JavaPlugin {
         announceStart(event);
         showBar(event);
         applyEffectsToAll(event, now);
+        startSupports(event);
         store.recordStart(event, now, forced);
         store.setNextAt(service.nextAt());
         requestSave();
+    }
+
+    /**
+     * Включает «физическую» половину события (1.4.176): падающие звёзды и
+     * нашествие мобов. У события без этих секций сервисы просто не запускаются.
+     */
+    private void startSupports(WorldEvent event) {
+        if (meteors != null) {
+            meteors.start(event);
+        }
+        if (horde != null) {
+            horde.start(event);
+        }
+    }
+
+    /** Гасит звёзды и волны: событие закончилось или плагин выключается. */
+    private void stopSupports() {
+        if (meteors != null) {
+            meteors.stop();
+        }
+        if (horde != null) {
+            horde.stop();
+        }
     }
 
     /** Помечает данные изменёнными: запись уйдёт через две секунды, вне главного потока. */
@@ -418,6 +513,16 @@ public final class EventsPlugin extends JavaPlugin {
 
     public EventService service() {
         return service;
+    }
+
+    /** Сервис падающих звёзд (1.4.176). */
+    MeteorService meteors() {
+        return meteors;
+    }
+
+    /** Сервис нашествия мобов (1.4.176). */
+    HordeService horde() {
+        return horde;
     }
 
     EventsStore store() {

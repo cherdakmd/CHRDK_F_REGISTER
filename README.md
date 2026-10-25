@@ -111,6 +111,33 @@
 - В консоли команда печатает голый адрес строкой. Тесты — `WikiSettingsTest`
   и `PresentationUpdateTest` (кнопка ведёт в существующую команду).
 
+## Звёзды падают, Кровавая луна приводит мобов (1.4.176)
+
+События перестали быть только процентами: у них появилась «физическая»
+половина — но с потолками и без ломания мира.
+
+- **«Звездопад» роняет звёзды.** Светящийся блок стартует в 26 блоках над
+  землёй рядом со случайным игроком, летит вниз с огненным следом и на земле
+  рассыпается добычей (аметист, светопыль, чернила свечения). Блоки в точке
+  падения не ломаются и не появляются — чужие приваты событие не трогает.
+  Координаты падения получают игроки в 64 блоках.
+- **«Метеоритный дождь» — редкие крупные метеоры** с большей добычей; прежняя
+  надбавка к дропу осталась у обоих событий.
+- **«Кровавая луна» поднимает мобов.** Множитель естественного спавна
+  (`multiplier`, по умолчанию 2.0) добавляет рядом ещё мобов на каждого
+  заспавненного сервером, а раз в 40 секунд вокруг случайного игрока идёт
+  волна. Только причина `NATURAL`: спавнеры и призывы команд не усиливаются.
+- **Потолки вместо «чем больше, тем лучше»:** множитель ≤ 3.0, лишних мобов на
+  спавн ≤ 2, волна ≤ 12, рядом с игроком ≤ `max-near-player` (32 по умолчанию),
+  звёзд в воздухе ≤ 6, добычи со звезды ≤ 8.
+- `/events` и `/events list` показывают вторую половину события, в профиле —
+  строки про звёзды и множитель; новые плейсхолдеры `%chrdkevents_meteors%`,
+  `%chrdkevents_horde%`, `%chrdkevents_multiplier%`.
+- **Старый `config.yml` не нужно править руками:** недостающие секции `meteors`
+  и `horde` подставляются в память из ресурса — файл и его комментарии
+  остаются прежними. Подробности — `docs/releases/1.4.176.md` и
+  `wiki/events.md`.
+
 ## Второе умение, очки за достижения и плюшки рангов (1.4.175)
 
 Третья волна по классам — сразу три вещи, которые меняют игру, но не продают
@@ -3168,36 +3195,36 @@ lines)`. `ProfileContext` несёт UUID, ник, признак «онлайн
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.175.jar`,
-аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.175.jar`,
-реферальный — `referrals/build/libs/chrdk-referrals-1.4.175.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.175.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.175.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.175.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.175.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.175.jar` (хартия чар — при установленном аддоне чар),
-достижения — `achievements/build/libs/chrdk-achievements-1.4.175.jar`, навыки —
-`skills/build/libs/chrdk-skills-1.4.175.jar`, клады —
-`treasures/build/libs/chrdk-treasures-1.4.175.jar`, общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.175.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.175.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.175.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.175.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.175.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.175.jar`, стримерская программа —
-`streams/build/libs/chrdk-streams-1.4.175.jar`, лотерея —
-`lottery/build/libs/chrdk-lottery-1.4.175.jar`, аукцион —
-`auction/build/libs/chrdk-auction-1.4.175.jar`, питомцы —
-`pets/build/libs/chrdk-pets-1.4.175.jar`, заказы —
-`orders/build/libs/chrdk-orders-1.4.175.jar`, охота —
-`hunt/build/libs/chrdk-hunt-1.4.175.jar`, группы —
-`party/build/libs/chrdk-party-1.4.175.jar`, события —
-`events/build/libs/chrdk-events-1.4.175.jar`, задания —
-`quests/build/libs/chrdk-quests-1.4.175.jar`, боссы —
-`bosses/build/libs/chrdk-bosses-1.4.175.jar`, гильдии —
-`guilds/build/libs/chrdk-guilds-1.4.175.jar`, классы —
-`classes/build/libs/chrdk-classes-1.4.175.jar`, профессии —
-`professions/build/libs/chrdk-professions-1.4.175.jar`. На сервер ядро
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.176.jar`,
+аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.176.jar`,
+реферальный — `referrals/build/libs/chrdk-referrals-1.4.176.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.176.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.176.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.176.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.176.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.176.jar` (хартия чар — при установленном аддоне чар),
+достижения — `achievements/build/libs/chrdk-achievements-1.4.176.jar`, навыки —
+`skills/build/libs/chrdk-skills-1.4.176.jar`, клады —
+`treasures/build/libs/chrdk-treasures-1.4.176.jar`, общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.176.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.176.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.176.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.176.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.176.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.176.jar`, стримерская программа —
+`streams/build/libs/chrdk-streams-1.4.176.jar`, лотерея —
+`lottery/build/libs/chrdk-lottery-1.4.176.jar`, аукцион —
+`auction/build/libs/chrdk-auction-1.4.176.jar`, питомцы —
+`pets/build/libs/chrdk-pets-1.4.176.jar`, заказы —
+`orders/build/libs/chrdk-orders-1.4.176.jar`, охота —
+`hunt/build/libs/chrdk-hunt-1.4.176.jar`, группы —
+`party/build/libs/chrdk-party-1.4.176.jar`, события —
+`events/build/libs/chrdk-events-1.4.176.jar`, задания —
+`quests/build/libs/chrdk-quests-1.4.176.jar`, боссы —
+`bosses/build/libs/chrdk-bosses-1.4.176.jar`, гильдии —
+`guilds/build/libs/chrdk-guilds-1.4.176.jar`, классы —
+`classes/build/libs/chrdk-classes-1.4.176.jar`, профессии —
+`professions/build/libs/chrdk-professions-1.4.176.jar`. На сервер ядро
 обязательно, аддоны — по желанию (требуют ядро 1.4.6+). К релизу на GitHub
 прикладывается **один архив** `chrdk-plugins-<версия>.zip`: ядро и все 29 аддонов
 одной версии (30 JAR) плюс памятка `ОБНОВЛЕНИЕ.txt`. Отдельные JAR больше не

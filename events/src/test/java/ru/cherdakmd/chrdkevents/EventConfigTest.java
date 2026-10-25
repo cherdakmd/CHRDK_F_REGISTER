@@ -2,6 +2,7 @@ package ru.cherdakmd.chrdkevents;
 
 import org.bukkit.Material;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.EntityType;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -115,6 +116,127 @@ class EventConfigTest {
         assertEquals(1, quiet.effects().get(0).amplifier());
         assertEquals(60, quiet.effects().get(0).seconds());
         assertSame(Material.CLOCK, quiet.icon(), "иконка по умолчанию — часы");
+    }
+
+    @Test
+    void meteorsSectionIsParsed() {
+        EventConfig config = parse("""
+                events:
+                  starfall:
+                    type: MINING
+                    weight: 10
+                    percent: 40
+                    duration-seconds: 480
+                    blocks: [IRON_ORE]
+                    meteors:
+                      interval-seconds: 20
+                      radius: 30
+                      max-active: 3
+                      blocks: [AMETHYST_BLOCK, minecraft:GLOWSTONE, ВОЗДУХ]
+                      loot: [AMETHYST_SHARD, GLOWSTONE_DUST]
+                      min-loot: 2
+                      max-loot: 4
+                """);
+        WorldEvent event = config.event("starfall");
+        assertNotNull(event);
+        assertTrue(event.fallingStars());
+        MeteorSpawn meteors = event.meteors();
+        assertEquals(20, meteors.intervalSeconds());
+        assertEquals(30, meteors.radius());
+        assertEquals(3, meteors.maxActive());
+        assertEquals(List.of(Material.AMETHYST_BLOCK, Material.GLOWSTONE), meteors.blocks(),
+                "воздух отброшен, namespace снят");
+        assertEquals(List.of(Material.AMETHYST_SHARD, Material.GLOWSTONE_DUST), meteors.loot());
+        assertEquals(2, meteors.minLoot());
+        assertEquals(4, meteors.maxLoot());
+        assertTrue(meteors.announce(), "по умолчанию координаты объявляются");
+    }
+
+    @Test
+    void meteorsWithoutLootAreDisabled() {
+        EventConfig config = parse("""
+                events:
+                  broken_stars:
+                    type: MINING
+                    weight: 10
+                    percent: 40
+                    blocks: [IRON_ORE]
+                    meteors:
+                      blocks: [AMETHYST_BLOCK]
+                      loot: []
+                """);
+        WorldEvent event = config.event("broken_stars");
+        assertNotNull(event, "само событие остаётся рабочим");
+        assertFalse(event.fallingStars(), "без добычи звёзды выключены");
+        assertSame(MeteorSpawn.NONE, event.meteors());
+    }
+
+    @Test
+    void hordeSectionIsParsed() {
+        EventConfig config = parse("""
+                events:
+                  blood_moon:
+                    type: LOOT
+                    weight: 10
+                    percent: 35
+                    duration-seconds: 600
+                    items: [BONE]
+                    horde:
+                      multiplier: 2.5
+                      wave-interval-seconds: 40
+                      wave-size: 4
+                      max-near-player: 32
+                      min-distance: 10
+                      max-distance: 26
+                      only-at-night: true
+                      mobs: [ZOMBIE, minecraft:SKELETON, ЕДИНОРОГ, ZOMBIE]
+                """);
+        WorldEvent event = config.event("blood_moon");
+        assertNotNull(event);
+        assertTrue(event.hordeActive());
+        HordeSpawn horde = event.horde();
+        assertEquals(2.5, horde.multiplier(), 0.0001);
+        assertEquals(40, horde.waveIntervalSeconds());
+        assertEquals(4, horde.waveSize());
+        assertEquals(32, horde.maxNearPlayer());
+        assertEquals(10, horde.minDistance());
+        assertEquals(26, horde.maxDistance());
+        assertTrue(horde.onlyAtNight());
+        assertEquals(List.of(EntityType.ZOMBIE, EntityType.SKELETON), horde.mobs(),
+                "неизвестный моб пропущен, дубль убран");
+    }
+
+    @Test
+    void hordeWithoutMobsIsDisabled() {
+        EventConfig config = parse("""
+                events:
+                  quiet_moon:
+                    type: LOOT
+                    weight: 10
+                    percent: 35
+                    items: [BONE]
+                    horde:
+                      multiplier: 2.0
+                      mobs: [ЕДИНОРОГ]
+                """);
+        WorldEvent event = config.event("quiet_moon");
+        assertNotNull(event);
+        assertFalse(event.hordeActive());
+    }
+
+    @Test
+    void supportsAreAbsentByDefault() {
+        EventConfig config = parse("""
+                events:
+                  plain:
+                    type: XP
+                    weight: 10
+                    percent: 50
+                """);
+        WorldEvent event = config.event("plain");
+        assertNotNull(event);
+        assertSame(MeteorSpawn.NONE, event.meteors());
+        assertSame(HordeSpawn.NONE, event.horde());
     }
 
     @Test
