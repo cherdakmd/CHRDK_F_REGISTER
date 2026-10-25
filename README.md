@@ -850,7 +850,7 @@ auto-messages:
   # %pass_type%, %trial_days%, %balance%.
   # Проверка без ожидания: /pass automessages list|next|test <номер>.
   messages:
-    - {"text": "<gray>Все возможности сервера собраны в <white>/menu</white>: аккаунт, прогресс, экономика, приваты и коллекции.</gray>"}
+    - {"text": "<gray>Все возможности сервера собраны в <white>/menu</white>: ранг, прогресс, экономика, мир, снаряжение, охота и общество.</gray>"}
     - {"text": "<gray>Ваш баланс банка: <white>%balance%</white> алмазов. Перевод другу — <white>/pay ник сумма</white>, топ — <white>/baltop</white>.</gray>"}
     - {"text": "<gray>Алмазы можно хранить в банке: <white>/bal deposit</white> и <white>/bal withdraw</white>. Счёт не теряется при смерти.</gray>"}
     - {"text": "<gray>Ваш пробный период активен: осталось <white>%pass_left%</white>. Статус и продление — <white>/pass menu</white>.</gray>", "condition": "trial"}
