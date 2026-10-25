@@ -111,6 +111,29 @@
 - В консоли команда печатает голый адрес строкой. Тесты — `WikiSettingsTest`
   и `PresentationUpdateTest` (кнопка ведёт в существующую команду).
 
+## Умения классов и сообщение об уровне (1.4.173)
+
+У каждого класса появился один активный приём, а новый уровень класса больше
+не проходит незаметно:
+
+- **Воин** — «Боевой рывок»: рывок вперёд и три секунды стойкости (откат 20 с).
+- **Стрелок** — «Залп»: три стрелы веером по 3,5 урона (18 с).
+- **Маг** — «Ледяная вспышка»: урон и замедление врагам в радиусе 6 блоков (22 с).
+- **Жрец** — «Исцеление»: лечит вас и до четырёх союзников в радиусе 8 блоков (25 с).
+- Применить: `/ability` (алиасы `sposobnost`, `umenie`), `/class ability` или
+  кнопка **Умение класса** в меню. Право `chrdkclasses.ability`.
+- Откат хранится в `classes.json` (`ability-at`), поэтому перезаход, смерть,
+  `/class respec` и `/classadmin reset` его не снимают. Маг бьёт только
+  враждебных мобов, жрец лечит только игроков, блоки не страдают.
+- Умение не тратит очки таланта и не даёт валюты: класс по-прежнему не
+  экономика. Темп настраивается через `abilities.enabled` и
+  `abilities.cooldown-multiplier` (`0.5..3.0`), кулдауны и сила — в коде.
+- Плейсхолдеры `%chrdkclasses_ability%` и `%chrdkclasses_ability_ready%`.
+- Повышение уровня класса (он выводится из навыков и сравнивается каждые пять
+  секунд) приходит в чат, над хотбаром и звуком, вместе с числом свободных
+  очков. Вход и просадка уровня повышением не считаются; выключатель —
+  `general.level-notice`.
+
 ## Координаты приватов в уведомлениях (1.4.172)
 
 Уведомление о границе привата показывает **координаты блока** в центре
@@ -3087,36 +3110,36 @@ lines)`. `ProfileContext` несёт UUID, ник, признак «онлайн
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.172.jar`,
-аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.172.jar`,
-реферальный — `referrals/build/libs/chrdk-referrals-1.4.172.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.172.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.172.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.172.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.172.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.172.jar` (хартия чар — при установленном аддоне чар),
-достижения — `achievements/build/libs/chrdk-achievements-1.4.172.jar`, навыки —
-`skills/build/libs/chrdk-skills-1.4.172.jar`, клады —
-`treasures/build/libs/chrdk-treasures-1.4.172.jar`, общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.172.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.172.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.172.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.172.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.172.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.172.jar`, стримерская программа —
-`streams/build/libs/chrdk-streams-1.4.172.jar`, лотерея —
-`lottery/build/libs/chrdk-lottery-1.4.172.jar`, аукцион —
-`auction/build/libs/chrdk-auction-1.4.172.jar`, питомцы —
-`pets/build/libs/chrdk-pets-1.4.172.jar`, заказы —
-`orders/build/libs/chrdk-orders-1.4.172.jar`, охота —
-`hunt/build/libs/chrdk-hunt-1.4.172.jar`, группы —
-`party/build/libs/chrdk-party-1.4.172.jar`, события —
-`events/build/libs/chrdk-events-1.4.172.jar`, задания —
-`quests/build/libs/chrdk-quests-1.4.172.jar`, боссы —
-`bosses/build/libs/chrdk-bosses-1.4.172.jar`, гильдии —
-`guilds/build/libs/chrdk-guilds-1.4.172.jar`, классы —
-`classes/build/libs/chrdk-classes-1.4.172.jar`, профессии —
-`professions/build/libs/chrdk-professions-1.4.172.jar`. На сервер ядро
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.173.jar`,
+аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.173.jar`,
+реферальный — `referrals/build/libs/chrdk-referrals-1.4.173.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.173.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.173.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.173.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.173.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.173.jar` (хартия чар — при установленном аддоне чар),
+достижения — `achievements/build/libs/chrdk-achievements-1.4.173.jar`, навыки —
+`skills/build/libs/chrdk-skills-1.4.173.jar`, клады —
+`treasures/build/libs/chrdk-treasures-1.4.173.jar`, общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.173.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.173.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.173.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.173.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.173.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.173.jar`, стримерская программа —
+`streams/build/libs/chrdk-streams-1.4.173.jar`, лотерея —
+`lottery/build/libs/chrdk-lottery-1.4.173.jar`, аукцион —
+`auction/build/libs/chrdk-auction-1.4.173.jar`, питомцы —
+`pets/build/libs/chrdk-pets-1.4.173.jar`, заказы —
+`orders/build/libs/chrdk-orders-1.4.173.jar`, охота —
+`hunt/build/libs/chrdk-hunt-1.4.173.jar`, группы —
+`party/build/libs/chrdk-party-1.4.173.jar`, события —
+`events/build/libs/chrdk-events-1.4.173.jar`, задания —
+`quests/build/libs/chrdk-quests-1.4.173.jar`, боссы —
+`bosses/build/libs/chrdk-bosses-1.4.173.jar`, гильдии —
+`guilds/build/libs/chrdk-guilds-1.4.173.jar`, классы —
+`classes/build/libs/chrdk-classes-1.4.173.jar`, профессии —
+`professions/build/libs/chrdk-professions-1.4.173.jar`. На сервер ядро
 обязательно, аддоны — по желанию (требуют ядро 1.4.6+). К релизу на GitHub
 прикладывается **один архив** `chrdk-plugins-<версия>.zip`: ядро и все 29 аддонов
 одной версии (30 JAR) плюс памятка `ОБНОВЛЕНИЕ.txt`. Отдельные JAR больше не

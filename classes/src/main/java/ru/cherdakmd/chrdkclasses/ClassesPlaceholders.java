@@ -83,6 +83,10 @@ public final class ClassesPlaceholders extends PlaceholderExpansion {
             case "reduction" -> number(effects, EffectKind.DAMAGE_REDUCTION);
             case "speed" -> number(effects, EffectKind.MOVEMENT_SPEED);
             case "regen" -> number(effects, EffectKind.REGEN);
+            case "ability" -> playerClass == null ? ""
+                    : plugin.messages().plain("ability." + playerClass.id() + ".name");
+            case "ability_ready" -> playerClass == null ? ""
+                    : Long.toString((plugin.abilities().cooldownLeft(id, playerClass) + 999L) / 1000L);
             case "change_left" -> playerClass == null ? ""
                     : Long.toString(service.changeCooldownLeft(id, System.currentTimeMillis()));
             case "respec_left" -> playerClass == null ? ""

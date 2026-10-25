@@ -94,6 +94,12 @@ final class ClassMath {
         return minutes > 0 ? minutes + " мин" : safe + " с";
     }
 
+    /** То же время, но из миллисекунд: кулдауны умений считаются в них. */
+    static String clockMillis(long millis) {
+        long seconds = Math.max(0L, millis) / 1_000L;
+        return clock(seconds);
+    }
+
     /** Число без лишних нулей и с запятой в дробной части. */
     static String decimal(double value) {
         double safe = Math.abs(value) < 0.0001 ? 0.0 : value;

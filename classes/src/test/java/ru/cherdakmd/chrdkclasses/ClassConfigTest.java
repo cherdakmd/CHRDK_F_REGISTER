@@ -47,6 +47,9 @@ class ClassConfigTest {
         assertEquals(24, config.respecCooldownHours());
         assertEquals(5, config.pulseSeconds());
         assertEquals(8, config.outOfCombatSeconds());
+        assertTrue(config.abilitiesEnabled());
+        assertEquals(1.0, config.abilityCooldownMultiplier(), 1.0E-9);
+        assertTrue(config.levelNotice());
         ClassConfig nullConfig = ClassConfig.parse(null, LOGGER);
         assertEquals(config.levelsPerLevel(), nullConfig.levelsPerLevel());
     }
@@ -88,6 +91,29 @@ class ClassConfigTest {
         assertEquals(ClassConfig.MAX_RESPEC_HOURS, high.respecCooldownHours());
         assertEquals(ClassConfig.MAX_PULSE_SECONDS, high.pulseSeconds());
         assertEquals(ClassConfig.MAX_OUT_OF_COMBAT_SECONDS, high.outOfCombatSeconds());
+    }
+
+    @Test
+    void abilityMultiplierIsClamped() {
+        ClassConfig low = parse("""
+                abilities:
+                  enabled: false
+                  cooldown-multiplier: 0.01
+                """);
+        assertFalse(low.abilitiesEnabled());
+        assertEquals(ClassConfig.MIN_ABILITY_MULTIPLIER, low.abilityCooldownMultiplier(), 1.0E-9);
+
+        ClassConfig high = parse("""
+                abilities:
+                  cooldown-multiplier: 99
+                """);
+        assertEquals(ClassConfig.MAX_ABILITY_MULTIPLIER, high.abilityCooldownMultiplier(), 1.0E-9);
+
+        ClassConfig odd = parse("""
+                abilities:
+                  cooldown-multiplier: "быстро"
+                """);
+        assertEquals(1.0, odd.abilityCooldownMultiplier(), 1.0E-9);
     }
 
     @Test
@@ -134,6 +160,10 @@ class ClassConfigTest {
             assertTrue(config.outOfCombatSeconds() >= 3, "регенерация не должна идти в бою");
             assertFalse(config.locale().isBlank());
             assertNotNull(yaml.getConfigurationSection("effects"));
+            assertTrue(config.abilitiesEnabled(), "умения идут включёнными");
+            assertEquals(1.0, config.abilityCooldownMultiplier(), 1.0E-9);
+            assertNotNull(yaml.getConfigurationSection("abilities"));
+            assertTrue(yaml.getBoolean("general.level-notice"));
         }
     }
 }

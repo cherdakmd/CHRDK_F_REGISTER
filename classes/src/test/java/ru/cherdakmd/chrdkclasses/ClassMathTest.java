@@ -79,4 +79,13 @@ class ClassMathTest {
         assertEquals("1 ч 5 мин", ClassMath.clock(3_900));
         assertEquals("1 дн. 1 ч", ClassMath.clock(90_000));
     }
+
+    @Test
+    void millisecondCooldownsAreCeiledDownToSeconds() {
+        assertEquals("0 с", ClassMath.clockMillis(0L));
+        assertEquals("0 с", ClassMath.clockMillis(999L), "меньше секунды — «0 с», без дробей");
+        assertEquals("20 с", ClassMath.clockMillis(20_000L));
+        assertEquals("1 мин", ClassMath.clockMillis(60_000L));
+        assertEquals("0 с", ClassMath.clockMillis(-5_000L), "минус не должен печататься");
+    }
 }

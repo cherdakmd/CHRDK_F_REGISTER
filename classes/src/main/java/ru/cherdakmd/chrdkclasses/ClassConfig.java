@@ -29,6 +29,9 @@ public final class ClassConfig {
     public static final int MAX_PULSE_SECONDS = 60;
     /** Потолок «вне боя» в секундах. */
     public static final int MAX_OUT_OF_COMBAT_SECONDS = 60;
+    /** Границы множителя кулдауна умений. */
+    public static final double MIN_ABILITY_MULTIPLIER = 0.5;
+    public static final double MAX_ABILITY_MULTIPLIER = 3.0;
 
     private final boolean enabled;
     private final String locale;
@@ -41,11 +44,15 @@ public final class ClassConfig {
     private final int respecCooldownHours;
     private final int pulseSeconds;
     private final int outOfCombatSeconds;
+    private final boolean abilitiesEnabled;
+    private final double abilityCooldownMultiplier;
+    private final boolean levelNotice;
 
     private ClassConfig(boolean enabled, String locale, boolean actionbar, boolean effectsEnabled,
                         int levelsPerLevel, int pointsPerLevel, int startingPoints,
                         int changeCooldownDays, int respecCooldownHours, int pulseSeconds,
-                        int outOfCombatSeconds) {
+                        int outOfCombatSeconds, boolean abilitiesEnabled,
+                        double abilityCooldownMultiplier, boolean levelNotice) {
         this.enabled = enabled;
         this.locale = locale;
         this.actionbar = actionbar;
@@ -57,11 +64,14 @@ public final class ClassConfig {
         this.respecCooldownHours = respecCooldownHours;
         this.pulseSeconds = pulseSeconds;
         this.outOfCombatSeconds = outOfCombatSeconds;
+        this.abilitiesEnabled = abilitiesEnabled;
+        this.abilityCooldownMultiplier = abilityCooldownMultiplier;
+        this.levelNotice = levelNotice;
     }
 
     /** Умолчания — те же, что в ресурсном config.yml. */
     public static ClassConfig defaults() {
-        return new ClassConfig(true, "ru", true, true, 30, 1, 1, 7, 24, 5, 8);
+        return new ClassConfig(true, "ru", true, true, 30, 1, 1, 7, 24, 5, 8, true, 1.0, true);
     }
 
     /** Разбирает конфиг; {@code null} допустим — тогда действуют умолчания. */
@@ -89,13 +99,29 @@ public final class ClassConfig {
                 (int) clamp(source, "general.pulse-seconds", fallback.pulseSeconds,
                         1, MAX_PULSE_SECONDS, logger),
                 (int) clamp(source, "general.regen-out-of-combat-seconds",
-                        fallback.outOfCombatSeconds, 0, MAX_OUT_OF_COMBAT_SECONDS, logger));
+                        fallback.outOfCombatSeconds, 0, MAX_OUT_OF_COMBAT_SECONDS, logger),
+                source.getBoolean("abilities.enabled", fallback.abilitiesEnabled),
+                clampDouble(source, "abilities.cooldown-multiplier",
+                        fallback.abilityCooldownMultiplier, MIN_ABILITY_MULTIPLIER,
+                        MAX_ABILITY_MULTIPLIER, logger),
+                source.getBoolean("general.level-notice", fallback.levelNotice));
     }
 
     private static long clamp(FileConfiguration source, String path, long fallback, long min,
                               long max, Logger logger) {
         long raw = source.getLong(path, fallback);
         long value = Math.clamp(raw, min, max);
+        if (value != raw && logger != null) {
+            logger.warning("[CHRDK_Classes] " + path + ": " + raw + " вне границ "
+                    + min + ".." + max + " — взято " + value + ".");
+        }
+        return value;
+    }
+
+    private static double clampDouble(FileConfiguration source, String path, double fallback,
+                                      double min, double max, Logger logger) {
+        double raw = source.getDouble(path, fallback);
+        double value = Math.clamp(raw, min, max);
         if (value != raw && logger != null) {
             logger.warning("[CHRDK_Classes] " + path + ": " + raw + " вне границ "
                     + min + ".." + max + " — взято " + value + ".");
@@ -161,5 +187,20 @@ public final class ClassConfig {
 
     public long outOfCombatMillis() {
         return outOfCombatSeconds * 1_000L;
+    }
+
+    /** Включены ли активные умения классов. */
+    public boolean abilitiesEnabled() {
+        return abilitiesEnabled;
+    }
+
+    /** Множитель кулдауна умений: 0.5 — вдвое чаще, 3 — втрое реже. */
+    public double abilityCooldownMultiplier() {
+        return abilityCooldownMultiplier;
+    }
+
+    /** Сообщать ли о повышении уровня класса. */
+    public boolean levelNotice() {
+        return levelNotice;
     }
 }

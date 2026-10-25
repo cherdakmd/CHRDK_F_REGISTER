@@ -127,6 +127,34 @@ class ClassStoreTest {
     }
 
     @Test
+    void abilityMomentSurvivesRestartAndReset(@TempDir Path dir) {
+        ClassStore store = new ClassStore(dir, LOGGER);
+        store.setClass(PLAYER, "warrior", NOW);
+        assertEquals(0L, store.abilityAt(PLAYER), "до первого применения — ноль");
+        store.setAbilityAt(PLAYER, NOW + 5_000L);
+        assertEquals(NOW + 5_000L, store.abilityAt(PLAYER));
+        assertTrue(store.isDirty(), "применение умения должно попасть в файл");
+        store.setAbilityAt(PLAYER, -5L);
+        assertEquals(0L, store.abilityAt(PLAYER), "отрицательный момент не пишется");
+
+        // Сброс класса не должен возвращать умение: иначе /classadmin reset
+        // становится бесплатным сбросом кулдауна.
+        store.setAbilityAt(PLAYER, NOW);
+        store.clearClass(PLAYER);
+        assertEquals(NOW, store.abilityAt(PLAYER));
+        store.setClass(PLAYER, "archer", NOW);
+        store.setAbilityAt(PLAYER, NOW + 1L);
+        store.clearTalents(PLAYER, NOW + 2L);
+        assertEquals(NOW + 1L, store.abilityAt(PLAYER));
+
+        store.saveNow();
+        ClassStore reloaded = new ClassStore(dir, LOGGER);
+        reloaded.load();
+        assertEquals(NOW + 1L, reloaded.abilityAt(PLAYER), "кулдаун переживает перезапуск");
+        assertEquals(0L, reloaded.abilityAt(OTHER), "чужой игрок не задет");
+    }
+
+    @Test
     void saveAndLoadRoundTrip(@TempDir Path dir) {
         ClassStore store = new ClassStore(dir, LOGGER);
         store.rename(PLAYER, "Чердак");

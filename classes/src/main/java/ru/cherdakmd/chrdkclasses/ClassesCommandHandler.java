@@ -26,7 +26,7 @@ import java.util.UUID;
 public final class ClassesCommandHandler implements CommandExecutor, TabCompleter {
 
     private static final List<String> SUBS = List.of("help", "menu", "choose", "info", "talents",
-            "learn", "respec", "points", "top");
+            "learn", "respec", "points", "top", "ability");
     private static final List<String> ADMIN_SUBS = List.of("reload", "info", "set", "reset",
             "respec");
 
@@ -41,6 +41,24 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
         String name = command.getName().toLowerCase(Locale.ROOT);
         if (name.equals("classadmin")) {
             return admin(sender, args);
+        }
+        if (name.equals("ability")) {
+            // Отдельная команда для боя: /class ability длиннее, а умение нужно
+            // на горячей клавише.
+            if (!sender.hasPermission("chrdkclasses.ability")) {
+                plugin.messages().send(sender, "no-permission");
+                return true;
+            }
+            if (!plugin.config().enabled()) {
+                plugin.messages().send(sender, "disabled");
+                return true;
+            }
+            if (!(sender instanceof Player player)) {
+                plugin.messages().send(sender, "player-only");
+                return true;
+            }
+            useAbility(player);
+            return true;
         }
         if (!sender.hasPermission("chrdkclasses.use")) {
             plugin.messages().send(sender, "no-permission");
@@ -69,6 +87,12 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
             case "respec" -> respec(sender);
             case "points" -> points(sender);
             case "top" -> top(sender);
+            case "ability" -> {
+                Player player = player(sender);
+                if (player != null) {
+                    useAbility(player);
+                }
+            }
             default -> {
                 plugin.messages().send(sender, "unknown-subcommand", "sub", args[0]);
                 help(sender);
@@ -82,7 +106,7 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
     private void help(CommandSender sender) {
         plugin.messages().send(sender, "help-header");
         for (String key : List.of("help-menu", "help-choose", "help-info", "help-talents",
-                "help-learn", "help-respec", "help-points", "help-top")) {
+                "help-learn", "help-respec", "help-points", "help-ability", "help-top")) {
             plugin.messages().send(sender, key);
         }
         plugin.messages().send(sender, "help-footer",
@@ -224,6 +248,26 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
             plugin.requestSave();
             plugin.effects().apply(player);
         }
+    }
+
+    /**
+     * Применяет умение класса и показывает исход.
+     *
+     * <p>Умение не тратит очки и не пишет файл: единственное состояние —
+     * кулдаун в памяти модуля. Поэтому здесь нет {@code requestSave}.</p>
+     */
+    private void useAbility(Player player) {
+        ClassResult result = plugin.abilities().use(player);
+        plugin.messages().send(player, result.key(), ClassText.localise(plugin.messages(), result).toArray());
+        if (!result.ok() || !plugin.config().actionbar()) {
+            return;
+        }
+        PlayerClass playerClass = plugin.service().classOf(player.getUniqueId());
+        if (playerClass == null) {
+            return;
+        }
+        player.sendActionBar(plugin.messages().get("ability-actionbar",
+                "ability", plugin.messages().mini("ability." + playerClass.id() + ".name")));
     }
 
     private void respec(CommandSender sender) {

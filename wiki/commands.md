@@ -77,7 +77,8 @@ description: "Одна страница со всеми командами иг�
 |---|---|
 | `/prof [menu\|choose <профессия>\|info\|stats\|top]` | Профессии |
 | `/skills [menu\|list\|top\|<навык>]` | Навыки |
-| `/class [menu\|choose <класс>\|info\|talents\|learn <талант>\|respec\|top]` | Класс и таланты |
+| `/class [menu\|choose <класс>\|info\|talents\|learn <талант>\|respec\|points\|top\|ability]` | Класс, дерево талантов и умение |
+| `/ability` | применить умение класса (то же, что `/class ability`) |
 | `/quests [menu\|list\|info\|claim\|join <фракция>\|leave\|faction]` | Задания и фракции |
 | `/battlepass [menu\|top\|info <id>\|claim [id\|all]\|help]` | Боевой пропуск |
 | `/achievements [menu\|list\|badge <ид\|off>]` | Достижения и бейджи |

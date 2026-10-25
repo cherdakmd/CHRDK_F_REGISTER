@@ -25,7 +25,7 @@ import ru.cherdakmd.chrdkregister.storage.SafeJsonWriter;
  * Классы игроков в {@code classes.json} (1.4.164).
  *
  * <p>Хранится только выбор: сам класс, изученные таланты и моменты смены
- * класса и пересборки. Уровень класса и число очков не сохраняются — они
+ * класса, пересборки и применения умения. Уровень класса и число очков не сохраняются — они
  * выводятся из навыков, поэтому «файл говорит 12, а навыки дают 8» невозможно.</p>
  *
  * <p>Паттерн записи общий для репозитория: мутации на главном потоке,
@@ -51,6 +51,7 @@ public final class ClassStore {
         private final Set<String> talents = new LinkedHashSet<>();
         private long changedAt;
         private long respecAt;
+        private long abilityAt;
 
         Player(UUID id, String name) {
             this.id = id;
@@ -125,6 +126,7 @@ public final class ClassStore {
         }
         player.changedAt = Math.max(0L, number(row.get("changed-at")));
         player.respecAt = Math.max(0L, number(row.get("respec-at")));
+        player.abilityAt = Math.max(0L, number(row.get("ability-at")));
         return player;
     }
 
@@ -178,6 +180,28 @@ public final class ClassStore {
 
     public synchronized long respecAt(UUID id) {
         return of(id).respecAt;
+    }
+
+    /**
+     * Когда игрок последний раз применял умение класса (0 — никогда).
+     *
+     * <p>Кулдаун хранится в файле, а не в памяти: иначе выход и повторный вход
+     * сбрасывали бы его, и умение становилось бы бесконечным. Пересборка
+     * талантов и админский сброс его не трогают — умение принадлежит классу, а
+     * не дереву.</p>
+     */
+    public synchronized long abilityAt(UUID id) {
+        return of(id).abilityAt;
+    }
+
+    /** Запоминает момент применения умения. */
+    public synchronized void setAbilityAt(UUID id, long at) {
+        Player player = of(id);
+        long value = Math.max(0L, at);
+        if (player.abilityAt != value) {
+            player.abilityAt = value;
+            dirty = true;
+        }
     }
 
     /**
@@ -340,6 +364,9 @@ public final class ClassStore {
             }
             if (player.respecAt > 0) {
                 row.put("respec-at", player.respecAt);
+            }
+            if (player.abilityAt > 0) {
+                row.put("ability-at", player.abilityAt);
             }
             rows.put(player.id.toString(), row);
         }

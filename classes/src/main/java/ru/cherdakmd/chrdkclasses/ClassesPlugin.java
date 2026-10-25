@@ -1,12 +1,16 @@
 package ru.cherdakmd.chrdkclasses;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Sound;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * CHRDK_Classes — четыре класса и деревья талантов поверх навыков (1.4.164).
@@ -30,6 +34,8 @@ public final class ClassesPlugin extends JavaPlugin {
     private TalentService service;
     private SkillsBridge skillsBridge;
     private ClassEffects effects;
+    private AbilityService abilities;
+    private final ClassProgress progress = new ClassProgress();
     private ClassesGui gui;
     private BukkitTask saveTask;
     private BukkitTask pulseTask;
@@ -47,6 +53,7 @@ public final class ClassesPlugin extends JavaPlugin {
             this.skillsBridge = new SkillsBridge(this);
             this.service = new TalentService(config, store, skillsBridge);
             this.effects = new ClassEffects(this);
+            this.abilities = new AbilityService(this);
             this.gui = new ClassesGui(this);
 
             getServer().getPluginManager().registerEvents(new ClassListener(this), this);
@@ -60,6 +67,7 @@ public final class ClassesPlugin extends JavaPlugin {
             this.pulseTask = getServer().getScheduler().runTaskTimer(this,
                     this::pulse, 100L, config.pulseTicks());
 
+            warnMissingSections();
             getLogger().info("CHRDK_Classes включён: классов " + ClassCatalog.classes().size()
                     + ", талантов " + (ClassCatalog.classes().size()
                     * ClassCatalog.TALENTS_PER_CLASS)
@@ -115,22 +123,80 @@ public final class ClassesPlugin extends JavaPlugin {
         for (Player player : Bukkit.getOnlinePlayers()) {
             effects.apply(player);
         }
+        warnMissingSections();
     }
 
-    /** Один такт: лечение и насыщение вне боя. */
+    /**
+     * Подсказывает, что новых ключей нет в старом {@code config.yml}.
+     *
+     * <p>Bukkit не дописывает ключи в файл: сервер, обновившийся с 1.4.172,
+     * работает на значениях по умолчанию, но админ должен знать, почему он не
+     * видит секцию. Без этой строки «в конфиге нет умений» выглядит как баг.</p>
+     */
+    private void warnMissingSections() {
+        List<String> missing = new ArrayList<>();
+        if (!getConfig().isSet("abilities")) {
+            missing.add("abilities");
+        }
+        if (!getConfig().isSet("general.level-notice")) {
+            missing.add("general.level-notice");
+        }
+        if (!missing.isEmpty()) {
+            getLogger().info("[CHRDK_Classes] В config.yml нет ключей " + String.join(", ", missing)
+                    + " — работают значения по умолчанию (образец лежит в jar: config.yml).");
+        }
+    }
+
+    /**
+     * Один такт: лечение и насыщение вне боя плюс проверка уровня класса.
+     *
+     * <p>Уровень класса не хранится и не приходит событием — он выводится из
+     * навыков. Поэтому повышение ловится сравнением с прошлым пульсом: без
+     * этого игрок узнавал о новых очках таланта случайно.</p>
+     */
     private void pulse() {
-        if (!config.enabled() || !config.effectsEnabled()) {
+        if (!config.enabled()) {
             return;
         }
         long now = System.currentTimeMillis();
+        boolean applyEffects = config.effectsEnabled();
+        boolean notice = config.levelNotice();
         for (Player player : Bukkit.getOnlinePlayers()) {
-            effects.pulse(player, now);
+            if (applyEffects) {
+                effects.pulse(player, now);
+            }
+            if (notice) {
+                checkLevel(player);
+            }
         }
+    }
+
+    /** Сообщает о повышении уровня класса, если он вырос с прошлого пульса. */
+    private void checkLevel(Player player) {
+        PlayerClass playerClass = service.classOf(player.getUniqueId());
+        if (playerClass == null) {
+            progress.forget(player.getUniqueId());
+            return;
+        }
+        int level = service.level(player.getUniqueId());
+        int points = service.availablePoints(player.getUniqueId());
+        ClassProgress.Change change = progress.observe(player.getUniqueId(), level, points);
+        if (change == null) {
+            return;
+        }
+        messages().send(player, "level-up",
+                "level", String.valueOf(change.level()),
+                "points", String.valueOf(change.points()));
+        if (config.actionbar()) {
+            player.sendActionBar(messages().get("level-up-actionbar",
+                    "level", String.valueOf(change.level())));
+        }
+        player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.6f, 1.35f);
     }
 
     private void registerCommands() {
         ClassesCommandHandler handler = new ClassesCommandHandler(this);
-        for (String name : new String[]{"class", "classadmin"}) {
+        for (String name : new String[]{"class", "classadmin", "ability"}) {
             PluginCommand command = getCommand(name);
             if (command == null) {
                 getLogger().warning("Команда " + name + " не объявлена в plugin.yml — модуль без неё.");
@@ -216,6 +282,14 @@ public final class ClassesPlugin extends JavaPlugin {
 
     public ClassEffects effects() {
         return effects;
+    }
+
+    public AbilityService abilities() {
+        return abilities;
+    }
+
+    public ClassProgress progress() {
+        return progress;
     }
 
     public ClassesGui gui() {

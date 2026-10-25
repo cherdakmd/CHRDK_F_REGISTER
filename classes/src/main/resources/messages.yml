@@ -21,6 +21,7 @@ classes:
   help-learn: "<yellow>/class learn <талант></yellow> <gray>— выучить талант за очки</gray>"
   help-respec: "<yellow>/class respec</yellow> <gray>— вернуть очки и собрать дерево заново</gray>"
   help-points: "<yellow>/class points</yellow> <gray>— уровень, очки и сколько до следующего</gray>"
+  help-ability: "<yellow>/class ability</yellow> <gray>— умение класса (то же делает <yellow>/ability</yellow>)</gray>"
   help-top: "<yellow>/class top</yellow> <gray>— сколько игроков в каждом классе</gray>"
   help-footer: "<gray>Уровень класса растёт от навыков: один уровень за каждые %per% уровней навыков.</gray>"
 
@@ -53,6 +54,14 @@ classes:
   respec-cooldown: "<red>Пересборка будет доступна через <white>%time%</white>.</red>"
   respec-done: "<green>Таланты сброшены: %talents%. Очки вернулись, свободно <white>%points%</white>.</green>"
 
+  # ------------------------------ умения класса ------------------------------
+  # %ability% — имя умения из ability.<ид>.name, %time% — остаток кулдауна.
+  ability-disabled: "<red>Умения классов выключены в config.yml.</red>"
+  ability-dead: "<red>Умение недоступно: вы мертвы.</red>"
+  ability-cooldown: "<red>Умение будет готово через <white>%time%</white>.</red>"
+  ability-used: "<green>Умение «%ability%» сработало.</green>"
+  ability-actionbar: "<gold>%ability%</gold>"
+
   # ---------------------------- карточка и очки -----------------------------
   info-header: "<gold>Класс: <white>%class%</white></gold>"
   info-none: "<gray>Класс не выбран.</gray>"
@@ -67,6 +76,11 @@ classes:
   info-talents-empty: "<gray>Талантов пока нет: очки появятся вместе с уровнями навыков.</gray>"
   info-cooldown: "<dark_gray>Смена класса будет доступна через %time%</dark_gray>"
   info-footer: "<dark_gray>Учить таланты: /class talents · очки: /class points</dark_gray>"
+
+  # --------------------------- уровень класса -------------------------------
+  # Уровень выводится из навыков: пульс сравнивает его с прошлым и сообщает рост.
+  level-up: "<gold>Уровень класса %level%</gold> <gray>· свободных очков талантов: <white>%points%</white> · </gray><yellow>/class talents</yellow>"
+  level-up-actionbar: "<gold>Уровень класса %level%</gold>"
 
   # ------------------------ распределение по классам ------------------------
   top-header: "<gold>Классы на сервере</gold> <dark_gray>·</dark_gray> <gray>выбрали %count% игроков</gray>"
@@ -120,6 +134,10 @@ classes:
   menu-respec-cooldown: "<red>Доступно через %time%</red>"
   menu-respec-empty: "<gray>Изученных талантов нет</gray>"
   menu-respec-ready: "<green>Вернётся очков: %cost%</green>"
+  menu-ability-name: "<gold>Умение класса</gold>"
+  menu-ability-ready: "<green>Клик — применить</green>"
+  menu-ability-cooldown: "<red>Откат: %time%</red>"
+  menu-ability-none: "<gray>Сначала выберите класс</gray>"
   menu-summary-name: "<gold>Ваш класс</gold>"
   menu-summary-class: "<gray>Класс: <white>%class%</white></gray>"
   menu-summary-level: "<gray>Уровень: <white>%level%</white> · уровней навыков %total%</gray>"
@@ -157,6 +175,16 @@ classes:
   class.mage.desc: "<gray>Оберег вместо меча: броня, стойкость и скорость.</gray>"
   class.cleric.name: "Жрец"
   class.cleric.desc: "<gray>Милость и дорога: регенерация, сытость и запас здоровья.</gray>"
+
+  # умения классов (ClassAbility): имя и что делает
+  ability.warrior.name: "Боевой рывок"
+  ability.warrior.desc: "<gray>Рывок вперёд и три секунды стойкости.</gray>"
+  ability.archer.name: "Залп"
+  ability.archer.desc: "<gray>Три стрелы веером по 3,5 урона.</gray>"
+  ability.mage.name: "Ледяная вспышка"
+  ability.mage.desc: "<gray>Мороз по врагам вокруг: лёгкий урон и замедление.</gray>"
+  ability.cleric.name: "Исцеление"
+  ability.cleric.desc: "<gray>Лечит вас и до четырёх союзников рядом.</gray>"
 
   # ------------------------------ ветки дерева ------------------------------
   branch.stoyka: "Стойкость"
