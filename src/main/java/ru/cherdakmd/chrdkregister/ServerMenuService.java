@@ -365,7 +365,7 @@ public final class ServerMenuService implements Listener {
                     return; // подсказка: инвентарь уже защищён от переноса предметов
                 }
                 case CLOSE -> {
-                    Bukkit.getScheduler().runTask(plugin, player::closeInventory);
+                    Bukkit.getScheduler().runTask(plugin, () -> player.closeInventory());
                     return;
                 }
                 case CATEGORY -> {
