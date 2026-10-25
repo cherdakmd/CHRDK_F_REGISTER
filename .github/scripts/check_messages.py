@@ -84,11 +84,11 @@ def flatten_like_core(keys: set[str], top_level: list[str]) -> set[str]:
 # ключ первым или (для send/sendList) вторым аргументом; «ключ + хвост» (» + ")
 # не считается литералом — это динамический префикс.
 CALL = re.compile(
-    r'\.(send|sendList|get|getList|raw|plain|has)\s*\(\s*'
+    r'\.(send|sendList|get|getList|raw|mini|plain|has)\s*\(\s*'
     r'((?:[\w().]+\s*,\s*)?)"([a-z][a-z0-9.\-]*)"(?!\s*\+)'
 )
 FOREIGN_CALL = re.compile(r'\b(?!plugin\b)[a-z]\w*\.messages\(\)')
-DYNAMIC = re.compile(r'(?:raw|getList|get|send)\s*\([^)]*"([a-z][a-z0-9\-]*(?:\.[a-z0-9\-]*)*\.)"\s*\+')
+DYNAMIC = re.compile(r'(?:raw|mini|getList|get|send)\s*\([^)]*"([a-z][a-z0-9\-]*(?:\.[a-z0-9\-]*)*\.)"\s*\+')
 VARIABLE_KEY = re.compile(r'\.(?:send|sendList|get|getList|raw|plain|has)\s*\(\s*(?:[\w().]+\s*,\s*)?(?![\w().]*")[a-zA-Z]\w*')
 
 

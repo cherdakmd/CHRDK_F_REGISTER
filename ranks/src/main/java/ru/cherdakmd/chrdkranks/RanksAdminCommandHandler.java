@@ -38,7 +38,7 @@ final class RanksAdminCommandHandler implements CommandExecutor, TabCompleter {
             case "info" -> {
                 plugin.messages().send(sender, "info",
                         "count", plugin.config().ladder().size(),
-                        "sort", plugin.messages().raw(
+                        "sort", plugin.messages().mini(
                                 plugin.config().sortTab() ? "state-on" : "state-off"),
                         "tick", plugin.config().tickSeconds());
                 return true;

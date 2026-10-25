@@ -200,7 +200,7 @@ public final class TierCraftListener implements Listener {
             plugin.messages().send(player, "rolled-cursed");
         } else if (roll.percent() != 0) {
             plugin.messages().send(player, "rolled",
-                    "tier", plugin.messages().raw("tier." + roll.id() + ".name"));
+                    "tier", plugin.messages().mini("tier." + roll.id() + ".name"));
         }
     }
 }

@@ -12,6 +12,7 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
+import ru.cherdakmd.chrdkregister.Messages;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -111,19 +112,19 @@ public final class EnchantGui implements Listener {
         if (meta != null) {
             meta.displayName(plugin.messages().get(
                     def.curse() ? "lore-line-curse" : "lore-line",
-                    "name", plugin.messages().raw("en." + def.id() + ".name"),
+                    "name", plugin.messages().mini("en." + def.id() + ".name"),
                     "levelroman", EnchantCodec.roman(def.maxLevel())));
             List<net.kyori.adventure.text.Component> lore = new ArrayList<>();
             lore.add(plugin.messages().get("gui-enchant-lore-polarity",
-                    "polarity", plugin.messages().raw(def.polarity().labelKey())));
+                    "polarity", plugin.messages().mini(def.polarity().labelKey())));
             lore.add(plugin.messages().get("gui-enchant-lore-rarity",
-                    "rarity", plugin.messages().raw(def.rarity().labelKey()),
+                    "rarity", plugin.messages().mini(def.rarity().labelKey()),
                     "maxlevel", def.maxLevel()));
             lore.add(plugin.messages().get("gui-enchant-lore-items",
-                    "items", supportedLabel(def)));
+                    "items", Messages.trusted(supportedLabel(def))));
             if (def.conflictGroup() != null) {
                 lore.add(plugin.messages().get("info-conflicts",
-                        "conflicts", conflictsLabel(def)));
+                        "conflicts", Messages.trusted(conflictsLabel(def))));
             }
             lore.addAll(plugin.messages().getList("en." + def.id() + ".lore"));
             meta.lore(lore);

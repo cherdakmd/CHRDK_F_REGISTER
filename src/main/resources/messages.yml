@@ -351,10 +351,10 @@ messages:
       <red><bold>У вас нет активного ранга на сервере!</bold></red>
       <gray>Цена ранга: </gray><gold><bold>%price% ₽</bold></gold><gray> (выдаётся на </gray><aqua>%days% дней</aqua><gray>)</gray>
       <yellow>ВАЖНО: В поле «Ваше имя» (имя донатера) укажите ваш точный ник: </yellow><green><bold>%player%</bold></green>
-      <gray>Проходка активируется автоматически сразу после оплаты (не выходя с сервера).</gray>
+      <gray>Ранг активируется автоматически сразу после оплаты (не выходя с сервера).</gray>
       <red>==============================================</red>
     "reminder": "<red>Нет ранга! Оформите его за %price% ₽ на странице оплаты (укажите ник %player% в имени донатера)</red>"
-    "title": "<red><bold>НЕТ ПРОХОДКИ</bold></red>"
+    "title": "<red><bold>НЕТ РАНГА</bold></red>"
     "title-subtitle": "<yellow>Донат %price%₽ (ник: %player%)</yellow>"
 
   # ---------------------------------------------------------------
@@ -388,12 +388,12 @@ messages:
     "failed": "<yellow>Не удалось подобрать безопасное место — ты появишься на обычном спавне.</yellow>"
 
   # ---------------------------------------------------------------
-  # pass — Проходка: активация, срок, выдача, отзыв
+  # pass — Ранг: активация, срок, выдача, отзыв
   # ---------------------------------------------------------------
   "pass":
     "activated": |-
       <gold>==============================================</gold>
-      <green><bold>✓ Проходка на сервер активирована (%source%)!</bold></green>
+      <green><bold>✓ Ранг на сервере активирован (%source%)!</bold></green>
       <gray>Срок действия до: </gray><aqua>%until%</aqua>
       <gold>==============================================</gold>
     "admin-help": |-
@@ -423,16 +423,16 @@ messages:
       <yellow>/%label% reload</yellow><gray> — перезагрузить config.yml</gray>
     "claim-success": "<green>✓ Платёж #%id% подтверждён, ранг активирован!</green>"
     "expired": "<red>Срок вашего ранга истёк! Продлить можно в витрине: /rank</red>"
-    "expiring": "<gold>Внимание! Проходка заканчивается через %remaining% (до %until%). Продлить: %renew%</gold>"
-    "expiry-bar": "<yellow>Проходка заканчивается через %remaining%</yellow>"
+    "expiring": "<gold>Внимание! Ранг заканчивается через %remaining% (до %until%). Продлить: %renew%</gold>"
+    "expiry-bar": "<yellow>Ранг заканчивается через %remaining%</yellow>"
     "gift-notice": "<green>Вам подарили ранг на %days% дн. от %sender%!</green>"
     "gifted": "<green>✓ Подарок отправлен: <gold>%player%</gold> получил %days% дн. ранга.</green>"
-    "granted": "<green>✓ Проходка выдана игроку <gold><bold>%player%</bold></gold> на %days% дн. (до %until%).</green>"
+    "granted": "<green>✓ Ранг выдан игроку <gold><bold>%player%</bold></gold> на %days% дн. (до %until%).</green>"
     "info":
-      "active": "<green><bold>АКТИВНА</bold></green>"
+      "active": "<green><bold>АКТИВЕН</bold></green>"
       "footer-line": "<gold>==============================================</gold>"
       "header-line": "<gold>==============================================</gold>"
-      "inactive": "<red><bold>НЕТ / ИСТЕКЛА</bold></red>"
+      "inactive": "<red><bold>НЕТ / ИСТЁК</bold></red>"
       "paid-label": "<gray>Оплачено всего: </gray>"
       "paid-value": "<aqua>%total_paid_kopecks% ₽ (%payments_count% платежей)</aqua>"
       "payment-code": "<gold>Код оплаты: </gold><gold><bold>%code%</bold></gold>"
@@ -467,7 +467,7 @@ messages:
       "pay-name": "<gold><bold>Оплатить / продлить ранг</bold></gold>"
       "pay-lore": "<gray>Клик — ссылка на страницу оплаты в чат.</gray>"
       "tier-name": "<yellow><bold>%label%</bold></yellow>"
-      "tier-lore": "<gray>%amount% ₽ → %days% дн. прохода · клик — ссылка на оплату.</gray>"
+      "tier-lore": "<gray>%amount% ₽ → %days% дн. ранга · клик — ссылка на оплату.</gray>"
       "tier-picked": "<green>Тариф «%label%»: %amount% ₽ → %days% дн. Ссылка на оплату — ниже в чате.</green>"
       "history-name": "<white>%amount% ₽ · %status%</white>"
       "history-info": "<gray>%date% · источник: %source%</gray>"
@@ -514,9 +514,9 @@ messages:
     "not-active": "<red>У игрока %target_name% не найдено активного ранга.</red>"
     "not-registered": "<red>Игрок %target_name% ещё не регистрировал пароль.</red>"
     "password-reset": "<yellow>Ваш пароль был сброшен администратором. Зарегистрируйте новый пароль!</yellow>"
-    "password-reset-notice": "<green>✓ Пароль (и 2FA) игрока %target_name% сброшены. Проходка сохранена.</green>"
+    "password-reset-notice": "<green>✓ Пароль (и 2FA) игрока %target_name% сброшены. Ранг сохранён.</green>"
     "revoked": "<red>Ваш ранг был отозван администратором.</red>"
-    "revoked-notice": "<green>✓ Проходка игрока %target_name% отозвана.</green>"
+    "revoked-notice": "<green>✓ Ранг игрока %target_name% отозван.</green>"
     "tier-line": "<yellow>%price% ₽</yellow><gray> → </gray><aqua>%days% дн.%label%</aqua>"
     "two-factor-not-enabled": "<red>У игрока %target_name% не включена двухфакторная аутентификация.</red>"
     "two-factor-reset": "<yellow>Двухфакторная аутентификация (2FA) вашего аккаунта была сброшена администратором.</yellow>"
@@ -526,7 +526,7 @@ messages:
   # ---------------------------------------------------------------
     "boost-checking": "<gray>Проверяем подписку Boosty для %boosty%…</gray>"
     "boost-linked": "<green>✓ Привязка к Boosty <gold>%boosty%</gold> (%level%) создана — подписка идёт до <aqua>%until%</aqua>.</green>"
-    "boost-changed": "<green>✓ Привязка обновлена: теперь Boosty <gold>%boosty%</gold> (%level%). Проходка до <aqua>%until%</aqua>.</green>"
+    "boost-changed": "<green>✓ Привязка обновлена: теперь Boosty <gold>%boosty%</gold> (%level%). Ранг до <aqua>%until%</aqua>.</green>"
     "boost-not-found": "<red>Подписчика <gold>%boosty%</gold> на Boosty не нашли. Проверьте ник в точности как на сайте boosty.to.</red>"
     "boost-inactive": "<red>Подписка Boosty <gold>%boosty%</gold> сейчас не активна. Если вы только что оформили — подождите пару минут и повторите.</red>"
     "boost-low-level": "<red>Уровень «%level%» дешевле требуемых %min% ₽/мес. Оформите подходящий уровень на Boosty.</red>"
@@ -538,7 +538,7 @@ messages:
   # stats — Статистика /pass stats
   # ---------------------------------------------------------------
   "stats":
-    "conversion": "<gray>Конверсия: </gray><green>%active% активных проходок из %total% известных аккаунтов (%percent%%)</green>"
+    "conversion": "<gray>Конверсия: </gray><green>%active% активных рангов из %total% известных аккаунтов (%percent%%)</green>"
     "granted": "<gray>Всего выдано донатами: </gray><white>%count% платежей</white>"
     "provider-line": "<gray>%service% (сессия): опросов %attempts% (успех %ok%, сбоев %fail%); обработано донатов %processed% на %sum% ₽</gray>"
     "header": "<gold>=== Статистика донатов ===</gold>"
@@ -562,7 +562,7 @@ messages:
     "not-found": "<red>Игрок %target_name% не найден в базе плагина.</red>"
     "paid-label": "<gray>Всего оплачено: </gray>"
     "paid-value": "<aqua>%total_paid_kopecks% ₽ (%payments_count% платежей, последний: %last_payment_at%)</aqua>"
-    "pass": "<gray>Проходка: </gray>%value%"
+    "pass": "<gray>Ранг: </gray>%value%"
     "registered": "<gray>Пароль зарегистрирован: </gray>%value%"
     "sessions-label": "<gray>Сессии: </gray>"
     "sessions-value": "<white>%count% шт. (/pass sessions %player%)</white>"
@@ -610,14 +610,14 @@ messages:
         Сумма: %amount% ₽
       "approved-title": "Донат подтверждён администратором"
       "down-title": "⛔ %service% недоступен"
-      "down-desc": "Серия отказов %service%: %fails% подряд. Последняя ошибка: %error%. Авто-выдача проходок на паузе до восстановления связи."
+      "down-desc": "Серия отказов %service%: %fails% подряд. Последняя ошибка: %error%. Авто-выдача рангов на паузе до восстановления связи."
       "up-title": "✅ %service% снова на связи"
-      "up-desc": "Автоматическая выдача проходок восстановлена, серия отказов завершена."
+      "up-desc": "Автоматическая выдача рангов восстановлена, серия отказов завершена."
       "granted-body": |-
         Игрок: %player%
         Сумма: %amount% ₽
         Срок: %days% дн.
-      "granted-title": "Проходка выдана автоматически"
+      "granted-title": "Ранг выдан автоматически"
       "pending-body": |-
         ID: %id%
         Имя: %donor%
@@ -632,7 +632,7 @@ messages:
     "recheck-unavailable": "<red>Донаты выключены или не настроены: включите donatepay.enabled / easydonate.enabled и задайте ключ в plugins/CHRDK_F_REGISTER/config.yml.</red>"
     "recheck-done": "<green>Опрос донатов завершён: новых транзакций — %count%, в очереди решений — %pending% шт. (/%label% pending).</green>"
     "recheck-failed": "<red>Опрос донатов не удался: %error%. Подробности — в консоли сервера.</red>"
-    "alert-offline": "<red>⚠ %service% недоступен: %fails% неудач подряд (%error%). Проходки по донатам не выдаются — проверьте сайт и ключи.</red>"
+    "alert-offline": "<red>⚠ %service% недоступен: %fails% неудач подряд (%error%). Ранги по донатам не выдаются — проверьте сайт и ключи.</red>"
     "alert-online": "<green>✔ %service% снова на связи — авто-проверка донатов восстановлена.</green>"
     "alert-pending-stale": "<yellow>⧗ %count% донат(а) ждут решения дольше %hours% ч — разбор: /pass pending.</yellow>"
     "alert-diagnosis": "<gray>Диагноз %service%: %diagnosis%</gray>"
@@ -709,7 +709,7 @@ messages:
     "setup-start": "<gray>Настраиваю группы LuckPerms по схеме default → ранг → admin…</gray>"
     "setup-done": "<green>✓ LuckPerms настроен: группы %groups% (создано: %created%, узлов выставлено: %nodes%).</green>"
     "setup-fail": "<red>Авто-настройка LuckPerms не удалась: %error%</red>"
-    "setup-hint-pass": "<yellow>Группа '%group%' создана. Включите авто-выдачу проходным: integrations.pass-group: \"%group%\" в config.yml + /pass reload.</yellow>"
+    "setup-hint-pass": "<yellow>Группа '%group%' создана. Включите авто-выдачу рангов: integrations.pass-group: \"%group%\" в config.yml + /pass reload.</yellow>"
     "status-header": "<gold>=== Группы LuckPerms (схема CHRDK) ===</gold>"
     "status-line": "<gray>- %group%: существует, вес %weight%, прав %perms%</gray>"
     "status-missing": "<yellow>- %group%: НЕ создана — выполните /%label% luckperms setup</yellow>"
@@ -778,7 +778,7 @@ messages:
   "status":
     "accounts": "<gray>Зарегистрировано паролей: </gray>"
     "accounts-value": "<aqua>%registered% / %total%</aqua>"
-    "active-passes": "<gray>Активных проходок: </gray><green>%count%</green>"
+    "active-passes": "<gray>Активных рангов: </gray><green>%count%</green>"
     "auto-messages": "<gray>Автосообщения: %value%</gray>"
     "auto-messages-value": "<aqua>каждые %seconds% сек. (%count% шт.)</aqua>"
     "chat": "<gray>Встроенный чат: %state% (радиус %radius% блоков)</gray>"
@@ -1044,17 +1044,17 @@ messages:
     "usage": "<yellow>/profile [ник]</yellow> <gray>— карточка, </gray><yellow>/profile chat [ник]</yellow> <gray>— текстом.</gray>"
     "title": "<dark_gray>Профиль</dark_gray> <gold>%player%</gold>"
     "head-name": "<gold><b>%player%</b></gold>"
-    "head-lore-pass": "<gray>Проходка: </gray><green>%days% дн.</green>"
-    "head-lore-trial": "<gray>Проходка: </gray><yellow>пробная, %days% дн.</yellow>"
-    "head-lore-no-pass": "<gray>Проходка: </gray><red>нет</red>"
+    "head-lore-pass": "<gray>Ранг: </gray><green>%days% дн.</green>"
+    "head-lore-trial": "<gray>Ранг: </gray><yellow>приветственный, %days% дн.</yellow>"
+    "head-lore-no-pass": "<gray>Ранг: </gray><red>нет</red>"
     "head-lore-bank": "<gray>Банк: </gray><aqua>%amount%</aqua>"
     "head-lore-more": "<dark_gray>Ещё разделов: %count% — смотрите в чате</dark_gray>"
     "head-lore-hint": "<dark_gray>Клик по разделу — подробности в чат</dark_gray>"
     "section-core": "Аккаунт и банк"
     "section-hint": "<dark_gray>Клик — показать в чате</dark_gray>"
-    "core-pass": "<gray>Проходка: </gray><green>активна, осталось %days% дн.</green>"
-    "core-trial": "<gray>Проходка: </gray><yellow>пробная, осталось %days% дн.</yellow>"
-    "core-no-pass": "<gray>Проходка: </gray><red>нет</red>"
+    "core-pass": "<gray>Ранг: </gray><green>активен, осталось %days% дн.</green>"
+    "core-trial": "<gray>Ранг: </gray><yellow>приветственный, осталось %days% дн.</yellow>"
+    "core-no-pass": "<gray>Ранг: </gray><red>нет</red>"
     "core-registered": "<gray>Аккаунт: </gray><white>пароль установлен</white>"
     "core-not-registered": "<gray>Аккаунт: </gray><red>без пароля</red>"
     "core-two-factor": "<gray>2FA: </gray><green>включена</green>"

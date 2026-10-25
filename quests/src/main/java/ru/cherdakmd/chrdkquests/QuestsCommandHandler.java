@@ -246,12 +246,12 @@ public final class QuestsCommandHandler implements CommandExecutor, TabCompleter
                     "description", faction.description());
         }
         plugin.messages().send(sender, "faction-rank",
-                "rank", plugin.messages().plain("rank." + plugin.service().rankId(id)),
+                "rank", plugin.messages().mini("rank." + plugin.service().rankId(id)),
                 "number", String.valueOf(plugin.service().rankNumber(id)));
         plugin.messages().send(sender, "faction-reputation",
                 "reputation", String.valueOf(reputation),
                 "next", faction.nextThreshold(reputation) < 0
-                        ? plugin.messages().plain("faction-max")
+                        ? plugin.messages().mini("faction-max")
                         : String.valueOf(faction.nextThreshold(reputation)));
         plugin.messages().send(sender, "faction-done",
                 "done", String.valueOf(plugin.service().doneCount(id)),

@@ -404,7 +404,11 @@ public final class TreasureBarrels implements Listener {
     /** Кладёт добычу в бочку и записывает владельца в сам блок. */
     private boolean fill(Block block, Player owner, TreasureTier tier,
                          List<ItemStack> contents) {
-        BlockState state = block.getState();
+        // getState() без аргумента — СНИМОК блока. Инвентарь в нём пуст, а
+        // следующий update() копирует снимок обратно в блок и затирает только
+        // что положенную добычу: бочка оставалась пустой. Живое состояние
+        // (useSnapshot = false) пишет прямо в блок и переживает update().
+        BlockState state = block.getState(false);
         if (!(state instanceof Barrel barrel)) {
             return false;
         }
@@ -448,6 +452,13 @@ public final class TreasureBarrels implements Listener {
                 (tier == null ? TreasureTier.COMMON : tier).id());
         data.set(createdKey, PersistentDataType.LONG, System.currentTimeMillis());
         barrel.update(true, false);
+        // Страховка от регрессии: если блок почему-то не принял добычу, честно
+        // возвращаем false — spawn уберёт бочку, а offer выдаст клад в руки.
+        if (isEmpty(block)) {
+            plugin.getLogger().warning("Клад-бочка " + describe(block)
+                    + " не приняла добычу — выдаю её в инвентарь.");
+            return false;
+        }
         // Добыча не должна исчезнуть даже в невероятном случае переполнения.
         for (ItemStack rest : leftovers) {
             block.getWorld().dropItemNaturally(block.getLocation().add(0.5, 1.0, 0.5), rest);
@@ -814,6 +825,12 @@ public final class TreasureBarrels implements Listener {
 
     private static Key key(Block block) {
         return new Key(block.getWorld().getUID(), block.getX(), block.getY(), block.getZ());
+    }
+
+    /** Точка в лог: мир и координаты без обращения к снимку состояния. */
+    private static String describe(Block block) {
+        return block.getWorld().getName() + " " + block.getX() + ","
+                + block.getY() + "," + block.getZ();
     }
 
     private static String orEmpty(String value) {

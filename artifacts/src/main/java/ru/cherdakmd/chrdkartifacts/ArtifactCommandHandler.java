@@ -179,14 +179,14 @@ public final class ArtifactCommandHandler implements CommandExecutor, TabComplet
         plugin.messages().send(player, "traits-header-good");
         for (ArtifactTraits.Def trait : ArtifactTraits.good()) {
             plugin.messages().send(player, "traits-line-good",
-                    "name", plugin.messages().raw("trait." + trait.id() + ".name"),
-                    "desc", plugin.messages().raw("trait." + trait.id() + ".desc"));
+                    "name", plugin.messages().mini("trait." + trait.id() + ".name"),
+                    "desc", plugin.messages().mini("trait." + trait.id() + ".desc"));
         }
         plugin.messages().send(player, "traits-header-bad");
         for (ArtifactTraits.Def trait : ArtifactTraits.bad()) {
             plugin.messages().send(player, "traits-line-bad",
-                    "name", plugin.messages().raw("trait." + trait.id() + ".name"),
-                    "desc", plugin.messages().raw("trait." + trait.id() + ".desc"));
+                    "name", plugin.messages().mini("trait." + trait.id() + ".name"),
+                    "desc", plugin.messages().mini("trait." + trait.id() + ".desc"));
         }
         ArtifactsConfig.Traits config = plugin.config().traits();
         plugin.messages().send(player, "traits-footer",
@@ -239,7 +239,7 @@ public final class ArtifactCommandHandler implements CommandExecutor, TabComplet
             plugin.collection().record(target, def.id());
             plugin.messages().send(sender, "admin-given",
                     "player", target.getName(),
-                    "name", plugin.items().nameOf(def),
+                    "name", Messages.trusted(plugin.items().nameOf(def)),
                     "amount", String.valueOf(amount));
             if (dropped > 0) {
                 plugin.messages().send(sender, "admin-given-dropped",
@@ -247,7 +247,7 @@ public final class ArtifactCommandHandler implements CommandExecutor, TabComplet
                         "amount", String.valueOf(dropped));
             }
             plugin.messages().send(target, "admin-received",
-                    "name", plugin.items().nameOf(def));
+                    "name", Messages.trusted(plugin.items().nameOf(def)));
             return true;
         }
         plugin.messages().send(sender, "admin-usage");

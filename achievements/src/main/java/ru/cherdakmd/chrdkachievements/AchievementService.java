@@ -139,9 +139,11 @@ public final class AchievementService {
         if (name.isBlank()) {
             name = ArtifactTextFallback.humanize(def.id());
         }
+        // Категория — разметка из messages.yml, а не текст игрока: без Trusted
+        // MiniMessage показал бы в чате литералы <aqua>…</aqua>.
         plugin.messages().send(player, "achievement-unlocked",
                 "name", Messages.trusted(name),
-                "category", plugin.messages().raw("category." + def.category().id()));
+                "category", plugin.messages().mini("category." + def.category().id()));
         AchievementsConfig.Reward reward = plugin.config().rewardOf(def);
         if (reward.passDays() > 0 || reward.diamonds() > 0) {
             plugin.messages().send(player, "achievement-reward",

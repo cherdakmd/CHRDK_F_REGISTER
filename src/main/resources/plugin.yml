@@ -8,11 +8,11 @@ softdepend:
   - LuckPerms
 authors:
   - cherdakmd
-description: Плагин проходки через DonatePay (150р на 1 месяц) с регистрацией, авторизацией по паролю, TOTP 2FA и встроенным чатом (локальный/глобальный, ЛС, автосообщения) для Purpur 26.3
+description: Ядро CHERDAK для Purpur 26.3 — пять донатных рангов, регистрация, вход по паролю, TOTP 2FA, чат, банк и профиль игрока
 
 commands:
   register:
-    description: Зарегистрировать аккаунт и активировать одноразовый пробный период
+    description: Зарегистрировать аккаунт и активировать приветственный ранг
     usage: /<command> <пароль> <повтор>
     aliases: [reg]
   login:
@@ -20,7 +20,7 @@ commands:
     usage: /<command> <пароль> [код_2FA]
     aliases: [l]
   profile:
-    description: "Карточка игрока: проходка, банк и разделы аддонов одной страницей"
+    description: "Карточка игрока: ранг, банк и разделы аддонов одной страницей"
     usage: /<command> [chat] [ник]
     aliases: [prof]
   menu:
@@ -48,7 +48,7 @@ commands:
     usage: /<command> [setup|qr|confirm|disable|status|cancel|<6-значный_код>]
     aliases: [totp, twofactor]
   pass:
-    description: Проверка статуса проходки и управление проходками
+    description: Проверка статуса ранга и управление рангами
     usage: /<command> [menu|shop|my|add|remove|check|unregister|reset2fa|status|reload|shopbuy|shoprevoke|shopgift] [ник]
     aliases: [fregister, prohodka]
   chat:

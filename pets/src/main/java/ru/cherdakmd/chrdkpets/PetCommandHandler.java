@@ -98,7 +98,7 @@ public final class PetCommandHandler implements CommandExecutor, TabCompleter {
         plugin.messages().send(player, "card-header");
         plugin.messages().send(player, "card-name",
                 "name", plugin.service().displayName(data),
-                "species", plugin.messages().plain(speciesKey(data.species())));
+                "species", plugin.messages().mini(speciesKey(data.species())));
         plugin.messages().send(player, "card-level",
                 "level", String.valueOf(level),
                 "xp", String.valueOf(data.xp()));
@@ -147,7 +147,7 @@ public final class PetCommandHandler implements CommandExecutor, TabCompleter {
             if (data.dead()) {
                 plugin.messages().send(player, "list-line-dead",
                         "name", plugin.service().displayName(data),
-                        "species", plugin.messages().plain(speciesKey(data.species())),
+                        "species", plugin.messages().mini(speciesKey(data.species())),
                         "level", String.valueOf(level),
                         "date", DATE.format(Instant.ofEpochMilli(
                                 data.diedAt() > 0L ? data.diedAt() : data.created())
@@ -155,7 +155,7 @@ public final class PetCommandHandler implements CommandExecutor, TabCompleter {
             } else {
                 plugin.messages().send(player, "list-line",
                         "name", plugin.service().displayName(data),
-                        "species", plugin.messages().plain(speciesKey(data.species())),
+                        "species", plugin.messages().mini(speciesKey(data.species())),
                         "level", String.valueOf(level),
                         "xp", String.valueOf(data.xp()));
             }
@@ -178,7 +178,7 @@ public final class PetCommandHandler implements CommandExecutor, TabCompleter {
             plugin.messages().send(player, "top-line",
                     "place", String.valueOf(place++),
                     "name", plugin.service().displayName(data),
-                    "species", plugin.messages().plain(speciesKey(data.species())),
+                    "species", plugin.messages().mini(speciesKey(data.species())),
                     "level", String.valueOf(plugin.service().level(data)),
                     "owner", data.ownerName().isBlank() ? "—" : data.ownerName());
         }

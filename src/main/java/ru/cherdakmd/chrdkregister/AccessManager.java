@@ -1582,12 +1582,12 @@ public final class AccessManager {
     /** Заголовок уведомления в Discord: ручная выдача или награда аддона. */
     static String notificationTitle(String source) {
         if (source != null && source.startsWith("streams")) {
-            return "Проходка продлена по стримерской программе";
+            return "Ранг продлён по стримерской программе";
         }
         if (source != null && source.startsWith("battlepass")) {
-            return "Проходка выдана за батлпасс";
+            return "Ранг выдан за батлпасс";
         }
-        return "Проходка выдана вручную";
+        return "Ранг выдан вручную";
     }
 
     /**
@@ -1648,7 +1648,7 @@ public final class AccessManager {
         }
         logger.info("Pass revoked for player " + targetPlayerName + ".");
         audit.log(AuditLog.PASS_REVOKE, "admin", targetPlayerName, "");
-        notifications.notify("pass.revoked", "Проходка отозвана",
+        notifications.notify("pass.revoked", "Ранг отозван",
                 "Игрок: " + targetPlayerName, "warn");
         plugin.luckPermsPassSync().onPassRevoked(targetPlayerName);
         fireEventSync(new PassRevokedEvent(targetPlayerName));
@@ -2010,7 +2010,7 @@ public final class AccessManager {
     private void sendPaymentLinkLine(Player player, String service, String url) {
         player.sendMessage(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(
                 "<click:open_url:'" + url + "'>"
-                + "<hover:show_text:'<green>Нажмите, чтобы перейти к оплате проходки</green>'>"
+                + "<hover:show_text:'<green>Нажмите, чтобы перейти к оплате ранга</green>'>"
                 + "<aqua><bold><underlined>[ Открыть страницу оплаты " + service + " ]</underlined></bold></aqua>"
                 + "</hover></click>"));
     }

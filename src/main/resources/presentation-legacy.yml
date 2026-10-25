@@ -2,7 +2,7 @@ server-menu:
   enabled: true
   items:
     - { slot: 10, icon: EMERALD,    name: "<gold><bold>Оплатить / продлить</bold></gold>",        lore: "<gray>кликабельная ссылка на оплату</gray>",  command: "pass donate" }
-    - { slot: 12, icon: PAPER,      name: "<aqua><bold>Проходка и аккаунт</bold></aqua>",         lore: "<gray>статус, тарифы, сессии, 2FA</gray>",    command: "pass menu" }
+    - { slot: 12, icon: PAPER,      name: "<aqua><bold>Ранг и аккаунт</bold></aqua>",         lore: "<gray>статус, тарифы, сессии, 2FA</gray>",    command: "pass menu" }
     - { slot: 14, icon: CLOCK,      name: "<yellow><bold>Ежедневные награды</bold></yellow>",     lore: "<gray>призы за ежедневный вход</gray>",       command: "daily" }
     - { slot: 16, icon: COMPASS,    name: "<green><bold>Телепорты</bold></green>",                lore: "<gray>точки дома и телепорты</gray>",         command: "home" }
     - { slot: -1, icon: NETHER_STAR, name: "<light_purple><bold>Ранги и прогресс</bold></light_purple>", lore: "<gray>звания по наигранному времени</gray>", command: "ranks" }
@@ -22,7 +22,7 @@ auto-messages:
   prefix: "&8[&6CHRDK&8] &r"
   # Доступна подстановка %online% — количество игроков онлайн
   messages:
-    - "&eПонравился сервер? Поддержи проект и продли проходку: &b/pass"
+    - "&eПонравился сервер? Поддержи проект и продли ранг: &b/pass"
     - "&eВключи двухфакторную защиту аккаунта: &b/2fa setup"
     - "&eСмени пароль на надёжный: &b/changepassword"
     - "&eСейчас на сервере: &b%online% &eигроков"
@@ -33,8 +33,8 @@ tablist:
   # Разметка — MiniMessage либо &-коды. Подстановки:
   #   %player% — ник игрока, %online%/%max% — онлайн и лимит,
   #   %tps% — TPS сервера, %ping% — пинг игрока, %world% — его мир,
-  #   %pass_status% — активна/истекла/нет проходки, %pass_left% — «12 дн. 3 ч.»,
-  #   %pass_days% — осталось целых дней проходки.
+  #   %pass_status% — активен/истёк/нет ранга, %pass_left% — «12 дн. 3 ч.»,
+  #   %pass_days% — осталось целых дней ранга.
   enabled: true
   # Как часто (в тиках, 20 = 1 сек) обновлять таб-лист всем игрокам. Минимум 10.
   refresh-ticks: 40
@@ -47,7 +47,7 @@ tablist:
   # Строки подвала списка
   footer:
     - ""
-    - "<gray>Проходка: <aqua>%pass_status%</aqua> <dark_gray>|</dark_gray> осталось: <aqua>%pass_left%</aqua>"
+    - "<gray>Ранг: <aqua>%pass_status%</aqua> <dark_gray>|</dark_gray> осталось: <aqua>%pass_left%</aqua>"
     - "<gray>Пинг: <yellow>%ping% мс</yellow> <dark_gray>|</dark_gray> Мир: <yellow>%world%</yellow>"
     - ""
   # Формат имени игрока в списке (TAB). Пустая строка = не менять имя

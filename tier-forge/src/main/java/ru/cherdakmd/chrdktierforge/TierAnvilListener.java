@@ -231,7 +231,7 @@ public final class TierAnvilListener implements Listener {
             plugin.messages().send(player, "rerolled-cursed");
         } else if (consumed.percent() != 0) {
             plugin.messages().send(player, "rerolled",
-                    "tier", plugin.messages().raw("tier." + consumed.id() + ".name"));
+                    "tier", plugin.messages().mini("tier." + consumed.id() + ".name"));
         }
     }
 

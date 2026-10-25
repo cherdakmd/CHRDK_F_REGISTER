@@ -172,8 +172,8 @@ public final class ClaimMenuGui implements Listener {
         } else {
             material = entry.salePrice() > 0 ? Material.GOLD_INGOT : Material.PAPER;
         }
-        String sale = entry.salePrice() > 0
-                ? plugin.messages().raw("list-sale", "price", String.valueOf(entry.salePrice()))
+        Object sale = entry.salePrice() > 0
+                ? plugin.messages().mini("list-sale", "price", String.valueOf(entry.salePrice()))
                 : "";
         return item(material, "menu-entry-name", "menu-entry-lore",
                 "world", entry.world(),
@@ -279,8 +279,8 @@ public final class ClaimMenuGui implements Listener {
                 ? entry
                 : new ClaimMenuModel.Entry(claim.world, claim.x, claim.z, claim.owner,
                         claim.paidUntil, claim.salePrice, claim.isOwner(player.getName()));
-        String sale = actual.salePrice() > 0
-                ? plugin.messages().raw("list-sale", "price", String.valueOf(actual.salePrice()))
+        Object sale = actual.salePrice() > 0
+                ? plugin.messages().mini("list-sale", "price", String.valueOf(actual.salePrice()))
                 : "";
         plugin.messages().send(player, "menu-info-line",
                 "world", actual.world(),

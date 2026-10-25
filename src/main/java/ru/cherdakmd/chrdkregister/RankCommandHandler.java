@@ -148,9 +148,9 @@ public final class RankCommandHandler implements CommandExecutor, TabCompleter {
                 messages.send(sender, "rankadmin.info",
                         "player", target,
                         "level", level <= 0 ? "—" : String.valueOf(level),
-                        "rank", level <= 0 ? messages.raw("rankadmin.none")
-                                : access.config().ranks().decorate(level,
-                                        access.config().ranks().name(level)),
+                        "rank", level <= 0 ? messages.mini("rankadmin.none")
+                                : Messages.trusted(access.config().ranks().decorate(level,
+                                        access.config().ranks().name(level))),
                         "until", until <= 0 ? messages.raw("rank.permanent")
                                 : AccessManager.formatTimestamp(until));
             }

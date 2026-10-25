@@ -32,26 +32,39 @@ public final class TabListService implements Listener {
 
     /** Снимок настроек из {@code config.yml}. */
     record Settings(boolean enabled, int refreshTicks, List<String> header, List<String> footer,
-                    String nameFormat, List<String> pinnedNames) {
+                    String nameFormat, List<String> pinnedNames, boolean showRankName) {
+        Settings {
+            // Пустой формат — не трогаем чужие префиксы; название ранга без
+            // формата никчему.
+            showRankName = showRankName && nameFormat != null && !nameFormat.isBlank();
+        }
+
         static Settings disabled() {
-            return new Settings(false, 40, List.of(), List.of(), "", List.of());
+            return new Settings(false, 40, List.of(), List.of(), "", List.of(), false);
         }
     }
 
     /** Значения подстановок одного игрока — ровно то, что знает юнит-тест. */
     record TabContext(String playerName, int online, int maxPlayers, double tps, int ping,
                       String world, String passStatus, String passLeft, long passDaysLeft,
-                      PresentationContext presentation, String taggedName) {
+                      PresentationContext presentation, String taggedName, String rankTag) {
+        TabContext(String playerName, int online, int maxPlayers, double tps, int ping, String world,
+                   String passStatus, String passLeft, long passDaysLeft, PresentationContext presentation,
+                   String taggedName) {
+            this(playerName, online, maxPlayers, tps, ping, world, passStatus, passLeft, passDaysLeft,
+                    presentation, taggedName, "");
+        }
+
         TabContext(String playerName, int online, int maxPlayers, double tps, int ping, String world,
                    String passStatus, String passLeft, long passDaysLeft, PresentationContext presentation) {
             this(playerName, online, maxPlayers, tps, ping, world, passStatus, passLeft, passDaysLeft,
-                    presentation, playerName);
+                    presentation, playerName, "");
         }
 
         TabContext(String playerName, int online, int maxPlayers, double tps, int ping, String world,
                    String passStatus, String passLeft, long passDaysLeft) {
             this(playerName, online, maxPlayers, tps, ping, world, passStatus, passLeft, passDaysLeft,
-                    new PresentationContext("", "", "", "", ""), playerName);
+                    new PresentationContext("", "", "", "", ""), playerName, "");
         }
 
         /** Пары «ключ-значение» для Messages.fill: ключ → строковое значение. */
@@ -66,8 +79,10 @@ public final class TabListService implements Listener {
                     "pass_status", passStatus,
                     "pass_left", passLeft,
                     "pass_days", passDaysLeft,
-                    // Ник с метками аддонов — доверенная разметка, поэтому Trusted, а не строка.
-                    "player_tagged", Messages.trusted(taggedName)};
+                    // Ник с метками аддонов и хвост с названием ранга — доверенная
+                    // разметка, поэтому Trusted, а не строка.
+                    "player_tagged", Messages.trusted(taggedName),
+                    "rank_tag", Messages.trusted(rankTag)};
             Object[] extra = presentation.placeholders();
             Object[] result = java.util.Arrays.copyOf(base, base.length + extra.length);
             System.arraycopy(extra, 0, result, base.length, extra.length);
@@ -104,7 +119,8 @@ public final class TabListService implements Listener {
                 cfg.getStringList(root + ".header"),
                 cfg.getStringList(root + ".footer"),
                 cfg.getString(root + ".player-name-format", ""),
-                cfg.getStringList(root + ".pinned-names"));
+                cfg.getStringList(root + ".pinned-names"),
+                cfg.getBoolean(root + ".show-rank-name", true));
         reschedule();
         syncPinned();
         if (settings.enabled()) {
@@ -173,7 +189,8 @@ public final class TabListService implements Listener {
         player.sendPlayerListHeaderAndFooter(header, footer);
         managedHeaders.add(player.getUniqueId());
         if (!settings.nameFormat().isBlank()) {
-            player.playerListName(renderName(messages, settings.nameFormat(), context));
+            player.playerListName(renderName(messages,
+                    nameFormat(settings.nameFormat(), settings.showRankName()), context));
             managedNames.add(player.getUniqueId());
         } else if (managedNames.remove(player.getUniqueId())) player.playerListName(null);
     }
@@ -284,6 +301,22 @@ public final class TabListService implements Listener {
         return messages.renderTemplate(format, context.placeholders());
     }
 
+    /**
+     * Формат имени с названием ранга.
+     *
+     * <p>Старые конфиги знают только {@code %player_tagged%} — знак и цвет без
+     * слова «Покровитель». Чтобы обновление подхватилось без правки файла,
+     * суффикс {@code %rank_tag%} добавляется на лету, если его ещё нет в
+     * шаблоне; {@code tablist.show-rank-name: false} возвращает прежний вид.</p>
+     */
+    static String nameFormat(String format, boolean showRankName) {
+        if (format == null || format.isBlank() || !showRankName
+                || format.contains("%rank_tag%")) {
+            return format;
+        }
+        return format + "%rank_tag%";
+    }
+
     // ------------------------------ сборка контекста -----------------------------
 
     private TabContext contextOf(Player player, long nowMillis) {
@@ -310,7 +343,38 @@ public final class TabListService implements Listener {
                 PresentationContext.of(account, accessManager.getStage(player), nowMillis,
                         accessManager.config().trialEnabled() && accessManager.store().isTrialEligible(player.getName(), player.getUniqueId()),
                         accessManager.config().trialDays(), plugin.messages(), navigation(player)),
-                nameDecorator.apply(player.getName()));
+                nameDecorator.apply(player.getName()), rankTag(player, nowMillis));
+    }
+
+    /**
+     * Хвост « · Покровитель» для таба: название ступени в её оформлении.
+     *
+     * <p>Возвращает готовую MiniMessage-строку (её подставляет
+     * {@code %rank_tag%} как {@link Messages.Trusted}); без ранга — пусто,
+     * чтобы в списке не оставалось висящего разделителя.</p>
+     */
+    private String rankTag(Player player, long nowMillis) {
+        RankSettings ranks = accessManager.config().ranks();
+        int level = accessManager.store().rankLevel(player.getName(), nowMillis);
+        return rankTagText(ranks, level);
+    }
+
+    /**
+     * Хвост с названием ступени по настройкам и уровню — чистая логика для теста.
+     *
+     * <p>{@code ranks.show-name-in-chat} уже дописывает ступень в
+     * {@code %player_tagged%} («ник · Покровитель»): второй раз то же слово
+     * в табе не нужно.</p>
+     */
+    static String rankTagText(RankSettings ranks, int level) {
+        if (ranks == null || !ranks.enabled() || ranks.showNameInChat()) {
+            return "";
+        }
+        RankTier tier = level <= 0 ? null : ranks.tier(level);
+        if (tier == null || tier.name().isBlank()) {
+            return "";
+        }
+        return " <dark_gray>·</dark_gray> " + tier.decorate(tier.name());
     }
 
     private String navigation(Player player) {

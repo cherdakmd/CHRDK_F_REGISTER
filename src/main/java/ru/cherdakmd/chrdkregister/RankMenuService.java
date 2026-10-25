@@ -119,7 +119,10 @@ public final class RankMenuService implements Listener {
             return item;
         }
         meta.displayName(messages.get("rank.card-name",
-                "badge", tier.badge(), "rank", tier.decorate(tier.name())));
+                "badge", tier.badge(),
+                // %rank% — готовая разметка ступени: без Trusted MiniMessage
+                // показал бы в подсказке литералы <gradient:…>.
+                "rank", Messages.trusted(tier.decorate(tier.name()))));
         List<Component> lore = new ArrayList<>();
         ShopProduct month = cardProduct(level, false);
         ShopProduct year = cardProduct(level, true);
@@ -228,7 +231,7 @@ public final class RankMenuService implements Listener {
             ShopProduct year = cardProduct(tier.level(), true);
             messages.send(sender, "rank.shop-entry",
                     "badge", tier.badge(),
-                    "rank", tier.decorate(tier.name()),
+                    "rank", Messages.trusted(tier.decorate(tier.name())),
                     "month", month == null ? "—" : money(month.priceRubles()),
                     "year", year == null ? "—" : money(year.priceRubles()));
         }
@@ -259,7 +262,7 @@ public final class RankMenuService implements Listener {
         messages.send(sender, "rank.my-line",
                 "player", playerName,
                 "badge", ranks.badge(level),
-                "rank", ranks.decorate(level, ranks.name(level)),
+                "rank", Messages.trusted(ranks.decorate(level, ranks.name(level))),
                 "until", until <= 0 ? messages.raw("rank.permanent") : AccessManager.formatTimestamp(until),
                 "days", until <= 0 ? "∞" : String.valueOf(PlaceholderValues.wholeDaysLeft(until, now)));
     }
@@ -295,7 +298,7 @@ public final class RankMenuService implements Listener {
             long until = access.store().rankUntil(account.playerName);
             messages.send(sender, "rank.top-entry",
                     "badge", ranks.badge(level),
-                    "rank", ranks.decorate(level, ranks.name(level)),
+                    "rank", Messages.trusted(ranks.decorate(level, ranks.name(level))),
                     "player", account.playerName,
                     "until", account.rankPermanent || until <= 0
                             ? messages.raw("rank.permanent") : AccessManager.formatTimestamp(until));
@@ -356,7 +359,7 @@ public final class RankMenuService implements Listener {
         RankSettings ranks = access.config().ranks();
         if (level <= current) {
             messages.send(player, level == current ? "rank.already-current" : "rank.already-higher",
-                    "rank", ranks.decorate(level, ranks.name(level)));
+                    "rank", Messages.trusted(ranks.decorate(level, ranks.name(level))));
             return;
         }
         ShopProduct month = cardProduct(level, false);
@@ -369,7 +372,7 @@ public final class RankMenuService implements Listener {
             return;
         }
         messages.send(player, "rank.buy-link",
-                "rank", ranks.decorate(level, ranks.name(level)),
+                "rank", Messages.trusted(ranks.decorate(level, ranks.name(level))),
                 "price", money(month.priceRubles()),
                 "url", access.config().effectiveDonateUrl(),
                 "label", access.config().effectiveDonateLabel());

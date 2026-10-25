@@ -48,7 +48,7 @@ public final class TableListener implements Listener {
         }
         if (roll == null) return;
         plugin.messages().send(player, roll.def().curse() ? "table-cursed" : "table-added",
-                "name", plugin.messages().raw("en." + roll.def().id() + ".name"),
+                "name", plugin.messages().mini("en." + roll.def().id() + ".name"),
                 "levelroman", EnchantCodec.roman(roll.level()));
         // маленький колдовской флёр: убираем известную гибель удачи
         try {

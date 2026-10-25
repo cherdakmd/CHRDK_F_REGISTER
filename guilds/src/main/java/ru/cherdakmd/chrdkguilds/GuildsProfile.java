@@ -46,7 +46,7 @@ final class GuildsProfile implements ChrdkRegisterApi.ProfileProvider {
                     "name", guild.name(),
                     "tag", guild.tag().isEmpty() ? "—" : guild.tag()));
             lines.add(messages.get("profile-rank",
-                    "rank", messages.plain("rank." + (rank == null
+                    "rank", messages.mini("rank." + (rank == null
                             ? GuildRank.MEMBER.id() : rank.id()))));
             lines.add(messages.get("profile-members",
                     "count", String.valueOf(guild.size()),
@@ -61,7 +61,7 @@ final class GuildsProfile implements ChrdkRegisterApi.ProfileProvider {
                         "opponent", opponent == null ? "?" : opponent.label(),
                         "score", war.pointsOf(guild.id()) + ":"
                                 + war.pointsOf(war.opponentOf(guild.id())),
-                        "state", messages.plain(war.pending()
+                        "state", messages.mini(war.pending()
                                 ? "war-state-pending" : "war-state-active")));
             } else {
                 lines.add(messages.get("profile-glory",

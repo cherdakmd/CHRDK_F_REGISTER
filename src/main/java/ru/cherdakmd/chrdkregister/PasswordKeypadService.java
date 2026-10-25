@@ -142,11 +142,11 @@ public final class PasswordKeypadService implements Listener {
     }
 
     /** Человекочитаемое имя раскладки (литералы — чтобы MessagesTest видел ключи). */
-    private String pageLabel(KeypadRules.Page page) {
+    private Messages.Trusted pageLabel(KeypadRules.Page page) {
         return switch (page) {
-            case LOWER -> messages.raw("button-login.page-lower");
-            case UPPER -> messages.raw("button-login.page-upper");
-            case DIGITS_SYMBOLS -> messages.raw("button-login.page-symbols");
+            case LOWER -> messages.mini("button-login.page-lower");
+            case UPPER -> messages.mini("button-login.page-upper");
+            case DIGITS_SYMBOLS -> messages.mini("button-login.page-symbols");
         };
     }
 

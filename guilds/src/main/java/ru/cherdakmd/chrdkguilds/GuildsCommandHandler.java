@@ -268,7 +268,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
             Player target = Bukkit.getPlayer(targetId);
             if (target != null) {
                 plugin.messages().send(target, "promote-notice",
-                        "rank", plugin.messages().plain("rank.officer"));
+                        "rank", plugin.messages().mini("rank.officer"));
             }
         }
     }
@@ -294,7 +294,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
             Player target = Bukkit.getPlayer(targetId);
             if (target != null) {
                 plugin.messages().send(target, "demote-notice",
-                        "rank", plugin.messages().plain("rank.member"));
+                        "rank", plugin.messages().mini("rank.member"));
             }
         }
     }
@@ -346,7 +346,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
                 "name", arg(result, "name"),
                 "treasury", arg(result, "treasury"),
                 "members", arg(result, "members"),
-                "war", plugin.messages().plain(arg(result, "war")));
+                "war", plugin.messages().mini(arg(result, "war")));
         plugin.requestSave();
         Bukkit.getServer().broadcast(plugin.messages().get("disband-broadcast",
                 "name", arg(result, "name")));
@@ -490,7 +490,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
             plugin.messages().send(sender, "info-war",
                     "name", opponent == null ? "?" : opponent.label(),
                     "score", war.pointsOf(guild.id()) + ":" + war.pointsOf(war.opponentOf(guild.id())),
-                    "state", plugin.messages().plain(war.pending()
+                    "state", plugin.messages().mini(war.pending()
                             ? "war-state-pending" : "war-state-active"));
         }
     }
@@ -537,11 +537,11 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
         for (UUID member : guild.memberIds()) {
             plugin.messages().send(sender, "members-line",
                     "player", nameOf(member),
-                    "rank", plugin.messages().plain("rank." + (guild.rankOf(member) == null
+                    "rank", plugin.messages().mini("rank." + (guild.rankOf(member) == null
                             ? GuildRank.MEMBER.id() : guild.rankOf(member).id())),
                     "online", Bukkit.getPlayer(member) == null
-                            ? plugin.messages().plain("status-offline")
-                            : plugin.messages().plain("status-online"));
+                            ? plugin.messages().mini("status-offline")
+                            : plugin.messages().mini("status-online"));
         }
     }
 
@@ -659,7 +659,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
         plugin.messages().send(sender, "war-status",
                 "name", guild.label(),
                 "opponent", opponent == null ? "?" : opponent.label(),
-                "state", plugin.messages().plain(war.pending()
+                "state", plugin.messages().mini(war.pending()
                         ? "war-state-pending" : "war-state-active"),
                 "score", war.pointsOf(guild.id()) + ":"
                         + war.pointsOf(war.opponentOf(guild.id())),
@@ -718,7 +718,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
                 plugin.messages().send(sender, "admin-disbanded",
                         "name", arg(result, "name"),
                         "treasury", arg(result, "treasury"),
-                        "war", plugin.messages().plain(arg(result, "war")));
+                        "war", plugin.messages().mini(arg(result, "war")));
                 plugin.requestSave();
             }
             case "endwar" -> {
@@ -765,7 +765,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
                             "time", record.time(),
                             "challenger", record.challenger(),
                             "target", record.target(),
-                            "result", plugin.messages().plain(warResultKey(record.result())),
+                            "result", plugin.messages().mini(warResultKey(record.result())),
                             "wager", GuildMath.diamonds(record.wager()));
                     shown++;
                 }

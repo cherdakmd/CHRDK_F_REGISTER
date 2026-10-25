@@ -33,9 +33,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class MessagesTest {
     private static final Logger LOGGER = Logger.getLogger("MessagesTest");
 
-    /** Вызовы вида messages.get("ключ", ...) и messages().send("ключ", ...). */
+    /** Вызовы вида messages.get("ключ", ...), messages().send(...) и messages().mini(...). */
     private static final Pattern CALL = Pattern.compile(
-            "messages(?:\\(\\))?\\.(?:send|sendList|get|getList|raw|plain|has)\\(");
+            "messages(?:\\(\\))?\\.(?:send|sendList|get|getList|raw|mini|plain|has)\\(");
     private static final Pattern LITERAL = Pattern.compile("\"([a-z][a-z0-9.\\-]*)\"");
     /**
      * Ключи, которые код выбирает не напрямую в вызове messages.*: наборы подсказок PasswordPolicy,

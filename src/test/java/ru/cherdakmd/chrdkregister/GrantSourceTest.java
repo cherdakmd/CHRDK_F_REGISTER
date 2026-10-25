@@ -35,10 +35,10 @@ class GrantSourceTest {
 
     @Test
     void notificationTitleMentionsStreams() {
-        assertEquals("Проходка продлена по стримерской программе",
+        assertEquals("Ранг продлён по стримерской программе",
                 AccessManager.notificationTitle("streams"));
-        assertEquals("Проходка выдана за батлпасс",
+        assertEquals("Ранг выдан за батлпасс",
                 AccessManager.notificationTitle("battlepass:claim-all"));
-        assertEquals("Проходка выдана вручную", AccessManager.notificationTitle("manual"));
+        assertEquals("Ранг выдан вручную", AccessManager.notificationTitle("manual"));
     }
 }

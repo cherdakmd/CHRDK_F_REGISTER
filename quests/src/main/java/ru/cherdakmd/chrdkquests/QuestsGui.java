@@ -138,16 +138,16 @@ public final class QuestsGui implements Listener {
         QuestFaction faction = plugin.service().faction(id);
         List<Component> lore = new ArrayList<>();
         lore.add(plugin.messages().get("menu-info-faction",
-                "faction", faction == null ? plugin.messages().plain("faction-nobody") : faction.name()));
+                "faction", faction == null ? plugin.messages().mini("faction-nobody") : faction.name()));
         if (faction != null) {
             int reputation = plugin.service().reputation(id);
             lore.add(plugin.messages().get("menu-info-rank",
-                    "rank", plugin.messages().plain("rank." + plugin.service().rankId(id)),
+                    "rank", plugin.messages().mini("rank." + plugin.service().rankId(id)),
                     "number", String.valueOf(plugin.service().rankNumber(id))));
             lore.add(plugin.messages().get("menu-info-reputation",
                     "reputation", String.valueOf(reputation),
                     "next", faction.nextThreshold(reputation) < 0
-                            ? plugin.messages().plain("faction-max")
+                            ? plugin.messages().mini("faction-max")
                             : String.valueOf(faction.nextThreshold(reputation))));
         }
         lore.add(plugin.messages().get("menu-info-done",
@@ -173,7 +173,7 @@ public final class QuestsGui implements Listener {
         lore.add(plugin.messages().get("menu-faction-reputation",
                 "reputation", String.valueOf(reputation)));
         lore.add(plugin.messages().get("menu-faction-rank",
-                "rank", plugin.messages().plain("rank." + faction.rankId(reputation))));
+                "rank", plugin.messages().mini("rank." + faction.rankId(reputation))));
         lore.add(plugin.messages().get(current ? "menu-faction-current" : "menu-faction-join-hint"));
         return item(faction.icon(), null, faction.name(), lore);
     }
@@ -195,7 +195,7 @@ public final class QuestsGui implements Listener {
         QuestFaction faction = plugin.config().faction(npc.factionId());
         lore.add(plugin.messages().get("menu-npc-faction",
                 "faction", faction == null
-                        ? plugin.messages().plain("faction-neutral") : faction.name()));
+                        ? plugin.messages().mini("faction-neutral") : faction.name()));
         lore.add(plugin.messages().get("menu-npc-progress",
                 "done", String.valueOf(done),
                 "total", String.valueOf(npc.quests().size())));

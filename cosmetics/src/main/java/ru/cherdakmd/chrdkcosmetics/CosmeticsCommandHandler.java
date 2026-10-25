@@ -77,7 +77,7 @@ final class CosmeticsCommandHandler implements CommandExecutor, TabCompleter {
             hasLocked |= !open;
             String key = open ? "line" : "line-locked";
             plugin.messages().send(player, key,
-                    "state", plugin.messages().raw(
+                    "state", plugin.messages().mini(
                             !open ? "state-locked" : def.id().equals(selected) ? "state-on" : "state-off"),
                     "name", def.displayName(), "id", def.id());
         }

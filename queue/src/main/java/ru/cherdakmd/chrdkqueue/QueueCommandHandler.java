@@ -49,7 +49,7 @@ public final class QueueCommandHandler implements CommandExecutor, TabCompleter 
                             "name", entry.name(),
                             "wait", waitMinutes,
                             "reserved", plugin.queueService().isReservedFor(entry.name())
-                                    ? plugin.messages().raw("info-reserved-tag") : "");
+                                    ? plugin.messages().mini("info-reserved-tag") : "");
                 }
                 return true;
             }

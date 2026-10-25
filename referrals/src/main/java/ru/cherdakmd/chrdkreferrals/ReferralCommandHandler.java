@@ -63,7 +63,7 @@ public final class ReferralCommandHandler implements TabExecutor {
         service.store().linkOf(player.getName()).ifPresentOrElse(
                 link -> plugin.messages().send(player, "ref.status-linked-to",
                         "inviter", link.inviter,
-                        "consumed", link.consumed ? plugin.messages().raw("ref.status-consumed") : ""),
+                        "consumed", link.consumed ? plugin.messages().mini("ref.status-consumed") : ""),
                 () -> plugin.messages().send(player, "ref.status-linked-none"));
         plugin.messages().send(player, "ref.how-it-works",
                 "player", player.getName(), "bonus", plugin.config().bonusDaysInviter());

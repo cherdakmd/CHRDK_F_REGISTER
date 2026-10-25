@@ -132,14 +132,14 @@ public final class TierIdentificationListener implements Listener {
                 plugin.messages().send(player, "identified-cursed");
             } else {
                 plugin.messages().send(player, "identified",
-                        "tier", plugin.messages().raw("tier." + roll.id() + ".name"));
+                        "tier", plugin.messages().mini("tier." + roll.id() + ".name"));
             }
         } else if (batch.allCursed()) {
             plugin.messages().send(player, "identified-batch-cursed", "count", batch.total());
         } else {
             plugin.messages().send(player, "identified-batch",
                     "count", batch.total(),
-                    "tier", plugin.messages().raw("tier." + batch.best().id() + ".name"));
+                    "tier", plugin.messages().mini("tier." + batch.best().id() + ".name"));
         }
         playSound(player, batch.best());
         return batch.total();

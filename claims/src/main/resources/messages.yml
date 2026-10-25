@@ -195,7 +195,7 @@ claims:
   claim-lost: "<red>Приват %where% освобождён за долги — защита снята.</red>"
   debt-warning: "<red>Приват %where% не оплачен: долг %days% сут. из %grace%. Пополните казну: /claim deposit.</red>"
   rent-warning: "<yellow>Рента по приватам: казна %balance% ⛁, нужно минимум %need% ⛁ до %date%. Пополните: /claim deposit.</yellow>"
-  limit-shrunk: "<yellow>Проходка закончилась: лимит приватов снизился до %limit%. У вас %claims% чанков — существующие сохранены, новые не купить.</yellow>"
+  limit-shrunk: "<yellow>Ранг закончился: лимит приватов снизился до %limit%. У вас %claims% чанков — существующие сохранены, новые не купить.</yellow>"
   rent-paid-line: "<gray>Рента списана: %amount% ⛁ за приваты (казна: %balance% ⛁).</gray>"
   # админка
   near-usage: "<gray>/claim near [радиус %min%..%max%] — чужие приваты вокруг (по умолчанию %default% чанков).</gray>"

@@ -69,7 +69,7 @@ public final class DailyCommandHandler implements TabExecutor {
                 boolean claimed = progress.lastClaimDay >= DailyStore.dayOf(System.currentTimeMillis());
                 plugin.messages().send(player, "daily.info",
                         "streak", progress.streak, "total", progress.totalClaims,
-                        "claimed", plugin.messages().raw(claimed ? "daily.claimed-yes" : "daily.claimed-no"));
+                        "claimed", plugin.messages().mini(claimed ? "daily.claimed-yes" : "daily.claimed-no"));
             }
             default -> plugin.messages().send(player, "daily.usage");
         }
@@ -106,14 +106,14 @@ public final class DailyCommandHandler implements TabExecutor {
             if (uuid == null) {
                 plugin.messages().send(sender, "admin.lookup",
                         "player", name, "streak", "—", "total", "—",
-                        "claimed", plugin.messages().raw("daily.claimed-no"));
+                        "claimed", plugin.messages().mini("daily.claimed-no"));
                 return true;
             }
             DailyStore.Progress progress = plugin.store().progressOf(uuid);
             boolean claimed = progress.lastClaimDay >= DailyStore.dayOf(System.currentTimeMillis());
             plugin.messages().send(sender, "admin.lookup",
                     "player", name, "streak", progress.streak, "total", progress.totalClaims,
-                    "claimed", plugin.messages().raw(claimed ? "daily.claimed-yes" : "daily.claimed-no"));
+                    "claimed", plugin.messages().mini(claimed ? "daily.claimed-yes" : "daily.claimed-no"));
             return true;
         }
         if (args.length >= 3 && "set".equalsIgnoreCase(args[0])) {
@@ -130,7 +130,7 @@ public final class DailyCommandHandler implements TabExecutor {
             if (uuid == null) {
                 plugin.messages().send(sender, "admin.lookup", "player", name,
                         "streak", "—", "total", "—",
-                        "claimed", plugin.messages().raw("daily.claimed-no"));
+                        "claimed", plugin.messages().mini("daily.claimed-no"));
                 return true;
             }
             plugin.store().setStreak(uuid, streak, System.currentTimeMillis());

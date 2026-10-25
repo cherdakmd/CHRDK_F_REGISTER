@@ -149,7 +149,7 @@ public final class EnchantItems {
         if (meta != null) {
             meta.displayName(plugin.messages().get(
                     def.curse() ? "gui-book-name-curse" : "gui-book-name",
-                    "name", plugin.messages().raw("en." + def.id() + ".name")));
+                    "name", plugin.messages().mini("en." + def.id() + ".name")));
             book.setItemMeta(meta);
         }
         return book;
@@ -208,7 +208,7 @@ public final class EnchantItems {
             if (def == null) continue;
             // 1.4.128: проклятия пишутся красным — по лору видно, что это минус
             lore.add(plugin.messages().get(def.curse() ? "lore-line-curse" : "lore-line",
-                    "name", plugin.messages().raw("en." + def.id() + ".name"),
+                    "name", plugin.messages().mini("en." + def.id() + ".name"),
                     "levelroman", EnchantCodec.roman(entry.getValue())));
         }
         meta.lore(lore.isEmpty() ? null : lore);

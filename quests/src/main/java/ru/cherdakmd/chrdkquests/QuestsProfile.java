@@ -46,11 +46,11 @@ final class QuestsProfile implements ChrdkRegisterApi.ProfileProvider {
             int reputation = plugin.service().reputation(id);
             lines.add(messages.get("profile-faction",
                     "faction", faction.name(),
-                    "rank", messages.plain("rank." + plugin.service().rankId(id))));
+                    "rank", messages.mini("rank." + plugin.service().rankId(id))));
             lines.add(messages.get("profile-reputation",
                     "reputation", String.valueOf(reputation),
                     "next", faction.nextThreshold(reputation) < 0
-                            ? messages.plain("faction-max")
+                            ? messages.mini("faction-max")
                             : String.valueOf(faction.nextThreshold(reputation))));
         }
         lines.add(messages.get("profile-progress",

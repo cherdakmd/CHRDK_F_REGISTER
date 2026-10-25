@@ -63,7 +63,7 @@ streams:
   "unlinked-platform": "<yellow>Привязка %platform% (%channel%) удалена.</yellow> <gray>Осталось каналов: %left%.</gray>"
   "not-linked-platform": "<red>На площадке %platform% канал не привязан.</red>"
   "awarded": "<gold>✦ Эфир засчитан:</gold> <green>+%days% дн. ранга</green> <gray>(сегодня %today% / %max%)</gray>"
-  "awarded-until": "<gray>Проходка активна до %until%.</gray>"
+  "awarded-until": "<gray>Ранг активен до %until%.</gray>"
   "award-error": "<red>Не удалось выдать награду: %error%</red>"
 
   "stats-header": "<gold><bold>Стримерская программа</bold></gold> <gray>· стримеров: %count% · каналов: %channels%</gray>"
@@ -98,7 +98,7 @@ streams:
   "watch-error": "<red>Платформа не ответила: %error%</red>"
   "watch-tick": "<green>+%minutes% мин. просмотра.</green> <gray>До суток: %left% мин. · сегодня: %today% / %max%</gray>"
   "watch-awarded": "<gold>✦ Просмотр засчитан:</gold> <green>+%days% дн. ранга</green> <gray>(сегодня %today% / %max%)</gray>"
-  "watch-awarded-until": "<gray>Проходка активна до %until%.</gray>"
+  "watch-awarded-until": "<gray>Ранг активен до %until%.</gray>"
   "watch-award-error": "<red>Не удалось выдать награду: %error%</red>"
   "watch-left": "<yellow>Вы больше не смотрите канал %streamer%.</yellow> <gray>Прогресс сохранён.</gray>"
   "watch-checking": "<gray>Проверяем, идёт ли эфир…</gray>"

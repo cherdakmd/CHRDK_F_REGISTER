@@ -181,7 +181,7 @@ public final class OrdersGui implements Listener {
         if (left > 0) {
             String next = plugin.config().nextRankId(reputation);
             lore.add(plugin.messages().get("menu-info-next",
-                    "rank", plugin.messages().plain("rank." + next),
+                    "rank", plugin.messages().mini("rank." + next),
                     "left", String.valueOf(left)));
         } else {
             lore.add(plugin.messages().get("menu-info-max"));

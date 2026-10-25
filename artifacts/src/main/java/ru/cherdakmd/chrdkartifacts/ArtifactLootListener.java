@@ -11,6 +11,8 @@ import org.bukkit.event.world.LootGenerateEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.loot.LootTable;
 
+import ru.cherdakmd.chrdkregister.Messages;
+
 import java.util.Random;
 
 /**
@@ -62,7 +64,7 @@ public final class ArtifactLootListener implements Listener {
         ItemStack drop = plugin.items().build(def, 1);
         event.getDrops().add(drop);
         plugin.messages().send(killer, "dropped",
-                "name", plugin.items().nameOf(def));
+                "name", Messages.trusted(plugin.items().nameOf(def)));
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -85,6 +87,6 @@ public final class ArtifactLootListener implements Listener {
         // на берегу или в лодке находка иначе уходит в воду и тонет.
         player.getWorld().dropItem(item.getLocation(), plugin.items().build(def, 1));
         plugin.messages().send(player, "dropped",
-                "name", plugin.items().nameOf(def));
+                "name", Messages.trusted(plugin.items().nameOf(def)));
     }
 }

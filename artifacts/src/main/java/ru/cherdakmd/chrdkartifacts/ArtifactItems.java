@@ -8,6 +8,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
+import ru.cherdakmd.chrdkregister.Messages;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -198,7 +199,7 @@ public final class ArtifactItems {
         lore.add(plugin.messages().get(lineKey));
         String desc = ArtifactText.loreOrEmpty(plugin.messages().raw("art." + def.id() + ".lore"));
         if (!desc.isEmpty()) {
-            lore.add(plugin.messages().get("lore-desc", "text", desc));
+            lore.add(plugin.messages().get("lore-desc", "text", Messages.trusted(desc)));
         }
         if (traits != null) {
             for (Map.Entry<String, Integer> entry : traits.entrySet()) {
@@ -209,9 +210,9 @@ public final class ArtifactItems {
                 // 1.4.129: ▲ — польза, ▼ — вред; уровень римской цифрой
                 lore.add(plugin.messages().get(
                         trait.polarity().good() ? "trait-line-good" : "trait-line-bad",
-                        "name", plugin.messages().raw("trait." + trait.id() + ".name"),
+                        "name", plugin.messages().mini("trait." + trait.id() + ".name"),
                         "levelroman", ArtifactTraitCodec.roman(entry.getValue()),
-                        "desc", plugin.messages().raw("trait." + trait.id() + ".desc")));
+                        "desc", plugin.messages().mini("trait." + trait.id() + ".desc")));
             }
         }
         if (def.mode() == ArtifactDef.Mode.ACTIVE) {

@@ -49,8 +49,8 @@ public final class HatCommand implements CommandExecutor {
         int level = access.store().rankLevel(player.getName(), System.currentTimeMillis());
         if (!allowed(level, minLevel, player.hasPermission("chrdkregister.hat"))) {
             messages.send(player, "hat.locked", "level", minLevel,
-                    "rank", access.config().ranks().decorate(minLevel,
-                            access.config().ranks().name(minLevel)));
+                    "rank", Messages.trusted(access.config().ranks().decorate(minLevel,
+                            access.config().ranks().name(minLevel))));
             return true;
         }
         PlayerInventory inventory = player.getInventory();

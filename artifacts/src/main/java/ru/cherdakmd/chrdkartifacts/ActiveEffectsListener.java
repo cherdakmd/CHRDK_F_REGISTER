@@ -22,6 +22,8 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 
+import ru.cherdakmd.chrdkregister.Messages;
+
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
@@ -110,7 +112,8 @@ public final class ActiveEffectsListener implements Listener {
             player.setLevel(player.getLevel() - xpCost);
         }
         plugin.cooldowns().start(player.getUniqueId(), id, now, plugin.config().cooldownSeconds(def));
-        plugin.messages().send(player, "activated", "name", plugin.items().nameOf(def));
+        plugin.messages().send(player, "activated",
+                "name", Messages.trusted(plugin.items().nameOf(def)));
         plugin.feedback().activated(player, def);
     }
 

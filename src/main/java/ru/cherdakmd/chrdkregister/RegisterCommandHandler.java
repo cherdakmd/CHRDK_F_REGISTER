@@ -520,7 +520,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                             "status", record.status,
                             "note", record.note.isBlank() ? "" : " (" + record.note + ")",
                             "suggested", record.suggestedName.isBlank()
-                                    ? "" : messages.raw("donation.suggested", "name", record.suggestedName),
+                                    ? "" : messages.mini("donation.suggested", "name", record.suggestedName),
                             "created", AccessManager.formatTimestamp(record.createdAt));
                 }
                 messages.send(sender, "donation.pending-hint", "label", label);
@@ -628,16 +628,20 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 }
                 for (RegistrationStore.DonationRecord record : shown) {
                     RegistrationStore.DonationStatus status = record.donationStatus();
+                    // detail собирается вручную: в нём и ник из журнала, и готовая
+                    // подсказка «donation.suggested». Пользовательские части
+                    // экранируются поштучно, поэтому всю строку можно пометить
+                    // доверенной — иначе разметка подсказки вышла бы литералами.
                     String detail;
                     if (status == RegistrationStore.DonationStatus.GRANTED) {
-                        detail = " → " + record.grantedTo + " (+" + record.days + " дн.)"
+                        detail = " → " + Messages.escape(record.grantedTo) + " (+" + record.days + " дн.)"
                                 + (record.decidedBy == null || record.decidedBy.isBlank()
-                                        ? "" : " (" + record.decidedBy + ")");
+                                        ? "" : " (" + Messages.escape(record.decidedBy) + ")");
                     } else if (status == RegistrationStore.DonationStatus.REJECTED) {
                         detail = record.decidedBy == null || record.decidedBy.isBlank()
-                                ? "" : " (" + record.decidedBy + ")";
+                                ? "" : " (" + Messages.escape(record.decidedBy) + ")";
                     } else {
-                        detail = (record.note.isBlank() ? "" : " (" + record.note + ")")
+                        detail = (record.note.isBlank() ? "" : " (" + Messages.escape(record.note) + ")")
                                 + (record.suggestedName.isBlank() ? ""
                                         : messages.raw("donation.suggested", "name", record.suggestedName));
                     }
@@ -648,7 +652,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                             "donor", record.donorName,
                             "amount", record.amountRubles(),
                             "status", donationStatusLabel(status),
-                            "detail", detail,
+                            "detail", Messages.trusted(detail),
                             "created", AccessManager.formatTimestamp(record.createdAt));
                 }
                 messages.send(sender, "donation.journal-hint", "label", label);
@@ -1138,7 +1142,8 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                     "processed", card.processedTransactions(),
                     "sum", DonationService.formatRubles(card.sessionSumKopecks()));
         }
-        messages.send(sender, "stats.tiers", "tiers", DonationService.describeTiers(cfg, messages));
+        messages.send(sender, "stats.tiers", "tiers",
+                Messages.trusted(DonationService.describeTiers(cfg, messages)));
     }
 
     private void showDoctor(CommandSender sender) {
@@ -1660,14 +1665,15 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         messages.send(sender, "shop.header",
                 "url", accessManager.config().effectiveDonateUrl());
         for (ShopProduct product : catalog.products()) {
+            // Название и описание товара — разметка из config.yml, а не текст игрока.
             messages.send(sender, product.isBundle() ? "shop.entry-bundle" : "shop.entry",
-                    "name", product.name(),
+                    "name", Messages.trusted(product.name()),
                     "price", product.priceRubles(),
                     "days", product.days(),
-                    "description", product.description());
+                    "description", Messages.trusted(product.description()));
             if (product.isBundle()) {
                 messages.send(sender, "shop.entry-includes",
-                        "items", describeContents(product, catalog));
+                        "items", Messages.trusted(describeContents(product, catalog)));
             }
         }
         ShopDiscount discount = accessManager.config().shopDiscount();
@@ -1720,7 +1726,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         }
         for (var purchase : active) {
             messages.send(sender, "shop.my-entry",
-                    "name", purchase.product().name(),
+                    "name", Messages.trusted(purchase.product().name()),
                     "until", AccessManager.formatTimestamp(purchase.untilMillis()),
                     "left", ShopEntitlements.remainingDays(purchase.untilMillis(), System.currentTimeMillis()));
         }
@@ -1754,7 +1760,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             case GRANTED -> {
                 messages.send(sender, "shop.granted",
                         "player", result.playerName(),
-                        "name", result.product().name(),
+                        "name", Messages.trusted(result.product().name()),
                         "days", result.days(),
                         "until", AccessManager.formatTimestamp(result.untilMillis()));
                 if (result.isBundle()) {
@@ -1794,7 +1800,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             case GRANTED -> {
                 messages.send(sender, "shop.gift-sent",
                         "player", result.playerName(),
-                        "name", result.product().name(),
+                        "name", Messages.trusted(result.product().name()),
                         "until", AccessManager.formatTimestamp(result.untilMillis()));
                 if (result.isBundle()) {
                     messages.send(sender, "shop.granted-includes",

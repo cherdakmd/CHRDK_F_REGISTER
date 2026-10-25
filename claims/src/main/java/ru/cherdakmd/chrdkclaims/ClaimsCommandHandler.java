@@ -177,7 +177,7 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
         plugin.messages().send(player, "info-paid",
                 "paid", service().formatDate(claim.paidUntil),
                 "debt", claim.debtDays > 0
-                        ? plugin.messages().raw("info-debt",
+                        ? plugin.messages().mini("info-debt",
                                 "debt-days", String.valueOf(claim.debtDays))
                         : "");
         if (claim.debtDays <= 0) {
@@ -257,11 +257,11 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
                     "z", String.valueOf(claim.z),
                     "paid", service().formatDate(claim.paidUntil),
                     "sale", claim.salePrice > 0
-                            ? plugin.messages().raw("list-sale",
+                            ? plugin.messages().mini("list-sale",
                                     "price", String.valueOf(claim.salePrice))
                             : "",
                     "debt", claim.debtDays > 0
-                            ? plugin.messages().raw("list-debt",
+                            ? plugin.messages().mini("list-debt",
                                     "days", String.valueOf(claim.debtDays))
                             : "");
         }
@@ -295,7 +295,7 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
                     "owner", offer.owner(),
                     "dist", distance == Integer.MAX_VALUE
                             ? ""
-                            : plugin.messages().raw("forsale-distance",
+                            : plugin.messages().mini("forsale-distance",
                                     "dist", String.valueOf(distance)));
         }
         sendPageLine(player, "forsale-page", page, pages, "forsale");
@@ -368,7 +368,7 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
                     "x", String.valueOf(claim.x), "z", String.valueOf(claim.z),
                     "owner", claim.owner, "dist", String.valueOf(entry.distance()),
                     "sale", claim.salePrice > 0
-                            ? plugin.messages().raw("near-sale",
+                            ? plugin.messages().mini("near-sale",
                                     "price", String.valueOf(claim.salePrice))
                             : "");
         }
@@ -487,7 +487,7 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
                 "claims", String.valueOf(claims.size()),
                 "limit", String.valueOf(service().limitOf(player.getName())),
                 "upkeep", String.valueOf(plugin.config().upkeepIn(here)),
-                "debt", debt ? plugin.messages().raw("balance-debt") : "");
+                "debt", debt ? plugin.messages().mini("balance-debt") : "");
         long earliest = Long.MAX_VALUE;
         long need = 0;
         for (Claim claim : claims) {

@@ -154,7 +154,7 @@ public final class ShopCommandHandler implements TabExecutor {
                     "material", item.material().toLowerCase(Locale.ROOT),
                     "ask", PriceEngine.round(service.askPrice(item)),
                     "bid", PriceEngine.round(service.bidPrice(item)),
-                    "category", plugin.messages().plain(category.messageKey()));
+                    "category", plugin.messages().mini(category.messageKey()));
         }
         if (matches.size() > shown) {
             plugin.messages().send(player, "shop.find-more",

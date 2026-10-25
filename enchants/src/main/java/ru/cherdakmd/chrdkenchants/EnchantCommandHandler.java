@@ -8,6 +8,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
+import ru.cherdakmd.chrdkregister.Messages;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -59,13 +61,13 @@ public final class EnchantCommandHandler implements TabExecutor {
             return true;
         }
         plugin.messages().send(player, "info-header",
-                "name", plugin.messages().raw("en." + def.id() + ".name"),
-                "rarity", plugin.messages().raw(def.rarity().labelKey()),
+                "name", plugin.messages().mini("en." + def.id() + ".name"),
+                "rarity", plugin.messages().mini(def.rarity().labelKey()),
                 "maxlevel", def.maxLevel());
         plugin.messages().send(player, "info-polarity",
-                "polarity", plugin.messages().raw(def.polarity().labelKey()));
+                "polarity", plugin.messages().mini(def.polarity().labelKey()));
         plugin.messages().send(player, "info-items",
-                "items", plugin.gui().supportedLabel(def));
+                "items", Messages.trusted(plugin.gui().supportedLabel(def)));
         if (def.conflictGroup() != null) {
             plugin.messages().send(player, "info-conflicts",
                     "conflicts", "");
@@ -114,7 +116,7 @@ public final class EnchantCommandHandler implements TabExecutor {
             target.getInventory().addItem(book).values()
                     .forEach(leftover -> target.getWorld().dropItemNaturally(target.getLocation(), leftover));
             plugin.messages().send(sender, "admin-given",
-                    "name", plugin.messages().raw("en." + def.id() + ".name"),
+                    "name", plugin.messages().mini("en." + def.id() + ".name"),
                     "level", level, "player", target.getName());
             return true;
         }

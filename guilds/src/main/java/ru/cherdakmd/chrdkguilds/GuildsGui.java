@@ -118,7 +118,7 @@ final class GuildsGui implements Listener {
         lore.add(plugin.messages().get("menu-info-name", "name", guild.name(),
                 "tag", guild.tag().isEmpty() ? "—" : guild.tag()));
         lore.add(plugin.messages().get("menu-info-rank",
-                "rank", plugin.messages().plain("rank." + rankOf(guild, player.getUniqueId()))));
+                "rank", plugin.messages().mini("rank." + rankOf(guild, player.getUniqueId()))));
         lore.add(plugin.messages().get("menu-info-members",
                 "count", String.valueOf(guild.size()),
                 "cap", String.valueOf(GuildMath.memberCap(guild.level()))));
@@ -136,7 +136,7 @@ final class GuildsGui implements Listener {
         String display = name == null ? member.toString().substring(0, 8) : name;
         List<Component> lore = new ArrayList<>();
         lore.add(plugin.messages().get("menu-member-rank",
-                "rank", plugin.messages().plain("rank." + rankOf(guild, member))));
+                "rank", plugin.messages().mini("rank." + rankOf(guild, member))));
         lore.add(plugin.messages().get("menu-member-click"));
         ItemStack head = new ItemStack(Material.PLAYER_HEAD);
         ItemMeta meta = head.getItemMeta();
@@ -188,7 +188,7 @@ final class GuildsGui implements Listener {
                     "max", GuildMath.diamonds(plugin.config().maxWager())));
         } else {
             Guild opponent = plugin.store().guild(war.opponentOf(guild.id()));
-            String state = plugin.messages().plain(war.pending() ? "menu-war-pending"
+            Object state = plugin.messages().mini(war.pending() ? "menu-war-pending"
                     : "menu-war-active");
             lore.add(plugin.messages().get("menu-war-opponent",
                     "name", opponent == null ? "?" : opponent.label(), "state", state));
@@ -275,7 +275,7 @@ final class GuildsGui implements Listener {
                 String name = Bukkit.getOfflinePlayer(member).getName();
                 plugin.messages().send(player, "member-info",
                         "name", name == null ? member.toString().substring(0, 8) : name,
-                        "rank", plugin.messages().plain("rank." + rankOf(guild, member)),
+                        "rank", plugin.messages().mini("rank." + rankOf(guild, member)),
                         "guild", guild.label());
             }
         }
@@ -291,7 +291,7 @@ final class GuildsGui implements Listener {
         plugin.messages().send(player, "war-status",
                 "name", guild.label(),
                 "opponent", opponent == null ? "?" : opponent.label(),
-                "state", plugin.messages().plain(war.pending() ? "war-state-pending"
+                "state", plugin.messages().mini(war.pending() ? "war-state-pending"
                         : "war-state-active"),
                 "score", war.pointsOf(guild.id()) + ":"
                         + war.pointsOf(war.opponentOf(guild.id())),

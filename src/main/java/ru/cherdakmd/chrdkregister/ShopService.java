@@ -237,11 +237,11 @@ public final class ShopService {
         if (online != null) {
             if (gift) {
                 plugin.messages().send(online, "shop.gift-received",
-                        "name", product.name(), "from", giftFrom.trim(),
+                        "name", Messages.trusted(product.name()), "from", giftFrom.trim(),
                         "until", AccessManager.formatTimestamp(until));
             } else {
                 plugin.messages().send(online, "shop.received",
-                        "name", product.name(),
+                        "name", Messages.trusted(product.name()),
                         "until", AccessManager.formatTimestamp(until));
             }
             if (bonusDays > 0) {

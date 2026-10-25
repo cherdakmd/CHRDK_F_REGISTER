@@ -199,7 +199,7 @@ public final class ClaimsService {
     private void sendLimit(Player player, String name) {
         plugin.messages().send(player, "limit-reached",
                 "limit", String.valueOf(limitOf(name)),
-                "pass-hint", hasNoPass(name) ? plugin.messages().raw("pass-hint") : "");
+                "pass-hint", hasNoPass(name) ? plugin.messages().mini("pass-hint") : "");
     }
 
     private boolean hasNoPass(String name) {

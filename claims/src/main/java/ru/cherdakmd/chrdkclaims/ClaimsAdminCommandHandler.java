@@ -152,7 +152,7 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
                     "z", String.valueOf(claim.z),
                     "paid", plugin.service().formatDate(claim.paidUntil),
                     "sale", claim.salePrice > 0
-                            ? plugin.messages().raw("list-sale",
+                            ? plugin.messages().mini("list-sale",
                                     "price", String.valueOf(claim.salePrice))
                             : "");
         }
@@ -198,7 +198,7 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
                     "base", String.valueOf(base),
                     "override", override == null
                             ? ""
-                            : plugin.messages().raw("admin-limit-override-part"));
+                            : plugin.messages().mini("admin-limit-override-part"));
             return;
         }
         String raw = args[2];

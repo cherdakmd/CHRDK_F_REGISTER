@@ -46,7 +46,7 @@ donatepay:
 
 # Консольные действия по входящим донатам (оба провайдера: DonatePay и EasyDonate).
 # При успешной оплате с суммой >= sum выполняется command от имени консоли.
-# Плейсхолдеры: {username} — имя из формы оплаты, {player} — ник получателя прохода
+# Плейсхолдеры: {username} — имя из формы оплаты, {player} — ник получателя ранга
 # (или username, если не заматчился), {sum} — сумма в рублях, {message} — комментарий.
 # Донорский ввод экранируется автоматически (кавычки/слэши вырезаются).
 # Не срабатывает для backfill при первом включении и retry старых pending — только
@@ -183,7 +183,7 @@ pass:
   # Однократный приветственный ранг для нового аккаунта после первой регистрации.
   # Отсчёт начинается с успешного /register; до регистрации доступен только вход/регистрация.
   # Уже зарегистрированным и ранее получавшим ранг аккаунтам повторно не выдаётся.
-  # Старый триал проходки больше не нужен: вход свободный, а приветственный ранг
+  # Старый пробный период больше не нужен: вход свободный, а приветственный ранг
   # новичка настраивается в секции ranks.welcome (1.4.167).
   trial:
     enabled: false
@@ -213,7 +213,7 @@ pass:
   gui-menu: true
 
 # ================================================================
-#  Донатные ранги (1.4.167). Пришли на смену проходке: вход на сервер
+#  Донатные ранги (1.4.167). Пришли на смену платному входу: вход на сервер
 #  свободный, а ранг — подписка на комфорт, оформление и статус.
 #  Цены и сроки живут в каталоге shop.products (товары с полем rank),
 #  числа (дома, приваты, скидки) — в конфигах модулей. Здесь только то,
@@ -221,7 +221,9 @@ pass:
 # ================================================================
 ranks:
   enabled: true
-  # Показывать слово «Странник» рядом с ником в чате. false — только знак и цвет.
+  # Показывать слово «Странник» рядом с ником в чате и в %player_tagged%.
+  # false — только знак и цвет; в табе название тогда добавляет %rank_tag%
+  # (см. tablist.show-rank-name), поэтому дубля нет ни в одном режиме.
   show-name-in-chat: false
   # Анонсировать вход в чат для ступеней, у которых задана join-line.
   announce-join: true
@@ -563,13 +565,13 @@ server-menu:
   # Пункты. category — id категории; без него пункт живёт на главной странице.
   items:
     # ------------------------------ главная ------------------------------
-    - {"slot": 20, "icon": "PAPER", "name": "<gold><bold>Проходка и аккаунт</bold></gold>", "lore": "<gray>Осталось: %pass_left%</gray>\n<gray>Статус, тарифы и настройки аккаунта</gray>", "command": "pass menu"}
+    - {"slot": 20, "icon": "PAPER", "name": "<gold><bold>Ранг и аккаунт</bold></gold>", "lore": "<gray>Осталось: %pass_left%</gray>\n<gray>Статус, тарифы и настройки аккаунта</gray>", "command": "pass menu"}
     - {"slot": 21, "icon": "EMERALD", "name": "<gold><bold>Поддержать сервер</bold></gold>", "lore": "<gray>Ссылка на оплату и продление</gray>\n<gray>Пробный срок не требует оплаты заранее</gray>", "command": "pass donate"}
     - {"slot": 22, "icon": "GOLD_INGOT", "name": "<gold><bold>Мой баланс</bold></gold>", "lore": "<gray>Счёт банка и алмазы в инвентаре</gray>\n<gray>Перевод: /pay ник сумма</gray>", "command": "bal", "permission": "chrdkregister.bal"}
     - {"slot": 23, "icon": "DIAMOND", "name": "<gold><bold>Топ богачей</bold></gold>", "lore": "<gray>Кто копит алмазы усерднее всех</gray>", "command": "baltop", "permission": "chrdkregister.baltop"}
     - {"slot": 24, "icon": "CLOCK", "name": "<gold><bold>Ежедневная награда</bold></gold>", "lore": "<gray>Календарь, стрик и награда дня</gray>", "command": "daily", "plugin": "CHRDK_DailyRewards", "permission": "chrdkdaily.use"}
     # ---------------------------- аккаунт --------------------------------
-    - {"category": "account", "icon": "PAPER", "name": "<gold><bold>Проходка и аккаунт</bold></gold>", "lore": "<gray>Осталось: %pass_left%</gray>\n<gray>Статус, тарифы и настройки аккаунта</gray>", "command": "pass menu"}
+    - {"category": "account", "icon": "PAPER", "name": "<gold><bold>Ранг и аккаунт</bold></gold>", "lore": "<gray>Осталось: %pass_left%</gray>\n<gray>Статус, тарифы и настройки аккаунта</gray>", "command": "pass menu"}
     - {"category": "account", "icon": "EMERALD", "name": "<gold><bold>Поддержать сервер</bold></gold>", "lore": "<gray>Ссылка на оплату и продление</gray>\n<gray>Пробный срок не требует оплаты заранее</gray>", "command": "pass donate"}
     - {"category": "account", "icon": "CHEST", "name": "<gold><bold>Каталог товаров</bold></gold>", "lore": "<gray>Что входит в ранг и бандлы</gray>\n<gray>Оплата — на сайте, выдача автоматическая</gray>", "command": "pass shop"}
     - {"category": "account", "icon": "CLOCK", "name": "<gold><bold>Ежедневные награды</bold></gold>", "lore": "<gray>Календарь, стрик и награда дня</gray>", "command": "daily", "plugin": "CHRDK_DailyRewards", "permission": "chrdkdaily.use"}
@@ -923,8 +925,8 @@ auto-messages:
     - {"text": "<gray>Алмазы можно хранить в банке: <white>/bal deposit</white> и <white>/bal withdraw</white>. Счёт не теряется при смерти.</gray>"}
     - {"text": "<gray>Переключение локального и общего чата — <white>/chat</white>. Личное сообщение — <white>/msg ник текст</white>, ответ — <white>/r</white>.</gray>"}
     # --- ранг и безопасность ---
-    - {"text": "<gray>Ваш пробный период активен: осталось <white>%pass_left%</white>. Статус и продление — <white>/pass menu</white>.</gray>", "condition": "trial"}
-    - {"text": "<gray>Проходка закончилась. Продлить и вернуть доступ — <white>/pass menu</white>, вопросы — в Discord сервера.</gray>", "condition": "no-pass"}
+    - {"text": "<gray>Ваш приветственный ранг активен: осталось <white>%pass_left%</white>. Статус и продление — <white>/pass menu</white>.</gray>", "condition": "trial"}
+    - {"text": "<gray>Ранг закончился. Продлить и сохранить оформление — <white>/pass menu</white>, вопросы — в Discord сервера.</gray>", "condition": "no-pass"}
     - {"text": "<gray>Спасибо за поддержку сервера! Ваш ранг активен до конца срока: <white>%pass_left%</white>.</gray>", "condition": "paid"}
     - {"text": "<gray>Защитите аккаунт: <white>/2fa setup</white>, затем подтвердите код приложения. Никому не сообщайте пароль и коды.</gray>", "condition": "unsecured"}
     - {"text": "<gray>Проверьте сессии входа: <white>/session</white>. Для выхода из аккаунта — <white>/logout</white>.</gray>"}
@@ -958,9 +960,10 @@ tablist:
   # Разметка — MiniMessage либо &-коды. Подстановки:
   #   %player% — ник игрока, %online%/%max% — онлайн и лимит,
   #   %tps% — TPS сервера, %ping% — пинг игрока, %world% — его мир,
+  #   %rank_tag% — название донатного ранга в его оформлении (« · Покровитель»),
   #   %pass_status% — активен/истёк/нет ранга, %pass_left% — «12 дн. 3 ч.»,
   #   %pass_days% — осталось целых дней ранга.
-  #   %pass_type% — пробная/обычная/нет, %auth_status% — состояние входа,
+  #   %pass_type% — приветственный/обычный/нет, %auth_status% — состояние входа,
   #   %auth_hint% — следующий шаг, %security% — состояние 2FA,
   #   %navigation% — доступные ссылки после входа (до входа: пустая строка).
   enabled: true
@@ -983,7 +986,13 @@ tablist:
   # %player_tagged% — ник с оформлением: знак и цвет донатного ранга, метка
   # стримера, звание кладоискателя. Пусто — не перекрашивать чужие префиксы
   # (сортировкой таба управляет CHRDK_Ranks, формат ей не мешает).
-  player-name-format: "%player_tagged%"
+  # %rank_tag% — хвост « · Покровитель» с названием ступени (пусто без ранга).
+  # Порядок частей свободный: можно поставить %rank_tag% перед ником.
+  player-name-format: "%player_tagged%%rank_tag%"
+  # Добавлять название ранга, даже если в формате выше нет %rank_tag%.
+  # Нужно для старых конфигов: обновление подхватит название само.
+  # false — в табе останутся только знак и цвет ступени.
+  show-rank-name: true
   # Никнеймы, закреплённые ВВЕРХУ списка игроков (регистр не важен).
   # Реализовано через приоритетную команду scoreboard — клиент Minecraft
   # сортирует список сначала по команде, потом по нику.

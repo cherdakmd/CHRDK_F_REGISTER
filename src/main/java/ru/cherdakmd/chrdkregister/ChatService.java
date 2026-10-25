@@ -214,7 +214,7 @@ public final class ChatService implements Listener {
             messages.send(player, "mute.cannot-write",
                     "duration", AccessManager.describeRemaining(mute.until - now),
                     "reason", mute.reason == null || mute.reason.isBlank()
-                            ? "" : messages.raw("mute.notice-reason", "reason", mute.reason));
+                            ? "" : messages.mini("mute.notice-reason", "reason", mute.reason));
             return;
         }
 
@@ -857,7 +857,7 @@ public final class ChatService implements Listener {
             messages.send(sender, "mute.list-entry",
                     "player", entry.playerName,
                     "remaining", AccessManager.describeRemaining(entry.remainingMillis(System.currentTimeMillis())),
-                    "reason", entry.reason.isBlank() ? messages.raw("mute.no-reason") : entry.reason);
+                    "reason", entry.reason.isBlank() ? messages.mini("mute.no-reason") : entry.reason);
             listed = true;
         }
         if (!listed) {
@@ -898,7 +898,7 @@ public final class ChatService implements Listener {
                     "duration", AccessManager.describeRemaining(minutes * 60_000L),
                     "reason", reason == null || reason.isBlank()
                             ? ""
-                            : messages.raw("mute.notice-reason", "reason", reason));
+                            : messages.mini("mute.notice-reason", "reason", reason));
         }
         return true;
     }
@@ -1079,7 +1079,7 @@ public final class ChatService implements Listener {
                         "duration", AccessManager.describeRemaining(mute.until - System.currentTimeMillis()),
                         "reason", mute.reason.isBlank()
                                 ? ""
-                                : messages.raw("mute.notice-reason", "reason", mute.reason));
+                                : messages.mini("mute.notice-reason", "reason", mute.reason));
                 return true;
             }
             if (target.getUniqueId().equals(senderPlayer.getUniqueId())) {

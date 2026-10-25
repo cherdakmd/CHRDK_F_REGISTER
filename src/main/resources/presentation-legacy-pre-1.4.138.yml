@@ -8,7 +8,7 @@ server-menu:
   # plugin/permission: пункт скрыт, если аддон выключен или нет права.
   # Команды выполняются только от игрока; административных действий здесь нет.
   items:
-    - {"slot": 10, "icon": "PAPER", "name": "<gold><bold>Проходка и аккаунт</bold></gold>", "lore": "<gray>Осталось: %pass_left%</gray>\n<gray>Статус, тарифы и настройки аккаунта</gray>", "command": "pass menu"}
+    - {"slot": 10, "icon": "PAPER", "name": "<gold><bold>Ранг и аккаунт</bold></gold>", "lore": "<gray>Осталось: %pass_left%</gray>\n<gray>Статус, тарифы и настройки аккаунта</gray>", "command": "pass menu"}
     - {"slot": 11, "icon": "EMERALD", "name": "<gold><bold>Поддержать сервер</bold></gold>", "lore": "<gray>Ссылка на оплату и продление</gray>\n<gray>Пробный срок не требует оплаты заранее</gray>", "command": "pass donate"}
     - {"slot": 12, "icon": "CLOCK", "name": "<gold><bold>Ежедневные награды</bold></gold>", "lore": "<gray>Календарь, стрик и награда дня</gray>", "command": "daily", "plugin": "CHRDK_DailyRewards", "permission": "chrdkdaily.use"}
     - {"slot": 13, "icon": "EXPERIENCE_BOTTLE", "name": "<gold><bold>Боевой пропуск</bold></gold>", "lore": "<gray>Задания сезона и получение наград</gray>", "command": "battlepass", "plugin": "CHRDK_BattlePass", "permission": "chrdkbp.use"}
@@ -48,7 +48,7 @@ auto-messages:
   # condition: always (по умолчанию), trial, unsecured.
   messages:
     - {"text": "<gray>Все возможности сервера собраны в /menu. Начните с ежедневной награды и целей сезона.</gray>"}
-    - {"text": "<gray>Ваш пробный период активен. Осталось %pass_left%. Статус и продление — /pass menu.</gray>", "condition": "trial"}
+    - {"text": "<gray>Ваш приветственный ранг активен. Осталось %pass_left%. Статус и продление — /pass menu.</gray>", "condition": "trial"}
     - {"text": "<gray>Защитите аккаунт: /2fa setup, затем подтвердите код приложения. Не сообщайте никому пароль и коды.</gray>", "condition": "unsecured"}
     - {"text": "<gray>Забирайте ежедневную награду: /daily. Сохраняйте стрик входов.</gray>", "plugin": "CHRDK_DailyRewards", "permission": "chrdkdaily.use"}
     - {"text": "<gray>Проверьте задания сезона и доступные награды: /battlepass.</gray>", "plugin": "CHRDK_BattlePass", "permission": "chrdkbp.use"}
@@ -75,8 +75,8 @@ tablist:
   # Разметка — MiniMessage либо &-коды. Подстановки:
   #   %player% — ник игрока, %online%/%max% — онлайн и лимит,
   #   %tps% — TPS сервера, %ping% — пинг игрока, %world% — его мир,
-  #   %pass_status% — активна/истекла/нет проходки, %pass_left% — «12 дн. 3 ч.»,
-  #   %pass_days% — осталось целых дней проходки.
+  #   %pass_status% — активен/истёк/нет ранга, %pass_left% — «12 дн. 3 ч.»,
+  #   %pass_days% — осталось целых дней ранга.
   #   %pass_type% — пробная/обычная/нет, %auth_status% — состояние входа,
   #   %auth_hint% — следующий шаг, %security% — состояние 2FA,
   #   %navigation% — доступные ссылки после входа (до входа: пустая строка).

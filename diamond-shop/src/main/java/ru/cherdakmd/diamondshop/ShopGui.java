@@ -53,7 +53,7 @@ public final class ShopGui implements Listener {
         ShopHolder holder = new ShopHolder(current, safePage);
         Component title = plugin.messages().get("shop.gui.title")
                 .append(plugin.messages().get("shop.gui.title-suffix",
-                        "category", plugin.messages().plain(current.messageKey()),
+                        "category", plugin.messages().mini(current.messageKey()),
                         "page", safePage + 1,
                         "pages", pages));
         Inventory inventory = Bukkit.createInventory(holder, ShopLayout.SIZE, title);

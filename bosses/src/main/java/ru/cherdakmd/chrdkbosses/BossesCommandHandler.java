@@ -90,16 +90,16 @@ public final class BossesCommandHandler implements CommandExecutor, TabCompleter
         plugin.messages().send(sender, "list-header", "count", String.valueOf(bosses.size()));
         for (BossDefinition definition : bosses) {
             ActiveBoss active = plugin.service().current(definition.id());
-            String state;
+            Object state;
             if (active != null) {
-                state = plugin.messages().plain("list-alive",
+                state = plugin.messages().mini("list-alive",
                         "phase", active.phase().name(),
                         "percent", String.valueOf(Math.round(active.progress() * 100)));
             } else {
                 long seconds = plugin.service().secondsToSpawn(definition.id(), now);
                 state = seconds > 0
-                        ? plugin.messages().plain("list-cooldown", "time", BossMath.clock(seconds))
-                        : plugin.messages().plain("list-ready");
+                        ? plugin.messages().mini("list-cooldown", "time", BossMath.clock(seconds))
+                        : plugin.messages().mini("list-ready");
             }
             plugin.messages().send(sender, "list-line",
                     "name", definition.name(),
@@ -163,7 +163,7 @@ public final class BossesCommandHandler implements CommandExecutor, TabCompleter
                     "level", zone.levelLabel(),
                     "radius", String.valueOf(Math.round(zone.radius())),
                     "bonus", String.valueOf(zone.xpBonusPercent()),
-                    "state", plugin.messages().plain(zone.enabled()
+                    "state", plugin.messages().mini(zone.enabled()
                             ? "zones-on" : "zones-off"));
         }
     }
@@ -277,8 +277,8 @@ public final class BossesCommandHandler implements CommandExecutor, TabCompleter
         plugin.messages().send(sender, "admin-info",
                 "name", definition.name(),
                 "state", active == null
-                        ? plugin.messages().plain("admin-state-idle")
-                        : plugin.messages().plain("admin-state-alive"),
+                        ? plugin.messages().mini("admin-state-idle")
+                        : plugin.messages().mini("admin-state-alive"),
                 "kills", String.valueOf(plugin.store().kills(definition.id())),
                 "next", BossMath.clock(plugin.service().secondsToSpawn(definition.id(), now)),
                 "arena", definition.arena().label());
@@ -327,7 +327,7 @@ public final class BossesCommandHandler implements CommandExecutor, TabCompleter
                     "time", entry.time(),
                     "name", entry.name(),
                     "killer", entry.killer().isEmpty()
-                            ? plugin.messages().plain("admin-history-unknown") : entry.killer(),
+                            ? plugin.messages().mini("admin-history-unknown") : entry.killer(),
                     "participants", String.valueOf(entry.participants()));
             shown++;
         }

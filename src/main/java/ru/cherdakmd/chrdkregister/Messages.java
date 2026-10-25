@@ -170,6 +170,18 @@ public final class Messages {
         return fill(template(key), placeholders);
     }
 
+    /**
+     * Готовая разметка из {@code messages.yml} для подстановки в другой шаблон.
+     *
+     * <p>Обычная строка в подстановке экранируется ({@link #escape}), поэтому
+     * {@code raw} внутри {@code get}/{@code send} вывел бы теги литералами.
+     * Значения самого плагина — не пользовательский ввод, их разметка должна
+     * остаться живой; для этого и нужен {@link Trusted}.</p>
+     */
+    public Trusted mini(String key, Object... placeholders) {
+        return trusted(raw(key, placeholders));
+    }
+
     /** Отправляет игроку или в консоль текст по ключу. */
     public void send(CommandSender sender, String key, Object... placeholders) {
         if (sender == null) return;

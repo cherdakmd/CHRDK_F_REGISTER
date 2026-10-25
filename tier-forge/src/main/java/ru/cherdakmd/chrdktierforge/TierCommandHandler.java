@@ -111,7 +111,7 @@ public final class TierCommandHandler implements TabExecutor {
             String name = plugin.messages().raw("tier." + tier.id() + ".name");
             String percent = (tier.percent() > 0 ? "+" : "") + tier.percent();
             plugin.messages().send(player, "list-row",
-                    "color", color, "name", name,
+                    "color", Messages.trusted(color), "name", Messages.trusted(name),
                     "weight", tier.weight(), "percent", percent);
         }
         plugin.messages().send(player, "list-footer",
@@ -491,7 +491,8 @@ public final class TierCommandHandler implements TabExecutor {
             String color = plugin.messages().raw("tier." + tier.id() + ".color");
             String name = plugin.messages().raw("tier." + tier.id() + ".name");
             plugin.messages().send(sender, "stats-row",
-                    "color", color, "name", name, "count", count);
+                    "color", Messages.trusted(color), "name", Messages.trusted(name),
+                    "count", count);
         }
         if (shown == 0) {
             plugin.messages().send(sender, emptyKey, "player", nameArg);
