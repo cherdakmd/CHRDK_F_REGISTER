@@ -11,7 +11,11 @@ final class BattlePassMenuLayout {
     /** Слотов под задания: пять верхних рядов. */
     static final int ITEMS_PER_PAGE = 45;
     static final int SLOT_PREV = 45;
+    static final int SLOT_CLAIM_ALL = 46;
+    static final int SLOT_BACK = 47;
     static final int SLOT_SUMMARY = 48;
+    static final int SLOT_PREMIUM = 50;
+    static final int SLOT_REFRESH = 52;
     static final int SLOT_CLOSE = 49;
     static final int SLOT_NEXT = 53;
 
@@ -19,7 +23,7 @@ final class BattlePassMenuLayout {
     }
 
     enum Action {
-        NONE, MISSION, PREV, NEXT, CLOSE, SUMMARY
+        NONE, MISSION, PREV, NEXT, CLOSE, SUMMARY, CLAIM_ALL, BACK, PREMIUM, REFRESH
     }
 
     /** Сколько страниц нужно для такого числа заданий (минимум одна). */
@@ -59,6 +63,10 @@ final class BattlePassMenuLayout {
         if (slot == SLOT_CLOSE) {
             return Action.CLOSE;
         }
+        if (slot == SLOT_CLAIM_ALL) return Action.CLAIM_ALL;
+        if (slot == SLOT_BACK) return Action.BACK;
+        if (slot == SLOT_PREMIUM) return Action.PREMIUM;
+        if (slot == SLOT_REFRESH) return Action.REFRESH;
         if (slot == SLOT_SUMMARY) {
             return Action.SUMMARY;
         }

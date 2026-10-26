@@ -56,6 +56,28 @@ class BattlePassMenuLayoutTest {
         assertEquals(BattlePassMenuLayout.Action.SUMMARY,
                 BattlePassMenuLayout.actionFor(BattlePassMenuLayout.SLOT_SUMMARY, 0, 1, 0));
         assertEquals(BattlePassMenuLayout.Action.NONE,
-                BattlePassMenuLayout.actionFor(46, 0, 1, 0), "пустая кнопка нижнего ряда");
+                BattlePassMenuLayout.actionFor(51, 0, 1, 0), "пустая кнопка нижнего ряда");
     }
+    @Test
+    void toolbarActionsNeverOverlapMissionsOnAnyPage() {
+        int[] slots = {46, 47, 48, 49, 50, 52};
+        BattlePassMenuLayout.Action[] actions = {
+                BattlePassMenuLayout.Action.CLAIM_ALL, BattlePassMenuLayout.Action.BACK,
+                BattlePassMenuLayout.Action.SUMMARY, BattlePassMenuLayout.Action.CLOSE,
+                BattlePassMenuLayout.Action.PREMIUM, BattlePassMenuLayout.Action.REFRESH};
+        for (int count : new int[]{0, 11, 45, 46, 91}) {
+            for (int page = 0; page < BattlePassMenuLayout.pageCount(count); page++) {
+                for (int i = 0; i < slots.length; i++) {
+                    assertEquals(-1, BattlePassMenuLayout.missionIndex(slots[i], page, count));
+                    assertEquals(actions[i], BattlePassMenuLayout.actionFor(
+                            slots[i], page, BattlePassMenuLayout.pageCount(count), count));
+                }
+                assertEquals(BattlePassMenuLayout.Action.NONE,
+                        BattlePassMenuLayout.actionFor(-999, page, 3, count));
+                assertEquals(BattlePassMenuLayout.Action.NONE,
+                        BattlePassMenuLayout.actionFor(54, page, 3, count));
+            }
+        }
+    }
+
 }
