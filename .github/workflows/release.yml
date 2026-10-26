@@ -10,6 +10,8 @@ permissions:
 jobs:
   build-and-upload:
     name: Build plugins and attach the archive
+    # Самостоятельные релизы датапаков не являются релизами плагинов.
+    if: startsWith(github.event.release.tag_name, 'v1.')
     runs-on: ubuntu-latest
     steps:
       - name: Check out tagged source
@@ -26,6 +28,23 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
+
+      - name: Verify release tag matches plugin version
+        id: verify-version
+        shell: bash
+        run: |
+          plugin_version="$(sed -n 's/^plugin_version=//p' gradle.properties)"
+          tag_version="${GITHUB_REF_NAME#v}"
+          if [[ "$tag_version" != "$plugin_version" ]]; then
+            echo "Release tag $GITHUB_REF_NAME does not match plugin version $plugin_version" >&2
+            exit 1
+          fi
+          echo "version=$plugin_version" >> "$GITHUB_OUTPUT"
+
+      - name: Check messages and release validation tests
+        run: |
+          python3 .github/scripts/check_messages.py
+          python3 -m unittest discover -s .github/scripts -p 'test_verify_release.py' -v
 
       - name: Build plugins
         shell: bash
@@ -53,18 +72,6 @@ jobs:
         if: always()
         shell: bash
         run: python3 .github/scripts/report_tests.py
-
-      - name: Verify release tag matches plugin version
-        id: verify-version
-        shell: bash
-        run: |
-          plugin_version="$(sed -n 's/^plugin_version=//p' gradle.properties)"
-          tag_version="${GITHUB_REF_NAME#v}"
-          if [[ "$tag_version" != "$plugin_version" ]]; then
-            echo "Release tag $GITHUB_REF_NAME does not match plugin version $plugin_version" >&2
-            exit 1
-          fi
-          echo "version=$plugin_version" >> "$GITHUB_OUTPUT"
 
       - name: Pack all plugin JARs and the update memo into one ZIP
         shell: bash
@@ -112,12 +119,18 @@ jobs:
 
           Что происходит с конфигами
           --------------------------
-          Новые ключи добавляются в конфиг автоматически при первом запуске,
-          существующие значения сохраняются. Комментарии в старом config.yml
-          могут остаться прежними — для полного набора новых комментариев
-          удалите конкретный config.yml (только файл, не папку) перед запуском.
-          loot.yml обновлять не нужно: старый файл дополняется новыми записями
-          из JAR, ваши правки остаются. Данные игроков (JSON) мигрируют сами.
+          Не удаляйте старые конфиги без резервной копии. Не все списки
+          обновляются автоматически: сравните свои значения с config.yml из JAR.
+          Особенно важны CHRDK_Core: shop.products и labels.colors.list,
+          CHRDK_Cosmetics: cosmetics.join-effect.product и определения шлейфов,
+          CHRDK_BattlePass: battlepass.weeks[].missions[].premium-products.
+          Старое nick-color в награде заменено на nick-aurora.
+          Новые цены TradeMC должны точно совпасть с shop.products[].price;
+          дубликаты цен недопустимы. Перед продажей домов выполните из консоли
+          pass luckperms setup (нужен LuckPerms).
+          Часть стандартного оформления мигрирует автоматически; собственные
+          изменения не перезаписываются. Обновление конфигов не требует
+          удаления данных игроков. Полный порядок — в описании релиза.
 
           Откат
           -----
@@ -129,6 +142,12 @@ jobs:
           Полный список изменений и инструкция — в описании релиза на GitHub
           и в README репозитория.
           MEMO
+          printf '\nВерсия: %s\nПлатформа: Purpur 26.3 / Java 25\n' "$version" >> 'release/ОБНОВЛЕНИЕ.txt'
+          for notes in docs/releases/1.4.18{6,7,8,9}.md; do
+            printf '\n\n' >> 'release/ОБНОВЛЕНИЕ.txt'
+            cat "$notes" >> 'release/ОБНОВЛЕНИЕ.txt'
+          done
+          python3 .github/scripts/verify_release.py release "$version"
           zip -j -9 "chrdk-plugins-${version}.zip" release/*.jar 'release/ОБНОВЛЕНИЕ.txt'
           unzip -l "chrdk-plugins-${version}.zip"
           echo "zip=chrdk-plugins-${version}.zip" >> "$GITHUB_ENV"
@@ -136,4 +155,4 @@ jobs:
       - name: Attach the all-in-one archive
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ env.zip }}" --clobber
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ env.zip }}" "release/ОБНОВЛЕНИЕ.txt" --clobber

@@ -9,7 +9,7 @@ commands:
   battlepass:
     description: "Батлпасс: задания сезона, меню, рейтинг и награды"
     aliases: [bp, pass2]
-    usage: "/battlepass [menu|top|info <id>|claim [id|all]|help]"
+    usage: "/battlepass [menu|progress|top|info <id>|claim [id|all]|help]"
   bpadmin:
     description: "Администрирование батлпасса"
     permission: chrdkbp.admin

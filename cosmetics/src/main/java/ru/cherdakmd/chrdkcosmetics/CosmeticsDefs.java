@@ -23,11 +23,17 @@ final class CosmeticsDefs {
                     double spread, double speed, String product, int rank) {
     }
 
-    /** Параметры входа-торжества. */
+    /**
+     * Параметры входа-торжества.
+     *
+     * <p>{@code product} — id товара каталога ядра (1.4.188): пока он активен,
+     * эффект работает и без ранга. Пустая строка — эффект только по ступени,
+     * как было до 1.4.188.</p>
+     */
     record JoinEffect(boolean enabled, String particle, int particleCount,
-                      String sound, double volume, double pitch) {
+                      String sound, double volume, double pitch, String product) {
         static JoinEffect disabled() {
-            return new JoinEffect(false, "", 0, "", 1.0, 1.0);
+            return new JoinEffect(false, "", 0, "", 1.0, 1.0, "");
         }
     }
 
@@ -71,7 +77,31 @@ final class CosmeticsDefs {
         }
         return new JoinEffect(true, particle,
                 clamp(intOf(raw.get("particle-count"), 40), 1, 500),
-                sound, doubleOf(raw.get("volume"), 1.0), doubleOf(raw.get("pitch"), 1.0));
+                sound, doubleOf(raw.get("volume"), 1.0), doubleOf(raw.get("pitch"), 1.0),
+                norm(raw.get("product")).toLowerCase(Locale.ROOT));
+    }
+
+    /**
+     * Положен ли игроку торжественный вход (1.4.188).
+     *
+     * <p>Два независимых пути, как у шлейфов: ступень ранга не ниже
+     * {@code min-rank} либо активный товар каталога. Покупка не отменяет ранг и
+     * наоборот, поэтому достаточно любого условия; истёк товар — эффект
+     * остаётся только у тех, кому он положен ступенью.</p>
+     *
+     * @param rankLevel ступень донатного ранга (0 — без ранга)
+     * @param minRank   со скольки ступеней эффект положен по рангу
+     * @param owned     проверка «товар куплен и не истёк»
+     */
+    static boolean joinEffectUnlocked(JoinEffect effect, int rankLevel, int minRank,
+                                      Predicate<String> owned) {
+        if (effect == null || !effect.enabled()) {
+            return false;
+        }
+        if (rankLevel >= Math.max(0, minRank)) {
+            return true;
+        }
+        return !effect.product().isEmpty() && owned != null && owned.test(effect.product());
     }
 
     /** Валиден ли выбор игрока: есть такой эффект и он доступен. */

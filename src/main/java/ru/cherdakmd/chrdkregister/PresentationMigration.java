@@ -33,14 +33,16 @@ final class PresentationMigration {
             "server-menu.close-name", "server-menu.categories");
 
     /**
-     * Стоковые снимки прошлых версий: от нового к старому. Снимок 1.4.182 —
+     * Стоковые снимки прошлых версий: от нового к старому. Снимок 1.4.185 —
+     * меню из 52 пунктов со старой подсказкой «Оформление ника»; снимок 1.4.182 —
      * меню с «Вики сервера», но без кнопки «Оформление ника» (51 пункт);
      * снимок 1.4.170 — без обеих (50 пунктов); снимок 1.4.169 — последний со
      * старой плоской структурой (6 разделов, 42 пункта).
      */
-    static final List<String> LEGACY_RESOURCES = List.of("presentation-legacy-1.4.182.yml",
-            "presentation-legacy-1.4.170.yml", "presentation-legacy-1.4.169.yml",
-            "presentation-legacy-pre-1.4.138.yml", "presentation-legacy.yml");
+    static final List<String> LEGACY_RESOURCES = List.of("presentation-legacy-1.4.185.yml",
+            "presentation-legacy-1.4.182.yml", "presentation-legacy-1.4.170.yml",
+            "presentation-legacy-1.4.169.yml", "presentation-legacy-pre-1.4.138.yml",
+            "presentation-legacy.yml");
 
     private PresentationMigration() {
     }

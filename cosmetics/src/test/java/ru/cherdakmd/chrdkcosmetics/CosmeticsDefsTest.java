@@ -30,6 +30,41 @@ class CosmeticsDefsTest {
     }
 
     @Test
+    void joinEffectReadsTheProductId() {
+        CosmeticsDefs.JoinEffect effect = CosmeticsDefs.parseJoinEffect(Map.of(
+                "enabled", true, "particle", "totem_of_undying", "sound", "entity_player_levelup",
+                "product", " JOIN-EFFECT "));
+        assertEquals("join-effect", effect.product(), "id товара нормализуется");
+
+        CosmeticsDefs.JoinEffect without = CosmeticsDefs.parseJoinEffect(Map.of(
+                "enabled", true, "particle", "totem_of_undying"));
+        assertEquals("", without.product(), "без поля товар не задан");
+    }
+
+    @Test
+    void joinEffectOpensByRankOrByPurchase() {
+        CosmeticsDefs.JoinEffect effect = CosmeticsDefs.parseJoinEffect(Map.of(
+                "enabled", true, "particle", "totem_of_undying", "product", "join-effect"));
+        List<String> owned = List.of("join-effect");
+
+        assertTrue(CosmeticsDefs.joinEffectUnlocked(effect, 4, 4, id -> false),
+                "Меценату эффект положен по ступени");
+        assertFalse(CosmeticsDefs.joinEffectUnlocked(effect, 3, 4, id -> false),
+                "без покупки и без ступени эффекта нет");
+        assertTrue(CosmeticsDefs.joinEffectUnlocked(effect, 0, 4, owned::contains),
+                "покупка открывает эффект без ранга");
+        assertFalse(CosmeticsDefs.joinEffectUnlocked(effect, 0, 4, id -> false),
+                "чужой товар ничего не открывает");
+        assertFalse(CosmeticsDefs.joinEffectUnlocked(
+                        CosmeticsDefs.parseJoinEffect(Map.of("enabled", true, "particle", "flame")),
+                        3, 4, owned::contains),
+                "без поля product покупка ничего не открывает: работает только ступень");
+        assertFalse(CosmeticsDefs.joinEffectUnlocked(null, 5, 4, owned::contains));
+        assertFalse(CosmeticsDefs.joinEffectUnlocked(CosmeticsDefs.JoinEffect.disabled(),
+                5, 4, owned::contains));
+    }
+
+    @Test
     void joinEffectDisabledWithoutEnableOrPayload() {
         assertFalse(CosmeticsDefs.parseJoinEffect(Map.of("enabled", false)).enabled());
         assertFalse(CosmeticsDefs.parseJoinEffect(null).enabled());

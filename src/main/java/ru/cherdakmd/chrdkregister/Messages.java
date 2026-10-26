@@ -160,6 +160,17 @@ public final class Messages {
         return raw == null ? "" : raw.replaceAll("<[^>]+>", "").trim();
     }
 
+    /**
+     * Компонент из готовой разметки самого плагина.
+     *
+     * <p>Нужен там, где строка уже собрана кодом (например, ник с метками
+     * аддонов), а показать её надо как украшение предмета. Ввод игроков сюда
+     * передавать нельзя — только результат {@code decoratedName} и подобное.</p>
+     */
+    public Component markup(String miniMessageMarkup) {
+        return mini.deserialize(miniMessageMarkup == null ? "" : miniMessageMarkup);
+    }
+
     /** Текст без разметки — для логов, консоли и сравнений. */
     public String plain(String key, Object... placeholders) {
         return PlainTextComponentSerializer.plainText().serialize(get(key, placeholders));

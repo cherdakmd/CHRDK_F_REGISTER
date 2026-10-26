@@ -5,6 +5,7 @@ import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -18,6 +19,11 @@ import java.util.logging.Logger;
  *
  * <p>Сбой одного провайдера не ломает чат: исключение логируется, а имя
  * остаётся таким, каким его собрали предыдущие шаги.</p>
+ *
+ * <p>С 1.4.186 у каждого провайдера есть фильтр: игрок сам решает, какие звания
+ * показывать ({@link LabelPreferences}), и выключенные просто пропускаются.
+ * Фильтр проверяется по id провайдера, поэтому аддонам не нужно ничего знать о
+ * настройках — они по-прежнему только рисуют свою метку.</p>
  */
 final class NameTags {
 
@@ -49,8 +55,49 @@ final class NameTags {
 
     /** Применить все оформления по очереди. */
     String decorate(String playerName, String decoratedName) {
+        return decorate(playerName, decoratedName, id -> true);
+    }
+
+    /**
+     * Применить одно оформление по id (1.4.187).
+     *
+     * <p>Нужно, когда порядок меток задаёт игрок: ядро само решает, какое
+     * оформление вызвать следующим, и передаёт сюда уже собранную строку.</p>
+     *
+     * @return имя с меткой; без такого id или при сбое — то же имя
+     */
+    String decorateOne(String id, String playerName, String decoratedName) {
+        if (id == null || id.isBlank()) {
+            return decoratedName;
+        }
+        String key = id.trim();
+        for (Entry entry : entries) {
+            if (!entry.id().equals(key)) {
+                continue;
+            }
+            try {
+                String next = entry.provider().decorate(playerName, decoratedName);
+                return next == null ? decoratedName : next;
+            } catch (RuntimeException exception) {
+                logger.log(Level.WARNING, "Оформление ника '" + key
+                        + "' упало — имя останется без него", exception);
+                return decoratedName;
+            }
+        }
+        return decoratedName;
+    }
+
+    /**
+     * Применить только разрешённые оформления в порядке регистрации.
+     *
+     * @param allowed фильтр по id провайдера; {@code null} — разрешено всё
+     */
+    String decorate(String playerName, String decoratedName, Predicate<String> allowed) {
         String result = decoratedName;
         for (Entry entry : entries) {
+            if (allowed != null && !allowed.test(entry.id())) {
+                continue;
+            }
             try {
                 String next = entry.provider().decorate(playerName, result);
                 if (next != null) {

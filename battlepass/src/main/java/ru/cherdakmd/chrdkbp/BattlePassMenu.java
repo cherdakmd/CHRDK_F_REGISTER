@@ -9,6 +9,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -32,19 +33,21 @@ final class BattlePassMenu implements Listener {
     }
 
     /** Строка меню: номер волны и состояние задания. */
-    private record Entry(int week, BattlePassView.Mission view) {
+    private record Entry(int week, long unlockAt, boolean unlocked, BattlePassView.Mission view) {
     }
 
     static final class Holder implements InventoryHolder {
         private final UUID owner;
         private final int page;
+        private final BattlePassConfig.Season season;
         private Inventory inventory;
         private List<String> missionIds = List.of();
         private int itemCount;
 
-        Holder(UUID owner, int page) {
+        Holder(UUID owner, int page, BattlePassConfig.Season season) {
             this.owner = owner;
             this.page = page;
+            this.season = season;
         }
 
         void bind(Inventory inventory, List<String> missionIds, int itemCount) {
@@ -61,6 +64,14 @@ final class BattlePassMenu implements Listener {
 
     /** Открыть меню на указанной странице (страница зажимается в допустимые границы). */
     void open(Player player, int page) {
+        if (!player.hasPermission("chrdkbp.use")) {
+            plugin.messages().send(player, "no-permission");
+            return;
+        }
+        if (!plugin.settings().menuEnabled()) {
+            plugin.messages().send(player, "menu-disabled");
+            return;
+        }
         BattlePassConfig.Season season = plugin.season();
         if (season == null || season.empty()) {
             plugin.messages().send(player, "no-season");
@@ -69,10 +80,11 @@ final class BattlePassMenu implements Listener {
         List<Entry> entries = entries(player, season);
         List<String> ids = entries.stream().map(entry -> entry.view().def().id()).toList();
         int safePage = BattlePassMenuLayout.clampPage(page, entries.size());
-        Holder holder = new Holder(player.getUniqueId(), safePage);
+        Holder holder = new Holder(player.getUniqueId(), safePage, season);
         Inventory inventory = Bukkit.createInventory(holder, BattlePassMenuLayout.SIZE,
                 plugin.messages().get("menu-title",
-                        "season", BattlePassScreen.described(season.name())));
+                        "season", BattlePassScreen.described(season.name()),
+                        "page", safePage + 1, "pages", BattlePassMenuLayout.pageCount(entries.size())));
         holder.bind(inventory, ids, entries.size());
 
         int from = safePage * BattlePassMenuLayout.ITEMS_PER_PAGE;
@@ -90,11 +102,23 @@ final class BattlePassMenu implements Listener {
             inventory.setItem(BattlePassMenuLayout.SLOT_NEXT, button(Material.ARROW, "menu-next"));
         }
         inventory.setItem(BattlePassMenuLayout.SLOT_SUMMARY, summary(player, season, entries));
+        inventory.setItem(BattlePassMenuLayout.SLOT_CLAIM_ALL, button(Material.CHEST, "menu-claim-all"));
+        inventory.setItem(BattlePassMenuLayout.SLOT_BACK, button(Material.COMPASS, "menu-back"));
+        inventory.setItem(BattlePassMenuLayout.SLOT_REFRESH, button(Material.CLOCK, "menu-refresh"));
+        ItemStack premium = button(Material.GOLD_INGOT, "menu-premium-name");
+        ItemMeta premiumMeta = premium.getItemMeta();
+        if (premiumMeta != null) {
+            premiumMeta.lore(plugin.messages().getList("menu-premium-lore",
+                    "vip", plugin.messages().mini(playerStatusKey(plugin.vipActive(player))),
+                    "premium", plugin.messages().mini(playerStatusKey(plugin.premiumActive(player)))));
+            premium.setItemMeta(premiumMeta);
+        }
+        inventory.setItem(BattlePassMenuLayout.SLOT_PREMIUM, premium);
         inventory.setItem(BattlePassMenuLayout.SLOT_CLOSE, button(Material.BARRIER, "menu-close"));
         player.openInventory(inventory);
     }
 
-    /** Все задания уже открытых волн в порядке сезона. */
+    /** Все задания сезона: будущие волны видны с датой открытия. */
     private List<Entry> entries(Player player, BattlePassConfig.Season season) {
         long now = System.currentTimeMillis();
         boolean vipActive = plugin.vipActive(player);
@@ -102,11 +126,9 @@ final class BattlePassMenu implements Listener {
         UUID uuid = player.getUniqueId();
         List<Entry> entries = new ArrayList<>();
         for (int index = 0; index < season.weeks().size(); index++) {
-            if (!BattlePassConfig.isUnlocked(season, index, now)) {
-                break;
-            }
             for (BattlePassConfig.MissionDef mission : season.weeks().get(index).missions()) {
-                entries.add(new Entry(index + 1, new BattlePassView.Mission(
+                entries.add(new Entry(index + 1, BattlePassConfig.unlockAt(season, index),
+                        BattlePassConfig.isUnlocked(season, index, now), new BattlePassView.Mission(
                         mission,
                         plugin.store().progressOf(uuid, mission.id()),
                         plugin.store().isClaimed(uuid, mission.id(), "FREE"),
@@ -122,7 +144,7 @@ final class BattlePassMenu implements Listener {
     private ItemStack icon(Entry entry) {
         BattlePassView.Mission view = entry.view();
         BattlePassConfig.MissionDef mission = view.def();
-        ItemStack item = new ItemStack(materialOf(mission));
+        ItemStack item = new ItemStack(entry.unlocked() ? materialOf(mission) : Material.GRAY_DYE);
         ItemMeta meta = item.getItemMeta();
         if (meta == null) {
             return item;
@@ -135,12 +157,20 @@ final class BattlePassMenu implements Listener {
                 "target", mission.target(),
                 "points", mission.points(),
                 "reward", plugin.screen().reward(mission)));
-        switch (view.state()) {
+        if (!entry.unlocked()) {
+            lore.add(plugin.messages().get("menu-lore-locked", "date",
+                    java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
+                            .withZone(java.time.ZoneId.systemDefault())
+                            .format(java.time.Instant.ofEpochMilli(entry.unlockAt()))));
+        } else switch (view.state()) {
             case READY -> lore.add(plugin.messages().get("menu-lore-claim"));
             case VIP_LOCKED -> lore.add(plugin.messages().get("menu-lore-vip"));
             case PREMIUM_LOCKED -> lore.add(plugin.messages().get("menu-lore-premium"));
             case CLAIMED -> lore.add(plugin.messages().get("menu-lore-claimed"));
             default -> { /* в работе — подсказка не нужна */ }
+        }
+        if (entry.unlocked() && view.state() == BattlePassView.State.READY) {
+            meta.setEnchantmentGlintOverride(true);
         }
         meta.lore(lore);
         item.setItemMeta(meta);
@@ -153,7 +183,7 @@ final class BattlePassMenu implements Listener {
         java.util.Set<String> claims = plugin.store().claimsSnapshot().getOrDefault(
                 player.getUniqueId(), java.util.Set.of());
         int ready = (int) entries.stream()
-                .filter(entry -> entry.view().state() == BattlePassView.State.READY)
+                .filter(entry -> entry.unlocked() && entry.view().state() == BattlePassView.State.READY)
                 .count();
         ItemStack item = new ItemStack(Material.NETHER_STAR);
         ItemMeta meta = item.getItemMeta();
@@ -171,6 +201,10 @@ final class BattlePassMenu implements Listener {
         return item;
     }
 
+    private static String playerStatusKey(boolean active) {
+        return active ? "menu-track-active" : "menu-track-locked";
+    }
+
     private ItemStack button(Material material, String key) {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
@@ -184,7 +218,7 @@ final class BattlePassMenu implements Listener {
     private static Material materialOf(BattlePassConfig.MissionDef mission) {
         if (!mission.icon().isEmpty()) {
             Material configured = Material.matchMaterial(mission.icon());
-            if (configured != null) {
+            if (configured != null && configured.isItem() && !configured.isAir()) {
                 return configured;
             }
         }
@@ -217,22 +251,58 @@ final class BattlePassMenu implements Listener {
         if (slot < 0 || slot >= BattlePassMenuLayout.SIZE) {
             return;
         }
-        int pages = BattlePassMenuLayout.pageCount(holder.itemCount);
-        BattlePassMenuLayout.Action action = BattlePassMenuLayout.actionFor(
-                slot, holder.page, pages, holder.itemCount);
-        switch (action) {
-            case CLOSE -> player.closeInventory();
-            case PREV -> open(player, holder.page - 1);
-            case NEXT -> open(player, holder.page + 1);
-            case MISSION -> {
-                int index = BattlePassMenuLayout.missionIndex(slot, holder.page, holder.itemCount);
-                if (index >= 0 && index < holder.missionIds.size()) {
-                    plugin.claims().claimOne(player, holder.missionIds.get(index));
-                    // Перерисовываем: состояние, полосы и кнопки могли измениться.
+        // Bukkit запрещает менять открытый инвентарь внутри InventoryClickEvent.
+        // Проверка текущего Holder также гасит второй клик из старого окна.
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (!player.isOnline() || player.getOpenInventory().getTopInventory().getHolder() != holder) {
+                return;
+            }
+            if (!player.hasPermission("chrdkbp.use") || !plugin.settings().menuEnabled()) {
+                player.closeInventory();
+                return;
+            }
+            if (plugin.season() != holder.season) {
+                open(player, 0); // после reload старый id не должен выдать награду другого сезона
+                return;
+            }
+            int pages = BattlePassMenuLayout.pageCount(holder.itemCount);
+            BattlePassMenuLayout.Action action = BattlePassMenuLayout.actionFor(
+                    slot, holder.page, pages, holder.itemCount);
+            switch (action) {
+                case CLOSE -> player.closeInventory();
+                case PREV -> open(player, holder.page - 1);
+                case NEXT -> open(player, holder.page + 1);
+                case REFRESH -> open(player, holder.page);
+                case BACK -> {
+                    player.closeInventory();
+                    player.performCommand("menu");
+                }
+                case PREMIUM -> {
+                    player.closeInventory();
+                    player.performCommand("pass shop");
+                }
+                case CLAIM_ALL -> {
+                    plugin.claims().claimAll(player);
                     open(player, holder.page);
                 }
+                case MISSION -> {
+                    int index = BattlePassMenuLayout.missionIndex(slot, holder.page, holder.itemCount);
+                    if (index >= 0 && index < holder.missionIds.size()) {
+                        // Claims повторно проверяет волну, прогресс, права и уже выданные награды.
+                        plugin.claims().claimOne(player, holder.missionIds.get(index));
+                        open(player, holder.page);
+                    }
+                }
+                default -> { }
             }
-            default -> { /* SUMMARY и пустые слоты ничего не делают */ }
+        });
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onDrag(InventoryDragEvent event) {
+        if (event.getView().getTopInventory().getHolder() instanceof Holder) {
+            event.setCancelled(true);
         }
     }
+
 }

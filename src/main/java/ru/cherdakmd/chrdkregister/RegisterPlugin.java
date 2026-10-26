@@ -35,6 +35,12 @@ public final class RegisterPlugin extends JavaPlugin {
     /** 1.4.183: личные переключатели надписей в нике и табе. */
     private LabelPreferences labelPreferences;
     private LabelsCommandHandler labelsCommand;
+    /** 1.4.186: меню «Оформление ника» — по плитке на каждую надпись. */
+    private LabelsMenuService labelsMenu;
+    /** 1.4.187: палитра цветов ника и лимиты пресетов. */
+    private volatile LabelPalette palette = LabelPalette.disabled();
+    private LabelsStyleMenuService labelsStyleMenu;
+    private volatile LabelLimits labelLimits = LabelLimits.DEFAULT;
     private PluginUpdateService pluginUpdater;
     private ExternalHooks externalHooks;
     private LuckPermsPassSync luckPermsPassSync;
@@ -91,9 +97,20 @@ public final class RegisterPlugin extends JavaPlugin {
         this.tabListService.setNameDecorator(chatService::decoratedName);
         this.tabListService.setLabelPreferences(labelPreferences);
         this.chatService.setLabelPreferences(labelPreferences);
+        profileService.setLabelPreferences(labelPreferences);
+        this.labelsMenu = new LabelsMenuService(this, labelPreferences);
+        getServer().getPluginManager().registerEvents(labelsMenu, this);
+        // 1.4.187: цвет, порядок меток и пресеты — отдельные экраны из меню.
+        this.labelsStyleMenu = new LabelsStyleMenuService(this, labelPreferences);
+        getServer().getPluginManager().registerEvents(labelsStyleMenu, this);
+        labelsMenu.setStyleMenu(labelsStyleMenu);
+        applyLabelSettings();
         this.luckPermsPassSync = new LuckPermsPassSync(externalHooks, store, accessManager::config, getLogger());
         this.shopService = new ShopService(this, accessManager, externalHooks, getLogger());
         this.chatService.setTagResolver(shopService::tagOf);
+        // 1.4.187: «каталожные» цвета открываются покупкой — ядро спрашивает
+        // у каталога активные товары игрока (без создания записей).
+        this.chatService.setPurchaseLookup(this::purchasedProducts);
         getServer().getPluginManager().registerEvents(new ShopListener(shopService), this);
         shopService.cleanupExpired();
         shopService.logProblems();
@@ -173,7 +190,8 @@ public final class RegisterPlugin extends JavaPlugin {
                 return true;
             });
         }
-        this.labelsCommand = new LabelsCommandHandler(this, labelPreferences);
+        this.labelsCommand = new LabelsCommandHandler(this, labelPreferences, labelsMenu);
+        labelsMenu.setCommand(labelsCommand);
         PluginCommand labelsCommandPlugin = getCommand("labels");
         if (labelsCommandPlugin != null) {
             labelsCommandPlugin.setExecutor(labelsCommand);
@@ -248,6 +266,8 @@ public final class RegisterPlugin extends JavaPlugin {
         if (pluginUpdater != null) pluginUpdater.close();
         if (serverMenuService != null) serverMenuService.shutdown();
         if (rankMenuService != null) rankMenuService.shutdown();
+        if (labelsMenu != null) labelsMenu.shutdown();
+        if (labelsStyleMenu != null) labelsStyleMenu.shutdown();
         if (bankService != null) {
             bankService.shutdown();
             bankService = null;
@@ -313,6 +333,7 @@ public final class RegisterPlugin extends JavaPlugin {
         if (shopService != null) {
             shopService.logProblems();
         }
+        applyLabelSettings();
     }
 
     /** Тексты плагина из {@code messages.yml}. */
@@ -438,6 +459,58 @@ public final class RegisterPlugin extends JavaPlugin {
     /** Карточка игрока {@code /profile}. */
     public ProfileService profile() {
         return profileService;
+    }
+
+    /** Меню «Оформление ника» (1.4.186): открывается из /labels и /profile. */
+    public LabelsMenuService labelsMenu() {
+        return labelsMenu;
+    }
+
+    /** Экраны цвета, порядка и пресетов (1.4.187). */
+    public LabelsStyleMenuService labelsStyleMenu() {
+        return labelsStyleMenu;
+    }
+
+    /** Палитра цветов ника (1.4.187); без конфига — выключена. */
+    public LabelPalette palette() {
+        return palette;
+    }
+
+    /** Лимиты пресетов по ступеням ранга (1.4.187). */
+    public LabelLimits labelLimits() {
+        return labelLimits;
+    }
+
+    /** Перечитывает палитру и лимиты после /pass reload. */
+    public void applyLabelSettings() {
+        this.palette = LabelPalette.fromConfig(getConfig());
+        this.labelLimits = LabelLimits.fromConfig(getConfig());
+        if (chatService != null) {
+            chatService.setPalette(palette);
+        }
+        if (labelsMenu != null) {
+            labelsMenu.applySettings(palette, labelLimits);
+        }
+        if (labelsStyleMenu != null) {
+            labelsStyleMenu.applySettings(palette, labelLimits);
+        }
+    }
+
+    /** Иды активных товаров игрока: нужны и палитре, и меню. */
+    public java.util.Set<String> purchasedProducts(String playerName) {
+        ShopService shop = shopService;
+        if (shop == null) {
+            return java.util.Set.of();
+        }
+        try {
+            java.util.Set<String> ids = new java.util.LinkedHashSet<>();
+            for (ShopService.Active active : shop.active(playerName)) {
+                ids.add(active.product().id());
+            }
+            return java.util.Set.copyOf(ids);
+        } catch (RuntimeException exception) {
+            return java.util.Set.of();
+        }
     }
 
     /** Чат и автосообщения ({@code /pass automessages}). */

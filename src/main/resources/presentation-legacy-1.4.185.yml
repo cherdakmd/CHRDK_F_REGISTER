@@ -1,0 +1,95 @@
+# Стоковая секция server-menu конфигурации 1.4.185 — последний снимок перед
+# 1.4.186, где у каждого звания свой переключатель и обновлена подсказка
+# «Оформление ника» (7 разделов, 52 пункта). Пунктов столько же, сколько сейчас:
+# менялась только подсказка.
+# Данные для PresentationMigration: сервер, обновившийся до 1.4.185 включительно
+# и не правивший меню, один раз получает свежий текст подсказки.
+# Не задавайте этот файл как defaults конфигурации и не копируйте игрокам.
+
+server-menu:
+  enabled: true
+  title: "<gold>Меню сервера</gold>"
+  # Заголовок раздела: «Меню · <имя категории>» — видно, где игрок находится.
+  category-title: "<dark_gray>Меню · </dark_gray><gold>%category%</gold>"
+  # Кнопки нижнего ряда страницы раздела.
+  back-slot: 40
+  back-icon: "ARROW"
+  back-name: "<gray>◀ Назад</gray>"
+  # -1 — не показывать кнопку «Закрыть» (ESC работает всегда).
+  close-slot: 44
+  close-icon: "BARRIER"
+  close-name: "<red>✖ Закрыть</red>"
+  # Семь разделов: путь игрока от ранга до общества. Порядок слотов = порядок
+  # иконок на главной странице.
+  categories:
+    - {"id": "account", "slot": 10, "icon": "PAPER", "name": "<gold><bold>Ранг и аккаунт</bold></gold>", "lore": "<gray>Ранг, оплата, награды входа и защита аккаунта</gray>"}
+    - {"id": "progress", "slot": 11, "icon": "EXPERIENCE_BOTTLE", "name": "<gold><bold>Прогресс и награды</bold></gold>", "lore": "<gray>Сезон, задания, навыки, класс и достижения</gray>"}
+    - {"id": "economy", "slot": 12, "icon": "DIAMOND", "name": "<gold><bold>Экономика</bold></gold>", "lore": "<gray>Банк, магазин, аукцион, заказы и лотерея</gray>"}
+    - {"id": "world", "slot": 13, "icon": "GRASS_BLOCK", "name": "<gold><bold>Мир и территории</bold></gold>", "lore": "<gray>Приваты, дома и телепорты</gray>"}
+    - {"id": "gear", "slot": 14, "icon": "ANVIL", "name": "<gold><bold>Снаряжение и питомцы</bold></gold>", "lore": "<gray>Чары, тиры, артефакты, косметика и питомцы</gray>"}
+    - {"id": "adventure", "slot": 15, "icon": "IRON_SWORD", "name": "<gold><bold>Охота и события</bold></gold>", "lore": "<gray>Охота, боссы, ивенты и клады</gray>"}
+    - {"id": "social", "slot": 16, "icon": "BELL", "name": "<gold><bold>Общество</bold></gold>", "lore": "<gray>Чат, отряд, гильдия, очередь и стримы</gray>"}
+  # Пункты. category — id раздела; без category пункт живёт на главной странице.
+  # Без command — подсказка (клик игнорируется).
+  items:
+    # ------------------------------ главная ------------------------------
+    - {"slot": 4, "icon": "PLAYER_HEAD", "name": "<gold><bold>%player%</bold></gold>", "lore": "<gray>Ранг: <white>%rank%</white></gray>\n<gray>Осталось: <white>%pass_left%</white></gray>\n<dark_gray>Клик — карточка игрока</dark_gray>", "command": "profile", "permission": "chrdkregister.profile"}
+    - {"slot": 20, "icon": "BOOK", "name": "<gold><bold>Вики сервера</bold></gold>", "lore": "<gray>Все команды, цены и лимиты сайтом</gray>\n<dark_gray>Клик — ссылка на сайт в чат</dark_gray>", "command": "wiki"}
+    - {"slot": 22, "icon": "KNOWLEDGE_BOOK", "name": "<gray><bold>Как пользоваться</bold></gray>", "lore": "<gray>Клик по иконке открывает раздел</gray>\n<gray>Внутри — кнопки с командами</gray>\n<gray>«Назад» и «Закрыть» — в нижнем ряду</gray>"}
+    # ------------------------------ аккаунт ------------------------------
+    - {"category": "account", "icon": "NAME_TAG", "name": "<gold><bold>Мой ранг</bold></gold>", "lore": "<gray>Сейчас: <white>%rank%</white> <dark_gray>·</dark_gray> <white>%rank_status%</white></gray>\n<gray>Осталось: <white>%pass_left%</white></gray>\n<dark_gray>Клик — бонусы ступени и срок</dark_gray>", "command": "rank my"}
+    - {"category": "account", "icon": "NETHER_STAR", "name": "<gold><bold>Витрина рангов</bold></gold>", "lore": "<gray>Пять ступеней: что даёт каждая</gray>\n<dark_gray>Карточки, цены и кнопка оплаты</dark_gray>", "command": "rank"}
+    - {"category": "account", "icon": "BOOK", "name": "<gold><bold>Правила рангов</bold></gold>", "lore": "<gray>Что ранг даёт и чего не даёт</gray>\n<dark_gray>Честные границы без скрытых бонусов</dark_gray>", "command": "rank rules"}
+    - {"category": "account", "icon": "EMERALD", "name": "<gold><bold>Поддержать сервер</bold></gold>", "lore": "<gray>Оплата и продление через TradeMC</gray>\n<dark_gray>Выдача автоматическая, по нику</dark_gray>", "command": "pass donate"}
+    - {"category": "account", "icon": "CHEST", "name": "<gold><bold>Каталог товаров</bold></gold>", "lore": "<gray>Ранги, наборы и боевой пропуск одной страницей</gray>\n<dark_gray>Цены и состав — в чате, оплата — на сайте</dark_gray>", "command": "pass shop"}
+    - {"category": "account", "icon": "CLOCK", "name": "<gold><bold>Ежедневная награда</bold></gold>", "lore": "<gray>Календарь, стрик и награда дня</gray>", "command": "daily", "plugin": "CHRDK_DailyRewards", "permission": "chrdkdaily.use"}
+    - {"category": "account", "icon": "WRITABLE_BOOK", "name": "<gold><bold>Путеводитель</bold></gold>", "lore": "<gray>Книга с командами и первыми шагами</gray>", "command": "guide"}
+    - {"category": "account", "icon": "TRIPWIRE_HOOK", "name": "<gold><bold>Защита 2FA</bold></gold>", "lore": "<gray>Статус двухфакторной защиты</gray>\n<dark_gray>Подключение: /2fa setup</dark_gray>", "command": "2fa status"}
+    - {"category": "account", "icon": "COMPASS", "name": "<gold><bold>Сессии входа</bold></gold>", "lore": "<gray>Активные сессии аккаунта</gray>\n<dark_gray>Выход: /logout</dark_gray>", "command": "session"}
+    # ------------------------------ прогресс ------------------------------
+    - {"category": "progress", "icon": "FIREWORK_ROCKET", "name": "<gold><bold>Боевой пропуск</bold></gold>", "lore": "<gray>Экран сезона: недели и награды</gray>\n<dark_gray>Забрать награды: /battlepass claim</dark_gray>", "command": "battlepass menu", "plugin": "CHRDK_BattlePass", "permission": "chrdkbp.use"}
+    - {"category": "progress", "icon": "DRAGON_EGG", "name": "<gold><bold>Достижения</bold></gold>", "lore": "<gray>72 цели, бейджи и награды</gray>", "command": "achievements", "plugin": "CHRDK_Achievements", "permission": "chrdkachievements.use"}
+    - {"category": "progress", "icon": "GOLDEN_HELMET", "name": "<gold><bold>Звание по стажу</bold></gold>", "lore": "<gray>Растёт от наигранного времени</gray>\n<dark_gray>Не путать с донатным рангом</dark_gray>", "command": "ranks", "plugin": "CHRDK_Ranks", "permission": "chrdkranks.use"}
+    - {"category": "progress", "icon": "PAPER", "name": "<gold><bold>Задания</bold></gold>", "lore": "<gray>Фракции, персонажи и награды</gray>\n<dark_gray>Награды — без валюты, только опыт и расходники</dark_gray>", "command": "quests menu", "plugin": "CHRDK_Quests", "permission": "chrdkquests.use"}
+    - {"category": "progress", "icon": "AMETHYST_CLUSTER", "name": "<gold><bold>Навыки</bold></gold>", "lore": "<gray>10 навыков, 60 перков и уровни</gray>", "command": "skills", "plugin": "CHRDK_Skills", "permission": "chrdkskills.use"}
+    - {"category": "progress", "icon": "IRON_SWORD", "name": "<gold><bold>Класс и таланты</bold></gold>", "lore": "<gray>Выбор класса и дерево талантов</gray>", "command": "class menu", "plugin": "CHRDK_Classes", "permission": "chrdkclasses.use"}
+    - {"category": "progress", "icon": "IRON_PICKAXE", "name": "<gold><bold>Профессии</bold></gold>", "lore": "<gray>Ремесло, опыт и прибавки</gray>", "command": "prof menu", "plugin": "CHRDK_Professions", "permission": "chrdkprofessions.use"}
+    - {"category": "progress", "icon": "BEACON", "name": "<gold><bold>Общие цели</bold></gold>", "lore": "<gray>Вклад в цели всего сообщества</gray>", "command": "goals", "plugin": "CHRDK_CommonGoals", "permission": "chrdkgoals.use"}
+    - {"category": "progress", "icon": "PLAYER_HEAD", "name": "<gold><bold>Пригласить друга</bold></gold>", "lore": "<gray>Реферальный статус и бонусные дни</gray>", "command": "ref", "plugin": "CHRDK_Referrals", "permission": "chrdkref.use"}
+    # ------------------------------ экономика ------------------------------
+    - {"category": "economy", "icon": "GOLD_INGOT", "name": "<gold><bold>Мой баланс</bold></gold>", "lore": "<gray>Счёт банка и алмазы в инвентаре</gray>\n<dark_gray>Перевод: /pay ник сумма</dark_gray>", "command": "bal", "permission": "chrdkregister.bal"}
+    - {"category": "economy", "icon": "DIAMOND", "name": "<gold><bold>Топ богачей</bold></gold>", "lore": "<gray>Кто копит алмазы усерднее всех</gray>", "command": "baltop", "permission": "chrdkregister.baltop"}
+    - {"category": "economy", "icon": "EMERALD", "name": "<gold><bold>Алмазный магазин</bold></gold>", "lore": "<gray>Обмен ресурсов и динамические цены</gray>\n<dark_gray>Счёт магазина отделён от банка</dark_gray>", "command": "shop", "plugin": "CHRDK_DiamondShop", "permission": "chrdkshop.use"}
+    - {"category": "economy", "icon": "GOLD_BLOCK", "name": "<gold><bold>Аукцион игроков</bold></gold>", "lore": "<gray>Лоты и подтверждение покупки</gray>\n<dark_gray>Выставить: /auction sell цена</dark_gray>", "command": "auction", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
+    - {"category": "economy", "icon": "ENDER_CHEST", "name": "<gold><bold>Почта аукциона</bold></gold>", "lore": "<gray>Купленное и возврат непроданного</gray>", "command": "auction mail", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
+    - {"category": "economy", "icon": "OAK_SIGN", "name": "<gold><bold>Доска заказов</bold></gold>", "lore": "<gray>Заказы от ботов: принеси и получи</gray>", "command": "orders list", "plugin": "CHRDK_Orders", "permission": "chrdkorders.use"}
+    - {"category": "economy", "icon": "SUNFLOWER", "name": "<gold><bold>Лотерея недели</bold></gold>", "lore": "<gray>Банк, шанс и время розыгрыша</gray>", "command": "lottery info", "plugin": "CHRDK_Lottery", "permission": "chrdklottery.use"}
+    - {"category": "economy", "icon": "HOPPER", "name": "<gold><bold>Казна приватов</bold></gold>", "lore": "<gray>Баланс для ежедневной ренты</gray>", "command": "claim balance", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
+    # ------------------------------ мир ------------------------------
+    - {"category": "world", "icon": "MAP", "name": "<gold><bold>Мои территории</bold></gold>", "lore": "<gray>Меню приватов: клик — телепорт</gray>\n<dark_gray>Список чанков и витрина продаж</dark_gray>", "command": "claim menu", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
+    - {"category": "world", "icon": "FILLED_MAP", "name": "<gold><bold>Карта приватов</bold></gold>", "lore": "<gray>Карта чанков вокруг вас</gray>", "command": "claim map", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
+    - {"category": "world", "icon": "OAK_FENCE", "name": "<gold><bold>Как приватить</bold></gold>", "lore": "<gray>Покупка, члены и рента</gray>\n<dark_gray>Эта кнопка не покупает чанк</dark_gray>", "command": "claim help", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
+    - {"category": "world", "icon": "COMPASS", "name": "<gold><bold>Дома</bold></gold>", "lore": "<gray>Список точек дома</gray>\n<dark_gray>Установить: /sethome имя</dark_gray>", "command": "homes", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
+    - {"category": "world", "icon": "RED_BED", "name": "<gold><bold>Поставить дом</bold></gold>", "lore": "<gray>Встаньте в нужной точке и введите</gray>\n<dark_gray>/sethome имя</dark_gray>\n<dark_gray>Лимит точек зависит от ранга</dark_gray>"}
+    - {"category": "world", "icon": "ENDER_PEARL", "name": "<gold><bold>Случайный телепорт</bold></gold>", "lore": "<gray>RTP за алмазы</gray>\n<dark_gray>Цена — в настройках телепортов</dark_gray>", "command": "rtp", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
+    - {"category": "world", "icon": "OAK_DOOR", "name": "<gold><bold>Телепорт к игроку</bold></gold>", "lore": "<gray>Запрос: /tpa ник</gray>\n<dark_gray>Принять: /tpaccept</dark_gray>", "command": "tpa", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
+    # ------------------------------ снаряжение ------------------------------
+    - {"category": "gear", "icon": "ENCHANTED_BOOK", "name": "<gold><bold>Кастомные чары</bold></gold>", "lore": "<gray>Каталог чар и описания</gray>\n<dark_gray>Получение — через игровую механику</dark_gray>", "command": "enchants", "plugin": "CHRDK_Enchants", "permission": "chrdkenchants.use"}
+    - {"category": "gear", "icon": "SMITHING_TABLE", "name": "<gold><bold>Редкости снаряжения</bold></gold>", "lore": "<gray>Тиры крафта и характеристики</gray>", "command": "tiers", "plugin": "CHRDK_TierForge", "permission": "chrdktierforge.use"}
+    - {"category": "gear", "icon": "TOTEM_OF_UNDYING", "name": "<gold><bold>Артефакты</bold></gold>", "lore": "<gray>Каталог, носимые артефакты и источники</gray>\n<dark_gray>Добывайте их в мире</dark_gray>", "command": "artifacts", "plugin": "CHRDK_Artifacts", "permission": "chrdkartifacts.use"}
+    - {"category": "gear", "icon": "ITEM_FRAME", "name": "<gold><bold>Коллекция артефактов</bold></gold>", "lore": "<gray>Собранное, прогресс и награды</gray>", "command": "artifacts collection", "plugin": "CHRDK_Artifacts", "permission": "chrdkartifacts.use"}
+    - {"category": "gear", "icon": "FIREWORK_ROCKET", "name": "<gold><bold>Косметика</bold></gold>", "lore": "<gray>Эффекты, шлейфы и оформление</gray>", "command": "cosmetics list", "plugin": "CHRDK_Cosmetics", "permission": "chrdkcosmetics.use"}
+    - {"category": "gear", "icon": "BONE", "name": "<gold><bold>Питомцы</bold></gold>", "lore": "<gray>Кошки и волки: уровни и трюки</gray>", "command": "pet list", "plugin": "CHRDK_Pets", "permission": "chrdkpets.use"}
+    # ------------------------------ охота и события ------------------------------
+    - {"category": "adventure", "icon": "BOW", "name": "<gold><bold>Охота</bold></gold>", "lore": "<gray>Пять семейств, трофеи и моб-ключи</gray>", "command": "hunt", "plugin": "CHRDK_Hunt", "permission": "chrdkhunt.use"}
+    - {"category": "adventure", "icon": "WITHER_SKELETON_SKULL", "name": "<gold><bold>Боссы</bold></gold>", "lore": "<gray>Зоны опасности и таймеры</gray>", "command": "boss menu", "plugin": "CHRDK_Bosses", "permission": "chrdkbosses.use"}
+    - {"category": "adventure", "icon": "FIREWORK_STAR", "name": "<gold><bold>События</bold></gold>", "lore": "<gray>Расписание и ближайший ивент</gray>", "command": "events", "plugin": "CHRDK_Events", "permission": "chrdkevents.use"}
+    - {"category": "adventure", "icon": "CHEST", "name": "<gold><bold>Клады</bold></gold>", "lore": "<gray>Бочки с добычей и арсенал находок</gray>\n<dark_gray>Копайте — клад найдёт вас сам</dark_gray>", "command": "treasures", "plugin": "CHRDK_Treasures", "permission": "chrdktreasures.use"}
+    # ------------------------------ общество ------------------------------
+    - {"category": "social", "icon": "FEATHER", "name": "<gold><bold>Чат</bold></gold>", "lore": "<gray>Клик — переключить канал</gray>\n<dark_gray>Локальный слышат рядом, глобальный — все</dark_gray>", "command": "chat"}
+    - {"category": "social", "icon": "SHIELD", "name": "<gold><bold>Отряд</bold></gold>", "lore": "<gray>Вместе: приглашения и общий чат</gray>", "command": "party", "plugin": "CHRDK_Party", "permission": "chrdkparty.use"}
+    - {"category": "social", "icon": "WHITE_BANNER", "name": "<gold><bold>Гильдия</bold></gold>", "lore": "<gray>Казна, ранги и войны</gray>", "command": "guild menu", "plugin": "CHRDK_Guilds", "permission": "chrdkguilds.use"}
+    - {"category": "social", "icon": "HOPPER", "name": "<gold><bold>Очередь входа</bold></gold>", "lore": "<gray>Статус очереди и приоритет</gray>", "command": "queue info", "plugin": "CHRDK_Queue", "permission": "chrdkqueue.use"}
+    - {"category": "social", "icon": "JUKEBOX", "name": "<gold><bold>Стримерская программа</bold></gold>", "lore": "<gray>Twitch и VK Play Live: статус и награды</gray>\n<dark_gray>Привязка: /stream link</dark_gray>", "command": "stream status", "plugin": "CHRDK_Streams", "permission": "chrdkstreams.use"}
+    # 1.4.183: свой ник — что видно в табе и чате. Настройка личная, права не меняет.
+    - {"category": "social", "icon": "NAME_TAG", "name": "<gold><bold>Оформление ника</bold></gold>", "lore": "<gray>Ранг, метки и шапка таба — вкл/выкл</gray>\n<dark_gray>Клик: /labels</dark_gray>", "command": "labels", "permission": "chrdkregister.labels"}

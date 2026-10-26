@@ -437,6 +437,21 @@ shop:
       permissions: []
       commands: []
 
+    # --- Удобство (1.4.188) --------------------------------------------------
+    # Группа товара создаётся командой /pass luckperms setup: она получает права
+    # из поля permissions и выдаётся игроку на срок покупки. Лимит аддона при
+    # этом не суммируется с рангом, а берётся максимум — и всегда упирается в
+    # жёсткий потолок аддона (дома ≤ 12). Так товар не может «перерасти» ранг.
+    - id: homes-plus
+      name: "<aqua>Дома: 8 точек</aqua>"
+      price: 109
+      days: 30
+      group: "homesplus"
+      description: "Восемь точек дома вместо трёх — 30 дней (потолок 12, с рангом не складывается)"
+      tag: ""
+      permissions: ["chrdktele.homes.plus"]
+      commands: []
+
     # --- Косметика поштучно -------------------------------------------------
     # Товары без группы и без разметки ника: это «право на эффект», которое
     # проверяет аддон CHRDK_Cosmetics через API ядра (hasEntitlement). Владелец
@@ -444,7 +459,7 @@ shop:
     # id товара и поле product шлейфа в cosmetics/config.yml должны совпадать.
     - id: trail-flame
       name: "<red>Огненный шлейф</red>"
-      price: 59
+      price: 39
       days: 30
       group: ""
       description: "Шлейф огня за спиной — 30 дней"
@@ -454,7 +469,7 @@ shop:
 
     - id: trail-hearts
       name: "<light_purple>Сердечки</light_purple>"
-      price: 59
+      price: 49
       days: 30
       group: ""
       description: "Шлейф сердечек за спиной — 30 дней"
@@ -484,7 +499,7 @@ shop:
 
     - id: trail-magic
       name: "<dark_purple>Ведьмина магия</dark_purple>"
-      price: 69
+      price: 79
       days: 30
       group: ""
       description: "Шлейф ведьминой магии за спиной — 30 дней"
@@ -492,17 +507,84 @@ shop:
       permissions: []
       commands: []
 
+    # Торжественный вход: тот же эффект, что у Мецената, но без ранга.
+    # cosmetics/config.yml → join-effect.product должен совпадать с этим id.
+    - id: join-effect
+      name: "<gold>Торжественный вход</gold>"
+      price: 89
+      days: 30
+      group: ""
+      description: "Вспышка тотема и звук при входе на сервер — 30 дней"
+      tag: ""
+      permissions: []
+      commands: []
+
+    # --- Цвета ника (1.4.187, 1.4.188) --------------------------------------
+    # Товар открывает один цвет из labels.colors.list, у которого product
+    # совпадает с id этого товара. Цвет не даёт силы: это только вид ника.
+    # Цвет с product — премиум: его даёт только покупка, ступень ранга его не
+    # заменяет. Обычные цвета (без product) открывает ступень.
+    - id: nick-aurora
+      name: "<gradient:#00e5ff:#8a2be2>Цвет ника: Сияние</gradient>"
+      price: 119
+      days: 30
+      group: ""
+      description: "Градиент «Сияние» для ника — 30 дней"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: nick-flame
+      name: "<gradient:#ff3d00:#ffd54f>Цвет ника: Пламя</gradient>"
+      price: 129
+      days: 30
+      group: ""
+      description: "Градиент «Пламя» для ника — 30 дней"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: nick-pearl
+      name: "<gradient:#ffffff:#9fd8ff>Цвет ника: Жемчуг</gradient>"
+      price: 139
+      days: 30
+      group: ""
+      description: "Градиент «Жемчуг» для ника — 30 дней"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: nick-lagoon
+      name: "<gradient:#00c9a7:#7ae582>Цвет ника: Лагуна</gradient>"
+      price: 149
+      days: 30
+      group: ""
+      description: "Градиент «Лагуна» для ника — 30 дней"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: nick-crimson
+      name: "<gradient:#7b0d1e:#ff5c8a>Цвет ника: Багрянец</gradient>"
+      price: 169
+      days: 30
+      group: ""
+      description: "Градиент «Багрянец» для ника — 30 дней"
+      tag: ""
+      permissions: []
+      commands: []
+
     # --- Батлпасс -----------------------------------------------------------
     # Боевой пропуск сезона: открывает премиум-колонку наград в заданиях
     # (battlepass/config.yml → premium.product должен совпадать с этим id).
-    # Награды премиум-трека — дни ранга и косметика, без игровой силы.
+    # Награды премиум-трека — часы ранга и косметика, без игровой силы.
     # 90 дней = длина сезона; продление складывается, потолок общий 365.
     - id: battlepass-premium
       name: "<gold>Боевой пропуск</gold>"
       price: 249
       days: 90
       group: ""
-      description: "Золотые награды всех заданий сезона: дни ранга и косметика"
+      description: "Золотые награды всех заданий сезона: часы ранга и косметика"
       tag: ""
       permissions: []
       commands: []
@@ -516,7 +598,7 @@ shop:
       price: 199
       days: 30
       group: ""
-      description: "Все пять шлейфов сразу — выгоднее на 116 ₽"
+      description: "Все пять шлейфов сразу — вместо 295 ₽, выгода 96 ₽"
       tag: ""
       permissions: []
       commands: []
@@ -526,6 +608,26 @@ shop:
         - trail-notes
         - trail-sparkles
         - trail-magic
+
+    # Самый выгодный набор витрины (1.4.188): весь вид разом. Вложенный набор
+    # раскрывается рекурсивно, поэтому игрок получает и шлейфы по отдельности
+    # (на случай, если «Набор шлейфов» потом уберут из каталога).
+    - id: look-pack
+      name: "<gradient:#00e5ff:#ffd54f>Весь вид</gradient>"
+      price: 599
+      days: 30
+      group: ""
+      description: "Все шлейфы и пять градиентов ника на 30 дней — вместо 1 000 ₽"
+      tag: ""
+      permissions: []
+      commands: []
+      includes:
+        - trails-pack
+        - nick-aurora
+        - nick-flame
+        - nick-pearl
+        - nick-lagoon
+        - nick-crimson
 
 
 # =====================================================================
@@ -646,8 +748,9 @@ server-menu:
     - {"category": "social", "icon": "WHITE_BANNER", "name": "<gold><bold>Гильдия</bold></gold>", "lore": "<gray>Казна, ранги и войны</gray>", "command": "guild menu", "plugin": "CHRDK_Guilds", "permission": "chrdkguilds.use"}
     - {"category": "social", "icon": "HOPPER", "name": "<gold><bold>Очередь входа</bold></gold>", "lore": "<gray>Статус очереди и приоритет</gray>", "command": "queue info", "plugin": "CHRDK_Queue", "permission": "chrdkqueue.use"}
     - {"category": "social", "icon": "JUKEBOX", "name": "<gold><bold>Стримерская программа</bold></gold>", "lore": "<gray>Twitch и VK Play Live: статус и награды</gray>\n<dark_gray>Привязка: /stream link</dark_gray>", "command": "stream status", "plugin": "CHRDK_Streams", "permission": "chrdkstreams.use"}
-    # 1.4.183: свой ник — что видно в табе и чате. Настройка личная, права не меняет.
-    - {"category": "social", "icon": "NAME_TAG", "name": "<gold><bold>Оформление ника</bold></gold>", "lore": "<gray>Ранг, метки и шапка таба — вкл/выкл</gray>\n<dark_gray>Клик: /labels</dark_gray>", "command": "labels", "permission": "chrdkregister.labels"}
+    # 1.4.183: свой ник — что видно в табе и чате. 1.4.186: каждое звание отдельно.
+    # Настройка личная, права и прогресс не меняет.
+    - {"category": "social", "icon": "NAME_TAG", "name": "<gold><bold>Оформление ника</bold></gold>", "lore": "<gray>Ранг, титул, звание, класс, гильдия, стример</gray>\n<gray>и шапка таба — каждое включается отдельно</gray>\n<dark_gray>Клик: /labels</dark_gray>", "command": "labels", "permission": "chrdkregister.labels"}
 
 # Алмазный банк: /bal, /pay, /baltop (1.4.138).
 # Валюта — алмазы: предметы в инвентаре и счёт в банке. Курс фиксированный,
@@ -1028,10 +1131,13 @@ tablist:
   # Нужно для старых конфигов: обновление подхватит название само.
   # false — в табе останутся только знак и цвет ступени.
   show-rank-name: true
-  # Что игрок показывает в своём нике, он решает сам: /labels rank|badges|header
-  # (файл plugins/CHRDK_Core/labels.json). Скрытие — только оформление: ранг,
+  # Что игрок показывает в своём нике, он решает сам: /labels открывает меню,
+  # где каждое звание и надпись включаются отдельно (ранг, титул кузни, звание
+  # кладоискателя, класс, гильдия, стример, квесты, достижения, шапка таба).
+  # Файл plugins/CHRDK_Core/labels.json. Скрытие — только оформление: ранг,
   # опыт и права остаются. Сортирует список CHRDK_Ranks: сначала донатный ранг,
   # внутри ранга — звание за стаж (ranks.sort-tab в его config.yml).
+  #
   # Никнеймы, закреплённые ВВЕРХУ списка игроков (регистр не важен).
   # Реализовано через приоритетную команду scoreboard — клиент Minecraft
   # сортирует список сначала по команде, потом по нику.
@@ -1039,3 +1145,49 @@ tablist:
   # (префиксы/ранги), его команда имеет приоритет — TAB не перетягивает игрока обратно.
   pinned-names:
     - kalinin_play
+
+# =====================================================================
+#  Оформление ника: цвета и пресеты (1.4.187)
+# =====================================================================
+# Что игрок уже выбрал — в plugins/CHRDK_Core/labels.json (скрытые надписи,
+# порядок меток, цвет, сохранённые пресеты). Здесь — что ему вообще доступно.
+#
+# Правило сервера: оформление не даёт силы. Цвет ника — это вид, а не бонус,
+# поэтому часть палитры открыта всем, часть — со ступенью ранга, а отдельные
+# «дорогие» цвета продаются в каталоге (см. shop.products, товары nick-*).
+labels:
+  colors:
+    # false — палитра пропадает: ник красит только ранг или тег каталога.
+    enabled: true
+    # Цвета по порядку в меню. У каждого:
+    #   id      — машинное имя (латиницей, без пробелов), оно пишется в labels.json;
+    #   name    — подпись в меню (MiniMessage);
+    #   format  — шаблон с %name%, в него подставляется ник;
+    #   rank    — минимальная ступень доната (0 — доступен всем);
+    #   product — id товара каталога: такой цвет продаётся, и покупка —
+    #             единственный способ его получить; ступень ранга его не заменяет.
+    # Свой цвет главнее цвета ступени, но не главнее купленного тега каталога:
+    # оплаченное вперёд не отбираем.
+    list:
+      - {"id": "gray",         "name": "<gray>Серый</gray>",                 "format": "<gray>%name%</gray>",                                  "rank": 0}
+      - {"id": "white",        "name": "<white>Белый</white>",               "format": "<white>%name%</white>",                                "rank": 0}
+      - {"id": "yellow",       "name": "<yellow>Жёлтый</yellow>",            "format": "<yellow>%name%</yellow>",                              "rank": 0}
+      - {"id": "green",        "name": "<green>Зелёный</green>",             "format": "<green>%name%</green>",                                "rank": 0}
+      - {"id": "aqua",         "name": "<aqua>Бирюзовый</aqua>",             "format": "<aqua>%name%</aqua>",                                  "rank": 1}
+      - {"id": "blue",         "name": "<blue>Синий</blue>",                 "format": "<blue>%name%</blue>",                                  "rank": 1}
+      - {"id": "gold",         "name": "<gold>Золотой</gold>",               "format": "<gold>%name%</gold>",                                  "rank": 2}
+      - {"id": "light-purple", "name": "<light_purple>Сиреневый</light_purple>", "format": "<light_purple>%name%</light_purple>",              "rank": 3}
+      - {"id": "red",          "name": "<red>Алый</red>",                    "format": "<red>%name%</red>",                                    "rank": 4}
+      - {"id": "sunset",       "name": "<gradient:#ffd700:#ff8800>Закат</gradient>", "format": "<gradient:#ffd700:#ff8800>%name%</gradient>",   "rank": 5}
+      # Только каталог: ранг эти градиенты не открывает — «богаче» от ступени
+      # даёт количество обычных цветов, а не бесплатный премиум.
+      - {"id": "aurora",       "name": "<gradient:#00e5ff:#8a2be2>Сияние</gradient>", "format": "<gradient:#00e5ff:#8a2be2>%name%</gradient>", "product": "nick-aurora"}
+      - {"id": "flame",        "name": "<gradient:#ff3d00:#ffd54f>Пламя</gradient>",  "format": "<gradient:#ff3d00:#ffd54f>%name%</gradient>", "product": "nick-flame"}
+      - {"id": "pearl",        "name": "<gradient:#ffffff:#9fd8ff>Жемчуг</gradient>", "format": "<gradient:#ffffff:#9fd8ff>%name%</gradient>", "product": "nick-pearl"}
+      - {"id": "lagoon",       "name": "<gradient:#00c9a7:#7ae582>Лагуна</gradient>", "format": "<gradient:#00c9a7:#7ae582>%name%</gradient>", "product": "nick-lagoon"}
+      - {"id": "crimson",      "name": "<gradient:#7b0d1e:#ff5c8a>Багрянец</gradient>", "format": "<gradient:#7b0d1e:#ff5c8a>%name%</gradient>", "product": "nick-crimson"}
+  presets:
+    # Свои пресеты оформления: снимок «что скрыто + порядок + цвет», который
+    # возвращается одной кнопкой. Индекс списка — ступень ранга:
+    # [без ранга, I, II, III, IV, V]. Больше шести слотов меню не покажет.
+    slots: [2, 2, 3, 4, 5, 6]

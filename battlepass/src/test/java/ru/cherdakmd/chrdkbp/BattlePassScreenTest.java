@@ -135,4 +135,26 @@ class BattlePassScreenTest {
         assertFalse(line.contains("забрать"), "без пропуска кнопки быть не должно: " + line);
         assertFalse(line.contains("<"), "в тексте остались теги: " + line);
     }
+    @Test
+    void guiTitleAndTrackStatusRenderWithoutMarkupOrComponentDebugText() throws Exception {
+        try (InputStream stream = Files.newInputStream(resource())) {
+            Messages messages = Messages.from(stream, null, LOGGER);
+            String title = plain(messages.get("menu-title", "season",
+                    BattlePassScreen.described("<gold>Стужа</gold>"), "page", 2, "pages", 3));
+            assertTrue(title.contains("Стужа"), title);
+            assertTrue(title.contains("2/3"), title);
+            assertFalse(title.contains("<"), title);
+            List<Component> lore = messages.getList("menu-premium-lore",
+                    "vip", messages.mini("menu-track-active"),
+                    "premium", messages.mini("menu-track-locked"));
+            String text = lore.stream().map(BattlePassScreenTest::plain)
+                    .collect(java.util.stream.Collectors.joining("\n"));
+            assertTrue(text.contains("открыта"), text);
+            assertTrue(text.contains("закрыта"), text);
+            assertFalse(text.contains("<"), text);
+            assertFalse(text.contains("%"), text);
+            assertFalse(text.contains("TextComponent"), text);
+        }
+    }
+
 }
