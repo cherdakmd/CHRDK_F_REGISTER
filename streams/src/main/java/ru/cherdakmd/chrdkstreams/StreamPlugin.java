@@ -13,7 +13,7 @@ import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
  *
  * <p>Игрок привязывает канал на Twitch или VK Play Live, подтверждает владение
  * кодом {@code CHRDK-XXXX} в названии эфира, и каждый час подтверждённого эфира
- * получает сутки ранга. Награда ограничена дневным и общим потолком, поэтому
+ * получает час ранга. Награда ограничена дневным и общим потолком, поэтому
  * программа не превращается в способ играть бесплатно круглосуточно.</p>
  *
  * <p>Аддон зависит от {@code CHRDK_Core}: дни ранга выдаёт его публичный API,
@@ -184,8 +184,8 @@ public final class StreamPlugin extends JavaPlugin {
                     + "(https://dev.twitch.tv/console/apps). VK Play Live работает и так.");
         }
         getLogger().info("[Streams] Готово: " + cfg.platforms() + ", "
-                + cfg.minutesPerDay() + " мин. эфира = 1 сутки, максимум "
-                + cfg.maxDaysPerDay() + " суток в день, привязок " + store.size() + ".");
+                + cfg.minutesPerHour() + " мин. эфира = 1 час, максимум "
+                + cfg.maxHoursPerDay() + " ч. в сутки, привязок " + store.size() + ".");
         if (cfg.tags().enabled()) {
             // manageTabNames() опрашивает Bukkit — только из основного потока.
             boolean tab = manageTabNames();
@@ -194,9 +194,9 @@ public final class StreamPlugin extends JavaPlugin {
                     : " в чате, TAB ведёт ядро (добавьте %player_tagged% в tablist)."));
         }
         if (cfg.viewers().enabled()) {
-            getLogger().info("[Streams] Просмотр зрителей: " + cfg.viewers().minutesPerDay()
-                    + " мин. = 1 сутки, до " + cfg.viewers().maxDaysPerDay() + "/день, "
-                    + cfg.viewers().maxTotalDays() + " всего, код раз в "
+            getLogger().info("[Streams] Просмотр зрителей: " + cfg.viewers().minutesPerHour()
+                    + " мин. = 1 час, до " + cfg.viewers().maxHoursPerDay() + " ч./сутки, "
+                    + cfg.viewers().maxTotalHours() + " всего, код раз в "
                     + cfg.viewers().codeWindowMinutes() + " мин.");
         }
     }

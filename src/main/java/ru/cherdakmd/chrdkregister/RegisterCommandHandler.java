@@ -1401,11 +1401,15 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                         : Messages.trusted(messages.raw("account.state-totp-off")));
                         messages.send(sender, "account.stage", "value", stageText);
         if (account.passUntil > 0) {
+            // 1.4.184: награды аддонов измеряются часами — показываем их как часы,
+            // а дни оставляем покупкам, ручной выдаче и приветственному рангу.
             sender.sendMessage(messages.get("account.last-grant-label")
-                    .append(messages.get("account.last-grant-value",
-                                    "last_grant_days", account.lastGrantDays,
-                                    "last_grant_source", account.lastGrantSource.isBlank() ? "неизвестно" : account.lastGrantSource,
-                                    "last_grant_at", AccessManager.formatTimestamp(account.lastGrantAt))));
+                    .append(messages.get(account.lastGrantHours > 0
+                                    ? "account.last-grant-hours-value" : "account.last-grant-value",
+                            "last_grant_days", account.lastGrantDays,
+                            "last_grant_hours", account.lastGrantHours,
+                            "last_grant_source", account.lastGrantSource.isBlank() ? "неизвестно" : account.lastGrantSource,
+                            "last_grant_at", AccessManager.formatTimestamp(account.lastGrantAt))));
         }
         if (account.paymentsCount > 0) {
             sender.sendMessage(messages.get("account.paid-label")

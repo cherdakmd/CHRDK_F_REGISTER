@@ -95,8 +95,8 @@ class OrdersConfigTest {
                     weight: 10
                     min-reputation: -4
                     reputation: 999
-                    pass-days-chance: 500
-                    pass-days: 100
+                    pass-hours-chance: 500
+                    pass-hours: 100
                     items:
                       COAL:
                         amount-min: 10
@@ -123,7 +123,7 @@ class OrdersConfigTest {
         assertEquals(0, ores.minReputation());
         assertEquals(100, ores.reputation());
         assertEquals(100.0, ores.passChance(), 1.0e-9);
-        assertEquals(OrderCategory.MAX_PASS_DAYS, ores.passDays());
+        assertEquals(OrderCategory.MAX_PASS_HOURS, ores.passHours());
         assertEquals(1, ores.items().size());
         assertEquals(Material.COAL, ores.items().get(0).material());
         assertEquals(10, ores.items().get(0).minAmount());
@@ -196,7 +196,7 @@ class OrdersConfigTest {
         assertEquals(0, category.minReputation());
         assertEquals(0, category.reputation());
         assertEquals(0.0, category.passChance(), 1.0e-9);
-        assertEquals(0, category.passDays());
+        assertEquals(0, category.passHours());
         assertFalse(category.usable());
         assertNull(category.pick(null));
         assertTrue(new OrderBot(null, null, null, null).id().isEmpty());

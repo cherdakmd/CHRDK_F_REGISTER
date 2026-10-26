@@ -178,7 +178,7 @@ final class BattlePassAdminCommandHandler implements CommandExecutor, TabComplet
                 }
                 for (BattlePassConfig.MissionDef mission : season.weeks().get(index).missions()) {
                     if (row.getOrDefault(mission.id(), 0) >= mission.target()
-                            && mission.freeDays() > 0
+                            && mission.freeHours() > 0
                             && !plugin.store().isClaimed(player.getUniqueId(), mission.id(), "FREE")) {
                         ready++;
                     }
@@ -207,9 +207,9 @@ final class BattlePassAdminCommandHandler implements CommandExecutor, TabComplet
                         "id", mission.id(),
                         "type", mission.type().name(),
                         "target", mission.target(),
-                        "free", mission.freeDays(),
-                        "vip", mission.vipDays(),
-                        "premium", mission.premiumDays(),
+                        "free", mission.freeHours(),
+                        "vip", mission.vipHours(),
+                        "premium", mission.premiumHours(),
                         "points", mission.points());
             }
         }

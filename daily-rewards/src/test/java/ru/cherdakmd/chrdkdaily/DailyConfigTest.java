@@ -36,7 +36,7 @@ class DailyConfigTest {
                     vip-items: ["BREAD 16"]
                   - day: 2
                     items: ["COAL 4"]
-                    vip-pass-days: 1
+                    vip-pass-hours: 1
                 join-reminder: false
                 """);
         assertEquals(2, config.rewards().size());
@@ -46,7 +46,7 @@ class DailyConfigTest {
         assertEquals("BREAD", day1.itemsFor(false).get(0).material());
         assertEquals(16, day1.itemsFor(true).get(0).amount());
         DailyConfig.DayReward day2 = config.rewardForStreakDay(2);
-        assertEquals(1, day2.vipPassDays());
+        assertEquals(1, day2.vipPassHours());
     }
 
     @Test
@@ -102,7 +102,7 @@ class DailyConfigTest {
         DailyConfig.DayReward day = new DailyConfig.DayReward(1,
                 List.of(new DailyConfig.ItemReward("DIAMOND", 2)), List.of(), 3);
         assertEquals("diamond ×2", DailyConfig.describe(day, false, Optional.empty()));
-        assertEquals("diamond ×2, +3 дн. ранга", DailyConfig.describe(day, true, Optional.empty()));
+        assertEquals("diamond ×2, +3 ч. ранга", DailyConfig.describe(day, true, Optional.empty()));
         assertEquals("—", DailyConfig.describe(new DailyConfig.DayReward(1, List.of(), List.of(), 0),
                 false, Optional.empty()));
     }

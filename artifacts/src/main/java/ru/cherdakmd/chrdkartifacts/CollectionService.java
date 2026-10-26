@@ -151,9 +151,9 @@ public final class CollectionService {
     /** Текст награды для GUI и чата (MiniMessage, собран из messages.yml). */
     public String rewardText(CollectionRewards.Tier tier) {
         List<String> parts = new ArrayList<>(2);
-        if (tier.passDays() > 0) {
-            parts.add(plugin.messages().raw("collection-reward-days",
-                    "days", String.valueOf(tier.passDays())));
+        if (tier.passHours() > 0) {
+            parts.add(plugin.messages().raw("collection-reward-hours",
+                    "hours", String.valueOf(tier.passHours())));
         }
         if (tier.diamonds() > 0) {
             parts.add(plugin.messages().raw("collection-reward-diamonds",
@@ -183,9 +183,9 @@ public final class CollectionService {
     }
 
     private void grant(Player player, CollectionRewards.Tier tier) {
-        if (tier.passDays() > 0) {
+        if (tier.passHours() > 0) {
             if (plugin.coreApi() != null) {
-                plugin.coreApi().grantPass(player.getName(), tier.passDays(),
+                plugin.coreApi().grantPassHours(player.getName(), tier.passHours(),
                         "artifacts:collection_" + tier.percent());
             } else {
                 plugin.getLogger().warning("Ядро недоступно: награда за коллекцию "

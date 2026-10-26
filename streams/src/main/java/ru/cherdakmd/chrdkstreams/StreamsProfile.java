@@ -11,7 +11,7 @@ import java.util.Optional;
 /**
  * Раздел стримерской программы в {@code /profile} (1.4.156).
  *
- * <p>Сколько дней ранга накоплено эфирами и сколько минут осталось до
+ * <p>Сколько часов ранга накоплено эфирами и сколько минут осталось до
  * следующего дня. Привязка хранится по UUID, поэтому раздел виден и оффлайн.</p>
  */
 final class StreamsProfile implements ChrdkRegisterApi.ProfileProvider {
@@ -39,13 +39,13 @@ final class StreamsProfile implements ChrdkRegisterApi.ProfileProvider {
         StreamBinding binding = found.get();
         StreamRewards.State state = binding.state() == null
                 ? StreamRewards.State.empty() : binding.state();
-        if (state.totalDays() <= 0 && state.pendingMillis() <= 0L) {
+        if (state.totalHours() <= 0 && state.pendingMillis() <= 0L) {
             return null;
         }
         List<Component> lines = new ArrayList<>();
-        if (state.totalDays() > 0) {
-            lines.add(plugin.messages().get("profile-days",
-                    "days", String.valueOf(state.totalDays())));
+        if (state.totalHours() > 0) {
+            lines.add(plugin.messages().get("profile-hours",
+                    "hours", String.valueOf(state.totalHours())));
         }
         if (state.pendingMillis() > 0L) {
             lines.add(plugin.messages().get("profile-pending",

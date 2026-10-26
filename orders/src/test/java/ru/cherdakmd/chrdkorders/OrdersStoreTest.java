@@ -140,7 +140,7 @@ class OrdersStoreTest {
                       "material": "NOT_A_MATERIAL",
                       "amount": 5,
                       "reward": 3,
-                      "pass-days": 0,
+                      "pass-hours": 0,
                       "min-reputation": 0,
                       "reputation": 1,
                       "created": 1,
@@ -169,6 +169,40 @@ class OrdersStoreTest {
         assertNull(store.order("6"));
         assertEquals("5", store.reserveId(), "номер учитывает уже сохранённые заказы");
         assertEquals(0, store.players());
+    }
+
+    @Test
+    void legacyPassDaysKeyIsReadAsHours(@TempDir Path dir) throws Exception {
+        // Доска, сохранённая до 1.4.184: ключ pass-days. Значение читается как часы,
+        // чтобы ожидающие заказы не потеряли награду при обновлении.
+        String json = """
+                {
+                  "version": 1,
+                  "next-id": 3,
+                  "orders": [
+                    {
+                      "id": "2",
+                      "bot": "grom",
+                      "bot-name": "Кузнец Гром",
+                      "category": "ores",
+                      "material": "COAL",
+                      "amount": 10,
+                      "reward": 3,
+                      "pass-days": 2,
+                      "min-reputation": 0,
+                      "reputation": 1,
+                      "created": 1,
+                      "expires": 2
+                    }
+                  ],
+                  "players": {}
+                }
+                """;
+        Files.writeString(dir.resolve("orders.json"), json, StandardCharsets.UTF_8);
+        OrdersStore store = new OrdersStore(dir, LOGGER);
+        store.load();
+        assertEquals(2, store.order("2").rewardPassHours(),
+                "старый ключ читается как часы, а не как сутки");
     }
 
     @Test

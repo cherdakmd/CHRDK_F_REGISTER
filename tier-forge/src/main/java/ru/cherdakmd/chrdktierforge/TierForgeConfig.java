@@ -28,6 +28,15 @@ public record TierForgeConfig(
         int mobUtilitiesChancePercent,
         java.util.Set<String> mobWorldBlacklist,
         boolean mobPlayerKillOnly,
+        boolean worldEnabled,
+        int worldChancePercent,
+        int worldWeaponsChancePercent,
+        int worldArmorChancePercent,
+        int worldToolsChancePercent,
+        int worldUtilitiesChancePercent,
+        java.util.Set<String> worldBlacklist,
+        boolean worldLootEnabled,
+        boolean worldFishingEnabled,
         boolean identifyUnidentified,
         int identifyScanTicks,
         int identifyScanPlayersPerTick,
@@ -115,6 +124,25 @@ public record TierForgeConfig(
         }
         boolean mobKillOnly = config.getBoolean("mob-drop.player-kill-only", false);
 
+        // --- мировая редкость (1.4.185): предметы, добытые не крафтом ---
+        boolean world = config.getBoolean("world.enabled", true);
+        int worldChance = clamp(config.getInt("world.chance-percent", 25), 0, 100, logger,
+                "world.chance-percent");
+        int worldWeapons = kindChance(config.getInt("world.weapons-chance-percent", -1), logger,
+                "world.weapons-chance-percent");
+        int worldArmor = kindChance(config.getInt("world.armor-chance-percent", -1), logger,
+                "world.armor-chance-percent");
+        int worldTools = kindChance(config.getInt("world.tools-chance-percent", -1), logger,
+                "world.tools-chance-percent");
+        int worldUtilities = kindChance(config.getInt("world.utilities-chance-percent", -1), logger,
+                "world.utilities-chance-percent");
+        java.util.Set<String> worldWorlds = new java.util.HashSet<>();
+        for (String worldName : config.getStringList("world.world-blacklist")) {
+            if (worldName != null && !worldName.isBlank()) {
+                worldWorlds.add(worldName.trim().toLowerCase(Locale.ROOT));
+            }
+        }
+
         java.util.Set<String> blacklist = new java.util.HashSet<>();
         for (String material : config.getStringList("craft.material-blacklist")) {
             if (material != null && !material.isBlank()) {
@@ -176,6 +204,10 @@ public record TierForgeConfig(
                 config.getBoolean("craft.utilities", true),
                 reroll, catalyst, rerollXp, mobDrop, mobChance,
                 mobWeapons, mobArmor, mobTools, mobUtilities, mobWorlds, mobKillOnly,
+                world, worldChance, worldWeapons, worldArmor, worldTools, worldUtilities,
+                worldWorlds,
+                config.getBoolean("world.loot-enabled", true),
+                config.getBoolean("world.fishing-enabled", true),
                 config.getBoolean("identify.enabled", true),
                 // 1.4.80: верхняя граница и внятное предупреждение — скан «раз в тик»
                 // ронял TPS, а нулевой/крошечный период молча не применялся.
@@ -249,6 +281,29 @@ public record TierForgeConfig(
             return mobUtilitiesChancePercent >= 0 ? mobUtilitiesChancePercent : mobDropChancePercent;
         }
         return mobToolsChancePercent >= 0 ? mobToolsChancePercent : mobDropChancePercent;
+    }
+
+    /**
+     * Шанс мировой редкости для вида предмета: свой из {@code world.*-chance-percent}
+     * или общий {@code world.chance-percent} (1.4.185). {@code 0} — виду не выдаём.
+     */
+    public int worldChanceFor(ItemKind kind) {
+        if (kind == null) return 0;
+        if (kind.isWeapon()) {
+            return worldWeaponsChancePercent >= 0 ? worldWeaponsChancePercent : worldChancePercent;
+        }
+        if (kind.isArmor()) {
+            return worldArmorChancePercent >= 0 ? worldArmorChancePercent : worldChancePercent;
+        }
+        if (kind.isUtility()) {
+            return worldUtilitiesChancePercent >= 0 ? worldUtilitiesChancePercent : worldChancePercent;
+        }
+        return worldToolsChancePercent >= 0 ? worldToolsChancePercent : worldChancePercent;
+    }
+
+    /** Мир в чёрном списке мировой лотереи (регистр не важен)? */
+    public boolean worldWorldBlocked(String worldName) {
+        return worldName != null && worldBlacklist.contains(worldName.toLowerCase(Locale.ROOT));
     }
 
     /** Мир в чёрном списке для дропа с мобов (регистр не важен)? */

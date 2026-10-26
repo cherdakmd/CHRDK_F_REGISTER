@@ -119,8 +119,9 @@ bots:
 #   weight            — вес при случайном выборе (не проценты: нормализуется);
 #   min-reputation    — с какой репутации игрок может взять такой заказ;
 #   reputation        — сколько репутации даёт сдача (+1 обычный, +2 редкий);
-#   pass-days-chance  — шанс, что заказ дополнительно даст дни ранга;
-#   pass-days         — сколько дней дать при срабатывании шанса.
+#   pass-hours-chance — шанс, что заказ дополнительно даст часы ранга (с 1.4.184);
+#   pass-hours        — сколько ЧАСОВ дать при срабатывании шанса (потолок 24,
+#                       прежние ключи pass-days-chance/pass-days читаются как часы).
 # В items перечислены материалы: количество и цена за штуку в алмазах.
 # Материал, которого нет в игре, пропускается с предупреждением в лог.
 categories:
@@ -128,8 +129,8 @@ categories:
     weight: 30
     min-reputation: 0
     reputation: 1
-    pass-days-chance: 0
-    pass-days: 0
+    pass-hours-chance: 0
+    pass-hours: 0
     items:
       COAL:
         amount-min: 48
@@ -159,8 +160,8 @@ categories:
     weight: 26
     min-reputation: 0
     reputation: 1
-    pass-days-chance: 0
-    pass-days: 0
+    pass-hours-chance: 0
+    pass-hours: 0
     items:
       WHEAT:
         amount-min: 32
@@ -198,8 +199,8 @@ categories:
     weight: 20
     min-reputation: 0
     reputation: 1
-    pass-days-chance: 0
-    pass-days: 0
+    pass-hours-chance: 0
+    pass-hours: 0
     items:
       BONE:
         amount-min: 24
@@ -229,8 +230,8 @@ categories:
     weight: 14
     min-reputation: 0
     reputation: 1
-    pass-days-chance: 0
-    pass-days: 0
+    pass-hours-chance: 0
+    pass-hours: 0
     items:
       COD:
         amount-min: 16
@@ -260,8 +261,8 @@ categories:
     weight: 8
     min-reputation: 5
     reputation: 1
-    pass-days-chance: 5
-    pass-days: 1
+    pass-hours-chance: 5
+    pass-hours: 1
     items:
       BLAZE_ROD:
         amount-min: 8
@@ -287,8 +288,8 @@ categories:
     weight: 6
     min-reputation: 10
     reputation: 2
-    pass-days-chance: 8
-    pass-days: 1
+    pass-hours-chance: 8
+    pass-hours: 1
     items:
       AMETHYST_SHARD:
         amount-min: 12
@@ -310,8 +311,8 @@ categories:
     weight: 6
     min-reputation: 15
     reputation: 2
-    pass-days-chance: 10
-    pass-days: 1
+    pass-hours-chance: 10
+    pass-hours: 1
     items:
       GOLD_INGOT:
         amount-min: 16

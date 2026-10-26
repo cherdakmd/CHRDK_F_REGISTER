@@ -41,36 +41,37 @@ final class BattlePassConfig {
      * @param worlds      миры, где задание считается (пусто — все)
      * @param permission  право, без которого прогресс не идёт (пусто — всем)
      * @param icon        материал иконки в меню (пусто — по типу задания)
-     * @param premiumDays дни ранга в премиум-треке (0 — премиум-награды нет)
+     * @param premiumHours часы ранга в премиум-треке (0 — премиум-награды нет)
      * @param premiumProducts товары каталога ядра, которые выдаёт премиум-трек
      */
     record MissionDef(String id, String description, MissionType type, String matchKey,
-                      int target, int freeDays, int vipDays, int points,
+                      int target, int freeHours, int vipHours, int points,
                       List<String> worlds, String permission, String icon,
-                      int premiumDays, List<String> premiumProducts) {
+                      int premiumHours, List<String> premiumProducts) {
 
         MissionDef {
             premiumProducts = premiumProducts == null ? List.of() : List.copyOf(premiumProducts);
-            premiumDays = Math.max(0, premiumDays);
+            // 1.4.184: награда в часах, одна награда — не больше суток.
+            premiumHours = Math.max(0, Math.min(24, premiumHours));
         }
 
         /** Совместимый конструктор для тестов и старых вызовов. */
         MissionDef(String id, String description, MissionType type, String matchKey,
-                   int target, int freeDays, int vipDays) {
-            this(id, description, type, matchKey, target, freeDays, vipDays,
+                   int target, int freeHours, int vipHours) {
+            this(id, description, type, matchKey, target, freeHours, vipHours,
                     DEFAULT_POINTS, List.of(), "", "", 0, List.of());
         }
 
         MissionDef(String id, String description, MissionType type, String matchKey,
-                   int target, int freeDays, int vipDays, int points,
+                   int target, int freeHours, int vipHours, int points,
                    List<String> worlds, String permission, String icon) {
-            this(id, description, type, matchKey, target, freeDays, vipDays,
+            this(id, description, type, matchKey, target, freeHours, vipHours,
                     points, worlds, permission, icon, 0, List.of());
         }
 
         /** В задании есть премиум-награда. */
         boolean hasPremium() {
-            return premiumDays > 0 || !premiumProducts.isEmpty();
+            return premiumHours > 0 || !premiumProducts.isEmpty();
         }
 
         boolean restrictedWorld() {
@@ -295,25 +296,43 @@ final class BattlePassConfig {
                 type,
                 matchKey,
                 target,
-                Math.max(0, intOf(raw.get("free-days"), 0)),
-                Math.max(0, intOf(raw.get("vip-days"), 0)),
+                clampHours(hoursOf(raw, "free")),
+                clampHours(hoursOf(raw, "vip")),
                 Math.max(0, intOf(raw.get("points"), DEFAULT_POINTS)),
                 worlds(raw.get("worlds")),
                 String.valueOf(raw.get("permission") == null ? "" : raw.get("permission")).trim(),
                 norm(raw.get("icon")).toUpperCase(Locale.ROOT),
-                premiumDays(raw, id, weekNumber, problems),
+                premiumHours(raw, id, weekNumber, problems),
                 premiumProducts(raw, id, weekNumber, problems));
     }
 
-    /** Дни премиум-трека: отрицательные и слишком большие отбрасываются. */
-    private static int premiumDays(Map<?, ?> raw, String id, int weekNumber, List<String> problems) {
-        int days = intOf(raw.get("premium-days"), 0);
-        if (days < 0 || days > 3650) {
-            problems.add("волна " + weekNumber + ": «" + id + "» — premium-days " + days
-                    + " вне диапазона 0..3650, награда не выдаётся");
+    /**
+     * Часы награды задания. Ключи старого формата ({@code free-days} и т.п.)
+     * читаются как часы: конфиг, не перезаписанный после обновления, не должен
+     * потерять награду, а сутками прежние значения больше не выдаются.
+     */
+    private static int hoursOf(Map<?, ?> raw, String branch) {
+        Object value = raw.get(branch + "-hours");
+        if (value == null) {
+            value = raw.get(branch + "-days");
+        }
+        return intOf(value, 0);
+    }
+
+    /** Часы ранга вне 0..24 (потолок награды) — ошибка конфига. */
+    private static int clampHours(int hours) {
+        return Math.max(0, Math.min(24, hours));
+    }
+
+    /** Часы премиум-трека: отрицательные и больше суток отбрасываются. */
+    private static int premiumHours(Map<?, ?> raw, String id, int weekNumber, List<String> problems) {
+        int hours = hoursOf(raw, "premium");
+        if (hours < 0 || hours > 24) {
+            problems.add("волна " + weekNumber + ": «" + id + "» — premium-hours " + hours
+                    + " вне диапазона 0..24, награда не выдаётся");
             return 0;
         }
-        return days;
+        return hours;
     }
 
     /** Товары каталога в премиум-треке: чистим id и ограничиваем список. */

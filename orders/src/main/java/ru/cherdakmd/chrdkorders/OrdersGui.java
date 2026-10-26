@@ -139,7 +139,7 @@ public final class OrdersGui implements Listener {
                 "reward", String.valueOf(order.rewardDiamonds())));
         if (order.hasPassReward()) {
             lore.add(plugin.messages().get("menu-order-pass",
-                    "days", String.valueOf(order.rewardPassDays())));
+                    "hours", String.valueOf(order.rewardPassHours())));
         }
         String left = OrderBoard.formatDuration(order.millisLeft(System.currentTimeMillis()));
         lore.add(plugin.messages().get("menu-order-time",

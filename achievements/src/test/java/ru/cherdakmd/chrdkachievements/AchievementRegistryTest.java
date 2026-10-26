@@ -34,7 +34,7 @@ class AchievementRegistryTest {
             assertTrue(ids.add(def.id()), "дубль ида: " + def.id());
             assertNotNull(def.metric(), "у " + def.id() + " нет метрики");
             assertTrue(def.goal() > 0, "у " + def.id() + " нулевой порог");
-            assertTrue(def.passDays() >= 0 && def.passDays() <= 365);
+            assertTrue(def.passHours() >= 0 && def.passHours() <= 24, "награда не больше суток");
             assertTrue(def.diamonds() >= 0 && def.diamonds() <= 576);
         }
         assertNotNull(AchievementRegistry.byId("VETERAN"));

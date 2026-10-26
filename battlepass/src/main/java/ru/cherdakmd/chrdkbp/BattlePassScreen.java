@@ -89,23 +89,23 @@ final class BattlePassScreen {
     }
 
     /**
-     * Награды задания: «+1 дн.», «VIP +2 дн.», «★ +3 дн. и товар» — все ветки сразу.
+     * Награды задания: «+1 ч.», «VIP +2 ч.», «★ +3 ч. и товар» — все ветки сразу.
      *
      * <p>Премиум-награда показывается всегда, даже без боевого пропуска: витрина
      * должна объяснять, за что платят. Доступность видна по иконке состояния.</p>
      */
     Messages.Trusted reward(BattlePassConfig.MissionDef mission) {
         if (!mission.hasPremium()) {
-            boolean free = mission.freeDays() > 0;
-            boolean vip = mission.vipDays() > 0;
+            boolean free = mission.freeHours() > 0;
+            boolean vip = mission.vipHours() > 0;
             String text;
             if (free && vip) {
                 text = messages.raw("reward-both",
-                        "free", mission.freeDays(), "vip", mission.vipDays());
+                        "free", mission.freeHours(), "vip", mission.vipHours());
             } else if (free) {
-                text = messages.raw("reward-free", "days", mission.freeDays());
+                text = messages.raw("reward-free", "hours", mission.freeHours());
             } else if (vip) {
-                text = messages.raw("reward-vip", "days", mission.vipDays());
+                text = messages.raw("reward-vip", "hours", mission.vipHours());
             } else {
                 return Messages.trusted("");
             }
@@ -113,23 +113,23 @@ final class BattlePassScreen {
         }
 
         StringBuilder text = new StringBuilder();
-        if (mission.freeDays() > 0) {
-            text.append(messages.raw("reward-free", "days", mission.freeDays()));
+        if (mission.freeHours() > 0) {
+            text.append(messages.raw("reward-free", "hours", mission.freeHours()));
         }
-        if (mission.vipDays() > 0) {
+        if (mission.vipHours() > 0) {
             if (text.length() > 0) {
                 text.append(' ');
             }
-            text.append(messages.raw("reward-vip", "days", mission.vipDays()));
+            text.append(messages.raw("reward-vip", "hours", mission.vipHours()));
         }
         if (text.length() > 0) {
             text.append(' ');
         }
-        if (mission.premiumDays() > 0) {
-            text.append(messages.raw("reward-premium-days", "days", mission.premiumDays()));
+        if (mission.premiumHours() > 0) {
+            text.append(messages.raw("reward-premium-hours", "hours", mission.premiumHours()));
         }
         if (!mission.premiumProducts().isEmpty()) {
-            if (mission.premiumDays() > 0) {
+            if (mission.premiumHours() > 0) {
                 text.append(' ');
             }
             text.append(messages.raw("reward-premium-item",

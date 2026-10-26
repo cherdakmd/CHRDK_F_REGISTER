@@ -20,15 +20,15 @@ import java.util.UUID;
  *   <li>{@code %chrdkstreams_platform%} — Twitch / VK Play Live;</li>
  *   <li>{@code %chrdkstreams_channels%} — все каналы: {@code twitch/foo, vkplay/bar};</li>
  *   <li>{@code %chrdkstreams_verified%} — «да» / «нет»;</li>
- *   <li>{@code %chrdkstreams_pending%} — минут накоплено до следующих суток;</li>
- *   <li>{@code %chrdkstreams_today%} — суток получено сегодня;</li>
- *   <li>{@code %chrdkstreams_days%} — суток получено всего;</li>
- *   <li>{@code %chrdkstreams_rule%} — минут эфира за сутки (из конфига);</li>
- *   <li>{@code %chrdkstreams_max_today%} — дневной потолок;</li>
+ *   <li>{@code %chrdkstreams_pending%} — минут накоплено до следующего часа ранга;</li>
+ *   <li>{@code %chrdkstreams_today%} — часов получено сегодня;</li>
+ *   <li>{@code %chrdkstreams_hours%} — часов получено всего (псевдоним {@code days});</li>
+ *   <li>{@code %chrdkstreams_rule%} — минут эфира за час ранга (из конфига);</li>
+ *   <li>{@code %chrdkstreams_max_today%} — суточный потолок часов;</li>
  *   <li>{@code %chrdkstreams_watching%} — чей эфир смотрит игрок (или {@code —});</li>
- *   <li>{@code %chrdkstreams_watch_pending%} — минут просмотра до следующих суток;</li>
- *   <li>{@code %chrdkstreams_watch_today%} — суток за просмотр сегодня;</li>
- *   <li>{@code %chrdkstreams_watch_days%} — суток за просмотр всего;</li>
+ *   <li>{@code %chrdkstreams_watch_pending%} — минут просмотра до следующего часа;</li>
+ *   <li>{@code %chrdkstreams_watch_today%} — часов за просмотр сегодня;</li>
+ *   <li>{@code %chrdkstreams_watch_hours%} — часов за просмотр всего (псевдоним {@code watch_days});</li>
  *   <li>{@code %chrdkstreams_watchers%} — подтверждённых зрителей у стримера.</li>
  * </ul>
  */
@@ -67,10 +67,10 @@ public final class StreamPlaceholders extends PlaceholderExpansion {
         String key = params.toLowerCase(Locale.ROOT);
         StreamConfig config = plugin.config();
         if ("rule".equals(key)) {
-            return Integer.toString(config.minutesPerDay());
+            return Integer.toString(config.minutesPerHour());
         }
         if ("max_today".equals(key)) {
-            return Integer.toString(config.maxDaysPerDay());
+            return Integer.toString(config.maxHoursPerDay());
         }
         if (player == null) {
             return "";
@@ -83,7 +83,7 @@ public final class StreamPlaceholders extends PlaceholderExpansion {
             return switch (key) {
                 case "channel", "platform", "channels" -> NONE;
                 case "verified" -> "нет";
-                case "pending", "today", "days" -> "0";
+                case "pending", "today", "hours", "days" -> "0";
                 default -> null;
             };
         }
@@ -97,7 +97,8 @@ public final class StreamPlaceholders extends PlaceholderExpansion {
             case "pending" -> Long.toString(
                     StreamRewards.pendingMinutes(binding.state(), config.rule()));
             case "today" -> Integer.toString(binding.state().awardedToday());
-            case "days" -> Integer.toString(binding.state().totalDays());
+            // «days» — прежнее имя (до 1.4.184), оставлено для старых конфигов TAB.
+            case "hours", "days" -> Integer.toString(binding.state().totalHours());
             default -> null;
         };
     }
@@ -115,7 +116,7 @@ public final class StreamPlaceholders extends PlaceholderExpansion {
         if (found.isEmpty()) {
             return switch (key) {
                 case "watching" -> NONE;
-                case "watch_pending", "watch_today", "watch_days" -> "0";
+                case "watch_pending", "watch_today", "watch_hours", "watch_days" -> "0";
                 default -> null;
             };
         }
@@ -126,7 +127,7 @@ public final class StreamPlaceholders extends PlaceholderExpansion {
             case "watching" -> binding.streamerName().isBlank() ? NONE : binding.streamerName();
             case "watch_pending" -> Long.toString(StreamRewards.pendingMinutes(state, rule));
             case "watch_today" -> Integer.toString(state.awardedToday());
-            case "watch_days" -> Integer.toString(state.totalDays());
+            case "watch_hours", "watch_days" -> Integer.toString(state.totalHours());
             default -> null;
         };
     }

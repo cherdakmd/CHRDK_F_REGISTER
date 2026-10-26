@@ -185,7 +185,7 @@ public final class OrdersStore {
                     material,
                     (int) Math.min(576L, amount),
                     (int) number(row.get("reward")),
-                    (int) number(row.get("pass-days")),
+                    passHoursOf(row),
                     (int) number(row.get("min-reputation")),
                     (int) number(row.get("reputation")),
                     number(row.get("created")),
@@ -417,7 +417,7 @@ public final class OrdersStore {
             row.put("material", order.material());
             row.put("amount", order.amount());
             row.put("reward", order.rewardDiamonds());
-            row.put("pass-days", order.rewardPassDays());
+            row.put("pass-hours", order.rewardPassHours());
             row.put("min-reputation", order.minReputation());
             row.put("reputation", order.reputation());
             row.put("created", order.createdAt());
@@ -489,6 +489,19 @@ public final class OrdersStore {
         } catch (IllegalArgumentException exception) {
             return null;
         }
+    }
+
+    /**
+     * Часы ранга из строки доски. Старые доски писали ключ {@code pass-days}:
+     * читаем его как часы, чтобы ожидающие заказы не потеряли награду при
+     * обновлении до 1.4.184 (сутки в старом ключе теперь не выдаются).
+     */
+    private static int passHoursOf(Map<?, ?> row) {
+        Object value = row.get("pass-hours");
+        if (value == null) {
+            value = row.get("pass-days");
+        }
+        return (int) number(value);
     }
 
     private static String string(Object value) {

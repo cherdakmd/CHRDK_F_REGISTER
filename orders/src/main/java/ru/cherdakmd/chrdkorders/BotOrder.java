@@ -19,14 +19,14 @@ import java.util.Locale;
  * @param material       материал (имя {@link Material})
  * @param amount         сколько принести
  * @param rewardDiamonds сколько алмазов заплатит бот
- * @param rewardPassDays сколько дней ранга даст сверху (0 — нет)
+ * @param rewardPassHours сколько часов ранга даст сверху (0 — нет)
  * @param minReputation  требуемая репутация
  * @param reputation     сколько репутации получит сдавший
  * @param createdAt      когда заказ появился на доске
  * @param expiresAt      когда бот уйдёт; 0 — бессрочно
  */
 public record BotOrder(String id, String botId, String botName, String category,
-                       String material, int amount, int rewardDiamonds, int rewardPassDays,
+                       String material, int amount, int rewardDiamonds, int rewardPassHours,
                        int minReputation, int reputation, long createdAt, long expiresAt) {
 
     public BotOrder {
@@ -37,7 +37,7 @@ public record BotOrder(String id, String botId, String botName, String category,
         material = material == null ? "" : material.trim().toUpperCase(Locale.ROOT);
         amount = Math.clamp(amount, 1, 576);
         rewardDiamonds = Math.clamp(rewardDiamonds, 0, 576);
-        rewardPassDays = Math.clamp(rewardPassDays, 0, 30);
+        rewardPassHours = Math.clamp(rewardPassHours, 0, 30);
         minReputation = Math.clamp(minReputation, 0, 100_000);
         reputation = Math.clamp(reputation, 0, 100);
         createdAt = Math.max(0L, createdAt);
@@ -61,6 +61,6 @@ public record BotOrder(String id, String botId, String botName, String category,
 
     /** Заказ может принести ранг. */
     public boolean hasPassReward() {
-        return rewardPassDays > 0;
+        return rewardPassHours > 0;
     }
 }

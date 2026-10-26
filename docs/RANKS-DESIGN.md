@@ -426,7 +426,8 @@ boolean revokePrivilege(String playerName);
 ```
 
 `grantPass(name, days, source)` сохраняется и означает «дни текущего ранга»
-(или приветственного, если ранга нет). `hasActivePass` и `passUntil` —
+(или приветственного, если ранга нет). С 1.4.184 у наград аддонов свой путь:
+`grantPassHours(name, hours, source)` — часы вместо суток, `API_VERSION = 11`. `hasActivePass` и `passUntil` —
 алиасы новых методов. События `PassGrantedEvent` / `PassExpiredEvent`
 получают поле `rankLevel`; старые конструкторы остаются.
 
@@ -488,8 +489,8 @@ limits:
 | `cosmetics` | проходка открывает всё | шлейфы по уровню + 2 новых |
 | `daily-rewards` | VIP-трек по проходке | по рангу ≥ 2, дни убрать |
 | `lottery` | `require-pass` | `min-rank` (по умолчанию 0) |
-| `battlepass` | премиум — отдельный товар | включён в IV–V, дни → дни ранга |
-| `achievements`, `artifacts`, `orders`, `referrals`, `streams`, `tier-forge`, `quests` | дни проходки | дни ранга, тексты |
+| `battlepass` | премиум — отдельный товар | включён в IV–V, часы → часы ранга (1.4.184) |
+| `achievements`, `artifacts`, `orders`, `referrals`, `streams`, `tier-forge`, `quests` | часы проходки | часы ранга, тексты (1.4.184: были дни) |
 | `ranks` (стаж) | алиас `/rank` | только `/ranks`, `/zvanie` |
 | `treasures` | звание кладоискателя | без изменений, знаки компонуются |
 

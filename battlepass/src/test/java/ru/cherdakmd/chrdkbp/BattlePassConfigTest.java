@@ -17,10 +17,10 @@ class BattlePassConfigTest {
                 BattlePassConfig.parseWeeks(List.of(
                         Map.of("unlock-day", 0, "missions", List.of(
                                 Map.of("id", "m1", "type", "MINE", "material", "DIAMOND_ORE",
-                                        "target", 5, "free-days", 1, "vip-days", 2))),
+                                        "target", 5, "free-hours", 1, "vip-hours", 2))),
                         Map.of("unlock-day", 7, "missions", List.of(
                                 Map.of("id", "m2", "type", "KILL", "entity", "ZOMBIE",
-                                        "target", 10, "free-days", 1, "vip-days", 0))))));
+                                        "target", 10, "free-hours", 1, "vip-hours", 0))))));
     }
 
     private static long start() {
@@ -56,16 +56,40 @@ class BattlePassConfigTest {
                         Map.of("id", "no_target", "type", "MINE", "material", "stone"),
                         Map.of("id", "ok", "type", "MINE", "material", "stone", "target", 1),
                         Map.of("id", "fishy", "type", "FISH", "target", 3,
-                                "free-days", "2", "vip-days", "1")))));
+                                "free-hours", "2", "vip-hours", "1")))));
         assertEquals(1, weeks.size());
         List<BattlePassConfig.MissionDef> missions = weeks.get(0).missions();
         assertEquals(2, missions.size(), "ok/craft + fishy; мусор и дубликат id отброшены");
         BattlePassConfig.MissionDef fish = missions.stream()
                 .filter(m -> m.id().equals("fishy")).findFirst().orElseThrow();
         assertEquals("any", fish.matchKey(), "FISH без entity ловит любой улов");
-        assertEquals(2, fish.freeDays());
-        assertEquals(1, fish.vipDays());
+        assertEquals(2, fish.freeHours());
+        assertEquals(1, fish.vipHours());
         assertEquals(BattlePassConfig.MissionType.CRAFT, missions.get(0).type());
+    }
+
+    @Test
+    void legacyDayKeysAreReadAsHours() {
+        BattlePassConfig.MissionDef mission = BattlePassConfig.parseWeeks(List.of(
+                Map.of("unlock-day", 0, "missions", List.of(
+                        Map.of("id", "old", "type", "MINE", "material", "stone", "target", 1,
+                                "free-days", 2, "vip-days", 3, "premium-days", 4)))))
+                .get(0).missions().get(0);
+        assertEquals(2, mission.freeHours(), "free-days читается как часы");
+        assertEquals(3, mission.vipHours(), "vip-days читается как часы");
+        assertEquals(4, mission.premiumHours(), "premium-days читается как часы");
+    }
+
+    @Test
+    void rewardHoursAreCappedAtOneDay() {
+        BattlePassConfig.MissionDef mission = BattlePassConfig.parseWeeks(List.of(
+                Map.of("unlock-day", 0, "missions", List.of(
+                        Map.of("id", "huge", "type", "MINE", "material", "stone", "target", 1,
+                                "free-hours", 400, "vip-hours", -3, "premium-hours", 99)))))
+                .get(0).missions().get(0);
+        assertEquals(24, mission.freeHours(), "потолок награды — сутки");
+        assertEquals(0, mission.vipHours(), "отрицательные часы — без награды");
+        assertEquals(0, mission.premiumHours(), "премиум больше суток не выдаётся");
     }
 
     @Test
@@ -215,14 +239,14 @@ class BattlePassConfigTest {
     }
 
     /** Задание с премиум-полями: карта собирается изменяемой, чтобы не путать скобки. */
-    private static BattlePassConfig.ParseResult parsePremium(Object premiumDays,
+    private static BattlePassConfig.ParseResult parsePremium(Object premiumHours,
                                                              Object premiumProducts) {
         java.util.Map<String, Object> mission = new java.util.LinkedHashMap<>();
         mission.put("id", "prem");
         mission.put("type", "MINE");
         mission.put("material", "STONE");
         mission.put("target", 10);
-        mission.put("premium-days", premiumDays);
+        mission.put("premium-hours", premiumHours);
         mission.put("premium-products", premiumProducts);
         return BattlePassConfig.parseWeeksDetailed(List.of(
                 Map.of("unlock-day", 0, "missions", List.of(mission))));
@@ -234,7 +258,7 @@ class BattlePassConfigTest {
                 List.of("trail-flame", " Trail-Flame ", "NICK-COLOR"));
         BattlePassConfig.MissionDef mission = result.weeks().get(0).missions().get(0);
         assertTrue(mission.hasPremium());
-        assertEquals(3, mission.premiumDays());
+        assertEquals(3, mission.premiumHours());
         assertEquals(List.of("trail-flame", "nick-color"), mission.premiumProducts(),
                 "id нормализуются, дубли убраны");
         assertTrue(result.problems().isEmpty(), () -> result.problems().toString());
@@ -244,9 +268,9 @@ class BattlePassConfigTest {
     void premiumRewardsTolerateTypos() {
         BattlePassConfig.ParseResult result = parsePremium(99_999, List.of("Плохой Id", "ok-id"));
         BattlePassConfig.MissionDef mission = result.weeks().get(0).missions().get(0);
-        assertEquals(0, mission.premiumDays(), "слишком большой срок отброшен");
+        assertEquals(0, mission.premiumHours(), "слишком большой срок отброшен");
         assertEquals(List.of("ok-id"), mission.premiumProducts(), "кривой id пропущен");
-        assertTrue(result.problems().stream().anyMatch(text -> text.contains("premium-days")));
+        assertTrue(result.problems().stream().anyMatch(text -> text.contains("premium-hours")));
         assertTrue(result.problems().stream().anyMatch(text -> text.contains("premium-products")));
     }
 

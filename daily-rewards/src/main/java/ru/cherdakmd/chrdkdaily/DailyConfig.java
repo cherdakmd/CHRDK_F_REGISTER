@@ -25,7 +25,7 @@ public final class DailyConfig {
             int day,
             List<ItemReward> items,
             List<ItemReward> vipItems,
-            int vipPassDays
+            int vipPassHours
     ) {
         /** Предметы ветки конкретного игрока. */
         public List<ItemReward> itemsFor(boolean vip) {
@@ -67,12 +67,16 @@ public final class DailyConfig {
             int day = intOf(raw.get("day"), expectedDay);
             List<ItemReward> items = parseItems(raw.get("items"), logger, validateMaterials);
             List<ItemReward> vipItems = parseItems(raw.get("vip-items"), logger, validateMaterials);
-            int vipPassDays = Math.max(0, intOf(raw.get("vip-pass-days"), 0));
-            if (items.isEmpty() && vipItems.isEmpty() && vipPassDays == 0) {
+            // 1.4.184: награда в часах, одна награда — не больше суток. Старый ключ
+            // vip-pass-days читается как часы, чтобы конфиг без перезаписи не потерял награду.
+            Object hoursRaw = raw.containsKey("vip-pass-hours")
+                    ? raw.get("vip-pass-hours") : raw.get("vip-pass-days");
+            int vipPassHours = Math.min(24, Math.max(0, intOf(hoursRaw, 0)));
+            if (items.isEmpty() && vipItems.isEmpty() && vipPassHours == 0) {
                 logger.warning("[DailyRewards] rewards день " + day + ": пустая награда — пропускаю.");
                 continue;
             }
-            rewards.add(new DayReward(day, items, vipItems, vipPassDays));
+            rewards.add(new DayReward(day, items, vipItems, vipPassHours));
             expectedDay = day + 1;
         }
         if (rewards.isEmpty()) {
@@ -102,16 +106,16 @@ public final class DailyConfig {
     }
 
     /** Краткое описание награды для лора календаря. */
-    public static String describe(DayReward reward, boolean vip, Optional<Integer> fallbackPassDays) {
+    public static String describe(DayReward reward, boolean vip, Optional<Integer> fallbackPassHours) {
         List<String> parts = new ArrayList<>();
         reward.itemsFor(vip).forEach(item ->
                 parts.add(item.material().toLowerCase(Locale.ROOT) + " ×" + item.amount()));
-        int passDays = vip ? reward.vipPassDays() : 0;
-        if (passDays <= 0) {
-            passDays = fallbackPassDays.orElse(0);
+        int passHours = vip ? reward.vipPassHours() : 0;
+        if (passHours <= 0) {
+            passHours = fallbackPassHours.orElse(0);
         }
-        if (passDays > 0) {
-            parts.add("+" + passDays + " дн. ранга");
+        if (passHours > 0) {
+            parts.add("+" + passHours + " ч. ранга");
         }
         return parts.isEmpty() ? "—" : String.join(", ", parts);
     }

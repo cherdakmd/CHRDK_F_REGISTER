@@ -7,12 +7,12 @@ package ru.cherdakmd.chrdkachievements;
  * @param category раздел витрины
  * @param metric   счётчик, по которому считается прогресс
  * @param goal     порог выполнения (для флагов — 1)
- * @param passDays дни ранга в награду (0 — без дней)
+ * @param passHours часы ранга в награду (0 — без награды)
  * @param diamonds алмазы в награду (0 — без алмазов)
  * @param badge    ид бейджа из messages.yml ({@code badge.<id>}) или {@code null}
  */
 public record AchievementDef(String id, Category category, AchievementMetric metric, long goal,
-                             int passDays, int diamonds, String badge) {
+                             int passHours, int diamonds, String badge) {
 
     /** Разделы витрины. */
     public enum Category {
@@ -49,12 +49,13 @@ public record AchievementDef(String id, Category category, AchievementMetric met
         if (goal <= 0) {
             throw new IllegalArgumentException("порог достижения должен быть > 0: " + id);
         }
-        passDays = Math.max(0, Math.min(365, passDays));
+        // 1.4.184: награда измеряется часами, одна награда — не больше суток.
+        passHours = Math.max(0, Math.min(24, passHours));
         diamonds = Math.max(0, Math.min(576, diamonds));
     }
 
     /** Есть ли материальная награда. */
     public boolean hasReward() {
-        return passDays > 0 || diamonds > 0;
+        return passHours > 0 || diamonds > 0;
     }
 }

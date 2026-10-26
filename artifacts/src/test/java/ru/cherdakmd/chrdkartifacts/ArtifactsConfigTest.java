@@ -53,8 +53,8 @@ class ArtifactsConfigTest {
                 collection:
                   enabled: false
                   rewards:
-                    80: {pass-days: 5, diamonds: 40}
-                    20: {pass-days: 1, diamonds: 4}
+                    80: {pass-hours: 5, diamonds: 40}
+                    20: {pass-hours: 1, diamonds: 4}
                 """);
         assertEquals(new ArtifactsConfig.Collection(false, List.of(
                 new CollectionRewards.Tier(20, 1, 4),
@@ -66,16 +66,16 @@ class ArtifactsConfigTest {
         ArtifactsConfig config = parse("""
                 collection:
                   rewards:
-                    250: {pass-days: 99999, diamonds: -5}
-                    abc: {pass-days: 1, diamonds: 1}
-                    50: {pass-days: 2, diamonds: 16}
+                    250: {pass-hours: 99999, diamonds: -5}
+                    abc: {pass-hours: 1, diamonds: 1}
+                    50: {pass-hours: 2, diamonds: 16}
                 """);
         assertEquals(2, config.collection().rewards().size());
         // Список нормализуется по возрастанию: сначала 50, затем ужатый до 100 порог.
         assertEquals(50, config.collection().rewards().get(0).percent());
         CollectionRewards.Tier capped = config.collection().rewards().get(1);
         assertEquals(100, capped.percent());
-        assertEquals(365, capped.passDays());
+        assertEquals(24, capped.passHours(), "награда не больше суток");
         assertEquals(0, capped.diamonds());
     }
 

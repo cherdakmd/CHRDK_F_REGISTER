@@ -59,14 +59,14 @@ public final class ReferralCommandHandler implements TabExecutor {
         plugin.messages().send(player, "ref.status-code", "player", player.getName());
         ReferralStore.RefStats stats = service.store().statsView(player.getName());
         plugin.messages().send(player, "ref.status-stats",
-                "linked", stats.linked, "paid", stats.paid, "days", stats.daysEarned);
+                "linked", stats.linked, "paid", stats.paid, "hours", stats.hoursEarned);
         service.store().linkOf(player.getName()).ifPresentOrElse(
                 link -> plugin.messages().send(player, "ref.status-linked-to",
                         "inviter", link.inviter,
                         "consumed", link.consumed ? plugin.messages().mini("ref.status-consumed") : ""),
                 () -> plugin.messages().send(player, "ref.status-linked-none"));
         plugin.messages().send(player, "ref.how-it-works",
-                "player", player.getName(), "bonus", plugin.config().bonusDaysInviter());
+                "player", player.getName(), "bonus", plugin.config().bonusHoursInviter());
         return true;
     }
 
@@ -97,7 +97,7 @@ public final class ReferralCommandHandler implements TabExecutor {
         for (Map.Entry<String, ReferralStore.RefStats> entry : top) {
             plugin.messages().send(sender, "ref.top-line",
                     "index", index++, "player", entry.getKey(),
-                    "paid", entry.getValue().paid, "days", entry.getValue().daysEarned);
+                    "paid", entry.getValue().paid, "hours", entry.getValue().hoursEarned);
         }
     }
 
@@ -117,7 +117,7 @@ public final class ReferralCommandHandler implements TabExecutor {
                 plugin.messages().send(sender, "admin.lookup-none", "player", name);
             } else {
                 plugin.messages().send(sender, "admin.lookup", "player", name,
-                        "linked", stats.linked, "paid", stats.paid, "days", stats.daysEarned,
+                        "linked", stats.linked, "paid", stats.paid, "hours", stats.hoursEarned,
                         "inviter", link == null ? "—" : link.inviter);
             }
             return true;

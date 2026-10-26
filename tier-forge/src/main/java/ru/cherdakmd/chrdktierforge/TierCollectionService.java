@@ -273,10 +273,10 @@ public final class TierCollectionService {
                 continue;
             }
             TierCollectionConfig.SectionReward reward = config.section(section);
-            pay(player, "section:" + section, reward.passDays(), reward.diamonds());
+            pay(player, "section:" + section, reward.passHours(), reward.diamonds());
             plugin.messages().send(player, "collection-section",
                     "name", Messages.trusted(sectionName(section)),
-                    "reward", Messages.trusted(rewardText(reward.passDays(),
+                    "reward", Messages.trusted(rewardText(reward.passHours(),
                             reward.diamonds())));
             if (config.titles().enabled()) {
                 String title = titleText(section);
@@ -293,17 +293,17 @@ public final class TierCollectionService {
         if (!keeper.claim(player.getUniqueId(), key)) {
             return; // веха уже выплачена
         }
-        pay(player, key, milestone.passDays(), milestone.diamonds());
+        pay(player, key, milestone.passHours(), milestone.diamonds());
         plugin.messages().send(player, "collection-milestone",
                 "name", Messages.trusted(name),
-                "reward", Messages.trusted(rewardText(milestone.passDays(),
+                "reward", Messages.trusted(rewardText(milestone.passHours(),
                         milestone.diamonds())));
     }
 
-    private void pay(Player player, String key, int passDays, int diamonds) {
-        if (passDays > 0) {
+    private void pay(Player player, String key, int passHours, int diamonds) {
+        if (passHours > 0) {
             if (plugin.coreApi() != null) {
-                plugin.coreApi().grantPass(player.getName(), passDays,
+                plugin.coreApi().grantPassHours(player.getName(), passHours,
                         "tierforge:collection:" + key);
             } else {
                 plugin.getLogger().warning("Ядро недоступно: награда коллекции " + key
@@ -323,11 +323,11 @@ public final class TierCollectionService {
     }
 
     /** Человеческий текст награды для чата. */
-    String rewardText(int passDays, int diamonds) {
+    String rewardText(int passHours, int diamonds) {
         List<String> parts = new ArrayList<>(2);
-        if (passDays > 0) {
-            parts.add(plugin.messages().raw("collection-reward-days",
-                    "days", passDays));
+        if (passHours > 0) {
+            parts.add(plugin.messages().raw("collection-reward-hours",
+                    "hours", passHours));
         }
         if (diamonds > 0) {
             parts.add(plugin.messages().raw("collection-reward-diamonds",

@@ -54,12 +54,12 @@ class TierForgeConfigTest {
     void collectionSectionIsWiredIntoConfig() {
         YamlConfiguration yaml = empty();
         yaml.set("collection.enabled", false);
-        yaml.set("collection.rewards.properties.15.pass-days", 5);
+        yaml.set("collection.rewards.properties.15.pass-hours", 5);
         yaml.set("collection.rewards.properties.15.diamonds", 7);
         TierForgeConfig config = parse(yaml).config();
         assertFalse(config.collection().enabled(), "флаг из collection.enabled доходит до снимка");
         assertEquals(1, config.collection().properties().size());
-        assertEquals(5, config.collection().properties().get(0).passDays());
+        assertEquals(5, config.collection().properties().get(0).passHours());
         assertEquals(7, config.collection().properties().get(0).diamonds());
     }
 
@@ -382,5 +382,57 @@ class TierForgeConfigTest {
         assertEquals(ForgeUpgrade.forMaterial("QUARTZ", ItemKind.SWORD,
                         parsed.config().improveMaterials()).id(), "edge",
                 "битый материал возвращается к умолчанию QUARTZ");
+    }
+
+    @Test
+    void worldSourcesDefaultsAndPerKindChances() {
+        TierForgeConfig config = parse(empty()).config();
+        assertTrue(config.worldEnabled(), "мировая редкость включена по умолчанию");
+        assertEquals(25, config.worldChancePercent());
+        assertEquals(25, config.worldChanceFor(ItemKind.SWORD));
+        assertEquals(25, config.worldChanceFor(ItemKind.CHESTPLATE));
+        assertEquals(25, config.worldChanceFor(ItemKind.PICKAXE));
+        assertEquals(25, config.worldChanceFor(ItemKind.UTILITY));
+        assertEquals(0, config.worldChanceFor(null), "без вида наката нет");
+        assertTrue(config.worldLootEnabled(), "сундуки и структуры включены");
+        assertTrue(config.worldFishingEnabled(), "рыбалка включена");
+        assertFalse(config.worldWorldBlocked("world"));
+
+        YamlConfiguration yaml = empty();
+        yaml.set("world.chance-percent", 40);
+        yaml.set("world.weapons-chance-percent", 0);
+        yaml.set("world.armor-chance-percent", 90);
+        TierForgeConfig custom = parse(yaml).config();
+        assertEquals(0, custom.worldChanceFor(ItemKind.SWORD), "0 — группе выключено");
+        assertEquals(90, custom.worldChanceFor(ItemKind.HELMET));
+        assertEquals(40, custom.worldChanceFor(ItemKind.PICKAXE), "-1 = общий шанс");
+    }
+
+    @Test
+    void worldSourcesAreClampedAndWorldsAreNormalized() {
+        YamlConfiguration yaml = empty();
+        yaml.set("world.chance-percent", 500);
+        yaml.set("world.weapons-chance-percent", 150);
+        yaml.set("world.armor-chance-percent", -9);
+        yaml.set("world.loot-enabled", false);
+        yaml.set("world.fishing-enabled", false);
+        yaml.set("world.world-blacklist", List.of(" World_Nether ", "", "CREATIVE"));
+        Parsed parsed = parse(yaml);
+        TierForgeConfig config = parsed.config();
+
+        assertEquals(100, config.worldChancePercent(), "500% → 100%");
+        assertEquals(100, config.worldChanceFor(ItemKind.SWORD));
+        assertEquals(100, config.worldChanceFor(ItemKind.HELMET),
+                "-9 → -1 → общий шанс, а не отрицательный");
+        assertFalse(config.worldLootEnabled());
+        assertFalse(config.worldFishingEnabled());
+        assertTrue(config.worldWorldBlocked("world_nether"), "регистр не важен");
+        assertTrue(config.worldWorldBlocked("CREATIVE"));
+        assertFalse(config.worldWorldBlocked("world"));
+        assertFalse(config.worldWorldBlocked(null));
+        assertTrue(parsed.warnings().stream()
+                .anyMatch(w -> w.contains("world.chance-percent")));
+        assertTrue(parsed.warnings().stream()
+                .anyMatch(w -> w.contains("world.weapons-chance-percent")));
     }
 }

@@ -580,6 +580,7 @@ messages:
     "last-auth-value": "<white>%last_auth_ip% %last_auth_at%</white>"
     "last-grant-label": "<gray>Последняя выдача: </gray>"
     "last-grant-value": "<white>%last_grant_days% дн., источник %last_grant_source%, %last_grant_at%</white>"
+    "last-grant-hours-value": "<white>%last_grant_hours% ч., источник %last_grant_source%, %last_grant_at%</white>"
     "mute-label": "<gray>Мут: </gray>"
     "mute-value": "<red>до %until%%reason%</red>"
     "not-found": "<red>Игрок %target_name% не найден в базе плагина.</red>"

@@ -652,6 +652,42 @@ public final class RegistrationStore {
     }
 
     /**
+     * Продлевает ранг на часы — путь наград аддонов (1.4.184).
+     *
+     * <p>Сутки как единица награды убраны: час эфира даёт час ранга, награда
+     * батлпасса или достижения — тоже часы. Дни остались только у покупок,
+     * ручной выдачи администратора и приветственного ранга.</p>
+     *
+     * @param hours длительность в часах; значения {@code <= 0} игнорируются
+     */
+    public synchronized PlayerAccount grantPassHours(String playerName, long nowMillis,
+                                                    int hours, String source) {
+        String key = canonicalName(playerName);
+        PlayerAccount account = data.accounts.computeIfAbsent(key, ignored -> new PlayerAccount());
+        account.canonicalName = key;
+        if (account.playerName == null || account.playerName.isBlank()) {
+            account.playerName = playerName;
+        }
+        if (account.rankPermanent) {
+            return copy(account); // ранг навсегда продлевать не нужно
+        }
+        int safeHours = Math.max(0, Math.min(24 * 365, hours));
+        if (safeHours == 0) {
+            return copy(account);
+        }
+        long baseTime = Math.max(nowMillis, account.passUntil);
+        account.passUntil = baseTime + safeHours * 3_600_000L;
+        consumeTrial(account);
+        account.lastGrantSource = (source == null || source.isBlank()) ? "reward" : source;
+        account.lastGrantAt = nowMillis;
+        account.lastGrantDays = 0;
+        account.lastGrantHours = safeHours;
+        clearExpiryWarnings(account);
+        markDirtyNow();
+        return copy(account);
+    }
+
+    /**
      * Grants or extends a pass manually, recording who/why it happened.
      *
      * @param source free-form tag shown in {@code /pass check} (manual, gift, admin:Nick, ...)
@@ -677,6 +713,8 @@ public final class RegistrationStore {
         account.lastGrantSource = (source == null || source.isBlank()) ? "manual" : source;
         account.lastGrantAt = nowMillis;
         account.lastGrantDays = (int) Math.max(0, durationMillis / 86_400_000L);
+        // 1.4.184: дни и часы не смешиваются — иначе /pass check покажет старые часы.
+        account.lastGrantHours = 0;
         clearExpiryWarnings(account);
         markDirtyNow();
         return copy(account);
@@ -2107,6 +2145,8 @@ public final class RegistrationStore {
         public String lastGrantSource = "";
         public long lastGrantAt;
         public int lastGrantDays;
+        /** 1.4.184: длительность последней награды в часах (награды больше не в сутках). */
+        public int lastGrantHours;
         public String passwordHash = "";
         public long registeredAt;
         public String totpSecret = "";

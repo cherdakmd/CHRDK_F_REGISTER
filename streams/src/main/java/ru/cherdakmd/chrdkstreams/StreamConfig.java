@@ -13,9 +13,9 @@ import java.util.Locale;
  * плагин. Площадка без ключей авторизации просто выключается — остальные
  * продолжают работать.</p>
  *
- * @param minutesPerDay  минут эфира за одни сутки ранга
- * @param maxDaysPerDay  потолок наград за календарные сутки (UTC)
- * @param maxTotalDays   потолок наград за всё время (0 — без потолка)
+ * @param minutesPerHour  минут эфира за один час ранга (60 = час за час)
+ * @param maxHoursPerDay  потолок часов ранга за календарные сутки (UTC)
+ * @param maxTotalHours   потолок часов за всё время (0 — без потолка)
  * @param pollSeconds    период опроса площадок
  * @param maxCreditMinutes максимум минут за один опрос (защита от простоя)
  * @param requireOnline  считать эфир только пока игрок на сервере
@@ -31,9 +31,9 @@ import java.util.Locale;
  */
 record StreamConfig(
         boolean enabled,
-        int minutesPerDay,
-        int maxDaysPerDay,
-        int maxTotalDays,
+        int minutesPerHour,
+        int maxHoursPerDay,
+        int maxTotalHours,
         int pollSeconds,
         int maxCreditMinutes,
         boolean requireOnline,
@@ -121,7 +121,7 @@ record StreamConfig(
     }
 
     /**
-     * Награды зрителям: 120 минут просмотра = сутки, не больше 1 в день и 30 всего.
+     * Награды зрителям: 120 минут просмотра = 1 час ранга, не больше 1 в день и 30 всего.
      *
      * <p>Зрительская программа — это не только награда, но и противодействие
      * накрутке: короткий код легко подобрать, заявок может быть сколько угодно,
@@ -130,7 +130,7 @@ record StreamConfig(
      * {@code requestTtlHours} (сколько живёт заявка),
      * {@code maxCodeAttempts}/{@code codeLockMinutes} (блокировка за перебор кода).</p>
      */
-    record Viewers(boolean enabled, int minutesPerDay, int maxDaysPerDay, int maxTotalDays,
+    record Viewers(boolean enabled, int minutesPerHour, int maxHoursPerDay, int maxTotalHours,
                    int codeWindowMinutes, int checkinMinMinutes, boolean requireApproval,
                    int maxPerStreamer, int requestTtlHours, int maxCodeAttempts,
                    int codeLockMinutes, boolean announceCode) {
@@ -146,10 +146,10 @@ record StreamConfig(
         }
 
         Viewers {
-            minutesPerDay = Math.clamp(minutesPerDay, StreamRewards.MIN_MINUTES_PER_DAY,
-                    StreamRewards.MAX_MINUTES_PER_DAY);
-            maxDaysPerDay = Math.clamp(maxDaysPerDay, 0, StreamRewards.MAX_DAYS_PER_DAY);
-            maxTotalDays = Math.clamp(maxTotalDays, 0, StreamRewards.MAX_TOTAL_DAYS);
+            minutesPerHour = Math.clamp(minutesPerHour, StreamRewards.MIN_MINUTES_PER_HOUR,
+                    StreamRewards.MAX_MINUTES_PER_HOUR);
+            maxHoursPerDay = Math.clamp(maxHoursPerDay, 0, StreamRewards.MAX_HOURS_PER_DAY);
+            maxTotalHours = Math.clamp(maxTotalHours, 0, StreamRewards.MAX_TOTAL_HOURS);
             codeWindowMinutes = Math.clamp(codeWindowMinutes,
                     ViewerCodes.MIN_WINDOW_MINUTES, ViewerCodes.MAX_WINDOW_MINUTES);
             checkinMinMinutes = Math.clamp(checkinMinMinutes, 1, codeWindowMinutes);
@@ -175,7 +175,7 @@ record StreamConfig(
         }
 
         StreamRewards.Rule rule() {
-            return StreamRewards.Rule.of(minutesPerDay, maxDaysPerDay, maxTotalDays);
+            return StreamRewards.Rule.of(minutesPerHour, maxHoursPerDay, maxTotalHours);
         }
 
         long codeWindowMillis() {
@@ -188,10 +188,10 @@ record StreamConfig(
     }
 
     StreamConfig {
-        minutesPerDay = Math.clamp(minutesPerDay, StreamRewards.MIN_MINUTES_PER_DAY,
-                StreamRewards.MAX_MINUTES_PER_DAY);
-        maxDaysPerDay = Math.clamp(maxDaysPerDay, 0, StreamRewards.MAX_DAYS_PER_DAY);
-        maxTotalDays = Math.clamp(maxTotalDays, 0, StreamRewards.MAX_TOTAL_DAYS);
+        minutesPerHour = Math.clamp(minutesPerHour, StreamRewards.MIN_MINUTES_PER_HOUR,
+                StreamRewards.MAX_MINUTES_PER_HOUR);
+        maxHoursPerDay = Math.clamp(maxHoursPerDay, 0, StreamRewards.MAX_HOURS_PER_DAY);
+        maxTotalHours = Math.clamp(maxTotalHours, 0, StreamRewards.MAX_TOTAL_HOURS);
         pollSeconds = Math.clamp(pollSeconds, MIN_POLL_SECONDS, MAX_POLL_SECONDS);
         maxCreditMinutes = Math.clamp(maxCreditMinutes, MIN_CREDIT_MINUTES, MAX_CREDIT_MINUTES);
         minViewers = Math.clamp(minViewers, 0, MAX_VIEWERS);
@@ -204,7 +204,7 @@ record StreamConfig(
 
     /** Правила начисления для {@link StreamRewards}. */
     StreamRewards.Rule rule() {
-        return StreamRewards.Rule.of(minutesPerDay, maxDaysPerDay, maxTotalDays);
+        return StreamRewards.Rule.of(minutesPerHour, maxHoursPerDay, maxTotalHours);
     }
 
     /** Максимум миллисекунд эфира, который засчитывается за один опрос. */
@@ -250,9 +250,11 @@ record StreamConfig(
         }
         return new StreamConfig(
                 config.getBoolean("streams.enabled", true),
-                config.getInt("streams.minutes-per-day", 60),
-                config.getInt("streams.max-days-per-day", 6),
-                config.getInt("streams.max-total-days", 365),
+                // 1.4.184: часы вместо суток. Старые ключи (*-per-day/*-days) читаются
+                // как часы, чтобы конфиг без перезаписи не потерял настройку.
+                hours(config, "streams.minutes-per-hour", "streams.minutes-per-day", 60),
+                hours(config, "streams.max-hours-per-day", "streams.max-days-per-day", 6),
+                hours(config, "streams.max-total-hours", "streams.max-total-days", 365),
                 config.getInt("streams.poll-seconds", 120),
                 config.getInt("streams.max-credit-minutes", 10),
                 config.getBoolean("streams.require-online", true),
@@ -282,9 +284,12 @@ record StreamConfig(
                         config.getBoolean("streams.tags.tab", true)),
                 new Viewers(
                         config.getBoolean("streams.viewers.enabled", true),
-                        config.getInt("streams.viewers.minutes-per-day", 120),
-                        config.getInt("streams.viewers.max-days-per-day", 1),
-                        config.getInt("streams.viewers.max-total-days", 30),
+                        hours(config, "streams.viewers.minutes-per-hour",
+                                "streams.viewers.minutes-per-day", 120),
+                        hours(config, "streams.viewers.max-hours-per-day",
+                                "streams.viewers.max-days-per-day", 1),
+                        hours(config, "streams.viewers.max-total-hours",
+                                "streams.viewers.max-total-days", 30),
                         config.getInt("streams.viewers.code-window-minutes", 10),
                         config.getInt("streams.viewers.checkin-min-minutes", 5),
                         config.getBoolean("streams.viewers.require-approval", true),
@@ -301,6 +306,12 @@ record StreamConfig(
                 30, 60, true,
                 Twitch.disabled(), new VkPlay(true, VkPlayClient.DEFAULT_API_URL),
                 Tags.defaults(), Viewers.defaults());
+    }
+
+    /** Значение по новому ключу, а если его нет — по старому (совместимость конфигов). */
+    private static int hours(FileConfiguration config, String key, String legacy, int fallback) {
+        return config.contains(key) ? config.getInt(key, fallback)
+                : config.getInt(legacy, fallback);
     }
 
     private static String text(String value) {

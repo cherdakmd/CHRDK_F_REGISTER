@@ -383,7 +383,7 @@ final class ViewerService {
         long credit = ViewerCodes.creditMillis(since, config.viewers().codeWindowMillis());
         StreamRewards.Decision decision = StreamRewards.advance(
                 viewers.progress(uuid), credit, now, config.viewers().rule());
-        if (decision.awarded() && !grant(name, decision.awardDays())) {
+        if (decision.awarded() && !grant(name, decision.awardHours())) {
             // Награда не выдана — прогресс не сохраняем, повторим на следующем коде.
             return;
         }
@@ -396,10 +396,10 @@ final class ViewerService {
         } else {
             tell(uuid, "watch-tick",
                     "minutes", minutes,
-                    "left", StreamRewards.minutesToNextDay(decision.state(),
+                    "left", StreamRewards.minutesToNextHour(decision.state(),
                             config.viewers().rule()),
                     "today", decision.state().awardedToday(),
-                    "max", config.viewers().maxDaysPerDay());
+                    "max", config.viewers().maxHoursPerDay());
         }
         if (decision.awarded()) {
             announce(uuid, name, decision);
@@ -422,11 +422,11 @@ final class ViewerService {
                         ? "watch-state-accepted" : "watch-state-pending")));
         plugin.messages().send(viewer, "watch-status-progress",
                 "minutes", StreamRewards.pendingMinutes(state, config.viewers().rule()),
-                "needed", config.viewers().minutesPerDay(),
+                "needed", config.viewers().minutesPerHour(),
                 "today", state.awardedToday(),
-                "max", config.viewers().maxDaysPerDay());
-        plugin.messages().send(viewer, "watch-status-total", "days", state.totalDays());
-        long left = StreamRewards.minutesToNextDay(state, config.viewers().rule());
+                "max", config.viewers().maxHoursPerDay());
+        plugin.messages().send(viewer, "watch-status-total", "hours", state.totalHours());
+        long left = StreamRewards.minutesToNextHour(state, config.viewers().rule());
         if (left > 0L) {
             plugin.messages().send(viewer, "watch-status-left", "left", left);
         }
@@ -576,7 +576,7 @@ final class ViewerService {
         return Math.max(1L, (remaining + 59_999L) / 60_000L);
     }
 
-    private boolean grant(String name, int days) {
+    private boolean grant(String name, int hours) {
         ChrdkRegisterApi api = plugin.coreApi();
         if (api == null) {
             plugin.getLogger().warning("[Streams] Ядро CHRDK_Core недоступно — награда зрителю "
@@ -584,11 +584,11 @@ final class ViewerService {
             return false;
         }
         try {
-            api.grantPass(name, days, SOURCE);
+            api.grantPassHours(name, hours, SOURCE);
             return true;
         } catch (RuntimeException exception) {
-            plugin.getLogger().log(Level.WARNING, "[Streams] Не удалось выдать " + days
-                    + " дн. зрителю " + name, exception);
+            plugin.getLogger().log(Level.WARNING, "[Streams] Не удалось выдать " + hours
+                    + " ч. зрителю " + name, exception);
             String error = exception.getMessage() == null ? "" : exception.getMessage();
             Bukkit.getScheduler().runTask(plugin, () -> {
                 Player online = Bukkit.getPlayerExact(name);
@@ -604,9 +604,9 @@ final class ViewerService {
         ChrdkRegisterApi api = plugin.coreApi();
         long until = api == null ? 0L : api.passUntil(name);
         tell(uuid, "watch-awarded",
-                "days", decision.awardDays(),
+                "hours", decision.awardHours(),
                 "today", decision.state().awardedToday(),
-                "max", config.viewers().maxDaysPerDay());
+                "max", config.viewers().maxHoursPerDay());
         if (until > 0L) {
             tell(uuid, "watch-awarded-until", "until", StreamService.until(until));
         }

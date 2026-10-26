@@ -111,6 +111,70 @@
 - В консоли команда печатает голый адрес строкой. Тесты — `WikiSettingsTest`
   и `PresentationUpdateTest` (кнопка ведёт в существующую команду).
 
+## Редкость мировой добычи (1.4.185)
+
+Тир получала только крафтовая вещь, дроп с мобов и именные находки кладов.
+Сундуки в шахтах и крепостях, затонувшие корабли и рыбалка приходили обычными
+предметами. Теперь редкость разыгрывается в момент появления вещи:
+
+- **Сундуки и структуры** — лут-таблица наполняет инвентарь, подходящая
+  экипировка получает шанс на тир (`LootGenerateEvent`).
+- **Рыбалка** — пойманная вещь правится ещё на крючке (`PlayerFishEvent`).
+- **Шанс по умолчанию 25 %**, у каждой группы свой (`world.weapons-chance-percent`
+  и т. д.), есть чёрный список миров; правила групп общие с крафтом.
+- **Старые вещи не трогаются.** Инвентари не сканируются: редкость получает
+  только то, что мир создал после обновления. Иначе случайный «проклятый» тир
+  молча ослабил бы чужой меч из сундука.
+- **Опознание как раньше:** при `identify.enabled: true` вещь попадает в сундук
+  «неопознанной», редкость открывается в инвентаре.
+
+```yaml
+# tier-forge/config.yml
+world:
+  enabled: true
+  chance-percent: 25
+  loot-enabled: true       # сундуки, бочки и находки структур
+  fishing-enabled: true    # пойманная вещь
+  world-blacklist: []
+```
+
+Подробности — `docs/releases/1.4.185.md`.
+
+## Награды меряются часами (1.4.184)
+
+Сутки больше не единица награды. Час эфира даёт ровно час ранга, и так во всех
+аддонах:
+
+- **Эфир** — 60 минут подтверждённого стрима = 1 час ранга (`streams.minutes-per-hour`),
+  не больше 6 часов за календарные сутки (UTC) и 365 часов всего.
+- **Зрители** — 120 минут просмотра = 1 час, не больше 1 часа в день и 30 всего.
+- **Достижения, артефакты, кузня тиров, батлпасс, ежедневки, заказы, рефералы** —
+  те же числа, что раньше были днями, теперь читаются как часы: `pass-hours`,
+  `free-hours`/`vip-hours`/`premium-hours`, `vip-pass-hours`, `bonus-hours`,
+  `pass-hours-chance`/`pass-hours`.
+- **Потолок одной награды — сутки (24 ч).** Больше не выдаёт ни один аддон:
+  значение клампится, а конфиг с опечаткой получает предупреждение в лог
+  (`/bpadmin validate` — по батлпассу).
+- **Покупки и сроки не тронуты.** Подписка, подарочные дни витрины и
+  приветственные 3 дня Странника остаются в днях: это срок, а не награда за
+  активность.
+
+Новые аддоны получают часы через `ChrdkRegisterApi.grantPassHours(name, hours,
+source)` (`API_VERSION` = 11); старый `grantPass(name, days, source)` продолжает
+работать для совместимости. В `/pass check` последняя награда показывается в
+часах, а не «0 дн.».
+
+Старые данные читаются без потерь: `totalDays` в прогрессе стримов,
+`daysEarned` в рефералах и `pass-days` в доске заказов подхватываются как часы.
+Конфиги, не перезаписанные после обновления, тоже не ломаются: `pass-days*`
+(достижения, артефакты, кузня, заказы), `bonus-days.*`, `vip-pass-days`,
+`free-days`/`vip-days`/`premium-days` и стримерские `minutes-per-day`,
+`max-days-per-day`, `max-total-days` читаются как часы соответствующего ключа.
+PlaceholderAPI: `%chrdkstreams_hours%` и `%chrdkstreams_watch_hours%` — новые
+имена, прежние `days`/`watch_days` остались псевдонимами.
+
+Подробности — `docs/releases/1.4.184.md`.
+
 ## В табе порядок, надписи по желанию (1.4.183)
 
 В списке игроков был бардак: сортировка шла только по стажу, и оплаченный ранг
@@ -1430,7 +1494,9 @@ public void onEnable() {
         return;
     }
     // Проверки: api.hasActivePass("Steve"), api.isAuthenticated(player),
-    // api.<Economy>economy(), api.<LuckPerms>luckPerms(), api.grantPass("Steve", 7, "myaddon")
+    // api.<Economy>economy(), api.<LuckPerms>luckPerms(),
+    // api.grantPassHours("Steve", 7, "myaddon") — награда в часах (API v11),
+    // api.grantPass("Steve", 30, "myaddon") — продление на дни (оплаты, подарки)
     Bukkit.getPluginManager().registerEvents(new Listener() {
         @EventHandler
         public void onPassGrant(PassGrantedEvent e) {
@@ -1530,11 +1596,11 @@ public void onEnable() {
 - Код приглашения — **просто ваш ник**: ничего генерировать не нужно.
 - Новичок **до первой оплаты** пишет `/ref use <ник>` — привязка одноразовая и необратимая.
 - Когда он **впервые оплачивает проходку** (донат сработал — событие `PassGrantedEvent` из ядра),
-  оба получают бонус: пригласивший **+7 дней**, приглашённый **+3 дня** (настраивается
-  `bonus-days:` в `plugins/CHRDK_Referrals/config.yml`). Начисление идёт через API ядра —
-  в аудите видна метка `referral:<ник>`.
+  оба получают бонус: пригласивший **+7 часов**, приглашённый **+3 часа** (настраивается
+  `bonus-hours:` в `plugins/CHRDK_Referrals/config.yml`; старый `bonus-days:` читается как часы).
+  Начисление идёт через API ядра (`grantPassHours`) — в аудите видна метка `referral:<ник>`.
 - Анти-накрутка: пригласитель обязан быть зарегистрирован (`rules.require-inviter-registered`),
-  нельзя привязаться к себе, привязка — только до первой проходки. «Бесплатные дни» живы только
+  нельзя привязаться к себе, привязка — только до первой проходки. «Бесплатные часы» живы только
   за реальную оплату друга.
 - Новичку при входе показывается одноразовая подсказка про `/ref use` (отключается).
 
@@ -1542,7 +1608,7 @@ public void onEnable() {
 
 | Команда | Описание |
 |---|---|
-| `/ref` | Мой код (ник), сколько приглашено, заработано дней, чья я реферал |
+| `/ref` | Мой код (ник), сколько приглашено, заработано часов, чья я реферал |
 | `/ref use <ник>` | Привязаться к пригласившему (один раз, до первой проходки) |
 | `/ref top` | Топ-10 приглашателей по оплатившим друзьям |
 | `/refadmin lookup <ник>` | Карточка игрока (`chrdkref.admin`) |
@@ -1565,8 +1631,9 @@ public void onEnable() {
 - Стрик растёт ежедневно подряд; пропустил сутки — сбрасывается в 1. Награды зациклены по 7 дням
   (день 8 стрика = день 1), но сам стрик растёт без ограничений.
 - **VIP-ветка** (у держателей активной проходки — через API ядра `hasActivePass`): свои, более
-  богатые предметы (`vip-items`) плюс **дни проходки** (`vip-pass-days`, начисляются через
-  `api.grantPass`). Если VIP-ветка дня пуста — проходчик получает обычную.
+  богатые предметы (`vip-items`) плюс **часы проходки** (`vip-pass-hours`, начисляются через
+  `api.grantPassHours`; с 1.4.184 единица — час, а не сутки). Если VIP-ветка дня пуста —
+  проходчик получает обычную.
 - Забирать могут только авторизованные игроки; напоминание в чате при входе (настраивается).
 - Каталог полностью задаётся в `plugins/CHRDK_DailyRewards/config.yml` (`rewards:`, формат
   `"MATERIAL количество"`).
@@ -3373,36 +3440,36 @@ lines)`. `ProfileContext` несёт UUID, ник, признак «онлайн
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.183.jar`,
-аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.183.jar`,
-реферальный — `referrals/build/libs/chrdk-referrals-1.4.183.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.183.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.183.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.183.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.183.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.183.jar` (хартия чар — при установленном аддоне чар),
-достижения — `achievements/build/libs/chrdk-achievements-1.4.183.jar`, навыки —
-`skills/build/libs/chrdk-skills-1.4.183.jar`, клады —
-`treasures/build/libs/chrdk-treasures-1.4.183.jar`, общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.183.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.183.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.183.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.183.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.183.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.183.jar`, стримерская программа —
-`streams/build/libs/chrdk-streams-1.4.183.jar`, лотерея —
-`lottery/build/libs/chrdk-lottery-1.4.183.jar`, аукцион —
-`auction/build/libs/chrdk-auction-1.4.183.jar`, питомцы —
-`pets/build/libs/chrdk-pets-1.4.183.jar`, заказы —
-`orders/build/libs/chrdk-orders-1.4.183.jar`, охота —
-`hunt/build/libs/chrdk-hunt-1.4.183.jar`, группы —
-`party/build/libs/chrdk-party-1.4.183.jar`, события —
-`events/build/libs/chrdk-events-1.4.183.jar`, задания —
-`quests/build/libs/chrdk-quests-1.4.183.jar`, боссы —
-`bosses/build/libs/chrdk-bosses-1.4.183.jar`, гильдии —
-`guilds/build/libs/chrdk-guilds-1.4.183.jar`, классы —
-`classes/build/libs/chrdk-classes-1.4.183.jar`, профессии —
-`professions/build/libs/chrdk-professions-1.4.183.jar`. На сервер ядро
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.185.jar`,
+аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.185.jar`,
+реферальный — `referrals/build/libs/chrdk-referrals-1.4.185.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.185.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.185.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.185.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.185.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.185.jar` (хартия чар — при установленном аддоне чар),
+достижения — `achievements/build/libs/chrdk-achievements-1.4.185.jar`, навыки —
+`skills/build/libs/chrdk-skills-1.4.185.jar`, клады —
+`treasures/build/libs/chrdk-treasures-1.4.185.jar`, общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.185.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.185.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.185.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.185.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.185.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.185.jar`, стримерская программа —
+`streams/build/libs/chrdk-streams-1.4.185.jar`, лотерея —
+`lottery/build/libs/chrdk-lottery-1.4.185.jar`, аукцион —
+`auction/build/libs/chrdk-auction-1.4.185.jar`, питомцы —
+`pets/build/libs/chrdk-pets-1.4.185.jar`, заказы —
+`orders/build/libs/chrdk-orders-1.4.185.jar`, охота —
+`hunt/build/libs/chrdk-hunt-1.4.185.jar`, группы —
+`party/build/libs/chrdk-party-1.4.185.jar`, события —
+`events/build/libs/chrdk-events-1.4.185.jar`, задания —
+`quests/build/libs/chrdk-quests-1.4.185.jar`, боссы —
+`bosses/build/libs/chrdk-bosses-1.4.185.jar`, гильдии —
+`guilds/build/libs/chrdk-guilds-1.4.185.jar`, классы —
+`classes/build/libs/chrdk-classes-1.4.185.jar`, профессии —
+`professions/build/libs/chrdk-professions-1.4.185.jar`. На сервер ядро
 обязательно, аддоны — по желанию (требуют ядро 1.4.6+). К релизу на GitHub
 прикладывается **один архив** `chrdk-plugins-<версия>.zip`: ядро и все 29 аддонов
 одной версии (30 JAR) плюс памятка `ОБНОВЛЕНИЕ.txt`. Отдельные JAR больше не
@@ -7101,11 +7168,12 @@ API ядра (`hasActivePass`, `isRegistered`, `isTwoFactorEnabled`) при вх
 тик отбрасывается: телепорт и рывок артефакта не превращаются в «Семь миль».
 Дистанция копится в буфере и сбрасывается раз в секунду.
 
-**4. Награды.** Дни проходки и алмазы, у «Ветерана» — 5 дней и 40 алмазов, у
-«Легенды» — 7 дней и 64 алмаза. Награда выдаётся один раз: помимо отметки
+**4. Награды.** Часы проходки и алмазы: у «Ветерана» — 5 часов и 40 алмазов,
+у редких вех — от 2 до 96 алмазов. Награда выдаётся один раз: помимо отметки
 «открыто» есть отдельная отметка «выплачено», поэтому сбой между открытием и
 выплатой не приводит к повторной выдаче после перезапуска. Переопределение в
-`rewards.<ид>.pass-days|diamonds` (отсутствие поля — значение из каталога).
+`rewards.<ид>.pass-hours|diamonds` (отсутствие поля — значение из каталога;
+с 1.4.184 единица — час, потолок награды 24 ч).
 
 **5. Бейджи.** «Ветеран» и «Легенда» дают бейдж: `/achievements badge <ид>`
 надевает его, `off` — снимает. Бейдж идёт перед ником через
@@ -7199,9 +7267,9 @@ API ядра (`hasActivePass`, `isRegistered`, `isTwoFactorEnabled`) при вх
 артефактов положительный кулдаун.
 
 **9. Настройки.** Новые секции с русскими комментариями:
-`collection.enabled`, `collection.rewards.<процент>.pass-days|diamonds`;
+`collection.enabled`, `collection.rewards.<процент>.pass-hours|diamonds`;
 `feedback.actionbar`, `feedback.sounds`, `feedback.curse-message-seconds`.
-Кривые значения клампятся (процент 1–100, дни 0–365, алмазы 0–576), лишние
+Кривые значения клампятся (процент 1–100, часы 0–24, алмазы 0–576), лишние
 ключи наград пропускаются с предупреждением. Пустой блок `rewards` возвращает
 набор по умолчанию.
 
@@ -8050,7 +8118,8 @@ id, покрытие видов, бросок без дублей и с искл
   10 минут, а не час.
 - Эфир проверяется на площадке в момент чек-ина: офлайн-канал не засчитывается.
 - Фолловер-проверка — подтверждение стримером (см. выше).
-- Потолки: `minutes-per-day: 120`, `max-days-per-day: 1`, `max-total-days: 30`.
+- Потолки: `minutes-per-hour: 120` (два часа просмотра = час ранга),
+  `max-hours-per-day: 1`, `max-total-hours: 30`. С 1.4.184 награда в часах.
   Значения по умолчанию намеренно скромные: просмотр — приятный бонус, а не
   способ играть бесплатно круглосуточно. Награда зрителям никогда не выше
   стримерской (час эфира = сутки) и не даёт ни ресурсов, ни снаряжения, ни
@@ -8104,8 +8173,8 @@ id, покрытие видов, бросок без дублей и с искл
   покрыты юнит-тестами.
 - PlaceholderAPI (мягко) для зрителей: `%chrdkstreams_watching%`,
   `%chrdkstreams_watch_pending%`, `%chrdkstreams_watch_today%`,
-  `%chrdkstreams_watch_days%`, `%chrdkstreams_watchers%` — только сохранённые
-  данные, без запросов к площадкам.
+  `%chrdkstreams_watch_hours%` (прежнее имя `watch_days`),
+  `%chrdkstreams_watchers%` — только сохранённые данные, без запросов к площадкам.
 
 **Тесты:** ядро — `NameTagsTest` (порядок, замена по id, сбой провайдера,
 `null`), `AddonApiContractTest.nameTagsAreAdditive` (методы остались
@@ -8144,9 +8213,10 @@ id, покрытие видов, бросок без дублей и с искл
 
 **Правила и потолки (всё в `streams/config.yml`)**
 
-- `minutes-per-day: 60` — 60 минут эфира = 1 сутки проходки.
-- `max-days-per-day: 6` — не больше шести суток за календарные сутки (UTC).
-- `max-total-days: 365` — не больше 365 суток с программы; `0` — без потолка.
+- `minutes-per-hour: 60` — 60 минут эфира = 1 час проходки (с 1.4.184; раньше
+  единицей были сутки).
+- `max-hours-per-day: 6` — не больше шести часов за календарные сутки (UTC).
+- `max-total-hours: 365` — не больше 365 часов с программы; `0` — без потолка.
   Считаются только дни за эфир, покупки и подарки этот счётчик не трогают.
 - Накопленные минуты не сгорают в полночь, но остаток всегда **меньше** порога
   одного дня: «накопить на неделю вперёд» нельзя.
@@ -8197,12 +8267,12 @@ id, покрытие видов, бросок без дублей и с искл
 - Хранилище `plugins/CHRDK_Streams/streams-data.json`: привязка, код, отметка
   подтверждения и прогресс; атомарная запись (temp + move), битые строки
   пропускаются.
-- Награда — `coreApi().grantPass(ник, дни, "streams")`; в поздравлении игрок
+- Награда — `coreApi().grantPassHours(ник, часы, "streams")`; в поздравлении игрок
   видит «наградой стримерской программы», в Discord — «Проходка продлена по
   стримерской программе». Подписи получили и другие источники: батлпасс,
   ежедневный вход, рефералы.
 - PlaceholderAPI (мягко): `%chrdkstreams_channel%`, `_platform%`, `_verified%`,
-  `_pending%`, `_today%`, `_days%`, `_rule%`, `_max_today%` — только сохранённые
+  `_pending%`, `_today%`, `_hours%` (прежнее имя `_days%`), `_rule%`, `_max_today%` — только сохранённые
   данные, без сети в плейсхолдере.
 - `/pass update` теперь ждёт 17 JAR + ZIP (18 assets); `release.yml` кладёт
   `chrdk-streams` в набор, а карта модулей ядра знает `CHRDK_Streams`.
@@ -8312,28 +8382,31 @@ boosty:
           type: KILL
           entity: "ZOMBIE|HUSK|DROWNED"
           target: 40
-          free-days: 1         # всем
-          vip-days: 1          # владельцам проходки
-          premium-days: 2      # владельцам боевого пропуска
+          free-hours: 1        # всем
+          vip-hours: 1         # владельцам проходки
+          premium-hours: 2     # владельцам боевого пропуска
           premium-products: [trail-flame, nick-color]   # до 5 товаров каталога
 ```
 
-- `premium-days` — дни проходки. Складываются с остальными ветками и выдаются
-  одним вызовом ядра, чтобы игрок получил одно поздравление, а не пачку.
+- `premium-hours` — часы проходки (1.4.184: раньше дни). Ключи старого формата
+  `free-days`/`vip-days`/`premium-days` читаются как часы: число остаётся числом
+  часов, поэтому конфиг без перезаписи не потеряет награду. Складываются
+  с остальными ветками и выдаются одним вызовом ядра, чтобы игрок получил одно
+  поздравление, а не пачку.
 - `premium-products` — id товаров каталога. Выдаются через API v5
   (`grantEntitlement`) без записи продажи: это награда, а не покупка, иначе
   бесплатные выдачи раздували бы выручку. В аудите — событие `shop.grant`,
   в `data.json` — обычный срок товара, поэтому `/pass my` показывает подарок.
 - Опечатки не роняют конфиг: кривой id товара, больше пяти товаров или
-  `premium-days` вне `0..3650` отбрасываются с пояснением в `/bpadmin validate`.
+  `premium-hours` вне `0..24` отбрасываются с пояснением в `/bpadmin validate`.
 
 **Как игрок это видит**
 
 - В `/battlepass` и меню у задания три состояния: доступно (✔), нужна проходка
   (◆) и нужен боевой пропуск (★). Кнопка «забрать» появляется, когда доступна
   хотя бы одна ветка.
-- Награда показывается целиком — `+1 дн. VIP +1 дн. ★ +2 дн. ★ подарок` — даже
-  без пропуска: витрина должна объяснять, за что платят.
+- Награда показывается целиком — `+1 ч. ранга VIP +1 ч. ранга ★ +2 ч. ★ подарок` —
+  даже без пропуска: витрина должна объяснять, за что платят.
 - В шапке — статус боевого пропуска; если что-то готово, но закрыто, внизу
   строка «Готово к выдаче золотых наград: N».
 - `claim all` забирает всё доступное сразу и отдельно сообщает, сколько

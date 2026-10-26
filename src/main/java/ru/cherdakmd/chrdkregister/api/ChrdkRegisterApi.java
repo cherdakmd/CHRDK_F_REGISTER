@@ -32,7 +32,7 @@ import java.util.UUID;
 public interface ChrdkRegisterApi {
 
     /** Версия контракта API. Растёт при расширении (добавлении методов/событий). */
-    int API_VERSION = 10;
+    int API_VERSION = 11;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -127,6 +127,22 @@ public interface ChrdkRegisterApi {
      * @param source метка источника, попадёт в аккаунт и аудит (например, имя аддона)
      */
     void grantPass(String playerName, int days, String source);
+
+    /**
+     * Продлевает ранг на часы — путь наград аддонов (v11, 1.4.184).
+     *
+     * <p>С 1.4.184 награды измеряются часами: час эфира даёт час ранга, награда
+     * достижения, батлпасса или заказа — свои часы. Сутки остались только у
+     * покупок, ручной выдачи и приветственного ранга. Метод не поднимает
+     * {@code PassGrantedEvent}: награда — не оплата, реферальные бонусы на неё
+     * начисляться не должны.</p>
+     *
+     * @param hours  сколько часов добавить; {@code <= 0} — ничего не делать,
+     *               значение зажимается сверху ({@code 365 * 24})
+     * @param source метка источника для аудита и поздравления ({@code streams:...})
+     */
+    default void grantPassHours(String playerName, int hours, String source) {
+    }
 
     /** Отзывает проходку; {@code true}, если проходка была активна. */
     boolean revokePass(String playerName);

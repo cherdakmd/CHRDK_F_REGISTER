@@ -21,9 +21,9 @@ class StreamConfigTest {
         StreamConfig config = parse("");
 
         assertTrue(config.enabled());
-        assertEquals(60, config.minutesPerDay(), "час эфира = сутки");
-        assertEquals(6, config.maxDaysPerDay());
-        assertEquals(365, config.maxTotalDays());
+        assertEquals(60, config.minutesPerHour(), "час эфира = час ранга");
+        assertEquals(6, config.maxHoursPerDay());
+        assertEquals(365, config.maxTotalHours());
         assertEquals(120, config.pollSeconds());
         assertEquals(10, config.maxCreditMinutes());
         assertTrue(config.requireOnline());
@@ -48,17 +48,17 @@ class StreamConfigTest {
     void brokenNumbersAreClamped() throws Exception {
         StreamConfig config = parse("""
                 streams:
-                  minutes-per-day: 0
-                  max-days-per-day: 99
-                  max-total-days: -3
+                  minutes-per-hour: 0
+                  max-hours-per-day: 99
+                  max-total-hours: -3
                   poll-seconds: 1
                   max-credit-minutes: 0
                   min-viewers: -10
                 """);
 
-        assertEquals(1, config.minutesPerDay());
-        assertEquals(StreamRewards.MAX_DAYS_PER_DAY, config.maxDaysPerDay());
-        assertEquals(0, config.maxTotalDays());
+        assertEquals(1, config.minutesPerHour());
+        assertEquals(StreamRewards.MAX_HOURS_PER_DAY, config.maxHoursPerDay());
+        assertEquals(0, config.maxTotalHours());
         assertEquals(StreamConfig.MIN_POLL_SECONDS, config.pollSeconds());
         assertEquals(StreamConfig.MIN_CREDIT_MINUTES, config.maxCreditMinutes());
         assertEquals(0, config.minViewers());
@@ -233,9 +233,9 @@ class StreamConfigTest {
         StreamConfig config = parse("");
 
         assertTrue(config.viewers().enabled());
-        assertEquals(120, config.viewers().minutesPerDay());
-        assertEquals(1, config.viewers().maxDaysPerDay());
-        assertEquals(30, config.viewers().maxTotalDays());
+        assertEquals(120, config.viewers().minutesPerHour());
+        assertEquals(1, config.viewers().maxHoursPerDay());
+        assertEquals(30, config.viewers().maxTotalHours());
         assertEquals(10, config.viewers().codeWindowMinutes());
         assertEquals(5, config.viewers().checkinMinMinutes());
         assertTrue(config.viewers().requireApproval());
@@ -249,16 +249,16 @@ class StreamConfigTest {
         StreamConfig config = parse("""
                 streams:
                   viewers:
-                    minutes-per-day: 0
-                    max-days-per-day: 99
-                    max-total-days: 99999
+                    minutes-per-hour: 0
+                    max-hours-per-day: 99
+                    max-total-hours: 99999
                     code-window-minutes: 1
                     checkin-min-minutes: 999
                 """);
 
-        assertEquals(StreamRewards.MIN_MINUTES_PER_DAY, config.viewers().minutesPerDay());
-        assertEquals(StreamRewards.MAX_DAYS_PER_DAY, config.viewers().maxDaysPerDay());
-        assertEquals(StreamRewards.MAX_TOTAL_DAYS, config.viewers().maxTotalDays());
+        assertEquals(StreamRewards.MIN_MINUTES_PER_HOUR, config.viewers().minutesPerHour());
+        assertEquals(StreamRewards.MAX_HOURS_PER_DAY, config.viewers().maxHoursPerDay());
+        assertEquals(StreamRewards.MAX_TOTAL_HOURS, config.viewers().maxTotalHours());
         assertEquals(ViewerCodes.MIN_WINDOW_MINUTES, config.viewers().codeWindowMinutes());
         assertEquals(ViewerCodes.MIN_WINDOW_MINUTES, config.viewers().checkinMinMinutes(),
                 "чек-ин не может быть реже окна кода");
@@ -268,7 +268,7 @@ class StreamConfigTest {
     void defaultsMatchShippedConfigKeys() {
         StreamConfig config = StreamConfig.defaults();
 
-        assertEquals(60, config.minutesPerDay());
+        assertEquals(60, config.minutesPerHour());
         assertEquals(StreamRewards.Rule.of(60, 6, 365), config.rule());
         assertEquals(StreamConfig.Tags.defaults(), config.tags());
         assertEquals(StreamConfig.Viewers.defaults(), config.viewers());

@@ -145,7 +145,7 @@ public final class AchievementService {
                 "name", Messages.trusted(name),
                 "category", plugin.messages().mini("category." + def.category().id()));
         AchievementsConfig.Reward reward = plugin.config().rewardOf(def);
-        if (reward.passDays() > 0 || reward.diamonds() > 0) {
+        if (reward.passHours() > 0 || reward.diamonds() > 0) {
             plugin.messages().send(player, "achievement-reward",
                     "reward", Messages.trusted(rewardText(reward)));
         }
@@ -167,9 +167,9 @@ public final class AchievementService {
             return;
         }
         AchievementsConfig.Reward reward = plugin.config().rewardOf(def);
-        if (reward.passDays() > 0) {
+        if (reward.passHours() > 0) {
             if (plugin.coreApi() != null) {
-                plugin.coreApi().grantPass(player.getName(), reward.passDays(),
+                plugin.coreApi().grantPassHours(player.getName(), reward.passHours(),
                         "achievements:" + def.id());
             } else {
                 plugin.getLogger().warning("Ядро недоступно: награда достижения "
@@ -191,9 +191,9 @@ public final class AchievementService {
     /** Текст награды для чата и GUI. */
     public String rewardText(AchievementsConfig.Reward reward) {
         List<String> parts = new ArrayList<>(2);
-        if (reward.passDays() > 0) {
-            parts.add(plugin.messages().raw("reward-days",
-                    "days", String.valueOf(reward.passDays())));
+        if (reward.passHours() > 0) {
+            parts.add(plugin.messages().raw("reward-hours",
+                    "hours", String.valueOf(reward.passHours())));
         }
         if (reward.diamonds() > 0) {
             parts.add(plugin.messages().raw("reward-diamonds",

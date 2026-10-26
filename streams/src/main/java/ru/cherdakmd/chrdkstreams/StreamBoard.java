@@ -14,14 +14,14 @@ import java.util.UUID;
  *
  * <p>Класс чистый — ни Bukkit, ни файлов: сортировка и подсчёт проверяются
  * юнит-тестами. Топ считает только реально заработанные дни: строка с нулём
- * ничего не говорит игроку, поэтому в таблицу не попадает. При равенстве дней
+ * ничего не говорит игроку, поэтому в таблицу не попадает. При равенстве часов
  * выше тот, чей ник идёт раньше по алфавиту, — так порядок стабилен между
  * вызовами и не «прыгает» от перестановки коллекции.</p>
  */
 final class StreamBoard {
 
     /** Строка топа. */
-    record Row(UUID uuid, String playerName, int totalDays, int channels) {
+    record Row(UUID uuid, String playerName, int totalHours, int channels) {
     }
 
     /** Итоги одной площадки: сколько каналов и сколько из них подтверждено. */
@@ -44,13 +44,13 @@ final class StreamBoard {
             return rows;
         }
         for (StreamBinding binding : bindings) {
-            if (binding == null || binding.state().totalDays() <= 0) {
+            if (binding == null || binding.state().totalHours() <= 0) {
                 continue;
             }
             rows.add(new Row(binding.uuid(), displayName(binding),
-                    binding.state().totalDays(), binding.channels().size()));
+                    binding.state().totalHours(), binding.channels().size()));
         }
-        rows.sort(Comparator.comparingInt(Row::totalDays).reversed()
+        rows.sort(Comparator.comparingInt(Row::totalHours).reversed()
                 .thenComparing(row -> row.playerName().toLowerCase(Locale.ROOT)));
         return rows.size() <= safeLimit ? List.copyOf(rows) : List.copyOf(rows.subList(0, safeLimit));
     }

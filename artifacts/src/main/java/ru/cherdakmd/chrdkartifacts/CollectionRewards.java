@@ -14,7 +14,7 @@ import java.util.Set;
  * «сколько процентов собрано», «какие пороги уже достигнуты» и «какие ещё не
  * выданы». Выдача самих наград — в {@link CollectionService}.</p>
  *
- * <p>1.4.130: награда состоит из дней ранга и алмазов. Оба поля
+ * <p>1.4.130: награда состоит из часов ранга и алмазов. Оба поля
  * необязательны: порог с нулевой наградой просто отмечается как полученный.
  * Это осознанно: администратор может оставить порог-веху без материального
  * приза, не ломая расчёт.</p>
@@ -22,18 +22,19 @@ import java.util.Set;
 public final class CollectionRewards {
 
     /** Награда за порог: процент открытых артефактов, дни ранга и алмазы. */
-    public record Tier(int percent, int passDays, int diamonds) {
+    public record Tier(int percent, int passHours, int diamonds) {
 
         /** Значения клампятся в конструкторе: кривой конфиг не должен ломать прогресс. */
         public Tier {
             percent = Math.max(1, Math.min(100, percent));
-            passDays = Math.max(0, Math.min(365, passDays));
+            // 1.4.184: награда в часах, одна награда — не больше суток.
+            passHours = Math.max(0, Math.min(24, passHours));
             diamonds = Math.max(0, Math.min(576, diamonds));
         }
 
         /** Пустая награда (только отметка о достижении). */
         public boolean empty() {
-            return passDays <= 0 && diamonds <= 0;
+            return passHours <= 0 && diamonds <= 0;
         }
     }
 

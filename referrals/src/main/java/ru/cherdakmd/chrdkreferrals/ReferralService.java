@@ -44,7 +44,7 @@ public final class ReferralService {
 
     /**
      * Событие выдачи/продления ранга из ядра. Если это ПЕРВАЯ оплата приглашённого —
-     * платим бонусные дни обоим (через api.grantPass — событие привязки потребителя повторно
+     * платим бонусные часы обоим (через api.grantPassHours — событие привязки потребителя повторно
      * не стреляет, потому что link.consumed станет true ДО grant).
      */
     public void onPassGranted(String playerName) {
@@ -54,28 +54,28 @@ public final class ReferralService {
         if (pending.isEmpty()) return;
         ReferralStore.RefLink link = pending.get();
 
-        long inviterDays = plugin.config().bonusDaysInviter();
-        long inviteeDays = plugin.config().bonusDaysInvitee();
-        if (inviterDays > 0) {
-            api.grantPass(link.inviter, (int) inviterDays, "referral:" + playerName);
+        int inviterHours = plugin.config().bonusHoursInviter();
+        int inviteeHours = plugin.config().bonusHoursInvitee();
+        if (inviterHours > 0) {
+            api.grantPassHours(link.inviter, inviterHours, "referral:" + playerName);
         }
-        if (inviteeDays > 0) {
-            api.grantPass(playerName, (int) inviteeDays, "referral-bonus:" + link.inviter);
+        if (inviteeHours > 0) {
+            api.grantPassHours(playerName, inviteeHours, "referral-bonus:" + link.inviter);
         }
-        store.recordBonusPaid(link.inviter, inviterDays);
+        store.recordBonusPaid(link.inviter, inviterHours);
 
         Player inviteePlayer = Bukkit.getPlayerExact(playerName);
-        if (inviteePlayer != null && inviteeDays > 0) {
+        if (inviteePlayer != null && inviteeHours > 0) {
             plugin.messages().send(inviteePlayer, "ref.bonus-you",
-                    "days", inviteeDays, "inviter", link.inviter);
+                    "hours", inviteeHours, "inviter", link.inviter);
         }
         Player inviterPlayer = Bukkit.getPlayerExact(link.inviter);
-        if (inviterPlayer != null && inviterDays > 0) {
+        if (inviterPlayer != null && inviterHours > 0) {
             plugin.messages().send(inviterPlayer, "ref.bonus-inviter",
-                    "invitee", playerName, "days", inviterDays);
+                    "invitee", playerName, "hours", inviterHours);
         }
         plugin.getLogger().info("Referral bonus: " + playerName + " (inviter: " + link.inviter
-                + ", +" + inviterDays + "d / +" + inviteeDays + "d).");
+                + ", +" + inviterHours + "h / +" + inviteeHours + "h).");
     }
 
     /** Одноразовая подсказка новичку: никогда не имел ранга и нет привязки. */

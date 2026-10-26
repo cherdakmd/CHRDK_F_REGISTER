@@ -16,14 +16,14 @@ import java.util.Random;
  * @param minReputation с какой репутации игрок вправе взять такой заказ
  * @param reputation    сколько репутации даёт сдача
  * @param passChance    шанс добавить дни ранга, проценты
- * @param passDays      сколько дней давать при срабатывании шанса
+ * @param passHours      сколько часов ранга давать при срабатывании шанса
  * @param items         материалы категории
  */
 public record OrderCategory(String id, double weight, int minReputation, int reputation,
-                            double passChance, int passDays, List<OrderItem> items) {
+                            double passChance, int passHours, List<OrderItem> items) {
 
-    /** Больше 30 дней за один заказ не выдаётся: это уже не «спасибо». */
-    public static final int MAX_PASS_DAYS = 30;
+    /** Потолок награды ранга за один заказ — сутки (1.4.184: было 30 дней). */
+    public static final int MAX_PASS_HOURS = 24;
 
     public OrderCategory {
         id = id == null ? "" : id.trim().toLowerCase(Locale.ROOT);
@@ -31,7 +31,7 @@ public record OrderCategory(String id, double weight, int minReputation, int rep
         minReputation = Math.clamp(minReputation, 0, 100_000);
         reputation = Math.clamp(reputation, 0, 100);
         passChance = Math.clamp(passChance, 0.0, 100.0);
-        passDays = Math.clamp(passDays, 0, MAX_PASS_DAYS);
+        passHours = Math.clamp(passHours, 0, MAX_PASS_HOURS);
         items = items == null ? List.of() : List.copyOf(items);
     }
 

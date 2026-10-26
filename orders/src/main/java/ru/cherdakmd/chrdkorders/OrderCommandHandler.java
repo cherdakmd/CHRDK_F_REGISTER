@@ -119,7 +119,7 @@ public final class OrderCommandHandler implements CommandExecutor, TabCompleter 
                         "amount", String.valueOf(order.amount()),
                         "bot", order.botName(),
                         "reward", String.valueOf(order.rewardDiamonds()),
-                        "days", String.valueOf(order.rewardPassDays()),
+                        "hours", String.valueOf(order.rewardPassHours()),
                         "time", time.isEmpty() ? "—" : time);
             } else {
                 plugin.messages().send(player, "list-row",

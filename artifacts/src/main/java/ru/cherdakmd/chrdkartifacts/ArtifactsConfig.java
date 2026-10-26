@@ -188,15 +188,18 @@ public final class ArtifactsConfig {
                     }
                     continue;
                 }
-                int days = rewards.getInt(key + ".pass-days", 0);
+                // 1.4.184: часы вместо суток; старый ключ pass-days читается как часы.
+                String hoursKey = rewards.contains(key + ".pass-hours")
+                        ? key + ".pass-hours" : key + ".pass-days";
+                int hours = rewards.getInt(hoursKey, 0);
                 int diamonds = rewards.getInt(key + ".diamonds", 0);
                 if (logger != null) {
-                    warnIfClamped(logger, "collection.rewards." + key + ".pass-days", days,
-                            0, 365, Math.max(0, Math.min(365, days)));
+                    warnIfClamped(logger, "collection.rewards." + hoursKey, hours,
+                            0, 24, Math.max(0, Math.min(24, hours)));
                     warnIfClamped(logger, "collection.rewards." + key + ".diamonds", diamonds,
                             0, 576, Math.max(0, Math.min(576, diamonds)));
                 }
-                tiers.add(new CollectionRewards.Tier(percent, days, diamonds));
+                tiers.add(new CollectionRewards.Tier(percent, hours, diamonds));
             }
         }
         List<CollectionRewards.Tier> normalized = CollectionRewards.normalize(tiers);

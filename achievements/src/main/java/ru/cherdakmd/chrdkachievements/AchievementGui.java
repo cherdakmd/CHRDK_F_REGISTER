@@ -128,7 +128,7 @@ public final class AchievementGui implements Listener {
                 "goal", String.valueOf(def.goal()),
                 "percent", String.valueOf(percent)));
         AchievementsConfig.Reward reward = plugin.config().rewardOf(def);
-        if (reward.passDays() > 0 || reward.diamonds() > 0) {
+        if (reward.passHours() > 0 || reward.diamonds() > 0) {
             lore.add(plugin.messages().get("entry-reward",
                     "reward", Messages.trusted(service.rewardText(reward))));
         }

@@ -25,13 +25,13 @@ final class BattlePassFx {
         actionbar(player, "actionbar-completed");
     }
 
-    /** Награда получена (дни ранга). */
-    void claimed(Player player, int days) {
+    /** Награда получена (часы ранга, с 1.4.184). */
+    void claimed(Player player, int hours) {
         play(player, Sound.ENTITY_PLAYER_LEVELUP, 0.6f, 1.2f);
         if (!plugin.settings().actionbar()) {
             return;
         }
-        player.sendActionBar(plugin.messages().get("actionbar-claimed", "days", days));
+        player.sendActionBar(plugin.messages().get("actionbar-claimed", "hours", hours));
     }
 
     /** Открылась новая волна. */

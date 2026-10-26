@@ -45,13 +45,13 @@ class AchievementsConfigTest {
     @Test
     void rewardOverrideReplacesCatalogueValues() throws Exception {
         AchievementDef veteran = AchievementRegistry.byId("veteran");
-        // По умолчанию — 5 дней и 40 алмазов из каталога.
+        // По умолчанию — 5 часов и 40 алмазов из каталога (1.4.184: часы вместо суток).
         assertEquals(new AchievementsConfig.Reward(5, 40), parse("").rewardOf(veteran));
 
         AchievementsConfig custom = parse("""
                 rewards:
                   veteran:
-                    pass-days: 10
+                    pass-hours: 10
                     diamonds: 64
                 """);
         assertEquals(new AchievementsConfig.Reward(10, 64), custom.rewardOf(veteran));
@@ -70,12 +70,12 @@ class AchievementsConfigTest {
         AchievementsConfig config = parse("""
                 rewards:
                   veteran:
-                    pass-days: 9999
+                    pass-hours: 9999
                     diamonds: -7
                   nesushchestvuyushchee:
-                    pass-days: 5
+                    pass-hours: 5
                 """);
-        assertEquals(new AchievementsConfig.Reward(365, 0),
+        assertEquals(new AchievementsConfig.Reward(24, 0),
                 config.rewardOf(AchievementRegistry.byId("veteran")));
         // Неизвестный ид просто не попал в карту — каталог не пострадал.
         assertEquals(new AchievementsConfig.Reward(2, 12),
