@@ -84,10 +84,10 @@ class LabelPaletteTest {
 
     @Test
     void lockReasonExplainsWhatIsMissing() {
-        assertEquals("catalog", LabelPalette.lockReason(CATALOG, Set.of()));
-        assertEquals("rank", LabelPalette.lockReason(CATALOG, Set.of("nick-aurora")));
-        assertEquals("rank", LabelPalette.lockReason(RANKED, Set.of()));
-        assertEquals("hidden", LabelPalette.lockReason(null, Set.of()));
+        assertEquals(LabelPalette.Lock.CATALOG, LabelPalette.lockReason(CATALOG, Set.of()));
+        assertEquals(LabelPalette.Lock.RANK, LabelPalette.lockReason(CATALOG, Set.of("nick-aurora")));
+        assertEquals(LabelPalette.Lock.RANK, LabelPalette.lockReason(RANKED, Set.of()));
+        assertEquals(LabelPalette.Lock.HIDDEN, LabelPalette.lockReason(null, Set.of()));
     }
 
     @Test

@@ -174,19 +174,31 @@ public final class LabelPalette {
         return color.format().replace("%name%", name);
     }
 
+    /** Почему цвет недоступен игроку. */
+    public enum Lock {
+        /** Цвет есть и открыт — подсказка не нужна. */
+        NONE,
+        /** Такого цвета в палитре нет. */
+        HIDDEN,
+        /** Цвет продаётся в каталоге, товар не активен. */
+        CATALOG,
+        /** Цвету нужна ступень ранга выше текущей. */
+        RANK
+    }
+
     /**
      * Ближайшее требование для подсказки в меню: «нужен ранг III» или
-     * «продаётся в каталоге». Возвращает ключ текста, а не готовую строку:
-     * язык и разметка живут в messages.yml.
+     * «продаётся в каталоге». Текст выбирает вызывающий код — язык и разметка
+     * живут в messages.yml, а не в логике доступа.
      */
-    public static String lockReason(Color color, Set<String> purchased) {
+    public static Lock lockReason(Color color, Set<String> purchased) {
         if (color == null) {
-            return "hidden";
+            return Lock.HIDDEN;
         }
         if (color.inCatalog() && (purchased == null || !purchased.contains(color.product()))) {
-            return "catalog";
+            return Lock.CATALOG;
         }
-        return "rank";
+        return Lock.RANK;
     }
 
     /** Разбор секции конфига — для {@code ConfigReport} и диагностики. */

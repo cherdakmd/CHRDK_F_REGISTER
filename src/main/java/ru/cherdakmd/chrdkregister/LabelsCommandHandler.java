@@ -154,8 +154,9 @@ public final class LabelsCommandHandler implements CommandExecutor, TabCompleter
         int level = store == null ? 0
                 : store.rankLevel(player.getName(), System.currentTimeMillis());
         if (!palette.allowed(color, level, plugin.purchasedProducts(player.getName()))) {
-            messages.send(player, "catalog".equals(LabelPalette.lockReason(color,
-                            plugin.purchasedProducts(player.getName())))
+            messages.send(player,
+                    LabelPalette.lockReason(color, plugin.purchasedProducts(player.getName()))
+                            == LabelPalette.Lock.CATALOG
                             ? "labels.color-locked-catalog" : "labels.color-locked-rank",
                     "rank", String.valueOf(color.rank()),
                     "product", color.product());

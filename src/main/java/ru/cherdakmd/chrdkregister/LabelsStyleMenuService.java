@@ -158,9 +158,9 @@ public final class LabelsStyleMenuService implements Listener {
         List<Component> lore = new ArrayList<>();
         lore.add(plugin.messages().get("labels.color-sample",
                 "sample", Messages.trusted(preview(player.getName(), color))));
-        String reason = LabelPalette.lockReason(color, owned);
+        LabelPalette.Lock reason = LabelPalette.lockReason(color, owned);
         if (!allowed) {
-            lore.add("catalog".equals(reason)
+            lore.add(reason == LabelPalette.Lock.CATALOG
                     ? plugin.messages().get("labels.color-need-catalog",
                     "product", Messages.trusted(color.product()))
                     : plugin.messages().get("labels.color-need-rank",
@@ -323,7 +323,8 @@ public final class LabelsStyleMenuService implements Listener {
         int level = rankLevel(player.getName());
         Set<String> owned = plugin.purchasedProducts(player.getName());
         if (!palette.allowed(color, level, owned)) {
-            plugin.messages().send(player, "catalog".equals(LabelPalette.lockReason(color, owned))
+            plugin.messages().send(player,
+                    LabelPalette.lockReason(color, owned) == LabelPalette.Lock.CATALOG
                             ? "labels.color-locked-catalog" : "labels.color-locked-rank",
                     "rank", String.valueOf(color.rank()),
                     "product", color.product());
