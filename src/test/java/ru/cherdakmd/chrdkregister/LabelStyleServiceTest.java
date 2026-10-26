@@ -151,6 +151,14 @@ class LabelStyleServiceTest {
     }
 
     @Test
+    void gradientRankNameStaysOneUnduplicatedLabel() {
+        String result = plain().compose("Имя", "Имя", List.of(R, C), "⚜",
+                "<gradient:#b388ff:#ffd700>Покровитель</gradient>");
+        assertEquals("Имя · ⚜ Покровитель · [КЛ]", text(result));
+        assertFalse(result.contains("ANCHOR"));
+    }
+
+    @Test
     void invalidDuplicateOrEmptyProvidersCannotReplaceName(@TempDir Path dir) {
         for (LabelStyleService.TagRenderer renderer : List.<LabelStyleService.TagRenderer>of(
                 (id, player, name) -> null, (id, player, name) -> "замена имени",

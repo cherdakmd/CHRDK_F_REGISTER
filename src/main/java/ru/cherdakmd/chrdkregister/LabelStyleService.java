@@ -187,9 +187,10 @@ public final class LabelStyleService {
         cursor[0] += content.length();
         int from = Math.min(content.length(), Math.max(0, start - offset));
         int to = Math.min(content.length(), Math.max(from, end - offset));
-        Component result = node instanceof TextComponent text
-                ? text.content(content.substring(from, to))
-                : Component.text(content.substring(from, to)).style(node.style());
+        // MiniMessage хранит исходный градиент в VirtualComponent (наследнике
+        // TextComponent). Мутация content() оставила бы там прежний текст для
+        // сериализации. Создаём обычный узел, сохраняя вычисленные цвета детей.
+        Component result = Component.text(content.substring(from, to)).style(node.style());
         List<Component> children = new ArrayList<>();
         for (Component child : node.children()) children.add(crop(child, start, end, cursor));
         return result.children(children);
