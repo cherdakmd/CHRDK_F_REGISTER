@@ -76,7 +76,7 @@ battlepass:
   #   permission: chrdkbp.vip   — задание считается только с этим правом
   #   icon: DIAMOND             — иконка в меню (пусто — по типу задания)
   #   premium-hours: 3          — часы ранга в премиум-треке (потолок 24)
-  #   premium-products: [nick-color] — товары каталога ядра в премиум-треке (до 5)
+  #   premium-products: [nick-aurora] — товары каталога ядра в премиум-треке (до 5)
   weeks:
     - unlock-day: 0
       missions:
@@ -141,7 +141,7 @@ battlepass:
           target: 60
           free-hours: 1
           vip-hours: 1
-          premium-products: [nick-color]
+          premium-products: [nick-aurora]
           points: 20
         - id: smelter
           desc: "<gray>Выплавить 64 слитка</gray>"

@@ -195,6 +195,30 @@ class ShopConfigConsistencyTest {
     }
 
     @Test
+    void everyBattlePassRewardPointsToAnExistingProduct() {
+        ShopCatalog catalog = catalog();
+        YamlConfiguration battlepass = yaml("battlepass/src/main/resources/config.yml");
+        int references = 0;
+        for (java.util.Map<?, ?> week : battlepass.getMapList("battlepass.weeks")) {
+            assertTrue(week.get("missions") instanceof List<?>, "у волны нет списка заданий");
+            for (Object entry : (List<?>) week.get("missions")) {
+                assertTrue(entry instanceof java.util.Map<?, ?>, "задание должно быть объектом");
+                java.util.Map<?, ?> mission = (java.util.Map<?, ?>) entry;
+                if (!(mission.get("premium-products") instanceof List<?> rewards)) {
+                    continue;
+                }
+                for (Object reward : rewards) {
+                    String id = String.valueOf(reward);
+                    assertTrue(catalog.find(id).isPresent(), "награда задания " + mission.get("id")
+                            + " ссылается на отсутствующий товар " + id);
+                    references++;
+                }
+            }
+        }
+        assertTrue(references > 0, "проверка должна охватывать реальные награды сезона");
+    }
+
+    @Test
     void homesProductIsWiredToTheTeleportsPermission() {
         ShopProduct homes = catalog().find("homes-plus").orElse(null);
         assertNotNull(homes, "товар домов должен быть в каталоге");

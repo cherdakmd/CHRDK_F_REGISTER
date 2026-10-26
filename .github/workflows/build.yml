@@ -18,13 +18,13 @@ permissions:
 
 jobs:
   build:
-    name: Purpur 1.21.11 / Java 21
+    name: Purpur 26.3 / Java 25
     runs-on: ubuntu-latest
     steps:
       - name: Check out source
         uses: actions/checkout@v5
 
-      - name: Set up Java 21
+      - name: Set up Java 25
         uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -37,6 +37,9 @@ jobs:
       - name: Messages contract check
         shell: bash
         run: python3 .github/scripts/check_messages.py
+
+      - name: Test release archive validation
+        run: python3 -m unittest discover -s .github/scripts -p 'test_verify_release.py' -v
 
       - name: Build plugin
         shell: bash
