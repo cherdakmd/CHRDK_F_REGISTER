@@ -36,7 +36,6 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-import ru.cherdakmd.chrdkregister.Messages;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -138,8 +137,6 @@ public final class SkillListener implements Listener {
                 block.getWorld().dropItemNaturally(dropAt, drop.clone());
             }
         }
-        plugin.messages().send(player, "double-drop",
-                "skill", Messages.trusted(plugin.messages().raw("skill." + skill.id() + ".name")));
     }
 
     /**

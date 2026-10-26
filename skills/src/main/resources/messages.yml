@@ -11,7 +11,6 @@ messages:
   level-up: "<gold>✦ <white>%skill%</white> — уровень <yellow>%level%</yellow>!</gold>"
   actionbar-level: "<gold>%skill% → %level%</gold>"
   milestone: "<green>Награда за уровень <white>%level%</white>: <aqua>%diamonds% алмазов</aqua>.</green>"
-  double-drop: "<gray>%skill%: двойная добыча!</gray>"
   extra-catch: "<aqua>Рыбалка: лишний улов!</aqua>"
   arrow-kept: "<gray>Стрельба: стрела сохранена.</gray>"
   extra-potion: "<light_purple>Алхимия: вторая порция ингредиента.</light_purple>"
