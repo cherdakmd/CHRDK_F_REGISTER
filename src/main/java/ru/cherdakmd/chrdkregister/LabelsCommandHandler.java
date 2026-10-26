@@ -33,7 +33,8 @@ public final class LabelsCommandHandler implements CommandExecutor, TabCompleter
     private static final List<String> OPTIONS = List.of(
             "rank", "tierforge", "treasures", "classes", "guilds", "streams",
             "quests", "achievements", "header",
-            "badges", "all", "on", "off", "reset", "status", "menu");
+            "badges", "all", "on", "off", "reset", "status", "menu",
+            "color", "order", "preset");
 
     private final RegisterPlugin plugin;
     private final LabelPreferences preferences;
@@ -71,6 +72,18 @@ public final class LabelsCommandHandler implements CommandExecutor, TabCompleter
         String option = args[0].toLowerCase(Locale.ROOT);
         if (option.equals("status")) {
             sendStatus(player);
+            return true;
+        }
+        if (option.equals("color") || option.equals("цвет")) {
+            handleColor(player, args);
+            return true;
+        }
+        if (option.equals("order") || option.equals("порядок")) {
+            handleOrder(player, args);
+            return true;
+        }
+        if (option.equals("preset") || option.equals("пресет")) {
+            handlePreset(player, args, label);
             return true;
         }
         switch (option) {
@@ -111,6 +124,157 @@ public final class LabelsCommandHandler implements CommandExecutor, TabCompleter
             case "шапка", "таб" -> LabelPreferences.Label.HEADER;
             default -> LabelPreferences.Label.byId(key);
         };
+    }
+
+    /* ------------------------- цвет, порядок, пресеты ------------------------- */
+
+    /** {@code /labels color} — экран палитры, {@code /labels color aqua} — выбрать. */
+    private void handleColor(Player player, String[] args) {
+        if (args.length < 2) {
+            LabelsStyleMenuService menu = plugin.labelsStyleMenu();
+            if (menu != null) {
+                menu.openColors(player);
+            }
+            return;
+        }
+        String id = args[1].toLowerCase(Locale.ROOT);
+        if (id.equals("off") || id.equals("auto") || id.equals("сброс")) {
+            preferences.setColor(player.getName(), "");
+            messages.send(player, "labels.color-cleared");
+            plugin.refreshTab();
+            return;
+        }
+        LabelPalette palette = plugin.palette();
+        LabelPalette.Color color = palette.enabled() ? palette.byId(id) : null;
+        if (color == null) {
+            messages.send(player, "labels.color-unknown", "id", id);
+            return;
+        }
+        RegistrationStore store = plugin.store();
+        int level = store == null ? 0
+                : store.rankLevel(player.getName(), System.currentTimeMillis());
+        if (!palette.allowed(color, level, plugin.purchasedProducts(player.getName()))) {
+            messages.send(player, "catalog".equals(LabelPalette.lockReason(color,
+                            plugin.purchasedProducts(player.getName())))
+                            ? "labels.color-locked-catalog" : "labels.color-locked-rank",
+                    "rank", String.valueOf(color.rank()),
+                    "product", color.product());
+            return;
+        }
+        preferences.setColor(player.getName(), color.id());
+        messages.send(player, "labels.color-set",
+                "name", Messages.trusted(color.name()));
+        plugin.refreshTab();
+    }
+
+    /** {@code /labels order} — экран порядка, {@code /labels order guilds left} — сдвиг. */
+    private void handleOrder(Player player, String[] args) {
+        LabelsStyleMenuService menu = plugin.labelsStyleMenu();
+        if (args.length < 2) {
+            if (menu != null) {
+                menu.openOrder(player);
+            }
+            return;
+        }
+        LabelPreferences.Label label = singleOf(args[1]);
+        if (label == null || label.group() == LabelPreferences.Group.TAB) {
+            messages.send(player, "labels.order-unknown", "id", args[1]);
+            return;
+        }
+        String direction = args.length > 2 ? args[2].toLowerCase(Locale.ROOT) : "left";
+        int step = switch (direction) {
+            case "right", "rightward", "правее", "вправо" -> 1;
+            default -> -1;
+        };
+        LabelStyleService styles = plugin.chatService() == null
+                ? null : plugin.chatService().labelStyles();
+        if (styles == null || !styles.move(player.getName(), label, step)) {
+            messages.send(player, "labels.order-edge");
+            return;
+        }
+        messages.send(player, "labels.order-moved",
+                "name", LabelsMenuService.nameOf(messages, label),
+                "position", String.valueOf(styles.order(player.getName()).indexOf(label) + 1));
+        plugin.refreshTab();
+    }
+
+    /** {@code /labels preset} — экран пресетов, дальше save/load/delete и номер. */
+    private void handlePreset(Player player, String[] args, String label) {
+        LabelsStyleMenuService menu = plugin.labelsStyleMenu();
+        if (args.length < 2) {
+            if (menu != null) {
+                menu.openPresets(player);
+            }
+            return;
+        }
+        String action = args[1].toLowerCase(Locale.ROOT);
+        if (action.equals("list") || action.equals("список")) {
+            sendPresetList(player);
+            return;
+        }
+        int number = args.length > 2 ? parseNumber(args[2]) : 0;
+        if (number <= 0) {
+            messages.send(player, "labels.preset-usage", "label", label);
+            return;
+        }
+        RegistrationStore store = plugin.store();
+        int level = store == null ? 0
+                : store.rankLevel(player.getName(), System.currentTimeMillis());
+        int slots = plugin.labelLimits().slotsFor(level);
+        if (number > slots) {
+            messages.send(player, "labels.preset-no-slot",
+                    "number", String.valueOf(number), "slots", String.valueOf(slots));
+            return;
+        }
+        String slot = "p" + number;
+        switch (action) {
+            case "save", "сохранить" -> {
+                preferences.savePreset(player.getName(), slot);
+                messages.send(player, "labels.preset-saved", "number", String.valueOf(number));
+            }
+            case "delete", "удалить" -> {
+                if (preferences.deletePreset(player.getName(), slot)) {
+                    messages.send(player, "labels.preset-deleted", "number", String.valueOf(number));
+                } else {
+                    messages.send(player, "labels.preset-missing", "number", String.valueOf(number));
+                }
+            }
+            default -> {
+                LabelPreferences.Snapshot snapshot = preferences.presets(player.getName()).get(slot);
+                if (snapshot == null) {
+                    messages.send(player, "labels.preset-missing", "number", String.valueOf(number));
+                    return;
+                }
+                preferences.apply(player.getName(), snapshot);
+                messages.send(player, "labels.preset-applied", "number", String.valueOf(number));
+                plugin.refreshTab();
+            }
+        }
+    }
+
+    /** Страница со списком сохранённых видов. */
+    private void sendPresetList(Player player) {
+        messages.send(player, "labels.preset-list-header");
+        var presets = preferences.presets(player.getName());
+        if (presets.isEmpty()) {
+            messages.send(player, "labels.preset-list-empty");
+        } else {
+            presets.forEach((slot, snapshot) -> messages.send(player, "labels.preset-list-line",
+                    "slot", slot,
+                    "hidden", String.valueOf(snapshot.hiddenCount()),
+                    "color", snapshot.color().isEmpty()
+                            ? messages.mini("labels.preset-no-color")
+                            : Messages.trusted(snapshot.color())));
+        }
+        messages.send(player, "labels.preset-list-hint");
+    }
+
+    private static int parseNumber(String raw) {
+        try {
+            return Integer.parseInt(raw == null ? "" : raw.trim());
+        } catch (NumberFormatException exception) {
+            return 0;
+        }
     }
 
     private void toggle(Player player, LabelPreferences.Label label) {

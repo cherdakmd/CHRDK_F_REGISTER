@@ -46,8 +46,9 @@ class LabelsMenuServiceTest {
     @Test
     void tilesDoNotCoverButtons() {
         int[] reserved = {LabelsMenuService.HEAD_SLOT, LabelsMenuService.PREVIEW_SLOT,
-                LabelsMenuService.ENABLE_ALL_SLOT,
-                LabelsMenuService.DISABLE_ALL_SLOT, LabelsMenuService.PROFILE_SLOT,
+                LabelsMenuService.ENABLE_ALL_SLOT, LabelsMenuService.DISABLE_ALL_SLOT,
+                LabelsMenuService.COLORS_SLOT, LabelsMenuService.ORDER_SLOT,
+                LabelsMenuService.PRESETS_SLOT, LabelsMenuService.PROFILE_SLOT,
                 LabelsMenuService.RESET_SLOT, LabelsMenuService.CLOSE_SLOT};
         for (int slot : reserved) {
             assertNull(LabelsMenuService.labelAt(slot), "кнопка перекрыта плиткой: " + slot);
@@ -79,6 +80,8 @@ class LabelsMenuServiceTest {
             }
             for (String key : List.of("labels.menu-title", "labels.menu-head", "labels.menu-head-lore",
                     "labels.menu-preview", "labels.menu-preview-lore", "labels.menu-entry-on",
+                    "labels.menu-color", "labels.menu-color-auto", "labels.menu-color-lore",
+                    "labels.menu-order", "labels.menu-presets",
                     "labels.menu-entry-off", "labels.menu-enable-all", "labels.menu-disable-all",
                     "labels.menu-reset", "labels.menu-profile", "labels.menu-close",
                     "labels.profile-section", "labels.profile-button", "labels.profile-button-lore",

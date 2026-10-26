@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -20,28 +21,27 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 /**
- * Личные переключатели надписей: что игрок показывает в своём нике (1.4.186).
+ * Личное оформление ника: что игрок показывает, в каком порядке и каким цветом
+ * (1.4.186, порядок/цвет/пресеты — 1.4.187).
  *
- * <p>С 1.4.183 надписи прятались тремя группами: ранг, «метки» и шапка таба.
- * Внутри «меток» лежали сразу титул кузни, звание кладоискателя, класс, гильдия,
- * стример, квесты и достижения — выключить одно из них было нельзя. Теперь у
- * каждого звания свой источник: игрок сам решает, что оставить, и это ровно те
- * id, под которыми аддоны регистрируют оформление через
- * {@link ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi#registerNameTag}.
- * Так фильтр живёт в одном месте — ядре, — а аддоны о настройках не знают.</p>
+ * <p>С 1.4.183 надписи прятались тремя группами, с 1.4.186 — каждая отдельно.
+ * Теперь к этому добавилось три вещи, о которых просили игроки: свой порядок
+ * меток перед ником, свой цвет ника из палитры (часть цветов открывает ранг,
+ * отдельные продаются в каталоге) и пресеты — сохранённые виды, которые
+ * переключаются одной кнопкой.</p>
  *
  * <p>Файл — {@code labels.json}:
  * <pre>{@code
- * { "version": 2, "players": { "cherdak": { "hidden": ["rank", "streams"] } } }
+ * { "version": 3, "players": { "cherdak": {
+ *     "hidden": ["rank"], "order": ["guilds", "rank"], "color": "aqua",
+ *     "presets": { "p1": { "hidden": [], "order": [], "color": "gray" } } } } }
  * }</pre>
- * Ключ — ник в нижнем регистре: настройка должна переживать смену UUID при
- * переезде сервера и работать для оффлайн-игрока. Пишется атомарно через
- * {@link SafeJsonWriter}; событие редкое (игрок нажал кнопку), поэтому запись
- * сразу, без таймера.</p>
+ * Ключ — ник в нижнем регистре: настройка переживает смену UUID и работает для
+ * оффлайн-игрока. Пишется атомарно через {@link SafeJsonWriter}.</p>
  *
- * <p>Файл 1.4.183 читается как есть: {@code badges} раскрывается во все
- * аддонские источники, {@code rank} и {@code header} совпадают по смыслу.
- * Первое изменение перезапишет файл в новом формате — потерь нет.</p>
+ * <p>Файлы прошлых версий читаются как есть: 1.4.183 ({@code badges} — все
+ * аддонские метки) и 1.4.186 (только {@code hidden}). Порядок, цвет и пресеты
+ * при первом сохранении дописываются, выбор игрока не теряется.</p>
  */
 public final class LabelPreferences {
 
@@ -54,8 +54,9 @@ public final class LabelPreferences {
     }
 
     /**
-     * Что именно можно спрятать. Ид у {@code NAME}-надписей совпадает с id
-     * провайдера оформления, чтобы фильтр не требовал отдельной таблицы.
+     * Что именно можно спрятать и в каком порядке поставить. Ид у
+     * {@code NAME}-надписей совпадает с id провайдера оформления, чтобы фильтр
+     * не требовал отдельной таблицы.
      */
     public enum Label {
         /** Название и знак донатного ранга («· Покровитель», ❋). */
@@ -132,18 +133,91 @@ public final class LabelPreferences {
     }
 
     /**
+     * Один вид ника: что скрыто, в каком порядке метки и каким цветом.
+     *
+     * <p>Пресет — это и есть снимок {@link #snapshot(String)}: сохранили
+     * текущий вид, потом вернулись к нему одной кнопкой.</p>
+     */
+    public record Snapshot(int hidden, List<Label> order, String color) {
+
+        public Snapshot {
+            order = order == null ? List.of() : List.copyOf(order);
+            color = color == null ? "" : color.trim().toLowerCase(Locale.ROOT);
+        }
+
+        /** Видна ли надпись в этом виде. */
+        public boolean visible(Label label) {
+            return label != null && (hidden & (1 << label.ordinal())) == 0;
+        }
+
+        /** Сколько надписей скрыто. */
+        public int hiddenCount() {
+            int count = 0;
+            for (Label label : Label.values()) {
+                if (!visible(label)) {
+                    count++;
+                }
+            }
+            return count;
+        }
+    }
+
+    /** Неизменяемое состояние игрока: новые записи — новый объект. */
+    private record State(int hidden, List<Label> order, String color,
+                         Map<String, Snapshot> presets) {
+
+        static final State EMPTY = new State(0, List.of(), "", Map.of());
+
+        State withHidden(int mask) {
+            return new State(mask, order, color, presets);
+        }
+
+        State withOrder(List<Label> next) {
+            return new State(hidden, next, color, presets);
+        }
+
+        State withColor(String next) {
+            return new State(hidden, order, next, presets);
+        }
+
+        State withPreset(String slot, Snapshot snapshot) {
+            Map<String, Snapshot> next = new LinkedHashMap<>(presets);
+            next.put(slot, snapshot);
+            return new State(hidden, order, color, Map.copyOf(next));
+        }
+
+        State withoutPreset(String slot) {
+            if (!presets.containsKey(slot)) {
+                return this;
+            }
+            Map<String, Snapshot> next = new LinkedHashMap<>(presets);
+            next.remove(slot);
+            return new State(hidden, order, color, Map.copyOf(next));
+        }
+
+        boolean isEmpty() {
+            return hidden == 0 && order.isEmpty() && color.isEmpty() && presets.isEmpty();
+        }
+
+        /** Видна ли надпись при этом состоянии: та же маска, что и в {@link Snapshot}. */
+        boolean visible(Label label) {
+            return label != null && (hidden & (1 << label.ordinal())) == 0;
+        }
+    }
+
+    /**
      * Ид старого формата «все метки одной группой» (1.4.183). При чтении
      * раскрывается во все аддонские источники — ранг остаётся отдельным.
      */
     static final String LEGACY_BADGES = "badges";
 
-    private static final int VERSION = 2;
+    private static final int VERSION = 3;
 
     private final Gson gson = new GsonBuilder().disableHtmlEscaping().create();
     private final Path file;
     private final Logger logger;
-    /** Ник → маска скрытых надписей. */
-    private final Map<String, Integer> hidden = new ConcurrentHashMap<>();
+    /** Ник → состояние оформления. Чтения без блокировки, записи под synchronized. */
+    private final Map<String, State> players = new ConcurrentHashMap<>();
     private volatile boolean dirty = false;
 
     public LabelPreferences(Path dataDir, Logger logger) {
@@ -168,8 +242,8 @@ public final class LabelPreferences {
             if (root == null) {
                 return;
             }
-            Object players = root.get("players");
-            if (!(players instanceof Map<?, ?> map)) {
+            Object rawPlayers = root.get("players");
+            if (!(rawPlayers instanceof Map<?, ?> map)) {
                 return;
             }
             for (Map.Entry<?, ?> entry : map.entrySet()) {
@@ -177,13 +251,9 @@ public final class LabelPreferences {
                 if (name.isEmpty() || !(entry.getValue() instanceof Map<?, ?> player)) {
                     continue;
                 }
-                int mask = 0;
-                Object raw = player.get("hidden");
-                if (raw instanceof List<?> list) {
-                    mask = maskOf(list);
-                }
-                if (mask != 0) {
-                    hidden.put(name, mask);
+                State state = stateOf(player);
+                if (!state.isEmpty()) {
+                    players.put(name, state);
                 }
             }
             dirty = false;
@@ -191,6 +261,20 @@ public final class LabelPreferences {
             logger.warning("Не удалось прочитать labels.json: " + exception
                     + " — настройки надписей взяты по умолчанию (всё видно).");
         }
+    }
+
+    /** Состояние из одной записи файла: формат 1, 2 и 3 читаются одинаково. */
+    private static State stateOf(Map<?, ?> player) {
+        int mask = 0;
+        Object raw = player.get("hidden");
+        if (raw instanceof List<?> list) {
+            mask = maskOf(list);
+        }
+        List<Label> order = orderOf(player.get("order"));
+        Object rawColor = player.get("color");
+        String color = rawColor == null ? "" : key(String.valueOf(rawColor));
+        Map<String, Snapshot> presets = presetsOf(player.get("presets"));
+        return new State(mask, order, color, presets);
     }
 
     /** Маска из списка идов файла — с разворотом старой группы {@code badges}. */
@@ -218,15 +302,47 @@ public final class LabelPreferences {
         return raw != null && LEGACY_BADGES.equals(raw.trim().toLowerCase(Locale.ROOT));
     }
 
+    /** Порядок меток из файла: только надписи рядом с ником, без повторов. */
+    private static List<Label> orderOf(Object raw) {
+        if (!(raw instanceof List<?> list)) {
+            return List.of();
+        }
+        Set<Label> seen = EnumSet.noneOf(Label.class);
+        for (Object item : list) {
+            Label label = Label.byNameTagId(item == null ? null : String.valueOf(item));
+            if (label != null) {
+                seen.add(label);
+            }
+        }
+        return seen.isEmpty() ? List.of() : List.copyOf(seen);
+    }
+
+    private static Map<String, Snapshot> presetsOf(Object raw) {
+        if (!(raw instanceof Map<?, ?> map)) {
+            return Map.of();
+        }
+        Map<String, Snapshot> out = new LinkedHashMap<>();
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
+            String slot = key(entry.getKey() == null ? null : String.valueOf(entry.getKey()));
+            if (slot.isEmpty() || !(entry.getValue() instanceof Map<?, ?> value)) {
+                continue;
+            }
+            int mask = value.get("hidden") instanceof List<?> list ? maskOf(list) : 0;
+            out.put(slot, new Snapshot(mask, orderOf(value.get("order")),
+                    value.get("color") == null ? "" : key(String.valueOf(value.get("color")))));
+        }
+        return Map.copyOf(out);
+    }
+
     /* ------------------------------- состояние -------------------------------- */
+
+    private State state(String playerName) {
+        return players.getOrDefault(key(playerName), State.EMPTY);
+    }
 
     /** Видна ли надпись у этого игрока. Незнакомый ник — всё видно. */
     public boolean visible(String playerName, Label label) {
-        if (label == null) {
-            return true;
-        }
-        Integer mask = hidden.get(key(playerName));
-        return mask == null || (mask & (1 << label.ordinal())) == 0;
+        return label == null || state(playerName).visible(label);
     }
 
     /**
@@ -242,13 +358,16 @@ public final class LabelPreferences {
 
     /** Скрытые надписи игрока в порядке объявления. */
     public List<Label> hiddenLabels(String playerName) {
-        Integer mask = hidden.get(key(playerName));
-        if (mask == null || mask == 0) {
+        return hiddenLabels(state(playerName));
+    }
+
+    private static List<Label> hiddenLabels(State state) {
+        if (state.hidden == 0) {
             return List.of();
         }
         List<Label> out = new ArrayList<>();
         for (Label label : Label.values()) {
-            if ((mask & (1 << label.ordinal())) != 0) {
+            if (!state.visible(label)) {
                 out.add(label);
             }
         }
@@ -262,13 +381,12 @@ public final class LabelPreferences {
 
     /** Спрятано ли у игрока хоть что-то — для {@code /labels all}. */
     public boolean anyHidden(String playerName) {
-        Integer mask = hidden.get(key(playerName));
-        return mask != null && mask != 0;
+        return state(playerName).hidden != 0;
     }
 
     /** Сколько записей в файле — для диагностики. */
     public int size() {
-        return hidden.size();
+        return players.size();
     }
 
     public boolean isDirty() {
@@ -277,6 +395,30 @@ public final class LabelPreferences {
 
     public Path file() {
         return file;
+    }
+
+    /**
+     * Порядок меток слева направо. Пустой список — «как задумано»: ранг
+     * ближе к нику, метки аддонов — левее, ровно как до 1.4.187.
+     */
+    public List<Label> order(String playerName) {
+        return state(playerName).order;
+    }
+
+    /** Свой цвет ника; пусто — цвет даёт ранг или купленный тег каталога. */
+    public String color(String playerName) {
+        return state(playerName).color;
+    }
+
+    /** Пресеты игрока: имя слота → вид. */
+    public Map<String, Snapshot> presets(String playerName) {
+        return state(playerName).presets;
+    }
+
+    /** Текущий вид игрока — то, что сохраняется в пресет. */
+    public Snapshot snapshot(String playerName) {
+        State state = state(playerName);
+        return new Snapshot(state.hidden, state.order, state.color);
     }
 
     /* ------------------------------- изменение -------------------------------- */
@@ -307,30 +449,29 @@ public final class LabelPreferences {
             return true;
         }
         int bit = 1 << label.ordinal();
-        int mask = hidden.getOrDefault(name, 0);
+        int mask = state(name).hidden;
         int next = visible ? (mask & ~bit) : (mask | bit);
-        store(name, next);
+        store(name, state(name).withHidden(next));
         return visible;
     }
 
     /**
      * Показывает или прячет группу надписей.
      *
-     * <p>Нужно для старых команд {@code /labels badges} и {@code /labels rank}:
-     * они продолжают работать, но теперь это массовое действие, а не
-     * единственный способ.</p>
+     * <p>Нужно для старых команд {@code /labels badges}: они продолжают
+     * работать, но теперь это массовое действие, а не единственный способ.</p>
      */
     public synchronized void setGroup(String playerName, Set<Label> labels, boolean visible) {
         String name = key(playerName);
         if (name.isEmpty() || labels == null || labels.isEmpty()) {
             return;
         }
-        int mask = hidden.getOrDefault(name, 0);
+        int mask = state(name).hidden;
         for (Label label : labels) {
             int bit = 1 << label.ordinal();
             mask = visible ? (mask & ~bit) : (mask | bit);
         }
-        store(name, mask);
+        store(name, state(name).withHidden(mask));
     }
 
     /** Все аддонские метки — то, что раньше называлось {@code badges}. */
@@ -360,58 +501,156 @@ public final class LabelPreferences {
                 mask |= 1 << label.ordinal();
             }
         }
-        store(name, mask);
+        store(name, state(name).withHidden(mask));
         return visible;
     }
 
-    /** Возвращает всё как было (всё видно). */
+    /**
+     * Новый порядок меток.
+     *
+     * <p>Принимаются только надписи рядом с ником; повторы и мусор
+     * отбрасываются. Пустой список — вернуть вид «по умолчанию».</p>
+     */
+    public synchronized void setOrder(String playerName, List<Label> order) {
+        String name = key(playerName);
+        if (name.isEmpty()) {
+            return;
+        }
+        store(name, state(name).withOrder(normalizeOrder(order)));
+    }
+
+    /** Свой цвет ника; пустая строка — снять выбор. */
+    public synchronized void setColor(String playerName, String colorId) {
+        String name = key(playerName);
+        if (name.isEmpty()) {
+            return;
+        }
+        String next = colorId == null ? "" : key(colorId);
+        store(name, state(name).withColor(next));
+    }
+
+    /** Применить сохранённый вид (пресет или системный пресет из меню). */
+    public synchronized void apply(String playerName, Snapshot snapshot) {
+        String name = key(playerName);
+        if (name.isEmpty() || snapshot == null) {
+            return;
+        }
+        State current = state(name);
+        store(name, new State(snapshot.hidden(), normalizeOrder(snapshot.order()),
+                snapshot.color(), current.presets));
+    }
+
+    /** Сохранить текущий вид в слот пресета. */
+    public synchronized boolean savePreset(String playerName, String slot) {
+        String name = key(playerName);
+        String key = key(slot);
+        if (name.isEmpty() || key.isEmpty()) {
+            return false;
+        }
+        store(name, state(name).withPreset(key, snapshot(name)));
+        return true;
+    }
+
+    /** Удалить свой пресет. */
+    public synchronized boolean deletePreset(String playerName, String slot) {
+        String name = key(playerName);
+        String key = key(slot);
+        if (name.isEmpty() || key.isEmpty()) {
+            return false;
+        }
+        State current = state(name);
+        if (!current.presets.containsKey(key)) {
+            return false;
+        }
+        store(name, current.withoutPreset(key));
+        return true;
+    }
+
+    /** Возвращает текущий вид по умолчанию (пресеты остаются). */
     public synchronized void reset(String playerName) {
         String name = key(playerName);
         if (name.isEmpty()) {
             return;
         }
-        if (hidden.remove(name) != null) {
-            saveNow();
+        State current = state(name);
+        if (current.hidden == 0 && current.order.isEmpty() && current.color.isEmpty()) {
+            return;
         }
+        store(name, new State(0, List.of(), "", current.presets));
     }
 
-    private void store(String name, int mask) {
-        int previous = hidden.getOrDefault(name, 0);
-        if (mask == 0) {
-            hidden.remove(name);
+    private void store(String name, State state) {
+        State previous = players.getOrDefault(name, State.EMPTY);
+        if (state.equals(previous)) {
+            return;
+        }
+        if (state.isEmpty()) {
+            players.remove(name);
         } else {
-            hidden.put(name, mask);
+            players.put(name, state);
         }
-        if (mask != previous) {
-            saveNow();
-        }
+        saveNow();
     }
 
     /* --------------------------------- запись --------------------------------- */
 
     /** JSON-снимок для записи и для тестов. */
     public synchronized String snapshotJson() {
-        Map<String, Object> players = new LinkedHashMap<>();
-        List<String> names = new ArrayList<>(hidden.keySet());
+        Map<String, Object> playersJson = new LinkedHashMap<>();
+        List<String> names = new ArrayList<>(players.keySet());
         names.sort(String::compareTo);
         for (String name : names) {
-            int mask = hidden.getOrDefault(name, 0);
-            List<String> list = new ArrayList<>();
-            for (Label label : Label.values()) {
-                if ((mask & (1 << label.ordinal())) != 0) {
-                    list.add(label.id());
-                }
-            }
-            if (list.isEmpty()) {
+            State state = players.get(name);
+            if (state == null || state.isEmpty()) {
                 continue;
             }
             Map<String, Object> player = new LinkedHashMap<>();
-            player.put("hidden", list);
-            players.put(name, player);
+            List<String> hidden = new ArrayList<>();
+            for (Label label : Label.values()) {
+                if (!state.visible(label)) {
+                    hidden.add(label.id());
+                }
+            }
+            if (!hidden.isEmpty()) {
+                player.put("hidden", hidden);
+            }
+            if (!state.order.isEmpty()) {
+                player.put("order", state.order.stream().map(Label::id).toList());
+            }
+            if (!state.color.isEmpty()) {
+                player.put("color", state.color);
+            }
+            if (!state.presets.isEmpty()) {
+                Map<String, Object> presets = new LinkedHashMap<>();
+                List<String> slots = new ArrayList<>(state.presets.keySet());
+                slots.sort(String::compareTo);
+                for (String slot : slots) {
+                    Snapshot snapshot = state.presets.get(slot);
+                    Map<String, Object> view = new LinkedHashMap<>();
+                    List<String> presetHidden = new ArrayList<>();
+                    for (Label label : Label.values()) {
+                        if (!snapshot.visible(label)) {
+                            presetHidden.add(label.id());
+                        }
+                    }
+                    if (!presetHidden.isEmpty()) {
+                        view.put("hidden", presetHidden);
+                    }
+                    if (!snapshot.order().isEmpty()) {
+                        view.put("order", snapshot.order().stream().map(Label::id).toList());
+                    }
+                    if (!snapshot.color().isEmpty()) {
+                        view.put("color", snapshot.color());
+                    }
+                    presets.put(slot, view);
+                }
+                player.put("presets", presets);
+            }
+            playersJson.put(name, player);
         }
         Map<String, Object> root = new LinkedHashMap<>();
         root.put("version", VERSION);
-        root.put("players", players);
+        root.put("players", playersJson);
         return gson.toJson(root);
     }
 
@@ -428,5 +667,19 @@ public final class LabelPreferences {
             logger.warning("Не удалось сохранить labels.json — настройки надписей "
                     + "останутся в памяти до следующей попытки.");
         }
+    }
+
+    /** Уникальные метки в порядке первого появления — без мусора и повторов. */
+    static List<Label> normalizeOrder(List<Label> labels) {
+        if (labels == null || labels.isEmpty()) {
+            return List.of();
+        }
+        Set<Label> seen = new LinkedHashSet<>();
+        for (Label label : labels) {
+            if (label != null && label.group() == Group.NAME) {
+                seen.add(label);
+            }
+        }
+        return seen.isEmpty() ? List.of() : List.copyOf(seen);
     }
 }

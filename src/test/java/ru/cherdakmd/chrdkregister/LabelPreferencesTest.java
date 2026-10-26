@@ -219,6 +219,109 @@ class LabelPreferencesTest {
     }
 
     @Test
+    void orderIsStoredAndRestored(@TempDir Path dir) {
+        LabelPreferences preferences = fresh(dir);
+        assertTrue(preferences.order("Steve").isEmpty(), "по умолчанию порядок «как задумано»");
+
+        preferences.setOrder("Steve", List.of(LabelPreferences.Label.GUILDS,
+                LabelPreferences.Label.RANK, LabelPreferences.Label.CLASSES));
+        assertEquals(List.of(LabelPreferences.Label.GUILDS, LabelPreferences.Label.RANK,
+                LabelPreferences.Label.CLASSES), preferences.order("Steve"));
+        // Шапка таба — не метка рядом с ником: в порядок она не попадает.
+        assertEquals(List.of(), fresh(dir).order("Steve") , "файл без сохранения ещё пуст");
+        preferences.saveNow();
+        assertEquals(List.of(LabelPreferences.Label.GUILDS, LabelPreferences.Label.RANK,
+                LabelPreferences.Label.CLASSES), fresh(dir).order("Steve"));
+    }
+
+    @Test
+    void orderIgnoresJunkAndDuplicates(@TempDir Path dir) {
+        LabelPreferences preferences = fresh(dir);
+        preferences.setOrder("Steve", List.of(LabelPreferences.Label.RANK,
+                LabelPreferences.Label.RANK, LabelPreferences.Label.HEADER, null));
+        assertEquals(List.of(LabelPreferences.Label.RANK), preferences.order("Steve"),
+                "повтор и шапка таба отброшены");
+    }
+
+    @Test
+    void colorIsStoredLowerCase(@TempDir Path dir) {
+        LabelPreferences preferences = fresh(dir);
+        assertEquals("", preferences.color("Steve"));
+        preferences.setColor("Steve", "  AQUA ");
+        assertEquals("aqua", preferences.color("steve"));
+        preferences.saveNow();
+        assertEquals("aqua", fresh(dir).color("Steve"));
+        preferences.setColor("Steve", "");
+        assertEquals("", preferences.color("Steve"), "пустая строка снимает выбор");
+    }
+
+    @Test
+    void presetsSaveApplyAndDelete(@TempDir Path dir) {
+        LabelPreferences preferences = fresh(dir);
+        preferences.set("Steve", LabelPreferences.Label.RANK, false);
+        preferences.setColor("Steve", "aqua");
+        preferences.setOrder("Steve", List.of(LabelPreferences.Label.GUILDS));
+
+        assertTrue(preferences.savePreset("Steve", "p1"));
+        assertTrue(preferences.presets("Steve").containsKey("p1"));
+
+        // Меняем вид и возвращаемся к сохранённому.
+        preferences.set("Steve", LabelPreferences.Label.RANK, true);
+        preferences.setColor("Steve", "");
+        preferences.apply("Steve", preferences.presets("Steve").get("p1"));
+        assertFalse(preferences.visible("Steve", LabelPreferences.Label.RANK));
+        assertEquals("aqua", preferences.color("Steve"));
+        assertEquals(List.of(LabelPreferences.Label.GUILDS), preferences.order("Steve"));
+
+        preferences.saveNow();
+        assertEquals(1, fresh(dir).presets("Steve").size(), "пресеты переживают перезапуск");
+
+        assertTrue(preferences.deletePreset("Steve", "p1"));
+        assertFalse(preferences.presets("Steve").containsKey("p1"));
+        assertFalse(preferences.deletePreset("Steve", "p1"), "повторное удаление — false");
+    }
+
+    @Test
+    void resetKeepsPresets(@TempDir Path dir) {
+        LabelPreferences preferences = fresh(dir);
+        preferences.toggle("Steve", LabelPreferences.Label.RANK);
+        preferences.savePreset("Steve", "p1");
+        preferences.reset("Steve");
+        assertTrue(preferences.visible("Steve", LabelPreferences.Label.RANK),
+                "вид вернулся к обычному");
+        assertEquals(1, preferences.presets("Steve").size(), "а пресеты остались");
+    }
+
+    @Test
+    void versionThreeKeepsEverythingInFile(@TempDir Path dir) {
+        LabelPreferences preferences = fresh(dir);
+        preferences.set("Steve", LabelPreferences.Label.GUILDS, false);
+        preferences.setOrder("Steve", List.of(LabelPreferences.Label.RANK,
+                LabelPreferences.Label.GUILDS));
+        preferences.setColor("Steve", "aqua");
+        preferences.savePreset("Steve", "p2");
+
+        String json = preferences.snapshotJson();
+        assertTrue(json.contains("\"version\":3"), json);
+        assertTrue(json.contains("\"order\":["), json);
+        assertTrue(json.contains("\"color\":\"aqua\""), json);
+        assertTrue(json.contains("\"presets\":{"), json);
+    }
+
+    @Test
+    void oldFilesWithoutNewFieldsStillRead(@TempDir Path dir) throws IOException {
+        // Формат 1.4.186: только hidden, без порядка, цвета и пресетов.
+        Files.writeString(dir.resolve("labels.json"),
+                "{\"version\":2,\"players\":{\"steve\":{\"hidden\":[\"streams\"]}}}",
+                StandardCharsets.UTF_8);
+        LabelPreferences preferences = fresh(dir);
+        assertFalse(preferences.visible("steve", LabelPreferences.Label.STREAMS));
+        assertEquals("", preferences.color("steve"));
+        assertEquals(List.of(), preferences.order("steve"));
+        assertTrue(preferences.presets("steve").isEmpty());
+    }
+
+    @Test
     void brokenFileFallsBackToVisibleEverything(@TempDir Path dir) throws IOException {
         Path file = dir.resolve("labels.json");
         Files.writeString(file, "{ это не json", StandardCharsets.UTF_8);

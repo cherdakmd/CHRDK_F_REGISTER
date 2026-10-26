@@ -59,6 +59,35 @@ final class NameTags {
     }
 
     /**
+     * Применить одно оформление по id (1.4.187).
+     *
+     * <p>Нужно, когда порядок меток задаёт игрок: ядро само решает, какое
+     * оформление вызвать следующим, и передаёт сюда уже собранную строку.</p>
+     *
+     * @return имя с меткой; без такого id или при сбое — то же имя
+     */
+    String decorateOne(String id, String playerName, String decoratedName) {
+        if (id == null || id.isBlank()) {
+            return decoratedName;
+        }
+        String key = id.trim();
+        for (Entry entry : entries) {
+            if (!entry.id().equals(key)) {
+                continue;
+            }
+            try {
+                String next = entry.provider().decorate(playerName, decoratedName);
+                return next == null ? decoratedName : next;
+            } catch (RuntimeException exception) {
+                logger.log(Level.WARNING, "Оформление ника '" + key
+                        + "' упало — имя останется без него", exception);
+                return decoratedName;
+            }
+        }
+        return decoratedName;
+    }
+
+    /**
      * Применить только разрешённые оформления в порядке регистрации.
      *
      * @param allowed фильтр по id провайдера; {@code null} — разрешено всё

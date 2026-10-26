@@ -49,6 +49,10 @@ public final class LabelsMenuService implements Listener {
     static final int[] ENTRY_SLOTS = {10, 11, 12, 19, 20, 21, 28, 29, 30};
     static final int ENABLE_ALL_SLOT = 45;
     static final int DISABLE_ALL_SLOT = 47;
+    /** 1.4.187: три личных экрана — цвет, порядок меток и пресеты. */
+    static final int COLORS_SLOT = 46;
+    static final int ORDER_SLOT = 50;
+    static final int PRESETS_SLOT = 51;
     static final int PROFILE_SLOT = 48;
     static final int RESET_SLOT = 49;
     static final int CLOSE_SLOT = 53;
@@ -56,6 +60,9 @@ public final class LabelsMenuService implements Listener {
     private final RegisterPlugin plugin;
     private final LabelPreferences preferences;
     private LabelsCommandHandler command;
+    /** Три личных экрана 1.4.187; {@code null} — кнопки не показываем. */
+    private LabelsStyleMenuService styleMenu;
+    private volatile LabelPalette palette = LabelPalette.disabled();
 
     public LabelsMenuService(RegisterPlugin plugin, LabelPreferences preferences) {
         this.plugin = plugin;
@@ -65,6 +72,16 @@ public final class LabelsMenuService implements Listener {
     /** Обратная связь в чат — те же тексты, что у командной формы. */
     public void setCommand(LabelsCommandHandler command) {
         this.command = command;
+    }
+
+    /** Подключает экраны цвета, порядка и пресетов (1.4.187). */
+    public void setStyleMenu(LabelsStyleMenuService styleMenu) {
+        this.styleMenu = styleMenu;
+    }
+
+    /** Палитра нужна для подписи кнопки «Цвет»: какой цвет выбран сейчас. */
+    public void applySettings(LabelPalette colors, LabelLimits limits) {
+        this.palette = colors == null ? LabelPalette.disabled() : colors;
     }
 
     /* ------------------------------- открытие ------------------------------- */
@@ -102,6 +119,13 @@ public final class LabelsMenuService implements Listener {
         for (int index = 0; index < Math.min(ENTRY_SLOTS.length, tiles.size()); index++) {
             inventory.setItem(ENTRY_SLOTS[index], tile(player, tiles.get(index)));
         }
+        if (styleMenu != null) {
+            inventory.setItem(COLORS_SLOT, colorButton(player));
+            inventory.setItem(ORDER_SLOT, button(Material.ARROW,
+                    plugin.messages().get("labels.menu-order")));
+            inventory.setItem(PRESETS_SLOT, button(Material.BOOK,
+                    plugin.messages().get("labels.menu-presets")));
+        }
         inventory.setItem(ENABLE_ALL_SLOT, button(Material.LIME_DYE,
                 plugin.messages().get("labels.menu-enable-all")));
         inventory.setItem(DISABLE_ALL_SLOT, button(Material.GRAY_DYE,
@@ -112,6 +136,24 @@ public final class LabelsMenuService implements Listener {
                 plugin.messages().get("labels.menu-reset")));
         inventory.setItem(CLOSE_SLOT, button(Material.BARRIER,
                 plugin.messages().get("labels.menu-close")));
+    }
+
+    /** Кнопка «Цвет»: подпись показывает выбранный цвет или «как у ранга». */
+    private ItemStack colorButton(Player player) {
+        LabelPalette colors = palette;
+        String chosen = preferences.color(player.getName());
+        LabelPalette.Color color = colors.enabled() ? colors.byId(chosen) : null;
+        ItemStack item = new ItemStack(Material.CYAN_DYE);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            meta.displayName(color == null
+                    ? plugin.messages().get("labels.menu-color-auto")
+                    : plugin.messages().get("labels.menu-color",
+                    "name", Messages.trusted(color.name())));
+            meta.lore(plugin.messages().getList("labels.menu-color-lore"));
+            item.setItemMeta(meta);
+        }
+        return item;
     }
 
     /** Голова: сколько надписей включено из скольких. */
@@ -305,6 +347,36 @@ public final class LabelsMenuService implements Listener {
             Bukkit.getScheduler().runTask(plugin, () -> {
                 if (player.isOnline()) {
                     plugin.profile().show(player, false, null);
+                }
+            });
+            return;
+        }
+        if (styleMenu != null && slot == COLORS_SLOT) {
+            Player viewer = player;
+            player.closeInventory();
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (viewer.isOnline()) {
+                    styleMenu.openColors(viewer);
+                }
+            });
+            return;
+        }
+        if (styleMenu != null && slot == ORDER_SLOT) {
+            Player viewer = player;
+            player.closeInventory();
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (viewer.isOnline()) {
+                    styleMenu.openOrder(viewer);
+                }
+            });
+            return;
+        }
+        if (styleMenu != null && slot == PRESETS_SLOT) {
+            Player viewer = player;
+            player.closeInventory();
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (viewer.isOnline()) {
+                    styleMenu.openPresets(viewer);
                 }
             });
             return;
