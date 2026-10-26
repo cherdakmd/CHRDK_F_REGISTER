@@ -72,6 +72,7 @@ class TreasureMessagesTest {
             "map-row", "map-row-world", "map-footer", "map-info", "map-info-world",
             "map-info-where", "map-info-progress", "map-info-how", "map-info-here",
             "map-found", "map-hint", "map-hint-zone", "map-disabled",
+            "treasure-found-ground", "drops-landed",
             "menu-maps-name", "menu-maps-lore", "menu-maps-empty", "menu-maps-hint",
             "menu-maps-title", "menu-map-name", "menu-map-where", "menu-map-coords",
             "menu-map-progress", "menu-map-open", "menu-maps-help-name",

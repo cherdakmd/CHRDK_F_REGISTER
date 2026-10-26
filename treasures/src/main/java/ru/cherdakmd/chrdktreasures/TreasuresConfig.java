@@ -161,6 +161,38 @@ public final class TreasuresConfig {
     }
 
     /**
+     * Куда попадает добыча (1.4.181).
+     *
+     * <p>Бочки оказались слишком шумными: находка — событие, а контейнер на
+     * каждом шаге превращал игру в охоту за сундуками. По умолчанию добыча
+     * просто рассыпается у ног; бочки остались опцией для тех, кому нужен
+     * контейнер, и включаются ключом {@code drops.ground: false}.</p>
+     *
+     * @param ground       добыча падает на землю (по умолчанию); false — бочка
+     * @param ownerSeconds сколько секунд поднять может только нашедший (0 — все)
+     * @param scatter      разброс в блоках вокруг точки находки
+     * @param lift         подбрасывание вверх, чтобы добыча не легла в блок
+     * @param glow         подсветка предметов
+     */
+    public record Drops(boolean ground, int ownerSeconds, double scatter,
+                        double lift, boolean glow) {
+
+        /** Добыча в инвентарь, как до 1.4.166: ни бочек, ни предметов на земле. */
+        public static final Drops INVENTORY = new Drops(false, 0, 0.0, 0.0, false);
+
+        public Drops {
+            ownerSeconds = Math.clamp(ownerSeconds, 0, 600);
+            scatter = Math.clamp(scatter, 0.0, 1.5);
+            lift = Math.clamp(lift, 0.0, 1.0);
+        }
+
+        /** Срок привязки добычи к нашедшему в миллисекундах. */
+        public long ownerMillis() {
+            return ownerSeconds * 1_000L;
+        }
+    }
+
+    /**
      * Особые находки (1.4.166): реликвии CHRDK_Artifacts и книги чар
      * CHRDK_Enchants прямо в кладе.
      *
@@ -383,6 +415,8 @@ public final class TreasuresConfig {
     private final Map<TreasureTier, Double> tierChances;
     /** 1.4.153: клад-карты — шанс выпадения, зона и срок жизни. */
     private final Maps maps;
+    /** 1.4.181: добыча падает на землю, а не встаёт бочкой. */
+    private final Drops drops;
     private final Barrels barrels;
     /** 1.4.166: реликвии и книги чар из соседних аддонов. */
     private final Specials specials;
@@ -409,7 +443,8 @@ public final class TreasuresConfig {
                             boolean abilitiesEnabled, boolean cursesEnabled,
                             boolean setsEnabled, double arsenalShare,
                             boolean tiersEnabled, Map<TreasureTier, Double> tierChances,
-                            Maps maps, Barrels barrels, Specials specials, Shards shards,
+                            Maps maps, Drops drops, Barrels barrels,
+                            Specials specials, Shards shards,
                             RankTag rankTag, TreasureExperience.Rule experience) {
         this.enabled = enabled;
         this.auraRefreshTicks = auraRefreshTicks;
@@ -441,6 +476,7 @@ public final class TreasuresConfig {
         this.tiersEnabled = tiersEnabled;
         this.tierChances = tierChances;
         this.maps = maps == null ? Maps.DISABLED : maps;
+        this.drops = drops == null ? new Drops(true, 120, 0.35, 0.3, true) : drops;
         this.barrels = barrels == null ? Barrels.DISABLED : barrels;
         this.specials = specials == null ? defaultSpecials() : specials;
         this.shards = shards == null ? defaultShards() : shards;
@@ -600,7 +636,7 @@ public final class TreasuresConfig {
                 cfg.getBoolean("sets.enabled", true),
                 arsenalShare, tiersEnabled,
                 Collections.unmodifiableMap(tierChances),
-                parseMaps(cfg), parseBarrels(cfg), parseSpecials(cfg),
+                parseMaps(cfg), parseDrops(cfg), parseBarrels(cfg), parseSpecials(cfg),
                 parseShards(cfg, logger), parseRankTag(cfg), parseExperience(cfg));
     }
 
@@ -822,6 +858,11 @@ public final class TreasuresConfig {
         return maps;
     }
 
+    /** 1.4.181: как выдать добычу — на землю или бочкой. */
+    public Drops drops() {
+        return drops;
+    }
+
     /** Клады-бочки: появление, срок жизни и анимация. */
     public Barrels barrels() {
         return barrels;
@@ -906,6 +947,22 @@ public final class TreasuresConfig {
      * {@link Barrels}: опечатка в конфиге не может оставить бочку навсегда или
      * разрешить сотни бочек одному игроку.
      */
+    /**
+     * Разбор секции {@code drops.*} (1.4.181).
+     *
+     * <p>Ключа нет — добыча падает на землю: так ведёт себя новый сервер и так
+     * же обновляются старые, где бочки были включены по умолчанию. Бочки
+     * возвращаются только явным {@code drops.ground: false}.</p>
+     */
+    private static Drops parseDrops(FileConfiguration cfg) {
+        return new Drops(
+                cfg.getBoolean("drops.ground", true),
+                (int) clamp(cfg.getLong("drops.owner-seconds", 120L), 0L, 600L),
+                clamp(cfg.getDouble("drops.scatter", 0.35), 0.0, 1.5),
+                clamp(cfg.getDouble("drops.lift", 0.3), 0.0, 1.0),
+                cfg.getBoolean("drops.glow", true));
+    }
+
     private static Barrels parseBarrels(FileConfiguration cfg) {
         return new Barrels(
                 cfg.getBoolean("barrels.enabled", true),

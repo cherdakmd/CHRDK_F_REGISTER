@@ -785,7 +785,9 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
                     "abilities", String.valueOf(abilities),
                     "sets", String.valueOf(TreasureSets.all().size()),
                     "curses", String.valueOf(curses),
-                    "maps", plugin.maps().summary());
+                    "maps", plugin.maps().summary(),
+                    // 1.4.181: видно, падает добыча на землю или в бочку.
+                    "drops", plugin.drops() == null ? "—" : plugin.drops().summary());
             return true;
         }
         plugin.messages().send(sender, "admin-usage");

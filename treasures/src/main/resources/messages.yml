@@ -527,6 +527,9 @@ messages:
   treasure-found-named: "<gold>Клад!</gold> %tier% <dark_gray>·</dark_gray> %name%"
   treasure-found-loot: "<gold>Клад!</gold> %tier% <gray>— добыча:</gray> %loot%"
   treasure-found-barrel: "<gold>Клад!</gold> %tier% <gray>— добыча в бочке на месте находки.</gray>"
+  # 1.4.181: бочек на каждую находку больше нет — добыча падает на землю.
+  treasure-found-ground: "<gold>Клад!</gold> %tier% <gray>— добыча рассыпалась у ног.</gray>"
+  drops-landed: "<green>Находка на земле</green> <gray>— подбери <white>%count%</white> предм.</gray>"
   treasure-found-empty: "<gold>Клад!</gold> %tier% <gray>— добыча уже в инвентаре.</gray>"
   treasure-broadcast-named: "<gold>%player%</gold> <gray>нашёл</gray> %tier% <gray>находку</gray> %name%<gray>!</gray>"
   treasure-broadcast-loot: "<gold>%player%</gold> <gray>нашёл</gray> %tier% <gray>клад:</gray> %loot%"
@@ -657,6 +660,8 @@ messages:
   # 1.4.166: клад появляется бочкой.
   barrel-placed: "<green>Клад в бочке!</green> <gray>%tier% · открой её на месте находки.</gray>"
   barrel-hint: "<gray>ПКМ по бочке — забрать добычу.</gray>"
+  drops-summary-ground: "<gray>добыча падает на землю, привязка %seconds% с</gray>"
+  drops-summary-barrel: "<gray>добыча складывается в бочку</gray>"
   barrel-locked: "<red>Бочка с кладом принадлежит</red> <white>%player%</white><red>.</red>"
   barrel-limit: "<yellow>У тебя уже %max% бочек с кладом.</yellow> <gray>Забери добычу из старой — тогда появится новая.</gray>"
   barrel-expiring: "<yellow>Бочка с кладом исчезнет через %seconds% сек. — забери добычу!</yellow>"
@@ -796,7 +801,7 @@ messages:
   admin-chance-reset: "<green>Шанс %tier% снова из config.yml.</green>"
   admin-chance-unknown-tier: "<red>Неизвестная редкость «%tier%».</red>"
   admin-chance-invalid: "<red>Нужен шанс от 0 до 100 (например, 0.05) или reset.</red>"
-  admin-info: "<gold>Клады:</gold> <gray>находок <white>%items%</white>, регионов <white>%regions%</white>, редкостей <white>%tiers%</white>, блоков <white>%blocks%</white>, лут-записей <white>%loot%</white>, способностей <white>%abilities%</white>, сетов <white>%sets%</white>, проклятий <white>%curses%</white>, карты <white>%maps%</white>.</gray>"
+  admin-info: "<gold>Клады:</gold> <gray>находок <white>%items%</white>, регионов <white>%regions%</white>, редкостей <white>%tiers%</white>, блоков <white>%blocks%</white>, лут-записей <white>%loot%</white>, способностей <white>%abilities%</white>, сетов <white>%sets%</white>, проклятий <white>%curses%</white>, карты <white>%maps%</white>, выдача <white>%drops%</white>.</gray>"
   admin-usage: "<yellow>/treasuresadmin <reload|info|give <ник> <ид>|map <ник> [редкость]|reset <ник>|resetall confirm|chance <редкость> <процент|reset>|stats <ник>|barrels [list|clear]|barrel test [редкость]></yellow>"
   admin-barrels-summary: "<gold>Бочки с кладом:</gold> <gray>живых <white>%live%</white>, просрочено <white>%expired%</white>, лимит на игрока <white>%limit%</white>, срок <white>%seconds%</white> c.</gray>"
   admin-barrels-line: "<gray>%world% <white>%x%,%y%,%z%</white> — %owner%, %tier%, осталось <white>%left%</white></gray>"

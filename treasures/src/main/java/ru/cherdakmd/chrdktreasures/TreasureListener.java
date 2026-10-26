@@ -401,9 +401,13 @@ public final class TreasureListener implements Listener {
                 plugin.messages().send(player, "treasure-found-loot",
                         "tier", Messages.trusted(tierName),
                         "loot", Messages.trusted(loot));
-            } else if (found.barrel()) {
+            } else if (found.placement() == TreasureService.Placement.BARREL) {
                 // 1.4.166: добыча не в рюкзаке, а в бочке — говорим прямо.
                 plugin.messages().send(player, "treasure-found-barrel",
+                        "tier", Messages.trusted(tierName));
+            } else if (found.placement() == TreasureService.Placement.GROUND) {
+                // 1.4.181: бочек нет — добыча лежит у ног.
+                plugin.messages().send(player, "treasure-found-ground",
                         "tier", Messages.trusted(tierName));
             } else {
                 plugin.messages().send(player, "treasure-found-empty",
@@ -472,8 +476,10 @@ public final class TreasureListener implements Listener {
         if (found.sharded()) {
             line.append(" · осколки: ").append(found.shards());
         }
-        if (found.barrel()) {
+        if (found.placement() == TreasureService.Placement.BARREL) {
             line.append(" · бочка");
+        } else if (found.placement() == TreasureService.Placement.GROUND) {
+            line.append(" · на земле");
         }
         plugin.getLogger().info(line.toString());
     }
