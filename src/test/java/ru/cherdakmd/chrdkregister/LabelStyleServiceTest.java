@@ -63,53 +63,133 @@ class LabelStyleServiceTest {
         return preferences;
     }
 
-    @Test
-    void composePlacesFirstLabelOnTheLeft() {
-        // guilds применён последним, значит оказался левее всех.
-        assertEquals("[ГИ] [КЛ] Имя",
-                plain().compose("Имя", "Имя", List.of(G, C, R), "", ""));
+    private static String text(String markup) {
+        return Messages.stripFormatting(markup);
     }
 
     @Test
-    void badgeSitsWherePlayerPutIt() {
-        assertEquals("[ГИ] ✦ [КЛ] Имя",
-                plain().compose("Имя", "Имя", List.of(G, R, C), "✦", ""));
-        assertEquals("[ГИ] [КЛ] Имя",
-                plain().compose("Имя", "Имя", List.of(G, C, R), "", ""));
+    void nameAlwaysComesBeforeLabels() {
+        assertEquals("Имя · [ГИ] · [КЛ]",
+                text(plain().compose("Имя", "Имя", List.of(G, C, R), "", "")));
     }
 
     @Test
-    void hiddenLabelNeverAppears() {
-        // Порядок «гильдия → класс → знак ранга»: гильдия скрыта, остальное
-        // сдвигается, но относительный порядок не меняется.
-        assertEquals("[КЛ] ✦ Имя",
-                plain().compose("Имя", "Имя", List.of(G, C, R), "✦", "", Set.of(G)),
-                "скрытая гильдия выпала из строки");
-        assertEquals("Имя",
-                plain().compose("Имя", "Имя", List.of(G, C, R), "✦", "",
-                        Set.of(G, C, R)),
-                "скрыто всё — остаётся только ник");
+    void badgeAndRankNameStayTogetherAtSelectedPosition() {
+        assertEquals("Имя · [ГИ] · ✦ Странник · [КЛ]",
+                text(plain().compose("Имя", "Имя", List.of(G, R, C), "✦", "Странник")));
+        assertEquals("Имя · [ГИ] · [КЛ]",
+                text(plain().compose("Имя", "Имя", List.of(G, C, R), "", "")));
+        var selection = plain().select("Имя", List.of(R, G, C), "✦", "Странник", Set.of(), 2);
+        assertEquals(List.of(R, G), selection.shown().stream().map(LabelStyleService.Decoration::source).toList());
+        assertEquals(List.of(C), selection.overflow().stream().map(LabelStyleService.Decoration::source).toList());
     }
 
     @Test
-    void unknownTagKeepsNameAsIs() {
-        // Квестов в заглушке нет: метка пропускается, а имя остаётся.
-        assertEquals("[ГИ] Имя",
-                plain().compose("Имя", "Имя", List.of(LabelPreferences.Label.QUESTS, G), "", ""));
+    void hiddenRankDoesNotLeakItsNameAndHiddenTagsDoNotUseSlots() {
+        assertEquals("Имя · [КЛ]",
+                text(plain().compose("Имя", "Имя", List.of(G, C, R), "✦", "Странник", Set.of(G, R))));
+        assertEquals("Имя", text(plain().compose("Имя", "Имя", List.of(G, C, R), "✦", "Странник",
+                Set.of(G, C, R))));
+        var selection = plain().select("Имя", List.of(G, R, C), "✦", "Странник", Set.of(G), 2);
+        assertEquals(List.of(R, C), selection.shown().stream().map(LabelStyleService.Decoration::source).toList());
+        assertTrue(selection.overflow().isEmpty());
     }
 
     @Test
-    void suffixGoesAfterEverything() {
-        assertEquals("[ГИ] Имя <dark_gray>·</dark_gray> Странник",
-                plain().compose("Имя", "Имя", List.of(G), "",
-                        " <dark_gray>·</dark_gray> Странник"));
+    void absentSourcesAndHeaderDoNotUseSlots() {
+        var selection = plain().select("Имя", List.of(LabelPreferences.Label.QUESTS,
+                LabelPreferences.Label.HEADER, R, G, C), "", "", Set.of(), 2);
+        assertEquals(List.of(G, C), selection.shown().stream().map(LabelStyleService.Decoration::source).toList());
+        assertTrue(selection.overflow().isEmpty());
+        assertEquals("Имя", text(plain().compose("Имя", "Имя", List.of(LabelPreferences.Label.QUESTS), "", "")));
     }
 
     @Test
     void emptyOrderFallsBackToDeclarationOrder() {
-        assertEquals("[КЛ] [ГИ] [ДО] Имя",
-                plain().compose("Имя", "Имя", List.of(), "", ""),
-                "пустой порядок — объявление, ранг без знака ничего не добавляет");
+        assertEquals("Имя · [КЛ] · [ГИ] · [ДО]",
+                text(plain().compose("Имя", "Имя", List.of(), "", "")));
+    }
+
+    @Test
+    void legacyPrefixSuffixAndStreamerWrappingAllBecomeSuffixes(@TempDir Path dir) {
+        LabelStyleService styles = new LabelStyleService((id, player, name) -> switch (id) {
+            case "classes" -> "<aqua>[КЛ]</aqua> " + name;
+            case "guilds" -> name + " <green>[ГИ]</green>";
+            case "streams" -> "<bold>" + name + "</bold> <red>[СТРИМ]</red>";
+            default -> name;
+        }, fresh(dir), LOOKUP);
+        String result = styles.compose("Имя", "<gold>Имя</gold>",
+                List.of(C, G, LabelPreferences.Label.STREAMS), "", "");
+        assertEquals("Имя · [КЛ] · [ГИ] · [СТРИМ]", text(result));
+        assertFalse(result.contains("ANCHOR"));
+        assertTrue(result.contains("<aqua>"));
+        assertTrue(result.contains("<green>"));
+        assertTrue(result.contains("<red>"));
+        assertFalse(result.contains("<bold>Имя"), "аддон больше не меняет стиль самого ника");
+    }
+
+    @Test
+    void nestedAndLegacyColorsSurviveProjection(@TempDir Path dir) {
+        LabelStyleService styles = new LabelStyleService((id, player, name) ->
+                "<bold><aqua> · [Класс]</aqua></bold> " + name + " ", fresh(dir), LOOKUP);
+        String result = styles.compose("Имя", "Имя", List.of(C), "", "");
+        assertEquals("Имя · [Класс]", text(result));
+        assertTrue(result.contains("<aqua>"));
+        assertTrue(result.contains("<bold>"));
+        LabelStyleService legacy = new LabelStyleService((id, player, name) ->
+                "&a[КЛ] &r" + name, fresh(dir.resolve("legacy")), LOOKUP);
+        assertEquals("Имя · [КЛ]", text(legacy.compose("Имя", "Имя", List.of(C), "", "")));
+    }
+
+    @Test
+    void gradientAroundNameCannotLeakAnchorAcrossComponents(@TempDir Path dir) {
+        LabelStyleService styles = new LabelStyleService((id, player, name) ->
+                "<gradient:#ff0000:#0000ff>" + name + " · Звание</gradient>", fresh(dir), LOOKUP);
+        String result = styles.compose("Имя", "Имя", List.of(C), "", "");
+        assertEquals("Имя · Звание", text(result));
+        assertFalse(result.contains("ANCHOR"));
+    }
+
+    @Test
+    void invalidDuplicateOrEmptyProvidersCannotReplaceName(@TempDir Path dir) {
+        for (LabelStyleService.TagRenderer renderer : List.<LabelStyleService.TagRenderer>of(
+                (id, player, name) -> null, (id, player, name) -> "замена имени",
+                (id, player, name) -> name + name, (id, player, name) -> "<bold>" + name + "</bold>")) {
+            LabelStyleService styles = new LabelStyleService(renderer, fresh(dir), LOOKUP);
+            assertEquals("Имя", text(styles.compose("Имя", "Имя", List.of(C), "", "")));
+        }
+    }
+
+    @Test
+    void rankDowngradeAndReloadChangeCountWithoutLosingPreferences(@TempDir Path dir) {
+        LabelPreferences prefs = fresh(dir);
+        int[] level = {5};
+        LabelStyleService styles = new LabelStyleService(LabelStyleServiceTest::tag, prefs,
+                new LabelStyleService.RankLookup() {
+                    public LabelStyleService.Rank view(String player) {
+                        return new LabelStyleService.Rank(level[0], "✦", "<gold>%name%</gold>", "Ранг", true);
+                    }
+                    public List<String> registrationOrder() { return List.of(); }
+                });
+        prefs.setOrder("Имя", List.of(R, G, C, LabelPreferences.Label.ACHIEVEMENTS));
+        var order = styles.order("Имя");
+        assertEquals(4, styles.selection("Имя").shown().size());
+        level[0] = 1;
+        assertEquals("Имя · ✦ Ранг · [ГИ]", text(styles.decorate("Имя", "Имя", "")));
+        assertEquals(2, styles.selection("Имя").overflow().size());
+        assertEquals(order, styles.order("Имя"));
+        styles.applyLimits(new LabelLimits(List.of(2), List.of(3)));
+        assertEquals(3, styles.selection("Имя").shown().size());
+        styles.applyLimits(null);
+        assertEquals(2, styles.selection("Имя").shown().size());
+        level[0] = 5;
+        assertEquals(4, styles.selection("Имя").shown().size());
+    }
+
+    @Test
+    void duplicateSourcesCannotConsumeExtraSlots() {
+        var result = plain().select("Имя", List.of(G, G, C), "", "", Set.of(), 2);
+        assertEquals(List.of(G, C), result.shown().stream().map(LabelStyleService.Decoration::source).toList());
     }
 
     @Test
@@ -133,16 +213,11 @@ class LabelStyleServiceTest {
     }
 
     @Test
-    void defaultOrderKeepsOldLookAndRankLast(@TempDir Path dir) {
-        List<LabelPreferences.Label> order = with(fresh(dir)).defaultOrder();
-        // Зарегистрированные метки — в обратном порядке регистрации, затем
-        // остальные по объявлению, ранг — последним, ближе к нику.
-        assertEquals(List.of(G, C, LabelPreferences.Label.ACHIEVEMENTS,
-                        LabelPreferences.Label.TIERFORGE, LabelPreferences.Label.TREASURES,
-                        LabelPreferences.Label.STREAMS, LabelPreferences.Label.QUESTS, R),
-                order, "порядок регистрации перевёрнут, ранг — последним, ближе к нику");
-        assertTrue(order.containsAll(LabelPreferences.Label.nameTags()),
-                "все надписи на месте");
+    void defaultOrderIsStableAndRankHasPriority(@TempDir Path dir) {
+        assertEquals(List.of(R, C, G, LabelPreferences.Label.TREASURES,
+                LabelPreferences.Label.TIERFORGE, LabelPreferences.Label.STREAMS,
+                LabelPreferences.Label.QUESTS, LabelPreferences.Label.ACHIEVEMENTS),
+                with(fresh(dir)).defaultOrder());
     }
 
     @Test
@@ -163,22 +238,22 @@ class LabelStyleServiceTest {
     }
 
     @Test
-    void newLabelLandsBeforeRank(@TempDir Path dir) {
+    void newLabelsAreAppendedWithoutChangingSavedPriority(@TempDir Path dir) {
         LabelPreferences preferences = fresh(dir);
         // Порядок настроен до появления новой метки (например, стримера).
         preferences.setOrder("Steve", List.of(G, R));
         List<LabelPreferences.Label> order = with(preferences).order("Steve");
-        assertTrue(order.indexOf(LabelPreferences.Label.STREAMS) < order.indexOf(R),
-                "новая метка встаёт перед рангом, а не после");
+        assertEquals(List.of(G, R), order.subList(0, 2));
+        assertTrue(order.indexOf(LabelPreferences.Label.STREAMS) > order.indexOf(R));
     }
 
     @Test
     void moveSwapsNeighboursAndStopsAtEdges(@TempDir Path dir) {
         LabelStyleService styles = with(fresh(dir));
-        assertTrue(styles.move("Steve", R, -1), "ранг можно сдвинуть левее");
+        assertTrue(styles.move("Steve", R, 1), "ранг можно сдвинуть правее");
 
         List<LabelPreferences.Label> order = styles.order("Steve");
-        assertEquals(R, order.get(order.size() - 2), "ранг сдвинулся на одну позицию");
+        assertEquals(R, order.get(1), "ранг сдвинулся на одну позицию");
         assertFalse(styles.move("Steve", order.get(0), -1), "левее первой некуда");
         assertFalse(styles.move("Steve", order.get(order.size() - 1), 1), "правее последней некуда");
         assertFalse(styles.move("Steve", null, 1));
@@ -188,7 +263,7 @@ class LabelStyleServiceTest {
     @Test
     void resetOrderReturnsDefault(@TempDir Path dir) {
         LabelStyleService styles = with(fresh(dir));
-        styles.move("Steve", R, -1);
+        styles.move("Steve", R, 1);
         styles.resetOrder("Steve");
         assertEquals(styles.defaultOrder(), styles.order("Steve"));
     }

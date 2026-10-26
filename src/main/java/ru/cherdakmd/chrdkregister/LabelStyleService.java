@@ -1,24 +1,20 @@
 package ru.cherdakmd.chrdkregister;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
- * Сборка ника по личным настройкам игрока (1.4.187): свой цвет, свой порядок
- * меток, ранг и тег каталога.
- *
- * <p>До этой версии порядок задавал порядок регистрации аддонов, а цвет — ранг
- * или купленный тег. Теперь игрок может поменять и то и другое, поэтому вся
- * сборка живёт в одном месте: сначала ник красится (свой цвет из палитры
- * главнее цвета ступени, но не главнее купленного тега каталога), потом вокруг
- * него раскладываются метки в выбранном порядке, а метка ранга идёт там, куда
- * её поставил игрок.</p>
- *
- * <p>Порядок — слева направо, как его видит игрок. Каждая метка приписывается
- * <em>перед</em> уже собранной строкой, поэтому обход идёт с конца списка: так
- * «первая» метка оказывается левее всех.</p>
+ * Единый вид ника в чате и TAB: имя первым, затем выбранные метки (1.4.190).
+ * Порядок задаёт одновременно позицию и приоритет при ограничении по рангу.
+ * Старый API аддонов проецируется на отдельную метку без переноса их префиксов
+ * или обёрток на имя. Цвета меток и персональные настройки сохраняются.
  */
 public final class LabelStyleService {
 
@@ -42,6 +38,31 @@ public final class LabelStyleService {
                        boolean showName) {
     }
 
+    private static final String ANCHOR = "CHRDK_LABEL_NAME_ANCHOR_7BBA";
+    private static final String SEPARATOR = " <dark_gray>·</dark_gray> ";
+    private static final PlainTextComponentSerializer PLAIN = PlainTextComponentSerializer.plainText();
+    private static final MiniMessage MINI = MiniMessage.miniMessage();
+
+    /** Одна надпись; знак и название ранга вместе занимают одно место. */
+    public record Decoration(LabelPreferences.Label source, String markup) { }
+
+    /** Снимок для сборки и меню: отсутствующие/скрытые источники не занимают мест. */
+    public record Selection(List<Decoration> shown, List<Decoration> overflow, int limit) {
+        public Selection {
+            shown = List.copyOf(shown);
+            overflow = List.copyOf(overflow);
+        }
+
+        public boolean deferred(LabelPreferences.Label label) {
+            return overflow.stream().anyMatch(entry -> entry.source() == label);
+        }
+
+        public boolean displayed(LabelPreferences.Label label) {
+            return shown.stream().anyMatch(entry -> entry.source() == label);
+        }
+    }
+
+    private volatile LabelLimits limits = LabelLimits.DEFAULT;
     private final TagRenderer tags;
     private final LabelPreferences preferences;
     private final RankLookup ranks;
@@ -63,56 +84,115 @@ public final class LabelStyleService {
      */
     public String decorate(String playerName, String base, String customColor) {
         Rank rank = ranks.view(playerName);
-        List<LabelPreferences.Label> order = order(playerName);
-        boolean rankVisible = preferences.visible(playerName, LabelPreferences.Label.RANK);
+        return assemble(colorize(base, customColor, rank), selection(playerName, rank, customColor));
+    }
 
-        String colored = colorize(base, customColor, rank);
-        String suffix = "";
-        if (rank != null && rankVisible && rank.showName() && !rank.name().isBlank()) {
-            suffix = " <dark_gray>·</dark_gray> " + rankName(rank, customColor);
+    public void applyLimits(LabelLimits limits) {
+        this.limits = limits == null ? LabelLimits.DEFAULT : limits;
+    }
+
+    public Selection selection(String playerName) {
+        return selection(playerName, ranks.view(playerName), null);
+    }
+
+    private Selection selection(String playerName, Rank rank, String customColor) {
+        String badge = rank == null || rank.badge() == null ? "" : rank.badge();
+        String name = rank == null || !rank.showName() || rank.name() == null
+                ? "" : rankName(rank, customColor);
+        return select(playerName, order(playerName), badge, name,
+                Set.copyOf(preferences.hiddenLabels(playerName)),
+                limits.labelsFor(rank == null ? 0 : rank.level()));
+    }
+
+    /** Чистая сборка для тестов, без персонального лимита. */
+    String compose(String playerName, String base, List<LabelPreferences.Label> order,
+                   String badge, String rankName, Set<LabelPreferences.Label> hidden) {
+        return assemble(base, select(playerName, order, badge, rankName, hidden, LabelLimits.MAX_LABELS));
+    }
+
+    String compose(String playerName, String base, List<LabelPreferences.Label> order,
+                   String badge, String rankName) {
+        return compose(playerName, base, order, badge, rankName, Set.of());
+    }
+
+    private static String assemble(String base, Selection selection) {
+        StringBuilder result = new StringBuilder(base == null ? "" : base);
+        for (Decoration entry : selection.shown()) {
+            // Отдельный компонент не позволяет цвету/жирности метки красить ник или соседей.
+            result.append(SEPARATOR).append("<reset>").append(entry.markup()).append("<reset>");
         }
-        String badge = rank == null || !rankVisible ? "" : rank.badge();
-        return compose(playerName, colored, order, badge, suffix,
-                Set.copyOf(preferences.hiddenLabels(playerName)));
+        return result.toString();
+    }
+
+    Selection select(String playerName, List<LabelPreferences.Label> order,
+                     String badge, String rankName, Set<LabelPreferences.Label> hidden, int limit) {
+        List<Decoration> entries = new ArrayList<>();
+        List<LabelPreferences.Label> effective = order == null || order.isEmpty()
+                ? LabelPreferences.Label.nameTags() : order;
+        Set<LabelPreferences.Label> seen = new LinkedHashSet<>();
+        for (LabelPreferences.Label label : effective) {
+            if (label == null || label.group() != LabelPreferences.Group.NAME || !seen.add(label)
+                    || (hidden != null && hidden.contains(label))) {
+                continue;
+            }
+            String markup;
+            if (label == LabelPreferences.Label.RANK) {
+                markup = project(ANCHOR + " " + (badge == null ? "" : badge) + " "
+                        + (rankName == null ? "" : rankName));
+            } else {
+                markup = project(tags == null ? null : tags.apply(label.id(), playerName, ANCHOR));
+            }
+            if (!markup.isBlank()) entries.add(new Decoration(label, markup));
+        }
+        int safeLimit = Math.max(0, Math.min(LabelLimits.MAX_LABELS, limit));
+        int split = Math.min(safeLimit, entries.size());
+        return new Selection(entries.subList(0, split), entries.subList(split, entries.size()), safeLimit);
     }
 
     /**
-     * Чистая сборка строки — без Bukkit и без настроек. Покрыта тестами.
-     *
-     * @param order  метки слева направо (включая {@code RANK})
-     * @param badge  знак ступени; пусто — не рисовать
-     * @param suffix хвост с названием ступени; пусто — не рисовать
-     * @param hidden скрытые надписи: их метки пропускаются
+     * Совместимость с prefix/suffix API: аддон получает якорь вместо готового
+     * ника. Удаляем якорь из дерева компонентов и обрезаем только внешние
+     * пробелы/разделители. Вложенные цвета, градиенты и форматирование остаются.
+     * Провайдер, потерявший/продублировавший имя, не может испортить общую строку.
      */
-    String compose(String playerName, String base, List<LabelPreferences.Label> order,
-                   String badge, String suffix, Set<LabelPreferences.Label> hidden) {
-        String out = base == null ? "" : base;
-        List<LabelPreferences.Label> effective =
-                order == null || order.isEmpty() ? LabelPreferences.Label.nameTags() : order;
-        for (int index = effective.size() - 1; index >= 0; index--) {
-            LabelPreferences.Label label = effective.get(index);
-            if (label == null || (hidden != null && hidden.contains(label))) {
-                continue;
-            }
-            if (label == LabelPreferences.Label.RANK) {
-                String safeBadge = badge == null ? "" : badge.trim();
-                if (!safeBadge.isEmpty()) {
-                    out = safeBadge + " " + out;
-                }
-                continue;
-            }
-            String next = tags == null ? null : tags.apply(label.id(), playerName, out);
-            if (next != null) {
-                out = next;
-            }
-        }
-        return out + (suffix == null ? "" : suffix);
+    static String project(String decorated) {
+        if (decorated == null) return "";
+        Component component = Messages.format(decorated);
+        String text = PLAIN.serialize(component);
+        int anchor = text.indexOf(ANCHOR);
+        if (anchor < 0 || text.indexOf(ANCHOR, anchor + ANCHOR.length()) >= 0) return "";
+        // Градиент дробит даже якорь на отдельные компоненты: replaceText
+        // не ищет поперёк соседних узлов, поэтому вырезаем диапазон дерева.
+        component = Component.empty()
+                .append(crop(component, 0, anchor, new int[]{0}))
+                .append(crop(component, anchor + ANCHOR.length(), text.length(), new int[]{0}));
+        text = PLAIN.serialize(component);
+        int start = 0;
+        int end = text.length();
+        while (start < end && boundary(text.charAt(start))) start++;
+        while (end > start && boundary(text.charAt(end - 1))) end--;
+        if (start == end) return "";
+        return MINI.serialize(crop(component, start, end, new int[]{0}).compact());
     }
 
-    /** Удобная перегрузка без скрытых надписей — для тестов и простых вызовов. */
-    String compose(String playerName, String base, List<LabelPreferences.Label> order,
-                   String badge, String suffix) {
-        return compose(playerName, base, order, badge, suffix, Set.of());
+    private static boolean boundary(char c) {
+        return Character.isWhitespace(c) || c == '·' || c == '|' || c == '•';
+    }
+
+    /** Обрезка по индексам видимого текста, без разрезания MiniMessage-тегов. */
+    private static Component crop(Component node, int start, int end, int[] cursor) {
+        String content = node instanceof TextComponent text ? text.content()
+                : PLAIN.serialize(node.children(List.of()));
+        int offset = cursor[0];
+        cursor[0] += content.length();
+        int from = Math.min(content.length(), Math.max(0, start - offset));
+        int to = Math.min(content.length(), Math.max(from, end - offset));
+        Component result = node instanceof TextComponent text
+                ? text.content(content.substring(from, to))
+                : Component.text(content.substring(from, to)).style(node.style());
+        List<Component> children = new ArrayList<>();
+        for (Component child : node.children()) children.add(crop(child, start, end, cursor));
+        return result.children(children);
     }
 
     /* -------------------------------- цвет ника -------------------------------- */
@@ -163,62 +243,22 @@ public final class LabelStyleService {
 
     /* --------------------------------- порядок --------------------------------- */
 
-    /**
-     * Порядок меток слева направо: сохранённый игроком, а без него — прежний
-     * («как регистрировались», перевёрнутый порядок плюс ранг последним, ближе
-     * к нику).
-     */
+    /** Сохранённый приоритет не меняем; новые источники дописываем в конец. */
     public List<LabelPreferences.Label> order(String playerName) {
-        List<LabelPreferences.Label> saved = preferences.order(playerName);
-        if (saved.isEmpty()) {
-            return defaultOrder();
-        }
         Set<LabelPreferences.Label> kept = new LinkedHashSet<>();
-        for (LabelPreferences.Label label : saved) {
-            if (label != null && label.group() == LabelPreferences.Group.NAME) {
-                kept.add(label);
-            }
+        for (LabelPreferences.Label label : preferences.order(playerName)) {
+            if (label != null && label.group() == LabelPreferences.Group.NAME) kept.add(label);
         }
-        List<LabelPreferences.Label> out = new ArrayList<>(kept);
-        // Недостающая метка (аддон новее настройки) встаёт перед рангом: ранг
-        // остаётся ближе к нику, а новая метка не выпадает из ника молча.
-        // Порядок недостающих — как в виде по умолчанию.
-        List<LabelPreferences.Label> missing = new ArrayList<>();
-        for (LabelPreferences.Label label : defaultOrder()) {
-            if (!kept.contains(label)) {
-                missing.add(label);
-            }
-        }
-        int rankAt = out.indexOf(LabelPreferences.Label.RANK);
-        if (rankAt < 0) {
-            out.addAll(missing);
-        } else {
-            out.addAll(rankAt, missing);
-        }
-        return List.copyOf(out);
+        kept.addAll(defaultOrder());
+        return List.copyOf(kept);
     }
 
-    /** Порядок по умолчанию: как было до 1.4.187. */
+    /** Стабильный приоритет, не зависящий от очередности запуска аддонов. */
     public List<LabelPreferences.Label> defaultOrder() {
-        List<String> ids = ranks.registrationOrder();
-        List<LabelPreferences.Label> out = new ArrayList<>();
-        if (ids != null) {
-            for (int index = ids.size() - 1; index >= 0; index--) {
-                LabelPreferences.Label label =
-                        LabelPreferences.Label.byNameTagId(ids.get(index));
-                if (label != null && !out.contains(label)) {
-                    out.add(label);
-                }
-            }
-        }
-        for (LabelPreferences.Label label : LabelPreferences.Label.nameTags()) {
-            if (!out.contains(label)) {
-                out.add(label);
-            }
-        }
-        out.remove(LabelPreferences.Label.RANK);
-        out.add(LabelPreferences.Label.RANK);
-        return List.copyOf(out);
+        return List.of(LabelPreferences.Label.RANK, LabelPreferences.Label.CLASSES,
+                LabelPreferences.Label.GUILDS, LabelPreferences.Label.TREASURES,
+                LabelPreferences.Label.TIERFORGE, LabelPreferences.Label.STREAMS,
+                LabelPreferences.Label.QUESTS, LabelPreferences.Label.ACHIEVEMENTS);
     }
 
     /**

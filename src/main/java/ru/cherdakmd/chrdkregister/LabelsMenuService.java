@@ -109,7 +109,8 @@ public final class LabelsMenuService implements Listener {
         for (int slot = 0; slot < SIZE; slot++) {
             inventory.setItem(slot, filler);
         }
-        inventory.setItem(HEAD_SLOT, head(player));
+        LabelStyleService.Selection selection = selectionOf(plugin, player.getName());
+        inventory.setItem(HEAD_SLOT, head(player, selection));
         inventory.setItem(PREVIEW_SLOT, preview(player));
         List<LabelPreferences.Label> labels = LabelPreferences.Label.nameTags();
         // Шапка таба — не метка рядом с ником, но такая же надпись: ставим её
@@ -117,7 +118,7 @@ public final class LabelsMenuService implements Listener {
         List<LabelPreferences.Label> tiles = new ArrayList<>(labels);
         tiles.add(LabelPreferences.Label.HEADER);
         for (int index = 0; index < Math.min(ENTRY_SLOTS.length, tiles.size()); index++) {
-            inventory.setItem(ENTRY_SLOTS[index], tile(player, tiles.get(index)));
+            inventory.setItem(ENTRY_SLOTS[index], tile(player, tiles.get(index), selection));
         }
         if (styleMenu != null) {
             inventory.setItem(COLORS_SLOT, colorButton(player));
@@ -157,7 +158,7 @@ public final class LabelsMenuService implements Listener {
     }
 
     /** Голова: сколько надписей включено из скольких. */
-    private ItemStack head(Player player) {
+    private ItemStack head(Player player, LabelStyleService.Selection selection) {
         ItemStack item = new ItemStack(Material.PLAYER_HEAD);
         if (!(item.getItemMeta() instanceof org.bukkit.inventory.meta.SkullMeta meta)) {
             return item;
@@ -171,6 +172,7 @@ public final class LabelsMenuService implements Listener {
                 "total", String.valueOf(total)));
         List<Component> lore = new ArrayList<>();
         lore.addAll(plugin.messages().getList("labels.menu-head-lore"));
+        if (selection != null) lore.add(summary(plugin.messages(), selection));
         meta.lore(lore);
         item.setItemMeta(meta);
         return item;
@@ -202,7 +204,7 @@ public final class LabelsMenuService implements Listener {
     }
 
     /** Плитка одной надписи: иконка, состояние и подсказка. */
-    private ItemStack tile(Player player, LabelPreferences.Label label) {
+    private ItemStack tile(Player player, LabelPreferences.Label label, LabelStyleService.Selection selection) {
         boolean visible = preferences.visible(player.getName(), label);
         ItemStack item = new ItemStack(icon(label));
         ItemMeta meta = item.getItemMeta();
@@ -218,10 +220,33 @@ public final class LabelsMenuService implements Listener {
         lore.add(descOf(label));
         lore.add(plugin.messages().get(visible
                 ? "labels.menu-lore-state-on" : "labels.menu-lore-state-off"));
+        lore.add(plugin.messages().get("labels.source-state", "value",
+                stateOf(plugin.messages(), preferences, player.getName(), label, selection)));
         lore.add(plugin.messages().get("labels.menu-lore-click"));
         meta.lore(lore);
         item.setItemMeta(meta);
         return item;
+    }
+
+    /** Один снимок используется для всех плиток, команды и карточки игрока. */
+    static LabelStyleService.Selection selectionOf(RegisterPlugin plugin, String playerName) {
+        ChatService chat = plugin.chatService();
+        return chat == null || chat.labelStyles() == null ? null : chat.labelStyles().selection(playerName);
+    }
+
+    static Component summary(Messages messages, LabelStyleService.Selection selection) {
+        return messages.get("labels.display-summary", "shown", selection.shown().size(),
+                "limit", selection.limit(), "waiting", selection.overflow().size());
+    }
+
+    static Messages.Trusted stateOf(Messages messages, LabelPreferences preferences, String playerName,
+                                   LabelPreferences.Label label, LabelStyleService.Selection selection) {
+        if (!preferences.visible(playerName, label)) return messages.mini("labels.value-off");
+        if (label == LabelPreferences.Label.HEADER || selection == null || selection.displayed(label)) {
+            return messages.mini("labels.value-on");
+        }
+        return selection.deferred(label) ? messages.mini("labels.value-waiting")
+                : messages.mini("labels.value-unavailable");
     }
 
     /* ------------------------------ тексты и иконки ------------------------------ */

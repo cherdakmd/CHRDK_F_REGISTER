@@ -476,7 +476,7 @@ public final class RegisterPlugin extends JavaPlugin {
         return palette;
     }
 
-    /** Лимиты пресетов по ступеням ранга (1.4.187). */
+    /** Лимиты пресетов и надписей по ступеням ранга. */
     public LabelLimits labelLimits() {
         return labelLimits;
     }
@@ -487,6 +487,8 @@ public final class RegisterPlugin extends JavaPlugin {
         this.labelLimits = LabelLimits.fromConfig(getConfig());
         if (chatService != null) {
             chatService.setPalette(palette);
+            chatService.setRankNameInTab(getConfig().getBoolean("tablist.show-rank-name", true));
+            if (chatService.labelStyles() != null) chatService.labelStyles().applyLimits(labelLimits);
         }
         if (labelsMenu != null) {
             labelsMenu.applySettings(palette, labelLimits);

@@ -203,8 +203,7 @@ public final class TabListService implements Listener {
 
     private void apply(Player player) {
         boolean showHeader = visible(player, LabelPreferences.Label.HEADER);
-        boolean showRank = visible(player, LabelPreferences.Label.RANK);
-        TabContext context = contextOf(player, System.currentTimeMillis(), showRank);
+        TabContext context = contextOf(player, System.currentTimeMillis());
         Messages messages = plugin.messages();
         // 1.4.183: игрок может спрятать шапку и подвал — тогда список остаётся
         // чистым, а не «с дырками» в полэкрана.
@@ -372,25 +371,14 @@ public final class TabListService implements Listener {
         return messages.renderTemplate(format, context.placeholders());
     }
 
-    /**
-     * Формат имени с названием ранга.
-     *
-     * <p>Старые конфиги знают только {@code %player_tagged%} — знак и цвет без
-     * слова «Покровитель». Чтобы обновление подхватилось без правки файла,
-     * суффикс {@code %rank_tag%} добавляется на лету, если его ещё нет в
-     * шаблоне; {@code tablist.show-rank-name: false} возвращает прежний вид.</p>
-     */
+    /** Старый отдельный %rank_tag% не должен дублировать ранг и обходить лимит. */
     static String nameFormat(String format, boolean showRankName) {
-        if (format == null || format.isBlank() || !showRankName
-                || format.contains("%rank_tag%")) {
-            return format;
-        }
-        return format + "%rank_tag%";
+        return format == null ? null : format.replace("%rank_tag%", "").strip();
     }
 
     // ------------------------------ сборка контекста -----------------------------
 
-    private TabContext contextOf(Player player, long nowMillis, boolean showRank) {
+    private TabContext contextOf(Player player, long nowMillis) {
         RegistrationStore.PlayerAccount account =
                 accessManager.store().getAccount(player.getName()).orElse(null);
         double tps;
@@ -415,38 +403,7 @@ public final class TabListService implements Listener {
                         accessManager.config().trialEnabled() && accessManager.store().isTrialEligible(player.getName(), player.getUniqueId()),
                         accessManager.config().trialDays(), plugin.messages(), navigation(player)),
                 nameDecorator.decorate(player.getName()),
-                showRank ? rankTag(player, nowMillis) : "");
-    }
-
-    /**
-     * Хвост « · Покровитель» для таба: название ступени в её оформлении.
-     *
-     * <p>Возвращает готовую MiniMessage-строку (её подставляет
-     * {@code %rank_tag%} как {@link Messages.Trusted}); без ранга — пусто,
-     * чтобы в списке не оставалось висящего разделителя.</p>
-     */
-    private String rankTag(Player player, long nowMillis) {
-        RankSettings ranks = accessManager.config().ranks();
-        int level = accessManager.store().rankLevel(player.getName(), nowMillis);
-        return rankTagText(ranks, level);
-    }
-
-    /**
-     * Хвост с названием ступени по настройкам и уровню — чистая логика для теста.
-     *
-     * <p>{@code ranks.show-name-in-chat} уже дописывает ступень в
-     * {@code %player_tagged%} («ник · Покровитель»): второй раз то же слово
-     * в табе не нужно.</p>
-     */
-    static String rankTagText(RankSettings ranks, int level) {
-        if (ranks == null || !ranks.enabled() || ranks.showNameInChat()) {
-            return "";
-        }
-        RankTier tier = level <= 0 ? null : ranks.tier(level);
-        if (tier == null || tier.name().isBlank()) {
-            return "";
-        }
-        return " <dark_gray>·</dark_gray> " + tier.decorate(tier.name());
+                "");
     }
 
     private String navigation(Player player) {

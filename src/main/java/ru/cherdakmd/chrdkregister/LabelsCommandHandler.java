@@ -310,12 +310,12 @@ public final class LabelsCommandHandler implements CommandExecutor, TabCompleter
     /** Текущее состояние всех переключателей одной страницей. */
     private void sendStatus(Player player) {
         messages.send(player, "labels.header");
+        LabelStyleService.Selection selection = LabelsMenuService.selectionOf(plugin, player.getName());
+        if (selection != null) player.sendMessage(LabelsMenuService.summary(messages, selection));
         for (LabelPreferences.Label label : LabelPreferences.Label.values()) {
             messages.send(player, "labels.status-line",
                     "name", LabelsMenuService.nameOf(messages, label),
-                    "value", preferences.visible(player.getName(), label)
-                            ? messages.mini("labels.value-on")
-                            : messages.mini("labels.value-off"));
+                    "value", LabelsMenuService.stateOf(messages, preferences, player.getName(), label, selection));
         }
         messages.send(player, "labels.hint");
     }

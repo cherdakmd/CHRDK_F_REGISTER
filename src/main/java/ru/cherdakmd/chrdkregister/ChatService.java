@@ -78,6 +78,13 @@ public final class ChatService implements Listener {
     private volatile LabelPreferences labelPreferences;
     /** 1.4.187: цвет, порядок меток и сборка ника по настройкам игрока. */
     private volatile LabelStyleService labelStyles;
+    private volatile boolean rankNameInTab = true;
+
+    /** Снимок флага при reload, без чтения Bukkit-конфига из async-чата. */
+    void setRankNameInTab(boolean visible) {
+        this.rankNameInTab = visible;
+    }
+
     /** 1.4.187: палитра цветов ника; выключена — цвет даёт ранг или каталог. */
     private volatile LabelPalette palette = LabelPalette.disabled();
     /** 1.4.187: активные товары игрока — они открывают «каталожные» цвета. */
@@ -127,12 +134,8 @@ public final class ChatService implements Listener {
         boolean catalogTag = tag != null && !tag.isBlank();
         LabelStyleService styles = labelStyles;
         if (styles == null) {
-            // Хранилища настроек ещё нет (ранняя стадия запуска) — прежний путь.
-            String withRank = labelVisible(playerName, LabelPreferences.Label.RANK)
-                    ? decorateRank(playerName, base, catalogTag)
-                    : base;
-            return nameTags.decorate(playerName, withRank,
-                    id -> labelVisibleNameTag(playerName, id));
+            // До загрузки настроек не запускаем старую сборку префиксов.
+            return base;
         }
         // Купленный тег каталога главнее выбора игрока: оплаченное вперёд не
         // отбираем. Иначе свой цвет из палитры, затем цвет ступени.
@@ -175,21 +178,6 @@ public final class ChatService implements Listener {
         this.purchaseLookup = lookup == null ? name -> Set.of() : lookup;
     }
 
-    /** Личный переключатель надписей: без хранилища — всё видно (1.4.183). */
-    private boolean labelVisible(String playerName, LabelPreferences.Label label) {
-        LabelPreferences preferences = labelPreferences;
-        return preferences == null || preferences.visible(playerName, label);
-    }
-
-    /**
-     * Метка аддона по id его провайдера (1.4.186). Незнакомый id — видно:
-     * аддон новее ядра не должен терять подпись из-за незнакомого имени.
-     */
-    private boolean labelVisibleNameTag(String playerName, String nameTagId) {
-        LabelPreferences preferences = labelPreferences;
-        return preferences == null || preferences.visibleNameTag(playerName, nameTagId);
-    }
-
     /** Подключает личные переключатели надписей (1.4.183). */
     public void setLabelPreferences(LabelPreferences preferences) {
         this.labelPreferences = preferences;
@@ -220,32 +208,13 @@ public final class ChatService implements Listener {
             return null;
         }
         return new LabelStyleService.Rank(tier.level(), tier.badge(), tier.format(),
-                tier.name(), ranks.showNameInChat());
+                tier.name(), rankNameVisible(ranks.showNameInChat(),
+                        rankNameInTab));
     }
 
-    /**
-     * Оформление ника донатным рангом (1.4.167): знак перед ником и цвет ступени.
-     *
-     * <p>Оплаченный ранее тег каталога ({@code nick-color}, {@code sponsor}) главнее
-     * цвета ранга, пока не истёк: купленное вперёд не отбираем. Знак ранга при этом
-     * остаётся — он и есть визитная карточка ступени.</p>
-     */
-    private String decorateRank(String playerName, String name, boolean hasLegacyTag) {
-        RankSettings ranks = accessManager.config().ranks();
-        if (ranks == null || !ranks.enabled()) {
-            return name;
-        }
-        int level = accessManager.store().rankLevel(playerName, System.currentTimeMillis());
-        RankTier tier = level <= 0 ? null : ranks.tier(level);
-        if (tier == null) {
-            return name;
-        }
-        String decorated = hasLegacyTag ? name : tier.decorate(name);
-        String prefix = tier.badge().isBlank() ? "" : tier.badge() + " ";
-        if (ranks.showNameInChat()) {
-            return prefix + decorated + " <dark_gray>·</dark_gray> " + tier.decorate(tier.name());
-        }
-        return prefix + decorated;
+    /** Название больше не приписывается в TAB отдельно, в обход лимита. */
+    static boolean rankNameVisible(boolean inChat, boolean inTab) {
+        return inChat || inTab;
     }
 
     /** Сборка ника по настройкам игрока (1.4.187); {@code null} до загрузки. */

@@ -129,7 +129,7 @@ public final class LabelsStyleMenuService implements Listener {
         for (int index = 0; index < Math.min(CONTENT_SLOTS.length, colors.size()); index++) {
             LabelPalette.Color color = colors.get(index);
             boolean allowed = palette.allowed(color, level, owned);
-            boolean active = color.id().equals(chosen);
+            boolean active = allowed && color.id().equals(chosen);
             inventory.setItem(CONTENT_SLOTS[index],
                     colorTile(player, color, allowed, active, level, owned));
         }
@@ -147,13 +147,7 @@ public final class LabelsStyleMenuService implements Listener {
         if (meta == null) {
             return item;
         }
-        Component suffix = active
-                ? plugin.messages().get("labels.color-active-mark")
-                : allowed ? Component.empty()
-                : plugin.messages().get("labels.color-locked-mark");
-        meta.displayName(plugin.messages().get("labels.color-name",
-                "name", Messages.trusted(color.name()),
-                "mark", suffix));
+        meta.displayName(colorName(plugin.messages(), color, allowed, active));
         List<Component> lore = new ArrayList<>();
         lore.add(plugin.messages().get("labels.color-sample",
                 "sample", Messages.trusted(preview(player.getName(), color))));
@@ -172,6 +166,13 @@ public final class LabelsStyleMenuService implements Listener {
         return item;
     }
 
+    /** Статус цвета — доверенная разметка, не Component.toString() в подстановке. */
+    static Component colorName(Messages messages, LabelPalette.Color color, boolean allowed, boolean active) {
+        Messages.Trusted mark = allowed && active ? messages.mini("labels.color-active-mark")
+                : allowed ? Messages.trusted("") : messages.mini("labels.color-locked-mark");
+        return messages.get("labels.color-name", "name", Messages.trusted(color.name()), "mark", mark);
+    }
+
     /** Подпись-образец: ник игрока в этом цвете, без разметки меню. */
     private String preview(String playerName, LabelPalette.Color color) {
         return LabelPalette.apply(color, Messages.escape(playerName));
@@ -181,20 +182,28 @@ public final class LabelsStyleMenuService implements Listener {
 
     private void paintOrder(Player player, Inventory inventory) {
         List<LabelPreferences.Label> order = orderOf(player.getName());
+        LabelStyleService.Selection selection = LabelsMenuService.selectionOf(plugin, player.getName());
         for (int index = 0; index < Math.min(CONTENT_SLOTS.length, order.size()); index++) {
             LabelPreferences.Label label = order.get(index);
             boolean first = index == 0;
             boolean last = index == order.size() - 1;
-            inventory.setItem(CONTENT_SLOTS[index], orderTile(player, label, index + 1, first, last));
+            inventory.setItem(CONTENT_SLOTS[index], orderTile(player, label, index + 1, first, last, selection));
         }
-        inventory.setItem(INFO_SLOT, button(Material.PAPER,
-                plugin.messages().get("labels.order-info")));
+        ItemStack info = button(Material.PAPER, plugin.messages().get("labels.order-info"));
+        if (selection != null) {
+            ItemMeta meta = info.getItemMeta();
+            if (meta != null) {
+                meta.lore(List.of(LabelsMenuService.summary(plugin.messages(), selection)));
+                info.setItemMeta(meta);
+            }
+        }
+        inventory.setItem(INFO_SLOT, info);
         inventory.setItem(RESET_SLOT, button(Material.MILK_BUCKET,
                 plugin.messages().get("labels.order-reset")));
     }
 
     private ItemStack orderTile(Player player, LabelPreferences.Label label, int position,
-                                boolean first, boolean last) {
+                                boolean first, boolean last, LabelStyleService.Selection selection) {
         ItemStack item = new ItemStack(Material.NAME_TAG);
         ItemMeta meta = item.getItemMeta();
         if (meta == null) {
@@ -206,6 +215,9 @@ public final class LabelsStyleMenuService implements Listener {
         List<Component> lore = new ArrayList<>();
         lore.add(plugin.messages().get("labels.order-preview",
                 "nick", Messages.trusted(samplePreview(player))));
+        lore.add(plugin.messages().get("labels.source-state", "value",
+                LabelsMenuService.stateOf(plugin.messages(), preferences, player.getName(), label, selection)));
+        lore.add(plugin.messages().get("labels.order-priority"));
         lore.add(plugin.messages().get(first
                 ? "labels.order-left-edge" : "labels.order-left"));
         lore.add(plugin.messages().get(last
