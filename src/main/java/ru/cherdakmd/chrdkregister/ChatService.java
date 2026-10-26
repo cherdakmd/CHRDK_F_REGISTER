@@ -74,6 +74,8 @@ public final class ChatService implements Listener {
     private volatile java.util.function.Function<String, String> tagResolver = name -> "";
     /** Оформление ников от аддонов (метка стримера и т.п.). */
     private final NameTags nameTags;
+    /** 1.4.183: что игрок показывает в своём нике; {@code null} — всё видно. */
+    private volatile LabelPreferences labelPreferences;
     private final Map<UUID, Set<String>> ignoreCache = new ConcurrentHashMap<>();
     private final Set<UUID> socialSpy = ConcurrentHashMap.newKeySet();
 
@@ -106,10 +108,40 @@ public final class ChatService implements Listener {
 
     /** Ник с оформлением товара и метками аддонов: {@code <gold>Nick</gold> [СТРИМ]}. */
     public String decoratedName(String playerName) {
+        return decoratedName(playerName,
+                labelVisible(playerName, LabelPreferences.Category.RANK),
+                labelVisible(playerName, LabelPreferences.Category.BADGES));
+    }
+
+    /**
+     * Ник с явно заданными флагами надписей (1.4.183).
+     *
+     * <p>Таб-лист передаёт флаги сам: он уже знает личные переключатели игрока.
+     * Остальной код (чат, личные сообщения) пользуется вариантом без флагов —
+     * он читает те же настройки из {@link LabelPreferences}.</p>
+     *
+     * @param showRank   показывать название и знак донатного ранга
+     * @param showBadges показывать метки аддонов (класс, гильдия, стример, звание)
+     */
+    public String decoratedName(String playerName, boolean showRank, boolean showBadges) {
         java.util.function.Function<String, String> resolver = tagResolver;
         String tag = resolver == null ? "" : resolver.apply(playerName);
         String base = ShopEntitlements.decorate(playerName, tag);
-        return nameTags.decorate(playerName, decorateRank(playerName, base, tag != null && !tag.isBlank()));
+        String withRank = showRank
+                ? decorateRank(playerName, base, tag != null && !tag.isBlank())
+                : base;
+        return showBadges ? nameTags.decorate(playerName, withRank) : withRank;
+    }
+
+    /** Личный переключатель надписей: без хранилища — всё видно (1.4.183). */
+    private boolean labelVisible(String playerName, LabelPreferences.Category category) {
+        LabelPreferences preferences = labelPreferences;
+        return preferences == null || preferences.visible(playerName, category);
+    }
+
+    /** Подключает личные переключатели надписей (1.4.183). */
+    public void setLabelPreferences(LabelPreferences preferences) {
+        this.labelPreferences = preferences;
     }
 
     /**

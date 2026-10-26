@@ -36,6 +36,10 @@ commands:
     description: "Кликабельная ссылка на вики игрока: команды, цены и лимиты сайтом"
     usage: /<command> [страница]
     aliases: [site]
+  labels:
+    description: "Что показывать в своём нике: ранг, метки аддонов и шапку таба"
+    usage: /<command> [rank|badges|header|all|on|off|reset]
+    aliases: [lab, tags]
   rankadmin:
     description: "Ручная выдача и снятие донатных рангов"
     permission: chrdkregister.admin
@@ -108,6 +112,9 @@ commands:
     aliases: [balancetop, topbal]
 
 permissions:
+  chrdkregister.labels:
+    description: "Переключать надписи в своём нике и шапку таб-листа"
+    default: true
   chrdkregister.menu:
     description: Главное меню сервера /menu (GUI)
     default: true

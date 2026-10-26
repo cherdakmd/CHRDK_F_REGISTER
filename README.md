@@ -50,10 +50,10 @@
 | Мир и территории | приваты (меню/карта/справка), дома, установка дома, RTP, TPA | 7 |
 | Снаряжение и питомцы | чары, тиры, артефакты и коллекция, косметика, питомцы | 6 |
 | Охота и события | охота, боссы, события, клады | 4 |
-| Общество | чат, отряд, гильдия, очередь, стримерская программа | 5 |
+| Общество | чат, отряд, гильдия, очередь, стримерская программа, оформление ника | 6 |
 | Главная | карточка игрока, вики сервера, подсказка «как пользоваться» | 3 |
 
-Всего 51 пункт. Главная страница: карточка игрока (ник, ранг, остаток срока)
+Всего 52 пункта. Главная страница: карточка игрока (ник, ранг, остаток срока)
 в слоте 4, **«Вики сервера» в 20**, семь разделов в ряду 10–16 и подсказка
 «как пользоваться» в 22.
 
@@ -110,6 +110,23 @@
   выключает ссылку и честно сообщает «не настроена», а не ломает разметку.
 - В консоли команда печатает голый адрес строкой. Тесты — `WikiSettingsTest`
   и `PresentationUpdateTest` (кнопка ведёт в существующую команду).
+
+## В табе порядок, надписи по желанию (1.4.183)
+
+В списке игроков был бардак: сортировка шла только по стажу, и оплаченный ранг
+ничего не значил. Теперь:
+
+- **Ранги по порядку.** Покровитель → Меценат → Хранитель → Следопыт →
+  Странник → без ранга; внутри одной ступени выше тот, у кого больше стажа.
+  Список раскладывают команды scoreboard (`!rk-a00` … `!rk-f99`) — клиент
+  сортирует ники по их имени. Закреп `pinned-names` остаётся выше всех.
+- **`/labels` — ник на выбор.** `rank` прячет название и знак донатного ранга,
+  `badges` — метки аддонов (класс, гильдия, стример, звание), `header` — шапку
+  и подвал таба; `all`/`on`/`off`/`reset` — всё сразу. Настройка личная
+  (`plugins/CHRDK_Core/labels.json`), переживает перезаход и перезапуск,
+  права, опыт, срок ранга и лимиты не меняет.
+
+Подробности — `docs/releases/1.4.183.md`.
 
 ## Класс и ремесло выбираются сразу (1.4.182)
 
@@ -547,6 +564,7 @@
 | `/logout` | — | Выйти из аккаунта и сбросить сессию по IP (пароль потребуется снова) |
 | `/session` | `/sessions` | Показать активные сессии аккаунта; `/session end` — завершить их все |
 | `/guide` | — | Получить книгу-путеводитель по серверу |
+| `/labels [rank\|badges\|header\|all\|on\|off\|reset]` | `/lab`, `/tags` | Что показывать в своём нике: ранг, метки аддонов и шапку таба (личная настройка, права не меняет) |
 
 ### Команды чата (для игроков)
 | Команда | Алиасы | Описание |
@@ -845,7 +863,7 @@ pass:
 # её пункты, «Назад» (back-*) и «Закрыть» (close-*). Пункт без command — подсказка:
 # иконка видна, клик ничего не делает. Категория без доступных пунктов исчезает с
 # главной, пункт скрывается, если выключен его аддон (plugin) или нет права.
-# Полный стоковый набор (7 разделов, 50 пунктов) — в config.yml ресурса плагина.
+# Полный стоковый набор (7 разделов, 52 пункта) — в config.yml ресурса плагина.
 server-menu:
   enabled: true
   title: "<gold>Меню сервера</gold>"
@@ -1192,8 +1210,9 @@ tablist:
     - "<gray>2FA: <white>%security%</white> <dark_gray>•</dark_gray> <yellow>%ping% мс</yellow> <dark_gray>•</dark_gray> %world%"
     - "<aqua>%navigation%</aqua>"
     - ""
-  # Пусто: не перекрашивать чужие префиксы/имена; CHRDK_Ranks управляет сортировкой.
-  player-name-format: ""
+  # %player_tagged% — ник с оформлением (ранг, метка стримера, звание кладоискателя),
+  # %rank_tag% — хвост « · Покровитель». Скрыть их у себя игрок может через /labels.
+  player-name-format: "%player_tagged%%rank_tag%"
   # Никнеймы, закреплённые ВВЕРХУ списка игроков (регистр не важен).
   # Реализовано через приоритетную команду scoreboard — клиент Minecraft
   # сортирует список сначала по команде, потом по нику.
@@ -1202,6 +1221,37 @@ tablist:
   pinned-names:
     - kalinin_play
 ```
+
+### Порядок в табе и `/labels` (1.4.183)
+
+Список игроков сортирует CHRDK_Ranks — клиент Minecraft раскладывает ники по
+имени команды scoreboard, поэтому порядок задаётся не текстом, а командой:
+
+1. **Донатный ранг** — Покровитель → Меценат → Хранитель → Следопыт →
+   Странник → без ранга (`!rk-a…` … `!rk-f…`).
+2. **Звание за стаж** внутри одной ступени — от высшего к низшему (`00` … `25`,
+   `99` — звания ещё нет).
+3. Закреп `pinned-names` (`!chrdk-pin`) всегда выше всех: буква `c` идёт раньше `r`.
+
+Раньше сортировка была только по стажу, и оплаченный ранг в списке ничего не
+значил — теперь он задаёт группу, а набитые часы решают, кто выше внутри неё.
+
+Оформление своего ника игрок настраивает сам — `/labels`:
+
+| Команда | Что делает |
+|---|---|
+| `/labels` | Показать состояние всех переключателей |
+| `/labels rank` | Скрыть/показать название и знак донатного ранга |
+| `/labels badges` | Скрыть/показать метки аддонов: класс, гильдия, стример, звание |
+| `/labels header` | Скрыть/показать шапку и подвал таб-листа (их видит только сам игрок) |
+| `/labels all` | Переключить всё сразу: спрятать всё / вернуть всё |
+| `/labels on` · `/labels off` | Показать всё / скрыть всё |
+| `/labels reset` | Вернуть оформление по умолчанию (видно всё) |
+
+Настройка личная (`plugins/CHRDK_Core/labels.json`), переживает перезаход и
+перезапуск, ключ — ник без регистра. Скрытие надписей не меняет права, опыт,
+срок ранга и лимиты: это оформление, а не привилегия. Таб-лист общий, поэтому
+спрятанный ранг исчезает у всех — «только для себя» ванильный клиент не умеет.
 
 После заполнения `api-token` и `payment-url` выполни `/pass reload` (или перезапусти сервер).
 
@@ -3323,36 +3373,36 @@ lines)`. `ProfileContext` несёт UUID, ник, признак «онлайн
 ./gradlew build
 ```
 
-Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.182.jar`,
-аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.182.jar`,
-реферальный — `referrals/build/libs/chrdk-referrals-1.4.182.jar`, ежедневки —
-`daily-rewards/build/libs/chrdk-daily-rewards-1.4.182.jar`, телепорты —
-`teleports/build/libs/chrdk-teleports-1.4.182.jar`, чары —
-`enchants/build/libs/chrdk-enchants-1.4.182.jar`, тир-крафт —
-`tier-forge/build/libs/chrdk-tier-forge-1.4.182.jar`, артефакты —
-`artifacts/build/libs/chrdk-artifacts-1.4.182.jar` (хартия чар — при установленном аддоне чар),
-достижения — `achievements/build/libs/chrdk-achievements-1.4.182.jar`, навыки —
-`skills/build/libs/chrdk-skills-1.4.182.jar`, клады —
-`treasures/build/libs/chrdk-treasures-1.4.182.jar`, общие цели —
-`common-goals/build/libs/chrdk-common-goals-1.4.182.jar`, приваты —
-`claims/build/libs/chrdk-claims-1.4.182.jar`, звания за стаж —
-`ranks/build/libs/chrdk-ranks-1.4.182.jar`, косметика проходки —
-`cosmetics/build/libs/chrdk-cosmetics-1.4.182.jar`, батлпасс —
-`battlepass/build/libs/chrdk-battlepass-1.4.182.jar`, очередь входа —
-`queue/build/libs/chrdk-queue-1.4.182.jar`, стримерская программа —
-`streams/build/libs/chrdk-streams-1.4.182.jar`, лотерея —
-`lottery/build/libs/chrdk-lottery-1.4.182.jar`, аукцион —
-`auction/build/libs/chrdk-auction-1.4.182.jar`, питомцы —
-`pets/build/libs/chrdk-pets-1.4.182.jar`, заказы —
-`orders/build/libs/chrdk-orders-1.4.182.jar`, охота —
-`hunt/build/libs/chrdk-hunt-1.4.182.jar`, группы —
-`party/build/libs/chrdk-party-1.4.182.jar`, события —
-`events/build/libs/chrdk-events-1.4.182.jar`, задания —
-`quests/build/libs/chrdk-quests-1.4.182.jar`, боссы —
-`bosses/build/libs/chrdk-bosses-1.4.182.jar`, гильдии —
-`guilds/build/libs/chrdk-guilds-1.4.182.jar`, классы —
-`classes/build/libs/chrdk-classes-1.4.182.jar`, профессии —
-`professions/build/libs/chrdk-professions-1.4.182.jar`. На сервер ядро
+Собираются все модули монорепозитория: ядро появится в `build/libs/chrdk-core-1.4.183.jar`,
+аддон CHRDK_DiamondShop — в `diamond-shop/build/libs/chrdk-diamond-shop-1.4.183.jar`,
+реферальный — `referrals/build/libs/chrdk-referrals-1.4.183.jar`, ежедневки —
+`daily-rewards/build/libs/chrdk-daily-rewards-1.4.183.jar`, телепорты —
+`teleports/build/libs/chrdk-teleports-1.4.183.jar`, чары —
+`enchants/build/libs/chrdk-enchants-1.4.183.jar`, тир-крафт —
+`tier-forge/build/libs/chrdk-tier-forge-1.4.183.jar`, артефакты —
+`artifacts/build/libs/chrdk-artifacts-1.4.183.jar` (хартия чар — при установленном аддоне чар),
+достижения — `achievements/build/libs/chrdk-achievements-1.4.183.jar`, навыки —
+`skills/build/libs/chrdk-skills-1.4.183.jar`, клады —
+`treasures/build/libs/chrdk-treasures-1.4.183.jar`, общие цели —
+`common-goals/build/libs/chrdk-common-goals-1.4.183.jar`, приваты —
+`claims/build/libs/chrdk-claims-1.4.183.jar`, звания за стаж —
+`ranks/build/libs/chrdk-ranks-1.4.183.jar`, косметика проходки —
+`cosmetics/build/libs/chrdk-cosmetics-1.4.183.jar`, батлпасс —
+`battlepass/build/libs/chrdk-battlepass-1.4.183.jar`, очередь входа —
+`queue/build/libs/chrdk-queue-1.4.183.jar`, стримерская программа —
+`streams/build/libs/chrdk-streams-1.4.183.jar`, лотерея —
+`lottery/build/libs/chrdk-lottery-1.4.183.jar`, аукцион —
+`auction/build/libs/chrdk-auction-1.4.183.jar`, питомцы —
+`pets/build/libs/chrdk-pets-1.4.183.jar`, заказы —
+`orders/build/libs/chrdk-orders-1.4.183.jar`, охота —
+`hunt/build/libs/chrdk-hunt-1.4.183.jar`, группы —
+`party/build/libs/chrdk-party-1.4.183.jar`, события —
+`events/build/libs/chrdk-events-1.4.183.jar`, задания —
+`quests/build/libs/chrdk-quests-1.4.183.jar`, боссы —
+`bosses/build/libs/chrdk-bosses-1.4.183.jar`, гильдии —
+`guilds/build/libs/chrdk-guilds-1.4.183.jar`, классы —
+`classes/build/libs/chrdk-classes-1.4.183.jar`, профессии —
+`professions/build/libs/chrdk-professions-1.4.183.jar`. На сервер ядро
 обязательно, аддоны — по желанию (требуют ядро 1.4.6+). К релизу на GitHub
 прикладывается **один архив** `chrdk-plugins-<версия>.zip`: ядро и все 29 аддонов
 одной версии (30 JAR) плюс памятка `ОБНОВЛЕНИЕ.txt`. Отдельные JAR больше не

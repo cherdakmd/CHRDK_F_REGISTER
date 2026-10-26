@@ -29,14 +29,32 @@ class RankLadderTest {
     @Test
     void higherTierSortsFirstInTab() {
         // клиент сортирует по имени команды: высшее звание (индекс 0) — первая строка
-        assertEquals("!rk-a", RankLadder.teamNameFor(0));
-        assertEquals("!rk-b", RankLadder.teamNameFor(1));
-        assertEquals("!rk-c", RankLadder.teamNameFor(2));
-        assertTrue(RankLadder.teamNameFor(0).compareTo(RankLadder.teamNameFor(1)) < 0);
+        assertEquals("!rk-f00", RankLadder.teamNameFor(0, 0), "без ранга, высшее звание");
+        assertEquals("!rk-f01", RankLadder.teamNameFor(0, 1));
+        assertEquals("!rk-f02", RankLadder.teamNameFor(0, 2));
+        assertEquals("!rk-f99", RankLadder.teamNameFor(0, -1), "без звания — последняя строка");
+        assertTrue(RankLadder.teamNameFor(0, 0).compareTo(RankLadder.teamNameFor(0, 1)) < 0);
+        assertTrue(RankLadder.teamNameFor(0, 2).compareTo(RankLadder.teamNameFor(0, -1)) < 0);
         // закреп ника ядра (!chrdk-pin) остаётся выше любых званий
-        assertTrue("!chrdk-pin".compareTo(RankLadder.teamNameFor(0)) < 0);
-        assertNull(RankLadder.teamNameFor(-1));
-        assertNull(RankLadder.teamNameFor(100));
+        assertTrue("!chrdk-pin".compareTo(RankLadder.teamNameFor(5, 0)) < 0);
+    }
+
+    @Test
+    void donorRankGoesBeforePlaytimeTier() {
+        // 1.4.183: Покровитель с любым (даже нулевым) стажем — выше Мецената
+        assertEquals("!rk-a99", RankLadder.teamNameFor(5, -1));
+        assertEquals("!rk-b99", RankLadder.teamNameFor(4, -1));
+        assertTrue(RankLadder.teamNameFor(5, -1).compareTo(RankLadder.teamNameFor(4, 0)) < 0,
+                "высшая ступень ранга важнее лучшего стажа");
+        assertTrue(RankLadder.teamNameFor(5, 3).compareTo(RankLadder.teamNameFor(5, 4)) < 0,
+                "внутри одного ранга выше тот, у кого больше стажа");
+        assertTrue(RankLadder.teamNameFor(3, 0).compareTo(RankLadder.teamNameFor(1, 0)) < 0);
+        assertEquals("!rk-f99", RankLadder.teamNameFor(0, -1));
+        // границы: битый уровень не ломает имя команды
+        assertEquals("!rk-a00", RankLadder.teamNameFor(99, 0), "уровень выше пятого зажат");
+        assertEquals("!rk-f00", RankLadder.teamNameFor(-7, 0), "отрицательный — это «нет ранга»");
+        assertEquals("!rk-a25", RankLadder.teamNameFor(5, 999), "индекс звания зажат");
+        assertTrue(RankLadder.teamNameFor(5, 0).length() <= 16, "имя команды влезает в лимит");
     }
 
     @Test

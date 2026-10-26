@@ -5,10 +5,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 /**
  * Тик-сервис: засчитывает наигранное время, вручает звания с церемонией
@@ -17,7 +14,6 @@ import java.util.UUID;
 final class RanksService {
 
     private final RanksPlugin plugin;
-    private final Map<UUID, Integer> assignedTier = new HashMap<>();
 
     RanksService(RanksPlugin plugin) {
         this.plugin = plugin;
@@ -69,27 +65,34 @@ final class RanksService {
         }
     }
 
-    /** Команда TAB-сортировки по текущему званию. Межзвание снимает старую команду. */
+    /**
+     * Команда TAB-сортировки: сначала донатный ранг, потом звание за стаж
+     * (1.4.183).
+     *
+     * <p>Раньше команда кодировала только звание, и оплаченный ранг в списке
+     * ничего не значил — Покровитель мог стоять под Странником. Теперь имя
+     * команды собирает {@link RankLadder#teamNameFor(int, int)}. Чужие команды
+     * (закреп ядра, LuckPerms, TAB) не трогаем: там свои правила.</p>
+     */
     private void assignTeam(Player player, int tier) {
-        Integer previous = assignedTier.get(player.getUniqueId());
-        if (previous != null && previous == tier) {
-            return; // команда уже правильная — не дёргаем сеть
-        }
-        assignedTier.put(player.getUniqueId(), tier);
         Scoreboard board = Bukkit.getScoreboardManager() == null
                 ? null : Bukkit.getScoreboardManager().getMainScoreboard();
         if (board == null) {
             return;
+        }
+        Team current = board.getEntryTeam(player.getName());
+        if (current != null && !RankLadder.isManagedTeam(current.getName())) {
+            return; // игрок закреплён другой командой — не спорим
+        }
+        String teamName = RankLadder.teamNameFor(plugin.rankLevel(player), tier);
+        if (current != null && teamName.equals(current.getName())) {
+            return; // уже в нужной команде — скорборд не трогаем
         }
         // снять со всех наших команд (игрок мог «спуститься» после /ranksadmin set)
         for (Team team : board.getTeams()) {
             if (RankLadder.isManagedTeam(team.getName()) && team.hasEntry(player.getName())) {
                 team.removeEntry(player.getName());
             }
-        }
-        String teamName = RankLadder.teamNameFor(tier);
-        if (teamName == null) {
-            return; // без звания — обычная сортировка
         }
         Team team = board.getTeam(teamName);
         if (team == null) {
@@ -100,7 +103,6 @@ final class RanksService {
 
     /** Зачистка при выгрузке: убрать управляемые команды целиком. */
     void clearManagedTeams() {
-        assignedTier.clear();
         if (Bukkit.getScoreboardManager() == null) {
             return;
         }
@@ -111,9 +113,8 @@ final class RanksService {
         }
     }
 
-    /** При смене лестницы через reload: сбросить кэш назначений и пересадить онлайн. */
+    /** При смене лестницы через reload: пересадить онлайн в новые команды. */
     void refreshAllOnline() {
-        assignedTier.clear();
         for (Player player : Bukkit.getOnlinePlayers()) {
             evaluate(player, plugin.store().secondsOf(player.getUniqueId()));
             // устаревшие id вручённых званий после смены лестницы

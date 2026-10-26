@@ -112,6 +112,29 @@ messages:
     "register": "<yellow>Использование: /register <пароль> <повтор></yellow>"
 
   # ---------------------------------------------------------------
+  # labels — /labels: что игрок показывает в своём нике (1.4.183)
+  # ---------------------------------------------------------------
+  "labels":
+    "header": "<gold>Оформление ника</gold> <dark_gray>·</dark_gray> <gray>что видят другие в табе и чате</gray>"
+    "status-line": "<gray>%name%: %value%</gray>"
+    "name-rank": "<white>Ранг</white> <dark_gray>(название и знак ступени)</dark_gray>"
+    "name-badges": "<white>Метки</white> <dark_gray>(класс, гильдия, стример, звание)</dark_gray>"
+    "name-header": "<white>Шапка таба</white> <dark_gray>(видит только сам игрок)</dark_gray>"
+    "value-on": "<green>видно</green>"
+    "value-off": "<red>скрыто</red>"
+    "rank-on": "<green>Ранг снова виден</green> <gray>— название и знак ступени вернулись в ник.</gray>"
+    "rank-off": "<gray>Ранг скрыт</gray> <dark_gray>·</dark_gray> <gray>привилегии, опыт и срок остаются. Вернуть: <yellow>/labels rank</yellow></gray>"
+    "badges-on": "<green>Метки снова видны</green> <gray>— класс, гильдия, стример и звание вернулись в ник.</gray>"
+    "badges-off": "<gray>Метки скрыты</gray> <dark_gray>·</dark_gray> <gray>ник останется чистым. Вернуть: <yellow>/labels badges</yellow></gray>"
+    "header-on": "<green>Шапка таба включена</green> <gray>— онлайн, TPS и ссылки снова видны.</gray>"
+    "header-off": "<gray>Шапка таба скрыта</gray> <dark_gray>·</dark_gray> <gray>список игроков останется без подписей.</gray>"
+    "all-on": "<green>Все надписи включены</green> <dark_gray>·</dark_gray> <gray>ранг, метки и шапка снова видны.</gray>"
+    "all-off": "<gray>Все надписи скрыты</gray> <dark_gray>·</dark_gray> <gray>в табе и чате останется только ник. Настройка личная и не влияет на права.</gray>"
+    "reset": "<green>Оформление вернулось к обычному</green> <gray>— видно всё.</gray>"
+    "hint": "<gray>Переключить: <yellow>/labels rank</yellow>, <yellow>/labels badges</yellow>, <yellow>/labels header</yellow>; всё сразу — <yellow>/labels all</yellow>.</gray>"
+    "usage": "<yellow>Использование: /%label% [rank|badges|all|on|off|reset]</yellow>"
+
+  # ---------------------------------------------------------------
   # restriction — Блокировка команд и чата до авторизации
   # ---------------------------------------------------------------
   "restriction":
@@ -1151,7 +1174,7 @@ messages:
     "top-header": "<gold><b>Покровители гильдии</b></gold> <gray>(%count%)</gray>"
     "top-entry": "%badge% %rank% <white>%player%</white> <gray>— до %until%</gray>"
     "top-empty": "<gray>Пока никого: список открывают Меценаты и Покровители.</gray>"
-    "rules": "<gold><b>Что мы не продаём</b></gold>\n<gray>Никакой силы: урон, здоровье, броня, удача и шанс находки.</gray>\n<gray>Никакой валюты: множители алмазов, монет и осколков не продаются никогда.</gray>\n<gray>Опыт и добыча растут с рангом — но с потолком: +50 % опыта, +25 % добычи, +10 уровней навыка.</gray>\n<gray>Никаких админ-команд: /fly, /god, /back, /repair.</gray>\n<gray>Никакого приоритета выше заслуг: таб сортируется по стажу.</gray>\n<gray>Ранг делает удобнее, быстрее и красивее то, что и так доступно всем.</gray>"
+    "rules": "<gold><b>Что мы не продаём</b></gold>\n<gray>Никакой силы: урон, здоровье, броня, удача и шанс находки.</gray>\n<gray>Никакой валюты: множители алмазов, монет и осколков не продаются никогда.</gray>\n<gray>Опыт и добыча растут с рангом — но с потолком: +50 % опыта, +25 % добычи, +10 уровней навыка.</gray>\n<gray>Никаких админ-команд: /fly, /god, /back, /repair.</gray>\n<gray>Порядок в табе — по ступени ранга, внутри ступени — по стажу: это оформление, а не сила. Спрятать свои надписи можно командой <white>/labels</white>.</gray>\n<gray>Ранг делает удобнее, быстрее и красивее то, что и так доступно всем.</gray>"
     "legend-title": "Летопись гильдии"
     "legend-desc": "%player% вступил в летопись гильдии: %rank%. Ранг действует до %until%. Подарок от: %gift%"
     "permanent": "навсегда"
