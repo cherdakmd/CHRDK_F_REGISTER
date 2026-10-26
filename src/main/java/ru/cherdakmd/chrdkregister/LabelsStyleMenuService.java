@@ -73,18 +73,18 @@ public final class LabelsStyleMenuService implements Listener {
     /* -------------------------------- открытие -------------------------------- */
 
     public void openColors(Player player) {
-        open(player, Kind.COLORS, "labels.color-title");
+        open(player, Kind.COLORS, plugin.messages().get("labels.color-title"));
     }
 
     public void openOrder(Player player) {
-        open(player, Kind.ORDER, "labels.order-title");
+        open(player, Kind.ORDER, plugin.messages().get("labels.order-title"));
     }
 
     public void openPresets(Player player) {
-        open(player, Kind.PRESETS, "labels.preset-title");
+        open(player, Kind.PRESETS, plugin.messages().get("labels.preset-title"));
     }
 
-    private void open(Player player, Kind kind, String titleKey) {
+    private void open(Player player, Kind kind, Component title) {
         if (player == null) {
             return;
         }
@@ -93,8 +93,7 @@ public final class LabelsStyleMenuService implements Listener {
             return;
         }
         Holder holder = new Holder(kind, player.getUniqueId());
-        Inventory inventory = Bukkit.createInventory(holder, SIZE,
-                plugin.messages().get(titleKey));
+        Inventory inventory = Bukkit.createInventory(holder, SIZE, title);
         holder.bind(inventory);
         paint(player, holder);
         player.openInventory(inventory);

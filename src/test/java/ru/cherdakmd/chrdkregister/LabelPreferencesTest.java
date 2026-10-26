@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -172,8 +173,8 @@ class LabelPreferencesTest {
 
         @SuppressWarnings("unchecked")
         Map<String, Object> root = GSON.fromJson(preferences.snapshotJson(), LinkedHashMap.class);
-        assertEquals(2.0, ((Number) root.get("version")).doubleValue(),
-                "1.4.186 пишет формат версии 2: каждая надпись отдельно");
+        assertEquals(3.0, ((Number) root.get("version")).doubleValue(),
+                "1.4.187 пишет формат версии 3: надписи, порядок, цвет, пресеты");
         @SuppressWarnings("unchecked")
         Map<String, Object> players = (Map<String, Object>) root.get("players");
         assertEquals(List.of("alice", "bob"), List.copyOf(players.keySet()), "ключи отсортированы");
@@ -201,7 +202,7 @@ class LabelPreferencesTest {
         // Первое изменение переписывает файл в новом формате — без потери выбора.
         preferences.set("steve", LabelPreferences.Label.GUILDS, true);
         String json = Files.readString(preferences.file(), StandardCharsets.UTF_8);
-        assertTrue(json.contains("\"version\":2"), json);
+        assertTrue(json.contains("\"version\":3"), json);
         assertTrue(json.contains("\"rank\""), json);
         assertFalse(json.contains("\"badges\""), "старая группа больше не пишется");
     }
@@ -228,7 +229,14 @@ class LabelPreferencesTest {
         assertEquals(List.of(LabelPreferences.Label.GUILDS, LabelPreferences.Label.RANK,
                 LabelPreferences.Label.CLASSES), preferences.order("Steve"));
         // Шапка таба — не метка рядом с ником: в порядок она не попадает.
-        assertEquals(List.of(), fresh(dir).order("Steve") , "файл без сохранения ещё пуст");
+        preferences.setOrder("Steve", List.of(LabelPreferences.Label.GUILDS,
+                LabelPreferences.Label.HEADER, LabelPreferences.Label.RANK,
+                LabelPreferences.Label.CLASSES));
+        assertEquals(List.of(LabelPreferences.Label.GUILDS, LabelPreferences.Label.RANK,
+                LabelPreferences.Label.CLASSES), preferences.order("Steve"),
+                "шапка таба отброшена, порядок сохранён");
+        preferences.setOrder("Steve", List.of(LabelPreferences.Label.GUILDS,
+                LabelPreferences.Label.RANK, LabelPreferences.Label.CLASSES));
         preferences.saveNow();
         assertEquals(List.of(LabelPreferences.Label.GUILDS, LabelPreferences.Label.RANK,
                 LabelPreferences.Label.CLASSES), fresh(dir).order("Steve"));
@@ -237,7 +245,7 @@ class LabelPreferencesTest {
     @Test
     void orderIgnoresJunkAndDuplicates(@TempDir Path dir) {
         LabelPreferences preferences = fresh(dir);
-        preferences.setOrder("Steve", List.of(LabelPreferences.Label.RANK,
+        preferences.setOrder("Steve", Arrays.asList(LabelPreferences.Label.RANK,
                 LabelPreferences.Label.RANK, LabelPreferences.Label.HEADER, null));
         assertEquals(List.of(LabelPreferences.Label.RANK), preferences.order("Steve"),
                 "повтор и шапка таба отброшены");

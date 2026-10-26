@@ -68,7 +68,8 @@ class LabelPaletteTest {
     @Test
     void nullAndUnknownAreRejected() {
         assertFalse(palette().allowed(null, 5, Set.of()));
-        assertFalse(palette().allowed(CATALOG, 5, null), "нет товаров — только ранг");
+        assertTrue(palette().allowed(CATALOG, 5, null),
+                "null вместо списка товаров — как пустой список, а не падение");
         assertNull(palette().byId(null));
         assertNull(palette().byId("  "));
         assertNull(palette().byId("нет"));

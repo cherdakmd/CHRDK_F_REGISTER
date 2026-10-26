@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -79,9 +80,15 @@ class LabelStyleServiceTest {
 
     @Test
     void hiddenLabelNeverAppears() {
-        assertEquals("✦ [КЛ] Имя",
+        // Порядок «гильдия → класс → знак ранга»: гильдия скрыта, остальное
+        // сдвигается, но относительный порядок не меняется.
+        assertEquals("[КЛ] ✦ Имя",
                 plain().compose("Имя", "Имя", List.of(G, C, R), "✦", "", Set.of(G)),
                 "скрытая гильдия выпала из строки");
+        assertEquals("Имя",
+                plain().compose("Имя", "Имя", List.of(G, C, R), "✦", "",
+                        Set.of(G, C, R)),
+                "скрыто всё — остаётся только ник");
     }
 
     @Test
@@ -128,8 +135,12 @@ class LabelStyleServiceTest {
     @Test
     void defaultOrderKeepsOldLookAndRankLast(@TempDir Path dir) {
         List<LabelPreferences.Label> order = with(fresh(dir)).defaultOrder();
-        assertEquals(List.of(G, C, LabelPreferences.Label.ACHIEVEMENTS, R), order,
-                "порядок регистрации перевёрнут, ранг — последним, ближе к нику");
+        // Зарегистрированные метки — в обратном порядке регистрации, затем
+        // остальные по объявлению, ранг — последним, ближе к нику.
+        assertEquals(List.of(G, C, LabelPreferences.Label.ACHIEVEMENTS,
+                        LabelPreferences.Label.TIERFORGE, LabelPreferences.Label.TREASURES,
+                        LabelPreferences.Label.STREAMS, LabelPreferences.Label.QUESTS, R),
+                order, "порядок регистрации перевёрнут, ранг — последним, ближе к нику");
         assertTrue(order.containsAll(LabelPreferences.Label.nameTags()),
                 "все надписи на месте");
     }
@@ -137,11 +148,16 @@ class LabelStyleServiceTest {
     @Test
     void savedOrderKeepsRankWherePlayerPutIt(@TempDir Path dir) {
         LabelPreferences preferences = fresh(dir);
-        preferences.setOrder("Steve", List.of(G, R, C));
-        List<LabelPreferences.Label> order = with(preferences).order("Steve");
-        assertEquals(G, order.get(0));
-        assertEquals(R, order.get(1));
-        assertEquals(C, order.get(2));
+        LabelStyleService styles = with(preferences);
+        // Полный порядок, в котором ранг стоит вторым — не там, где по умолчанию.
+        List<LabelPreferences.Label> arranged = new ArrayList<>(styles.defaultOrder());
+        arranged.remove(R);
+        arranged.add(1, R);
+        preferences.setOrder("Steve", arranged);
+
+        List<LabelPreferences.Label> order = styles.order("Steve");
+        assertEquals(arranged, order, "сохранённый порядок не переставляется");
+        assertEquals(R, order.get(1), "ранг остался там, куда его поставил игрок");
         assertEquals(LabelPreferences.Label.nameTags().size(), order.size(),
                 "недостающие метки не потерялись");
     }

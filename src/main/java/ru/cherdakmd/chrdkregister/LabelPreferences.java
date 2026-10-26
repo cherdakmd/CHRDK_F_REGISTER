@@ -307,7 +307,7 @@ public final class LabelPreferences {
         if (!(raw instanceof List<?> list)) {
             return List.of();
         }
-        Set<Label> seen = EnumSet.noneOf(Label.class);
+        Set<Label> seen = new LinkedHashSet<>();
         for (Object item : list) {
             Label label = Label.byNameTagId(item == null ? null : String.valueOf(item));
             if (label != null) {

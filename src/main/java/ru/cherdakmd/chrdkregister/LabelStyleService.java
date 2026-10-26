@@ -182,18 +182,19 @@ public final class LabelStyleService {
         List<LabelPreferences.Label> out = new ArrayList<>(kept);
         // Недостающая метка (аддон новее настройки) встаёт перед рангом: ранг
         // остаётся ближе к нику, а новая метка не выпадает из ника молча.
-        List<LabelPreferences.Label> late = new ArrayList<>();
+        // Порядок недостающих — как в виде по умолчанию.
+        List<LabelPreferences.Label> missing = new ArrayList<>();
         for (LabelPreferences.Label label : defaultOrder()) {
-            if (kept.contains(label)) {
-                continue;
-            }
-            if (label == LabelPreferences.Label.RANK) {
-                late.add(label);
-            } else {
-                out.add(label);
+            if (!kept.contains(label)) {
+                missing.add(label);
             }
         }
-        out.addAll(late);
+        int rankAt = out.indexOf(LabelPreferences.Label.RANK);
+        if (rankAt < 0) {
+            out.addAll(missing);
+        } else {
+            out.addAll(rankAt, missing);
+        }
         return List.copyOf(out);
     }
 

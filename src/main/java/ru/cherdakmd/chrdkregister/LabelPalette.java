@@ -168,7 +168,9 @@ public final class LabelPalette {
      */
     public static String apply(Color color, String escapedName) {
         String name = escapedName == null ? "" : escapedName;
-        if (color == null) {
+        if (color == null || name.isEmpty()) {
+            // Пустое имя не оборачиваем в теги: иначе в меню и чате появляются
+            // пустые «цветные» строки.
             return name;
         }
         return color.format().replace("%name%", name);
