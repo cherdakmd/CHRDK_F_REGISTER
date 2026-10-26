@@ -12,7 +12,7 @@ import java.util.Set;
 
 /**
  * Единый вид ника в чате и TAB: имя первым, затем выбранные метки (1.4.190).
- * Порядок задаёт одновременно позицию и приоритет при ограничении по рангу.
+ * Каждое место содержит конкретный источник; автоматической подмены нет.
  * Старый API аддонов проецируется на отдельную метку без переноса их префиксов
  * или обёрток на имя. Цвета меток и персональные настройки сохраняются.
  */
@@ -29,7 +29,7 @@ public final class LabelStyleService {
         /** Оформление ступени игрока; {@code null} — ранга нет. */
         Rank view(String playerName);
 
-        /** Порядок регистрации меток аддонов — из него берётся вид по умолчанию. */
+        /** Исторический порядок регистрации; назначения мест больше от него не зависят. */
         List<String> registrationOrder();
     }
 
@@ -46,11 +46,20 @@ public final class LabelStyleService {
     /** Одна надпись; знак и название ранга вместе занимают одно место. */
     public record Decoration(LabelPreferences.Label source, String markup) { }
 
-    /** Снимок для сборки и меню: отсутствующие/скрытые источники не занимают мест. */
-    public record Selection(List<Decoration> shown, List<Decoration> overflow, int limit) {
+    /** Снимок для сборки и меню: назначения мест сохраняются при пропаже источника. */
+    public record Selection(List<Decoration> shown, List<Decoration> overflow, int limit, List<Decoration> available) {
+        public Selection(List<Decoration> shown, List<Decoration> overflow, int limit) {
+            this(shown, overflow, limit, java.util.stream.Stream.concat(shown.stream(), overflow.stream()).toList());
+        }
+
         public Selection {
+            available = List.copyOf(available);
             shown = List.copyOf(shown);
             overflow = List.copyOf(overflow);
+        }
+
+        public boolean obtained(LabelPreferences.Label label) {
+            return available.stream().anyMatch(entry -> entry.source() == label);
         }
 
         public boolean deferred(LabelPreferences.Label label) {
@@ -99,9 +108,48 @@ public final class LabelStyleService {
         String badge = rank == null || rank.badge() == null ? "" : rank.badge();
         String name = rank == null || !rank.showName() || rank.name() == null
                 ? "" : rankName(rank, customColor);
-        return select(playerName, order(playerName), badge, name,
-                Set.copyOf(preferences.hiddenLabels(playerName)),
-                limits.labelsFor(rank == null ? 0 : rank.level()));
+        List<Decoration> available = select(playerName, defaultOrder(), badge, name,
+                Set.of(), LabelLimits.MAX_LABELS).shown();
+        int limit = limits.labelsFor(rank == null ? 0 : rank.level());
+        List<Decoration> shown = new ArrayList<>();
+        List<Decoration> locked = new ArrayList<>();
+        List<String> assignments = assignments(playerName);
+        for (int i = 0; i < assignments.size(); i++) {
+            LabelPreferences.Label label = LabelPreferences.Label.byNameTagId(assignments.get(i));
+            if (label == null || !preferences.visible(playerName, label)) continue;
+            for (Decoration decoration : available) {
+                if (decoration.source() == label) {
+                    (i < limit ? shown : locked).add(decoration);
+                    break;
+                }
+            }
+        }
+        return new Selection(shown, locked, limit, available);
+    }
+
+    /** Все восемь назначений, включая пустые и временно заблокированные. */
+    public List<String> assignments(String playerName) {
+        List<String> saved = preferences.slots(playerName);
+        return saved != null ? saved : order(playerName).stream().map(LabelPreferences.Label::id).toList();
+    }
+
+    public enum AssignmentResult { APPLIED, LOCKED, UNAVAILABLE }
+
+    /** Повторная проверка лимита и наличия — также для клика из устаревшего окна. */
+    public AssignmentResult assign(String playerName, int index, LabelPreferences.Label label) {
+        Selection current = selection(playerName);
+        if (index < 0 || index >= current.limit()) return AssignmentResult.LOCKED;
+        if (label != null && (label.group() != LabelPreferences.Group.NAME || !current.obtained(label))) {
+            return AssignmentResult.UNAVAILABLE;
+        }
+        List<String> next = new ArrayList<>(assignments(playerName));
+        if (label != null) {
+            // Одна надпись — одно место: перенос, а не дублирование.
+            for (int i = 0; i < next.size(); i++) if (next.get(i).equals(label.id())) next.set(i, "");
+        }
+        next.set(index, label == null ? "" : label.id());
+        preferences.setSlots(playerName, next, label);
+        return AssignmentResult.APPLIED;
     }
 
     /** Чистая сборка для тестов, без персонального лимита. */
@@ -244,10 +292,13 @@ public final class LabelStyleService {
 
     /* --------------------------------- порядок --------------------------------- */
 
-    /** Сохранённый приоритет не меняем; новые источники дописываем в конец. */
+    /** Совместимый список источников для старых файлов и команд перемещения. */
     public List<LabelPreferences.Label> order(String playerName) {
         Set<LabelPreferences.Label> kept = new LinkedHashSet<>();
-        for (LabelPreferences.Label label : preferences.order(playerName)) {
+        List<String> explicit = preferences.slots(playerName);
+        List<LabelPreferences.Label> source = explicit == null ? preferences.order(playerName)
+                : explicit.stream().map(LabelPreferences.Label::byNameTagId).filter(java.util.Objects::nonNull).toList();
+        for (LabelPreferences.Label label : source) {
             if (label != null && label.group() == LabelPreferences.Group.NAME) kept.add(label);
         }
         kept.addAll(defaultOrder());
@@ -272,15 +323,13 @@ public final class LabelStyleService {
         if (label == null || direction == 0) {
             return false;
         }
-        List<LabelPreferences.Label> current = new ArrayList<>(order(playerName));
-        int index = current.indexOf(label);
+        List<String> current = new ArrayList<>(assignments(playerName));
+        int index = current.indexOf(label.id());
         int target = index + (direction < 0 ? -1 : 1);
-        if (index < 0 || target < 0 || target >= current.size()) {
-            return false;
-        }
-        current.remove(index);
-        current.add(target, label);
-        preferences.setOrder(playerName, current);
+        int limit = selection(playerName).limit();
+        if (index < 0 || index >= limit || target < 0 || target >= limit) return false;
+        java.util.Collections.swap(current, index, target);
+        preferences.setSlots(playerName, current);
         return true;
     }
 

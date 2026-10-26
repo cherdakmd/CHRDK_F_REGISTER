@@ -52,7 +52,7 @@ public final class LabelsStyleMenuService implements Listener {
     static final int CLOSE_SLOT = 53;
 
     /** Какой экран открыт — по нему обработчик понимает смысл клика. */
-    enum Kind { COLORS, ORDER, PRESETS }
+    enum Kind { COLORS, ORDER, PRESETS, PICKER }
 
     private final RegisterPlugin plugin;
     private final LabelPreferences preferences;
@@ -84,7 +84,25 @@ public final class LabelsStyleMenuService implements Listener {
         open(player, Kind.PRESETS, plugin.messages().get("labels.preset-title"));
     }
 
+    public void openSlot(Player player, int place) {
+        LabelStyleService styles = styles();
+        if (player == null || styles == null) return;
+        if (place < 0 || place >= styles.selection(player.getName()).limit()) {
+            plugin.messages().send(player, "labels.slot-locked");
+            return;
+        }
+        open(player, Kind.PICKER, plugin.messages().get("labels.slot-title", "number", place + 1), place);
+    }
+
+    private LabelStyleService styles() {
+        return plugin.chatService() == null ? null : plugin.chatService().labelStyles();
+    }
+
     private void open(Player player, Kind kind, Component title) {
+        open(player, kind, title, -1);
+    }
+
+    private void open(Player player, Kind kind, Component title, int place) {
         if (player == null) {
             return;
         }
@@ -92,7 +110,7 @@ public final class LabelsStyleMenuService implements Listener {
             plugin.messages().send(player, "error.no-permission");
             return;
         }
-        Holder holder = new Holder(kind, player.getUniqueId());
+        Holder holder = new Holder(kind, player.getUniqueId(), place);
         Inventory inventory = Bukkit.createInventory(holder, SIZE, title);
         holder.bind(inventory);
         paint(player, holder);
@@ -112,6 +130,7 @@ public final class LabelsStyleMenuService implements Listener {
             case COLORS -> paintColors(player, inventory);
             case ORDER -> paintOrder(player, inventory);
             case PRESETS -> paintPresets(player, inventory);
+            case PICKER -> paintPicker(player, inventory, holder.place);
         }
         inventory.setItem(BACK_SLOT, button(Material.ARROW,
                 plugin.messages().get("labels.style-back")));
@@ -181,50 +200,55 @@ public final class LabelsStyleMenuService implements Listener {
     /* --------------------------------- порядок --------------------------------- */
 
     private void paintOrder(Player player, Inventory inventory) {
-        List<LabelPreferences.Label> order = orderOf(player.getName());
-        LabelStyleService.Selection selection = LabelsMenuService.selectionOf(plugin, player.getName());
-        for (int index = 0; index < Math.min(CONTENT_SLOTS.length, order.size()); index++) {
-            LabelPreferences.Label label = order.get(index);
-            boolean first = index == 0;
-            boolean last = index == order.size() - 1;
-            inventory.setItem(CONTENT_SLOTS[index], orderTile(player, label, index + 1, first, last, selection));
+        for (int i = 0; i < LabelLimits.MAX_LABELS; i++) {
+            inventory.setItem(CONTENT_SLOTS[i], plugin.labelsMenu().placeTile(player, i));
         }
+        LabelStyleService.Selection selection = LabelsMenuService.selectionOf(plugin, player.getName());
         ItemStack info = button(Material.PAPER, plugin.messages().get("labels.order-info"));
-        if (selection != null) {
-            ItemMeta meta = info.getItemMeta();
-            if (meta != null) {
-                meta.lore(List.of(LabelsMenuService.summary(plugin.messages(), selection)));
-                info.setItemMeta(meta);
-            }
+        ItemMeta meta = info.getItemMeta();
+        if (meta != null && selection != null) {
+            meta.lore(List.of(LabelsMenuService.summary(plugin.messages(), selection),
+                    plugin.messages().get("labels.order-preview", "nick", Messages.trusted(samplePreview(player)))));
+            info.setItemMeta(meta);
         }
         inventory.setItem(INFO_SLOT, info);
-        inventory.setItem(RESET_SLOT, button(Material.MILK_BUCKET,
-                plugin.messages().get("labels.order-reset")));
+        inventory.setItem(RESET_SLOT, button(Material.MILK_BUCKET, plugin.messages().get("labels.order-reset")));
     }
 
-    private ItemStack orderTile(Player player, LabelPreferences.Label label, int position,
-                                boolean first, boolean last, LabelStyleService.Selection selection) {
-        ItemStack item = new ItemStack(Material.NAME_TAG);
-        ItemMeta meta = item.getItemMeta();
-        if (meta == null) {
-            return item;
+    private void paintPicker(Player player, Inventory inventory, int place) {
+        LabelStyleService styles = styles();
+        if (styles == null) return;
+        LabelStyleService.Selection selection = styles.selection(player.getName());
+        List<LabelPreferences.Label> labels = LabelPreferences.Label.nameTags();
+        String chosen = styles.assignments(player.getName()).get(place);
+        for (int i = 0; i < labels.size(); i++) {
+            LabelPreferences.Label label = labels.get(i);
+            boolean obtained = selection.obtained(label);
+            ItemStack tile = button(obtained ? Material.NAME_TAG : Material.GRAY_DYE,
+                    plugin.messages().get(label.id().equals(chosen) ? "labels.slot-selected" : "labels.menu-entry-on",
+                            "name", LabelsMenuService.nameOf(plugin.messages(), label)));
+            ItemMeta meta = tile.getItemMeta();
+            if (meta != null) {
+                List<Component> lore = new ArrayList<>();
+                selection.available().stream().filter(entry -> entry.source() == label).findFirst()
+                        .ifPresent(entry -> lore.add(plugin.messages().get("labels.slot-sample",
+                                "sample", Messages.trusted(entry.markup()))));
+                lore.add(plugin.messages().get(obtained ? "labels.slot-pick-hint" : "labels.slot-unavailable"));
+                lore.add(plugin.messages().get("labels.slot-single-source"));
+                meta.lore(lore);
+                tile.setItemMeta(meta);
+            }
+            inventory.setItem(CONTENT_SLOTS[i], tile);
         }
-        meta.displayName(plugin.messages().get("labels.order-name",
-                "position", String.valueOf(position),
-                "name", LabelsMenuService.nameOf(plugin.messages(), label)));
-        List<Component> lore = new ArrayList<>();
-        lore.add(plugin.messages().get("labels.order-preview",
-                "nick", Messages.trusted(samplePreview(player))));
-        lore.add(plugin.messages().get("labels.source-state", "value",
-                LabelsMenuService.stateOf(plugin.messages(), preferences, player.getName(), label, selection)));
-        lore.add(plugin.messages().get("labels.order-priority"));
-        lore.add(plugin.messages().get(first
-                ? "labels.order-left-edge" : "labels.order-left"));
-        lore.add(plugin.messages().get(last
-                ? "labels.order-right-edge" : "labels.order-right"));
-        meta.lore(lore);
-        item.setItemMeta(meta);
-        return item;
+        ItemStack info = button(Material.PAPER, plugin.messages().get("labels.slot-title", "number", place + 1));
+        ItemMeta meta = info.getItemMeta();
+        if (meta != null) {
+            meta.lore(List.of(plugin.messages().get("labels.order-preview", "nick", Messages.trusted(samplePreview(player))),
+                    plugin.messages().get("labels.slot-no-fallback")));
+            info.setItemMeta(meta);
+        }
+        inventory.setItem(INFO_SLOT, info);
+        inventory.setItem(RESET_SLOT, button(Material.BARRIER, plugin.messages().get("labels.slot-clear")));
     }
 
     /** Текущий ник целиком: по нему видно, как перестановка меняет строку. */
@@ -293,6 +317,13 @@ public final class LabelsStyleMenuService implements Listener {
                 || !holder.owner().equals(player.getUniqueId())) {
             return;
         }
+        if (!player.hasPermission("chrdkregister.labels")) {
+            player.closeInventory();
+            plugin.messages().send(player, "error.no-permission");
+            return;
+        }
+        if (event.getClick() != ClickType.LEFT && event.getClick() != ClickType.RIGHT
+                && !(holder.kind == Kind.PRESETS && event.getClick() == ClickType.SHIFT_RIGHT)) return;
         int slot = event.getRawSlot();
         if (slot < 0 || slot >= SIZE) {
             return;
@@ -314,6 +345,7 @@ public final class LabelsStyleMenuService implements Listener {
             case COLORS -> onColorClick(player, slot);
             case ORDER -> onOrderClick(player, slot, event.getClick());
             case PRESETS -> onPresetClick(player, slot, event.getClick());
+            case PICKER -> onPickerClick(player, slot, holder.place);
         }
         repaint(player, holder);
     }
@@ -360,20 +392,39 @@ public final class LabelsStyleMenuService implements Listener {
             return;
         }
         int index = indexOf(slot);
-        List<LabelPreferences.Label> order = orderOf(player.getName());
-        if (index < 0 || index >= order.size()) {
+        if (index < 0 || index >= LabelLimits.MAX_LABELS) return;
+        if (click.isRightClick()) applyAssignment(player, index, null);
+        else {
+            player.closeInventory();
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (player.isOnline()) openSlot(player, index);
+            });
+        }
+    }
+
+    private void onPickerClick(Player player, int slot, int place) {
+        if (slot == RESET_SLOT) {
+            applyAssignment(player, place, null);
             return;
         }
-        LabelPreferences.Label label = order.get(index);
-        int direction = click.isRightClick() ? 1 : -1;
-        if (!plugin.chatService().labelStyles().move(player.getName(), label, direction)) {
-            plugin.messages().send(player, "labels.order-edge");
-            return;
+        int index = indexOf(slot);
+        List<LabelPreferences.Label> labels = LabelPreferences.Label.nameTags();
+        if (index >= 0 && index < labels.size()) applyAssignment(player, place, labels.get(index));
+    }
+
+    private void applyAssignment(Player player, int place, LabelPreferences.Label label) {
+        LabelStyleService styles = styles();
+        if (styles == null) return;
+        switch (styles.assign(player.getName(), place, label)) {
+            case LOCKED -> plugin.messages().send(player, "labels.slot-locked");
+            case UNAVAILABLE -> plugin.messages().send(player, "labels.slot-unavailable");
+            case APPLIED -> {
+                plugin.messages().send(player, label == null ? "labels.slot-cleared" : "labels.slot-assigned",
+                        "number", place + 1, "name", label == null ? Messages.trusted("")
+                                : LabelsMenuService.nameOf(plugin.messages(), label));
+                plugin.refreshTab();
+            }
         }
-        plugin.messages().send(player, "labels.order-moved",
-                "name", LabelsMenuService.nameOf(plugin.messages(), label),
-                "position", String.valueOf(orderOf(player.getName()).indexOf(label) + 1));
-        plugin.refreshTab();
     }
 
     private void onPresetClick(Player player, int slot, ClickType click) {
@@ -441,12 +492,6 @@ public final class LabelsStyleMenuService implements Listener {
         return store == null ? 0 : store.rankLevel(playerName, System.currentTimeMillis());
     }
 
-    private List<LabelPreferences.Label> orderOf(String playerName) {
-        ChatService chat = plugin.chatService();
-        LabelStyleService styles = chat == null ? null : chat.labelStyles();
-        return styles == null ? LabelPreferences.Label.nameTags() : styles.order(playerName);
-    }
-
     static String slotId(int index) {
         return "p" + (index + 1);
     }
@@ -504,11 +549,17 @@ public final class LabelsStyleMenuService implements Listener {
     static final class Holder implements InventoryHolder {
         private final Kind kind;
         private final UUID owner;
+        private final int place;
         private Inventory inventory;
 
         Holder(Kind kind, UUID owner) {
+            this(kind, owner, -1);
+        }
+
+        Holder(Kind kind, UUID owner, int place) {
             this.kind = kind;
             this.owner = owner;
+            this.place = place;
         }
 
         Kind kind() {

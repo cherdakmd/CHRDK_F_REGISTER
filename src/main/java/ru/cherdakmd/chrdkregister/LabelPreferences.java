@@ -32,8 +32,8 @@ import java.util.logging.Logger;
  *
  * <p>Файл — {@code labels.json}:
  * <pre>{@code
- * { "version": 3, "players": { "cherdak": {
- *     "hidden": ["rank"], "order": ["guilds", "rank"], "color": "aqua",
+ * { "version": 4, "players": { "cherdak": {
+ *     "hidden": ["rank"], "slots": ["guilds", "classes"], "color": "aqua",
  *     "presets": { "p1": { "hidden": [], "order": [], "color": "gray" } } } } }
  * }</pre>
  * Ключ — ник в нижнем регистре: настройка переживает смену UUID и работает для
@@ -138,9 +138,14 @@ public final class LabelPreferences {
      * <p>Пресет — это и есть снимок {@link #snapshot(String)}: сохранили
      * текущий вид, потом вернулись к нему одной кнопкой.</p>
      */
-    public record Snapshot(int hidden, List<Label> order, String color) {
+    public record Snapshot(int hidden, List<Label> order, String color, List<String> slots) {
+
+        public Snapshot(int hidden, List<Label> order, String color) {
+            this(hidden, order, color, null);
+        }
 
         public Snapshot {
+            slots = normalizeSlots(slots);
             order = order == null ? List.of() : List.copyOf(order);
             color = color == null ? "" : color.trim().toLowerCase(Locale.ROOT);
         }
@@ -164,26 +169,30 @@ public final class LabelPreferences {
 
     /** Неизменяемое состояние игрока: новые записи — новый объект. */
     private record State(int hidden, List<Label> order, String color,
-                         Map<String, Snapshot> presets) {
+                         Map<String, Snapshot> presets, List<String> slots) {
 
-        static final State EMPTY = new State(0, List.of(), "", Map.of());
+        static final State EMPTY = new State(0, List.of(), "", Map.of(), null);
 
         State withHidden(int mask) {
-            return new State(mask, order, color, presets);
+            return new State(mask, order, color, presets, slots);
         }
 
         State withOrder(List<Label> next) {
-            return new State(hidden, next, color, presets);
+            return new State(hidden, next, color, presets, null);
+        }
+
+        State withSlots(List<String> next) {
+            return new State(hidden, order, color, presets, normalizeSlots(next));
         }
 
         State withColor(String next) {
-            return new State(hidden, order, next, presets);
+            return new State(hidden, order, next, presets, slots);
         }
 
         State withPreset(String slot, Snapshot snapshot) {
             Map<String, Snapshot> next = new LinkedHashMap<>(presets);
             next.put(slot, snapshot);
-            return new State(hidden, order, color, Map.copyOf(next));
+            return new State(hidden, order, color, Map.copyOf(next), slots);
         }
 
         State withoutPreset(String slot) {
@@ -192,11 +201,11 @@ public final class LabelPreferences {
             }
             Map<String, Snapshot> next = new LinkedHashMap<>(presets);
             next.remove(slot);
-            return new State(hidden, order, color, Map.copyOf(next));
+            return new State(hidden, order, color, Map.copyOf(next), slots);
         }
 
         boolean isEmpty() {
-            return hidden == 0 && order.isEmpty() && color.isEmpty() && presets.isEmpty();
+            return hidden == 0 && order.isEmpty() && color.isEmpty() && presets.isEmpty() && slots == null;
         }
 
         /** Видна ли надпись при этом состоянии: та же маска, что и в {@link Snapshot}. */
@@ -211,7 +220,7 @@ public final class LabelPreferences {
      */
     static final String LEGACY_BADGES = "badges";
 
-    private static final int VERSION = 3;
+    private static final int VERSION = 4;
 
     private final Gson gson = new GsonBuilder().disableHtmlEscaping().create();
     private final Path file;
@@ -263,7 +272,7 @@ public final class LabelPreferences {
         }
     }
 
-    /** Состояние из одной записи файла: формат 1, 2 и 3 читаются одинаково. */
+    /** Состояние из одной записи файла: форматы 1–3 читаются без потерь, в 4 добавлены места. */
     private static State stateOf(Map<?, ?> player) {
         int mask = 0;
         Object raw = player.get("hidden");
@@ -274,7 +283,7 @@ public final class LabelPreferences {
         Object rawColor = player.get("color");
         String color = rawColor == null ? "" : key(String.valueOf(rawColor));
         Map<String, Snapshot> presets = presetsOf(player.get("presets"));
-        return new State(mask, order, color, presets);
+        return new State(mask, order, color, presets, slotsOf(player.get("slots")));
     }
 
     /** Маска из списка идов файла — с разворотом старой группы {@code badges}. */
@@ -329,7 +338,8 @@ public final class LabelPreferences {
             }
             int mask = value.get("hidden") instanceof List<?> list ? maskOf(list) : 0;
             out.put(slot, new Snapshot(mask, orderOf(value.get("order")),
-                    value.get("color") == null ? "" : key(String.valueOf(value.get("color")))));
+                    value.get("color") == null ? "" : key(String.valueOf(value.get("color"))),
+                    slotsOf(value.get("slots"))));
         }
         return Map.copyOf(out);
     }
@@ -398,11 +408,49 @@ public final class LabelPreferences {
     }
 
     /**
-     * Порядок меток слева направо. Пустой список — «как задумано»: ранг
-     * ближе к нику, метки аддонов — левее, ровно как до 1.4.187.
+     * Старый порядок меток для совместимости файлов 1–3.
+     * Пустой список означает стандартные назначения мест.
      */
     public List<Label> order(String playerName) {
         return state(playerName).order;
+    }
+
+    /** null — старый порядок; пустые строки — намеренно свободные места. */
+    public List<String> slots(String playerName) {
+        return state(playerName).slots;
+    }
+
+    public synchronized void setSlots(String playerName, List<String> slots) {
+        setSlots(playerName, slots, null);
+    }
+
+    /** Назначение места и включение выбранного источника — одна запись состояния. */
+    public synchronized void setSlots(String playerName, List<String> slots, Label enable) {
+        String name = key(playerName);
+        if (name.isEmpty()) return;
+        State current = state(name);
+        State next = current.withSlots(slots);
+        if (enable != null) next = next.withHidden(current.hidden & ~(1 << enable.ordinal()));
+        store(name, next);
+    }
+
+    private static List<String> slotsOf(Object raw) {
+        if (!(raw instanceof List<?> list)) return null;
+        List<String> out = new ArrayList<>();
+        for (Object item : list) out.add(item instanceof String text ? text : "");
+        return normalizeSlots(out);
+    }
+
+    /** Позиции не сдвигаются при пустом/неизвестном источнике и дубликате. */
+    static List<String> normalizeSlots(List<String> raw) {
+        if (raw == null) return null;
+        List<String> out = new ArrayList<>();
+        Set<Label> seen = new LinkedHashSet<>();
+        for (int i = 0; i < LabelLimits.MAX_LABELS; i++) {
+            Label label = i < raw.size() ? Label.byNameTagId(raw.get(i)) : null;
+            out.add(label != null && seen.add(label) ? label.id() : "");
+        }
+        return List.copyOf(out);
     }
 
     /** Свой цвет ника; пусто — цвет даёт ранг или купленный тег каталога. */
@@ -418,7 +466,7 @@ public final class LabelPreferences {
     /** Текущий вид игрока — то, что сохраняется в пресет. */
     public Snapshot snapshot(String playerName) {
         State state = state(playerName);
-        return new Snapshot(state.hidden, state.order, state.color);
+        return new Snapshot(state.hidden, state.order, state.color, state.slots);
     }
 
     /* ------------------------------- изменение -------------------------------- */
@@ -537,7 +585,7 @@ public final class LabelPreferences {
         }
         State current = state(name);
         store(name, new State(snapshot.hidden(), normalizeOrder(snapshot.order()),
-                snapshot.color(), current.presets));
+                snapshot.color(), current.presets, snapshot.slots()));
     }
 
     /** Сохранить текущий вид в слот пресета. */
@@ -573,10 +621,10 @@ public final class LabelPreferences {
             return;
         }
         State current = state(name);
-        if (current.hidden == 0 && current.order.isEmpty() && current.color.isEmpty()) {
+        if (current.hidden == 0 && current.order.isEmpty() && current.color.isEmpty() && current.slots == null) {
             return;
         }
-        store(name, new State(0, List.of(), "", current.presets));
+        store(name, new State(0, List.of(), "", current.presets, null));
     }
 
     private void store(String name, State state) {
@@ -617,6 +665,7 @@ public final class LabelPreferences {
             if (!state.order.isEmpty()) {
                 player.put("order", state.order.stream().map(Label::id).toList());
             }
+            if (state.slots != null) player.put("slots", state.slots);
             if (!state.color.isEmpty()) {
                 player.put("color", state.color);
             }
@@ -639,6 +688,7 @@ public final class LabelPreferences {
                     if (!snapshot.order().isEmpty()) {
                         view.put("order", snapshot.order().stream().map(Label::id).toList());
                     }
+                    if (snapshot.slots() != null) view.put("slots", snapshot.slots());
                     if (!snapshot.color().isEmpty()) {
                         view.put("color", snapshot.color());
                     }

@@ -173,8 +173,8 @@ class LabelPreferencesTest {
 
         @SuppressWarnings("unchecked")
         Map<String, Object> root = GSON.fromJson(preferences.snapshotJson(), LinkedHashMap.class);
-        assertEquals(3.0, ((Number) root.get("version")).doubleValue(),
-                "1.4.187 пишет формат версии 3: надписи, порядок, цвет, пресеты");
+        assertEquals(4.0, ((Number) root.get("version")).doubleValue(),
+                "1.4.191 пишет формат версии 4: источники, места, цвет, пресеты");
         @SuppressWarnings("unchecked")
         Map<String, Object> players = (Map<String, Object>) root.get("players");
         assertEquals(List.of("alice", "bob"), List.copyOf(players.keySet()), "ключи отсортированы");
@@ -202,7 +202,7 @@ class LabelPreferencesTest {
         // Первое изменение переписывает файл в новом формате — без потери выбора.
         preferences.set("steve", LabelPreferences.Label.GUILDS, true);
         String json = Files.readString(preferences.file(), StandardCharsets.UTF_8);
-        assertTrue(json.contains("\"version\":3"), json);
+        assertTrue(json.contains("\"version\":4"), json);
         assertTrue(json.contains("\"rank\""), json);
         assertFalse(json.contains("\"badges\""), "старая группа больше не пишется");
     }
@@ -310,7 +310,7 @@ class LabelPreferencesTest {
         preferences.savePreset("Steve", "p2");
 
         String json = preferences.snapshotJson();
-        assertTrue(json.contains("\"version\":3"), json);
+        assertTrue(json.contains("\"version\":4"), json);
         assertTrue(json.contains("\"order\":["), json);
         assertTrue(json.contains("\"color\":\"aqua\""), json);
         assertTrue(json.contains("\"presets\":{"), json);

@@ -49,6 +49,15 @@ public record LabelLimits(List<Integer> presetSlots, List<Integer> displayedLabe
         return displayedLabels.get(Math.max(0, Math.min(displayedLabels.size() - 1, level)));
     }
 
+    /** Минимальная ступень для места; -1 — место не открывается текущим конфигом. */
+    public int levelForLabelSlot(int index) {
+        if (index < 0 || index >= MAX_LABELS) return -1;
+        for (int level = 0; level < displayedLabels.size(); level++) {
+            if (index < labelsFor(level)) return level;
+        }
+        return -1;
+    }
+
     /** Сколько слотов у этой ступени; уровень вне лестницы считается крайним. */
     public int slotsFor(int level) {
         int index = Math.max(0, Math.min(presetSlots.size() - 1, level));

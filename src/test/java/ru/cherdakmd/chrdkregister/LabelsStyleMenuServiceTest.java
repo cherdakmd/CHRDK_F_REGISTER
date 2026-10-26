@@ -47,7 +47,13 @@ class LabelsStyleMenuServiceTest {
         prefs.toggle("Steve", guild);
         assertEquals(messages.raw("labels.value-off"), LabelsMenuService.stateOf(messages, prefs, "Steve", guild, selection).text());
         assertEquals(messages.raw("labels.value-on"), LabelsMenuService.stateOf(messages, prefs, "Steve", LabelPreferences.Label.HEADER, selection).text());
-        assertEquals("После ника: 1 / 1 · не поместилось: 1", plain(LabelsMenuService.summary(messages, selection)));
+        var withUnassigned = new LabelStyleService.Selection(selection.shown(), selection.overflow(), 1,
+                List.of(new LabelStyleService.Decoration(rank, "Ранг"),
+                        new LabelStyleService.Decoration(guild, "Гильдия"),
+                        new LabelStyleService.Decoration(classes, "Класс")));
+        assertEquals(messages.raw("labels.value-unassigned"),
+                LabelsMenuService.stateOf(messages, prefs, "Steve", classes, withUnassigned).text());
+        assertEquals("Надписей: 1 / 1 · на закрытых местах: 1", plain(LabelsMenuService.summary(messages, selection)));
     }
 
     private static String plain(net.kyori.adventure.text.Component component) {

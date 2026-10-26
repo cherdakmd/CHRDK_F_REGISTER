@@ -8,6 +8,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -39,14 +40,15 @@ import java.util.UUID;
  */
 public final class LabelsMenuService implements Listener {
 
-    /** Шесть рядов: заголовок, девять плиток, кнопки. */
+    /** Шесть рядов: превью, места, переключатели источников, кнопки. */
     static final int SIZE = 54;
     /** Голова игрока со сводкой. */
     static final int HEAD_SLOT = 4;
     /** Как ник выглядит для остальных — ровно та строка, что уходит в чат и таб. */
     static final int PREVIEW_SLOT = 8;
-    /** Плитки надписей: три ряда по три. */
-    static final int[] ENTRY_SLOTS = {10, 11, 12, 19, 20, 21, 28, 29, 30};
+    /** Переключатели источников под выбранными местами; шапка TAB отдельно. */
+    static final int[] ENTRY_SLOTS = {28, 29, 30, 31, 32, 33, 34, 35, 37};
+    static final int[] PLACE_SLOTS = {19, 20, 21, 22, 23, 24, 25, 26};
     static final int ENABLE_ALL_SLOT = 45;
     static final int DISABLE_ALL_SLOT = 47;
     /** 1.4.187: три личных экрана — цвет, порядок меток и пресеты. */
@@ -63,6 +65,7 @@ public final class LabelsMenuService implements Listener {
     /** Три личных экрана 1.4.187; {@code null} — кнопки не показываем. */
     private LabelsStyleMenuService styleMenu;
     private volatile LabelPalette palette = LabelPalette.disabled();
+    private volatile LabelLimits limits = LabelLimits.DEFAULT;
 
     public LabelsMenuService(RegisterPlugin plugin, LabelPreferences preferences) {
         this.plugin = plugin;
@@ -82,6 +85,7 @@ public final class LabelsMenuService implements Listener {
     /** Палитра нужна для подписи кнопки «Цвет»: какой цвет выбран сейчас. */
     public void applySettings(LabelPalette colors, LabelLimits limits) {
         this.palette = colors == null ? LabelPalette.disabled() : colors;
+        this.limits = limits == null ? LabelLimits.DEFAULT : limits;
     }
 
     /* ------------------------------- открытие ------------------------------- */
@@ -112,9 +116,9 @@ public final class LabelsMenuService implements Listener {
         LabelStyleService.Selection selection = selectionOf(plugin, player.getName());
         inventory.setItem(HEAD_SLOT, head(player, selection));
         inventory.setItem(PREVIEW_SLOT, preview(player));
+        for (int i = 0; i < PLACE_SLOTS.length; i++) inventory.setItem(PLACE_SLOTS[i], placeTile(player, i));
         List<LabelPreferences.Label> labels = LabelPreferences.Label.nameTags();
-        // Шапка таба — не метка рядом с ником, но такая же надпись: ставим её
-        // последней плиткой, чтобы сетка оставалась 3×3.
+        // Шапка TAB — отдельный переключатель, не место возле ника.
         List<LabelPreferences.Label> tiles = new ArrayList<>(labels);
         tiles.add(LabelPreferences.Label.HEADER);
         for (int index = 0; index < Math.min(ENTRY_SLOTS.length, tiles.size()); index++) {
@@ -245,8 +249,45 @@ public final class LabelsMenuService implements Listener {
         if (label == LabelPreferences.Label.HEADER || selection == null || selection.displayed(label)) {
             return messages.mini("labels.value-on");
         }
+        if (!selection.obtained(label)) return messages.mini("labels.value-unavailable");
         return selection.deferred(label) ? messages.mini("labels.value-waiting")
-                : messages.mini("labels.value-unavailable");
+                : messages.mini("labels.value-unassigned");
+    }
+
+    /** Места всегда показывают сохранённое назначение, даже если источник исчез. */
+    ItemStack placeTile(Player player, int index) {
+        ChatService chat = plugin.chatService();
+        LabelStyleService styles = chat == null ? null : chat.labelStyles();
+        LabelStyleService.Selection selection = styles == null ? null : styles.selection(player.getName());
+        LabelPreferences.Label chosen = styles == null ? null
+                : LabelPreferences.Label.byNameTagId(styles.assignments(player.getName()).get(index));
+        boolean open = selection != null && index < selection.limit();
+        ItemStack item = new ItemStack(open ? Material.NAME_TAG : Material.GRAY_DYE);
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return item;
+        meta.displayName(chosen == null ? plugin.messages().get("labels.slot-empty", "number", index + 1)
+                : plugin.messages().get("labels.order-name", "position", index + 1,
+                        "name", nameOf(plugin.messages(), chosen)));
+        List<Component> lore = new ArrayList<>();
+        if (chosen != null) lore.add(plugin.messages().get("labels.source-state", "value",
+                stateOf(plugin.messages(), preferences, player.getName(), chosen, selection)));
+        if (open) {
+            lore.add(plugin.messages().get("labels.slot-choose"));
+            lore.add(plugin.messages().get("labels.slot-clear-hint"));
+        } else {
+            int level = limits.levelForLabelSlot(index);
+            lore.add(level < 0 ? plugin.messages().get("labels.slot-config-locked")
+                    : plugin.messages().get("labels.slot-need-rank", "level", level));
+        }
+        lore.add(plugin.messages().get("labels.slot-no-fallback"));
+        meta.lore(lore);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    static int placeIndex(int slot) {
+        for (int i = 0; i < PLACE_SLOTS.length; i++) if (PLACE_SLOTS[i] == slot) return i;
+        return -1;
     }
 
     /* ------------------------------ тексты и иконки ------------------------------ */
@@ -357,9 +398,33 @@ public final class LabelsMenuService implements Listener {
                 || !holder.owner().equals(player.getUniqueId())) {
             return;
         }
+        if (!player.hasPermission("chrdkregister.labels")) {
+            player.closeInventory();
+            plugin.messages().send(player, "error.no-permission");
+            return;
+        }
+        if (event.getClick() != ClickType.LEFT && event.getClick() != ClickType.RIGHT) return;
         int slot = event.getRawSlot();
         if (slot < 0 || slot >= SIZE) {
             return; // клик по своему инвентарю — ничего не делаем
+        }
+        int place = placeIndex(slot);
+        if (place >= 0 && styleMenu != null) {
+            if (event.isRightClick()) {
+                LabelStyleService styles = plugin.chatService() == null ? null : plugin.chatService().labelStyles();
+                if (styles != null && styles.assign(player.getName(), place, null)
+                        == LabelStyleService.AssignmentResult.APPLIED) {
+                    plugin.messages().send(player, "labels.slot-cleared", "number", place + 1);
+                    plugin.refreshTab();
+                    repaint(player);
+                } else plugin.messages().send(player, "labels.slot-locked");
+            } else {
+                player.closeInventory();
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    if (player.isOnline()) styleMenu.openSlot(player, place);
+                });
+            }
+            return;
         }
         if (slot == CLOSE_SLOT) {
             player.closeInventory();

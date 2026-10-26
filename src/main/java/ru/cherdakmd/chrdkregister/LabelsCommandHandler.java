@@ -195,7 +195,7 @@ public final class LabelsCommandHandler implements CommandExecutor, TabCompleter
         }
         messages.send(player, "labels.order-moved",
                 "name", LabelsMenuService.nameOf(messages, label),
-                "position", String.valueOf(styles.order(player.getName()).indexOf(label) + 1));
+                "position", String.valueOf(styles.assignments(player.getName()).indexOf(label.id()) + 1));
         plugin.refreshTab();
     }
 
