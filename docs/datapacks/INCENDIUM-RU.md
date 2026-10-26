@@ -1,12 +1,12 @@
 # Incendium Legacy 5.5.4 — русский перевод для Minecraft 26.3
 
 Отдельный выпуск датапака, **не релиз плагинов CHRDK**. Версия плагинов
-остаётся 1.4.189; архивы датапака хранятся в GitHub Releases, а не в Git.
+остаётся 1.4.189; готовые архивы лежат в `datapacks/incendium-ru`, релиз содержит ссылки на них.
 
 ## Скачать
 
-- [Готовый датапак](https://github.com/cherdakmd/CHRDK_F_REGISTER/releases/download/incendium-legacy-5.5.4-26.3-ru.1/Incendium_Legacy_v5.5.4%2B26.3_RU.zip)
-- [Дополнительный языковой ресурспак](https://github.com/cherdakmd/CHRDK_F_REGISTER/releases/download/incendium-legacy-5.5.4-26.3-ru.1/Incendium_Legacy_RU_language_26.3.zip)
+- [Готовый датапак](https://github.com/cherdakmd/CHRDK_F_REGISTER/raw/refs/tags/incendium-legacy-5.5.4-26.3-ru.1/datapacks/incendium-ru/Incendium_Legacy_v5.5.4%2B26.3_RU.zip)
+- [Дополнительный языковой ресурспак](https://github.com/cherdakmd/CHRDK_F_REGISTER/raw/refs/tags/incendium-legacy-5.5.4-26.3-ru.1/datapacks/incendium-ru/Incendium_Legacy_RU_language_26.3.zip)
 - [Страница релиза](https://github.com/cherdakmd/CHRDK_F_REGISTER/releases/tag/incendium-legacy-5.5.4-26.3-ru.1)
 
 ## Что переведено
@@ -36,7 +36,7 @@
 клиентского мода. Сторонний ресурспак с английскими переводами может их
 перекрыть. Старые предметы и структуры с обычным английским текстом сами
 не переписываются; если сохранены ключи translate, помогает языковой пак.
-Полная инструкция приложена к релизу как `ОБНОВЛЕНИЕ.txt`.
+Полная инструкция: `datapacks/incendium-ru/ОБНОВЛЕНИЕ.txt`.
 
 ## Проверки
 
