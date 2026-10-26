@@ -1958,6 +1958,32 @@ public final class RegistrationStore {
         return writtenSequence.get() >= requiredSequence;
     }
 
+    /** Локальный журнал ДОСТАВОК, не реестр квитанций провайдера и не дедупликация заказов. */
+    public synchronized String reserveStoreDelivery(String actor, String command, long now) {
+        if (data.storeDeliveries == null) data.storeDeliveries = new LinkedHashMap<>();
+        String id = UUID.randomUUID().toString();
+        data.storeDeliveries.put(id, new PaymentReceipt(actor, command, now, "RECEIVED_RECONCILE_IF_INTERRUPTED"));
+        markDirty();
+        long requiredSequence = snapshotSequence.get() + 1;
+        flushBlocking();
+        return writtenSequence.get() >= requiredSequence ? id : "";
+    }
+
+    public synchronized void finishStoreDelivery(String id, String outcome) {
+        if (data.storeDeliveries == null) return;
+        PaymentReceipt delivery = data.storeDeliveries.get(id);
+        if (delivery == null) return;
+        data.storeDeliveries.put(id, new PaymentReceipt(delivery.actor(), delivery.command(), delivery.confirmedAt(), outcome));
+        markDirtyNow();
+    }
+
+    public synchronized Map<String, String> storeDeliveries() {
+        Map<String, String> result = new LinkedHashMap<>();
+        if (data.storeDeliveries != null) data.storeDeliveries.forEach((id, delivery) ->
+                result.put(id, delivery.actor() + " | " + delivery.command() + " | " + delivery.outcome()));
+        return Map.copyOf(result);
+    }
+
     public synchronized void finishPayment(String reference, String outcome) {
         if (data.paymentReceipts == null) return;
         PaymentReceipt receipt = data.paymentReceipts.get(reference);
@@ -2241,6 +2267,7 @@ public final class RegistrationStore {
 
     private static final class StoreData {
         private Map<String, PaymentReceipt> paymentReceipts = new LinkedHashMap<>();
+        private Map<String, PaymentReceipt> storeDeliveries = new LinkedHashMap<>();
         int version;
         /** Версия схемы рангов: 1 — миграция с проходки выполнена (1.4.167). */
         int rankSchemaVersion;

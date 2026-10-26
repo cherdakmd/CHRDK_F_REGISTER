@@ -123,10 +123,22 @@ public final class Messages {
         }
         Map<String, String> overrides = new LinkedHashMap<>(readFile(userFile));
         String moduleName = plugin.getName();
+        if ("CHRDK_Core".equalsIgnoreCase(moduleName)) {
+            Map<String, String> legacy = readResource(plugin, "shop-delivery-messages-legacy-1.4.193.yml", logger);
+            migrateStockOverrides(defaults, overrides, legacy);
+        }
         overrides.replaceAll((key, text) -> GameplayRewardTexts.message(moduleName, key, text));
         Messages messages = new Messages(defaults, overrides, logger);
         messages.logMissingKeys(fileName);
         return messages;
+    }
+
+    static void migrateStockOverrides(Map<String, String> defaults, Map<String, String> overrides,
+                                      Map<String, String> legacy) {
+        for (var entry : legacy.entrySet()) {
+            if (java.util.Objects.equals(overrides.get(entry.getKey()), entry.getValue()) && defaults.containsKey(entry.getKey()))
+                overrides.put(entry.getKey(), defaults.get(entry.getKey()));
+        }
     }
 
     /** Конструктор для тестов и внешних загрузчиков: значения по умолчанию — поток, правки — файл. */

@@ -11,6 +11,11 @@ final class PaidAuditReport {
     private PaidAuditReport() { }
 
     static String render(List<RegistrationStore.PlayerAccount> accounts, Map<String, String> receipts, long now) {
+        return render(accounts, receipts, Map.of(), now);
+    }
+
+    static String render(List<RegistrationStore.PlayerAccount> accounts, Map<String, String> receipts,
+                         Map<String, String> deliveries, long now) {
         List<Map<String, Object>> rows = accounts.stream().map(account -> {
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("player", account.playerName);
@@ -32,6 +37,6 @@ final class PaidAuditReport {
         return new GsonBuilder().setPrettyPrinting().create().toJson(Map.of(
                 "generatedAt", now, "mode", "READ_ONLY_NO_REVOCATION",
                 "warning", "Compare provider receipts, shop sale records, audit and backups. Lifetime total and last source are not proof of purchased rank/time. Reserved or failed receipts must not be replayed blindly.",
-                "paymentReceipts", receipts, "accounts", rows));
+                "paymentReceipts", receipts, "storeRconDeliveriesNotPaymentReceipts", deliveries, "accounts", rows));
     }
 }

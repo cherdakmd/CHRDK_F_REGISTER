@@ -353,7 +353,7 @@ public final class RegisterPlugin extends JavaPlugin {
                 java.nio.file.Files.createDirectories(folder);
                 java.nio.file.Path file = folder.resolve("audit-" + java.util.UUID.randomUUID() + ".json");
                 java.nio.file.Files.writeString(file,
-                        PaidAuditReport.render(store.getAllAccounts(), store.paymentReceipts(), System.currentTimeMillis()),
+                        PaidAuditReport.render(store.getAllAccounts(), store.paymentReceipts(), store.storeDeliveries(), System.currentTimeMillis()),
                         java.nio.charset.StandardCharsets.UTF_8, java.nio.file.StandardOpenOption.CREATE_NEW);
                 getServer().getScheduler().runTask(this, () -> messages.send(sender, "paid-only.audit-done", "file", file.getFileName()));
             } catch (Exception error) {
