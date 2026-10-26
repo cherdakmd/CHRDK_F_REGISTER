@@ -102,7 +102,7 @@ class DailyConfigTest {
         DailyConfig.DayReward day = new DailyConfig.DayReward(1,
                 List.of(new DailyConfig.ItemReward("DIAMOND", 2)), List.of(), 3);
         assertEquals("diamond ×2", DailyConfig.describe(day, false, Optional.empty()));
-        assertEquals("diamond ×2, +3 ч. ранга", DailyConfig.describe(day, true, Optional.empty()));
+        assertEquals("diamond ×2, +3 ч. буста", DailyConfig.describe(day, true, Optional.empty()));
         assertEquals("—", DailyConfig.describe(new DailyConfig.DayReward(1, List.of(), List.of(), 0),
                 false, Optional.empty()));
     }

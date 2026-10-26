@@ -21,7 +21,7 @@ class StreamConfigTest {
         StreamConfig config = parse("");
 
         assertTrue(config.enabled());
-        assertEquals(60, config.minutesPerHour(), "час эфира = час ранга");
+        assertEquals(60, config.minutesPerHour(), "час эфира = час буста");
         assertEquals(6, config.maxHoursPerDay());
         assertEquals(365, config.maxTotalHours());
         assertEquals(120, config.pollSeconds());

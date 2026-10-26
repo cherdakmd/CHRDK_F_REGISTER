@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Арифметика наград: час эфира = час ранга, дневные и общие потолки, переход через полночь. */
+/** Арифметика наград: час эфира = час буста, дневные и общие потолки, переход через полночь. */
 class StreamRewardsTest {
 
     private static final long MINUTE = 60_000L;
@@ -135,7 +135,7 @@ class StreamRewardsTest {
 
         long eta = StreamRewards.etaMillis(state, HOURLY, NOW);
 
-        assertEquals(NOW + 40 * MINUTE, eta, "до часа ранга не хватает 40 минут эфира");
+        assertEquals(NOW + 40 * MINUTE, eta, "до часа буста не хватает 40 минут эфира");
     }
 
     @Test
