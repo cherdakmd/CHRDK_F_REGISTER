@@ -437,6 +437,21 @@ shop:
       permissions: []
       commands: []
 
+    # --- Удобство (1.4.188) --------------------------------------------------
+    # Группа товара создаётся командой /pass luckperms setup: она получает права
+    # из поля permissions и выдаётся игроку на срок покупки. Лимит аддона при
+    # этом не суммируется с рангом, а берётся максимум — и всегда упирается в
+    # жёсткий потолок аддона (дома ≤ 12). Так товар не может «перерасти» ранг.
+    - id: homes-plus
+      name: "<aqua>Дома: 8 точек</aqua>"
+      price: 109
+      days: 30
+      group: "homesplus"
+      description: "Восемь точек дома вместо трёх — 30 дней (потолок 12, с рангом не складывается)"
+      tag: ""
+      permissions: ["chrdktele.homes.plus"]
+      commands: []
+
     # --- Косметика поштучно -------------------------------------------------
     # Товары без группы и без разметки ника: это «право на эффект», которое
     # проверяет аддон CHRDK_Cosmetics через API ядра (hasEntitlement). Владелец
@@ -444,7 +459,7 @@ shop:
     # id товара и поле product шлейфа в cosmetics/config.yml должны совпадать.
     - id: trail-flame
       name: "<red>Огненный шлейф</red>"
-      price: 59
+      price: 39
       days: 30
       group: ""
       description: "Шлейф огня за спиной — 30 дней"
@@ -454,7 +469,7 @@ shop:
 
     - id: trail-hearts
       name: "<light_purple>Сердечки</light_purple>"
-      price: 59
+      price: 49
       days: 30
       group: ""
       description: "Шлейф сердечек за спиной — 30 дней"
@@ -484,7 +499,7 @@ shop:
 
     - id: trail-magic
       name: "<dark_purple>Ведьмина магия</dark_purple>"
-      price: 69
+      price: 79
       days: 30
       group: ""
       description: "Шлейф ведьминой магии за спиной — 30 дней"
@@ -492,14 +507,26 @@ shop:
       permissions: []
       commands: []
 
-    # --- Цвета ника (1.4.187) -----------------------------------------------
+    # Торжественный вход: тот же эффект, что у Мецената, но без ранга.
+    # cosmetics/config.yml → join-effect.product должен совпадать с этим id.
+    - id: join-effect
+      name: "<gold>Торжественный вход</gold>"
+      price: 89
+      days: 30
+      group: ""
+      description: "Вспышка тотема и звук при входе на сервер — 30 дней"
+      tag: ""
+      permissions: []
+      commands: []
+
+    # --- Цвета ника (1.4.187, 1.4.188) --------------------------------------
     # Товар открывает один цвет из labels.colors.list, у которого product
     # совпадает с id этого товара. Цвет не даёт силы: это только вид ника.
-    # Владелец нужной ступени видит цвет и так — покупка для тех, кто без ранга
-    # или хочет «дорогой» градиент раньше ступени.
+    # Цвет с product — премиум: его даёт только покупка, ступень ранга его не
+    # заменяет. Обычные цвета (без product) открывает ступень.
     - id: nick-aurora
       name: "<gradient:#00e5ff:#8a2be2>Цвет ника: Сияние</gradient>"
-      price: 149
+      price: 119
       days: 30
       group: ""
       description: "Градиент «Сияние» для ника — 30 дней"
@@ -509,7 +536,7 @@ shop:
 
     - id: nick-flame
       name: "<gradient:#ff3d00:#ffd54f>Цвет ника: Пламя</gradient>"
-      price: 149
+      price: 129
       days: 30
       group: ""
       description: "Градиент «Пламя» для ника — 30 дней"
@@ -519,10 +546,30 @@ shop:
 
     - id: nick-pearl
       name: "<gradient:#ffffff:#9fd8ff>Цвет ника: Жемчуг</gradient>"
-      price: 149
+      price: 139
       days: 30
       group: ""
       description: "Градиент «Жемчуг» для ника — 30 дней"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: nick-lagoon
+      name: "<gradient:#00c9a7:#7ae582>Цвет ника: Лагуна</gradient>"
+      price: 149
+      days: 30
+      group: ""
+      description: "Градиент «Лагуна» для ника — 30 дней"
+      tag: ""
+      permissions: []
+      commands: []
+
+    - id: nick-crimson
+      name: "<gradient:#7b0d1e:#ff5c8a>Цвет ника: Багрянец</gradient>"
+      price: 169
+      days: 30
+      group: ""
+      description: "Градиент «Багрянец» для ника — 30 дней"
       tag: ""
       permissions: []
       commands: []
@@ -551,7 +598,7 @@ shop:
       price: 199
       days: 30
       group: ""
-      description: "Все пять шлейфов сразу — выгоднее на 116 ₽"
+      description: "Все пять шлейфов сразу — вместо 295 ₽, выгода 96 ₽"
       tag: ""
       permissions: []
       commands: []
@@ -561,6 +608,26 @@ shop:
         - trail-notes
         - trail-sparkles
         - trail-magic
+
+    # Самый выгодный набор витрины (1.4.188): весь вид разом. Вложенный набор
+    # раскрывается рекурсивно, поэтому игрок получает и шлейфы по отдельности
+    # (на случай, если «Набор шлейфов» потом уберут из каталога).
+    - id: look-pack
+      name: "<gradient:#00e5ff:#ffd54f>Весь вид</gradient>"
+      price: 599
+      days: 30
+      group: ""
+      description: "Все шлейфы и пять градиентов ника на 30 дней — вместо 1 000 ₽"
+      tag: ""
+      permissions: []
+      commands: []
+      includes:
+        - trails-pack
+        - nick-aurora
+        - nick-flame
+        - nick-pearl
+        - nick-lagoon
+        - nick-crimson
 
 
 # =====================================================================
@@ -1117,6 +1184,8 @@ labels:
       - {"id": "aurora",       "name": "<gradient:#00e5ff:#8a2be2>Сияние</gradient>", "format": "<gradient:#00e5ff:#8a2be2>%name%</gradient>", "product": "nick-aurora"}
       - {"id": "flame",        "name": "<gradient:#ff3d00:#ffd54f>Пламя</gradient>",  "format": "<gradient:#ff3d00:#ffd54f>%name%</gradient>", "product": "nick-flame"}
       - {"id": "pearl",        "name": "<gradient:#ffffff:#9fd8ff>Жемчуг</gradient>", "format": "<gradient:#ffffff:#9fd8ff>%name%</gradient>", "product": "nick-pearl"}
+      - {"id": "lagoon",       "name": "<gradient:#00c9a7:#7ae582>Лагуна</gradient>", "format": "<gradient:#00c9a7:#7ae582>%name%</gradient>", "product": "nick-lagoon"}
+      - {"id": "crimson",      "name": "<gradient:#7b0d1e:#ff5c8a>Багрянец</gradient>", "format": "<gradient:#7b0d1e:#ff5c8a>%name%</gradient>", "product": "nick-crimson"}
   presets:
     # Свои пресеты оформления: снимок «что скрыто + порядок + цвет», который
     # возвращается одной кнопкой. Индекс списка — ступень ранга:

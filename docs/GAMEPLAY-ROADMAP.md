@@ -591,3 +591,13 @@
     `nick-pearl` в каталоге. Тесты: `LabelStyleServiceTest`,
     `LabelPaletteTest`, `LabelLimitsTest`, расширенный `LabelPreferencesTest`.
     Документация — `docs/releases/1.4.187.md`, `wiki/ranks.md`.
+40. **Витрина: 5 товаров и честные цены — 1.4.188**: `homes-plus` (право
+    `chrdktele.homes.plus` через группу LuckPerms, потолок 12, с рангом не
+    складывается), `join-effect` (торжественный вход товаром; в косметике
+    поле `join-effect.product` и чистая проверка `joinEffectUnlocked`),
+    `nick-lagoon`, `nick-crimson` (премиум-цвета только покупкой),
+    `look-pack` (набор: шлейфы + все градиенты). Дубли цен убраны (шлейфы
+    39–79, цвета 119–169), потому что TradeMC присылает только сумму и
+    `matchingPrice` ищет карточку по цене. `ShopConfigConsistencyTest`
+    проверяет уникальность цен и ссылки между ядром, косметикой и батлпассом.
+    Документ — `docs/DONATE-CATALOG.md`.

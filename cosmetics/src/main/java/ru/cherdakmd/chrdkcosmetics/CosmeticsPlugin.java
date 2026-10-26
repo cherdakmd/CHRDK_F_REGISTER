@@ -150,7 +150,10 @@ public final class CosmeticsPlugin extends JavaPlugin implements Listener {
         Player player = event.getPlayer();
         Bukkit.getScheduler().runTask(this, () -> {
             int rank = coreApi == null ? 0 : coreApi.rankLevel(player.getName());
-            if (rank < getConfig().getInt("cosmetics.join-effect.min-rank", 4)) {
+            boolean shop = config.shopEnabled() && coreApi != null;
+            if (!CosmeticsDefs.joinEffectUnlocked(effect, rank,
+                    getConfig().getInt("cosmetics.join-effect.min-rank", 4),
+                    id -> shop && coreApi.hasEntitlement(player.getName(), id))) {
                 return;
             }
             Sound sound = resolveSound(effect.sound());
