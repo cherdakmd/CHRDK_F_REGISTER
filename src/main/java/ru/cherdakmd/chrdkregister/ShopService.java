@@ -136,13 +136,18 @@ public final class ShopService {
 
     Result grant(String playerName, String productId, int days, PaymentConfirmation payment, String giftFrom) {
         if (payment == null || !payment.consume()) return Result.failure(Status.DISABLED, playerName);
+        ShopProduct paidProduct = catalog().find(productId).orElse(null);
+        if (days > 0 && paidProduct != null && days != paidProduct.days()) {
+            payment.finish(access, playerName, "INVALID_PERIOD");
+            return Result.failure(Status.DISABLED, playerName);
+        }
         Result result = grant(playerName, productId, days, payment.actor(), giftFrom, true);
         payment.finish(access, playerName, result.status().name());
         return result;
     }
 
     /**
-     * Выдаёт товар без записи в журнал продаж: награда аддона или компенсация.
+     * @deprecated Бесплатная выдача платных товаров запрещена.
      *
      * <p>Срок, группа, команды и аудит — те же, что у покупки. Отличие одно: в журнале
      * донатов не появляется строка с ценой, иначе бесплатные выдачи раздували бы выручку

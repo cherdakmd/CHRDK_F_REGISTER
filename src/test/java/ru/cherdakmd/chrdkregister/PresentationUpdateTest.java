@@ -278,7 +278,7 @@ class PresentationUpdateTest {
         a.lastGrantSource="manual";a.passUntil+=86400000;
         assertEquals("Ранг активен",PresentationContext.of(a,AccessManager.PlayerStage.AUTHENTICATED,now,false,14,messages(),"/menu").passType());
         var reg=PresentationContext.of(null,AccessManager.PlayerStage.NEEDS_REGISTER,now,true,14,messages(),"/ah");
-        assertTrue(reg.authHint().contains("14"));assertTrue(reg.navigation().isEmpty());assertFalse(reg.navigation().contains("/ah"));
+        assertFalse(reg.authHint().contains("14"));assertTrue(reg.authHint().contains("буст"));assertTrue(reg.navigation().isEmpty());assertFalse(reg.navigation().contains("/ah"));
         var login=PresentationContext.of(a,AccessManager.PlayerStage.NEEDS_LOGIN,now,false,14,messages(),"/ah");
         assertEquals("Войдите в аккаунт: /login",login.authHint());assertTrue(login.navigation().isEmpty());
     }

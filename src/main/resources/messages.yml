@@ -40,13 +40,6 @@ messages:
   "trial":
     "register-prompt": "<yellow>Зарегистрируйте пароль командой: </yellow><click:suggest_command:'/register '><hover:show_text:'<green>Подставить команду в чат</green>'><gold><bold>/register \\<пароль> \\<повтор></bold></gold></hover></click>"
     "welcome": "<gold>Добро пожаловать! Зарегистрируйтесь; за игру выдаются отдельные бусты, а не платные ранги. /register пароль пароль</gold>"
-    "granted": "<green>Приветственный ранг на %days% дней активирован! Действует до %until%. Приятной игры!</green>"
-    "notify-title": "Приветственный ранг активирован"
-    "notify-desc": "Игрок: %player%. Пробный период: %days% дней, до %until%."
-
-  # ---------------------------------------------------------------
-  # common — Общие слова состояния (используются в разных сообщениях)
-  # ---------------------------------------------------------------
   "common":
     "no-permission": "<red>Недостаточно прав.</red>"
     "player-only": "<red>Эта команда доступна только игрокам.</red>"
@@ -88,18 +81,14 @@ messages:
     "backup": "<yellow>Использование: /%label% backup <create|list|restore <файл>></yellow>"
     "backup-restore": "<yellow>Использование: /%label% backup restore <файл></yellow>"
     "login": "<yellow>Использование: /login <пароль> [код_2FA]</yellow>"
-    "pass-add": "<yellow>Использование: /%label% add <ник> [дней]</yellow>"
     "pass-boost": "<yellow>Использование: /%label% boost <ник_на_Boosty></yellow> — привязать подписку; /%label% boost reset — отвязать"
     "pass-approve": "<yellow>Использование: /%label% approve <id> [ник] [дней]</yellow>"
     "pass-check": "<yellow>Использование: /%label% check <ник></yellow>"
     "pass-claim": "<yellow>Использование: /%label% claim <id доната></yellow>"
-    "pass-gift": "<yellow>Использование: /%label% gift <ник> <дней></yellow>"
     "pass-logoutall": "<yellow>Использование: /%label% logoutall <ник></yellow>"
     "pass-reject": "<yellow>Использование: /%label% reject <id> [причина]</yellow>"
     "pass-donations": "<yellow>Использование: /%label% donations [all|granted|pending|rejected|name|amount|review] [лимит]</yellow>"
     "pass-remove": "<yellow>Использование: /%label% remove <ник></yellow>"
-    "pass-testpay": "<yellow>Использование: /%label% testpay <ник> [сумма_руб] [сервис] — тестовый платёж (donatepay/easydonate/trademc): полный цикл выдачи (журнал, аудит, уведомления).</yellow>"
-    "pass-testpaylive": "<yellow>Использование: /%label% testpay-live <ник> <сумма_руб> payment=номер_платежа [комментарий] — ЖИВОЙ тест: запись о донате отправится в ваш кошелёк DonatePay (set_notification).</yellow>"
     "pass-shoppay": "<yellow>Использование: /%label% shoppay <ник> <сумма_руб> payment=номер_платежа — RCON-хук магазина TradeMC: провести покупку как донат (журнал, выдача по тарифам).</yellow>"
     "pass-shopbuy": "<yellow>Использование: /%label% shopbuy <ник> <товар> [дней] payment=номер_платежа — выдать товар каталога (RCON-хук витрины TradeMC).</yellow>"
     "pass-shoprevoke": "<yellow>Использование: /%label% shoprevoke <ник> <товар> — снять товар и его группу.</yellow>"
@@ -563,7 +552,7 @@ messages:
       <yellow>/%label% status</yellow><gray> — общая статистика плагина</gray>
       <yellow>/%label% add <ник> [дней]</yellow><gray> — отключено: требуется подтверждённая реальная оплата</gray>
       <yellow>/%label% gift <ник> <дней></yellow><gray> — отключено: оплаченные подарки через shopgift с номером платежа</gray>
-      <yellow>/%label% shoppay <ник> <сумма></yellow><gray> — покупка из магазина TradeMC: журнал, тариф, выдача</gray>
+      <yellow>/%label% shoppay <ник> <сумма> payment=номер</yellow><gray> — покупка из магазина TradeMC: журнал, тариф, выдача</gray>
       <yellow>/%label% pending</yellow><gray> — нераспознанные донаты</gray>
       <yellow>/%label% donations [фильтр] [лимит]</yellow><gray> — журнал всех донатов (выданные/ожидание/отклонённые)</gray>
       <yellow>/%label% health</yellow><gray> — состояние донатных сервисов, счётчики опросов</gray>
@@ -573,6 +562,7 @@ messages:
       <yellow>/%label% logoutall <ник></yellow><gray> — завершить все сессии игрока</gray>
       <yellow>/%label% stats</yellow><gray> — выручка, конверсия и тарифы</gray>
       <yellow>/%label% doctor</yellow><gray> — самопроверка конфигурации</gray>
+      <yellow>/%label% paidaudit</yellow><gray> — отчёт сверки покупок без изменения прав</gray>
       <yellow>/%label% audit [ник] [N]</yellow><gray> — последние записи аудита</gray>
       <yellow>/%label% backup <create|list|restore></yellow><gray> — резервные копии данных</gray>
       <yellow>/%label% luckperms [setup|status]</yellow><gray> — авто-настройка групп LuckPerms (default → ранг → admin)</gray>
@@ -582,9 +572,6 @@ messages:
     "expired": "<red>Срок вашего ранга истёк! Продлить можно в витрине: /rank</red>"
     "expiring": "<gold>Внимание! Ранг заканчивается через %remaining% (до %until%). Продлить: %renew%</gold>"
     "expiry-bar": "<yellow>Ранг заканчивается через %remaining%</yellow>"
-    "gift-notice": "<green>Вам подарили ранг на %days% дн. от %sender%!</green>"
-    "gifted": "<green>✓ Подарок отправлен: <gold>%player%</gold> получил %days% дн. ранга.</green>"
-    "granted": "<green>✓ Ранг выдан игроку <gold><bold>%player%</bold></gold> на %days% дн. (до %until%).</green>"
     "info":
       "active": "<green><bold>АКТИВЕН</bold></green>"
       "footer-line": "<gold>==============================================</gold>"
@@ -1323,10 +1310,7 @@ messages:
   # rankadmin — ручная выдача рангов (1.4.167)
   # ---------------------------------------------------------------
   "rankadmin":
-    "usage": "<yellow>Использование: /rankadmin <give <ник> <ступень 1..5> [дней] | take <ник> | info <ник>></yellow>"
-    "bad-level": "<red>Ступень — число от 1 до 5.</red>"
-    "bad-days": "<red>Срок — целое число дней (0 или пусто — навсегда).</red>"
-    "given": "<green>%player% получил ступень %level% (%days%).</green>"
+    "usage": "<yellow>Использование: /rankadmin <take <ник> | info <ник>></yellow>"
     "taken": "<yellow>Ранг %player% снят.</yellow>"
     "take-none": "<gray>У %player% не было ранга.</gray>"
     "info": "<gray>%player%</gray> <dark_gray>·</dark_gray> %rank% <gray>(ступень %level%), до %until%</gray>"
@@ -1351,6 +1335,7 @@ messages:
     "required": "<red>Нужны консоль/RCON и номер подтверждённой реальной оплаты последним аргументом: payment=provider:12345. Это подтверждение владельца, не тест и не награда. Номер — 3–128 латинских букв, цифр, точек, подчёркиваний, двоеточий или дефисов.</red>"
     "duplicate": "<red>Номер платежа уже зарезервирован либо не удалось долговечно сохранить подтверждение. Повторная выдача запрещена. Сверьте /pass paidaudit, журнал и платёж провайдера; не обходите проверку новым номером.</red>"
     "test-disabled": "<yellow>Тестовые платежи на рабочем сервере больше не выдают платные права. Проверяйте интеграцию на отдельном тестовом сервере.</yellow>"
+    "period": "<red>Срок должен совпадать с оплаченной карточкой каталога. Произвольное продление платных прав запрещено; уберите [дней] или укажите срок товара.</red>"
     "unknown-price": "<red>По этой сумме нет однозначной карточки покупки. Ничего не выдано: сверьте платёж с каталогом и оформите /pass shopbuy с номером реальной оплаты.</red>"
     "audit-start": "<gray>Готовится отчёт сверки без изменения прав игроков…</gray>"
     "audit-done": "<green>Отчёт: paid-audit/%file%. Сверьте историю провайдера и аудит. Оплаченные/смешанные сроки автоматически не отзываются.</green>"

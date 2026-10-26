@@ -195,27 +195,20 @@ class ShopConfigConsistencyTest {
     }
 
     @Test
-    void everyBattlePassRewardPointsToAnExistingProduct() {
-        ShopCatalog catalog = catalog();
+    void battlePassNeverRewardsPaidCatalogProducts() {
         YamlConfiguration battlepass = yaml("battlepass/src/main/resources/config.yml");
-        int references = 0;
+        int missions = 0;
         for (java.util.Map<?, ?> week : battlepass.getMapList("battlepass.weeks")) {
-            assertTrue(week.get("missions") instanceof List<?>, "у волны нет списка заданий");
+            assertTrue(week.get("missions") instanceof List<?>);
             for (Object entry : (List<?>) week.get("missions")) {
-                assertTrue(entry instanceof java.util.Map<?, ?>, "задание должно быть объектом");
+                assertTrue(entry instanceof java.util.Map<?, ?>);
                 java.util.Map<?, ?> mission = (java.util.Map<?, ?>) entry;
-                if (!(mission.get("premium-products") instanceof List<?> rewards)) {
-                    continue;
-                }
-                for (Object reward : rewards) {
-                    String id = String.valueOf(reward);
-                    assertTrue(catalog.find(id).isPresent(), "награда задания " + mission.get("id")
-                            + " ссылается на отсутствующий товар " + id);
-                    references++;
-                }
+                assertFalse(mission.containsKey("premium-products"), "paid product reward: " + mission.get("id"));
+                assertTrue(mission.containsKey("free-boost-hours"), "explicit independent boost reward required");
+                missions++;
             }
         }
-        assertTrue(references > 0, "проверка должна охватывать реальные награды сезона");
+        assertEquals(11, missions, "audit must cover every shipped season mission");
     }
 
     @Test

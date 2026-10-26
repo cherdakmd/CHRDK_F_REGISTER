@@ -1605,6 +1605,11 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 return;
             }
         }
+        ShopProduct paidProduct = plugin.shop().product(productId).orElse(null);
+        if (days > 0 && paidProduct != null && days != paidProduct.days()) {
+            messages.send(sender, "paid-only.period");
+            return;
+        }
         PaymentConfirmation payment = PaymentConfirmation.confirm(sender, paymentReference, operation, accessManager);
         if (payment == null) return;
         ShopService.Result result = plugin.shop().grant(playerName, productId, days, payment);

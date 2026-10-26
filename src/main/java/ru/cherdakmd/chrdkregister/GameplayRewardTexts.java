@@ -11,8 +11,8 @@ final class GameplayRewardTexts {
 
     static String reward(String text) {
         if (text == null) return "";
-        String result = text.replaceAll("(?iu)(часами|часы|часов|часа|час|ч\\.|дней|дня|день|сутки|суток) ранга", "$1 буста")
-                .replaceAll("(?iu)(часами|часы|часов|часа|час|ч\\.|дней|дня|день|сутки|суток) проходки", "$1 буста");
+        String result = text.replaceAll("(?iu)(часами|часы|часов|часа|час|ч\\.|дни|днями|дней|дня|день|сутки|суток) ранга", "$1 буста")
+                .replaceAll("(?iu)(часами|часы|часов|часа|час|ч\\.|дни|днями|дней|дня|день|сутки|суток) проходки", "$1 буста");
         result = result.replace("<gray>до</gray> <aqua>%until%</aqua>", "<gray>• только онлайн; запас — /profile</gray>");
         // В старых локалях дата окончания награды больше не имеет смысла.
         if (result.contains("%until%") && (result.contains("буста") || result.contains("Буст"))) {
