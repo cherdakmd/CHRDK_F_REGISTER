@@ -54,6 +54,7 @@ class ConfigReportTest {
         yaml.set("reroll.enabled", false);
         yaml.set("mob-drop.enabled", false);
         yaml.set("identify.enabled", false);
+        yaml.set("world.enabled", false);
         List<String> lines = ConfigReport.lines(parse(yaml));
         assertTrue(lines.get(0).contains("выключен"), lines.get(0));
         assertTrue(lines.get(1).contains("тир виден сразу"), lines.get(1));

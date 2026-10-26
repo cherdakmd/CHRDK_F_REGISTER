@@ -156,7 +156,8 @@ class TierCollectionConfigTest {
         yaml.set("collection.rewards.properties.15.pass-hours", -1);
         yaml.set("collection.rewards.properties.15.diamonds", 9999);
         TierCollectionConfig config = parse(yaml);
-        assertEquals(365, config.section("tiers").passHours(), "больше года за раздел не выдаём");
+        assertEquals(24, config.section("tiers").passHours(),
+                "1.4.184: потолок одной награды — сутки");
         assertEquals(0, config.section("tiers").diamonds());
         assertEquals(0, config.properties().get(0).passHours());
         assertEquals(576, config.properties().get(0).diamonds(), "9 стаков алмазов — потолок");
