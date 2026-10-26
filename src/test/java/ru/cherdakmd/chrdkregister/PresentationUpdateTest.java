@@ -99,8 +99,10 @@ class PresentationUpdateTest {
         var oldItems=live.getMapList("server-menu.items");
         var newItems=fresh.getMapList("server-menu.items");
         assertEquals(oldItems.size(),newItems.size(),"пунктов столько же — 52");
-        assertEquals(0,newItems.stream().filter(item -> !oldItems.contains(item)).count(),
-                "новых кнопок нет");
+        var changed=newItems.stream().filter(item -> !oldItems.contains(item)).toList();
+        assertEquals(1,changed.size(),changed.toString());
+        assertEquals("labels",changed.get(0).get("command"),
+                "меняется только подсказка «Оформление ника», других правок нет");
         for(String key:changes) live.set(key,fresh.get(key));
         assertTrue(PresentationMigration.replacements(live,List.of(snapshot),fresh).isEmpty(),
                 "после миграции повторной не будет");
