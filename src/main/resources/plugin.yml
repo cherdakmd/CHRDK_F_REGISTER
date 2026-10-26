@@ -37,8 +37,8 @@ commands:
     usage: /<command> [страница]
     aliases: [site]
   labels:
-    description: "Что показывать в своём нике: ранг, метки аддонов и шапку таба"
-    usage: /<command> [rank|badges|header|all|on|off|reset]
+    description: "Что показывать в своём нике: меню, где каждое звание и надпись включаются отдельно"
+    usage: /<command> [меню|rank|tierforge|treasures|classes|guilds|streams|quests|achievements|header|badges|all|on|off|reset|status]
     aliases: [lab, tags]
   rankadmin:
     description: "Ручная выдача и снятие донатных рангов"
@@ -113,7 +113,7 @@ commands:
 
 permissions:
   chrdkregister.labels:
-    description: "Переключать надписи в своём нике и шапку таб-листа"
+    description: "Переключать надписи в своём нике и шапку таб-листа (каждое звание отдельно)"
     default: true
   chrdkregister.menu:
     description: Главное меню сервера /menu (GUI)

@@ -646,8 +646,9 @@ server-menu:
     - {"category": "social", "icon": "WHITE_BANNER", "name": "<gold><bold>Гильдия</bold></gold>", "lore": "<gray>Казна, ранги и войны</gray>", "command": "guild menu", "plugin": "CHRDK_Guilds", "permission": "chrdkguilds.use"}
     - {"category": "social", "icon": "HOPPER", "name": "<gold><bold>Очередь входа</bold></gold>", "lore": "<gray>Статус очереди и приоритет</gray>", "command": "queue info", "plugin": "CHRDK_Queue", "permission": "chrdkqueue.use"}
     - {"category": "social", "icon": "JUKEBOX", "name": "<gold><bold>Стримерская программа</bold></gold>", "lore": "<gray>Twitch и VK Play Live: статус и награды</gray>\n<dark_gray>Привязка: /stream link</dark_gray>", "command": "stream status", "plugin": "CHRDK_Streams", "permission": "chrdkstreams.use"}
-    # 1.4.183: свой ник — что видно в табе и чате. Настройка личная, права не меняет.
-    - {"category": "social", "icon": "NAME_TAG", "name": "<gold><bold>Оформление ника</bold></gold>", "lore": "<gray>Ранг, метки и шапка таба — вкл/выкл</gray>\n<dark_gray>Клик: /labels</dark_gray>", "command": "labels", "permission": "chrdkregister.labels"}
+    # 1.4.183: свой ник — что видно в табе и чате. 1.4.186: каждое звание отдельно.
+    # Настройка личная, права и прогресс не меняет.
+    - {"category": "social", "icon": "NAME_TAG", "name": "<gold><bold>Оформление ника</bold></gold>", "lore": "<gray>Ранг, титул, звание, класс, гильдия, стример</gray>\n<gray>и шапка таба — каждое включается отдельно</gray>\n<dark_gray>Клик: /labels</dark_gray>", "command": "labels", "permission": "chrdkregister.labels"}
 
 # Алмазный банк: /bal, /pay, /baltop (1.4.138).
 # Валюта — алмазы: предметы в инвентаре и счёт в банке. Курс фиксированный,
@@ -1028,10 +1029,13 @@ tablist:
   # Нужно для старых конфигов: обновление подхватит название само.
   # false — в табе останутся только знак и цвет ступени.
   show-rank-name: true
-  # Что игрок показывает в своём нике, он решает сам: /labels rank|badges|header
-  # (файл plugins/CHRDK_Core/labels.json). Скрытие — только оформление: ранг,
+  # Что игрок показывает в своём нике, он решает сам: /labels открывает меню,
+  # где каждое звание и надпись включаются отдельно (ранг, титул кузни, звание
+  # кладоискателя, класс, гильдия, стример, квесты, достижения, шапка таба).
+  # Файл plugins/CHRDK_Core/labels.json. Скрытие — только оформление: ранг,
   # опыт и права остаются. Сортирует список CHRDK_Ranks: сначала донатный ранг,
   # внутри ранга — звание за стаж (ranks.sort-tab в его config.yml).
+  #
   # Никнеймы, закреплённые ВВЕРХУ списка игроков (регистр не важен).
   # Реализовано через приоритетную команду scoreboard — клиент Minecraft
   # сортирует список сначала по команде, потом по нику.

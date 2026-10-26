@@ -34,9 +34,10 @@ import java.util.UUID;
  * карточка остаётся рабочей.</p>
  *
  * <p>Меню на 54 слота: голова игрока, до двадцати одного раздела и кнопки
- * «В чат», «Обновить», «Закрыть». Клик по разделу закрывает меню и печатает
- * его строки в чат; {@code /profile chat [ник]} выводит всё текстом — это же
- * работает из консоли.</p>
+ * «В чат», «Оформление ника» (только в своей карточке, 1.4.186), «Обновить»,
+ * «Закрыть». Клик по разделу закрывает меню и печатает его строки в чат;
+ * {@code /profile chat [ник]} выводит всё текстом — это же работает из
+ * консоли.</p>
  *
  * <p>Профиль другого игрока показывает те же разделы, но только публичные
  * данные: аддон сам решает, что отдавать при {@code self = false}. Доступ
@@ -54,6 +55,8 @@ public final class ProfileService implements Listener {
             28, 29, 30, 31, 32, 33, 34,
             37, 38, 39, 40, 41, 42, 43};
     static final int TO_CHAT_SLOT = 45;
+    /** 1.4.186: переход в меню «Оформление ника» — только в своей карточке. */
+    static final int LABELS_SLOT = 47;
     static final int REFRESH_SLOT = 49;
     static final int CLOSE_SLOT = 53;
 
@@ -63,6 +66,8 @@ public final class ProfileService implements Listener {
     private final AccessManager accessManager;
     private final BankStore bank;
     private final ProfileRegistry registry;
+    /** Личные переключатели надписей: раздел «Оформление ника» (1.4.186). */
+    private LabelPreferences labelPreferences;
 
     public ProfileService(RegisterPlugin plugin, AccessManager accessManager, BankStore bank,
                           ProfileRegistry registry) {
@@ -70,6 +75,11 @@ public final class ProfileService implements Listener {
         this.accessManager = accessManager;
         this.bank = bank;
         this.registry = registry;
+    }
+
+    /** Подключает переключатели надписей (вызывается при включении ядра). */
+    public void setLabelPreferences(LabelPreferences preferences) {
+        this.labelPreferences = preferences;
     }
 
     /* --------------------------------- вход ---------------------------------- */
@@ -202,6 +212,10 @@ public final class ProfileService implements Listener {
         if (core != null && !core.lines().isEmpty()) {
             out.add(core);
         }
+        ChrdkRegisterApi.ProfileSection labels = labelsSection(target);
+        if (labels != null) {
+            out.add(labels);
+        }
         out.addAll(registry.sections(new ChrdkRegisterApi.ProfileContext(target.id(),
                 target.name(), target.online(), target.self())));
         return List.copyOf(out);
@@ -251,6 +265,35 @@ public final class ProfileService implements Listener {
                 plugin.messages().raw("profile.section-core"), Material.NETHER_STAR, lines);
     }
 
+    /**
+     * Раздел «Оформление ника» (1.4.186): что из надписей игрок оставил.
+     *
+     * <p>Показывается только в своей карточке: настройка личная, и чужой
+     * профиль не должен рассказывать, что человек у себя спрятал. Внутри —
+     * сколько надписей включено и какие именно скрыты.</p>
+     */
+    private ChrdkRegisterApi.ProfileSection labelsSection(Target target) {
+        if (!target.self() || labelPreferences == null) {
+            return null;
+        }
+        List<Component> lines = new ArrayList<>();
+        int total = LabelPreferences.Label.values().length;
+        int hidden = labelPreferences.hiddenCount(target.name());
+        if (hidden == 0) {
+            lines.add(plugin.messages().get("labels.profile-all-visible", "total", total));
+        } else {
+            lines.add(plugin.messages().get("labels.profile-line",
+                    "visible", String.valueOf(total - hidden), "total", String.valueOf(total)));
+            for (LabelPreferences.Label label : labelPreferences.hiddenLabels(target.name())) {
+                lines.add(plugin.messages().get("labels.profile-hidden",
+                        "name", LabelsMenuService.nameOf(plugin.messages(), label)));
+            }
+        }
+        lines.add(plugin.messages().get("labels.profile-hint"));
+        return new ChrdkRegisterApi.ProfileSection(
+                plugin.messages().raw("labels.profile-section"), Material.NAME_TAG, lines);
+    }
+
     static long daysLeft(long until, long now) {
         long left = Math.max(0L, until - now);
         return (left + DAY_MILLIS - 1L) / DAY_MILLIS;
@@ -270,6 +313,9 @@ public final class ProfileService implements Listener {
         }
         inventory.setItem(TO_CHAT_SLOT, button(Material.WRITABLE_BOOK,
                 "profile.to-chat", "profile.to-chat-lore"));
+        if (target.self() && viewer.hasPermission("chrdkregister.labels")) {
+            inventory.setItem(LABELS_SLOT, labelsButton());
+        }
         inventory.setItem(REFRESH_SLOT, button(Material.SUNFLOWER,
                 "profile.refresh", "profile.refresh-lore"));
         inventory.setItem(CLOSE_SLOT, button(Material.BARRIER, "profile.close", null));
@@ -318,6 +364,19 @@ public final class ProfileService implements Listener {
         List<Component> lore = new ArrayList<>(section.lines());
         lore.add(plugin.messages().get("profile.section-hint"));
         meta.lore(lore);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /** Кнопка «Оформление ника»: имя и подсказка читаются литералами (контракт текстов). */
+    private ItemStack labelsButton() {
+        ItemStack item = new ItemStack(Material.NAME_TAG);
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) {
+            return item;
+        }
+        meta.displayName(plugin.messages().get("labels.profile-button"));
+        meta.lore(List.of(plugin.messages().get("labels.profile-button-lore")));
         item.setItemMeta(meta);
         return item;
     }
@@ -388,6 +447,25 @@ public final class ProfileService implements Listener {
             Target target = resolve(player, holder.targetName);
             if (target != null) {
                 print(player, target);
+            }
+            return;
+        }
+        if (slot == LABELS_SLOT) {
+            // Кнопка есть только в своей карточке, но проверяем и здесь: клик
+            // мог прийти из чужого меню, если холдер подменили.
+            if (holder.owner.equals(player.getUniqueId())
+                    && player.hasPermission("chrdkregister.labels")) {
+                LabelsMenuService menu = plugin.labelsMenu();
+                if (menu != null) {
+                    // Закрытие и открытие в одном тике клиент иногда теряет:
+                    // показываем меню следующим тиком, когда экран уже свободен.
+                    player.closeInventory();
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        if (player.isOnline()) {
+                            menu.open(player);
+                        }
+                    });
+                }
             }
             return;
         }

@@ -97,7 +97,7 @@ public final class TabListService implements Listener {
     private final java.util.Set<java.util.UUID> managedNames = new java.util.HashSet<>();
     private final java.util.Set<java.util.UUID> managedHeaders = new java.util.HashSet<>();
     /** Оформление ника из ядра (тег каталога + метки аддонов) для {@code %player_tagged%}. */
-    private volatile NameDecorator nameDecorator = (name, rank, badges) -> Messages.escape(name);
+    private volatile NameDecorator nameDecorator = Messages::escape;
     /** 1.4.183: личные переключатели надписей; {@code null} — всё видно. */
     private volatile LabelPreferences labelPreferences;
 
@@ -107,20 +107,21 @@ public final class TabListService implements Listener {
     }
 
     /**
-     * Оформление ника с учётом переключателей (1.4.183).
+     * Оформление ника для {@code %player_tagged%}.
      *
-     * <p>Флаги передаются отдельно, а не читаются внутри декоратора: таб-лист
-     * уже знает, что игрок спрятал, и не должен второй раз спрашивать то же
-     * самое у хранилища на каждого зрителя.</p>
+     * <p>С 1.4.186 декоратор читает личные переключатели сам (по каждому
+     * источнику отдельно): таб-листу остаётся только подставить результат.
+     * Так настройки надписей живут в одном месте, а не дублируются в двух
+     * вызовах с флагами.</p>
      */
     @FunctionalInterface
     public interface NameDecorator {
-        String decorate(String playerName, boolean showRank, boolean showBadges);
+        String decorate(String playerName);
     }
 
     /** Подключает оформление ников (вызывается один раз при включении ядра). */
     public void setNameDecorator(NameDecorator decorator) {
-        this.nameDecorator = decorator == null ? (name, rank, badges) -> name : decorator;
+        this.nameDecorator = decorator == null ? name -> name : decorator;
     }
 
     /** Подключает личные переключатели надписей (1.4.183). */
@@ -201,10 +202,9 @@ public final class TabListService implements Listener {
     }
 
     private void apply(Player player) {
-        boolean showHeader = visible(player, LabelPreferences.Category.HEADER);
-        boolean showRank = visible(player, LabelPreferences.Category.RANK);
-        boolean showBadges = visible(player, LabelPreferences.Category.BADGES);
-        TabContext context = contextOf(player, System.currentTimeMillis(), showRank, showBadges);
+        boolean showHeader = visible(player, LabelPreferences.Label.HEADER);
+        boolean showRank = visible(player, LabelPreferences.Label.RANK);
+        TabContext context = contextOf(player, System.currentTimeMillis(), showRank);
         Messages messages = plugin.messages();
         // 1.4.183: игрок может спрятать шапку и подвал — тогда список остаётся
         // чистым, а не «с дырками» в полэкрана.
@@ -221,10 +221,10 @@ public final class TabListService implements Listener {
         } else if (managedNames.remove(player.getUniqueId())) player.playerListName(null);
     }
 
-    /** Видна ли категория у этого игрока: без хранилища — всё видно. */
-    private boolean visible(Player player, LabelPreferences.Category category) {
+    /** Видна ли надпись у этого игрока: без хранилища — всё видно. */
+    private boolean visible(Player player, LabelPreferences.Label label) {
         LabelPreferences preferences = labelPreferences;
-        return preferences == null || preferences.visible(player.getName(), category);
+        return preferences == null || preferences.visible(player.getName(), label);
     }
 
     /**
@@ -390,8 +390,7 @@ public final class TabListService implements Listener {
 
     // ------------------------------ сборка контекста -----------------------------
 
-    private TabContext contextOf(Player player, long nowMillis, boolean showRank,
-                                 boolean showBadges) {
+    private TabContext contextOf(Player player, long nowMillis, boolean showRank) {
         RegistrationStore.PlayerAccount account =
                 accessManager.store().getAccount(player.getName()).orElse(null);
         double tps;
@@ -415,7 +414,7 @@ public final class TabListService implements Listener {
                 PresentationContext.of(account, accessManager.getStage(player), nowMillis,
                         accessManager.config().trialEnabled() && accessManager.store().isTrialEligible(player.getName(), player.getUniqueId()),
                         accessManager.config().trialDays(), plugin.messages(), navigation(player)),
-                nameDecorator.decorate(player.getName(), showRank, showBadges),
+                nameDecorator.decorate(player.getName()),
                 showRank ? rankTag(player, nowMillis) : "");
     }
 

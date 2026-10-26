@@ -106,37 +106,38 @@ public final class ChatService implements Listener {
         this.tagResolver = resolver == null ? name -> "" : resolver;
     }
 
-    /** Ник с оформлением товара и метками аддонов: {@code <gold>Nick</gold> [СТРИМ]}. */
-    public String decoratedName(String playerName) {
-        return decoratedName(playerName,
-                labelVisible(playerName, LabelPreferences.Category.RANK),
-                labelVisible(playerName, LabelPreferences.Category.BADGES));
-    }
-
     /**
-     * Ник с явно заданными флагами надписей (1.4.183).
+     * Ник с оформлением товара и метками аддонов: {@code <gold>Nick</gold> [СТРИМ]}.
      *
-     * <p>Таб-лист передаёт флаги сам: он уже знает личные переключатели игрока.
-     * Остальной код (чат, личные сообщения) пользуется вариантом без флагов —
-     * он читает те же настройки из {@link LabelPreferences}.</p>
-     *
-     * @param showRank   показывать название и знак донатного ранга
-     * @param showBadges показывать метки аддонов (класс, гильдия, стример, звание)
+     * <p>С 1.4.186 каждая надпись проверяется отдельно: ранг — своим
+     * переключателем, каждая метка аддона — по id провайдера, зарегистрированного
+     * через {@code registerNameTag}. Выключенное просто не рисуется, привилегии
+     * и срок ранга остаются.</p>
      */
-    public String decoratedName(String playerName, boolean showRank, boolean showBadges) {
+    public String decoratedName(String playerName) {
         java.util.function.Function<String, String> resolver = tagResolver;
         String tag = resolver == null ? "" : resolver.apply(playerName);
         String base = ShopEntitlements.decorate(playerName, tag);
-        String withRank = showRank
+        String withRank = labelVisible(playerName, LabelPreferences.Label.RANK)
                 ? decorateRank(playerName, base, tag != null && !tag.isBlank())
                 : base;
-        return showBadges ? nameTags.decorate(playerName, withRank) : withRank;
+        return nameTags.decorate(playerName, withRank,
+                id -> labelVisibleNameTag(playerName, id));
     }
 
     /** Личный переключатель надписей: без хранилища — всё видно (1.4.183). */
-    private boolean labelVisible(String playerName, LabelPreferences.Category category) {
+    private boolean labelVisible(String playerName, LabelPreferences.Label label) {
         LabelPreferences preferences = labelPreferences;
-        return preferences == null || preferences.visible(playerName, category);
+        return preferences == null || preferences.visible(playerName, label);
+    }
+
+    /**
+     * Метка аддона по id его провайдера (1.4.186). Незнакомый id — видно:
+     * аддон новее ядра не должен терять подпись из-за незнакомого имени.
+     */
+    private boolean labelVisibleNameTag(String playerName, String nameTagId) {
+        LabelPreferences preferences = labelPreferences;
+        return preferences == null || preferences.visibleNameTag(playerName, nameTagId);
     }
 
     /** Подключает личные переключатели надписей (1.4.183). */

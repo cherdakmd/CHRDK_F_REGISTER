@@ -86,6 +86,26 @@ class PresentationUpdateTest {
                 .contains("server-menu.items"),"пользовательские пункты сохраняются");
     }
 
+    /**
+     * 1.4.186: сервер, обновившийся с 1.4.185 и не правивший меню, не получает
+     * новых пунктов — меняется только подсказка «Оформление ника», которая
+     * теперь рассказывает про переключатель на каждое звание.
+     */
+    @Test void stockMenuFrom185KeepsItsButtonsAndRefreshesTheHint() {
+        var snapshot=yaml("presentation-legacy-1.4.185.yml");
+        var live=yaml("presentation-legacy-1.4.185.yml");var fresh=yaml("config.yml");
+        var changes=PresentationMigration.replacements(live,List.of(snapshot),fresh);
+        assertTrue(changes.contains("server-menu.items"),changes.toString());
+        var oldItems=live.getMapList("server-menu.items");
+        var newItems=fresh.getMapList("server-menu.items");
+        assertEquals(oldItems.size(),newItems.size(),"пунктов столько же — 52");
+        assertEquals(0,newItems.stream().filter(item -> !oldItems.contains(item)).count(),
+                "новых кнопок нет");
+        for(String key:changes) live.set(key,fresh.get(key));
+        assertTrue(PresentationMigration.replacements(live,List.of(snapshot),fresh).isEmpty(),
+                "после миграции повторной не будет");
+    }
+
     @Test void customListsAndDisabledFlagsSurvive() {
         var live=yaml("presentation-legacy-pre-1.4.138.yml");var legacy=yaml("presentation-legacy-pre-1.4.138.yml");var fresh=yaml("config.yml");
         live.set("server-menu.items",List.of(Map.of("slot",10,"icon","PAPER","name","Custom","command","custom")));

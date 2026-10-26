@@ -35,6 +35,8 @@ public final class RegisterPlugin extends JavaPlugin {
     /** 1.4.183: личные переключатели надписей в нике и табе. */
     private LabelPreferences labelPreferences;
     private LabelsCommandHandler labelsCommand;
+    /** 1.4.186: меню «Оформление ника» — по плитке на каждую надпись. */
+    private LabelsMenuService labelsMenu;
     private PluginUpdateService pluginUpdater;
     private ExternalHooks externalHooks;
     private LuckPermsPassSync luckPermsPassSync;
@@ -91,6 +93,9 @@ public final class RegisterPlugin extends JavaPlugin {
         this.tabListService.setNameDecorator(chatService::decoratedName);
         this.tabListService.setLabelPreferences(labelPreferences);
         this.chatService.setLabelPreferences(labelPreferences);
+        profileService.setLabelPreferences(labelPreferences);
+        this.labelsMenu = new LabelsMenuService(this, labelPreferences);
+        getServer().getPluginManager().registerEvents(labelsMenu, this);
         this.luckPermsPassSync = new LuckPermsPassSync(externalHooks, store, accessManager::config, getLogger());
         this.shopService = new ShopService(this, accessManager, externalHooks, getLogger());
         this.chatService.setTagResolver(shopService::tagOf);
@@ -173,7 +178,8 @@ public final class RegisterPlugin extends JavaPlugin {
                 return true;
             });
         }
-        this.labelsCommand = new LabelsCommandHandler(this, labelPreferences);
+        this.labelsCommand = new LabelsCommandHandler(this, labelPreferences, labelsMenu);
+        labelsMenu.setCommand(labelsCommand);
         PluginCommand labelsCommandPlugin = getCommand("labels");
         if (labelsCommandPlugin != null) {
             labelsCommandPlugin.setExecutor(labelsCommand);
@@ -248,6 +254,7 @@ public final class RegisterPlugin extends JavaPlugin {
         if (pluginUpdater != null) pluginUpdater.close();
         if (serverMenuService != null) serverMenuService.shutdown();
         if (rankMenuService != null) rankMenuService.shutdown();
+        if (labelsMenu != null) labelsMenu.shutdown();
         if (bankService != null) {
             bankService.shutdown();
             bankService = null;
@@ -438,6 +445,11 @@ public final class RegisterPlugin extends JavaPlugin {
     /** Карточка игрока {@code /profile}. */
     public ProfileService profile() {
         return profileService;
+    }
+
+    /** Меню «Оформление ника» (1.4.186): открывается из /labels и /profile. */
+    public LabelsMenuService labelsMenu() {
+        return labelsMenu;
     }
 
     /** Чат и автосообщения ({@code /pass automessages}). */

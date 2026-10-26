@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Раскладка карточки {@code /profile} (1.4.156): слоты разделов и округление
- * остатка проходки вверх.
+ * остатка проходки вверх. С 1.4.186 — ещё и кнопка «Оформление ника».
  */
 class ProfileServiceTest {
 
@@ -22,6 +22,18 @@ class ProfileServiceTest {
         assertEquals(1L, ProfileService.daysLeft(now + DAY, now));
         assertEquals(2L, ProfileService.daysLeft(now + DAY + 1L, now));
         assertEquals(30L, ProfileService.daysLeft(now + 30L * DAY, now));
+    }
+
+    @Test
+    void labelsButtonDoesNotCoverSectionsOrOtherButtons() {
+        assertTrue(ProfileService.LABELS_SLOT >= 0 && ProfileService.LABELS_SLOT < ProfileService.SIZE,
+                "кнопка вне меню: " + ProfileService.LABELS_SLOT);
+        for (int slot : ProfileService.SECTION_SLOTS) {
+            assertTrue(slot != ProfileService.LABELS_SLOT, "кнопка поверх раздела: " + slot);
+        }
+        assertTrue(ProfileService.LABELS_SLOT != ProfileService.TO_CHAT_SLOT);
+        assertTrue(ProfileService.LABELS_SLOT != ProfileService.REFRESH_SLOT);
+        assertTrue(ProfileService.LABELS_SLOT != ProfileService.CLOSE_SLOT);
     }
 
     @Test
