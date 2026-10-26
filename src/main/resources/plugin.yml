@@ -41,9 +41,9 @@ commands:
     usage: /<command> [меню|rank|tierforge|treasures|classes|guilds|streams|quests|achievements|header|badges|all|on|off|reset|status|color|order|preset]
     aliases: [lab, tags]
   rankadmin:
-    description: "Ручная выдача и снятие донатных рангов"
+    description: "Просмотр и отзыв донатных рангов; покупки только с подтверждением оплаты"
     permission: chrdkregister.admin
-    usage: /<command> <give <ник> <ступень 1..5> [дней] | take <ник> | info <ник>>
+    usage: /<command> <take <ник> | info <ник>>
   captcha:
     description: Ответ на проверку «ты не бот» после серии неудачных попыток входа
     usage: /<command> <число>

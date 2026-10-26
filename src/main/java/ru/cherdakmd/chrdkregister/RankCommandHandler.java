@@ -98,42 +98,8 @@ public final class RankCommandHandler implements CommandExecutor, TabCompleter {
         String target = args[1];
         switch (action) {
             case "give" -> {
-                if (args.length < 3) {
-                    messages.send(sender, "rankadmin.usage");
-                    return true;
-                }
-                int level;
-                try {
-                    level = Integer.parseInt(args[2]);
-                } catch (NumberFormatException exception) {
-                    messages.send(sender, "rankadmin.bad-level");
-                    return true;
-                }
-                if (level < 1 || level > RankLadder.MAX_LEVEL) {
-                    messages.send(sender, "rankadmin.bad-level");
-                    return true;
-                }
-                int days = 0;
-                if (args.length >= 4) {
-                    try {
-                        days = Integer.parseInt(args[3]);
-                    } catch (NumberFormatException exception) {
-                        messages.send(sender, "rankadmin.bad-days");
-                        return true;
-                    }
-                }
-                long now = System.currentTimeMillis();
-                if (days > 0) {
-                    long until = now + days * ShopEntitlements.DAY_MILLIS;
-                    access.store().grantRankUntil(target, now, level, until, "admin");
-                } else {
-                    access.store().grantRankPermanent(target, now, level, "admin");
-                }
-                audit(sender, "rankadmin.give", target,
-                        "level", level, "days", days);
-                messages.send(sender, "rankadmin.given",
-                        "player", target, "level", level,
-                        "days", days > 0 ? String.valueOf(days) : messages.raw("rank.permanent"));
+                messages.send(sender, "paid-only.blocked");
+                return true;
             }
             case "take" -> {
                 boolean removed = access.store().revokeRank(target);

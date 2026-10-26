@@ -359,6 +359,13 @@ public final class RegistrationStore {
         if (loaded.paymentCodes == null) loaded.paymentCodes = new LinkedHashMap<>();
         if (loaded.trialUsedUuids == null) loaded.trialUsedUuids = new LinkedHashSet<>();
         for (PlayerAccount account : loaded.accounts.values()) {
+            account.rewardBoostMillis = Math.clamp(account.rewardBoostMillis, 0L, 365 * 24 * RewardBoostMath.HOUR);
+            Map<String, Double> fractions = new LinkedHashMap<>();
+            if (account.rewardBoostFractions != null) account.rewardBoostFractions.forEach((key, value) -> {
+                if (Set.of("vanilla", "professions", "skills").contains(key) && value != null && Double.isFinite(value))
+                    fractions.put(key, Math.clamp(value, 0.0, .999999999));
+            });
+            account.rewardBoostFractions = fractions;
             if (account.trialConsumed || account.isRegistered() || account.lastGrantAt > 0 || account.passUntil > 0) {
                 account.trialConsumed = true;
                 if (account.uuid != null && !account.uuid.isBlank()) loaded.trialUsedUuids.add(account.uuid);
@@ -604,35 +611,9 @@ public final class RegistrationStore {
      * @return сколько аккаунтов получило ранг
      */
     public synchronized int migrateRanks(long nowMillis) {
-        if (data.rankSchemaVersion >= 1) {
-            return 0;
-        }
-        int changed = 0;
-        for (PlayerAccount account : data.accounts.values()) {
-            if (account == null || account.rankLevel > 0 || account.rankPermanent) {
-                continue;
-            }
-            int level = RankLadder.levelForLifetime(account.totalPaidKopecks);
-            if (level > 0) {
-                account.rankLevel = level;
-                account.rankPermanent = true;
-                account.tempRankLevel = 0;
-                account.passUntil = 0L;
-                account.rankGrantedAt = nowMillis;
-                account.lastGrantSource = "migration:permanent";
-                changed++;
-            } else if (account.passUntil > nowMillis) {
-                account.rankLevel = 1;
-                changed++;
-            }
-        }
-        data.rankSchemaVersion = 1;
-        if (changed > 0) {
-            markDirtyNow();
-        } else {
-            markDirty();
-        }
-        return changed;
+        // Сумма всех покупок не доказывает оплату конкретного ранга. Старые права не отзываем.
+        if (data.rankSchemaVersion < 1) { data.rankSchemaVersion = 1; markDirty(); }
+        return 0;
     }
 
     /** Общая подготовка аккаунта: канонический ключ и ник, если его ещё нет. */
@@ -660,31 +641,10 @@ public final class RegistrationStore {
      *
      * @param hours длительность в часах; значения {@code <= 0} игнорируются
      */
-    public synchronized PlayerAccount grantPassHours(String playerName, long nowMillis,
-                                                    int hours, String source) {
-        String key = canonicalName(playerName);
-        PlayerAccount account = data.accounts.computeIfAbsent(key, ignored -> new PlayerAccount());
-        account.canonicalName = key;
-        if (account.playerName == null || account.playerName.isBlank()) {
-            account.playerName = playerName;
-        }
-        if (account.rankPermanent) {
-            return copy(account); // ранг навсегда продлевать не нужно
-        }
-        int safeHours = Math.max(0, Math.min(24 * 365, hours));
-        if (safeHours == 0) {
-            return copy(account);
-        }
-        long baseTime = Math.max(nowMillis, account.passUntil);
-        account.passUntil = baseTime + safeHours * 3_600_000L;
-        consumeTrial(account);
-        account.lastGrantSource = (source == null || source.isBlank()) ? "reward" : source;
-        account.lastGrantAt = nowMillis;
-        account.lastGrantDays = 0;
-        account.lastGrantHours = safeHours;
-        clearExpiryWarnings(account);
-        markDirtyNow();
-        return copy(account);
+    @Deprecated
+    public synchronized PlayerAccount grantPassHours(String playerName, long nowMillis, int hours, String source) {
+        grantRewardBoost(playerName, hours, 24);
+        return getAccount(playerName).orElse(null);
     }
 
     /**
@@ -779,6 +739,7 @@ public final class RegistrationStore {
             boolean strictCaseMatch,
             boolean testPayment
     ) {
+        if (testPayment) return Optional.empty();
         if (donorName == null || donorName.isBlank()) return Optional.empty();
         String key = canonicalName(donorName);
         PlayerAccount existing = data.accounts.get(key);
@@ -1025,7 +986,6 @@ public final class RegistrationStore {
         if (playerName == null || playerName.isBlank() || rawPassword == null || rawPassword.isEmpty()) {
             return false;
         }
-        boolean grantTrial = trialDays > 0 && isTrialEligible(playerName, uuid);
         String key = canonicalName(playerName);
         PlayerAccount account = data.accounts.computeIfAbsent(key, ignored -> new PlayerAccount());
         if (account.isRegistered()) {
@@ -1040,16 +1000,7 @@ public final class RegistrationStore {
         account.registeredAt = nowMillis;
         account.trialConsumed = true;
         if (uuid != null) data.trialUsedUuids.add(uuid.toString());
-        if (grantTrial) {
-            int days = Math.max(1, Math.min(365, trialDays));
-            account.passUntil = Math.addExact(nowMillis, days * 86_400_000L);
-            account.trialGrantedAt = nowMillis;
-            account.trialUntil = account.passUntil;
-            account.lastGrantSource = "trial";
-            account.lastGrantAt = nowMillis;
-            account.lastGrantDays = days;
-            clearExpiryWarnings(account);
-        }
+        // Прежний параметр trialDays сохранён для бинарной совместимости; платных прав не выдаёт.
         addSessionEntry(account, uuid, ipAddress, nowMillis, "register");
         markDirtyNow();
         return true;
@@ -1963,12 +1914,81 @@ public final class RegistrationStore {
         return name == null ? "" : name.trim().toLowerCase(Locale.ROOT);
     }
 
+    /** Отдельный запас онлайн-времени: не изменяет ни одного платного поля. */
+    public synchronized long grantRewardBoost(String playerName, int hours, int bankHours) {
+        if (!AccessManager.isValidMinecraftName(playerName) || hours <= 0) return rewardBoostRemaining(playerName);
+        PlayerAccount account = accountFor(playerName);
+        account.rewardBoostMillis = RewardBoostMath.grant(account.rewardBoostMillis, hours, bankHours);
+        markDirtyNow();
+        return account.rewardBoostMillis;
+    }
+
+    public synchronized long rewardBoostRemaining(String playerName) {
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        return account == null ? 0 : Math.max(0, account.rewardBoostMillis);
+    }
+
+    public synchronized void consumeRewardBoost(String playerName, long millis) {
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        if (account == null || millis <= 0 || account.rewardBoostMillis <= 0) return;
+        account.rewardBoostMillis = Math.max(0, account.rewardBoostMillis - millis);
+        markDirty();
+    }
+
+    public synchronized long boostExperience(String playerName, String channel, long base, long current) {
+        if (channel == null || !Set.of("vanilla", "professions", "skills").contains(channel)) return current;
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        if (account == null || account.rewardBoostMillis <= 0) return current;
+        if (account.rewardBoostFractions == null) account.rewardBoostFractions = new LinkedHashMap<>();
+        var result = RewardBoostMath.experience(base, current, account.rewardBoostFractions.getOrDefault(channel, 0.0));
+        account.rewardBoostFractions.put(channel, result.fraction());
+        markDirty();
+        return result.amount();
+    }
+
+    /** Сначала долговечно резервируем платёж. Повтор и неопределённый исход требуют сверки, не повторной выдачи. */
+    public synchronized boolean reservePayment(String reference, String actor, String command, long now) {
+        if (reference == null || !reference.matches("[A-Za-z0-9][A-Za-z0-9_.:-]{2,127}")) return false;
+        if (data.paymentReceipts == null) data.paymentReceipts = new LinkedHashMap<>();
+        if (data.paymentReceipts.containsKey(reference)) return false;
+        data.paymentReceipts.put(reference, new PaymentReceipt(actor, command, now, "RESERVED_RECONCILE_IF_INTERRUPTED"));
+        markDirty();
+        long requiredSequence = snapshotSequence.get() + 1;
+        flushBlocking();
+        return writtenSequence.get() >= requiredSequence;
+    }
+
+    public synchronized void finishPayment(String reference, String outcome) {
+        if (data.paymentReceipts == null) return;
+        PaymentReceipt receipt = data.paymentReceipts.get(reference);
+        if (receipt == null) return;
+        data.paymentReceipts.put(reference, new PaymentReceipt(receipt.actor(), receipt.command(), receipt.confirmedAt(), outcome));
+        markDirtyNow();
+    }
+
+    public synchronized Map<String, String> paymentReceipts() {
+        Map<String, String> result = new LinkedHashMap<>();
+        if (data.paymentReceipts != null) data.paymentReceipts.forEach((reference, receipt) ->
+                result.put(reference, receipt.actor() + " | " + receipt.command() + " | " + receipt.outcome()));
+        return Map.copyOf(result);
+    }
+
+    private record PaymentReceipt(String actor, String command, long confirmedAt, String outcome) { }
+
     private static PlayerAccount copy(PlayerAccount source) {
         PlayerAccount result = new PlayerAccount();
         result.uuid = source.uuid;
         result.playerName = source.playerName;
         result.canonicalName = source.canonicalName;
         result.passUntil = source.passUntil;
+        result.rankLevel = source.rankLevel;
+        result.rankPermanent = source.rankPermanent;
+        result.tempRankLevel = source.tempRankLevel;
+        result.rankGrantedAt = source.rankGrantedAt;
+        result.lastGrantHours = source.lastGrantHours;
+        result.rewardBoostMillis = source.rewardBoostMillis;
+        result.rewardBoostFractions = source.rewardBoostFractions == null ? new LinkedHashMap<>()
+                : new LinkedHashMap<>(source.rewardBoostFractions);
         result.trialConsumed = source.trialConsumed;
         result.trialGrantedAt = source.trialGrantedAt;
         result.trialUntil = source.trialUntil;
@@ -2127,6 +2147,8 @@ public final class RegistrationStore {
 
     /** An account of a player: pass, credentials, 2FA, sessions, ignore list and mute. */
     public static final class PlayerAccount {
+        public long rewardBoostMillis;
+        public Map<String, Double> rewardBoostFractions = new LinkedHashMap<>();
         public String uuid = "";
         public String playerName = "";
         public String canonicalName = "";
@@ -2218,6 +2240,7 @@ public final class RegistrationStore {
     }
 
     private static final class StoreData {
+        private Map<String, PaymentReceipt> paymentReceipts = new LinkedHashMap<>();
         int version;
         /** Версия схемы рангов: 1 — миграция с проходки выполнена (1.4.167). */
         int rankSchemaVersion;

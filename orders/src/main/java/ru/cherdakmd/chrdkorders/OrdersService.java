@@ -317,7 +317,7 @@ public final class OrdersService {
         return dropped;
     }
 
-    /** Часы ранга через ядро; {@code true} — награда выдана. */
+    /** Часы буста через ядро; {@code true} — награда выдана. */
     private boolean grantPassHours(Player player, BotOrder order) {
         if (!order.hasPassReward()) {
             return false;
@@ -328,7 +328,7 @@ public final class OrdersService {
                     + " не выдана игроку " + player.getName() + ".");
             return false;
         }
-        api.grantPassHours(player.getName(), order.rewardPassHours(), "orders:" + order.botId());
+        api.grantRewardBoostHours(player.getName(), order.rewardPassHours(), "orders:" + order.botId());
         return true;
     }
 

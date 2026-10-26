@@ -67,7 +67,7 @@ class CoreAccessPolicyTest {
         assertFalse(LuckPermsPassSync.grantsGroup(false, true),
                 "тестовый период и /pass testpay группу не выдают");
         assertTrue(LuckPermsPassSync.grantsGroup(true, true), "покупка выдаёт группу");
-        assertTrue(LuckPermsPassSync.grantsGroup(false, false),
+        assertFalse(LuckPermsPassSync.grantsGroup(false, false),
                 "при pass-group-paid-only: false группа выдаётся и в тестовом режиме");
         assertEquals("group.pass", LuckPermsPassSync.groupNodeName(" pass "));
     }
@@ -95,17 +95,12 @@ class CoreAccessPolicyTest {
                 new DonatePayClient.Transaction(-now, "TestPlayer", BigDecimal.valueOf(500),
                         "success", "donation", now, true),
                 now, false, RegistrationStore.DONATION_SOURCE_DONATEPAY);
-        assertTrue(test.granted(), "тестовая оплата проходит полный цикл выдачи");
-        assertTrue(store.hasActivePass("TestPlayer", now + 1), "проходка продлена");
-        assertEquals(0, store.getAccount("TestPlayer").orElseThrow().paymentsCount,
-                "тестовый платёж не считается покупкой");
-        assertEquals(0, store.getAccount("TestPlayer").orElseThrow().totalPaidKopecks,
-                "сумма тестового платежа не попадает в статистику");
-        assertFalse(store.isTotpEnabled("TestPlayer"));
-        assertEquals(List.of("TestPlayer"), notified);
-        assertEquals(List.of(false), paidFlags, "группа проходки для теста не выдаётся");
-        // Тестовая оплата не переписывает источник выдачи: аккаунт не притворяется оплаченным.
-        assertEquals("", store.getAccount("TestPlayer").orElseThrow().lastGrantSource);
+        assertFalse(test.granted(), "тест никогда не выдаёт платных прав");
+        assertFalse(store.hasActivePass("TestPlayer", now + 1));
+        assertTrue(store.getAccount("TestPlayer").isEmpty(), "даже платный аккаунт не создаётся");
+        assertTrue(notified.isEmpty());
+        assertTrue(paidFlags.isEmpty());
+        assertFalse(service.approve(-now, "TestPlayer", 0, "Admin", now + 1));
 
         DonationService.Outcome real = service.process(
                 new DonatePayClient.Transaction(42L, "TestPlayer", BigDecimal.valueOf(500),
@@ -115,7 +110,7 @@ class CoreAccessPolicyTest {
         assertEquals(1, store.getAccount("TestPlayer").orElseThrow().paymentsCount,
                 "реальная оплата засчитывается как покупка");
         assertTrue(store.getAccount("TestPlayer").orElseThrow().totalPaidKopecks > 0);
-        assertEquals(List.of(false, true), paidFlags);
+        assertEquals(List.of(true), paidFlags);
         assertEquals("donatepay", store.getAccount("TestPlayer").orElseThrow().lastGrantSource,
                 "реальная оплата ставит источник donatepay");
     }
@@ -126,12 +121,12 @@ class CoreAccessPolicyTest {
         long now = 1_700_000_000_000L;
         store.registerPassword("TrialPlayer", java.util.UUID.randomUUID(), "Secret123", "192.0.2.10",
                 now, 14);
-        assertTrue(store.getAccount("TrialPlayer").orElseThrow().isTrialOnly());
+        assertFalse(store.getAccount("TrialPlayer").orElseThrow().hasRank(now));
 
         store.grantPassFromDonation("TrialPlayer", now, now, 30L * 86_400_000L, false, true);
         RegistrationStore.PlayerAccount account = store.getAccount("TrialPlayer").orElseThrow();
         assertEquals(0, account.paymentsCount, "тестовая оплата не делает из пробного аккаунта платного");
-        assertEquals("trial", account.lastGrantSource);
-        assertTrue(account.isTrialOnly(), "пробный аккаунт остаётся пробным до реальной покупки");
+        assertEquals("", account.lastGrantSource);
+        assertFalse(account.hasRank(now), "тест не выдаёт платных прав");
     }
 }

@@ -119,6 +119,7 @@ public final class SkillService {
         // максимумом, чтобы не поймать переполнение long.
         long safeUnits = Math.min(1000L, units);
         long gained = perUnit * safeUnits;
+        if (plugin.coreApi() != null) gained = plugin.coreApi().boostExperience(player.getName(), "skills", gained, gained);
         int oldLevel = level(player, skill);
         long total = store.addXp(key(player), skill, gained);
         int newLevel = SkillCurve.levelFor(total, curve());

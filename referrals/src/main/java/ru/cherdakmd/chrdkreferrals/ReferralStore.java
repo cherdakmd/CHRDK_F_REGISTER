@@ -38,7 +38,7 @@ public final class ReferralStore {
     public static class RefStats {
         public int linked;  // сколько друзей привязалось
         public int paid;    // сколько из них оплатило
-        public long hoursEarned;  // часы ранга, с 1.4.184 (раньше дни)
+        public long hoursEarned;  // часы буста, с 1.4.184 (раньше дни)
     }
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();

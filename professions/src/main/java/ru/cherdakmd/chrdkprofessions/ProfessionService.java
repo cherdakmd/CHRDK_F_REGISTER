@@ -23,6 +23,13 @@ public final class ProfessionService {
     /** Бонусы донатного ранга: подставляются ядром после загрузки API (1.4.167). */
     private volatile Function<UUID, RankBonus> rankBonus = player -> RankBonus.NONE;
 
+    @FunctionalInterface
+    public interface RewardScaler { long apply(UUID player, long base, long current); }
+    private volatile RewardScaler rewardScaler = (player, base, current) -> current;
+    public void setRewardScaler(RewardScaler scaler) {
+        rewardScaler = scaler == null ? (player, base, current) -> current : scaler;
+    }
+
     public ProfessionService(ProfessionConfig config, ProfessionStore store) {
         this.config = config == null ? ProfessionConfig.defaults() : config;
         this.store = store;
@@ -208,7 +215,9 @@ public final class ProfessionService {
         // Опыт: множитель сервера × бонус ранга (1.4.167). Оба множителя
         // умножаются до округления, чтобы 10 % ранга не терялись на мелких наградах.
         double factor = config.xpMultiplier() * bonus(player).xpFactor();
-        int scaled = Math.max(1, (int) Math.round(rawXp * factor));
+        long base = Math.max(1L, Math.round(rawXp * config.xpMultiplier()));
+        long current = Math.max(1L, Math.round(rawXp * factor));
+        int scaled = (int) Math.min(Integer.MAX_VALUE, Math.max(current, rewardScaler.apply(player, base, current)));
         int left = dailyLeft(player, profession, now);
         int granted = left < 0 ? scaled : Math.min(scaled, left);
         boolean capped = left >= 0 && granted < scaled;

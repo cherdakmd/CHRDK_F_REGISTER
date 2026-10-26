@@ -169,7 +169,7 @@ public final class AchievementService {
         AchievementsConfig.Reward reward = plugin.config().rewardOf(def);
         if (reward.passHours() > 0) {
             if (plugin.coreApi() != null) {
-                plugin.coreApi().grantPassHours(player.getName(), reward.passHours(),
+                plugin.coreApi().grantRewardBoostHours(player.getName(), reward.passHours(),
                         "achievements:" + def.id());
             } else {
                 plugin.getLogger().warning("Ядро недоступно: награда достижения "

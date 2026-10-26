@@ -17,6 +17,8 @@ import java.util.logging.Level;
  */
 public final class RegisterPlugin extends JavaPlugin {
     private AccessManager accessManager;
+    private RewardBoostService rewardBoosts;
+    RewardBoostService rewardBoosts() { return rewardBoosts; }
     private ChatService chatService;
     private PassMenuService passMenuService;
     private DonateMenuService donateMenuService;
@@ -83,6 +85,9 @@ public final class RegisterPlugin extends JavaPlugin {
         this.bankService = new BankService(this, bankStore, () -> accessManager.config().economy());
         this.bankService.start();
         this.profileRegistry = new ProfileRegistry(getLogger());
+        this.rewardBoosts = new RewardBoostService(this, accessManager);
+        getServer().getPluginManager().registerEvents(rewardBoosts, this);
+        profileRegistry.register("reward-boost", rewardBoosts::profile);
         this.profileService = new ProfileService(this, accessManager, bankStore, profileRegistry);
         getServer().getPluginManager().registerEvents(profileService, this);
         // Автосообщения показывают баланс банка: подстановка %balance%.
@@ -231,6 +236,7 @@ public final class RegisterPlugin extends JavaPlugin {
         }
 
         accessManager.start();
+        rewardBoosts.start();
         chatService.start();
         this.updateChecker = new UpdateChecker(this, accessManager, getLogger());
         getServer().getPluginManager().registerEvents(updateChecker, this);
@@ -296,6 +302,7 @@ public final class RegisterPlugin extends JavaPlugin {
             spawnService.shutdown();
             spawnService = null;
         }
+        if (rewardBoosts != null) rewardBoosts.close();
         if (accessManager != null) {
             accessManager.shutdown();
             accessManager = null;
@@ -334,6 +341,25 @@ public final class RegisterPlugin extends JavaPlugin {
             shopService.logProblems();
         }
         applyLabelSettings();
+    }
+
+    void writePaidAudit(org.bukkit.command.CommandSender sender) {
+        // Отчёт не содержит паролей, TOTP, IP, токенов и иных данных авторизации.
+        messages.send(sender, "paid-only.audit-start");
+        executor.taskExecutor().execute(() -> {
+            try {
+                java.nio.file.Path folder = getDataFolder().toPath().resolve("paid-audit");
+                java.nio.file.Files.createDirectories(folder);
+                java.nio.file.Path file = folder.resolve("audit-" + java.util.UUID.randomUUID() + ".json");
+                java.nio.file.Files.writeString(file,
+                        PaidAuditReport.render(store.getAllAccounts(), store.paymentReceipts(), System.currentTimeMillis()),
+                        java.nio.charset.StandardCharsets.UTF_8, java.nio.file.StandardOpenOption.CREATE_NEW);
+                getServer().getScheduler().runTask(this, () -> messages.send(sender, "paid-only.audit-done", "file", file.getFileName()));
+            } catch (Exception error) {
+                getLogger().log(java.util.logging.Level.SEVERE, "Payment reconciliation report failed", error);
+                getServer().getScheduler().runTask(this, () -> messages.send(sender, "paid-only.audit-error"));
+            }
+        });
     }
 
     /** Тексты плагина из {@code messages.yml}. */

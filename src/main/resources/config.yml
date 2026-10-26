@@ -99,19 +99,19 @@ easydonate:
 #  Настройка в panel.trademc.org:
 #   1) Магазин → Сервера: привяжите сервер по RCON (хост/порт/пароль rcon).
 #   2) Товар ранга → поле "команда при покупке":
-#      pass shoppay %username% <цена_товара>
+#      pass shoppay %username% <цена_товара> payment=<реальный_номер_заказа>
 #      Плейсхолдер ника у TradeMC — %username% (точное написание есть в
 #      подсказке панели). Команда выполняется от консоли, слэш не нужен.
 #      Сумма должна совпадать с ценой карточки в shop.products (поле price):
 #      по ней ядро находит ступень и срок. Если цены нет — работает старый
 #      путь донатов (donatepay), поэтому дублируйте цены один в один.
 #   3) Тест: купите товар или выполните из консоли
-#      pass shoppay TestPlayer 99
+#      pass shoppay TestPlayer 99 payment=trademc:12345
 # ================================================================
 trademc:
   # 1.4.167: ОСНОВНОЙ режим продаж. true выключает опросы DonatePay/EasyDonate
   # и Boosty-подписки одним переключателем; панель TradeMC после оплаты выполняет
-  # по RCON `pass shoppay <ник> <цена>` и выдаёт карточку ранга по цене.
+  # по RCON `pass shoppay <ник> <цена> payment=<номер>` и выдаёт карточку ранга по цене.
   # Впишите shop-id и payment-url ниже — без ссылки игрок увидит ссылку DonatePay.
   enabled: true
   # Числовой ID вашего магазина из панели TradeMC (идёт в логи и /pass status)
@@ -180,11 +180,10 @@ motd:
     - "<gradient:#ffcc00:#ff8800><b>ЧРДК — делаем контент вместе</b></gradient>\n<gray>Сегодня %date% · v%version% · ждём именно тебя</gray>"
 
 pass:
-  # Однократный приветственный ранг для нового аккаунта после первой регистрации.
+  # Старые пробные платные права больше не выдаются; вместо них reward-boost.welcome-hours.
   # Отсчёт начинается с успешного /register; до регистрации доступен только вход/регистрация.
   # Уже зарегистрированным и ранее получавшим ранг аккаунтам повторно не выдаётся.
-  # Старый пробный период больше не нужен: вход свободный, а приветственный ранг
-  # новичка настраивается в секции ranks.welcome (1.4.167).
+  # Эти старые ключи не могут вернуть бесплатные платные права даже при enabled:true.
   trial:
     enabled: false
     days: 14
@@ -241,11 +240,9 @@ ranks:
     xp-percent: [0, 10, 20, 30, 40, 50]
     drop-percent: [0, 5, 10, 15, 20, 25]
     skill-levels: [0, 2, 4, 6, 8, 10]
-  # Приветственный ранг новичку после регистрации: три дня первой ступени.
-  # Сутки легко пропустить (зашёл вечером, вернулся через два дня) — три дня
-  # показывают оформление, очередь и шлейф хотя бы в двух-трёх заходах.
+  # Устарело: бесплатные платные ранги не выдаются. Приветствие — reward-boost.welcome-hours.
   welcome:
-    enabled: true
+    enabled: false
     level: 1
     days: 3
   # Лестница снизу вверх. format — MiniMessage-шаблон с %name%; badge — знак
@@ -287,8 +284,8 @@ ranks:
 #  косметика поштучно и боевой пропуск. Товар выдаётся по RCON-команде
 #  из витрины TradeMC:
 #
-#      pass shopbuy <ник> <товар>          # срок из товара
-#      pass shopbuy <ник> <товар> 30       # свой срок (не больше потолка)
+#      pass shopbuy <ник> <товар> payment=<номер> # только подтверждённая реальная оплата
+#      pass shopbuy <ник> <товар> 30 payment=<номер> # срок по оплаченной карточке
 #
 #  У товара три необязательных действия:
 #    group       — временная группа LuckPerms (её видят очередь и аддоны);
@@ -578,14 +575,14 @@ shop:
     # --- Батлпасс -----------------------------------------------------------
     # Боевой пропуск сезона: открывает премиум-колонку наград в заданиях
     # (battlepass/config.yml → premium.product должен совпадать с этим id).
-    # Награды премиум-трека — часы ранга и косметика, без игровой силы.
+    # Награды премиум-трека — отдельные бусты, без выдачи платных товаров и рангов.
     # 90 дней = длина сезона; продление складывается, потолок общий 365.
     - id: battlepass-premium
       name: "<gold>Боевой пропуск</gold>"
       price: 249
       days: 90
       group: ""
-      description: "Золотые награды всех заданий сезона: часы ранга и косметика"
+      description: "Золотые награды всех заданий сезона: часы отдельного буста"
       tag: ""
       permissions: []
       commands: []
@@ -1064,7 +1061,7 @@ auto-messages:
     - {"text": "<gray>Алмазы можно хранить в банке: <white>/bal deposit</white> и <white>/bal withdraw</white>. Счёт не теряется при смерти.</gray>"}
     - {"text": "<gray>Переключение локального и общего чата — <white>/chat</white>. Личное сообщение — <white>/msg ник текст</white>, ответ — <white>/r</white>.</gray>"}
     # --- ранг и безопасность ---
-    - {"text": "<gray>Ваш приветственный ранг активен: осталось <white>%pass_left%</white>. Статус и продление — <white>/pass menu</white>.</gray>", "condition": "trial"}
+    - {"text": "<gray>За игровые достижения — отдельный буст +10% опыта Minecraft, профессий и навыков. Тратится только онлайн; запас — <white>/profile</white>. Ранги и платные товары не продлеваются.</gray>"}
     - {"text": "<gray>Ранг закончился. Продлить и сохранить оформление — <white>/pass menu</white>, вопросы — в Discord сервера.</gray>", "condition": "no-pass"}
     - {"text": "<gray>Спасибо за поддержку сервера! Ваш ранг активен до конца срока: <white>%pass_left%</white>.</gray>", "condition": "paid"}
     - {"text": "<gray>Защитите аккаунт: <white>/2fa setup</white>, затем подтвердите код приложения. Никому не сообщайте пароль и коды.</gray>", "condition": "unsecured"}
@@ -1075,7 +1072,7 @@ auto-messages:
     - {"text": "<gray>72 достижения ждут своего героя: <white>/achievements</white>. Бейджи открываются вместе с целями.</gray>", "plugin": "CHRDK_Achievements", "permission": "chrdkachievements.use"}
     - {"text": "<gray>Десять навыков и 60 перков: <white>/skills</white>. Уровни растут от обычной игры — копайте, бейте, варите.</gray>", "plugin": "CHRDK_Skills", "permission": "chrdkskills.use"}
     - {"text": "<gray>Клад можно найти в любом камне: <white>/treasures</white>. Способности по ПКМ, сеты и проклятия — в лоре находок.</gray>", "plugin": "CHRDK_Treasures", "permission": "chrdktreasures.use"}
-    - {"text": "<gray>Артефакты собираются в коллекцию: <white>/artifacts collection</white>. За полноту каталога — дни ранга и алмазы.</gray>", "plugin": "CHRDK_Artifacts", "permission": "chrdkartifacts.use"}
+    - {"text": "<gray>Артефакты собираются в коллекцию: <white>/artifacts collection</white>. За полноту каталога — часы отдельного буста и алмазы.</gray>", "plugin": "CHRDK_Artifacts", "permission": "chrdkartifacts.use"}
     - {"text": "<gray>Звание растёт вместе с наигранным временем. Ваш прогресс — <white>/ranks</white>.</gray>", "plugin": "CHRDK_Ranks", "permission": "chrdkranks.use"}
     - {"text": "<gray>Общие цели сервера: <white>/goals</white> — ваш вклад и прогресс сообщества.</gray>", "plugin": "CHRDK_CommonGoals", "permission": "chrdkgoals.use", "min-online": 3}
     # --- экономика ---
@@ -1088,7 +1085,7 @@ auto-messages:
     - {"text": "<gray>Точки дома: <white>/homes</white> и <white>/sethome имя</white>. Запрос к игроку — <white>/tpa ник</white>.</gray>", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
     - {"text": "<gray>Изучайте кастомные чары: <white>/enchants</white>. Редкости снаряжения — <white>/tiers</white>.</gray>", "plugin": "CHRDK_Enchants", "permission": "chrdkenchants.use"}
     - {"text": "<gray>Косметический шлейф: <white>/cosmetics list</white>. Выключить эффект — <white>/cosmetics off</white>.</gray>", "plugin": "CHRDK_Cosmetics", "permission": "chrdkcosmetics.use"}
-    - {"text": "<gray>Стримите на Twitch или VK Play Live? Привяжите канал: <white>/stream link</white> — час эфира даёт сутки ранга.</gray>", "plugin": "CHRDK_Streams", "permission": "chrdkstreams.use"}
+    - {"text": "<gray>Стримите на Twitch или VK Play Live? Привяжите канал: <white>/stream link</white> — час эфира даёт час отдельного буста.</gray>", "plugin": "CHRDK_Streams", "permission": "chrdkstreams.use"}
     - {"text": "<gray>Приглашайте друзей: <white>/ref</white> — статус и условия бонуса. Вас позвал друг? <white>/ref use его_ник</white>.</gray>", "plugin": "CHRDK_Referrals", "permission": "chrdkref.use"}
     - {"text": "<gray>Сейчас на сервере <white>%online%</white> игроков. Самое время для общих целей: <white>/goals</white>.</gray>", "plugin": "CHRDK_CommonGoals", "permission": "chrdkgoals.use", "min-online": 5}
     - {"text": "<gray>Забирайте ежедневную награду: <white>/daily</white>. Стрик входов не сбрасывается при пропуске одного дня.</gray>", "plugin": "CHRDK_DailyRewards", "permission": "chrdkdaily.use"}
@@ -1196,3 +1193,13 @@ labels:
     # возвращается одной кнопкой. Индекс списка — ступень ранга:
     # [без ранга, I, II, III, IV, V]. Больше шести слотов меню не покажет.
     slots: [2, 2, 3, 4, 5, 6]
+
+# ================================================================
+# Отдельные игровые награды. Не продлевают ранги/проходку, не дают товары и LP-права.
+# Процент фиксирован: +10% XP Minecraft, профессий и навыков; сумма XP-бонусов до +50%.
+# Повторная награда продлевает только время, процент не складывается.
+# Офлайн и выключенный сервер время не расходуют; остаток хранится в data.json.
+reward-boost:
+  max-bank-hours: 24
+  # Однократно после первой регистрации; 0 — не выдавать приветственный буст.
+  welcome-hours: 3

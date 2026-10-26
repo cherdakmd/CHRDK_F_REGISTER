@@ -584,7 +584,7 @@ final class ViewerService {
             return false;
         }
         try {
-            api.grantPassHours(name, hours, SOURCE);
+            api.grantRewardBoostHours(name, hours, SOURCE);
             return true;
         } catch (RuntimeException exception) {
             plugin.getLogger().log(Level.WARNING, "[Streams] Не удалось выдать " + hours

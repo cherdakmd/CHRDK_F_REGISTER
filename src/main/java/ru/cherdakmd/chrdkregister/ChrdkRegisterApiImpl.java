@@ -13,7 +13,13 @@ import java.util.Optional;
  */
 final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
 
-    private final JavaPlugin plugin;
+    private final RegisterPlugin plugin;
+    private final java.util.Set<String> blocked = java.util.concurrent.ConcurrentHashMap.newKeySet();
+    private void deny(String operation, String player) {
+        if (!blocked.add(operation)) return;
+        java.util.logging.Logger logger = plugin == null ? java.util.logging.Logger.getLogger("CHRDK_Core") : plugin.getLogger();
+        logger.warning("Blocked unpaid API " + operation + " (first player: " + player + "). Use grantRewardBoostHours for gameplay rewards.");
+    }
     private final AccessManager accessManager;
     private final ExternalHooks hooks;
     private final ShopService shop;
@@ -21,7 +27,7 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
     private final BankStore bank;
     private final ProfileRegistry profiles;
 
-    ChrdkRegisterApiImpl(JavaPlugin plugin, AccessManager accessManager, ExternalHooks hooks,
+    ChrdkRegisterApiImpl(RegisterPlugin plugin, AccessManager accessManager, ExternalHooks hooks,
                          ShopService shop, NameTags nameTags, BankStore bank,
                          ProfileRegistry profiles) {
         this.plugin = plugin;
@@ -92,17 +98,12 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
 
     @Override
     public void grantRank(String playerName, int level, int days, String source) {
-        long now = System.currentTimeMillis();
-        int safeDays = days <= 0 ? accessManager.config().grantDays() : Math.min(365, days);
-        accessManager.store().grantRankUntil(playerName, now, RankLadder.clampLevel(level),
-                now + Math.max(1, safeDays) * 86_400_000L,
-                source == null || source.isBlank() ? "addon" : source);
+        deny("grantRank", playerName);
     }
 
     @Override
     public void grantRankPermanent(String playerName, int level, String source) {
-        accessManager.store().grantRankPermanent(playerName, System.currentTimeMillis(),
-                RankLadder.clampLevel(level), source == null || source.isBlank() ? "addon" : source);
+        deny("grantRankPermanent", playerName);
     }
 
     @Override
@@ -149,13 +150,28 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
 
     @Override
     public void grantPass(String playerName, int days, String source) {
-        accessManager.grantPassManually(playerName, days, source == null || source.isBlank() ? "addon" : source);
+        deny("grantPass", playerName);
     }
 
     @Override
     public void grantPassHours(String playerName, int hours, String source) {
         accessManager.grantPassHours(playerName, hours,
                 source == null || source.isBlank() ? "addon" : source);
+    }
+
+    @Override
+    public void grantRewardBoostHours(String playerName, int hours, String source) {
+        plugin.rewardBoosts().grant(playerName, hours, source);
+    }
+
+    @Override
+    public long rewardBoostRemainingMillis(String playerName) {
+        return accessManager.store().rewardBoostRemaining(playerName);
+    }
+
+    @Override
+    public long boostExperience(String playerName, String channel, long base, long current) {
+        return plugin.rewardBoosts().experience(playerName, channel, base, current);
     }
 
     @Override
@@ -170,7 +186,8 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
 
     @Override
     public long grantEntitlement(String playerName, String productId, int days, String source) {
-        return shop.grantInternal(playerName, productId, days, source);
+        deny("grantEntitlement", playerName);
+        return 0L;
     }
 
     @Override

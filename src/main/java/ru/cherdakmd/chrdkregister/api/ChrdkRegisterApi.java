@@ -32,7 +32,7 @@ import java.util.UUID;
 public interface ChrdkRegisterApi {
 
     /** Версия контракта API. Растёт при расширении (добавлении методов/событий). */
-    int API_VERSION = 11;
+    int API_VERSION = 12;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -74,11 +74,13 @@ public interface ChrdkRegisterApi {
         return rankLevel(playerName) >= Math.max(1, minLevel);
     }
 
-    /** Выдаёт ранг на срок; {@code days <= 0} — срок по умолчанию из конфига ядра. */
+    /** @deprecated Платные ранги игровым API не выдаются. */
+    @Deprecated
     default void grantRank(String playerName, int level, int days, String source) {
     }
 
-    /** Выдаёт ранг навсегда (миграция, ручная выдача, акции). */
+    /** @deprecated Платные ранги игровым API не выдаются. */
+    @Deprecated
     default void grantRankPermanent(String playerName, int level, String source) {
     }
 
@@ -120,29 +122,23 @@ public interface ChrdkRegisterApi {
 
     /* ------------------------------ управление проходкой ------------------------------ */
 
-    /**
-     * Выдаёт (или продлевает) проходку.
-     *
-     * @param days   длительность в днях; {@code <= 0} — значение {@code pass.grant-days}
-     * @param source метка источника, попадёт в аккаунт и аудит (например, имя аддона)
-     */
+    /** @deprecated Платные права не выдаются игровым API. Используйте grantRewardBoostHours. */
+    @Deprecated
     void grantPass(String playerName, int days, String source);
 
-    /**
-     * Продлевает ранг на часы — путь наград аддонов (v11, 1.4.184).
-     *
-     * <p>С 1.4.184 награды измеряются часами: час эфира даёт час ранга, награда
-     * достижения, батлпасса или заказа — свои часы. Сутки остались только у
-     * покупок, ручной выдачи и приветственного ранга. Метод не поднимает
-     * {@code PassGrantedEvent}: награда — не оплата, реферальные бонусы на неё
-     * начисляться не должны.</p>
-     *
-     * @param hours  сколько часов добавить; {@code <= 0} — ничего не делать,
-     *               значение зажимается сверху ({@code 365 * 24})
-     * @param source метка источника для аудита и поздравления ({@code streams:...})
-     */
+    /** @deprecated Совместимый адаптер к отдельному бусту; НИКОГДА не продлевает ранг/проходку. */
+    @Deprecated
     default void grantPassHours(String playerName, int hours, String source) {
     }
+
+    /** Игровая награда: +10 % XP, только авторизованное онлайн-время, без платных прав. */
+    default void grantRewardBoostHours(String playerName, int hours, String source) { }
+
+    /** Остаток отдельного буста; это не Unix timestamp и не срок ранга. */
+    default long rewardBoostRemainingMillis(String playerName) { return 0L; }
+
+    /** База до других бонусов и уже начисляемый XP. +10 % аддитивно, общий предел +50 %. */
+    default long boostExperience(String playerName, String channel, long base, long current) { return current; }
 
     /** Отзывает проходку; {@code true}, если проходка была активна. */
     boolean revokePass(String playerName);
@@ -165,18 +161,8 @@ public interface ChrdkRegisterApi {
         return 0L;
     }
 
-    /**
-     * Выдаёт покупку каталога как награду: срок, группа и команды товара, без записи
-     * продажи в журнале донатов. Нужно аддонам, которые награждают товаром каталога, —
-     * например, премиум-трек батлпасса выдаёт косметику.
-     *
-     * <p>Появился в API v5; реализация по умолчанию ничего не выдаёт и возвращает
-     * {@code 0}, поэтому сторонние реализации интерфейса остаются совместимыми.</p>
-     *
-     * @param days срок в днях; {@code <= 0} — срок из карточки товара
-     * @param source метка источника для аудита ({@code battlepass:mission_id})
-     * @return момент окончания срока; {@code 0} — товар не выдан
-     */
+    /** @deprecated Платные товары не выдаются игровым API. Всегда возвращает 0. */
+    @Deprecated
     default long grantEntitlement(String playerName, String productId, int days, String source) {
         return 0L;
     }

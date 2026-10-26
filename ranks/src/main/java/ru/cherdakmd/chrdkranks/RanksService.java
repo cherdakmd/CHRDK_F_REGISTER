@@ -59,10 +59,11 @@ final class RanksService {
                 }
             }
         }
-        for (String command : rank.commands()) {
-            String parsed = command.replace("%player%", player.getName());
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), parsed);
-        }
+        // Произвольные команды наград могли выдавать платные группы через LP/алиасы.
+        // Звание за стаж остаётся заслуженным оформлением, но не донатным рангом.
+        var api = Bukkit.getServicesManager().load(ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.class);
+        if (api != null) api.grantRewardBoostHours(player.getName(), Math.clamp(plugin.getConfig().getInt("rewards.boost-hours", 1), 0, 24), "playtime:" + rank.id());
+
     }
 
     /**

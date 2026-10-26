@@ -41,7 +41,7 @@ final class BattlePassConfig {
      * @param worlds      миры, где задание считается (пусто — все)
      * @param permission  право, без которого прогресс не идёт (пусто — всем)
      * @param icon        материал иконки в меню (пусто — по типу задания)
-     * @param premiumHours часы ранга в премиум-треке (0 — премиум-награды нет)
+     * @param premiumHours часы буста в премиум-треке (0 — премиум-награды нет)
      * @param premiumProducts товары каталога ядра, которые выдаёт премиум-трек
      */
     record MissionDef(String id, String description, MissionType type, String matchKey,
@@ -50,7 +50,8 @@ final class BattlePassConfig {
                       int premiumHours, List<String> premiumProducts) {
 
         MissionDef {
-            premiumProducts = premiumProducts == null ? List.of() : List.copyOf(premiumProducts);
+            if (premiumHours <= 0 && premiumProducts != null && !premiumProducts.isEmpty()) premiumHours = 1;
+            premiumProducts = List.of(); // платные товары доступны только за реальную оплату
             // 1.4.184: награда в часах, одна награда — не больше суток.
             premiumHours = Math.max(0, Math.min(24, premiumHours));
         }
@@ -312,14 +313,14 @@ final class BattlePassConfig {
      * потерять награду, а сутками прежние значения больше не выдаются.
      */
     private static int hoursOf(Map<?, ?> raw, String branch) {
-        Object value = raw.get(branch + "-hours");
+        Object value = raw.containsKey(branch + "-boost-hours") ? raw.get(branch + "-boost-hours") : raw.get(branch + "-hours");
         if (value == null) {
             value = raw.get(branch + "-days");
         }
         return intOf(value, 0);
     }
 
-    /** Часы ранга вне 0..24 (потолок награды) — ошибка конфига. */
+    /** Часы буста вне 0..24 (потолок награды) — ошибка конфига. */
     private static int clampHours(int hours) {
         return Math.max(0, Math.min(24, hours));
     }
@@ -339,6 +340,7 @@ final class BattlePassConfig {
     private static List<String> premiumProducts(Map<?, ?> raw, String id, int weekNumber,
                                                 List<String> problems) {
         Object value = raw.get("premium-products");
+        if (value != null) problems.add("волна " + weekNumber + ": «" + id + "» — старые premium-products отключены; продуктовая награда без часов заменяется 1 ч. буста");
         if (value == null) {
             return List.of();
         }

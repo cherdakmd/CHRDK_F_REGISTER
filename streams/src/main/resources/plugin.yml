@@ -2,7 +2,7 @@ name: CHRDK_Streams
 version: ${version}
 main: ru.cherdakmd.chrdkstreams.StreamPlugin
 api-version: '26.3'
-description: "Награда стримерам: час эфира на Twitch или VK Play Live — сутки ранга (аддон CHRDK_Core)"
+description: "Награда стримерам: час эфира на Twitch или VK Play Live — час отдельного буста (аддон CHRDK_Core)"
 author: cherdakmd
 depend: [CHRDK_Core]
 softdepend: [PlaceholderAPI]

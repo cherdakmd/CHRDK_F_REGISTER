@@ -116,9 +116,9 @@ public final class ShopService {
         if (matches.size() > 1) {
             logger.warning("Витрина: цена " + rubles + " ₽ у нескольких товаров ("
                     + String.join(", ", matches.stream().map(ShopProduct::id).toList())
-                    + ") — выдан первый, поправьте shop.products");
+                    + ") — выдача по цене заблокирована, поправьте shop.products");
         }
-        return matches.isEmpty() ? Optional.empty() : Optional.of(matches.get(0));
+        return matches.size() != 1 ? Optional.empty() : Optional.of(matches.get(0));
     }
 
     /**
@@ -130,23 +130,15 @@ public final class ShopService {
      * @param actor      кто выдал (консоль, RCON, админ) — для аудита
      * @return результат выдачи
      */
-    public Result grant(String playerName, String productId, int days, String actor) {
-        return grant(playerName, productId, days, actor, "");
+    Result grant(String playerName, String productId, int days, PaymentConfirmation payment) {
+        return grant(playerName, productId, days, payment, "");
     }
 
-    /**
-     * Выдаёт товар и, если он набор, всё его содержимое.
-     *
-     * <p>Набор — рецепт покупки: отдельных записей в аккаунте он не создаёт, игрок
-     * получает ровно перечисленные товары, каждый со своим сроком. Поэтому витрина
-     * {@code /pass my} показывает состав, а не «набор», и продление одной вещи
-     * из набора не задевает остальные.</p>
-     *
-     * @param giftFrom ник дарителя; пусто — обычная покупка. Подарок отличается
-     *                 только журналом, аудитом и поздравлением получателя
-     */
-    public Result grant(String playerName, String productId, int days, String actor, String giftFrom) {
-        return grant(playerName, productId, days, actor, giftFrom, true);
+    Result grant(String playerName, String productId, int days, PaymentConfirmation payment, String giftFrom) {
+        if (payment == null || !payment.consume()) return Result.failure(Status.DISABLED, playerName);
+        Result result = grant(playerName, productId, days, payment.actor(), giftFrom, true);
+        payment.finish(access, playerName, result.status().name());
+        return result;
     }
 
     /**
@@ -159,10 +151,10 @@ public final class ShopService {
      * @param source откуда пришла выдача, например {@code battlepass:mine_diamonds}
      * @return момент окончания срока; {@code 0} — товар не выдан
      */
+    @Deprecated
     public long grantInternal(String playerName, String productId, int days, String source) {
-        Result result = grant(playerName, productId, days,
-                source == null || source.isBlank() ? "internal" : source, "", false);
-        return result.granted() ? result.untilMillis() : 0L;
+        logger.warning("Blocked unpaid catalog reward: " + playerName + "/" + productId);
+        return 0L;
     }
 
     private Result grant(String playerName, String productId, int days, String actor,

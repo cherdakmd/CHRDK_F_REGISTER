@@ -25,7 +25,7 @@ final class BattlePassFx {
         actionbar(player, "actionbar-completed");
     }
 
-    /** Награда получена (часы ранга, с 1.4.184). */
+    /** Награда получена (часы буста, с 1.4.184). */
     void claimed(Player player, int hours) {
         play(player, Sound.ENTITY_PLAYER_LEVELUP, 0.6f, 1.2f);
         if (!plugin.settings().actionbar()) {

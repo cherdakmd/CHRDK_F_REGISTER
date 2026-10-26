@@ -303,7 +303,7 @@ public final class TierCollectionService {
     private void pay(Player player, String key, int passHours, int diamonds) {
         if (passHours > 0) {
             if (plugin.coreApi() != null) {
-                plugin.coreApi().grantPassHours(player.getName(), passHours,
+                plugin.coreApi().grantRewardBoostHours(player.getName(), passHours,
                         "tierforge:collection:" + key);
             } else {
                 plugin.getLogger().warning("Ядро недоступно: награда коллекции " + key

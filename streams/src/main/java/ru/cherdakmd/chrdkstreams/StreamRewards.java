@@ -1,7 +1,7 @@
 package ru.cherdakmd.chrdkstreams;
 
 /**
- * Арифметика наград стримера: сколько ЧАСОВ ранга даёт накопленный эфир.
+ * Арифметика наград стримера: сколько ЧАСОВ буста даёт накопленный эфир.
  *
  * <p>Класс чистый — ни Bukkit, ни сети, ни файлов. Благодаря этому правила
  * проверяются юнит-тестами: часы, потолки, переход через полночь, защита от
@@ -9,8 +9,8 @@ package ru.cherdakmd.chrdkstreams;
  *
  * <p>Правила:</p>
  * <ul>
- *   <li>{@code minutesPerHour} минут эфира = 1 час ранга (по умолчанию 60:
- *       час эфира даёт ровно час ранга);</li>
+ *   <li>{@code minutesPerHour} минут эфира = 1 час буста (по умолчанию 60:
+ *       час эфира даёт ровно час буста);</li>
  *   <li>за календарные сутки (UTC) — не больше {@code maxHoursPerDay} часов;</li>
  *   <li>за всё время — не больше {@code maxTotalHours} (0 — без потолка);</li>
  *   <li>остаток копится, но не больше «почти полного дня»: накрутить запас
@@ -51,7 +51,7 @@ final class StreamRewards {
                     Math.clamp(maxTotalHours, 0, MAX_TOTAL_HOURS));
         }
 
-        /** Порог одного часа ранга в миллисекундах эфира. */
+        /** Порог одного часа буста в миллисекундах эфира. */
         long hourThresholdMillis() {
             return (long) minutesPerHour * MINUTE_MILLIS;
         }
@@ -124,7 +124,7 @@ final class StreamRewards {
         return (int) Math.floorDiv(Math.max(0L, nowMillis), DAY_MILLIS);
     }
 
-    /** Минут осталось до следующего часа ранга (для /stream status). */
+    /** Минут осталось до следующего часа буста (для /stream status). */
     static long minutesToNextHour(State state, Rule rule) {
         long threshold = rule.hourThresholdMillis();
         if (threshold <= 0) {
@@ -139,7 +139,7 @@ final class StreamRewards {
      *
      * <p>Возвращает {@code now}, если порог уже набран (награда придёт на
      * следующем опросе), и {@code -1}, если действует потолок — считать нечего.
-     * Для подсказки «следующий час ранга примерно в HH:mm».</p>
+     * Для подсказки «следующий час буста примерно в HH:mm».</p>
      */
     static long etaMillis(State state, Rule rule, long nowMillis) {
         long threshold = rule.hourThresholdMillis();

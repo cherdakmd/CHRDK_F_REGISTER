@@ -35,7 +35,7 @@ tiers:
   collection-milestone: "<gold>★ Веха коллекции: %name%!</gold> <gray>Награда:</gray> %reward%"
   collection-milestone-properties: "%count% свойств тиров"
   collection-milestone-affixes: "%count% аффиксов"
-  collection-reward-hours: "<white>%hours%</white> ч. ранга"
+  collection-reward-hours: "<white>%hours%</white> ч. буста"
   collection-reward-diamonds: "<white>%count%</white> алмазов"
   collection-reward-join: " <gray>+</gray> "
   collection-reward-none: "<gray>без награды</gray>"

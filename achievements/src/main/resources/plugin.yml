@@ -2,7 +2,7 @@ name: CHRDK_Achievements
 version: ${version}
 main: ru.cherdakmd.chrdkachievements.AchievementsPlugin
 api-version: '26.3'
-description: "72 достижения в четырёх разделах: прогресс из событий и API ядра, награды рангами-днями и алмазами, бейджи в нике"
+description: "72 достижения в четырёх разделах: прогресс из событий и API ядра, награды отдельными бустами и алмазами, бейджи в нике"
 author: cherdakmd
 depend: [CHRDK_Core]
 commands:

@@ -69,7 +69,7 @@ public final class DailyConfig {
             List<ItemReward> vipItems = parseItems(raw.get("vip-items"), logger, validateMaterials);
             // 1.4.184: награда в часах, одна награда — не больше суток. Старый ключ
             // vip-pass-days читается как часы, чтобы конфиг без перезаписи не потерял награду.
-            Object hoursRaw = raw.containsKey("vip-pass-hours")
+            Object hoursRaw = raw.containsKey("vip-boost-hours") ? raw.get("vip-boost-hours") : raw.containsKey("vip-pass-hours")
                     ? raw.get("vip-pass-hours") : raw.get("vip-pass-days");
             int vipPassHours = Math.min(24, Math.max(0, intOf(hoursRaw, 0)));
             if (items.isEmpty() && vipItems.isEmpty() && vipPassHours == 0) {
@@ -115,7 +115,7 @@ public final class DailyConfig {
             passHours = fallbackPassHours.orElse(0);
         }
         if (passHours > 0) {
-            parts.add("+" + passHours + " ч. ранга");
+            parts.add("+" + passHours + " ч. буста");
         }
         return parts.isEmpty() ? "—" : String.join(", ", parts);
     }

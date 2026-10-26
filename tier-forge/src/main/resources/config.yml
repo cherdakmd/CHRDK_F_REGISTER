@@ -239,22 +239,22 @@ collection:
   rewards:
     # Награды за ПОЛНОСТЬЮ закрытый раздел: все 7 редкостей, все 30 аффиксов,
     # все 105 свойств или вся кузня (142). Выдаются один раз, вместе с титулом.
-    # С 1.4.184 награда измеряется ЧАСАМИ ранга (pass-hours), потолок — 24 ч.
+    # С 1.4.184 награда измеряется ЧАСАМИ буста (boost-hours), потолок — 24 ч.
     # Прежние «сутки» за единицу больше не выдаются.
     sections:
-      tiers: {pass-hours: 3, diamonds: 16}
-      affixes: {pass-hours: 5, diamonds: 24}
-      properties: {pass-hours: 8, diamonds: 48}
-      all: {pass-hours: 15, diamonds: 96}
+      tiers: {boost-hours: 3, diamonds: 16}
+      affixes: {boost-hours: 5, diamonds: 24}
+      properties: {boost-hours: 8, diamonds: 48}
+      all: {boost-hours: 15, diamonds: 96}
     # Промежуточные вехи по уникальным свойствам тиров: ключ — сколько собрать.
     properties:
-      15: {pass-hours: 2, diamonds: 8}
-      45: {pass-hours: 4, diamonds: 16}
-      75: {pass-hours: 7, diamonds: 32}
+      15: {boost-hours: 2, diamonds: 8}
+      45: {boost-hours: 4, diamonds: 16}
+      75: {boost-hours: 7, diamonds: 32}
     # Промежуточные вехи по аффиксам (15 хороших + 15 плохих).
     affixes:
-      10: {pass-hours: 2, diamonds: 8}
-      20: {pass-hours: 4, diamonds: 16}
+      10: {boost-hours: 2, diamonds: 8}
+      20: {boost-hours: 4, diamonds: 16}
 
 anvil:
   # Мастер-выключатель всех механик наковальни: слияние тиров, перекат и ковка

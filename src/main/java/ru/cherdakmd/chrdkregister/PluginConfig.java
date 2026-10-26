@@ -677,7 +677,8 @@ public final class PluginConfig {
      *  Pass
      * ------------------------------------------------------------------ */
 
-    public boolean trialEnabled() { return trialEnabled; }
+    /** Пробные платные права запрещены независимо от старого конфига. */
+    public boolean trialEnabled() { return false; }
 
     public int trialDays() { return trialDays; }
 

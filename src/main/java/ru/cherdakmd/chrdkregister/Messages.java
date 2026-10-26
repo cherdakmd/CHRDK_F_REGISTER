@@ -121,7 +121,9 @@ public final class Messages {
         if (!Files.exists(userFile)) {
             plugin.saveResource(fileName, false);
         }
-        Map<String, String> overrides = readFile(userFile);
+        Map<String, String> overrides = new LinkedHashMap<>(readFile(userFile));
+        String moduleName = plugin.getName();
+        overrides.replaceAll((key, text) -> GameplayRewardTexts.message(moduleName, key, text));
         Messages messages = new Messages(defaults, overrides, logger);
         messages.logMissingKeys(fileName);
         return messages;

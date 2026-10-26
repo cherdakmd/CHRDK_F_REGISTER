@@ -37,7 +37,7 @@ record AutoMessage(String text, String plugin, String permission, String conditi
 
     static AutoMessage parse(Object value) {
         if (value instanceof String text) {
-            return new AutoMessage(text, "", "", "always", 0);
+            return new AutoMessage(GameplayRewardTexts.announcement(text), "", "", "always", 0);
         }
         if (!(value instanceof Map<?, ?> map)) {
             return null;
@@ -54,7 +54,7 @@ record AutoMessage(String text, String plugin, String permission, String conditi
         if (!CONDITIONS.contains(condition)) {
             return null;
         }
-        return new AutoMessage(text, string(map.get("plugin")), string(map.get("permission")),
+        return new AutoMessage(GameplayRewardTexts.announcement(text), string(map.get("plugin")), string(map.get("permission")),
                 condition, number(map.get("min-online")));
     }
 

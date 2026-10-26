@@ -39,7 +39,7 @@ final class PresentationMigration {
      * снимок 1.4.170 — без обеих (50 пунктов); снимок 1.4.169 — последний со
      * старой плоской структурой (6 разделов, 42 пункта).
      */
-    static final List<String> LEGACY_RESOURCES = List.of("presentation-legacy-1.4.185.yml",
+    static final List<String> LEGACY_RESOURCES = List.of("presentation-legacy-1.4.192.yml", "presentation-legacy-1.4.185.yml",
             "presentation-legacy-1.4.182.yml", "presentation-legacy-1.4.170.yml",
             "presentation-legacy-1.4.169.yml", "presentation-legacy-pre-1.4.138.yml",
             "presentation-legacy.yml");

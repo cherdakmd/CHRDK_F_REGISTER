@@ -259,17 +259,16 @@ class BattlePassConfigTest {
         BattlePassConfig.MissionDef mission = result.weeks().get(0).missions().get(0);
         assertTrue(mission.hasPremium());
         assertEquals(3, mission.premiumHours());
-        assertEquals(List.of("trail-flame", "nick-color"), mission.premiumProducts(),
-                "id нормализуются, дубли убраны");
-        assertTrue(result.problems().isEmpty(), () -> result.problems().toString());
+        assertTrue(mission.premiumProducts().isEmpty(), "платные товары исключены из наград");
+        assertTrue(result.problems().stream().anyMatch(text -> text.contains("premium-products")));
     }
 
     @Test
     void premiumRewardsTolerateTypos() {
         BattlePassConfig.ParseResult result = parsePremium(99_999, List.of("Плохой Id", "ok-id"));
         BattlePassConfig.MissionDef mission = result.weeks().get(0).missions().get(0);
-        assertEquals(0, mission.premiumHours(), "слишком большой срок отброшен");
-        assertEquals(List.of("ok-id"), mission.premiumProducts(), "кривой id пропущен");
+        assertEquals(1, mission.premiumHours(), "продуктовая награда заменена одним часом буста");
+        assertTrue(mission.premiumProducts().isEmpty());
         assertTrue(result.problems().stream().anyMatch(text -> text.contains("premium-hours")));
         assertTrue(result.problems().stream().anyMatch(text -> text.contains("premium-products")));
     }
@@ -278,8 +277,8 @@ class BattlePassConfigTest {
     void premiumProductListIsCapped() {
         BattlePassConfig.ParseResult result = parsePremium(0,
                 List.of("a1", "b2", "c3", "d4", "e5", "f6", "g7"));
-        assertEquals(BattlePassConfig.MAX_PREMIUM_PRODUCTS,
-                result.weeks().get(0).missions().get(0).premiumProducts().size());
+        assertTrue(result.weeks().get(0).missions().get(0).premiumProducts().isEmpty());
+        assertEquals(1, result.weeks().get(0).missions().get(0).premiumHours());
         assertTrue(result.problems().stream().anyMatch(text -> text.contains("больше")));
     }
 

@@ -199,9 +199,9 @@ public final class OrdersConfig {
             // 1.4.184: награда в часах. Ключи старого формата (pass-days*) читаются
             // как часы, чтобы конфиги, не перезаписанные после обновления, не потеряли
             // награду; сутками прежние значения больше не выдаются.
-            double passChance = clamp(number(section, key, ".pass-hours-chance", ".pass-days-chance"),
+            double passChance = clamp((section.contains(key + ".boost-hours-chance") ? section.getDouble(key + ".boost-hours-chance") : number(section, key, ".pass-hours-chance", ".pass-days-chance")),
                     0.0, 100.0);
-            int passHours = (int) clamp((long) number(section, key, ".pass-hours", ".pass-days"),
+            int passHours = (int) clamp((long) (section.contains(key + ".boost-hours") ? section.getDouble(key + ".boost-hours") : number(section, key, ".pass-hours", ".pass-days")),
                     0L, OrderCategory.MAX_PASS_HOURS);
             List<OrderItem> items = new ArrayList<>();
             ConfigurationSection itemsSection =

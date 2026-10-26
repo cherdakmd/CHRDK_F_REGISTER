@@ -146,6 +146,11 @@ public final class ProfessionsPlugin extends JavaPlugin {
             return online == null ? ru.cherdakmd.chrdkregister.api.RankBonus.NONE
                     : coreApi.rankBonus(online.getName());
         });
+        service.setRewardScaler((uuid, base, current) -> {
+            var online = uuid == null ? null : Bukkit.getPlayer(uuid);
+            return online == null || coreApi == null ? current
+                    : coreApi.boostExperience(online.getName(), "professions", base, current);
+        });
         try {
             coreApi.registerProfile("professions", new ProfessionsProfile(this));
         } catch (RuntimeException | LinkageError error) {

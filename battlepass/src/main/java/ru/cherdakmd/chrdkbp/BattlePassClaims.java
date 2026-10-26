@@ -4,11 +4,6 @@ import org.bukkit.entity.Player;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -20,40 +15,10 @@ import java.util.UUID;
  */
 final class BattlePassClaims {
 
-    private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd.MM.yyyy")
-            .withZone(ZoneId.systemDefault());
-
     private final BattlePassPlugin plugin;
 
     BattlePassClaims(BattlePassPlugin plugin) {
         this.plugin = plugin;
-    }
-
-    /**
-     * Выдаёт товары каталога, не записывая их в журнал продаж: это награда, а не покупка.
-     *
-     * @return сколько товаров реально выдано (каталог мог измениться после рестарта)
-     */
-    private int grantProducts(Player player, List<String> products, String source) {
-        if (products.isEmpty()) {
-            return 0;
-        }
-        ChrdkRegisterApi api = plugin.coreApi();
-        if (api == null) {
-            return 0;
-        }
-        int granted = 0;
-        for (String product : products) {
-            long until = api.grantEntitlement(player.getName(), product, 0, source);
-            if (until <= 0) {
-                plugin.getLogger().warning("Премиум-трек: товар «" + product
-                        + "» не выдан игроку " + player.getName()
-                        + " — товара нет в каталоге ядра или каталог выключен.");
-                continue;
-            }
-            granted++;
-        }
-        return granted;
     }
 
     /** Забрать все готовые награды. Возвращает число выданных наград (0 — нечего). */
@@ -78,7 +43,6 @@ final class BattlePassClaims {
         int hours = 0;
         int vipSkipped = 0;
         int premiumSkipped = 0;
-        List<String> products = new ArrayList<>();
         for (int index = 0; index < season.weeks().size(); index++) {
             if (!BattlePassConfig.isUnlocked(season, index, now)) {
                 break;
@@ -113,11 +77,7 @@ final class BattlePassClaims {
                 } else if (plugin.store().markClaimed(uuid, mission.id(), "PREMIUM")) {
                     rewards++;
                     hours += mission.premiumHours();
-                    for (String product : mission.premiumProducts()) {
-                        if (!products.contains(product)) {
-                            products.add(product);
-                        }
-                    }
+
                 }
             }
         }
@@ -133,19 +93,9 @@ final class BattlePassClaims {
             return 0;
         }
         if (hours > 0) {
-            api.grantPassHours(player.getName(), hours, "battlepass:claim-all");
+            api.grantRewardBoostHours(player.getName(), hours, "battlepass:claim-all");
         }
-        int granted = grantProducts(player, products, "battlepass:claim-all");
-        if (hours > 0) {
-            messages.send(player, "claim-all-summary",
-                    "count", rewards, "hours", hours,
-                    "until", DATE.format(Instant.ofEpochMilli(api.passUntil(player.getName()))));
-        } else {
-            messages.send(player, "claim-all-products", "count", rewards);
-        }
-        if (granted > 0) {
-            messages.send(player, "premium-products-granted", "count", granted);
-        }
+        messages.send(player, "claim-all-summary", "count", rewards, "hours", hours);
         if (premiumSkipped > 0) {
             messages.send(player, "claim-all-premium-skipped", "count", premiumSkipped);
         }
@@ -213,13 +163,11 @@ final class BattlePassClaims {
             hours += mission.vipHours();
         }
         boolean premiumSkipped = premiumLeft && !premiumActive;
-        List<String> products = new ArrayList<>();
         if (premiumLeft && premiumActive
                 && plugin.store().markClaimed(uuid, mission.id(), "PREMIUM")) {
             hours += mission.premiumHours();
-            products.addAll(mission.premiumProducts());
         }
-        if (hours <= 0 && products.isEmpty()) {
+        if (hours <= 0) {
             if (premiumSkipped) {
                 messages.send(player, "premium-denied",
                         "id", mission.id(), "desc", BattlePassScreen.described(mission));
@@ -230,21 +178,10 @@ final class BattlePassClaims {
             return false;
         }
         if (hours > 0) {
-            api.grantPassHours(player.getName(), hours, "battlepass:" + mission.id());
+            api.grantRewardBoostHours(player.getName(), hours, "battlepass:" + mission.id());
         }
-        int granted = grantProducts(player, products, "battlepass:" + mission.id());
-        if (hours > 0) {
-            messages.send(player, "reward",
-                    "hours", hours,
-                    "until", DATE.format(Instant.ofEpochMilli(api.passUntil(player.getName()))),
-                    "id", mission.id(), "desc", BattlePassScreen.described(mission));
-        } else {
-            messages.send(player, "reward-products",
-                    "id", mission.id(), "desc", BattlePassScreen.described(mission));
-        }
-        if (granted > 0) {
-            messages.send(player, "premium-products-granted", "count", granted);
-        }
+        messages.send(player, "reward", "hours", hours,
+                "id", mission.id(), "desc", BattlePassScreen.described(mission));
         if (vipSkipped) {
             messages.send(player, "vip-denied", "hours", mission.vipHours(),
                     "id", mission.id(), "desc", BattlePassScreen.described(mission));

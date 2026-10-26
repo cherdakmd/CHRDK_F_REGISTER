@@ -20,10 +20,10 @@ import java.util.UUID;
  *   <li>{@code %chrdkstreams_platform%} — Twitch / VK Play Live;</li>
  *   <li>{@code %chrdkstreams_channels%} — все каналы: {@code twitch/foo, vkplay/bar};</li>
  *   <li>{@code %chrdkstreams_verified%} — «да» / «нет»;</li>
- *   <li>{@code %chrdkstreams_pending%} — минут накоплено до следующего часа ранга;</li>
+ *   <li>{@code %chrdkstreams_pending%} — минут накоплено до следующего часа буста;</li>
  *   <li>{@code %chrdkstreams_today%} — часов получено сегодня;</li>
  *   <li>{@code %chrdkstreams_hours%} — часов получено всего (псевдоним {@code days});</li>
- *   <li>{@code %chrdkstreams_rule%} — минут эфира за час ранга (из конфига);</li>
+ *   <li>{@code %chrdkstreams_rule%} — минут эфира за час буста (из конфига);</li>
  *   <li>{@code %chrdkstreams_max_today%} — суточный потолок часов;</li>
  *   <li>{@code %chrdkstreams_watching%} — чей эфир смотрит игрок (или {@code —});</li>
  *   <li>{@code %chrdkstreams_watch_pending%} — минут просмотра до следующего часа;</li>

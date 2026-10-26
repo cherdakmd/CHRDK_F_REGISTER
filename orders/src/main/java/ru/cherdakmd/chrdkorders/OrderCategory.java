@@ -16,7 +16,7 @@ import java.util.Random;
  * @param minReputation с какой репутации игрок вправе взять такой заказ
  * @param reputation    сколько репутации даёт сдача
  * @param passChance    шанс добавить дни ранга, проценты
- * @param passHours      сколько часов ранга давать при срабатывании шанса
+ * @param passHours      сколько часов буста давать при срабатывании шанса
  * @param items         материалы категории
  */
 public record OrderCategory(String id, double weight, int minReputation, int reputation,

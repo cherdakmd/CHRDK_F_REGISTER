@@ -185,7 +185,7 @@ public final class CollectionService {
     private void grant(Player player, CollectionRewards.Tier tier) {
         if (tier.passHours() > 0) {
             if (plugin.coreApi() != null) {
-                plugin.coreApi().grantPassHours(player.getName(), tier.passHours(),
+                plugin.coreApi().grantRewardBoostHours(player.getName(), tier.passHours(),
                         "artifacts:collection_" + tier.percent());
             } else {
                 plugin.getLogger().warning("Ядро недоступно: награда за коллекцию "

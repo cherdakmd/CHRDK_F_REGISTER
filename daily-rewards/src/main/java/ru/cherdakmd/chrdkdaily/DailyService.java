@@ -11,7 +11,7 @@ import java.util.Map;
 
 /**
  * Выдача наград: apply конфиг-день к игроку (предметы в инвентарь + drop под ноги,
- * VIP-часы ранга — через API ядра).
+ * VIP-часы буста — через API ядра).
  */
 public final class DailyService {
 
@@ -53,7 +53,7 @@ public final class DailyService {
         }
         int passHours = vip ? day.vipPassHours() : 0;
         if (passHours > 0 && api != null) {
-            api.grantPassHours(player.getName(), passHours, "daily-rewards:day" + day.day());
+            api.grantRewardBoostHours(player.getName(), passHours, "daily-rewards:day" + day.day());
         }
         return new ClaimResult(streak, items, passHours, vip);
     }

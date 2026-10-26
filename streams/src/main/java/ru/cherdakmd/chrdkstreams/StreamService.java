@@ -29,7 +29,7 @@ import java.util.logging.Logger;
  * <p>Работает в отдельном потоке: раз в {@code streams.poll-seconds} берёт все
  * привязки, спрашивает у площадок «идёт ли эфир», проверяет условия (подтверждён,
  * игрок онлайн, зрителей достаточно) и копит минуты. Когда минут набирается на
- * час ранга — выдаёт его через API ядра.</p>
+ * час буста — выдаёт его через API ядра.</p>
  *
  * <p>Защита от накрутки:</p>
  * <ul>
@@ -250,7 +250,7 @@ final class StreamService {
         }
     }
 
-    /** Выдаёт часы ранга через API ядра. {@code false} — не получилось, надо повторить. */
+    /** Выдаёт часы буста через API ядра. {@code false} — не получилось, надо повторить. */
     private boolean grant(StreamBinding binding, int hours, Player online) {
         ChrdkRegisterApi api = plugin.coreApi();
         if (api == null) {
@@ -260,7 +260,7 @@ final class StreamService {
         }
         String name = online != null ? online.getName() : binding.playerName();
         try {
-            api.grantPassHours(name, hours, SOURCE);
+            api.grantRewardBoostHours(name, hours, SOURCE);
             return true;
         } catch (RuntimeException exception) {
             logger.log(Level.WARNING, "[Streams] Не удалось выдать " + hours + " ч. игроку "

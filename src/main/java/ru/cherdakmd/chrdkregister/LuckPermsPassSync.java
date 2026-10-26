@@ -49,7 +49,7 @@ public final class LuckPermsPassSync {
      * {@code integrations.pass-group-paid-only}. Покрыто юнит-тестами.
      */
     public static boolean grantsGroup(boolean paidGrant, boolean paidOnly) {
-        return paidGrant || !paidOnly;
+        return paidGrant; // старый paid-only:false больше не разрешает бесплатные платные права
     }
 
     /** Выдать синхронизируемую группу (реальная покупка, ручная выдача, Boosty). */
