@@ -54,10 +54,15 @@ class ShopConfigConsistencyTest {
         List<String> ids = new ArrayList<>();
         for (Object entry : cosmetics.getList("cosmetics.trail.defs", List.of())) {
             if (entry instanceof java.util.Map<?, ?> map) {
-                String product = map.get("product") == null ? "" : String.valueOf(map.get("product")).trim();
                 String id = map.get("id") == null ? "" : String.valueOf(map.get("id")).trim();
-                if (!product.isEmpty()) {
-                    ids.add(product.toLowerCase(java.util.Locale.ROOT));
+                String product = map.get("product") == null ? "" : String.valueOf(map.get("product")).trim();
+                // Поле есть, но пустое — шлейф только за ранг (эксклюзив Мецената и
+                // Покровителя) и в продаже его нет. Поля нет вовсе — аддон берёт
+                // имя товара по умолчанию, trail-<id>, и такой товар обязан быть.
+                if (map.containsKey("product")) {
+                    if (!product.isEmpty()) {
+                        ids.add(product.toLowerCase(java.util.Locale.ROOT));
+                    }
                 } else if (!id.isEmpty()) {
                     ids.add(("trail-" + id).toLowerCase(java.util.Locale.ROOT));
                 }
@@ -175,6 +180,12 @@ class ShopConfigConsistencyTest {
         }
         assertEquals(1, referenced.stream().filter("join-effect"::equals).count(),
                 "торжественный вход продаётся товаром join-effect");
+        for (String sold : List.of("trail-flame", "trail-hearts", "trail-notes",
+                "trail-sparkles", "trail-magic")) {
+            assertTrue(referenced.contains(sold), "шлейф " + sold + " должен продаваться");
+        }
+        assertFalse(referenced.contains("trail-gold") || referenced.contains("trail-aurora"),
+                "«Золотая пыль» и «Сияние» — эксклюзив ранга IV–V, поштучно не продаются");
 
         YamlConfiguration battlepass = yaml("battlepass/src/main/resources/config.yml");
         String premium = battlepass.getString("battlepass.premium.product", "").trim();
