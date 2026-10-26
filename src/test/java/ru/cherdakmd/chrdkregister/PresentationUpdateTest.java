@@ -139,7 +139,7 @@ class PresentationUpdateTest {
         assertEquals(7,categories.size(),"разделы меню: "+categories);
         assertEquals(7,new HashSet<>(categories).size(),"ид разделов уникальны");
         var entries=config.getMapList("server-menu.items").stream().map(this::menuEntry).toList();
-        assertEquals(51,entries.size(),"пункты меню 1.4.171: 50 из 1.4.170 + кнопка вики");
+        assertEquals(52,entries.size(),"пункты меню 1.4.183: 50 из 1.4.170 + вики + оформление ника");
         for (var entry : entries) {
             if (!entry.category().isBlank()) assertTrue(categories.contains(entry.category()),entry.category());
         }
