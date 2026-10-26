@@ -147,6 +147,9 @@ messages:
     "slot-no-fallback": "<dark_gray>Без автоподмены: исчезнувшая надпись не заменяется другой.</dark_gray>"
     "slot-need-rank": "<red>Место открывается на ступени %level% (по настройкам сервера).</red>"
     "slot-config-locked": "<dark_gray>Место не открывается при текущих настройках сервера.</dark_gray>"
+    "slot-lock-mark": "<dark_gray>Закрыто · </dark_gray>"
+    "slot-option-name": "%name%"
+    "preset-places-hint": "<dark_gray>Точные места, включая пустые, сохраняются; показ ограничен вашим рангом.</dark_gray>"
     "slot-title": "<gold>Надпись для места %number%</gold>"
     "slot-selected": "<green>✔ Выбрано:</green> %name%"
     "slot-sample": "<gray>Надпись: %sample%</gray>"
@@ -169,7 +172,7 @@ messages:
     "usage": "<yellow>Использование: /%label% [меню|rank|tierforge|treasures|classes|guilds|streams|quests|achievements|header|badges|all|on|off|reset|status]</yellow>"
     # ---- меню «Оформление ника» (1.4.186) ----
     "menu-title": "<gold>Оформление ника</gold>"
-    "menu-head": "<gold>%player%</gold> <dark_gray>·</dark_gray> <gray>включено %visible% из %total%</gray>"
+    "menu-head": "<gold>%player%</gold> <dark_gray>·</dark_gray> <gray>надписей %visible% / %total%</gray>"
     "menu-head-lore":
       - "<gray>Ник всегда первый; ранги и звания — только после него.</gray>"
       - "<gray>Количество надписей зависит от ступени ранга.</gray>"

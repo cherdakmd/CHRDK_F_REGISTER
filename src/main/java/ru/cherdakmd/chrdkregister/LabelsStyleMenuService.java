@@ -225,7 +225,7 @@ public final class LabelsStyleMenuService implements Listener {
             LabelPreferences.Label label = labels.get(i);
             boolean obtained = selection.obtained(label);
             ItemStack tile = button(obtained ? Material.NAME_TAG : Material.GRAY_DYE,
-                    plugin.messages().get(label.id().equals(chosen) ? "labels.slot-selected" : "labels.menu-entry-on",
+                    plugin.messages().get(label.id().equals(chosen) ? "labels.slot-selected" : "labels.slot-option-name",
                             "name", LabelsMenuService.nameOf(plugin.messages(), label)));
             ItemMeta meta = tile.getItemMeta();
             if (meta != null) {
@@ -296,6 +296,7 @@ public final class LabelsStyleMenuService implements Listener {
                             ? Messages.trusted(
                             plugin.messages().raw("labels.preset-no-color"))
                             : Messages.trusted(snapshot.color())));
+            lore.add(plugin.messages().get("labels.preset-places-hint"));
             lore.add(plugin.messages().get("labels.preset-apply-hint"));
             lore.add(plugin.messages().get("labels.preset-overwrite-hint"));
             lore.add(plugin.messages().get("labels.preset-delete-hint"));

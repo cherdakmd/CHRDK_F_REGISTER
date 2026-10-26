@@ -168,8 +168,8 @@ public final class LabelsMenuService implements Listener {
             return item;
         }
         meta.setOwningPlayer(player);
-        int total = LabelPreferences.Label.values().length;
-        int visible = total - preferences.hiddenCount(player.getName());
+        int total = selection == null ? limits.labelsFor(0) : selection.limit();
+        int visible = selection == null ? 0 : selection.shown().size();
         meta.displayName(plugin.messages().get("labels.menu-head",
                 "player", player.getName(),
                 "visible", String.valueOf(visible),
@@ -265,9 +265,10 @@ public final class LabelsMenuService implements Listener {
         ItemStack item = new ItemStack(open ? Material.NAME_TAG : Material.GRAY_DYE);
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;
-        meta.displayName(chosen == null ? plugin.messages().get("labels.slot-empty", "number", index + 1)
+        Component title = chosen == null ? plugin.messages().get("labels.slot-empty", "number", index + 1)
                 : plugin.messages().get("labels.order-name", "position", index + 1,
-                        "name", nameOf(plugin.messages(), chosen)));
+                        "name", nameOf(plugin.messages(), chosen));
+        meta.displayName(open ? title : plugin.messages().get("labels.slot-lock-mark").append(title));
         List<Component> lore = new ArrayList<>();
         if (chosen != null) lore.add(plugin.messages().get("labels.source-state", "value",
                 stateOf(plugin.messages(), preferences, player.getName(), chosen, selection)));
