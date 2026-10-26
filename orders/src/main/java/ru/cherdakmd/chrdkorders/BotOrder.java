@@ -37,7 +37,7 @@ public record BotOrder(String id, String botId, String botName, String category,
         material = material == null ? "" : material.trim().toUpperCase(Locale.ROOT);
         amount = Math.clamp(amount, 1, 576);
         rewardDiamonds = Math.clamp(rewardDiamonds, 0, 576);
-        rewardPassHours = Math.clamp(rewardPassHours, 0, 30);
+        rewardPassHours = Math.clamp(rewardPassHours, 0, OrderCategory.MAX_PASS_HOURS);
         minReputation = Math.clamp(minReputation, 0, 100_000);
         reputation = Math.clamp(reputation, 0, 100);
         createdAt = Math.max(0L, createdAt);
