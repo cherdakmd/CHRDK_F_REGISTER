@@ -601,15 +601,10 @@ final class ViewerService {
     }
 
     private void announce(UUID uuid, String name, StreamRewards.Decision decision) {
-        ChrdkRegisterApi api = plugin.coreApi();
-        long until = api == null ? 0L : api.passUntil(name);
         tell(uuid, "watch-awarded",
                 "hours", decision.awardHours(),
                 "today", decision.state().awardedToday(),
                 "max", config.viewers().maxHoursPerDay());
-        if (until > 0L) {
-            tell(uuid, "watch-awarded-until", "until", StreamService.until(until));
-        }
     }
 
     /** Сообщение игроку из любого потока: отправка — на основном. */

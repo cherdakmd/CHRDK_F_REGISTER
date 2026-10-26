@@ -293,6 +293,7 @@ public final class DonationService {
      * @param days pass length in days; {@code <= 0} uses the tier matching the paid amount
      */
     public synchronized boolean approve(long donationId, String playerName, int days, String adminName, long nowMillis) {
+        if (!AccessManager.isValidMinecraftName(playerName)) return false;
         PluginConfig config = configSupplier.get();
         Optional<RegistrationStore.DonationRecord> existing = store.getDonation(donationId);
         if (existing.isEmpty()) return false;
@@ -357,7 +358,9 @@ public final class DonationService {
         if (!viaCode && !DonorNameMatcher.looksLikeDonor(record.donorName, playerName)) {
             return "donation.claim.name-mismatch";
         }
-        approve(donationId, playerName, 0, playerName + text("donation.label.self-claimed"), nowMillis);
+        if (!approve(donationId, playerName, 0, playerName + text("donation.label.self-claimed"), nowMillis)) {
+            return "donation.claim.review-required";
+        }
         audit.log(AuditLog.DONATION_CLAIMED, playerName, playerName, ipAddress,
                 AuditLog.details("donation", donationId, "donorName", record.donorName));
         return "";

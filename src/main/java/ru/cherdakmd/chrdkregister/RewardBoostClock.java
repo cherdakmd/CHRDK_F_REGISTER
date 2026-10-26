@@ -28,6 +28,12 @@ final class RewardBoostClock {
         online.put(id, new Cursor(name, cursor.nanos() + millis * 1_000_000L));
     }
 
+    synchronized void settle(String name, long nowNanos) {
+        UUID id = online.entrySet().stream().filter(entry -> entry.getValue().name().equalsIgnoreCase(name))
+                .map(Map.Entry::getKey).findFirst().orElse(null);
+        if (id != null) sample(id, name, nowNanos);
+    }
+
     synchronized void pause(UUID id, long nowNanos) {
         Cursor cursor = online.remove(id);
         if (cursor != null) debit.accept(cursor.name(), elapsed(cursor, nowNanos));

@@ -11,7 +11,6 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -25,12 +24,15 @@ final class RewardBoostService implements Listener {
     private final RewardBoostClock clock;
     private final Map<PlayerExpChangeEvent, Integer> bases = new WeakHashMap<>();
     private BukkitTask task;
+    private volatile int maxBankHours = 24;
+    void reload() { maxBankHours = Math.clamp(plugin.getConfig().getInt("reward-boost.max-bank-hours", 24), 1, 24 * 365); }
 
     RewardBoostService(RegisterPlugin plugin, AccessManager access) {
         this.plugin = plugin;
         this.access = access;
         this.store = access.store();
         this.clock = new RewardBoostClock(store::consumeRewardBoost);
+        reload();
     }
 
     void start() {
@@ -78,26 +80,29 @@ final class RewardBoostService implements Listener {
 
     void grant(String name, int hours, String source) {
         if (!AccessManager.isValidMinecraftName(name) || hours <= 0) return;
-        if (!Bukkit.isPrimaryThread()) {
-            Bukkit.getScheduler().runTask(plugin, () -> grant(name, hours, source));
-            return;
-        }
-        // Списываем уже проведённое онлайн-время ДО пополнения, не задним числом с новой награды.
-        tick();
+        // Само пополнение синхронно и потокобезопасно: аддон может сохранить claim сразу после API.
+        // На основной поток откладывается только сообщение, а не заслуженная награда.
+        clock.settle(name, System.nanoTime());
         long before = store.rewardBoostRemaining(name);
-        int bankHours = plugin.getConfig().getInt("reward-boost.max-bank-hours", 24);
-        long remaining = store.grantRewardBoost(name, hours, bankHours);
+        long remaining = store.grantRewardBoost(name, hours, maxBankHours);
         long added = Math.max(0L, remaining - before);
-        Player online = Bukkit.getPlayerExact(name);
-        if (online != null) plugin.messages().send(online, added > 0 ? "reward-boost.granted" : "reward-boost.full",
-                "minutes", (added + 59_999) / 60_000, "left", (remaining + 59_999) / 60_000);
+        Runnable notify = () -> {
+            Player online = Bukkit.getPlayerExact(name);
+            if (online != null) plugin.messages().send(online, added > 0 ? "reward-boost.granted" : "reward-boost.full",
+                    "minutes", (added + 59_999) / 60_000, "left", (remaining + 59_999) / 60_000);
+        };
+        if (Bukkit.isPrimaryThread()) notify.run();
+        else Bukkit.getScheduler().runTask(plugin, notify);
         access.audit().log("REWARD_BOOST", "gameplay", name, "",
                 AuditLog.details("source", source == null ? "reward" : source,
                         "addedMillis", added, "remainingMillis", remaining, "percent", RewardBoostMath.PERCENT));
     }
 
     long experience(String name, String channel, long base, long current) {
-        if (!Bukkit.isPrimaryThread() || !authenticated(Bukkit.getPlayerExact(name))) return current;
+        if (!AccessManager.isValidMinecraftName(name) || !Bukkit.isPrimaryThread()) return current;
+        Player player = Bukkit.getPlayerExact(name);
+        if (!authenticated(player)) return current;
+        clock.sample(player.getUniqueId(), name, System.nanoTime());
         return store.boostExperience(name, channel, base, RewardBoostMath.limit(base, current));
     }
 

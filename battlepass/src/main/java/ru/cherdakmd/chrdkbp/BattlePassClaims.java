@@ -35,7 +35,7 @@ final class BattlePassClaims {
             return 0;
         }
         long now = System.currentTimeMillis();
-        boolean vipActive = api.passUntil(player.getName()) > now;
+        boolean vipActive = plugin.vipActive(player);
         boolean premiumActive = plugin.premiumActive(player);
         UUID uuid = player.getUniqueId();
 
@@ -139,7 +139,7 @@ final class BattlePassClaims {
             return false;
         }
 
-        boolean vipActive = api.passUntil(player.getName()) > now;
+        boolean vipActive = plugin.vipActive(player);
         boolean premiumActive = plugin.premiumActive(player);
         boolean freeLeft = mission.freeHours() > 0
                 && !plugin.store().isClaimed(uuid, mission.id(), "FREE");

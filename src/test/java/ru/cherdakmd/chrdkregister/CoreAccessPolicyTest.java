@@ -129,4 +129,37 @@ class CoreAccessPolicyTest {
         assertEquals("", account.lastGrantSource);
         assertFalse(account.hasRank(now), "тест не выдаёт платных прав");
     }
+    @Test
+    void manualApprovalRequiresRealPendingReceiptAndCannotBeRepeated(@TempDir Path dir) {
+        var store = new RegistrationStore(dir, Logger.getAnonymousLogger());
+        var config = PluginConfig.fromBukkitConfig(new YamlConfiguration());
+        var service = new DonationService(store, () -> config,
+                new AuditLog(dir, Logger.getAnonymousLogger(), config.timeZone()),
+                new NotificationService(() -> config, Logger.getAnonymousLogger()),
+                Logger.getAnonymousLogger(),
+                Messages.from(getClass().getResourceAsStream("/messages.yml"), null, Logger.getAnonymousLogger()), null);
+        long now = 1_800_000_000_000L;
+        var receipt = new RegistrationStore.DonationRecord();
+        receipt.id = 123;
+        receipt.donorName = "Paid";
+        receipt.amountKopecks = 500_00L;
+        receipt.status = RegistrationStore.DonationStatus.PENDING_REVIEW.name();
+        store.recordDonation(receipt);
+        assertFalse(service.approve(123, "Paid", 3650, "Admin", now), "no arbitrary extension beyond paid tariff");
+        assertTrue(service.approve(123, "Paid", 0, "Admin", now));
+        long until = store.getAccount("Paid").orElseThrow().passUntil;
+        assertTrue(until > now);
+        assertFalse(service.approve(123, "Paid", 0, "Admin", now + 1));
+        assertEquals(until, store.getAccount("Paid").orElseThrow().passUntil);
+        assertFalse(store.reservePayment("donatepay:123", "RCON", "shopbuy Paid duplicate", now));
+        var small = new RegistrationStore.DonationRecord();
+        small.id = 124;
+        small.donorName = "Free";
+        small.amountKopecks = 1;
+        small.status = RegistrationStore.DonationStatus.PENDING_AMOUNT.name();
+        store.recordDonation(small);
+        assertFalse(service.claim(124, "Free", "ip", now).isEmpty(), "must not announce activation after failed approval");
+        assertFalse(store.hasActivePass("Free", now));
+    }
+
 }

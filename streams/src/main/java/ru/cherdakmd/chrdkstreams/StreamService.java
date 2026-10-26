@@ -275,8 +275,6 @@ final class StreamService {
         if (!cfg.announce()) {
             return;
         }
-        ChrdkRegisterApi api = plugin.coreApi();
-        long until = api == null ? 0L : api.passUntil(name);
         int today = decision.state().awardedToday();
         Bukkit.getScheduler().runTask(plugin, () -> {
             Player player = Bukkit.getPlayer(uuid);
@@ -285,9 +283,6 @@ final class StreamService {
             }
             plugin.messages().send(player, "awarded",
                     "hours", decision.awardHours(), "today", today, "max", cfg.maxHoursPerDay());
-            if (until > 0) {
-                plugin.messages().send(player, "awarded-until", "until", until(until));
-            }
         });
     }
 

@@ -322,6 +322,7 @@ public final class RegisterPlugin extends JavaPlugin {
         if (accessManager != null) {
             accessManager.reload(updated);
         }
+        if (rewardBoosts != null) rewardBoosts.reload();
         if (chatService != null) {
             chatService.reload(updated.chat());
         }

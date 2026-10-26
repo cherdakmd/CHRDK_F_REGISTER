@@ -416,7 +416,8 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
 
     /** Активна ли ранг: от неё зависит доступность VIP-наград. */
     boolean vipActive(Player player) {
-        return passUntil(player) > System.currentTimeMillis();
+        ChrdkRegisterApi api = coreApi;
+        return api != null && player != null && api.hasActivePass(player.getName());
     }
 
     /**
