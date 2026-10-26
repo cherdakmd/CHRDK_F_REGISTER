@@ -551,7 +551,7 @@ messages:
       <yellow>/%label% reset2fa <ник></yellow><gray> — сбросить только TOTP 2FA игрока</gray>
       <yellow>/%label% status</yellow><gray> — общая статистика плагина</gray>
       <yellow>/%label% add <ник> [дней]</yellow><gray> — отключено: требуется подтверждённая реальная оплата</gray>
-      <yellow>/%label% gift <ник> <дней></yellow><gray> — отключено: оплаченные подарки через shopgift с номером платежа</gray>
+      <yellow>/%label% gift <ник> <дней></yellow><gray> — отключено: оплаченные подарки через shopgift магазина по RCON</gray>
       <yellow>/%label% shoppay <ник> <сумма> [payment=номер]</yellow><gray> — покупка из магазина TradeMC: журнал, тариф, выдача</gray>
       <yellow>/%label% pending</yellow><gray> — нераспознанные донаты</gray>
       <yellow>/%label% donations [фильтр] [лимит]</yellow><gray> — журнал всех донатов (выданные/ожидание/отклонённые)</gray>
