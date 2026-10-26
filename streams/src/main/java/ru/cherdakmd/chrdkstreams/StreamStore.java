@@ -78,7 +78,9 @@ final class StreamStore {
                     (int) longOf(entry, "day"),
                     (int) longOf(entry, "awardedToday"),
                     longOf(entry, "pendingMillis"),
-                    (int) longOf(entry, "totalDays"));
+                    // 1.4.184: ключ totalHours. Старый totalDays читаем как часы,
+                    // чтобы накопленное не обнулилось после обновления.
+                    (int) longOf(entry, "totalHours", "totalDays"));
             return new StreamBinding(uuid, string(entry, "name"), channels, state);
         } catch (RuntimeException exception) {
             return null; // битая строка — пропускаем, остальные важнее
@@ -150,7 +152,7 @@ final class StreamStore {
             entry.addProperty("day", binding.state().day());
             entry.addProperty("awardedToday", binding.state().awardedToday());
             entry.addProperty("pendingMillis", binding.state().pendingMillis());
-            entry.addProperty("totalDays", binding.state().totalDays());
+            entry.addProperty("totalHours", binding.state().totalHours());
             players.add(entry);
         }
         JsonObject root = new JsonObject();
@@ -234,11 +236,11 @@ final class StreamStore {
         return bindings.size();
     }
 
-    /** Суммарно начисленных суток по всем игрокам (для логов). */
-    synchronized int totalDays() {
+    /** Суммарно начисленных часов по всем игрокам (для логов). */
+    synchronized int totalHours() {
         int sum = 0;
         for (StreamBinding binding : bindings.values()) {
-            sum += Math.max(0, binding.state().totalDays());
+            sum += Math.max(0, binding.state().totalHours());
         }
         return sum;
     }
@@ -246,6 +248,11 @@ final class StreamStore {
     private static String string(JsonObject object, String key) {
         return object.has(key) && object.get(key).isJsonPrimitive()
                 ? object.get(key).getAsString().trim() : "";
+    }
+
+    /** Значение по новому ключу, а если его нет — по старому (совместимость данных). */
+    private static long longOf(JsonObject object, String key, String legacy) {
+        return object.has(key) ? longOf(object, key) : longOf(object, legacy);
     }
 
     private static long longOf(JsonObject object, String key) {

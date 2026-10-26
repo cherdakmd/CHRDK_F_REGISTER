@@ -50,7 +50,7 @@ class ViewerStoreTest {
         assertEquals("Streamer", binding.streamerName());
         assertEquals(1_800_000_300_000L, binding.lastCheckIn());
 
-        assertEquals(4, loaded.progress(VIEWER).totalDays());
+        assertEquals(4, loaded.progress(VIEWER).totalHours());
         assertEquals(1, loaded.progress(VIEWER).awardedToday());
     }
 
@@ -66,7 +66,7 @@ class ViewerStoreTest {
         assertTrue(store.settings(STREAMER).isEmpty());
         assertTrue(store.viewer(VIEWER).isPresent(),
                 "прогресс и привязка зрителя не должны сгорать из-за выключения");
-        assertEquals(3, store.progress(VIEWER).totalDays(),
+        assertEquals(3, store.progress(VIEWER).totalHours(),
                 "дневной потолок нельзя сбросить переподключением");
         assertEquals(0, store.streamerCount());
     }
@@ -117,7 +117,7 @@ class ViewerStoreTest {
                    {"uuid":"33333333-3333-3333-3333-333333333333","name":"X","streamer":"bad"}
                  ],
                  "progress":[
-                   {"uuid":"44444444-4444-4444-4444-444444444444","totalDays":7}
+                   {"uuid":"44444444-4444-4444-4444-444444444444","totalHours":7}
                  ]}
                 """, StandardCharsets.UTF_8);
 
@@ -126,7 +126,7 @@ class ViewerStoreTest {
 
         assertEquals(0, store.viewerCount());
         assertEquals(7, store.progress(
-                UUID.fromString("44444444-4444-4444-4444-444444444444")).totalDays());
+                UUID.fromString("44444444-4444-4444-4444-444444444444")).totalHours());
         assertTrue(store.allStreamers().isEmpty());
         assertFalse(Files.exists(folder.resolve("streams-viewers.json.tmp")));
     }

@@ -49,13 +49,22 @@ final class ProfessionsProfile implements ChrdkRegisterApi.ProfileProvider {
             lines.add(messages.get("profile-level",
                     "level", String.valueOf(level),
                     "rank", Messages.trusted(messages.raw(ProfessionMath.rankKey(level)))));
+            int percent = plugin.service().progressPercent(context.playerId(), profession);
             lines.add(messages.get("profile-progress",
                     "xp", String.valueOf(plugin.service().progress(context.playerId(), profession)),
                     "needed", needed <= 0 ? "∞" : String.valueOf(needed),
-                    "percent", String.valueOf(
-                            plugin.service().progressPercent(context.playerId(), profession))));
+                    "percent", String.valueOf(percent)));
+            if (needed > 0) {
+                lines.add(messages.get("profile-bar", "bar", ProfessionText.bar(percent)));
+            }
+            String next = ProfessionText.nextStepRaw(messages, profession, level, maxLevel);
+            if (!next.isBlank()) {
+                lines.add(messages.get("profile-next", "next", Messages.trusted(next)));
+            }
             lines.add(messages.get("profile-perk", "perk",
                     Messages.trusted(ProfessionText.perkRaw(messages, profession, level, maxLevel))));
+            lines.add(messages.get("profile-hint",
+                    "hint", ProfessionText.hintComponent(messages, profession)));
             int left = plugin.service().dailyLeft(context.playerId(), profession,
                     System.currentTimeMillis());
             if (left >= 0) {

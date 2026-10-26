@@ -175,6 +175,15 @@ public final class OrdersConfig {
         return out;
     }
 
+    /** Значение по новому ключу, а если его нет — по старому (совместимость конфигов). */
+    private static double number(ConfigurationSection section, String key,
+                                 String current, String legacy) {
+        if (section.contains(key + current)) {
+            return section.getDouble(key + current, 0.0);
+        }
+        return section.getDouble(key + legacy, 0.0);
+    }
+
     private static Map<String, OrderCategory> parseCategories(FileConfiguration config,
                                                               Logger logger) {
         Map<String, OrderCategory> out = new LinkedHashMap<>();
@@ -187,10 +196,13 @@ public final class OrdersConfig {
             int minReputation = (int) clamp(section.getLong(key + ".min-reputation", 0L),
                     0L, 100_000L);
             int reputation = (int) clamp(section.getLong(key + ".reputation", 1L), 0L, 100L);
-            double passChance = clamp(section.getDouble(key + ".pass-days-chance", 0.0),
+            // 1.4.184: награда в часах. Ключи старого формата (pass-days*) читаются
+            // как часы, чтобы конфиги, не перезаписанные после обновления, не потеряли
+            // награду; сутками прежние значения больше не выдаются.
+            double passChance = clamp(number(section, key, ".pass-hours-chance", ".pass-days-chance"),
                     0.0, 100.0);
-            int passDays = (int) clamp(section.getLong(key + ".pass-days", 0L),
-                    0L, OrderCategory.MAX_PASS_DAYS);
+            int passHours = (int) clamp((long) number(section, key, ".pass-hours", ".pass-days"),
+                    0L, OrderCategory.MAX_PASS_HOURS);
             List<OrderItem> items = new ArrayList<>();
             ConfigurationSection itemsSection =
                     section.getConfigurationSection(key + ".items");
@@ -219,7 +231,7 @@ public final class OrdersConfig {
             }
             out.put(key.toLowerCase(Locale.ROOT),
                     new OrderCategory(key, weight, minReputation, reputation,
-                            passChance, passDays, items));
+                            passChance, passHours, items));
         }
         return out;
     }

@@ -246,4 +246,24 @@ public final class EventService {
         return current != null && current.kind() == EventKind.EFFECT
                 ? current.effects() : List.of();
     }
+
+    /** Падающие звёзды текущего события (1.4.176); выключены — {@link MeteorSpawn#NONE}. */
+    public MeteorSpawn meteors() {
+        return current != null ? current.meteors() : MeteorSpawn.NONE;
+    }
+
+    /** Нашествие мобов текущего события (1.4.176); выключено — {@link HordeSpawn#NONE}. */
+    public HordeSpawn horde() {
+        return current != null ? current.horde() : HordeSpawn.NONE;
+    }
+
+    /** Падают ли звёзды прямо сейчас. */
+    public boolean fallingStars() {
+        return meteors().usable();
+    }
+
+    /** Идут ли волны мобов прямо сейчас. */
+    public boolean hordeActive() {
+        return horde().usable();
+    }
 }

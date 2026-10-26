@@ -83,6 +83,8 @@ public final class ProfessionsPlaceholders extends PlaceholderExpansion {
                     Math.max(0, needed - service.progress(id, active)));
             case "percent" -> Integer.toString(service.progressPercent(id, active));
             case "total" -> Integer.toString(service.totalXp(id));
+            // 1.4.179: полоса опыта без разметки — для таба и скорбордов.
+            case "bar" -> ProfessionText.barPlain(service.progressPercent(id, active));
             case "perk" -> {
                 int value = ProfessionMath.perkValue(active, level, maxLevel);
                 yield value <= 0 ? plugin.messages().plain("perk.none")

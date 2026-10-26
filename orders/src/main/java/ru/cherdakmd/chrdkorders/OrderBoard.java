@@ -18,7 +18,7 @@ public final class OrderBoard {
 
     /** Один сгенерированный заказ до присвоения номера и срока. */
     public record Draft(OrderBot bot, OrderCategory category, OrderItem item, int amount,
-                        int rewardDiamonds, int rewardPassDays) {
+                        int rewardDiamonds, int rewardPassHours) {
     }
 
     private OrderBoard() {
@@ -62,8 +62,8 @@ public final class OrderBoard {
         }
         int amount = item.amount(rng);
         int reward = reward(item, amount, premium, jitter, minReward, maxReward, rng);
-        int passDays = passDays(category, rng);
-        return new Draft(bot, category, item, amount, reward, passDays);
+        int passHours = passHours(category, rng);
+        return new Draft(bot, category, item, amount, reward, passHours);
     }
 
     /**
@@ -93,12 +93,12 @@ public final class OrderBoard {
     }
 
     /** Дни ранга по шансу категории; 0 — заказ обычный. */
-    public static int passDays(OrderCategory category, Random random) {
-        if (category == null || category.passDays() <= 0 || category.passChance() <= 0.0) {
+    public static int passHours(OrderCategory category, Random random) {
+        if (category == null || category.passHours() <= 0 || category.passChance() <= 0.0) {
             return 0;
         }
         Random rng = random == null ? new Random() : random;
-        return rng.nextDouble() * 100.0 < category.passChance() ? category.passDays() : 0;
+        return rng.nextDouble() * 100.0 < category.passChance() ? category.passHours() : 0;
     }
 
     /**
@@ -152,7 +152,7 @@ public final class OrderBoard {
         long life = Math.round(ttl * (0.75 + rng.nextDouble() * 0.5));
         return new BotOrder(id, draft.bot().id(), draft.bot().name(), draft.category().id(),
                 draft.item().material().name(), draft.amount(), draft.rewardDiamonds(),
-                draft.rewardPassDays(), draft.category().minReputation(),
+                draft.rewardPassHours(), draft.category().minReputation(),
                 draft.category().reputation(), now, now + life);
     }
 

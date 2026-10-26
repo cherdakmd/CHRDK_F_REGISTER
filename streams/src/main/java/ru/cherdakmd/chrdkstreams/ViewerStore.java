@@ -124,7 +124,7 @@ final class ViewerStore {
             entry.addProperty("day", state.getValue().day());
             entry.addProperty("awardedToday", state.getValue().awardedToday());
             entry.addProperty("pendingMillis", state.getValue().pendingMillis());
-            entry.addProperty("totalDays", state.getValue().totalDays());
+            entry.addProperty("totalHours", state.getValue().totalHours());
             progressArray.add(entry);
         }
         JsonObject root = new JsonObject();
@@ -300,7 +300,8 @@ final class ViewerStore {
                     (int) longOf(entry, "day"),
                     (int) longOf(entry, "awardedToday"),
                     longOf(entry, "pendingMillis"),
-                    (int) longOf(entry, "totalDays"));
+                    // 1.4.184: ключ totalHours; старый totalDays читаем как часы.
+                    (int) longOf(entry, "totalHours", "totalDays"));
             return Map.entry(uuid, state);
         } catch (RuntimeException exception) {
             return null;
@@ -321,6 +322,11 @@ final class ViewerStore {
         } catch (RuntimeException exception) {
             return false;
         }
+    }
+
+    /** Значение по новому ключу, а если его нет — по старому (совместимость данных). */
+    private static long longOf(JsonObject object, String key, String legacy) {
+        return object.has(key) ? longOf(object, key) : longOf(object, legacy);
     }
 
     private static long longOf(JsonObject object, String key) {

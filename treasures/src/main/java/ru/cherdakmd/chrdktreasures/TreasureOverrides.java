@@ -3,16 +3,14 @@ package ru.cherdakmd.chrdktreasures;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
-import java.io.IOException;
-import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.OptionalDouble;
 import java.util.logging.Logger;
+import ru.cherdakmd.chrdkregister.storage.SafeJsonWriter;
 
 /**
  * Переопределения шансов из {@code chances.yml}.
@@ -133,28 +131,6 @@ public final class TreasureOverrides {
                         .append(entry.getValue()).append('\n');
             }
         }
-        Path temp = file.resolveSibling(FILE_NAME + ".tmp");
-        try {
-            Files.createDirectories(file.getParent());
-            Files.writeString(temp, text.toString(), java.nio.charset.StandardCharsets.UTF_8);
-            move(temp, file);
-        } catch (IOException exception) {
-            logger.severe("[CHRDK_Treasures] Не удалось записать " + file + ": "
-                    + exception.getMessage());
-            try {
-                Files.deleteIfExists(temp);
-            } catch (IOException ignored) {
-                // временный файл безвреден и перезапишется в следующий раз
-            }
-        }
-    }
-
-    private static void move(Path from, Path to) throws IOException {
-        try {
-            Files.move(from, to, StandardCopyOption.REPLACE_EXISTING,
-                    StandardCopyOption.ATOMIC_MOVE);
-        } catch (AtomicMoveNotSupportedException exception) {
-            Files.move(from, to, StandardCopyOption.REPLACE_EXISTING);
-        }
+        SafeJsonWriter.write(file, text.toString(), logger, "[CHRDK_Treasures]");
     }
 }

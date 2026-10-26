@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -31,6 +32,8 @@ class EventMessagesTest {
             "bonus-value-xp", "bonus-value-mining", "bonus-value-loot", "bonus-value-effect",
             "start-broadcast", "end-broadcast", "bossbar", "join-active",
             "bonus-xp", "bonus-mining", "bonus-loot",
+            "bonus-extra-meteors", "bonus-extra-horde", "meteor-fell", "horde-wave",
+            "profile-meteors", "profile-horde",
             "admin-usage", "admin-reloaded", "admin-force-active", "admin-force-unknown",
             "admin-force-none", "admin-force-ok", "admin-stop-none", "admin-stop-ok",
             "admin-next-active", "admin-next-ok",
@@ -68,7 +71,8 @@ class EventMessagesTest {
         expected.put("active-bonus", List.of("%bonus%"));
         expected.put("next", List.of("%time%", "%human%"));
         expected.put("list-header", List.of("%count%"));
-        expected.put("list-line", List.of("%name%", "%kind%", "%time%", "%state%"));
+        expected.put("list-line",
+                List.of("%name%", "%kind%", "%bonus%", "%time%", "%state%"));
         expected.put("bonus-value-xp", List.of("%percent%"));
         expected.put("bonus-value-mining", List.of("%percent%"));
         expected.put("bonus-value-loot", List.of("%percent%"));
@@ -90,6 +94,9 @@ class EventMessagesTest {
         expected.put("profile-active", List.of("%name%", "%time%"));
         expected.put("profile-next", List.of("%time%"));
         expected.put("profile-stats", List.of("%total%"));
+        expected.put("profile-horde", List.of("%multiplier%"));
+        expected.put("meteor-fell", List.of("%x%", "%y%", "%z%"));
+        expected.put("horde-wave", List.of("%count%"));
 
         for (Map.Entry<String, List<String>> row : expected.entrySet()) {
             String text = section.getString(row.getKey(), "");
@@ -97,6 +104,37 @@ class EventMessagesTest {
                 assertTrue(text.contains(placeholder),
                         "в «" + row.getKey() + "» нет " + placeholder + ": " + text);
             }
+        }
+    }
+
+    @Test
+    void bundledConfigReallyHasStarsAndHorde() throws Exception {
+        try (InputStream stream = EventMessagesTest.class.getResourceAsStream("/config.yml")) {
+            assertNotNull(stream, "config.yml должен лежать в ресурсах модуля");
+            YamlConfiguration yaml = YamlConfiguration.loadConfiguration(
+                    new InputStreamReader(stream, StandardCharsets.UTF_8));
+            EventConfig config = EventConfig.parse(yaml, null);
+
+            WorldEvent starfall = config.event("starfall");
+            assertNotNull(starfall, "в поставляемом конфиге есть Звездопад");
+            assertTrue(starfall.fallingStars(), "у Звездопада должны падать звёзды");
+            assertFalse(starfall.meteors().loot().isEmpty(), "звезда должна что-то ронять");
+            assertTrue(starfall.meteors().crater(), "звезда выбивает воронку");
+            assertTrue(starfall.meteors().craterRadius() <= MeteorSpawn.MAX_CRATER_RADIUS,
+                    "радиус воронки в пределах потолка");
+
+            WorldEvent bloodMoon = config.event("blood_moon");
+            assertNotNull(bloodMoon, "в поставляемом конфиге есть Кровавая луна");
+            assertTrue(bloodMoon.hordeActive(), "у Кровавой луны должно быть нашествие");
+            assertTrue(bloodMoon.horde().multiplier() >= 2.0,
+                    "множитель спавна должен быть заметным");
+            assertFalse(bloodMoon.horde().mobs().isEmpty(), "список мобов не пуст");
+
+            WorldEvent meteorShower = config.event("meteor_shower");
+            assertNotNull(meteorShower);
+            assertTrue(meteorShower.fallingStars(), "у Метеоритного дождя тоже падают камни");
+            assertEquals(2, meteorShower.meteors().craterRadius(),
+                    "у крупного метеора воронка заметнее");
         }
     }
 

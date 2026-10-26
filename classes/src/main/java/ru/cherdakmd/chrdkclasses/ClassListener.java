@@ -37,13 +37,29 @@ final class ClassListener implements Listener {
         Player player = event.getPlayer();
         plugin.store().rename(player.getUniqueId(), player.getName());
         plugin.effects().forget(player.getUniqueId());
+        // Уровень запоминается молча: накопленное до входа — не «повышение».
+        plugin.progress().baseline(player.getUniqueId(),
+                plugin.service().level(player.getUniqueId()));
         // Атрибуты применяются после входа: навыки могли ещё не отдать уровень.
         Bukkit.getScheduler().runTask(plugin, () -> plugin.effects().apply(player));
+        // Навыки подтягиваются не мгновенно — через десять секунд запоминаем
+        // уровень ещё раз, чтобы вход не выглядел повышением класса.
+        Bukkit.getScheduler().runTaskLater(plugin, () -> baselineQuietly(player), 200L);
+    }
+
+    /** Повторная сверка уровня после входа: молча, без сообщения игроку. */
+    private void baselineQuietly(Player player) {
+        if (!plugin.isEnabled() || !player.isOnline()) {
+            return;
+        }
+        plugin.progress().baseline(player.getUniqueId(), plugin.service().level(player.getUniqueId()));
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent event) {
-        plugin.effects().clear(event.getPlayer());
+        Player player = event.getPlayer();
+        plugin.effects().clear(player);
+        plugin.progress().forget(player.getUniqueId());
     }
 
     @EventHandler(priority = EventPriority.MONITOR)

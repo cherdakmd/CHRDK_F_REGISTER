@@ -28,8 +28,8 @@ class OrderBoardTest {
     }
 
     private static OrderCategory category(String id, double weight, int minRep, int rep,
-                                          double passChance, int passDays, OrderItem... items) {
-        return new OrderCategory(id, weight, minRep, rep, passChance, passDays, List.of(items));
+                                          double passChance, int passHours, OrderItem... items) {
+        return new OrderCategory(id, weight, minRep, rep, passChance, passHours, List.of(items));
     }
 
     private static Map<String, OrderCategory> map(OrderCategory... categories) {
@@ -132,14 +132,14 @@ class OrderBoardTest {
     }
 
     @Test
-    void passDaysFollowCategoryChance() {
+    void passHoursFollowCategoryChance() {
         OrderCategory noPass = category("no", 1.0, 0, 1, 0, 5,
                 item(Material.COAL, 1, 1, 0.1));
         OrderCategory always = category("always", 1.0, 0, 2, 100, 7,
                 item(Material.GOLD_INGOT, 1, 1, 0.1));
-        assertEquals(0, OrderBoard.passDays(noPass, new Random(1)));
-        assertEquals(7, OrderBoard.passDays(always, new Random(1)));
-        assertEquals(0, OrderBoard.passDays(null, new Random(1)));
+        assertEquals(0, OrderBoard.passHours(noPass, new Random(1)));
+        assertEquals(7, OrderBoard.passHours(always, new Random(1)));
+        assertEquals(0, OrderBoard.passHours(null, new Random(1)));
     }
 
     @Test
@@ -160,7 +160,7 @@ class OrderBoardTest {
         assertEquals("IRON_INGOT", order.material());
         assertEquals(10, order.amount());
         assertEquals(8, order.rewardDiamonds());
-        assertEquals(1, order.rewardPassDays());
+        assertEquals(1, order.rewardPassHours());
         assertEquals(5, order.minReputation());
         assertEquals(2, order.reputation());
         assertEquals(now, order.createdAt());
@@ -193,7 +193,7 @@ class OrderBoardTest {
         assertEquals(Material.IRON_INGOT, order.materialOrNull());
         assertEquals(1, order.amount());
         assertEquals(576, order.rewardDiamonds());
-        assertEquals(30, order.rewardPassDays());
+        assertEquals(24, order.rewardPassHours(), "потолок награды — сутки");
         assertEquals(0, order.minReputation());
         assertEquals(100, order.reputation());
         assertEquals(0L, order.createdAt());

@@ -2,6 +2,7 @@ package ru.cherdakmd.chrdkprofessions;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
@@ -29,6 +30,8 @@ public final class ProfessionsPlugin extends JavaPlugin {
     private ProfessionStore store;
     private ProfessionService service;
     private ProfessionsGui gui;
+    /** 1.4.182: обязательный выбор профессии — меню и напоминания. */
+    private ProfessionOnboarding onboarding;
     private BukkitTask saveTask;
     private BukkitTask queuedSave;
     private boolean saveQueued;
@@ -43,15 +46,18 @@ public final class ProfessionsPlugin extends JavaPlugin {
             store.load();
             this.service = new ProfessionService(config, store);
             this.gui = new ProfessionsGui(this);
+            this.onboarding = new ProfessionOnboarding(this);
 
             getServer().getPluginManager().registerEvents(new ProfessionListener(this), this);
             getServer().getPluginManager().registerEvents(gui, this);
+            getServer().getPluginManager().registerEvents(onboarding, this);
             registerCommands();
             registerPlaceholders();
             registerProfile();
 
             this.saveTask = getServer().getScheduler().runTaskTimerAsynchronously(this,
                     this::saveNow, 200L, 200L);
+            onboarding.start();
 
             getLogger().info("CHRDK_Professions включён: профессий " + Profession.values().length
                     + ", игроков в файле " + store.size() + ".");
@@ -80,6 +86,9 @@ public final class ProfessionsPlugin extends JavaPlugin {
             queuedSave.cancel();
             queuedSave = null;
         }
+        if (onboarding != null) {
+            onboarding.stop();
+        }
         if (store != null) {
             store.flush();
         }
@@ -92,6 +101,10 @@ public final class ProfessionsPlugin extends JavaPlugin {
         this.config = ProfessionConfig.parse(getConfig(), getLogger());
         this.messages = Messages.load(this, config.locale(), getLogger());
         service.applyConfig(config);
+        // 1.4.182: период напоминания мог измениться — перезапускаем задачи.
+        if (onboarding != null) {
+            onboarding.start();
+        }
     }
 
     private void registerCommands() {
@@ -138,6 +151,26 @@ public final class ProfessionsPlugin extends JavaPlugin {
         } catch (RuntimeException | LinkageError error) {
             getLogger().warning("[CHRDK_Professions] раздел профиля недоступен: " + error);
         }
+    }
+
+    /**
+     * Подсказка после выбора ремесла (1.4.177).
+     *
+     * <p>Игрок только что нажал «Выбрать» — в этот момент он должен узнать, за
+     * какую работу пойдёт опыт, а не через день и не в вики. Одна строка в чате
+     * и есть ответ на «выбрал и ничего не происходит».</p>
+     */
+    public void hint(Player player, Profession profession) {
+        if (player == null || profession == null) {
+            return;
+        }
+        Messages texts = this.messages;
+        if (texts == null) {
+            return;
+        }
+        this.messages.send(player, "chosen-hint",
+                "profession", ProfessionText.nameComponent(texts, profession),
+                "hint", ProfessionText.hintComponent(texts, profession));
     }
 
     /* --------------------------------- запись --------------------------------- */

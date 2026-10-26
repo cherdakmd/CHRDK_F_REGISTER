@@ -2,11 +2,13 @@ package ru.cherdakmd.chrdkevents;
 
 import org.bukkit.GameMode;
 import org.bukkit.Material;
+import org.bukkit.entity.Enemy;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerExpChangeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -26,6 +28,10 @@ import java.util.UUID;
  * не выдаёт предмет «из воздуха» без действия: руда падает только за
  * сломанный блок, дроп — только за убитого моба. Это главное отличие события
  * от сундука с подарками.</p>
+ *
+ * <p>С 1.4.176 здесь же эхо нашествия: во время «Кровавой луны» естественный
+ * спавн рядом с игроком усиливается. Спавнеры, призывы команд и наши
+ * собственные спавны ({@code CUSTOM}) множитель не получают.</p>
  *
  * <p>Сообщения в экшен-баре под троттлингом: опыт и руда приходят пачками, и
  * строка не должна мигать.</p>
@@ -114,6 +120,29 @@ public final class EventsListener implements Listener {
             killer.sendActionBar(plugin.messages().get("bonus-loot",
                     "item", itemName(picked),
                     "name", current == null ? "" : current.name()));
+        }
+    }
+
+    /* -------------------------------- нашествие -------------------------------- */
+
+    /**
+     * Естественный спавн во время нашествия: рядом поднимается ещё моб.
+     *
+     * <p>Проверка причины спавна здесь принципиальна: без неё фермы на
+     * спавнерах и мобов, призванных командой, событие усиливало бы так же, как
+     * честную ночную охоту.</p>
+     */
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onSpawn(CreatureSpawnEvent event) {
+        if (event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.NATURAL) {
+            return;
+        }
+        if (!(event.getEntity() instanceof Enemy)) {
+            return;
+        }
+        HordeService horde = plugin.horde();
+        if (horde != null) {
+            horde.reinforce(event.getLocation(), event.getEntityType());
         }
     }
 

@@ -194,6 +194,30 @@ class MessagesTest {
     }
 
     @Test
+    void placeholderNamesWorkWithAndWithoutPercentSigns() {
+        Messages messages = inline("""
+                messages:
+                  update: "Новая версия v%latest% (у вас v%current%) — %url%"
+                """);
+
+        String plain = messages.plain("update",
+                "latest", "1.4.177", "%current%", "1.4.176", "url", "https://example.org");
+        assertEquals("Новая версия v1.4.177 (у вас v1.4.176) — https://example.org", plain);
+        assertFalse(plain.contains("%"), "сырых плейсхолдеров остаться не должно: " + plain);
+    }
+
+    @Test
+    void emptyPlaceholderNameIsIgnored() {
+        Messages messages = inline("""
+                messages:
+                  text: "Скидка 100%% — итог"
+                """);
+
+        assertEquals("Скидка 100%% — итог", messages.plain("text", "", "подмена"),
+                "пустое имя не должно превращаться в замену всех %% подряд");
+    }
+
+    @Test
     void missingKeysFallBackToBundledDefaults(@TempDir Path tempDir) throws Exception {
         Path userFile = tempDir.resolve("messages.yml");
         Files.writeString(userFile, """

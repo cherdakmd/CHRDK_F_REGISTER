@@ -10,7 +10,7 @@ import java.util.Locale;
  * Тексты результатов операций (1.4.164).
  *
  * <p>{@link TalentService} возвращает чистые иды: класс {@code warrior}, талант
- * {@code warrior-stoyka-1}, навык {@code defense}. Так сервис остаётся
+ * {@code warrior-stoyka-1}, навык {@code defense}, умение {@code warrior}. Так сервис остаётся
  * проверяемым без сервера и без {@code messages.yml}. Команда и меню показывают
  * один и тот же результат, поэтому перевод идов в имена живёт здесь, а не
  * дублируется в двух местах.</p>
@@ -28,7 +28,8 @@ final class ClassText {
         }
         for (int index = 0; index + 1 < args.size(); index += 2) {
             String kind = args.get(index);
-            if (!kind.equals("class") && !kind.equals("talent") && !kind.equals("skill")) {
+            if (!kind.equals("class") && !kind.equals("talent") && !kind.equals("skill")
+                    && !kind.equals("ability")) {
                 continue;
             }
             String id = args.get(index + 1);

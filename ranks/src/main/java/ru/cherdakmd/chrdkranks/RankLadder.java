@@ -9,14 +9,24 @@ import java.util.Map;
  * Чистая логика — покрыта юнит-тестами без сервера.
  *
  * Лестница хранится СТРОГО по убыванию порога часов: индекс 0 — высшее звание.
- * Команда самого высокого звания — {@code !rk-a}, следующего — {@code !rk-b} и т.д.:
- * клиент сортирует список по имени команды, поэтому ветераны оказываются выше
- * (закреп ядра {@code !chrdk-pin} остаётся выше всех — буква 'c' < 'r').
+ *
+ * <p>С 1.4.183 команда кодирует два признака сразу: сначала донатную ступень,
+ * потом звание за стаж. Клиент сортирует список по имени команды, поэтому
+ * {@code !rk-a00} (Покровитель, высшее звание) стоит выше {@code !rk-b00}
+ * (Меценат), а тот — выше {@code !rk-f99} (без ранга и без звания). Иначе в
+ * списке был настоящий бардак: игроки с оплаченным рангом перемешивались с
+ * остальными по одной лишь набитой игровой сессии.</p>
+ *
+ * <p>Закреп ядра {@code !chrdk-pin} остаётся выше всех: буква 'c' < 'r'.</p>
  */
 final class RankLadder {
 
     static final String TEAM_PREFIX = "!rk-";
     static final int MAX_RANKS = 26;
+    /** Пять донатных ступеней (см. {@code RankSettings}); 0 — ранга нет. */
+    static final int MAX_RANK_LEVEL = 5;
+    /** Код «звания нет»: стоит после любого настоящего (0 — высшее звание). */
+    static final String NO_TIER_CODE = "99";
 
     private RankLadder() {
     }
@@ -40,12 +50,32 @@ final class RankLadder {
         return -1;
     }
 
-    /** Команда scoreboard для позиции лестницы (0 → "!rk-a"); -1 → null (без команды). */
-    static String teamNameFor(int index) {
-        if (index < 0 || index >= MAX_RANKS) {
-            return null;
+    /**
+     * Команда scoreboard: ранг важнее стажа (1.4.183).
+     *
+     * <p>Имя команды — {@code !rk-} + буква донатной ступени + двузначный код
+     * звания. Буква ступени идёт от 'a' (высшая, Покровитель) к 'f' (ранга
+     * нет). Код звания — {@code 00} у высшего звания, {@code 25} у низшего и
+     * {@code 99}, если звания ещё нет: так список внутри одного ранга тоже
+     * упорядочен, а «новички» не всплывают выше ветеранов.</p>
+     *
+     * @param rankLevel ступень донатного ранга (0 — нет, 1..5 по лестнице);
+     *                  значения вне диапазона зажимаются
+     * @param tierIndex позиция звания за стаж ({@link #tierIndex}); -1 — звания нет
+     * @return имя команды: не длиннее 7 символов, всегда пригодное для регистрации
+     */
+    static String teamNameFor(int rankLevel, int tierIndex) {
+        int level = Math.clamp(rankLevel, 0, MAX_RANK_LEVEL);
+        char rankChar = (char) ('a' + (MAX_RANK_LEVEL - level));
+        String tierCode;
+        if (tierIndex < 0) {
+            tierCode = NO_TIER_CODE;
+        } else {
+            // индекс 0 — высшее звание, ему самый маленький код
+            int capped = Math.clamp(tierIndex, 0, MAX_RANKS - 1);
+            tierCode = String.format(java.util.Locale.ROOT, "%02d", capped);
         }
-        return TEAM_PREFIX + (char) ('a' + index);
+        return TEAM_PREFIX + rankChar + tierCode;
     }
 
     /** Принадлежит ли имя команды нашему модулю (для зачистки при выгрузке). */

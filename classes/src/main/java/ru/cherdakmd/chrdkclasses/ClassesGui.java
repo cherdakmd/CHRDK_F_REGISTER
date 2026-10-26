@@ -24,7 +24,7 @@ import java.util.UUID;
  * Меню классов: выбор, карточка стиля и дерево талантов (1.4.164).
  *
  * <p>Три экрана: главный (кто я и кем могу стать), карточка класса (что он даёт
- * и кнопка подтверждения) и дерево (12 узлов тремя ветками). Меню ничего не
+ * и кнопка подтверждения) и дерево (15 узлов тремя ветками). Меню ничего не
  * решает само: клик зовёт {@link TalentService}, поэтому выбрать класс или
  * выучить талант в обход очков и требований нельзя.</p>
  */
@@ -60,24 +60,40 @@ final class ClassesGui implements Listener {
     private static final int INFO_SLOT = 4;
     private static final int CLOSE_SLOT = 49;
     private static final int BACK_SLOT = 45;
+    /**
+     * В дереве навигация сверху: пять ярусов занимают все нижние ряды, и
+     * кнопки в подвале отняли бы место у мастерского яруса.
+     */
+    private static final int TREE_CLOSE_SLOT = 8;
+    private static final int TREE_BACK_SLOT = 0;
     /** Четыре класса в ряд: слоты 19, 21, 23, 25. */
     private static final int[] CLASS_SLOTS = {19, 21, 23, 25};
     private static final int TALENTS_SLOT = 39;
+    /** Умение класса — между деревом и пересборкой. */
+    private static final int ABILITY_SLOT = 40;
+    /** Второе умение — отдельная кнопка рядом (1.4.175). */
+    private static final int ABILITY2_SLOT = 42;
     private static final int RESPEC_SLOT = 41;
-    private static final int TREE_RESPEC_SLOT = 48;
+    private static final int TREE_RESPEC_SLOT = 45;
     private static final int SUMMARY_SLOT = 46;
+    /** Карточка класса в дереве — правый нижний угол. */
+    private static final int TREE_SUMMARY_SLOT = 53;
     /** Подтверждение выбора в карточке класса. */
     private static final int CONFIRM_SLOT = 31;
     /** Превью веток в карточке класса. */
     private static final int[] PREVIEW_SLOTS = {19, 21, 23};
     /** Заголовки веток в дереве — над колонками 1, 4 и 7. */
     private static final int[] BRANCH_SLOTS = {1, 4, 7};
-    /** Ярусы дерева: четыре ряда по три колонки. */
+    /** Ярусы дерева: пять рядов по три колонки (пятый — мастерский). */
     private static final int[][] TALENT_SLOTS = {
             {10, 13, 16},
             {19, 22, 25},
             {28, 31, 34},
-            {37, 40, 43}};
+            {37, 40, 43},
+            {46, 49, 52}};
+
+    /** Ярус, который открывается только навыком 75; подсвечивается в тексте. */
+    static final int MASTERY_TIER = 5;
 
     private final ClassesPlugin plugin;
 
@@ -109,11 +125,19 @@ final class ClassesGui implements Listener {
             PlayerClass candidate = classes.get(index);
             inventory.setItem(CLASS_SLOTS[index], classItem(candidate, candidate == current));
         }
-        inventory.setItem(TALENTS_SLOT, button(Material.BOOK, "menu-talents-name",
-                List.of(current == null
-                        ? plugin.messages().get("menu-talents-none")
-                        : plugin.messages().get("menu-talents-lore",
-                        "points", String.valueOf(service.availablePoints(id))))));
+        List<Component> talentsLore = new ArrayList<>();
+        if (current == null) {
+            talentsLore.add(plugin.messages().get("menu-talents-none"));
+        } else {
+            talentsLore.add(plugin.messages().get("menu-talents-lore",
+                    "points", String.valueOf(service.availablePoints(id))));
+            talentsLore.add(plugin.messages().get("menu-talents-nodes",
+                    "count", String.valueOf(plugin.store().talentCount(id)),
+                    "max", String.valueOf(ClassCatalog.TALENTS_PER_CLASS)));
+        }
+        inventory.setItem(TALENTS_SLOT, button(Material.BOOK, "menu-talents-name", talentsLore));
+        inventory.setItem(ABILITY_SLOT, abilityItem(player, current, ClassAbility.FIRST));
+        inventory.setItem(ABILITY2_SLOT, abilityItem(player, current, ClassAbility.SECOND));
         inventory.setItem(RESPEC_SLOT, respecItem(id));
         inventory.setItem(CLOSE_SLOT, button(Material.BARRIER, "menu-close", List.of()));
         player.openInventory(inventory);
@@ -186,10 +210,10 @@ final class ClassesGui implements Listener {
                 }
             }
         }
-        inventory.setItem(SUMMARY_SLOT, summaryItem(player, current));
-        inventory.setItem(BACK_SLOT, button(Material.ARROW, "menu-back", List.of()));
+        inventory.setItem(TREE_SUMMARY_SLOT, summaryItem(player, current));
+        inventory.setItem(TREE_BACK_SLOT, button(Material.ARROW, "menu-back", List.of()));
         inventory.setItem(TREE_RESPEC_SLOT, respecItem(player.getUniqueId()));
-        inventory.setItem(CLOSE_SLOT, button(Material.BARRIER, "menu-close", List.of()));
+        inventory.setItem(TREE_CLOSE_SLOT, button(Material.BARRIER, "menu-close", List.of()));
         player.openInventory(inventory);
     }
 
@@ -211,6 +235,19 @@ final class ClassesGui implements Listener {
         lore.add(plugin.messages().get("menu-summary-talents",
                 "count", String.valueOf(service.store().talentCount(id)),
                 "max", String.valueOf(ClassCatalog.TALENTS_PER_CLASS)));
+        int bonus = service.achievementBonus(id);
+        if (bonus > 0) {
+            lore.add(plugin.messages().get("menu-summary-achievements",
+                    "bonus", String.valueOf(bonus)));
+        }
+        RankPerks perks = service.perks(id);
+        if (perks != RankPerks.NONE) {
+            lore.add(plugin.messages().get("menu-summary-rank",
+                    "level", String.valueOf(perks.level()),
+                    "step", String.valueOf(perks.levelStepDiscount()),
+                    "cooldown", String.valueOf(
+                            Math.round((1.0 - perks.cooldownFactor()) * 100.0))));
+        }
         return button(material(playerClass.iconName()), "menu-summary-name", lore);
     }
 
@@ -257,11 +294,14 @@ final class ClassesGui implements Listener {
         lore.add(plugin.messages().get("talent." + talent.id() + ".desc"));
         lore.add(Component.empty());
         lore.add(effectLine(talent.kind(), talent.value()));
+        if (talent.tier() >= MASTERY_TIER) {
+            lore.add(plugin.messages().get("menu-talent-mastery"));
+        }
         if (talent.needsSkill()) {
             lore.add(plugin.messages().get("menu-talent-skill",
                     "skill", Messages.trusted(plugin.messages().raw(
                             "skill." + talent.skill() + ".name")),
-                    "level", String.valueOf(talent.skillLevel()),
+                    "level", String.valueOf(service.requiredSkill(id, talent)),
                     "have", String.valueOf(service.skillLevel(id, talent.skill()))));
         }
         lore.add(Component.empty());
@@ -281,7 +321,7 @@ final class ClassesGui implements Listener {
                     Messages.trusted(plugin.messages().raw(
                             "talent." + talent.requires() + ".name")));
             case "talent-skill" -> plugin.messages().get("menu-talent-skill-locked",
-                    "level", String.valueOf(talent.skillLevel()));
+                    "level", String.valueOf(plugin.service().requiredSkill(playerId, talent)));
             case "talent-points" -> plugin.messages().get("menu-talent-no-points",
                     "points", String.valueOf(plugin.service().availablePoints(playerId)));
             case "class-required" -> plugin.messages().get("menu-talent-no-class");
@@ -309,6 +349,35 @@ final class ClassesGui implements Listener {
                         "class." + current.id() + ".name"))));
         return button(current == null ? Material.LIME_DYE : Material.ORANGE_DYE,
                 "menu-confirm-name", lore);
+    }
+
+    /**
+     * Кнопка умения: имя, описание и состояние отката (1.4.175 — по слоту).
+     *
+     * <p>Оба умения выглядят одинаково и отличаются только содержимым: игроку
+     * не нужно помнить, что «кнопка справа — вторая», имя написано на самой
+     * кнопке.</p>
+     */
+    private ItemStack abilityItem(Player player, PlayerClass current, int slot) {
+        String nameKey = slot == ClassAbility.SECOND ? "menu-ability-second-name" : "menu-ability-name";
+        List<Component> lore = new ArrayList<>();
+        if (current == null) {
+            lore.add(plugin.messages().get("menu-ability-none"));
+            return button(Material.GRAY_DYE, nameKey, lore);
+        }
+        ClassAbility ability = ClassAbility.of(current, slot);
+        if (!plugin.config().abilitiesEnabled() || ability == null) {
+            lore.add(plugin.messages().get("ability-disabled"));
+            return button(Material.GRAY_DYE, nameKey, lore);
+        }
+        lore.add(plugin.messages().get("ability." + ability.key() + ".name"));
+        lore.add(plugin.messages().get("ability." + ability.key() + ".desc"));
+        lore.add(Component.empty());
+        long left = plugin.abilities().cooldownLeft(player.getUniqueId(), current, slot);
+        lore.add(left > 0
+                ? plugin.messages().get("menu-ability-cooldown", "time", ClassMath.clockMillis(left))
+                : plugin.messages().get("menu-ability-ready"));
+        return button(material(ability.iconName()), nameKey, lore);
     }
 
     private ItemStack respecItem(UUID id) {
@@ -347,11 +416,13 @@ final class ClassesGui implements Listener {
             return;
         }
         int slot = event.getRawSlot();
-        if (slot == CLOSE_SLOT) {
+        // В дереве кнопки сверху: нижние ряды заняты ярусами.
+        boolean tree = holder.screen == Screen.TALENTS;
+        if (slot == (tree ? TREE_CLOSE_SLOT : CLOSE_SLOT)) {
             player.closeInventory();
             return;
         }
-        if (slot == BACK_SLOT) {
+        if (slot == (tree ? TREE_BACK_SLOT : BACK_SLOT)) {
             open(player);
             return;
         }
@@ -372,6 +443,19 @@ final class ClassesGui implements Listener {
     private void clickMain(Player player, int slot) {
         if (slot == TALENTS_SLOT) {
             openTalents(player);
+            return;
+        }
+        if (slot == ABILITY_SLOT || slot == ABILITY2_SLOT) {
+            if (plugin.service().classOf(player.getUniqueId()) != null) {
+                // Меню закрывается только при выбранном классе: без него
+                // умение всё равно не сработает, и игрок прочитает подсказку
+                // в открытом меню, а не в пустоте.
+                player.closeInventory();
+            }
+            ClassResult result = plugin.abilities().use(player,
+                    slot == ABILITY2_SLOT ? ClassAbility.SECOND : ClassAbility.FIRST);
+            plugin.messages().send(player, result.key(),
+                    ClassText.localise(plugin.messages(), result).toArray());
             return;
         }
         if (slot == RESPEC_SLOT) {

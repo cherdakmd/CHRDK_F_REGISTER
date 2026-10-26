@@ -4,6 +4,7 @@ import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.EntityType;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -137,8 +138,10 @@ public final class EventConfig {
                     logger, "events." + key + ".items");
             List<WorldEvent.Effect> effects = effects(section.getMapList(key + ".effects"),
                     logger, "events." + key + ".effects");
+            MeteorSpawn meteors = meteors(section, key, logger);
+            HordeSpawn horde = horde(section, key, logger);
             WorldEvent event = new WorldEvent(key, name, description, kind, duration, weight,
-                    cooldown, percent, blocks, items, effects, icon);
+                    cooldown, percent, blocks, items, effects, icon, meteors, horde);
             if (!event.usable()) {
                 if (logger != null) {
                     logger.warning("[CHRDK_Events] events." + key + ": нет веса или данных для вида "
@@ -147,6 +150,112 @@ public final class EventConfig {
                 continue;
             }
             out.add(event);
+        }
+        return out;
+    }
+
+    /**
+     * Секция {@code meteors}: падающие звёзды события (1.4.176).
+     *
+     * <p>Секции нет — звёзд нет, событие остаётся обычной надбавкой. Секция
+     * есть, но пустая (нет {@code blocks} или {@code loot}) — предупреждение в
+     * лог и выключение: небо не должно сыпать пустыми искрами.</p>
+     */
+    private static MeteorSpawn meteors(ConfigurationSection section, String key, Logger logger) {
+        // section — это уже секция events, поэтому путь внутри неё относительный.
+        String path = key + ".meteors";
+        String human = "events." + path;
+        if (!section.isConfigurationSection(path)) {
+            return MeteorSpawn.NONE;
+        }
+        MeteorSpawn spawn = new MeteorSpawn(
+                section.getBoolean(path + ".enabled", true),
+                clamp(section, path + ".interval-seconds", 25,
+                        MeteorSpawn.MIN_INTERVAL_SECONDS, MeteorSpawn.MAX_INTERVAL_SECONDS, logger),
+                clamp(section, path + ".radius", 24,
+                        MeteorSpawn.MIN_RADIUS, MeteorSpawn.MAX_RADIUS, logger),
+                clamp(section, path + ".max-active", 2, 1, MeteorSpawn.MAX_ACTIVE, logger),
+                materials(section.getStringList(path + ".blocks"), logger, human + ".blocks"),
+                materials(section.getStringList(path + ".loot"), logger, human + ".loot"),
+                clamp(section, path + ".min-loot", 1, 1, MeteorSpawn.MAX_LOOT_PER_STAR, logger),
+                clamp(section, path + ".max-loot", 2, 1, MeteorSpawn.MAX_LOOT_PER_STAR, logger),
+                section.getBoolean(path + ".announce", true),
+                section.getBoolean(path + ".break-blocks", true),
+                clamp(section, path + ".crater-radius", 2, 0,
+                        MeteorSpawn.MAX_CRATER_RADIUS, logger));
+        if (spawn.enabled() && !spawn.usable()) {
+            if (logger != null) {
+                logger.warning("[CHRDK_Events] " + human + ": выключены — "
+                        + "нужны хотя бы один блок в blocks и один предмет в loot.");
+            }
+            return MeteorSpawn.NONE;
+        }
+        return spawn;
+    }
+
+    /**
+     * Секция {@code horde}: нашествие мобов события (1.4.176).
+     *
+     * <p>Множитель и волны зажаты внутри {@link HordeSpawn}: конфиг не может
+     * сделать спавн бесконечным, даже если вписать туда миллион.</p>
+     */
+    private static HordeSpawn horde(ConfigurationSection section, String key, Logger logger) {
+        String path = key + ".horde";
+        String human = "events." + path;
+        if (!section.isConfigurationSection(path)) {
+            return HordeSpawn.NONE;
+        }
+        HordeSpawn spawn = new HordeSpawn(
+                section.getBoolean(path + ".enabled", true),
+                clamp(section, path + ".multiplier", 2.0,
+                        HordeSpawn.MIN_MULTIPLIER, HordeSpawn.MAX_MULTIPLIER, logger),
+                clamp(section, path + ".wave-interval-seconds", 45,
+                        HordeSpawn.MIN_WAVE_INTERVAL_SECONDS,
+                        HordeSpawn.MAX_WAVE_INTERVAL_SECONDS, logger),
+                clamp(section, path + ".wave-size", 3, 1, HordeSpawn.MAX_WAVE_SIZE, logger),
+                clamp(section, path + ".max-near-player", 24, 1,
+                        HordeSpawn.MAX_NEAR_PLAYER_LIMIT, logger),
+                clamp(section, path + ".min-distance", 10,
+                        HordeSpawn.MIN_DISTANCE_FLOOR, HordeSpawn.MAX_DISTANCE_CEILING, logger),
+                clamp(section, path + ".max-distance", 24,
+                        HordeSpawn.MIN_DISTANCE_FLOOR, HordeSpawn.MAX_DISTANCE_CEILING, logger),
+                section.getBoolean(path + ".only-at-night", false),
+                entityTypes(section.getStringList(path + ".mobs"), logger, human + ".mobs"));
+        if (spawn.enabled() && !spawn.usable()) {
+            if (logger != null) {
+                logger.warning("[CHRDK_Events] " + human + ": выключено — "
+                        + "в mobs нет ни одного известного моба.");
+            }
+            return HordeSpawn.NONE;
+        }
+        return spawn;
+    }
+
+    /** Типы мобов по именам: неизвестное имя — предупреждение, а не падение. */
+    private static List<EntityType> entityTypes(List<String> names, Logger logger, String path) {
+        if (names == null || names.isEmpty()) {
+            return List.of();
+        }
+        List<EntityType> out = new ArrayList<>();
+        for (String name : names) {
+            if (name == null || name.isBlank()) {
+                continue;
+            }
+            String key = name.trim().toUpperCase(Locale.ROOT);
+            if (key.startsWith("MINECRAFT:")) {
+                key = key.substring("MINECRAFT:".length()).trim();
+            }
+            try {
+                EntityType type = EntityType.valueOf(key);
+                if (!out.contains(type)) {
+                    out.add(type);
+                }
+            } catch (IllegalArgumentException unknown) {
+                if (logger != null) {
+                    logger.warning("[CHRDK_Events] " + path + ": неизвестный моб «"
+                            + name + "» — пропущен.");
+                }
+            }
         }
         return out;
     }
@@ -199,10 +308,21 @@ public final class EventConfig {
         return value instanceof Number number ? number.intValue() : fallback;
     }
 
-    private static int clamp(FileConfiguration source, String path, int fallback,
+    private static int clamp(ConfigurationSection source, String path, int fallback,
                              int min, int max, Logger logger) {
         long raw = source.getLong(path, fallback);
         int value = (int) Math.clamp(raw, min, max);
+        if (value != raw && logger != null) {
+            logger.warning("[CHRDK_Events] " + path + ": " + raw
+                    + " вне границ " + min + ".." + max + " — взято " + value + ".");
+        }
+        return value;
+    }
+
+    private static double clamp(ConfigurationSection source, String path, double fallback,
+                                double min, double max, Logger logger) {
+        double raw = source.getDouble(path, fallback);
+        double value = Math.max(min, Math.min(max, raw));
         if (value != raw && logger != null) {
             logger.warning("[CHRDK_Events] " + path + ": " + raw
                     + " вне границ " + min + ".." + max + " — взято " + value + ".");

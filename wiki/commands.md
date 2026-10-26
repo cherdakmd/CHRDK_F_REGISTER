@@ -17,6 +17,7 @@ description: "Одна страница со всеми командами иг�
 | `/pass` | Статус аккаунта и 2FA |
 | `/hat` | Надеть блок из руки на голову (ранг V) |
 | `/wiki [страница]` | Ссылка на этот сайт в чат: команды, цены и лимиты |
+| `/labels [rank\|badges\|header\|all\|on\|off\|reset]` | Что показывать в своём нике: ранг, метки и шапку таба |
 
 ## Вход и безопасность
 
@@ -77,7 +78,8 @@ description: "Одна страница со всеми командами иг�
 |---|---|
 | `/prof [menu\|choose <профессия>\|info\|stats\|top]` | Профессии |
 | `/skills [menu\|list\|top\|<навык>]` | Навыки |
-| `/class [menu\|choose <класс>\|info\|talents\|learn <талант>\|respec\|top]` | Класс и таланты |
+| `/class [menu\|choose <класс>\|info\|talents\|learn <талант>\|respec\|points\|top\|ability [1\|2]]` | Класс, дерево талантов и умения |
+| `/ability [1\|2]` | применить умение класса: без аргумента — первое, `2` — второе |
 | `/quests [menu\|list\|info\|claim\|join <фракция>\|leave\|faction]` | Задания и фракции |
 | `/battlepass [menu\|top\|info <id>\|claim [id\|all]\|help]` | Боевой пропуск |
 | `/achievements [menu\|list\|badge <ид\|off>]` | Достижения и бейджи |

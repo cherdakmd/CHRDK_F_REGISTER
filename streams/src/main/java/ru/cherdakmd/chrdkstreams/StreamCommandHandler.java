@@ -481,7 +481,7 @@ public final class StreamCommandHandler implements TabExecutor {
             plugin.messages().send(streamer, "viewer-list-line",
                     "player", binding.playerName(),
                     "minutes", StreamRewards.pendingMinutes(state, plugin.config().viewers().rule()),
-                    "days", state.totalDays());
+                    "hours", state.totalHours());
         }
     }
 
@@ -509,10 +509,10 @@ public final class StreamCommandHandler implements TabExecutor {
         StreamRewards.Rule rule = config.rule();
         plugin.messages().send(player, "status-progress",
                 "minutes", StreamRewards.pendingMinutes(binding.state(), rule),
-                "needed", config.minutesPerDay(),
+                "needed", config.minutesPerHour(),
                 "today", binding.state().awardedToday(),
-                "max", config.maxDaysPerDay());
-        plugin.messages().send(player, "status-total", "days", binding.state().totalDays());
+                "max", config.maxHoursPerDay());
+        plugin.messages().send(player, "status-total", "hours", binding.state().totalHours());
         long now = System.currentTimeMillis();
         long eta = StreamRewards.etaMillis(binding.state(), rule, now);
         if (eta < 0L) {
@@ -528,7 +528,7 @@ public final class StreamCommandHandler implements TabExecutor {
             plugin.messages().send(player, "status-online-hint");
         }
         plugin.messages().send(player, "status-footer",
-                "minutes", config.minutesPerDay(), "max", config.maxDaysPerDay());
+                "minutes", config.minutesPerHour(), "max", config.maxHoursPerDay());
         List<StreamBinding.Channel> checkable = new ArrayList<>();
         for (StreamBinding.Channel channel : binding.channels()) {
             if (config.available(channel.platform())) {
@@ -599,7 +599,7 @@ public final class StreamCommandHandler implements TabExecutor {
 
     /* --------------------------------- top --------------------------------- */
 
-    /** {@code /stream top [n]} — кто больше всех получил дней за эфир. */
+    /** {@code /stream top [n]} — кто больше всех получил часов за эфир. */
     private void top(CommandSender sender, String[] args, String label) {
         int limit = StreamBoard.MAX_ROWS;
         if (args.length >= 2) {
@@ -622,7 +622,7 @@ public final class StreamCommandHandler implements TabExecutor {
             plugin.messages().send(sender, "top-line",
                     "place", place,
                     "player", row.playerName(),
-                    "days", row.totalDays(),
+                    "hours", row.totalHours(),
                     "channels", row.channels());
             place++;
         }
@@ -759,7 +759,7 @@ public final class StreamCommandHandler implements TabExecutor {
                         "platform", channel.platform().displayName(),
                         "channel", channel.channel(),
                         "state", trustedState(channel.verified()),
-                        "days", binding.state().totalDays());
+                        "hours", binding.state().totalHours());
                 shown++;
             }
         }
@@ -770,8 +770,8 @@ public final class StreamCommandHandler implements TabExecutor {
         StreamConfig config = plugin.config();
         plugin.messages().send(sender, "reloaded",
                 "platforms", StreamPlatform.ids(config.platforms()),
-                "minutes", config.minutesPerDay(),
-                "max", config.maxDaysPerDay());
+                "minutes", config.minutesPerHour(),
+                "max", config.maxHoursPerDay());
     }
 
     /* ------------------------------ помощники ------------------------------ */

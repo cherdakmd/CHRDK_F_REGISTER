@@ -40,8 +40,11 @@ public final class RanksPlugin extends JavaPlugin implements Listener {
         this.store = new PlaytimeStore(getDataFolder().toPath(), getLogger());
         store.load();
         this.service = new RanksService(this);
-        reloadRanksConfig();
+        // 1.4.183: API ядра нужен уже при первой раскладке — иначе стартовый
+        // порядок в табе соберётся без донатного ранга и «поедет» только
+        // через минуту, на следующем тике.
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
+        reloadRanksConfig();
         if (coreApi != null) {
             try {
                 coreApi.registerProfile("ranks", new RanksProfile(this));
@@ -147,6 +150,28 @@ public final class RanksPlugin extends JavaPlugin implements Listener {
 
     public Messages messages() {
         return messages;
+    }
+
+    /**
+     * Ступень донатного ранга игрока (1.4.183).
+     *
+     * <p>Берётся у ядра: ранги — его данные, дублировать их в файле стажа
+     * нельзя. Совсем старое ядро метода не знает — тогда ступень 0, и внутри
+     * одного ранга сортировка идёт по стажу, как раньше.</p>
+     *
+     * @return 0 — ранга нет, 1..5 — ступень лестницы
+     */
+    public int rankLevel(Player player) {
+        ChrdkRegisterApi api = coreApi;
+        if (api == null || player == null) {
+            return 0;
+        }
+        try {
+            return Math.clamp(api.rankLevel(player.getName()), 0, RankLadder.MAX_RANK_LEVEL);
+        } catch (RuntimeException | LinkageError ignored) {
+            // Старое ядро или сбой реестра — сортировка по стажу остаётся.
+            return 0;
+        }
     }
 
     public RanksConfig config() {

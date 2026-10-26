@@ -36,27 +36,54 @@ class PresentationUpdateTest {
     }
 
     /**
-     * 1.4.171 добавляет в стоковое меню одну кнопку — «Вики сервера».
-     * Сервер, который не правил меню в 1.4.170, должен получить её и только её:
+     * 1.4.171 добавил «Вики сервера», 1.4.183 — «Оформление ника».
+     * Сервер, который не правил меню в 1.4.170, получает обе кнопки и только их:
      * остальные пункты и настройки разделов остаются прежними.
      */
-    @Test void stockMenuFrom170GainsOnlyTheWikiButton() {
+    @Test void stockMenuFrom170GainsOnlyTheNewButtons() {
         var live=yaml("presentation-legacy-1.4.170.yml");var fresh=yaml("config.yml");
         var changes=PresentationMigration.replacements(live,List.of(live),fresh);
         assertTrue(changes.contains("server-menu.items"),changes.toString());
         var oldItems=live.getMapList("server-menu.items");
         var newItems=fresh.getMapList("server-menu.items");
-        assertEquals(oldItems.size()+1,newItems.size(),"в стоке ровно один новый пункт");
+        assertEquals(oldItems.size()+2,newItems.size(),"в стоке ровно две новые кнопки");
         assertTrue(newItems.containsAll(oldItems),"старые пункты не переписаны");
         var added=newItems.stream().filter(item -> !oldItems.contains(item)).toList();
-        assertEquals(1,added.size(),added.toString());
-        assertEquals("wiki",added.get(0).get("command"),"новый пункт ведёт в /wiki");
-        assertEquals(20,((Number)added.get(0).get("slot")).intValue(),"кнопка на главной, слот 20");
+        assertEquals(2,added.size(),added.toString());
+        var wiki=added.stream().filter(item -> "wiki".equals(item.get("command"))).findFirst().orElseThrow();
+        assertEquals(20,((Number)wiki.get("slot")).intValue(),"кнопка на главной, слот 20");
+        var labels=added.stream().filter(item -> "labels".equals(item.get("command"))).findFirst().orElseThrow();
+        assertEquals("social",labels.get("category"),"переключатели надписей — в разделе «Общество»");
         // Настройки разделов и кнопок не менялись — миграция их не трогает.
         for (String companion : PresentationMigration.MENU_COMPANIONS) {
             if (companion.equals("server-menu.items")) continue;
             assertEquals(fresh.get(companion),live.get(companion),companion);
         }
+    }
+
+    /**
+     * 1.4.183: сервер, обновившийся с 1.4.182 и не правивший меню, получает
+     * ровно одну кнопку — «Оформление ника» на /labels.
+     */
+    @Test void stockMenuFrom182GainsOnlyTheNickButton() {
+        var snapshot=yaml("presentation-legacy-1.4.182.yml");
+        var live=yaml("presentation-legacy-1.4.182.yml");var fresh=yaml("config.yml");
+        var changes=PresentationMigration.replacements(live,List.of(snapshot),fresh);
+        assertTrue(changes.contains("server-menu.items"),changes.toString());
+        var oldItems=live.getMapList("server-menu.items");
+        var newItems=fresh.getMapList("server-menu.items");
+        assertEquals(oldItems.size()+1,newItems.size(),"в стоке ровно одна новая кнопка");
+        var added=newItems.stream().filter(item -> !oldItems.contains(item)).toList();
+        assertEquals(1,added.size(),added.toString());
+        assertEquals("labels",added.get(0).get("command"),"новый пункт ведёт в /labels");
+        for(String key:changes) live.set(key,fresh.get(key));
+        assertTrue(PresentationMigration.replacements(live,List.of(snapshot),fresh).isEmpty(),
+                "после миграции повторной не будет");
+        // Правленые пункты по-прежнему не подменяются стоковыми.
+        var custom=yaml("presentation-legacy-1.4.182.yml");
+        custom.set("server-menu.items",List.of(Map.of("slot",10,"icon","PAPER","name","Custom","command","custom")));
+        assertFalse(PresentationMigration.replacements(custom,List.of(snapshot),fresh)
+                .contains("server-menu.items"),"пользовательские пункты сохраняются");
     }
 
     @Test void customListsAndDisabledFlagsSurvive() {
@@ -112,7 +139,7 @@ class PresentationUpdateTest {
         assertEquals(7,categories.size(),"разделы меню: "+categories);
         assertEquals(7,new HashSet<>(categories).size(),"ид разделов уникальны");
         var entries=config.getMapList("server-menu.items").stream().map(this::menuEntry).toList();
-        assertEquals(51,entries.size(),"пункты меню 1.4.171: 50 из 1.4.170 + кнопка вики");
+        assertEquals(52,entries.size(),"пункты меню 1.4.183: 50 из 1.4.170 + вики + оформление ника");
         for (var entry : entries) {
             if (!entry.category().isBlank()) assertTrue(categories.contains(entry.category()),entry.category());
         }

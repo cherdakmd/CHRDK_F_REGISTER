@@ -32,6 +32,9 @@ public final class RegisterPlugin extends JavaPlugin {
     private AdminDonationsGuiService adminDonationsGui;
     private PasswordKeypadService passwordKeypad;
     private TabListService tabListService;
+    /** 1.4.183: личные переключатели надписей в нике и табе. */
+    private LabelPreferences labelPreferences;
+    private LabelsCommandHandler labelsCommand;
     private PluginUpdateService pluginUpdater;
     private ExternalHooks externalHooks;
     private LuckPermsPassSync luckPermsPassSync;
@@ -82,8 +85,12 @@ public final class RegisterPlugin extends JavaPlugin {
         this.adminDonationsGui = new AdminDonationsGuiService(accessManager, messages, this);
         this.donateMenuService.setAdminJournalOpener(player -> adminDonationsGui.openMenu(player));
         this.passwordKeypad = new PasswordKeypadService(this, accessManager, messages);
+        this.labelPreferences = new LabelPreferences(getDataFolder().toPath(), getLogger());
+        labelPreferences.load();
         this.tabListService = new TabListService(this, accessManager);
         this.tabListService.setNameDecorator(chatService::decoratedName);
+        this.tabListService.setLabelPreferences(labelPreferences);
+        this.chatService.setLabelPreferences(labelPreferences);
         this.luckPermsPassSync = new LuckPermsPassSync(externalHooks, store, accessManager::config, getLogger());
         this.shopService = new ShopService(this, accessManager, externalHooks, getLogger());
         this.chatService.setTagResolver(shopService::tagOf);
@@ -166,6 +173,12 @@ public final class RegisterPlugin extends JavaPlugin {
                 return true;
             });
         }
+        this.labelsCommand = new LabelsCommandHandler(this, labelPreferences);
+        PluginCommand labelsCommandPlugin = getCommand("labels");
+        if (labelsCommandPlugin != null) {
+            labelsCommandPlugin.setExecutor(labelsCommand);
+            labelsCommandPlugin.setTabCompleter(labelsCommand);
+        }
         this.wikiCommand = new WikiCommandHandler(() -> accessManager.config().wiki(), messages);
         PluginCommand wikiCommandPlugin = getCommand("wiki");
         if (wikiCommandPlugin != null) {
@@ -247,6 +260,10 @@ public final class RegisterPlugin extends JavaPlugin {
             tabListService.shutdown();
             tabListService = null;
         }
+        if (labelPreferences != null) {
+            labelPreferences.saveNow();
+            labelPreferences = null;
+        }
         if (chatService != null) {
             chatService.shutdown();
             chatService = null;
@@ -301,6 +318,18 @@ public final class RegisterPlugin extends JavaPlugin {
     /** Тексты плагина из {@code messages.yml}. */
     public PluginUpdateService pluginUpdater() { return pluginUpdater; }
 
+    /**
+     * Перерисовывает таб-лист всем (1.4.183).
+     *
+     * <p>Нужно после {@code /labels}: имя в списке общее, поэтому смена «что
+     * показывать» должна быть видна всем сразу, а не только автору настройки.</p>
+     */
+    public void refreshTab() {
+        if (tabListService != null) {
+            tabListService.refreshAll();
+        }
+    }
+
     public Messages messages() {
         return messages;
     }
@@ -351,6 +380,9 @@ public final class RegisterPlugin extends JavaPlugin {
         }
         if (wikiCommand != null) {
             wikiCommand.setMessages(messages);
+        }
+        if (labelsCommand != null) {
+            labelsCommand.refreshMessages();
         }
         return messages.validate();
     }

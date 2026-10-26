@@ -59,13 +59,20 @@ public final class TreasuresGui implements Listener {
     private static final int TOP_LIMIT = 45;
     /** Полоса баланса в обменнике: по центру, чтобы не спорить со сеткой. */
     private static final int SHARD_BALANCE_SLOT = 49;
+    /** 1.4.180: карточки активных клад-карт — ряд 10..16 и два места под ним. */
+    private static final int[] MAP_SLOTS = {10, 11, 12, 13, 14, 15, 16, 19, 20};
+    /** 1.4.180: памятка «как искать клад» рядом с карточками. */
+    private static final int MAP_HELP_SLOT = 31;
+    private static final int MAP_EMPTY_SLOT = 22;
 
     private enum View {
         MAIN,
         REGION,
         MYTHIC,
         TOP,
-        SHARDS
+        SHARDS,
+        /** 1.4.180: активные клад-карты с прогрессом раскопок. */
+        MAPS
     }
 
     /** Владелец инвентаря: защищает от подмены и чужих кликов. */
@@ -233,6 +240,112 @@ public final class TreasuresGui implements Listener {
                 plugin.messages().get(count > 0 ? "menu-maps-lore" : "menu-maps-empty",
                         "count", count),
                 plugin.messages().get("menu-maps-hint")));
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /**
+     * Страница клад-карт (1.4.180).
+     *
+     * <p>Карта в инвентаре — просто предмет с лором, и игроки не понимали, что с
+     * ней делать. Здесь она показана карточкой: где тайник, сколько идти, что
+     * уже раскопано, сколько осталось. Клик по карточке повторяет путь в чат и
+     * закрывает окно, чтобы сообщение было видно.</p>
+     */
+    public void openMaps(Player player) {
+        if (player == null || !plugin.config().enabled()) {
+            return;
+        }
+        if (!plugin.config().maps().enabled()) {
+            plugin.messages().send(player, "map-disabled");
+            return;
+        }
+        Holder holder = new Holder(player.getUniqueId(), View.MAPS, null);
+        holder.inventory = Bukkit.createInventory(holder, 54,
+                plugin.messages().get("menu-maps-title"));
+        long now = System.currentTimeMillis();
+        int place = 0;
+        for (TreasureMapService.Slot slot : plugin.maps().active(player)) {
+            if (place >= MAP_SLOTS.length) {
+                break;
+            }
+            if (slot.map().expired(now)) {
+                continue;
+            }
+            holder.inventory.setItem(MAP_SLOTS[place], mapCard(player, slot.map(), place + 1));
+            place++;
+        }
+        if (place == 0) {
+            holder.inventory.setItem(MAP_EMPTY_SLOT, emptyMapsCard());
+        }
+        holder.inventory.setItem(MAP_HELP_SLOT, mapsHelp());
+        holder.inventory.setItem(PAGE_BACK, button(Material.ARROW, "menu-back", null));
+        holder.inventory.setItem(PAGE_CLOSE, button(Material.BARRIER, "menu-close", null));
+        player.openInventory(holder.inventory);
+    }
+
+    /** Карточка одной карты: редкость, путь, прогресс и срок. */
+    private ItemStack mapCard(Player player, TreasureMap map, int number) {
+        ItemStack item = new ItemStack(Material.FILLED_MAP);
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) {
+            return item;
+        }
+        meta.displayName(plugin.messages().get("menu-map-name",
+                "num", String.valueOf(number),
+                "tier", Messages.trusted(plugin.messages().raw("tier." + map.tier().id()))));
+        List<Component> lore = new ArrayList<>();
+        lore.add(plugin.messages().get("map-item-region",
+                "region", Messages.trusted(plugin.messages().raw("region." + map.region().id()))));
+        TreasureMapHint hint = TreasureMapHint.of(map, player.getWorld().getName(),
+                player.getLocation().getBlockX(), player.getLocation().getBlockZ());
+        if (hint.sameWorld()) {
+            lore.add(plugin.messages().get("menu-map-where",
+                    "distance", hint.distance(), "direction", hint.direction()));
+        } else {
+            lore.add(plugin.messages().get("map-item-world", "world", map.world()));
+        }
+        lore.add(plugin.messages().get("menu-map-coords",
+                "x", map.x(), "z", map.z(), "radius", map.radius()));
+        lore.add(plugin.messages().get("menu-map-progress",
+                "bar", Messages.trusted(MapProgress.colored(map.dug(), map.needed())),
+                "dug", map.dug(), "needed", map.needed(), "left", map.remaining()));
+        long left = map.remainingMillis(System.currentTimeMillis());
+        if (left > 0L) {
+            lore.add(plugin.messages().get("map-item-expire",
+                    "time", TreasureMapHint.duration(left)));
+        }
+        lore.add(plugin.messages().get("menu-map-open"));
+        meta.lore(lore);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /** Памятка: что делать с картой, в четырёх строках. */
+    private ItemStack mapsHelp() {
+        ItemStack item = new ItemStack(Material.WRITABLE_BOOK);
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) {
+            return item;
+        }
+        meta.displayName(plugin.messages().get("menu-maps-help-name"));
+        List<Component> lore = new ArrayList<>();
+        for (int step = 1; step <= 4; step++) {
+            lore.add(plugin.messages().get("menu-maps-help-" + step));
+        }
+        meta.lore(lore);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    private ItemStack emptyMapsCard() {
+        ItemStack item = new ItemStack(Material.MAP);
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) {
+            return item;
+        }
+        meta.displayName(plugin.messages().get("menu-maps-none-name"));
+        meta.lore(List.of(plugin.messages().get("menu-maps-none-lore")));
         item.setItemMeta(meta);
         return item;
     }
@@ -542,7 +655,42 @@ public final class TreasuresGui implements Listener {
                 }
             }
             case SHARDS -> clickShards(player, slot);
+            case MAPS -> clickMaps(player, slot);
         }
+    }
+
+    /** Клик по карточке карты — путь в чат; окно закрывается, чтобы текст был виден. */
+    private void clickMaps(Player player, int slot) {
+        if (slot == PAGE_BACK) {
+            open(player);
+            return;
+        }
+        if (slot == PAGE_CLOSE) {
+            player.closeInventory();
+            return;
+        }
+        int index = -1;
+        for (int position = 0; position < MAP_SLOTS.length; position++) {
+            if (MAP_SLOTS[position] == slot) {
+                index = position;
+                break;
+            }
+        }
+        if (index < 0) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        List<TreasureMapService.Slot> alive = new ArrayList<>();
+        for (TreasureMapService.Slot entry : plugin.maps().active(player)) {
+            if (!entry.map().expired(now)) {
+                alive.add(entry);
+            }
+        }
+        if (index >= alive.size()) {
+            return;
+        }
+        player.closeInventory();
+        plugin.maps().describe(player, alive.get(index).map());
     }
 
     private void clickMain(Player player, int slot) {
@@ -559,8 +707,8 @@ public final class TreasuresGui implements Listener {
             return;
         }
         if (slot == MAPS_SLOT) {
-            player.closeInventory();
-            plugin.maps().list(player);
+            // 1.4.180: вместо списка в чат — витрина карт с прогрессом.
+            openMaps(player);
             return;
         }
         if (slot == SHARDS_SLOT) {

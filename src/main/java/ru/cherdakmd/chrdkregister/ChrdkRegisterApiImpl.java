@@ -153,6 +153,12 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
     }
 
     @Override
+    public void grantPassHours(String playerName, int hours, String source) {
+        accessManager.grantPassHours(playerName, hours,
+                source == null || source.isBlank() ? "addon" : source);
+    }
+
+    @Override
     public boolean revokePass(String playerName) {
         return accessManager.revokePass(playerName);
     }

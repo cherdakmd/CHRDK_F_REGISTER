@@ -38,7 +38,7 @@ public final class ReferralStore {
     public static class RefStats {
         public int linked;  // сколько друзей привязалось
         public int paid;    // сколько из них оплатило
-        public long daysEarned;
+        public long hoursEarned;  // часы ранга, с 1.4.184 (раньше дни)
     }
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -78,7 +78,9 @@ public final class ReferralStore {
                     RefStats stat = new RefStats();
                     stat.linked = (int) longOf(row.get("linked"));
                     stat.paid = (int) longOf(row.get("paid"));
-                    stat.daysEarned = longOf(row.get("daysEarned"));
+                    // 1.4.184: ключ переименован; старое значение читаем как часы.
+                    stat.hoursEarned = row.containsKey("hoursEarned")
+                            ? longOf(row.get("hoursEarned")) : longOf(row.get("daysEarned"));
                     stats.put(String.valueOf(entry.getKey()), stat);
                 }
             }
@@ -138,24 +140,24 @@ public final class ReferralStore {
         RefStats copy = new RefStats();
         copy.linked = stat.linked;
         copy.paid = stat.paid;
-        copy.daysEarned = stat.daysEarned;
+        copy.hoursEarned = stat.hoursEarned;
         return copy;
     }
 
-    /** Топ приглашателей по числу оплативших (затем по дням). */
+    /** Топ приглашателей по числу оплативших (затем по часам). */
     public synchronized List<Map.Entry<String, RefStats>> topByPaid(int limit) {
         List<Map.Entry<String, RefStats>> ranked = new ArrayList<>(stats.entrySet());
         ranked.sort(Comparator.<Map.Entry<String, RefStats>>comparingInt(e -> e.getValue().paid).reversed()
                 .thenComparing(Comparator.<Map.Entry<String, RefStats>>comparingLong(
-                        e -> e.getValue().daysEarned).reversed()));
+                        e -> e.getValue().hoursEarned).reversed()));
         return ranked.subList(0, Math.min(limit, ranked.size()));
     }
 
-    /** Отмечает выплату дней пригласителю (после начисления через API). */
-    public synchronized void recordBonusPaid(String inviter, long days) {
+    /** Отмечает выплату часов пригласителю (после начисления через API). */
+    public synchronized void recordBonusPaid(String inviter, long hours) {
         RefStats stat = statsOf(inviter);
         stat.paid++;
-        stat.daysEarned += days;
+        stat.hoursEarned += hours;
         dirty = true;
     }
 
@@ -182,7 +184,7 @@ public final class ReferralStore {
             Map<String, Object> fields = new LinkedHashMap<>();
             fields.put("linked", stat.linked);
             fields.put("paid", stat.paid);
-            fields.put("daysEarned", stat.daysEarned);
+            fields.put("hoursEarned", stat.hoursEarned);
             statsCopy.put(player, fields);
         });
         data.put("stats", statsCopy);

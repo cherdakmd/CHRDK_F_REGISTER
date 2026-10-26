@@ -74,7 +74,7 @@ class ClassStoreTest {
                 added++;
             }
         }
-        assertEquals(ClassCatalog.TALENTS_PER_CLASS, added, "все 12 талантов одного класса");
+        assertEquals(ClassCatalog.TALENTS_PER_CLASS, added, "все таланты одного класса");
         assertEquals(ClassCatalog.TALENTS_PER_CLASS, store.talentCount(PLAYER));
         assertFalse(store.learnTalent(PLAYER, "mage-chary-1"), "тринадцатый талант не влезает");
     }
@@ -124,6 +124,54 @@ class ClassStoreTest {
         assertNull(store.byName(""));
         assertEquals(2, store.countOf("warrior"));
         assertEquals(2, store.size());
+    }
+
+    @Test
+    void abilityMomentSurvivesRestartAndReset(@TempDir Path dir) {
+        ClassStore store = new ClassStore(dir, LOGGER);
+        store.setClass(PLAYER, "warrior", NOW);
+        assertEquals(0L, store.abilityAt(PLAYER), "до первого применения — ноль");
+        store.setAbilityAt(PLAYER, NOW + 5_000L);
+        assertEquals(NOW + 5_000L, store.abilityAt(PLAYER));
+        assertTrue(store.isDirty(), "применение умения должно попасть в файл");
+        store.setAbilityAt(PLAYER, -5L);
+        assertEquals(0L, store.abilityAt(PLAYER), "отрицательный момент не пишется");
+
+        // Сброс класса не должен возвращать умение: иначе /classadmin reset
+        // становится бесплатным сбросом кулдауна.
+        store.setAbilityAt(PLAYER, NOW);
+        store.clearClass(PLAYER);
+        assertEquals(NOW, store.abilityAt(PLAYER));
+        store.setClass(PLAYER, "archer", NOW);
+        store.setAbilityAt(PLAYER, NOW + 1L);
+        store.clearTalents(PLAYER, NOW + 2L);
+        assertEquals(NOW + 1L, store.abilityAt(PLAYER));
+
+        store.saveNow();
+        ClassStore reloaded = new ClassStore(dir, LOGGER);
+        reloaded.load();
+        assertEquals(NOW + 1L, reloaded.abilityAt(PLAYER), "кулдаун переживает перезапуск");
+        assertEquals(0L, reloaded.abilityAt(OTHER), "чужой игрок не задет");
+    }
+
+    @Test
+    void secondAbilityMomentIsSeparateAndSurvivesRestart(@TempDir Path dir) {
+        ClassStore store = new ClassStore(dir, LOGGER);
+        store.setClass(PLAYER, "mage", NOW);
+        store.setAbilityAt(PLAYER, NOW + 1_000L);
+        assertEquals(0L, store.ability2At(PLAYER), "второе умение ещё не применяли");
+        store.setAbility2At(PLAYER, NOW + 2_000L);
+        assertEquals(NOW + 1_000L, store.abilityAt(PLAYER), "откаты не мешают друг другу");
+        assertEquals(NOW + 2_000L, store.ability2At(PLAYER));
+        store.setAbility2At(PLAYER, -1L);
+        assertEquals(0L, store.ability2At(PLAYER), "отрицательный момент не пишется");
+
+        store.setAbility2At(PLAYER, NOW + 3_000L);
+        store.saveNow();
+        ClassStore reloaded = new ClassStore(dir, LOGGER);
+        reloaded.load();
+        assertEquals(NOW + 3_000L, reloaded.ability2At(PLAYER));
+        assertEquals(2, ClassStore.VERSION, "формат файла вырос вместе с новым полем");
     }
 
     @Test

@@ -14,6 +14,7 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import ru.cherdakmd.chrdkregister.Messages;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -136,15 +137,23 @@ final class ProfessionsGui implements Listener {
                 "level", String.valueOf(level),
                 "rank", ProfessionText.rankComponent(plugin.messages(), level)));
         if (needed > 0) {
+            int percent = ProfessionMath.progressPercent(xp, maxLevel);
             lore.add(plugin.messages().get("menu-profession-xp",
                     "xp", String.valueOf(ProfessionMath.progress(xp, maxLevel)),
                     "needed", String.valueOf(needed),
-                    "percent", String.valueOf(ProfessionMath.progressPercent(xp, maxLevel))));
+                    "percent", String.valueOf(percent)));
+            lore.add(plugin.messages().get("menu-progress-bar", "bar", ProfessionText.bar(percent)));
         } else {
             lore.add(plugin.messages().get("menu-profession-max"));
         }
         lore.add(plugin.messages().get("menu-profession-perk",
                 "perk", ProfessionText.perk(plugin.messages(), profession, level, maxLevel)));
+        String next = ProfessionText.nextStepRaw(plugin.messages(), profession, level, maxLevel);
+        if (!next.isBlank()) {
+            lore.add(plugin.messages().get("menu-profession-next", "next", Messages.trusted(next)));
+        }
+        lore.add(plugin.messages().get("menu-profession-hint",
+                "hint", ProfessionText.hintComponent(plugin.messages(), profession)));
         lore.add(Component.empty());
         lore.add(profession == plugin.service().active(id)
                 ? plugin.messages().get("menu-profession-current")
@@ -226,6 +235,7 @@ final class ProfessionsGui implements Listener {
                 ProfessionText.localise(plugin.messages(), result).toArray());
         if (result.ok()) {
             plugin.requestSave();
+            plugin.hint(player, Profession.parse(professionId));
         }
         open(player);
     }

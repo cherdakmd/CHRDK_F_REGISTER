@@ -39,7 +39,7 @@ public final class TreasureService {
     public record Found(TreasureTier tier, TreasureRegion region, TreasureItemDef item,
                         List<TreasureLoot.LootStack> loot, List<Integer> milestones,
                         int streak, TreasureRank rank,
-                        List<TreasureLoot.LootStack> bonus, boolean barrel,
+                        List<TreasureLoot.LootStack> bonus, Placement placement,
                         List<TreasureSpecial> specials, int shards) {
 
         public boolean named() {
@@ -59,6 +59,21 @@ public final class TreasureService {
         public boolean sharded() {
             return shards > 0;
         }
+
+        /** Лежит ли добыча в мире — на земле или в бочке. */
+        public boolean inWorld() {
+            return placement != null && placement != Placement.INVENTORY;
+        }
+    }
+
+    /** Куда легла добыча (1.4.181). */
+    public enum Placement {
+        /** В инвентарь: места в мире не было или мир недоступен. */
+        INVENTORY,
+        /** На землю у места находки — поведение по умолчанию с 1.4.181. */
+        GROUND,
+        /** В бочку — только при {@code drops.ground: false}. */
+        BARREL
     }
 
     private final TreasuresPlugin plugin;
@@ -262,15 +277,13 @@ public final class TreasureService {
     }
 
     /**
-     * Выдаёт клад и, если возможно, материализует его бочкой.
+     * Выдаёт клад и кладёт добычу в мир.
      *
-     * <p>1.4.166: добыча больше не «исчезает в рюкзаке». Всё, что нашлось,
-     * собирается в один список и ставится в бочку на месте находки; открытие
-     * сопровождается анимацией. Бочка ставится следующим тиком — во время
-     * {@code BlockBreakEvent} блок ещё не заменён воздухом, и поставить её
-     * прямо в обработчике нельзя. Если поставить бочку не удалось (нет места,
-     * лимит, чужой регион), {@link TreasureBarrels} сам вернёт добычу в
-     * инвентарь и сообщит игроку.</p>
+     * <p>1.4.181: по умолчанию находка рассыпается на земле у места добычи
+     * ({@link TreasureDrops}); бочка ставится только при
+     * {@code drops.ground: false} и остаётся опцией. Всё, что нашлось,
+     * собирается в один список заранее, поэтому смена места выдачи не теряет
+     * ни предмета. Если мир не принял добычу, она уходит в инвентарь.</p>
      *
      * @param origin место находки; {@code null} — выдать в инвентарь сразу
      */
@@ -278,7 +291,7 @@ public final class TreasureService {
                       TreasureRoll.Roll roll, Location origin) {
         if (player == null || tier == null || roll == null) {
             return new Found(tier, region, null, List.of(), List.of(), 0,
-                    TreasureRank.NOVICE, List.of(), false, List.of(), 0);
+                    TreasureRank.NOVICE, List.of(), Placement.INVENTORY, List.of(), 0);
         }
         TreasureRank before = rank(player);
         store.setName(key(player), player.getName());
@@ -322,14 +335,40 @@ public final class TreasureService {
             store.addShards(key(player), shards);
         }
         ensureNotEmpty(payload);
-        boolean barrel = origin != null && plugin.barrels() != null
-                && plugin.barrels().offer(player, origin, tier, payload);
-        if (!barrel) {
+        // 1.4.181: по умолчанию добыча падает на землю. Бочка — опция
+        // (drops.ground: false); инвентарь — только если места в мире нет.
+        Placement placement = placeInWorld(player, origin, tier, payload);
+        if (placement == Placement.INVENTORY) {
             givePayload(player, payload);
         }
         checkRank(player, before);
         return new Found(tier, region, item, loot, milestones, streak,
-                rank(player), bonus, barrel, specials, shards);
+                rank(player), bonus, placement, specials, shards);
+    }
+
+    /**
+     * Кладёт добычу в мир: на землю (по умолчанию) или в бочку (опция).
+     *
+     * <p>Любая ошибка мира не должна стоить игроку находки: если ни земля, ни
+     * бочка не приняли предметы, вызывающий код выдаёт их в инвентарь.</p>
+     */
+    private Placement placeInWorld(Player player, Location origin, TreasureTier tier,
+                                   List<ItemStack> payload) {
+        if (origin == null || payload == null || payload.isEmpty()) {
+            return Placement.INVENTORY;
+        }
+        TreasuresConfig.Drops drops = plugin.config() == null
+                ? TreasuresConfig.Drops.INVENTORY : plugin.config().drops();
+        if (drops.ground()) {
+            if (plugin.drops() != null && plugin.drops().drop(player, origin, payload) > 0) {
+                return Placement.GROUND;
+            }
+            return Placement.INVENTORY;
+        }
+        if (plugin.barrels() != null && plugin.barrels().offer(player, origin, tier, payload)) {
+            return Placement.BARREL;
+        }
+        return Placement.INVENTORY;
     }
 
     /**

@@ -86,7 +86,7 @@ class OrdersMessagesTest {
         expected.put("list-row", List.of("%num%", "%material%", "%amount%", "%bot%",
                 "%reward%", "%time%"));
         expected.put("list-row-pass", List.of("%num%", "%material%", "%amount%", "%bot%",
-                "%reward%", "%days%", "%time%"));
+                "%reward%", "%hours%", "%time%"));
         expected.put("list-row-locked", List.of("%num%", "%material%", "%amount%", "%bot%",
                 "%need%"));
         expected.put("delivered", List.of("%material%", "%amount%", "%bot%", "%reward%"));
@@ -97,7 +97,7 @@ class OrdersMessagesTest {
         expected.put("menu-title", List.of("%count%"));
         expected.put("menu-order-need", List.of("%material%", "%amount%"));
         expected.put("menu-order-have", List.of("%have%", "%need%"));
-        expected.put("menu-order-pass", List.of("%days%"));
+        expected.put("menu-order-pass", List.of("%hours%"));
         expected.put("menu-info-lore", List.of("%reputation%", "%rank%"));
         expected.put("top-row", List.of("%num%", "%player%", "%completed%", "%reputation%",
                 "%rank%"));

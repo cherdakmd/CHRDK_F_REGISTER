@@ -5,24 +5,33 @@ import org.bukkit.configuration.file.FileConfiguration;
 /** Тонкая обёртка над config.yml рефералки. */
 public final class ReferralConfig {
 
-    private final int bonusDaysInviter;
-    private final int bonusDaysInvitee;
+    private final int bonusHoursInviter;
+    private final int bonusHoursInvitee;
     private final boolean requireInviterRegistered;
     private final boolean joinHint;
 
     public ReferralConfig(FileConfiguration config) {
-        this.bonusDaysInviter = Math.clamp(config.getInt("bonus-days.inviter", 7), 0, 365);
-        this.bonusDaysInvitee = Math.clamp(config.getInt("bonus-days.invitee", 3), 0, 365);
+        // 1.4.184: бонус в часах, потолок одной награды — сутки. Старые ключи
+        // bonus-days.* читаются как часы, чтобы конфиг без перезаписи не потерял бонус.
+        this.bonusHoursInviter = Math.clamp(hours(config, "inviter", 7), 0, 24);
+        this.bonusHoursInvitee = Math.clamp(hours(config, "invitee", 3), 0, 24);
         this.requireInviterRegistered = config.getBoolean("rules.require-inviter-registered", true);
         this.joinHint = config.getBoolean("rules.join-hint", true);
     }
 
-    public int bonusDaysInviter() {
-        return bonusDaysInviter;
+    public int bonusHoursInviter() {
+        return bonusHoursInviter;
     }
 
-    public int bonusDaysInvitee() {
-        return bonusDaysInvitee;
+    public int bonusHoursInvitee() {
+        return bonusHoursInvitee;
+    }
+
+    /** Часы бонуса: новый ключ {@code bonus-hours.<who>}, старый — {@code bonus-days.<who>}. */
+    private static int hours(FileConfiguration config, String who, int fallback) {
+        String key = "bonus-hours." + who;
+        return config.contains(key) ? config.getInt(key, fallback)
+                : config.getInt("bonus-days." + who, fallback);
     }
 
     public boolean requireInviterRegistered() {

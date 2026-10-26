@@ -18,23 +18,24 @@ class ConfigReportTest {
     @Test
     void defaultsAreReportedAsEnabled() {
         List<String> lines = ConfigReport.lines(parse(new YamlConfiguration()));
-        assertEquals(9, lines.size(),
-                "девять строк: крафт, опознание, наковальня, дроп, прочее, "
-                        + "аффиксы/зачарования, кастомные чары, эффекты, коллекция");
+        assertEquals(10, lines.size(),
+                "десять строк: крафт, опознание, наковальня, дроп, мировая добыча, "
+                        + "прочее, аффиксы/зачарования, кастомные чары, эффекты, коллекция");
         assertTrue(lines.get(0).contains("100%"), lines.get(0));
         assertTrue(lines.get(1).contains("включено"), lines.get(1));
         assertTrue(lines.get(2).contains("перекат вкл."), lines.get(2));
         assertTrue(lines.get(3).contains("общий 15%"), lines.get(3));
         assertTrue(lines.get(3).contains("босс ×2"), "множитель без хвоста .0: " + lines.get(3));
-        assertTrue(lines.get(5).contains("до 2 бонусов"), lines.get(5));
-        assertTrue(lines.get(5).contains("шанс от 20%"), lines.get(5));
-        assertTrue(lines.get(6).contains("кастомные чары (CHRDK_Enchants)"), lines.get(6));
-        assertTrue(lines.get(6).contains("шанс от 18%"), lines.get(6));
-        assertTrue(lines.get(6).contains("проклятия 15% с тира epic"), lines.get(6));
-        assertTrue(lines.get(8).contains("коллекция кузни: включена"), lines.get(8));
-        assertTrue(lines.get(8).contains("вехи 5"), "три свойства + две аффиксные: " + lines.get(8));
-        assertTrue(lines.get(8).contains("разделов 4"), lines.get(8));
-        assertTrue(lines.get(8).contains("титулы вкл."), lines.get(8));
+        assertTrue(lines.get(4).contains("общий 25%"), lines.get(4));
+        assertTrue(lines.get(6).contains("до 2 бонусов"), lines.get(6));
+        assertTrue(lines.get(6).contains("шанс от 20%"), lines.get(6));
+        assertTrue(lines.get(7).contains("кастомные чары (CHRDK_Enchants)"), lines.get(7));
+        assertTrue(lines.get(7).contains("шанс от 18%"), lines.get(7));
+        assertTrue(lines.get(7).contains("проклятия 15% с тира epic"), lines.get(7));
+        assertTrue(lines.get(9).contains("коллекция кузни: включена"), lines.get(9));
+        assertTrue(lines.get(9).contains("вехи 5"), "три свойства + две аффиксные: " + lines.get(9));
+        assertTrue(lines.get(9).contains("разделов 4"), lines.get(9));
+        assertTrue(lines.get(9).contains("титулы вкл."), lines.get(9));
     }
 
     @Test
@@ -42,7 +43,7 @@ class ConfigReportTest {
         YamlConfiguration yaml = new YamlConfiguration();
         yaml.set("collection.enabled", false);
         List<String> lines = ConfigReport.lines(parse(yaml));
-        assertEquals("коллекция кузни: выключена", lines.get(8));
+        assertEquals("коллекция кузни: выключена", lines.get(9));
     }
 
     @Test
@@ -53,10 +54,12 @@ class ConfigReportTest {
         yaml.set("reroll.enabled", false);
         yaml.set("mob-drop.enabled", false);
         yaml.set("identify.enabled", false);
+        yaml.set("world.enabled", false);
         List<String> lines = ConfigReport.lines(parse(yaml));
         assertTrue(lines.get(0).contains("выключен"), lines.get(0));
         assertTrue(lines.get(1).contains("тир виден сразу"), lines.get(1));
         assertTrue(lines.get(3).contains("выключен"), lines.get(3));
+        assertTrue(lines.get(4).contains("тир только у крафта и дропа"), lines.get(4));
     }
 
     @Test
@@ -65,6 +68,11 @@ class ConfigReportTest {
         yaml.set("mob-drop.weapons-chance-percent", 40);
         yaml.set("mob-drop.armor-chance-percent", 0);
         yaml.set("mob-drop.boss-multiplier", 2.5);
+        yaml.set("world.chance-percent", 60);
+        yaml.set("world.armor-chance-percent", 0);
+        String world = ConfigReport.lines(parse(yaml)).get(4);
+        assertTrue(world.contains("общий 60%"), world);
+        assertTrue(world.contains("броня выкл."), world);
         String drop = ConfigReport.lines(parse(yaml)).get(3);
         assertTrue(drop.contains("оружие 40%"), drop);
         assertTrue(drop.contains("броня выкл."), drop);
@@ -74,14 +82,14 @@ class ConfigReportTest {
     @Test
     void visualsLineShowsMasterSwitch() {
         List<String> enabled = ConfigReport.lines(parse(new YamlConfiguration()));
-        assertEquals(9, enabled.size(), enabled.toString());
-        assertTrue(enabled.get(7).contains("аура каждые 10 тиков"), enabled.get(7));
-        assertTrue(enabled.get(7).contains("7 тиров с частицами"), enabled.get(7));
+        assertEquals(10, enabled.size(), enabled.toString());
+        assertTrue(enabled.get(8).contains("аура каждые 10 тиков"), enabled.get(8));
+        assertTrue(enabled.get(8).contains("7 тиров с частицами"), enabled.get(8));
 
         YamlConfiguration yaml = new YamlConfiguration();
         yaml.set("visuals.enabled", false);
-        assertTrue(ConfigReport.lines(parse(yaml)).get(7).contains("выключены"),
-                ConfigReport.lines(parse(yaml)).get(7));
+        assertTrue(ConfigReport.lines(parse(yaml)).get(8).contains("выключены"),
+                ConfigReport.lines(parse(yaml)).get(8));
     }
 
     @Test
@@ -89,12 +97,12 @@ class ConfigReportTest {
         YamlConfiguration yaml = new YamlConfiguration();
         yaml.set("enchantments.custom.enabled", false);
         List<String> lines = ConfigReport.lines(parse(yaml));
-        assertTrue(lines.get(6).contains("выключены"), lines.get(6));
+        assertTrue(lines.get(7).contains("выключены"), lines.get(7));
 
         YamlConfiguration noCurses = new YamlConfiguration();
         noCurses.set("enchantments.custom.curse-chance-percent", 0);
-        assertTrue(ConfigReport.lines(parse(noCurses)).get(6).contains("без проклятий"),
-                ConfigReport.lines(parse(noCurses)).get(6));
+        assertTrue(ConfigReport.lines(parse(noCurses)).get(7).contains("без проклятий"),
+                ConfigReport.lines(parse(noCurses)).get(7));
     }
 
     @Test

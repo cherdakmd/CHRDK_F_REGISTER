@@ -324,8 +324,11 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         String paid = spot.paidUntil() > 0 ? config.formatDate(spot.paidUntil()) : "";
         Object[] placeholders = {
                 "owner", spot.owner(),
-                "x", String.valueOf(spot.x()),
-                "z", String.valueOf(spot.z()),
+                // Игроку — координаты блока в центре привата, а не номер чанка:
+                // чанк -139 читается как «где-то посередине», блок -2216 совпадает
+                // с F3, миникартой и точкой телепорта к привату.
+                "x", String.valueOf(spot.blockX()),
+                "z", String.valueOf(spot.blockZ()),
                 "world", spot.world(),
                 "price", String.valueOf(spot.salePrice()),
                 "role", spot.role() == null ? "" : service.roleName(spot.role()),

@@ -1,17 +1,18 @@
 package ru.cherdakmd.chrdkstreams;
 
 /**
- * Арифметика наград стримера: сколько суток ранга даёт накопленный эфир.
+ * Арифметика наград стримера: сколько ЧАСОВ ранга даёт накопленный эфир.
  *
  * <p>Класс чистый — ни Bukkit, ни сети, ни файлов. Благодаря этому правила
  * проверяются юнит-тестами: часы, потолки, переход через полночь, защита от
- * «начислить сутки за один тик после простоя».</p>
+ * «начислить час за один тик после простоя».</p>
  *
  * <p>Правила:</p>
  * <ul>
- *   <li>{@code minutesPerDay} минут эфира = 1 сутки ранга (по умолчанию 60);</li>
- *   <li>за календарные сутки (UTC) — не больше {@code maxDaysPerDay} наград;</li>
- *   <li>за всё время — не больше {@code maxTotalDays} (0 — без потолка);</li>
+ *   <li>{@code minutesPerHour} минут эфира = 1 час ранга (по умолчанию 60:
+ *       час эфира даёт ровно час ранга);</li>
+ *   <li>за календарные сутки (UTC) — не больше {@code maxHoursPerDay} часов;</li>
+ *   <li>за всё время — не больше {@code maxTotalHours} (0 — без потолка);</li>
  *   <li>остаток копится, но не больше «почти полного дня»: накрутить запас
  *       на неделю вперёд нельзя;</li>
  *   <li>при смене суток счётчик «сегодня» обнуляется, а остаток минут — нет:
@@ -24,16 +25,16 @@ final class StreamRewards {
     static final long DAY_MILLIS = 86_400_000L;
 
     /** Разумные границы, чтобы опечатка в конфиге не сломала арифметику. */
-    static final int MIN_MINUTES_PER_DAY = 1;
-    static final int MAX_MINUTES_PER_DAY = 600;
-    static final int MAX_DAYS_PER_DAY = 24;
-    static final int MAX_TOTAL_DAYS = 3650;
+    static final int MIN_MINUTES_PER_HOUR = 1;
+    static final int MAX_MINUTES_PER_HOUR = 600;
+    static final int MAX_HOURS_PER_DAY = 24;
+    static final int MAX_TOTAL_HOURS = 3650;
 
     private StreamRewards() {
     }
 
-    /** Что накопилось у игрока: день (UTC epoch day), награды за день, остаток минут, всего. */
-    record State(int day, int awardedToday, long pendingMillis, int totalDays) {
+    /** Что накопилось у игрока: день (UTC epoch day), часы за день, остаток минут, всего часов. */
+    record State(int day, int awardedToday, long pendingMillis, int totalHours) {
 
         static State empty() {
             return new State(0, 0, 0L, 0);
@@ -41,39 +42,39 @@ final class StreamRewards {
     }
 
     /** Правила начисления из конфига, уже зажатые в допустимые границы. */
-    record Rule(int minutesPerDay, int maxDaysPerDay, int maxTotalDays) {
+    record Rule(int minutesPerHour, int maxHoursPerDay, int maxTotalHours) {
 
-        static Rule of(int minutesPerDay, int maxDaysPerDay, int maxTotalDays) {
+        static Rule of(int minutesPerHour, int maxHoursPerDay, int maxTotalHours) {
             return new Rule(
-                    Math.clamp(minutesPerDay, MIN_MINUTES_PER_DAY, MAX_MINUTES_PER_DAY),
-                    Math.clamp(maxDaysPerDay, 0, MAX_DAYS_PER_DAY),
-                    Math.clamp(maxTotalDays, 0, MAX_TOTAL_DAYS));
+                    Math.clamp(minutesPerHour, MIN_MINUTES_PER_HOUR, MAX_MINUTES_PER_HOUR),
+                    Math.clamp(maxHoursPerDay, 0, MAX_HOURS_PER_DAY),
+                    Math.clamp(maxTotalHours, 0, MAX_TOTAL_HOURS));
         }
 
-        /** Порог одного дня ранга в миллисекундах эфира. */
-        long dayThresholdMillis() {
-            return (long) minutesPerDay * MINUTE_MILLIS;
+        /** Порог одного часа ранга в миллисекундах эфира. */
+        long hourThresholdMillis() {
+            return (long) minutesPerHour * MINUTE_MILLIS;
         }
 
-        /** Сколько ещё можно наградить сегодня. */
+        /** Сколько ещё часов можно наградить сегодня. */
         int remainingToday(int awardedToday) {
-            return Math.max(0, maxDaysPerDay - Math.max(0, awardedToday));
+            return Math.max(0, maxHoursPerDay - Math.max(0, awardedToday));
         }
 
-        /** Сколько ещё можно наградить всего; {@link Integer#MAX_VALUE} — потолка нет. */
-        int remainingTotal(int totalDays) {
-            if (maxTotalDays <= 0) {
+        /** Сколько ещё часов можно наградить всего; {@link Integer#MAX_VALUE} — потолка нет. */
+        int remainingTotal(int totalHours) {
+            if (maxTotalHours <= 0) {
                 return Integer.MAX_VALUE;
             }
-            return Math.max(0, maxTotalDays - Math.max(0, totalDays));
+            return Math.max(0, maxTotalHours - Math.max(0, totalHours));
         }
     }
 
-    /** Итог шага: новое состояние и сколько суток начислить прямо сейчас. */
-    record Decision(State state, int awardDays) {
+    /** Итог шага: новое состояние и сколько часов начислить прямо сейчас. */
+    record Decision(State state, int awardHours) {
 
         boolean awarded() {
-            return awardDays > 0;
+            return awardHours > 0;
         }
     }
 
@@ -83,7 +84,7 @@ final class StreamRewards {
      * @param state        что было
      * @param creditMillis сколько эфира добавить (уже проверенного: канал подтверждён,
      *                     игрок онлайн, эфир идёт)
-     * @param nowMillis    текущее время (для определения суток)
+     * @param nowMillis    текущее время (для определения суток UTC)
      * @param rule         правила сезона
      */
     static Decision advance(State state, long creditMillis, long nowMillis, Rule rule) {
@@ -91,31 +92,31 @@ final class StreamRewards {
         boolean newDay = today != state.day();
         int awardedToday = newDay ? 0 : Math.max(0, state.awardedToday());
         long pending = Math.max(0L, state.pendingMillis());
-        int totalDays = Math.max(0, state.totalDays());
+        int totalHours = Math.max(0, state.totalHours());
 
         if (creditMillis > 0) {
             pending += creditMillis;
         }
 
-        int remaining = Math.min(rule.remainingToday(awardedToday), rule.remainingTotal(totalDays));
-        long threshold = rule.dayThresholdMillis();
+        int remaining = Math.min(rule.remainingToday(awardedToday), rule.remainingTotal(totalHours));
+        long threshold = rule.hourThresholdMillis();
         int possible = threshold <= 0 ? 0 : (int) Math.min(Integer.MAX_VALUE, pending / threshold);
         int award = Math.min(possible, remaining);
 
         if (award > 0) {
             pending -= (long) award * threshold;
             awardedToday += award;
-            totalDays += award;
+            totalHours += award;
         }
 
-        // Не копим больше «почти дня»: иначе после потолка освободившиеся сутки
+        // Не копим больше «почти часа»: иначе после потолка освободившиеся часы
         // выдавались бы одной пачкой за эфир, который уже не засчитывался.
         long cap = Math.max(0L, threshold - 1);
         if (pending > cap) {
             pending = cap;
         }
 
-        return new Decision(new State(today, awardedToday, pending, totalDays), award);
+        return new Decision(new State(today, awardedToday, pending, totalHours), award);
     }
 
     /** Номер суток UTC — по нему обнуляется дневной счётчик. */
@@ -123,9 +124,9 @@ final class StreamRewards {
         return (int) Math.floorDiv(Math.max(0L, nowMillis), DAY_MILLIS);
     }
 
-    /** Минут осталось до следующей награды (для /stream status). */
-    static long minutesToNextDay(State state, Rule rule) {
-        long threshold = rule.dayThresholdMillis();
+    /** Минут осталось до следующего часа ранга (для /stream status). */
+    static long minutesToNextHour(State state, Rule rule) {
+        long threshold = rule.hourThresholdMillis();
         if (threshold <= 0) {
             return 0;
         }
@@ -138,15 +139,15 @@ final class StreamRewards {
      *
      * <p>Возвращает {@code now}, если порог уже набран (награда придёт на
      * следующем опросе), и {@code -1}, если действует потолок — считать нечего.
-     * Для подсказки «следующие сутки примерно в HH:mm».</p>
+     * Для подсказки «следующий час ранга примерно в HH:mm».</p>
      */
     static long etaMillis(State state, Rule rule, long nowMillis) {
-        long threshold = rule.dayThresholdMillis();
+        long threshold = rule.hourThresholdMillis();
         if (threshold <= 0) {
             return -1L;
         }
         int remaining = Math.min(rule.remainingToday(state.awardedToday()),
-                rule.remainingTotal(state.totalDays()));
+                rule.remainingTotal(state.totalHours()));
         if (remaining <= 0) {
             return -1L;
         }
@@ -156,7 +157,7 @@ final class StreamRewards {
 
     /** Минут накоплено (для /stream status): всегда меньше порога одного дня. */
     static long pendingMinutes(State state, Rule rule) {
-        long threshold = rule.dayThresholdMillis();
+        long threshold = rule.hourThresholdMillis();
         if (threshold <= 0) {
             return 0;
         }

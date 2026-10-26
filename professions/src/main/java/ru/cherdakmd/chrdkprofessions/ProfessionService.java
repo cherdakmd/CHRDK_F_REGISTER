@@ -262,7 +262,7 @@ public final class ProfessionService {
         return perk(player, Profession.COOK, config.perkCookSaturation());
     }
 
-    /** Шанс камнереза на второй блок, %. */
+    /** Шанс камнереза на лишний блок при плавке и распиле, %. */
     public int masonChance(UUID player) {
         return perk(player, Profession.MASON, config.perkMasonBlock());
     }

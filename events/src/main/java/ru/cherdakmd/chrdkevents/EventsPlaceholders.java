@@ -19,7 +19,9 @@ import java.util.Locale;
  *   <li>{@code time_left} / {@code seconds_left} — остаток текущего события;</li>
  *   <li>{@code next} / {@code next_seconds} — до следующего события;</li>
  *   <li>{@code total} — сколько событий провёл сервер;</li>
- *   <li>{@code last} — имя последнего прошедшего события.</li>
+ *   <li>{@code last} — имя последнего прошедшего события;</li>
+ *   <li>{@code meteors} / {@code horde} — падают ли звёзды и идёт ли нашествие
+ *       (1.4.176).</li>
  * </ul>
  */
 public final class EventsPlaceholders extends PlaceholderExpansion {
@@ -70,6 +72,14 @@ public final class EventsPlaceholders extends PlaceholderExpansion {
                 yield last == null ? "" : last.name();
             }
             case "enabled" -> plugin.config().enabled() ? "да" : "нет";
+            case "meteors" -> service.fallingStars() ? "да" : "нет";
+            case "horde" -> service.hordeActive() ? "да" : "нет";
+            case "multiplier" -> {
+                if (current == null || !current.hordeActive()) {
+                    yield "1.0";
+                }
+                yield String.format(Locale.ROOT, "%.1f", current.horde().multiplier());
+            }
             default -> "";
         };
     }

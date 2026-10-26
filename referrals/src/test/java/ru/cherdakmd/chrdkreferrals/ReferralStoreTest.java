@@ -47,11 +47,11 @@ class ReferralStoreTest {
         ReferralStore.RefStats stats = store.statsView("steve");
         assertEquals(2, stats.linked);
         assertEquals(1, stats.paid);
-        assertEquals(7, stats.daysEarned);
+        assertEquals(7, stats.hoursEarned);
     }
 
     @Test
-    void topSortsByPaidThenDays(@TempDir Path dir) {
+    void topSortsByPaidThenHours(@TempDir Path dir) {
         ReferralStore store = newStore(dir);
         store.recordBonusPaid("Anna", 7);
         store.recordBonusPaid("Bob", 7);
@@ -89,7 +89,7 @@ class ReferralStoreTest {
         assertEquals("Steve", link.inviter);
         assertTrue(link.consumed);
         assertEquals(now + 1000, link.paidAt);
-        assertEquals(7, reloaded.statsView("steve").daysEarned);
+        assertEquals(7, reloaded.statsView("steve").hoursEarned);
     }
 
     @Test

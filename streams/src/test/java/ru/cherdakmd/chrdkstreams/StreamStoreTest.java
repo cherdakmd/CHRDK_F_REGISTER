@@ -63,7 +63,7 @@ class StreamStoreTest {
         assertEquals(1_800_000_000_000L, restored.verifiedAt());
         assertEquals(2, restored.state().awardedToday());
         assertEquals(45 * 60_000L, restored.state().pendingMillis());
-        assertEquals(7, restored.state().totalDays());
+        assertEquals(7, restored.state().totalHours());
         assertTrue(restored.verified());
     }
 
@@ -109,7 +109,7 @@ class StreamStoreTest {
                 {"players":[
                   {"uuid":"11111111-2222-3333-4444-555555555555","name":"Steve",
                    "platform":"vkplay","channel":"chrdk_vk","code":"CHRDK-ABCD",
-                   "verifiedAt":5,"day":1,"awardedToday":2,"pendingMillis":60000,"totalDays":3}
+                   "verifiedAt":5,"day":1,"awardedToday":2,"pendingMillis":60000,"totalHours":3}
                 ]}
                 """, StandardCharsets.UTF_8);
 
@@ -120,7 +120,7 @@ class StreamStoreTest {
         assertEquals(1, binding.channels().size(), "старая запись = один канал");
         assertEquals(StreamPlatform.VKPLAY, binding.platform());
         assertEquals("chrdk_vk", binding.channel());
-        assertEquals(3, binding.state().totalDays());
+        assertEquals(3, binding.state().totalHours());
         assertEquals(2, binding.state().awardedToday());
     }
 
@@ -220,7 +220,7 @@ class StreamStoreTest {
                   {"uuid":"not-a-uuid","platform":"twitch","channel":"a"},
                   {"uuid":"11111111-2222-3333-4444-555555555555","platform":"unknown","channel":"b"},
                   {"uuid":"22222222-3333-4444-5555-666666666666","platform":"twitch","channel":""},
-                  {"uuid":"33333333-4444-5555-6666-777777777777","platform":"vkplay","channel":"good","code":"CHRDK-ABCD","verifiedAt":5,"totalDays":3}
+                  {"uuid":"33333333-4444-5555-6666-777777777777","platform":"vkplay","channel":"good","code":"CHRDK-ABCD","verifiedAt":5,"totalHours":3}
                 ]}
                 """, StandardCharsets.UTF_8);
 
@@ -231,17 +231,17 @@ class StreamStoreTest {
         StreamBinding binding = store.get(
                 UUID.fromString("33333333-4444-5555-6666-777777777777")).orElseThrow();
         assertEquals(StreamPlatform.VKPLAY, binding.platform());
-        assertEquals(3, binding.state().totalDays());
+        assertEquals(3, binding.state().totalHours());
     }
 
     @Test
-    void totalDaysSumsAwards() {
+    void totalHoursSumsAwards() {
         StreamStore store = store();
         store.put(binding(PLAYER, "A", new StreamRewards.State(0, 0, 0L, 4),
                 channel(StreamPlatform.TWITCH, "a", "CHRDK-AAAA", 0L)));
         store.put(binding(UUID.randomUUID(), "B", new StreamRewards.State(0, 0, 0L, 6),
                 channel(StreamPlatform.VKPLAY, "b", "CHRDK-BBBB", 0L)));
 
-        assertEquals(10, store.totalDays());
+        assertEquals(10, store.totalHours());
     }
 }

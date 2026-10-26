@@ -56,6 +56,15 @@ final class ConfigReport {
                 + ", босс ×" + trim(config.mobBossMultiplier())
                 + (config.mobPlayerKillOnly() ? ", только убийство игроком" : "")
                 : "выключен"));
+        out.add("мировая добыча: " + (config.worldEnabled()
+                ? "общий " + config.worldChancePercent() + "%, по видам — оружие "
+                + worldChance(config, ItemKind.SWORD)
+                + ", броня " + worldChance(config, ItemKind.CHESTPLATE)
+                + ", инструменты " + worldChance(config, ItemKind.PICKAXE)
+                + ", утилита " + worldChance(config, ItemKind.UTILITY)
+                + (config.worldLootEnabled() ? "" : ", сундуки выкл.")
+                + (config.worldFishingEnabled() ? "" : ", рыбалка выкл.")
+                : "выключена — тир только у крафта и дропа"));
         out.add("настройки: ранг +" + config.passBonusCraftPercent()
                 + "% к крафту, клички " + onOff(config.namesEnabled())
                 + ", свойства тиров " + (config.propertiesEnabled()
@@ -104,6 +113,12 @@ final class ConfigReport {
             return "выкл.";
         }
         return value + "%";
+    }
+
+    /** Шанс мировой редкости для группы: свой процент или «общий» (фолбэк `-1`). */
+    private static String worldChance(TierForgeConfig config, ItemKind kind) {
+        int value = config.worldChanceFor(kind);
+        return value <= 0 ? "выкл." : value + "%";
     }
 
     private static String onOff(boolean value) {

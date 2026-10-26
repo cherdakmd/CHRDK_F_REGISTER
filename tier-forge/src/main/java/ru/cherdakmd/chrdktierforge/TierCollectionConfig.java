@@ -28,7 +28,7 @@ import java.util.logging.Logger;
  * <p>Награды настраиваются, чтобы сервер мог выбрать свою экономику. Пустая
  * секция {@code collection.rewards.properties: {}} означает «за свойства
  * ничего не давать», а отсутствующая — умолчания. Значения клампятся:
- * ранг 0..365 дней, алмазы 0..576.</p>
+ * ранг 0..24 часов (потолок — сутки), алмазы 0..576.</p>
  *
  * @param enabled       включена ли коллекция (выключение не стирает книгу)
  * @param announceFinds объявлять в чат каждую новую находку
@@ -42,11 +42,15 @@ public record TierCollectionConfig(boolean enabled, boolean announceFinds, Title
                                    List<Milestone> affixes,
                                    Map<String, SectionReward> sections) {
 
-    /** Веха: сколько единиц собрать и что за это дать. */
-    public record Milestone(int count, int passDays, int diamonds) {
+    /**
+     * Веха: сколько единиц собрать и что за это дать.
+     *
+     * @param passHours часы ранга (с 1.4.184 награда измеряется часами, потолок — сутки)
+     */
+    public record Milestone(int count, int passHours, int diamonds) {
 
         public boolean hasReward() {
-            return passDays > 0 || diamonds > 0;
+            return passHours > 0 || diamonds > 0;
         }
     }
 
@@ -79,11 +83,15 @@ public record TierCollectionConfig(boolean enabled, boolean announceFinds, Title
         }
     }
 
-    /** Награда за закрытый раздел; титул берётся из {@code messages.title.<id>}. */
-    public record SectionReward(int passDays, int diamonds) {
+    /**
+     * Награда за закрытый раздел; титул берётся из {@code messages.title.<id>}.
+     *
+     * @param passHours часы ранга (с 1.4.184 награда измеряется часами, потолок — сутки)
+     */
+    public record SectionReward(int passHours, int diamonds) {
 
         public boolean hasReward() {
-            return passDays > 0 || diamonds > 0;
+            return passHours > 0 || diamonds > 0;
         }
     }
 
@@ -208,18 +216,20 @@ public record TierCollectionConfig(boolean enabled, boolean announceFinds, Title
                 out.put(id, fallback);
                 continue;
             }
-            int passDays = clamp(row.getInt("pass-days", fallback.passDays()), 0, 365, logger,
-                    "collection.rewards.sections." + id + ".pass-days");
+            // 1.4.184: часы вместо суток; старый ключ pass-days читается как часы.
+            String hoursKey = row.contains("pass-hours") ? "pass-hours" : "pass-days";
+            int passHours = clamp(row.getInt(hoursKey, fallback.passHours()), 0, 24, logger,
+                    "collection.rewards.sections." + id + "." + hoursKey);
             int diamonds = clamp(row.getInt("diamonds", fallback.diamonds()), 0, 576, logger,
                     "collection.rewards.sections." + id + ".diamonds");
-            out.put(id, new SectionReward(passDays, diamonds));
+            out.put(id, new SectionReward(passHours, diamonds));
         }
         return Collections.unmodifiableMap(out);
     }
 
     /**
      * Разбор карты «число → награда». Ключ — целое число (15, 45, …), значения —
-     * {@code pass-days} и {@code diamonds}. Секция без ключей означает «вех нет».
+     * {@code pass-hours} и {@code diamonds}. Секция без ключей означает «вех нет».
      */
     private static List<Milestone> parseMilestones(ConfigurationSection section, Logger logger,
                                                    String key, int maxCount,
@@ -246,11 +256,12 @@ public record TierCollectionConfig(boolean enabled, boolean announceFinds, Title
                 continue;
             }
             ConfigurationSection row = section.getConfigurationSection(raw);
-            int passDays = clamp(row == null ? 0 : row.getInt("pass-days", 0), 0, 365, logger,
-                    key + "." + raw + ".pass-days");
+            String hoursKey = row != null && row.contains("pass-hours") ? "pass-hours" : "pass-days";
+            int passHours = clamp(row == null ? 0 : row.getInt(hoursKey, 0), 0, 24, logger,
+                    key + "." + raw + "." + hoursKey);
             int diamonds = clamp(row == null ? 0 : row.getInt("diamonds", 0), 0, 576, logger,
                     key + "." + raw + ".diamonds");
-            byCount.put(count, new Milestone(count, passDays, diamonds));
+            byCount.put(count, new Milestone(count, passHours, diamonds));
         }
         List<Milestone> out = new ArrayList<>(byCount.values());
         out.sort(Comparator.comparingInt(Milestone::count));

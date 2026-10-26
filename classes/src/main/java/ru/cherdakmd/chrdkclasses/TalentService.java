@@ -16,17 +16,33 @@ import java.util.UUID;
  * он добавляет — пассивные прибавки с жёсткими потолками
  * ({@link EffectKind#cap()}), а требует он прокачки навыков. Поэтому класс
  * растёт от игры, а не от даты входа.</p>
+ *
+ * <p>С 1.4.175 к двум числам добавились два необязательных источника:
+ * {@link AchievementSource} даёт очки за открытые достижения (с потолком), а
+ * {@link RankSource} — плюшки ранга {@link RankPerks}: ниже пороги навыков,
+ * короче откаты и мельче шаг уровня. Ни один из них не поднимает потолки
+ * эффектов и не меняет цену дерева.</p>
  */
 public final class TalentService {
 
     private volatile ClassConfig config;
     private final ClassStore store;
     private final SkillSource skills;
+    private final RankSource ranks;
+    private final AchievementSource achievements;
 
+    /** Сервис без рангов и достижений: базовые правила (так его видят тесты). */
     public TalentService(ClassConfig config, ClassStore store, SkillSource skills) {
+        this(config, store, skills, null, null);
+    }
+
+    public TalentService(ClassConfig config, ClassStore store, SkillSource skills,
+                         RankSource ranks, AchievementSource achievements) {
         this.config = config;
         this.store = store;
         this.skills = skills;
+        this.ranks = ranks;
+        this.achievements = achievements;
     }
 
     /** Новый конфиг без потери прогресса (перезагрузка). */
@@ -57,15 +73,73 @@ public final class TalentService {
                 ? 0 : Math.max(0, skills.level(player, skillId));
     }
 
-    /** Уровень класса, выведенный из навыков. */
-    public int level(UUID player) {
-        return ClassMath.level(totalSkill(player), config.levelsPerLevel());
+    /* ------------------------------- ранги (1.4.175) ------------------------------- */
+
+    /** Ступень донатного ранга: 0 — ранга нет или ядро не отвечает. */
+    public int rankLevel(UUID player) {
+        if (ranks == null || player == null) {
+            return 0;
+        }
+        return Math.clamp(ranks.rankLevel(player), 0, RankPerks.MAX_RANK);
     }
 
-    /** Сколько очков игрок заработал за всё время. */
+    /**
+     * Плюшки ранга игрока; при выключенной секции {@code ranks} — никаких.
+     *
+     * <p>Выключатель стоит здесь, а не у каждого вызова: тогда «плюшки
+     * выключены» значит ровно одно — все числа как без ранга.</p>
+     */
+    RankPerks perks(UUID player) {
+        return config.ranksEnabled() ? RankPerks.of(rankLevel(player)) : RankPerks.NONE;
+    }
+
+    /** Шаг уровня класса с учётом ранга — для подписей в меню. */
+    public int levelStep(UUID player) {
+        return perks(player).levelStep(config.levelsPerLevel());
+    }
+
+    /** Сколько уровней навыков нужно до следующего уровня класса с учётом ранга. */
+    public int nextLevelIn(UUID player) {
+        return ClassMath.nextLevelIn(totalSkill(player), levelStep(player));
+    }
+
+    /* --------------------------------- очки ---------------------------------- */
+
+    /** Сколько очков талантов игрок получил за достижения. */
+    public int achievementBonus(UUID player) {
+        if (achievements == null || player == null || !config.enabled()) {
+            return 0;
+        }
+        return ClassMath.achievementBonus(achievements.unlockedCount(player),
+                config.achievementEvery(), config.achievementMaxBonus());
+    }
+
+    /** Сколько достижений открыто; 0 — аддона нет. */
+    public int unlockedAchievements(UUID player) {
+        return achievements == null || player == null ? 0
+                : Math.max(0, achievements.unlockedCount(player));
+    }
+
+    /**
+     * Порог навыка для узла с учётом ранга.
+     *
+     * <p>Меню и проверка зовут именно его: иначе кнопка показывала бы 75, а
+     * сервис требовал 70 — и игрок считал бы, что талант «не учится».</p>
+     */
+    public int requiredSkill(UUID player, Talent talent) {
+        return talent == null || !talent.needsSkill() ? 0
+                : perks(player).skillRequirement(talent.skillLevel());
+    }
+
+    /** Уровень класса, выведенный из навыков (шаг уменьшен рангом). */
+    public int level(UUID player) {
+        return ClassMath.level(totalSkill(player), levelStep(player));
+    }
+
+    /** Сколько очков игрок заработал за всё время: уровни плюс достижения. */
     public int earnedPoints(UUID player) {
         return ClassMath.points(level(player), config.startingPoints(),
-                config.pointsPerLevel());
+                config.pointsPerLevel()) + achievementBonus(player);
     }
 
     /** Сколько очков стоит изученное дерево. */
@@ -125,13 +199,15 @@ public final class TalentService {
 
     /** Сколько секунд осталось до смены класса (0 — можно менять). */
     public long changeCooldownLeft(UUID player, long now) {
-        long until = store.changedAt(player) + config.changeCooldownSeconds() * 1_000L;
+        long base = perks(player).changeCooldownSeconds(config.changeCooldownSeconds());
+        long until = store.changedAt(player) + base * 1_000L;
         return until <= now ? 0L : (until - now + 999) / 1_000L;
     }
 
     /** Сколько секунд осталось до пересборки дерева. */
     public long respecCooldownLeft(UUID player, long now) {
-        long until = store.respecAt(player) + config.respecCooldownSeconds() * 1_000L;
+        long base = perks(player).respecCooldownSeconds(config.respecCooldownSeconds());
+        long until = store.respecAt(player) + base * 1_000L;
         return until <= now ? 0L : (until - now + 999) / 1_000L;
     }
 
@@ -210,9 +286,10 @@ public final class TalentService {
         }
         if (talent.needsSkill()) {
             int have = skillLevel(player, talent.skill());
-            if (have < talent.skillLevel()) {
+            int required = perks(player).skillRequirement(talent.skillLevel());
+            if (have < required) {
                 return ClassResult.fail("talent-skill", "skill", talent.skill(),
-                        "level", String.valueOf(talent.skillLevel()),
+                        "level", String.valueOf(required),
                         "have", String.valueOf(have));
             }
         }

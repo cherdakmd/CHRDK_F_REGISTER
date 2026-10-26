@@ -60,6 +60,8 @@ public final class TreasuresPlugin extends JavaPlugin {
     private TreasureMapService maps;
     /** 1.4.166: клады-бочки — появление, анимация и уборка. */
     private TreasureBarrels barrels;
+    /** 1.4.181: добыча падает на землю, без сундука. */
+    private TreasureDrops drops;
     /** 1.4.166: звание кладоискателя рядом с ником в чате и табе. */
     private TreasureRankTagService rankTags;
     /** Зарегистрирован ли провайдер оформления ников (для честного unregister). */
@@ -87,6 +89,7 @@ public final class TreasuresPlugin extends JavaPlugin {
         this.listener = new TreasureListener(this, service);
         this.maps = new TreasureMapService(this);
         this.barrels = new TreasureBarrels(this);
+        this.drops = new TreasureDrops(this);
         this.gui = new TreasuresGui(this, service);
         this.rankTags = new TreasureRankTagService(this, service);
 
@@ -458,7 +461,12 @@ public final class TreasuresPlugin extends JavaPlugin {
         return maps;
     }
 
-    /** 1.4.166: бочки, в которых появляется клад. */
+    /** 1.4.181: выдача добычи на землю, без сундука. */
+    public TreasureDrops drops() {
+        return drops;
+    }
+
+    /** 1.4.166: бочки, в которых появляется клад (опция с 1.4.181). */
     public TreasureBarrels barrels() {
         return barrels;
     }

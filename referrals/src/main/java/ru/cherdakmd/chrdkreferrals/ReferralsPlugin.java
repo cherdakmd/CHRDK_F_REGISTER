@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * CHRDK_Referrals — реферальная система-аддон: новичок привязывается к пригласившему
  * ({@code /ref use <ник>}) до первой подписки, при его первой оплате оба получают бонусные
- * дни через API ядра ({@code PassGrantedEvent} + {@code ChrdkRegisterApi.grantPass}).
+ * часы через API ядра ({@code PassGrantedEvent} + {@code ChrdkRegisterApi.grantPassHours}).
  */
 public final class ReferralsPlugin extends JavaPlugin {
 
@@ -49,8 +49,8 @@ public final class ReferralsPlugin extends JavaPlugin {
             }
         }, 6000L, 6000L);
 
-        getLogger().info("CHRDK_Referrals включён: бонус друга +" + config.bonusDaysInviter()
-                + " / приглашённого +" + config.bonusDaysInvitee() + " дн.");
+        getLogger().info("CHRDK_Referrals включён: бонус друга +" + config.bonusHoursInviter()
+                + " / приглашённого +" + config.bonusHoursInvitee() + " ч.");
     }
 
     @Override

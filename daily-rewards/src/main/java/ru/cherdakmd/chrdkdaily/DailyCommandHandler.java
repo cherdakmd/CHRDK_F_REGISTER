@@ -84,8 +84,8 @@ public final class DailyCommandHandler implements TabExecutor {
             plugin.messages().send(player, "daily.claim-items",
                     "items", DailyService.itemsText(result.items()));
         }
-        if (result.passDays() > 0) {
-            plugin.messages().send(player, "daily.claim-pass-days", "days", result.passDays());
+        if (result.passHours() > 0) {
+            plugin.messages().send(player, "daily.claim-pass-hours", "hours", result.passHours());
         }
         plugin.messages().send(player, "daily.claim-streak", "streak", result.streak());
     }

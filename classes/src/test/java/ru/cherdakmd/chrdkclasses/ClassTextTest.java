@@ -29,6 +29,8 @@ class ClassTextTest {
                   class.cleric.name: "Жрец"
                   talent.warrior-stoyka-1.name: "Стойкость I"
                   skill.defense.name: "Оборона"
+                  ability.warrior.name: "Боевой рывок"
+                  ability.warrior-2.name: "Боевой клич"
                 """;
         return Messages.from(new ByteArrayInputStream(yaml.getBytes(StandardCharsets.UTF_8)),
                 null, LOGGER);
@@ -48,6 +50,14 @@ class ClassTextTest {
                 "level", "20", "have", "10");
         assertEquals(List.of("skill", "Оборона", "level", "20", "have", "10"),
                 ClassText.localise(messages(), skill));
+
+        ClassResult used = ClassResult.ok("ability-used", "ability", "warrior");
+        assertEquals(List.of("ability", "Боевой рывок"), ClassText.localise(messages(), used),
+                "умение переводится в имя, а не в ид класса");
+
+        ClassResult second = ClassResult.ok("ability-used", "ability", "warrior-2");
+        assertEquals(List.of("ability", "Боевой клич"), ClassText.localise(messages(), second),
+                "у второго умения свой ключ: ид-2");
     }
 
     @Test

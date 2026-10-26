@@ -11,7 +11,7 @@ import java.util.Map;
 
 /**
  * Выдача наград: apply конфиг-день к игроку (предметы в инвентарь + drop под ноги,
- * VIP-дни ранга — через API ядра).
+ * VIP-часы ранга — через API ядра).
  */
 public final class DailyService {
 
@@ -28,7 +28,7 @@ public final class DailyService {
     }
 
     /** Итог claim: стрик, что выдано, откуда VIP. */
-    public record ClaimResult(int streak, List<DailyConfig.ItemReward> items, int passDays, boolean vip) {
+    public record ClaimResult(int streak, List<DailyConfig.ItemReward> items, int passHours, boolean vip) {
     }
 
     /**
@@ -51,11 +51,11 @@ public final class DailyService {
                 giveItems(player, material, reward.amount());
             }
         }
-        int passDays = vip ? day.vipPassDays() : 0;
-        if (passDays > 0 && api != null) {
-            api.grantPass(player.getName(), passDays, "daily-rewards:day" + day.day());
+        int passHours = vip ? day.vipPassHours() : 0;
+        if (passHours > 0 && api != null) {
+            api.grantPassHours(player.getName(), passHours, "daily-rewards:day" + day.day());
         }
-        return new ClaimResult(streak, items, passDays, vip);
+        return new ClaimResult(streak, items, passHours, vip);
     }
 
     /** Игрок может взять награду сегодня. */

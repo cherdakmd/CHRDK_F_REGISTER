@@ -10,6 +10,10 @@ classes:
   no-permission: "<red>Недостаточно прав.</red>"
   player-only: "<red>Эта команда только для игроков.</red>"
   disabled: "<red>Классы выключены в config.yml.</red>"
+  # 1.4.182: обязательный выбор класса — меню, напоминание и закрытие без выбора.
+  onboarding-start: "<gold>Класс</gold> <dark_gray>·</dark_gray> <white>Выбери стиль игры</white> <dark_gray>—</dark_gray> <gray>меню откроется через пару секунд. Это бесплатно.</gray>"
+  onboarding-remind: "<gold>Выбери класс</gold> <dark_gray>·</dark_gray> <yellow>/class</yellow>"
+  onboarding-closed: "<gold>Класс</gold> <dark_gray>·</dark_gray> <white>Без класса не работают умения, таланты и прибавки.</white> <gray>Меню откроется снова — или выбери сам: <yellow>/class</yellow></gray>"
   unknown-subcommand: "<red>Неизвестная подкоманда «%sub%». Смотрите <yellow>/class help</yellow>.</red>"
 
   # -------------------------------- справка ---------------------------------
@@ -21,6 +25,7 @@ classes:
   help-learn: "<yellow>/class learn <талант></yellow> <gray>— выучить талант за очки</gray>"
   help-respec: "<yellow>/class respec</yellow> <gray>— вернуть очки и собрать дерево заново</gray>"
   help-points: "<yellow>/class points</yellow> <gray>— уровень, очки и сколько до следующего</gray>"
+  help-ability: "<yellow>/class ability [1|2]</yellow> <gray>— умение класса (то же делает <yellow>/ability [1|2]</yellow>)</gray>"
   help-top: "<yellow>/class top</yellow> <gray>— сколько игроков в каждом классе</gray>"
   help-footer: "<gray>Уровень класса растёт от навыков: один уровень за каждые %per% уровней навыков.</gray>"
 
@@ -53,12 +58,26 @@ classes:
   respec-cooldown: "<red>Пересборка будет доступна через <white>%time%</white>.</red>"
   respec-done: "<green>Таланты сброшены: %talents%. Очки вернулись, свободно <white>%points%</white>.</green>"
 
+  # ------------------------------ умения класса ------------------------------
+  # %ability% — имя умения из ability.<ид>.name, %time% — остаток кулдауна.
+  ability-disabled: "<red>Умения классов выключены в config.yml.</red>"
+  ability-dead: "<red>Умение недоступно: вы мертвы.</red>"
+  ability-cooldown: "<red>Умение будет готово через <white>%time%</white>.</red>"
+  ability-used: "<green>Умение «%ability%» сработало.</green>"
+  ability-actionbar: "<gold>%ability%</gold>"
+
   # ---------------------------- карточка и очки -----------------------------
   info-header: "<gold>Класс: <white>%class%</white></gold>"
   info-none: "<gray>Класс не выбран.</gray>"
   info-none-hint: "<gray>Выберите бесплатно: <yellow>/class choose <warrior|archer|mage|cleric></yellow>. Сменить класс можно раз в неделю.</gray>"
   info-level: "<gray>Уровень <white>%level%</white> · уровней навыков <white>%total%</white> · до следующего <white>%next%</white></gray>"
   info-points: "<gray>Очки талантов: свободно <white>%points%</white>, вложено <white>%spent%</white></gray>"
+  # 1.4.175: бонус очков за достижения и плюшки донатного ранга в /class points.
+  info-achievements: "<gray>Достижения: открыто <white>%count%</white> · очков за них <white>+%bonus%</white> из %max%</gray>"
+  info-achievements-none: "<gray>Достижения: аддон CHRDK_Achievements не найден — очки идут только за уровни навыков</gray>"
+  info-rank: "<gold>Ранг: ступень %level% из 5</gold> <gray>· порог узлов −%skill% · шаг уровня −%step% · откат умений −%cooldown%% · смена класса −%change% дн. · пересборка −%respec% ч.</gray>"
+  info-rank-none: "<gray>Донатного ранга нет — пороги, откаты и шаг уровня базовые.</gray>"
+  info-rank-off: "<gray>Плюшки рангов выключены в config.yml — правила базовые.</gray>"
   info-passive-header: "<gray>Пассив класса:</gray>"
   info-branch-header: "<gold>Ветка «%branch%»</gold>"
   info-talent-line: "<gray>· <white>%talent%</white> <dark_gray>(%cost% очк.)</dark_gray> — %effect%</gray>"
@@ -67,6 +86,11 @@ classes:
   info-talents-empty: "<gray>Талантов пока нет: очки появятся вместе с уровнями навыков.</gray>"
   info-cooldown: "<dark_gray>Смена класса будет доступна через %time%</dark_gray>"
   info-footer: "<dark_gray>Учить таланты: /class talents · очки: /class points</dark_gray>"
+
+  # --------------------------- уровень класса -------------------------------
+  # Уровень выводится из навыков: пульс сравнивает его с прошлым и сообщает рост.
+  level-up: "<gold>Уровень класса %level%</gold> <gray>· свободных очков талантов: <white>%points%</white> · </gray><yellow>/class talents</yellow>"
+  level-up-actionbar: "<gold>Уровень класса %level%</gold>"
 
   # ------------------------ распределение по классам ------------------------
   top-header: "<gold>Классы на сервере</gold> <dark_gray>·</dark_gray> <gray>выбрали %count% игроков</gray>"
@@ -97,6 +121,7 @@ classes:
   menu-talents-name: "<gold>Дерево талантов</gold>"
   menu-talents-none: "<gray>Сначала выберите класс</gray>"
   menu-talents-lore: "<gray>Свободных очков: <white>%points%</white></gray>"
+  menu-talents-nodes: "<gray>Изучено узлов: <white>%count%/%max%</white></gray>"
   menu-class-passive: "<gray>Пассив класса:</gray>"
   menu-class-current: "<green>Это ваш класс — клик откроет дерево</green>"
   menu-class-click: "<aqua>Клик — карточка класса</aqua>"
@@ -110,6 +135,7 @@ classes:
   menu-talent-no-class: "<red>Сначала выберите класс</red>"
   menu-talent-ready: "<green>Клик — изучить</green>"
   menu-talent-cost: "<dark_gray>Цена: %cost% очк.</dark_gray>"
+  menu-talent-mastery: "<light_purple>Мастерский узел · пятый ярус</light_purple>"
   menu-confirm-name: "<gold>Подтвердить</gold>"
   menu-confirm-same: "<gray>Этот класс уже выбран</gray>"
   menu-confirm-cooldown: "<red>Смена будет доступна через %time%</red>"
@@ -120,11 +146,18 @@ classes:
   menu-respec-cooldown: "<red>Доступно через %time%</red>"
   menu-respec-empty: "<gray>Изученных талантов нет</gray>"
   menu-respec-ready: "<green>Вернётся очков: %cost%</green>"
+  menu-ability-name: "<gold>Умение класса</gold>"
+  menu-ability-second-name: "<gold>Второе умение</gold>"
+  menu-ability-ready: "<green>Клик — применить</green>"
+  menu-ability-cooldown: "<red>Откат: %time%</red>"
+  menu-ability-none: "<gray>Сначала выберите класс</gray>"
   menu-summary-name: "<gold>Ваш класс</gold>"
   menu-summary-class: "<gray>Класс: <white>%class%</white></gray>"
   menu-summary-level: "<gray>Уровень: <white>%level%</white> · уровней навыков %total%</gray>"
   menu-summary-points: "<gray>Очки: свободно <white>%points%</white>, вложено %spent%</gray>"
   menu-summary-talents: "<gray>Талантов: <white>%count%/%max%</white></gray>"
+  menu-summary-achievements: "<light_purple>+%bonus% очк. за достижения</light_purple>"
+  menu-summary-rank: "<gold>Ранг %level%</gold> <gray>· шаг уровня −%step%, откат умений −%cooldown%%</gray>"
 
   # -------------------------------- профиль ---------------------------------
   profile-title: "Класс"
@@ -157,6 +190,31 @@ classes:
   class.mage.desc: "<gray>Оберег вместо меча: броня, стойкость и скорость.</gray>"
   class.cleric.name: "Жрец"
   class.cleric.desc: "<gray>Милость и дорога: регенерация, сытость и запас здоровья.</gray>"
+
+  # метка класса в нике (ClassTag): полная MiniMessage-строка, ставится перед ником
+  tag.warrior: "<red>[Воин]</red>"
+  tag.archer: "<green>[Стрелок]</green>"
+  tag.mage: "<light_purple>[Маг]</light_purple>"
+  tag.cleric: "<gold>[Жрец]</gold>"
+
+  # умения классов (ClassAbility): имя и что делает.
+  # Ключ первого умения — ид класса, второго — ид класса с «-2».
+  ability.warrior.name: "Боевой рывок"
+  ability.warrior.desc: "<gray>Рывок вперёд и три секунды стойкости.</gray>"
+  ability.warrior-2.name: "Боевой клич"
+  ability.warrior-2.desc: "<gray>Поглощение и стойкость вам и союзникам в шести блоках.</gray>"
+  ability.archer.name: "Залп"
+  ability.archer.desc: "<gray>Три стрелы веером по 3,5 урона.</gray>"
+  ability.archer-2.name: "Прицельный выстрел"
+  ability.archer-2.desc: "<gray>Одна пробивающая стрела на 6 урона.</gray>"
+  ability.mage.name: "Ледяная вспышка"
+  ability.mage.desc: "<gray>Мороз по врагам вокруг: лёгкий урон и замедление.</gray>"
+  ability.mage-2.name: "Испепеление"
+  ability.mage-2.desc: "<gray>Конус пламени впереди: 4 урона и три секунды огня.</gray>"
+  ability.cleric.name: "Исцеление"
+  ability.cleric.desc: "<gray>Лечит вас и до четырёх союзников рядом.</gray>"
+  ability.cleric-2.name: "Оберег"
+  ability.cleric-2.desc: "<gray>Поглощение и снятие слабости, слепоты и яда у союзников.</gray>"
 
   # ------------------------------ ветки дерева ------------------------------
   branch.stoyka: "Стойкость"
@@ -281,3 +339,29 @@ classes:
   talent.cleric-doroga-3.desc: "<gray>Ямы и обрывы не страшны.</gray>"
   talent.cleric-doroga-4.name: "Странствие"
   talent.cleric-doroga-4.desc: "<gray>Вершина дороги: идти — значит жить.</gray>"
+
+  # пятый ярус — мастерские узлы: одно очко, навык 75 и предыдущий узел
+  talent.warrior-stoyka-5.name: "Живая крепость"
+  talent.warrior-stoyka-5.desc: "<gray>Броня из опыта: удары скользят по стойке.</gray>"
+  talent.warrior-natisk-5.name: "Сокрушение"
+  talent.warrior-natisk-5.desc: "<gray>Вес всего боя в одном замахе.</gray>"
+  talent.warrior-zemlya-5.name: "Корни гор"
+  talent.warrior-zemlya-5.desc: "<gray>С места не сдвинуть: отбрасывание гаснет.</gray>"
+  talent.archer-metkost-5.name: "Смертельный выстрел"
+  talent.archer-metkost-5.desc: "<gray>Стрела находит щель в любой броне.</gray>"
+  talent.archer-skorost-5.name: "Ветер в спину"
+  talent.archer-skorost-5.desc: "<gray>Шаг лёгкий, как у тени.</gray>"
+  talent.archer-vyzhivanie-5.name: "Второе сердце"
+  talent.archer-vyzhivanie-5.desc: "<gray>Даже смертельная рана затягивается на ходу.</gray>"
+  talent.mage-chary-5.name: "Печать хранителя"
+  talent.mage-chary-5.desc: "<gray>Чары держат удар вместо брони.</gray>"
+  talent.mage-shchit-5.name: "Купол льда"
+  talent.mage-shchit-5.desc: "<gray>Запас сил, который не пробить с одного удара.</gray>"
+  talent.mage-potok-5.name: "Поток силы"
+  talent.mage-potok-5.desc: "<gray>Магия несёт вперёд, а не тянет назад.</gray>"
+  talent.cleric-milost-5.name: "Хлеб и соль"
+  talent.cleric-milost-5.desc: "<gray>Сытость не кончается там, где есть милость.</gray>"
+  talent.cleric-svet-5.name: "Светлый доспех"
+  talent.cleric-svet-5.desc: "<gray>Вера крепче железа.</gray>"
+  talent.cleric-doroga-5.name: "Попутный ветер"
+  talent.cleric-doroga-5.desc: "<gray>Дорога сама ведёт идущего.</gray>"

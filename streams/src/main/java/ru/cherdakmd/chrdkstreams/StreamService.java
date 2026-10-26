@@ -29,7 +29,7 @@ import java.util.logging.Logger;
  * <p>Работает в отдельном потоке: раз в {@code streams.poll-seconds} берёт все
  * привязки, спрашивает у площадок «идёт ли эфир», проверяет условия (подтверждён,
  * игрок онлайн, зрителей достаточно) и копит минуты. Когда минут набирается на
- * сутки — выдаёт их через API ядра.</p>
+ * час ранга — выдаёт его через API ядра.</p>
  *
  * <p>Защита от накрутки:</p>
  * <ul>
@@ -118,8 +118,8 @@ final class StreamService {
         task = Bukkit.getScheduler().runTaskTimerAsynchronously(
                 plugin, this::pollSafely, firstDelay, periodTicks);
         logger.info("[Streams] Опрос запущен: " + StreamPlatform.ids(cfg.platforms()) + ", каждые "
-                + cfg.pollSeconds() + " с, " + cfg.minutesPerDay() + " мин. = 1 сутки, "
-                + "потолок " + cfg.maxDaysPerDay() + "/сутки.");
+                + cfg.pollSeconds() + " с, " + cfg.minutesPerHour() + " мин. = 1 час, "
+                + "потолок " + cfg.maxHoursPerDay() + " ч./сутки.");
     }
 
     private Map<StreamPlatform, StreamClient> buildClients(StreamConfig cfg) {
@@ -230,7 +230,7 @@ final class StreamService {
             StreamRewards.Decision decision = StreamRewards.advance(
                     binding.state(), credit, now, cfg.rule());
             String name = online != null ? online.getName() : binding.playerName();
-            if (decision.awarded() && !grant(binding, decision.awardDays(), online)) {
+            if (decision.awarded() && !grant(binding, decision.awardHours(), online)) {
                 // Награду выдать не удалось — состояние не сохраняем, повторим на следующем опросе.
                 continue;
             }
@@ -250,8 +250,8 @@ final class StreamService {
         }
     }
 
-    /** Выдаёт дни ранга через API ядра. {@code false} — не получилось, надо повторить. */
-    private boolean grant(StreamBinding binding, int days, Player online) {
+    /** Выдаёт часы ранга через API ядра. {@code false} — не получилось, надо повторить. */
+    private boolean grant(StreamBinding binding, int hours, Player online) {
         ChrdkRegisterApi api = plugin.coreApi();
         if (api == null) {
             logger.warning("[Streams] Ядро CHRDK_Core недоступно — награда "
@@ -260,10 +260,10 @@ final class StreamService {
         }
         String name = online != null ? online.getName() : binding.playerName();
         try {
-            api.grantPass(name, days, SOURCE);
+            api.grantPassHours(name, hours, SOURCE);
             return true;
         } catch (RuntimeException exception) {
-            logger.log(Level.WARNING, "[Streams] Не удалось выдать " + days + " дн. игроку "
+            logger.log(Level.WARNING, "[Streams] Не удалось выдать " + hours + " ч. игроку "
                     + name, exception);
             notifyError(binding.uuid(), exception.getMessage());
             return false;
@@ -284,7 +284,7 @@ final class StreamService {
                 return;
             }
             plugin.messages().send(player, "awarded",
-                    "days", decision.awardDays(), "today", today, "max", cfg.maxDaysPerDay());
+                    "hours", decision.awardHours(), "today", today, "max", cfg.maxHoursPerDay());
             if (until > 0) {
                 plugin.messages().send(player, "awarded-until", "until", until(until));
             }

@@ -109,6 +109,29 @@ class TreasureConfigTest {
     }
 
     @Test
+    void dropsGoToTheGroundByDefault() {
+        TreasuresConfig.Drops drops = TreasuresConfig.parse(
+                new YamlConfiguration(), LOGGER).drops();
+        assertTrue(drops.ground(), "1.4.181: добыча падает на землю без сундука");
+        assertEquals(120, drops.ownerSeconds());
+        assertEquals(120_000L, drops.ownerMillis());
+        assertEquals(0.35, drops.scatter(), 1e-9);
+        assertEquals(0.3, drops.lift(), 1e-9);
+        assertTrue(drops.glow());
+
+        YamlConfiguration cfg = new YamlConfiguration();
+        cfg.set("drops.ground", false);
+        cfg.set("drops.owner-seconds", 5000);
+        cfg.set("drops.scatter", 99);
+        cfg.set("drops.lift", -1);
+        TreasuresConfig.Drops custom = TreasuresConfig.parse(cfg, LOGGER).drops();
+        assertFalse(custom.ground(), "бочки возвращаются явным ключом");
+        assertEquals(600, custom.ownerSeconds(), "привязка не длиннее десяти минут");
+        assertEquals(1.5, custom.scatter(), 1e-9);
+        assertEquals(0.0, custom.lift(), 1e-9);
+    }
+
+    @Test
     void barrelsAreOnByDefaultWithDocumentedLimits() {
         TreasuresConfig defaults = TreasuresConfig.parse(new YamlConfiguration(), LOGGER);
         TreasuresConfig.Barrels barrels = defaults.barrels();
@@ -432,7 +455,7 @@ class TreasureConfigTest {
         assertEquals(120, maps.distanceMin());
         assertEquals(480, maps.distanceMax());
         assertEquals(40, maps.hintTicks());
-        assertEquals(256, maps.hintDistance());
+        assertEquals(512, maps.hintDistance(), "подсказка работает на всю дальность тайника");
         assertEquals(TreasureTier.values().length, maps.tierWeights().size(),
                 "вес задан для каждой редкости тайника");
         assertFalse(TreasuresConfig.Maps.DISABLED.enabled());

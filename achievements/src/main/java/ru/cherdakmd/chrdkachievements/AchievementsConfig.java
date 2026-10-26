@@ -12,14 +12,15 @@ import java.util.logging.Logger;
  * переопределения наград.
  *
  * <p>Награды в каталоге — значения по умолчанию; секция
- * {@code rewards.<ид>.pass-days|diamonds} позволяет администратору подкрутить
+ * {@code rewards.<ид>.pass-hours|diamonds} позволяет администратору подкрутить
  * приз без пересборки. Значения клампятся, неизвестные иды пропускаются с
  * предупреждением.</p>
  */
 public final class AchievementsConfig {
 
     /** Переопределение награды достижения. */
-    public record Reward(int passDays, int diamonds) {
+    /** Награда достижения: часы ранга и алмазы (1.4.184 — часы вместо суток). */
+    public record Reward(int passHours, int diamonds) {
     }
 
     private final boolean enabled;
@@ -62,11 +63,13 @@ public final class AchievementsConfig {
                     continue;
                 }
                 // Отсутствие поля — «как в каталоге» (-1), кривое значение — кламп.
-                boolean hasDays = root.contains(key + ".pass-days");
+                // 1.4.184: часы вместо суток; старый ключ pass-days читается как часы.
+                String hoursKey = root.contains(key + ".pass-hours") ? key + ".pass-hours"
+                        : (root.contains(key + ".pass-days") ? key + ".pass-days" : null);
                 boolean hasDiamonds = root.contains(key + ".diamonds");
-                int days = hasDays ? clamp(root.getInt(key + ".pass-days"), 0, 365) : -1;
+                int hours = hoursKey == null ? -1 : clamp(root.getInt(hoursKey), 0, 24);
                 int diamonds = hasDiamonds ? clamp(root.getInt(key + ".diamonds"), 0, 576) : -1;
-                rewards.put(key, new Reward(days, diamonds));
+                rewards.put(key, new Reward(hours, diamonds));
             }
         }
         return new AchievementsConfig(enabled, announce, actionbar, countCreative, countFlying,
@@ -76,10 +79,10 @@ public final class AchievementsConfig {
     /** Награда с учётом переопределений: {@code -1} означает «как в каталоге». */
     public Reward rewardOf(AchievementDef def) {
         Reward override = rewards.get(def.id());
-        int days = override == null || override.passDays() < 0 ? def.passDays() : override.passDays();
+        int hours = override == null || override.passHours() < 0 ? def.passHours() : override.passHours();
         int diamonds = override == null || override.diamonds() < 0
                 ? def.diamonds() : override.diamonds();
-        return new Reward(days, diamonds);
+        return new Reward(hours, diamonds);
     }
 
     public boolean enabled() {

@@ -30,14 +30,14 @@ class CollectionRewardsTest {
         assertEquals(25, normalized.get(0).percent());
         assertEquals(75, normalized.get(1).percent());
         // При дубле побеждает первая по порядку запись, а не «богатая» вторая.
-        assertEquals(3, normalized.get(1).passDays());
+        assertEquals(3, normalized.get(1).passHours());
     }
 
     @Test
     void tierValuesAreClamped() {
         CollectionRewards.Tier tier = new CollectionRewards.Tier(500, -3, 10_000);
         assertEquals(100, tier.percent());
-        assertEquals(0, tier.passDays());
+        assertEquals(0, tier.passHours());
         assertEquals(576, tier.diamonds());
         assertTrue(tier.empty() == false);
     }

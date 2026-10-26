@@ -32,7 +32,7 @@ class TierCollectionConfigTest {
                 config.properties().stream().map(TierCollectionConfig.Milestone::count).toList());
         assertEquals(List.of(10, 20),
                 config.affixes().stream().map(TierCollectionConfig.Milestone::count).toList());
-        assertEquals(2, config.properties().get(0).passDays());
+        assertEquals(2, config.properties().get(0).passHours());
         assertEquals(32, config.properties().get(2).diamonds());
     }
 
@@ -90,18 +90,18 @@ class TierCollectionConfigTest {
         yaml.set("collection.enabled", false);
         yaml.set("collection.announce-finds", false);
         yaml.set("collection.titles.enabled", false);
-        yaml.set("collection.rewards.sections.all.pass-days", 30);
+        yaml.set("collection.rewards.sections.all.pass-hours", 30);
         yaml.set("collection.rewards.sections.all.diamonds", 100);
-        yaml.set("collection.rewards.properties.30.pass-days", 5);
+        yaml.set("collection.rewards.properties.30.pass-hours", 5);
         yaml.set("collection.rewards.properties.30.diamonds", 12);
-        yaml.set("collection.rewards.affixes.15.pass-days", 1);
+        yaml.set("collection.rewards.affixes.15.pass-hours", 1);
         yaml.set("collection.rewards.affixes.15.diamonds", 3);
 
         TierCollectionConfig config = parse(yaml);
         assertFalse(config.enabled());
         assertFalse(config.announceFinds());
         assertFalse(config.titles().enabled());
-        assertEquals(30, config.section("all").passDays());
+        assertEquals(24, config.section("all").passHours(), "потолок награды — сутки");
         assertEquals(100, config.section("all").diamonds());
         assertEquals(new TierCollectionConfig.SectionReward(3, 16), config.section("tiers"),
                 "незаданный раздел остаётся на умолчании");
@@ -114,7 +114,7 @@ class TierCollectionConfigTest {
     @Test
     void zeroedSectionMeansNoReward() {
         YamlConfiguration yaml = new YamlConfiguration();
-        yaml.set("collection.rewards.sections.all.pass-days", 0);
+        yaml.set("collection.rewards.sections.all.pass-hours", 0);
         yaml.set("collection.rewards.sections.all.diamonds", 0);
         TierCollectionConfig config = parse(yaml);
         assertFalse(config.section("all").hasReward());
@@ -135,30 +135,31 @@ class TierCollectionConfigTest {
     @Test
     void milestonesAreSortedAndOutOfRangeKeysDropped() {
         YamlConfiguration yaml = new YamlConfiguration();
-        yaml.set("collection.rewards.properties.105.pass-days", 9);
-        yaml.set("collection.rewards.properties.15.pass-days", 1);
-        yaml.set("collection.rewards.properties.999.pass-days", 100);
-        yaml.set("collection.rewards.properties.0.pass-days", 100);
-        yaml.set("collection.rewards.properties.abc.pass-days", 100);
+        yaml.set("collection.rewards.properties.105.pass-hours", 9);
+        yaml.set("collection.rewards.properties.15.pass-hours", 1);
+        yaml.set("collection.rewards.properties.999.pass-hours", 100);
+        yaml.set("collection.rewards.properties.0.pass-hours", 100);
+        yaml.set("collection.rewards.properties.abc.pass-hours", 100);
 
         List<TierCollectionConfig.Milestone> milestones = parse(yaml).properties();
         assertEquals(List.of(15, 105),
                 milestones.stream().map(TierCollectionConfig.Milestone::count).toList());
-        assertEquals(1, milestones.get(0).passDays());
-        assertEquals(9, milestones.get(1).passDays());
+        assertEquals(1, milestones.get(0).passHours());
+        assertEquals(9, milestones.get(1).passHours());
     }
 
     @Test
     void rewardsAreClampedToSafeRanges() {
         YamlConfiguration yaml = new YamlConfiguration();
-        yaml.set("collection.rewards.sections.tiers.pass-days", 9999);
+        yaml.set("collection.rewards.sections.tiers.pass-hours", 9999);
         yaml.set("collection.rewards.sections.tiers.diamonds", -5);
-        yaml.set("collection.rewards.properties.15.pass-days", -1);
+        yaml.set("collection.rewards.properties.15.pass-hours", -1);
         yaml.set("collection.rewards.properties.15.diamonds", 9999);
         TierCollectionConfig config = parse(yaml);
-        assertEquals(365, config.section("tiers").passDays(), "больше года за раздел не выдаём");
+        assertEquals(24, config.section("tiers").passHours(),
+                "1.4.184: потолок одной награды — сутки");
         assertEquals(0, config.section("tiers").diamonds());
-        assertEquals(0, config.properties().get(0).passDays());
+        assertEquals(0, config.properties().get(0).passHours());
         assertEquals(576, config.properties().get(0).diamonds(), "9 стаков алмазов — потолок");
     }
 

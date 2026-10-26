@@ -30,11 +30,13 @@ import java.util.Locale;
  * @param items             предметы для вида LOOT
  * @param effects           эффекты для вида EFFECT
  * @param icon              иконка в меню и профиле
+ * @param meteors           падающие звёзды события (1.4.176)
+ * @param horde             нашествие мобов события (1.4.176)
  */
 public record WorldEvent(String id, String name, String description, EventKind kind,
                          int durationSeconds, int weight, int cooldownSeconds, int percent,
                          List<Material> blocks, List<Material> items, List<Effect> effects,
-                         Material icon) {
+                         Material icon, MeteorSpawn meteors, HordeSpawn horde) {
 
     /** Потолок длительности: дольше игроки перестают замечать событие. */
     public static final int MAX_DURATION_SECONDS = 1_800;
@@ -72,6 +74,23 @@ public record WorldEvent(String id, String name, String description, EventKind k
         items = copyMaterials(items);
         effects = copyEffects(effects);
         icon = icon == null || icon == Material.AIR ? Material.CLOCK : icon;
+        meteors = meteors == null ? MeteorSpawn.NONE : meteors;
+        horde = horde == null ? HordeSpawn.NONE : horde;
+    }
+
+    /**
+     * Событие без падающих звёзд и нашествия — обычная надбавка.
+     *
+     * <p>Короткий конструктор оставлен, чтобы старые тесты и сторонний код,
+     * собранный до 1.4.176, продолжали работать: {@code meteors} и
+     * {@code horde} просто выключаются.</p>
+     */
+    public WorldEvent(String id, String name, String description, EventKind kind,
+                      int durationSeconds, int weight, int cooldownSeconds, int percent,
+                      List<Material> blocks, List<Material> items, List<Effect> effects,
+                      Material icon) {
+        this(id, name, description, kind, durationSeconds, weight, cooldownSeconds, percent,
+                blocks, items, effects, icon, MeteorSpawn.NONE, HordeSpawn.NONE);
     }
 
     private static List<Material> copyMaterials(List<Material> source) {
@@ -111,6 +130,16 @@ public record WorldEvent(String id, String name, String description, EventKind k
             case LOOT -> percent > 0 && !items.isEmpty();
             case EFFECT -> !effects.isEmpty();
         };
+    }
+
+    /** Падают ли в этом событии звёзды. */
+    public boolean fallingStars() {
+        return meteors.usable();
+    }
+
+    /** Идёт ли в этом событии нашествие мобов. */
+    public boolean hordeActive() {
+        return horde.usable();
     }
 
     /** Самый долгий эффект — им ограничивается «хвост» после события. */

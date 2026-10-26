@@ -1519,6 +1519,9 @@ public final class AccessManager {
         return grantPassManually(targetPlayerName, config.grantDays(), "manual");
     }
 
+    /** Потолок одной часовой награды: 365 суток в часах — защита от опечатки в конфиге. */
+    public static final int MAX_REWARD_HOURS = 24 * 365;
+
     /**
      * Grants or extends a pass manually.
      *
@@ -1551,6 +1554,44 @@ public final class AccessManager {
     }
 
     /**
+     * Продлевает ранг на часы — общий путь наград аддонов (1.4.184).
+     *
+     * <p>Награда больше не измеряется сутками: час эфира даёт час ранга,
+     * награда достижения или батлпасса — свои часы. Сутки остались только у
+     * покупок, ручной выдачи и приветственного ранга.</p>
+     *
+     * <p>Событие {@link PassGrantedEvent} здесь не поднимается намеренно: это
+     * сигнал «ранг куплен/выдан человеком», а награда не должна запускать
+     * реферальные бонусы и прочие реакции на оплату.</p>
+     *
+     * @param hours  длительность в часах; {@code <= 0} — ничего не делать
+     * @param source метка источника для аудита и поздравления (streams, battlepass, ...)
+     */
+    public RegistrationStore.PlayerAccount grantPassHours(String targetPlayerName, int hours, String source) {
+        long now = System.currentTimeMillis();
+        int safeHours = Math.clamp(hours, 0, MAX_REWARD_HOURS);
+        if (safeHours == 0) {
+            return store.getAccount(targetPlayerName).orElse(null);
+        }
+        String tag = source == null || source.isBlank() ? "reward" : source;
+        RegistrationStore.PlayerAccount account =
+                store.grantPassHours(targetPlayerName, now, safeHours, tag);
+        String description = describeGrantSource(tag);
+        Player onlinePlayer = Bukkit.getPlayerExact(targetPlayerName);
+        if (onlinePlayer != null) {
+            notifyOnlinePassActivated(onlinePlayer, account.passUntil, description);
+        }
+        logger.info("Reward pass extended for " + targetPlayerName + " by " + safeHours
+                + " h (until " + formatTimestamp(account.passUntil) + ", source: " + tag + ").");
+        audit.log(AuditLog.PASS_GRANT_MANUAL, "reward", targetPlayerName, "",
+                AuditLog.details("hours", safeHours, "source", tag, "passUntil", account.passUntil));
+        notifications.notify("pass.granted", notificationTitle(tag),
+                "Игрок: " + targetPlayerName + "\nЧасов: " + safeHours + "\nИсточник: " + tag, "good");
+        plugin.luckPermsPassSync().onPassGranted(targetPlayerName);
+        return account;
+    }
+
+    /**
      * Человеческое описание источника проходки для поздравления игроку.
      * Аддоны передают метку вида {@code streams:...}, {@code battlepass:...} и т.п.
      */
@@ -1575,6 +1616,18 @@ public final class AccessManager {
         }
         if (source.startsWith("referral")) {
             return "бонусом за приглашённого друга";
+        }
+        if (source.startsWith("achievements")) {
+            return "наградой за достижение";
+        }
+        if (source.startsWith("artifacts")) {
+            return "наградой за коллекцию артефактов";
+        }
+        if (source.startsWith("tierforge")) {
+            return "наградой за коллекцию кузни";
+        }
+        if (source.startsWith("orders")) {
+            return "бонусом заказа";
         }
         return "администратором";
     }

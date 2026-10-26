@@ -21,7 +21,7 @@ final class ClassMath {
     /** Потолок очков талантов: защита от правки файла руками. */
     static final int MAX_POINTS = 300;
     /** Ярусов в ветке. */
-    static final int MAX_TIER = 4;
+    static final int MAX_TIER = 5;
 
     /** Уровень класса по сумме уровней навыков. */
     static int level(int totalSkill, int perLevel) {
@@ -36,6 +36,21 @@ final class ClassMath {
         int step = Math.clamp(perLevel, 0, 5);
         long total = (long) start + (long) (Math.clamp(level, 1, MAX_LEVEL) - 1) * step;
         return (int) Math.clamp(total, 0L, MAX_POINTS);
+    }
+
+    /**
+     * Очки талантов за открытые достижения (1.4.175).
+     *
+     * <p>Достижения — единственный источник очков сверх уровней, и он не
+     * продаётся: очко даётся за каждые {@code every} открытых, но не больше
+     * {@code max}. Верхняя граница нужна, чтобы дерево оставалось деревом:
+     * даже с бонусом очков хватает ровно на все 36.</p>
+     */
+    static int achievementBonus(int unlocked, int every, int max) {
+        if (every <= 0 || max <= 0 || unlocked <= 0) {
+            return 0;
+        }
+        return Math.clamp(unlocked / every, 0, Math.max(0, max));
     }
 
     /** Сколько очков осталось после изученных талантов. */
@@ -92,6 +107,12 @@ final class ClassMath {
             return hours + " ч" + (minutes > 0 ? " " + minutes + " мин" : "");
         }
         return minutes > 0 ? minutes + " мин" : safe + " с";
+    }
+
+    /** То же время, но из миллисекунд: кулдауны умений считаются в них. */
+    static String clockMillis(long millis) {
+        long seconds = Math.max(0L, millis) / 1_000L;
+        return clock(seconds);
     }
 
     /** Число без лишних нулей и с запятой в дробной части. */

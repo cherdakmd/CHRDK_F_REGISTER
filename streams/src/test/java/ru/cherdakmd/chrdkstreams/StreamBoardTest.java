@@ -17,14 +17,14 @@ class StreamBoardTest {
         return new StreamBinding.Channel(platform, name, "CHRDK-AAAA", verifiedAt);
     }
 
-    private static StreamBinding binding(String name, int days, StreamBinding.Channel... channels) {
+    private static StreamBinding binding(String name, int hours, StreamBinding.Channel... channels) {
         return new StreamBinding(UUID.nameUUIDFromBytes(name.getBytes()), name,
                 Arrays.asList(channels),
-                new StreamRewards.State(0, 0, 0L, days));
+                new StreamRewards.State(0, 0, 0L, hours));
     }
 
     @Test
-    void topSortsByDaysDescending() {
+    void topSortsByHoursDescending() {
         List<StreamBinding> bindings = List.of(
                 binding("Ann", 3, channel(StreamPlatform.TWITCH, "ann", 1L)),
                 binding("Bob", 10, channel(StreamPlatform.VKPLAY, "bob", 1L)),
@@ -34,7 +34,7 @@ class StreamBoardTest {
 
         assertEquals(List.of("Bob", "Cid", "Ann"),
                 rows.stream().map(StreamBoard.Row::playerName).toList());
-        assertEquals(10, rows.get(0).totalDays());
+        assertEquals(10, rows.get(0).totalHours());
     }
 
     @Test

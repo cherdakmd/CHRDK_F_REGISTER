@@ -47,8 +47,39 @@ class ClassConfigTest {
         assertEquals(24, config.respecCooldownHours());
         assertEquals(5, config.pulseSeconds());
         assertEquals(8, config.outOfCombatSeconds());
+        assertTrue(config.abilitiesEnabled());
+        assertEquals(1.0, config.abilityCooldownMultiplier(), 1.0E-9);
+        assertTrue(config.levelNotice());
+        assertTrue(config.tagEnabled(), "метка класса включена по умолчанию");
         ClassConfig nullConfig = ClassConfig.parse(null, LOGGER);
         assertEquals(config.levelsPerLevel(), nullConfig.levelsPerLevel());
+    }
+
+    @Test
+    void onboardingIsRequiredAndClamped() {
+        ClassConfig defaults = parse("general: {}\n");
+        assertTrue(defaults.onboarding().required(), "выбор класса обязателен по умолчанию");
+        assertEquals(40, defaults.onboarding().openDelayTicks());
+        assertEquals(10, defaults.onboarding().reopenSeconds());
+        assertEquals(30, defaults.onboarding().remindSeconds());
+        assertEquals(10 * 20L, defaults.onboarding().reopenTicks());
+        assertEquals(30 * 20L, defaults.onboarding().remindTicks());
+
+        String yaml = "onboarding:\n"
+                + "  required: false\n"
+                + "  open-delay-ticks: -5\n"
+                + "  reopen-seconds: 0\n"
+                + "  remind-seconds: 100000\n";
+        ClassConfig custom = parse(yaml);
+        assertFalse(custom.onboarding().required());
+        assertEquals(0, custom.onboarding().openDelayTicks());
+        assertEquals(1L, custom.onboarding().openTicks(), "нулевая задержка — один тик");
+        assertEquals(3, custom.onboarding().reopenSeconds(),
+                "переоткрытие не чаще раза в три секунды");
+        assertEquals(3600, custom.onboarding().remindSeconds(),
+                "напоминание не чаще раза в час");
+        assertEquals(0L, parse("onboarding:\n  remind-seconds: 0\n").onboarding().remindTicks(),
+                "ноль выключает напоминание");
     }
 
     @Test
@@ -88,6 +119,29 @@ class ClassConfigTest {
         assertEquals(ClassConfig.MAX_RESPEC_HOURS, high.respecCooldownHours());
         assertEquals(ClassConfig.MAX_PULSE_SECONDS, high.pulseSeconds());
         assertEquals(ClassConfig.MAX_OUT_OF_COMBAT_SECONDS, high.outOfCombatSeconds());
+    }
+
+    @Test
+    void abilityMultiplierIsClamped() {
+        ClassConfig low = parse("""
+                abilities:
+                  enabled: false
+                  cooldown-multiplier: 0.01
+                """);
+        assertFalse(low.abilitiesEnabled());
+        assertEquals(ClassConfig.MIN_ABILITY_MULTIPLIER, low.abilityCooldownMultiplier(), 1.0E-9);
+
+        ClassConfig high = parse("""
+                abilities:
+                  cooldown-multiplier: 99
+                """);
+        assertEquals(ClassConfig.MAX_ABILITY_MULTIPLIER, high.abilityCooldownMultiplier(), 1.0E-9);
+
+        ClassConfig odd = parse("""
+                abilities:
+                  cooldown-multiplier: "быстро"
+                """);
+        assertEquals(1.0, odd.abilityCooldownMultiplier(), 1.0E-9);
     }
 
     @Test
@@ -134,6 +188,54 @@ class ClassConfigTest {
             assertTrue(config.outOfCombatSeconds() >= 3, "регенерация не должна идти в бою");
             assertFalse(config.locale().isBlank());
             assertNotNull(yaml.getConfigurationSection("effects"));
+            assertTrue(config.abilitiesEnabled(), "умения идут включёнными");
+            assertEquals(1.0, config.abilityCooldownMultiplier(), 1.0E-9);
+            assertNotNull(yaml.getConfigurationSection("abilities"));
+            assertTrue(yaml.getBoolean("general.level-notice"));
+            assertTrue(config.tagEnabled());
+            assertNotNull(yaml.getConfigurationSection("tag"));
+            assertNotNull(yaml.getConfigurationSection("points"), "секция очков за достижения");
+            assertNotNull(yaml.getConfigurationSection("ranks"), "секция плюшек рангов");
+            assertEquals(15, config.achievementEvery());
+            assertEquals(2, config.achievementMaxBonus());
+            assertTrue(config.ranksEnabled());
         }
+    }
+
+    @Test
+    void achievementPointsRespectTheirLimits() {
+        ClassConfig defaults = parse("general: {}\n");
+        assertEquals(ClassConfig.defaults().achievementEvery(), defaults.achievementEvery());
+        assertEquals(ClassConfig.defaults().achievementMaxBonus(), defaults.achievementMaxBonus());
+        assertTrue(defaults.ranksEnabled(), "плюшки рангов включены по умолчанию");
+
+        ClassConfig low = parse("""
+                points:
+                  achievement-every: -5
+                  achievement-max: -5
+                ranks:
+                  enabled: false
+                """);
+        assertEquals(0, low.achievementEvery(), "отрицательное значение — бонус выключен");
+        assertEquals(0, low.achievementMaxBonus());
+        assertFalse(low.ranksEnabled());
+
+        ClassConfig high = parse("""
+                points:
+                  achievement-every: 999
+                  achievement-max: 999
+                """);
+        assertEquals(ClassConfig.MAX_ACHIEVEMENT_EVERY, high.achievementEvery());
+        assertEquals(ClassConfig.MAX_ACHIEVEMENT_BONUS, high.achievementMaxBonus(),
+                "потолок очков за достижения не даёт купить всё дерево дважды");
+    }
+
+    @Test
+    void levelStepNeverCollapsesToOne() {
+        ClassConfig low = parse("""
+                general:
+                  levels-per-level: 1
+                """);
+        assertEquals(ClassConfig.MIN_LEVELS_PER_LEVEL, low.levelsPerLevel());
     }
 }

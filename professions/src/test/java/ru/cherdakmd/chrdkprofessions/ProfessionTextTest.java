@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Показ результатов и прибавок (1.4.165).
@@ -27,8 +28,14 @@ class ProfessionTextTest {
                 professions:
                   profession.smith.name: "Кузнец"
                   profession.mason.name: "Камнерез"
+                  profession.mason.hint: "камень и камнерез"
                   perk.none: "пока нет"
                   perk.smith: "Скидка %value%"
+                  perk.cook: "+%value% сытости"
+                  next.smith: "урок %level% → %value%"
+                  next.mason: "урок %level% → %value%"
+                  next.cook: "урок %level% → %value%"
+                  next.max: "потолок"
                   rank.novice: "новичок"
                   rank.master: "мастер"
                 """;
@@ -75,10 +82,54 @@ class ProfessionTextTest {
         assertEquals("Скидка 20",
                 ProfessionText.perk(messages, Profession.SMITH, 10).text());
         assertEquals("пока нет",
+                ProfessionText.perk(messages, Profession.COOK, 4).text(),
+                "до 5-го уровня повар ещё не кормит сытнее");
+        assertEquals("+1 сытости",
                 ProfessionText.perk(messages, Profession.COOK, 5).text(),
-                "до 10-го уровня повар ещё не кормит сытнее");
+                "1.4.178: первый шаг насыщения — с 5-го уровня");
         assertEquals("", ProfessionText.perkRaw(messages, null, 10));
         assertEquals("", ProfessionText.perk(null, Profession.SMITH, 10).text());
+    }
+
+    @Test
+    void hintIsShownForKnownProfessionOnly() {
+        Messages messages = messages();
+        assertEquals("камень и камнерез",
+                ProfessionText.hintComponent(messages, Profession.MASON).text());
+        assertEquals("", ProfessionText.hintComponent(messages, Profession.SMITH).text(),
+                "без ключа текст не выдумывается");
+        assertEquals("", ProfessionText.hintComponent(null, Profession.MASON).text());
+        assertEquals("", ProfessionText.hintComponent(messages, null).text());
+    }
+
+    @Test
+    void barShowsProgressInTenSegments() {
+        assertEquals("░░░░░░░░░░", ProfessionText.barPlain(0));
+        assertEquals("███░░░░░░░", ProfessionText.barPlain(30));
+        assertEquals("█████░░░░░", ProfessionText.barPlain(50));
+        assertEquals("██████████", ProfessionText.barPlain(100));
+        assertEquals("░░░░░░░░░░", ProfessionText.barPlain(-20), "ниже нуля не бывает");
+        assertEquals("██████████", ProfessionText.barPlain(140), "выше ста не бывает");
+        assertTrue(ProfessionText.barRaw(50).contains("<green>█████</green>"),
+                "заполненная часть зелёная");
+        assertTrue(ProfessionText.barRaw(50).contains("<dark_gray>░░░░░</dark_gray>"),
+                "пустая часть тёмная");
+    }
+
+    @Test
+    void nextStepTellsWhatTheLevelBrings() {
+        Messages messages = messages();
+        assertEquals("урок 2 → 2", ProfessionText.nextStepRaw(messages, Profession.MASON, 1, 25));
+        assertEquals("урок 5 → 1", ProfessionText.nextStepRaw(messages, Profession.COOK, 1, 25),
+                "у повара шаг — порог насыщения");
+        assertEquals("потолок", ProfessionText.nextStepRaw(messages, Profession.COOK, 16, 25),
+                "третий шаг открывается только с рангом");
+        assertEquals("потолок", ProfessionText.nextStepRaw(messages, Profession.SMITH, 20, 25),
+                "скидка уже на потолке");
+        assertEquals("", ProfessionText.nextStepRaw(messages, Profession.SMITH, 25, 25),
+                "на своём потолке подсказки нет");
+        assertEquals("", ProfessionText.nextStepRaw(null, Profession.SMITH, 1, 25));
+        assertEquals("", ProfessionText.nextStepRaw(messages, null, 1, 25));
     }
 
     @Test

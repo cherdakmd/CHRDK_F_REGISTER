@@ -75,10 +75,11 @@ class ProfessionMathTest {
         assertEquals(1, ProfessionMath.alchemistChance(1));
         assertEquals(20, ProfessionMath.alchemistChance(25));
 
-        assertEquals(0, ProfessionMath.cookSaturation(1));
-        assertEquals(1, ProfessionMath.cookSaturation(10));
-        assertEquals(1, ProfessionMath.cookSaturation(19));
-        assertEquals(2, ProfessionMath.cookSaturation(20));
+        assertEquals(0, ProfessionMath.cookSaturation(1), "до 5-го уровня прибавки нет");
+        assertEquals(0, ProfessionMath.cookSaturation(4));
+        assertEquals(1, ProfessionMath.cookSaturation(5), "1.4.178: первый шаг с 5-го уровня");
+        assertEquals(1, ProfessionMath.cookSaturation(14));
+        assertEquals(2, ProfessionMath.cookSaturation(15));
         assertEquals(2, ProfessionMath.cookSaturation(25));
 
         assertEquals(15, ProfessionMath.masonChance(15));
@@ -86,6 +87,20 @@ class ProfessionMathTest {
 
         assertEquals(0, ProfessionMath.perkValue(null, 10));
         assertEquals(8, ProfessionMath.perkValue(Profession.SMITH, 4));
+    }
+
+    @Test
+    void cookStepsTellWhatComesNext() {
+        assertEquals(5, ProfessionMath.nextCookStep(1), "с первого уровня следующий шаг — пятый");
+        assertEquals(5, ProfessionMath.nextCookStep(4));
+        assertEquals(15, ProfessionMath.nextCookStep(5));
+        assertEquals(0, ProfessionMath.nextCookStep(15),
+                "порог 30-го уровня без ранга недоступен");
+        assertEquals(0, ProfessionMath.nextCookStep(25), "без ранга дальше 25-го некуда");
+        assertEquals(30, ProfessionMath.nextCookStep(15, 35), "ранг V открывает 30-й");
+        assertEquals(30, ProfessionMath.nextCookStep(25, 35), "ранг V открывает 30-й");
+        assertEquals(0, ProfessionMath.nextCookStep(30, 35));
+        assertEquals(0, ProfessionMath.nextCookStep(35, 35));
     }
 
     @Test

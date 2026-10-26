@@ -42,7 +42,7 @@ public final class ReferralRules {
         return LinkError.OK;
     }
 
-    /** Trial grants must never consume a pending link or mint referral days. */
+    /** Trial grants must never consume a pending link or mint referral hours. */
     public static boolean triggersBonus(String source) { return !"trial".equals(source); }
 
     /** Соответствующий ключ сообщения для ошибки. */

@@ -71,10 +71,10 @@ collection:
   # один раз. Пустой блок (rewards: {}) вернёт набор по умолчанию — чтобы
   # выключить награды, поставьте enabled: false или нули в полях.
   rewards:
-    25: {pass-days: 1, diamonds: 8}
-    50: {pass-days: 2, diamonds: 16}
-    75: {pass-days: 3, diamonds: 24}
-    100: {pass-days: 7, diamonds: 32}
+    25: {pass-hours: 1, diamonds: 8}
+    50: {pass-hours: 2, diamonds: 16}
+    75: {pass-hours: 3, diamonds: 24}
+    100: {pass-hours: 7, diamonds: 32}
 
 # Обратная связь (1.4.130): экшнбар и звуки вместо «тонущих» строк в чате.
 feedback:

@@ -62,8 +62,8 @@ class BattlePassScreenTest {
         assertFalse(line.contains("<gray>"), "MiniMessage-тег попал в текст: " + line);
         assertFalse(line.contains("</gray>"), "закрывающий тег попал в текст: " + line);
         assertTrue(line.contains("8/16"), "нет прогресса: " + line);
-        assertTrue(line.contains("+1 дн."), "нет бесплатной награды: " + line);
-        assertTrue(line.contains("VIP +2 дн."), "нет VIP-награды: " + line);
+        assertTrue(line.contains("+1 ч."), "нет бесплатной награды: " + line);
+        assertTrue(line.contains("VIP +2 ч."), "нет VIP-награды: " + line);
         assertFalse(line.contains("забрать"), "кнопка не нужна, пока цель не достигнута: " + line);
         assertEquals(8, line.chars().filter(c -> c == '▰' || c == '▱').count(),
                 "полоса должна состоять из 8 секций: " + line);
@@ -116,11 +116,11 @@ class BattlePassScreenTest {
     }
 
     @Test
-    void premiumRewardIsShownWithProductsAndDays() throws Exception {
+    void premiumRewardIsShownWithProductsAndHours() throws Exception {
         String line = plain(screen().mission("bp",
                 new BattlePassView.Mission(premium(), 10, false, false, false, false, true)));
-        assertTrue(line.contains("+1 дн."), "бесплатная награда потерялась: " + line);
-        assertTrue(line.contains("★ +3 дн."), "нет дней премиум-трека: " + line);
+        assertTrue(line.contains("+1 ч."), "бесплатная награда потерялась: " + line);
+        assertTrue(line.contains("★ +3 ч."), "нет часов премиум-трека: " + line);
         assertTrue(line.contains("★ подарок"), "нет отметки о товаре: " + line);
         assertTrue(line.contains("забрать"), "премиум-награда должна быть доступна: " + line);
         assertFalse(line.contains("<"), "в тексте остались теги: " + line);

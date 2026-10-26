@@ -286,17 +286,35 @@ public final class Messages {
         return fill(legacyToMini(template(key)), placeholders);
     }
 
-     private String fill(String template, Object... placeholders) {
-         if (placeholders == null || placeholders.length == 0) return template;
-         String result = template;
-         for (int index = 0; index + 1 < placeholders.length; index += 2) {
-             String name = String.valueOf(placeholders[index]);
-             Object replacement = placeholders[index + 1];
-             String value = replacement instanceof Trusted trusted ? trusted.text() : escape(replacement);
-             result = result.replace("%" + name + "%", value);
-         }
-         return result;
-     }
+    private String fill(String template, Object... placeholders) {
+        if (placeholders == null || placeholders.length == 0) return template;
+        String result = template;
+        for (int index = 0; index + 1 < placeholders.length; index += 2) {
+            String name = placeholderName(placeholders[index]);
+            if (name.isEmpty()) continue;
+            Object replacement = placeholders[index + 1];
+            String value = replacement instanceof Trusted trusted ? trusted.text() : escape(replacement);
+            result = result.replace("%" + name + "%", value);
+        }
+        return result;
+    }
+
+    /**
+     * Имя подстановки без обрамляющих процентов.
+     *
+     * <p>Код вправе передать и {@code "latest"}, и {@code "%latest%"}: второе
+     * исторически писали рядом с шаблоном, и без нормализации получалось
+     * {@code %%latest%%} — подстановка не срабатывала, а игрок видел сырой
+     * {@code %latest%} в чате. Пустое имя пропускается: {@code "%%"} в тексте
+     * заменять нечем.</p>
+     */
+    private static String placeholderName(Object raw) {
+        String name = raw == null ? "" : String.valueOf(raw).trim();
+        while (name.length() >= 2 && name.startsWith("%") && name.endsWith("%")) {
+            name = name.substring(1, name.length() - 1).trim();
+        }
+        return name;
+    }
 
     /** Значение подстановки с уже готовой MiniMessage-разметкой: вставляется в шаблон без экранирования. */
     public record Trusted(String text) { }

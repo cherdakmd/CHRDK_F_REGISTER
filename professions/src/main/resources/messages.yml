@@ -20,7 +20,7 @@ professions:
   help-info: "<yellow>/prof info [ремесло]</yellow> <gray>— карточка, прибавка и остаток на сегодня</gray>"
   help-stats: "<yellow>/prof stats</yellow> <gray>— уровни всех четырёх ремёсел</gray>"
   help-top: "<yellow>/prof top</yellow> <gray>— сколько игроков в каждом ремесле</gray>"
-  help-footer: "<gray>Опыт даёт крафт, плавка и варка. Суточный потолок: <white>%cap%</white> опыта, смена ремесла — раз в <white>%hours%</white> ч.</gray>"
+  help-footer: "<gray>Опыт даёт работа: крафт, печь, варка, добыча, камнерез, наковальня и стол кузнеца. Суточный потолок: <white>%cap%</white> опыта, смена ремесла — раз в <white>%hours%</white> ч.</gray>"
 
   # -------------------------------- выбор -----------------------------------
   choose-usage: "<gray>/prof choose <yellow><smith|alchemist|cook|mason></yellow></gray>"
@@ -31,19 +31,31 @@ professions:
   profession-change-ready: "<gray>Смена ремесла «%from%» → «%to%»: опыт прежнего сохранится.</gray>"
   profession-chosen: "<green>Ремесло выбрано: <white>%profession%</white>. Опыт пойдёт за работу.</green>"
   profession-changed: "<green>Ремесло сменено: <white>%from%</white> → <white>%to%</white>. Опыт обоих сохранён.</green>"
+  # 1.4.177: сразу после выбора — за какую работу идёт опыт.
+  chosen-hint: "%profession% <dark_gray>·</dark_gray> <gray>опыт за:</gray> %hint%"
 
   # ------------------------------ опыт и уровни ------------------------------
   join-hint: "<gray>Ремесло ещё не выбрано: <yellow>/prof</yellow> — четыре профессии и их прибавки.</gray>"
+  # 1.4.182: обязательный выбор профессии — меню, напоминание и закрытие без выбора.
+  onboarding-start: "<gold>Профессия</gold> <dark_gray>·</dark_gray> <white>Выбери ремесло</white> <dark_gray>—</dark_gray> <gray>меню откроется через пару секунд. Это бесплатно.</gray>"
+  onboarding-remind: "<gold>Выбери профессию</gold> <dark_gray>·</dark_gray> <yellow>/prof</yellow>"
+  onboarding-closed: "<gold>Профессия</gold> <dark_gray>·</dark_gray> <white>Без ремесла не капает опыт и не работают прибавки.</white> <gray>Меню откроется снова — или выбери сам: <yellow>/prof</yellow></gray>"
   level-up: "<gold>Профессия «%profession%»: уровень <white>%level%</white> — %rank%</gold>"
   level-actionbar: "<gold>%profession% · ур. %level%</gold>"
   daily-cap: "<gray>Суточный опыт «%profession%» получен. Продолжим завтра.</gray>"
+  # 1.4.177: строка над хотбаром после начисления опыта (копим 0,5 с).
+  xp-gain: "<gray>%profession% <dark_gray>·</dark_gray> <green>+%amount%</green> <gray>опыта <dark_gray>(%xp%/%needed%)</dark_gray></gray>"
 
   # -------------------------------- карточка --------------------------------
   info-header: "<gold>Профессия: <white>%profession%</white></gold>"
   info-none: "<gray>Ремесло не выбрано.</gray>"
   info-none-hint: "<gray>Выбор бесплатный: <yellow>/prof choose <smith|alchemist|cook|mason></yellow>. Смена — раз в %hours% ч.</gray>"
   info-level: "<gray>Уровень <white>%level%</white> · %rank% · опыт <white>%xp%/%needed%</white></gray>"
+  # 1.4.179: полоса опыта и что даст следующий уровень.
+  info-bar: "%bar%"
+  info-next: "%next%"
   info-perk: "<gray>Прибавка: %perk%</gray>"
+  info-hint: "<gray>Опыт за:</gray> %hint%"
   # 1.4.167: ранг поднимает потолок профессии выше обычных 25 уровней.
   info-rank-cap: "<gold>Ранг даёт +%bonus% уровней навыка: потолок %level%.</gold>"
   info-not-active: "<dark_gray>Это не текущее ремесло: опыт за работу пока не идёт.</dark_gray>"
@@ -73,7 +85,10 @@ professions:
   menu-profession-level: "<gray>Уровень <white>%level%</white> · %rank%</gray>"
   menu-profession-xp: "<gray>Опыт: <white>%xp%/%needed%</white> (%percent%)</gray>"
   menu-profession-max: "<gold>Уровень максимальный</gold>"
+  menu-progress-bar: "%bar%"
+  menu-profession-next: "%next%"
   menu-profession-perk: "<gray>Прибавка: %perk%</gray>"
+  menu-profession-hint: "<gray>Опыт за:</gray> %hint%"
   menu-profession-current: "<green>Это ваше ремесло</green>"
   menu-profession-click: "<yellow>Нажмите, чтобы посмотреть</yellow>"
   menu-confirm-name: "<green>Выбрать ремесло</green>"
@@ -90,9 +105,19 @@ professions:
   profile-profession: "<gray>Ремесло: <white>%profession%</white></gray>"
   profile-level: "<gray>Уровень <white>%level%</white> · %rank%</gray>"
   profile-progress: "<gray>Опыт: <white>%xp%/%needed%</white> (%percent%)</gray>"
+  profile-bar: "%bar%"
+  profile-next: "%next%"
   profile-perk: "<gray>Прибавка: %perk%</gray>"
+  profile-hint: "<gray>Опыт за:</gray> %hint%"
   profile-daily: "<gray>Осталось на сегодня: <white>%left%</white></gray>"
   profile-cooldown: "<dark_gray>Смена ремесла через %time%</dark_gray>"
+
+  # ----------------------------- что дальше (1.4.179) -----------------------
+  next.smith: "<gray>Дальше: уровень <white>%level%</white> — скидка <white>%value%</white>%</gray>"
+  next.alchemist: "<gray>Дальше: уровень <white>%level%</white> — шанс <white>%value%</white>%</gray>"
+  next.mason: "<gray>Дальше: уровень <white>%level%</white> — шанс <white>%value%</white>%</gray>"
+  next.cook: "<gray>Дальше: уровень <white>%level%</white> — <white>+%value%</white> к насыщению</gray>"
+  next.max: "<dark_gray>Прибавка на потолке: следующий шаг откроется с рангом выше.</dark_gray>"
 
   # -------------------------------- ранги -----------------------------------
   rank.novice: "<gray>новичок</gray>"
@@ -105,17 +130,21 @@ professions:
   perk.smith: "<white>%value%</white>% скидки на работу в наковальне"
   perk.alchemist: "<white>%value%</white>% шанса на лишнюю склянку"
   perk.cook: "<white>+%value%</white> к насыщению от еды"
-  perk.mason: "<white>%value%</white>% шанса на второй блок при плавке"
+  perk.mason: "<white>%value%</white>% шанса на лишний блок при плавке и распиле"
 
   # ------------------------------ ремёсла -----------------------------------
   profession.smith.name: "<white>Кузнец</white>"
-  profession.smith.desc: "<gray>Наковальня, инструменты и броня. Опыт — за ковку, плавку металла и починку.</gray>"
+  profession.smith.hint: "<gray>ковка, наковальня, плавка металла, руда</gray>"
+  profession.smith.desc: "<gray>Наковальня, инструменты и броня. Опыт — за ковку, работу в наковальне, плавку металла и добычу руды.</gray>"
   profession.alchemist.name: "<white>Алхимик</white>"
-  profession.alchemist.desc: "<gray>Зелья и варка. Опыт — за сваренные зелья и алхимические предметы.</gray>"
+  profession.alchemist.hint: "<gray>варка зелий, реагенты, тростник и аметист</gray>"
+  profession.alchemist.desc: "<gray>Зелья и варка. Опыт — за сваренные зелья, реагенты и алхимические предметы.</gray>"
   profession.cook.name: "<white>Повар</white>"
-  profession.cook.desc: "<gray>Еда и печь. Опыт — за готовку, выпечку и плавку еды.</gray>"
+  profession.cook.hint: "<gray>готовка и печь, урожай с грядок</gray>"
+  profession.cook.desc: "<gray>Еда и печь. Опыт — за готовку, выпечку и собранный урожай.</gray>"
   profession.mason.name: "<white>Камнерез</white>"
-  profession.mason.desc: "<gray>Камень и плавка. Опыт — за каменные блоки, кирпич и обжиг.</gray>"
+  profession.mason.hint: "<gray>добыча камня, распил на камнерезе, обжиг</gray>"
+  profession.mason.desc: "<gray>Камень, кирпич и распил. Опыт — за добычу камня, камнерез и обжиг.</gray>"
 
   # --------------------------- администрирование ----------------------------
   admin-usage: "<gray>/profadmin <yellow>reload</yellow> | <yellow>info <ник></yellow> | <yellow>set <ник> <ремесло></yellow> | <yellow>xp <ник> <ремесло> <кол-во></yellow> | <yellow>reset <ник></yellow></gray>"

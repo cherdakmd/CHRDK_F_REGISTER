@@ -28,6 +28,11 @@ public final class ClaimNotice {
     /**
      * Снимок привата в чанке игрока.
      *
+     * <p>{@code x} и {@code z} — координаты <b>чанка</b>: по ним приват ищется
+     * в хранилище и сравниваются переходы. Игроку показываются координаты
+     * блока в центре этого чанка ({@link #blockX()} / {@link #blockZ()}):
+     * они совпадают с F3, с миникартой и с точкой, куда ведёт {@code /claim tp}.</p>
+     *
      * @param role {@code null} — игрок не участник (посторонний)
      */
     public record Spot(String world, int x, int z, String owner, int salePrice,
@@ -53,6 +58,20 @@ public final class ClaimNotice {
                 return Audience.OWNER;
             }
             return role != null ? Audience.MEMBER : Audience.VISITOR;
+        }
+
+        /**
+         * Координата X блока в центре привата: чанк {@code -139} — это блоки
+         * {@code -2224..-2209}, центр {@code -2216}. Именно эти числа видит
+         * игрок в уведомлении, а не «номер чанка».
+         */
+        public int blockX() {
+            return ClaimTeleport.centerX(x);
+        }
+
+        /** Координата Z блока в центре привата (см. {@link #blockX()}). */
+        public int blockZ() {
+            return ClaimTeleport.centerZ(z);
         }
 
         /** Стабильный ключ чанка для кулдауна уведомлений. */

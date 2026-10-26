@@ -169,14 +169,14 @@ public final class AchievementRegistry {
     }
 
     private static void register(String id, AchievementDef.Category category,
-                                 AchievementMetric metric, long goal, int passDays, int diamonds) {
-        register(id, category, metric, goal, passDays, diamonds, null);
+                                 AchievementMetric metric, long goal, int passHours, int diamonds) {
+        register(id, category, metric, goal, passHours, diamonds, null);
     }
 
     private static void register(String id, AchievementDef.Category category,
-                                 AchievementMetric metric, long goal, int passDays, int diamonds,
+                                 AchievementMetric metric, long goal, int passHours, int diamonds,
                                  String badge) {
-        REGISTRY.put(id, new AchievementDef(id, category, metric, goal, passDays, diamonds, badge));
+        REGISTRY.put(id, new AchievementDef(id, category, metric, goal, passHours, diamonds, badge));
     }
 
     public static AchievementDef byId(String id) {

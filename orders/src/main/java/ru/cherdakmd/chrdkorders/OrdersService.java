@@ -148,7 +148,7 @@ public final class OrdersService {
         int reward = OrderBoard.reward(item, amount, config.premium(), config.jitterPercent(),
                 config.minReward(), config.maxReward(), random);
         return new OrderBoard.Draft(botFor(category), category, item, amount, reward,
-                OrderBoard.passDays(category, random));
+                OrderBoard.passHours(category, random));
     }
 
     /**
@@ -257,7 +257,7 @@ public final class OrdersService {
         plugin.store().recordDelivery(player.getUniqueId(), player.getName(), now,
                 order.reputation());
         int dropped = payDiamonds(player, order.rewardDiamonds());
-        boolean pass = grantPass(player, order);
+        boolean pass = grantPassHours(player, order);
         plugin.requestSave();
 
         plugin.messages().send(player, "delivered",
@@ -272,7 +272,7 @@ public final class OrdersService {
         }
         if (pass) {
             plugin.messages().send(player, "delivered-pass",
-                    "days", String.valueOf(order.rewardPassDays()));
+                    "hours", String.valueOf(order.rewardPassHours()));
         }
         if (dropped > 0) {
             plugin.messages().send(player, "delivered-dropped");
@@ -317,8 +317,8 @@ public final class OrdersService {
         return dropped;
     }
 
-    /** Дни ранга через ядро; {@code true} — награда выдана. */
-    private boolean grantPass(Player player, BotOrder order) {
+    /** Часы ранга через ядро; {@code true} — награда выдана. */
+    private boolean grantPassHours(Player player, BotOrder order) {
         if (!order.hasPassReward()) {
             return false;
         }
@@ -328,7 +328,7 @@ public final class OrdersService {
                     + " не выдана игроку " + player.getName() + ".");
             return false;
         }
-        api.grantPass(player.getName(), order.rewardPassDays(), "orders:" + order.botId());
+        api.grantPassHours(player.getName(), order.rewardPassHours(), "orders:" + order.botId());
         return true;
     }
 

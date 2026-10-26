@@ -97,16 +97,35 @@ public final class TabListService implements Listener {
     private final java.util.Set<java.util.UUID> managedNames = new java.util.HashSet<>();
     private final java.util.Set<java.util.UUID> managedHeaders = new java.util.HashSet<>();
     /** Оформление ника из ядра (тег каталога + метки аддонов) для {@code %player_tagged%}. */
-    private volatile java.util.function.Function<String, String> nameDecorator = Messages::escape;
+    private volatile NameDecorator nameDecorator = (name, rank, badges) -> Messages.escape(name);
+    /** 1.4.183: личные переключатели надписей; {@code null} — всё видно. */
+    private volatile LabelPreferences labelPreferences;
 
     public TabListService(RegisterPlugin plugin, AccessManager accessManager) {
         this.plugin = plugin;
         this.accessManager = accessManager;
     }
 
+    /**
+     * Оформление ника с учётом переключателей (1.4.183).
+     *
+     * <p>Флаги передаются отдельно, а не читаются внутри декоратора: таб-лист
+     * уже знает, что игрок спрятал, и не должен второй раз спрашивать то же
+     * самое у хранилища на каждого зрителя.</p>
+     */
+    @FunctionalInterface
+    public interface NameDecorator {
+        String decorate(String playerName, boolean showRank, boolean showBadges);
+    }
+
     /** Подключает оформление ников (вызывается один раз при включении ядра). */
-    public void setNameDecorator(java.util.function.Function<String, String> decorator) {
-        this.nameDecorator = decorator == null ? name -> name : decorator;
+    public void setNameDecorator(NameDecorator decorator) {
+        this.nameDecorator = decorator == null ? (name, rank, badges) -> name : decorator;
+    }
+
+    /** Подключает личные переключатели надписей (1.4.183). */
+    public void setLabelPreferences(LabelPreferences preferences) {
+        this.labelPreferences = preferences;
     }
 
     /** Перечитывает {@code tablist.*} из конфига, пересоздаёт задачу и применяет к онлайну. */
@@ -182,10 +201,17 @@ public final class TabListService implements Listener {
     }
 
     private void apply(Player player) {
-        TabContext context = contextOf(player, System.currentTimeMillis());
+        boolean showHeader = visible(player, LabelPreferences.Category.HEADER);
+        boolean showRank = visible(player, LabelPreferences.Category.RANK);
+        boolean showBadges = visible(player, LabelPreferences.Category.BADGES);
+        TabContext context = contextOf(player, System.currentTimeMillis(), showRank, showBadges);
         Messages messages = plugin.messages();
-        Component header = joinLines(renderLines(messages, settings.header(), context));
-        Component footer = joinLines(renderLines(messages, settings.footer(), context));
+        // 1.4.183: игрок может спрятать шапку и подвал — тогда список остаётся
+        // чистым, а не «с дырками» в полэкрана.
+        Component header = showHeader
+                ? joinLines(renderLines(messages, settings.header(), context)) : Component.empty();
+        Component footer = showHeader
+                ? joinLines(renderLines(messages, settings.footer(), context)) : Component.empty();
         player.sendPlayerListHeaderAndFooter(header, footer);
         managedHeaders.add(player.getUniqueId());
         if (!settings.nameFormat().isBlank()) {
@@ -193,6 +219,26 @@ public final class TabListService implements Listener {
                     nameFormat(settings.nameFormat(), settings.showRankName()), context));
             managedNames.add(player.getUniqueId());
         } else if (managedNames.remove(player.getUniqueId())) player.playerListName(null);
+    }
+
+    /** Видна ли категория у этого игрока: без хранилища — всё видно. */
+    private boolean visible(Player player, LabelPreferences.Category category) {
+        LabelPreferences preferences = labelPreferences;
+        return preferences == null || preferences.visible(player.getName(), category);
+    }
+
+    /**
+     * Перерисовывает таб всем (1.4.183).
+     *
+     * <p>Имя в списке общее: если игрок спрятал ранг, это должны увидеть все, а
+     * не только он. Поэтому после переключения в {@code /labels} обновляется
+     * весь онлайн, а не один зритель.</p>
+     */
+    public void refreshAll() {
+        if (!settings.enabled()) {
+            return;
+        }
+        applyAll();
     }
 
     // ------------------------------ закрепление вверху списка -------------------
@@ -221,7 +267,7 @@ public final class TabListService implements Listener {
             if (name != null && !name.isBlank()) {
                 String exact = Bukkit.getOnlinePlayers().stream().map(Player::getName)
                         .filter(n -> n.equalsIgnoreCase(name.trim())).findFirst().orElse(name.trim());
-                if (board.getEntryTeam(exact) == null || board.getEntryTeam(exact) == team) team.addEntry(exact);
+                pin(board, team, exact);
             }
         }
     }
@@ -241,8 +287,33 @@ public final class TabListService implements Listener {
         }
         for (Player player : Bukkit.getOnlinePlayers()) {
             String name = player.getName();
-            if (isPinned(settings.pinnedNames(), name) && !team.hasEntry(name) && board.getEntryTeam(name) == null) team.addEntry(name);
+            if (isPinned(settings.pinnedNames(), name) && !team.hasEntry(name)) {
+                pin(board, team, name);
+            }
         }
+    }
+
+    /**
+     * Ставит игрока в команду закрепа (1.4.183).
+     *
+     * <p>Закреп обязан быть выше любого звания, а команда у игрока может быть
+     * только одна: если он уже стоит в нашей же служебной команде (префикс
+     * {@code !} — закреп ядра и сортировка CHRDK_Ranks), забираем его оттуда.
+     * Чужие команды (LuckPerms, TAB) не трогаем: там свои правила, и ломать их
+     * ради порядка в списке нельзя.</p>
+     */
+    private static void pin(Scoreboard board, Team team, String name) {
+        Team current = board == null ? null : board.getEntryTeam(name);
+        if (current != null && current.equals(team)) {
+            return;
+        }
+        if (current != null) {
+            if (!current.getName().startsWith("!")) {
+                return;
+            }
+            current.removeEntry(name);
+        }
+        team.addEntry(name);
     }
 
     private void clearPinned() {
@@ -319,7 +390,8 @@ public final class TabListService implements Listener {
 
     // ------------------------------ сборка контекста -----------------------------
 
-    private TabContext contextOf(Player player, long nowMillis) {
+    private TabContext contextOf(Player player, long nowMillis, boolean showRank,
+                                 boolean showBadges) {
         RegistrationStore.PlayerAccount account =
                 accessManager.store().getAccount(player.getName()).orElse(null);
         double tps;
@@ -343,7 +415,8 @@ public final class TabListService implements Listener {
                 PresentationContext.of(account, accessManager.getStage(player), nowMillis,
                         accessManager.config().trialEnabled() && accessManager.store().isTrialEligible(player.getName(), player.getUniqueId()),
                         accessManager.config().trialDays(), plugin.messages(), navigation(player)),
-                nameDecorator.apply(player.getName()), rankTag(player, nowMillis));
+                nameDecorator.decorate(player.getName(), showRank, showBadges),
+                showRank ? rankTag(player, nowMillis) : "");
     }
 
     /**
@@ -380,6 +453,7 @@ public final class TabListService implements Listener {
     private String navigation(Player player) {
         List<String> links = new ArrayList<>();
         if (accessManager.config().serverMenu().enabled() && player.hasPermission("chrdkregister.menu")) links.add("/menu");
+        if (player.hasPermission("chrdkregister.labels")) links.add("/labels");
         for (String[] addon : new String[][]{{"CHRDK_DailyRewards", "chrdkdaily.use", "/daily"},
                 {"CHRDK_Auction", "chrdkauction.use", "/ah"}, {"CHRDK_Lottery", "chrdklottery.use", "/lottery"}}) {
             if (Bukkit.getPluginManager().isPluginEnabled(addon[0]) && player.hasPermission(addon[1])) links.add(addon[2]);

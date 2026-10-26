@@ -211,6 +211,35 @@ class EventServiceTest {
     }
 
     @Test
+    void supportsFollowCurrentEvent() {
+        org.bukkit.configuration.file.YamlConfiguration yaml =
+                new org.bukkit.configuration.file.YamlConfiguration();
+        yaml.set("general.min-players", 1);
+        yaml.set("schedule.min-delay-seconds", 60);
+        yaml.set("schedule.max-delay-seconds", 60);
+        yaml.set("events.star.type", "MINING");
+        yaml.set("events.star.weight", 10);
+        yaml.set("events.star.percent", 40);
+        yaml.set("events.star.duration-seconds", 300);
+        yaml.set("events.star.blocks", List.of("IRON_ORE"));
+        yaml.set("events.star.meteors.interval-seconds", 20);
+        yaml.set("events.star.meteors.blocks", List.of("AMETHYST_BLOCK"));
+        yaml.set("events.star.meteors.loot", List.of("AMETHYST_SHARD"));
+        EventService service = new EventService(EventConfig.parse(yaml, null), new Random(1));
+        assertFalse(service.fallingStars(), "без события звёзд нет");
+        assertFalse(service.hordeActive());
+        service.planNext(NOW);
+        WorldEvent started = service.tryStart(NOW + 60_000L, 1);
+        assertNotNull(started);
+        assertTrue(service.fallingStars());
+        assertEquals(2, service.meteors().maxActive(), "умолчание секции meteors");
+        assertFalse(service.hordeActive(), "секции horde нет — нашествия нет");
+        service.stop(NOW + 61_000L);
+        assertFalse(service.fallingStars(), "после события звёзды гаснут");
+        assertSame(MeteorSpawn.NONE, service.meteors());
+    }
+
+    @Test
     void bonusGettersFollowCurrentKind() {
         EventService service = new EventService(config(event("e0", EventKind.XP, 300, 10, 0, 42)),
                 new Random(1));

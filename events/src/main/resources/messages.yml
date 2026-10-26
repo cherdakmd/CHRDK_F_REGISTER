@@ -28,7 +28,7 @@ events:
   next-unknown: "<gray>Следующее событие ещё не запланировано.</gray>"
   list-empty: "<red>В config.yml нет ни одного рабочего события.</red>"
   list-header: "<gold>События</gold> <dark_gray>·</dark_gray> <gray>%count%</gray>"
-  list-line: "<dark_gray>·</dark_gray> <white>%name%</white> <gray>(%kind%, %time%)</gray> <dark_gray>—</dark_gray> %state%"
+  list-line: "<dark_gray>·</dark_gray> <white>%name%</white> <gray>·</gray> <gray>%kind%</gray> <dark_gray>—</dark_gray> <gray>%bonus%</gray> <dark_gray>(%time%, %state%)</dark_gray>"
   list-ready: "<green>готово</green>"
   list-cooling: "<dark_gray>на паузе</dark_gray>"
 
@@ -43,6 +43,9 @@ events:
   bonus-value-mining: "шанс лишней руды %percent%%"
   bonus-value-loot: "шанс лишнего дропа %percent%%"
   bonus-value-effect: "общие эффекты на время события"
+  # Что добавляет «физическая» половина события (1.4.176).
+  bonus-extra-meteors: "звёзды падают с неба"
+  bonus-extra-horde: "мобы лезут гуще и волнами"
 
   # ------------------------------- объявления -------------------------------
   start-broadcast: "<dark_gray>▬▬▬</dark_gray> <gold>Мировое событие: %name%</gold> <dark_gray>▬▬▬</dark_gray>\n<gray>%description%</gray>\n<gray>Продлится</gray> <white>%time%</white><gray>. Смотрите</gray> <yellow>/events</yellow><gray>.</gray>"
@@ -54,6 +57,12 @@ events:
   bonus-xp: "<green>+%percent%% опыта</green> <dark_gray>·</dark_gray> <gray>%name%</gray>"
   bonus-mining: "<green>+1 %item%</green> <dark_gray>·</dark_gray> <gray>%name%</gray>"
   bonus-loot: "<green>+ %item%</green> <dark_gray>·</dark_gray> <gray>%name%</gray>"
+
+  # ----------------------- звёзды и нашествие (1.4.176) ----------------------
+  # Координаты падения: без них звезду в 64 блоках не найти.
+  meteor-fell: "<gold>✦ Звезда упала</gold> <dark_gray>·</dark_gray> <gray>координаты</gray> <white>%x% %y% %z%</white>"
+  # Волна мобов вокруг игрока.
+  horde-wave: "<dark_red>▲ Кровавая луна</dark_red> <dark_gray>·</dark_gray> <gray>рядом поднимаются мобы</gray> <white>%count%</white>"
 
   # ---------------------------------- админ ---------------------------------
   admin-usage: "<gray>/eventsadmin <yellow>force [ид]</yellow> | <yellow>stop</yellow> | <yellow>next</yellow> | <yellow>reload</yellow> | <yellow>list</yellow> | <yellow>history [n]</yellow></gray>"
@@ -77,4 +86,6 @@ events:
   profile-active: "<gray>Сейчас:</gray> <gold>%name%</gold> <gray>· осталось %time%</gray>"
   profile-next: "<gray>Следующее — примерно через %time%</gray>"
   profile-none: "<gray>Сейчас события нет.</gray>"
+  profile-meteors: "<aqua>✦ В небе падают звёзды — добыча ждёт на земле.</aqua>"
+  profile-horde: "<red>▲ Нашествие мобов: спавн ×%multiplier%</red>"
   profile-stats: "<dark_gray>Всего событий на сервере: %total%</dark_gray>"

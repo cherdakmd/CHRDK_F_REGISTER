@@ -42,6 +42,14 @@ final class EventsProfile implements ChrdkRegisterApi.ProfileProvider {
             lines.add(messages.get("profile-active",
                     "name", current.name(),
                     "time", EventText.clock(service.secondsLeft(now))));
+            if (current.fallingStars()) {
+                lines.add(messages.get("profile-meteors"));
+            }
+            if (current.hordeActive()) {
+                lines.add(messages.get("profile-horde", "multiplier",
+                        String.format(java.util.Locale.ROOT, "%.1f",
+                                current.horde().multiplier())));
+            }
         } else {
             lines.add(messages.get("profile-none"));
             long seconds = service.secondsToNext(now);
