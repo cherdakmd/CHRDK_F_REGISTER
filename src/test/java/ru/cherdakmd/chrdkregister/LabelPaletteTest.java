@@ -55,20 +55,20 @@ class LabelPaletteTest {
     }
 
     @Test
-    void catalogColorCanBeBoughtWithoutRank() {
+    void catalogColorIsSoldNotEarnedByRank() {
         assertFalse(palette().allowed(CATALOG, 0, Set.of()));
         assertTrue(palette().allowed(CATALOG, 0, Set.of("nick-aurora")),
                 "покупка открывает цвет без ступени");
         assertFalse(palette().allowed(CATALOG, 3, Set.of("другой-товар")),
                 "чужой товар ничего не открывает");
-        assertTrue(palette().allowed(CATALOG, 4, Set.of()),
-                "с четвёртой ступени цвет открыт и так");
+        assertFalse(palette().allowed(CATALOG, 5, Set.of()),
+                "градиент из каталога не открывается рангом даже на пятой ступени");
     }
 
     @Test
     void nullAndUnknownAreRejected() {
         assertFalse(palette().allowed(null, 5, Set.of()));
-        assertTrue(palette().allowed(CATALOG, 5, null),
+        assertFalse(palette().allowed(CATALOG, 5, null),
                 "null вместо списка товаров — как пустой список, а не падение");
         assertNull(palette().byId(null));
         assertNull(palette().byId("  "));
@@ -80,7 +80,11 @@ class LabelPaletteTest {
         List<LabelPalette.Color> colors = palette().available(0, Set.of("nick-aurora"));
         assertEquals(List.of(FREE, CATALOG), colors);
         assertEquals(List.of(FREE), palette().available(0, Set.of()));
-        assertEquals(List.of(FREE, RANKED, CATALOG), palette().available(5, Set.of()));
+        assertEquals(List.of(FREE, RANKED), palette().available(5, Set.of()),
+                "премиум без покупки в доступные не попадает");
+        assertEquals(List.of(FREE, RANKED, CATALOG),
+                palette().available(5, Set.of("nick-aurora")),
+                "с покупкой — по порядку конфига");
     }
 
     @Test

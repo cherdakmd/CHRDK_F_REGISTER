@@ -20,8 +20,8 @@ import java.util.Set;
  *
  * <ul>
  *   <li>{@code rank} — минимальная ступень доната (0 — доступен всем);</li>
- *   <li>{@code product} — id товара каталога: пока он активен, цвет открыт
- *       даже без нужной ступени.</li>
+ *   <li>{@code product} — id товара каталога. Такой цвет продаётся: покупка —
+ *       единственный способ его получить, ступень его не заменяет.</li>
  * </ul>
  *
  * <p>Палитра ничего не знает про чат и Bukkit-события: чистая логика, которую
@@ -133,8 +133,11 @@ public final class LabelPalette {
     }
 
     /**
-     * Доступен ли цвет игроку: хватает ступени ранга либо куплен товар,
-     * который его открывает.
+     * Доступен ли цвет игроку.
+     *
+     * <p>Обычный цвет открывает ступень ранга. Цвет с товаром — премиум: его
+     * даёт только покупка, даже на последней ступени. Так «богаче от ранга»
+     * остаётся количеством цветов, а градиенты не раздаются бесплатно.</p>
      *
      * @param color      проверяемый цвет; {@code null} — недоступен
      * @param rankLevel  ступень донатного ранга 0..5
@@ -144,10 +147,10 @@ public final class LabelPalette {
         if (color == null) {
             return false;
         }
-        if (color.openForRank(rankLevel)) {
-            return true;
+        if (color.inCatalog()) {
+            return purchased != null && purchased.contains(color.product());
         }
-        return color.inCatalog() && purchased != null && purchased.contains(color.product());
+        return color.openForRank(rankLevel);
     }
 
     /** Все доступные игроку цвета в порядке конфига. */

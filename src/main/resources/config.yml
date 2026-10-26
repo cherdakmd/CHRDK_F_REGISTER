@@ -1097,7 +1097,8 @@ labels:
     #   name    — подпись в меню (MiniMessage);
     #   format  — шаблон с %name%, в него подставляется ник;
     #   rank    — минимальная ступень доната (0 — доступен всем);
-    #   product — id товара каталога: пока он активен, цвет открыт даже без ступени.
+    #   product — id товара каталога: такой цвет продаётся, и покупка —
+    #             единственный способ его получить; ступень ранга его не заменяет.
     # Свой цвет главнее цвета ступени, но не главнее купленного тега каталога:
     # оплаченное вперёд не отбираем.
     list:
@@ -1111,10 +1112,11 @@ labels:
       - {"id": "light-purple", "name": "<light_purple>Сиреневый</light_purple>", "format": "<light_purple>%name%</light_purple>",              "rank": 3}
       - {"id": "red",          "name": "<red>Алый</red>",                    "format": "<red>%name%</red>",                                    "rank": 4}
       - {"id": "sunset",       "name": "<gradient:#ffd700:#ff8800>Закат</gradient>", "format": "<gradient:#ffd700:#ff8800>%name%</gradient>",   "rank": 5}
-      # Покупаются в каталоге: покупка открывает цвет, даже если ранг не дорос.
-      - {"id": "aurora",       "name": "<gradient:#00e5ff:#8a2be2>Сияние</gradient>", "format": "<gradient:#00e5ff:#8a2be2>%name%</gradient>", "rank": 4, "product": "nick-aurora"}
-      - {"id": "flame",        "name": "<gradient:#ff3d00:#ffd54f>Пламя</gradient>",  "format": "<gradient:#ff3d00:#ffd54f>%name%</gradient>", "rank": 5, "product": "nick-flame"}
-      - {"id": "pearl",        "name": "<gradient:#ffffff:#9fd8ff>Жемчуг</gradient>", "format": "<gradient:#ffffff:#9fd8ff>%name%</gradient>", "rank": 5, "product": "nick-pearl"}
+      # Только каталог: ранг эти градиенты не открывает — «богаче» от ступени
+      # даёт количество обычных цветов, а не бесплатный премиум.
+      - {"id": "aurora",       "name": "<gradient:#00e5ff:#8a2be2>Сияние</gradient>", "format": "<gradient:#00e5ff:#8a2be2>%name%</gradient>", "product": "nick-aurora"}
+      - {"id": "flame",        "name": "<gradient:#ff3d00:#ffd54f>Пламя</gradient>",  "format": "<gradient:#ff3d00:#ffd54f>%name%</gradient>", "product": "nick-flame"}
+      - {"id": "pearl",        "name": "<gradient:#ffffff:#9fd8ff>Жемчуг</gradient>", "format": "<gradient:#ffffff:#9fd8ff>%name%</gradient>", "product": "nick-pearl"}
   presets:
     # Свои пресеты оформления: снимок «что скрыто + порядок + цвет», который
     # возвращается одной кнопкой. Индекс списка — ступень ранга:
