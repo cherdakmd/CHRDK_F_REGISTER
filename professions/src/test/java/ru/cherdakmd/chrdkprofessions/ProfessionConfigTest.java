@@ -46,6 +46,32 @@ class ProfessionConfigTest {
     }
 
     @Test
+    void onboardingIsRequiredAndClamped() throws Exception {
+        ProfessionConfig defaults = parse("");
+        assertTrue(defaults.onboarding().required(), "выбор профессии обязателен по умолчанию");
+        assertEquals(40, defaults.onboarding().openDelayTicks());
+        assertEquals(10, defaults.onboarding().reopenSeconds());
+        assertEquals(30, defaults.onboarding().remindSeconds());
+        assertEquals(10 * 20L, defaults.onboarding().reopenTicks());
+        assertEquals(30 * 20L, defaults.onboarding().remindTicks());
+
+        ProfessionConfig custom = parse("onboarding:\n"
+                + "  required: false\n"
+                + "  open-delay-ticks: -1\n"
+                + "  reopen-seconds: 1\n"
+                + "  remind-seconds: 99999\n");
+        assertFalse(custom.onboarding().required());
+        assertEquals(0, custom.onboarding().openDelayTicks());
+        assertEquals(1L, custom.onboarding().openTicks(), "нулевая задержка — один тик");
+        assertEquals(3, custom.onboarding().reopenSeconds(),
+                "переоткрытие не чаще раза в три секунды");
+        assertEquals(3600, custom.onboarding().remindSeconds(),
+                "напоминание не чаще раза в час");
+        assertEquals(0L, parse("onboarding:\n  remind-seconds: 0\n").onboarding().remindTicks(),
+                "ноль выключает напоминание");
+    }
+
+    @Test
     void emptyConfigUsesDefaults() throws Exception {
         ProfessionConfig config = parse("");
         assertEquals(1200, config.dailyXpCap());

@@ -10,6 +10,10 @@ classes:
   no-permission: "<red>Недостаточно прав.</red>"
   player-only: "<red>Эта команда только для игроков.</red>"
   disabled: "<red>Классы выключены в config.yml.</red>"
+  # 1.4.182: обязательный выбор класса — меню, напоминание и закрытие без выбора.
+  onboarding-start: "<gold>Класс</gold> <dark_gray>·</dark_gray> <white>Выбери стиль игры</white> <dark_gray>—</dark_gray> <gray>меню откроется через пару секунд. Это бесплатно.</gray>"
+  onboarding-remind: "<gold>Выбери класс</gold> <dark_gray>·</dark_gray> <yellow>/class</yellow>"
+  onboarding-closed: "<gold>Класс</gold> <dark_gray>·</dark_gray> <white>Без класса не работают умения, таланты и прибавки.</white> <gray>Меню откроется снова — или выбери сам: <yellow>/class</yellow></gray>"
   unknown-subcommand: "<red>Неизвестная подкоманда «%sub%». Смотрите <yellow>/class help</yellow>.</red>"
 
   # -------------------------------- справка ---------------------------------

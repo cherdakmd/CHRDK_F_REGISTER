@@ -43,6 +43,48 @@ public final class ClassConfig {
     public static final double MIN_ABILITY_MULTIPLIER = 0.5;
     public static final double MAX_ABILITY_MULTIPLIER = 3.0;
 
+    /**
+     * Обязательный выбор класса (1.4.182).
+     *
+     * <p>Игрок без класса не получает ничего: ни умений, ни талантов, ни
+     * прибавок. Меню поэтому открывается само и переоткрывается, пока выбор не
+     * сделан, — но игру это не запрещает: блоки, команды и награды остаются
+     * доступны. Жёсткая блокировка намеренно не используется: она ломает
+     * первый вход, если игрок отошёл от клавиатуры.</p>
+     *
+     * @param required       обязателен ли выбор класса
+     * @param openDelayTicks задержка первого открытия после входа, тики
+     * @param reopenSeconds  пауза перед повторным открытием закрытого меню, сек
+     * @param remindSeconds  период напоминания в экшен-баре, сек (0 — молчать)
+     */
+    public record Onboarding(boolean required, int openDelayTicks, int reopenSeconds,
+                             int remindSeconds) {
+
+        /** Умолчания: включено, меню через 2 сек, переоткрытие через 10 сек. */
+        public static final Onboarding DEFAULT = new Onboarding(true, 40, 10, 30);
+
+        public Onboarding {
+            openDelayTicks = Math.clamp(openDelayTicks, 0, 600);
+            reopenSeconds = Math.clamp(reopenSeconds, 3, 600);
+            remindSeconds = Math.clamp(remindSeconds, 0, 3600);
+        }
+
+        /** Задержка первого открытия в тиках; 0 превращается в один тик. */
+        public long openTicks() {
+            return Math.max(1L, openDelayTicks);
+        }
+
+        /** Пауза перед повторным открытием в тиках. */
+        public long reopenTicks() {
+            return reopenSeconds * 20L;
+        }
+
+        /** Период напоминания в тиках; 0 — напоминаний нет. */
+        public long remindTicks() {
+            return remindSeconds * 20L;
+        }
+    }
+
     private final boolean enabled;
     private final String locale;
     private final boolean actionbar;
@@ -61,6 +103,8 @@ public final class ClassConfig {
     private final int achievementEvery;
     private final int achievementMaxBonus;
     private final boolean ranksEnabled;
+    /** 1.4.182: обязательный выбор класса. */
+    private final Onboarding onboarding;
 
     private ClassConfig(boolean enabled, String locale, boolean actionbar, boolean effectsEnabled,
                         int levelsPerLevel, int pointsPerLevel, int startingPoints,
@@ -68,7 +112,7 @@ public final class ClassConfig {
                         int outOfCombatSeconds, boolean abilitiesEnabled,
                         double abilityCooldownMultiplier, boolean levelNotice,
                         boolean tagEnabled, int achievementEvery, int achievementMaxBonus,
-                        boolean ranksEnabled) {
+                        boolean ranksEnabled, Onboarding onboarding) {
         this.enabled = enabled;
         this.locale = locale;
         this.actionbar = actionbar;
@@ -87,12 +131,13 @@ public final class ClassConfig {
         this.achievementEvery = achievementEvery;
         this.achievementMaxBonus = achievementMaxBonus;
         this.ranksEnabled = ranksEnabled;
+        this.onboarding = onboarding == null ? Onboarding.DEFAULT : onboarding;
     }
 
     /** Умолчания — те же, что в ресурсном config.yml. */
     public static ClassConfig defaults() {
         return new ClassConfig(true, "ru", true, true, 30, 1, 1, 7, 24, 5, 8, true, 1.0, true,
-                true, 15, 2, true);
+                true, 15, 2, true, Onboarding.DEFAULT);
     }
 
     /** Разбирает конфиг; {@code null} допустим — тогда действуют умолчания. */
@@ -131,7 +176,32 @@ public final class ClassConfig {
                         0, MAX_ACHIEVEMENT_EVERY, logger),
                 (int) clamp(source, "points.achievement-max", fallback.achievementMaxBonus,
                         0, MAX_ACHIEVEMENT_BONUS, logger),
-                source.getBoolean("ranks.enabled", fallback.ranksEnabled));
+                source.getBoolean("ranks.enabled", fallback.ranksEnabled),
+                parseOnboarding(source));
+    }
+
+    /**
+     * Разбор секции {@code onboarding.*} (1.4.182).
+     *
+     * <p>Ключей нет — выбор обязателен: сервер, обновившийся со старой версии,
+     * тоже должен познакомить новичка с классом, иначе половина игроков ходит
+     * без умений и не знает об этом.</p>
+     */
+    private static Onboarding parseOnboarding(FileConfiguration source) {
+        Onboarding fallback = Onboarding.DEFAULT;
+        return new Onboarding(
+                source.getBoolean("onboarding.required", fallback.required()),
+                (int) clamp(source, "onboarding.open-delay-ticks", fallback.openDelayTicks(),
+                        0, 600, null),
+                (int) clamp(source, "onboarding.reopen-seconds", fallback.reopenSeconds(),
+                        3, 600, null),
+                (int) clamp(source, "onboarding.remind-seconds", fallback.remindSeconds(),
+                        0, 3600, null));
+    }
+
+    /** Обязательный выбор класса (1.4.182). */
+    public Onboarding onboarding() {
+        return onboarding;
     }
 
     private static long clamp(FileConfiguration source, String path, long fallback, long min,

@@ -40,6 +40,8 @@ public final class ClassesPlugin extends JavaPlugin {
     private ClassTag tag;
     private final ClassProgress progress = new ClassProgress();
     private ClassesGui gui;
+    /** 1.4.182: обязательный выбор класса — меню и напоминания. */
+    private ClassOnboarding onboarding;
     private BukkitTask saveTask;
     private BukkitTask pulseTask;
     private BukkitTask queuedSave;
@@ -62,9 +64,11 @@ public final class ClassesPlugin extends JavaPlugin {
             this.abilities = new AbilityService(this);
             this.tag = new ClassTag(this);
             this.gui = new ClassesGui(this);
+            this.onboarding = new ClassOnboarding(this);
 
             getServer().getPluginManager().registerEvents(new ClassListener(this), this);
             getServer().getPluginManager().registerEvents(gui, this);
+            getServer().getPluginManager().registerEvents(onboarding, this);
             registerCommands();
             registerPlaceholders();
             registerProfile();
@@ -73,6 +77,7 @@ public final class ClassesPlugin extends JavaPlugin {
                     this::saveNow, 100L, 100L);
             this.pulseTask = getServer().getScheduler().runTaskTimer(this,
                     this::pulse, 100L, config.pulseTicks());
+            onboarding.start();
 
             warnMissingSections();
             getLogger().info("CHRDK_Classes включён: классов " + ClassCatalog.classes().size()
@@ -111,6 +116,9 @@ public final class ClassesPlugin extends JavaPlugin {
             pulseTask.cancel();
             pulseTask = null;
         }
+        if (onboarding != null) {
+            onboarding.stop();
+        }
         if (queuedSave != null) {
             queuedSave.cancel();
             queuedSave = null;
@@ -139,6 +147,9 @@ public final class ClassesPlugin extends JavaPlugin {
         for (Player player : Bukkit.getOnlinePlayers()) {
             effects.apply(player);
         }
+        if (onboarding != null) {
+            onboarding.start();
+        }
         warnMissingSections();
     }
 
@@ -165,6 +176,9 @@ public final class ClassesPlugin extends JavaPlugin {
         }
         if (!getConfig().isSet("ranks")) {
             missing.add("ranks");
+        }
+        if (!getConfig().isSet("onboarding")) {
+            missing.add("onboarding");
         }
         if (!missing.isEmpty()) {
             getLogger().info("[CHRDK_Classes] В config.yml нет ключей " + String.join(", ", missing)

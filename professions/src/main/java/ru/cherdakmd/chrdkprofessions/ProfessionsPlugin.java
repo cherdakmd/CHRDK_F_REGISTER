@@ -30,6 +30,8 @@ public final class ProfessionsPlugin extends JavaPlugin {
     private ProfessionStore store;
     private ProfessionService service;
     private ProfessionsGui gui;
+    /** 1.4.182: обязательный выбор профессии — меню и напоминания. */
+    private ProfessionOnboarding onboarding;
     private BukkitTask saveTask;
     private BukkitTask queuedSave;
     private boolean saveQueued;
@@ -44,15 +46,18 @@ public final class ProfessionsPlugin extends JavaPlugin {
             store.load();
             this.service = new ProfessionService(config, store);
             this.gui = new ProfessionsGui(this);
+            this.onboarding = new ProfessionOnboarding(this);
 
             getServer().getPluginManager().registerEvents(new ProfessionListener(this), this);
             getServer().getPluginManager().registerEvents(gui, this);
+            getServer().getPluginManager().registerEvents(onboarding, this);
             registerCommands();
             registerPlaceholders();
             registerProfile();
 
             this.saveTask = getServer().getScheduler().runTaskTimerAsynchronously(this,
                     this::saveNow, 200L, 200L);
+            onboarding.start();
 
             getLogger().info("CHRDK_Professions включён: профессий " + Profession.values().length
                     + ", игроков в файле " + store.size() + ".");
@@ -81,6 +86,9 @@ public final class ProfessionsPlugin extends JavaPlugin {
             queuedSave.cancel();
             queuedSave = null;
         }
+        if (onboarding != null) {
+            onboarding.stop();
+        }
         if (store != null) {
             store.flush();
         }
@@ -93,6 +101,10 @@ public final class ProfessionsPlugin extends JavaPlugin {
         this.config = ProfessionConfig.parse(getConfig(), getLogger());
         this.messages = Messages.load(this, config.locale(), getLogger());
         service.applyConfig(config);
+        // 1.4.182: период напоминания мог измениться — перезапускаем задачи.
+        if (onboarding != null) {
+            onboarding.start();
+        }
     }
 
     private void registerCommands() {

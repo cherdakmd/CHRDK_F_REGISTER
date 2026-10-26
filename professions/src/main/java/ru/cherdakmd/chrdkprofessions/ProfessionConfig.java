@@ -16,6 +16,47 @@ import java.util.logging.Logger;
  */
 public final class ProfessionConfig {
 
+    /**
+     * Обязательный выбор профессии (1.4.182).
+     *
+     * <p>Без ремесла не идёт ни опыт, ни прибавки: игрок просто не видит
+     * системы. Меню профессий поэтому открывается само и переоткрывается, пока
+     * выбор не сделан, но играть это не мешает — блоки и команды не
+     * блокируются.</p>
+     *
+     * @param required       обязателен ли выбор профессии
+     * @param openDelayTicks задержка первого открытия после входа, тики
+     * @param reopenSeconds  пауза перед повторным открытием закрытого меню, сек
+     * @param remindSeconds  период напоминания в экшен-баре, сек (0 — молчать)
+     */
+    public record Onboarding(boolean required, int openDelayTicks, int reopenSeconds,
+                             int remindSeconds) {
+
+        /** Умолчания: включено, меню через 2 сек, переоткрытие через 10 сек. */
+        public static final Onboarding DEFAULT = new Onboarding(true, 40, 10, 30);
+
+        public Onboarding {
+            openDelayTicks = Math.clamp(openDelayTicks, 0, 600);
+            reopenSeconds = Math.clamp(reopenSeconds, 3, 600);
+            remindSeconds = Math.clamp(remindSeconds, 0, 3600);
+        }
+
+        /** Задержка первого открытия в тиках; 0 превращается в один тик. */
+        public long openTicks() {
+            return Math.max(1L, openDelayTicks);
+        }
+
+        /** Пауза перед повторным открытием в тиках. */
+        public long reopenTicks() {
+            return reopenSeconds * 20L;
+        }
+
+        /** Период напоминания в тиках; 0 — напоминаний нет. */
+        public long remindTicks() {
+            return remindSeconds * 20L;
+        }
+    }
+
     public static final int MAX_DAILY_CAP = 100_000;
     public static final int MAX_CHOOSE_HOURS = 720;
     public static final double MIN_MULTIPLIER = 0.1;
@@ -34,12 +75,14 @@ public final class ProfessionConfig {
     private final boolean perkAlchemistBottle;
     private final boolean perkCookSaturation;
     private final boolean perkMasonBlock;
+    /** 1.4.182: обязательный выбор профессии. */
+    private final Onboarding onboarding;
 
     private ProfessionConfig(boolean enabled, String locale, boolean actionbar, boolean joinHint,
                              boolean xpFeedback, int dailyXpCap, int chooseCooldownHours,
                              double xpMultiplier, boolean perksEnabled, boolean perkSmithAnvil,
                              boolean perkAlchemistBottle, boolean perkCookSaturation,
-                             boolean perkMasonBlock) {
+                             boolean perkMasonBlock, Onboarding onboarding) {
         this.enabled = enabled;
         this.locale = locale;
         this.actionbar = actionbar;
@@ -53,12 +96,13 @@ public final class ProfessionConfig {
         this.perkAlchemistBottle = perkAlchemistBottle;
         this.perkCookSaturation = perkCookSaturation;
         this.perkMasonBlock = perkMasonBlock;
+        this.onboarding = onboarding == null ? Onboarding.DEFAULT : onboarding;
     }
 
     /** Умолчания — те же, что в ресурсном config.yml. */
     public static ProfessionConfig defaults() {
         return new ProfessionConfig(true, "ru", true, true, true, 1200, 24, 1.0,
-                true, true, true, true, true);
+                true, true, true, true, true, Onboarding.DEFAULT);
     }
 
     /** Разбирает конфиг; {@code null} допустим — тогда действуют умолчания. */
@@ -93,7 +137,32 @@ public final class ProfessionConfig {
                 source.getBoolean("perks.smith-anvil-discount", fallback.perkSmithAnvil),
                 source.getBoolean("perks.alchemist-extra-bottle", fallback.perkAlchemistBottle),
                 source.getBoolean("perks.cook-saturation", fallback.perkCookSaturation),
-                source.getBoolean("perks.mason-extra-block", fallback.perkMasonBlock));
+                source.getBoolean("perks.mason-extra-block", fallback.perkMasonBlock),
+                parseOnboarding(source));
+    }
+
+    /**
+     * Разбор секции {@code onboarding.*} (1.4.182).
+     *
+     * <p>Ключей нет — выбор обязателен: обновлённый сервер тоже должен
+     * познакомить новичка с ремеслом, иначе половина игроков ходит без опыта и
+     * не догадывается об этом.</p>
+     */
+    private static Onboarding parseOnboarding(FileConfiguration source) {
+        Onboarding fallback = Onboarding.DEFAULT;
+        return new Onboarding(
+                source.getBoolean("onboarding.required", fallback.required()),
+                (int) clamp(source, "onboarding.open-delay-ticks", fallback.openDelayTicks(),
+                        0, 600, null),
+                (int) clamp(source, "onboarding.reopen-seconds", fallback.reopenSeconds(),
+                        3, 600, null),
+                (int) clamp(source, "onboarding.remind-seconds", fallback.remindSeconds(),
+                        0, 3600, null));
+    }
+
+    /** Обязательный выбор профессии (1.4.182). */
+    public Onboarding onboarding() {
+        return onboarding;
     }
 
     private static long clamp(FileConfiguration source, String path, long fallback, long min,

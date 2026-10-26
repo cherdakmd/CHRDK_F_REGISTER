@@ -36,6 +36,10 @@ professions:
 
   # ------------------------------ опыт и уровни ------------------------------
   join-hint: "<gray>Ремесло ещё не выбрано: <yellow>/prof</yellow> — четыре профессии и их прибавки.</gray>"
+  # 1.4.182: обязательный выбор профессии — меню, напоминание и закрытие без выбора.
+  onboarding-start: "<gold>Профессия</gold> <dark_gray>·</dark_gray> <white>Выбери ремесло</white> <dark_gray>—</dark_gray> <gray>меню откроется через пару секунд. Это бесплатно.</gray>"
+  onboarding-remind: "<gold>Выбери профессию</gold> <dark_gray>·</dark_gray> <yellow>/prof</yellow>"
+  onboarding-closed: "<gold>Профессия</gold> <dark_gray>·</dark_gray> <white>Без ремесла не капает опыт и не работают прибавки.</white> <gray>Меню откроется снова — или выбери сам: <yellow>/prof</yellow></gray>"
   level-up: "<gold>Профессия «%profession%»: уровень <white>%level%</white> — %rank%</gold>"
   level-actionbar: "<gold>%profession% · ур. %level%</gold>"
   daily-cap: "<gray>Суточный опыт «%profession%» получен. Продолжим завтра.</gray>"
