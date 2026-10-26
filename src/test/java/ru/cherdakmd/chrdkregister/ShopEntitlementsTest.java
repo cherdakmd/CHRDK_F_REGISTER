@@ -88,7 +88,23 @@ class ShopEntitlementsTest {
     }
 
     @Test
-    void plainTextPrefixIsKept() {
-        assertEquals("VIP Notch", ShopEntitlements.decorate("Notch", "VIP "));
+    void plainTextTagComesAfterName() {
+        assertEquals("Notch · VIP", Messages.stripFormatting(ShopEntitlements.decorate("Notch", "VIP ")));
+    }
+
+    @Test
+    void styledLegacyTagCannotBecomePrefix() {
+        String result = ShopEntitlements.decorate("Notch", "<bold><gold>[VIP] ");
+        assertEquals("Notch · [VIP]", Messages.stripFormatting(result));
+        assertTrue(result.contains("<gold>"));
+        assertTrue(result.contains("<bold>"));
+        assertEquals("Notch · VIP", Messages.stripFormatting(ShopEntitlements.decorate("Notch", "&6VIP &r")));
+    }
+
+    @Test
+    void gradientTagAndMatchingPlayerNameRemainUnambiguous() {
+        assertEquals("Notch · [VIP]", Messages.stripFormatting(
+                ShopEntitlements.decorate("Notch", "<gradient:#ff0000:#0000ff>[VIP] ")));
+        assertEquals("VIP · VIP", Messages.stripFormatting(ShopEntitlements.decorate("VIP", "VIP ")));
     }
 }

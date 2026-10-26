@@ -1,7 +1,6 @@
 package ru.cherdakmd.chrdkregister;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 
@@ -212,36 +211,19 @@ public final class LabelStyleService {
         // Градиент дробит даже якорь на отдельные компоненты: replaceText
         // не ищет поперёк соседних узлов, поэтому вырезаем диапазон дерева.
         component = Component.empty()
-                .append(crop(component, 0, anchor, new int[]{0}))
-                .append(crop(component, anchor + ANCHOR.length(), text.length(), new int[]{0}));
+                .append(NicknameComponents.slice(component, 0, anchor))
+                .append(NicknameComponents.slice(component, anchor + ANCHOR.length(), text.length()));
         text = PLAIN.serialize(component);
         int start = 0;
         int end = text.length();
         while (start < end && boundary(text.charAt(start))) start++;
         while (end > start && boundary(text.charAt(end - 1))) end--;
         if (start == end) return "";
-        return MINI.serialize(crop(component, start, end, new int[]{0}).compact());
+        return MINI.serialize(NicknameComponents.slice(component, start, end).compact());
     }
 
     private static boolean boundary(char c) {
         return Character.isWhitespace(c) || c == '·' || c == '|' || c == '•';
-    }
-
-    /** Обрезка по индексам видимого текста, без разрезания MiniMessage-тегов. */
-    private static Component crop(Component node, int start, int end, int[] cursor) {
-        String content = node instanceof TextComponent text ? text.content()
-                : PLAIN.serialize(node.children(List.of()));
-        int offset = cursor[0];
-        cursor[0] += content.length();
-        int from = Math.min(content.length(), Math.max(0, start - offset));
-        int to = Math.min(content.length(), Math.max(from, end - offset));
-        // MiniMessage хранит исходный градиент в VirtualComponent (наследнике
-        // TextComponent). Мутация content() оставила бы там прежний текст для
-        // сериализации. Создаём обычный узел, сохраняя вычисленные цвета детей.
-        Component result = Component.text(content.substring(from, to)).style(node.style());
-        List<Component> children = new ArrayList<>();
-        for (Component child : node.children()) children.add(crop(child, start, end, cursor));
-        return result.children(children);
     }
 
     /* -------------------------------- цвет ника -------------------------------- */

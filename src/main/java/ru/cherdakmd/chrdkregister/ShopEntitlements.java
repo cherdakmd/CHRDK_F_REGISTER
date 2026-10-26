@@ -52,6 +52,7 @@ public final class ShopEntitlements {
 
     /**
      * Оборачивает ник в разметку товара: {@code <gold>Nick</gold>}.
+     * Видимый текст старого тега всегда переносится ПОСЛЕ ника.
      *
      * <p>Закрывающие теги строятся по всем открытым тегам в обратном порядке, поэтому
      * корректно закрываются и {@code <gradient:#ffcc00:#ff8800>}, и вложенные
@@ -64,7 +65,7 @@ public final class ShopEntitlements {
             return name;
         }
         if (tag.indexOf('<') < 0) {
-            return tag + name; // обычный текстовый префикс: пробелы значимы
+            return NicknameComponents.nameFromEndFirst(name, tag + name);
         }
         String trimmed = tag.trim();
         java.util.ArrayDeque<String> open = new java.util.ArrayDeque<>();
@@ -96,6 +97,6 @@ public final class ShopEntitlements {
         while (!open.isEmpty()) {
             closing.append("</").append(open.pop()).append('>');
         }
-        return trimmed + name + closing;
+        return NicknameComponents.nameFromEndFirst(name, trimmed + name + closing);
     }
 }
