@@ -28,7 +28,9 @@ import java.util.UUID;
  * наглядно: девять плиток — ранг, титул кузни, звание кладоискателя, класс,
  * гильдия, стример, квесты, достижения и шапка таба. Клик переключает одну
  * надпись и сразу перерисовывает меню; снизу — «Включить всё», «Выключить
- * всё», «Сброс», «Профиль» и «Закрыть».</p>
+ * всё», «Сброс», «Профиль» и «Закрыть». Справа вверху — «Вас видят так»: та же
+ * строка, которую получают остальные игроки, поэтому видно, что настройка не
+ * личная, а общая.</p>
  *
  * <p>Меню открывается командой {@code /labels}, кнопкой из {@code /profile} и
  * пунктом «Оформление ника» в {@code /menu}. Это только оформление: ранг, опыт,
@@ -41,6 +43,8 @@ public final class LabelsMenuService implements Listener {
     static final int SIZE = 54;
     /** Голова игрока со сводкой. */
     static final int HEAD_SLOT = 4;
+    /** Как ник выглядит для остальных — ровно та строка, что уходит в чат и таб. */
+    static final int PREVIEW_SLOT = 8;
     /** Плитки надписей: три ряда по три. */
     static final int[] ENTRY_SLOTS = {10, 11, 12, 19, 20, 21, 28, 29, 30};
     static final int ENABLE_ALL_SLOT = 45;
@@ -89,6 +93,7 @@ public final class LabelsMenuService implements Listener {
             inventory.setItem(slot, filler);
         }
         inventory.setItem(HEAD_SLOT, head(player));
+        inventory.setItem(PREVIEW_SLOT, preview(player));
         List<LabelPreferences.Label> labels = LabelPreferences.Label.nameTags();
         // Шапка таба — не метка рядом с ником, но такая же надпись: ставим её
         // последней плиткой, чтобы сетка оставалась 3×3.
@@ -125,6 +130,31 @@ public final class LabelsMenuService implements Listener {
         List<Component> lore = new ArrayList<>();
         lore.addAll(plugin.messages().getList("labels.menu-head-lore"));
         meta.lore(lore);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /**
+     * «Вас видят так» — ник, собранный ровно так, как его получают другие.
+     *
+     * <p>Настройка надписей не личная: спрятанную метку не видит никто, поэтому
+     * в меню и показывается общая строка, а не «как вижу я». Собирается тем же
+     * {@code ChatService#decoratedName}, что и сообщения в чате, — расхождению
+     * взяться неоткуда.</p>
+     */
+    private ItemStack preview(Player player) {
+        ItemStack item = new ItemStack(Material.NAME_TAG);
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) {
+            return item;
+        }
+        ChatService chat = plugin.chatService();
+        String nick = chat == null ? Messages.escape(player.getName())
+                : chat.decoratedName(player.getName());
+        meta.displayName(plugin.messages().get("labels.menu-preview",
+                "nick", Messages.trusted(nick == null || nick.isBlank()
+                        ? Messages.escape(player.getName()) : nick)));
+        meta.lore(plugin.messages().getList("labels.menu-preview-lore"));
         item.setItemMeta(meta);
         return item;
     }

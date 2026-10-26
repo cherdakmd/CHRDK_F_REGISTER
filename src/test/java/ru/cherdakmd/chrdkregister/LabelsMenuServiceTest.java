@@ -45,7 +45,8 @@ class LabelsMenuServiceTest {
 
     @Test
     void tilesDoNotCoverButtons() {
-        int[] reserved = {LabelsMenuService.HEAD_SLOT, LabelsMenuService.ENABLE_ALL_SLOT,
+        int[] reserved = {LabelsMenuService.HEAD_SLOT, LabelsMenuService.PREVIEW_SLOT,
+                LabelsMenuService.ENABLE_ALL_SLOT,
                 LabelsMenuService.DISABLE_ALL_SLOT, LabelsMenuService.PROFILE_SLOT,
                 LabelsMenuService.RESET_SLOT, LabelsMenuService.CLOSE_SLOT};
         for (int slot : reserved) {
@@ -76,14 +77,16 @@ class LabelsMenuServiceTest {
                         "нет названия: " + label.id());
                 assertFalse(label.id().isBlank(), "нет ида: " + label);
             }
-            for (String key : List.of("labels.menu-title", "labels.menu-head", "labels.menu-entry-on",
+            for (String key : List.of("labels.menu-title", "labels.menu-head", "labels.menu-head-lore",
+                    "labels.menu-preview", "labels.menu-preview-lore", "labels.menu-entry-on",
                     "labels.menu-entry-off", "labels.menu-enable-all", "labels.menu-disable-all",
                     "labels.menu-reset", "labels.menu-profile", "labels.menu-close",
                     "labels.profile-section", "labels.profile-button", "labels.profile-button-lore",
                     "labels.profile-all-visible", "labels.profile-line", "labels.profile-hidden",
                     "labels.profile-hint")) {
                 assertFalse(messages.raw(key, "player", "x", "visible", "1", "total", "9",
-                        "name", "y").isBlank(), "пустой текст: " + key);
+                        "name", "y", "nick", "<gold>Ник</gold>").isBlank(),
+                        "пустой текст: " + key);
             }
         }
     }
