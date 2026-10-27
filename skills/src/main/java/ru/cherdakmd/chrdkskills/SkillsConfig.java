@@ -29,6 +29,7 @@ public final class SkillsConfig {
     }
 
     private final boolean enabled;
+    private final boolean abilitiesEnabled, abilitiesHud;
     private final boolean announce;
     private final boolean actionbar;
     private final boolean sounds;
@@ -48,7 +49,9 @@ public final class SkillsConfig {
                          double xpRate, long maxXpPerAction,
                          Map<SkillType, SkillSettings> skills,
                          Map<Integer, Milestone> milestones, long placedBlockTtlSeconds,
-                         int placedBlockMaxEntries, int leaderboardSize) {
+                         int placedBlockMaxEntries, int leaderboardSize, boolean abilitiesEnabled, boolean abilitiesHud) {
+        this.abilitiesEnabled = abilitiesEnabled;
+        this.abilitiesHud = abilitiesHud;
         this.enabled = enabled;
         this.announce = announce;
         this.actionbar = actionbar;
@@ -128,7 +131,8 @@ public final class SkillsConfig {
 
         return new SkillsConfig(enabled, announce, actionbar, sounds, countCreative,
                 refreshTicks, curve, xpRate, maxXp,
-                skills, Collections.unmodifiableMap(milestones), ttl, maxEntries, leaderboard);
+                skills, Collections.unmodifiableMap(milestones), ttl, maxEntries, leaderboard,
+                cfg.getBoolean("abilities.enabled", true), cfg.getBoolean("abilities.hud", true));
     }
 
     /** Значения опыта по умолчанию — те же, что в config.yml. */
@@ -156,6 +160,9 @@ public final class SkillsConfig {
         out.put(100, new Milestone(100, 40));
         return Map.copyOf(out);
     }
+
+    public boolean abilitiesEnabled() { return abilitiesEnabled; }
+    public boolean abilitiesHud() { return abilitiesHud; }
 
     public SkillSettings skill(SkillType skill) {
         return skills.getOrDefault(skill, new SkillSettings(true, defaultsXp(skill), 1.0));

@@ -66,6 +66,7 @@ final class SkillsProfile implements ChrdkRegisterApi.ProfileProvider {
         lines.add(messages.get("profile-best",
                 "skill", Messages.trusted(messages.raw("skill." + best.id() + ".name")),
                 "level", String.valueOf(bestLevel)));
+        lines.add(messages.get("ability-energy", "energy", plugin.abilities().energy(context.playerId()), "max", SkillAbility.MAX_ENERGY));
         return new ChrdkRegisterApi.ProfileSection(messages.raw("profile-title"),
                 Material.EXPERIENCE_BOTTLE, lines);
     }

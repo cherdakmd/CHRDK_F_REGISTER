@@ -108,6 +108,7 @@ public final class SkillListener implements Listener {
         if (skill == SkillType.FARMING && !SkillMaterials.isRipe(block)) {
             return;
         }
+        plugin.abilities().noteBreak(event, skill);
         service.award(player, skill, 1L);
         doubleDrop(player, block, skill);
         if (skill == SkillType.FARMING) {

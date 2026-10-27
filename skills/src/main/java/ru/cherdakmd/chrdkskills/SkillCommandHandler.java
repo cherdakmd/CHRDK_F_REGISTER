@@ -59,6 +59,13 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
             plugin.messages().send(sender, "player-only");
             return true;
         }
+        if (args[0].equalsIgnoreCase("energy")) {
+            plugin.abilities().status(player); return true;
+        }
+        if (args[0].equalsIgnoreCase("use")) {
+            if (args.length != 2) { plugin.messages().send(player, "ability-usage"); return true; }
+            plugin.abilities().activate(player, SkillAbility.of(SkillType.byId(args[1]))); return true;
+        }
         if (args[0].equalsIgnoreCase("list")) {
             return handleList(player);
         }
@@ -218,12 +225,14 @@ public final class SkillCommandHandler implements CommandExecutor, TabCompleter 
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (command.getName().equalsIgnoreCase("skills")) {
             if (args.length == 1) {
-                List<String> options = new ArrayList<>(List.of("list", "top", "menu"));
+                List<String> options = new ArrayList<>(List.of("list", "top", "menu", "use", "energy"));
                 for (SkillType skill : SkillRegistry.all()) {
                     options.add(skill.id());
                 }
                 return filter(options, args[0]);
             }
+            if (args.length == 2 && args[0].equalsIgnoreCase("use"))
+                return filter(java.util.Arrays.stream(SkillAbility.values()).map(SkillAbility::id).toList(), args[1]);
             return List.of();
         }
         if (!command.getName().equalsIgnoreCase("skillsadmin")) {

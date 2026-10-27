@@ -122,7 +122,8 @@ public final class SkillsGui implements Listener {
                         "unlocked", String.valueOf(unlocked),
                         "all", String.valueOf(all)),
                 plugin.messages().get("menu-summary-xp",
-                        "xp", String.valueOf(service.totalXp(player)))));
+                        "xp", String.valueOf(service.totalXp(player))),
+                plugin.messages().get("ability-energy", "energy", plugin.abilities().energy(player.getUniqueId()), "max", SkillAbility.MAX_ENERGY)));
         item.setItemMeta(meta);
         return item;
     }
@@ -155,9 +156,24 @@ public final class SkillsGui implements Listener {
             SkillPerk perk = perks.get(index);
             holder.inventory.setItem(PERK_SLOTS[index], perkIcon(perk, level));
         }
+        SkillAbility ability = SkillAbility.of(skill);
+        if (ability != null) holder.inventory.setItem(22, abilityIcon(player, ability));
         holder.inventory.setItem(DETAIL_BACK, button(Material.ARROW, "detail-back"));
         holder.inventory.setItem(DETAIL_CLOSE, button(Material.BARRIER, "menu-close"));
         player.openInventory(holder.inventory);
+    }
+
+    private ItemStack abilityIcon(Player player, SkillAbility ability) {
+        ItemStack item = new ItemStack(Material.BLAZE_POWDER);
+        ItemMeta meta = item.getItemMeta();
+        meta.displayName(plugin.messages().get(ability.nameKey()));
+        meta.lore(List.of(plugin.messages().get(ability.descKey()),
+                plugin.messages().get("ability-card", "level", SkillAbility.UNLOCK_LEVEL, "cost", ability.cost(),
+                        "seconds", ability.seconds(), "cooldown", ability.cooldown()),
+                plugin.messages().get("ability-energy", "energy", plugin.abilities().energy(player.getUniqueId()), "max", SkillAbility.MAX_ENERGY),
+                plugin.messages().get("ability-card-ready", "time", plugin.abilities().cooldown(player.getUniqueId(), ability)),
+                plugin.messages().get("ability-card-click")));
+        item.setItemMeta(meta); return item;
     }
 
     private ItemStack perkIcon(SkillPerk perk, int level) {
@@ -240,7 +256,10 @@ public final class SkillsGui implements Listener {
             }
             return;
         }
-        if (slot == DETAIL_BACK) {
+        if (slot == 22 && SkillAbility.of(holder.skill) != null) {
+            player.closeInventory();
+            Bukkit.getScheduler().runTask(plugin, () -> plugin.abilities().activate(player, SkillAbility.of(holder.skill)));
+        } else if (slot == DETAIL_BACK) {
             open(player);
         } else if (slot == DETAIL_CLOSE) {
             player.closeInventory();
