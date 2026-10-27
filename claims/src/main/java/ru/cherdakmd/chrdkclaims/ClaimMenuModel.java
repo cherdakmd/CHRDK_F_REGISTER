@@ -54,7 +54,7 @@ public final class ClaimMenuModel {
             return result;
         }
         String name = viewer == null ? "" : viewer;
-        for (Claim claim : claims) {
+        for (Claim claim : ClaimTerritories.representatives(claims)) {
             if (claim == null || claim.world == null || claim.world.isBlank()) {
                 continue;
             }

@@ -40,6 +40,17 @@ public final class Claim {
     public int salePrice;
     /** Приветствие для гостей: показывается при входе в приват (пусто — нет). */
     public String greeting = "";
+    /** Предложение аренды этого чанка, алмазов/сутки; не цена всей территории. */
+    public int rentOffer;
+    public String tenant = "";
+    public int rentPrice;
+    public long rentUntil;
+    public boolean rentRenew;
+
+    public boolean rentedAt(long now) { return tenant != null && !tenant.isBlank() && rentUntil > now; }
+    public void clearRental() { tenant = ""; rentPrice = 0; rentUntil = 0; rentRenew = false; }
+    public String accessDomain(long now) { return rentedAt(now) ? "tenant:" + tenant.toLowerCase(Locale.ROOT) : "owner:" + owner.toLowerCase(Locale.ROOT); }
+
 
     public Claim(String world, int x, int z, String owner, long paidUntil) {
         this.world = world;
@@ -65,10 +76,18 @@ public final class Claim {
      * Фактическая роль игрока: {@code null} — посторонний, владелец всегда полный.
      * Участник без явной роли сохраняет прежнее поведение — полный доступ.
      */
-    public Role roleOf(String name) {
+    public Role roleOf(String name) { return roleAt(name, System.currentTimeMillis()); }
+
+    Role roleAt(String name, long now) {
         if (isOwner(name)) {
             return Role.BUILD;
         }
+        if (rentedAt(now)) return tenant.equalsIgnoreCase(name) ? Role.BUILD : null;
+        return memberRole(name);
+    }
+
+    Role memberRole(String name) {
+        if (isOwner(name)) return Role.BUILD;
         if (name == null || !isMember(name)) {
             return null;
         }

@@ -118,7 +118,7 @@ public final class ClaimTeleportService implements Listener {
             plugin.messages().send(player, "tp-world-missing", "world", claim.world);
             return false;
         }
-        boolean member = claim.isOwner(player.getName()) || claim.isMember(player.getName());
+        boolean member = claim.canUse(player.getName());
         // Приват на продажу — публичный лот: его можно осмотреть (защита при этом действует).
         boolean viewable = claim.salePrice > 0;
         if (!member && !viewable && !plugin.isBypassing(player)) {

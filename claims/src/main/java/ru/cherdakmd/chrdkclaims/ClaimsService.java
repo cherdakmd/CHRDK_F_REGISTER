@@ -125,6 +125,7 @@ public final class ClaimsService {
             }
             return existing.salePrice > 0 ? "for-sale" : "already-claimed";
         }
+        if (plugin.store().foreignNearby(chunk.getWorld().getName(), chunk.getX(), chunk.getZ(), player.getName(), List.of())) return "foreign-buffer";
         if (cfg.spawnMargin > 0) {
             var spawn = chunk.getWorld().getSpawnLocation();
             int dx = (chunk.getX() << 4) + 8 - spawn.getBlockX();
@@ -155,45 +156,48 @@ public final class ClaimsService {
     }
 
     private void buy(Player player, Chunk chunk) {
-        ClaimsConfig cfg = plugin.config();
-        String world = chunk.getWorld().getName();
-        int price = cfg.priceIn(world);
-        int upkeep = cfg.upkeepIn(world);
-        Claim existing = plugin.store().claimAt(world, chunk.getX(), chunk.getZ());
-        String refusal = checkBuyable(player, chunk);
-        if (refusal != null) {
-            switch (refusal) {
-                case "already-yours" -> plugin.messages().send(player, "already-yours");
-                case "for-sale" -> plugin.messages().send(player, "already-for-sale",
-                        "owner", existing.owner, "price", String.valueOf(existing.salePrice));
-                case "already-claimed" -> plugin.messages().send(player, "already-claimed",
-                        "owner", existing.owner);
-                case "world-disabled" -> plugin.messages().send(player, "world-disabled",
-                        "world", chunk.getWorld().getName());
-                case "spawn-margin" -> plugin.messages().send(player, "spawn-margin",
-                        "margin", String.valueOf(cfg.spawnMargin));
-                case "limit-reached" -> sendLimit(player, player.getName());
-                default -> plugin.messages().send(player, "not-enough",
+        synchronized (plugin.store()) {
+            ClaimsConfig cfg = plugin.config();
+            String world = chunk.getWorld().getName();
+            int price = cfg.priceIn(world);
+            int upkeep = cfg.upkeepIn(world);
+            Claim existing = plugin.store().claimAt(world, chunk.getX(), chunk.getZ());
+            String refusal = checkBuyable(player, chunk);
+            if (refusal != null) {
+                switch (refusal) {
+                    case "already-yours" -> plugin.messages().send(player, "already-yours");
+                    case "for-sale" -> plugin.messages().send(player, "already-for-sale",
+                            "owner", existing.owner, "price", String.valueOf(existing.salePrice));
+                    case "already-claimed" -> plugin.messages().send(player, "already-claimed",
+                            "owner", existing.owner);
+                    case "world-disabled" -> plugin.messages().send(player, "world-disabled",
+                            "world", chunk.getWorld().getName());
+                    case "spawn-margin" -> plugin.messages().send(player, "spawn-margin",
+                            "margin", String.valueOf(cfg.spawnMargin));
+                    case "foreign-buffer" -> plugin.messages().send(player, "foreign-buffer");
+                    case "limit-reached" -> sendLimit(player, player.getName());
+                    default -> plugin.messages().send(player, "not-enough",
+                            "need", String.valueOf(price),
+                            "have", String.valueOf(available(player)));
+                }
+                return;
+            }
+            if (!charge(player, price)) {
+                plugin.messages().send(player, "not-enough",
                         "need", String.valueOf(price),
                         "have", String.valueOf(available(player)));
+                return;
             }
-            return;
+            Claim claim = new Claim(chunk.getWorld().getName(), chunk.getX(), chunk.getZ(),
+                    player.getName(), System.currentTimeMillis() + ClaimMath.DAY_MILLIS);
+            plugin.store().add(claim);
+            plugin.store().addDiamondsSpent(price);
+            audit("buy", player.getName() + " " + claim.where() + " price=" + price);
+            plugin.messages().send(player, "bought",
+                    "price", String.valueOf(price),
+                    "upkeep", String.valueOf(upkeep),
+                    "paid", formatDate(claim.paidUntil));
         }
-        if (!charge(player, price)) {
-            plugin.messages().send(player, "not-enough",
-                    "need", String.valueOf(price),
-                    "have", String.valueOf(available(player)));
-            return;
-        }
-        Claim claim = new Claim(chunk.getWorld().getName(), chunk.getX(), chunk.getZ(),
-                player.getName(), System.currentTimeMillis() + ClaimMath.DAY_MILLIS);
-        plugin.store().add(claim);
-        plugin.store().addDiamondsSpent(price);
-        audit("buy", player.getName() + " " + claim.where() + " price=" + price);
-        plugin.messages().send(player, "bought",
-                "price", String.valueOf(price),
-                "upkeep", String.valueOf(upkeep),
-                "paid", formatDate(claim.paidUntil));
     }
 
     private void sendLimit(Player player, String name) {
@@ -234,6 +238,7 @@ public final class ClaimsService {
             plugin.messages().send(player, "unclaim-not-yours");
             return;
         }
+        if (rentalLocked(player, List.of(claim))) return;
         plugin.store().remove(claim);
         audit("unclaim", player.getName() + " " + claim.where());
         plugin.messages().send(player, "unclaimed");
@@ -246,6 +251,7 @@ public final class ClaimsService {
             plugin.messages().send(player, "unclaim-all-none");
             return;
         }
+        if (rentalLocked(player, claims)) return;
         for (Claim claim : claims) {
             plugin.store().remove(claim);
         }
@@ -261,35 +267,37 @@ public final class ClaimsService {
      * и не длиннее {@link Claim#MAX_GREETING}.
      */
     public void setGreeting(Player player, String text) {
-        Claim claim = claimHere(player);
-        if (claim == null) {
-            plugin.messages().send(player, "unclaim-none");
-            return;
-        }
-        if (!claim.isOwner(player.getName())) {
-            plugin.messages().send(player, "greeting-not-yours");
-            return;
-        }
-        String normalized = Claim.normalizeGreeting(text);
-        if (normalized.isEmpty()) {
-            if (!claim.hasGreeting()) {
-                plugin.messages().send(player, "greeting-none");
+        synchronized (plugin.store()) {
+            Claim claim = claimHere(player);
+            if (claim == null) {
+                plugin.messages().send(player, "unclaim-none");
                 return;
             }
-            claim.greeting = "";
+            if (!claim.isOwner(player.getName())) {
+                plugin.messages().send(player, "greeting-not-yours");
+                return;
+            }
+            String normalized = Claim.normalizeGreeting(text);
+            if (normalized.isEmpty()) {
+                if (!claim.hasGreeting()) {
+                    plugin.messages().send(player, "greeting-none");
+                    return;
+                }
+                plugin.store().territory(claim).forEach(c -> c.greeting = "");
+                plugin.store().markDirty();
+                audit("greeting-clear", player.getName() + " " + claim.where());
+                plugin.messages().send(player, "greeting-cleared");
+                return;
+            }
+            if (normalized.equals(claim.greeting)) {
+                plugin.messages().send(player, "greeting-same");
+                return;
+            }
+            plugin.store().territory(claim).forEach(c -> c.greeting = normalized);
             plugin.store().markDirty();
-            audit("greeting-clear", player.getName() + " " + claim.where());
-            plugin.messages().send(player, "greeting-cleared");
-            return;
+            audit("greeting-set", player.getName() + " " + claim.where() + " text=" + normalized);
+            plugin.messages().send(player, "greeting-set", "text", normalized);
         }
-        if (normalized.equals(claim.greeting)) {
-            plugin.messages().send(player, "greeting-same");
-            return;
-        }
-        claim.greeting = normalized;
-        plugin.store().markDirty();
-        audit("greeting-set", player.getName() + " " + claim.where() + " text=" + normalized);
-        plugin.messages().send(player, "greeting-set", "text", normalized);
     }
 
     /** Мгновенный обратный выкуп сервером за sellbackPercent от цены. */
@@ -298,6 +306,7 @@ public final class ClaimsService {
         if (claim == null) {
             return;
         }
+        if (rentalLocked(player, List.of(claim))) return;
         int reward = ClaimMath.sellbackReward(
                 plugin.config().priceIn(claim.world), plugin.config().sellbackPercent);
         plugin.store().remove(claim);
@@ -313,24 +322,31 @@ public final class ClaimsService {
 
     /** Выставить/снять продажу. price 0 = снять с продажи. */
     public void setSale(Player player, int price) {
-        Claim claim = ownClaimHere(player, "sell-not-yours");
-        if (claim == null) {
-            return;
-        }
-        if (price > 0 && claim.debtDays > 0) {
-            // Покупатель не должен унаследовать чужие долги: сначала гасим их.
-            plugin.messages().send(player, "sell-debt",
-                    "days", String.valueOf(claim.debtDays));
-            return;
-        }
-        claim.salePrice = Math.max(0, price);
-        plugin.store().markDirty();
-        audit(price > 0 ? "sale-set" : "sale-clear",
-                player.getName() + " " + claim.where() + " price=" + claim.salePrice);
-        if (price > 0) {
-            plugin.messages().send(player, "sell-set", "price", String.valueOf(price));
-        } else {
-            plugin.messages().send(player, "sell-cleared");
+        synchronized (plugin.store()) {
+            Claim claim = ownClaimHere(player, "sell-not-yours");
+            if (claim == null) {
+                return;
+            }
+            List<Claim> region = plugin.store().territory(claim);
+            if (price > 0 && (rentalLocked(player, region) || region.stream().anyMatch(c -> c.rentOffer > 0))) {
+                plugin.messages().send(player, "rent-sale");
+                return;
+            }
+            if (price > 0 && region.stream().anyMatch(c -> c.debtDays > 0)) {
+                // Покупатель не должен унаследовать чужие долги: сначала гасим их.
+                plugin.messages().send(player, "sell-debt",
+                        "days", String.valueOf(region.stream().mapToInt(c -> c.debtDays).max().orElse(0)));
+                return;
+            }
+            region.forEach(c -> c.salePrice = Math.max(0, price));
+            plugin.store().markDirty();
+            audit(price > 0 ? "sale-set" : "sale-clear",
+                    player.getName() + " " + claim.where() + " price=" + claim.salePrice);
+            if (price > 0) {
+                plugin.messages().send(player, "sell-set", "price", String.valueOf(price));
+            } else {
+                plugin.messages().send(player, "sell-cleared");
+            }
         }
     }
 
@@ -345,74 +361,84 @@ public final class ClaimsService {
      * витриной `/claim forsale` можно пользоваться, не бегая по карте.
      */
     public void buyFromPlayer(Player player, int chunkX, int chunkZ) {
-        String world = player.getWorld().getName();
-        if (!plugin.config().worldEnabled(world)) {
-            plugin.messages().send(player, "world-disabled", "world", world);
-            return;
-        }
-        Claim claim = plugin.store().claimAt(world, chunkX, chunkZ);
-        if (claim == null || claim.salePrice <= 0) {
-            plugin.messages().send(player, "buy-not-for-sale");
-            return;
-        }
-        if (claim.isOwner(player.getName())) {
-            plugin.messages().send(player, "already-yours");
-            return;
-        }
-        int price = claim.salePrice;
-        if (available(player) < price) {
-            plugin.messages().send(player, "not-enough",
-                    "need", String.valueOf(price), "have", String.valueOf(available(player)));
-            return;
-        }
-        if (plugin.store().count(player.getName()) >= limitOf(player.getName())) {
-            sendLimit(player, player.getName());
-            return;
-        }
-        if (!charge(player, price)) {
-            plugin.messages().send(player, "not-enough",
-                    "need", String.valueOf(price), "have", String.valueOf(available(player)));
-            return;
-        }
-        String seller = claim.owner;
-        int tax = ClaimMath.saleTax(price, plugin.config().saleTaxPercent);
-        int net = Math.max(0, price - tax);
-        plugin.store().addTreasury(seller, net);
-        plugin.store().addTaxBurned(tax);
+        synchronized (plugin.store()) {
+            String world = player.getWorld().getName();
+            if (!plugin.config().worldEnabled(world)) {
+                plugin.messages().send(player, "world-disabled", "world", world);
+                return;
+            }
+            Claim claim = plugin.store().claimAt(world, chunkX, chunkZ);
+            if (claim == null || claim.salePrice <= 0) {
+                plugin.messages().send(player, "buy-not-for-sale");
+                return;
+            }
+            if (claim.isOwner(player.getName())) {
+                plugin.messages().send(player, "already-yours");
+                return;
+            }
+            List<Claim> region = plugin.store().territory(claim);
+            if (region.stream().anyMatch(c -> c.salePrice != claim.salePrice || c.debtDays > 0 || c.rentOffer > 0)
+                    || rentalLocked(player, region)) {
+                plugin.messages().send(player, "rent-sale");
+                return;
+            }
+            if (!spacing(player, region, player.getName())) return;
+            int price = claim.salePrice;
+            if (available(player) < price) {
+                plugin.messages().send(player, "not-enough",
+                        "need", String.valueOf(price), "have", String.valueOf(available(player)));
+                return;
+            }
+            if ((long) plugin.store().count(player.getName()) + region.size() > limitOf(player.getName())) {
+                sendLimit(player, player.getName());
+                return;
+            }
+            if (!charge(player, price)) {
+                plugin.messages().send(player, "not-enough",
+                        "need", String.valueOf(price), "have", String.valueOf(available(player)));
+                return;
+            }
+            String seller = claim.owner;
+            int tax = ClaimMath.saleTax(price, plugin.config().saleTaxPercent);
+            int net = Math.max(0, price - tax);
+            plugin.store().addTreasury(seller, net);
+            plugin.store().addTaxBurned(tax);
 
-        List<String> formerMembers = new ArrayList<>(claim.members);
-        claim.owner = player.getName();
-        claim.clearMembers();
-        claim.salePrice = 0;
-        claim.debtDays = 0;
-        plugin.store().markDirty();
-        audit("sale", player.getName() + " <- " + seller + " " + claim.where()
-                + " price=" + price + " tax=" + tax);
+            List<String> formerMembers = region.stream().flatMap(c -> c.members.stream()).distinct().toList();
+            for (Claim part : region) {
+                part.owner = player.getName(); part.clearMembers(); part.salePrice = 0;
+                part.debtDays = 0; part.rentOffer = 0; part.clearRental();
+            }
+            plugin.store().mergeAcquired(region);
+            plugin.store().markDirty();
+            audit("sale", player.getName() + " <- " + seller + " " + claim.where()
+                    + " price=" + price + " tax=" + tax);
 
-        plugin.messages().send(player, "buy-done",
-                "seller", seller, "price", String.valueOf(price), "tax", String.valueOf(tax));
-        String sellerText = plugin.messages().plain("buy-sold-notice",
-                "x", String.valueOf(claim.x), "z", String.valueOf(claim.z),
-                "price", String.valueOf(price), "buyer", player.getName(),
-                "net", String.valueOf(net), "tax", String.valueOf(tax));
-        Player sellerOnline = Bukkit.getPlayerExact(seller);
-        if (sellerOnline != null && authenticated(sellerOnline)) {
-            plugin.messages().send(sellerOnline, "buy-sold",
+            plugin.messages().send(player, "buy-done",
+                    "seller", seller, "price", String.valueOf(price), "tax", String.valueOf(tax));
+            String sellerText = plugin.messages().plain("buy-sold-notice",
                     "x", String.valueOf(claim.x), "z", String.valueOf(claim.z),
                     "price", String.valueOf(price), "buyer", player.getName(),
                     "net", String.valueOf(net), "tax", String.valueOf(tax));
-        } else {
-            plugin.store().addNotice(seller, sellerText);
-        }
-        for (String member : formerMembers) {
-            String text = plugin.messages().plain("notice-sold-member",
-                    "where", claim.where(), "seller", seller, "buyer", player.getName());
-            Player memberOnline = Bukkit.getPlayerExact(member);
-            if (memberOnline != null && authenticated(memberOnline)) {
-                plugin.messages().send(memberOnline, "notice-sold-member",
-                        "where", claim.where(), "seller", seller, "buyer", player.getName());
+            Player sellerOnline = Bukkit.getPlayerExact(seller);
+            if (sellerOnline != null && authenticated(sellerOnline)) {
+                plugin.messages().send(sellerOnline, "buy-sold",
+                        "x", String.valueOf(claim.x), "z", String.valueOf(claim.z),
+                        "price", String.valueOf(price), "buyer", player.getName(),
+                        "net", String.valueOf(net), "tax", String.valueOf(tax));
             } else {
-                plugin.store().addNotice(member, text);
+                plugin.store().addNotice(seller, sellerText);
+            }
+            for (String member : formerMembers) {
+                String text = plugin.messages().plain("notice-sold-member",
+                        "where", claim.where(), "seller", seller, "buyer", player.getName());
+                Player memberOnline = Bukkit.getPlayerExact(member);
+                if (memberOnline != null && authenticated(memberOnline)) {
+                    plugin.messages().send(memberOnline, "notice-sold-member",
+                            "where", claim.where(), "seller", seller, "buyer", player.getName());
+                } else {
+                    plugin.store().addNotice(member, text);
+                }
             }
         }
     }
@@ -420,123 +446,127 @@ public final class ClaimsService {
     // ------------------------------------------------------------ members --
 
     public boolean addMember(Player player, String name, boolean everywhere, Claim.Role role) {
-        List<Claim> targets = targets(player, everywhere);
-        if (targets == null) {
-            return false;
-        }
-        Player target = Bukkit.getPlayerExact(name);
-        if (target == null && !knownPlayer(name)) {
-            plugin.messages().send(player, "add-unknown", "name", name);
-            return false;
-        }
-        if (role == null) {
-            role = Claim.Role.BUILD;
-        }
-        String roleText = plugin.messages().plain(roleKey(role));
-        int changed = 0;
-        int updated = 0;
-        for (Claim claim : targets) {
-            if (claim.isOwner(name)) {
-                continue;
+        synchronized (plugin.store()) {
+            List<Claim> targets = targets(player, everywhere);
+            if (targets == null) {
+                return false;
             }
-            if (claim.isMember(name)) {
-                if (claim.roleOf(name) != role) {
-                    claim.setRole(name, role);
-                    updated++;
+            Player target = Bukkit.getPlayerExact(name);
+            if (target == null && !knownPlayer(name)) {
+                plugin.messages().send(player, "add-unknown", "name", name);
+                return false;
+            }
+            if (role == null) {
+                role = Claim.Role.BUILD;
+            }
+            String roleText = plugin.messages().plain(roleKey(role));
+            int changed = 0;
+            int updated = 0;
+            for (Claim claim : targets) {
+                if (claim.isOwner(name)) {
+                    continue;
                 }
-                continue;
-            }
-            if (claim.members.size() >= plugin.config().membersPerChunk) {
-                plugin.messages().send(player, "add-full",
-                        "max", String.valueOf(plugin.config().membersPerChunk));
-                if (!everywhere) {
-                    return true;
+                if (claim.isMember(name)) {
+                    if (claim.roleOf(name) != role) {
+                        claim.setRole(name, role);
+                        updated++;
+                    }
+                    continue;
                 }
-                continue;
+                if (claim.members.size() >= plugin.config().membersPerChunk) {
+                    plugin.messages().send(player, "add-full",
+                            "max", String.valueOf(plugin.config().membersPerChunk));
+                    if (!everywhere) {
+                        return true;
+                    }
+                    continue;
+                }
+                claim.members.add(name);
+                claim.setRole(name, role);
+                changed++;
             }
-            claim.members.add(name);
-            claim.setRole(name, role);
-            changed++;
-        }
-        plugin.store().markDirty();
-        if (changed > 0) {
-            audit("member-add", player.getName() + " -> " + name
-                    + " role=" + role.name() + " count=" + changed);
-        }
-        if (updated > 0) {
-            audit("member-role", player.getName() + " -> " + name
-                    + " role=" + role.name() + " count=" + updated);
-        }
-        if (changed == 0 && updated == 0) {
-            plugin.messages().send(player, "add-already", "name", name);
-            return true;
-        }
-        if (updated > 0 && changed == 0) {
-            plugin.messages().send(player, "role-updated", "name", name, "role", roleText);
-            return true;
-        }
-        if (everywhere) {
-            plugin.messages().send(player, "add-all-done", "name", name,
-                    "count", String.valueOf(changed), "role", roleText);
-        } else {
-            plugin.messages().send(player, "add-done", "name", name, "role", roleText);
-        }
-        Claim first = targets.get(0);
-        if (target != null) {
+            plugin.store().markDirty();
+            if (changed > 0) {
+                audit("member-add", player.getName() + " -> " + name
+                        + " role=" + role.name() + " count=" + changed);
+            }
+            if (updated > 0) {
+                audit("member-role", player.getName() + " -> " + name
+                        + " role=" + role.name() + " count=" + updated);
+            }
+            if (changed == 0 && updated == 0) {
+                plugin.messages().send(player, "add-already", "name", name);
+                return true;
+            }
+            if (updated > 0 && changed == 0) {
+                plugin.messages().send(player, "role-updated", "name", name, "role", roleText);
+                return true;
+            }
             if (everywhere) {
-                plugin.messages().send(target, "member-added-all",
-                        "owner", player.getName(), "count", String.valueOf(changed));
+                plugin.messages().send(player, "add-all-done", "name", name,
+                        "count", String.valueOf(changed), "role", roleText);
             } else {
-                plugin.messages().send(target, "member-added",
-                        "owner", player.getName(),
-                        "x", String.valueOf(first.x), "z", String.valueOf(first.z));
+                plugin.messages().send(player, "add-done", "name", name, "role", roleText);
             }
-        } else if (everywhere) {
-            plugin.store().addNotice(name, plugin.messages().plain("member-added-all",
-                    "owner", player.getName(), "count", String.valueOf(changed)));
-        } else {
-            plugin.store().addNotice(name, plugin.messages().plain("member-added",
-                    "owner", player.getName(),
-                    "x", String.valueOf(first.x), "z", String.valueOf(first.z)));
+            Claim first = targets.get(0);
+            if (target != null) {
+                if (everywhere) {
+                    plugin.messages().send(target, "member-added-all",
+                            "owner", player.getName(), "count", String.valueOf(changed));
+                } else {
+                    plugin.messages().send(target, "member-added",
+                            "owner", player.getName(),
+                            "x", String.valueOf(first.x), "z", String.valueOf(first.z));
+                }
+            } else if (everywhere) {
+                plugin.store().addNotice(name, plugin.messages().plain("member-added-all",
+                        "owner", player.getName(), "count", String.valueOf(changed)));
+            } else {
+                plugin.store().addNotice(name, plugin.messages().plain("member-added",
+                        "owner", player.getName(),
+                        "x", String.valueOf(first.x), "z", String.valueOf(first.z)));
+            }
+            return true;
         }
-        return true;
     }
 
     public boolean removeMember(Player player, String name, boolean everywhere) {
-        List<Claim> targets = targets(player, everywhere);
-        if (targets == null) {
-            return false;
-        }
-        int changed = 0;
-        for (Claim claim : targets) {
-            changed += claim.removeMember(name) ? 1 : 0;
-        }
-        plugin.store().markDirty();
-        if (changed > 0) {
-            audit("member-remove", player.getName() + " -> " + name + " count=" + changed);
-        }
-        if (changed == 0) {
-            plugin.messages().send(player, "remove-not-member", "name", name);
+        synchronized (plugin.store()) {
+            List<Claim> targets = targets(player, everywhere);
+            if (targets == null) {
+                return false;
+            }
+            int changed = 0;
+            for (Claim claim : targets) {
+                changed += claim.removeMember(name) ? 1 : 0;
+            }
+            plugin.store().markDirty();
+            if (changed > 0) {
+                audit("member-remove", player.getName() + " -> " + name + " count=" + changed);
+            }
+            if (changed == 0) {
+                plugin.messages().send(player, "remove-not-member", "name", name);
+                return true;
+            }
+            if (everywhere) {
+                plugin.messages().send(player, "remove-all-done", "name", name, "count", String.valueOf(changed));
+            } else {
+                plugin.messages().send(player, "remove-done", "name", name);
+            }
+            Player target = Bukkit.getPlayerExact(name);
+            if (target != null) {
+                Claim first = targets.get(0);
+                if (everywhere) {
+                    plugin.messages().send(target, "member-removed-all",
+                            "owner", player.getName(), "count", String.valueOf(changed));
+                } else {
+                    plugin.messages().send(target, "member-removed",
+                            "owner", player.getName(),
+                            "x", String.valueOf(first.x), "z", String.valueOf(first.z));
+                }
+            }
             return true;
         }
-        if (everywhere) {
-            plugin.messages().send(player, "remove-all-done", "name", name, "count", String.valueOf(changed));
-        } else {
-            plugin.messages().send(player, "remove-done", "name", name);
-        }
-        Player target = Bukkit.getPlayerExact(name);
-        if (target != null) {
-            Claim first = targets.get(0);
-            if (everywhere) {
-                plugin.messages().send(target, "member-removed-all",
-                        "owner", player.getName(), "count", String.valueOf(changed));
-            } else {
-                plugin.messages().send(target, "member-removed",
-                        "owner", player.getName(),
-                        "x", String.valueOf(first.x), "z", String.valueOf(first.z));
-            }
-        }
-        return true;
     }
 
     /** Цели для add/remove: текущий чанк (с проверкой владения) или все приваты игрока. */
@@ -558,7 +588,7 @@ public final class ClaimsService {
             plugin.messages().send(player, "remove-not-owner");
             return null;
         }
-        return List.of(claim);
+        return plugin.store().territory(claim);
     }
 
     // ------------------------------------------------------------ transfer --
@@ -610,6 +640,9 @@ public final class ClaimsService {
             return;
         }
         Chunk chunk = admin.getLocation().getChunk();
+        if (plugin.store().foreignNearby(chunk.getWorld().getName(), chunk.getX(), chunk.getZ(), targetName, List.of())) {
+            plugin.messages().send(admin, "foreign-buffer"); return;
+        }
         Claim created = new Claim(chunk.getWorld().getName(), chunk.getX(), chunk.getZ(),
                 targetName, System.currentTimeMillis() + ClaimMath.DAY_MILLIS);
         plugin.store().add(created);
@@ -626,63 +659,69 @@ public final class ClaimsService {
     }
 
     private boolean transfer(Claim claim, Player actor, String targetName, boolean admin) {
-        if (targetName == null || targetName.isBlank() || !knownPlayer(targetName)) {
-            plugin.messages().send(actor, "transfer-unknown", "name",
-                    targetName == null ? "?" : targetName);
-            return false;
-        }
-        if (claim.isOwner(targetName)) {
-            plugin.messages().send(actor, "transfer-self");
-            return false;
-        }
-        int limit = limitOf(targetName);
-        if (plugin.store().count(targetName) >= limit) {
-            plugin.messages().send(actor, "transfer-limit",
-                    "name", targetName, "limit", String.valueOf(limit));
-            return false;
-        }
-        String oldOwner = claim.owner;
-        int x = claim.x;
-        int z = claim.z;
-        List<String> formerMembers = new ArrayList<>(claim.members);
-        claim.owner = targetName;
-        claim.clearMembers();
-        claim.salePrice = 0;
-        plugin.store().markDirty();
-        audit(admin ? "admin-transfer" : "transfer",
-                actor.getName() + " " + oldOwner + " -> " + targetName + " " + claim.where());
-
-        if (admin) {
-            plugin.messages().send(actor, "admin-transfer-done", "name", targetName, "old", oldOwner);
-        } else {
-            plugin.messages().send(actor, "transfer-done", "name", targetName);
-        }
-        Player target = Bukkit.getPlayerExact(targetName);
-        if (target != null && authenticated(target)) {
-            plugin.messages().send(target, "transfer-received",
-                    "from", actor.getName(), "x", String.valueOf(x), "z", String.valueOf(z));
-        } else {
-            plugin.store().addNotice(targetName, plugin.messages().plain("transfer-received",
-                    "from", actor.getName(), "x", String.valueOf(x), "z", String.valueOf(z)));
-        }
-        Player oldOnline = Bukkit.getPlayerExact(oldOwner);
-        if (oldOnline != null && !oldOwner.equalsIgnoreCase(actor.getName())
-                && authenticated(oldOnline)) {
-            plugin.messages().send(oldOnline, "transfer-given",
-                    "name", targetName, "x", String.valueOf(x), "z", String.valueOf(z));
-        }
-        for (String member : formerMembers) {
-            String text = plugin.messages().plain("member-removed",
-                    "owner", oldOwner, "x", String.valueOf(x), "z", String.valueOf(z));
-            Player memberOnline = Bukkit.getPlayerExact(member);
-            if (memberOnline != null && authenticated(memberOnline)) {
-                plugin.messages().send(memberOnline, "member-removed",
-                        "owner", oldOwner, "x", String.valueOf(x), "z", String.valueOf(z));
-            } else {
-                plugin.store().addNotice(member, text);
+        synchronized (plugin.store()) {
+            if (targetName == null || targetName.isBlank() || !knownPlayer(targetName)) {
+                plugin.messages().send(actor, "transfer-unknown", "name",
+                        targetName == null ? "?" : targetName);
+                return false;
             }
+            if (claim.isOwner(targetName)) {
+                plugin.messages().send(actor, "transfer-self");
+                return false;
+            }
+            List<Claim> region = plugin.store().territory(claim);
+            if (rentalLocked(actor, region) || !spacing(actor, region, targetName)) return false;
+            int limit = limitOf(targetName);
+            if ((long) plugin.store().count(targetName) + region.size() > limit) {
+                plugin.messages().send(actor, "transfer-limit",
+                        "name", targetName, "limit", String.valueOf(limit));
+                return false;
+            }
+            String oldOwner = claim.owner;
+            int x = claim.x;
+            int z = claim.z;
+            List<String> formerMembers = region.stream().flatMap(c -> c.members.stream()).distinct().toList();
+            for (Claim part : region) {
+                part.owner = targetName; part.clearMembers(); part.salePrice = 0;
+                part.rentOffer = 0; part.clearRental();
+            }
+            plugin.store().mergeAcquired(region);
+            plugin.store().markDirty();
+            audit(admin ? "admin-transfer" : "transfer",
+                    actor.getName() + " " + oldOwner + " -> " + targetName + " " + claim.where());
+
+            if (admin) {
+                plugin.messages().send(actor, "admin-transfer-done", "name", targetName, "old", oldOwner);
+            } else {
+                plugin.messages().send(actor, "transfer-done", "name", targetName);
+            }
+            Player target = Bukkit.getPlayerExact(targetName);
+            if (target != null && authenticated(target)) {
+                plugin.messages().send(target, "transfer-received",
+                        "from", actor.getName(), "x", String.valueOf(x), "z", String.valueOf(z));
+            } else {
+                plugin.store().addNotice(targetName, plugin.messages().plain("transfer-received",
+                        "from", actor.getName(), "x", String.valueOf(x), "z", String.valueOf(z)));
+            }
+            Player oldOnline = Bukkit.getPlayerExact(oldOwner);
+            if (oldOnline != null && !oldOwner.equalsIgnoreCase(actor.getName())
+                    && authenticated(oldOnline)) {
+                plugin.messages().send(oldOnline, "transfer-given",
+                        "name", targetName, "x", String.valueOf(x), "z", String.valueOf(z));
+            }
+            for (String member : formerMembers) {
+                String text = plugin.messages().plain("member-removed",
+                        "owner", oldOwner, "x", String.valueOf(x), "z", String.valueOf(z));
+                Player memberOnline = Bukkit.getPlayerExact(member);
+                if (memberOnline != null && authenticated(memberOnline)) {
+                    plugin.messages().send(memberOnline, "member-removed",
+                            "owner", oldOwner, "x", String.valueOf(x), "z", String.valueOf(z));
+                } else {
+                    plugin.store().addNotice(member, text);
+                }
+            }
+            return true;
         }
-        return true;
     }
 
     // ------------------------------------------------------------ treasury --
@@ -746,6 +785,7 @@ public final class ClaimsService {
             if (!cfg.worldEnabled(claim.world)) {
                 continue;
             }
+            if (claim.rentedAt(now)) continue; // Серверная рента этого оплаченного срока внесена заранее.
             int rent = cfg.upkeepIn(claim.world);
             if (rent <= 0) {
                 continue; // рента в этом мире отключена
@@ -901,6 +941,61 @@ public final class ClaimsService {
                 "balance", String.valueOf(balance),
                 "need", String.valueOf(need),
                 "date", formatDate(earliest == Long.MAX_VALUE ? now : earliest));
+    }
+
+    public boolean rentalLocked(org.bukkit.command.CommandSender actor, List<Claim> claims) {
+        if (claims.stream().noneMatch(c -> c.rentedAt(System.currentTimeMillis()))) return false;
+        plugin.messages().send(actor, "rent-locked");
+        return true;
+    }
+
+    private boolean spacing(org.bukkit.command.CommandSender actor, List<Claim> moving, String owner) {
+        java.util.Set<Claim> ignored = new java.util.HashSet<>(moving);
+        if (moving.stream().noneMatch(c -> plugin.store().foreignNearby(c.world, c.x, c.z, owner, ignored))) return true;
+        plugin.messages().send(actor, "foreign-buffer");
+        return false;
+    }
+
+    public void rental(Player player, String action, int price) {
+        if (!isAllowed(player)) { plugin.messages().send(player, "need-auth"); return; }
+        Claim claim = claimHere(player);
+        if (claim == null || !plugin.config().worldEnabled(claim.world)) {
+            plugin.messages().send(player, "unclaim-none"); return;
+        }
+        long now = System.currentTimeMillis();
+        String refusal;
+        switch (action) {
+            case "offer" -> refusal = ClaimRentals.offer(plugin.store(), claim, player.getName(), price, now);
+            case "take" -> refusal = ClaimRentals.take(plugin.store(), claim, player.getName(), price, now, serverRent(claim));
+            case "stop" -> refusal = ClaimRentals.stop(plugin.store(), claim, player.getName());
+            default -> { plugin.messages().send(player, "rent-usage"); return; }
+        }
+        if (refusal != null) { plugin.messages().send(player, refusal); return; }
+        audit("rent-" + action, player.getName() + " " + claim.where() + " price=" + claim.rentPrice
+                + " offer=" + claim.rentOffer + " until=" + claim.rentUntil);
+        plugin.messages().send(player, "rent-updated");
+        rentalInfo(player, claim);
+    }
+
+    public void rentalInfo(Player player, Claim claim) {
+        plugin.messages().send(player, "info-territory", "chunks", plugin.store().territory(claim).size());
+        plugin.messages().send(player, "rent-info", "offer", claim.rentOffer,
+                "tenant", claim.rentedAt(System.currentTimeMillis()) ? claim.tenant : "—",
+                "price", claim.rentPrice, "until", claim.rentedAt(System.currentTimeMillis()) ? formatDate(claim.rentUntil) : "—",
+                "renew", claim.rentRenew ? "да" : "нет");
+    }
+
+    private int serverRent(Claim claim) {
+        return plugin.config().upkeepPerDay <= 0 ? 0 : plugin.config().upkeepIn(claim.world);
+    }
+
+    public void processRentals(long now) {
+        for (Claim claim : plugin.store().all()) {
+            // Отключённый мир: оплаченный срок сохраняется, новых списаний нет.
+            int result = ClaimRentals.settle(plugin.store(), claim, now,
+                    plugin.config().worldEnabled(claim.world) ? serverRent(claim) : -1);
+            if (result != 0) audit(result > 0 ? "rent-renew" : "rent-end", claim.where());
+        }
     }
 
     // ------------------------------------------------------------- others --

@@ -18,7 +18,7 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
 
     private static final List<String> SUBS = List.of("help", "menu", "tp", "info", "map", "list",
             "unclaim", "add", "remove", "deposit", "withdraw", "balance", "sell", "sellback",
-            "buy", "transfer", "forsale", "borders", "near", "notices", "greeting");
+            "buy", "transfer", "forsale", "borders", "near", "notices", "greeting", "rent");
 
     private final ClaimsPlugin plugin;
 
@@ -54,6 +54,7 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
             case "near" -> near(player, args);
             case "notices" -> notices(player, args);
             case "greeting" -> greeting(player, args);
+            case "rent" -> rental(player, args);
             case "sell" -> sell(player, args);
             case "sellback" -> {
                 if (ready(player)) {
@@ -82,6 +83,29 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
             default -> plugin.messages().send(player, "unknown-sub");
         }
         return true;
+    }
+
+    private void rental(Player player, String[] args) {
+        if (!ready(player)) return;
+        if (args.length == 1) {
+            Claim claim = service().claimHere(player);
+            if (claim == null) plugin.messages().send(player, "unclaim-none");
+            else service().rentalInfo(player, claim);
+            plugin.messages().send(player, "rent-usage");
+            return;
+        }
+        String action = args[1].toLowerCase(Locale.ROOT);
+        if (action.equals("stop") && args.length == 2) {
+            service().rental(player, action, 0); return;
+        }
+        if (action.equals("off") && args.length == 2) { service().rental(player, "offer", 0); return; }
+        if ((action.equals("offer") || action.equals("take")) && args.length == 3) {
+            try {
+                int price = Integer.parseInt(args[2]);
+                if (price > 0 && price <= ClaimRentals.MAX_PRICE) { service().rental(player, action, price); return; }
+            } catch (NumberFormatException ignored) { }
+        }
+        plugin.messages().send(player, "rent-usage");
     }
 
     private ClaimsService service() {
@@ -170,6 +194,7 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
                     "upkeep", String.valueOf(plugin.config().upkeepIn(world)));
             return;
         }
+        service().rentalInfo(player, claim);
         plugin.messages().send(player, "info-owner",
                 "owner", claim.owner,
                 "members-count", String.valueOf(claim.members.size()),
@@ -241,7 +266,7 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
     }
 
     private void list(Player player, String[] args) {
-        List<Claim> claims = service().ownedSorted(player.getName());
+        List<Claim> claims = ClaimTerritories.representatives(service().ownedSorted(player.getName()));
         if (claims.isEmpty()) {
             plugin.messages().send(player, "list-none");
             return;
@@ -250,11 +275,12 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
         int page = Pagination.clampPage(pageArg(args, 1), pages);
         plugin.messages().send(player, "list-header",
                 "count", String.valueOf(claims.size()),
+                "chunks", plugin.store().count(player.getName()),
                 "limit", String.valueOf(service().limitOf(player.getName())));
         for (Claim claim : Pagination.slice(claims, page, Pagination.PAGE_SIZE)) {
             plugin.messages().send(player, "list-line",
                     "world", claim.world, "x", String.valueOf(claim.x),
-                    "z", String.valueOf(claim.z),
+                    "z", String.valueOf(claim.z), "chunks", plugin.store().territory(claim).size(),
                     "paid", service().formatDate(claim.paidUntil),
                     "sale", claim.salePrice > 0
                             ? plugin.messages().mini("list-sale",
@@ -273,7 +299,7 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
         Chunk chunk = player.getLocation().getChunk();
         String world = chunk.getWorld().getName();
         List<ClaimMarket.Offer> offers = new ArrayList<>();
-        for (Claim claim : plugin.store().all()) {
+        for (Claim claim : ClaimTerritories.representatives(plugin.store().all())) {
             if (claim.salePrice > 0 && plugin.config().worldEnabled(claim.world)) {
                 offers.add(new ClaimMarket.Offer(claim.world, claim.x, claim.z,
                         claim.owner, claim.salePrice));
@@ -293,6 +319,7 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
                     "world", offer.world(), "x", String.valueOf(offer.x()),
                     "z", String.valueOf(offer.z()), "price", String.valueOf(offer.price()),
                     "owner", offer.owner(),
+                    "chunks", plugin.store().territory(plugin.store().claimAt(offer.world(), offer.x(), offer.z())).size(),
                     "dist", distance == Integer.MAX_VALUE
                             ? ""
                             : plugin.messages().mini("forsale-distance",
@@ -644,6 +671,10 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
                 }
             }
             return result;
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("rent")) {
+            String prefix = args[1].toLowerCase(Locale.ROOT);
+            return List.of("offer", "off", "take", "stop").stream().filter(s -> s.startsWith(prefix)).toList();
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("sell")) {
             result.add("снять");

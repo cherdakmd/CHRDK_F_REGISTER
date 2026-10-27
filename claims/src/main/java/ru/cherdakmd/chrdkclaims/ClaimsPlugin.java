@@ -57,6 +57,7 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
     private NamespacedKey noticesKey;
     private BukkitTask saveTask;
     private BukkitTask upkeepTask;
+    private BukkitTask rentalTask;
 
     @Override
     public void onEnable() {
@@ -110,6 +111,8 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         }
 
         // рента добегает простой сервера: прогон при включении и дальше раз в час
+        rentalTask = Bukkit.getScheduler().runTaskTimer(this,
+                () -> service.processRentals(System.currentTimeMillis()), 80L, 1200L);
         upkeepTask = Bukkit.getScheduler().runTaskTimer(this,
                 () -> service.processUpkeep(System.currentTimeMillis()),
                 100L, UPKEEP_INTERVAL_TICKS);
@@ -131,6 +134,7 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         if (teleports != null) {
             teleports.shutdown();
         }
+        if (rentalTask != null) rentalTask.cancel();
         if (upkeepTask != null) {
             upkeepTask.cancel();
         }
@@ -403,31 +407,24 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         }
     }
 
-    /** Рисует контур чанка на двух уровнях — видно и на неровном рельефе. */
+    /** Ближайший внешний контур территории, без внутренних швов и без загрузки чанков. */
     private void drawBorder(Player player) {
         Location base = player.getLocation();
         World world = base.getWorld();
-        int minX = (base.getBlockX() >> 4) << 4;
-        int minZ = (base.getBlockZ() >> 4) << 4;
-        int y = base.getBlockY();
-        for (int offset = 0; offset <= 16; offset += 2) {
-            player.spawnParticle(Particle.END_ROD,
-                    new Location(world, minX + offset, y + 0.2, minZ), 1);
-            player.spawnParticle(Particle.END_ROD,
-                    new Location(world, minX + offset, y + 0.2, minZ + 16), 1);
-            player.spawnParticle(Particle.END_ROD,
-                    new Location(world, minX, y + 0.2, minZ + offset), 1);
-            player.spawnParticle(Particle.END_ROD,
-                    new Location(world, minX + 16, y + 0.2, minZ + offset), 1);
-            if (offset % 4 == 0) {
-                player.spawnParticle(Particle.END_ROD,
-                        new Location(world, minX + offset, y + 2.2, minZ), 1);
-                player.spawnParticle(Particle.END_ROD,
-                        new Location(world, minX + offset, y + 2.2, minZ + 16), 1);
-                player.spawnParticle(Particle.END_ROD,
-                        new Location(world, minX, y + 2.2, minZ + offset), 1);
-                player.spawnParticle(Particle.END_ROD,
-                        new Location(world, minX + 16, y + 2.2, minZ + offset), 1);
+        var edges = ClaimBorders.visible(base.getBlockX() >> 4, base.getBlockZ() >> 4,
+                (x, z) -> store.claimAt(world.getName(), x, z));
+        int sent = 0;
+        for (var edge : edges) {
+            for (int offset = 0; offset <= 16; offset += 2) {
+                if (sent >= 512) return;
+                double x = edge.x1() + (edge.x2() - edge.x1()) * offset / 16.0;
+                double z = edge.z1() + (edge.z2() - edge.z1()) * offset / 16.0;
+                player.spawnParticle(Particle.END_ROD, new Location(world, x, base.getY() + .2, z), 1);
+                sent++;
+                if (offset % 4 == 0 && sent < 512) {
+                    player.spawnParticle(Particle.END_ROD, new Location(world, x, base.getY() + 2.2, z), 1);
+                    sent++;
+                }
             }
         }
     }

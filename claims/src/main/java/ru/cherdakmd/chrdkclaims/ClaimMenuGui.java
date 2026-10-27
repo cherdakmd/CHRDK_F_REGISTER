@@ -180,6 +180,7 @@ public final class ClaimMenuGui implements Listener {
                 "x", String.valueOf(entry.x()),
                 "z", String.valueOf(entry.z()),
                 "owner", entry.owner(),
+                "chunks", plugin.store().territory(plugin.store().claimAt(entry.world(), entry.x(), entry.z())).size(),
                 "paid", plugin.service().formatDate(entry.paidUntil()),
                 "sale", sale);
     }

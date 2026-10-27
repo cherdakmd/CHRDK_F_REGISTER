@@ -37,7 +37,7 @@ import java.util.logging.Logger;
 public final class ClaimStore {
 
     /** Версия схемы данных (для будущих миграций). */
-    public static final int SCHEMA_VERSION = 2;
+    public static final int SCHEMA_VERSION = 3;
     /** Сколько отложенных вестей хранить на игрока (старые вытесняются). */
     public static final int MAX_NOTICES = 40;
 
@@ -90,7 +90,7 @@ public final class ClaimStore {
         }
         try {
             read(data);
-            dirty = false;
+            dirty = (int) longOf(data.get("version")) < SCHEMA_VERSION;
         } catch (RuntimeException exception) {
             reset();
             quarantine(exception);
@@ -220,6 +220,16 @@ public final class ClaimStore {
                         }
                     }
                 }
+                claim.rentOffer = clamp((int) longOf(map.get("ro")), 0, 1_000_000);
+                String tenant = str(map.get("rt"));
+                int rentPrice = clamp((int) longOf(map.get("rp")), 0, 1_000_000);
+                long rentUntil = longOf(map.get("ru"));
+                if (tenant != null && !tenant.isBlank() && !claim.isOwner(tenant) && rentPrice > 0 && rentUntil > 0) {
+                    claim.tenant = tenant;
+                    claim.rentPrice = rentPrice;
+                    claim.rentUntil = rentUntil;
+                    claim.rentRenew = Boolean.TRUE.equals(map.get("rr"));
+                }
                 Claim previous = claims.computeIfAbsent(world, key -> new HashMap<>())
                         .putIfAbsent(claim.key(), claim);
                 if (previous != null) {
@@ -277,6 +287,10 @@ public final class ClaimStore {
                 }
             }
         }
+        for (List<Claim> group : ClaimTerritories.groups(all())) {
+            if (group.size() > 1) ClaimTerritories.normalize(group, group, version < 3);
+        }
+        if (version < 3) logger.info("[CHRDK_Claims] Территории объединены по общей стороне. Старые лоты объединённых территорий сняты; доступ — безопасное пересечение участников.");
         if (data.get("stats") instanceof Map<?, ?> stats) {
             chunksClaimedTotal = Math.max(0, longOf(stats.get("chunksClaimedTotal")));
             diamondsSpent = Math.max(0, longOf(stats.get("diamondsSpent")));
@@ -299,6 +313,11 @@ public final class ClaimStore {
                     entry.put("p", claim.paidUntil);
                     entry.put("d", claim.debtDays);
                     entry.put("s", claim.salePrice);
+                    entry.put("ro", claim.rentOffer);
+                    if (claim.tenant != null && !claim.tenant.isBlank()) {
+                        entry.put("rt", claim.tenant); entry.put("rp", claim.rentPrice);
+                        entry.put("ru", claim.rentUntil); entry.put("rr", claim.rentRenew);
+                    }
                     if (claim.hasGreeting()) {
                         entry.put("g", claim.greeting);
                     }
@@ -422,7 +441,7 @@ public final class ClaimStore {
 
     /** Итог восстановления: успех, файла нет, имя недопустимо или файл нечитаем. */
     public enum RestoreResult {
-        OK, NOT_FOUND, INVALID, IO_ERROR
+        OK, NOT_FOUND, INVALID, IO_ERROR, PROTECTED
     }
 
     /**
@@ -434,6 +453,7 @@ public final class ClaimStore {
      * не может уничтожить рабочий файл.</p>
      */
     public synchronized RestoreResult restoreFrom(String fileName) {
+        if (all().stream().anyMatch(c -> c.rentedAt(System.currentTimeMillis()))) return RestoreResult.PROTECTED;
         if (fileName == null || fileName.isBlank()) {
             return RestoreResult.INVALID;
         }
@@ -488,18 +508,70 @@ public final class ClaimStore {
         return inWorld == null ? null : inWorld.get(ClaimMath.chunkKey(chunkX, chunkZ));
     }
 
+    /** Общая территория; записи оплаты и аренды по-прежнему принадлежат отдельным чанкам. */
+    public synchronized List<Claim> territory(Claim claim) {
+        if (claim == null || claimAt(claim.world, claim.x, claim.z) != claim) return List.of();
+        // Проход индексированных соседей: стоимость зависит от размера территории, не всего мира.
+        List<Claim> result = new ArrayList<>();
+        java.util.ArrayDeque<Claim> queue = new java.util.ArrayDeque<>();
+        Set<Long> seen = new java.util.HashSet<>();
+        queue.add(claim); seen.add(claim.key());
+        int[][] sides = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+        while (!queue.isEmpty()) {
+            Claim current = queue.removeFirst(); result.add(current);
+            for (int[] side : sides) {
+                long x = (long) current.x + side[0], z = (long) current.z + side[1];
+                if (x < Integer.MIN_VALUE || x > Integer.MAX_VALUE || z < Integer.MIN_VALUE || z > Integer.MAX_VALUE) continue;
+                Claim next = claimAt(claim.world, (int) x, (int) z);
+                if (next != null && next.isOwner(claim.owner) && seen.add(next.key())) queue.add(next);
+            }
+        }
+        result.sort(java.util.Comparator.comparingInt((Claim c) -> c.x).thenComparingInt(c -> c.z));
+        return result;
+    }
+
+    /** Один свободный чанк между чужими территориями, включая диагональ. */
+    public synchronized boolean foreignNearby(String world, int x, int z, String owner, java.util.Collection<Claim> moving) {
+        Set<?> ignored = moving instanceof Set<?> set ? set : new java.util.HashSet<>(moving);
+        for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) {
+            long nx = (long) x + dx, nz = (long) z + dz;
+            if (nx < Integer.MIN_VALUE || nx > Integer.MAX_VALUE || nz < Integer.MIN_VALUE || nz > Integer.MAX_VALUE) continue;
+            Claim near = claimAt(world, (int) nx, (int) nz);
+            if (near != null && !ignored.contains(near) && !near.isOwner(owner)) return true;
+        }
+        return false;
+    }
+
+    synchronized void mergeAcquired(List<Claim> incoming) {
+        Set<Claim> incomingSet = new java.util.HashSet<>(incoming);
+        for (List<Claim> group : ClaimTerritories.groups(all())) {
+            if (group.stream().noneMatch(incomingSet::contains)) continue;
+            List<Claim> sources = group.stream().filter(c -> !incomingSet.contains(c)).toList();
+            ClaimTerritories.normalize(group, sources.isEmpty() ? incoming.stream().filter(group::contains).toList() : sources, true);
+        }
+        touch();
+    }
+
     public synchronized void add(Claim claim) {
         Map<Long, Claim> world = claims.computeIfAbsent(claim.world, key -> new HashMap<>());
+        Claim prior = world.get(claim.key());
+        if (prior != null && prior != claim && prior.rentedAt(System.currentTimeMillis()))
+            throw new IllegalStateException("Paid rental is protected");
         Claim previous = world.put(claim.key(), claim);
         if (previous != null) {
             logger.warning("[CHRDK_Claims] Приват " + claim.where() + " перезаписан новым владельцем "
                     + claim.owner + " (был " + previous.owner + ").");
         }
+        List<Claim> region = territory(claim);
+        List<Claim> sources = region.stream().filter(c -> c != claim).toList();
+        if (!sources.isEmpty()) ClaimTerritories.normalize(region, sources, true);
         chunksClaimedTotal++;
         touch();
     }
 
     public synchronized void remove(Claim claim) {
+        if (claim.rentedAt(System.currentTimeMillis())) throw new IllegalStateException("Paid rental is protected");
+        if (claimAt(claim.world, claim.x, claim.z) == claim) territory(claim).forEach(c -> c.salePrice = 0);
         Map<Long, Claim> world = claims.get(claim.world);
         if (world != null) {
             if (!world.remove(claim.key(), claim)) {
@@ -515,6 +587,8 @@ public final class ClaimStore {
 
     /** Удаляет все приваты мира (например, после смены карты). @return сколько удалено. */
     public synchronized int removeWorld(String world) {
+        if (inWorld(world).stream().anyMatch(c -> c.rentedAt(System.currentTimeMillis())))
+            throw new IllegalStateException("Paid rental is protected");
         Map<Long, Claim> removed = claims.remove(world);
         if (removed == null || removed.isEmpty()) {
             return 0;
@@ -696,16 +770,21 @@ public final class ClaimStore {
                 || from.equalsIgnoreCase(to)) {
             return new TransferSummary(0, 0, 0, false);
         }
+        List<Claim> moving = ofOwner(from);
+        Set<Claim> movingSet = new java.util.HashSet<>(moving);
+        if (moving.stream().anyMatch(c -> c.rentedAt(System.currentTimeMillis())
+                || foreignNearby(c.world, c.x, c.z, to, movingSet))) throw new IllegalStateException("Protected rental or foreign buffer");
         int movedClaims = 0;
         for (Claim claim : all()) {
             if (!claim.isOwner(from)) {
                 continue;
             }
             claim.owner = to;
-            claim.members.removeIf(member -> member.equalsIgnoreCase(to));
+            claim.removeMember(to);
             movedClaims++;
         }
 
+        if (!moving.isEmpty()) mergeAcquired(moving);
         int movedTreasury = 0;
         String fromTreasury = keyIgnoreCase(treasury, from);
         if (fromTreasury != null) {

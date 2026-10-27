@@ -94,6 +94,7 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
             plugin.messages().send(player, "admin-no-claim");
             return;
         }
+        if (plugin.service().rentalLocked(player, List.of(claim))) return;
         plugin.store().remove(claim);
         plugin.audit("admin-delete", player.getName() + " " + claim.where()
                 + " owner=" + claim.owner);
@@ -116,6 +117,7 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
             plugin.messages().send(sender, "admin-player-not-found", "name", name);
             return;
         }
+        if (plugin.service().rentalLocked(sender, claims)) return;
         for (Claim claim : new ArrayList<>(claims)) {
             plugin.store().remove(claim);
         }
@@ -250,7 +252,9 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
             plugin.messages().send(sender, "admin-transferall-self");
             return;
         }
-        ClaimStore.TransferSummary summary = plugin.store().transferAll(from, to);
+        ClaimStore.TransferSummary summary;
+        try { summary = plugin.store().transferAll(from, to); }
+        catch (IllegalStateException protectedLand) { plugin.messages().send(sender, "transfer-protected"); return; }
         plugin.audit("admin-transferall", sender.getName() + " " + from + " -> " + to
                 + " claims=" + summary.claims() + " treasury=" + summary.treasury());
         if (summary.claims() == 0 && summary.treasury() == 0
@@ -300,6 +304,7 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
         }
         ClaimStore.RestoreResult result = plugin.store().restoreFrom(args[2]);
         switch (result) {
+            case PROTECTED -> plugin.messages().send(sender, "rent-locked");
             case OK -> {
                 plugin.messages().send(sender, "admin-backup-restored", "file", args[2]);
                 plugin.audit("backup-restore", sender.getName() + " <- " + args[2]);
@@ -386,6 +391,7 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
             return;
         }
         String world = args[1];
+        if (plugin.service().rentalLocked(sender, plugin.store().inWorld(world))) return;
         int count = plugin.store().removeWorld(world);
         if (count == 0) {
             plugin.messages().send(sender, "admin-purge-none", "world", world);

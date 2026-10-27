@@ -598,7 +598,7 @@ public final class ClaimProtectionListener implements Listener {
         }
         Claim from = claimAt(event.getBlock());
         Claim to = claimAt(event.getToBlock());
-        if (to != null && (from == null || !from.isOwner(to.owner))) {
+        if (to != null && (from == null || !sameDomain(from, to))) {
             event.setCancelled(true);
         }
     }
@@ -635,11 +635,16 @@ public final class ClaimProtectionListener implements Listener {
     }
 
     /** Блок уходит через границу: владелец точки не совпадает с владельцем поршня. */
+    private boolean sameDomain(Claim left, Claim right) {
+        long now = System.currentTimeMillis();
+        return left != null && right != null && left.accessDomain(now).equals(right.accessDomain(now));
+    }
+
     private boolean crossesBorder(Claim base, Claim point) {
         if (point == null) {
             return false;
         }
-        return base == null || !base.isOwner(point.owner);
+        return base == null || !sameDomain(base, point);
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -668,11 +673,11 @@ public final class ClaimProtectionListener implements Listener {
         }
         // воронка должна стоять в привате того же владельца, иначе пересылка запрещена
         Claim hopperClaim = claimAt(inventoryBlock(event.getInitiator()));
-        if (sourceClaim != null && (hopperClaim == null || !hopperClaim.isOwner(sourceClaim.owner))) {
+        if (sourceClaim != null && (hopperClaim == null || !sameDomain(hopperClaim, sourceClaim))) {
             event.setCancelled(true);
             return;
         }
-        if (destClaim != null && (hopperClaim == null || !hopperClaim.isOwner(destClaim.owner))) {
+        if (destClaim != null && (hopperClaim == null || !sameDomain(hopperClaim, destClaim))) {
             event.setCancelled(true);
         }
     }
