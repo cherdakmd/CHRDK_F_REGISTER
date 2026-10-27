@@ -30,6 +30,7 @@ public final class ProfessionsPlugin extends JavaPlugin {
     private ProfessionStore store;
     private ProfessionService service;
     private ProfessionsGui gui;
+    private ProfessionWorkshop workshop;
     /** 1.4.182: обязательный выбор профессии — меню и напоминания. */
     private ProfessionOnboarding onboarding;
     private BukkitTask saveTask;
@@ -46,6 +47,7 @@ public final class ProfessionsPlugin extends JavaPlugin {
             store.load();
             this.service = new ProfessionService(config, store);
             this.gui = new ProfessionsGui(this);
+            this.workshop = new ProfessionWorkshop(this);
             this.onboarding = new ProfessionOnboarding(this);
 
             getServer().getPluginManager().registerEvents(new ProfessionListener(this), this);
@@ -105,6 +107,15 @@ public final class ProfessionsPlugin extends JavaPlugin {
         if (onboarding != null) {
             onboarding.start();
         }
+    }
+
+    ProfessionWorkshop workshop() { return workshop; }
+
+    boolean authenticated(Player player) {
+        ChrdkRegisterApi api = coreApi;
+        if (api == null || player == null) return false;
+        try { return api.isAuthenticated(player); }
+        catch (LinkageError ignored) { return false; }
     }
 
     private void registerCommands() {

@@ -41,6 +41,9 @@ final class ProfessionsProfile implements ChrdkRegisterApi.ProfileProvider {
             lines.add(messages.get("profile-none-hint",
                     "hours", String.valueOf(plugin.config().chooseCooldownHours())));
         } else {
+            ProfessionMastery mastery = plugin.store().mastery(context.playerId(), profession);
+            lines.add(messages.get("mastery-status", "specialization", mastery == null
+                    ? messages.get("mastery-none") : messages.get(mastery.nameKey())));
             int level = plugin.service().level(context.playerId(), profession);
             int maxLevel = plugin.service().maxLevel(context.playerId());
             int needed = ProfessionMath.needed(level, maxLevel);

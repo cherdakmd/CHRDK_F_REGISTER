@@ -26,7 +26,7 @@ import java.util.UUID;
  */
 public final class ProfessionsCommandHandler implements CommandExecutor, TabCompleter {
 
-    private static final List<String> SUBS = List.of("help", "menu", "choose", "info", "stats", "top");
+    private static final List<String> SUBS = List.of("help", "menu", "choose", "info", "stats", "top", "mastery", "work");
     private static final List<String> ADMIN_SUBS = List.of("reload", "info", "set", "xp", "reset");
     private static final int MAX_ADMIN_XP = 100_000;
 
@@ -60,6 +60,11 @@ public final class ProfessionsCommandHandler implements CommandExecutor, TabComp
             case "info" -> info(sender, args);
             case "stats" -> stats(sender);
             case "top" -> top(sender);
+            case "mastery" -> mastery(sender, args);
+            case "work" -> {
+                Player player = requirePlayer(sender);
+                if (player != null) plugin.workshop().perform(player);
+            }
             default -> plugin.messages().send(sender, "unknown-subcommand", "sub", args[0]);
         }
         return true;
@@ -74,6 +79,8 @@ public final class ProfessionsCommandHandler implements CommandExecutor, TabComp
         plugin.messages().send(sender, "help-info");
         plugin.messages().send(sender, "help-stats");
         plugin.messages().send(sender, "help-top");
+        plugin.messages().send(sender, "help-mastery");
+        plugin.messages().send(sender, "help-work");
         plugin.messages().send(sender, "help-footer",
                 "cap", cap() <= 0 ? "∞" : String.valueOf(cap()),
                 "hours", String.valueOf(plugin.config().chooseCooldownHours()));
@@ -105,6 +112,18 @@ public final class ProfessionsCommandHandler implements CommandExecutor, TabComp
         plugin.requestSave();
         // 1.4.177: выбор без подсказки «за что опыт» выглядит как тишина.
         plugin.hint(player, Profession.parse(args[1]));
+    }
+
+    private void mastery(CommandSender sender, String[] args) {
+        Player player = requirePlayer(sender);
+        if (player == null) return;
+        if (args.length < 2) { plugin.gui().openMastery(player); return; }
+        ProfessionMastery choice = ProfessionMastery.parse(args[1]);
+        if (choice == null || choice.profession() != plugin.service().active(player.getUniqueId())) {
+            plugin.messages().send(sender, "mastery-wrong");
+            return;
+        }
+        plugin.gui().openMasteryConfirm(player, choice);
     }
 
     private void info(CommandSender sender, String[] args) {
@@ -148,6 +167,9 @@ public final class ProfessionsCommandHandler implements CommandExecutor, TabComp
                     "level", String.valueOf(maxLevel),
                     "bonus", String.valueOf(maxLevel - ProfessionMath.MAX_LEVEL));
         }
+        ProfessionMastery mastery = player == null ? null : plugin.store().mastery(player, target);
+        plugin.messages().send(sender, "mastery-status", "specialization", mastery == null
+                ? plugin.messages().get("mastery-none") : plugin.messages().get(mastery.nameKey()));
         daily(sender, player, target);
         if (plugin.service().active(player) != target) {
             plugin.messages().send(sender, "info-not-active");
@@ -417,6 +439,9 @@ public final class ProfessionsCommandHandler implements CommandExecutor, TabComp
         }
         if (args.length == 2) {
             String sub = args[0].toLowerCase(Locale.ROOT);
+            if (sub.equals("mastery") && sender instanceof Player player)
+                return filter(ProfessionMastery.of(plugin.service().active(player.getUniqueId())).stream()
+                        .map(ProfessionMastery::id).toList(), args[1]);
             return sub.equals("choose") || sub.equals("info")
                     ? filter(professionIds(), args[1]) : List.of();
         }

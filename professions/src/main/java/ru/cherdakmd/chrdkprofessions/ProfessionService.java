@@ -134,6 +134,48 @@ public final class ProfessionService {
                         "to", target.id());
     }
 
+    public ProfessionMastery mastery(UUID player) {
+        return player == null ? null : store.mastery(player, active(player));
+    }
+
+    public long masteryCooldownLeft(UUID player, Profession profession, long now) {
+        if (store.mastery(player, profession) == null) return 0;
+        long changed = store.masteryChanged(player, profession);
+        long until = changed > Long.MAX_VALUE - ProfessionMastery.CHANGE_MILLIS
+                ? Long.MAX_VALUE : changed + ProfessionMastery.CHANGE_MILLIS;
+        return remaining(until, now);
+    }
+
+    public long workCooldownLeft(UUID player, long now) {
+        return player == null ? 0 : remaining(store.workUntil(player, active(player)), now);
+    }
+
+    private static long remaining(long until, long now) {
+        return until <= now ? 0 : (until - Math.max(0, now)) / 1000 + ((until - Math.max(0, now)) % 1000 > 0 ? 1 : 0);
+    }
+
+    public ProfessionResult checkMastery(UUID player) {
+        if (!config.enabled() || !config.perksEnabled() || !config.masteryEnabled()) return ProfessionResult.fail("mastery-disabled");
+        if (!store.canTrack(player)) return ProfessionResult.fail("mastery-storage-full");
+        Profession current = active(player);
+        if (current == null) return ProfessionResult.fail("mastery-no-profession");
+        if (level(player, current) < ProfessionMastery.UNLOCK_LEVEL)
+            return ProfessionResult.fail("mastery-locked", "level", String.valueOf(ProfessionMastery.UNLOCK_LEVEL));
+        return ProfessionResult.ok("mastery-ready");
+    }
+
+    public ProfessionResult chooseMastery(UUID player, String id, long now) {
+        ProfessionResult check = checkMastery(player);
+        if (!check.ok()) return check;
+        ProfessionMastery target = ProfessionMastery.parse(id);
+        if (target == null || target.profession() != active(player)) return ProfessionResult.fail("mastery-wrong");
+        if (target == mastery(player)) return ProfessionResult.fail("mastery-same");
+        long left = masteryCooldownLeft(player, target.profession(), now);
+        if (left > 0) return ProfessionResult.fail("mastery-change-cooldown", "time", ProfessionMath.clock(left));
+        if (!store.setMastery(player, target, now)) return ProfessionResult.fail("mastery-storage-full");
+        return ProfessionResult.ok("mastery-chosen", "specialization", target.id());
+    }
+
     /* --------------------------------- опыт ----------------------------------- */
 
     public int xp(UUID player, Profession profession) {

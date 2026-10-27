@@ -33,7 +33,7 @@ import ru.cherdakmd.chrdkregister.storage.SafeJsonWriter;
  */
 public final class ProfessionStore {
 
-    public static final int VERSION = 1;
+    public static final int VERSION = 2;
     /** Потолок числа игроков в файле: защита от мусора. */
     public static final int MAX_PLAYERS = 200_000;
     /** Потолок опыта одной профессии: защита от правки файла руками. */
@@ -65,6 +65,9 @@ public final class ProfessionStore {
         private final Map<String, Integer> xp = new LinkedHashMap<>();
         private final Map<String, Daily> daily = new LinkedHashMap<>();
         private long changedAt;
+        private final Map<String, String> mastery = new LinkedHashMap<>();
+        private final Map<String, Long> masteryChanged = new LinkedHashMap<>();
+        private final Map<String, Long> workUntil = new LinkedHashMap<>();
 
         Player(UUID id, String name) {
             this.id = id;
@@ -154,8 +157,59 @@ public final class ProfessionStore {
                 }
             }
         }
+        if (row.get("mastery") instanceof Map<?, ?> values) {
+            for (Profession profession : Profession.values()) {
+                ProfessionMastery choice = ProfessionMastery.parse(id(values.get(profession.id())));
+                if (choice != null && choice.profession() == profession) player.mastery.put(profession.id(), choice.id());
+            }
+        }
+        readTimes(row.get("mastery-changed"), player.masteryChanged);
+        readTimes(row.get("work-until"), player.workUntil);
         player.changedAt = Math.max(0L, number(row.get("changed-at")));
         return player;
+    }
+
+    private static void readTimes(Object raw, Map<String, Long> target) {
+        if (!(raw instanceof Map<?, ?> values)) return;
+        for (Profession profession : Profession.values()) {
+            long value = number(values.get(profession.id()));
+            if (value > 0) target.put(profession.id(), value);
+        }
+    }
+
+    public synchronized boolean canTrack(UUID id) {
+        return id != null && (players.containsKey(id) || players.size() < MAX_PLAYERS);
+    }
+
+    public synchronized ProfessionMastery mastery(UUID id, Profession profession) {
+        Player p = players.get(id);
+        return p == null || profession == null ? null : ProfessionMastery.parse(p.mastery.get(profession.id()));
+    }
+
+    public synchronized long masteryChanged(UUID id, Profession profession) {
+        Player p = players.get(id);
+        return p == null || profession == null ? 0 : p.masteryChanged.getOrDefault(profession.id(), 0L);
+    }
+
+    public synchronized long workUntil(UUID id, Profession profession) {
+        Player p = players.get(id);
+        return p == null || profession == null ? 0 : p.workUntil.getOrDefault(profession.id(), 0L);
+    }
+
+    public synchronized boolean setMastery(UUID id, ProfessionMastery choice, long now) {
+        if (!canTrack(id) || choice == null) return false;
+        Player p = of(id);
+        p.mastery.put(choice.profession().id(), choice.id());
+        p.masteryChanged.put(choice.profession().id(), Math.max(0, now));
+        dirty = true;
+        return true;
+    }
+
+    public synchronized boolean setWorkUntil(UUID id, Profession profession, long until) {
+        if (!canTrack(id) || profession == null) return false;
+        of(id).workUntil.put(profession.id(), Math.max(0, until));
+        dirty = true;
+        return true;
     }
 
     /* --------------------------------- доступ --------------------------------- */
@@ -318,12 +372,15 @@ public final class ProfessionStore {
             return false;
         }
         if (player.active.isEmpty() && player.xp.isEmpty() && player.daily.isEmpty()
-                && player.changedAt == 0L) {
+                && player.changedAt == 0L && player.mastery.isEmpty() && player.workUntil.isEmpty() && player.masteryChanged.isEmpty()) {
             return false;
         }
         player.active = "";
         player.xp.clear();
         player.daily.clear();
+        player.mastery.clear();
+        player.masteryChanged.clear();
+        player.workUntil.clear();
         player.changedAt = 0L;
         dirty = true;
         return true;
@@ -389,6 +446,9 @@ public final class ProfessionStore {
         for (Player player : players.values()) {
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("name", player.name);
+            if (!player.mastery.isEmpty()) row.put("mastery", new LinkedHashMap<>(player.mastery));
+            if (!player.masteryChanged.isEmpty()) row.put("mastery-changed", new LinkedHashMap<>(player.masteryChanged));
+            if (!player.workUntil.isEmpty()) row.put("work-until", new LinkedHashMap<>(player.workUntil));
             if (!player.active.isEmpty()) {
                 row.put("active", player.active);
             }

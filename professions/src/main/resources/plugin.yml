@@ -10,7 +10,7 @@ softdepend: [PlaceholderAPI]
 commands:
   prof:
     description: "Профессия, опыт и прибавки"
-    usage: "/prof [menu|choose <профессия>|info [профессия]|stats|top]"
+    usage: "/prof [menu|choose <профессия>|info [профессия]|stats|top|mastery [специализация]|work]"
     aliases: [profession, professions, professii]
     permission: chrdkprofessions.use
   profadmin:

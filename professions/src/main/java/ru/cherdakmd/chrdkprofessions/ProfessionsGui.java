@@ -37,6 +37,7 @@ final class ProfessionsGui implements Listener {
 
     private static final int SIZE = 54;
     private static final int SUMMARY_SLOT = 4;
+    private static final int MASTERY_SLOT = 40;
     /** Четыре профессии в ряд: слоты 19, 21, 23, 25. */
     private static final int[] PROFESSION_SLOTS = {19, 21, 23, 25};
     private static final int CONFIRM_SLOT = 31;
@@ -45,7 +46,7 @@ final class ProfessionsGui implements Listener {
 
     enum Screen {
         MAIN,
-        INFO
+        INFO, MASTERY, MASTERY_CONFIRM
     }
 
     static final class Holder implements InventoryHolder {
@@ -89,6 +90,7 @@ final class ProfessionsGui implements Listener {
         for (int index = 0; index < PROFESSION_SLOTS.length && index < values.length; index++) {
             inventory.setItem(PROFESSION_SLOTS[index], professionItem(player, values[index]));
         }
+        inventory.setItem(MASTERY_SLOT, button(Material.SMITHING_TABLE, "mastery-menu", List.of(plugin.messages().get("mastery-menu-hint"))));
         inventory.setItem(CLOSE_SLOT, button(Material.BARRIER, "menu-close", List.of()));
         player.openInventory(inventory);
     }
@@ -107,8 +109,53 @@ final class ProfessionsGui implements Listener {
         inventory.setItem(SUMMARY_SLOT, professionItem(player, profession));
         inventory.setItem(CONFIRM_SLOT, confirmItem(player, profession));
         inventory.setItem(BACK_SLOT, button(Material.ARROW, "menu-back", List.of()));
+        inventory.setItem(MASTERY_SLOT, button(Material.SMITHING_TABLE, "mastery-menu", List.of(plugin.messages().get("mastery-menu-hint"))));
         inventory.setItem(CLOSE_SLOT, button(Material.BARRIER, "menu-close", List.of()));
         player.openInventory(inventory);
+    }
+
+    void openMastery(Player player) {
+        Profession profession = plugin.service().active(player.getUniqueId());
+        if (profession == null) { plugin.messages().send(player, "mastery-no-profession"); return; }
+        Holder holder = new Holder(player.getUniqueId(), Screen.MASTERY, profession.id());
+        holder.inventory = Bukkit.createInventory(holder, SIZE, plugin.messages().get("mastery-menu"));
+        holder.inventory.setItem(SUMMARY_SLOT, professionItem(player, profession));
+        var choices = ProfessionMastery.of(profession);
+        for (int i = 0; i < choices.size(); i++) holder.inventory.setItem(20 + i * 4, masteryItem(player, choices.get(i)));
+        ProfessionMastery current = plugin.service().mastery(player.getUniqueId());
+        List<Component> lore = new ArrayList<>();
+        if (current == null) lore.add(plugin.messages().get("mastery-needed"));
+        else {
+            lore.add(plugin.messages().get(current.descKey()));
+            lore.add(plugin.messages().get(current.costKey()));
+            long left = plugin.service().workCooldownLeft(player.getUniqueId(), System.currentTimeMillis());
+            lore.add(plugin.messages().get(left > 0 ? "work-cooldown" : "mastery-ready", "time", ProfessionMath.clock(left)));
+        }
+        holder.inventory.setItem(CONFIRM_SLOT, button(Material.CRAFTING_TABLE, "work-button", lore));
+        holder.inventory.setItem(BACK_SLOT, button(Material.ARROW, "menu-back", List.of()));
+        holder.inventory.setItem(CLOSE_SLOT, button(Material.BARRIER, "menu-close", List.of()));
+        player.openInventory(holder.inventory);
+    }
+
+    void openMasteryConfirm(Player player, ProfessionMastery choice) {
+        Holder holder = new Holder(player.getUniqueId(), Screen.MASTERY_CONFIRM, choice.id());
+        holder.inventory = Bukkit.createInventory(holder, SIZE, plugin.messages().get("mastery-confirm"));
+        holder.inventory.setItem(SUMMARY_SLOT, masteryItem(player, choice));
+        holder.inventory.setItem(CONFIRM_SLOT, button(Material.LIME_DYE, "mastery-confirm", List.of(plugin.messages().get("mastery-confirm-hint"))));
+        holder.inventory.setItem(BACK_SLOT, button(Material.ARROW, "menu-back", List.of()));
+        holder.inventory.setItem(CLOSE_SLOT, button(Material.BARRIER, "menu-close", List.of()));
+        player.openInventory(holder.inventory);
+    }
+
+    private ItemStack masteryItem(Player player, ProfessionMastery choice) {
+        List<Component> lore = new ArrayList<>();
+        lore.add(plugin.messages().get(choice.descKey()));
+        lore.add(plugin.messages().get(choice.costKey()));
+        lore.add(plugin.messages().get("mastery-requirement", "level", ProfessionMastery.UNLOCK_LEVEL));
+        lore.add(plugin.messages().get("mastery-interval", "time", ProfessionMath.clock(choice.cooldownSeconds())));
+        if (choice == plugin.service().mastery(player.getUniqueId())) lore.add(plugin.messages().get("mastery-active"));
+        else lore.add(plugin.messages().get("mastery-pick"));
+        return button(material(choice.icon()), choice.nameKey(), lore);
     }
 
     /* --------------------------------- предметы -------------------------------- */
@@ -199,11 +246,34 @@ final class ProfessionsGui implements Listener {
                 || event.getRawSlot() >= SIZE) {
             return;
         }
+        if (!player.hasPermission("chrdkprofessions.use")) return;
         int slot = event.getRawSlot();
         if (slot == CLOSE_SLOT) {
             player.closeInventory();
             return;
         }
+        if (holder.screen == Screen.MASTERY_CONFIRM) {
+            if (slot == BACK_SLOT) openMastery(player);
+            else if (slot == CONFIRM_SLOT) {
+                ProfessionResult result = plugin.service().chooseMastery(player.getUniqueId(), holder.professionId, System.currentTimeMillis());
+                plugin.messages().send(player, result.key(), ProfessionText.localise(plugin.messages(), result).toArray());
+                if (result.ok()) plugin.requestSave();
+                openMastery(player);
+            }
+            return;
+        }
+        if (holder.screen == Screen.MASTERY) {
+            if (slot == BACK_SLOT) open(player);
+            else if (slot == CONFIRM_SLOT) {
+                player.closeInventory();
+                Bukkit.getScheduler().runTask(plugin, () -> plugin.workshop().perform(player));
+            } else {
+                var choices = ProfessionMastery.of(Profession.parse(holder.professionId));
+                if (slot == 20 || slot == 24) openMasteryConfirm(player, choices.get(slot == 20 ? 0 : 1));
+            }
+            return;
+        }
+        if (slot == MASTERY_SLOT) { openMastery(player); return; }
         if (holder.screen == Screen.INFO) {
             if (slot == BACK_SLOT) {
                 open(player);
