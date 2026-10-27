@@ -71,6 +71,15 @@ class ReleaseValidationTest(unittest.TestCase):
 
 
 class ReleaseWorkflowContractTest(unittest.TestCase):
+    def test_sixty_roadmap_criteria_are_separately_accounted_for(self):
+        import re
+        root = Path(__file__).resolve().parents[2]
+        source = (root / "docs/roadmaps/mobs-enchants-60.md").read_text()
+        for prefix, expected in (("I", 25), ("N", 35)):
+            rows = re.findall(r"^\| (" + prefix + r"\d{2}) \|.*\| Реализовано \d+ \|$", source, re.M)
+            self.assertEqual(len(set(rows)), expected)
+            self.assertEqual(len(rows), expected)
+
     def test_memo_is_external_so_run_step_stays_below_github_limit(self):
         root = Path(__file__).resolve().parents[2]
         source = (root / ".github/workflows/release.yml").read_text()
