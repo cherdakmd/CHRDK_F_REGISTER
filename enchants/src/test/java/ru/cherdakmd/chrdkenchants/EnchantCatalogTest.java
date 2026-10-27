@@ -66,7 +66,7 @@ class EnchantCatalogTest {
         applicable = EnchantRoller.applicable(EnchantRegistry.all(), "DIAMOND_SWORD", Map.of("crippling_edge", 1), 3, 1)
                 .stream().map(EnchantDef::id).collect(Collectors.toSet());
         var selected = ids(EnchantCatalog.select(EnchantCatalog.Query.all().hand(true), Map.of(), applicable));
-        assertFalse(selected.contains("crippling_edge")); assertFalse(selected.contains("sapping_edge"));
+        assertFalse(selected.contains("crippling_edge")); assertFalse(selected.contains("sapping_edge")); assertFalse(selected.contains("provoking_strike"));
         assertFalse(selected.contains("quiet_step")); assertTrue(selected.contains("lifesteal"));
     }
     @Test void raritySortIsDescendingAndStableAndFilterCyclesReachAll() {
@@ -78,7 +78,9 @@ class EnchantCatalogTest {
         assertNull(EnchantCatalog.next(EnchantDef.Polarity.CURSE, EnchantDef.Polarity.values()));
     }
     @Test void conflictsContainActualOtherIdsAndNeverTheDefinitionItself() {
-        assertEquals(List.of("sapping_edge"), EnchantCatalog.conflicts(EnchantRegistry.byId("crippling_edge")));
+        assertEquals(List.of("provoking_strike", "sapping_edge"), EnchantCatalog.conflicts(EnchantRegistry.byId("crippling_edge")));
+        assertEquals(List.of("crippling_edge", "sapping_edge"), EnchantCatalog.conflicts(EnchantRegistry.byId("provoking_strike")));
+        assertEquals(List.of("briar_guard", "faltering_guard"), EnchantCatalog.conflicts(EnchantRegistry.byId("signal_guard")));
         assertEquals(List.of("second_skin", "thin_padding"), EnchantCatalog.conflicts(EnchantRegistry.byId("bulwark")));
         assertTrue(EnchantCatalog.conflicts(EnchantRegistry.byId("scholar")).isEmpty());
     }
