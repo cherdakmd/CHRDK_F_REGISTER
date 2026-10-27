@@ -158,9 +158,10 @@ final class MobProgression implements Listener {
     }
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void transform(org.bukkit.event.entity.EntityTransformEvent event) {
+        if (!event.getEntity().getPersistentDataContainer().has(level, PersistentDataType.INTEGER)) return;
         Bukkit.getScheduler().runTask(plugin, () -> {
             if (event.isCancelled()) return;
-            for (LivingEntity mob : event.getTransformedEntities()) {
+            for (var entity : event.getTransformedEntities()) if (entity instanceof LivingEntity mob) {
                 strip(mob);
                 var data = mob.getPersistentDataContainer();
                 data.remove(level); data.remove(elite); data.remove(origin);
@@ -170,7 +171,7 @@ final class MobProgression implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void ranged(EntityDamageByEntityEvent event) {
         if (!(event.getEntity() instanceof Player) || !(event.getDamager() instanceof Projectile shot)
-                || !(shot.getShooter() instanceof LivingEntity mob) || !allowed(mob)) return;
+                || !(shot.getShooter() instanceof LivingEntity mob) || !allowed(mob) || !hostile(mob)) return;
         var data = mob.getPersistentDataContainer();
         if (data.getOrDefault(active, PersistentDataType.BYTE, (byte) 0) != 1) return;
         int rank = data.getOrDefault(level, PersistentDataType.INTEGER, 0);
