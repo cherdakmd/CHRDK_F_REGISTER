@@ -14,9 +14,9 @@ import static org.junit.jupiter.api.Assertions.*;
 class UtilityEnchantTest {
     @TempDir Path dir;
     private static final Logger LOG = Logger.getLogger("UtilityEnchantTest");
-    @Test void sixPositiveImplementedUtilitiesExtendTheCatalogToSeventyTwo() {
+    @Test void sixPositiveImplementedUtilitiesExtendTheCatalogToSeventyFour() {
         assertEquals(6, UtilityEnchant.values().length);
-        assertEquals(72, EnchantRegistry.size()); assertEquals(57, EnchantRegistry.lightCount());
+        assertEquals(74, EnchantRegistry.size()); assertEquals(59, EnchantRegistry.lightCount());
         assertEquals(15, EnchantRegistry.curseCount());
         for (var utility : UtilityEnchant.values()) {
             var def = EnchantRegistry.byId(utility.id);
@@ -38,10 +38,10 @@ class UtilityEnchantTest {
     }
     @Test void utilityMasterIsIndependentOfThePveMasterAndIndividualFlags() {
         var yaml = new YamlConfiguration();
-        assertEquals(72, EnchantsConfig.parse(yaml, LOG).enabledEnchants().size());
+        assertEquals(74, EnchantsConfig.parse(yaml, LOG).enabledEnchants().size());
         yaml.set("utility-effects.enabled", false);
         var disabled = EnchantsConfig.parse(yaml, LOG);
-        assertEquals(66, disabled.enabledEnchants().size());
+        assertEquals(68, disabled.enabledEnchants().size());
         assertTrue(disabled.isEnabled("crippling_edge")); assertTrue(disabled.isEnabled("phoenix"));
         for (var utility : UtilityEnchant.values()) assertFalse(disabled.isEnabled(utility.id));
         yaml.set("pve-effects.enabled", false);

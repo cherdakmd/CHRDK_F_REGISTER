@@ -30,10 +30,10 @@ class EnchantCatalogTest {
             assertEquals(Set.copyOf(EnchantRegistry.all()), Set.copyOf(reached));
         }
     }
-    @Test void allFiftySevenLightDefinitionsAreReachableNotJustTheFirstFortyFive() {
+    @Test void allFiftyNineLightDefinitionsAreReachableNotJustTheFirstFortyFive() {
         var selected = EnchantCatalog.select(EnchantCatalog.Query.all().polarity(EnchantDef.Polarity.LIGHT), Map.of(), Set.of());
-        assertEquals(57, selected.size()); assertEquals(2, EnchantCatalog.pages(selected.size()));
-        assertEquals(45, EnchantCatalog.slice(selected, 0).size()); assertEquals(12, EnchantCatalog.slice(selected, 1).size());
+        assertEquals(59, selected.size()); assertEquals(2, EnchantCatalog.pages(selected.size()));
+        assertEquals(45, EnchantCatalog.slice(selected, 0).size()); assertEquals(14, EnchantCatalog.slice(selected, 1).size());
     }
     @Test void pagesAndEmptyResultsAreClampedIncludingExtremeRequests() {
         assertEquals(1, EnchantCatalog.pages(0)); assertEquals(1, EnchantCatalog.pages(-1));

@@ -1,4 +1,4 @@
-# CHRDK_Enchants — имена/описания 72 чар (en.<id>.name, en.<id>.lore) и тексты UI.
+# CHRDK_Enchants — имена/описания 74 чар (en.<id>.name, en.<id>.lore) и тексты UI.
 # Проклятия лежат в той же секции en, цвет и знак задаются полярностью чары.
 enchants:
   no-api: "<red>Ядро CHRDK_F_REGISTER не найдено — чары недоступны.</red>"
@@ -6,7 +6,7 @@ enchants:
   table-added: "<light_purple>✦ Стол дарует чару: %name% %levelroman%!</light_purple>"
   table-cursed: "<dark_red>☠ Стол выплеснул проклятие: %name% %levelroman%!</dark_red>"
   anvil-capped: "<red>На предмете уже максимум чар (%max%) или они конфликтуют.</red>"
-  usage: "<gray>/enchants — каталог %count% чар; info <id>, find <текст>, group <тип>, rarity <редкость>, light, curses, hand, sort <id|name|rarity>, inspect, cooldowns, sources, library [страница]</gray>"
+  usage: "<gray>/enchants — каталог %count% чар; info <id>, find <текст>, group <тип>, rarity <редкость>, light, curses, hand, sort <id|name|rarity>, inspect, cooldowns, sources, library [страница], guard [auto|id]</gray>"
   info-header: "<light_purple>✦ %name% <gray>(%rarity%, ур. I–%maxlevel%)</gray>"
   info-items: "<gray>Накладывается на: <yellow>%items%</yellow></gray>"
   info-conflicts: "<gray>Конфликтует с: <red>%conflicts%</red></gray>"
@@ -376,3 +376,20 @@ enchants:
   library-empty: "<gray>Пока пусто. Заберите настоящую книгу чар в свой инвентарь; старые книги тоже учитываются. Библиотека не выдаёт копии.</gray>"
   library-disabled: "<gray>Библиотека временно выключена. Сохранённые открытия не удалены.</gray>"
   library-invalid: "<red>Индекс библиотеки имеет неизвестный формат или повреждён. Он не перезаписан; обратитесь к администрации для сверки с резервной копией.</red>"
+
+  en.provoking_strike.name: "Провоцирующий удар"
+  en.provoking_strike.lore:
+    - "<gray>После разрешённого ближнего удара: шанс 15/20% переключить цель моба на себя.</gray>"
+    - "<gray>Только обычный враждебный Monster в 6 блоках, с прямой видимостью.</gray>"
+    - "<gray>Отмена/подмена цели соблюдается; агро не фиксируется, AI не меняется.</gray>"
+    - "<gray>Общая перезарядка новых PvE-чар: 15 сек. после успеха; не игроки/питомцы/NPC/боссы.</gray>"
+  en.signal_guard.name: "Сигнальный заслон"
+  en.signal_guard.lore:
+    - "<gray>После разрешённого попадания моба: шанс 15/20% подсветить его на 2/3 сек.</gray>"
+    - "<gray>Только враждебные мобы: не игроки, питомцы, NPC или боссы.</gray>"
+    - "<gray>Свечение любого происхождения не заменяется; уровни брони не складываются.</gray>"
+    - "<gray>Общая перезарядка новых PvE-чар: 15 сек. после успешного эффекта.</gray>"
+  guard-status: "<gold>Приоритет защиты: %selected% · реально доступна: %actual% · общий cooldown: %seconds% сек.</gold>"
+  guard-auto: "<gray>Автоматически по уровню</gray>"
+  guard-none: "<gray>Нет надетой включённой защитной чары</gray>"
+  guard-unavailable: "<yellow>Выберите auto либо включённую защитную чару на надетой броне: briar_guard, faltering_guard, signal_guard. Перезарядка не менялась.</yellow>"

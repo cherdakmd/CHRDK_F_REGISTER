@@ -11,7 +11,7 @@ import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 import java.util.List;
 
 /**
- * CHRDK_Enchants — 72 кастомных чар: 57 светлых и 15 проклятий. Источники:
+ * CHRDK_Enchants — 74 кастомных чар: 59 светлых и 15 проклятий. Источники:
  * зачаровательный стол и жители-библиотекари; книги чар накладываются на
  * наковальне. Книги и чары хранятся в PDC предметов, в инвентарях. Отрицательные метки
  * установленной руды сохраняются в PDC чанков.
@@ -165,6 +165,8 @@ public final class EnchantsPlugin extends JavaPlugin {
     public EnchantGui gui() {
         return gui;
     }
+
+    PveEffectsListener pve() { return pve; }
 
     public AuraService auras() {
         return auras;

@@ -94,6 +94,11 @@ public final class EnchantCommandHandler implements TabExecutor {
         try {
             EnchantCatalog.Query query = EnchantCatalog.Query.all();
             switch (action) {
+                case "guard" -> {
+                    if (args.length == 1 || args.length == 2) {
+                        plugin.pve().guardPreference(player, args.length == 1 ? null : args[1].toLowerCase(Locale.ROOT)); return true;
+                    }
+                }
                 case "library" -> {
                     if (args.length == 1 || args.length == 2) {
                         int page = args.length == 1 ? 1 : Integer.parseInt(args[1]);
@@ -238,10 +243,11 @@ public final class EnchantCommandHandler implements TabExecutor {
         String prefix = args[args.length - 1].toLowerCase(Locale.ROOT);
         if ("enchants".equalsIgnoreCase(command.getName())) {
             if (!sender.hasPermission("chrdkenchants.use")) return matches;
-            if (args.length == 1) return List.of("library", "sources", "info", "find", "group", "rarity", "light", "curses", "hand", "sort", "inspect", "cooldowns")
+            if (args.length == 1) return List.of("guard", "library", "sources", "info", "find", "group", "rarity", "light", "curses", "hand", "sort", "inspect", "cooldowns")
                     .stream().filter(value -> value.startsWith(prefix)).toList();
             if (args.length == 2) {
                 List<String> values = switch (args[0].toLowerCase(Locale.ROOT)) {
+                    case "guard" -> List.of("auto", "briar_guard", "faltering_guard", "signal_guard");
                     case "library" -> java.util.stream.IntStream.rangeClosed(1, EnchantLibrary.pages(EnchantRegistry.size())).mapToObj(Integer::toString).toList();
                     case "info", "find" -> EnchantRegistry.all().stream().map(EnchantDef::id).toList();
                     case "group" -> java.util.Arrays.stream(ItemGroup.values()).map(value -> value.name().toLowerCase(Locale.ROOT)).toList();
