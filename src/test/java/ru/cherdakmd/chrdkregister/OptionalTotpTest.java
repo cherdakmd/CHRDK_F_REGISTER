@@ -127,6 +127,7 @@ class OptionalTotpTest {
     @Test void reloadReleaseUsesNormalAuthenticationCleanupSessionAndAntiMultiAlt() throws Exception {
         String source = Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkregister/AccessManager.java"));
         String method = source.substring(source.indexOf("private void releaseOptionalEnrollment"), source.indexOf("public synchronized void shutdown"));
+        assertTrue(method.contains("getStage(player) != PlayerStage.NEEDS_LOGIN"));
         assertTrue(method.contains("TotpAccessPolicy.releaseEnrollment"));
         assertTrue(method.contains("store.isTotpEnabled(player.getName())"));
         assertTrue(method.contains("passwordVerifiedPlayers.contains(uuid)"));

@@ -470,7 +470,8 @@ public final class AccessManager {
     private void releaseOptionalEnrollment(boolean wasRequired) {
         if (!wasRequired || config.totpRequired()) return;
         for (Player player : List.copyOf(Bukkit.getOnlinePlayers())) {
-            if (!player.isOnline() || !store.isRegistered(player.getName())) continue;
+            // getStage также повторно проверяет регистрацию и возможное требование ранга.
+            if (!player.isOnline() || getStage(player) != PlayerStage.NEEDS_LOGIN) continue;
             UUID uuid = player.getUniqueId();
             if (!TotpAccessPolicy.releaseEnrollment(wasRequired, config.totpRequired(),
                     store.isTotpEnabled(player.getName()), passwordVerifiedPlayers.contains(uuid),
