@@ -103,6 +103,7 @@ public final class EnchantService {
      * @return null = можно; иначе текстовый код причины для сообщения
      */
     public String canApplyFromBook(ItemStack item, ItemStack book) {
+        if (item == null || items.validated(book) == null || items.validated(item) == null) return "invalid-data";
         if (!items.isEnchantBook(book)) {
             return "not-book";
         }
@@ -138,6 +139,7 @@ public final class EnchantService {
 
     /** Переносит чары из книги на предмет (вызывающий проверил canApplyFromBook). */
     public void applyFromBook(ItemStack item, ItemStack book) {
+        if (canApplyFromBook(item, book) != null) throw new IllegalArgumentException("Book transfer rejected");
         Map<String, Integer> enchants = new java.util.LinkedHashMap<>(items.read(item));
         items.read(book).forEach((id, level) -> {
             EnchantDef def = EnchantRegistry.byId(id);

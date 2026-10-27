@@ -754,7 +754,7 @@ server-menu:
     - {"category": "gear", "icon": "SMITHING_TABLE", "name": "<gold><bold>Редкости снаряжения</bold></gold>", "lore": "<gray>Тиры крафта и характеристики</gray>", "command": "tiers", "plugin": "CHRDK_TierForge", "permission": "chrdktierforge.use"}
     - {"category": "gear", "icon": "TOTEM_OF_UNDYING", "name": "<gold><bold>Артефакты</bold></gold>", "lore": "<gray>Каталог, носимые артефакты и источники</gray>\n<dark_gray>Добывайте их в мире</dark_gray>", "command": "artifacts", "plugin": "CHRDK_Artifacts", "permission": "chrdkartifacts.use"}
     - {"category": "gear", "icon": "ITEM_FRAME", "name": "<gold><bold>Коллекция артефактов</bold></gold>", "lore": "<gray>Собранное, прогресс и награды</gray>", "command": "artifacts collection", "plugin": "CHRDK_Artifacts", "permission": "chrdkartifacts.use"}
-    - {"category": "gear", "icon": "FIREWORK_ROCKET", "name": "<gold><bold>Косметика</bold></gold>", "lore": "<gray>Эффекты, шлейфы и оформление</gray>", "command": "cosmetics list", "plugin": "CHRDK_Cosmetics", "permission": "chrdkcosmetics.use"}
+    - {"category": "gear", "icon": "FIREWORK_ROCKET", "name": "<gold><bold>Косметика</bold></gold>", "lore": "<gray>Эффекты, шлейфы и оформление</gray>", "command": "cosmetic", "plugin": "CHRDK_Cosmetics", "permission": "chrdkcosmetics.use"}
     - {"category": "gear", "icon": "BONE", "name": "<gold><bold>Питомцы</bold></gold>", "lore": "<gray>Кошки и волки: уровни и трюки</gray>", "command": "pet list", "plugin": "CHRDK_Pets", "permission": "chrdkpets.use"}
     # ------------------------------ охота и события ------------------------------
     - {"category": "adventure", "icon": "BOW", "name": "<gold><bold>Охота</bold></gold>", "lore": "<gray>Пять семейств, трофеи и моб-ключи</gray>", "command": "hunt", "plugin": "CHRDK_Hunt", "permission": "chrdkhunt.use"}
@@ -1105,7 +1105,7 @@ auto-messages:
     # --- мир, снаряжение, сообщество ---
     - {"text": "<gray>Точки дома: <white>/homes</white> и <white>/sethome имя</white>. Запрос к игроку — <white>/tpa ник</white>.</gray>", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
     - {"text": "<gray>Изучайте кастомные чары: <white>/enchants</white>. Редкости снаряжения — <white>/tiers</white>.</gray>", "plugin": "CHRDK_Enchants", "permission": "chrdkenchants.use"}
-    - {"text": "<gray>Косметический шлейф: <white>/cosmetics list</white>. Выключить эффект — <white>/cosmetics off</white>.</gray>", "plugin": "CHRDK_Cosmetics", "permission": "chrdkcosmetics.use"}
+    - {"text": "<gray>Вся косметика — <white>/cosmetic</white> или кнопка в <white>/menu</white>. Шлейф, вход, цвет ника и надписи — в одном меню.</gray>", "plugin": "CHRDK_Cosmetics", "permission": "chrdkcosmetics.use"}
     - {"text": "<gray>Стримите на Twitch или VK Play Live? Привяжите канал: <white>/stream link</white> — час эфира даёт час отдельного буста.</gray>", "plugin": "CHRDK_Streams", "permission": "chrdkstreams.use"}
     - {"text": "<gray>Приглашайте друзей: <white>/ref</white> — статус и условия бонуса. Вас позвал друг? <white>/ref use его_ник</white>.</gray>", "plugin": "CHRDK_Referrals", "permission": "chrdkref.use"}
     - {"text": "<gray>Сейчас на сервере <white>%online%</white> игроков. Самое время для общих целей: <white>/goals</white>.</gray>", "plugin": "CHRDK_CommonGoals", "permission": "chrdkgoals.use", "min-online": 5}

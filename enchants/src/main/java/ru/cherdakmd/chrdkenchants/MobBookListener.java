@@ -60,6 +60,6 @@ final class MobBookListener implements Listener {
     }
     private double chance(String kind, double fallback, double max) {
         double value = plugin.getConfig().getDouble("sources.mobs." + kind + "-chance-percent", fallback);
-        return Double.isFinite(value) ? Math.clamp(value, 0, max) : fallback;
+        return EnchantSourceReport.chance(value, fallback, max);
     }
 }

@@ -94,6 +94,7 @@ public final class EnchantCommandHandler implements TabExecutor {
         try {
             EnchantCatalog.Query query = EnchantCatalog.Query.all();
             switch (action) {
+                case "sources" -> { if (args.length == 1) { new EnchantSourceReport(plugin).send(player); return true; } }
                 case "find" -> {
                     if (args.length < 2) break;
                     String text = String.join(" ", java.util.Arrays.copyOfRange(args, 1, args.length));
@@ -226,7 +227,7 @@ public final class EnchantCommandHandler implements TabExecutor {
         String prefix = args[args.length - 1].toLowerCase(Locale.ROOT);
         if ("enchants".equalsIgnoreCase(command.getName())) {
             if (!sender.hasPermission("chrdkenchants.use")) return matches;
-            if (args.length == 1) return List.of("info", "find", "group", "rarity", "light", "curses", "hand", "sort", "inspect", "cooldowns")
+            if (args.length == 1) return List.of("sources", "info", "find", "group", "rarity", "light", "curses", "hand", "sort", "inspect", "cooldowns")
                     .stream().filter(value -> value.startsWith(prefix)).toList();
             if (args.length == 2) {
                 List<String> values = switch (args[0].toLowerCase(Locale.ROOT)) {

@@ -58,6 +58,7 @@ public final class LabelsMenuService implements Listener {
     static final int PROFILE_SLOT = 48;
     static final int RESET_SLOT = 49;
     static final int CLOSE_SLOT = 53;
+    static final int COSMETICS_SLOT = 52;
 
     private final RegisterPlugin plugin;
     private final LabelPreferences preferences;
@@ -139,6 +140,8 @@ public final class LabelsMenuService implements Listener {
                 plugin.messages().get("labels.menu-profile")));
         inventory.setItem(RESET_SLOT, button(Material.MILK_BUCKET,
                 plugin.messages().get("labels.menu-reset")));
+        if (Bukkit.getPluginManager().isPluginEnabled("CHRDK_Cosmetics"))
+            inventory.setItem(COSMETICS_SLOT, button(Material.FIREWORK_ROCKET, plugin.messages().get("labels.menu-cosmetics")));
         inventory.setItem(CLOSE_SLOT, button(Material.BARRIER,
                 plugin.messages().get("labels.menu-close")));
     }
@@ -425,6 +428,15 @@ public final class LabelsMenuService implements Listener {
                     if (player.isOnline()) styleMenu.openSlot(player, place);
                 });
             }
+            return;
+        }
+        if (slot == COSMETICS_SLOT && Bukkit.getPluginManager().isPluginEnabled("CHRDK_Cosmetics")) {
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (player.isOnline() && player.getOpenInventory().getTopInventory().getHolder() == holder
+                        && Bukkit.getPluginManager().isPluginEnabled("CHRDK_Cosmetics")) {
+                    player.closeInventory(); player.performCommand("cosmetic");
+                }
+            });
             return;
         }
         if (slot == CLOSE_SLOT) {

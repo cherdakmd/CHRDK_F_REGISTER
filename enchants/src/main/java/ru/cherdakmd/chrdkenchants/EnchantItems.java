@@ -69,8 +69,19 @@ public final class EnchantItems {
         if (meta == null) {
             return Map.of();
         }
+        if (!meta.getPersistentDataContainer().has(key, PersistentDataType.STRING)) return Map.of();
         String raw = meta.getPersistentDataContainer().get(key, PersistentDataType.STRING);
         return raw == null ? Map.of() : Map.copyOf(EnchantCodec.decode(raw));
+    }
+
+    /** Наличие метки проверяется и при повреждённом типе/пустой строке. */
+    boolean marked(ItemStack item) {
+        return item != null && item.hasItemMeta() && item.getItemMeta().getPersistentDataContainer().has(key);
+    }
+    Map<String, Integer> validated(ItemStack item) {
+        if (!marked(item)) return Map.of();
+        var data = item.getItemMeta().getPersistentDataContainer();
+        return data.has(key, PersistentDataType.STRING) ? EnchantBookValidation.read(data.get(key, PersistentDataType.STRING)) : null;
     }
 
     /** Уровень конкретной чары на предмете (0 — нет). */
@@ -166,6 +177,7 @@ public final class EnchantItems {
         if (entity == null) {
             return Map.of();
         }
+        if (!entity.getPersistentDataContainer().has(key, PersistentDataType.STRING)) return Map.of();
         String raw = entity.getPersistentDataContainer().get(key, PersistentDataType.STRING);
         return raw == null ? Map.of() : Map.copyOf(EnchantCodec.decode(raw));
     }

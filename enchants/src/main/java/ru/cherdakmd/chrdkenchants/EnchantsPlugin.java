@@ -34,6 +34,7 @@ public final class EnchantsPlugin extends JavaPlugin {
     private EnchantItems items;
     private EnchantService service;
     private EnchantGui gui;
+    private TableListener table;
     private EnchantCommandHandler commandHandler;
     private AuraService auras;
     private PveEffectsListener pve;
@@ -51,7 +52,8 @@ public final class EnchantsPlugin extends JavaPlugin {
         this.commandHandler = new EnchantCommandHandler(this);
         this.auras = new AuraService(this);
 
-        Bukkit.getPluginManager().registerEvents(new TableListener(this), this);
+        this.table = new TableListener(this);
+        Bukkit.getPluginManager().registerEvents(table, this);
         Bukkit.getPluginManager().registerEvents(new MobBookListener(this), this);
         this.pve = new PveEffectsListener(this);
         Bukkit.getPluginManager().registerEvents(pve, this);
@@ -88,6 +90,7 @@ public final class EnchantsPlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         sourceGeneration++;
+        if (table != null) table.clear();
         if (gui != null) gui.stop();
         if (pve != null) pve.stop();
         if (utility != null) utility.stop();
@@ -107,6 +110,7 @@ public final class EnchantsPlugin extends JavaPlugin {
     /** Перечитывает config.yml/messages.yml. */
     public void reloadEnchantsConfig() {
         sourceGeneration++;
+        if (table != null) table.clear();
         reloadConfig();
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);

@@ -82,6 +82,8 @@ public final class TreasuresPlugin extends JavaPlugin {
         // Конфиг читается до листенера: антинакрутка берёт из него TTL и лимит.
         reloadTreasuresConfig();
         this.service = new TreasureService(this, store);
+        Bukkit.getServicesManager().register(ru.cherdakmd.chrdkregister.api.ChrdkTreasureBookInfo.class,
+                new TreasureBookInfo(this::config), this, org.bukkit.plugin.ServicePriority.Normal);
         this.sets = new TreasureSets(this);
         this.auras = new TreasureAuras(this);
         this.abilities = new TreasureAbilities(this);
@@ -154,6 +156,7 @@ public final class TreasuresPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        Bukkit.getServicesManager().unregisterAll(this);
         unregisterRankTag();
         if (rankTags != null) {
             rankTags.stop();

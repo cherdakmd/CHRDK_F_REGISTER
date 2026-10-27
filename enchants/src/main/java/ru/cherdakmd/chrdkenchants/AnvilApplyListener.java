@@ -30,7 +30,7 @@ public final class AnvilApplyListener implements Listener {
     public void onPrepareAnvil(PrepareAnvilEvent event) {
         ItemStack left = event.getInventory().getItem(0);
         ItemStack right = event.getInventory().getItem(1);
-        if (left == null || right == null || !plugin.items().isEnchantBook(right)) {
+        if (left == null || right == null || right.getType() != org.bukkit.Material.ENCHANTED_BOOK || !plugin.items().marked(right)) {
             return;
         }
         Player viewer = event.getView().getPlayer() instanceof Player player ? player : null;
@@ -78,12 +78,19 @@ public final class AnvilApplyListener implements Listener {
      * получивший новое проклятие. Считаем разницу «было → стало», поэтому
      * повторная починка того же проклятия предупреждение не повторяет.
      */
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(priority = org.bukkit.event.EventPriority.HIGHEST, ignoreCancelled = true)
     public void onTakeResult(InventoryClickEvent event) {
         if (!(event.getInventory() instanceof org.bukkit.inventory.AnvilInventory)) {
             return;
         }
         if (event.getRawSlot() != 2 || !(event.getWhoClicked() instanceof Player player)) {
+            return;
+        }
+        ItemStack right = event.getInventory().getItem(1);
+        if (right != null && right.getType() == org.bukkit.Material.ENCHANTED_BOOK && plugin.items().marked(right)
+                && (!player.hasPermission("chrdkenchants.use") || plugin.coreApi() == null || !plugin.coreApi().isAuthenticated(player)
+                || plugin.service().canApplyFromBook(event.getInventory().getItem(0), right) != null)) {
+            event.setCancelled(true);
             return;
         }
         ItemStack result = event.getCurrentItem();
