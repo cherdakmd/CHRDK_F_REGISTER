@@ -376,10 +376,12 @@ public final class TreasureBarrels implements Listener {
                 return;
             }
             if (spawn(owner, location, tier, copy)) {
-                plugin.messages().send(owner, "barrel-placed",
-                        "tier", Messages.trusted(plugin.messages().raw(
-                                "tier." + (tier == null ? TreasureTier.COMMON : tier).id())));
-                plugin.messages().send(owner, "barrel-hint");
+                if (plugin.config().findNotifications()) {
+                    plugin.messages().send(owner, "barrel-placed",
+                            "tier", Messages.trusted(plugin.messages().raw(
+                                    "tier." + (tier == null ? TreasureTier.COMMON : tier).id())));
+                    plugin.messages().send(owner, "barrel-hint");
+                }
             } else {
                 plugin.messages().send(owner, "barrel-fallback");
                 plugin.treasures().givePayload(owner, copy);

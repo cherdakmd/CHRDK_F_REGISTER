@@ -392,10 +392,13 @@ public final class TreasureMapService {
                 service.mined(player), plugin.config().arsenalShare());
         TreasureService.Found found = service.give(player, map.tier(), map.region(), roll,
                 block.getLocation());
-        plugin.messages().send(player, "map-found",
-                "tier", Messages.trusted(plugin.messages().raw("tier." + map.tier().id())),
-                "region", Messages.trusted(
-                        plugin.messages().raw("region." + map.region().id())));
+        if (plugin.config().findNotifications()
+                && plugin.store().announce(player.getUniqueId().toString())) {
+            plugin.messages().send(player, "map-found",
+                    "tier", Messages.trusted(plugin.messages().raw("tier." + map.tier().id())),
+                    "region", Messages.trusted(
+                            plugin.messages().raw("region." + map.region().id())));
+        }
         plugin.listener().celebrate(player, block.getLocation(), found);
         return found;
     }

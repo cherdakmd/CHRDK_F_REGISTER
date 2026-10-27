@@ -94,8 +94,11 @@ public final class TreasureDrops {
             return 0;
         }
         effects(world, center, player, key);
-        plugin.messages().send(player, "drops-landed",
-                "count", String.valueOf(dropped));
+        if (plugin.config() != null && plugin.config().findNotifications()
+                && plugin.store().announce(key)) {
+            plugin.messages().send(player, "drops-landed",
+                    "count", String.valueOf(dropped));
+        }
         return dropped;
     }
 

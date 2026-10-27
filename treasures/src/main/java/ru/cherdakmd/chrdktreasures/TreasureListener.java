@@ -373,11 +373,6 @@ public final class TreasureListener implements Listener {
     /* --------------------------------- события -------------------------------- */
 
     void celebrate(Player player, Location location, TreasureService.Found found) {
-        String tierName = plugin.messages().raw("tier." + found.tier().id());
-        String itemName = found.named()
-                ? plugin.messages().raw("treasure." + found.item().id() + ".name")
-                : "";
-
         if (plugin.store().particles(player.getUniqueId().toString())) {
             particles(location, found.tier());
         }
@@ -385,6 +380,16 @@ public final class TreasureListener implements Listener {
             player.playSound(player.getLocation(), soundOf(found.tier()), 0.9f, 1.0f);
         }
         plugin.showcase().show(player, found);
+        // Частицы, звук и витрина остаются. Старые announce/log-finds=true
+        // не должны возвращать чат-спам после обновления без нового ключа.
+        if (!plugin.config().findNotifications()) {
+            return;
+        }
+        String tierName = plugin.messages().raw("tier." + found.tier().id());
+        String itemName = found.named()
+                ? plugin.messages().raw("treasure." + found.item().id() + ".name")
+                : "";
+
         // 1.4.148: «что именно выпало». Список готовится один раз — он нужен и
         // игроку, и объявлению, и журналу сервера.
         TreasureLootText.Summary summary = plugin.config().showLoot()
@@ -453,12 +458,12 @@ public final class TreasureListener implements Listener {
 
     /**
      * Пишет находку в консоль сервера: без разметки и тегов языка, с составом.
-     * Журнал не зависит от витрины и переключателя объявлений — администратор
-     * всегда увидит, что и кому выпало.
+     * Журнал не зависит от личного переключателя объявлений, но разрешён
+     * только при явном включении общих уведомлений и log-finds.
      */
     private void logFind(Player player, TreasureService.Found found,
                          TreasureLootText.Summary summary) {
-        if (!plugin.config().logFinds()) {
+        if (!plugin.config().findNotifications() || !plugin.config().logFinds()) {
             return;
         }
         String detail = found.named()

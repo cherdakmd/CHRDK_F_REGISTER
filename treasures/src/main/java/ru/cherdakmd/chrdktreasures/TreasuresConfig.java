@@ -393,6 +393,8 @@ public final class TreasuresConfig {
     private final int placedBlockMaxEntries;
     private final long cooldownMillis;
     private final Map<Integer, Milestone> milestones;
+    /** Общий запрет спама находок; отсутствующий ключ в старом конфиге означает тишину. */
+    private final boolean findNotifications;
     private final boolean broadcastLegendary;
     private final boolean broadcastMythical;
     private final boolean broadcastLegend;
@@ -436,7 +438,7 @@ public final class TreasuresConfig {
                             double depthMaxBonus, long placedBlockTtlSeconds,
                             int placedBlockMaxEntries, long cooldownMillis,
                             Map<Integer, Milestone> milestones,
-                            boolean broadcastLegendary, boolean broadcastMythical,
+                            boolean findNotifications, boolean broadcastLegendary, boolean broadcastMythical,
                             boolean broadcastLegend, boolean showLoot, int lootDetailsMax,
                             boolean logFinds, int streakWindowSeconds, int streakBonusEvery,
                             Map<TreasureRank, Integer> rankRewards, Effects effects,
@@ -459,6 +461,7 @@ public final class TreasuresConfig {
         this.placedBlockMaxEntries = placedBlockMaxEntries;
         this.cooldownMillis = cooldownMillis;
         this.milestones = milestones;
+        this.findNotifications = findNotifications;
         this.broadcastLegendary = broadcastLegendary;
         this.broadcastMythical = broadcastMythical;
         this.broadcastLegend = broadcastLegend;
@@ -587,6 +590,7 @@ public final class TreasuresConfig {
             milestones = new TreeMap<>(defaultMilestones());
         }
 
+        boolean findNotifications = cfg.getBoolean("feedback.find-notifications", false);
         boolean broadcastLegendary = cfg.getBoolean("feedback.broadcast-legendary", true);
         boolean broadcastMythical = cfg.getBoolean("feedback.broadcast-mythical", true);
         boolean broadcastLegend = cfg.getBoolean("feedback.broadcast-legend", true);
@@ -627,7 +631,7 @@ public final class TreasuresConfig {
                 Collections.unmodifiableMap(blockTables),
                 depthPerBlock, depthMax, ttl, maxEntries,
                 cooldown, Collections.unmodifiableMap(milestones),
-                broadcastLegendary, broadcastMythical, broadcastLegend,
+                findNotifications, broadcastLegendary, broadcastMythical, broadcastLegend,
                 showLoot, lootDetailsMax, logFinds,
                 streakWindow, streakBonusEvery,
                 Collections.unmodifiableMap(rankRewards), effects,
@@ -774,6 +778,11 @@ public final class TreasuresConfig {
 
     public Map<Integer, Milestone> milestones() {
         return milestones;
+    }
+
+    /** Разрешены ли автоматические строки о находках в чате и консоли. */
+    public boolean findNotifications() {
+        return findNotifications;
     }
 
     public boolean broadcastLegendary() {

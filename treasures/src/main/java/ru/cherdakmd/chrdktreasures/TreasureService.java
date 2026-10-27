@@ -459,7 +459,7 @@ public final class TreasureService {
      *
      * <p>Именные предметы в бонус не попадают намеренно — иначе серия стала бы
      * вторым, скрытым броском коллекции и обесценила бы редкость. Бонус — это
-     * ресурсы, и он честно объявляется игроку.</p>
+     * ресурсы; выдача не зависит от настройки сообщений о находках.</p>
      */
     private List<TreasureLoot.LootStack> grantStreakBonus(Player player, TreasureTier tier,
                                                           TreasureRegion region, int streak,
@@ -477,7 +477,8 @@ public final class TreasureService {
                 payload.add(itemStack);
             }
         }
-        if (!extra.loot().isEmpty()) {
+        if (!extra.loot().isEmpty() && plugin.config().findNotifications()
+                && store.announce(key(player))) {
             // 1.4.148: бонус тоже называет состав, иначе игрок снова лезет в инвентарь.
             String loot = plugin.config().showLoot()
                     ? TreasureLootMarkup.markup(plugin.messages(), TreasureLootText.summarize(
