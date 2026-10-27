@@ -87,6 +87,10 @@ final class MobProgression implements Listener {
             int rank = MobProgressionPolicy.level(mob.getWorld().getEnvironment().name(), distance, total);
             int variant = distance > 512 && total >= 50 && ThreadLocalRandom.current().nextDouble(100) < eliteChance
                     ? ThreadLocalRandom.current().nextInt(1, 4) : 0;
+            // У летающих скорость задаётся отдельным AI, а крипер не бьёт в ближнем бою.
+            // Не выдаём им вариант, чьё усиление фактически не работает.
+            if (variant == 3 && (mob instanceof Ghast || mob instanceof Phantom)) variant = 2;
+            if (variant == 2 && mob instanceof Creeper) variant = 1;
             var data = mob.getPersistentDataContainer();
             data.set(level, PersistentDataType.INTEGER, rank);
             data.set(elite, PersistentDataType.INTEGER, variant);
