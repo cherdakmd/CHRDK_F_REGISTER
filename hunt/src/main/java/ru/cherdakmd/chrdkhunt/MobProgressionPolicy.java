@@ -26,16 +26,19 @@ final class MobProgressionPolicy {
     }
     static int variantCount(boolean armored, boolean recovery) { return variantCount(armored, recovery, false); }
     static int variant(int draw, boolean armored, boolean recovery) { return variant(draw, armored, recovery, false); }
-    static int variantCount(boolean armored, boolean recovery, boolean dash) {
-        return 3 + (armored ? 1 : 0) + (recovery ? 1 : 0) + (dash ? 1 : 0);
+    static int variantCount(boolean armored, boolean recovery, boolean dash) { return variantCount(armored, recovery, dash, false); }
+    static int variant(int draw, boolean armored, boolean recovery, boolean dash) { return variant(draw, armored, recovery, dash, false); }
+    static int variantCount(boolean armored, boolean recovery, boolean dash, boolean tactics) {
+        return 3 + (armored ? 1 : 0) + (recovery ? 1 : 0) + (dash ? 1 : 0) + (tactics ? 1 : 0);
     }
-    static int variant(int draw, boolean armored, boolean recovery, boolean dash) {
-        if (draw < 0 || draw >= variantCount(armored, recovery, dash)) throw new IllegalArgumentException("Elite draw out of range");
+    static int variant(int draw, boolean armored, boolean recovery, boolean dash, boolean tactics) {
+        if (draw < 0 || draw >= variantCount(armored, recovery, dash, tactics)) throw new IllegalArgumentException("Elite draw out of range");
         if (draw < 3) return draw + 1;
         int offset = 3;
         if (armored && draw == offset++) return 4;
         if (recovery && draw == offset++) return EliteRecovery.VARIANT;
-        return EliteDash.VARIANT;
+        if (dash && draw == offset++) return EliteDash.VARIANT;
+        return EliteTactics.VARIANT;
     }
     static boolean natural(String reason) { return "NATURAL".equals(reason) || "CHUNK_GEN".equals(reason) || "PATROL".equals(reason); }
     static int bookTier(int level) { return level >= 20 ? 3 : level >= 10 ? 2 : 1; }

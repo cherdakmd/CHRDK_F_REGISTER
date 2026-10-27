@@ -82,7 +82,7 @@ class EliteDashTest {
             assertThrows(IllegalArgumentException.class, () -> MobProgressionPolicy.variant(-1, armor, recovery, dash));
             assertThrows(IllegalArgumentException.class, () -> MobProgressionPolicy.variant(count, armor, recovery, dash));
         }
-        assertTrue(MobProgressionPolicy.valid(30, 6)); assertFalse(MobProgressionPolicy.valid(30, 7));
+        assertTrue(MobProgressionPolicy.valid(30, 6)); assertFalse(MobProgressionPolicy.valid(30, ru.cherdakmd.chrdkregister.api.MobProgressionKeys.MAX_ELITE + 1));
         assertEquals(MobProgressionPolicy.stats(30, 0), MobProgressionPolicy.stats(30, 6));
     }
     @Test void burstCannotBeStackedExtendedOrReplaceItsOwner() {
