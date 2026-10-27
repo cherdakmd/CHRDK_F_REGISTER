@@ -14,15 +14,15 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Каталог 1.4.128: 60 чар — 45 светлых и 15 проклятий, уникальные id,
+ * Каталог 1.4.128: 66 чар — 51 светлая и 15 проклятий, уникальные id,
  * валидные группы поддержки, редкости и смешанная конфликтная группа.
  */
 class EnchantRegistryTest {
 
     @Test
-    void sixtyUniqueEnchants() {
+    void sixtySixUniqueEnchants() {
         List<EnchantDef> all = EnchantRegistry.all();
-        assertEquals(60, all.size());
+        assertEquals(66, all.size());
         Set<String> ids = new HashSet<>();
         all.forEach(def -> {
             assertTrue(ids.add(def.id()), "дубликат id " + def.id());
@@ -35,10 +35,10 @@ class EnchantRegistryTest {
     }
 
     @Test
-    void polaritySplitIsFortyFiveAndFifteen() {
-        assertEquals(45, EnchantRegistry.lightCount());
+    void polaritySplitIsFiftyOneAndFifteen() {
+        assertEquals(51, EnchantRegistry.lightCount());
         assertEquals(15, EnchantRegistry.curseCount());
-        assertEquals(60, EnchantRegistry.lightCount() + EnchantRegistry.curseCount());
+        assertEquals(66, EnchantRegistry.lightCount() + EnchantRegistry.curseCount());
         EnchantRegistry.light().forEach(def -> assertFalse(def.curse(), def.id()));
         EnchantRegistry.curses().forEach(def -> assertTrue(def.curse(), def.id()));
     }
@@ -75,10 +75,10 @@ class EnchantRegistryTest {
         for (ItemGroup group : ItemGroup.values()) {
             assertTrue(used.contains(group), "нет чары для " + group);
         }
-        // 16 явных мечевых + 4 «на любой предмет» (Книжник и три проклятия).
-        assertEquals(20, EnchantRegistry.all().stream().filter(def ->
+        // 18 явных мечевых + 4 «на любой предмет» (Книжник и три проклятия).
+        assertEquals(22, EnchantRegistry.all().stream().filter(def ->
                 def.supports().contains(ItemGroup.SWORD)).count(),
-                "меч: 9 старых + 4 светлых + 3 проклятия + 4 любых");
+                "меч: 9 старых + 4 светлых + 2 PvE + 3 проклятия + 4 любых");
         // 9 явных кирковых + те же 4 «на любой предмет».
         assertEquals(13, EnchantRegistry.all().stream().filter(def ->
                 def.supports().contains(ItemGroup.PICKAXE)).count(),

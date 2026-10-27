@@ -54,7 +54,9 @@ public record EnchantsConfig(
                 logger, "rules.max-legendary-per-item");
         boolean curses = clampBool(config, "rules.curses-enabled", true);
         List<EnchantDef> enabled = new ArrayList<>();
+        boolean pve = clampBool(config, "pve-effects.enabled", true);
         for (EnchantDef def : EnchantRegistry.all()) {
+            if (!pve && PveEnchant.byId(def.id()) != null) continue;
             if (def.curse() && !curses) {
                 continue; // мастер-выключатель сильнее индивидуальных флагов
             }

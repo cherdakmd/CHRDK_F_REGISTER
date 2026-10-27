@@ -1,4 +1,4 @@
-# CHRDK_Enchants — 60 кастомных чар: 45 светлых и 15 проклятий. Предметы с ними
+# CHRDK_Enchants — 66 кастомных чар: 51 светлая и 15 проклятий. Предметы с ними
 # живут в NBT (PDC) и сохраняются в инвентарях игроков — отдельного хранилища нет.
 #
 # 1.4.128: проклятия — это отдельный полюс. Они реально мешают (минус к урону,
@@ -41,6 +41,12 @@ rules:
 
 # Отключение отдельных чар (id: enabled).
 enchants:
+  crippling_edge: {enabled: true}     # Подрезание — замедляет моба после удара
+  sapping_edge: {enabled: true}       # Изнуряющий клинок — ослабляет моба
+  pinning_shot: {enabled: true}       # Сковывающий выстрел — замедляет моба
+  sapping_shot: {enabled: true}       # Изнуряющий выстрел — ослабляет моба
+  briar_guard: {enabled: true}        # Терновый заслон — замедляет атакующего моба
+  faltering_guard: {enabled: true}    # Ослабляющий заслон — ослабляет атакующего моба
   thunderstrike: {enabled: true}      # Громобой
   lifesteal: {enabled: true}          # Вампиризм
   chainspark: {enabled: true}         # Цепная молния
@@ -103,3 +109,10 @@ enchants:
   gluttony: {enabled: true}            # Обжорство
   slow_learner: {enabled: true}        # Тугодум
   cursed_blood: {enabled: true}        # Проклятая кровь
+
+# Новые PvE-чары 1.4.203: только авторизованные игроки Survival с chrdkenchants.use.
+# Шансы/длительности фиксированы в балансе; общий cooldown 12/15 сек в PDC игрока.
+# Не действуют на игроков, питомцев, NPC, именованных мобов и ванильных боссов.
+# Уже имеющееся Замедление/Слабость любого уровня НЕ заменяется.
+pve-effects:
+  enabled: true

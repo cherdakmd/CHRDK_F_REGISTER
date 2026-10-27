@@ -27,7 +27,7 @@ import static ru.cherdakmd.chrdkenchants.EnchantDef.Rarity.LEGENDARY;
 import static ru.cherdakmd.chrdkenchants.EnchantDef.Rarity.RARE;
 
 /**
- * Реестр всех кастомных чар (1.4.128: 60 — 45 светлых и 15 проклятий).
+ * Реестр всех кастомных чар (1.4.203: 66 — 51 светлая и 15 проклятий).
  *
  * <p>Первые 30 — «эпические» чары из 1.4.13 (Громобой, Вампиризм, Феникс…).
  * Волна 18 добавила 15 новых светлых чар (статы: урон, скорость стрел, защита,
@@ -90,6 +90,14 @@ public final class EnchantRegistry {
         register("prospector", RARE, 3, null, LIGHT, PICKAXE, SHOVEL, HOE, AXE);
         register("fortunate", EPIC, 2, null, LIGHT, PICKAXE);
         register("scholar", COMMON, 3, null, LIGHT, ANY);
+
+        // PvE-контроль: I уровень эффекта, общая перезарядка, без урона игрокам/питомцам.
+        register("crippling_edge", RARE, 3, "pve-melee-control", LIGHT, SWORD, AXE);
+        register("sapping_edge", EPIC, 2, "pve-melee-control", LIGHT, SWORD, AXE);
+        register("pinning_shot", RARE, 3, "pve-ranged-control", LIGHT, BOW, CROSSBOW);
+        register("sapping_shot", EPIC, 2, "pve-ranged-control", LIGHT, BOW, CROSSBOW);
+        register("briar_guard", RARE, 2, "pve-guard-control", LIGHT, CHESTPLATE, LEGGINGS);
+        register("faltering_guard", RARE, 2, "pve-guard-control", LIGHT, CHESTPLATE, LEGGINGS);
 
         // --------------------------- 15 проклятий (1.4.128) ---------------------------
         register("dull_blade", COMMON, 3, null, CURSE, SWORD, AXE);

@@ -1,4 +1,4 @@
-# CHRDK_Enchants — имена/описания 60 чар (en.<id>.name, en.<id>.lore) и тексты UI.
+# CHRDK_Enchants — имена/описания 66 чар (en.<id>.name, en.<id>.lore) и тексты UI.
 # Проклятия лежат в той же секции en, цвет и знак задаются полярностью чары.
 enchants:
   no-api: "<red>Ядро CHRDK_F_REGISTER не найдено — чары недоступны.</red>"
@@ -6,7 +6,7 @@ enchants:
   table-added: "<light_purple>✦ Стол дарует чару: %name% %levelroman%!</light_purple>"
   table-cursed: "<dark_red>☠ Стол выплеснул проклятие: %name% %levelroman%!</dark_red>"
   anvil-capped: "<red>На предмете уже максимум чар (%max%) или они конфликтуют.</red>"
-  usage: "<gray>/enchants — книга всех 60 чар (светлые и проклятия); /enchants info <id></gray>"
+  usage: "<gray>/enchants — книга всех 66 чар (светлые и проклятия); /enchants info <id></gray>"
   info-header: "<light_purple>✦ %name% <gray>(%rarity%, ур. I–%maxlevel%)</gray>"
   info-items: "<gray>Накладывается на: <yellow>%items%</yellow></gray>"
   info-conflicts: "<gray>Конфликтует с: <red>%conflicts%</red></gray>"
@@ -242,6 +242,42 @@ enchants:
     cursed_blood:
       name: "Проклятая кровь"
       lore: "<red>Раз в пять секунд кровь может отнять полсердца.</red>"
+  en.crippling_edge.name: "Подрезание"
+  en.crippling_edge.lore:
+    - "<gray>Замедление I на 2/3/4 сек., шанс 20/25/30%.</gray>"
+    - "<gray>Только враждебные мобы: не игроки, питомцы, NPC или боссы.</gray>"
+    - "<gray>Общая перезарядка новых PvE-чар: 12 сек. после срабатывания.</gray>"
+    - "<gray>Имеющийся эффект того же типа не заменяется.</gray>"
+  en.sapping_edge.name: "Изнуряющий клинок"
+  en.sapping_edge.lore:
+    - "<gray>Слабость I на 2/3 сек., шанс 15/20%.</gray>"
+    - "<gray>Только враждебные мобы: не игроки, питомцы, NPC или боссы.</gray>"
+    - "<gray>Общая перезарядка новых PvE-чар: 15 сек. после срабатывания.</gray>"
+    - "<gray>Имеющийся эффект того же типа не заменяется.</gray>"
+  en.pinning_shot.name: "Сковывающий выстрел"
+  en.pinning_shot.lore:
+    - "<gray>Замедление I на 2/3/4 сек., шанс 20/25/30%.</gray>"
+    - "<gray>Только враждебные мобы: не игроки, питомцы, NPC или боссы.</gray>"
+    - "<gray>Общая перезарядка новых PvE-чар: 12 сек. после срабатывания.</gray>"
+    - "<gray>Имеющийся эффект того же типа не заменяется.</gray>"
+  en.sapping_shot.name: "Изнуряющий выстрел"
+  en.sapping_shot.lore:
+    - "<gray>Слабость I на 2/3 сек., шанс 15/20%.</gray>"
+    - "<gray>Только враждебные мобы: не игроки, питомцы, NPC или боссы.</gray>"
+    - "<gray>Общая перезарядка новых PvE-чар: 15 сек. после срабатывания.</gray>"
+    - "<gray>Имеющийся эффект того же типа не заменяется.</gray>"
+  en.briar_guard.name: "Терновый заслон"
+  en.briar_guard.lore:
+    - "<gray>Замедление I атакующему мобу на 2/3 сек., шанс 15/20%.</gray>"
+    - "<gray>Только враждебные мобы: не игроки, питомцы, NPC или боссы.</gray>"
+    - "<gray>Общая перезарядка новых PvE-чар: 15 сек. после срабатывания.</gray>"
+    - "<gray>Имеющийся эффект того же типа не заменяется.</gray>"
+  en.faltering_guard.name: "Ослабляющий заслон"
+  en.faltering_guard.lore:
+    - "<gray>Слабость I атакующему мобу на 2/3 сек., шанс 15/20%.</gray>"
+    - "<gray>Только враждебные мобы: не игроки, питомцы, NPC или боссы.</gray>"
+    - "<gray>Общая перезарядка новых PvE-чар: 15 сек. после срабатывания.</gray>"
+    - "<gray>Имеющийся эффект того же типа не заменяется.</gray>"
   book-rarity: "<dark_gray>✶</dark_gray> <gray>Редкость: %rarity% · максимум %maxlevel%</gray>"
   book-items: "<dark_gray>✶</dark_gray> <gray>Для: %items%</gray>"
   book-conflicts: "<dark_gray>✶</dark_gray> <gray>Несовместимо: %conflicts%</gray>"
