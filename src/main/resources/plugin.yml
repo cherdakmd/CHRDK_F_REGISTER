@@ -12,7 +12,7 @@ description: Ядро CHERDAK для Purpur 26.3 — пять донатных �
 
 commands:
   register:
-    description: Зарегистрировать аккаунт и активировать приветственный ранг
+    description: Зарегистрировать аккаунт и получить приветственный XP-буст
     usage: /<command> <пароль> <повтор>
     aliases: [reg]
   login:

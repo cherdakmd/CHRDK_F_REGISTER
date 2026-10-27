@@ -39,7 +39,13 @@ public final class ShopService {
         /** Такого товара нет в конфиге. */
         UNKNOWN_PRODUCT,
         /** У игрока уже есть ранг не ниже — покупка не нужна. */
-        RANK_HIGHER
+        RANK_HIGHER,
+        /** Полный оплаченный срок не помещается в горизонт каталога. */
+        TIME_LIMIT,
+        /** Набор имеет потерянные/циклические ссылки или включает ранг. */
+        INVALID_BUNDLE,
+        /** Ник не соответствует принятому сервером формату. */
+        INVALID_RECIPIENT
     }
 
     public record Result(Status status, String playerName, ShopProduct product,
@@ -142,6 +148,11 @@ public final class ShopService {
             return Result.failure(Status.DISABLED, playerName);
         }
         Result result = grant(playerName, productId, days, payment.actor(), giftFrom, true);
+        if (paidProduct != null && (result.status() == Status.RANK_HIGHER
+                || result.status() == Status.TIME_LIMIT || result.status() == Status.INVALID_BUNDLE
+                || result.status() == Status.INVALID_RECIPIENT)) {
+            queueRejected(result.playerName(), paidProduct, result.status());
+        }
         payment.finish(access, playerName, result.status().name());
         return result;
     }
@@ -172,6 +183,9 @@ public final class ShopService {
         if (product == null) {
             return Result.failure(Status.UNKNOWN_PRODUCT, playerName);
         }
+        if (!AccessManager.isValidMinecraftName(playerName)) {
+            return Result.failure(Status.INVALID_RECIPIENT, playerName);
+        }
         int length = days > 0
                 ? Math.min(days, ShopCatalog.MAX_PRODUCT_DAYS)
                 : product.days();
@@ -182,30 +196,58 @@ public final class ShopService {
                 .filter(name -> name != null && !name.isBlank())
                 .orElse(playerName);
 
+        // До любых изменений проверяем весь набор и все оплаченные дни.
+        if (!product.includes().isEmpty() && !ShopDeliveryPolicy.complete(product, catalog)) {
+            return Result.failure(Status.INVALID_BUNDLE, canonical);
+        }
+        if (product.hasRank()) {
+            var account = access.store().getAccount(canonical).orElse(null);
+            int current = access.store().rankLevel(canonical, now);
+            var plan = ShopDeliveryPolicy.rankPlan(account, product.rank(), length, 0, now,
+                    monthlyPrice(current), monthlyPrice(product.rank()), catalog.maxTotalDays());
+            if (plan.status() != Status.GRANTED) return Result.failure(plan.status(), canonical);
+        } else if (product.isBundle()) {
+            for (String id : product.resolvedIncludes()) {
+                ShopProduct part = catalog.find(id).orElseThrow(); // проверено complete()
+                if (!fitsProduct(canonical, part, now, part.days())) {
+                    return Result.failure(Status.TIME_LIMIT, canonical);
+                }
+            }
+        } else if (!fitsProduct(canonical, product, now, length)) {
+            return Result.failure(Status.TIME_LIMIT, canonical);
+        }
+
         // Скидка — про покупку: за награды аддонов (recordSale = false) бонус не даём,
         // иначе бесплатные выдачи раздували бы срок за счёт подписки.
         ShopDiscount discount = recordSale ? discountFor(canonical) : ShopDiscount.DISABLED;
         int bonusDays = discount.bonusFor(length);
         long until;
         if (product.hasRank()) {
+            var before = access.store().getAccount(canonical).orElse(null);
+            var baseline = ShopDeliveryPolicy.rankPlan(before, product.rank(), length, 0, now,
+                    monthlyPrice(access.store().rankLevel(canonical, now)), monthlyPrice(product.rank()), catalog.maxTotalDays());
             until = grantRankProduct(canonical, product, length, bonusDays, now);
             if (until <= 0L) {
                 return Result.failure(Status.RANK_HIGHER, canonical);
             }
+            bonusDays = ShopDeliveryPolicy.bonusDays(until, baseline.until());
         } else {
+            long current = "homes-plus".equals(product.id()) ? 0 : access.store().entitlementUntil(canonical, product.id());
+            long baseline = ShopEntitlements.extend(now, current, length, catalog.maxTotalDays());
             until = product.isBundle() ? 0L : grantOne(canonical, product, now, length, discount);
+            bonusDays = product.isBundle() ? 0 : ShopDeliveryPolicy.bonusDays(until, baseline);
         }
         List<String> included = new ArrayList<>();
         if (product.isBundle()) {
             until = now;
             bonusDays = 0;
             for (String partId : product.resolvedIncludes()) {
-                ShopProduct part = catalog.find(partId).orElse(null);
-                if (part == null) {
-                    continue; // набор пережил правку конфига — выдаём то, что ещё существует
-                }
-                until = Math.max(until, grantOne(canonical, part, now, part.days(), discount));
-                bonusDays += discount.bonusFor(part.days());
+                ShopProduct part = catalog.find(partId).orElseThrow(); // весь состав проверен до выдачи
+                long current = "homes-plus".equals(part.id()) ? 0 : access.store().entitlementUntil(canonical, part.id());
+                long baseline = ShopEntitlements.extend(now, current, part.days(), catalog.maxTotalDays());
+                long grantedUntil = grantOne(canonical, part, now, part.days(), discount);
+                until = Math.max(until, grantedUntil);
+                bonusDays += ShopDeliveryPolicy.bonusDays(grantedUntil, baseline);
                 included.add(part.id());
             }
             if (product.hasPassDays()) {
@@ -242,7 +284,7 @@ public final class ShopService {
                         "until", AccessManager.formatTimestamp(until));
             }
             if (bonusDays > 0) {
-                plugin.messages().send(online, "shop.received-bonus",
+                plugin.messages().send(online, included.isEmpty() ? "shop.received-bonus" : "shop.received-bonus-bundle",
                         "days", bonusDays, "percent", discount.percent());
             }
         }
@@ -266,6 +308,12 @@ public final class ShopService {
         return new Result(Status.GRANTED, canonical, product, until, length, included, bonusDays);
     }
 
+    private boolean fitsProduct(String playerName, ShopProduct product, long now, int days) {
+        long current = "homes-plus".equals(product.id()) ? 0
+                : access.store().entitlementUntil(playerName, product.id());
+        return ShopDeliveryPolicy.fits(now, current, days, catalog().maxTotalDays());
+    }
+
     /**
      * Выдаёт ранг из карточки каталога.
      *
@@ -277,49 +325,17 @@ public final class ShopService {
      */
     private long grantRankProduct(String playerName, ShopProduct product, int days, int bonusDays,
                                   long now) {
-        int level = product.rank();
-        RegistrationStore.PlayerAccount account = access.store().getAccount(playerName).orElse(null);
-        boolean permanent = account != null && account.rankPermanent;
-        int permanentLevel = permanent ? account.rankLevel : 0;
-        int currentLevel = access.store().rankLevel(playerName, now);
-        if (permanentLevel >= level || (!permanent && currentLevel > level)) {
-            return 0L;
-        }
-        int totalDays = Math.max(1, days + bonusDays);
-        long cap = now + catalog().maxTotalDays() * ShopEntitlements.DAY_MILLIS;
-        long until;
-        if (!permanent && currentLevel == level) {
-            long base = Math.max(now, access.store().rankUntil(playerName));
-            until = Math.min(cap, base + totalDays * ShopEntitlements.DAY_MILLIS);
-        } else {
-            int remaining = 0;
-            if (!permanent && currentLevel > 0) {
-                long currentUntil = access.store().rankUntil(playerName);
-                if (currentUntil > now) {
-                    remaining = (int) Math.ceil((currentUntil - now) / (double) ShopEntitlements.DAY_MILLIS);
-                }
-            }
-            int planned = RankLadder.upgradeDays(totalDays, remaining,
-                    monthlyPrice(currentLevel), monthlyPrice(level), catalog().maxTotalDays());
-            until = now + planned * ShopEntitlements.DAY_MILLIS;
-        }
-        access.store().grantRankUntil(playerName, now, level, until, "shop:" + product.id());
-        return until;
+        var account = access.store().getAccount(playerName).orElse(null);
+        int current = access.store().rankLevel(playerName, now);
+        var plan = ShopDeliveryPolicy.rankPlan(account, product.rank(), days, bonusDays, now,
+                monthlyPrice(current), monthlyPrice(product.rank()), catalog().maxTotalDays());
+        if (plan.status() != Status.GRANTED) return 0L;
+        access.store().grantRankUntil(playerName, now, product.rank(), plan.until(), "shop:" + product.id());
+        return plan.until();
     }
 
-    /**
-     * Платёж за ступень ниже текущей: деньги не теряются (1.4.167).
-     *
-     * <p>Витрина TradeMC присылает только сумму, поэтому игрок с Покровителем
-     * вполне может купить Мецената — по ошибке или из любопытства. Ранг не
-     * понижается, и без записи в журнал такой платёж просто исчез бы: человек
-     * заплатил и не получил ничего. Кладём покупку в очередь ручного разбора
-     * ({@code /pass pending}), чтобы владелец вернул деньги или зачёл их сам.</p>
-     *
-     * @return запись журнала со статусом ожидания
-     */
-    public RegistrationStore.DonationRecord rejectLowerRank(String playerName, ShopProduct product,
-                                                            int currentLevel) {
+    /** Неисполненная доставка всех трёх команд: ручная сверка, не доказательство оплаты. */
+    private RegistrationStore.DonationRecord queueRejected(String playerName, ShopProduct product, Status reason) {
         long now = System.currentTimeMillis();
         RegistrationStore.DonationRecord record = new RegistrationStore.DonationRecord();
         record.id = access.store().nextShopSaleId();
@@ -330,7 +346,7 @@ public final class ShopService {
         record.createdAt = now;
         record.detectedAt = now;
         record.status = RegistrationStore.DonationStatus.PENDING_REVIEW.name();
-        record.note = "shop:" + product.id() + ":ниже текущей ступени " + currentLevel;
+        record.note = "shop:" + product.id() + ":delivery-review:" + reason.name() + ":сверить оплату с магазином";
         record.grantedTo = "";
         record.decidedBy = "";
         record.decidedAt = 0L;
@@ -338,10 +354,9 @@ public final class ShopService {
         access.store().recordDonation(record);
         access.audit().log(AuditLog.SHOP_BUY_PENDING, "trademc", record.donorName, "",
                 AuditLog.details("product", product.id(), "price", product.priceRubles(),
-                        "currentLevel", currentLevel));
-        logger.warning("Витрина: " + record.donorName + " оплатил «" + product.id() + "» ("
-                + product.priceRubles() + " ₽), но у него уже ступень " + currentLevel
-                + ". Платёж в очереди /pass pending — верните деньги или зачтите вручную.");
+                        "reason", reason.name()));
+        logger.warning("Магазин: доставка " + product.id() + " для " + record.donorName
+                + " не выполнена (" + reason + "). Очередь /pass pending: сверить оплату и решить вручную.");
         return record;
     }
 

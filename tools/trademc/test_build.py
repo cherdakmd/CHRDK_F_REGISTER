@@ -147,10 +147,11 @@ class StorefrontTest(unittest.TestCase):
             with zipfile.ZipFile(first) as archive:
                 self.assertIsNone(archive.testzip())
                 names = archive.namelist()
-                self.assertEqual(29, len(names))
+                self.assertEqual(30, len(names))
                 self.assertEqual(25, sum(n.endswith('.png') for n in names))
                 self.assertIn(kit.TEXT_NAME, names)
                 self.assertIn(kit.MD_NAME, names)
+                self.assertIn(kit.AUDIT_NAME, names)
                 self.assertIn('README.md', names)
                 self.assertIn('manifest.json', names)
                 self.assertEqual(len(names), len(set(names)))

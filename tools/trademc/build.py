@@ -11,6 +11,8 @@ import re
 import zipfile
 
 import yaml
+
+from audit import validate as audit_catalog, report as audit_report
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -27,6 +29,7 @@ COLORS = {"flame": (255, 151, 63), "hearts": (255, 117, 170),
           "crimson": (246, 123, 151)}
 TEXT_NAME = "КОМАНДЫ_МАГАЗИНА.txt"
 MD_NAME = "КОМАНДЫ_МАГАЗИНА.md"
+AUDIT_NAME = "АУДИТ_ТОВАРОВ.md"
 
 
 def plain(value):
@@ -51,6 +54,7 @@ def catalog(root=ROOT):
     for p in products:
         if not re.fullmatch(r"[a-z0-9-]+", p["id"]) or p["price"] <= 0 or p["days"] <= 0:
             raise ValueError(f"Invalid product: {p}")
+    audit_catalog(root, data, products)
     return data, products
 
 
@@ -82,34 +86,47 @@ def description(p, cfg):
         lines += [f"Лимиты: дома — {homes}; чанки привата — {claims}; лоты аукциона — {lots}.",
                   f"Скидка на платные телепорты: {discounts}%; цена не ниже 1 алмаза.",
                   f"Надписи после ника: {slots}; сохранённых пресетов: {presets}. Ник всегда первый и не занимает место.",
-                  f"Опыт профессий и сезонного пропуска: +{xp}%; потолок профессии: {25 + extra} (25 + {extra} от ранга).",
+                  f"Опыт профессий: +{xp}%; потолок профессии: {25 + extra} (25 + {extra} от ранга).",
                   f"Количество добычи в находках и охоте: +{drop}% с округлением вниз; это не гарантированное удвоение каждого блока.",
-                  "Вход без очереди; оформление и возможности предыдущих ступеней."]
+                  "Вход без очереди в рамках вместимости сервера; оформление и возможности предыдущих ступеней."]
+        cosmetics = yaml.safe_load((ROOT / "cosmetics/src/main/resources/config.yml").read_text(encoding="utf-8"))["cosmetics"]
+        trails = [plain(x["name"]) for x in cosmetics["trail"]["defs"] if x.get("rank", 0) <= tier]
+        lines.append("Шлейфы по рангу: " + "; ".join(trails) + ". Одновременно выбирается один.")
         if tier >= 4:
             lines.append("Премиум-трек боевого пропуска и эффект входа доступны, пока активен ранг IV–V.")
         if tier == 5:
             lines.append("Команда /hat (предмет в руке на голову); шлейф «Сияние».")
         lines.append("Платные цвета ника не входят даже в V: приобретаются отдельно.")
-        lines.append("Продление складывает дни до серверного лимита. Младший активный ранг не заменяет старший; повышение пересчитывает остаток по цене.")
+        lines.append("Повторная покупка продлевает срок только если весь оплаченный период помещается в горизонт 365 дней. Младший ранг не заменяет старший; повышение пересчитывает остаток по цене. Невозможная доставка уходит на ручную сверку, а не урезается.")
     elif p["id"] == "homes-plus":
         lines += ["Каждая покупка добавляет +8 мест на собственные 30 дней; повторная покупка не продлевает старый пакет.",
                   "Складывается с базой ранга и всеми активными пакетами, без общего игрового потолка. Ранг V + два пакета = 12 + 8 + 8 = 28 домов.",
                   "Количество пакетов учитывает ядро, не право LuckPerms. При истечении купленных мест сохранённые точки не удаляются."]
     elif p["id"].startswith("trail-"):
         lines.append("Выбор эффекта: /cosmetics. Одновременно используется один шлейф; можно отключить.")
+    elif p["id"] == "join-effect":
+        lines += ["Включается автоматически при следующем входе, пока активна покупка или ранг IV–V.",
+                  "Отдельного переключателя этого эффекта в /cosmetics нет: команда управляет только шлейфом."]
     elif p["id"].startswith("nick-"):
-        lines += ["Выбор в /nickcolors или /profile → Надписи. Нужна отдельная реальная покупка этого цвета.",
-                  "Покупка цвета не добавляет шлейф, эффект входа, ранг или игровые бонусы."]
+        color = next(c for c in cfg["labels"]["colors"]["list"] if c.get("product") == p["id"])
+        lines.append("Прямой выбор купленного цвета: /labels color " + color["id"] + ".")
+        lines += ["Выбор в /labels color или /profile → Надписи. Нужна отдельная реальная покупка этого цвета.",
+                  "Покупка цвета не добавляет шлейф, эффект входа, ранг или игровые бонусы. По окончании срока платный цвет недоступен, даже если выбран в сохранённом пресете."]
     elif p["id"] == "battlepass-premium":
-        lines += ["Открывает золотую дорожку текущего сезона на срок товара; уровни и задания всё равно нужно проходить.",
-                  "Награды прогресса — отдельные XP-бусты, а не выдача/продление ранга или других платных товаров.",
+        lines += ["Открывает золотую дорожку доступных заданий на 90 дней; задания всё равно нужно выполнять. Это срок доступа, не обещание длины сезона и не покупка уровней.",
+                  "Награды прогресса — отдельные XP-бусты, а не выдача/продление ранга или других платных товаров. Запас буста по умолчанию 24 часа: расходуйте его перед забором новых наград.",
                   "Ранг IV–V уже открывает этот трек на время действия ранга; отдельная покупка не обязательна."]
     elif p["id"] in {"trails-pack", "look-pack"}:
         names = {x["id"]: plain(x["name"]) for x in cfg["shop"]["products"]}
         lines.append("Состав: " + "; ".join(names[x] for x in p["includes"]) + ".")
+        lines.append("Каталожные шлейфы — только пять продаваемых; «Золотая пыль» и ранговое «Сияние» не входят.")
+        lines.append("Уже купленные составляющие продлеваются отдельно; итоговые даты могут различаться. Если хотя бы одна часть не помещается в потолок, весь набор отправляется на ручную сверку без частичной выдачи.")
         lines.append("Один платёж — одна команда набора. Не добавляйте отдельные команды его составляющих.")
         if p["id"] == "look-pack":
+            lines.append("Поштучно: 1 000 ₽; пять цветов + набор шлейфов: 904 ₽. Цена 599 ₽ экономит 305 ₽ относительно второго способа (401 ₽ относительно поштучного).")
             lines.append("Всего пять шлейфов и пять премиум-цветов. Ранг и эффект входа не входят.")
+    if not p.get("rank") and p["id"] not in {"homes-plus", "trails-pack", "look-pack"}:
+        lines.append("Повторная покупка добавляет срок к остатку, не усиливает эффект. Потолок 365 дней: если весь оплаченный срок не помещается, доставка не выполняется и требует ручной сверки с магазином.")
     return "\n".join(lines)
 
 
@@ -195,14 +212,21 @@ pass luckperms setup
 
 Команды для игрока (с / в игровом чате; НЕ добавлять в доставку TradeMC):
 /rank my — активный ранг и срок; /rank shop — витрина; /rank top — топ IV–V.
-/cosmetics — выбор/отключение купленных шлейфов и эффекта входа.
-/nickcolors — выбор купленного цвета ника; /profile — оформление и надписи.
+/cosmetics — выбор/отключение шлейфа; эффект входа автоматический, здесь не отключается.
+/labels color — выбор купленного цвета ника; /profile — оформление и надписи.
 /bp — сезонные задания и доступные награды боевого пропуска.
 /hat — предмет в руке на голову, доступен только рангу V.
 
 Проверка перед открытием продаж: резервная копия → установка плагинов из одного
 релиза → сверка настроек и цен → защищённый RCON → отдельная согласованная покупка
 → один вызов команды → проверка выдачи/срока → сверка журнала с магазином.
+Если доставка отклонена по TIME_LIMIT, RANK_HIGHER или INVALID_BUNDLE, запись
+попадает в pass pending. Это запрос ручной сверки, не доказательство оплаты:
+сверьте кабинет и журнал, затем решите вопрос возврата или выдачи. Не подтверждайте
+запись вслепую: команда approve не является повторной выдачей конкретного товара.
+Пакеты не выдаются частично; оплаченные дни не срезаются до потолка.
+При включённой платной Boosty-подписке бонусные дни зависят от настроек и остатка
+до потолка; это не скидка цены TradeMC и не обещание бонуса поверх 365 дней.
 Игроку не выдавайте административные права или права на shopbuy/shoppay/shopgift.
 Предупреждение навыков «Двойная добыча» отключено; сама дополнительная добыча
 осталась и по-прежнему выпадает на землю с прежним шансом и ограничениями.
@@ -379,7 +403,7 @@ def artwork(p):
                    "battlepass-premium": "ЗОЛОТАЯ ДОРОЖКА · ЗАДАНИЯ ТЕКУЩЕГО СЕЗОНА",
                    "trails-pack": "5 ШЛЕЙФОВ · ВЫБОР В /COSMETICS",
                    "look-pack": "5 ШЛЕЙФОВ + 5 ПРЕМИУМ-ЦВЕТОВ"}.get(p['id'],
-                       "ПЛАТНЫЙ ЦВЕТ НИКА · ВЫБОР В /NICKCOLORS" if p['id'].startswith('nick-')
+                       "ПЛАТНЫЙ ЦВЕТ НИКА · ВЫБОР В /LABELS COLOR" if p['id'].startswith('nick-')
                        else "КОСМЕТИЧЕСКИЙ ШЛЕЙФ · ВЫБОР В /COSMETICS")
     centered(d, (600, 1028), tagline, (193, 205, 219), 23, True)
     centered(d, (600, 1076), "ТОЧНЫЙ ИГРОВОЙ НИК ПРИ ПОКУПКЕ", (126, 147, 167), 19)
@@ -423,6 +447,8 @@ def check():
         raise ValueError("Storefront TXT is stale: run tools/trademc/build.py --build")
     if (OUTPUT / MD_NAME).read_text(encoding="utf-8") != markdown_document(cfg, products):
         raise ValueError("Storefront Markdown is stale: run tools/trademc/build.py --build")
+    if (OUTPUT / AUDIT_NAME).read_text(encoding="utf-8") != audit_report(ROOT, cfg, products, version()):
+        raise ValueError("Storefront audit report is stale")
     if (OUTPUT / "manifest.json").read_text(encoding="utf-8") != manifest_text(cfg, products):
         raise ValueError("Storefront manifest/catalog/hash mismatch")
     print(f"TradeMC OK: {len(products)} products, commands, prices, durations and individual PNGs")
@@ -435,6 +461,7 @@ def build():
         artwork(p).save(OUTPUT / "images" / image_name(index, p), optimize=True)
     (OUTPUT / TEXT_NAME).write_text(document(cfg, products), encoding="utf-8")
     (OUTPUT / MD_NAME).write_text(markdown_document(cfg, products), encoding="utf-8")
+    (OUTPUT / AUDIT_NAME).write_text(audit_report(ROOT, cfg, products, version()), encoding="utf-8")
     (OUTPUT / "manifest.json").write_text(manifest_text(cfg, products), encoding="utf-8")
     check()
 
@@ -443,7 +470,7 @@ def pack(destination=None):
     check()
     path = Path(destination) if destination else ROOT / f"build/trademc/chrdk-trademc-{version()}.zip"
     path.parent.mkdir(parents=True, exist_ok=True)
-    files = [OUTPUT / TEXT_NAME, OUTPUT / MD_NAME, OUTPUT / "manifest.json", OUTPUT / "README.md"]
+    files = [OUTPUT / TEXT_NAME, OUTPUT / MD_NAME, OUTPUT / AUDIT_NAME, OUTPUT / "manifest.json", OUTPUT / "README.md"]
     files += sorted((OUTPUT / "images").glob("*.png"))
     with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
         for file in files:

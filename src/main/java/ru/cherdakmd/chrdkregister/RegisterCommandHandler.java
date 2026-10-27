@@ -724,16 +724,9 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                                 "name", result.playerName(),
                                 "days", result.days(),
                                 "until", AccessManager.formatTimestamp(result.untilMillis()));
-                        case RANK_HIGHER -> {
-                            // Деньги уже пришли: не теряем их, а кладём платёж в очередь
-                            // ручного разбора, чтобы владелец вернул сумму или зачёл её сам.
-                            int current = accessManager.store().rankLevel(result.playerName(), System.currentTimeMillis());
-                            plugin.shop().rejectLowerRank(result.playerName(), card, current);
-                            messages.send(sender, "donation.shoppay-lower-rank",
-                                    "amount", amount, "name", result.playerName(),
-                                    "product", Messages.stripTags(card.name()),
-                                    "level", current, "label", label);
-                        }
+                        case RANK_HIGHER, TIME_LIMIT, INVALID_BUNDLE, INVALID_RECIPIENT -> messages.send(sender, "shop.review-required",
+                                "player", result.playerName(), "product", card.id(),
+                                "reason", result.status().name(), "label", label);
                         default -> messages.send(sender, "donation.shoppay-rejected",
                                 "amount", amount, "note", result.status().name());
                     }
@@ -1625,12 +1618,14 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                             "items", String.join(", ", result.included()));
                 }
                 if (result.hasBonus()) {
-                    messages.send(sender, "shop.granted-bonus", "days", result.bonusDays());
+                    messages.send(sender, result.isBundle() ? "shop.granted-bonus-bundle" : "shop.granted-bonus", "days", result.bonusDays());
                 }
             }
             case UNKNOWN_PRODUCT -> messages.send(sender, "shop.unknown-product",
                     "id", productId, "list", String.join(", ", plugin.shop().catalog().ids()));
-            case RANK_HIGHER -> messages.send(sender, "shop.rank-higher", "player", result.playerName());
+            case RANK_HIGHER, TIME_LIMIT, INVALID_BUNDLE, INVALID_RECIPIENT -> messages.send(sender, "shop.review-required",
+                    "player", result.playerName(), "product", productId,
+                    "reason", result.status().name(), "label", label);
             default -> messages.send(sender, "shop.disabled");
         }
     }
@@ -1672,7 +1667,9 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             }
             case UNKNOWN_PRODUCT -> messages.send(sender, "shop.unknown-product",
                     "id", productId, "list", String.join(", ", plugin.shop().catalog().ids()));
-            case RANK_HIGHER -> messages.send(sender, "shop.rank-higher", "player", result.playerName());
+            case RANK_HIGHER, TIME_LIMIT, INVALID_BUNDLE, INVALID_RECIPIENT -> messages.send(sender, "shop.review-required",
+                    "player", result.playerName(), "product", productId,
+                    "reason", result.status().name(), "label", label);
             default -> messages.send(sender, "shop.disabled");
         }
     }

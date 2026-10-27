@@ -120,8 +120,8 @@ public final class ShopCatalog {
             }
             if (days > cap) {
                 problems.add("shop.products[" + index + "] (" + id + "): срок " + days
-                        + " больше shop.max-total-days " + cap + " — срок урезан");
-                days = cap;
+                        + " больше shop.max-total-days " + cap + " — товар пропущен, оплаченный срок нельзя урезать");
+                continue;
             }
 
             String group = text(entry.get("group"));

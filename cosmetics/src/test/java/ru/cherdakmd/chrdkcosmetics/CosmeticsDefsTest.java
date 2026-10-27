@@ -178,4 +178,20 @@ class CosmeticsDefsTest {
         assertFalse(CosmeticsDefs.unlocked(rankTrail(5), true, false, 0, owns(""), List.of()),
                 "пустой product не считается покупкой");
     }
+    @Test
+    void legacyPackNeverUnlocksRankExclusiveEffects() {
+        for (int rank : List.of(4, 5)) {
+            assertFalse(CosmeticsDefs.unlocked(rankTrail(rank), true, false, 0,
+                    owns("trails-pack"), List.of("trails-pack")));
+            assertFalse(CosmeticsDefs.unlocked(rankTrail(rank), true, false, 3,
+                    owns("look-pack"), List.of("look-pack")));
+            assertTrue(CosmeticsDefs.unlocked(rankTrail(rank), true, true, rank,
+                    owns(), List.of("trails-pack")));
+        }
+        assertTrue(CosmeticsDefs.unlocked(flame(), true, false, 0,
+                owns("trails-pack"), List.of("trails-pack")));
+        assertFalse(CosmeticsDefs.unlocked(flame(), true, false, 0,
+                owns(), List.of("trails-pack")), "истёкшее право набора не открывает шлейф");
+    }
+
 }

@@ -149,7 +149,7 @@ final class CosmeticsDefs {
         if (!def.product().isEmpty() && owned.test(def.product())) {
             return true;
         }
-        if (packProducts != null) {
+        if (!def.product().isEmpty() && packProducts != null) {
             for (String pack : packProducts) {
                 if (pack != null && !pack.isBlank()
                         && owned.test(pack.trim().toLowerCase(Locale.ROOT))) {
