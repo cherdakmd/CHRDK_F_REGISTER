@@ -88,6 +88,7 @@ public final class EnchantsPlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         sourceGeneration++;
+        if (gui != null) gui.stop();
         if (pve != null) pve.stop();
         if (utility != null) utility.stop();
         if (auras != null) {
@@ -110,6 +111,7 @@ public final class EnchantsPlugin extends JavaPlugin {
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
         this.config = EnchantsConfig.parse(getConfig(), getLogger());
+        if (gui != null) gui.closeAll();
         if (pve != null) pve.reload();
         if (utility != null) utility.reload();
     }

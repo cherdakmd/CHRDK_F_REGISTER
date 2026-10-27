@@ -16,87 +16,66 @@ import ru.cherdakmd.chrdkregister.Messages;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
-/**
- * Инвентарная «книга» всех чар: иконки по группам, редкость, применимость, конфликты.
- *
- * <p>1.4.128: чар стало 60, поэтому справочник разбит на страницы — светлые и
- * проклятия отдельно. Между страницами ходят стрелками в нижнем ряду, клики
- * ничего не выдают.</p>
- */
+/** Read-only справочник; серверный holder хранит фильтры, владельца и поколение reload. */
 public final class EnchantGui implements Listener {
-
-    private static final int SIZE = 54;
-    private static final int PAGE_SIZE = 45;
-    private static final int PREVIOUS_SLOT = 45;
-    private static final int NEXT_SLOT = 53;
-    private static final int FOOTER_SLOT = 49;
-
     private final EnchantsPlugin plugin;
-
-    public EnchantGui(EnchantsPlugin plugin) {
-        this.plugin = plugin;
+    private boolean stopped;
+    public EnchantGui(EnchantsPlugin plugin) { this.plugin = plugin; }
+    private boolean eligible(Player player) {
+        return !stopped && player.isOnline() && plugin.coreApi() != null && plugin.coreApi().isAuthenticated(player)
+                && player.hasPermission("chrdkenchants.use");
     }
-
-    /** Все страницы справочника: светлые чары, затем проклятия. */
-    private static List<List<EnchantDef>> pages() {
-        List<List<EnchantDef>> pages = new ArrayList<>();
-        pages.add(EnchantRegistry.light());
-        if (!EnchantRegistry.curses().isEmpty()) {
-            pages.add(EnchantRegistry.curses());
-        }
-        return pages;
-    }
-
-    public void open(Player player) {
-        open(player, 0);
-    }
-
-    /** Открывает конкретную страницу (0 — светлые, 1 — проклятия). */
-    public void open(Player player, int requestedPage) {
-        List<List<EnchantDef>> pages = pages();
-        int page = Math.max(0, Math.min(pages.size() - 1, requestedPage));
-        List<EnchantDef> items = pages.get(page);
-        EnchantsHolder holder = new EnchantsHolder(page);
-        Inventory inventory = Bukkit.createInventory(holder, SIZE,
-                plugin.messages().get("gui-title",
-                        "page", page + 1, "pages", pages.size()));
-        holder.bind(inventory);
-        for (int slot = 0; slot < Math.min(items.size(), PAGE_SIZE); slot++) {
-            inventory.setItem(slot, enchantIcon(items.get(slot)));
-        }
-        if (page > 0) {
-            inventory.setItem(PREVIOUS_SLOT, navigation(Material.ARROW, "gui-prev"));
-        }
-        if (page < pages.size() - 1) {
-            inventory.setItem(NEXT_SLOT, navigation(Material.ARROW, "gui-next"));
-        }
-        ItemStack footer = new ItemStack(Material.BOOK);
-        ItemMeta footerMeta = footer.getItemMeta();
-        if (footerMeta != null) {
-            footerMeta.displayName(plugin.messages().get("gui-title",
-                    "page", page + 1, "pages", pages.size()));
-            footerMeta.lore(List.of(plugin.messages().get("gui-footer")));
-            footer.setItemMeta(footerMeta);
-        }
-        inventory.setItem(FOOTER_SLOT, footer);
+    public void open(Player player) { open(player, EnchantCatalog.Query.all(), 0); }
+    void open(Player player, EnchantCatalog.Query query) { open(player, query, 0); }
+    private void open(Player player, EnchantCatalog.Query query, int requested) {
+        if (!eligible(player)) return;
+        Map<String, String> names = EnchantRegistry.all().stream().collect(Collectors.toMap(EnchantDef::id,
+                def -> plugin.messages().plain("en." + def.id() + ".name")));
+        Set<String> applicable = query.hand() ? plugin.service().applicableTo(player.getInventory().getItemInMainHand())
+                .stream().map(EnchantDef::id).collect(Collectors.toSet()) : Set.of();
+        List<EnchantDef> selected = EnchantCatalog.select(query, names, applicable);
+        int page = EnchantCatalog.page(requested, selected.size());
+        var holder = new EnchantsHolder(player.getUniqueId(), plugin.sourceGeneration(), query, page);
+        Inventory inventory = Bukkit.createInventory(holder, 54, plugin.messages().get("gui-title",
+                "page", page + 1, "pages", EnchantCatalog.pages(selected.size())));
+        holder.inventory = inventory;
+        List<EnchantDef> items = EnchantCatalog.slice(selected, page);
+        for (int slot = 0; slot < items.size(); slot++) inventory.setItem(slot, enchantIcon(items.get(slot)));
+        if (items.isEmpty()) inventory.setItem(22, button(Material.PAPER, "catalog-empty"));
+        if (page > 0) inventory.setItem(45, button(Material.ARROW, "gui-prev"));
+        if (page + 1 < EnchantCatalog.pages(selected.size())) inventory.setItem(53, button(Material.ARROW, "gui-next"));
+        inventory.setItem(46, button(Material.HOPPER, "catalog-group", "value", Messages.trusted(query.group() == null
+                ? plugin.messages().raw("catalog-all") : groupLabel(query.group()))));
+        inventory.setItem(47, button(Material.AMETHYST_SHARD, "catalog-rarity", "value", query.rarity() == null
+                ? plugin.messages().mini("catalog-all") : plugin.messages().mini(query.rarity().labelKey())));
+        inventory.setItem(48, button(Material.SOUL_LANTERN, "catalog-polarity", "value", query.polarity() == null
+                ? plugin.messages().mini("catalog-all") : plugin.messages().mini(query.polarity().labelKey())));
+        inventory.setItem(49, button(Material.BOOK, "catalog-result", "count", selected.size(), "total", EnchantRegistry.size(),
+                "search", query.search().isEmpty() ? "—" : query.search()));
+        inventory.setItem(50, button(Material.ANVIL, "catalog-hand", "value", query.hand()
+                ? plugin.messages().mini("catalog-on") : plugin.messages().mini("catalog-off")));
+        inventory.setItem(51, button(Material.COMPARATOR, "catalog-sort", "value", plugin.messages().mini("catalog-sort-" + query.sort().name().toLowerCase(java.util.Locale.ROOT))));
+        inventory.setItem(52, button(Material.BARRIER, "catalog-clear"));
         player.openInventory(inventory);
     }
-
-    /** Стрелка перехода между страницами. */
-    private ItemStack navigation(Material material, String key) {
+    private ItemStack button(Material material, String key, Object... args) {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.displayName(plugin.messages().get(key));
+            meta.displayName(plugin.messages().get(key, args));
+            meta.lore(List.of(plugin.messages().get("catalog-hint")));
             item.setItemMeta(meta);
         }
         return item;
     }
-
     /** Иконка чары: материал по группе применимости, имя, редкость, предметы, описание. */
     private ItemStack enchantIcon(EnchantDef def) {
-        Material icon = switch (def.supports().stream().findFirst().orElse(ItemGroup.SWORD)) {
+        Material icon = switch (def.supports().stream().min(java.util.Comparator.naturalOrder()).orElse(ItemGroup.SWORD)) {
             case SWORD, AXE -> Material.IRON_SWORD;
             case BOW, CROSSBOW -> Material.BOW;
             case HELMET -> Material.IRON_HELMET;
@@ -133,87 +112,61 @@ public final class EnchantGui implements Listener {
         return item;
     }
 
-    /** Ярлык предметов по множеству групп (текст из messages.yml, ключи item-*). */
+    String groupLabel(ItemGroup group) {
+        return plugin.messages().raw("catalog-group-" + group.name().toLowerCase(java.util.Locale.ROOT));
+    }
     public String supportedLabel(EnchantDef def) {
-        if (def.supports().size() == 4 && def.supports().contains(ItemGroup.HELMET)
-                && def.supports().contains(ItemGroup.BOOTS)) {
-            return plugin.messages().raw("item-armor");
-        }
-        if (def.supports().size() == ItemGroup.values().length) {
-            return plugin.messages().raw("item-any");
-        }
-        if (def.supports().size() == 2 && def.supports().contains(ItemGroup.SWORD)
-                && def.supports().contains(ItemGroup.AXE)) {
-            return plugin.messages().raw("item-sword");
-        }
-        if (def.supports().size() == 2 && def.supports().contains(ItemGroup.BOW)
-                && def.supports().contains(ItemGroup.CROSSBOW)) {
-            return plugin.messages().raw("item-bow");
-        }
-        return plugin.messages().raw(def.supports().iterator().next().labelKey());
+        if (def.supports().size() == ItemGroup.values().length) return plugin.messages().raw("item-any");
+        return String.join(", ", def.supports().stream().sorted().map(this::groupLabel).toList());
     }
-
-    private String conflictsLabel(EnchantDef def) {
-        List<String> conflicting = new ArrayList<>();
-        for (EnchantDef other : EnchantRegistry.all()) {
-            if (other.conflictGroup() != null
-                    && other.conflictGroup().equals(def.conflictGroup())
-                    && !other.id().equals(def.id())) {
-                conflicting.add(plugin.messages().raw("en." + other.id() + ".name"));
-            }
-        }
-        return String.join(", ", conflicting);
+    String conflictsLabel(EnchantDef def) {
+        return String.join(", ", EnchantCatalog.conflicts(def).stream()
+                .map(id -> plugin.messages().raw("en." + id + ".name")).toList());
     }
-
-    @EventHandler(ignoreCancelled = true)
+    void stop() { stopped = true; closeAll(); }
+    void closeAll() {
+        for (Player player : Bukkit.getOnlinePlayers())
+            if (player.getOpenInventory().getTopInventory().getHolder() instanceof EnchantsHolder) player.closeInventory();
+    }
+    @EventHandler(priority = org.bukkit.event.EventPriority.HIGHEST)
     public void onInventoryClick(InventoryClickEvent event) {
-        if (!(event.getInventory().getHolder() instanceof EnchantsHolder holder)) {
-            return;
+        if (!(event.getInventory().getHolder() instanceof EnchantsHolder holder)) return;
+        boolean blocked = event.isCancelled();
+        event.setCancelled(true); // Включая shift, number-key, double-click и клики нижнего инвентаря.
+        if (blocked || !(event.getWhoClicked() instanceof Player player) || !eligible(player) || !holder.owner.equals(player.getUniqueId())
+                || event.getRawSlot() < 0 || event.getRawSlot() >= 54 || holder.generation != plugin.sourceGeneration()) return;
+        EnchantCatalog.Query query = holder.query;
+        int page = holder.page;
+        switch (event.getRawSlot()) {
+            case 45 -> { if (page == 0) return; page--; }
+            case 53 -> { if (event.getInventory().getItem(53) == null) return; page++; }
+            case 46 -> { query = query.group(EnchantCatalog.next(query.group(), ItemGroup.values())); page = 0; }
+            case 47 -> { query = query.rarity(EnchantCatalog.next(query.rarity(), EnchantDef.Rarity.values())); page = 0; }
+            case 48 -> { query = query.polarity(EnchantCatalog.next(query.polarity(), EnchantDef.Polarity.values())); page = 0; }
+            case 50 -> { query = query.hand(!query.hand()); page = 0; }
+            case 51 -> { query = query.sort(EnchantCatalog.Sort.values()[(query.sort().ordinal() + 1) % EnchantCatalog.Sort.values().length]); page = 0; }
+            case 52 -> { query = EnchantCatalog.Query.all(); page = 0; }
+            default -> { return; }
         }
-        event.setCancelled(true);
-        if (!(event.getWhoClicked() instanceof Player player)) {
-            return;
-        }
-        if (event.getClickedInventory() != event.getInventory()) {
-            return;
-        }
-        // смена страницы — следующим тиком: открывать инвентарь внутри клика небезопасно
-        if (event.getSlot() == NEXT_SLOT) {
-            int page = holder.page() + 1;
-            Bukkit.getScheduler().runTask(plugin, () -> open(player, page));
-        } else if (event.getSlot() == PREVIOUS_SLOT) {
-            int page = holder.page() - 1;
-            Bukkit.getScheduler().runTask(plugin, () -> open(player, page));
-        }
+        EnchantCatalog.Query next = query; int nextPage = page;
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (eligible(player) && holder.generation == plugin.sourceGeneration()
+                    && player.getOpenInventory().getTopInventory().getHolder() == holder) open(player, next, nextPage);
+        });
     }
-
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(priority = org.bukkit.event.EventPriority.HIGHEST)
     public void onInventoryDrag(InventoryDragEvent event) {
-        if (event.getInventory().getHolder() instanceof EnchantsHolder) {
-            event.setCancelled(true);
-        }
+        if (event.getInventory().getHolder() instanceof EnchantsHolder) event.setCancelled(true);
     }
-
     private static final class EnchantsHolder implements InventoryHolder {
-
-        private final int page;
-        private Inventory inventory;
-
-        private EnchantsHolder(int page) {
-            this.page = page;
+        final UUID owner;
+        final long generation;
+        final EnchantCatalog.Query query;
+        final int page;
+        Inventory inventory;
+        EnchantsHolder(UUID owner, long generation, EnchantCatalog.Query query, int page) {
+            this.owner = owner; this.generation = generation; this.query = query; this.page = page;
         }
-
-        private int page() {
-            return page;
-        }
-
-        private void bind(Inventory inventory) {
-            this.inventory = inventory;
-        }
-
-        @Override
-        public @NotNull Inventory getInventory() {
-            return inventory;
-        }
+        @Override public @NotNull Inventory getInventory() { return inventory; }
     }
 }

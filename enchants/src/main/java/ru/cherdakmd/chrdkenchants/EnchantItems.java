@@ -213,7 +213,7 @@ public final class EnchantItems {
             if (meta instanceof org.bukkit.inventory.meta.EnchantmentStorageMeta) {
                 lore.add(plugin.messages().get("book-rarity", "rarity", plugin.messages().mini(def.rarity().labelKey()),
                         "maxlevel", def.maxLevel()));
-                String groups = String.join(", ", def.supports().stream().map(group -> plugin.messages().raw(group.labelKey())).distinct().sorted().toList());
+                String groups = plugin.gui().supportedLabel(def);
                 lore.add(plugin.messages().get("book-items", "items", ru.cherdakmd.chrdkregister.Messages.trusted(groups)));
                 for (Component description : plugin.messages().getList("en." + def.id() + ".lore"))
                     lore.add(Component.text("✶ ").append(description));
