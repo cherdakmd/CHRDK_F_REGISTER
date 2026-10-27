@@ -87,4 +87,9 @@ public interface ChrdkEnchantsApi {
     default ItemStack book(String id, int level) {
         return null;
     }
+    /** Новый источник книги; старые реализации мягко возвращают книгу без метки. Только main thread. */
+    default ItemStack book(String id, int level, EnchantBookSource source) {
+        return book(id, level);
+    }
+
 }

@@ -94,6 +94,13 @@ public final class EnchantCommandHandler implements TabExecutor {
         try {
             EnchantCatalog.Query query = EnchantCatalog.Query.all();
             switch (action) {
+                case "library" -> {
+                    if (args.length == 1 || args.length == 2) {
+                        int page = args.length == 1 ? 1 : Integer.parseInt(args[1]);
+                        if (page < 1) throw new IllegalArgumentException();
+                        plugin.library().show(player, page); return true;
+                    }
+                }
                 case "sources" -> { if (args.length == 1) { new EnchantSourceReport(plugin).send(player); return true; } }
                 case "find" -> {
                     if (args.length < 2) break;
@@ -120,6 +127,9 @@ public final class EnchantCommandHandler implements TabExecutor {
     private void inspect(Player player) {
         Map<String, Integer> present = plugin.items().read(player.getInventory().getItemInMainHand());
         if (present.isEmpty()) { plugin.messages().send(player, "catalog-inspect-empty"); return; }
+        if (player.getInventory().getItemInMainHand().getType() == org.bukkit.Material.ENCHANTED_BOOK)
+            plugin.messages().send(player, "book-source", "source", plugin.messages().mini(
+                    plugin.items().bookSourceKey(player.getInventory().getItemInMainHand())));
         plugin.messages().send(player, "catalog-inspect-header", "count", present.size());
         present.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(entry -> {
             EnchantDef def = EnchantRegistry.byId(entry.getKey());
@@ -177,9 +187,10 @@ public final class EnchantCommandHandler implements TabExecutor {
                 plugin.messages().send(sender, "catalog-admin-level", "max", def.maxLevel());
                 return true;
             }
-            ItemStack book = plugin.items().makeEnchantBook(def, level);
+            ItemStack book = plugin.items().makeEnchantBook(def, level, ru.cherdakmd.chrdkregister.api.EnchantBookSource.ADMIN);
             target.getInventory().addItem(book).values()
                     .forEach(leftover -> target.getWorld().dropItemNaturally(target.getLocation(), leftover));
+            plugin.library().queue(target);
             plugin.messages().send(sender, "admin-given",
                     "name", plugin.messages().mini("en." + def.id() + ".name"),
                     "level", level, "player", target.getName());
@@ -227,10 +238,11 @@ public final class EnchantCommandHandler implements TabExecutor {
         String prefix = args[args.length - 1].toLowerCase(Locale.ROOT);
         if ("enchants".equalsIgnoreCase(command.getName())) {
             if (!sender.hasPermission("chrdkenchants.use")) return matches;
-            if (args.length == 1) return List.of("sources", "info", "find", "group", "rarity", "light", "curses", "hand", "sort", "inspect", "cooldowns")
+            if (args.length == 1) return List.of("library", "sources", "info", "find", "group", "rarity", "light", "curses", "hand", "sort", "inspect", "cooldowns")
                     .stream().filter(value -> value.startsWith(prefix)).toList();
             if (args.length == 2) {
                 List<String> values = switch (args[0].toLowerCase(Locale.ROOT)) {
+                    case "library" -> java.util.stream.IntStream.rangeClosed(1, EnchantLibrary.pages(EnchantRegistry.size())).mapToObj(Integer::toString).toList();
                     case "info", "find" -> EnchantRegistry.all().stream().map(EnchantDef::id).toList();
                     case "group" -> java.util.Arrays.stream(ItemGroup.values()).map(value -> value.name().toLowerCase(Locale.ROOT)).toList();
                     case "rarity" -> java.util.Arrays.stream(EnchantDef.Rarity.values()).map(value -> value.name().toLowerCase(Locale.ROOT)).toList();

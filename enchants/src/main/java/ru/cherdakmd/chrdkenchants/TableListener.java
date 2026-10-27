@@ -66,8 +66,12 @@ public final class TableListener implements Listener {
                     ? plugin.service().rollBook(tier, EnchantDef.Polarity.LIGHT, tier)
                     : plugin.service().rollOnto(result, tier, EnchantDef.Polarity.LIGHT, tier);
             if (roll == null) return;
-            if (book) plugin.items().apply(result, roll.def(), roll.level());
+            if (book) {
+                plugin.items().apply(result, roll.def(), roll.level());
+                plugin.items().stampBook(result, ru.cherdakmd.chrdkregister.api.EnchantBookSource.TABLE);
+            }
             inventory.setItem(0, result);
+            // Слот стола ещё не собственный инвентарь: открытие библиотеки произойдёт только после забора.
             plugin.messages().send(player, roll.def().curse() ? "table-cursed" : "table-added",
                     "name", plugin.messages().mini("en." + roll.def().id() + ".name"),
                     "levelroman", EnchantCodec.roman(roll.level()));

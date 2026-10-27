@@ -200,7 +200,8 @@ public final class TreasureSpecials {
         int cap = Math.min(levelCap, Math.max(1, api.maxLevel(id)));
         int level = exactLevel > 0 ? Math.min(exactLevel, cap)
                 : TreasureSpecialRolls.level(cap, random);
-        ItemStack book = api.book(id, level);
+        ItemStack book = api.book(id, level, exactLevel > 0 ? ru.cherdakmd.chrdkregister.api.EnchantBookSource.SHARDS
+                : ru.cherdakmd.chrdkregister.api.EnchantBookSource.TREASURE);
         if (book == null) {
             return null;
         }

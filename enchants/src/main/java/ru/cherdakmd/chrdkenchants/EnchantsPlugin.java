@@ -35,6 +35,9 @@ public final class EnchantsPlugin extends JavaPlugin {
     private EnchantService service;
     private EnchantGui gui;
     private TableListener table;
+    private MobBookListener mobBooks;
+    private EnchantLibraryListener library;
+    EnchantLibraryListener library() { return library; }
     private EnchantCommandHandler commandHandler;
     private AuraService auras;
     private PveEffectsListener pve;
@@ -56,7 +59,11 @@ public final class EnchantsPlugin extends JavaPlugin {
 
         this.table = new TableListener(this);
         Bukkit.getPluginManager().registerEvents(table, this);
-        Bukkit.getPluginManager().registerEvents(new MobBookListener(this), this);
+        this.mobBooks = new MobBookListener(this);
+        Bukkit.getPluginManager().registerEvents(mobBooks, this);
+        this.library = new EnchantLibraryListener(this);
+        Bukkit.getPluginManager().registerEvents(library, this);
+        for (var player : Bukkit.getOnlinePlayers()) library.queue(player);
         this.pve = new PveEffectsListener(this);
         Bukkit.getPluginManager().registerEvents(pve, this);
         this.utility = new UtilityEffectsListener(this);
@@ -98,6 +105,8 @@ public final class EnchantsPlugin extends JavaPlugin {
     public void onDisable() {
         sourceGeneration++;
         if (table != null) table.clear();
+        if (mobBooks != null) mobBooks.clear();
+        if (library != null) library.clear();
         if (tools != null) tools.clear();
         if (miningUtility != null) miningUtility.clear();
         if (gui != null) gui.stop();
@@ -120,6 +129,8 @@ public final class EnchantsPlugin extends JavaPlugin {
     public void reloadEnchantsConfig() {
         sourceGeneration++;
         if (table != null) table.clear();
+        if (mobBooks != null) mobBooks.clear();
+        if (library != null) library.clear();
         if (tools != null) tools.clear();
         if (miningUtility != null) miningUtility.clear();
         reloadConfig();

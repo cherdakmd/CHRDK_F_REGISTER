@@ -21,7 +21,13 @@ final class MobBookListener implements Listener {
     private final NamespacedKey origin = new NamespacedKey(MobProgressionKeys.NAMESPACE, MobProgressionKeys.ORIGIN);
     private final NamespacedKey active = new NamespacedKey(MobProgressionKeys.NAMESPACE, MobProgressionKeys.ACTIVE);
     private final NamespacedKey claimed;
-    MobBookListener(EnchantsPlugin plugin) { this.plugin = plugin; claimed = new NamespacedKey(plugin, "mob_book_claimed"); }
+    private final DeathBookClaims<EntityDeathEvent> claims = new DeathBookClaims<>(EntityDeathEvent::isCancelled);
+    private final MiningTasks pending;
+    MobBookListener(EnchantsPlugin plugin) {
+        this.plugin = plugin; claimed = new NamespacedKey(plugin, "mob_book_claimed");
+        pending = new MiningTasks(action -> { var task = Bukkit.getScheduler().runTask(plugin, action); return task::cancel; });
+    }
+    void clear() { pending.clear(); claims.clear(); }
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void death(EntityDeathEvent event) {
         if (!plugin.getConfig().getBoolean("sources.mobs.enabled", true)
@@ -49,13 +55,20 @@ final class MobBookListener implements Listener {
                 || !java.util.Set.of("NATURAL", "CHUNK_GEN", "PATROL").contains(event.getEntity().getEntitySpawnReason().name())
                 || rank < 1 || rank > 30 || variant < 0 || variant > MobProgressionKeys.MAX_ELITE || data.has(claimed)
                 || !MobProgressionKeys.NATURAL.equals(data.get(origin, PersistentDataType.STRING))) return;
-        data.set(claimed, PersistentDataType.BYTE, (byte) 1);
+        var id = event.getEntity().getUniqueId();
+        if (!claims.begin(id, event)) return;
+        pending.cancel(id); // Финально отменённая предыдущая смерть могла быть заменена уже в этом тике.
+        try {
+            if (!pending.submit(id, event, () -> {
+                if (claims.finish(id, event)) data.set(claimed, PersistentDataType.BYTE, (byte) 1);
+            })) { claims.discard(id, event); return; }
+        } catch (RuntimeException | Error failure) { claims.discard(id, event); throw failure; }
         double chance = chance(variant != 0 ? "elite" : "regular", variant != 0 ? 8 : .35, variant != 0 ? 25 : 1);
         if (plugin.service().random().nextDouble() * 100 >= chance) return;
         int tier = rank >= 20 ? 3 : rank >= 10 ? 2 : 1;
         var roll = plugin.service().rollBook(tier, EnchantDef.Polarity.LIGHT, tier);
         if (roll == null) return;
-        var book = plugin.items().makeEnchantBook(roll.def(), roll.level());
+        var book = plugin.items().makeEnchantBook(roll.def(), roll.level(), ru.cherdakmd.chrdkregister.api.EnchantBookSource.MOB);
         if (book != null) event.getDrops().add(book);
     }
     private double chance(String kind, double fallback, double max) {

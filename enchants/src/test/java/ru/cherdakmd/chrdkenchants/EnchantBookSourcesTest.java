@@ -42,7 +42,8 @@ class EnchantBookSourcesTest {
     @Test void booksFromMobsUseNaturalProvenanceOneClaimAndAnActualPlayerFinisher() throws Exception {
         String source = source("MobBookListener");
         assertTrue(source.contains("data.has(claimed)"));
-        assertTrue(source.indexOf("data.set(claimed") < source.indexOf("nextDouble()"));
+        assertTrue(source.indexOf("claims.begin(id, event)") < source.indexOf("nextDouble()"));
+        assertTrue(source.contains("if (claims.finish(id, event)) data.set(claimed"));
         assertTrue(source.contains("!killer.equals(attacker)"));
         assertTrue(source.contains("getEntitySpawnReason()"));
         assertTrue(source.contains("MobProgressionKeys.NATURAL.equals"));
