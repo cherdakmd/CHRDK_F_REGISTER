@@ -50,7 +50,7 @@ class BookProgressionTest {
         }
         for (String value:List.of("mob","MOB","v1:MOB","v2:mob","v1:unknown","<red>mob</red>","a".repeat(4097),""))
             assertNull(EnchantBookSource.decode(value));
-        assertNull(EnchantBookSource.decode(null)); assertEquals(7,codes.size());
+        assertNull(EnchantBookSource.decode(null)); assertEquals(8,codes.size());
     }
     @Test void newSourceOverloadDelegatesToLegacyApiWithoutBreakingOldImplementations() {
         var calls = new java.util.concurrent.atomic.AtomicInteger();
