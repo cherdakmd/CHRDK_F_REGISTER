@@ -6,9 +6,9 @@ description: "Косметика владельцев ранга: шлейфы �
 author: cherdakmd
 depend: [CHRDK_Core]
 commands:
-  cosmetic:
+  cosmetics:
     description: "Косметические эффекты: шлейфы частиц"
-    aliases: [cosmetics, cos]
+    aliases: [cosmetic, cos]
     usage: "/cosmetic [list|trails|text|off|<эффект>]"
 permissions:
   chrdkcosmetics.use:

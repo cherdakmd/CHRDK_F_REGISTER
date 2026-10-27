@@ -55,7 +55,7 @@ public final class CosmeticsPlugin extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(gui, this);
         Bukkit.getPluginManager().registerEvents(this, this);
         saveTask = Bukkit.getScheduler().runTaskTimerAsynchronously(this, store::save, 100L, 100L);
-        PluginCommand command = getCommand("cosmetic");
+        PluginCommand command = getCommand("cosmetics");
         if (command != null) {
             CosmeticsCommandHandler handler = new CosmeticsCommandHandler(this);
             command.setExecutor(handler);
