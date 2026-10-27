@@ -246,3 +246,5 @@ hunt:
   mob-history-empty: "<gray>История пуста. Здесь появятся новые природные уровневые мобы после ваших прямых ударов/снарядов в Survival. Наград и объявлений нет.</gray>"
   mob-history-header: "<gold>Ваша охота: %page%/%pages%</gold><gray> · %count% из последних 20 записей, новые сверху. Время UTC.</gray>"
   mob-history-row: "<gray>%num%. %time% · %mob% · ур. %level% · %kind% · %world%</gray>"
+
+  admin-reload-failed: "<red>Перезагрузка отклонена: проверьте config.yml и файл сообщений выбранной локали. Прежние настройки, меню и ожидающие операции сохранены.</red>"

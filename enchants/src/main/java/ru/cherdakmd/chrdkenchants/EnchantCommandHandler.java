@@ -160,8 +160,8 @@ public final class EnchantCommandHandler implements TabExecutor {
             return true;
         }
         if (args.length >= 1 && "reload".equalsIgnoreCase(args[0])) {
-            plugin.reloadEnchantsConfig();
-            plugin.messages().send(sender, "admin-reloaded");
+            if (plugin.tryReloadEnchantsConfig()) plugin.messages().send(sender, "admin-reloaded");
+            else plugin.messages().send(sender, "admin-reload-failed");
             return true;
         }
         if (args.length >= 3 && "give".equalsIgnoreCase(args[0])) {

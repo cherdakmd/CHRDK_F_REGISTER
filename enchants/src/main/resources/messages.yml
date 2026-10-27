@@ -393,3 +393,5 @@ enchants:
   guard-auto: "<gray>Автоматически по уровню</gray>"
   guard-none: "<gray>Нет надетой включённой защитной чары</gray>"
   guard-unavailable: "<yellow>Выберите auto либо включённую защитную чару на надетой броне: briar_guard, faltering_guard, signal_guard. Перезарядка не менялась.</yellow>"
+
+  admin-reload-failed: "<red>Перезагрузка отклонена: проверьте config.yml и файл сообщений выбранной локали. Прежние настройки, меню и ожидающие операции сохранены.</red>"

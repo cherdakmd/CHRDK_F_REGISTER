@@ -56,7 +56,7 @@ class HuntMessagesTest {
             "menu-bestiary-empty-lore", "menu-trophies", "menu-trophies-lore", "menu-keys",
             "menu-keys-lore", "menu-exchange", "menu-exchange-lore", "menu-stats",
             "menu-stats-lore", "menu-top", "menu-top-lore", "menu-close",
-            "admin-reloaded", "admin-given", "admin-reset", "admin-reset-missing",
+            "admin-reloaded", "admin-reload-failed", "admin-given", "admin-reset", "admin-reset-missing",
             "admin-player-not-found", "admin-bad-amount", "admin-bad-kind",
             "admin-unknown-family", "admin-usage", "admin-info",
             "bestiary-title", "bestiary-section-title", "bestiary-empty",

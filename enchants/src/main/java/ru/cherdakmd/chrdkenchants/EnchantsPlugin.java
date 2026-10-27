@@ -5,6 +5,7 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.cherdakmd.chrdkregister.Messages;
+import ru.cherdakmd.chrdkregister.configuration.ConfigSnapshot;
 import ru.cherdakmd.chrdkregister.api.ChrdkEnchantsApi;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 
@@ -27,8 +28,7 @@ import java.util.List;
 public final class EnchantsPlugin extends JavaPlugin {
 
     private volatile ChrdkRegisterApi coreApi;
-    private volatile Messages messages;
-    private volatile EnchantsConfig config;
+    private volatile ConfigSnapshot<EnchantsConfig> settings;
     private long sourceGeneration;
     long sourceGeneration() { return sourceGeneration; }
     private EnchantItems items;
@@ -50,7 +50,10 @@ public final class EnchantsPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
-        reloadEnchantsConfig();
+        if (!tryReloadEnchantsConfig()) {
+            Bukkit.getPluginManager().disablePlugin(this);
+            return;
+        }
         this.items = new EnchantItems(this);
         this.service = new EnchantService(this, items);
         this.gui = new EnchantGui(this);
@@ -125,21 +128,42 @@ public final class EnchantsPlugin extends JavaPlugin {
         getLogger().info("CHRDK_Enchants выключен.");
     }
 
-    /** Перечитывает config.yml/messages.yml. */
-    public void reloadEnchantsConfig() {
+    /** Совместимость с прежними внешними вызовами: не публикует непроверенный YAML. */
+    public void reloadEnchantsConfig() { tryReloadEnchantsConfig(); }
+    @Override public void reloadConfig() {
+        if (settings == null) super.reloadConfig();
+        else tryReloadEnchantsConfig();
+    }
+    @Override public org.bukkit.configuration.file.FileConfiguration getConfig() {
+        var current = settings;
+        return current == null ? super.getConfig() : current.yaml();
+    }
+    public boolean tryReloadEnchantsConfig() {
+        ConfigSnapshot<EnchantsConfig> candidate;
+        ChrdkRegisterApi updatedApi;
+        try {
+            candidate = ConfigSnapshot.load(
+                    getDataFolder().toPath().resolve("config.yml"), getResource("config.yml"), EnchantsConfig::parse,
+                    (yaml, staged) -> Messages.loadChecked(this, yaml.getString("general.locale", "ru"), staged, settings == null));
+            updatedApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
+        } catch (java.io.IOException | org.bukkit.configuration.InvalidConfigurationException | RuntimeException | LinkageError failure) {
+            if (settings == null) getLogger().severe("Начальные настройки чар не загружены (" + failure.getClass().getSimpleName() + "). Проверьте config.yml/messages.yml.");
+            else ConfigSnapshot.rejected(getLogger(), failure);
+            return false;
+        }
+        coreApi = updatedApi;
+        settings = candidate; // Единая публикация raw YAML + parsed config + messages.
         sourceGeneration++;
-        if (table != null) table.clear();
-        if (mobBooks != null) mobBooks.clear();
-        if (library != null) library.clear();
-        if (tools != null) tools.clear();
-        if (miningUtility != null) miningUtility.clear();
-        reloadConfig();
-        this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
-        this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
-        this.config = EnchantsConfig.parse(getConfig(), getLogger());
-        if (gui != null) gui.closeAll();
-        if (pve != null) pve.reload();
-        if (utility != null) utility.reload();
+        candidate.committed(getLogger(),
+                () -> { if (table != null) table.clear(); },
+                () -> { if (mobBooks != null) mobBooks.clear(); },
+                () -> { if (library != null) library.clear(); },
+                () -> { if (tools != null) tools.clear(); },
+                () -> { if (miningUtility != null) miningUtility.clear(); },
+                () -> { if (gui != null) gui.closeAll(); },
+                () -> { if (pve != null) pve.reload(); },
+                () -> { if (utility != null) utility.reload(); });
+        return true;
     }
 
     public ChrdkRegisterApi coreApi() {
@@ -147,11 +171,11 @@ public final class EnchantsPlugin extends JavaPlugin {
     }
 
     public Messages messages() {
-        return messages;
+        return settings.messages();
     }
 
     public EnchantsConfig config() {
-        return config;
+        return settings.value();
     }
 
     public EnchantItems items() {

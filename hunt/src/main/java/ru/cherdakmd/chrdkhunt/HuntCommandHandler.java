@@ -261,8 +261,8 @@ public final class HuntCommandHandler implements CommandExecutor, TabCompleter {
     }
 
     private boolean reload(CommandSender sender) {
-        plugin.reloadHunt();
-        plugin.messages().send(sender, "admin-reloaded");
+        if (plugin.tryReloadHunt()) plugin.messages().send(sender, "admin-reloaded");
+        else plugin.messages().send(sender, "admin-reload-failed");
         return true;
     }
 
