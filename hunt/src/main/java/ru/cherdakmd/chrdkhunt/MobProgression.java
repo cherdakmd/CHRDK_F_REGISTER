@@ -36,7 +36,7 @@ final class MobProgression implements Listener {
     private final LinkedHashMap<UUID, WeakReference<LivingEntity>> watched = new LinkedHashMap<>();
     private final MobTaskQueue tasks;
     private final BukkitTask watchTask;
-    private boolean enabled, showHud, armored, recovering;
+    private boolean enabled, showHud, armored, recovering, dashing;
     private double eliteChance;
     private NewcomerProtection newcomers;
     private SpawnGroup.Settings groupSettings;
@@ -63,6 +63,7 @@ final class MobProgression implements Listener {
         showHud = plugin.getConfig().getBoolean("mob-progression.hud", true);
         armored = plugin.getConfig().getBoolean("mob-progression.armored-elite", true);
         recovering = plugin.getConfig().getBoolean("mob-progression.recovery.enabled", true);
+        dashing = plugin.getConfig().getBoolean("mob-progression.dash.enabled", true);
         double value = plugin.getConfig().getDouble("mob-progression.elite-chance-percent", 2);
         eliteChance = Double.isFinite(value) ? Math.max(0, Math.min(5, value)) : 2;
         newcomers = NewcomerProtection.settings(
@@ -129,8 +130,9 @@ final class MobProgression implements Listener {
             var center = mob.getWorld().getSpawnLocation();
             double distance = Math.hypot(mob.getLocation().getX() - center.getX(), mob.getLocation().getZ() - center.getZ());
             int rank = MobProgressionPolicy.level(mob.getWorld().getEnvironment().name(), distance, group.effectiveSkills(total));
+            boolean dashAllowed = dashing && EliteDash.supported(mob.getType().name());
             int variant = distance > 512 && total >= 50 && ThreadLocalRandom.current().nextDouble(100) < eliteChance
-                    ? MobProgressionPolicy.variant(ThreadLocalRandom.current().nextInt(MobProgressionPolicy.variantCount(armored, recovering)), armored, recovering) : 0;
+                    ? MobProgressionPolicy.variant(ThreadLocalRandom.current().nextInt(MobProgressionPolicy.variantCount(armored, recovering, dashAllowed)), armored, recovering, dashAllowed) : 0;
             var protectedSpawn = newcomers.apply(MobProgressionPolicy.range(mob.getWorld().getEnvironment().name(), distance),
                     rank, variant, nearbyNewcomer);
             rank = protectedSpawn.level(); variant = protectedSpawn.elite();
@@ -175,6 +177,7 @@ final class MobProgression implements Listener {
         for (var entity : event.getEntities()) watched.remove(entity.getUniqueId());
     }
     private void refresh(LivingEntity mob) {
+        EliteDashing.clearModifier(mob, plugin);
         if (!eligibleMob(mob) || !validData(mob)) { clearOwned(mob); return; }
         if (!allowed(mob) || !watched.containsKey(mob.getUniqueId()) && watched.size() >= WATCH_LIMIT) { strip(mob); return; }
         watched.put(mob.getUniqueId(), new WeakReference<>(mob));
@@ -210,6 +213,7 @@ final class MobProgression implements Listener {
         if (Double.isFinite(value)) mob.setHealth(value);
     }
     private void strip(LivingEntity mob) {
+        EliteDashing.clearModifier(mob, plugin);
         watched.remove(mob.getUniqueId());
         var health = mob.getAttribute(Attribute.MAX_HEALTH);
         double before = health == null ? Double.NaN : health.getValue(), current = mob.getHealth();

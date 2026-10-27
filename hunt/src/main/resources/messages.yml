@@ -227,6 +227,7 @@ hunt:
   mob-variant-3: "<aqua>Стремительная элита</aqua>"
   mob-variant-4: "<blue>Бронированная элита</blue>"
   mob-variant-5: "<green>Восстанавливающаяся элита</green>"
+  mob-variant-6: "<yellow>Рывковая элита</yellow>"
   mob-api-unavailable: "<red>Ядро авторизации недоступно. Просмотр охоты пока закрыт.</red>"
   mob-need-auth: "<yellow>Сначала войдите в аккаунт.</yellow>"
   mob-help: "<yellow>/hunt danger · inspect · observations · elites · hud [on|off] · history [страница]</yellow>"

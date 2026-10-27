@@ -89,7 +89,7 @@ class EliteRecoveryTest {
         }
         assertThrows(IllegalArgumentException.class, () -> MobProgressionPolicy.variant(4, false, false));
         assertEquals(MobProgressionPolicy.stats(30, 0), MobProgressionPolicy.stats(30, 5));
-        assertTrue(MobProgressionPolicy.valid(30, 5)); assertFalse(MobProgressionPolicy.valid(30, 6));
+        assertTrue(MobProgressionPolicy.valid(30, 5)); assertFalse(MobProgressionPolicy.valid(30, ru.cherdakmd.chrdkregister.api.MobProgressionKeys.MAX_ELITE + 1));
     }
     @Test void replacementTicketsPreventOldCallbacksFromRemovingNewWork() {
         var windows = new RecoveryWindows(); UUID mob = UUID.randomUUID(), owner = UUID.randomUUID();
