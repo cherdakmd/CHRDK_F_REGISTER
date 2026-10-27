@@ -1,4 +1,4 @@
-# CHRDK_Enchants — имена/описания 66 чар (en.<id>.name, en.<id>.lore) и тексты UI.
+# CHRDK_Enchants — имена/описания 70 чар (en.<id>.name, en.<id>.lore) и тексты UI.
 # Проклятия лежат в той же секции en, цвет и знак задаются полярностью чары.
 enchants:
   no-api: "<red>Ядро CHRDK_F_REGISTER не найдено — чары недоступны.</red>"
@@ -6,7 +6,7 @@ enchants:
   table-added: "<light_purple>✦ Стол дарует чару: %name% %levelroman%!</light_purple>"
   table-cursed: "<dark_red>☠ Стол выплеснул проклятие: %name% %levelroman%!</dark_red>"
   anvil-capped: "<red>На предмете уже максимум чар (%max%) или они конфликтуют.</red>"
-  usage: "<gray>/enchants — книга всех 66 чар (светлые и проклятия); /enchants info <id></gray>"
+  usage: "<gray>/enchants — книга всех 70 чар (светлые и проклятия); /enchants info <id></gray>"
   info-header: "<light_purple>✦ %name% <gray>(%rarity%, ур. I–%maxlevel%)</gray>"
   info-items: "<gray>Накладывается на: <yellow>%items%</yellow></gray>"
   info-conflicts: "<gray>Конфликтует с: <red>%conflicts%</red></gray>"
@@ -282,3 +282,22 @@ enchants:
   book-items: "<dark_gray>✶</dark_gray> <gray>Для: %items%</gray>"
   book-conflicts: "<dark_gray>✶</dark_gray> <gray>Несовместимо: %conflicts%</gray>"
   book-apply: "<dark_gray>✶</dark_gray> <gray>Перенос: предмет + книга на наковальне</gray>"
+  en.careful_work.name: "Бережная работа"
+  en.careful_work.lore:
+    - "<gray>Шанс 10/20/30% сберечь 1 ед. износа после разбитого блока.</gray>"
+    - "<gray>Перезарядка 8 сек., сохраняется при релоге; не ремонт.</gray>"
+    - "<gray>Только работа инструментом; урон, добыча и XP не растут.</gray>"
+  en.garden_step.name: "Садовая поступь"
+  en.garden_step.lore:
+    - "<gray>Не вытаптываете грядки в этих ботинках.</gray>"
+    - "<gray>Не ускоряет урожай и не даёт обходить защиту блоков.</gray>"
+  en.air_reserve.name: "Запас воздуха"
+  en.air_reserve.lore:
+    - "<gray>При падении воздуха до 40: +40/60 ед. (базово 2/3 сек.).</gray>"
+    - "<gray>Раз в 60 сек., не выше максимума; не бесконечное дыхание.</gray>"
+    - "<gray>Нужен шлем и голова в обычном водном блоке.</gray>"
+  en.quiet_step.name: "Тихий шаг"
+  en.quiet_step.lore:
+    - "<gray>При обычной ходьбе не создаётся вибрация шага для скалка.</gray>"
+    - "<gray>Не скрывает спринт, прыжки, приземления и другие действия.</gray>"
+    - "<gray>Звуки шагов, видимость и обоняние вардена не меняются.</gray>"

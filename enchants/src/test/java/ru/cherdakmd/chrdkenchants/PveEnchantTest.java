@@ -21,7 +21,7 @@ class PveEnchantTest {
 
     @Test void catalogContainsSixImplementedPositiveDefinitionsAndSixtyLegacyDefinitions() {
         assertEquals(6, PveEnchant.values().length);
-        assertEquals(60, EnchantRegistry.all().stream().filter(def -> PveEnchant.byId(def.id()) == null).count());
+        assertEquals(60, EnchantRegistry.all().stream().filter(def -> PveEnchant.byId(def.id()) == null && UtilityEnchant.byId(def.id()) == null).count());
         for (var effect : PveEnchant.values()) {
             var def = EnchantRegistry.byId(effect.id);
             assertNotNull(def); assertFalse(def.curse()); assertEquals(effect.maxLevel, def.maxLevel());
@@ -64,10 +64,10 @@ class PveEnchantTest {
     }
     @Test void masterAndIndividualFlagsStopNewSourcesWithoutRemovingLegacyEnchantments() {
         var yaml = new YamlConfiguration();
-        assertEquals(66, EnchantsConfig.parse(yaml, LOG).enabledEnchants().size());
+        assertEquals(70, EnchantsConfig.parse(yaml, LOG).enabledEnchants().size());
         yaml.set("pve-effects.enabled", false);
         var disabled = EnchantsConfig.parse(yaml, LOG);
-        assertEquals(60, disabled.enabledEnchants().size()); assertTrue(disabled.isEnabled("phoenix"));
+        assertEquals(64, disabled.enabledEnchants().size()); assertTrue(disabled.isEnabled("phoenix"));
         for (var effect : PveEnchant.values()) assertFalse(disabled.isEnabled(effect.id));
         yaml.set("pve-effects.enabled", true); yaml.set("enchants.crippling_edge.enabled", false);
         assertFalse(EnchantsConfig.parse(yaml, LOG).isEnabled("crippling_edge"));

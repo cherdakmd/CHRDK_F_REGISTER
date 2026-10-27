@@ -11,7 +11,7 @@ import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 import java.util.List;
 
 /**
- * CHRDK_Enchants — 66 кастомных чар: 51 светлая и 15 проклятий. Источники:
+ * CHRDK_Enchants — 70 кастомных чар: 55 светлых и 15 проклятий. Источники:
  * зачаровательный стол и жители-библиотекари; книги чар накладываются на
  * наковальне. Хранилище — только PDC предметов, поэтому у плагина нет файла
  * данных: всё живёт в инвентарях.
@@ -37,6 +37,7 @@ public final class EnchantsPlugin extends JavaPlugin {
     private EnchantCommandHandler commandHandler;
     private AuraService auras;
     private PveEffectsListener pve;
+    private UtilityEffectsListener utility;
     private BowEffectsListener bowEffects;
     private EnchantsApiBridge apiBridge;
 
@@ -54,6 +55,8 @@ public final class EnchantsPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new MobBookListener(this), this);
         this.pve = new PveEffectsListener(this);
         Bukkit.getPluginManager().registerEvents(pve, this);
+        this.utility = new UtilityEffectsListener(this);
+        Bukkit.getPluginManager().registerEvents(utility, this);
         Bukkit.getPluginManager().registerEvents(new VillagerListener(this), this);
         Bukkit.getPluginManager().registerEvents(new AnvilApplyListener(this), this);
         Bukkit.getPluginManager().registerEvents(new MeleeEffectsListener(this), this);
@@ -86,6 +89,7 @@ public final class EnchantsPlugin extends JavaPlugin {
     public void onDisable() {
         sourceGeneration++;
         if (pve != null) pve.stop();
+        if (utility != null) utility.stop();
         if (auras != null) {
             auras.stop();
         }
@@ -107,6 +111,7 @@ public final class EnchantsPlugin extends JavaPlugin {
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
         this.config = EnchantsConfig.parse(getConfig(), getLogger());
         if (pve != null) pve.reload();
+        if (utility != null) utility.reload();
     }
 
     public ChrdkRegisterApi coreApi() {
