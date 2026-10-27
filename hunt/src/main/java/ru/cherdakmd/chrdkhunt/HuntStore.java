@@ -49,6 +49,7 @@ public final class HuntStore {
     public static final class PlayerData {
         private String name = "";
         private boolean mobHud = true;
+        private final List<HuntHistory.Entry> history = new ArrayList<>();
         private final Set<Integer> observedLevels = new LinkedHashSet<>();
         private final Set<Integer> observedElites = new LinkedHashSet<>();
         private long coins;
@@ -189,6 +190,7 @@ public final class HuntStore {
                     }
                     PlayerData player = new PlayerData(string(row.get("name")));
                     player.mobHud = !Boolean.FALSE.equals(row.get("mob-hud"));
+                    player.history.addAll(HuntHistory.read(row.get("history")));
                     readNumbers(row.get("observed-levels"), player.observedLevels, 30);
                     readNumbers(row.get("observed-elites"), player.observedElites,
                             ru.cherdakmd.chrdkregister.api.MobProgressionKeys.MAX_ELITE);
@@ -298,6 +300,19 @@ public final class HuntStore {
         if (id == null) return;
         PlayerData data = ensure(id, name);
         if (data.mobHud != value) { data.mobHud = value; dirty = true; }
+    }
+
+    /** Только личный ограниченный журнал; не вызывает registerKill и не выдаёт наград. */
+    synchronized boolean recordHistory(UUID id, String name, HuntHistory.Entry entry) {
+        if (id == null || entry == null) return false;
+        PlayerData data = ensure(id, name);
+        boolean changed = HuntHistory.append(data.history, entry);
+        if (changed) dirty = true;
+        return changed;
+    }
+    synchronized List<HuntHistory.Entry> history(UUID id) {
+        PlayerData data = player(id);
+        return data == null ? List.of() : List.copyOf(data.history).reversed();
     }
 
     /* -------------------------------- игроки ---------------------------------- */
@@ -804,6 +819,7 @@ public final class HuntStore {
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("name", player.name);
             row.put("mob-hud", player.mobHud);
+            row.put("history", HuntHistory.write(player.history));
             row.put("observed-levels", player.observedLevels.stream().sorted().toList());
             row.put("observed-elites", player.observedElites.stream().sorted().toList());
             row.put("coins", player.coins);

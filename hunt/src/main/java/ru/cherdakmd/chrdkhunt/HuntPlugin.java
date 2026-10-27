@@ -31,6 +31,8 @@ public final class HuntPlugin extends JavaPlugin {
     private boolean saveQueued;
     private ChrdkRegisterApi coreApi;
     private MobProgression progression;
+    private HuntHistoryTracker historyTracker;
+    HuntHistoryTracker historyTracker() { return historyTracker; }
 
     /**
      * Публичный API ядра: охота спрашивает бонус добычи ранга (1.4.167).
@@ -71,6 +73,8 @@ public final class HuntPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(bestiaryGui, this);
             this.progression = new MobProgression(this);
             getServer().getPluginManager().registerEvents(progression, this);
+            historyTracker = new HuntHistoryTracker(this);
+            getServer().getPluginManager().registerEvents(historyTracker, this);
             registerCommands();
             registerPlaceholders();
             scheduleTasks();
@@ -89,6 +93,7 @@ public final class HuntPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (historyTracker != null) historyTracker.stop();
         if (progression != null) progression.stop();
         if (coreApi != null) {
             try {
@@ -123,6 +128,7 @@ public final class HuntPlugin extends JavaPlugin {
      * ссылаться на удалённые позиции.
      */
     public void reloadHunt() {
+        if (historyTracker != null) historyTracker.clear();
         reloadConfig();
         this.config = HuntConfig.parse(getConfig(), getLogger());
         this.messages = Messages.load(this, config.locale(), getLogger());

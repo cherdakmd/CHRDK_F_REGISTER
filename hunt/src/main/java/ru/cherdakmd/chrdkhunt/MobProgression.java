@@ -39,6 +39,8 @@ final class MobProgression implements Listener {
     private boolean enabled, showHud, armored;
     private double eliteChance;
     private NewcomerProtection newcomers;
+    private SpawnGroup.Settings groupSettings;
+    SpawnGroup.Settings groupSettings() { return groupSettings; }
     private long generation;
     private String epoch;
 
@@ -66,6 +68,10 @@ final class MobProgression implements Listener {
                 plugin.getConfig().getBoolean("mob-progression.newcomer-protection.enabled", false),
                 plugin.getConfig().getInt("mob-progression.newcomer-protection.max-skill-total", 20),
                 plugin.getConfig().getDouble("mob-progression.newcomer-protection.radius", 16));
+        groupSettings = SpawnGroup.Settings.bounded(
+                plugin.getConfig().getBoolean("mob-progression.group.enabled", false),
+                plugin.getConfig().getDouble("mob-progression.group.radius", 24),
+                plugin.getConfig().getInt("mob-progression.group.max-members", 8));
         hud.clear(); watched.clear();
         for (var world : Bukkit.getWorlds()) for (var entity : world.getLivingEntities()) if (marked(entity)) refresh(entity);
     }
@@ -100,13 +106,19 @@ final class MobProgression implements Listener {
                     || !allowed(mob) || !eligibleMob(mob) || !mob.getPersistentDataContainer().getKeys().isEmpty()) return;
             Player nearest = null; double best = 128 * 128;
             boolean nearbyNewcomer = false;
+            var group = new SpawnGroup(groupSettings);
             for (Player player : mob.getWorld().getNearbyPlayers(mob.getLocation(), 128)) {
                 if (player.getGameMode() != GameMode.SURVIVAL || player.isDead() || plugin.coreApi() == null
                         || !plugin.coreApi().isAuthenticated(player)) continue;
                 double distance = player.getLocation().distanceSquared(mob.getLocation());
-                if (!nearbyNewcomer && newcomers.enabled() && distance <= newcomers.radius() * newcomers.radius()
-                        && observer(player) && !player.hasMetadata("NPC") && !player.isInvulnerable()
-                        && newcomers.candidate(skills(player), distance) && mob.hasLineOfSight(player)) nearbyNewcomer = true;
+                boolean newcomerCandidate = !nearbyNewcomer && newcomers.enabled()
+                        && distance <= newcomers.radius() * newcomers.radius();
+                if ((newcomerCandidate || groupSettings.inRange(distance)) && observer(player)
+                        && !player.hasMetadata("NPC") && !player.isInvulnerable() && mob.hasLineOfSight(player)) {
+                    int memberSkills = skills(player);
+                    if (newcomerCandidate && newcomers.candidate(memberSkills, distance)) nearbyNewcomer = true;
+                    group.offer(player.getUniqueId(), distance, memberSkills);
+                }
                 if (MobProgressionPolicy.nearer(distance, player.getUniqueId(), best, nearest == null ? null : nearest.getUniqueId())) {
                     best = distance; nearest = player;
                 }
@@ -115,7 +127,7 @@ final class MobProgression implements Listener {
             int total = skills(nearest);
             var center = mob.getWorld().getSpawnLocation();
             double distance = Math.hypot(mob.getLocation().getX() - center.getX(), mob.getLocation().getZ() - center.getZ());
-            int rank = MobProgressionPolicy.level(mob.getWorld().getEnvironment().name(), distance, total);
+            int rank = MobProgressionPolicy.level(mob.getWorld().getEnvironment().name(), distance, group.effectiveSkills(total));
             int variant = distance > 512 && total >= 50 && ThreadLocalRandom.current().nextDouble(100) < eliteChance
                     ? ThreadLocalRandom.current().nextInt(1, armored ? 5 : 4) : 0;
             var protectedSpawn = newcomers.apply(MobProgressionPolicy.range(mob.getWorld().getEnvironment().name(), distance),

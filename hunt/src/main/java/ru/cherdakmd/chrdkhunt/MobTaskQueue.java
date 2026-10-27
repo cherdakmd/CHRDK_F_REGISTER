@@ -30,6 +30,10 @@ final class MobTaskQueue {
         }
         return true;
     }
+    void cancel(UUID id, String kind) {
+        Ticket ticket = pending.remove(new Key(id, kind));
+        if (ticket != null && ticket.handle != null) ticket.handle.cancel();
+    }
     boolean contains(UUID id, String kind) { return pending.containsKey(new Key(id, kind)); }
     int size() { return pending.size(); }
     void clear() {

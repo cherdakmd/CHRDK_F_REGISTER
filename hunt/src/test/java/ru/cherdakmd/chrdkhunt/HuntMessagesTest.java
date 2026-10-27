@@ -25,7 +25,7 @@ class HuntMessagesTest {
             "no-permission", "player-only", "disabled", "unknown-subcommand",
             "help-header", "help-stats", "help-shop", "help-buy", "help-exchange",
             "help-keys", "help-chest", "help-bestiary", "help-trophies", "help-top",
-            "help-footer",
+            "help-footer", "mob-group-mode", "mob-history-help", "mob-history-empty", "mob-history-header", "mob-history-row",
             "kill-coins", "kill-separator", "kill-shards", "kill-key", "kill-dropped",
             "coins-cap", "boss-killed", "boss-broadcast",
             "exchange-closed", "exchange-limit", "exchange-min", "exchange-no-coins",
@@ -96,6 +96,20 @@ class HuntMessagesTest {
     }
 
     @Test
+    void historyRendersNativeMobTranslationWithoutLeakingPlaceholdersOrWorldMarkup() throws Exception {
+        try (InputStream stream = getClass().getResourceAsStream("/messages.yml")) {
+            var messages = ru.cherdakmd.chrdkregister.Messages.from(stream, null, java.util.logging.Logger.getAnonymousLogger());
+            var rendered = messages.get("mob-history-row", "num", 1, "time", "01.01.2027 12:00",
+                    "mob", ru.cherdakmd.chrdkregister.Messages.trusted("<lang:entity.minecraft.zombie>"),
+                    "level", 5, "kind", messages.mini("mob-variant-0"), "world", "<red>world");
+            String text = rendered.toString();
+            assertTrue(text.contains("entity.minecraft.zombie"));
+            assertTrue(text.contains("<red>world"), "имя мира остаётся текстом, а не разметкой");
+            assertFalse(text.contains("%mob%")); assertFalse(text.contains("%time%"));
+        }
+    }
+
+    @Test
     void ranksCoverTheDefaultLadder() throws Exception {
         ConfigurationSection section = load();
         for (String rank : HuntConfig.defaultRanks().values()) {
@@ -113,6 +127,10 @@ class HuntMessagesTest {
         expected.put("kill-key", List.of("%keys%", "%key%"));
         expected.put("coins-cap", List.of("%limit%"));
         expected.put("boss-killed", List.of("%family%", "%coins%", "%shard%"));
+        expected.put("mob-group-mode", List.of("%count%", "%radius%"));
+        expected.put("mob-history-help", List.of("%pages%"));
+        expected.put("mob-history-header", List.of("%page%", "%pages%", "%count%"));
+        expected.put("mob-history-row", List.of("%num%", "%time%", "%mob%", "%level%", "%kind%", "%world%"));
         expected.put("boss-broadcast", List.of("%player%", "%family%"));
         expected.put("exchange-ok", List.of("%diamonds%", "%coins%", "%left%"));
         expected.put("exchange-no-coins", List.of("%cost%", "%coins%"));

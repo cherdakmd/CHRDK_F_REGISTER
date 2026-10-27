@@ -23,7 +23,7 @@ public final class HuntCommandHandler implements CommandExecutor, TabCompleter {
 
     private static final List<String> PLAYER_SUBCOMMANDS =
             List.of("help", "stats", "shop", "buy", "exchange", "keys", "chest",
-                    "bestiary", "trophies", "trophy", "top", "danger", "inspect", "observations", "elites", "hud");
+                    "bestiary", "trophies", "trophy", "top", "danger", "inspect", "observations", "elites", "hud", "history");
     private static final List<String> ADMIN_SUBCOMMANDS =
             List.of("reload", "give", "reset", "info");
     private static final List<String> GIVE_KINDS = List.of("coins", "shards", "keys");
@@ -70,7 +70,7 @@ public final class HuntCommandHandler implements CommandExecutor, TabCompleter {
             case "trophies" -> trophies(sender);
             case "trophy" -> trophy(sender, args);
             case "top" -> plugin.report().top(sender);
-            case "danger", "inspect", "observations", "elites", "hud" -> new MobReport(plugin).command(sender, args);
+            case "danger", "inspect", "observations", "elites", "hud", "history" -> new MobReport(plugin).command(sender, args);
             default -> {
                 plugin.messages().send(sender, "unknown-subcommand", "sub", args[0]);
                 yield true;
@@ -337,6 +337,7 @@ public final class HuntCommandHandler implements CommandExecutor, TabCompleter {
             return true;
         }
         plugin.requestSave();
+        if (plugin.historyTracker() != null) plugin.historyTracker().forget(target.id());
         plugin.messages().send(sender, "admin-reset", "player", target.name());
         return true;
     }
@@ -411,6 +412,7 @@ public final class HuntCommandHandler implements CommandExecutor, TabCompleter {
                 case "trophy" -> filter(trophyIds(), args[1]);
                 case "stats" -> filter(onlineNames(), args[1]);
                 case "exchange" -> filter(List.of("max"), args[1]);
+                case "history" -> sender.hasPermission("chrdkhunt.use") ? filter(List.of("1", "2", "3", "4"), args[1]) : List.of();
                 default -> List.of();
             };
         }
