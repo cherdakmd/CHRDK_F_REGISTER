@@ -270,6 +270,7 @@ public final class RegisterPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        ru.cherdakmd.chrdkregister.api.CropReplanting.clear();
         if (pluginUpdater != null) pluginUpdater.close();
         if (serverMenuService != null) serverMenuService.shutdown();
         if (rankMenuService != null) rankMenuService.shutdown();

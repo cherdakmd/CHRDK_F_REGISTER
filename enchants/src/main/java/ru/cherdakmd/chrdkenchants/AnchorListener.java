@@ -25,6 +25,8 @@ final class AnchorListener implements Listener {
                 || !player.hasPermission("chrdkenchants.use") || plugin.coreApi() == null || !plugin.coreApi().isAuthenticated(player)
                 || !plugin.config().isEnabled("pve_anchor") || !plugin.pve().anchorPreferred(player)) return;
         if (!(player.getLastDamageCause() instanceof EntityDamageByEntityEvent damage) || !attacker.equals(damage.getDamager())
+                || damage.getCause() != org.bukkit.event.entity.EntityDamageEvent.DamageCause.ENTITY_ATTACK
+                    && damage.getCause() != org.bukkit.event.entity.EntityDamageEvent.DamageCause.ENTITY_SWEEP_ATTACK
                 || damage.isCancelled() || !Double.isFinite(damage.getFinalDamage()) || damage.getFinalDamage() <= 0) return;
         var boots = player.getInventory().getBoots();
         if (boots == null || !EnchantRegistry.byId("pve_anchor").supports(boots.getType().name())) return;

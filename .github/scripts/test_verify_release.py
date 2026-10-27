@@ -70,5 +70,20 @@ class ReleaseValidationTest(unittest.TestCase):
         self.assertEqual(30, len(names))
 
 
+class ReleaseWorkflowContractTest(unittest.TestCase):
+    def test_memo_is_external_so_run_step_stays_below_github_limit(self):
+        root = Path(__file__).resolve().parents[2]
+        source = (root / ".github/workflows/release.yml").read_text()
+        self.assertIn("cp docs/releases/update-memo.txt", source)
+        self.assertIn("1.4.{200,201,220}.md", source)
+        self.assertNotIn("--zip", source)
+        self.assertIn('"${{ env.zip }}" --clobber', source)
+        # GitHub limits each run script to 21000 characters. Avoid parsing YAML/dependencies.
+        for section in source.split("run: |\n")[1:]:
+            script = section.split("\n      - name:", 1)[0]
+            self.assertLess(len(script), 21000)
+        self.assertTrue((root / "docs/releases/update-memo.txt").read_text().startswith("CHRDK"))
+
+
 if __name__ == "__main__":
     unittest.main()

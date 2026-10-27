@@ -96,6 +96,12 @@ public final class CropReplanting {
             }
         }
     }
+    /** Остановка ядра: не оставляем статические ссылки на провайдеры и игроков. */
+    public static void clear() {
+        if (!Bukkit.isPrimaryThread()) return;
+        for (var item : pending.snapshot()) remove(item.getKey(), item.getValue());
+        currentPlacement = null;
+    }
     public static void cancel(Plugin plugin) {
         if (!Bukkit.isPrimaryThread()) return;
         var entries = pending.snapshot();
