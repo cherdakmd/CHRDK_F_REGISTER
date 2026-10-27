@@ -76,11 +76,10 @@ public final class TeleportCommandHandler implements TabExecutor {
 
     /* ------------------------------- общие проверки ------------------------------- */
 
-    /** Действует ли купленный товар «дополнительные дома» (право выдаётся ядром на срок). */
-    private boolean extraHomes(Player player) {
-        String permission = plugin.config().homesExtraPermission();
-        return plugin.config().grantsExtraHomes(
-                permission != null && !permission.isBlank() && player.hasPermission(permission));
+    /** Только учтённые ядром оплаченные пакеты; LP-право не подтверждает покупку. */
+    private int extraHomes(Player player) {
+        var api = plugin.coreApi();
+        return api == null ? 0 : Math.max(0, api.entitlementCount(player.getName(), "homes-plus"));
     }
 
     /** Ступень донатного ранга: 0 — без ранга, 1..5 (1.4.167). */

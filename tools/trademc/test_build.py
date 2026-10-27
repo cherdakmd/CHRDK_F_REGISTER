@@ -66,6 +66,19 @@ class StorefrontTest(unittest.TestCase):
         self.assertNotIn('shoppay <ник> <сумма> [дни]', txt)
         self.assertNotIn('[ник_дарителя] [дни]', txt)
 
+    def test_markdown_matches_catalog_and_preserves_literal_commands(self):
+        md = (kit.OUTPUT / kit.MD_NAME).read_text(encoding='utf-8')
+        self.assertEqual(kit.markdown_document(self.cfg, self.products), md)
+        self.assertEqual(0, md.count('```') % 2)
+        for i, p in enumerate(self.products, 1):
+            self.assertEqual(1, md.count('\n' + kit.command(p) + '\n'))
+            self.assertIn('images/' + kit.image_name(i, p), md)
+            self.assertIn(f"**Цена:** {p['price']} ₽\n- **Срок:** {p['days']} дней", md)
+        homes = kit.description(self.by_id['homes-plus'], self.cfg)
+        self.assertIn('12 + 8 + 8 = 28', homes)
+        self.assertIn('собственные 30 дней', homes)
+        self.assertNotIn('не +8 домов', md)
+
     def test_rank_limits_come_from_configs_not_old_cards(self):
         for p in self.products:
             if not p.get('rank'):
@@ -134,9 +147,10 @@ class StorefrontTest(unittest.TestCase):
             with zipfile.ZipFile(first) as archive:
                 self.assertIsNone(archive.testzip())
                 names = archive.namelist()
-                self.assertEqual(28, len(names))
+                self.assertEqual(29, len(names))
                 self.assertEqual(25, sum(n.endswith('.png') for n in names))
                 self.assertIn(kit.TEXT_NAME, names)
+                self.assertIn(kit.MD_NAME, names)
                 self.assertIn('README.md', names)
                 self.assertIn('manifest.json', names)
                 self.assertEqual(len(names), len(set(names)))

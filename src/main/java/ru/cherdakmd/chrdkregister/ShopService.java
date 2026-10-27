@@ -365,9 +365,13 @@ public final class ShopService {
      */
     private long grantOne(String playerName, ShopProduct product, long now, int days,
                           ShopDiscount discount) {
-        long until = access.store().grantEntitlement(
-                playerName, product.id(), now, days + discount.bonusFor(days), catalog().maxTotalDays());
-        applyGroup(playerName, product, now, until);
+        // Дома — независимые пакеты: покупка добавляет места, а не срок старого пакета.
+        long until = "homes-plus".equals(product.id())
+                ? access.store().grantStackedEntitlement(playerName, product.id(), now,
+                        days + discount.bonusFor(days), catalog().maxTotalDays())
+                : access.store().grantEntitlement(playerName, product.id(), now,
+                        days + discount.bonusFor(days), catalog().maxTotalDays());
+        applyGroup(playerName, product, now, access.store().entitlementUntil(playerName, product.id()));
         runCommands(playerName, product);
         return until;
     }
@@ -488,6 +492,7 @@ public final class ShopService {
         }
         LuckPerms luckPerms = hooks == null ? null : hooks.luckPerms().orElse(null);
         if (luckPerms == null) {
+            if ("homes-plus".equals(product.id())) return; // LP не участвует в лимите домов
             logger.warning("Товар '" + product.id() + "' требует LuckPerms (группа '"
                     + product.group() + "'), но LuckPerms не найден — покупка сохранена без группы.");
             return;

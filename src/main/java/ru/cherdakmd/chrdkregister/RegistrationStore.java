@@ -817,6 +817,52 @@ public final class RegistrationStore {
         return until;
     }
 
+    /**
+     * Отдельный оплаченный пакет с собственным сроком. Старое активное право
+     * переносится ровно один раз целиком: историю отдельных покупок не выдумываем.
+     * Сводный срок остаётся для витрины и LP, количество вычисляется по пакетам.
+     */
+    public synchronized long grantStackedEntitlement(String playerName, String productId,
+                                                     long nowMillis, int days, int maxTotalDays) {
+        if (playerName == null || playerName.isBlank() || productId == null
+                || productId.isBlank() || days <= 0) return 0L;
+        String key = canonicalName(playerName);
+        PlayerAccount account = data.accounts.computeIfAbsent(key, ignored -> new PlayerAccount());
+        account.canonicalName = key;
+        if (account.playerName == null || account.playerName.isBlank()) account.playerName = playerName;
+        if (account.entitlements == null) account.entitlements = new LinkedHashMap<>();
+        if (account.entitlementPackages == null) account.entitlementPackages = new LinkedHashMap<>();
+        boolean migrated = account.entitlementPackages.containsKey(productId);
+        java.util.List<Long> packages = account.entitlementPackages.get(productId);
+        if (packages == null) {
+            packages = new ArrayList<>();
+            Long legacy = migrated ? null : account.entitlements.get(productId);
+            if (legacy != null && legacy > nowMillis) packages.add(legacy);
+            account.entitlementPackages.put(productId, packages);
+        }
+        packages.removeIf(expiry -> expiry == null || expiry <= nowMillis);
+        long until = ShopEntitlements.extend(nowMillis, 0, days, maxTotalDays);
+        packages.add(until);
+        long latest = packages.stream().mapToLong(Long::longValue).max().orElse(until);
+        account.entitlements.put(productId, latest);
+        markDirtyNow();
+        return until; // срок именно новой покупки, не максимальный срок старого пакета
+    }
+
+    /** Количество активных пакетов; не LP-право и не число созданных точек дома. */
+    public synchronized int entitlementCount(String playerName, String productId, long nowMillis) {
+        if (playerName == null || playerName.isBlank() || productId == null || productId.isBlank()) return 0;
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        if (account == null) return 0;
+        if (account.entitlementPackages != null && account.entitlementPackages.containsKey(productId)) {
+            java.util.List<Long> packages = account.entitlementPackages.get(productId);
+            return packages == null ? 0 : (int) packages.stream()
+                    .filter(expiry -> expiry != null && expiry > nowMillis).count();
+        }
+        Long legacy = account.entitlements == null ? null : account.entitlements.get(productId);
+        return legacy != null && legacy > nowMillis ? 1 : 0;
+    }
+
     /** Момент окончания товара; {@code 0}, если товар никогда не покупался. */
     public synchronized long entitlementUntil(String playerName, String productId) {
         if (playerName == null || playerName.isBlank() || productId == null || productId.isBlank()) {
@@ -853,10 +899,12 @@ public final class RegistrationStore {
             return false;
         }
         PlayerAccount account = data.accounts.get(canonicalName(playerName));
-        if (account == null || account.entitlements == null) {
-            return false;
-        }
+        if (account == null) return false;
+        if (account.entitlements == null) account.entitlements = new LinkedHashMap<>();
         boolean removed = account.entitlements.remove(productId) != null;
+        if (account.entitlementPackages != null) {
+            removed |= account.entitlementPackages.remove(productId) != null;
+        }
         if (removed) {
             markDirtyNow();
         }
@@ -871,8 +919,24 @@ public final class RegistrationStore {
     public synchronized int cleanupEntitlements(long nowMillis) {
         int removed = 0;
         for (PlayerAccount account : data.accounts.values()) {
-            if (account == null || account.entitlements == null || account.entitlements.isEmpty()) {
-                continue;
+            if (account == null) continue;
+            if (account.entitlements == null) account.entitlements = new LinkedHashMap<>();
+            if (account.entitlementPackages != null) {
+                for (var entry : account.entitlementPackages.entrySet()) {
+                    var packages = entry.getValue();
+                    if (packages == null) {
+                        if (account.entitlements.remove(entry.getKey()) != null) removed++;
+                        continue;
+                    }
+                    int count = packages.size();
+                    packages.removeIf(expiry -> expiry == null || expiry <= nowMillis);
+                    removed += count - packages.size();
+                    if (packages.isEmpty()) account.entitlements.remove(entry.getKey());
+                    else account.entitlements.put(entry.getKey(), packages.stream()
+                            .mapToLong(Long::longValue).max().orElse(0));
+                }
+                account.entitlementPackages.entrySet().removeIf(entry -> entry.getValue() == null
+                        || entry.getValue().isEmpty());
             }
             int before = account.entitlements.size();
             account.entitlements.entrySet().removeIf(entry -> entry.getValue() == null
@@ -2046,6 +2110,14 @@ public final class RegistrationStore {
         result.entitlements = source.entitlements == null
                 ? new LinkedHashMap<>()
                 : new LinkedHashMap<>(source.entitlements);
+        result.entitlementPackages = new LinkedHashMap<>();
+        if (source.entitlementPackages != null) {
+            source.entitlementPackages.forEach((id, packages) -> {
+                if (id != null && packages != null) {
+                    result.entitlementPackages.put(id, new ArrayList<>(packages));
+                }
+            });
+        }
         result.mute = source.mute == null ? null : copyMute(source.mute);
         return result;
     }
@@ -2216,6 +2288,8 @@ public final class RegistrationStore {
          * {@link RegistrationStore} проверяют карту на {@code null}.</p>
          */
         public Map<String, Long> entitlements = new LinkedHashMap<>();
+        /** Независимые сроки оплаченных пакетов. Старый формат без поля читается как одно право. */
+        public Map<String, java.util.List<Long>> entitlementPackages = new LinkedHashMap<>();
 
         public boolean isTrialOnly() {
             return trialGrantedAt > 0 && "trial".equals(lastGrantSource) && paymentsCount == 0;

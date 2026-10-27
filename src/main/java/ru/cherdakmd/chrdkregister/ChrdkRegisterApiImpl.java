@@ -185,6 +185,11 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
     }
 
     @Override
+    public int entitlementCount(String playerName, String productId) {
+        return accessManager.store().entitlementCount(playerName, productId, System.currentTimeMillis());
+    }
+
+    @Override
     public long grantEntitlement(String playerName, String productId, int days, String source) {
         deny("grantEntitlement", playerName);
         return 0L;

@@ -26,6 +26,7 @@ COLORS = {"flame": (255, 151, 63), "hearts": (255, 117, 170),
           "pearl": (227, 218, 250), "lagoon": (102, 210, 244),
           "crimson": (246, 123, 151)}
 TEXT_NAME = "КОМАНДЫ_МАГАЗИНА.txt"
+MD_NAME = "КОМАНДЫ_МАГАЗИНА.md"
 
 
 def plain(value):
@@ -91,8 +92,9 @@ def description(p, cfg):
         lines.append("Платные цвета ника не входят даже в V: приобретаются отдельно.")
         lines.append("Продление складывает дни до серверного лимита. Младший активный ранг не заменяет старший; повышение пересчитывает остаток по цене.")
     elif p["id"] == "homes-plus":
-        lines += ["Действует больший лимит из ранга и товара: это не +8 домов поверх ранга.",
-                  "Настройка LuckPerms: один раз выполнить pass luckperms setup из серверной консоли."]
+        lines += ["Каждая покупка добавляет +8 мест на собственные 30 дней; повторная покупка не продлевает старый пакет.",
+                  "Складывается с базой ранга и всеми активными пакетами, без общего игрового потолка. Ранг V + два пакета = 12 + 8 + 8 = 28 домов.",
+                  "Количество пакетов учитывает ядро, не право LuckPerms. При истечении купленных мест сохранённые точки не удаляются."]
     elif p["id"].startswith("trail-"):
         lines.append("Выбор эффекта: /cosmetics. Одновременно используется один шлейф; можно отключить.")
     elif p["id"].startswith("nick-"):
@@ -188,7 +190,8 @@ pass paidaudit
   Только уполномоченный администратор: отчёт по оплатам/доставкам и историческим
   платным правам; не меняет покупки и ничего не отзывает. Сверяйте с кабинетом магазина.
 pass luckperms setup
-  Однократная настройка групп/домов сервером с LuckPerms; это не команда продажи.
+  Однократная настройка групп сервером с LuckPerms; это не команда продажи.
+  Купленные дома учитываются ядром независимо от наличия LP и его прав.
 
 Команды для игрока (с / в игровом чате; НЕ добавлять в доставку TradeMC):
 /rank my — активный ранг и срок; /rank shop — витрина; /rank top — топ IV–V.
@@ -205,6 +208,49 @@ pass luckperms setup
 осталась и по-прежнему выпадает на землю с прежним шансом и ограничениями.
 """)
     return "".join(chunks)
+
+
+def markdown_document(cfg, products):
+    """Formatted mirror of TXT: identical product data and complete owner appendix."""
+    txt = document(cfg, products)
+    intro = txt.split("=" * 74, 1)[0].strip()
+    intro = intro.replace("ЧЕРДАК — TRADEMC: ВСЕ ТОВАРЫ И КОМАНДЫ", "# ЧЕРДАК — TradeMC: все товары и команды", 1)
+    intro = intro.replace("КАК ЗАПОЛНИТЬ КАРТОЧКУ", "## Как заполнить карточку", 1)
+    for literal in ("%username%", "CHRDK_Core/config.yml", "trademc.enabled: true", "shop.products", "payment="):
+        intro = intro.replace(literal, "`" + literal + "`")
+    parts = [intro + f"\n\n## Каталог: {len(products)} товаров\n\n",
+             "| № | Товар | Цена | Срок | Картинка |\n| --- | --- | ---: | ---: | --- |\n"]
+    for i, p in enumerate(products, 1):
+        parts.append(f"| {i:02d} | {plain(p['name'])} | {p['price']} ₽ | {p['days']} дней | [PNG](images/{image_name(i, p)}) |\n")
+    for i, p in enumerate(products, 1):
+        name, image = plain(p['name']), "images/" + image_name(i, p)
+        parts.append(f"\n## {i:02d}. {name} — {p['days']} дней\n\n")
+        parts.append(f"- **ID:** `{p['id']}`\n- **Цена:** {p['price']} ₽\n- **Срок:** {p['days']} дней\n- **Картинка:** [{Path(image).name}]({image})\n\n")
+        parts.append(f"![{name} — {p['days']} дней, {p['price']} ₽]({image})\n\n### Описание для товара\n\n")
+        parts.extend("- " + line + "\n" for line in description(p, cfg).splitlines())
+        parts.append(f"\n### Основная команда — рекомендуется, RCON\n\n```text\n{command(p)}\n```\n\n")
+        parts.append(f"### Альтернатива по сумме\n\n**Вместо основной команды, не вместе с ней:**\n\n```text\npass shoppay %username% {p['price']}\n```\n")
+    appendix = txt.split("ДОПОЛНИТЕЛЬНЫЕ КОМАНДЫ И ПРИМЕЧАНИЯ ДЛЯ ВЛАДЕЛЬЦА\n", 1)[1].strip().splitlines()
+    parts.append("\n## Дополнительные команды и примечания для владельца\n\n")
+    i = 0
+    while i < len(appendix):
+        line = appendix[i]
+        if line.startswith("pass "):
+            commands = []
+            while i < len(appendix) and appendix[i].startswith("pass "):
+                commands.append(appendix[i])
+                i += 1
+            parts.append("```text\n" + "\n".join(commands) + "\n```\n\n")
+            continue
+        if line.startswith("/") and " — " in line:
+            line = re.sub(r"(/[a-z]+(?: [a-z]+)?) —", r"`\1` —", line)
+            parts.append("- " + line + "\n")
+        elif line.startswith("Команды для игрока"):
+            parts.append("### " + line.rstrip(":") + "\n\n")
+        else:
+            parts.append(line.lstrip() + "\n")
+        i += 1
+    return "".join(parts).rstrip() + "\n"
 
 
 def font(size, bold=False):
@@ -328,7 +374,7 @@ def artwork(p):
     if tier:
         tagline = f"РАНГ {['I', 'II', 'III', 'IV', 'V'][tier-1]} · ОФОРМЛЕНИЕ И ВОЗМОЖНОСТИ"
     else:
-        tagline = {"homes-plus": "ДО 8 ДОМОВ · НЕ СКЛАДЫВАЕТСЯ С РАНГОМ",
+        tagline = {"homes-plus": "+8 ДОМОВ · СКЛАДЫВАЕТСЯ С РАНГОМ И ПОКУПКАМИ",
                    "join-effect": "ТОТЕМНАЯ ВСПЫШКА И ЗВУК ПРИ ВХОДЕ",
                    "battlepass-premium": "ЗОЛОТАЯ ДОРОЖКА · ЗАДАНИЯ ТЕКУЩЕГО СЕЗОНА",
                    "trails-pack": "5 ШЛЕЙФОВ · ВЫБОР В /COSMETICS",
@@ -375,6 +421,8 @@ def check():
         raise ValueError("Duplicate product artwork")
     if (OUTPUT / TEXT_NAME).read_text(encoding="utf-8") != document(cfg, products):
         raise ValueError("Storefront TXT is stale: run tools/trademc/build.py --build")
+    if (OUTPUT / MD_NAME).read_text(encoding="utf-8") != markdown_document(cfg, products):
+        raise ValueError("Storefront Markdown is stale: run tools/trademc/build.py --build")
     if (OUTPUT / "manifest.json").read_text(encoding="utf-8") != manifest_text(cfg, products):
         raise ValueError("Storefront manifest/catalog/hash mismatch")
     print(f"TradeMC OK: {len(products)} products, commands, prices, durations and individual PNGs")
@@ -386,6 +434,7 @@ def build():
     for index, p in enumerate(products, 1):
         artwork(p).save(OUTPUT / "images" / image_name(index, p), optimize=True)
     (OUTPUT / TEXT_NAME).write_text(document(cfg, products), encoding="utf-8")
+    (OUTPUT / MD_NAME).write_text(markdown_document(cfg, products), encoding="utf-8")
     (OUTPUT / "manifest.json").write_text(manifest_text(cfg, products), encoding="utf-8")
     check()
 
@@ -394,7 +443,7 @@ def pack(destination=None):
     check()
     path = Path(destination) if destination else ROOT / f"build/trademc/chrdk-trademc-{version()}.zip"
     path.parent.mkdir(parents=True, exist_ok=True)
-    files = [OUTPUT / TEXT_NAME, OUTPUT / "manifest.json", OUTPUT / "README.md"]
+    files = [OUTPUT / TEXT_NAME, OUTPUT / MD_NAME, OUTPUT / "manifest.json", OUTPUT / "README.md"]
     files += sorted((OUTPUT / "images").glob("*.png"))
     with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
         for file in files:

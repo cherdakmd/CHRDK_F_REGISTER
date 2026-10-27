@@ -32,7 +32,7 @@ import java.util.UUID;
 public interface ChrdkRegisterApi {
 
     /** Версия контракта API. Растёт при расширении (добавлении методов/событий). */
-    int API_VERSION = 12;
+    int API_VERSION = 13;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -159,6 +159,14 @@ public interface ChrdkRegisterApi {
      */
     default long entitlementUntil(String playerName, String productId) {
         return 0L;
+    }
+
+    /**
+     * Число одновременно активных оплаченных пакетов (API v13, только чтение).
+     * Старое одиночное право учитывается как один пакет; не умножайте его по дням.
+     */
+    default int entitlementCount(String playerName, String productId) {
+        return hasEntitlement(playerName, productId) ? 1 : 0;
     }
 
     /** @deprecated Платные товары не выдаются игровым API. Всегда возвращает 0. */

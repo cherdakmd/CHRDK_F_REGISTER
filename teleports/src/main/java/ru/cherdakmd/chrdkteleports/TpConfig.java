@@ -69,41 +69,33 @@ public record TpConfig(
         return Math.max(0, Math.min(100, rankDiscounts.get(index)));
     }
 
-    /** Лимит домов по ступени ранга: таблица модуля или старое правило ранга. */
+    /** Лимит ранга плюс все одновременно активные оплаченные пакеты домов. */
+    public int homeLimit(int rank, int packages) {
+        int base;
+        if (rank <= 0) base = homesMaxNormal;
+        else if (rankHomes.isEmpty()) base = Math.max(homesMaxNormal, homesMaxVip);
+        else base = rankHomes.get(Math.min(rank, rankHomes.size() - 1));
+        // Старый hard-cap ограничивает только базу, не обрезает купленные места.
+        if (homesHardCap > 0) base = Math.min(base, homesHardCap);
+        long total = Math.max(0, base) + (long) Math.max(0, packages) * homesExtraLimit;
+        // Только защита типа int, не игровой потолок.
+        return (int) Math.min(Integer.MAX_VALUE, total);
+    }
+
+    /** Совместимость старого вызова: одно право означает один пакет, а не максимум. */
     public int homeLimit(int rank, boolean extra) {
-        int limit;
-        if (rank <= 0) {
-            limit = homesMaxNormal;
-        } else if (rankHomes.isEmpty()) {
-            limit = Math.max(homesMaxNormal, homesMaxVip);
-        } else {
-            limit = rankHomes.get(Math.min(rank, rankHomes.size() - 1));
-        }
-        if (extra && !homesExtraPermission.isBlank()) {
-            limit = Math.max(limit, homesExtraLimit);
-        }
-        return Math.min(limit, homesHardCap);
+        return homeLimit(rank, grantsExtraHomes(extra) ? 1 : 0);
     }
 
-    /**
-     * Лимит точек дома с учётом купленного товара «дополнительные дома».
-     *
-     * <p>Право {@code homes.extra-permission} выдаётся ядром на срок (группа LuckPerms),
-     * поэтому лимит живёт ровно столько, сколько оплачено. Независимо от способа получения
-     * лимит не превышает {@code homes.hard-cap}: выше потолка не продаётся ничего.</p>
-     *
-     * @param vip   действует ли ранг
-     * @param extra есть ли право на дополнительные дома
-     */
+    /** Старый VIP-вызов без таблицы рангов; оплаченный пакет складывается с базой. */
     public int homeLimit(boolean vip, boolean extra) {
-        int limit = vip ? homesMaxVip : homesMaxNormal;
-        if (extra && !homesExtraPermission.isBlank()) {
-            limit = Math.max(limit, homesExtraLimit);
-        }
-        return Math.min(limit, homesHardCap);
+        int base = vip ? homesMaxVip : homesMaxNormal;
+        if (homesHardCap > 0) base = Math.min(base, homesHardCap);
+        long total = Math.max(0, base) + (grantsExtraHomes(extra) ? (long) homesExtraLimit : 0);
+        return (int) Math.min(Integer.MAX_VALUE, total);
     }
 
-    /** Есть ли у игрока дополнительный лимит по праву (пустое право = товар выключен). */
+    /** Совместимость конфигурации; реальный обработчик читает покупки из ядра, не LP. */
     public boolean grantsExtraHomes(boolean hasPermission) {
         return hasPermission && !homesExtraPermission.isBlank();
     }
@@ -147,8 +139,8 @@ public record TpConfig(
         int maxNormal = clamp(section(homes, "max-normal", 3), 0, 100, logger, "homes.max-normal");
         int maxVip = clamp(section(homes, "max-vip", 8), maxNormal, 100, logger, "homes.max-vip");
         String extraPermission = section(homes, "extra-permission", "chrdktele.homes.plus").trim();
-        int extraLimit = clamp(section(homes, "extra-limit", 8), maxVip, 100, logger, "homes.extra-limit");
-        int hardCap = clamp(section(homes, "hard-cap", 12), maxNormal, 100,
+        int extraLimit = clamp(section(homes, "extra-limit", 8), 0, 100, logger, "homes.extra-limit");
+        int hardCap = clamp(section(homes, "hard-cap", 0), 0, 100,
                 logger, "homes.hard-cap");
         boolean bedSpawn = section(homes, "bed-spawn", true);
         List<Integer> rankHomes = intList(homes, "rank-limits", logger);
