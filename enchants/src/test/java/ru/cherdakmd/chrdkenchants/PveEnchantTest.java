@@ -64,10 +64,10 @@ class PveEnchantTest {
     }
     @Test void masterAndIndividualFlagsStopNewSourcesWithoutRemovingLegacyEnchantments() {
         var yaml = new YamlConfiguration();
-        assertEquals(70, EnchantsConfig.parse(yaml, LOG).enabledEnchants().size());
+        assertEquals(72, EnchantsConfig.parse(yaml, LOG).enabledEnchants().size());
         yaml.set("pve-effects.enabled", false);
         var disabled = EnchantsConfig.parse(yaml, LOG);
-        assertEquals(64, disabled.enabledEnchants().size()); assertTrue(disabled.isEnabled("phoenix"));
+        assertEquals(66, disabled.enabledEnchants().size()); assertTrue(disabled.isEnabled("phoenix"));
         for (var effect : PveEnchant.values()) assertFalse(disabled.isEnabled(effect.id));
         yaml.set("pve-effects.enabled", true); yaml.set("enchants.crippling_edge.enabled", false);
         assertFalse(EnchantsConfig.parse(yaml, LOG).isEnabled("crippling_edge"));

@@ -11,10 +11,10 @@ import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 import java.util.List;
 
 /**
- * CHRDK_Enchants — 70 кастомных чар: 55 светлых и 15 проклятий. Источники:
+ * CHRDK_Enchants — 72 кастомных чар: 57 светлых и 15 проклятий. Источники:
  * зачаровательный стол и жители-библиотекари; книги чар накладываются на
- * наковальне. Хранилище — только PDC предметов, поэтому у плагина нет файла
- * данных: всё живёт в инвентарях.
+ * наковальне. Книги и чары хранятся в PDC предметов, в инвентарях. Отрицательные метки
+ * установленной руды сохраняются в PDC чанков.
  *
  * <p>Эффекты сгруппированы слушателями: ближний бой, стрелы, броня/триггеры
  * здоровья, кирки, светлые чары и проклятия (1.4.128) и периодический сервис аур
@@ -39,6 +39,8 @@ public final class EnchantsPlugin extends JavaPlugin {
     private AuraService auras;
     private PveEffectsListener pve;
     private UtilityEffectsListener utility;
+    private ToolEffectsListener tools;
+    private MiningUtilityListener miningUtility;
     private BowEffectsListener bowEffects;
     private EnchantsApiBridge apiBridge;
 
@@ -65,7 +67,12 @@ public final class EnchantsPlugin extends JavaPlugin {
         this.bowEffects = new BowEffectsListener(this);
         Bukkit.getPluginManager().registerEvents(bowEffects, this);
         Bukkit.getPluginManager().registerEvents(new ArmorEffectsListener(this), this);
-        Bukkit.getPluginManager().registerEvents(new ToolEffectsListener(this), this);
+        MiningOrigin origin = new MiningOrigin(this);
+        Bukkit.getPluginManager().registerEvents(origin, this);
+        this.tools = new ToolEffectsListener(this, origin);
+        Bukkit.getPluginManager().registerEvents(tools, this);
+        this.miningUtility = new MiningUtilityListener(this);
+        Bukkit.getPluginManager().registerEvents(miningUtility, this);
         Bukkit.getPluginManager().registerEvents(new PolarityEffectsListener(this), this);
         // 1.4.140: старые предметы с чарами потеряли ванильный урон — чиним на входе.
         Bukkit.getPluginManager().registerEvents(new AttributeRepairListener(this), this);
@@ -91,6 +98,8 @@ public final class EnchantsPlugin extends JavaPlugin {
     public void onDisable() {
         sourceGeneration++;
         if (table != null) table.clear();
+        if (tools != null) tools.clear();
+        if (miningUtility != null) miningUtility.clear();
         if (gui != null) gui.stop();
         if (pve != null) pve.stop();
         if (utility != null) utility.stop();
@@ -111,6 +120,8 @@ public final class EnchantsPlugin extends JavaPlugin {
     public void reloadEnchantsConfig() {
         sourceGeneration++;
         if (table != null) table.clear();
+        if (tools != null) tools.clear();
+        if (miningUtility != null) miningUtility.clear();
         reloadConfig();
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);

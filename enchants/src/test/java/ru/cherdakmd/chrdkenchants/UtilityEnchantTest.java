@@ -14,9 +14,9 @@ import static org.junit.jupiter.api.Assertions.*;
 class UtilityEnchantTest {
     @TempDir Path dir;
     private static final Logger LOG = Logger.getLogger("UtilityEnchantTest");
-    @Test void fourPositiveImplementedUtilitiesExtendTheCatalogToSeventy() {
-        assertEquals(4, UtilityEnchant.values().length);
-        assertEquals(70, EnchantRegistry.size()); assertEquals(55, EnchantRegistry.lightCount());
+    @Test void sixPositiveImplementedUtilitiesExtendTheCatalogToSeventyTwo() {
+        assertEquals(6, UtilityEnchant.values().length);
+        assertEquals(72, EnchantRegistry.size()); assertEquals(57, EnchantRegistry.lightCount());
         assertEquals(15, EnchantRegistry.curseCount());
         for (var utility : UtilityEnchant.values()) {
             var def = EnchantRegistry.byId(utility.id);
@@ -38,7 +38,7 @@ class UtilityEnchantTest {
     }
     @Test void utilityMasterIsIndependentOfThePveMasterAndIndividualFlags() {
         var yaml = new YamlConfiguration();
-        assertEquals(70, EnchantsConfig.parse(yaml, LOG).enabledEnchants().size());
+        assertEquals(72, EnchantsConfig.parse(yaml, LOG).enabledEnchants().size());
         yaml.set("utility-effects.enabled", false);
         var disabled = EnchantsConfig.parse(yaml, LOG);
         assertEquals(66, disabled.enabledEnchants().size());
