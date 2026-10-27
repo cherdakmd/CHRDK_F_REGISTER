@@ -24,6 +24,12 @@ final class MobProgressionPolicy {
                 Math.min(1.5, (1 + (safe - 1) * .012) * (elite == 2 ? 1.10 : 1)),
                 Math.min(1.10, (1 + (safe - 1) * .002) * (elite == 3 ? 1.03 : 1)));
     }
+    static int variantCount(boolean armored, boolean recovery) { return 3 + (armored ? 1 : 0) + (recovery ? 1 : 0); }
+    static int variant(int draw, boolean armored, boolean recovery) {
+        if (draw < 0 || draw >= variantCount(armored, recovery)) throw new IllegalArgumentException("Elite draw out of range");
+        if (draw < 3) return draw + 1;
+        return armored && draw == 3 ? 4 : EliteRecovery.VARIANT;
+    }
     static boolean natural(String reason) { return "NATURAL".equals(reason) || "CHUNK_GEN".equals(reason) || "PATROL".equals(reason); }
     static int bookTier(int level) { return level >= 20 ? 3 : level >= 10 ? 2 : 1; }
     static boolean valid(int level, int elite) {

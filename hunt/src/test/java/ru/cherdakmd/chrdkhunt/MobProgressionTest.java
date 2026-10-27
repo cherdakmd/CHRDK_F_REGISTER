@@ -28,7 +28,7 @@ class MobProgressionTest {
     }
     @Test void everyEliteAndExtremeLevelRespectsHardStatCaps() {
         for (int level : new int[]{Integer.MIN_VALUE, 1, 2, 10, 20, 30, Integer.MAX_VALUE}) {
-            for (int variant = 0; variant <= 4; variant++) {
+            for (int variant = 0; variant <= ru.cherdakmd.chrdkregister.api.MobProgressionKeys.MAX_ELITE; variant++) {
                 var stats = MobProgressionPolicy.stats(level, variant);
                 assertTrue(stats.health() >= 1 && stats.health() <= 2.5);
                 assertTrue(stats.damage() >= 1 && stats.damage() <= 1.5);

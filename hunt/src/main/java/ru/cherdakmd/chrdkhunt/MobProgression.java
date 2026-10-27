@@ -36,7 +36,7 @@ final class MobProgression implements Listener {
     private final LinkedHashMap<UUID, WeakReference<LivingEntity>> watched = new LinkedHashMap<>();
     private final MobTaskQueue tasks;
     private final BukkitTask watchTask;
-    private boolean enabled, showHud, armored;
+    private boolean enabled, showHud, armored, recovering;
     private double eliteChance;
     private NewcomerProtection newcomers;
     private SpawnGroup.Settings groupSettings;
@@ -62,6 +62,7 @@ final class MobProgression implements Listener {
         enabled = plugin.getConfig().getBoolean("mob-progression.enabled", true);
         showHud = plugin.getConfig().getBoolean("mob-progression.hud", true);
         armored = plugin.getConfig().getBoolean("mob-progression.armored-elite", true);
+        recovering = plugin.getConfig().getBoolean("mob-progression.recovery.enabled", true);
         double value = plugin.getConfig().getDouble("mob-progression.elite-chance-percent", 2);
         eliteChance = Double.isFinite(value) ? Math.max(0, Math.min(5, value)) : 2;
         newcomers = NewcomerProtection.settings(
@@ -129,7 +130,7 @@ final class MobProgression implements Listener {
             double distance = Math.hypot(mob.getLocation().getX() - center.getX(), mob.getLocation().getZ() - center.getZ());
             int rank = MobProgressionPolicy.level(mob.getWorld().getEnvironment().name(), distance, group.effectiveSkills(total));
             int variant = distance > 512 && total >= 50 && ThreadLocalRandom.current().nextDouble(100) < eliteChance
-                    ? ThreadLocalRandom.current().nextInt(1, armored ? 5 : 4) : 0;
+                    ? MobProgressionPolicy.variant(ThreadLocalRandom.current().nextInt(MobProgressionPolicy.variantCount(armored, recovering)), armored, recovering) : 0;
             var protectedSpawn = newcomers.apply(MobProgressionPolicy.range(mob.getWorld().getEnvironment().name(), distance),
                     rank, variant, nearbyNewcomer);
             rank = protectedSpawn.level(); variant = protectedSpawn.elite();

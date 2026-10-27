@@ -31,6 +31,7 @@ public final class HuntPlugin extends JavaPlugin {
     private boolean saveQueued;
     private ChrdkRegisterApi coreApi;
     private MobProgression progression;
+    private EliteRegeneration regeneration;
     private HuntHistoryTracker historyTracker;
     HuntHistoryTracker historyTracker() { return historyTracker; }
 
@@ -75,6 +76,8 @@ public final class HuntPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(bestiaryGui, this);
             this.progression = new MobProgression(this);
             getServer().getPluginManager().registerEvents(progression, this);
+            regeneration = new EliteRegeneration(this);
+            getServer().getPluginManager().registerEvents(regeneration, this);
             historyTracker = new HuntHistoryTracker(this);
             getServer().getPluginManager().registerEvents(historyTracker, this);
             registerCommands();
@@ -95,6 +98,7 @@ public final class HuntPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (regeneration != null) regeneration.stop();
         if (historyTracker != null) historyTracker.stop();
         if (progression != null) progression.stop();
         if (coreApi != null) {
@@ -152,6 +156,7 @@ public final class HuntPlugin extends JavaPlugin {
         settings = candidate; // До этого места никакой cleanup/закрытие GUI не выполняется.
         candidate.committed(getLogger(),
                 () -> { if (historyTracker != null) historyTracker.clear(); },
+                () -> { if (regeneration != null) regeneration.reload(); },
                 () -> { if (progression != null) progression.reload(); },
                 () -> { if (gui != null) gui.closeAll(); },
                 () -> { if (shopGui != null) shopGui.closeAll(); },

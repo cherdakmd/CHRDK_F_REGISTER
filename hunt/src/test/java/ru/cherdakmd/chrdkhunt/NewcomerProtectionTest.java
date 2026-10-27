@@ -42,7 +42,7 @@ class NewcomerProtectionTest {
     @Test void protectionKeepsGeographicalMinimumAndDoesNotAmplifyRewardsOrStats() {
         var protection = NewcomerProtection.settings(true, 20, 16);
         for (String world : new String[]{"NORMAL", "NETHER", "THE_END"})
-            for (double distance : new double[]{0, 1024, 100_000}) for (int elite = 0; elite <= 4; elite++) {
+            for (double distance : new double[]{0, 1024, 100_000}) for (int elite = 0; elite <= ru.cherdakmd.chrdkregister.api.MobProgressionKeys.MAX_ELITE; elite++) {
                 var range = MobProgressionPolicy.range(world, distance);
                 int normal = MobProgressionPolicy.level(world, distance, 1000);
                 var result = protection.apply(range, normal, elite, true);

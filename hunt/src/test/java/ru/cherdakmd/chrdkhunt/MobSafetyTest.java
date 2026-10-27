@@ -104,12 +104,12 @@ class MobSafetyTest {
     }
     @Test void oldProfilesDefaultToEnabledHudAndCorruptCollectionsAreBounded() throws Exception {
         UUID id = UUID.randomUUID();
-        Files.writeString(dir.resolve("hunt.json"), "{\"players\":{\"" + id + "\":{\"name\":\"Игрок\",\"coins\":123,\"observed-levels\":[0,1,1,2.5,30,31,999999999999],\"observed-elites\":[-1,0,1,4,5]}}}");
+        Files.writeString(dir.resolve("hunt.json"), "{\"players\":{\"" + id + "\":{\"name\":\"Игрок\",\"coins\":123,\"observed-levels\":[0,1,1,2.5,30,31,999999999999],\"observed-elites\":[-1,0,1,4,5,6]}}}");
         HuntStore store = new HuntStore(dir, null); store.load();
         assertEquals(123, store.coins(id)); assertTrue(store.mobHud(id));
-        assertEquals(Set.of(1,30), store.observedLevels(id)); assertEquals(Set.of(1,4), store.observedElites(id));
-        for (int i = 1; i <= 30; i++) store.observeMob(id, "Игрок", i, i % 5);
-        assertEquals(30, store.observedLevels(id).size()); assertEquals(4, store.observedElites(id).size());
+        assertEquals(Set.of(1,30), store.observedLevels(id)); assertEquals(Set.of(1,4,5), store.observedElites(id));
+        for (int i = 1; i <= 30; i++) store.observeMob(id, "Игрок", i, i % 6);
+        assertEquals(30, store.observedLevels(id).size()); assertEquals(5, store.observedElites(id).size());
     }
     @Test void hudAndInspectionHaveFinalCancellationAuthDistanceAndCleanupContracts() throws Exception {
         String source = source("MobProgression");
@@ -130,7 +130,7 @@ class MobSafetyTest {
     @Test void messagesContainEveryEliteAndNewCommand() throws Exception {
         try (var stream = getClass().getResourceAsStream("/messages.yml")) {
             assertNotNull(stream); var messages = Messages.from(stream, dir.resolve("messages.yml"), Logger.getLogger("MobSafetyTest"));
-            for (int i = 0; i <= 4; i++) assertTrue(messages.has("mob-variant-" + i));
+            for (int i = 0; i <= ru.cherdakmd.chrdkregister.api.MobProgressionKeys.MAX_ELITE; i++) assertTrue(messages.has("mob-variant-" + i));
             for (String key : List.of("mob-danger", "mob-inspect", "mob-observations", "mob-elite-collection", "mob-hud-state", "mob-bestiary-levels")) assertTrue(messages.has(key), key);
         }
     }
