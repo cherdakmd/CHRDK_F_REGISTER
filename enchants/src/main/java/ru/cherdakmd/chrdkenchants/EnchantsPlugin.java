@@ -29,6 +29,8 @@ public final class EnchantsPlugin extends JavaPlugin {
     private volatile ChrdkRegisterApi coreApi;
     private volatile Messages messages;
     private volatile EnchantsConfig config;
+    private long sourceGeneration;
+    long sourceGeneration() { return sourceGeneration; }
     private EnchantItems items;
     private EnchantService service;
     private EnchantGui gui;
@@ -48,6 +50,7 @@ public final class EnchantsPlugin extends JavaPlugin {
         this.auras = new AuraService(this);
 
         Bukkit.getPluginManager().registerEvents(new TableListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new MobBookListener(this), this);
         Bukkit.getPluginManager().registerEvents(new VillagerListener(this), this);
         Bukkit.getPluginManager().registerEvents(new AnvilApplyListener(this), this);
         Bukkit.getPluginManager().registerEvents(new MeleeEffectsListener(this), this);
@@ -93,6 +96,7 @@ public final class EnchantsPlugin extends JavaPlugin {
 
     /** Перечитывает config.yml/messages.yml. */
     public void reloadEnchantsConfig() {
+        sourceGeneration++;
         reloadConfig();
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);

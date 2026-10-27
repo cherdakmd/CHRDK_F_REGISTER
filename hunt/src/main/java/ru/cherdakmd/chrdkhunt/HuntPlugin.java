@@ -30,6 +30,7 @@ public final class HuntPlugin extends JavaPlugin {
     private BukkitTask queuedSave;
     private boolean saveQueued;
     private ChrdkRegisterApi coreApi;
+    private MobProgression progression;
 
     /**
      * Публичный API ядра: охота спрашивает бонус добычи ранга (1.4.167).
@@ -68,6 +69,8 @@ public final class HuntPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(shopGui, this);
             getServer().getPluginManager().registerEvents(trophyGui, this);
             getServer().getPluginManager().registerEvents(bestiaryGui, this);
+            this.progression = new MobProgression(this);
+            getServer().getPluginManager().registerEvents(progression, this);
             registerCommands();
             registerPlaceholders();
             scheduleTasks();
@@ -86,6 +89,7 @@ public final class HuntPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (progression != null) progression.stop();
         if (coreApi != null) {
             try {
                 coreApi.unregisterProfile("hunt");
@@ -122,6 +126,7 @@ public final class HuntPlugin extends JavaPlugin {
         reloadConfig();
         this.config = HuntConfig.parse(getConfig(), getLogger());
         this.messages = Messages.load(this, config.locale(), getLogger());
+        if (progression != null) progression.reload();
         if (gui != null) {
             gui.closeAll();
         }

@@ -5,7 +5,7 @@ api-version: '26.3'
 description: "Охота на мобов: монеты, осколки семейств, трофеи и моб-ключи"
 author: cherdakmd
 depend: [CHRDK_Core]
-softdepend: [PlaceholderAPI]
+softdepend: [PlaceholderAPI, CHRDK_Skills]
 commands:
   hunt:
     description: "Охота: кошелёк, обмен, лавка, ключи и трофеи"

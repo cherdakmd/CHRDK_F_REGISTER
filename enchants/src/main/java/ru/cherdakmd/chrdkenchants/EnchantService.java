@@ -60,7 +60,12 @@ public final class EnchantService {
      * по пулу проклятий, светлая — только по светлому пулу; {@code null} — любой.
      */
     public RollResult rollOnto(ItemStack item, int costTier, EnchantDef.Polarity polarity) {
-        List<EnchantDef> candidates = applicableTo(item, polarity);
+        return rollOnto(item, costTier, polarity, 3);
+    }
+
+    public RollResult rollOnto(ItemStack item, int costTier, EnchantDef.Polarity polarity, int rarityTier) {
+        List<EnchantDef> candidates = applicableTo(item, polarity).stream()
+                .filter(def -> ru.cherdakmd.chrdkregister.api.EnchantBookPolicy.allows(def.rarity().name(), rarityTier)).toList();
         EnchantDef picked = EnchantRoller.pickWeighted(candidates, random);
         if (picked == null) {
             return null;
@@ -77,8 +82,13 @@ public final class EnchantService {
 
     /** Случайная книга выбранного знака: жители продают только светлые. */
     public RollResult rollBook(int costTier, EnchantDef.Polarity polarity) {
+        return rollBook(costTier, polarity, 3);
+    }
+
+    public RollResult rollBook(int costTier, EnchantDef.Polarity polarity, int rarityTier) {
         List<EnchantDef> pool = plugin.config().enabledEnchants().stream()
                 .filter(def -> polarity == null || def.polarity() == polarity)
+                .filter(def -> ru.cherdakmd.chrdkregister.api.EnchantBookPolicy.allows(def.rarity().name(), rarityTier))
                 .toList();
         EnchantDef picked = EnchantRoller.pickWeighted(pool, random);
         if (picked == null) {
@@ -97,7 +107,7 @@ public final class EnchantService {
             return "not-book";
         }
         Map<String, Integer> bookEnchants = items.read(book);
-        Map<String, Integer> itemEnchants = items.read(item);
+        Map<String, Integer> itemEnchants = new java.util.LinkedHashMap<>(items.read(item));
         for (String id : bookEnchants.keySet()) {
             EnchantDef def = EnchantRegistry.byId(id);
             if (def == null || !plugin.config().isEnabled(id)) {
@@ -118,6 +128,7 @@ public final class EnchantService {
             if (!itemEnchants.containsKey(id) && itemEnchants.size() >= plugin.config().maxPerItem()) {
                 return "blocked";
             }
+            itemEnchants.put(id, bookEnchants.get(id));
         }
         if (item.getType() == Material.BOOK || item.getType() == Material.AIR) {
             return "mismatch";

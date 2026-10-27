@@ -26,24 +26,35 @@ public final class AnvilApplyListener implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(priority = org.bukkit.event.EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPrepareAnvil(PrepareAnvilEvent event) {
         ItemStack left = event.getInventory().getItem(0);
         ItemStack right = event.getInventory().getItem(1);
         if (left == null || right == null || !plugin.items().isEnchantBook(right)) {
             return;
         }
+        Player viewer = event.getView().getPlayer() instanceof Player player ? player : null;
+        if (viewer == null || !viewer.hasPermission("chrdkenchants.use") || plugin.coreApi() == null || !plugin.coreApi().isAuthenticated(viewer)) {
+            event.setResult(null);
+            return;
+        }
         String problem = plugin.service().canApplyFromBook(left, right);
         if (problem != null) {
-            Player viewer = event.getView().getPlayer() instanceof Player player ? player : null;
             if (viewer != null && "blocked".equals(problem)) {
                 plugin.messages().send(viewer, "anvil-capped",
                         "max", plugin.config().maxPerItem());
             }
-            // без результата: ванильная наковальня не даст рабочую выдачу этой паре
+            // Запрещаем и ванильный результат: иначе книга исчезнет без переноса кастомной чары.
+            event.setResult(null);
             return;
         }
-        ItemStack result = left.clone();
+        ItemStack vanilla = event.getResult();
+        int vanillaCost = Math.max(0, event.getInventory().getRepairCost());
+        if (vanilla == null && vanillaCost >= event.getInventory().getMaximumRepairCost()) {
+            event.setResult(null);
+            return;
+        }
+        ItemStack result = vanilla == null ? left.clone() : vanilla.clone();
         plugin.service().applyFromBook(result, right);
         event.setResult(result);
         int maxLevel = plugin.items().read(right).values().stream().mapToInt(Integer::intValue).max().orElse(1);
@@ -58,7 +69,8 @@ public final class AnvilApplyListener implements Listener {
                     case LEGENDARY -> 10;
                 })
                 .mapToInt(Integer::intValue).max().orElse(2);
-        event.getInventory().setRepairCost(rarityCost * maxLevel + 3);
+        event.getInventory().setRepairCostAmount(1);
+        event.getInventory().setRepairCost(Math.min(1000000, (vanilla == null ? 0 : vanillaCost) + rarityCost * maxLevel + 3));
     }
 
     /**
@@ -90,6 +102,8 @@ public final class AnvilApplyListener implements Listener {
         }
         // клик ещё не перенёс предмет — предупреждаем следующим тиком
         Bukkit.getScheduler().runTask(plugin,
-                () -> plugin.messages().send(player, "anvil-curse-applied"));
+                () -> {
+                    if (!event.isCancelled() && player.isOnline()) plugin.messages().send(player, "anvil-curse-applied");
+                });
     }
 }

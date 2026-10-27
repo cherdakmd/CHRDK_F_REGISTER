@@ -185,10 +185,12 @@ public final class TreasureSpecials {
         if (api == null) {
             return null;
         }
-        List<String> pool = cursed ? api.curseIds() : api.lightIds();
+        List<String> pool = (cursed ? api.curseIds() : api.lightIds()).stream()
+                .filter(id -> ru.cherdakmd.chrdkregister.api.EnchantBookPolicy.allows(api.rarity(id), levelCap)).toList();
         if (pool.isEmpty()) {
             // Проклятий нет или они выключены — книга будет светлой.
-            pool = api.lightIds();
+            pool = api.lightIds().stream()
+                    .filter(id -> ru.cherdakmd.chrdkregister.api.EnchantBookPolicy.allows(api.rarity(id), levelCap)).toList();
             cursed = false;
         }
         if (pool.isEmpty()) {

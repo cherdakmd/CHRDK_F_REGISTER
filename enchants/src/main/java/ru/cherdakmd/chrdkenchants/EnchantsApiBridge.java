@@ -67,6 +67,12 @@ public final class EnchantsApiBridge implements ChrdkEnchantsApi {
     }
 
     @Override
+    public String rarity(String id) {
+        EnchantDef def = EnchantRegistry.byId(id);
+        return def == null ? "" : def.rarity().name();
+    }
+
+    @Override
     public int maxLevel(String id) {
         EnchantDef def = EnchantRegistry.byId(id);
         return def == null ? 0 : def.maxLevel();

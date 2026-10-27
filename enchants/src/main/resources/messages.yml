@@ -3,7 +3,7 @@
 enchants:
   no-api: "<red>Ядро CHRDK_F_REGISTER не найдено — чары недоступны.</red>"
   need-auth: "<red>Сначала войдите на сервер (/login).</red>"
-  table-added: "<light_purple>✦ Стол дарует эпическую чару: %name% %levelroman%!</light_purple>"
+  table-added: "<light_purple>✦ Стол дарует чару: %name% %levelroman%!</light_purple>"
   table-cursed: "<dark_red>☠ Стол выплеснул проклятие: %name% %levelroman%!</dark_red>"
   anvil-capped: "<red>На предмете уже максимум чар (%max%) или они конфликтуют.</red>"
   usage: "<gray>/enchants — книга всех 60 чар (светлые и проклятия); /enchants info <id></gray>"
@@ -242,3 +242,7 @@ enchants:
     cursed_blood:
       name: "Проклятая кровь"
       lore: "<red>Раз в пять секунд кровь может отнять полсердца.</red>"
+  book-rarity: "<dark_gray>✶</dark_gray> <gray>Редкость: %rarity% · максимум %maxlevel%</gray>"
+  book-items: "<dark_gray>✶</dark_gray> <gray>Для: %items%</gray>"
+  book-conflicts: "<dark_gray>✶</dark_gray> <gray>Несовместимо: %conflicts%</gray>"
+  book-apply: "<dark_gray>✶</dark_gray> <gray>Перенос: предмет + книга на наковальне</gray>"

@@ -41,6 +41,9 @@ public interface ChrdkEnchantsApi {
     /** Максимальный уровень чары (0 — такой чары нет). */
     int maxLevel(String id);
 
+    /** COMMON / RARE / EPIC / LEGENDARY; пусто для старого моста или неизвестного id. */
+    default String rarity(String id) { return ""; }
+
     /** Уровень чары на предмете (0 — нет). */
     int levelOf(ItemStack item, String id);
 

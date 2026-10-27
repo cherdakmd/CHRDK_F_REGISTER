@@ -5,6 +5,7 @@ api-version: '26.3'
 description: "60 кастомных чар CHRDK: 45 светлых и 15 проклятий — стол, жители, книги"
 author: cherdakmd
 depend: [CHRDK_Core]
+softdepend: [CHRDK_Hunt]
 commands:
   enchants:
     description: Список кастомных чар и их описания

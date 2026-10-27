@@ -220,3 +220,8 @@ hunt:
   admin-usage: "<yellow>/huntadmin <reload|give <ник> <coins|shards|keys> <кол-во> [семейство]|reset <ник>|info></yellow>"
   admin-info: "<gold>Охота:</gold> <gray>семейств <white>%families%</white>, правил мобов <white>%mobs%</white>, позиций лавки <white>%shop%</white>, трофеев <white>%trophies%</white>, охотников <white>%players%</white>, монет заработано <white>%earned%</white>, включено: <white>%enabled%</white>.</gray>"
   "rank-extra-loot": "<gold>Ранг добавил к добыче: +%amount% шт.</gold>"
+  mob-level-hud: "<gray>Уровень <white>%level%</white> · %kind%</gray>"
+  mob-variant-0: "<gray>Обычный</gray>"
+  mob-variant-1: "<gold>Стойкая элита</gold>"
+  mob-variant-2: "<red>Яростная элита</red>"
+  mob-variant-3: "<aqua>Стремительная элита</aqua>"

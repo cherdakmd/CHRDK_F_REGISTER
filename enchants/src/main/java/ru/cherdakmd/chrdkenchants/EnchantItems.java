@@ -210,6 +210,21 @@ public final class EnchantItems {
             lore.add(plugin.messages().get(def.curse() ? "lore-line-curse" : "lore-line",
                     "name", plugin.messages().mini("en." + def.id() + ".name"),
                     "levelroman", EnchantCodec.roman(entry.getValue())));
+            if (meta instanceof org.bukkit.inventory.meta.EnchantmentStorageMeta) {
+                lore.add(plugin.messages().get("book-rarity", "rarity", plugin.messages().mini(def.rarity().labelKey()),
+                        "maxlevel", def.maxLevel()));
+                String groups = String.join(", ", def.supports().stream().map(group -> plugin.messages().raw(group.labelKey())).distinct().sorted().toList());
+                lore.add(plugin.messages().get("book-items", "items", ru.cherdakmd.chrdkregister.Messages.trusted(groups)));
+                for (Component description : plugin.messages().getList("en." + def.id() + ".lore"))
+                    lore.add(Component.text("✶ ").append(description));
+                if (def.conflictGroup() != null) {
+                    String conflicts = String.join(", ", EnchantRegistry.all().stream()
+                            .filter(other -> def.conflictGroup().equals(other.conflictGroup()) && !def.id().equals(other.id()))
+                            .map(other -> plugin.messages().raw("en." + other.id() + ".name")).toList());
+                    if (!conflicts.isEmpty()) lore.add(plugin.messages().get("book-conflicts", "conflicts", ru.cherdakmd.chrdkregister.Messages.trusted(conflicts)));
+                }
+                lore.add(plugin.messages().get("book-apply"));
+            }
         }
         meta.lore(lore.isEmpty() ? null : lore);
     }
