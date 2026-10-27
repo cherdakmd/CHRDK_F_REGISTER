@@ -114,7 +114,7 @@ final class UtilityEffectsListener implements Listener {
                     || event.getAmount() > 40 || !eligible(player) || !world.equals(player.getWorld().getUID())
                     || !PveEquipment.same(expected, player.getInventory().getHelmet())
                     || level(player.getInventory().getHelmet(), UtilityEnchant.AIR_RESERVE) != level
-                    || player.getEyeLocation().getBlock().getType() != Material.WATER || player.getRemainingAir() > 40) return;
+                    || !player.isUnderWater() || player.getRemainingAir() > 40) return;
             long now = System.currentTimeMillis();
             if (player.getPersistentDataContainer().getOrDefault(airReady, PersistentDataType.LONG, 0L) > now) return;
             int before = player.getRemainingAir();

@@ -75,7 +75,7 @@ class UtilityEnchantTest {
         String source = source();
         for (String guard : List.of("event.isCancelled()", "session.equals(sessions.get(id))", "generation != plugin.sourceGeneration()",
                 "world.equals(player.getWorld().getUID())", "PveEquipment.same(expected, player.getInventory().getHelmet())",
-                "Math.min(player.getMaximumAir()", "player.getEyeLocation().getBlock().getType() != Material.WATER",
+                "Math.min(player.getMaximumAir()", "!player.isUnderWater()",
                 "player.getRemainingAir() <= before", "airPending.containsKey(player.getUniqueId())")) assertTrue(source.contains(guard), guard);
     }
     @Test void stepAndGardenOnlySuppressTheirOwnEnvironmentalEvents() throws Exception {
