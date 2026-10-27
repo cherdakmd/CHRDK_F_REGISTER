@@ -1263,7 +1263,6 @@ messages:
     "not-active": "<red>У %player% нет активного товара «%id%».</red>"
     "unknown-product": "<red>Товар «%id%» не найден. Доступно: %list%</red>"
     "review-required": "<yellow>Доставка %product% для %player% не выполнена: %reason%. Запись в /%label% pending — сверьте оплату с магазином, затем решите вручную. Дни не урезались, частичная выдача не выполнялась.</yellow>"
-    "rank-higher": "<red>У %player% уже есть ранг не ниже — покупка не выдана.</red>"
     "my-header": "<gold><b>Мои покупки</b></gold> <gray>(%player%)</gray>"
     "my-entry": "<yellow>%name%</yellow> <gray>— до %until%, осталось %left% дн.</gray>"
     "my-empty": "<gray>Активных покупок нет. Каталог: /%label% shop</gray>"
