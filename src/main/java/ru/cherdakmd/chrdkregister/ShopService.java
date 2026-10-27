@@ -42,7 +42,7 @@ public final class ShopService {
         RANK_HIGHER,
         /** Полный оплаченный срок не помещается в горизонт каталога. */
         TIME_LIMIT,
-        /** Набор имеет потерянные/циклические ссылки или включает ранг. */
+        /** Набор имеет потерянные/циклические ссылки или вложенный ранг. */
         INVALID_BUNDLE,
         /** Ник не соответствует принятому сервером формату. */
         INVALID_RECIPIENT
@@ -206,14 +206,15 @@ public final class ShopService {
             var plan = ShopDeliveryPolicy.rankPlan(account, product.rank(), length, 0, now,
                     monthlyPrice(current), monthlyPrice(product.rank()), catalog.maxTotalDays());
             if (plan.status() != Status.GRANTED) return Result.failure(plan.status(), canonical);
-        } else if (product.isBundle()) {
+        }
+        if (product.isBundle()) {
             for (String id : product.resolvedIncludes()) {
                 ShopProduct part = catalog.find(id).orElseThrow(); // проверено complete()
-                if (!fitsProduct(canonical, part, now, part.days())) {
+                if (!fitsProduct(canonical, part, now, product.includedDays(part))) {
                     return Result.failure(Status.TIME_LIMIT, canonical);
                 }
             }
-        } else if (!fitsProduct(canonical, product, now, length)) {
+        } else if (!product.hasRank() && !fitsProduct(canonical, product, now, length)) {
             return Result.failure(Status.TIME_LIMIT, canonical);
         }
 
@@ -239,13 +240,16 @@ public final class ShopService {
         }
         List<String> included = new ArrayList<>();
         if (product.isBundle()) {
-            until = now;
-            bonusDays = 0;
+            if (!product.hasRank()) {
+                until = now;
+                bonusDays = 0;
+            }
             for (String partId : product.resolvedIncludes()) {
                 ShopProduct part = catalog.find(partId).orElseThrow(); // весь состав проверен до выдачи
                 long current = "homes-plus".equals(part.id()) ? 0 : access.store().entitlementUntil(canonical, part.id());
-                long baseline = ShopEntitlements.extend(now, current, part.days(), catalog.maxTotalDays());
-                long grantedUntil = grantOne(canonical, part, now, part.days(), discount);
+                int partDays = product.includedDays(part);
+                long baseline = ShopEntitlements.extend(now, current, partDays, catalog.maxTotalDays());
+                long grantedUntil = grantOne(canonical, part, now, partDays, discount);
                 until = Math.max(until, grantedUntil);
                 bonusDays += ShopDeliveryPolicy.bonusDays(grantedUntil, baseline);
                 included.add(part.id());
@@ -365,7 +369,7 @@ public final class ShopService {
         int price = 0;
         int bestDays = Integer.MAX_VALUE;
         for (ShopProduct product : catalog().products()) {
-            if (product.rank() == level && product.days() <= 31 && product.days() < bestDays) {
+            if (!product.isBundle() && product.rank() == level && product.days() <= 31 && product.days() < bestDays) {
                 price = product.priceRubles();
                 bestDays = product.days();
             }
@@ -402,6 +406,8 @@ public final class ShopService {
                 .filter(name -> name != null && !name.isBlank())
                 .orElse(playerName);
         ShopProduct product = catalog().find(productId).orElse(null);
+        // Гибрид нельзя отзывать наполовину и нельзя снимать чужие пересекающиеся покупки.
+        if (product != null && product.hasRank() && product.isBundle()) return false;
         boolean removed;
         if (product != null && product.isBundle()) {
             // У набора нет собственной записи: снимаем всё, что он выдал. Время,

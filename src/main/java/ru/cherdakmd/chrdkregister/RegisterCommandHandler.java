@@ -1682,6 +1682,11 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         }
         String playerName = args[1].trim();
         String productId = args[2].trim();
+        ShopProduct product = plugin.shop().product(productId).orElse(null);
+        if (product != null && product.hasRank() && product.isBundle()) {
+            messages.send(sender, "shop.hybrid-revoke-manual");
+            return;
+        }
         if (!plugin.shop().revoke(playerName, productId, sender.getName())) {
             messages.send(sender, "shop.not-active", "player", playerName, "id", productId);
             return;

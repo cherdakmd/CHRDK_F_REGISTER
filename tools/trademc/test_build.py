@@ -20,16 +20,16 @@ class StorefrontTest(unittest.TestCase):
         cls.cfg, cls.products = kit.catalog()
         cls.by_id = {p['id']: p for p in cls.products}
 
-    def test_all_25_skus_and_periods(self):
-        self.assertEqual(25, len(self.products))
-        self.assertEqual(10, sum(bool(p.get('rank')) for p in self.products))
+    def test_all_26_skus_and_periods(self):
+        self.assertEqual(26, len(self.products))
+        self.assertEqual(10, sum(bool(p.get('rank')) and not p.get('includes') for p in self.products))
         for p in self.products:
             expected = 365 if p['id'].endswith('-year') else 90 if p['id'] == 'battlepass-premium' else 30
             self.assertEqual(expected, p['days'], p['id'])
             self.assertEqual(f"pass shopbuy %username% {p['id']}", kit.command(p))
             self.assertNotIn('payment=', kit.command(p))
         self.assertEqual([99, 159, 229, 299, 365],
-                         [p['price'] for p in self.products if p.get('rank') and p['days'] == 30])
+                         [p['price'] for p in self.products if p.get('rank') and not p.get('includes') and p['days'] == 30])
 
     def test_manifest_matches_live_catalog_and_individual_artwork(self):
         manifest = json.loads((kit.OUTPUT / 'manifest.json').read_text(encoding='utf-8'))
@@ -50,8 +50,8 @@ class StorefrontTest(unittest.TestCase):
                 img.verify()
             names.add(entry['image'])
             hashes.add(entry['imageSha256'])
-        self.assertEqual(25, len(names))
-        self.assertEqual(25, len(hashes))
+        self.assertEqual(26, len(names))
+        self.assertEqual(26, len(hashes))
 
     def test_txt_ready_commands_prices_durations_and_trust_boundary(self):
         txt = (kit.OUTPUT / kit.TEXT_NAME).read_text(encoding='utf-8')
@@ -81,7 +81,7 @@ class StorefrontTest(unittest.TestCase):
 
     def test_rank_limits_come_from_configs_not_old_cards(self):
         for p in self.products:
-            if not p.get('rank'):
+            if not p.get('rank') or p.get('includes'):
                 continue
             tier = p['rank']
             text = kit.description(p, self.cfg)
@@ -90,6 +90,18 @@ class StorefrontTest(unittest.TestCase):
             self.assertIn('Платные цвета ника не входят даже в V', text)
             self.assertIn('не гарантированное удвоение каждого блока', text)
         self.assertIn('90 дней', kit.document(self.cfg, self.products))
+
+    def test_all_inclusive_has_approved_terms_and_no_contradictory_rank_color_claim(self):
+        from audit import leaves
+        full = self.by_id['all-inclusive']
+        self.assertEqual((899, 30, 5, 30), (full['price'], full['days'], full['rank'], full['includes-days']))
+        self.assertEqual(13, len(leaves('all-inclusive', self.by_id)))
+        self.assertEqual('pass shopbuy %username% all-inclusive', kit.command(full))
+        text = kit.description(full, self.cfg)
+        self.assertIn('20 домов', text)
+        self.assertIn('экономия набора 174', text)
+        self.assertNotIn('Платные цвета ника не входят', text)
+        self.assertEqual(90, self.by_id['battlepass-premium']['days'])
 
     def test_bundle_members_exist_and_are_not_additional_delivery_commands(self):
         for p in self.products:
@@ -147,8 +159,8 @@ class StorefrontTest(unittest.TestCase):
             with zipfile.ZipFile(first) as archive:
                 self.assertIsNone(archive.testzip())
                 names = archive.namelist()
-                self.assertEqual(30, len(names))
-                self.assertEqual(25, sum(n.endswith('.png') for n in names))
+                self.assertEqual(31, len(names))
+                self.assertEqual(26, sum(n.endswith('.png') for n in names))
                 self.assertIn(kit.TEXT_NAME, names)
                 self.assertIn(kit.MD_NAME, names)
                 self.assertIn(kit.AUDIT_NAME, names)

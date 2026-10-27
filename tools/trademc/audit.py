@@ -25,7 +25,7 @@ def validate(root, cfg, products):
         if not condition:
             raise ValueError('TradeMC cross-module audit: ' + message)
     by_id = {p['id']: p for p in products}
-    require(len(by_id) == 25, 'expected 25 distinct sale SKUs')
+    require(len(by_id) == 26, 'expected 26 distinct sale SKUs')
     require(cfg['shop']['enabled'] and cfg['shop']['max-total-days'] == 365, 'catalog enabled / 365-day horizon')
     for level in cfg['ranks']['levels']:
         monthly = by_id.get('rank-' + level['id'])
@@ -72,6 +72,13 @@ def validate(root, cfg, products):
     require(sum(by_id[x]['price'] for x in trail_ids) == 295, 'trail savings text stale')
     require(sum(by_id[x]['price'] for x in color_ids) == 705, 'color savings text stale')
     require(by_id['trails-pack']['price'] == 199 and by_id['look-pack']['price'] == 599, 'bundle savings text stale')
+    full = by_id['all-inclusive']
+    require(full['price'] == 899 and full['days'] == 30 and full['rank'] == 5 and full['includes-days'] == 30,
+            'all-inclusive must grant V and all extras for 899 / 30 days')
+    require(leaves('all-inclusive', by_id) == trail_ids | color_ids | {'homes-plus', 'join-effect', 'battlepass-premium'},
+            'all-inclusive contents mismatch')
+    require(len(leaves('all-inclusive', by_id)) == 13, 'full pack needs 13 distinct extra rights')
+    require(not any(by_id[x].get('rank') for x in leaves('all-inclusive', by_id)), 'rank must not be a bundle leaf')
     require(all(not p.get('commands') and not p.get('pass-days') for p in products), 'unexpected item/paid-pass console grants in catalog')
     commands = yaml.safe_load((root / 'src/main/resources/plugin.yml').read_text(encoding='utf-8'))['commands']
     require(all(c in commands for c in ('labels', 'profile', 'rank', 'hat', 'pass')), 'player/store command missing')
@@ -83,12 +90,14 @@ def report(root, cfg, products, version):
     lines = [f'# Аудит всех товаров TradeMC — {version}\n\n',
              'Проверены стандартные конфиги, код доступа/выдачи и регрессионные тесты. '
              '**Это не проверка реальной оплаты или установленного сервера.**\n\n',
-             '## Сверка 25 товаров\n\n',
+             f'## Сверка {len(products)} товаров\n\n',
              '| ID | Название | Цена | Дней | Выдача и повторная покупка |\n',
              '| --- | --- | ---: | ---: | --- |\n']
     for p in products:
         name = re.sub(r'<[^>]+>', '', p['name'])
-        if p.get('rank'):
+        if p['id'] == 'all-inclusive':
+            behavior = 'Покровитель V + 13 дополнений по 30 дней; одна продажа 899 ₽'
+        elif p.get('rank'):
             behavior = f"Ранг {p['rank']}; продление/повышение с сохранением остатка, без понижения"
         elif p['id'] == 'homes-plus':
             behavior = '+8 за каждый пакет; независимые сроки; складывается с рангом'
@@ -104,6 +113,19 @@ def report(root, cfg, products, version):
             behavior = f"{len(leaves(p['id'], {x['id']: x for x in products}))} отдельных прав; срок каждой части продлевается отдельно"
         lines.append(f"| `{p['id']}` | {name} | {p['price']} ₽ | {p['days']} | {behavior} |\n")
     lines.append('''
+## Добавлено в 1.4.198: «Всё включено»
+
+899 ₽ / 30 дней: ранг V на корне + пакет +8 домов, пять каталожных шлейфов,
+пять платных цветов, эффект входа и премиум-пропуск. Все 13 дополнительных
+прав в этом наборе выдаются на 30 дней; отдельный пропуск остаётся на 90 дней.
+Стандартный V даёт 12 домов: с первым пакетом будет 20; старые пакеты также
+учитываются. Каждый новый пакет домов истекает независимо, остальные права
+и ранг продлеваются по прежним правилам. Сначала проверяется весь состав.
+Набор не меняет базовую цену V при пересчёте повышения/в меню рангов.
+Для постоянного V набор не выдаётся: ручная сверка, а не выдача только дополнений.
+Отзыв гибрида через shoprevoke заблокирован, чтобы не снимать только половину
+покупки или чужие пересекающиеся права. Возвраты разбираются вручную.
+
 ## Найдено и исправлено в 1.4.197
 
 1. Несуществующий `/nickcolors` заменён реальной `/labels color <id>` в документах и картинках.
@@ -135,7 +157,7 @@ def report(root, cfg, products, version):
 
 ## Что проверяется автоматически
 
-25 уникальных SKU и цен; пары рангов 30/365; связи шлейфов/цветов/эффекта/пропуска с товарами;
+26 уникальных SKU и цен; пары рангов 30/365; связи шлейфов/цветов/эффекта/пропуска с товарами;
 состав/циклы наборов; периоды листьев; реальная палитра градиентов; формулы цен; размер пакета домов;
 существующие команды; соответствие TXT/MD/манифеста; 25 PNG 1200×1200 с разными SHA-256; CRC и
 воспроизводимость ZIP. Java-тесты отдельно проверяют доступ, арифметику сроков, постоянный/временный

@@ -138,15 +138,23 @@ public final class ShopCatalog {
                 tag = "";
             }
 
-            int rank = intOf(entry.get("rank"), 0);
+            int rank = intOf(entry.get("rank"), entry.containsKey("rank") ? -1 : 0);
             if (rank < 0 || rank > RankLadder.MAX_LEVEL) {
                 problems.add("shop.products[" + index + "] (" + id + "): rank " + rank
-                        + " вне диапазона 1.." + RankLadder.MAX_LEVEL + " — товар без ранга");
-                rank = 0;
+                        + " вне диапазона 0.." + RankLadder.MAX_LEVEL + " — товар пропущен");
+                continue;
             }
-            if (rank > 0 && !strings(entry.get("includes")).isEmpty()) {
-                problems.add("shop.products[" + index + "] (" + id + "): у товара ранга не бывает "
-                        + "includes — набор проигнорирован");
+            int includedDays = intOf(entry.get("includes-days"), entry.containsKey("includes-days") ? -1 : 0);
+            if (includedDays < 0 || includedDays > cap) {
+                problems.add("shop.products (" + id + "): недопустимый includes-days — товар пропущен");
+                continue;
+            }
+            List<String> includes = ids(strings(entry.get("includes")));
+            if ((rank > 0 && entry.containsKey("includes") && (includedDays == 0 || includes.isEmpty()))
+                    || (includedDays > 0 && includes.isEmpty())) {
+                problems.add("shop.products[" + index + "] (" + id + "): набор с рангом требует "
+                        + "положительный includes-days — товар пропущен");
+                continue;
             }
 
             int passDays = intOf(entry.get("pass-days"), 0);
@@ -156,13 +164,11 @@ public final class ShopCatalog {
                 passDays = 0;
             }
 
-            List<String> includes = ids(strings(entry.get("includes")));
             List<String> permissions = strings(entry.get("permissions"));
             List<String> commands = strings(entry.get("commands"));
 
-            List<String> safeIncludes = rank > 0 ? List.of() : includes;
             ShopProduct product = new ShopProduct(id, name, text(entry.get("description")),
-                    price, days, group, tag, permissions, commands, safeIncludes, List.of(), passDays, rank);
+                    price, days, group, tag, permissions, commands, includes, List.of(), passDays, rank, includedDays);
             seen.put(id, product);
             products.add(product);
         }
@@ -200,10 +206,10 @@ public final class ShopCatalog {
             result.add(new ShopProduct(product.id(), product.name(), product.description(),
                     product.priceRubles(), product.days(), product.group(), product.tag(),
                     product.permissions(), product.commands(), product.includes(), leaves,
-                    product.passDays(), product.rank()));
+                    product.passDays(), product.rank(), product.includedDays()));
         }
         for (ShopProduct bundle : result) {
-            if (bundle.resolvedIncludes().isEmpty() || bundle.hasPassDays()) {
+            if (bundle.resolvedIncludes().isEmpty() || bundle.hasPassDays() || bundle.hasRank()) {
                 // Набор с днями проходки не проверяем: у проходки своя цена по тарифам,
                 // и любая оценка здесь была бы выдумкой.
                 continue;

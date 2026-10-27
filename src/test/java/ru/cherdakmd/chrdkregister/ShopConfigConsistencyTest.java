@@ -84,7 +84,7 @@ class ShopConfigConsistencyTest {
         ShopCatalog catalog = catalog();
         assertTrue(catalog.usable(), "витрина должна быть включена");
         assertTrue(catalog.problems().isEmpty(), "каталог разбирается с ошибками: " + catalog.problems());
-        assertEquals(25, catalog.products().size(), "пять товаров добавились к двадцати (1.4.188)");
+        assertEquals(26, catalog.products().size(), "полный набор добавлен к 25 товарам");
     }
 
     @Test

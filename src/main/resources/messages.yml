@@ -1262,6 +1262,7 @@ messages:
     "revoked-player": "<yellow>Товар «%name%» больше не действует.</yellow>"
     "not-active": "<red>У %player% нет активного товара «%id%».</red>"
     "unknown-product": "<red>Товар «%id%» не найден. Доступно: %list%</red>"
+    "hybrid-revoke-manual": "<yellow>Набор с рангом требует ручного разбора возврата: shoprevoke не отзывает его частично и не снимает пересекающиеся покупки. Сначала сверьте историю оплат и сроки.</yellow>"
     "review-required": "<yellow>Доставка %product% для %player% не выполнена: %reason%. Запись в /%label% pending — сверьте оплату с магазином, затем решите вручную. Дни не урезались, частичная выдача не выполнялась.</yellow>"
     "my-header": "<gold><b>Мои покупки</b></gold> <gray>(%player%)</gray>"
     "my-entry": "<yellow>%name%</yellow> <gray>— до %until%, осталось %left% дн.</gray>"

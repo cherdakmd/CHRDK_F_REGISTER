@@ -31,14 +31,24 @@ class CrossModuleAuditTest(unittest.TestCase):
     def check(self):
         return validate(self.root, self.cfg, self.products)
 
-    def test_all_25_products_and_audit_report_are_covered(self):
-        self.assertEqual(25, len(self.check()))
+    def test_all_26_products_and_audit_report_are_covered(self):
+        self.assertEqual(26, len(self.check()))
         text = report(self.root, self.cfg, self.products, kit.version())
-        self.assertEqual(25, text.count('| `'))
+        self.assertEqual(26, text.count('| `'))
         for p in self.products:
             self.assertIn('`' + p['id'] + '`', text)
         self.assertIn('904 ₽', text)
         self.assertIn('не провер', text.lower())
+
+    def test_full_pack_period_or_price_cannot_change_silently(self):
+        full = next(p for p in self.products if p['id'] == 'all-inclusive')
+        full['includes-days'] = 90
+        with self.assertRaisesRegex(ValueError, 'all-inclusive must grant'):
+            self.check()
+        full['includes-days'] = 30
+        full['price'] = 999
+        with self.assertRaisesRegex(ValueError, 'all-inclusive must grant'):
+            self.check()
 
     def test_rank_pair_price_mismatch_is_rejected(self):
         self.products[1]['price'] += 1
