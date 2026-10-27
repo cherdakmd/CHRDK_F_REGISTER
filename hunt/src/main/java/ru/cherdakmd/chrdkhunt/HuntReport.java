@@ -141,6 +141,7 @@ public final class HuntReport {
         plugin.messages().send(sender, "help-chest");
         plugin.messages().send(sender, "help-trophies");
         plugin.messages().send(sender, "help-top");
+        plugin.messages().send(sender, "mob-help");
         plugin.messages().send(sender, "help-footer");
     }
 }

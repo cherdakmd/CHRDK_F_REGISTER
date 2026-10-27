@@ -10,7 +10,7 @@ commands:
   hunt:
     description: "Охота: кошелёк, обмен, лавка, ключи и трофеи"
     aliases: [ohota, hunter]
-    usage: "/hunt [stats [ник]|shop|buy <id>|exchange <алмазы|max>|keys|chest <семейство>|trophies|trophy <id>|top|help]"
+    usage: "/hunt [stats [ник]|shop|buy <id>|exchange <алмазы|max>|keys|chest <семейство>|trophies|trophy <id>|top|danger|inspect|observations|elites|hud [on|off]|help]"
   huntadmin:
     description: "Управление охотой"
     permission: chrdkhunt.admin

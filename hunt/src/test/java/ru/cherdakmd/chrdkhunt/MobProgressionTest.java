@@ -28,7 +28,7 @@ class MobProgressionTest {
     }
     @Test void everyEliteAndExtremeLevelRespectsHardStatCaps() {
         for (int level : new int[]{Integer.MIN_VALUE, 1, 2, 10, 20, 30, Integer.MAX_VALUE}) {
-            for (int variant = 0; variant <= 3; variant++) {
+            for (int variant = 0; variant <= 4; variant++) {
                 var stats = MobProgressionPolicy.stats(level, variant);
                 assertTrue(stats.health() >= 1 && stats.health() <= 2.5);
                 assertTrue(stats.damage() >= 1 && stats.damage() <= 1.5);
@@ -73,7 +73,7 @@ class MobProgressionTest {
     @Test void sourceKeepsFinalSpawnGuardsAndNeverRenamesOrInflatesRewards() throws Exception {
         String source = Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkhunt/MobProgression.java"));
         assertTrue(source.contains("generation != expected || event.isCancelled()"));
-        assertTrue(source.contains("pending >= 4096"));
+        assertTrue(Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkhunt/MobTaskQueue.java")).contains("LIMIT = 4096"));
         assertTrue(source.contains("!mob.getPersistentDataContainer().getKeys().isEmpty()"));
         assertTrue(source.contains("instance.removeModifier(key)"));
         assertFalse(source.contains(".customName(" + "plugin"));
@@ -81,6 +81,7 @@ class MobProgressionTest {
         assertFalse(source.contains("setDroppedExp")); assertFalse(source.contains("handleDeath("));
         assertFalse(source.contains("dropItem")); assertFalse(source.contains("award("));
         assertTrue(source.contains("mob.getPersistentDataContainer().remove(active)"));
-        assertFalse(source.contains("mob.getPersistentDataContainer().remove(level)"));
+        assertTrue(source.contains("if (!allowed(mob)"));
+        assertTrue(source.contains("data.remove(level); data.remove(elite); data.remove(origin)"));
     }
 }

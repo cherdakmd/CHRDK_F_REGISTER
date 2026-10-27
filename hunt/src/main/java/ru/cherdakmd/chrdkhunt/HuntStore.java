@@ -48,6 +48,9 @@ public final class HuntStore {
     /** Профиль охотника. Мутируется только методами хранилища. */
     public static final class PlayerData {
         private String name = "";
+        private boolean mobHud = true;
+        private final Set<Integer> observedLevels = new LinkedHashSet<>();
+        private final Set<Integer> observedElites = new LinkedHashSet<>();
         private long coins;
         private long earned;
         private long killsTotal;
@@ -185,6 +188,10 @@ public final class HuntStore {
                         continue;
                     }
                     PlayerData player = new PlayerData(string(row.get("name")));
+                    player.mobHud = !Boolean.FALSE.equals(row.get("mob-hud"));
+                    readNumbers(row.get("observed-levels"), player.observedLevels, 30);
+                    readNumbers(row.get("observed-elites"), player.observedElites,
+                            ru.cherdakmd.chrdkregister.api.MobProgressionKeys.MAX_ELITE);
                     player.coins = clampLong(row.get("coins"), MAX_COINS);
                     player.earned = clampLong(row.get("earned"), MAX_COINS);
                     player.killsTotal = clampLong(row.get("kills-total"), Long.MAX_VALUE);
@@ -260,6 +267,37 @@ public final class HuntStore {
                 target.add(id);
             }
         }
+    }
+
+    private static void readNumbers(Object raw, Set<Integer> result, int max) {
+        if (!(raw instanceof List<?> rows)) return;
+        for (Object value : rows) if (value instanceof Number number) {
+            double n = number.doubleValue();
+            if (Double.isFinite(n) && n >= 1 && n <= max && n == Math.rint(n)) result.add((int) n);
+        }
+    }
+    /** Наблюдения не считаются убийствами и не открывают старые наградные разделы. */
+    public synchronized boolean observeMob(UUID id, String name, int level, int elite) {
+        if (id == null || !MobProgressionPolicy.valid(level, elite)) return false;
+        PlayerData data = ensure(id, name);
+        boolean changed = data.observedLevels.add(level);
+        if (elite > 0) changed |= data.observedElites.add(elite);
+        dirty |= changed;
+        return changed;
+    }
+    public synchronized Set<Integer> observedLevels(UUID id) {
+        PlayerData data = player(id); return data == null ? Set.of() : Set.copyOf(data.observedLevels);
+    }
+    public synchronized Set<Integer> observedElites(UUID id) {
+        PlayerData data = player(id); return data == null ? Set.of() : Set.copyOf(data.observedElites);
+    }
+    public synchronized boolean mobHud(UUID id) {
+        PlayerData data = player(id); return data == null || data.mobHud;
+    }
+    public synchronized void mobHud(UUID id, String name, boolean value) {
+        if (id == null) return;
+        PlayerData data = ensure(id, name);
+        if (data.mobHud != value) { data.mobHud = value; dirty = true; }
     }
 
     /* -------------------------------- игроки ---------------------------------- */
@@ -765,6 +803,9 @@ public final class HuntStore {
             PlayerData player = entry.getValue();
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("name", player.name);
+            row.put("mob-hud", player.mobHud);
+            row.put("observed-levels", player.observedLevels.stream().sorted().toList());
+            row.put("observed-elites", player.observedElites.stream().sorted().toList());
             row.put("coins", player.coins);
             row.put("earned", player.earned);
             row.put("kills-total", player.killsTotal);

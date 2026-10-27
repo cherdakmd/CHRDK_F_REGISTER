@@ -36,14 +36,18 @@ final class MobBookListener implements Listener {
                 : damage.getDamager() instanceof Projectile shot && shot.getShooter() instanceof Player player ? player : null;
         if (!killer.equals(attacker)) return; // падение, лава, питомцы и старый combat credit не дают книгу
         var data = event.getEntity().getPersistentDataContainer();
+        if (!data.has(level, PersistentDataType.INTEGER) || !data.has(elite, PersistentDataType.INTEGER)
+                || !data.has(active, PersistentDataType.BYTE) || !data.has(origin, PersistentDataType.STRING)) return;
         int rank = data.getOrDefault(level, PersistentDataType.INTEGER, 0);
         int variant = data.getOrDefault(elite, PersistentDataType.INTEGER, 0);
         if (event.getEntity().hasMetadata("NPC") || event.getEntity().customName() != null
                 || event.getEntity() instanceof org.bukkit.entity.Tameable || event.getEntity() instanceof org.bukkit.entity.Boss
+                || event.getEntity() instanceof org.bukkit.entity.Warden || event.getEntity() instanceof org.bukkit.entity.ElderGuardian
+                || event.getEntity() instanceof org.bukkit.entity.ArmorStand || !event.getEntity().hasAI()
                 || data.getOrDefault(active, PersistentDataType.BYTE, (byte) 0) != 1
                 || event.getEntity().getEntitySpawnReason() == null
                 || !java.util.Set.of("NATURAL", "CHUNK_GEN", "PATROL").contains(event.getEntity().getEntitySpawnReason().name())
-                || rank < 1 || rank > 30 || variant < 0 || variant > 3 || data.has(claimed)
+                || rank < 1 || rank > 30 || variant < 0 || variant > MobProgressionKeys.MAX_ELITE || data.has(claimed)
                 || !MobProgressionKeys.NATURAL.equals(data.get(origin, PersistentDataType.STRING))) return;
         data.set(claimed, PersistentDataType.BYTE, (byte) 1);
         double chance = chance(variant != 0 ? "elite" : "regular", variant != 0 ? 8 : .35, variant != 0 ? 25 : 1);

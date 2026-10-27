@@ -215,6 +215,8 @@ public final class HuntPlugin extends JavaPlugin {
         return messages;
     }
 
+    MobProgression progression() { return progression; }
+
     public HuntStore store() {
         return store;
     }

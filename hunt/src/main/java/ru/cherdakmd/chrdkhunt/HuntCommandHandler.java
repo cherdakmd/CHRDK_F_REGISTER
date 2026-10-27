@@ -23,7 +23,7 @@ public final class HuntCommandHandler implements CommandExecutor, TabCompleter {
 
     private static final List<String> PLAYER_SUBCOMMANDS =
             List.of("help", "stats", "shop", "buy", "exchange", "keys", "chest",
-                    "bestiary", "trophies", "trophy", "top");
+                    "bestiary", "trophies", "trophy", "top", "danger", "inspect", "observations", "elites", "hud");
     private static final List<String> ADMIN_SUBCOMMANDS =
             List.of("reload", "give", "reset", "info");
     private static final List<String> GIVE_KINDS = List.of("coins", "shards", "keys");
@@ -70,6 +70,7 @@ public final class HuntCommandHandler implements CommandExecutor, TabCompleter {
             case "trophies" -> trophies(sender);
             case "trophy" -> trophy(sender, args);
             case "top" -> plugin.report().top(sender);
+            case "danger", "inspect", "observations", "elites", "hud" -> new MobReport(plugin).command(sender, args);
             default -> {
                 plugin.messages().send(sender, "unknown-subcommand", "sub", args[0]);
                 yield true;
@@ -393,6 +394,8 @@ public final class HuntCommandHandler implements CommandExecutor, TabCompleter {
             }
             return List.of();
         }
+        if (args.length == 2 && args[0].equalsIgnoreCase("hud") && sender.hasPermission("chrdkhunt.use"))
+            return filter(List.of("on", "off"), args[1]);
         if (args.length == 1) {
             return filter(PLAYER_SUBCOMMANDS, args[0]);
         }
