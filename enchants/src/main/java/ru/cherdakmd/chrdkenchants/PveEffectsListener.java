@@ -119,8 +119,8 @@ final class PveEffectsListener implements Listener {
                     || !eligible(owner) || !target.isValid() || target.isDead() || !hostile(target)
                     || !world.equals(owner.getWorld().getUID()) || !world.equals(target.getWorld().getUID())
                     || !plugin.config().isEnabled(choice.enchant.id)) return;
-            if (weapon != null && !weapon.equals(owner.getInventory().getItemInMainHand())) return;
-            if (armor != null && !Arrays.equals(armor, owner.getInventory().getArmorContents())) return;
+            if (weapon != null && !PveEquipment.same(weapon, owner.getInventory().getItemInMainHand())) return;
+            if (armor != null && !PveEquipment.same(armor, owner.getInventory().getArmorContents())) return;
             if (shot != null && (shot.source.isCancelled() || shot.expires < System.currentTimeMillis()
                     || !shot.source.getProjectile().getUniqueId().equals(projectile))) return;
             long now = System.currentTimeMillis();

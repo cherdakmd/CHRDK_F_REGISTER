@@ -112,11 +112,32 @@ class PveEnchantTest {
         for (String guard : List.of("event.isCancelled() || event.getFinalDamage() <= 0", "generation != plugin.sourceGeneration()",
                 "shot.source.isCancelled()", "shot.source.getProjectile().getUniqueId().equals(projectile)",
                 "session.equals(sessions.get(owner.getUniqueId()))", "!hostile(target)", "target.hasPotionEffect(type)",
-                "weapon.equals(owner.getInventory().getItemInMainHand())", "Arrays.equals(armor, owner.getInventory().getArmorContents())",
+                "PveEquipment.same(weapon, owner.getInventory().getItemInMainHand())", "PveEquipment.same(armor, owner.getInventory().getArmorContents())",
                 "pending >= MAX_PENDING", "shots.size() >= MAX_SHOTS", "shots.remove(arrow.getUniqueId())")) assertTrue(source.contains(guard), guard);
         assertFalse(source.contains("setDamage(")); assertFalse(source.contains("target.damage("));
         assertFalse(source.contains("addItem(")); assertFalse(source.contains("dropItem("));
         assertFalse(source.contains("removePotionEffect("));
+    }
+    @Test void ordinaryWearIsNormalizedOnACopyWithoutChangingOtherMetadata() {
+        var original = wearMeta(27);
+        var normalized = (org.bukkit.inventory.meta.Damageable) PveEquipment.normalize(original);
+        assertEquals(0, normalized.getDamage());
+        assertEquals(27, original.getDamage());
+        assertEquals("CHRDK", normalized.getDisplayName());
+        assertEquals(123, normalized.getCustomModelData());
+        assertNotSame(original, normalized);
+    }
+    private org.bukkit.inventory.meta.Damageable wearMeta(int damage) {
+        var wear = new java.util.concurrent.atomic.AtomicInteger(damage);
+        return (org.bukkit.inventory.meta.Damageable) Proxy.newProxyInstance(getClass().getClassLoader(),
+                new Class<?>[]{org.bukkit.inventory.meta.Damageable.class}, (proxy, method, args) -> switch (method.getName()) {
+                    case "clone" -> wearMeta(wear.get());
+                    case "getDamage" -> wear.get();
+                    case "setDamage" -> { wear.set((Integer) args[0]); yield null; }
+                    case "getDisplayName" -> "CHRDK";
+                    case "getCustomModelData" -> 123;
+                    default -> null;
+                });
     }
     @Test void persistentSharedCooldownIsOnlyPaidForAnAppliedEffectAndNeverRemovedOnQuitOrReload() throws Exception {
         String source = Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkenchants/PveEffectsListener.java"));
