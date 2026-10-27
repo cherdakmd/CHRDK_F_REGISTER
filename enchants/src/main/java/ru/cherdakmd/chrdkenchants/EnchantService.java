@@ -146,9 +146,7 @@ public final class EnchantService {
             if (def == null) return;
             int existing = enchants.getOrDefault(id, 0);
             // наковальня: одинаковые чары сливаются как ваниль (max или +1 уровень, не выше потолка)
-            int merged = existing > 0 && existing == level
-                    ? Math.min(def.maxLevel(), level + 1)
-                    : Math.max(existing, level);
+            int merged = AnvilPrice.merge(existing, level, def.maxLevel());
             enchants.put(id, merged);
         });
         items.write(item, enchants);

@@ -35,6 +35,7 @@ public final class EnchantsPlugin extends JavaPlugin {
     private EnchantService service;
     private EnchantGui gui;
     private TableListener table;
+    private AnvilApplyListener anvil;
     private MobBookListener mobBooks;
     private EnchantLibraryListener library;
     EnchantLibraryListener library() { return library; }
@@ -72,7 +73,8 @@ public final class EnchantsPlugin extends JavaPlugin {
         this.utility = new UtilityEffectsListener(this);
         Bukkit.getPluginManager().registerEvents(utility, this);
         Bukkit.getPluginManager().registerEvents(new VillagerListener(this), this);
-        Bukkit.getPluginManager().registerEvents(new AnvilApplyListener(this), this);
+        anvil = new AnvilApplyListener(this);
+        Bukkit.getPluginManager().registerEvents(anvil, this);
         Bukkit.getPluginManager().registerEvents(new MeleeEffectsListener(this), this);
         this.bowEffects = new BowEffectsListener(this);
         Bukkit.getPluginManager().registerEvents(bowEffects, this);
@@ -108,6 +110,7 @@ public final class EnchantsPlugin extends JavaPlugin {
     public void onDisable() {
         sourceGeneration++;
         if (table != null) table.clear();
+        if (anvil != null) anvil.clear();
         if (mobBooks != null) mobBooks.clear();
         if (library != null) library.clear();
         if (tools != null) tools.clear();
@@ -156,6 +159,7 @@ public final class EnchantsPlugin extends JavaPlugin {
         sourceGeneration++;
         candidate.committed(getLogger(),
                 () -> { if (table != null) table.clear(); },
+                () -> { if (anvil != null) anvil.clear(); },
                 () -> { if (mobBooks != null) mobBooks.clear(); },
                 () -> { if (library != null) library.clear(); },
                 () -> { if (tools != null) tools.clear(); },
