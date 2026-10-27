@@ -34,6 +34,7 @@ public final class HuntPlugin extends JavaPlugin {
     private EliteRegeneration regeneration;
     private EliteDashing dashing;
     private EliteAdaptation adaptation;
+    private EliteFleeing fleeing;
     private HuntHistoryTracker historyTracker;
     HuntHistoryTracker historyTracker() { return historyTracker; }
 
@@ -84,6 +85,8 @@ public final class HuntPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(dashing, this);
             adaptation = new EliteAdaptation(this);
             getServer().getPluginManager().registerEvents(adaptation, this);
+            fleeing = new EliteFleeing(this);
+            getServer().getPluginManager().registerEvents(fleeing, this);
             historyTracker = new HuntHistoryTracker(this);
             getServer().getPluginManager().registerEvents(historyTracker, this);
             registerCommands();
@@ -104,6 +107,7 @@ public final class HuntPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (fleeing != null) fleeing.stop();
         if (adaptation != null) adaptation.stop();
         if (dashing != null) dashing.stop();
         if (regeneration != null) regeneration.stop();
@@ -164,6 +168,7 @@ public final class HuntPlugin extends JavaPlugin {
         settings = candidate; // До этого места никакой cleanup/закрытие GUI не выполняется.
         candidate.committed(getLogger(),
                 () -> { if (historyTracker != null) historyTracker.clear(); },
+                () -> { if (fleeing != null) fleeing.reload(); },
                 () -> { if (adaptation != null) adaptation.reload(); },
                 () -> { if (dashing != null) dashing.reload(); },
                 () -> { if (regeneration != null) regeneration.reload(); },

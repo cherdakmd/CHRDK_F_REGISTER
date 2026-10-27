@@ -99,7 +99,7 @@ class EliteTacticsTest {
             assertThrows(IllegalArgumentException.class, () -> MobProgressionPolicy.variant(-1, armor, recovery, dash, tactics));
             assertThrows(IllegalArgumentException.class, () -> MobProgressionPolicy.variant(count, armor, recovery, dash, tactics));
         }
-        assertTrue(MobProgressionPolicy.valid(30, 7)); assertFalse(MobProgressionPolicy.valid(30, 8));
+        assertTrue(MobProgressionPolicy.valid(30, 7)); assertFalse(MobProgressionPolicy.valid(30, ru.cherdakmd.chrdkregister.api.MobProgressionKeys.MAX_ELITE + 1));
         assertEquals(MobProgressionPolicy.stats(30, 0), MobProgressionPolicy.stats(30, 7));
     }
     @Test void preparationDoesNotExtendWindowOrChangeTypeOrOwner() {
