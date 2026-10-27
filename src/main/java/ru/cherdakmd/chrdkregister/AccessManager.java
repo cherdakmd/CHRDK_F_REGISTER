@@ -427,6 +427,7 @@ public final class AccessManager {
     }
 
     public synchronized void reload(PluginConfig newConfig) {
+        boolean wasRequired = this.config.totpRequired();
         this.config = newConfig;
         for (ProviderPulse pulse : donationPulses.values()) {
             pulse.provider.updateConfig(newConfig);
@@ -459,9 +460,35 @@ public final class AccessManager {
         }
 
         applyLogMasking();
+        releaseOptionalEnrollment(wasRequired);
         audit.log(AuditLog.CONFIG_RELOAD, "server", "", "",
                 AuditLog.details("minimumRubles", newConfig.minimumDonationRubles(),
                         "grantDays", newConfig.grantDays(), "sessionMinutes", newConfig.sessionMinutes()));
+    }
+
+    /** После reload выпускаем лишь подтвердивших пароль и ещё НЕ привязавших TOTP. */
+    private void releaseOptionalEnrollment(boolean wasRequired) {
+        if (!wasRequired || config.totpRequired()) return;
+        for (Player player : List.copyOf(Bukkit.getOnlinePlayers())) {
+            if (!player.isOnline() || !store.isRegistered(player.getName())) continue;
+            UUID uuid = player.getUniqueId();
+            if (!TotpAccessPolicy.releaseEnrollment(wasRequired, config.totpRequired(),
+                    store.isTotpEnabled(player.getName()), passwordVerifiedPlayers.contains(uuid),
+                    "2fa-enrollment".equals(authSource.get(uuid)))) continue;
+            long now = System.currentTimeMillis();
+            String ip = getPlayerIp(player);
+            String blocked = enforceAntiMultiAlt(player, player.getName(), ip, now);
+            if (blocked != null) {
+                player.kick(Component.text(blocked, NamedTextColor.RED));
+                continue;
+            }
+            pendingTotpSecrets.remove(uuid);
+            store.touchSession(player.getName(), uuid, ip, now);
+            authSource.put(uuid, "password");
+            completeAuthentication(player, "two-factor.optional-login-complete");
+            if (config.auditLogLogins()) audit.log(AuditLog.LOGIN_SUCCESS, player.getName(), player.getName(), ip,
+                    AuditLog.details("method", "password", "reason", "optional-2fa-reload"));
+        }
     }
 
     public synchronized void shutdown() {
@@ -587,7 +614,7 @@ public final class AccessManager {
      * ({@code totp.required: true}), а аутентификатор у аккаунта ещё не настроен.
      */
     public boolean requiresTotpEnrollment(String playerName) {
-        return config.totpEnabled() && config.totpRequired() && !store.isTotpEnabled(playerName);
+        return TotpAccessPolicy.enrollment(config.totpEnabled(), config.totpRequired(), store.isTotpEnabled(playerName));
     }
 
     public boolean isBlocked(Player player) {
@@ -649,9 +676,8 @@ public final class AccessManager {
             // required. Обязательная 2FA (totp.required) не пропускается сессией никогда, а если
             // аутентификатор ещё не привязан — игрок проходит привязку до входа в игру.
             boolean totpEnrolled = config.totpEnabled() && store.isTotpEnabled(name);
-            boolean secondStepRequired = totpEnrolled
-                    ? (!config.sessionSkips2fa() || config.totpRequired())
-                    : requiresTotpEnrollment(name);
+            boolean secondStepRequired = TotpAccessPolicy.sessionNeedsSecondStep(config.totpEnabled(),
+                    config.totpRequired(), store.isTotpEnabled(name), config.sessionSkips2fa());
             if (secondStepRequired) {
                 passwordVerifiedPlayers.add(uuid);
                 if (totpEnrolled) {

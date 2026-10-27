@@ -62,6 +62,7 @@ public final class RegisterPlugin extends JavaPlugin {
     public void onEnable() {
         migrateLegacyDataFolder();
         saveDefaultConfig();
+        OptionalTotpMigration.apply(this);
         PresentationMigration.apply(this);
         PluginConfig config = PluginConfig.fromBukkitConfig(getConfig());
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
@@ -317,6 +318,7 @@ public final class RegisterPlugin extends JavaPlugin {
 
     public void reloadPluginConfig() {
         reloadConfig();
+        OptionalTotpMigration.apply(this);
         PresentationMigration.apply(this);
         PluginConfig updated = PluginConfig.fromBukkitConfig(getConfig());
         if (accessManager != null) {

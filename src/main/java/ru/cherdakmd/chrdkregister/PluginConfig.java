@@ -402,7 +402,7 @@ public final class PluginConfig {
                 config.getInt("auth.brute-force.temp-ip-ban-minutes", 15),
                 config.getBoolean("auth.brute-force.notify-admins", true),
                 config.getBoolean("totp.enabled", true),
-                config.getBoolean("totp.required", true),
+                config.getBoolean("totp.required", false),
                 config.getString("totp.issuer", "CHRDK"),
                 config.getInt("totp.window-steps", 1),
                 config.getInt("totp.max-attempts", maxLoginAttempts),

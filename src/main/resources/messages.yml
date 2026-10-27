@@ -427,6 +427,7 @@ messages:
       "success": "<green>✓ 2FA привязана! Вы вошли на сервер. Приятной игры!</green>"
       "title-subtitle": "<yellow>Привяжите 2FA: /2fa setup</yellow>"
     "reset-enrollment": "<yellow>Администратор сбросил 2FA. Привяжите приложение заново — инструкция ниже.</yellow>"
+    "optional-login-complete": "<green>✓ Пароль подтверждён, вход завершён. 2FA теперь добровольна: включить защиту можно командой /2fa setup.</green>"
     "reset-login-complete": "<green>✓ Вход завершён: администратор сбросил 2FA.</green>"
     "reset-not-enabled": "<red>У игрока %target_name% не включена двухфакторная аутентификация.</red>"
     "reset-players-only": "<red>Эта команда доступна только игрокам. Для сброса 2FA игрока используйте: /pass reset2fa <ник></red>"

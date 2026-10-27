@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Обязательная 2FA и группа проходки «только за покупку» (1.4.105).
+ * Добровольная 2FA (1.4.211), административный обязательный режим и платная группа.
  *
  * <p>Проверяются чистые контракты: значения по умолчанию и переключатели конфига,
  * набор команд стадии привязки, политика выдачи LuckPerms-группы и то, что тестовая
@@ -30,10 +30,11 @@ class CoreAccessPolicyTest {
     }
 
     @Test
-    void mandatoryTwoFactorIsOnByDefaultAndRespectsTheGlobalSwitch() throws Exception {
+    void twoFactorEnrollmentIsOptionalByDefaultAndRespectsTheGlobalSwitch() throws Exception {
         PluginConfig defaults = PluginConfig.fromBukkitConfig(new YamlConfiguration());
         assertTrue(defaults.totpEnabled(), "2FA включена по умолчанию");
-        assertTrue(defaults.totpRequired(), "2FA обязательна для всех по умолчанию");
+        assertFalse(defaults.totpRequired(), "привязка 2FA добровольна по умолчанию");
+        assertTrue(config("totp:\n  required: true\n").totpRequired(), "администратор может явно вернуть требование");
         assertTrue(defaults.passGroupPaidOnly(), "группа проходки — только за покупку по умолчанию");
 
         assertFalse(config("totp:\n  required: false\n").totpRequired(),
