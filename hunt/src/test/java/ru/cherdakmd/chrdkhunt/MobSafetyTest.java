@@ -47,14 +47,15 @@ class MobSafetyTest {
         assertEquals(12, MobProgressionPolicy.level("THE_END", 0, MobProgression.skills(() -> { throw new RuntimeException(); })));
     }
     @Test void armoredVariantDoesNotChangeOtherStatMultipliersAndCannotExceedArmorBudget() {
-        assertEquals(4, MobProgressionKeys.MAX_ELITE);
+        assertEquals(5, MobProgressionKeys.MAX_ELITE);
         assertEquals(MobProgressionPolicy.stats(20, 0), MobProgressionPolicy.stats(20, 4));
         assertEquals(4, MobProgressionPolicy.armorBonus(2, 4));
         assertEquals(1, MobProgressionPolicy.armorBonus(11, 4));
         assertEquals(0, MobProgressionPolicy.armorBonus(20, 4));
         assertEquals(0, MobProgressionPolicy.armorBonus(Double.NaN, 4));
         assertEquals(0, MobProgressionPolicy.armorBonus(2, 0));
-        assertFalse(MobProgressionPolicy.valid(1, 5)); assertFalse(MobProgressionPolicy.valid(31, 1));
+        assertTrue(MobProgressionPolicy.valid(1, 5)); assertFalse(MobProgressionPolicy.valid(1, 6));
+        assertFalse(MobProgressionPolicy.valid(31, 1));
     }
     @Test void shotSnapshotIsFiniteBoundedExpiresAndRejectsFutureTimestamp() {
         assertEquals(1.5, MobProgressionPolicy.shotFactor(1.5, 1000, 31_000));
@@ -93,7 +94,7 @@ class MobSafetyTest {
         HuntStore store = new HuntStore(dir, null); UUID id = UUID.randomUUID();
         assertTrue(store.mobHud(id)); assertTrue(store.observeMob(id, "Игрок", 12, 4));
         assertFalse(store.observeMob(id, "Игрок", 12, 4));
-        assertFalse(store.observeMob(id, "Игрок", 31, 0)); assertFalse(store.observeMob(id, "Игрок", 2, 5));
+        assertFalse(store.observeMob(id, "Игрок", 31, 0)); assertFalse(store.observeMob(id, "Игрок", 2, 6));
         store.mobHud(id, "Игрок", false); store.saveNow();
         HuntStore loaded = new HuntStore(dir, null); loaded.load();
         assertEquals(Set.of(12), loaded.observedLevels(id)); assertEquals(Set.of(4), loaded.observedElites(id));
