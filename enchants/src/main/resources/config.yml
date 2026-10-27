@@ -115,6 +115,8 @@ enchants:
   dull_pick: {enabled: true}           # Тупой резец
   jinxed: {enabled: true}              # Порча
   gluttony: {enabled: true}            # Обжорство
+  pve_anchor: {enabled: true}         # PvE-якорь: ботинки I/II, −15/30% горизонтальной отдачи от моба
+  harvest_replant: {enabled: true}    # Мотыга I: росток за одно реальное обычное семя, общий координатор Skills
   slow_learner: {enabled: true}        # Тугодум
   cursed_blood: {enabled: true}        # Проклятая кровь
 
@@ -173,3 +175,16 @@ library:
 # Итог >= native maximumRepairCost (обычно 40) скрывает результат вне Creative.
 # Накопление следующего штрафа читает Purpur settings.blocks.anvil.cumulative-cost.
 # Чистая книга + имя без native-результата: только текст; форматирование — отдельно.
+
+# Мастерская N24–N26: только Survival, свои реальные материалы, подтверждение 30 секунд.
+# Цены фиксированные: очищение 8 осколков аметиста + 1 алмаз;
+# объединение 8 лазурита + 1 алмаз; разделение 1 обычная книга + 8 лазурита.
+# Переименованные/зачарованные материалы не расходуются. Нужны свободные места под результат.
+workshop:
+  enabled: true
+  cleanse:
+    enabled: true
+  combine:
+    enabled: true
+  split:
+    enabled: true

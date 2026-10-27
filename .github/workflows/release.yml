@@ -464,7 +464,7 @@ jobs:
           и в README репозитория.
           MEMO
           printf '\nВерсия: %s\nПлатформа: Purpur 26.3 / Java 25\n' "$version" >> 'release/ОБНОВЛЕНИЕ.txt'
-          for notes in docs/releases/1.4.{200,201}.md; do
+          for notes in docs/releases/1.4.{200,201,220}.md; do
             printf '\n\n' >> 'release/ОБНОВЛЕНИЕ.txt'
             cat "$notes" >> 'release/ОБНОВЛЕНИЕ.txt'
           done
@@ -473,10 +473,7 @@ jobs:
           unzip -l "chrdk-plugins-${version}.zip"
           echo "zip=chrdk-plugins-${version}.zip" >> "$GITHUB_ENV"
 
-      - name: Pack the complete TradeMC storefront
-        run: python3 tools/trademc/build.py --zip
-
-      - name: Attach the plugin ZIP and separate storefront ZIP
+      - name: Attach the plugin ZIP only
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ env.zip }}" "build/trademc/chrdk-trademc-${{ steps.verify-version.outputs.version }}.zip" --clobber
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ env.zip }}" --clobber

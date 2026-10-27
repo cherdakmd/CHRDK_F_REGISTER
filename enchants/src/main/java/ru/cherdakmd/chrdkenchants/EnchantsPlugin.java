@@ -12,7 +12,7 @@ import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 import java.util.List;
 
 /**
- * CHRDK_Enchants — 74 кастомных чар: 59 светлых и 15 проклятий. Источники:
+ * CHRDK_Enchants — 76 кастомных чар: 61 светлых и 15 проклятий. Источники:
  * зачаровательный стол и жители-библиотекари; книги чар накладываются на
  * наковальне. Книги и чары хранятся в PDC предметов, в инвентарях. Отрицательные метки
  * установленной руды сохраняются в PDC чанков.
@@ -36,6 +36,9 @@ public final class EnchantsPlugin extends JavaPlugin {
     private EnchantGui gui;
     private TableListener table;
     private AnvilApplyListener anvil;
+    private EnchantWorkshop workshop;
+    EnchantWorkshop workshop() { return workshop; }
+    AnvilApplyListener anvil() { return anvil; }
     private MobBookListener mobBooks;
     private EnchantLibraryListener library;
     EnchantLibraryListener library() { return library; }
@@ -70,9 +73,13 @@ public final class EnchantsPlugin extends JavaPlugin {
         for (var player : Bukkit.getOnlinePlayers()) library.queue(player);
         this.pve = new PveEffectsListener(this);
         Bukkit.getPluginManager().registerEvents(pve, this);
+        Bukkit.getPluginManager().registerEvents(new AnchorListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new HarvestReplantListener(this), this);
         this.utility = new UtilityEffectsListener(this);
         Bukkit.getPluginManager().registerEvents(utility, this);
         Bukkit.getPluginManager().registerEvents(new VillagerListener(this), this);
+        workshop = new EnchantWorkshop(this);
+        Bukkit.getPluginManager().registerEvents(workshop, this);
         anvil = new AnvilApplyListener(this);
         Bukkit.getPluginManager().registerEvents(anvil, this);
         Bukkit.getPluginManager().registerEvents(new MeleeEffectsListener(this), this);
@@ -109,8 +116,10 @@ public final class EnchantsPlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         sourceGeneration++;
+        ru.cherdakmd.chrdkregister.api.CropReplanting.cancel(this);
         if (table != null) table.clear();
         if (anvil != null) anvil.clear();
+        if (workshop != null) workshop.clear();
         if (mobBooks != null) mobBooks.clear();
         if (library != null) library.clear();
         if (tools != null) tools.clear();
@@ -158,8 +167,10 @@ public final class EnchantsPlugin extends JavaPlugin {
         settings = candidate; // Единая публикация raw YAML + parsed config + messages.
         sourceGeneration++;
         candidate.committed(getLogger(),
+                () -> ru.cherdakmd.chrdkregister.api.CropReplanting.cancel(this),
                 () -> { if (table != null) table.clear(); },
                 () -> { if (anvil != null) anvil.clear(); },
+                () -> { if (workshop != null) workshop.clear(); },
                 () -> { if (mobBooks != null) mobBooks.clear(); },
                 () -> { if (library != null) library.clear(); },
                 () -> { if (tools != null) tools.clear(); },

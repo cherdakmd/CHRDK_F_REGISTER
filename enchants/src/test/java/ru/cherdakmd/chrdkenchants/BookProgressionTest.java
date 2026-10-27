@@ -100,7 +100,7 @@ class BookProgressionTest {
     @Test void libraryRoundTripsTheEntireCatalogWithoutIncreasingLevelsOrInventingIds() {
         Map<String,Integer> all=new TreeMap<>(); EnchantRegistry.all().forEach(def->all.put(def.id(),def.maxLevel()));
         String encoded=EnchantLibrary.encode(all); assertTrue(encoded.length()<4099);
-        assertEquals(all,EnchantLibrary.read(encoded)); assertEquals(74,EnchantLibrary.read(encoded).size());
+        assertEquals(all,EnchantLibrary.read(encoded)); assertEquals(76,EnchantLibrary.read(encoded).size());
         assertEquals(Map.of(),EnchantLibrary.read(null)); assertEquals(Map.of(),EnchantLibrary.read("v1|"));
     }
     @Test void libraryKeepsHighestDiscoveredLevelAndDoesNotMutateEitherInput() {

@@ -7,11 +7,6 @@ on:
       - 'arena/**'
   pull_request:
   workflow_dispatch:
-    inputs:
-      release_tag:
-        description: 'Приложить полный ZIP TradeMC к релизу с этим тегом (пусто — обычная сборка)'
-        required: false
-        default: ''
 
 permissions:
   contents: read
@@ -94,35 +89,3 @@ jobs:
             */build/libs/*.jar
           if-no-files-found: error
           retention-days: 14
-
-  # Ручная повторная загрузка полного комплекта, только к совпадающему тегу.
-  shop-images:
-    name: Attach complete TradeMC kit to the release
-    if: ${{ inputs.release_tag != '' }}
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Check out the release source
-        uses: actions/checkout@v5
-        with:
-          ref: ${{ inputs.release_tag }}
-
-      - name: Verify and pack the storefront
-        shell: bash
-        env:
-          TAG: ${{ inputs.release_tag }}
-        run: |
-          set -euo pipefail
-          version="$(sed -n 's/^plugin_version=//p' gradle.properties)"
-          [[ "$TAG" == "v$version" ]] || { echo "Tag/version mismatch" >&2; exit 1; }
-          python3 -m pip install -r tools/trademc/requirements.txt
-          python3 tools/trademc/build.py --zip
-          echo "kit=build/trademc/chrdk-trademc-${version}.zip" >> "$GITHUB_ENV"
-
-      - name: Upload the storefront ZIP
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ inputs.release_tag }}
-        run: gh release upload "$TAG" "${{ env.kit }}" --clobber

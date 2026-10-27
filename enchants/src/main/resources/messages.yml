@@ -1,12 +1,24 @@
-# CHRDK_Enchants — имена/описания 74 чар (en.<id>.name, en.<id>.lore) и тексты UI.
+# CHRDK_Enchants — имена/описания 76 чар (en.<id>.name, en.<id>.lore) и тексты UI.
 # Проклятия лежат в той же секции en, цвет и знак задаются полярностью чары.
 enchants:
+  workshop-quote: "<aqua>%action%</aqua><gray>: цена <yellow>%cost%</yellow>. Ничего ещё не списано. В течение 30 секунд: <yellow>/enchants confirm %code%</yellow>. Не меняйте руки и инвентарь.</gray>"
+  workshop-selected: "<gray>Выбранная чара: <light_purple>%name%</light_purple>. Очищение удаляет только её проклятие; разделение переносит её в отдельную книгу без копирования.</gray>"
+  workshop-result: "<gray>После объединения: <light_purple>%name%</light_purple>, уровень <yellow>%level%</yellow>; две исходные книги расходуются.</gray>"
+  workshop-done: "<green>Операция завершена. Материалы списаны, результат в инвентаре.</green>"
+  workshop-rejected: "<red>Операция отклонена, ничего не списано. Нужны Survival, закрытый контейнер, один предмет в основной руке, обычные материалы и место. Объединение: две полностью одинаковые чистые кастомные книги в руках, один id/уровень ниже потолка. Разделение: смешанная книга и id. Подтверждение устаревает при изменении инвентаря, выходе, смерти, TP или reload.</red>"
+  preview-open-anvil: "<yellow>Откройте наковальню, положите предмет слева и кастомную книгу справа, затем /enchants preview.</yellow>"
+  preview-unavailable: "<red>Нет действующего безопасного расчёта. Проверьте книгу, совместимость и состояние наковальни.</red>"
+  preview-price: "<aqua>Наковальня:</aqua> <gray>базовая часть %native% + кастомные чары %custom% = <yellow>%total% уровней</yellow>; native-предел %maximum% (для Survival цена строго ниже). Только отчёт, предмет не выдаётся.</gray>"
+  preview-ready: "<green>По текущему расчёту и вашему уровню получение доступно. При клике всё проверяется заново.</green>"
+  preview-too-expensive: "<red>Сейчас получить результат нельзя: native-предел или недостаточно уровней. Preview не обходит цену.</red>"
+  preview-transfer: "<gray>%name%: %before% → <yellow>%after%</yellow>. Остальные данные сохраняются штатным результатом наковальни.</gray>"
+  book-source-workshop: "<aqua>мастерская чар</aqua>"
   no-api: "<red>Ядро CHRDK_F_REGISTER не найдено — чары недоступны.</red>"
   need-auth: "<red>Сначала войдите на сервер (/login).</red>"
   table-added: "<light_purple>✦ Стол дарует чару: %name% %levelroman%!</light_purple>"
   table-cursed: "<dark_red>☠ Стол выплеснул проклятие: %name% %levelroman%!</dark_red>"
   anvil-capped: "<red>На предмете уже максимум чар (%max%) или они конфликтуют.</red>"
-  usage: "<gray>/enchants — каталог %count% чар; info <id>, find <текст>, group <тип>, rarity <редкость>, light, curses, hand, sort <id|name|rarity>, inspect, cooldowns, sources, library [страница], guard [auto|id]</gray>"
+  usage: "<gray>/enchants — каталог %count% чар; info <id>, find <текст>, group <тип>, rarity <редкость>, light, curses, hand, sort <id|name|rarity>, inspect, cooldowns, sources, library [страница], guard [auto|id], preview, cleanse <id>, combine, split <id>, confirm <код></gray>"
   info-header: "<light_purple>✦ %name% <gray>(%rarity%, ур. I–%maxlevel%)</gray>"
   info-items: "<gray>Накладывается на: <yellow>%items%</yellow></gray>"
   info-conflicts: "<gray>Конфликтует с: <red>%conflicts%</red></gray>"
@@ -58,6 +70,16 @@ enchants:
   item-crossbow: "арбалеты"
   # --- 30 чар ---
   en:
+    pve_anchor:
+      name: "PvE-якорь"
+      lore:
+        - "<gray>Ботинки I/II: −15/30% горизонтального отбрасывания только от обычного враждебного моба в ближнем бою.</gray>"
+        - "<gray>Не PvP/взрывы/снаряды; вертикаль без изменений. Общий PvE-cooldown 15 секунд, приоритет /enchants guard pve_anchor.</gray>"
+    harvest_replant:
+      name: "Бережная пересадка"
+      lore:
+        - "<gray>Мотыга I: после разрешённого ручного сбора зрелой культуры сажает росток за одно обычное настоящее семя из инвентаря.</gray>"
+        - "<gray>Без роста/добавочного опыта/дропа. Вместе со Skills — одна посадка, не две. Приваты могут отменить размещение.</gray>"
     thunderstrike:
       name: "Громобой"
       lore: "<gray><gray>Есть шанс, что удар вызовет молнию и подпалит цель.</gray></gray>"

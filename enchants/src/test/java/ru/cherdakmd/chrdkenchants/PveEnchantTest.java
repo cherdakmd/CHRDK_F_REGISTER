@@ -20,14 +20,14 @@ class PveEnchantTest {
     private static final Logger LOG = Logger.getLogger("PveEnchantTest");
 
     @Test void catalogContainsEightImplementedPositiveDefinitionsAndSixtyLegacyDefinitions() {
-        assertEquals(8, PveEnchant.values().length);
+        assertEquals(9, PveEnchant.values().length);
         assertEquals(60, EnchantRegistry.all().stream().filter(def -> PveEnchant.byId(def.id()) == null && UtilityEnchant.byId(def.id()) == null).count());
         for (var effect : PveEnchant.values()) {
             var def = EnchantRegistry.byId(effect.id);
             assertNotNull(def); assertFalse(def.curse()); assertEquals(effect.maxLevel, def.maxLevel());
             assertTrue(def.rarity() == EnchantDef.Rarity.RARE || def.rarity() == EnchantDef.Rarity.EPIC);
             assertNotNull(def.conflictGroup());
-            assertTrue(List.of("SLOWNESS", "WEAKNESS", "GLOWING", "TARGET").contains(effect.effect));
+            assertTrue(List.of("SLOWNESS", "WEAKNESS", "GLOWING", "TARGET", "KNOCKBACK").contains(effect.effect));
         }
         assertNull(PveEnchant.byId(null)); assertNull(PveEnchant.byId("phoenix"));
     }
@@ -35,8 +35,8 @@ class PveEnchantTest {
         for (var effect : PveEnchant.values()) {
             for (int level : new int[]{Integer.MIN_VALUE, 0, 1, 2, 3, 10, Integer.MAX_VALUE}) {
                 assertTrue(effect.level(level) >= 1 && effect.level(level) <= effect.maxLevel);
-                assertTrue(effect.chance(level) >= 15 && effect.chance(level) <= 30);
-                if (effect == PveEnchant.PROVOKING_STRIKE) assertEquals(0, effect.ticks(level));
+                assertTrue(effect == PveEnchant.PVE_ANCHOR ? effect.chance(level) == 100 : effect.chance(level) >= 15 && effect.chance(level) <= 30);
+                if (effect == PveEnchant.PROVOKING_STRIKE || effect == PveEnchant.PVE_ANCHOR) assertEquals(0, effect.ticks(level));
                 else assertTrue(effect.ticks(level) >= 40 && effect.ticks(level) <= 80);
                 assertTrue(effect.cooldownSeconds >= 12 && effect.cooldownSeconds <= 15);
             }
@@ -65,10 +65,10 @@ class PveEnchantTest {
     }
     @Test void masterAndIndividualFlagsStopNewSourcesWithoutRemovingLegacyEnchantments() {
         var yaml = new YamlConfiguration();
-        assertEquals(74, EnchantsConfig.parse(yaml, LOG).enabledEnchants().size());
+        assertEquals(76, EnchantsConfig.parse(yaml, LOG).enabledEnchants().size());
         yaml.set("pve-effects.enabled", false);
         var disabled = EnchantsConfig.parse(yaml, LOG);
-        assertEquals(66, disabled.enabledEnchants().size()); assertTrue(disabled.isEnabled("phoenix"));
+        assertEquals(67, disabled.enabledEnchants().size()); assertTrue(disabled.isEnabled("phoenix"));
         for (var effect : PveEnchant.values()) assertFalse(disabled.isEnabled(effect.id));
         yaml.set("pve-effects.enabled", true); yaml.set("enchants.crippling_edge.enabled", false);
         assertFalse(EnchantsConfig.parse(yaml, LOG).isEnabled("crippling_edge"));

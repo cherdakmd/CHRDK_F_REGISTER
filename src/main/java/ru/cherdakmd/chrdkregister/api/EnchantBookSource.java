@@ -2,7 +2,7 @@ package ru.cherdakmd.chrdkregister.api;
 
 /** Справочное происхождение новой книги, не подпись подлинности и не право на награду. */
 public enum EnchantBookSource {
-    TABLE, VILLAGER, MOB, TREASURE, SHARDS, ADMIN, API;
+    TABLE, VILLAGER, MOB, TREASURE, SHARDS, ADMIN, API, WORKSHOP;
 
     public String id() { return name().toLowerCase(java.util.Locale.ROOT); }
     public String encoded() { return "v1:" + id(); }

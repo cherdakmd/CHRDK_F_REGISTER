@@ -30,3 +30,6 @@ config/chrdk_f_register-data.json
 
 # Собранный вики-сайт (GitHub Pages собирает его в Actions)
 /site/
+
+# Локальное окружение проверок Python
+.venv/

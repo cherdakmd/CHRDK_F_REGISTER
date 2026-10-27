@@ -2,7 +2,7 @@ name: CHRDK_Enchants
 version: ${version}
 main: ru.cherdakmd.chrdkenchants.EnchantsPlugin
 api-version: '26.3'
-description: "74 кастомных чар CHRDK: 59 светлых и 15 проклятий — стол, клады, мобы, жители"
+description: "76 кастомных чар CHRDK: 61 светлых и 15 проклятий — стол, клады, мобы, жители"
 author: cherdakmd
 depend: [CHRDK_Core]
 softdepend: [CHRDK_Hunt]

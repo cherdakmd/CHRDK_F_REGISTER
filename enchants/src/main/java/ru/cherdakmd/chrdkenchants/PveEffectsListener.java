@@ -82,6 +82,10 @@ final class PveEffectsListener implements Listener {
         var enchant = PveChoices.choose(channel, levels, preference(owner));
         return enchant == null ? null : new Choice(enchant, levels.get(enchant.id));
     }
+    boolean anchorPreferred(Player player) {
+        var choice = choose(PveEnchant.Channel.GUARD, player, player.getInventory().getArmorContents());
+        return choice != null && choice.enchant == PveEnchant.PVE_ANCHOR;
+    }
     void guardPreference(Player player, String requested) {
         if (requested != null) {
             if (requested.equals("auto")) player.getPersistentDataContainer().remove(preferred);
@@ -136,6 +140,7 @@ final class PveEffectsListener implements Listener {
     }
     private void after(EntityDamageByEntityEvent event, Player owner, LivingEntity target, Choice choice,
                        ItemStack weapon, ItemStack[] armor, Shot shot, UUID projectile) {
+        if (choice.enchant == PveEnchant.PVE_ANCHOR) return; // Обрабатывается только native-knockback, не damage/potion.
         if (owner.getPersistentDataContainer().getOrDefault(ready, PersistentDataType.LONG, 0L) > System.currentTimeMillis()) return;
         long generation = plugin.sourceGeneration();
         UUID world = owner.getWorld().getUID();

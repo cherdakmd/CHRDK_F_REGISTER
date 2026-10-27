@@ -127,6 +127,31 @@ public final class AnvilApplyListener implements Listener {
         event.setResult(output);
     }
 
+    /** Пользовательский read-only отчёт о реально открытой наковальне; предмет preview не выдаётся. */
+    void preview(Player player) {
+        if (!(player.getOpenInventory() instanceof AnvilView view)) { plugin.messages().send(player, "preview-open-anvil"); return; }
+        var quote = quotes.get(player.getUniqueId());
+        var left = view.getTopInventory().getItem(0); var right = view.getTopInventory().getItem(1);
+        if (quote == null || !quote.source(view, left, right, view.getRenameText())
+                || !quote.output(view.getTopInventory().getItem(2), view.getRepairCost(), view.getRepairItemCountCost(),
+                    view.getMaximumRepairCost(), plugin.sourceGeneration(), cumulativeCost(), player.getGameMode() == GameMode.CREATIVE)
+                || view.canBypassCost() || !player.hasPermission("chrdkenchants.use") || plugin.coreApi() == null
+                || !plugin.coreApi().isAuthenticated(player) || plugin.service().canApplyFromBook(left, right) != null) {
+            plugin.messages().send(player, "preview-unavailable"); return;
+        }
+        plugin.messages().send(player, "preview-price", "total", quote.cost(), "custom", quote.surcharge(),
+                "native", quote.cost() == Integer.MAX_VALUE ? "не разделяется при насыщении" : Long.toString(Math.max(0L, quote.cost() - quote.surcharge())), "maximum", quote.maximum());
+        boolean allowed = AnvilPrice.allowed(quote.cost(), quote.maximum(), player.getGameMode() == GameMode.CREATIVE);
+        plugin.messages().send(player, allowed && (player.getGameMode() == GameMode.CREATIVE || player.getLevel() >= quote.cost())
+                ? "preview-ready" : "preview-too-expensive");
+        var before = plugin.items().read(left);
+        for (var entry : plugin.items().read(right).entrySet()) {
+            var def = EnchantRegistry.byId(entry.getKey()); int was = before.getOrDefault(def.id(), 0);
+            plugin.messages().send(player, "preview-transfer", "name", plugin.messages().mini("en." + def.id() + ".name"),
+                    "before", was, "after", AnvilPrice.merge(was, entry.getValue(), def.maxLevel()));
+        }
+    }
+
     private void reject(PrepareAnvilEvent event, Player viewer) {
         quotes.remove(viewer.getUniqueId());
         event.setResult(null);

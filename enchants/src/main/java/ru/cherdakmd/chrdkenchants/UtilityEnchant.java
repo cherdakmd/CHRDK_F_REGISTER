@@ -4,7 +4,7 @@ package ru.cherdakmd.chrdkenchants;
 enum UtilityEnchant {
     CAREFUL_WORK("careful_work", 3), GARDEN_STEP("garden_step", 1),
     AIR_RESERVE("air_reserve", 2), QUIET_STEP("quiet_step", 1),
-    TOOL_SAFEGUARD("tool_safeguard", 1), FROST_RESISTANCE("frost_resistance", 2);
+    TOOL_SAFEGUARD("tool_safeguard", 1), FROST_RESISTANCE("frost_resistance", 2), HARVEST_REPLANT("harvest_replant", 1);
     final String id;
     final int maxLevel;
     UtilityEnchant(String id, int maxLevel) { this.id = id; this.maxLevel = maxLevel; }

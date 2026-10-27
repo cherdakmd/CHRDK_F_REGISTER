@@ -99,6 +99,7 @@ public final class SkillsPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        ru.cherdakmd.chrdkregister.api.CropReplanting.cancel(this);
         if (abilityTask != null) abilityTask.cancel();
         if (abilities != null) abilities.clear();
         if (abilityStore != null) abilityStore.flush();
@@ -130,6 +131,7 @@ public final class SkillsPlugin extends JavaPlugin {
 
     /** Перечитывает config.yml/messages.yml, сохраняя прогресс игроков. */
     public void reloadSkillsConfig() {
+        ru.cherdakmd.chrdkregister.api.CropReplanting.cancel(this);
         if (abilities != null) abilities.clear();
         reloadConfig();
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"),

@@ -112,7 +112,7 @@ public final class SkillListener implements Listener {
         service.award(player, skill, 1L);
         doubleDrop(player, block, skill);
         if (skill == SkillType.FARMING) {
-            replayCrop(player, block, type);
+            replayCrop(player, event);
         }
     }
 
@@ -147,29 +147,21 @@ public final class SkillListener implements Listener {
      * после {@link BlockBreakEvent}, и посаженное «сразу» просто исчезло бы
      * вместе с ним.</p>
      */
-    private void replayCrop(Player player, Block block, Material type) {
-        if (!service.perksFor(player, SkillType.FARMING).flag(SkillPerk.Kind.AUTO_REPLANT)) {
-            return;
-        }
-        Material replant = SkillMaterials.replantOf(type);
-        if (replant == null) {
-            return;
-        }
-        plugin.getServer().getScheduler().runTask(plugin, () -> {
-            if (block.getType() != Material.AIR) {
-                return;
-            }
-            block.setType(replant, false);
-            if (block.getBlockData() instanceof Ageable ageable) {
-                ageable.setAge(0);
-                block.setBlockData(ageable, false);
-            }
-        });
+    private void replayCrop(Player player, BlockBreakEvent event) {
+        if (!service.perksFor(player, SkillType.FARMING).flag(SkillPerk.Kind.AUTO_REPLANT)) return;
+        ru.cherdakmd.chrdkregister.api.CropReplanting.request(plugin, event, () ->
+                plugin.config().enabled() && player.getGameMode() == GameMode.SURVIVAL
+                && player.hasPermission("chrdkskills.use") && plugin.coreApi() != null
+                && plugin.coreApi().isAuthenticated(player)
+                && service.perksFor(player, SkillType.FARMING).flag(SkillPerk.Kind.AUTO_REPLANT));
     }
 
     /** Запоминаем поставленные блоки — с них опыта не будет. */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event) {
+        // Свой возраст-0 росток не является поставленной игроком зрелой культурой/рудой.
+        // Native-событие остаётся видимым всем защитам, но не урезает XP следующего зрелого урожая.
+        if (ru.cherdakmd.chrdkregister.api.CropReplanting.isPlacement(event)) return;
         Block block = event.getBlockPlaced();
         placedBlocks.record(event.getPlayer().getUniqueId(), block.getWorld().getName(),
                 block.getX(), block.getY(), block.getZ(), System.currentTimeMillis());
@@ -426,7 +418,16 @@ public final class SkillListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent event) {
+        ru.cherdakmd.chrdkregister.api.CropReplanting.cancelPlayer(event.getPlayer().getUniqueId());
         plugin.effects().clear(event.getPlayer());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void replantTeleport(org.bukkit.event.player.PlayerTeleportEvent event) {
+        ru.cherdakmd.chrdkregister.api.CropReplanting.cancelPlayer(event.getPlayer().getUniqueId());
+    }
+    @EventHandler public void replantDeath(org.bukkit.event.entity.PlayerDeathEvent event) {
+        ru.cherdakmd.chrdkregister.api.CropReplanting.cancelPlayer(event.getEntity().getUniqueId());
     }
 
     /**
