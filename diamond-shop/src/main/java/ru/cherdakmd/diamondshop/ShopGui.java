@@ -259,7 +259,7 @@ public final class ShopGui implements Listener {
                     "units", result.units(),
                     "cost", result.money(),
                     "balance", plugin.shopService().balance(player),
-                    "value", units);
+                    "value", units, "limit", plugin.shopService().config().dailyTurnoverLimit());
         }
         // перечитываем витрину с новыми ценами, оставаясь в том же разделе
         reopen(player, category, page);
