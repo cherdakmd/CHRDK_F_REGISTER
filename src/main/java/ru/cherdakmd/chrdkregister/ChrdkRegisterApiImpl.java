@@ -116,6 +116,16 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
         return plugin != null && plugin.isEnabled() && bank != null && plugin.bank() != null
                 && plugin.bank().enabled() && org.bukkit.Bukkit.isPrimaryThread();
     }
+    @Override public boolean personalBankAvailable() { return auctionBankReady(); }
+    @Override public boolean registerIncomeSource(String source, java.util.UUID lineage) { return auctionBankReady() && bank.registerIncomeSource(source, lineage); }
+    @Override public boolean incomeSourceAvailable(String source, java.util.UUID lineage) { return auctionBankReady() && bank.incomeSourceAvailable(source, lineage); }
+    @Override public java.util.UUID knownBankPlayer(String name) { return auctionBankReady() ? claimAccount(name) : null; }
+    @Override public long creditedEntitlement(String source, java.util.UUID lineage, String key, java.util.UUID owner) {
+        return auctionBankReady() ? bank.creditedEntitlement(source, lineage, key, owner) : -1L;
+    }
+    @Override public boolean creditEntitlement(String source, java.util.UUID lineage, String key, java.util.UUID owner, long total) {
+        return auctionBankReady() && bank.creditEntitlement(source, lineage, key, owner, total);
+    }
     @Override public boolean auctionBankAvailable() { return auctionBankReady(); }
     @Override public long auctionBankBalance(java.util.UUID player) { return auctionBankReady() && player != null ? bank.balance(player) : -1L; }
     @Override public boolean importLegacyAuction(java.util.UUID market, java.util.UUID player, long amount) {

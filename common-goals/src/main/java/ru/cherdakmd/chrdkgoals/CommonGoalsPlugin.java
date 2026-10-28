@@ -39,6 +39,14 @@ public final class CommonGoalsPlugin extends JavaPlugin implements Listener {
         store.load();
         this.service = new GoalsService(this);
         reloadGoalsConfig();
+        try {
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 16 || !store.healthy())
+                throw new IllegalStateException("Нужен Core API 16+ и исправный источник целей");
+            store.enableBank();
+        } catch (Exception | LinkageError error) {
+            getLogger().log(java.util.logging.Level.SEVERE, "Цели остановлены без сброса данных", error);
+            Bukkit.getPluginManager().disablePlugin(this); return;
+        }
 
         Bukkit.getPluginManager().registerEvents(new GoalListeners(this), this);
         Bukkit.getPluginManager().registerEvents(this, this);
@@ -55,7 +63,7 @@ public final class CommonGoalsPlugin extends JavaPlugin implements Listener {
             admin.setTabCompleter(commands);
         }
 
-        lifecycle = Bukkit.getScheduler().runTaskTimer(this, this::ensureWave, 100L, 1200L);
+        lifecycle = Bukkit.getScheduler().runTaskTimer(this, () -> { ensureWave(); service.settleRewards(); }, 100L, 1200L);
         saveTask = Bukkit.getScheduler().runTaskTimer(this,
                 () -> store.saveAsync(this), SAVE_INTERVAL_TICKS, SAVE_INTERVAL_TICKS);
         getLogger().info("CHRDK_CommonGoals включён: волна целей до "
@@ -114,10 +122,7 @@ public final class CommonGoalsPlugin extends JavaPlugin implements Listener {
     @EventHandler
     public void onAuthCompleted(PlayerAuthCompletedEvent event) {
         Player player = event.getPlayer();
-        int pending = store.pendingRewardOf(player.getName());
-        if (pending > 0) {
-            messages().send(player, "join-pending", "amount", String.valueOf(pending));
-        }
+        if (store.entitlementOf(player.getName()) > 0) service.claimRewards(player);
     }
 
     public ChrdkRegisterApi coreApi() {

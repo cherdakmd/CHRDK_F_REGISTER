@@ -81,8 +81,8 @@ public final class GoalCommandHandler implements CommandExecutor, TabCompleter {
                         "leader", goal.leader());
             }
         }
-        plugin.messages().send(player, "list-footer",
-                "pending", String.valueOf(plugin.store().pendingRewardOf(player.getName())));
+        plugin.messages().send(player, "bank-list-footer",
+                "pending", plugin.service().awaiting(player) < 0 ? "проверка недоступна" : String.valueOf(plugin.service().awaiting(player)));
     }
 
     private void showTop(Player player) {
@@ -198,17 +198,7 @@ public final class GoalCommandHandler implements CommandExecutor, TabCompleter {
         }
     }
 
-    private void claim(Player player) {
-        int claimed = plugin.store().claim(player.getName());
-        if (claimed <= 0) {
-            plugin.messages().send(player, "claim-none");
-            return;
-        }
-        java.util.HashMap<Integer, ItemStack> overflow = player.getInventory()
-                .addItem(new ItemStack(Material.DIAMOND, claimed));
-        overflow.values().forEach(item -> player.getWorld().dropItem(player.getLocation(), item));
-        plugin.messages().send(player, "claim-done", "amount", String.valueOf(claimed));
-    }
+    private void claim(Player player) { plugin.service().claimRewards(player); }
 
     /* ------------------------------ /goalsadmin ------------------------------ */
 

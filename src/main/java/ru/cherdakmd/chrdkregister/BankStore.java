@@ -42,7 +42,7 @@ import java.util.logging.Logger;
 public final class BankStore {
 
     /** Версия формата файла. */
-    public static final int SCHEMA_VERSION = 2;
+    public static final int SCHEMA_VERSION = 3;
     /** Верхняя граница счёта: защита от переполнения и «бесконечных» начислений. */
     public static final long MAX_BALANCE = 1_000_000_000L;
 
@@ -104,10 +104,15 @@ public final class BankStore {
         int schema = SCHEMA_VERSION;
         Map<String, Account> accounts = new LinkedHashMap<>();
         Map<String, ClaimsImport> claimsImports = new LinkedHashMap<>();
+        Map<String, UUID> entitlementSources = new LinkedHashMap<>();
+        Map<String, Entitlement> entitlementCredits = new LinkedHashMap<>();
         Map<UUID, AuctionImport> auctionImports = new LinkedHashMap<>();
         Map<UUID, AuctionPayment> auctionSettlements = new LinkedHashMap<>();
     }
 
+    public record Entitlement(UUID owner, long credited) { }
+    private final Map<String, UUID> entitlementSources = new LinkedHashMap<>();
+    private final Map<String, Entitlement> entitlementCredits = new LinkedHashMap<>();
     public record AuctionImport(UUID market, long amount) { }
     private final Map<UUID, AuctionImport> auctionImports = new LinkedHashMap<>();
     private final Map<UUID, AuctionPayment> auctionSettlements = new LinkedHashMap<>();
@@ -148,10 +153,24 @@ public final class BankStore {
                     || !document.getAsJsonObject().get("accounts").isJsonObject()) throw new IllegalArgumentException("Нет таблицы банковских счетов");
             var object = document.getAsJsonObject();
             int schema = object.has("schema") ? object.get("schema").getAsInt() : 1;
-            if (schema != 1 && schema != SCHEMA_VERSION) throw new IllegalArgumentException("Неизвестная схема банка");
-            if (schema == 2) for (String key : java.util.List.of("claimsImports", "auctionImports", "auctionSettlements"))
+            if (schema != 1 && schema != 2 && schema != SCHEMA_VERSION) throw new IllegalArgumentException("Неизвестная схема банка");
+            if (schema >= 2) for (String key : java.util.List.of("claimsImports", "auctionImports", "auctionSettlements"))
+                if (!object.has(key) || !object.get(key).isJsonObject()) throw new IllegalArgumentException("Нет таблицы " + key);
+            if (schema >= 3) for (String key : java.util.List.of("entitlementSources", "entitlementCredits"))
                 if (!object.has(key) || !object.get(key).isJsonObject()) throw new IllegalArgumentException("Нет таблицы " + key);
             Envelope envelope = GSON.fromJson(document, Envelope.class);
+            entitlementSources.clear(); entitlementCredits.clear();
+            if (envelope.entitlementSources != null) for (var row : envelope.entitlementSources.entrySet()) {
+                if (!validIncomeSource(row.getKey()) || row.getValue() == null) throw new IllegalArgumentException("Неверный источник доходов");
+                entitlementSources.put(row.getKey(), row.getValue());
+            }
+            if (envelope.entitlementCredits != null) for (var row : envelope.entitlementCredits.entrySet()) {
+                var key = row.getKey(); var receipt = row.getValue(); int separator = key == null ? -1 : key.indexOf(':');
+                if (separator <= 0 || !entitlementSources.containsKey(key.substring(0, separator))
+                        || !validIncomeKey(key.substring(separator + 1)) || receipt == null || receipt.owner() == null || receipt.credited() < 0)
+                    throw new IllegalArgumentException("Неверная квитанция дохода");
+                entitlementCredits.put(key, receipt);
+            }
             if (envelope == null || envelope.accounts == null) throw new IllegalArgumentException("Пустой денежный файл");
             claimsImports.clear();
             if (envelope.claimsImports != null) for (var row : envelope.claimsImports.entrySet()) {
@@ -187,6 +206,7 @@ public final class BankStore {
                 accounts.put(id, account);
                 rows.add(Map.entry(id, account));
             }
+            for (var receipt : entitlementCredits.values()) if (!accounts.containsKey(receipt.owner())) throw new IllegalArgumentException("Доход без счёта");
             for (var receipt : claimsImports.values()) if (!accounts.containsKey(receipt.player())) throw new IllegalArgumentException("Квитанция казны без счёта");
             for (var id : auctionImports.keySet()) if (!accounts.containsKey(id)) throw new IllegalArgumentException("Импорт аукциона без счёта");
             for (var payment : auctionSettlements.values()) if (!accounts.containsKey(payment.buyer()) || !accounts.containsKey(payment.seller())
@@ -478,6 +498,41 @@ public final class BankStore {
         account.updated = System.currentTimeMillis(); dirty = true; return true;
     }
 
+    private static boolean validIncomeSource(String source) { return source != null && source.matches("[a-z][a-z0-9-]{0,47}"); }
+    private static boolean validIncomeKey(String key) { return key != null && key.matches("[a-z0-9_-]{1,80}"); }
+    public synchronized boolean incomeSourceAvailable(String source, UUID lineage) {
+        return available && validIncomeSource(source) && lineage != null && lineage.equals(entitlementSources.get(source));
+    }
+    public synchronized boolean registerIncomeSource(String source, UUID lineage) {
+        if (!available || !validIncomeSource(source) || lineage == null) return false;
+        var existing = entitlementSources.get(source);
+        if (existing != null) return existing.equals(lineage);
+        var next = envelope(); next.entitlementSources.put(source, lineage); return publishAuction(next);
+    }
+    /** Возвращает подтверждённую накопительную сумму; -1 означает неизвестность/конфликт, НЕ ноль. */
+    public synchronized long creditedEntitlement(String source, UUID lineage, String key, UUID owner) {
+        if (!available || !validIncomeSource(source) || !validIncomeKey(key) || lineage == null || owner == null) return -1;
+        var registered = entitlementSources.get(source);
+        if (!lineage.equals(registered)) return -1;
+        var receipt = entitlementCredits.get(source + ":" + key);
+        return receipt == null ? 0 : receipt.owner().equals(owner) ? receipt.credited() : -1;
+    }
+    /** Источник — долговечный монотонный total, не расходуемый кошелёк. Кредитуется только delta. */
+    public synchronized boolean creditEntitlement(String source, UUID lineage, String key, UUID owner, long total) {
+        long credited = creditedEntitlement(source, lineage, key, owner);
+        if (credited < 0 || total < credited || total < 0) return false;
+        long delta = total - credited;
+        if (total == credited && entitlementCredits.containsKey(source + ":" + key)) return true;
+        long accepted = Math.min(delta, MAX_BALANCE - balance(owner));
+        if (delta > 0 && accepted == 0) return false;
+        var next = envelope();
+        var account = next.accounts.computeIfAbsent(owner.toString(), ignored -> new Account());
+        adjust(account, accepted);
+        next.entitlementSources.put(source, lineage);
+        next.entitlementCredits.put(source + ":" + key, new Entitlement(owner, credited + accepted));
+        return publishAuction(next) && accepted == delta;
+    }
+
     /** Синхронный once-import. Источник заморожен в одном конкретном рынке. */
     public synchronized boolean importLegacyAuction(UUID market, UUID owner, long amount) {
         if (!available || market == null || owner == null || amount < 0 || amount > MAX_BALANCE) return false;
@@ -533,10 +588,12 @@ public final class BankStore {
         try { writeStrict(next); }
         catch (IOException error) {
             available = false;
-            logger.severe("[bank] Неоднозначный сбой записи платежа аукциона; банк остановлен до проверки/restart: " + error.getMessage());
+            logger.severe("[bank] Неоднозначный сбой финансовой записи; банк остановлен до проверки/restart: " + error.getMessage());
             return false;
         }
         accounts.clear(); next.accounts.forEach((id, account) -> accounts.put(UUID.fromString(id), account));
+        entitlementSources.clear(); entitlementSources.putAll(next.entitlementSources);
+        entitlementCredits.clear(); entitlementCredits.putAll(next.entitlementCredits);
         auctionImports.clear(); auctionImports.putAll(next.auctionImports);
         auctionSettlements.clear(); auctionSettlements.putAll(next.auctionSettlements);
         dirty = false; return true;
@@ -556,6 +613,7 @@ public final class BankStore {
         var envelope = new Envelope();
         accounts.forEach((id, account) -> envelope.accounts.put(id.toString(), account.copy()));
         envelope.claimsImports.putAll(claimsImports);
+        envelope.entitlementSources.putAll(entitlementSources); envelope.entitlementCredits.putAll(entitlementCredits);
         envelope.auctionImports.putAll(auctionImports); envelope.auctionSettlements.putAll(auctionSettlements);
         return envelope;
     }

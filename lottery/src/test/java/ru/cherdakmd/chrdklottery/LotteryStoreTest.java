@@ -62,10 +62,10 @@ class LotteryStoreTest {
         assertThrows(IOException.class, () -> s.draw(100, 80, new Random()));
         assertEquals(0, s.lastDrawAt()); assertEquals(0, s.pendingPayoutOf(alice));
         Files.delete(dir.resolve("data.json.tmp"));
-        s.draw(100, 80, new Random());
+        var restarted = store(dir); restarted.draw(100, 80, new Random());
         Files.createDirectory(dir.resolve("data.json.tmp"));
-        assertThrows(IOException.class, () -> s.debitPrize(alice, 1));
-        assertEquals(8, s.pendingPayoutOf(alice));
+        assertThrows(IOException.class, () -> restarted.debitPrize(alice, 1));
+        assertEquals(8, restarted.pendingPayoutOf(alice));
     }
     @Test void ledgerLimitsRejectBeforeMutatingMemoryOrDisk() throws Exception {
         var s = store(dir); s.purchase(alice, "Alice", 1, LotteryStore.MAX_POT);

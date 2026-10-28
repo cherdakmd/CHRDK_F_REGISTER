@@ -28,6 +28,8 @@ public final class LotteryService implements Listener {
 
     public LotteryService(LotteryPlugin plugin, LotteryStore store) { this.plugin = plugin; this.store = store; }
     public void start() throws IOException {
+        store.enableBank();
+        ensureIncome();
         LotteryConfig c = plugin.config();
         long boundary = DrawSchedule.lastBoundary(ZonedDateTime.now(c.zone()), c.drawDay(), c.drawTime())
                 .toInstant().toEpochMilli();
@@ -37,6 +39,7 @@ public final class LotteryService implements Listener {
     }
     public void shutdown() { if (task != null) { task.cancel(); task = null; } }
     private void tick() {
+        settlePrizes();
         LotteryConfig c = plugin.config();
         ZonedDateTime now = ZonedDateTime.now(c.zone());
         long boundary = DrawSchedule.lastBoundary(now, c.drawDay(), c.drawTime()).toInstant().toEpochMilli();
@@ -65,16 +68,33 @@ public final class LotteryService implements Listener {
                 plugin.coreApi().notifyEvent("lottery.draw", plugin.messages().plain("lottery.notify-title"),
                         plugin.messages().plain("lottery.draw-broadcast", "player", result.playerName(),
                                 "pot", result.pot(), "payout", result.payout(), "burn", result.pot() - result.payout(), "total", total), "good");
-                // Prize remains in the ledger until explicitly claimed, including for online winners.
+                settlePrizes();
                 for (Player p : Bukkit.getOnlinePlayers()) remindPrize(p);
             }
             return true;
         } catch (IOException | RuntimeException e) { fail(e); return false; }
     }
     @EventHandler public void onAuthenticated(PlayerAuthCompletedEvent event) { remindPrize(event.getPlayer()); }
+    private boolean ensureIncome() {
+        if (!store.healthy() || plugin.coreApi() == null || !plugin.coreApi().personalBankAvailable()) return false;
+        if (store.bankRegistered()) return plugin.coreApi().incomeSourceAvailable("lottery", store.incomeId());
+        if (!plugin.coreApi().registerIncomeSource("lottery", store.incomeId())) return false;
+        try { store.markBankRegistered(); return true; }
+        catch (IOException error) { fail(error); return false; }
+    }
+    private void settlePrizes() {
+        if (!ensureIncome()) return;
+        // UUID authoritative; totals are saved by draw BEFORE any bank credit. No debitPrize after credit.
+        for (var row : store.entitlements().entrySet()) {
+            UUID owner = UUID.fromString(row.getKey());
+            if (!plugin.coreApi().creditEntitlement("lottery", store.incomeId(), row.getKey(), owner, row.getValue()))
+                plugin.getLogger().warning("Выигрыш ожидает зачисления: " + owner + "; источник сохранён");
+        }
+    }
     private void remindPrize(Player p) {
-        if (plugin.coreApi().isAuthenticated(p) && store.pendingPayoutOf(p.getUniqueId()) > 0)
-            plugin.messages().send(p, "lottery.pending-ready", "payout", store.pendingPayoutOf(p.getUniqueId()));
+        if (!plugin.coreApi().isAuthenticated(p)) return;
+        long total = store.entitlementOf(p.getUniqueId());
+        if (total > 0) claimPrize(p);
     }
     public boolean authenticated(Player p) {
         if (!plugin.coreApi().isAuthenticated(p)) { plugin.messages().send(p, "lottery.need-auth"); return false; }
@@ -117,18 +137,13 @@ public final class LotteryService implements Listener {
     }
     public void claimPrize(Player p) {
         if (!authenticated(p)) return;
-        int pending = store.pendingPayoutOf(p.getUniqueId());
-        if (pending <= 0) { plugin.messages().send(p, "lottery.no-prize"); return; }
-        int amount = Math.min(pending, DiamondWallet.capacity(p));
-        if (amount == 0) { plugin.messages().send(p, "lottery.inventory-full"); return; }
-        ItemStack[] before = snapshot(p);
-        DiamondWallet.give(p, amount);
-        try { store.debitPrize(p.getUniqueId(), amount); }
-        catch (IOException | RuntimeException e) {
-            p.getInventory().setStorageContents(before); fail(e); plugin.messages().send(p, "lottery.storage-error"); return;
+        long total = store.entitlementOf(p.getUniqueId());
+        if (total <= 0) { plugin.messages().send(p, "lottery.no-prize"); return; }
+        String key = p.getUniqueId().toString();
+        if (!ensureIncome() || !plugin.coreApi().creditEntitlement("lottery", store.incomeId(), key, p.getUniqueId(), total)) {
+            plugin.messages().send(p, "lottery.bank-wait"); return;
         }
-        p.saveData();
-        plugin.messages().send(p, "lottery.pending-paid", "payout", amount, "remaining", pending - amount);
+        plugin.messages().send(p, "lottery.bank-paid", "balance", plugin.coreApi().auctionBankBalance(p.getUniqueId()));
     }
     private static ItemStack[] snapshot(Player p) {
         ItemStack[] result = p.getInventory().getStorageContents();

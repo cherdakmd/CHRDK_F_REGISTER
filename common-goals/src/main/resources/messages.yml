@@ -101,3 +101,6 @@ goals:
     donate-diamonds:
       name: "Общий котёл"
       desc: "Внести алмазы в общий котёл (/goals donate)"
+  bank-wait: '<yellow>Награда ожидает зачисления: банк недоступен, /bal заполнен или данные расходятся. Источник сохранён; /goals claim — повторить.</yellow>'
+  bank-paid: '<green>Награды целей учтены в общем /bal: %balance% 💠. Повторное получение не начисляет их ещё раз.</green>'
+  bank-list-footer: '<gray>Ожидает зачисления: %pending% 💠. /goals claim — повторить зачисление в /bal.</gray>'

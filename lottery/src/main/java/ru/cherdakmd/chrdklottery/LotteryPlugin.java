@@ -18,7 +18,7 @@ public final class LotteryPlugin extends JavaPlugin {
         try {
             saveDefaultConfig();
             api = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
-            if (api == null) throw new IllegalStateException("CHRDK_Core API missing");
+            if (api == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 16) throw new IllegalStateException("CHRDK_Core API missing");
             reloadLotteryConfig();
             LotteryStore store = new LotteryStore(getDataFolder().toPath(), getLogger());
             store.load();
@@ -31,7 +31,7 @@ public final class LotteryPlugin extends JavaPlugin {
             }
             service.start();
             getLogger().info("CHRDK_Lottery enabled: " + config.drawDay() + " " + config.drawTime() + " " + config.zone());
-        } catch (Exception e) {
+        } catch (Exception | LinkageError e) {
             getLogger().log(Level.SEVERE, "Lottery disabled. Existing ledger must not be overwritten.", e);
             Bukkit.getPluginManager().disablePlugin(this);
         }

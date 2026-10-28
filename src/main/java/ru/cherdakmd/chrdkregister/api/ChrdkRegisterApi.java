@@ -32,7 +32,7 @@ import java.util.UUID;
 public interface ChrdkRegisterApi {
 
     /** Версия контракта API. Растёт при расширении (добавлении методов/событий). */
-    int API_VERSION = 15;
+    int API_VERSION = 16;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -216,6 +216,15 @@ public interface ChrdkRegisterApi {
     /** Доверенная сделка Claims. payer=null — offline-only, без доступа к инвентарю. */
     default boolean exchangeClaimAccounts(java.util.Map<String, Long> deltas, Player payer,
             org.bukkit.inventory.ItemStack[] expected, org.bukkit.inventory.ItemStack[] replacement) { return false; }
+
+    /** API v16. Накопительные доходы: источник сохраняет total ДО вызова; повтор не начисляет delta ещё раз. */
+    default boolean personalBankAvailable() { return false; }
+    default boolean registerIncomeSource(String source, UUID lineage) { return false; }
+    default boolean incomeSourceAvailable(String source, UUID lineage) { return false; }
+    default UUID knownBankPlayer(String name) { return null; }
+    default long creditedEntitlement(String source, UUID lineage, String key, UUID owner) { return -1L; }
+    /** true — total зачислен полностью. false: выплата могла быть частичной/неизвестной; нельзя откатывать source total. */
+    default boolean creditEntitlement(String source, UUID lineage, String key, UUID owner, long total) { return false; }
 
     /** API v15: -1 при недоступном банке; UUID из достоверного ledger аукциона. */
     default boolean auctionBankAvailable() { return false; }
