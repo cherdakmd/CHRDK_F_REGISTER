@@ -151,8 +151,8 @@ public final class GuildService {
         String warKey = cancelWarsOnDisband(guild);
         store.remove(guild);
         return GuildResult.ok("disband-ok", "name", guild.name(), "treasury",
-                GuildMath.diamonds(guild.treasury()), "returns", GuildMath.diamonds(guild.warReturns()), "members",
-                String.valueOf(guild.size()), "war", warKey);
+                GuildMath.diamonds(guild.treasury()), "members",
+                String.valueOf(guild.size()), "war", warKey, "returns", GuildMath.diamonds(guild.warReturns()));
     }
 
     private String cancelWarsOnDisband(Guild guild) {
@@ -756,7 +756,7 @@ public final class GuildService {
         String warKey = cancelWarsOnDisband(guild);
         store.remove(guild);
         return GuildResult.ok("admin-disbanded", "name", guild.name(),
-                "treasury", GuildMath.diamonds(guild.treasury()), "returns", GuildMath.diamonds(guild.warReturns()), "war", warKey);
+                "treasury", GuildMath.diamonds(guild.treasury()), "war", warKey, "returns", GuildMath.diamonds(guild.warReturns()));
     }
 
     /** Снимает кулдаун войны — после ручного разбора ситуации. */

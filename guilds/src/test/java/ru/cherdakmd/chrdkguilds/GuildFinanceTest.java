@@ -159,4 +159,36 @@ class GuildFinanceTest {
         object=JsonParser.parseString(json).getAsJsonObject(); var wars=object.getAsJsonArray("wars"); var next=wars.get(0).deepCopy().getAsJsonObject(); next.addProperty("id","second"); wars.add(next);
         String bad=object.toString(); assertThrows(IllegalArgumentException.class,()->live.detached(bad));
     }
+    @Test void creationPreviewQuotesOldPriceAndNeverCreatesBeforeReceipt() throws Exception {
+        legacy(100); var source=source(); var live=bind(source); UUID creator=UUID.randomUUID();
+        var preview=GuildFinance.preview(live,config,(s,q)->s.create(q,creator,"Третий","THR",now));
+        assertTrue(preview.result().ok()); assertEquals(27,preview.debit()); assertEquals(0,preview.credit());
+        assertEquals(2,live.count()); assertNull(live.of(creator)); assertNotNull(live.detached(preview.domain()).of(creator));
+    }
+    @Test void expiredStakeReturnsAtCapOnlyOnceAndHistorySurvivesRestart() throws Exception {
+        legacy(Guild.MAX_TREASURY); var source=source(); var live=bind(source); var service=service(live);
+        assertTrue(service.declareWar(leader,"TWO",32,now).ok());
+        live.transaction(copy->{copy.of(leader).deposit(32);return true;},false);
+        long later=now+config.warAcceptSeconds()*1000L+1;
+        assertEquals(1,service.tick(later).size());
+        var reboot=bind(source()); assertEquals(32,reboot.of(leader).warReturns()); assertEquals(1,reboot.history().size());
+        assertTrue(service(reboot).tick(later+1000).isEmpty()); assertEquals(32,reboot.of(leader).warReturns()); assertTrue(source().refunds().isEmpty());
+    }
+    @Test void activeDrawReturnsBothStakesWithoutCapLossOrLeaderCredit() throws Exception {
+        legacy(Guild.MAX_TREASURY); var source=source(); var live=bind(source); var service=service(live);
+        assertTrue(service.declareWar(leader,"TWO",32,now).ok()); assertTrue(service.acceptWar(rival,now+1000).ok());
+        live.transaction(copy->{copy.of(leader).deposit(32);copy.of(rival).deposit(32);return true;},false);
+        assertTrue(service.forceEndWar("ONE",now+2000).ok());
+        var reboot=bind(source()); assertEquals(32,reboot.of(leader).warReturns()); assertEquals(32,reboot.of(rival).warReturns());
+        assertEquals("DRAW",reboot.history().getFirst().result()); assertTrue(reboot.wars().isEmpty()); assertTrue(source().refunds().isEmpty());
+    }
+    @Test void disbandPreservesOtherGuildRefundAndNeverPrivatizesCollectiveFunds() throws Exception {
+        legacy(Guild.MAX_TREASURY); var source=source(); var live=bind(source); var service=service(live);
+        assertTrue(service.declareWar(leader,"TWO",32,now).ok());
+        live.transaction(copy->{copy.of(leader).deposit(32);return true;},false);
+        assertTrue(service.forceDisband("TWO").ok());
+        var reboot=bind(source()); assertEquals(32,reboot.of(leader).warReturns()); assertNull(reboot.of(rival));
+        assertTrue(reboot.wars().isEmpty()); assertEquals(1,reboot.history().size()); assertTrue(source().refunds().isEmpty());
+    }
+
 }

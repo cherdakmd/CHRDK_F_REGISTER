@@ -725,7 +725,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
                 plugin.messages().send(sender, "admin-disbanded",
                         "name", arg(result, "name"),
                         "treasury", arg(result, "treasury"),
-                "returns", arg(result, "returns"),
+                        "returns", arg(result, "returns"),
                         "war", plugin.messages().mini(arg(result, "war")));
                 plugin.requestSave();
             }
@@ -919,7 +919,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
             return List.of();
         }
         if (sender instanceof Player actor && !plugin.authenticated(actor)) {
-            plugin.messages().send(sender,"finance-auth"); return true;
+            return List.of();
         }
         if (command.getName().equalsIgnoreCase("gchat")) {
             return List.of();
