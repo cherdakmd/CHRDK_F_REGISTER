@@ -30,6 +30,7 @@ public final class GoalStore {
         if (!Files.exists(file)) return;
         try {
             var object = JsonParser.parseString(Files.readString(file, StandardCharsets.UTF_8)).getAsJsonObject();
+            ru.cherdakmd.chrdkregister.api.FinanceNumbers.requireIntegral(object);
             for (String key : List.of("goals", "pendingRewards", "rotationEndsAt", "rotationsDone", "lifetimeEarned"))
                 if (!object.has(key)) throw new IllegalArgumentException("missing " + key);
             var loaded = JSON.fromJson(object, Data.class);

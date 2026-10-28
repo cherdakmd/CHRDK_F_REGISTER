@@ -78,10 +78,7 @@ public final class CommonGoalsPlugin extends JavaPlugin implements Listener {
         if (saveTask != null) {
             saveTask.cancel();
         }
-        if (store != null) {
-            store.markDirty();
-            store.save();
-        }
+        if (store != null) store.save();
         getLogger().info("CHRDK_CommonGoals выключен.");
     }
 

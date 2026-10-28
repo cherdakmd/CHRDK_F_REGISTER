@@ -149,6 +149,7 @@ public final class BankStore {
         if (!Files.isRegularFile(file)) { available = false; logger.severe("[bank] bank.json не является файлом; банк остановлен"); return; }
         try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
             var document = com.google.gson.JsonParser.parseReader(reader);
+            ru.cherdakmd.chrdkregister.api.FinanceNumbers.requireIntegral(document);
             if (!document.isJsonObject() || !document.getAsJsonObject().has("accounts")
                     || !document.getAsJsonObject().get("accounts").isJsonObject()) throw new IllegalArgumentException("Нет таблицы банковских счетов");
             var object = document.getAsJsonObject();

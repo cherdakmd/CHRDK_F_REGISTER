@@ -81,8 +81,8 @@ public final class GoalCommandHandler implements CommandExecutor, TabCompleter {
                         "leader", goal.leader());
             }
         }
-        plugin.messages().send(player, "bank-list-footer",
-                "pending", plugin.service().awaiting(player) < 0 ? "проверка недоступна" : String.valueOf(plugin.service().awaiting(player)));
+        long awaiting = plugin.service().awaiting(player);
+        plugin.messages().send(player, "bank-list-footer", "pending", awaiting < 0 ? "проверка недоступна" : String.valueOf(awaiting));
     }
 
     private void showTop(Player player) {

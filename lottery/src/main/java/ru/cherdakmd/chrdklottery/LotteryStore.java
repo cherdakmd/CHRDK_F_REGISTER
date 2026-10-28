@@ -39,6 +39,7 @@ public final class LotteryStore {
         if (!Files.exists(file)) return;
         try {
             var json = com.google.gson.JsonParser.parseString(Files.readString(file, StandardCharsets.UTF_8));
+            ru.cherdakmd.chrdkregister.api.FinanceNumbers.requireIntegral(json);
             if (!json.isJsonObject()) throw new IllegalArgumentException("ledger object expected");
             for (String key : List.of("schema", "tickets", "pending", "names", "pot", "lastDrawAt"))
                 if (!json.getAsJsonObject().has(key)) throw new IllegalArgumentException("missing " + key);
