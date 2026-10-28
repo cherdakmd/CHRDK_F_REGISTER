@@ -56,9 +56,9 @@ class BankChargeTest {
         assertTrue(b.creditEntitlement("lottery",lineage,"prize",owner,5)); assertTrue(b.importLegacyAuction(UUID.randomUUID(),owner,2));
         b.deposit(owner,"Alex",1); b.saveNow(); assertEquals(BankCharge.Status.COMMITTED,load().bankChargeStatus(c)); assertEquals(98,load().balance(owner));
     }
-    @Test void schemaThreeMigratesWithoutInventingChargesAndFourRequiresTable() throws Exception {
+    @Test void schemaThreeMigratesWithoutInventingChargesAndCurrentRequiresTable() throws Exception {
         var b=funded(10); var json=com.google.gson.JsonParser.parseString(Files.readString(b.file())).getAsJsonObject();
-        json.addProperty("schema",3); json.remove("chargeSettlements"); Files.writeString(b.file(),json.toString());
+        json.addProperty("schema",3); json.remove("chargeSettlements"); json.remove("chargeWitnesses"); json.remove("cashPending"); json.remove("cashReceipts"); Files.writeString(b.file(),json.toString());
         b=load(); assertTrue(b.available()); assertTrue(b.settleCharge(charge(1,1,0,0))); assertEquals(9,load().balance(owner));
         json=com.google.gson.JsonParser.parseString(Files.readString(b.file())).getAsJsonObject(); json.remove("chargeSettlements"); Files.writeString(b.file(),json.toString()); assertFalse(load().available());
     }
