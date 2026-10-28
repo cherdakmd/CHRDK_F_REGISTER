@@ -301,8 +301,8 @@ public final class OrdersService {
         }
         ChrdkRegisterApi api = plugin.coreApi();
         if (api == null) {
-            plugin.getLogger().warning("Ядро недоступно: ранг за заказ " + order.id()
-                    + " не выдана игроку " + player.getName() + ".");
+            plugin.getLogger().warning("Ядро недоступно: отдельный буст за заказ " + order.id()
+                    + " не выдан игроку " + player.getName() + ".");
             return false;
         }
         api.grantRewardBoostHours(player.getName(), order.rewardPassHours(), "orders:" + order.botId());
