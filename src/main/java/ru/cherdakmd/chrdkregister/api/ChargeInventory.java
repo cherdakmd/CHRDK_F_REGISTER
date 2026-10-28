@@ -84,37 +84,34 @@ public final class ChargeInventory {
         if (source == null || !source.matches("[a-z][a-z0-9-]{0,47}")) throw new IllegalArgumentException("source");
         return new org.bukkit.NamespacedKey("chrdk_core", "charge_" + source);
     }
-    private static void saveWitness(Player player, BankCharge c) {
-        player.getPersistentDataContainer().set(witnessKey(c.source()), org.bukkit.persistence.PersistentDataType.STRING, c.transaction().toString());
-        player.saveData();
+    /** Общий native-порт: storage-only, отдельный nonce для каждого namespace. */
+    public static InventoryTransfer.Inventory inventory(Player player,String source,java.util.function.BooleanSupplier authenticated) {
+        return inventory(player,witnessKey(source),authenticated);
     }
-    /** Player нужен только для предметной части. При cash=0 актуальный инвентарь вообще не читается. */
-    public static ChargeRecovery.Decision recover(ChargeJournal journal, ChrdkRegisterApi api, Player player, Source source) throws IOException {
-        var pending = journal.pending();
-        if (pending == null) return ChargeRecovery.Decision.COMPLETE;
-        if (!journal.healthy() || !valid(pending)) return ChargeRecovery.Decision.CONFLICT;
-        if (api == null) return ChargeRecovery.Decision.WAIT;
-        var c = pending.payment(); var status = api.bankChargeStatus(c);
-        String state = source.snapshot();
-        boolean stateBefore = state.equals(pending.beforeState()), stateAfter = state.equals(pending.afterState());
-        if (c.cash() > 0 && (player == null || !player.isOnline() || !player.getUniqueId().equals(c.payer()) || !api.isAuthenticated(player)))
-            return ChargeRecovery.Decision.WAIT;
-        ItemStack[] storage = c.cash() == 0 ? null : player.getInventory().getStorageContents();
-        var decision = ChargeRecovery.decide(status, c.cash(), stateBefore, stateAfter,
-                c.cash() > 0 && matches(storage, pending.beforeInventory()), c.cash() > 0 && matches(storage, pending.afterInventory()));
-        switch (decision) {
-            case APPLY_AFTER -> {
-                player.getInventory().setStorageContents(decode(pending.afterInventory())); saveWitness(player, c);
-                source.publish(pending.beforeState(), pending.afterState()); journal.complete(c);
+    /** Отдельный key для небанковских/auction WAL: charge_* зарезервированы Root BankChargeGuard. */
+    public static InventoryTransfer.Inventory inventory(Player player,org.bukkit.NamespacedKey key,java.util.function.BooleanSupplier authenticated) {
+        if(player==null) return null;
+        java.util.Objects.requireNonNull(key);
+        return new InventoryTransfer.Inventory() {
+            public UUID owner() { return player.getUniqueId(); }
+            public boolean available() { return org.bukkit.Bukkit.isPrimaryThread()&&player.isOnline()&&!player.hasMetadata("NPC")&&authenticated.getAsBoolean(); }
+            public String witness() { return player.getPersistentDataContainer().get(key,org.bukkit.persistence.PersistentDataType.STRING); }
+            public boolean matches(String snapshot) { return ChargeInventory.matches(player.getInventory().getStorageContents(),snapshot); }
+            public void apply(String after,String token) {
+                player.getInventory().setStorageContents(decode(after));
+                player.getPersistentDataContainer().set(key,org.bukkit.persistence.PersistentDataType.STRING,token);
+                checkpoint();
             }
-            case COMPLETE -> {
-                if (c.cash() > 0) saveWitness(player, c);
-                source.publish(pending.beforeState(), pending.afterState()); journal.complete(c);
-            }
-            case ROLLBACK -> journal.rollback(c);
-            case WAIT, CONFLICT -> { }
-        }
-        return decision;
+            public void checkpoint() { player.saveData(); }
+        };
+    }
+    /** При cash=0 актуальный playerdata не нужен; при доплате нужен durable native nonce. */
+    public static ChargeRecovery.Decision recover(ChargeJournal journal,ChrdkRegisterApi api,Player player,Source source) throws IOException {
+        var pending=journal.pending(); if(pending==null) return ChargeRecovery.Decision.COMPLETE;
+        if(!journal.healthy()||!valid(pending)) return ChargeRecovery.Decision.CONFLICT;
+        if(api==null) return ChargeRecovery.Decision.WAIT;
+        return ChargeRecovery.recover(journal,api.bankChargeStatus(pending.payment()),
+                pending.payment().cash()==0?null:inventory(player,pending.payment().source(),()->api.isAuthenticated(player)),source);
     }
     private ChargeInventory() { }
 }

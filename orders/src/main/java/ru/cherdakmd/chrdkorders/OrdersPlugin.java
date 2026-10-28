@@ -36,7 +36,7 @@ public final class OrdersPlugin extends JavaPlugin {
             this.config = OrdersConfig.parse(getConfig(), getLogger());
             this.messages = Messages.load(this, config.locale(), getLogger());
             this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
-            if(coreApi==null||ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)<21) throw new IllegalStateException("Нужен Core API 21+");
+            if(coreApi==null||ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)<22) throw new IllegalStateException("Нужен Core API 22+");
             this.store = new OrdersStore(getDataFolder().toPath(), getLogger());
             store.load();
             this.finance = new OrdersFinance(this);

@@ -31,8 +31,8 @@ import java.util.UUID;
  */
 public interface ChrdkRegisterApi {
 
-    /** Версия контракта API. API 21: InventoryIncome для предметных доходов с playerdata witness. */
-    int API_VERSION = 21;
+    /** Версия контракта API. API 22: обязательный native witness/checkpoint для предметных переходов. */
+    int API_VERSION = 22;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();

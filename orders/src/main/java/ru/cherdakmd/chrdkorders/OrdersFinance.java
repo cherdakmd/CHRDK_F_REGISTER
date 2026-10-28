@@ -76,6 +76,7 @@ public final class OrdersFinance implements AutoCloseable {
             public boolean available() { return p.isOnline()&&!p.isDead()&&!p.hasMetadata("NPC")&&plugin.coreApi()!=null&&plugin.coreApi().isAuthenticated(p); }
             public String witness() { return p.getPersistentDataContainer().get(WITNESS,PersistentDataType.STRING); }
             public boolean matches(String state) { return ChargeInventory.matches(p.getInventory().getStorageContents(),state); }
+            public void checkpoint() { p.saveData(); }
             public void consume(String state,String witness) {
                 p.getInventory().setStorageContents(ChargeInventory.decode(state));
                 p.getPersistentDataContainer().set(WITNESS,PersistentDataType.STRING,witness);

@@ -125,13 +125,7 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
                 || !payer.getUniqueId().equals(payment.payer()) || payer.hasMetadata("NPC") || !isAuthenticated(payer)
                 || payer.getGameMode() != org.bukkit.GameMode.SURVIVAL && payer.getGameMode() != org.bukkit.GameMode.ADVENTURE
                 || expected == null || expected.length != 36 || !java.util.Arrays.equals(expected, payer.getInventory().getStorageContents())) return false;
-        String permission = switch (payment.source()) {
-            case "lottery" -> "chrdklottery.use";
-            case "common-goals" -> "chrdkgoals.use";
-            case "teleports" -> "chrdktele.use";
-            case "claim-teleports" -> "chrdkclaims.teleport";
-            default -> null;
-        };
+        String permission = ru.cherdakmd.chrdkregister.api.BankCharge.permission(payment.source());
         if (permission == null || !payer.hasPermission(permission)) return false;
         if (bank.bankChargeStatus(payment) == ru.cherdakmd.chrdkregister.api.BankCharge.Status.COMMITTED) return true;
         var plan = ru.cherdakmd.chrdkregister.api.ChargeInventory.plan(expected, payment.price(), bank.balance(payer.getUniqueId()));

@@ -5,6 +5,6 @@ enum RecoveryDecision {
     ROLLBACK, COMPLETE, CONFLICT;
     static RecoveryDecision of(boolean before, boolean after) {
         if (before == after) return CONFLICT;
-        return after ? COMPLETE : ROLLBACK;
+        return after ? CONFLICT : ROLLBACK;
     }
 }

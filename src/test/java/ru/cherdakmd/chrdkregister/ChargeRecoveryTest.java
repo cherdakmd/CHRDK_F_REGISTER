@@ -6,7 +6,7 @@ import static ru.cherdakmd.chrdkregister.api.ChargeRecovery.Decision.*;
 class ChargeRecoveryTest {
     @Test void committedCashOnlyAcceptsOneUnambiguousInventoryAndPublishedSourceCannotDebitAgain() {
         for (boolean sourceAfter:new boolean[]{false,true}) for (boolean before:new boolean[]{false,true}) for (boolean after:new boolean[]{false,true}) {
-            var expected=before==after || sourceAfter&&!after ? CONFLICT : after ? COMPLETE : APPLY_AFTER;
+            var expected=!sourceAfter&&before&&!after ? APPLY_AFTER : CONFLICT;
             assertEquals(expected,ChargeRecovery.decide(BankCharge.Status.COMMITTED,9,!sourceAfter,sourceAfter,before,after));
         }
     }

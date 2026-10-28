@@ -19,8 +19,9 @@ public final class AuctionStore {
     private static final int MAX_SNAPSHOT_CHARS = 4 * 1024 * 1024;
     public record Lot(long id, UUID seller, String name, String item, int price, int fee, long expires) { }
     public record Parcel(long id, String item) { }
-    public record Pending(UUID player, String operation, String before, String after, State next, AuctionPayment payment) {
-        public Pending(UUID player, String operation, String before, String after, State next) { this(player, operation, before, after, next, null); }
+    public record Pending(UUID player, String operation, String before, String after, State next, AuctionPayment payment,UUID transferId) {
+        public Pending(UUID player,String operation,String before,String after,State next) { this(player,operation,before,after,next,null,UUID.randomUUID()); }
+        public Pending(UUID player,String operation,String before,String after,State next,AuctionPayment payment) { this(player,operation,before,after,next,payment,payment==null?UUID.randomUUID():payment.transaction()); }
     }
     public static final class State {
         long sequence = 1;
@@ -66,6 +67,11 @@ public final class AuctionStore {
             validate(loaded.state);
             if (loaded.pending != null) {
                 Pending p = loaded.pending;
+                var rawPending=obj.getAsJsonObject("pending");
+                if(rawPending.has("transferId")&&!rawPending.get("transferId").isJsonNull()
+                        &&(p.transferId==null||!rawPending.get("transferId").isJsonPrimitive()
+                        ||!rawPending.get("transferId").getAsJsonPrimitive().isString()
+                        ||!p.transferId.toString().equals(rawPending.get("transferId").getAsString()))) throw new IllegalArgumentException("transfer nonce");
                 if (p.player == null || p.operation == null || p.before == null || p.after == null)
                     throw new IllegalArgumentException("pending");
                 if (p.payment == null) {
@@ -139,7 +145,7 @@ public final class AuctionStore {
             checkpoint.afterReplace();
             try (FileChannel directory = FileChannel.open(file.getParent(), StandardOpenOption.READ)) { directory.force(true); }
             data = next;
-        } catch (IOException error) { healthy = false; throw error; }
+        } catch (IOException | RuntimeException error) { healthy = false; throw error; }
     }
     private void available() { if (!healthy || data.pending != null) throw new IllegalStateException("recovery required"); }
     public void enableBank() throws IOException {
@@ -154,7 +160,7 @@ public final class AuctionStore {
     }
     private static void validateBankPending(Envelope env, Pending pending) {
         var p = pending.payment;
-        if (env.schema != 2 || p == null || !p.valid() || !p.market().equals(env.market) || !p.buyer().equals(pending.player)
+        if (env.schema != 2 || p == null || !p.valid() || pending.transferId!=null&&!pending.transferId.equals(p.transaction()) || !p.market().equals(env.market) || !p.buyer().equals(pending.player)
                 || p.sequence() != env.state.bankSequence + 1 || pending.next.bankSequence != p.sequence()
                 || !pending.operation.equals("BANK_BUY #" + p.lot())
                 || !p.inventoryHash().equals(AuctionPayment.hash(pending.before, pending.after))) throw new IllegalArgumentException("bank intent");

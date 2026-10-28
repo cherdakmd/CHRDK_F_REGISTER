@@ -6,6 +6,17 @@ import java.util.UUID;
 public record BankCharge(String source, UUID lineage, long sequence, UUID transaction, UUID payer,
                          long price, long debit, long cash, long change, String inventoryHash, String stateHash) {
     public enum Status { UNAVAILABLE, MISSING, COMMITTED, CONFLICT }
+    public static String permission(String source) {
+        if(source==null) return null;
+        return switch(source) {
+            case "lottery" -> "chrdklottery.use";
+            case "common-goals" -> "chrdkgoals.use";
+            case "teleports" -> "chrdktele.use";
+            case "claim-teleports" -> "chrdkclaims.teleport";
+            case "guilds" -> "chrdkguilds.use";
+            default -> null;
+        };
+    }
     public boolean valid() {
         return source != null && source.matches("[a-z][a-z0-9-]{0,47}") && lineage != null && transaction != null && payer != null
                 && sequence > 0 && sequence < Long.MAX_VALUE && price >= 1 && price <= 1_000_000

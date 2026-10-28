@@ -154,12 +154,13 @@ class OrdersFinanceTest {
         String service=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkorders/OrdersService.java")); assertFalse(service.contains("Material.DIAMOND")); assertFalse(service.contains("dropItemNaturally")); assertFalse(service.contains("getContents()"));
     }
     static final class NativeBag implements InventoryIncome.Inventory {
-        final UUID owner; String state="before",witness; int writes; boolean crash;
+        final UUID owner; String state="before",witness; int writes; boolean crash,checkpointCrash;
         NativeBag(UUID owner) { this.owner=owner; }
         public UUID owner() { return owner; }
         public boolean available() { return true; }
         public String witness() { return witness; }
         public boolean matches(String expected) { return state.equals(expected); }
+        public void checkpoint() throws IOException { if(checkpointCrash) throw new IOException("checkpoint refused"); }
         public void consume(String after,String token) throws IOException { state=after; witness=token; writes++; if(crash) throw new IOException("native saved then disconnected"); }
     }
     @Test void unpublishedIntentNeverCreditsAndOnlyConsumedProofAllowsProductionPublish() throws Exception {
@@ -174,6 +175,15 @@ class OrdersFinanceTest {
         assertThrows(IOException.class,()->InventoryIncome.recover(p.inventory(),bag)); var reopened=load();
         bag.crash=false; assertEquals(InventoryIncome.Decision.CONSUMED,InventoryIncome.recover(reopened.pending().inventory(),bag)); reopened.publish(reopened.pending());
         var b=bank(); assertTrue(OrdersFinance.deliver(reopened,new Gateway(b),owner,17)); assertEquals(1,bag.writes); assertEquals(17,b.balance(owner)); assertEquals(1,load().completed(owner));
+    }
+
+    @Test void inMemoryWitnessCannotPublishOrderWhileRetryCheckpointStillFails() throws Exception {
+        var s=ready(); var p=prepare(s); var bag=new NativeBag(owner); bag.crash=true;
+        assertThrows(IOException.class,()->InventoryIncome.recover(p.inventory(),bag)); bag.crash=false; bag.checkpointCrash=true;
+        assertThrows(IOException.class,()->InventoryIncome.recover(load().pending().inventory(),bag));
+        assertNotNull(load().order("1")); assertTrue(load().incomes().isEmpty()); assertEquals(0,bank().balance(owner)); assertEquals(1,bag.writes);
+        bag.checkpointCrash=false; assertEquals(InventoryIncome.Decision.CONSUMED,InventoryIncome.recover(load().pending().inventory(),bag));
+        var reopened=load(); reopened.publish(reopened.pending()); assertEquals(17,load().incomes().get(owner)); assertEquals(1,bag.writes);
     }
 
 }

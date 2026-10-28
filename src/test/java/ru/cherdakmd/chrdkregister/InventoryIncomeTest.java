@@ -16,6 +16,7 @@ class InventoryIncomeTest {
         public boolean available() { return available; }
         public String witness() { return witness; }
         public boolean matches(String value) { return state.equals(value); }
+        public void checkpoint() throws IOException { }
         public void consume(String after,String token) throws IOException { state=after; if(!noWitness) witness=token; writes++; if(crash) throw new IOException("after native saveData"); }
     }
     @Test void consumesOnlyAfterIntentAndReturnsProofForSourcePublication() throws Exception {

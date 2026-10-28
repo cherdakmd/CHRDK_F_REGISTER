@@ -42,7 +42,7 @@ public final class GuildsPlugin extends JavaPlugin {
             this.messages = Messages.load(this, config.locale(), getLogger());
             this.store = new GuildStore(getDataFolder().toPath(), getLogger());
             this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
-            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 19) throw new IllegalStateException("Нужен Core API 19+");
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 22) throw new IllegalStateException("Нужен Core API 22+");
             this.payments = new ru.cherdakmd.chrdkregister.api.PaidActions(this,this::coreApi,this::messages,"guilds");
             store.bind(payments.store());
             this.service = new GuildService(config, store);

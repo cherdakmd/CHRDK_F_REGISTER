@@ -70,7 +70,7 @@ public final class ChargeJournal {
             checkpoint.afterReplace();
             try (FileChannel directory = FileChannel.open(file.getParent(), StandardOpenOption.READ)) { directory.force(true); }
             data = next;
-        } catch (IOException error) { healthy = false; throw error; }
+        } catch (IOException | RuntimeException error) { healthy = false; throw error; }
     }
     public synchronized BankCharge prepare(UUID payer, long price, long debit, long cash, long change,
                                             String beforeInventory, String afterInventory, String beforeState, String afterState) throws IOException {

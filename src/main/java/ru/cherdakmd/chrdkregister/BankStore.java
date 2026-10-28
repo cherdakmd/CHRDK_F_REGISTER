@@ -649,7 +649,7 @@ public final class BankStore {
     }
     private boolean publishAuction(Envelope next) {
         try { writeStrict(next); }
-        catch (IOException error) {
+        catch (IOException | RuntimeException error) {
             available = false;
             logger.severe("[bank] Неоднозначный сбой финансовой записи; банк остановлен до проверки/restart: " + error.getMessage());
             return false;
@@ -697,7 +697,7 @@ public final class BankStore {
     public synchronized void saveNow() {
         if (!available || !dirty) return;
         try { writeStrict(envelope()); dirty = false; }
-        catch (IOException error) { available = false; logger.severe("[bank] Запись остановлена: " + error.getMessage()); }
+        catch (IOException | RuntimeException error) { available = false; logger.severe("[bank] Запись остановлена: " + error.getMessage()); }
     }
     public synchronized String snapshotJson() { return GSON.toJson(envelope()); }
 

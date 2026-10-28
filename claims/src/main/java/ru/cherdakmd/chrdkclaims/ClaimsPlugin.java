@@ -67,7 +67,7 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         saveDefaultConfig();
         reloadClaimsConfig();
         try {
-            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 18) throw new IllegalStateException("Нужен Core API 18+");
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 22) throw new IllegalStateException("Нужен Core API 22+");
             teleportPayments = new ru.cherdakmd.chrdkregister.api.PaidActions(this,this::coreApi,this::messages,"claim-teleports");
         } catch (Exception | LinkageError error) {
             getLogger().log(java.util.logging.Level.SEVERE,"Приваты остановлены: платёжный протокол недоступен; данные не сброшены",error);

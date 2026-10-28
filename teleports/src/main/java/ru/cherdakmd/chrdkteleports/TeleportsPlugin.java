@@ -32,7 +32,7 @@ public final class TeleportsPlugin extends JavaPlugin implements org.bukkit.even
         saveDefaultConfig();
         reloadTeleportsConfig();
         try {
-            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 18) throw new IllegalStateException("Нужен Core API 18+");
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 22) throw new IllegalStateException("Нужен Core API 22+");
             this.store = new HomeStore(getDataFolder().toPath(), getLogger());
             this.payments = new ru.cherdakmd.chrdkregister.api.PaidActions(this,this::coreApi,this::messages,"teleports");
             if (!payments.store().valuesInitialized()) store.load();

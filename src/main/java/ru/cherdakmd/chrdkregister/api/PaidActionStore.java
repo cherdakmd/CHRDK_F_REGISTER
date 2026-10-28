@@ -76,7 +76,7 @@ public final class PaidActionStore implements ChargeInventory.Source {
             checkpoint.afterReplace();
             try (var c=FileChannel.open(file.getParent(),StandardOpenOption.READ)) { c.force(true); }
             data=next;
-        } catch (IOException error) { healthy=false; throw error; }
+        } catch (IOException | RuntimeException error) { healthy=false; throw error; }
     }
     public synchronized void markRegistered() throws IOException { writable(); var n=copy(); n.registered=true; write(n); }
     public synchronized boolean valuesInitialized() { return data.valuesInitialized; }

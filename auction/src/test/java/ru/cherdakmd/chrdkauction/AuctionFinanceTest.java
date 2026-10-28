@@ -102,7 +102,8 @@ class AuctionFinanceTest {
             assertEquals(AuctionRecovery.Decision.CONFLICT,AuctionRecovery.decide(AuctionPayment.Status.CONFLICT,9,before,after));
         }
         assertEquals(AuctionRecovery.Decision.APPLY_AFTER,AuctionRecovery.decide(AuctionPayment.Status.COMMITTED,108,true,false));
-        assertEquals(AuctionRecovery.Decision.COMPLETE,AuctionRecovery.decide(AuctionPayment.Status.COMMITTED,108,false,true));
+        assertEquals(AuctionRecovery.Decision.CONFLICT,AuctionRecovery.decide(AuctionPayment.Status.COMMITTED,108,false,true));
+        assertEquals(AuctionRecovery.Decision.COMPLETE,AuctionRecovery.decide(AuctionPayment.Status.COMMITTED,108,false,true,true));
         assertEquals(AuctionRecovery.Decision.CONFLICT,AuctionRecovery.decide(AuctionPayment.Status.COMMITTED,108,false,false));
         assertEquals(AuctionRecovery.Decision.CONFLICT,AuctionRecovery.decide(AuctionPayment.Status.MISSING,108,false,true));
     }
@@ -110,8 +111,9 @@ class AuctionFinanceTest {
         String src=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkauction/AuctionService.java"));
         String buy=src.substring(src.indexOf("void buy("),src.indexOf("void cancel("));
         assertTrue(buy.indexOf("prepareBankBuy")<buy.indexOf("commitAuctionPayment"));
-        assertTrue(buy.indexOf("commitAuctionPayment")<buy.indexOf("setStorageContents"));
-        assertTrue(buy.indexOf("saveData()")<buy.indexOf("completeBank"));
+        assertTrue(buy.indexOf("commitAuctionPayment")<buy.indexOf("AuctionTransfers.bank"));
+        assertFalse(buy.contains("setStorageContents"));
+        assertFalse(buy.contains("saveData()"));
         assertTrue(buy.contains("if (plan.cash() > 0)")); assertFalse(buy.contains("prepareBuy("));
         String money=src.substring(src.indexOf("void money("),src.indexOf("private void lockPlayer"));
         assertFalse(money.contains("prepareMoneyClaim")); assertFalse(money.contains("setStorageContents")); assertTrue(money.contains("bankBalance"));

@@ -37,8 +37,8 @@ public final class CommonGoalsPlugin extends JavaPlugin implements Listener {
         saveDefaultConfig();
         reloadGoalsConfig();
         try {
-            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 17)
-                throw new IllegalStateException("Нужен Core API 17+");
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 22)
+                throw new IllegalStateException("Нужен Core API 22+");
             this.store = new GoalStore(getDataFolder().toPath(), getLogger());
             store.load();
             if (!store.healthy()) throw new IllegalStateException("Источник целей повреждён");

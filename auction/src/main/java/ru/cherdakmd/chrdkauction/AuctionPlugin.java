@@ -18,7 +18,7 @@ public final class AuctionPlugin extends JavaPlugin {
         try {
             saveDefaultConfig(); reloadAuction();
             api=Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
-            if (api==null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)<15) throw new IllegalStateException("Нужен CHRDK_Core API 15+; финансовый fallback запрещён");
+            if (api==null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)<22) throw new IllegalStateException("Нужен CHRDK_Core API 22+; финансовый fallback запрещён");
             ChrdkRegisterApi.class.getMethod("auctionBankAvailable");
             ChrdkRegisterApi.class.getMethod("auctionPaymentStatus", ru.cherdakmd.chrdkregister.api.AuctionPayment.class);
             ChrdkRegisterApi.class.getMethod("importLegacyAuction", java.util.UUID.class, java.util.UUID.class, long.class);

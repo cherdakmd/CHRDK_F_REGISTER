@@ -5,6 +5,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.*;
 import org.bukkit.inventory.ItemStack;
 import ru.cherdakmd.chrdkregister.api.AuctionPayment;
+import ru.cherdakmd.chrdkregister.api.InventoryTransfer;
+import ru.cherdakmd.chrdkregister.api.ChargeInventory;
 import ru.cherdakmd.chrdkregister.api.events.PlayerAuthCompletedEvent;
 import java.io.IOException;
 import java.util.*;
@@ -66,7 +68,9 @@ public final class AuctionService implements Listener {
     private boolean transfer(Player p, ItemStack[] before, ItemStack[] after, Prepare prepare) {
         try {
             prepare.run(ItemCodec.inventory(before), ItemCodec.inventory(after));
-            p.getInventory().setStorageContents(after); p.saveData(); store.complete(); return true;
+            if(AuctionTransfers.item(store,inventory(p,"auction-items"))!=InventoryTransfer.Decision.APPLIED)
+                throw new IOException("Предметный переход не подтверждён native witness");
+            return true;
         } catch (Exception error) {
             failed(p, error);
             if (!store.healthy() || store.pending() != null && store.pending().player().equals(p.getUniqueId())) lockPlayer(p);
@@ -118,11 +122,9 @@ public final class AuctionService implements Listener {
                 } else { tell(p, "auction.finance-unavailable"); if (payment.cash() > 0) lockPlayer(p); }
                 return;
             }
-            if (plan.cash() > 0) {
-                if (!ItemCodec.matches(p.getInventory().getStorageContents(), a)) throw new IllegalStateException("Storage изменён после оплаты");
-                p.getInventory().setStorageContents(plan.after()); p.saveData();
-            }
-            store.completeBank(payment);
+            var applied=AuctionTransfers.bank(store,status,plan.cash()==0?null:inventory(p,"auction-cash"));
+            if(applied!=AuctionRecovery.Decision.COMPLETE&&applied!=AuctionRecovery.Decision.APPLY_AFTER)
+                throw new IOException("Предметная доплата не подтверждена native witness");
             tell(p, "auction.bank-bought", "id", id, "change", plan.change());
             var seller = Bukkit.getPlayer(lot.seller());
             if (seller != null && plugin.api().isAuthenticated(seller)) tell(seller, "auction.sold", "id", id, "money", lot.price() - lot.fee());
@@ -168,16 +170,12 @@ public final class AuctionService implements Listener {
         if (!AuctionWallet.valid(pending)) throw new IllegalStateException("Некорректный физический план");
         // Полностью банковская покупка не читает/не восстанавливает актуальный storage владельца.
         if (payment.cash() == 0) return recoverBankOnly();
-        var contents = p.getInventory().getStorageContents();
-        var decision = AuctionRecovery.decide(plugin.api().auctionPaymentStatus(payment), payment.cash(),
-                ItemCodec.matches(contents, pending.before()), ItemCodec.matches(contents, pending.after()));
-        switch (decision) {
-            case APPLY_AFTER -> { p.getInventory().setStorageContents(ItemCodec.inventory(pending.after())); p.saveData(); store.completeBank(payment); }
-            case COMPLETE -> { p.saveData(); store.completeBank(payment); }
-            case ROLLBACK -> store.rollbackBank(payment);
-            case WAIT, CONFLICT -> { lockPlayer(p); return false; }
-        }
+        var decision=AuctionTransfers.bank(store,plugin.api().auctionPaymentStatus(payment),inventory(p,"auction-cash"));
+        if(decision==AuctionRecovery.Decision.WAIT||decision==AuctionRecovery.Decision.CONFLICT) { lockPlayer(p); return false; }
         return true;
+    }
+    private InventoryTransfer.Inventory inventory(Player p,String source) {
+        return ChargeInventory.inventory(p,new NamespacedKey("chrdk_inventory",source),()->plugin.api()!=null&&plugin.api().isAuthenticated(p));
     }
     @EventHandler public void onAuth(PlayerAuthCompletedEvent event) {
         Player p = event.getPlayer();
@@ -197,12 +195,9 @@ public final class AuctionService implements Listener {
             if (pending.payment() != null) {
                 if (!recoverBank(p)) return false;
             } else {
-                var inventory = p.getInventory().getStorageContents();
-                switch (RecoveryDecision.of(ItemCodec.matches(inventory,pending.before()), ItemCodec.matches(inventory,pending.after()))) {
-                    case COMPLETE -> { p.saveData(); store.complete(); }
-                    case ROLLBACK -> store.rollback();
-                    case CONFLICT -> throw new IllegalStateException("Конфликт снимков. Нужна согласованная резервная копия; автоматический возврат запрещён.");
-                }
+                var decision=AuctionTransfers.item(store,inventory(p,"auction-items"));
+                if(decision!=InventoryTransfer.Decision.APPLIED)
+                    throw new IOException("Предметная операция без подтверждённого nonce; сохраните журнал для сверки");
             }
             start(); tell(p, "auction.bank-recovered"); return true;
         } catch (Exception error) { failed(p, error); lockPlayer(p); return false; }
