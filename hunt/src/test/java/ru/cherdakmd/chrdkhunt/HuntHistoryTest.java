@@ -28,6 +28,8 @@ class HuntHistoryTest {
     @Test void duplicatesDoNotDirtyOrCreateAnotherRow() {
         var store = new HuntStore(dir, Logger.getAnonymousLogger()); UUID owner = UUID.randomUUID();
         assertTrue(store.recordHistory(owner, "Hunter", entry(1))); store.snapshotJson();
+        assertTrue(store.isDirty(), "снимок не подтверждает запись на диск"); store.flush();
+        assertFalse(store.isDirty());
         assertFalse(store.recordHistory(owner, "Hunter", entry(1))); assertFalse(store.isDirty());
         assertEquals(1, store.history(owner).size());
         assertFalse(store.recordHistory(null, "Hunter", entry(2)));

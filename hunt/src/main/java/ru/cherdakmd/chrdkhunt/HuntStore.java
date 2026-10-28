@@ -37,7 +37,8 @@ import java.util.logging.Logger;
  * Сутки считаются по UTC, чтобы «сегодня» не зависело от часового пояса.</p>
  *
  * <p>Паттерн записи общий для репозитория: мутации на главном потоке,
- * {@link #snapshotJson()} и асинхронная запись {@link #saveNow()}. Класс чистый
+ * snapshot+асинхронная запись {@link #saveNow()} под одним монитором. Финансовые
+ * переходы синхронно force+atomic-replace: async-save не затирает новый доход. Класс чистый
  * (Gson + NIO + UUID) и проверяется юнит-тестами без Bukkit.</p>
  */
 public final class HuntStore {
