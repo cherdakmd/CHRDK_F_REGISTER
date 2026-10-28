@@ -32,7 +32,7 @@ import java.util.UUID;
 public interface ChrdkRegisterApi {
 
     /** Версия контракта API. Растёт при расширении (добавлении методов/событий). */
-    int API_VERSION = 17;
+    int API_VERSION = 18;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -218,6 +218,8 @@ public interface ChrdkRegisterApi {
             org.bukkit.inventory.ItemStack[] expected, org.bukkit.inventory.ItemStack[] replacement) { return false; }
 
     /** API v17: статус долговечного расхода; false commit не является доказательством неоплаты. */
+    /** API 18: authoritative high-water, -1 при неизвестном источнике/неисправном банке. */
+    default long bankChargeSequence(String source, UUID lineage) { return -1L; }
     default BankCharge.Status bankChargeStatus(BankCharge payment) { return BankCharge.Status.UNAVAILABLE; }
     default boolean commitBankCharge(Player payer, BankCharge payment, org.bukkit.inventory.ItemStack[] expected) { return false; }
 

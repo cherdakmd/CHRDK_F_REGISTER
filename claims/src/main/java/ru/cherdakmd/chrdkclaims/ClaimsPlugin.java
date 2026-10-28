@@ -48,6 +48,8 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
     private ClaimAudit audit;
     private ClaimMenuGui menu;
     private ClaimTeleportService teleports;
+    private ru.cherdakmd.chrdkregister.api.PaidActions teleportPayments;
+    private BukkitTask teleportFinanceTask;
     private final Set<UUID> bypass = ConcurrentHashMap.newKeySet();
     /** Активные подсветки границ: игрок → задача (чтобы не плодить таймеры). */
     private final Map<UUID, BukkitTask> borderTasks = new ConcurrentHashMap<>();
@@ -63,6 +65,15 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        reloadClaimsConfig();
+        try {
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 18) throw new IllegalStateException("Нужен Core API 18+");
+            teleportPayments = new ru.cherdakmd.chrdkregister.api.PaidActions(this,this::coreApi,this::messages,"claim-teleports");
+        } catch (Exception | LinkageError error) {
+            getLogger().log(java.util.logging.Level.SEVERE,"Приваты остановлены: платёжный протокол недоступен; данные не сброшены",error);
+            Bukkit.getPluginManager().disablePlugin(this); return;
+        }
+        teleportFinanceTask=Bukkit.getScheduler().runTaskTimer(this,teleportPayments::tick,100L,100L);
         this.store = new ClaimStore(getDataFolder().toPath(), getLogger());
         store.load();
         this.audit = new ClaimAudit(getDataFolder().toPath(), getLogger());
@@ -136,6 +147,7 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        if (teleportFinanceTask!=null) teleportFinanceTask.cancel();
         if (moneyMigrationTask != null) { moneyMigrationTask.cancel(); moneyMigrationTask = null; }
         if (coreApi != null) {
             try {
@@ -494,6 +506,9 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
     }
 
     /** Телепорт к приватам (/claim tp и клик в меню). */
+    public ru.cherdakmd.chrdkregister.api.PaidActions teleportPayments() { return teleportPayments; }
+    @EventHandler(priority=org.bukkit.event.EventPriority.LOWEST)
+    public void onTeleportFinanceAuth(PlayerAuthCompletedEvent event) { teleportPayments.recover(event.getPlayer()); }
     public ClaimTeleportService teleports() {
         return teleports;
     }

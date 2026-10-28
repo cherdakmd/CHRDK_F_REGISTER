@@ -63,3 +63,16 @@ admin:
   reloaded: "<green>Конфигурация телепортов перезагружена.</green>"
   usage:
     - "<gray><yellow>/tpadmin reload</yellow> — перечитать конфиг</gray>"
+
+finance:
+  service-mode: '<red>Оплата требует авторизации, живого игрока в Survival/Adventure; NPC не допускаются.</red>'
+  service-wait: '<yellow>Платёж/исход услуги ожидает сверки. Новая оплата не выполнена. Администратору: finance / recover.</yellow>'
+  service-insufficient: '<red>Нужно %cost% 💠: сначала /bal, затем обычные алмазы/руда/блоки из storage. Именные предметы, броня и offhand не расходуются.</red>'
+  service-refused: '<red>Операция отклонена. Новое списание/возврат не выполнены.</red>'
+  service-refunding: '<yellow>Телепорт отменён. Полный возврат %cost% 💠 учтён для /bal; при недоступном/заполненном банке непогашенная часть сохранена.</yellow>'
+  service-checked: '<green>Безопасная сверка завершена. Это не принудительное подтверждение и не обход IO-карантина.</green>'
+  service-payment: '<yellow>Pending оплаты %id%; плательщик %payer%. Не удаляйте журнал.</yellow>'
+  service-action: '<yellow>Резерв %id%: payer=%payer%, actor=%actor%, цена=%price%, этап=%phase%.</yellow>'
+  service-status: '<gray>Незавершённых услуг: %count%, блокировка оплаты: %paused%. EXECUTING требует доказательства исхода.</gray>'
+  service-resolve-usage: '<yellow>После ручной сверки: resolve <UUID> success|refund confirm. Для Claims: /claimadmin tpresolve; для Teleports: /tpadmin resolve. Не угадывайте исход.</yellow>'
+  service-lock: '<red>Предметная оплата не завершена. Нужна сверка банка и playerdata; повторите вход после восстановления.</red>'

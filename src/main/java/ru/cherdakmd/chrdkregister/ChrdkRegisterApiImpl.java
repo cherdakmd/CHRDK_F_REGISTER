@@ -116,6 +116,7 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
         return plugin != null && plugin.isEnabled() && bank != null && plugin.bank() != null
                 && plugin.bank().enabled() && org.bukkit.Bukkit.isPrimaryThread();
     }
+    @Override public long bankChargeSequence(String source, java.util.UUID lineage) { return auctionBankReady() ? bank.bankChargeSequence(source,lineage) : -1L; }
     @Override public ru.cherdakmd.chrdkregister.api.BankCharge.Status bankChargeStatus(ru.cherdakmd.chrdkregister.api.BankCharge payment) {
         return auctionBankReady() ? bank.bankChargeStatus(payment) : ru.cherdakmd.chrdkregister.api.BankCharge.Status.UNAVAILABLE;
     }
@@ -127,6 +128,8 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
         String permission = switch (payment.source()) {
             case "lottery" -> "chrdklottery.use";
             case "common-goals" -> "chrdkgoals.use";
+            case "teleports" -> "chrdktele.use";
+            case "claim-teleports" -> "chrdkclaims.teleport";
             default -> null;
         };
         if (permission == null || !payer.hasPermission(permission)) return false;

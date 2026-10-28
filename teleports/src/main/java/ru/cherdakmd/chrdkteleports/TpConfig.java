@@ -116,9 +116,9 @@ public record TpConfig(
 
         ConfigurationSection costs = config.getConfigurationSection("costs");
         int discount = clamp(section(costs, "vip-discount-percent", 50), 0, 100, logger, "costs.vip-discount-percent");
-        int costRtp = clamp(section(costs, "rtp-diamonds", 5), 0, 640, logger, "costs.rtp-diamonds");
-        int costTpa = clamp(section(costs, "tpa-diamonds", 2), 0, 640, logger, "costs.tpa-diamonds");
-        int costHome = clamp(section(costs, "home-diamonds", 1), 0, 640, logger, "costs.home-diamonds");
+        int costRtp = clamp(section(costs, "rtp-diamonds", 5), 1, 640, logger, "costs.rtp-diamonds");
+        int costTpa = clamp(section(costs, "tpa-diamonds", 2), 1, 640, logger, "costs.tpa-diamonds");
+        int costHome = clamp(section(costs, "home-diamonds", 1), 1, 640, logger, "costs.home-diamonds");
         int costSethome = clamp(section(costs, "sethome-diamonds", 0), 0, 640, logger, "costs.sethome-diamonds");
 
         ConfigurationSection rtp = config.getConfigurationSection("rtp");

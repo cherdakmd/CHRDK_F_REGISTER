@@ -533,6 +533,10 @@ public final class BankStore {
         chargeWitnesses.forEach((key, value) -> { if (key.endsWith(suffix)) result.put(key.substring(0, key.length() - suffix.length()), value); });
         return Map.copyOf(result);
     }
+    public synchronized long bankChargeSequence(String source, UUID lineage) {
+        if (!incomeSourceAvailable(source,lineage)) return -1L;
+        var last=chargeSettlements.get(source); return last==null ? 0L:last.sequence();
+    }
     public synchronized BankCharge.Status bankChargeStatus(BankCharge payment) {
         if (!available) return BankCharge.Status.UNAVAILABLE;
         if (payment == null || !payment.valid()) return BankCharge.Status.CONFLICT;

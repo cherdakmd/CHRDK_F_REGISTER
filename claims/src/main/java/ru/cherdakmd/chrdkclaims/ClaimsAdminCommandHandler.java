@@ -18,7 +18,7 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
 
     private static final List<String> SUBS = List.of("reload", "bypass", "delete", "deleteall",
             "info", "give", "transfer", "limit", "transferall", "backup", "audit",
-            "purge", "rent", "stats");
+            "purge", "rent", "stats", "tpfinance", "tprecover", "tpresolve");
 
     private final ClaimsPlugin plugin;
 
@@ -35,6 +35,10 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
         if (args.length == 0) {
             usage(sender);
             return true;
+        }
+        if (args[0].startsWith("tp") && List.of("tpfinance","tprecover","tpresolve").contains(args[0].toLowerCase(Locale.ROOT))) {
+            String[] financeArgs=args.clone(); financeArgs[0]=financeArgs[0].substring(2);
+            plugin.teleportPayments().admin(sender,financeArgs); return true;
         }
         String sub = args[0].toLowerCase(Locale.ROOT);
         switch (sub) {

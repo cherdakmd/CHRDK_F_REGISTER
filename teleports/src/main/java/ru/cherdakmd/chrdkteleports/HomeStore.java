@@ -37,6 +37,28 @@ public final class HomeStore {
     private final Logger logger;
     private final Map<UUID, Map<String, HomeLocation>> homes = new LinkedHashMap<>();
     private volatile boolean dirty = false;
+    private boolean healthy = true;
+    private ru.cherdakmd.chrdkregister.api.PaidActionStore finance;
+    public static String financeKey(UUID owner,String name) { return owner+":"+normalize(name); }
+    public static String financeValue(HomeLocation home) { return new Gson().toJson(home); }
+    public synchronized void bind(ru.cherdakmd.chrdkregister.api.PaidActionStore source) throws IOException {
+        if (!healthy) throw new IOException("Повреждён источник домов");
+        if (!source.valuesInitialized()) {
+            var values=new LinkedHashMap<String,String>(); homes.forEach((id,points)->points.forEach((name,home)->values.put(financeKey(id,name),financeValue(home))));
+            source.initializeValues(values);
+        }
+        for (var row:source.values().entrySet()) {
+            int colon=row.getKey().indexOf(':'); if (colon<1) throw new IOException("Неверный ключ дома");
+            UUID.fromString(row.getKey().substring(0,colon));
+            HomeLocation home=new Gson().fromJson(row.getValue(),HomeLocation.class);
+            if (!valid(home) || !normalize(home.name()).equals(row.getKey().substring(colon+1))) throw new IOException("Неверный дом");
+        }
+        finance=source; dirty=false;
+    }
+    private static boolean valid(HomeLocation h) { return h!=null && isValidName(h.name()) && h.world()!=null && !h.world().isBlank() && Double.isFinite(h.x()) && Double.isFinite(h.y()) && Double.isFinite(h.z()) && Math.abs(h.x())<=30_000_000 && Math.abs(h.z())<=30_000_000 && Float.isFinite(h.yaw()) && Float.isFinite(h.pitch()); }
+    private void writeValue(String key,String value) {
+        try { finance.putValue(key,value); } catch (IOException error) { throw new IllegalStateException("Дом не сохранён; источник остановлен",error); }
+    }
 
     public HomeStore(Path dataDir, Logger logger) {
         this.file = dataDir.resolve("teleports-data.json");
@@ -67,21 +89,29 @@ public final class HomeStore {
     }
 
     public synchronized Map<String, HomeLocation> of(UUID uuid) {
+        if (finance!=null) {
+            var result=new LinkedHashMap<String,HomeLocation>(); String prefix=uuid+":";
+            finance.values().forEach((key,value)->{ if (key.startsWith(prefix)) result.put(key.substring(prefix.length()),new Gson().fromJson(value,HomeLocation.class)); });
+            return result;
+        }
         return homes.computeIfAbsent(uuid, key -> new LinkedHashMap<>());
     }
 
     /** Сохраняет/заменяет точку. true = заменил существующую. */
     public synchronized boolean put(UUID uuid, HomeLocation home) {
+        if (!valid(home)) throw new IllegalArgumentException("home");
+        if (finance!=null) { boolean replaced=get(uuid,normalize(home.name()))!=null; writeValue(financeKey(uuid,home.name()),financeValue(home)); return replaced; }
         boolean replaced = of(uuid).put(normalize(home.name()), home) != null;
         dirty = true;
         return replaced;
     }
 
     public synchronized HomeLocation get(UUID uuid, String nameLower) {
-        return homes.getOrDefault(uuid, Map.of()).get(nameLower);
+        return of(uuid).get(nameLower);
     }
 
     public synchronized boolean remove(UUID uuid, String nameLower) {
+        if (finance!=null) { boolean found=get(uuid,nameLower)!=null; if (found) writeValue(financeKey(uuid,nameLower),null); return found; }
         boolean removed = of(uuid).remove(nameLower) != null;
         if (removed) {
             dirty = true;
@@ -91,13 +121,13 @@ public final class HomeStore {
 
     /** Список точек игрока (по имени). */
     public synchronized List<HomeLocation> list(UUID uuid) {
-        List<HomeLocation> list = new ArrayList<>(homes.getOrDefault(uuid, Map.of()).values());
+        List<HomeLocation> list = new ArrayList<>(of(uuid).values());
         list.sort(Comparator.comparing(home -> normalize(home.name())));
         return list;
     }
 
     public synchronized int count(UUID uuid) {
-        return homes.getOrDefault(uuid, Map.of()).size();
+        return of(uuid).size();
     }
 
     /**
@@ -106,7 +136,7 @@ public final class HomeStore {
      */
     public synchronized int countPlayerHomes(UUID uuid) {
         int total = 0;
-        for (String key : homes.getOrDefault(uuid, Map.of()).keySet()) {
+        for (String key : of(uuid).keySet()) {
             if (!isBedName(key)) {
                 total++;
             }
@@ -115,7 +145,7 @@ public final class HomeStore {
     }
 
     public boolean isDirty() {
-        return dirty;
+        return finance==null && dirty;
     }
 
     /* ------------------------------- загрузка/сохранение ------------------------------- */
@@ -127,36 +157,35 @@ public final class HomeStore {
         try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
             @SuppressWarnings("unchecked")
             Map<String, Object> root = gson.fromJson(reader, LinkedHashMap.class);
-            if (root == null) {
-                return;
-            }
+            if (root == null || !(root.get("homes") instanceof Map)) throw new JsonParseException("Нет таблицы homes");
             Object homesObj = root.get("homes");
             if (homesObj instanceof Map<?, ?> map) {
                 map.forEach((uuidKey, sections) -> {
                     UUID uuid;
                     try {
                         uuid = UUID.fromString(String.valueOf(uuidKey));
-                    } catch (IllegalArgumentException e) {
-                        return;
-                    }
-                    if (!(sections instanceof Map<?, ?> points)) return;
+                    } catch (IllegalArgumentException e) { throw new JsonParseException("Неверный UUID дома",e); }
+                    if (!(sections instanceof Map<?, ?> points)) throw new JsonParseException("Неверные дома");
                     Map<String, HomeLocation> player = homes.computeIfAbsent(uuid, key -> new LinkedHashMap<>());
                     points.forEach((nameKey, rawLoc) -> {
                         HomeLocation home = decodeHome(String.valueOf(nameKey), rawLoc);
-                        if (home != null) {
-                            player.put(normalize(home.name()), home);
-                        }
+                        if (!valid(home) || !normalize(home.name()).equals(String.valueOf(nameKey))) throw new JsonParseException("Неверная точка дома");
+                        player.put(normalize(home.name()), home);
                     });
                 });
             }
             dirty = false;
         } catch (IOException | JsonParseException e) {
-            logger.warning("Не удалось прочитать teleports-data.json: " + e
-                    + ". Начнём с чистого листа (файл перезапишется при изменениях).");
+            healthy=false; throw new IllegalStateException("Повреждён teleports-data.json; файл не сброшен",e);
         }
     }
 
     public synchronized String snapshotJson() {
+        if (finance!=null) {
+            var current=new LinkedHashMap<String,Map<String,Object>>();
+            finance.values().forEach((key,value)->{ int colon=key.indexOf(':'); current.computeIfAbsent(key.substring(0,colon),ignored->new LinkedHashMap<>()).put(key.substring(colon+1),encodeHome(new Gson().fromJson(value,HomeLocation.class))); });
+            return gson.toJson(Map.of("homes",current));
+        }
         Map<String, Object> root = new LinkedHashMap<>();
         Map<String, Object> homesObj = new LinkedHashMap<>();
         homes.forEach((uuid, points) -> {
@@ -169,6 +198,7 @@ public final class HomeStore {
     }
 
     public void saveNow() {
+        if (finance!=null || !healthy) return;
         String json;
         synchronized (this) {
             json = snapshotJson();
@@ -206,6 +236,9 @@ public final class HomeStore {
         if (!(raw instanceof Map<?, ?> map)) {
             return null;
         }
+        for (String key:List.of("world","x","y","z","yaw","pitch")) if (!map.containsKey(key)) return null;
+        for (String key:List.of("x","y","z","yaw","pitch")) if (!(map.get(key) instanceof Number)) return null;
+        if (!(map.get("world") instanceof String)) return null;
         Object nameRaw = map.get("name");
         Object worldRaw = map.get("world");
         String name = nameRaw == null ? fallbackName : String.valueOf(nameRaw);

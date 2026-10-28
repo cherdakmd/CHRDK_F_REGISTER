@@ -24,6 +24,7 @@ public final class TeleportService implements Listener {
     /** Состояние ожидающего телепорта. */
     private static final class Pending {
         BukkitTask task;
+        String world;
         double fromX, fromY, fromZ;
     }
 
@@ -63,20 +64,20 @@ public final class TeleportService implements Listener {
         }
         int delay = plugin.config().delaySeconds();
         Pending current = new Pending();
+        current.world = player.getWorld().getName();
         current.fromX = player.getLocation().getX();
         current.fromY = player.getLocation().getY();
         current.fromZ = player.getLocation().getZ();
         if (delay <= 0) {
             pending.put(player.getUniqueId(), current);
-            onGo.run();
-            pending.remove(player.getUniqueId());
+            try { onGo.run(); } finally { pending.remove(player.getUniqueId()); }
             return true;
         }
         plugin.messages().send(player, "tp.warmup-start", "seconds", delay);
         Pending target = current;
         target.task = Bukkit.getScheduler().runTaskLater(plugin, () -> {
             pending.remove(player.getUniqueId(), target);
-            if (player.isOnline()) {
+            if (player.isOnline() && player.getWorld().getName().equals(target.world)) {
                 onGo.run();
             }
         }, delay * 20L);
@@ -98,17 +99,19 @@ public final class TeleportService implements Listener {
         }
     }
 
+    public void shutdown() { for (var p:pending.values()) if (p.task!=null) p.task.cancel(); pending.clear(); }
+
     /* ------------------------------- слушатели отмен ------------------------------- */
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onMove(PlayerMoveEvent event) {
         if (!plugin.config().cancelOnMove()) return;
         Pending current = pending.get(event.getPlayer().getUniqueId());
-        if (current == null) return;
+        if (current == null || event.getTo()==null) return;
         double dX = event.getTo().getX() - current.fromX;
         double dY = event.getTo().getY() - current.fromY;
         double dZ = event.getTo().getZ() - current.fromZ;
-        if (Math.abs(dX) > 0.15 || Math.abs(dZ) > 0.15 || Math.abs(dY) > 0.5) {
+        if (!event.getTo().getWorld().getName().equals(current.world) || Math.abs(dX) > 0.15 || Math.abs(dZ) > 0.15 || Math.abs(dY) > 0.5) {
             cancel(event.getPlayer().getUniqueId(), "tp.warmup-cancelled-move");
         }
     }
