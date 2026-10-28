@@ -29,7 +29,7 @@ public final class ShopCommandHandler implements TabExecutor {
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                              @NotNull String label, String @NotNull [] args) {
         if (plugin.coreApi() == null) {
-            plugin.messages().send(sender, "shop.no-api");
+            plugin.messages().send(sender, "trading.no-api");
             return true;
         }
         if ("shopadmin".equalsIgnoreCase(command.getName())) {
@@ -42,44 +42,44 @@ public final class ShopCommandHandler implements TabExecutor {
 
     private boolean handleShop(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            plugin.messages().send(sender, "shop.usage");
+            plugin.messages().send(sender, "trading.usage");
             return true;
         }
         if (!plugin.coreApi().isAuthenticated(player)) {
-            plugin.messages().send(player, "shop.need-auth");
+            plugin.messages().send(player, "trading.need-auth");
             return true;
         }
-        if (!plugin.shopService().ready(player)) { plugin.messages().send(player, "shop.unavailable"); return true; }
+        if (!plugin.shopService().ready(player)) { plugin.messages().send(player, "trading.unavailable"); return true; }
         if (args.length == 0) {
             plugin.gui().open(player, 0);
             return true;
         }
         String sub = args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
-            case "balance", "bal" -> plugin.messages().send(player, "shop.balance",
+            case "balance", "bal" -> plugin.messages().send(player, "trading.balance",
                     "balance", plugin.shopService().balance(player), "physical", plugin.shopService().physical(player));
-            case "deposit", "dep", "withdraw", "draw" -> plugin.messages().send(player, "shop.bank-commands");
+            case "deposit", "dep", "withdraw", "draw" -> plugin.messages().send(player, "trading.bank-commands");
             case "price" -> handlePrice(player, args);
             case "find", "search" -> handleFind(player, args);
             case "buy" -> handleBuy(player, args);
             case "sell" -> handleSell(player, args);
             case "sellall" -> handleSellAll(player);
             case "stats" -> handleStats(player);
-            default -> plugin.messages().send(player, "shop.usage");
+            default -> plugin.messages().send(player, "trading.usage");
         }
         return true;
     }
 
     private void handlePrice(Player player, String[] args) {
         if (args.length < 2) {
-            plugin.messages().send(player, "shop.usage");
+            plugin.messages().send(player, "trading.usage");
             return;
         }
         ShopConfig.ShopItem item = requireItem(player, args[1]);
         if (item == null) return;
         ShopService service = plugin.shopService();
         long stock = service.store().stockOf(item, System.currentTimeMillis(), service.config().stockRecoveryPerHour());
-        plugin.messages().send(player, "shop.price-info",
+        plugin.messages().send(player, "trading.price-info",
                 "material", item.material().toLowerCase(Locale.ROOT),
                 "price", service.priceOf(item),
                 "bid", service.bidPrice(item),
@@ -87,7 +87,7 @@ public final class ShopCommandHandler implements TabExecutor {
                 "stock", stock, "ref", item.refStock());
         double[] history = service.historyOf(item);
         if (history.length > 0) {
-            plugin.messages().send(player, "shop.price-history",
+            plugin.messages().send(player, "trading.price-history",
                     "history", PriceEngine.sparkline(history),
                     "trend", PriceEngine.trend(history));
         }
@@ -96,37 +96,37 @@ public final class ShopCommandHandler implements TabExecutor {
     /** Поиск товара по фрагменту имени материала: до 10 совпадений с ценами. */
     private void handleFind(Player player, String[] args) {
         if (args.length < 2) {
-            plugin.messages().send(player, "shop.usage");
+            plugin.messages().send(player, "trading.usage");
             return;
         }
         String query = String.join(" ", Arrays.copyOfRange(args, 1, args.length)).trim();
         ShopService service = plugin.shopService();
         List<ShopConfig.ShopItem> matches = ShopCatalog.search(service.config().items(), query);
         if (matches.isEmpty()) {
-            plugin.messages().send(player, "shop.find-empty", "query", query);
+            plugin.messages().send(player, "trading.find-empty", "query", query);
             return;
         }
-        plugin.messages().send(player, "shop.find-header",
+        plugin.messages().send(player, "trading.find-header",
                 "query", query, "count", matches.size());
         int shown = Math.min(ShopCatalog.SEARCH_LIMIT, matches.size());
         for (int index = 0; index < shown; index++) {
             ShopConfig.ShopItem item = matches.get(index);
             ShopCategory category = ShopCategory.byId(item.category()).orElse(ShopCategory.DEFAULT);
-            plugin.messages().send(player, "shop.find-line",
+            plugin.messages().send(player, "trading.find-line",
                     "material", item.material().toLowerCase(Locale.ROOT),
                     "ask", service.askPrice(item), "batch", service.batchSize(item),
                     "bid", PriceEngine.round(service.bidPrice(item)),
                     "category", plugin.messages().mini(category.messageKey()));
         }
         if (matches.size() > shown) {
-            plugin.messages().send(player, "shop.find-more",
+            plugin.messages().send(player, "trading.find-more",
                     "shown", shown, "count", matches.size());
         }
     }
 
     private void handleBuy(Player player, String[] args) {
         if (args.length < 3) {
-            plugin.messages().send(player, "shop.usage");
+            plugin.messages().send(player, "trading.usage");
             return;
         }
         ShopConfig.ShopItem item = requireItem(player, args[1]);
@@ -134,8 +134,8 @@ public final class ShopCommandHandler implements TabExecutor {
         long units = parseLong(args[2], -1);
         ShopService.TradeResult result = plugin.shopService().buy(player, item, units);
         if (result.success()) {
-            plugin.messages().send(player, "shop.payment-detail", "account", result.bankPaid(), "physical", result.physicalPaid(), "change", result.change());
-            plugin.messages().send(player, "shop.buy-done",
+            plugin.messages().send(player, "trading.payment-detail", "account", result.bankPaid(), "physical", result.physicalPaid(), "change", result.change());
+            plugin.messages().send(player, "trading.buy-done",
                     "material", item.material().toLowerCase(Locale.ROOT), "units", result.units(),
                     "cost", result.money(),
                     "balance", plugin.shopService().balance(player), "physical", plugin.shopService().physical(player));
@@ -149,7 +149,7 @@ public final class ShopCommandHandler implements TabExecutor {
 
     private void handleSell(Player player, String[] args) {
         if (args.length < 2) {
-            plugin.messages().send(player, "shop.usage");
+            plugin.messages().send(player, "trading.usage");
             return;
         }
         ShopConfig.ShopItem item = requireItem(player, args[1]);
@@ -165,17 +165,17 @@ public final class ShopCommandHandler implements TabExecutor {
             units = 1;
         }
         if (have <= 0) {
-            plugin.messages().send(player, "shop.sell-none");
+            plugin.messages().send(player, "trading.sell-none");
             return;
         }
         ShopService.TradeResult result = plugin.shopService().sell(player, item, units);
         if (result.success()) {
-            plugin.messages().send(player, "shop.sell-done",
+            plugin.messages().send(player, "trading.sell-done",
                     "material", item.material().toLowerCase(Locale.ROOT), "units", result.units(),
                     "income", result.money(),
                     "balance", plugin.shopService().balance(player), "physical", plugin.shopService().physical(player));
         } else {
-            plugin.messages().send(player, result.errorKey() == null ? "shop.invalid-number" : result.errorKey(),
+            plugin.messages().send(player, result.errorKey() == null ? "trading.invalid-number" : result.errorKey(),
                     "cost", result.money(), "limit", plugin.shopService().config().dailyTurnoverLimit(),
                     "balance", plugin.shopService().balance(player),
                     "material", item.material().toLowerCase(Locale.ROOT), "units", units,
@@ -186,10 +186,10 @@ public final class ShopCommandHandler implements TabExecutor {
     private void handleSellAll(Player player) {
         ShopService.SellAllResult result = plugin.shopService().sellAll(player);
         if (result.kinds() == 0) {
-            plugin.messages().send(player, "shop.sellall-none");
+            plugin.messages().send(player, "trading.sellall-none");
             return;
         }
-        plugin.messages().send(player, "shop.sellall-done",
+        plugin.messages().send(player, "trading.sellall-done",
                 "kinds", result.kinds(), "units", result.units(),
                 "income", result.income(),
                 "balance", plugin.shopService().balance(player), "physical", plugin.shopService().physical(player));
@@ -197,21 +197,21 @@ public final class ShopCommandHandler implements TabExecutor {
 
     private void handleStats(CommandSender sender) {
         ShopService service = plugin.shopService();
-        plugin.messages().send(sender, "shop.stats-header");
-        plugin.messages().send(sender, "shop.stats-turnover", "turnover", PriceEngine.round(service.store().turnover()));
+        plugin.messages().send(sender, "trading.stats-header");
+        plugin.messages().send(sender, "trading.stats-turnover", "turnover", PriceEngine.round(service.store().turnover()));
         List<ShopConfig.ShopItem> items = service.config().items();
         boolean any = false;
         for (ShopConfig.ShopItem item : items) {
             ShopStore.ItemState state = service.store().snapshotOf(item.material());
             if (state == null || (state.boughtByPlayers == 0 && state.soldByPlayers == 0)) continue;
             any = true;
-            plugin.messages().send(sender, "shop.stats-line",
+            plugin.messages().send(sender, "trading.stats-line",
                     "material", item.material().toLowerCase(Locale.ROOT),
                     "sold", state.soldByPlayers, "bought", state.boughtByPlayers,
                     "price", service.priceOf(item));
         }
         if (!any) {
-            plugin.messages().send(sender, "shop.stats-empty");
+            plugin.messages().send(sender, "trading.stats-empty");
         }
     }
 
@@ -242,14 +242,14 @@ public final class ShopCommandHandler implements TabExecutor {
         }
         ShopConfig.ShopItem item = plugin.shopService().findItem(args[1]).orElse(null);
         if (item == null) {
-            plugin.messages().send(sender, "shop.unknown-item", "material", args[1]);
+            plugin.messages().send(sender, "trading.unknown-item", "material", args[1]);
             return;
         }
         ShopService service = plugin.shopService();
         if (args.length >= 3) {
             long value = parseLong(args[2], -1);
             if (value < 0) {
-                plugin.messages().send(sender, "shop.invalid-number", "value", args[2]);
+                plugin.messages().send(sender, "trading.invalid-number", "value", args[2]);
                 return;
             }
             service.store().setStock(item, value, System.currentTimeMillis());
@@ -297,7 +297,7 @@ public final class ShopCommandHandler implements TabExecutor {
     private ShopConfig.ShopItem requireItem(CommandSender sender, String input) {
         ShopConfig.ShopItem item = plugin.shopService().findItem(input).orElse(null);
         if (item == null) {
-            plugin.messages().send(sender, "shop.unknown-item", "material", input);
+            plugin.messages().send(sender, "trading.unknown-item", "material", input);
         }
         return item;
     }

@@ -76,6 +76,18 @@ class WholeTradesTest {
         store.addBalance(UUID.randomUUID(),1); store.saveNow();
         var reloaded=new ShopStore(dir,Logger.getLogger("WholeTradesTest")); reloaded.load(); assertEquals(1e30,reloaded.balanceOf(id));
     }
+    @Test void legacyCustomLoreCannotMislabelNewBatchPrices(@org.junit.jupiter.api.io.TempDir Path dir) throws Exception {
+        var file=dir.resolve("messages.yml");
+        Files.writeString(file,"messages:\n  shop:\n    gui:\n      item-lore:\n        - 'Цена за штуку, Shift 64'\n");
+        try(var input=getClass().getResourceAsStream("/messages.yml")) {
+            var messages=ru.cherdakmd.chrdkregister.Messages.from(input,file,Logger.getLogger("WholeTradesTest"));
+            assertTrue(messages.getList("shop.gui.item-lore").getFirst().contains("за штуку"));
+            var current=messages.getList("trading.gui.item-lore");
+            assertTrue(current.stream().anyMatch(v->v.contains("%batch%")));
+            assertTrue(current.stream().anyMatch(v->v.contains("16 партий")));
+            assertTrue(messages.raw("trading.balance").contains("/bal"));
+        }
+    }
     @Test void serviceHasNoSpendableShopWalletNoDropsAndCommitsPreparedSnapshots() throws Exception {
         var s=Files.readString(Path.of("src/main/java/ru/cherdakmd/diamondshop/ShopService.java"));
         for(var forbidden:List.of("store.trySpend", "store.addBalance", "dropItem", "getContents()")) assertFalse(s.contains(forbidden),forbidden);

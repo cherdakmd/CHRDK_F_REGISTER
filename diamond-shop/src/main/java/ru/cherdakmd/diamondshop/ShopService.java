@@ -60,14 +60,14 @@ public final class ShopService {
         return trade(player, item, batches, buy, batch, price);
     }
     private TradeResult trade(Player player, ShopConfig.ShopItem item, long batches, boolean buy, int expectedBatch, long expectedPrice) {
-        if (!ready(player) || player.getGameMode() != GameMode.SURVIVAL) return fail("shop.unavailable", 0);
+        if (!ready(player) || player.getGameMode() != GameMode.SURVIVAL) return fail("trading.unavailable", 0);
         int batch = batchSize(item); long price = buy ? askPrice(item) : bidPrice(item);
-        if (expectedBatch >= 0 && (batch != expectedBatch || price != expectedPrice)) return fail("shop.price-changed", 0);
-        if (batch < 1 || price < 1) return fail("shop.unavailable", 0);
-        if (batches < 1 || batches > 2304L / batch || batches > WholeTrades.MAX / price) return fail("shop.invalid-number", 0);
+        if (expectedBatch >= 0 && (batch != expectedBatch || price != expectedPrice)) return fail("trading.price-changed", 0);
+        if (batch < 1 || price < 1) return fail("trading.unavailable", 0);
+        if (batches < 1 || batches > 2304L / batch || batches > WholeTrades.MAX / price) return fail("trading.invalid-number", 0);
         long units = batches * batch, money = batches * price;
         Material material = Material.matchMaterial(item.material());
-        if (material == null || !material.isItem()) return fail("shop.unknown-item", 0);
+        if (material == null || !material.isItem()) return fail("trading.unknown-item", 0);
         var before = copy(player.getInventory().getStorageContents()); var after = copy(before);
         long debit = 0, credit = buy ? 0 : money, spent = 0, change = 0;
         if (buy) {
@@ -77,21 +77,21 @@ public final class ShopService {
                 amounts[slot] = after[slot].getAmount(); values[slot] = config.currencyRates().getOrDefault(after[slot].getType().name(), 0);
             }
             var removal = WholeTrades.take(amounts, values, needed);
-            if (removal == null) return fail("shop.not-enough-balance", money);
+            if (removal == null) return fail("trading.not-enough-balance", money);
             spent = removal.paid();
             for (int slot=0; slot<after.length; slot++) if (amounts[slot] != removal.after()[slot]) {
                 if (removal.after()[slot] == 0) after[slot] = null; else after[slot].setAmount(removal.after()[slot]);
             }
             var payment = WholeTrades.payment(money, wallet, spent);
-            if (payment == null) return fail("shop.not-enough-balance", money);
+            if (payment == null) return fail("trading.not-enough-balance", money);
             debit = payment.account(); credit = payment.change(); change = credit;
-            if (!insert(after, material, units)) return fail("shop.no-space", money);
+            if (!insert(after, material, units)) return fail("trading.no-space", money);
         } else {
-            if (!remove(after, material, units)) return fail("shop.not-enough-items", money);
+            if (!remove(after, material, units)) return fail("trading.not-enough-items", money);
         }
         long now = System.currentTimeMillis();
-        if (!store.canRecordTurnover(player.getUniqueId(), money, config.dailyTurnoverLimit(), now)) return fail("shop.daily-limit", money);
-        if (!api.get().exchangeDiamonds(player, debit, credit, before, after)) return fail("shop.unavailable", money);
+        if (!store.canRecordTurnover(player.getUniqueId(), money, config.dailyTurnoverLimit(), now)) return fail("trading.daily-limit", money);
+        if (!api.get().exchangeDiamonds(player, debit, credit, before, after)) return fail("trading.unavailable", money);
         // На основном потоке нет callbacks между проверкой лимита, Core-commit и учётом рынка.
         store.tryRecordTurnover(player.getUniqueId(), money, config.dailyTurnoverLimit(), now);
         store.adjustStock(item, buy ? -units : units, now, config.stockRecoveryPerHour());
