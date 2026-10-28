@@ -207,7 +207,7 @@ public final class ClaimTeleportService implements Listener {
                     String payload=target.getWorld().getName()+":"+target.getX()+":"+target.getY()+":"+target.getZ();
                     boolean success=plugin.teleportPayments().perform(player,player,state.price,"claim-tp",payload,()->{
                         state.dispatching=true;
-                        return player.teleport(target);
+                        return ru.cherdakmd.chrdkregister.api.PaidActions.teleport(player,target);
                     });
                     if (success) { cooldowns.put(player.getUniqueId(),System.currentTimeMillis()); plugin.messages().send(player,"tp-done","where",claim.where()); }
                 } finally { if (pending.remove(player.getUniqueId(),state) && state.timeout!=null) state.timeout.cancel(); }

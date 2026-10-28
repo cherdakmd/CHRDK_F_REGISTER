@@ -44,12 +44,13 @@ public final class HomeStore {
     public synchronized void bind(ru.cherdakmd.chrdkregister.api.PaidActionStore source) throws IOException {
         if (!healthy) throw new IOException("Повреждён источник домов");
         if (!source.valuesInitialized()) {
+            if (!source.values().isEmpty()) throw new IOException("Дома есть, но флаг импорта отсутствует; источник не перезаписывается");
             var values=new LinkedHashMap<String,String>(); homes.forEach((id,points)->points.forEach((name,home)->values.put(financeKey(id,name),financeValue(home))));
             source.initializeValues(values);
         }
         for (var row:source.values().entrySet()) {
             int colon=row.getKey().indexOf(':'); if (colon<1) throw new IOException("Неверный ключ дома");
-            UUID.fromString(row.getKey().substring(0,colon));
+            if (!UUID.fromString(row.getKey().substring(0,colon)).toString().equals(row.getKey().substring(0,colon))) throw new IOException("Неканонический UUID дома");
             HomeLocation home=new Gson().fromJson(row.getValue(),HomeLocation.class);
             if (!valid(home) || !normalize(home.name()).equals(row.getKey().substring(colon+1))) throw new IOException("Неверный дом");
         }

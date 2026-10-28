@@ -36,6 +36,6 @@ class HomeFinanceTest {
     }
     @Test void productionCommandsUseOutcomeProtocolInsteadOfPhysicalWallet() throws Exception {
         String code=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkteleports/TeleportCommandHandler.java"));
-        assertFalse(code.contains("DiamondWallet")); assertTrue(code.contains("payments().perform")); assertTrue(code.contains("payments().putValue")); assertTrue(code.contains("()->mover.teleport(target)"));
+        assertFalse(code.contains("DiamondWallet")); assertTrue(code.contains("payments().perform")); assertTrue(code.contains("payments().putValue")); assertTrue(code.contains("PaidActions.teleport(mover,target)"));
     }
 }

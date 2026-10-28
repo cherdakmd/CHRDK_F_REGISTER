@@ -339,12 +339,13 @@ public final class TeleportCommandHandler implements TabExecutor {
         }
         Location loc = player.getLocation();
         HomeLocation point = new HomeLocation(name,player.getWorld().getName(),loc.getX(),loc.getY(),loc.getZ(),loc.getYaw(),loc.getPitch());
-        if (!plugin.payments().putValue(player,chargedCost(player,plugin.config().costSethome()),HomeStore.financeKey(player.getUniqueId(),name),HomeStore.financeValue(point))) return true;
+        int price=chargedCost(player,plugin.config().costSethome());
+        if (!plugin.payments().putValue(player,price,HomeStore.financeKey(player.getUniqueId(),name),HomeStore.financeValue(point))) return true;
         int used = store.countPlayerHomes(player.getUniqueId());
-        if (chargedCost(player, plugin.config().costSethome()) > 0) {
+        if (price > 0) {
             plugin.messages().send(player, "home.saved-paid",
                     "name", name, "used", used, "max", max,
-                    "cost", chargedCost(player, plugin.config().costSethome()));
+                    "cost", price);
         } else {
             plugin.messages().send(player, "home.saved",
                     "name", name, "used", used, "max", max);
@@ -477,7 +478,7 @@ public final class TeleportCommandHandler implements TabExecutor {
             plugin.messages().send(payer,"tp.world-denied"); return false;
         }
         String payload=target.getWorld().getName()+":"+target.getX()+":"+target.getY()+":"+target.getZ();
-        return plugin.payments().perform(payer,mover,Math.max(1,cost),kind,payload,()->mover.teleport(target));
+        return plugin.payments().perform(payer,mover,Math.max(1,cost),kind,payload,()->ru.cherdakmd.chrdkregister.api.PaidActions.teleport(mover,target));
     }
 
     /* ------------------------------- /tpadmin ------------------------------- */

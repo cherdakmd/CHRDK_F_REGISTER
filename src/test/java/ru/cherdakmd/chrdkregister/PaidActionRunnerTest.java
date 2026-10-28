@@ -28,6 +28,13 @@ class PaidActionRunnerTest {
         var s=ready(); assertTrue(PaidActions.execute(s,id,()->true)); assertTrue(new PaidActionStore(dir).actions().isEmpty()); assertTrue(s.refunds().isEmpty());
         assertFalse(PaidActions.execute(s,id,()->{fail("must not call native twice"); return true;}));
     }
+    @Test void successfulPositionSavePrecedesSourceCompletionAndNativeFalseDoesNotSave() throws Exception {
+        String code=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkregister/api/PaidActions.java"));
+        String nativeCall=code.substring(code.indexOf("public static boolean teleport"),code.indexOf("/** Доменная запись"));
+        assertTrue(nativeCall.contains("if (!actor.teleport(target)) return false;")); assertTrue(nativeCall.indexOf("teleport(target)")<nativeCall.indexOf("saveData()"));
+        String runner=code.substring(code.indexOf("public static boolean execute"),code.indexOf("/** Позиция"));
+        assertTrue(runner.indexOf("store.begin")<runner.indexOf("operation.getAsBoolean")); assertTrue(runner.indexOf("operation.getAsBoolean")<runner.indexOf("store.finish"));
+    }
     @Test void cannotCallNativeUntilExecutingFenceIsDurable() throws Exception {
         var s=ready(); Files.createDirectory(dir.resolve("paid-actions.json.tmp"));
         assertThrows(java.io.IOException.class,()->PaidActions.execute(s,id,()->{fail("no durable executing fence"); return true;}));

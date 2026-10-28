@@ -13,6 +13,6 @@ class ClaimTeleportFinanceTest {
         String finish=code.substring(code.indexOf("private void finish"),code.indexOf("private void runMain"));
         assertTrue(finish.indexOf("pending.get(player.getUniqueId())!=state")<finish.indexOf("payments().perform".replace("payments()","teleportPayments()")));
         assertTrue(finish.contains("safeLocation")); assertTrue(code.contains("current==original")); assertTrue(code.contains("current.canUse"));
-        assertFalse(code.contains("teleportAsync(target)")); assertTrue(code.contains("return player.teleport(target)")); assertTrue(code.contains("state.timeout"));
+        assertFalse(code.contains("teleportAsync(target)")); assertTrue(code.contains("PaidActions.teleport(player,target)")); assertTrue(code.contains("state.timeout"));
     }
 }

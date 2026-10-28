@@ -78,6 +78,11 @@ public final class PaidActions {
         if (!store.finish(id,success)) throw new IllegalStateException("Потерян резерв услуги");
         return success;
     }
+    /** Позиция сохраняется до закрытия резерва. Исключение saveData остаётся неизвестным исходом, не false. */
+    public static boolean teleport(Player actor, org.bukkit.Location target) {
+        if (!actor.teleport(target)) return false;
+        actor.saveData(); return true;
+    }
     /** Доменная запись (платный sethome) публикуется атомарно внутри source, без второго JSON. */
     public boolean putValue(Player payer,int price,String key,String value) {
         try {
