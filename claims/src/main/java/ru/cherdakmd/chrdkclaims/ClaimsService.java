@@ -91,6 +91,7 @@ public final class ClaimsService {
 
     /** Проверка возможности купить именно этот чанк (статус-отказ в out-сообщение). */
     public String checkBuyable(Player player, Chunk chunk) {
+        if (!plugin.store().fundsReady(player.getName())) return "finance.unavailable";
         ClaimsConfig cfg = plugin.config();
         if (!cfg.worldEnabled(chunk.getWorld().getName())) {
             return "world-disabled";
@@ -152,6 +153,7 @@ public final class ClaimsService {
                     case "spawn-margin" -> plugin.messages().send(player, "spawn-margin",
                             "margin", String.valueOf(cfg.spawnMargin));
                     case "foreign-buffer" -> plugin.messages().send(player, "foreign-buffer");
+                    case "finance.unavailable" -> plugin.messages().send(player, "finance.unavailable");
                     case "limit-reached" -> sendLimit(player, player.getName());
                     default -> plugin.messages().send(player, "finance.not-enough",
                             "need", String.valueOf(price),
@@ -160,9 +162,7 @@ public final class ClaimsService {
                 return;
             }
             if (!charge(player, price)) {
-                plugin.messages().send(player, "finance.not-enough",
-                        "need", String.valueOf(price),
-                        "have", String.valueOf(available(player)));
+                plugin.messages().send(player, "finance.unavailable");
                 return;
             }
             Claim claim = new Claim(chunk.getWorld().getName(), chunk.getX(), chunk.getZ(),
@@ -342,6 +342,7 @@ public final class ClaimsService {
      */
     public void buyFromPlayer(Player player, int chunkX, int chunkZ) {
         synchronized (plugin.store()) {
+            if (!plugin.store().fundsReady(player.getName())) { plugin.messages().send(player,"finance.unavailable"); return; }
             String world = player.getWorld().getName();
             if (!plugin.config().worldEnabled(world)) {
                 plugin.messages().send(player, "world-disabled", "world", world);

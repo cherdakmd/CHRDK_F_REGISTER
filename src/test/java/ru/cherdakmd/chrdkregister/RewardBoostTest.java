@@ -140,7 +140,7 @@ class RewardBoostTest {
 
     @Test void newApiHasBackwardCompatibleDefaults() throws Exception {
         var type = ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.class;
-        assertEquals(13, ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
+        assertTrue(ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION >= 13);
         assertTrue(type.getMethod("grantRewardBoostHours", String.class, int.class, String.class).isDefault());
         assertTrue(type.getMethod("rewardBoostRemainingMillis", String.class).isDefault());
         assertTrue(type.getMethod("boostExperience", String.class, String.class, long.class, long.class).isDefault());

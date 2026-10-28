@@ -133,12 +133,15 @@ public final class BankStore {
             return;
         }
         try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
-            Envelope envelope = GSON.fromJson(reader, Envelope.class);
+            var document = com.google.gson.JsonParser.parseReader(reader);
+            if (!document.isJsonObject() || !document.getAsJsonObject().has("accounts")
+                    || !document.getAsJsonObject().get("accounts").isJsonObject()) throw new IllegalArgumentException("Нет таблицы банковских счетов");
+            Envelope envelope = GSON.fromJson(document, Envelope.class);
             if (envelope == null || envelope.accounts == null) throw new IllegalArgumentException("Пустой денежный файл");
             claimsImports.clear();
             if (envelope.claimsImports != null) for (var row : envelope.claimsImports.entrySet()) {
                 var receipt = row.getValue();
-                if (row.getKey() == null || normalize(row.getKey()).isEmpty() || receipt == null || receipt.player() == null
+                if (row.getKey() == null || normalize(row.getKey()).isEmpty() || normalize(row.getKey()).length() > 16 || receipt == null || receipt.player() == null
                         || receipt.amount() < 0 || receipt.amount() > MAX_BALANCE) throw new IllegalArgumentException("Неверная квитанция казны");
                 if (claimsImports.put(normalize(row.getKey()), receipt) != null) throw new IllegalArgumentException("Повтор имени казны");
             }
@@ -146,11 +149,9 @@ public final class BankStore {
             for (Map.Entry<String, Account> raw : envelope.accounts.entrySet()) {
                 UUID id = parseUuid(raw.getKey());
                 Account account = raw.getValue();
-                if (id == null || account == null) {
-                    continue;
-                }
+                if (id == null || account == null) throw new IllegalArgumentException("Неверный банковский UUID/счёт");
                 account.name = sanitize(account.name);
-                account.balance = Math.clamp(account.balance, 0L, MAX_BALANCE);
+                if (account.balance < 0 || account.balance > MAX_BALANCE) throw new IllegalArgumentException("Неверный банковский баланс");
                 account.deposited = Math.max(0L, account.deposited);
                 account.withdrawn = Math.max(0L, account.withdrawn);
                 account.sent = Math.max(0L, account.sent);

@@ -49,4 +49,14 @@ class ClaimsBankTest {
         Files.writeString(dir.resolve("bank.json"),"{\"accounts\":{},\"claimsImports\":{\"Steve\":{\"player\":\""+UUID.randomUUID()+"\",\"amount\":10}}}");
         var b=bank(); assertFalse(b.available()); assertFalse(b.importLegacyClaims(UUID.randomUUID(),"Steve",10));
     }
+    @Test void corruptBalanceAndMissingAccountsDoNotBecomeRealZeroForAutomaticRent() throws Exception {
+        for(String json : List.of("{}", "{\"accounts\":{\"not-a-uuid\":{\"balance\":40}}}",
+                "{\"accounts\":{\""+UUID.randomUUID()+"\":{\"balance\":-1}}}",
+                "{\"accounts\":{\""+UUID.randomUUID()+"\":{\"balance\":1000000001}}}")) {
+            Files.writeString(dir.resolve("bank.json"),json);
+            var b=bank(); assertFalse(b.available()); b.saveNow();
+            assertEquals(json,Files.readString(dir.resolve("bank.json")));
+        }
+    }
+
 }

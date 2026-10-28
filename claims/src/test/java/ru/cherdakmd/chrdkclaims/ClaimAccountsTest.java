@@ -27,7 +27,7 @@ class ClaimAccountsTest {
         var s=store(); s.addTreasury("Owner",70); var c=claim(s,System.currentTimeMillis());
         var a=wire(s); a.set("Owner",11); a.set("NewOwner",30);
         assertEquals(11,s.treasuryOf("Owner")); assertEquals(70,s.legacyTreasuryOf("Owner"));
-        var moved=s.transferOwnership("Owner","NewOwner");
+        var moved=s.transferAll("Owner","NewOwner");
         assertEquals(0,moved.treasury()); assertEquals("NewOwner",c.owner);
         assertEquals(11,a.balance("Owner")); assertEquals(30,a.balance("NewOwner"));
         assertEquals(70,s.legacyTreasuryOf("Owner")); assertEquals(0,s.legacyTreasuryOf("NewOwner"));
