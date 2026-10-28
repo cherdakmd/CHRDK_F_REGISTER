@@ -30,8 +30,8 @@ class BankDepositPlanTest {
     @Test void productionDepositHasNoRefundOrDropAndUsesDeepStoragePlan() throws Exception {
         String source=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkregister/BankService.java"));
         String deposit=source.substring(source.indexOf("public long deposit(Player"),source.indexOf("/* --------------------------------- снятие"));
-        assertTrue(deposit.contains("BankDepositPlan.plan")); assertTrue(deposit.contains("store.exchange"));
-        assertTrue(deposit.contains("inventory.setStorageContents(before)")); assertTrue(deposit.contains("getHeldItemSlot"));
+        assertTrue(deposit.contains("BankCashInventory.deposit")); assertTrue(deposit.contains("store.prepareCash"));
+        assertFalse(deposit.contains("setStorageContents(before)")); assertTrue(deposit.contains("getHeldItemSlot"));
         assertFalse(deposit.contains("refund(")); assertFalse(deposit.contains("dropItem")); assertFalse(deposit.contains("getItemInOffHand"));
     }
 }

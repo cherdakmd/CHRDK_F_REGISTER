@@ -33,8 +33,8 @@ import java.util.logging.Logger;
  * <p>Класс чистый (Gson + NIO, без Bukkit), мутации синхронизированы и идут
  * только с главного потока; запись — дебаунс: {@link #saveNow()} вызывает
  * периодическая асинхронная задача, {@link #flush()} — выключение плагина.
- * Потеря при аварийном завершении ограничена последними секундами, зато файл
- * никогда не пишется на каждую операцию.</p>
+ * Финансовые intents/receipts сохраняются синхронно force+atomic replace.
+ * Обычные счётчики без финансового протокола сохраняются штатным autosave.</p>
  *
  * <p>Ник — не ключ: игрок может сменить имя, счёт остаётся. Индекс ников нужен
  * только для {@code /pay <ник>} офлайн-игроку и {@code /bal <ник>}; он
@@ -43,7 +43,7 @@ import java.util.logging.Logger;
 public final class BankStore {
 
     /** Версия формата файла. */
-    public static final int SCHEMA_VERSION = 4;
+    public static final int SCHEMA_VERSION = 5;
     /** Верхняя граница счёта: защита от переполнения и «бесконечных» начислений. */
     public static final long MAX_BALANCE = 1_000_000_000L;
 
@@ -104,6 +104,8 @@ public final class BankStore {
     private static final class Envelope {
         int schema = SCHEMA_VERSION;
         Map<String, Account> accounts = new LinkedHashMap<>();
+        Map<UUID,BankCash.Intent> cashPending=new LinkedHashMap<>();
+        Map<UUID,BankCash.Receipt> cashReceipts=new LinkedHashMap<>();
         Map<String, ClaimsImport> claimsImports = new LinkedHashMap<>();
         Map<String, BankCharge> chargeSettlements = new LinkedHashMap<>();
         Map<String, UUID> chargeWitnesses = new LinkedHashMap<>();
@@ -111,6 +113,35 @@ public final class BankStore {
         Map<String, Entitlement> entitlementCredits = new LinkedHashMap<>();
         Map<UUID, AuctionImport> auctionImports = new LinkedHashMap<>();
         Map<UUID, AuctionPayment> auctionSettlements = new LinkedHashMap<>();
+    }
+
+    private final Map<UUID,BankCash.Intent> cashPending=new LinkedHashMap<>();
+    private final Map<UUID,BankCash.Receipt> cashReceipts=new LinkedHashMap<>();
+    synchronized java.util.List<BankCash.Intent> cashPendingSnapshot() { return java.util.List.copyOf(cashPending.values()); }
+    synchronized int cashPendingCount() { return cashPending.size(); }
+    synchronized int cashReceiptCount() { return cashReceipts.size(); }
+    synchronized BankCash.Intent cashPending(UUID id) { return cashPending.get(id); }
+    synchronized BankCash.Receipt cashReceipt(UUID id) { return cashReceipts.get(id); }
+    public synchronized boolean cashLocked(UUID id) { return cashPending.containsKey(id); }
+    synchronized void quarantineCash() { available=false; }
+    synchronized BankCash.Intent prepareCash(UUID owner,String name,BankCash.Kind kind,long amount,int blockWorth,int selected,long request,String before,String after) {
+        if(!available||owner==null||cashLocked(owner)) return null;
+        var old=cashReceipts.get(owner); long sequence=old==null?1:old.sequence()+1;
+        var intent=new BankCash.Intent(UUID.randomUUID(),owner,sequence,kind,amount,balance(owner),blockWorth,selected,request,before,after);
+        if(!intent.valid()) return null;
+        var next=envelope(); var account=next.accounts.computeIfAbsent(owner.toString(),id->new Account());
+        String clean=sanitize(name); if(!clean.isBlank()) account.name=clean;
+        next.cashPending.put(owner,intent);
+        return publishAuction(next)?intent:null;
+    }
+    synchronized boolean finishCash(BankCash.Intent intent) {
+        if(!available||intent==null) return false;
+        var receipt=cashReceipts.get(intent.owner());
+        if(receipt!=null&&receipt.matches(intent)&&!cashLocked(intent.owner())) return true;
+        if(!intent.equals(cashPending.get(intent.owner()))||balance(intent.owner())!=intent.beforeBalance()) return false;
+        var next=envelope(); adjust(next.accounts.get(intent.owner().toString()),intent.afterBalance()-intent.beforeBalance());
+        next.cashPending.remove(intent.owner()); next.cashReceipts.put(intent.owner(),new BankCash.Receipt(intent.sequence(),intent.transaction(),intent.kind(),intent.amount()));
+        return publishAuction(next);
     }
 
     private final Map<String, BankCharge> chargeSettlements = new LinkedHashMap<>();
@@ -152,20 +183,37 @@ public final class BankStore {
     public synchronized void load() {
         if (!Files.exists(file)) return;
         if (!Files.isRegularFile(file)) { available = false; logger.severe("[bank] bank.json не является файлом; банк остановлен"); return; }
-        try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
-            var document = com.google.gson.JsonParser.parseReader(reader);
+        try {
+            var document = BankJson.read(file);
             ru.cherdakmd.chrdkregister.api.FinanceNumbers.requireIntegral(document);
             if (!document.isJsonObject() || !document.getAsJsonObject().has("accounts")
                     || !document.getAsJsonObject().get("accounts").isJsonObject()) throw new IllegalArgumentException("Нет таблицы банковских счетов");
             var object = document.getAsJsonObject();
-            int schema = object.has("schema") ? object.get("schema").getAsInt() : 1;
-            if (schema != 1 && schema != 2 && schema != 3 && schema != SCHEMA_VERSION) throw new IllegalArgumentException("Неизвестная схема банка");
+            if(object.has("schema")&&(!object.get("schema").isJsonPrimitive()||!object.get("schema").getAsJsonPrimitive().isNumber())) throw new IllegalArgumentException("bank schema type");
+            int schema = object.has("schema") ? object.get("schema").getAsBigDecimal().intValueExact() : 1;
+            if (schema != 1 && schema != 2 && schema != 3 && schema != 4 && schema != SCHEMA_VERSION) throw new IllegalArgumentException("Неизвестная схема банка");
             if (schema >= 2) for (String key : java.util.List.of("claimsImports", "auctionImports", "auctionSettlements"))
                 if (!object.has(key) || !object.get(key).isJsonObject()) throw new IllegalArgumentException("Нет таблицы " + key);
             if (schema >= 3) for (String key : java.util.List.of("entitlementSources", "entitlementCredits"))
                 if (!object.has(key) || !object.get(key).isJsonObject()) throw new IllegalArgumentException("Нет таблицы " + key);
             if (schema >= 4) for (String key : java.util.List.of("chargeSettlements", "chargeWitnesses"))
                 if (!object.has(key) || !object.get(key).isJsonObject()) throw new IllegalArgumentException("Нет таблицы " + key);
+            if(schema>=5) for(String field:java.util.List.of("cashPending","cashReceipts")) {
+                if(!object.has(field)||!object.get(field).isJsonObject()) throw new IllegalArgumentException("missing "+field);
+                for(var entry:object.getAsJsonObject(field).entrySet()) {
+                    ru.cherdakmd.chrdkregister.api.MilestoneMigration.uuid(entry.getKey());
+                    var row=entry.getValue().getAsJsonObject();
+                    for(String number:field.equals("cashPending")?java.util.List.of("sequence","amount","beforeBalance","blockWorth","selected","request"):java.util.List.of("sequence","amount")) {
+                        var value=row.get(number); if(value==null||!value.isJsonPrimitive()||!value.getAsJsonPrimitive().isNumber()) throw new IllegalArgumentException("cash numeric type");
+                        if(number.equals("blockWorth")||number.equals("selected")) value.getAsBigDecimal().intValueExact();
+                    }
+                    for(String text:field.equals("cashPending")?java.util.List.of("transaction","owner","kind","before","after"):java.util.List.of("transaction","kind")) {
+                        var value=row.get(text); if(value==null||!value.isJsonPrimitive()||!value.getAsJsonPrimitive().isString()) throw new IllegalArgumentException("cash text type");
+                    }
+                    ru.cherdakmd.chrdkregister.api.MilestoneMigration.uuid(row.get("transaction").getAsString());
+                    if(field.equals("cashPending")) ru.cherdakmd.chrdkregister.api.MilestoneMigration.uuid(row.get("owner").getAsString());
+                }
+            } else if(object.has("cashPending")||object.has("cashReceipts")) throw new IllegalArgumentException("downgraded cash schema");
             Envelope envelope = GSON.fromJson(document, Envelope.class);
             entitlementSources.clear(); entitlementCredits.clear();
             if (envelope.entitlementSources != null) for (var row : envelope.entitlementSources.entrySet()) {
@@ -233,6 +281,18 @@ public final class BankStore {
                 if (!accounts.containsKey(payment.payer())) throw new IllegalArgumentException("Расход без счёта");
                 if (payment.cash() > 0 && !payment.transaction().equals(chargeWitnesses.get(payment.source() + ":" + payment.payer())))
                     throw new IllegalArgumentException("Предметная оплата без метки playerdata");
+            }
+            cashPending.clear(); cashReceipts.clear();
+            if(envelope.cashReceipts!=null) for(var entry:envelope.cashReceipts.entrySet()) {
+                if(entry.getKey()==null||entry.getValue()==null||!entry.getValue().valid()||!accounts.containsKey(entry.getKey())) throw new IllegalArgumentException("cash receipt");
+                cashReceipts.put(entry.getKey(),entry.getValue());
+            }
+            if(envelope.cashPending!=null) for(var entry:envelope.cashPending.entrySet()) {
+                var intent=entry.getValue(); var receipt=cashReceipts.get(entry.getKey());
+                if(intent==null||!intent.valid()||!intent.owner().equals(entry.getKey())||!accounts.containsKey(entry.getKey())
+                        ||intent.beforeBalance()!=balance(entry.getKey())||intent.sequence()!=(receipt==null?1:receipt.sequence()+1)
+                        ||receipt!=null&&receipt.transaction().equals(intent.transaction())) throw new IllegalArgumentException("cash pending");
+                cashPending.put(entry.getKey(),intent);
             }
             for (var receipt : entitlementCredits.values()) if (!accounts.containsKey(receipt.owner())) throw new IllegalArgumentException("Доход без счёта");
             for (var receipt : claimsImports.values()) if (!accounts.containsKey(receipt.player())) throw new IllegalArgumentException("Квитанция казны без счёта");
@@ -365,7 +425,7 @@ public final class BankStore {
      * @return новый баланс или {@code -1}, если счёт переполнился
      */
     public synchronized long deposit(UUID id, String name, long amount) {
-        if (!available) return -1L;
+        if (!available || cashLocked(id)) return -1L;
         if (id == null || amount <= 0L) {
             return balance(id);
         }
@@ -386,7 +446,7 @@ public final class BankStore {
      * @return {@code true}, если денег хватило
      */
     public synchronized boolean withdraw(UUID id, long amount) {
-        if (!available) return false;
+        if (!available || cashLocked(id)) return false;
         if (id == null || amount <= 0L) {
             return false;
         }
@@ -407,7 +467,7 @@ public final class BankStore {
      * @return фактический баланс после операции
      */
     public synchronized long setBalance(UUID id, String name, long balance) {
-        if (!available) return balance(id);
+        if (!available || cashLocked(id)) return balance(id);
         Account account = open(id, name);
         long clamped = Math.clamp(balance, 0L, MAX_BALANCE);
         if (clamped > account.balance) {
@@ -427,7 +487,7 @@ public final class BankStore {
      */
     public synchronized TransferResult transfer(UUID from, String fromName, UUID to, String toName,
                                                 long amount, int taxPercent) {
-        if (!available) return TransferResult.failed(Status.UNAVAILABLE, amount);
+        if (!available || cashLocked(from) || cashLocked(to)) return TransferResult.failed(Status.UNAVAILABLE, amount);
         if (from == null || to == null) {
             return TransferResult.failed(Status.UNKNOWN_PLAYER, amount);
         }
@@ -478,7 +538,7 @@ public final class BankStore {
     /** Казна раньше была по нику: глобальная квитанция не даёт повторить импорт под другим UUID. */
     public synchronized boolean importLegacyClaims(UUID id, String name, long amount) {
         String source = normalize(name);
-        if (!available || id == null || source.isEmpty() || source.length() > 16 || amount < 0 || amount > MAX_BALANCE) return false;
+        if (!available || cashLocked(id) || id == null || source.isEmpty() || source.length() > 16 || amount < 0 || amount > MAX_BALANCE) return false;
         var receipt = claimsImports.get(source);
         if (receipt != null) return receipt.player().equals(id);
         var account = open(id, name);
@@ -492,7 +552,7 @@ public final class BankStore {
         if (!available || deltas == null || deltas.isEmpty() || deltas.size() > 8 || commit == null) return false;
         for (var entry : deltas.entrySet()) {
             Long delta = entry.getValue();
-            if (entry.getKey() == null || delta == null || delta < -MAX_BALANCE || delta > MAX_BALANCE) return false;
+            if (cashLocked(entry.getKey()) || entry.getKey() == null || delta == null || delta < -MAX_BALANCE || delta > MAX_BALANCE) return false;
             long next = balance(entry.getKey()) + delta;
             if (next < 0 || next > MAX_BALANCE) return false;
         }
@@ -508,7 +568,7 @@ public final class BankStore {
 
     /** Баланс и квитанция в одном bank.json: повторное чтение старого shop-data не начисляет деньги снова. */
     public synchronized boolean importLegacyShop(UUID id, long amount) {
-        if (!available || id == null || amount < 0 || amount > MAX_BALANCE) return false;
+        if (!available || cashLocked(id) || id == null || amount < 0 || amount > MAX_BALANCE) return false;
         var account = open(id, "");
         if (account.legacyShopImported) return true;
         if (account.balance > MAX_BALANCE - amount) return false;
@@ -519,7 +579,7 @@ public final class BankStore {
 
     /** Проверяем деньги до inventoryCommit; callback обязан откатить собственный снимок при исключении. */
     public synchronized boolean exchange(UUID id, String name, long debit, long credit, Runnable inventoryCommit) {
-        if (!available || id == null || inventoryCommit == null || debit < 0 || credit < 0 || debit > MAX_BALANCE || credit > MAX_BALANCE) return false;
+        if (!available || cashLocked(id) || id == null || inventoryCommit == null || debit < 0 || credit < 0 || debit > MAX_BALANCE || credit > MAX_BALANCE) return false;
         var account = open(id, name);
         if (account.balance < debit || account.balance - debit > MAX_BALANCE - credit) return false;
         inventoryCommit.run(); // Не вызывает событий/команд; исключение не меняет деньги.
@@ -552,6 +612,7 @@ public final class BankStore {
         var status = bankChargeStatus(payment);
         if (status == BankCharge.Status.COMMITTED) return true;
         if (status != BankCharge.Status.MISSING) return false;
+        if(cashLocked(payment.payer())) return false;
         long balance = balance(payment.payer());
         if (balance < payment.debit() || balance - payment.debit() + payment.change() > MAX_BALANCE) return false;
         var next = envelope();
@@ -586,6 +647,7 @@ public final class BankStore {
         if (credited < 0 || total < credited || total < 0) return false;
         long delta = total - credited;
         if (total == credited && entitlementCredits.containsKey(source + ":" + key)) return true;
+        if(cashLocked(owner)) return false;
         long accepted = Math.min(delta, MAX_BALANCE - balance(owner));
         if (delta > 0 && accepted == 0) return false;
         var next = envelope();
@@ -598,7 +660,7 @@ public final class BankStore {
 
     /** Синхронный once-import. Источник заморожен в одном конкретном рынке. */
     public synchronized boolean importLegacyAuction(UUID market, UUID owner, long amount) {
-        if (!available || market == null || owner == null || amount < 0 || amount > MAX_BALANCE) return false;
+        if (!available || cashLocked(owner) || market == null || owner == null || amount < 0 || amount > MAX_BALANCE) return false;
         var previous = auctionImports.get(owner);
         if (previous != null) return previous.equals(new AuctionImport(market, amount));
         if (balance(owner) > MAX_BALANCE - amount) return false;
@@ -631,6 +693,7 @@ public final class BankStore {
         if (!auctionImports.containsKey(payment.buyer()) || !auctionImports.containsKey(payment.seller())
                 || !auctionImports.get(payment.buyer()).market().equals(payment.market())
                 || !auctionImports.get(payment.seller()).market().equals(payment.market())) return false;
+        if(cashLocked(payment.buyer())||cashLocked(payment.seller())) return false;
         long buyerAfter = balance(payment.buyer()) - payment.debit() + payment.change();
         if (balance(payment.buyer()) < payment.debit() || buyerAfter > MAX_BALANCE
                 || balance(payment.seller()) > MAX_BALANCE - (payment.price() - payment.fee())) return false;
@@ -654,6 +717,7 @@ public final class BankStore {
             logger.severe("[bank] Неоднозначный сбой финансовой записи; банк остановлен до проверки/restart: " + error.getMessage());
             return false;
         }
+        cashPending.clear(); cashPending.putAll(next.cashPending); cashReceipts.clear(); cashReceipts.putAll(next.cashReceipts);
         accounts.clear(); next.accounts.forEach((id, account) -> accounts.put(UUID.fromString(id), account));
         chargeSettlements.clear(); chargeSettlements.putAll(next.chargeSettlements);
         chargeWitnesses.clear(); chargeWitnesses.putAll(next.chargeWitnesses);
@@ -661,6 +725,7 @@ public final class BankStore {
         entitlementCredits.clear(); entitlementCredits.putAll(next.entitlementCredits);
         auctionImports.clear(); auctionImports.putAll(next.auctionImports);
         auctionSettlements.clear(); auctionSettlements.putAll(next.auctionSettlements);
+        byName.clear(); accounts.forEach((id,account)->{if(!account.name.isBlank()) byName.put(normalize(account.name),id);});
         dirty = false; return true;
     }
 
@@ -676,6 +741,7 @@ public final class BankStore {
 
     private Envelope envelope() {
         var envelope = new Envelope();
+        envelope.cashPending.putAll(cashPending); envelope.cashReceipts.putAll(cashReceipts);
         accounts.forEach((id, account) -> envelope.accounts.put(id.toString(), account.copy()));
         envelope.claimsImports.putAll(claimsImports);
         envelope.chargeSettlements.putAll(chargeSettlements);
@@ -687,7 +753,8 @@ public final class BankStore {
     private void writeStrict(Envelope envelope) throws IOException {
         Files.createDirectories(file.getParent());
         Path temp = file.resolveSibling("bank.json.tmp");
-        Files.writeString(temp, GSON.toJson(envelope), StandardCharsets.UTF_8);
+        String json=GSON.toJson(envelope); if(json.getBytes(StandardCharsets.UTF_8).length>64*1024*1024) throw new IOException("bank capacity");
+        Files.writeString(temp, json, StandardCharsets.UTF_8);
         try (var channel = java.nio.channels.FileChannel.open(temp, java.nio.file.StandardOpenOption.WRITE)) { channel.force(true); }
         Files.move(temp, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
         checkpoint.afterReplace();

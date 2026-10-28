@@ -26,13 +26,14 @@ import java.util.function.Supplier;
  * сумма не зависит от свободных слотов. Комиссия ({@code economy.pay-tax-percent})
  * не зачисляется никому — это не доход сервера, а сдерживающий налог.</p>
  */
-public final class BankService {
+public final class BankService implements org.bukkit.event.Listener {
 
     /** Результат снятия. */
     public enum WithdrawStatus {
         OK,
         NOT_ENOUGH,
-        NO_SPACE
+        NO_SPACE,
+        UNAVAILABLE
     }
 
     public record WithdrawResult(WithdrawStatus status, long amount, long balance) {
@@ -49,6 +50,9 @@ public final class BankService {
     private final RegisterPlugin plugin;
     private final BankStore store;
     private final Supplier<EconomySettings> settings;
+    private org.bukkit.scheduler.BukkitTask cashTask;
+    private int cashCursor;
+    private static final org.bukkit.NamespacedKey CASH_KEY=new org.bukkit.NamespacedKey("chrdk_core","cash_transfer");
     /** Пауза между переводами: uuid → момент последнего перевода (мс). */
     private final Map<UUID, Long> lastPay = new ConcurrentHashMap<>();
 
@@ -116,80 +120,75 @@ public final class BankService {
         return amount <= 0 ? 0 : depositPlanned(player, false, amount);
     }
 
-    private long depositPlanned(Player player, boolean handOnly, long amount) {
-        if (player == null || !enabled() || !org.bukkit.Bukkit.isPrimaryThread()) return 0;
-        var inventory = player.getInventory();
-        var before = java.util.Arrays.stream(inventory.getStorageContents()).map(i -> i == null ? null : i.clone()).toArray(ItemStack[]::new);
-        if (before.length != 36) return 0;
-        int[] counts = new int[36]; long[] values = new long[36];
-        for (int i=0; i<36; i++) {
-            var stack = before[i];
-            if (stack == null || stack.getAmount() <= 0 || stack.getAmount() > 64) continue;
-            long worth = valueOf(stack);
-            if (worth > 0 && (amount == -1 || stack.isSimilar(Plain.DIAMOND))) {
-                counts[i] = stack.getAmount(); values[i] = worth / counts[i];
-            }
-        }
-        var plan = BankDepositPlan.plan(counts, values, handOnly ? inventory.getHeldItemSlot() : -1,
-                amount, store.balance(player.getUniqueId()));
-        if (plan == null || !java.util.Arrays.equals(before, inventory.getStorageContents())) return 0;
-        var after = java.util.Arrays.stream(before).map(i -> i == null ? null : i.clone()).toArray(ItemStack[]::new);
-        for (int i=0; i<36; i++) if (counts[i] != plan.remaining()[i]) {
-            if (plan.remaining()[i] == 0) after[i] = null; else after[i].setAmount(plan.remaining()[i]);
-        }
+    private boolean authenticated(Player player) {
+        var api=Bukkit.getServicesManager().load(ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.class);
+        return Bukkit.isPrimaryThread()&&player!=null&&player.isOnline()&&!player.hasMetadata("NPC")&&api!=null&&api.isAuthenticated(player);
+    }
+    private boolean cashReady(Player player) {
+        if(!enabled()||!authenticated(player)||player.isDead()||!player.hasPermission("chrdkregister.bal")
+                ||(player.getGameMode()!=org.bukkit.GameMode.SURVIVAL&&player.getGameMode()!=org.bukkit.GameMode.ADVENTURE)) return false;
+        boolean pending=store.cashLocked(player.getUniqueId());
+        var result=recoverCash(player);
+        // Повтор команды сначала завершает старый intent, но не создаёт второй обмен тем же нажатием.
+        return !pending&&result==ru.cherdakmd.chrdkregister.api.InventoryTransfer.Decision.APPLIED;
+    }
+    private ru.cherdakmd.chrdkregister.api.InventoryTransfer.Decision recoverCash(Player player) {
         try {
-            return store.exchange(player.getUniqueId(), player.getName(), 0, plan.credit(), () -> {
-                try { inventory.setStorageContents(after); }
-                catch (RuntimeException error) { inventory.setStorageContents(before); throw error; }
-            }) ? plan.credit() : 0;
-        } catch (RuntimeException error) {
-            plugin.getLogger().warning("Депозит отклонён, банковский баланс не изменён: " + error.getMessage());
-            return 0;
+            var pending=store.cashPending(player.getUniqueId());
+            if(pending!=null&&!BankCashInventory.valid(pending)) {
+                store.quarantineCash(); throw new IllegalStateException("Повреждён native-план bank.json; файл не перезаписывается");
+            }
+            var port=ru.cherdakmd.chrdkregister.api.ChargeInventory.inventory(player,CASH_KEY,()->authenticated(player));
+            var result=BankCash.recover(store,player.getUniqueId(),port);
+            if(result!=ru.cherdakmd.chrdkregister.api.InventoryTransfer.Decision.APPLIED) lockCash(player);
+            return result;
+        } catch(Exception error) {
+            plugin.getLogger().log(java.util.logging.Level.SEVERE,"Банк: обмен с playerdata не подтверждён; не удаляйте bank.json",error);
+            lockCash(player); return ru.cherdakmd.chrdkregister.api.InventoryTransfer.Decision.WAIT;
         }
     }
-
-    /** Алмазный эквивалент предмета (обычный алмаз/блок) или 0. */
-    private long valueOf(ItemStack stack) {
-        if (stack == null || stack.getType().isAir()) {
-            return 0L;
+    private void lockCash(Player player) {
+        try { player.kick(plugin.messages().get("economy.cash-playerdata-lock")); }
+        catch(RuntimeException error) { player.kick(net.kyori.adventure.text.Component.text("Банк: обмен предметов требует сверки playerdata.")); }
+    }
+    @org.bukkit.event.EventHandler(priority=org.bukkit.event.EventPriority.HIGHEST)
+    public void cashAuthenticated(ru.cherdakmd.chrdkregister.api.events.PlayerAuthCompletedEvent event) {
+        if(authenticated(event.getPlayer())) recoverCash(event.getPlayer());
+    }
+    private long depositPlanned(Player player,boolean handOnly,long amount) {
+        if(!cashReady(player)) return -1;
+        var before=ru.cherdakmd.chrdkregister.api.ChargeInventory.copy(player.getInventory().getStorageContents());
+        int selected=handOnly?player.getInventory().getHeldItemSlot():-1;
+        int worth=settings().blockWorth();
+        var plan=BankCashInventory.deposit(before,selected,amount,worth,store.balance(player.getUniqueId()));
+        if(plan==null) return 0;
+        return exchangeCash(player,BankCash.Kind.DEPOSIT,plan,before,worth,selected,amount)?plan.amount():-1;
+    }
+    private boolean exchangeCash(Player player,BankCash.Kind kind,BankCashInventory.Plan plan,ItemStack[] before,int worth,int selected,long request) {
+        try {
+            var intent=store.prepareCash(player.getUniqueId(),player.getName(),kind,plan.amount(),worth,selected,request,
+                    ru.cherdakmd.chrdkregister.api.ChargeInventory.encode(before),ru.cherdakmd.chrdkregister.api.ChargeInventory.encode(plan.after()));
+            if(intent==null) { if(!store.available()||store.cashLocked(player.getUniqueId())) lockCash(player); return false; }
+            return recoverCash(player)==ru.cherdakmd.chrdkregister.api.InventoryTransfer.Decision.APPLIED;
+        } catch(Exception error) {
+            plugin.getLogger().log(java.util.logging.Level.SEVERE,"Банковский обмен ожидает сверки, автоматического возврата нет",error);
+            if(!store.available()||store.cashLocked(player.getUniqueId())) lockCash(player); return false;
         }
-        if (stack.isSimilar(Plain.DIAMOND)) {
-            return stack.getAmount();
-        }
-        if (stack.isSimilar(Plain.BLOCK)) {
-            return (long) stack.getAmount() * settings().blockWorth();
-        }
-        return 0L;
     }
 
     /* --------------------------------- снятие --------------------------------- */
 
-    /** Снимает алмазы со счёта в инвентарь (только если хватает места). */
-    public WithdrawResult withdraw(Player player, long amount) {
-        if (player == null || amount <= 0L) {
-            return new WithdrawResult(WithdrawStatus.NOT_ENOUGH, Math.max(0L, amount), 0L);
-        }
-        long balance = store.balance(player.getUniqueId());
-        if (balance < amount) {
-            return new WithdrawResult(WithdrawStatus.NOT_ENOUGH, amount, balance);
-        }
-        if (capacity(player) < amount) {
-            return new WithdrawResult(WithdrawStatus.NO_SPACE, amount, balance);
-        }
-        if (!store.withdraw(player.getUniqueId(), amount)) {
-            return new WithdrawResult(WithdrawStatus.NOT_ENOUGH, amount, store.balance(player.getUniqueId()));
-        }
-        long left = amount;
-        while (left > 0L) {
-            int take = (int) Math.min(64L, left);
-            left -= take;
-            var leftover = player.getInventory().addItem(new ItemStack(Material.DIAMOND, take));
-            for (ItemStack stack : leftover.values()) {
-                // Место проверяли заранее; падение — страховка, а не норма.
-                player.getWorld().dropItemNaturally(player.getLocation(), stack);
-            }
-        }
-        return new WithdrawResult(WithdrawStatus.OK, amount, store.balance(player.getUniqueId()));
+    /** Точный storage-only grant; intent и резерв счёта durable до native-выдачи. */
+    public WithdrawResult withdraw(Player player,long amount) {
+        if(player==null||amount<=0) return new WithdrawResult(WithdrawStatus.NOT_ENOUGH,Math.max(0,amount),0);
+        if(!cashReady(player)) return new WithdrawResult(WithdrawStatus.UNAVAILABLE,amount,store.balance(player.getUniqueId()));
+        long balance=store.balance(player.getUniqueId());
+        if(balance<amount) return new WithdrawResult(WithdrawStatus.NOT_ENOUGH,amount,balance);
+        var before=ru.cherdakmd.chrdkregister.api.ChargeInventory.copy(player.getInventory().getStorageContents());
+        var plan=BankCashInventory.withdraw(before,amount);
+        if(plan==null) return new WithdrawResult(WithdrawStatus.NO_SPACE,amount,balance);
+        boolean done=exchangeCash(player,BankCash.Kind.WITHDRAW,plan,before,1,-1,amount);
+        return new WithdrawResult(done?WithdrawStatus.OK:WithdrawStatus.UNAVAILABLE,amount,store.balance(player.getUniqueId()));
     }
 
     /** Сколько алмазов влезает в инвентарь с учётом неполных стаков обычных алмазов. */
@@ -313,6 +312,17 @@ public final class BankService {
 
     /** Планировщик: периодическая запись файла. */
     public void start() {
+        if(store.available()) for(var pending:store.cashPendingSnapshot()) if(!BankCashInventory.valid(pending)) {
+            store.quarantineCash(); plugin.getLogger().severe("Банк остановлен: повреждён native-план cashPending. Сохраните bank.json для сверки."); break;
+        }
+        Bukkit.getPluginManager().registerEvents(this,plugin);
+        cashTask=Bukkit.getScheduler().runTaskTimer(plugin,()->{
+            var players=new java.util.ArrayList<>(Bukkit.getOnlinePlayers());
+            for(int i=0;i<Math.min(16,players.size());i++) {
+                var player=players.get(Math.floorMod(cashCursor++,players.size()));
+                if(authenticated(player)) recoverCash(player);
+            }
+        },20L,20L);
         Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, () -> {
             if (store.isDirty()) {
                 store.saveNow();
@@ -321,6 +331,8 @@ public final class BankService {
     }
 
     public void shutdown() {
+        if(cashTask!=null) cashTask.cancel();
+        org.bukkit.event.HandlerList.unregisterAll(this);
         store.flush();
         lastPay.clear();
     }

@@ -39,8 +39,8 @@ market/playerdata. Не удалять pending и не выдавать пред
 
 | Путь | Подтверждённое состояние кода | Что ещё необходимо |
 |---|---|---|
-| Core `/bal deposit` | BankService.depositPlanned вызывает BankStore.exchange с inventory callback; нет durable intent/playerdata proof | Канонический журнал обмена предметы↔банк, авторитетный receipt, native proof/recovery |
-| Core `/bal withdraw` | Списание затем addItem; есть страховочный dropItemNaturally | Durable выдача storage-only, без денежных drops; повторный native checkpoint и безопасный отказ при полном inventory |
+| Core `/bal deposit` | Закрыто в 233: canonical bank.json v5 intent + native proof + receipt/баланс одним replace | [Протокол и границы 233](../releases/1.4.233.md) |
+| Core `/bal withdraw` | Закрыто в 233: целый storage-only grant с резервом счёта/nonce/checkpoint; без drops | [Протокол и границы 233](../releases/1.4.233.md) |
 | DiamondShop | ShopService.trade → exchangeDiamonds; рынок/оборот учитываются отдельно после Core callback | Native intent + receipt + once market/UTC-turnover publication; отдельный путь товарной продажи как дохода |
 | Claims земля/аренда/личные операции | ClaimBankBridge → exchangeClaimAccounts; банк и домен/предметы независимы | Квитанция и согласованный source-переход, в том числе системные переводы без Player и recovery аренды |
 
@@ -73,7 +73,7 @@ BattlePass найденные DIAMOND_ORE — цели заданий, DIAMOND_S
 ## Условия общего релиза
 
 - [x] 232: native proof общей оплаты, Orders и pending-аукциона; Guilds allowlist; runtime quarantine.
-- [ ] Core deposit/withdraw с durable native protocol, без денежных drops.
+- [x] 233: Core deposit/withdraw с durable native protocol, без денежных drops.
 - [ ] DiamondShop: native recovery и согласованность рынка/лимитов.
 - [ ] Claims: финансовые source-переходы и recovery системной аренды.
 - [ ] DailyRewards: обычные/VIP денежные награды в /bal, frozen once-claim.
@@ -87,3 +87,10 @@ BattlePass найденные DIAMOND_ORE — цели заданий, DIAMOND_S
 Аукционный nonce защищает незавершённый переход, но не является универсальным
 Root receipt всех предметов после закрытия WAL. Согласованные резервные копии —
 на остановленном сервере, единым комплектом, с журналами всех модулей.
+
+## Уточнение после 233
+
+Депозит/снятие больше не используют прежний callback. Canonical bank.json v5
+резервирует только владельца, сохраняет intent до native-выдачи и latest receipt
+вместе с изменением баланса. Остальные callback-пути (магазин и земельные Claims)
+от этого не становятся автоматически журналируемыми. Общий релиз остаётся закрыт.

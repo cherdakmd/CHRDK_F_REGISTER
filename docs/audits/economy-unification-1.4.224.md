@@ -14,7 +14,7 @@
 
 | Модуль | Личные деньги / платёжный путь | Состояние |
 |---|---|---|
-| Core | bank.json, депозит, переводы | Единый личный счёт; депозит укреплён в 223 |
+| Core | bank.json, депозит, снятие, переводы | 233: canonical cash intents/receipts + playerdata proof, резерв владельца, без money drops |
 | DiamondShop | Старый balances; покупка/продажа | Уже /bal, once-import, банк первым |
 | Claims | Старый treasury; земля, аренда | Уже /bal; 226: платный claim tp с резервом/возвратом /bal |
 | Auction | Старый money; покупка/выручка | Уже /bal, durable receipt/WAL с 223 |
@@ -163,3 +163,10 @@ proof перед публикацией pending-аукциона, Guilds в Root
 отсутствие кошелька не доказывает отсутствие денежной награды.
 [Актуальная матрица рисков и блокирующие release-gates](native-economy-1.4.232.md).
 [Изменения и проверки 232](../releases/1.4.232.md). Общего релиза пока нет.
+
+## Этап 233
+
+Core deposit/withdraw: canonical bank.json v5 с per-owner intent/резервом и latest
+receipt, native storage+nonce до публикации баланса, без addItem/drop fallback.
+[Recovery, миграция и проверки 233](../releases/1.4.233.md). Магазин, земельные
+операции/аренда Claims и два конфигурационных денежных выхода остаются gates.
