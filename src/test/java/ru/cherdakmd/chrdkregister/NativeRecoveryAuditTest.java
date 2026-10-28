@@ -17,7 +17,7 @@ class NativeRecoveryAuditTest {
     ChargeJournal journal() throws Exception { return new ChargeJournal(dir.resolve("module"),"guilds",source().lineage()); }
     BankStore bank() { var b=new BankStore(dir.resolve("core"),log); b.load(); return b; }
     BankCharge prepare(boolean cash) throws Exception {
-        var s=source(); var b=bank(); b.registerIncomeSource("guilds",s.lineage()); b.open(owner,"Alex"); if(!cash) b.deposit(owner,"Alex",5); b.flush();
+        var s=source(); s.markRegistered(); var b=bank(); b.registerIncomeSource("guilds",s.lineage()); b.open(owner,"Alex"); if(!cash) b.deposit(owner,"Alex",5); b.flush();
         return journal().prepare(owner,5,cash?0:5,cash?9:0,cash?4:0,"before",cash?"after":"before",s.snapshot(),s.previewValue("fixture","new domain"));
     }
     ChargeRecovery.Decision recover(BankCharge.Status status,InventoryTransfer.Inventory bag) throws Exception { return ChargeRecovery.recover(journal(),status,bag,source()); }

@@ -114,7 +114,7 @@ class AuctionFinanceTest {
         assertTrue(buy.indexOf("commitAuctionPayment")<buy.indexOf("AuctionTransfers.bank"));
         assertFalse(buy.contains("setStorageContents"));
         assertFalse(buy.contains("saveData()"));
-        assertTrue(buy.contains("if (plan.cash() > 0)")); assertFalse(buy.contains("prepareBuy("));
+        assertTrue(buy.contains("plan.cash()==0?null:inventory(p,\"auction-cash\")")); assertFalse(buy.contains("prepareBuy("));
         String money=src.substring(src.indexOf("void money("),src.indexOf("private void lockPlayer"));
         assertFalse(money.contains("prepareMoneyClaim")); assertFalse(money.contains("setStorageContents")); assertTrue(money.contains("bankBalance"));
     }
