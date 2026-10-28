@@ -198,7 +198,7 @@ public final class OrdersStore {
     public synchronized Pending prepare(UUID owner,String name,BotOrder order,long now,int maxPerDay,int cooldownSeconds,String before,String after) throws IOException {
         idleWrite();
         if(owner==null||name==null||now<0||!order.equals(orders.get(order.id()))||order.expired(now)
-                ||reputation(owner)<order.minReputation()||maxPerDay>0&&today(owner,now)>=maxPerDay
+                ||completed(owner)==Integer.MAX_VALUE||reputation(owner)<order.minReputation()||maxPerDay>0&&today(owner,now)>=maxPerDay
                 ||cooldownSeconds>0&&lastDelivery(owner)>0&&now-lastDelivery(owner)<cooldownSeconds*1000L) throw new IllegalStateException("delivery rules changed");
         // Проверяем переполнение до первой записи и до списания предметов.
         Math.addExact(incomes.getOrDefault(owner,0L),order.rewardDiamonds());
@@ -457,7 +457,7 @@ public final class OrdersStore {
         return dirty;
     }
 
-    /** Снимок для асинхронной записи; сбрасывает флаг «грязно». */
+    /** Снимок без ACK записи. Dirty снимается только после успешного durable replace. */
     public synchronized String snapshotJson() {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("version", 2);
@@ -496,7 +496,6 @@ public final class OrdersStore {
             playerRows.put(entry.getKey().toString(), row);
         }
         data.put("players", playerRows);
-        dirty = false;
         return GSON.toJson(data);
     }
 

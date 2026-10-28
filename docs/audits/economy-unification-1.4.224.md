@@ -95,7 +95,8 @@ Teleports/claim tp переведены на bank-first, sethome связан с
 - [x] 226 — Teleports и claim tp: единый платёж и безопасный исход/возврат, не списание за отменённый телепорт.
 - [x] 227 — Guilds: личная сторона /bal, общая казна и зарезервированные ставки; отсутствие обрезания возвратов по cap.
 - [x] 228 — Skills, Achievements, Artifacts, TierForge: денежные вехи в /bal, once-import, долговечные source-отметки и cumulative obligation.
-- [ ] Orders, Hunt, Treasures: денежные награды без drops,
+- [x] 229 — Orders: durable item intent, playerdata witness, одна публикация доски/лимита/денежного source.
+- [ ] Hunt, Treasures: денежные награды без drops,
   идемпотентность/очередь при cap и согласованность с потреблением товара/монет/получением вехи.
 - [ ] Общий аудит native playerdata proof во всех предметных оплатах (включая ранее изменённые пути): witness из 225 пока подключён к Lottery/Goals.
 - [ ] Повторная проверка источников и стандартных конфигов после всех изменений.
@@ -124,3 +125,13 @@ Guilds: создание и взнос через bank-first WAL, снятие �
 [Протокол и границы гарантии 228](../releases/1.4.228.md).
 API 20 также проверяет известность UUID на общем creditEntitlement, не только
 в новом адаптере. Старые игровые бусты/асинхронный прогресс не объявляются ACID с банком.
+
+## Этап 229
+
+Orders хранит финансовые обязательства в canonical `orders.json` v2 вместе с
+доской, репутацией, UTC-лимитами и pending intent. Между intent и публикацией
+требуется native storage+witness, сохранённый одним playerdata. Только после
+публикации доступен cumulative income для /bal; cap/down не удаляют остаток.
+[Миграция, ограничения буста и native staging 229](../releases/1.4.229.md).
+Общий native-аудит прежних путей остаётся открытым, подключение нового Orders
+само по себе не закрывает этот release-gate. Остались Hunt и Treasures.

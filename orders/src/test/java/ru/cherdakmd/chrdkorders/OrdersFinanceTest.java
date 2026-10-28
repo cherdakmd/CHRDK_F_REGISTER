@@ -126,8 +126,27 @@ class OrdersFinanceTest {
         var rejected=new OrdersStore(dir,log); assertThrows(IllegalStateException.class,rejected::load); rejected.flush(); assertEquals(bad,Files.readString(s.file()));
     }
     @Test void asyncFlushCannotPublishSnapshotFromBeforeFinancialCommit() throws Exception {
-        var s=ready(); var p=prepare(s); Thread writer=new Thread(s::saveNow); writer.start(); s.publish(p); writer.join(); s.saveNow();
-        assertNull(load().pending()); assertNull(load().order("1")); assertEquals(17,load().incomes().get(owner));
+        ready();
+        var ref=new java.util.concurrent.atomic.AtomicReference<OrdersStore>();
+        var held=new java.util.concurrent.atomic.AtomicBoolean(); var error=new java.util.concurrent.atomic.AtomicReference<Throwable>();
+        var entered=new java.util.concurrent.CountDownLatch(1); var release=new java.util.concurrent.CountDownLatch(1);
+        var s=new OrdersStore(dir,log,()->{
+            if(Thread.currentThread().getName().equals("old-async-save")) {
+                held.set(Thread.holdsLock(ref.get())); entered.countDown();
+                try { if(!release.await(5,java.util.concurrent.TimeUnit.SECONDS)) throw new IOException("test release timeout"); }
+                catch(InterruptedException e) { Thread.currentThread().interrupt(); throw new IOException(e); }
+            }
+        }); ref.set(s); s.load(); s.add(order("2"));
+        var started=new java.util.concurrent.CountDownLatch(1);
+        var transaction=new Thread(()->{started.countDown(); try { var p=prepare(s); s.publish(p); } catch(Throwable e) { error.set(e); }});
+        var writer=new Thread(s::saveNow,"old-async-save"); writer.start();
+        try {
+            assertTrue(entered.await(5,java.util.concurrent.TimeUnit.SECONDS)); assertTrue(held.get(),"snapshot+replace must hold source monitor");
+            transaction.start(); assertTrue(started.await(5,java.util.concurrent.TimeUnit.SECONDS));
+        } finally { release.countDown(); }
+        writer.join(5000); transaction.join(5000);
+        assertFalse(writer.isAlive()); assertFalse(transaction.isAlive()); assertNull(error.get());
+        assertNull(load().pending()); assertNull(load().order("1")); assertNotNull(load().order("2")); assertEquals(17,load().incomes().get(owner));
     }
     @Test void nativeWiringIsStorageOnlyAndHasNoDiamondPayoutFallback() throws Exception {
         String code=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkorders/OrdersFinance.java"));

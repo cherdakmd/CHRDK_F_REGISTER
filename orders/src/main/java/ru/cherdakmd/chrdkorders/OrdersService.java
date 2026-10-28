@@ -198,6 +198,7 @@ public final class OrdersService {
         if (player == null) {
             return false;
         }
+        if(plugin.finance().paused()) { plugin.messages().send(player,"finance-wait"); return false; }
         BotOrder order = order(orderId);
         if (order == null) {
             plugin.messages().send(player, "unknown-order", "id", orderId == null ? "" : orderId);
