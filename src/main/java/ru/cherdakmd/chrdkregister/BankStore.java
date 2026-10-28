@@ -110,6 +110,8 @@ public final class BankStore {
     private final Map<UUID, Account> accounts = new LinkedHashMap<>();
     private final Map<String, UUID> byName = new LinkedHashMap<>();
     private boolean dirty;
+    private boolean available = true;
+    public synchronized boolean available() { return available; }
 
     public BankStore(Path dataFolder, Logger logger) {
         this.file = dataFolder.resolve("bank.json");
@@ -128,9 +130,7 @@ public final class BankStore {
         }
         try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
             Envelope envelope = GSON.fromJson(reader, Envelope.class);
-            if (envelope == null || envelope.accounts == null) {
-                return;
-            }
+            if (envelope == null || envelope.accounts == null) throw new IllegalArgumentException("Пустой денежный файл");
             List<Map.Entry<UUID, Account>> rows = new ArrayList<>();
             for (Map.Entry<String, Account> raw : envelope.accounts.entrySet()) {
                 UUID id = parseUuid(raw.getKey());
@@ -157,6 +157,7 @@ public final class BankStore {
             logger.info("[bank] Загружено счетов: " + accounts.size()
                     + ", в обороте " + total() + " алмазов.");
         } catch (Exception exception) {
+            available = false;
             // Битый файл не должен превращаться в пустой: сохраняем копию и начинаем заново.
             logger.severe("[bank] Не удалось прочитать " + file + ": " + exception.getMessage()
                     + " — файл сохранён рядом как bank.json.corrupt");
@@ -377,7 +378,7 @@ public final class BankStore {
 
     /** Баланс и квитанция в одном bank.json: повторное чтение старого shop-data не начисляет деньги снова. */
     public synchronized boolean importLegacyShop(UUID id, long amount) {
-        if (id == null || amount < 0 || amount > MAX_BALANCE) return false;
+        if (!available || id == null || amount < 0 || amount > MAX_BALANCE) return false;
         var account = open(id, "");
         if (account.legacyShopImported) return true;
         if (account.balance > MAX_BALANCE - amount) return false;
@@ -388,7 +389,7 @@ public final class BankStore {
 
     /** Проверяем деньги до inventoryCommit; callback обязан откатить собственный снимок при исключении. */
     public synchronized boolean exchange(UUID id, String name, long debit, long credit, Runnable inventoryCommit) {
-        if (id == null || inventoryCommit == null || debit < 0 || credit < 0 || debit > MAX_BALANCE || credit > MAX_BALANCE) return false;
+        if (!available || id == null || inventoryCommit == null || debit < 0 || credit < 0 || debit > MAX_BALANCE || credit > MAX_BALANCE) return false;
         var account = open(id, name);
         if (account.balance < debit || account.balance - debit > MAX_BALANCE - credit) return false;
         inventoryCommit.run(); // Не вызывает событий/команд; исключение не меняет деньги.
@@ -409,7 +410,7 @@ public final class BankStore {
 
     /** Немедленная запись (может вызываться с асинхронного потока). */
     public synchronized void saveNow() {
-        if (!dirty) {
+        if (!available || !dirty) {
             return;
         }
         Envelope envelope = new Envelope();

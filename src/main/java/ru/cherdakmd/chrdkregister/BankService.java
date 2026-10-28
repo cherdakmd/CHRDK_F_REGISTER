@@ -76,7 +76,7 @@ public final class BankService {
     }
 
     public boolean enabled() {
-        return settings().enabled();
+        return settings().enabled() && store.available();
     }
 
     /* ---------------------------------- счёт ---------------------------------- */

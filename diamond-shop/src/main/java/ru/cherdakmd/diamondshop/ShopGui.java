@@ -229,9 +229,9 @@ public final class ShopGui implements Listener {
         }
         long units = click.isShiftClick() ? 16 : 1;
         if (click.isLeftClick()) {
-            trade(player, item, units, true, holder.category(), holder.page());
+            trade(player, item, units, true, holder.category(), holder.page(), offer);
         } else if (click.isRightClick()) {
-            trade(player, item, units, false, holder.category(), holder.page());
+            trade(player, item, units, false, holder.category(), holder.page(), offer);
         }
     }
 
@@ -243,10 +243,8 @@ public final class ShopGui implements Listener {
     }
 
     private void trade(Player player, ShopConfig.ShopItem item, long units, boolean buy,
-                       ShopCategory category, int page) {
-        ShopService.TradeResult result = buy
-                ? plugin.shopService().buy(player, item, units)
-                : plugin.shopService().sell(player, item, units);
+                       ShopCategory category, int page, Offer offer) {
+        ShopService.TradeResult result = plugin.shopService().quoted(player, item, units, buy, offer.batch(), buy ? offer.ask() : offer.bid());
         if (result.success()) {
             if (buy) plugin.messages().send(player, "shop.payment-detail", "account", result.bankPaid(), "physical", result.physicalPaid(), "change", result.change());
             String key = buy ? "shop.buy-done" : "shop.sell-done";

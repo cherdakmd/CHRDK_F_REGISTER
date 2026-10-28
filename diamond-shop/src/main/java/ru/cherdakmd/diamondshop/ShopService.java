@@ -33,7 +33,7 @@ public final class ShopService {
     public double[] historyOf(ShopConfig.ShopItem item) { return store.historyOf(item.material()); }
     public boolean migrate(UUID id, double old) {
         long amount = WholeTrades.legacy(old); var core = api.get();
-        return amount >= 0 && core != null && core.importLegacyShop(id, amount);
+        return store.legacyAvailable() && amount >= 0 && core != null && core.importLegacyShop(id, amount);
     }
     public boolean ready(Player player) {
         var core = api.get();
@@ -54,11 +54,15 @@ public final class ShopService {
     private static TradeResult fail(String key, long money) { return new TradeResult(false, money, key, 0, 0, 0, 0); }
 
     /** Аргумент — число партий, а не штук. Цена каждой партии целая, количество ограничено вместимостью storage. */
-    public TradeResult buy(Player player, ShopConfig.ShopItem item, long batches) { return trade(player, item, batches, true); }
-    public TradeResult sell(Player player, ShopConfig.ShopItem item, long batches) { return trade(player, item, batches, false); }
-    private TradeResult trade(Player player, ShopConfig.ShopItem item, long batches, boolean buy) {
+    public TradeResult buy(Player player, ShopConfig.ShopItem item, long batches) { return trade(player, item, batches, true, -1, -1); }
+    public TradeResult sell(Player player, ShopConfig.ShopItem item, long batches) { return trade(player, item, batches, false, -1, -1); }
+    TradeResult quoted(Player player, ShopConfig.ShopItem item, long batches, boolean buy, int batch, long price) {
+        return trade(player, item, batches, buy, batch, price);
+    }
+    private TradeResult trade(Player player, ShopConfig.ShopItem item, long batches, boolean buy, int expectedBatch, long expectedPrice) {
         if (!ready(player) || player.getGameMode() != GameMode.SURVIVAL) return fail("shop.unavailable", 0);
         int batch = batchSize(item); long price = buy ? askPrice(item) : bidPrice(item);
+        if (expectedBatch >= 0 && (batch != expectedBatch || price != expectedPrice)) return fail("shop.price-changed", 0);
         if (batch < 1 || price < 1) return fail("shop.unavailable", 0);
         if (batches < 1 || batches > 2304L / batch || batches > WholeTrades.MAX / price) return fail("shop.invalid-number", 0);
         long units = batches * batch, money = batches * price;
@@ -68,13 +72,15 @@ public final class ShopService {
         long debit = 0, credit = buy ? 0 : money, spent = 0, change = 0;
         if (buy) {
             long wallet = balance(player), needed = Math.max(0, money - wallet);
-            // Сначала мелкие номиналы; переплата блоком возвращается целыми алмазами на /bal.
-            var currencies = config.currencyRates().entrySet().stream().sorted(Map.Entry.comparingByValue()).toList();
-            for (var currency : currencies) for (int slot = 0; slot < after.length && needed > 0; slot++) {
-                var stack = after[slot]; if (!plain(stack) || !stack.getType().name().equals(currency.getKey())) continue;
-                long take = Math.min(stack.getAmount(), (needed + currency.getValue() - 1L) / currency.getValue());
-                long value = take * currency.getValue(); spent += value; needed -= value;
-                stack.setAmount(stack.getAmount() - (int) take); if (stack.getAmount() == 0) after[slot] = null;
+            int[] amounts = new int[36], values = new int[36];
+            for (int slot=0; slot<after.length; slot++) if (plain(after[slot])) {
+                amounts[slot] = after[slot].getAmount(); values[slot] = config.currencyRates().getOrDefault(after[slot].getType().name(), 0);
+            }
+            var removal = WholeTrades.take(amounts, values, needed);
+            if (removal == null) return fail("shop.not-enough-balance", money);
+            spent = removal.paid();
+            for (int slot=0; slot<after.length; slot++) if (amounts[slot] != removal.after()[slot]) {
+                if (removal.after()[slot] == 0) after[slot] = null; else after[slot].setAmount(removal.after()[slot]);
             }
             var payment = WholeTrades.payment(money, wallet, spent);
             if (payment == null) return fail("shop.not-enough-balance", money);

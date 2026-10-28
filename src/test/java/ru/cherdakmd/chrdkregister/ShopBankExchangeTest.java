@@ -34,6 +34,12 @@ class ShopBankExchangeTest {
         assertEquals(7,s.balance(id)); assertFalse(s.exchange(id,"Alex",-1,0,calls::incrementAndGet));
         assertTrue(s.exchange(id,"Alex",7,6,calls::incrementAndGet)); assertEquals(6,s.balance(id)); assertEquals(1,calls.get());
     }
+    @Test void corruptBankCannotBeUsedForNewImportOrExchangeAndIsNotOverwritten() throws Exception {
+        Files.writeString(dir.resolve("bank.json"), "broken-json"); var s=store(); s.load();
+        assertFalse(s.available()); assertFalse(s.importLegacyShop(UUID.randomUUID(),1));
+        assertFalse(s.exchange(UUID.randomUUID(),"Alex",0,1,()->fail("must not commit")));
+        s.saveNow(); assertEquals("broken-json",Files.readString(dir.resolve("bank.json")));
+    }
     @Test void apiStorageSnapshotAndLifecycleGuardsAreWired() throws Exception {
         var s=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkregister/ChrdkRegisterApiImpl.java"));
         for(var guard:List.of("isPrimaryThread()", "expected.length != 36", "replacement.length != 36", "Arrays.equals(expected", "GameMode.SURVIVAL", "!isAuthenticated(player)", "setStorageContents(original)", "bank.exchange(")) assertTrue(s.contains(guard),guard);

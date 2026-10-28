@@ -30,5 +30,22 @@ final class WholeTrades {
         return physical < needed || balance - account > MAX - (physical - needed)
                 ? null : new Payment(account, physical, physical - needed);
     }
+    record Removal(int[] after, long paid) { }
+    static Removal take(int[] amounts, int[] values, long needed) {
+        if (amounts == null || values == null || amounts.length != values.length || amounts.length > 36 || needed < 0 || needed > MAX) return null;
+        int[] next = amounts.clone(); var order = new java.util.ArrayList<Integer>();
+        for (int i=0; i<next.length; i++) {
+            if (next[i] < 0 || next[i] > 64 || values[i] < 0) return null;
+            if (values[i] > 0) order.add(i);
+        }
+        order.sort(java.util.Comparator.comparingInt(i -> values[i]));
+        long paid = 0;
+        for (int slot : order) {
+            if (needed <= 0) break;
+            long count = Math.min(next[slot], (needed + values[slot] - 1L) / values[slot]);
+            next[slot] -= (int) count; long value = count * values[slot]; paid += value; needed -= value;
+        }
+        return needed > 0 ? null : new Removal(next, paid);
+    }
     private WholeTrades() { }
 }

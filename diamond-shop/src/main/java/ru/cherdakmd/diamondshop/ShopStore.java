@@ -55,6 +55,8 @@ public final class ShopStore {
     private final Map<UUID, LimitRow> limits = new HashMap<>();
     private double turnover;
     private boolean dirty;
+    private volatile boolean legacyAvailable = true;
+    public boolean legacyAvailable() { return legacyAvailable; }
 
     public ShopStore(Path dataFolder, Logger logger) {
         this.file = dataFolder.resolve("shop-data.json");
@@ -68,7 +70,13 @@ public final class ShopStore {
         }
         try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
             Map<String, Object> data = GSON.fromJson(reader, DATA_TYPE);
-            if (data == null) return;
+            if (data == null) throw new IllegalArgumentException("Пустой денежный файл");
+            if (data.get("balances") != null && !(data.get("balances") instanceof Map<?, ?>)) throw new IllegalArgumentException("Неверный balances");
+            if (data.get("balances") instanceof Map<?, ?> rows) for (var entry : rows.entrySet()) {
+                UUID.fromString(String.valueOf(entry.getKey()));
+                if (!(entry.getValue() instanceof Number value) || !Double.isFinite(value.doubleValue()) || value.doubleValue() < 0)
+                    throw new IllegalArgumentException("Неверная старая сумма: " + entry.getKey());
+            }
             transferMap(data.get("balances"), balances, Double.class);
             Object itemsObj = data.get("items");
             if (itemsObj instanceof Map<?, ?> map) {
@@ -109,6 +117,7 @@ public final class ShopStore {
             logger.info("[DiamondShop] Загружено: " + balances.size() + " балансов, "
                     + items.size() + " товаров, оборот " + turnover + " ⛁.");
         } catch (Exception e) {
+            legacyAvailable = false;
             logger.severe("[DiamondShop] Не удалось прочитать " + file + ": " + e.getMessage());
         }
     }
@@ -307,6 +316,7 @@ public final class ShopStore {
 
     /** Синхронная запись (использовать при выключении и в тестах). */
     public void saveNow() {
+        if (!legacyAvailable) return; // Не перезаписываем повреждённый денежный источник пустым состоянием.
         if (!dirty && Files.isRegularFile(file)) return;
         String json = snapshotJson();
         try {
