@@ -44,6 +44,8 @@ public final class PaidActionStore implements ChargeInventory.Source {
     private static void validate(Data d) {
         if (d == null || d.schema != 1 || d.lineage == null || d.values == null || d.actions == null || d.refunds == null || d.resolutions == null || d.resolutions.size()>100)
             throw new IllegalArgumentException("action source");
+        if (!d.registered && (!d.actions.isEmpty() || !d.refunds.isEmpty() || !d.resolutions.isEmpty()))
+            throw new IllegalArgumentException("financial source lost registration marker");
         for (var row:d.values.entrySet()) if (row.getKey()==null || row.getKey().length()>160 || row.getValue()==null || row.getValue().length()>16_384)
             throw new IllegalArgumentException("source value");
         for (var row:d.actions.entrySet()) {

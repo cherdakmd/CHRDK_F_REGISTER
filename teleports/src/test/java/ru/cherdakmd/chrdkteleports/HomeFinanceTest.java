@@ -24,6 +24,11 @@ class HomeFinanceTest {
     @Test void corruptLegacyNeverOverwritesExistingDataOnDisable() throws Exception {
         String bad="{broken"; Files.writeString(dir.resolve("teleports-data.json"),bad); var h=homes(); assertThrows(IllegalStateException.class,h::load); h.saveNow(); assertEquals(bad,Files.readString(dir.resolve("teleports-data.json")));
     }
+    @Test void nonemptyValuesWithoutImportFlagAreNeverOverwrittenByLegacyHomes() throws Exception {
+        var source=new PaidActionStore(dir); source.putValue(HomeStore.financeKey(owner,point.name()),HomeStore.financeValue(point));
+        var h=homes(); assertThrows(java.io.IOException.class,()->h.bind(source));
+        assertEquals(HomeStore.financeValue(point),source.values().get(HomeStore.financeKey(owner,point.name())));
+    }
     @Test void actualTeleportPricesCannotBeZeroButSettingPointCan() {
         var c=new org.bukkit.configuration.file.YamlConfiguration(); c.set("costs.home-diamonds",0); c.set("costs.rtp-diamonds",0); c.set("costs.tpa-diamonds",0);
         var parsed=TpConfig.parse(c,Logger.getAnonymousLogger()); assertEquals(1,parsed.costHome()); assertEquals(1,parsed.costRtp()); assertEquals(1,parsed.costTpa()); assertEquals(0,parsed.costSethome());

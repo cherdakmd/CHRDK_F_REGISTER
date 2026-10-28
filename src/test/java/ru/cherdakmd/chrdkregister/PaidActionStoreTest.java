@@ -60,6 +60,11 @@ class PaidActionStoreTest {
         var json=com.google.gson.JsonParser.parseString(original).getAsJsonObject(); json.getAsJsonObject("actions").getAsJsonObject(a.id().toString()).addProperty("price",1.5);
         Files.writeString(dir.resolve("paid-actions.json"),json.toString()); assertThrows(IOException.class,this::load);
     }
+    @Test void financialRowsWithFalseRegistrationCannotBootstrapNewBankSource() throws Exception {
+        var s=registered(); publish(s,action());
+        var file=dir.resolve("paid-actions.json"); var json=com.google.gson.JsonParser.parseString(Files.readString(file)).getAsJsonObject(); json.addProperty("registered",false);
+        String bad=json.toString(); Files.writeString(file,bad); assertThrows(IOException.class,this::load); assertEquals(bad,Files.readString(file));
+    }
     @Test void valuesImportOnlyOnceAndPaidPreviewCannotOverwriteBeforeReceipt() throws Exception {
         var s=registered(); s.initializeValues(Map.of("home","old")); s.initializeValues(Map.of("home","wrong")); assertEquals("old",s.values().get("home"));
         var after=s.previewValue("home","new"); assertEquals("old",load().values().get("home")); s.publish(s.snapshot(),after); assertEquals("new",load().values().get("home"));
