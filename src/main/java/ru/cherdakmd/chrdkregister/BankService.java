@@ -127,6 +127,8 @@ public final class BankService implements org.bukkit.event.Listener {
     private boolean cashReady(Player player) {
         if(!enabled()||!authenticated(player)||player.isDead()||!player.hasPermission("chrdkregister.bal")
                 ||(player.getGameMode()!=org.bukkit.GameMode.SURVIVAL&&player.getGameMode()!=org.bukkit.GameMode.ADVENTURE)) return false;
+        // Нельзя разменять физические деньги уже принятой оплаты аддона до её native-checkpoint.
+        if(!new BankChargeGuard(plugin,store).check(player)) return false;
         boolean pending=store.cashLocked(player.getUniqueId());
         var result=recoverCash(player);
         // Повтор команды сначала завершает старый intent, но не создаёт второй обмен тем же нажатием.
