@@ -7,11 +7,13 @@ class BankChargeGuardTest {
     @Test void markerSurvivesNormalInventoryChangesButOldOrMissingPlayerdataMarkerFailsClosed() {
         var first=UUID.randomUUID(); var second=UUID.randomUUID();
         assertTrue(BankChargeGuard.matches(Map.of(),Map.of()));
-        assertTrue(BankChargeGuard.matches(Map.of("lottery",first),Map.of("lottery",first.toString(),"unrelated","anything")));
+        assertTrue(BankChargeGuard.matches(Map.of("lottery",first),Map.of("lottery",first.toString())));
         assertFalse(BankChargeGuard.matches(Map.of("lottery",first),Map.of()));
         assertFalse(BankChargeGuard.matches(Map.of("lottery",first),Map.of("lottery",second.toString())));
         assertFalse(BankChargeGuard.matches(Map.of("lottery",first,"common-goals",second),Map.of("lottery",first.toString())));
         assertFalse(BankChargeGuard.matches(null,Map.of()));
+        assertFalse(BankChargeGuard.matches(Map.of(),Map.of("lottery",first.toString()))); // orphan marker after bank reset
+        assertFalse(BankChargeGuard.matches(Map.of("lottery",first),Map.of("lottery",first.toString(),"common-goals",second.toString())));
     }
     @Test void rootGuardRunsAfterAddonAuthRecoveryAndRemainsRegisteredWithoutAddons() throws Exception {
         String guard=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkregister/BankChargeGuard.java"));

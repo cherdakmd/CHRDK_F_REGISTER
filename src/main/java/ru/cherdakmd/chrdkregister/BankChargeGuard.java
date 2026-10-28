@@ -4,7 +4,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.*;
 import org.bukkit.persistence.PersistentDataType;
-import ru.cherdakmd.chrdkregister.api.ChargeInventory;
 import ru.cherdakmd.chrdkregister.api.events.PlayerAuthCompletedEvent;
 import java.util.*;
 
@@ -21,14 +20,16 @@ final class BankChargeGuard implements Listener {
         for (var p:Bukkit.getOnlinePlayers()) if (api.isAuthenticated(p)) check(p);
     }
     static boolean matches(Map<String, UUID> expected, Map<String, String> actual) {
-        if (expected == null || actual == null) return false;
+        if (expected == null || actual == null || expected.size() != actual.size()) return false;
         for (var row:expected.entrySet()) if (!row.getValue().toString().equals(actual.get(row.getKey()))) return false;
         return true;
     }
     private void check(Player p) {
         if (!p.isOnline()) return;
         var expected=bank.chargeWitnesses(p.getUniqueId()); var actual=new HashMap<String, String>();
-        if (expected != null) for (var source:expected.keySet()) actual.put(source,p.getPersistentDataContainer().get(ChargeInventory.witnessKey(source),PersistentDataType.STRING));
+        // Проверяем также orphan-маркеры: исчезнувшая банковская запись не означает «не было оплаты».
+        for (var key:p.getPersistentDataContainer().getKeys()) if (key.getNamespace().equals("chrdk_core") && key.getKey().startsWith("charge_"))
+            actual.put(key.getKey().substring("charge_".length()),p.getPersistentDataContainer().get(key,PersistentDataType.STRING));
         if (matches(expected,actual)) return;
         plugin.getLogger().severe("Банк: playerdata не подтверждает предметную оплату для " + p.getUniqueId() + "; игра заблокирована до сверки. Ожидаемые метки: " + expected);
         net.kyori.adventure.text.Component reason = net.kyori.adventure.text.Component.text("Банк: предметная оплата требует сверки playerdata администратором.");
