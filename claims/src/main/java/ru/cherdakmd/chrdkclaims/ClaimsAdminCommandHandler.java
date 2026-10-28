@@ -36,7 +36,7 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
             usage(sender);
             return true;
         }
-        if (args[0].startsWith("tp") && List.of("tpfinance","tprecover","tpresolve").contains(args[0].toLowerCase(Locale.ROOT))) {
+        if (List.of("tpfinance","tprecover","tpresolve").contains(args[0].toLowerCase(Locale.ROOT))) {
             String[] financeArgs=args.clone(); financeArgs[0]=financeArgs[0].substring(2);
             plugin.teleportPayments().admin(sender,financeArgs); return true;
         }

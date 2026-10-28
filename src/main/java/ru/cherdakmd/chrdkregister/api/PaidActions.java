@@ -100,7 +100,7 @@ public final class PaidActions {
             flushRefunds(); return true;
         } catch (Exception error) { failure(player,error); return false; }
     }
-    public void tick() { recover(null); }
+    public void tick() { if (store.healthy() && journal.healthy()) recover(null); }
     public void flushRefunds() throws IOException {
         if (!ready()) return;
         var rows=new ArrayList<>(store.refunds().entrySet()); if (rows.isEmpty()) return;
@@ -117,7 +117,7 @@ public final class PaidActions {
             }
             if (args.length==1 && args[0].equalsIgnoreCase("finance")) {
                 if (journal.pending()!=null) say(sender,"payment","id",journal.pending().payment().transaction(),"payer",journal.pending().payment().payer());
-                for (var a:store.actions()) say(sender,"action","id",a.id(),"payer",a.payer(),"actor",a.actor(),"price",a.price(),"phase",a.phase());
+                for (var a:store.actions()) say(sender,"action","id",a.id(),"payer",a.payer(),"actor",a.actor(),"price",a.price(),"phase",a.phase(),"kind",a.kind(),"target",a.payload());
                 say(sender,"status","count",store.actions().size(),"paused",paused()); return true;
             }
             if (args.length>0 && args[0].equalsIgnoreCase("resolve")) {

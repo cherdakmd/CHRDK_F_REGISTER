@@ -137,14 +137,16 @@ public final class TeleportCommandHandler implements TabExecutor {
         TpConfig config = plugin.config();
         if (!gates(player, COOLDOWN_RTP, config.rtpCooldownSeconds())) return true;
         plugin.messages().send(player, "rtp.searching", "radius", config.rtpRadius());
-        boolean started = plugin.teleports().start(player, () -> executeRtp(player));
+        int cost=chargedCost(player,config.costRtp());
+        plugin.messages().send(player,"finance.service-quote","cost",cost);
+        boolean started = plugin.teleports().start(player, () -> executeRtp(player,cost));
         if (!started) {
             plugin.messages().send(player, "tp.in-progress");
         }
         return true;
     }
 
-    private void executeRtp(Player player) {
+    private void executeRtp(Player player,int cost) {
         TpConfig config = plugin.config();
         World world = config.rtpWorld().isBlank()
                 ? player.getWorld() : Bukkit.getWorld(config.rtpWorld());
@@ -165,11 +167,11 @@ public final class TeleportCommandHandler implements TabExecutor {
                 continue;
             }
             Location destination = new Location(world, x + 0.5, y + 1, z + 0.5);
-            if (!paidTeleport(player, player, chargedCost(player, config.costRtp()), "rtp", destination)) return;
+            if (!paidTeleport(player, player, cost, "rtp", destination)) return;
             plugin.teleports().markCooldown(COOLDOWN_RTP, player.getUniqueId(), System.currentTimeMillis());
             plugin.messages().send(player, "rtp.done",
                     "x", x, "z", z,
-                    "cost", chargedCost(player, config.costRtp()),
+                    "cost", cost,
                     "vip-suffix", vipSuffix(player));
             return;
         }
@@ -200,7 +202,7 @@ public final class TeleportCommandHandler implements TabExecutor {
         long now = System.currentTimeMillis();
         TpaRequests.CreateResult result = plugin.tpaRequests().create(
                 player.getUniqueId(), target.getUniqueId(), here, now,
-                plugin.config().tpaTimeoutSeconds());
+                plugin.config().tpaTimeoutSeconds(),chargedCost(player,plugin.config().costTpa()));
         switch (result) {
             case SELF -> plugin.messages().send(player, "tpa.self");
             case OUTGOING_EXISTS -> plugin.messages().send(player, "tpa.outgoing-exists");
@@ -270,10 +272,10 @@ public final class TeleportCommandHandler implements TabExecutor {
             return;
         }
         if (!plugin.coreApi().isAuthenticated(anchor) || !plugin.coreApi().isAuthenticated(mover)) return;
-        if (!paidTeleport(payer, mover, chargedCost(payer, plugin.config().costTpa()), "tpa", anchor.getLocation())) return;
+        if (!paidTeleport(payer, mover, request.quotedCost(), "tpa", anchor.getLocation())) return;
         plugin.teleports().markCooldown(COOLDOWN_TPA, request.requester(), System.currentTimeMillis());
         plugin.messages().send(payer, "tp.teleported",
-                "cost", chargedCost(payer, plugin.config().costTpa()),
+                "cost", request.quotedCost(),
                 "vip-suffix", vipSuffix(payer));
     }
 
@@ -438,15 +440,17 @@ public final class TeleportCommandHandler implements TabExecutor {
             return true;
         }
         if (!gates(player, COOLDOWN_HOME, 0)) return true; // без собственного кулдауна; только мир/занятость
+        int cost=chargedCost(player,plugin.config().costHome());
+        plugin.messages().send(player,"finance.service-quote","cost",cost);
         boolean started = plugin.teleports().start(player,
-                () -> executeHome(player, world, home));
+                () -> executeHome(player, world, home,cost));
         if (!started) {
             plugin.messages().send(player, "tp.in-progress");
         }
         return true;
     }
 
-    private void executeHome(Player player, World world, HomeLocation home) {
+    private void executeHome(Player player, World world, HomeLocation home,int cost) {
         if (!plugin.config().worldAllowed(world.getName())
                 || !plugin.config().worldAllowed(player.getWorld().getName())) {
             plugin.messages().send(player, "tp.world-denied");
@@ -461,9 +465,9 @@ public final class TeleportCommandHandler implements TabExecutor {
             plugin.messages().send(player, "home.world-missing", "world", home.world());
             return;
         }
-        if (!paidTeleport(player, player, chargedCost(player, plugin.config().costHome()), "home", target)) return;
+        if (!paidTeleport(player, player, cost, "home", target)) return;
         plugin.messages().send(player, bed ? "home.bed-here" : "home.here",
-                "cost", chargedCost(player, plugin.config().costHome()),
+                "cost", cost,
                 "vip-suffix", vipSuffix(player));
     }
 
@@ -519,9 +523,7 @@ public final class TeleportCommandHandler implements TabExecutor {
                 }
             }
             case "tpadmin" -> {
-                if (args.length == 1 && "reload".startsWith(prefix)) {
-                    matches.add("reload");
-                }
+                if (args.length==1) for (String option:List.of("reload","finance","recover","resolve")) if (option.startsWith(prefix)) matches.add(option);
             }
             default -> {
             }

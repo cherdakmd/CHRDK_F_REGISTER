@@ -57,6 +57,7 @@ public final class ClaimTeleportService implements Listener {
     private static final class Pending {
         private BukkitTask task, timeout;
         private boolean dispatching;
+        private int price;
         private String world;
         private double x;
         private double y;
@@ -173,6 +174,8 @@ public final class ClaimTeleportService implements Listener {
     private void startWarmup(Player player, Claim claim) {
         int seconds=plugin.config().teleportWarmup; Location from=player.getLocation(); Pending state=new Pending();
         state.world=from.getWorld().getName(); state.x=from.getX(); state.y=from.getY(); state.z=from.getZ();
+        state.price=plugin.config().teleportCost;
+        plugin.messages().send(player,"finance.service-quote","cost",state.price);
         pending.put(player.getUniqueId(),state);
         state.timeout=Bukkit.getScheduler().runTaskLater(plugin,()->cancel(player.getUniqueId(),"tp-failed"),(seconds+30L)*20);
         if (seconds<=0) { finish(player,claim,state); return; }
@@ -202,7 +205,7 @@ public final class ClaimTeleportService implements Listener {
                     if (target==null) { plugin.messages().send(player,"tp-unsafe","where",claim.where()); return; }
                     if (!valid(player,claim,state)) { plugin.messages().send(player,"tp-failed"); return; }
                     String payload=target.getWorld().getName()+":"+target.getX()+":"+target.getY()+":"+target.getZ();
-                    boolean success=plugin.teleportPayments().perform(player,player,plugin.config().teleportCost,"claim-tp",payload,()->{
+                    boolean success=plugin.teleportPayments().perform(player,player,state.price,"claim-tp",payload,()->{
                         state.dispatching=true;
                         return player.teleport(target);
                     });
