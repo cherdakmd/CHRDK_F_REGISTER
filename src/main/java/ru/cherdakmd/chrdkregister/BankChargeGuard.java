@@ -31,7 +31,7 @@ final class BankChargeGuard implements Listener {
         if (expected != null) for (var source:expected.keySet()) actual.put(source,p.getPersistentDataContainer().get(ChargeInventory.witnessKey(source),PersistentDataType.STRING));
         if (matches(expected,actual)) return;
         plugin.getLogger().severe("Банк: playerdata не подтверждает предметную оплату для " + p.getUniqueId() + "; игра заблокирована до сверки. Ожидаемые метки: " + expected);
-        var reason = net.kyori.adventure.text.Component.text("Банк: предметная оплата требует сверки playerdata администратором.");
+        net.kyori.adventure.text.Component reason = net.kyori.adventure.text.Component.text("Банк: предметная оплата требует сверки playerdata администратором.");
         try { reason = plugin.messages().get("economy.charge-playerdata-lock"); }
         catch (RuntimeException error) { plugin.getLogger().warning("Некорректное сообщение финансовой блокировки: " + error.getMessage()); }
         p.kick(reason);
