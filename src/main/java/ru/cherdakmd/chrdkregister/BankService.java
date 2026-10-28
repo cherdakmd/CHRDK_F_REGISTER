@@ -16,8 +16,8 @@ import java.util.function.Supplier;
  * Банк алмазов: депозит, снятие, переводы и топ.
  *
  * <p>Единственное место, где встречаются инвентарь и счёт: все операции
- * выполняются на главном потоке целиком, поэтому «списали, но не выдали»
- * невозможно. Депозит принимает только обычные алмазы и алмазные блоки —
+ * выполняются на главном потоке. Депозит сначала проверяет предел счёта
+ * и готовит точный storage-снимок; отказ не выдаёт предметы в мир. Депозит принимает только обычные алмазы и алмазные блоки —
  * именованные и зачарованные предметы не трогаются (их можно продать, но не
  * «разменять» случайно). Снятие сначала проверяет место в инвентаре и только
  * потом списывает.</p>
@@ -108,85 +108,44 @@ public final class BankService {
      * @return сколько алмазов зачислено
      */
     public long deposit(Player player, boolean handOnly) {
-        if (player == null || !enabled()) {
-            return 0L;
-        }
-        long worth = 0L;
-        var inventory = player.getInventory();
-        if (handOnly) {
-            ItemStack hand = inventory.getItemInMainHand();
-            long value = valueOf(hand);
-            if (value > 0L) {
-                worth = value;
-                inventory.setItemInMainHand(null);
-            }
-        } else {
-            ItemStack[] contents = inventory.getStorageContents();
-            boolean changed = false;
-            for (int slot = 0; slot < contents.length; slot++) {
-                long value = valueOf(contents[slot]);
-                if (value <= 0L) {
-                    continue;
-                }
-                worth += value;
-                contents[slot] = null;
-                changed = true;
-            }
-            if (changed) {
-                inventory.setStorageContents(contents);
-            }
-        }
-        if (worth <= 0L) {
-            return 0L;
-        }
-        long balance = store.deposit(player.getUniqueId(), player.getName(), worth);
-        if (balance < 0L) {
-            // Счёт переполнен — возвращаем предметы, ничего не теряя.
-            refund(player, worth);
-            return 0L;
-        }
-        return worth;
+        return depositPlanned(player, handOnly, -1);
     }
 
-    /**
-     * Складывает в банк ровно {@code amount} алмазов, снимая только обычные
-     * алмазы из инвентаря. Блоки не размениваются: игрок сам выбирает, чем
-     * платить, и не получает «сдачу» незаметно для себя.
-     *
-     * @return сколько зачислено (0 — не хватило алмазов)
-     */
+    /** Числовой депозит принимает только алмазы, без автоматического размена блоков. */
     public long depositAmount(Player player, long amount) {
-        if (player == null || amount <= 0L || !enabled()) {
-            return 0L;
-        }
-        long available = 0L;
-        for (ItemStack stack : player.getInventory().getStorageContents()) {
-            if (stack != null && stack.isSimilar(Plain.DIAMOND)) {
-                available += stack.getAmount();
+        return amount <= 0 ? 0 : depositPlanned(player, false, amount);
+    }
+
+    private long depositPlanned(Player player, boolean handOnly, long amount) {
+        if (player == null || !enabled() || !org.bukkit.Bukkit.isPrimaryThread()) return 0;
+        var inventory = player.getInventory();
+        var before = java.util.Arrays.stream(inventory.getStorageContents()).map(i -> i == null ? null : i.clone()).toArray(ItemStack[]::new);
+        if (before.length != 36) return 0;
+        int[] counts = new int[36]; long[] values = new long[36];
+        for (int i=0; i<36; i++) {
+            var stack = before[i];
+            if (stack == null || stack.getAmount() <= 0 || stack.getAmount() > 64) continue;
+            long worth = valueOf(stack);
+            if (worth > 0 && (amount == -1 || stack.isSimilar(Plain.DIAMOND))) {
+                counts[i] = stack.getAmount(); values[i] = worth / counts[i];
             }
         }
-        if (available < amount) {
-            return 0L;
+        var plan = BankDepositPlan.plan(counts, values, handOnly ? inventory.getHeldItemSlot() : -1,
+                amount, store.balance(player.getUniqueId()));
+        if (plan == null || !java.util.Arrays.equals(before, inventory.getStorageContents())) return 0;
+        var after = java.util.Arrays.stream(before).map(i -> i == null ? null : i.clone()).toArray(ItemStack[]::new);
+        for (int i=0; i<36; i++) if (counts[i] != plan.remaining()[i]) {
+            if (plan.remaining()[i] == 0) after[i] = null; else after[i].setAmount(plan.remaining()[i]);
         }
-        ItemStack[] contents = player.getInventory().getStorageContents();
-        long left = amount;
-        for (int slot = 0; slot < contents.length && left > 0L; slot++) {
-            ItemStack stack = contents[slot];
-            if (stack == null || !stack.isSimilar(Plain.DIAMOND)) {
-                continue;
-            }
-            int take = (int) Math.min(left, stack.getAmount());
-            int rest = stack.getAmount() - take;
-            contents[slot] = rest == 0 ? null : new ItemStack(Material.DIAMOND, rest);
-            left -= take;
+        try {
+            return store.exchange(player.getUniqueId(), player.getName(), 0, plan.credit(), () -> {
+                try { inventory.setStorageContents(after); }
+                catch (RuntimeException error) { inventory.setStorageContents(before); throw error; }
+            }) ? plan.credit() : 0;
+        } catch (RuntimeException error) {
+            plugin.getLogger().warning("Депозит отклонён, банковский баланс не изменён: " + error.getMessage());
+            return 0;
         }
-        player.getInventory().setStorageContents(contents);
-        long balance = store.deposit(player.getUniqueId(), player.getName(), amount);
-        if (balance < 0L) {
-            refund(player, amount);
-            return 0L;
-        }
-        return amount;
     }
 
     /** Алмазный эквивалент предмета (обычный алмаз/блок) или 0. */
@@ -201,19 +160,6 @@ public final class BankService {
             return (long) stack.getAmount() * settings().blockWorth();
         }
         return 0L;
-    }
-
-    /** Возврат предметов при сбое (переполнение счёта): лучше выдать, чем потерять. */
-    private void refund(Player player, long diamonds) {
-        long left = diamonds;
-        while (left > 0L) {
-            int take = (int) Math.min(64L, left);
-            left -= take;
-            var leftover = player.getInventory().addItem(new ItemStack(Material.DIAMOND, take));
-            for (ItemStack stack : leftover.values()) {
-                player.getWorld().dropItemNaturally(player.getLocation(), stack);
-            }
-        }
     }
 
     /* --------------------------------- снятие --------------------------------- */

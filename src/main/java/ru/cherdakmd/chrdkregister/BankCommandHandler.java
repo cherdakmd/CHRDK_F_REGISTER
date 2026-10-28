@@ -226,6 +226,7 @@ public final class BankCommandHandler implements CommandExecutor, TabCompleter {
                             "amount", BankService.format(result.credited()));
                 }
             }
+            case UNAVAILABLE -> messages.send(player, "economy.disabled");
             case UNKNOWN_PLAYER -> messages.send(player, "economy.unknown-player",
                     "player", result.targetName());
             case SELF_TRANSFER -> messages.send(player, "economy.pay-self");

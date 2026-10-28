@@ -1,6 +1,7 @@
 package ru.cherdakmd.chrdkauction;
 
 import com.google.gson.*;
+import ru.cherdakmd.chrdkregister.api.AuctionPayment;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
@@ -18,20 +19,30 @@ public final class AuctionStore {
     private static final int MAX_SNAPSHOT_CHARS = 4 * 1024 * 1024;
     public record Lot(long id, UUID seller, String name, String item, int price, int fee, long expires) { }
     public record Parcel(long id, String item) { }
-    public record Pending(UUID player, String operation, String before, String after, State next) { }
+    public record Pending(UUID player, String operation, String before, String after, State next, AuctionPayment payment) {
+        public Pending(UUID player, String operation, String before, String after, State next) { this(player, operation, before, after, next, null); }
+    }
     public static final class State {
         long sequence = 1;
+        long bankSequence;
         LinkedHashMap<Long, Lot> lots = new LinkedHashMap<>();
         LinkedHashMap<UUID, ArrayList<Parcel>> mail = new LinkedHashMap<>();
         LinkedHashMap<UUID, Long> money = new LinkedHashMap<>();
     }
     private static final class Envelope {
         int schema = 1;
+        UUID market;
         State state = new State();
         Pending pending;
     }
     private final Path file;
     private Envelope data = new Envelope();
+    private boolean healthy = true;
+    public boolean healthy() { return healthy; }
+    public boolean bankMode() { return data.schema == 2; }
+    public UUID market() { return data.market; }
+    public long nextBankSequence() { return data.state.bankSequence + 1; }
+    public Map<UUID, Long> legacyMoney() { return Map.copyOf(data.state.money); }
     public AuctionStore(Path dir, Logger logger) { file = dir.resolve("market.json"); }
     public void load() throws IOException {
         if (!Files.exists(file)) return;
@@ -43,17 +54,29 @@ public final class AuctionStore {
             if (obj.has("pending") && !obj.get("pending").isJsonNull())
                 requireStateFields(obj.getAsJsonObject("pending").getAsJsonObject("next"));
             Envelope loaded = JSON.fromJson(obj, Envelope.class);
-            if (loaded.schema != 1) throw new IllegalArgumentException("schema");
+            if (loaded.schema != 1 && loaded.schema != 2) throw new IllegalArgumentException("schema");
+            if (loaded.schema == 2) {
+                if (loaded.market == null || !obj.getAsJsonObject("state").has("bankSequence")) throw new IllegalArgumentException("missing market/counter");
+                if (loaded.pending != null && !obj.getAsJsonObject("pending").getAsJsonObject("next").has("bankSequence")) throw new IllegalArgumentException("missing next counter");
+            }
+            if (loaded.schema == 1 && (loaded.market != null || loaded.state.bankSequence != 0)) throw new IllegalArgumentException("downgraded market");
             validate(loaded.state);
             if (loaded.pending != null) {
                 Pending p = loaded.pending;
                 if (p.player == null || p.operation == null || p.before == null || p.after == null)
                     throw new IllegalArgumentException("pending");
-                validateSnapshots(p.before, p.after);
+                if (p.payment == null) {
+                    validateSnapshots(p.before, p.after);
+                    if (!p.operation.matches("(?:LIST|BUY|ITEM) #[1-9][0-9]*|WITHDRAW [1-9][0-9]*")) throw new IllegalArgumentException("legacy operation");
+                    if (loaded.schema == 2 && (p.next.bankSequence != loaded.state.bankSequence || !p.next.money.equals(loaded.state.money)))
+                        throw new IllegalArgumentException("frozen wallet/counter changed");
+                } else validateBankPending(loaded, p);
                 validate(p.next);
+                if (loaded.schema == 2 && p.payment == null && (p.operation.startsWith("BUY") || p.operation.startsWith("WITHDRAW") || p.operation.startsWith("BANK_BUY")))
+                    throw new IllegalArgumentException("missing bank payment");
             }
             data = loaded;
-        } catch (RuntimeException e) { throw new IOException("Corrupt auction ledger; restore a backup, do not delete it", e); }
+        } catch (IOException | RuntimeException e) { healthy = false; throw new IOException("Corrupt auction ledger; restore a backup, do not delete it", e); }
     }
     private static void requireStateFields(JsonObject obj) {
         if (obj == null) throw new IllegalArgumentException("missing state");
@@ -61,7 +84,7 @@ public final class AuctionStore {
             if (!obj.has(key) || obj.get(key).isJsonNull()) throw new IllegalArgumentException("missing " + key);
     }
     private static void validate(State s) {
-        if (s == null || s.sequence < 1 || s.lots == null || s.mail == null || s.money == null)
+        if (s == null || s.sequence < 1 || s.lots == null || s.mail == null || s.money == null || s.bankSequence < 0 || s.bankSequence >= Long.MAX_VALUE - 1)
             throw new IllegalArgumentException("state");
         Set<Long> ids = new HashSet<>();
         int entries = s.lots.size();
@@ -98,25 +121,62 @@ public final class AuctionStore {
         Base64.getDecoder().decode(s);
     }
     private State copy() { return JSON.fromJson(JSON.toJson(data.state), State.class); }
-    private void write(Envelope next) throws IOException {
-        Files.createDirectories(file.getParent());
-        byte[] bytes = JSON.toJson(next).getBytes(StandardCharsets.UTF_8);
-        if (bytes.length > 64 * 1024 * 1024) throw new IllegalArgumentException("ledger capacity");
-        Path temp = file.resolveSibling("market.json.tmp");
-        Files.write(temp, bytes);
-        try (FileChannel ch = FileChannel.open(temp, StandardOpenOption.WRITE)) { ch.force(true); }
-        try { Files.move(temp, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING); }
-        catch (AtomicMoveNotSupportedException e) { Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING); }
-        data = next;
+    private Envelope envelope(State state, Pending pending) {
+        var next = new Envelope(); next.schema = data.schema; next.market = data.market; next.state = state; next.pending = pending; return next;
     }
-    private void available() { if (data.pending != null) throw new IllegalStateException("recovery required"); }
+    private void write(Envelope next) throws IOException {
+        try {
+            Files.createDirectories(file.getParent());
+            byte[] bytes = JSON.toJson(next).getBytes(StandardCharsets.UTF_8);
+            if (bytes.length > 64 * 1024 * 1024) throw new IllegalArgumentException("ledger capacity");
+            Path temp = file.resolveSibling("market.json.tmp"); Files.write(temp, bytes);
+            try (FileChannel ch = FileChannel.open(temp, StandardOpenOption.WRITE)) { ch.force(true); }
+            Files.move(temp, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            try (FileChannel directory = FileChannel.open(file.getParent(), StandardOpenOption.READ)) { directory.force(true); }
+            data = next;
+        } catch (IOException error) { healthy = false; throw error; }
+    }
+    private void available() { if (!healthy || data.pending != null) throw new IllegalStateException("recovery required"); }
+    public void enableBank() throws IOException {
+        available(); if (bankMode()) return;
+        var next = envelope(copy(), null); next.schema = 2; next.market = UUID.randomUUID(); write(next);
+    }
     private void prepare(UUID player, String op, String before, String after, State next) throws IOException {
         available(); validate(next);
         if (player == null) throw new IllegalArgumentException("transfer player");
         validateSnapshots(before, after);
-        Envelope env = new Envelope(); env.state = data.state;
-        env.pending = new Pending(player, op, before, after, next);
-        write(env);
+        write(envelope(data.state, new Pending(player, op, before, after, next)));
+    }
+    private static void validateBankPending(Envelope env, Pending pending) {
+        var p = pending.payment;
+        if (env.schema != 2 || p == null || !p.valid() || !p.market().equals(env.market) || !p.buyer().equals(pending.player)
+                || p.sequence() != env.state.bankSequence + 1 || pending.next.bankSequence != p.sequence()
+                || !pending.operation.equals("BANK_BUY #" + p.lot())
+                || !p.inventoryHash().equals(AuctionPayment.hash(pending.before, pending.after))) throw new IllegalArgumentException("bank intent");
+        if (pending.before.length() > MAX_SNAPSHOT_CHARS || pending.after.length() > MAX_SNAPSHOT_CHARS
+                || (p.cash() == 0) != pending.before.equals(pending.after)) throw new IllegalArgumentException("cash snapshots");
+        var lot = env.state.lots.get(p.lot());
+        if (lot == null || !lot.seller.equals(p.seller()) || lot.price != p.price() || lot.fee != p.fee()) throw new IllegalArgumentException("bank lot");
+        var expected = JSON.fromJson(JSON.toJson(env.state), State.class);
+        expected.lots.remove(lot.id); expected.mail.computeIfAbsent(p.buyer(), k -> new ArrayList<>()).add(new Parcel(lot.id, lot.item));
+        expected.bankSequence = p.sequence();
+        if (!JSON.toJsonTree(expected).equals(JSON.toJsonTree(pending.next))) throw new IllegalArgumentException("bank next state");
+    }
+    public void prepareBankBuy(AuctionPayment payment, long now, String before, String after) throws IOException {
+        available(); var lot = lot(payment.lot());
+        if (!bankMode() || lot == null || lot.expires <= now || lot.seller.equals(payment.buyer())) throw new IllegalArgumentException("bank lot unavailable");
+        var next = copy(); next.lots.remove(lot.id);
+        next.mail.computeIfAbsent(payment.buyer(), k -> new ArrayList<>()).add(new Parcel(lot.id, lot.item)); next.bankSequence = payment.sequence();
+        var pending = new Pending(payment.buyer(), "BANK_BUY #" + lot.id, before, after, next, payment);
+        validate(next); validateBankPending(data, pending); write(envelope(data.state, pending));
+    }
+    void completeBank(AuctionPayment verified) throws IOException {
+        if (!healthy || data.pending == null || verified == null || !verified.equals(data.pending.payment)) throw new IllegalStateException("bank verification required");
+        publish(data.pending.next);
+    }
+    void rollbackBank(AuctionPayment verifiedMissing) throws IOException {
+        if (!healthy || data.pending == null || verifiedMissing == null || !verifiedMissing.equals(data.pending.payment)) throw new IllegalStateException("bank verification required");
+        publish(data.state);
     }
     public static int fee(int price, int percent) {
         if (price < 2 || price > MAX_PRICE || percent < 0 || percent > 50) throw new IllegalArgumentException("price/fee");
@@ -133,7 +193,7 @@ public final class AuctionStore {
         prepare(seller, "LIST #" + id, before, after, next); return id;
     }
     public void prepareBuy(UUID buyer, long id, long now, String before, String after) throws IOException {
-        available(); Lot lot = lot(id);
+        available(); if (bankMode()) throw new IllegalStateException("legacy wallet frozen"); Lot lot = lot(id);
         if (lot == null || lot.expires <= now || lot.seller.equals(buyer)) throw new IllegalArgumentException("unavailable lot");
         State next = copy(); next.lots.remove(id);
         next.mail.computeIfAbsent(buyer, k -> new ArrayList<>()).add(new Parcel(id, lot.item));
@@ -155,7 +215,7 @@ public final class AuctionStore {
         if (changed) publish(next);
     }
     private void publish(State next) throws IOException {
-        validate(next); Envelope env = new Envelope(); env.state = next; write(env);
+        validate(next); write(envelope(next, null));
     }
     public void prepareItemClaim(UUID owner, long id, String before, String after) throws IOException {
         available(); State next = copy(); var parcels = next.mail.get(owner);
@@ -164,18 +224,18 @@ public final class AuctionStore {
         prepare(owner, "ITEM #" + id, before, after, next);
     }
     public void prepareMoneyClaim(UUID owner, int amount, String before, String after) throws IOException {
-        available(); long balance = balance(owner);
+        available(); if (bankMode()) throw new IllegalStateException("legacy wallet frozen"); long balance = balance(owner);
         if (amount <= 0 || amount > balance) throw new IllegalArgumentException("balance");
         State next = copy();
         if (amount == balance) next.money.remove(owner); else next.money.put(owner, balance - amount);
         prepare(owner, "WITHDRAW " + amount, before, after, next);
     }
     public void complete() throws IOException {
-        if (data.pending == null) throw new IllegalStateException("no transfer");
+        if (!healthy || data.pending == null || data.pending.payment != null) throw new IllegalStateException("no legacy transfer");
         publish(data.pending.next);
     }
     public void rollback() throws IOException {
-        if (data.pending == null) throw new IllegalStateException("no transfer");
+        if (!healthy || data.pending == null || data.pending.payment != null) throw new IllegalStateException("no legacy transfer");
         publish(data.state);
     }
     public void validateItems(java.util.function.Consumer<String> validator) {

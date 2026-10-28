@@ -1,3 +1,7 @@
+# Оплата: сначала общий /bal, затем обычные DIAMOND/DIAMOND_ORE/DEEPSLATE_DIAMOND_ORE (1)
+# и DIAMOND_BLOCK (9) из storage. Выручка после комиссии и сдача — на /bal.
+# Отдельного расходуемого баланса нет. Старый money заморожен как once-import источник.
+# Нужен CHRDK_Core API 15+. При сбое банка fallback к выдаче алмазов запрещён.
 # CHRDK_Auction — обычные алмазы, НЕ Vault и НЕ реальные деньги.
 market:
   min-price: 20

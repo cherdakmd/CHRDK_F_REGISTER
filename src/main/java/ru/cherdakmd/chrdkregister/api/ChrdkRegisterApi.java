@@ -32,7 +32,7 @@ import java.util.UUID;
 public interface ChrdkRegisterApi {
 
     /** Версия контракта API. Растёт при расширении (добавлении методов/событий). */
-    int API_VERSION = 14;
+    int API_VERSION = 15;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -216,6 +216,13 @@ public interface ChrdkRegisterApi {
     /** Доверенная сделка Claims. payer=null — offline-only, без доступа к инвентарю. */
     default boolean exchangeClaimAccounts(java.util.Map<String, Long> deltas, Player payer,
             org.bukkit.inventory.ItemStack[] expected, org.bukkit.inventory.ItemStack[] replacement) { return false; }
+
+    /** API v15: -1 при недоступном банке; UUID из достоверного ledger аукциона. */
+    default boolean auctionBankAvailable() { return false; }
+    default long auctionBankBalance(UUID player) { return -1L; }
+    default boolean importLegacyAuction(UUID market, UUID player, long amount) { return false; }
+    default AuctionPayment.Status auctionPaymentStatus(AuctionPayment payment) { return AuctionPayment.Status.UNAVAILABLE; }
+    default boolean commitAuctionPayment(Player payer, AuctionPayment payment, org.bukkit.inventory.ItemStack[] expected) { return false; }
 
     /** Сумма всех переводов игрока (API v7). */
     default long bankSent(String playerName) {

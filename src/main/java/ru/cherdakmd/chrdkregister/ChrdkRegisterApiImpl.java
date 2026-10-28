@@ -112,6 +112,59 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
         });
     }
 
+    private boolean auctionBankReady() {
+        return plugin != null && plugin.isEnabled() && bank != null && plugin.bank() != null
+                && plugin.bank().enabled() && org.bukkit.Bukkit.isPrimaryThread();
+    }
+    @Override public boolean auctionBankAvailable() { return auctionBankReady(); }
+    @Override public long auctionBankBalance(java.util.UUID player) { return auctionBankReady() && player != null ? bank.balance(player) : -1L; }
+    @Override public boolean importLegacyAuction(java.util.UUID market, java.util.UUID player, long amount) {
+        return auctionBankReady() && bank.importLegacyAuction(market, player, amount);
+    }
+    @Override public ru.cherdakmd.chrdkregister.api.AuctionPayment.Status auctionPaymentStatus(ru.cherdakmd.chrdkregister.api.AuctionPayment payment) {
+        return auctionBankReady() ? bank.auctionPaymentStatus(payment) : ru.cherdakmd.chrdkregister.api.AuctionPayment.Status.UNAVAILABLE;
+    }
+    @Override public boolean commitAuctionPayment(Player payer, ru.cherdakmd.chrdkregister.api.AuctionPayment payment, org.bukkit.inventory.ItemStack[] expected) {
+        if (!auctionBankReady() || payment == null || !payment.valid() || payer == null || !payer.isOnline() || payer.isDead()
+                || !payer.getUniqueId().equals(payment.buyer()) || payer.hasMetadata("NPC") || !isAuthenticated(payer)
+                || !payer.hasPermission("chrdkauction.use")
+                || payer.getGameMode() != org.bukkit.GameMode.SURVIVAL && payer.getGameMode() != org.bukkit.GameMode.ADVENTURE
+                || expected == null || expected.length != 36 || !java.util.Arrays.equals(expected, payer.getInventory().getStorageContents())) return false;
+        if (bank.auctionPaymentStatus(payment) == ru.cherdakmd.chrdkregister.api.AuctionPayment.Status.COMMITTED) return true;
+        if (!auctionTenderMatches(payment, expected)) return false;
+        return bank.settleAuction(payment);
+    }
+    private boolean auctionTenderMatches(ru.cherdakmd.chrdkregister.api.AuctionPayment payment, org.bukkit.inventory.ItemStack[] before) {
+        int[] amounts = new int[36], values = new int[36];
+        for (int i=0; i<36; i++) {
+            var item = before[i];
+            if (item == null || item.hasItemMeta() || item.getAmount() <= 0 || item.getAmount() > 64) continue;
+            values[i] = switch (item.getType()) {
+                case DIAMOND, DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE -> 1;
+                case DIAMOND_BLOCK -> 9;
+                default -> 0;
+            };
+            if (values[i] > 0) amounts[i] = item.getAmount();
+        }
+        var plan = ru.cherdakmd.chrdkregister.api.AuctionTender.plan(payment.price(), bank.balance(payment.buyer()), amounts, values);
+        if (plan == null || plan.debit() != payment.debit() || plan.cash() != payment.cash() || plan.change() != payment.change()) return false;
+        var after = java.util.Arrays.stream(before).map(i -> i == null ? null : i.clone()).toArray(org.bukkit.inventory.ItemStack[]::new);
+        for (int i=0; i<36; i++) if (amounts[i] != plan.remaining()[i]) {
+            if (plan.remaining()[i] == 0) after[i] = null; else after[i].setAmount(plan.remaining()[i]);
+        }
+        return payment.inventoryHash().equals(ru.cherdakmd.chrdkregister.api.AuctionPayment.hash(auctionSnapshot(before), auctionSnapshot(after)));
+    }
+    private static String auctionSnapshot(org.bukkit.inventory.ItemStack[] inventory) {
+        var encoded = new String[36];
+        for (int i=0; i<36; i++) {
+            var item = inventory[i];
+            if (item == null || item.getType().isAir()) continue;
+            if (item.getAmount() <= 0 || item.getAmount() > item.getMaxStackSize()) throw new IllegalArgumentException("Некорректный storage-снимок");
+            encoded[i] = java.util.Base64.getEncoder().encodeToString(item.serializeAsBytes());
+        }
+        return new com.google.gson.Gson().toJson(encoded);
+    }
+
     @Override
     public long bankSent(String playerName) {
         java.util.UUID id = bank == null ? null : bank.idByName(playerName);

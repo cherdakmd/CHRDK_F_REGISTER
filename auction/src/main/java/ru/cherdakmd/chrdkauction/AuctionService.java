@@ -4,6 +4,7 @@ import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.event.*;
 import org.bukkit.inventory.ItemStack;
+import ru.cherdakmd.chrdkregister.api.AuctionPayment;
 import ru.cherdakmd.chrdkregister.api.events.PlayerAuthCompletedEvent;
 import java.io.IOException;
 import java.util.*;
@@ -12,35 +13,63 @@ import java.util.logging.Level;
 public final class AuctionService implements Listener {
     private final AuctionPlugin plugin;
     final AuctionStore store;
+    private boolean migrationStarted;
+    private org.bukkit.scheduler.BukkitTask migrationTask;
     AuctionService(AuctionPlugin plugin, AuctionStore store) { this.plugin = plugin; this.store = store; }
     boolean authenticated(Player p) {
         if (!p.hasPermission("chrdkauction.use")) { tell(p, "auction.permission"); return false; }
         if (!plugin.api().isAuthenticated(p)) { tell(p, "auction.auth"); return false; }
         return true;
     }
+    private boolean financeAvailable() {
+        return plugin.api() != null && plugin.api().apiVersion() >= 15 && store.healthy()
+                && plugin.api().auctionBankAvailable();
+    }
+    long bankBalance(Player p) { return plugin.api().auctionBankBalance(p.getUniqueId()); }
+    private boolean importOwner(UUID owner) {
+        return store.bankMode() && plugin.api().importLegacyAuction(store.market(), owner, store.balance(owner));
+    }
+    void start() throws IOException {
+        var pending = store.pending();
+        if (pending != null && pending.payment() != null && pending.payment().cash() == 0) recoverBankOnly();
+        if (store.pending() != null) return;
+        store.enableBank();
+        if (migrationStarted) return;
+        migrationStarted = true;
+        var rows = store.legacyMoney().entrySet().iterator();
+        if (!rows.hasNext()) return;
+        migrationTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            if (!store.healthy() || store.pending() != null || !financeAvailable()) return;
+            if (!rows.hasNext()) { migrationTask.cancel(); migrationTask = null; return; }
+            var row = rows.next();
+            if (!importOwner(row.getKey())) plugin.getLogger().warning("Не перенесена старая выручка аукциона " + row.getKey()
+                    + ": предел /bal, несовместимая квитанция или недоступный банк. Источник сохранён; повтор при обращении владельца/покупке.");
+        }, 1L, 1L);
+    }
+    void shutdown() { if (migrationTask != null) migrationTask.cancel(); }
     boolean ready(Player p) {
         if (!authenticated(p)) return false;
-        if (store.pending() != null) { tell(p, "auction.recovery"); return false; }
         if (p.getGameMode() != GameMode.SURVIVAL && p.getGameMode() != GameMode.ADVENTURE) {
             tell(p, "auction.mode"); return false;
         }
-        try { store.expire(System.currentTimeMillis()); return true; }
-        catch (Exception e) { failed(p, e); return false; }
+        if (!store.healthy()) { tell(p, "auction.error"); return false; }
+        try {
+            start();
+            if (store.pending() != null) { tell(p, "auction.recovery"); return false; }
+            if (!financeAvailable() || !importOwner(p.getUniqueId())) { tell(p, "auction.finance-unavailable"); return false; }
+            plugin.api().personalDiamonds(p); // Индекс имени — только из настоящего UUID игрока.
+            store.expire(System.currentTimeMillis()); return true;
+        } catch (Exception error) { failed(p, error); return false; }
     }
     void tell(Player p, String key, Object... args) { plugin.messages().send(p, key, args); }
     @FunctionalInterface interface Prepare { void run(String before, String after) throws IOException; }
     private boolean transfer(Player p, ItemStack[] before, ItemStack[] after, Prepare prepare) {
         try {
             prepare.run(ItemCodec.inventory(before), ItemCodec.inventory(after));
-            // After this point any failure retains the journal; never blindly undo or retry a transfer.
-            p.getInventory().setStorageContents(after);
-            p.saveData();
-            store.complete();
-            return true;
-        } catch (Exception e) {
-            failed(p, e);
-            if (store.pending() != null && store.pending().player().equals(p.getUniqueId()))
-                p.kick(plugin.messages().get("auction.recovery-kick"));
+            p.getInventory().setStorageContents(after); p.saveData(); store.complete(); return true;
+        } catch (Exception error) {
+            failed(p, error);
+            if (!store.healthy() || store.pending() != null && store.pending().player().equals(p.getUniqueId())) lockPlayer(p);
             return false;
         }
     }
@@ -68,23 +97,39 @@ public final class AuctionService implements Listener {
     }
     void buy(Player p, long id) {
         if (!ready(p)) return;
-        AuctionStore.Lot lot = store.lot(id);
-        if (lot == null || lot.seller().equals(p.getUniqueId()) || lot.expires() <= System.currentTimeMillis()) { tell(p,"auction.unavailable"); return; }
-        ItemStack[] before = ItemCodec.copy(p.getInventory().getStorageContents());
-        ItemStack[] after = charge(before, lot.price());
-        if (after == null) { tell(p,"auction.no-diamonds","price",lot.price()); return; }
-        if (transfer(p,before,after,(a,b) -> store.prepareBuy(p.getUniqueId(),id,System.currentTimeMillis(),a,b)))
-            tell(p,"auction.bought","id",id);
-    }
-    /** Pure inventory planning: no live inventory mutation before the journal is durable. */
-    static ItemStack[] charge(ItemStack[] before, int amount) {
-        ItemStack[] after = ItemCodec.copy(before); int left = amount;
-        for (int i=0; i<after.length && left>0; i++) if (DiamondWallet.isCurrency(after[i])) {
-            int take = Math.min(left,after[i].getAmount()); int rest=after[i].getAmount()-take;
-            if (rest==0) after[i]=null; else after[i].setAmount(rest);
-            left-=take;
+        var lot = store.lot(id);
+        if (lot == null || lot.expires() <= System.currentTimeMillis() || lot.seller().equals(p.getUniqueId())) {
+            tell(p, "auction.unavailable"); return;
         }
-        return left==0 ? after : null;
+        if (!importOwner(lot.seller())) { tell(p, "auction.seller-unavailable"); return; }
+        var before = ItemCodec.copy(p.getInventory().getStorageContents());
+        var plan = AuctionWallet.plan(before, lot.price(), bankBalance(p));
+        if (plan == null) { tell(p, "auction.no-diamonds", "price", lot.price()); return; }
+        try {
+            String a = ItemCodec.inventory(before), b = ItemCodec.inventory(plan.after());
+            var payment = new AuctionPayment(UUID.randomUUID(), store.market(), store.nextBankSequence(), lot.id(), p.getUniqueId(), lot.seller(),
+                    lot.price(), lot.fee(), plan.debit(), plan.cash(), plan.change(), AuctionPayment.hash(a,b));
+            store.prepareBankBuy(payment, System.currentTimeMillis(), a, b);
+            plugin.api().commitAuctionPayment(p, payment, before);
+            var status = plugin.api().auctionPaymentStatus(payment);
+            if (status != AuctionPayment.Status.COMMITTED) {
+                if (status == AuctionPayment.Status.MISSING && ItemCodec.matches(p.getInventory().getStorageContents(), a)) {
+                    store.rollbackBank(payment); tell(p, "auction.finance-refused");
+                } else { tell(p, "auction.finance-unavailable"); if (payment.cash() > 0) lockPlayer(p); }
+                return;
+            }
+            if (plan.cash() > 0) {
+                if (!ItemCodec.matches(p.getInventory().getStorageContents(), a)) throw new IllegalStateException("Storage изменён после оплаты");
+                p.getInventory().setStorageContents(plan.after()); p.saveData();
+            }
+            store.completeBank(payment);
+            tell(p, "auction.bought", "id", id, "change", plan.change());
+            var seller = Bukkit.getPlayer(lot.seller());
+            if (seller != null && plugin.api().isAuthenticated(seller)) tell(seller, "auction.sold", "id", id, "money", lot.price() - lot.fee());
+        } catch (Exception error) {
+            failed(p, error);
+            if (!store.healthy() || store.pending() != null && store.pending().payment() != null && store.pending().payment().cash() > 0) lockPlayer(p);
+        }
     }
     void cancel(Player p,long id) {
         if (!ready(p)) return;
@@ -101,43 +146,74 @@ public final class AuctionService implements Listener {
         if (after==null) { tell(p,"auction.full"); return; }
         if (transfer(p,before,after,(a,b)->store.prepareItemClaim(p.getUniqueId(),id,a,b))) tell(p,"auction.claimed","id",id);
     }
+    /** Совместимость команды: отдельного расходуемого кошелька больше нет. */
     void money(Player p) {
-        if (!ready(p)) return;
-        long balance=store.balance(p.getUniqueId()); int paid=(int)Math.min(balance,DiamondWallet.capacity(p));
-        if (paid>0) {
-            ItemStack[] before=ItemCodec.copy(p.getInventory().getStorageContents()), after=ItemCodec.copy(before);
-            for (int left=paid;left>0;) {
-                int n=Math.min(left,64); after=ItemCodec.insert(after,new ItemStack(Material.DIAMOND,n)); left-=n;
-            }
-            if (!transfer(p,before,after,(a,b)->store.prepareMoneyClaim(p.getUniqueId(),paid,a,b))) return;
+        if (ready(p)) tell(p, "auction.balance", "balance", bankBalance(p));
+    }
+    private void lockPlayer(Player p) {
+        try { p.kick(plugin.messages().get("auction.recovery-kick")); }
+        catch (RuntimeException error) { p.kick(net.kyori.adventure.text.Component.text("Аукцион: незавершённая операция. Вход закрыт до восстановления.")); }
+    }
+    private boolean recoverBankOnly() throws IOException {
+        var pending = store.pending();
+        if (pending == null || pending.payment() == null || pending.payment().cash() != 0) return false;
+        if (!AuctionWallet.valid(pending)) throw new IllegalStateException("Некорректный банковский план");
+        var decision = AuctionRecovery.decide(plugin.api().auctionPaymentStatus(pending.payment()), 0, false, false);
+        if (decision == AuctionRecovery.Decision.COMPLETE) store.completeBank(pending.payment());
+        else if (decision == AuctionRecovery.Decision.ROLLBACK) store.rollbackBank(pending.payment());
+        return store.pending() == null;
+    }
+    private boolean recoverBank(Player p) throws IOException {
+        var pending = store.pending(); var payment = pending.payment();
+        if (!AuctionWallet.valid(pending)) throw new IllegalStateException("Некорректный физический план");
+        // Полностью банковская покупка не читает/не восстанавливает актуальный storage владельца.
+        if (payment.cash() == 0) return recoverBankOnly();
+        var contents = p.getInventory().getStorageContents();
+        var decision = AuctionRecovery.decide(plugin.api().auctionPaymentStatus(payment), payment.cash(),
+                ItemCodec.matches(contents, pending.before()), ItemCodec.matches(contents, pending.after()));
+        switch (decision) {
+            case APPLY_AFTER -> { p.getInventory().setStorageContents(ItemCodec.inventory(pending.after())); p.saveData(); store.completeBank(payment); }
+            case COMPLETE -> { p.saveData(); store.completeBank(payment); }
+            case ROLLBACK -> store.rollbackBank(payment);
+            case WAIT, CONFLICT -> { lockPlayer(p); return false; }
         }
-        tell(p,"auction.balance","balance",balance,"paid",paid,"remaining",balance-paid);
+        return true;
     }
     @EventHandler public void onAuth(PlayerAuthCompletedEvent event) {
-        Player p=event.getPlayer();
-        if (store.pending()!=null && store.pending().player().equals(p.getUniqueId()) && !recover(p)) return;
-        int count=store.mail(p.getUniqueId()).size(); long balance=store.balance(p.getUniqueId());
-        if (count>0 || balance>0) tell(p,"auction.pending-mail","count",count,"balance",balance);
+        Player p = event.getPlayer();
+        if (store.pending() != null && store.pending().player().equals(p.getUniqueId()) && !recover(p)) return;
+        if (!store.healthy() || store.pending() != null || !p.isOnline()) return;
+        try { start(); } catch (Exception error) { failed(p, error); return; }
+        if (!financeAvailable() || !importOwner(p.getUniqueId())) { tell(p, "auction.finance-unavailable"); return; }
+        int count = store.mail(p.getUniqueId()).size();
+        if (count > 0 || store.balance(p.getUniqueId()) > 0) tell(p, "auction.pending-mail", "count", count, "balance", bankBalance(p));
     }
     boolean recover(Player p) {
-        var pending=store.pending();
-        if (pending==null) return true;
+        var pending = store.pending();
+        if (pending == null) return true;
         if (!pending.player().equals(p.getUniqueId()) || !plugin.api().isAuthenticated(p)) return false;
+        if (!store.healthy()) { lockPlayer(p); return false; }
         try {
-            ItemStack[] inventory=p.getInventory().getStorageContents();
-            switch (RecoveryDecision.of(ItemCodec.matches(inventory,pending.before()), ItemCodec.matches(inventory,pending.after()))) {
-                case COMPLETE -> { p.saveData(); store.complete(); }
-                case ROLLBACK -> store.rollback();
-                case CONFLICT -> throw new IllegalStateException("Ambiguous inventory snapshots. Restore consistent backups; no automatic decision is safe.");
+            if (pending.payment() != null) {
+                if (!recoverBank(p)) return false;
+            } else {
+                var inventory = p.getInventory().getStorageContents();
+                switch (RecoveryDecision.of(ItemCodec.matches(inventory,pending.before()), ItemCodec.matches(inventory,pending.after()))) {
+                    case COMPLETE -> { p.saveData(); store.complete(); }
+                    case ROLLBACK -> store.rollback();
+                    case CONFLICT -> throw new IllegalStateException("Конфликт снимков. Нужна согласованная резервная копия; автоматический возврат запрещён.");
+                }
             }
-            plugin.getLogger().warning("Recovered auction transfer for " + pending.player() + ": " + pending.operation());
-            tell(p,"auction.recovered"); return true;
-        } catch (Exception e) {
-            failed(p,e); p.kick(plugin.messages().get("auction.recovery-kick")); return false;
-        }
+            start(); tell(p, "auction.recovered"); return true;
+        } catch (Exception error) { failed(p, error); lockPlayer(p); return false; }
     }
-    private void failed(Player p,Exception e) {
-        plugin.getLogger().log(Level.SEVERE,"Auction operation failed. Inspect journal before manual refunds.",e);
-        tell(p,"auction.error");
+    boolean recoverWithoutPlayer() {
+        if (!store.healthy()) return false;
+        try { boolean recovered = recoverBankOnly(); if (recovered) start(); return recovered; }
+        catch (Exception error) { plugin.getLogger().log(Level.SEVERE, "Не удалось восстановить банковскую покупку", error); return false; }
+    }
+    private void failed(Player p, Exception error) {
+        plugin.getLogger().log(Level.SEVERE, "Auction operation failed. Inspect journal before manual refunds.", error);
+        try { tell(p, "auction.error"); } catch (RuntimeException ignored) { plugin.getLogger().warning("Не удалось показать сообщение об ошибке"); }
     }
 }

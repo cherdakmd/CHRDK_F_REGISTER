@@ -24,6 +24,7 @@ final class AuctionCommands implements CommandExecutor,TabCompleter {
                             pending==null?"нет":pending.operation()+" / UUID "+pending.player());
                 }
                 case "recover" -> {
+                    if (service.recoverWithoutPlayer()) { plugin.messages().send(sender,"auction.recovered"); break; }
                     var pending=service.store.pending();
                     Player p=pending==null?null:Bukkit.getPlayer(pending.player());
                     if (p==null || !plugin.api().isAuthenticated(p)) plugin.messages().send(sender,"auction.recover-offline");
