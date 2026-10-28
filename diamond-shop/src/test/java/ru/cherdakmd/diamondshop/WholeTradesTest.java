@@ -81,10 +81,11 @@ class WholeTradesTest {
         Files.writeString(file,"messages:\n  shop:\n    gui:\n      item-lore:\n        - 'Цена за штуку, Shift 64'\n");
         try(var input=getClass().getResourceAsStream("/messages.yml")) {
             var messages=ru.cherdakmd.chrdkregister.Messages.from(input,file,Logger.getLogger("WholeTradesTest"));
-            assertTrue(messages.getList("shop.gui.item-lore").getFirst().contains("за штуку"));
-            var current=messages.getList("trading.gui.item-lore");
-            assertTrue(current.stream().anyMatch(v->v.contains("%batch%")));
-            assertTrue(current.stream().anyMatch(v->v.contains("16 партий")));
+            assertTrue(messages.raw("shop.gui.item-lore").contains("за штуку"));
+            var current=messages.raw("trading.gui.item-lore");
+            assertEquals(4,messages.getList("trading.gui.item-lore", "batch",256,"ask",6,"bid",4).size());
+            assertTrue(current.contains("%batch%"));
+            assertTrue(current.contains("16 партий"));
             assertTrue(messages.raw("trading.balance").contains("/bal"));
         }
     }
