@@ -53,10 +53,12 @@ class PaidActionStoreTest {
     }
     @Test void corruptionMissingTablesAndFractionalMoneyDoNotBecomeEmptySource() throws Exception {
         var s=registered(); var a=action(); publish(s,a); String original=Files.readString(dir.resolve("paid-actions.json"));
-        for (String field:List.of("lineage","registered","actions","refunds","valuesInitialized")) {
+        for (String field:List.of("schema","lineage","registered","actions","refunds","valuesInitialized")) {
             var json=com.google.gson.JsonParser.parseString(original).getAsJsonObject(); json.remove(field); String bad=json.toString(); Files.writeString(dir.resolve("paid-actions.json"),bad);
             assertThrows(IOException.class,this::load); assertEquals(bad,Files.readString(dir.resolve("paid-actions.json")));
         }
+        var missing=com.google.gson.JsonParser.parseString(original).getAsJsonObject(); missing.add("schema",com.google.gson.JsonNull.INSTANCE);
+        Files.writeString(dir.resolve("paid-actions.json"),missing.toString()); assertThrows(IOException.class,this::load);
         var json=com.google.gson.JsonParser.parseString(original).getAsJsonObject(); json.getAsJsonObject("actions").getAsJsonObject(a.id().toString()).addProperty("price",1.5);
         Files.writeString(dir.resolve("paid-actions.json"),json.toString()); assertThrows(IOException.class,this::load);
     }

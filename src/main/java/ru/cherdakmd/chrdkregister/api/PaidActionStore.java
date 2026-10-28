@@ -37,7 +37,7 @@ public final class PaidActionStore implements ChargeInventory.Source {
             if (Files.size(file) > 32L*1024*1024) throw new IllegalArgumentException("source capacity");
             var object = JsonParser.parseString(Files.readString(file)).getAsJsonObject(); FinanceNumbers.requireIntegral(object);
             for (String key:List.of("schema","lineage","registered","valuesInitialized","values","actions","refunds","resolutions"))
-                if (!object.has(key)) throw new IllegalArgumentException("missing " + key);
+                if (!object.has(key) || object.get(key).isJsonNull()) throw new IllegalArgumentException("missing/null " + key);
             data = JSON.fromJson(object,Data.class); validate(data);
         } catch (RuntimeException error) { healthy=false; throw new IOException("Повреждён paid-actions.json; источник не сбрасывается",error); }
     }
