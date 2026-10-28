@@ -24,11 +24,11 @@ final class AuctionCommands implements CommandExecutor,TabCompleter {
                             pending==null?"нет":pending.operation()+" / UUID "+pending.player());
                 }
                 case "recover" -> {
-                    if (service.recoverWithoutPlayer()) { plugin.messages().send(sender,"auction.recovered"); break; }
+                    if (service.recoverWithoutPlayer()) { plugin.messages().send(sender,"auction.bank-recovered"); break; }
                     var pending=service.store.pending();
                     Player p=pending==null?null:Bukkit.getPlayer(pending.player());
                     if (p==null || !plugin.api().isAuthenticated(p)) plugin.messages().send(sender,"auction.recover-offline");
-                    else plugin.messages().send(sender,service.recover(p)?"auction.recovered":"auction.recovery");
+                    else plugin.messages().send(sender,service.recover(p)?"auction.bank-recovered":"auction.recovery");
                 }
                 default -> plugin.messages().send(sender,"auction.admin-usage");
             }

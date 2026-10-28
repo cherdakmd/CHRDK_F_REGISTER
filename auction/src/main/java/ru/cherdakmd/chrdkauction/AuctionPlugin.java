@@ -18,8 +18,12 @@ public final class AuctionPlugin extends JavaPlugin {
         try {
             saveDefaultConfig(); reloadAuction();
             api=Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
-            if (api==null || api.apiVersion()<15) throw new IllegalStateException("Нужен CHRDK_Core API 15+; финансовый fallback запрещён");
-            api.getClass().getMethod("auctionPaymentStatus", ru.cherdakmd.chrdkregister.api.AuctionPayment.class);
+            if (api==null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)<15) throw new IllegalStateException("Нужен CHRDK_Core API 15+; финансовый fallback запрещён");
+            ChrdkRegisterApi.class.getMethod("auctionBankAvailable");
+            ChrdkRegisterApi.class.getMethod("auctionPaymentStatus", ru.cherdakmd.chrdkregister.api.AuctionPayment.class);
+            ChrdkRegisterApi.class.getMethod("importLegacyAuction", java.util.UUID.class, java.util.UUID.class, long.class);
+            ChrdkRegisterApi.class.getMethod("commitAuctionPayment", org.bukkit.entity.Player.class,
+                    ru.cherdakmd.chrdkregister.api.AuctionPayment.class, org.bukkit.inventory.ItemStack[].class);
             AuctionStore store=new AuctionStore(getDataFolder().toPath(),getLogger()); store.load();
             for (var lot:store.lots()) ItemCodec.decode(lot.item());
             // Validate committed parcels as well, without exposing a mutable ledger.

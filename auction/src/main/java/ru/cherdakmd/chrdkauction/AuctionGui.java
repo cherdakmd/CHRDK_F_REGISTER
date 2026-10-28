@@ -42,7 +42,7 @@ final class AuctionGui implements Listener {
         if (page>0) h.inventory.setItem(45,button(Material.ARROW,"auction.prev"));
         h.inventory.setItem(46,button(Material.CHEST,"auction.mine"));
         h.inventory.setItem(47,button(Material.ENDER_CHEST,"auction.mail"));
-        h.inventory.setItem(48,button(Material.DIAMOND,"auction.money","balance",service.bankBalance(p)));
+        h.inventory.setItem(48,button(Material.DIAMOND,"auction.bank-money","balance",service.bankBalance(p)));
         h.inventory.setItem(49,button(Material.PAPER,"auction.help"));
         h.inventory.setItem(50,button(Material.BOOK,"auction.back"));
         if (from+45<size) h.inventory.setItem(53,button(Material.ARROW,"auction.next"));

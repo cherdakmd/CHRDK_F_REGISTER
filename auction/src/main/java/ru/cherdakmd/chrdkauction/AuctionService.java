@@ -22,7 +22,7 @@ public final class AuctionService implements Listener {
         return true;
     }
     private boolean financeAvailable() {
-        return plugin.api() != null && plugin.api().apiVersion() >= 15 && store.healthy()
+        return plugin.api() != null && store.healthy()
                 && plugin.api().auctionBankAvailable();
     }
     long bankBalance(Player p) { return plugin.api().auctionBankBalance(p.getUniqueId()); }
@@ -104,7 +104,7 @@ public final class AuctionService implements Listener {
         if (!importOwner(lot.seller())) { tell(p, "auction.seller-unavailable"); return; }
         var before = ItemCodec.copy(p.getInventory().getStorageContents());
         var plan = AuctionWallet.plan(before, lot.price(), bankBalance(p));
-        if (plan == null) { tell(p, "auction.no-diamonds", "price", lot.price()); return; }
+        if (plan == null) { tell(p, "auction.bank-no-diamonds", "price", lot.price()); return; }
         try {
             String a = ItemCodec.inventory(before), b = ItemCodec.inventory(plan.after());
             var payment = new AuctionPayment(UUID.randomUUID(), store.market(), store.nextBankSequence(), lot.id(), p.getUniqueId(), lot.seller(),
@@ -123,7 +123,7 @@ public final class AuctionService implements Listener {
                 p.getInventory().setStorageContents(plan.after()); p.saveData();
             }
             store.completeBank(payment);
-            tell(p, "auction.bought", "id", id, "change", plan.change());
+            tell(p, "auction.bank-bought", "id", id, "change", plan.change());
             var seller = Bukkit.getPlayer(lot.seller());
             if (seller != null && plugin.api().isAuthenticated(seller)) tell(seller, "auction.sold", "id", id, "money", lot.price() - lot.fee());
         } catch (Exception error) {
@@ -148,10 +148,10 @@ public final class AuctionService implements Listener {
     }
     /** Совместимость команды: отдельного расходуемого кошелька больше нет. */
     void money(Player p) {
-        if (ready(p)) tell(p, "auction.balance", "balance", bankBalance(p));
+        if (ready(p)) tell(p, "auction.bank-balance", "balance", bankBalance(p));
     }
     private void lockPlayer(Player p) {
-        try { p.kick(plugin.messages().get("auction.recovery-kick")); }
+        try { p.kick(plugin.messages().get("auction.bank-recovery-kick")); }
         catch (RuntimeException error) { p.kick(net.kyori.adventure.text.Component.text("Аукцион: незавершённая операция. Вход закрыт до восстановления.")); }
     }
     private boolean recoverBankOnly() throws IOException {
@@ -186,7 +186,7 @@ public final class AuctionService implements Listener {
         try { start(); } catch (Exception error) { failed(p, error); return; }
         if (!financeAvailable() || !importOwner(p.getUniqueId())) { tell(p, "auction.finance-unavailable"); return; }
         int count = store.mail(p.getUniqueId()).size();
-        if (count > 0 || store.balance(p.getUniqueId()) > 0) tell(p, "auction.pending-mail", "count", count, "balance", bankBalance(p));
+        if (count > 0 || store.balance(p.getUniqueId()) > 0) tell(p, "auction.bank-pending-mail", "count", count, "balance", bankBalance(p));
     }
     boolean recover(Player p) {
         var pending = store.pending();
@@ -204,7 +204,7 @@ public final class AuctionService implements Listener {
                     case CONFLICT -> throw new IllegalStateException("Конфликт снимков. Нужна согласованная резервная копия; автоматический возврат запрещён.");
                 }
             }
-            start(); tell(p, "auction.recovered"); return true;
+            start(); tell(p, "auction.bank-recovered"); return true;
         } catch (Exception error) { failed(p, error); lockPlayer(p); return false; }
     }
     boolean recoverWithoutPlayer() {

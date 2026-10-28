@@ -23,7 +23,7 @@ class AuctionMessagesTest {
                     }
                 }
             }
-            assertTrue(yaml.getString("messages.auction.balance").contains("/bal"));
+            assertTrue(yaml.getString("messages.auction.bank-balance").contains("/bal"));
         }
     }
 }
