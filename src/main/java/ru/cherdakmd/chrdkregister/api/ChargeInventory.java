@@ -46,18 +46,23 @@ public final class ChargeInventory {
         }
         return true;
     }
+    /** API 19: стоимость обычного предмета ровно по правилам предметной доплаты. */
+    public static long cashValue(ItemStack item) {
+        if (item == null || item.hasItemMeta() || item.getAmount() <= 0 || item.getAmount() > 64) return 0;
+        int unit = switch (item.getType()) {
+            case DIAMOND, DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE -> 1;
+            case DIAMOND_BLOCK -> 9;
+            default -> 0;
+        };
+        return (long) unit * item.getAmount();
+    }
     public static Plan plan(ItemStack[] before, long price, long balance) {
         if (before == null || before.length != 36) return null;
         int[] counts = new int[36], values = new int[36];
         for (int i=0; i<36; i++) {
             var item = before[i];
-            if (item == null || item.hasItemMeta() || item.getAmount() <= 0 || item.getAmount() > 64) continue;
-            values[i] = switch (item.getType()) {
-                case DIAMOND, DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE -> 1;
-                case DIAMOND_BLOCK -> 9;
-                default -> 0;
-            };
-            if (values[i] > 0) counts[i] = item.getAmount();
+            long cash = cashValue(item);
+            if (cash > 0) { values[i] = (int)(cash / item.getAmount()); counts[i] = item.getAmount(); }
         }
         var tender = AuctionTender.plan(price, balance, counts, values); if (tender == null) return null;
         var after = copy(before);

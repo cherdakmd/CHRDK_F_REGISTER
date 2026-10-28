@@ -30,7 +30,8 @@ final class GuildsListener implements Listener {
             return;
         }
         Player killer = victim.getKiller();
-        if (killer == null || killer.getUniqueId().equals(victim.getUniqueId())) {
+        if (killer == null || killer.getUniqueId().equals(victim.getUniqueId())
+                || !plugin.authenticated(killer) || !plugin.authenticated(victim)) {
             return;
         }
         boolean claimed = plugin.config().claimedBonus()
@@ -46,6 +47,11 @@ final class GuildsListener implements Listener {
                     "points", arg(result, "points"), "score", arg(result, "score")));
         }
         plugin.requestSave();
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onAuthenticated(ru.cherdakmd.chrdkregister.api.events.PlayerAuthCompletedEvent event) {
+        plugin.payments().recover(event.getPlayer());
     }
 
     /** Напоминание о приглашении: игрок мог не видеть его в чате. */

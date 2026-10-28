@@ -46,7 +46,7 @@ public final class PaidActionStore implements ChargeInventory.Source {
             throw new IllegalArgumentException("action source");
         if (!d.registered && (!d.actions.isEmpty() || !d.refunds.isEmpty() || !d.resolutions.isEmpty()))
             throw new IllegalArgumentException("financial source lost registration marker");
-        for (var row:d.values.entrySet()) if (row.getKey()==null || row.getKey().length()>160 || row.getValue()==null || row.getValue().length()>16_384)
+        for (var row:d.values.entrySet()) if (row.getKey()==null || row.getKey().length()>160 || row.getValue()==null || row.getValue().length()>8*1024*1024)
             throw new IllegalArgumentException("source value");
         for (var row:d.actions.entrySet()) {
             var a=row.getValue();
@@ -85,6 +85,16 @@ public final class PaidActionStore implements ChargeInventory.Source {
     }
     public synchronized Map<String,String> values() { return Map.copyOf(data.values); }
     public synchronized void putValue(String key,String value) throws IOException { writable(); var n=copy(); if (value==null) n.values.remove(key); else n.values.put(key,value); write(n); }
+    /** API 19: доменная выплата и cumulative entitlement фиксируются одним source replace.
+     * Получатель не становится владельцем всей казны: только явно снятой суммы. */
+    public synchronized void creditValue(String key, String value, UUID owner, long amount) throws IOException {
+        writable();
+        if (!data.registered || owner == null || amount <= 0 || value == null) throw new IllegalArgumentException("domain credit");
+        var next = copy();
+        next.values.put(key, value);
+        next.refunds.merge(owner, amount, Math::addExact);
+        write(next);
+    }
     public synchronized String previewValue(String key,String value) {
         writable(); if (!data.registered) throw new IllegalStateException("unregistered"); var n=copy(); n.values.put(key,value); validate(n); return JSON.toJson(n);
     }

@@ -40,7 +40,7 @@ guilds:
   create-ready: "<gray>Гильдия «%name%» готова к созданию: взнос <white>%cost%</white> алмазов. Повторите команду.</gray>"
   create-ok: "<green>Гильдия <white>%name%</white> [%tag%] создана. Казна пуста — начните с <yellow>/guild deposit all</yellow>.</green>"
   create-broadcast: "<gold>Новая гильдия:</gold> <white>%name%</white> [%tag%] <gray>· лидер %leader%</gray>"
-  create-no-diamonds: "<red>Нужно %cost% алмазов в инвентаре. Взнос — только алмазами.</red>"
+  create-no-diamonds: "<red>Нужно %cost% алмазов: сначала /bal, затем обычные алмазы из основного инвентаря.</red>"
   create-no-economy: "<red>Экономика недоступна: попробуйте позже.</red>"
   name-short: "<red>Название короче %min% символов.</red>"
   name-long: "<red>Название длиннее %max% символов.</red>"
@@ -52,8 +52,8 @@ guilds:
   rename-usage: "<gray>/guild rename <yellow><новое имя></yellow></gray>"
   retag-ok: "<green>Новый тег гильдии: <white>%tag%</white>.</green>"
   retag-usage: "<gray>/guild retag <yellow><тег></yellow> <dark_gray>·</dark_gray> <gray>до %max% символов</gray>"
-  disband-confirm: "<red>Распустить гильдию <white>%name%</white>? Казна (%treasury% алмазов) сгорит.</red> <gray>Подтвердите: <yellow>/guild disband confirm</yellow></gray>"
-  disband-ok: "<red>Гильдия <white>%name%</white> распущена. Участников было: %members%, казна: %treasury%, %war%.</red>"
+  disband-confirm: "<red>Распустить гильдию <white>%name%</white>? Казна (%treasury% алмазов) и её военный резерв (%returns%) сгорят.</red> <gray>Подтвердите: <yellow>/guild disband confirm</yellow></gray>"
+  disband-ok: "<red>Гильдия <white>%name%</white> распущена. Участников было: %members%, казна: %treasury%, военный резерв: %returns%, %war%.</red>"
   disband-broadcast: "<red>Гильдия <white>%name%</white> распущена.</red>"
   disband-war-none: "<dark_gray>войны не было</dark_gray>"
   disband-war-cancelled: "<dark_gray>война отменена</dark_gray>"
@@ -106,7 +106,7 @@ guilds:
   treasury-empty: "<red>Казна пуста.</red>"
   treasury-info: "<gray>Казна: <white>%amount%</white> из %cap% алмазов. Взнос: <yellow>/guild deposit all</yellow></gray>"
   withdraw-usage: "<gray>/guild withdraw <yellow><сумма|all></yellow></gray>"
-  withdraw-ok: "<green>Из казны выдано <white>%amount%</white>. Осталось: %total%.</green>"
+  withdraw-ok: "<green>Из казны снято <white>%amount%</white> для /bal. Осталось: %total%. При потолке банка выплата сохранена и дождётся места.</green>"
   withdraw-empty: "<red>Нужна сумма больше нуля.</red>"
   withdraw-leader-only: "<red>Снимать алмазы из казны может только лидер.</red>"
   upgrade-ok: "<green>Гильдия достигла уровня <white>%level%</white>: состав до %cap%.</green>"
@@ -216,12 +216,30 @@ guilds:
   profile-war: "<gray>Война с <white>%opponent%</white>: %score% · %state%</gray>"
 
   # ---------------------------------- админ ---------------------------------
-  admin-usage: "<gray>/guildadmin <yellow>reload</yellow> | <yellow>info <гильдия></yellow> | <yellow>disband <гильдия></yellow> | <yellow>endwar <гильдия></yellow> | <yellow>cooldown reset <гильдия></yellow> | <yellow>history [n]</yellow></gray>"
+  admin-usage: "<gray>/guildadmin <yellow>reload</yellow> | <yellow>info <гильдия></yellow> | <yellow>disband <гильдия></yellow> | <yellow>endwar <гильдия></yellow> | <yellow>cooldown reset <гильдия></yellow> | <yellow>history [n]</yellow> | <yellow>finance</yellow> | <yellow>recover</yellow></gray>"
   admin-reloaded: "<green>Конфиг перечитан.</green> <gray>Гильдий: %guilds%, войн: %wars%.</gray>"
   admin-guild-info: "<gray>ид: <white>%id%</white> · существует %created% · война: %war%</gray>"
-  admin-disbanded: "<green>Гильдия «%name%» распущена.</green> <gray>Казна: %treasury%, война: %war%.</gray>"
+  admin-disbanded: "<green>Гильдия «%name%» распущена.</green> <gray>Казна: %treasury%, военный резерв: %returns%, война: %war%.</gray>"
   admin-cooldown: "<green>Кулдаун войны гильдии «%name%» снят.</green>"
   admin-cooldown-none: "<gray>У гильдии «%name%» нет кулдауна.</gray>"
   admin-history-empty: "<gray>История войн пока пуста.</gray>"
   admin-history-line: "<dark_gray>·</dark_gray> <gray>%time%</gray> <white>%challenger%</white> <gray>против</gray> <white>%target%</white> <dark_gray>—</dark_gray> %result% <gray>(ставка %wager%)</gray>"
   admin-history-unknown: "<dark_gray>неизвестно</dark_gray>"
+  finance-paused: "<yellow>Операция не подтверждена: идёт сверка финансового источника. Не удаляйте журнал; проверьте /guildadmin finance.</yellow>"
+  finance-auth: "<red>Сначала войдите в аккаунт.</red>"
+  finance-mode: "<red>Оплата доступна вошедшему живому игроку в выживании или приключении.</red>"
+  treasury-war-returns: "<gray>Военные выплаты сверх потолка: <white>%amount%</white>. Это общие средства; они пополнят казну при расходовании.</gray>"
+
+  finance:
+    service-quote: '<gray>Цена услуги: %cost% 💠. Оплата только после ожидания и выбора точки: /bal, затем обычные предметы; сдача и возврат — /bal.</gray>'
+    service-mode: '<red>Оплата требует авторизации, живого игрока в Survival/Adventure; NPC не допускаются.</red>'
+    service-wait: '<yellow>Платёж/исход услуги ожидает сверки. Новые сделки приостановлены; уже начатая оплата не объявляется отменённой. Администратору: finance / recover.</yellow>'
+    service-insufficient: '<red>Нужно %cost% 💠: сначала /bal, затем обычные алмазы/руда/блоки из storage. Именные предметы, броня и offhand не расходуются.</red>'
+    service-refused: '<red>Операция отклонена. Новое списание/возврат не выполнены.</red>'
+    service-refunding: '<yellow>Операция отменена. Полный возврат %cost% 💠 учтён для /bal; при недоступном/заполненном банке непогашенная часть сохранена.</yellow>'
+    service-checked: '<green>Безопасная сверка завершена. Это не принудительное подтверждение и не обход IO-карантина.</green>'
+    service-payment: '<yellow>Pending оплаты %id%; плательщик %payer%. Не удаляйте журнал.</yellow>'
+    service-action: '<yellow>Резерв %id%: payer=%payer%, actor=%actor%, цена=%price%, этап=%phase%, вид=%kind%, цель=%target%.</yellow>'
+    service-status: '<gray>Незавершённых услуг: %count%, блокировка оплаты: %paused%. EXECUTING требует доказательства исхода.</gray>'
+    service-resolve-usage: '<yellow>После ручной сверки: resolve <UUID> success|refund confirm. Для Claims: /claimadmin tpresolve; для Teleports: /tpadmin resolve. Не угадывайте исход.</yellow>'
+    service-lock: '<red>Предметная оплата не завершена. Нужна сверка банка и playerdata; повторите вход после восстановления.</red>'

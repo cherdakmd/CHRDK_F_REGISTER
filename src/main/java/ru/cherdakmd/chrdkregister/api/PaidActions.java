@@ -91,6 +91,18 @@ public final class PaidActions {
             return pay(payer,price,()->store.previewValue(key,value));
         } catch (Exception error) { failure(payer,error); return false; }
     }
+    /** API 19: снятие из коллективного источника — только в банк, без предметной выдачи.
+     * После успешного source replace ошибка доставки не отменяет уже созданное обязательство. */
+    public boolean creditValue(Player player, String key, String value, long amount) {
+        try {
+            if (!eligible(player)) { say(player,"mode"); return false; }
+            if (occupied(player.getUniqueId()) || !ready()) { say(player,"wait"); return false; }
+            store.creditValue(key,value,player.getUniqueId(),amount);
+        } catch (Exception error) { failure(player,error); return false; }
+        try { flushRefunds(); }
+        catch (Exception error) { plugin.getLogger().log(java.util.logging.Level.SEVERE,"Выплата сохранена и ожидает доставки в банк",error); }
+        return true;
+    }
     public boolean recover(Player player) {
         try {
             var p=journal.pending();

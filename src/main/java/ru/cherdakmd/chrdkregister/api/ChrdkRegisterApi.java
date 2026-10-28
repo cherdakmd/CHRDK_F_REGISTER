@@ -32,7 +32,7 @@ import java.util.UUID;
 public interface ChrdkRegisterApi {
 
     /** Версия контракта API. Растёт при расширении (добавлении методов/событий). */
-    int API_VERSION = 18;
+    int API_VERSION = 19;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();

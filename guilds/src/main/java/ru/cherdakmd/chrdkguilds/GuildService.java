@@ -110,6 +110,7 @@ public final class GuildService {
      * удалось — гильдия не появляется. Остаток от «сдачи» возвращается сразу.</p>
      */
     public GuildResult create(GuildPurse purse, UUID leader, String name, String tag, long now) {
+        if (store.financed()) return GuildResult.fail("finance-paused");
         GuildResult check = checkCreate(leader, name, tag);
         if (!check.ok()) {
             return check;
@@ -139,6 +140,7 @@ public final class GuildService {
 
     /** Распускает гильдию; казна сгорает вместе с ней — так решил лидер. */
     public GuildResult disband(UUID actor) {
+        if (store.financed()) return store.transaction(copy -> new GuildService(config, copy).disband(actor), GuildResult.fail("finance-paused"));
         Guild guild = store.of(actor);
         if (guild == null) {
             return GuildResult.fail("not-in-guild");
@@ -149,7 +151,7 @@ public final class GuildService {
         String warKey = cancelWarsOnDisband(guild);
         store.remove(guild);
         return GuildResult.ok("disband-ok", "name", guild.name(), "treasury",
-                GuildMath.diamonds(guild.treasury()), "members",
+                GuildMath.diamonds(guild.treasury()), "returns", GuildMath.diamonds(guild.warReturns()), "members",
                 String.valueOf(guild.size()), "war", warKey);
     }
 
@@ -161,12 +163,12 @@ public final class GuildService {
         if (war.pending()) {
             Guild other = store.guild(war.opponentOf(guild.id()));
             if (other != null && other.id().equals(war.challengerId())) {
-                other.deposit(war.wager());
+                other.returnWarFunds(war.wager());
             }
         } else {
             Guild other = store.guild(war.opponentOf(guild.id()));
             if (other != null) {
-                other.deposit(war.wager() * 2);
+                other.returnWarFunds(war.wager() * 2);
                 other.addGlory(GuildMath.GLORY_PER_WIN);
                 other.recordWarWin();
             }
@@ -180,6 +182,7 @@ public final class GuildService {
 
     /** Приглашает игрока; повторное приглашение заменяет прежнее. */
     public GuildResult invite(UUID inviter, UUID target, long now) {
+        if (store.financed()) return store.transaction(copy -> new GuildService(config, copy).invite(inviter, target, now), GuildResult.fail("finance-paused"));
         Guild guild = store.of(inviter);
         if (guild == null) {
             return GuildResult.fail("not-in-guild");
@@ -209,6 +212,7 @@ public final class GuildService {
 
     /** Принимает приглашение и вступает в гильдию. */
     public GuildResult accept(UUID player, long now) {
+        if (store.financed()) return store.transaction(copy -> new GuildService(config, copy).accept(player, now), GuildResult.fail("finance-paused"));
         if (store.of(player) != null) {
             return GuildResult.fail("already-in-guild");
         }
@@ -237,6 +241,7 @@ public final class GuildService {
     }
 
     public GuildResult decline(UUID player) {
+        if (store.financed()) return store.transaction(copy -> new GuildService(config, copy).decline(player), GuildResult.fail("finance-paused"));
         if (store.removeInvite(player)) {
             return GuildResult.ok("invite-declined");
         }
@@ -247,6 +252,7 @@ public final class GuildService {
 
     /** Выход из гильдии: лидер сначала передаёт её или распускает. */
     public GuildResult leave(UUID player) {
+        if (store.financed()) return store.transaction(copy -> new GuildService(config, copy).leave(player), GuildResult.fail("finance-paused"));
         Guild guild = store.of(player);
         if (guild == null) {
             return GuildResult.fail("not-in-guild");
@@ -260,6 +266,7 @@ public final class GuildService {
     }
 
     public GuildResult kick(UUID actor, UUID target) {
+        if (store.financed()) return store.transaction(copy -> new GuildService(config, copy).kick(actor, target), GuildResult.fail("finance-paused"));
         Guild guild = store.of(actor);
         if (guild == null) {
             return GuildResult.fail("not-in-guild");
@@ -279,6 +286,7 @@ public final class GuildService {
     }
 
     public GuildResult promote(UUID actor, UUID target) {
+        if (store.financed()) return store.transaction(copy -> new GuildService(config, copy).promote(actor, target), GuildResult.fail("finance-paused"));
         Guild guild = store.of(actor);
         if (guild == null) {
             return GuildResult.fail("not-in-guild");
@@ -300,6 +308,7 @@ public final class GuildService {
     }
 
     public GuildResult demote(UUID actor, UUID target) {
+        if (store.financed()) return store.transaction(copy -> new GuildService(config, copy).demote(actor, target), GuildResult.fail("finance-paused"));
         Guild guild = store.of(actor);
         if (guild == null) {
             return GuildResult.fail("not-in-guild");
@@ -320,6 +329,7 @@ public final class GuildService {
     }
 
     public GuildResult transfer(UUID actor, UUID target) {
+        if (store.financed()) return store.transaction(copy -> new GuildService(config, copy).transfer(actor, target), GuildResult.fail("finance-paused"));
         Guild guild = store.of(actor);
         if (guild == null) {
             return GuildResult.fail("not-in-guild");
@@ -337,6 +347,7 @@ public final class GuildService {
 
     /** Переименование: только лидер и только свободное название. */
     public GuildResult rename(UUID actor, String name) {
+        if (store.financed()) return store.transaction(copy -> new GuildService(config, copy).rename(actor, name), GuildResult.fail("finance-paused"));
         Guild guild = store.of(actor);
         if (guild == null) {
             return GuildResult.fail("not-in-guild");
@@ -363,6 +374,7 @@ public final class GuildService {
 
     /** Новый тег: только лидер и только свободный. */
     public GuildResult retag(UUID actor, String tag) {
+        if (store.financed()) return store.transaction(copy -> new GuildService(config, copy).retag(actor, tag), GuildResult.fail("finance-paused"));
         Guild guild = store.of(actor);
         if (guild == null) {
             return GuildResult.fail("not-in-guild");
@@ -391,6 +403,7 @@ public final class GuildService {
 
     /** Кладёт алмазы в казну: сначала берём у игрока, лишнее возвращаем. */
     public GuildResult deposit(GuildPurse purse, UUID player, long amount) {
+        if (store.financed()) return GuildResult.fail("finance-paused");
         Guild guild = store.of(player);
         if (guild == null) {
             return GuildResult.fail("not-in-guild");
@@ -425,6 +438,7 @@ public final class GuildService {
 
     /** Снимает алмазы из казны: только лидер, чтобы казна не растащилась. */
     public GuildResult withdraw(GuildPurse purse, UUID player, long amount) {
+        if (store.financed()) return GuildResult.fail("finance-paused");
         Guild guild = store.of(player);
         if (guild == null) {
             return GuildResult.fail("not-in-guild");
@@ -452,6 +466,7 @@ public final class GuildService {
 
     /** Поднимает уровень из казны: цена растёт, потолок состава тоже. */
     public GuildResult upgrade(UUID actor) {
+        if (store.financed()) return store.transaction(copy -> new GuildService(config, copy).upgrade(actor), GuildResult.fail("finance-paused"));
         Guild guild = store.of(actor);
         if (guild == null) {
             return GuildResult.fail("not-in-guild");
@@ -483,6 +498,7 @@ public final class GuildService {
      * иначе ставка возвращается, а объявивший получает кулдаун.</p>
      */
     public GuildResult declareWar(UUID actor, String targetQuery, long wager, long now) {
+        if (store.financed()) return store.transaction(copy -> new GuildService(config, copy).declareWar(actor, targetQuery, wager, now), GuildResult.fail("finance-paused"));
         if (!config.warsEnabled()) {
             return GuildResult.fail("war-disabled");
         }
@@ -534,6 +550,7 @@ public final class GuildService {
 
     /** Вторая сторона соглашается — война начинается. */
     public GuildResult acceptWar(UUID actor, long now) {
+        if (store.financed()) return store.transaction(copy -> new GuildService(config, copy).acceptWar(actor, now), GuildResult.fail("finance-paused"));
         Guild guild = store.of(actor);
         if (guild == null) {
             return GuildResult.fail("not-in-guild");
@@ -564,6 +581,7 @@ public final class GuildService {
 
     /** Отказ: ставка объявившего возвращается, у него остаётся кулдаун. */
     public GuildResult declineWar(UUID actor, long now) {
+        if (store.financed()) return store.transaction(copy -> new GuildService(config, copy).declineWar(actor, now), GuildResult.fail("finance-paused"));
         Guild guild = store.of(actor);
         if (guild == null) {
             return GuildResult.fail("not-in-guild");
@@ -577,7 +595,7 @@ public final class GuildService {
         }
         Guild challenger = store.guild(war.challengerId());
         if (challenger != null) {
-            challenger.deposit(war.wager());
+            challenger.returnWarFunds(war.wager());
             challenger.setWarCooldownUntil(now + config.warCooldownSeconds() * 1_000L);
         }
         war.cancel(now);
@@ -588,6 +606,7 @@ public final class GuildService {
 
     /** Капитуляция: победа достаётся противнику сразу, без ожидания таймера. */
     public GuildResult surrenderWar(UUID actor, long now) {
+        if (store.financed()) return store.transaction(copy -> new GuildService(config, copy).surrenderWar(actor, now), GuildResult.fail("finance-paused"));
         Guild guild = store.of(actor);
         if (guild == null) {
             return GuildResult.fail("not-in-guild");
@@ -613,6 +632,7 @@ public final class GuildService {
 
     /** Один такт: закрывает просроченные приглашения и войны. */
     public List<GuildResult> tick(long now) {
+        if (store.financed()) return store.transaction(copy -> new GuildService(config, copy).tick(now), List.of());
         List<GuildResult> notices = new ArrayList<>();
         store.pruneInvites(now);
         for (GuildWar war : store.wars()) {
@@ -620,7 +640,7 @@ public final class GuildService {
                 Guild challenger = store.guild(war.challengerId());
                 Guild target = store.guild(war.targetId());
                 if (challenger != null) {
-                    challenger.deposit(war.wager());
+                    challenger.returnWarFunds(war.wager());
                     challenger.setWarCooldownUntil(now
                             + Math.min(config.warCooldownSeconds(), 600) * 1_000L);
                 }
@@ -648,15 +668,15 @@ public final class GuildService {
         String winnerName = winner == null ? "" : winner.name();
         if (result == GuildWar.Result.DRAW) {
             if (challenger != null) {
-                challenger.deposit(war.wager());
+                challenger.returnWarFunds(war.wager());
                 challenger.addGlory(GuildMath.GLORY_PER_LOSS);
             }
             if (target != null) {
-                target.deposit(war.wager());
+                target.returnWarFunds(war.wager());
                 target.addGlory(GuildMath.GLORY_PER_LOSS);
             }
         } else if (winner != null) {
-            winner.deposit(war.wager() * 2);
+            winner.returnWarFunds(war.wager() * 2);
             winner.addGlory(GuildMath.GLORY_PER_WIN);
             winner.recordWarWin();
             Guild loser = winner.id().equals(war.challengerId()) ? target : challenger;
@@ -683,6 +703,7 @@ public final class GuildService {
      * @param claimed погиб ли игрок на приватах (вес боя выше)
      */
     public GuildResult kill(UUID killer, UUID victim, boolean claimed, long now) {
+        if (store.financed()) return store.transaction(copy -> new GuildService(config, copy).kill(killer, victim, claimed, now), GuildResult.fail("finance-paused"));
         if (!config.warsEnabled() || killer == null || victim == null || killer.equals(victim)) {
             return GuildResult.fail("");
         }
@@ -711,6 +732,7 @@ public final class GuildService {
 
     /** Принудительно завершает войну гильдии — админская команда. */
     public GuildResult forceEndWar(String query, long now) {
+        if (store.financed()) return store.transaction(copy -> new GuildService(config, copy).forceEndWar(query, now), GuildResult.fail("finance-paused"));
         Guild guild = store.find(query);
         if (guild == null) {
             return GuildResult.fail("guild-not-found", "name", query == null ? "?" : query);
@@ -726,6 +748,7 @@ public final class GuildService {
 
     /** Убирает гильдию админской командой без проверки лидера. */
     public GuildResult forceDisband(String query) {
+        if (store.financed()) return store.transaction(copy -> new GuildService(config, copy).forceDisband(query), GuildResult.fail("finance-paused"));
         Guild guild = store.find(query);
         if (guild == null) {
             return GuildResult.fail("guild-not-found", "name", query == null ? "?" : query);
@@ -733,11 +756,12 @@ public final class GuildService {
         String warKey = cancelWarsOnDisband(guild);
         store.remove(guild);
         return GuildResult.ok("admin-disbanded", "name", guild.name(),
-                "treasury", GuildMath.diamonds(guild.treasury()), "war", warKey);
+                "treasury", GuildMath.diamonds(guild.treasury()), "returns", GuildMath.diamonds(guild.warReturns()), "war", warKey);
     }
 
     /** Снимает кулдаун войны — после ручного разбора ситуации. */
     public boolean clearCooldown(Guild guild) {
+        if (store.financed()) return guild != null && store.transaction(copy -> new GuildService(config, copy).clearCooldown(copy.guild(guild.id())), false);
         if (guild == null || guild.warCooldownUntil() == 0) {
             return false;
         }
