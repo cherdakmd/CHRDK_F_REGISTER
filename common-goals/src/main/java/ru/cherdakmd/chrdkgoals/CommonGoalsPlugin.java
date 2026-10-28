@@ -35,13 +35,14 @@ public final class CommonGoalsPlugin extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         saveDefaultConfig();
-        this.store = new GoalStore(getDataFolder().toPath(), getLogger());
-        store.load();
-        this.service = new GoalsService(this);
         reloadGoalsConfig();
         try {
-            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 16 || !store.healthy())
-                throw new IllegalStateException("Нужен Core API 16+ и исправный источник целей");
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 16)
+                throw new IllegalStateException("Нужен Core API 16+");
+            this.store = new GoalStore(getDataFolder().toPath(), getLogger());
+            store.load();
+            if (!store.healthy()) throw new IllegalStateException("Источник целей повреждён");
+            this.service = new GoalsService(this);
             store.enableBank();
         } catch (Exception | LinkageError error) {
             getLogger().log(java.util.logging.Level.SEVERE, "Цели остановлены без сброса данных", error);
