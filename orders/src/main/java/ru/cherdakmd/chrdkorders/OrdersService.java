@@ -23,8 +23,8 @@ import java.util.Random;
  * <p>Заказы приходят «сами»: пока на доске есть место, генератор добавляет
  * новый. Заказчик — бот из конфига, а не сущность и не игрок, поэтому доска
  * работает на одиноком сервере и не зависит от чужих цен. Обмен честный и
- * одномоментный: предметы уходят из инвентаря, алмазы приходят сразу — escrow
- * не нужен.</p>
+ * фиксируемый: durable intent → storage+witness в playerdata → удаление заказа,
+ * лимиты и денежное обязательство в одном orders.json. /bal получает delta.</p>
  *
  * <p>Сдаются только «простые» предметы: если стак не складывается с обычным
  * (имя, чары, прочие компоненты, урон) — он не считается. Так дорогая находка
@@ -34,8 +34,6 @@ public final class OrdersService {
 
     /** Как часто доска добирает заказы вместо истёкших. */
     private static final int BOARD_REFRESH_SECONDS = 60;
-    /** Сколько алмазов класть в один стак при выдаче. */
-    private static final int DIAMOND_STACK = 64;
     /** Порядок заказов на доске — по номеру, а не по времени записи. */
     private static final Comparator<BotOrder> BY_ID =
             Comparator.comparingLong((BotOrder order) -> parseId(order.id()));
@@ -70,6 +68,7 @@ public final class OrdersService {
      * @return сколько заказов добавлено
      */
     public int ensureBoard() {
+        if(plugin.finance().paused()) return 0;
         int removed = purgeExpired();
         if (removed > 0) {
             plugin.getLogger().info("С доски ушло заказов: " + removed + ".");
@@ -91,10 +90,11 @@ public final class OrdersService {
 
     /** Снимает истёкшие заказы; возвращает число снятых. */
     public int purgeExpired() {
-        return plugin.store().purgeExpired(System.currentTimeMillis());
+        return plugin.finance().paused()?0:plugin.store().purgeExpired(System.currentTimeMillis());
     }
 
     public int clearBoard() {
+        if(plugin.finance().paused()) return 0;
         int removed = plugin.store().clear();
         if (removed > 0) {
             plugin.requestSave();
@@ -109,6 +109,7 @@ public final class OrdersService {
      * @return заказ или {@code null}, если конфиг не даёт ни одного варианта
      */
     public BotOrder create(String categoryId) {
+        if(plugin.finance().paused()) return null;
         if (!plugin.config().enabled()) {
             return null;
         }
@@ -209,8 +210,11 @@ public final class OrdersService {
         if (player == null || order == null) {
             return false;
         }
+        if(!plugin.config().enabled()) { plugin.messages().send(player,"disabled"); return false; }
+        if(plugin.finance().paused()) { plugin.messages().send(player,"finance-wait"); return false; }
+        if(!plugin.finance().eligible(player)) { plugin.messages().send(player,"finance-mode"); return false; }
         long now = System.currentTimeMillis();
-        if (order.expired(now) || plugin.store().order(order.id()) == null) {
+        if (!order.equals(plugin.store().order(order.id())) || order.expired(now) || plugin.store().order(order.id()) == null) {
             plugin.messages().send(player, "order-expired");
             ensureBoard();
             return false;
@@ -247,16 +251,8 @@ public final class OrdersService {
                     "have", String.valueOf(have));
             return false;
         }
-        if (!takePlain(player, material, order.amount())) {
-            // Инвентарь изменился между подсчётом и списанием — ничего не теряем.
-            plugin.messages().send(player, "inventory-error");
-            return false;
-        }
+        if(!plugin.finance().complete(player,order,now)) return false;
 
-        plugin.store().remove(order.id());
-        plugin.store().recordDelivery(player.getUniqueId(), player.getName(), now,
-                order.reputation());
-        int dropped = payDiamonds(player, order.rewardDiamonds());
         boolean pass = grantPassHours(player, order);
         plugin.requestSave();
 
@@ -273,9 +269,6 @@ public final class OrdersService {
         if (pass) {
             plugin.messages().send(player, "delivered-pass",
                     "hours", String.valueOf(order.rewardPassHours()));
-        }
-        if (dropped > 0) {
-            plugin.messages().send(player, "delivered-dropped");
         }
         player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_YES, 0.8f, 1.1f);
         if (pass) {
@@ -298,23 +291,6 @@ public final class OrdersService {
             }
         }
         return "";
-    }
-
-    /** Выдаёт алмазы; возвращает количество, которое не влезло и упало под ноги. */
-    private int payDiamonds(Player player, int total) {
-        int remaining = Math.max(0, total);
-        int dropped = 0;
-        while (remaining > 0) {
-            int chunk = Math.min(DIAMOND_STACK, remaining);
-            remaining -= chunk;
-            ItemStack stack = new ItemStack(Material.DIAMOND, chunk);
-            Map<Integer, ItemStack> leftover = player.getInventory().addItem(stack);
-            for (ItemStack rest : leftover.values()) {
-                player.getWorld().dropItemNaturally(player.getLocation(), rest);
-                dropped += rest.getAmount();
-            }
-        }
-        return dropped;
     }
 
     /** Часы буста через ядро; {@code true} — награда выдана. */
@@ -361,34 +337,13 @@ public final class OrdersService {
             return 0;
         }
         int count = 0;
-        ItemStack[] contents = player.getInventory().getContents();
+        ItemStack[] contents = player.getInventory().getStorageContents();
         for (ItemStack stack : contents) {
             if (stack != null && stack.getType() == material && isPlain(stack)) {
                 count += stack.getAmount();
             }
         }
         return count;
-    }
-
-    /** Списывает ровно {@code amount} простых предметов; {@code false} — не хватило. */
-    private static boolean takePlain(Player player, Material material, int amount) {
-        int remaining = amount;
-        ItemStack[] contents = player.getInventory().getContents();
-        for (int slot = 0; slot < contents.length && remaining > 0; slot++) {
-            ItemStack stack = contents[slot];
-            if (stack == null || stack.getType() != material || !isPlain(stack)) {
-                continue;
-            }
-            int take = Math.min(remaining, stack.getAmount());
-            remaining -= take;
-            if (take >= stack.getAmount()) {
-                player.getInventory().setItem(slot, null);
-            } else {
-                stack.setAmount(stack.getAmount() - take);
-                player.getInventory().setItem(slot, stack);
-            }
-        }
-        return remaining == 0;
     }
 
     /* ------------------------------ репутация --------------------------------- */

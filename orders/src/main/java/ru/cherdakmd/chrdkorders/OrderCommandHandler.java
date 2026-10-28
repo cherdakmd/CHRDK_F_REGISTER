@@ -25,7 +25,7 @@ public final class OrderCommandHandler implements CommandExecutor, TabCompleter 
     private static final List<String> PLAYER_SUBCOMMANDS =
             List.of("help", "list", "deliver", "stats", "top");
     private static final List<String> ADMIN_SUBCOMMANDS =
-            List.of("reload", "new", "clear", "give", "info");
+            List.of("reload", "new", "clear", "give", "info", "awards");
 
     private final OrdersPlugin plugin;
 
@@ -229,6 +229,10 @@ public final class OrderCommandHandler implements CommandExecutor, TabCompleter 
         if (args.length == 0) {
             plugin.messages().send(sender, "admin-usage");
             return true;
+        }
+        if(args[0].equalsIgnoreCase("awards")) { plugin.finance().status(sender); return true; }
+        if(plugin.finance().paused()&&!args[0].equalsIgnoreCase("info")&&!args[0].equalsIgnoreCase("reload")) {
+            plugin.messages().send(sender,"finance-wait"); return true;
         }
         return switch (args[0].toLowerCase(Locale.ROOT)) {
             case "reload" -> reload(sender);

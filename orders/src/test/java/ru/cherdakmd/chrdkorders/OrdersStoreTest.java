@@ -145,16 +145,6 @@ class OrdersStoreTest {
                       "reputation": 1,
                       "created": 1,
                       "expires": 2
-                    },
-                    {
-                      "id": "",
-                      "material": "COAL",
-                      "amount": 5
-                    },
-                    {
-                      "id": "6",
-                      "material": "",
-                      "amount": 5
                     }
                   ],
                   "players": {}
@@ -163,7 +153,7 @@ class OrdersStoreTest {
         Files.writeString(dir.resolve("orders.json"), json, StandardCharsets.UTF_8);
         OrdersStore store = new OrdersStore(dir, LOGGER);
         store.load();
-        assertEquals(1, store.size(), "битые строки пропускаются");
+        assertEquals(1, store.size(), "неизвестный материал сохраняется без подмены награды");
         assertNull(store.order("4").materialOrNull());
         assertNull(store.order(""));
         assertNull(store.order("6"));

@@ -14,7 +14,7 @@ commands:
   ordersadmin:
     description: "Управление доской заказов"
     permission: chrdkorders.admin
-    usage: "/ordersadmin [reload|new [категория]|clear|give <ник> <репутация>|info]"
+    usage: "/ordersadmin [reload|new [категория]|clear|give <ник> <репутация>|info|awards]"
 permissions:
   chrdkorders.use:
     description: "Просмотр доски и сдача заказов"
