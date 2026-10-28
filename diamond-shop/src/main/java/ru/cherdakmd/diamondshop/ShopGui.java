@@ -42,6 +42,7 @@ public final class ShopGui implements Listener {
 
     /** Открыть витрину на конкретном разделе и странице. */
     public void open(Player player, ShopCategory category, int page) {
+        if (!plugin.shopService().ready(player)) { plugin.messages().send(player, "shop.unavailable"); return; }
         List<ShopConfig.ShopItem> all = plugin.shopService().config().items();
         List<ShopCategory> tabs = ShopCatalog.tabs(all);
         ShopCategory current = category == null || !tabs.contains(category)
@@ -50,7 +51,7 @@ public final class ShopGui implements Listener {
         int pages = ShopLayout.pages(view.size());
         int safePage = ShopLayout.clampPage(page, view.size());
 
-        ShopHolder holder = new ShopHolder(current, safePage);
+        ShopHolder holder = new ShopHolder(current, safePage, plugin.shopService());
         Component title = plugin.messages().get("shop.gui.title")
                 .append(plugin.messages().get("shop.gui.title-suffix",
                         "category", plugin.messages().mini(current.messageKey()),
@@ -68,7 +69,10 @@ public final class ShopGui implements Listener {
 
         int from = safePage * ShopLayout.ITEMS_PER_PAGE;
         for (int slot = 0; slot < ShopLayout.ITEMS_PER_PAGE && from + slot < view.size(); slot++) {
-            inventory.setItem(ShopLayout.FIRST_ITEM_SLOT + slot, iconOf(view.get(from + slot)));
+            var item = view.get(from + slot); var service = plugin.shopService();
+            var offer = new Offer(item.material(), service.batchSize(item), service.askPrice(item), service.bidPrice(item));
+            holder.offers.put(ShopLayout.FIRST_ITEM_SLOT + slot, offer);
+            inventory.setItem(ShopLayout.FIRST_ITEM_SLOT + slot, iconOf(item, offer));
         }
         if (view.isEmpty()) {
             inventory.setItem(ShopLayout.FIRST_ITEM_SLOT + 13,
@@ -107,7 +111,7 @@ public final class ShopGui implements Listener {
      * Иконка товара. Имя не переопределяется — клиент показывает локализованное
      * название материала; в лоре остаются цены, тренд и id для {@code /shop buy}.
      */
-    private ItemStack iconOf(ShopConfig.ShopItem item) {
+    private ItemStack iconOf(ShopConfig.ShopItem item, Offer offer) {
         Material material = Material.matchMaterial(item.material());
         if (material == null || !material.isItem()) {
             material = Material.BARRIER;
@@ -122,8 +126,8 @@ public final class ShopGui implements Listener {
             double[] history = service.historyOf(item);
             List<Component> lore = new ArrayList<>(plugin.messages().getList("shop.gui.item-lore",
                     "price", PriceEngine.round(price),
-                    "bid", service.bidPrice(item),
-                    "ask", service.askPrice(item),
+                    "bid", offer.bid(),
+                    "ask", offer.ask(), "batch", offer.batch(),
                     "trend", PriceEngine.trend(history),
                     "history", PriceEngine.sparkline(history),
                     "stock", stock,
@@ -142,9 +146,9 @@ public final class ShopGui implements Listener {
         if (meta != null) {
             ShopService service = plugin.shopService();
             meta.displayName(plugin.messages().get("shop.gui.balance-name",
-                    "balance", PriceEngine.round(service.store().balanceOf(player.getUniqueId()))));
+                    "balance", service.balance(player)));
             meta.lore(List.of(plugin.messages().get("shop.gui.balance-lore",
-                    "turnover", PriceEngine.round(service.store().turnover()))));
+                    "turnover", PriceEngine.round(service.store().turnover()), "physical", service.physical(player))));
             icon.setItemMeta(meta);
         }
         return icon;
@@ -213,12 +217,17 @@ public final class ShopGui implements Listener {
             return;
         }
         ShopConfig.ShopItem item = view.get(index);
+        var offer = holder.offers.get(slot); var service = plugin.shopService();
+        if (holder.service != service || offer == null || !offer.id().equals(item.material())
+                || offer.batch() != service.batchSize(item) || offer.ask() != service.askPrice(item) || offer.bid() != service.bidPrice(item)) {
+            plugin.messages().send(player, "shop.price-changed"); reopen(player, holder.category(), holder.page()); return;
+        }
 
         ClickType click = event.getClick();
         if (click == ClickType.NUMBER_KEY || click == ClickType.DROP || click == ClickType.CONTROL_DROP) {
             return;
         }
-        long units = click.isShiftClick() ? 64 : 1;
+        long units = click.isShiftClick() ? 16 : 1;
         if (click.isLeftClick()) {
             trade(player, item, units, true, holder.category(), holder.page());
         } else if (click.isRightClick()) {
@@ -239,18 +248,19 @@ public final class ShopGui implements Listener {
                 ? plugin.shopService().buy(player, item, units)
                 : plugin.shopService().sell(player, item, units);
         if (result.success()) {
+            if (buy) plugin.messages().send(player, "shop.payment-detail", "account", result.bankPaid(), "physical", result.physicalPaid(), "change", result.change());
             String key = buy ? "shop.buy-done" : "shop.sell-done";
             plugin.messages().send(player, key,
                     "material", item.material().toLowerCase(Locale.ROOT),
-                    "units", units,
+                    "units", result.units(),
                     buy ? "cost" : "income", result.money(),
-                    "balance", PriceEngine.round(plugin.shopService().store().balanceOf(player.getUniqueId())));
+                    "balance", plugin.shopService().balance(player));
         } else if (result.errorKey() != null && result.errorKey().startsWith("shop.")) {
             plugin.messages().send(player, result.errorKey(),
                     "material", item.material().toLowerCase(Locale.ROOT),
-                    "units", units,
+                    "units", result.units(),
                     "cost", result.money(),
-                    "balance", PriceEngine.round(plugin.shopService().store().balanceOf(player.getUniqueId())),
+                    "balance", plugin.shopService().balance(player),
                     "value", units);
         }
         // перечитываем витрину с новыми ценами, оставаясь в том же разделе
@@ -259,17 +269,27 @@ public final class ShopGui implements Listener {
 
     /** Перерисовка витрины следующим тиком — после завершения текущего клика. */
     private void reopen(Player player, ShopCategory category, int page) {
-        plugin.getServer().getScheduler().runTask(plugin, () -> open(player, category, page));
+        var expected = player.getOpenInventory().getTopInventory();
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            if (plugin.isEnabled() && player.isOnline() && player.getOpenInventory().getTopInventory() == expected) open(player, category, page);
+        });
     }
 
     /** Holder с разделом и номером страницы. */
+    public void closeAll() {
+        for (var player : Bukkit.getOnlinePlayers()) if (player.getOpenInventory().getTopInventory().getHolder() instanceof ShopHolder) player.closeInventory();
+    }
+    private record Offer(String id, int batch, long ask, long bid) { }
     private static final class ShopHolder implements InventoryHolder {
 
         private final ShopCategory category;
         private final int page;
         private Inventory inventory;
+        private final ShopService service;
+        private final java.util.Map<Integer, Offer> offers = new java.util.HashMap<>();
 
-        private ShopHolder(ShopCategory category, int page) {
+        private ShopHolder(ShopCategory category, int page, ShopService service) {
+            this.service = service;
             this.category = category;
             this.page = page;
         }

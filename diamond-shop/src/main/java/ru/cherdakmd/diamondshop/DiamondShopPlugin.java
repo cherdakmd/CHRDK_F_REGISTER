@@ -26,6 +26,7 @@ public final class DiamondShopPlugin extends JavaPlugin {
     private volatile Messages messages;
     private BukkitTask saveTask;
     private BukkitTask historyTask;
+    private BukkitTask migrationTask;
 
     @Override
     public void onEnable() {
@@ -57,12 +58,23 @@ public final class DiamondShopPlugin extends JavaPlugin {
                 shopService.config().items().forEach(item -> shopService.recordPricePoint(item)),
                 historyTicks, historyTicks);
 
+        var legacy = store.legacyBalances().entrySet().iterator();
+        migrationTask = Bukkit.getScheduler().runTaskTimer(this, () -> {
+            for (int i = 0; i < 16 && legacy.hasNext(); i++) {
+                var entry = legacy.next();
+                if (!shopService.migrate(entry.getKey(), entry.getValue()))
+                    getLogger().warning("Старый счёт " + entry.getKey() + " пока не перенесён: проверьте Core/лимит/исходную сумму. Он сохранён, магазин повторит проверку при обращении.");
+            }
+            if (!legacy.hasNext()) { migrationTask.cancel(); migrationTask = null; }
+        }, 1L, 1L);
         getLogger().info("CHRDK_DiamondShop включён: товаров " + shopService.config().items().size()
                 + ", ядро " + (coreApi == null ? "НЕ найдено!" : "v" + coreApi.pluginVersion()) + ".");
     }
 
     @Override
     public void onDisable() {
+        if (gui != null) gui.closeAll();
+        if (migrationTask != null) { migrationTask.cancel(); migrationTask = null; }
         if (saveTask != null) {
             saveTask.cancel();
             saveTask = null;
@@ -79,6 +91,7 @@ public final class DiamondShopPlugin extends JavaPlugin {
 
     /** Перечитывает config.yml/messages.yml и пересоздаёт сервис магазина. */
     public void reloadShopConfig() {
+        if (gui != null) gui.closeAll();
         reloadConfig();
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
@@ -87,7 +100,7 @@ public final class DiamondShopPlugin extends JavaPlugin {
             this.store.load();
         }
         ShopConfig.ShopConfigData data = ShopConfig.parse(getConfig(), getLogger());
-        this.shopService = new ShopService(data, store);
+        this.shopService = new ShopService(data, store, this::coreApi);
     }
 
     /** API ядра; {@code null}, если основной плагин не загружен (очередь загрузки). */

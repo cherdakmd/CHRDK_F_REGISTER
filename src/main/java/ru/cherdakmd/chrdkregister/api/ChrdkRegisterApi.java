@@ -197,6 +197,16 @@ public interface ChrdkRegisterApi {
         return 0L;
     }
 
+    /** Общий личный счёт по UUID Player, с обновлением индекса ника. Не отдельный кошелёк магазина. */
+    default long personalDiamonds(Player player) { return 0L; }
+
+    /** Доверенная серверная миграция старого DiamondShop; receipt сохраняется вместе с балансом. */
+    default boolean importLegacyShop(java.util.UUID player, long roundedAmount) { return false; }
+
+    /** Main-thread обмен счёта и полного storage-снимка. Старое ядро отказывает, без fallback-кошелька. */
+    default boolean exchangeDiamonds(Player player, long debit, long credit,
+                                     org.bukkit.inventory.ItemStack[] expected, org.bukkit.inventory.ItemStack[] replacement) { return false; }
+
     /** Сумма всех переводов игрока (API v7). */
     default long bankSent(String playerName) {
         return 0L;

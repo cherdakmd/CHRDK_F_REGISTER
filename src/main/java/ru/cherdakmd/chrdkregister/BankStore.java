@@ -54,6 +54,8 @@ public final class BankStore {
         public long sent;
         public long received;
         public long updated;
+        public boolean legacyShopImported;
+        public long legacyShopAmount;
 
         public Account copy() {
             Account copy = new Account();
@@ -64,6 +66,8 @@ public final class BankStore {
             copy.sent = sent;
             copy.received = received;
             copy.updated = updated;
+            copy.legacyShopImported = legacyShopImported;
+            copy.legacyShopAmount = legacyShopAmount;
             return copy;
         }
     }
@@ -369,6 +373,28 @@ public final class BankStore {
         target.updated = now;
         dirty = true;
         return new TransferResult(Status.OK, amount, tax, credited, source.balance, target.balance);
+    }
+
+    /** Баланс и квитанция в одном bank.json: повторное чтение старого shop-data не начисляет деньги снова. */
+    public synchronized boolean importLegacyShop(UUID id, long amount) {
+        if (id == null || amount < 0 || amount > MAX_BALANCE) return false;
+        var account = open(id, "");
+        if (account.legacyShopImported) return true;
+        if (account.balance > MAX_BALANCE - amount) return false;
+        account.balance += amount; account.deposited += amount;
+        account.legacyShopAmount = amount; account.legacyShopImported = true;
+        account.updated = System.currentTimeMillis(); dirty = true; return true;
+    }
+
+    /** Проверяем деньги до inventoryCommit; callback обязан откатить собственный снимок при исключении. */
+    public synchronized boolean exchange(UUID id, String name, long debit, long credit, Runnable inventoryCommit) {
+        if (id == null || inventoryCommit == null || debit < 0 || credit < 0 || debit > MAX_BALANCE || credit > MAX_BALANCE) return false;
+        var account = open(id, name);
+        if (account.balance < debit || account.balance - debit > MAX_BALANCE - credit) return false;
+        inventoryCommit.run(); // Не вызывает событий/команд; исключение не меняет деньги.
+        account.balance = account.balance - debit + credit;
+        account.withdrawn += debit; account.deposited += credit;
+        account.updated = System.currentTimeMillis(); dirty = true; return true;
     }
 
     /* -------------------------------- сохранение ------------------------------- */

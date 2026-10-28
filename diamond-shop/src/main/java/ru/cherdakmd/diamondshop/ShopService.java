@@ -1,266 +1,132 @@
 package ru.cherdakmd.diamondshop;
 
+import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
+import java.util.*;
+import java.util.function.Supplier;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-
-/**
- * Торговые операции магазина: единственное место, где пересекаются баланс, запас и инвентарь.
- */
+/** Единственный финансовый источник — Core /bal; магазин хранит только рынок и старый вход миграции. */
 public final class ShopService {
-
     private final ShopConfig.ShopConfigData config;
     private final ShopStore store;
-
-    public ShopService(ShopConfig.ShopConfigData config, ShopStore store) {
-        this.config = config;
-        this.store = store;
+    private final Supplier<ChrdkRegisterApi> api;
+    public ShopService(ShopConfig.ShopConfigData config, ShopStore store, Supplier<ChrdkRegisterApi> api) {
+        this.config = config; this.store = store; this.api = api;
     }
-
-    public ShopConfig.ShopConfigData config() {
-        return config;
-    }
-
-    public ShopStore store() {
-        return store;
-    }
-
-    /** Средняя цена единицы товара (mid) с применённым возвратом запаса. */
+    public ShopConfig.ShopConfigData config() { return config; }
+    public ShopStore store() { return store; }
     public double priceOf(ShopConfig.ShopItem item) {
-        long stock = store.stockOf(item, System.currentTimeMillis(), config.stockRecoveryPerHour());
-        return PriceEngine.price(item.basePrice(), stock, item.refStock(), item.minMultiplier(), item.maxMultiplier());
+        return PriceEngine.price(item.basePrice(), store.stockOf(item, System.currentTimeMillis(), config.stockRecoveryPerHour()),
+                item.refStock(), item.minMultiplier(), item.maxMultiplier());
     }
-
-    /** Цена, по которой игрок ПОКУПАЕТ у магазина (mid + половина спреда). */
-    public double askPrice(ShopConfig.ShopItem item) {
-        return PriceEngine.ask(priceOf(item), config.spreadPercent());
+    public int batchSize(ShopConfig.ShopItem item) {
+        return WholeTrades.batch(PriceEngine.bid(PriceEngine.round(item.basePrice() * Math.min(1, item.minMultiplier())), config.spreadPercent()));
     }
-
-    /** Цена, по которой игрок ПРОДАЁТ магазину (mid - половина спреда). */
-    public double bidPrice(ShopConfig.ShopItem item) {
-        return PriceEngine.bid(priceOf(item), config.spreadPercent());
+    public long askPrice(ShopConfig.ShopItem item) { return WholeTrades.price(PriceEngine.ask(priceOf(item), config.spreadPercent()), batchSize(item), true); }
+    public long bidPrice(ShopConfig.ShopItem item) { return WholeTrades.price(PriceEngine.bid(priceOf(item), config.spreadPercent()), batchSize(item), false); }
+    public void recordPricePoint(ShopConfig.ShopItem item) { store.recordPrice(item, priceOf(item), System.currentTimeMillis(), config.historyMaxPoints(), config.historyIntervalMillis()); }
+    public double[] historyOf(ShopConfig.ShopItem item) { return store.historyOf(item.material()); }
+    public boolean migrate(UUID id, double old) {
+        long amount = WholeTrades.legacy(old); var core = api.get();
+        return amount >= 0 && core != null && core.importLegacyShop(id, amount);
     }
-
-    /** Фиксирует точку mid-цены в истории (вызывается после сделок и по таймеру). */
-    public void recordPricePoint(ShopConfig.ShopItem item) {
-        store.recordPrice(item, priceOf(item), System.currentTimeMillis(),
-                config.historyMaxPoints(), config.historyIntervalMillis());
+    public boolean ready(Player player) {
+        var core = api.get();
+        return Bukkit.isPrimaryThread() && core != null && player.isOnline() && !player.isDead() && !player.hasMetadata("NPC")
+                && player.hasPermission("chrdkshop.use") && core.isAuthenticated(player)
+                && migrate(player.getUniqueId(), store.balanceOf(player.getUniqueId()));
     }
-
-    /** История mid-цен товара (для спарклайна). */
-    public double[] historyOf(ShopConfig.ShopItem item) {
-        return store.historyOf(item.material());
+    public long balance(Player player) { var core = api.get(); return core == null ? 0 : core.personalDiamonds(player); }
+    public long physical(Player player) {
+        long value = 0;
+        for (var stack : player.getInventory().getStorageContents()) if (plain(stack))
+            value += (long) config.currencyRates().getOrDefault(stack.getType().name(), 0) * stack.getAmount();
+        return value;
     }
+    private static boolean plain(ItemStack item) { return item != null && !item.getType().isAir() && !item.hasItemMeta() && item.getAmount() > 0 && item.getAmount() <= item.getMaxStackSize(); }
+    private static ItemStack[] copy(ItemStack[] items) { return Arrays.stream(items).map(i -> i == null ? null : i.clone()).toArray(ItemStack[]::new); }
+    public record TradeResult(boolean success, long money, String errorKey, long units, long bankPaid, long physicalPaid, long change) { }
+    private static TradeResult fail(String key, long money) { return new TradeResult(false, money, key, 0, 0, 0, 0); }
 
-    /** Алмазный эквивалент {@code count} единиц материала по действующему курсу. */
-    public double currencyWorth(Material material, int count) {
-        Integer rate = config.currencyRates().get(material.name());
-        return rate == null ? 0d : rate * (double) count;
-    }
-
-    public boolean isCurrency(Material material) {
-        return config.currencyRates().containsKey(material.name());
-    }
-
-    /* ------------------------------- пополнение ------------------------------- */
-
-    /** Изымает из инвентаря ВСЮ валюту и зачисляет на счёт; возвращает сумму в алмазах. */
-    public double depositAll(Player player, boolean handOnly) {
-        PlayerInventory inventory = player.getInventory();
-        double credited = 0d;
-        if (handOnly) {
-            ItemStack hand = inventory.getItemInMainHand();
-            if (isCurrency(hand.getType())) {
-                credited = currencyWorth(hand.getType(), hand.getAmount());
-                inventory.setItemInMainHand(null);
+    /** Аргумент — число партий, а не штук. Цена каждой партии целая, количество ограничено вместимостью storage. */
+    public TradeResult buy(Player player, ShopConfig.ShopItem item, long batches) { return trade(player, item, batches, true); }
+    public TradeResult sell(Player player, ShopConfig.ShopItem item, long batches) { return trade(player, item, batches, false); }
+    private TradeResult trade(Player player, ShopConfig.ShopItem item, long batches, boolean buy) {
+        if (!ready(player) || player.getGameMode() != GameMode.SURVIVAL) return fail("shop.unavailable", 0);
+        int batch = batchSize(item); long price = buy ? askPrice(item) : bidPrice(item);
+        if (batch < 1 || price < 1) return fail("shop.unavailable", 0);
+        if (batches < 1 || batches > 2304L / batch || batches > WholeTrades.MAX / price) return fail("shop.invalid-number", 0);
+        long units = batches * batch, money = batches * price;
+        Material material = Material.matchMaterial(item.material());
+        if (material == null || !material.isItem()) return fail("shop.unknown-item", 0);
+        var before = copy(player.getInventory().getStorageContents()); var after = copy(before);
+        long debit = 0, credit = buy ? 0 : money, spent = 0, change = 0;
+        if (buy) {
+            long wallet = balance(player), needed = Math.max(0, money - wallet);
+            // Сначала мелкие номиналы; переплата блоком возвращается целыми алмазами на /bal.
+            var currencies = config.currencyRates().entrySet().stream().sorted(Map.Entry.comparingByValue()).toList();
+            for (var currency : currencies) for (int slot = 0; slot < after.length && needed > 0; slot++) {
+                var stack = after[slot]; if (!plain(stack) || !stack.getType().name().equals(currency.getKey())) continue;
+                long take = Math.min(stack.getAmount(), (needed + currency.getValue() - 1L) / currency.getValue());
+                long value = take * currency.getValue(); spent += value; needed -= value;
+                stack.setAmount(stack.getAmount() - (int) take); if (stack.getAmount() == 0) after[slot] = null;
             }
+            var payment = WholeTrades.payment(money, wallet, spent);
+            if (payment == null) return fail("shop.not-enough-balance", money);
+            debit = payment.account(); credit = payment.change(); change = credit;
+            if (!insert(after, material, units)) return fail("shop.no-space", money);
         } else {
-            ItemStack[] contents = inventory.getContents();
-            for (int slot = 0; slot < contents.length; slot++) {
-                ItemStack stack = contents[slot];
-                if (stack == null || !isCurrency(stack.getType())) continue;
-                credited += currencyWorth(stack.getType(), stack.getAmount());
-                inventory.setItem(slot, null);
-            }
+            if (!remove(after, material, units)) return fail("shop.not-enough-items", money);
         }
-        if (credited > 0) {
-            store.addBalance(player.getUniqueId(), credited);
-        }
-        return credited;
-    }
-
-    /* ------------------------------- вывод ------------------------------- */
-
-    /**
-     * Выдаёт игроку физические алмазы на целое число единиц (блоки по курсу 9 + самоцветы).
-     * Возвращает фактически списанную сумму (целую) или -1, если средств не хватило.
-     */
-    public long withdraw(Player player, long diamonds) {
-        if (diamonds < 1 || !store.trySpend(player.getUniqueId(), diamonds)) {
-            return -1;
-        }
-        long blocks = diamonds / 9;
-        int gems = (int) (diamonds % 9);
-        Map<Integer, ItemStack> leftover = new HashMap<>();
-        while (blocks > 0) {
-            int take = (int) Math.min(64, blocks);
-            leftover.putAll(player.getInventory().addItem(new ItemStack(Material.DIAMOND_BLOCK, take)));
-            blocks -= take;
-        }
-        while (gems > 0) {
-            int take = Math.min(64, gems);
-            leftover.putAll(player.getInventory().addItem(new ItemStack(Material.DIAMOND, take)));
-            gems -= take;
-        }
-        leftover.values().forEach(stack -> player.getWorld().dropItemNaturally(player.getLocation(), stack));
-        return diamonds;
-    }
-
-    /* ------------------------------- сделки ------------------------------- */
-
-    public record TradeResult(boolean success, double money, String errorKey) {
-    }
-
-    /** Покупка игроком {@code units} единиц товара у магазина. */
-    public TradeResult buy(Player player, ShopConfig.ShopItem item, long units) {
-        if (units <= 0) return new TradeResult(false, 0d, "shop.invalid-number");
-        double price = askPrice(item);
-        double cost = PriceEngine.revenue(price, units);
-        if (!store.trySpend(player.getUniqueId(), cost)) {
-            return new TradeResult(false, cost, "shop.not-enough-balance");
-        }
-        if (!store.tryRecordTurnover(player.getUniqueId(), cost, config.dailyTurnoverLimit(),
-                System.currentTimeMillis())) {
-            store.addBalance(player.getUniqueId(), cost); // откат списания
-            return new TradeResult(false, cost, "shop.daily-limit");
-        }
-        Material material = Material.matchMaterial(item.material());
-        if (material == null) {
-            store.addBalance(player.getUniqueId(), cost);
-            return new TradeResult(false, 0d, "shop.unknown-item");
-        }
-        giveItems(player, material, units);
         long now = System.currentTimeMillis();
-        store.adjustStock(item, -units, now, config.stockRecoveryPerHour());
-        store.recordTrade(item, units, false, cost);
-        recordPricePoint(item);
-        return new TradeResult(true, cost, null);
+        if (!store.canRecordTurnover(player.getUniqueId(), money, config.dailyTurnoverLimit(), now)) return fail("shop.daily-limit", money);
+        if (!api.get().exchangeDiamonds(player, debit, credit, before, after)) return fail("shop.unavailable", money);
+        // На основном потоке нет callbacks между проверкой лимита, Core-commit и учётом рынка.
+        store.tryRecordTurnover(player.getUniqueId(), money, config.dailyTurnoverLimit(), now);
+        store.adjustStock(item, buy ? -units : units, now, config.stockRecoveryPerHour());
+        store.recordTrade(item, units, !buy, money); recordPricePoint(item);
+        return new TradeResult(true, money, null, units, debit, spent, change);
     }
-
-    /** Продажа игроком {@code units} единиц товара магазину. */
-    public TradeResult sell(Player player, ShopConfig.ShopItem item, long units) {
-        if (units <= 0) return new TradeResult(false, 0d, "shop.invalid-number");
-        Material material = Material.matchMaterial(item.material());
-        if (material == null) return new TradeResult(false, 0d, "shop.unknown-item");
-        if (countItems(player.getInventory(), material) < units) {
-            return new TradeResult(false, 0d, "shop.not-enough-items");
-        }
-        double price = bidPrice(item);
-        double income = PriceEngine.revenue(price, units);
-        if (!store.tryRecordTurnover(player.getUniqueId(), income, config.dailyTurnoverLimit(),
-                System.currentTimeMillis())) {
-            return new TradeResult(false, income, "shop.daily-limit");
-        }
-        removeItems(player.getInventory(), material, units);
-        store.addBalance(player.getUniqueId(), income);
-        long now = System.currentTimeMillis();
-        store.adjustStock(item, units, now, config.stockRecoveryPerHour());
-        store.recordTrade(item, units, true, income);
-        recordPricePoint(item);
-        return new TradeResult(true, income, null);
-    }
-
-    /* ------------------------------- sellall ------------------------------- */
-
-    /** Результат распродажи всего торгуемого из инвентаря. */
-    public record SellAllResult(double income, long units, int kinds) {
-    }
-
-    /** Продаёт ВСЕ торгуемые товары из инвентаря игрока (с учётом дневного лимита). */
+    public record SellAllResult(long income, long units, int kinds) { }
     public SellAllResult sellAll(Player player) {
-        double incomeTotal = 0d;
-        long unitsTotal = 0;
-        int kinds = 0;
-        double limitLeft = config.dailyTurnoverLimit() <= 0 ? Double.MAX_VALUE
-                : config.dailyTurnoverLimit() - store.usedToday(player.getUniqueId(), System.currentTimeMillis());
-        for (ShopConfig.ShopItem item : config.items()) {
-            Material material = Material.matchMaterial(item.material());
-            if (material == null) continue;
-            long have = countItems(player.getInventory(), material);
-            if (have <= 0) continue;
-            // ограничиваем объём, чтобы не вылететь за дневной лимит
-            if (limitLeft < Double.MAX_VALUE) {
-                double unitPrice = bidPrice(item);
-                long affordable = (long) Math.floor(limitLeft / Math.max(1e-9, unitPrice));
-                if (affordable <= 0) continue;
-                have = Math.min(have, affordable);
-            }
-            TradeResult result = sell(player, item, have);
-            if (result.success()) {
-                incomeTotal = PriceEngine.round(incomeTotal + result.money());
-                unitsTotal += have;
-                kinds++;
-                if (limitLeft < Double.MAX_VALUE) {
-                    limitLeft = Math.max(0, limitLeft - result.money());
-                }
-            }
+        long total = 0, units = 0; int kinds = 0;
+        for (var item : config.items()) {
+            var material = Material.matchMaterial(item.material()); int batch = batchSize(item); long price = bidPrice(item);
+            if (material == null || batch < 1 || price < 1) continue;
+            long lots = countItems(player.getInventory(), material) / batch;
+            if (config.dailyTurnoverLimit() > 0) lots = Math.min(lots, (long) Math.floor(Math.max(0, config.dailyTurnoverLimit() - store.usedToday(player.getUniqueId(), System.currentTimeMillis())) / price));
+            if (lots < 1) continue;
+            var result = sell(player, item, lots);
+            if (result.success()) { total += result.money(); units += result.units(); kinds++; }
         }
-        return new SellAllResult(incomeTotal, unitsTotal, kinds);
+        return new SellAllResult(total, units, kinds);
     }
-
-    /* ------------------------------- инвентарная математика ------------------------------- */
-
-    /** Сколько единиц материала лежит в инвентаре (без брони/оффхенда в основных слотах). */
     public static long countItems(PlayerInventory inventory, Material material) {
-        long total = 0;
-        for (ItemStack stack : inventory.getContents()) {
-            if (stack != null && stack.getType() == material) total += stack.getAmount();
+        long count = 0; for (var stack : inventory.getStorageContents()) if (plain(stack) && stack.getType() == material) count += stack.getAmount(); return count;
+    }
+    private static boolean remove(ItemStack[] items, Material material, long units) {
+        for (int i = 0; i < items.length && units > 0; i++) {
+            var stack = items[i]; if (!plain(stack) || stack.getType() != material) continue;
+            int take = (int) Math.min(units, stack.getAmount()); units -= take; stack.setAmount(stack.getAmount() - take);
+            if (stack.getAmount() == 0) items[i] = null;
         }
-        return total;
+        return units == 0;
     }
-
-    /** Снимает ровно {@code units} единиц материала (вызывать после проверки countItems). */
-    public static void removeItems(PlayerInventory inventory, Material material, long units) {
-        long remaining = units;
-        ItemStack[] contents = inventory.getContents();
-        for (int slot = 0; slot < contents.length && remaining > 0; slot++) {
-            ItemStack stack = contents[slot];
-            if (stack == null || stack.getType() != material) continue;
-            if (stack.getAmount() <= remaining) {
-                remaining -= stack.getAmount();
-                inventory.setItem(slot, null);
-            } else {
-                stack.setAmount((int) (stack.getAmount() - remaining));
-                remaining = 0;
-            }
+    private static boolean insert(ItemStack[] items, Material material, long units) {
+        int maximum = material.getMaxStackSize();
+        for (int i = 0; i < items.length && units > 0; i++) {
+            var stack = items[i]; if (!plain(stack) || stack.getType() != material) continue;
+            int add = (int) Math.min(units, maximum - stack.getAmount()); stack.setAmount(stack.getAmount() + add); units -= add;
         }
-    }
-
-    /** Выдаёт предметы игроку; не влезшее бросается под ноги. */
-    public static void giveItems(Player player, Material material, long units) {
-        long remaining = units;
-        Map<Integer, ItemStack> leftover = new HashMap<>();
-        while (remaining > 0) {
-            int take = (int) Math.min(material.getMaxStackSize(), remaining);
-            leftover.putAll(player.getInventory().addItem(new ItemStack(material, take)));
-            remaining -= take;
+        for (int i = 0; i < items.length && units > 0; i++) if (items[i] == null || items[i].getType().isAir()) {
+            int add = (int) Math.min(units, maximum); items[i] = new ItemStack(material, add); units -= add;
         }
-        leftover.values().forEach(stack -> player.getWorld().dropItemNaturally(player.getLocation(), stack));
+        return units == 0;
     }
-
-    /** Итоговый список имён валют для подсказок сообщений. */
-    public String currencyNames() {
-        return String.join(", ", config.currencyRates().keySet().stream()
-                .map(String::toLowerCase).toList());
-    }
-
-    /** Товар по пользовательскому вводу (регистронезависимо). */
-    public Optional<ShopConfig.ShopItem> findItem(String input) {
-        return config.item(input);
-    }
+    public Optional<ShopConfig.ShopItem> findItem(String input) { return config.item(input); }
 }

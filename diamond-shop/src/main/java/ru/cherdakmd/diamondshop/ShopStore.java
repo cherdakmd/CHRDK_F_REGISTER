@@ -115,6 +115,11 @@ public final class ShopStore {
 
     /* ------------------------------- балансы ------------------------------- */
 
+    /** Только неизменяемый вход миграции. В новых сделках эти деньги не расходуются. */
+    public synchronized Map<UUID, Double> legacyBalances() { return Map.copyOf(balances); }
+    public synchronized boolean canRecordTurnover(UUID id, double amount, double limit, long now) {
+        return Double.isFinite(amount) && amount > 0 && (limit <= 0 || usedToday(id, now) + amount <= limit);
+    }
     public synchronized double balanceOf(UUID uuid) {
         return balances.getOrDefault(uuid, 0d);
     }

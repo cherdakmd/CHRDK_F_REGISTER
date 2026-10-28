@@ -44,6 +44,29 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
         return bank == null ? 0L : bank.balanceOf(playerName);
     }
 
+    @Override public long personalDiamonds(Player player) {
+        return player == null || plugin == null || plugin.bank() == null || !org.bukkit.Bukkit.isPrimaryThread()
+                ? 0L : plugin.bank().balance(player);
+    }
+    @Override public boolean importLegacyShop(java.util.UUID player, long amount) {
+        return plugin != null && plugin.bank() != null && plugin.bank().enabled() && org.bukkit.Bukkit.isPrimaryThread()
+                && bank != null && bank.importLegacyShop(player, amount);
+    }
+    @Override public boolean exchangeDiamonds(Player player, long debit, long credit,
+            org.bukkit.inventory.ItemStack[] expected, org.bukkit.inventory.ItemStack[] replacement) {
+        if (plugin == null || plugin.bank() == null || !plugin.bank().enabled() || bank == null
+                || !org.bukkit.Bukkit.isPrimaryThread() || player == null || !player.isOnline() || player.isDead()
+                || player.hasMetadata("NPC") || player.getGameMode() != org.bukkit.GameMode.SURVIVAL || !isAuthenticated(player)
+                || expected == null || replacement == null || expected.length != 36 || replacement.length != 36
+                || !java.util.Arrays.equals(expected, player.getInventory().getStorageContents())) return false;
+        var original = java.util.Arrays.stream(expected).map(i -> i == null ? null : i.clone()).toArray(org.bukkit.inventory.ItemStack[]::new);
+        var next = java.util.Arrays.stream(replacement).map(i -> i == null ? null : i.clone()).toArray(org.bukkit.inventory.ItemStack[]::new);
+        return bank.exchange(player.getUniqueId(), player.getName(), debit, credit, () -> {
+            try { player.getInventory().setStorageContents(next); }
+            catch (RuntimeException failure) { player.getInventory().setStorageContents(original); throw failure; }
+        });
+    }
+
     @Override
     public long bankSent(String playerName) {
         java.util.UUID id = bank == null ? null : bank.idByName(playerName);
