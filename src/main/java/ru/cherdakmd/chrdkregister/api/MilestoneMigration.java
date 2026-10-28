@@ -33,6 +33,7 @@ public final class MilestoneMigration {
             var out=new LinkedHashMap<UUID,Set<String>>();
             for(var entry:data.getAsJsonObject("players").entrySet()) {
                 UUID owner=uuid(entry.getKey()); var row=entry.getValue().getAsJsonObject();
+                validateProgress(row,kind);
                 String field=kind==Kind.SKILLS?"milestones":"claimed";
                 if(!row.has(field)||!row.get(field).isJsonArray()) throw new IllegalArgumentException("missing legacy claims");
                 var claims=new LinkedHashSet<String>();
@@ -42,17 +43,58 @@ public final class MilestoneMigration {
             return Map.copyOf(out);
         } catch(RuntimeException error) { throw new IOException("Неоднозначный legacy ledger наград: "+file+"; файл не перезаписывается",error); }
     }
+    private static void strings(JsonObject row,String field) {
+        if(!row.has(field)||!row.get(field).isJsonArray()) throw new IllegalArgumentException("invalid progress "+field);
+        for(var value:row.getAsJsonArray(field)) {
+            if(!value.isJsonPrimitive()||!value.getAsJsonPrimitive().isString()||value.getAsString().isBlank()) throw new IllegalArgumentException("invalid id "+field);
+        }
+    }
+    private static void counters(JsonObject row,String field) {
+        if(!row.has(field)||!row.get(field).isJsonObject()) throw new IllegalArgumentException("invalid counters "+field);
+        for(var entry:row.getAsJsonObject(field).entrySet()) {
+            var value=entry.getValue();
+            if(!value.isJsonPrimitive()||!value.getAsJsonPrimitive().isNumber()||value.getAsBigDecimal().longValueExact()<0) throw new IllegalArgumentException("invalid counter");
+        }
+    }
+    private static void validateProgress(JsonObject row,Kind kind) {
+        if(kind==Kind.SKILLS) {
+            counters(row,"xp");
+            if(row.has("name")&&(!row.get("name").isJsonPrimitive()||!row.get("name").getAsJsonPrimitive().isString())) throw new IllegalArgumentException("invalid player name");
+        } else if(kind==Kind.ACHIEVEMENTS) {
+            counters(row,"counters"); strings(row,"unlocked");
+            if(row.has("badge")&&!row.get("badge").isJsonNull()&&(!row.get("badge").isJsonPrimitive()||!row.get("badge").getAsJsonPrimitive().isString())) throw new IllegalArgumentException("invalid badge");
+        } else {
+            strings(row,"discovered");
+            for(String field:List.of("firstFound","lastFound")) {
+                if(!row.has(field)||!row.get(field).isJsonPrimitive()||!row.get(field).getAsJsonPrimitive().isNumber()||row.get(field).getAsBigDecimal().longValueExact()<0) throw new IllegalArgumentException("invalid discovery time");
+            }
+        }
+    }
     public static Map<UUID,Set<String>> tierForge(Path file) throws IOException {
         if(!Files.exists(file)) return Map.of();
         try {
             if(!Files.isRegularFile(file)||Files.size(file)>32L*1024*1024) throw new IllegalArgumentException("legacy capacity/type");
             var yaml=new YamlConfiguration(); yaml.load(file.toFile());
+            if(yaml.contains("players")) {
+                var players=yaml.getConfigurationSection("players"); if(players==null) throw new IllegalArgumentException("invalid stats players");
+                for(String player:players.getKeys(false)) {
+                    uuid(player); var row=players.getConfigurationSection(player); if(row==null) throw new IllegalArgumentException("invalid stats profile");
+                    for(Object value:row.getValues(false).values()) {
+                        if(!(value instanceof Number)||new java.math.BigDecimal(value.toString()).longValueExact()<0||new java.math.BigDecimal(value.toString()).longValueExact()>Integer.MAX_VALUE) throw new IllegalArgumentException("invalid stats counter");
+                    }
+                }
+            }
             if(!yaml.contains("collection")) return Map.of();
             var root=yaml.getConfigurationSection("collection"); if(root==null) throw new IllegalArgumentException("collection section");
             var out=new LinkedHashMap<UUID,Set<String>>();
             for(String raw:root.getKeys(false)) {
                 UUID owner=uuid(raw); var row=root.getConfigurationSection(raw);
                 if(row==null||!row.isList("claimed")) throw new IllegalArgumentException("legacy collection claims");
+                for(String field:List.of("tiers","properties","affixes")) {
+                    if(!row.isList(field)) throw new IllegalArgumentException("invalid collection progress");
+                    for(Object value:Objects.requireNonNull(row.getList(field))) if(!(value instanceof String id)||id.isBlank()) throw new IllegalArgumentException("invalid collection id");
+                }
+                if(row.contains("title")&&!(row.get("title") instanceof String)) throw new IllegalArgumentException("invalid title");
                 var claims=new LinkedHashSet<String>();
                 for(Object value:Objects.requireNonNull(row.getList("claimed"))) {
                     if(!(value instanceof String key)) throw new IllegalArgumentException("legacy claim key");
