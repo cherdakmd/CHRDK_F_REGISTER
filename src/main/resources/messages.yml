@@ -1351,6 +1351,7 @@ messages:
   labels.menu-cosmetics: "<light_purple>Вся косметика</light_purple>"
 
   finance:
+    award-status: '<gray>Награды /bal: %source%, lineage=%lineage%, получателей с доходом=%count%, исправен=%healthy%, конфликт=%conflict%. Это не сброс IO-карантина.</gray>'
     service-quote: '<gray>Цена услуги: %cost% 💠. Оплата только после ожидания и выбора точки: /bal, затем обычные предметы; сдача и возврат — /bal.</gray>'
     service-mode: '<red>Оплата требует авторизации, живого игрока в Survival/Adventure; NPC не допускаются.</red>'
     service-wait: '<yellow>Платёж/исход услуги ожидает сверки. Новые сделки приостановлены; уже начатая оплата не объявляется отменённой. Администратору: finance / recover.</yellow>'

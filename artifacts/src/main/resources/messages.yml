@@ -86,7 +86,7 @@ messages:
   collection-reward-claimed: "<green>получено</green>"
   collection-reward-pending: "<yellow>ещё нет</yellow>"
   collection-reward-hours: "<aqua>%hours% ч. буста</aqua>"
-  collection-reward-diamonds: "<aqua>%count% алмазов</aqua>"
+  collection-reward-diamonds: "<aqua>%count% алмазов в /bal</aqua>"
   collection-reward-join: "<gray> + </gray>"
   collection-reward-none: "<gray>отметка о достижении</gray>"
   collection-discovered: "<gold>✦ Коллекция пополнилась: %name% <gray>(%found%/%total%)</gray></gold>"
@@ -397,3 +397,5 @@ messages:
   trait.vechnyj-golod:
     name: "Вечный голод"
     desc: "Голод наступает быстрее"
+
+  finance.award-status: '<gray>Награды /bal: %source%, lineage=%lineage%, получателей с доходом=%count%, исправен=%healthy%, конфликт=%conflict%. Это не сброс IO-карантина.</gray>'

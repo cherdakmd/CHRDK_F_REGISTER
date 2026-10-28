@@ -32,7 +32,7 @@ import java.util.UUID;
 public interface ChrdkRegisterApi {
 
     /** Версия контракта API. Растёт при расширении (добавлении методов/событий). */
-    int API_VERSION = 19;
+    int API_VERSION = 20;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -228,6 +228,8 @@ public interface ChrdkRegisterApi {
     default boolean registerIncomeSource(String source, UUID lineage) { return false; }
     default boolean incomeSourceAvailable(String source, UUID lineage) { return false; }
     default UUID knownBankPlayer(String name) { return null; }
+    /** API 20: UUID уже известен банку/серверу. Не создаёт игрока по одному имени/неизвестному UUID. */
+    default boolean canReceiveBankIncome(UUID owner) { return false; }
     default long creditedEntitlement(String source, UUID lineage, String key, UUID owner) { return -1L; }
     /** true — total зачислен полностью. false: выплата могла быть частичной/неизвестной; нельзя откатывать source total. */
     default boolean creditEntitlement(String source, UUID lineage, String key, UUID owner, long total) { return false; }

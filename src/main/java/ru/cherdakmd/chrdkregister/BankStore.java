@@ -282,6 +282,8 @@ public final class BankStore {
         return key.isEmpty() ? null : byName.get(key);
     }
 
+    public synchronized boolean knows(UUID id) { return id != null && accounts.containsKey(id); }
+
     public synchronized long balance(UUID id) {
         Account account = account(id);
         return account == null ? 0L : account.balance;

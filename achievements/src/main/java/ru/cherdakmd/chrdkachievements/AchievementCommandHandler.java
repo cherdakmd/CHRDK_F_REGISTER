@@ -127,6 +127,7 @@ public final class AchievementCommandHandler implements CommandExecutor, TabComp
             plugin.messages().send(sender, "no-permission");
             return true;
         }
+        if (plugin.awards().admin(sender,args)) return true;
         if (args.length == 1 && args[0].equalsIgnoreCase("reload")) {
             plugin.reloadAchievementsConfig();
             plugin.messages().send(sender, "admin-reloaded");

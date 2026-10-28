@@ -33,6 +33,7 @@ dependencies {
     // PlaceholderAPI — мягкая интеграция: в рантайме плагина может не быть.
     compileOnly "me.clip:placeholderapi:2.12.3"
 
+    testImplementation project(':')
     testImplementation "org.purpurmc.purpur:purpur-api:${project.purpur_api_version}"
     testImplementation "com.google.code.gson:gson:2.11.0"
     testImplementation "org.junit.jupiter:junit-jupiter:5.11.3"

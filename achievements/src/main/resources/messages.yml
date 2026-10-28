@@ -49,7 +49,7 @@ messages:
   achievement-hint-badges: "<gray>Витрина и бейджи: <yellow>/achievements</yellow></gray>"
   actionbar-unlocked: "<gold>✦ %name%</gold>"
   reward-hours: "<aqua>%hours% ч. буста</aqua>"
-  reward-diamonds: "<aqua>%count% алмазов</aqua>"
+  reward-diamonds: "<aqua>%count% алмазов в /bal</aqua>"
   reward-join: "<gray> + </gray>"
   reward-none: "<gray>без материальной награды</gray>"
 
@@ -249,3 +249,5 @@ messages:
   ach.povelitel-zverej.desc: "Приручить пятьдесят животных."
   ach.legenda-legend.name: "Легенда легенд"
   ach.legenda-legend.desc: "Открыть все остальные достижения обновлённого каталога. Даёт бейдж «Легенда легенд»."
+
+  finance.award-status: '<gray>Награды /bal: %source%, lineage=%lineage%, получателей с доходом=%count%, исправен=%healthy%, конфликт=%conflict%. Это не сброс IO-карантина.</gray>'

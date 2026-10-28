@@ -10,7 +10,7 @@ messages:
   # ------------------------------ уведомления ------------------------------
   level-up: "<gold>✦ <white>%skill%</white> — уровень <yellow>%level%</yellow>!</gold>"
   actionbar-level: "<gold>%skill% → %level%</gold>"
-  milestone: "<green>Награда за уровень <white>%level%</white>: <aqua>%diamonds% алмазов</aqua>.</green>"
+  milestone: "<green>Награда за уровень <white>%level%</white>: <aqua>%diamonds% алмазов в /bal</aqua>. При полном/недоступном банке выплата сохранена.</green>"
   extra-catch: "<aqua>Рыбалка: лишний улов!</aqua>"
   arrow-kept: "<gray>Стрельба: стрела сохранена.</gray>"
   extra-potion: "<light_purple>Алхимия: вторая порция ингредиента.</light_purple>"
@@ -237,3 +237,5 @@ messages:
   ability.archery.desc: "<gray>Следующая успешная стрела, выпущенная после подготовки: подсвечивает враждебного моба на 8 секунд. Только PvE, без прибавки урона.</gray>"
   ability.defense.name: "<gold>Сдерживание</gold>"
   ability.defense.desc: "<gray>Следующий полученный удар враждебного моба: Замедление I атакующему на 3 секунды. Нужен щит. Урон не отменяется. Только PvE.</gray>"
+
+  finance.award-status: '<gray>Награды /bal: %source%, lineage=%lineage%, получателей с доходом=%count%, исправен=%healthy%, конфликт=%conflict%. Это не сброс IO-карантина.</gray>'

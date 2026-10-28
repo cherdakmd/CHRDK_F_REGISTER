@@ -516,6 +516,7 @@ public final class TierCommandHandler implements TabExecutor {
             plugin.messages().send(sender, "admin-no-perm");
             return true;
         }
+        if (plugin.awards().admin(sender,args)) return true;
         if (args.length >= 1 && "reload".equalsIgnoreCase(args[0])) {
             plugin.reloadTierConfig();
             plugin.messages().send(sender, "admin-reloaded");

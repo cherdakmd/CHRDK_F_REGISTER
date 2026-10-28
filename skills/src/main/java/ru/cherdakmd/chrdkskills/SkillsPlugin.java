@@ -39,13 +39,24 @@ public final class SkillsPlugin extends JavaPlugin {
     private BukkitTask saveTask;
     private BukkitTask effectTask;
 
+    private ru.cherdakmd.chrdkregister.api.MilestoneAwards awards;
+    public ru.cherdakmd.chrdkregister.api.MilestoneAwards awards() { return awards; }
+
     @Override
     public void onEnable() {
         saveDefaultConfig();
         this.store = new SkillStore(getDataFolder().toPath(), getLogger());
-        this.store.load();
         // Конфиг читается до создания листенера: антинакрутка берёт из него TTL.
         reloadSkillsConfig();
+        try {
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 20) throw new IllegalStateException("Нужен Core API 20+");
+            this.awards = new ru.cherdakmd.chrdkregister.api.MilestoneAwards(this,this::coreApi,this::messages,"skills-awards",ru.cherdakmd.chrdkregister.api.MilestoneMigration.json(getDataFolder().toPath().resolve("skills.json"),ru.cherdakmd.chrdkregister.api.MilestoneMigration.Kind.SKILLS));
+        } catch (Exception | LinkageError error) {
+            getLogger().log(java.util.logging.Level.SEVERE,"Модуль остановлен без сброса прогресса/наград",error);
+            this.store = null;
+            Bukkit.getPluginManager().disablePlugin(this); return;
+        }
+        this.store.load();
         this.service = new SkillService(this, store);
         this.abilityStore = new SkillAbilityStore(getDataFolder().toPath(), getLogger());
         abilityStore.load();
@@ -99,6 +110,7 @@ public final class SkillsPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (awards != null) awards.close();
         ru.cherdakmd.chrdkregister.api.CropReplanting.cancel(this);
         if (abilityTask != null) abilityTask.cancel();
         if (abilities != null) abilities.clear();

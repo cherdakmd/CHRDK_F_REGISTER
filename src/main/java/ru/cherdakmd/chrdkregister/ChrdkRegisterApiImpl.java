@@ -148,8 +148,14 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
     @Override public long creditedEntitlement(String source, java.util.UUID lineage, String key, java.util.UUID owner) {
         return auctionBankReady() ? bank.creditedEntitlement(source, lineage, key, owner) : -1L;
     }
+    @Override public boolean canReceiveBankIncome(java.util.UUID owner) {
+        if (!auctionBankReady() || owner == null) return false;
+        if (bank.knows(owner)) return true;
+        var player = org.bukkit.Bukkit.getPlayer(owner);
+        return player != null && isAuthenticated(player) || org.bukkit.Bukkit.getOfflinePlayer(owner).hasPlayedBefore();
+    }
     @Override public boolean creditEntitlement(String source, java.util.UUID lineage, String key, java.util.UUID owner, long total) {
-        return auctionBankReady() && bank.creditEntitlement(source, lineage, key, owner, total);
+        return auctionBankReady() && canReceiveBankIncome(owner) && bank.creditEntitlement(source, lineage, key, owner, total);
     }
     @Override public boolean auctionBankAvailable() { return auctionBankReady(); }
     @Override public long auctionBankBalance(java.util.UUID player) { return auctionBankReady() && player != null ? bank.balance(player) : -1L; }
