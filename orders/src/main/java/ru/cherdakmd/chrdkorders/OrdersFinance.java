@@ -87,10 +87,18 @@ public final class OrdersFinance implements AutoCloseable {
         if(p==null) return false;
         if(paused()) { waitMessage(p); return false; }
         if(!eligible(p)) { plugin.messages().send(p,"finance-mode"); return false; }
+        final String beforeState,afterState;
         try {
             var before=ChargeInventory.copy(p.getInventory().getStorageContents()); var after=plan(before,order);
             if(after==null) { plugin.messages().send(p,"inventory-error"); return false; }
-            var pending=store.prepare(p.getUniqueId(),p.getName(),order,now,plugin.config().maxPerDay(),plugin.config().cooldownSeconds(),ChargeInventory.encode(before),ChargeInventory.encode(after));
+            beforeState=ChargeInventory.encode(before); afterState=ChargeInventory.encode(after);
+        } catch(RuntimeException invalidInventory) {
+            // Ничего ещё не записано/не списано. Непригодный для snapshot предмет
+            // у одного игрока не должен переводить всю доску в IO-карантин.
+            plugin.messages().send(p,"inventory-error"); return false;
+        }
+        try {
+            var pending=store.prepare(p.getUniqueId(),p.getName(),order,now,plugin.config().maxPerDay(),plugin.config().cooldownSeconds(),beforeState,afterState);
             if(InventoryIncome.recover(pending.inventory(),inventory(p))!=InventoryIncome.Decision.CONSUMED) {
                 conflict=true; lock(p); waitMessage(p); return false;
             }

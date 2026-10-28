@@ -516,7 +516,7 @@ public final class OrdersStore {
             checkpoint.afterReplace();
             try(var directory=FileChannel.open(file.getParent(),StandardOpenOption.READ)) { directory.force(true); }
             dirty=false;
-        } catch(IOException error) { healthy=false; dirty=true; throw error; }
+        } catch(IOException | RuntimeException error) { healthy=false; dirty=true; throw error; }
     }
     /** Номер суток UTC — так «сегодня» одинаково на любом сервере. */
     public static long dayOf(long now) {
