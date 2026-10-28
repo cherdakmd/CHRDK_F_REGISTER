@@ -142,7 +142,7 @@ public final class CollectionService {
             grant(player, tier);
             plugin.messages().send(player, "collection-reward-granted",
                     "percent", String.valueOf(tier.percent()),
-                    "reward", Messages.trusted(rewardText(tier)));
+                    "reward", Messages.trusted(rewardText(new CollectionRewards.Tier(tier.percent(),tier.passHours(),(int)plugin.awards().amount(player,"percent:"+tier.percent())))));
             granted++;
         }
         return granted;

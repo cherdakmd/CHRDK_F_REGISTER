@@ -117,4 +117,26 @@ class MilestoneFinanceTest {
         var s=initialized(); s.reserve(owner,"level:25",0); s=load(); s.reserve(owner,"level:25",50); assertTrue(load().totals().isEmpty());
         assertTrue(load().claimed(owner).contains("level:25"));
     }
+    @Test void multipleCrossedLevelsShareOneAtomicReservationAndKeepFrozenPrices() throws Exception {
+        var s=initialized(); s.reserveAll(owner,Map.of("level:25",17L,"level:50",3L));
+        s=load(); assertEquals(20,s.totals().get(owner)); assertTrue(s.claimed(owner).containsAll(Set.of("level:25","level:50")));
+        s.reserveAll(owner,Map.of("level:25",99L,"level:50",99L)); assertEquals(17,s.amount(owner,"level:25")); assertEquals(3,s.amount(owner,"level:50"));
+    }
+    @Test void invalidOrFailedBatchDoesNotLeaveFirstCrossedLevelPaidAlone() throws Exception {
+        var s=initialized(); assertThrows(IllegalArgumentException.class,()->s.reserveAll(owner,Map.of("level:25",17L,"level:50",-1L)));
+        assertTrue(load().totals().isEmpty());
+        Files.createDirectory(dir.resolve("milestone-awards.json.tmp"));
+        assertThrows(IOException.class,()->s.reserveAll(owner,Map.of("level:25",17L,"level:50",3L)));
+        assertFalse(load().claimed(owner).contains("level:25")); assertFalse(load().claimed(owner).contains("level:50"));
+    }
+
+    @Test void bankAfterReplaceFailureRecoversReceiptWithoutPayingAgain() throws Exception {
+        var s=initialized(); s.reserve(owner,"level:25",17); var bank=bank();
+        bank.registerIncomeSource(SOURCE,s.lineage()); s.markRegistered();
+        var ambiguous=new BankStore(dir.resolve("core"),Logger.getAnonymousLogger(),()->{throw new IOException("after bank replace");}); ambiguous.load();
+        assertFalse(MilestoneAwards.deliver(s,new Gateway(ambiguous),SOURCE,owner,17)); assertFalse(ambiguous.available());
+        var reboot=bank(); assertEquals(17,reboot.balance(owner));
+        assertTrue(MilestoneAwards.deliver(load(),new Gateway(reboot),SOURCE,owner,17)); assertEquals(17,bank().balance(owner));
+    }
+
 }

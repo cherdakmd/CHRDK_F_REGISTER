@@ -91,11 +91,22 @@ public final class MilestoneStore {
     }
     /** true = финансовое обязательство уже durable, в том числе при повторе/новой цене. */
     public synchronized boolean reserve(UUID owner,String key,long amount) throws IOException {
-        writable(); validKey(key);
-        if(!data.imported||owner==null||amount<0||amount>1_000_000) throw new IllegalArgumentException("award reservation");
-        if(claimed(owner).contains(key)) return true;
-        var n=copy(); n.awards.computeIfAbsent(owner,id->new LinkedHashMap<>()).put(key,amount); write(n); return true;
+        validKey(key); return reserveAll(owner,Map.of(key,amount));
     }
+    /** Один переход XP может закрыть несколько уровней: все once-записи публикуются вместе. */
+    public synchronized boolean reserveAll(UUID owner,Map<String,Long> awards) throws IOException {
+        writable();
+        if(!data.imported||owner==null||awards==null) throw new IllegalArgumentException("award reservation");
+        for(var row:awards.entrySet()) {
+            validKey(row.getKey());
+            if(row.getValue()==null||row.getValue()<0||row.getValue()>1_000_000) throw new IllegalArgumentException("award amount");
+        }
+        if(awards.isEmpty()||claimed(owner).containsAll(awards.keySet())) return true;
+        var n=copy(); var rows=n.awards.computeIfAbsent(owner,id->new LinkedHashMap<>());
+        awards.forEach(rows::putIfAbsent); write(n); return true;
+    }
+    /** -1 — веха ещё не принята; ноль также может означать историческую already-paid отметку. */
+    public synchronized long amount(UUID owner,String key) { var rows=data.awards.get(owner); return rows==null?-1:rows.getOrDefault(key,-1L); }
     public synchronized Set<String> claimed(UUID owner) { var rows=data.awards.get(owner); return rows==null?Set.of():Set.copyOf(rows.keySet()); }
     public synchronized Map<UUID,Long> totals() {
         var totals=new LinkedHashMap<UUID,Long>();

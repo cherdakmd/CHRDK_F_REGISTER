@@ -285,7 +285,7 @@ public final class TierCollectionService {
             plugin.messages().send(player, "collection-section",
                     "name", Messages.trusted(sectionName(section)),
                     "reward", Messages.trusted(rewardText(reward.passHours(),
-                            reward.diamonds())));
+                            (int)plugin.awards().amount(player,"section:"+section))));
             if (config.titles().enabled()) {
                 String title = titleText(section);
                 if (title != null) {
@@ -307,7 +307,7 @@ public final class TierCollectionService {
         plugin.messages().send(player, "collection-milestone",
                 "name", Messages.trusted(name),
                 "reward", Messages.trusted(rewardText(milestone.passHours(),
-                        milestone.diamonds())));
+                        (int)plugin.awards().amount(player,key))));
     }
 
     private void pay(Player player, String key, int passHours, int diamonds) {

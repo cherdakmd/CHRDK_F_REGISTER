@@ -149,7 +149,8 @@ public final class AchievementService {
         plugin.messages().send(player, "achievement-unlocked",
                 "name", Messages.trusted(name),
                 "category", plugin.messages().mini("category." + def.category().id()));
-        AchievementsConfig.Reward reward = plugin.config().rewardOf(def);
+        AchievementsConfig.Reward configured = plugin.config().rewardOf(def);
+        AchievementsConfig.Reward reward = new AchievementsConfig.Reward(configured.passHours(),(int)plugin.awards().amount(player,def.id()));
         if (reward.passHours() > 0 || reward.diamonds() > 0) {
             plugin.messages().send(player, "achievement-reward",
                     "reward", Messages.trusted(rewardText(reward)));

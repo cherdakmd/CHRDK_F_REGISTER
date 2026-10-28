@@ -56,6 +56,7 @@ class MessagesTest {
             // 1.4.106: передаётся переменной messageKey в SpawnService#teleport.
             "spawn.teleported",
             // 1.4.156: кнопки меню /profile — ключи передаются в ProfileService#button.
+            "finance.award-status", // общий API-адаптер читает Messages вызывающего модуля
             "profile.to-chat", "profile.to-chat-lore", "profile.refresh",
             "profile.refresh-lore", "profile.close");
 

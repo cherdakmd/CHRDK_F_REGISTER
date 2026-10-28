@@ -191,21 +191,19 @@ public final class SkillService {
         if (newLevel <= oldLevel) {
             return List.of();
         }
+        var pending = new java.util.LinkedHashMap<String,Long>();
+        for (var entry : plugin.config().milestones().entrySet()) {
+            int level=entry.getKey();
+            if (level>oldLevel && level<=newLevel && !store.milestones(key(player)).contains(level))
+                pending.put("level:"+level,(long)entry.getValue().diamonds());
+        }
+        if (!pending.isEmpty() && !plugin.awards().reserveAll(player,pending)) return null;
         List<Integer> granted = new ArrayList<>();
-        for (Map.Entry<Integer, SkillsConfig.Milestone> entry
-                : plugin.config().milestones().entrySet()) {
-            int level = entry.getKey();
-            if (level <= oldLevel || level > newLevel) {
-                continue;
-            }
-            if (store.milestones(key(player)).contains(level)) continue;
-            SkillsConfig.Milestone milestone = entry.getValue();
-            if (!plugin.awards().reserve(player,"level:"+level,milestone.diamonds())) return null;
-            store.markMilestone(key(player), level);
-            granted.add(level);
-            plugin.messages().send(player, "milestone",
-                    "level", String.valueOf(level),
-                    "diamonds", String.valueOf(milestone.diamonds()));
+        for (var entry : plugin.config().milestones().entrySet()) {
+            int level=entry.getKey();
+            if (!pending.containsKey("level:"+level)) continue;
+            store.markMilestone(key(player),level); granted.add(level);
+            plugin.messages().send(player,"milestone","level",level,"diamonds",plugin.awards().amount(player,"level:"+level));
         }
         return List.copyOf(granted);
     }

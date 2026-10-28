@@ -59,10 +59,14 @@ public final class MilestoneAwards {
     public boolean ready(Player player) { return Bukkit.isPrimaryThread()&&!conflict&&store.healthy()&&player!=null&&player.isOnline()&&!player.hasMetadata("NPC")&&api.get()!=null&&api.get().isAuthenticated(player); }
     /** Вызывать до legacy markClaimed и до объявления успеха. Повтор не меняет замороженную сумму. */
     public boolean reserve(Player player,String key,long amount) {
+        return reserveAll(player,Map.of(key,amount));
+    }
+    public boolean reserveAll(Player player,Map<String,Long> awards) {
         if(!ready(player)) return false;
-        try { store.reserve(player.getUniqueId(),key,amount); return true; }
+        try { store.reserveAll(player.getUniqueId(),awards); return true; }
         catch(Exception error) { conflict=true; failure(error); return false; }
     }
+    public long amount(Player player,String key) { return store.amount(player.getUniqueId(),key); }
     public void tick() {
         if(conflict||!store.healthy()) return;
         try {
