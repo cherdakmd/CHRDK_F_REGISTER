@@ -78,17 +78,17 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
         return known; // Не генерируем offline UUID и не обращаемся к Mojang за именем.
     }
     @Override public boolean importLegacyClaims(String name, long amount) {
-        if (plugin == null || plugin.bank() == null || !plugin.bank().enabled() || !org.bukkit.Bukkit.isPrimaryThread()) return false;
+        if (plugin == null || !plugin.isEnabled() || plugin.bank() == null || !plugin.bank().enabled() || !org.bukkit.Bukkit.isPrimaryThread()) return false;
         var id = claimAccount(name);
         return id != null && bank.importLegacyClaims(id, name, amount);
     }
     @Override public long claimBankBalance(String name) {
-        if (plugin == null || plugin.bank() == null || !plugin.bank().enabled() || !org.bukkit.Bukkit.isPrimaryThread()) return 0;
+        if (plugin == null || !plugin.isEnabled() || plugin.bank() == null || !plugin.bank().enabled() || !org.bukkit.Bukkit.isPrimaryThread()) return 0;
         var id = claimAccount(name); return id == null ? 0 : bank.balance(id);
     }
     @Override public boolean exchangeClaimAccounts(java.util.Map<String, Long> deltas, Player payer,
             org.bukkit.inventory.ItemStack[] expected, org.bukkit.inventory.ItemStack[] replacement) {
-        if (plugin == null || plugin.bank() == null || !plugin.bank().enabled() || bank == null || !org.bukkit.Bukkit.isPrimaryThread()
+        if (plugin == null || !plugin.isEnabled() || plugin.bank() == null || !plugin.bank().enabled() || bank == null || !org.bukkit.Bukkit.isPrimaryThread()
                 || deltas == null || deltas.isEmpty() || deltas.size() > 8) return false;
         var changes = new java.util.LinkedHashMap<java.util.UUID, Long>();
         for (var row : deltas.entrySet()) {

@@ -402,7 +402,7 @@ public final class ClaimsService {
                     "net", String.valueOf(net), "tax", String.valueOf(tax));
             Player sellerOnline = Bukkit.getPlayerExact(seller);
             if (sellerOnline != null && authenticated(sellerOnline)) {
-                plugin.messages().send(sellerOnline, "buy-sold",
+                plugin.messages().send(sellerOnline, "finance.buy-sold",
                         "x", String.valueOf(claim.x), "z", String.valueOf(claim.z),
                         "price", String.valueOf(price), "buyer", player.getName(),
                         "net", String.valueOf(net), "tax", String.valueOf(tax));

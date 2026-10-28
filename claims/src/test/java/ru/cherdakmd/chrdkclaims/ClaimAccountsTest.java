@@ -87,6 +87,8 @@ class ClaimAccountsTest {
         assertTrue(plugin.indexOf("store.accounts(new ClaimBankBridge")<plugin.indexOf("service.processUpkeep"));
         assertTrue(bridge.contains("getStorageContents()")); assertTrue(bridge.contains("DiamondItems.plain"));
         assertTrue(bridge.contains("exchangeClaimAccounts(changes, null, null, null)"));
+        assertTrue(bridge.contains("Bukkit.getScheduler().runTask(plugin"));
+        assertTrue(bridge.indexOf("Bukkit.getScheduler().runTask(plugin") < bridge.indexOf("plugin.messages().send(player, \"finance.payment\""));
         assertTrue(service.contains("ClaimUpkeep.day")); assertTrue(service.contains("finance.bank-commands"));
         var userFile=dir.resolve("messages.yml");
         Files.writeString(userFile,"claims:\n  profile-treasury: 'Старая пользовательская казна'\n");

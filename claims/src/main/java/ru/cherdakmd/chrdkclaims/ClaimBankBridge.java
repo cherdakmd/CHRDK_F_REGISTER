@@ -58,7 +58,22 @@ final class ClaimBankBridge implements ClaimAccounts {
         }
         changes.put(key, -plan.bank() + plan.change());
         boolean committed = plugin.coreApi().exchangeClaimAccounts(changes, player, before, after);
-        if (committed) plugin.messages().send(player, "finance.payment", "bank", plan.bank(), "physical", plan.physical(), "change", plan.change());
+        // Никаких сообщений/рендеринга между финансовым commit и записью территории.
+        // Ошибка пользовательского MiniMessage не должна прервать уже оплаченный переход владения.
+        if (committed) {
+            try {
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    try {
+                        if (player.isOnline()) plugin.messages().send(player, "finance.payment",
+                                "bank", plan.bank(), "physical", plan.physical(), "change", plan.change());
+                    } catch (RuntimeException error) {
+                        plugin.getLogger().warning("Не удалось показать отчёт оплаты Claims: " + error.getMessage());
+                    }
+                });
+            } catch (RuntimeException error) {
+                plugin.getLogger().warning("Не удалось отложить отчёт оплаты Claims: " + error.getMessage());
+            }
+        }
         return committed;
     }
 }

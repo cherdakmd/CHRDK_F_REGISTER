@@ -301,7 +301,8 @@ claims:
     balance-due: '<gray>Ближайшая рента: %date% · личный /bal %balance% ⛁ · нужно %need% ⛁. Автоматическое списание только со счёта, не из инвентаря.</gray>'
     balance-line: '<gold>Личный /bal: <aqua>%treasury% ⛁</aqua></gold> <gray>· в инвентаре %physical% ⛁ · приватов %claims%/%limit% · рента %upkeep% ⛁/сут за чанк%debt%</gray>'
     bank-commands: '<yellow>Отдельной казны приватов больше нет. Пополнение личного счёта: /bal deposit [all|hand|сумма]; снятие: /bal withdraw <сумма>. /claim balance показывает общий /bal и предметы в инвентаре.</yellow>'
-    buy-sold-notice: ваш чанк [%x%, %z%] куплен за %price% ⛁ покупателем %buyer%; зачислено %net% ⛁ (налог %tax% ⛁)
+    buy-sold: "<aqua>Ваш чанк [%x%, %z%] куплен за %price% ⛁ покупателем %buyer%; на личный /bal зачислено %net% ⛁ (налог %tax% ⛁).</aqua>"
+    buy-sold-notice: ваш чанк [%x%, %z%] куплен за %price% ⛁ покупателем %buyer%; на личный /bal зачислено %net% ⛁ (налог %tax% ⛁)
     change-to-treasury: <gray>Сдача с алмазных блоков (%change% ⛁) зачислена на личный /bal.</gray>
     debt-warning: '<red>Приват %where% не оплачен: долг %days% сут. из %grace%. Пополните /bal: /bal deposit.</red>'
     deposit-done: '<green>В казну внесено %amount% ⛁. Баланс: %balance% ⛁.</green>'
