@@ -116,6 +116,8 @@ public final class BankStore {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
+    @FunctionalInterface interface WriteCheckpoint { void afterReplace() throws IOException; }
+    private final WriteCheckpoint checkpoint;
     private final Path file;
     private final Logger logger;
     private final Map<UUID, Account> accounts = new LinkedHashMap<>();
@@ -125,8 +127,10 @@ public final class BankStore {
     public synchronized boolean available() { return available; }
 
     public BankStore(Path dataFolder, Logger logger) {
-        this.file = dataFolder.resolve("bank.json");
-        this.logger = logger;
+        this(dataFolder, logger, () -> { });
+    }
+    BankStore(Path dataFolder, Logger logger, WriteCheckpoint checkpoint) {
+        this.file = dataFolder.resolve("bank.json"); this.logger = logger; this.checkpoint = checkpoint;
     }
 
     public Path file() {
@@ -561,6 +565,7 @@ public final class BankStore {
         Files.writeString(temp, GSON.toJson(envelope), StandardCharsets.UTF_8);
         try (var channel = java.nio.channels.FileChannel.open(temp, java.nio.file.StandardOpenOption.WRITE)) { channel.force(true); }
         Files.move(temp, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        checkpoint.afterReplace();
         try (var directory = java.nio.channels.FileChannel.open(file.getParent(), java.nio.file.StandardOpenOption.READ)) { directory.force(true); }
     }
     /** Синхронизировано с durable-платежами: устаревший async-снимок не перезапишет квитанцию. */

@@ -90,4 +90,14 @@ class AuctionBankTest {
         assertFalse(bad.valid()); assertFalse(b.settleAuction(bad));
         assertNotEquals(AuctionPayment.hash("a","b"),AuctionPayment.hash("ab",""));
     }
+    @Test void exceptionAfterRenameIsUnknownNotMissingAndReloadFindsCommittedReceipt() throws Exception {
+        var b=actors(); b.deposit(buyer,"Buyer",100); b.saveNow(); var p=payment(1,100,0,0);
+        var ambiguous=new BankStore(dir,Logger.getAnonymousLogger(),()->{throw new java.io.IOException("after rename");}); ambiguous.load();
+        assertFalse(ambiguous.settleAuction(p)); assertEquals(AuctionPayment.Status.UNAVAILABLE,ambiguous.auctionPaymentStatus(p));
+        assertEquals(100,ambiguous.balance(buyer)); assertEquals(-1,ambiguous.deposit(buyer,"Buyer",1)); assertFalse(ambiguous.withdraw(buyer,1));
+        assertEquals(AuctionPayment.Status.COMMITTED,load().auctionPaymentStatus(p));
+        assertEquals(0,load().balance(buyer)); assertEquals(95,load().balance(seller));
+        ambiguous.saveNow(); assertEquals(AuctionPayment.Status.COMMITTED,load().auctionPaymentStatus(p));
+    }
+
 }

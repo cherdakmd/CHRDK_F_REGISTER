@@ -35,6 +35,8 @@ public final class AuctionStore {
         State state = new State();
         Pending pending;
     }
+    @FunctionalInterface interface WriteCheckpoint { void afterReplace() throws IOException; }
+    private final WriteCheckpoint checkpoint;
     private final Path file;
     private Envelope data = new Envelope();
     private boolean healthy = true;
@@ -43,7 +45,8 @@ public final class AuctionStore {
     public UUID market() { return data.market; }
     public long nextBankSequence() { return data.state.bankSequence + 1; }
     public Map<UUID, Long> legacyMoney() { return Map.copyOf(data.state.money); }
-    public AuctionStore(Path dir, Logger logger) { file = dir.resolve("market.json"); }
+    public AuctionStore(Path dir, Logger logger) { this(dir, logger, () -> { }); }
+    AuctionStore(Path dir, Logger logger, WriteCheckpoint checkpoint) { file = dir.resolve("market.json"); this.checkpoint = checkpoint; }
     public void load() throws IOException {
         if (!Files.exists(file)) return;
         try {
@@ -72,6 +75,7 @@ public final class AuctionStore {
                         throw new IllegalArgumentException("frozen wallet/counter changed");
                 } else validateBankPending(loaded, p);
                 validate(p.next);
+                if (loaded.schema == 1 && p.next.bankSequence != 0) throw new IllegalArgumentException("downgraded pending counter");
                 if (loaded.schema == 2 && p.payment == null && (p.operation.startsWith("BUY") || p.operation.startsWith("WITHDRAW") || p.operation.startsWith("BANK_BUY")))
                     throw new IllegalArgumentException("missing bank payment");
             }
@@ -132,6 +136,7 @@ public final class AuctionStore {
             Path temp = file.resolveSibling("market.json.tmp"); Files.write(temp, bytes);
             try (FileChannel ch = FileChannel.open(temp, StandardOpenOption.WRITE)) { ch.force(true); }
             Files.move(temp, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            checkpoint.afterReplace();
             try (FileChannel directory = FileChannel.open(file.getParent(), StandardOpenOption.READ)) { directory.force(true); }
             data = next;
         } catch (IOException error) { healthy = false; throw error; }

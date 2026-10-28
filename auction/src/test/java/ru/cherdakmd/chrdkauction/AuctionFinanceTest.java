@@ -116,4 +116,17 @@ class AuctionFinanceTest {
         String money=src.substring(src.indexOf("void money("),src.indexOf("private void lockPlayer"));
         assertFalse(money.contains("prepareMoneyClaim")); assertFalse(money.contains("setStorageContents")); assertTrue(money.contains("bankBalance"));
     }
+    @Test void marketExceptionAfterRenameCannotPublishStaleInMemoryState() throws Exception {
+        var s=market(); long id=list(s); s.enableBank(); var p=intent(s,id,false); s.prepareBankBuy(p,1500,"same","same");
+        var ambiguous=new AuctionStore(dir.resolve("auction"),Logger.getAnonymousLogger(),()->{throw new java.io.IOException("after rename");}); ambiguous.load();
+        assertThrows(java.io.IOException.class,()->ambiguous.completeBank(p)); assertFalse(ambiguous.healthy()); assertNotNull(ambiguous.pending());
+        assertThrows(IllegalStateException.class,()->ambiguous.rollbackBank(p));
+        assertNull(market().pending()); assertEquals(1,market().mail(buyer).size()); assertNull(market().lot(id));
+    }
+    @Test void legacyPartialWithdrawalFinishesBeforeImportingOnlyRemainingProceeds() throws Exception {
+        var s=market(); long id=list(s); s.prepareBuy(buyer,id,1500,"a","b"); s.complete();
+        s.prepareMoneyClaim(seller,30,"before-withdraw","after-withdraw"); s=market(); s.complete(); s.enableBank();
+        assertEquals(65,s.balance(seller)); assertTrue(bank().importLegacyAuction(s.market(),seller,s.balance(seller))); assertEquals(65,bank().balance(seller));
+    }
+
 }
