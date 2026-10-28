@@ -14,7 +14,7 @@ commands:
   huntadmin:
     description: "Управление охотой"
     permission: chrdkhunt.admin
-    usage: "/huntadmin [reload|give <ник> <coins|shards|keys> <кол-во> [семейство]|reset <ник>|info]"
+    usage: "/huntadmin [reload|awards|give <ник> <coins|shards|keys> <кол-во> [семейство]|reset <ник>|info]"
 permissions:
   chrdkhunt.use:
     description: "Охота, обмен монет и лавка"

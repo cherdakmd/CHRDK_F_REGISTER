@@ -19,6 +19,7 @@ public final class HuntPlugin extends JavaPlugin {
 
     private volatile ConfigSnapshot<HuntConfig> settings;
     private HuntStore store;
+    private HuntFinance finance;
     private HuntItems items;
     private HuntService service;
     private HuntReport report;
@@ -42,6 +43,8 @@ public final class HuntPlugin extends JavaPlugin {
      * Публичный API ядра: охота спрашивает бонус добычи ранга (1.4.167).
      * {@code null} — ядро старше API v10 или не установлено.
      */
+    public HuntFinance finance() { return finance; }
+
     public ChrdkRegisterApi coreApi() {
         return coreApi;
     }
@@ -54,8 +57,11 @@ public final class HuntPlugin extends JavaPlugin {
                 getServer().getPluginManager().disablePlugin(this);
                 return;
             }
+            this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
+            if(coreApi==null||ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)<21) throw new IllegalStateException("Нужен Core API 21+");
             this.store = new HuntStore(getDataFolder().toPath(), getLogger());
             store.load();
+            this.finance = new HuntFinance(this);
             this.items = new HuntItems(this);
             this.service = new HuntService(this);
             this.report = new HuntReport(this);
@@ -98,15 +104,17 @@ public final class HuntPlugin extends JavaPlugin {
                     + ", трофеев " + config().trophies().size()
                     + ", видов в бестиарии " + config().bestiary().totalEntries()
                     + ", охотников в базе " + store.players() + ".");
-        } catch (RuntimeException exception) {
+        } catch (Exception | LinkageError exception) {
             getLogger().severe("CHRDK_Hunt не смог запуститься: " + exception.getMessage());
             exception.printStackTrace();
+            this.store=null; // fail-stop: onDisable не переписывает сомнительный source
             getServer().getPluginManager().disablePlugin(this);
         }
     }
 
     @Override
     public void onDisable() {
+        if(finance!=null) finance.close();
         if (fleeing != null) fleeing.stop();
         if (adaptation != null) adaptation.stop();
         if (dashing != null) dashing.stop();

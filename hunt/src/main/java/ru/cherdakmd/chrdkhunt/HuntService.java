@@ -30,8 +30,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class HuntService {
 
-    /** Сколько алмазов класть в один стак при выдаче. */
-    private static final int DIAMOND_STACK = 64;
     /** Потолок покупок за один раз — защита от случайного «купи 1000». */
     private static final int MAX_PURCHASE = 64;
 
@@ -62,6 +60,7 @@ public final class HuntService {
         if (killer == null || dead == null) {
             return false;
         }
+        if(!plugin.finance().eligible(killer)) return false;
         HuntConfig config = plugin.config();
         if (config == null || !config.enabled()) {
             return false;
@@ -305,6 +304,7 @@ public final class HuntService {
      * <p>Повторный клик ничего не дублирует: факт выдачи хранится в данных.</p>
      */
     public boolean claimBestiary(Player player, String sectionId) {
+        if(!plugin.store().healthy()) { if(player!=null) plugin.messages().send(player,"finance-wait"); return false; }
         if (player == null) {
             return false;
         }
@@ -426,6 +426,7 @@ public final class HuntService {
         if (player == null) {
             return false;
         }
+        if(!plugin.finance().ready(player)) return false;
         HuntConfig config = plugin.config();
         if (config == null || !config.enabled()) {
             plugin.messages().send(player, "disabled");
@@ -461,22 +462,12 @@ public final class HuntService {
                     "coins", String.valueOf(wallet));
             return false;
         }
-        if (!plugin.store().spendCoins(id, cost)) {
-            plugin.messages().send(player, "exchange-no-coins",
-                    "cost", String.valueOf(cost),
-                    "coins", String.valueOf(wallet));
-            return false;
-        }
-        plugin.store().recordExchange(id, player.getName(), now, requested);
-        int dropped = payDiamonds(player, requested);
+        if(!plugin.finance().exchange(player,config,now,requested)) return false;
         plugin.requestSave();
         plugin.messages().send(player, "exchange-ok",
                 "diamonds", String.valueOf(requested),
                 "coins", String.valueOf(cost),
                 "left", String.valueOf(left - requested));
-        if (dropped > 0) {
-            plugin.messages().send(player, "exchange-dropped");
-        }
         player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_BREAK, 0.6f, 1.2f);
         return true;
     }
@@ -486,6 +477,7 @@ public final class HuntService {
         if (player == null) {
             return false;
         }
+        if(!plugin.finance().ready(player)) return false;
         HuntConfig config = plugin.config();
         if (config == null || !config.enabled()) {
             plugin.messages().send(player, "disabled");
@@ -524,22 +516,11 @@ public final class HuntService {
                 - plugin.store().exchangeToday(player.getUniqueId(), System.currentTimeMillis()));
     }
 
-    /** Выдаёт алмазы; возвращает количество, которое не влезло и упало под ноги. */
-    private int payDiamonds(Player player, int total) {
-        int remaining = Math.max(0, total);
-        int dropped = 0;
-        while (remaining > 0) {
-            int chunk = Math.min(DIAMOND_STACK, remaining);
-            remaining -= chunk;
-            dropped += giveOrDrop(player, new ItemStack(Material.DIAMOND, chunk));
-        }
-        return dropped;
-    }
-
     /* --------------------------------- лавка ---------------------------------- */
 
     /** Покупает позицию лавки; {@code quantity} — сколько покупок подряд. */
     public boolean buy(Player player, String offerId, int quantity) {
+        if(!plugin.store().healthy()) { if(player!=null) plugin.messages().send(player,"finance-wait"); return false; }
         if (player == null) {
             return false;
         }
@@ -607,6 +588,7 @@ public final class HuntService {
         if (player == null) {
             return false;
         }
+        if(!plugin.finance().ready(player)) return false;
         HuntConfig config = plugin.config();
         if (config == null || !config.enabled()) {
             plugin.messages().send(player, "disabled");
@@ -632,26 +614,12 @@ public final class HuntService {
             plugin.messages().send(player, "chest-no-key", "key", family.keyName());
             return false;
         }
-        if (!plugin.store().spendKey(id, family.id())) {
-            plugin.messages().send(player, "chest-no-key", "key", family.keyName());
-            return false;
-        }
-
         long now = System.currentTimeMillis();
         ChestResult result = HuntRoll.chest(random, chest);
         long allowed = coinsLeft(id, now, config);
         long coins = Math.min(result.coins(), allowed);
-        plugin.store().touchDay(id, player.getName(), now);
-        if (coins > 0L) {
-            plugin.store().addCoins(id, player.getName(), coins);
-        }
-        if (result.shards() > 0) {
-            plugin.store().addShards(id, player.getName(), family.id(), result.shards());
-        }
-        int dropped = 0;
-        if (result.diamonds() > 0) {
-            dropped += payDiamonds(player, result.diamonds());
-        }
+        if(!plugin.finance().chest(player,family,now,coins,result)) return false;
+        int dropped = 0; // Только предметный loot, не денежная награда.
         int rankBonus = 0;
         for (HuntDrop drop : result.drops()) {
             int extra = rankExtraDrops(player, drop.amount());
@@ -692,6 +660,7 @@ public final class HuntService {
 
     /** Крафтит трофей (или выдаёт уже полученный бесплатно). */
     public boolean craftTrophy(Player player, String trophyId) {
+        if(!plugin.store().healthy()) { if(player!=null) plugin.messages().send(player,"finance-wait"); return false; }
         if (player == null) {
             return false;
         }
@@ -750,6 +719,7 @@ public final class HuntService {
 
     /** Выдаёт предмет-трофей уже полученного трофея. */
     public boolean claimTrophy(Player player, String trophyId) {
+        if(!plugin.store().healthy()) { if(player!=null) plugin.messages().send(player,"finance-wait"); return false; }
         if (player == null) {
             return false;
         }

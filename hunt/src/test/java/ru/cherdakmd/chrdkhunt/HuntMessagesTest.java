@@ -29,7 +29,7 @@ class HuntMessagesTest {
             "kill-coins", "kill-separator", "kill-shards", "kill-key", "kill-dropped",
             "coins-cap", "boss-killed", "boss-broadcast",
             "exchange-closed", "exchange-limit", "exchange-min", "exchange-no-coins",
-            "exchange-ok", "exchange-dropped", "exchange-bad-amount",
+            "exchange-ok", "finance-wait", "finance-mode", "finance-refused", "finance-status", "exchange-bad-amount",
             "shop-title", "shop-empty-name", "shop-empty-lore", "shop-info-name",
             "shop-info-lore", "shop-icon-price", "shop-icon-limit", "shop-icon-limit-none",
             "shop-icon-earned", "shop-icon-wallet", "shop-icon-click", "shop-icon-locked",
@@ -132,6 +132,7 @@ class HuntMessagesTest {
         expected.put("mob-history-header", List.of("%page%", "%pages%", "%count%"));
         expected.put("mob-history-row", List.of("%num%", "%time%", "%mob%", "%level%", "%kind%", "%world%"));
         expected.put("boss-broadcast", List.of("%player%", "%family%"));
+        expected.put("finance-status",List.of("%source%","%lineage%","%healthy%","%conflict%","%count%"));
         expected.put("exchange-ok", List.of("%diamonds%", "%coins%", "%left%"));
         expected.put("exchange-no-coins", List.of("%cost%", "%coins%"));
         expected.put("exchange-limit", List.of("%limit%"));

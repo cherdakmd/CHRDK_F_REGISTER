@@ -105,7 +105,7 @@ class MobSafetyTest {
     }
     @Test void oldProfilesDefaultToEnabledHudAndCorruptCollectionsAreBounded() throws Exception {
         UUID id = UUID.randomUUID();
-        Files.writeString(dir.resolve("hunt.json"), "{\"players\":{\"" + id + "\":{\"name\":\"Игрок\",\"coins\":123,\"observed-levels\":[0,1,1,2.5,30,31,999999999999],\"observed-elites\":[-1,0,1,4,5,6,7,8,9]}}}");
+        Files.writeString(dir.resolve("hunt.json"), "{\"version\":1,\"players\":{\"" + id + "\":{\"name\":\"Игрок\",\"coins\":123,\"observed-levels\":[0,1,1,2.5,30,31,999999999999],\"observed-elites\":[-1,0,1,4,5,6,7,8,9]}}}");
         HuntStore store = new HuntStore(dir, null); store.load();
         assertEquals(123, store.coins(id)); assertTrue(store.mobHud(id));
         assertEquals(Set.of(1,30), store.observedLevels(id)); assertEquals(Set.of(1,4,5,6,7,8), store.observedElites(id));

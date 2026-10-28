@@ -25,7 +25,7 @@ public final class HuntCommandHandler implements CommandExecutor, TabCompleter {
             List.of("help", "stats", "shop", "buy", "exchange", "keys", "chest",
                     "bestiary", "trophies", "trophy", "top", "danger", "inspect", "observations", "elites", "hud", "history");
     private static final List<String> ADMIN_SUBCOMMANDS =
-            List.of("reload", "give", "reset", "info");
+            List.of("reload", "give", "reset", "info", "awards");
     private static final List<String> GIVE_KINDS = List.of("coins", "shards", "keys");
 
     private final HuntPlugin plugin;
@@ -247,6 +247,10 @@ public final class HuntCommandHandler implements CommandExecutor, TabCompleter {
         if (args.length == 0) {
             plugin.messages().send(sender, "admin-usage");
             return true;
+        }
+        if(args[0].equalsIgnoreCase("awards")) { plugin.finance().status(sender); return true; }
+        if(!plugin.store().healthy()&&!args[0].equalsIgnoreCase("reload")&&!args[0].equalsIgnoreCase("info")) {
+            plugin.messages().send(sender,"finance-wait"); return true;
         }
         return switch (args[0].toLowerCase(Locale.ROOT)) {
             case "reload" -> reload(sender);
