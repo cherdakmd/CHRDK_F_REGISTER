@@ -68,12 +68,17 @@ public final class TreasuresPlugin extends JavaPlugin {
     private boolean nameTagRegistered;
     private BukkitTask saveTask;
     private BukkitTask auraTask;
+    private TreasureFinance finance;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
         this.store = new TreasureStore(getDataFolder().toPath(), getLogger());
-        this.store.load();
+        try { this.store.load(); }
+        catch (RuntimeException error) {
+            getLogger().log(java.util.logging.Level.SEVERE,"Treasures остановлен: сохраните treasures.json для сверки",error);
+            Bukkit.getPluginManager().disablePlugin(this); return;
+        }
         this.overrides = new TreasureOverrides(getDataFolder().toPath(), getLogger());
         this.overrides.load();
         this.items = new TreasureItems(this);
@@ -82,6 +87,7 @@ public final class TreasuresPlugin extends JavaPlugin {
         // Конфиг читается до листенера: антинакрутка берёт из него TTL и лимит.
         reloadTreasuresConfig();
         this.service = new TreasureService(this, store);
+        this.finance = new TreasureFinance(this);
         Bukkit.getServicesManager().register(ru.cherdakmd.chrdkregister.api.ChrdkTreasureBookInfo.class,
                 new TreasureBookInfo(this::config), this, org.bukkit.plugin.ServicePriority.Normal);
         this.sets = new TreasureSets(this);
@@ -156,6 +162,7 @@ public final class TreasuresPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (finance != null) finance.close();
         Bukkit.getServicesManager().unregisterAll(this);
         unregisterRankTag();
         if (rankTags != null) {
@@ -327,6 +334,8 @@ public final class TreasuresPlugin extends JavaPlugin {
             if (store.isDirty()) {
                 store.saveNow();
             }
+            if (!store.healthy()) Bukkit.getScheduler().runTask(this,
+                    () -> Bukkit.getPluginManager().disablePlugin(this));
         } catch (RuntimeException exception) {
             getLogger().warning("Не удалось сохранить клады: " + exception.getMessage());
         }
@@ -418,6 +427,8 @@ public final class TreasuresPlugin extends JavaPlugin {
             return null;
         }
     }
+
+    public TreasureFinance finance() { return finance; }
 
     public TreasureStore store() {
         return store;

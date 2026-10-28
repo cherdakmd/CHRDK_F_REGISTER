@@ -28,7 +28,7 @@ class TreasureMessagesTest {
     private static final Pattern PLACEHOLDER = Pattern.compile("%[A-Za-z0-9_.-]+%");
 
     private static final List<String> UI_KEYS = List.of(
-            "menu-title", "menu-region-name", "menu-region-lore", "menu-region-click",
+            "finance-status", "menu-title", "menu-region-name", "menu-region-lore", "menu-region-click",
             "menu-mythic-name", "menu-mythic-lore", "menu-summary-name", "menu-summary-mined",
             "menu-summary-found", "menu-summary-collection", "menu-summary-next",
             "menu-summary-next-none", "menu-top-name", "menu-top-lore", "menu-sounds-name",

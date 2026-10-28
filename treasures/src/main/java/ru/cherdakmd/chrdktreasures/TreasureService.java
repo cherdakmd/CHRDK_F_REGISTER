@@ -293,6 +293,7 @@ public final class TreasureService {
             return new Found(tier, region, null, List.of(), List.of(), 0,
                     TreasureRank.NOVICE, List.of(), Placement.INVENTORY, List.of(), 0);
         }
+        if (plugin.finance().paused() || !plugin.finance().eligible(player)) return null;
         TreasureRank before = rank(player);
         store.setName(key(player), player.getName());
         // 1.4.166: сначала собираем добычу, потом решаем, куда её положить.
@@ -320,9 +321,10 @@ public final class TreasureService {
                 payload.add(itemStack);
             }
         }
-        int streak = store.recordTreasure(key(player), tier,
+        Integer streak = plugin.finance().record(player, tier,
                 item == null ? null : item.id(), System.currentTimeMillis(),
                 plugin.config().streakWindowMillis());
+        if (streak == null) return null;
         List<Integer> milestones = checkMilestones(player);
         List<TreasureLoot.LootStack> bonus = grantStreakBonus(player, tier, region, streak, payload);
         // 1.4.166: реликвия или книга чар из соседних аддонов — до бочки, чтобы
@@ -501,21 +503,20 @@ public final class TreasureService {
         if (after == null || before == null || after.ordinal() <= before.ordinal()) {
             return;
         }
-        int diamonds = plugin.config().rankReward(after);
-        if (diamonds > 0) {
-            giveDiamonds(player, diamonds);
-        }
+        long diamonds = store.frozen(player.getUniqueId(), "rank:" + after.id());
         String rankName = plugin.messages().raw("rank." + after.id());
         // 1.4.166: звание могло начать показываться — обновляем имя сразу,
         // а не на следующем тике таба.
         if (plugin.rankTags() != null) {
             plugin.rankTags().refresh(player);
         }
+        if (!plugin.config().findNotifications() || !store.announce(key(player))) return;
         plugin.messages().send(player, "rank-up",
                 "rank", Messages.trusted(rankName),
                 "diamonds", String.valueOf(diamonds));
         if (after == TreasureRank.LEGEND && plugin.config().broadcastLegend()) {
             for (Player online : plugin.getServer().getOnlinePlayers()) {
+                if (!store.announce(key(online))) continue;
                 plugin.messages().send(online, "rank-up-broadcast",
                         "player", player.getName(),
                         "rank", Messages.trusted(rankName));
@@ -525,7 +526,8 @@ public final class TreasureService {
 
     /** Принудительная выдача находки (админская команда). */
     public boolean giveItem(Player player, TreasureItemDef def) {
-        if (player == null || def == null) {
+        if (player == null || def == null || plugin.finance().paused()
+                || !plugin.finance().eligible(player)) {
             return false;
         }
         ItemStack stack = plugin.items().create(def);
@@ -533,9 +535,10 @@ public final class TreasureService {
             return false;
         }
         TreasureRank before = rank(player);
-        giveStack(player, stack);
-        store.recordTreasure(key(player), def.tier(), def.id(), System.currentTimeMillis(),
+        Integer streak = plugin.finance().record(player, def.tier(), def.id(), System.currentTimeMillis(),
                 plugin.config().streakWindowMillis());
+        if (streak == null) return false;
+        giveStack(player, stack);
         checkMilestones(player);
         checkRank(player, before);
         return true;
@@ -674,30 +677,14 @@ public final class TreasureService {
                 continue;
             }
             granted.add(threshold);
-            int diamonds = entry.getValue().diamonds();
-            if (diamonds > 0) {
-                giveDiamonds(player, diamonds);
-            }
-            plugin.messages().send(player, "collection-milestone",
+            long diamonds = store.frozen(player.getUniqueId(), "collection:" + threshold);
+            if (plugin.config().findNotifications() && store.announce(key(player)))
+                plugin.messages().send(player, "collection-milestone",
                     "found", String.valueOf(threshold),
                     "total", String.valueOf(TreasureRegistry.size()),
                     "diamonds", String.valueOf(diamonds));
         }
         return List.copyOf(granted);
-    }
-
-    /** Выдаёт алмазы стеками по 64: веха на 96 не должна терять 32 алмаза. */
-    private void giveDiamonds(Player player, int amount) {
-        int left = amount;
-        while (left > 0) {
-            int stack = Math.min(64, left);
-            left -= stack;
-            Map<Integer, ItemStack> leftover =
-                    player.getInventory().addItem(new ItemStack(Material.DIAMOND, stack));
-            for (ItemStack rest : leftover.values()) {
-                player.getWorld().dropItemNaturally(player.getLocation(), rest);
-            }
-        }
     }
 
     /* ----------------------------------- топ ---------------------------------- */

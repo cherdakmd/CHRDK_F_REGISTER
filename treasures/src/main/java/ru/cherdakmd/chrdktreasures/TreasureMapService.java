@@ -392,6 +392,7 @@ public final class TreasureMapService {
                 service.mined(player), plugin.config().arsenalShare());
         TreasureService.Found found = service.give(player, map.tier(), map.region(), roll,
                 block.getLocation());
+        if (found == null) return null;
         if (plugin.config().findNotifications()
                 && plugin.store().announce(player.getUniqueId().toString())) {
             plugin.messages().send(player, "map-found",

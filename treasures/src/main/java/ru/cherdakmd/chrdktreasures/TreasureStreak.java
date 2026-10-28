@@ -32,7 +32,7 @@ public final class TreasureStreak {
             // Часы сервера перевели назад: считаем серию прерванной, но не падаем.
             return 1;
         }
-        return now - lastFindAt > windowMillis ? 1 : current + 1;
+        return now - lastFindAt > windowMillis ? 1 : (current == Integer.MAX_VALUE ? current : current + 1);
     }
 
     /** Пора ли выдать бонус за серию: каждая {@code every}-я находка. */

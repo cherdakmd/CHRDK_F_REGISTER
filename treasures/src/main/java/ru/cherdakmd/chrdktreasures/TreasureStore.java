@@ -1,11 +1,16 @@
 package ru.cherdakmd.chrdktreasures;
 
-import com.google.gson.Gson;
+import com.google.gson.*;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
+import ru.cherdakmd.chrdkregister.api.MilestoneMigration;
+import ru.cherdakmd.chrdkregister.api.FinanceNumbers;
+import java.io.IOException;
+import java.nio.channels.FileChannel;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+import java.util.UUID;
+import java.util.Collections;
 
-import java.io.Reader;
-import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,28 +22,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Logger;
-import ru.cherdakmd.chrdkregister.storage.SafeJsonWriter;
 
-/**
- * Данные кладоискателей (`treasures.json`).
- *
- * <p>Формат: {@code {"version":1,"players":{"<uuid>":{"name":"Steve",
- * "mined":123,"tiers":{"common":2},"items":{"plains-reap-hook":1},
- * "settings":{"announce":true},"milestones":[10],"streak":4,
- * "best_streak":9,"last_find":1730000000000,"shards":46,
- * "shards_spent":12,"rank_tag":"auto"}}}}.</p>
- *
- * <p>Поля серии и осколков необязательны: старые файлы читаются без них, а
- * новые поля пишутся рядом — версия формата остаётся 1, ломать чужие данные не
- * нужно.</p>
- *
- * <p>Счётчик добытых блоков — топливо прогрессии: он растёт на каждом
- * подходящем блоке, даже если клад не выпал. Число находок по редкостям нужно
- * для топа и витрины, а карта предметов — для коллекции.</p>
- *
- * <p>Паттерн записи общий для репозитория: мутации на главном потоке, снимок и
- * асинхронная запись раз в 5 секунд, синхронизация на хранилище.</p>
- */
+
+/** Canonical treasures.json v2: прогресс и once-награды одним durable replace.
+ * Обычный autosave сериализован с финансовым commit; reset не удаляет денежные claims.
+ * Предметный loot/inventory не входит в эту файловую транзакцию. */
 public final class TreasureStore {
 
     /** Прогресс одного игрока. */
@@ -65,7 +53,7 @@ public final class TreasureStore {
         public long found() {
             long total = 0L;
             for (long value : tiers.values()) {
-                total += value;
+                total = add(total,value);
             }
             return total;
         }
@@ -76,98 +64,143 @@ public final class TreasureStore {
     }
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Type DATA_TYPE = new TypeToken<LinkedHashMap<String, Object>>() {
-    }.getType();
-
+    public static final String SOURCE="treasures-income";
+    @FunctionalInterface public interface Checkpoint { void afterReplace() throws IOException; }
     private final Path file;
     private final Logger logger;
-    private final Map<String, PlayerData> players = new LinkedHashMap<>();
-    private boolean dirty;
+    private final Checkpoint checkpoint;
+    private final Map<String,PlayerData> players=new LinkedHashMap<>();
+    // Не часть сбрасываемого профиля: нулевые исходы тоже закрывают награду навсегда.
+    private final Map<UUID,Map<String,Long>> awards=new LinkedHashMap<>();
+    private UUID lineage=UUID.randomUUID();
+    private boolean registered,healthy=true,dirty;
 
-    public TreasureStore(Path dataFolder, Logger logger) {
-        this.file = dataFolder.resolve("treasures.json");
-        this.logger = logger;
+    public TreasureStore(Path folder,Logger logger) { this(folder,logger,()->{}); }
+    public TreasureStore(Path folder,Logger logger,Checkpoint checkpoint) {
+        file=folder.resolve("treasures.json"); this.logger=logger; this.checkpoint=java.util.Objects.requireNonNull(checkpoint);
     }
-
-    public Path file() {
-        return file;
+    public Path file() { return file; }
+    public synchronized boolean healthy() { return healthy; }
+    public synchronized UUID lineage() { return lineage; }
+    public synchronized boolean registered() { return registered; }
+    private void writable() { if(!healthy) throw new IllegalStateException("treasures.json quarantined"); }
+    public synchronized void markRegistered() throws IOException { writable(); if(!registered) { registered=true; persist(); } }
+    public synchronized long income(UUID owner) {
+        long total=0; for(long value:awards.getOrDefault(owner,Map.of()).values()) total=Math.addExact(total,value); return total;
     }
-
+    public synchronized Map<UUID,Long> incomes() {
+        Map<UUID,Long> out=new LinkedHashMap<>(); awards.keySet().forEach(id->out.put(id,income(id))); return Collections.unmodifiableMap(out);
+    }
+    public synchronized Map<String,Long> claims(UUID owner) { return Map.copyOf(awards.getOrDefault(owner,Map.of())); }
+    public synchronized long frozen(UUID owner,String key) { return awards.getOrDefault(owner,Map.of()).getOrDefault(key,0L); }
+    /** Проверяем весь план до первой мутации; неизменные суммы не берутся из нового конфига повторно. */
+    private void validatePlan(UUID owner,Map<String,Long> plan) {
+        MilestoneMigration.uuid(owner.toString()); long total=income(owner); var existing=awards.getOrDefault(owner,Map.of());
+        for(var entry:plan.entrySet()) {
+            TreasureRewardRules.validKey(entry.getKey()); long value=entry.getValue();
+            if(value<0||value>576) throw new IllegalArgumentException("reward amount");
+            if(!existing.containsKey(entry.getKey())) total=Math.addExact(total,value);
+        }
+    }
+    private boolean freeze(UUID owner,Map<String,Long> plan) {
+        if(plan.isEmpty()) return false;
+        boolean added=false; var rows=awards.computeIfAbsent(owner,id->new LinkedHashMap<>());
+        for(var entry:plan.entrySet()) if(!rows.containsKey(entry.getKey())) { rows.put(entry.getKey(),entry.getValue()); added=true; }
+        return added;
+    }
+    public synchronized int recordRewardedTreasure(UUID owner,TreasureTier tier,String item,long now,long window,TreasuresConfig config) throws IOException {
+        writable(); if(owner==null||tier==null) throw new IllegalArgumentException("treasure owner/tier");
+        String id=owner.toString(); var data=players.get(id); long found=data==null?0:data.found(); int distinct=data==null?0:data.foundItems();
+        if(item!=null&&!item.isBlank()&&(data==null||!data.items.containsKey(item))) distinct=Math.addExact(distinct,1);
+        var plan=TreasureRewardRules.quote(add(found,1),distinct,config); validatePlan(owner,plan);
+        int streak=recordTreasure(id,tier,item,now,window);
+        if(freeze(owner,plan)) persist(); // В том числе нулевой денежный исход; до native world/inventory.
+        return streak;
+    }
+    /** Новые пороги коллекции/награды из конфига: только реально сохранённый прогресс. */
+    public synchronized boolean reconcile(UUID owner,TreasuresConfig config) throws IOException {
+        writable(); var data=players.get(owner.toString()); if(data==null) return false;
+        var plan=TreasureRewardRules.quote(data.found(),data.foundItems(),config); validatePlan(owner,plan);
+        if(!freeze(owner,plan)) return false; persist(); return true;
+    }
     public synchronized void load() {
-        if (!Files.isRegularFile(file)) {
-            return;
-        }
-        try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
-            Map<String, Object> data = GSON.fromJson(reader, DATA_TYPE);
-            if (data == null || !(data.get("players") instanceof Map<?, ?> rows)) {
-                return;
+        try {
+            if(!Files.exists(file)) { persist(); return; }
+            if(!Files.isRegularFile(file)||Files.size(file)>32L*1024*1024) throw new IOException("treasures capacity/type");
+            var root=TreasureJson.read(file); FinanceNumbers.requireIntegral(root);
+            long version=num(root,"version",false); if(version!=1&&version!=2) throw new IllegalArgumentException("treasures version");
+            var loaded=new LinkedHashMap<String,PlayerData>();
+            for(var entry:obj(root,"players").entrySet()) {
+                UUID owner=MilestoneMigration.uuid(entry.getKey()); var row=entry.getValue().getAsJsonObject(); var data=new PlayerData();
+                data.name=text(row,"name"); data.mined=num(row,"mined",false);
+                for(var t:obj(row,"tiers").entrySet()) {
+                    TreasureTier tier=TreasureTier.byId(t.getKey());
+                    if(tier==null||!t.getKey().equals(tier.id())) throw new IllegalArgumentException("tier");
+                    data.tiers.put(tier,number(t.getValue()));
+                }
+                for(var item:obj(row,"items").entrySet()) {
+                    long count=number(item.getValue()); if(item.getKey().isBlank()||count<1||count>Integer.MAX_VALUE) throw new IllegalArgumentException("item counter");
+                    data.items.put(item.getKey(),(int)count);
+                }
+                var settings=obj(row,"settings"); data.announce=bool(settings,"announce",version==1,true);
+                data.particles=bool(settings,"particles",version==1,true); data.sounds=bool(settings,"sounds",version==1,true);
+                var milestones=row.getAsJsonArray("milestones"); if(milestones==null) throw new IllegalArgumentException("missing milestones");
+                for(var value:milestones) {
+                    long count=number(value); if(count<1||count>Integer.MAX_VALUE||!data.milestones.add((int)count)) throw new IllegalArgumentException("milestone");
+                }
+                data.streak=integer(row,"streak",version==1); data.bestStreak=integer(row,"best_streak",version==1);
+                data.bestStreak=Math.max(data.streak,data.bestStreak);
+                data.lastFindAt=num(row,"last_find",version==1); data.shards=num(row,"shards",version==1); data.shardsSpent=num(row,"shards_spent",version==1);
+                if(row.has("rank_tag")) {
+                    var tag=TreasureRankTags.Choice.byId(text(row,"rank_tag")); if(tag==null) throw new IllegalArgumentException("rank tag"); data.rankTag=tag;
+                } else if(version==2) throw new IllegalArgumentException("rank tag missing");
+                loaded.put(owner.toString(),data);
             }
-            for (Map.Entry<?, ?> entry : rows.entrySet()) {
-                if (!(entry.getValue() instanceof Map<?, ?> row)) {
-                    continue;
-                }
-                PlayerData player = new PlayerData();
-                Object name = row.get("name");
-                player.name = name == null ? "" : String.valueOf(name).trim();
-                player.mined = number(row.get("mined"));
-                if (row.get("tiers") instanceof Map<?, ?> tiers) {
-                    for (Map.Entry<?, ?> tier : tiers.entrySet()) {
-                        TreasureTier type = TreasureTier.byId(String.valueOf(tier.getKey()));
-                        if (type != null) {
-                            player.tiers.put(type, number(tier.getValue()));
-                        }
+            var loadedAwards=new LinkedHashMap<UUID,Map<String,Long>>();
+            if(version==1) {
+                loaded.forEach((raw,data)->{
+                    var rows=new LinkedHashMap<String,Long>();
+                    for(var rank:TreasureRank.values()) if(rank!=TreasureRank.NOVICE&&data.found()>=rank.minFound()) rows.put("rank:"+rank.id(),0L);
+                    data.milestones.forEach(count->rows.put("collection:"+count,0L));
+                    loadedAwards.put(UUID.fromString(raw),rows);
+                });
+            } else {
+                var finance=obj(root,"finance"); if(!SOURCE.equals(text(finance,"source"))) throw new IllegalArgumentException("source namespace");
+                lineage=MilestoneMigration.uuid(text(finance,"lineage")); registered=bool(finance,"registered",false,false);
+                for(var entry:obj(finance,"awards").entrySet()) {
+                    UUID id=MilestoneMigration.uuid(entry.getKey()); var rows=new LinkedHashMap<String,Long>(); long total=0;
+                    for(var award:entry.getValue().getAsJsonObject().entrySet()) {
+                        TreasureRewardRules.validKey(award.getKey()); long amount=number(award.getValue());
+                        if(amount>576) throw new IllegalArgumentException("award amount"); total=Math.addExact(total,amount); rows.put(award.getKey(),amount);
                     }
+                    loadedAwards.put(id,rows);
                 }
-                if (row.get("items") instanceof Map<?, ?> items) {
-                    for (Map.Entry<?, ?> item : items.entrySet()) {
-                        int count = (int) Math.min(Integer.MAX_VALUE, number(item.getValue()));
-                        if (count > 0) {
-                            player.items.put(String.valueOf(item.getKey()), count);
-                        }
-                    }
-                }
-                if (row.get("settings") instanceof Map<?, ?> settings) {
-                    player.announce = bool(settings.get("announce"), true);
-                    player.particles = bool(settings.get("particles"), true);
-                    player.sounds = bool(settings.get("sounds"), true);
-                }
-                if (row.get("milestones") instanceof List<?> milestones) {
-                    for (Object element : milestones) {
-                        if (element instanceof Number count) {
-                            player.milestones.add(Math.max(1, count.intValue()));
-                        }
-                    }
-                }
-                player.streak = (int) Math.min(Integer.MAX_VALUE, number(row.get("streak")));
-                player.bestStreak = (int) Math.min(Integer.MAX_VALUE,
-                        number(row.get("best_streak")));
-                player.bestStreak = Math.max(player.bestStreak, player.streak);
-                player.lastFindAt = number(row.get("last_find"));
-                player.shards = Math.max(0L, number(row.get("shards")));
-                player.shardsSpent = Math.max(0L, number(row.get("shards_spent")));
-                TreasureRankTags.Choice rankTag = TreasureRankTags.Choice.byId(
-                        row.get("rank_tag") == null ? null : String.valueOf(row.get("rank_tag")));
-                player.rankTag = rankTag == null ? TreasureRankTags.Choice.AUTO : rankTag;
-                players.put(String.valueOf(entry.getKey()), player);
             }
-            logger.info("[CHRDK_Treasures] Загружено кладоискателей: " + players.size() + ".");
-        } catch (Exception exception) {
-            logger.severe("[CHRDK_Treasures] Не удалось прочитать " + file + ": "
-                    + exception.getMessage());
+            players.clear(); players.putAll(loaded); awards.clear(); awards.putAll(loadedAwards); dirty=false;
+            if(version==1) persist();
+            if(logger!=null) logger.info("[CHRDK_Treasures] Загружено кладоискателей: "+players.size()+".");
+        } catch(Exception error) {
+            healthy=false; throw new IllegalStateException("Неоднозначный treasures.json; оригинал сохранён, не удаляйте финансовый source",error);
         }
     }
-
-    private static long number(Object value) {
-        return value instanceof Number number ? Math.max(0L, number.longValue()) : 0L;
+    private static JsonObject obj(JsonObject row,String key) {
+        if(!row.has(key)||!row.get(key).isJsonObject()) throw new IllegalArgumentException("object "+key); return row.getAsJsonObject(key);
     }
-
-    private static boolean bool(Object value, boolean fallback) {
-        return value instanceof Boolean flag ? flag : fallback;
+    private static String text(JsonObject row,String key) {
+        var value=row.get(key); if(value==null||!value.isJsonPrimitive()||!value.getAsJsonPrimitive().isString()) throw new IllegalArgumentException("text "+key); return value.getAsString();
     }
-
-    private PlayerData data(String playerKey) {
-        return players.computeIfAbsent(playerKey, key -> new PlayerData());
+    private static long number(JsonElement value) {
+        if(value==null||!value.isJsonPrimitive()||!value.getAsJsonPrimitive().isNumber()) throw new IllegalArgumentException("counter type");
+        long n=value.getAsBigDecimal().longValueExact(); if(n<0) throw new IllegalArgumentException("negative counter"); return n;
     }
+    private static long num(JsonObject row,String key,boolean optional) { return optional&&!row.has(key)?0:number(row.get(key)); }
+    private static int integer(JsonObject row,String key,boolean optional) { long n=num(row,key,optional); if(n>Integer.MAX_VALUE) throw new IllegalArgumentException("int counter"); return (int)n; }
+    private static boolean bool(JsonObject row,String key,boolean optional,boolean fallback) {
+        var value=row.get(key); if(value==null&&optional) return fallback;
+        if(value==null||!value.isJsonPrimitive()||!value.getAsJsonPrimitive().isBoolean()) throw new IllegalArgumentException("boolean "+key); return value.getAsBoolean();
+    }
+    private static long add(long a,long b) { return b>=Long.MAX_VALUE-a?Long.MAX_VALUE:a+b; }
+    private PlayerData data(String playerKey) { writable(); MilestoneMigration.uuid(playerKey); return players.computeIfAbsent(playerKey,key->new PlayerData()); }
 
     public synchronized String name(String playerKey) {
         PlayerData data = players.get(playerKey);
@@ -198,7 +231,7 @@ public final class TreasureStore {
             return mined(playerKey);
         }
         PlayerData data = data(playerKey);
-        data.mined = Math.min(Long.MAX_VALUE, data.mined + amount);
+        data.mined = add(data.mined, amount);
         dirty = true;
         return data.mined;
     }
@@ -240,7 +273,7 @@ public final class TreasureStore {
             return shards(playerKey);
         }
         PlayerData data = data(playerKey);
-        data.shards = Math.min(Long.MAX_VALUE, data.shards + amount);
+        data.shards = add(data.shards, amount);
         dirty = true;
         return data.shards;
     }
@@ -254,6 +287,7 @@ public final class TreasureStore {
      * @return {@code true} — покупка оплачена, баланс уменьшен
      */
     public synchronized boolean takeShards(String playerKey, int amount) {
+        writable();
         if (playerKey == null || amount <= 0) {
             return false;
         }
@@ -262,7 +296,7 @@ public final class TreasureStore {
             return false;
         }
         data.shards -= amount;
-        data.shardsSpent = Math.min(Long.MAX_VALUE, data.shardsSpent + amount);
+        data.shardsSpent = add(data.shardsSpent, amount);
         dirty = true;
         return true;
     }
@@ -273,6 +307,7 @@ public final class TreasureStore {
      * заново выключать чужие поздравления.
      */
     public synchronized void reset(String playerKey) {
+        writable();
         PlayerData data = players.get(playerKey);
         if (data == null) {
             return;
@@ -295,6 +330,7 @@ public final class TreasureStore {
      * @return сколько профилей было удалено
      */
     public synchronized int resetAll() {
+        writable();
         int removed = players.size();
         if (removed == 0) {
             return 0;
@@ -322,9 +358,9 @@ public final class TreasureStore {
             return 0;
         }
         PlayerData data = data(playerKey);
-        data.tiers.merge(tier, 1L, Long::sum);
+        data.tiers.merge(tier, 1L, TreasureStore::add);
         if (itemId != null && !itemId.isBlank()) {
-            data.items.merge(itemId, 1, Integer::sum);
+            data.items.merge(itemId, 1, (a,b) -> a==Integer.MAX_VALUE?a:a+b);
         }
         long stamp = now > 0L ? now : System.currentTimeMillis();
         data.streak = TreasureStreak.next(data.streak, data.lastFindAt, stamp, windowMillis);
@@ -418,6 +454,7 @@ public final class TreasureStore {
 
     /** Отмечает веху коллекции. {@code true} — веха новая. */
     public synchronized boolean markMilestone(String playerKey, int found) {
+        if (found < 1) return false;
         PlayerData data = data(playerKey);
         if (!data.milestones.add(found)) {
             return false;
@@ -440,10 +477,11 @@ public final class TreasureStore {
         return dirty;
     }
 
-    /** Снимок для асинхронной записи; сбрасывает флаг «грязно». */
+    /** Снимок не снимает dirty: нужен durable ACK под тем же монитором. */
     public synchronized String snapshotJson() {
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("version", 1);
+        data.put("version", 2);
+        Map<String,Object> finance=new LinkedHashMap<>(); finance.put("source",SOURCE); finance.put("lineage",lineage); finance.put("registered",registered); finance.put("awards",awards); data.put("finance",finance);
         Map<String, Object> rows = new LinkedHashMap<>();
         players.forEach((key, player) -> {
             Map<String, Object> fields = new LinkedHashMap<>();
@@ -478,37 +516,26 @@ public final class TreasureStore {
             rows.put(key, fields);
         });
         data.put("players", rows);
-        dirty = false;
         return GSON.toJson(data);
     }
 
-    /** Пишет файл, если есть изменения (или его ещё нет). */
-    public void saveNow() {
-        String json;
-        synchronized (this) {
-            if (!dirty && Files.isRegularFile(file)) {
-                return;
-            }
-            json = snapshotJson();
-        }
-        write(json);
-    }
-
-    /** Немедленная запись без проверки флага (выключение сервера, тесты). */
-    public void flush() {
-        write(snapshotJson());
-    }
-
-    private void write(String json) {
-        if (!SafeJsonWriter.write(file, json, logger, "[CHRDK_Treasures]")) {
-            // Диск не принял данные — помечаем состояние изменённым, иначе
-            // следующее автосохранение решит, что писать нечего, и прогресс
-            // потеряется молча.
-            synchronized (this) {
-                dirty = true;
-            }
+    /** Старый async snapshot не может затереть новый финансовый commit. */
+    public synchronized void saveNow() { if(healthy&&dirty) flush(); }
+    public synchronized void flush() {
+        if(!healthy) return;
+        try { persist(); } catch(IOException|RuntimeException error) {
+            if(logger!=null) logger.log(java.util.logging.Level.SEVERE,"treasures.json приостановлен; не удаляйте финансовый source",error);
         }
     }
-
-
+    private void persist() throws IOException {
+        writable();
+        try {
+            byte[] bytes=snapshotJson().getBytes(StandardCharsets.UTF_8); if(bytes.length>32*1024*1024) throw new IOException("treasures capacity");
+            Files.createDirectories(file.getParent()); var temp=file.resolveSibling("treasures.json.tmp"); Files.write(temp,bytes);
+            try(var channel=FileChannel.open(temp,StandardOpenOption.WRITE)) { channel.force(true); }
+            Files.move(temp,file,StandardCopyOption.ATOMIC_MOVE,StandardCopyOption.REPLACE_EXISTING); checkpoint.afterReplace();
+            try(var directory=FileChannel.open(file.getParent(),StandardOpenOption.READ)) { directory.force(true); }
+            dirty=false;
+        } catch(IOException|RuntimeException error) { healthy=false; dirty=true; throw error; }
+    }
 }

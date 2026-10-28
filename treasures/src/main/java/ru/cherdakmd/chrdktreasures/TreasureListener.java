@@ -81,7 +81,8 @@ public final class TreasureListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
-        if (!honest(player) || !plugin.config().enabled()) {
+        if (!honest(player) || !plugin.config().enabled() || plugin.finance().paused()
+                || !plugin.finance().eligible(player)) {
             return;
         }
         Block block = event.getBlock();
@@ -129,6 +130,7 @@ public final class TreasureListener implements Listener {
         lastTreasure.put(player.getUniqueId(), now);
         TreasureService.Found found = service.give(player, tier, region, roll,
                 block.getLocation());
+        if (found == null) return;
         celebrate(player, block.getLocation(), found);
         // 1.4.153: к находке иногда прикладывается клад-карта. Тайник из самой
         // карты карту не выдаёт — цепочки «карта из карты» нет.

@@ -4,6 +4,7 @@
 # позиции каталога и 72 вещи арсенала Mine Treasure (всего 196). Здесь меняются только
 # подписи; значения экранируются ядром, разметка — MiniMessage.
 messages:
+  finance-status: "<gray>Источник %source% · %lineage% · исправен: %healthy% · конфликт: %conflict% · получателей: %count%. Долг при cap/недоступности банка сохраняется.</gray>"
   # -------------------------------- профиль ----------------------------------
   profile-title: "Клады"
   profile-found: "<gray>Найдено кладов: </gray><white>%found%</white>"
@@ -539,10 +540,10 @@ messages:
   loot-list-separator: "<gray>, </gray>"
   loot-list-more: "<gray> и ещё <white>%count%</white></gray>"
   double-ore: "<gray>Двойная руда!</gray>"
-  collection-milestone: "<gold>Коллекция: <white>%found%/%total%</white> находок! Награда — <aqua>%diamonds% алмазов</aqua>.</gold>"
+  collection-milestone: "<gold>Коллекция: <white>%found%/%total%</white> находок! Награда — <aqua>%diamonds% алмазов → /bal</aqua> (при лимите — очередь).</gold>"
   streak-bonus: "<gold>Серия %streak%!</gold> <gray>Бонусная добыча уже в инвентаре.</gray>"
   streak-bonus-loot: "<gold>Серия %streak%!</gold> <gray>Бонус:</gray> %loot%"
-  rank-up: "<gold>Новый ранг:</gold> %rank% <gray>· награда <aqua>%diamonds% алмазов</aqua></gray>"
+  rank-up: "<gold>Новый ранг:</gold> %rank% <gray>· награда <aqua>%diamonds% алмазов → /bal</aqua> (при лимите — очередь)</gray>"
   rank-up-broadcast: "<gold>%player%</gold> <gray>достиг звания</gray> %rank%<gray>!</gray>"
   title-found: "<gold>Клад!</gold> %tier%"
   title-found-named: "%name%"
@@ -757,7 +758,7 @@ messages:
   help-stats-other: "<yellow>/treasures stats <ник></yellow> <gray>— статистика другого игрока</gray>"
   help-top: "<yellow>/treasures top</yellow> <gray>— топ кладоискателей</gray>"
   help-toggle: "<yellow>/treasures toggle <sounds|particles|announce></yellow> <gray>— оформление находок</gray>"
-  help-footer: "<gray>Администратор: <yellow>/treasuresadmin reload|info|give|map|reset|resetall|chance|stats</yellow></gray>"
+  help-footer: "<gray>Администратор: <yellow>/treasuresadmin awards | /treasuresadmin reload|info|give|map|reset|resetall|chance|stats</yellow></gray>"
   top-header: "<gold>Топ кладоискателей</gold> <dark_gray>(по числу кладов)</dark_gray>"
   top-line: "<gold>%place%.</gold> <white>%name%</white> <dark_gray>·</dark_gray> <yellow>%found% кладов</yellow> <dark_gray>(коллекция %collection%/%total%)</dark_gray>"
   list-header: "<gold>Коллекция кладов</gold>"

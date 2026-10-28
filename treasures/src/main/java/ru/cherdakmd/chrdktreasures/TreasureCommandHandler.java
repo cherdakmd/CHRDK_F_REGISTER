@@ -609,6 +609,9 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
             plugin.messages().send(sender, "no-permission");
             return true;
         }
+        if (args.length == 1 && args[0].equalsIgnoreCase("awards")) {
+            plugin.finance().status(sender); return true;
+        }
         if (args.length == 1 && args[0].equalsIgnoreCase("reload")) {
             plugin.reloadTreasuresConfig();
             plugin.messages().send(sender, "admin-reloaded");
@@ -914,7 +917,7 @@ public final class TreasureCommandHandler implements CommandExecutor, TabComplet
                 return List.of();
             }
             if (args.length == 1) {
-                return filter(List.of("reload", "give", "reset", "resetall", "stats",
+                return filter(List.of("awards", "reload", "give", "reset", "resetall", "stats",
                         "chance", "map", "shards", "info", "barrels", "barrel"), args[0]);
             }
             if (args.length == 2 && args[0].equalsIgnoreCase("chance")) {

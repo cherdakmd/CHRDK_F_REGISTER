@@ -271,12 +271,15 @@ class TreasureStoreTest {
     }
 
     @Test
-    void brokenFileDoesNotCrashLoad() throws Exception {
-        Files.writeString(folder.resolve("treasures.json"), "{ это не json ");
-        TreasureStore store = store();
-        String player = UUID.randomUUID().toString();
-        assertEquals(0L, store.mined(player));
-        store.addMined(player, 1L);
-        assertEquals(1L, store.mined(player));
+    void brokenFileQuarantinesWithoutDestructiveShutdown() throws Exception {
+        String original = "{ это не json ";
+        Files.writeString(folder.resolve("treasures.json"), original);
+        TreasureStore store = new TreasureStore(folder, LOGGER);
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class, store::load);
+        assertFalse(store.healthy());
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class,
+                () -> store.addMined(UUID.randomUUID().toString(), 1L));
+        store.flush();
+        assertEquals(original, Files.readString(folder.resolve("treasures.json")));
     }
 }
