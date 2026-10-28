@@ -35,7 +35,7 @@ class LotteryBankTest {
     }
     @Test void productionPrizeNeverDebitsSourceOrGivesInventoryItems() throws Exception {
         String source=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdklottery/LotteryService.java"));
-        String claim=source.substring(source.indexOf("public void claimPrize"),source.indexOf("private static ItemStack[] snapshot"));
+        String claim=source.substring(source.indexOf("public void claimPrize"),source.indexOf("private void fail("));
         assertTrue(claim.contains("creditEntitlement")); assertFalse(claim.contains("debitPrize"));
         assertFalse(claim.contains("addItem")); assertFalse(claim.contains("DiamondWallet.give"));
     }

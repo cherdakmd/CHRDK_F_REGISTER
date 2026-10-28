@@ -27,7 +27,7 @@ goals:
   admin-reloaded: "<green>Конфигурация общих целей перечитана.</green>"
   admin-progress-set: "<green>Прогресс цели «%goal%» теперь %progress%.</green>"
   admin-unknown-goal: "<red>Нет такой цели. Активные смотрите в /goals.</red>"
-  admin-usage: "<yellow>/goalsadmin rotate | reload | progress <id> <значение></yellow>"
+  admin-usage: "<yellow>/goalsadmin rotate | reload | recover | progress <id> <значение></yellow>"
   goal:
     hostile-slay:
       name: "Чистилище полей"
@@ -104,3 +104,9 @@ goals:
   bank-wait: '<yellow>Награда ожидает зачисления: банк недоступен, /bal заполнен или данные расходятся. Источник сохранён; /goals claim — повторить.</yellow>'
   bank-paid: '<green>Награды целей учтены в общем /bal: %balance% 💠. Повторное получение не начисляет их ещё раз.</green>'
   bank-list-footer: '<gray>Ожидает зачисления: %pending% 💠. /goals claim — повторить зачисление в /bal.</gray>'
+  bank-mode: '<red>Денежный взнос доступен авторизованному живому игроку с правом chrdkgoals.use в Survival/Adventure; NPC не допускаются.</red>'
+  bank-recovery: '<yellow>Есть незавершённый взнос. Прогресс и новые операции ждут квитанцию банка и сверку источника/предметов. Администратору: /goalsadmin recover.</yellow>'
+  bank-recovered: '<green>Проверка журнала взноса завершена. Повторного списания нет.</green>'
+  bank-not-enough: '<red>Нужно %amount% 💠: сначала /bal, затем обычные алмазы/руда/блоки из storage. Именные вещи и offhand не расходуются.</red>'
+  bank-refused: '<red>Банк отклонил взнос. Вклад и предметы не изменены.</red>'
+  bank-donated: '<green>Внесено %amount% 💠 в общую цель. Сдача %change% 💠 — в /bal.</green>'

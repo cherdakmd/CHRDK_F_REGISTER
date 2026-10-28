@@ -18,7 +18,7 @@ public final class LotteryPlugin extends JavaPlugin {
         try {
             saveDefaultConfig();
             api = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
-            if (api == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 16) throw new IllegalStateException("CHRDK_Core API missing");
+            if (api == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 17) throw new IllegalStateException("CHRDK_Core API missing");
             reloadLotteryConfig();
             LotteryStore store = new LotteryStore(getDataFolder().toPath(), getLogger());
             store.load();

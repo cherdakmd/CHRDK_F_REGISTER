@@ -32,7 +32,7 @@ import java.util.UUID;
 public interface ChrdkRegisterApi {
 
     /** Версия контракта API. Растёт при расширении (добавлении методов/событий). */
-    int API_VERSION = 16;
+    int API_VERSION = 17;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -216,6 +216,10 @@ public interface ChrdkRegisterApi {
     /** Доверенная сделка Claims. payer=null — offline-only, без доступа к инвентарю. */
     default boolean exchangeClaimAccounts(java.util.Map<String, Long> deltas, Player payer,
             org.bukkit.inventory.ItemStack[] expected, org.bukkit.inventory.ItemStack[] replacement) { return false; }
+
+    /** API v17: статус долговечного расхода; false commit не является доказательством неоплаты. */
+    default BankCharge.Status bankChargeStatus(BankCharge payment) { return BankCharge.Status.UNAVAILABLE; }
+    default boolean commitBankCharge(Player payer, BankCharge payment, org.bukkit.inventory.ItemStack[] expected) { return false; }
 
     /** API v16. Накопительные доходы: источник сохраняет total ДО вызова; повтор не начисляет delta ещё раз. */
     default boolean personalBankAvailable() { return false; }

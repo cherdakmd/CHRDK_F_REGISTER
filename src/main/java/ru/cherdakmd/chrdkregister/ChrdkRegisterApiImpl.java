@@ -116,6 +116,28 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
         return plugin != null && plugin.isEnabled() && bank != null && plugin.bank() != null
                 && plugin.bank().enabled() && org.bukkit.Bukkit.isPrimaryThread();
     }
+    @Override public ru.cherdakmd.chrdkregister.api.BankCharge.Status bankChargeStatus(ru.cherdakmd.chrdkregister.api.BankCharge payment) {
+        return auctionBankReady() ? bank.bankChargeStatus(payment) : ru.cherdakmd.chrdkregister.api.BankCharge.Status.UNAVAILABLE;
+    }
+    @Override public boolean commitBankCharge(Player payer, ru.cherdakmd.chrdkregister.api.BankCharge payment, org.bukkit.inventory.ItemStack[] expected) {
+        if (!auctionBankReady() || payment == null || !payment.valid() || payer == null || !payer.isOnline() || payer.isDead()
+                || !payer.getUniqueId().equals(payment.payer()) || payer.hasMetadata("NPC") || !isAuthenticated(payer)
+                || payer.getGameMode() != org.bukkit.GameMode.SURVIVAL && payer.getGameMode() != org.bukkit.GameMode.ADVENTURE
+                || expected == null || expected.length != 36 || !java.util.Arrays.equals(expected, payer.getInventory().getStorageContents())) return false;
+        String permission = switch (payment.source()) {
+            case "lottery" -> "chrdklottery.use";
+            case "common-goals" -> "chrdkgoals.use";
+            default -> null;
+        };
+        if (permission == null || !payer.hasPermission(permission)) return false;
+        if (bank.bankChargeStatus(payment) == ru.cherdakmd.chrdkregister.api.BankCharge.Status.COMMITTED) return true;
+        var plan = ru.cherdakmd.chrdkregister.api.ChargeInventory.plan(expected, payment.price(), bank.balance(payer.getUniqueId()));
+        if (plan == null || plan.debit() != payment.debit() || plan.cash() != payment.cash() || plan.change() != payment.change()
+                || !payment.inventoryHash().equals(ru.cherdakmd.chrdkregister.api.AuctionPayment.hash(
+                    ru.cherdakmd.chrdkregister.api.ChargeInventory.encode(expected), ru.cherdakmd.chrdkregister.api.ChargeInventory.encode(plan.after())))) return false;
+        bank.open(payer.getUniqueId(), payer.getName());
+        return bank.settleCharge(payment);
+    }
     @Override public boolean personalBankAvailable() { return auctionBankReady(); }
     @Override public boolean registerIncomeSource(String source, java.util.UUID lineage) { return auctionBankReady() && bank.registerIncomeSource(source, lineage); }
     @Override public boolean incomeSourceAvailable(String source, java.util.UUID lineage) { return auctionBankReady() && bank.incomeSourceAvailable(source, lineage); }

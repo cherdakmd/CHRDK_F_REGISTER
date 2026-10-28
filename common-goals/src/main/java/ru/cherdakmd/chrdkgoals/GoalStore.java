@@ -9,7 +9,7 @@ import java.util.*;
 import java.util.logging.*;
 
 /** Источник накопительных доходов. Schema 2 запрещает физическое снятие pendingRewards. */
-public final class GoalStore {
+public final class GoalStore implements ru.cherdakmd.chrdkregister.api.ChargeInventory.Source {
     private static final Gson JSON = new GsonBuilder().setPrettyPrinting().create();
     private static final class Data {
         int schema = 1;
@@ -24,7 +24,13 @@ public final class GoalStore {
     private final Logger logger;
     private Data data = new Data();
     private boolean dirty, healthy = true;
-    public GoalStore(Path folder, Logger logger) { file = folder.resolve("goals-data.json"); this.logger = logger; }
+    private java.util.function.BooleanSupplier financeBusy = () -> false;
+    public synchronized void bindFinance(java.util.function.BooleanSupplier busy) { financeBusy = Objects.requireNonNull(busy); }
+    private final ru.cherdakmd.chrdkregister.api.ChargeJournal.WriteCheckpoint checkpoint;
+    public GoalStore(Path folder, Logger logger) { this(folder, logger, () -> { }); }
+    GoalStore(Path folder, Logger logger, ru.cherdakmd.chrdkregister.api.ChargeJournal.WriteCheckpoint checkpoint) {
+        file = folder.resolve("goals-data.json"); this.logger = logger; this.checkpoint = Objects.requireNonNull(checkpoint);
+    }
     public synchronized boolean healthy() { return healthy; }
     public synchronized void load() {
         if (!Files.exists(file)) return;
@@ -55,14 +61,15 @@ public final class GoalStore {
             throw new IllegalArgumentException("income");
     }
     private static boolean name(String n) { return n != null && n.matches("[a-z0-9_]{1,16}"); }
-    private void writable() { if (!healthy) throw new IllegalStateException("goals storage quarantined"); }
+    private void writable() { if (!healthy || financeBusy.getAsBoolean()) throw new IllegalStateException("goals finance paused"); }
     private void persist(Data next) throws IOException {
-        writable(); validate(next);
+        if (!healthy) throw new IllegalStateException("goals storage quarantined"); validate(next);
         try {
             Files.createDirectories(file.getParent()); Path temp = file.resolveSibling("goals-data.json.tmp");
             Files.writeString(temp, JSON.toJson(next), StandardCharsets.UTF_8);
             try (FileChannel channel = FileChannel.open(temp, StandardOpenOption.WRITE)) { channel.force(true); }
             Files.move(temp, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        checkpoint.afterReplace();
             try (FileChannel directory = FileChannel.open(file.getParent(), StandardOpenOption.READ)) { directory.force(true); }
             data = next; dirty = false;
         } catch (IOException error) { healthy = false; throw error; }
@@ -72,16 +79,46 @@ public final class GoalStore {
         writable(); if (data.schema == 2) return;
         var next = copy(); next.schema = 2; next.incomeId = UUID.randomUUID(); persist(next);
     }
+    @Override public synchronized String snapshot() {
+        if (!healthy) throw new IllegalStateException("goals storage quarantined"); return JSON.toJson(data);
+    }
+    /** Только preview: завершение, вклад и распределённые награды подготовлены без изменения source. */
+    public synchronized String previewDonation(String name, int amount, int bonus) throws IOException {
+        writable(); saveStrict();
+        if (data.schema != 2 || !data.bankRegistered || name == null || !name(name) || amount < 1 || amount > 100_000)
+            throw new IllegalArgumentException("bank donation");
+        var next = copy(); var goal = next.goals.stream().filter(g -> g.id.equals("donate-diamonds") && !g.done).findFirst().orElseThrow();
+        goal.progress = (int) Math.min(goal.target, (long) goal.progress + amount);
+        goal.contributions.merge(name, amount, Math::addExact);
+        if (goal.progress == goal.target) {
+            goal.done = true;
+            for (var row : GoalRewards.distribute(goal.rewardPool, goal.contributions, bonus).entrySet()) {
+                next.pendingRewards.merge(row.getKey(), (long) row.getValue(), Math::addExact);
+                next.lifetimeEarned = Math.addExact(next.lifetimeEarned, row.getValue());
+            }
+        }
+        validate(next); return JSON.toJson(next);
+    }
+    @Override public synchronized void publish(String before, String after) throws IOException {
+        if (!healthy) throw new IOException("goals storage quarantined");
+        String current = snapshot(); if (current.equals(after)) return;
+        if (!current.equals(before)) throw new IllegalStateException("goals state conflict");
+        var object = JsonParser.parseString(after); ru.cherdakmd.chrdkregister.api.FinanceNumbers.requireIntegral(object);
+        var next = JSON.fromJson(object, Data.class); validate(next);
+        if (next.schema != 2 || !next.bankRegistered || !Objects.equals(data.incomeId, next.incomeId) || !after.equals(JSON.toJson(next)))
+            throw new IllegalArgumentException("goals state identity/canonical encoding");
+        persist(next);
+    }
     public synchronized UUID incomeId() { return data.incomeId; }
     public synchronized boolean bankRegistered() { return data.bankRegistered; }
-    public synchronized void markBankRegistered() throws IOException { var next = copy(); next.bankRegistered = true; persist(next); }
+    public synchronized void markBankRegistered() throws IOException { writable(); var next = copy(); next.bankRegistered = true; persist(next); }
     public synchronized void saveStrict() throws IOException { if (dirty) persist(copy()); }
     public synchronized void save() {
         if (!healthy || !dirty) return;
         try { saveStrict(); } catch (IOException error) { logger.log(Level.SEVERE, "Цели: ошибка записи, хранилище остановлено", error); }
     }
     public void saveAsync(CommonGoalsPlugin plugin) { plugin.getServer().getScheduler().runTaskAsynchronously(plugin, this::save); }
-    public synchronized void markDirty() { if (healthy) dirty = true; }
+    public synchronized void markDirty() { if (healthy && !financeBusy.getAsBoolean()) dirty = true; }
     public synchronized List<GoalState> goals() { return List.copyOf(data.goals); }
     public synchronized Optional<GoalState> goal(String id) { return data.goals.stream().filter(g -> g.id.equals(id)).findFirst(); }
     public synchronized void replaceGoals(List<GoalState> goals, long ends) {
@@ -89,7 +126,7 @@ public final class GoalStore {
     }
     public synchronized long rotationEndsAt() { return data.rotationEndsAt; }
     public synchronized int rotationsDone() { return data.rotationsDone; }
-    public synchronized boolean needRotation(long now) { return healthy && (data.goals.isEmpty() || data.rotationEndsAt <= now); }
+    public synchronized boolean needRotation(long now) { return healthy && !financeBusy.getAsBoolean() && (data.goals.isEmpty() || data.rotationEndsAt <= now); }
     public synchronized boolean addProgress(String id, String player, int amount) {
         writable(); var found = goal(id); if (found.isEmpty() || found.get().done || amount <= 0) return false;
         var g = found.get(); g.progress = (int) Math.min(g.target, (long) g.progress + amount);

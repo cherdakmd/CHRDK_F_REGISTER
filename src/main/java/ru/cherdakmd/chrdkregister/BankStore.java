@@ -3,6 +3,7 @@ package ru.cherdakmd.chrdkregister;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import ru.cherdakmd.chrdkregister.api.AuctionPayment;
+import ru.cherdakmd.chrdkregister.api.BankCharge;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -42,7 +43,7 @@ import java.util.logging.Logger;
 public final class BankStore {
 
     /** Версия формата файла. */
-    public static final int SCHEMA_VERSION = 3;
+    public static final int SCHEMA_VERSION = 4;
     /** Верхняя граница счёта: защита от переполнения и «бесконечных» начислений. */
     public static final long MAX_BALANCE = 1_000_000_000L;
 
@@ -104,12 +105,14 @@ public final class BankStore {
         int schema = SCHEMA_VERSION;
         Map<String, Account> accounts = new LinkedHashMap<>();
         Map<String, ClaimsImport> claimsImports = new LinkedHashMap<>();
+        Map<String, BankCharge> chargeSettlements = new LinkedHashMap<>();
         Map<String, UUID> entitlementSources = new LinkedHashMap<>();
         Map<String, Entitlement> entitlementCredits = new LinkedHashMap<>();
         Map<UUID, AuctionImport> auctionImports = new LinkedHashMap<>();
         Map<UUID, AuctionPayment> auctionSettlements = new LinkedHashMap<>();
     }
 
+    private final Map<String, BankCharge> chargeSettlements = new LinkedHashMap<>();
     public record Entitlement(UUID owner, long credited) { }
     private final Map<String, UUID> entitlementSources = new LinkedHashMap<>();
     private final Map<String, Entitlement> entitlementCredits = new LinkedHashMap<>();
@@ -154,11 +157,13 @@ public final class BankStore {
                     || !document.getAsJsonObject().get("accounts").isJsonObject()) throw new IllegalArgumentException("Нет таблицы банковских счетов");
             var object = document.getAsJsonObject();
             int schema = object.has("schema") ? object.get("schema").getAsInt() : 1;
-            if (schema != 1 && schema != 2 && schema != SCHEMA_VERSION) throw new IllegalArgumentException("Неизвестная схема банка");
+            if (schema != 1 && schema != 2 && schema != 3 && schema != SCHEMA_VERSION) throw new IllegalArgumentException("Неизвестная схема банка");
             if (schema >= 2) for (String key : java.util.List.of("claimsImports", "auctionImports", "auctionSettlements"))
                 if (!object.has(key) || !object.get(key).isJsonObject()) throw new IllegalArgumentException("Нет таблицы " + key);
             if (schema >= 3) for (String key : java.util.List.of("entitlementSources", "entitlementCredits"))
                 if (!object.has(key) || !object.get(key).isJsonObject()) throw new IllegalArgumentException("Нет таблицы " + key);
+            if (schema >= 4 && (!object.has("chargeSettlements") || !object.get("chargeSettlements").isJsonObject()))
+                throw new IllegalArgumentException("Нет таблицы расходов");
             Envelope envelope = GSON.fromJson(document, Envelope.class);
             entitlementSources.clear(); entitlementCredits.clear();
             if (envelope.entitlementSources != null) for (var row : envelope.entitlementSources.entrySet()) {
@@ -171,6 +176,13 @@ public final class BankStore {
                         || !validIncomeKey(key.substring(separator + 1)) || receipt == null || receipt.owner() == null || receipt.credited() < 0)
                     throw new IllegalArgumentException("Неверная квитанция дохода");
                 entitlementCredits.put(key, receipt);
+            }
+            chargeSettlements.clear();
+            if (envelope.chargeSettlements != null) for (var row : envelope.chargeSettlements.entrySet()) {
+                var payment = row.getValue();
+                if (payment == null || !payment.valid() || !payment.source().equals(row.getKey())
+                        || !payment.lineage().equals(entitlementSources.get(row.getKey()))) throw new IllegalArgumentException("Неверная квитанция расхода");
+                chargeSettlements.put(row.getKey(), payment);
             }
             if (envelope == null || envelope.accounts == null) throw new IllegalArgumentException("Пустой денежный файл");
             claimsImports.clear();
@@ -207,6 +219,7 @@ public final class BankStore {
                 accounts.put(id, account);
                 rows.add(Map.entry(id, account));
             }
+            for (var payment : chargeSettlements.values()) if (!accounts.containsKey(payment.payer())) throw new IllegalArgumentException("Расход без счёта");
             for (var receipt : entitlementCredits.values()) if (!accounts.containsKey(receipt.owner())) throw new IllegalArgumentException("Доход без счёта");
             for (var receipt : claimsImports.values()) if (!accounts.containsKey(receipt.player())) throw new IllegalArgumentException("Квитанция казны без счёта");
             for (var id : auctionImports.keySet()) if (!accounts.containsKey(id)) throw new IllegalArgumentException("Импорт аукциона без счёта");
@@ -499,6 +512,27 @@ public final class BankStore {
         account.updated = System.currentTimeMillis(); dirty = true; return true;
     }
 
+    public synchronized BankCharge.Status bankChargeStatus(BankCharge payment) {
+        if (!available) return BankCharge.Status.UNAVAILABLE;
+        if (payment == null || !payment.valid()) return BankCharge.Status.CONFLICT;
+        if (!incomeSourceAvailable(payment.source(), payment.lineage())) return BankCharge.Status.UNAVAILABLE;
+        var last = chargeSettlements.get(payment.source());
+        if (payment.equals(last)) return BankCharge.Status.COMMITTED;
+        return payment.sequence() == (last == null ? 1 : last.sequence() + 1) ? BankCharge.Status.MISSING : BankCharge.Status.CONFLICT;
+    }
+    /** Расход и банковская сдача одним файлом с high-water квитанцией. */
+    public synchronized boolean settleCharge(BankCharge payment) {
+        var status = bankChargeStatus(payment);
+        if (status == BankCharge.Status.COMMITTED) return true;
+        if (status != BankCharge.Status.MISSING) return false;
+        long balance = balance(payment.payer());
+        if (balance < payment.debit() || balance - payment.debit() + payment.change() > MAX_BALANCE) return false;
+        var next = envelope();
+        adjust(next.accounts.computeIfAbsent(payment.payer().toString(), ignored -> new Account()), -payment.debit() + payment.change());
+        next.chargeSettlements.put(payment.source(), payment);
+        return publishAuction(next);
+    }
+
     private static boolean validIncomeSource(String source) { return source != null && source.matches("[a-z][a-z0-9-]{0,47}"); }
     private static boolean validIncomeKey(String key) { return key != null && key.matches("[a-z0-9_-]{1,80}"); }
     public synchronized boolean incomeSourceAvailable(String source, UUID lineage) {
@@ -593,6 +627,7 @@ public final class BankStore {
             return false;
         }
         accounts.clear(); next.accounts.forEach((id, account) -> accounts.put(UUID.fromString(id), account));
+        chargeSettlements.clear(); chargeSettlements.putAll(next.chargeSettlements);
         entitlementSources.clear(); entitlementSources.putAll(next.entitlementSources);
         entitlementCredits.clear(); entitlementCredits.putAll(next.entitlementCredits);
         auctionImports.clear(); auctionImports.putAll(next.auctionImports);
@@ -614,6 +649,7 @@ public final class BankStore {
         var envelope = new Envelope();
         accounts.forEach((id, account) -> envelope.accounts.put(id.toString(), account.copy()));
         envelope.claimsImports.putAll(claimsImports);
+        envelope.chargeSettlements.putAll(chargeSettlements);
         envelope.entitlementSources.putAll(entitlementSources); envelope.entitlementCredits.putAll(entitlementCredits);
         envelope.auctionImports.putAll(auctionImports); envelope.auctionSettlements.putAll(auctionSettlements);
         return envelope;

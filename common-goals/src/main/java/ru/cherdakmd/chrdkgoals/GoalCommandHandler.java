@@ -115,87 +115,10 @@ public final class GoalCommandHandler implements CommandExecutor, TabCompleter {
     }
 
     private void donate(Player player, String[] args) {
-        GoalState cauldron = plugin.store().goals().stream()
-                .filter(g -> g.id.equals("donate-diamonds") && !g.done)
-                .findFirst().orElse(null);
-        if (cauldron == null) {
-            plugin.messages().send(player, "donate-no-goal");
-            return;
-        }
-        int amount = 0;
-        try {
-            amount = args.length >= 2 ? Integer.parseInt(args[1]) : 0;
-        } catch (NumberFormatException ignored) {
-            // ниже donate-invalid
-        }
-        if (amount < 1 || amount > 100_000) {
-            plugin.messages().send(player, "donate-invalid", "max", "100000");
-            return;
-        }
-        // сколько эквивалента алмазов игрок реально несёт
-        int have = 0;
-        for (ItemStack stack : player.getInventory().getStorageContents()) {
-            if (stack == null) {
-                continue;
-            }
-            int value = MaterialGoals.diamondValue(stack.getType());
-            if (value > 0) {
-                have += value * stack.getAmount();
-            }
-        }
-        if (have < amount) {
-            plugin.messages().send(player, "donate-none");
-            return;
-        }
-        removeDiamonds(player, amount);
-        plugin.service().addProgress(GoalMetric.DONATE_DIAMONDS, player, amount);
-        plugin.messages().send(player, "donate-done", "amount", String.valueOf(amount));
-    }
-
-    /**
-     * Списывает из инвентаря эквивалент N алмазов. Блок стоит 9: если сдача не набирается
-     * поштучно, изымается один блок, а разница (9 - left) возвращается алмазами.
-     */
-    private void removeDiamonds(Player player, int amount) {
-        int left = amount;
-        for (Material material : List.of(Material.DIAMOND, Material.DIAMOND_ORE,
-                Material.DEEPSLATE_DIAMOND_ORE, Material.DIAMOND_BLOCK)) {
-            if (left <= 0) {
-                break;
-            }
-            int value = MaterialGoals.diamondValue(material);
-            for (int slot = 0; slot < player.getInventory().getSize() && left > 0; slot++) {
-                ItemStack stack = player.getInventory().getItem(slot);
-                if (stack == null || stack.getType() != material) {
-                    continue;
-                }
-                while (stack.getAmount() > 0 && left >= value) {
-                    stack.setAmount(stack.getAmount() - 1);
-                    left -= value;
-                }
-                if (stack.getAmount() == 0) {
-                    player.getInventory().setItem(slot, null);
-                }
-            }
-        }
-        if (left > 0) {
-            // осталась сумма, которую не набрать поштучно: меняем блок на 9 алмазов
-            for (int slot = 0; slot < player.getInventory().getSize() && left > 0; slot++) {
-                ItemStack stack = player.getInventory().getItem(slot);
-                if (stack == null || stack.getType() != Material.DIAMOND_BLOCK) {
-                    continue;
-                }
-                stack.setAmount(stack.getAmount() - 1);
-                if (stack.getAmount() == 0) {
-                    player.getInventory().setItem(slot, null);
-                }
-                java.util.HashMap<Integer, ItemStack> overflow = player.getInventory()
-                        .addItem(new ItemStack(Material.DIAMOND, 9 - left));
-                overflow.values().forEach(item -> player.getWorld()
-                        .dropItem(player.getLocation(), item));
-                left = 0;
-            }
-        }
+        int amount;
+        try { amount = args.length == 2 ? Integer.parseInt(args[1]) : 0; }
+        catch (NumberFormatException error) { amount = 0; }
+        plugin.service().donate(player, amount);
     }
 
     private void claim(Player player) { plugin.service().claimRewards(player); }
@@ -207,6 +130,10 @@ public final class GoalCommandHandler implements CommandExecutor, TabCompleter {
             plugin.messages().send(sender, "no-permission");
             return true;
         }
+        if (args.length == 1 && args[0].equalsIgnoreCase("recover")) {
+            plugin.messages().send(sender, plugin.service().recoverPending() ? "bank-recovered" : "bank-recovery"); return true;
+        }
+        if (plugin.service().paymentsBusy()) { plugin.messages().send(sender, "bank-recovery"); return true; }
         if (args.length == 1 && args[0].equalsIgnoreCase("rotate")) {
             plugin.rotateNow();
             plugin.messages().send(sender, "admin-rotated");
@@ -247,7 +174,7 @@ public final class GoalCommandHandler implements CommandExecutor, TabCompleter {
         }
         if (command.getName().equalsIgnoreCase("goalsadmin")) {
             if (args.length == 1) {
-                return filter(List.of("rotate", "reload", "progress"), args[0]);
+                return filter(List.of("rotate", "reload", "progress", "recover"), args[0]);
             }
             if (args.length == 2 && args[0].equalsIgnoreCase("progress")) {
                 return filter(plugin.store().goals().stream().map(g -> g.id).toList(), args[1]);

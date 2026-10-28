@@ -2,6 +2,7 @@ package ru.cherdakmd.chrdkgoals;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import ru.cherdakmd.chrdkregister.api.*;
 
 /**
  * Обработчик прогресса: фильтрация (авторизация, активная волна), добавление вклада,
@@ -10,15 +11,85 @@ import org.bukkit.entity.Player;
 public final class GoalsService {
 
     private final CommonGoalsPlugin plugin;
+    private ChargeJournal charges;
     private final java.util.Random random = new java.util.Random();
 
     public GoalsService(CommonGoalsPlugin plugin) {
         this.plugin = plugin;
     }
 
+    public void startPayments() throws java.io.IOException {
+        charges = new ChargeJournal(plugin.getDataFolder().toPath(), "common-goals", plugin.store().incomeId());
+        plugin.store().bindFinance(this::paymentsBusy);
+        if (charges.pending() != null && !ChargeInventory.valid(charges.pending())) throw new java.io.IOException("Неверный план взноса целей");
+        recoverCharge(null);
+    }
+    public boolean paymentsBusy() { return !plugin.store().healthy() || charges != null && (!charges.healthy() || charges.pending() != null); }
+    private void lock(Player p) { p.kick(net.kyori.adventure.text.Component.text("Общие цели: незавершённая предметная оплата. Повторите вход после проверки банка; при конфликте нужен администратор.")); }
+    private boolean recoverCharge(Player p) {
+        if (charges == null || charges.pending() == null) return !paymentsBusy();
+        var pending = charges.pending();
+        try {
+            var decision = ChargeInventory.recover(charges, plugin.coreApi(), p, plugin.store());
+            if (decision == ChargeRecovery.Decision.WAIT || decision == ChargeRecovery.Decision.CONFLICT) {
+                if (p != null && p.getUniqueId().equals(pending.payment().payer()) && pending.payment().cash() > 0) lock(p);
+                return false;
+            }
+            plugin.getLogger().info("Взнос целей восстановлен: " + pending.payment().transaction() + " / " + decision);
+            if (decision != ChargeRecovery.Decision.ROLLBACK && !plugin.store().goals().isEmpty() && plugin.store().goals().stream().allMatch(g -> g.done)) plugin.rotate(6000);
+            return true;
+        } catch (Exception error) {
+            plugin.getLogger().log(java.util.logging.Level.SEVERE, "Взнос целей не восстановлен; журнал сохранён", error);
+            if (p != null && p.getUniqueId().equals(pending.payment().payer()) && pending.payment().cash() > 0) lock(p);
+            return false;
+        }
+    }
+    public boolean recoverPending() {
+        var pending = charges == null ? null : charges.pending();
+        return pending == null ? !paymentsBusy() : recoverCharge(pending.payment().cash() == 0 ? null : Bukkit.getPlayer(pending.payment().payer()));
+    }
+    public boolean onAuthPayment(Player p) {
+        var pending = charges == null ? null : charges.pending();
+        return pending == null || !pending.payment().payer().equals(p.getUniqueId()) || recoverCharge(p);
+    }
+    public void donate(Player p, int amount) {
+        if (plugin.coreApi() == null || !plugin.coreApi().isAuthenticated(p) || !p.hasPermission("chrdkgoals.use")
+                || p.hasMetadata("NPC") || p.isDead()
+                || p.getGameMode() != org.bukkit.GameMode.SURVIVAL && p.getGameMode() != org.bukkit.GameMode.ADVENTURE) {
+            plugin.messages().send(p, "bank-mode"); return;
+        }
+        if (paymentsBusy()) { recoverCharge(p); if (paymentsBusy()) { plugin.messages().send(p, "bank-recovery"); return; } }
+        if (!ensureIncome()) { plugin.messages().send(p, "bank-wait"); return; }
+        if (amount < 1 || amount > 100_000) { plugin.messages().send(p, "donate-invalid", "max", "100000"); return; }
+        var goal = plugin.store().goal("donate-diamonds").filter(g -> !g.done).orElse(null);
+        if (goal == null) { plugin.messages().send(p, "donate-no-goal"); return; }
+        var before = ChargeInventory.copy(p.getInventory().getStorageContents());
+        var plan = ChargeInventory.plan(before, amount, plugin.coreApi().auctionBankBalance(p.getUniqueId()));
+        if (plan == null) { plugin.messages().send(p, "bank-not-enough", "amount", amount); return; }
+        try {
+            String afterState = plugin.store().previewDonation(p.getName().toLowerCase(java.util.Locale.ROOT), amount, plugin.config().rewardBonusPercent());
+            var payment = charges.prepare(p.getUniqueId(), amount, plan.debit(), plan.cash(), plan.change(),
+                    ChargeInventory.encode(before), ChargeInventory.encode(plan.after()), plugin.store().snapshot(), afterState);
+            plugin.coreApi().commitBankCharge(p, payment, before);
+            var decision = ChargeInventory.recover(charges, plugin.coreApi(), p, plugin.store());
+            if (decision == ChargeRecovery.Decision.ROLLBACK) { plugin.messages().send(p, "bank-refused"); return; }
+            if (decision == ChargeRecovery.Decision.WAIT || decision == ChargeRecovery.Decision.CONFLICT) {
+                if (plan.cash() > 0) lock(p); plugin.messages().send(p, "bank-recovery"); return;
+            }
+            plugin.messages().send(p, "bank-donated", "amount", amount, "change", plan.change());
+            var completed = plugin.store().goal("donate-diamonds").orElseThrow();
+            if (completed.done) onGoalCompleted(completed);
+            settleRewards();
+        } catch (Exception error) {
+            plugin.getLogger().log(java.util.logging.Level.SEVERE, "Взнос целей остановлен; журнал сохранён", error);
+            if (!charges.healthy() || !plugin.store().healthy() || charges.pending() != null && charges.pending().payment().cash() > 0) lock(p);
+            plugin.messages().send(p, "bank-recovery");
+        }
+    }
+
     /** Засчитывает прогресс «сырым» событием от слушателей. Проверки — на вызывающем. */
     public void addProgress(GoalMetric metric, Player player, int amount) {
-        if (amount <= 0) {
+        if (paymentsBusy() || amount <= 0) {
             return;
         }
         if (plugin.config().requireAuth()
@@ -68,7 +139,7 @@ public final class GoalsService {
     }
 
     private boolean ensureIncome() {
-        if (!plugin.store().healthy() || plugin.coreApi() == null || !plugin.coreApi().personalBankAvailable()) return false;
+        if (paymentsBusy() || !plugin.store().healthy() || plugin.coreApi() == null || !plugin.coreApi().personalBankAvailable()) return false;
         if (plugin.store().bankRegistered()) return plugin.coreApi().incomeSourceAvailable("common-goals", plugin.store().incomeId());
         if (!plugin.coreApi().registerIncomeSource("common-goals", plugin.store().incomeId())) return false;
         try { plugin.store().markBankRegistered(); return true; }

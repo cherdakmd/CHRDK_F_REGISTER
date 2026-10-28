@@ -6,7 +6,7 @@ import java.util.*;
 public final class AuctionTender {
     public record Plan(int[] remaining, long debit, long cash, long change) { }
     public static Plan plan(long price, long balance, int[] amounts, int[] values) {
-        if (price < 2 || price > 1_000_000 || balance < 0 || balance > 1_000_000_000L
+        if (price < 1 || price > 1_000_000 || balance < 0 || balance > 1_000_000_000L
                 || amounts == null || values == null || amounts.length != 36 || values.length != 36) return null;
         int[] after = amounts.clone(); var slots = new ArrayList<Integer>();
         for (int i=0; i<36; i++) {

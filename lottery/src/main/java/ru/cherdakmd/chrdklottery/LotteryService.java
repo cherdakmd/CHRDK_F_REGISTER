@@ -8,6 +8,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.api.events.PlayerAuthCompletedEvent;
+import ru.cherdakmd.chrdkregister.api.*;
 
 import java.io.IOException;
 import java.security.SecureRandom;
@@ -26,20 +27,35 @@ public final class LotteryService implements Listener {
     private final Set<UUID> waitingWarned = new HashSet<>();
     private long announcedBoundary;
     private BukkitTask task;
+    private ChargeJournal charges;
+    private boolean awaitingStartBoundary;
 
     public LotteryService(LotteryPlugin plugin, LotteryStore store) { this.plugin = plugin; this.store = store; }
     public void start() throws IOException {
         store.enableBank();
-        ensureIncome();
-        LotteryConfig c = plugin.config();
-        long boundary = DrawSchedule.lastBoundary(ZonedDateTime.now(c.zone()), c.drawDay(), c.drawTime())
-                .toInstant().toEpochMilli();
-        // First install is not a missed draw; do not raffle newly purchased tickets 30 seconds later.
-        if (store.lastDrawAt() == 0 || !c.catchUpOnStart()) store.markDrawnNow(boundary);
+        if (charges == null) {
+            charges = new ChargeJournal(plugin.getDataFolder().toPath(), "lottery", store.incomeId());
+            store.bindFinance(this::paymentsBusy);
+            if (charges.pending() != null && !ChargeInventory.valid(charges.pending())) throw new IOException("Неверный платёжный план лотереи");
+        }
+        recoverCharge(null);
+        if (!paymentsBusy()) ensureIncome();
+        awaitingStartBoundary = true;
+        finishStartBoundary();
         task = Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 600L, 600L);
+    }
+    private void finishStartBoundary() throws IOException {
+        if (!awaitingStartBoundary || paymentsBusy()) return;
+        LotteryConfig c = plugin.config();
+        long boundary = DrawSchedule.lastBoundary(ZonedDateTime.now(c.zone()), c.drawDay(), c.drawTime()).toInstant().toEpochMilli();
+        if (store.lastDrawAt() == 0 || !c.catchUpOnStart()) store.markDrawnNow(boundary);
+        awaitingStartBoundary = false;
     }
     public void shutdown() { if (task != null) { task.cancel(); task = null; } }
     private void tick() {
+        recoverCharge(null);
+        if (paymentsBusy() || !store.healthy()) return;
+        try { finishStartBoundary(); } catch (IOException error) { fail(error); return; }
         settlePrizes();
         LotteryConfig c = plugin.config();
         ZonedDateTime now = ZonedDateTime.now(c.zone());
@@ -56,7 +72,7 @@ public final class LotteryService implements Listener {
         }
     }
     public boolean drawNow() {
-        if (!ensureIncome()) return false;
+        if (paymentsBusy() || !ensureIncome()) return false;
         LotteryConfig c = plugin.config();
         int total = LotteryRound.totalTickets(store.ticketsSnapshot());
         long now = System.currentTimeMillis();
@@ -76,9 +92,14 @@ public final class LotteryService implements Listener {
             return true;
         } catch (IOException | RuntimeException e) { fail(e); return false; }
     }
-    @EventHandler public void onAuthenticated(PlayerAuthCompletedEvent event) { remindPrize(event.getPlayer()); }
+    @EventHandler public void onAuthenticated(PlayerAuthCompletedEvent event) {
+        Player p = event.getPlayer();
+        var pending = charges == null ? null : charges.pending();
+        if (pending != null && pending.payment().payer().equals(p.getUniqueId()) && !recoverCharge(p)) return;
+        if (!paymentsBusy()) remindPrize(p);
+    }
     private boolean ensureIncome() {
-        if (!store.healthy() || plugin.coreApi() == null || !plugin.coreApi().personalBankAvailable()) return false;
+        if (!store.healthy() || paymentsBusy() || plugin.coreApi() == null || !plugin.coreApi().personalBankAvailable()) return false;
         if (store.bankRegistered()) return plugin.coreApi().incomeSourceAvailable("lottery", store.incomeId());
         if (!plugin.coreApi().registerIncomeSource("lottery", store.incomeId())) return false;
         try { store.markBankRegistered(); return true; }
@@ -105,6 +126,10 @@ public final class LotteryService implements Listener {
     }
     public void buyTickets(Player p, int count) {
         if (!authenticated(p)) return;
+        if (p.getGameMode() != org.bukkit.GameMode.SURVIVAL && p.getGameMode() != org.bukkit.GameMode.ADVENTURE || p.hasMetadata("NPC") || p.isDead()) {
+            plugin.messages().send(p, "lottery.bank-mode"); return;
+        }
+        if (paymentsBusy()) { recoverCharge(p); if (paymentsBusy()) { plugin.messages().send(p, "lottery.bank-recovery"); return; } }
         if (!ensureIncome()) { plugin.messages().send(p, "lottery.bank-wait"); return; }
         LotteryConfig c = plugin.config();
         if (plugin.coreApi().rankLevel(p.getName()) < c.minRank()) {
@@ -128,16 +153,46 @@ public final class LotteryService implements Listener {
             plugin.messages().send(p, "lottery.round-limit"); return;
         }
         int cost = (int) costLong;
-        ItemStack[] before = snapshot(p);
-        if (!DiamondWallet.charge(p, cost)) {
-            plugin.messages().send(p, "lottery.buy-no-diamonds", "cost", cost, "have", DiamondWallet.count(p)); return;
+        var before = ChargeInventory.copy(p.getInventory().getStorageContents());
+        var plan = ChargeInventory.plan(before, cost, plugin.coreApi().auctionBankBalance(p.getUniqueId()));
+        if (plan == null) { plugin.messages().send(p, "lottery.bank-not-enough", "cost", cost); return; }
+        try {
+            String afterState = store.previewPurchase(p.getUniqueId(), p.getName(), count, cost);
+            String beforeState = store.snapshot();
+            var payment = charges.prepare(p.getUniqueId(), cost, plan.debit(), plan.cash(), plan.change(),
+                    ChargeInventory.encode(before), ChargeInventory.encode(plan.after()), beforeState, afterState);
+            plugin.coreApi().commitBankCharge(p, payment, before);
+            var decision = ChargeInventory.recover(charges, plugin.coreApi(), p, store);
+            if (decision == ChargeRecovery.Decision.ROLLBACK) { plugin.messages().send(p, "lottery.bank-refused"); return; }
+            if (decision == ChargeRecovery.Decision.WAIT || decision == ChargeRecovery.Decision.CONFLICT) {
+                plugin.messages().send(p, "lottery.bank-recovery"); if (plan.cash() > 0) lock(p); return;
+            }
+            plugin.messages().send(p, "lottery.bank-bought", "count", count, "cost", cost, "change", plan.change(), "total", store.ticketsOf(p.getUniqueId()));
+        } catch (Exception error) {
+            fail(error);
+            if (!charges.healthy() || !store.healthy() || charges.pending() != null && charges.pending().payment().cash() > 0) lock(p);
+            plugin.messages().send(p, "lottery.storage-error");
         }
-        try { store.purchase(p.getUniqueId(), p.getName(), count, cost); }
-        catch (IOException | RuntimeException e) {
-            p.getInventory().setStorageContents(before); fail(e); plugin.messages().send(p, "lottery.storage-error"); return;
+    }
+    private boolean paymentsBusy() { return !store.healthy() || charges != null && (!charges.healthy() || charges.pending() != null); }
+    private void lock(Player p) { p.kick(net.kyori.adventure.text.Component.text("Лотерея: незавершённая предметная оплата. Повторите вход после проверки банка; при конфликте нужен администратор.")); }
+    private boolean recoverCharge(Player p) {
+        if (charges == null || charges.pending() == null) return !paymentsBusy();
+        var pending = charges.pending();
+        try {
+            var result = ChargeInventory.recover(charges, plugin.coreApi(), p, store);
+            if (result == ChargeRecovery.Decision.WAIT || result == ChargeRecovery.Decision.CONFLICT) {
+                if (p != null && pending.payment().payer().equals(p.getUniqueId()) && pending.payment().cash() > 0) lock(p);
+                return false;
+            }
+            plugin.getLogger().info("Оплата лотереи восстановлена: " + pending.payment().transaction() + " / " + result); return true;
+        } catch (Exception error) {
+            fail(error); if (p != null && pending.payment().payer().equals(p.getUniqueId()) && pending.payment().cash() > 0) lock(p); return false;
         }
-        p.saveData();
-        plugin.messages().send(p, "lottery.buy-success", "count", count, "cost", cost, "total", store.ticketsOf(p.getUniqueId()));
+    }
+    public boolean recoverPending() {
+        var pending = charges == null ? null : charges.pending();
+        return pending == null ? !paymentsBusy() : recoverCharge(pending.payment().cash() == 0 ? null : Bukkit.getPlayer(pending.payment().payer()));
     }
     public void claimPrize(Player p) {
         if (!authenticated(p)) return;
@@ -148,11 +203,6 @@ public final class LotteryService implements Listener {
             plugin.messages().send(p, "lottery.bank-wait"); return;
         }
         plugin.messages().send(p, "lottery.bank-paid", "balance", plugin.coreApi().auctionBankBalance(p.getUniqueId()));
-    }
-    private static ItemStack[] snapshot(Player p) {
-        ItemStack[] result = p.getInventory().getStorageContents();
-        for (int i = 0; i < result.length; i++) if (result[i] != null) result[i] = result[i].clone();
-        return result;
     }
     private void fail(Exception e) { plugin.getLogger().log(Level.SEVERE, "Lottery operation failed; ledger not changed", e); }
     public void sendInfo(Player p) {

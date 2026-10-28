@@ -37,13 +37,13 @@ public final class CommonGoalsPlugin extends JavaPlugin implements Listener {
         saveDefaultConfig();
         reloadGoalsConfig();
         try {
-            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 16)
-                throw new IllegalStateException("Нужен Core API 16+");
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 17)
+                throw new IllegalStateException("Нужен Core API 17+");
             this.store = new GoalStore(getDataFolder().toPath(), getLogger());
             store.load();
             if (!store.healthy()) throw new IllegalStateException("Источник целей повреждён");
             this.service = new GoalsService(this);
-            store.enableBank();
+            store.enableBank(); service.startPayments();
         } catch (Exception | LinkageError error) {
             getLogger().log(java.util.logging.Level.SEVERE, "Цели остановлены без сброса данных", error);
             Bukkit.getPluginManager().disablePlugin(this); return;
@@ -64,7 +64,7 @@ public final class CommonGoalsPlugin extends JavaPlugin implements Listener {
             admin.setTabCompleter(commands);
         }
 
-        lifecycle = Bukkit.getScheduler().runTaskTimer(this, () -> { ensureWave(); service.settleRewards(); }, 100L, 1200L);
+        lifecycle = Bukkit.getScheduler().runTaskTimer(this, () -> { service.recoverPending(); if (!service.paymentsBusy()) { ensureWave(); service.settleRewards(); } }, 100L, 1200L);
         saveTask = Bukkit.getScheduler().runTaskTimer(this,
                 () -> store.saveAsync(this), SAVE_INTERVAL_TICKS, SAVE_INTERVAL_TICKS);
         getLogger().info("CHRDK_CommonGoals включён: волна целей до "
@@ -100,6 +100,7 @@ public final class CommonGoalsPlugin extends JavaPlugin implements Listener {
 
     /** Принудительная ротация (новая волна + рассылка). */
     public void rotateNow() {
+        if (service.paymentsBusy()) throw new IllegalStateException("Незавершённый взнос целей");
         List<GoalState> wave = config.rollWave(new java.util.Random());
         long endsAt = System.currentTimeMillis()
                 + Duration.ofDays(config.periodDays()).toMillis();
@@ -113,13 +114,14 @@ public final class CommonGoalsPlugin extends JavaPlugin implements Listener {
 
     /** Отложенная ротация через N тиков (после полного завершения всех целей волны). */
     public void rotate(long delayTicks) {
-        Bukkit.getScheduler().runTaskLater(this, this::rotateNow, delayTicks);
+        Bukkit.getScheduler().runTaskLater(this, () -> { if (service.paymentsBusy()) rotate(200L); else rotateNow(); }, delayTicks);
     }
 
     /** После полной авторизации напоминаем про незабранные награды. */
     @EventHandler
     public void onAuthCompleted(PlayerAuthCompletedEvent event) {
         Player player = event.getPlayer();
+        if (!service.onAuthPayment(player)) return;
         if (store.entitlementOf(player.getName()) > 0) service.claimRewards(player);
     }
 
