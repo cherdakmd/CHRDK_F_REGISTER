@@ -74,6 +74,15 @@ public final class ChargeInventory {
                 && c.inventoryHash().equals(AuctionPayment.hash(pending.beforeInventory(), pending.afterInventory()))
                 && c.stateHash().equals(AuctionPayment.hash(pending.beforeState(), pending.afterState()));
     }
+    /** Nonce сохраняется в том же playerdata, что и storage, и переживает очистку module WAL. */
+    public static org.bukkit.NamespacedKey witnessKey(String source) {
+        if (source == null || !source.matches("[a-z][a-z0-9-]{0,47}")) throw new IllegalArgumentException("source");
+        return new org.bukkit.NamespacedKey("chrdk_core", "charge_" + source);
+    }
+    private static void saveWitness(Player player, BankCharge c) {
+        player.getPersistentDataContainer().set(witnessKey(c.source()), org.bukkit.persistence.PersistentDataType.STRING, c.transaction().toString());
+        player.saveData();
+    }
     /** Player нужен только для предметной части. При cash=0 актуальный инвентарь вообще не читается. */
     public static ChargeRecovery.Decision recover(ChargeJournal journal, ChrdkRegisterApi api, Player player, Source source) throws IOException {
         var pending = journal.pending();
@@ -90,11 +99,11 @@ public final class ChargeInventory {
                 c.cash() > 0 && matches(storage, pending.beforeInventory()), c.cash() > 0 && matches(storage, pending.afterInventory()));
         switch (decision) {
             case APPLY_AFTER -> {
-                player.getInventory().setStorageContents(decode(pending.afterInventory())); player.saveData();
+                player.getInventory().setStorageContents(decode(pending.afterInventory())); saveWitness(player, c);
                 source.publish(pending.beforeState(), pending.afterState()); journal.complete(c);
             }
             case COMPLETE -> {
-                if (c.cash() > 0) player.saveData();
+                if (c.cash() > 0) saveWitness(player, c);
                 source.publish(pending.beforeState(), pending.afterState()); journal.complete(c);
             }
             case ROLLBACK -> journal.rollback(c);

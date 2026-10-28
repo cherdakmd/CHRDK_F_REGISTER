@@ -1137,6 +1137,7 @@ messages:
   # economy — банк алмазов, /bal, /pay, /baltop (1.4.138)
   # ---------------------------------------------------------------
   "economy":
+    charge-playerdata-lock: '<red>Банк не может подтвердить сохранение предметной оплаты. Игра приостановлена до сверки playerdata и квитанций администратором. Не сбрасывайте данные.</red>'
     "disabled": "<red>Банк выключен в config.yml (economy.enabled).</red>"
     "help": "<gold>Банк алмазов</gold>\n<gray>/bal — баланс счёта и алмазов в инвентаре</gray>\n<gray>/bal <ник> — баланс другого игрока</gray>\n<gray>/bal deposit [all|hand|сумма] — положить алмазы в банк</gray>\n<gray>/bal withdraw <сумма> — снять алмазы в инвентарь</gray>\n<gray>/pay <ник> <сумма> — перевод (работает и для офлайн-игрока)</gray>\n<gray>/baltop [страница] — топ счетов</gray>"
     "balance": "<gold>Баланс: <white>%balance%</white> алмазов</gold> <dark_gray>·</dark_gray> <gray>в инвентаре: <white>%inventory%</white> <dark_gray>·</dark_gray> всего: <white>%total%</white></gray>"

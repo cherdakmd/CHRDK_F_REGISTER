@@ -68,6 +68,18 @@ class BankChargeTest {
         json=com.google.gson.JsonParser.parseString(original).getAsJsonObject(); json.getAsJsonObject("chargeSettlements").getAsJsonObject("lottery").addProperty("lineage",UUID.randomUUID().toString());
         Files.writeString(b.file(),json.toString()); assertFalse(load().available());
     }
+    @Test void cashWitnessSurvivesReceiptCompactionOtherBuyersAndBankOnlyPayments() {
+        var b=funded(2); var physical=charge(1,2,9,6); assertTrue(b.settleCharge(physical));
+        assertEquals(Map.of("lottery",physical.transaction()),load().chargeWitnesses(owner));
+        var other=UUID.randomUUID(); var second=new BankCharge("lottery",lineage,2,UUID.randomUUID(),other,1,0,9,8,hash,hash); assertTrue(b.settleCharge(second));
+        assertTrue(b.settleCharge(charge(3,1,0,0)));
+        assertEquals(Map.of("lottery",physical.transaction()),load().chargeWitnesses(owner)); assertEquals(Map.of("lottery",second.transaction()),load().chargeWitnesses(other));
+    }
+    @Test void missingCashWitnessTableOrWitnessIsCorruptionRatherThanUntouchedPlayerdata() throws Exception {
+        var b=funded(2); assertTrue(b.settleCharge(charge(1,2,9,6))); String original=Files.readString(b.file());
+        var json=com.google.gson.JsonParser.parseString(original).getAsJsonObject(); json.remove("chargeWitnesses"); Files.writeString(b.file(),json.toString()); assertFalse(load().available()); assertNull(load().chargeWitnesses(owner));
+        json=com.google.gson.JsonParser.parseString(original).getAsJsonObject(); json.getAsJsonObject("chargeWitnesses").remove("lottery:"+owner); Files.writeString(b.file(),json.toString()); assertFalse(load().available());
+    }
     @Test void namespacesHaveIndependentExpenseAndIncomeSequences() {
         var b=funded(100); var lottery=charge(1,10,0,0); assertTrue(b.settleCharge(lottery)); var goals=UUID.randomUUID(); b.registerIncomeSource("common-goals",goals);
         var other=new BankCharge("common-goals",goals,1,UUID.randomUUID(),owner,3,3,0,0,hash,hash); assertTrue(b.settleCharge(other));

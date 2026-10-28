@@ -85,6 +85,9 @@ public final class RegisterPlugin extends JavaPlugin {
         this.bankStore.load();
         this.bankService = new BankService(this, bankStore, () -> accessManager.config().economy());
         this.bankService.start();
+        var chargeGuard = new BankChargeGuard(this, bankStore);
+        getServer().getPluginManager().registerEvents(chargeGuard, this);
+        getServer().getScheduler().runTask(this, chargeGuard::checkOnline);
         this.profileRegistry = new ProfileRegistry(getLogger());
         this.rewardBoosts = new RewardBoostService(this, accessManager);
         getServer().getPluginManager().registerEvents(rewardBoosts, this);

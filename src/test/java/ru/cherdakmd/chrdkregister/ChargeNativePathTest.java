@@ -13,7 +13,9 @@ class ChargeNativePathTest {
     @Test void recoverySavesPlayerdataBeforeSourceAndNeverAutomaticallyRefundsOrDrops() throws Exception {
         String code=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkregister/api/ChargeInventory.java"));
         String apply=code.substring(code.indexOf("case APPLY_AFTER"),code.indexOf("case COMPLETE"));
-        assertTrue(apply.indexOf("setStorageContents")<apply.indexOf("saveData")); assertTrue(apply.indexOf("saveData")<apply.indexOf("source.publish")); assertTrue(apply.indexOf("source.publish")<apply.indexOf("journal.complete"));
+        assertTrue(apply.indexOf("setStorageContents")<apply.indexOf("saveWitness")); assertTrue(apply.indexOf("saveWitness")<apply.indexOf("source.publish")); assertTrue(apply.indexOf("source.publish")<apply.indexOf("journal.complete"));
+        String save=code.substring(code.indexOf("private static void saveWitness"),code.indexOf("/** Player нужен"));
+        assertTrue(save.indexOf("getPersistentDataContainer().set")<save.indexOf("player.saveData()"));
         assertTrue(code.contains("c.cash() == 0 ? null : player.getInventory()")); assertFalse(code.contains("deposit(")); assertFalse(code.contains("dropItem"));
     }
 }

@@ -106,6 +106,7 @@ public final class BankStore {
         Map<String, Account> accounts = new LinkedHashMap<>();
         Map<String, ClaimsImport> claimsImports = new LinkedHashMap<>();
         Map<String, BankCharge> chargeSettlements = new LinkedHashMap<>();
+        Map<String, UUID> chargeWitnesses = new LinkedHashMap<>();
         Map<String, UUID> entitlementSources = new LinkedHashMap<>();
         Map<String, Entitlement> entitlementCredits = new LinkedHashMap<>();
         Map<UUID, AuctionImport> auctionImports = new LinkedHashMap<>();
@@ -113,6 +114,7 @@ public final class BankStore {
     }
 
     private final Map<String, BankCharge> chargeSettlements = new LinkedHashMap<>();
+    private final Map<String, UUID> chargeWitnesses = new LinkedHashMap<>();
     public record Entitlement(UUID owner, long credited) { }
     private final Map<String, UUID> entitlementSources = new LinkedHashMap<>();
     private final Map<String, Entitlement> entitlementCredits = new LinkedHashMap<>();
@@ -162,8 +164,8 @@ public final class BankStore {
                 if (!object.has(key) || !object.get(key).isJsonObject()) throw new IllegalArgumentException("Нет таблицы " + key);
             if (schema >= 3) for (String key : java.util.List.of("entitlementSources", "entitlementCredits"))
                 if (!object.has(key) || !object.get(key).isJsonObject()) throw new IllegalArgumentException("Нет таблицы " + key);
-            if (schema >= 4 && (!object.has("chargeSettlements") || !object.get("chargeSettlements").isJsonObject()))
-                throw new IllegalArgumentException("Нет таблицы расходов");
+            if (schema >= 4) for (String key : java.util.List.of("chargeSettlements", "chargeWitnesses"))
+                if (!object.has(key) || !object.get(key).isJsonObject()) throw new IllegalArgumentException("Нет таблицы " + key);
             Envelope envelope = GSON.fromJson(document, Envelope.class);
             entitlementSources.clear(); entitlementCredits.clear();
             if (envelope.entitlementSources != null) for (var row : envelope.entitlementSources.entrySet()) {
@@ -219,7 +221,19 @@ public final class BankStore {
                 accounts.put(id, account);
                 rows.add(Map.entry(id, account));
             }
-            for (var payment : chargeSettlements.values()) if (!accounts.containsKey(payment.payer())) throw new IllegalArgumentException("Расход без счёта");
+            chargeWitnesses.clear();
+            if (envelope.chargeWitnesses != null) for (var row : envelope.chargeWitnesses.entrySet()) {
+                int colon = row.getKey() == null ? -1 : row.getKey().indexOf(':');
+                if (colon < 1 || row.getValue() == null || !entitlementSources.containsKey(row.getKey().substring(0, colon))
+                        || !accounts.containsKey(UUID.fromString(row.getKey().substring(colon + 1)))
+                        || !UUID.fromString(row.getKey().substring(colon + 1)).toString().equals(row.getKey().substring(colon + 1))) throw new IllegalArgumentException("Неверная метка playerdata");
+                chargeWitnesses.put(row.getKey(), row.getValue());
+            }
+            for (var payment : chargeSettlements.values()) {
+                if (!accounts.containsKey(payment.payer())) throw new IllegalArgumentException("Расход без счёта");
+                if (payment.cash() > 0 && !payment.transaction().equals(chargeWitnesses.get(payment.source() + ":" + payment.payer())))
+                    throw new IllegalArgumentException("Предметная оплата без метки playerdata");
+            }
             for (var receipt : entitlementCredits.values()) if (!accounts.containsKey(receipt.owner())) throw new IllegalArgumentException("Доход без счёта");
             for (var receipt : claimsImports.values()) if (!accounts.containsKey(receipt.player())) throw new IllegalArgumentException("Квитанция казны без счёта");
             for (var id : auctionImports.keySet()) if (!accounts.containsKey(id)) throw new IllegalArgumentException("Импорт аукциона без счёта");
@@ -512,6 +526,13 @@ public final class BankStore {
         account.updated = System.currentTimeMillis(); dirty = true; return true;
     }
 
+    /** Последняя предметная оплата каждого источника для владельца; null — банк не может дать авторитетный ответ. */
+    public synchronized Map<String, UUID> chargeWitnesses(UUID owner) {
+        if (!available || owner == null) return null;
+        var result = new LinkedHashMap<String, UUID>(); String suffix = ":" + owner;
+        chargeWitnesses.forEach((key, value) -> { if (key.endsWith(suffix)) result.put(key.substring(0, key.length() - suffix.length()), value); });
+        return Map.copyOf(result);
+    }
     public synchronized BankCharge.Status bankChargeStatus(BankCharge payment) {
         if (!available) return BankCharge.Status.UNAVAILABLE;
         if (payment == null || !payment.valid()) return BankCharge.Status.CONFLICT;
@@ -530,6 +551,7 @@ public final class BankStore {
         var next = envelope();
         adjust(next.accounts.computeIfAbsent(payment.payer().toString(), ignored -> new Account()), -payment.debit() + payment.change());
         next.chargeSettlements.put(payment.source(), payment);
+        if (payment.cash() > 0) next.chargeWitnesses.put(payment.source() + ":" + payment.payer(), payment.transaction());
         return publishAuction(next);
     }
 
@@ -628,6 +650,7 @@ public final class BankStore {
         }
         accounts.clear(); next.accounts.forEach((id, account) -> accounts.put(UUID.fromString(id), account));
         chargeSettlements.clear(); chargeSettlements.putAll(next.chargeSettlements);
+        chargeWitnesses.clear(); chargeWitnesses.putAll(next.chargeWitnesses);
         entitlementSources.clear(); entitlementSources.putAll(next.entitlementSources);
         entitlementCredits.clear(); entitlementCredits.putAll(next.entitlementCredits);
         auctionImports.clear(); auctionImports.putAll(next.auctionImports);
@@ -650,6 +673,7 @@ public final class BankStore {
         accounts.forEach((id, account) -> envelope.accounts.put(id.toString(), account.copy()));
         envelope.claimsImports.putAll(claimsImports);
         envelope.chargeSettlements.putAll(chargeSettlements);
+        envelope.chargeWitnesses.putAll(chargeWitnesses);
         envelope.entitlementSources.putAll(entitlementSources); envelope.entitlementCredits.putAll(entitlementCredits);
         envelope.auctionImports.putAll(auctionImports); envelope.auctionSettlements.putAll(auctionSettlements);
         return envelope;

@@ -21,7 +21,7 @@ public final class LotteryStore implements ru.cherdakmd.chrdkregister.api.Charge
     private boolean healthy = true;
     private java.util.function.BooleanSupplier financeBusy = () -> false;
     public synchronized void bindFinance(java.util.function.BooleanSupplier busy) { financeBusy = Objects.requireNonNull(busy); }
-    private void mutable() { if (!healthy || financeBusy.getAsBoolean()) throw new IllegalStateException("lottery finance paused"); }
+    private void mutable() throws IOException { if (!healthy) throw new IOException("lottery storage quarantined"); if (financeBusy.getAsBoolean()) throw new IllegalStateException("lottery finance paused"); }
     public synchronized boolean healthy() { return healthy; }
 
     public record LastWinner(String playerName, int pot, int payout, long drawnAtEpochMillis) { }
@@ -145,7 +145,7 @@ public final class LotteryStore implements ru.cherdakmd.chrdkregister.api.Charge
     @Override public synchronized String snapshot() {
         if (!healthy) throw new IllegalStateException("lottery storage quarantined"); return GSON.toJson(data);
     }
-    public synchronized String previewPurchase(UUID player, String name, int count, int price) {
+    public synchronized String previewPurchase(UUID player, String name, int count, int price) throws IOException {
         mutable();
         if (data.schema != 2 || !data.bankRegistered || player == null || name == null || !name.matches("[A-Za-z0-9_]{1,16}") || count < 1 || price < 1)
             throw new IllegalArgumentException("bank purchase");
