@@ -314,6 +314,8 @@ claims:
     - '<gray>В инвентаре: %physical% ⛁. Автооплата — только /bal.</gray>'
     not-enough: '<red>Не хватает алмазов: нужно %need% ⛁, есть %have% ⛁ (личный /bal + обычные предметы в инвентаре).</red>'
     payment: '<gray>Оплачено с /bal: %bank% ⛁; обычными предметами: %physical% ⛁; целая сдача на /bal: %change% ⛁.</gray>'
+    profile-inventory: "<gray>В инвентаре: </gray><aqua>%amount% ⛁</aqua><gray>; автооплата только с /bal.</gray>"
+    profile-unavailable: "<yellow>Банк/перенос казны пока недоступен: автоматическая оплата приостановлена.</yellow>"
     profile-treasury: '<gray>Личный /bal: </gray><aqua>%amount%</aqua> <gray>алмазов</gray>'
     rent-funds: <red>Не хватает средств арендатора либо сделка не принята банком. Для продления нужны деньги на /bal; пополнение /bal deposit.</red>
     rent-info: '<gray>Аренда чанка: предложение %offer% ⛁/сутки; арендатор %tenant%, его цена %price% ⛁/сутки, оплачено до %until%, автопродление: %renew%.</gray>'

@@ -101,5 +101,9 @@ class ClaimAccountsTest {
         assertTrue(messages.raw("finance.balance-line").contains("%physical%"));
         assertFalse(messages.raw("finance.profile-treasury").contains("Казна"));
         assertTrue(messages.raw("finance.bank-commands").contains("/bal deposit"));
+        assertTrue(messages.raw("finance.profile-inventory").contains("%amount%"));
+        String profile=Files.readString(Path.of(base+"ClaimsProfile.java"));
+        assertTrue(profile.contains("context.self() && context.online()"));
+        assertTrue(profile.contains("finance.profile-unavailable"));
     }
 }

@@ -48,9 +48,16 @@ final class ClaimsProfile implements ChrdkRegisterApi.ProfileProvider {
                 "used", String.valueOf(claims),
                 "limit", String.valueOf(limit)));
         if (rented > 0) lines.add(plugin.messages().get("profile-rented", "count", rented));
-        if (treasury > 0) {
+        if (plugin.store().fundsReady(name)) {
             lines.add(plugin.messages().get("finance.profile-treasury",
                     "amount", String.valueOf(treasury)));
+        }
+        else lines.add(plugin.messages().get("finance.profile-unavailable"));
+        // Чужие/офлайн-инвентари не сканируем ради просмотра профиля.
+        if (context.self() && context.online() && context.playerId() != null) {
+            var player = org.bukkit.Bukkit.getPlayer(context.playerId());
+            if (player != null) lines.add(plugin.messages().get("finance.profile-inventory",
+                    "amount", DiamondItems.count(player.getInventory())));
         }
         return new ChrdkRegisterApi.ProfileSection(plugin.messages().raw("profile-title"),
                 Material.OAK_FENCE, lines);
