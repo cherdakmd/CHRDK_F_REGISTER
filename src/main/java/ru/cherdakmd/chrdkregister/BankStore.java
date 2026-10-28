@@ -234,7 +234,7 @@ public final class BankStore {
             if (row.getValue().balance <= 0L || out.size() >= size) {
                 break;
             }
-            out.add(new Entry(row.getKey(), row.getValue().name, row.getValue().balance));
+            out.add(new Entry(row.getKey(), row.getValue().name.isBlank() ? row.getKey().toString() : row.getValue().name, row.getValue().balance));
         }
         return List.copyOf(out);
     }

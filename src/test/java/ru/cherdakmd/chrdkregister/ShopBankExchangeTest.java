@@ -34,6 +34,11 @@ class ShopBankExchangeTest {
         assertEquals(7,s.balance(id)); assertFalse(s.exchange(id,"Alex",-1,0,calls::incrementAndGet));
         assertTrue(s.exchange(id,"Alex",7,6,calls::incrementAndGet)); assertEquals(6,s.balance(id)); assertEquals(1,calls.get());
     }
+    @Test void importedOfflineAccountHasUuidLabelUntilPlayerNameIsKnown() {
+        var s=store(); var id=UUID.randomUUID(); assertTrue(s.importLegacyShop(id,3));
+        assertEquals(id.toString(),s.top(1).getFirst().name());
+        s.open(id,"Alex"); assertEquals("Alex",s.top(1).getFirst().name()); assertEquals(3,s.balanceOf("Alex"));
+    }
     @Test void corruptBankCannotBeUsedForNewImportOrExchangeAndIsNotOverwritten() throws Exception {
         Files.writeString(dir.resolve("bank.json"), "broken-json"); var s=store(); s.load();
         assertFalse(s.available()); assertFalse(s.importLegacyShop(UUID.randomUUID(),1));

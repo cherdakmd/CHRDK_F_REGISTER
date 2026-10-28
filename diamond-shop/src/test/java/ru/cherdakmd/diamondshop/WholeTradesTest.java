@@ -67,6 +67,15 @@ class WholeTradesTest {
         Files.writeString(file,bad); var store=new ShopStore(dir,Logger.getLogger("WholeTradesTest")); store.load();
         assertFalse(store.legacyAvailable()); store.saveNow(); assertEquals(bad,Files.readString(file));
     }
+    @Test void marketSaveDoesNotRoundOrTruncateFrozenLegacyInput(@org.junit.jupiter.api.io.TempDir Path dir) throws Exception {
+        var id=UUID.randomUUID(); var file=dir.resolve("shop-data.json");
+        Files.writeString(file,"{\"balances\":{\""+id+"\":1.0E30}}");
+        var store=new ShopStore(dir,Logger.getLogger("WholeTradesTest")); store.load();
+        assertTrue(store.legacyAvailable()); assertEquals(1e30,store.balanceOf(id));
+        assertEquals(-1,WholeTrades.legacy(store.balanceOf(id)));
+        store.addBalance(UUID.randomUUID(),1); store.saveNow();
+        var reloaded=new ShopStore(dir,Logger.getLogger("WholeTradesTest")); reloaded.load(); assertEquals(1e30,reloaded.balanceOf(id));
+    }
     @Test void serviceHasNoSpendableShopWalletNoDropsAndCommitsPreparedSnapshots() throws Exception {
         var s=Files.readString(Path.of("src/main/java/ru/cherdakmd/diamondshop/ShopService.java"));
         for(var forbidden:List.of("store.trySpend", "store.addBalance", "dropItem", "getContents()")) assertFalse(s.contains(forbidden),forbidden);

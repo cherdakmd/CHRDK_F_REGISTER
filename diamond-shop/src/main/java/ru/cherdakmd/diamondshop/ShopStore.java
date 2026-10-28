@@ -282,7 +282,7 @@ public final class ShopStore {
     public synchronized String snapshotJson() {
         Map<String, Object> data = new LinkedHashMap<>();
         Map<String, Double> balancesCopy = new LinkedHashMap<>();
-        balances.forEach((uuid, value) -> balancesCopy.put(uuid.toString(), PriceEngine.round(value)));
+        balances.forEach((uuid, value) -> balancesCopy.put(uuid.toString(), value));
         data.put("balances", balancesCopy);
         Map<String, Object> itemsCopy = new LinkedHashMap<>();
         items.forEach((material, state) -> {
