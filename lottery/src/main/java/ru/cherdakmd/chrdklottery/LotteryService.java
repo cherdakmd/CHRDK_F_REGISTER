@@ -23,6 +23,7 @@ public final class LotteryService implements Listener {
     private final LotteryStore store;
     private final SecureRandom random = new SecureRandom();
     private final Set<Integer> announced = new HashSet<>();
+    private final Set<UUID> waitingWarned = new HashSet<>();
     private long announcedBoundary;
     private BukkitTask task;
 
@@ -55,6 +56,7 @@ public final class LotteryService implements Listener {
         }
     }
     public boolean drawNow() {
+        if (!ensureIncome()) return false;
         LotteryConfig c = plugin.config();
         int total = LotteryRound.totalTickets(store.ticketsSnapshot());
         long now = System.currentTimeMillis();
@@ -87,8 +89,9 @@ public final class LotteryService implements Listener {
         // UUID authoritative; totals are saved by draw BEFORE any bank credit. No debitPrize after credit.
         for (var row : store.entitlements().entrySet()) {
             UUID owner = UUID.fromString(row.getKey());
-            if (!plugin.coreApi().creditEntitlement("lottery", store.incomeId(), row.getKey(), owner, row.getValue()))
-                plugin.getLogger().warning("Выигрыш ожидает зачисления: " + owner + "; источник сохранён");
+            if (!plugin.coreApi().creditEntitlement("lottery", store.incomeId(), row.getKey(), owner, row.getValue())) {
+                if (waitingWarned.add(owner)) plugin.getLogger().warning("Выигрыш ожидает зачисления: " + owner + "; источник сохранён");
+            } else waitingWarned.remove(owner);
         }
     }
     private void remindPrize(Player p) {
@@ -102,6 +105,7 @@ public final class LotteryService implements Listener {
     }
     public void buyTickets(Player p, int count) {
         if (!authenticated(p)) return;
+        if (!ensureIncome()) { plugin.messages().send(p, "lottery.bank-wait"); return; }
         LotteryConfig c = plugin.config();
         if (plugin.coreApi().rankLevel(p.getName()) < c.minRank()) {
             plugin.messages().send(p, "lottery.need-pass"); return;

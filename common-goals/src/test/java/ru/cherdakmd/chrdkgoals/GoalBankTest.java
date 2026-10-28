@@ -46,4 +46,11 @@ class GoalBankTest {
             Files.writeString(dir.resolve("goals-data.json"),json.toString()); assertFalse(source().healthy());
         }
     }
+    @Test void productionClaimSavesBeforeBankAndNeverRemovesSource() throws Exception {
+        String source=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkgoals/GoalsService.java"));
+        String claim=source.substring(source.indexOf("public void claimRewards"),source.indexOf("public String goalName"));
+        assertTrue(claim.indexOf("saveStrict")<claim.indexOf("creditEntitlement"));
+        assertFalse(claim.contains(".claim(")); assertFalse(claim.contains("addItem")); assertFalse(claim.contains("dropItem"));
+    }
+
 }
