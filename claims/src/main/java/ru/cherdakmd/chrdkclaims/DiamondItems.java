@@ -19,11 +19,14 @@ public final class DiamondItems {
         };
     }
 
+    static boolean plain(ItemStack item) {
+        return item != null && !item.getType().isAir() && !item.hasItemMeta() && item.getAmount() > 0 && item.getAmount() <= 64;
+    }
     /** Алмазный эквивалент содержимого инвентаря (без брони/второй руки). */
     public static int count(Inventory inventory) {
         int total = 0;
         for (ItemStack stack : inventory.getStorageContents()) {
-            if (stack != null) {
+            if (plain(stack)) {
                 total += valueOf(stack.getType()) * stack.getAmount();
             }
         }

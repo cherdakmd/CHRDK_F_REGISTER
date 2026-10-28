@@ -67,6 +67,51 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
         });
     }
 
+    private java.util.UUID claimAccount(String name) {
+        if (bank == null || name == null || name.isBlank()) return null;
+        var known = bank.idByName(name);
+        var cached = org.bukkit.Bukkit.getOfflinePlayerIfCached(name);
+        if (cached != null && cached.getName() != null && cached.getName().equalsIgnoreCase(name)) {
+            if (known != null && !known.equals(cached.getUniqueId())) return null;
+            return cached.getUniqueId();
+        }
+        return known; // Не генерируем offline UUID и не обращаемся к Mojang за именем.
+    }
+    @Override public boolean importLegacyClaims(String name, long amount) {
+        if (plugin == null || plugin.bank() == null || !plugin.bank().enabled() || !org.bukkit.Bukkit.isPrimaryThread()) return false;
+        var id = claimAccount(name);
+        return id != null && bank.importLegacyClaims(id, name, amount);
+    }
+    @Override public long claimBankBalance(String name) {
+        if (plugin == null || plugin.bank() == null || !plugin.bank().enabled() || !org.bukkit.Bukkit.isPrimaryThread()) return 0;
+        var id = claimAccount(name); return id == null ? 0 : bank.balance(id);
+    }
+    @Override public boolean exchangeClaimAccounts(java.util.Map<String, Long> deltas, Player payer,
+            org.bukkit.inventory.ItemStack[] expected, org.bukkit.inventory.ItemStack[] replacement) {
+        if (plugin == null || plugin.bank() == null || !plugin.bank().enabled() || bank == null || !org.bukkit.Bukkit.isPrimaryThread()
+                || deltas == null || deltas.isEmpty() || deltas.size() > 8) return false;
+        var changes = new java.util.LinkedHashMap<java.util.UUID, Long>();
+        for (var row : deltas.entrySet()) {
+            var id = claimAccount(row.getKey());
+            if (id == null || row.getValue() == null || row.getValue() < -BankStore.MAX_BALANCE || row.getValue() > BankStore.MAX_BALANCE) return false;
+            changes.merge(id, row.getValue(), Long::sum);
+        }
+        if (payer == null) {
+            if (expected != null || replacement != null) return false;
+            return bank.exchangeAccounts(changes, () -> { });
+        }
+        if (!payer.isOnline() || payer.isDead() || payer.hasMetadata("NPC") || !isAuthenticated(payer)
+                || !payer.hasPermission("chrdkclaims.use") || payer.getGameMode() != org.bukkit.GameMode.SURVIVAL
+                || expected == null || replacement == null || expected.length != 36 || replacement.length != 36
+                || !java.util.Arrays.equals(expected, payer.getInventory().getStorageContents())) return false;
+        var original = java.util.Arrays.stream(expected).map(i -> i == null ? null : i.clone()).toArray(org.bukkit.inventory.ItemStack[]::new);
+        var next = java.util.Arrays.stream(replacement).map(i -> i == null ? null : i.clone()).toArray(org.bukkit.inventory.ItemStack[]::new);
+        return bank.exchangeAccounts(changes, () -> {
+            try { payer.getInventory().setStorageContents(next); }
+            catch (RuntimeException failure) { payer.getInventory().setStorageContents(original); throw failure; }
+        });
+    }
+
     @Override
     public long bankSent(String playerName) {
         java.util.UUID id = bank == null ? null : bank.idByName(playerName);

@@ -42,7 +42,7 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
         }
         String sub = args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
-            case "help" -> plugin.messages().send(player, "usage");
+            case "help" -> plugin.messages().send(player, "finance.usage");
             case "menu" -> menu(player, args);
             case "tp" -> teleport(player, args);
             case "info" -> info(player, args);
@@ -91,7 +91,7 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
             Claim claim = service().claimHere(player);
             if (claim == null) plugin.messages().send(player, "unclaim-none");
             else service().rentalInfo(player, claim);
-            plugin.messages().send(player, "rent-usage");
+            plugin.messages().send(player, "finance.rent-usage");
             return;
         }
         String action = args[1].toLowerCase(Locale.ROOT);
@@ -105,7 +105,7 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
                 if (price > 0 && price <= ClaimRentals.MAX_PRICE) { service().rental(player, action, price); return; }
             } catch (NumberFormatException ignored) { }
         }
-        plugin.messages().send(player, "rent-usage");
+        plugin.messages().send(player, "finance.rent-usage");
     }
 
     private ClaimsService service() {
@@ -358,7 +358,7 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
                     plugin.messages().send(player, "unclaim-all-none");
                     return;
                 }
-                plugin.messages().send(player, "unclaim-all-confirm",
+                plugin.messages().send(player, "finance.unclaim-all-confirm",
                         "count", String.valueOf(count));
             }
             return;
@@ -505,12 +505,13 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
     }
 
     private void balance(Player player) {
+        if (!plugin.store().fundsReady(player.getName())) { plugin.messages().send(player,"finance.unavailable"); return; }
         List<Claim> claims = plugin.store().ofOwner(player.getName());
         boolean debt = claims.stream().anyMatch(claim -> claim.debtDays > 0);
         int treasury = plugin.store().treasuryOf(player.getName());
         String here = player.getWorld().getName();
-        plugin.messages().send(player, "balance-line",
-                "treasury", String.valueOf(treasury),
+        plugin.messages().send(player, "finance.balance-line",
+                "treasury", String.valueOf(treasury), "physical", DiamondItems.count(player.getInventory()),
                 "claims", String.valueOf(claims.size()),
                 "limit", String.valueOf(service().limitOf(player.getName())),
                 "upkeep", String.valueOf(plugin.config().upkeepIn(here)),
@@ -525,7 +526,7 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
             need += (long) plugin.config().upkeepIn(claim.world) * (1L + claim.debtDays);
         }
         if (!claims.isEmpty() && earliest != Long.MAX_VALUE) {
-            plugin.messages().send(player, "balance-due",
+            plugin.messages().send(player, "finance.balance-due",
                     "date", service().formatDate(earliest),
                     "balance", String.valueOf(treasury),
                     "need", String.valueOf(Math.min(Integer.MAX_VALUE, need)));
@@ -567,7 +568,7 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
 
     private void members(Player player, String[] args, boolean add) {
         if (args.length < 2) {
-            plugin.messages().send(player, "usage");
+            plugin.messages().send(player, "finance.usage");
             return;
         }
         if (!ready(player)) {
@@ -603,39 +604,10 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
     }
 
     private void deposit(Player player, String[] args) {
-        if (!ready(player)) {
-            return;
-        }
-        int amount;
-        if (args.length < 2 || args[1].equalsIgnoreCase("все")
-                || args[1].equalsIgnoreCase("all")) {
-            amount = DiamondItems.count(player.getInventory());
-        } else {
-            Integer parsed = parseAmount(args[1]);
-            if (parsed == null || parsed < 1 || parsed > 1_000_000) {
-                plugin.messages().send(player, "deposit-invalid", "max", "1000000");
-                return;
-            }
-            amount = parsed;
-        }
-        if (amount <= 0) {
-            plugin.messages().send(player, "deposit-none");
-            return;
-        }
-        service().deposit(player, amount);
+        if (ready(player)) plugin.messages().send(player, "finance.bank-commands");
     }
-
     private void withdraw(Player player, String[] args) {
-        if (!ready(player)) {
-            return;
-        }
-        Integer parsed = args.length > 1 ? parseAmount(args[1]) : null;
-        if (parsed == null || parsed < 1 || parsed > plugin.config().withdrawMax) {
-            plugin.messages().send(player, "withdraw-invalid",
-                    "max", String.valueOf(plugin.config().withdrawMax));
-            return;
-        }
-        service().withdraw(player, parsed);
+        if (ready(player)) plugin.messages().send(player, "finance.bank-commands");
     }
 
     private Integer parseAmount(String raw) {

@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * CHRDK_Claims — приваты чанков за алмазные предметы: покупка территории,
- * ежесуточная рента из казны, налог на сделки, продажа игрокам, полная защита.
+ * ежесуточная рента с личного /bal, налог на сделки, продажа игрокам, полная защита.
  */
 public final class ClaimsPlugin extends JavaPlugin implements Listener {
 
@@ -58,6 +58,7 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
     private BukkitTask saveTask;
     private BukkitTask upkeepTask;
     private BukkitTask rentalTask;
+    private BukkitTask moneyMigrationTask;
 
     @Override
     public void onEnable() {
@@ -67,6 +68,17 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         this.audit = new ClaimAudit(getDataFolder().toPath(), getLogger());
         this.service = new ClaimsService(this);
         reloadClaimsConfig();
+        store.accounts(new ClaimBankBridge(this)); // Обязательно до любой оплаты/таймеров, даже без Core.
+        var names = new java.util.LinkedHashSet<String>(store.legacyTreasuries().keySet());
+        for (var claim : store.all()) { names.add(claim.owner); if (!claim.tenant.isBlank()) names.add(claim.tenant); }
+        var pendingNames = names.iterator();
+        moneyMigrationTask = Bukkit.getScheduler().runTaskTimer(this, () -> {
+            for (int i=0; i<16 && pendingNames.hasNext(); i++) {
+                String name = pendingNames.next();
+                if (!store.fundsReady(name)) getLogger().warning("Казна " + name + " пока не перенесена: банк/UUID/предел счёта недоступен. Остаток сохранён, рента этого владельца приостановлена.");
+            }
+            if (!pendingNames.hasNext()) { moneyMigrationTask.cancel(); moneyMigrationTask = null; }
+        }, 1L, 1L);
         if (coreApi != null) {
             try {
                 coreApi.registerProfile("claims", new ClaimsProfile(this));
@@ -124,6 +136,7 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        if (moneyMigrationTask != null) { moneyMigrationTask.cancel(); moneyMigrationTask = null; }
         if (coreApi != null) {
             try {
                 coreApi.unregisterProfile("claims");
@@ -168,6 +181,7 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
     @EventHandler
     public void onAuthCompleted(PlayerAuthCompletedEvent event) {
         Player player = event.getPlayer();
+        store.fundsReady(player.getName());
         // Стоящий на привате игрок должен увидеть, куда попал, не делая шага.
         refreshNoticeLater(player);
         List<String> notices = store.pollNotices(player.getName());

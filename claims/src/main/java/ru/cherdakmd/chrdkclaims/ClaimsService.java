@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Бизнес-логика приватов: покупка/продажа чанков, казна, участники, ежесуточная рента.
- * Деньги — только предметы алмазов: казна (виртуальный баланс) + добор из инвентаря.
+ * Покупка/продажа чанков, участники, ежесуточная рента.
+ * Единственный личный /bal; предметы добираются только при ручной покупке.
  */
 public final class ClaimsService {
 
@@ -71,7 +71,7 @@ public final class ClaimsService {
         return Bukkit.getPlayerExact(name) != null || Bukkit.getOfflinePlayerIfCached(name) != null;
     }
 
-    /** Текущая казна + алмазы в инвентаре (с защитой от переполнения int). */
+    /** Личный /bal + обычные алмазы в storage (с защитой от переполнения int). */
     public int available(Player player) {
         long sum = (long) plugin.store().treasuryOf(player.getName())
                 + DiamondItems.count(player.getInventory());
@@ -79,35 +79,12 @@ public final class ClaimsService {
     }
 
     /**
-     * Списывает сумму: сначала казна, недостающее — предметами (со сдачей в казну).
+     * Списывает сумму: сначала /bal, недостающее — обычными предметами (сдача на /bal).
      *
      * @return true, если сумма набралась и списана
      */
     public boolean charge(Player player, int amount) {
-        if (amount <= 0) {
-            return true;
-        }
-        int treasury = plugin.store().treasuryOf(player.getName());
-        int items = DiamondItems.count(player.getInventory());
-        if ((long) treasury + items < amount) {
-            return false;
-        }
-        int fromItems = Math.max(0, amount - treasury);
-        int collected = 0;
-        if (fromItems > 0) {
-            collected = DiamondItems.collect(player.getInventory(), fromItems);
-            if (collected < fromItems) {
-                return false; // не должно случаться после проверки, но подстрахуемся
-            }
-        }
-        plugin.store().takeTreasury(player.getName(), Math.min(treasury, amount));
-        if (collected > fromItems) {
-            plugin.store().addTreasury(player.getName(), collected - fromItems);
-            plugin.messages().send(player, "change-to-treasury",
-                    "change", String.valueOf(collected - fromItems));
-        }
-        plugin.store().markDirty();
-        return true;
+        return amount >= 0 && plugin.store().transferFunds(Map.of(player.getName(), -(long) amount), player.getName());
     }
 
     // ------------------------------------------------------------ purchase --
@@ -139,7 +116,7 @@ public final class ClaimsService {
             return "limit-reached";
         }
         if (available(player) < cfg.priceIn(chunk.getWorld().getName())) {
-            return "not-enough";
+            return "finance.not-enough";
         }
         return null;
     }
@@ -176,14 +153,14 @@ public final class ClaimsService {
                             "margin", String.valueOf(cfg.spawnMargin));
                     case "foreign-buffer" -> plugin.messages().send(player, "foreign-buffer");
                     case "limit-reached" -> sendLimit(player, player.getName());
-                    default -> plugin.messages().send(player, "not-enough",
+                    default -> plugin.messages().send(player, "finance.not-enough",
                             "need", String.valueOf(price),
                             "have", String.valueOf(available(player)));
                 }
                 return;
             }
             if (!charge(player, price)) {
-                plugin.messages().send(player, "not-enough",
+                plugin.messages().send(player, "finance.not-enough",
                         "need", String.valueOf(price),
                         "have", String.valueOf(available(player)));
                 return;
@@ -302,6 +279,9 @@ public final class ClaimsService {
 
     /** Мгновенный обратный выкуп сервером за sellbackPercent от цены. */
     public void sellback(Player player) {
+        if (plugin.coreApi() == null || !plugin.coreApi().isAuthenticated(player) || player.getGameMode() != org.bukkit.GameMode.SURVIVAL) {
+            plugin.messages().send(player,"finance.unavailable"); return;
+        }
         Claim claim = ownClaimHere(player, "sell-not-yours");
         if (claim == null) {
             return;
@@ -309,13 +289,13 @@ public final class ClaimsService {
         if (rentalLocked(player, List.of(claim))) return;
         int reward = ClaimMath.sellbackReward(
                 plugin.config().priceIn(claim.world), plugin.config().sellbackPercent);
+        if (!plugin.store().transferFunds(Map.of(player.getName(), (long) reward), null)) {
+            plugin.messages().send(player, "finance.unavailable"); return;
+        }
         plugin.store().remove(claim);
         audit("sellback", player.getName() + " " + claim.where() + " reward=" + reward);
-        int dropped = reward > 0 ? DiamondItems.give(player, reward) : 0;
-        plugin.messages().send(player, "sellback-done", "reward", String.valueOf(reward));
-        if (dropped > 0) {
-            plugin.messages().send(player, "withdraw-dropped", "amount", String.valueOf(dropped));
-        }
+        plugin.messages().send(player, "finance.sellback-done", "reward", String.valueOf(reward));
+
     }
 
     // ------------------------------------------------------------ p2p sale --
@@ -334,7 +314,7 @@ public final class ClaimsService {
             }
             if (price > 0 && region.stream().anyMatch(c -> c.debtDays > 0)) {
                 // Покупатель не должен унаследовать чужие долги: сначала гасим их.
-                plugin.messages().send(player, "sell-debt",
+                plugin.messages().send(player, "finance.sell-debt",
                         "days", String.valueOf(region.stream().mapToInt(c -> c.debtDays).max().orElse(0)));
                 return;
             }
@@ -385,7 +365,7 @@ public final class ClaimsService {
             if (!spacing(player, region, player.getName())) return;
             int price = claim.salePrice;
             if (available(player) < price) {
-                plugin.messages().send(player, "not-enough",
+                plugin.messages().send(player, "finance.not-enough",
                         "need", String.valueOf(price), "have", String.valueOf(available(player)));
                 return;
             }
@@ -393,15 +373,14 @@ public final class ClaimsService {
                 sendLimit(player, player.getName());
                 return;
             }
-            if (!charge(player, price)) {
-                plugin.messages().send(player, "not-enough",
-                        "need", String.valueOf(price), "have", String.valueOf(available(player)));
-                return;
-            }
             String seller = claim.owner;
             int tax = ClaimMath.saleTax(price, plugin.config().saleTaxPercent);
             int net = Math.max(0, price - tax);
-            plugin.store().addTreasury(seller, net);
+            var changes = new LinkedHashMap<String, Long>();
+            changes.put(player.getName(), -(long) price); changes.merge(seller, (long) net, Long::sum);
+            if (!plugin.store().transferFunds(changes, player.getName())) {
+                plugin.messages().send(player, "finance.unavailable"); return;
+            }
             plugin.store().addTaxBurned(tax);
 
             List<String> formerMembers = region.stream().flatMap(c -> c.members.stream()).distinct().toList();
@@ -416,7 +395,7 @@ public final class ClaimsService {
 
             plugin.messages().send(player, "buy-done",
                     "seller", seller, "price", String.valueOf(price), "tax", String.valueOf(tax));
-            String sellerText = plugin.messages().plain("buy-sold-notice",
+            String sellerText = plugin.messages().plain("finance.buy-sold-notice",
                     "x", String.valueOf(claim.x), "z", String.valueOf(claim.z),
                     "price", String.valueOf(price), "buyer", player.getName(),
                     "net", String.valueOf(net), "tax", String.valueOf(tax));
@@ -726,43 +705,8 @@ public final class ClaimsService {
 
     // ------------------------------------------------------------ treasury --
 
-    public void deposit(Player player, int amount) {
-        int have = DiamondItems.count(player.getInventory());
-        if (amount <= 0 || have <= 0) {
-            plugin.messages().send(player, "deposit-none");
-            return;
-        }
-        if (have < amount) {
-            plugin.messages().send(player, "deposit-not-enough",
-                    "need", String.valueOf(amount), "have", String.valueOf(have));
-            return;
-        }
-        int collected = DiamondItems.collect(player.getInventory(), amount);
-        if (collected <= 0) {
-            plugin.messages().send(player, "deposit-none");
-            return;
-        }
-        int balance = plugin.store().addTreasury(player.getName(), collected);
-        audit("deposit", player.getName() + " amount=" + collected + " balance=" + balance);
-        plugin.messages().send(player, "deposit-done",
-                "amount", String.valueOf(collected), "balance", String.valueOf(balance));
-    }
-
-    public void withdraw(Player player, int amount) {
-        if (!plugin.store().takeTreasury(player.getName(), amount)) {
-            plugin.messages().send(player, "withdraw-not-enough",
-                    "balance", String.valueOf(plugin.store().treasuryOf(player.getName())));
-            return;
-        }
-        audit("withdraw", player.getName() + " amount=" + amount);
-        int dropped = DiamondItems.give(player, amount);
-        plugin.messages().send(player, "withdraw-done",
-                "amount", String.valueOf(amount),
-                "balance", String.valueOf(plugin.store().treasuryOf(player.getName())));
-        if (dropped > 0) {
-            plugin.messages().send(player, "withdraw-dropped", "amount", String.valueOf(dropped));
-        }
-    }
+    public void deposit(Player player, int amount) { plugin.messages().send(player, "finance.bank-commands"); }
+    public void withdraw(Player player, int amount) { plugin.messages().send(player, "finance.bank-commands"); }
 
     // ------------------------------------------------------------- upkeep --
 
@@ -782,6 +726,7 @@ public final class ClaimsService {
         Map<String, Integer> chargedByOwner = new LinkedHashMap<>();
 
         for (Claim claim : plugin.store().all()) {
+            if (!plugin.store().fundsReady(claim.owner)) continue; // Недоступность банка/миграции — не долг и не удаление.
             if (!cfg.worldEnabled(claim.world)) {
                 continue;
             }
@@ -818,22 +763,17 @@ public final class ClaimsService {
             int debtBefore = claim.debtDays;
             int chargedForClaim = 0;
             boolean released = false;
+            boolean unavailable = false;
             for (long day = 0; day < overdue; day++) {
-                ClaimMath.RentStep step = ClaimMath.settleRentDay(
-                        plugin.store().treasuryOf(claim.owner), rent,
-                        claim.debtDays, cfg.graceDays);
-                if (step.charged() > 0) {
-                    plugin.store().takeTreasury(claim.owner, step.charged());
-                    chargedForClaim += step.charged();
-                }
-                claim.paidUntil += ClaimMath.DAY_MILLIS;
-                claim.debtDays = step.debtDays();
+                ClaimMath.RentStep step = ClaimUpkeep.day(plugin.store(), claim, rent, cfg.graceDays);
+                if (step == null) { unavailable = true; break; }
+                chargedForClaim += step.charged();
                 if (step.released()) {
                     released = true;
                     break;
                 }
             }
-            if (clamped) {
+            if (clamped && !unavailable) {
                 // Не растягиваем «догон» на много часов вперёд, если дата была испорчена.
                 plugin.getLogger().warning("[CHRDK_Claims] " + claim.where()
                         + ": просрочка больше " + ClaimMath.MAX_CATCHUP_DAYS
@@ -844,6 +784,7 @@ public final class ClaimsService {
                 chargedTotal += chargedForClaim;
                 chargedByOwner.merge(claim.owner, chargedForClaim, Integer::sum);
             }
+            if (unavailable) continue;
             if (released) {
                 plugin.store().remove(claim);
                 releasedTotal++;
@@ -863,7 +804,7 @@ public final class ClaimsService {
             chargedByOwner.forEach((owner, amount) -> {
                 Player online = Bukkit.getPlayerExact(owner);
                 if (online != null && authenticated(online)) {
-                    plugin.messages().send(online, "rent-paid-line",
+                    plugin.messages().send(online, "finance.rent-paid-line",
                             "amount", String.valueOf(amount),
                             "balance", String.valueOf(plugin.store().treasuryOf(owner)));
                 }
@@ -891,7 +832,7 @@ public final class ClaimsService {
     private void notifyDebt(Claim claim, ClaimsConfig cfg) {
         Player online = Bukkit.getPlayerExact(claim.owner);
         if (online != null && authenticated(online)) {
-            plugin.messages().send(online, "debt-warning",
+            plugin.messages().send(online, "finance.debt-warning",
                     "where", claim.where(),
                     "days", String.valueOf(claim.debtDays),
                     "grace", String.valueOf(cfg.graceDays));
@@ -937,7 +878,7 @@ public final class ClaimsService {
         if (balance >= need) {
             return;
         }
-        plugin.messages().send(player, "rent-warning",
+        plugin.messages().send(player, "finance.rent-warning",
                 "balance", String.valueOf(balance),
                 "need", String.valueOf(need),
                 "date", formatDate(earliest == Long.MAX_VALUE ? now : earliest));
@@ -968,9 +909,9 @@ public final class ClaimsService {
             case "offer" -> refusal = ClaimRentals.offer(plugin.store(), claim, player.getName(), price, now);
             case "take" -> refusal = ClaimRentals.take(plugin.store(), claim, player.getName(), price, now, serverRent(claim));
             case "stop" -> refusal = ClaimRentals.stop(plugin.store(), claim, player.getName());
-            default -> { plugin.messages().send(player, "rent-usage"); return; }
+            default -> { plugin.messages().send(player, "finance.rent-usage"); return; }
         }
-        if (refusal != null) { plugin.messages().send(player, refusal); return; }
+        if (refusal != null) { plugin.messages().send(player, java.util.Set.of("rent-funds", "rent-owner-funds", "rent-usage").contains(refusal) ? "finance." + refusal : refusal); return; }
         audit("rent-" + action, player.getName() + " " + claim.where() + " price=" + claim.rentPrice
                 + " offer=" + claim.rentOffer + " until=" + claim.rentUntil);
         plugin.messages().send(player, "rent-updated");
@@ -979,7 +920,7 @@ public final class ClaimsService {
 
     public void rentalInfo(Player player, Claim claim) {
         plugin.messages().send(player, "info-territory", "chunks", plugin.store().territory(claim).size());
-        plugin.messages().send(player, "rent-info", "offer", claim.rentOffer,
+        plugin.messages().send(player, "finance.rent-info", "offer", claim.rentOffer,
                 "tenant", claim.rentedAt(System.currentTimeMillis()) ? claim.tenant : "—",
                 "price", claim.rentPrice, "until", claim.rentedAt(System.currentTimeMillis()) ? formatDate(claim.rentUntil) : "—",
                 "renew", claim.rentRenew ? "да" : "нет");

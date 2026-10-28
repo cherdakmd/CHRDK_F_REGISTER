@@ -147,14 +147,14 @@ public final class ClaimMenuGui implements Listener {
         int limit = plugin.service().limitOf(player.getName());
         int treasury = plugin.store().treasuryOf(player.getName());
         int own = plugin.store().count(player.getName());
-        return item(Material.BOOK, "menu-info-name", "menu-info-lore",
+        return item(Material.BOOK, "menu-info-name", "finance.menu-info-lore",
                 "tab", plugin.messages().plain(ClaimMenuModel.titleKey(holder.tab)),
                 "count", String.valueOf(total),
                 "page", String.valueOf(holder.page),
                 "pages", String.valueOf(pages),
                 "limit", String.valueOf(limit),
                 "free", String.valueOf(Math.max(0, limit - own)),
-                "treasury", String.valueOf(treasury));
+                "treasury", String.valueOf(treasury), "physical", DiamondItems.count(player.getInventory()));
     }
 
     private ItemStack emptyIcon(MenuHolder holder) {

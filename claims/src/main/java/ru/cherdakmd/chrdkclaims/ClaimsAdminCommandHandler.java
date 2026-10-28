@@ -240,7 +240,7 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
         }
     }
 
-    /** Массовая передача всех приватов, казны и вестей — сценарий смены ника. */
+    /** Массовая передача приватов и вестей. Личные счета/источники миграции не переназначаются. */
     private void transferAll(CommandSender sender, String[] args) {
         if (args.length < 3) {
             usage(sender);
@@ -254,26 +254,26 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
         }
         ClaimStore.TransferSummary summary;
         try { summary = plugin.store().transferAll(from, to); }
-        catch (IllegalStateException protectedLand) { plugin.messages().send(sender, "transfer-protected"); return; }
+        catch (IllegalStateException protectedLand) { plugin.messages().send(sender, "finance.transfer-protected"); return; }
         plugin.audit("admin-transferall", sender.getName() + " " + from + " -> " + to
                 + " claims=" + summary.claims() + " treasury=" + summary.treasury());
         if (summary.claims() == 0 && summary.treasury() == 0
                 && summary.notices() == 0 && !summary.limitMoved()) {
-            plugin.messages().send(sender, "admin-transferall-none", "name", from);
+            plugin.messages().send(sender, "finance.admin-transferall-none", "name", from);
             return;
         }
-        plugin.messages().send(sender, "admin-transferall-done",
+        plugin.messages().send(sender, "finance.admin-transferall-done",
                 "from", from, "name", to,
                 "claims", String.valueOf(summary.claims()),
                 "treasury", String.valueOf(summary.treasury()),
                 "notices", String.valueOf(summary.notices()));
-        String notice = plugin.messages().plain("admin-transferall-received",
+        String notice = plugin.messages().plain("finance.admin-transferall-received",
                 "from", from,
                 "claims", String.valueOf(summary.claims()),
                 "treasury", String.valueOf(summary.treasury()));
         Player online = Bukkit.getPlayerExact(to);
         if (online != null && plugin.service().isAllowed(online)) {
-            plugin.messages().send(online, "admin-transferall-received",
+            plugin.messages().send(online, "finance.admin-transferall-received",
                     "from", from,
                     "claims", String.valueOf(summary.claims()),
                     "treasury", String.valueOf(summary.treasury()));
@@ -425,7 +425,7 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
                 debt++;
             }
         }
-        plugin.messages().send(sender, "admin-stats-general",
+        plugin.messages().send(sender, "finance.admin-stats-general",
                 "claims", String.valueOf(claims.size()),
                 "owners", String.valueOf(byOwner.size()),
                 "treasury", String.valueOf(plugin.store().totalTreasury()),

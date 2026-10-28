@@ -50,6 +50,40 @@ public final class ClaimStore {
     private final Logger logger;
     /** world → (chunkKey → Claim). */
     private final Map<String, Map<Long, Claim>> claims = new HashMap<>();
+    private ClaimAccounts accounts;
+    private volatile boolean moneyAvailable = true;
+    private static final class LegacyMoneyException extends IllegalArgumentException {
+        LegacyMoneyException(String message) { super(message); }
+    }
+    public boolean moneyAvailable() { return moneyAvailable && !blocked; }
+    void accounts(ClaimAccounts accounts) { this.accounts = java.util.Objects.requireNonNull(accounts); }
+    boolean externalAccounts() { return accounts != null; }
+    long balanceLimit() { return accounts == null ? Integer.MAX_VALUE : 1_000_000_000L; }
+    boolean fundsReady(String name) { return accounts == null ? moneyAvailable() : accounts.ready(name); }
+    Map<String, Integer> legacyTreasuries() { return Map.copyOf(treasury); }
+    synchronized int legacyTreasuryOf(String name) {
+        Integer value = treasury.get(keyIgnoreCase(treasury, name)); return value == null ? 0 : value;
+    }
+    boolean transferFunds(Map<String, Long> changes, String inventoryPayer) {
+        if (accounts != null) return accounts.exchange(changes, inventoryPayer);
+        // Чистый embedded-режим старых unit-тестов. ClaimsPlugin всегда ставит Core-мост до таймеров.
+        synchronized (this) {
+            var next = new LinkedHashMap<String, Long>();
+            for (var entry : changes.entrySet()) {
+                if (entry.getKey() == null || entry.getValue() == null) return false;
+                next.merge(entry.getKey().toLowerCase(java.util.Locale.ROOT), entry.getValue(), Long::sum);
+            }
+            for (var entry : next.entrySet()) {
+                long value = (long) legacyTreasuryOf(entry.getKey()) + entry.getValue();
+                if (value < 0 || value > Integer.MAX_VALUE) return false;
+            }
+            for (var entry : next.entrySet()) {
+                String key = keyIgnoreCase(treasury, entry.getKey());
+                treasury.put(key == null ? entry.getKey() : key, (int) (legacyTreasuryOf(entry.getKey()) + entry.getValue()));
+            }
+            touch(); return true;
+        }
+    }
     private final Map<String, Integer> treasury = new LinkedHashMap<>();
     private final Map<String, List<String>> notices = new LinkedHashMap<>();
     /** Персональные лимиты чанков, выданные администратором (ник → чанков). */
@@ -86,11 +120,15 @@ public final class ClaimStore {
             return;
         }
         if (data == null) {
+            quarantine(new IllegalArgumentException("Пустой файл приватов"));
             return;
         }
         try {
             read(data);
             dirty = (int) longOf(data.get("version")) < SCHEMA_VERSION;
+        } catch (LegacyMoneyException exception) {
+            treasury.clear(); // Территории уже прочитаны: финансовая ошибка не снимает их защиту.
+            quarantine(exception);
         } catch (RuntimeException exception) {
             reset();
             quarantine(exception);
@@ -144,6 +182,7 @@ public final class ClaimStore {
     }
 
     private void reset() {
+        moneyAvailable = true;
         claims.clear();
         treasury.clear();
         notices.clear();
@@ -246,16 +285,15 @@ public final class ClaimStore {
                     + " дубликат(ов) чанков — оставлены первые записи.");
         }
 
+        if (data.get("treasury") != null && !(data.get("treasury") instanceof Map<?, ?>)) throw new LegacyMoneyException("Неверная казна");
         if (data.get("treasury") instanceof Map<?, ?> map) {
-            for (Map.Entry<?, ?> entry : map.entrySet()) {
-                if (entry.getKey() == null) {
-                    continue;
-                }
+            for (var entry : map.entrySet()) {
                 String name = String.valueOf(entry.getKey());
-                int balance = clamp((int) longOf(entry.getValue()), 0, Integer.MAX_VALUE);
-                if (!name.isBlank() && balance > 0) {
-                    treasury.put(name, balance);
-                }
+                if (entry.getKey() == null || name.isBlank() || name.length() > 16 || keyIgnoreCase(treasury, name) != null
+                        || !(entry.getValue() instanceof Number number) || !Double.isFinite(number.doubleValue())
+                        || number.doubleValue() != Math.rint(number.doubleValue()) || number.doubleValue() < 0 || number.doubleValue() > Integer.MAX_VALUE)
+                    throw new LegacyMoneyException("Неверный остаток казны: " + name);
+                treasury.put(name, ((Number) entry.getValue()).intValue());
             }
         }
         if (data.get("notices") instanceof Map<?, ?> map) {
@@ -387,12 +425,14 @@ public final class ClaimStore {
 
     /** Повреждённый файл не затирается: откладываем его рядом для ручного восстановления. */
     private void quarantine(Exception exception) {
+        moneyAvailable = false;
+        blocked = true;
         Path broken = file.resolveSibling(file.getFileName() + ".corrupt-" + System.currentTimeMillis());
         try {
-            Files.move(file, broken, StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(file, broken, StandardCopyOption.REPLACE_EXISTING);
             logger.log(Level.SEVERE, "[CHRDK_Claims] claims-data.json не удалось прочитать ("
-                    + exception.getMessage() + "). Файл сохранён как " + broken.getFileName()
-                    + "; плагин стартует с пустыми приватами. Проверьте резервную копию "
+                    + exception.getMessage() + "). Исходник не изменён, копия сохранена как " + broken.getFileName()
+                    + "; запись и финансовые операции приостановлены. Проверьте резервную копию "
                     + backup.getFileName() + ".", exception);
         } catch (IOException moveException) {
             blocked = true;
@@ -641,6 +681,7 @@ public final class ClaimStore {
      * передать «steve», пока в данных записан «Steve».
      */
     public synchronized int treasuryOf(String name) {
+        if (accounts != null) return (int) Math.min(Integer.MAX_VALUE, accounts.balance(name));
         if (name == null) {
             return 0;
         }
@@ -650,6 +691,7 @@ public final class ClaimStore {
 
     /** @return новый баланс (не больше {@link Integer#MAX_VALUE}). */
     public synchronized int addTreasury(String name, int amount) {
+        if (accounts != null) return amount >= 0 && transferFunds(Map.of(name, (long) amount), null) ? treasuryOf(name) : -1;
         if (name == null || name.isBlank()) {
             return 0;
         }
@@ -662,6 +704,7 @@ public final class ClaimStore {
     }
 
     public synchronized boolean takeTreasury(String name, int amount) {
+        if (accounts != null) return amount >= 0 && transferFunds(Map.of(name, -(long) amount), null);
         if (amount <= 0) {
             return true;
         }
@@ -787,7 +830,7 @@ public final class ClaimStore {
         if (!moving.isEmpty()) mergeAcquired(moving);
         int movedTreasury = 0;
         String fromTreasury = keyIgnoreCase(treasury, from);
-        if (fromTreasury != null) {
+        if (accounts == null && fromTreasury != null) {
             movedTreasury = treasury.remove(fromTreasury);
         }
         if (movedTreasury > 0) {

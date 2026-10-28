@@ -39,7 +39,7 @@ final class ClaimsProfile implements ChrdkRegisterApi.ProfileProvider {
         int treasury = plugin.store().treasuryOf(name);
         long now = System.currentTimeMillis();
         long rented = plugin.store().all().stream().filter(c -> c.rentedAt(now) && c.tenant.equalsIgnoreCase(name)).count();
-        if (claims <= 0 && treasury <= 0 && rented <= 0) {
+        if (claims <= 0 && rented <= 0) {
             return null;
         }
         int limit = plugin.service().limitOf(name);
@@ -49,7 +49,7 @@ final class ClaimsProfile implements ChrdkRegisterApi.ProfileProvider {
                 "limit", String.valueOf(limit)));
         if (rented > 0) lines.add(plugin.messages().get("profile-rented", "count", rented));
         if (treasury > 0) {
-            lines.add(plugin.messages().get("profile-treasury",
+            lines.add(plugin.messages().get("finance.profile-treasury",
                     "amount", String.valueOf(treasury)));
         }
         return new ChrdkRegisterApi.ProfileSection(plugin.messages().raw("profile-title"),

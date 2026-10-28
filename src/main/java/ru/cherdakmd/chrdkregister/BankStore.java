@@ -101,7 +101,11 @@ public final class BankStore {
     private static final class Envelope {
         int schema = SCHEMA_VERSION;
         Map<String, Account> accounts = new LinkedHashMap<>();
+        Map<String, ClaimsImport> claimsImports = new LinkedHashMap<>();
     }
+
+    public record ClaimsImport(UUID player, long amount) { }
+    private final Map<String, ClaimsImport> claimsImports = new LinkedHashMap<>();
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
@@ -131,6 +135,13 @@ public final class BankStore {
         try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
             Envelope envelope = GSON.fromJson(reader, Envelope.class);
             if (envelope == null || envelope.accounts == null) throw new IllegalArgumentException("Пустой денежный файл");
+            claimsImports.clear();
+            if (envelope.claimsImports != null) for (var row : envelope.claimsImports.entrySet()) {
+                var receipt = row.getValue();
+                if (row.getKey() == null || normalize(row.getKey()).isEmpty() || receipt == null || receipt.player() == null
+                        || receipt.amount() < 0 || receipt.amount() > MAX_BALANCE) throw new IllegalArgumentException("Неверная квитанция казны");
+                if (claimsImports.put(normalize(row.getKey()), receipt) != null) throw new IllegalArgumentException("Повтор имени казны");
+            }
             List<Map.Entry<UUID, Account>> rows = new ArrayList<>();
             for (Map.Entry<String, Account> raw : envelope.accounts.entrySet()) {
                 UUID id = parseUuid(raw.getKey());
@@ -147,6 +158,7 @@ public final class BankStore {
                 accounts.put(id, account);
                 rows.add(Map.entry(id, account));
             }
+            for (var receipt : claimsImports.values()) if (!accounts.containsKey(receipt.player())) throw new IllegalArgumentException("Квитанция казны без счёта");
             // Индекс ников: свежая запись (updated) побеждает старую.
             rows.sort(Comparator.comparingLong((Map.Entry<UUID, Account> row) -> row.getValue().updated));
             for (Map.Entry<UUID, Account> row : rows) {
@@ -376,6 +388,37 @@ public final class BankStore {
         return new TransferResult(Status.OK, amount, tax, credited, source.balance, target.balance);
     }
 
+    /** Казна раньше была по нику: глобальная квитанция не даёт повторить импорт под другим UUID. */
+    public synchronized boolean importLegacyClaims(UUID id, String name, long amount) {
+        String source = normalize(name);
+        if (!available || id == null || source.isEmpty() || source.length() > 16 || amount < 0 || amount > MAX_BALANCE) return false;
+        var receipt = claimsImports.get(source);
+        if (receipt != null) return receipt.player().equals(id);
+        var account = open(id, name);
+        if (account.balance > MAX_BALANCE - amount) return false;
+        account.balance += amount; account.deposited += amount; account.updated = System.currentTimeMillis();
+        claimsImports.put(source, new ClaimsImport(id, amount)); dirty = true; return true;
+    }
+
+    /** Одна main-thread сделка нескольких личных счетов: сначала проверяем ВСЕ пределы. */
+    public synchronized boolean exchangeAccounts(Map<UUID, Long> deltas, Runnable commit) {
+        if (!available || deltas == null || deltas.isEmpty() || deltas.size() > 8 || commit == null) return false;
+        for (var entry : deltas.entrySet()) {
+            Long delta = entry.getValue();
+            if (entry.getKey() == null || delta == null || delta < -MAX_BALANCE || delta > MAX_BALANCE) return false;
+            long next = balance(entry.getKey()) + delta;
+            if (next < 0 || next > MAX_BALANCE) return false;
+        }
+        commit.run(); // Только подготовленный storage-setter, без команд/событий.
+        for (var entry : deltas.entrySet()) {
+            var account = open(entry.getKey(), ""); long delta = entry.getValue();
+            account.balance += delta;
+            if (delta > 0) account.deposited += delta; else account.withdrawn -= delta;
+            account.updated = System.currentTimeMillis();
+        }
+        dirty = true; return true;
+    }
+
     /** Баланс и квитанция в одном bank.json: повторное чтение старого shop-data не начисляет деньги снова. */
     public synchronized boolean importLegacyShop(UUID id, long amount) {
         if (!available || id == null || amount < 0 || amount > MAX_BALANCE) return false;
@@ -417,6 +460,7 @@ public final class BankStore {
         for (Map.Entry<UUID, Account> row : accounts.entrySet()) {
             envelope.accounts.put(row.getKey().toString(), row.getValue());
         }
+        envelope.claimsImports.putAll(claimsImports);
         try {
             Files.createDirectories(file.getParent());
             Path temp = file.resolveSibling("bank.json.tmp");
@@ -440,6 +484,7 @@ public final class BankStore {
         for (Map.Entry<UUID, Account> row : accounts.entrySet()) {
             envelope.accounts.put(row.getKey().toString(), row.getValue());
         }
+        envelope.claimsImports.putAll(claimsImports);
         return GSON.toJson(envelope);
     }
 
