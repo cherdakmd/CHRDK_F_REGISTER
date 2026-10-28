@@ -28,8 +28,13 @@ final class BankChargeGuard implements Listener {
         if (!p.isOnline()) return;
         var expected=bank.chargeWitnesses(p.getUniqueId()); var actual=new HashMap<String, String>();
         // Проверяем также orphan-маркеры: исчезнувшая банковская запись не означает «не было оплаты».
-        for (var key:p.getPersistentDataContainer().getKeys()) if (key.getNamespace().equals("chrdk_core") && key.getKey().startsWith("charge_"))
-            actual.put(key.getKey().substring("charge_".length()),p.getPersistentDataContainer().get(key,PersistentDataType.STRING));
+        try {
+            for (var key:p.getPersistentDataContainer().getKeys()) if (key.getNamespace().equals("chrdk_core") && key.getKey().startsWith("charge_"))
+                actual.put(key.getKey().substring("charge_".length()),p.getPersistentDataContainer().get(key,PersistentDataType.STRING));
+        } catch (RuntimeException error) {
+            plugin.getLogger().warning("Банк: невозможно прочитать playerdata marker " + p.getUniqueId() + ": " + error.getMessage());
+            actual = null; // Ошибка чтения не выпускает игрока из проверки.
+        }
         if (matches(expected,actual)) return;
         plugin.getLogger().severe("Банк: playerdata не подтверждает предметную оплату для " + p.getUniqueId() + "; игра заблокирована до сверки. Ожидаемые метки: " + expected);
         net.kyori.adventure.text.Component reason = net.kyori.adventure.text.Component.text("Банк: предметная оплата требует сверки playerdata администратором.");
