@@ -21,6 +21,7 @@ public final class MilestoneAwards {
     }
     /** Чистый production-исполнитель, проверяемый настоящим BankStore без Bukkit. */
     public static boolean deliver(MilestoneStore store,Bank bank,String source,UUID owner,long total) throws IOException {
+        if(!source.equals(store.source())) throw new IllegalArgumentException("award namespace mismatch");
         if(!store.healthy()||!bank.available()) return false;
         if(store.registered()) { if(!bank.registered(source,store.lineage())) throw new IllegalStateException("award lineage unavailable"); }
         else { if(!bank.register(source,store.lineage())) throw new IllegalStateException("award lineage conflict"); store.markRegistered(); }
@@ -51,7 +52,7 @@ public final class MilestoneAwards {
     public MilestoneAwards(JavaPlugin plugin,Supplier<ChrdkRegisterApi> api,Supplier<ru.cherdakmd.chrdkregister.Messages> messages,String source,Map<UUID,Set<String>> legacy) throws Exception {
         if(!source.matches("[a-z][a-z0-9-]{0,47}")||api.get()==null||ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)<20) throw new IllegalStateException("Нужен Core API 20+");
         this.plugin=plugin; this.api=api; this.messages=messages; this.source=source;
-        store=new MilestoneStore(plugin.getDataFolder().toPath()); store.initialize(legacy); tick();
+        store=new MilestoneStore(plugin.getDataFolder().toPath(),source); store.initialize(legacy); tick();
         task=Bukkit.getScheduler().runTaskTimer(plugin,this::tick,20L,20L);
     }
     public void close() { task.cancel(); }

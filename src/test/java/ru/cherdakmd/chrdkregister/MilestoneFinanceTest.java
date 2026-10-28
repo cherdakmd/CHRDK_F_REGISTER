@@ -14,7 +14,7 @@ class MilestoneFinanceTest {
     @TempDir Path dir;
     final UUID owner=UUID.randomUUID();
     static final String SOURCE="skills-awards";
-    MilestoneStore load() throws Exception { return new MilestoneStore(dir); }
+    MilestoneStore load() throws Exception { return new MilestoneStore(dir,SOURCE); }
     MilestoneStore initialized() throws Exception { var s=load(); s.initialize(Map.of(owner,Set.of("level:10"))); return s; }
     BankStore bank() { var b=new BankStore(dir.resolve("core"),Logger.getAnonymousLogger()); b.load(); return b; }
     static final class Gateway implements MilestoneAwards.Bank {
@@ -85,7 +85,7 @@ class MilestoneFinanceTest {
         assertFalse(load().claimed(owner).contains("level:25")); assertTrue(load().totals().isEmpty());
     }
     @Test void afterReplaceFailureQuarantinesAndReloadFindsClaimAndAmountTogether() throws Exception {
-        initialized(); var s=new MilestoneStore(dir,()->{throw new IOException("after replace");});
+        initialized(); var s=new MilestoneStore(dir,SOURCE,()->{throw new IOException("after replace");});
         assertThrows(IOException.class,()->s.reserve(owner,"level:25",17)); assertFalse(s.healthy());
         assertTrue(load().claimed(owner).contains("level:25")); assertEquals(17,load().totals().get(owner));
         assertThrows(IllegalStateException.class,()->s.reserve(owner,"level:50",3));
@@ -98,7 +98,7 @@ class MilestoneFinanceTest {
     }
     @Test void nullMissingFractionalAndInvalidOwnerMetadataNeverResetSource() throws Exception {
         var s=initialized(); s.reserve(owner,"level:25",17); var file=dir.resolve("milestone-awards.json"); String good=Files.readString(file);
-        for(String key:List.of("schema","lineage","imported","registered","awards")) {
+        for(String key:List.of("schema","source","lineage","imported","registered","awards")) {
             var json=JsonParser.parseString(good).getAsJsonObject(); json.remove(key); String bad=json.toString(); Files.writeString(file,bad);
             assertThrows(IOException.class,this::load); assertEquals(bad,Files.readString(file));
         }
@@ -137,6 +137,13 @@ class MilestoneFinanceTest {
         assertFalse(MilestoneAwards.deliver(s,new Gateway(ambiguous),SOURCE,owner,17)); assertFalse(ambiguous.available());
         var reboot=bank(); assertEquals(17,reboot.balance(owner));
         assertTrue(MilestoneAwards.deliver(load(),new Gateway(reboot),SOURCE,owner,17)); assertEquals(17,bank().balance(owner));
+    }
+
+    @Test void movingLedgerToAnotherModuleOrPassingAnotherNamespaceCannotMint() throws Exception {
+        var s=initialized(); s.reserve(owner,"level:25",17); var b=bank();
+        assertThrows(IOException.class,()->new MilestoneStore(dir,"achievements-awards"));
+        assertThrows(IllegalArgumentException.class,()->MilestoneAwards.deliver(s,new Gateway(b),"achievements-awards",owner,17));
+        assertEquals(0,b.balance(owner)); assertEquals(17,load().totals().get(owner));
     }
 
 }

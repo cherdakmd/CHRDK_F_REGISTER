@@ -14,21 +14,24 @@ public final class MilestoneStore {
     private static final class Data {
         int schema=1;
         UUID lineage=UUID.randomUUID();
+        String source;
         boolean imported,registered;
         Map<UUID,Map<String,Long>> awards=new LinkedHashMap<>();
     }
     private final Path file;
+    private final String source;
     private final ChargeJournal.WriteCheckpoint checkpoint;
     private Data data;
     private boolean healthy=true;
-    public MilestoneStore(Path folder) throws IOException { this(folder,()->{}); }
-    public MilestoneStore(Path folder,ChargeJournal.WriteCheckpoint checkpoint) throws IOException {
-        file=folder.resolve("milestone-awards.json"); this.checkpoint=Objects.requireNonNull(checkpoint);
-        if (!Files.exists(file)) { write(new Data()); return; }
+    public MilestoneStore(Path folder,String source) throws IOException { this(folder,source,()->{}); }
+    public MilestoneStore(Path folder,String source,ChargeJournal.WriteCheckpoint checkpoint) throws IOException {
+        if(source==null||!source.matches("[a-z][a-z0-9-]{0,47}")) throw new IllegalArgumentException("award namespace");
+        this.source=source; file=folder.resolve("milestone-awards.json"); this.checkpoint=Objects.requireNonNull(checkpoint);
+        if (!Files.exists(file)) { var fresh=new Data(); fresh.source=source; write(fresh); return; }
         try {
             if (Files.size(file)>32L*1024*1024) throw new IllegalArgumentException("award capacity");
             var object=JsonParser.parseString(Files.readString(file)).getAsJsonObject(); FinanceNumbers.requireIntegral(object);
-            for(String key:List.of("schema","lineage","imported","registered","awards"))
+            for(String key:List.of("schema","source","lineage","imported","registered","awards"))
                 if(!object.has(key)||object.get(key).isJsonNull()) throw new IllegalArgumentException("missing "+key);
             if(!object.get("schema").isJsonPrimitive()||!object.get("schema").getAsJsonPrimitive().isNumber()
                     ||!object.get("registered").isJsonPrimitive()||!object.get("registered").getAsJsonPrimitive().isBoolean()
@@ -41,13 +44,14 @@ public final class MilestoneStore {
                 }
             }
             data=JSON.fromJson(object,Data.class); validate(data);
+            if(!source.equals(data.source)) throw new IllegalArgumentException("award source namespace");
         } catch(RuntimeException error) { healthy=false; throw new IOException("Повреждён milestone-awards.json; не сбрасывайте журнал наград",error); }
     }
     static void validKey(String key) {
         if(key==null||!key.matches("[a-z0-9][a-z0-9:_-]{0,119}")) throw new IllegalArgumentException("award key");
     }
     private static void validate(Data d) {
-        if(d==null||d.schema!=1||d.lineage==null||d.awards==null||!d.imported&&(!d.awards.isEmpty()||d.registered)) throw new IllegalArgumentException("award source");
+        if(d==null||d.schema!=1||d.source==null||!d.source.matches("[a-z][a-z0-9-]{0,47}")||d.lineage==null||d.awards==null||!d.imported&&(!d.awards.isEmpty()||d.registered)) throw new IllegalArgumentException("award source");
         for(var player:d.awards.entrySet()) {
             if(player.getKey()==null||player.getValue()==null||player.getValue().isEmpty()) throw new IllegalArgumentException("award owner");
             long total=0;
@@ -74,6 +78,7 @@ public final class MilestoneStore {
         } catch(IOException error) { healthy=false; throw error; }
     }
     public synchronized boolean healthy() { return healthy; }
+    public synchronized String source() { return source; }
     public synchronized UUID lineage() { return data.lineage; }
     public synchronized boolean imported() { return data.imported; }
     public synchronized boolean registered() { return data.registered; }
