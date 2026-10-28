@@ -158,6 +158,10 @@ class GuildFinanceTest {
         String unknown=object.toString(); assertThrows(IllegalArgumentException.class,()->live.detached(unknown));
         object=JsonParser.parseString(json).getAsJsonObject(); var wars=object.getAsJsonArray("wars"); var next=wars.get(0).deepCopy().getAsJsonObject(); next.addProperty("id","second"); wars.add(next);
         String bad=object.toString(); assertThrows(IllegalArgumentException.class,()->live.detached(bad));
+        var receipts=JsonParser.parseString(json).getAsJsonObject();
+        var kills=new com.google.gson.JsonObject(); kills.add(leader+"|"+rival,com.google.gson.JsonNull.INSTANCE);
+        receipts.getAsJsonArray("wars").get(0).getAsJsonObject().add("last-kills",kills);
+        assertThrows(IllegalArgumentException.class,()->live.detached(receipts.toString()));
     }
     @Test void creationPreviewQuotesOldPriceAndNeverCreatesBeforeReceipt() throws Exception {
         legacy(100); var source=source(); var live=bind(source); UUID creator=UUID.randomUUID();

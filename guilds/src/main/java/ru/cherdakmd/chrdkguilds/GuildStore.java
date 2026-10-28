@@ -663,6 +663,7 @@ final class GuildStore {
             range(row,"treasury",0,Guild.MAX_TREASURY,true);
             range(row,"war-returns",0,Long.MAX_VALUE,false);
             if (number(row.get("war-returns")) > 0 && number(row.get("treasury")) != Guild.MAX_TREASURY) bad("unfunded return");
+            Math.addExact(number(row.get("treasury")),number(row.get("war-returns")));
             range(row,"level",1,GuildMath.MAX_LEVEL,true);
             for (String key : List.of("glory","wars-won","wars-lost")) range(row,key,0,Integer.MAX_VALUE,true);
             range(row,"war-cooldown-until",0,Long.MAX_VALUE,false);
@@ -693,7 +694,11 @@ final class GuildStore {
             if (row.containsKey("last-kills")) {
                 if (!(row.get("last-kills") instanceof Map<?,?>)) bad("kill receipts");
                 for (var entry : ((Map<?,?>)row.get("last-kills")).entrySet()) {
-                    if (!(entry.getKey() instanceof String) || number(entry.getValue()) < 0) bad("kill receipt");
+                    if (!(entry.getKey() instanceof String) || entry.getValue() == null || number(entry.getValue()) <= 0) bad("kill receipt");
+                    String[] pair = entry.getKey().toString().split("\\|",-1);
+                    if (pair.length != 2) bad("kill pair");
+                    strictUuid(pair[0]); strictUuid(pair[1]);
+                    if (pair[0].compareTo(pair[1]) >= 0) bad("kill pair order");
                 }
             }
         }
