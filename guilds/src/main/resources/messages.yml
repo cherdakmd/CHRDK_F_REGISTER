@@ -225,7 +225,7 @@ guilds:
   admin-history-empty: "<gray>История войн пока пуста.</gray>"
   admin-history-line: "<dark_gray>·</dark_gray> <gray>%time%</gray> <white>%challenger%</white> <gray>против</gray> <white>%target%</white> <dark_gray>—</dark_gray> %result% <gray>(ставка %wager%)</gray>"
   admin-history-unknown: "<dark_gray>неизвестно</dark_gray>"
-  finance-paused: "<yellow>Операция не подтверждена: идёт сверка финансового источника. Не удаляйте журнал; проверьте /guildadmin finance.</yellow>"
+  finance-paused: "<yellow>Операция не подтверждена. При незавершённой оплате не удаляйте журнал; проверьте /guildadmin finance.</yellow>"
   finance-auth: "<red>Сначала войдите в аккаунт.</red>"
   finance-mode: "<red>Оплата доступна вошедшему живому игроку в выживании или приключении.</red>"
   treasury-war-returns: "<gray>Военные выплаты сверх потолка: <white>%amount%</white>. Это общие средства; они пополнят казну при расходовании.</gray>"
@@ -241,5 +241,5 @@ guilds:
     service-payment: '<yellow>Pending оплаты %id%; плательщик %payer%. Не удаляйте журнал.</yellow>'
     service-action: '<yellow>Резерв %id%: payer=%payer%, actor=%actor%, цена=%price%, этап=%phase%, вид=%kind%, цель=%target%.</yellow>'
     service-status: '<gray>Незавершённых услуг: %count%, блокировка оплаты: %paused%. EXECUTING требует доказательства исхода.</gray>'
-    service-resolve-usage: '<yellow>После ручной сверки: resolve <UUID> success|refund confirm. Для Claims: /claimadmin tpresolve; для Teleports: /tpadmin resolve. Не угадывайте исход.</yellow>'
+    service-resolve-usage: '<yellow>После ручной сверки: resolve <UUID> success|refund confirm. Не угадывайте исход. Доменные операции Guilds не имеют native-резерва EXECUTING; используйте /guildadmin finance и recover.</yellow>'
     service-lock: '<red>Предметная оплата не завершена. Нужна сверка банка и playerdata; повторите вход после восстановления.</red>'
