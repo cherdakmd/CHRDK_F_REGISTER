@@ -712,11 +712,12 @@ server-menu:
     - {"slot": 4, "icon": "PLAYER_HEAD", "name": "<gold><bold>%player%</bold></gold>", "lore": "<gray>Ранг: <white>%rank%</white></gray>\n<gray>Осталось: <white>%pass_left%</white></gray>\n<dark_gray>Клик — карточка игрока</dark_gray>", "command": "profile", "permission": "chrdkregister.profile"}
     - {"slot": 20, "icon": "BOOK", "name": "<gold><bold>Вики сервера</bold></gold>", "lore": "<gray>Все команды, цены и лимиты сайтом</gray>\n<dark_gray>Клик — ссылка на сайт в чат</dark_gray>", "command": "wiki"}
     - {"slot": 22, "icon": "KNOWLEDGE_BOOK", "name": "<gray><bold>Как пользоваться</bold></gray>", "lore": "<gray>Клик по иконке открывает раздел</gray>\n<gray>Внутри — кнопки с командами</gray>\n<gray>«Назад» и «Закрыть» — в нижнем ряду</gray>"}
+    - {"slot": 24, "icon": "EMERALD", "name": "<gold><bold>Поддержать сервер</bold></gold>", "lore": "<gray>Официальный донат-магазин CHRDK</gray>\n<yellow>chrdk.trademc.org</yellow>\n<dark_gray>Клик — ссылка на магазин в чат</dark_gray>", "command": "donate", "permission": "chrdkregister.donate"}
     # ------------------------------ аккаунт ------------------------------
     - {"category": "account", "icon": "NAME_TAG", "name": "<gold><bold>Мой ранг</bold></gold>", "lore": "<gray>Сейчас: <white>%rank%</white> <dark_gray>·</dark_gray> <white>%rank_status%</white></gray>\n<gray>Осталось: <white>%pass_left%</white></gray>\n<dark_gray>Клик — бонусы ступени и срок</dark_gray>", "command": "rank my"}
     - {"category": "account", "icon": "NETHER_STAR", "name": "<gold><bold>Витрина рангов</bold></gold>", "lore": "<gray>Пять ступеней: что даёт каждая</gray>\n<dark_gray>Карточки, цены и кнопка оплаты</dark_gray>", "command": "rank"}
     - {"category": "account", "icon": "BOOK", "name": "<gold><bold>Правила рангов</bold></gold>", "lore": "<gray>Что ранг даёт и чего не даёт</gray>\n<dark_gray>Честные границы без скрытых бонусов</dark_gray>", "command": "rank rules"}
-    - {"category": "account", "icon": "EMERALD", "name": "<gold><bold>Поддержать сервер</bold></gold>", "lore": "<gray>Оплата и продление через TradeMC</gray>\n<dark_gray>Выдача автоматическая, по нику</dark_gray>", "command": "pass donate"}
+    - {"category": "account", "icon": "EMERALD", "name": "<gold><bold>Поддержать сервер</bold></gold>", "lore": "<gray>Оплата и продление через TradeMC</gray>\n<dark_gray>Выдача автоматическая, по нику</dark_gray>", "command": "donate", "permission": "chrdkregister.donate"}
     - {"category": "account", "icon": "CHEST", "name": "<gold><bold>Каталог товаров</bold></gold>", "lore": "<gray>Ранги, наборы и боевой пропуск одной страницей</gray>\n<dark_gray>Цены и состав — в чате, оплата — на сайте</dark_gray>", "command": "pass shop"}
     - {"category": "account", "icon": "CLOCK", "name": "<gold><bold>Ежедневная награда</bold></gold>", "lore": "<gray>Календарь, стрик и награда дня</gray>", "command": "daily", "plugin": "CHRDK_DailyRewards", "permission": "chrdkdaily.use"}
     - {"category": "account", "icon": "WRITABLE_BOOK", "name": "<gold><bold>Путеводитель</bold></gold>", "lore": "<gray>Книга с командами и первыми шагами</gray>", "command": "guide"}
@@ -1084,7 +1085,7 @@ auto-messages:
     - {"text": "<gray>Спасибо за поддержку сервера! Ваш ранг активен до конца срока: <white>%pass_left%</white>.</gray>", "condition": "paid"}
     - {"text": "<gray>Защитите аккаунт: <white>/2fa setup</white>, затем подтвердите код приложения. Никому не сообщайте пароль и коды.</gray>", "condition": "unsecured"}
     - {"text": "<gray>Проверьте сессии входа: <white>/session</white>. Для выхода из аккаунта — <white>/logout</white>.</gray>"}
-    - {"text": "<gray>Хотите поддержать проект? <white>/pass donate</white> откроет ссылку на оплату и продление.</gray>"}
+    - {"text": "<gray>Поддержать сервер и выбрать ранг или косметику: <click:open_url:'https://chrdk.trademc.org/'><gold><u>донат-магазин CHRDK</u></gold></click>. Ссылка также доступна через <white>/donate</white> и <white>/menu</white>.</gray>"}
     # --- прогресс ---
     - {"text": "<gray>Задания сезона и награды: <white>/battlepass</white>. Прогресс не сгорает при перезапуске.</gray>", "plugin": "CHRDK_BattlePass", "permission": "chrdkbp.use"}
     - {"text": "<gray>72 достижения ждут своего героя: <white>/achievements</white>. Бейджи открываются вместе с целями.</gray>", "plugin": "CHRDK_Achievements", "permission": "chrdkachievements.use"}

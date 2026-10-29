@@ -86,7 +86,7 @@ class ReleaseWorkflowContractTest(unittest.TestCase):
         root = Path(__file__).resolve().parents[2]
         source = (root / ".github/workflows/release.yml").read_text()
         self.assertIn("cp docs/releases/update-memo.txt", source)
-        self.assertIn("1.4.{200,201,{220..239}}.md", source)
+        self.assertIn("1.4.{200,201,{220..240}}.md", source)
         self.assertIn('unzip -t "chrdk-plugins-${version}.zip"', source)
         self.assertNotIn("--zip", source)
         self.assertIn('"${{ env.zip }}" --clobber', source)

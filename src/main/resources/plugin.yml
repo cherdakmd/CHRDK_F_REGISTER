@@ -32,6 +32,10 @@ commands:
   hat:
     description: "Надеть блок из руки на голову (преимущество Покровителя)"
     usage: /<command>
+  donate:
+    description: "Поддержать сервер — ссылка на официальный донат-магазин"
+    usage: /<command>
+    permission: chrdkregister.donate
   wiki:
     description: "Кликабельная ссылка на вики игрока: команды, цены и лимиты сайтом"
     usage: /<command> [страница]
@@ -112,6 +116,9 @@ commands:
     aliases: [balancetop, topbal]
 
 permissions:
+  chrdkregister.donate:
+    description: "Получить ссылку на донат-магазин сервера"
+    default: true
   chrdkregister.labels:
     description: "Переключать надписи в своём нике и шапку таб-листа (каждое звание отдельно)"
     default: true

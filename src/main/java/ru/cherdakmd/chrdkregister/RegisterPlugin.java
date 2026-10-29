@@ -26,6 +26,7 @@ public final class RegisterPlugin extends JavaPlugin {
     private RankMenuService rankMenuService;
     private HatCommand hatCommand;
     private WikiCommandHandler wikiCommand;
+    private DonateCommandHandler donateCommand;
     private BankStore bankStore;
     private BankService bankService;
     private ProfileRegistry profileRegistry;
@@ -205,6 +206,12 @@ public final class RegisterPlugin extends JavaPlugin {
         if (labelsCommandPlugin != null) {
             labelsCommandPlugin.setExecutor(labelsCommand);
             labelsCommandPlugin.setTabCompleter(labelsCommand);
+        }
+        this.donateCommand = new DonateCommandHandler(messages);
+        PluginCommand donateCommandPlugin = getCommand("donate");
+        if (donateCommandPlugin != null) {
+            donateCommandPlugin.setExecutor(donateCommand);
+            donateCommandPlugin.setTabCompleter(donateCommand);
         }
         this.wikiCommand = new WikiCommandHandler(() -> accessManager.config().wiki(), messages);
         PluginCommand wikiCommandPlugin = getCommand("wiki");
@@ -434,6 +441,9 @@ public final class RegisterPlugin extends JavaPlugin {
         }
         if (wikiCommand != null) {
             wikiCommand.setMessages(messages);
+        }
+        if (donateCommand != null) {
+            donateCommand.setMessages(messages);
         }
         if (labelsCommand != null) {
             labelsCommand.refreshMessages();

@@ -1179,6 +1179,13 @@ messages:
   # %label% — как игрок написал команду. Клик открывает браузер,
   # вторая строка копирует адрес: на некоторых клиентах open_url молчит.
   # ---------------------------------------------------------------
+  "donate":
+    "link": "<gold>Поддержать сервер:</gold> <click:open_url:'%url%'><hover:show_text:'<green>Открыть официальный магазин</green>'><aqua><u>%url%</u></aqua></hover></click>"
+    "copy": "<dark_gray>Ссылка не открывается? <click:copy_to_clipboard:'%url%'><u>Скопировать адрес</u></click> и вставить в браузер.</dark_gray>"
+    "console": "<gray>Донат-магазин сервера: %url%</gray>"
+    "usage": "<yellow>/donate</yellow> <gray>— ссылка на донат-магазин сервера.</gray>"
+    "no-permission": "<red>Нет права chrdkregister.donate.</red>"
+
   "wiki":
     "link": "<gray>Вики сервера: <click:open_url:'%url%'><hover:show_text:'<green>Открыть в браузере</green>'><aqua><u>%url%</u></aqua></hover></click></gray>"
     "page": "<gray>Вики · <white>%page%</white>: <click:open_url:'%url%'><hover:show_text:'<green>Открыть в браузере</green>'><aqua><u>%url%</u></aqua></hover></click></gray>"
