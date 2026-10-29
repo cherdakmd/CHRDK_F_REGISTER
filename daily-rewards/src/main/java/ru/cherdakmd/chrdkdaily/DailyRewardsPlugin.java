@@ -14,8 +14,8 @@ import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 import java.util.List;
 
 /**
- * CHRDK_DailyRewards — ежедневные награды со стриком. Ветка VIP активируется активной
- * рангом ядра ({@code api.hasActivePass}), выдача VIP-часов — через {@code api.grantPassHours}.
+ * CHRDK_DailyRewards — ежедневные награды со стриком. Усиленная ветка определяется активным
+ * рангом ядра; часы награды — только отдельный игровой буст, не платный ранг.
  * Забирать награду могут только авторизованные игроки.
  */
 public final class DailyRewardsPlugin extends JavaPlugin {

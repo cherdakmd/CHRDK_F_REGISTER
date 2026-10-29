@@ -52,7 +52,7 @@ public final class DailyService {
     }
     public boolean admin(org.bukkit.command.CommandSender sender,String[] args){
         if(!sender.hasPermission("chrdkdaily.admin"))return false;
-        if(args.length==1&&args[0].equalsIgnoreCase("recovery")){plugin.messages().send(sender,"finance.daily-status","healthy",store.healthy(),"lineage",store.lineage(),"registered",store.registered());return true;}
+        if(args.length==1&&args[0].equalsIgnoreCase("recovery")){plugin.messages().send(sender,"finance.daily-status","healthy",store.healthy(),"lineage",store.lineage(),"registered",store.registered());int shown=0;for(var e:store.pendingRewards().entrySet()){if(shown++>=20)break;var r=e.getValue();String effect=r.completed()<r.items().size()?itemsText(List.of(r.items().get(r.completed()))):"буст "+r.hours()+" ч.";plugin.messages().send(sender,"finance.daily-pending","owner",e.getKey(),"day",r.day(),"phase",r.executing()?"ИСХОД НЕИЗВЕСТЕН":"ОЖИДАЕТ","effect",effect,"step",r.completed(),"count",r.effects());}return true;}
         if(args.length==3&&args[0].equalsIgnoreCase("resolve")&&args[2].equalsIgnoreCase("confirm")){
             try{var id=UUID.fromString(args[1]);var r=store.pending(id);if(r==null||!r.executing())throw new IllegalStateException("not executing");store.finishEffect(id);plugin.getLogger().warning("Daily native effect manually reconciled by "+sender.getName()+": owner="+id+" day="+r.day()+" effect="+r.completed());plugin.messages().send(sender,"finance.daily-resolved");}catch(Exception e){plugin.messages().send(sender,"finance.daily-wait");}return true;
         }

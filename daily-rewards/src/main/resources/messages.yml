@@ -33,7 +33,7 @@ messages:
       "reward-line": "<gray>• %reward%</gray>"
       "footer-name": "<aqua>Ваш стрик: %streak% дн.</aqua>"
   "admin":
-    "usage": "<gray>/dailyadmin lookup <ник> | set <ник> <стрик> | reload</gray>"
+    "usage": "<gray>/dailyadmin lookup <ник> | set <ник> <стрик> | reload | recovery | resolve <UUID> confirm</gray>"
     "lookup": "<gray>%player%: стрик %streak%, всего взято %total%, сегодня %claimed%</gray>"
     "set-ok": "<green>Стрик игрока %player% установлен в %streak% (сброс последнего дня — забрать сможет завтра).</green>"
     "reloaded": "<green>Конфигурация ежедневок перечитана.</green>"
@@ -44,3 +44,4 @@ messages:
     daily-money: '<green>Денежная награда: %amount% 💠 на /bal. Если банк заполнен или временно недоступен, сумма сохранена и будет зачислена позже.</green>'
     daily-status: '<gray>Daily: исправность=%healthy%, источник=%lineage%, регистрация=%registered%. Для незавершённого native-эффекта проверьте daily-data.json; не удаляйте его.</gray>'
     daily-resolved: '<yellow>Текущий native-эффект отмечен проверенным администратором. Это не повторная выдача; оставшиеся эффекты продолжатся автоматически.</yellow>'
+    daily-pending: '<gray>%owner%: UTC-день %day%, %phase%, шаг %step%/%count%: %effect%. Сверьте playerdata/мир/буст перед resolve.</gray>'

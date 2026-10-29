@@ -81,6 +81,7 @@ public final class DailyStore {
     public synchronized boolean registered() {return data.registered;}
     public synchronized Map<UUID,Long> totals() {return Map.copyOf(data.totals);}
     public synchronized Reward pending(UUID id) {return data.pending.get(id);}
+    public synchronized Map<UUID,Reward> pendingRewards(){return Map.copyOf(data.pending);}
     private Data copy() {return JSON.fromJson(JSON.toJson(data),Data.class);}
     private void write(Data next) throws IOException {
         if(!healthy)throw new IOException("daily quarantined"); validate(next);
