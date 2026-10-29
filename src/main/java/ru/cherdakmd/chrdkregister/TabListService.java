@@ -409,8 +409,9 @@ public final class TabListService implements Listener {
     private String navigation(Player player) {
         List<String> links = new ArrayList<>();
         if (accessManager.config().serverMenu().enabled() && player.hasPermission("chrdkregister.menu")) links.add("/menu");
+        if (player.hasPermission("chrdkregister.bal")) links.add("/bal");
         if (player.hasPermission("chrdkregister.labels")) links.add("/labels");
-        for (String[] addon : new String[][]{{"CHRDK_DailyRewards", "chrdkdaily.use", "/daily"},
+        for (String[] addon : new String[][]{{"CHRDK_DiamondShop", "chrdkshop.use", "/shop"}, {"CHRDK_DailyRewards", "chrdkdaily.use", "/daily"},
                 {"CHRDK_Auction", "chrdkauction.use", "/ah"}, {"CHRDK_Lottery", "chrdklottery.use", "/lottery"}}) {
             if (Bukkit.getPluginManager().isPluginEnabled(addon[0]) && player.hasPermission(addon[1])) links.add(addon[2]);
         }

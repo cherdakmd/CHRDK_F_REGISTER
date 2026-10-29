@@ -53,7 +53,7 @@ description: "Одна страница со всеми командами иг�
 |---|---|
 | `/bal` · `/baltop` | Баланс банка и топ |
 | `/pay <ник> <сумма>` | Перевод алмазов |
-| `/shop [balance\|deposit\|withdraw\|price\|buy\|sell\|stats\|help]` | Алмазный магазин |
+| `/shop [balance\|price\|find\|buy\|sell\|sellall\|stats\|help]` | Алмазный магазин; buy/sell — штуки, новый декор без скупки |
 | `/auction [sell <цена>\|buy <id> confirm\|cancel <id>\|mail\|claim <id>\|money\|mine]` | Аукцион игроков |
 | `/orders [list\|deliver <номер>\|stats [ник]\|top\|help]` | Доска заказов от ботов |
 | `/lottery [buy [n]\|info\|top\|last\|claim]` | Лотерея недели |

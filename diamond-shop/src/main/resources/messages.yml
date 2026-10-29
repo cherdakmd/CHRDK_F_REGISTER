@@ -163,7 +163,17 @@ messages:
     back: '<yellow>← Вернуться к товарам без сделки</yellow>'
     maximum: '<gold>Подобрать максимум продажи без неоплачиваемого остатка</gold>'
     item-lore:
+      - '<gray>Скупка учитывает предел стоимости переработки.</gray>'
       - '<gray>Эталон: %batch% шт. · продать </gray><green>%bid% алм.</green><gray> · купить </gray><red>%ask% алм.</red>'
       - '<gray>Запас: %stock% / %ref%   Тренд: %trend% <aqua>%history%</aqua></gray>'
       - '<yellow>ЛКМ — выбрать количество покупки</yellow>'
       - '<yellow>ПКМ — выбрать количество продажи</yellow>'
+    buy-only: '<yellow>Этот товар можно только купить. Магазин не принимает его обратно; /shop sellall его пропускает.</yellow>'
+    no-bid: '<yellow>Скупка по этой котировке недоступна. Предметы не забраны; выберите другой товар или проверьте /shop price.</yellow>'
+    price-buy-only: '<gray>%material%: купить %batch% шт. за </gray><red>%ask% алм.</red><gray>. Только покупка; запас %stock% / %ref%.</gray>'
+    find-buy-only: '<gray>%material% ×%batch% <dark_gray>(%category%)</dark_gray> — купить </gray><red>%ask% алм.</red><gray> · без обратной скупки</gray>'
+    buy-only-lore:
+      - '<gray>Эталон: %batch% шт. · купить </gray><red>%ask% алм.</red>'
+      - '<gold>Только покупка · обратной скупки нет</gold>'
+      - '<gray>Запас: %stock% / %ref%   Тренд: %trend% <aqua>%history%</aqua></gray>'
+      - '<yellow>ЛКМ — выбрать количество покупки</yellow>'

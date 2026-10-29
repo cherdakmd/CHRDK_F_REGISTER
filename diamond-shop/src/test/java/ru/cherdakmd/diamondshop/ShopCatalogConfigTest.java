@@ -32,8 +32,7 @@ class ShopCatalogConfigTest {
     @Test
     void shippedCatalogIsLargeAndConsistent() throws IOException {
         List<RawItem> items = parse();
-        assertTrue(items.size() >= 120,
-                "каталог должен быть большим: сейчас " + items.size() + " товаров");
+        assertEquals(178,items.size(),"размер поставляемого каталога");
 
         Set<String> materials = new HashSet<>();
         Set<String> currency = Set.of("DIAMOND", "DIAMOND_ORE", "DEEPSLATE_DIAMOND_ORE",

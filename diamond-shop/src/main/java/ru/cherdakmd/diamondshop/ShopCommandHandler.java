@@ -79,13 +79,14 @@ public final class ShopCommandHandler implements TabExecutor {
         if (item == null) return;
         ShopService service = plugin.shopService();
         long stock = service.store().stockOf(item, System.currentTimeMillis(), service.config().stockRecoveryPerHour());
-        plugin.messages().send(player, "trading.price-info",
+        plugin.messages().send(player, item.sellEnabled()?"trading.price-info":"quantity.price-buy-only",
                 "material", item.material().toLowerCase(Locale.ROOT),
                 "price", service.priceOf(item),
                 "bid", service.bidPrice(item),
                 "ask", service.askPrice(item), "batch", service.batchSize(item),
                 "stock", stock, "ref", item.refStock());
-        plugin.messages().send(player,"quantity.price-units","minimum",TradeAmounts.minimumSale(service.batchSize(item),service.bidPrice(item)));
+        if (item.sellEnabled()) plugin.messages().send(player,service.bidPrice(item)>0?"quantity.price-units":"quantity.no-bid",
+                "minimum",TradeAmounts.minimumSale(service.batchSize(item),service.bidPrice(item)));
         double[] history = service.historyOf(item);
         if (history.length > 0) {
             plugin.messages().send(player, "trading.price-history",
@@ -113,7 +114,7 @@ public final class ShopCommandHandler implements TabExecutor {
         for (int index = 0; index < shown; index++) {
             ShopConfig.ShopItem item = matches.get(index);
             ShopCategory category = ShopCategory.byId(item.category()).orElse(ShopCategory.DEFAULT);
-            plugin.messages().send(player, "trading.find-line",
+            plugin.messages().send(player, item.sellEnabled()?"trading.find-line":"quantity.find-buy-only",
                     "material", item.material().toLowerCase(Locale.ROOT),
                     "ask", service.askPrice(item), "batch", service.batchSize(item),
                     "bid", PriceEngine.round(service.bidPrice(item)),

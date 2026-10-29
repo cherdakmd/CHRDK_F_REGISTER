@@ -7,6 +7,15 @@ CHRDK — русский сервер с выживанием, охотой и C
 собрано всё, что нужно игроку: как зайти, что где лежит, сколько стоит и какие
 у правил границы.
 
+## Строить стало удобнее
+
+:::html
+<section class="shop-spotlight" aria-label="Обновление алмазного магазина">
+<div><p class="shop-kicker">ИГРОВАЯ ЭКОНОМИКА · 1.4.245</p><h3>Ваша следующая постройка — в цвете</h3><p><strong>178 товаров в /shop</strong>: добавлены 16 цветов бетона, 16 цветов терракоты и четыре готовых строительных блока. Шесть разделов, выбор количества и подтверждение целой суммы.</p><p>Оплата с <code>/bal</code>, недостача — алмазными предметами. Новая палитра — <strong>без обратной скупки</strong>; выручка за часть прежних товаров ограничена стоимостью переработки.</p><a class="btn btn-primary" href="shop.html">Магазин и новые правила →</a></div>
+<div class="shop-palette" role="img" aria-label="Шестнадцать цветов строительной палитры"><span style="--block:#cfd5d6"></span><span style="--block:#e06101"></span><span style="--block:#a9309f"></span><span style="--block:#2489c7"></span><span style="--block:#f0af15"></span><span style="--block:#5ea818"></span><span style="--block:#d5658e"></span><span style="--block:#36393d"></span><span style="--block:#7d7d73"></span><span style="--block:#157788"></span><span style="--block:#64209c"></span><span style="--block:#2c2e8f"></span><span style="--block:#603b20"></span><span style="--block:#495b24"></span><span style="--block:#8e2020"></span><span style="--block:#080a0f"></span></div>
+</section>
+:::
+
 ## Первый вечер
 
 :::html
@@ -15,7 +24,7 @@ CHRDK — русский сервер с выживанием, охотой и C
 <li><span class="step-num">1</span><div><h3>Зарегистрироваться</h3><p>На сервере: <code>/register &lt;пароль&gt; &lt;пароль&gt;</code> — пароль от 8 символов. Потом включите защиту: <code>/2fa setup</code>.</p><p class="step-more"><a href="start.html">Первые шаги →</a></p></div></li>
 <li><span class="step-num">2</span><div><h3>Открыть меню</h3><p><code>/menu</code> — карта всех возможностей: семь разделов, каждый пункт ведёт в готовую команду. Запоминать команды не нужно.</p><p class="step-more"><a href="menu.html">Что внутри →</a></p></div></li>
 <li><span class="step-num">3</span><div><h3>Поставить дом и привал</h3><p><code>/sethome base</code> — дом, <code>/claim</code> — приват на чанк. Без ранга доступно 3 дома и 24 чанка.</p><p class="step-more"><a href="claims.html">Приваты →</a></p></div></li>
-<li><span class="step-num">4</span><div><h3>Заработать первые алмазы</h3><p>Шахта, <code>/shop</code>, <code>/daily</code>, заказы ботов. Алмазы — единственная валюта сервера.</p><p class="step-more"><a href="economy.html">Экономика →</a></p></div></li>
+<li><span class="step-num">4</span><div><h3>Заработать первые алмазы</h3><p>Шахта, продажа ресурсов в <code>/shop</code>, <code>/daily</code> и заказы ботов. Личные алмазные расчёты — через <code>/bal</code>.</p><p class="step-more"><a href="economy.html">Экономика →</a></p></div></li>
 <li><span class="step-num">5</span><div><h3>Попробовать охоту</h3><p>Сражайтесь с природными мобами, собирайте монеты охоты и развивайте навыки.</p><p class="step-more"><a href="hunt.html">Охота →</a></p></div></li>
 </ol>
 :::
@@ -50,7 +59,7 @@ CHRDK — русский сервер с выживанием, охотой и C
 <details class="faq"><summary>Что будет с домами, когда ранг закончится?</summary><p>Ничего не пропадёт. Дома и приваты сверх лимита остаются доступными — просто нельзя будет создать новые, пока не освободите место или не вернёте ранг.</p></details>
 <details class="faq"><summary>Сколько стоит приват?</summary><p>16 алмазов за чанк и 1 алмаз в сутки ренты. Без ранга доступно 24 чанка, с Покровителем — до 48.</p></details>
 <details class="faq"><summary>Где взять алмазы?</summary><p>Шахта, продажа ресурсов в <code>/shop</code>, ежедневная награда, монеты охоты, заказы ботов, аукцион, достижения.</p></details>
-<details class="faq"><summary>Ранг даёт преимущество в бою?</summary><p>Нет. Урон, броня, удача и урон по боссам от ранга не меняются. Потолки прогресса — +50 % опыта, +25 % добычи и +10 уровней профессий — выше не продаются.</p></details>
+<details class="faq"><summary>Ранг даёт преимущество в бою?</summary><p>Нет. Урон, броня и удача от ранга не меняются. Потолки прогресса — +50 % опыта, +25 % добычи и +10 уровней профессий — выше не продаются.</p></details>
 :::
 
 > **Не нашли ответ?** Воспользуйтесь поиском (Ctrl-K) или разделом

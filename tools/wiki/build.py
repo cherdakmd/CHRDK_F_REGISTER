@@ -89,6 +89,14 @@ def read_page(path: Path) -> tuple[dict, str]:
     return meta, body
 
 
+def catalog_counts() -> tuple[int, int]:
+    """Числа главной из действующих исходников, не из устаревающей подписи."""
+    settings = (ROOT / "settings.gradle").read_text(encoding="utf-8")
+    modules = re.findall(r"^include\s+['\"]([^'\"]+)['\"]", settings, re.M)
+    shop = yaml.safe_load((ROOT / "diamond-shop/src/main/resources/config.yml").read_text(encoding="utf-8"))
+    return 1 + len(set(modules)), len(shop["items"])
+
+
 def property_value(key: str, fallback: str = "") -> str:
     props = ROOT / "gradle.properties"
     if not props.exists():
@@ -555,6 +563,7 @@ def build(check: bool) -> int:
         is_home = slug == "index"
 
         if is_home:
+            plugin_count, shop_count = catalog_counts()
             hero = (
                 '<section class="hero">'
                 '<div class="hero-glow" aria-hidden="true"></div>'
@@ -569,8 +578,8 @@ def build(check: bool) -> int:
                 '</div>'
                 '<div class="hero-stats">'
                 f'<div><strong>{len(ordered)}</strong><span>страниц</span></div>'
-                '<div><strong>5</strong><span>рангов</span></div>'
-                '<div><strong>28</strong><span>плагинов в комплекте</span></div>'
+                f'<div><strong>{shop_count}</strong><span>товаров в /shop</span></div>'
+                f'<div><strong>{plugin_count}</strong><span>плагинов в комплекте</span></div>'
                 '<div><strong>76</strong><span>кастомных чар</span></div>'
                 '</div>'
                 '</div>'

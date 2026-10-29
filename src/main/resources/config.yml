@@ -736,7 +736,7 @@ server-menu:
     # ------------------------------ экономика ------------------------------
     - {"category": "economy", "icon": "GOLD_INGOT", "name": "<gold><bold>Мой баланс</bold></gold>", "lore": "<gray>Счёт банка и алмазы в инвентаре</gray>\n<dark_gray>Перевод: /pay ник сумма</dark_gray>", "command": "bal", "permission": "chrdkregister.bal"}
     - {"category": "economy", "icon": "DIAMOND", "name": "<gold><bold>Топ богачей</bold></gold>", "lore": "<gray>Кто копит алмазы усерднее всех</gray>", "command": "baltop", "permission": "chrdkregister.baltop"}
-    - {"category": "economy", "icon": "EMERALD", "name": "<gold><bold>Алмазный магазин</bold></gold>", "lore": "<gray>Обмен ресурсов и динамические цены</gray>\n<dark_gray>Счёт магазина отделён от банка</dark_gray>", "command": "shop", "plugin": "CHRDK_DiamondShop", "permission": "chrdkshop.use"}
+    - {"category": "economy", "icon": "EMERALD", "name": "<gold><bold>Алмазный магазин</bold></gold>", "lore": "<gray>Ресурсы и строительная палитра</gray>\n<gray>Выбор количества, оплата с /bal</gray>\n<dark_gray>Новый декор — без обратной скупки</dark_gray>", "command": "shop", "plugin": "CHRDK_DiamondShop", "permission": "chrdkshop.use"}
     - {"category": "economy", "icon": "GOLD_BLOCK", "name": "<gold><bold>Аукцион игроков</bold></gold>", "lore": "<gray>Лоты и подтверждение покупки</gray>\n<dark_gray>Выставить: /auction sell цена</dark_gray>", "command": "auction", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
     - {"category": "economy", "icon": "ENDER_CHEST", "name": "<gold><bold>Почта аукциона</bold></gold>", "lore": "<gray>Купленное и возврат непроданного</gray>", "command": "auction mail", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
     - {"category": "economy", "icon": "OAK_SIGN", "name": "<gold><bold>Доска заказов</bold></gold>", "lore": "<gray>Заказы от ботов: принеси и получи</gray>", "command": "orders list", "plugin": "CHRDK_Orders", "permission": "chrdkorders.use"}
@@ -1092,7 +1092,7 @@ auto-messages:
     - {"text": "<gray>Звание растёт вместе с наигранным временем. Ваш прогресс — <white>/ranks</white>.</gray>", "plugin": "CHRDK_Ranks", "permission": "chrdkranks.use"}
     - {"text": "<gray>Общие цели сервера: <white>/goals</white> — ваш вклад и прогресс сообщества.</gray>", "plugin": "CHRDK_CommonGoals", "permission": "chrdkgoals.use", "min-online": 3}
     # --- экономика ---
-    - {"text": "<gray>Обмен ресурсов и актуальные цены: <white>/shop</white>. Счёт магазина отделён от банка <white>/bal</white>.</gray>", "plugin": "CHRDK_DiamondShop", "permission": "chrdkshop.use"}
+    - {"text": "<gray>Ресурсы и строительная палитра: <white>/shop</white>. Личный счёт — <white>/bal</white>, недостача — предметами. У декора нет обратной скупки; цены и доступность — <white>/shop price товар</white>.</gray>", "plugin": "CHRDK_DiamondShop", "permission": "chrdkshop.use"}
     - {"text": "<gray>Продайте стак из руки: <white>/auction sell цена</white>. Покупка требует подтверждения, комиссия видна в лоте.</gray>", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
     - {"text": "<gray>Купленные и возвращённые лоты ждут в <white>/auction mail</white>. Выручку забирайте через <white>/auction money</white>.</gray>", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
     - {"text": "<gray>Лотерея: <white>/lottery</white> — банк, шанс и время. Билеты — <white>/lottery buy</white>, выигрыш — <white>/lottery claim</white>.</gray>", "plugin": "CHRDK_Lottery", "permission": "chrdklottery.use"}
@@ -1132,7 +1132,7 @@ tablist:
     - "<gold>%pass_type%</gold> <dark_gray>•</dark_gray> <aqua>%pass_left%</aqua>"
     - "<gray>%auth_hint%</gray>"
     - "<gray>2FA: <white>%security%</white> <dark_gray>•</dark_gray> <yellow>%ping% мс</yellow> <dark_gray>•</dark_gray> %world%"
-    - "<aqua>%navigation%</aqua>"
+    - "<gold>↪</gold> <aqua>%navigation%</aqua>"
     - ""
   # Общая строка: ник первым, затем выбранные метки на открытых местах.
   # Старый %rank_tag% удаляется из формата на лету: ранг уже учтён в лимите.

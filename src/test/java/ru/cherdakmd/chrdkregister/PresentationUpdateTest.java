@@ -47,8 +47,8 @@ class PresentationUpdateTest {
         var oldItems=live.getMapList("server-menu.items");
         var newItems=fresh.getMapList("server-menu.items");
         assertEquals(oldItems.size()-1,newItems.size(),"кнопки ядра и доната вместо четырёх снятых аддонов");
-        assertTrue(newItems.containsAll(oldItems.stream().filter(item -> !RetiredAddons.plugin(String.valueOf(item.get("plugin"))) && !"pass donate".equals(item.get("command"))).toList()),"пункты остальных аддонов не переписаны");
-        var added=newItems.stream().filter(item -> !oldItems.contains(item)).toList();
+        assertTrue(newItems.containsAll(oldItems.stream().filter(item -> !RetiredAddons.plugin(String.valueOf(item.get("plugin"))) && !"pass donate".equals(item.get("command")) && !"shop".equals(item.get("command"))).toList()),"пункты остальных аддонов не переписаны");
+        var added=newItems.stream().filter(item -> !oldItems.contains(item)).filter(item -> !"shop".equals(item.get("command"))).toList();
         assertEquals(4,added.size(),added.toString());
         var wiki=added.stream().filter(item -> "wiki".equals(item.get("command"))).findFirst().orElseThrow();
         assertEquals(20,((Number)wiki.get("slot")).intValue(),"кнопка на главной, слот 20");
@@ -73,7 +73,7 @@ class PresentationUpdateTest {
         var oldItems=live.getMapList("server-menu.items");
         var newItems=fresh.getMapList("server-menu.items");
         assertEquals(oldItems.size()-2,newItems.size(),"кнопки ника/доната добавлены, четыре снятых аддона удалены");
-        var added=newItems.stream().filter(item -> !oldItems.contains(item)).toList();
+        var added=newItems.stream().filter(item -> !oldItems.contains(item)).filter(item -> !"shop".equals(item.get("command"))).toList();
         assertEquals(3,added.size(),added.toString());
         assertEquals(1,added.stream().filter(item -> "labels".equals(item.get("command"))).count());
         assertEquals(2,added.stream().filter(item -> "donate".equals(item.get("command"))).count());
@@ -100,7 +100,7 @@ class PresentationUpdateTest {
         var oldItems=live.getMapList("server-menu.items");
         var newItems=fresh.getMapList("server-menu.items");
         assertEquals(oldItems.size()-3,newItems.size(),"снятые аддоны удалены, добавлена кнопка доната");
-        var changed=newItems.stream().filter(item -> !oldItems.contains(item)).toList();
+        var changed=newItems.stream().filter(item -> !oldItems.contains(item)).filter(item -> !"shop".equals(item.get("command"))).toList();
         assertEquals(3,changed.size(),changed.toString());
         assertEquals(1,changed.stream().filter(item -> "labels".equals(item.get("command"))).count());
         assertEquals(2,changed.stream().filter(item -> "donate".equals(item.get("command"))).count());
@@ -122,6 +122,22 @@ class PresentationUpdateTest {
             assertFalse(RetiredAddons.command(String.valueOf(entry.get("command"))));
         }
         for (String key:changes) live.set(key,fresh.get(key));
+        assertTrue(PresentationMigration.replacements(live,List.of(legacy),fresh).isEmpty());
+    }
+
+    @Test void stock244UpdatesShopHelpAnnouncementsAndTabWithoutChangingOwnerSettings() {
+        var legacy=yaml("presentation-legacy-1.4.244.yml");var live=yaml("presentation-legacy-1.4.244.yml");
+        var fresh=yaml("config.yml");
+        assertTrue(PresentationMigration.LEGACY_RESOURCES.contains("presentation-legacy-1.4.244.yml"));
+        var changes=PresentationMigration.replacements(live,List.of(legacy),fresh);
+        assertTrue(changes.containsAll(List.of("server-menu.items","auto-messages.messages","tablist.footer")));
+        var shop=fresh.getMapList("server-menu.items").stream().filter(i->"shop".equals(i.get("command"))).findFirst().orElseThrow();
+        assertTrue(shop.get("lore").toString().contains("/bal"));
+        assertTrue(shop.get("lore").toString().contains("без обратной скупки"));
+        assertFalse(shop.get("lore").toString().contains("отделён"));
+        live.set("tablist.refresh-ticks",77);live.set("server-menu.enabled",false);
+        for(var key:changes)live.set(key,fresh.get(key));
+        assertEquals(77,live.getInt("tablist.refresh-ticks"));assertFalse(live.getBoolean("server-menu.enabled"));
         assertTrue(PresentationMigration.replacements(live,List.of(legacy),fresh).isEmpty());
     }
 

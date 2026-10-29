@@ -9,12 +9,16 @@ on:
       - 'wiki/**'
       - 'tools/wiki/**'
       - 'gradle.properties'
+      - 'settings.gradle'
+      - 'diamond-shop/src/main/resources/config.yml'
       - '.github/workflows/pages.yml'
   pull_request:
     paths:
       - 'wiki/**'
       - 'tools/wiki/**'
       - 'gradle.properties'
+      - 'settings.gradle'
+      - 'diamond-shop/src/main/resources/config.yml'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -47,7 +51,9 @@ jobs:
 
       - name: Build and check links
         shell: bash
-        run: python3 tools/wiki/build.py --check
+        run: |
+          python3 tools/wiki/build.py --check
+          python3 -m unittest discover -s tools/wiki -p 'test_*.py' -v
 
       - name: Configure Pages
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'

@@ -6,9 +6,12 @@
 # 1.4.221: отдельного кошелька магазина нет. Сначала /bal, недостача — предметами.
 # Только обычные предметы без метаданных из 36 storage-слотов. Сдача целая на /bal.
 # Старые остатки shop-data.json — замороженный вход миграции, ceil один раз в банк.
-# Партия фиксируется по нижней bid-цене конфига: 1/2/4/.../1024/2304 шт.
-# Покупка ceil(ask × партия), продажа floor(bid × партия), минимум 1 алмаз.
-# Не хватает полной партии — товар остаётся; не хватает места — вся покупка отклоняется.
+# Торговля поштучная (1..2304): эталонная партия — только единица котировки.
+# Итог покупки округляется вверх, продажи вниз до целого алмаза. Нулевая выплата запрещена.
+# Партия учитывает нижнюю цену и рецептурный потолок; после 1.4.245 она может измениться.
+# Проверенные цепочки ограничивают скупку по минимальной стоимости получения из магазина.
+# sell-enabled: false — товар только покупается игроком; отсутствие ключа означает true.
+# Не хватает места — вся покупка отклоняется без оплаты и выбрасывания предметов.
 # Курс предметов в физических алмазах; ручное пополнение/снятие теперь через /bal.
 currency:
   DIAMOND: 1
@@ -28,7 +31,7 @@ pricing:
   # ask округляется вверх, bid вниз. Даже при 0% округление может дать разницу.
   spread-percent: 10.0
   # Дневной лимит оборота игрока в алмазах (покупки+продажи вместе, окно — сутки UTC).
-  # 0 = без лимита. Защищает рынок от накруток.
+  # 0 = без лимита. Лимит дополняет, но не заменяет ограничения рецептурной скупки.
   daily-turnover-limit: 0
   # Сколько точек истории цен хранить на товар (спарклайн в /shop price и витрине)
   history-points: 24
@@ -186,6 +189,260 @@ items:
     max-multiplier: 3.0
 
   # ── Дерево и грибные стебли ──
+  # Строительная палитра: готовые блоки только для покупки, без обратной скупки.
+  - material: WHITE_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: ORANGE_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: MAGENTA_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: LIGHT_BLUE_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: YELLOW_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: LIME_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: PINK_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: GRAY_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: LIGHT_GRAY_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: CYAN_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: PURPLE_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: BLUE_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: BROWN_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: GREEN_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: RED_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: BLACK_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: WHITE_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: ORANGE_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: MAGENTA_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: LIGHT_BLUE_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: YELLOW_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: LIME_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: PINK_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: GRAY_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: LIGHT_GRAY_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: CYAN_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: PURPLE_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: BLUE_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: BROWN_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: GREEN_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: RED_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: BLACK_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: SMOOTH_STONE
+    category: blocks
+    base-price: 0.1
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: STONE_BRICKS
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: POLISHED_DEEPSLATE
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: QUARTZ_BRICKS
+    category: blocks
+    base-price: 2.6
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+
   - material: BAMBOO
     category: wood
     base-price: 0.1

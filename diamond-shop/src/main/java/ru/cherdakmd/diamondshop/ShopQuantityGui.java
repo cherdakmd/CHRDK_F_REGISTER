@@ -22,6 +22,7 @@ public final class ShopQuantityGui implements Listener {
 
     void open(Player player,ShopConfig.ShopItem item,boolean buy,ShopCategory category,int page,
               ShopService service,int batch,long price){
+        if (!buy && !item.sellEnabled()) { plugin.messages().send(player,"quantity.buy-only"); return; }
         var h=new Holder(player.getUniqueId(),item,buy,category,page,service,batch,price);
         if(!current(player,h)){plugin.messages().send(player,"trading.price-changed");plugin.gui().open(player,category,page);return;}
         h.units=buy?1:TradeAmounts.minimumSale(batch,price);
@@ -31,7 +32,7 @@ public final class ShopQuantityGui implements Listener {
     private boolean current(Player player,Holder h){
         var s=plugin.shopService();
         return h.owner.equals(player.getUniqueId())&&player.getGameMode()==GameMode.SURVIVAL&&h.service==s
-            &&s.ready(player)&&s.findItem(h.item.material()).filter(h.item::equals).isPresent()
+            &&(h.buy||h.item.sellEnabled())&&s.ready(player)&&s.findItem(h.item.material()).filter(h.item::equals).isPresent()
             &&h.batch==s.batchSize(h.item)&&h.price==(h.buy?s.askPrice(h.item):s.bidPrice(h.item))
             &&TradeAmounts.minimumSale(h.batch,h.price)>0;
     }

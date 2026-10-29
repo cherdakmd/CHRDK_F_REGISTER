@@ -35,8 +35,13 @@ public final class ShopConfig {
             double basePrice,
             long refStock,
             double minMultiplier,
-            double maxMultiplier
+            double maxMultiplier,
+            boolean sellEnabled
     ) {
+        public ShopItem(String material, String category, double basePrice, long refStock,
+                        double minMultiplier, double maxMultiplier) {
+            this(material, category, basePrice, refStock, minMultiplier, maxMultiplier, true);
+        }
     }
 
     /** Сырые значения курса материал → алмазы (имя материала без валидации Material — для тестов). */
@@ -121,8 +126,12 @@ public final class ShopConfig {
             logger.warning("[DiamondShop] items: неизвестный материал или валюта '" + material + "' — пропускаю.");
             return null;
         }
+        if (raw.containsKey("sell-enabled") && !(raw.get("sell-enabled") instanceof Boolean)) {
+            logger.warning("[DiamondShop] items." + material + ": sell-enabled должен быть true/false — пропускаю.");
+            return null;
+        }
         double basePrice = numberOf(raw.get("base-price"), 0);
-        if (basePrice <= 0) {
+        if (!Double.isFinite(basePrice) || basePrice <= 0) {
             logger.warning("[DiamondShop] items." + material + ": base-price должен быть > 0 — пропускаю.");
             return null;
         }
@@ -130,7 +139,7 @@ public final class ShopConfig {
         double minMult = Math.clamp(numberOf(raw.get("min-multiplier"), defMin), 0.01, 1d);
         double maxMult = Math.clamp(numberOf(raw.get("max-multiplier"), defMax), 1d, 100d);
         return new ShopItem(material, categoryOf(raw.get("category"), logger, material),
-                basePrice, refStock, minMult, maxMult);
+                basePrice, refStock, minMult, maxMult, !Boolean.FALSE.equals(raw.get("sell-enabled")));
     }
 
     /**
@@ -151,9 +160,10 @@ public final class ShopConfig {
     }
 
     private static double numberOf(Object value, double fallback) {
-        if (value instanceof Number number) return number.doubleValue();
+        if (value instanceof Number number) return Double.isFinite(number.doubleValue()) ? number.doubleValue() : fallback;
         try {
-            return value == null ? fallback : Double.parseDouble(String.valueOf(value));
+            double parsed = value == null ? fallback : Double.parseDouble(String.valueOf(value));
+            return Double.isFinite(parsed) ? parsed : fallback;
         } catch (NumberFormatException e) {
             return fallback;
         }

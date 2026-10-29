@@ -46,6 +46,7 @@ jobs:
           python3 -m pip install -r tools/trademc/requirements.txt
           python3 tools/trademc/build.py --check
           python3 -m unittest discover -s tools/trademc -p 'test_*.py' -v
+          python3 -m unittest discover -s tools/wiki -p 'test_*.py' -v
 
       - name: Build plugin
         shell: bash

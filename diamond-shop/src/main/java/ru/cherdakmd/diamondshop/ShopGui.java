@@ -124,7 +124,7 @@ public final class ShopGui implements Listener {
             long stock = service.store().stockOf(item, now, service.config().stockRecoveryPerHour());
             double price = service.priceOf(item);
             double[] history = service.historyOf(item);
-            List<Component> lore = new ArrayList<>(plugin.messages().getList("quantity.item-lore",
+            List<Component> lore = new ArrayList<>(plugin.messages().getList(item.sellEnabled()?"quantity.item-lore":"quantity.buy-only-lore",
                     "price", PriceEngine.round(price),
                     "bid", offer.bid(),
                     "ask", offer.ask(), "batch", offer.batch(),
@@ -229,6 +229,7 @@ public final class ShopGui implements Listener {
         }
         if(!click.isLeftClick()&&!click.isRightClick())return;
         boolean buy=click.isLeftClick();
+        if (!buy && !item.sellEnabled()) { plugin.messages().send(player,"quantity.buy-only"); return; }
         var expected=player.getOpenInventory().getTopInventory();
         plugin.getServer().getScheduler().runTask(plugin,()->{
             if(plugin.isEnabled()&&player.isOnline()&&player.getOpenInventory().getTopInventory()==expected)

@@ -36,6 +36,7 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
         try { if(ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)<23) throw new IllegalStateException("Нужен Core API 23+"); }
         catch(Exception e) { getLogger().severe("Магазин выключен: нужен актуальный CHRDK_Core API 23+"); Bukkit.getPluginManager().disablePlugin(this); return; }
         saveDefaultConfig();
+        ShopCatalogMigration.apply(this);
         reloadShopConfig(); // stores первичную инициализацию всех сервисов
 
         Bukkit.getPluginManager().registerEvents(this,this);

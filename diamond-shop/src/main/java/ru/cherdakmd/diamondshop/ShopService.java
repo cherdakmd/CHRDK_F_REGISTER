@@ -15,8 +15,25 @@ public final class ShopService {
     private final ShopConfig.ShopConfigData config;
     private final ShopStore store;
     private final Supplier<ChrdkRegisterApi> api;
+    private final Map<String,Integer> batches;
+    private final Map<String,java.math.BigDecimal> recipeFloors;
     public ShopService(ShopConfig.ShopConfigData config, ShopStore store, Supplier<ChrdkRegisterApi> api) {
         this.config = config; this.store = store; this.api = api;
+        var minimum = new HashMap<String,java.math.BigDecimal>();
+        config.currencyRates().forEach((m,v)->minimum.put(m,java.math.BigDecimal.valueOf(v)));
+        for (var item : config.items()) minimum.put(item.material(), java.math.BigDecimal.valueOf(
+                PriceEngine.ask(PriceEngine.round(item.basePrice()*item.minMultiplier()),config.spreadPercent())));
+        // Постоянный консервативный потолок: покупка ингредиента сама поднимает его цену.
+        // Текущий снимок НЕ защищал бы от большой покупки и последующей переработки.
+        recipeFloors = RecipeEconomy.recipeCosts(minimum);
+        var sizes = new HashMap<String,Integer>();
+        for (var item : config.items()) {
+            double bid = PriceEngine.bid(PriceEngine.round(item.basePrice()*item.minMultiplier()),config.spreadPercent());
+            var cost = recipeFloors.get(item.material());
+            if (cost != null) bid = Math.min(bid, cost.doubleValue()*(1-config.spreadPercent()/200));
+            sizes.put(item.material(), WholeTrades.batch(bid));
+        }
+        batches = Map.copyOf(sizes);
     }
     public ShopConfig.ShopConfigData config() { return config; }
     public ShopStore store() { return store; }
@@ -24,11 +41,16 @@ public final class ShopService {
         return PriceEngine.price(item.basePrice(), store.stockOf(item, System.currentTimeMillis(), config.stockRecoveryPerHour()),
                 item.refStock(), item.minMultiplier(), item.maxMultiplier());
     }
-    public int batchSize(ShopConfig.ShopItem item) {
-        return WholeTrades.batch(PriceEngine.bid(PriceEngine.round(item.basePrice() * Math.min(1, item.minMultiplier())), config.spreadPercent()));
+    public int batchSize(ShopConfig.ShopItem item) { return batches.getOrDefault(item.material(),0); }
+    public long askPrice(ShopConfig.ShopItem item) {
+        return WholeTrades.price(PriceEngine.ask(priceOf(item),config.spreadPercent()),batchSize(item),true);
     }
-    public long askPrice(ShopConfig.ShopItem item) { return WholeTrades.price(PriceEngine.ask(priceOf(item), config.spreadPercent()), batchSize(item), true); }
-    public long bidPrice(ShopConfig.ShopItem item) { return WholeTrades.price(PriceEngine.bid(priceOf(item), config.spreadPercent()), batchSize(item), false); }
+    public long bidPrice(ShopConfig.ShopItem item) {
+        if (!item.sellEnabled()) return 0;
+        long bid = Math.max(0,WholeTrades.price(PriceEngine.bid(priceOf(item),config.spreadPercent()),batchSize(item),false));
+        var cost = recipeFloors.get(item.material());
+        return cost == null ? bid : Math.min(bid,RecipeEconomy.cap(cost,batchSize(item),config.spreadPercent()));
+    }
     public void recordPricePoint(ShopConfig.ShopItem item) { store.recordPrice(item, priceOf(item), System.currentTimeMillis(), config.historyMaxPoints(), config.historyIntervalMillis()); }
     public double[] historyOf(ShopConfig.ShopItem item) { return store.historyOf(item.material()); }
     private boolean binding() {
@@ -82,10 +104,11 @@ public final class ShopService {
         return trade(player, item, units, buy, batch, price);
     }
     private TradeResult trade(Player player, ShopConfig.ShopItem item, long units, boolean buy, int expectedBatch, long expectedPrice) {
+        if (!buy && !item.sellEnabled()) return fail("quantity.buy-only",0);
         if (!ready(player) || player.getGameMode() != GameMode.SURVIVAL) return fail("trading.unavailable", 0);
         int batch = batchSize(item); long price = buy ? askPrice(item) : bidPrice(item);
         if (expectedBatch >= 0 && (batch != expectedBatch || price != expectedPrice)) return fail("trading.price-changed", 0);
-        if (batch < 1 || price < 1) return fail("trading.unavailable", 0);
+        if (batch < 1 || price < 1) return fail(buy?"trading.unavailable":"quantity.no-bid", 0);
         long money=TradeAmounts.quote(batch,price,units,buy);
         if(money<0)return fail("trading.invalid-number",0);
         if(money==0)return fail("quantity.too-small",0);
@@ -132,6 +155,7 @@ public final class ShopService {
     }
     public record SellAllResult(long income, long units, int kinds) { }
     private TradeAmounts.Sale maximumSalePlan(Player player,ShopConfig.ShopItem item,int batch,long bid) {
+        if (!item.sellEnabled()) return null;
         var material=Material.matchMaterial(item.material()); if(material==null)return null;
         long budget=Math.max(0,WholeTrades.MAX-balance(player));
         if(config.dailyTurnoverLimit()>0)budget=Math.min(budget,(long)Math.floor(Math.max(0,config.dailyTurnoverLimit()-store.usedToday(player.getUniqueId(),System.currentTimeMillis()))));
@@ -143,6 +167,7 @@ public final class ShopService {
     }
     /** all использует ту же замороженную котировку, по которой подобран объём. */
     public TradeResult sellMaximum(Player player,ShopConfig.ShopItem item) {
+        if (!item.sellEnabled()) return fail("quantity.buy-only",0);
         if(!ready(player)||player.getGameMode()!=GameMode.SURVIVAL)return fail("trading.unavailable",0);
         var plan=maximumSalePlan(player,item,batchSize(item),bidPrice(item));
         if(plan==null)return fail("quantity.sellall-none",0);
@@ -151,6 +176,7 @@ public final class ShopService {
     public SellAllResult sellAll(Player player) {
         long total=0,units=0;int kinds=0;
         for(var item:config.items()){
+            if (!item.sellEnabled()) continue;
             if(!ready(player)||player.getGameMode()!=GameMode.SURVIVAL)break;
             var result=sellMaximum(player,item);
             if(result.success()){total+=result.money();units+=result.units();kinds++;}
