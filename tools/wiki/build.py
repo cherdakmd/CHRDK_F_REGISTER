@@ -32,36 +32,40 @@ ASSET_DIR = ROOT / "tools" / "wiki" / "assets"
 CONFIG_PATH = WIKI_DIR / "config.yml"
 
 TRANSLIT = {
-    "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "e",
-    "ж": "zh", "з": "z", "и": "i", "й": "j", "к": "k", "л": "l", "м": "m",
-    "н": "n", "о": "o", "п": "p", "р": "r", "с": "s", "т": "t", "у": "u",
-    "ф": "f", "х": "h", "ц": "c", "ч": "ch", "ш": "sh", "щ": "shch", "ъ": "",
-    "ы": "y", "ь": "", "э": "e", "ю": "ju", "я": "ja",
+    "а": "a",
+    "б": "b",
+    "в": "v",
+    "г": "g",
+    "д": "d",
+    "е": "e",
+    "ё": "e",
+    "ж": "zh",
+    "з": "z",
+    "и": "i",
+    "й": "j",
+    "к": "k",
+    "л": "l",
+    "м": "m",
+    "н": "n",
+    "о": "o",
+    "п": "p",
+    "р": "r",
+    "с": "s",
+    "т": "t",
+    "у": "u",
+    "ф": "f",
+    "х": "h",
+    "ц": "c",
+    "ч": "ch",
+    "ш": "sh",
+    "щ": "shch",
+    "ъ": "",
+    "ы": "y",
+    "ь": "",
+    "э": "e",
+    "ю": "ju",
+    "я": "ja",
 }
-
-ICONS = {
-    "compass": '<path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm3.5 6.5-2.2 5.3-5.3 2.2 2.2-5.3 5.3-2.2Z"/>',
-    "coins": '<ellipse cx="9" cy="7" rx="5" ry="3"/><path d="M4 7v4c0 1.7 2.2 3 5 3s5-1.3 5-3V7"/><path d="M4 11v4c0 1.7 2.2 3 5 3 1 0 2-.2 2.7-.5"/><ellipse cx="16" cy="15" rx="4" ry="2.4"/><path d="M12 15v3c0 1.3 1.8 2.4 4 2.4s4-1.1 4-2.4v-3"/>',
-    "crown": '<path d="m3 7 4 3 5-6 5 6 4-3-2 12H5L3 7Z"/><path d="M5 21h14"/>',
-    "map": '<path d="m3 6 6-2 6 2 6-2v14l-6 2-6-2-6 2V6Z"/><path d="M9 4v14M15 6v14"/>',
-    "chart": '<path d="M4 20V4M4 20h16"/><path d="m7 15 4-5 3 3 5-7"/>',
-    "sword": '<path d="m14 4 6-2-2 6L8 18l-4 2 2-4L16 6"/><path d="m5 15 4 4"/>',
-    "shield": '<path d="M12 3 5 6v5c0 4.4 3 8.4 7 10 4-1.6 7-5.6 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-5"/>',
-    "users": '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M16 14.6c2.8.2 5 2.2 5 5.4"/>',
-    "book": '<path d="M4 19.5V5a2 2 0 0 1 2-2h13v18H6.5A2.5 2.5 0 0 0 4 21"/><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H19"/>',
-}
-
-BADGE = {
-    "start": "Старт",
-    "economy": "Алмазы",
-    "ranks": "Ранги",
-    "world": "Мир",
-    "progress": "Прогресс",
-    "adventure": "Приключения",
-    "gear": "Снаряжение",
-    "social": "Люди",
-}
-
 
 # ------------------------------------------------------------------ разбор файлов
 
@@ -74,44 +78,15 @@ def read_page(path: Path) -> tuple[dict, str]:
         end = text.find("\n---\n", 4)
         if end == -1:
             raise ValueError(f"{path}: незакрытый front matter")
-        for line in text[4:end].splitlines():
-            if not line.strip() or line.lstrip().startswith("#"):
-                continue
-            key, sep, value = line.partition(":")
-            if not sep:
-                raise ValueError(f"{path}: строка front matter без ':' — {line!r}")
-            meta[key.strip()] = value.strip().strip('"').strip("'")
-        body = text[end + 5:]
+        meta = yaml.safe_load(text[4:end])
+        if not isinstance(meta, dict):
+            raise ValueError(f"{path}: front matter должен быть объектом")
+        body = text[end + 5 :]
     if "title" not in meta:
         raise ValueError(f"{path}: во front matter нет title")
     if "description" not in meta:
         raise ValueError(f"{path}: во front matter нет description")
     return meta, body
-
-
-def catalog_counts() -> tuple[int, int]:
-    """Числа главной из действующих исходников, не из устаревающей подписи."""
-    settings = (ROOT / "settings.gradle").read_text(encoding="utf-8")
-    modules = re.findall(r"^include\s+['\"]([^'\"]+)['\"]", settings, re.M)
-    shop = yaml.safe_load((ROOT / "diamond-shop/src/main/resources/config.yml").read_text(encoding="utf-8"))
-    return 1 + len(set(modules)), len(shop["items"])
-
-
-def property_value(key: str, fallback: str = "") -> str:
-    props = ROOT / "gradle.properties"
-    if not props.exists():
-        return fallback
-    for line in props.read_text(encoding="utf-8").splitlines():
-        if line.startswith(f"{key}="):
-            return line.split("=", 1)[1].strip()
-    return fallback
-
-
-def addon_count() -> int:
-    settings = ROOT / "settings.gradle"
-    if not settings.exists():
-        return 27
-    return len(re.findall(r"^\s*include\s+'([^']+)'", settings.read_text(encoding="utf-8"), re.MULTILINE)) or 27
 
 
 def version() -> str:
@@ -151,6 +126,12 @@ class Renderer:
 
     def link(self, label: str, target: str) -> str:
         target = target.strip()
+        if (
+            target.startswith("//")
+            or re.match(r"^[a-z][a-z0-9+.-]*:", target, re.I)
+            and not target.startswith(("https://", "http://", "mailto:"))
+        ):
+            raise ValueError("Недопустимая ссылка: " + target)
         external = bool(re.match(r"^[a-z]+://", target)) or target.startswith("mailto:")
         if not external and target.endswith(".md"):
             target = target[:-3] + ".html"
@@ -163,49 +144,66 @@ class Renderer:
         return f'<a href="{html.escape(target, quote=True)}"{attrs}>{label}</a>'
 
     def inline(self, text: str) -> str:
-        codes: list[str] = []
+        fragments = []
 
-        def stash_code(match: re.Match) -> str:
-            codes.append(html.escape(match.group(1)))
-            return f"\x00{len(codes) - 1}\x00"
+        def stash(value):
+            fragments.append(value)
+            return f"\x00{len(fragments)-1}\x00"
 
-        text = re.sub(r"`([^`]+)`", stash_code, text)
+        text = re.sub(
+            r"`([^`]+)`",
+            lambda m: stash("<code>" + html.escape(m[1]) + "</code>"),
+            text,
+        )
+        text = re.sub(
+            r"\[([^\]]+)\]\(([^)\s]+)\)",
+            lambda m: stash(self.link(html.escape(m[1]), m[2])),
+            text,
+        )
         text = html.escape(text)
-
-        def make_link(match: re.Match) -> str:
-            return self.link(match.group(1), match.group(2))
-
-        text = re.sub(r"\[([^\]]+)\]\(([^)\s]+)\)", make_link, text)
+        text = re.sub(
+            r"(?<![\w_])https?://[^\s<]+",
+            lambda m: stash(self.link(m[0], html.unescape(m[0]))),
+            text,
+        )
         text = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", text)
         text = re.sub(r"(?<![\w*])\*([^*\n]+)\*(?![\w*])", r"<em>\1</em>", text)
-        text = re.sub(r"~~([^~]+)~~", r"<del>\1</del>", text)
-        text = re.sub(r"(?<![\w_])(?:https?://[^\s<]+)", lambda m: self.link(m.group(0), m.group(0)), text)
-
-        def unstash(match: re.Match) -> str:
-            return f"<code>{codes[int(match.group(1))]}</code>"
-
-        return re.sub(r"\x00(\d+)\x00", unstash, text)
+        return re.sub(r"\x00(\d+)\x00", lambda m: fragments[int(m[1])], text)
 
     @staticmethod
     def table(rows: list[str]) -> str:
         def cells(line: str) -> list[str]:
-            return [cell.strip() for cell in line.strip().strip("|").split("|")]
+            return [
+                cell.strip() for cell in re.split(r"(?<!\\)\|", line.strip().strip("|"))
+            ]
 
         header = cells(rows[0])
         aligns: list[str] = []
         for raw in cells(rows[1]):
             left, right = raw.startswith(":"), raw.endswith(":")
-            aligns.append("center" if left and right else "right" if right else "left" if left else "")
+            aligns.append(
+                "center"
+                if left and right
+                else "right" if right else "left" if left else ""
+            )
         body = [cells(row) for row in rows[2:]]
         out = ['<div class="table-wrap"><table><thead><tr>']
         for index, cell in enumerate(header):
-            style = f' class="al-{aligns[index]}"' if index < len(aligns) and aligns[index] else ""
+            style = (
+                f' class="al-{aligns[index]}"'
+                if index < len(aligns) and aligns[index]
+                else ""
+            )
             out.append(f"<th{style}>{cell}</th>")
         out.append("</tr></thead><tbody>")
         for row in body:
             out.append("<tr>")
             for index, cell in enumerate(row):
-                style = f' class="al-{aligns[index]}"' if index < len(aligns) and aligns[index] else ""
+                style = (
+                    f' class="al-{aligns[index]}"'
+                    if index < len(aligns) and aligns[index]
+                    else ""
+                )
                 out.append(f"<td{style}>{cell}</td>")
             out.append("</tr>")
         out.append("</tbody></table></div>")
@@ -244,7 +242,9 @@ class Renderer:
                     index += 1
                 index += 1
                 css = f' class="language-{html.escape(language)}"' if language else ""
-                out.append(f"<pre><code{css}>{html.escape(chr(10).join(buffer))}</code></pre>")
+                out.append(
+                    f"<pre><code{css}>{html.escape(chr(10).join(buffer))}</code></pre>"
+                )
                 continue
 
             if stripped in {"---", "***"}:
@@ -262,7 +262,7 @@ class Renderer:
                     anchor = self.anchor(heading.group(2))
                     out.append(
                         f'<h{level} id="{anchor}">'
-                        f'<a class="anchor" href="#{anchor}" aria-hidden="true">#</a>{text}'
+                        f'{text}<a class="anchor" href="#{anchor}" aria-label="Ссылка на раздел: {html.escape(heading.group(2),quote=True)}">#</a>'
                         f"</h{level}>"
                     )
                     if level == 2:
@@ -276,10 +276,16 @@ class Renderer:
                     rows.append(lines[index].strip())
                     index += 1
                 if len(rows) >= 2 and re.match(r"^\|[\s:|-]+\|?$", rows[1]):
-                    prepared = [rows[0]] + [rows[1]] + [self.inline_row(row) for row in rows[2:]]
+                    prepared = (
+                        [rows[0]]
+                        + [rows[1]]
+                        + [self.inline_row(row) for row in rows[2:]]
+                    )
                     out.append(self.table(prepared))
                 else:
-                    out.append("<pre><code>" + html.escape("\n".join(rows)) + "</code></pre>")
+                    out.append(
+                        "<pre><code>" + html.escape("\n".join(rows)) + "</code></pre>"
+                    )
                 continue
 
             if stripped.startswith(">"):
@@ -288,7 +294,7 @@ class Renderer:
                     buffer.append(lines[index].strip()[1:].strip())
                     index += 1
                 inner = self.inline(" ".join(part for part in buffer if part))
-                out.append(f'<blockquote><p>{inner}</p></blockquote>')
+                out.append(f"<blockquote><p>{inner}</p></blockquote>")
                 continue
 
             list_item = re.match(r"^[-*]\s+(.*)$", stripped)
@@ -348,390 +354,251 @@ class Renderer:
 
     def inline_row(self, row: str) -> str:
         inner = row.strip().strip("|")
-        return "|" + "|".join(self.inline(cell.strip()) for cell in inner.split("|")) + "|"
-
-
-# ------------------------------------------------------------------ шаблоны
-
-
-def icon_svg(name: str, size: int = 20) -> str:
-    path = ICONS.get(name, ICONS["book"])
-    return (
-        f'<svg class="icon" width="{size}" height="{size}" viewBox="0 0 24 24" '
-        f'fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" '
-        f'stroke-linejoin="round" aria-hidden="true">{path}</svg>'
-    )
-
-
-def nav_html(groups: list[dict], pages: dict[str, dict], current: str) -> str:
-    out = ['<nav class="nav" aria-label="Разделы вики">']
-    for group in groups:
-        out.append(f'<div class="nav-group" style="--accent:{group.get("accent", "#a98bff")}">')
-        out.append(
-            f'<p class="nav-title">{icon_svg(group["icon"], 16)}<span>{html.escape(group["title"])}</span></p>'
+        return (
+            "|"
+            + "|".join(
+                self.inline(cell.strip().replace(r"\|", "|")).replace("|", "&#124;")
+                for cell in re.split(r"(?<!\\)\|", inner)
+            )
+            + "|"
         )
-        out.append("<ul>")
-        for slug in group["pages"]:
-            page = pages[slug]
-            active = ' class="is-active" aria-current="page"' if slug == current else ""
-            out.append(f'<li><a href="{slug}.html"{active}>{html.escape(page["meta"]["title"])}</a></li>')
-        out.append("</ul></div>")
-    out.append("</nav>")
-    return "".join(out)
 
 
-def group_cards_html(groups: list[dict], pages: dict[str, dict]) -> str:
-    out = ['<section class="group-cards" aria-label="Разделы вики">']
+# ------------------------------------------------------------------ страницы
+
+
+def source_commit() -> str:
+    import os, subprocess
+
+    supplied = os.environ.get("GITHUB_SHA", "")
+    if re.fullmatch(r"[0-9a-f]{40}", supplied):
+        return supplied
+    return subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
+    ).strip()
+
+
+def nav_html(groups, raw, current):
+    out = ['<nav aria-label="Разделы справочника">']
     for group in groups:
-        target = next((slug for slug in group["pages"] if slug != "index"), "index")
+        out.append(f'<section class="nav-group"><h2>{html.escape(group["title"])}</h2>')
+        for slug in group["pages"]:
+            active = ' aria-current="page"' if slug == current else ""
+            out.append(
+                f'<a href="{slug}.html"{active}>{html.escape(raw[slug][0]["title"])}</a>'
+            )
+        out.append("</section>")
+    return "".join(out) + "</nav>"
+
+
+def cards_html(groups, raw):
+    out = ['<section class="chapter-grid" aria-label="Все разделы">']
+    for i, g in enumerate(groups, 1):
         links = "".join(
-            f'<li><a href="{slug}.html">{html.escape(pages[slug]["meta"]["title"])}</a></li>'
-            for slug in group["pages"]
+            f'<a href="{slug}.html">{html.escape(raw[slug][0]["title"])} <span aria-hidden="true">↗</span></a>'
+            for slug in g["pages"]
             if slug != "index"
         )
-        art = art_path(group)
-        accent = group.get("accent", "#a98bff")
         out.append(
-            f'<article class="group-card" style="--accent:{accent}">'
-            f'<a class="group-card-art" href="{target}.html" tabindex="-1" aria-hidden="true">'
-            f'<img src="{art}" alt="" width="1408" height="768" loading="lazy" decoding="async"></a>'
-            f'<div class="group-card-body"><header>{icon_svg(group["icon"], 22)}'
-            f'<h2><a href="{target}.html">{html.escape(group["title"])}</a></h2>'
-            f'<span class="badge">{BADGE.get(group["id"], "Раздел")}</span></header>'
-            f'<p>{html.escape(group.get("description", ""))}</p>'
-            f"<ul>{links}</ul></div></article>"
+            f'<article class="chapter"><span class="chapter-num">{i:02d} /</span><h2>{html.escape(g["title"])}</h2><p>{html.escape(g["description"])}</p><div>{links}</div></article>'
         )
-    out.append("</section>")
-    return "".join(out)
+    return "".join(out) + "</section>"
 
 
-def art_path(group: dict) -> str:
-    """Обложка раздела: своя из config.yml или assets/img/<id>.jpg."""
-    return group.get("image", f"assets/img/{group['id']}.jpg")
-
-
-def toc_html(toc: list[tuple[str, str]], title: str) -> str:
-    if not toc:
-        return ""
-    links = "".join(
-        f'<li><a href="#{anchor}">{html.escape(text)}</a></li>' for anchor, text in toc
-    )
-    return f'<aside class="toc"><p class="toc-title">{html.escape(title)}</p><ul>{links}</ul></aside>'
+def home_html(book, groups):
+    return f"""<section class="hero"><div class="hero-copy"><p class="eyebrow">ПОЛЕВОЙ СПРАВОЧНИК · CHRDK</p>
+<h1>Большой мир.<br>Понятные <em>правила.</em></h1>
+<p>Построить дом, освоить ремесло, собрать отряд. Все системы сервера — от первого входа до собственной истории.</p>
+<div class="hero-actions"><a class="button primary" href="start.html">Я здесь впервые <span aria-hidden="true">↗</span></a><a class="button" href="commands.html">Найти команду</a></div>
+<div class="hero-stats"><div><strong>{book.value('plugins')}</strong><span>плагинов в исходниках</span></div><div><strong>{book.value('shop_count')}</strong><span>товаров в /shop</span></div><div><strong>{len(groups)}</strong><span>разделов справочника</span></div></div></div>
+<div class="hero-art"><img src="assets/img/hero.jpg" width="1376" height="768" alt="Блочный мир CHRDK: остров, крепость и портал" fetchpriority="high"><div class="art-label"><span class="status-dot"></span> ВХОД БЕСПЛАТНЫЙ · ПАРОЛЬ ОБЯЗАТЕЛЕН</div></div></section>
+<div class="field-note"><strong>Сверяемся с кодом, а не с памятью.</strong><span>Таблицы берутся из конфигов. Настройки вашего сервера могут отличаться. <a href="about.html">Как читать вики ↗</a></span></div>"""
 
 
 PAGE_TEMPLATE = """<!doctype html>
-<html lang="ru" data-theme="dark">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{title} · {site}</title>
-<meta name="description" content="{description}">
-<link rel="canonical" href="{canonical}">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="{site}">
-<meta property="og:locale" content="ru_RU">
-<meta property="og:title" content="{title} · {site}">
-<meta property="og:description" content="{description}">
-<meta property="og:url" content="{canonical}">
-<meta property="og:image" content="{og_image}">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="{title} · {site}">
-<meta name="twitter:description" content="{description}">
-<meta name="twitter:image" content="{og_image}">
-<meta name="theme-color" content="#0b0d12">
-<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="assets/style.css">
-<script>try{{var t=localStorage.getItem("chrdk-wiki-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}}catch(e){{}}</script>
-</head>
-<body>
-<div class="read-progress" id="readProgress" aria-hidden="true"></div>
+<html lang="ru" data-theme="dark"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{title} — CHRDK</title><meta name="description" content="{description}">
+<link rel="canonical" href="{canonical}"><meta property="og:type" content="website">
+<meta property="og:title" content="{title} — CHRDK"><meta property="og:description" content="{description}">
+<meta property="og:url" content="{canonical}"><meta property="og:image" content="{url}assets/img/hero.jpg">
+<meta property="og:locale" content="ru_RU"><meta name="theme-color" content="#111a17">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="assets/style.css?v={asset_revision}">
+<script>try{{let t=localStorage.getItem('chrdk-wiki-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}}catch(e){{}}</script>
+<noscript><style>.sidebar{{position:static!important;transform:none!important;display:block!important}}.layout{{display:block!important}}.search-trigger,.menu-btn{{display:none!important}}</style></noscript>
+</head><body data-revision="{commit}">
 <a class="skip-link" href="#main">Перейти к содержимому</a>
-<header class="topbar">
-  <button class="icon-btn menu-btn" id="menuBtn" aria-label="Открыть меню" aria-expanded="false">{menu_icon}</button>
-  <a class="brand" href="index.html">
-    <span class="brand-mark">{brand_icon}</span>
-    <span class="brand-text"><strong>CHRDK</strong><small>вики сервера</small></span>
-  </a>
-  <button class="search-trigger" id="searchTrigger" aria-label="Поиск по вики">
-    {search_icon}<span>Поиск по вики</span><kbd>Ctrl K</kbd>
-  </button>
-  <div class="topbar-actions">
-    <span class="version" title="Версия плагинов">v{version}</span>
-    <button class="icon-btn" id="themeBtn" aria-label="Сменить тему">☾</button>
-    <a class="icon-btn" href="{github}" target="_blank" rel="noopener" aria-label="GitHub">{github_icon}</a>
-  </div>
-</header>
-<div class="layout">
-  <aside class="sidebar" id="sidebar">
-    {nav}
-    <div class="sidebar-footer">
-      <a href="{releases}" target="_blank" rel="noopener">Обновления сервера ↗</a>
-      <p>Сборка вики: {built}</p>
-    </div>
-  </aside>
-  <main id="main" class="content">
-    <nav class="crumbs" aria-label="Путь"><a href="index.html">Вики</a><span>/</span><span>{group}</span></nav>
-    {hero}
-    <article class="page">
-      {heading}
-      <p class="lead">{lead}</p>
-      {body}
-    </article>
-    {extra}
-    <nav class="pager" aria-label="Соседние страницы">{pager}</nav>
-    <footer class="footer">
-      <p>CHRDK · вики для игроков · версия {version}</p>
-      <p><a href="{github}" target="_blank" rel="noopener">Исходники</a> · <a href="{releases}" target="_blank" rel="noopener">Релизы</a> · <a href="{url}">Сайт</a></p>
-    </footer>
-  </main>
-  {toc}
-</div>
-<div class="search-modal" id="searchModal" hidden>
-  <div class="search-box" role="dialog" aria-modal="true" aria-labelledby="searchTitle">
-    <div class="search-head">
-      <span id="searchTitle" class="search-title">Поиск</span>
-      <input id="searchInput" type="search" placeholder="Ранги, охота, приваты…" autocomplete="off" spellcheck="false">
-      <button class="icon-btn" id="searchClose" aria-label="Закрыть поиск">✕</button>
-    </div>
-    <div class="search-results" id="searchResults"><p class="search-empty">Начните вводить запрос.</p></div>
-  </div>
-</div>
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
-<script src="assets/app.js" defer></script>
-</body>
-</html>
-"""
-
-
-SVG = {
-    "menu": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>',
-    "brand": '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="m12 2 7 4.5v9L12 22l-7-6.5v-9L12 2Z"/><path d="m5 6.5 7 4.2 7-4.2M12 10.7V22"/></svg>',
-    "search": '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>',
-    "github": '<svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.1-1.47-1.1-1.47-.9-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.88 1.52 2.3 1.08 2.86.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.6 9.6 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg>',
-}
+<header class="topbar"><button class="icon-button menu-btn" id="menuBtn" aria-label="Открыть разделы" aria-controls="sidebar" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+<a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><path d="m3 7 9-5 9 5v10l-9 5-9-5Z M3 7l9 5 9-5 M12 12v10"/></svg></span><span><strong>CHRDK</strong><small>ПОЛЕВОЙ СПРАВОЧНИК</small></span></a>
+<button class="search-trigger" id="searchTrigger" aria-label="Поиск по справочнику"><svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/></svg><span>Поиск по миру и правилам</span><kbd>Ctrl K</kbd></button>
+<div class="top-actions"><a class="version" href="updates.html" title="Версия исходников, не установленного сервера">v{version}</a><button class="icon-button" id="themeBtn" aria-label="Сменить тему"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16Z" fill="currentColor"/></svg></button><a class="github-link" href="{github}" target="_blank" rel="noopener">GitHub ↗</a></div></header>
+<div class="layout"><aside class="sidebar" id="sidebar">{nav}<div class="nav-footer"><span class="status-dot"></span> Из исходников<br><a href="{github}/commit/{commit}">{short_commit}</a> · {built}</div></aside>
+<main class="content" id="main"><nav class="breadcrumbs" aria-label="Путь"><a href="index.html">Справочник</a><span>/</span><span>{group}</span></nav>
+{hero}<article class="page">{heading}<p class="lead">{lead}</p>{body}</article>{cards}
+<nav class="pager" aria-label="Соседние страницы">{pager}</nav>
+<section class="page-source"><strong>Основано на исходниках</strong><p>Стандартная поставка · {version} · настройки сервера могут отличаться.</p><a href="{github}/blob/{commit}/wiki/{slug}.md">Текст страницы ↗</a><a href="{github}/tree/{commit}">Реализация ↗</a></section>
+<footer class="footer"><strong>CHRDK /</strong><span>Выживание. Ремесло. Своя история.</span><a href="{releases}">Релизы ↗</a><a href="about.html">О справочнике</a></footer></main>
+<aside class="toc" aria-label="На этой странице"><p>НА ЭТОЙ СТРАНИЦЕ</p>{toc}</aside></div>
+<dialog class="search-modal" id="searchModal" aria-labelledby="searchTitle"><div class="search-head"><label id="searchTitle" for="searchInput">Что ищем?</label><button class="icon-button" id="searchClose" aria-label="Закрыть поиск">×</button></div>
+<input id="searchInput" type="search" placeholder="Например: аренда, пересадка, iron_ingot" autocomplete="off" spellcheck="false" autofocus>
+<p class="search-hint">Несколько слов уточняют поиск · ↑ ↓ выбор · Enter открыть · Esc закрыть</p><div id="searchResults" class="search-results" aria-live="polite"></div></dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div><script src="assets/app.js?v={asset_revision}" defer></script></body></html>"""
 
 
 def build(check: bool) -> int:
+    import hashlib
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from facts import FactBook
+    from freshness import check as freshness_check
+
+    problems = []
+    if check:
+        problems.extend(freshness_check(ROOT))
+        if problems:
+            print("Нужна сверка вики:\n" + "\n".join(problems), file=sys.stderr)
+            return 1
+    book = FactBook(ROOT)
     config = yaml.safe_load(CONFIG_PATH.read_text(encoding="utf-8"))
     site = config["site"]
     groups = config["groups"]
+    raw = {p.stem: read_page(p) for p in sorted(WIKI_DIR.glob("*.md"))}
+    ordered = [s for g in groups for s in g["pages"]]
+    if set(ordered) != set(raw) or len(ordered) != len(set(ordered)):
+        print(
+            "Навигация должна содержать каждую страницу ровно один раз.",
+            file=sys.stderr,
+        )
+        return 1
+    commit = source_commit()
     version_str = version()
     built = date.today().isoformat()
-
-    files = sorted(WIKI_DIR.glob("*.md"))
-    raw: dict[str, tuple[dict, str]] = {}
-    for path in files:
-        raw[path.stem] = read_page(path)
-
-    ordered = [slug for group in groups for slug in group["pages"]]
-    problems: list[str] = []
-
-    for group in groups:
-        for slug in group["pages"]:
-            if slug not in raw:
-                problems.append(f"навигация ссылается на отсутствующий файл wiki/{slug}.md")
-    for slug in raw:
-        if slug not in ordered:
-            problems.append(f"страница wiki/{slug}.md не добавлена ни в один раздел config.yml")
-    if len(ordered) != len(set(ordered)):
-        problems.append("страница указана в навигации больше одного раза")
-
-    pages: dict[str, dict] = {}
-    group_of: dict[str, dict] = {}
-    for group in groups:
-        for slug in group["pages"]:
-            group_of[slug] = group
-
-    known = set(raw)
+    asset_revision = hashlib.sha256(
+        (ASSET_DIR / "style.css").read_bytes() + (ASSET_DIR / "app.js").read_bytes()
+    ).hexdigest()[:12]
     OUT_DIR.mkdir(exist_ok=True)
     for old in OUT_DIR.glob("*.html"):
         old.unlink()
-
-    search_index: list[dict] = []
-    anchors_by_page: dict[str, set[str]] = {}
-
-    for slug in ordered:
-        if slug not in raw:
-            continue
-        meta, body = raw[slug]
-        renderer = Renderer(slug, known)
+    anchors = {}
+    search = []
+    for i, slug in enumerate(ordered):
+        meta, source = raw[slug]
+        body = book.expand(source)
+        renderer = Renderer(slug, set(raw))
         rendered = renderer.render(body)
-        anchors_by_page[slug] = set(renderer.anchors)
-
-        title = meta["title"]
-        group = group_of[slug]
-        is_home = slug == "index"
-
-        if is_home:
-            plugin_count, shop_count = catalog_counts()
-            hero = (
-                '<section class="hero">'
-                '<div class="hero-glow" aria-hidden="true"></div>'
-                '<div class="hero-copy">'
-                f'<p class="hero-kicker">{len(groups)} разделов · 5 рангов · вход бесплатный</p>'
-                '<h1>Всё о сервере <span>CHRDK</span> — по-русски</h1>'
-                f'<p class="hero-sub">{html.escape(site["description"])}</p>'
-                '<div class="hero-actions">'
-                '<a class="btn btn-primary" href="start.html">Первые шаги</a>'
-                '<a class="btn" href="commands.html">Все команды</a>'
-                '<a class="btn btn-ghost" href="ranks.html">Ранги</a>'
-                '</div>'
-                '<div class="hero-stats">'
-                f'<div><strong>{len(ordered)}</strong><span>страниц</span></div>'
-                f'<div><strong>{shop_count}</strong><span>товаров в /shop</span></div>'
-                f'<div><strong>{plugin_count}</strong><span>плагинов в комплекте</span></div>'
-                '<div><strong>76</strong><span>кастомных чар</span></div>'
-                '</div>'
-                '</div>'
-                '<div class="hero-art">'
-                f'<img src="assets/img/hero.jpg" alt="Остров CHRDK: замок, портал и алмазы" '
-                'width="1376" height="768" fetchpriority="high" decoding="async">'
-                '</div>'
-                '</section>'
-            )
-            heading = ""
-            lead = ""
-            extra = group_cards_html(groups, {
-                s: {"meta": raw[s][0]} for s in raw
-            })
-        else:
-            eyebrow = BADGE.get(group["id"], group["title"])
-            hero = ""
-            heading = (
-                f'<header class="page-head" style="--accent:{group.get("accent", "#a98bff")}">'
-                f'<img src="{art_path(group)}" alt="" width="1408" height="768" '
-                'loading="lazy" decoding="async">'
-                '<div class="page-head-copy">'
-                f'<p class="eyebrow">{html.escape(group["title"])} · {html.escape(eyebrow)}</p>'
-                f'<h1>{html.escape(title)}</h1>'
-                '</div></header>'
-            )
-            lead = meta["description"]
-            extra = ""
-
-        pager_links = []
-        position = ordered.index(slug)
-        if position > 0:
-            prev = ordered[position - 1]
-            pager_links.append(
-                f'<a class="pager-prev" href="{prev}.html"><span>Назад</span>'
-                f'<strong>{html.escape(raw[prev][0]["title"])}</strong></a>'
-            )
-        else:
-            pager_links.append("<span></span>")
-        if position + 1 < len(ordered):
-            nxt = ordered[position + 1]
-            pager_links.append(
-                f'<a class="pager-next" href="{nxt}.html"><span>Дальше</span>'
-                f'<strong>{html.escape(raw[nxt][0]["title"])}</strong></a>'
-            )
-        else:
-            pager_links.append("<span></span>")
-
-        page_html = PAGE_TEMPLATE.format(
-            title=html.escape(title),
-            site=html.escape(site["title"]),
+        anchors[slug] = set(renderer.anchors)
+        group = next(g for g in groups if slug in g["pages"])
+        toc = "".join(
+            f'<a href="#{anchor}">{html.escape(title)}</a>'
+            for anchor, title in renderer.toc
+        )
+        pager = "".join(
+            f'<a href="{ordered[j]}.html"><small>{label}</small>{html.escape(raw[ordered[j]][0]["title"])} <span aria-hidden="true">{arrow}</span></a>'
+            for j, label, arrow in [(i - 1, "НАЗАД", "←"), (i + 1, "ДАЛЬШЕ", "→")]
+            if 0 <= j < len(ordered)
+        )
+        page = PAGE_TEMPLATE.format(
+            title=html.escape(meta["title"]),
             description=html.escape(meta["description"], quote=True),
+            canonical=site["url"] + ("" if slug == "index" else slug + ".html"),
             url=site["url"],
-            canonical=site["url"] if slug == "index" else f'{site["url"]}{slug}.html',
-            og_image=f'{site["url"]}{art_path(group)}',
-            slug=slug,
-            version=html.escape(version_str),
             github=site["github"],
             releases=site["releases"],
+            version=version_str,
+            asset_revision=asset_revision,
+            commit=commit,
+            short_commit=commit[:7],
             built=built,
-            menu_icon=SVG["menu"],
-            brand_icon=SVG["brand"],
-            search_icon=SVG["search"],
-            github_icon=SVG["github"],
-            nav=nav_html(groups, {s: {"meta": raw[s][0]} for s in raw}, slug),
+            slug=slug,
+            nav=nav_html(groups, raw, slug),
             group=html.escape(group["title"]),
-            hero=hero,
-            heading=heading,
+            hero=home_html(book, groups) if slug == "index" else "",
+            heading=(
+                ""
+                if slug == "index"
+                else f'<header class="page-heading"><p class="eyebrow">{html.escape(group["title"])}</p><h1>{html.escape(meta["title"])}</h1></header>'
+            ),
             lead=html.escape(meta["description"]),
             body=rendered,
-            extra=extra,
-            pager="".join(pager_links),
-            toc=toc_html(renderer.toc, "На этой странице"),
+            cards=cards_html(groups, raw) if slug == "index" else "",
+            toc=toc,
+            pager=pager,
         )
-        (OUT_DIR / f"{slug}.html").write_text(page_html, encoding="utf-8")
-
-        plain = re.sub(r"<[^>]+>", " ", rendered)
-        plain = html.unescape(re.sub(r"\s+", " ", plain)).strip()
-        search_index.append(
+        (OUT_DIR / (slug + ".html")).write_text(page, encoding="utf-8")
+        plain = html.unescape(re.sub("<[^>]+>", " ", rendered))
+        plain = re.sub(r"\s+", " ", plain).strip()
+        search.append(
             {
-                "title": title,
-                "url": f"{slug}.html",
+                "title": meta["title"],
+                "url": slug + ".html",
                 "group": group["title"],
-                "headings": [text for _, text in renderer.toc],
-                "text": plain[:1600],
+                "headings": [t for _, t in renderer.toc],
+                "text": plain,
             }
         )
-
-    # ------------------------------------------------------------------ ассеты
-    assets_out = OUT_DIR / "assets"
-    if assets_out.exists():
-        shutil.rmtree(assets_out)
-    shutil.copytree(ASSET_DIR, assets_out)
-    (OUT_DIR / ".nojekyll").write_text("", encoding="utf-8")
-    (OUT_DIR / "assets" / "version.txt").write_text(version_str, encoding="utf-8")
+    assets = OUT_DIR / "assets"
+    if assets.exists():
+        shutil.rmtree(assets)
+    shutil.copytree(ASSET_DIR, assets)
+    (OUT_DIR / ".nojekyll").write_text("")
+    (assets / "version.txt").write_text(version_str)
     (OUT_DIR / "search-index.json").write_text(
-        json.dumps(search_index, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
+        json.dumps(search, ensure_ascii=False), encoding="utf-8"
     )
-
-    urls = "".join(
-        f"<url><loc>{site['url']}{slug}.html</loc><changefreq>weekly</changefreq></url>"
-        for slug in ordered
+    (OUT_DIR / "build-info.json").write_text(
+        json.dumps(
+            {
+                "version": version_str,
+                "commit": commit,
+                "pages": len(ordered),
+                "plugins": len(book.modules),
+                "built": built,
+            },
+            ensure_ascii=False,
+        )
+        + "\n",
+        encoding="utf-8",
     )
+    urls = "".join(f'<url><loc>{site["url"]}{s}.html</loc></url>' for s in ordered)
     (OUT_DIR / "sitemap.xml").write_text(
-        '<?xml version="1.0" encoding="UTF-8"?>'
-        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
-        f"{urls}</urlset>",
+        '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+        + urls
+        + "</urlset>",
         encoding="utf-8",
     )
     (OUT_DIR / "robots.txt").write_text(
-        f"User-agent: *\nAllow: /\nSitemap: {site['url']}sitemap.xml\n", encoding="utf-8"
+        f'User-agent: *\nAllow: /\nSitemap: {site["url"]}sitemap.xml\n'
     )
-
-    # ------------------------------------------------------------------ проверки
-    link_re = re.compile(r'href="([^"#][^"]*?\.html)(?:#([^"]*))?"')
     for slug in ordered:
-        path = OUT_DIR / f"{slug}.html"
-        if not path.exists():
-            continue
-        text = path.read_text(encoding="utf-8")
-        for target, anchor in link_re.findall(text):
+        text = (OUT_DIR / (slug + ".html")).read_text(encoding="utf-8")
+        for target in re.findall(r'(?:href|src)="([^"]+)"', text):
             if target.startswith(("http://", "https://", "mailto:")):
                 continue
-            if not (OUT_DIR / target).exists():
-                problems.append(f"{slug}.html: ссылка на отсутствующую страницу {target}")
-            elif anchor and target.endswith(".html"):
-                target_slug = target[:-5]
-                if anchor not in anchors_by_page.get(target_slug, set()):
-                    problems.append(f"{slug}.html: нет якоря #{anchor} на {target}")
-        page_ids = set(re.findall(r'id="([^"]+)"', text))
-        for anchor in re.findall(r'href="#([^"]+)"', text):
-            if anchor not in page_ids:
-                problems.append(f"{slug}.html: нет якоря #{anchor} на этой странице")
-        for required in ("assets/style.css", "assets/app.js"):
-            if required not in text:
-                problems.append(f"{slug}.html: не подключён {required}")
-
+            path, _, anchor = target.partition("#")
+            path = path.split("?", 1)[0]
+            if path and not (OUT_DIR / path).is_file():
+                problems.append(f"{slug}: нет файла {path}")
+            target_slug = path[:-5] if path.endswith(".html") else slug
+            if (
+                anchor
+                and anchor not in anchors.get(target_slug, set())
+                and anchor not in {"main"}
+            ):
+                problems.append(f"{slug}: нет якоря {target}")
+        if "{{" in text:
+            problems.append(f"{slug}: не раскрыты данные")
     if problems:
-        print("Проверка вики не прошла:", file=sys.stderr)
-        for problem in problems:
-            print("  •", problem, file=sys.stderr)
+        print("\n".join(problems), file=sys.stderr)
         return 1
-
-    print(f"Готово: {len(ordered)} страниц → {OUT_DIR} (v{version_str})")
-    if check:
-        print("Ссылки, якоря и навигация в порядке.")
+    print(
+        f'Готово: {len(ordered)} страниц → {OUT_DIR} (v{version_str}); данные и ссылки проверены; сверка источников: {"проверена" if check else "не запрошена"}.'
+    )
     return 0
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Собрать вики CHRDK в site/")
-    parser.add_argument("--check", action="store_true", help="проверить ссылки и навигацию")
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
     raise SystemExit(build(args.check))
 
