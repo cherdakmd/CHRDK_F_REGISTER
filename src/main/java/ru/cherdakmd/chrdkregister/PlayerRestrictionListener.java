@@ -117,7 +117,8 @@ public final class PlayerRestrictionListener implements Listener {
         if (stage == AccessManager.PlayerStage.AUTHENTICATED) return;
 
         String label = extractCommandLabel(event.getMessage());
-        if (isCommandAllowed(stage, label)) {
+        String[] args = extractCommandArguments(event.getMessage());
+        if (isCommandAllowed(stage, label, args)) {
             return;
         }
 
@@ -150,6 +151,11 @@ public final class PlayerRestrictionListener implements Listener {
         return command;
     }
 
+    static String[] extractCommandArguments(String rawMessage) {
+        String[] words = rawMessage.trim().split("\\s+");
+        return java.util.Arrays.copyOfRange(words, 1, words.length);
+    }
+
     public static boolean isCommandAllowed(AccessManager.PlayerStage stage, String label) {
         if (label == null || label.isEmpty()) return false;
         return switch (stage) {
@@ -160,6 +166,13 @@ public final class PlayerRestrictionListener implements Listener {
             case NEEDS_2FA -> TWO_FACTOR_COMMANDS.contains(label);
             case NEEDS_2FA_SETUP -> TWO_FACTOR_COMMANDS.contains(label);
         };
+    }
+
+    /** Разрешённый корень /pass или /2fa не открывает его административные подкоманды. */
+    public static boolean isCommandAllowed(AccessManager.PlayerStage stage, String label, String[] args) {
+        return isCommandAllowed(stage, label)
+                && (stage == AccessManager.PlayerStage.AUTHENTICATED
+                || !RegistrationCommandAccess.requiresAuthentication(label, args));
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)

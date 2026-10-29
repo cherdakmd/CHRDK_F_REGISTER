@@ -60,18 +60,19 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             @NotNull String[] args
     ) {
         String cmdName = command.getName().toLowerCase(Locale.ROOT);
-        return switch (cmdName) {
-            case "register" -> handleRegister(sender, args);
-            case "login" -> handleLogin(sender, args);
-            case "captcha" -> handleCaptcha(sender, args);
-            case "changepassword" -> handleChangePassword(sender, args);
-            case "2fa" -> handleTwoFactor(sender, label, args);
-            case "pass" -> handlePass(sender, label, args);
-            case "logout" -> handleLogout(sender);
-            case "session" -> handleSession(sender, args);
-            case "guide" -> handleGuide(sender);
-            default -> false;
-        };
+        return RegistrationCommandAccess.dispatch(sender, cmdName, args, accessManager::getStage, messages,
+                () -> switch (cmdName) {
+                    case "register" -> handleRegister(sender, args);
+                    case "login" -> handleLogin(sender, args);
+                    case "captcha" -> handleCaptcha(sender, args);
+                    case "changepassword" -> handleChangePassword(sender, args);
+                    case "2fa" -> handleTwoFactor(sender, label, args);
+                    case "pass" -> handlePass(sender, label, args);
+                    case "logout" -> handleLogout(sender);
+                    case "session" -> handleSession(sender, args);
+                    case "guide" -> handleGuide(sender);
+                    default -> false;
+        });
     }
 
     /** {@code /guide} — повторно выдать книгу-путеводитель. */
@@ -371,7 +372,8 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         if (args.length == 0) {
             if (sender instanceof Player player) {
                 showOwnPassStatus(player);
-                if (sender.hasPermission("chrdkregister.admin")) {
+                if (RegistrationCommandAccess.authenticatedSender(sender, accessManager::getStage)
+                        && sender.hasPermission("chrdkregister.admin")) {
                     messages.send(sender, "pass.admin-help", "label", label);
                 }
             } else {
@@ -1761,6 +1763,8 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             @NotNull String[] args
     ) {
         String cmdName = command.getName().toLowerCase(Locale.ROOT);
+        if (!"pass".equals(cmdName) && !"2fa".equals(cmdName)) return List.of();
+        boolean authenticated = RegistrationCommandAccess.authenticatedSender(sender, accessManager::getStage);
         if ("2fa".equals(cmdName)) {
             if (args.length == 1) {
                 if (sender instanceof Player player && accessManager.getStage(player) == AccessManager.PlayerStage.NEEDS_2FA) {
@@ -1773,14 +1777,14 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                         matches.add(sub);
                     }
                 }
-                if (sender.hasPermission("chrdkregister.admin") && "reset".startsWith(prefix)) {
+                if (authenticated && sender.hasPermission("chrdkregister.admin") && "reset".startsWith(prefix)) {
                     matches.add("reset");
                 }
                 return matches;
             }
             if (args.length == 2
                     && ("reset".equalsIgnoreCase(args[0]) || "reset2fa".equalsIgnoreCase(args[0]))
-                    && sender.hasPermission("chrdkregister.admin")) {
+                    && authenticated && sender.hasPermission("chrdkregister.admin")) {
                 return completePlayerNames(args[1]);
             }
             return List.of();
@@ -1789,7 +1793,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         if (!"pass".equals(cmdName)) {
             return List.of();
         }
-        if (!sender.hasPermission("chrdkregister.admin")) {
+        if (!authenticated || !sender.hasPermission("chrdkregister.admin")) {
             if (args.length == 1) {
                 String prefix = args[0].toLowerCase(Locale.ROOT);
                 List<String> matches = new ArrayList<>();
