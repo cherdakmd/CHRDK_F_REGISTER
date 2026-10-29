@@ -290,7 +290,7 @@ public final class LabelStyleService {
     /** Стабильный приоритет, не зависящий от очередности запуска аддонов. */
     public List<LabelPreferences.Label> defaultOrder() {
         return List.of(LabelPreferences.Label.RANK, LabelPreferences.Label.CLASSES,
-                LabelPreferences.Label.GUILDS, LabelPreferences.Label.TREASURES,
+                LabelPreferences.Label.GUILDS,
                 LabelPreferences.Label.TIERFORGE, LabelPreferences.Label.STREAMS,
                 LabelPreferences.Label.QUESTS, LabelPreferences.Label.ACHIEVEMENTS);
     }

@@ -665,7 +665,7 @@ wiki:
   # Должен совпадать с адресом сайта из docs/WIKI.md. Слэш на конце не обязателен.
   url: "https://cherdakmd.github.io/CHRDK_F_REGISTER/"
   # Подсказки в TAB и в сообщении об ошибке: слаг = имя файла страницы на сайте.
-  pages: ["start", "menu", "commands", "ranks", "economy", "treasures", "claims", "faq"]
+  pages: ["start", "menu", "commands", "ranks", "economy", "claims", "faq"]
 
 # Главное меню сервера /menu (1.4.170): игрок открывает разделы и выполняет
 # команды кликом, без знания синтаксиса. Ядро об аддонах ничего не знает —
@@ -703,7 +703,7 @@ server-menu:
     - {"id": "economy", "slot": 12, "icon": "DIAMOND", "name": "<gold><bold>Экономика</bold></gold>", "lore": "<gray>Банк, магазин, аукцион, заказы и лотерея</gray>"}
     - {"id": "world", "slot": 13, "icon": "GRASS_BLOCK", "name": "<gold><bold>Мир и территории</bold></gold>", "lore": "<gray>Приваты, дома и телепорты</gray>"}
     - {"id": "gear", "slot": 14, "icon": "ANVIL", "name": "<gold><bold>Снаряжение и питомцы</bold></gold>", "lore": "<gray>Чары, тиры, артефакты, косметика и питомцы</gray>"}
-    - {"id": "adventure", "slot": 15, "icon": "IRON_SWORD", "name": "<gold><bold>Охота и события</bold></gold>", "lore": "<gray>Охота, боссы, ивенты и клады</gray>"}
+    - {"id": "adventure", "slot": 15, "icon": "IRON_SWORD", "name": "<gold><bold>Охота и события</bold></gold>", "lore": "<gray>Охота и мировые события</gray>"}
     - {"id": "social", "slot": 16, "icon": "BELL", "name": "<gold><bold>Общество</bold></gold>", "lore": "<gray>Чат, отряд, гильдия, очередь и стримы</gray>"}
   # Пункты. category — id раздела; без category пункт живёт на главной странице.
   # Без command — подсказка (клик игнорируется).
@@ -758,9 +758,7 @@ server-menu:
     - {"category": "gear", "icon": "BONE", "name": "<gold><bold>Питомцы</bold></gold>", "lore": "<gray>Кошки и волки: уровни и трюки</gray>", "command": "pet list", "plugin": "CHRDK_Pets", "permission": "chrdkpets.use"}
     # ------------------------------ охота и события ------------------------------
     - {"category": "adventure", "icon": "BOW", "name": "<gold><bold>Охота</bold></gold>", "lore": "<gray>Пять семейств, трофеи и моб-ключи</gray>", "command": "hunt", "plugin": "CHRDK_Hunt", "permission": "chrdkhunt.use"}
-    - {"category": "adventure", "icon": "WITHER_SKELETON_SKULL", "name": "<gold><bold>Боссы</bold></gold>", "lore": "<gray>Зоны опасности и таймеры</gray>", "command": "boss menu", "plugin": "CHRDK_Bosses", "permission": "chrdkbosses.use"}
     - {"category": "adventure", "icon": "FIREWORK_STAR", "name": "<gold><bold>События</bold></gold>", "lore": "<gray>Расписание и ближайший ивент</gray>", "command": "events", "plugin": "CHRDK_Events", "permission": "chrdkevents.use"}
-    - {"category": "adventure", "icon": "CHEST", "name": "<gold><bold>Клады</bold></gold>", "lore": "<gray>Бочки с добычей и арсенал находок</gray>\n<dark_gray>Копайте — клад найдёт вас сам</dark_gray>", "command": "treasures", "plugin": "CHRDK_Treasures", "permission": "chrdktreasures.use"}
     # ------------------------------ общество ------------------------------
     - {"category": "social", "icon": "FEATHER", "name": "<gold><bold>Чат</bold></gold>", "lore": "<gray>Клик — переключить канал</gray>\n<dark_gray>Локальный слышат рядом, глобальный — все</dark_gray>", "command": "chat"}
     - {"category": "social", "icon": "SHIELD", "name": "<gold><bold>Отряд</bold></gold>", "lore": "<gray>Вместе: приглашения и общий чат</gray>", "command": "party", "plugin": "CHRDK_Party", "permission": "chrdkparty.use"}
@@ -1091,7 +1089,6 @@ auto-messages:
     - {"text": "<gray>Задания сезона и награды: <white>/battlepass</white>. Прогресс не сгорает при перезапуске.</gray>", "plugin": "CHRDK_BattlePass", "permission": "chrdkbp.use"}
     - {"text": "<gray>72 достижения ждут своего героя: <white>/achievements</white>. Бейджи открываются вместе с целями.</gray>", "plugin": "CHRDK_Achievements", "permission": "chrdkachievements.use"}
     - {"text": "<gray>Десять навыков и 60 перков: <white>/skills</white>. Уровни растут от обычной игры — копайте, бейте, варите.</gray>", "plugin": "CHRDK_Skills", "permission": "chrdkskills.use"}
-    - {"text": "<gray>Клад можно найти в любом камне: <white>/treasures</white>. Способности по ПКМ, сеты и проклятия — в лоре находок.</gray>", "plugin": "CHRDK_Treasures", "permission": "chrdktreasures.use"}
     - {"text": "<gray>Артефакты собираются в коллекцию: <white>/artifacts collection</white>. За полноту каталога — часы отдельного буста и алмазы.</gray>", "plugin": "CHRDK_Artifacts", "permission": "chrdkartifacts.use"}
     - {"text": "<gray>Звание растёт вместе с наигранным временем. Ваш прогресс — <white>/ranks</white>.</gray>", "plugin": "CHRDK_Ranks", "permission": "chrdkranks.use"}
     - {"text": "<gray>Общие цели сервера: <white>/goals</white> — ваш вклад и прогресс сообщества.</gray>", "plugin": "CHRDK_CommonGoals", "permission": "chrdkgoals.use", "min-online": 3}
@@ -1149,7 +1146,7 @@ tablist:
   show-rank-name: true
   # Что игрок показывает в своём нике, он решает сам: /labels открывает меню,
   # где каждое звание и надпись включаются отдельно (ранг, титул кузни, звание
-  # кладоискателя, класс, гильдия, стример, квесты, достижения, шапка таба).
+  # класс, гильдия, стример, квесты, достижения, шапка таба).
   # Файл plugins/CHRDK_Core/labels.json. Скрытие — только оформление: ранг,
   # опыт и права остаются. Сортирует список CHRDK_Ranks: сначала донатный ранг,
   # внутри ранга — звание за стаж (ranks.sort-tab в его config.yml).

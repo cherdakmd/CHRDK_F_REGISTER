@@ -18,7 +18,7 @@ class LabelSlotsTest {
     private static final LabelPreferences.Label R = LabelPreferences.Label.RANK;
     private static final LabelPreferences.Label C = LabelPreferences.Label.CLASSES;
     private static final LabelPreferences.Label G = LabelPreferences.Label.GUILDS;
-    private static final LabelPreferences.Label T = LabelPreferences.Label.TREASURES;
+    private static final LabelPreferences.Label T = LabelPreferences.Label.ACHIEVEMENTS;
 
     private static LabelPreferences prefs(Path dir) {
         var prefs = new LabelPreferences(dir, Logger.getAnonymousLogger());
@@ -28,7 +28,7 @@ class LabelSlotsTest {
 
     private static LabelStyleService styles(LabelPreferences prefs, int[] level, Set<String> missing) {
         return new LabelStyleService((id, player, name) ->
-                !missing.contains(id) && Set.of("classes", "guilds", "treasures").contains(id)
+                !missing.contains(id) && Set.of("classes", "guilds", "achievements").contains(id)
                         ? "<aqua>[" + id + "]</aqua> " + name : name,
                 prefs, new LabelStyleService.RankLookup() {
                     public LabelStyleService.Rank view(String player) {
@@ -49,7 +49,7 @@ class LabelSlotsTest {
         int[] level = {1};
         Set<String> missing = new HashSet<>();
         var styles = styles(prefs, level, missing);
-        prefs.setSlots(PLAYER, List.of("rank", "classes", "guilds", "treasures"));
+        prefs.setSlots(PLAYER, List.of("rank", "classes", "guilds", "achievements"));
         assertEquals(List.of(R, C), shown(styles));
         missing.add("classes");
         assertEquals(List.of(R), shown(styles));
@@ -70,7 +70,7 @@ class LabelSlotsTest {
         var prefs = prefs(dir);
         int[] level = {5};
         var styles = styles(prefs, level, Set.of());
-        prefs.setSlots(PLAYER, List.of("rank", "classes", "guilds", "treasures"));
+        prefs.setSlots(PLAYER, List.of("rank", "classes", "guilds", "achievements"));
         var saved = styles.assignments(PLAYER);
         assertEquals(List.of(R, C, G, T), shown(styles));
         level[0] = 1;
@@ -147,10 +147,10 @@ class LabelSlotsTest {
     @Test
     void junkAndDuplicatesBecomeHolesRatherThanShiftingPositions(@TempDir Path dir) throws Exception {
         Files.writeString(dir.resolve("labels.json"), """
-                {"version":4,"players":{"steve":{"slots":["classes",null,"classes","header","guilds",17,"unknown","treasures","rank"]}}}
+                {"version":4,"players":{"steve":{"slots":["classes",null,"classes","header","guilds",17,"unknown","achievements","rank"]}}}
                 """);
         var prefs = prefs(dir);
-        assertEquals(List.of("classes", "", "", "", "guilds", "", "", "treasures"), prefs.slots(PLAYER));
+        assertEquals(List.of("classes", "", "", "", "guilds", "", "", "achievements"), prefs.slots(PLAYER));
         var styles = styles(prefs, new int[]{1}, Set.of());
         assertEquals(List.of(C), shown(styles));
         assertTrue(styles.selection(PLAYER).deferred(G));

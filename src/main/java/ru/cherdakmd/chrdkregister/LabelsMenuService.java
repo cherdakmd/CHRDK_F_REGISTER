@@ -26,7 +26,7 @@ import java.util.UUID;
  *
  * <p>С 1.4.183 настройка жила в чате командой {@code /labels}, и прятать можно
  * было только группами: «всё звания» одной кнопкой. Здесь то же самое, но
- * наглядно: девять плиток — ранг, титул кузни, звание кладоискателя, класс,
+ * наглядно: восемь плиток — ранг, титул кузни, класс,
  * гильдия, стример, квесты, достижения и шапка таба. Клик переключает одну
  * надпись и сразу перерисовывает меню; снизу — «Включить всё», «Выключить
  * всё», «Сброс», «Профиль» и «Закрыть». Справа вверху — «Вас видят так»: та же
@@ -306,7 +306,6 @@ public final class LabelsMenuService implements Listener {
         return switch (label) {
             case RANK -> messages.mini("labels.name-rank");
             case TIERFORGE -> messages.mini("labels.name-tierforge");
-            case TREASURES -> messages.mini("labels.name-treasures");
             case CLASSES -> messages.mini("labels.name-classes");
             case GUILDS -> messages.mini("labels.name-guilds");
             case STREAMS -> messages.mini("labels.name-streams");
@@ -321,7 +320,6 @@ public final class LabelsMenuService implements Listener {
         return switch (label) {
             case RANK -> plugin.messages().get("labels.desc-rank");
             case TIERFORGE -> plugin.messages().get("labels.desc-tierforge");
-            case TREASURES -> plugin.messages().get("labels.desc-treasures");
             case CLASSES -> plugin.messages().get("labels.desc-classes");
             case GUILDS -> plugin.messages().get("labels.desc-guilds");
             case STREAMS -> plugin.messages().get("labels.desc-streams");
@@ -336,7 +334,6 @@ public final class LabelsMenuService implements Listener {
         return switch (label) {
             case RANK -> Material.NETHER_STAR;
             case TIERFORGE -> Material.ANVIL;
-            case TREASURES -> Material.COMPASS;
             case CLASSES -> Material.IRON_SWORD;
             case GUILDS -> Material.WHITE_BANNER;
             case STREAMS -> Material.JUKEBOX;

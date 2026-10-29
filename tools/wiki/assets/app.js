@@ -150,7 +150,7 @@
     var query = (input.value || "").trim().toLowerCase();
     if (query.length < 2) {
       hits = [];
-      results.innerHTML = '<p class="search-empty">Введите хотя бы два символа: «клады», «ранг», «приват»…</p>';
+      results.innerHTML = '<p class="search-empty">Введите хотя бы два символа: «охота», «ранг», «приват»…</p>';
       return;
     }
     var scored = [];

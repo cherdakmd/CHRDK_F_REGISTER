@@ -56,7 +56,7 @@ description: "Регистрация, 2FA и спокойный первый в�
 | Хочется | Куда |
 |---|---|
 | Понять, что где лежит | [Меню `/menu`](menu.html) |
-| Заработать | [Экономика](economy.html), [клады](treasures.html), [охота](hunt.html) |
+| Заработать | [Экономика](economy.html), [охота](hunt.html) |
 | Прокачаться | [Профессии](professions.html), [навыки](skills.html), [класс](classes.html) |
 | Найти компанию | [Группы](party.html), [гильдии](guilds.html) |
 | Разобраться в рангах | [Ранги](ranks.html) |

@@ -159,6 +159,7 @@ public final class EnchantItems {
         return makeEnchantBook(def, level, ru.cherdakmd.chrdkregister.api.EnchantBookSource.API);
     }
     public ItemStack makeEnchantBook(EnchantDef def, int level, ru.cherdakmd.chrdkregister.api.EnchantBookSource source) {
+        if (source != null && source.retired()) return null;
         ItemStack book = new ItemStack(Material.ENCHANTED_BOOK);
         var originMeta = book.getItemMeta();
         originMeta.getPersistentDataContainer().set(bookSource, PersistentDataType.STRING,
@@ -177,7 +178,7 @@ public final class EnchantItems {
 
     /** Только в точке создания. refresh/inspect никогда не приписывают источник старой книге. */
     void stampBook(ItemStack book, ru.cherdakmd.chrdkregister.api.EnchantBookSource source) {
-        if (book == null || book.getType() != Material.ENCHANTED_BOOK || validated(book) == null) return;
+        if (source == null || source.retired() || book == null || book.getType() != Material.ENCHANTED_BOOK || validated(book) == null) return;
         var meta = book.getItemMeta();
         meta.getPersistentDataContainer().set(bookSource, PersistentDataType.STRING, source.encoded());
         book.setItemMeta(meta); refresh(book);

@@ -149,6 +149,7 @@ public final class EnchantsApiBridge implements ChrdkEnchantsApi {
 
     @Override
     public ItemStack book(String id, int level, ru.cherdakmd.chrdkregister.api.EnchantBookSource source) {
+        if (source != null && source.retired()) return null;
         EnchantsConfig config = config();
         EnchantDef def = EnchantRegistry.byId(id);
         if (config == null || def == null || plugin.items() == null

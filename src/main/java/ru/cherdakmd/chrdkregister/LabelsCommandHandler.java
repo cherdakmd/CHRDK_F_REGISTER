@@ -16,7 +16,7 @@ import java.util.Locale;
  * 1.4.186).
  *
  * <p>Без аргумента открывается меню «Оформление ника»: каждая надпись — своя
- * плитка (ранг, титул кузни, звание кладоискателя, класс, гильдия, стример,
+ * плитка (ранг, титул кузни, класс, гильдия, стример,
  * квесты, достижения, шапка таба). Текстовые ключи остались для тех, кто любит
  * команды и для логов: {@code /labels rank}, {@code /labels streams} — одна
  * надпись; {@code /labels badges} — все аддонские разом; {@code all},
@@ -31,7 +31,7 @@ public final class LabelsCommandHandler implements CommandExecutor, TabCompleter
 
     /** Текстовые ключи в порядке подсказки: сначала одиночные, потом группы. */
     private static final List<String> OPTIONS = List.of(
-            "rank", "tierforge", "treasures", "classes", "guilds", "streams",
+            "rank", "tierforge", "classes", "guilds", "streams",
             "quests", "achievements", "header",
             "badges", "all", "on", "off", "reset", "status", "menu",
             "color", "order", "preset");
@@ -115,7 +115,6 @@ public final class LabelsCommandHandler implements CommandExecutor, TabCompleter
         return switch (key) {
             case "ранг", "ранги" -> LabelPreferences.Label.RANK;
             case "кузня", "титул", "кузни" -> LabelPreferences.Label.TIERFORGE;
-            case "клады", "кладоискатель" -> LabelPreferences.Label.TREASURES;
             case "класс", "классы" -> LabelPreferences.Label.CLASSES;
             case "гильдия", "гильдии" -> LabelPreferences.Label.GUILDS;
             case "стример", "эфир" -> LabelPreferences.Label.STREAMS;

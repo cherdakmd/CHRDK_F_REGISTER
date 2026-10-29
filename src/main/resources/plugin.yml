@@ -38,7 +38,7 @@ commands:
     aliases: [site]
   labels:
     description: "Оформление ника: что показывать, в каком порядке, каким цветом и пресеты"
-    usage: /<command> [меню|rank|tierforge|treasures|classes|guilds|streams|quests|achievements|header|badges|all|on|off|reset|status|color|order|preset]
+    usage: /<command> [меню|rank|tierforge|classes|guilds|streams|quests|achievements|header|badges|all|on|off|reset|status|color|order|preset]
     aliases: [lab, tags]
   rankadmin:
     description: "Просмотр и отзыв донатных рангов; покупки только с подтверждением оплаты"

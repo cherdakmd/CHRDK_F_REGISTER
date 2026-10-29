@@ -338,7 +338,6 @@ public final class PluginUpdateService implements AutoCloseable {
         result.put("CHRDK_Artifacts", "chrdk-artifacts");
         result.put("CHRDK_Auction", "chrdk-auction");
         result.put("CHRDK_BattlePass", "chrdk-battlepass");
-        result.put("CHRDK_Bosses", "chrdk-bosses");
         result.put("CHRDK_Claims", "chrdk-claims");
         result.put("CHRDK_Classes", "chrdk-classes");
         result.put("CHRDK_CommonGoals", "chrdk-common-goals");
@@ -362,7 +361,6 @@ public final class PluginUpdateService implements AutoCloseable {
         result.put("CHRDK_Streams", "chrdk-streams");
         result.put("CHRDK_Teleports", "chrdk-teleports");
         result.put("CHRDK_TierForge", "chrdk-tier-forge");
-        result.put("CHRDK_Treasures", "chrdk-treasures");
         return Collections.unmodifiableMap(result);
     }
 

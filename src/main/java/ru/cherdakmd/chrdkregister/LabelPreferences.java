@@ -63,8 +63,6 @@ public final class LabelPreferences {
         RANK("rank", Group.NAME),
         /** Титул за закрытые разделы коллекции кузни. */
         TIERFORGE("tierforge", Group.NAME),
-        /** Звание кладоискателя за найденные клады. */
-        TREASURES("treasures", Group.NAME),
         /** Метка выбранного класса. */
         CLASSES("classes", Group.NAME),
         /** Метка гильдии. */
@@ -283,7 +281,7 @@ public final class LabelPreferences {
         Object rawColor = player.get("color");
         String color = rawColor == null ? "" : key(String.valueOf(rawColor));
         Map<String, Snapshot> presets = presetsOf(player.get("presets"));
-        return new State(mask, order, color, presets, slotsOf(player.get("slots")));
+        return new State(mask, order, color, presets, savedSlots(player));
     }
 
     /** Маска из списка идов файла — с разворотом старой группы {@code badges}. */
@@ -339,7 +337,7 @@ public final class LabelPreferences {
             int mask = value.get("hidden") instanceof List<?> list ? maskOf(list) : 0;
             out.put(slot, new Snapshot(mask, orderOf(value.get("order")),
                     value.get("color") == null ? "" : key(String.valueOf(value.get("color"))),
-                    slotsOf(value.get("slots"))));
+                    savedSlots(value)));
         }
         return Map.copyOf(out);
     }
@@ -441,14 +439,31 @@ public final class LabelPreferences {
         return normalizeSlots(out);
     }
 
+    /** Старый явный порядок со снятым источником становится фиксированными местами. */
+    private static List<String> savedSlots(Map<?, ?> value) {
+        if (value.get("slots") instanceof List<?>) return slotsOf(value.get("slots"));
+        if (value.get("order") instanceof List<?> order && order.stream()
+                .anyMatch(item -> item instanceof String id && RetiredAddons.source(id))) {
+            List<String> slots = new ArrayList<>();
+            for (Object item : order) slots.add(item instanceof String id ? id : "");
+            for (String id : List.of("rank", "classes", "guilds", "treasures", "tierforge", "streams", "quests", "achievements"))
+                if (!slots.contains(id)) slots.add(id);
+            return normalizeSlots(slots);
+        }
+        return null;
+    }
+
     /** Позиции не сдвигаются при пустом/неизвестном источнике и дубликате. */
     static List<String> normalizeSlots(List<String> raw) {
         if (raw == null) return null;
         List<String> out = new ArrayList<>();
-        Set<Label> seen = new LinkedHashSet<>();
+        Set<String> seen = new LinkedHashSet<>();
         for (int i = 0; i < LabelLimits.MAX_LABELS; i++) {
             Label label = i < raw.size() ? Label.byNameTagId(raw.get(i)) : null;
-            out.add(label != null && seen.add(label) ? label.id() : "");
+            // Снятый источник остаётся пустым назначением: соседние места не сдвигаются.
+            String id = label != null ? label.id()
+                    : i < raw.size() && RetiredAddons.source(raw.get(i)) ? raw.get(i).trim().toLowerCase(Locale.ROOT) : "";
+            out.add(!id.isEmpty() && seen.add(id) ? id : "");
         }
         return List.copyOf(out);
     }

@@ -16,7 +16,6 @@ include 'tier-forge'
 include 'artifacts'
 include 'achievements'
 include 'skills'
-include 'treasures'
 include 'common-goals'
 include 'claims'
 include 'ranks'
@@ -41,7 +40,6 @@ include 'events'
 
 include 'quests'
 
-include 'bosses'
 
 include 'guilds'
 include 'classes'

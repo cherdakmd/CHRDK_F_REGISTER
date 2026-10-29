@@ -67,7 +67,9 @@ class ReleaseValidationTest(unittest.TestCase):
         self.assertIn("CHRDK_Core", names)
         self.assertIn("CHRDK_BattlePass", names)
         self.assertIn("CHRDK_Professions", names)
-        self.assertEqual(30, len(names))
+        self.assertEqual(28, len(names))
+        self.assertNotIn("CHRDK_Bosses", names)
+        self.assertNotIn("CHRDK_Treasures", names)
 
 
 class ReleaseWorkflowContractTest(unittest.TestCase):
@@ -84,7 +86,7 @@ class ReleaseWorkflowContractTest(unittest.TestCase):
         root = Path(__file__).resolve().parents[2]
         source = (root / ".github/workflows/release.yml").read_text()
         self.assertIn("cp docs/releases/update-memo.txt", source)
-        self.assertIn("1.4.{200,201,{220..238}}.md", source)
+        self.assertIn("1.4.{200,201,{220..239}}.md", source)
         self.assertIn('unzip -t "chrdk-plugins-${version}.zip"', source)
         self.assertNotIn("--zip", source)
         self.assertIn('"${{ env.zip }}" --clobber', source)

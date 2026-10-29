@@ -31,8 +31,8 @@ import java.util.UUID;
  */
 public interface ChrdkRegisterApi {
 
-    /** Версия контракта API. API 25: durable checkpoint игровых наград; API 24 — Claims domain settlement. */
-    int API_VERSION = 25;
+    /** Версия контракта API. API 26: удалён снимок снятого аддона ChrdkTreasureBookInfo; API 25: durable checkpoint игровых наград; API 24 — Claims domain settlement. */
+    int API_VERSION = 26;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();

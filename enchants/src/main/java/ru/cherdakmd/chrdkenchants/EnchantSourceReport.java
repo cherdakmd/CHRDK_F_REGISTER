@@ -2,7 +2,6 @@ package ru.cherdakmd.chrdkenchants;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import ru.cherdakmd.chrdkregister.api.ChrdkTreasureBookInfo;
 import java.util.Locale;
 
 /** Шансы именно источников, не обещание гарантированной книги/конкретной чары. */
@@ -26,17 +25,6 @@ final class EnchantSourceReport {
                         && Bukkit.getPluginManager().isPluginEnabled("CHRDK_Hunt") && light > 0),
                 "normal", percent(chance(plugin.getConfig().getDouble("sources.mobs.regular-chance-percent", .35), .35, 1)),
                 "elite", percent(chance(plugin.getConfig().getDouble("sources.mobs.elite-chance-percent", 8), 8, 25)));
-        try {
-            ChrdkTreasureBookInfo provider = Bukkit.getServicesManager().load(ChrdkTreasureBookInfo.class);
-            if (provider == null) plugin.messages().send(player, "sources-treasure-unavailable");
-            else {
-                var treasure = provider.snapshot();
-                plugin.messages().send(player, "sources-treasure", "state", state(treasure.enabled() && light + curses > 0), "curse", treasure.cursePercent());
-                for (var tier : treasure.tiers()) plugin.messages().send(player, "sources-tier", "tier", plugin.messages().has("sources-tier-" + tier.id()) ? plugin.messages().mini("sources-tier-" + tier.id()) : tier.id(), "chance", percent(tier.chancePercent()), "level", tier.maxLevel());
-                plugin.messages().send(player, "sources-exchange", "state", state(treasure.exchangeEnabled() && light > 0));
-                for (var offer : treasure.offers()) plugin.messages().send(player, "sources-offer", "id", offer.id(), "shards", offer.shards(), "level", offer.level());
-            }
-        } catch (RuntimeException | LinkageError unavailable) { plugin.messages().send(player, "sources-treasure-unavailable"); }
         plugin.messages().send(player, "sources-footer");
     }
 }

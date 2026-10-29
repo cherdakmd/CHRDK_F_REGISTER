@@ -63,7 +63,24 @@ class BookProgressionTest {
                     if (method.isDefault()) return java.lang.reflect.InvocationHandler.invokeDefault(proxy, method, args);
                     throw new UnsupportedOperationException(method.getName());
                 });
-        assertNull(api.book("seer", 1, EnchantBookSource.TREASURE)); assertEquals(1,calls.get());
+        assertNull(api.book("seer", 1, EnchantBookSource.MOB)); assertEquals(1,calls.get());
+    }
+    @Test void retiredOriginsRemainReadableButCannotGenerateNewBooksThroughApi() throws Throwable {
+        assertEquals(EnchantBookSource.TREASURE, EnchantBookSource.decode("v1:treasure"));
+        assertEquals(EnchantBookSource.SHARDS, EnchantBookSource.decode("v1:shards"));
+        assertTrue(EnchantBookSource.TREASURE.retired()); assertTrue(EnchantBookSource.SHARDS.retired());
+        assertFalse(EnchantBookSource.MOB.retired());
+        var api = (ru.cherdakmd.chrdkregister.api.ChrdkEnchantsApi) java.lang.reflect.Proxy.newProxyInstance(
+                getClass().getClassLoader(), new Class<?>[]{ru.cherdakmd.chrdkregister.api.ChrdkEnchantsApi.class},
+                (proxy, method, args) -> {
+                    if (method.isDefault()) return java.lang.reflect.InvocationHandler.invokeDefault(proxy, method, args);
+                    throw new AssertionError("Снятый источник не должен дойти до генератора");
+                });
+        assertNull(api.book("seer", 1, EnchantBookSource.TREASURE));
+        assertNull(api.book("seer", 1, EnchantBookSource.SHARDS));
+        assertTrue(source("EnchantItems").contains("if (source != null && source.retired()) return null;"));
+        assertTrue(source("EnchantsApiBridge").contains("if (source != null && source.retired()) return null;"));
+        assertFalse(source("EnchantSourceReport").contains("ChrdkTreasureBookInfo"));
     }
     @Test void oldBooksRemainValidWithoutSourceAndSourceIsNotPartOfTransferValidation() throws Exception {
         assertEquals(Map.of("seer",1),EnchantBookValidation.read("seer:1"));
@@ -81,8 +98,6 @@ class BookProgressionTest {
         assertTrue(source("EnchantCommandHandler").contains("EnchantBookSource.ADMIN"));
         assertTrue(source("EnchantsApiBridge").contains("EnchantBookSource.API"));
         Path root=Path.of("..");
-        String treasures=Files.readString(root.resolve("treasures/src/main/java/ru/cherdakmd/chrdktreasures/TreasureSpecials.java"));
-        assertTrue(treasures.contains("EnchantBookSource.SHARDS")); assertTrue(treasures.contains("EnchantBookSource.TREASURE"));
         String api=Files.readString(root.resolve("src/main/java/ru/cherdakmd/chrdkregister/api/ChrdkEnchantsApi.java"));
         assertTrue(api.contains("default ItemStack book(String id, int level, EnchantBookSource source)"));
         assertTrue(api.contains("return book(id, level);"));

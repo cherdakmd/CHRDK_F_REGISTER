@@ -66,6 +66,7 @@ record AutoMessage(String text, String plugin, String permission, String conditi
 
     boolean eligible(Predicate<String> plugins, Predicate<String> permissions,
                      boolean trial, boolean unsecured, boolean hasPass, boolean paid, int online) {
+        if (RetiredAddons.plugin(plugin) || RetiredAddons.announcement(text)) return false;
         if (minOnline > 0 && online < minOnline) {
             return false;
         }

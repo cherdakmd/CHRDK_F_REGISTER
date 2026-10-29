@@ -51,7 +51,7 @@ public final class WikiCommandHandler implements CommandExecutor, TabCompleter {
             return true;
         }
         String slug = args.length == 1 ? args[0].trim().toLowerCase(Locale.ROOT) : "";
-        if (!slug.isEmpty() && !WikiSettings.validSlug(slug)) {
+        if (!slug.isEmpty() && (!WikiSettings.validSlug(slug) || RetiredAddons.source(slug))) {
             messages.send(sender, "wiki.unknown", "page", slug,
                     "pages", String.join(", ", wiki.pages()));
             return true;

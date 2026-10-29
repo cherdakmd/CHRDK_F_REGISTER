@@ -36,7 +36,7 @@ final class NameTags {
 
     /** Зарегистрировать оформление; повторный id заменяет прежний провайдер. */
     void register(String id, ChrdkRegisterApi.NameTagProvider provider) {
-        if (id == null || id.isBlank() || provider == null) {
+        if (id == null || id.isBlank() || RetiredAddons.source(id) || provider == null) {
             return;
         }
         String key = id.trim();

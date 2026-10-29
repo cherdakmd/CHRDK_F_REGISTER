@@ -41,7 +41,7 @@ public final class ProfileRegistry {
      */
     public boolean register(String id, ChrdkRegisterApi.ProfileProvider provider) {
         String key = normalize(id);
-        if (key.isEmpty() || provider == null) {
+        if (key.isEmpty() || RetiredAddons.source(key) || provider == null) {
             return false;
         }
         return providers.put(key, provider) != provider;

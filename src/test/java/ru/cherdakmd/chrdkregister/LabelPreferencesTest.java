@@ -79,9 +79,9 @@ class LabelPreferencesTest {
     @Test
     void nameTagIdsMapStraightToSources(@TempDir Path dir) {
         LabelPreferences preferences = fresh(dir);
-        preferences.set("Steve", LabelPreferences.Label.TREASURES, false);
+        preferences.set("Steve", LabelPreferences.Label.ACHIEVEMENTS, false);
         // Аддоны регистрируют оформление под этими id — фильтр ищет источник по ним.
-        assertFalse(preferences.visibleNameTag("Steve", "treasures"));
+        assertFalse(preferences.visibleNameTag("Steve", "achievements"));
         assertTrue(preferences.visibleNameTag("Steve", "guilds"));
         assertTrue(preferences.visibleNameTag("Steve", "сторонний-аддон"),
                 "незнакомый id не теряет метку");
@@ -145,7 +145,7 @@ class LabelPreferencesTest {
         assertFalse(preferences.visible("Steve", LabelPreferences.Label.ACHIEVEMENTS));
         assertTrue(preferences.visible("Steve", LabelPreferences.Label.HEADER),
                 "шапка таба — отдельный переключатель");
-        assertEquals(7, LabelPreferences.badgeLabels().size(),
+        assertEquals(6, LabelPreferences.badgeLabels().size(),
                 "все NAME-надписи, кроме ранга");
 
         preferences.setGroup("Steve", LabelPreferences.badgeLabels(), true);
@@ -350,7 +350,7 @@ class LabelPreferencesTest {
         assertTrue(preferences.setAll("", false));
         assertEquals(0, preferences.size());
         assertNull(LabelPreferences.Label.byId("хедер"), "неизвестный ид — null");
-        assertEquals(8, LabelPreferences.Label.nameTags().size(),
-                "восемь надписей рядом с ником + шапка таба отдельно");
+        assertEquals(7, LabelPreferences.Label.nameTags().size(),
+                "семь надписей рядом с ником + шапка таба отдельно");
     }
 }
