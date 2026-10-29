@@ -26,4 +26,16 @@ class TradeAmountsTest {
     @Test void commandAllAndSellAllUseTheFrozenMaximumExecutor()throws Exception{String service=Files.readString(Path.of("src/main/java/ru/cherdakmd/diamondshop/ShopService.java"));assertTrue(service.contains("quoted(player,item,plan.units(),false,plan.batch(),plan.price())"));assertTrue(service.contains("var result=sellMaximum(player,item)"));String command=Files.readString(Path.of("src/main/java/ru/cherdakmd/diamondshop/ShopCommandHandler.java"));assertTrue(command.contains("all?plugin.shopService().sellMaximum(player,item)"));}
     @Test void buyWindowCannotAdvertiseOrApplyAMinimumBasedOnAsk()throws Exception{String s=Files.readString(Path.of("src/main/java/ru/cherdakmd/diamondshop/ShopQuantityGui.java"));assertTrue(s.contains("if(!h.buy)inv.setItem(33"));assertTrue(s.contains("case 33->h.buy?0:"));var yaml=org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(new java.io.InputStreamReader(getClass().getResourceAsStream("/messages.yml"),java.nio.charset.StandardCharsets.UTF_8));var buy=yaml.getStringList("messages.quantity.buy-details");assertFalse(buy.isEmpty());assertFalse(buy.stream().anyMatch(line->line.contains("%minimum%")));assertTrue(yaml.getStringList("messages.quantity.details").stream().anyMatch(line->line.contains("%minimum%")));}
 
+    @Test void extremeBudgetsAndInventoryCountsMatchIndependentBigIntegerEnumeration(){
+        for(int batch:new int[]{1,7,64,2304})for(long price:new long[]{1,3,WholeTrades.MAX})
+        for(long available:new long[]{0,1,22,63,2304,2305,Long.MAX_VALUE})for(long budget:new long[]{0,1,WholeTrades.MAX-1,WholeTrades.MAX,Long.MAX_VALUE}){
+            long best=0;int expected=0;
+            for(int q=1;q<=Math.min(available,TradeAmounts.MAX_UNITS);q++){
+                long income=java.math.BigInteger.valueOf(price).multiply(java.math.BigInteger.valueOf(q)).divide(java.math.BigInteger.valueOf(batch)).longValueExact();
+                if(income<=Math.min(budget,WholeTrades.MAX)&&income>best){best=income;expected=q;}
+            }
+            assertEquals(expected,TradeAmounts.saleAll(batch,price,available,budget),"batch="+batch+" price="+price+" available="+available+" budget="+budget);
+        }
+    }
+
 }
