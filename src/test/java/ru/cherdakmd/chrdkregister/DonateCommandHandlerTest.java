@@ -99,9 +99,12 @@ class DonateCommandHandlerTest {
         var announcements = ChatConfig.fromBukkitConfig(yaml("config.yml")).autoMessageEntries();
         var donation = announcements.stream().filter(entry -> entry.text().contains("/donate")).toList();
         assertEquals(1, donation.size());
-        assertTrue(clicks(messages().markup(donation.getFirst().text())).contains(ClickEvent.openUrl(URL)));
+        var targets = clicks(messages().markup(donation.getFirst().text()));
+        assertTrue(targets.contains(ClickEvent.runCommand("/donate")));
+        assertTrue(targets.stream().allMatch(target -> target.equals(ClickEvent.runCommand("/donate"))),
+                "подсказка только запрашивает официальную ссылку, не выполняет покупку");
         assertTrue(donation.getFirst().eligible(id -> true, permission -> true, false, false));
-        assertEquals(28, announcements.size(), "напоминание доната одно, сообщение снятого аддона удалено");
+        assertEquals(yaml("config.yml").getList("auto-messages.messages").size(), announcements.size());
     }
     @Test void stock239MigratesOnceWithoutTouchingCustomListsOrSchedule() {
         var live = yaml("presentation-legacy-1.4.239.yml");

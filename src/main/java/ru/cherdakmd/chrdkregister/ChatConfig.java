@@ -82,9 +82,9 @@ public final class ChatConfig {
 
     private static final List<String> DEFAULT_AUTO_MESSAGES = List.of(
             "<gold>Все возможности сервера — в /menu.</gold>",
-            "<gray>Пробные дни не продлеваются повторным входом. Ваш остаток: %pass_left% — /pass.</gray>",
+            "<gray>Команды, правила и ограничения сервера — /wiki. Профиль и действующие права — /profile.</gray>",
             "<gray>Локальный и общий чат переключаются через /chat; личные сообщения — /msg ник текст.</gray>",
-            "<gray>Проверьте защиту аккаунта: /2fa status. Сессии входа: /session.</gray>"
+            "<gray>Никому не сообщайте пароль и коды 2FA. Проверить сессии входа — /session; завершить вход — /logout.</gray>"
     );
 
     private boolean enabled = true;

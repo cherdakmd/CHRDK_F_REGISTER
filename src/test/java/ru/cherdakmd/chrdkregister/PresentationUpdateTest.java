@@ -284,7 +284,7 @@ class PresentationUpdateTest {
     }
     @Test void structuredAndLegacyMessagesSupportTargetingAndExplicitEmptyList() throws Exception {
         var c=ChatConfig.fromBukkitConfig(yaml("config.yml"));
-        assertEquals(28,c.autoMessageEntries().size());
+        assertEquals(yaml("config.yml").getList("auto-messages.messages").size(),c.autoMessageEntries().size());
         var legacy=new YamlConfiguration();legacy.loadFromString("auto-messages:\n  messages: ['Hello %online%']\n");
         assertEquals("Hello %online%",ChatConfig.fromBukkitConfig(legacy).autoMessageEntries().getFirst().text());
         legacy.set("auto-messages.messages",List.of());assertTrue(ChatConfig.fromBukkitConfig(legacy).autoMessageEntries().isEmpty());

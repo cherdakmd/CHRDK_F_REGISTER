@@ -41,7 +41,7 @@ class EventsRemovalTest {
         var category = stock.getMapList("server-menu.categories").stream()
                 .filter(item -> "adventure".equals(item.get("id"))).findFirst().orElseThrow();
         assertEquals("<gold><bold>Охота</bold></gold>", category.get("name"));
-        assertEquals(28, ChatConfig.fromBukkitConfig(stock).autoMessageEntries().size());
+        assertEquals(stock.getList("auto-messages.messages").size(), ChatConfig.fromBukkitConfig(stock).autoMessageEntries().size());
     }
     @Test void oldCommandsAndPluginReferencesCannotReappearInCustomMenus() {
         for (String command : List.of("events", "/event info", "sobytiya next", "eventsadmin force",

@@ -1064,47 +1064,60 @@ auto-messages:
   #   text        — MiniMessage-текст;
   #   plugin      — показывать только когда аддон включён (иначе скрыто);
   #   permission  — показывать только владельцам права;
-  #   condition   — always (по умолчанию), trial (приветственный ранг),
-  #                 unsecured (2FA не подключена), no-pass (ранга нет),
-  #                 paid (активный оплаченный ранг);
-  #   min-online  — минимум игроков онлайн (0 — без ограничения).
+  #   condition   — always (по умолчанию), trial (старое пробное право),
+  #                 unsecured (2FA доступна, но не подключена), no-pass (нет активного ранга),
+  #                 paid (активный непробный ранг, в том числе ручная выдача);
+  #   min-online  — минимум авторизованных игроков с правом получения рассылки.
   # Подстановки: %player%, %online%, %max%, %world%, %pass_left%, %pass_days%,
   # %pass_type%, %trial_days%, %balance% (баланс банка /bal).
+  # Здесь %online% — размер авторизованной аудитории, не весь онлайн сервера.
   # Проверка без ожидания: /pass automessages list|next|test <номер>.
+  # Список 1.4.247: числа и цены проверяются в игре, без устаревающих обещаний.
   messages:
-    # --- общее ---
-    - {"text": "<gray>Все возможности сервера собраны в <white>/menu</white>: ранг, прогресс, экономика, мир, снаряжение, охота и общество.</gray>"}
-    - {"text": "<gray>Ваш баланс банка: <white>%balance%</white> алмазов. Перевод другу — <white>/pay ник сумма</white>, топ — <white>/baltop</white>.</gray>"}
-    - {"text": "<gray>Алмазы можно хранить в банке: <white>/bal deposit</white> и <white>/bal withdraw</white>. Счёт не теряется при смерти.</gray>"}
-    - {"text": "<gray>Переключение локального и общего чата — <white>/chat</white>. Личное сообщение — <white>/msg ник текст</white>, ответ — <white>/r</white>.</gray>"}
-    # --- ранг и безопасность ---
-    - {"text": "<gray>За игровые достижения — отдельный буст +10% опыта Minecraft, профессий и навыков. Тратится только онлайн; запас — <white>/profile</white>. Ранги и платные товары не продлеваются.</gray>"}
-    - {"text": "<gray>Ранг закончился. Продлить и сохранить оформление — <white>/pass menu</white>, вопросы — в Discord сервера.</gray>", "condition": "no-pass"}
-    - {"text": "<gray>Спасибо за поддержку сервера! Ваш ранг активен до конца срока: <white>%pass_left%</white>.</gray>", "condition": "paid"}
-    - {"text": "<gray>Защитите аккаунт: <white>/2fa setup</white>, затем подтвердите код приложения. Никому не сообщайте пароль и коды.</gray>", "condition": "unsecured"}
-    - {"text": "<gray>Проверьте сессии входа: <white>/session</white>. Для выхода из аккаунта — <white>/logout</white>.</gray>"}
-    - {"text": "<gray>Поддержать сервер и выбрать ранг или косметику: <click:open_url:'https://chrdk.trademc.org/'><gold><u>донат-магазин CHRDK</u></gold></click>. Ссылка также доступна через <white>/donate</white> и <white>/menu</white>.</gray>"}
-    # --- прогресс ---
-    - {"text": "<gray>Задания сезона и награды: <white>/battlepass</white>. Прогресс не сгорает при перезапуске.</gray>", "plugin": "CHRDK_BattlePass", "permission": "chrdkbp.use"}
-    - {"text": "<gray>72 достижения ждут своего героя: <white>/achievements</white>. Бейджи открываются вместе с целями.</gray>", "plugin": "CHRDK_Achievements", "permission": "chrdkachievements.use"}
-    - {"text": "<gray>Десять навыков и 60 перков: <white>/skills</white>. Уровни растут от обычной игры — копайте, бейте, варите.</gray>", "plugin": "CHRDK_Skills", "permission": "chrdkskills.use"}
-    - {"text": "<gray>Артефакты собираются в коллекцию: <white>/artifacts collection</white>. За полноту каталога — часы отдельного буста и алмазы.</gray>", "plugin": "CHRDK_Artifacts", "permission": "chrdkartifacts.use"}
-    - {"text": "<gray>Звание растёт вместе с наигранным временем. Ваш прогресс — <white>/ranks</white>.</gray>", "plugin": "CHRDK_Ranks", "permission": "chrdkranks.use"}
-    - {"text": "<gray>Общие цели сервера: <white>/goals</white> — ваш вклад и прогресс сообщества.</gray>", "plugin": "CHRDK_CommonGoals", "permission": "chrdkgoals.use", "min-online": 3}
-    # --- экономика ---
-    - {"text": "<gray>Ресурсы и строительная палитра: <white>/shop</white>. Личный счёт — <white>/bal</white>, недостача — предметами. У декора нет обратной скупки; цены и доступность — <white>/shop price товар</white>.</gray>", "plugin": "CHRDK_DiamondShop", "permission": "chrdkshop.use"}
-    - {"text": "<gray>Продайте стак из руки: <white>/auction sell цена</white>. Покупка требует подтверждения, комиссия видна в лоте.</gray>", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
-    - {"text": "<gray>Купленные и возвращённые лоты ждут в <white>/auction mail</white>. Выручку забирайте через <white>/auction money</white>.</gray>", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
-    - {"text": "<gray>Лотерея: <white>/lottery</white> — банк, шанс и время. Билеты — <white>/lottery buy</white>, выигрыш — <white>/lottery claim</white>.</gray>", "plugin": "CHRDK_Lottery", "permission": "chrdklottery.use"}
-    - {"text": "<gray>Защитите постройки: <white>/claim help</white>. Казна для ежедневной ренты — <white>/claim balance</white>.</gray>", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
-    # --- мир, снаряжение, сообщество ---
-    - {"text": "<gray>Точки дома: <white>/homes</white> и <white>/sethome имя</white>. Запрос к игроку — <white>/tpa ник</white>.</gray>", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
-    - {"text": "<gray>Изучайте кастомные чары: <white>/enchants</white>. Редкости снаряжения — <white>/tiers</white>.</gray>", "plugin": "CHRDK_Enchants", "permission": "chrdkenchants.use"}
-    - {"text": "<gray>Вся косметика — <white>/cosmetic</white> или кнопка в <white>/menu</white>. Шлейф, вход, цвет ника и надписи — в одном меню.</gray>", "plugin": "CHRDK_Cosmetics", "permission": "chrdkcosmetics.use"}
-    - {"text": "<gray>Приглашайте друзей: <white>/ref</white> — статус и условия бонуса. Вас позвал друг? <white>/ref use его_ник</white>.</gray>", "plugin": "CHRDK_Referrals", "permission": "chrdkref.use"}
-    - {"text": "<gray>Сейчас на сервере <white>%online%</white> игроков. Самое время для общих целей: <white>/goals</white>.</gray>", "plugin": "CHRDK_CommonGoals", "permission": "chrdkgoals.use", "min-online": 5}
-    - {"text": "<gray>Забирайте ежедневную награду: <white>/daily</white>. Стрик входов не сбрасывается при пропуске одного дня.</gray>", "plugin": "CHRDK_DailyRewards", "permission": "chrdkdaily.use"}
-    - {"text": "<gray>Сведения об очереди входа: <white>/queue info</white>. Приоритет зависит от настроек сервера.</gray>", "plugin": "CHRDK_Queue", "permission": "chrdkqueue.use"}
+    - {"text": "<gray>Не знаете, с чего начать? <white>/menu</white> открывает карту возможностей сервера: выберите занятие и нужный раздел.</gray>", "permission": "chrdkregister.menu"}
+    - {"text": "<gray>Команды, правила и ограничения — <white>/wiki</white>. Откройте актуальный справочник; цены и доступные действия проверяйте также в игре.</gray>"}
+    - {"text": "<gray>Ваш ранг, банк и разделы развития — <white>/profile</white>. Это личная карточка, а не меню выбора профессии.</gray>", "permission": "chrdkregister.profile"}
+    - {"text": "<gray>На вашем личном счёте <white>%balance%</white> алмазов. Проверка баланса — <white>/bal</white>; казны территорий и гильдий считаются отдельно.</gray>", "permission": "chrdkregister.bal"}
+    - {"text": "<gray>Обычные алмазы и алмазные блоки можно внести через <white>/bal deposit</white>. Снять сумму предметами — <white>/bal withdraw сумма</white>.</gray>", "permission": "chrdkregister.bal"}
+    - {"text": "<gray>Перевод другу — <white>/pay ник сумма</white>. Проверьте получателя и целое число алмазов перед отправкой.</gray>", "permission": "chrdkregister.pay"}
+    - {"text": "<gray>Для общего чата начните сообщение с !. Постоянный канал: <white>/chat global</white> или <white>/chat local</white>; проверить — <white>/chat status</white>.</gray>"}
+    - {"text": "<gray>Личное сообщение — <white>/msg ник текст</white>, ответ — <white>/r текст</white>. Не передавайте пароли, коды 2FA и платёжные данные в переписке.</gray>"}
+    - {"text": "<gray>2FA подключается по желанию: <white>/2fa setup</white>, затем <white>/2fa confirm код</white>. Храните секрет отдельно и никому не сообщайте одноразовые коды.</gray>", "condition": "unsecured"}
+    - {"text": "<gray>Проверить сессии входа — <white>/session</white>. На чужом компьютере завершайте вход через <white>/logout</white>.</gray>"}
+    - {"text": "<gray>Вход свободный в стандартных настройках. Ранги и их условия — <white>/rank shop</white>, действующие права — <white>/rank my</white>.</gray>"}
+    - {"text": "<gray>У вашего ранга осталось <white>%pass_left%</white>. Действующие права и срок проверяйте в <white>/rank my</white>; ранг не заменяет пароль и 2FA.</gray>", "condition": "paid"}
+    - {"text": "<gray>Ник идёт первым, метки выбираете вы: <white>/labels</white>. Проверьте видимость и места; премиальные цвета требуют отдельной покупки даже при V ранге.</gray>", "permission": "chrdkregister.labels"}
+    - {"text": "<gray>Игровые награды могут давать отдельный XP-буст Minecraft, профессий и навыков. Он расходуется онлайн после входа; запас — <white>/profile</white>. Платный ранг не продлевается.</gray>", "permission": "chrdkregister.profile"}
+    - {"text": "<gray>Ремесло выбирается в <white>/profession menu</white>, работа и специализация — <white>/profession work</white> и <white>/profession mastery</white>. Профессия и класс — разные системы.</gray>", "plugin": "CHRDK_Professions", "permission": "chrdkprofessions.use"}
+    - {"text": "<gray>Навыки растут от подходящих игровых действий: <white>/skills</white>. Проверяйте требования, лимиты и откаты в карточке; повторная установка блока не гарантирует опыт.</gray>", "plugin": "CHRDK_Skills", "permission": "chrdkskills.use"}
+    - {"text": "<gray>Выберите роль в <white>/class menu</white>, затем изучите <white>/class talents</white>. Боевые PvE-умения не следует считать преимуществом против игроков.</gray>", "plugin": "CHRDK_Classes", "permission": "chrdkclasses.use"}
+    - {"text": "<gray>Задания и фракции — <white>/quests menu</white>. Условия — <white>/quests info id</white>, сдача — <white>/quests claim id</white>. Награды: опыт, предметы и репутация, не валюта.</gray>", "plugin": "CHRDK_Quests", "permission": "chrdkquests.use"}
+    - {"text": "<gray>Задания сезона — <white>/battlepass menu</white>, прогресс — <white>/battlepass progress</white>. Перед получением проверьте условия и доступную дорожку наград.</gray>", "plugin": "CHRDK_BattlePass", "permission": "chrdkbp.use"}
+    - {"text": "<gray>Долгие цели и заслуженные бейджи — <white>/achievements menu</white>. Выбранный бейдж также должен быть включён и размещён через <white>/labels</white>.</gray>", "plugin": "CHRDK_Achievements", "permission": "chrdkachievements.use"}
+    - {"text": "<gray>Ежедневная награда: <white>/daily info</white> и <white>/daily claim</white>. День считается по UTC; пропуск дня сбрасывает серию, а простой вход не заменяет получение.</gray>", "plugin": "CHRDK_DailyRewards", "permission": "chrdkdaily.use"}
+    - {"text": "<gray>Помогайте общей цели: <white>/goals</white> показывает прогресс и вклад. Ожидающие личные награды — <white>/goals claim</white>; общий фонд не равен награде одного игрока.</gray>", "plugin": "CHRDK_CommonGoals", "permission": "chrdkgoals.use", "min-online": 3}
+    - {"text": "<gray>Звания за наигранное время — <white>/ranks</white>. Это игровые заслуги, не оплаченные ранги; показ звания настраивается в <white>/labels</white>.</gray>", "plugin": "CHRDK_Ranks", "permission": "chrdkranks.use"}
+    - {"text": "<gray>Ресурсы и строительная палитра — <white>/shop</white>. Количество задаётся в штуках. Оплата сначала с <white>/bal</white>, недостача — подходящими обычными алмазными предметами.</gray>", "plugin": "CHRDK_DiamondShop", "permission": "chrdkshop.use"}
+    - {"text": "<gray>Перед продажей проверьте <white>/shop price товар</white>. Скупка ограничена рецептурными правилами; у ряда строительных товаров нет обратной скупки. <white>/shop sellall</white> продаёт сразу.</gray>", "plugin": "CHRDK_DiamondShop", "permission": "chrdkshop.use"}
+    - {"text": "<gray>Купленное, возвраты и непроданное — <white>/auction mail</white>. Выручка успешной продажи поступает в <white>/bal</white>; <white>/auction money</white> показывает банк, а не выдаёт отдельный кошелёк.</gray>", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
+    - {"text": "<gray>Предмет из руки выставляется через <white>/auction sell цена</white>. Покупка: <white>/auction buy id confirm</white>. Проверяйте свойства вещи, комиссию и сумму до сделки.</gray>", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
+    - {"text": "<gray>Ресурсы заказчикам-ботам: <white>/orders list</white>, сдача — <white>/orders deliver номер</white>. Проверяйте срок и награду; репутация доски не равна репутации фракций.</gray>", "plugin": "CHRDK_Orders", "permission": "chrdkorders.use"}
+    - {"text": "<gray>Розыгрыш, банк и расписание — <white>/lottery info</white>, билеты — <white>/lottery buy число</white>. Ожидающий выигрыш: <white>/lottery claim</white>. Покупка билета не гарантирует доход.</gray>", "plugin": "CHRDK_Lottery", "permission": "chrdklottery.use"}
+    - {"text": "<gray>Территория — <white>/claim menu</white>, окружение — <white>/claim map</white>. Ежедневная рента оплачивается казной территории: держите запас и проверяйте <white>/claim balance</white>.</gray>", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
+    - {"text": "<gray>Аренда отдельного чанка — <white>/claim rent</white>. Оплату несёт казна территории арендатора; нехватка завершает аренду. Право собственности не передаётся.</gray>", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
+    - {"text": "<gray>Сохранить дом — <white>/sethome имя</white>, список и лимит — <white>/homes</white>. <white>/home</white>, <white>/rtp</white> и запросы <white>/tpa ник</white> имеют цену; скидка не означает бесплатный перенос.</gray>", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
+    - {"text": "<gray>Где искать книги — <white>/enchants sources</white>, условия чары — <white>/enchants info id</white>. Книга не отменяет совместимость, конфликты и ограничения наковальни.</gray>", "plugin": "CHRDK_Enchants", "permission": "chrdkenchants.use"}
+    - {"text": "<gray>Проверяйте редкость и свойства вещи: <white>/tiers info</white>. Коллекция — <white>/tiers collection</white>. Положительный тир не отменяет отрицательные аффиксы.</gray>", "plugin": "CHRDK_TierForge", "permission": "chrdktierforge.use"}
+    - {"text": "<gray>Коллекция находок — <white>/artifacts collection</white>. Читайте обе стороны карточки: полезный эффект может сочетаться с минусом, ценой опыта и перезарядкой.</gray>", "plugin": "CHRDK_Artifacts", "permission": "chrdkartifacts.use"}
+    - {"text": "<gray>Опасность мира и разбор охоты — <white>/hunt danger</white> и <white>/hunt inspect</white>. Не каждое убийство подходит для награды; спавнерные мобы стандартно исключены.</gray>", "plugin": "CHRDK_Hunt", "permission": "chrdkhunt.use"}
+    - {"text": "<gray>Монеты, осколки и ключи охоты — отдельные ресурсы. <white>/hunt stats</white> показывает прогресс, <white>/hunt exchange</white> — обмен по правилам и дневному лимиту.</gray>", "plugin": "CHRDK_Hunt", "permission": "chrdkhunt.use"}
+    - {"text": "<gray>Развиваются уже приручённые ванильные кошки и волки: <white>/pet list</white>. Опыт и бонусы зависят от действий и близости владельца; уровень не делает питомца бессмертным.</gray>", "plugin": "CHRDK_Pets", "permission": "chrdkpets.use"}
+    - {"text": "<gray>Соберите отряд: <white>/party create</white>, приглашение — <white>/party invite ник</white>. Бонус требует игры рядом; просто находиться в списке участников недостаточно.</gray>", "plugin": "CHRDK_Party", "permission": "chrdkparty.use"}
+    - {"text": "<gray>Постоянное объединение — <white>/guild menu</white>. Казна гильдии отдельна от личного <white>/bal</white>; перед внесением средств и войной проверяйте условия.</gray>", "plugin": "CHRDK_Guilds", "permission": "chrdkguilds.use"}
+    - {"text": "<gray>Выбор доступного шлейфа — <white>/cosmetics trails</white>, отключение — <white>/cosmetics off</white>. Каталог не означает владение; право может иметь срок.</gray>", "plugin": "CHRDK_Cosmetics", "permission": "chrdkcosmetics.use"}
+    - {"text": "<gray>Пригласил друг? <white>/ref use его_ник</white> фиксирует привязку по правилам системы. Статус — <white>/ref</white>. Подходящая первая оплата даёт игровой буст, не продление ранга.</gray>", "plugin": "CHRDK_Referrals", "permission": "chrdkref.use"}
+    - {"text": "<gray>Сведения об очереди — <white>/queue info</white>. Приоритет ранга не отменяет предел вместимости, регистрацию, пароль и подключённую 2FA.</gray>", "plugin": "CHRDK_Queue", "permission": "chrdkqueue.use"}
+    - {"text": "<gray>Поддержать сервер можно через <click:run_command:'/donate'><white>/donate</white></click>. Используйте официальную ссылку, не передавайте деньги по реквизитам из чужих личных сообщений.</gray>", "permission": "chrdkregister.donate"}
 
 tablist:
   # Таб-лист (TAB): шапка/подвал списка игроков и формат имени в нём.

@@ -6,6 +6,15 @@
 
 Начиная с версии 1.4.1: **интеграция с PlaceholderAPI** (мягкая зависимость) — плейсхолдеры `%chrdk_*%` для таб-листа, скорбордов и голограмм.
 
+## 1.4.247 — актуальные автосообщения
+
+44 подсказки с действующими командами, всеми аддонами и ссылкой `/wiki`.
+Исправлены ранги, аукцион, ежедневки и косметика; устаревающие числовые обещания убраны.
+Точный стандартный список обновится один раз с backup, пользовательские сообщения
+и расписание сохраняются. Публикация исходников не меняет запущенный сервер.
+
+[Изменения](docs/releases/1.4.247.md) · [Рассылка и миграция](docs/AUTO_MESSAGES.md).
+
 ## 1.4.246 — новый справочник и публикация после полной проверки
 
 Вики полностью переписана: 36 страниц, каталоги товаров и чар из исходников,
@@ -1730,15 +1739,10 @@ auto-messages:
   # %pass_type%, %trial_days%, %balance%.
   # Проверка без ожидания: /pass automessages list|next|test <номер>.
   messages:
-    - {"text": "<gray>Все возможности сервера собраны в <white>/menu</white>: ранг, прогресс, экономика, мир, снаряжение, охота и общество.</gray>"}
-    - {"text": "<gray>Ваш баланс банка: <white>%balance%</white> алмазов. Перевод другу — <white>/pay ник сумма</white>, топ — <white>/baltop</white>.</gray>"}
-    - {"text": "<gray>Алмазы можно хранить в банке: <white>/bal deposit</white> и <white>/bal withdraw</white>. Счёт не теряется при смерти.</gray>"}
-    - {"text": "<gray>Ваш пробный период активен: осталось <white>%pass_left%</white>. Статус и продление — <white>/pass menu</white>.</gray>", "condition": "trial"}
-    - {"text": "<gray>Проходка закончилась. Продлить и вернуть доступ — <white>/pass menu</white>.</gray>", "condition": "no-pass"}
-    - {"text": "<gray>Спасибо за поддержку сервера! Ваша проходка активна: <white>%pass_left%</white>.</gray>", "condition": "paid"}
-    - {"text": "<gray>Защитите аккаунт: <white>/2fa setup</white>. Никому не сообщайте пароль и коды.</gray>", "condition": "unsecured"}
-    - {"text": "<gray>72 достижения ждут своего героя: <white>/achievements</white>.</gray>", "plugin": "CHRDK_Achievements", "permission": "chrdkachievements.use"}
-    - {"text": "<gray>Общие цели сервера: <white>/goals</white>. Сейчас на сервере <white>%online%</white> игроков.</gray>", "plugin": "CHRDK_CommonGoals", "permission": "chrdkgoals.use", "min-online": 3}
+    - {"text": "<gray>Команды, правила и ограничения — <white>/wiki</white>. Откройте актуальный справочник; цены и доступные действия проверяйте также в игре.</gray>"}
+    - {"text": "<gray>Ваш баланс — <white>%balance%</white> алмазов. Проверка — <white>/bal</white>.</gray>", "permission": "chrdkregister.bal"}
+    - {"text": "<gray>Ежедневная награда — <white>/daily claim</white>. День считается по UTC; пропуск сбрасывает серию.</gray>", "plugin": "CHRDK_DailyRewards", "permission": "chrdkdaily.use"}
+    # Полный актуальный набор — src/main/resources/config.yml.
 
 tablist:
   # Таб-лист (TAB): шапка/подвал списка игроков и формат имени в нём.
@@ -3436,7 +3440,7 @@ lines)`. `ProfileContext` несёт UUID, ник, признак «онлайн
 ./gradlew build
 ```
 
-Собираются **26 плагинов**: ядро в `build/libs/chrdk-core-1.4.246.jar`,
+Собираются **26 плагинов**: ядро в `build/libs/chrdk-core-1.4.247.jar`,
 остальные 25 — в `<модуль>/build/libs/` с той же версией. Полный действующий
 список модулей — `settings.gradle`; снятые модули в него не входят.
 Для работы аддонов устанавливается ядро из того же комплекта, Core API 27.

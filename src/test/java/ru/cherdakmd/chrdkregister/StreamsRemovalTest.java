@@ -46,7 +46,7 @@ class StreamsRemovalTest {
         assertFalse(items.stream().anyMatch(item -> RetiredAddons.command(String.valueOf(item.get("command")))
                 || RetiredAddons.plugin(String.valueOf(item.get("plugin")))));
         var announcements = ChatConfig.fromBukkitConfig(current).autoMessageEntries();
-        assertEquals(28, announcements.size());
+        assertEquals(current.getList("auto-messages.messages").size(), announcements.size());
         assertFalse(announcements.stream().anyMatch(entry -> RetiredAddons.announcement(entry.text())));
         assertEquals(1, announcements.stream().filter(entry -> entry.text().contains("/donate")).count());
     }
