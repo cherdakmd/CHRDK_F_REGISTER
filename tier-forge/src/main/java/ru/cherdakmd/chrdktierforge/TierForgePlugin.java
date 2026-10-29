@@ -48,7 +48,7 @@ public final class TierForgePlugin extends JavaPlugin {
     /** Таймер пассивного пульса кузни (регенерация/зрение/магнит), гасим при перезагрузке. */
     private org.bukkit.scheduler.BukkitTask forgePulseTask;
     /**
-     * Мост для чужих аддонов (1.4.141): клады выдают предметы с тиром, не
+     * Мост для чужих аддонов (1.4.141): позволяет выдавать предметы с тиром, не
      * завися от классов этого плагина.
      */
     private TierApiBridge tierApi;
@@ -95,7 +95,7 @@ public final class TierForgePlugin extends JavaPlugin {
             startForgePulse();
         }
 
-        // 1.4.141: публичный мост «TierForge → клады/квесты». Регистрируется
+        // 1.4.141: публичный мост «TierForge → другие аддоны». Регистрируется
         // последним, когда items/config уже готовы.
         this.tierApi = new TierApiBridge(this);
         Bukkit.getServicesManager().register(ChrdkTierApi.class, tierApi, this,

@@ -29,6 +29,11 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Check retired addon residues
+        run: |
+          python3 .github/scripts/check_retired_addons.py
+          python3 -m unittest discover -s .github/scripts -p 'test_retired_addons.py' -v
+
       - name: Messages contract check
         shell: bash
         run: python3 .github/scripts/check_messages.py

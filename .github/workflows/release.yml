@@ -43,6 +43,8 @@ jobs:
 
       - name: Check messages and release validation tests
         run: |
+          python3 .github/scripts/check_retired_addons.py
+          python3 -m unittest discover -s .github/scripts -p 'test_retired_addons.py' -v
           python3 .github/scripts/check_messages.py
           python3 -m unittest discover -s .github/scripts -p 'test_verify_release.py' -v
 
