@@ -131,19 +131,28 @@ public final class ShopService {
         return new TradeResult(true, money, null, units, debit, spent, change);
     }
     public record SellAllResult(long income, long units, int kinds) { }
-    public int maximumSale(Player player,ShopConfig.ShopItem item,int batch,long bid) {
-        var material=Material.matchMaterial(item.material()); if(material==null)return 0;
+    private TradeAmounts.Sale maximumSalePlan(Player player,ShopConfig.ShopItem item,int batch,long bid) {
+        var material=Material.matchMaterial(item.material()); if(material==null)return null;
         long budget=Math.max(0,WholeTrades.MAX-balance(player));
         if(config.dailyTurnoverLimit()>0)budget=Math.min(budget,(long)Math.floor(Math.max(0,config.dailyTurnoverLimit()-store.usedToday(player.getUniqueId(),System.currentTimeMillis()))));
-        return TradeAmounts.saleAll(batch,bid,countItems(player.getInventory(),material),budget);
+        return TradeAmounts.selectSale(batch,bid,countItems(player.getInventory(),material),budget);
+    }
+    public int maximumSale(Player player,ShopConfig.ShopItem item,int batch,long bid) {
+        var plan=maximumSalePlan(player,item,batch,bid);
+        return plan==null?0:plan.units();
+    }
+    /** all использует ту же замороженную котировку, по которой подобран объём. */
+    public TradeResult sellMaximum(Player player,ShopConfig.ShopItem item) {
+        if(!ready(player)||player.getGameMode()!=GameMode.SURVIVAL)return fail("trading.unavailable",0);
+        var plan=maximumSalePlan(player,item,batchSize(item),bidPrice(item));
+        if(plan==null)return fail("quantity.sellall-none",0);
+        return quoted(player,item,plan.units(),false,plan.batch(),plan.price());
     }
     public SellAllResult sellAll(Player player) {
         long total=0,units=0;int kinds=0;
         for(var item:config.items()){
             if(!ready(player)||player.getGameMode()!=GameMode.SURVIVAL)break;
-            long count=maximumSale(player,item,batchSize(item),bidPrice(item));
-            if(count<1)continue;
-            var result=sell(player,item,count);
+            var result=sellMaximum(player,item);
             if(result.success()){total+=result.money();units+=result.units();kinds++;}
             else if(store.pending()!=null||!store.legacyAvailable())break;
         }

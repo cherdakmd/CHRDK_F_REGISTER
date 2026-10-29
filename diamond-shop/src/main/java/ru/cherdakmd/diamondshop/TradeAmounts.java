@@ -21,6 +21,16 @@ final class TradeAmounts {
         long income=price*max/batch;
         return income==0?0:(int)((income*batch+price-1)/price);
     }
+    /** Объём и котировка принимаются вместе: исполнение не выбирает цену повторно. */
+    record Sale(int batch,long price,int units,long money) {
+        Sale {
+            if(money<1||quote(batch,price,units,false)!=money)throw new IllegalArgumentException("sale quote");
+        }
+    }
+    static Sale selectSale(int batch,long price,long available,long budget){
+        int units=saleAll(batch,price,available,budget);
+        return units==0?null:new Sale(batch,price,units,quote(batch,price,units,false));
+    }
     static int adjust(int current,int delta){return (int)Math.max(1,Math.min(MAX_UNITS,(long)current+delta));}
     private TradeAmounts(){}
 }

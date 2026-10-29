@@ -157,20 +157,13 @@ public final class ShopCommandHandler implements TabExecutor {
         if (item == null) return;
         Material material = Material.matchMaterial(item.material());
         long have = material == null ? 0 : ShopService.countItems(player.getInventory(), material);
-        long units;
-        if (args.length >= 3 && "all".equalsIgnoreCase(args[2])) {
-            units = plugin.shopService().maximumSale(player,item,plugin.shopService().batchSize(item),plugin.shopService().bidPrice(item));
-        } else if (args.length >= 3) {
-            units = parseLong(args[2], -1);
-        } else {
-            units = 1;
-        }
+        boolean all=args.length>=3&&"all".equalsIgnoreCase(args[2]);
+        long units=all?0:args.length>=3?parseLong(args[2],-1):1;
         if (have <= 0) {
             plugin.messages().send(player, "trading.sell-none");
             return;
         }
-        if(args.length>=3&&"all".equalsIgnoreCase(args[2])&&units<1){plugin.messages().send(player,"quantity.sellall-none");return;}
-        ShopService.TradeResult result = plugin.shopService().sell(player, item, units);
+        ShopService.TradeResult result = all?plugin.shopService().sellMaximum(player,item):plugin.shopService().sell(player,item,units);
         if (result.success()) {
             plugin.messages().send(player, "trading.sell-done",
                     "material", item.material().toLowerCase(Locale.ROOT), "units", result.units(),
