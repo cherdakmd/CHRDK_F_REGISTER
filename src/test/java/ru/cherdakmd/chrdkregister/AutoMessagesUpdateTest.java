@@ -159,7 +159,7 @@ class AutoMessagesUpdateTest {
     @Test void editedPartialEmptyAndMissingListsAreNotOverwritten() {
         var legacy = yaml("presentation-legacy-1.4.246.yml");
         var fresh = yaml("config.yml");
-        var edited = new ArrayList<>(legacy.getList("auto-messages.messages"));
+        var edited = new ArrayList<Object>(legacy.getList("auto-messages.messages"));
         edited.set(0, Map.of("text", "Личное сообщение владельца"));
         for (List<?> custom : List.<List<?>>of(edited, List.of("Свой текст"), List.of())) {
             var live = yaml("config.yml");
