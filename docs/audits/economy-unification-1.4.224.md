@@ -191,3 +191,14 @@ playerdata proof, receipt отдельно от latest cash marker, затем �
 до ACK; прежняя квитанция имеет приоритет, неизвестный UUID не импортируется наугад.
 [API 23, миграции и проверки 235](../releases/1.4.235.md). Общий релиз не опубликован;
 Claims земля/аренда, DailyRewards money и Treasures plain diamond loot ещё открыты.
+
+## Этап 236 — деньги и домен Claims
+
+Gate земли/аренды закрыт: расчёт на отдельном ClaimStore, canonical source WAL,
+Root multiaccount receipt, затем frozen ownership/roles/срок/долг/снятие/счётчики
+одним ACK. Source lineage имеет durable регистрацию; старые казны — forced
+name/UUID import receipt. Физическая недостача отдельно journalled в личный /bal,
+без именованных предметов/offhand и денежных drops. Pending замораживает все
+мутации и защищает также новый чанк; live restore финансового источника запрещён.
+[Протокол и границы 236](../releases/1.4.236.md). DailyRewards DIAMOND/VIP и
+Treasures ordinary diamond loot остаются release-gates; ZIP/установки нет.

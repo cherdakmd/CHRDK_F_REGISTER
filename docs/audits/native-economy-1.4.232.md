@@ -42,7 +42,7 @@ market/playerdata. Не удалять pending и не выдавать пред
 | Core `/bal deposit` | Закрыто в 233: canonical bank.json v5 intent + native proof + receipt/баланс одним replace | [Протокол и границы 233](../releases/1.4.233.md) |
 | Core `/bal withdraw` | Закрыто в 233: целый storage-only grant с резервом счёта/nonce/checkpoint; без drops | [Протокол и границы 233](../releases/1.4.233.md) |
 | DiamondShop | Закрыто в 235: durable source intent → Core reservation/native proof → bank receipt → once stock/stats/accepted UTC effect | [Протокол, тесты и границы 235](../releases/1.4.235.md) |
-| Claims земля/аренда/личные операции | ClaimBankBridge → exchangeClaimAccounts; банк и домен/предметы независимы | Квитанция и согласованный source-переход, в том числе системные переводы без Player и recovery аренды |
+| Claims земля/аренда/личные операции | Закрыто в 236: отдельная shadow-модель, canonical domain WAL, атомарная квитанция всех счетов и once domain ACK; native funding в личный /bal | [Протокол, проверки и границы 236](../releases/1.4.236.md) |
 
 Укрепление ChargeInventory **не переподключает автоматически** эти старые API.
 В частности, просто добавить saveData в callback недостаточно: сбой второго
@@ -74,8 +74,8 @@ BattlePass найденные DIAMOND_ORE — цели заданий, DIAMOND_S
 
 - [x] 232: native proof общей оплаты, Orders и pending-аукциона; Guilds allowlist; runtime quarantine.
 - [x] 233: Core deposit/withdraw с durable native protocol, без денежных drops.
-- [ ] DiamondShop: native recovery и согласованность рынка/лимитов.
-- [ ] Claims: финансовые source-переходы и recovery системной аренды.
+- [x] 235: DiamondShop — native recovery и согласованность рынка/лимитов.
+- [x] 236: Claims — финансовые source-переходы и recovery системной аренды.
 - [ ] DailyRewards: обычные/VIP денежные награды в /bal, frozen once-claim.
 - [ ] Treasures: отделение обычных алмазных roll-outcomes от именного/предметного loot.
 - [ ] Повторить полный поиск прямых выдач/списаний и проверить стандартные/старые конфиги.
@@ -116,3 +116,12 @@ canonical bank.json v6 SHOP-intent и резервом владельца, nativ
 отказа intake позволяет отменить только ещё не принятую заявку без денег/предметов.
 [Подробности 235](../releases/1.4.235.md). Claims, DailyRewards и Treasures loot
 остаются gates общего релиза.
+
+## Этап 236 — Claims
+
+Земля, налог/выручка, суточные списания, долг и аренда имеют единый frozen
+domain ACK. Системное снятие за долг входит в тот же переход. Неопределённость
+не объявляется нехваткой; WAL блокирует interleaving и старый autosave. Native
+недостача до заявки отдельно пополняет личный /bal и остаётся в нём при отказе.
+[API 24, схемы, тесты и эксплуатационные границы](../releases/1.4.236.md).
+Открыты DailyRewards, Treasures plain loot, итоговый recensus и общий релиз.

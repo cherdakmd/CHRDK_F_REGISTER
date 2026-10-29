@@ -57,6 +57,7 @@ public final class ClaimStore {
     private long financialSequence;
     private ClaimFinance.Pending financialPending;
     private Map<String,Map<Long,Claim>> pendingProtection;
+    private boolean protectionUnknown;
     private void cachePendingProtection() {
         if(financialPending==null) {pendingProtection=null;return;}
         var copy=new ClaimStore(file.getParent(),logger); copy.read(GSON.fromJson(financialPending.after(),DATA_TYPE)); pendingProtection=copy.claims;
@@ -118,7 +119,10 @@ public final class ClaimStore {
         chunksClaimedTotal=copy.chunksClaimedTotal; diamondsSpent=copy.diamondsSpent; taxBurned=copy.taxBurned; revision++;
     }
     synchronized Claim protectedClaimAt(String world,int x,int z) {
-        var before=claimAt(world,x,z); if(before!=null||financialPending==null) return before;
+        var before=claimAt(world,x,z); if(before!=null) return before;
+        // Нечитаемый источник не доказывает, что чанк свободен. Временно защищаем весь мир.
+        if(protectionUnknown) return new Claim(world,x,z,"",Long.MAX_VALUE);
+        if(financialPending==null) return null;
         if(pendingProtection==null) cachePendingProtection(); var map=pendingProtection.get(world); return map==null?null:map.get(ClaimMath.chunkKey(x,z));
     }
 
@@ -183,6 +187,7 @@ public final class ClaimStore {
     // ------------------------------------------------------------------ io --
 
     public synchronized void load() {
+        if(finance!=null) throw new IllegalStateException("Финансовый источник перезагружается только при остановленном сервере");
         reset();
         if (!Files.exists(file)) return;
         Map<String, Object> data;
@@ -257,7 +262,7 @@ public final class ClaimStore {
     }
 
     private void reset() {
-        moneyAvailable = true;
+        moneyAvailable = true; protectionUnknown=false;
         financialLineage=java.util.UUID.randomUUID(); financialRegistered=false; financialSequence=0; financialPending=null; pendingProtection=null;
         claims.clear();
         treasury.clear();
@@ -507,6 +512,7 @@ public final class ClaimStore {
 
     /** Повреждённый файл не затирается: откладываем его рядом для ручного восстановления. */
     private void quarantine(Exception exception) {
+        protectionUnknown=true;
         moneyAvailable = false;
         blocked = true;
         Path broken = file.resolveSibling(file.getFileName() + ".corrupt-" + System.currentTimeMillis());
@@ -981,7 +987,7 @@ public final class ClaimStore {
         if (amount <= 0) {
             return;
         }
-        diamondsSpent += amount;
+        diamondsSpent = Math.addExact(diamondsSpent,amount);
         touch();
     }
 
@@ -990,7 +996,7 @@ public final class ClaimStore {
         if (amount <= 0) {
             return;
         }
-        taxBurned += amount;
+        taxBurned = Math.addExact(taxBurned,amount);
         touch();
     }
 
