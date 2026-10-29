@@ -22,6 +22,9 @@ final class GameplayRewardTexts {
     }
 
     static String message(String module, String key, String text) {
+        // Старый пользовательский файл не переписываем, но снятый источник не рекламируем.
+        if ("CHRDK_Core".equalsIgnoreCase(module) && "labels.usage".equals(key) && text != null)
+            return text.replaceAll("(?i)\\|treasures(?=\\||\\])", "");
         if (MODULES.contains(module.toLowerCase(Locale.ROOT))) return reward(text);
         return text;
     }

@@ -50,6 +50,15 @@ class RetiredAddonsTest {
         assertTrue(AutoMessage.parse("Ванильные боссы и сокровища рыбалки остаются").eligible(id -> true, permission -> true, false, false));
         assertFalse(RetiredAddons.announcement("/treasures_other"));
     }
+    @Test void oldCustomLabelsUsageLosesOnlyTheRetiredTokenWithoutRewritingTheFile() {
+        String old = "<yellow>/labels [rank|tierforge|treasures|classes]</yellow>";
+        assertEquals("<yellow>/labels [rank|tierforge|classes]</yellow>",
+                GameplayRewardTexts.message("CHRDK_Core", "labels.usage", old));
+        assertEquals("<yellow>/labels [rank]</yellow>", GameplayRewardTexts.message(
+                "CHRDK_Core", "labels.usage", "<yellow>/labels [rank|TREASURES]</yellow>"));
+        assertEquals(old, GameplayRewardTexts.message("CHRDK_Core", "unrelated", old));
+        assertEquals(old, GameplayRewardTexts.message("OtherPlugin", "labels.usage", old));
+    }
     @Test void wikiHasNeitherRetiredSuggestionsNorBrokenExplicitLinks() {
         var wiki = WikiSettings.of(true, WikiSettings.DEFAULT_URL, List.of("treasures", "hunt", "bosses", "faq"));
         assertEquals(List.of("hunt", "faq"), wiki.pages());
