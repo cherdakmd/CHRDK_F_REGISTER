@@ -1,0 +1,80 @@
+# Точный стандартный список 1.4.245–1.4.246. Только автосообщения;
+# расписание, меню и TAB здесь намеренно отсутствуют.
+auto-messages:
+  messages:
+  - text: '<gray>Все возможности сервера собраны в <white>/menu</white>: ранг, прогресс, экономика, мир, снаряжение, охота и общество.</gray>'
+  - text: '<gray>Ваш баланс банка: <white>%balance%</white> алмазов. Перевод другу — <white>/pay ник сумма</white>, топ — <white>/baltop</white>.</gray>'
+  - text: '<gray>Алмазы можно хранить в банке: <white>/bal deposit</white> и <white>/bal withdraw</white>. Счёт не теряется при смерти.</gray>'
+  - text: <gray>Переключение локального и общего чата — <white>/chat</white>. Личное сообщение — <white>/msg ник текст</white>, ответ
+      — <white>/r</white>.</gray>
+  - text: <gray>За игровые достижения — отдельный буст +10% опыта Minecraft, профессий и навыков. Тратится только онлайн; запас — <white>/profile</white>.
+      Ранги и платные товары не продлеваются.</gray>
+  - text: <gray>Ранг закончился. Продлить и сохранить оформление — <white>/pass menu</white>, вопросы — в Discord сервера.</gray>
+    condition: no-pass
+  - text: '<gray>Спасибо за поддержку сервера! Ваш ранг активен до конца срока: <white>%pass_left%</white>.</gray>'
+    condition: paid
+  - text: '<gray>Защитите аккаунт: <white>/2fa setup</white>, затем подтвердите код приложения. Никому не сообщайте пароль и коды.</gray>'
+    condition: unsecured
+  - text: '<gray>Проверьте сессии входа: <white>/session</white>. Для выхода из аккаунта — <white>/logout</white>.</gray>'
+  - text: '<gray>Поддержать сервер и выбрать ранг или косметику: <click:open_url:''https://chrdk.trademc.org/''><gold><u>донат-магазин
+      CHRDK</u></gold></click>. Ссылка также доступна через <white>/donate</white> и <white>/menu</white>.</gray>'
+  - text: '<gray>Задания сезона и награды: <white>/battlepass</white>. Прогресс не сгорает при перезапуске.</gray>'
+    plugin: CHRDK_BattlePass
+    permission: chrdkbp.use
+  - text: '<gray>72 достижения ждут своего героя: <white>/achievements</white>. Бейджи открываются вместе с целями.</gray>'
+    plugin: CHRDK_Achievements
+    permission: chrdkachievements.use
+  - text: '<gray>Десять навыков и 60 перков: <white>/skills</white>. Уровни растут от обычной игры — копайте, бейте, варите.</gray>'
+    plugin: CHRDK_Skills
+    permission: chrdkskills.use
+  - text: '<gray>Артефакты собираются в коллекцию: <white>/artifacts collection</white>. За полноту каталога — часы отдельного буста
+      и алмазы.</gray>'
+    plugin: CHRDK_Artifacts
+    permission: chrdkartifacts.use
+  - text: <gray>Звание растёт вместе с наигранным временем. Ваш прогресс — <white>/ranks</white>.</gray>
+    plugin: CHRDK_Ranks
+    permission: chrdkranks.use
+  - text: '<gray>Общие цели сервера: <white>/goals</white> — ваш вклад и прогресс сообщества.</gray>'
+    plugin: CHRDK_CommonGoals
+    permission: chrdkgoals.use
+    min-online: 3
+  - text: '<gray>Ресурсы и строительная палитра: <white>/shop</white>. Личный счёт — <white>/bal</white>, недостача — предметами. У
+      декора нет обратной скупки; цены и доступность — <white>/shop price товар</white>.</gray>'
+    plugin: CHRDK_DiamondShop
+    permission: chrdkshop.use
+  - text: '<gray>Продайте стак из руки: <white>/auction sell цена</white>. Покупка требует подтверждения, комиссия видна в лоте.</gray>'
+    plugin: CHRDK_Auction
+    permission: chrdkauction.use
+  - text: <gray>Купленные и возвращённые лоты ждут в <white>/auction mail</white>. Выручку забирайте через <white>/auction money</white>.</gray>
+    plugin: CHRDK_Auction
+    permission: chrdkauction.use
+  - text: '<gray>Лотерея: <white>/lottery</white> — банк, шанс и время. Билеты — <white>/lottery buy</white>, выигрыш — <white>/lottery
+      claim</white>.</gray>'
+    plugin: CHRDK_Lottery
+    permission: chrdklottery.use
+  - text: '<gray>Защитите постройки: <white>/claim help</white>. Казна для ежедневной ренты — <white>/claim balance</white>.</gray>'
+    plugin: CHRDK_Claims
+    permission: chrdkclaims.use
+  - text: '<gray>Точки дома: <white>/homes</white> и <white>/sethome имя</white>. Запрос к игроку — <white>/tpa ник</white>.</gray>'
+    plugin: CHRDK_Teleports
+    permission: chrdktele.use
+  - text: '<gray>Изучайте кастомные чары: <white>/enchants</white>. Редкости снаряжения — <white>/tiers</white>.</gray>'
+    plugin: CHRDK_Enchants
+    permission: chrdkenchants.use
+  - text: <gray>Вся косметика — <white>/cosmetic</white> или кнопка в <white>/menu</white>. Шлейф, вход, цвет ника и надписи — в одном
+      меню.</gray>
+    plugin: CHRDK_Cosmetics
+    permission: chrdkcosmetics.use
+  - text: '<gray>Приглашайте друзей: <white>/ref</white> — статус и условия бонуса. Вас позвал друг? <white>/ref use его_ник</white>.</gray>'
+    plugin: CHRDK_Referrals
+    permission: chrdkref.use
+  - text: '<gray>Сейчас на сервере <white>%online%</white> игроков. Самое время для общих целей: <white>/goals</white>.</gray>'
+    plugin: CHRDK_CommonGoals
+    permission: chrdkgoals.use
+    min-online: 5
+  - text: '<gray>Забирайте ежедневную награду: <white>/daily</white>. Стрик входов не сбрасывается при пропуске одного дня.</gray>'
+    plugin: CHRDK_DailyRewards
+    permission: chrdkdaily.use
+  - text: '<gray>Сведения об очереди входа: <white>/queue info</white>. Приоритет зависит от настроек сервера.</gray>'
+    plugin: CHRDK_Queue
+    permission: chrdkqueue.use
