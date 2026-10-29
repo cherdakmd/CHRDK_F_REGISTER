@@ -73,9 +73,10 @@ class TreasureFindNotificationsTest {
         assertTrue(reveal.indexOf("findNotifications()") < reveal.indexOf("\"map-found\""));
         assertTrue(reveal.contains("plugin.listener().celebrate(player, block.getLocation(), found)"));
         String service = source("TreasureService");
-        assertTrue(service.contains("if (!extra.loot().isEmpty() && plugin.config().findNotifications()"));
-        assertTrue(service.indexOf("payload.add(itemStack)", service.indexOf("private List<TreasureLoot.LootStack> grantStreakBonus"))
-                < service.indexOf("if (!extra.loot().isEmpty() && plugin.config().findNotifications()"));
+        String bonus=service.substring(service.indexOf("private List<TreasureLoot.LootStack> grantStreakBonus"),service.indexOf("private void checkRank"));
+        assertTrue(bonus.contains("payload.add(itemStack)"));
+        assertFalse(bonus.contains("messages().send"));
+        assertFalse(source("TreasureListener").contains("\"double-ore\""));
     }
 
     private String source(String name) throws Exception {

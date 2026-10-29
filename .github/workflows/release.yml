@@ -103,6 +103,7 @@ jobs:
           done
           python3 .github/scripts/verify_release.py release "$version"
           zip -j -9 "chrdk-plugins-${version}.zip" release/*.jar 'release/ОБНОВЛЕНИЕ.txt'
+          unzip -t "chrdk-plugins-${version}.zip"
           unzip -l "chrdk-plugins-${version}.zip"
           echo "zip=chrdk-plugins-${version}.zip" >> "$GITHUB_ENV"
 

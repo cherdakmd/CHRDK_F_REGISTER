@@ -206,4 +206,6 @@ class QuestModelTest {
         assertEquals("?", QuestText.joinTags(List.of()));
         assertEquals("a, b", QuestText.joinTags(List.of("a", "b")));
     }
+    @Test void questCurrencyCannotBeEnabledThroughCustomItems(){var reward=new QuestReward(10,0,List.of(new QuestReward.Item(Material.DIAMOND,1),new QuestReward.Item(Material.DIAMOND_BLOCK,1),new QuestReward.Item(Material.BREAD,2)));assertEquals(1,reward.items().size());assertEquals(Material.BREAD,reward.items().getFirst().material());}
+
 }

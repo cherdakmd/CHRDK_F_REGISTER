@@ -89,3 +89,14 @@ jobs:
             */build/libs/*.jar
           if-no-files-found: error
           retention-days: 14
+
+      - name: Upload JUnit reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-${{ github.sha }}
+          path: |
+            build/test-results/test/*.xml
+            */build/test-results/test/*.xml
+          retention-days: 14
+          if-no-files-found: ignore
