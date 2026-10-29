@@ -169,6 +169,7 @@ public final class ShopCommandHandler implements TabExecutor {
             plugin.messages().send(player, "trading.sell-none");
             return;
         }
+        if(args.length>=3&&"all".equalsIgnoreCase(args[2])&&units<1){plugin.messages().send(player,"quantity.sellall-none");return;}
         ShopService.TradeResult result = plugin.shopService().sell(player, item, units);
         if (result.success()) {
             plugin.messages().send(player, "trading.sell-done",
