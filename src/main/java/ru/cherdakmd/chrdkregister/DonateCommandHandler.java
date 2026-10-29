@@ -26,20 +26,20 @@ public final class DonateCommandHandler implements CommandExecutor, TabCompleter
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        Messages texts = messages;
+        Messages messages = this.messages;
         if (!sender.hasPermission(PERMISSION)) {
-            texts.send(sender, "donate.no-permission");
+            messages.send(sender, "donate.no-permission");
             return true;
         }
         if (args.length != 0) {
-            texts.send(sender, "donate.usage");
+            messages.send(sender, "donate.usage");
             return true;
         }
         if (sender instanceof Player) {
-            texts.send(sender, "donate.link", "url", SHOP_URL);
-            texts.send(sender, "donate.copy", "url", SHOP_URL);
+            messages.send(sender, "donate.link", "url", SHOP_URL);
+            messages.send(sender, "donate.copy", "url", SHOP_URL);
         } else {
-            texts.send(sender, "donate.console", "url", SHOP_URL);
+            messages.send(sender, "donate.console", "url", SHOP_URL);
         }
         return true;
     }
