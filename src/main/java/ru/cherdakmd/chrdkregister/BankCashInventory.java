@@ -47,6 +47,7 @@ final class BankCashInventory {
     static boolean valid(BankCash.Intent intent) {
         try {
             if(intent==null||!intent.valid()) return false;
+            if(intent.kind()==BankCash.Kind.SHOP) return ru.cherdakmd.chrdkregister.api.ShopInventory.valid(intent.shop());
             var before=ChargeInventory.decode(intent.before());
             var plan=intent.kind()==BankCash.Kind.DEPOSIT?deposit(before,intent.selected(),intent.request(),intent.blockWorth(),intent.beforeBalance()):withdraw(before,intent.amount());
             return plan!=null&&plan.amount()==intent.amount()&&ChargeInventory.matches(plan.after(),intent.after());

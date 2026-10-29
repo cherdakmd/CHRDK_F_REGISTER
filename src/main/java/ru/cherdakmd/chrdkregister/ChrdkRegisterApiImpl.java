@@ -49,8 +49,22 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
                 ? 0L : plugin.bank().balance(player);
     }
     @Override public boolean importLegacyShop(java.util.UUID player, long amount) {
+        if(player==null||!org.bukkit.Bukkit.isPrimaryThread()) return false;
+        var online=org.bukkit.Bukkit.getPlayer(player);
+        if(bank!=null&&bank.account(player)==null&&(online==null||!isAuthenticated(online))&&!org.bukkit.Bukkit.getOfflinePlayer(player).hasPlayedBefore()) return false;
         return plugin != null && plugin.bank() != null && plugin.bank().enabled() && org.bukkit.Bukkit.isPrimaryThread()
                 && bank != null && bank.importLegacyShop(player, amount);
+    }
+    @Override public boolean shopTradingAvailable() { return plugin!=null&&plugin.bank()!=null&&plugin.bank().enabled(); }
+    @Override public boolean legacyShopImported(java.util.UUID id) { return bank!=null&&bank.legacyShopImported(id); }
+    @Override public boolean registerShop(java.util.UUID market) {
+        return org.bukkit.Bukkit.isPrimaryThread()&&bank!=null&&bank.registerShop(market);
+    }
+    @Override public ru.cherdakmd.chrdkregister.api.ShopExchange.Status shopExchangeStatus(ru.cherdakmd.chrdkregister.api.ShopExchange t) {
+        return bank==null?ru.cherdakmd.chrdkregister.api.ShopExchange.Status.UNAVAILABLE:bank.shopStatus(t);
+    }
+    @Override public ru.cherdakmd.chrdkregister.api.ShopExchange.Status commitShopExchange(Player p,ru.cherdakmd.chrdkregister.api.ShopExchange t) {
+        return plugin==null||plugin.bank()==null?ru.cherdakmd.chrdkregister.api.ShopExchange.Status.UNAVAILABLE:plugin.bank().shopExchange(p,t);
     }
     @Override public boolean exchangeDiamonds(Player player, long debit, long credit,
             org.bukkit.inventory.ItemStack[] expected, org.bukkit.inventory.ItemStack[] replacement) {

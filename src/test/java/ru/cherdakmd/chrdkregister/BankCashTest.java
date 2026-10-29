@@ -48,7 +48,7 @@ class BankCashTest {
         BankCash.recover(b,owner,nativeBag); assertEquals(100,load().balance(owner)); assertEquals(2,load().cashReceipt(owner).sequence()); assertEquals(2,nativeBag.applies); assertFalse(load().finishCash(first));
     }
     @Test void matchingAfterWithoutNonceCannotAuthorizeDepositOrWithdrawal() throws Exception {
-        for(var kind:BankCash.Kind.values()) {
+        for(var kind:new BankCash.Kind[]{BankCash.Kind.DEPOSIT,BankCash.Kind.WITHDRAW}) {
             Path separate=dir.resolve(kind.name()); var b=new BankStore(separate,log); b.deposit(owner,"Steve",100); b.flush(); intent(b,kind,9); var nativeBag=bag(); nativeBag.state="after";
             assertEquals(InventoryTransfer.Decision.CONFLICT,BankCash.recover(b,owner,nativeBag)); assertEquals(100,b.balance(owner)); assertNotNull(b.cashPending(owner)); assertEquals(0,nativeBag.applies);
         }
@@ -112,8 +112,8 @@ class BankCashTest {
         var p=new AuctionPayment(UUID.randomUUID(),lineage,1,1,other,owner,10,0,10,0,0,"a".repeat(64)); assertFalse(b.settleAuction(p)); assertEquals(AuctionPayment.Status.MISSING,b.auctionPaymentStatus(p));
     }
     @Test void legacyV4MigratesWithoutInventingMoneyOrRetroactivelyExchangingItems() throws Exception {
-        funded(100); var json=JsonParser.parseString(Files.readString(load().file())).getAsJsonObject(); json.addProperty("schema",4); json.remove("cashPending"); json.remove("cashReceipts"); Files.writeString(load().file(),json.toString());
-        var b=load(); assertTrue(b.available()); assertEquals(100,b.balance(owner)); assertNull(b.cashReceipt(owner)); assertFalse(b.cashLocked(owner)); assertNotNull(intent(b,BankCash.Kind.DEPOSIT,9)); assertEquals(5,JsonParser.parseString(Files.readString(b.file())).getAsJsonObject().get("schema").getAsInt());
+        funded(100); var json=JsonParser.parseString(Files.readString(load().file())).getAsJsonObject(); json.addProperty("schema",4); json.remove("cashPending"); json.remove("cashReceipts"); json.remove("shopSettlements"); Files.writeString(load().file(),json.toString());
+        var b=load(); assertTrue(b.available()); assertEquals(100,b.balance(owner)); assertNull(b.cashReceipt(owner)); assertFalse(b.cashLocked(owner)); assertNotNull(intent(b,BankCash.Kind.DEPOSIT,9)); assertEquals(6,JsonParser.parseString(Files.readString(b.file())).getAsJsonObject().get("schema").getAsInt());
     }
     void refuse(String original) throws Exception {
         Files.writeString(dir.resolve("bank.json"),original); var b=load(); assertFalse(b.available()); b.flush(); assertEquals(original,Files.readString(b.file()));
@@ -121,7 +121,7 @@ class BankCashTest {
     @Test void strictMetadataRejectsMissingTablesDuplicateJsonAndTrailingGarbage() throws Exception {
         pending(BankCash.Kind.DEPOSIT); String original=Files.readString(load().file()); var root=JsonParser.parseString(original).getAsJsonObject();
         for(String field:List.of("cashPending","cashReceipts")) { var bad=root.deepCopy(); bad.remove(field); refuse(bad.toString()); }
-        refuse(original+" trailing"); refuse(original.replace("\"schema\": 5","\"schema\": 5, \"schema\": 4"));
+        refuse(original+" trailing"); refuse(original.replace("\"schema\": 6","\"schema\": 6, \"schema\": 4"));
     }
     @Test void malformedAmountsUuidSequenceBalanceAndIntOverflowAreNotCoerced() throws Exception {
         pending(BankCash.Kind.DEPOSIT); var root=JsonParser.parseString(Files.readString(load().file())).getAsJsonObject();

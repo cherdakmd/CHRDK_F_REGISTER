@@ -6,7 +6,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
-import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
+import ru.cherdakmd.chrdkregister.api.*;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -33,14 +33,30 @@ public final class ShopService {
     public double[] historyOf(ShopConfig.ShopItem item) { return store.historyOf(item.material()); }
     public boolean migrate(UUID id, double ignoredLegacyPreview) {
         long amount = store.legacyAmount(id); var core = api.get();
+        if(store.legacyAvailable()&&core!=null&&core.legacyShopImported(id)) return true;
         return store.legacyAvailable() && amount >= 0 && core != null && core.importLegacyShop(id, amount);
     }
     public boolean ready(Player player) {
         var core = api.get();
-        return Bukkit.isPrimaryThread() && core != null && player.isOnline() && !player.isDead() && !player.hasMetadata("NPC")
+        if(!Bukkit.isPrimaryThread()||core==null||!core.shopTradingAvailable()||!store.legacyAvailable()||!store.ensureMarket()||!core.registerShop(store.market())) return false;
+        if(store.pending()!=null) { recoverPending(); return false; }
+        return player.isOnline() && !player.isDead() && !player.hasMetadata("NPC")
                 && player.hasPermission("chrdkshop.use") && core.isAuthenticated(player)
                 && migrate(player.getUniqueId(), store.balanceOf(player.getUniqueId()));
     }
+    public boolean recoverPending() {
+        var core=api.get(); if(core==null||!Bukkit.isPrimaryThread()||!store.legacyAvailable()||!store.ensureMarket()||!core.registerShop(store.market())) return false;
+        return ShopJournal.recover(store,new ShopJournal.Bank() {
+            public ShopExchange.Status status(ShopExchange t) { return core.shopExchangeStatus(t); }
+            public ShopExchange.Status commit(ShopExchange t) {
+                var player=Bukkit.getPlayer(t.owner()); if(player==null||!core.isAuthenticated(player)) return ShopExchange.Status.UNAVAILABLE;
+                var result=core.commitShopExchange(player,t);
+                if(result!=ShopExchange.Status.COMMITTED&&result!=ShopExchange.Status.MISSING) lock(player);
+                return result;
+            }
+        });
+    }
+    private void lock(Player player) { player.kick(net.kyori.adventure.text.Component.text("Магазин: незавершённая сделка требует восстановления. Не сбрасывайте данные.")); }
     public long balance(Player player) { var core = api.get(); return core == null ? 0 : core.personalDiamonds(player); }
     public long physical(Player player) {
         long value = 0;
@@ -91,11 +107,14 @@ public final class ShopService {
         }
         long now = System.currentTimeMillis();
         if (!store.canRecordTurnover(player.getUniqueId(), money, config.dailyTurnoverLimit(), now)) return fail(store.legacyAvailable() ? "trading.daily-limit" : "trading.unavailable", money);
-        if (!api.get().exchangeDiamonds(player, debit, credit, before, after)) return fail("trading.unavailable", money);
-        // На основном потоке нет callbacks между проверкой лимита, Core-commit и учётом рынка.
-        store.tryRecordTurnover(player.getUniqueId(), money, config.dailyTurnoverLimit(), now);
-        store.adjustStock(item, buy ? -units : units, now, config.stockRecoveryPerHour());
-        store.recordTrade(item, units, !buy, money); recordPricePoint(item);
+        var t=new ShopExchange(UUID.randomUUID(),store.market(),store.sequence()+1,player.getUniqueId(),buy,item.material(),units,money,debit,credit,spent,config.currencyRates(),ChargeInventory.encode(before),ChargeInventory.encode(after));
+        long stock=store.stockOf(item,now,config.stockRecoveryPerHour());
+        long afterStock; try { afterStock=Math.max(1,Math.addExact(stock,buy?-units:units)); } catch(ArithmeticException e) { return fail("trading.unavailable",money); }
+        double afterPrice=PriceEngine.price(item.basePrice(),afterStock,item.refStock(),item.minMultiplier(),item.maxMultiplier());
+        if(!store.prepare(t,item,now,config.stockRecoveryPerHour(),config.dailyTurnoverLimit(),config.historyMaxPoints(),config.historyIntervalMillis(),afterPrice)) {
+            if(!store.legacyAvailable()) lock(player); return fail("trading.unavailable",money);
+        }
+        if(!recoverPending()) { lock(player); return fail("trading.pending",money); }
         return new TradeResult(true, money, null, units, debit, spent, change);
     }
     public record SellAllResult(long income, long units, int kinds) { }

@@ -65,7 +65,7 @@ class ShopDurabilityTest {
     }
     @Test void freshFileAndCleanLegacySourceCanBeSavedWithoutAnInventedWallet() throws Exception {
         var s=load(); s.saveNow(); assertTrue(Files.isRegularFile(file())); assertTrue(load().legacyBalances().isEmpty()); assertFalse(s.isDirty());
-        seed("1.01"); s=load(); String before=Files.readString(file()); s.saveNow(); assertEquals(before,Files.readString(file()));
+        seed("1.01"); s=load(); String before=Files.readString(file()); s.saveNow(); assertEquals(2,s.legacyAmount(id)); assertTrue(JsonParser.parseString(Files.readString(file())).getAsJsonObject().has("market"));
     }
     @Test void sourceStockLimitAndHistoryRoundTripTogether() throws Exception {
         var s=funded(); long time=86400000L*21500+1; s.adjustStock(item,-2,time,0); s.recordTrade(item,2,false,4); assertTrue(s.tryRecordTurnover(id,4,100,time)); s.recordPrice(item,2,time,24,1000); s.saveNow();

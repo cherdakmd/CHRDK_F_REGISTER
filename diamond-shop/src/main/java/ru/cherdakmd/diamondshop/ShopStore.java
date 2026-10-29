@@ -50,6 +50,14 @@ public final class ShopStore {
     private final Map<UUID, java.math.BigDecimal> balances = new HashMap<>();
     private final Map<String, ItemState> items = new HashMap<>();
     private final Map<UUID, LimitRow> limits = new HashMap<>();
+    private UUID market=UUID.randomUUID();
+    private long sequence;
+    private ShopJournal.Pending pending;
+    synchronized UUID market() { return market; }
+    synchronized long sequence() { return sequence; }
+    synchronized ShopJournal.Pending pending() { return pending; }
+    synchronized boolean ensureMarket() { saveNow(); return legacyAvailable&&Files.isRegularFile(file)&&!dirty; }
+    synchronized void stop(String reason) { quarantine(new IllegalStateException(reason)); }
     private double turnover;
     private boolean dirty;
     private volatile boolean legacyAvailable = true;
@@ -70,7 +78,7 @@ public final class ShopStore {
         try {
             if (!Files.isRegularFile(file)) throw new IOException("shop-data.json не является файлом");
             var data=ShopJson.read(file);
-            for(String key:data.keySet()) if(!java.util.Set.of("balances","items","limits","turnover").contains(key)) throw new IllegalArgumentException("Неизвестное поле магазина: "+key);
+            for(String key:data.keySet()) if(!java.util.Set.of("balances","items","limits","turnover","schema","market","sequence","pending").contains(key)) throw new IllegalArgumentException("Неизвестное поле магазина: "+key);
             var nextBalances=new HashMap<UUID,java.math.BigDecimal>();
             var nextItems=new HashMap<String,ItemState>();
             var nextLimits=new HashMap<UUID,LimitRow>();
@@ -96,9 +104,26 @@ public final class ShopStore {
                 limit.used=decimal(row.get("used")); nextLimits.put(id,limit);
             }
             double nextTurnover=data.has("turnover")?decimal(data.get("turnover")):0;
+            UUID nextMarket=market; long nextSequence=0; ShopJournal.Pending nextPending=null;
+            if(data.has("schema")) {
+                if(integer(data,"schema",true)!=1) throw new IllegalArgumentException("shop schema");
+                if(!data.has("market")||!data.get("market").isJsonPrimitive()||!data.get("market").getAsJsonPrimitive().isString()) throw new IllegalArgumentException("market UUID");
+                nextMarket=uuid(data.get("market").getAsString()); nextSequence=integer(data,"sequence",true);
+                if(nextSequence>=Long.MAX_VALUE-1) throw new IllegalArgumentException("shop sequence exhausted");
+                if(data.has("pending")) {
+                    var row=data.getAsJsonObject("pending"); ru.cherdakmd.chrdkregister.api.ShopExchange.requireJson(row.getAsJsonObject("trade"));
+                    for(String field:java.util.List.of("stock","sold","bought","time","day","historyPoints","historyInterval")) integer(row,field,true);
+                    integer(row,"historyPoints",true); row.get("historyPoints").getAsBigDecimal().intValueExact();
+                    for(String field:java.util.List.of("turnover","price")) decimal(row.get(field));
+                    var used=row.get("used"); if(used==null||!used.isJsonPrimitive()||!used.getAsJsonPrimitive().isNumber()) throw new IllegalArgumentException("pending used");
+                    nextPending=GSON.fromJson(row,ShopJournal.Pending.class);
+                    var limit=nextLimits.get(nextPending.trade().owner()); double oldUsed=limit!=null&&limit.dayStart==nextPending.day()?limit.used:0;
+                    if(!nextMarket.equals(nextPending.trade().market())||nextPending.trade().sequence()!=nextSequence+1||!nextPending.matches(nextItems.get(nextPending.trade().material()),oldUsed,nextTurnover)) throw new IllegalArgumentException("pending effect");
+                }
+            } else if(data.has("market")||data.has("sequence")||data.has("pending")) throw new IllegalArgumentException("downgraded shop metadata");
             // Сначала проверена вся структура: не публикуем половину файла до первой ошибки.
             balances.clear(); balances.putAll(nextBalances); items.clear(); items.putAll(nextItems); limits.clear(); limits.putAll(nextLimits);
-            turnover=nextTurnover; dirty=false;
+            turnover=nextTurnover; market=nextMarket; sequence=nextSequence; pending=nextPending; dirty=!data.has("schema");
             logger.info("[DiamondShop] Загружено: "+balances.size()+" старых входов миграции, "+items.size()+" товаров.");
         } catch(Exception error) { quarantine(error); }
     }
@@ -169,6 +194,7 @@ public final class ShopStore {
     /** Лениво применяет возврат запаса к эталону и возвращает актуальный stock. */
     public synchronized long stockOf(ShopConfig.ShopItem item, long nowMillis, double recoveryPerHour) {
         ItemState state = itemState(item, nowMillis);
+        if(pending!=null) return state.stock;
         long stock = PriceEngine.recover(state.stock, item.refStock(), recoveryPerHour, nowMillis - state.recoveryAt);
         if (stock != state.stock) {
             state.stock = stock;
@@ -180,6 +206,7 @@ public final class ShopStore {
 
     /** Применяет изменение запаса после сделки (дельта < 0 при покупке игроком). */
     public synchronized void adjustStock(ShopConfig.ShopItem item, long delta, long nowMillis, double recoveryPerHour) {
+        if(pending!=null) throw new IllegalStateException("Рынок зарезервирован незавершённой сделкой");
         ItemState state = itemState(item, nowMillis);
         stockOf(item, nowMillis, recoveryPerHour);
         state.stock = Math.max(1, state.stock + delta);
@@ -188,6 +215,7 @@ public final class ShopStore {
     }
 
     public synchronized void setStock(ShopConfig.ShopItem item, long value, long nowMillis) {
+        if(pending!=null) throw new IllegalStateException("Рынок зарезервирован незавершённой сделкой");
         ItemState state = itemState(item, nowMillis);
         state.stock = Math.max(1, value);
         state.recoveryAt = nowMillis;
@@ -196,6 +224,7 @@ public final class ShopStore {
 
     /** Записывает сделку в статистику (units — штуки товара). */
     public synchronized void recordTrade(ShopConfig.ShopItem item, long units, boolean playerSold, double revenue) {
+        if(pending!=null) throw new IllegalStateException("Рынок зарезервирован незавершённой сделкой");
         ItemState state = itemState(item, System.currentTimeMillis());
         if (playerSold) state.soldByPlayers += units;
         else state.boughtByPlayers += units;
@@ -235,6 +264,7 @@ public final class ShopStore {
      */
     public synchronized void recordPrice(ShopConfig.ShopItem item, double price, long nowMillis,
                                          int maxPoints, long minIntervalMillis) {
+        if(pending!=null||!legacyAvailable) return;
         ItemState state = itemState(item, nowMillis);
         if (state.history.length > 0 && nowMillis - state.historyAt < minIntervalMillis) {
             state.history[state.history.length - 1] = price; // тот же тик — обновляем значение
@@ -262,6 +292,7 @@ public final class ShopStore {
      * Окно — календарные сутки UTC.
      */
     public synchronized boolean tryRecordTurnover(UUID uuid, double amount, double limit, long nowMillis) {
+        if(pending!=null) return false;
         if(!canRecordTurnover(uuid,amount,limit,nowMillis)) return false;
         if (limit == 0) return true;
         long today = nowMillis - Math.floorMod(nowMillis, 86_400_000L);
@@ -291,6 +322,7 @@ public final class ShopStore {
         Map<String, Object> data = new LinkedHashMap<>();
         Map<String, java.math.BigDecimal> balancesCopy = new LinkedHashMap<>();
         balances.forEach((uuid, value) -> balancesCopy.put(uuid.toString(), value));
+        data.put("schema",1); data.put("market",market); data.put("sequence",sequence); if(pending!=null) data.put("pending",pending);
         data.put("balances", balancesCopy);
         Map<String, Object> itemsCopy = new LinkedHashMap<>();
         items.forEach((material, state) -> {
@@ -321,20 +353,51 @@ public final class ShopStore {
         saveNow();
     }
 
+    synchronized boolean prepare(ru.cherdakmd.chrdkregister.api.ShopExchange t,ShopConfig.ShopItem item,long now,double recovery,double limit,int points,long interval,double price) {
+        if(!legacyAvailable||pending!=null||!market.equals(t.market())||t.sequence()!=sequence+1||!t.valid()||!item.material().equals(t.material())||!canRecordTurnover(t.owner(),t.money(),limit,now)) return false;
+        try {
+            stockOf(item,now,recovery); var state=items.get(item.material());
+            var p=new ShopJournal.Pending(t,Math.max(1,Math.addExact(state.stock,t.buy()?-t.units():t.units())),
+                Math.addExact(state.soldByPlayers,t.buy()?0:t.units()),Math.addExact(state.boughtByPlayers,t.buy()?t.units():0),now,
+                now-Math.floorMod(now,86400000L),limit==0?-1:PriceEngine.round(usedToday(t.owner(),now)+t.money()),PriceEngine.round(turnover+t.money()),price,points,interval);
+            if(!p.valid()||p.turnover()<turnover||p.used()!=-1&&p.used()<usedToday(t.owner(),now)) return false;
+            var json=com.google.gson.JsonParser.parseString(snapshotJson()).getAsJsonObject(); json.add("pending",GSON.toJsonTree(p));
+            if(!writeJson(GSON.toJson(json))) return false;
+            pending=p; dirty=false; return true;
+        } catch(ArithmeticException e) { return false; }
+    }
+    synchronized boolean finish(ShopJournal.Pending p) {
+        if(!legacyAvailable) return false;
+        if(pending==null) return sequence==p.trade().sequence();
+        if(!pending.equals(p)) return false;
+        var state=items.get(p.trade().material());
+        if(!p.matches(state,usedToday(p.trade().owner(),p.time()),turnover)) { stop("Не совпадает frozen effect рынка"); return false; }
+        var json=com.google.gson.JsonParser.parseString(snapshotJson()).getAsJsonObject(); json.remove("pending"); json.addProperty("sequence",p.trade().sequence()); json.addProperty("turnover",p.turnover());
+        var row=json.getAsJsonObject("items").getAsJsonObject(p.trade().material()); row.addProperty("stock",p.stock()); row.addProperty("recoveryAt",p.time()); row.addProperty("soldByPlayers",p.sold()); row.addProperty("boughtByPlayers",p.bought());
+        double[] history=state.history.clone(); long historyAt=state.historyAt;
+        if(history.length>0&&p.time()-historyAt<p.historyInterval()) history[history.length-1]=p.price();
+        else { int keep=Math.min(p.historyPoints()-1,history.length); var next=new double[keep+1]; System.arraycopy(history,history.length-keep,next,0,keep); next[keep]=p.price(); history=next; historyAt=p.time(); }
+        row.add("history",GSON.toJsonTree(history)); row.addProperty("historyAt",historyAt);
+        if(p.used()!=-1) { var limit=new JsonObject(); limit.addProperty("dayStart",p.day()); limit.addProperty("used",p.used()); json.getAsJsonObject("limits").add(p.trade().owner().toString(),limit); }
+        if(!writeJson(GSON.toJson(json))) return false;
+        state.stock=p.stock(); state.recoveryAt=p.time(); state.soldByPlayers=p.sold(); state.boughtByPlayers=p.bought(); state.history=history; state.historyAt=historyAt;
+        if(p.used()!=-1) { var limit=new LimitRow(); limit.dayStart=p.day(); limit.used=p.used(); limits.put(p.trade().owner(),limit); }
+        turnover=p.turnover(); sequence=p.trade().sequence(); pending=null; dirty=false; return true;
+    }
     /** Snapshot+force+replace+ACK под тем же монитором, что и мутации рынка. */
     public synchronized void saveNow() {
         if(!legacyAvailable||(!dirty&&Files.isRegularFile(file))) return;
+        if(writeJson(snapshotJson())) dirty=false;
+    }
+    private boolean writeJson(String json) {
         try {
-            String json=snapshotJson();
             if(json.getBytes(StandardCharsets.UTF_8).length>64L*1024*1024) throw new IOException("shop capacity");
-            Files.createDirectories(file.getParent());
-            var temp=file.resolveSibling("shop-data.json.tmp");
+            Files.createDirectories(file.getParent()); var temp=file.resolveSibling("shop-data.json.tmp");
             Files.writeString(temp,json,StandardCharsets.UTF_8);
             try(var channel=java.nio.channels.FileChannel.open(temp,java.nio.file.StandardOpenOption.WRITE)) { channel.force(true); }
-            Files.move(temp,file,java.nio.file.StandardCopyOption.ATOMIC_MOVE,java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-            checkpoint.afterReplace();
+            Files.move(temp,file,java.nio.file.StandardCopyOption.ATOMIC_MOVE,java.nio.file.StandardCopyOption.REPLACE_EXISTING); checkpoint.afterReplace();
             try(var directory=java.nio.channels.FileChannel.open(file.getParent(),java.nio.file.StandardOpenOption.READ)) { directory.force(true); }
-            dirty=false;
-        } catch(IOException|RuntimeException error) { quarantine(error); }
+            return true;
+        } catch(IOException|RuntimeException error) { quarantine(error); return false; }
     }
 }

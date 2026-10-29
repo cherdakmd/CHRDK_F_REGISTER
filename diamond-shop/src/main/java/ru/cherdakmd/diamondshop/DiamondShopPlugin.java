@@ -17,7 +17,7 @@ import java.util.List;
  * отказом, но не падает. Продажи доступны только авторизованным игрокам —
  * {@code api.isAuthenticated(player)} на каждой команде и клике.</p>
  */
-public final class DiamondShopPlugin extends JavaPlugin {
+public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.event.Listener {
 
     private volatile ChrdkRegisterApi coreApi;
     private volatile ShopService shopService;
@@ -27,12 +27,17 @@ public final class DiamondShopPlugin extends JavaPlugin {
     private BukkitTask saveTask;
     private BukkitTask historyTask;
     private BukkitTask migrationTask;
+    private BukkitTask recoveryTask;
 
     @Override
     public void onEnable() {
+        try { if(ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)<23) throw new IllegalStateException("Нужен Core API 23+"); }
+        catch(Exception e) { getLogger().severe("Магазин выключен: нужен актуальный CHRDK_Core API 23+"); Bukkit.getPluginManager().disablePlugin(this); return; }
         saveDefaultConfig();
         reloadShopConfig(); // stores первичную инициализацию всех сервисов
 
+        Bukkit.getPluginManager().registerEvents(this,this);
+        recoveryTask=Bukkit.getScheduler().runTaskTimer(this,()->shopService.recoverPending(),1L,20L);
         this.gui = new ShopGui(this);
         Bukkit.getPluginManager().registerEvents(gui, this);
 
@@ -71,9 +76,15 @@ public final class DiamondShopPlugin extends JavaPlugin {
                 + ", ядро " + (coreApi == null ? "НЕ найдено!" : "v" + coreApi.pluginVersion()) + ".");
     }
 
+    @org.bukkit.event.EventHandler(priority=org.bukkit.event.EventPriority.LOWEST)
+    public void onAuthenticated(ru.cherdakmd.chrdkregister.api.events.PlayerAuthCompletedEvent event) {
+        if(shopService!=null&&store.pending()!=null&&store.pending().trade().owner().equals(event.getPlayer().getUniqueId())) shopService.recoverPending();
+    }
+
     @Override
     public void onDisable() {
         if (gui != null) gui.closeAll();
+        if(recoveryTask!=null) { recoveryTask.cancel(); recoveryTask=null; }
         if (migrationTask != null) { migrationTask.cancel(); migrationTask = null; }
         if (saveTask != null) {
             saveTask.cancel();

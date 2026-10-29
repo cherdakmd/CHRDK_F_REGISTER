@@ -31,8 +31,8 @@ import java.util.UUID;
  */
 public interface ChrdkRegisterApi {
 
-    /** Версия контракта API. API 22: обязательный native witness/checkpoint для предметных переходов. */
-    int API_VERSION = 22;
+    /** Версия контракта API. API 23: durable whole-lot DiamondShop exchange и квитанция импорта. */
+    int API_VERSION = 23;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -204,6 +204,13 @@ public interface ChrdkRegisterApi {
     default boolean importLegacyShop(java.util.UUID player, long roundedAmount) { return false; }
 
     /** Main-thread обмен счёта и полного storage-снимка. Старое ядро отказывает, без fallback-кошелька. */
+    /** Durable DiamondShop protocol; frozen source intent must precede this call. */
+    default boolean shopTradingAvailable() { return false; }
+    default boolean legacyShopImported(java.util.UUID owner) { return false; }
+    default boolean registerShop(java.util.UUID market) { return false; }
+    default ShopExchange.Status shopExchangeStatus(ShopExchange trade) { return ShopExchange.Status.UNAVAILABLE; }
+    default ShopExchange.Status commitShopExchange(Player player,ShopExchange trade) { return ShopExchange.Status.UNAVAILABLE; }
+
     default boolean exchangeDiamonds(Player player, long debit, long credit,
                                      org.bukkit.inventory.ItemStack[] expected, org.bukkit.inventory.ItemStack[] replacement) { return false; }
 

@@ -92,8 +92,8 @@ class WholeTradesTest {
     @Test void serviceHasNoSpendableShopWalletNoDropsAndCommitsPreparedSnapshots() throws Exception {
         var s=Files.readString(Path.of("src/main/java/ru/cherdakmd/diamondshop/ShopService.java"));
         for(var forbidden:List.of("store.trySpend", "store.addBalance", "dropItem", "getContents()")) assertFalse(s.contains(forbidden),forbidden);
-        for(var guard:List.of("getStorageContents()", "!item.hasItemMeta()", "exchangeDiamonds(player, debit, credit, before, after)", "canRecordTurnover", "countItems(player.getInventory(), material) / batch")) assertTrue(s.contains(guard),guard);
-        assertTrue(s.indexOf("canRecordTurnover")<s.indexOf("exchangeDiamonds"));
+        for(var guard:List.of("getStorageContents()", "!item.hasItemMeta()", "store.prepare(t,item", "canRecordTurnover", "countItems(player.getInventory(), material) / batch")) assertTrue(s.contains(guard),guard);
+        assertTrue(s.indexOf("canRecordTurnover")<s.indexOf("store.prepare(t,item"));
         var gui=Files.readString(Path.of("src/main/java/ru/cherdakmd/diamondshop/ShopGui.java"));
         for(var guard:List.of("holder.service != service", "offer.ask() !=", "offer.bid() !=", "getTopInventory() == expected")) assertTrue(gui.contains(guard),guard);
     }

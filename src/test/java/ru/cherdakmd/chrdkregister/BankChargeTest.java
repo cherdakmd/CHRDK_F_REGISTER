@@ -58,7 +58,7 @@ class BankChargeTest {
     }
     @Test void schemaThreeMigratesWithoutInventingChargesAndCurrentRequiresTable() throws Exception {
         var b=funded(10); var json=com.google.gson.JsonParser.parseString(Files.readString(b.file())).getAsJsonObject();
-        json.addProperty("schema",3); json.remove("chargeSettlements"); json.remove("chargeWitnesses"); json.remove("cashPending"); json.remove("cashReceipts"); Files.writeString(b.file(),json.toString());
+        json.addProperty("schema",3); json.remove("chargeSettlements"); json.remove("chargeWitnesses"); json.remove("cashPending"); json.remove("cashReceipts"); json.remove("shopSettlements"); Files.writeString(b.file(),json.toString());
         b=load(); assertTrue(b.available()); assertTrue(b.settleCharge(charge(1,1,0,0))); assertEquals(9,load().balance(owner));
         json=com.google.gson.JsonParser.parseString(Files.readString(b.file())).getAsJsonObject(); json.remove("chargeSettlements"); Files.writeString(b.file(),json.toString()); assertFalse(load().available());
     }

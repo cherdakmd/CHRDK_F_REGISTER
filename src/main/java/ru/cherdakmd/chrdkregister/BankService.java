@@ -149,6 +149,21 @@ public final class BankService implements org.bukkit.event.Listener {
             lockCash(player); return ru.cherdakmd.chrdkregister.api.InventoryTransfer.Decision.WAIT;
         }
     }
+    public ru.cherdakmd.chrdkregister.api.ShopExchange.Status shopExchange(Player player,ru.cherdakmd.chrdkregister.api.ShopExchange t) {
+        var unavailable=ru.cherdakmd.chrdkregister.api.ShopExchange.Status.UNAVAILABLE;
+        if(!authenticated(player)||t==null||!player.getUniqueId().equals(t.owner())) return unavailable;
+        var status=store.shopStatus(t);
+        if(status==ru.cherdakmd.chrdkregister.api.ShopExchange.Status.COMMITTED) return status;
+        if(status==ru.cherdakmd.chrdkregister.api.ShopExchange.Status.MISSING) {
+            // Trusted market API accepts only a previously durable source intent: eligibility was frozen by ShopService.
+            // Auth/native evidence remain live; changed config/permissions/mode cannot strand accepted obligations.
+            if(!new BankChargeGuard(plugin,store).check(player)||!ru.cherdakmd.chrdkregister.api.ShopInventory.valid(t)) return unavailable;
+            if(recoverCash(player)!=ru.cherdakmd.chrdkregister.api.InventoryTransfer.Decision.APPLIED) return unavailable;
+            if(!ru.cherdakmd.chrdkregister.api.ChargeInventory.matches(player.getInventory().getStorageContents(),t.before())||!store.prepareShop(t,player.getName())) return unavailable;
+        } else if(status!=ru.cherdakmd.chrdkregister.api.ShopExchange.Status.PREPARED) return status;
+        recoverCash(player);
+        return store.shopStatus(t);
+    }
     private void lockCash(Player player) {
         try { player.kick(plugin.messages().get("economy.cash-playerdata-lock")); }
         catch(RuntimeException error) { player.kick(net.kyori.adventure.text.Component.text("Банк: обмен предметов требует сверки playerdata.")); }
