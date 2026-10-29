@@ -228,6 +228,12 @@ public final class ShopCommandHandler implements TabExecutor {
                 plugin.reloadShopConfig();
                 plugin.messages().send(sender, "admin.reloaded");
             }
+            case "recovery" -> {
+                var store=plugin.shopService().store(); var pending=store.pending();
+                plugin.messages().send(sender,"trading.recovery-status","healthy",store.legacyAvailable(),"market",store.market(),"sequence",store.sequence(),
+                    "pending",pending==null?"нет":pending.trade().transaction(),"owner",pending==null?"—":pending.trade().owner(),
+                    "bank",pending==null?"—":plugin.coreApi().shopExchangeStatus(pending.trade()));
+            }
             case "stock" -> handleAdminStock(sender, args);
             case "top" -> handleAdminTop(sender);
             default -> plugin.messages().send(sender, "admin.usage");
@@ -236,7 +242,8 @@ public final class ShopCommandHandler implements TabExecutor {
     }
 
     private void handleAdminStock(CommandSender sender, String[] args) {
-        if(!plugin.shopService().store().legacyAvailable()||plugin.shopService().store().pending()!=null) { plugin.messages().send(sender,"trading.storage-unavailable"); return; }
+        if(!plugin.shopService().store().legacyAvailable()) { plugin.messages().send(sender,"trading.storage-unavailable"); return; }
+        if(plugin.shopService().store().pending()!=null) { plugin.messages().send(sender,"trading.market-busy"); return; }
         if (args.length < 2) {
             plugin.messages().send(sender, "admin.usage");
             return;
@@ -318,7 +325,7 @@ public final class ShopCommandHandler implements TabExecutor {
         String prefix = args[args.length - 1].toLowerCase(Locale.ROOT);
         if ("shopadmin".equalsIgnoreCase(command.getName())) {
             if (args.length == 1) {
-                addMatches(matches, prefix, List.of("stock", "top", "reload"));
+                addMatches(matches, prefix, List.of("stock", "top", "reload", "recovery"));
             } else if (args.length == 2 && "stock".equalsIgnoreCase(args[0])) {
                 addItemMatches(matches, prefix);
             }

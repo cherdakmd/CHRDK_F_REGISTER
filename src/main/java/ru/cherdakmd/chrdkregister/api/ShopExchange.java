@@ -10,7 +10,7 @@ public record ShopExchange(UUID transaction,UUID market,long sequence,UUID owner
     public boolean valid() {
         if(transaction==null||market==null||owner==null||sequence<1||sequence>=Long.MAX_VALUE||material==null||!material.matches("[A-Z][A-Z0-9_]{0,127}")
                 ||units<1||units>2304||money<1||money>1_000_000_000L||debit<0||debit>money||credit<0||credit>1_000_000_000L||physical<0||physical>36L*64*Integer.MAX_VALUE
-                ||rates==null||rates.isEmpty()||rates.size()>256||before==null||after==null||before.equals(after)||before.length()>4*1024*1024||after.length()>4*1024*1024) return false;
+                ||rates==null||rates.size()>4096||before==null||after==null||before.equals(after)||before.length()>4*1024*1024||after.length()>4*1024*1024) return false;
         for(var r:rates.entrySet()) if(!r.getKey().matches("[A-Z][A-Z0-9_]{0,127}")||r.getValue()==null||r.getValue()<1) return false;
         return buy?debit+physical-credit==money:debit==0&&physical==0&&credit==money;
     }

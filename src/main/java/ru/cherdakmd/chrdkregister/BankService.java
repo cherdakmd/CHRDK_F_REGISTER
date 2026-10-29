@@ -149,6 +149,11 @@ public final class BankService implements org.bukkit.event.Listener {
             lockCash(player); return ru.cherdakmd.chrdkregister.api.InventoryTransfer.Decision.WAIT;
         }
     }
+    public boolean shopReady(Player player) {
+        return enabled()&&authenticated(player)&&!player.isDead()&&player.getGameMode()==org.bukkit.GameMode.SURVIVAL&&player.hasPermission("chrdkshop.use")
+            &&!store.cashLocked(player.getUniqueId())&&new BankChargeGuard(plugin,store).check(player)
+            &&recoverCash(player)==ru.cherdakmd.chrdkregister.api.InventoryTransfer.Decision.APPLIED;
+    }
     public ru.cherdakmd.chrdkregister.api.ShopExchange.Status shopExchange(Player player,ru.cherdakmd.chrdkregister.api.ShopExchange t) {
         var unavailable=ru.cherdakmd.chrdkregister.api.ShopExchange.Status.UNAVAILABLE;
         if(!authenticated(player)||t==null||!player.getUniqueId().equals(t.owner())) return unavailable;

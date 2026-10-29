@@ -30,7 +30,15 @@ final class ShopJournal {
         var pending=store.pending(); if(pending==null) return store.legacyAvailable();
         if(!store.legacyAvailable()) return false;
         var status=bank.status(pending.trade());
-        if(status==ShopExchange.Status.MISSING||status==ShopExchange.Status.PREPARED) status=bank.commit(pending.trade());
+        boolean accepted=status==ShopExchange.Status.PREPARED;
+        if(status==ShopExchange.Status.MISSING||accepted) {
+            status=bank.commit(pending.trade());
+            if(status!=ShopExchange.Status.COMMITTED&&bank.status(pending.trade())==ShopExchange.Status.MISSING) {
+                if(accepted) store.stop("Исчезло принятое Core намерение; требуется согласованное восстановление");
+                else store.cancelUnaccepted(pending);
+                return false;
+            }
+        }
         if(status==ShopExchange.Status.CONFLICT) { store.stop("Конфликт квитанции рынка; не сбрасывайте журнал"); return false; }
         return status==ShopExchange.Status.COMMITTED&&store.finish(pending);
     }

@@ -353,6 +353,9 @@ public final class ShopStore {
         saveNow();
     }
 
+    private static boolean exactIncrease(double before,double after,long money) {
+        return Double.isFinite(after)&&java.math.BigDecimal.valueOf(after).subtract(java.math.BigDecimal.valueOf(before)).compareTo(java.math.BigDecimal.valueOf(money))==0;
+    }
     synchronized boolean prepare(ru.cherdakmd.chrdkregister.api.ShopExchange t,ShopConfig.ShopItem item,long now,double recovery,double limit,int points,long interval,double price) {
         if(!legacyAvailable||pending!=null||!market.equals(t.market())||t.sequence()!=sequence+1||!t.valid()||!item.material().equals(t.material())||!canRecordTurnover(t.owner(),t.money(),limit,now)) return false;
         try {
@@ -360,11 +363,18 @@ public final class ShopStore {
             var p=new ShopJournal.Pending(t,Math.max(1,Math.addExact(state.stock,t.buy()?-t.units():t.units())),
                 Math.addExact(state.soldByPlayers,t.buy()?0:t.units()),Math.addExact(state.boughtByPlayers,t.buy()?t.units():0),now,
                 now-Math.floorMod(now,86400000L),limit==0?-1:PriceEngine.round(usedToday(t.owner(),now)+t.money()),PriceEngine.round(turnover+t.money()),price,points,interval);
-            if(!p.valid()||p.turnover()<turnover||p.used()!=-1&&p.used()<usedToday(t.owner(),now)) return false;
+            if(!p.valid()||!exactIncrease(turnover,p.turnover(),t.money())||p.used()!=-1&&!exactIncrease(usedToday(t.owner(),now),p.used(),t.money())) return false;
             var json=com.google.gson.JsonParser.parseString(snapshotJson()).getAsJsonObject(); json.add("pending",GSON.toJsonTree(p));
             if(!writeJson(GSON.toJson(json))) return false;
             pending=p; dirty=false; return true;
         } catch(ArithmeticException e) { return false; }
+    }
+    /** Caller has just received authoritative MISSING from healthy Core; no item/money effect exists. */
+    synchronized boolean cancelUnaccepted(ShopJournal.Pending p) {
+        if(!legacyAvailable||!p.equals(pending)) return false;
+        var json=com.google.gson.JsonParser.parseString(snapshotJson()).getAsJsonObject(); json.remove("pending");
+        if(!writeJson(GSON.toJson(json))) return false;
+        pending=null; dirty=false; return true;
     }
     synchronized boolean finish(ShopJournal.Pending p) {
         if(!legacyAvailable) return false;

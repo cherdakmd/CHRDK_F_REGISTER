@@ -13,6 +13,7 @@ public final class ShopInventory {
             Material material=Material.matchMaterial(t.material()); if(material==null||!material.isItem()) return false;
             for(String currency:t.rates().keySet()) { var m=Material.matchMaterial(currency); if(m==null||!m.isItem()) return false; }
             var items=ChargeInventory.decode(t.before());
+            if(ChargeInventory.matches(items,t.after())) return false;
             if(t.buy()) {
                 long left=t.money()-t.debit(),paid=0; var order=new ArrayList<Integer>();
                 for(int i=0;i<36;i++) if(plain(items[i])&&t.rates().containsKey(items[i].getType().name())) order.add(i);

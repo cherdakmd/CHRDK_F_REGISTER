@@ -142,7 +142,9 @@ public final class BankStore {
         var receipt=cashReceipts.get(intent.owner());
         if(receipt!=null&&receipt.matches(intent)&&!cashLocked(intent.owner())) return true;
         if(!intent.equals(cashPending.get(intent.owner()))||balance(intent.owner())!=intent.beforeBalance()) return false;
-        var next=envelope(); adjust(next.accounts.get(intent.owner().toString()),intent.afterBalance()-intent.beforeBalance());
+        var next=envelope(); var account=next.accounts.get(intent.owner().toString());
+        if(intent.shop()!=null) { adjust(account,-intent.shop().debit()); adjust(account,intent.shop().credit()); }
+        else adjust(account,intent.afterBalance()-intent.beforeBalance());
         next.cashPending.remove(intent.owner()); next.cashReceipts.put(intent.owner(),new BankCash.Receipt(intent.sequence(),intent.transaction(),intent.kind(),intent.amount()));
         if(intent.shop()!=null) next.shopSettlements.put(intent.shop().market(),intent.shop());
         return publishAuction(next);

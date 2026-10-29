@@ -55,7 +55,7 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
         return plugin != null && plugin.bank() != null && plugin.bank().enabled() && org.bukkit.Bukkit.isPrimaryThread()
                 && bank != null && bank.importLegacyShop(player, amount);
     }
-    @Override public boolean shopTradingAvailable() { return plugin!=null&&plugin.bank()!=null&&plugin.bank().enabled(); }
+    @Override public boolean shopTradingAvailable(Player player) { return plugin!=null&&plugin.bank()!=null&&plugin.bank().shopReady(player); }
     @Override public boolean legacyShopImported(java.util.UUID id) { return bank!=null&&bank.legacyShopImported(id); }
     @Override public boolean registerShop(java.util.UUID market) {
         return org.bukkit.Bukkit.isPrimaryThread()&&bank!=null&&bank.registerShop(market);

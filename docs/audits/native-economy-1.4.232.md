@@ -41,7 +41,7 @@ market/playerdata. Не удалять pending и не выдавать пред
 |---|---|---|
 | Core `/bal deposit` | Закрыто в 233: canonical bank.json v5 intent + native proof + receipt/баланс одним replace | [Протокол и границы 233](../releases/1.4.233.md) |
 | Core `/bal withdraw` | Закрыто в 233: целый storage-only grant с резервом счёта/nonce/checkpoint; без drops | [Протокол и границы 233](../releases/1.4.233.md) |
-| DiamondShop | ShopService.trade → exchangeDiamonds; рынок/оборот учитываются отдельно после Core callback | Native intent + receipt + once market/UTC-turnover publication; отдельный путь товарной продажи как дохода |
+| DiamondShop | Закрыто в 235: durable source intent → Core reservation/native proof → bank receipt → once stock/stats/accepted UTC effect | [Протокол, тесты и границы 235](../releases/1.4.235.md) |
 | Claims земля/аренда/личные операции | ClaimBankBridge → exchangeClaimAccounts; банк и домен/предметы независимы | Квитанция и согласованный source-переход, в том числе системные переводы без Player и recovery аренды |
 
 Укрепление ChargeInventory **не переподключает автоматически** эти старые API.
@@ -106,3 +106,13 @@ force+atomic writer и dirty ACK, с карантином IO/runtime-неопр�
 **Это ещё не durable-сделка магазина**: сохранённый intent, Core/playerdata proof
 и идемпотентные stock/статистика/принятое UTC-окно остаются следующим gate.
 Общий релиз по-прежнему заблокирован.
+
+## Этап 235 — DiamondShop gate закрыт
+
+Старый callback удалён из ShopService. Сохранённая заявка рынка связывается с
+canonical bank.json v6 SHOP-intent и резервом владельца, native nonce/checkpoint,
+квитанцией Core и однократным stock/статистикой/принятым UTC-окном. API 23.
+Финансовая неопределённость не компенсируется guessed refunds; Core MISSING после
+отказа intake позволяет отменить только ещё не принятую заявку без денег/предметов.
+[Подробности 235](../releases/1.4.235.md). Claims, DailyRewards и Treasures loot
+остаются gates общего релиза.

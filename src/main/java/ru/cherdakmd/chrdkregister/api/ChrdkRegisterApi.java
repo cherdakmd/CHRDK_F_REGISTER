@@ -205,7 +205,7 @@ public interface ChrdkRegisterApi {
 
     /** Main-thread обмен счёта и полного storage-снимка. Старое ядро отказывает, без fallback-кошелька. */
     /** Durable DiamondShop protocol; frozen source intent must precede this call. */
-    default boolean shopTradingAvailable() { return false; }
+    default boolean shopTradingAvailable(Player player) { return false; }
     default boolean legacyShopImported(java.util.UUID owner) { return false; }
     default boolean registerShop(java.util.UUID market) { return false; }
     default ShopExchange.Status shopExchangeStatus(ShopExchange trade) { return ShopExchange.Status.UNAVAILABLE; }

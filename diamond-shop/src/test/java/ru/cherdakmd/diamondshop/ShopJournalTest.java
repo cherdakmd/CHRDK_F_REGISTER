@@ -45,4 +45,17 @@ class ShopJournalTest {
     @Test void noMetadataDowngradeCanErasePendingJournal() throws Exception { pending(true); var json=JsonParser.parseString(Files.readString(dir.resolve("shop-data.json"))).getAsJsonObject(); json.remove("schema"); String bad=json.toString(); Files.writeString(dir.resolve("shop-data.json"),bad); var s=load(); assertFalse(s.legacyAvailable()); s.saveNow(); assertEquals(bad,Files.readString(dir.resolve("shop-data.json"))); }
     @Test void tamperedEffectSequenceOrTypedAmountsStopReaderWithoutRewrite() throws Exception { pending(true); String original=Files.readString(dir.resolve("shop-data.json")); for(String field:List.of("stock","sold","bought","time","day","historyPoints")) for(String value:List.of("\"1\"","1.5","9223372036854775808")) { var json=JsonParser.parseString(original).getAsJsonObject(); json.getAsJsonObject("pending").add(field,JsonParser.parseString(value)); String bad=json.toString(); Files.writeString(dir.resolve("shop-data.json"),bad); var s=load(); assertFalse(s.legacyAvailable()); s.saveNow(); assertEquals(bad,Files.readString(dir.resolve("shop-data.json"))); } }
     @Test void productionUsesJournalAndAuthRecoveryNotTheOldCallback() throws Exception { String source=Files.readString(Path.of("src/main/java/ru/cherdakmd/diamondshop/ShopService.java")); assertFalse(source.contains("exchangeDiamonds(")); assertFalse(source.contains("dropItem")); assertFalse(source.contains("store.adjustStock(")); assertTrue(source.contains("store.prepare(t,item")); assertTrue(source.contains("ShopJournal.recover(store")); assertTrue(source.contains("core.legacyShopImported(id)")); String plugin=Files.readString(Path.of("src/main/java/ru/cherdakmd/diamondshop/DiamondShopPlugin.java")); assertTrue(plugin.contains("EventPriority.LOWEST")); assertTrue(plugin.contains("runTaskTimer(this,()->shopService.recoverPending()")); assertTrue(plugin.contains("<23")); }
+    @Test void healthyMissingAfterRefusedIntakeCancelsOnlyUnacceptedSourceRequest() {
+        pending(true); var bank=new Bank() { @Override public ShopExchange.Status commit(ShopExchange t) { return ShopExchange.Status.UNAVAILABLE; } };
+        assertFalse(ShopJournal.recover(load(),bank)); var s=load(); assertNull(s.pending()); assertEquals(0,s.sequence()); assertEquals(1000,s.snapshotOf("STONE").stock); assertEquals(0,s.turnover()); assertEquals(0,s.usedToday(owner,time)); assertTrue(s.legacyAvailable());
+    }
+    @Test void unavailableAfterIntakeCannotBeMisreadAsSafeToCancel() {
+        var p=pending(true); var bank=new Bank() { @Override public ShopExchange.Status commit(ShopExchange t) {state=ShopExchange.Status.UNAVAILABLE; return state;} };
+        assertFalse(ShopJournal.recover(load(),bank)); assertEquals(p,load().pending());
+    }
+    @Test void disappearanceOfAnAcknowledgedRootIntentStopsSourceInsteadOfCancelling() {
+        pending(true); var bank=new Bank() { @Override public ShopExchange.Status commit(ShopExchange t) {state=ShopExchange.Status.MISSING; return ShopExchange.Status.UNAVAILABLE;} }; bank.state=ShopExchange.Status.PREPARED;
+        var s=load(); assertFalse(ShopJournal.recover(s,bank)); assertFalse(s.legacyAvailable()); assertNotNull(load().pending());
+    }
+
 }

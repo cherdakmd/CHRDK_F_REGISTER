@@ -182,3 +182,12 @@ force+atomic writer и dirty ACK, с карантином IO/runtime-неопр�
 **Это ещё не durable-сделка магазина**: сохранённый intent, Core/playerdata proof
 и идемпотентные stock/статистика/принятое UTC-окно остаются следующим gate.
 Общий релиз по-прежнему заблокирован.
+
+## Этап 235 — журналируемый рынок DiamondShop
+
+Gate магазина закрыт: source WAL/market sequence, Core SHOP reservation и native
+playerdata proof, receipt отдельно от latest cash marker, затем одним ACK stock,
+статистика, история и замороженные сутки UTC. Импорт старого кошелька теперь durable
+до ACK; прежняя квитанция имеет приоритет, неизвестный UUID не импортируется наугад.
+[API 23, миграции и проверки 235](../releases/1.4.235.md). Общий релиз не опубликован;
+Claims земля/аренда, DailyRewards money и Treasures plain diamond loot ещё открыты.
