@@ -118,6 +118,7 @@ public final class ShopStore {
                 var registration=data.get("registered"); if(registration==null||!registration.isJsonPrimitive()||!registration.getAsJsonPrimitive().isBoolean()) throw new IllegalArgumentException("shop registration");
                 nextRegistered=registration.getAsBoolean();
                 nextMarket=uuid(data.get("market").getAsString()); nextSequence=integer(data,"sequence",true);
+                if(!nextRegistered&&nextSequence>0) throw new IllegalArgumentException("sequence without registration ACK");
                 if(nextSequence>=Long.MAX_VALUE-1) throw new IllegalArgumentException("shop sequence exhausted");
                 if(data.has("pending")) {
                     var row=data.getAsJsonObject("pending"); ru.cherdakmd.chrdkregister.api.ShopExchange.requireJson(row.getAsJsonObject("trade"));

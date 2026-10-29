@@ -65,13 +65,13 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
 
         var legacy = store.legacyBalances().entrySet().iterator();
         migrationTask = Bukkit.getScheduler().runTaskTimer(this, () -> {
-            for (int i = 0; i < 16 && legacy.hasNext(); i++) {
+            for (int i = 0; i < 4 && legacy.hasNext(); i++) {
                 var entry = legacy.next();
                 if (!shopService.migrate(entry.getKey(), entry.getValue()))
                     getLogger().warning("Старый счёт " + entry.getKey() + " пока не перенесён: проверьте Core/лимит/исходную сумму. Он сохранён, магазин повторит проверку при обращении.");
             }
             if (!legacy.hasNext()) { migrationTask.cancel(); migrationTask = null; }
-        }, 1L, 1L);
+        }, 1L, 20L);
         getLogger().info("CHRDK_DiamondShop включён: товаров " + shopService.config().items().size()
                 + ", ядро " + (coreApi == null ? "НЕ найдено!" : "v" + coreApi.pluginVersion()) + ".");
     }
