@@ -33,3 +33,8 @@ config/chrdk_f_register-data.json
 
 # Локальное окружение проверок Python
 .venv/
+
+# Проверки браузерной вики
+/tools/wiki/node_modules/
+/tools/wiki/test-results/
+/tools/wiki/playwright-report/

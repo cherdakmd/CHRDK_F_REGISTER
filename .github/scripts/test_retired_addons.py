@@ -69,6 +69,16 @@ class RetiredAddonsGuardTest(unittest.TestCase):
             self.write(name, "CHRDK_Treasures /boss")
         self.assertEqual([], check(self.root))
 
+    def test_generated_browser_dependencies_are_not_server_addons(self):
+        for name in ("tools/wiki/node_modules/vendor/events.js",
+                     "tools/wiki/test-results/old/error-context.md",
+                     "tools/wiki/playwright-report/index.html"):
+            self.write(name, 'require("./events"); /stream /boss')
+        self.assertEqual([], check(self.root))
+        # Собственный код сайта по-прежнему проверяется.
+        self.write("tools/wiki/assets/app.js", 'const removed = "events.html";')
+        self.assertTrue(check(self.root))
+
     def test_vanilla_bosses_fishing_and_read_only_provenance_are_not_addons(self):
         self.write("wiki/hunt.md", "Ванильные боссы, сокровища рыбалки и /minecraft:bossbar list")
         self.write("hunt/src/main/resources/config.yml", 'command: "bossbar list"')

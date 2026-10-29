@@ -11,6 +11,11 @@ on:
 permissions:
   contents: read
 
+# Один канонический сайт из main. Не отменяем начатую публикацию.
+concurrency:
+  group: build-and-pages-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build:
     name: Purpur 26.3 / Java 25
@@ -46,7 +51,6 @@ jobs:
           python3 -m pip install -r tools/trademc/requirements.txt
           python3 tools/trademc/build.py --check
           python3 -m unittest discover -s tools/trademc -p 'test_*.py' -v
-          python3 -m unittest discover -s tools/wiki -p 'test_*.py' -v
 
       - name: Build plugin
         shell: bash
@@ -106,3 +110,58 @@ jobs:
             */build/test-results/test/*.xml
           retention-days: 14
           if-no-files-found: ignore
+
+  wiki:
+    name: Build wiki
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: tools/wiki/package-lock.json
+      - name: Install documentation tools
+        run: |
+          python3 -m pip install -r tools/wiki/requirements.txt
+          npm ci --prefix tools/wiki
+          cd tools/wiki && npx playwright install --with-deps chromium
+      - name: Check wiki freshness, data and links
+        run: |
+          python3 tools/wiki/build.py --check
+          python3 -m unittest discover -s tools/wiki -p 'test_*.py' -v
+          node --test tools/wiki/test_search.cjs
+      - name: Test desktop, mobile and accessibility
+        run: npm test --prefix tools/wiki
+      - name: Configure Pages
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        uses: actions/configure-pages@v5
+      - name: Upload site
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: [build, wiki]
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy verified site
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Report source revision
+        run: echo "Published wiki from $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"

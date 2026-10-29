@@ -33,7 +33,7 @@ class StorefrontTest(unittest.TestCase):
 
     def test_manifest_matches_live_catalog_and_individual_artwork(self):
         manifest = json.loads((kit.OUTPUT / 'manifest.json').read_text(encoding='utf-8'))
-        self.assertEqual(kit.version(), manifest['pluginVersion'])
+        self.assertEqual(kit.snapshot_version(), manifest['pluginVersion'])
         self.assertEqual(set(self.by_id), {p['id'] for p in manifest['products']})
         names, hashes = set(), set()
         for entry in manifest['products']:
@@ -55,7 +55,7 @@ class StorefrontTest(unittest.TestCase):
 
     def test_txt_ready_commands_prices_durations_and_trust_boundary(self):
         txt = (kit.OUTPUT / kit.TEXT_NAME).read_text(encoding='utf-8')
-        self.assertEqual(kit.document(self.cfg, self.products), txt)
+        self.assertEqual(kit.document(self.cfg, self.products, kit.snapshot_version()), txt)
         for index, p in enumerate(self.products, 1):
             self.assertEqual(1, txt.count(kit.command(p) + '\n'))
             self.assertIn(f"Цена: {p['price']} ₽\nСрок: {p['days']} дней", txt)
@@ -68,7 +68,7 @@ class StorefrontTest(unittest.TestCase):
 
     def test_markdown_matches_catalog_and_preserves_literal_commands(self):
         md = (kit.OUTPUT / kit.MD_NAME).read_text(encoding='utf-8')
-        self.assertEqual(kit.markdown_document(self.cfg, self.products), md)
+        self.assertEqual(kit.markdown_document(self.cfg, self.products, kit.snapshot_version()), md)
         self.assertEqual(0, md.count('```') % 2)
         for i, p in enumerate(self.products, 1):
             self.assertEqual(1, md.count('\n' + kit.command(p) + '\n'))
@@ -124,6 +124,17 @@ class StorefrontTest(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     kit.catalog(root)
 
+    def test_version_only_bump_preserves_existing_materials_but_not_catalog_drift(self):
+        before = {p: hashlib.sha256(p.read_bytes()).digest() for p in kit.OUTPUT.rglob('*') if p.is_file()}
+        with patch.object(kit, 'version', return_value='9.0.0'):
+            kit.check()
+            changed = [dict(p) for p in self.products]
+            changed[0]['price'] += 1
+            with patch.object(kit, 'catalog', return_value=(self.cfg, changed)):
+                with self.assertRaisesRegex(ValueError, 'TXT is stale'):
+                    kit.check()
+        self.assertEqual(before, {p: hashlib.sha256(p.read_bytes()).digest() for p in before})
+
     def test_stale_txt_and_tampered_manifest_are_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
             output = Path(tmp) / 'kit'
@@ -168,7 +179,7 @@ class StorefrontTest(unittest.TestCase):
                 self.assertIn('manifest.json', names)
                 self.assertEqual(len(names), len(set(names)))
                 self.assertFalse(any(n.endswith('.jar') or n.startswith('/') or '..' in Path(n).parts for n in names))
-                self.assertEqual(kit.document(self.cfg, self.products), archive.read(kit.TEXT_NAME).decode('utf-8'))
+                self.assertEqual(kit.document(self.cfg, self.products, kit.snapshot_version()), archive.read(kit.TEXT_NAME).decode('utf-8'))
                 for info in archive.infolist():
                     self.assertEqual((1980, 1, 1, 0, 0, 0), info.date_time)
 

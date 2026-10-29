@@ -144,9 +144,9 @@ def image_name(index, p):
     return f"{index:02d}-{p['id']}.png"
 
 
-def document(cfg, products):
+def document(cfg, products, source_version=None):
     intro = f"""ЧЕРДАК — TRADEMC: ВСЕ ТОВАРЫ И КОМАНДЫ
-Версия плагинов: {version()}. Каталог: {len(products)} товаров.
+Версия плагинов: {source_version or version()}. Каталог: {len(products)} товаров.
 Цены и сроки: стандартные настройки этой версии, рубли / календарные дни.
 Источник: src/main/resources/config.yml → shop.products.
 
@@ -244,9 +244,9 @@ pass luckperms setup
     return "".join(chunks)
 
 
-def markdown_document(cfg, products):
+def markdown_document(cfg, products, source_version=None):
     """Formatted mirror of TXT: identical product data and complete owner appendix."""
-    txt = document(cfg, products)
+    txt = document(cfg, products, source_version)
     intro = txt.split("=" * 74, 1)[0].strip()
     intro = intro.replace("ЧЕРДАК — TRADEMC: ВСЕ ТОВАРЫ И КОМАНДЫ", "# ЧЕРДАК — TradeMC: все товары и команды", 1)
     intro = intro.replace("КАК ЗАПОЛНИТЬ КАРТОЧКУ", "## Как заполнить карточку", 1)
@@ -422,8 +422,8 @@ def artwork(p):
     return out
 
 
-def manifest(cfg, products):
-    result = {"schemaVersion": 1, "pluginVersion": version(),
+def manifest(cfg, products, source_version=None):
+    result = {"schemaVersion": 1, "pluginVersion": source_version or version(),
               "source": "src/main/resources/config.yml → shop.products", "products": []}
     for index, p in enumerate(products, 1):
         path = OUTPUT / "images" / image_name(index, p)
@@ -436,12 +436,24 @@ def manifest(cfg, products):
     return result
 
 
-def manifest_text(cfg, products):
-    return json.dumps(manifest(cfg, products), ensure_ascii=False, indent=2) + "\n"
+def manifest_text(cfg, products, source_version=None):
+    return json.dumps(manifest(cfg, products, source_version), ensure_ascii=False, indent=2) + "\n"
+
+
+def snapshot_version():
+    """Версия сохранённого комплекта; новый bump не требует готовить материалы заново."""
+    saved = json.loads((OUTPUT / "manifest.json").read_text(encoding="utf-8"))
+    value = saved.get("pluginVersion", "")
+    if not isinstance(value, str) or not re.fullmatch(r"\d+\.\d+\.\d+", value):
+        raise ValueError("Storefront manifest/catalog/hash mismatch: invalid pluginVersion")
+    if tuple(map(int, value.split('.'))) > tuple(map(int, version().split('.'))):
+        raise ValueError("Storefront manifest/catalog/hash mismatch: snapshot is from a future version")
+    return value
 
 
 def check():
     cfg, products = catalog()
+    recorded_version = snapshot_version()
     expected = {image_name(i, p) for i, p in enumerate(products, 1)}
     actual = {p.name for p in (OUTPUT / "images").glob("*.png")}
     if actual != expected:
@@ -455,13 +467,13 @@ def check():
         hashes.add(hashlib.sha256(p.read_bytes()).hexdigest())
     if len(hashes) != len(products):
         raise ValueError("Duplicate product artwork")
-    if (OUTPUT / TEXT_NAME).read_text(encoding="utf-8") != document(cfg, products):
+    if (OUTPUT / TEXT_NAME).read_text(encoding="utf-8") != document(cfg, products, recorded_version):
         raise ValueError("Storefront TXT is stale: run tools/trademc/build.py --build")
-    if (OUTPUT / MD_NAME).read_text(encoding="utf-8") != markdown_document(cfg, products):
+    if (OUTPUT / MD_NAME).read_text(encoding="utf-8") != markdown_document(cfg, products, recorded_version):
         raise ValueError("Storefront Markdown is stale: run tools/trademc/build.py --build")
-    if (OUTPUT / AUDIT_NAME).read_text(encoding="utf-8") != audit_report(ROOT, cfg, products, version()):
+    if (OUTPUT / AUDIT_NAME).read_text(encoding="utf-8") != audit_report(ROOT, cfg, products, recorded_version):
         raise ValueError("Storefront audit report is stale")
-    if (OUTPUT / "manifest.json").read_text(encoding="utf-8") != manifest_text(cfg, products):
+    if (OUTPUT / "manifest.json").read_text(encoding="utf-8") != manifest_text(cfg, products, recorded_version):
         raise ValueError("Storefront manifest/catalog/hash mismatch")
     print(f"TradeMC OK: {len(products)} products, commands, prices, durations and individual PNGs")
 
@@ -480,7 +492,7 @@ def build():
 
 def pack(destination=None):
     check()
-    path = Path(destination) if destination else ROOT / f"build/trademc/chrdk-trademc-{version()}.zip"
+    path = Path(destination) if destination else ROOT / f"build/trademc/chrdk-trademc-{snapshot_version()}.zip"
     path.parent.mkdir(parents=True, exist_ok=True)
     files = [OUTPUT / TEXT_NAME, OUTPUT / MD_NAME, OUTPUT / AUDIT_NAME, OUTPUT / "manifest.json", OUTPUT / "README.md"]
     files += sorted((OUTPUT / "images").glob("*.png"))
