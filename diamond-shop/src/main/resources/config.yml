@@ -188,7 +188,6 @@ items:
     ref-stock: 800
     max-multiplier: 3.0
 
-  # ── Дерево и грибные стебли ──
   # Строительная палитра: готовые блоки только для покупки, без обратной скупки.
   - material: WHITE_CONCRETE
     category: blocks
@@ -443,6 +442,7 @@ items:
     max-multiplier: 2.0
     sell-enabled: false
 
+  # ── Дерево и грибные стебли ──
   - material: BAMBOO
     category: wood
     base-price: 0.1

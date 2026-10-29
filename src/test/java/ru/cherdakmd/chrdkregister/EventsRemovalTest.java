@@ -87,7 +87,7 @@ class EventsRemovalTest {
         live.set("tablist.pinned-names", List.of("Admin"));
         var changes = PresentationMigration.replacements(live, List.of(legacy), stock);
         assertTrue(changes.containsAll(List.of("server-menu.items", "server-menu.categories")));
-        assertFalse(changes.contains("auto-messages.messages"), "в стоке не было отдельной рекламы этого модуля");
+        assertTrue(changes.contains("auto-messages.messages"), "1.4.245 обновляет подсказку общего /bal у магазина; реклама снятого модуля не возвращается");
         assertEquals(1, legacy.getMapList("server-menu.items").size() - stock.getMapList("server-menu.items").size());
         for (String key : changes) live.set(key, stock.get(key));
         assertFalse(live.getBoolean("auto-messages.enabled")); assertEquals(777, live.getInt("auto-messages.interval-seconds"));

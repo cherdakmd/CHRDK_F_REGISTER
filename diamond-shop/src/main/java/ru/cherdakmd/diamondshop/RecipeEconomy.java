@@ -1,32 +1,49 @@
 package ru.cherdakmd.diamondshop;
 
 import java.math.BigDecimal;
-import java.math.MathContext;
-import java.math.RoundingMode;
+import java.math.BigInteger;
 import java.util.*;
 
 /** Нижняя стоимость приобретения по проверенным vanilla-цепочкам, без оценки труда/топлива. */
 final class RecipeEconomy {
-    private static final MathContext DOWN = new MathContext(24, RoundingMode.FLOOR);
+    /** Точные доли: цикл слиток → 9 самородков → слиток не теряет десятитысячные. */
+    record Cost(BigInteger numerator, BigInteger denominator) implements Comparable<Cost> {
+        Cost {
+            if (numerator.signum()<0 || denominator.signum()<=0) throw new IllegalArgumentException("cost");
+            var gcd=numerator.gcd(denominator);numerator=numerator.divide(gcd);denominator=denominator.divide(gcd);
+        }
+        static Cost of(double value) { return decimal(BigDecimal.valueOf(value)); }
+        static Cost decimal(BigDecimal value) {
+            return value.scale()<0 ? new Cost(value.unscaledValue().multiply(BigInteger.TEN.pow(-value.scale())),BigInteger.ONE)
+                    : new Cost(value.unscaledValue(),BigInteger.TEN.pow(value.scale()));
+        }
+        Cost add(Cost other) { return new Cost(numerator.multiply(other.denominator).add(other.numerator.multiply(denominator)),denominator.multiply(other.denominator)); }
+        Cost multiply(int count) { return new Cost(numerator.multiply(BigInteger.valueOf(count)),denominator); }
+        Cost multiply(Cost other) { return new Cost(numerator.multiply(other.numerator),denominator.multiply(other.denominator)); }
+        Cost divide(int count) { return new Cost(numerator,denominator.multiply(BigInteger.valueOf(count))); }
+        Cost min(Cost other) { return compareTo(other)<=0?this:other; }
+        public int compareTo(Cost other) { return numerator.multiply(other.denominator).compareTo(other.numerator.multiply(denominator)); }
+    }
+    private static final Cost ZERO = Cost.of(0);
     record Recipe(String output, int count, Map<String, Integer> inputs) { }
     static final List<Recipe> RECIPES = recipes();
     private RecipeEconomy() { }
 
     /** Релаксация учитывает промежуточные материалы, которых нет на витрине. */
-    static Map<String, BigDecimal> costs(Map<String, BigDecimal> purchases) {
+    static Map<String, Cost> costs(Map<String, Cost> purchases) {
         var costs = new HashMap<>(purchases);
         // В этих цепочках нет размножающих циклов. Простой путь не длиннее числа рецептов.
         for (int pass = 0; pass <= RECIPES.size(); pass++) {
             boolean changed = false;
             for (var recipe : RECIPES) {
-                BigDecimal total = BigDecimal.ZERO;
+                Cost total = ZERO;
                 for (var input : recipe.inputs().entrySet()) {
                     var cost = costs.get(input.getKey());
                     if (cost == null) { total = null; break; }
-                    total = total.add(cost.multiply(BigDecimal.valueOf(input.getValue())));
+                    total = total.add(cost.multiply(input.getValue()));
                 }
                 if (total == null) continue;
-                var unit = total.divide(BigDecimal.valueOf(recipe.count()), DOWN);
+                var unit = total.divide(recipe.count());
                 var previous = costs.get(recipe.output());
                 if (previous == null || unit.compareTo(previous) < 0) {
                     costs.put(recipe.output(), unit); changed = true;
@@ -38,29 +55,36 @@ final class RecipeEconomy {
     }
 
     /** Только рецептурные пути: собственная цена товара не ограничивает добытое сырьё. */
-    static Map<String, BigDecimal> recipeCosts(Map<String, BigDecimal> purchases) {
+    static Map<String, Cost> recipeCosts(Map<String, Cost> purchases) {
         var all = costs(purchases);
-        var derived = new HashMap<String, BigDecimal>();
+        var derived = new HashMap<String, Cost>();
         for (var recipe : RECIPES) {
-            BigDecimal total = BigDecimal.ZERO;
+            Cost total = ZERO;
             for (var input : recipe.inputs().entrySet()) {
                 var cost = all.get(input.getKey());
                 if (cost == null) { total = null; break; }
-                total = total.add(cost.multiply(BigDecimal.valueOf(input.getValue())));
+                total = total.add(cost.multiply(input.getValue()));
             }
             if (total != null) derived.merge(recipe.output(),
-                    total.divide(BigDecimal.valueOf(recipe.count()), DOWN), BigDecimal::min);
+                    total.divide(recipe.count()), Cost::min);
         }
         return Map.copyOf(derived);
     }
 
-    static BigDecimal unit(long price, int batch) {
-        return BigDecimal.valueOf(price).divide(BigDecimal.valueOf(batch), DOWN);
+    static Cost unit(long price, int batch) { return Cost.of(price).divide(batch); }
+    static Cost withSpread(Cost cost, double spread) {
+        return cost.multiply(Cost.decimal(BigDecimal.ONE.subtract(BigDecimal.valueOf(spread).divide(BigDecimal.valueOf(200)))));
     }
-    static long cap(BigDecimal cost, int batch, double spread) {
-        return cost.multiply(BigDecimal.ONE.subtract(BigDecimal.valueOf(spread).divide(BigDecimal.valueOf(200))))
-                .multiply(BigDecimal.valueOf(batch)).setScale(0, RoundingMode.FLOOR)
-                .min(BigDecimal.valueOf(WholeTrades.MAX)).longValueExact();
+    static long cap(Cost cost, int batch, double spread) {
+        var total=withSpread(cost,spread).multiply(batch);
+        return total.numerator().divide(total.denominator()).min(BigInteger.valueOf(WholeTrades.MAX)).longValueExact();
+    }
+    static int batch(Cost minimumBid) {
+        if (minimumBid.numerator().signum()==0) return 0;
+        var units=minimumBid.denominator().add(minimumBid.numerator()).subtract(BigInteger.ONE).divide(minimumBid.numerator());
+        for (int size:new int[]{1,2,4,8,16,32,64,128,256,512,1024,2304})
+            if (units.compareTo(BigInteger.valueOf(size))<=0) return size;
+        return 0;
     }
     private static List<Recipe> recipes() {
         var r = new ArrayList<Recipe>();

@@ -4,7 +4,6 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import java.io.InputStreamReader;
-import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
@@ -53,7 +52,7 @@ class ShopServiceEconomyTest {
         for (double spread:new double[]{0,10,90}) {
             var s=service(spread);
             for (int sample=0;sample<12;sample++) {
-                var purchases=new HashMap<String,BigDecimal>();purchases.put("DIAMOND",BigDecimal.ONE);
+                var purchases=new HashMap<String,RecipeEconomy.Cost>();purchases.put("DIAMOND",RecipeEconomy.Cost.of(1));
                 for (var item:s.config().items()) {
                     s.store().setStock(item,switch(random.nextInt(3)){case 0->1;case 1->item.refStock();default->Long.MAX_VALUE;},System.currentTimeMillis());
                     purchases.put(item.material(),RecipeEconomy.unit(s.askPrice(item),s.batchSize(item)));
@@ -96,6 +95,20 @@ class ShopServiceEconomyTest {
             assertEquals(0,s.bidPrice(item));assertTrue(s.askPrice(item)>0);
         }
         assertEquals(36,count);
+    }
+    @Test void forgedLegacyItemCannotEnableBuybackForNewDecor() throws Exception {
+        var s=service(10);var item=s.config().item("WHITE_CONCRETE").orElseThrow();
+        var forged=new ShopConfig.ShopItem(item.material(),item.category(),item.basePrice(),item.refStock(),item.minMultiplier(),item.maxMultiplier());
+        assertEquals(0,s.bidPrice(forged));
+        assertEquals("trading.price-changed",s.sell(null,forged,64).errorKey());
+        assertEquals("trading.price-changed",s.sellMaximum(null,forged).errorKey());
+        assertEquals(0,s.maximumSale(null,forged,s.batchSize(forged),1));
+    }
+    @Test void exactFractionsDoNotDecayInGoldNuggetRoundTrips() {
+        var costs=RecipeEconomy.recipeCosts(Map.of("GOLD_INGOT",RecipeEconomy.Cost.of(.5)));
+        assertEquals(RecipeEconomy.Cost.of(.5),costs.get("GOLD_INGOT"));
+        assertEquals(1,RecipeEconomy.cap(costs.get("GOLD_INGOT"),2,0));
+        assertEquals(2304,RecipeEconomy.batch(RecipeEconomy.unit(1,2304)));
     }
     @Test void sixArgumentCustomItemsKeepLegacyTwoWayTrading() {
         assertTrue(new ShopConfig.ShopItem("STONE","blocks",.05,20000,.25,4).sellEnabled());
