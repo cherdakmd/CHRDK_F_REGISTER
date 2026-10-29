@@ -28,13 +28,14 @@ class RetiredAddonsGuardTest(unittest.TestCase):
 
     def test_plugin_namespace_artifact_and_deleted_api_are_rejected(self):
         for symbol in ("CHRDK_Bosses", "CHRDK_Treasures", "ru.cherdakmd.chrdktreasures",
-                       "chrdk-bosses-1.4.238.jar", "ChrdkTreasureBookInfo"):
+                       "chrdk-bosses-1.4.238.jar", "ChrdkTreasureBookInfo", "CHRDK_Streams",
+                       "chrdk-streams-1.4.240.jar", "ru.cherdakmd.chrdkstreams"):
             with self.subTest(symbol=symbol):
                 self.write("enchants/src/main/java/Source.java", f"import {symbol};")
                 self.assertTrue(check(self.root))
 
     def test_retired_pages_are_rejected_even_without_commands(self):
-        for page in ("bosses", "treasures"):
+        for page in ("bosses", "treasures", "streams"):
             with self.subTest(page=page):
                 self.write("tools/wiki/assets/app.js", f'const href = "{page}.html";')
                 self.assertTrue(check(self.root))
@@ -51,7 +52,7 @@ class RetiredAddonsGuardTest(unittest.TestCase):
         self.assertTrue(check(self.root))
         (self.root / "settings.gradle").unlink()
         for name in ("bosses/build.gradle", "treasures/build/libs/old.jar", "wiki/bosses.md",
-                     "wiki/treasures.md", "docs/TREASURES_ARSENAL.md"):
+                     "wiki/treasures.md", "docs/TREASURES_ARSENAL.md", "streams/build.gradle", "wiki/streams.md"):
             with self.subTest(name=name):
                 with tempfile.TemporaryDirectory() as directory:
                     root = Path(directory)

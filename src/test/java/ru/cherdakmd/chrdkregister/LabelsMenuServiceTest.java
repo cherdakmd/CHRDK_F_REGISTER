@@ -124,7 +124,7 @@ class LabelsMenuServiceTest {
         }
         assertEquals(LabelPreferences.Label.RANK, LabelsCommandHandler.singleOf("ранг"));
         assertEquals(LabelPreferences.Label.HEADER, LabelsCommandHandler.singleOf("шапка"));
-        assertEquals(LabelPreferences.Label.STREAMS, LabelsCommandHandler.singleOf("стример"));
+        assertNull(LabelsCommandHandler.singleOf("стример"));
         // «badges» и «all» — не одиночные надписи, у них свои ветки команды.
         assertNull(LabelsCommandHandler.singleOf("badges"));
         assertNull(LabelsCommandHandler.singleOf("all"));

@@ -116,7 +116,7 @@ class PluginUpdateServiceTest {
 
     @Test void retiredJarBlocksStagingBeforeAnyDownloadAndNeverDeletesServerFiles() throws Exception {
         Fixture fixture = new Fixture(); fixture.install("CHRDK_Core", "1.4.72");
-        for (String plugin : List.of("CHRDK_Bosses", "CHRDK_Treasures")) {
+        for (String plugin : List.of("CHRDK_Bosses", "CHRDK_Treasures", "CHRDK_Streams")) {
             Path old = root.resolve("renamed-retired-plugin.jar"); byte[] original = jar(plugin, "1.4.72");
             Files.write(old, original);
             try (var updater = fixture.service()) {
@@ -145,8 +145,8 @@ class PluginUpdateServiceTest {
         try (var updater = fixture.service()) {
             var result = updater.execute(true, "1.4.72");
             assertTrue(result.staged());
-            assertEquals(28, result.count());
-            try (var files = Files.list(result.updateDirectory())) { assertEquals(28, files.count()); }
+            assertEquals(27, result.count());
+            try (var files = Files.list(result.updateDirectory())) { assertEquals(27, files.count()); }
             for (var entry : originals.entrySet()) {
                 assertArrayEquals(entry.getValue(), Files.readAllBytes(entry.getKey()));
                 assertArrayEquals(entry.getValue(), Files.readAllBytes(result.backup().resolve(entry.getKey().getFileName())));
@@ -333,7 +333,7 @@ class PluginUpdateServiceTest {
         }
         CommandSender generic = (CommandSender) Proxy.newProxyInstance(CommandSender.class.getClassLoader(), new Class<?>[]{CommandSender.class}, (p, m, a) -> null);
         assertFalse(RegisterCommandHandler.canDownloadUpdates(generic));
-        assertEquals(28, PluginUpdateService.MODULES.size());
+        assertEquals(27, PluginUpdateService.MODULES.size());
         Set<String> actual = new HashSet<>();
         List<Path> descriptors = new ArrayList<>();
         descriptors.add(Path.of("src/main/resources/plugin.yml"));

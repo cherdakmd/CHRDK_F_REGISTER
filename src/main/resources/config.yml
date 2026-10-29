@@ -704,7 +704,7 @@ server-menu:
     - {"id": "world", "slot": 13, "icon": "GRASS_BLOCK", "name": "<gold><bold>Мир и территории</bold></gold>", "lore": "<gray>Приваты, дома и телепорты</gray>"}
     - {"id": "gear", "slot": 14, "icon": "ANVIL", "name": "<gold><bold>Снаряжение и питомцы</bold></gold>", "lore": "<gray>Чары, тиры, артефакты, косметика и питомцы</gray>"}
     - {"id": "adventure", "slot": 15, "icon": "IRON_SWORD", "name": "<gold><bold>Охота и события</bold></gold>", "lore": "<gray>Охота и мировые события</gray>"}
-    - {"id": "social", "slot": 16, "icon": "BELL", "name": "<gold><bold>Общество</bold></gold>", "lore": "<gray>Чат, отряд, гильдия, очередь и стримы</gray>"}
+    - {"id": "social", "slot": 16, "icon": "BELL", "name": "<gold><bold>Общество</bold></gold>", "lore": "<gray>Чат, отряд, гильдия, очередь</gray>"}
   # Пункты. category — id раздела; без category пункт живёт на главной странице.
   # Без command — подсказка (клик игнорируется).
   items:
@@ -765,10 +765,9 @@ server-menu:
     - {"category": "social", "icon": "SHIELD", "name": "<gold><bold>Отряд</bold></gold>", "lore": "<gray>Вместе: приглашения и общий чат</gray>", "command": "party", "plugin": "CHRDK_Party", "permission": "chrdkparty.use"}
     - {"category": "social", "icon": "WHITE_BANNER", "name": "<gold><bold>Гильдия</bold></gold>", "lore": "<gray>Казна, ранги и войны</gray>", "command": "guild menu", "plugin": "CHRDK_Guilds", "permission": "chrdkguilds.use"}
     - {"category": "social", "icon": "HOPPER", "name": "<gold><bold>Очередь входа</bold></gold>", "lore": "<gray>Статус очереди и приоритет</gray>", "command": "queue info", "plugin": "CHRDK_Queue", "permission": "chrdkqueue.use"}
-    - {"category": "social", "icon": "JUKEBOX", "name": "<gold><bold>Стримерская программа</bold></gold>", "lore": "<gray>Twitch и VK Play Live: статус и награды</gray>\n<dark_gray>Привязка: /stream link</dark_gray>", "command": "stream status", "plugin": "CHRDK_Streams", "permission": "chrdkstreams.use"}
     # 1.4.183: свой ник — что видно в табе и чате. 1.4.186: каждое звание отдельно.
     # Настройка личная, права и прогресс не меняет.
-    - {"category": "social", "icon": "NAME_TAG", "name": "<gold><bold>Оформление ника</bold></gold>", "lore": "<gray>Ранг, титул, звание, класс, гильдия, стример</gray>\n<gray>и шапка таба — каждое включается отдельно</gray>\n<dark_gray>Клик: /labels</dark_gray>", "command": "labels", "permission": "chrdkregister.labels"}
+    - {"category": "social", "icon": "NAME_TAG", "name": "<gold><bold>Оформление ника</bold></gold>", "lore": "<gray>Ранг, титул, звание, класс, гильдия</gray>\n<gray>и шапка таба — каждое включается отдельно</gray>\n<dark_gray>Клик: /labels</dark_gray>", "command": "labels", "permission": "chrdkregister.labels"}
 
 # Алмазный банк: /bal, /pay, /baltop (1.4.138).
 # Валюта — алмазы: предметы в инвентаре и счёт в банке. Курс фиксированный,
@@ -1103,7 +1102,6 @@ auto-messages:
     - {"text": "<gray>Точки дома: <white>/homes</white> и <white>/sethome имя</white>. Запрос к игроку — <white>/tpa ник</white>.</gray>", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
     - {"text": "<gray>Изучайте кастомные чары: <white>/enchants</white>. Редкости снаряжения — <white>/tiers</white>.</gray>", "plugin": "CHRDK_Enchants", "permission": "chrdkenchants.use"}
     - {"text": "<gray>Вся косметика — <white>/cosmetic</white> или кнопка в <white>/menu</white>. Шлейф, вход, цвет ника и надписи — в одном меню.</gray>", "plugin": "CHRDK_Cosmetics", "permission": "chrdkcosmetics.use"}
-    - {"text": "<gray>Стримите на Twitch или VK Play Live? Привяжите канал: <white>/stream link</white> — час эфира даёт час отдельного буста.</gray>", "plugin": "CHRDK_Streams", "permission": "chrdkstreams.use"}
     - {"text": "<gray>Приглашайте друзей: <white>/ref</white> — статус и условия бонуса. Вас позвал друг? <white>/ref use его_ник</white>.</gray>", "plugin": "CHRDK_Referrals", "permission": "chrdkref.use"}
     - {"text": "<gray>Сейчас на сервере <white>%online%</white> игроков. Самое время для общих целей: <white>/goals</white>.</gray>", "plugin": "CHRDK_CommonGoals", "permission": "chrdkgoals.use", "min-online": 5}
     - {"text": "<gray>Забирайте ежедневную награду: <white>/daily</white>. Стрик входов не сбрасывается при пропуске одного дня.</gray>", "plugin": "CHRDK_DailyRewards", "permission": "chrdkdaily.use"}
@@ -1147,7 +1145,7 @@ tablist:
   show-rank-name: true
   # Что игрок показывает в своём нике, он решает сам: /labels открывает меню,
   # где каждое звание и надпись включаются отдельно (ранг, титул кузни, звание
-  # класс, гильдия, стример, квесты, достижения, шапка таба).
+  # класс, гильдия, квесты, достижения, шапка таба).
   # Файл plugins/CHRDK_Core/labels.json. Скрытие — только оформление: ранг,
   # опыт и права остаются. Сортирует список CHRDK_Ranks: сначала донатный ранг,
   # внутри ранга — звание за стаж (ranks.sort-tab в его config.yml).

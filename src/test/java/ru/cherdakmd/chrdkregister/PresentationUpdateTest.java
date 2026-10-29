@@ -46,7 +46,7 @@ class PresentationUpdateTest {
         assertTrue(changes.contains("server-menu.items"),changes.toString());
         var oldItems=live.getMapList("server-menu.items");
         var newItems=fresh.getMapList("server-menu.items");
-        assertEquals(oldItems.size()+1,newItems.size(),"кнопки ядра и доната вместо двух снятых аддонов");
+        assertEquals(oldItems.size(),newItems.size(),"кнопки ядра и доната вместо трёх снятых аддонов");
         assertTrue(newItems.containsAll(oldItems.stream().filter(item -> !RetiredAddons.plugin(String.valueOf(item.get("plugin"))) && !"pass donate".equals(item.get("command"))).toList()),"пункты остальных аддонов не переписаны");
         var added=newItems.stream().filter(item -> !oldItems.contains(item)).toList();
         assertEquals(4,added.size(),added.toString());
@@ -72,7 +72,7 @@ class PresentationUpdateTest {
         assertTrue(changes.contains("server-menu.items"),changes.toString());
         var oldItems=live.getMapList("server-menu.items");
         var newItems=fresh.getMapList("server-menu.items");
-        assertEquals(oldItems.size(),newItems.size(),"кнопки ника/доната добавлены, два снятых аддона удалены");
+        assertEquals(oldItems.size()-1,newItems.size(),"кнопки ника/доната добавлены, три снятых аддона удалены");
         var added=newItems.stream().filter(item -> !oldItems.contains(item)).toList();
         assertEquals(3,added.size(),added.toString());
         assertEquals(1,added.stream().filter(item -> "labels".equals(item.get("command"))).count());
@@ -99,7 +99,7 @@ class PresentationUpdateTest {
         assertTrue(changes.contains("server-menu.items"),changes.toString());
         var oldItems=live.getMapList("server-menu.items");
         var newItems=fresh.getMapList("server-menu.items");
-        assertEquals(oldItems.size()-1,newItems.size(),"снятые аддоны удалены, добавлена кнопка доната");
+        assertEquals(oldItems.size()-2,newItems.size(),"снятые аддоны удалены, добавлена кнопка доната");
         var changed=newItems.stream().filter(item -> !oldItems.contains(item)).toList();
         assertEquals(3,changed.size(),changed.toString());
         assertEquals(1,changed.stream().filter(item -> "labels".equals(item.get("command"))).count());
@@ -109,14 +109,14 @@ class PresentationUpdateTest {
                 "после миграции повторной не будет");
     }
 
-    @Test void stock238DropsBothAddonsAndTheirAnnouncementExactlyOnce() {
+    @Test void stock238DropsRetiredAddonsAndTheirAnnouncementsExactlyOnce() {
         var live=yaml("presentation-legacy-1.4.238.yml"); var legacy=yaml("presentation-legacy-1.4.238.yml");
         var fresh=yaml("config.yml");
         assertTrue(PresentationMigration.LEGACY_RESOURCES.contains("presentation-legacy-1.4.238.yml"));
         var changes=PresentationMigration.replacements(live,List.of(legacy),fresh);
         assertTrue(changes.contains("server-menu.items"));
         assertTrue(changes.contains("auto-messages.messages"));
-        assertEquals(live.getMapList("server-menu.items").size()-1, fresh.getMapList("server-menu.items").size());
+        assertEquals(live.getMapList("server-menu.items").size()-2, fresh.getMapList("server-menu.items").size());
         for (var entry:fresh.getMapList("server-menu.items")) {
             assertFalse(RetiredAddons.plugin(String.valueOf(entry.get("plugin"))));
             assertFalse(RetiredAddons.command(String.valueOf(entry.get("command"))));
@@ -178,7 +178,7 @@ class PresentationUpdateTest {
         assertEquals(7,categories.size(),"разделы меню: "+categories);
         assertEquals(7,new HashSet<>(categories).size(),"ид разделов уникальны");
         var entries=config.getMapList("server-menu.items").stream().map(this::menuEntry).toList();
-        assertEquals(51,entries.size(),"меню 1.4.240 с кнопкой доната без снятых аддонов");
+        assertEquals(50,entries.size(),"меню 1.4.241 с кнопкой доната без снятых аддонов");
         for (var entry : entries) {
             if (!entry.category().isBlank()) assertTrue(categories.contains(entry.category()),entry.category());
         }
@@ -268,7 +268,7 @@ class PresentationUpdateTest {
     }
     @Test void structuredAndLegacyMessagesSupportTargetingAndExplicitEmptyList() throws Exception {
         var c=ChatConfig.fromBukkitConfig(yaml("config.yml"));
-        assertEquals(29,c.autoMessageEntries().size());
+        assertEquals(28,c.autoMessageEntries().size());
         var legacy=new YamlConfiguration();legacy.loadFromString("auto-messages:\n  messages: ['Hello %online%']\n");
         assertEquals("Hello %online%",ChatConfig.fromBukkitConfig(legacy).autoMessageEntries().getFirst().text());
         legacy.set("auto-messages.messages",List.of());assertTrue(ChatConfig.fromBukkitConfig(legacy).autoMessageEntries().isEmpty());

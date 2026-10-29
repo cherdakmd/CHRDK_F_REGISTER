@@ -78,7 +78,7 @@ class RetiredAddonsTest {
         assertEquals(1, preferences.hiddenCount("Steve"));
         assertEquals(List.of("rank", "treasures", "guilds", "classes"), preferences.slots("Steve").subList(0,4));
         assertEquals(List.of("treasures", "classes"), preferences.presets("Steve").get("p1").slots().subList(0,2));
-        preferences.set("Steve", LabelPreferences.Label.STREAMS, false); preferences.saveNow();
+        preferences.set("Steve", LabelPreferences.Label.ACHIEVEMENTS, false); preferences.saveNow();
         var restored = reload();
         assertEquals(preferences.slots("Steve"), restored.slots("Steve"));
         assertEquals(preferences.presets("Steve"), restored.presets("Steve"));
@@ -99,7 +99,7 @@ class RetiredAddonsTest {
         preferences.set("Steve", LabelPreferences.Label.RANK, false); preferences.saveNow();
         assertEquals(preferences.slots("Steve"), reload().slots("Steve"));
     }
-    @Test void sevenRemainingNameSourcesStillProvideAllEightEditableSlots() {
+    @Test void sixRemainingNameSourcesStillProvideAllEightEditableSlots() {
         var preferences = reload();
         var styles = new LabelStyleService((id, player, base) -> "[" + id + "] " + base, preferences,
                 new LabelStyleService.RankLookup() {

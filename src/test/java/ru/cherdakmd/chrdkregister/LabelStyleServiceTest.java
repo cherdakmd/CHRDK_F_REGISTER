@@ -111,16 +111,16 @@ class LabelStyleServiceTest {
     }
 
     @Test
-    void legacyPrefixSuffixAndStreamerWrappingAllBecomeSuffixes(@TempDir Path dir) {
+    void legacyPrefixSuffixAndAddonWrappingAllBecomeSuffixes(@TempDir Path dir) {
         LabelStyleService styles = new LabelStyleService((id, player, name) -> switch (id) {
             case "classes" -> "<aqua>[КЛ]</aqua> " + name;
             case "guilds" -> name + " <green>[ГИ]</green>";
-            case "streams" -> "<bold>" + name + "</bold> <red>[СТРИМ]</red>";
+            case "tierforge" -> "<bold>" + name + "</bold> <red>[КЗ]</red>";
             default -> name;
         }, fresh(dir), LOOKUP);
         String result = styles.compose("Имя", "<gold>Имя</gold>",
-                List.of(C, G, LabelPreferences.Label.STREAMS), "", "");
-        assertEquals("Имя · [КЛ] · [ГИ] · [СТРИМ]", text(result));
+                List.of(C, G, LabelPreferences.Label.TIERFORGE), "", "");
+        assertEquals("Имя · [КЛ] · [ГИ] · [КЗ]", text(result));
         assertFalse(result.contains("ANCHOR"));
         assertTrue(result.contains("<aqua>"));
         assertTrue(result.contains("<green>"));
@@ -222,7 +222,7 @@ class LabelStyleServiceTest {
 
     @Test
     void defaultOrderIsStableAndRankHasPriority(@TempDir Path dir) {
-        assertEquals(List.of(R, C, G, LabelPreferences.Label.TIERFORGE, LabelPreferences.Label.STREAMS,
+        assertEquals(List.of(R, C, G, LabelPreferences.Label.TIERFORGE,
                 LabelPreferences.Label.QUESTS, LabelPreferences.Label.ACHIEVEMENTS),
                 with(fresh(dir)).defaultOrder());
     }
@@ -247,11 +247,11 @@ class LabelStyleServiceTest {
     @Test
     void newLabelsAreAppendedWithoutChangingSavedPriority(@TempDir Path dir) {
         LabelPreferences preferences = fresh(dir);
-        // Порядок настроен до появления новой метки (например, стримера).
+        // Порядок настроен до появления новой метки (например, титула кузни).
         preferences.setOrder("Steve", List.of(G, R));
         List<LabelPreferences.Label> order = with(preferences).order("Steve");
         assertEquals(List.of(G, R), order.subList(0, 2));
-        assertTrue(order.indexOf(LabelPreferences.Label.STREAMS) > order.indexOf(R));
+        assertTrue(order.indexOf(LabelPreferences.Label.TIERFORGE) > order.indexOf(R));
     }
 
     @Test

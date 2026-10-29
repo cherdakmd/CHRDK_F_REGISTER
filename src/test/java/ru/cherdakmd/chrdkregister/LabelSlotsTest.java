@@ -131,13 +131,13 @@ class LabelSlotsTest {
     void legacyFileAndPresetKeepPositionsWithoutAvailabilityFiltering(@TempDir Path dir) throws Exception {
         Files.writeString(dir.resolve("labels.json"), """
                 {"version":3,"players":{"steve":{"order":["guilds","classes","rank"],
-                "color":"aqua","hidden":["streams"],"presets":{"p1":{"order":["guilds","classes","rank"]}}}}}
+                "color":"aqua","hidden":["quests"],"presets":{"p1":{"order":["guilds","classes","rank"]}}}}}
                 """);
         var prefs = prefs(dir);
         var styles = styles(prefs, new int[]{1}, Set.of("guilds"));
         assertEquals(List.of(C), shown(styles));
         assertEquals("aqua", prefs.color(PLAYER));
-        assertFalse(prefs.visible(PLAYER, LabelPreferences.Label.STREAMS));
+        assertFalse(prefs.visible(PLAYER, LabelPreferences.Label.QUESTS));
         styles.assign(PLAYER, 0, R);
         prefs.apply(PLAYER, prefs.presets(PLAYER).get("p1"));
         assertEquals(List.of(C), shown(styles));

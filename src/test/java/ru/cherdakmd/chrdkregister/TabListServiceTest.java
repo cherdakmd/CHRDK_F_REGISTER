@@ -53,9 +53,9 @@ class TabListServiceTest {
     void taggedNameIsRenderedAsMarkup() {
         var ctx = new TabListService.TabContext("Steve", 1, 1, 20.0, 0, "w", "", "", 0,
                 new PresentationContext("", "", "", "", ""),
-                "<bold>Steve</bold> <red>[СТРИМ]</red>");
+                "<bold>Steve</bold> <red>[МЕТКА]</red>");
         Component line = TabListService.renderName(messages(), "%player_tagged% / %player%", ctx);
-        assertEquals("Steve [СТРИМ] / Steve", PLAIN.serialize(line),
+        assertEquals("Steve [МЕТКА] / Steve", PLAIN.serialize(line),
                 "%player_tagged% — доверенная разметка, %player% по-прежнему экранируется");
     }
 

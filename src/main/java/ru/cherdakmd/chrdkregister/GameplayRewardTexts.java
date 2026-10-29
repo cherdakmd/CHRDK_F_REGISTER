@@ -6,7 +6,7 @@ import java.util.Set;
 /** Совместимость старых пользовательских messages.yml без перезаписи владельческих файлов. */
 final class GameplayRewardTexts {
     private static final Set<String> MODULES = Set.of("chrdk_achievements", "chrdk_artifacts", "chrdk_battlepass",
-            "chrdk_dailyrewards", "chrdk_orders", "chrdk_referrals", "chrdk_streams", "chrdk_tierforge");
+            "chrdk_dailyrewards", "chrdk_orders", "chrdk_referrals", "chrdk_tierforge");
     private GameplayRewardTexts() { }
 
     static String reward(String text) {
@@ -24,7 +24,9 @@ final class GameplayRewardTexts {
     static String message(String module, String key, String text) {
         // Старый пользовательский файл не переписываем, но снятый источник не рекламируем.
         if ("CHRDK_Core".equalsIgnoreCase(module) && "labels.usage".equals(key) && text != null)
-            return text.replaceAll("(?i)\\|treasures(?=\\||\\])", "");
+            return text.replaceAll("(?i)\\|(?:treasures|streams)(?=\\||\\])", "")
+                    .replaceAll("(?i)(\\[)(?:treasures|streams)\\|", "$1")
+                    .replaceAll("(?i)\\[(?:treasures|streams)\\]", "[]");
         if (MODULES.contains(module.toLowerCase(Locale.ROOT))) return reward(text);
         return text;
     }
@@ -34,9 +36,6 @@ final class GameplayRewardTexts {
         String lower = text.toLowerCase(Locale.ROOT);
         if (lower.contains("приветственный ранг")) {
             return "<gray>За достижения выдаётся отдельный буст +10% опыта Minecraft, профессий и навыков. Время только онлайн; запас — /profile. Платные ранги и товары не продлеваются.</gray>";
-        }
-        if (lower.contains("эфира") || lower.contains("стрима")) {
-            return reward(text).replace("сутки буста", "час буста");
         }
         if (lower.contains("коллекц") || lower.contains("достижен") || lower.contains("наград")) return reward(text);
         return text;

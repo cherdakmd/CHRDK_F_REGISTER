@@ -67,8 +67,6 @@ public final class LabelPreferences {
         CLASSES("classes", Group.NAME),
         /** Метка гильдии. */
         GUILDS("guilds", Group.NAME),
-        /** Метка стримера (Twitch / VK Play Live). */
-        STREAMS("streams", Group.NAME),
         /** Метка квестов и общего прогресса. */
         QUESTS("quests", Group.NAME),
         /** Значок за собранные достижения. */

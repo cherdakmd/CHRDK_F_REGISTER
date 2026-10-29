@@ -26,8 +26,8 @@ import java.util.UUID;
  *
  * <p>С 1.4.183 настройка жила в чате командой {@code /labels}, и прятать можно
  * было только группами: «всё звания» одной кнопкой. Здесь то же самое, но
- * наглядно: восемь плиток — ранг, титул кузни, класс,
- * гильдия, стример, квесты, достижения и шапка таба. Клик переключает одну
+ * наглядно: семь плиток — ранг, титул кузни, класс,
+ * гильдия, квесты, достижения и шапка таба. Клик переключает одну
  * надпись и сразу перерисовывает меню; снизу — «Включить всё», «Выключить
  * всё», «Сброс», «Профиль» и «Закрыть». Справа вверху — «Вас видят так»: та же
  * строка, которую получают остальные игроки, поэтому видно, что настройка не
@@ -47,7 +47,7 @@ public final class LabelsMenuService implements Listener {
     /** Как ник выглядит для остальных — ровно та строка, что уходит в чат и таб. */
     static final int PREVIEW_SLOT = 8;
     /** Переключатели источников под выбранными местами; шапка TAB отдельно. */
-    static final int[] ENTRY_SLOTS = {28, 29, 30, 31, 32, 33, 34, 35};
+    static final int[] ENTRY_SLOTS = {28, 29, 30, 31, 32, 33, 34};
     static final int[] PLACE_SLOTS = {19, 20, 21, 22, 23, 24, 25, 26};
     static final int ENABLE_ALL_SLOT = 45;
     static final int DISABLE_ALL_SLOT = 47;
@@ -308,7 +308,6 @@ public final class LabelsMenuService implements Listener {
             case TIERFORGE -> messages.mini("labels.name-tierforge");
             case CLASSES -> messages.mini("labels.name-classes");
             case GUILDS -> messages.mini("labels.name-guilds");
-            case STREAMS -> messages.mini("labels.name-streams");
             case QUESTS -> messages.mini("labels.name-quests");
             case ACHIEVEMENTS -> messages.mini("labels.name-achievements");
             case HEADER -> messages.mini("labels.name-header");
@@ -322,7 +321,6 @@ public final class LabelsMenuService implements Listener {
             case TIERFORGE -> plugin.messages().get("labels.desc-tierforge");
             case CLASSES -> plugin.messages().get("labels.desc-classes");
             case GUILDS -> plugin.messages().get("labels.desc-guilds");
-            case STREAMS -> plugin.messages().get("labels.desc-streams");
             case QUESTS -> plugin.messages().get("labels.desc-quests");
             case ACHIEVEMENTS -> plugin.messages().get("labels.desc-achievements");
             case HEADER -> plugin.messages().get("labels.desc-header");
@@ -336,7 +334,6 @@ public final class LabelsMenuService implements Listener {
             case TIERFORGE -> Material.ANVIL;
             case CLASSES -> Material.IRON_SWORD;
             case GUILDS -> Material.WHITE_BANNER;
-            case STREAMS -> Material.JUKEBOX;
             case QUESTS -> Material.WRITABLE_BOOK;
             case ACHIEVEMENTS -> Material.EXPERIENCE_BOTTLE;
             case HEADER -> Material.PAPER;

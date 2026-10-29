@@ -27,8 +27,8 @@ groups:
     title: "Ранги и вход"
     icon: crown
     accent: "#f0abfc"
-    description: "Пять ступеней, стримеры и очередь на вход."
-    pages: [ranks, streams, queue]
+    description: "Пять ступеней и очередь на вход."
+    pages: [ranks, queue]
   - id: world
     title: "Мир"
     icon: map

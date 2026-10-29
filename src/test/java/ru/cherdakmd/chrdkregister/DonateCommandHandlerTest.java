@@ -101,7 +101,7 @@ class DonateCommandHandlerTest {
         assertEquals(1, donation.size());
         assertTrue(clicks(messages().markup(donation.getFirst().text())).contains(ClickEvent.openUrl(URL)));
         assertTrue(donation.getFirst().eligible(id -> true, permission -> true, false, false));
-        assertEquals(29, announcements.size(), "напоминание заменено, дополнительный спам не добавлен");
+        assertEquals(28, announcements.size(), "напоминание доната одно, сообщение снятого аддона удалено");
     }
     @Test void stock239MigratesOnceWithoutTouchingCustomListsOrSchedule() {
         var live = yaml("presentation-legacy-1.4.239.yml");
@@ -110,7 +110,7 @@ class DonateCommandHandlerTest {
         var changes = PresentationMigration.replacements(live, List.of(legacy), fresh);
         assertTrue(PresentationMigration.LEGACY_RESOURCES.contains("presentation-legacy-1.4.239.yml"));
         assertTrue(changes.containsAll(List.of("server-menu.items", "auto-messages.messages")));
-        assertEquals(live.getMapList("server-menu.items").size() + 1, fresh.getMapList("server-menu.items").size());
+        assertEquals(live.getMapList("server-menu.items").size(), fresh.getMapList("server-menu.items").size());
         for (String key : changes) live.set(key, fresh.get(key));
         assertEquals(777, live.getInt("auto-messages.interval-seconds"));
         assertTrue(PresentationMigration.replacements(live, List.of(legacy), fresh).isEmpty());

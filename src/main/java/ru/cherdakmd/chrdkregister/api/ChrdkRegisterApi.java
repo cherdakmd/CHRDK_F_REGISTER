@@ -31,8 +31,8 @@ import java.util.UUID;
  */
 public interface ChrdkRegisterApi {
 
-    /** Версия контракта API. API 26: сняты контракты удалённых аддонов; API 25: durable checkpoint игровых наград; API 24 — Claims domain settlement. */
-    int API_VERSION = 26;
+    /** Версия контракта API. API 27: снят источник оформления удалённого аддона; API 26: сняты контракты удалённых аддонов; API 25: durable checkpoint игровых наград; API 24 — Claims domain settlement. */
+    int API_VERSION = 27;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -276,7 +276,7 @@ public interface ChrdkRegisterApi {
      *
      * <p>Провайдер получает ник без разметки и уже оформленное имя (с тегом
      * каталога) и возвращает новое — MiniMessage-строку. Так аддон может
-     * сделать ник жирным, добавить метку «СТРИМ» и т.п.</p>
+     * сделать ник жирным, добавить метку гильдии и т.п.</p>
      */
     @FunctionalInterface
     interface NameTagProvider {
@@ -296,7 +296,7 @@ public interface ChrdkRegisterApi {
      * <p>По умолчанию ничего не делает: старые реализации API остаются
      * совместимыми. Сбой провайдера логируется и не ломает чат.</p>
      *
-     * @param id       уникальное имя аддона, например {@code streams}
+     * @param id       уникальное имя аддона, например {@code guilds}
      * @param provider сборка имени; {@code null} игнорируется
      */
     default void registerNameTag(String id, NameTagProvider provider) {

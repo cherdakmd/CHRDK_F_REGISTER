@@ -292,7 +292,7 @@ public final class LabelStyleService {
     public List<LabelPreferences.Label> defaultOrder() {
         return List.of(LabelPreferences.Label.RANK, LabelPreferences.Label.CLASSES,
                 LabelPreferences.Label.GUILDS,
-                LabelPreferences.Label.TIERFORGE, LabelPreferences.Label.STREAMS,
+                LabelPreferences.Label.TIERFORGE,
                 LabelPreferences.Label.QUESTS, LabelPreferences.Label.ACHIEVEMENTS);
     }
 

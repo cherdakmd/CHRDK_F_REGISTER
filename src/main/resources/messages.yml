@@ -110,7 +110,6 @@ messages:
     "name-tierforge": "<white>Титул кузни</white> <dark_gray>(коллекция редкостей)</dark_gray>"
     "name-classes": "<white>Класс</white> <dark_gray>(метка выбранного класса)</dark_gray>"
     "name-guilds": "<white>Гильдия</white> <dark_gray>(название и метка гильдии)</dark_gray>"
-    "name-streams": "<white>Стример</white> <dark_gray>(метка Twitch и VK Play Live)</dark_gray>"
     "name-quests": "<white>Квесты</white> <dark_gray>(метка прогресса заданий)</dark_gray>"
     "name-achievements": "<white>Достижения</white> <dark_gray>(значок за собранное)</dark_gray>"
     "name-header": "<white>Шапка таба</white> <dark_gray>(видит только сам игрок)</dark_gray>"
@@ -118,7 +117,6 @@ messages:
     "desc-tierforge": "<dark_gray>Титул за закрытые разделы коллекции кузни.</dark_gray>"
     "desc-classes": "<dark_gray>Метка класса: воин, маг, охотник и остальные.</dark_gray>"
     "desc-guilds": "<dark_gray>Метка гильдии, в которой вы состоите.</dark_gray>"
-    "desc-streams": "<dark_gray>Отметка стримера для привязанных каналов.</dark_gray>"
     "desc-quests": "<dark_gray>Метка квестов и общего прогресса заданий.</dark_gray>"
     "desc-achievements": "<dark_gray>Значок за собранные достижения.</dark_gray>"
     "desc-header": "<dark_gray>Онлайн, TPS и ссылки над списком игроков.</dark_gray>"
@@ -156,7 +154,7 @@ messages:
     "all-off": "<gray>Все надписи скрыты</gray> <dark_gray>·</dark_gray> <gray>в табе и чате останется только ник. Настройка личная и не влияет на права.</gray>"
     "reset": "<green>Оформление сброшено</green> <gray>— обычный цвет, порядок и лимит вашей ступени.</gray>"
     "hint": "<gray>Тонко: <yellow>/labels</yellow> — меню, где каждая надпись включается отдельно.</gray>"
-    "usage": "<yellow>Использование: /%label% [меню|rank|tierforge|classes|guilds|streams|quests|achievements|header|badges|all|on|off|reset|status]</yellow>"
+    "usage": "<yellow>Использование: /%label% [меню|rank|tierforge|classes|guilds|quests|achievements|header|badges|all|on|off|reset|status]</yellow>"
     # ---- меню «Оформление ника» (1.4.186) ----
     "menu-title": "<gold>Оформление ника</gold>"
     "menu-head": "<gold>%player%</gold> <dark_gray>·</dark_gray> <gray>надписей %visible% / %total%</gray>"
@@ -166,7 +164,7 @@ messages:
       - "<gray>Ранг со знаком — одно место; шапка таба не считается.</gray>"
       - "<gray>Средний ряд — выбранные места. ЛКМ выбрать, ПКМ очистить.</gray>"
       - "<gray>Каждая надпись включается отдельно: ранг, титул кузни, звание,</gray>"
-      - "<gray>класс, гильдия, стример, квесты, достижения и шапка таба.</gray>"
+      - "<gray>класс, гильдия, квесты, достижения и шапка таба.</gray>"
       - ""
       - "<dark_gray>Решение ваше, но видят его все: ник в списке общий.</dark_gray>"
       - "<dark_gray>Это только оформление: права, опыт и срок ранга не меняются.</dark_gray>"
@@ -253,7 +251,7 @@ messages:
     "profile-hidden": "<dark_gray>·</dark_gray> <red>скрыто:</red> %name%"
     "profile-hint": "<gray>Кнопка «Оформление ника» рядом — включить и выключить каждую.</gray>"
     "profile-button": "<gold><b>Оформление ника</b></gold> <dark_gray>·</dark_gray> <gray>что видно в табе и чате</gray>"
-    "profile-button-lore": "<gray>Ранг, титул, звание, класс, гильдия, стример, квесты, достижения и шапка — каждое отдельно.</gray>"
+    "profile-button-lore": "<gray>Ранг, титул, звание, класс, гильдия, квесты, достижения и шапка — каждое отдельно.</gray>"
 
   # ---------------------------------------------------------------
   # restriction — Блокировка команд и чата до авторизации

@@ -31,10 +31,9 @@ class RewardBoundaryTest {
     }
 
     @Test void oldAnnouncementsAndMessagesStopPromisingPaidTime() {
-        assertEquals("+2 ч. буста", GameplayRewardTexts.message("CHRDK_Streams", "awarded", "+2 ч. ранга"));
+        assertEquals("+2 ч. буста", GameplayRewardTexts.message("CHRDK_Orders", "awarded", "+2 ч. ранга"));
         assertEquals("+2 ч. буста", GameplayRewardTexts.message("CHRDK_Achievements", "reward-hours", "+2 ч. проходки"));
         assertEquals("30 дней ранга", GameplayRewardTexts.message("CHRDK_Core", "shop.name", "30 дней ранга"));
-        assertTrue(GameplayRewardTexts.announcement("час эфира даёт сутки ранга").contains("час буста"));
         assertFalse(GameplayRewardTexts.announcement("Ваш приветственный ранг активен").contains("приветственный ранг"));
         assertFalse(GameplayRewardTexts.message("CHRDK_BattlePass", "reward", "+2 ч. ранга <gray>до</gray> <aqua>%until%</aqua>").contains("%until%"));
     }

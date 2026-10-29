@@ -72,7 +72,7 @@ public final class ChatService implements Listener {
     private final Map<UUID, UUID> lastPrivatePartners = new ConcurrentHashMap<>();
     /** Оформление ника из каталога товаров (цветной ник, плашка мецената). */
     private volatile java.util.function.Function<String, String> tagResolver = name -> "";
-    /** Оформление ников от аддонов (метка стримера и т.п.). */
+    /** Оформление ников от аддонов (метка гильдии и т.п.). */
     private final NameTags nameTags;
     /** 1.4.183: что игрок показывает в своём нике; {@code null} — всё видно. */
     private volatile LabelPreferences labelPreferences;
@@ -120,7 +120,7 @@ public final class ChatService implements Listener {
     }
 
     /**
-     * Ник с оформлением товара и метками аддонов: {@code <gold>Nick</gold> [СТРИМ]}.
+     * Ник с оформлением товара и метками аддонов: {@code <gold>Nick</gold> [ГИЛЬДИЯ]}.
      *
      * <p>С 1.4.186 каждая надпись проверяется отдельно: ранг — своим
      * переключателем, каждая метка аддона — по id провайдера, зарегистрированного

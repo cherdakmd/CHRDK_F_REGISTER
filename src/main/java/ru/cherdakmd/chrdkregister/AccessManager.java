@@ -1584,7 +1584,7 @@ public final class AccessManager {
      * реферальные бонусы и прочие реакции на оплату.</p>
      *
      * @param hours  длительность в часах; {@code <= 0} — ничего не делать
-     * @param source метка источника для аудита и поздравления (streams, battlepass, ...)
+     * @param source метка источника для аудита и поздравления (artifacts, battlepass, ...)
      */
     @Deprecated
     public RegistrationStore.PlayerAccount grantPassHours(String targetPlayerName, int hours, String source) {
@@ -1594,7 +1594,7 @@ public final class AccessManager {
 
     /**
      * Человеческое описание источника проходки для поздравления игроку.
-     * Аддоны передают метку вида {@code streams:...}, {@code battlepass:...} и т.п.
+     * Аддоны передают метку вида {@code artifacts:...}, {@code battlepass:...} и т.п.
      */
     static String describeGrantSource(String source) {
         if (source == null || source.isBlank()) {
@@ -1608,9 +1608,6 @@ public final class AccessManager {
         }
         if (source.startsWith("shop")) {
             return "покупкой в магазине";
-        }
-        if (source.startsWith("streams")) {
-            return "наградой стримерской программы";
         }
         if (source.startsWith("daily-rewards")) {
             return "наградой ежедневного входа";
@@ -1635,9 +1632,6 @@ public final class AccessManager {
 
     /** Заголовок уведомления в Discord: ручная выдача или награда аддона. */
     static String notificationTitle(String source) {
-        if (source != null && source.startsWith("streams")) {
-            return "Ранг продлён по стримерской программе";
-        }
         if (source != null && source.startsWith("battlepass")) {
             return "Ранг выдан за батлпасс";
         }
