@@ -99,6 +99,7 @@ class RetiredAddonsTest {
                     }
                     public List<String> registrationOrder() { return List.of(); }
                 });
+        styles.applyLimits(new LabelLimits(List.of(2), List.of(8)));
         assertEquals(8, styles.assignments("Steve").size());
         assertEquals("", styles.assignments("Steve").get(7));
         assertEquals(LabelStyleService.AssignmentResult.APPLIED, styles.assign("Steve", 7, null));

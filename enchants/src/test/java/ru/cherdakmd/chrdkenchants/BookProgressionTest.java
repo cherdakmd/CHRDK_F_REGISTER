@@ -73,6 +73,8 @@ class BookProgressionTest {
         var api = (ru.cherdakmd.chrdkregister.api.ChrdkEnchantsApi) java.lang.reflect.Proxy.newProxyInstance(
                 getClass().getClassLoader(), new Class<?>[]{ru.cherdakmd.chrdkregister.api.ChrdkEnchantsApi.class},
                 (proxy, method, args) -> {
+                    if (method.getName().equals("book") && method.getParameterCount() == 2)
+                        throw new AssertionError("Снятый источник вызвал старый генератор");
                     if (method.isDefault()) return java.lang.reflect.InvocationHandler.invokeDefault(proxy, method, args);
                     throw new AssertionError("Снятый источник не должен дойти до генератора");
                 });
