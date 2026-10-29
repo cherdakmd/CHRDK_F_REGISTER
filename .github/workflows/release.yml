@@ -46,7 +46,7 @@ jobs:
           python3 .github/scripts/check_retired_addons.py
           python3 -m unittest discover -s .github/scripts -p 'test_retired_addons.py' -v
           python3 .github/scripts/check_messages.py
-          python3 -m unittest discover -s .github/scripts -p 'test_verify_release.py' -v
+          python3 -m unittest discover -s .github/scripts -p 'test_*release.py' -v
 
       - name: Verify TradeMC kit and regression tests
         run: |
@@ -99,12 +99,12 @@ jobs:
           fi
           cp docs/releases/update-memo.txt 'release/ОБНОВЛЕНИЕ.txt'
           printf '\nВерсия: %s\nПлатформа: Purpur 26.3 / Java 25\n' "$version" >> 'release/ОБНОВЛЕНИЕ.txt'
-          for notes in docs/releases/1.4.{200,201,{220..243}}.md; do
+          for notes in docs/releases/1.4.{200,201,{220..244}}.md; do
             printf '\n\n' >> 'release/ОБНОВЛЕНИЕ.txt'
             cat "$notes" >> 'release/ОБНОВЛЕНИЕ.txt'
           done
           python3 .github/scripts/verify_release.py release "$version"
-          zip -j -9 "chrdk-plugins-${version}.zip" release/*.jar 'release/ОБНОВЛЕНИЕ.txt'
+          python3 .github/scripts/pack_release.py release "$version" "chrdk-plugins-${version}.zip"
           unzip -t "chrdk-plugins-${version}.zip"
           unzip -l "chrdk-plugins-${version}.zip"
           echo "zip=chrdk-plugins-${version}.zip" >> "$GITHUB_ENV"

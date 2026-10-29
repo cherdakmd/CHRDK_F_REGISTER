@@ -24,6 +24,8 @@ public final class PluginUpdateService implements AutoCloseable {
     static final int JSON_LIMIT = 2 * 1024 * 1024;
     static final int ZIP_LIMIT = 64 * 1024 * 1024;
     static final int JAR_LIMIT = 32 * 1024 * 1024;
+    static final int MEMO_LIMIT = 2 * 1024 * 1024;
+    static final String MEMO_NAME = "ОБНОВЛЕНИЕ.txt";
     static final Map<String, String> MODULES = modules();
     private final Path plugins, update, data;
     private final Supplier<String> repository;
@@ -34,7 +36,7 @@ public final class PluginUpdateService implements AutoCloseable {
     private volatile boolean closed;
 
     record Asset(String name, URI url, long size, String sha256) { }
-    record Release(String version, String url, Asset zip, Map<String, Asset> jars) { }
+    record Release(String version, String url, Asset zip) { }
     record Descriptor(String name, String version, String main, String api) { }
     record Installed(Path path, Descriptor descriptor, String hash) { }
     public record Result(String version, String url, boolean staged, boolean filesCurrent,
@@ -90,32 +92,27 @@ public final class PluginUpdateService implements AutoCloseable {
                 throw new IOException("Неподдерживаемый формат версии релиза.");
             String version = UpdateChecker.normalizeVersion(tag);
             String prefix = "https://github.com/" + repo + "/releases/download/" + tag + "/";
-            Map<String, Asset> assets = new HashMap<>();
+            Asset zip = null;
+            String expected = "chrdk-plugins-" + version + ".zip";
             for (var element : json.getAsJsonArray("assets")) {
                 JsonObject item = element.getAsJsonObject();
                 String name = item.get("name").getAsString();
-                // Ignore unrelated assets, but require exact names, digests and URLs for this bundle.
-                if (!name.equals("chrdk-plugins-" + version + ".zip")
-                        && MODULES.values().stream().noneMatch(base -> name.equals(base + "-" + version + ".jar"))) continue;
+                // Публикуется только ZIP. Посторонние assets не являются источником доверия к JAR.
+                if (!name.equals(expected)) continue;
                 String digest = item.has("digest") && !item.get("digest").isJsonNull() ? item.get("digest").getAsString() : "";
                 String url = item.get("browser_download_url").getAsString();
-                long size = item.get("size").getAsLong();
+                var rawSize = item.get("size");
+                if (rawSize == null || !rawSize.isJsonPrimitive() || !rawSize.getAsJsonPrimitive().isNumber())
+                    throw new IOException("Некорректный тип размера ZIP в метаданных релиза.");
+                long size = rawSize.getAsBigDecimal().longValueExact();
                 if (!digest.matches("sha256:[0-9a-fA-F]{64}") || !url.equals(prefix + name)
-                        || size <= 0 || size > (name.endsWith(".zip") ? ZIP_LIMIT : JAR_LIMIT))
+                        || size <= 0 || size > ZIP_LIMIT)
                     throw new IOException("Релиз не готов: неверный адрес, размер или SHA-256 файла " + name);
-                if (assets.put(name, new Asset(name, URI.create(url), size, digest.substring(7).toLowerCase(Locale.ROOT))) != null)
-                    throw new IOException("Повторяющийся файл релиза: " + name);
+                if (zip != null) throw new IOException("Повторяющийся файл релиза: " + name);
+                zip = new Asset(name, URI.create(url), size, digest.substring(7).toLowerCase(Locale.ROOT));
             }
-            Map<String, Asset> jars = new TreeMap<>();
-            for (var module : MODULES.entrySet()) {
-                String name = module.getValue() + "-" + version + ".jar";
-                Asset asset = assets.get(name);
-                if (asset == null) throw new IOException("Релиз ещё не собран полностью: отсутствует " + name);
-                jars.put(module.getKey(), asset);
-            }
-            Asset zip = assets.get("chrdk-plugins-" + version + ".zip");
             if (zip == null) throw new IOException("Релиз ещё не собран полностью: отсутствует общий ZIP.");
-            return new Release(version, "https://github.com/" + repo + "/releases/tag/" + tag, zip, Map.copyOf(jars));
+            return new Release(version, "https://github.com/" + repo + "/releases/tag/" + tag, zip);
         } catch (RuntimeException exception) {
             throw new IOException("Некорректные метаданные релиза GitHub.", exception);
         }
@@ -141,10 +138,10 @@ public final class PluginUpdateService implements AutoCloseable {
         Path backup = null;
         boolean published = false;
         try {
-            // All nineteen JARs must be valid, even when only some addons are installed.
+            // Проверяем весь комплект и памятку, даже если установлена только часть аддонов.
             unpackAndVerify(zip, release, prepared);
             for (var entry : installed.entrySet()) {
-                Path source = prepared.resolve(release.jars().get(entry.getKey()).name());
+                Path source = prepared.resolve(jarName(entry.getKey(), release.version()));
                 Path target = prepared.resolve(entry.getValue().path().getFileName());
                 // Keep the old filename: Bukkit uses it to replace the original on next startup.
                 // A separate directory avoids collisions with other release filenames.
@@ -192,22 +189,36 @@ public final class PluginUpdateService implements AutoCloseable {
         }
     }
 
+    private static String jarName(String plugin, String version) {
+        return MODULES.get(plugin) + "-" + version + ".jar";
+    }
+
     private void unpackAndVerify(byte[] zip, Release release, Path prepared) throws IOException {
         Map<String, String> names = new HashMap<>();
-        release.jars().forEach((plugin, asset) -> names.put(asset.name(), plugin));
+        MODULES.keySet().forEach(plugin -> names.put(jarName(plugin, release.version()), plugin));
         Set<String> seen = new HashSet<>();
-        int total = 0;
+        long total = 0;
         try (ZipInputStream input = new ZipInputStream(new ByteArrayInputStream(zip))) {
             for (var entry = input.getNextEntry(); entry != null; entry = input.getNextEntry()) {
                 String name = entry.getName();
-                // No zip paths, directories, unknown entries or duplicate filenames.
-                if (entry.isDirectory() || !names.containsKey(name) || !seen.add(name))
+                // Только плоский набор известных имён; ни путей, ни каталогов, ни повторов.
+                boolean memo = MEMO_NAME.equals(name);
+                if (entry.isDirectory() || (!memo && !names.containsKey(name)) || !seen.add(name))
                     throw new IOException("Неожиданный или повторяющийся файл в ZIP.");
-                byte[] jar = readLimited(input, JAR_LIMIT);
-                total += jar.length;
+                byte[] content = readLimited(input, memo ? MEMO_LIMIT : JAR_LIMIT);
+                total += content.length;
                 if (total > ZIP_LIMIT) throw new IOException("Распакованный комплект слишком большой.");
+                if (memo) {
+                    String text = java.nio.charset.StandardCharsets.UTF_8.newDecoder()
+                            .decode(ByteBuffer.wrap(content)).toString();
+                    if (text.startsWith("\uFEFF")) text = text.substring(1);
+                    if (text.isBlank() || text.indexOf('\0') >= 0)
+                        throw new IOException("Памятка обновления пуста или не является текстом UTF-8.");
+                    continue; // Памятка проверяется, но не устанавливается как исполняемый плагин.
+                }
                 String plugin = names.get(name);
-                verify(jar, release.jars().get(plugin));
+                // SHA-256 всего ZIP уже проверен до распаковки и покрывает также все байты JAR.
+                byte[] jar = content;
                 Path path = prepared.resolve(name);
                 Files.write(path, jar, StandardOpenOption.CREATE_NEW);
                 Descriptor descriptor = descriptor(path);
@@ -229,7 +240,8 @@ public final class PluginUpdateService implements AutoCloseable {
                 }
             }
         }
-        if (seen.size() != MODULES.size()) throw new IOException("ZIP не содержит все плагины сборки.");
+        if (!seen.containsAll(names.keySet()) || !seen.contains(MEMO_NAME))
+            throw new IOException("ZIP не содержит все плагины сборки и памятку обновления.");
     }
 
     private Map<String, Installed> installed() throws IOException {
