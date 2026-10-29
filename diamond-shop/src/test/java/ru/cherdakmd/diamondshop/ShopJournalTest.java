@@ -16,7 +16,7 @@ class ShopJournalTest {
     final Logger log=Logger.getAnonymousLogger();
     final ShopConfig.ShopItem item=new ShopConfig.ShopItem("STONE","blocks",1,1000,.25,4);
     ShopStore load() { var s=new ShopStore(dir,log); s.load(); return s; }
-    ShopStore initial() { var s=load(); s.setStock(item,1000,time); assertTrue(s.ensureMarket()); return s; }
+    ShopStore initial() { var s=load(); s.setStock(item,1000,time); assertTrue(s.ensureMarket()); assertTrue(s.markRegistered()); return s; }
     ShopExchange trade(ShopStore s,boolean buy) { return new ShopExchange(UUID.randomUUID(),s.market(),s.sequence()+1,owner,buy,"STONE",64,10,buy?10:0,buy?0:10,0,Map.of("DIAMOND",1),"before","after"); }
     ShopJournal.Pending pending(boolean buy) { var s=initial(); assertTrue(s.prepare(trade(s,buy),item,time,0,100,24,3600000,1)); return load().pending(); }
     static class Bank implements ShopJournal.Bank {
@@ -56,6 +56,20 @@ class ShopJournalTest {
     @Test void disappearanceOfAnAcknowledgedRootIntentStopsSourceInsteadOfCancelling() {
         pending(true); var bank=new Bank() { @Override public ShopExchange.Status commit(ShopExchange t) {state=ShopExchange.Status.MISSING; return ShopExchange.Status.UNAVAILABLE;} }; bank.state=ShopExchange.Status.PREPARED;
         var s=load(); assertFalse(ShopJournal.recover(s,bank)); assertFalse(s.legacyAvailable()); assertNotNull(load().pending());
+    }
+
+    @Test void registeredMarkerIsDurableAndAnUnregisteredSourceCannotPrepareMoney() {
+        var s=load(); s.setStock(item,1000,time); assertTrue(s.ensureMarket()); assertFalse(s.registered()); assertFalse(s.prepare(trade(s,true),item,time,0,100,24,3600000,1));
+        assertTrue(s.markRegistered()); assertTrue(load().registered());
+    }
+    @Test void registrationMarkerWriteFailureDoesNotPermitAnyTradeIntake() {
+        var s=new ShopStore(dir,log,()->{throw new IOException("registration uncertain");});
+        assertFalse(s.markRegistered()); assertFalse(s.legacyAvailable()); assertFalse(s.registered()); assertNull(s.pending());
+        assertTrue(load().registered());
+    }
+    @Test void sourceBindingNeverRegistersAgainAfterPriorAcknowledgement() throws Exception {
+        String source=Files.readString(Path.of("src/main/java/ru/cherdakmd/diamondshop/ShopService.java"));
+        assertTrue(source.contains("if(store.registered()) return core.shopRegistered(store.market());")); assertTrue(source.contains("if(!binding()) return false;"));
     }
 
 }

@@ -207,6 +207,7 @@ public interface ChrdkRegisterApi {
     /** Durable DiamondShop protocol; frozen source intent must precede this call. */
     default boolean shopTradingAvailable(Player player) { return false; }
     default boolean legacyShopImported(java.util.UUID owner) { return false; }
+    default boolean shopRegistered(java.util.UUID market) { return false; }
     default boolean registerShop(java.util.UUID market) { return false; }
     default ShopExchange.Status shopExchangeStatus(ShopExchange trade) { return ShopExchange.Status.UNAVAILABLE; }
     default ShopExchange.Status commitShopExchange(Player player,ShopExchange trade) { return ShopExchange.Status.UNAVAILABLE; }

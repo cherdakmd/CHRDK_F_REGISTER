@@ -31,21 +31,27 @@ public final class ShopService {
     public long bidPrice(ShopConfig.ShopItem item) { return WholeTrades.price(PriceEngine.bid(priceOf(item), config.spreadPercent()), batchSize(item), false); }
     public void recordPricePoint(ShopConfig.ShopItem item) { store.recordPrice(item, priceOf(item), System.currentTimeMillis(), config.historyMaxPoints(), config.historyIntervalMillis()); }
     public double[] historyOf(ShopConfig.ShopItem item) { return store.historyOf(item.material()); }
+    private boolean binding() {
+        var core=api.get(); if(core==null||!Bukkit.isPrimaryThread()||!store.legacyAvailable()||!store.ensureMarket()) return false;
+        if(store.registered()) return core.shopRegistered(store.market());
+        return core.registerShop(store.market())&&store.markRegistered();
+    }
     public boolean migrate(UUID id, double ignoredLegacyPreview) {
+        if(!binding()) return false;
         long amount = store.legacyAmount(id); var core = api.get();
         if(store.legacyAvailable()&&core!=null&&core.legacyShopImported(id)) return true;
         return store.legacyAvailable() && amount >= 0 && core != null && core.importLegacyShop(id, amount);
     }
     public boolean ready(Player player) {
         var core = api.get();
-        if(!Bukkit.isPrimaryThread()||core==null||!core.shopTradingAvailable(player)||!store.legacyAvailable()||!store.ensureMarket()||!core.registerShop(store.market())) return false;
+        if(!Bukkit.isPrimaryThread()||core==null||!core.shopTradingAvailable(player)||!store.legacyAvailable()||!binding()) return false;
         if(store.pending()!=null) { recoverPending(); return false; }
         return player.isOnline() && !player.isDead() && !player.hasMetadata("NPC")
                 && player.hasPermission("chrdkshop.use") && core.isAuthenticated(player)
                 && migrate(player.getUniqueId(), store.balanceOf(player.getUniqueId()));
     }
     public boolean recoverPending() {
-        var core=api.get(); if(core==null||!Bukkit.isPrimaryThread()||!store.legacyAvailable()||!store.ensureMarket()||!core.registerShop(store.market())) return false;
+        var core=api.get(); if(core==null||!Bukkit.isPrimaryThread()||!store.legacyAvailable()||!binding()) return false;
         return ShopJournal.recover(store,new ShopJournal.Bank() {
             public ShopExchange.Status status(ShopExchange t) { return core.shopExchangeStatus(t); }
             public ShopExchange.Status commit(ShopExchange t) {

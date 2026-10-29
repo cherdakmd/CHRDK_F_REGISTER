@@ -230,7 +230,7 @@ public final class ShopCommandHandler implements TabExecutor {
             }
             case "recovery" -> {
                 var store=plugin.shopService().store(); var pending=store.pending();
-                plugin.messages().send(sender,"trading.recovery-status","healthy",store.legacyAvailable(),"market",store.market(),"sequence",store.sequence(),
+                plugin.messages().send(sender,"trading.recovery-status","healthy",store.legacyAvailable(),"binding",plugin.coreApi().shopRegistered(store.market()),"market",store.market(),"sequence",store.sequence(),
                     "pending",pending==null?"нет":pending.trade().transaction(),"owner",pending==null?"—":pending.trade().owner(),
                     "bank",pending==null?"—":plugin.coreApi().shopExchangeStatus(pending.trade()));
             }
