@@ -6,12 +6,13 @@ import java.util.*;
 
 /** Canonical bank.json intent: один незавершённый обмен на UUID, банк/лимит владельца зарезервированы. */
 final class BankCash {
-    enum Kind { DEPOSIT, WITHDRAW, SHOP }
+    enum Kind { DEPOSIT, WITHDRAW, SHOP, CLAIM_FUND }
     record Intent(UUID transaction,UUID owner,long sequence,Kind kind,long amount,long beforeBalance,
                   int blockWorth,int selected,long request,String before,String after,ru.cherdakmd.chrdkregister.api.ShopExchange shop) {
         Intent(UUID t,UUID o,long s,Kind k,long a,long b,int w,int slot,long r,String before,String after) { this(t,o,s,k,a,b,w,slot,r,before,after,null); }
         boolean valid() {
             if(kind==Kind.SHOP) return shop!=null&&shop.valid()&&shop.fits(beforeBalance)&&transaction.equals(shop.transaction())&&owner.equals(shop.owner())&&sequence>0&&sequence<Long.MAX_VALUE&&amount==shop.money()&&before.equals(shop.before())&&after.equals(shop.after());
+            if(kind==Kind.CLAIM_FUND) return shop==null&&transaction!=null&&owner!=null&&sequence>0&&sequence<Long.MAX_VALUE&&beforeBalance>=0&&beforeBalance<=BankStore.MAX_BALANCE&&amount>0&&amount<=36L*64*9&&amount<=BankStore.MAX_BALANCE-beforeBalance&&request>beforeBalance&&request<=BankStore.MAX_BALANCE&&amount>=request-beforeBalance&&blockWorth==9&&selected==-1&&before!=null&&after!=null&&!before.equals(after)&&before.length()<=4*1024*1024&&after.length()<=4*1024*1024;
             return shop==null&&transaction!=null&&owner!=null&&sequence>0&&sequence<Long.MAX_VALUE&&kind!=null
                     &&amount>0&&amount<=36L*64*64&&beforeBalance>=0&&beforeBalance<=BankStore.MAX_BALANCE
                     &&blockWorth>=1&&blockWorth<=64&&selected>=-1&&selected<36
@@ -19,7 +20,7 @@ final class BankCash {
                     :request==amount&&selected==-1&&amount<=2304&&amount<=beforeBalance)
                     &&before!=null&&after!=null&&!before.equals(after)&&before.length()<=4*1024*1024&&after.length()<=4*1024*1024;
         }
-        long afterBalance() { return kind==Kind.SHOP?beforeBalance-shop.debit()+shop.credit():kind==Kind.DEPOSIT?beforeBalance+amount:beforeBalance-amount; }
+        long afterBalance() { return kind==Kind.SHOP?beforeBalance-shop.debit()+shop.credit():(kind==Kind.DEPOSIT||kind==Kind.CLAIM_FUND)?beforeBalance+amount:beforeBalance-amount; }
     }
     record Receipt(long sequence,UUID transaction,Kind kind,long amount) {
         boolean valid() { return sequence>0&&sequence<Long.MAX_VALUE&&transaction!=null&&kind!=null&&amount>0&&amount<=(kind==Kind.SHOP?BankStore.MAX_BALANCE:kind==Kind.WITHDRAW?2304:36L*64*64); }

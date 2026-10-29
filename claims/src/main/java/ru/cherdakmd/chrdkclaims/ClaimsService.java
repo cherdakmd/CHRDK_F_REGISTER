@@ -37,6 +37,11 @@ public final class ClaimsService {
         return plugin.coreApi() == null || plugin.coreApi().isAuthenticated(player);
     }
 
+    private boolean mutation(org.bukkit.command.CommandSender actor) {
+        if(plugin.financeReady()) return true;
+        plugin.messages().send(actor,"finance.unavailable"); return false;
+    }
+
     /** Общий лимит игрока: таблица по ступени ранга, без персональных правок (1.4.167). */
     public int baseLimitOf(String playerName) {
         int level = plugin.coreApi() == null ? 0 : plugin.coreApi().rankLevel(playerName);
@@ -84,7 +89,7 @@ public final class ClaimsService {
      * @return true, если сумма набралась и списана
      */
     public boolean charge(Player player, int amount) {
-        return amount >= 0 && plugin.store().transferFunds(Map.of(player.getName(), -(long) amount), player.getName());
+        return false; // Денежная операция допустима только внутри ClaimLand/ClaimRentals с domain WAL.
     }
 
     // ------------------------------------------------------------ purchase --
@@ -134,6 +139,7 @@ public final class ClaimsService {
     }
 
     private void buy(Player player, Chunk chunk) {
+        if(!mutation(player)) return;
         synchronized (plugin.store()) {
             ClaimsConfig cfg = plugin.config();
             String world = chunk.getWorld().getName();
@@ -161,14 +167,11 @@ public final class ClaimsService {
                 }
                 return;
             }
-            if (!charge(player, price)) {
-                plugin.messages().send(player, "finance.unavailable");
-                return;
+            long paidUntil=System.currentTimeMillis()+ClaimMath.DAY_MILLIS;
+            if(!ClaimLand.buy(plugin.store(),chunk.getWorld().getName(),chunk.getX(),chunk.getZ(),player.getName(),price,paidUntil)) {
+                plugin.messages().send(player,"finance.unavailable"); return;
             }
-            Claim claim = new Claim(chunk.getWorld().getName(), chunk.getX(), chunk.getZ(),
-                    player.getName(), System.currentTimeMillis() + ClaimMath.DAY_MILLIS);
-            plugin.store().add(claim);
-            plugin.store().addDiamondsSpent(price);
+            Claim claim=plugin.store().claimAt(chunk.getWorld().getName(),chunk.getX(),chunk.getZ());
             audit("buy", player.getName() + " " + claim.where() + " price=" + price);
             plugin.messages().send(player, "bought",
                     "price", String.valueOf(price),
@@ -206,6 +209,7 @@ public final class ClaimsService {
 
     /** Отказ от привата без компенсации. */
     public void unclaim(Player player) {
+        if(!mutation(player)) return;
         Claim claim = claimHere(player);
         if (claim == null) {
             plugin.messages().send(player, "unclaim-none");
@@ -223,6 +227,7 @@ public final class ClaimsService {
 
     /** Снимает все приваты игрока (после подтверждения /claim unclaim all confirm). */
     public void unclaimAll(Player player) {
+        if(!mutation(player)) return;
         List<Claim> claims = plugin.store().ofOwner(player.getName());
         if (claims.isEmpty()) {
             plugin.messages().send(player, "unclaim-all-none");
@@ -244,6 +249,7 @@ public final class ClaimsService {
      * и не длиннее {@link Claim#MAX_GREETING}.
      */
     public void setGreeting(Player player, String text) {
+        if(!mutation(player)) return;
         synchronized (plugin.store()) {
             Claim claim = claimHere(player);
             if (claim == null) {
@@ -279,6 +285,7 @@ public final class ClaimsService {
 
     /** Мгновенный обратный выкуп сервером за sellbackPercent от цены. */
     public void sellback(Player player) {
+        if(!mutation(player)) return;
         if (plugin.coreApi() == null || !plugin.coreApi().isAuthenticated(player) || player.getGameMode() != org.bukkit.GameMode.SURVIVAL) {
             plugin.messages().send(player,"finance.unavailable"); return;
         }
@@ -289,10 +296,9 @@ public final class ClaimsService {
         if (rentalLocked(player, List.of(claim))) return;
         int reward = ClaimMath.sellbackReward(
                 plugin.config().priceIn(claim.world), plugin.config().sellbackPercent);
-        if (!plugin.store().transferFunds(Map.of(player.getName(), (long) reward), null)) {
+        if (!ClaimLand.sellback(plugin.store(),claim,reward)) {
             plugin.messages().send(player, "finance.unavailable"); return;
         }
-        plugin.store().remove(claim);
         audit("sellback", player.getName() + " " + claim.where() + " reward=" + reward);
         plugin.messages().send(player, "finance.sellback-done", "reward", String.valueOf(reward));
 
@@ -302,6 +308,7 @@ public final class ClaimsService {
 
     /** Выставить/снять продажу. price 0 = снять с продажи. */
     public void setSale(Player player, int price) {
+        if(!mutation(player)) return;
         synchronized (plugin.store()) {
             Claim claim = ownClaimHere(player, "sell-not-yours");
             if (claim == null) {
@@ -341,6 +348,7 @@ public final class ClaimsService {
      * витриной `/claim forsale` можно пользоваться, не бегая по карте.
      */
     public void buyFromPlayer(Player player, int chunkX, int chunkZ) {
+        if(!mutation(player)) return;
         synchronized (plugin.store()) {
             if (!plugin.store().fundsReady(player.getName())) { plugin.messages().send(player,"finance.unavailable"); return; }
             String world = player.getWorld().getName();
@@ -377,20 +385,8 @@ public final class ClaimsService {
             String seller = claim.owner;
             int tax = ClaimMath.saleTax(price, plugin.config().saleTaxPercent);
             int net = Math.max(0, price - tax);
-            var changes = new LinkedHashMap<String, Long>();
-            changes.put(player.getName(), -(long) price); changes.merge(seller, (long) net, Long::sum);
-            if (!plugin.store().transferFunds(changes, player.getName())) {
-                plugin.messages().send(player, "finance.unavailable"); return;
-            }
-            plugin.store().addTaxBurned(tax);
-
-            List<String> formerMembers = region.stream().flatMap(c -> c.members.stream()).distinct().toList();
-            for (Claim part : region) {
-                part.owner = player.getName(); part.clearMembers(); part.salePrice = 0;
-                part.debtDays = 0; part.rentOffer = 0; part.clearRental();
-            }
-            plugin.store().mergeAcquired(region);
-            plugin.store().markDirty();
+            List<String> formerMembers=region.stream().flatMap(c->c.members.stream()).distinct().toList();
+            if(!ClaimLand.trade(plugin.store(),claim,player.getName(),tax)) { plugin.messages().send(player,"finance.unavailable"); return; }
             audit("sale", player.getName() + " <- " + seller + " " + claim.where()
                     + " price=" + price + " tax=" + tax);
 
@@ -426,6 +422,7 @@ public final class ClaimsService {
     // ------------------------------------------------------------ members --
 
     public boolean addMember(Player player, String name, boolean everywhere, Claim.Role role) {
+        if(!mutation(player)) return false;
         synchronized (plugin.store()) {
             List<Claim> targets = targets(player, everywhere);
             if (targets == null) {
@@ -511,6 +508,7 @@ public final class ClaimsService {
     }
 
     public boolean removeMember(Player player, String name, boolean everywhere) {
+        if(!mutation(player)) return false;
         synchronized (plugin.store()) {
             List<Claim> targets = targets(player, everywhere);
             if (targets == null) {
@@ -575,6 +573,7 @@ public final class ClaimsService {
 
     /** Передать текущий чанк другому игроку (только владелец). */
     public void transferHere(Player player, String targetName) {
+        if(!mutation(player)) return;
         Claim claim = claimHere(player);
         if (claim == null) {
             plugin.messages().send(player, "unclaim-none");
@@ -589,6 +588,7 @@ public final class ClaimsService {
 
     /** Принудительная передача текущего чанка администратором (без проверки владения). */
     public void adminTransferHere(Player admin, String targetName) {
+        if(!mutation(admin)) return;
         Claim claim = claimHere(admin);
         if (claim == null) {
             plugin.messages().send(admin, "admin-no-claim");
@@ -599,6 +599,7 @@ public final class ClaimsService {
 
     /** Выдать текущий чанк игроку от администратора: свободный — создать, занятый — передать. */
     public void giveHere(Player admin, String targetName) {
+        if(!mutation(admin)) return;
         if (!plugin.config().worldEnabled(admin.getLocation().getWorld().getName())) {
             plugin.messages().send(admin, "world-disabled",
                     "world", admin.getLocation().getWorld().getName());
@@ -639,6 +640,7 @@ public final class ClaimsService {
     }
 
     private boolean transfer(Claim claim, Player actor, String targetName, boolean admin) {
+        if(!mutation(actor)) return false;
         synchronized (plugin.store()) {
             if (targetName == null || targetName.isBlank() || !knownPlayer(targetName)) {
                 plugin.messages().send(actor, "transfer-unknown", "name",
@@ -717,6 +719,7 @@ public final class ClaimsService {
      * чанк освобождается. Вызывается периодически (из плагина, каждый час и при старте).
      */
     public UpkeepResult processUpkeep(long now) {
+        if(!plugin.financeReady()) return new UpkeepResult(0,0,0);
         ClaimsConfig cfg = plugin.config();
         if (cfg.upkeepPerDay <= 0) {
             return new UpkeepResult(0, 0, 0);
@@ -727,6 +730,7 @@ public final class ClaimsService {
         Map<String, Integer> chargedByOwner = new LinkedHashMap<>();
 
         for (Claim claim : plugin.store().all()) {
+            if(plugin.finance().busy()) break;
             if (!plugin.store().fundsReady(claim.owner)) continue; // Недоступность банка/миграции — не долг и не удаление.
             if (!cfg.worldEnabled(claim.world)) {
                 continue;
@@ -741,12 +745,9 @@ public final class ClaimsService {
                 // Долг мог остаться с прошлых суток: как только казна пополнена,
                 // закрываем его, не дожидаясь следующего дня.
                 if (claim.debtDays > 0) {
-                    int charged = 0;
-                    while (claim.debtDays > 0
-                            && plugin.store().takeTreasury(claim.owner, rent)) {
-                        claim.debtDays--;
-                        charged += rent;
-                    }
+                    Integer paid=ClaimUpkeep.debt(plugin.store(),claim,rent);
+                    if(paid==null) continue;
+                    int charged=paid;
                     if (charged > 0) {
                         chargedTotal += charged;
                         chargedByOwner.merge(claim.owner, charged, Integer::sum);
@@ -766,7 +767,7 @@ public final class ClaimsService {
             boolean released = false;
             boolean unavailable = false;
             for (long day = 0; day < overdue; day++) {
-                ClaimMath.RentStep step = ClaimUpkeep.day(plugin.store(), claim, rent, cfg.graceDays);
+                ClaimMath.RentStep step = ClaimUpkeep.day(plugin.store(), claim, rent, cfg.graceDays,clamped&&day+1==overdue?now:0);
                 if (step == null) { unavailable = true; break; }
                 chargedForClaim += step.charged();
                 if (step.released()) {
@@ -779,7 +780,7 @@ public final class ClaimsService {
                 plugin.getLogger().warning("[CHRDK_Claims] " + claim.where()
                         + ": просрочка больше " + ClaimMath.MAX_CATCHUP_DAYS
                         + " сут., остаток списан без детализации.");
-                claim.paidUntil = Math.max(claim.paidUntil, now);
+                // Дата уже заморожена в последнем суточном domain intent.
             }
             if (chargedForClaim > 0) {
                 chargedTotal += chargedForClaim;
@@ -787,7 +788,7 @@ public final class ClaimsService {
             }
             if (unavailable) continue;
             if (released) {
-                plugin.store().remove(claim);
+                // Удаление уже включено в durable domain ACK ClaimUpkeep.day.
                 releasedTotal++;
                 notifyLoss(claim);
                 continue;
@@ -799,6 +800,7 @@ public final class ClaimsService {
                 }
             }
         }
+        if(plugin.finance().busy()) return new UpkeepResult(chargedTotal,releasedTotal,debtClaims);
         plugin.store().markDirty();
 
         if (cfg.notifyRent) {
@@ -899,6 +901,7 @@ public final class ClaimsService {
     }
 
     public void rental(Player player, String action, int price) {
+        if(!mutation(player)) return;
         if (!isAllowed(player)) { plugin.messages().send(player, "need-auth"); return; }
         Claim claim = claimHere(player);
         if (claim == null || !plugin.config().worldEnabled(claim.world)) {
@@ -932,7 +935,9 @@ public final class ClaimsService {
     }
 
     public void processRentals(long now) {
+        if(!plugin.financeReady()) return;
         for (Claim claim : plugin.store().all()) {
+            if(plugin.finance().busy()) break;
             // Отключённый мир: оплаченный срок сохраняется, новых списаний нет.
             int result = ClaimRentals.settle(plugin.store(), claim, now,
                     plugin.config().worldEnabled(claim.world) ? serverRent(claim) : -1);

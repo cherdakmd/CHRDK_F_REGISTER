@@ -49,6 +49,10 @@ final class BankCashInventory {
             if(intent==null||!intent.valid()) return false;
             if(intent.kind()==BankCash.Kind.SHOP) return ru.cherdakmd.chrdkregister.api.ShopInventory.valid(intent.shop());
             var before=ChargeInventory.decode(intent.before());
+            if(intent.kind()==BankCash.Kind.CLAIM_FUND) {
+                var tender=ChargeInventory.plan(before,intent.request(),intent.beforeBalance());
+                return tender!=null&&tender.cash()==intent.amount()&&ChargeInventory.matches(tender.after(),intent.after());
+            }
             var plan=intent.kind()==BankCash.Kind.DEPOSIT?deposit(before,intent.selected(),intent.request(),intent.blockWorth(),intent.beforeBalance()):withdraw(before,intent.amount());
             return plan!=null&&plan.amount()==intent.amount()&&ChargeInventory.matches(plan.after(),intent.after());
         } catch(RuntimeException error) { return false; }

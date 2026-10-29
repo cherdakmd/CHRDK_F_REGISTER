@@ -149,6 +149,15 @@ public final class BankService implements org.bukkit.event.Listener {
             lockCash(player); return ru.cherdakmd.chrdkregister.api.InventoryTransfer.Decision.WAIT;
         }
     }
+    public boolean fundClaimPayment(Player player,long cost) {
+        if(!enabled()||!authenticated(player)||player.isDead()||player.getGameMode()!=org.bukkit.GameMode.SURVIVAL||!player.hasPermission("chrdkclaims.use")||cost<0||cost>BankStore.MAX_BALANCE||store.cashLocked(player.getUniqueId())||!new BankChargeGuard(plugin,store).check(player)) return false;
+        if(recoverCash(player)!=ru.cherdakmd.chrdkregister.api.InventoryTransfer.Decision.APPLIED) return false;
+        long balance=store.balance(player.getUniqueId()); if(balance>=cost) return true;
+        var before=ru.cherdakmd.chrdkregister.api.ChargeInventory.copy(player.getInventory().getStorageContents());
+        var tender=ru.cherdakmd.chrdkregister.api.ChargeInventory.plan(before,cost,balance);
+        if(tender==null||tender.cash()>BankStore.MAX_BALANCE-balance) return false;
+        return exchangeCash(player,BankCash.Kind.CLAIM_FUND,new BankCashInventory.Plan(tender.after(),tender.cash()),before,9,-1,cost);
+    }
     public boolean shopReady(Player player) {
         return enabled()&&authenticated(player)&&!player.isDead()&&player.getGameMode()==org.bukkit.GameMode.SURVIVAL&&player.hasPermission("chrdkshop.use")
             &&!store.cashLocked(player.getUniqueId())&&new BankChargeGuard(plugin,store).check(player)

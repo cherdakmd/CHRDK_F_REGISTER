@@ -28,9 +28,14 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if(!plugin.financeReady()&&(args.length==0||!args[0].equalsIgnoreCase("recovery"))) { plugin.messages().send(sender,"finance.unavailable");return true; }
+
         if (!sender.hasPermission("chrdkclaims.admin")) {
             plugin.messages().send(sender, "no-permission");
             return true;
+        }
+        if(args.length>0&&args[0].equalsIgnoreCase("recovery")) {
+            var store=plugin.store(); sender.sendMessage("Claims: healthy="+store.moneyAvailable()+" lineage="+store.financialLineage()+" registered="+store.financialRegistered()+" sequence="+store.financialSequence()+" pending="+(store.financialPending()!=null)); return true;
         }
         if (args.length == 0) {
             usage(sender);

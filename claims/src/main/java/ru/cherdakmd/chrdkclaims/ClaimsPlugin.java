@@ -44,6 +44,10 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
     private volatile Messages messages;
     private volatile ClaimsConfig config;
     private ClaimStore store;
+    private ClaimFinance finance;
+    private BukkitTask financeTask;
+    ClaimFinance finance() { return finance; }
+    boolean financeReady() { return finance!=null&&!finance.busy()&&finance.binding(); }
     private ClaimsService service;
     private ClaimAudit audit;
     private ClaimMenuGui menu;
@@ -67,7 +71,7 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         saveDefaultConfig();
         reloadClaimsConfig();
         try {
-            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 22) throw new IllegalStateException("Нужен Core API 22+");
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 24) throw new IllegalStateException("Нужен Core API 24+");
             teleportPayments = new ru.cherdakmd.chrdkregister.api.PaidActions(this,this::coreApi,this::messages,"claim-teleports");
         } catch (Exception | LinkageError error) {
             getLogger().log(java.util.logging.Level.SEVERE,"Приваты остановлены: платёжный протокол недоступен; данные не сброшены",error);
@@ -79,12 +83,15 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         this.audit = new ClaimAudit(getDataFolder().toPath(), getLogger());
         this.service = new ClaimsService(this);
         reloadClaimsConfig();
-        store.accounts(new ClaimBankBridge(this)); // Обязательно до любой оплаты/таймеров, даже без Core.
+        var bank=new ClaimBankBridge(this); store.accounts(bank);
+        finance=new ClaimFinance(store,bank); store.finance=finance;
+        financeTask=Bukkit.getScheduler().runTaskTimer(this,()->{ if(!finance.recover()) getLogger().fine("Финансы Claims ожидают банк или завершение canonical WAL"); },1L,100L);
         var names = new java.util.LinkedHashSet<String>(store.legacyTreasuries().keySet());
         for (var claim : store.all()) { names.add(claim.owner); if (!claim.tenant.isBlank()) names.add(claim.tenant); }
         var pendingNames = names.iterator();
         moneyMigrationTask = Bukkit.getScheduler().runTaskTimer(this, () -> {
-            for (int i=0; i<16 && pendingNames.hasNext(); i++) {
+            if(!financeReady()) return;
+            for (int i=0; i<4 && pendingNames.hasNext(); i++) {
                 String name = pendingNames.next();
                 if (!store.fundsReady(name)) getLogger().warning("Казна " + name + " пока не перенесена: банк/UUID/предел счёта недоступен. Остаток сохранён, рента этого владельца приостановлена.");
             }
@@ -147,6 +154,7 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        if(financeTask!=null) financeTask.cancel();
         if (teleportFinanceTask!=null) teleportFinanceTask.cancel();
         if (moneyMigrationTask != null) { moneyMigrationTask.cancel(); moneyMigrationTask = null; }
         if (coreApi != null) {
@@ -193,6 +201,7 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
     @EventHandler
     public void onAuthCompleted(PlayerAuthCompletedEvent event) {
         Player player = event.getPlayer();
+        if(!financeReady()) return;
         store.fundsReady(player.getName());
         // Стоящий на привате игрок должен увидеть, куда попал, не делая шага.
         refreshNoticeLater(player);

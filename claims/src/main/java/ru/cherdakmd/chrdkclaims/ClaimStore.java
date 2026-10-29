@@ -37,13 +37,13 @@ import java.util.logging.Logger;
 public final class ClaimStore {
 
     /** Версия схемы данных (для будущих миграций). */
-    public static final int SCHEMA_VERSION = 3;
+    public static final int SCHEMA_VERSION = 4;
     /** Сколько отложенных вестей хранить на игрока (старые вытесняются). */
     public static final int MAX_NOTICES = 40;
 
     private static final Type DATA_TYPE = new TypeToken<LinkedHashMap<String, Object>>() {
     }.getType();
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setObjectToNumberStrategy(com.google.gson.ToNumberPolicy.BIG_DECIMAL).setPrettyPrinting().create();
 
     private final Path file;
     private final Path backup;
@@ -51,6 +51,72 @@ public final class ClaimStore {
     /** world → (chunkKey → Claim). */
     private final Map<String, Map<Long, Claim>> claims = new HashMap<>();
     private ClaimAccounts accounts;
+    ClaimFinance finance;
+    private java.util.UUID financialLineage=java.util.UUID.randomUUID();
+    private boolean financialRegistered;
+    private long financialSequence;
+    private ClaimFinance.Pending financialPending;
+    @FunctionalInterface interface WriteCheckpoint { void afterReplace() throws IOException; }
+    private final WriteCheckpoint checkpoint;
+    synchronized java.util.UUID financialLineage() { return financialLineage; }
+    synchronized boolean financialRegistered() { return financialRegistered; }
+    synchronized long financialSequence() { return financialSequence; }
+    synchronized ClaimFinance.Pending financialPending() { return financialPending; }
+    synchronized long financeRevision() { return revision; }
+    synchronized boolean ensureFinance() { save(); return moneyAvailable()&&(financialPending!=null||!dirty)&&Files.isRegularFile(file); }
+    synchronized boolean markFinanceRegistered() {
+        if(!moneyAvailable()) return false; if(financialRegistered) return true;
+        var data=snapshot().data(); financeMap(data).put("registered",true);
+        if(!write(data)) return false; financialRegistered=true; dirty=false; return true;
+    }
+    @SuppressWarnings("unchecked") private static Map<String,Object> financeMap(Map<String,Object> data) { return (Map<String,Object>) data.get("finance"); }
+    private Map<String,Object> financialMetadata() {
+        var data=new LinkedHashMap<String,Object>(); data.put("lineage",financialLineage.toString()); data.put("registered",financialRegistered); data.put("sequence",financialSequence);
+        if(financialPending!=null) data.put("pending",financialPending); return data;
+    }
+    synchronized String domainJson() { var data=snapshot().data(); data.remove("finance"); return GSON.toJson(canonical(GSON.toJsonTree(data))); }
+    private static com.google.gson.JsonElement canonical(com.google.gson.JsonElement value) {
+        if(value.isJsonObject()) { var result=new com.google.gson.JsonObject(); var sorted=new java.util.TreeMap<String,com.google.gson.JsonElement>(); value.getAsJsonObject().entrySet().forEach(e->sorted.put(e.getKey(),e.getValue())); sorted.forEach((k,v)->result.add(k,canonical(v))); return result; }
+        if(value.isJsonArray()) { var result=new com.google.gson.JsonArray(); value.getAsJsonArray().forEach(v->result.add(canonical(v)));return result; } return value;
+    }
+    synchronized ClaimStore financeCopy(ClaimAccounts port) {
+        var copy=new ClaimStore(file.getParent(),logger); var data=snapshot().data(); data.remove("finance"); copy.read(data); copy.accounts=port; return copy;
+    }
+    synchronized void stopFinance(String message) { moneyAvailable=false; blocked=true; logger.severe("[Claims] "+message+"; файл не перезаписывается"); }
+    synchronized boolean prepareFinance(ClaimFinance.Pending p) {
+        if(!moneyAvailable()||!financialRegistered||financialPending!=null||!p.valid()||!p.exchange().lineage().equals(financialLineage)||p.exchange().sequence()!=financialSequence+1||!p.beforeHash().equals(ru.cherdakmd.chrdkregister.api.ClaimExchange.hash(domainJson()))) return false;
+        try { validateDomain(GSON.fromJson(p.after(),com.google.gson.JsonObject.class)); } catch(RuntimeException e) {return false;}
+        var data=snapshot().data(); financeMap(data).put("pending",p);
+        if(!write(data)) return false; financialPending=p; dirty=false; return true;
+    }
+    synchronized boolean cancelFinance(ClaimFinance.Pending p) {
+        if(!moneyAvailable()||!p.equals(financialPending)) return false;
+        if(!p.beforeHash().equals(ru.cherdakmd.chrdkregister.api.ClaimExchange.hash(domainJson()))) {stopFinance("Изменился domain при отмене");return false;}
+        var data=snapshot().data(); financeMap(data).remove("pending"); if(!write(data)) return false; financialPending=null; dirty=false; return true;
+    }
+    synchronized boolean finishFinance(ClaimFinance.Pending p) {
+        if(!moneyAvailable()||!p.equals(financialPending)) return false;
+        if(!p.beforeHash().equals(ru.cherdakmd.chrdkregister.api.ClaimExchange.hash(domainJson()))) {stopFinance("Изменился зарезервированный domain snapshot");return false;}
+        Map<String,Object> after=GSON.fromJson(p.after(),DATA_TYPE); var meta=financialMetadata(); meta.remove("pending"); meta.put("sequence",p.exchange().sequence()); after.put("finance",meta);
+        if(!write(after)) return false;
+        publishDomain(after); financialSequence=p.exchange().sequence(); financialPending=null; dirty=false; return true;
+    }
+    private void publishDomain(Map<String,Object> data) {
+        var copy=new ClaimStore(file.getParent(),logger); copy.read(data);
+        for(var world:copy.claims.values()) for(var e:new ArrayList<>(world.entrySet())) {
+            var n=e.getValue(); var old=claimAt(n.world,n.x,n.z); if(old==null) continue;
+            old.owner=n.owner; old.paidUntil=n.paidUntil; old.debtDays=n.debtDays; old.salePrice=n.salePrice; old.greeting=n.greeting;
+            old.rentOffer=n.rentOffer; old.tenant=n.tenant; old.rentPrice=n.rentPrice; old.rentUntil=n.rentUntil; old.rentRenew=n.rentRenew;
+            old.clearMembers(); old.members.addAll(n.members); n.explicitRoles().forEach(old::applyRole); world.put(e.getKey(),old);
+        }
+        claims.clear(); claims.putAll(copy.claims); treasury.clear(); treasury.putAll(copy.treasury); notices.clear(); notices.putAll(copy.notices); limits.clear(); limits.putAll(copy.limits);
+        chunksClaimedTotal=copy.chunksClaimedTotal; diamondsSpent=copy.diamondsSpent; taxBurned=copy.taxBurned; revision++;
+    }
+    synchronized Claim protectedClaimAt(String world,int x,int z) {
+        var before=claimAt(world,x,z); if(before!=null||financialPending==null) return before;
+        var copy=new ClaimStore(file.getParent(),logger); copy.read(GSON.fromJson(financialPending.after(),DATA_TYPE)); return copy.claimAt(world,x,z);
+    }
+
     private volatile boolean moneyAvailable = true;
     private static final class LegacyMoneyException extends IllegalArgumentException {
         LegacyMoneyException(String message) { super(message); }
@@ -100,6 +166,10 @@ public final class ClaimStore {
     private volatile boolean blocked;
 
     public ClaimStore(Path dataFolder, Logger logger) {
+        this(dataFolder,logger,()->{});
+    }
+    ClaimStore(Path dataFolder,Logger logger,WriteCheckpoint checkpoint) {
+        this.checkpoint=checkpoint;
         this.file = dataFolder.resolve("claims-data.json");
         this.backup = dataFolder.resolve("claims-data.json.bak");
         this.logger = logger;
@@ -109,12 +179,10 @@ public final class ClaimStore {
 
     public synchronized void load() {
         reset();
-        if (!Files.isRegularFile(file)) {
-            return;
-        }
+        if (!Files.exists(file)) return;
         Map<String, Object> data;
-        try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
-            data = GSON.fromJson(reader, DATA_TYPE);
+        try {
+            data = GSON.fromJson(ClaimJson.read(file), DATA_TYPE);
         } catch (IOException | RuntimeException exception) {
             quarantine(exception);
             return;
@@ -125,6 +193,21 @@ public final class ClaimStore {
         }
         try {
             read(data);
+            var json=GSON.toJsonTree(data).getAsJsonObject();
+            if(longOf(data.get("version"))>=4) {
+                try {
+                    validateDomain(json); var f=json.getAsJsonObject("finance"); if(f==null) throw new IllegalArgumentException("missing finance");
+                    financialLineage=ru.cherdakmd.chrdkregister.api.MilestoneMigration.uuid(text(f,"lineage"));
+                    var registered=f.get("registered"); if(registered==null||!registered.isJsonPrimitive()||!registered.getAsJsonPrimitive().isBoolean()) throw new IllegalArgumentException("registration ACK");
+                    financialRegistered=registered.getAsBoolean(); financialSequence=integer(f,"sequence"); if(financialSequence<0||financialSequence>=Long.MAX_VALUE||!financialRegistered&&financialSequence!=0) throw new IllegalArgumentException("claim sequence");
+                    if(f.has("pending")) {
+                        var row=f.getAsJsonObject("pending"); ru.cherdakmd.chrdkregister.api.ClaimExchange.requireJson(row.getAsJsonObject("exchange"));
+                        text(row,"beforeHash"); text(row,"after"); financialPending=GSON.fromJson(row,ClaimFinance.Pending.class);
+                        if(!financialRegistered||!financialPending.valid()||!financialLineage.equals(financialPending.exchange().lineage())||financialPending.exchange().sequence()!=financialSequence+1||!financialPending.beforeHash().equals(ru.cherdakmd.chrdkregister.api.ClaimExchange.hash(domainJson()))) throw new IllegalArgumentException("claim WAL");
+                        validateDomain(GSON.fromJson(financialPending.after(),com.google.gson.JsonObject.class));
+                    }
+                } catch(RuntimeException e) { throw new LegacyMoneyException("Неверный финансовый domain/WAL: "+e.getMessage()); }
+            } else if(json.has("finance")) throw new LegacyMoneyException("Пониженная схема с финансовым WAL");
             dirty = (int) longOf(data.get("version")) < SCHEMA_VERSION;
         } catch (LegacyMoneyException exception) {
             treasury.clear(); // Территории уже прочитаны: финансовая ошибка не снимает их защиту.
@@ -136,22 +219,9 @@ public final class ClaimStore {
     }
 
     /** Пишет данные синхронно. Вызывается из onDisable и асинхронной задачи. */
-    public void save() {
-        if (blocked) {
-            return;
-        }
-        Snapshot snapshot = snapshot();
-        boolean written;
-        synchronized (writeLock) {
-            written = write(snapshot.data());
-        }
-        if (written) {
-            synchronized (this) {
-                if (revision == snapshot.revision()) {
-                    dirty = false;
-                }
-            }
-        }
+    public synchronized void save() {
+        if(blocked||financialPending!=null||!dirty&&Files.isRegularFile(file)) return;
+        var snapshot=snapshot(); if(write(snapshot.data())) dirty=false;
     }
 
     /** Планирует асинхронную запись; параллельные запуски не дублируются. */
@@ -183,6 +253,7 @@ public final class ClaimStore {
 
     private void reset() {
         moneyAvailable = true;
+        financialLineage=java.util.UUID.randomUUID(); financialRegistered=false; financialSequence=0; financialPending=null;
         claims.clear();
         treasury.clear();
         notices.clear();
@@ -203,10 +274,7 @@ public final class ClaimStore {
     @SuppressWarnings("unchecked")
     private void read(Map<String, Object> data) {
         int version = (int) longOf(data.get("version"));
-        if (version > SCHEMA_VERSION) {
-            logger.warning("[CHRDK_Claims] claims-data.json версии " + version
-                    + " новее плагина (" + SCHEMA_VERSION + "): неизвестные поля будут проигнорированы.");
-        }
+        if (version > SCHEMA_VERSION) throw new LegacyMoneyException("Неизвестная версия claims-data.json");
         long now = System.currentTimeMillis();
         int repairedDates = 0;
         int duplicates = 0;
@@ -339,7 +407,7 @@ public final class ClaimStore {
     private Snapshot snapshot() {
         synchronized (this) {
             Map<String, Object> data = new LinkedHashMap<>();
-            data.put("version", SCHEMA_VERSION);
+            data.put("version", SCHEMA_VERSION); data.put("finance",financialMetadata());
             List<Map<String, Object>> claimsList = new ArrayList<>();
             for (Map<Long, Claim> world : claims.values()) {
                 for (Claim claim : world.values()) {
@@ -371,6 +439,7 @@ public final class ClaimStore {
                     claimsList.add(entry);
                 }
             }
+            claimsList.sort(java.util.Comparator.comparing((Map<String,Object> r)->r.get("w").toString()).thenComparingInt(r->((Number)r.get("x")).intValue()).thenComparingInt(r->((Number)r.get("z")).intValue()));
             data.put("claims", claimsList);
             data.put("treasury", new LinkedHashMap<>(treasury));
             if (!limits.isEmpty()) {
@@ -390,37 +459,35 @@ public final class ClaimStore {
         }
     }
 
-    private boolean write(Map<String, Object> data) {
+    private boolean write(Map<String,Object> data) {
+        if(blocked) return false;
         try {
-            Path parent = file.getParent();
-            if (parent != null) {
-                Files.createDirectories(parent);
-            }
-            Path tmp = file.resolveSibling(file.getFileName() + ".tmp");
-            try (Writer writer = Files.newBufferedWriter(tmp, StandardCharsets.UTF_8)) {
-                GSON.toJson(data, writer);
-            }
-            try {
-                if (Files.isRegularFile(file)) {
-                    Files.copy(file, backup, StandardCopyOption.REPLACE_EXISTING);
-                }
-            } catch (IOException backupException) {
-                // Нехватка места/прав на .bak не должна блокировать сохранение данных.
-                logger.log(Level.WARNING, "[CHRDK_Claims] Не удалось обновить "
-                        + backup.getFileName() + ": " + backupException.getMessage(), backupException);
-            }
-            try {
-                Files.move(tmp, file, StandardCopyOption.REPLACE_EXISTING,
-                        StandardCopyOption.ATOMIC_MOVE);
-            } catch (AtomicMoveNotSupportedException unsupported) {
-                Files.move(tmp, file, StandardCopyOption.REPLACE_EXISTING);
-            }
+            String json=GSON.toJson(data); if(json.getBytes(StandardCharsets.UTF_8).length>64L*1024*1024) throw new IOException("claim capacity");
+            Files.createDirectories(file.getParent()); var tmp=file.resolveSibling("claims-data.json.tmp");
+            Files.writeString(tmp,json,StandardCharsets.UTF_8);
+            try(var channel=java.nio.channels.FileChannel.open(tmp,java.nio.file.StandardOpenOption.WRITE)) {channel.force(true);}
+            if(Files.isRegularFile(file)) Files.copy(file,backup,StandardCopyOption.REPLACE_EXISTING);
+            Files.move(tmp,file,StandardCopyOption.ATOMIC_MOVE,StandardCopyOption.REPLACE_EXISTING); checkpoint.afterReplace();
+            try(var channel=java.nio.channels.FileChannel.open(file.getParent(),java.nio.file.StandardOpenOption.READ)) {channel.force(true);}
             return true;
-        } catch (IOException exception) {
-            logger.log(Level.WARNING, "[CHRDK_Claims] Не удалось записать claims-data.json: "
-                    + exception.getMessage(), exception);
-            return false;
+        } catch(IOException|RuntimeException e) {stopFinance("Неоднозначный сбой записи: "+e.getMessage());return false;}
+    }
+    private static String text(com.google.gson.JsonObject row,String field) {
+        var v=row.get(field); if(v==null||!v.isJsonPrimitive()||!v.getAsJsonPrimitive().isString()) throw new IllegalArgumentException("claim text "+field);return v.getAsString();
+    }
+    private static long integer(com.google.gson.JsonObject row,String field) {
+        var v=row.get(field); if(v==null||!v.isJsonPrimitive()||!v.getAsJsonPrimitive().isNumber()) throw new IllegalArgumentException("claim number "+field);return v.getAsBigDecimal().longValueExact();
+    }
+    private static void validateDomain(com.google.gson.JsonObject json) {
+        if(integer(json,"version")!=4||!json.has("claims")||!json.get("claims").isJsonArray()||!json.has("treasury")||!json.get("treasury").isJsonObject()) throw new IllegalArgumentException("claim domain");
+        var seen=new java.util.HashSet<String>();
+        for(var entry:json.getAsJsonArray("claims")) {
+            var row=entry.getAsJsonObject(); var world=text(row,"w"); var owner=text(row,"o"); if(world.isBlank()||owner.isBlank()) throw new IllegalArgumentException("claim identity");
+            for(String f:java.util.List.of("x","z","d","s","ro")) {long n=integer(row,f); Math.toIntExact(n); if(!f.equals("x")&&!f.equals("z")&&n<0) throw new IllegalArgumentException("negative claim counter");}
+            if(integer(row,"p")<1||!seen.add(world+":"+integer(row,"x")+":"+integer(row,"z"))) throw new IllegalArgumentException("claim date/duplicate");
+            if(row.has("rt")) {text(row,"rt");if(integer(row,"rp")<0||integer(row,"ru")<0)throw new IllegalArgumentException("rent amount/date");var renew=row.get("rr");if(renew==null||!renew.isJsonPrimitive()||!renew.getAsJsonPrimitive().isBoolean())throw new IllegalArgumentException("rent renew");}
         }
+        var stats=json.getAsJsonObject("stats"); for(String f:java.util.List.of("chunksClaimedTotal","diamondsSpent","taxBurned")) if(integer(stats,f)<0) throw new IllegalArgumentException("claim statistic");
     }
 
     /** Повреждённый файл не затирается: откладываем его рядом для ручного восстановления. */
@@ -493,6 +560,7 @@ public final class ClaimStore {
      * не может уничтожить рабочий файл.</p>
      */
     public synchronized RestoreResult restoreFrom(String fileName) {
+        if(finance!=null||financialRegistered||financialPending!=null) return RestoreResult.PROTECTED;
         if (all().stream().anyMatch(c -> c.rentedAt(System.currentTimeMillis()))) return RestoreResult.PROTECTED;
         if (fileName == null || fileName.isBlank()) {
             return RestoreResult.INVALID;

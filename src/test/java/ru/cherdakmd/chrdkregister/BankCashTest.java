@@ -112,7 +112,7 @@ class BankCashTest {
         var p=new AuctionPayment(UUID.randomUUID(),lineage,1,1,other,owner,10,0,10,0,0,"a".repeat(64)); assertFalse(b.settleAuction(p)); assertEquals(AuctionPayment.Status.MISSING,b.auctionPaymentStatus(p));
     }
     @Test void legacyV4MigratesWithoutInventingMoneyOrRetroactivelyExchangingItems() throws Exception {
-        funded(100); var json=JsonParser.parseString(Files.readString(load().file())).getAsJsonObject(); json.addProperty("schema",4); json.remove("cashPending"); json.remove("cashReceipts"); json.remove("shopSettlements"); Files.writeString(load().file(),json.toString());
+        funded(100); var json=JsonParser.parseString(Files.readString(load().file())).getAsJsonObject(); json.addProperty("schema",4); json.remove("cashPending"); json.remove("cashReceipts"); json.remove("shopSettlements"); json.remove("claimSettlements"); Files.writeString(load().file(),json.toString());
         var b=load(); assertTrue(b.available()); assertEquals(100,b.balance(owner)); assertNull(b.cashReceipt(owner)); assertFalse(b.cashLocked(owner)); assertNotNull(intent(b,BankCash.Kind.DEPOSIT,9)); assertEquals(6,JsonParser.parseString(Files.readString(b.file())).getAsJsonObject().get("schema").getAsInt());
     }
     void refuse(String original) throws Exception {

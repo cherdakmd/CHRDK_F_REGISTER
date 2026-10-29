@@ -145,7 +145,7 @@ public final class ClaimProtectionListener implements Listener {
         if (block == null) {
             return null;
         }
-        return plugin.store().claimAt(block.getWorld().getName(),
+        return plugin.store().protectedClaimAt(block.getWorld().getName(),
                 block.getX() >> 4, block.getZ() >> 4);
     }
 
@@ -162,6 +162,7 @@ public final class ClaimProtectionListener implements Listener {
         if (claim == null) {
             return true;
         }
+        if(plugin.finance()!=null&&plugin.finance().busy()) return false;
         return claim.allows(player.getName(), required) || plugin.isBypassing(player);
     }
 

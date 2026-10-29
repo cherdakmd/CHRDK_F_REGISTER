@@ -28,6 +28,8 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if(!plugin.financeReady()&&(args.length==0||!args[0].equalsIgnoreCase("recovery"))) { plugin.messages().send(sender,"finance.unavailable");return true; }
+
         if (!(sender instanceof Player player)) {
             sender.sendMessage(plugin.messages().plain("player-only"));
             return true;

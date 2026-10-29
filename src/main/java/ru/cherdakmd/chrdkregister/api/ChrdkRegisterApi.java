@@ -32,7 +32,7 @@ import java.util.UUID;
 public interface ChrdkRegisterApi {
 
     /** Версия контракта API. API 23: durable whole-lot DiamondShop exchange и квитанция импорта. */
-    int API_VERSION = 23;
+    int API_VERSION = 24;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -205,6 +205,12 @@ public interface ChrdkRegisterApi {
 
     /** Main-thread обмен счёта и полного storage-снимка. Старое ядро отказывает, без fallback-кошелька. */
     /** Durable DiamondShop protocol; frozen source intent must precede this call. */
+    /** API 24: Claims source WAL precedes bank-only atomic domain settlement. */
+    default boolean claimSourceRegistered(UUID lineage) { return false; }
+    default boolean registerClaimSource(UUID lineage) { return false; }
+    default ClaimExchange.Status claimExchangeStatus(ClaimExchange t) { return ClaimExchange.Status.UNAVAILABLE; }
+    default ClaimExchange.Status commitClaimExchange(ClaimExchange t) { return ClaimExchange.Status.UNAVAILABLE; }
+    default boolean fundClaimPayment(Player payer,long cost) { return false; }
     default boolean shopTradingAvailable(Player player) { return false; }
     default boolean legacyShopImported(java.util.UUID owner) { return false; }
     default boolean shopRegistered(java.util.UUID market) { return false; }
