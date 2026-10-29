@@ -239,6 +239,9 @@ public final class PluginUpdateService implements AutoCloseable {
                 if (Files.isSymbolicLink(path) || !Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS))
                     throw new IOException("Автообновление не поддерживает ссылки вместо JAR: " + path.getFileName());
                 Descriptor descriptor = descriptor(path);
+                if (descriptor != null && RetiredAddons.plugin(descriptor.name()))
+                    throw new IOException("Обнаружен снятый аддон " + descriptor.name()
+                            + ": архивируйте данные и уберите его JAR вручную по инструкции 1.4.239.");
                 if (descriptor == null || !MODULES.containsKey(descriptor.name())) continue;
                 if (found.put(descriptor.name(), new Installed(path, descriptor, hash(path))) != null)
                     throw new IOException("В plugins несколько JAR одного плагина: " + descriptor.name());

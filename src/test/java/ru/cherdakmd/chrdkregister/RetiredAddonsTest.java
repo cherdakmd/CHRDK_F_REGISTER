@@ -90,6 +90,24 @@ class RetiredAddonsTest {
         preferences.set("Steve", LabelPreferences.Label.RANK, false); preferences.saveNow();
         assertEquals(preferences.slots("Steve"), reload().slots("Steve"));
     }
+    @Test void sevenRemainingNameSourcesStillProvideAllEightEditableSlots() {
+        var preferences = reload();
+        var styles = new LabelStyleService((id, player, base) -> "[" + id + "] " + base, preferences,
+                new LabelStyleService.RankLookup() {
+                    public LabelStyleService.Rank view(String player) {
+                        return new LabelStyleService.Rank(5, "★", "<gold>%name%</gold>", "V", true);
+                    }
+                    public List<String> registrationOrder() { return List.of(); }
+                });
+        assertEquals(8, styles.assignments("Steve").size());
+        assertEquals("", styles.assignments("Steve").get(7));
+        assertEquals(LabelStyleService.AssignmentResult.APPLIED, styles.assign("Steve", 7, null));
+        assertEquals(LabelStyleService.AssignmentResult.APPLIED,
+                styles.assign("Steve", 7, LabelPreferences.Label.GUILDS));
+        assertEquals("guilds", styles.assignments("Steve").get(7));
+        assertEquals(1, styles.assignments("Steve").stream().filter("guilds"::equals).count());
+        assertTrue(styles.selection("Steve").displayed(LabelPreferences.Label.GUILDS));
+    }
     @Test void retiredProvidersAreRejectedButOtherAddonsStillRegister() {
         var profiles = new ProfileRegistry(Logger.getAnonymousLogger());
         var tags = new NameTags(Logger.getAnonymousLogger());

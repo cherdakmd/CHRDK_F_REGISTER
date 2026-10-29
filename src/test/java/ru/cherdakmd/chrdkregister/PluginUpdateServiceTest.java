@@ -114,6 +114,24 @@ class PluginUpdateServiceTest {
         }
     }
 
+    @Test void retiredJarBlocksStagingBeforeAnyDownloadAndNeverDeletesServerFiles() throws Exception {
+        Fixture fixture = new Fixture(); fixture.install("CHRDK_Core", "1.4.72");
+        for (String plugin : List.of("CHRDK_Bosses", "CHRDK_Treasures")) {
+            Path old = root.resolve("renamed-retired-plugin.jar"); byte[] original = jar(plugin, "1.4.72");
+            Files.write(old, original);
+            try (var updater = fixture.service()) {
+                IOException failure = assertThrows(IOException.class, () -> updater.execute(true, "1.4.72"));
+                assertTrue(failure.getMessage().contains(plugin));
+                assertEquals(0, fixture.downloads);
+                assertFalse(Files.exists(root.resolve("update")));
+                assertArrayEquals(original, Files.readAllBytes(old));
+            }
+            Files.delete(old);
+        }
+        assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_Bosses"));
+        assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_Treasures"));
+    }
+
     @Test void stagesWholeInstalledBatchWithOriginalFilenamesAndBackupsWithoutTouchingLiveJars() throws Exception {
         Fixture fixture = new Fixture();
         Map<Path, byte[]> originals = new HashMap<>();

@@ -129,7 +129,8 @@ public final class LabelStyleService {
     /** Все восемь назначений, включая пустые и временно заблокированные. */
     public List<String> assignments(String playerName) {
         List<String> saved = preferences.slots(playerName);
-        return saved != null ? saved : order(playerName).stream().map(LabelPreferences.Label::id).toList();
+        return saved != null ? saved
+                : LabelPreferences.normalizeSlots(order(playerName).stream().map(LabelPreferences.Label::id).toList());
     }
 
     public enum AssignmentResult { APPLIED, LOCKED, UNAVAILABLE }

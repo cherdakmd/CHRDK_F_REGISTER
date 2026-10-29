@@ -445,7 +445,7 @@ public final class LabelPreferences {
         if (value.get("order") instanceof List<?> order && order.stream()
                 .anyMatch(item -> item instanceof String id && RetiredAddons.source(id))) {
             List<String> slots = new ArrayList<>();
-            for (Object item : order) slots.add(item instanceof String id ? id : "");
+            for (Object item : order) slots.add(item instanceof String id ? key(id) : "");
             for (String id : List.of("rank", "classes", "guilds", "treasures", "tierforge", "streams", "quests", "achievements"))
                 if (!slots.contains(id)) slots.add(id);
             return normalizeSlots(slots);
