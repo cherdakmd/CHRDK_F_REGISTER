@@ -23,7 +23,7 @@ final class BankCash {
         long afterBalance() { return kind==Kind.SHOP?beforeBalance-shop.debit()+shop.credit():(kind==Kind.DEPOSIT||kind==Kind.CLAIM_FUND)?beforeBalance+amount:beforeBalance-amount; }
     }
     record Receipt(long sequence,UUID transaction,Kind kind,long amount) {
-        boolean valid() { return sequence>0&&sequence<Long.MAX_VALUE&&transaction!=null&&kind!=null&&amount>0&&amount<=(kind==Kind.SHOP?BankStore.MAX_BALANCE:kind==Kind.WITHDRAW?2304:36L*64*64); }
+        boolean valid() { return sequence>0&&sequence<Long.MAX_VALUE&&transaction!=null&&kind!=null&&amount>0&&amount<=(kind==Kind.SHOP?BankStore.MAX_BALANCE:kind==Kind.WITHDRAW?2304:kind==Kind.CLAIM_FUND?36L*64*9:36L*64*64); }
         boolean matches(Intent i) { return sequence==i.sequence()&&transaction.equals(i.transaction())&&kind==i.kind()&&amount==i.amount(); }
     }
     static boolean matches(Receipt receipt,String witness) { return Objects.equals(receipt==null?null:receipt.transaction().toString(),witness); }

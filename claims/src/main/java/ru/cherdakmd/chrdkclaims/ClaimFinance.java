@@ -54,6 +54,10 @@ final class ClaimFinance {
                 var t=new ClaimExchange(UUID.randomUUID(),store.financialLineage(),store.financialSequence()+1,kind,deltas,ClaimExchange.hash(after));
                 if(!store.prepareFinance(new Pending(t,ClaimExchange.hash(before),after))) return refused;
                 return recover()?result:refused;
+            } catch(RuntimeException e) {
+                // A detached plan/reentrant native callback cannot publish a partial domain.
+                // If WAL/IO is already uncertain its pending/blocked state remains untouched.
+                return refused;
             } finally { planning=false; }
         }
     }

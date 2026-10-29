@@ -96,7 +96,7 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
                 if (!store.fundsReady(name)) getLogger().warning("Казна " + name + " пока не перенесена: банк/UUID/предел счёта недоступен. Остаток сохранён, рента этого владельца приостановлена.");
             }
             if (!pendingNames.hasNext()) { moneyMigrationTask.cancel(); moneyMigrationTask = null; }
-        }, 1L, 1L);
+        }, 1L, 20L);
         if (coreApi != null) {
             try {
                 coreApi.registerProfile("claims", new ClaimsProfile(this));

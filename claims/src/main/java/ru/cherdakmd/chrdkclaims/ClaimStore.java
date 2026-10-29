@@ -90,7 +90,7 @@ public final class ClaimStore {
     synchronized void stopFinance(String message) { moneyAvailable=false; blocked=true; logger.severe("[Claims] "+message+"; файл не перезаписывается"); }
     synchronized boolean prepareFinance(ClaimFinance.Pending p) {
         if(!moneyAvailable()||!financialRegistered||financialPending!=null||!p.valid()||!p.exchange().lineage().equals(financialLineage)||p.exchange().sequence()!=financialSequence+1||!p.beforeHash().equals(ru.cherdakmd.chrdkregister.api.ClaimExchange.hash(domainJson()))) return false;
-        try { validateDomain(ClaimJson.object(p.after())); } catch(RuntimeException e) {return false;}
+        try { validateFrozenDomain(p.after()); } catch(RuntimeException e) {return false;}
         var data=snapshot().data(); financeMap(data).put("pending",p);
         boolean saved=write(data); financialPending=p; cachePendingProtection(); if(!saved) return false; dirty=false; return true;
     }
@@ -209,7 +209,7 @@ public final class ClaimStore {
                         var row=f.getAsJsonObject("pending"); ru.cherdakmd.chrdkregister.api.ClaimExchange.requireJson(row.getAsJsonObject("exchange"));
                         text(row,"beforeHash"); text(row,"after"); financialPending=GSON.fromJson(row,ClaimFinance.Pending.class);
                         if(!financialRegistered||!financialPending.valid()||!financialLineage.equals(financialPending.exchange().lineage())||financialPending.exchange().sequence()!=financialSequence+1||!financialPending.beforeHash().equals(ru.cherdakmd.chrdkregister.api.ClaimExchange.hash(domainJson()))) throw new IllegalArgumentException("claim WAL");
-                        validateDomain(ClaimJson.object(financialPending.after()));
+                        validateFrozenDomain(financialPending.after());
                     }
                 } catch(RuntimeException e) { throw new LegacyMoneyException("Неверный финансовый domain/WAL: "+e.getMessage()); }
             } else if(json.has("finance")) throw new LegacyMoneyException("Пониженная схема с финансовым WAL");
@@ -271,6 +271,9 @@ public final class ClaimStore {
         blocked = false;
     }
 
+    private void requireMutation() {
+        if(finance!=null&&finance.busy()) throw new IllegalStateException("Claims: незавершённый финансовый переход/карантин");
+    }
     private void touch() {
         dirty = true;
         revision++;
@@ -484,6 +487,11 @@ public final class ClaimStore {
     private static long integer(com.google.gson.JsonObject row,String field) {
         var v=row.get(field); if(v==null||!v.isJsonPrimitive()||!v.getAsJsonPrimitive().isNumber()) throw new IllegalArgumentException("claim number "+field);return v.getAsBigDecimal().longValueExact();
     }
+    private void validateFrozenDomain(String after) {
+        var json=ClaimJson.object(after); validateDomain(json);
+        var copy=new ClaimStore(file.getParent(),logger); copy.read(GSON.fromJson(json,DATA_TYPE));
+        if(!after.equals(copy.domainJson())) throw new IllegalArgumentException("noncanonical/normalizing frozen domain");
+    }
     private static void validateDomain(com.google.gson.JsonObject json) {
         ru.cherdakmd.chrdkregister.api.FinanceNumbers.requireIntegral(json);
         if(integer(json,"version")!=4||!json.has("claims")||!json.get("claims").isJsonArray()||!json.has("treasury")||!json.get("treasury").isJsonObject()) throw new IllegalArgumentException("claim domain");
@@ -658,6 +666,7 @@ public final class ClaimStore {
     }
 
     synchronized void mergeAcquired(List<Claim> incoming) {
+        requireMutation();
         Set<Claim> incomingSet = new java.util.HashSet<>(incoming);
         for (List<Claim> group : ClaimTerritories.groups(all())) {
             if (group.stream().noneMatch(incomingSet::contains)) continue;
@@ -668,6 +677,7 @@ public final class ClaimStore {
     }
 
     public synchronized void add(Claim claim) {
+        requireMutation();
         Map<Long, Claim> world = claims.computeIfAbsent(claim.world, key -> new HashMap<>());
         Claim prior = world.get(claim.key());
         if (prior != null && prior != claim && prior.rentedAt(System.currentTimeMillis()))
@@ -680,11 +690,12 @@ public final class ClaimStore {
         List<Claim> region = territory(claim);
         List<Claim> sources = region.stream().filter(c -> c != claim).toList();
         if (!sources.isEmpty()) ClaimTerritories.normalize(region, sources, true);
-        chunksClaimedTotal++;
+        chunksClaimedTotal=Math.addExact(chunksClaimedTotal,1);
         touch();
     }
 
     public synchronized void remove(Claim claim) {
+        requireMutation();
         if (claim.rentedAt(System.currentTimeMillis())) throw new IllegalStateException("Paid rental is protected");
         if (claimAt(claim.world, claim.x, claim.z) == claim) territory(claim).forEach(c -> c.salePrice = 0);
         Map<Long, Claim> world = claims.get(claim.world);
@@ -702,6 +713,7 @@ public final class ClaimStore {
 
     /** Удаляет все приваты мира (например, после смены карты). @return сколько удалено. */
     public synchronized int removeWorld(String world) {
+        requireMutation();
         if (inWorld(world).stream().anyMatch(c -> c.rentedAt(System.currentTimeMillis())))
             throw new IllegalStateException("Paid rental is protected");
         Map<Long, Claim> removed = claims.remove(world);
@@ -807,6 +819,7 @@ public final class ClaimStore {
     // ------------------------------------------------------------- notices --
 
     public synchronized void addNotice(String name, String text) {
+        requireMutation();
         if (name == null || name.isBlank() || text == null || text.isBlank()) {
             return;
         }
@@ -826,6 +839,7 @@ public final class ClaimStore {
 
     /** Забирает (и очищает) вести игрока. */
     public synchronized List<String> pollNotices(String name) {
+        if(finance!=null&&finance.busy()) return java.util.List.of();
         if (name == null) {
             return List.of();
         }
@@ -846,6 +860,7 @@ public final class ClaimStore {
 
     /** Назначает персональный лимит (1..100000) — он главнее базы и бонуса ранга. */
     public synchronized void setLimitOverride(String name, int limit) {
+        requireMutation();
         if (name == null || name.isBlank()) {
             return;
         }
@@ -856,6 +871,7 @@ public final class ClaimStore {
 
     /** Снимает персональный лимит. @return был ли он назначен */
     public synchronized boolean clearLimitOverride(String name) {
+        requireMutation();
         String key = name == null ? null : keyIgnoreCase(limits, name);
         if (key == null) {
             return false;
@@ -884,6 +900,7 @@ public final class ClaimStore {
      * чужого привата, из списка участников он удаляется — он теперь владелец.</p>
      */
     public synchronized TransferSummary transferAll(String from, String to) {
+        requireMutation();
         if (from == null || to == null || from.isBlank() || to.isBlank()
                 || from.equalsIgnoreCase(to)) {
             return new TransferSummary(0, 0, 0, false);
@@ -960,6 +977,7 @@ public final class ClaimStore {
     // --------------------------------------------------------------- stats --
 
     public synchronized void addDiamondsSpent(long amount) {
+        requireMutation();
         if (amount <= 0) {
             return;
         }
@@ -968,6 +986,7 @@ public final class ClaimStore {
     }
 
     public synchronized void addTaxBurned(long amount) {
+        requireMutation();
         if (amount <= 0) {
             return;
         }

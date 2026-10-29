@@ -101,6 +101,7 @@ public final class ClaimTeleportService implements Listener {
         if (player == null || !player.isOnline()) {
             return false;
         }
+        if(!plugin.financeReady()) {plugin.messages().send(player,"finance.unavailable");return false;}
         if (plugin.coreApi()==null || !plugin.coreApi().isAuthenticated(player)) { plugin.messages().send(player,"need-auth"); return false; }
         if (plugin.teleportPayments().occupied(player.getUniqueId())) { plugin.messages().send(player,"finance.service-wait"); return false; }
         if (!plugin.config().teleportEnabled) {
@@ -189,7 +190,7 @@ public final class ClaimTeleportService implements Listener {
     }
     private boolean valid(Player player,Claim original,Pending state) {
         Claim current=plugin.store().claimAt(original.world,original.x,original.z);
-        return pending.get(player.getUniqueId())==state && player.isOnline() && plugin.coreApi()!=null && plugin.coreApi().isAuthenticated(player)
+        return plugin.financeReady() && pending.get(player.getUniqueId())==state && player.isOnline() && plugin.coreApi()!=null && plugin.coreApi().isAuthenticated(player)
                 && plugin.config().teleportEnabled && plugin.config().worldEnabled(original.world) && player.hasPermission("chrdkclaims.teleport")
                 && player.getWorld().getName().equals(state.world) && current==original && (current.canUse(player.getName()) || current.salePrice>0 || plugin.isBypassing(player));
     }
