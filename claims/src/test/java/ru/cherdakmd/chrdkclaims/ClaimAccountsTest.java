@@ -84,11 +84,12 @@ class ClaimAccountsTest {
         String bridge=Files.readString(Path.of(base+"ClaimBankBridge.java"));
         String plugin=Files.readString(Path.of(base+"ClaimsPlugin.java"));
         assertFalse(service.contains("DiamondItems.give(")); assertFalse(service.contains("DiamondItems.collect("));
-        assertTrue(plugin.indexOf("store.accounts(new ClaimBankBridge")<plugin.indexOf("service.processUpkeep"));
-        assertTrue(bridge.contains("getStorageContents()")); assertTrue(bridge.contains("DiamondItems.plain"));
-        assertTrue(bridge.contains("exchangeClaimAccounts(changes, null, null, null)"));
-        assertTrue(bridge.contains("Bukkit.getScheduler().runTask(plugin"));
-        assertTrue(bridge.indexOf("Bukkit.getScheduler().runTask(plugin") < bridge.indexOf("plugin.messages().send(player, \"finance.payment\""));
+        assertTrue(plugin.indexOf("store.accounts(bank)")<plugin.indexOf("service.processUpkeep"));
+        assertTrue(plugin.contains("new ClaimFinance(store,bank)"));
+        assertFalse(bridge.contains("exchangeClaimAccounts("));
+        assertTrue(bridge.contains("fundClaimPayment(player,cost)"));
+        assertTrue(bridge.contains("commitClaimExchange(t)"));
+        assertTrue(bridge.contains("financialPending()==null"));
         assertTrue(service.contains("ClaimUpkeep.day")); assertTrue(service.contains("finance.bank-commands"));
         var userFile=dir.resolve("messages.yml");
         Files.writeString(userFile,"claims:\n  profile-treasury: 'Старая пользовательская казна'\n");

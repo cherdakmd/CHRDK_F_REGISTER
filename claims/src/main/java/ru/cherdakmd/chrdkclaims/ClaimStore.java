@@ -56,6 +56,11 @@ public final class ClaimStore {
     private boolean financialRegistered;
     private long financialSequence;
     private ClaimFinance.Pending financialPending;
+    private Map<String,Map<Long,Claim>> pendingProtection;
+    private void cachePendingProtection() {
+        if(financialPending==null) {pendingProtection=null;return;}
+        var copy=new ClaimStore(file.getParent(),logger); copy.read(GSON.fromJson(financialPending.after(),DATA_TYPE)); pendingProtection=copy.claims;
+    }
     @FunctionalInterface interface WriteCheckpoint { void afterReplace() throws IOException; }
     private final WriteCheckpoint checkpoint;
     synchronized java.util.UUID financialLineage() { return financialLineage; }
@@ -87,19 +92,19 @@ public final class ClaimStore {
         if(!moneyAvailable()||!financialRegistered||financialPending!=null||!p.valid()||!p.exchange().lineage().equals(financialLineage)||p.exchange().sequence()!=financialSequence+1||!p.beforeHash().equals(ru.cherdakmd.chrdkregister.api.ClaimExchange.hash(domainJson()))) return false;
         try { validateDomain(GSON.fromJson(p.after(),com.google.gson.JsonObject.class)); } catch(RuntimeException e) {return false;}
         var data=snapshot().data(); financeMap(data).put("pending",p);
-        if(!write(data)) return false; financialPending=p; dirty=false; return true;
+        boolean saved=write(data); financialPending=p; cachePendingProtection(); if(!saved) return false; dirty=false; return true;
     }
     synchronized boolean cancelFinance(ClaimFinance.Pending p) {
         if(!moneyAvailable()||!p.equals(financialPending)) return false;
         if(!p.beforeHash().equals(ru.cherdakmd.chrdkregister.api.ClaimExchange.hash(domainJson()))) {stopFinance("Изменился domain при отмене");return false;}
-        var data=snapshot().data(); financeMap(data).remove("pending"); if(!write(data)) return false; financialPending=null; dirty=false; return true;
+        var data=snapshot().data(); financeMap(data).remove("pending"); if(!write(data)) return false; financialPending=null; pendingProtection=null; dirty=false; return true;
     }
     synchronized boolean finishFinance(ClaimFinance.Pending p) {
         if(!moneyAvailable()||!p.equals(financialPending)) return false;
         if(!p.beforeHash().equals(ru.cherdakmd.chrdkregister.api.ClaimExchange.hash(domainJson()))) {stopFinance("Изменился зарезервированный domain snapshot");return false;}
         Map<String,Object> after=GSON.fromJson(p.after(),DATA_TYPE); var meta=financialMetadata(); meta.remove("pending"); meta.put("sequence",p.exchange().sequence()); after.put("finance",meta);
         if(!write(after)) return false;
-        publishDomain(after); financialSequence=p.exchange().sequence(); financialPending=null; dirty=false; return true;
+        publishDomain(after); financialSequence=p.exchange().sequence(); financialPending=null; pendingProtection=null; dirty=false; return true;
     }
     private void publishDomain(Map<String,Object> data) {
         var copy=new ClaimStore(file.getParent(),logger); copy.read(data);
@@ -114,7 +119,7 @@ public final class ClaimStore {
     }
     synchronized Claim protectedClaimAt(String world,int x,int z) {
         var before=claimAt(world,x,z); if(before!=null||financialPending==null) return before;
-        var copy=new ClaimStore(file.getParent(),logger); copy.read(GSON.fromJson(financialPending.after(),DATA_TYPE)); return copy.claimAt(world,x,z);
+        if(pendingProtection==null) cachePendingProtection(); var map=pendingProtection.get(world); return map==null?null:map.get(ClaimMath.chunkKey(x,z));
     }
 
     private volatile boolean moneyAvailable = true;
@@ -253,7 +258,7 @@ public final class ClaimStore {
 
     private void reset() {
         moneyAvailable = true;
-        financialLineage=java.util.UUID.randomUUID(); financialRegistered=false; financialSequence=0; financialPending=null;
+        financialLineage=java.util.UUID.randomUUID(); financialRegistered=false; financialSequence=0; financialPending=null; pendingProtection=null;
         claims.clear();
         treasury.clear();
         notices.clear();
@@ -479,6 +484,7 @@ public final class ClaimStore {
         var v=row.get(field); if(v==null||!v.isJsonPrimitive()||!v.getAsJsonPrimitive().isNumber()) throw new IllegalArgumentException("claim number "+field);return v.getAsBigDecimal().longValueExact();
     }
     private static void validateDomain(com.google.gson.JsonObject json) {
+        ru.cherdakmd.chrdkregister.api.FinanceNumbers.requireIntegral(json);
         if(integer(json,"version")!=4||!json.has("claims")||!json.get("claims").isJsonArray()||!json.has("treasury")||!json.get("treasury").isJsonObject()) throw new IllegalArgumentException("claim domain");
         var seen=new java.util.HashSet<String>();
         for(var entry:json.getAsJsonArray("claims")) {

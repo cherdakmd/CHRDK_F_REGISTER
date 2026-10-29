@@ -637,6 +637,7 @@ public final class ClaimProtectionListener implements Listener {
 
     /** Блок уходит через границу: владелец точки не совпадает с владельцем поршня. */
     private boolean sameDomain(Claim left, Claim right) {
+        if(plugin.finance()!=null&&plugin.finance().busy()) return false;
         long now = System.currentTimeMillis();
         return left != null && right != null && left.accessDomain(now).equals(right.accessDomain(now));
     }

@@ -24,8 +24,9 @@ final class ClaimFinance {
     ClaimFinance(ClaimStore store,Bank bank) { this.store=store; this.bank=bank; }
     boolean busy() { return planning||store.financialPending()!=null||!store.moneyAvailable(); }
     boolean binding() {
-        if(!store.moneyAvailable()||!store.ensureFinance()) return false;
-        return store.financialRegistered()?bank.registered(store.financialLineage()):bank.register(store.financialLineage())&&store.markFinanceRegistered();
+        if(!store.moneyAvailable()) return false;
+        if(store.financialRegistered()) return bank.registered(store.financialLineage());
+        return store.ensureFinance()&&bank.register(store.financialLineage())&&store.markFinanceRegistered();
     }
     boolean recover() {
         synchronized(store) {
