@@ -12,7 +12,7 @@ commands:
     usage: "/claim [menu [стр]|tp [x z]|info [x z]|map [радиус]|list [стр]|forsale [стр]|near [радиус]|borders|notices [on|off]|greeting [текст]|rent [offer <цена>|off|take <цена>|stop]|unclaim [all confirm]|add|remove <ник> [доступ|контейнеры|полный]|deposit|withdraw|balance|sell|sellback|buy [x z]|transfer|help]"
   claimadmin:
     description: "Администрирование приватов: выдача, лимиты, перенос, рента, статистика"
-    usage: "/claimadmin [reload|bypass|delete|deleteall|info|give|transfer|limit|transferall|purge|rent|stats]"
+    usage: "/claimadmin [reload|bypass|delete|deleteall|info|give|transfer|limit|transferall|purge|rent|stats|recovery]"
     permission: chrdkclaims.admin
 permissions:
   chrdkclaims.use:

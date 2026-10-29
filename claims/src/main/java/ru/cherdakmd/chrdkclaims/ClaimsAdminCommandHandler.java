@@ -18,7 +18,7 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
 
     private static final List<String> SUBS = List.of("reload", "bypass", "delete", "deleteall",
             "info", "give", "transfer", "limit", "transferall", "backup", "audit",
-            "purge", "rent", "stats", "tpfinance", "tprecover", "tpresolve");
+            "purge", "rent", "stats", "recovery", "tpfinance", "tprecover", "tpresolve");
 
     private final ClaimsPlugin plugin;
 
