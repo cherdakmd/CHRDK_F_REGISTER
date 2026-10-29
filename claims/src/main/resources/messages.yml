@@ -339,7 +339,9 @@ claims:
     sell-debt: <red>У привата долг %days% сут. — сначала пополните /bal (/bal deposit), затем выставляйте на продажу.</red>
     sellback-done: <green>Чанк возвращён серверу. Возврат %reward% ⛁ зачислен на личный /bal.</green>
     transfer-protected: '<red>Перенос не выполнен: есть оплаченная аренда или новый владелец нарушит отступ от чужих приватов. Данные и личные счета не изменены.</red>'
-    unavailable: '<red>Платёж недоступен: проверьте авторизацию/Survival, актуальное Core, включённый банк, UUID и предел счёта. Старый остаток казны сохранён. При недоступном банке новые списания и снятие приватов за неуплату приостановлены.</red>'
+    unavailable: '<yellow>Операция недоступна или ожидает сверки: не считайте начатую оплату отменённой. Проверьте авторизацию/Survival, Core, банк, UUID и предел счёта. Предметная недостача сначала пополняет ваш /bal и остаётся там при отказе покупки. Администратору: /claimadmin recovery.</yellow>'
+    recovery: '<gray>Claims: исправность=%healthy%, источник=%lineage%, подтверждение регистрации=%registered%, последовательность=%sequence%, незавершённая операция=%pending%.</gray>'
+    backup-protected: '<yellow>Финансовый источник нельзя откатывать отдельно в работающем сервере. Нужны остановка и согласованные копии Claims, банка и playerdata. Не удаляйте журналы и квитанции.</yellow>'
     unclaim-all-confirm: '<red>Будут сняты все ваши приваты (%count%). Возврата оплаты нет; личный /bal не обнуляется. Подтвердите: <yellow>/claim unclaim all confirm</yellow></red>'
     usage: <gray>/claim — купить чанк · menu · tp [x z] · info [x z] · map [радиус] · list [стр] · forsale [стр] · near [радиус] · borders · notices [on|off] · greeting [текст|снять] · rent · unclaim [all confirm] · add/remove <ник> [доступ|контейнеры|полный]
       [все] · transfer <ник> · balance (личный /bal) · sell <цена|снять> · sellback · buy [x z] · help</gray>

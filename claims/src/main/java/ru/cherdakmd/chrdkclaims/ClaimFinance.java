@@ -45,14 +45,14 @@ final class ClaimFinance {
             if(planning||!recover()) return refused;
             planning=true;
             try {
-                long revision=store.financeRevision();
+                long revision=store.financeRevision(); String before=store.domainJson();
                 var plan=new Planning(bank); var shadow=store.financeCopy(plan);
                 T result=action.apply(shadow); if(!success.test(result)) return result;
                 if(!plan.valid) return refused;
-                var deltas=bank.resolve(plan.deltas,plan.payer); if(deltas==null||store.financeRevision()!=revision) return refused;
                 String after=shadow.domainJson();
+                var deltas=bank.resolve(plan.deltas,plan.payer); if(deltas==null||store.financeRevision()!=revision||!before.equals(store.domainJson())) return refused;
                 var t=new ClaimExchange(UUID.randomUUID(),store.financialLineage(),store.financialSequence()+1,kind,deltas,ClaimExchange.hash(after));
-                if(!store.prepareFinance(new Pending(t,ClaimExchange.hash(store.domainJson()),after))) return refused;
+                if(!store.prepareFinance(new Pending(t,ClaimExchange.hash(before),after))) return refused;
                 return recover()?result:refused;
             } finally { planning=false; }
         }

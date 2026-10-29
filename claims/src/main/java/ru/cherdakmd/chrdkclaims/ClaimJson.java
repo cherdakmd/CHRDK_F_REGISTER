@@ -17,6 +17,13 @@ final class ClaimJson {
             return value.getAsJsonObject();
         }
     }
+    static JsonObject object(String json) {
+        try(var input=new JsonReader(new StringReader(json))) {
+            input.setStrictness(Strictness.STRICT);var value=read(input,0);
+            if(input.peek()!=JsonToken.END_DOCUMENT||!value.isJsonObject()) throw new IOException("claim domain/trailing JSON");
+            return value.getAsJsonObject();
+        } catch(IOException e) {throw new IllegalArgumentException("claim domain JSON",e);}
+    }
     private static JsonElement read(JsonReader input,int depth) throws IOException {
         if(depth>64) throw new IOException("claim nesting");
         return switch(input.peek()) {

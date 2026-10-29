@@ -113,7 +113,7 @@ class BankCashTest {
     }
     @Test void legacyV4MigratesWithoutInventingMoneyOrRetroactivelyExchangingItems() throws Exception {
         funded(100); var json=JsonParser.parseString(Files.readString(load().file())).getAsJsonObject(); json.addProperty("schema",4); json.remove("cashPending"); json.remove("cashReceipts"); json.remove("shopSettlements"); json.remove("claimSettlements"); Files.writeString(load().file(),json.toString());
-        var b=load(); assertTrue(b.available()); assertEquals(100,b.balance(owner)); assertNull(b.cashReceipt(owner)); assertFalse(b.cashLocked(owner)); assertNotNull(intent(b,BankCash.Kind.DEPOSIT,9)); assertEquals(6,JsonParser.parseString(Files.readString(b.file())).getAsJsonObject().get("schema").getAsInt());
+        var b=load(); assertTrue(b.available()); assertEquals(100,b.balance(owner)); assertNull(b.cashReceipt(owner)); assertFalse(b.cashLocked(owner)); assertNotNull(intent(b,BankCash.Kind.DEPOSIT,9)); assertEquals(BankStore.SCHEMA_VERSION,JsonParser.parseString(Files.readString(b.file())).getAsJsonObject().get("schema").getAsInt());
     }
     void refuse(String original) throws Exception {
         Files.writeString(dir.resolve("bank.json"),original); var b=load(); assertFalse(b.available()); b.flush(); assertEquals(original,Files.readString(b.file()));
@@ -121,7 +121,7 @@ class BankCashTest {
     @Test void strictMetadataRejectsMissingTablesDuplicateJsonAndTrailingGarbage() throws Exception {
         pending(BankCash.Kind.DEPOSIT); String original=Files.readString(load().file()); var root=JsonParser.parseString(original).getAsJsonObject();
         for(String field:List.of("cashPending","cashReceipts")) { var bad=root.deepCopy(); bad.remove(field); refuse(bad.toString()); }
-        refuse(original+" trailing"); refuse(original.replace("\"schema\": 6","\"schema\": 6, \"schema\": 4"));
+        refuse(original+" trailing"); refuse(original.replace("\"schema\": "+BankStore.SCHEMA_VERSION,"\"schema\": "+BankStore.SCHEMA_VERSION+", \"schema\": 4"));
     }
     @Test void malformedAmountsUuidSequenceBalanceAndIntOverflowAreNotCoerced() throws Exception {
         pending(BankCash.Kind.DEPOSIT); var root=JsonParser.parseString(Files.readString(load().file())).getAsJsonObject();

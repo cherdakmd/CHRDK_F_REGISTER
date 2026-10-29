@@ -90,7 +90,7 @@ public final class ClaimStore {
     synchronized void stopFinance(String message) { moneyAvailable=false; blocked=true; logger.severe("[Claims] "+message+"; файл не перезаписывается"); }
     synchronized boolean prepareFinance(ClaimFinance.Pending p) {
         if(!moneyAvailable()||!financialRegistered||financialPending!=null||!p.valid()||!p.exchange().lineage().equals(financialLineage)||p.exchange().sequence()!=financialSequence+1||!p.beforeHash().equals(ru.cherdakmd.chrdkregister.api.ClaimExchange.hash(domainJson()))) return false;
-        try { validateDomain(GSON.fromJson(p.after(),com.google.gson.JsonObject.class)); } catch(RuntimeException e) {return false;}
+        try { validateDomain(ClaimJson.object(p.after())); } catch(RuntimeException e) {return false;}
         var data=snapshot().data(); financeMap(data).put("pending",p);
         boolean saved=write(data); financialPending=p; cachePendingProtection(); if(!saved) return false; dirty=false; return true;
     }
@@ -209,7 +209,7 @@ public final class ClaimStore {
                         var row=f.getAsJsonObject("pending"); ru.cherdakmd.chrdkregister.api.ClaimExchange.requireJson(row.getAsJsonObject("exchange"));
                         text(row,"beforeHash"); text(row,"after"); financialPending=GSON.fromJson(row,ClaimFinance.Pending.class);
                         if(!financialRegistered||!financialPending.valid()||!financialLineage.equals(financialPending.exchange().lineage())||financialPending.exchange().sequence()!=financialSequence+1||!financialPending.beforeHash().equals(ru.cherdakmd.chrdkregister.api.ClaimExchange.hash(domainJson()))) throw new IllegalArgumentException("claim WAL");
-                        validateDomain(GSON.fromJson(financialPending.after(),com.google.gson.JsonObject.class));
+                        validateDomain(ClaimJson.object(financialPending.after()));
                     }
                 } catch(RuntimeException e) { throw new LegacyMoneyException("Неверный финансовый domain/WAL: "+e.getMessage()); }
             } else if(json.has("finance")) throw new LegacyMoneyException("Пониженная схема с финансовым WAL");
@@ -279,7 +279,7 @@ public final class ClaimStore {
     @SuppressWarnings("unchecked")
     private void read(Map<String, Object> data) {
         int version = (int) longOf(data.get("version"));
-        if (version > SCHEMA_VERSION) throw new LegacyMoneyException("Неизвестная версия claims-data.json");
+
         long now = System.currentTimeMillis();
         int repairedDates = 0;
         int duplicates = 0;
@@ -407,6 +407,7 @@ public final class ClaimStore {
             diamondsSpent = Math.max(0, longOf(stats.get("diamondsSpent")));
             taxBurned = Math.max(0, longOf(stats.get("taxBurned")));
         }
+        if (version > SCHEMA_VERSION) throw new LegacyMoneyException("Неизвестная версия claims-data.json");
     }
 
     private Snapshot snapshot() {

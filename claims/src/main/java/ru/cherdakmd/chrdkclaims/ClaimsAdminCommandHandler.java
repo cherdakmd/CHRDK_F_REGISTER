@@ -35,7 +35,7 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
             return true;
         }
         if(args.length>0&&args[0].equalsIgnoreCase("recovery")) {
-            var store=plugin.store(); sender.sendMessage("Claims: healthy="+store.moneyAvailable()+" lineage="+store.financialLineage()+" registered="+store.financialRegistered()+" sequence="+store.financialSequence()+" pending="+(store.financialPending()!=null)); return true;
+            var store=plugin.store(); plugin.messages().send(sender,"finance.recovery","healthy",String.valueOf(store.moneyAvailable()),"lineage",store.financialLineage().toString(),"registered",String.valueOf(store.financialRegistered()),"sequence",String.valueOf(store.financialSequence()),"pending",String.valueOf(store.financialPending()!=null)); return true;
         }
         if (args.length == 0) {
             usage(sender);
@@ -313,7 +313,7 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
         }
         ClaimStore.RestoreResult result = plugin.store().restoreFrom(args[2]);
         switch (result) {
-            case PROTECTED -> plugin.messages().send(sender, "rent-locked");
+            case PROTECTED -> plugin.messages().send(sender, "finance.backup-protected");
             case OK -> {
                 plugin.messages().send(sender, "admin-backup-restored", "file", args[2]);
                 plugin.audit("backup-restore", sender.getName() + " <- " + args[2]);
