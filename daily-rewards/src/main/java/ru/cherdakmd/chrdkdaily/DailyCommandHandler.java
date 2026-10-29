@@ -58,8 +58,7 @@ public final class DailyCommandHandler implements TabExecutor {
                 }
                 DailyService.ClaimResult result = plugin.service().claim(player);
                 if (result == null) {
-                    plugin.messages().send(player, "daily.already-claimed",
-                            "streak", plugin.store().progressOf(player.getUniqueId()).streak);
+                    plugin.messages().send(player, "finance.daily-wait");
                 } else {
                     announceClaim(player, result);
                 }
@@ -78,8 +77,8 @@ public final class DailyCommandHandler implements TabExecutor {
 
     /** Объявляет содержимое выданной награды (используется командой и GUI). */
     public void announceClaim(Player player, DailyService.ClaimResult result) {
-        DailyConfig.DayReward day = plugin.config().rewardForStreakDay(result.streak());
-        plugin.messages().send(player, "daily.claim-header", "day", day.day());
+        plugin.messages().send(player, "daily.claim-header", "day", result.cycleDay());
+        if(result.money()>0)plugin.messages().send(player,"finance.daily-money","amount",result.money());
         if (!result.items().isEmpty()) {
             plugin.messages().send(player, "daily.claim-items",
                     "items", DailyService.itemsText(result.items()));
@@ -93,6 +92,8 @@ public final class DailyCommandHandler implements TabExecutor {
     /* ------------------------------- /dailyadmin ------------------------------- */
 
     private boolean handleAdmin(CommandSender sender, String[] args) {
+        if(!sender.hasPermission("chrdkdaily.admin")) return true;
+        if(plugin.service().admin(sender,args)) return true;
         if (args.length >= 1 && "reload".equalsIgnoreCase(args[0])) {
             plugin.reloadDailyConfig();
             plugin.messages().send(sender, "admin.reloaded");
@@ -133,7 +134,7 @@ public final class DailyCommandHandler implements TabExecutor {
                         "claimed", plugin.messages().mini("daily.claimed-no"));
                 return true;
             }
-            plugin.store().setStreak(uuid, streak, System.currentTimeMillis());
+            try{plugin.store().setStreak(uuid, streak, System.currentTimeMillis());}catch(RuntimeException e){plugin.messages().send(sender,"finance.daily-wait");return true;}
             plugin.messages().send(sender, "admin.set-ok", "player", name, "streak", Math.max(0, streak));
             return true;
         }
@@ -155,7 +156,7 @@ public final class DailyCommandHandler implements TabExecutor {
         String prefix = args[args.length - 1].toLowerCase(Locale.ROOT);
         if ("dailyadmin".equalsIgnoreCase(command.getName())) {
             if (args.length == 1) {
-                List.of("lookup", "set", "reload").stream()
+                List.of("lookup", "set", "reload", "recovery", "resolve").stream()
                         .filter(option -> option.startsWith(prefix)).forEach(matches::add);
             }
             return matches;

@@ -1,8 +1,6 @@
 package ru.cherdakmd.chrdkachievements;
 
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 import ru.cherdakmd.chrdkregister.Messages;
 
 import java.util.ArrayList;
@@ -92,6 +90,10 @@ public final class AchievementService {
             return 0;
         }
         String key = key(player);
+        for (String id : store.unlocked(key)) {
+            AchievementDef def = AchievementRegistry.byId(id);
+            if (def != null && !store.claimed(key).contains(id)) pay(player,def);
+        }
         int opened = 0;
         for (int pass = 0; pass < 3; pass++) {
             List<AchievementDef> fresh = AchievementRules.newlyCompleted(
@@ -115,6 +117,8 @@ public final class AchievementService {
         if (player == null || def == null) {
             return false;
         }
+        if (!store.claimed(key(player)).contains(def.id())
+                && !plugin.awards().reserve(player,def.id(),plugin.config().rewardOf(def).diamonds())) return false;
         boolean fresh = store.unlock(key(player), def.id());
         store.raise(key(player), AchievementMetric.ACHIEVEMENTS, store.unlocked(key(player)).size());
         if (fresh) {
@@ -126,6 +130,7 @@ public final class AchievementService {
 
     private boolean unlock(Player player, AchievementDef def) {
         String key = key(player);
+        if (!plugin.awards().reserve(player,def.id(),plugin.config().rewardOf(def).diamonds())) return false;
         if (!store.unlock(key, def.id())) {
             return false;
         }
@@ -144,7 +149,8 @@ public final class AchievementService {
         plugin.messages().send(player, "achievement-unlocked",
                 "name", Messages.trusted(name),
                 "category", plugin.messages().mini("category." + def.category().id()));
-        AchievementsConfig.Reward reward = plugin.config().rewardOf(def);
+        AchievementsConfig.Reward configured = plugin.config().rewardOf(def);
+        AchievementsConfig.Reward reward = new AchievementsConfig.Reward(configured.passHours(),(int)plugin.awards().amount(player,def.id()));
         if (reward.passHours() > 0 || reward.diamonds() > 0) {
             plugin.messages().send(player, "achievement-reward",
                     "reward", Messages.trusted(rewardText(reward)));
@@ -162,6 +168,7 @@ public final class AchievementService {
 
     private void pay(Player player, AchievementDef def) {
         String key = key(player);
+        if (store.claimed(key).contains(def.id()) || !plugin.awards().reserve(player,def.id(),plugin.config().rewardOf(def).diamonds())) return;
         if (!store.markClaimed(key, def.id())) {
             // Награда уже была выплачена ранее — не дублируем.
             return;
@@ -169,23 +176,14 @@ public final class AchievementService {
         AchievementsConfig.Reward reward = plugin.config().rewardOf(def);
         if (reward.passHours() > 0) {
             if (plugin.coreApi() != null) {
-                plugin.coreApi().grantPassHours(player.getName(), reward.passHours(),
+                plugin.coreApi().grantRewardBoostHours(player.getName(), reward.passHours(),
                         "achievements:" + def.id());
             } else {
                 plugin.getLogger().warning("Ядро недоступно: награда достижения "
                         + def.id() + " не выдана игроку " + player.getName());
             }
         }
-        int remaining = reward.diamonds();
-        while (remaining > 0) {
-            int amount = Math.min(64, remaining);
-            remaining -= amount;
-            Map<Integer, ItemStack> leftover = player.getInventory()
-                    .addItem(new ItemStack(Material.DIAMOND, amount));
-            for (ItemStack rest : leftover.values()) {
-                player.getWorld().dropItemNaturally(player.getLocation(), rest);
-            }
-        }
+
     }
 
     /** Текст награды для чата и GUI. */

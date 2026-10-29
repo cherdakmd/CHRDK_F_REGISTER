@@ -57,10 +57,10 @@ public final class ReferralService {
         int inviterHours = plugin.config().bonusHoursInviter();
         int inviteeHours = plugin.config().bonusHoursInvitee();
         if (inviterHours > 0) {
-            api.grantPassHours(link.inviter, inviterHours, "referral:" + playerName);
+            api.grantRewardBoostHours(link.inviter, inviterHours, "referral:" + playerName);
         }
         if (inviteeHours > 0) {
-            api.grantPassHours(playerName, inviteeHours, "referral-bonus:" + link.inviter);
+            api.grantRewardBoostHours(playerName, inviteeHours, "referral-bonus:" + link.inviter);
         }
         store.recordBonusPaid(link.inviter, inviterHours);
 

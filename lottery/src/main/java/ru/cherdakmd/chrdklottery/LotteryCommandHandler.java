@@ -15,6 +15,8 @@ public final class LotteryCommandHandler implements CommandExecutor, TabComplete
             if (sub.equals("reload")) {
                 try { plugin.reloadLotteryConfig(); plugin.messages().send(sender, "lottery.admin-reload"); }
                 catch (Exception e) { plugin.getLogger().log(java.util.logging.Level.SEVERE, "Lottery reload failed", e); plugin.messages().send(sender, "lottery.storage-error"); }
+            } else if (sub.equals("recover")) {
+                plugin.messages().send(sender, service.recoverPending() ? "lottery.bank-recovered" : "lottery.bank-recovery");
             } else if (sub.equals("drawnow") && args.length == 2 && args[1].equalsIgnoreCase("confirm")) {
                 plugin.messages().send(sender, service.drawNow() ? "lottery.admin-drawnow-done" : "lottery.storage-error");
             } else plugin.messages().send(sender, "lottery.admin-usage");
@@ -41,7 +43,7 @@ public final class LotteryCommandHandler implements CommandExecutor, TabComplete
         boolean admin = command.getName().equalsIgnoreCase("lotteryadmin");
         if (!sender.hasPermission(admin ? "chrdklottery.admin" : "chrdklottery.use")) return List.of();
         List<String> options = List.of();
-        if (args.length == 1) options = admin ? List.of("reload", "drawnow") : List.of("buy", "info", "top", "last", "claim");
+        if (args.length == 1) options = admin ? List.of("reload", "drawnow", "recover") : List.of("buy", "info", "top", "last", "claim");
         else if (args.length == 2 && admin && args[0].equalsIgnoreCase("drawnow")) options = List.of("confirm");
         if (args.length == 0) return List.of();
         String prefix = args[args.length - 1].toLowerCase(Locale.ROOT);

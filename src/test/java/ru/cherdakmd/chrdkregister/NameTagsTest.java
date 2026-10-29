@@ -21,25 +21,25 @@ class NameTagsTest {
     @Test
     void providersApplyInRegistrationOrder() {
         NameTags tags = new NameTags(LOGGER);
-        tags.register("streams", (name, decorated) -> decorated + " [СТРИМ]");
+        tags.register("decoration", (name, decorated) -> decorated + " [МЕТКА]");
         tags.register("extra", (name, decorated) -> "<bold>" + decorated + "</bold>");
 
-        assertEquals("<bold>Steve [СТРИМ]</bold>", tags.decorate("Steve", "Steve"));
+        assertEquals("<bold>Steve [МЕТКА]</bold>", tags.decorate("Steve", "Steve"));
     }
 
     @Test
     void filterSkipsDisabledProviders() {
         NameTags tags = new NameTags(LOGGER);
-        tags.register("streams", (name, decorated) -> decorated + " [СТРИМ]");
+        tags.register("decoration", (name, decorated) -> decorated + " [МЕТКА]");
         tags.register("guilds", (name, decorated) -> decorated + " <gray>[ГИ]</gray>");
         tags.register("achievements", (name, decorated) -> decorated + " ★");
 
         assertEquals("Steve ★", tags.decorate("Steve", "Steve",
-                        id -> !id.equals("streams") && !id.equals("guilds")),
+                        id -> !id.equals("decoration") && !id.equals("guilds")),
                 "скрытые метки не попадают в ник, порядок остальных сохраняется");
         assertEquals("Steve", tags.decorate("Steve", "Steve", id -> false),
                 "всё выключено — имя как есть");
-        assertEquals("Steve [СТРИМ] <gray>[ГИ]</gray> ★",
+        assertEquals("Steve [МЕТКА] <gray>[ГИ]</gray> ★",
                 tags.decorate("Steve", "Steve", null),
                 "без фильтра работает как раньше");
     }
@@ -47,19 +47,19 @@ class NameTagsTest {
     @Test
     void sameIdReplacesPreviousProvider() {
         NameTags tags = new NameTags(LOGGER);
-        tags.register("streams", (name, decorated) -> "первый");
-        tags.register("streams", (name, decorated) -> "второй");
+        tags.register("decoration", (name, decorated) -> "первый");
+        tags.register("decoration", (name, decorated) -> "второй");
 
-        assertEquals(List.of("streams"), tags.ids());
+        assertEquals(List.of("decoration"), tags.ids());
         assertEquals("второй", tags.decorate("Steve", "Steve"));
     }
 
     @Test
     void unregisterRestoresPlainName() {
         NameTags tags = new NameTags(LOGGER);
-        tags.register("streams", (name, decorated) -> decorated + " [СТРИМ]");
-        assertTrue(tags.unregister("streams"));
-        assertFalse(tags.unregister("streams"));
+        tags.register("decoration", (name, decorated) -> decorated + " [МЕТКА]");
+        assertTrue(tags.unregister("decoration"));
+        assertFalse(tags.unregister("decoration"));
 
         assertEquals("Steve", tags.decorate("Steve", "Steve"));
     }
@@ -90,7 +90,7 @@ class NameTagsTest {
     @Test
     void providerMayKeepNameUnchanged() {
         NameTags tags = new NameTags(LOGGER);
-        tags.register("streams", (name, decorated) -> null);
+        tags.register("decoration", (name, decorated) -> null);
 
         assertEquals("Steve", tags.decorate("Steve", "Steve"));
     }

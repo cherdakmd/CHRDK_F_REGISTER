@@ -87,6 +87,9 @@ cosmetics:
     product: "join-effect"
     particle: totem_of_undying
     particle-count: 60
-    sound: entity_player_levelup
+    sound: entity.player.levelup
     volume: 0.8
     pitch: 1.2
+
+# /cosmetic — единое GUI; /cosmetics и /cos — совместимые алиасы.
+# Предпочтения эффекта входа и шлейфа сохраняются без выдачи новых прав.

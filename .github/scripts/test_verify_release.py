@@ -67,7 +67,38 @@ class ReleaseValidationTest(unittest.TestCase):
         self.assertIn("CHRDK_Core", names)
         self.assertIn("CHRDK_BattlePass", names)
         self.assertIn("CHRDK_Professions", names)
-        self.assertEqual(30, len(names))
+        self.assertEqual(26, len(names))
+        self.assertNotIn("CHRDK_Bosses", names)
+        self.assertNotIn("CHRDK_Treasures", names)
+        self.assertNotIn("CHRDK_Streams", names)
+        self.assertNotIn("CHRDK_Events", names)
+
+
+class ReleaseWorkflowContractTest(unittest.TestCase):
+    def test_sixty_roadmap_criteria_are_separately_accounted_for(self):
+        import re
+        root = Path(__file__).resolve().parents[2]
+        source = (root / "docs/roadmaps/mobs-enchants-60.md").read_text()
+        for prefix, expected in (("I", 25), ("N", 35)):
+            rows = re.findall(r"^\| (" + prefix + r"\d{2}) \|.*\| Реализовано \d+ \|$", source, re.M)
+            self.assertEqual(len(set(rows)), expected)
+            self.assertEqual(len(rows), expected)
+
+    def test_memo_is_external_so_run_step_stays_below_github_limit(self):
+        root = Path(__file__).resolve().parents[2]
+        source = (root / ".github/workflows/release.yml").read_text()
+        self.assertIn("cp docs/releases/update-memo.txt", source)
+        self.assertIn("1.4.{200,201,{220..245}}.md", source)
+        self.assertIn('unzip -t "chrdk-plugins-${version}.zip"', source)
+        self.assertIn('python3 .github/scripts/pack_release.py release "$version" "chrdk-plugins-${version}.zip"', source)
+        self.assertNotIn("zip -j -9", source)
+        self.assertNotIn("--zip", source)
+        self.assertIn('"${{ env.zip }}" --clobber', source)
+        # GitHub limits each run script to 21000 characters. Avoid parsing YAML/dependencies.
+        for section in source.split("run: |\n")[1:]:
+            script = section.split("\n      - name:", 1)[0]
+            self.assertLess(len(script), 21000)
+        self.assertTrue((root / "docs/releases/update-memo.txt").read_text().startswith("CHRDK"))
 
 
 if __name__ == "__main__":

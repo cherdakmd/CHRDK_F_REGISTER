@@ -12,10 +12,6 @@ class GrantSourceTest {
 
     @Test
     void addonSourcesAreNamed() {
-        assertEquals("наградой стримерской программы",
-                AccessManager.describeGrantSource("streams"));
-        assertEquals("наградой стримерской программы",
-                AccessManager.describeGrantSource("streams:twitch"));
         assertEquals("наградой батлпасса",
                 AccessManager.describeGrantSource("battlepass:mission_1"));
         assertEquals("наградой ежедневного входа",
@@ -34,9 +30,7 @@ class GrantSourceTest {
     }
 
     @Test
-    void notificationTitleMentionsStreams() {
-        assertEquals("Ранг продлён по стримерской программе",
-                AccessManager.notificationTitle("streams"));
+    void notificationTitleMentionsBattlePass() {
         assertEquals("Ранг выдан за батлпасс",
                 AccessManager.notificationTitle("battlepass:claim-all"));
         assertEquals("Ранг выдан вручную", AccessManager.notificationTitle("manual"));

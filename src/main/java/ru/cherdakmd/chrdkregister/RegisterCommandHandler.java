@@ -60,18 +60,19 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             @NotNull String[] args
     ) {
         String cmdName = command.getName().toLowerCase(Locale.ROOT);
-        return switch (cmdName) {
-            case "register" -> handleRegister(sender, args);
-            case "login" -> handleLogin(sender, args);
-            case "captcha" -> handleCaptcha(sender, args);
-            case "changepassword" -> handleChangePassword(sender, args);
-            case "2fa" -> handleTwoFactor(sender, label, args);
-            case "pass" -> handlePass(sender, label, args);
-            case "logout" -> handleLogout(sender);
-            case "session" -> handleSession(sender, args);
-            case "guide" -> handleGuide(sender);
-            default -> false;
-        };
+        return RegistrationCommandAccess.dispatch(sender, cmdName, args, accessManager::getStage, messages,
+                () -> switch (cmdName) {
+                    case "register" -> handleRegister(sender, args);
+                    case "login" -> handleLogin(sender, args);
+                    case "captcha" -> handleCaptcha(sender, args);
+                    case "changepassword" -> handleChangePassword(sender, args);
+                    case "2fa" -> handleTwoFactor(sender, label, args);
+                    case "pass" -> handlePass(sender, label, args);
+                    case "logout" -> handleLogout(sender);
+                    case "session" -> handleSession(sender, args);
+                    case "guide" -> handleGuide(sender);
+                    default -> false;
+        });
     }
 
     /** {@code /guide} — повторно выдать книгу-путеводитель. */
@@ -371,7 +372,8 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         if (args.length == 0) {
             if (sender instanceof Player player) {
                 showOwnPassStatus(player);
-                if (sender.hasPermission("chrdkregister.admin")) {
+                if (RegistrationCommandAccess.authenticatedSender(sender, accessManager::getStage)
+                        && sender.hasPermission("chrdkregister.admin")) {
                     messages.send(sender, "pass.admin-help", "label", label);
                 }
             } else {
@@ -451,59 +453,8 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 accessManager.bindBoostyAsync(boostPlayer, boostArg);
                 return true;
             }
-            case "add", "grant" -> {
-                if (args.length < 2) {
-                    messages.send(sender, "usage.pass-add", "label", label);
-                    return true;
-                }
-                String targetName = args[1].trim();
-                if (!AccessManager.isValidMinecraftName(targetName)) {
-                    messages.send(sender, "error.invalid-nickname", "target_name", targetName);
-                    return true;
-                }
-                int days = accessManager.config().grantDays();
-                if (args.length >= 3) {
-                    try {
-                        days = Math.clamp(Integer.parseInt(args[2]), 1, 3650);
-                    } catch (NumberFormatException exception) {
-                        messages.send(sender, "error.days-number");
-                        return true;
-                    }
-                }
-                RegistrationStore.PlayerAccount account = accessManager.grantPassManually(targetName, days, "manual");
-                messages.send(sender, "pass.granted",
-                        "player", account.playerName,
-                        "days", days,
-                        "until", AccessManager.formatTimestamp(account.passUntil));
-                return true;
-            }
-            case "gift" -> {
-                if (args.length < 3) {
-                    messages.send(sender, "usage.pass-gift", "label", label);
-                    return true;
-                }
-                String targetName = args[1].trim();
-                int days;
-                try {
-                    days = Math.clamp(Integer.parseInt(args[2]), 1, 3650);
-                } catch (NumberFormatException exception) {
-                    messages.send(sender, "error.days-number");
-                    return true;
-                }
-                if (!AccessManager.isValidMinecraftName(targetName)) {
-                    messages.send(sender, "error.invalid-nickname", "target_name", targetName);
-                    return true;
-                }
-                RegistrationStore.PlayerAccount account = accessManager.grantPassManually(targetName, days,
-                        "gift:" + sender.getName());
-                accessManager.audit().log(AuditLog.PASS_GRANT_GIFT, sender.getName(), targetName, null,
-                        AuditLog.details("days", days));
-                        messages.send(sender, "pass.gifted",
-                        "player", account.playerName, "days", days);
-                Player online = Bukkit.getPlayerExact(targetName);
-                if (online != null) {
-                    messages.send(online, "pass.gift-notice", "days", days, "sender", sender.getName());
-                }
+            case "add", "grant", "gift" -> {
+                messages.send(sender, "paid-only.blocked");
                 return true;
             }
             case "pending" -> {
@@ -736,104 +687,8 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                         "player", targetName);
                 return true;
             }
-            case "testpay" -> {
-                if (args.length < 2) {
-                    messages.send(sender, "usage.pass-testpay", "label", label);
-                    return true;
-                }
-                String targetName = args[1].trim();
-                int amount = accessManager.config().minimumDonationRubles();
-                String source = RegistrationStore.DONATION_SOURCE_DONATEPAY;
-                if (args.length >= 4) {
-                    source = args[3].trim().toLowerCase(java.util.Locale.ROOT);
-                    if (!source.equals(RegistrationStore.DONATION_SOURCE_DONATEPAY)
-                            && !source.equals(EasyDonateClient.SOURCE)
-                            && !source.equals(RegistrationStore.DONATION_SOURCE_TRADEMC)) {
-                        messages.send(sender, "usage.pass-testpay", "label", label);
-                        return true;
-                    }
-                }
-                if (args.length >= 3) {
-                    try {
-                        amount = Integer.parseInt(args[2]);
-                        if (amount < 0 || amount > 1_000_000) {
-                            messages.send(sender, "error.amount-number");
-                            return true;
-                        }
-                    } catch (NumberFormatException exception) {
-                        messages.send(sender, "error.amount-number");
-                        return true;
-                    }
-                }
-                DonationService.Outcome outcome = accessManager.simulateDonation(targetName, amount, source);
-                switch (outcome.status()) {
-                    case GRANTED -> {
-                        messages.send(sender, "donation.testpay-granted",
-                                "amount", amount,
-                                "name", outcome.playerName(),
-                                "days", outcome.days(),
-                                "until", AccessManager.formatTimestamp(outcome.passUntil()));
-                        if (!accessManager.config().passGroup().isBlank()
-                                && accessManager.config().passGroupPaidOnly()) {
-                            messages.send(sender, "donation.testpay-group-skipped",
-                                    "group", accessManager.config().passGroup());
-                        }
-                    }
-                    case REJECTED -> messages.send(sender, "donation.testpay-rejected",
-                            "amount", amount,
-                            "note", outcome.note().isBlank() ? "—" : outcome.note());
-                    default -> messages.send(sender, "donation.testpay-pending",
-                            "amount", amount,
-                            "donor", targetName,
-                            "status", outcome.status().name(),
-                            "note", outcome.note().isBlank() ? "—" : outcome.note(),
-                            "label", label);
-                }
-                return true;
-            }
-            case "testpay-live" -> {
-                // Живой тест: отправляем запись о донате прямо в кошелёк DonatePay (set_notification)
-                if (args.length < 3) {
-                    messages.send(sender, "usage.pass-testpaylive", "label", label);
-                    return true;
-                }
-                if (!accessManager.config().donatePayReady()) {
-                    messages.send(sender, "donation.testpaylive-notready");
-                    return true;
-                }
-                String donorName = args[1].trim();
-                long amount;
-                try {
-                    amount = Long.parseLong(args[2]);
-                } catch (NumberFormatException exception) {
-                    messages.send(sender, "error.amount-number");
-                    return true;
-                }
-                if (amount <= 0 || amount > 1_000_000) {
-                    messages.send(sender, "error.amount-number");
-                    return true;
-                }
-                String comment = args.length > 3
-                        ? String.join(" ", java.util.Arrays.copyOfRange(args, 3, args.length)) : "";
-                messages.send(sender, "donation.testpaylive-sending", "donor", donorName, "amount", amount);
-                accessManager.postTestDonateNotification(donorName, amount, comment,
-                        status -> {
-                            messages.send(sender, "donation.testpaylive-posted",
-                                    "donor", donorName, "amount", amount, "status", status);
-                            messages.send(sender, "donation.testpaylive-probing");
-                        },
-                        error -> messages.send(sender, "donation.testpaylive-failed",
-                                "error", error),
-                        (seen, transaction) -> {
-                            if (seen) {
-                                messages.send(sender, "donation.testpaylive-verdict-seen",
-                                        "donor", donorName, "amount", amount,
-                                        "id", transaction == null ? 0 : transaction.id());
-                            } else {
-                                messages.send(sender, "donation.testpaylive-verdict-hidden",
-                                        "label", label, "donor", donorName, "amount", amount);
-                            }
-                        });
+            case "testpay", "testpay-live" -> {
+                messages.send(sender, "paid-only.test-disabled");
                 return true;
             }
             case "shoppay" -> {
@@ -860,8 +715,10 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 // каталоге, а не превратиться в дни старого тарифа.
                 ShopProduct card = plugin.shop().productByPrice(amount).orElse(null);
                 if (card != null) {
-                    ShopService.Result result = plugin.shop().grant(donorName, card.id(), 0,
-                            RegistrationStore.DONATION_SOURCE_TRADEMC + ":" + amount);
+                    PaymentConfirmation payment = PaymentConfirmation.confirm(sender, PaymentConfirmation.reference(args),
+                            String.join(" ", args), accessManager);
+                    if (payment == null) return true;
+                    ShopService.Result result = plugin.shop().grant(donorName, card.id(), 0, payment);
                     switch (result.status()) {
                         case GRANTED -> messages.send(sender, "donation.shoppay-card",
                                 "amount", amount,
@@ -869,39 +726,16 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                                 "name", result.playerName(),
                                 "days", result.days(),
                                 "until", AccessManager.formatTimestamp(result.untilMillis()));
-                        case RANK_HIGHER -> {
-                            // Деньги уже пришли: не теряем их, а кладём платёж в очередь
-                            // ручного разбора, чтобы владелец вернул сумму или зачёл её сам.
-                            int current = accessManager.store().rankLevel(result.playerName(), System.currentTimeMillis());
-                            plugin.shop().rejectLowerRank(result.playerName(), card, current);
-                            messages.send(sender, "donation.shoppay-lower-rank",
-                                    "amount", amount, "name", result.playerName(),
-                                    "product", Messages.stripTags(card.name()),
-                                    "level", current, "label", label);
-                        }
+                        case RANK_HIGHER, TIME_LIMIT, INVALID_BUNDLE, INVALID_RECIPIENT -> messages.send(sender, "shop.review-required",
+                                "player", result.playerName(), "product", card.id(),
+                                "reason", result.status().name(), "label", label);
                         default -> messages.send(sender, "donation.shoppay-rejected",
                                 "amount", amount, "note", result.status().name());
                     }
                     return true;
                 }
-                DonationService.Outcome outcome = accessManager.simulateDonation(
-                        donorName, amount, RegistrationStore.DONATION_SOURCE_TRADEMC);
-                switch (outcome.status()) {
-                    case GRANTED -> messages.send(sender, "donation.shoppay-granted",
-                            "amount", amount,
-                            "name", outcome.playerName(),
-                            "days", outcome.days(),
-                            "until", AccessManager.formatTimestamp(outcome.passUntil()));
-                    case REJECTED -> messages.send(sender, "donation.shoppay-rejected",
-                            "amount", amount,
-                            "note", outcome.note().isBlank() ? "—" : outcome.note());
-                    default -> messages.send(sender, "donation.shoppay-pending",
-                            "amount", amount,
-                            "donor", donorName,
-                            "status", outcome.status().name(),
-                            "note", outcome.note().isBlank() ? "—" : outcome.note(),
-                            "label", label);
-                }
+                // Цена без однозначной карточки не превращается в синтетический платёж.
+                messages.send(sender, "paid-only.unknown-price");
                 return true;
             }
             case "shopbuy" -> {
@@ -1016,6 +850,10 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             }
             case "doctor" -> {
                 showDoctor(sender);
+                return true;
+            }
+            case "paidaudit" -> {
+                plugin.writePaidAudit(sender);
                 return true;
             }
             case "audit" -> {
@@ -1739,6 +1577,10 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
 
     /** {@code /pass shopbuy <ник> <товар> [дней]} — RCON-хук магазина и ручная выдача. */
     private void handleShopBuy(CommandSender sender, String label, String[] args) {
+        String paymentReference = PaymentConfirmation.reference(args);
+        String operation = String.join(" ", args);
+        args = PaymentConfirmation.arguments(args);
+
         if (args.length < 3) {
             messages.send(sender, "usage.pass-shopbuy", "label", label);
             return;
@@ -1758,8 +1600,14 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 return;
             }
         }
-        ShopService.Result result = plugin.shop().grant(playerName, productId, days,
-                sender.getName());
+        ShopProduct paidProduct = plugin.shop().product(productId).orElse(null);
+        if (days > 0 && paidProduct != null && days != paidProduct.days()) {
+            messages.send(sender, "paid-only.period");
+            return;
+        }
+        PaymentConfirmation payment = PaymentConfirmation.confirm(sender, paymentReference, operation, accessManager);
+        if (payment == null) return;
+        ShopService.Result result = plugin.shop().grant(playerName, productId, days, payment);
         switch (result.status()) {
             case GRANTED -> {
                 messages.send(sender, "shop.granted",
@@ -1772,12 +1620,14 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                             "items", String.join(", ", result.included()));
                 }
                 if (result.hasBonus()) {
-                    messages.send(sender, "shop.granted-bonus", "days", result.bonusDays());
+                    messages.send(sender, result.isBundle() ? "shop.granted-bonus-bundle" : "shop.granted-bonus", "days", result.bonusDays());
                 }
             }
             case UNKNOWN_PRODUCT -> messages.send(sender, "shop.unknown-product",
                     "id", productId, "list", String.join(", ", plugin.shop().catalog().ids()));
-            case RANK_HIGHER -> messages.send(sender, "shop.rank-higher", "player", result.playerName());
+            case RANK_HIGHER, TIME_LIMIT, INVALID_BUNDLE, INVALID_RECIPIENT -> messages.send(sender, "shop.review-required",
+                    "player", result.playerName(), "product", productId,
+                    "reason", result.status().name(), "label", label);
             default -> messages.send(sender, "shop.disabled");
         }
     }
@@ -1790,6 +1640,10 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
      * Платёж всё равно проходит на витрине — команда лишь фиксирует, кто платил.</p>
      */
     private void handleShopGift(CommandSender sender, String label, String[] args) {
+        String paymentReference = PaymentConfirmation.reference(args);
+        String operation = String.join(" ", args);
+        args = PaymentConfirmation.arguments(args);
+
         if (args.length < 3) {
             messages.send(sender, "usage.pass-shopgift", "label", label);
             return;
@@ -1799,7 +1653,9 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         String giver = args.length >= 4 && !args[3].isBlank()
                 ? args[3].trim()
                 : sender.getName();
-        ShopService.Result result = plugin.shop().grant(playerName, productId, 0, sender.getName(), giver);
+        PaymentConfirmation payment = PaymentConfirmation.confirm(sender, paymentReference, operation, accessManager);
+        if (payment == null) return;
+        ShopService.Result result = plugin.shop().grant(playerName, productId, 0, payment, giver);
         switch (result.status()) {
             case GRANTED -> {
                 messages.send(sender, "shop.gift-sent",
@@ -1813,7 +1669,9 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             }
             case UNKNOWN_PRODUCT -> messages.send(sender, "shop.unknown-product",
                     "id", productId, "list", String.join(", ", plugin.shop().catalog().ids()));
-            case RANK_HIGHER -> messages.send(sender, "shop.rank-higher", "player", result.playerName());
+            case RANK_HIGHER, TIME_LIMIT, INVALID_BUNDLE, INVALID_RECIPIENT -> messages.send(sender, "shop.review-required",
+                    "player", result.playerName(), "product", productId,
+                    "reason", result.status().name(), "label", label);
             default -> messages.send(sender, "shop.disabled");
         }
     }
@@ -1826,6 +1684,11 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         }
         String playerName = args[1].trim();
         String productId = args[2].trim();
+        ShopProduct product = plugin.shop().product(productId).orElse(null);
+        if (product != null && product.hasRank() && product.isBundle()) {
+            messages.send(sender, "shop.hybrid-revoke-manual");
+            return;
+        }
         if (!plugin.shop().revoke(playerName, productId, sender.getName())) {
             messages.send(sender, "shop.not-active", "player", playerName, "id", productId);
             return;
@@ -1900,6 +1763,8 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
             @NotNull String[] args
     ) {
         String cmdName = command.getName().toLowerCase(Locale.ROOT);
+        if (!"pass".equals(cmdName) && !"2fa".equals(cmdName)) return List.of();
+        boolean authenticated = RegistrationCommandAccess.authenticatedSender(sender, accessManager::getStage);
         if ("2fa".equals(cmdName)) {
             if (args.length == 1) {
                 if (sender instanceof Player player && accessManager.getStage(player) == AccessManager.PlayerStage.NEEDS_2FA) {
@@ -1912,14 +1777,14 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                         matches.add(sub);
                     }
                 }
-                if (sender.hasPermission("chrdkregister.admin") && "reset".startsWith(prefix)) {
+                if (authenticated && sender.hasPermission("chrdkregister.admin") && "reset".startsWith(prefix)) {
                     matches.add("reset");
                 }
                 return matches;
             }
             if (args.length == 2
                     && ("reset".equalsIgnoreCase(args[0]) || "reset2fa".equalsIgnoreCase(args[0]))
-                    && sender.hasPermission("chrdkregister.admin")) {
+                    && authenticated && sender.hasPermission("chrdkregister.admin")) {
                 return completePlayerNames(args[1]);
             }
             return List.of();
@@ -1928,7 +1793,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
         if (!"pass".equals(cmdName)) {
             return List.of();
         }
-        if (!sender.hasPermission("chrdkregister.admin")) {
+        if (!authenticated || !sender.hasPermission("chrdkregister.admin")) {
             if (args.length == 1) {
                 String prefix = args[0].toLowerCase(Locale.ROOT);
                 List<String> matches = new ArrayList<>();

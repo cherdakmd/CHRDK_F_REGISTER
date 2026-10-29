@@ -104,8 +104,11 @@ public final class DonationService {
     }
 
     /** Обработка платежа от произвольного провайдера (источник записывается в журнал). */
-    public Outcome process(DonatePayClient.Transaction transaction, long nowMillis,
+    public synchronized Outcome process(DonatePayClient.Transaction transaction, long nowMillis,
                            boolean pollMode, String source) {
+        if (store.isDonationProcessed(source, transaction.id())) {
+            return new Outcome(RegistrationStore.DonationStatus.REJECTED, "", 0, 0, "Already processed", "");
+        }
         PluginConfig config = configSupplier.get();
         int amountRubles = toRubles(transaction.amount());
         int days = config.daysForAmount(amountRubles);
@@ -119,7 +122,10 @@ public final class DonationService {
         String grantedTo = "";
         long passUntil = 0;
 
-        if (!transaction.isSuccessfulDonation()) {
+        if (testPayment) {
+            status = RegistrationStore.DonationStatus.REJECTED;
+            note = "Тестовая транзакция: платные права не выдаются";
+        } else if (!transaction.isSuccessfulDonation()) {
             status = RegistrationStore.DonationStatus.REJECTED;
             note = text("donation.reason.not-successful");
         } else if (amountRubles < config.minimumDonationRubles()) {
@@ -142,14 +148,19 @@ public final class DonationService {
                 status = RegistrationStore.DonationStatus.PENDING_NAME;
                 note = text("donation.reason.name-mismatch");
             } else {
-                Optional<RegistrationStore.PlayerAccount> granted = store.grantPassFromDonation(
-                        grantName,
-                        transaction.createdAt(),
-                        nowMillis,
-                        days * 86_400_000L,
-                        config.strictCaseMatch(),
-                        testPayment);
+                String reference = (source == null || source.isBlank() ? RegistrationStore.DONATION_SOURCE_DONATEPAY : source)
+                        + ":" + transaction.id();
+                var known = store.getAccount(grantName);
+                boolean exactCase = !config.strictCaseMatch() || known.isEmpty()
+                        || known.get().playerName.equals(grantName);
+                Optional<RegistrationStore.PlayerAccount> granted = Optional.empty();
+                if (exactCase && store.reservePayment(reference, "provider:" + source,
+                        "auto " + grantName + " " + amountRubles, nowMillis)) {
+                    granted = store.grantPassFromDonation(grantName, transaction.createdAt(), nowMillis,
+                            days * 86_400_000L, config.strictCaseMatch(), false);
+                }
                 if (granted.isPresent()) {
+                    store.finishPayment(reference, "GRANTED");
                     status = RegistrationStore.DonationStatus.GRANTED;
                     grantedTo = granted.get().playerName;
                     passUntil = granted.get().passUntil;
@@ -281,15 +292,22 @@ public final class DonationService {
      *
      * @param days pass length in days; {@code <= 0} uses the tier matching the paid amount
      */
-    public boolean approve(long donationId, String playerName, int days, String adminName, long nowMillis) {
+    public synchronized boolean approve(long donationId, String playerName, int days, String adminName, long nowMillis) {
+        if (!AccessManager.isValidMinecraftName(playerName)) return false;
         PluginConfig config = configSupplier.get();
         Optional<RegistrationStore.DonationRecord> existing = store.getDonation(donationId);
         if (existing.isEmpty()) return false;
         RegistrationStore.DonationRecord record = existing.get();
-        int grantDays = days > 0 ? days : config.daysForAmount((int) (record.amountKopecks / 100L));
+        if (!record.donationStatus().isPending() || record.id < 0
+                || record.amountKopecks < config.minimumDonationRubles() * 100L) return false;
+        int grantDays = config.daysForAmount((int) (record.amountKopecks / 100L));
+        if (days > 0 && days != grantDays) return false;
+        if (!store.reservePayment(record.source + ":" + donationId, adminName,
+                "approve " + playerName + " " + grantDays, nowMillis)) return false;
         long passUntil = store.grantPassManual(playerName, nowMillis, grantDays * 86_400_000L,
                 record.source + ":#" + donationId).passUntil;
         store.addPayment(playerName, record.amountKopecks, nowMillis);
+        store.finishPayment(record.source + ":" + donationId, "GRANTED");
         store.updateDonation(donationId, RegistrationStore.DonationStatus.GRANTED.name(),
                 record.note + (record.note.isBlank() ? "" : "; ") + text("donation.label.approved"),
                 adminName, nowMillis, playerName, grantDays);
@@ -340,7 +358,9 @@ public final class DonationService {
         if (!viaCode && !DonorNameMatcher.looksLikeDonor(record.donorName, playerName)) {
             return "donation.claim.name-mismatch";
         }
-        approve(donationId, playerName, 0, playerName + text("donation.label.self-claimed"), nowMillis);
+        if (!approve(donationId, playerName, 0, playerName + text("donation.label.self-claimed"), nowMillis)) {
+            return "donation.claim.review-required";
+        }
         audit.log(AuditLog.DONATION_CLAIMED, playerName, playerName, ipAddress,
                 AuditLog.details("donation", donationId, "donorName", record.donorName));
         return "";

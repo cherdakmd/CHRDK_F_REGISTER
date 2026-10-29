@@ -45,7 +45,7 @@ public record TierCollectionConfig(boolean enabled, boolean announceFinds, Title
     /**
      * Веха: сколько единиц собрать и что за это дать.
      *
-     * @param passHours часы ранга (с 1.4.184 награда измеряется часами, потолок — сутки)
+     * @param passHours часы буста (с 1.4.184 награда измеряется часами, потолок — сутки)
      */
     public record Milestone(int count, int passHours, int diamonds) {
 
@@ -86,7 +86,7 @@ public record TierCollectionConfig(boolean enabled, boolean announceFinds, Title
     /**
      * Награда за закрытый раздел; титул берётся из {@code messages.title.<id>}.
      *
-     * @param passHours часы ранга (с 1.4.184 награда измеряется часами, потолок — сутки)
+     * @param passHours часы буста (с 1.4.184 награда измеряется часами, потолок — сутки)
      */
     public record SectionReward(int passHours, int diamonds) {
 
@@ -217,7 +217,7 @@ public record TierCollectionConfig(boolean enabled, boolean announceFinds, Title
                 continue;
             }
             // 1.4.184: часы вместо суток; старый ключ pass-days читается как часы.
-            String hoursKey = row.contains("pass-hours") ? "pass-hours" : "pass-days";
+            String hoursKey = row.contains("boost-hours") ? "boost-hours" : row.contains("pass-hours") ? "pass-hours" : "pass-days";
             int passHours = clamp(row.getInt(hoursKey, fallback.passHours()), 0, 24, logger,
                     "collection.rewards.sections." + id + "." + hoursKey);
             int diamonds = clamp(row.getInt("diamonds", fallback.diamonds()), 0, 576, logger,
@@ -256,7 +256,7 @@ public record TierCollectionConfig(boolean enabled, boolean announceFinds, Title
                 continue;
             }
             ConfigurationSection row = section.getConfigurationSection(raw);
-            String hoursKey = row != null && row.contains("pass-hours") ? "pass-hours" : "pass-days";
+            String hoursKey = row == null ? "boost-hours" : row.contains("boost-hours") ? "boost-hours" : row.contains("pass-hours") ? "pass-hours" : "pass-days";
             int passHours = clamp(row == null ? 0 : row.getInt(hoursKey, 0), 0, 24, logger,
                     key + "." + raw + "." + hoursKey);
             int diamonds = clamp(row == null ? 0 : row.getInt("diamonds", 0), 0, 576, logger,

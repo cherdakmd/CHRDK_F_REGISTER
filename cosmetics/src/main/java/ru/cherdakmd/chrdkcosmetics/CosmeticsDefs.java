@@ -45,19 +45,19 @@ final class CosmeticsDefs {
         for (Map<?, ?> entry : raw) {
             String id = norm(entry.get("id"));
             String particle = norm(entry.get("particle"));
-            if (id.isEmpty() || particle.isEmpty()) {
+            if (!id.matches("[a-z0-9_.:-]{1,64}") || particle.isEmpty()) {
                 continue; // безсообразные записи пропускаем — сервер не извещаем смертью
             }
             Object nameRaw = entry.get("name");
             String name = nameRaw == null ? id : String.valueOf(nameRaw);
             String product = norm(entry.get("product"));
-            if (product.isEmpty()) {
+            if (!entry.containsKey("product")) {
                 product = "trail-" + id;
             }
             int rank = clamp(intOf(entry.get("rank"), 0), 0, 5);
             int count = clamp(intOf(entry.get("count"), 2), 1, 50);
-            double spread = doubleOf(entry.get("spread"), 0.2);
-            double speed = doubleOf(entry.get("speed"), 0.0);
+            double spread = Math.clamp(doubleOf(entry.get("spread"), 0.2), 0, 2);
+            double speed = Math.clamp(doubleOf(entry.get("speed"), 0.0), 0, 2);
             if (out.stream().anyMatch(def -> def.id().equals(id))) {
                 continue; // дубликаты id молча игнорируем
             }
@@ -77,7 +77,7 @@ final class CosmeticsDefs {
         }
         return new JoinEffect(true, particle,
                 clamp(intOf(raw.get("particle-count"), 40), 1, 500),
-                sound, doubleOf(raw.get("volume"), 1.0), doubleOf(raw.get("pitch"), 1.0),
+                sound, Math.clamp(doubleOf(raw.get("volume"), 1.0), 0, 4), Math.clamp(doubleOf(raw.get("pitch"), 1.0), .5, 2),
                 norm(raw.get("product")).toLowerCase(Locale.ROOT));
     }
 
@@ -149,7 +149,7 @@ final class CosmeticsDefs {
         if (!def.product().isEmpty() && owned.test(def.product())) {
             return true;
         }
-        if (packProducts != null) {
+        if (!def.product().isEmpty() && packProducts != null) {
             for (String pack : packProducts) {
                 if (pack != null && !pack.isBlank()
                         && owned.test(pack.trim().toLowerCase(Locale.ROOT))) {
@@ -182,10 +182,11 @@ final class CosmeticsDefs {
 
     private static double doubleOf(Object value, double fallback) {
         if (value instanceof Number number) {
-            return number.doubleValue();
+            return Double.isFinite(number.doubleValue()) ? number.doubleValue() : fallback;
         }
         try {
-            return Double.parseDouble(String.valueOf(value));
+            double n = Double.parseDouble(String.valueOf(value));
+            return Double.isFinite(n) ? n : fallback;
         } catch (RuntimeException exception) {
             return fallback;
         }

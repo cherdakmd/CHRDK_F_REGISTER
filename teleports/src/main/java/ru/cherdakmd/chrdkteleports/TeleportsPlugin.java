@@ -14,12 +14,13 @@ import java.util.List;
  * CHRDK_Teleports — телепортация за алмазы: RTP в радиусе, TPA-запросы, точки дома.
  * Авторизация и VIP-скидка берутся из API ядра ({@code ChrdkRegisterApi}).
  */
-public final class TeleportsPlugin extends JavaPlugin {
+public final class TeleportsPlugin extends JavaPlugin implements org.bukkit.event.Listener {
 
     private volatile ChrdkRegisterApi coreApi;
     private volatile Messages messages;
     private volatile TpConfig config;
     private HomeStore store;
+    private ru.cherdakmd.chrdkregister.api.PaidActions payments;
     private TeleportService teleports;
     private TpaRequests tpaRequests;
     private TeleportCommandHandler commandHandler;
@@ -30,8 +31,16 @@ public final class TeleportsPlugin extends JavaPlugin {
     public void onEnable() {
         saveDefaultConfig();
         reloadTeleportsConfig();
-        this.store = new HomeStore(getDataFolder().toPath(), getLogger());
-        this.store.load();
+        try {
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 22) throw new IllegalStateException("Нужен Core API 22+");
+            this.store = new HomeStore(getDataFolder().toPath(), getLogger());
+            this.payments = new ru.cherdakmd.chrdkregister.api.PaidActions(this,this::coreApi,this::messages,"teleports");
+            if (!payments.store().valuesInitialized()) store.load();
+            store.bind(payments.store());
+        } catch (Exception | LinkageError error) {
+            getLogger().log(java.util.logging.Level.SEVERE,"Телепорты остановлены без сброса данных",error);
+            Bukkit.getPluginManager().disablePlugin(this); return;
+        }
         // Ядро 1.4.106+: случайный спавн не трогает игрока, у которого уже есть дом.
         // Через отдельный мост: со старым ядром модуль продолжает работать без этой связи.
         try {
@@ -44,6 +53,7 @@ public final class TeleportsPlugin extends JavaPlugin {
         this.tpaRequests = new TpaRequests();
         this.commandHandler = new TeleportCommandHandler(this);
 
+        Bukkit.getPluginManager().registerEvents(this, this);
         Bukkit.getPluginManager().registerEvents(teleports, this);
         // Кровать = дом: точка ставится при сне, смерть возвращает к ней.
         Bukkit.getPluginManager().registerEvents(new BedHomeListener(this), this);
@@ -80,9 +90,8 @@ public final class TeleportsPlugin extends JavaPlugin {
             saveTask.cancel();
             saveTask = null;
         }
-        if (store != null) {
-            store.saveNow();
-        }
+        if (teleports != null) teleports.shutdown();
+        if (store != null) store.saveNow();
         getLogger().info("CHRDK_Teleports выключен.");
     }
 
@@ -96,6 +105,7 @@ public final class TeleportsPlugin extends JavaPlugin {
 
     /** Рассылает уведомления об истёкших TPA-запросах. */
     private void notifyExpiredRequests() {
+        payments.tick();
         for (TpaRequests.Request expired : tpaRequests.sweepExpired(System.currentTimeMillis())) {
             Player requester = Bukkit.getPlayer(expired.requester());
             Player target = Bukkit.getPlayer(expired.target());
@@ -127,6 +137,9 @@ public final class TeleportsPlugin extends JavaPlugin {
         return config;
     }
 
+    public ru.cherdakmd.chrdkregister.api.PaidActions payments() { return payments; }
+    @org.bukkit.event.EventHandler(priority=org.bukkit.event.EventPriority.LOWEST)
+    public void onAuthenticated(ru.cherdakmd.chrdkregister.api.events.PlayerAuthCompletedEvent event) { payments.recover(event.getPlayer()); }
     public HomeStore store() {
         return store;
     }

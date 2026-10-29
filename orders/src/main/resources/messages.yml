@@ -3,6 +3,9 @@
 # Ключи без префикса: код обращается к ним как "list-row" и т.п.
 # Разметка — MiniMessage, подстановки — %имя%.
 orders:
+  finance-wait: "<yellow>Сдача заказов ожидает сверки. Перезайдите позже; не повторяйте сдачу. Сохранённые деньги останутся к получению в /bal.</yellow>"
+  finance-mode: "<red>Сдавать заказы можно после входа, в выживании или приключении, без NPC и с доступом к доске.</red>"
+  finance-status: "<gray>Источник %source% · lineage %lineage% · исправен %healthy% · intent %pending% · конфликт %conflict% · получателей %count%</gray>"
   # ------------------------------- служебные --------------------------------
   no-permission: "<red>Недостаточно прав.</red>"
   player-only: "<red>Эта команда только для игроков.</red>"
@@ -15,21 +18,20 @@ orders:
   help-deliver: "<yellow>/orders deliver <номер></yellow> <gray>— сдать предметы из инвентаря</gray>"
   help-stats: "<yellow>/orders stats [ник]</yellow> <gray>— репутация, звание и сдачи</gray>"
   help-top: "<yellow>/orders top</yellow> <gray>— кто больше всех помог ботам</gray>"
-  help-footer: "<gray>Сдаются только обычные предметы без имени и чар. Награда — алмазами.</gray>"
+  help-footer: "<gray>Сдаются только обычные предметы без имени и чар. Награда — через /bal. Offhand и броня не списываются.</gray>"
 
   # ------------------------------ доска в чате -------------------------------
   list-header: "<gold>Заказы</gold> <dark_gray>·</dark_gray> <gray>свободно:</gray> <white>%count%</white> <dark_gray>·</dark_gray> <gray>ваша репутация:</gray> <white>%reputation%</white> <gray>(%rank%)</gray>"
   list-row: "<gray>%num%.</gray> <white>%material%</white> <dark_gray>×%amount%</dark_gray> <dark_gray>·</dark_gray> <gray>для</gray> <white>%bot%</white> <dark_gray>·</dark_gray> <aqua>%reward%</aqua> <gray>алм.</gray> <dark_gray>·</dark_gray> <gray>осталось %time%</gray>"
-  list-row-pass: "<gray>%num%.</gray> <white>%material%</white> <dark_gray>×%amount%</dark_gray> <dark_gray>·</dark_gray> <gray>для</gray> <white>%bot%</white> <dark_gray>·</dark_gray> <aqua>%reward%</aqua> <gray>алм. +</gray> <light_purple>%hours% ч. ранга</light_purple> <dark_gray>·</dark_gray> <gray>осталось %time%</gray>"
+  list-row-pass: "<gray>%num%.</gray> <white>%material%</white> <dark_gray>×%amount%</dark_gray> <dark_gray>·</dark_gray> <gray>для</gray> <white>%bot%</white> <dark_gray>·</dark_gray> <aqua>%reward%</aqua> <gray>алм. +</gray> <light_purple>%hours% ч. буста</light_purple> <dark_gray>·</dark_gray> <gray>осталось %time%</gray>"
   list-row-locked: "<gray>%num%.</gray> <dark_gray>%material% ×%amount% · для %bot% · нужна репутация %need%</dark_gray>"
   list-empty: "<gray>Пока пусто: боты ещё не придумали заказы. Заходите позже.</gray>"
   list-footer: "<gray>Сдать: <yellow>/orders deliver <номер></yellow> или клик в меню <yellow>/orders</yellow>.</gray>"
 
   # --------------------------------- сдача -----------------------------------
-  delivered: "<green>Заказ выполнен:</green> <white>%material%</white> <dark_gray>×%amount%</dark_gray> <gray>для</gray> <white>%bot%</white> <dark_gray>·</dark_gray> <aqua>+%reward% алм.</aqua>"
+  delivered: "<green>Заказ выполнен:</green> <white>%material%</white> <dark_gray>×%amount%</dark_gray> <gray>для</gray> <white>%bot%</white> <dark_gray>·</dark_gray> <aqua>+%reward% алм. к получению через /bal</aqua>"
   delivered-line: "<gray>%bot%: «%line%»</gray>"
-  delivered-pass: "<light_purple>Бот расщедрился: +%hours% ч. ранга!</light_purple>"
-  delivered-dropped: "<gray>Инвентарь полон — часть алмазов лежит под ногами.</gray>"
+  delivered-pass: "<light_purple>Бот расщедрился: +%hours% ч. буста!</light_purple>"
   delivered-broadcast: "<gold>%player%</gold> <gray>выполнил заказ</gray> <white>%bot%</white> <gray>и получил</gray> <aqua>%reward% алм.</aqua>"
   not-enough: "<red>Нужно %need% × %material%, а в инвентаре %have%. Обычные, без имени и чар.</red>"
   locked: "<red>Бот не доверяет новичкам: нужна репутация %need%.</red>"
@@ -47,8 +49,8 @@ orders:
   menu-order-quote: "<dark_gray>«%line%»</dark_gray>"
   menu-order-need: "<gray>Принести: <white>%material% ×%amount%</white></gray>"
   menu-order-have: "<gray>В инвентаре: <white>%have%</white> из <white>%need%</white></gray>"
-  menu-order-reward: "<gray>Награда: <aqua>%reward% алмазов</aqua></gray>"
-  menu-order-pass: "<gray>Бонус: <light_purple>%hours% ч. ранга</light_purple></gray>"
+  menu-order-reward: "<gray>Награда: <aqua>%reward% алмазов через /bal</aqua></gray>"
+  menu-order-pass: "<gray>Бонус: <light_purple>%hours% ч. буста</light_purple></gray>"
   menu-order-time: "<gray>Осталось: <white>%time%</white></gray>"
   menu-order-reputation: "<gray>Репутация за сдачу: <white>+%reputation%</white></gray>"
   menu-order-locked-reputation: "<red>Нужна репутация %need% (у вас %have%)</red>"
@@ -101,5 +103,5 @@ orders:
   admin-player-not-found: "<red>Игрок не найден в сети.</red>"
   admin-unknown-category: "<red>Неизвестная категория «%id%».</red>"
   admin-bad-amount: "<red>Нужно целое число от 0 до 100000.</red>"
-  admin-usage: "<yellow>/ordersadmin <reload|new [категория]|clear|give <ник> <репутация>|info></yellow>"
+  admin-usage: "<yellow>/ordersadmin <reload|new [категория]|clear|give <ник> <репутация>|info|awards></yellow>"
   admin-info: "<gold>Заказы:</gold> <gray>на доске <white>%orders%</white> из <white>%size%</white>, категорий <white>%categories%</white>, ботов <white>%bots%</white>, игроков в базе <white>%players%</white>, сдач всего <white>%completed%</white>.</gray>"

@@ -15,7 +15,8 @@ public final class TpaRequests {
     public enum CreateResult {OK, SELF, OUTGOING_EXISTS, INCOMING_EXISTS}
 
     /** @param here true = заявитель зовёт цель К СЕБЕ (tpahere); false = заявитель идёт к цели. */
-    public record Request(UUID requester, UUID target, boolean here, long expiresAtMillis) {
+    public record Request(UUID requester, UUID target, boolean here, long expiresAtMillis, int quotedCost) {
+        public Request(UUID requester, UUID target, boolean here, long expiresAtMillis) { this(requester,target,here,expiresAtMillis,1); }
     }
 
     private final Map<UUID, Request> byTarget = new LinkedHashMap<>();
@@ -25,6 +26,10 @@ public final class TpaRequests {
      */
     public synchronized CreateResult create(UUID requester, UUID target, boolean here,
                                             long nowMillis, long timeoutSeconds) {
+        return create(requester,target,here,nowMillis,timeoutSeconds,1);
+    }
+    public synchronized CreateResult create(UUID requester, UUID target, boolean here, long nowMillis, long timeoutSeconds, int quotedCost) {
+        if (quotedCost<1 || quotedCost>1_000_000) throw new IllegalArgumentException("quoted cost");
         if (requester.equals(target)) {
             return CreateResult.SELF;
         }
@@ -36,7 +41,7 @@ public final class TpaRequests {
             return CreateResult.INCOMING_EXISTS;
         }
         byTarget.put(target, new Request(requester, target, here,
-                nowMillis + timeoutSeconds * 1000L));
+                nowMillis + timeoutSeconds * 1000L,quotedCost));
         return CreateResult.OK;
     }
 

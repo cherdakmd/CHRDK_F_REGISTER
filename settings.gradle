@@ -16,14 +16,12 @@ include 'tier-forge'
 include 'artifacts'
 include 'achievements'
 include 'skills'
-include 'treasures'
 include 'common-goals'
 include 'claims'
 include 'ranks'
 include 'cosmetics'
 include 'battlepass'
 include 'queue'
-include 'streams'
 
 include 'lottery'
 
@@ -37,11 +35,9 @@ include 'hunt'
 
 include 'party'
 
-include 'events'
 
 include 'quests'
 
-include 'bosses'
 
 include 'guilds'
 include 'classes'

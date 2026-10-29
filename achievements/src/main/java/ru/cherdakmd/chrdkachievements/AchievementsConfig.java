@@ -19,7 +19,7 @@ import java.util.logging.Logger;
 public final class AchievementsConfig {
 
     /** Переопределение награды достижения. */
-    /** Награда достижения: часы ранга и алмазы (1.4.184 — часы вместо суток). */
+    /** Награда достижения: часы буста и алмазы (1.4.184 — часы вместо суток). */
     public record Reward(int passHours, int diamonds) {
     }
 
@@ -64,7 +64,7 @@ public final class AchievementsConfig {
                 }
                 // Отсутствие поля — «как в каталоге» (-1), кривое значение — кламп.
                 // 1.4.184: часы вместо суток; старый ключ pass-days читается как часы.
-                String hoursKey = root.contains(key + ".pass-hours") ? key + ".pass-hours"
+                String hoursKey = root.contains(key + ".boost-hours") ? key + ".boost-hours" : root.contains(key + ".pass-hours") ? key + ".pass-hours"
                         : (root.contains(key + ".pass-days") ? key + ".pass-days" : null);
                 boolean hasDiamonds = root.contains(key + ".diamonds");
                 int hours = hoursKey == null ? -1 : clamp(root.getInt(hoursKey), 0, 24);

@@ -48,7 +48,7 @@ public final class TierForgePlugin extends JavaPlugin {
     /** Таймер пассивного пульса кузни (регенерация/зрение/магнит), гасим при перезагрузке. */
     private org.bukkit.scheduler.BukkitTask forgePulseTask;
     /**
-     * Мост для чужих аддонов (1.4.141): клады выдают предметы с тиром, не
+     * Мост для чужих аддонов (1.4.141): позволяет выдавать предметы с тиром, не
      * завися от классов этого плагина.
      */
     private TierApiBridge tierApi;
@@ -56,16 +56,27 @@ public final class TierForgePlugin extends JavaPlugin {
     private File statsFile;
     private org.bukkit.scheduler.BukkitTask statsSaveTask;
 
+    private ru.cherdakmd.chrdkregister.api.MilestoneAwards awards;
+    public ru.cherdakmd.chrdkregister.api.MilestoneAwards awards() { return awards; }
+
     @Override
     public void onEnable() {
         saveDefaultConfig();
         reloadTierConfig();
+        try {
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 20) throw new IllegalStateException("Нужен Core API 20+");
+            this.awards = new ru.cherdakmd.chrdkregister.api.MilestoneAwards(this,this::coreApi,this::messages,"tierforge-awards",ru.cherdakmd.chrdkregister.api.MilestoneMigration.tierForge(getDataFolder().toPath().resolve("stats.yml")));
+        } catch (Exception | LinkageError error) {
+            getLogger().log(java.util.logging.Level.SEVERE,"Модуль остановлен без сброса прогресса/наград",error);
+            Bukkit.getPluginManager().disablePlugin(this); return;
+        }
         this.items = new TierItems(this);
         this.visuals = new TierVisualService(this);
         this.visuals.restart();
         loadStats();
         startStatsSave();
         this.collectionService = new TierCollectionService(this, collection);
+        awards.reconciler(player -> collectionService.reconcileRewards(player));
         this.collectionMenu = new TierCollectionMenu(this, collectionService);
         Bukkit.getPluginManager().registerEvents(collectionMenu, this);
 
@@ -84,7 +95,7 @@ public final class TierForgePlugin extends JavaPlugin {
             startForgePulse();
         }
 
-        // 1.4.141: публичный мост «TierForge → клады/квесты». Регистрируется
+        // 1.4.141: публичный мост «TierForge → другие аддоны». Регистрируется
         // последним, когда items/config уже готовы.
         this.tierApi = new TierApiBridge(this);
         Bukkit.getServicesManager().register(ChrdkTierApi.class, tierApi, this,
@@ -209,6 +220,7 @@ public final class TierForgePlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (awards != null) awards.close();
         unregisterCollectionNameTag();
         if (tabService != null) {
             tabService.stop();

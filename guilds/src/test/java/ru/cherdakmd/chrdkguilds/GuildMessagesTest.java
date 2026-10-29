@@ -68,7 +68,13 @@ class GuildMessagesTest {
             "profile-none", "profile-none-hint", "profile-name", "profile-rank", "profile-members",
             "profile-treasury", "profile-glory", "profile-war", "admin-usage", "admin-reloaded",
             "admin-guild-info", "admin-disbanded", "admin-cooldown", "admin-cooldown-none",
-            "admin-history-empty", "admin-history-line", "admin-history-unknown"
+            "admin-history-empty", "admin-history-line", "admin-history-unknown",
+            "finance-paused", "finance-auth", "finance-mode", "treasury-war-returns",
+            // Общий PaidActions читает эти ключи из Messages вызывающего модуля.
+            "finance.service-quote", "finance.service-mode", "finance.service-wait",
+            "finance.service-insufficient", "finance.service-refused", "finance.service-refunding",
+            "finance.service-checked", "finance.service-payment", "finance.service-action",
+            "finance.service-status", "finance.service-resolve-usage", "finance.service-lock"
             );
 
     private static ConfigurationSection load() throws Exception {
@@ -119,6 +125,8 @@ class GuildMessagesTest {
     void placeholdersMatchTheCode() throws Exception {
         ConfigurationSection section = load();
         Map<String, List<String>> expected = new LinkedHashMap<>();
+        expected.put("treasury-war-returns", List.of("%amount%"));
+        expected.put("finance.service-insufficient", List.of("%cost%"));
         expected.put("unknown-subcommand", List.of("%sub%"));
         expected.put("guild-not-found", List.of("%name%"));
         expected.put("target-not-found", List.of("%player%"));
@@ -139,8 +147,8 @@ class GuildMessagesTest {
         expected.put("rename-ok", List.of("%name%"));
         expected.put("retag-ok", List.of("%tag%"));
         expected.put("retag-usage", List.of("%max%"));
-        expected.put("disband-confirm", List.of("%name%", "%treasury%"));
-        expected.put("disband-ok", List.of("%name%", "%members%", "%treasury%", "%war%"));
+        expected.put("disband-confirm", List.of("%name%", "%treasury%", "%returns%"));
+        expected.put("disband-ok", List.of("%name%", "%members%", "%treasury%", "%returns%", "%war%"));
         expected.put("disband-broadcast", List.of("%name%"));
         expected.put("invite-sent", List.of("%name%", "%seconds%"));
         expected.put("invite-received", List.of("%player%", "%name%", "%seconds%"));
@@ -226,7 +234,7 @@ class GuildMessagesTest {
         expected.put("profile-war", List.of("%opponent%", "%score%", "%state%"));
         expected.put("admin-reloaded", List.of("%guilds%", "%wars%"));
         expected.put("admin-guild-info", List.of("%id%", "%created%", "%war%"));
-        expected.put("admin-disbanded", List.of("%name%", "%treasury%", "%war%"));
+        expected.put("admin-disbanded", List.of("%name%", "%treasury%", "%returns%", "%war%"));
         expected.put("admin-cooldown", List.of("%name%"));
         expected.put("admin-cooldown-none", List.of("%name%"));
         expected.put("admin-history-line", List.of("%time%", "%challenger%", "%target%",

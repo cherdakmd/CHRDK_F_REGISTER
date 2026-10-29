@@ -24,7 +24,9 @@ import java.util.List;
  *
  * <p><b>Набор.</b> Товар может включать другие товары ({@code includes}) и дни проходки
  * ({@code pass-days}). Набор — это рецепт покупки, а не отдельная сущность: покупатель
- * получает ровно те товары, что перечислены, каждый со своим сроком. {@code includes}
+ * получает ровно те товары, что перечислены. Обычно у каждой части свой срок;
+ * положительный {@code includedDays} задаёт единый период всех листьев этой покупки.
+ * Ранг гибридного набора задаётся на корне, не вложенным товаром. {@code includes}
  * хранит то, что написал администратор (для витрины), {@code resolvedIncludes} — плоский
  * список после раскрытия вложенных наборов (для выдачи).</p>
  */
@@ -41,7 +43,8 @@ public record ShopProduct(
         List<String> includes,
         List<String> resolvedIncludes,
         int passDays,
-        int rank
+        int rank,
+        int includedDays
 ) {
 
     /** Товар без набора: прежний конструктор, чтобы не менять существующие вызовы. */
@@ -59,6 +62,19 @@ public record ShopProduct(
                 includes, resolvedIncludes, passDays, 0);
     }
 
+    /** Старый конструктор: составляющие сохраняют собственные сроки. */
+    public ShopProduct(String id, String name, String description, int priceRubles, int days,
+                       String group, String tag, List<String> permissions, List<String> commands,
+                       List<String> includes, List<String> resolvedIncludes, int passDays, int rank) {
+        this(id, name, description, priceRubles, days, group, tag, permissions, commands,
+                includes, resolvedIncludes, passDays, rank, 0);
+    }
+
+    /** Единый период составляющих задан явно; 0 — прежние собственные сроки. */
+    public int includedDays(ShopProduct part) {
+        return includedDays > 0 ? includedDays : part.days();
+    }
+
     public ShopProduct {
         permissions = permissions == null ? List.of() : List.copyOf(permissions);
         commands = commands == null ? List.of() : List.copyOf(commands);
@@ -68,6 +84,7 @@ public record ShopProduct(
         tag = tag == null ? "" : tag.trim();
         description = description == null ? "" : description.trim();
         name = name == null || name.isBlank() ? id : name.trim();
+        includedDays = Math.max(0, includedDays);
         passDays = Math.max(0, passDays);
         rank = Math.max(0, Math.min(RankLadder.MAX_LEVEL, rank));
     }

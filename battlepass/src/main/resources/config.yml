@@ -18,8 +18,8 @@ battlepass:
 
   # Премиум-трек: дополнительная колонка наград за задания.
   # Открывается товаром каталога ядра (shop в config.yml ядра) или рангом IV–V.
-  # Награды премиум-трека не дают игровой силы: ЧАСЫ ранга и товары каталога
-  # (косметика, оформление) — те же, что продаются поштучно.
+  # Награды премиум-трека: часы отдельного XP-буста, без выдачи платных товаров.
+  # Платные товары каталога в наградах запрещены, даже если указаны в старом конфиге.
   premium:
     # Со ступени донатного ранга премиум-трек открыт без отдельной покупки (1.4.167).
     min-rank: 4
@@ -51,8 +51,8 @@ battlepass:
     # GUI по /battlepass, /bp и /battlepass menu. false — текстовый экран по /bp.
     menu: true
 
-  # Награды за задания: часы ранга (с 1.4.184; раньше единицей были сутки).
-  # free-hours — всем, vip-hours — дополнительно владельцам активного ранга.
+  # Награды за задания: часы буста (с 1.4.184; раньше единицей были сутки).
+  # free-boost-hours — всем, vip-boost-hours — дополнительно владельцам активного ранга.
   # Ключи старого вида free-days/vip-days/premium-days читаются как часы, поэтому
   # конфиг, не перезаписанный после обновления, награду не потеряет.
   # points — очки сезона для /battlepass top (по умолчанию 10).
@@ -75,8 +75,8 @@ battlepass:
   #   worlds: [world]           — считать только в этих мирах (пусто — везде)
   #   permission: chrdkbp.vip   — задание считается только с этим правом
   #   icon: DIAMOND             — иконка в меню (пусто — по типу задания)
-  #   premium-hours: 3          — часы ранга в премиум-треке (потолок 24)
-  #   premium-products: [nick-aurora] — товары каталога ядра в премиум-треке (до 5)
+  #   premium-boost-hours: 3          — часы буста в премиум-треке (потолок 24)
+  # Старые premium-products игнорируются; награда без часов заменяется 1 часом буста.
   weeks:
     - unlock-day: 0
       missions:
@@ -85,34 +85,33 @@ battlepass:
           type: MINE
           material: DIAMOND_ORE
           target: 16
-          free-hours: 1
-          vip-hours: 2
-          premium-hours: 2
+          free-boost-hours: 1
+          vip-boost-hours: 2
+          premium-boost-hours: 2
           points: 20
         - id: hunt_zombies
           desc: "<gray>Победить зомби</gray>"
           type: KILL
           entity: "ZOMBIE|HUSK|DROWNED"
           target: 40
-          free-hours: 1
-          vip-hours: 1
-          premium-products: [trail-flame]
+          free-boost-hours: 1
+          vip-boost-hours: 1
           points: 20
         - id: angler
           desc: "<gray>Поймать рыбу</gray>"
           type: FISH
           entity: ANY
           target: 10
-          free-hours: 1
-          vip-hours: 1
+          free-boost-hours: 1
+          vip-boost-hours: 1
           points: 10
         - id: builder
           desc: "<gray>Построить 128 блоков</gray>"
           type: PLACE
           material: "COBBLESTONE|STONE|OAK_PLANKS"
           target: 128
-          free-hours: 1
-          vip-hours: 1
+          free-boost-hours: 1
+          vip-boost-hours: 1
           points: 15
           icon: BRICKS
     - unlock-day: 7
@@ -122,34 +121,33 @@ battlepass:
           type: MINE
           material: ANCIENT_DEBRIS
           target: 6
-          free-hours: 2
-          vip-hours: 3
-          premium-hours: 3
+          free-boost-hours: 2
+          vip-boost-hours: 3
+          premium-boost-hours: 3
           points: 30
         - id: craft_netherite
           desc: "<gray>Сковать незеритовый предмет</gray>"
           type: CRAFT
           material: NETHERITE_INGOT
           target: 2
-          free-hours: 1
-          vip-hours: 2
+          free-boost-hours: 1
+          vip-boost-hours: 2
           points: 25
         - id: hunt_skeletons
           desc: "<gray>Победить скелетов</gray>"
           type: KILL
           entity: "SKELETON|STRAY|BOGGED"
           target: 60
-          free-hours: 1
-          vip-hours: 1
-          premium-products: [nick-aurora]
+          free-boost-hours: 1
+          vip-boost-hours: 1
           points: 20
         - id: smelter
           desc: "<gray>Выплавить 64 слитка</gray>"
           type: SMELT
           material: "IRON_INGOT|GOLD_INGOT"
           target: 64
-          free-hours: 1
-          vip-hours: 2
+          free-boost-hours: 1
+          vip-boost-hours: 2
           points: 20
     - unlock-day: 14
       missions:
@@ -158,24 +156,24 @@ battlepass:
           type: ENCHANT
           material: "DIAMOND_SWORD|DIAMOND_PICKAXE|DIAMOND_CHESTPLATE"
           target: 3
-          free-hours: 2
-          vip-hours: 2
-          premium-hours: 4
+          free-boost-hours: 2
+          vip-boost-hours: 2
+          premium-boost-hours: 4
           points: 30
         - id: farmer
           desc: "<gray>Развести 10 животных</gray>"
           type: BREED
           entity: "COW|PIG|SHEEP|CHICKEN"
           target: 10
-          free-hours: 1
-          vip-hours: 1
+          free-boost-hours: 1
+          vip-boost-hours: 1
           points: 15
         - id: nether_miner
           desc: "<gray>Добыть 256 блоков в Нижнем мире</gray>"
           type: MINE
           material: "NETHERRACK|BLACKSTONE"
           target: 256
-          free-hours: 1
-          vip-hours: 2
+          free-boost-hours: 1
+          vip-boost-hours: 2
           points: 25
           worlds: ["world_nether"]

@@ -192,7 +192,7 @@ public final class RankMenuService implements Listener {
     private ShopProduct cardProduct(int level, boolean year) {
         ShopProduct best = null;
         for (ShopProduct product : plugin.shop().catalog().products()) {
-            if (product.rank() != level) {
+            if (product.isBundle() || product.rank() != level) {
                 continue;
             }
             boolean isYear = product.days() > 180;

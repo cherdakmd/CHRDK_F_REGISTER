@@ -79,10 +79,11 @@ class HomeStoreTest {
     }
 
     @Test
-    void corruptedFileTolerated(@TempDir Path dir) throws Exception {
+    void corruptedFileIsQuarantined(@TempDir Path dir) throws Exception {
         java.nio.file.Files.writeString(dir.resolve("teleports-data.json"), "{~[");
         HomeStore store = newStore(dir);
-        store.load();
-        assertEquals(0, store.count(UUID.randomUUID()));
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class,store::load);
+        store.saveNow();
+        assertEquals("{~[",java.nio.file.Files.readString(dir.resolve("teleports-data.json")));
     }
 }

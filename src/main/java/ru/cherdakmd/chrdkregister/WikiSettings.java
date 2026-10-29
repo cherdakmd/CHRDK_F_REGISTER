@@ -36,7 +36,7 @@ public record WikiSettings(boolean enabled, String url, List<String> pages) {
 
     /** Страницы, которые чаще всего нужны в игре: слаг = имя файла на сайте. */
     public static final List<String> DEFAULT_PAGES = List.of(
-            "start", "menu", "commands", "ranks", "economy", "treasures", "claims", "faq");
+            "start", "menu", "commands", "ranks", "economy", "claims", "faq");
 
     /** Потолок подсказок: длиннее список не влезает в TAB и в сообщение об ошибке. */
     public static final int MAX_PAGES = 20;
@@ -72,7 +72,7 @@ public record WikiSettings(boolean enabled, String url, List<String> pages) {
         if (rawPages != null) {
             for (String raw : rawPages) {
                 String slug = raw == null ? "" : raw.trim().toLowerCase(Locale.ROOT);
-                if (validSlug(slug)) {
+                if (validSlug(slug) && !RetiredAddons.source(slug)) {
                     unique.add(slug);
                 }
                 if (unique.size() >= MAX_PAGES) {
@@ -102,7 +102,7 @@ public record WikiSettings(boolean enabled, String url, List<String> pages) {
             return "";
         }
         String clean = slug == null ? "" : slug.trim().toLowerCase(Locale.ROOT);
-        if (clean.isEmpty() || !validSlug(clean)) {
+        if (clean.isEmpty() || !validSlug(clean) || RetiredAddons.source(clean)) {
             return url;
         }
         return url + clean + ".html";

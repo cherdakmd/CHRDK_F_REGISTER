@@ -59,6 +59,26 @@ class LabelsMenuServiceTest {
     }
 
     @Test
+    void explicitPlacesDoNotOverlapSourceTogglesOrButtons() {
+        Set<Integer> seen = new HashSet<>();
+        for (int slot : LabelsMenuService.ENTRY_SLOTS) seen.add(slot);
+        for (int i = 0; i < LabelsMenuService.PLACE_SLOTS.length; i++) {
+            int slot = LabelsMenuService.PLACE_SLOTS[i];
+            assertTrue(seen.add(slot));
+            assertEquals(i, LabelsMenuService.placeIndex(slot));
+            assertNull(LabelsMenuService.labelAt(slot));
+            for (int reserved : new int[]{LabelsMenuService.HEAD_SLOT, LabelsMenuService.PREVIEW_SLOT,
+                    LabelsMenuService.ENABLE_ALL_SLOT, LabelsMenuService.DISABLE_ALL_SLOT,
+                    LabelsMenuService.COLORS_SLOT, LabelsMenuService.ORDER_SLOT, LabelsMenuService.PRESETS_SLOT,
+                    LabelsMenuService.PROFILE_SLOT, LabelsMenuService.RESET_SLOT, LabelsMenuService.CLOSE_SLOT}) {
+                assertTrue(slot != reserved);
+            }
+        }
+        assertEquals(-1, LabelsMenuService.placeIndex(-1));
+        assertEquals(LabelLimits.MAX_LABELS, LabelsMenuService.PLACE_SLOTS.length);
+    }
+
+    @Test
     void slotLookupRoundTrips() {
         for (LabelPreferences.Label label : LabelPreferences.Label.values()) {
             int slot = LabelsMenuService.slotOf(label);
@@ -104,7 +124,7 @@ class LabelsMenuServiceTest {
         }
         assertEquals(LabelPreferences.Label.RANK, LabelsCommandHandler.singleOf("ранг"));
         assertEquals(LabelPreferences.Label.HEADER, LabelsCommandHandler.singleOf("шапка"));
-        assertEquals(LabelPreferences.Label.STREAMS, LabelsCommandHandler.singleOf("стример"));
+        assertNull(LabelsCommandHandler.singleOf("стример"));
         // «badges» и «all» — не одиночные надписи, у них свои ветки команды.
         assertNull(LabelsCommandHandler.singleOf("badges"));
         assertNull(LabelsCommandHandler.singleOf("all"));

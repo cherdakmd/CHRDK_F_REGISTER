@@ -239,6 +239,7 @@ final class GuildsGui implements Listener {
                 || event.getRawSlot() >= SIZE) {
             return;
         }
+        if (!plugin.authenticated(player) || !player.hasPermission("chrdkguilds.use") || !plugin.config().enabled()) return;
         int slot = event.getRawSlot();
         if (slot == CLOSE_SLOT || slot == BACK_SLOT) {
             player.closeInventory();
@@ -261,6 +262,7 @@ final class GuildsGui implements Listener {
             plugin.messages().send(player, "treasury-info",
                     "amount", GuildMath.diamonds(guild.treasury()),
                     "cap", GuildMath.diamonds(Guild.MAX_TREASURY));
+            if (guild.warReturns() > 0) plugin.messages().send(player,"treasury-war-returns","amount",GuildMath.diamonds(guild.warReturns()));
             return;
         }
         if (slot == WAR_SLOT) {

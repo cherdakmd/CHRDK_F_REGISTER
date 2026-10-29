@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * CHRDK_Claims — приваты чанков за алмазные предметы: покупка территории,
- * ежесуточная рента из казны, налог на сделки, продажа игрокам, полная защита.
+ * ежесуточная рента с личного /bal, налог на сделки, продажа игрокам, полная защита.
  */
 public final class ClaimsPlugin extends JavaPlugin implements Listener {
 
@@ -44,10 +44,16 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
     private volatile Messages messages;
     private volatile ClaimsConfig config;
     private ClaimStore store;
+    private ClaimFinance finance;
+    private BukkitTask financeTask;
+    ClaimFinance finance() { return finance; }
+    boolean financeReady() { return finance!=null&&!finance.busy()&&finance.binding(); }
     private ClaimsService service;
     private ClaimAudit audit;
     private ClaimMenuGui menu;
     private ClaimTeleportService teleports;
+    private ru.cherdakmd.chrdkregister.api.PaidActions teleportPayments;
+    private BukkitTask teleportFinanceTask;
     private final Set<UUID> bypass = ConcurrentHashMap.newKeySet();
     /** Активные подсветки границ: игрок → задача (чтобы не плодить таймеры). */
     private final Map<UUID, BukkitTask> borderTasks = new ConcurrentHashMap<>();
@@ -57,15 +63,40 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
     private NamespacedKey noticesKey;
     private BukkitTask saveTask;
     private BukkitTask upkeepTask;
+    private BukkitTask rentalTask;
+    private BukkitTask moneyMigrationTask;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        reloadClaimsConfig();
+        try {
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 24) throw new IllegalStateException("Нужен Core API 24+");
+            teleportPayments = new ru.cherdakmd.chrdkregister.api.PaidActions(this,this::coreApi,this::messages,"claim-teleports");
+        } catch (Exception | LinkageError error) {
+            getLogger().log(java.util.logging.Level.SEVERE,"Приваты остановлены: платёжный протокол недоступен; данные не сброшены",error);
+            Bukkit.getPluginManager().disablePlugin(this); return;
+        }
+        teleportFinanceTask=Bukkit.getScheduler().runTaskTimer(this,teleportPayments::tick,100L,100L);
         this.store = new ClaimStore(getDataFolder().toPath(), getLogger());
         store.load();
         this.audit = new ClaimAudit(getDataFolder().toPath(), getLogger());
         this.service = new ClaimsService(this);
         reloadClaimsConfig();
+        var bank=new ClaimBankBridge(this); store.accounts(bank);
+        finance=new ClaimFinance(store,bank); store.finance=finance;
+        financeTask=Bukkit.getScheduler().runTaskTimer(this,()->{ if(!finance.recover()) getLogger().fine("Финансы Claims ожидают банк или завершение canonical WAL"); },1L,100L);
+        var names = new java.util.LinkedHashSet<String>(store.legacyTreasuries().keySet());
+        for (var claim : store.all()) { names.add(claim.owner); if (!claim.tenant.isBlank()) names.add(claim.tenant); }
+        var pendingNames = names.iterator();
+        moneyMigrationTask = Bukkit.getScheduler().runTaskTimer(this, () -> {
+            if(!financeReady()) return;
+            for (int i=0; i<4 && pendingNames.hasNext(); i++) {
+                String name = pendingNames.next();
+                if (!store.fundsReady(name)) getLogger().warning("Казна " + name + " пока не перенесена: банк/UUID/предел счёта недоступен. Остаток сохранён, рента этого владельца приостановлена.");
+            }
+            if (!pendingNames.hasNext()) { moneyMigrationTask.cancel(); moneyMigrationTask = null; }
+        }, 1L, 20L);
         if (coreApi != null) {
             try {
                 coreApi.registerProfile("claims", new ClaimsProfile(this));
@@ -110,6 +141,8 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         }
 
         // рента добегает простой сервера: прогон при включении и дальше раз в час
+        rentalTask = Bukkit.getScheduler().runTaskTimer(this,
+                () -> service.processRentals(System.currentTimeMillis()), 80L, 1200L);
         upkeepTask = Bukkit.getScheduler().runTaskTimer(this,
                 () -> service.processUpkeep(System.currentTimeMillis()),
                 100L, UPKEEP_INTERVAL_TICKS);
@@ -121,6 +154,9 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        if(financeTask!=null) financeTask.cancel();
+        if (teleportFinanceTask!=null) teleportFinanceTask.cancel();
+        if (moneyMigrationTask != null) { moneyMigrationTask.cancel(); moneyMigrationTask = null; }
         if (coreApi != null) {
             try {
                 coreApi.unregisterProfile("claims");
@@ -131,6 +167,7 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         if (teleports != null) {
             teleports.shutdown();
         }
+        if (rentalTask != null) rentalTask.cancel();
         if (upkeepTask != null) {
             upkeepTask.cancel();
         }
@@ -164,6 +201,8 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
     @EventHandler
     public void onAuthCompleted(PlayerAuthCompletedEvent event) {
         Player player = event.getPlayer();
+        if(!financeReady()) return;
+        store.fundsReady(player.getName());
         // Стоящий на привате игрок должен увидеть, куда попал, не делая шага.
         refreshNoticeLater(player);
         List<String> notices = store.pollNotices(player.getName());
@@ -403,31 +442,24 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         }
     }
 
-    /** Рисует контур чанка на двух уровнях — видно и на неровном рельефе. */
+    /** Ближайший внешний контур территории, без внутренних швов и без загрузки чанков. */
     private void drawBorder(Player player) {
         Location base = player.getLocation();
         World world = base.getWorld();
-        int minX = (base.getBlockX() >> 4) << 4;
-        int minZ = (base.getBlockZ() >> 4) << 4;
-        int y = base.getBlockY();
-        for (int offset = 0; offset <= 16; offset += 2) {
-            player.spawnParticle(Particle.END_ROD,
-                    new Location(world, minX + offset, y + 0.2, minZ), 1);
-            player.spawnParticle(Particle.END_ROD,
-                    new Location(world, minX + offset, y + 0.2, minZ + 16), 1);
-            player.spawnParticle(Particle.END_ROD,
-                    new Location(world, minX, y + 0.2, minZ + offset), 1);
-            player.spawnParticle(Particle.END_ROD,
-                    new Location(world, minX + 16, y + 0.2, minZ + offset), 1);
-            if (offset % 4 == 0) {
-                player.spawnParticle(Particle.END_ROD,
-                        new Location(world, minX + offset, y + 2.2, minZ), 1);
-                player.spawnParticle(Particle.END_ROD,
-                        new Location(world, minX + offset, y + 2.2, minZ + 16), 1);
-                player.spawnParticle(Particle.END_ROD,
-                        new Location(world, minX, y + 2.2, minZ + offset), 1);
-                player.spawnParticle(Particle.END_ROD,
-                        new Location(world, minX + 16, y + 2.2, minZ + offset), 1);
+        var edges = ClaimBorders.visible(base.getBlockX() >> 4, base.getBlockZ() >> 4,
+                (x, z) -> store.claimAt(world.getName(), x, z));
+        int sent = 0;
+        for (var edge : edges) {
+            for (int offset = 0; offset <= 16; offset += 2) {
+                if (sent >= 512) return;
+                double x = edge.x1() + (edge.x2() - edge.x1()) * offset / 16.0;
+                double z = edge.z1() + (edge.z2() - edge.z1()) * offset / 16.0;
+                player.spawnParticle(Particle.END_ROD, new Location(world, x, base.getY() + .2, z), 1);
+                sent++;
+                if (offset % 4 == 0 && sent < 512) {
+                    player.spawnParticle(Particle.END_ROD, new Location(world, x, base.getY() + 2.2, z), 1);
+                    sent++;
+                }
             }
         }
     }
@@ -483,6 +515,9 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
     }
 
     /** Телепорт к приватам (/claim tp и клик в меню). */
+    public ru.cherdakmd.chrdkregister.api.PaidActions teleportPayments() { return teleportPayments; }
+    @EventHandler(priority=org.bukkit.event.EventPriority.LOWEST)
+    public void onTeleportFinanceAuth(PlayerAuthCompletedEvent event) { teleportPayments.recover(event.getPlayer()); }
     public ClaimTeleportService teleports() {
         return teleports;
     }

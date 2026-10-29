@@ -17,22 +17,33 @@ import java.util.List;
  * отказом, но не падает. Продажи доступны только авторизованным игрокам —
  * {@code api.isAuthenticated(player)} на каждой команде и клике.</p>
  */
-public final class DiamondShopPlugin extends JavaPlugin {
+public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.event.Listener {
 
     private volatile ChrdkRegisterApi coreApi;
     private volatile ShopService shopService;
     private ShopStore store;
     private ShopGui gui;
+    private ShopQuantityGui quantities;
+    public ShopQuantityGui quantities(){return quantities;}
     private volatile Messages messages;
     private BukkitTask saveTask;
     private BukkitTask historyTask;
+    private BukkitTask migrationTask;
+    private BukkitTask recoveryTask;
 
     @Override
     public void onEnable() {
+        try { if(ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)<23) throw new IllegalStateException("Нужен Core API 23+"); }
+        catch(Exception e) { getLogger().severe("Магазин выключен: нужен актуальный CHRDK_Core API 23+"); Bukkit.getPluginManager().disablePlugin(this); return; }
         saveDefaultConfig();
+        ShopCatalogMigration.apply(this);
         reloadShopConfig(); // stores первичную инициализацию всех сервисов
 
+        Bukkit.getPluginManager().registerEvents(this,this);
+        recoveryTask=Bukkit.getScheduler().runTaskTimer(this,()->shopService.recoverPending(),1L,20L);
         this.gui = new ShopGui(this);
+        this.quantities=new ShopQuantityGui(this);
+        getServer().getPluginManager().registerEvents(quantities,this);
         Bukkit.getPluginManager().registerEvents(gui, this);
 
         ShopCommandHandler commands = new ShopCommandHandler(this);
@@ -57,12 +68,29 @@ public final class DiamondShopPlugin extends JavaPlugin {
                 shopService.config().items().forEach(item -> shopService.recordPricePoint(item)),
                 historyTicks, historyTicks);
 
+        var legacy = store.legacyBalances().entrySet().iterator();
+        migrationTask = Bukkit.getScheduler().runTaskTimer(this, () -> {
+            for (int i = 0; i < 4 && legacy.hasNext(); i++) {
+                var entry = legacy.next();
+                if (!shopService.migrate(entry.getKey(), entry.getValue()))
+                    getLogger().warning("Старый счёт " + entry.getKey() + " пока не перенесён: проверьте Core/лимит/исходную сумму. Он сохранён, магазин повторит проверку при обращении.");
+            }
+            if (!legacy.hasNext()) { migrationTask.cancel(); migrationTask = null; }
+        }, 1L, 20L);
         getLogger().info("CHRDK_DiamondShop включён: товаров " + shopService.config().items().size()
                 + ", ядро " + (coreApi == null ? "НЕ найдено!" : "v" + coreApi.pluginVersion()) + ".");
     }
 
+    @org.bukkit.event.EventHandler(priority=org.bukkit.event.EventPriority.LOWEST)
+    public void onAuthenticated(ru.cherdakmd.chrdkregister.api.events.PlayerAuthCompletedEvent event) {
+        if(shopService!=null&&store.pending()!=null&&store.pending().trade().owner().equals(event.getPlayer().getUniqueId())) shopService.recoverPending();
+    }
+
     @Override
     public void onDisable() {
+        if (gui != null) gui.closeAll();
+        if(recoveryTask!=null) { recoveryTask.cancel(); recoveryTask=null; }
+        if (migrationTask != null) { migrationTask.cancel(); migrationTask = null; }
         if (saveTask != null) {
             saveTask.cancel();
             saveTask = null;
@@ -79,6 +107,7 @@ public final class DiamondShopPlugin extends JavaPlugin {
 
     /** Перечитывает config.yml/messages.yml и пересоздаёт сервис магазина. */
     public void reloadShopConfig() {
+        if (gui != null) gui.closeAll();
         reloadConfig();
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
@@ -87,7 +116,7 @@ public final class DiamondShopPlugin extends JavaPlugin {
             this.store.load();
         }
         ShopConfig.ShopConfigData data = ShopConfig.parse(getConfig(), getLogger());
-        this.shopService = new ShopService(data, store);
+        this.shopService = new ShopService(data, store, this::coreApi);
     }
 
     /** API ядра; {@code null}, если основной плагин не загружен (очередь загрузки). */

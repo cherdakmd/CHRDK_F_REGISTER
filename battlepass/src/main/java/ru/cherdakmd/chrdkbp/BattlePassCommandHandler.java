@@ -116,10 +116,10 @@ final class BattlePassCommandHandler implements CommandExecutor, TabCompleter {
                 "next", nextWeek(season, current, now));
 
         long until = plugin.passUntil(player);
-        boolean vipActive = until > now;
+        boolean vipActive = plugin.vipActive(player);
         if (vipActive) {
             plugin.messages().send(player, "vip-active",
-                    "until", DATE.format(Instant.ofEpochMilli(until)));
+                    "until", until <= 0 ? "без срока" : DATE.format(Instant.ofEpochMilli(until)));
         } else {
             plugin.messages().send(player, "vip-none");
         }

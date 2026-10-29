@@ -23,6 +23,13 @@ public final class ProfessionService {
     /** Бонусы донатного ранга: подставляются ядром после загрузки API (1.4.167). */
     private volatile Function<UUID, RankBonus> rankBonus = player -> RankBonus.NONE;
 
+    @FunctionalInterface
+    public interface RewardScaler { long apply(UUID player, long base, long current); }
+    private volatile RewardScaler rewardScaler = (player, base, current) -> current;
+    public void setRewardScaler(RewardScaler scaler) {
+        rewardScaler = scaler == null ? (player, base, current) -> current : scaler;
+    }
+
     public ProfessionService(ProfessionConfig config, ProfessionStore store) {
         this.config = config == null ? ProfessionConfig.defaults() : config;
         this.store = store;
@@ -127,6 +134,48 @@ public final class ProfessionService {
                         "to", target.id());
     }
 
+    public ProfessionMastery mastery(UUID player) {
+        return player == null ? null : store.mastery(player, active(player));
+    }
+
+    public long masteryCooldownLeft(UUID player, Profession profession, long now) {
+        if (store.mastery(player, profession) == null) return 0;
+        long changed = store.masteryChanged(player, profession);
+        long until = changed > Long.MAX_VALUE - ProfessionMastery.CHANGE_MILLIS
+                ? Long.MAX_VALUE : changed + ProfessionMastery.CHANGE_MILLIS;
+        return remaining(until, now);
+    }
+
+    public long workCooldownLeft(UUID player, long now) {
+        return player == null ? 0 : remaining(store.workUntil(player, active(player)), now);
+    }
+
+    private static long remaining(long until, long now) {
+        return until <= now ? 0 : (until - Math.max(0, now)) / 1000 + ((until - Math.max(0, now)) % 1000 > 0 ? 1 : 0);
+    }
+
+    public ProfessionResult checkMastery(UUID player) {
+        if (!config.enabled() || !config.perksEnabled() || !config.masteryEnabled()) return ProfessionResult.fail("mastery-disabled");
+        if (!store.canTrack(player)) return ProfessionResult.fail("mastery-storage-full");
+        Profession current = active(player);
+        if (current == null) return ProfessionResult.fail("mastery-no-profession");
+        if (level(player, current) < ProfessionMastery.UNLOCK_LEVEL)
+            return ProfessionResult.fail("mastery-locked", "level", String.valueOf(ProfessionMastery.UNLOCK_LEVEL));
+        return ProfessionResult.ok("mastery-ready");
+    }
+
+    public ProfessionResult chooseMastery(UUID player, String id, long now) {
+        ProfessionResult check = checkMastery(player);
+        if (!check.ok()) return check;
+        ProfessionMastery target = ProfessionMastery.parse(id);
+        if (target == null || target.profession() != active(player)) return ProfessionResult.fail("mastery-wrong");
+        if (target == mastery(player)) return ProfessionResult.fail("mastery-same");
+        long left = masteryCooldownLeft(player, target.profession(), now);
+        if (left > 0) return ProfessionResult.fail("mastery-change-cooldown", "time", ProfessionMath.clock(left));
+        if (!store.setMastery(player, target, now)) return ProfessionResult.fail("mastery-storage-full");
+        return ProfessionResult.ok("mastery-chosen", "specialization", target.id());
+    }
+
     /* --------------------------------- опыт ----------------------------------- */
 
     public int xp(UUID player, Profession profession) {
@@ -208,7 +257,9 @@ public final class ProfessionService {
         // Опыт: множитель сервера × бонус ранга (1.4.167). Оба множителя
         // умножаются до округления, чтобы 10 % ранга не терялись на мелких наградах.
         double factor = config.xpMultiplier() * bonus(player).xpFactor();
-        int scaled = Math.max(1, (int) Math.round(rawXp * factor));
+        long base = Math.max(1L, Math.round(rawXp * config.xpMultiplier()));
+        long current = Math.max(1L, Math.round(rawXp * factor));
+        int scaled = (int) Math.min(Integer.MAX_VALUE, Math.max(current, rewardScaler.apply(player, base, current)));
         int left = dailyLeft(player, profession, now);
         int granted = left < 0 ? scaled : Math.min(scaled, left);
         boolean capped = left >= 0 && granted < scaled;

@@ -250,7 +250,7 @@ class HuntStoreTest {
     }
 
     @Test
-    void brokenRowsAreSkippedOnLoad(@TempDir Path dir) throws Exception {
+    void brokenFinancialRowsStopLoadAndDisableCannotEraseThem(@TempDir Path dir) throws Exception {
         UUID good = UUID.randomUUID();
         Files.writeString(dir.resolve("hunt.json"), """
                 {
@@ -263,11 +263,10 @@ class HuntStoreTest {
                 }
                 """.formatted(good, UUID.randomUUID()), StandardCharsets.UTF_8);
         HuntStore store = new HuntStore(dir, LOGGER);
-        store.load();
-        assertEquals(1, store.players());
-        assertEquals(10L, store.coins(good));
-        assertEquals(2L, store.shards(good, "undead"));
-        assertNull(store.byName("плохой"));
+        String original=Files.readString(dir.resolve("hunt.json"));
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class,store::load);
+        assertFalse(store.healthy()); store.flush();
+        assertEquals(original,Files.readString(dir.resolve("hunt.json")));
     }
 
     @Test

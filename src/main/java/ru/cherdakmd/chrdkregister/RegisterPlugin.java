@@ -17,6 +17,8 @@ import java.util.logging.Level;
  */
 public final class RegisterPlugin extends JavaPlugin {
     private AccessManager accessManager;
+    private RewardBoostService rewardBoosts;
+    RewardBoostService rewardBoosts() { return rewardBoosts; }
     private ChatService chatService;
     private PassMenuService passMenuService;
     private DonateMenuService donateMenuService;
@@ -24,6 +26,7 @@ public final class RegisterPlugin extends JavaPlugin {
     private RankMenuService rankMenuService;
     private HatCommand hatCommand;
     private WikiCommandHandler wikiCommand;
+    private DonateCommandHandler donateCommand;
     private BankStore bankStore;
     private BankService bankService;
     private ProfileRegistry profileRegistry;
@@ -60,6 +63,7 @@ public final class RegisterPlugin extends JavaPlugin {
     public void onEnable() {
         migrateLegacyDataFolder();
         saveDefaultConfig();
+        OptionalTotpMigration.apply(this);
         PresentationMigration.apply(this);
         PluginConfig config = PluginConfig.fromBukkitConfig(getConfig());
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
@@ -82,7 +86,13 @@ public final class RegisterPlugin extends JavaPlugin {
         this.bankStore.load();
         this.bankService = new BankService(this, bankStore, () -> accessManager.config().economy());
         this.bankService.start();
+        var chargeGuard = new BankChargeGuard(this, bankStore);
+        getServer().getPluginManager().registerEvents(chargeGuard, this);
+        getServer().getScheduler().runTask(this, chargeGuard::checkOnline);
         this.profileRegistry = new ProfileRegistry(getLogger());
+        this.rewardBoosts = new RewardBoostService(this, accessManager);
+        getServer().getPluginManager().registerEvents(rewardBoosts, this);
+        profileRegistry.register("reward-boost", rewardBoosts::profile);
         this.profileService = new ProfileService(this, accessManager, bankStore, profileRegistry);
         getServer().getPluginManager().registerEvents(profileService, this);
         // Автосообщения показывают баланс банка: подстановка %balance%.
@@ -197,6 +207,12 @@ public final class RegisterPlugin extends JavaPlugin {
             labelsCommandPlugin.setExecutor(labelsCommand);
             labelsCommandPlugin.setTabCompleter(labelsCommand);
         }
+        this.donateCommand = new DonateCommandHandler(messages);
+        PluginCommand donateCommandPlugin = getCommand("donate");
+        if (donateCommandPlugin != null) {
+            donateCommandPlugin.setExecutor(donateCommand);
+            donateCommandPlugin.setTabCompleter(donateCommand);
+        }
         this.wikiCommand = new WikiCommandHandler(() -> accessManager.config().wiki(), messages);
         PluginCommand wikiCommandPlugin = getCommand("wiki");
         if (wikiCommandPlugin != null) {
@@ -231,6 +247,7 @@ public final class RegisterPlugin extends JavaPlugin {
         }
 
         accessManager.start();
+        rewardBoosts.start();
         chatService.start();
         this.updateChecker = new UpdateChecker(this, accessManager, getLogger());
         getServer().getPluginManager().registerEvents(updateChecker, this);
@@ -263,6 +280,7 @@ public final class RegisterPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        ru.cherdakmd.chrdkregister.api.CropReplanting.clear();
         if (pluginUpdater != null) pluginUpdater.close();
         if (serverMenuService != null) serverMenuService.shutdown();
         if (rankMenuService != null) rankMenuService.shutdown();
@@ -296,6 +314,7 @@ public final class RegisterPlugin extends JavaPlugin {
             spawnService.shutdown();
             spawnService = null;
         }
+        if (rewardBoosts != null) rewardBoosts.close();
         if (accessManager != null) {
             accessManager.shutdown();
             accessManager = null;
@@ -310,11 +329,13 @@ public final class RegisterPlugin extends JavaPlugin {
 
     public void reloadPluginConfig() {
         reloadConfig();
+        OptionalTotpMigration.apply(this);
         PresentationMigration.apply(this);
         PluginConfig updated = PluginConfig.fromBukkitConfig(getConfig());
         if (accessManager != null) {
             accessManager.reload(updated);
         }
+        if (rewardBoosts != null) rewardBoosts.reload();
         if (chatService != null) {
             chatService.reload(updated.chat());
         }
@@ -334,6 +355,25 @@ public final class RegisterPlugin extends JavaPlugin {
             shopService.logProblems();
         }
         applyLabelSettings();
+    }
+
+    void writePaidAudit(org.bukkit.command.CommandSender sender) {
+        // Отчёт не содержит паролей, TOTP, IP, токенов и иных данных авторизации.
+        messages.send(sender, "paid-only.audit-start");
+        executor.taskExecutor().execute(() -> {
+            try {
+                java.nio.file.Path folder = getDataFolder().toPath().resolve("paid-audit");
+                java.nio.file.Files.createDirectories(folder);
+                java.nio.file.Path file = folder.resolve("audit-" + java.util.UUID.randomUUID() + ".json");
+                java.nio.file.Files.writeString(file,
+                        PaidAuditReport.render(store.getAllAccounts(), store.paymentReceipts(), store.storeDeliveries(), System.currentTimeMillis()),
+                        java.nio.charset.StandardCharsets.UTF_8, java.nio.file.StandardOpenOption.CREATE_NEW);
+                getServer().getScheduler().runTask(this, () -> messages.send(sender, "paid-only.audit-done", "file", file.getFileName()));
+            } catch (Exception error) {
+                getLogger().log(java.util.logging.Level.SEVERE, "Payment reconciliation report failed", error);
+                getServer().getScheduler().runTask(this, () -> messages.send(sender, "paid-only.audit-error"));
+            }
+        });
     }
 
     /** Тексты плагина из {@code messages.yml}. */
@@ -401,6 +441,9 @@ public final class RegisterPlugin extends JavaPlugin {
         }
         if (wikiCommand != null) {
             wikiCommand.setMessages(messages);
+        }
+        if (donateCommand != null) {
+            donateCommand.setMessages(messages);
         }
         if (labelsCommand != null) {
             labelsCommand.refreshMessages();
@@ -476,7 +519,7 @@ public final class RegisterPlugin extends JavaPlugin {
         return palette;
     }
 
-    /** Лимиты пресетов по ступеням ранга (1.4.187). */
+    /** Лимиты пресетов и надписей по ступеням ранга. */
     public LabelLimits labelLimits() {
         return labelLimits;
     }
@@ -487,6 +530,8 @@ public final class RegisterPlugin extends JavaPlugin {
         this.labelLimits = LabelLimits.fromConfig(getConfig());
         if (chatService != null) {
             chatService.setPalette(palette);
+            chatService.setRankNameInTab(getConfig().getBoolean("tablist.show-rank-name", true));
+            if (chatService.labelStyles() != null) chatService.labelStyles().applyLimits(labelLimits);
         }
         if (labelsMenu != null) {
             labelsMenu.applySettings(palette, labelLimits);

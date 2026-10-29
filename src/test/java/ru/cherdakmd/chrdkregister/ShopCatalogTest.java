@@ -84,12 +84,10 @@ class ShopCatalogTest {
     }
 
     @Test
-    void trimsDaysToGlobalCap() {
+    void rejectsProductWhosePaidPeriodExceedsCap() {
         ShopCatalog catalog = ShopCatalog.parse(true, 30, List.of(product("year", 1000, 365)));
-        ShopProduct year = catalog.find("year").orElseThrow();
-
-        assertEquals(30, year.days(), "срок не может быть больше общего потолка");
-        assertTrue(catalog.problems().stream().anyMatch(problem -> problem.contains("урезан")),
+        assertTrue(catalog.find("year").isEmpty(), "нельзя продать 365 дней, а выдать 30");
+        assertTrue(catalog.problems().stream().anyMatch(problem -> problem.contains("товар пропущен")),
                 () -> catalog.problems().toString());
     }
 

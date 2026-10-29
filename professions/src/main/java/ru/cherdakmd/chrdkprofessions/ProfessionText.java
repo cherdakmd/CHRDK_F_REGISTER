@@ -174,7 +174,8 @@ final class ProfessionText {
             if (id == null || id.isBlank()) {
                 continue;
             }
-            String key = "profession." + id.toLowerCase(Locale.ROOT) + ".name";
+            ProfessionMastery mastery = ProfessionMastery.parse(id);
+            String key = mastery == null ? "profession." + id.toLowerCase(Locale.ROOT) + ".name" : mastery.nameKey();
             if (messages.has(key)) {
                 args.set(index, messages.plain(key));
             }

@@ -92,7 +92,7 @@ class ClaimStoreTest {
         ClaimStore store = store();
         store.load();
         assertTrue(store.all().isEmpty());
-        assertFalse(Files.exists(file), "повреждённый файл откладывается в сторону");
+        assertTrue(Files.exists(file), "повреждённый исходник остаётся на месте и блокирует повторный старт с пустыми деньгами");
         try (var files = Files.list(dir)) {
             assertTrue(files.anyMatch(path -> path.getFileName().toString()
                             .startsWith("claims-data.json.corrupt-")),

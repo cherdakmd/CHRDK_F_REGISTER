@@ -1,6 +1,5 @@
 package ru.cherdakmd.chrdkartifacts;
 
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import ru.cherdakmd.chrdkregister.Messages;
@@ -18,7 +17,7 @@ import java.util.Set;
  * а также разовый скан инвентаря при входе и открытии коллекции — так предметы,
  * полученные до 1.4.130, не приходится добывать заново.</p>
  *
- * <p>Награда — дни ранга через API ядра и алмазы предметами. Награда
+ * <p>Награда — отдельный игровой буст через API ядра и алмазы в /bal. Награда
  * выдаётся ровно один раз на порог: отметка живёт в {@link CollectionStore},
  * поэтому перезапуск и повторный вход не дублируют приз.</p>
  */
@@ -136,13 +135,14 @@ public final class CollectionService {
                 count(player), total());
         int granted = 0;
         for (CollectionRewards.Tier tier : tiers) {
+            if (!plugin.awards().reserve(player,"percent:"+tier.percent(),tier.diamonds())) continue;
             if (!store.markClaimed(key(player), tier.percent())) {
                 continue;
             }
             grant(player, tier);
             plugin.messages().send(player, "collection-reward-granted",
                     "percent", String.valueOf(tier.percent()),
-                    "reward", Messages.trusted(rewardText(tier)));
+                    "reward", Messages.trusted(rewardText(new CollectionRewards.Tier(tier.percent(),tier.passHours(),(int)plugin.awards().amount(player,"percent:"+tier.percent())))));
             granted++;
         }
         return granted;
@@ -185,7 +185,7 @@ public final class CollectionService {
     private void grant(Player player, CollectionRewards.Tier tier) {
         if (tier.passHours() > 0) {
             if (plugin.coreApi() != null) {
-                plugin.coreApi().grantPassHours(player.getName(), tier.passHours(),
+                plugin.coreApi().grantRewardBoostHours(player.getName(), tier.passHours(),
                         "artifacts:collection_" + tier.percent());
             } else {
                 plugin.getLogger().warning("Ядро недоступно: награда за коллекцию "
@@ -193,18 +193,7 @@ public final class CollectionService {
                         + player.getName() + ".");
             }
         }
-        // Алмазы выдаются стаками: ItemStack не принимает количество больше 64,
-        // а конфиг допускает до 576 — без разбивки это был бы IllegalArgumentException.
-        int remaining = tier.diamonds();
-        while (remaining > 0) {
-            int amount = Math.min(64, remaining);
-            remaining -= amount;
-            ItemStack stack = new ItemStack(Material.DIAMOND, amount);
-            Map<Integer, ItemStack> leftover = player.getInventory().addItem(stack);
-            for (ItemStack rest : leftover.values()) {
-                player.getWorld().dropItemNaturally(player.getLocation(), rest);
-            }
-        }
+
     }
 
     private static List<ItemStack> inventoryItems(Player player) {

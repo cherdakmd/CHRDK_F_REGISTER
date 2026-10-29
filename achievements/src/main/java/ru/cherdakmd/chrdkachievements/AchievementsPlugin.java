@@ -33,12 +33,25 @@ public final class AchievementsPlugin extends JavaPlugin {
     /** Секунды с включения — по ним считаются время игры и опрос API. */
     private int seconds;
 
+    private ru.cherdakmd.chrdkregister.api.MilestoneAwards awards;
+    public ru.cherdakmd.chrdkregister.api.MilestoneAwards awards() { return awards; }
+
     @Override
     public void onEnable() {
         saveDefaultConfig();
         this.store = new AchievementStore(getDataFolder().toPath(), getLogger());
+        reloadAchievementsConfig();
+        try {
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 20) throw new IllegalStateException("Нужен Core API 20+");
+            this.awards = new ru.cherdakmd.chrdkregister.api.MilestoneAwards(this,this::coreApi,this::messages,"achievements-awards",ru.cherdakmd.chrdkregister.api.MilestoneMigration.json(getDataFolder().toPath().resolve("achievements.json"),ru.cherdakmd.chrdkregister.api.MilestoneMigration.Kind.ACHIEVEMENTS));
+        } catch (Exception | LinkageError error) {
+            getLogger().log(java.util.logging.Level.SEVERE,"Модуль остановлен без сброса прогресса/наград",error);
+            this.store = null;
+            Bukkit.getPluginManager().disablePlugin(this); return;
+        }
         this.store.load();
         this.service = new AchievementService(this, store);
+        awards.reconciler(player -> service.check(player));
         this.listener = new AchievementListener(this, service);
         this.gui = new AchievementGui(this, service);
         reloadAchievementsConfig();
@@ -103,6 +116,7 @@ public final class AchievementsPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (awards != null) awards.close();
         if (coreApi != null) {
             try {
                 coreApi.unregisterProfile("achievements");
@@ -140,7 +154,7 @@ public final class AchievementsPlugin extends JavaPlugin {
                 getLogger());
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
         this.config = AchievementsConfig.parse(getConfig(), getLogger());
-        if (store != null) {
+        if (store != null && service != null) {
             // Бейджи могли измениться в messages.yml — обновляем кэш ников.
             for (Player player : Bukkit.getOnlinePlayers()) {
                 service.refreshBadge(player);

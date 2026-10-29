@@ -54,8 +54,8 @@ class LabelPreferencesTest {
         assertFalse(preferences.toggle("Steve", LabelPreferences.Label.RANK), "первое нажатие прячет");
         assertFalse(preferences.visible("Steve", LabelPreferences.Label.RANK));
         // 1.4.186: раньше все метки прятались одной группой — теперь сосед не задет.
-        assertTrue(preferences.visible("Steve", LabelPreferences.Label.STREAMS),
-                "метка стримера не задета рангом");
+        assertTrue(preferences.visible("Steve", LabelPreferences.Label.QUESTS),
+                "метка квестов не задета рангом");
         assertTrue(preferences.visible("Steve", LabelPreferences.Label.TIERFORGE));
         assertTrue(preferences.visible("Steve", LabelPreferences.Label.HEADER));
         assertTrue(preferences.anyHidden("Steve"));
@@ -79,15 +79,15 @@ class LabelPreferencesTest {
     @Test
     void nameTagIdsMapStraightToSources(@TempDir Path dir) {
         LabelPreferences preferences = fresh(dir);
-        preferences.set("Steve", LabelPreferences.Label.TREASURES, false);
+        preferences.set("Steve", LabelPreferences.Label.ACHIEVEMENTS, false);
         // Аддоны регистрируют оформление под этими id — фильтр ищет источник по ним.
-        assertFalse(preferences.visibleNameTag("Steve", "treasures"));
+        assertFalse(preferences.visibleNameTag("Steve", "achievements"));
         assertTrue(preferences.visibleNameTag("Steve", "guilds"));
         assertTrue(preferences.visibleNameTag("Steve", "сторонний-аддон"),
                 "незнакомый id не теряет метку");
         assertTrue(preferences.visibleNameTag("Steve", null));
-        assertEquals(LabelPreferences.Label.STREAMS,
-                LabelPreferences.Label.byNameTagId("STREAMS"), "регистр не важен");
+        assertEquals(LabelPreferences.Label.QUESTS,
+                LabelPreferences.Label.byNameTagId("QUESTS"), "регистр не важен");
         assertNull(LabelPreferences.Label.byNameTagId("header"),
                 "шапка таба — не метка рядом с ником");
     }
@@ -96,13 +96,13 @@ class LabelPreferencesTest {
     void choiceSurvivesRestart(@TempDir Path dir) {
         LabelPreferences preferences = fresh(dir);
         preferences.toggle("Cherdak", LabelPreferences.Label.RANK);
-        preferences.toggle("Cherdak", LabelPreferences.Label.STREAMS);
+        preferences.toggle("Cherdak", LabelPreferences.Label.QUESTS);
         preferences.saveNow();
         assertTrue(Files.exists(preferences.file()));
 
         LabelPreferences reloaded = fresh(dir);
         assertFalse(reloaded.visible("cherdak", LabelPreferences.Label.RANK));
-        assertFalse(reloaded.visible("CHERDAK", LabelPreferences.Label.STREAMS));
+        assertFalse(reloaded.visible("CHERDAK", LabelPreferences.Label.QUESTS));
         assertTrue(reloaded.visible("cherdak", LabelPreferences.Label.GUILDS),
                 "соседняя метка не пострадала");
         assertTrue(reloaded.visible("cherdak", LabelPreferences.Label.HEADER));
@@ -140,12 +140,12 @@ class LabelPreferencesTest {
         preferences.setGroup("Steve", LabelPreferences.badgeLabels(), false);
         assertTrue(preferences.visible("Steve", LabelPreferences.Label.RANK),
                 "группа меток не трогает ранг");
-        assertFalse(preferences.visible("Steve", LabelPreferences.Label.STREAMS));
+        assertFalse(preferences.visible("Steve", LabelPreferences.Label.QUESTS));
         assertFalse(preferences.visible("Steve", LabelPreferences.Label.TIERFORGE));
         assertFalse(preferences.visible("Steve", LabelPreferences.Label.ACHIEVEMENTS));
         assertTrue(preferences.visible("Steve", LabelPreferences.Label.HEADER),
                 "шапка таба — отдельный переключатель");
-        assertEquals(7, LabelPreferences.badgeLabels().size(),
+        assertEquals(5, LabelPreferences.badgeLabels().size(),
                 "все NAME-надписи, кроме ранга");
 
         preferences.setGroup("Steve", LabelPreferences.badgeLabels(), true);
@@ -168,19 +168,19 @@ class LabelPreferencesTest {
     @Test
     void snapshotHasReadableShape(@TempDir Path dir) {
         LabelPreferences preferences = fresh(dir);
-        preferences.toggle("Bob", LabelPreferences.Label.STREAMS);
+        preferences.toggle("Bob", LabelPreferences.Label.QUESTS);
         preferences.toggle("alice", LabelPreferences.Label.HEADER);
 
         @SuppressWarnings("unchecked")
         Map<String, Object> root = GSON.fromJson(preferences.snapshotJson(), LinkedHashMap.class);
-        assertEquals(3.0, ((Number) root.get("version")).doubleValue(),
-                "1.4.187 пишет формат версии 3: надписи, порядок, цвет, пресеты");
+        assertEquals(4.0, ((Number) root.get("version")).doubleValue(),
+                "1.4.191 пишет формат версии 4: источники, места, цвет, пресеты");
         @SuppressWarnings("unchecked")
         Map<String, Object> players = (Map<String, Object>) root.get("players");
         assertEquals(List.of("alice", "bob"), List.copyOf(players.keySet()), "ключи отсортированы");
         @SuppressWarnings("unchecked")
         Map<String, Object> bob = (Map<String, Object>) players.get("bob");
-        assertEquals(List.of("streams"), bob.get("hidden"));
+        assertEquals(List.of("quests"), bob.get("hidden"));
     }
 
     @Test
@@ -202,7 +202,7 @@ class LabelPreferencesTest {
         // Первое изменение переписывает файл в новом формате — без потери выбора.
         preferences.set("steve", LabelPreferences.Label.GUILDS, true);
         String json = Files.readString(preferences.file(), StandardCharsets.UTF_8);
-        assertTrue(json.contains("\"version\":3"), json);
+        assertTrue(json.contains("\"version\":4"), json);
         assertTrue(json.contains("\"rank\""), json);
         assertFalse(json.contains("\"badges\""), "старая группа больше не пишется");
     }
@@ -214,7 +214,7 @@ class LabelPreferencesTest {
                 + "{\"hidden\":[\"rank\",\"hologram\",\"\",\"badge\"]}}}", StandardCharsets.UTF_8);
         LabelPreferences preferences = fresh(dir);
         assertFalse(preferences.visible("steve", LabelPreferences.Label.RANK));
-        assertTrue(preferences.visible("steve", LabelPreferences.Label.STREAMS),
+        assertTrue(preferences.visible("steve", LabelPreferences.Label.QUESTS),
                 "неизвестный ид не прячет чужие надписи");
         assertTrue(preferences.visible("steve", LabelPreferences.Label.HEADER));
     }
@@ -310,7 +310,7 @@ class LabelPreferencesTest {
         preferences.savePreset("Steve", "p2");
 
         String json = preferences.snapshotJson();
-        assertTrue(json.contains("\"version\":3"), json);
+        assertTrue(json.contains("\"version\":4"), json);
         assertTrue(json.contains("\"order\":["), json);
         assertTrue(json.contains("\"color\":\"aqua\""), json);
         assertTrue(json.contains("\"presets\":{"), json);
@@ -320,10 +320,10 @@ class LabelPreferencesTest {
     void oldFilesWithoutNewFieldsStillRead(@TempDir Path dir) throws IOException {
         // Формат 1.4.186: только hidden, без порядка, цвета и пресетов.
         Files.writeString(dir.resolve("labels.json"),
-                "{\"version\":2,\"players\":{\"steve\":{\"hidden\":[\"streams\"]}}}",
+                "{\"version\":2,\"players\":{\"steve\":{\"hidden\":[\"quests\"]}}}",
                 StandardCharsets.UTF_8);
         LabelPreferences preferences = fresh(dir);
-        assertFalse(preferences.visible("steve", LabelPreferences.Label.STREAMS));
+        assertFalse(preferences.visible("steve", LabelPreferences.Label.QUESTS));
         assertEquals("", preferences.color("steve"));
         assertEquals(List.of(), preferences.order("steve"));
         assertTrue(preferences.presets("steve").isEmpty());
@@ -350,7 +350,7 @@ class LabelPreferencesTest {
         assertTrue(preferences.setAll("", false));
         assertEquals(0, preferences.size());
         assertNull(LabelPreferences.Label.byId("хедер"), "неизвестный ид — null");
-        assertEquals(8, LabelPreferences.Label.nameTags().size(),
-                "восемь надписей рядом с ником + шапка таба отдельно");
+        assertEquals(6, LabelPreferences.Label.nameTags().size(),
+                "шесть надписей рядом с ником + шапка таба отдельно");
     }
 }

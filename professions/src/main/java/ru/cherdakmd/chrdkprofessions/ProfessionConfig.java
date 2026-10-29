@@ -77,12 +77,14 @@ public final class ProfessionConfig {
     private final boolean perkMasonBlock;
     /** 1.4.182: обязательный выбор профессии. */
     private final Onboarding onboarding;
+    private final boolean masteryEnabled;
 
     private ProfessionConfig(boolean enabled, String locale, boolean actionbar, boolean joinHint,
                              boolean xpFeedback, int dailyXpCap, int chooseCooldownHours,
                              double xpMultiplier, boolean perksEnabled, boolean perkSmithAnvil,
                              boolean perkAlchemistBottle, boolean perkCookSaturation,
-                             boolean perkMasonBlock, Onboarding onboarding) {
+                             boolean perkMasonBlock, Onboarding onboarding, boolean masteryEnabled) {
+        this.masteryEnabled = masteryEnabled;
         this.enabled = enabled;
         this.locale = locale;
         this.actionbar = actionbar;
@@ -102,7 +104,7 @@ public final class ProfessionConfig {
     /** Умолчания — те же, что в ресурсном config.yml. */
     public static ProfessionConfig defaults() {
         return new ProfessionConfig(true, "ru", true, true, true, 1200, 24, 1.0,
-                true, true, true, true, true, Onboarding.DEFAULT);
+                true, true, true, true, true, Onboarding.DEFAULT, true);
     }
 
     /** Разбирает конфиг; {@code null} допустим — тогда действуют умолчания. */
@@ -138,7 +140,7 @@ public final class ProfessionConfig {
                 source.getBoolean("perks.alchemist-extra-bottle", fallback.perkAlchemistBottle),
                 source.getBoolean("perks.cook-saturation", fallback.perkCookSaturation),
                 source.getBoolean("perks.mason-extra-block", fallback.perkMasonBlock),
-                parseOnboarding(source));
+                parseOnboarding(source), source.getBoolean("mastery.enabled", true));
     }
 
     /**
@@ -161,6 +163,8 @@ public final class ProfessionConfig {
     }
 
     /** Обязательный выбор профессии (1.4.182). */
+    public boolean masteryEnabled() { return masteryEnabled; }
+
     public Onboarding onboarding() {
         return onboarding;
     }

@@ -73,7 +73,55 @@ class TpConfigTest {
     }
 
     @Test
-    void extraHomesFromShopRespectHardCap() {
+    void everyPaidPackageAddsToEveryRankWithoutAGameplayCap() {
+        TpConfig config = parse("""
+                homes:
+                  rank-limits: [3, 4, 6, 8, 10, 12]
+                  extra-limit: 8
+                  hard-cap: 0
+                """);
+        int[] bases = {3, 4, 6, 8, 10, 12};
+        for (int rank = 0; rank <= 5; rank++) {
+            for (int packages = 0; packages <= 10; packages++) {
+                assertEquals(bases[rank] + packages * 8, config.homeLimit(rank, packages));
+            }
+        }
+        assertEquals(20, config.homeLimit(5, 1));
+        assertEquals(28, config.homeLimit(5, 2));
+        assertEquals(812, config.homeLimit(5, 100), "нет старого потолка 12 или нового 64");
+        assertEquals(12, config.homeLimit(5, -1));
+        assertEquals(Integer.MAX_VALUE, config.homeLimit(5, Integer.MAX_VALUE), "защита от переполнения");
+    }
+
+    @Test
+    void oldHardCapDoesNotSwallowPurchasedHomesAndRankChangesAreImmediate() {
+        TpConfig config = parse("""
+                homes:
+                  rank-limits: [3, 4, 6, 8, 10, 12]
+                  extra-limit: 8
+                  hard-cap: 12
+                """);
+        assertEquals(28, config.homeLimit(5, 2));
+        assertEquals(20, config.homeLimit(5, 1), "один пакет закончился");
+        assertEquals(11, config.homeLimit(0, 1), "ранг закончился, оплаченный пакет остался");
+        assertEquals(3, config.homeLimit(0, 0));
+    }
+
+    @Test
+    void paidPackageSizeIsNotRaisedToVipBaseAndDoesNotDependOnLpPermission() {
+        TpConfig config = parse("""
+                homes:
+                  max-vip: 50
+                  extra-limit: 8
+                  extra-permission: ""
+                """);
+        assertEquals(8, config.homesExtraLimit());
+        assertEquals(58, config.homeLimit(1, 1));
+        assertEquals(11, config.homeLimit(0, 1));
+    }
+
+    @Test
+    void extraHomesAddToBaseWithoutBeingCutByLegacyHardCap() {
         TpConfig config = parse("""
                 homes:
                   max-normal: 3
@@ -84,8 +132,8 @@ class TpConfigTest {
                 """);
         assertEquals(3, config.homeLimit(false, false));
         assertEquals(8, config.homeLimit(true, false));
-        assertEquals(9, config.homeLimit(false, true), "extra-limit 10 урезан потолком 9");
-        assertEquals(9, config.homeLimit(true, true));
+        assertEquals(13, config.homeLimit(false, true), "оплаченный пакет добавляет 10 к базе 3");
+        assertEquals(18, config.homeLimit(true, true));
         assertEquals("chrdktele.homes.plus", config.homesExtraPermission());
         assertTrue(config.grantsExtraHomes(true));
         assertFalse(config.grantsExtraHomes(false), "без права товар не даёт домов");

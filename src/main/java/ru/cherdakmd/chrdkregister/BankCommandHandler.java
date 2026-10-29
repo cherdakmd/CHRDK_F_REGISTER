@@ -24,7 +24,7 @@ import java.util.Locale;
  */
 public final class BankCommandHandler implements CommandExecutor, TabCompleter {
 
-    private static final List<String> BAL_SUBCOMMANDS = List.of("deposit", "withdraw", "help");
+    private static final List<String> BAL_SUBCOMMANDS = List.of("deposit", "withdraw", "help", "recovery");
 
     private final RegisterPlugin plugin;
     private final BankService bank;
@@ -53,6 +53,10 @@ public final class BankCommandHandler implements CommandExecutor, TabCompleter {
     /* ---------------------------------- /bal ---------------------------------- */
 
     private boolean handleBalance(CommandSender sender, String[] args) {
+        if(args.length==1&&args[0].equalsIgnoreCase("recovery")) {
+            if(!sender.hasPermission("chrdkregister.admin")) { messages.send(sender,"common.no-permission"); return true; }
+            messages.send(sender,"economy.cash-status","healthy",bank.store().available(),"pending",bank.store().cashPendingCount(),"receipts",bank.store().cashReceiptCount()); return true;
+        }
         if (!bank.enabled()) {
             messages.send(sender, "economy.disabled");
             return true;
@@ -137,11 +141,13 @@ public final class BankCommandHandler implements CommandExecutor, TabCompleter {
                 return;
             }
             credited = bank.depositAmount(player, amount);
+            if (credited < 0L) { messages.send(player,"economy.cash-unavailable"); return; }
             if (credited <= 0L) {
                 messages.send(player, "economy.not-enough-items", "amount", BankService.format(amount));
                 return;
             }
         }
+        if (credited < 0L) { messages.send(player,"economy.cash-unavailable"); return; }
         if (credited <= 0L) {
             messages.send(player, "economy.nothing-to-deposit");
             return;
@@ -171,6 +177,7 @@ public final class BankCommandHandler implements CommandExecutor, TabCompleter {
                     "amount", BankService.format(result.amount()),
                     "balance", BankService.format(result.balance()));
             case NO_SPACE -> messages.send(player, "economy.no-space");
+            case UNAVAILABLE -> messages.send(player,"economy.cash-unavailable");
             default -> messages.send(player, "economy.not-enough-balance",
                     "balance", BankService.format(result.balance()),
                     "amount", BankService.format(amount));
@@ -226,6 +233,7 @@ public final class BankCommandHandler implements CommandExecutor, TabCompleter {
                             "amount", BankService.format(result.credited()));
                 }
             }
+            case UNAVAILABLE -> messages.send(player, "economy.disabled");
             case UNKNOWN_PLAYER -> messages.send(player, "economy.unknown-player",
                     "player", result.targetName());
             case SELF_TRANSFER -> messages.send(player, "economy.pay-self");

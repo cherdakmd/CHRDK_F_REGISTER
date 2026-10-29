@@ -3,6 +3,10 @@
 # Ключи без префикса: код обращается к ним как "kill-coins" и т.п.
 # Разметка — MiniMessage, подстановки — %имя%.
 hunt:
+  finance-wait: "<yellow>Финансовый source Hunt ждёт сверки. Не повторяйте обмен после ошибки: сохранённый доход останется к получению через /bal.</yellow>"
+  finance-mode: "<red>Нужны вход в аккаунт, доступ к охоте и режим выживания/приключения; NPC не получают награды.</red>"
+  finance-refused: "<yellow>Обмен не принят: проверьте монеты, курс и дневной остаток. Ничего не списано.</yellow>"
+  finance-status: "<gray>Источник %source% · lineage %lineage% · исправен %healthy% · конфликт %conflict% · получателей %count%</gray>"
   # ------------------------------- служебные --------------------------------
   no-permission: "<red>Недостаточно прав.</red>"
   player-only: "<red>Эта команда только для игроков.</red>"
@@ -14,7 +18,7 @@ hunt:
   help-stats: "<yellow>/hunt stats [ник]</yellow> <gray>— кошелёк, звание и осколки</gray>"
   help-shop: "<yellow>/hunt shop</yellow> <gray>— лавка за монеты</gray>"
   help-buy: "<yellow>/hunt buy <id> [кол-во]</yellow> <gray>— купить позицию лавки</gray>"
-  help-exchange: "<yellow>/hunt exchange <алмазы|max></yellow> <gray>— обменять монеты на алмазы</gray>"
+  help-exchange: "<yellow>/hunt exchange <алмазы|max></yellow> <gray>— обменять монеты на /bal</gray>"
   help-keys: "<yellow>/hunt keys</yellow> <gray>— ключи и сундуки семейств</gray>"
   help-chest: "<yellow>/hunt chest <семейство></yellow> <gray>— открыть сундук за ключ</gray>"
   help-bestiary: "<yellow>/hunt bestiary [раздел|claim <раздел>]</yellow> <gray>— журнал видов и награды разделов</gray>"
@@ -37,8 +41,7 @@ hunt:
   exchange-limit: "<red>На сегодня обмен исчерпан: осталось %limit% алмазов.</red>"
   exchange-min: "<red>Минимальный обмен — %min% алмаз(а).</red>"
   exchange-no-coins: "<red>Нужно %cost% монет, а в кошельке %coins%.</red>"
-  exchange-ok: "<green>Обмен:</green> <white>%coins% монет</white> <gray>→</gray> <aqua>%diamonds% алмаз(ов)</aqua> <dark_gray>·</dark_gray> <gray>осталось сегодня: %left%</gray>"
-  exchange-dropped: "<gray>Инвентарь полон — часть алмазов лежит под ногами.</gray>"
+  exchange-ok: "<green>Обмен:</green> <white>%coins% монет</white> <gray>→</gray> <aqua>%diamonds% алмаз(ов) к получению через /bal</aqua> <dark_gray>·</dark_gray> <gray>осталось сегодня: %left%</gray>"
   exchange-bad-amount: "<red>Нужно целое число алмазов или слово max.</red>"
 
   # --------------------------------- лавка ----------------------------------
@@ -78,7 +81,7 @@ hunt:
   chest-no-key: "<red>Нужен ключ: %key%.</red>"
   chest-opened: "<green>Сундук открыт:</green> <white>%family%</white> <dark_gray>·</dark_gray> <gold>+%coins% монет</gold> <dark_gray>·</dark_gray> <aqua>+%shards% %shard%</aqua>"
   chest-loot-line: "<gray>· <white>%item% ×%amount%</white></gray>"
-  chest-diamonds: "<aqua>Редкая находка: %diamonds% алмаз(ов)!</aqua>"
+  chest-diamonds: "<aqua>Редкая находка: %diamonds% алмаз(ов) через /bal!</aqua>"
   chest-dropped: "<gray>Инвентарь полон — часть добычи лежит под ногами.</gray>"
 
   # -------------------------------- бестиарий --------------------------------
@@ -217,6 +220,38 @@ hunt:
   admin-bad-amount: "<red>Количество — целое число от 1 до 1000000.</red>"
   admin-bad-kind: "<red>Неизвестный тип «%kind%»: нужны coins, shards или keys.</red>"
   admin-unknown-family: "<red>Семейства «%id%» нет в конфиге.</red>"
-  admin-usage: "<yellow>/huntadmin <reload|give <ник> <coins|shards|keys> <кол-во> [семейство]|reset <ник>|info></yellow>"
+  admin-usage: "<yellow>/huntadmin <reload|awards|give <ник> <coins|shards|keys> <кол-во> [семейство]|reset <ник>|info></yellow>"
   admin-info: "<gold>Охота:</gold> <gray>семейств <white>%families%</white>, правил мобов <white>%mobs%</white>, позиций лавки <white>%shop%</white>, трофеев <white>%trophies%</white>, охотников <white>%players%</white>, монет заработано <white>%earned%</white>, включено: <white>%enabled%</white>.</gray>"
   "rank-extra-loot": "<gold>Ранг добавил к добыче: +%amount% шт.</gold>"
+  mob-level-hud: "<gray>Уровень <white>%level%</white> · %kind%</gray>"
+  mob-variant-0: "<gray>Обычный</gray>"
+  mob-variant-1: "<gold>Стойкая элита</gold>"
+  mob-variant-2: "<red>Яростная элита</red>"
+  mob-variant-3: "<aqua>Стремительная элита</aqua>"
+  mob-variant-4: "<blue>Бронированная элита</blue>"
+  mob-variant-5: "<green>Восстанавливающаяся элита</green>"
+  mob-variant-6: "<yellow>Рывковая элита</yellow>"
+  mob-variant-7: "<light_purple>Тактическая элита</light_purple>"
+  mob-variant-8: "<dark_aqua>Осторожная элита</dark_aqua>"
+  mob-api-unavailable: "<red>Ядро авторизации недоступно. Просмотр охоты пока закрыт.</red>"
+  mob-need-auth: "<yellow>Сначала войдите в аккаунт.</yellow>"
+  mob-help: "<yellow>/hunt danger · inspect · observations · elites · hud [on|off] · history [страница]</yellow>"
+  mob-danger: "<gold>Опасность зоны:</gold> <white>%min%–%max% ур.</white> <gray>· от спавна %distance% блоков. Личный ориентир: %personal% ур.; это не точный прогноз следующего моба.</gray>"
+  mob-inspect-none: "<gray>Наведитесь на природного уровневого моба в пределах 16 блоков без стены между вами.</gray>"
+  mob-inspect: "<gold>Уровень %level%</gold> <gray>· %kind% · здоровье %hp%/%max%. Это осмотр, не обещание награды.</gray>"
+  mob-observations: "<gold>Наблюдавшиеся уровни: %count%/30</gold><gray> · %levels%. Пополняется осмотром или подтверждённым нелетальным попаданием в Survival. Наград нет.</gray>"
+  mob-elite-collection: "<gold>Встреченные варианты элиты: %count%/%total%</gold><gray> · %variants%. Только коллекция, без наград и бонусов.</gray>"
+  mob-hud-state: "<gray>Ваш боевой HUD мобов: %state%. Общий выключатель сервера имеет приоритет. Запись наблюдений от HUD не зависит.</gray>"
+  mob-on: "<green>Включён</green>"
+  mob-off: "<red>Выключен</red>"
+  mob-bestiary-levels: "<gray>Наблюдавшиеся уровни (без наград): %levels%</gray>"
+  mob-bestiary-elites: "<gray>Встречено вариантов элиты: %count% · /hunt elites</gray>"
+  mob-progression-disabled: "<gray>Уровневые мобы выключены в этом мире или на сервере.</gray>"
+
+  mob-group-mode: "<gray>Групповой расчёт включён: среднее Skills до %count% ближайших видимых Survival-игроков в радиусе %radius% блоков; нужны минимум двое. Защита новичка имеет приоритет, существующие мобы не пересчитываются.</gray>"
+  mob-history-help: "<yellow>/hunt history [страница] — только ваша история, страницы 1–%pages%.</yellow>"
+  mob-history-empty: "<gray>История пуста. Здесь появятся новые природные уровневые мобы после ваших прямых ударов/снарядов в Survival. Наград и объявлений нет.</gray>"
+  mob-history-header: "<gold>Ваша охота: %page%/%pages%</gold><gray> · %count% из последних 20 записей, новые сверху. Время UTC.</gray>"
+  mob-history-row: "<gray>%num%. %time% · %mob% · ур. %level% · %kind% · %world%</gray>"
+
+  admin-reload-failed: "<red>Перезагрузка отклонена: проверьте config.yml и файл сообщений выбранной локали. Прежние настройки, меню и ожидающие операции сохранены.</red>"

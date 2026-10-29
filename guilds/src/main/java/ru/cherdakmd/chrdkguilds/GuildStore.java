@@ -41,7 +41,7 @@ final class GuildStore {
     /** Сколько последних войн хранится в истории. */
     static final int MAX_HISTORY = 50;
 
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setObjectToNumberStrategy(com.google.gson.ToNumberPolicy.BIG_DECIMAL).setPrettyPrinting().create();
     private static final Type DATA_TYPE = new TypeToken<LinkedHashMap<String, Object>>() {
     }.getType();
     private static final DateTimeFormatter STAMP = DateTimeFormatter
@@ -65,6 +65,73 @@ final class GuildStore {
     private final List<GuildWar> wars = new ArrayList<>();
     private final List<WarRecord> history = new ArrayList<>();
     private boolean dirty;
+    private boolean healthy = true;
+    private ru.cherdakmd.chrdkregister.api.PaidActionStore finance;
+    private String lastDomain;
+    static final String FINANCE_KEY = "guild-state";
+
+    boolean financed() { return finance != null; }
+
+    /** Старый JSON читается ровно до durable отметки импорта. После неё — только архив. */
+    synchronized void bind(ru.cherdakmd.chrdkregister.api.PaidActionStore source) throws IOException {
+        if (!source.valuesInitialized()) {
+            if (!source.values().isEmpty()) throw new IOException("У гильдий потерян флаг импорта");
+            load();
+            source.initializeValues(Map.of(FINANCE_KEY, snapshotJson()));
+        }
+        if (source.values().size() != 1 || !source.values().containsKey(FINANCE_KEY)) throw new IOException("Неверный источник гильдий");
+        finance = source;
+        refresh();
+        dirty = false;
+    }
+
+    private void refresh() {
+        if (finance == null) return;
+        String json = finance.values().get(FINANCE_KEY);
+        if (json == null) throw new IllegalStateException("Потеряно состояние гильдий");
+        if (!json.equals(lastDomain)) {
+            GuildStore parsed = detached(json);
+            guilds.clear(); guilds.putAll(parsed.guilds);
+            byMember.clear(); byMember.putAll(parsed.byMember);
+            invites.clear(); invites.addAll(parsed.invites);
+            wars.clear(); wars.addAll(parsed.wars);
+            history.clear(); history.addAll(parsed.history);
+            lastDomain = json;
+        }
+    }
+
+    synchronized GuildStore detached(String json) {
+        GuildStore copy = new GuildStore(file.getParent(), logger);
+        copy.readData(json);
+        return copy;
+    }
+
+    synchronized GuildStore copy() { refresh(); return detached(snapshotJson()); }
+
+    /** Все мутации, включая результат войны и состав, публикуются до внешнего ответа. */
+    synchronized <T> T transaction(java.util.function.Function<GuildStore,T> operation, T failure) {
+        try {
+            if (finance == null || !finance.healthy()) return failure;
+            GuildStore copy = copy();
+            String before = copy.snapshotJson();
+            T result = operation.apply(copy);
+            String after = copy.snapshotJson();
+            if (!before.equals(after)) {
+                detached(after); // валидация перед записью, не после получения денег
+                finance.putValue(FINANCE_KEY, after);
+                refresh();
+            }
+            return result;
+        } catch (IOException | RuntimeException error) {
+            if (logger != null) logger.log(java.util.logging.Level.SEVERE,"Гильдии: изменение не подтверждено; проверьте финансовый журнал",error);
+            return failure;
+        }
+    }
+
+    private void detachedOnly() {
+        if (!healthy || finance != null) throw new IllegalStateException("Live guild mutations require transaction");
+    }
+
 
     GuildStore(Path dataFolder, Logger logger) {
         this.file = dataFolder.resolve("guilds.json");
@@ -77,111 +144,37 @@ final class GuildStore {
 
     /* --------------------------------- чтение --------------------------------- */
 
-    /** Читает файл; битые записи пропускаются с предупреждением. */
+    /** Повреждение казны/резерва останавливает модуль, а не создаёт пустую казну. */
     synchronized void load() {
-        if (!Files.isRegularFile(file)) {
-            return;
-        }
-        try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
-            Map<String, Object> data = GSON.fromJson(reader, DATA_TYPE);
-            if (data == null) {
-                return;
-            }
-            int skipped = 0;
-            if (data.get("guilds") instanceof List<?> rows) {
-                for (Object element : rows) {
-                    if (!(element instanceof Map<?, ?> row)) {
-                        skipped++;
-                        continue;
-                    }
-                    Guild guild = readGuild(row);
-                    if (guild == null || guilds.size() >= GuildConfig.MAX_GUILDS_LIMIT) {
-                        skipped++;
-                        continue;
-                    }
-                    if (guilds.containsKey(guild.id())) {
-                        skipped++;
-                        continue;
-                    }
-                    for (UUID member : guild.memberIds()) {
-                        if (byMember.containsKey(member)) {
-                            // Один игрок — одна гильдия: вторая запись считается мусором.
-                            guild.removeMember(member);
-                        }
-                    }
-                    if (guild.abandoned()) {
-                        skipped++;
-                        continue;
-                    }
-                    guilds.put(guild.id(), guild);
-                    for (UUID member : guild.memberIds()) {
-                        byMember.put(member, guild.id());
-                    }
-                }
-            }
-            if (data.get("invites") instanceof List<?> rows) {
-                for (Object element : rows) {
-                    if (!(element instanceof Map<?, ?> row)) {
-                        skipped++;
-                        continue;
-                    }
-                    GuildInvite invite = readInvite(row);
-                    if (invite == null || guilds.get(invite.guildId()) == null
-                            || byMember.containsKey(invite.player())) {
-                        skipped++;
-                        continue;
-                    }
-                    invites.add(invite);
-                }
-            }
-            if (data.get("wars") instanceof List<?> rows) {
-                for (Object element : rows) {
-                    if (!(element instanceof Map<?, ?> row)) {
-                        skipped++;
-                        continue;
-                    }
-                    GuildWar war = readWar(row);
-                    if (war == null || !guilds.containsKey(war.challengerId())
-                            || !guilds.containsKey(war.targetId())) {
-                        skipped++;
-                        continue;
-                    }
-                    wars.add(war);
-                }
-            }
-            if (data.get("history") instanceof List<?> rows) {
-                for (Object element : rows) {
-                    if (!(element instanceof Map<?, ?> row)) {
-                        skipped++;
-                        continue;
-                    }
-                    if (history.size() >= MAX_HISTORY) {
-                        break;
-                    }
-                    String challenger = string(row.get("challenger"));
-                    String target = string(row.get("target"));
-                    if (challenger.isEmpty() || target.isEmpty()) {
-                        skipped++;
-                        continue;
-                    }
-                    history.add(new WarRecord(string(row.get("id")), challenger, target,
-                            string(row.get("winner")), string(row.get("result")),
-                            number(row.get("wager")), Math.max(0L, number(row.get("ended-at")))));
-                }
-            }
-            if (skipped > 0 && logger != null) {
-                logger.warning("[CHRDK_Guilds] Пропущено записей guilds.json: " + skipped + ".");
-            }
-            if (logger != null) {
-                logger.info("[CHRDK_Guilds] Загружено гильдий: " + guilds.size()
-                        + ", войн: " + wars.size() + ".");
-            }
+        detachedOnly();
+        if (!Files.exists(file)) return;
+        try {
+            if (!Files.isRegularFile(file) || Files.size(file) > 8L*1024*1024) throw new IOException("guild source capacity/type");
+            GuildStore parsed = detached(Files.readString(file));
+            guilds.clear(); guilds.putAll(parsed.guilds);
+            byMember.clear(); byMember.putAll(parsed.byMember);
+            invites.clear(); invites.addAll(parsed.invites);
+            wars.clear(); wars.addAll(parsed.wars);
+            history.clear(); history.addAll(parsed.history);
         } catch (IOException | RuntimeException error) {
-            if (logger != null) {
-                logger.severe("[CHRDK_Guilds] Не удалось прочитать " + file + ": "
-                        + error.getMessage() + " — начну с чистого листа.");
-            }
+            healthy = false;
+            throw new IllegalStateException("Повреждён guilds.json; исходник не перезаписывается",error);
         }
+    }
+
+    private void readData(String json) {
+        Map<String,Object> data = GSON.fromJson(json, DATA_TYPE);
+        validateInput(data);
+        for (Map<?,?> row : rows(data,"guilds")) {
+            Guild guild = readGuild(row);
+            guilds.put(guild.id(),guild);
+            for (UUID member : guild.memberIds()) byMember.put(member,guild.id());
+        }
+        for (Map<?,?> row : rows(data,"invites")) invites.add(readInvite(row));
+        for (Map<?,?> row : rows(data,"wars")) wars.add(readWar(row));
+        for (Map<?,?> row : rows(data,"history")) history.add(new WarRecord(
+                string(row.get("id")),string(row.get("challenger")),string(row.get("target")),
+                string(row.get("winner")),string(row.get("result")),number(row.get("wager")),number(row.get("ended-at"))));
     }
 
     private static Guild readGuild(Map<?, ?> row) {
@@ -206,6 +199,7 @@ final class GuildStore {
                 (int) number(row.get("glory")), (int) number(row.get("wars-won")),
                 (int) number(row.get("wars-lost")));
         guild.setWarCooldownUntil(number(row.get("war-cooldown-until")));
+        guild.restoreWarReturns(number(row.get("war-returns")));
         return guild;
     }
 
@@ -248,18 +242,22 @@ final class GuildStore {
     /* --------------------------------- доступ --------------------------------- */
 
     synchronized List<Guild> guilds() {
+        refresh();
         return List.copyOf(guilds.values());
     }
 
     synchronized int count() {
+        refresh();
         return guilds.size();
     }
 
     synchronized Guild guild(String id) {
+        refresh();
         return id == null ? null : guilds.get(id.trim());
     }
 
     synchronized Guild of(UUID player) {
+        refresh();
         if (player == null) {
             return null;
         }
@@ -268,6 +266,7 @@ final class GuildStore {
     }
 
     synchronized Guild byName(String name) {
+        refresh();
         String key = GuildMath.key(name);
         if (key.isEmpty()) {
             return null;
@@ -281,6 +280,7 @@ final class GuildStore {
     }
 
     synchronized Guild byTag(String tag) {
+        refresh();
         String key = GuildMath.key(tag);
         if (key.isEmpty()) {
             return null;
@@ -295,11 +295,13 @@ final class GuildStore {
 
     /** Поиск по названию или тегу — для команд и войн. */
     synchronized Guild find(String query) {
+        refresh();
         Guild byName = byName(query);
         return byName != null ? byName : byTag(query);
     }
 
     synchronized List<Guild> top(int limit) {
+        refresh();
         List<Guild> list = new ArrayList<>(guilds.values());
         list.sort((left, right) -> {
             int byGlory = Integer.compare(right.glory(), left.glory());
@@ -315,6 +317,7 @@ final class GuildStore {
     /* -------------------------------- изменения ------------------------------- */
 
     synchronized void add(Guild guild) {
+        detachedOnly();
         if (guild == null || guilds.containsKey(guild.id())) {
             return;
         }
@@ -326,6 +329,7 @@ final class GuildStore {
     }
 
     synchronized void remove(Guild guild) {
+        detachedOnly();
         if (guild == null || guilds.remove(guild.id()) == null) {
             return;
         }
@@ -339,6 +343,7 @@ final class GuildStore {
 
     /** Пересчитывает индекс «игрок → гильдия» после изменений состава. */
     synchronized void reindex(Guild guild) {
+        detachedOnly();
         if (guild == null) {
             return;
         }
@@ -356,6 +361,7 @@ final class GuildStore {
     /* ------------------------------- приглашения ------------------------------ */
 
     synchronized void addInvite(GuildInvite invite) {
+        detachedOnly();
         if (invite == null) {
             return;
         }
@@ -365,6 +371,7 @@ final class GuildStore {
     }
 
     synchronized GuildInvite inviteOf(UUID player) {
+        refresh();
         if (player == null) {
             return null;
         }
@@ -377,6 +384,7 @@ final class GuildStore {
     }
 
     synchronized boolean removeInvite(UUID player) {
+        detachedOnly();
         boolean removed = invites.removeIf(invite -> invite.player().equals(player));
         if (removed) {
             dirty = true;
@@ -386,6 +394,7 @@ final class GuildStore {
 
     /** Убирает просроченные приглашения; возвращает число удалённых. */
     synchronized int pruneInvites(long now) {
+        detachedOnly();
         int before = invites.size();
         invites.removeIf(invite -> invite.expired(now));
         int removed = before - invites.size();
@@ -398,6 +407,7 @@ final class GuildStore {
     /* ---------------------------------- войны --------------------------------- */
 
     synchronized void addWar(GuildWar war) {
+        detachedOnly();
         if (war == null) {
             return;
         }
@@ -407,11 +417,13 @@ final class GuildStore {
     }
 
     synchronized List<GuildWar> wars() {
+        refresh();
         return List.copyOf(wars);
     }
 
     /** Незакрытая война гильдии или {@code null}. */
     synchronized GuildWar warOf(String guildId) {
+        refresh();
         if (guildId == null) {
             return null;
         }
@@ -425,6 +437,7 @@ final class GuildStore {
 
     /** Война между двумя гильдиями, если она ещё не закрыта. */
     synchronized GuildWar warBetween(String first, String second) {
+        refresh();
         if (first == null || second == null) {
             return null;
         }
@@ -437,6 +450,7 @@ final class GuildStore {
     }
 
     synchronized int activeWars() {
+        refresh();
         int count = 0;
         for (GuildWar war : wars) {
             if (war.active()) {
@@ -447,6 +461,7 @@ final class GuildStore {
     }
 
     synchronized int pendingWars() {
+        refresh();
         int count = 0;
         for (GuildWar war : wars) {
             if (war.pending()) {
@@ -458,6 +473,7 @@ final class GuildStore {
 
     /** Закрывает войну и убирает её из активных, оставляя в истории. */
     synchronized void closeWar(GuildWar war, String winnerName) {
+        detachedOnly();
         if (war == null) {
             return;
         }
@@ -473,10 +489,12 @@ final class GuildStore {
     }
 
     synchronized List<WarRecord> history() {
+        refresh();
         return List.copyOf(history);
     }
 
     synchronized void clearHistory() {
+        detachedOnly();
         if (history.isEmpty()) {
             return;
         }
@@ -491,6 +509,7 @@ final class GuildStore {
     }
 
     synchronized String snapshotJson() {
+        refresh();
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("version", VERSION);
         List<Map<String, Object>> guildRows = new ArrayList<>();
@@ -509,6 +528,7 @@ final class GuildStore {
             }
             row.put("members", members);
             row.put("treasury", guild.treasury());
+            if (guild.warReturns() > 0) row.put("war-returns", guild.warReturns());
             row.put("level", guild.level());
             row.put("glory", guild.glory());
             row.put("wars-won", guild.warsWon());
@@ -581,12 +601,12 @@ final class GuildStore {
             }
             data.put("history", historyRows);
         }
-        dirty = false;
         return GSON.toJson(data);
     }
 
     /** Пишет файл, только если были изменения. */
     void saveNow() {
+        if (finance != null || !healthy) return;
         String json;
         synchronized (this) {
             if (!dirty) {
@@ -599,11 +619,14 @@ final class GuildStore {
 
     /** Немедленная запись без проверки флага (выключение сервера, тесты). */
     void flush() {
+        if (finance != null || !healthy) return;
         write(snapshotJson());
     }
 
     private void write(String json) {
-        if (!SafeJsonWriter.write(file, json, logger, "[CHRDK_Guilds]")) {
+        if (SafeJsonWriter.write(file, json, logger, "[CHRDK_Guilds]")) {
+            synchronized (this) { dirty = false; }
+        } else {
             // Диск не принял данные — помечаем состояние изменённым, иначе
             // следующее автосохранение решит, что писать нечего, и прогресс
             // потеряется молча.
@@ -613,6 +636,110 @@ final class GuildStore {
         }
     }
 
+    /** Строгая граница: нельзя округлять деньги, чинить владельца или терять резерв. */
+    private static void validateInput(Map<String,Object> data) {
+        if (data == null || number(data.get("version")) != VERSION || !(data.get("guilds") instanceof List<?>)) bad("schema");
+        var ids = new java.util.HashSet<String>();
+        var names = new java.util.HashSet<String>();
+        var tags = new java.util.HashSet<String>();
+        var members = new java.util.HashSet<UUID>();
+        var guildRows = rows(data,"guilds");
+        if (guildRows.size() > GuildConfig.MAX_GUILDS_LIMIT) bad("guild capacity");
+        for (Map<?,?> row : guildRows) {
+            String id = text(row,"id",true), name = text(row,"name",true), tag = text(row,"tag",false);
+            if (!ids.add(id) || !name.equals(Guild.cleanName(name)) || !tag.equals(Guild.cleanTag(tag))
+                    || !names.add(GuildMath.key(name)) || !tag.isEmpty() && !tags.add(GuildMath.key(tag))) bad("guild identity");
+            UUID leader = strictUuid(row.get("leader"));
+            if (!(row.get("members") instanceof Map<?,?>)) bad("members");
+            Map<?,?> roster = (Map<?,?>) row.get("members");
+            if (roster.isEmpty() || !"leader".equals(roster.get(leader.toString()))) bad("leader");
+            for (var member : roster.entrySet()) {
+                UUID player = strictUuid(member.getKey());
+                if (!members.add(player) || !(member.getValue() instanceof String)) bad("member identity");
+                String rank = member.getValue().toString();
+                if (!(rank.equals("leader") || rank.equals("officer") || rank.equals("member")) || rank.equals("leader") != player.equals(leader)) bad("rank");
+            }
+            range(row,"created-at",0,Long.MAX_VALUE,true);
+            range(row,"treasury",0,Guild.MAX_TREASURY,true);
+            range(row,"war-returns",0,Long.MAX_VALUE,false);
+            if (number(row.get("war-returns")) > 0 && number(row.get("treasury")) != Guild.MAX_TREASURY) bad("unfunded return");
+            Math.addExact(number(row.get("treasury")),number(row.get("war-returns")));
+            range(row,"level",1,GuildMath.MAX_LEVEL,true);
+            for (String key : List.of("glory","wars-won","wars-lost")) range(row,key,0,Integer.MAX_VALUE,true);
+            range(row,"war-cooldown-until",0,Long.MAX_VALUE,false);
+        }
+        var invited = new java.util.HashSet<UUID>();
+        for (Map<?,?> row : rows(data,"invites")) {
+            if (!ids.contains(text(row,"guild",true))) bad("invite guild");
+            text(row,"guild-name",true);
+            UUID player = strictUuid(row.get("player"));
+            if (!invited.add(player) || members.contains(player)) bad("invite owner");
+            if (row.containsKey("inviter")) strictUuid(row.get("inviter"));
+            range(row,"created-at",0,Long.MAX_VALUE,true);
+            range(row,"expires-at",0,Long.MAX_VALUE,true);
+        }
+        var warIds = new java.util.HashSet<String>();
+        var reserved = new java.util.HashSet<String>();
+        for (Map<?,?> row : rows(data,"wars")) {
+            String challenger = text(row,"challenger",true), target = text(row,"target",true);
+            if (!warIds.add(text(row,"id",true)) || !ids.contains(challenger) || !ids.contains(target)
+                    || challenger.equals(target) || !reserved.add(challenger) || !reserved.add(target)) bad("war ownership");
+            String status = text(row,"status",true);
+            if (!(status.equals("PENDING") || status.equals("ACTIVE")) || row.containsKey("result")) bad("closed/unknown war");
+            range(row,"wager",0,Guild.MAX_TREASURY,true);
+            for (String key : List.of("created-at","starts-at","ends-at")) range(row,key,0,Long.MAX_VALUE,true);
+            for (String key : List.of("challenger-points","target-points")) range(row,key,0,Integer.MAX_VALUE,true);
+            if (status.equals("PENDING") && (number(row.get("starts-at")) != 0 || number(row.get("ends-at")) != 0)) bad("pending war time");
+            if (status.equals("ACTIVE") && number(row.get("ends-at")) < number(row.get("starts-at"))) bad("active war time");
+            if (row.containsKey("last-kills")) {
+                if (!(row.get("last-kills") instanceof Map<?,?>)) bad("kill receipts");
+                for (var entry : ((Map<?,?>)row.get("last-kills")).entrySet()) {
+                    if (!(entry.getKey() instanceof String) || entry.getValue() == null || number(entry.getValue()) <= 0) bad("kill receipt");
+                    String[] pair = entry.getKey().toString().split("\\|",-1);
+                    if (pair.length != 2) bad("kill pair");
+                    strictUuid(pair[0]); strictUuid(pair[1]);
+                    if (pair[0].compareTo(pair[1]) >= 0) bad("kill pair order");
+                }
+            }
+        }
+        var records = rows(data,"history");
+        if (records.size() > MAX_HISTORY) bad("history capacity");
+        for (Map<?,?> row : records) {
+            text(row,"id",true); text(row,"challenger",true); text(row,"target",true);
+            text(row,"winner",false); String result = text(row,"result",false);
+            if (!result.isEmpty()) GuildWar.Result.valueOf(result);
+            range(row,"wager",0,Guild.MAX_TREASURY,true);
+            range(row,"ended-at",0,Long.MAX_VALUE,true);
+        }
+    }
+
+    private static List<Map<?,?>> rows(Map<?,?> data,String key) {
+        if (!data.containsKey(key)) return List.of();
+        if (!(data.get(key) instanceof List<?>)) throw new IllegalArgumentException("Invalid rows: " + key);
+        var result = new ArrayList<Map<?,?>>();
+        for (Object element : (List<?>)data.get(key)) {
+            if (!(element instanceof Map<?,?> row)) throw new IllegalArgumentException("Invalid row: " + key);
+            result.add(row);
+        }
+        return result;
+    }
+    private static void range(Map<?,?> row,String key,long min,long max,boolean required) {
+        if (!row.containsKey(key) && !required) return;
+        if (row.get(key) == null) bad("missing " + key);
+        long value = number(row.get(key));
+        if (value < min || value > max) bad("range " + key);
+    }
+    private static String text(Map<?,?> row,String key,boolean required) {
+        if (!row.containsKey(key) && !required) return "";
+        if (!(row.get(key) instanceof String value) || value.length() > 160 || !value.equals(value.trim()) || required && value.isBlank()) throw new IllegalArgumentException("Invalid text: " + key);
+        return value;
+    }
+    private static UUID strictUuid(Object value) {
+        if (!(value instanceof String raw) || !UUID.fromString(raw).toString().equals(raw)) throw new IllegalArgumentException("Noncanonical UUID");
+        return UUID.fromString(raw);
+    }
+    private static void bad(String reason) { throw new IllegalArgumentException("Invalid guild source: " + reason); }
+
     /* -------------------------------- помощники ------------------------------- */
 
     private static String string(Object raw) {
@@ -620,7 +747,9 @@ final class GuildStore {
     }
 
     private static long number(Object raw) {
-        return raw instanceof Number number ? number.longValue() : 0L;
+        if (raw == null) return 0;
+        if (!(raw instanceof Number)) throw new IllegalArgumentException("Not a number");
+        return new java.math.BigDecimal(raw.toString()).longValueExact();
     }
 
     private static UUID uuid(Object raw) {

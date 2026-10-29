@@ -278,11 +278,7 @@ public final class AccessManager {
         stopTasks();
         this.serverStartedAtMillis = System.currentTimeMillis();
         long now = System.currentTimeMillis();
-        int migrated = store.migrateRanks(now);
-        if (migrated > 0) {
-            logger.info("Ранги: миграция с проходки затронула " + migrated
-                    + " аккаунт(ов) — платившим выдан постоянный ранг, триалу — первая ступень");
-        }
+        store.migrateRanks(now); // больше не превращает суммы покупок или старый триал в ранг
 
         long pollTicks = Math.max(20L * 15L, config.donatePollSeconds() * 20L);
         this.donatePollTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
@@ -389,6 +385,8 @@ public final class AccessManager {
      */
     private void runDonateActions(DonatePayClient.Transaction transaction,
                                   DonationService.Outcome outcome) {
+        if (transaction.testPayment() || transaction.id() < 0 || outcome == null || !outcome.granted()) return;
+
         try {
             if (transaction == null || !transaction.isSuccessfulDonation()) {
                 return;
@@ -429,6 +427,7 @@ public final class AccessManager {
     }
 
     public synchronized void reload(PluginConfig newConfig) {
+        boolean wasRequired = this.config.totpRequired();
         this.config = newConfig;
         for (ProviderPulse pulse : donationPulses.values()) {
             pulse.provider.updateConfig(newConfig);
@@ -461,9 +460,36 @@ public final class AccessManager {
         }
 
         applyLogMasking();
+        releaseOptionalEnrollment(wasRequired);
         audit.log(AuditLog.CONFIG_RELOAD, "server", "", "",
                 AuditLog.details("minimumRubles", newConfig.minimumDonationRubles(),
                         "grantDays", newConfig.grantDays(), "sessionMinutes", newConfig.sessionMinutes()));
+    }
+
+    /** После reload выпускаем лишь подтвердивших пароль и ещё НЕ привязавших TOTP. */
+    private void releaseOptionalEnrollment(boolean wasRequired) {
+        if (!wasRequired || config.totpRequired()) return;
+        for (Player player : List.copyOf(Bukkit.getOnlinePlayers())) {
+            // getStage также повторно проверяет регистрацию и возможное требование ранга.
+            if (!player.isOnline() || getStage(player) != PlayerStage.NEEDS_LOGIN) continue;
+            UUID uuid = player.getUniqueId();
+            if (!TotpAccessPolicy.releaseEnrollment(wasRequired, config.totpRequired(),
+                    store.isTotpEnabled(player.getName()), passwordVerifiedPlayers.contains(uuid),
+                    "2fa-enrollment".equals(authSource.get(uuid)))) continue;
+            long now = System.currentTimeMillis();
+            String ip = getPlayerIp(player);
+            String blocked = enforceAntiMultiAlt(player, player.getName(), ip, now);
+            if (blocked != null) {
+                player.kick(Component.text(blocked, NamedTextColor.RED));
+                continue;
+            }
+            pendingTotpSecrets.remove(uuid);
+            store.touchSession(player.getName(), uuid, ip, now);
+            authSource.put(uuid, "password");
+            completeAuthentication(player, "two-factor.optional-login-complete");
+            if (config.auditLogLogins()) audit.log(AuditLog.LOGIN_SUCCESS, player.getName(), player.getName(), ip,
+                    AuditLog.details("method", "password", "reason", "optional-2fa-reload"));
+        }
     }
 
     public synchronized void shutdown() {
@@ -553,17 +579,22 @@ public final class AccessManager {
         return getStage(player.getUniqueId(), player.getName(), System.currentTimeMillis());
     }
 
+    private boolean removeAuthentication(UUID uuid) {
+        if (plugin.rewardBoosts() != null) plugin.rewardBoosts().pause(uuid);
+        return authenticatedPlayers.remove(uuid);
+    }
+
     public PlayerStage getStage(UUID uuid, String playerName, long nowMillis) {
         // 1.4.167: вход свободный. Ворота проходки работают только при
         // pass.enabled: true — тогда стадия NO_PASS и подсказки остаются как были.
         if (config.passEnabled() && !store.hasActivePass(playerName, nowMillis)) {
-            authenticatedPlayers.remove(uuid);
+            removeAuthentication(uuid);
             passwordVerifiedPlayers.remove(uuid);
             if (config.trialEnabled() && store.isTrialEligible(playerName, uuid)) return PlayerStage.NEEDS_REGISTER;
             return PlayerStage.NO_PASS;
         }
         if (!store.isRegistered(playerName)) {
-            authenticatedPlayers.remove(uuid);
+            removeAuthentication(uuid);
             passwordVerifiedPlayers.remove(uuid);
             return PlayerStage.NEEDS_REGISTER;
         }
@@ -584,7 +615,7 @@ public final class AccessManager {
      * ({@code totp.required: true}), а аутентификатор у аккаунта ещё не настроен.
      */
     public boolean requiresTotpEnrollment(String playerName) {
-        return config.totpEnabled() && config.totpRequired() && !store.isTotpEnabled(playerName);
+        return TotpAccessPolicy.enrollment(config.totpEnabled(), config.totpRequired(), store.isTotpEnabled(playerName));
     }
 
     public boolean isBlocked(Player player) {
@@ -615,7 +646,7 @@ public final class AccessManager {
         long now = System.currentTimeMillis();
 
         store.recordPlayerSeen(uuid, name);
-        authenticatedPlayers.remove(uuid);
+        removeAuthentication(uuid);
         passwordVerifiedPlayers.remove(uuid);
         pendingTotpSecrets.remove(uuid);
         freezeLocations.put(uuid, player.getLocation().clone());
@@ -646,9 +677,8 @@ public final class AccessManager {
             // required. Обязательная 2FA (totp.required) не пропускается сессией никогда, а если
             // аутентификатор ещё не привязан — игрок проходит привязку до входа в игру.
             boolean totpEnrolled = config.totpEnabled() && store.isTotpEnabled(name);
-            boolean secondStepRequired = totpEnrolled
-                    ? (!config.sessionSkips2fa() || config.totpRequired())
-                    : requiresTotpEnrollment(name);
+            boolean secondStepRequired = TotpAccessPolicy.sessionNeedsSecondStep(config.totpEnabled(),
+                    config.totpRequired(), store.isTotpEnabled(name), config.sessionSkips2fa());
             if (secondStepRequired) {
                 passwordVerifiedPlayers.add(uuid);
                 if (totpEnrolled) {
@@ -670,6 +700,7 @@ public final class AccessManager {
                 return;
             }
             authenticatedPlayers.add(uuid);
+            if (plugin.rewardBoosts() != null) plugin.rewardBoosts().resume(player);
             freezeLocations.remove(uuid);
             lastChatReminderAt.remove(uuid);
             authSource.put(uuid, "session");
@@ -722,7 +753,7 @@ public final class AccessManager {
 
     public void onPlayerQuit(Player player) {
         UUID uuid = player.getUniqueId();
-        if (authenticatedPlayers.remove(uuid)) {
+        if (removeAuthentication(uuid)) {
             store.touchSession(player.getName(), uuid, getPlayerIp(player), System.currentTimeMillis());
         }
         String source = authSource.remove(uuid);
@@ -782,7 +813,8 @@ public final class AccessManager {
             messages.send(player, "register.password-shared");
             return true;
         }
-        int welcomeDays = config.ranks().welcomeEnabled() ? config.ranks().welcomeDays() : 0;
+        boolean welcomeEligible = store.isTrialEligible(player.getName(), player.getUniqueId());
+        int welcomeDays = 0;
         boolean registered = store.registerPassword(player.getName(), player.getUniqueId(), password, ip, now,
                 welcomeDays);
         if (!registered) {
@@ -790,21 +822,8 @@ public final class AccessManager {
             return true;
         }
 
-        RegistrationStore.PlayerAccount account = store.getAccount(player.getName()).orElseThrow();
-        if (account.trialGrantedAt == now && "trial".equals(account.lastGrantSource)) {
-            // Приветственный ранг: дни берём из ranks.welcome (3), а не из старого
-            // pass.trial.days (14) — иначе игрок читал бы «14 дней» про 3-дневный ранг.
-            int grantedDays = account.lastGrantDays > 0 ? account.lastGrantDays : welcomeDays;
-            messages.send(player, "trial.granted", "days", grantedDays, "until", formatTimestamp(account.passUntil));
-            // Приветственный ранг — не покупка: группа проходки выдаётся только после оплаты.
-            plugin.luckPermsPassSync().onPassGranted(player.getName(), false);
-            fireEventSync(new PassGrantedEvent(player.getName(), account.passUntil, grantedDays, "trial"));
-            audit.log(AuditLog.ADMIN_COMMAND, player.getName(), player.getName(), ip,
-                    AuditLog.details("action", "trial.granted", "days", grantedDays, "passUntil", account.passUntil));
-            notifications.notify("pass.granted", messages.plain("trial.notify-title"),
-                    messages.plain("trial.notify-desc", "player", player.getName(), "days", grantedDays,
-                            "until", formatTimestamp(account.passUntil)), "good");
-        }
+        int welcomeHours = Math.max(0, plugin.getConfig().getInt("reward-boost.welcome-hours", 3));
+        if (welcomeEligible && welcomeHours > 0) plugin.rewardBoosts().grant(player.getName(), welcomeHours, "welcome");
         if (requiresTotpEnrollment(player.getName())) {
             beginForcedEnrollment(player, "register.success-two-factor");
         } else {
@@ -1565,35 +1584,17 @@ public final class AccessManager {
      * реферальные бонусы и прочие реакции на оплату.</p>
      *
      * @param hours  длительность в часах; {@code <= 0} — ничего не делать
-     * @param source метка источника для аудита и поздравления (streams, battlepass, ...)
+     * @param source метка источника для аудита и поздравления (artifacts, battlepass, ...)
      */
+    @Deprecated
     public RegistrationStore.PlayerAccount grantPassHours(String targetPlayerName, int hours, String source) {
-        long now = System.currentTimeMillis();
-        int safeHours = Math.clamp(hours, 0, MAX_REWARD_HOURS);
-        if (safeHours == 0) {
-            return store.getAccount(targetPlayerName).orElse(null);
-        }
-        String tag = source == null || source.isBlank() ? "reward" : source;
-        RegistrationStore.PlayerAccount account =
-                store.grantPassHours(targetPlayerName, now, safeHours, tag);
-        String description = describeGrantSource(tag);
-        Player onlinePlayer = Bukkit.getPlayerExact(targetPlayerName);
-        if (onlinePlayer != null) {
-            notifyOnlinePassActivated(onlinePlayer, account.passUntil, description);
-        }
-        logger.info("Reward pass extended for " + targetPlayerName + " by " + safeHours
-                + " h (until " + formatTimestamp(account.passUntil) + ", source: " + tag + ").");
-        audit.log(AuditLog.PASS_GRANT_MANUAL, "reward", targetPlayerName, "",
-                AuditLog.details("hours", safeHours, "source", tag, "passUntil", account.passUntil));
-        notifications.notify("pass.granted", notificationTitle(tag),
-                "Игрок: " + targetPlayerName + "\nЧасов: " + safeHours + "\nИсточник: " + tag, "good");
-        plugin.luckPermsPassSync().onPassGranted(targetPlayerName);
-        return account;
+        plugin.rewardBoosts().grant(targetPlayerName, hours, source);
+        return store.getAccount(targetPlayerName).orElse(null);
     }
 
     /**
      * Человеческое описание источника проходки для поздравления игроку.
-     * Аддоны передают метку вида {@code streams:...}, {@code battlepass:...} и т.п.
+     * Аддоны передают метку вида {@code artifacts:...}, {@code battlepass:...} и т.п.
      */
     static String describeGrantSource(String source) {
         if (source == null || source.isBlank()) {
@@ -1607,9 +1608,6 @@ public final class AccessManager {
         }
         if (source.startsWith("shop")) {
             return "покупкой в магазине";
-        }
-        if (source.startsWith("streams")) {
-            return "наградой стримерской программы";
         }
         if (source.startsWith("daily-rewards")) {
             return "наградой ежедневного входа";
@@ -1634,9 +1632,6 @@ public final class AccessManager {
 
     /** Заголовок уведомления в Discord: ручная выдача или награда аддона. */
     static String notificationTitle(String source) {
-        if (source != null && source.startsWith("streams")) {
-            return "Ранг продлён по стримерской программе";
-        }
         if (source != null && source.startsWith("battlepass")) {
             return "Ранг выдан за батлпасс";
         }
@@ -1689,7 +1684,7 @@ public final class AccessManager {
         Player onlinePlayer = Bukkit.getPlayerExact(targetPlayerName);
         if (onlinePlayer != null) {
             UUID uuid = onlinePlayer.getUniqueId();
-            authenticatedPlayers.remove(uuid);
+            removeAuthentication(uuid);
             passwordVerifiedPlayers.remove(uuid);
             pendingTotpSecrets.remove(uuid);
             authSource.remove(uuid);
@@ -1718,7 +1713,7 @@ public final class AccessManager {
         Player onlinePlayer = Bukkit.getPlayerExact(targetPlayerName);
         if (onlinePlayer != null) {
             UUID uuid = onlinePlayer.getUniqueId();
-            authenticatedPlayers.remove(uuid);
+            removeAuthentication(uuid);
             passwordVerifiedPlayers.remove(uuid);
             pendingTotpSecrets.remove(uuid);
             authSource.remove(uuid);
@@ -1775,6 +1770,7 @@ public final class AccessManager {
         // Карта с QR больше не нужна: секрет привязан, картинка на ней уже «закрыта».
         clearTotpQrMaps(player);
         authenticatedPlayers.add(uuid);
+        if (plugin.rewardBoosts() != null) plugin.rewardBoosts().resume(player);
         passwordVerifiedPlayers.remove(uuid);
         freezeLocations.remove(uuid);
         lastChatReminderAt.remove(uuid);
@@ -1846,14 +1842,14 @@ public final class AccessManager {
             boolean hasPass = !config.passEnabled() || store.hasActivePass(player.getName(), now);
 
             if (!hasPass && config.trialEnabled() && store.isTrialEligible(player.getName(), uuid)) {
-                authenticatedPlayers.remove(uuid);
+                removeAuthentication(uuid);
                 passwordVerifiedPlayers.remove(uuid);
                 sendRegisterReminder(player, now);
                 continue;
             }
             if (!hasPass) {
                 passwordVerifiedPlayers.remove(uuid);
-                if (authenticatedPlayers.remove(uuid)) {
+                if (removeAuthentication(uuid)) {
                     freezeLocations.put(uuid, player.getLocation().clone());
                     player.closeInventory();
                     messages.send(player, "pass.expired");
@@ -1876,7 +1872,7 @@ public final class AccessManager {
             }
 
             if (!store.isRegistered(player.getName())) {
-                authenticatedPlayers.remove(uuid);
+                removeAuthentication(uuid);
                 passwordVerifiedPlayers.remove(uuid);
                 sendRegisterReminder(player, now);
                 continue;
@@ -2138,7 +2134,7 @@ public final class AccessManager {
     public void beginForcedEnrollment(Player player, String introKey) {
         if (player == null || !player.isOnline()) return;
         UUID uuid = player.getUniqueId();
-        authenticatedPlayers.remove(uuid);
+        removeAuthentication(uuid);
         passwordVerifiedPlayers.add(uuid);
         freezeLocations.putIfAbsent(uuid, player.getLocation().clone());
         lastChatReminderAt.put(uuid, System.currentTimeMillis());
@@ -2565,7 +2561,7 @@ public final class AccessManager {
         if (!cleared) {
             store.clearSessions(player.getName());
         }
-        authenticatedPlayers.remove(player.getUniqueId());
+        removeAuthentication(player.getUniqueId());
         passwordVerifiedPlayers.remove(player.getUniqueId());
         authSource.remove(player.getUniqueId());
         audit.log(AuditLog.SESSION_END, player.getName(), player.getName(), ip,
@@ -2605,7 +2601,7 @@ public final class AccessManager {
         Player online = Bukkit.getPlayerExact(playerName);
         if (online == null) return;
         UUID uuid = online.getUniqueId();
-        authenticatedPlayers.remove(uuid);
+        removeAuthentication(uuid);
         passwordVerifiedPlayers.remove(uuid);
         authSource.remove(uuid);
         freezeLocations.put(uuid, online.getLocation().clone());

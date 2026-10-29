@@ -45,7 +45,7 @@ public final class CollectionStore {
         public long lastFound;
     }
 
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setObjectToNumberStrategy(com.google.gson.ToNumberPolicy.BIG_DECIMAL).setPrettyPrinting().create();
     private static final Type DATA_TYPE = new TypeToken<LinkedHashMap<String, Object>>() {
     }.getType();
 

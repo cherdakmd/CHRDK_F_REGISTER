@@ -23,9 +23,9 @@ public final class HuntCommandHandler implements CommandExecutor, TabCompleter {
 
     private static final List<String> PLAYER_SUBCOMMANDS =
             List.of("help", "stats", "shop", "buy", "exchange", "keys", "chest",
-                    "bestiary", "trophies", "trophy", "top");
+                    "bestiary", "trophies", "trophy", "top", "danger", "inspect", "observations", "elites", "hud", "history");
     private static final List<String> ADMIN_SUBCOMMANDS =
-            List.of("reload", "give", "reset", "info");
+            List.of("reload", "give", "reset", "info", "awards");
     private static final List<String> GIVE_KINDS = List.of("coins", "shards", "keys");
 
     private final HuntPlugin plugin;
@@ -70,6 +70,7 @@ public final class HuntCommandHandler implements CommandExecutor, TabCompleter {
             case "trophies" -> trophies(sender);
             case "trophy" -> trophy(sender, args);
             case "top" -> plugin.report().top(sender);
+            case "danger", "inspect", "observations", "elites", "hud", "history" -> new MobReport(plugin).command(sender, args);
             default -> {
                 plugin.messages().send(sender, "unknown-subcommand", "sub", args[0]);
                 yield true;
@@ -247,6 +248,10 @@ public final class HuntCommandHandler implements CommandExecutor, TabCompleter {
             plugin.messages().send(sender, "admin-usage");
             return true;
         }
+        if(args[0].equalsIgnoreCase("awards")) { plugin.finance().status(sender); return true; }
+        if(!plugin.store().healthy()&&!args[0].equalsIgnoreCase("reload")&&!args[0].equalsIgnoreCase("info")) {
+            plugin.messages().send(sender,"finance-wait"); return true;
+        }
         return switch (args[0].toLowerCase(Locale.ROOT)) {
             case "reload" -> reload(sender);
             case "give" -> give(sender, args);
@@ -260,8 +265,8 @@ public final class HuntCommandHandler implements CommandExecutor, TabCompleter {
     }
 
     private boolean reload(CommandSender sender) {
-        plugin.reloadHunt();
-        plugin.messages().send(sender, "admin-reloaded");
+        if (plugin.tryReloadHunt()) plugin.messages().send(sender, "admin-reloaded");
+        else plugin.messages().send(sender, "admin-reload-failed");
         return true;
     }
 
@@ -336,6 +341,7 @@ public final class HuntCommandHandler implements CommandExecutor, TabCompleter {
             return true;
         }
         plugin.requestSave();
+        if (plugin.historyTracker() != null) plugin.historyTracker().forget(target.id());
         plugin.messages().send(sender, "admin-reset", "player", target.name());
         return true;
     }
@@ -393,6 +399,8 @@ public final class HuntCommandHandler implements CommandExecutor, TabCompleter {
             }
             return List.of();
         }
+        if (args.length == 2 && args[0].equalsIgnoreCase("hud") && sender.hasPermission("chrdkhunt.use"))
+            return filter(List.of("on", "off"), args[1]);
         if (args.length == 1) {
             return filter(PLAYER_SUBCOMMANDS, args[0]);
         }
@@ -408,6 +416,7 @@ public final class HuntCommandHandler implements CommandExecutor, TabCompleter {
                 case "trophy" -> filter(trophyIds(), args[1]);
                 case "stats" -> filter(onlineNames(), args[1]);
                 case "exchange" -> filter(List.of("max"), args[1]);
+                case "history" -> sender.hasPermission("chrdkhunt.use") ? filter(List.of("1", "2", "3", "4"), args[1]) : List.of();
                 default -> List.of();
             };
         }

@@ -10,6 +10,7 @@ import java.util.UUID;
 import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -187,17 +188,19 @@ class GuildStoreTest {
     }
 
     @Test
-    void brokenFileStartsClean(@TempDir Path dir) throws Exception {
+    void brokenFileStopsWithoutOverwrite(@TempDir Path dir) throws Exception {
         Files.createDirectories(dir);
         Files.writeString(dir.resolve("guilds.json"), "{[", StandardCharsets.UTF_8);
         GuildStore store = new GuildStore(dir, LOGGER);
-        store.load();
+        assertThrows(IllegalStateException.class,store::load);
+        store.flush();
+        assertEquals("{[",Files.readString(store.file()));
         assertEquals(0, store.count());
         assertFalse(store.isDirty());
     }
 
     @Test
-    void brokenEntriesAreSkipped(@TempDir Path dir) throws Exception {
+    void ambiguousEntriesStopEntireImport(@TempDir Path dir) throws Exception {
         Files.createDirectories(dir);
         Files.writeString(dir.resolve("guilds.json"), """
                 {
@@ -214,37 +217,18 @@ class GuildStoreTest {
                 }
                 """.formatted(LEADER, NOW, LEADER, MEMBER, OTHER), StandardCharsets.UTF_8);
         GuildStore store = new GuildStore(dir, LOGGER);
-        store.load();
-        assertEquals(1, store.count());
-        Guild guild = store.guild("g1");
-        assertNotNull(guild);
-        assertEquals(100L, guild.treasury());
-        assertEquals(3, guild.level());
-        assertEquals(2, guild.size(), "битый ид участника пропущен");
-        assertEquals(GuildRank.OFFICER, guild.rankOf(MEMBER));
-        assertEquals(GuildRank.LEADER, guild.rankOf(LEADER));
+        assertThrows(IllegalStateException.class,store::load);
+        assertEquals(0,store.count());
     }
 
     @Test
-    void duplicateMembershipIsResolved(@TempDir Path dir) throws Exception {
-        Files.createDirectories(dir);
-        Files.writeString(dir.resolve("guilds.json"), """
-                {
-                  "version": 1,
-                  "guilds": [
-                    {"id": "g1", "name": "Первый", "leader": "%s",
-                     "members": {"%s": "leader"}},
-                    {"id": "g2", "name": "Второй", "leader": "%s",
-                     "members": {"%s": "leader", "%s": "member"}}
-                  ]
-                }
-                """.formatted(LEADER, LEADER, OTHER, OTHER, MEMBER), StandardCharsets.UTF_8);
-        GuildStore store = new GuildStore(dir, LOGGER);
-        store.load();
-        assertEquals(2, store.count());
-        assertEquals("g1", store.of(LEADER).id());
-        assertEquals("g2", store.of(OTHER).id());
-        assertEquals("g2", store.of(MEMBER).id());
+    void completeLegacyGuildsKeepTheirOwners(@TempDir Path dir) throws Exception {
+        GuildStore original = new GuildStore(dir,LOGGER);
+        original.add(guild("g1","Первый","ONE")); original.add(secondGuild()); original.flush();
+        GuildStore store = new GuildStore(dir,LOGGER); store.load();
+        assertEquals(2,store.count());
+        assertEquals("g1",store.of(LEADER).id());
+        assertEquals("g2",store.of(RIVAL).id());
     }
 
     @Test

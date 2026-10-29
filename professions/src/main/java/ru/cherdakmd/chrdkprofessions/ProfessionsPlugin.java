@@ -30,6 +30,7 @@ public final class ProfessionsPlugin extends JavaPlugin {
     private ProfessionStore store;
     private ProfessionService service;
     private ProfessionsGui gui;
+    private ProfessionWorkshop workshop;
     /** 1.4.182: обязательный выбор профессии — меню и напоминания. */
     private ProfessionOnboarding onboarding;
     private BukkitTask saveTask;
@@ -46,6 +47,7 @@ public final class ProfessionsPlugin extends JavaPlugin {
             store.load();
             this.service = new ProfessionService(config, store);
             this.gui = new ProfessionsGui(this);
+            this.workshop = new ProfessionWorkshop(this);
             this.onboarding = new ProfessionOnboarding(this);
 
             getServer().getPluginManager().registerEvents(new ProfessionListener(this), this);
@@ -107,6 +109,15 @@ public final class ProfessionsPlugin extends JavaPlugin {
         }
     }
 
+    ProfessionWorkshop workshop() { return workshop; }
+
+    boolean authenticated(Player player) {
+        ChrdkRegisterApi api = coreApi;
+        if (api == null || player == null) return false;
+        try { return api.isAuthenticated(player); }
+        catch (LinkageError ignored) { return false; }
+    }
+
     private void registerCommands() {
         ProfessionsCommandHandler handler = new ProfessionsCommandHandler(this);
         for (String name : new String[]{"prof", "profadmin"}) {
@@ -145,6 +156,11 @@ public final class ProfessionsPlugin extends JavaPlugin {
             var online = uuid == null ? null : Bukkit.getPlayer(uuid);
             return online == null ? ru.cherdakmd.chrdkregister.api.RankBonus.NONE
                     : coreApi.rankBonus(online.getName());
+        });
+        service.setRewardScaler((uuid, base, current) -> {
+            var online = uuid == null ? null : Bukkit.getPlayer(uuid);
+            return online == null || coreApi == null ? current
+                    : coreApi.boostExperience(online.getName(), "professions", base, current);
         });
         try {
             coreApi.registerProfile("professions", new ProfessionsProfile(this));

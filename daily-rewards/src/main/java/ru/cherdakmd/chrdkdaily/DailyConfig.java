@@ -69,7 +69,7 @@ public final class DailyConfig {
             List<ItemReward> vipItems = parseItems(raw.get("vip-items"), logger, validateMaterials);
             // 1.4.184: награда в часах, одна награда — не больше суток. Старый ключ
             // vip-pass-days читается как часы, чтобы конфиг без перезаписи не потерял награду.
-            Object hoursRaw = raw.containsKey("vip-pass-hours")
+            Object hoursRaw = raw.containsKey("vip-boost-hours") ? raw.get("vip-boost-hours") : raw.containsKey("vip-pass-hours")
                     ? raw.get("vip-pass-hours") : raw.get("vip-pass-days");
             int vipPassHours = Math.min(24, Math.max(0, intOf(hoursRaw, 0)));
             if (items.isEmpty() && vipItems.isEmpty() && vipPassHours == 0) {
@@ -100,7 +100,7 @@ public final class DailyConfig {
                 logger.warning("[DailyRewards] rewards: пропускаю непонятный предмет '" + text + "'.");
                 continue;
             }
-            items.add(new ItemReward(material, Math.min(2304, amount)));
+            items.add(new ItemReward(bukkit==null?material:bukkit.name(), Math.min(2304, amount)));
         }
         return List.copyOf(items);
     }
@@ -109,13 +109,13 @@ public final class DailyConfig {
     public static String describe(DayReward reward, boolean vip, Optional<Integer> fallbackPassHours) {
         List<String> parts = new ArrayList<>();
         reward.itemsFor(vip).forEach(item ->
-                parts.add(item.material().toLowerCase(Locale.ROOT) + " ×" + item.amount()));
+                parts.add(DailyStore.moneyUnit(item.material())>0?"/bal +"+(long)DailyStore.moneyUnit(item.material())*item.amount()+" 💠":item.material().toLowerCase(Locale.ROOT) + " ×" + item.amount()));
         int passHours = vip ? reward.vipPassHours() : 0;
         if (passHours <= 0) {
             passHours = fallbackPassHours.orElse(0);
         }
         if (passHours > 0) {
-            parts.add("+" + passHours + " ч. ранга");
+            parts.add("+" + passHours + " ч. буста");
         }
         return parts.isEmpty() ? "—" : String.join(", ", parts);
     }

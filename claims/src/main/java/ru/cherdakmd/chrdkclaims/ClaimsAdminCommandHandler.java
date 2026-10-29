@@ -18,7 +18,7 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
 
     private static final List<String> SUBS = List.of("reload", "bypass", "delete", "deleteall",
             "info", "give", "transfer", "limit", "transferall", "backup", "audit",
-            "purge", "rent", "stats");
+            "purge", "rent", "stats", "recovery", "tpfinance", "tprecover", "tpresolve");
 
     private final ClaimsPlugin plugin;
 
@@ -28,13 +28,22 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if(!plugin.financeReady()&&(args.length==0||!args[0].equalsIgnoreCase("recovery"))) { plugin.messages().send(sender,"finance.unavailable");return true; }
+
         if (!sender.hasPermission("chrdkclaims.admin")) {
             plugin.messages().send(sender, "no-permission");
             return true;
         }
+        if(args.length>0&&args[0].equalsIgnoreCase("recovery")) {
+            var store=plugin.store(); plugin.messages().send(sender,"finance.recovery","healthy",String.valueOf(store.moneyAvailable()),"lineage",store.financialLineage().toString(),"registered",String.valueOf(store.financialRegistered()),"sequence",String.valueOf(store.financialSequence()),"pending",String.valueOf(store.financialPending()!=null)); return true;
+        }
         if (args.length == 0) {
             usage(sender);
             return true;
+        }
+        if (List.of("tpfinance","tprecover","tpresolve").contains(args[0].toLowerCase(Locale.ROOT))) {
+            String[] financeArgs=args.clone(); financeArgs[0]=financeArgs[0].substring(2);
+            plugin.teleportPayments().admin(sender,financeArgs); return true;
         }
         String sub = args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
@@ -94,6 +103,7 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
             plugin.messages().send(player, "admin-no-claim");
             return;
         }
+        if (plugin.service().rentalLocked(player, List.of(claim))) return;
         plugin.store().remove(claim);
         plugin.audit("admin-delete", player.getName() + " " + claim.where()
                 + " owner=" + claim.owner);
@@ -116,6 +126,7 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
             plugin.messages().send(sender, "admin-player-not-found", "name", name);
             return;
         }
+        if (plugin.service().rentalLocked(sender, claims)) return;
         for (Claim claim : new ArrayList<>(claims)) {
             plugin.store().remove(claim);
         }
@@ -238,7 +249,7 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
         }
     }
 
-    /** Массовая передача всех приватов, казны и вестей — сценарий смены ника. */
+    /** Массовая передача приватов и вестей. Личные счета/источники миграции не переназначаются. */
     private void transferAll(CommandSender sender, String[] args) {
         if (args.length < 3) {
             usage(sender);
@@ -250,26 +261,28 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
             plugin.messages().send(sender, "admin-transferall-self");
             return;
         }
-        ClaimStore.TransferSummary summary = plugin.store().transferAll(from, to);
+        ClaimStore.TransferSummary summary;
+        try { summary = plugin.store().transferAll(from, to); }
+        catch (IllegalStateException protectedLand) { plugin.messages().send(sender, "finance.transfer-protected"); return; }
         plugin.audit("admin-transferall", sender.getName() + " " + from + " -> " + to
                 + " claims=" + summary.claims() + " treasury=" + summary.treasury());
         if (summary.claims() == 0 && summary.treasury() == 0
                 && summary.notices() == 0 && !summary.limitMoved()) {
-            plugin.messages().send(sender, "admin-transferall-none", "name", from);
+            plugin.messages().send(sender, "finance.admin-transferall-none", "name", from);
             return;
         }
-        plugin.messages().send(sender, "admin-transferall-done",
+        plugin.messages().send(sender, "finance.admin-transferall-done",
                 "from", from, "name", to,
                 "claims", String.valueOf(summary.claims()),
                 "treasury", String.valueOf(summary.treasury()),
                 "notices", String.valueOf(summary.notices()));
-        String notice = plugin.messages().plain("admin-transferall-received",
+        String notice = plugin.messages().plain("finance.admin-transferall-received",
                 "from", from,
                 "claims", String.valueOf(summary.claims()),
                 "treasury", String.valueOf(summary.treasury()));
         Player online = Bukkit.getPlayerExact(to);
         if (online != null && plugin.service().isAllowed(online)) {
-            plugin.messages().send(online, "admin-transferall-received",
+            plugin.messages().send(online, "finance.admin-transferall-received",
                     "from", from,
                     "claims", String.valueOf(summary.claims()),
                     "treasury", String.valueOf(summary.treasury()));
@@ -300,6 +313,7 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
         }
         ClaimStore.RestoreResult result = plugin.store().restoreFrom(args[2]);
         switch (result) {
+            case PROTECTED -> plugin.messages().send(sender, "finance.backup-protected");
             case OK -> {
                 plugin.messages().send(sender, "admin-backup-restored", "file", args[2]);
                 plugin.audit("backup-restore", sender.getName() + " <- " + args[2]);
@@ -386,6 +400,7 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
             return;
         }
         String world = args[1];
+        if (plugin.service().rentalLocked(sender, plugin.store().inWorld(world))) return;
         int count = plugin.store().removeWorld(world);
         if (count == 0) {
             plugin.messages().send(sender, "admin-purge-none", "world", world);
@@ -419,7 +434,7 @@ public final class ClaimsAdminCommandHandler implements CommandExecutor, TabComp
                 debt++;
             }
         }
-        plugin.messages().send(sender, "admin-stats-general",
+        plugin.messages().send(sender, "finance.admin-stats-general",
                 "claims", String.valueOf(claims.size()),
                 "owners", String.valueOf(byOwner.size()),
                 "treasury", String.valueOf(plugin.store().totalTreasury()),

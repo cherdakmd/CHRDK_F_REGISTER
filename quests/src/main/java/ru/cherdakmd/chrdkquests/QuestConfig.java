@@ -286,6 +286,7 @@ public final class QuestConfig {
                     }
                     continue;
                 }
+                if(material==Material.DIAMOND||material==Material.DIAMOND_BLOCK){if(logger!=null)logger.warning("[CHRDK_Quests] "+path+"."+id+": алмазная валюта не является наградой квеста — пропущена.");continue;}
                 items.add(new QuestReward.Item(material, (int) number(entry.getValue(), 1)));
             }
         }

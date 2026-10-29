@@ -76,6 +76,25 @@ class LabelLimitsTest {
     }
 
     @Test
+    void displayedLabelsAreIndependentFromPresets() {
+        assertEquals(List.of(2, 2, 2, 3, 4, 5), LabelLimits.DEFAULT.displayedLabels());
+        assertEquals(2, LabelLimits.DEFAULT.labelsFor(-1));
+        assertEquals(5, LabelLimits.DEFAULT.labelsFor(99));
+        LabelLimits limits = LabelLimits.fromConfig(yaml("""
+                labels:
+                  display:
+                    slots: [1, 3, 99]
+                """));
+        assertEquals(1, limits.labelsFor(0));
+        assertEquals(3, limits.labelsFor(1));
+        assertEquals(LabelLimits.MAX_LABELS, limits.labelsFor(5));
+        assertEquals(LabelLimits.DEFAULT.presetSlots(), limits.presetSlots());
+        assertEquals(1, new LabelLimits(List.of(2), List.of(-3)).labelsFor(0));
+        assertEquals(LabelLimits.DEFAULT.displayedLabels(),
+                LabelLimits.fromConfig(yaml("labels:\n  presets:\n    slots: [1]\n")).displayedLabels());
+    }
+
+    @Test
     void missingSectionFallsBackToDefaults() {
         assertEquals(LabelLimits.DEFAULT, LabelLimits.fromConfig(yaml("general:\n  x: 1\n")));
         assertEquals(LabelLimits.DEFAULT, LabelLimits.fromConfig(null));

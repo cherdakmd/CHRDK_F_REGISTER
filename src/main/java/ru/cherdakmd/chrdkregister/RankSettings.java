@@ -60,7 +60,7 @@ public final class RankSettings {
                          List<Integer> bonusSkill) {
         this.enabled = enabled;
         this.showNameInChat = showNameInChat;
-        this.welcomeEnabled = welcomeEnabled;
+        this.welcomeEnabled = false; // старый конфиг не может включить бесплатный платный ранг
         this.welcomeLevel = RankLadder.clampLevel(welcomeLevel);
         this.welcomeDays = Math.max(0, Math.min(365, welcomeDays));
         this.announceJoin = announceJoin;
@@ -78,7 +78,7 @@ public final class RankSettings {
 
     /** Значения по умолчанию: лестница включена, приветственный ранг — 1 день. */
     public static RankSettings defaults() {
-        return new RankSettings(true, false, true, 1, 3, true, DEFAULT_TIERS, 5,
+        return new RankSettings(true, false, false, 1, 3, true, DEFAULT_TIERS, 5,
                 BonusDefaults.XP, BonusDefaults.DROP, BonusDefaults.SKILL);
     }
 

@@ -33,22 +33,40 @@ public final class SkillsPlugin extends JavaPlugin {
     private SkillEffects effects;
     private SkillListener listener;
     private SkillsGui gui;
+    private SkillAbilityStore abilityStore;
+    private SkillAbilities abilities;
+    private BukkitTask abilityTask;
     private BukkitTask saveTask;
     private BukkitTask effectTask;
+
+    private ru.cherdakmd.chrdkregister.api.MilestoneAwards awards;
+    public ru.cherdakmd.chrdkregister.api.MilestoneAwards awards() { return awards; }
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
         this.store = new SkillStore(getDataFolder().toPath(), getLogger());
-        this.store.load();
         // Конфиг читается до создания листенера: антинакрутка берёт из него TTL.
         reloadSkillsConfig();
+        try {
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 20) throw new IllegalStateException("Нужен Core API 20+");
+            this.awards = new ru.cherdakmd.chrdkregister.api.MilestoneAwards(this,this::coreApi,this::messages,"skills-awards",ru.cherdakmd.chrdkregister.api.MilestoneMigration.json(getDataFolder().toPath().resolve("skills.json"),ru.cherdakmd.chrdkregister.api.MilestoneMigration.Kind.SKILLS));
+        } catch (Exception | LinkageError error) {
+            getLogger().log(java.util.logging.Level.SEVERE,"Модуль остановлен без сброса прогресса/наград",error);
+            this.store = null;
+            Bukkit.getPluginManager().disablePlugin(this); return;
+        }
+        this.store.load();
         this.service = new SkillService(this, store);
+        this.abilityStore = new SkillAbilityStore(getDataFolder().toPath(), getLogger());
+        abilityStore.load();
+        this.abilities = new SkillAbilities(this, abilityStore);
         this.effects = new SkillEffects(this);
         this.listener = new SkillListener(this, service);
         this.gui = new SkillsGui(this, service);
 
         Bukkit.getPluginManager().registerEvents(listener, this);
+        Bukkit.getPluginManager().registerEvents(abilities, this);
         Bukkit.getPluginManager().registerEvents(gui, this);
 
         SkillCommandHandler commands = new SkillCommandHandler(this, service, gui);
@@ -78,6 +96,8 @@ public final class SkillsPlugin extends JavaPlugin {
         this.effectTask = Bukkit.getScheduler().runTaskTimer(this, this::refreshEffects,
                 Math.max(1, config.refreshTicks()), Math.max(1, config.refreshTicks()));
 
+        this.abilityTask = Bukkit.getScheduler().runTaskTimer(this, abilities::pulse, 20L, 20L);
+
         for (Player player : Bukkit.getOnlinePlayers()) {
             service.rememberName(player);
             effects.apply(player);
@@ -90,6 +110,11 @@ public final class SkillsPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (awards != null) awards.close();
+        ru.cherdakmd.chrdkregister.api.CropReplanting.cancel(this);
+        if (abilityTask != null) abilityTask.cancel();
+        if (abilities != null) abilities.clear();
+        if (abilityStore != null) abilityStore.flush();
         if (coreApi != null) {
             try {
                 coreApi.unregisterProfile("skills");
@@ -118,6 +143,8 @@ public final class SkillsPlugin extends JavaPlugin {
 
     /** Перечитывает config.yml/messages.yml, сохраняя прогресс игроков. */
     public void reloadSkillsConfig() {
+        ru.cherdakmd.chrdkregister.api.CropReplanting.cancel(this);
+        if (abilities != null) abilities.clear();
         reloadConfig();
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"),
                 getLogger());
@@ -150,6 +177,7 @@ public final class SkillsPlugin extends JavaPlugin {
 
     private void saveState() {
         try {
+            if (abilityStore != null) abilityStore.saveNow();
             if (store.isDirty()) {
                 store.saveNow();
             }
@@ -183,6 +211,8 @@ public final class SkillsPlugin extends JavaPlugin {
     public SkillService skills() {
         return service;
     }
+
+    SkillAbilities abilities() { return abilities; }
 
     public SkillEffects effects() {
         return effects;

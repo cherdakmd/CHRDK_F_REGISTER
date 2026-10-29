@@ -38,6 +38,9 @@ public final class ArtifactsPlugin extends JavaPlugin {
     private ArtifactsApiBridge apiBridge;
     private BukkitTask saveTask;
 
+    private ru.cherdakmd.chrdkregister.api.MilestoneAwards awards;
+    public ru.cherdakmd.chrdkregister.api.MilestoneAwards awards() { return awards; }
+
     @Override
     public void onEnable() {
         saveDefaultConfig();
@@ -48,7 +51,16 @@ public final class ArtifactsPlugin extends JavaPlugin {
         this.traits = new ArtifactTraitService(this);
         this.passives = new PassiveEffectsService(this);
         this.feedback = new ArtifactFeedback(this);
+        reloadArtifactsConfig();
+        try {
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 20) throw new IllegalStateException("Нужен Core API 20+");
+            this.awards = new ru.cherdakmd.chrdkregister.api.MilestoneAwards(this,this::coreApi,this::messages,"artifact-awards",ru.cherdakmd.chrdkregister.api.MilestoneMigration.json(getDataFolder().toPath().resolve("collection.json"),ru.cherdakmd.chrdkregister.api.MilestoneMigration.Kind.ARTIFACTS));
+        } catch (Exception | LinkageError error) {
+            getLogger().log(java.util.logging.Level.SEVERE,"Модуль остановлен без сброса прогресса/наград",error);
+            Bukkit.getPluginManager().disablePlugin(this); return;
+        }
         this.collection = new CollectionService(this);
+        awards.reconciler(player -> collection.claim(player));
         this.collectionGui = new CollectionGui(this);
         reloadArtifactsConfig();
 
@@ -91,6 +103,7 @@ public final class ArtifactsPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (awards != null) awards.close();
         if (apiBridge != null) {
             getServer().getServicesManager().unregister(ChrdkArtifactsApi.class, apiBridge);
             apiBridge = null;

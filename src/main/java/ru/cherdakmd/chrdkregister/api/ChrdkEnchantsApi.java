@@ -10,7 +10,7 @@ import java.util.Map;
  *
  * <p>Реализацию регистрирует <b>CHRDK_Enchants</b> через {@code ServicesManager};
  * потребители (например, <b>CHRDK_TierForge</b>) спрашивают её мягко и без
- * аддона чар просто не накладывают кастомные чары.</p>
+ * аддона чар просто не нанаградывают кастомные чары.</p>
  *
  * <pre>{@code
  * Bukkit.getServicesManager().register(ChrdkEnchantsApi.class, new EnchantsApiBridge(this),
@@ -41,6 +41,9 @@ public interface ChrdkEnchantsApi {
     /** Максимальный уровень чары (0 — такой чары нет). */
     int maxLevel(String id);
 
+    /** COMMON / RARE / EPIC / LEGENDARY; пусто для старого моста или неизвестного id. */
+    default String rarity(String id) { return ""; }
+
     /** Уровень чары на предмете (0 — нет). */
     int levelOf(ItemStack item, String id);
 
@@ -51,7 +54,7 @@ public interface ChrdkEnchantsApi {
     int count(ItemStack item);
 
     /**
-     * Накладывает чару на предмет с учётом правил аддона (поддержка вида,
+     * Нанаградывает чару на предмет с учётом правил аддона (поддержка вида,
      * лимит чар, конфликтные группы, включена ли чара в конфиге).
      *
      * @return {@code true}, если чара теперь на предмете (в том числе уже была)
@@ -71,7 +74,7 @@ public interface ChrdkEnchantsApi {
      * Готовая книга чары (1.4.166): предмет, который наковальня переносит на
      * снаряжение по обычным правилам модуля — с именем, лором и PDC.
      *
-     * <p>Книга нужна тем, кто выдаёт чары не со стола и не от жителей: клады
+     * <p>Книга нужна тем, кто выдаёт чары не со стола и не от жителей: награды
      * находят её как обычную добычу. Метод мягкий: старый аддон чар без
      * поддержки книг возвращает {@code null} (значение по умолчанию), и
      * источник просто пропускает награду, а не падает.</p>
@@ -84,4 +87,10 @@ public interface ChrdkEnchantsApi {
     default ItemStack book(String id, int level) {
         return null;
     }
+    /** Новый источник книги; старые реализации мягко возвращают книгу без метки. Только main thread. */
+    default ItemStack book(String id, int level, EnchantBookSource source) {
+        if (source != null && source.retired()) return null;
+        return book(id, level);
+    }
+
 }

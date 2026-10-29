@@ -41,7 +41,7 @@ public final class VillagerListener implements Listener {
         if (roll == null) {
             return;
         }
-        ItemStack book = plugin.items().makeEnchantBook(roll.def(), roll.level());
+        ItemStack book = plugin.items().makeEnchantBook(roll.def(), roll.level(), ru.cherdakmd.chrdkregister.api.EnchantBookSource.VILLAGER);
         MerchantRecipe custom = new MerchantRecipe(book, recipe.getUses(), recipe.getMaxUses(),
                 true, recipe.getVillagerExperience(), recipe.getPriceMultiplier(),
                 recipe.getDemand(), recipe.getSpecialPrice());

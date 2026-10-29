@@ -1,6 +1,5 @@
 package ru.cherdakmd.chrdkenchants;
 
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -29,12 +28,6 @@ import java.util.Random;
  * набор чар уже скопирован в PDC снаряда, поэтому повторно читать лук не нужно.</p>
  */
 public final class PolarityEffectsListener implements Listener {
-
-    /** Блоки, с которых «Старатель» умеет давать второй дроп. */
-    private static boolean isOre(Material material) {
-        String name = material.name();
-        return name.endsWith("_ORE") || name.equals("ANCIENT_DEBRIS");
-    }
 
     private final EnchantsPlugin plugin;
     private final Random random = new Random();
@@ -179,15 +172,7 @@ public final class PolarityEffectsListener implements Listener {
             event.getItems().clear();
             return;
         }
-        // Старатель: шанс удвоить дроп руды
-        int prospector = enchants.getOrDefault("prospector", 0);
-        if (prospector > 0 && isOre(event.getBlock().getType())
-                && random.nextInt(100) < EnchantParams.percent("prospector", prospector)) {
-            for (org.bukkit.entity.Item drop : List.copyOf(event.getItems())) {
-                ItemStack extra = drop.getItemStack().clone();
-                drop.getWorld().dropItemNaturally(drop.getLocation(), extra);
-            }
-        }
+        // Минеральные бонусы Мидаса/Золотой жилы — в ToolEffectsListener, после финальной отмены.
     }
 
     /* ------------------------------ убийства ------------------------------ */

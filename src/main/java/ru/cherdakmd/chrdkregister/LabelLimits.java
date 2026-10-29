@@ -5,18 +5,8 @@ import org.bukkit.configuration.file.FileConfiguration;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Сколько личных пресетов оформления доступно на каждой ступени (1.4.187).
- *
- * <p>Пресет — сохранённый вид ника: что скрыто, в каком порядке метки и какой
- * цвет. Чем выше ступень, тем больше слотов: у игрока без ранга их два
- * («минимальный» и «полный»), у Покровителя — шесть. Значение по индексу
- * уровня, как у бонусов ранга; конфиг может дать свой список, но числа
- * ограничены разумным потолком.</p>
- *
- * <p>Класс чистый, без Bukkit-сервера: разбор и расчёт покрыты тестами.</p>
- */
-public record LabelLimits(List<Integer> presetSlots) {
+/** Независимые лимиты пресетов и отображаемых надписей по ступеням 0–V. */
+public record LabelLimits(List<Integer> presetSlots, List<Integer> displayedLabels) {
 
     /** Потолок слотов: больше шести кнопок в меню не помещается. */
     public static final int MAX_SLOTS = 6;
@@ -24,24 +14,48 @@ public record LabelLimits(List<Integer> presetSlots) {
     /** Значения по умолчанию: 2 слота без ранга, дальше по одному на ступень. */
     private static final List<Integer> DEFAULTS = List.of(2, 2, 3, 4, 5, 6);
 
+    public static final int MAX_LABELS = 8;
+    private static final List<Integer> DEFAULT_LABELS = List.of(2, 2, 2, 3, 4, 5);
+
+    public LabelLimits(List<Integer> presetSlots) {
+        this(presetSlots, DEFAULT_LABELS);
+    }
+
     public static final LabelLimits DEFAULT = new LabelLimits(DEFAULTS);
 
     public LabelLimits {
+        presetSlots = normalize(presetSlots, DEFAULTS, MAX_SLOTS);
+        displayedLabels = normalize(displayedLabels, DEFAULT_LABELS, MAX_LABELS);
+    }
+
+    private static List<Integer> normalize(List<Integer> source, List<Integer> defaults, int max) {
+        List<Integer> values = source == null || source.isEmpty() ? defaults : source;
         List<Integer> safe = new ArrayList<>();
-        List<Integer> source = presetSlots == null || presetSlots.isEmpty()
-                ? DEFAULTS : presetSlots;
-        for (int index = 0; index < RankLadder.MAX_LEVEL + 1; index++) {
-            int value = index < source.size() ? source.get(index) : source.get(source.size() - 1);
-            safe.add(Math.max(1, Math.min(MAX_SLOTS, value)));
+        for (int index = 0; index <= RankLadder.MAX_LEVEL; index++) {
+            Integer value = values.get(Math.min(index, values.size() - 1));
+            safe.add(Math.max(1, Math.min(max, value == null ? defaults.get(index) : value)));
         }
-        presetSlots = List.copyOf(safe);
+        return List.copyOf(safe);
     }
 
     public static LabelLimits fromConfig(FileConfiguration config) {
-        if (config == null || !config.isList("labels.presets.slots")) {
-            return DEFAULT;
+        return config == null ? DEFAULT : new LabelLimits(
+                config.getIntegerList("labels.presets.slots"),
+                config.getIntegerList("labels.display.slots"));
+    }
+
+    /** Шапка TAB не считается; знак и название ранга вместе — одна надпись. */
+    public int labelsFor(int level) {
+        return displayedLabels.get(Math.max(0, Math.min(displayedLabels.size() - 1, level)));
+    }
+
+    /** Минимальная ступень для места; -1 — место не открывается текущим конфигом. */
+    public int levelForLabelSlot(int index) {
+        if (index < 0 || index >= MAX_LABELS) return -1;
+        for (int level = 0; level < displayedLabels.size(); level++) {
+            if (index < labelsFor(level)) return level;
         }
-        return new LabelLimits(config.getIntegerList("labels.presets.slots"));
+        return -1;
     }
 
     /** Сколько слотов у этой ступени; уровень вне лестницы считается крайним. */

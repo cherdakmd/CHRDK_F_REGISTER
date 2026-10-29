@@ -35,7 +35,7 @@ public record QuestReward(int xp, int reputation, List<Item> items) {
         }
 
         public boolean usable() {
-            return material != Material.AIR;
+            return material != Material.AIR && material != Material.DIAMOND && material != Material.DIAMOND_BLOCK;
         }
     }
 

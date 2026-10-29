@@ -2,14 +2,7 @@ package ru.cherdakmd.chrdkguilds;
 
 import java.util.UUID;
 
-/**
- * Кошелёк гильдейской казны (1.4.163).
- *
- * <p>Экономика сервера — алмазы предметами, но сервису гильдий не нужно знать
- * про инвентарь: он просит «взять столько» и «выдать столько». В игре это
- * реализует {@link DiamondPurse}, в тестах — простая заглушка. Так правила
- * казны проверяются без живого сервера, а игрок не может уйти в минус.</p>
- */
+/** Чистый кошелёк preview. Production не выдаёт предметы: GuildFinance публикует WAL/entitlement. */
 @FunctionalInterface
 public interface GuildPurse {
 
@@ -23,7 +16,7 @@ public interface GuildPurse {
     /**
      * Выдаёт алмазы игроку.
      *
-     * @return сколько не поместилось (выпало под ноги); в штатной ситуации 0
+     * @return сколько не принято; preview возвращает 0, выплата публикуется отдельно
      */
     default long give(UUID player, long amount) {
         return 0L;

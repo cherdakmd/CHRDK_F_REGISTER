@@ -89,6 +89,14 @@ def read_page(path: Path) -> tuple[dict, str]:
     return meta, body
 
 
+def catalog_counts() -> tuple[int, int]:
+    """Числа главной из действующих исходников, не из устаревающей подписи."""
+    settings = (ROOT / "settings.gradle").read_text(encoding="utf-8")
+    modules = re.findall(r"^include\s+['\"]([^'\"]+)['\"]", settings, re.M)
+    shop = yaml.safe_load((ROOT / "diamond-shop/src/main/resources/config.yml").read_text(encoding="utf-8"))
+    return 1 + len(set(modules)), len(shop["items"])
+
+
 def property_value(key: str, fallback: str = "") -> str:
     props = ROOT / "gradle.properties"
     if not props.exists():
@@ -102,8 +110,8 @@ def property_value(key: str, fallback: str = "") -> str:
 def addon_count() -> int:
     settings = ROOT / "settings.gradle"
     if not settings.exists():
-        return 29
-    return len(re.findall(r"^\s*include\s+'([^']+)'", settings.read_text(encoding="utf-8"), re.MULTILINE)) or 29
+        return 27
+    return len(re.findall(r"^\s*include\s+'([^']+)'", settings.read_text(encoding="utf-8"), re.MULTILINE)) or 27
 
 
 def version() -> str:
@@ -482,7 +490,7 @@ PAGE_TEMPLATE = """<!doctype html>
   <div class="search-box" role="dialog" aria-modal="true" aria-labelledby="searchTitle">
     <div class="search-head">
       <span id="searchTitle" class="search-title">Поиск</span>
-      <input id="searchInput" type="search" placeholder="Ранги, клады, приваты…" autocomplete="off" spellcheck="false">
+      <input id="searchInput" type="search" placeholder="Ранги, охота, приваты…" autocomplete="off" spellcheck="false">
       <button class="icon-btn" id="searchClose" aria-label="Закрыть поиск">✕</button>
     </div>
     <div class="search-results" id="searchResults"><p class="search-empty">Начните вводить запрос.</p></div>
@@ -555,6 +563,7 @@ def build(check: bool) -> int:
         is_home = slug == "index"
 
         if is_home:
+            plugin_count, shop_count = catalog_counts()
             hero = (
                 '<section class="hero">'
                 '<div class="hero-glow" aria-hidden="true"></div>'
@@ -569,9 +578,9 @@ def build(check: bool) -> int:
                 '</div>'
                 '<div class="hero-stats">'
                 f'<div><strong>{len(ordered)}</strong><span>страниц</span></div>'
-                '<div><strong>5</strong><span>рангов</span></div>'
-                '<div><strong>196</strong><span>находок в кладах</span></div>'
-                '<div><strong>60</strong><span>кастомных чар</span></div>'
+                f'<div><strong>{shop_count}</strong><span>товаров в /shop</span></div>'
+                f'<div><strong>{plugin_count}</strong><span>плагинов в комплекте</span></div>'
+                '<div><strong>76</strong><span>кастомных чар</span></div>'
                 '</div>'
                 '</div>'
                 '<div class="hero-art">'

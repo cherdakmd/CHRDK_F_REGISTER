@@ -289,6 +289,8 @@ public final class ProfileService implements Listener {
                         "name", LabelsMenuService.nameOf(plugin.messages(), label)));
             }
         }
+        LabelStyleService.Selection selection = LabelsMenuService.selectionOf(plugin, target.name());
+        if (selection != null) lines.add(LabelsMenuService.summary(plugin.messages(), selection));
         lines.add(plugin.messages().get("labels.profile-hint"));
         return new ChrdkRegisterApi.ProfileSection(
                 plugin.messages().raw("labels.profile-section"), Material.NAME_TAG, lines);

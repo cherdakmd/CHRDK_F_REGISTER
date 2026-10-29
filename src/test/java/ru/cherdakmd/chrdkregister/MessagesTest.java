@@ -43,7 +43,7 @@ class MessagesTest {
      * (например completeAuthentication(player, "register.success") или template("chat.broadcast-prefix")).
      */
     private static final List<String> DYNAMIC_PREFIXES = List.of(
-            "password.error.", "password.hint.", "password.strength.", "donation.", "pass.menu.item-");
+            "password.error.", "password.hint.", "password.strength.", "donation.", "pass.menu.item-", "finance.service-");
     private static final Set<String> INDIRECT_KEYS = Set.of(
             "register.success", "login.success", "chat.broadcast-prefix",
             "dialog.password-missing", "dialog.confirm-mismatch", "dialog.code-missing",
@@ -52,9 +52,11 @@ class MessagesTest {
             "register.success-two-factor", "login.password-ok-two-factor",
             "two-factor.login.success", "two-factor.required.session", "two-factor.required.success",
             "two-factor.reset-enrollment", "two-factor.reset-login-complete",
+            "two-factor.optional-login-complete", // 1.4.211: completeAuthentication при reload
             // 1.4.106: передаётся переменной messageKey в SpawnService#teleport.
             "spawn.teleported",
             // 1.4.156: кнопки меню /profile — ключи передаются в ProfileService#button.
+            "finance.award-status", // общий API-адаптер читает Messages вызывающего модуля
             "profile.to-chat", "profile.to-chat-lore", "profile.refresh",
             "profile.refresh-lore", "profile.close");
 

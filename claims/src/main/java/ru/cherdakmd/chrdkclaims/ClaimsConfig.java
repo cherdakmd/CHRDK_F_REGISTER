@@ -98,6 +98,7 @@ public final class ClaimsConfig {
     public final boolean teleportEnabled;
     /** Сколько секунд игрок стоит на месте до телепорта (0 — сразу). */
     public final int teleportWarmup;
+    public final int teleportCost;
     /** Кулдаун между телепортами, секунд (0 — без кулдауна). */
     public final int teleportCooldown;
     /** Радиус поиска безопасной площадки вокруг центра чанка, блоков. */
@@ -150,6 +151,7 @@ public final class ClaimsConfig {
 
         menuEnabled = cfg.getBoolean("menu.enabled", true);
         menuShowForSale = cfg.getBoolean("menu.show-for-sale", true);
+        teleportCost = clamped(cfg,logger,"teleport.cost-diamonds",1,1,1_000_000);
         teleportEnabled = cfg.getBoolean("teleport.enabled", true);
         teleportWarmup = clamped(cfg, logger, "teleport.warmup-seconds", 5, 0, 30);
         teleportCooldown = clamped(cfg, logger, "teleport.cooldown-seconds", 10, 0, 600);

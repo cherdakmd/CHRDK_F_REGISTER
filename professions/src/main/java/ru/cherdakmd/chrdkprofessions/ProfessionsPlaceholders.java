@@ -76,6 +76,12 @@ public final class ProfessionsPlaceholders extends PlaceholderExpansion {
         int maxLevel = service.maxLevel(id);
         int needed = ProfessionMath.needed(level, maxLevel);
         return switch (key) {
+            case "mastery" -> {
+                var mastery = service.mastery(id);
+                yield mastery == null ? "" : plugin.messages().plain(mastery.nameKey());
+            }
+            case "mastery_id" -> service.mastery(id) == null ? "" : service.mastery(id).id();
+            case "work_cooldown" -> Long.toString(service.workCooldownLeft(id, System.currentTimeMillis()));
             case "level" -> Integer.toString(level);
             case "rank" -> ProfessionText.rankPlain(plugin.messages(), level);
             case "xp" -> Integer.toString(service.progress(id, active));

@@ -7,7 +7,7 @@ import java.util.List;
  *
  * @param coins    монеты в кошелёк
  * @param shards   осколки семейства
- * @param diamonds алмазы в инвентарь
+ * @param diamonds алмазы через /bal
  * @param drops    ванильные вещи
  */
 public record ChestResult(long coins, int shards, int diamonds, List<HuntDrop> drops) {

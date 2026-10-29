@@ -1,8 +1,6 @@
 package ru.cherdakmd.chrdkskills;
 
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 import ru.cherdakmd.chrdkregister.Messages;
 
 import java.util.ArrayList;
@@ -119,11 +117,15 @@ public final class SkillService {
         // максимумом, чтобы не поймать переполнение long.
         long safeUnits = Math.min(1000L, units);
         long gained = perUnit * safeUnits;
+        if (plugin.coreApi() != null) gained = plugin.coreApi().boostExperience(player.getName(), "skills", gained, gained);
         int oldLevel = level(player, skill);
-        long total = store.addXp(key(player), skill, gained);
-        int newLevel = SkillCurve.levelFor(total, curve());
-        announceLevels(player, skill, oldLevel, newLevel);
+        if (store.xp(key(player), skill) > Long.MAX_VALUE - gained) return Award.none(skill);
+        long next = store.xp(key(player), skill) + gained;
+        int newLevel = SkillCurve.levelFor(next, curve());
         List<Integer> granted = grantMilestones(player, oldLevel, newLevel);
+        if (granted == null) return Award.none(skill);
+        long total = store.addXp(key(player), skill, gained);
+        announceLevels(player, skill, oldLevel, newLevel);
         return new Award(skill, gained, oldLevel, newLevel, granted);
     }
 
@@ -133,10 +135,12 @@ public final class SkillService {
             return Award.none(skill);
         }
         int oldLevel = level(player, skill);
+        if (store.xp(key(player), skill) > Long.MAX_VALUE - xp) return Award.none(skill);
+        long next = store.xp(key(player), skill) + xp;
+        int newLevel = SkillCurve.levelFor(next, curve());
+        if (grantMilestones(player, oldLevel, newLevel) == null) return Award.none(skill);
         long total = store.addXp(key(player), skill, xp);
-        int newLevel = SkillCurve.levelFor(total, curve());
         announceLevels(player, skill, oldLevel, newLevel);
-        grantMilestones(player, oldLevel, newLevel);
         return new Award(skill, xp, oldLevel, newLevel, List.of());
     }
 
@@ -187,28 +191,19 @@ public final class SkillService {
         if (newLevel <= oldLevel) {
             return List.of();
         }
+        var pending = new java.util.LinkedHashMap<String,Long>();
+        for (var entry : plugin.config().milestones().entrySet()) {
+            int level=entry.getKey();
+            if (level>oldLevel && level<=newLevel && !store.milestones(key(player)).contains(level))
+                pending.put("level:"+level,(long)entry.getValue().diamonds());
+        }
+        if (!pending.isEmpty() && !plugin.awards().reserveAll(player,pending)) return null;
         List<Integer> granted = new ArrayList<>();
-        for (Map.Entry<Integer, SkillsConfig.Milestone> entry
-                : plugin.config().milestones().entrySet()) {
-            int level = entry.getKey();
-            if (level <= oldLevel || level > newLevel) {
-                continue;
-            }
-            if (!store.markMilestone(key(player), level)) {
-                continue;
-            }
-            SkillsConfig.Milestone milestone = entry.getValue();
-            granted.add(level);
-            if (milestone.diamonds() > 0) {
-                ItemStack stack = new ItemStack(Material.DIAMOND, milestone.diamonds());
-                Map<Integer, ItemStack> leftover = player.getInventory().addItem(stack);
-                for (ItemStack rest : leftover.values()) {
-                    player.getWorld().dropItemNaturally(player.getLocation(), rest);
-                }
-            }
-            plugin.messages().send(player, "milestone",
-                    "level", String.valueOf(level),
-                    "diamonds", String.valueOf(milestone.diamonds()));
+        for (var entry : plugin.config().milestones().entrySet()) {
+            int level=entry.getKey();
+            if (!pending.containsKey("level:"+level)) continue;
+            store.markMilestone(key(player),level); granted.add(level);
+            plugin.messages().send(player,"milestone","level",level,"diamonds",plugin.awards().amount(player,"level:"+level));
         }
         return List.copyOf(granted);
     }

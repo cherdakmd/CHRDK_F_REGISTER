@@ -1,0 +1,553 @@
+# Архив стоковой презентации 1.4.238 только для распознавания и миграции.
+server-menu:
+  items:
+  - slot: 4
+    icon: PLAYER_HEAD
+    name: <gold><bold>%player%</bold></gold>
+    lore: '<gray>Ранг: <white>%rank%</white></gray>
+
+      <gray>Осталось: <white>%pass_left%</white></gray>
+
+      <dark_gray>Клик — карточка игрока</dark_gray>'
+    command: profile
+    permission: chrdkregister.profile
+  - slot: 20
+    icon: BOOK
+    name: <gold><bold>Вики сервера</bold></gold>
+    lore: '<gray>Все команды, цены и лимиты сайтом</gray>
+
+      <dark_gray>Клик — ссылка на сайт в чат</dark_gray>'
+    command: wiki
+  - slot: 22
+    icon: KNOWLEDGE_BOOK
+    name: <gray><bold>Как пользоваться</bold></gray>
+    lore: '<gray>Клик по иконке открывает раздел</gray>
+
+      <gray>Внутри — кнопки с командами</gray>
+
+      <gray>«Назад» и «Закрыть» — в нижнем ряду</gray>'
+  - category: account
+    icon: NAME_TAG
+    name: <gold><bold>Мой ранг</bold></gold>
+    lore: '<gray>Сейчас: <white>%rank%</white> <dark_gray>·</dark_gray> <white>%rank_status%</white></gray>
+
+      <gray>Осталось: <white>%pass_left%</white></gray>
+
+      <dark_gray>Клик — бонусы ступени и срок</dark_gray>'
+    command: rank my
+  - category: account
+    icon: NETHER_STAR
+    name: <gold><bold>Витрина рангов</bold></gold>
+    lore: '<gray>Пять ступеней: что даёт каждая</gray>
+
+      <dark_gray>Карточки, цены и кнопка оплаты</dark_gray>'
+    command: rank
+  - category: account
+    icon: BOOK
+    name: <gold><bold>Правила рангов</bold></gold>
+    lore: '<gray>Что ранг даёт и чего не даёт</gray>
+
+      <dark_gray>Честные границы без скрытых бонусов</dark_gray>'
+    command: rank rules
+  - category: account
+    icon: EMERALD
+    name: <gold><bold>Поддержать сервер</bold></gold>
+    lore: '<gray>Оплата и продление через TradeMC</gray>
+
+      <dark_gray>Выдача автоматическая, по нику</dark_gray>'
+    command: pass donate
+  - category: account
+    icon: CHEST
+    name: <gold><bold>Каталог товаров</bold></gold>
+    lore: '<gray>Ранги, наборы и боевой пропуск одной страницей</gray>
+
+      <dark_gray>Цены и состав — в чате, оплата — на сайте</dark_gray>'
+    command: pass shop
+  - category: account
+    icon: CLOCK
+    name: <gold><bold>Ежедневная награда</bold></gold>
+    lore: <gray>Календарь, стрик и награда дня</gray>
+    command: daily
+    plugin: CHRDK_DailyRewards
+    permission: chrdkdaily.use
+  - category: account
+    icon: WRITABLE_BOOK
+    name: <gold><bold>Путеводитель</bold></gold>
+    lore: <gray>Книга с командами и первыми шагами</gray>
+    command: guide
+  - category: account
+    icon: TRIPWIRE_HOOK
+    name: <gold><bold>Защита 2FA</bold></gold>
+    lore: '<gray>Статус двухфакторной защиты</gray>
+
+      <dark_gray>Подключение: /2fa setup</dark_gray>'
+    command: 2fa status
+  - category: account
+    icon: COMPASS
+    name: <gold><bold>Сессии входа</bold></gold>
+    lore: '<gray>Активные сессии аккаунта</gray>
+
+      <dark_gray>Выход: /logout</dark_gray>'
+    command: session
+  - category: progress
+    icon: FIREWORK_ROCKET
+    name: <gold><bold>Боевой пропуск</bold></gold>
+    lore: '<gray>Экран сезона: недели и награды</gray>
+
+      <dark_gray>Забрать награды: /battlepass claim</dark_gray>'
+    command: battlepass menu
+    plugin: CHRDK_BattlePass
+    permission: chrdkbp.use
+  - category: progress
+    icon: DRAGON_EGG
+    name: <gold><bold>Достижения</bold></gold>
+    lore: <gray>72 цели, бейджи и награды</gray>
+    command: achievements
+    plugin: CHRDK_Achievements
+    permission: chrdkachievements.use
+  - category: progress
+    icon: GOLDEN_HELMET
+    name: <gold><bold>Звание по стажу</bold></gold>
+    lore: '<gray>Растёт от наигранного времени</gray>
+
+      <dark_gray>Не путать с донатным рангом</dark_gray>'
+    command: ranks
+    plugin: CHRDK_Ranks
+    permission: chrdkranks.use
+  - category: progress
+    icon: PAPER
+    name: <gold><bold>Задания</bold></gold>
+    lore: '<gray>Фракции, персонажи и награды</gray>
+
+      <dark_gray>Награды — без валюты, только опыт и расходники</dark_gray>'
+    command: quests menu
+    plugin: CHRDK_Quests
+    permission: chrdkquests.use
+  - category: progress
+    icon: AMETHYST_CLUSTER
+    name: <gold><bold>Навыки</bold></gold>
+    lore: <gray>10 навыков, 60 перков и уровни</gray>
+    command: skills
+    plugin: CHRDK_Skills
+    permission: chrdkskills.use
+  - category: progress
+    icon: IRON_SWORD
+    name: <gold><bold>Класс и таланты</bold></gold>
+    lore: <gray>Выбор класса и дерево талантов</gray>
+    command: class menu
+    plugin: CHRDK_Classes
+    permission: chrdkclasses.use
+  - category: progress
+    icon: IRON_PICKAXE
+    name: <gold><bold>Профессии</bold></gold>
+    lore: <gray>Ремесло, опыт и прибавки</gray>
+    command: prof menu
+    plugin: CHRDK_Professions
+    permission: chrdkprofessions.use
+  - category: progress
+    icon: BEACON
+    name: <gold><bold>Общие цели</bold></gold>
+    lore: <gray>Вклад в цели всего сообщества</gray>
+    command: goals
+    plugin: CHRDK_CommonGoals
+    permission: chrdkgoals.use
+  - category: progress
+    icon: PLAYER_HEAD
+    name: <gold><bold>Пригласить друга</bold></gold>
+    lore: <gray>Реферальный статус и бонусные дни</gray>
+    command: ref
+    plugin: CHRDK_Referrals
+    permission: chrdkref.use
+  - category: economy
+    icon: GOLD_INGOT
+    name: <gold><bold>Мой баланс</bold></gold>
+    lore: '<gray>Счёт банка и алмазы в инвентаре</gray>
+
+      <dark_gray>Перевод: /pay ник сумма</dark_gray>'
+    command: bal
+    permission: chrdkregister.bal
+  - category: economy
+    icon: DIAMOND
+    name: <gold><bold>Топ богачей</bold></gold>
+    lore: <gray>Кто копит алмазы усерднее всех</gray>
+    command: baltop
+    permission: chrdkregister.baltop
+  - category: economy
+    icon: EMERALD
+    name: <gold><bold>Алмазный магазин</bold></gold>
+    lore: '<gray>Обмен ресурсов и динамические цены</gray>
+
+      <dark_gray>Счёт магазина отделён от банка</dark_gray>'
+    command: shop
+    plugin: CHRDK_DiamondShop
+    permission: chrdkshop.use
+  - category: economy
+    icon: GOLD_BLOCK
+    name: <gold><bold>Аукцион игроков</bold></gold>
+    lore: '<gray>Лоты и подтверждение покупки</gray>
+
+      <dark_gray>Выставить: /auction sell цена</dark_gray>'
+    command: auction
+    plugin: CHRDK_Auction
+    permission: chrdkauction.use
+  - category: economy
+    icon: ENDER_CHEST
+    name: <gold><bold>Почта аукциона</bold></gold>
+    lore: <gray>Купленное и возврат непроданного</gray>
+    command: auction mail
+    plugin: CHRDK_Auction
+    permission: chrdkauction.use
+  - category: economy
+    icon: OAK_SIGN
+    name: <gold><bold>Доска заказов</bold></gold>
+    lore: '<gray>Заказы от ботов: принеси и получи</gray>'
+    command: orders list
+    plugin: CHRDK_Orders
+    permission: chrdkorders.use
+  - category: economy
+    icon: SUNFLOWER
+    name: <gold><bold>Лотерея недели</bold></gold>
+    lore: <gray>Банк, шанс и время розыгрыша</gray>
+    command: lottery info
+    plugin: CHRDK_Lottery
+    permission: chrdklottery.use
+  - category: economy
+    icon: HOPPER
+    name: <gold><bold>Казна приватов</bold></gold>
+    lore: <gray>Баланс для ежедневной ренты</gray>
+    command: claim balance
+    plugin: CHRDK_Claims
+    permission: chrdkclaims.use
+  - category: world
+    icon: MAP
+    name: <gold><bold>Мои территории</bold></gold>
+    lore: '<gray>Меню приватов: клик — телепорт</gray>
+
+      <dark_gray>Список чанков и витрина продаж</dark_gray>'
+    command: claim menu
+    plugin: CHRDK_Claims
+    permission: chrdkclaims.use
+  - category: world
+    icon: FILLED_MAP
+    name: <gold><bold>Карта приватов</bold></gold>
+    lore: <gray>Карта чанков вокруг вас</gray>
+    command: claim map
+    plugin: CHRDK_Claims
+    permission: chrdkclaims.use
+  - category: world
+    icon: OAK_FENCE
+    name: <gold><bold>Как приватить</bold></gold>
+    lore: '<gray>Покупка, члены и рента</gray>
+
+      <dark_gray>Эта кнопка не покупает чанк</dark_gray>'
+    command: claim help
+    plugin: CHRDK_Claims
+    permission: chrdkclaims.use
+  - category: world
+    icon: COMPASS
+    name: <gold><bold>Дома</bold></gold>
+    lore: '<gray>Список точек дома</gray>
+
+      <dark_gray>Установить: /sethome имя</dark_gray>'
+    command: homes
+    plugin: CHRDK_Teleports
+    permission: chrdktele.use
+  - category: world
+    icon: RED_BED
+    name: <gold><bold>Поставить дом</bold></gold>
+    lore: '<gray>Встаньте в нужной точке и введите</gray>
+
+      <dark_gray>/sethome имя</dark_gray>
+
+      <dark_gray>Лимит точек зависит от ранга</dark_gray>'
+  - category: world
+    icon: ENDER_PEARL
+    name: <gold><bold>Случайный телепорт</bold></gold>
+    lore: '<gray>RTP за алмазы</gray>
+
+      <dark_gray>Цена — в настройках телепортов</dark_gray>'
+    command: rtp
+    plugin: CHRDK_Teleports
+    permission: chrdktele.use
+  - category: world
+    icon: OAK_DOOR
+    name: <gold><bold>Телепорт к игроку</bold></gold>
+    lore: '<gray>Запрос: /tpa ник</gray>
+
+      <dark_gray>Принять: /tpaccept</dark_gray>'
+    command: tpa
+    plugin: CHRDK_Teleports
+    permission: chrdktele.use
+  - category: gear
+    icon: ENCHANTED_BOOK
+    name: <gold><bold>Кастомные чары</bold></gold>
+    lore: '<gray>Каталог чар и описания</gray>
+
+      <dark_gray>Получение — через игровую механику</dark_gray>'
+    command: enchants
+    plugin: CHRDK_Enchants
+    permission: chrdkenchants.use
+  - category: gear
+    icon: SMITHING_TABLE
+    name: <gold><bold>Редкости снаряжения</bold></gold>
+    lore: <gray>Тиры крафта и характеристики</gray>
+    command: tiers
+    plugin: CHRDK_TierForge
+    permission: chrdktierforge.use
+  - category: gear
+    icon: TOTEM_OF_UNDYING
+    name: <gold><bold>Артефакты</bold></gold>
+    lore: '<gray>Каталог, носимые артефакты и источники</gray>
+
+      <dark_gray>Добывайте их в мире</dark_gray>'
+    command: artifacts
+    plugin: CHRDK_Artifacts
+    permission: chrdkartifacts.use
+  - category: gear
+    icon: ITEM_FRAME
+    name: <gold><bold>Коллекция артефактов</bold></gold>
+    lore: <gray>Собранное, прогресс и награды</gray>
+    command: artifacts collection
+    plugin: CHRDK_Artifacts
+    permission: chrdkartifacts.use
+  - category: gear
+    icon: FIREWORK_ROCKET
+    name: <gold><bold>Косметика</bold></gold>
+    lore: <gray>Эффекты, шлейфы и оформление</gray>
+    command: cosmetics list
+    plugin: CHRDK_Cosmetics
+    permission: chrdkcosmetics.use
+  - category: gear
+    icon: BONE
+    name: <gold><bold>Питомцы</bold></gold>
+    lore: '<gray>Кошки и волки: уровни и трюки</gray>'
+    command: pet list
+    plugin: CHRDK_Pets
+    permission: chrdkpets.use
+  - category: adventure
+    icon: BOW
+    name: <gold><bold>Охота</bold></gold>
+    lore: <gray>Пять семейств, трофеи и моб-ключи</gray>
+    command: hunt
+    plugin: CHRDK_Hunt
+    permission: chrdkhunt.use
+  - category: adventure
+    icon: WITHER_SKELETON_SKULL
+    name: <gold><bold>Боссы</bold></gold>
+    lore: <gray>Зоны опасности и таймеры</gray>
+    command: boss menu
+    plugin: CHRDK_Bosses
+    permission: chrdkbosses.use
+  - category: adventure
+    icon: FIREWORK_STAR
+    name: <gold><bold>События</bold></gold>
+    lore: <gray>Расписание и ближайший ивент</gray>
+    command: events
+    plugin: CHRDK_Events
+    permission: chrdkevents.use
+  - category: adventure
+    icon: CHEST
+    name: <gold><bold>Клады</bold></gold>
+    lore: '<gray>Бочки с добычей и арсенал находок</gray>
+
+      <dark_gray>Копайте — клад найдёт вас сам</dark_gray>'
+    command: treasures
+    plugin: CHRDK_Treasures
+    permission: chrdktreasures.use
+  - category: social
+    icon: FEATHER
+    name: <gold><bold>Чат</bold></gold>
+    lore: '<gray>Клик — переключить канал</gray>
+
+      <dark_gray>Локальный слышат рядом, глобальный — все</dark_gray>'
+    command: chat
+  - category: social
+    icon: SHIELD
+    name: <gold><bold>Отряд</bold></gold>
+    lore: '<gray>Вместе: приглашения и общий чат</gray>'
+    command: party
+    plugin: CHRDK_Party
+    permission: chrdkparty.use
+  - category: social
+    icon: WHITE_BANNER
+    name: <gold><bold>Гильдия</bold></gold>
+    lore: <gray>Казна, ранги и войны</gray>
+    command: guild menu
+    plugin: CHRDK_Guilds
+    permission: chrdkguilds.use
+  - category: social
+    icon: HOPPER
+    name: <gold><bold>Очередь входа</bold></gold>
+    lore: <gray>Статус очереди и приоритет</gray>
+    command: queue info
+    plugin: CHRDK_Queue
+    permission: chrdkqueue.use
+  - category: social
+    icon: JUKEBOX
+    name: <gold><bold>Стримерская программа</bold></gold>
+    lore: '<gray>Twitch и VK Play Live: статус и награды</gray>
+
+      <dark_gray>Привязка: /stream link</dark_gray>'
+    command: stream status
+    plugin: CHRDK_Streams
+    permission: chrdkstreams.use
+  - category: social
+    icon: NAME_TAG
+    name: <gold><bold>Оформление ника</bold></gold>
+    lore: '<gray>Ранг, титул, звание, класс, гильдия, стример</gray>
+
+      <gray>и шапка таба — каждое включается отдельно</gray>
+
+      <dark_gray>Клик: /labels</dark_gray>'
+    command: labels
+    permission: chrdkregister.labels
+  categories:
+  - id: account
+    slot: 10
+    icon: PAPER
+    name: <gold><bold>Ранг и аккаунт</bold></gold>
+    lore: <gray>Ранг, оплата, награды входа и защита аккаунта</gray>
+  - id: progress
+    slot: 11
+    icon: EXPERIENCE_BOTTLE
+    name: <gold><bold>Прогресс и награды</bold></gold>
+    lore: <gray>Сезон, задания, навыки, класс и достижения</gray>
+  - id: economy
+    slot: 12
+    icon: DIAMOND
+    name: <gold><bold>Экономика</bold></gold>
+    lore: <gray>Банк, магазин, аукцион, заказы и лотерея</gray>
+  - id: world
+    slot: 13
+    icon: GRASS_BLOCK
+    name: <gold><bold>Мир и территории</bold></gold>
+    lore: <gray>Приваты, дома и телепорты</gray>
+  - id: gear
+    slot: 14
+    icon: ANVIL
+    name: <gold><bold>Снаряжение и питомцы</bold></gold>
+    lore: <gray>Чары, тиры, артефакты, косметика и питомцы</gray>
+  - id: adventure
+    slot: 15
+    icon: IRON_SWORD
+    name: <gold><bold>Охота и события</bold></gold>
+    lore: <gray>Охота, боссы, ивенты и клады</gray>
+  - id: social
+    slot: 16
+    icon: BELL
+    name: <gold><bold>Общество</bold></gold>
+    lore: <gray>Чат, отряд, гильдия, очередь и стримы</gray>
+  title: <gold>Меню сервера</gold>
+  category-title: <dark_gray>Меню · </dark_gray><gold>%category%</gold>
+  back-slot: 40
+  back-icon: ARROW
+  back-name: <gray>◀ Назад</gray>
+  close-slot: 44
+  close-icon: BARRIER
+  close-name: <red>✖ Закрыть</red>
+auto-messages:
+  messages:
+  - text: '<gray>Все возможности сервера собраны в <white>/menu</white>: ранг, прогресс, экономика, мир, снаряжение, охота
+      и общество.</gray>'
+  - text: '<gray>Ваш баланс банка: <white>%balance%</white> алмазов. Перевод другу — <white>/pay ник сумма</white>, топ —
+      <white>/baltop</white>.</gray>'
+  - text: '<gray>Алмазы можно хранить в банке: <white>/bal deposit</white> и <white>/bal withdraw</white>. Счёт не теряется
+      при смерти.</gray>'
+  - text: <gray>Переключение локального и общего чата — <white>/chat</white>. Личное сообщение — <white>/msg ник текст</white>,
+      ответ — <white>/r</white>.</gray>
+  - text: <gray>За игровые достижения — отдельный буст +10% опыта Minecraft, профессий и навыков. Тратится только онлайн;
+      запас — <white>/profile</white>. Ранги и платные товары не продлеваются.</gray>
+  - text: <gray>Ранг закончился. Продлить и сохранить оформление — <white>/pass menu</white>, вопросы — в Discord сервера.</gray>
+    condition: no-pass
+  - text: '<gray>Спасибо за поддержку сервера! Ваш ранг активен до конца срока: <white>%pass_left%</white>.</gray>'
+    condition: paid
+  - text: '<gray>Защитите аккаунт: <white>/2fa setup</white>, затем подтвердите код приложения. Никому не сообщайте пароль
+      и коды.</gray>'
+    condition: unsecured
+  - text: '<gray>Проверьте сессии входа: <white>/session</white>. Для выхода из аккаунта — <white>/logout</white>.</gray>'
+  - text: <gray>Хотите поддержать проект? <white>/pass donate</white> откроет ссылку на оплату и продление.</gray>
+  - text: '<gray>Задания сезона и награды: <white>/battlepass</white>. Прогресс не сгорает при перезапуске.</gray>'
+    plugin: CHRDK_BattlePass
+    permission: chrdkbp.use
+  - text: '<gray>72 достижения ждут своего героя: <white>/achievements</white>. Бейджи открываются вместе с целями.</gray>'
+    plugin: CHRDK_Achievements
+    permission: chrdkachievements.use
+  - text: '<gray>Десять навыков и 60 перков: <white>/skills</white>. Уровни растут от обычной игры — копайте, бейте, варите.</gray>'
+    plugin: CHRDK_Skills
+    permission: chrdkskills.use
+  - text: '<gray>Клад можно найти в любом камне: <white>/treasures</white>. Способности по ПКМ, сеты и проклятия — в лоре
+      находок.</gray>'
+    plugin: CHRDK_Treasures
+    permission: chrdktreasures.use
+  - text: '<gray>Артефакты собираются в коллекцию: <white>/artifacts collection</white>. За полноту каталога — часы отдельного
+      буста и алмазы.</gray>'
+    plugin: CHRDK_Artifacts
+    permission: chrdkartifacts.use
+  - text: <gray>Звание растёт вместе с наигранным временем. Ваш прогресс — <white>/ranks</white>.</gray>
+    plugin: CHRDK_Ranks
+    permission: chrdkranks.use
+  - text: '<gray>Общие цели сервера: <white>/goals</white> — ваш вклад и прогресс сообщества.</gray>'
+    plugin: CHRDK_CommonGoals
+    permission: chrdkgoals.use
+    min-online: 3
+  - text: '<gray>Обмен ресурсов и актуальные цены: <white>/shop</white>. Счёт магазина отделён от банка <white>/bal</white>.</gray>'
+    plugin: CHRDK_DiamondShop
+    permission: chrdkshop.use
+  - text: '<gray>Продайте стак из руки: <white>/auction sell цена</white>. Покупка требует подтверждения, комиссия видна в
+      лоте.</gray>'
+    plugin: CHRDK_Auction
+    permission: chrdkauction.use
+  - text: <gray>Купленные и возвращённые лоты ждут в <white>/auction mail</white>. Выручку забирайте через <white>/auction
+      money</white>.</gray>
+    plugin: CHRDK_Auction
+    permission: chrdkauction.use
+  - text: '<gray>Лотерея: <white>/lottery</white> — банк, шанс и время. Билеты — <white>/lottery buy</white>, выигрыш — <white>/lottery
+      claim</white>.</gray>'
+    plugin: CHRDK_Lottery
+    permission: chrdklottery.use
+  - text: '<gray>Защитите постройки: <white>/claim help</white>. Казна для ежедневной ренты — <white>/claim balance</white>.</gray>'
+    plugin: CHRDK_Claims
+    permission: chrdkclaims.use
+  - text: '<gray>Точки дома: <white>/homes</white> и <white>/sethome имя</white>. Запрос к игроку — <white>/tpa ник</white>.</gray>'
+    plugin: CHRDK_Teleports
+    permission: chrdktele.use
+  - text: '<gray>Изучайте кастомные чары: <white>/enchants</white>. Редкости снаряжения — <white>/tiers</white>.</gray>'
+    plugin: CHRDK_Enchants
+    permission: chrdkenchants.use
+  - text: <gray>Вся косметика — <white>/cosmetic</white> или кнопка в <white>/menu</white>. Шлейф, вход, цвет ника и надписи
+      — в одном меню.</gray>
+    plugin: CHRDK_Cosmetics
+    permission: chrdkcosmetics.use
+  - text: '<gray>Стримите на Twitch или VK Play Live? Привяжите канал: <white>/stream link</white> — час эфира даёт час отдельного
+      буста.</gray>'
+    plugin: CHRDK_Streams
+    permission: chrdkstreams.use
+  - text: '<gray>Приглашайте друзей: <white>/ref</white> — статус и условия бонуса. Вас позвал друг? <white>/ref use его_ник</white>.</gray>'
+    plugin: CHRDK_Referrals
+    permission: chrdkref.use
+  - text: '<gray>Сейчас на сервере <white>%online%</white> игроков. Самое время для общих целей: <white>/goals</white>.</gray>'
+    plugin: CHRDK_CommonGoals
+    permission: chrdkgoals.use
+    min-online: 5
+  - text: '<gray>Забирайте ежедневную награду: <white>/daily</white>. Стрик входов не сбрасывается при пропуске одного дня.</gray>'
+    plugin: CHRDK_DailyRewards
+    permission: chrdkdaily.use
+  - text: '<gray>Сведения об очереди входа: <white>/queue info</white>. Приоритет зависит от настроек сервера.</gray>'
+    plugin: CHRDK_Queue
+    permission: chrdkqueue.use
+  prefix: '<dark_gray>[<gold>CHRDK</gold>]</dark_gray> '
+tablist:
+  header:
+  - ''
+  - <gradient:gold:yellow><bold>CHERDAK • ВЫЖИВАНИЕ</bold></gradient>
+  - <gray>Онлайн <white>%online%/%max%</white> <dark_gray>•</dark_gray> TPS <green>%tps%</green>
+  - <gray>%player% <dark_gray>•</dark_gray> <white>%auth_status%</white>
+  - ''
+  footer:
+  - ''
+  - <gold>%pass_type%</gold> <dark_gray>•</dark_gray> <aqua>%pass_left%</aqua>
+  - <gray>%auth_hint%</gray>
+  - '<gray>2FA: <white>%security%</white> <dark_gray>•</dark_gray> <yellow>%ping% мс</yellow> <dark_gray>•</dark_gray> %world%'
+  - <aqua>%navigation%</aqua>
+  - ''
+  player-name-format: '%player_tagged%'

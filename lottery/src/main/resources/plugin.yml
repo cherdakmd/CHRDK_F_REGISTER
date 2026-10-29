@@ -13,7 +13,7 @@ commands:
   lotteryadmin:
     aliases: [lotadmin]
     description: Администрирование лотереи
-    usage: /<command> [reload|drawnow confirm]
+    usage: /<command> [reload|drawnow confirm|recover]
     permission: chrdklottery.admin
 permissions:
   chrdklottery.use:

@@ -42,6 +42,7 @@ public final class BedHomeListener implements Listener {
         if (event.getBedEnterResult() != PlayerBedEnterEvent.BedEnterResult.OK) {
             return;
         }
+        if (plugin.payments()!=null && plugin.payments().paused()) return;
         if (!plugin.config().bedSpawnEnabled()) {
             return;
         }
@@ -60,7 +61,8 @@ public final class BedHomeListener implements Listener {
         if (previous != null && sameSpot(previous, home)) {
             return;
         }
-        store.put(player.getUniqueId(), home);
+        try { store.put(player.getUniqueId(), home); }
+        catch (RuntimeException error) { plugin.getLogger().warning("Кровать не сохранена: "+error); return; }
         plugin.messages().send(player, "home.bed-saved");
     }
 
@@ -72,6 +74,7 @@ public final class BedHomeListener implements Listener {
      */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
+        if (plugin.payments()!=null && plugin.payments().paused()) return;
         if (!plugin.config().bedSpawnEnabled()) {
             return;
         }
@@ -95,7 +98,8 @@ public final class BedHomeListener implements Listener {
         }
         HomeLocation home = BedHome.at(block, player.getLocation().getYaw());
         if (home != null) {
-            store.put(player.getUniqueId(), home);
+            try { store.put(player.getUniqueId(), home); }
+            catch (RuntimeException error) { plugin.getLogger().warning("Кровать не импортирована: "+error); }
         }
     }
 
@@ -109,6 +113,7 @@ public final class BedHomeListener implements Listener {
         if (event.getRespawnReason() != PlayerRespawnEvent.RespawnReason.DEATH) {
             return;
         }
+        if (plugin.payments()!=null && plugin.payments().paused()) return;
         if (!plugin.config().bedSpawnEnabled()) {
             return;
         }

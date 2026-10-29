@@ -52,12 +52,14 @@ public final class EnchantItems {
 
     private final EnchantsPlugin plugin;
     private final NamespacedKey key;
+    private final NamespacedKey bookSource;
     /** Кэш имён чар — нужен, чтобы отличить старые строки чар от строк свойств тира. */
     private List<String> cachedNames;
 
     public EnchantItems(EnchantsPlugin plugin) {
         this.plugin = plugin;
         this.key = new NamespacedKey(plugin, PDC_KEY);
+        this.bookSource = new NamespacedKey(plugin, "book_source_v1");
     }
 
     /** Все чары предмета (id→уровень). */
@@ -69,8 +71,19 @@ public final class EnchantItems {
         if (meta == null) {
             return Map.of();
         }
+        if (!meta.getPersistentDataContainer().has(key, PersistentDataType.STRING)) return Map.of();
         String raw = meta.getPersistentDataContainer().get(key, PersistentDataType.STRING);
         return raw == null ? Map.of() : Map.copyOf(EnchantCodec.decode(raw));
+    }
+
+    /** Наличие метки проверяется и при повреждённом типе/пустой строке. */
+    boolean marked(ItemStack item) {
+        return item != null && item.hasItemMeta() && item.getItemMeta().getPersistentDataContainer().has(key);
+    }
+    Map<String, Integer> validated(ItemStack item) {
+        if (!marked(item)) return Map.of();
+        var data = item.getItemMeta().getPersistentDataContainer();
+        return data.has(key, PersistentDataType.STRING) ? EnchantBookValidation.read(data.get(key, PersistentDataType.STRING)) : null;
     }
 
     /** Уровень конкретной чары на предмете (0 — нет). */
@@ -143,7 +156,15 @@ public final class EnchantItems {
 
     /** Книга чар (жители, выдача админом, наковальня). */
     public ItemStack makeEnchantBook(EnchantDef def, int level) {
+        return makeEnchantBook(def, level, ru.cherdakmd.chrdkregister.api.EnchantBookSource.API);
+    }
+    public ItemStack makeEnchantBook(EnchantDef def, int level, ru.cherdakmd.chrdkregister.api.EnchantBookSource source) {
+        if (source != null && source.retired()) return null;
         ItemStack book = new ItemStack(Material.ENCHANTED_BOOK);
+        var originMeta = book.getItemMeta();
+        originMeta.getPersistentDataContainer().set(bookSource, PersistentDataType.STRING,
+                (source == null ? ru.cherdakmd.chrdkregister.api.EnchantBookSource.API : source).encoded());
+        book.setItemMeta(originMeta);
         apply(book, def, level);
         ItemMeta meta = book.getItemMeta();
         if (meta != null) {
@@ -153,6 +174,25 @@ public final class EnchantItems {
             book.setItemMeta(meta);
         }
         return book;
+    }
+
+    /** Только в точке создания. refresh/inspect никогда не приписывают источник старой книге. */
+    void stampBook(ItemStack book, ru.cherdakmd.chrdkregister.api.EnchantBookSource source) {
+        if (source == null || source.retired() || book == null || book.getType() != Material.ENCHANTED_BOOK || validated(book) == null) return;
+        var meta = book.getItemMeta();
+        meta.getPersistentDataContainer().set(bookSource, PersistentDataType.STRING, source.encoded());
+        book.setItemMeta(meta); refresh(book);
+    }
+    String bookSourceKey(ItemStack item) {
+        return item != null && item.getType() == Material.ENCHANTED_BOOK && item.hasItemMeta()
+                ? sourceKey(item.getItemMeta()) : "book-source-legacy";
+    }
+    private String sourceKey(ItemMeta meta) {
+        var data = meta.getPersistentDataContainer();
+        if (!data.has(bookSource)) return "book-source-legacy";
+        var source = data.has(bookSource, PersistentDataType.STRING)
+                ? ru.cherdakmd.chrdkregister.api.EnchantBookSource.decode(data.get(bookSource, PersistentDataType.STRING)) : null;
+        return source == null ? "book-source-unknown" : "book-source-" + source.id();
     }
 
     /** Это наша книга чар? */
@@ -166,6 +206,7 @@ public final class EnchantItems {
         if (entity == null) {
             return Map.of();
         }
+        if (!entity.getPersistentDataContainer().has(key, PersistentDataType.STRING)) return Map.of();
         String raw = entity.getPersistentDataContainer().get(key, PersistentDataType.STRING);
         return raw == null ? Map.of() : Map.copyOf(EnchantCodec.decode(raw));
     }
@@ -210,7 +251,24 @@ public final class EnchantItems {
             lore.add(plugin.messages().get(def.curse() ? "lore-line-curse" : "lore-line",
                     "name", plugin.messages().mini("en." + def.id() + ".name"),
                     "levelroman", EnchantCodec.roman(entry.getValue())));
+            if (meta instanceof org.bukkit.inventory.meta.EnchantmentStorageMeta) {
+                lore.add(plugin.messages().get("book-rarity", "rarity", plugin.messages().mini(def.rarity().labelKey()),
+                        "maxlevel", def.maxLevel()));
+                String groups = plugin.gui().supportedLabel(def);
+                lore.add(plugin.messages().get("book-items", "items", ru.cherdakmd.chrdkregister.Messages.trusted(groups)));
+                for (Component description : plugin.messages().getList("en." + def.id() + ".lore"))
+                    lore.add(Component.text("✶ ").append(description));
+                if (def.conflictGroup() != null) {
+                    String conflicts = String.join(", ", EnchantRegistry.all().stream()
+                            .filter(other -> def.conflictGroup().equals(other.conflictGroup()) && !def.id().equals(other.id()))
+                            .map(other -> plugin.messages().raw("en." + other.id() + ".name")).toList());
+                    if (!conflicts.isEmpty()) lore.add(plugin.messages().get("book-conflicts", "conflicts", ru.cherdakmd.chrdkregister.Messages.trusted(conflicts)));
+                }
+                lore.add(plugin.messages().get("book-apply"));
+            }
         }
+        if (meta instanceof org.bukkit.inventory.meta.EnchantmentStorageMeta && !enchants.isEmpty())
+            lore.add(plugin.messages().get("book-source", "source", plugin.messages().mini(sourceKey(meta))));
         meta.lore(lore.isEmpty() ? null : lore);
     }
 

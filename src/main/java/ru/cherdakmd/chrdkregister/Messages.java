@@ -121,10 +121,91 @@ public final class Messages {
         if (!Files.exists(userFile)) {
             plugin.saveResource(fileName, false);
         }
-        Map<String, String> overrides = readFile(userFile);
+        Map<String, String> overrides = new LinkedHashMap<>(readFile(userFile));
+        String moduleName = plugin.getName();
+        if ("CHRDK_Core".equalsIgnoreCase(moduleName)) {
+            Map<String, String> legacy = readResource(plugin, "shop-delivery-messages-legacy-1.4.193.yml", logger);
+            migrateStockOverrides(defaults, overrides, legacy);
+        }
+        overrides.replaceAll((key, text) -> GameplayRewardTexts.message(moduleName, key, text));
         Messages messages = new Messages(defaults, overrides, logger);
         messages.logMissingKeys(fileName);
         return messages;
+    }
+
+    /** Строгая подготовка сообщений для reload мобов/чар. Другие модули сохраняют старый load(). */
+    public static Messages loadChecked(JavaPlugin plugin, String locale, Logger logger, boolean createMissing)
+            throws IOException, org.bukkit.configuration.InvalidConfigurationException {
+        String tag = locale == null ? "" : locale.trim().toLowerCase(Locale.ROOT)
+                .replace('_', '-').replaceAll("[^a-z0-9-]", "");
+        String fileName = tag.isEmpty() || "ru".equals(tag) ? FILE_NAME : "messages_" + tag + ".yml";
+        if (!FILE_NAME.equals(fileName)) {
+            try (InputStream resource = plugin.getResource(fileName)) {
+                if (resource == null) {
+                    if (logger != null) logger.info("Выбранной локали нет в JAR — используются русские тексты.");
+                    fileName = FILE_NAME;
+                }
+            }
+        }
+        YamlConfiguration base = readChecked(plugin.getResource(RESOURCE_NAME));
+        Map<String, String> defaults = new LinkedHashMap<>(flatten(base));
+        if (!FILE_NAME.equals(fileName)) defaults.putAll(flatten(readChecked(plugin.getResource(fileName))));
+        Path file = plugin.getDataFolder().toPath().resolve(fileName);
+        // Только первый запуск создаёт шаблон. На reload удалённый/недоступный файл — ошибка, не fallback.
+        if (createMissing && !Files.exists(file)) plugin.saveResource(fileName, false);
+        Map<String, String> overrides = checkedOverrides(base, file);
+        overrides.replaceAll((key, text) -> GameplayRewardTexts.message(plugin.getName(), key, text));
+        return checkedMessages(defaults, overrides, logger);
+    }
+
+    /** Строгий файловый контракт для загрузчиков/тестов, без JavaPlugin и без записи на диск. */
+    public static Messages fromChecked(InputStream defaultsStream, Path userFile, Logger logger)
+            throws IOException, org.bukkit.configuration.InvalidConfigurationException {
+        YamlConfiguration base = readChecked(defaultsStream);
+        return checkedMessages(flatten(base), checkedOverrides(base, userFile), logger);
+    }
+    private static YamlConfiguration readChecked(InputStream stream)
+            throws IOException, org.bukkit.configuration.InvalidConfigurationException {
+        if (stream == null) throw new IOException("Missing messages resource");
+        try (InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
+            var yaml = new YamlConfiguration();
+            yaml.load(reader);
+            for (String key : yaml.getKeys(true)) {
+                if (yaml.isConfigurationSection(key)) continue;
+                Object value = yaml.get(key);
+                if (!(value instanceof String) && !(value instanceof List<?> list && list.stream().allMatch(String.class::isInstance)))
+                    throw new org.bukkit.configuration.InvalidConfigurationException("Message must be text or a list of texts");
+            }
+            return yaml;
+        }
+    }
+    private static Map<String, String> checkedOverrides(YamlConfiguration base, Path file)
+            throws IOException, org.bukkit.configuration.InvalidConfigurationException {
+        if (file == null) return new LinkedHashMap<>();
+        YamlConfiguration live = readChecked(Files.newInputStream(file));
+        for (String key : base.getKeys(false)) {
+            if (base.isConfigurationSection(key) && live.contains(key) && !live.isConfigurationSection(key))
+                throw new org.bukkit.configuration.InvalidConfigurationException("Wrong messages section type");
+        }
+        return new LinkedHashMap<>(flatten(live));
+    }
+    private static Messages checkedMessages(Map<String, String> defaults, Map<String, String> overrides, Logger logger)
+            throws org.bukkit.configuration.InvalidConfigurationException {
+        var messages = new Messages(Map.copyOf(defaults), Map.copyOf(overrides), logger);
+        try {
+            for (String text : overrides.values()) messages.mini.deserialize(legacyToMini(text));
+        } catch (RuntimeException failure) {
+            throw new org.bukkit.configuration.InvalidConfigurationException("Invalid message markup");
+        }
+        return messages;
+    }
+
+    static void migrateStockOverrides(Map<String, String> defaults, Map<String, String> overrides,
+                                      Map<String, String> legacy) {
+        for (var entry : legacy.entrySet()) {
+            if (java.util.Objects.equals(overrides.get(entry.getKey()), entry.getValue()) && defaults.containsKey(entry.getKey()))
+                overrides.put(entry.getKey(), defaults.get(entry.getKey()));
+        }
     }
 
     /** Конструктор для тестов и внешних загрузчиков: значения по умолчанию — поток, правки — файл. */

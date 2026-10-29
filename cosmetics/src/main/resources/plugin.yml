@@ -9,7 +9,7 @@ commands:
   cosmetics:
     description: "Косметические эффекты: шлейфы частиц"
     aliases: [cosmetic, cos]
-    usage: "/cosmetics [list|off|<эффект>]"
+    usage: "/cosmetic [list|trails|text|off|<эффект>]"
 permissions:
   chrdkcosmetics.use:
     description: "Выбирать косметические эффекты"

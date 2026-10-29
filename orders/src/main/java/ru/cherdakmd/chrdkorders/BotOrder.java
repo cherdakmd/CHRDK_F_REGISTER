@@ -19,7 +19,7 @@ import java.util.Locale;
  * @param material       материал (имя {@link Material})
  * @param amount         сколько принести
  * @param rewardDiamonds сколько алмазов заплатит бот
- * @param rewardPassHours сколько часов ранга даст сверху (0 — нет)
+ * @param rewardPassHours сколько часов буста даст сверху (0 — нет)
  * @param minReputation  требуемая репутация
  * @param reputation     сколько репутации получит сдавший
  * @param createdAt      когда заказ появился на доске

@@ -43,8 +43,17 @@ jobs:
 
       - name: Check messages and release validation tests
         run: |
+          python3 .github/scripts/check_retired_addons.py
+          python3 -m unittest discover -s .github/scripts -p 'test_retired_addons.py' -v
           python3 .github/scripts/check_messages.py
-          python3 -m unittest discover -s .github/scripts -p 'test_verify_release.py' -v
+          python3 -m unittest discover -s .github/scripts -p 'test_*release.py' -v
+
+      - name: Verify TradeMC kit and regression tests
+        run: |
+          python3 -m pip install -r tools/trademc/requirements.txt
+          python3 tools/trademc/build.py --check
+          python3 -m unittest discover -s tools/trademc -p 'test_*.py' -v
+          python3 -m unittest discover -s tools/wiki -p 'test_*.py' -v
 
       - name: Build plugins
         shell: bash
@@ -89,70 +98,19 @@ jobs:
             echo 'Не найден ни один JAR — архив не собран.' >&2
             exit 1
           fi
-          cat > 'release/ОБНОВЛЕНИЕ.txt' <<'MEMO'
-          CHRDK — обновление плагинов
-          ===========================
-
-          Что в архиве
-          ------------
-          Все JAR-ы CHRDK одной версии: ядро CHRDK_Core и аддоны
-          (DiamondShop, Referrals, DailyRewards, Teleports, Enchants, TierForge,
-          Artifacts, Achievements, Skills, Treasures, CommonGoals, Claims, Ranks,
-          Cosmetics, BattlePass, Queue, Streams, Lottery, Auction, Pets, Orders, Hunt, Party,
-          Events, Quests, Bosses, Guilds, Classes, Professions).
-          Отдельные JAR-ы к релизу больше не прикладываются — только этот архив.
-
-          Порядок обновления
-          ------------------
-          1. Остановите сервер командой stop и дождитесь полной остановки.
-          2. Сделайте резервную копию папки plugins/ (достаточно копии целиком)
-             и мира. Это обязательный шаг: откат без копии невозможен.
-          3. Удалите из plugins/ старые JAR-ы CHRDK (файлы *.jar этой сборки).
-             Папки плагинов (plugins/CHRDK_*/) НЕ удаляйте: в них конфиги,
-             сообщения, loot.yml, chances.yml и данные игроков.
-          4. Распакуйте все JAR-ы из этого архива в plugins/ (без подпапок).
-          5. Запустите сервер и дождитесь строки «CHRDK_... включён» в консоли.
-          6. Проверьте /plugins: ядро и все аддоны должны быть зелёными (не red).
-             Красный аддон = нет ядра нужной версии или он не загрузился.
-          7. Проверьте консоль на предупреждения CHRDK: битый YAML или
-             неизвестный ключ видны сразу.
-
-          Что происходит с конфигами
-          --------------------------
-          Не удаляйте старые конфиги без резервной копии. Не все списки
-          обновляются автоматически: сравните свои значения с config.yml из JAR.
-          Особенно важны CHRDK_Core: shop.products и labels.colors.list,
-          CHRDK_Cosmetics: cosmetics.join-effect.product и определения шлейфов,
-          CHRDK_BattlePass: battlepass.weeks[].missions[].premium-products.
-          Старое nick-color в награде заменено на nick-aurora.
-          Новые цены TradeMC должны точно совпасть с shop.products[].price;
-          дубликаты цен недопустимы. Перед продажей домов выполните из консоли
-          pass luckperms setup (нужен LuckPerms).
-          Часть стандартного оформления мигрирует автоматически; собственные
-          изменения не перезаписываются. Обновление конфигов не требует
-          удаления данных игроков. Полный порядок — в описании релиза.
-
-          Откат
-          -----
-          Верните старые JAR-ы из резервной копии на место, верните папку
-          plugins/CHRDK_*/ из копии и запустите сервер. Данные, записанные
-          новой версией, старые сборки могут не прочитать — поэтому копия
-          делается до запуска.
-
-          Полный список изменений и инструкция — в описании релиза на GitHub
-          и в README репозитория.
-          MEMO
+          cp docs/releases/update-memo.txt 'release/ОБНОВЛЕНИЕ.txt'
           printf '\nВерсия: %s\nПлатформа: Purpur 26.3 / Java 25\n' "$version" >> 'release/ОБНОВЛЕНИЕ.txt'
-          for notes in docs/releases/1.4.18{6,7,8,9}.md; do
+          for notes in docs/releases/1.4.{200,201,{220..245}}.md; do
             printf '\n\n' >> 'release/ОБНОВЛЕНИЕ.txt'
             cat "$notes" >> 'release/ОБНОВЛЕНИЕ.txt'
           done
           python3 .github/scripts/verify_release.py release "$version"
-          zip -j -9 "chrdk-plugins-${version}.zip" release/*.jar 'release/ОБНОВЛЕНИЕ.txt'
+          python3 .github/scripts/pack_release.py release "$version" "chrdk-plugins-${version}.zip"
+          unzip -t "chrdk-plugins-${version}.zip"
           unzip -l "chrdk-plugins-${version}.zip"
           echo "zip=chrdk-plugins-${version}.zip" >> "$GITHUB_ENV"
 
-      - name: Attach the all-in-one archive
+      - name: Attach the plugin ZIP only
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ env.zip }}" "release/ОБНОВЛЕНИЕ.txt" --clobber
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ env.zip }}" --clobber

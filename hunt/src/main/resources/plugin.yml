@@ -5,16 +5,16 @@ api-version: '26.3'
 description: "Охота на мобов: монеты, осколки семейств, трофеи и моб-ключи"
 author: cherdakmd
 depend: [CHRDK_Core]
-softdepend: [PlaceholderAPI]
+softdepend: [PlaceholderAPI, CHRDK_Skills]
 commands:
   hunt:
     description: "Охота: кошелёк, обмен, лавка, ключи и трофеи"
     aliases: [ohota, hunter]
-    usage: "/hunt [stats [ник]|shop|buy <id>|exchange <алмазы|max>|keys|chest <семейство>|trophies|trophy <id>|top|help]"
+    usage: "/hunt [stats [ник]|shop|buy <id>|exchange <алмазы|max>|keys|chest <семейство>|trophies|trophy <id>|top|danger|inspect|observations|elites|hud [on|off]|history [страница]|help]"
   huntadmin:
     description: "Управление охотой"
     permission: chrdkhunt.admin
-    usage: "/huntadmin [reload|give <ник> <coins|shards|keys> <кол-во> [семейство]|reset <ник>|info]"
+    usage: "/huntadmin [reload|awards|give <ник> <coins|shards|keys> <кол-во> [семейство]|reset <ник>|info]"
 permissions:
   chrdkhunt.use:
     description: "Охота, обмен монет и лавка"

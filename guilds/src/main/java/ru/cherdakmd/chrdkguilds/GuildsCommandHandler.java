@@ -31,7 +31,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
     private static final List<String> WAR_SUBS = List.of("declare", "accept", "decline",
             "status", "surrender");
     private static final List<String> ADMIN_SUBS = List.of("reload", "info", "disband",
-            "endwar", "cooldown", "history");
+            "endwar", "cooldown", "history", "finance", "recover");
 
     private final GuildsPlugin plugin;
 
@@ -41,6 +41,9 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (sender instanceof Player actor && !plugin.authenticated(actor)) {
+            plugin.messages().send(sender,"finance-auth"); return true;
+        }
         if (command.getName().equalsIgnoreCase("gchat")) {
             if (!(sender instanceof Player player)) {
                 plugin.messages().send(sender, "player-only");
@@ -130,7 +133,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
         }
         String name = join(args, 1, args.length - 1);
         String tag = args[args.length - 1];
-        GuildResult result = plugin.service().create(plugin.purse(), player.getUniqueId(),
+        GuildResult result = plugin.finance().create(player,
                 name, tag, System.currentTimeMillis());
         plugin.messages().send(sender, result.key(), result.array());
         if (result.ok()) {
@@ -334,7 +337,8 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
             Guild guild = plugin.service().guildOf(player.getUniqueId());
             plugin.messages().send(sender, "disband-confirm",
                     "name", guild == null ? "?" : guild.name(),
-                    "treasury", guild == null ? "0" : GuildMath.diamonds(guild.treasury()));
+                    "treasury", guild == null ? "0" : GuildMath.diamonds(guild.treasury()),
+                    "returns", guild == null ? "0" : GuildMath.diamonds(guild.warReturns()));
             return;
         }
         GuildResult result = plugin.service().disband(player.getUniqueId());
@@ -345,6 +349,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
         plugin.messages().send(sender, "disband-ok",
                 "name", arg(result, "name"),
                 "treasury", arg(result, "treasury"),
+                "returns", arg(result, "returns"),
                 "members", arg(result, "members"),
                 "war", plugin.messages().mini(arg(result, "war")));
         plugin.requestSave();
@@ -402,7 +407,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
             plugin.messages().send(sender, "amount-bad");
             return;
         }
-        GuildResult result = plugin.service().deposit(plugin.purse(), player.getUniqueId(),
+        GuildResult result = plugin.finance().deposit(player,
                 amount);
         plugin.messages().send(sender, result.key(), result.array());
         if (result.ok()) {
@@ -422,12 +427,12 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
             plugin.messages().send(sender, "withdraw-usage");
             return;
         }
-        long amount = amount(player, args[1]);
+        long amount = all(args[1]) ? (plugin.service().guildOf(player.getUniqueId()) == null ? 0 : plugin.service().guildOf(player.getUniqueId()).treasury()) : parseLong(args[1],-1);
         if (amount <= 0) {
             plugin.messages().send(sender, "amount-bad");
             return;
         }
-        GuildResult result = plugin.service().withdraw(plugin.purse(), player.getUniqueId(),
+        GuildResult result = plugin.finance().withdraw(player,
                 amount);
         plugin.messages().send(sender, result.key(), result.array());
         if (result.ok()) {
@@ -481,6 +486,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
                 "glory", String.valueOf(guild.glory()));
         plugin.messages().send(sender, "info-treasury",
                 "amount", GuildMath.diamonds(guild.treasury()));
+        if (guild.warReturns() > 0) plugin.messages().send(sender,"treasury-war-returns","amount",GuildMath.diamonds(guild.warReturns()));
         plugin.messages().send(sender, "info-wars",
                 "won", String.valueOf(guild.warsWon()),
                 "lost", String.valueOf(guild.warsLost()));
@@ -679,6 +685,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
             plugin.messages().send(sender, "admin-usage");
             return true;
         }
+        if (plugin.payments().admin(sender,args)) return true;
         switch (args[0].toLowerCase(Locale.ROOT)) {
             case "reload" -> {
                 plugin.reloadGuilds();
@@ -718,6 +725,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
                 plugin.messages().send(sender, "admin-disbanded",
                         "name", arg(result, "name"),
                         "treasury", arg(result, "treasury"),
+                        "returns", arg(result, "returns"),
                         "war", plugin.messages().mini(arg(result, "war")));
                 plugin.requestSave();
             }
@@ -845,10 +853,14 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
     }
 
     /** Сумма взноса: число или {@code all} — весь инвентарь. */
+    private static boolean all(String raw) {
+        return raw.equalsIgnoreCase("all") || raw.equalsIgnoreCase("все") || raw.equalsIgnoreCase("всё");
+    }
+
     private long amount(Player player, String raw) {
         if (raw.equalsIgnoreCase("all") || raw.equalsIgnoreCase("все")
                 || raw.equalsIgnoreCase("всё")) {
-            return DiamondPurse.count(player.getInventory());
+            return plugin.finance().available(player);
         }
         return parseLong(raw, -1L);
     }
@@ -904,6 +916,9 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
                 }
                 return filter(names, args[2]);
             }
+            return List.of();
+        }
+        if (sender instanceof Player actor && !plugin.authenticated(actor)) {
             return List.of();
         }
         if (command.getName().equalsIgnoreCase("gchat")) {

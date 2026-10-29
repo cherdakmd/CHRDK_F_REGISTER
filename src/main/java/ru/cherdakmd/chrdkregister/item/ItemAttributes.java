@@ -31,7 +31,7 @@ import java.util.Set;
  * ({@link ItemStack#getType()} → {@code getDefaultAttributeModifiers()}):
  * дальше проценты тира, чар и находок считаются от настоящей базы.</p>
  *
- * <p>Класс — общий для всех аддонов CHRDK (TierForge, Enchants, Treasures).
+ * <p>Класс — общий для всех аддонов CHRDK (TierForge, Enchants, Artifacts).
  * Метод {@link #keep(ItemStack, ItemMeta)} идемпотентен: повторный вызов ничего
  * не меняет, поэтому его можно звать из любого пути сборки предмета. Чистая
  * часть ({@link #missing(Collection, Collection)}) проверяется юнит-тестами без

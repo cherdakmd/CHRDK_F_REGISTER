@@ -6,8 +6,8 @@ import org.bukkit.inventory.ItemStack;
  * Мост «CHRDK_TierForge → другие аддоны» (1.4.141).
  *
  * <p>Реализацию регистрирует <b>CHRDK_TierForge</b> через {@code ServicesManager};
- * потребители (например, <b>CHRDK_Treasures</b>) спрашивают её мягко и без
- * аддона тиров просто не накладывают тир на свои предметы.</p>
+ * потребители (например, <b>другие аддоны</b>) спрашивают её мягко и без
+ * аддона тиров просто не нанаградывают тир на свои предметы.</p>
  *
  * <pre>{@code
  * Bukkit.getServicesManager().register(ChrdkTierApi.class, new TierApiBridge(this),
@@ -30,18 +30,18 @@ public interface ChrdkTierApi {
     java.util.List<String> ladder();
 
     /**
-     * Накладывает случайный тир по весам конфига. Предмет должен быть того вида,
+     * Нанаградывает случайный тир по весам конфига. Предмет должен быть того вида,
      * который тир-система поддерживает (оружие, инструмент, броня, а с 1.4.142 —
      * ещё и утилита: щит, рог, фонарь, тотем). Утилита получает свою раскладку —
      * скорость бега и удачу, без урона и добычи.
      *
-     * @param source источник для {@code /tiers info}: {@code treasure}, {@code quest} …
+     * @param source источник для {@code /tiers info}: {@code loot}, {@code quest} …
      * @return {@code true}, если тир наложен
      */
     boolean applyRandomTier(ItemStack item, String source);
 
     /**
-     * Накладывает конкретный тир (админская выдача, квестовая награда).
+     * Нанаградывает конкретный тир (админская выдача, квестовая награда).
      *
      * @return {@code true}, если тир наложен
      */

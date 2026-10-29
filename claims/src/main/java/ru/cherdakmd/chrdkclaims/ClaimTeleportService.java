@@ -24,7 +24,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>Порядок: проверка мира, прав и кулдауна → обратный отсчёт (игрок должен стоять
  * на месте и не получать урон) → асинхронная загрузка чанка привата → поиск ближайшей
  * к центру площадки, где есть твёрдая земля и два свободных блока над ней →
- * {@link Player#teleportAsync(Location)}. Кулдаун срабатывает только после удачного
+ * оплаченный синхронный {@link Player#teleport(Location)} с проверкой результата.
+ * Кулдаун срабатывает только после удачного
  * телепорта, поэтому отмена разбега его не съедает.</p>
  *
  * <p>Чистая геометрия вынесена в {@link ClaimTeleport}; этот класс отвечает за
@@ -55,7 +56,9 @@ public final class ClaimTeleportService implements Listener {
 
     /** Ожидающий телепорт: где игрок стоял и задача отсчёта. */
     private static final class Pending {
-        private BukkitTask task;
+        private BukkitTask task, timeout;
+        private boolean dispatching;
+        private int price;
         private String world;
         private double x;
         private double y;
@@ -98,6 +101,9 @@ public final class ClaimTeleportService implements Listener {
         if (player == null || !player.isOnline()) {
             return false;
         }
+        if(!plugin.financeReady()) {plugin.messages().send(player,"finance.unavailable");return false;}
+        if (plugin.coreApi()==null || !plugin.coreApi().isAuthenticated(player)) { plugin.messages().send(player,"need-auth"); return false; }
+        if (plugin.teleportPayments().occupied(player.getUniqueId())) { plugin.messages().send(player,"finance.service-wait"); return false; }
         if (!plugin.config().teleportEnabled) {
             plugin.messages().send(player, "tp-disabled");
             return false;
@@ -118,7 +124,7 @@ public final class ClaimTeleportService implements Listener {
             plugin.messages().send(player, "tp-world-missing", "world", claim.world);
             return false;
         }
-        boolean member = claim.isOwner(player.getName()) || claim.isMember(player.getName());
+        boolean member = claim.canUse(player.getName());
         // Приват на продажу — публичный лот: его можно осмотреть (защита при этом действует).
         boolean viewable = claim.salePrice > 0;
         if (!member && !viewable && !plugin.isBypassing(player)) {
@@ -148,9 +154,8 @@ public final class ClaimTeleportService implements Listener {
         if (state == null) {
             return;
         }
-        if (state.task != null) {
-            state.task.cancel();
-        }
+        if (state.task != null) state.task.cancel();
+        if (state.timeout != null) state.timeout.cancel();
         Player player = Bukkit.getPlayer(uuid);
         if (player != null && messageKey != null) {
             plugin.messages().send(player, messageKey);
@@ -161,9 +166,7 @@ public final class ClaimTeleportService implements Listener {
     public void shutdown() {
         for (UUID uuid : pending.keySet()) {
             Pending state = pending.remove(uuid);
-            if (state != null && state.task != null) {
-                state.task.cancel();
-            }
+            if (state != null) { if (state.task != null) state.task.cancel(); if (state.timeout!=null) state.timeout.cancel(); }
         }
         cooldowns.clear();
     }
@@ -171,70 +174,51 @@ public final class ClaimTeleportService implements Listener {
     // ------------------------------------------------------------- разбег --
 
     private void startWarmup(Player player, Claim claim) {
-        int seconds = plugin.config().teleportWarmup;
-        String where = claim.where();
-        if (seconds <= 0) {
-            finish(player, claim);
-            return;
-        }
-        Location from = player.getLocation();
-        Pending state = new Pending();
-        state.world = from.getWorld().getName();
-        state.x = from.getX();
-        state.y = from.getY();
-        state.z = from.getZ();
-        state.task = Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            pending.remove(player.getUniqueId(), state);
-            if (!player.isOnline()) {
-                return;
-            }
-            if (!player.getWorld().getName().equals(state.world)) {
-                plugin.messages().send(player, "tp-cancelled-move");
-                return;
-            }
-            finish(player, claim);
-        }, seconds * 20L);
-        pending.put(player.getUniqueId(), state);
-        plugin.messages().send(player, "tp-warmup",
-                "where", where, "seconds", String.valueOf(seconds));
+        int seconds=plugin.config().teleportWarmup; Location from=player.getLocation(); Pending state=new Pending();
+        state.world=from.getWorld().getName(); state.x=from.getX(); state.y=from.getY(); state.z=from.getZ();
+        state.price=plugin.config().teleportCost;
+        plugin.messages().send(player,"finance.service-quote","cost",state.price);
+        pending.put(player.getUniqueId(),state);
+        state.timeout=Bukkit.getScheduler().runTaskLater(plugin,()->cancel(player.getUniqueId(),"tp-failed"),(seconds+30L)*20);
+        if (seconds<=0) { finish(player,claim,state); return; }
+        state.task=Bukkit.getScheduler().runTaskLater(plugin,()->{
+            if (pending.get(player.getUniqueId())!=state || !player.isOnline()) return;
+            if (!player.getWorld().getName().equals(state.world)) { cancel(player.getUniqueId(),"tp-cancelled-move"); return; }
+            finish(player,claim,state);
+        },seconds*20L);
+        plugin.messages().send(player,"tp-warmup","where",claim.where(),"seconds",seconds);
     }
-
-    /** Завершение разбега: загрузка чанка и выбор точки. Всегда на главной нити. */
-    private void finish(Player player, Claim claim) {
-        World world = Bukkit.getWorld(claim.world);
-        if (world == null) {
-            plugin.messages().send(player, "tp-world-missing", "world", claim.world);
-            return;
-        }
-        // Загрузка чанка — колбэком Paper: CompletableFuture-перегрузки в API уже нет.
-        world.getChunkAtAsync(claim.x, claim.z, true, chunk -> runMain(() -> {
-            if (!player.isOnline()) {
-                return;
-            }
-            Location target = safeLocation(world, claim, player.getLocation().getYaw());
-            if (target == null) {
-                plugin.messages().send(player, "tp-unsafe", "where", claim.where());
-                return;
-            }
-            teleport(player, claim, target);
-        }));
+    private boolean valid(Player player,Claim original,Pending state) {
+        Claim current=plugin.store().claimAt(original.world,original.x,original.z);
+        return plugin.financeReady() && pending.get(player.getUniqueId())==state && player.isOnline() && plugin.coreApi()!=null && plugin.coreApi().isAuthenticated(player)
+                && plugin.config().teleportEnabled && plugin.config().worldEnabled(original.world) && player.hasPermission("chrdkclaims.teleport")
+                && player.getWorld().getName().equals(state.world) && current==original && (current.canUse(player.getName()) || current.salePrice>0 || plugin.isBypassing(player));
     }
-
-    private void teleport(Player player, Claim claim, Location target) {
-        player.teleportAsync(target).thenAccept(success -> runMain(() -> {
-            if (!player.isOnline()) {
-                return;
-            }
-            if (!Boolean.TRUE.equals(success)) {
-                plugin.messages().send(player, "tp-failed");
-                return;
-            }
-            cooldowns.put(player.getUniqueId(), System.currentTimeMillis());
-            plugin.messages().send(player, "tp-done", "where", claim.where());
-        }));
+    /** Чанк загружается без оплаты. Lease остаётся занятым до native результата; запоздалый callback не списывает деньги. */
+    private void finish(Player player,Claim claim,Pending state) {
+        World world=Bukkit.getWorld(claim.world);
+        if (world==null || !valid(player,claim,state)) { cancel(player.getUniqueId(),"tp-failed"); return; }
+        try {
+            world.getChunkAtAsync(claim.x,claim.z,true,chunk->runMain(()->{
+                if (pending.get(player.getUniqueId())!=state) return;
+                try {
+                    if (!valid(player,claim,state)) { plugin.messages().send(player,"tp-failed"); return; }
+                    Location target=safeLocation(world,claim,player.getLocation().getYaw());
+                    if (target==null) { plugin.messages().send(player,"tp-unsafe","where",claim.where()); return; }
+                    if (!valid(player,claim,state)) { plugin.messages().send(player,"tp-failed"); return; }
+                    String payload=target.getWorld().getName()+":"+target.getX()+":"+target.getY()+":"+target.getZ();
+                    boolean success=plugin.teleportPayments().perform(player,player,state.price,"claim-tp",payload,()->{
+                        state.dispatching=true;
+                        return ru.cherdakmd.chrdkregister.api.PaidActions.teleport(player,target);
+                    });
+                    if (success) { cooldowns.put(player.getUniqueId(),System.currentTimeMillis()); plugin.messages().send(player,"tp-done","where",claim.where()); }
+                } finally { if (pending.remove(player.getUniqueId(),state) && state.timeout!=null) state.timeout.cancel(); }
+            }));
+        } catch (RuntimeException error) { cancel(player.getUniqueId(),"tp-failed"); plugin.getLogger().warning("Не удалось загрузить чанк телепорта: "+error); }
     }
 
     private void runMain(Runnable action) {
+        if (!plugin.isEnabled()) return;
         if (Bukkit.isPrimaryThread()) {
             action.run();
         } else {
@@ -311,7 +295,7 @@ public final class ClaimTeleportService implements Listener {
             return;
         }
         Pending state = pending.get(event.getPlayer().getUniqueId());
-        if (state == null || event.getTo() == null) {
+        if (state == null || state.dispatching || event.getTo() == null) {
             return;
         }
         Location to = event.getTo();
@@ -328,7 +312,7 @@ public final class ClaimTeleportService implements Listener {
         if (!plugin.config().teleportCancelDamage) {
             return;
         }
-        if (event.getEntity() instanceof Player player && isBusy(player.getUniqueId())) {
+        if (event.getEntity() instanceof Player player && isBusy(player.getUniqueId()) && !pending.get(player.getUniqueId()).dispatching) {
             cancel(player.getUniqueId(), "tp-cancelled-damage");
         }
     }

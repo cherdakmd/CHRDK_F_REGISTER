@@ -189,7 +189,7 @@ public final class ArtifactsConfig {
                     continue;
                 }
                 // 1.4.184: часы вместо суток; старый ключ pass-days читается как часы.
-                String hoursKey = rewards.contains(key + ".pass-hours")
+                String hoursKey = rewards.contains(key + ".boost-hours") ? key + ".boost-hours" : rewards.contains(key + ".pass-hours")
                         ? key + ".pass-hours" : key + ".pass-days";
                 int hours = rewards.getInt(hoursKey, 0);
                 int diamonds = rewards.getInt(key + ".diamonds", 0);

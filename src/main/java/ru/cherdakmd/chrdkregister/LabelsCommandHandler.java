@@ -16,9 +16,9 @@ import java.util.Locale;
  * 1.4.186).
  *
  * <p>Без аргумента открывается меню «Оформление ника»: каждая надпись — своя
- * плитка (ранг, титул кузни, звание кладоискателя, класс, гильдия, стример,
+ * плитка (ранг, титул кузни, класс, гильдия,
  * квесты, достижения, шапка таба). Текстовые ключи остались для тех, кто любит
- * команды и для логов: {@code /labels rank}, {@code /labels streams} — одна
+ * команды и для логов: {@code /labels rank}, {@code /labels classes} — одна
  * надпись; {@code /labels badges} — все аддонские разом; {@code all},
  * {@code on}, {@code off}, {@code reset} — всё сразу; {@code status} —
  * состояние страницей в чат.</p>
@@ -31,7 +31,7 @@ public final class LabelsCommandHandler implements CommandExecutor, TabCompleter
 
     /** Текстовые ключи в порядке подсказки: сначала одиночные, потом группы. */
     private static final List<String> OPTIONS = List.of(
-            "rank", "tierforge", "treasures", "classes", "guilds", "streams",
+            "rank", "tierforge", "classes", "guilds",
             "quests", "achievements", "header",
             "badges", "all", "on", "off", "reset", "status", "menu",
             "color", "order", "preset");
@@ -115,10 +115,8 @@ public final class LabelsCommandHandler implements CommandExecutor, TabCompleter
         return switch (key) {
             case "ранг", "ранги" -> LabelPreferences.Label.RANK;
             case "кузня", "титул", "кузни" -> LabelPreferences.Label.TIERFORGE;
-            case "клады", "кладоискатель" -> LabelPreferences.Label.TREASURES;
             case "класс", "классы" -> LabelPreferences.Label.CLASSES;
             case "гильдия", "гильдии" -> LabelPreferences.Label.GUILDS;
-            case "стример", "эфир" -> LabelPreferences.Label.STREAMS;
             case "квесты", "квест" -> LabelPreferences.Label.QUESTS;
             case "достижения" -> LabelPreferences.Label.ACHIEVEMENTS;
             case "шапка", "таб" -> LabelPreferences.Label.HEADER;
@@ -195,7 +193,7 @@ public final class LabelsCommandHandler implements CommandExecutor, TabCompleter
         }
         messages.send(player, "labels.order-moved",
                 "name", LabelsMenuService.nameOf(messages, label),
-                "position", String.valueOf(styles.order(player.getName()).indexOf(label) + 1));
+                "position", String.valueOf(styles.assignments(player.getName()).indexOf(label.id()) + 1));
         plugin.refreshTab();
     }
 
@@ -310,12 +308,12 @@ public final class LabelsCommandHandler implements CommandExecutor, TabCompleter
     /** Текущее состояние всех переключателей одной страницей. */
     private void sendStatus(Player player) {
         messages.send(player, "labels.header");
+        LabelStyleService.Selection selection = LabelsMenuService.selectionOf(plugin, player.getName());
+        if (selection != null) player.sendMessage(LabelsMenuService.summary(messages, selection));
         for (LabelPreferences.Label label : LabelPreferences.Label.values()) {
             messages.send(player, "labels.status-line",
                     "name", LabelsMenuService.nameOf(messages, label),
-                    "value", preferences.visible(player.getName(), label)
-                            ? messages.mini("labels.value-on")
-                            : messages.mini("labels.value-off"));
+                    "value", LabelsMenuService.stateOf(messages, preferences, player.getName(), label, selection));
         }
         messages.send(player, "labels.hint");
     }

@@ -1,3 +1,5 @@
+# Денежные награды вех поступают в /bal, без предметной выдачи и drops.
+# При cap/недоступном банке долг сохраняется в milestone-awards.json; не удаляйте ledger.
 # CHRDK_Artifacts — 65 артефактов (33 светлых, 32 проклятых). Метки артефактов и их
 # свойства ▲/▼ живут в PDC предметов; прогресс коллекции и кулдауны — в collection.json
 # и cooldowns.json рядом с этим файлом (с 1.4.130). Здесь включаемость, кулдауны и цена
@@ -71,10 +73,10 @@ collection:
   # один раз. Пустой блок (rewards: {}) вернёт набор по умолчанию — чтобы
   # выключить награды, поставьте enabled: false или нули в полях.
   rewards:
-    25: {pass-hours: 1, diamonds: 8}
-    50: {pass-hours: 2, diamonds: 16}
-    75: {pass-hours: 3, diamonds: 24}
-    100: {pass-hours: 7, diamonds: 32}
+    25: {boost-hours: 1, diamonds: 8}
+    50: {boost-hours: 2, diamonds: 16}
+    75: {boost-hours: 3, diamonds: 24}
+    100: {boost-hours: 7, diamonds: 32}
 
 # Обратная связь (1.4.130): экшнбар и звуки вместо «тонущих» строк в чате.
 feedback:

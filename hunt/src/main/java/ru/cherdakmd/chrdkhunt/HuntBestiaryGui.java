@@ -194,6 +194,10 @@ public final class HuntBestiaryGui implements Listener {
             lore.add(plugin.messages().get("bestiary-info-full",
                     "coins", String.valueOf(bestiary.fullCoins())));
         }
+        if (player.hasPermission("chrdkhunt.use") && plugin.coreApi() != null && plugin.coreApi().isAuthenticated(player)) {
+            lore.add(plugin.messages().get("mob-bestiary-levels", "levels", MobReport.numbers(plugin.store().observedLevels(player.getUniqueId()))));
+            lore.add(plugin.messages().get("mob-bestiary-elites", "count", plugin.store().observedElites(player.getUniqueId()).size()));
+        }
         lore.add(plugin.messages().get("bestiary-info-hint"));
         return plugin.items().icon(Material.WRITTEN_BOOK,
                 plugin.messages().get("bestiary-info-name"), lore);

@@ -35,6 +35,7 @@ public final class Guild {
     private final long createdAt;
     private final Map<UUID, GuildRank> members = new LinkedHashMap<>();
     private long treasury;
+    private long warReturns;
     private int level;
     private int glory;
     private int warsWon;
@@ -77,6 +78,23 @@ public final class Guild {
 
     public long treasury() {
         return treasury;
+    }
+
+    /** Коллективное обязательство: часть военной выплаты сверх потолка казны. */
+    public long warReturns() { return warReturns; }
+
+    /** Не обрезает выигрыш/возврат при полной казне. */
+    void returnWarFunds(long amount) {
+        if (amount <= 0) return;
+        long accepted = Math.min(amount, MAX_TREASURY - treasury);
+        long pending = Math.addExact(warReturns, amount - accepted);
+        treasury += accepted;
+        warReturns = pending;
+    }
+
+    void restoreWarReturns(long amount) {
+        if (amount < 0 || amount > 0 && treasury != MAX_TREASURY) throw new IllegalArgumentException("war returns");
+        warReturns = amount;
     }
 
     public int level() {
@@ -199,6 +217,9 @@ public final class Guild {
         }
         long taken = Math.min(amount, treasury);
         treasury -= taken;
+        long refill = Math.min(warReturns, MAX_TREASURY - treasury);
+        treasury += refill;
+        warReturns -= refill;
         return taken;
     }
 

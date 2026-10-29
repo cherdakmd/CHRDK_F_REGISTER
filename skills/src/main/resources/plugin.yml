@@ -8,7 +8,7 @@ depend: [CHRDK_Core]
 commands:
   skills:
     description: "Навыки: витрина, список, топ и карточка навыка"
-    usage: "/skills [menu|list|top|<навык>]"
+    usage: "/skills [menu|list|top|energy|use <навык>|<навык>]"
   skillsadmin:
     description: "Администрирование навыков"
     permission: chrdkskills.admin

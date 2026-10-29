@@ -12,7 +12,7 @@ import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
  *
  * <p>Заказы приходят от ботов-записей конфига, а не от игроков: сервер не
  * зависит от онлайна и чужих цен. Доска общая, заказы живут по времени, а
- * награда — алмазы и редкие дни ранга. Прогресс (репутация и сдачи) лежит
+ * награда — /bal и отдельные часы игрового буста. Прогресс (репутация и сдачи) лежит
  * в {@code orders.json} и переживает перезапуск.</p>
  */
 public final class OrdersPlugin extends JavaPlugin {
@@ -21,6 +21,7 @@ public final class OrdersPlugin extends JavaPlugin {
     private Messages messages;
     private OrdersStore store;
     private OrdersService service;
+    private OrdersFinance finance;
     private OrdersGui gui;
     private volatile ChrdkRegisterApi coreApi;
     private BukkitTask boardTask;
@@ -35,8 +36,10 @@ public final class OrdersPlugin extends JavaPlugin {
             this.config = OrdersConfig.parse(getConfig(), getLogger());
             this.messages = Messages.load(this, config.locale(), getLogger());
             this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
+            if(coreApi==null||ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)<22) throw new IllegalStateException("Нужен Core API 22+");
             this.store = new OrdersStore(getDataFolder().toPath(), getLogger());
             store.load();
+            this.finance = new OrdersFinance(this);
             this.service = new OrdersService(this);
             if (coreApi != null) {
                 try {
@@ -60,15 +63,17 @@ public final class OrdersPlugin extends JavaPlugin {
                     + " из " + config.boardSize() + ", ботов " + config.bots().size()
                     + ", категорий " + config.categories().size() + ", игроков в базе "
                     + store.players() + ".");
-        } catch (RuntimeException exception) {
+        } catch (Exception | LinkageError exception) {
             getLogger().severe("CHRDK_Orders не смог запуститься: " + exception.getMessage());
             exception.printStackTrace();
+            this.store = null; // fail-stop: onDisable не переписывает неподтверждённый progress
             getServer().getPluginManager().disablePlugin(this);
         }
     }
 
     @Override
     public void onDisable() {
+        if(finance!=null) finance.close();
         if (coreApi != null) {
             try {
                 coreApi.unregisterProfile("orders");
@@ -189,6 +194,8 @@ public final class OrdersPlugin extends JavaPlugin {
     public OrdersStore store() {
         return store;
     }
+
+    public OrdersFinance finance() { return finance; }
 
     public OrdersService service() {
         return service;

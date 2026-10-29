@@ -28,7 +28,7 @@ class OrdersMessagesTest {
             "help-footer",
             "list-header", "list-row", "list-row-pass", "list-row-locked", "list-empty",
             "list-footer",
-            "delivered", "delivered-line", "delivered-pass", "delivered-dropped",
+            "delivered", "delivered-line", "delivered-pass", "finance-mode", "finance-wait", "finance-status",
             "delivered-broadcast", "not-enough", "locked", "order-expired",
             "unknown-order", "cooldown", "daily-limit", "inventory-error",
             "menu-title", "menu-empty-name", "menu-empty-lore", "menu-order-bot",
@@ -101,6 +101,7 @@ class OrdersMessagesTest {
         expected.put("menu-info-lore", List.of("%reputation%", "%rank%"));
         expected.put("top-row", List.of("%num%", "%player%", "%completed%", "%reputation%",
                 "%rank%"));
+        expected.put("finance-status",List.of("%source%","%lineage%","%healthy%","%pending%","%conflict%","%count%"));
         expected.put("admin-info", List.of("%orders%", "%size%", "%categories%", "%bots%",
                 "%players%", "%completed%"));
         for (Map.Entry<String, List<String>> entry : expected.entrySet()) {

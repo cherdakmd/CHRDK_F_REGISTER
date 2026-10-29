@@ -12,7 +12,7 @@ messages:
     "need-pass": "<red>Билеты лотереи доступны с более высокой ступенью ранга.</red>"
     "player-only": "<red>Эта команда только для игроков.</red>"
     "usage": "<gray>/lottery info — банк и время розыгрыша; /lottery buy [n] — купить билеты; /lottery top; /lottery last; /lottery claim — забрать приз</gray>"
-    "admin-usage": "<gray>/lotteryadmin reload — перечитать конфиг; /lotteryadmin drawnow confirm — провести розыгрыш сейчас</gray>"
+    "admin-usage": "<gray>/lotteryadmin reload — перечитать конфиг; /lotteryadmin drawnow confirm — провести розыгрыш сейчас; /lotteryadmin recover — проверить журнал оплаты</gray>"
 
     "buy-success": "<green>Куплено билетов: %count% за %cost% 💠. Ваши билеты в этом розыгрыше: %total%.</green>"
     "buy-no-diamonds": "<red>Не хватает алмазов: нужно %cost% 💠, у вас %have% 💠.</red>"
@@ -46,3 +46,11 @@ messages:
     "storage-error": "<red>Операция не выполнена. Ошибка хранения данных — обратитесь к администратору.</red>"
     "no-permission": "<red>Нет права chrdklottery.use.</red>"
     "notify-title": "Лотерея недели — результат"
+    bank-wait: '<yellow>Выигрыш ожидает зачисления: банк недоступен, данные расходятся или /bal заполнен. Право на выплату сохранено; /lottery claim — повторить.</yellow>'
+    bank-paid: '<green>Выигрыши учтены на общем /bal: %balance% 💠. Повторное получение не начисляет их ещё раз.</green>'
+    bank-mode: '<red>Оплата доступна авторизованному живому игроку с правом chrdklottery.use в Survival/Adventure; NPC не допускаются.</red>'
+    bank-recovery: '<yellow>Есть незавершённая оплата. Билеты и новые сделки ждут квитанцию банка и сверку источника/предметов. Администратору: /lotteryadmin recover.</yellow>'
+    bank-recovered: '<green>Проверка журнала оплаты завершена. Повторного списания нет.</green>'
+    bank-not-enough: '<red>Нужно %cost% 💠: сначала /bal, затем обычные алмазы/руда/блоки из storage. Именные вещи и offhand не расходуются.</red>'
+    bank-refused: '<red>Банк отклонил покупку. Билеты не добавлены, предметы не изменены.</red>'
+    bank-bought: '<green>Куплено билетов: %count%, цена %cost% 💠. Всего %total%. Сдача %change% 💠 — в /bal.</green>'

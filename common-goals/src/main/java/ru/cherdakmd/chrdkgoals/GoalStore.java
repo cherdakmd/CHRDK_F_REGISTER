@@ -1,238 +1,171 @@
 package ru.cherdakmd.chrdkgoals;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
-
+import com.google.gson.*;
 import java.io.IOException;
-import java.io.Reader;
-import java.io.Writer;
-import java.lang.reflect.Type;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.nio.file.*;
+import java.util.*;
+import java.util.logging.*;
 
-/**
- * Данные целей (goals-data.json): активная волна (ид, объёмы, прогресс, вклады, флаг
- * завершения), дедлайн волны, незабранные награды игроков и простая статистика.
- * Паттерн — как у остальных аддонов: мутации в памяти, периодический snapshot + async-запись.
- */
-public final class GoalStore {
-
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Type DATA_TYPE = new TypeToken<LinkedHashMap<String, Object>>() {
-    }.getType();
-
+/** Источник накопительных доходов. Schema 2 запрещает физическое снятие pendingRewards. */
+public final class GoalStore implements ru.cherdakmd.chrdkregister.api.ChargeInventory.Source {
+    private static final Gson JSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final class Data {
+        int schema = 1;
+        UUID incomeId;
+        boolean bankRegistered;
+        List<GoalState> goals = new ArrayList<>();
+        Map<String, Long> pendingRewards = new LinkedHashMap<>();
+        long rotationEndsAt, lifetimeEarned;
+        int rotationsDone;
+    }
     private final Path file;
     private final Logger logger;
-    private final List<GoalState> goals = new ArrayList<>();
-    private final Map<String, Integer> pendingRewards = new LinkedHashMap<>();
-    private long rotationEndsAt;
-    private int rotationsDone;
-    private long lifetimeEarned;
-    private boolean dirty;
-
-    public GoalStore(Path dataFolder, Logger logger) {
-        this.file = dataFolder.resolve("goals-data.json");
-        this.logger = logger;
+    private Data data = new Data();
+    private boolean dirty, healthy = true;
+    private java.util.function.BooleanSupplier financeBusy = () -> false;
+    public synchronized void bindFinance(java.util.function.BooleanSupplier busy) { financeBusy = Objects.requireNonNull(busy); }
+    private final ru.cherdakmd.chrdkregister.api.ChargeJournal.WriteCheckpoint checkpoint;
+    public GoalStore(Path folder, Logger logger) { this(folder, logger, () -> { }); }
+    GoalStore(Path folder, Logger logger, ru.cherdakmd.chrdkregister.api.ChargeJournal.WriteCheckpoint checkpoint) {
+        file = folder.resolve("goals-data.json"); this.logger = logger; this.checkpoint = Objects.requireNonNull(checkpoint);
     }
-
+    public synchronized boolean healthy() { return healthy; }
     public synchronized void load() {
-        if (!Files.isRegularFile(file)) {
-            return;
-        }
-        try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
-            Map<String, Object> data = GSON.fromJson(reader, DATA_TYPE);
-            if (data == null) {
-                return;
-            }
-            rotationEndsAt = longOf(data.get("rotationEndsAt"));
-            rotationsDone = (int) longOf(data.get("rotationsDone"));
-            lifetimeEarned = longOf(data.get("lifetimeEarned"));
-            goals.clear();
-            if (data.get("goals") instanceof List<?> list) {
-                for (Object row : list) {
-                    if (!(row instanceof Map<?, ?> map)) {
-                        continue;
-                    }
-                    GoalState state = new GoalState(
-                            strOf(map.get("id")),
-                            (int) Math.max(1, longOf(map.get("target"))),
-                            (int) Math.max(0, longOf(map.get("rewardPool"))));
-                    state.progress = (int) Math.max(0, longOf(map.get("progress")));
-                    state.done = Boolean.TRUE.equals(map.get("done"));
-                    if (map.get("contributions") instanceof Map<?, ?> contribs) {
-                        for (Map.Entry<?, ?> entry : contribs.entrySet()) {
-                            state.contributions.put(String.valueOf(entry.getKey()),
-                                    (int) Math.max(0, longOf(entry.getValue())));
-                        }
-                    }
-                    goals.add(state);
-                }
-            }
-            pendingRewards.clear();
-            if (data.get("pendingRewards") instanceof Map<?, ?> map) {
-                for (Map.Entry<?, ?> entry : map.entrySet()) {
-                    int value = (int) Math.max(0, longOf(entry.getValue()));
-                    if (value > 0) {
-                        pendingRewards.put(String.valueOf(entry.getKey()), value);
-                    }
-                }
-            }
-        } catch (IOException exception) {
-            logger.log(Level.WARNING, "[CHRDK_CommonGoals] Не удалось прочитать " + file, exception);
-        }
-    }
-
-    public synchronized void save() {
-        if (!dirty) {
-            return;
-        }
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("rotationEndsAt", rotationEndsAt);
-        data.put("rotationsDone", rotationsDone);
-        data.put("lifetimeEarned", lifetimeEarned);
-        List<Map<String, Object>> goalRows = new ArrayList<>();
-        for (GoalState goal : goals) {
-            Map<String, Object> row = new LinkedHashMap<>();
-            row.put("id", goal.id);
-            row.put("target", goal.target);
-            row.put("rewardPool", goal.rewardPool);
-            row.put("progress", goal.progress);
-            row.put("done", goal.done);
-            row.put("contributions", new LinkedHashMap<>(goal.contributions));
-            goalRows.add(row);
-        }
-        data.put("goals", goalRows);
-        data.put("pendingRewards", new LinkedHashMap<>(pendingRewards));
+        if (!Files.exists(file)) return;
         try {
-            Files.createDirectories(file.getParent());
-            Path tmp = file.resolveSibling(file.getFileName() + ".tmp");
-            try (Writer writer = Files.newBufferedWriter(tmp, StandardCharsets.UTF_8)) {
-                GSON.toJson(data, writer);
+            var object = JsonParser.parseString(Files.readString(file, StandardCharsets.UTF_8)).getAsJsonObject();
+            ru.cherdakmd.chrdkregister.api.FinanceNumbers.requireIntegral(object);
+            for (String key : List.of("goals", "pendingRewards", "rotationEndsAt", "rotationsDone", "lifetimeEarned"))
+                if (!object.has(key)) throw new IllegalArgumentException("missing " + key);
+            var loaded = JSON.fromJson(object, Data.class);
+            if (loaded.schema == 2) for (String key : List.of("incomeId", "bankRegistered"))
+                if (!object.has(key)) throw new IllegalArgumentException("missing " + key);
+            validate(loaded); data = loaded;
+        } catch (Exception error) { healthy = false; logger.log(Level.SEVERE, "Цели: источник повреждён, изменения и выплаты остановлены; файл не сброшен", error); }
+    }
+    private static void validate(Data d) {
+        if (d == null || d.schema != 1 && d.schema != 2 || d.schema == 2 && d.incomeId == null
+                || d.goals == null || d.pendingRewards == null || d.rotationEndsAt < 0 || d.rotationsDone < 0 || d.lifetimeEarned < 0)
+            throw new IllegalArgumentException("goals data");
+        var ids = new HashSet<String>();
+        for (var goal : d.goals) {
+            if (goal == null || goal.id == null || !ids.add(goal.id) || goal.target < 1 || goal.rewardPool < 0
+                    || goal.progress < 0 || goal.progress > goal.target || goal.contributions == null)
+                throw new IllegalArgumentException("goal");
+            for (var row : goal.contributions.entrySet()) if (!name(row.getKey()) || row.getValue() == null || row.getValue() < 0)
+                throw new IllegalArgumentException("contribution");
+        }
+        for (var row : d.pendingRewards.entrySet()) if (!name(row.getKey()) || row.getValue() == null || row.getValue() <= 0)
+            throw new IllegalArgumentException("income");
+    }
+    private static boolean name(String n) { return n != null && n.matches("[a-z0-9_]{1,16}"); }
+    private void writable() { if (!healthy || financeBusy.getAsBoolean()) throw new IllegalStateException("goals finance paused"); }
+    private void persist(Data next) throws IOException {
+        if (!healthy) throw new IllegalStateException("goals storage quarantined"); validate(next);
+        try {
+            Files.createDirectories(file.getParent()); Path temp = file.resolveSibling("goals-data.json.tmp");
+            Files.writeString(temp, JSON.toJson(next), StandardCharsets.UTF_8);
+            try (FileChannel channel = FileChannel.open(temp, StandardOpenOption.WRITE)) { channel.force(true); }
+            Files.move(temp, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        checkpoint.afterReplace();
+            try (FileChannel directory = FileChannel.open(file.getParent(), StandardOpenOption.READ)) { directory.force(true); }
+            data = next; dirty = false;
+        } catch (IOException error) { healthy = false; throw error; }
+    }
+    private Data copy() { return JSON.fromJson(JSON.toJson(data), Data.class); }
+    public synchronized void enableBank() throws IOException {
+        writable(); if (data.schema == 2) return;
+        var next = copy(); next.schema = 2; next.incomeId = UUID.randomUUID(); persist(next);
+    }
+    @Override public synchronized String snapshot() {
+        if (!healthy) throw new IllegalStateException("goals storage quarantined"); return JSON.toJson(data);
+    }
+    /** Только preview: завершение, вклад и распределённые награды подготовлены без изменения source. */
+    public synchronized String previewDonation(String name, int amount, int bonus) throws IOException {
+        writable(); saveStrict();
+        if (data.schema != 2 || !data.bankRegistered || name == null || !name(name) || amount < 1 || amount > 100_000)
+            throw new IllegalArgumentException("bank donation");
+        var next = copy(); var goal = next.goals.stream().filter(g -> g.id.equals("donate-diamonds") && !g.done).findFirst().orElseThrow();
+        goal.progress = (int) Math.min(goal.target, (long) goal.progress + amount);
+        goal.contributions.merge(name, amount, Math::addExact);
+        if (goal.progress == goal.target) {
+            goal.done = true;
+            for (var row : GoalRewards.distribute(goal.rewardPool, goal.contributions, bonus).entrySet()) {
+                next.pendingRewards.merge(row.getKey(), (long) row.getValue(), Math::addExact);
+                next.lifetimeEarned = Math.addExact(next.lifetimeEarned, row.getValue());
             }
-            Files.move(tmp, file, java.nio.file.StandardCopyOption.REPLACE_EXISTING,
-                    java.nio.file.StandardCopyOption.ATOMIC_MOVE);
-        } catch (IOException exception) {
-            logger.log(Level.WARNING, "[CHRDK_CommonGoals] Не удалось записать " + file, exception);
         }
-        dirty = false;
+        validate(next); return JSON.toJson(next);
     }
-
-    public void saveAsync(CommonGoalsPlugin plugin) {
-        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, this::save);
+    @Override public synchronized void publish(String before, String after) throws IOException {
+        if (!healthy) throw new IOException("goals storage quarantined");
+        String current = snapshot(); if (current.equals(after)) return;
+        if (!current.equals(before)) throw new IllegalStateException("goals state conflict");
+        var object = JsonParser.parseString(after); ru.cherdakmd.chrdkregister.api.FinanceNumbers.requireIntegral(object);
+        var next = JSON.fromJson(object, Data.class); validate(next);
+        if (next.schema != 2 || !next.bankRegistered || !Objects.equals(data.incomeId, next.incomeId) || !after.equals(JSON.toJson(next)))
+            throw new IllegalArgumentException("goals state identity/canonical encoding");
+        persist(next);
     }
-
-    public synchronized void markDirty() {
-        dirty = true;
+    public synchronized UUID incomeId() { return data.incomeId; }
+    public synchronized boolean bankRegistered() { return data.bankRegistered; }
+    public synchronized void markBankRegistered() throws IOException { writable(); var next = copy(); next.bankRegistered = true; persist(next); }
+    public synchronized void saveStrict() throws IOException { if (dirty) persist(copy()); }
+    public synchronized void save() {
+        if (!healthy || !dirty) return;
+        try { saveStrict(); } catch (IOException error) { logger.log(Level.SEVERE, "Цели: ошибка записи, хранилище остановлено", error); }
     }
-
-    public synchronized List<GoalState> goals() {
-        return List.copyOf(goals);
+    public void saveAsync(CommonGoalsPlugin plugin) { plugin.getServer().getScheduler().runTaskAsynchronously(plugin, this::save); }
+    public synchronized void markDirty() { if (healthy && !financeBusy.getAsBoolean()) dirty = true; }
+    public synchronized List<GoalState> goals() { return List.copyOf(data.goals); }
+    public synchronized Optional<GoalState> goal(String id) { return data.goals.stream().filter(g -> g.id.equals(id)).findFirst(); }
+    public synchronized void replaceGoals(List<GoalState> goals, long ends) {
+        writable(); data.goals = new ArrayList<>(goals); data.rotationEndsAt = ends; data.rotationsDone = Math.incrementExact(data.rotationsDone); dirty = true;
     }
-
-    public synchronized Optional<GoalState> goal(String id) {
-        return goals.stream().filter(g -> g.id.equals(id)).findFirst();
+    public synchronized long rotationEndsAt() { return data.rotationEndsAt; }
+    public synchronized int rotationsDone() { return data.rotationsDone; }
+    public synchronized boolean needRotation(long now) { return healthy && !financeBusy.getAsBoolean() && (data.goals.isEmpty() || data.rotationEndsAt <= now); }
+    public synchronized boolean addProgress(String id, String player, int amount) {
+        writable(); var found = goal(id); if (found.isEmpty() || found.get().done || amount <= 0) return false;
+        var g = found.get(); g.progress = (int) Math.min(g.target, (long) g.progress + amount);
+        if (player != null) g.contributions.merge(player.toLowerCase(Locale.ROOT), amount, Math::addExact);
+        dirty = true; if (g.progress < g.target) return false; g.done = true; return true;
     }
-
-    public synchronized void replaceGoals(List<GoalState> newGoals, long newEndsAt) {
-        goals.clear();
-        goals.addAll(newGoals);
-        rotationEndsAt = newEndsAt;
-        rotationsDone++;
-        dirty = true;
-    }
-
-    public synchronized long rotationEndsAt() {
-        return rotationEndsAt;
-    }
-
-    public synchronized int rotationsDone() {
-        return rotationsDone;
-    }
-
-    public synchronized boolean needRotation(long nowMillis) {
-        return goals.isEmpty() || rotationEndsAt <= nowMillis;
-    }
-
-    /* ------------------------------ прогресс ------------------------------ */
-
-    /** Добавляет вклад, true = цель завершилась на этом вызове. */
-    public synchronized boolean addProgress(String goalId, String player, int amount) {
-        Optional<GoalState> goal = goal(goalId);
-        if (goal.isEmpty() || goal.get().done) {
-            return false;
+    /** Завершение, распределение и durable-source сохраняются под одним замком, до банковских вызовов. */
+    public synchronized boolean progressAndRewards(String id, String player, int amount, int bonus) throws IOException {
+        writable(); var previous = copy();
+        try {
+            if (!addProgress(id, player, amount)) return false;
+            var g = goal(id).orElseThrow();
+            for (var row : GoalRewards.distribute(g.rewardPool, g.contributions, bonus).entrySet()) addPendingReward(row.getKey(), row.getValue());
+            saveStrict(); return true;
+        } catch (IOException | RuntimeException error) {
+            data = previous; // При IO остаётся quarantine: не перезаписываем неоднозначный диск старым состоянием.
+            throw error;
         }
-        GoalState state = goal.get();
-        state.progress += Math.max(0, amount);
-        if (player != null) {
-            String key = player.toLowerCase(java.util.Locale.ROOT);
-            state.contributions.merge(key, Math.max(0, amount), Integer::sum);
-        }
-        if (state.progress >= state.target) {
-            state.done = true;
-            state.progress = state.target;
-            dirty = true;
-            return true;
-        }
-        dirty = true;
-        return false;
     }
-
-    public synchronized void setProgress(String goalId, int value) {
-        goal(goalId).ifPresent(state -> {
-            state.progress = Math.max(0, Math.min(value, state.target));
-            state.done = state.progress >= state.target;
-            dirty = true;
-        });
+    public synchronized void setProgress(String id, int value) {
+        writable(); goal(id).ifPresent(g -> { g.progress = Math.max(0, Math.min(value, g.target)); g.done = g.progress >= g.target; dirty = true; });
     }
-
-    /* ------------------------------ награды ------------------------------ */
-
-    public synchronized void addPendingReward(String player, int amounts) {
-        if (amounts <= 0) {
-            return;
-        }
-        pendingRewards.merge(player.toLowerCase(java.util.Locale.ROOT), amounts, Integer::sum);
-        lifetimeEarned += amounts;
-        dirty = true;
+    public synchronized void addPendingReward(String player, int amount) {
+        writable(); if (amount <= 0) return;
+        String key = player.toLowerCase(Locale.ROOT); if (!name(key)) throw new IllegalArgumentException("player name");
+        long next = Math.addExact(data.pendingRewards.getOrDefault(key, 0L), amount);
+        long earned = Math.addExact(data.lifetimeEarned, amount);
+        data.pendingRewards.put(key, next); data.lifetimeEarned = earned; dirty = true;
     }
-
-    public synchronized int pendingRewardOf(String player) {
-        return pendingRewards.getOrDefault(player.toLowerCase(java.util.Locale.ROOT), 0);
-    }
-
-    /** Атомарно снимает накопленную награду игрока, 0 если пусто. */
+    public synchronized int pendingRewardOf(String player) { return (int) Math.min(Integer.MAX_VALUE, entitlementOf(player)); }
+    public synchronized long entitlementOf(String player) { return data.pendingRewards.getOrDefault(player.toLowerCase(Locale.ROOT), 0L); }
+    /** Только для чтения старой схемы; production после enableBank сюда не попадает. */
     public synchronized int claim(String player) {
-        String key = player.toLowerCase(java.util.Locale.ROOT);
-        Integer removed = pendingRewards.remove(key);
-        if (removed == null || removed <= 0) {
-            return 0;
-        }
-        dirty = true;
-        return removed;
+        writable(); if (data.schema == 2) throw new IllegalStateException("bank entitlement cannot be withdrawn as items");
+        var amount = data.pendingRewards.remove(player.toLowerCase(Locale.ROOT)); dirty = true; return amount == null ? 0 : Math.toIntExact(amount);
     }
-
     public synchronized Map<String, Integer> pendingView() {
-        return new LinkedHashMap<>(pendingRewards);
+        var result = new LinkedHashMap<String, Integer>(); data.pendingRewards.forEach((n, a) -> result.put(n, Math.toIntExact(a))); return result;
     }
-
-    public synchronized long lifetimeEarned() {
-        return lifetimeEarned;
-    }
-
-    private static long longOf(Object value) {
-        return value instanceof Number number ? number.longValue() : 0L;
-    }
-
-    private static String strOf(Object value) {
-        return value == null ? "" : String.valueOf(value);
-    }
+    public synchronized Map<String, Long> entitlements() { return Map.copyOf(data.pendingRewards); }
+    public synchronized long lifetimeEarned() { return data.lifetimeEarned; }
 }

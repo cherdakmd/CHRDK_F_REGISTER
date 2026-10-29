@@ -8,7 +8,7 @@ messages:
     "status-linked-none": "<gray>Вы ни к кому не привязаны. Знаете чей-то код? </gray><yellow>/ref use <ник></yellow>"
     "status-linked-to": "<gray>Ваша пригласивший: </gray><aqua>%inviter%</aqua>%consumed%"
     "status-consumed": "<gray> (бонус уже выплачен)</gray>"
-    "how-it-works": "<dark_gray>Позовите друга: он пишет /ref use %player% до первой оплаты — вы оба получаете по %bonus% ч. ранга.</dark_gray>"
+    "how-it-works": "<dark_gray>Позовите друга: он пишет /ref use %player% до первой оплаты — вы оба получаете по %bonus% ч. буста.</dark_gray>"
     "use-ok": "<green>Готово! Вас пригласил(а) </green><aqua>%inviter%</aqua><green>. Оформите ранг — вы оба получите бонусные дни.</green>"
     "use-already-linked": "<red>Вы уже привязаны к %inviter% — привязка одноразовая.</red>"
     "use-self": "<red>Нельзя привязаться к самому себе.</red>"

@@ -51,7 +51,7 @@ class RankLadderTest {
     }
 
     @Test
-    void migrationGivesPermanentRankToPayersAndKeepsTrialDays(@TempDir Path dir) {
+    void migrationNeverConvertsLifetimeSpendIntoFreePermanentRank(@TempDir Path dir) {
         long now = 1_700_000_000_000L;
         RegistrationStore store = store(dir);
 
@@ -64,9 +64,9 @@ class RankLadderTest {
         store.grantPassManual("Trial", now, 1 * DAY, "trial");
 
         int migrated = store.migrateRanks(now);
-        assertEquals(3, migrated, "трое получили ранг");
-        assertEquals(3, store.rankLevel("Paid", now), "1400 ₽ — Хранитель");
-        assertEquals(0L, store.rankUntil("Paid"), "постоянный ранг без срока");
+        assertEquals(0, migrated, "автоматической выдачи рангов больше нет");
+        assertEquals(1, store.rankLevel("Paid", now), "сохранён прежний срок, без повышения по сумме всех покупок");
+        assertEquals(now + 30 * DAY, store.rankUntil("Paid"), "не превращаем оплаченные 30 дней в вечный ранг");
         assertEquals(1, store.rankLevel("Small", now), "150 ₽ — Странник");
         assertEquals(1, store.rankLevel("Trial", now), "триал — первая ступень");
         assertTrue(store.rankUntil("Trial") > now, "срок триала сохранён");

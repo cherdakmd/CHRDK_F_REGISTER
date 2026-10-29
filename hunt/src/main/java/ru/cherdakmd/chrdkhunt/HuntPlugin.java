@@ -5,6 +5,7 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
+import ru.cherdakmd.chrdkregister.configuration.ConfigSnapshot;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 
 /**
@@ -16,9 +17,9 @@ import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
  */
 public final class HuntPlugin extends JavaPlugin {
 
-    private HuntConfig config;
-    private Messages messages;
+    private volatile ConfigSnapshot<HuntConfig> settings;
     private HuntStore store;
+    private HuntFinance finance;
     private HuntItems items;
     private HuntService service;
     private HuntReport report;
@@ -30,11 +31,20 @@ public final class HuntPlugin extends JavaPlugin {
     private BukkitTask queuedSave;
     private boolean saveQueued;
     private ChrdkRegisterApi coreApi;
+    private MobProgression progression;
+    private EliteRegeneration regeneration;
+    private EliteDashing dashing;
+    private EliteAdaptation adaptation;
+    private EliteFleeing fleeing;
+    private HuntHistoryTracker historyTracker;
+    HuntHistoryTracker historyTracker() { return historyTracker; }
 
     /**
      * Публичный API ядра: охота спрашивает бонус добычи ранга (1.4.167).
      * {@code null} — ядро старше API v10 или не установлено.
      */
+    public HuntFinance finance() { return finance; }
+
     public ChrdkRegisterApi coreApi() {
         return coreApi;
     }
@@ -43,10 +53,15 @@ public final class HuntPlugin extends JavaPlugin {
     public void onEnable() {
         try {
             saveDefaultConfig();
-            this.config = HuntConfig.parse(getConfig(), getLogger());
-            this.messages = Messages.load(this, config.locale(), getLogger());
+            if (!tryReloadHunt()) {
+                getServer().getPluginManager().disablePlugin(this);
+                return;
+            }
+            this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
+            if(coreApi==null||ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)<21) throw new IllegalStateException("Нужен Core API 21+");
             this.store = new HuntStore(getDataFolder().toPath(), getLogger());
             store.load();
+            this.finance = new HuntFinance(this);
             this.items = new HuntItems(this);
             this.service = new HuntService(this);
             this.report = new HuntReport(this);
@@ -68,24 +83,44 @@ public final class HuntPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(shopGui, this);
             getServer().getPluginManager().registerEvents(trophyGui, this);
             getServer().getPluginManager().registerEvents(bestiaryGui, this);
+            this.progression = new MobProgression(this);
+            getServer().getPluginManager().registerEvents(progression, this);
+            regeneration = new EliteRegeneration(this);
+            getServer().getPluginManager().registerEvents(regeneration, this);
+            dashing = new EliteDashing(this);
+            getServer().getPluginManager().registerEvents(dashing, this);
+            adaptation = new EliteAdaptation(this);
+            getServer().getPluginManager().registerEvents(adaptation, this);
+            fleeing = new EliteFleeing(this);
+            getServer().getPluginManager().registerEvents(fleeing, this);
+            historyTracker = new HuntHistoryTracker(this);
+            getServer().getPluginManager().registerEvents(historyTracker, this);
             registerCommands();
             registerPlaceholders();
             scheduleTasks();
-            getLogger().info("CHRDK_Hunt включён: семейств " + config.families().size()
-                    + ", правил мобов " + config.mobRules().size()
-                    + ", позиций лавки " + config.shop().size()
-                    + ", трофеев " + config.trophies().size()
-                    + ", видов в бестиарии " + config.bestiary().totalEntries()
+            getLogger().info("CHRDK_Hunt включён: семейств " + config().families().size()
+                    + ", правил мобов " + config().mobRules().size()
+                    + ", позиций лавки " + config().shop().size()
+                    + ", трофеев " + config().trophies().size()
+                    + ", видов в бестиарии " + config().bestiary().totalEntries()
                     + ", охотников в базе " + store.players() + ".");
-        } catch (RuntimeException exception) {
+        } catch (Exception | LinkageError exception) {
             getLogger().severe("CHRDK_Hunt не смог запуститься: " + exception.getMessage());
             exception.printStackTrace();
+            this.store=null; // fail-stop: onDisable не переписывает сомнительный source
             getServer().getPluginManager().disablePlugin(this);
         }
     }
 
     @Override
     public void onDisable() {
+        if(finance!=null) finance.close();
+        if (fleeing != null) fleeing.stop();
+        if (adaptation != null) adaptation.stop();
+        if (dashing != null) dashing.stop();
+        if (regeneration != null) regeneration.stop();
+        if (historyTracker != null) historyTracker.stop();
+        if (progression != null) progression.stop();
         if (coreApi != null) {
             try {
                 coreApi.unregisterProfile("hunt");
@@ -118,22 +153,39 @@ public final class HuntPlugin extends JavaPlugin {
      * кошельки и коллекции. Открытые меню закрываются: старые иконки могут
      * ссылаться на удалённые позиции.
      */
-    public void reloadHunt() {
-        reloadConfig();
-        this.config = HuntConfig.parse(getConfig(), getLogger());
-        this.messages = Messages.load(this, config.locale(), getLogger());
-        if (gui != null) {
-            gui.closeAll();
+    public void reloadHunt() { tryReloadHunt(); }
+    @Override public void reloadConfig() {
+        if (settings == null) super.reloadConfig();
+        else tryReloadHunt();
+    }
+    @Override public org.bukkit.configuration.file.FileConfiguration getConfig() {
+        var current = settings;
+        return current == null ? super.getConfig() : current.yaml();
+    }
+    public boolean tryReloadHunt() {
+        ConfigSnapshot<HuntConfig> candidate;
+        try {
+            candidate = ConfigSnapshot.load(
+                    getDataFolder().toPath().resolve("config.yml"), getResource("config.yml"), HuntConfig::parse,
+                    (yaml, staged) -> Messages.loadChecked(this, yaml.getString("general.locale", "ru"), staged, settings == null));
+        } catch (java.io.IOException | org.bukkit.configuration.InvalidConfigurationException | RuntimeException | LinkageError failure) {
+            if (settings == null) getLogger().severe("Начальные настройки охоты не загружены (" + failure.getClass().getSimpleName() + "). Проверьте config.yml/messages.yml.");
+            else ConfigSnapshot.rejected(getLogger(), failure);
+            return false;
         }
-        if (shopGui != null) {
-            shopGui.closeAll();
-        }
-        if (trophyGui != null) {
-            trophyGui.closeAll();
-        }
-        if (bestiaryGui != null) {
-            bestiaryGui.closeAll();
-        }
+        settings = candidate; // До этого места никакой cleanup/закрытие GUI не выполняется.
+        candidate.committed(getLogger(),
+                () -> { if (historyTracker != null) historyTracker.clear(); },
+                () -> { if (fleeing != null) fleeing.reload(); },
+                () -> { if (adaptation != null) adaptation.reload(); },
+                () -> { if (dashing != null) dashing.reload(); },
+                () -> { if (regeneration != null) regeneration.reload(); },
+                () -> { if (progression != null) progression.reload(); },
+                () -> { if (gui != null) gui.closeAll(); },
+                () -> { if (shopGui != null) shopGui.closeAll(); },
+                () -> { if (trophyGui != null) trophyGui.closeAll(); },
+                () -> { if (bestiaryGui != null) bestiaryGui.closeAll(); });
+        return true;
     }
 
     private void registerCommands() {
@@ -203,12 +255,14 @@ public final class HuntPlugin extends JavaPlugin {
     }
 
     public HuntConfig config() {
-        return config;
+        return settings.value();
     }
 
     public Messages messages() {
-        return messages;
+        return settings.messages();
     }
+
+    MobProgression progression() { return progression; }
 
     public HuntStore store() {
         return store;

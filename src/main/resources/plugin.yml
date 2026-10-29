@@ -12,7 +12,7 @@ description: Ядро CHERDAK для Purpur 26.3 — пять донатных �
 
 commands:
   register:
-    description: Зарегистрировать аккаунт и активировать приветственный ранг
+    description: Зарегистрировать аккаунт и получить приветственный XP-буст
     usage: /<command> <пароль> <повтор>
     aliases: [reg]
   login:
@@ -32,18 +32,22 @@ commands:
   hat:
     description: "Надеть блок из руки на голову (преимущество Покровителя)"
     usage: /<command>
+  donate:
+    description: "Поддержать сервер — ссылка на официальный донат-магазин"
+    usage: /<command>
+    permission: chrdkregister.donate
   wiki:
     description: "Кликабельная ссылка на вики игрока: команды, цены и лимиты сайтом"
     usage: /<command> [страница]
     aliases: [site]
   labels:
     description: "Оформление ника: что показывать, в каком порядке, каким цветом и пресеты"
-    usage: /<command> [меню|rank|tierforge|treasures|classes|guilds|streams|quests|achievements|header|badges|all|on|off|reset|status|color|order|preset]
+    usage: /<command> [меню|rank|tierforge|classes|guilds|streams|quests|achievements|header|badges|all|on|off|reset|status|color|order|preset]
     aliases: [lab, tags]
   rankadmin:
-    description: "Ручная выдача и снятие донатных рангов"
+    description: "Просмотр и отзыв донатных рангов; покупки только с подтверждением оплаты"
     permission: chrdkregister.admin
-    usage: /<command> <give <ник> <ступень 1..5> [дней] | take <ник> | info <ник>>
+    usage: /<command> <take <ник> | info <ник>>
   captcha:
     description: Ответ на проверку «ты не бот» после серии неудачных попыток входа
     usage: /<command> <число>
@@ -112,6 +116,9 @@ commands:
     aliases: [balancetop, topbal]
 
 permissions:
+  chrdkregister.donate:
+    description: "Получить ссылку на донат-магазин сервера"
+    default: true
   chrdkregister.labels:
     description: "Переключать надписи в своём нике и шапку таб-листа (каждое звание отдельно)"
     default: true

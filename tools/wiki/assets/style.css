@@ -1170,3 +1170,17 @@ h2:hover .anchor, h3:hover .anchor { opacity: 1; }
   .steps li { padding: 13px 14px; gap: 11px; }
   .step-num { width: 26px; height: 26px; font-size: 12.5px; }
 }
+
+/* Палитра магазина: локальная пиксельная графика без сетевых зависимостей. */
+.shop-spotlight { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 28px; align-items: center;
+  padding: 26px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); }
+.shop-spotlight h3 { margin-top: 0; }
+.shop-kicker { color: var(--gold); font-size: 11px; font-weight: 700; letter-spacing: .1em; }
+.shop-palette { display: grid; grid-template-columns: repeat(4, 36px); gap: 7px; transform: rotate(-4deg); }
+.shop-palette span { width: 36px; height: 36px; background: var(--block); border: 2px solid #ffffff18;
+  box-shadow: inset -6px -6px 0 #0003, inset 3px 3px 0 #ffffff16; image-rendering: pixelated; }
+@media (max-width: 620px) {
+  .shop-spotlight { grid-template-columns: 1fr; padding: 18px; }
+  .shop-palette { grid-template-columns: repeat(8, 24px); gap: 5px; transform: none; }
+  .shop-palette span { width: 24px; height: 24px; }
+}

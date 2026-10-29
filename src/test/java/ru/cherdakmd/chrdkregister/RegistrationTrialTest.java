@@ -22,39 +22,34 @@ class RegistrationTrialTest {
         assertTrue(PlayerRestrictionListener.isCommandAllowed(AccessManager.PlayerStage.NEEDS_REGISTER,"register"));
         assertFalse(PlayerRestrictionListener.isCommandAllowed(AccessManager.PlayerStage.NEEDS_REGISTER,"ah"));
     }
-    @Test void welcomeRankIsThreeDaysOfTheFirstTier() {
-        var s=store(); s.recordPlayerSeen(UUID1,"Newbie");
-        assertTrue(s.registerPassword("Newbie",UUID1,"StrongPassword123","127.0.0.1",NOW,3));
-        var a=s.getAccount("newbie").orElseThrow();
-        assertEquals(3,a.lastGrantDays,"приветственный ранг — три дня");
-        assertEquals(1,a.effectiveRank(NOW),"ступень берётся из старых данных о сроке");
-        assertTrue(a.hasRank(NOW));
-        assertTrue(a.hasRank(NOW+3*86_400_000L-1));
-        assertFalse(a.hasRank(NOW+3*86_400_000L),"через три дня ранг заканчивается");
-        assertEquals(0,a.effectiveRank(NOW+3*86_400_000L));
-    }
-
-    @Test void registrationGrantsExactlyFourteenDaysAndPersistsTogether() {
-        var s=store(); s.recordPlayerSeen(UUID1,"Newbie");
-        assertTrue(s.registerPassword("Newbie",UUID1,"StrongPassword123","127.0.0.1",NOW,14));
-        var loaded=store();var a=loaded.getAccount("newbie").orElseThrow();
-        assertTrue(a.isRegistered());assertTrue(a.trialConsumed);assertEquals(NOW,a.trialGrantedAt);
-        assertEquals(NOW+FOURTEEN_DAYS,a.passUntil);assertEquals(a.passUntil,a.trialUntil);
-        assertEquals("trial",a.lastGrantSource);assertEquals(14,a.lastGrantDays);
-        assertTrue(loaded.hasActivePass("Newbie",a.passUntil-1));assertFalse(loaded.hasActivePass("Newbie",a.passUntil));
+    @Test void legacyTrialArgumentsNeverGrantPaidRights() {
+        for (int days : new int[] {0, 3, 14, 365}) {
+            String name = "Newbie" + days;
+            UUID id = UUID.randomUUID();
+            var s = store();
+            assertTrue(s.registerPassword(name, id, "StrongPassword123", "ip", NOW, days));
+            var account = store().getAccount(name).orElseThrow();
+            assertTrue(account.isRegistered());
+            assertTrue(account.trialConsumed);
+            assertEquals(0, account.passUntil);
+            assertEquals(0, account.trialUntil);
+            assertEquals(0, account.trialGrantedAt);
+            assertEquals(0, account.effectiveRank(NOW));
+            assertFalse(account.hasRank(NOW));
+        }
     }
     @Test void repeatRegistrationJoinResetAndRenameDoNotRenew() {
         var s=store();assertTrue(s.registerPassword("Newbie",UUID1,"StrongPassword123","ip",NOW,14));
         assertFalse(s.registerPassword("NEWBIE",UUID1,"OtherPassword123","ip",NOW+1000,14));
-        s.recordPlayerSeen(UUID1,"NEWBIE");assertEquals(NOW+FOURTEEN_DAYS,s.getAccount("Newbie").orElseThrow().passUntil);
+        s.recordPlayerSeen(UUID1,"NEWBIE");assertEquals(0,s.getAccount("Newbie").orElseThrow().passUntil);
         assertTrue(s.resetPassword("Newbie"));assertFalse(s.isTrialEligible("newbie",UUID1));
         assertTrue(s.registerPassword("Newbie",UUID1,"OtherPassword123","ip",NOW+2000,14));
-        assertEquals(NOW+FOURTEEN_DAYS,s.getAccount("Newbie").orElseThrow().passUntil);
+        assertEquals(0,s.getAccount("Newbie").orElseThrow().passUntil);
         assertFalse(store().isTrialEligible("ChangedName",UUID1));
     }
     @Test void revokedTrialCannotBeClaimedAgain() {
         var s=store();s.registerPassword("Newbie",UUID1,"StrongPassword123","ip",NOW,14);
-        assertTrue(s.revokePass("Newbie"));s.resetPassword("Newbie");
+        assertFalse(s.revokePass("Newbie"));s.resetPassword("Newbie");
         assertFalse(s.isTrialEligible("Newbie",UUID1));assertFalse(store().isTrialEligible("Other",UUID1));
     }
     @Test void paidPassIsNeitherShortenedNorExtendedByRegistration() {
@@ -72,7 +67,7 @@ class RegistrationTrialTest {
     @Test void paidExtensionStartsAfterTrial() {
         var s=store();s.registerPassword("Newbie",UUID1,"StrongPassword123","ip",NOW,14);
         s.grantPassManual("Newbie",NOW+1000,30*86_400_000L);
-        assertEquals(NOW+44*86_400_000L,s.getAccount("Newbie").orElseThrow().passUntil);
+        assertEquals(NOW+1000+30*86_400_000L,s.getAccount("Newbie").orElseThrow().passUntil);
     }
     @Test void migrationExcludesLegacyRegisteredAccountsWithoutChangingPasses() throws Exception {
         var s=store();s.recordPlayerSeen(UUID1,"Legacy");s.registerPassword("Legacy",UUID1,"StrongPassword123","ip",NOW);
@@ -87,7 +82,7 @@ class RegistrationTrialTest {
     }
     @Test void configDefaultsApplyToExistingConfigAndCanBeDisabled() throws Exception {
         var yaml=new YamlConfiguration();var c=PluginConfig.fromBukkitConfig(yaml);
-        assertTrue(c.trialEnabled());assertEquals(14,c.trialDays());
+        assertFalse(c.trialEnabled());assertEquals(14,c.trialDays());
         yaml.loadFromString("pass:\n  trial:\n    enabled: false\n    days: -1\n");
         c=PluginConfig.fromBukkitConfig(yaml);assertFalse(c.trialEnabled());assertEquals(1,c.trialDays());
     }

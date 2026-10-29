@@ -8,6 +8,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -25,8 +26,8 @@ import java.util.UUID;
  *
  * <p>С 1.4.183 настройка жила в чате командой {@code /labels}, и прятать можно
  * было только группами: «всё звания» одной кнопкой. Здесь то же самое, но
- * наглядно: девять плиток — ранг, титул кузни, звание кладоискателя, класс,
- * гильдия, стример, квесты, достижения и шапка таба. Клик переключает одну
+ * наглядно: семь плиток — ранг, титул кузни, класс,
+ * гильдия, квесты, достижения и шапка таба. Клик переключает одну
  * надпись и сразу перерисовывает меню; снизу — «Включить всё», «Выключить
  * всё», «Сброс», «Профиль» и «Закрыть». Справа вверху — «Вас видят так»: та же
  * строка, которую получают остальные игроки, поэтому видно, что настройка не
@@ -39,14 +40,15 @@ import java.util.UUID;
  */
 public final class LabelsMenuService implements Listener {
 
-    /** Шесть рядов: заголовок, девять плиток, кнопки. */
+    /** Шесть рядов: превью, места, переключатели источников, кнопки. */
     static final int SIZE = 54;
     /** Голова игрока со сводкой. */
     static final int HEAD_SLOT = 4;
     /** Как ник выглядит для остальных — ровно та строка, что уходит в чат и таб. */
     static final int PREVIEW_SLOT = 8;
-    /** Плитки надписей: три ряда по три. */
-    static final int[] ENTRY_SLOTS = {10, 11, 12, 19, 20, 21, 28, 29, 30};
+    /** Переключатели источников под выбранными местами; шапка TAB отдельно. */
+    static final int[] ENTRY_SLOTS = {28, 29, 30, 31, 32, 33, 34};
+    static final int[] PLACE_SLOTS = {19, 20, 21, 22, 23, 24, 25, 26};
     static final int ENABLE_ALL_SLOT = 45;
     static final int DISABLE_ALL_SLOT = 47;
     /** 1.4.187: три личных экрана — цвет, порядок меток и пресеты. */
@@ -56,6 +58,7 @@ public final class LabelsMenuService implements Listener {
     static final int PROFILE_SLOT = 48;
     static final int RESET_SLOT = 49;
     static final int CLOSE_SLOT = 53;
+    static final int COSMETICS_SLOT = 52;
 
     private final RegisterPlugin plugin;
     private final LabelPreferences preferences;
@@ -63,6 +66,7 @@ public final class LabelsMenuService implements Listener {
     /** Три личных экрана 1.4.187; {@code null} — кнопки не показываем. */
     private LabelsStyleMenuService styleMenu;
     private volatile LabelPalette palette = LabelPalette.disabled();
+    private volatile LabelLimits limits = LabelLimits.DEFAULT;
 
     public LabelsMenuService(RegisterPlugin plugin, LabelPreferences preferences) {
         this.plugin = plugin;
@@ -82,6 +86,7 @@ public final class LabelsMenuService implements Listener {
     /** Палитра нужна для подписи кнопки «Цвет»: какой цвет выбран сейчас. */
     public void applySettings(LabelPalette colors, LabelLimits limits) {
         this.palette = colors == null ? LabelPalette.disabled() : colors;
+        this.limits = limits == null ? LabelLimits.DEFAULT : limits;
     }
 
     /* ------------------------------- открытие ------------------------------- */
@@ -109,15 +114,16 @@ public final class LabelsMenuService implements Listener {
         for (int slot = 0; slot < SIZE; slot++) {
             inventory.setItem(slot, filler);
         }
-        inventory.setItem(HEAD_SLOT, head(player));
+        LabelStyleService.Selection selection = selectionOf(plugin, player.getName());
+        inventory.setItem(HEAD_SLOT, head(player, selection));
         inventory.setItem(PREVIEW_SLOT, preview(player));
+        for (int i = 0; i < PLACE_SLOTS.length; i++) inventory.setItem(PLACE_SLOTS[i], placeTile(player, i));
         List<LabelPreferences.Label> labels = LabelPreferences.Label.nameTags();
-        // Шапка таба — не метка рядом с ником, но такая же надпись: ставим её
-        // последней плиткой, чтобы сетка оставалась 3×3.
+        // Шапка TAB — отдельный переключатель, не место возле ника.
         List<LabelPreferences.Label> tiles = new ArrayList<>(labels);
         tiles.add(LabelPreferences.Label.HEADER);
         for (int index = 0; index < Math.min(ENTRY_SLOTS.length, tiles.size()); index++) {
-            inventory.setItem(ENTRY_SLOTS[index], tile(player, tiles.get(index)));
+            inventory.setItem(ENTRY_SLOTS[index], tile(player, tiles.get(index), selection));
         }
         if (styleMenu != null) {
             inventory.setItem(COLORS_SLOT, colorButton(player));
@@ -134,6 +140,8 @@ public final class LabelsMenuService implements Listener {
                 plugin.messages().get("labels.menu-profile")));
         inventory.setItem(RESET_SLOT, button(Material.MILK_BUCKET,
                 plugin.messages().get("labels.menu-reset")));
+        if (Bukkit.getPluginManager().isPluginEnabled("CHRDK_Cosmetics"))
+            inventory.setItem(COSMETICS_SLOT, button(Material.FIREWORK_ROCKET, plugin.messages().get("labels.menu-cosmetics")));
         inventory.setItem(CLOSE_SLOT, button(Material.BARRIER,
                 plugin.messages().get("labels.menu-close")));
     }
@@ -157,20 +165,21 @@ public final class LabelsMenuService implements Listener {
     }
 
     /** Голова: сколько надписей включено из скольких. */
-    private ItemStack head(Player player) {
+    private ItemStack head(Player player, LabelStyleService.Selection selection) {
         ItemStack item = new ItemStack(Material.PLAYER_HEAD);
         if (!(item.getItemMeta() instanceof org.bukkit.inventory.meta.SkullMeta meta)) {
             return item;
         }
         meta.setOwningPlayer(player);
-        int total = LabelPreferences.Label.values().length;
-        int visible = total - preferences.hiddenCount(player.getName());
+        int total = selection == null ? limits.labelsFor(0) : selection.limit();
+        int visible = selection == null ? 0 : selection.shown().size();
         meta.displayName(plugin.messages().get("labels.menu-head",
                 "player", player.getName(),
                 "visible", String.valueOf(visible),
                 "total", String.valueOf(total)));
         List<Component> lore = new ArrayList<>();
         lore.addAll(plugin.messages().getList("labels.menu-head-lore"));
+        if (selection != null) lore.add(summary(plugin.messages(), selection));
         meta.lore(lore);
         item.setItemMeta(meta);
         return item;
@@ -202,7 +211,7 @@ public final class LabelsMenuService implements Listener {
     }
 
     /** Плитка одной надписи: иконка, состояние и подсказка. */
-    private ItemStack tile(Player player, LabelPreferences.Label label) {
+    private ItemStack tile(Player player, LabelPreferences.Label label, LabelStyleService.Selection selection) {
         boolean visible = preferences.visible(player.getName(), label);
         ItemStack item = new ItemStack(icon(label));
         ItemMeta meta = item.getItemMeta();
@@ -218,10 +227,71 @@ public final class LabelsMenuService implements Listener {
         lore.add(descOf(label));
         lore.add(plugin.messages().get(visible
                 ? "labels.menu-lore-state-on" : "labels.menu-lore-state-off"));
+        lore.add(plugin.messages().get("labels.source-state", "value",
+                stateOf(plugin.messages(), preferences, player.getName(), label, selection)));
         lore.add(plugin.messages().get("labels.menu-lore-click"));
         meta.lore(lore);
         item.setItemMeta(meta);
         return item;
+    }
+
+    /** Один снимок используется для всех плиток, команды и карточки игрока. */
+    static LabelStyleService.Selection selectionOf(RegisterPlugin plugin, String playerName) {
+        ChatService chat = plugin.chatService();
+        return chat == null || chat.labelStyles() == null ? null : chat.labelStyles().selection(playerName);
+    }
+
+    static Component summary(Messages messages, LabelStyleService.Selection selection) {
+        return messages.get("labels.display-summary", "shown", selection.shown().size(),
+                "limit", selection.limit(), "waiting", selection.overflow().size());
+    }
+
+    static Messages.Trusted stateOf(Messages messages, LabelPreferences preferences, String playerName,
+                                   LabelPreferences.Label label, LabelStyleService.Selection selection) {
+        if (!preferences.visible(playerName, label)) return messages.mini("labels.value-off");
+        if (label == LabelPreferences.Label.HEADER || selection == null || selection.displayed(label)) {
+            return messages.mini("labels.value-on");
+        }
+        if (!selection.obtained(label)) return messages.mini("labels.value-unavailable");
+        return selection.deferred(label) ? messages.mini("labels.value-waiting")
+                : messages.mini("labels.value-unassigned");
+    }
+
+    /** Места всегда показывают сохранённое назначение, даже если источник исчез. */
+    ItemStack placeTile(Player player, int index) {
+        ChatService chat = plugin.chatService();
+        LabelStyleService styles = chat == null ? null : chat.labelStyles();
+        LabelStyleService.Selection selection = styles == null ? null : styles.selection(player.getName());
+        LabelPreferences.Label chosen = styles == null ? null
+                : LabelPreferences.Label.byNameTagId(styles.assignments(player.getName()).get(index));
+        boolean open = selection != null && index < selection.limit();
+        ItemStack item = new ItemStack(open ? Material.NAME_TAG : Material.GRAY_DYE);
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return item;
+        Component title = chosen == null ? plugin.messages().get("labels.slot-empty", "number", index + 1)
+                : plugin.messages().get("labels.order-name", "position", index + 1,
+                        "name", nameOf(plugin.messages(), chosen));
+        meta.displayName(open ? title : plugin.messages().get("labels.slot-lock-mark").append(title));
+        List<Component> lore = new ArrayList<>();
+        if (chosen != null) lore.add(plugin.messages().get("labels.source-state", "value",
+                stateOf(plugin.messages(), preferences, player.getName(), chosen, selection)));
+        if (open) {
+            lore.add(plugin.messages().get("labels.slot-choose"));
+            lore.add(plugin.messages().get("labels.slot-clear-hint"));
+        } else {
+            int level = limits.levelForLabelSlot(index);
+            lore.add(level < 0 ? plugin.messages().get("labels.slot-config-locked")
+                    : plugin.messages().get("labels.slot-need-rank", "level", level));
+        }
+        lore.add(plugin.messages().get("labels.slot-no-fallback"));
+        meta.lore(lore);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    static int placeIndex(int slot) {
+        for (int i = 0; i < PLACE_SLOTS.length; i++) if (PLACE_SLOTS[i] == slot) return i;
+        return -1;
     }
 
     /* ------------------------------ тексты и иконки ------------------------------ */
@@ -236,10 +306,8 @@ public final class LabelsMenuService implements Listener {
         return switch (label) {
             case RANK -> messages.mini("labels.name-rank");
             case TIERFORGE -> messages.mini("labels.name-tierforge");
-            case TREASURES -> messages.mini("labels.name-treasures");
             case CLASSES -> messages.mini("labels.name-classes");
             case GUILDS -> messages.mini("labels.name-guilds");
-            case STREAMS -> messages.mini("labels.name-streams");
             case QUESTS -> messages.mini("labels.name-quests");
             case ACHIEVEMENTS -> messages.mini("labels.name-achievements");
             case HEADER -> messages.mini("labels.name-header");
@@ -251,10 +319,8 @@ public final class LabelsMenuService implements Listener {
         return switch (label) {
             case RANK -> plugin.messages().get("labels.desc-rank");
             case TIERFORGE -> plugin.messages().get("labels.desc-tierforge");
-            case TREASURES -> plugin.messages().get("labels.desc-treasures");
             case CLASSES -> plugin.messages().get("labels.desc-classes");
             case GUILDS -> plugin.messages().get("labels.desc-guilds");
-            case STREAMS -> plugin.messages().get("labels.desc-streams");
             case QUESTS -> plugin.messages().get("labels.desc-quests");
             case ACHIEVEMENTS -> plugin.messages().get("labels.desc-achievements");
             case HEADER -> plugin.messages().get("labels.desc-header");
@@ -266,10 +332,8 @@ public final class LabelsMenuService implements Listener {
         return switch (label) {
             case RANK -> Material.NETHER_STAR;
             case TIERFORGE -> Material.ANVIL;
-            case TREASURES -> Material.COMPASS;
             case CLASSES -> Material.IRON_SWORD;
             case GUILDS -> Material.WHITE_BANNER;
-            case STREAMS -> Material.JUKEBOX;
             case QUESTS -> Material.WRITABLE_BOOK;
             case ACHIEVEMENTS -> Material.EXPERIENCE_BOTTLE;
             case HEADER -> Material.PAPER;
@@ -332,9 +396,42 @@ public final class LabelsMenuService implements Listener {
                 || !holder.owner().equals(player.getUniqueId())) {
             return;
         }
+        if (!player.hasPermission("chrdkregister.labels")) {
+            player.closeInventory();
+            plugin.messages().send(player, "error.no-permission");
+            return;
+        }
+        if (event.getClick() != ClickType.LEFT && event.getClick() != ClickType.RIGHT) return;
         int slot = event.getRawSlot();
         if (slot < 0 || slot >= SIZE) {
             return; // клик по своему инвентарю — ничего не делаем
+        }
+        int place = placeIndex(slot);
+        if (place >= 0 && styleMenu != null) {
+            if (event.isRightClick()) {
+                LabelStyleService styles = plugin.chatService() == null ? null : plugin.chatService().labelStyles();
+                if (styles != null && styles.assign(player.getName(), place, null)
+                        == LabelStyleService.AssignmentResult.APPLIED) {
+                    plugin.messages().send(player, "labels.slot-cleared", "number", place + 1);
+                    plugin.refreshTab();
+                    repaint(player);
+                } else plugin.messages().send(player, "labels.slot-locked");
+            } else {
+                player.closeInventory();
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    if (player.isOnline()) styleMenu.openSlot(player, place);
+                });
+            }
+            return;
+        }
+        if (slot == COSMETICS_SLOT && Bukkit.getPluginManager().isPluginEnabled("CHRDK_Cosmetics")) {
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (player.isOnline() && player.getOpenInventory().getTopInventory().getHolder() == holder
+                        && Bukkit.getPluginManager().isPluginEnabled("CHRDK_Cosmetics")) {
+                    player.closeInventory(); player.performCommand("cosmetic");
+                }
+            });
+            return;
         }
         if (slot == CLOSE_SLOT) {
             player.closeInventory();

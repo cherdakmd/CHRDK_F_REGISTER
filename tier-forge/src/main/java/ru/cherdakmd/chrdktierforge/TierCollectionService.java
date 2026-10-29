@@ -1,7 +1,6 @@
 package ru.cherdakmd.chrdktierforge;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import ru.cherdakmd.chrdkregister.Messages;
@@ -244,6 +243,13 @@ public final class TierCollectionService {
 
     /* ------------------------------- награды ------------------------------- */
 
+    /** Догоняет уже достигнутые пороги после входа/восстановления, без новой находки. */
+    public void reconcileRewards(Player player) {
+        TierCollectionConfig config = config();
+        if (player == null || config == null || !config.enabled()) return;
+        grantMilestones(player,config); grantSections(player,config);
+    }
+
     private void grantMilestones(Player player, TierCollectionConfig config) {
         TierCollectionBook.Snapshot snapshot = snapshot(player);
         for (TierCollectionConfig.Milestone milestone : config.properties()) {
@@ -269,15 +275,17 @@ public final class TierCollectionService {
             if (!progress.complete(section)) {
                 continue;
             }
+            TierCollectionConfig.SectionReward reward = config.section(section);
+            if (keeper.isClaimed(player.getUniqueId(),"section:"+section)) continue;
+            if (!plugin.awards().reserve(player,"section:"+section,reward.diamonds())) continue;
             if (!keeper.claim(player.getUniqueId(), "section:" + section)) {
                 continue;
             }
-            TierCollectionConfig.SectionReward reward = config.section(section);
             pay(player, "section:" + section, reward.passHours(), reward.diamonds());
             plugin.messages().send(player, "collection-section",
                     "name", Messages.trusted(sectionName(section)),
                     "reward", Messages.trusted(rewardText(reward.passHours(),
-                            reward.diamonds())));
+                            (int)plugin.awards().amount(player,"section:"+section))));
             if (config.titles().enabled()) {
                 String title = titleText(section);
                 if (title != null) {
@@ -290,6 +298,8 @@ public final class TierCollectionService {
 
     private void claim(Player player, String key, TierCollectionConfig.Milestone milestone,
                        String name) {
+        if (keeper.isClaimed(player.getUniqueId(),key)) return;
+        if (!plugin.awards().reserve(player,key,milestone.diamonds())) return;
         if (!keeper.claim(player.getUniqueId(), key)) {
             return; // веха уже выплачена
         }
@@ -297,29 +307,20 @@ public final class TierCollectionService {
         plugin.messages().send(player, "collection-milestone",
                 "name", Messages.trusted(name),
                 "reward", Messages.trusted(rewardText(milestone.passHours(),
-                        milestone.diamonds())));
+                        (int)plugin.awards().amount(player,key))));
     }
 
     private void pay(Player player, String key, int passHours, int diamonds) {
         if (passHours > 0) {
             if (plugin.coreApi() != null) {
-                plugin.coreApi().grantPassHours(player.getName(), passHours,
+                plugin.coreApi().grantRewardBoostHours(player.getName(), passHours,
                         "tierforge:collection:" + key);
             } else {
                 plugin.getLogger().warning("Ядро недоступно: награда коллекции " + key
                         + " не выдана игроку " + player.getName());
             }
         }
-        int remaining = diamonds;
-        while (remaining > 0) {
-            int amount = Math.min(64, remaining);
-            remaining -= amount;
-            Map<Integer, ItemStack> leftover = player.getInventory()
-                    .addItem(new ItemStack(Material.DIAMOND, amount));
-            for (ItemStack rest : leftover.values()) {
-                player.getWorld().dropItemNaturally(player.getLocation(), rest);
-            }
-        }
+
     }
 
     /** Человеческий текст награды для чата. */

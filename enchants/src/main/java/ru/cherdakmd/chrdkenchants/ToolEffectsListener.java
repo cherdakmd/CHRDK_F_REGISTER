@@ -1,198 +1,158 @@
 package ru.cherdakmd.chrdkenchants;
 
+import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockDropItemEvent;
 import org.bukkit.inventory.ItemStack;
+import java.util.*;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-/**
- * Кирки/инструменты: автоплавка (руда → слиток сразу), жилодробитель (вынос целой жилы
- * при крадушке), дробитель (3×3/3×3×2 при крадушке), рука Мидаса (шанс удвоения минералов).
- */
+/** Native break для каждого блока; бонусы только после финального разрешённого дропа. */
 public final class ToolEffectsListener implements Listener {
-
-    private static final Set<Material> SMELTABLES = Set.of(
-            Material.IRON_ORE, Material.DEEPSLATE_IRON_ORE,
-            Material.GOLD_ORE, Material.DEEPSLATE_GOLD_ORE,
-            Material.COPPER_ORE, Material.DEEPSLATE_COPPER_ORE,
-            Material.ANCIENT_DEBRIS);
-
-    private static final Set<Material> ORES = EnumSet.of(
-            Material.IRON_ORE, Material.DEEPSLATE_IRON_ORE,
-            Material.GOLD_ORE, Material.DEEPSLATE_GOLD_ORE, Material.NETHER_GOLD_ORE,
-            Material.COPPER_ORE, Material.DEEPSLATE_COPPER_ORE,
-            Material.COAL_ORE, Material.DEEPSLATE_COAL_ORE,
-            Material.REDSTONE_ORE, Material.DEEPSLATE_REDSTONE_ORE,
-            Material.LAPIS_ORE, Material.DEEPSLATE_LAPIS_ORE,
-            Material.EMERALD_ORE, Material.DEEPSLATE_EMERALD_ORE,
-            Material.DIAMOND_ORE, Material.DEEPSLATE_DIAMOND_ORE,
-            Material.NETHER_QUARTZ_ORE);
-
+    private record Key(UUID world, int x, int y, int z, UUID player) { }
+    private record Source(BlockBreakEvent event, Material type, ItemStack tool, long generation,
+                          boolean secondary, boolean sneaking, boolean natural, int slot, org.bukkit.util.Vector direction) { }
+    private record Yield(Item entity, int amount, Material material) { }
     private final EnchantsPlugin plugin;
-
-    public ToolEffectsListener(EnchantsPlugin plugin) {
-        this.plugin = plugin;
+    private final MiningOrigin origin;
+    private final MiningTasks tasks;
+    private final Map<Key, Source> sources = new HashMap<>();
+    private final Set<UUID> secondary = new HashSet<>();
+    ToolEffectsListener(EnchantsPlugin plugin, MiningOrigin origin) {
+        this.plugin = plugin; this.origin = origin;
+        tasks = new MiningTasks(action -> { var task = Bukkit.getScheduler().runTask(plugin, action); return task::cancel; });
     }
-
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    void clear() { tasks.clear(); sources.clear(); secondary.clear(); }
+    private void forget(Player player) {
+        tasks.cancel(player.getUniqueId());
+        sources.keySet().removeIf(key -> key.player.equals(player.getUniqueId()));
+    }
+    @EventHandler public void quit(org.bukkit.event.player.PlayerQuitEvent event) { forget(event.getPlayer()); }
+    @EventHandler public void death(org.bukkit.event.entity.PlayerDeathEvent event) { forget(event.getEntity()); }
+    @EventHandler public void world(org.bukkit.event.player.PlayerChangedWorldEvent event) { forget(event.getPlayer()); }
+    private Key key(Block block, Player player) {
+        return new Key(block.getWorld().getUID(), block.getX(), block.getY(), block.getZ(), player.getUniqueId());
+    }
+    private boolean eligible(Player player) {
+        return player.isOnline() && !player.isDead() && player.getGameMode() == GameMode.SURVIVAL
+                && player.hasPermission("chrdkenchants.use") && plugin.coreApi() != null && plugin.coreApi().isAuthenticated(player);
+    }
+    private int level(ItemStack tool, String id) {
+        EnchantDef def = EnchantRegistry.byId(id);
+        if (def == null || !plugin.config().isEnabled(id) || !def.supports(tool.getType().name())) return 0;
+        return Math.clamp(plugin.items().read(tool).getOrDefault(id, 0), 0, def.maxLevel());
+    }
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
-        Player player = event.getPlayer();
-        Block block = event.getBlock();
-        ItemStack tool = player.getInventory().getItemInMainHand();
-        Map<String, Integer> enchants = plugin.items().read(tool);
-        if (enchants.isEmpty()) return;
-
-        // Рука Мидаса
-        int midas = enchants.getOrDefault("midas", 0);
-        if (midas > 0 && ORES.contains(block.getType())
-                && roll(EnchantParams.chancePercent("midas", midas))) {
-            block.getDrops(tool, player).forEach(drop ->
-                    block.getWorld().dropItemNaturally(block.getLocation().add(0.5, 0.5, 0.5), drop));
-            player.playSound(block.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.5f, 1.6f);
-        }
-
-        boolean smelted = false;
-        // Автоплавка
-        if (enchants.containsKey("autosmelt") && SMELTABLES.contains(block.getType())) {
-            smelted = true;
-            event.setDropItems(false);
-            ItemStack ingot = smeltDropFor(block.getType());
-            block.getWorld().dropItemNaturally(block.getLocation().add(0.5, 0.5, 0.5), ingot);
-            event.setExpToDrop(event.getExpToDrop() + 1);
-        }
-
-        // Мега-режимы требуют крадушку (защита от случайных прорывов при стройке)
-        if (!player.isSneaking()) {
-            return;
-        }
-        int vein = enchants.getOrDefault("veinminer", 0);
-        if (vein > 0 && ORES.contains(block.getType())) {
-            breakVein(player, block, tool, block.getType(),
-                    EnchantParams.value("veinminer", vein), enchants.containsKey("autosmelt"));
-            return;
-        }
-        int excavator = enchants.getOrDefault("excavator", 0);
-        if (excavator > 0 && !block.getDrops(tool).isEmpty()) {
-            breakArea(player, block, tool, excavator);
-        }
+        Player player = event.getPlayer(); ItemStack tool = player.getInventory().getItemInMainHand();
+        if (!eligible(player) || tool.getAmount() != 1 || sources.size() >= 4096) return;
+        if (level(tool, "midas") + level(tool, "fortunate") + level(tool, "autosmelt")
+                + level(tool, "veinminer") + level(tool, "excavator") == 0) return;
+        Block block = event.getBlock(); Key key = key(block, player);
+        Source source = new Source(event, block.getType(), tool.clone(), plugin.sourceGeneration(),
+                secondary.contains(player.getUniqueId()), player.isSneaking(), MiningPolicy.ore(block.getType().name()) && !origin.denied(block), player.getInventory().getHeldItemSlot(), player.getLocation().getDirection().clone());
+        sources.put(key, source);
+        if (!tasks.submit(player.getUniqueId(), source, () -> {
+            sources.remove(key, source);
+            if (source.secondary || !valid(source) || !source.sneaking || (!block.getType().isAir() && !block.isLiquid())
+                    || player.getInventory().getHeldItemSlot() != source.slot
+                    || !PveEquipment.same(source.tool, player.getInventory().getItemInMainHand())) return;
+            int vein = level(source.tool, "veinminer"), area = level(source.tool, "excavator");
+            if (vein > 0 && MiningPolicy.ore(source.type.name())) vein(player, block, source, EnchantParams.value("veinminer", vein));
+            else if (area > 0) area(player, block, source, area);
+        })) sources.remove(key, source);
     }
-
-    private boolean roll(int chancePercent) {
-        return chancePercent > 0 && plugin.service().random().nextInt(100) < chancePercent;
+    private boolean valid(Source source) {
+        Player player = source.event.getPlayer();
+        return !source.event.isCancelled() && source.event.isDropItems() && source.generation == plugin.sourceGeneration()
+                && eligible(player) && player.getWorld().equals(source.event.getBlock().getWorld())
+                && player.getWorld().isChunkLoaded(source.event.getBlock().getX() >> 4, source.event.getBlock().getZ() >> 4);
     }
-
-    private static ItemStack smeltDropFor(Material ore) {
-        return switch (ore) {
-            case IRON_ORE, DEEPSLATE_IRON_ORE -> new ItemStack(Material.IRON_INGOT);
-            case GOLD_ORE, DEEPSLATE_GOLD_ORE -> new ItemStack(Material.GOLD_INGOT);
-            case COPPER_ORE, DEEPSLATE_COPPER_ORE -> new ItemStack(Material.COPPER_INGOT, 3);
-            case ANCIENT_DEBRIS -> new ItemStack(Material.NETHERITE_SCRAP);
-            default -> new ItemStack(ore);
-        };
+    /** Меняем только настоящие объекты ванильного drop-события. При его отмене игра их не выдаст. */
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void drops(BlockDropItemEvent event) {
+        Source source = sources.get(key(event.getBlock(), event.getPlayer()));
+        if (source == null || !valid(source) || event.getBlockState().getType() != source.type || event.getItems().size() > 64) return;
+        boolean silk = source.tool.containsEnchantment(Enchantment.SILK_TOUCH);
+        boolean smelt = level(source.tool, "autosmelt") > 0;
+        List<Yield> yields = new ArrayList<>();
+        for (Item entity : List.copyOf(event.getItems())) {
+            ItemStack stack = entity.getItemStack();
+            if (stack.hasItemMeta() || stack.getAmount() <= 0 || stack.getAmount() > stack.getMaxStackSize()) continue;
+            Material before = stack.getType();
+            if (smelt) {
+                Material after = Material.valueOf(MiningPolicy.smelt(source.type.name(), before.name(), silk));
+                if (after != before) { ItemStack converted = stack.clone(); converted.setType(after); entity.setItemStack(converted); }
+            }
+            if (source.natural && !source.secondary && !silk && before.name().equals(MiningPolicy.mineral(source.type.name())))
+                yields.add(new Yield(entity, stack.getAmount(), before));
+        }
+        if (yields.isEmpty() || level(source.tool, "midas") + level(source.tool, "fortunate") == 0) return;
+        tasks.submit(event.getPlayer().getUniqueId(), yields, () -> bonus(event, source, yields));
     }
-
-    /** BFS по жиле одного типа блока; smeltAll — дополнительная автоплавка по пути. */
-    private void breakVein(Player player, Block start, ItemStack tool, Material veinType,
-                           int maxBlocks, boolean smeltAll) {
-        Deque<Block> queue = new ArrayDeque<>();
-        Set<Block> seen = new HashSet<>();
-        queue.add(start);
-        seen.add(start);
-        int broken = 1; // стартовый блок уже событие вскрытия
-        while (!queue.isEmpty() && broken < maxBlocks) {
+    private void bonus(BlockDropItemEvent event, Source source, List<Yield> yields) {
+        if (event.isCancelled() || !valid(source) || origin.denied(event.getBlock())) return;
+        List<Yield> available = yields.stream().filter(yield -> event.getItems().contains(yield.entity)
+                && yield.entity.isValid() && !yield.entity.isDead() && yield.entity.getWorld().equals(event.getBlock().getWorld())
+                && yield.entity.getItemStack().getAmount() >= yield.amount
+                && (yield.entity.getItemStack().getType() == yield.material
+                || yield.entity.getItemStack().getType().name().equals(MiningPolicy.smelt(source.type.name(), yield.material.name(), false))))
+                .toList();
+        if (available.isEmpty()) return;
+        int midas = level(source.tool, "midas"), fortunate = level(source.tool, "fortunate");
+        boolean success = midas > 0 && roll(EnchantParams.chancePercent("midas", midas))
+                || fortunate > 0 && roll(EnchantParams.percent("fortunate", fortunate));
+        if (!success) return;
+        int remaining = 64; boolean dropped = false;
+        for (Yield yield : available) {
+            int amount = Math.min(remaining, yield.amount); if (amount <= 0) break; remaining -= amount;
+            // Не копируем PDC/имя чужой награды: только новый обычный минерал, в базовом количестве.
+            Item item = event.getBlock().getWorld().dropItemNaturally(event.getBlock().getLocation().add(.5,.5,.5),
+                    new ItemStack(yield.entity.getItemStack().getType(), amount));
+            dropped |= item.isValid() && !item.isDead();
+        }
+        if (dropped) event.getPlayer().playSound(event.getBlock().getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, .5f, 1.6f);
+    }
+    private boolean roll(int percent) { return percent > 0 && plugin.service().random().nextInt(100) < percent; }
+    private Block target(Block center, int x, int y, int z) {
+        int px = center.getX() + x, py = center.getY() + y, pz = center.getZ() + z;
+        if (py < center.getWorld().getMinHeight() || py >= center.getWorld().getMaxHeight()
+                || !center.getWorld().isChunkLoaded(px >> 4, pz >> 4)) return null;
+        return center.getWorld().getBlockAt(px, py, pz);
+    }
+    private boolean breakOne(Player player, Block block, Source source) {
+        if (block == null || !valid(source) || player.getInventory().getHeldItemSlot() != source.slot || !PveEquipment.same(source.tool, player.getInventory().getItemInMainHand())
+                || !(player.getEyeLocation().distanceSquared(block.getLocation().add(.5,.5,.5)) <= 25)
+                || block.isLiquid() || block.getType().isAir() || block.getType().getHardness() <= 0
+                || block.getType().getHardness() >= 30 || block.getState() instanceof org.bukkit.block.TileState) return false;
+        secondary.add(player.getUniqueId());
+        try { return player.breakBlock(block); }
+        finally { secondary.remove(player.getUniqueId()); }
+    }
+    private void vein(Player player, Block start, Source source, int maximum) {
+        Deque<Block> queue = new ArrayDeque<>(); Set<String> seen = new HashSet<>();
+        queue.add(start); seen.add(start.getX()+":"+start.getY()+":"+start.getZ()); int count = 1;
+        while (!queue.isEmpty() && count < maximum) {
             Block current = queue.removeFirst();
-            for (Block neighbor : neighbors(current)) {
-                if (broken >= maxBlocks) break;
-                if (!seen.add(neighbor) || neighbor.getType() != veinType) continue;
-                queue.add(neighbor);
-                broken++;
-                breakWithTool(player, neighbor, tool, smeltAll && SMELTABLES.contains(veinType));
+            for (var offset : MiningPolicy.NEIGHBORS) {
+                if (count >= maximum) break;
+                Block block = target(current, offset.x(), offset.y(), offset.z()); if (block == null) continue;
+                if (!seen.add(block.getX()+":"+block.getY()+":"+block.getZ()) || block.getType() != source.type) continue;
+                if (breakOne(player, block, source)) { count++; queue.add(block); }
             }
         }
     }
-
-    /** 3×3 плоскость (вторым уровнем — ещё слой глубже) по направлению взгляда. */
-    private void breakArea(Player player, Block center, ItemStack tool, int level) {
-        org.bukkit.util.Vector dir = player.getLocation().getDirection();
-        int offsetX = Math.abs(dir.getX()) > Math.abs(dir.getZ()) ? 1 : 0;
-        int offsetZ = offsetX == 0 ? 1 : 0;
-        boolean lookingVertical = Math.abs(dir.getY()) > 0.6;
-        int layers = level >= 2 ? 2 : 1;
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dy = -1; dy <= 1; dy++) {
-                for (int dz = -1; dz <= 1; dz++) {
-                    if (dx == 0 && dy == 0 && dz == 0) continue;
-                    for (int depth = 0; depth < layers; depth++) {
-                        Block target;
-                        if (lookingVertical) {
-                            target = center.getRelative(dx, depth, dz);
-                        } else {
-                            target = center.getRelative(dx * (1 - offsetX) + depth * offsetX,
-                                    dy, dz * (1 - offsetZ) + depth * offsetZ);
-                        }
-                        if (breakable(target)) {
-                            breakWithTool(player, target, tool, false);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private static boolean breakable(Block block) {
-        return !block.isLiquid() && !block.getType().isAir()
-                && block.getType().getHardness() > 0
-                && block.getType().getHardness() < 30 && block.getType() != Material.OBSIDIAN;
-    }
-
-    private void breakWithTool(Player player, Block block, ItemStack tool, boolean smelt) {
-        if (smelt) {
-            CollectionWrap.drops(block, tool).forEach(drop ->
-                    block.getWorld().dropItemNaturally(block.getLocation().add(0.5, 0.5, 0.5), drop));
-            block.setType(Material.AIR);
-        } else {
-            block.breakNaturally(tool, true);
-            if (block.getType() != Material.AIR) {
-                block.setType(Material.AIR);
-            }
-        }
-        damageTool(player, tool);
-    }
-
-    /** Износ "как у ванили": единица на блок (виржание недорогих блоков балансом носит DPS). */
-    private void damageTool(Player player, ItemStack tool) {
-        if (tool.getItemMeta() instanceof org.bukkit.inventory.meta.Damageable) {
-            tool.damage(1, player);
-        }
-    }
-
-    private static Block[] neighbors(Block block) {
-        return new Block[]{
-                block.getRelative(1, 0, 0), block.getRelative(-1, 0, 0),
-                block.getRelative(0, 1, 0), block.getRelative(0, -1, 0),
-                block.getRelative(0, 0, 1), block.getRelative(0, 0, -1),
-                block.getRelative(1, 1, 0), block.getRelative(-1, 1, 0),
-                block.getRelative(0, 1, 1), block.getRelative(0, 1, -1),
-                block.getRelative(1, 0, 1), block.getRelative(-1, 0, -1),
-                block.getRelative(1, 0, -1), block.getRelative(-1, 0, 1),
-        };
-    }
-
-    /** Маленькая обёртка для читаемости. */
-    private static final class CollectionWrap {
-        static java.util.Collection<ItemStack> drops(Block block, ItemStack tool) {
-            return block.getDrops(tool);
-        }
+    private void area(Player player, Block center, Source source, int level) {
+        var direction = source.direction;
+        for (var offset : MiningPolicy.area(direction.getX(), direction.getY(), direction.getZ(), level))
+            breakOne(player, target(center, offset.x(), offset.y(), offset.z()), source);
     }
 }

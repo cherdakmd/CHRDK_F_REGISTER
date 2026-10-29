@@ -4,7 +4,13 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
-import java.io.Reader;
+import java.io.IOException;
+import java.nio.channels.FileChannel;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+import com.google.gson.*;
+import ru.cherdakmd.chrdkregister.api.ChargeJournal;
+import ru.cherdakmd.chrdkregister.api.MilestoneMigration;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -19,7 +25,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Logger;
-import ru.cherdakmd.chrdkregister.storage.SafeJsonWriter;
+
 
 /**
  * Данные охоты ({@code hunt.json}): кошелёк, осколки, ключи, трофеи и суточные
@@ -31,7 +37,8 @@ import ru.cherdakmd.chrdkregister.storage.SafeJsonWriter;
  * Сутки считаются по UTC, чтобы «сегодня» не зависело от часового пояса.</p>
  *
  * <p>Паттерн записи общий для репозитория: мутации на главном потоке,
- * {@link #snapshotJson()} и асинхронная запись {@link #saveNow()}. Класс чистый
+ * snapshot+асинхронная запись {@link #saveNow()} под одним монитором. Финансовые
+ * переходы синхронно force+atomic-replace: async-save не затирает новый доход. Класс чистый
  * (Gson + NIO + UUID) и проверяется юнит-тестами без Bukkit.</p>
  */
 public final class HuntStore {
@@ -48,6 +55,10 @@ public final class HuntStore {
     /** Профиль охотника. Мутируется только методами хранилища. */
     public static final class PlayerData {
         private String name = "";
+        private boolean mobHud = true;
+        private final List<HuntHistory.Entry> history = new ArrayList<>();
+        private final Set<Integer> observedLevels = new LinkedHashSet<>();
+        private final Set<Integer> observedElites = new LinkedHashSet<>();
         private long coins;
         private long earned;
         private long killsTotal;
@@ -142,7 +153,7 @@ public final class HuntStore {
     public record Row(UUID id, String name, long earned, long kills, int trophies) {
     }
 
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setObjectToNumberStrategy(ToNumberPolicy.BIG_DECIMAL).setPrettyPrinting().create();
     private static final Type DATA_TYPE = new TypeToken<LinkedHashMap<String, Object>>() {
     }.getType();
     private static final Comparator<Row> TOP_ORDER =
@@ -150,14 +161,51 @@ public final class HuntStore {
                     .thenComparing(Comparator.comparingLong(Row::kills).reversed())
                     .thenComparing(Row::name);
 
+    public static final String SOURCE="hunt-income";
+    public record ExchangeWindow(long day,long total) { }
+    private UUID lineage=UUID.randomUUID();
+    private boolean registered,healthy=true;
+    // Не часть сбрасываемого игрового профиля: reset не уничтожает долг/дневной расход.
+    private final Map<UUID,Long> incomes=new LinkedHashMap<>();
+    private final Map<UUID,ExchangeWindow> exchangeWindows=new LinkedHashMap<>();
+    private final ChargeJournal.WriteCheckpoint checkpoint;
     private final Path file;
     private final Logger logger;
     private final Map<UUID, PlayerData> players = new LinkedHashMap<>();
     private boolean dirty;
 
-    public HuntStore(Path dataFolder, Logger logger) {
-        this.file = dataFolder.resolve("hunt.json");
-        this.logger = logger;
+    public HuntStore(Path dataFolder,Logger logger) { this(dataFolder,logger,()->{}); }
+    public HuntStore(Path dataFolder,Logger logger,ChargeJournal.WriteCheckpoint checkpoint) {
+        this.file=dataFolder.resolve("hunt.json"); this.logger=logger; this.checkpoint=java.util.Objects.requireNonNull(checkpoint);
+    }
+    public synchronized boolean healthy() { return healthy; }
+    public synchronized UUID lineage() { return lineage; }
+    public synchronized boolean registered() { return registered; }
+    public synchronized Map<UUID,Long> incomes() { return Map.copyOf(incomes); }
+    public synchronized long income(UUID id) { return incomes.getOrDefault(id,-1L); }
+    private void writable() { if(!healthy) throw new IllegalStateException("hunt.json quarantined"); }
+    public synchronized void markRegistered() throws IOException {
+        writable(); if(registered) return; registered=true; persist();
+    }
+    /** Монеты, UTC-лимит и /bal entitlement публикуются вместе. false не меняет профиль. */
+    public synchronized boolean exchangeToBank(UUID id,String name,long now,int diamonds,int min,int perDay,int rate) throws IOException {
+        writable();
+        if(id==null||name==null||now<0||diamonds<1||diamonds>100||min<1||min>100||perDay<0||perDay>100||rate<1||rate>100_000) throw new IllegalArgumentException("exchange quote");
+        long cost=Math.multiplyExact((long)diamonds,rate);
+        if(perDay==0||diamonds<Math.min(min,perDay)||diamonds>perDay-exchangeToday(id,now)||coins(id)<cost) return false;
+        long total=Math.addExact(incomes.getOrDefault(id,0L),diamonds);
+        spendCoins(id,cost); recordExchange(id,name,now,diamonds); incomes.put(id,total); persist(); return true;
+    }
+    /** Один ключ и все виртуальные исходы сундука, включая денежный, в одном replace.
+     * Предметный loot выдаётся вызывающим кодом после успеха и не объявляется ACID. */
+    public synchronized boolean openChestToBank(UUID id,String name,String family,long now,long coins,int shards,int diamonds) throws IOException {
+        writable();
+        if(id==null||name==null||now<0||family==null||HuntFamily.normalize(family).isEmpty()||coins<0||coins>HuntChest.MAX_COINS||shards<0||shards>HuntChest.MAX_SHARDS||diamonds<0||diamonds>HuntChest.MAX_DIAMONDS) throw new IllegalArgumentException("chest quote");
+        if(keys(id,family)<=0) return false;
+        long total=Math.addExact(incomes.getOrDefault(id,0L),diamonds);
+        spendKey(id,family); touchDay(id,name,now);
+        if(coins>0) addCoins(id,name,coins); if(shards>0) addShards(id,name,family,shards);
+        if(diamonds>0) incomes.put(id,total); persist(); return true;
     }
 
     public Path file() {
@@ -166,16 +214,15 @@ public final class HuntStore {
 
     /* --------------------------------- чтение --------------------------------- */
 
-    /** Читает файл; битые строки пропускаются с предупреждением. */
+    /** Строгая финансовая схема; bounded lenient чтение неденежных истории/наблюдений сохранено. */
     public synchronized void load() {
-        if (!Files.isRegularFile(file)) {
-            return;
-        }
-        try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
-            Map<String, Object> data = GSON.fromJson(reader, DATA_TYPE);
-            if (data == null) {
-                return;
-            }
+        writable();
+        try {
+            if(!Files.exists(file)) { persist(); return; }
+            if(!Files.isRegularFile(file)||Files.size(file)>32L*1024*1024) throw new IllegalArgumentException("hunt file capacity/type");
+            var root=JsonParser.parseString(Files.readString(file)).getAsJsonObject();
+            long version=integer(root,"version",1,2); validatePlayers(root,version);
+            Map<String,Object> data=GSON.fromJson(root,DATA_TYPE);
             int skipped = 0;
             if (data.get("players") instanceof Map<?, ?> rows) {
                 for (Map.Entry<?, ?> entry : rows.entrySet()) {
@@ -185,6 +232,11 @@ public final class HuntStore {
                         continue;
                     }
                     PlayerData player = new PlayerData(string(row.get("name")));
+                    player.mobHud = !Boolean.FALSE.equals(row.get("mob-hud"));
+                    player.history.addAll(HuntHistory.read(row.get("history")));
+                    readNumbers(row.get("observed-levels"), player.observedLevels, 30);
+                    readNumbers(row.get("observed-elites"), player.observedElites,
+                            ru.cherdakmd.chrdkregister.api.MobProgressionKeys.MAX_ELITE);
                     player.coins = clampLong(row.get("coins"), MAX_COINS);
                     player.earned = clampLong(row.get("earned"), MAX_COINS);
                     player.killsTotal = clampLong(row.get("kills-total"), Long.MAX_VALUE);
@@ -225,11 +277,65 @@ public final class HuntStore {
             if (logger != null) {
                 logger.info("[CHRDK_Hunt] Загружено охотников: " + players.size() + ".");
             }
-        } catch (Exception exception) {
-            if (logger != null) {
-                logger.severe("[CHRDK_Hunt] Не удалось прочитать " + file + ": "
-                        + exception.getMessage());
+            if(version==1) {
+                if(root.has("finance")) throw new IllegalArgumentException("hunt finance downgrade");
+                players.forEach((id,row)->{if(row.exchangeDay>0||row.exchangeToday>0) exchangeWindows.put(id,new ExchangeWindow(row.exchangeDay,row.exchangeToday));});
+                persist();
+            } else {
+                var finance=root.getAsJsonObject("finance");
+                if(!SOURCE.equals(text(finance,"source"))) throw new IllegalArgumentException("hunt namespace");
+                lineage=MilestoneMigration.uuid(text(finance,"lineage"));
+                if(!finance.has("registered")||!finance.get("registered").isJsonPrimitive()||!finance.get("registered").getAsJsonPrimitive().isBoolean()) throw new IllegalArgumentException("registered type");
+                registered=finance.get("registered").getAsBoolean();
+                for(var entry:finance.getAsJsonObject("incomes").entrySet()) incomes.put(MilestoneMigration.uuid(entry.getKey()),integer(finance.getAsJsonObject("incomes"),entry.getKey(),0,Long.MAX_VALUE));
+                for(var entry:finance.getAsJsonObject("exchange").entrySet()) {
+                    UUID id=MilestoneMigration.uuid(entry.getKey()); var window=entry.getValue().getAsJsonObject();
+                    exchangeWindows.put(id,new ExchangeWindow(integer(window,"day",0,Long.MAX_VALUE),integer(window,"total",0,1000)));
+                }
+                players.forEach((id,row)->{
+                    var window=exchangeWindows.getOrDefault(id,new ExchangeWindow(0,0));
+                    if(row.exchangeDay!=window.day()||row.exchangeToday!=window.total()) throw new IllegalArgumentException("exchange window mismatch");
+                });
             }
+        } catch(Exception error) {
+            healthy=false; throw new IllegalStateException("Неоднозначный hunt.json: запуск/перезапись запрещены",error);
+        }
+    }
+    private static String text(JsonObject row,String key) {
+        if(row==null||!row.has(key)||!row.get(key).isJsonPrimitive()||!row.get(key).getAsJsonPrimitive().isString()) throw new IllegalArgumentException("invalid "+key);
+        return row.get(key).getAsString();
+    }
+    private static long integer(JsonObject row,String key,long min,long max) {
+        if(row==null||!row.has(key)||!row.get(key).isJsonPrimitive()||!row.get(key).getAsJsonPrimitive().isNumber()) throw new IllegalArgumentException("invalid "+key);
+        long value=row.get(key).getAsBigDecimal().longValueExact(); if(value<min||value>max) throw new IllegalArgumentException("range "+key); return value;
+    }
+    private static void validatePlayers(JsonObject root,long version) {
+        var rows=root.getAsJsonObject("players"); if(rows==null) throw new IllegalArgumentException("missing players");
+        for(var entry:rows.entrySet()) {
+            MilestoneMigration.uuid(entry.getKey()); var row=entry.getValue().getAsJsonObject(); text(row,"name"); integer(row,"coins",0,MAX_COINS);
+            for(String key:List.of("earned","coins-today","kills-total","day","exchange-day","exchange-today","purchase-day","last-kill")) {
+                long cap=switch(key) {case "earned","coins-today" -> MAX_COINS; case "exchange-today" -> 1000; default -> Long.MAX_VALUE;};
+                if(version==2||row.has(key)) integer(row,key,0,cap);
+            }
+            for(String key:List.of("shards","keys","kills","purchases","bestiary")) {
+                if(!row.has(key)&&version==1) continue;
+                var map=row.getAsJsonObject(key); if(map==null) throw new IllegalArgumentException("missing "+key);
+                var ids=new LinkedHashSet<String>(); long cap=switch(key) {case "shards" -> MAX_SHARDS; case "keys" -> MAX_KEYS; case "purchases" -> 1000; default -> Long.MAX_VALUE;};
+                for(var counter:map.entrySet()) {
+                    String id=HuntFamily.normalize(counter.getKey());
+                    if(id.isEmpty()||!ids.add(id)) throw new IllegalArgumentException("duplicate/empty counter"); integer(map,counter.getKey(),0,cap);
+                }
+            }
+            for(String key:List.of("trophies","bestiary-awards")) {
+                if(!row.has(key)&&version==1) continue;
+                if(!row.get(key).isJsonArray()) throw new IllegalArgumentException("invalid "+key);
+                var ids=new LinkedHashSet<String>();
+                for(var item:row.getAsJsonArray(key)) {
+                    if(!item.isJsonPrimitive()||!item.getAsJsonPrimitive().isString()) throw new IllegalArgumentException("invalid id");
+                    String id=HuntFamily.normalize(item.getAsString()); if(id.isEmpty()||!ids.add(id)) throw new IllegalArgumentException("duplicate/empty id");
+                }
+            }
+            // История/наблюдения не денежный proof; их старый bounded lenient reader сохранён.
         }
     }
 
@@ -262,6 +368,53 @@ public final class HuntStore {
         }
     }
 
+    private static void readNumbers(Object raw, Set<Integer> result, int max) {
+        if (!(raw instanceof List<?> rows)) return;
+        for (Object value : rows) if (value instanceof Number number) {
+            double n = number.doubleValue();
+            if (Double.isFinite(n) && n >= 1 && n <= max && n == Math.rint(n)) result.add((int) n);
+        }
+    }
+    /** Наблюдения не считаются убийствами и не открывают старые наградные разделы. */
+    public synchronized boolean observeMob(UUID id, String name, int level, int elite) {
+        if(!healthy) return false;
+        if (id == null || !MobProgressionPolicy.valid(level, elite)) return false;
+        PlayerData data = ensure(id, name);
+        boolean changed = data.observedLevels.add(level);
+        if (elite > 0) changed |= data.observedElites.add(elite);
+        dirty |= changed;
+        return changed;
+    }
+    public synchronized Set<Integer> observedLevels(UUID id) {
+        PlayerData data = player(id); return data == null ? Set.of() : Set.copyOf(data.observedLevels);
+    }
+    public synchronized Set<Integer> observedElites(UUID id) {
+        PlayerData data = player(id); return data == null ? Set.of() : Set.copyOf(data.observedElites);
+    }
+    public synchronized boolean mobHud(UUID id) {
+        PlayerData data = player(id); return data == null || data.mobHud;
+    }
+    public synchronized void mobHud(UUID id, String name, boolean value) {
+        if(!healthy) return;
+        if (id == null) return;
+        PlayerData data = ensure(id, name);
+        if (data.mobHud != value) { data.mobHud = value; dirty = true; }
+    }
+
+    /** Только личный ограниченный журнал; не вызывает registerKill и не выдаёт наград. */
+    synchronized boolean recordHistory(UUID id, String name, HuntHistory.Entry entry) {
+        if(!healthy) return false;
+        if (id == null || entry == null) return false;
+        PlayerData data = ensure(id, name);
+        boolean changed = HuntHistory.append(data.history, entry);
+        if (changed) dirty = true;
+        return changed;
+    }
+    synchronized List<HuntHistory.Entry> history(UUID id) {
+        PlayerData data = player(id);
+        return data == null ? List.of() : List.copyOf(data.history).reversed();
+    }
+
     /* -------------------------------- игроки ---------------------------------- */
 
     /** Профиль или {@code null}, если игрок ещё не охотился. */
@@ -271,12 +424,14 @@ public final class HuntStore {
 
     /** Профиль с созданием; ник обновляется при каждой охоте. */
     public synchronized PlayerData ensure(UUID id, String name) {
+        writable();
         if (id == null) {
             return null;
         }
         PlayerData data = players.get(id);
         if (data == null) {
             data = new PlayerData(name);
+            var window=exchangeWindows.get(id); if(window!=null) { data.exchangeDay=window.day(); data.exchangeToday=window.total(); }
             players.put(id, data);
             dirty = true;
             return data;
@@ -395,6 +550,7 @@ public final class HuntStore {
 
     /** Списывает монеты; {@code false} — не хватило. */
     public synchronized boolean spendCoins(UUID id, long amount) {
+        writable();
         if (amount <= 0L) {
             return true;
         }
@@ -440,6 +596,7 @@ public final class HuntStore {
 
     /** Списывает осколки; {@code false} — не хватило. */
     public synchronized boolean spendShards(UUID id, String familyId, long amount) {
+        writable();
         if (amount <= 0L) {
             return true;
         }
@@ -486,6 +643,7 @@ public final class HuntStore {
 
     /** Тратит один ключ семейства; {@code false} — ключа нет. */
     public synchronized boolean spendKey(UUID id, String familyId) {
+        writable();
         String family = HuntFamily.normalize(familyId);
         PlayerData data = player(id);
         if (data == null) {
@@ -514,9 +672,9 @@ public final class HuntStore {
         String family = HuntFamily.normalize(familyId);
         if (!family.isEmpty()) {
             data.kills.merge(family, 1L, (old, added) ->
-                    Math.clamp(old + added, 0L, Long.MAX_VALUE));
+                    clampAdd(old,added,Long.MAX_VALUE));
         }
-        data.killsTotal = Math.clamp(data.killsTotal + 1L, 0L, Long.MAX_VALUE);
+        data.killsTotal = clampAdd(data.killsTotal,1L,Long.MAX_VALUE);
         data.lastKill = Math.max(0L, now);
         dirty = true;
     }
@@ -551,26 +709,14 @@ public final class HuntStore {
 
     /** Сколько алмазов игрок уже обменял за текущие сутки UTC. */
     public synchronized long exchangeToday(UUID id, long now) {
-        PlayerData data = player(id);
-        if (data == null) {
-            return 0L;
-        }
-        return data.exchangeDay == dayOf(now) ? data.exchangeToday : 0L;
+        var window=exchangeWindows.get(id); return window==null||window.day()!=dayOf(now)?0:window.total();
     }
-
-    /** Записывает обмен: сколько алмазов выдано за монеты. */
-    public synchronized void recordExchange(UUID id, String name, long now, int diamonds) {
-        PlayerData data = ensure(id, name);
-        if (data == null || diamonds <= 0) {
-            return;
-        }
-        long day = dayOf(now);
-        if (data.exchangeDay != day) {
-            data.exchangeDay = day;
-            data.exchangeToday = 0L;
-        }
-        data.exchangeToday = Math.clamp(data.exchangeToday + diamonds, 0L, 1_000L);
-        dirty = true;
+    /** Исторический helper статистики; денежный обмен использует только exchangeToBank. */
+    public synchronized void recordExchange(UUID id,String name,long now,int diamonds) {
+        writable(); if(id==null||diamonds<=0) return;
+        PlayerData data=ensure(id,name); long total=Math.min(1000,exchangeToday(id,now)+diamonds);
+        data.exchangeDay=dayOf(now); data.exchangeToday=total;
+        exchangeWindows.put(id,new ExchangeWindow(data.exchangeDay,total)); dirty=true;
     }
 
     /* --------------------------------- лавка ---------------------------------- */
@@ -648,8 +794,7 @@ public final class HuntStore {
         if (data == null) {
             return 0L;
         }
-        long value = Math.clamp(data.bestiary.getOrDefault(normalized, 0L) + 1L,
-                0L, Long.MAX_VALUE);
+        long value = clampAdd(data.bestiary.getOrDefault(normalized,0L),1L,Long.MAX_VALUE);
         data.bestiary.put(normalized, value);
         dirty = true;
         return value;
@@ -743,6 +888,7 @@ public final class HuntStore {
 
     /** Полная очистка профиля админом; {@code true} — запись была. */
     public synchronized boolean reset(UUID id) {
+        writable();
         if (id == null || players.remove(id) == null) {
             return false;
         }
@@ -756,15 +902,21 @@ public final class HuntStore {
         return dirty;
     }
 
-    /** Снимок для асинхронной записи; сбрасывает флаг «грязно». */
+    /** Снимок без ACK: dirty снимается лишь после успешного durable replace. */
     public synchronized String snapshotJson() {
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("version", 1);
+        data.put("version", 2);
+        Map<String,Object> finance=new LinkedHashMap<>(); finance.put("source",SOURCE); finance.put("lineage",lineage);
+        finance.put("registered",registered); finance.put("incomes",incomes); finance.put("exchange",exchangeWindows); data.put("finance",finance);
         Map<String, Object> rows = new LinkedHashMap<>();
         for (Map.Entry<UUID, PlayerData> entry : players.entrySet()) {
             PlayerData player = entry.getValue();
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("name", player.name);
+            row.put("mob-hud", player.mobHud);
+            row.put("history", HuntHistory.write(player.history));
+            row.put("observed-levels", player.observedLevels.stream().sorted().toList());
+            row.put("observed-elites", player.observedElites.stream().sorted().toList());
             row.put("coins", player.coins);
             row.put("earned", player.earned);
             row.put("kills-total", player.killsTotal);
@@ -784,36 +936,25 @@ public final class HuntStore {
             rows.put(entry.getKey().toString(), row);
         }
         data.put("players", rows);
-        dirty = false;
         return GSON.toJson(data);
     }
 
-    /** Пишет файл, только если были изменения. */
-    public void saveNow() {
-        String json;
-        synchronized (this) {
-            if (!dirty) {
-                return;
-            }
-            json = snapshotJson();
-        }
-        write(json);
+    /** Snapshot и replace под одним монитором: старый async writer не затирает финансовый commit. */
+    public synchronized void saveNow() { if(healthy&&dirty) flush(); }
+    public synchronized void flush() {
+        if(!healthy) return;
+        try { persist(); } catch(IOException error) { if(logger!=null) logger.log(java.util.logging.Level.SEVERE,"hunt.json приостановлен; не удаляйте финансовый source",error); }
     }
-
-    /** Немедленная запись без проверки флага (выключение сервера, тесты). */
-    public void flush() {
-        write(snapshotJson());
-    }
-
-    private void write(String json) {
-        if (!SafeJsonWriter.write(file, json, logger, "[CHRDK_Hunt]")) {
-            // Диск не принял данные — помечаем состояние изменённым, иначе
-            // следующее автосохранение решит, что писать нечего, и прогресс
-            // потеряется молча.
-            synchronized (this) {
-                dirty = true;
-            }
-        }
+    private void persist() throws IOException {
+        writable();
+        try {
+            byte[] bytes=snapshotJson().getBytes(StandardCharsets.UTF_8); if(bytes.length>32*1024*1024) throw new IOException("hunt capacity");
+            Files.createDirectories(file.getParent()); var temp=file.resolveSibling("hunt.json.tmp"); Files.write(temp,bytes);
+            try(var channel=FileChannel.open(temp,StandardOpenOption.WRITE)) { channel.force(true); }
+            Files.move(temp,file,StandardCopyOption.ATOMIC_MOVE,StandardCopyOption.REPLACE_EXISTING); checkpoint.afterReplace();
+            try(var directory=FileChannel.open(file.getParent(),StandardOpenOption.READ)) { directory.force(true); }
+            dirty=false;
+        } catch(IOException|RuntimeException error) { healthy=false; dirty=true; throw error; }
     }
     /** Номер суток UTC — так «сегодня» одинаково на любом сервере. */
     public static long dayOf(long now) {

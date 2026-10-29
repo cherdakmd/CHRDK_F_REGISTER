@@ -31,11 +31,15 @@ import java.util.UUID;
  */
 public interface ChrdkRegisterApi {
 
-    /** Версия контракта API. Растёт при расширении (добавлении методов/событий). */
-    int API_VERSION = 11;
+    /** Версия контракта API. API 27: снят источник оформления удалённого аддона; API 26: сняты контракты удалённых аддонов; API 25: durable checkpoint игровых наград; API 24 — Claims domain settlement. */
+    int API_VERSION = 27;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
+
+    /** API 25: durable current Core gameplay data; false never authorizes an addon reward ACK. */
+    default boolean checkpointGameplayRewards() { return false; }
+
 
     /* ------------------------------ проходка ------------------------------ */
 
@@ -74,11 +78,13 @@ public interface ChrdkRegisterApi {
         return rankLevel(playerName) >= Math.max(1, minLevel);
     }
 
-    /** Выдаёт ранг на срок; {@code days <= 0} — срок по умолчанию из конфига ядра. */
+    /** @deprecated Платные ранги игровым API не выдаются. */
+    @Deprecated
     default void grantRank(String playerName, int level, int days, String source) {
     }
 
-    /** Выдаёт ранг навсегда (миграция, ручная выдача, акции). */
+    /** @deprecated Платные ранги игровым API не выдаются. */
+    @Deprecated
     default void grantRankPermanent(String playerName, int level, String source) {
     }
 
@@ -120,29 +126,23 @@ public interface ChrdkRegisterApi {
 
     /* ------------------------------ управление проходкой ------------------------------ */
 
-    /**
-     * Выдаёт (или продлевает) проходку.
-     *
-     * @param days   длительность в днях; {@code <= 0} — значение {@code pass.grant-days}
-     * @param source метка источника, попадёт в аккаунт и аудит (например, имя аддона)
-     */
+    /** @deprecated Платные права не выдаются игровым API. Используйте grantRewardBoostHours. */
+    @Deprecated
     void grantPass(String playerName, int days, String source);
 
-    /**
-     * Продлевает ранг на часы — путь наград аддонов (v11, 1.4.184).
-     *
-     * <p>С 1.4.184 награды измеряются часами: час эфира даёт час ранга, награда
-     * достижения, батлпасса или заказа — свои часы. Сутки остались только у
-     * покупок, ручной выдачи и приветственного ранга. Метод не поднимает
-     * {@code PassGrantedEvent}: награда — не оплата, реферальные бонусы на неё
-     * начисляться не должны.</p>
-     *
-     * @param hours  сколько часов добавить; {@code <= 0} — ничего не делать,
-     *               значение зажимается сверху ({@code 365 * 24})
-     * @param source метка источника для аудита и поздравления ({@code streams:...})
-     */
+    /** @deprecated Совместимый адаптер к отдельному бусту; НИКОГДА не продлевает ранг/проходку. */
+    @Deprecated
     default void grantPassHours(String playerName, int hours, String source) {
     }
+
+    /** Игровая награда: +10 % XP, только авторизованное онлайн-время, без платных прав. */
+    default void grantRewardBoostHours(String playerName, int hours, String source) { }
+
+    /** Остаток отдельного буста; это не Unix timestamp и не срок ранга. */
+    default long rewardBoostRemainingMillis(String playerName) { return 0L; }
+
+    /** База до других бонусов и уже начисляемый XP. +10 % аддитивно, общий предел +50 %. */
+    default long boostExperience(String playerName, String channel, long base, long current) { return current; }
 
     /** Отзывает проходку; {@code true}, если проходка была активна. */
     boolean revokePass(String playerName);
@@ -166,17 +166,15 @@ public interface ChrdkRegisterApi {
     }
 
     /**
-     * Выдаёт покупку каталога как награду: срок, группа и команды товара, без записи
-     * продажи в журнале донатов. Нужно аддонам, которые награждают товаром каталога, —
-     * например, премиум-трек батлпасса выдаёт косметику.
-     *
-     * <p>Появился в API v5; реализация по умолчанию ничего не выдаёт и возвращает
-     * {@code 0}, поэтому сторонние реализации интерфейса остаются совместимыми.</p>
-     *
-     * @param days срок в днях; {@code <= 0} — срок из карточки товара
-     * @param source метка источника для аудита ({@code battlepass:mission_id})
-     * @return момент окончания срока; {@code 0} — товар не выдан
+     * Число одновременно активных оплаченных пакетов (API v13, только чтение).
+     * Старое одиночное право учитывается как один пакет; не умножайте его по дням.
      */
+    default int entitlementCount(String playerName, String productId) {
+        return hasEntitlement(playerName, productId) ? 1 : 0;
+    }
+
+    /** @deprecated Платные товары не выдаются игровым API. Всегда возвращает 0. */
+    @Deprecated
     default long grantEntitlement(String playerName, String productId, int days, String source) {
         return 0L;
     }
@@ -203,6 +201,64 @@ public interface ChrdkRegisterApi {
         return 0L;
     }
 
+    /** Общий личный счёт по UUID Player, с обновлением индекса ника. Не отдельный кошелёк магазина. */
+    default long personalDiamonds(Player player) { return 0L; }
+
+    /** Доверенная серверная миграция старого DiamondShop; receipt сохраняется вместе с балансом. */
+    default boolean importLegacyShop(java.util.UUID player, long roundedAmount) { return false; }
+
+    /** Main-thread обмен счёта и полного storage-снимка. Старое ядро отказывает, без fallback-кошелька. */
+    /** Durable DiamondShop protocol; frozen source intent must precede this call. */
+    /** API 24: Claims source WAL precedes bank-only atomic domain settlement. */
+    default boolean claimSourceRegistered(UUID lineage) { return false; }
+    default boolean registerClaimSource(UUID lineage) { return false; }
+    default ClaimExchange.Status claimExchangeStatus(ClaimExchange t) { return ClaimExchange.Status.UNAVAILABLE; }
+    default ClaimExchange.Status commitClaimExchange(ClaimExchange t) { return ClaimExchange.Status.UNAVAILABLE; }
+    default boolean fundClaimPayment(Player payer,long cost) { return false; }
+    default boolean shopTradingAvailable(Player player) { return false; }
+    default boolean legacyShopImported(java.util.UUID owner) { return false; }
+    default boolean shopRegistered(java.util.UUID market) { return false; }
+    default boolean registerShop(java.util.UUID market) { return false; }
+    default ShopExchange.Status shopExchangeStatus(ShopExchange trade) { return ShopExchange.Status.UNAVAILABLE; }
+    default ShopExchange.Status commitShopExchange(Player player,ShopExchange trade) { return ShopExchange.Status.UNAVAILABLE; }
+
+    default boolean exchangeDiamonds(Player player, long debit, long credit,
+                                     org.bukkit.inventory.ItemStack[] expected, org.bukkit.inventory.ItemStack[] replacement) { return false; }
+
+    /** Одноразовый перенос именной казны Claims; без известного UUID/включённого банка — отказ. */
+    default boolean importLegacyClaims(String name, long amount) { return false; }
+
+    /** Личный баланс по проверенному UUID из банка/кеша профилей, без сетевого поиска имени (API v14). */
+    default long claimBankBalance(String name) { return 0L; }
+
+    /** Доверенная сделка Claims. payer=null — offline-only, без доступа к инвентарю. */
+    default boolean exchangeClaimAccounts(java.util.Map<String, Long> deltas, Player payer,
+            org.bukkit.inventory.ItemStack[] expected, org.bukkit.inventory.ItemStack[] replacement) { return false; }
+
+    /** API v17: статус долговечного расхода; false commit не является доказательством неоплаты. */
+    /** API 18: authoritative high-water, -1 при неизвестном источнике/неисправном банке. */
+    default long bankChargeSequence(String source, UUID lineage) { return -1L; }
+    default BankCharge.Status bankChargeStatus(BankCharge payment) { return BankCharge.Status.UNAVAILABLE; }
+    default boolean commitBankCharge(Player payer, BankCharge payment, org.bukkit.inventory.ItemStack[] expected) { return false; }
+
+    /** API v16. Накопительные доходы: источник сохраняет total ДО вызова; повтор не начисляет delta ещё раз. */
+    default boolean personalBankAvailable() { return false; }
+    default boolean registerIncomeSource(String source, UUID lineage) { return false; }
+    default boolean incomeSourceAvailable(String source, UUID lineage) { return false; }
+    default UUID knownBankPlayer(String name) { return null; }
+    /** API 20: UUID уже известен банку/серверу. Не создаёт игрока по одному имени/неизвестному UUID. */
+    default boolean canReceiveBankIncome(UUID owner) { return false; }
+    default long creditedEntitlement(String source, UUID lineage, String key, UUID owner) { return -1L; }
+    /** true — total зачислен полностью. false: выплата могла быть частичной/неизвестной; нельзя откатывать source total. */
+    default boolean creditEntitlement(String source, UUID lineage, String key, UUID owner, long total) { return false; }
+
+    /** API v15: -1 при недоступном банке; UUID из достоверного ledger аукциона. */
+    default boolean auctionBankAvailable() { return false; }
+    default long auctionBankBalance(UUID player) { return -1L; }
+    default boolean importLegacyAuction(UUID market, UUID player, long amount) { return false; }
+    default AuctionPayment.Status auctionPaymentStatus(AuctionPayment payment) { return AuctionPayment.Status.UNAVAILABLE; }
+    default boolean commitAuctionPayment(Player payer, AuctionPayment payment, org.bukkit.inventory.ItemStack[] expected) { return false; }
+
     /** Сумма всех переводов игрока (API v7). */
     default long bankSent(String playerName) {
         return 0L;
@@ -220,7 +276,7 @@ public interface ChrdkRegisterApi {
      *
      * <p>Провайдер получает ник без разметки и уже оформленное имя (с тегом
      * каталога) и возвращает новое — MiniMessage-строку. Так аддон может
-     * сделать ник жирным, добавить метку «СТРИМ» и т.п.</p>
+     * сделать ник жирным, добавить метку гильдии и т.п.</p>
      */
     @FunctionalInterface
     interface NameTagProvider {
@@ -240,7 +296,7 @@ public interface ChrdkRegisterApi {
      * <p>По умолчанию ничего не делает: старые реализации API остаются
      * совместимыми. Сбой провайдера логируется и не ломает чат.</p>
      *
-     * @param id       уникальное имя аддона, например {@code streams}
+     * @param id       уникальное имя аддона, например {@code guilds}
      * @param provider сборка имени; {@code null} игнорируется
      */
     default void registerNameTag(String id, NameTagProvider provider) {

@@ -13,7 +13,7 @@ import ru.cherdakmd.chrdkregister.api.SpawnClaimIndex;
  * CHRDK_Guilds — гильдии, казна и войны (1.4.163).
  *
  * <p>Гильдия — это не чат с тегом, а общая казна и общая война. Взносы идут
- * алмазами из инвентаря, уровень покупается из казны и поднимает только потолок
+ * через личный /bal с обычной предметной доплатой, уровень покупается из казны и поднимает только потолок
  * состава, а войны — это ставки и время: обе стороны кладут равную ставку, и
  * победитель по очкам забирает обе. Силы в бою гильдия не даёт — иначе она
  * стала бы способом купить преимущество.</p>
@@ -29,11 +29,9 @@ public final class GuildsPlugin extends JavaPlugin {
     private GuildStore store;
     private GuildService service;
     private GuildsGui gui;
-    private GuildPurse purse;
+    private ru.cherdakmd.chrdkregister.api.PaidActions payments;
+    private GuildFinance finance;
     private BukkitTask tickTask;
-    private BukkitTask saveTask;
-    private BukkitTask queuedSave;
-    private boolean saveQueued;
     private ChrdkRegisterApi coreApi;
 
     @Override
@@ -43,9 +41,12 @@ public final class GuildsPlugin extends JavaPlugin {
             this.config = GuildConfig.parse(getConfig(), getLogger());
             this.messages = Messages.load(this, config.locale(), getLogger());
             this.store = new GuildStore(getDataFolder().toPath(), getLogger());
-            store.load();
+            this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 22) throw new IllegalStateException("Нужен Core API 22+");
+            this.payments = new ru.cherdakmd.chrdkregister.api.PaidActions(this,this::coreApi,this::messages,"guilds");
+            store.bind(payments.store());
             this.service = new GuildService(config, store);
-            this.purse = new DiamondPurse();
+            this.finance = new GuildFinance(this,payments);
             this.gui = new GuildsGui(this);
             getServer().getPluginManager().registerEvents(new GuildsListener(this), this);
             getServer().getPluginManager().registerEvents(gui, this);
@@ -64,12 +65,11 @@ public final class GuildsPlugin extends JavaPlugin {
                 }
             }
             this.tickTask = getServer().getScheduler().runTaskTimer(this, this::tick, 20L, 20L);
-            this.saveTask = getServer().getScheduler().runTaskTimerAsynchronously(this,
-                    this::saveNow, 100L, 100L);
+
             getLogger().info("CHRDK_Guilds включён: гильдий " + store.count()
                     + ", войн " + store.wars().size()
                     + ", войны " + (config.warsEnabled() ? "разрешены" : "выключены") + ".");
-        } catch (RuntimeException exception) {
+        } catch (Exception | LinkageError exception) {
             getLogger().severe("CHRDK_Guilds не смог запуститься: " + exception.getMessage());
             exception.printStackTrace();
             getServer().getPluginManager().disablePlugin(this);
@@ -91,25 +91,15 @@ public final class GuildsPlugin extends JavaPlugin {
             tickTask.cancel();
             tickTask = null;
         }
-        if (saveTask != null) {
-            saveTask.cancel();
-            saveTask = null;
-        }
-        if (queuedSave != null) {
-            queuedSave.cancel();
-            queuedSave = null;
-        }
-        if (store != null) {
-            store.flush();
-        }
+        // Источник уже durable. Legacy guilds.json после импорта никогда не перезаписывается.
         getLogger().info("CHRDK_Guilds выключен.");
     }
 
     /** Один такт: срок приглашений, конец войн и объявления о них. */
     private void tick() {
-        if (service == null) {
-            return;
-        }
+        if (service == null || payments == null) return;
+        payments.tick();
+        if (payments.paused()) return;
         long now = System.currentTimeMillis();
         for (GuildResult notice : service.tick(now)) {
             if (notice.key().isEmpty()) {
@@ -125,6 +115,7 @@ public final class GuildsPlugin extends JavaPlugin {
         reloadConfig();
         this.config = GuildConfig.parse(getConfig(), getLogger());
         this.messages = Messages.load(this, config.locale(), getLogger());
+        this.service = new GuildService(config,store);
         gui.refresh();
     }
 
@@ -170,7 +161,7 @@ public final class GuildsPlugin extends JavaPlugin {
         try {
             new GuildsPlaceholders(this).register();
             getLogger().info("PlaceholderAPI: доступны %chrdkguilds_...%.");
-        } catch (RuntimeException exception) {
+        } catch (Exception | LinkageError exception) {
             getLogger().warning("Не удалось зарегистрировать PlaceholderAPI: "
                     + exception.getMessage());
         }
@@ -178,28 +169,8 @@ public final class GuildsPlugin extends JavaPlugin {
 
     /* --------------------------------- запись --------------------------------- */
 
-    /** Помечает данные изменёнными: запись уйдёт через две секунды, вне главного потока. */
-    public void requestSave() {
-        if (saveQueued || !isEnabled()) {
-            return;
-        }
-        saveQueued = true;
-        this.queuedSave = getServer().getScheduler().runTaskLaterAsynchronously(this, () -> {
-            saveQueued = false;
-            queuedSave = null;
-            saveNow();
-        }, 40L);
-    }
-
-    private void saveNow() {
-        try {
-            if (store != null && store.isDirty()) {
-                store.saveNow();
-            }
-        } catch (RuntimeException error) {
-            getLogger().warning("Не удалось сохранить guilds.json: " + error.getMessage());
-        }
-    }
+    /** Совместимость вызывающих UI: все изменения уже записаны до успешного GuildResult. */
+    public void requestSave() { }
 
     /* ---------------------------------- доступ -------------------------------- */
 
@@ -223,7 +194,8 @@ public final class GuildsPlugin extends JavaPlugin {
         return gui;
     }
 
-    public GuildPurse purse() {
-        return purse;
-    }
+    GuildFinance finance() { return finance; }
+    public ru.cherdakmd.chrdkregister.api.PaidActions payments() { return payments; }
+    public ChrdkRegisterApi coreApi() { return coreApi; }
+    boolean authenticated(org.bukkit.entity.Player player) { return player != null && coreApi != null && coreApi.isAuthenticated(player); }
 }

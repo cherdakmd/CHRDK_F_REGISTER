@@ -20,7 +20,7 @@ commands:
     permission: chrdkguilds.use
   guildadmin:
     description: Управление гильдиями и войнами.
-    usage: /guildadmin <reload|info|disband|endwar|cooldown|history>
+    usage: /guildadmin <reload|info|disband|endwar|cooldown|history|finance|recover>
     aliases: [guildsadmin, ga]
     permission: chrdkguilds.admin
 permissions:

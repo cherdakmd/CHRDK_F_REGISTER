@@ -67,6 +67,12 @@ public final class EnchantsApiBridge implements ChrdkEnchantsApi {
     }
 
     @Override
+    public String rarity(String id) {
+        EnchantDef def = EnchantRegistry.byId(id);
+        return def == null ? "" : def.rarity().name();
+    }
+
+    @Override
     public int maxLevel(String id) {
         EnchantDef def = EnchantRegistry.byId(id);
         return def == null ? 0 : def.maxLevel();
@@ -138,6 +144,12 @@ public final class EnchantsApiBridge implements ChrdkEnchantsApi {
      */
     @Override
     public ItemStack book(String id, int level) {
+        return book(id, level, ru.cherdakmd.chrdkregister.api.EnchantBookSource.API);
+    }
+
+    @Override
+    public ItemStack book(String id, int level, ru.cherdakmd.chrdkregister.api.EnchantBookSource source) {
+        if (source != null && source.retired()) return null;
         EnchantsConfig config = config();
         EnchantDef def = EnchantRegistry.byId(id);
         if (config == null || def == null || plugin.items() == null
@@ -148,6 +160,6 @@ public final class EnchantsApiBridge implements ChrdkEnchantsApi {
             return null;
         }
         int clamped = Math.max(1, Math.min(def.maxLevel(), level));
-        return plugin.items().makeEnchantBook(def, clamped);
+        return plugin.items().makeEnchantBook(def, clamped, source);
     }
 }

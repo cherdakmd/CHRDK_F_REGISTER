@@ -24,7 +24,7 @@ import java.util.Locale;
  *
  * <p>Раскладка — {@link ShopLayout}: верхний ряд занимают вкладки разделов и
  * кнопка закрытия, в середине 36 товаров на страницу, снизу пагинация и баланс.
- * ЛКМ/Shift+ЛКМ — покупка 1/64, ПКМ/Shift+ПКМ — продажа 1/64. Содержимое
+ * ЛКМ — выбор количества покупки, ПКМ — выбор количества продажи. Содержимое
  * перечитывается при каждом действии, поэтому динамические цены всегда актуальны.</p>
  */
 public final class ShopGui implements Listener {
@@ -42,6 +42,7 @@ public final class ShopGui implements Listener {
 
     /** Открыть витрину на конкретном разделе и странице. */
     public void open(Player player, ShopCategory category, int page) {
+        if (!plugin.shopService().ready(player)) { plugin.messages().send(player, "trading.unavailable"); return; }
         List<ShopConfig.ShopItem> all = plugin.shopService().config().items();
         List<ShopCategory> tabs = ShopCatalog.tabs(all);
         ShopCategory current = category == null || !tabs.contains(category)
@@ -50,9 +51,9 @@ public final class ShopGui implements Listener {
         int pages = ShopLayout.pages(view.size());
         int safePage = ShopLayout.clampPage(page, view.size());
 
-        ShopHolder holder = new ShopHolder(current, safePage);
-        Component title = plugin.messages().get("shop.gui.title")
-                .append(plugin.messages().get("shop.gui.title-suffix",
+        ShopHolder holder = new ShopHolder(current, safePage, plugin.shopService());
+        Component title = plugin.messages().get("trading.gui.title")
+                .append(plugin.messages().get("trading.gui.title-suffix",
                         "category", plugin.messages().mini(current.messageKey()),
                         "page", safePage + 1,
                         "pages", pages));
@@ -64,22 +65,25 @@ public final class ShopGui implements Listener {
             int count = ShopCatalog.filter(all, tab).size();
             inventory.setItem(index, tabIcon(tab, tab == current, count));
         }
-        inventory.setItem(ShopLayout.SLOT_CLOSE, named(Material.BARRIER, "shop.gui.close-name"));
+        inventory.setItem(ShopLayout.SLOT_CLOSE, named(Material.BARRIER, "trading.gui.close-name"));
 
         int from = safePage * ShopLayout.ITEMS_PER_PAGE;
         for (int slot = 0; slot < ShopLayout.ITEMS_PER_PAGE && from + slot < view.size(); slot++) {
-            inventory.setItem(ShopLayout.FIRST_ITEM_SLOT + slot, iconOf(view.get(from + slot)));
+            var item = view.get(from + slot); var service = plugin.shopService();
+            var offer = new Offer(item.material(), service.batchSize(item), service.askPrice(item), service.bidPrice(item));
+            holder.offers.put(ShopLayout.FIRST_ITEM_SLOT + slot, offer);
+            inventory.setItem(ShopLayout.FIRST_ITEM_SLOT + slot, iconOf(item, offer));
         }
         if (view.isEmpty()) {
             inventory.setItem(ShopLayout.FIRST_ITEM_SLOT + 13,
-                    named(Material.BARRIER, "shop.gui.empty"));
+                    named(Material.BARRIER, "trading.gui.empty"));
         }
         if (safePage > 0) {
-            inventory.setItem(ShopLayout.SLOT_PREV, named(Material.ARROW, "shop.gui.prev-name"));
+            inventory.setItem(ShopLayout.SLOT_PREV, named(Material.ARROW, "trading.gui.prev-name"));
         }
         inventory.setItem(ShopLayout.SLOT_BALANCE, balanceIcon(player));
         if (safePage < pages - 1) {
-            inventory.setItem(ShopLayout.SLOT_NEXT, named(Material.ARROW, "shop.gui.next-name"));
+            inventory.setItem(ShopLayout.SLOT_NEXT, named(Material.ARROW, "trading.gui.next-name"));
         }
         player.openInventory(inventory);
     }
@@ -92,9 +96,9 @@ public final class ShopGui implements Listener {
         if (meta != null) {
             meta.displayName(plugin.messages().get(category.messageKey()));
             List<Component> lore = new ArrayList<>();
-            lore.add(plugin.messages().get("shop.gui.tab-lore", "count", count));
+            lore.add(plugin.messages().get("trading.gui.tab-lore", "count", count));
             if (selected) {
-                lore.add(plugin.messages().get("shop.gui.tab-current"));
+                lore.add(plugin.messages().get("trading.gui.tab-current"));
                 meta.setEnchantmentGlintOverride(true);
             }
             meta.lore(lore);
@@ -107,7 +111,7 @@ public final class ShopGui implements Listener {
      * Иконка товара. Имя не переопределяется — клиент показывает локализованное
      * название материала; в лоре остаются цены, тренд и id для {@code /shop buy}.
      */
-    private ItemStack iconOf(ShopConfig.ShopItem item) {
+    private ItemStack iconOf(ShopConfig.ShopItem item, Offer offer) {
         Material material = Material.matchMaterial(item.material());
         if (material == null || !material.isItem()) {
             material = Material.BARRIER;
@@ -120,15 +124,15 @@ public final class ShopGui implements Listener {
             long stock = service.store().stockOf(item, now, service.config().stockRecoveryPerHour());
             double price = service.priceOf(item);
             double[] history = service.historyOf(item);
-            List<Component> lore = new ArrayList<>(plugin.messages().getList("shop.gui.item-lore",
+            List<Component> lore = new ArrayList<>(plugin.messages().getList(item.sellEnabled()?"quantity.item-lore":"quantity.buy-only-lore",
                     "price", PriceEngine.round(price),
-                    "bid", service.bidPrice(item),
-                    "ask", service.askPrice(item),
+                    "bid", offer.bid(),
+                    "ask", offer.ask(), "batch", offer.batch(),
                     "trend", PriceEngine.trend(history),
                     "history", PriceEngine.sparkline(history),
                     "stock", stock,
                     "ref", item.refStock()));
-            lore.add(plugin.messages().get("shop.gui.item-id",
+            lore.add(plugin.messages().get("trading.gui.item-id",
                     "id", item.material().toLowerCase(Locale.ROOT)));
             meta.lore(lore);
             icon.setItemMeta(meta);
@@ -141,10 +145,10 @@ public final class ShopGui implements Listener {
         ItemMeta meta = icon.getItemMeta();
         if (meta != null) {
             ShopService service = plugin.shopService();
-            meta.displayName(plugin.messages().get("shop.gui.balance-name",
-                    "balance", PriceEngine.round(service.store().balanceOf(player.getUniqueId()))));
-            meta.lore(List.of(plugin.messages().get("shop.gui.balance-lore",
-                    "turnover", PriceEngine.round(service.store().turnover()))));
+            meta.displayName(plugin.messages().get("trading.gui.balance-name",
+                    "balance", service.balance(player)));
+            meta.lore(List.of(plugin.messages().get("trading.gui.balance-lore",
+                    "turnover", PriceEngine.round(service.store().turnover()), "physical", service.physical(player))));
             icon.setItemMeta(meta);
         }
         return icon;
@@ -213,17 +217,24 @@ public final class ShopGui implements Listener {
             return;
         }
         ShopConfig.ShopItem item = view.get(index);
+        var offer = holder.offers.get(slot); var service = plugin.shopService();
+        if (holder.service != service || offer == null || !offer.id().equals(item.material())
+                || offer.batch() != service.batchSize(item) || offer.ask() != service.askPrice(item) || offer.bid() != service.bidPrice(item)) {
+            plugin.messages().send(player, "trading.price-changed"); reopen(player, holder.category(), holder.page()); return;
+        }
 
         ClickType click = event.getClick();
         if (click == ClickType.NUMBER_KEY || click == ClickType.DROP || click == ClickType.CONTROL_DROP) {
             return;
         }
-        long units = click.isShiftClick() ? 64 : 1;
-        if (click.isLeftClick()) {
-            trade(player, item, units, true, holder.category(), holder.page());
-        } else if (click.isRightClick()) {
-            trade(player, item, units, false, holder.category(), holder.page());
-        }
+        if(!click.isLeftClick()&&!click.isRightClick())return;
+        boolean buy=click.isLeftClick();
+        if (!buy && !item.sellEnabled()) { plugin.messages().send(player,"quantity.buy-only"); return; }
+        var expected=player.getOpenInventory().getTopInventory();
+        plugin.getServer().getScheduler().runTask(plugin,()->{
+            if(plugin.isEnabled()&&player.isOnline()&&player.getOpenInventory().getTopInventory()==expected)
+                plugin.quantities().open(player,item,buy,holder.category(),holder.page(),holder.service,offer.batch(),buy?offer.ask():offer.bid());
+        });
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -233,43 +244,29 @@ public final class ShopGui implements Listener {
         }
     }
 
-    private void trade(Player player, ShopConfig.ShopItem item, long units, boolean buy,
-                       ShopCategory category, int page) {
-        ShopService.TradeResult result = buy
-                ? plugin.shopService().buy(player, item, units)
-                : plugin.shopService().sell(player, item, units);
-        if (result.success()) {
-            String key = buy ? "shop.buy-done" : "shop.sell-done";
-            plugin.messages().send(player, key,
-                    "material", item.material().toLowerCase(Locale.ROOT),
-                    "units", units,
-                    buy ? "cost" : "income", result.money(),
-                    "balance", PriceEngine.round(plugin.shopService().store().balanceOf(player.getUniqueId())));
-        } else if (result.errorKey() != null && result.errorKey().startsWith("shop.")) {
-            plugin.messages().send(player, result.errorKey(),
-                    "material", item.material().toLowerCase(Locale.ROOT),
-                    "units", units,
-                    "cost", result.money(),
-                    "balance", PriceEngine.round(plugin.shopService().store().balanceOf(player.getUniqueId())),
-                    "value", units);
-        }
-        // перечитываем витрину с новыми ценами, оставаясь в том же разделе
-        reopen(player, category, page);
-    }
-
     /** Перерисовка витрины следующим тиком — после завершения текущего клика. */
     private void reopen(Player player, ShopCategory category, int page) {
-        plugin.getServer().getScheduler().runTask(plugin, () -> open(player, category, page));
+        var expected = player.getOpenInventory().getTopInventory();
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            if (plugin.isEnabled() && player.isOnline() && player.getOpenInventory().getTopInventory() == expected) open(player, category, page);
+        });
     }
 
     /** Holder с разделом и номером страницы. */
+    public void closeAll() {
+        for (var player : Bukkit.getOnlinePlayers()) if (player.getOpenInventory().getTopInventory().getHolder() instanceof ShopHolder || ShopQuantityGui.owns(player.getOpenInventory().getTopInventory())) player.closeInventory();
+    }
+    private record Offer(String id, int batch, long ask, long bid) { }
     private static final class ShopHolder implements InventoryHolder {
 
         private final ShopCategory category;
         private final int page;
         private Inventory inventory;
+        private final ShopService service;
+        private final java.util.Map<Integer, Offer> offers = new java.util.HashMap<>();
 
-        private ShopHolder(ShopCategory category, int page) {
+        private ShopHolder(ShopCategory category, int page, ShopService service) {
+            this.service = service;
             this.category = category;
             this.page = page;
         }

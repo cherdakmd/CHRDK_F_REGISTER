@@ -53,9 +53,9 @@ class TabListServiceTest {
     void taggedNameIsRenderedAsMarkup() {
         var ctx = new TabListService.TabContext("Steve", 1, 1, 20.0, 0, "w", "", "", 0,
                 new PresentationContext("", "", "", "", ""),
-                "<bold>Steve</bold> <red>[СТРИМ]</red>");
+                "<bold>Steve</bold> <red>[МЕТКА]</red>");
         Component line = TabListService.renderName(messages(), "%player_tagged% / %player%", ctx);
-        assertEquals("Steve [СТРИМ] / Steve", PLAIN.serialize(line),
+        assertEquals("Steve [МЕТКА] / Steve", PLAIN.serialize(line),
                 "%player_tagged% — доверенная разметка, %player% по-прежнему экранируется");
     }
 
@@ -80,30 +80,25 @@ class TabListServiceTest {
     }
 
     @Test
-    void oldNameFormatGetsRankSuffixOnTheFly() {
-        assertEquals("%player_tagged%%rank_tag%",
-                TabListService.nameFormat("%player_tagged%", true),
-                "старый конфиг без %rank_tag% должен получить название ранга сам");
-        assertEquals("%player_tagged%%rank_tag%",
-                TabListService.nameFormat("%player_tagged%%rank_tag%", true),
-                "повторно суффикс не добавляется");
-        assertEquals("%rank_tag% %player_tagged%",
-                TabListService.nameFormat("%rank_tag% %player_tagged%", true));
-        assertEquals("%player_tagged%",
-                TabListService.nameFormat("%player_tagged%", false),
-                "show-rank-name: false возвращает прежний вид");
+    void oldRankSuffixCannotBypassSharedLimit() {
+        assertEquals("%player_tagged%", TabListService.nameFormat("%player_tagged%", true));
+        assertEquals("%player_tagged%", TabListService.nameFormat("%player_tagged%%rank_tag%", true));
+        assertEquals("%player_tagged%", TabListService.nameFormat("%rank_tag% %player_tagged%", true));
+        assertEquals("%player_tagged%", TabListService.nameFormat("%player_tagged%", false));
         assertEquals("", TabListService.nameFormat("", true));
         assertNull(TabListService.nameFormat(null, true));
+        var ctx = new TabListService.TabContext("Steve", 1, 1, 20.0, 0, "w", "", "", 0,
+                new PresentationContext("", "", "", "", ""), "Steve · ✦ Ранг · Класс", " · Ранг");
+        assertEquals("Steve · ✦ Ранг · Класс", PLAIN.serialize(TabListService.renderName(messages(),
+                TabListService.nameFormat("%player_tagged%%rank_tag%", true), ctx)));
     }
 
     @Test
-    void rankTagTextShowsStepAndAvoidsDoubleName() {
-        RankSettings ranks = RankSettings.defaults();
-        String tag = TabListService.rankTagText(ranks, 5);
-        assertEquals(" · Покровитель", Messages.stripFormatting(tag),
-                "хвост отделяется точкой-разделителем и содержит название ступени");
-        assertEquals("", TabListService.rankTagText(ranks, 0), "без ранга хвоста нет");
-        assertEquals("", TabListService.rankTagText(null, 5), "нет настроек — нет хвоста");
+    void legacyRankNameFlagsControlOneSharedLabel() {
+        assertTrue(ChatService.rankNameVisible(false, true));
+        assertTrue(ChatService.rankNameVisible(true, false));
+        assertTrue(ChatService.rankNameVisible(true, true));
+        org.junit.jupiter.api.Assertions.assertFalse(ChatService.rankNameVisible(false, false));
     }
 
     @Test
