@@ -91,7 +91,7 @@ public final class ShopStore {
             var nextLimits=new HashMap<UUID,LimitRow>();
             for(var entry:table(data,"balances",true).entrySet()) nextBalances.put(uuid(entry.getKey()),legacyDecimal(entry.getValue()));
             for(var entry:table(data,"items",false).entrySet()) {
-                if(!entry.getKey().matches("[A-Z][A-Z0-9_]{0,127}")||!entry.getValue().isJsonObject()) throw new IllegalArgumentException("Неверный товар");
+                if(!entry.getKey().matches("[A-Z][A-Z0-9_:]{0,127}")||!entry.getValue().isJsonObject()) throw new IllegalArgumentException("Неверный товар");
                 var row=entry.getValue().getAsJsonObject(); var state=new ItemState();
                 state.stock=integer(row,"stock",true); if(state.stock<1) throw new IllegalArgumentException("stock < 1");
                 state.recoveryAt=integer(row,"recoveryAt",true);

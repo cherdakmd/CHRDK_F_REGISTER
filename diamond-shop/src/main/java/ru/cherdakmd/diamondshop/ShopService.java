@@ -114,7 +114,7 @@ public final class ShopService {
         long now = System.currentTimeMillis();
         if (!store.canRecordTurnover(player.getUniqueId(), money, config.dailyTurnoverLimit(), now)) return fail(store.legacyAvailable() ? "trading.daily-limit" : "trading.unavailable", money);
         var frozenRates=new LinkedHashMap<String,Integer>();
-        config.currencyRates().forEach((key,value)->{ var m=Material.matchMaterial(key); if(m!=null&&m.isItem()) frozenRates.put(key,value); });
+        config.currencyRates().forEach((key,value)->{ var m=Material.matchMaterial(key); if(m!=null&&m.isItem()&&m.name().equals(key)) frozenRates.put(key,value); });
         var t=new ShopExchange(UUID.randomUUID(),store.market(),store.sequence()+1,player.getUniqueId(),buy,item.material(),units,money,debit,credit,spent,frozenRates,ChargeInventory.encode(before),ChargeInventory.encode(after));
         if(!ShopInventory.valid(t)) return fail("trading.unavailable",money);
         long stock=store.stockOf(item,now,config.stockRecoveryPerHour());
