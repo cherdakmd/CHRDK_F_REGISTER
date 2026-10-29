@@ -1117,7 +1117,7 @@ auto-messages:
     - {"text": "<gray>Выбор доступного шлейфа — <white>/cosmetics trails</white>, отключение — <white>/cosmetics off</white>. Каталог не означает владение; право может иметь срок.</gray>", "plugin": "CHRDK_Cosmetics", "permission": "chrdkcosmetics.use"}
     - {"text": "<gray>Пригласил друг? <white>/ref use его_ник</white> фиксирует привязку по правилам системы. Статус — <white>/ref</white>. Подходящая первая оплата даёт игровой буст, не продление ранга.</gray>", "plugin": "CHRDK_Referrals", "permission": "chrdkref.use"}
     - {"text": "<gray>Сведения об очереди — <white>/queue info</white>. Приоритет ранга не отменяет предел вместимости, регистрацию, пароль и подключённую 2FA.</gray>", "plugin": "CHRDK_Queue", "permission": "chrdkqueue.use"}
-    - {"text": "<gray>Поддержать сервер можно через <white>/donate</white>. Используйте официальную ссылку, не передавайте деньги по реквизитам из чужих личных сообщений.</gray>", "permission": "chrdkregister.donate"}
+    - {"text": "<gray>Поддержать сервер можно через <click:run_command:'/donate'><white>/donate</white></click>. Используйте официальную ссылку, не передавайте деньги по реквизитам из чужих личных сообщений.</gray>", "permission": "chrdkregister.donate"}
 
 tablist:
   # Таб-лист (TAB): шапка/подвал списка игроков и формат имени в нём.

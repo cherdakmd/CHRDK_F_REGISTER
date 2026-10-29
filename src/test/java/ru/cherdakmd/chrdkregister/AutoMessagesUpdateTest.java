@@ -114,7 +114,7 @@ class AutoMessagesUpdateTest {
         assertFalse(text.contains("72 достижения"));
         assertFalse(text.contains("60 перков"));
         assertFalse(text.contains("не сгорает при перезапуске"));
-        assertFalse(text.contains("https://"), "официальные адреса берутся командами из настроек, не дублируются");
+        assertFalse(text.contains("https://"), "официальные адреса выдают публичные команды, ссылки не дублируются");
         assertTrue(text.contains("/auction money показывает банк"));
         assertTrue(text.contains("Платный ранг не продлевается"));
         assertTrue(text.contains("2FA подключается по желанию"));
