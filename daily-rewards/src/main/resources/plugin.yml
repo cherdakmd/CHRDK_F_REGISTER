@@ -13,7 +13,7 @@ commands:
   dailyadmin:
     aliases: [dlyadmin]
     description: Администрирование ежедневных наград
-    usage: /<command> [set <ник> <стрик>|lookup <ник>|reload]
+    usage: /<command> [set <ник> <стрик>|lookup <ник>|reload|recovery|resolve <UUID> confirm]
     permission: chrdkdaily.admin
 permissions:
   chrdkdaily.use:

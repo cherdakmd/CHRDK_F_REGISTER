@@ -28,6 +28,7 @@ public final class DailyRewardsPlugin extends JavaPlugin {
     private DailyCalendarGui gui;
     private DailyCommandHandler commandHandler;
     private BukkitTask saveTask;
+    private BukkitTask rewardTask;
 
     @Override
     public void onEnable() {
@@ -36,6 +37,7 @@ public final class DailyRewardsPlugin extends JavaPlugin {
         this.store = new DailyStore(getDataFolder().toPath(), getLogger());
         this.store.load();
         this.service = new DailyService(this, store);
+        rewardTask=Bukkit.getScheduler().runTaskTimer(this,service::tick,20L,20L);
         this.gui = new DailyCalendarGui(this);
         this.commandHandler = new DailyCommandHandler(this);
 
@@ -70,6 +72,7 @@ public final class DailyRewardsPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if(rewardTask!=null)rewardTask.cancel();
         if (coreApi != null) {
             try {
                 coreApi.unregisterProfile("daily");
@@ -93,6 +96,7 @@ public final class DailyRewardsPlugin extends JavaPlugin {
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
         this.config = DailyConfig.parse(getConfig(), getLogger(), true);
+        if(coreApi!=null)try {if(ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)<25)coreApi=null;}catch(ReflectiveOperationException e){coreApi=null;}
     }
 
     public ChrdkRegisterApi coreApi() {

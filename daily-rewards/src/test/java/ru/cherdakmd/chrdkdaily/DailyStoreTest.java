@@ -86,6 +86,6 @@ class DailyStoreTest {
         java.nio.file.Files.writeString(dir.resolve("daily-data.json"), "[}");
         DailyStore store = newStore(dir);
         store.load();
-        assertTrue(store.canClaim(UUID.randomUUID(), 1000));
+        assertFalse(store.canClaim(UUID.randomUUID(), 1000), "повреждённый источник не переоткрывает награды");
     }
 }

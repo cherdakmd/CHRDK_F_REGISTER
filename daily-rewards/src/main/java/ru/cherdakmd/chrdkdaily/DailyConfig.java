@@ -100,7 +100,7 @@ public final class DailyConfig {
                 logger.warning("[DailyRewards] rewards: пропускаю непонятный предмет '" + text + "'.");
                 continue;
             }
-            items.add(new ItemReward(material, Math.min(2304, amount)));
+            items.add(new ItemReward(bukkit==null?material:bukkit.name(), Math.min(2304, amount)));
         }
         return List.copyOf(items);
     }
@@ -109,7 +109,7 @@ public final class DailyConfig {
     public static String describe(DayReward reward, boolean vip, Optional<Integer> fallbackPassHours) {
         List<String> parts = new ArrayList<>();
         reward.itemsFor(vip).forEach(item ->
-                parts.add(item.material().toLowerCase(Locale.ROOT) + " ×" + item.amount()));
+                parts.add(DailyStore.moneyUnit(item.material())>0?"/bal +"+(long)DailyStore.moneyUnit(item.material())*item.amount()+" 💠":item.material().toLowerCase(Locale.ROOT) + " ×" + item.amount()));
         int passHours = vip ? reward.vipPassHours() : 0;
         if (passHours <= 0) {
             passHours = fallbackPassHours.orElse(0);

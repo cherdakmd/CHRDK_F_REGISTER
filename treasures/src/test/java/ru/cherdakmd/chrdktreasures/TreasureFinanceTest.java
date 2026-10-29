@@ -66,16 +66,16 @@ class TreasureFinanceTest {
     }
     @Test void legacyMigrationClosesOldRanksAndExplicitMilestonesWithoutRetroPay() throws Exception {
         var s=ready(); s.recordTreasure(owner.toString(),TreasureTier.RARE,"old"); s.markMilestone(owner.toString(),1); s.setAnnounce(owner.toString(),false); s.flush();
-        var root=JsonParser.parseString(Files.readString(s.file())).getAsJsonObject(); root.addProperty("version",1); root.remove("finance"); Files.writeString(s.file(),root.toString());
+        var root=JsonParser.parseString(Files.readString(s.file())).getAsJsonObject(); root.addProperty("version",1); root.remove("finance");root.remove("loot_totals"); Files.writeString(s.file(),root.toString());
         s=load(); assertEquals(2,s.claims(owner).size()); assertEquals(0,s.income(owner)); assertEquals(10,s.shards(owner.toString())); assertEquals(1,s.itemCount(owner.toString(),"old")); assertFalse(s.announce(owner.toString()));
-        assertFalse(s.reconcile(owner,config(40,1,70))); assertEquals(0,load().income(owner)); assertEquals(2,JsonParser.parseString(Files.readString(s.file())).getAsJsonObject().get("version").getAsInt());
+        assertFalse(s.reconcile(owner,config(40,1,70))); assertEquals(0,load().income(owner)); assertEquals(3,JsonParser.parseString(Files.readString(s.file())).getAsJsonObject().get("version").getAsInt());
     }
     @Test void missingLegacyMarkerMayOnlyCreateANewIndependentEligibleClaim() throws Exception {
-        var s=ready(); s.recordTreasure(owner.toString(),TreasureTier.RARE,"old"); s.flush(); var root=JsonParser.parseString(Files.readString(s.file())).getAsJsonObject(); root.addProperty("version",1); root.remove("finance"); Files.writeString(s.file(),root.toString());
+        var s=ready(); s.recordTreasure(owner.toString(),TreasureTier.RARE,"old"); s.flush(); var root=JsonParser.parseString(Files.readString(s.file())).getAsJsonObject(); root.addProperty("version",1); root.remove("finance");root.remove("loot_totals"); Files.writeString(s.file(),root.toString());
         s=load(); assertTrue(s.reconcile(owner,config(40,1,7))); assertEquals(7,s.income(owner)); assertEquals(0,s.frozen(owner,"rank:seeker"));
     }
     @Test void malformedLegacyTypesRefuseWithoutOverwritingOriginal() throws Exception {
-        var s=ready(); var root=JsonParser.parseString(Files.readString(s.file())).getAsJsonObject(); root.addProperty("version",1); root.remove("finance");
+        var s=ready(); var root=JsonParser.parseString(Files.readString(s.file())).getAsJsonObject(); root.addProperty("version",1); root.remove("finance");root.remove("loot_totals");
         for(String invalid:List.of("-1","1.5","\"2\"","true","9223372036854775808")) {
             var copy=root.deepCopy(); copy.getAsJsonObject("players").getAsJsonObject(owner.toString()).add("mined",JsonParser.parseString(invalid)); refuse(copy.toString());
         }
@@ -170,4 +170,11 @@ class TreasureFinanceTest {
         String listener=Files.readString(base.resolve("TreasureListener.java")); assertTrue(listener.contains("!plugin.finance().eligible(player)")); assertTrue(listener.contains("if (found == null) return;"));
         String command=Files.readString(base.resolve("TreasureCommandHandler.java")); int gate=command.indexOf("private boolean handleAdmin"); assertTrue(command.indexOf("!sender.hasPermission(\"chrdktreasures.admin\")",gate)<command.indexOf("plugin.finance().status(sender)",gate));
     }
+    @Test void ordinaryLootIncomeAndFindAreOneCanonicalTransition() throws Exception {var s=load();s.recordRewardedTreasure(owner,TreasureTier.COMMON,null,now,60000,config(4),21);s=load();assertEquals(1,s.found(owner.toString()));assertEquals(21,s.income(owner));assertTrue(deliver(s,bank()));assertEquals(21,bank().balance(owner));}
+    @Test void lootRetryAfterSpendingNeverPaysTheSameCumulativeOutcomeAgain() throws Exception {var s=load();s.recordRewardedTreasure(owner,TreasureTier.COMMON,null,now,60000,config(4),21);var b=bank();deliver(s,b);assertTrue(b.withdraw(owner,21));b.flush();deliver(load(),b);assertEquals(0,b.balance(owner));}
+    @Test void lootDebtSurvivesProgressResetAndCap() throws Exception {var s=load();s.recordRewardedTreasure(owner,TreasureTier.COMMON,null,now,60000,config(4),21);s.resetAll();s.flush();s=load();assertEquals(21,s.income(owner));var b=bank();b.setBalance(owner,"Steve",BankStore.MAX_BALANCE);deliver(s,b);assertEquals(21,s.income(owner));b.withdraw(owner,21);deliver(s,b);assertEquals(BankStore.MAX_BALANCE,b.balance(owner));}
+    @Test void oldSchemaWithoutLootDoesNotBackpayHistoricalRolls() throws Exception {var s=earned();var r=JsonParser.parseString(Files.readString(s.file())).getAsJsonObject();r.addProperty("version",2);r.remove("loot_totals");Files.writeString(s.file(),r.toString());s=load();assertEquals(4,s.income(owner));s.recordRewardedTreasure(owner,TreasureTier.COMMON,null,now,60000,config(4),9);assertEquals(13,load().income(owner));}
+    @Test void schemaDowngradeAndMalformedLootTotalsAreRefused() throws Exception {var s=earned();String original=Files.readString(s.file());var r=JsonParser.parseString(original).getAsJsonObject();r.addProperty("version",2);refuse(r.toString());for(String n:List.of("-1","1.5","\"2\"","9223372036854775808")){r=JsonParser.parseString(original).getAsJsonObject();r.getAsJsonObject("loot_totals").add(owner.toString(),JsonParser.parseString(n));refuse(r.toString());}}
+    @Test void onlyOrdinaryCurrencyMaterialsHaveMoneyRates() {assertEquals(1,TreasureMoney.unit("DIAMOND"));assertEquals(9,TreasureMoney.unit("DIAMOND_BLOCK"));assertEquals(0,TreasureMoney.unit("DIAMOND_SWORD"));assertEquals(0,TreasureMoney.unit("DIAMOND_ORE"));}
+
 }

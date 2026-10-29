@@ -321,22 +321,23 @@ public final class TreasureService {
                 payload.add(itemStack);
             }
         }
-        Integer streak = plugin.finance().record(player, tier,
-                item == null ? null : item.id(), System.currentTimeMillis(),
-                plugin.config().streakWindowMillis());
-        if (streak == null) return null;
-        List<Integer> milestones = checkMilestones(player);
-        List<TreasureLoot.LootStack> bonus = grantStreakBonus(player, tier, region, streak, payload);
+        long acceptedAt=System.currentTimeMillis();
+        int nextStreak=TreasureStreak.next(store.streak(key(player)),store.lastFind(key(player)),acceptedAt,plugin.config().streakWindowMillis());
+        List<TreasureLoot.LootStack> bonus=grantStreakBonus(player,tier,region,nextStreak,payload);
         // 1.4.166: реликвия или книга чар из соседних аддонов — до бочки, чтобы
         // попасть в ту же добычу и не потеряться при отказе от контейнера.
         List<TreasureSpecial> specials = plugin.specials().grant(tier, payload);
         // 1.4.166: осколки кладов — валюта обменника. Начисляются на баланс, а
         // не падают предметом: их нельзя потерять при смерти или забыть в бочке.
         int shards = TreasureShardRolls.roll(plugin.config().shards(), tier, random);
-        if (shards > 0) {
-            store.addShards(key(player), shards);
-        }
         ensureNotEmpty(payload);
+        long lootIncome=0;
+        for(var stack:payload)if(TreasureMoney.plain(stack))lootIncome=Math.addExact(lootIncome,(long)TreasureMoney.unit(stack.getType().name())*stack.getAmount());
+        Integer streak=plugin.finance().record(player, tier,item==null?null:item.id(),acceptedAt,plugin.config().streakWindowMillis(),lootIncome);
+        if(streak==null)return null;
+        payload.removeIf(TreasureMoney::plain);
+        List<Integer> milestones=checkMilestones(player);
+        if(shards>0)store.addShards(key(player),shards);
         // 1.4.181: по умолчанию добыча падает на землю. Бочка — опция
         // (drops.ground: false); инвентарь — только если места в мире нет.
         Placement placement = placeInWorld(player, origin, tier, payload);
@@ -436,6 +437,7 @@ public final class TreasureService {
             }
         }
         ensureNotEmpty(payload);
+        payload.removeIf(TreasureMoney::plain);
         return payload;
     }
 
@@ -477,21 +479,6 @@ public final class TreasureService {
             ItemStack itemStack = stackOf(stack);
             if (itemStack != null) {
                 payload.add(itemStack);
-            }
-        }
-        if (!extra.loot().isEmpty() && plugin.config().findNotifications()
-                && store.announce(key(player))) {
-            // 1.4.148: бонус тоже называет состав, иначе игрок снова лезет в инвентарь.
-            String loot = plugin.config().showLoot()
-                    ? TreasureLootMarkup.markup(plugin.messages(), TreasureLootText.summarize(
-                            extra.loot(), plugin.config().lootDetailsMax()))
-                    : "";
-            if (loot.isEmpty()) {
-                plugin.messages().send(player, "streak-bonus", "streak", String.valueOf(streak));
-            } else {
-                plugin.messages().send(player, "streak-bonus-loot",
-                        "streak", String.valueOf(streak),
-                        "loot", Messages.trusted(loot));
             }
         }
         return extra.loot();

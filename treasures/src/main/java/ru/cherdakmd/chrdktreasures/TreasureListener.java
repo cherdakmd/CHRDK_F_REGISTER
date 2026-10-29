@@ -161,9 +161,7 @@ public final class TreasureListener implements Listener {
                 dropped = true;
             }
         }
-        if (dropped) {
-            plugin.messages().send(player, "double-ore");
-        }
+
     }
 
     /** Руда ли это: двойная добыча не должна дублировать песок и бревна. */

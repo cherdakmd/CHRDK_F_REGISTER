@@ -1,0 +1,44 @@
+package ru.cherdakmd.chrdkdaily;
+
+import com.google.gson.*;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.io.TempDir;
+import ru.cherdakmd.chrdkregister.BankStore;
+import java.io.*;
+import java.nio.file.*;
+import java.util.*;
+import java.util.logging.Logger;
+import static org.junit.jupiter.api.Assertions.*;
+
+class DailyDeliveryTest {
+    @TempDir Path dir;final UUID owner=UUID.randomUUID();final Logger log=Logger.getAnonymousLogger();final long now=21500L*86400000L;
+    DailyStore load(){var s=new DailyStore(dir,log);s.load();return s;}
+    DailyConfig config()throws Exception{var y=new YamlConfiguration();y.loadFromString("rewards:\n - day: 1\n   items: ['DIAMOND 2', 'BREAD 8']\n   vip-items: ['DIAMOND_BLOCK 2', 'EMERALD 3']\n   vip-boost-hours: 2\n");return DailyConfig.parse(y,log,false);}
+    final class Bank implements DailyDelivery.Bank {
+        BankStore root=new BankStore(dir.resolve("core"),log);boolean available=true,known=true;
+        Bank(){root.load();root.open(owner,"Steve");root.flush();}
+        public boolean available(){return available&&root.available();}public boolean registered(UUID l){return root.incomeSourceAvailable(DailyStore.SOURCE,l);}public boolean register(UUID l){return root.registerIncomeSource(DailyStore.SOURCE,l);}public boolean known(UUID id){return known;}public long credited(UUID l,UUID id){return root.creditedEntitlement(DailyStore.SOURCE,l,id.toString(),id);}public boolean credit(UUID l,UUID id,long n){return root.creditEntitlement(DailyStore.SOURCE,l,id.toString(),id,n);}
+    }
+    final class Native implements DailyDelivery.Native {int items,boosts;boolean fail;public void item(DailyConfig.ItemReward i)throws Exception{items++;if(fail)throw new IOException("native uncertain");}public void boost(int h){boosts++;}}
+    DailyStore accepted(Bank b,boolean vip)throws Exception{var s=load();assertTrue(DailyDelivery.bind(s,b));assertNotNull(s.accept(owner,now,config(),vip));return s;}
+    @Test void ordinaryDiamondsAreFrozenWithUtcProgressBeforeAnyEffects()throws Exception{var b=new Bank();accepted(b,false);var s=load();assertEquals(2,s.totals().get(owner));assertEquals(21500,s.progressOf(owner).lastClaimDay);assertEquals(List.of(new DailyConfig.ItemReward("BREAD",8)),s.pending(owner).items());assertEquals(0,b.root.balance(owner));}
+    @Test void vipBranchBlockRateAndHoursAreFrozen()throws Exception{var b=new Bank();var s=accepted(b,true);var r=s.pending(owner);assertTrue(r.vip());assertEquals(18,r.money());assertEquals(2,r.hours());assertEquals("EMERALD",r.items().getFirst().material());}
+    @Test void moneyRetryAfterSpendingDoesNotRecreditOldReward()throws Exception{var b=new Bank();var s=accepted(b,true);DailyDelivery.money(s,b);assertTrue(b.root.withdraw(owner,18));b.root.flush();DailyDelivery.money(load(),b);assertEquals(0,b.root.balance(owner));}
+    @Test void bankCapPreservesCumulativeObligationUntilRoomExists()throws Exception{var b=new Bank();b.root.setBalance(owner,"Steve",BankStore.MAX_BALANCE);var s=accepted(b,true);DailyDelivery.money(s,b);assertEquals(18,s.totals().get(owner));b.root.withdraw(owner,20);DailyDelivery.money(load(),b);assertEquals(BankStore.MAX_BALANCE-2,b.root.balance(owner));}
+    @Test void unknownUuidAndUnavailableDoNotEraseAcceptedRewards()throws Exception{var b=new Bank();var s=accepted(b,false);b.known=false;DailyDelivery.money(s,b);assertEquals(0,b.root.balance(owner));b.known=true;b.available=false;DailyDelivery.money(s,b);assertEquals(2,load().totals().get(owner));b.available=true;DailyDelivery.money(s,b);assertEquals(2,b.root.balance(owner));}
+    @Test void nativeEffectsAreOnceAndCompleteRemovesPendingOnly()throws Exception{var b=new Bank();var s=accepted(b,true);var port=new Native();assertTrue(DailyDelivery.nativeEffects(s,owner,port));assertTrue(DailyDelivery.nativeEffects(s,owner,port));assertEquals(1,port.items);assertEquals(1,port.boosts);assertNull(load().pending(owner));assertEquals(18,load().totals().get(owner));}
+    @Test void interruptedNativeIsHeldNotAutoRepeatedAcrossRestart()throws Exception{var b=new Bank();var s=accepted(b,true);var port=new Native();port.fail=true;assertThrows(IOException.class,()->DailyDelivery.nativeEffects(s,owner,port));s=load();port.fail=false;assertFalse(DailyDelivery.nativeEffects(s,owner,port));assertEquals(1,port.items);assertEquals(0,port.boosts);assertTrue(s.pending(owner).executing());}
+    @Test void verifiedEffectResolutionContinuesOnlyRemainingEffects()throws Exception{var b=new Bank();var s=accepted(b,true);s.begin(owner);s.finishEffect(owner);var port=new Native();assertTrue(DailyDelivery.nativeEffects(s,owner,port));assertEquals(0,port.items);assertEquals(1,port.boosts);}
+    @Test void pendingBlocksNextDayAndAdminStreakReset()throws Exception{var b=new Bank();var s=accepted(b,false);assertFalse(s.canClaim(owner,now+86400000));assertThrows(IllegalStateException.class,()->s.setStreak(owner,0,now));assertNull(s.accept(owner,now+86400000,config(),false));}
+    @Test void completedDaysAccumulateIncomeWithoutRequotingOldDays()throws Exception{var b=new Bank();var s=accepted(b,false);DailyDelivery.nativeEffects(s,owner,new Native());s.accept(owner,now+86400000,config(),true);assertEquals(20,load().totals().get(owner));assertEquals(2,load().progressOf(owner).streak);DailyDelivery.money(s,b);assertEquals(20,b.root.balance(owner));}
+    @Test void adminSetDoesNotClearMoneyOrPermitAnotherClaimToday()throws Exception{var b=new Bank();var s=accepted(b,false);DailyDelivery.nativeEffects(s,owner,new Native());s.setStreak(owner,0,now);assertFalse(s.canClaim(owner,now));assertEquals(2,load().totals().get(owner));}
+    @Test void missingCoreLineageAfterAckIsNotRecreated()throws Exception{var b=new Bank();var s=accepted(b,false);b.root=new BankStore(dir.resolve("empty"),log);b.root.load();assertFalse(DailyDelivery.bind(s,b));assertFalse(b.root.incomeSourceAvailable(DailyStore.SOURCE,s.lineage()));}
+    @Test void sourcePrepareBeforeRenameFailureCannotPublishClaimOrMoney()throws Exception{var b=new Bank();var s=load();DailyDelivery.bind(s,b);Files.createDirectory(dir.resolve("daily-data.json.tmp"));assertThrows(IOException.class,()->s.accept(owner,now,config(),false));assertFalse(s.healthy());assertTrue(load().canClaim(owner,now));assertEquals(0,b.root.balance(owner));}
+    @Test void sourceAfterRenameAmbiguityRetainsTheAcceptedReward()throws Exception{var b=new Bank();var s=load();DailyDelivery.bind(s,b);var f=new DailyStore(dir,log,()->{throw new IOException("uncertain");});f.load();assertThrows(IOException.class,()->f.accept(owner,now,config(),true));f.saveNow();s=load();assertFalse(s.canClaim(owner,now));assertEquals(18,s.totals().get(owner));DailyDelivery.money(s,b);assertEquals(18,b.root.balance(owner));}
+    @Test void executingPhaseAfterRenameFailureDoesNotAutoDispatchNative()throws Exception{var b=new Bank();accepted(b,true);var f=new DailyStore(dir,log,()->{throw new IOException("uncertain");});f.load();var port=new Native();assertThrows(IOException.class,()->DailyDelivery.nativeEffects(f,owner,port));assertEquals(0,port.items);assertFalse(DailyDelivery.nativeEffects(load(),owner,port));}
+    @Test void malformedTypesAndDuplicateFieldsDoNotReopenRewards()throws Exception{var b=new Bank();accepted(b,true);var original=JsonParser.parseString(Files.readString(dir.resolve("daily-data.json"))).getAsJsonObject();for(String value:List.of("\"18\"","18.1","9223372036854775808")){var r=original.deepCopy();r.getAsJsonObject("totals").add(owner.toString(),JsonParser.parseString(value));String bad=r.toString();Files.writeString(dir.resolve("daily-data.json"),bad);var s=load();assertFalse(s.healthy());s.saveNow();assertEquals(bad,Files.readString(dir.resolve("daily-data.json")));}Files.writeString(dir.resolve("daily-data.json"),"{\"players\":{},\"players\":{}}");assertFalse(load().healthy());}
+    @Test void deletingRegistrationAckCannotRecreateAnAcceptedSource()throws Exception{var b=new Bank();accepted(b,true);var r=JsonParser.parseString(Files.readString(dir.resolve("daily-data.json"))).getAsJsonObject();r.addProperty("registered",false);Files.writeString(dir.resolve("daily-data.json"),r.toString());assertFalse(load().healthy());}
+    @Test void snapshotDoesNotAcknowledgeDirtyData()throws Exception{var s=load();s.claim(owner,now);s.snapshotJson();assertTrue(s.isDirty());s.saveNow();assertFalse(s.isDirty());}
+    @Test void legacyProgressIsNotRetroactivelyPaid()throws Exception{Files.writeString(dir.resolve("daily-data.json"),"{\"players\":{\""+owner+"\":{\"lastClaimDay\":21500,\"streak\":7,\"totalClaims\":20}}}");var s=load();var b=new Bank();DailyDelivery.bind(s,b);assertTrue(s.totals().isEmpty());assertFalse(s.canClaim(owner,now));assertEquals(7,s.progressOf(owner).streak);}
+}

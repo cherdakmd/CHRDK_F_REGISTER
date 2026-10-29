@@ -85,11 +85,12 @@ public final class TreasureStore {
     public synchronized boolean registered() { return registered; }
     private void writable() { if(!healthy) throw new IllegalStateException("treasures.json quarantined"); }
     public synchronized void markRegistered() throws IOException { writable(); if(!registered) { registered=true; persist(); } }
+    private final Map<UUID,Long> lootTotals=new LinkedHashMap<>();
     public synchronized long income(UUID owner) {
-        long total=0; for(long value:awards.getOrDefault(owner,Map.of()).values()) total=Math.addExact(total,value); return total;
+        long total=lootTotals.getOrDefault(owner,0L); for(long value:awards.getOrDefault(owner,Map.of()).values()) total=Math.addExact(total,value); return total;
     }
     public synchronized Map<UUID,Long> incomes() {
-        Map<UUID,Long> out=new LinkedHashMap<>(); awards.keySet().forEach(id->out.put(id,income(id))); return Collections.unmodifiableMap(out);
+        Map<UUID,Long> out=new LinkedHashMap<>(); var owners=new LinkedHashSet<>(awards.keySet());owners.addAll(lootTotals.keySet());owners.forEach(id->out.put(id,income(id))); return Collections.unmodifiableMap(out);
     }
     public synchronized Map<String,Long> claims(UUID owner) { return Map.copyOf(awards.getOrDefault(owner,Map.of())); }
     public synchronized long frozen(UUID owner,String key) { return awards.getOrDefault(owner,Map.of()).getOrDefault(key,0L); }
@@ -109,12 +110,18 @@ public final class TreasureStore {
         return added;
     }
     public synchronized int recordRewardedTreasure(UUID owner,TreasureTier tier,String item,long now,long window,TreasuresConfig config) throws IOException {
-        writable(); if(owner==null||tier==null) throw new IllegalArgumentException("treasure owner/tier");
+        return recordRewardedTreasure(owner,tier,item,now,window,config,0);
+    }
+    public synchronized int recordRewardedTreasure(UUID owner,TreasureTier tier,String item,long now,long window,TreasuresConfig config,long lootIncome) throws IOException {
+        writable(); if(owner==null||tier==null||lootIncome<0) throw new IllegalArgumentException("treasure owner/tier/income");
+        long nextLoot=Math.addExact(lootTotals.getOrDefault(owner,0L),lootIncome); Math.addExact(income(owner),lootIncome);
         String id=owner.toString(); var data=players.get(id); long found=data==null?0:data.found(); int distinct=data==null?0:data.foundItems();
         if(item!=null&&!item.isBlank()&&(data==null||!data.items.containsKey(item))) distinct=Math.addExact(distinct,1);
         var plan=TreasureRewardRules.quote(add(found,1),distinct,config); validatePlan(owner,plan);
+        long combined=Math.addExact(income(owner),lootIncome); for(var e:plan.entrySet())if(!awards.getOrDefault(owner,Map.of()).containsKey(e.getKey()))combined=Math.addExact(combined,e.getValue());
         int streak=recordTreasure(id,tier,item,now,window);
-        if(freeze(owner,plan)) persist(); // В том числе нулевой денежный исход; до native world/inventory.
+        freeze(owner,plan); if(lootIncome>0)lootTotals.put(owner,nextLoot);
+        persist(); // Весь принятый roll: доход, серия, статистика до любых native drops.
         return streak;
     }
     /** Новые пороги коллекции/награды из конфига: только реально сохранённый прогресс. */
@@ -128,7 +135,7 @@ public final class TreasureStore {
             if(!Files.exists(file)) { persist(); return; }
             if(!Files.isRegularFile(file)||Files.size(file)>32L*1024*1024) throw new IOException("treasures capacity/type");
             var root=TreasureJson.read(file); FinanceNumbers.requireIntegral(root);
-            long version=num(root,"version",false); if(version!=1&&version!=2) throw new IllegalArgumentException("treasures version");
+            long version=num(root,"version",false); if(version!=1&&version!=2&&version!=3) throw new IllegalArgumentException("treasures version");
             var loaded=new LinkedHashMap<String,PlayerData>();
             for(var entry:obj(root,"players").entrySet()) {
                 UUID owner=MilestoneMigration.uuid(entry.getKey()); var row=entry.getValue().getAsJsonObject(); var data=new PlayerData();
@@ -153,7 +160,7 @@ public final class TreasureStore {
                 data.lastFindAt=num(row,"last_find",version==1); data.shards=num(row,"shards",version==1); data.shardsSpent=num(row,"shards_spent",version==1);
                 if(row.has("rank_tag")) {
                     var tag=TreasureRankTags.Choice.byId(text(row,"rank_tag")); if(tag==null) throw new IllegalArgumentException("rank tag"); data.rankTag=tag;
-                } else if(version==2) throw new IllegalArgumentException("rank tag missing");
+                } else if(version>=2) throw new IllegalArgumentException("rank tag missing");
                 loaded.put(owner.toString(),data);
             }
             var loadedAwards=new LinkedHashMap<UUID,Map<String,Long>>();
@@ -176,7 +183,11 @@ public final class TreasureStore {
                     loadedAwards.put(id,rows);
                 }
             }
-            players.clear(); players.putAll(loaded); awards.clear(); awards.putAll(loadedAwards); dirty=false;
+            var loadedLoot=new LinkedHashMap<UUID,Long>();
+            if(version>=3)for(var e:obj(root,"loot_totals").entrySet())loadedLoot.put(MilestoneMigration.uuid(e.getKey()),number(e.getValue()));
+            else if(root.has("loot_totals"))throw new IllegalArgumentException("downgraded loot source");
+            lootTotals.clear();lootTotals.putAll(loadedLoot);
+            players.clear(); players.putAll(loaded); awards.clear(); awards.putAll(loadedAwards); incomes(); dirty=false;
             if(version==1) persist();
             if(logger!=null) logger.info("[CHRDK_Treasures] Загружено кладоискателей: "+players.size()+".");
         } catch(Exception error) {
@@ -480,7 +491,7 @@ public final class TreasureStore {
     /** Снимок не снимает dirty: нужен durable ACK под тем же монитором. */
     public synchronized String snapshotJson() {
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("version", 2);
+        data.put("version", 3);data.put("loot_totals",lootTotals);
         Map<String,Object> finance=new LinkedHashMap<>(); finance.put("source",SOURCE); finance.put("lineage",lineage); finance.put("registered",registered); finance.put("awards",awards); data.put("finance",finance);
         Map<String, Object> rows = new LinkedHashMap<>();
         players.forEach((key, player) -> {

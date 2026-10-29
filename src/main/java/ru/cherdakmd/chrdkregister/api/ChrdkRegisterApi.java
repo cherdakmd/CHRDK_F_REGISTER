@@ -31,11 +31,15 @@ import java.util.UUID;
  */
 public interface ChrdkRegisterApi {
 
-    /** Версия контракта API. API 23: durable whole-lot DiamondShop exchange и квитанция импорта. */
-    int API_VERSION = 24;
+    /** Версия контракта API. API 25: durable checkpoint игровых наград; API 24 — Claims domain settlement. */
+    int API_VERSION = 25;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
+
+    /** API 25: durable current Core gameplay data; false never authorizes an addon reward ACK. */
+    default boolean checkpointGameplayRewards() { return false; }
+
 
     /* ------------------------------ проходка ------------------------------ */
 

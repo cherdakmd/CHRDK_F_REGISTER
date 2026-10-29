@@ -46,9 +46,12 @@ public final class TreasureFinance implements AutoCloseable {
     }
     /** null означает отказ ДО world/inventory grants, а не успешно найденный пустой клад. */
     public Integer record(Player p,TreasureTier tier,String item,long now,long window) {
+        return record(p,tier,item,now,window,0);
+    }
+    public Integer record(Player p,TreasureTier tier,String item,long now,long window,long lootIncome) {
         if(paused()||!eligible(p)) return null;
         final int result;
-        try { result=store.recordRewardedTreasure(p.getUniqueId(),tier,item,now,window,plugin.config()); }
+        try { result=store.recordRewardedTreasure(p.getUniqueId(),tier,item,now,window,plugin.config(),lootIncome); }
         catch(Exception error) { fail(error); return null; }
         // Source уже принят: недоступность/ошибка банка не отменяет предметную часть находки.
         try { deliver(store,bank,p.getUniqueId(),store.income(p.getUniqueId())); }

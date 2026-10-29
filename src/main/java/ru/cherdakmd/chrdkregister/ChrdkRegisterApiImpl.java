@@ -55,6 +55,7 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
         return plugin != null && plugin.bank() != null && plugin.bank().enabled() && org.bukkit.Bukkit.isPrimaryThread()
                 && bank != null && bank.importLegacyShop(player, amount);
     }
+    @Override public boolean checkpointGameplayRewards() { return org.bukkit.Bukkit.isPrimaryThread()&&accessManager.store().checkpointGameplayRewards(); }
     @Override public boolean claimSourceRegistered(java.util.UUID id) { return bank!=null&&bank.claimSourceRegistered(id); }
     @Override public boolean registerClaimSource(java.util.UUID id) { return org.bukkit.Bukkit.isPrimaryThread()&&bank!=null&&bank.registerClaimSource(id); }
     @Override public ru.cherdakmd.chrdkregister.api.ClaimExchange.Status claimExchangeStatus(ru.cherdakmd.chrdkregister.api.ClaimExchange t) { return bank==null?ru.cherdakmd.chrdkregister.api.ClaimExchange.Status.UNAVAILABLE:bank.claimStatus(t); }

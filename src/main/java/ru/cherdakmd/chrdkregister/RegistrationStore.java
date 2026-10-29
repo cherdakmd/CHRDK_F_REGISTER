@@ -145,6 +145,25 @@ public final class RegistrationStore {
         writeSnapshot(json, sequence);
     }
 
+    /** API 25: текущие игровые награды durable до ACK аддона; старые async snapshots отсечены. */
+    public synchronized boolean checkpointGameplayRewards() {
+        long sequence=snapshotSequence.incrementAndGet(); String json=GSON.toJson(data);
+        synchronized(writeLock) {
+            writtenSequence.set(sequence); // Даже неопределённый replace не разрешает старой async-записи откатить награду.
+            try {
+                Files.createDirectories(file.getParent());var temp=file.resolveSibling("data.json.reward.tmp");Files.writeString(temp,json,StandardCharsets.UTF_8);
+                try(var c=java.nio.channels.FileChannel.open(temp,java.nio.file.StandardOpenOption.WRITE)){c.force(true);}
+                Files.move(temp,file,StandardCopyOption.ATOMIC_MOVE,StandardCopyOption.REPLACE_EXISTING);
+                var hash=file.resolveSibling("data.json.sha256"); var ht=file.resolveSibling("data.json.sha256.reward.tmp");
+                Files.writeString(ht,java.util.HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(json.getBytes(StandardCharsets.UTF_8))),StandardCharsets.UTF_8);
+                try(var c=java.nio.channels.FileChannel.open(ht,java.nio.file.StandardOpenOption.WRITE)){c.force(true);}
+                Files.move(ht,hash,StandardCopyOption.ATOMIC_MOVE,StandardCopyOption.REPLACE_EXISTING);
+                try(var c=java.nio.channels.FileChannel.open(file.getParent(),java.nio.file.StandardOpenOption.READ)){c.force(true);}
+                dirty=false;return true;
+            } catch(Exception e){dirty=true;logger.log(Level.SEVERE,"Игровая награда ожидает сверки: checkpoint data.json не подтверждён",e);return false;}
+        }
+    }
+
     /**
      * Creates a gzipped backup of the current data file.
      *
