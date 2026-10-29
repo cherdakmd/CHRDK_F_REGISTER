@@ -55,6 +55,8 @@ public final class EventsPlugin extends JavaPlugin {
     private BukkitTask queuedSave;
     private boolean saveQueued;
     private ChrdkRegisterApi coreApi;
+    private ru.cherdakmd.chrdkregister.api.MoneyLoot moneyLoot;
+    public ru.cherdakmd.chrdkregister.api.MoneyLoot moneyLoot(){return moneyLoot;}
     private final Random random = new Random();
     /** Эффекты, о неизвестности которых уже предупредили: не спамим в лог. */
     private final Set<String> warnedEffects = ConcurrentHashMap.newKeySet();
@@ -76,6 +78,7 @@ public final class EventsPlugin extends JavaPlugin {
             registerCommands();
             registerPlaceholders();
             this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
+            moneyLoot=new ru.cherdakmd.chrdkregister.api.MoneyLoot(this,()->coreApi,this::messages,"events-loot");
             if (coreApi != null) {
                 try {
                     coreApi.registerProfile("events", new EventsProfile(this));
@@ -100,6 +103,7 @@ public final class EventsPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if(moneyLoot!=null)moneyLoot.close();
         if (coreApi != null) {
             try {
                 coreApi.unregisterProfile("events");

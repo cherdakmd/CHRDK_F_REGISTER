@@ -114,6 +114,8 @@ public final class EventsListener implements Listener {
             return;
         }
         Material picked = items.get(random.nextInt(items.size()));
+        int money=ru.cherdakmd.chrdkregister.api.MoneyLoot.unit(picked.name());
+        if(money>0){plugin.moneyLoot().accept(killer,"mob:"+event.getEntity().getUniqueId(),money);return;}
         event.getDrops().add(new ItemStack(picked, 1));
         if (cool(killer.getUniqueId())) {
             WorldEvent current = plugin.service().current();

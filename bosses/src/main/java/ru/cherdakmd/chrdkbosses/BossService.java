@@ -220,13 +220,15 @@ public final class BossService {
             if (player == null) {
                 continue;
             }
+            long money=0;for(var item:reward.items())money=Math.addExact(money,(long)ru.cherdakmd.chrdkregister.api.MoneyLoot.unit(item.material().name())*item.amount());
+            if(!plugin.moneyLoot().accept(player,"boss:"+boss.entity().getUniqueId(),money))continue;
             int xp = BossMath.xpShare(reward.xp(), entry.getValue());
             if (xp > 0) {
                 player.giveExp(xp);
                 plugin.messages().send(player, "boss-reward-xp", "xp", String.valueOf(xp));
             }
             for (BossReward.Item item : reward.items()) {
-                giveItem(player, new ItemStack(item.material(), item.amount()));
+                if(ru.cherdakmd.chrdkregister.api.MoneyLoot.unit(item.material().name())==0)giveItem(player, new ItemStack(item.material(), item.amount()));
             }
         }
 
