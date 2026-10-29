@@ -95,7 +95,6 @@ description: "Одна страница со всеми командами иг�
 |---|---|
 | `/hunt [stats\|shop\|buy\|exchange\|keys\|chest\|trophies\|trophy\|top\|help]` | Охота, монеты, ключи |
 | `/hunt history [страница]` | Последние 20 собственных природных уровневых убийств, без наград |
-| `/events [info\|next\|list]` | Мировые события |
 
 ## Снаряжение
 

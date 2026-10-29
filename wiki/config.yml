@@ -3,7 +3,7 @@ site:
   title: "CHRDK — вики сервера"
   short: "CHRDK"
   tagline: "Русский сервер с охотой, рангами и Character-прогрессом"
-  description: "Полная вики для игроков: команды, экономика, ранги, приваты, охота, события, зачарования и всё остальное."
+  description: "Полная вики для игроков: команды, экономика, ранги, приваты, охота, зачарования и всё остальное."
   url: "https://cherdakmd.github.io/CHRDK_F_REGISTER/"
   github: "https://github.com/cherdakmd/CHRDK_F_REGISTER"
   releases: "https://github.com/cherdakmd/CHRDK_F_REGISTER/releases"
@@ -45,8 +45,8 @@ groups:
     title: "Приключения"
     icon: sword
     accent: "#fb923c"
-    description: "Охота и мировые события."
-    pages: [hunt, events]
+    description: "Охота, бестиарий и трофеи."
+    pages: [hunt]
   - id: gear
     title: "Снаряжение"
     icon: shield

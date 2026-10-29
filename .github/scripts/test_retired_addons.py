@@ -29,13 +29,14 @@ class RetiredAddonsGuardTest(unittest.TestCase):
     def test_plugin_namespace_artifact_and_deleted_api_are_rejected(self):
         for symbol in ("CHRDK_Bosses", "CHRDK_Treasures", "ru.cherdakmd.chrdktreasures",
                        "chrdk-bosses-1.4.238.jar", "ChrdkTreasureBookInfo", "CHRDK_Streams",
-                       "chrdk-streams-1.4.240.jar", "ru.cherdakmd.chrdkstreams"):
+                       "chrdk-streams-1.4.240.jar", "ru.cherdakmd.chrdkstreams", "CHRDK_Events", "chrdk-events-1.4.241.jar",
+                       "ru.cherdakmd.chrdkevents"):
             with self.subTest(symbol=symbol):
                 self.write("enchants/src/main/java/Source.java", f"import {symbol};")
                 self.assertTrue(check(self.root))
 
     def test_retired_pages_are_rejected_even_without_commands(self):
-        for page in ("bosses", "treasures", "streams"):
+        for page in ("bosses", "treasures", "streams", "events"):
             with self.subTest(page=page):
                 self.write("tools/wiki/assets/app.js", f'const href = "{page}.html";')
                 self.assertTrue(check(self.root))
@@ -52,7 +53,7 @@ class RetiredAddonsGuardTest(unittest.TestCase):
         self.assertTrue(check(self.root))
         (self.root / "settings.gradle").unlink()
         for name in ("bosses/build.gradle", "treasures/build/libs/old.jar", "wiki/bosses.md",
-                     "wiki/treasures.md", "docs/TREASURES_ARSENAL.md", "streams/build.gradle", "wiki/streams.md"):
+                     "wiki/treasures.md", "docs/TREASURES_ARSENAL.md", "streams/build.gradle", "wiki/streams.md", "events/build.gradle", "wiki/events.md"):
             with self.subTest(name=name):
                 with tempfile.TemporaryDirectory() as directory:
                     root = Path(directory)
@@ -73,6 +74,13 @@ class RetiredAddonsGuardTest(unittest.TestCase):
         self.write("hunt/src/main/resources/config.yml", 'command: "bossbar list"')
         self.write("src/main/java/Legacy.java", 'Set.of("bosses", "treasures"); TREASURE; SHARDS;')
         self.write("artifacts/src/main/java/Loot.java", 'BOSSES_KILLED; fish_treasure; treasure_hunter;')
+        self.assertEqual([], check(self.root))
+
+    def test_shared_bukkit_and_core_event_paths_are_not_removed_modules(self):
+        self.write("src/main/java/Listener.java",
+                   "import org.bukkit.event.Event; import ru.cherdakmd.chrdkregister.api.events.PassGrantedEvent;")
+        self.write("wiki/commands.md", "https://jd.papermc.io/paper/org/bukkit/event/player/PlayerJoinEvent.html")
+        self.write("wiki/profile.md", "src/main/java/ru/cherdakmd/chrdkregister/api/events/PassGrantedEvent.java")
         self.assertEqual([], check(self.root))
 
 

@@ -703,7 +703,7 @@ server-menu:
     - {"id": "economy", "slot": 12, "icon": "DIAMOND", "name": "<gold><bold>Экономика</bold></gold>", "lore": "<gray>Банк, магазин, аукцион, заказы и лотерея</gray>"}
     - {"id": "world", "slot": 13, "icon": "GRASS_BLOCK", "name": "<gold><bold>Мир и территории</bold></gold>", "lore": "<gray>Приваты, дома и телепорты</gray>"}
     - {"id": "gear", "slot": 14, "icon": "ANVIL", "name": "<gold><bold>Снаряжение и питомцы</bold></gold>", "lore": "<gray>Чары, тиры, артефакты, косметика и питомцы</gray>"}
-    - {"id": "adventure", "slot": 15, "icon": "IRON_SWORD", "name": "<gold><bold>Охота и события</bold></gold>", "lore": "<gray>Охота и мировые события</gray>"}
+    - {"id": "adventure", "slot": 15, "icon": "IRON_SWORD", "name": "<gold><bold>Охота</bold></gold>", "lore": "<gray>Охота, бестиарий и трофеи</gray>"}
     - {"id": "social", "slot": 16, "icon": "BELL", "name": "<gold><bold>Общество</bold></gold>", "lore": "<gray>Чат, отряд, гильдия, очередь</gray>"}
   # Пункты. category — id раздела; без category пункт живёт на главной странице.
   # Без command — подсказка (клик игнорируется).
@@ -757,9 +757,8 @@ server-menu:
     - {"category": "gear", "icon": "ITEM_FRAME", "name": "<gold><bold>Коллекция артефактов</bold></gold>", "lore": "<gray>Собранное, прогресс и награды</gray>", "command": "artifacts collection", "plugin": "CHRDK_Artifacts", "permission": "chrdkartifacts.use"}
     - {"category": "gear", "icon": "FIREWORK_ROCKET", "name": "<gold><bold>Косметика</bold></gold>", "lore": "<gray>Эффекты, шлейфы и оформление</gray>", "command": "cosmetics list", "plugin": "CHRDK_Cosmetics", "permission": "chrdkcosmetics.use"}
     - {"category": "gear", "icon": "BONE", "name": "<gold><bold>Питомцы</bold></gold>", "lore": "<gray>Кошки и волки: уровни и трюки</gray>", "command": "pet list", "plugin": "CHRDK_Pets", "permission": "chrdkpets.use"}
-    # ------------------------------ охота и события ------------------------------
+    # ------------------------------ охота ------------------------------
     - {"category": "adventure", "icon": "BOW", "name": "<gold><bold>Охота</bold></gold>", "lore": "<gray>Пять семейств, трофеи и моб-ключи</gray>", "command": "hunt", "plugin": "CHRDK_Hunt", "permission": "chrdkhunt.use"}
-    - {"category": "adventure", "icon": "FIREWORK_STAR", "name": "<gold><bold>События</bold></gold>", "lore": "<gray>Расписание и ближайший ивент</gray>", "command": "events", "plugin": "CHRDK_Events", "permission": "chrdkevents.use"}
     # ------------------------------ общество ------------------------------
     - {"category": "social", "icon": "FEATHER", "name": "<gold><bold>Чат</bold></gold>", "lore": "<gray>Клик — переключить канал</gray>\n<dark_gray>Локальный слышат рядом, глобальный — все</dark_gray>", "command": "chat"}
     - {"category": "social", "icon": "SHIELD", "name": "<gold><bold>Отряд</bold></gold>", "lore": "<gray>Вместе: приглашения и общий чат</gray>", "command": "party", "plugin": "CHRDK_Party", "permission": "chrdkparty.use"}

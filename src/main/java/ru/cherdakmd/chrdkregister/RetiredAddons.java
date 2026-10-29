@@ -3,16 +3,16 @@ package ru.cherdakmd.chrdkregister;
 import java.util.Locale;
 import java.util.Set;
 
-/** Только совместимость сохранённых настроек после удаления аддонов в 1.4.239–1.4.241. */
+/** Только совместимость сохранённых настроек после удаления аддонов в 1.4.239–1.4.242. */
 final class RetiredAddons {
-    private static final Set<String> SOURCES = Set.of("bosses", "treasures", "streams");
+    private static final Set<String> SOURCES = Set.of("bosses", "treasures", "streams", "events");
     private static final Set<String> COMMANDS = Set.of("boss", "bosses", "bossy", "bosss", "bossadmin",
-            "bossesadmin", "treasures", "treasuresadmin", "stream", "streams", "strimer");
+            "bossesadmin", "treasures", "treasuresadmin", "stream", "streams", "strimer", "events", "event", "sobytiya", "eventsadmin");
     private static final java.util.regex.Pattern ANNOUNCEMENT = java.util.regex.Pattern.compile(
-            "(?i)(?:^|[^a-z0-9_])/+(?:[a-z0-9_]+:)?(?:" + String.join("|", COMMANDS) + ")(?![a-z0-9_])");
+            "(?i)(?:^|[^a-z0-9_])/+(?:[a-z0-9_]+:)?(?:" + String.join("|", COMMANDS) + ")(?![a-z0-9_/-])");
     // Только реклама снятой программы, а не общий совет о безопасном входе при записи экрана.
     private static final java.util.regex.Pattern REMOVED_PROGRAM = java.util.regex.Pattern.compile(
-            "(?iu)twitch|vk\\s*play\\s*live|стримерск[\\p{L}]*\\s+программ[\\p{L}]*");
+            "(?iu)twitch|vk\\s*play\\s*live|стримерск[\\p{L}]*\\s+программ[\\p{L}]*|мировые\\s+события");
     private RetiredAddons() { }
 
     static boolean source(String value) { return SOURCES.contains(normalize(value)); }

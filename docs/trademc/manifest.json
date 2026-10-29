@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pluginVersion": "1.4.241",
+  "pluginVersion": "1.4.242",
   "source": "src/main/resources/config.yml → shop.products",
   "products": [
     {
