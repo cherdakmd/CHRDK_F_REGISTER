@@ -29,16 +29,14 @@ class ShopStoreTest {
     }
 
     @Test
-    void balanceAddSpendAndInsufficiency(@TempDir Path dir) {
-        ShopStore store = newStore(dir);
-        UUID id = UUID.randomUUID();
-        assertEquals(0, store.balanceOf(id), 1e-9);
-        store.addBalance(id, 10.5);
-        assertEquals(10.5, store.balanceOf(id), 1e-9);
-        assertTrue(store.trySpend(id, 10.4));
-        assertEquals(0.1, store.balanceOf(id), 1e-9);
-        assertFalse(store.trySpend(id, 1), "нельзя уйти в минус");
-        assertEquals(0.1, store.balanceOf(id), 1e-9);
+    void legacyBalanceIsReadOnlyAndMigrationRoundsUpFromTheSource(@TempDir Path dir) throws Exception {
+        UUID id=UUID.randomUUID(); seed(dir,id,"10.5"); var store=newStore(dir); store.load();
+        assertEquals(10.5,store.balanceOf(id)); assertEquals(11,store.legacyAmount(id));
+        org.junit.jupiter.api.Assertions.assertThrows(NoSuchMethodException.class,()->ShopStore.class.getMethod("addBalance",UUID.class,double.class));
+        org.junit.jupiter.api.Assertions.assertThrows(NoSuchMethodException.class,()->ShopStore.class.getMethod("trySpend",UUID.class,double.class));
+    }
+    private void seed(Path dir,UUID id,String amount) throws Exception {
+        java.nio.file.Files.writeString(dir.resolve("shop-data.json"),"{\"balances\":{\""+id+"\":"+amount+"}}");
     }
 
     @Test
@@ -82,12 +80,12 @@ class ShopStoreTest {
     }
 
     @Test
-    void persistsAndReloads(@TempDir Path dir) {
+    void persistsAndReloads(@TempDir Path dir) throws Exception {
         ShopStore store = newStore(dir);
         UUID id = UUID.randomUUID();
         ShopConfig.ShopItem stone = item("STONE", 1000);
         long now = System.currentTimeMillis();
-        store.addBalance(id, 42.25);
+        seed(dir,id,"42.25"); store.load();
         store.adjustStock(stone, -300, now, 0);
         store.recordTrade(stone, 300, false, 300.0);
         store.saveNow();

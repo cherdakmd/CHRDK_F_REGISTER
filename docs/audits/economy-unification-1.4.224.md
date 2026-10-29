@@ -170,3 +170,15 @@ Core deposit/withdraw: canonical bank.json v5 с per-owner intent/резерво
 receipt, native storage+nonce до публикации баланса, без addItem/drop fallback.
 [Recovery, миграция и проверки 233](../releases/1.4.233.md). Магазин, земельные
 операции/аренда Claims и два конфигурационных денежных выхода остаются gates.
+
+## Этап 234 — хранилище DiamondShop, gate остаётся открытым
+
+Старые денежные входы сохраняются точно (BigDecimal), округление вверх делается
+до любого double-preview; удалены неиспользуемые мутации второго кошелька.
+ShopStore получил строгий all-or-nothing reader и общий монитор для snapshot,
+force+atomic writer и dirty ACK, с карантином IO/runtime-неопределённости.
+[Подробности и границы 234](../releases/1.4.234.md).
+
+**Это ещё не durable-сделка магазина**: сохранённый intent, Core/playerdata proof
+и идемпотентные stock/статистика/принятое UTC-окно остаются следующим gate.
+Общий релиз по-прежнему заблокирован.

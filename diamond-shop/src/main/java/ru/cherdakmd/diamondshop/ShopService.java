@@ -31,8 +31,8 @@ public final class ShopService {
     public long bidPrice(ShopConfig.ShopItem item) { return WholeTrades.price(PriceEngine.bid(priceOf(item), config.spreadPercent()), batchSize(item), false); }
     public void recordPricePoint(ShopConfig.ShopItem item) { store.recordPrice(item, priceOf(item), System.currentTimeMillis(), config.historyMaxPoints(), config.historyIntervalMillis()); }
     public double[] historyOf(ShopConfig.ShopItem item) { return store.historyOf(item.material()); }
-    public boolean migrate(UUID id, double old) {
-        long amount = WholeTrades.legacy(old); var core = api.get();
+    public boolean migrate(UUID id, double ignoredLegacyPreview) {
+        long amount = store.legacyAmount(id); var core = api.get();
         return store.legacyAvailable() && amount >= 0 && core != null && core.importLegacyShop(id, amount);
     }
     public boolean ready(Player player) {
@@ -90,7 +90,7 @@ public final class ShopService {
             if (!remove(after, material, units)) return fail("trading.not-enough-items", money);
         }
         long now = System.currentTimeMillis();
-        if (!store.canRecordTurnover(player.getUniqueId(), money, config.dailyTurnoverLimit(), now)) return fail("trading.daily-limit", money);
+        if (!store.canRecordTurnover(player.getUniqueId(), money, config.dailyTurnoverLimit(), now)) return fail(store.legacyAvailable() ? "trading.daily-limit" : "trading.unavailable", money);
         if (!api.get().exchangeDiamonds(player, debit, credit, before, after)) return fail("trading.unavailable", money);
         // На основном потоке нет callbacks между проверкой лимита, Core-commit и учётом рынка.
         store.tryRecordTurnover(player.getUniqueId(), money, config.dailyTurnoverLimit(), now);

@@ -73,7 +73,7 @@ class WholeTradesTest {
         var store=new ShopStore(dir,Logger.getLogger("WholeTradesTest")); store.load();
         assertTrue(store.legacyAvailable()); assertEquals(1e30,store.balanceOf(id));
         assertEquals(-1,WholeTrades.legacy(store.balanceOf(id)));
-        store.addBalance(UUID.randomUUID(),1); store.saveNow();
+        store.setStock(new ShopConfig.ShopItem("STONE", "blocks", 1, 1000, 0.25, 4), 500, 1000); store.saveNow();
         var reloaded=new ShopStore(dir,Logger.getLogger("WholeTradesTest")); reloaded.load(); assertEquals(1e30,reloaded.balanceOf(id));
     }
     @Test void legacyCustomLoreCannotMislabelNewBatchPrices(@org.junit.jupiter.api.io.TempDir Path dir) throws Exception {

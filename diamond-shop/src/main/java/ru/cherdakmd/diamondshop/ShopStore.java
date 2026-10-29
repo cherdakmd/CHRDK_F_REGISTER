@@ -1,29 +1,26 @@
 package ru.cherdakmd.diamondshop;
 
-import com.google.gson.Gson;
+import com.google.gson.*;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
+
 
 import java.io.IOException;
-import java.io.Reader;
-import java.io.Writer;
-import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
 
 /**
- * Персистентное состояние магазина (shop-data.json): алмазные балансы игроков, виртуальные
+ * Состояние магазина (shop-data.json): неизменяемый вход старых балансов, виртуальные
  * запасы товаров с меткой восстановления и накопленная статистика сделок.
  *
  * <p>Запись асинхронная (как у ядра): мутации — на главном потоке через synchronized-методы,
- * периодический {@link #saveAsync} снимает snapshot и пишет файл вне главного потока.</p>
+ * периодический {@link #saveAsync} пишет force+atomic replace под общим монитором.
+ * Snapshot не снимает dirty; IO/runtime-неопределённость останавливает writer до restart/сверки.</p>
  */
 public final class ShopStore {
 
@@ -44,13 +41,13 @@ public final class ShopStore {
     }
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Type DATA_TYPE = new TypeToken<LinkedHashMap<String, Object>>() {
-    }.getType();
+    @FunctionalInterface interface WriteCheckpoint { void afterReplace() throws IOException; }
+    private final WriteCheckpoint checkpoint;
 
     private final Path file;
     private final Logger logger;
 
-    private final Map<UUID, Double> balances = new HashMap<>();
+    private final Map<UUID, java.math.BigDecimal> balances = new HashMap<>();
     private final Map<String, ItemState> items = new HashMap<>();
     private final Map<UUID, LimitRow> limits = new HashMap<>();
     private double turnover;
@@ -59,102 +56,111 @@ public final class ShopStore {
     public boolean legacyAvailable() { return legacyAvailable; }
 
     public ShopStore(Path dataFolder, Logger logger) {
+        this(dataFolder, logger, () -> { });
+    }
+    ShopStore(Path dataFolder, Logger logger, WriteCheckpoint checkpoint) {
         this.file = dataFolder.resolve("shop-data.json");
         this.logger = logger;
+        this.checkpoint = checkpoint;
     }
 
-    /** Загружает состояние с диска (вызывается при включении плагина). */
+    /** Строго читаем весь источник до публикации. Битую строку/лимит не пропускаем. */
     public synchronized void load() {
-        if (!Files.isRegularFile(file)) {
-            return;
-        }
-        try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
-            Map<String, Object> data = GSON.fromJson(reader, DATA_TYPE);
-            if (data == null) throw new IllegalArgumentException("Пустой денежный файл");
-            if (data.get("balances") != null && !(data.get("balances") instanceof Map<?, ?>)) throw new IllegalArgumentException("Неверный balances");
-            if (data.get("balances") instanceof Map<?, ?> rows) for (var entry : rows.entrySet()) {
-                UUID.fromString(String.valueOf(entry.getKey()));
-                if (!(entry.getValue() instanceof Number value) || !Double.isFinite(value.doubleValue()) || value.doubleValue() < 0)
-                    throw new IllegalArgumentException("Неверная старая сумма: " + entry.getKey());
-            }
-            transferMap(data.get("balances"), balances, Double.class);
-            Object itemsObj = data.get("items");
-            if (itemsObj instanceof Map<?, ?> map) {
-                for (Map.Entry<?, ?> entry : map.entrySet()) {
-                    if (!(entry.getValue() instanceof Map<?, ?> state)) continue;
-                    ItemState itemState = new ItemState();
-                    itemState.stock = longOf(state.get("stock"));
-                    itemState.recoveryAt = longOf(state.get("recoveryAt"));
-                    itemState.soldByPlayers = longOf(state.get("soldByPlayers"));
-                    itemState.boughtByPlayers = longOf(state.get("boughtByPlayers"));
-                    Object historyObj = state.get("history");
-                    if (historyObj instanceof List<?> list) {
-                        double[] history = new double[list.size()];
-                        for (int i = 0; i < list.size(); i++) {
-                            history[i] = list.get(i) instanceof Number number ? number.doubleValue() : 0d;
-                        }
-                        itemState.history = history;
-                    }
-                    itemState.historyAt = longOf(state.get("historyAt"));
-                    items.put(String.valueOf(entry.getKey()), itemState);
+        if (!Files.exists(file)) return;
+        try {
+            if (!Files.isRegularFile(file)) throw new IOException("shop-data.json не является файлом");
+            var data=ShopJson.read(file);
+            for(String key:data.keySet()) if(!java.util.Set.of("balances","items","limits","turnover").contains(key)) throw new IllegalArgumentException("Неизвестное поле магазина: "+key);
+            var nextBalances=new HashMap<UUID,java.math.BigDecimal>();
+            var nextItems=new HashMap<String,ItemState>();
+            var nextLimits=new HashMap<UUID,LimitRow>();
+            for(var entry:table(data,"balances",true).entrySet()) nextBalances.put(uuid(entry.getKey()),legacyDecimal(entry.getValue()));
+            for(var entry:table(data,"items",false).entrySet()) {
+                if(!entry.getKey().matches("[A-Z][A-Z0-9_]{0,127}")||!entry.getValue().isJsonObject()) throw new IllegalArgumentException("Неверный товар");
+                var row=entry.getValue().getAsJsonObject(); var state=new ItemState();
+                state.stock=integer(row,"stock",true); if(state.stock<1) throw new IllegalArgumentException("stock < 1");
+                state.recoveryAt=integer(row,"recoveryAt",true);
+                state.soldByPlayers=integer(row,"soldByPlayers",true); state.boughtByPlayers=integer(row,"boughtByPlayers",true);
+                state.historyAt=integer(row,"historyAt",false);
+                if(row.has("history")) {
+                    if(!row.get("history").isJsonArray()) throw new IllegalArgumentException("Неверная история");
+                    var array=row.getAsJsonArray("history"); if(array.size()>4096) throw new IllegalArgumentException("Слишком длинная история");
+                    state.history=new double[array.size()]; for(int i=0;i<array.size();i++) state.history[i]=decimal(array.get(i));
                 }
+                nextItems.put(entry.getKey(),state);
             }
-            Object limitsObj = data.get("limits");
-            if (limitsObj instanceof Map<?, ?> map) {
-                for (Map.Entry<?, ?> entry : map.entrySet()) {
-                    if (!(entry.getValue() instanceof Map<?, ?> row)) continue;
-                    try {
-                        LimitRow limitRow = new LimitRow();
-                        limitRow.dayStart = longOf(row.get("dayStart"));
-                        limitRow.used = doubleOf(row.get("used"));
-                        limits.put(UUID.fromString(String.valueOf(entry.getKey())), limitRow);
-                    } catch (Exception ignored) {
-                        // повреждённая запись — пропускаем
-                    }
-                }
+            for(var entry:table(data,"limits",false).entrySet()) {
+                var id=uuid(entry.getKey()); if(!entry.getValue().isJsonObject()) throw new IllegalArgumentException("Неверный лимит");
+                var row=entry.getValue().getAsJsonObject(); var limit=new LimitRow();
+                limit.dayStart=integer(row,"dayStart",true); if(Math.floorMod(limit.dayStart,86_400_000L)!=0) throw new IllegalArgumentException("Не сутки UTC");
+                limit.used=decimal(row.get("used")); nextLimits.put(id,limit);
             }
-            turnover = doubleOf(data.get("turnover"));
-            logger.info("[DiamondShop] Загружено: " + balances.size() + " балансов, "
-                    + items.size() + " товаров, оборот " + turnover + " ⛁.");
-        } catch (Exception e) {
-            legacyAvailable = false;
-            logger.severe("[DiamondShop] Не удалось прочитать " + file + ": " + e.getMessage());
-        }
+            double nextTurnover=data.has("turnover")?decimal(data.get("turnover")):0;
+            // Сначала проверена вся структура: не публикуем половину файла до первой ошибки.
+            balances.clear(); balances.putAll(nextBalances); items.clear(); items.putAll(nextItems); limits.clear(); limits.putAll(nextLimits);
+            turnover=nextTurnover; dirty=false;
+            logger.info("[DiamondShop] Загружено: "+balances.size()+" старых входов миграции, "+items.size()+" товаров.");
+        } catch(Exception error) { quarantine(error); }
+    }
+    private static JsonObject table(JsonObject data,String name,boolean required) {
+        if(!data.has(name)&&!required) return new JsonObject();
+        var value=data.get(name); if(value==null||!value.isJsonObject()) throw new IllegalArgumentException("Неверная таблица "+name);
+        return value.getAsJsonObject();
+    }
+    private static UUID uuid(String value) {
+        var id=UUID.fromString(value); if(!id.toString().equals(value)) throw new IllegalArgumentException("Не canonical UUID"); return id;
+    }
+    private static java.math.BigDecimal legacyDecimal(JsonElement value) {
+        if(value==null||!value.isJsonPrimitive()||!value.getAsJsonPrimitive().isNumber()) throw new IllegalArgumentException("Не старая сумма");
+        var amount=value.getAsBigDecimal();
+        if(amount.signum()<0||Math.abs((long)amount.scale())>10000||amount.precision()>10000) throw new IllegalArgumentException("Неверная старая сумма");
+        return amount;
+    }
+    private static double decimal(JsonElement value) {
+        if(value==null||!value.isJsonPrimitive()||!value.getAsJsonPrimitive().isNumber()) throw new IllegalArgumentException("Не число");
+        double number=value.getAsDouble();
+        if(!Double.isFinite(number)||value.getAsBigDecimal().signum()<0||(number==0&&value.getAsBigDecimal().signum()!=0)) throw new IllegalArgumentException("Сумма/статистика вне диапазона");
+        return number;
+    }
+    private static long integer(JsonObject row,String name,boolean required) {
+        if(!row.has(name)&&!required) return 0;
+        var value=row.get(name); decimal(value); return value.getAsBigDecimal().longValueExact();
+    }
+    private void quarantine(Exception error) {
+        legacyAvailable=false;
+        logger.severe("[DiamondShop] Хранилище остановлено; исходный shop-data.json не перезаписывается: "+error.getMessage());
     }
 
     /* ------------------------------- балансы ------------------------------- */
 
     /** Только неизменяемый вход миграции. В новых сделках эти деньги не расходуются. */
-    public synchronized Map<UUID, Double> legacyBalances() { return Map.copyOf(balances); }
+    public synchronized Map<UUID, Double> legacyBalances() {
+        var view=new HashMap<UUID,Double>(); balances.forEach((id,value)->view.put(id,value.doubleValue())); return Map.copyOf(view);
+    }
+    /** Округляем вверх точное исходное число, а не предварительно округлённый double. */
+    public synchronized long legacyAmount(UUID id) {
+        if(!legacyAvailable||id==null) return -1;
+        var amount=balances.getOrDefault(id,java.math.BigDecimal.ZERO);
+        if(amount.compareTo(java.math.BigDecimal.valueOf(WholeTrades.MAX))>0) return -1;
+        if(amount.signum()>0&&amount.compareTo(java.math.BigDecimal.ONE)<0) return 1;
+        return amount.setScale(0,java.math.RoundingMode.CEILING).longValueExact();
+    }
     public synchronized boolean canRecordTurnover(UUID id, double amount, double limit, long now) {
-        return Double.isFinite(amount) && amount > 0 && (limit <= 0 || usedToday(id, now) + amount <= limit);
+        return legacyAvailable && id != null && Double.isFinite(amount) && amount > 0 && Double.isFinite(limit) && limit >= 0 && (limit == 0 || usedToday(id, now) + amount <= limit);
     }
     public synchronized double balanceOf(UUID uuid) {
-        return balances.getOrDefault(uuid, 0d);
-    }
-
-    public synchronized void addBalance(UUID uuid, double amount) {
-        balances.merge(uuid, amount, Double::sum);
-        dirty = true;
-    }
-
-    /** Списывает средства, если хватает; иначе ничего не делает. */
-    public synchronized boolean trySpend(UUID uuid, double amount) {
-        double current = balanceOf(uuid);
-        if (current + 1e-9 < amount) return false;
-        balances.put(uuid, PriceEngine.round(current - amount));
-        dirty = true;
-        return true;
+        return balances.getOrDefault(uuid, java.math.BigDecimal.ZERO).doubleValue();
     }
 
     /* ------------------------------- запасы ------------------------------- */
 
     /** Состояние товара с ленивой инициализацией под эталонный запас. */
-    public synchronized ItemState itemState(ShopConfig.ShopItem item, long nowMillis) {
+    private synchronized ItemState itemState(ShopConfig.ShopItem item, long nowMillis) {
         ItemState state = items.computeIfAbsent(item.material(), key -> {
             ItemState created = new ItemState();
             created.stock = item.refStock();
             created.recoveryAt = nowMillis;
+            dirty=true;
             return created;
         });
         return state;
@@ -210,6 +216,7 @@ public final class ShopStore {
         copy.recoveryAt = state.recoveryAt;
         copy.soldByPlayers = state.soldByPlayers;
         copy.boughtByPlayers = state.boughtByPlayers;
+        copy.history=state.history.clone(); copy.historyAt=state.historyAt;
         return copy;
     }
 
@@ -255,7 +262,8 @@ public final class ShopStore {
      * Окно — календарные сутки UTC.
      */
     public synchronized boolean tryRecordTurnover(UUID uuid, double amount, double limit, long nowMillis) {
-        if (limit <= 0) return true;
+        if(!canRecordTurnover(uuid,amount,limit,nowMillis)) return false;
+        if (limit == 0) return true;
         long today = nowMillis - Math.floorMod(nowMillis, 86_400_000L);
         LimitRow row = limits.get(uuid);
         if (row == null || row.dayStart != today) {
@@ -281,7 +289,7 @@ public final class ShopStore {
 
     public synchronized String snapshotJson() {
         Map<String, Object> data = new LinkedHashMap<>();
-        Map<String, Double> balancesCopy = new LinkedHashMap<>();
+        Map<String, java.math.BigDecimal> balancesCopy = new LinkedHashMap<>();
         balances.forEach((uuid, value) -> balancesCopy.put(uuid.toString(), value));
         data.put("balances", balancesCopy);
         Map<String, Object> itemsCopy = new LinkedHashMap<>();
@@ -305,7 +313,6 @@ public final class ShopStore {
         });
         data.put("limits", limitsCopy);
         data.put("turnover", turnover);
-        dirty = false;
         return GSON.toJson(data);
     }
 
@@ -314,42 +321,20 @@ public final class ShopStore {
         saveNow();
     }
 
-    /** Синхронная запись (использовать при выключении и в тестах). */
-    public void saveNow() {
-        if (!legacyAvailable) return; // Не перезаписываем повреждённый денежный источник пустым состоянием.
-        if (!dirty && Files.isRegularFile(file)) return;
-        String json = snapshotJson();
+    /** Snapshot+force+replace+ACK под тем же монитором, что и мутации рынка. */
+    public synchronized void saveNow() {
+        if(!legacyAvailable||(!dirty&&Files.isRegularFile(file))) return;
         try {
+            String json=snapshotJson();
+            if(json.getBytes(StandardCharsets.UTF_8).length>64L*1024*1024) throw new IOException("shop capacity");
             Files.createDirectories(file.getParent());
-            try (Writer writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
-                writer.write(json);
-            }
-        } catch (IOException e) {
-            logger.severe("[DiamondShop] Не удалось записать " + file + ": " + e.getMessage());
-            dirty = true;
-        }
-    }
-
-    /* ------------------------------- утилиты парсинга ------------------------------- */
-
-    @SuppressWarnings("unchecked")
-    private static <T> void transferMap(Object source, Map<UUID, T> target, Class<T> type) {
-        if (!(source instanceof Map<?, ?> map)) return;
-        for (Map.Entry<?, ?> entry : map.entrySet()) {
-            try {
-                target.put(UUID.fromString(String.valueOf(entry.getKey())),
-                        type.cast(Double.class.cast(entry.getValue())));
-            } catch (Exception ignored) {
-                // повреждённая запись — пропускаем
-            }
-        }
-    }
-
-    private static long longOf(Object value) {
-        return value instanceof Number number ? number.longValue() : 0L;
-    }
-
-    private static double doubleOf(Object value) {
-        return value instanceof Number number ? number.doubleValue() : 0d;
+            var temp=file.resolveSibling("shop-data.json.tmp");
+            Files.writeString(temp,json,StandardCharsets.UTF_8);
+            try(var channel=java.nio.channels.FileChannel.open(temp,java.nio.file.StandardOpenOption.WRITE)) { channel.force(true); }
+            Files.move(temp,file,java.nio.file.StandardCopyOption.ATOMIC_MOVE,java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            checkpoint.afterReplace();
+            try(var directory=java.nio.channels.FileChannel.open(file.getParent(),java.nio.file.StandardOpenOption.READ)) { directory.force(true); }
+            dirty=false;
+        } catch(IOException|RuntimeException error) { quarantine(error); }
     }
 }

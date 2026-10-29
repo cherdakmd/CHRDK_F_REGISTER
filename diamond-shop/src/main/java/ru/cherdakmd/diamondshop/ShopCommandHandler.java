@@ -236,6 +236,7 @@ public final class ShopCommandHandler implements TabExecutor {
     }
 
     private void handleAdminStock(CommandSender sender, String[] args) {
+        if(!plugin.shopService().store().legacyAvailable()) { plugin.messages().send(sender,"trading.storage-unavailable"); return; }
         if (args.length < 2) {
             plugin.messages().send(sender, "admin.usage");
             return;
