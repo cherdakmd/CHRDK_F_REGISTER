@@ -42,7 +42,7 @@ public final class ShopCommandHandler implements TabExecutor {
 
     private boolean handleShop(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            plugin.messages().send(sender, "trading.usage");
+            plugin.messages().send(sender, "quantity.usage");
             return true;
         }
         if (!plugin.coreApi().isAuthenticated(player)) {
@@ -65,14 +65,14 @@ public final class ShopCommandHandler implements TabExecutor {
             case "sell" -> handleSell(player, args);
             case "sellall" -> handleSellAll(player);
             case "stats" -> handleStats(player);
-            default -> plugin.messages().send(player, "trading.usage");
+            default -> plugin.messages().send(player, "quantity.usage");
         }
         return true;
     }
 
     private void handlePrice(Player player, String[] args) {
         if (args.length < 2) {
-            plugin.messages().send(player, "trading.usage");
+            plugin.messages().send(player, "quantity.usage");
             return;
         }
         ShopConfig.ShopItem item = requireItem(player, args[1]);
@@ -85,6 +85,7 @@ public final class ShopCommandHandler implements TabExecutor {
                 "bid", service.bidPrice(item),
                 "ask", service.askPrice(item), "batch", service.batchSize(item),
                 "stock", stock, "ref", item.refStock());
+        plugin.messages().send(player,"quantity.price-units","minimum",TradeAmounts.minimumSale(service.batchSize(item),service.bidPrice(item)));
         double[] history = service.historyOf(item);
         if (history.length > 0) {
             plugin.messages().send(player, "trading.price-history",
@@ -96,7 +97,7 @@ public final class ShopCommandHandler implements TabExecutor {
     /** Поиск товара по фрагменту имени материала: до 10 совпадений с ценами. */
     private void handleFind(Player player, String[] args) {
         if (args.length < 2) {
-            plugin.messages().send(player, "trading.usage");
+            plugin.messages().send(player, "quantity.usage");
             return;
         }
         String query = String.join(" ", Arrays.copyOfRange(args, 1, args.length)).trim();
@@ -126,7 +127,7 @@ public final class ShopCommandHandler implements TabExecutor {
 
     private void handleBuy(Player player, String[] args) {
         if (args.length < 3) {
-            plugin.messages().send(player, "trading.usage");
+            plugin.messages().send(player, "quantity.usage");
             return;
         }
         ShopConfig.ShopItem item = requireItem(player, args[1]);
@@ -149,7 +150,7 @@ public final class ShopCommandHandler implements TabExecutor {
 
     private void handleSell(Player player, String[] args) {
         if (args.length < 2) {
-            plugin.messages().send(player, "trading.usage");
+            plugin.messages().send(player, "quantity.usage");
             return;
         }
         ShopConfig.ShopItem item = requireItem(player, args[1]);
@@ -158,7 +159,7 @@ public final class ShopCommandHandler implements TabExecutor {
         long have = material == null ? 0 : ShopService.countItems(player.getInventory(), material);
         long units;
         if (args.length >= 3 && "all".equalsIgnoreCase(args[2])) {
-            units = plugin.shopService().batchSize(item) > 0 ? have / plugin.shopService().batchSize(item) : 0;
+            units = plugin.shopService().maximumSale(player,item,plugin.shopService().batchSize(item),plugin.shopService().bidPrice(item));
         } else if (args.length >= 3) {
             units = parseLong(args[2], -1);
         } else {
@@ -186,7 +187,7 @@ public final class ShopCommandHandler implements TabExecutor {
     private void handleSellAll(Player player) {
         ShopService.SellAllResult result = plugin.shopService().sellAll(player);
         if (result.kinds() == 0) {
-            plugin.messages().send(player, "trading.sellall-none");
+            plugin.messages().send(player, "quantity.sellall-none");
             return;
         }
         plugin.messages().send(player, "trading.sellall-done",
@@ -348,9 +349,9 @@ public final class ShopCommandHandler implements TabExecutor {
             }
             case 3 -> {
                 if ("sell".equalsIgnoreCase(args[0])) {
-                    addMatches(matches, prefix, List.of("1", "16", "64", "all"));
+                    addMatches(matches, prefix, List.of("1", "8", "16", "32", "64", "all"));
                 } else if ("buy".equalsIgnoreCase(args[0])) {
-                    addMatches(matches, prefix, List.of("1", "16", "64"));
+                    addMatches(matches, prefix, List.of("1", "8", "16", "32", "64"));
                 }
             }
             default -> {

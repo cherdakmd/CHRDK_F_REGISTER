@@ -24,7 +24,7 @@ import java.util.Locale;
  *
  * <p>Раскладка — {@link ShopLayout}: верхний ряд занимают вкладки разделов и
  * кнопка закрытия, в середине 36 товаров на страницу, снизу пагинация и баланс.
- * ЛКМ/Shift+ЛКМ — покупка 1/64, ПКМ/Shift+ПКМ — продажа 1/64. Содержимое
+ * ЛКМ — выбор количества покупки, ПКМ — выбор количества продажи. Содержимое
  * перечитывается при каждом действии, поэтому динамические цены всегда актуальны.</p>
  */
 public final class ShopGui implements Listener {
@@ -124,7 +124,7 @@ public final class ShopGui implements Listener {
             long stock = service.store().stockOf(item, now, service.config().stockRecoveryPerHour());
             double price = service.priceOf(item);
             double[] history = service.historyOf(item);
-            List<Component> lore = new ArrayList<>(plugin.messages().getList("trading.gui.item-lore",
+            List<Component> lore = new ArrayList<>(plugin.messages().getList("quantity.item-lore",
                     "price", PriceEngine.round(price),
                     "bid", offer.bid(),
                     "ask", offer.ask(), "batch", offer.batch(),
@@ -227,12 +227,13 @@ public final class ShopGui implements Listener {
         if (click == ClickType.NUMBER_KEY || click == ClickType.DROP || click == ClickType.CONTROL_DROP) {
             return;
         }
-        long units = click.isShiftClick() ? 16 : 1;
-        if (click.isLeftClick()) {
-            trade(player, item, units, true, holder.category(), holder.page(), offer);
-        } else if (click.isRightClick()) {
-            trade(player, item, units, false, holder.category(), holder.page(), offer);
-        }
+        if(!click.isLeftClick()&&!click.isRightClick())return;
+        boolean buy=click.isLeftClick();
+        var expected=player.getOpenInventory().getTopInventory();
+        plugin.getServer().getScheduler().runTask(plugin,()->{
+            if(plugin.isEnabled()&&player.isOnline()&&player.getOpenInventory().getTopInventory()==expected)
+                plugin.quantities().open(player,item,buy,holder.category(),holder.page(),holder.service,offer.batch(),buy?offer.ask():offer.bid());
+        });
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -240,29 +241,6 @@ public final class ShopGui implements Listener {
         if (event.getInventory().getHolder() instanceof ShopHolder) {
             event.setCancelled(true);
         }
-    }
-
-    private void trade(Player player, ShopConfig.ShopItem item, long units, boolean buy,
-                       ShopCategory category, int page, Offer offer) {
-        ShopService.TradeResult result = plugin.shopService().quoted(player, item, units, buy, offer.batch(), buy ? offer.ask() : offer.bid());
-        if (result.success()) {
-            if (buy) plugin.messages().send(player, "trading.payment-detail", "account", result.bankPaid(), "physical", result.physicalPaid(), "change", result.change());
-            String key = buy ? "trading.buy-done" : "trading.sell-done";
-            plugin.messages().send(player, key,
-                    "material", item.material().toLowerCase(Locale.ROOT),
-                    "units", result.units(),
-                    buy ? "cost" : "income", result.money(),
-                    "balance", plugin.shopService().balance(player));
-        } else if (result.errorKey() != null && result.errorKey().startsWith("trading.")) {
-            plugin.messages().send(player, result.errorKey(),
-                    "material", item.material().toLowerCase(Locale.ROOT),
-                    "units", result.units(),
-                    "cost", result.money(),
-                    "balance", plugin.shopService().balance(player),
-                    "value", units, "limit", plugin.shopService().config().dailyTurnoverLimit());
-        }
-        // перечитываем витрину с новыми ценами, оставаясь в том же разделе
-        reopen(player, category, page);
     }
 
     /** Перерисовка витрины следующим тиком — после завершения текущего клика. */
@@ -275,7 +253,7 @@ public final class ShopGui implements Listener {
 
     /** Holder с разделом и номером страницы. */
     public void closeAll() {
-        for (var player : Bukkit.getOnlinePlayers()) if (player.getOpenInventory().getTopInventory().getHolder() instanceof ShopHolder) player.closeInventory();
+        for (var player : Bukkit.getOnlinePlayers()) if (player.getOpenInventory().getTopInventory().getHolder() instanceof ShopHolder || ShopQuantityGui.owns(player.getOpenInventory().getTopInventory())) player.closeInventory();
     }
     private record Offer(String id, int batch, long ask, long bid) { }
     private static final class ShopHolder implements InventoryHolder {

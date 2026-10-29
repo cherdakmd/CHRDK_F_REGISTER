@@ -2,7 +2,7 @@ package ru.cherdakmd.chrdkregister.api;
 
 import java.util.*;
 
-/** Frozen whole-lot market exchange. Canonical market sequence is not a second wallet. */
+/** Frozen whole-diamond market exchange, with an exact item count. Canonical market sequence is not a second wallet. */
 public record ShopExchange(UUID transaction,UUID market,long sequence,UUID owner,boolean buy,String material,
         long units,long money,long debit,long credit,long physical,Map<String,Integer> rates,String before,String after) {
     public enum Status { UNAVAILABLE,MISSING,PREPARED,COMMITTED,CONFLICT }

@@ -23,6 +23,8 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
     private volatile ShopService shopService;
     private ShopStore store;
     private ShopGui gui;
+    private ShopQuantityGui quantities;
+    public ShopQuantityGui quantities(){return quantities;}
     private volatile Messages messages;
     private BukkitTask saveTask;
     private BukkitTask historyTask;
@@ -39,6 +41,8 @@ public final class DiamondShopPlugin extends JavaPlugin implements org.bukkit.ev
         Bukkit.getPluginManager().registerEvents(this,this);
         recoveryTask=Bukkit.getScheduler().runTaskTimer(this,()->shopService.recoverPending(),1L,20L);
         this.gui = new ShopGui(this);
+        this.quantities=new ShopQuantityGui(this);
+        getServer().getPluginManager().registerEvents(quantities,this);
         Bukkit.getPluginManager().registerEvents(gui, this);
 
         ShopCommandHandler commands = new ShopCommandHandler(this);

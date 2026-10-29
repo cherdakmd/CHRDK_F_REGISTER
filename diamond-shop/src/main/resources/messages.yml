@@ -132,3 +132,31 @@ messages:
     "top-line": "<gray>%index%. %material% — сделок: %trades% шт.</gray>"
     "top-empty": "<yellow>Сделок пока не было.</yellow>"
     "reloaded": "<green>Конфигурация магазина перечитана.</green>"
+  # Поштучная торговля: отдельные ключи, чтобы старые подписи партий не вводили в заблуждение.
+  quantity:
+    usage: '<gray>/shop — витрина и выбор количества; /shop buy <товар> <штук> | sell <товар> [штук|all] | sellall | price <товар> | find <текст> | balance</gray>'
+    price-units: '<gray>Можно торговать поштучно: покупка округляется вверх, продажа вниз. Минимум для продажи за целые алмазы: %minimum% шт. Число в /shop buy и sell — штуки, не партии.</gray>'
+    too-small: '<yellow>Выручка меньше 1 алмаза: продажа не проведена, предметы не забраны. Минимум и цены: /shop price %material%.</yellow>'
+    not-enough-items: '<red>Недостаточно обычных предметов %material% для выбранного количества. Именные предметы и вторая рука не используются.</red>'
+    sellall-none: '<yellow>Нет подходящей продажи за целые алмазы либо достигнут лимит оборота/счёта. Предметы с нулевой выручкой и остатки без дополнительной оплаты не забираются.</yellow>'
+    buy-title: '<gold>Покупка · количество</gold>'
+    sell-title: '<gold>Продажа · количество</gold>'
+    change: '<yellow>%amount% шт.</yellow>'
+    preset: '<aqua>Выбрать %amount% шт.</aqua>'
+    minimum: '<gold>Минимум для продажи: %minimum% шт.</gold>'
+    total: '<white>%amount% шт.</white><gray> · итог: </gray><gold>%money% алм.</gold>'
+    details:
+      - '<gray>Эталонная партия: %batch% шт. за %price% алм.</gray>'
+      - '<gray>Покупка: округление вверх. Продажа: вниз.</gray>'
+      - '<gray>Минимум для продажи: %minimum% шт. Нулевых выплат нет.</gray>'
+      - '<gray>Личный /bal: %balance%; обычные алмазные предметы: %physical%.</gray>'
+      - '<gray>Сначала /bal, затем недостача предметами. Сдача — на счёт.</gray>'
+    confirm: '<green>Подтвердить указанное количество и сумму</green>'
+    unavailable: '<red>Такая сумма недоступна · измените количество</red>'
+    back: '<yellow>← Вернуться к товарам без сделки</yellow>'
+    maximum: '<gold>Подобрать максимум продажи без неоплачиваемого остатка</gold>'
+    item-lore:
+      - '<gray>Эталон: %batch% шт. · продать </gray><green>%bid% алм.</green><gray> · купить </gray><red>%ask% алм.</red>'
+      - '<gray>Запас: %stock% / %ref%   Тренд: %trend% <aqua>%history%</aqua></gray>'
+      - '<yellow>ЛКМ — выбрать количество покупки</yellow>'
+      - '<yellow>ПКМ — выбрать количество продажи</yellow>'

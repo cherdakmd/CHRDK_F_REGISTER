@@ -86,13 +86,16 @@ class WholeTradesTest {
             assertEquals(4,messages.getList("trading.gui.item-lore", "batch",256,"ask",6,"bid",4).size());
             assertTrue(current.contains("%batch%"));
             assertTrue(current.contains("16 партий"));
+            var quantity=messages.raw("quantity.item-lore");
+            assertTrue(quantity.contains("выбрать количество"));
+            assertFalse(quantity.contains("16 партий"));
             assertTrue(messages.raw("trading.balance").contains("/bal"));
         }
     }
     @Test void serviceHasNoSpendableShopWalletNoDropsAndCommitsPreparedSnapshots() throws Exception {
         var s=Files.readString(Path.of("src/main/java/ru/cherdakmd/diamondshop/ShopService.java"));
         for(var forbidden:List.of("store.trySpend", "store.addBalance", "dropItem", "getContents()")) assertFalse(s.contains(forbidden),forbidden);
-        for(var guard:List.of("getStorageContents()", "!item.hasItemMeta()", "store.prepare(t,item", "canRecordTurnover", "countItems(player.getInventory(), material) / batch")) assertTrue(s.contains(guard),guard);
+        for(var guard:List.of("getStorageContents()", "!item.hasItemMeta()", "store.prepare(t,item", "canRecordTurnover", "TradeAmounts.quote(batch,price,units,buy)")) assertTrue(s.contains(guard),guard);
         assertTrue(s.indexOf("canRecordTurnover")<s.indexOf("store.prepare(t,item"));
         var gui=Files.readString(Path.of("src/main/java/ru/cherdakmd/diamondshop/ShopGui.java"));
         for(var guard:List.of("holder.service != service", "offer.ask() !=", "offer.bid() !=", "getTopInventory() == expected")) assertTrue(gui.contains(guard),guard);
