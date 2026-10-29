@@ -478,7 +478,7 @@ class PluginUpdateServiceTest {
                 try (var input = Files.newInputStream(Path.of("gradle.properties"))) { properties.load(input); }
                 basename = properties.getProperty("archives_base_name");
             } else {
-                String gradle = Files.readString(Path.of(file.getName(0).toString(), "build.gradle"));
+                String gradle = Files.readString(Path.of(file.normalize().getName(0).toString(), "build.gradle"));
                 var matcher = java.util.regex.Pattern.compile("archivesName\\s*=\\s*'([^']+)'").matcher(gradle);
                 assertTrue(matcher.find(), file.toString());
                 basename = matcher.group(1);
