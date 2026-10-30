@@ -31,8 +31,8 @@ import java.util.UUID;
  */
 public interface ChrdkRegisterApi {
 
-    /** Версия контракта API. API 28: индекс членства кланов; API 27: снят источник оформления удалённого аддона; API 26: сняты контракты удалённых аддонов; API 25: durable checkpoint игровых наград; API 24 — Claims domain settlement. */
-    int API_VERSION = 28;
+    /** Версия контракта API. API 29: точный остаток выручки магазина; API 28: индекс членства кланов; API 27: снят источник оформления удалённого аддона; API 26: сняты контракты удалённых аддонов; API 25: durable checkpoint игровых наград; API 24 — Claims domain settlement. */
+    int API_VERSION = 29;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -245,6 +245,8 @@ public interface ChrdkRegisterApi {
     default boolean personalBankAvailable() { return false; }
     default boolean registerIncomeSource(String source, UUID lineage) { return false; }
     default boolean incomeSourceAvailable(String source, UUID lineage) { return false; }
+    /** API 29: неоплаченная точная доля выручки; null — банк недоступен. */
+    default String shopSaleRemainder(UUID owner) { return null; }
     default UUID knownBankPlayer(String name) { return null; }
     /** API 20: UUID уже известен банку/серверу. Не создаёт игрока по одному имени/неизвестному UUID. */
     default boolean canReceiveBankIncome(UUID owner) { return false; }

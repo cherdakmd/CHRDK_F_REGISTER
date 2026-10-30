@@ -93,6 +93,38 @@ final class RecipeEconomy {
                 {"REDSTONE","REDSTONE_BLOCK"},{"EMERALD","EMERALD_BLOCK"},{"SLIME_BALL","SLIME_BLOCK"}}) {
             add(r,pair[1],1,pair[0],9); add(r,pair[0],9,pair[1],1);
         }
+        // Бесплатные для оценки труда/топлива/роста превращения: потолок, не обещание фактического дропа.
+        for(String soil:List.of("GRASS_BLOCK","COARSE_DIRT","ROOTED_DIRT","PODZOL","MYCELIUM","MUD","DIRT_PATH","MOSS_BLOCK","PALE_MOSS_BLOCK")) {
+            add(r,soil,1,"DIRT",1); add(r,"DIRT",1,soil,1);
+        }
+        add(r,"COARSE_DIRT",4,"DIRT",2,"GRAVEL",2);
+        add(r,"PACKED_MUD",1,"MUD",1,"WHEAT",1);
+        add(r,"MUD_BRICKS",4,"PACKED_MUD",4);
+        add(r,"COBBLED_DEEPSLATE",1,"DEEPSLATE",1); add(r,"DEEPSLATE",1,"COBBLED_DEEPSLATE",1);
+        add(r,"MOSSY_COBBLESTONE",1,"COBBLESTONE",1);
+        add(r,"SMOOTH_BASALT",1,"BASALT",1);
+        for(String metal:List.of("IRON","COPPER","GOLD")) {
+            add(r,"RAW_"+metal+"_BLOCK",1,"RAW_"+metal,9); add(r,"RAW_"+metal,9,"RAW_"+metal+"_BLOCK",1);
+        }
+        // Запас сверх vanilla Fortune III: учитываем повышенный дроп, без оценки инструмента и топлива.
+        for(String prefix:List.of("","DEEPSLATE_")) {
+            add(r,"COAL",32,prefix+"COAL_ORE",1);
+            add(r,"RAW_IRON",32,prefix+"IRON_ORE",1);
+            add(r,"RAW_GOLD",32,prefix+"GOLD_ORE",1);
+            add(r,"RAW_COPPER",128,prefix+"COPPER_ORE",1);
+            add(r,"LAPIS_LAZULI",256,prefix+"LAPIS_ORE",1);
+            add(r,"REDSTONE",64,prefix+"REDSTONE_ORE",1);
+            add(r,"EMERALD",32,prefix+"EMERALD_ORE",1);
+            add(r,"DIAMOND",16,prefix+"DIAMOND_ORE",1);
+        }
+        add(r,"GOLD_NUGGET",32,"GILDED_BLACKSTONE",1);
+        add(r,"CLAY",1,"MUD",1);
+        add(r,"GLASS",1,"RED_SAND",1);
+        add(r,"RED_SANDSTONE",1,"RED_SAND",4);
+        add(r,"GOLD_NUGGET",256,"NETHER_GOLD_ORE",1);
+        add(r,"QUARTZ",32,"NETHER_QUARTZ_ORE",1);
+        add(r,"NETHERITE_SCRAP",4,"ANCIENT_DEBRIS",1);
+        add(r,"NETHERITE_INGOT",1,"NETHERITE_SCRAP",4,"GOLD_INGOT",4);
         add(r,"HONEY_BLOCK",1,"HONEY_BOTTLE",4);
         // Для обратного крафта нужны пустые бутылки: их стоимость намеренно не добавляется.
         add(r,"HONEY_BOTTLE",4,"HONEY_BLOCK",1);

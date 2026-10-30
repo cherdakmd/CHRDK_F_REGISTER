@@ -94,7 +94,7 @@ class ShopServiceEconomyTest {
             assertEquals(0,s.maximumSale(null,item,s.batchSize(item),0));
             assertEquals(0,s.bidPrice(item));assertTrue(s.askPrice(item)>0);
         }
-        assertEquals(36,count);
+        assertEquals(91,count);
     }
     @Test void forgedLegacyItemCannotEnableBuybackForNewDecor() throws Exception {
         var s=service(10);var item=s.config().item("WHITE_CONCRETE").orElseThrow();

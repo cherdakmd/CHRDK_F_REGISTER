@@ -44,5 +44,32 @@ class ShopNativeBankTest {
     @Test void singleItemBuyHasCanonicalNativeReservationAndNoDoubleGrantAfterRestart()throws Exception{var b=funded(10);var t=new ShopExchange(UUID.randomUUID(),market,1,owner,true,"STONE",1,1,1,0,0,Map.of("DIAMOND",1),"before","after");assertTrue(b.prepareShop(t,"Steve"));var bag=bag();BankCash.recover(load(),owner,bag);BankCash.recover(load(),owner,bag);assertEquals(9,load().balance(owner));assertEquals(1,bag.applies);assertEquals(ShopExchange.Status.COMMITTED,load().shopStatus(t));}
     @Test void partialSaleIncomeWaitsForNativeCheckpointAndNeverRecreditsAfterSpending()throws Exception{var b=funded(0);var t=new ShopExchange(UUID.randomUUID(),market,1,owner,false,"STONE",43,2,0,2,0,Map.of("DIAMOND",1),"before","after");assertTrue(b.prepareShop(t,"Steve"));var bag=bag();bag.failSave=true;assertThrows(IOException.class,()->BankCash.recover(b,owner,bag));assertEquals(0,load().balance(owner));bag.failSave=false;BankCash.recover(load(),owner,bag);var paid=load();assertEquals(2,paid.balance(owner));assertTrue(paid.withdraw(owner,2));paid.flush();BankCash.recover(load(),owner,bag);assertEquals(0,load().balance(owner));assertEquals(1,bag.applies);}
     @Test void partialSaleAtCapAndZeroRevenueRefuseWithoutAnyNativeReservation(){var b=funded(BankStore.MAX_BALANCE);var cap=new ShopExchange(UUID.randomUUID(),market,1,owner,false,"STONE",22,1,0,1,0,Map.of("DIAMOND",1),"before","after");assertFalse(b.prepareShop(cap,"Steve"));var zero=new ShopExchange(UUID.randomUUID(),market,1,owner,false,"STONE",1,0,0,0,0,Map.of("DIAMOND",1),"before","after");assertFalse(b.prepareShop(zero,"Steve"));assertNull(b.cashPending(owner));}
+    ShopExchange fraction(BankStore bank,int count,long sequence) {
+        String before=bank.shopSaleRemainder(owner); var q=ShopSaleRemainder.quote(before,64,1,count);
+        return new ShopExchange(UUID.randomUUID(),market,sequence,owner,false,"STONE",count,q.money(),0,q.money(),0,Map.of("DIAMOND",1),"before","after",64,1,before,q.remainder());
+    }
+    @Test void unpaidFractionsAndNativeConsumptionAreAtomicAcrossRestartAndReplay() throws Exception {
+        var b=funded(0); var t=fraction(b,1,1); assertTrue(t.valid()); assertTrue(b.prepareShop(t,"Steve"));
+        assertEquals("0/1",load().shopSaleRemainder(owner)); var bag=bag(); bag.failSave=true; var pendingBank=b;
+        assertThrows(IOException.class,()->BankCash.recover(pendingBank,owner,bag)); assertEquals("0/1",load().shopSaleRemainder(owner));
+        bag.failSave=false; BankCash.recover(load(),owner,bag); BankCash.recover(load(),owner,bag);
+        assertEquals("1/64",load().shopSaleRemainder(owner)); assertEquals(0,load().balance(owner)); assertEquals(1,bag.applies);
+        b=load(); var last=fraction(b,63,2); assertTrue(b.prepareShop(last,"Steve"));
+        var nextBag=bag(); nextBag.token=b.cashReceipt(owner).transaction().toString();
+        BankCash.recover(b,owner,nextBag); assertEquals(1,load().balance(owner)); assertEquals("0/1",load().shopSaleRemainder(owner));
+    }
+    @Test void staleFractionOrForgedZeroMoneyCannotPrepareAndOtherPlayersCannotTakeIt() throws Exception {
+        var b=funded(0); var t=fraction(b,1,1); assertTrue(b.prepareShop(t,"Steve")); BankCash.recover(b,owner,bag()); b=load();
+        var stale=new ShopExchange(UUID.randomUUID(),market,2,owner,false,"STONE",63,0,0,0,0,Map.of("DIAMOND",1),"before","after",64,1,"0/1","63/64");
+        assertEquals(ShopExchange.Status.CONFLICT,b.shopStatus(stale)); assertFalse(b.prepareShop(stale,"Steve"));
+        assertEquals("0/1",b.shopSaleRemainder(UUID.randomUUID()));
+        var bad=new ShopExchange(UUID.randomUUID(),market,2,owner,false,"STONE",63,0,0,0,0,Map.of("DIAMOND",1),"before","after",64,1,"1/64","0/1"); assertFalse(bad.valid());
+    }
+    @Test void remainderSchemaCannotBeDowngradedOrSilentlyLoseCarry() throws Exception {
+        var b=funded(0); var t=fraction(b,1,1); b.prepareShop(t,"Steve"); BankCash.recover(b,owner,bag());
+        String original=Files.readString(b.file()); var json=JsonParser.parseString(original).getAsJsonObject(); json.addProperty("schema",7);
+        Files.writeString(b.file(),json.toString()); assertFalse(load().available());
+        json=JsonParser.parseString(original).getAsJsonObject(); json.remove("shopSaleRemainders"); Files.writeString(b.file(),json.toString()); assertFalse(load().available());
+    }
 
 }

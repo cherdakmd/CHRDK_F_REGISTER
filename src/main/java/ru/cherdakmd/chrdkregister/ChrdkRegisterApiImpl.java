@@ -159,6 +159,7 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
     @Override public boolean personalBankAvailable() { return auctionBankReady(); }
     @Override public boolean registerIncomeSource(String source, java.util.UUID lineage) { return auctionBankReady() && bank.registerIncomeSource(source, lineage); }
     @Override public boolean incomeSourceAvailable(String source, java.util.UUID lineage) { return auctionBankReady() && bank.incomeSourceAvailable(source, lineage); }
+    @Override public String shopSaleRemainder(java.util.UUID owner) { return auctionBankReady() ? bank.shopSaleRemainder(owner) : null; }
     @Override public java.util.UUID knownBankPlayer(String name) { return auctionBankReady() ? claimAccount(name) : null; }
     @Override public long creditedEntitlement(String source, java.util.UUID lineage, String key, java.util.UUID owner) {
         return auctionBankReady() ? bank.creditedEntitlement(source, lineage, key, owner) : -1L;

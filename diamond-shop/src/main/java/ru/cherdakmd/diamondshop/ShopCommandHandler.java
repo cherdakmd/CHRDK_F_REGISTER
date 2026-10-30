@@ -182,12 +182,12 @@ public final class ShopCommandHandler implements TabExecutor {
     private void handleSellAll(Player player) {
         ShopService.SellAllResult result = plugin.shopService().sellAll(player);
         if (result.kinds() == 0) {
-            plugin.messages().send(player, "quantity.sellall-none");
+            plugin.messages().send(player, "quantity.sellall-carry-none");
             return;
         }
-        plugin.messages().send(player, "trading.sellall-done",
+        plugin.messages().send(player, "quantity.sellall-carry-done",
                 "kinds", result.kinds(), "units", result.units(),
-                "income", result.income(),
+                "income", result.income(), "remainder", plugin.shopService().saleRemainder(player),
                 "balance", plugin.shopService().balance(player), "physical", plugin.shopService().physical(player));
     }
 

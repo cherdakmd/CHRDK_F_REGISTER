@@ -1,0 +1,894 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# CHRDK_DiamondShop — магазин обмена ресурсов с динамическими ценами
+# Аддон к CHRDK_F_REGISTER. Валюта — алмаз во всех видах (см. currency).
+# ═══════════════════════════════════════════════════════════════════════════
+
+# 1.4.221: отдельного кошелька магазина нет. Сначала /bal, недостача — предметами.
+# Только обычные предметы без метаданных из 36 storage-слотов. Сдача целая на /bal.
+# Старые остатки shop-data.json — замороженный вход миграции, ceil один раз в банк.
+# Торговля поштучная (1..2304): эталонная партия — только единица котировки.
+# Итог покупки округляется вверх, продажи вниз до целого алмаза. Нулевая выплата запрещена.
+# Партия учитывает нижнюю цену и рецептурный потолок; после 1.4.245 она может измениться.
+# Проверенные цепочки ограничивают скупку по минимальной стоимости получения из магазина.
+# sell-enabled: false — товар только покупается игроком; отсутствие ключа означает true.
+# Не хватает места — вся покупка отклоняется без оплаты и выбрасывания предметов.
+# Курс предметов в физических алмазах; ручное пополнение/снятие теперь через /bal.
+currency:
+  DIAMOND: 1
+  DIAMOND_ORE: 1
+  DEEPSLATE_DIAMOND_ORE: 1
+  DIAMOND_BLOCK: 9
+
+pricing:
+  # Насколько быстро запас товара возвращается к эталону (доля от разницы в час).
+  # 0.05 = за час запас восстанавливается на 5% разницы с эталонным.
+  stock-recovery-per-hour: 0.05
+  # Устаревший ключ для совместимости конфига. Снятие теперь /bal withdraw,
+  # его лимиты задаются в настройках банка Core, а не этим значением.
+  max-withdraw: 6400
+  # Спред между ценой покупки (ask) и продажи (bid), % от средней цены. При 10% игрок
+  # внутренняя ask на 5% выше mid, bid на 5% ниже. Затем целая партия:
+  # ask округляется вверх, bid вниз. Даже при 0% округление может дать разницу.
+  spread-percent: 10.0
+  # Дневной лимит оборота игрока в алмазах (покупки+продажи вместе, окно — сутки UTC).
+  # 0 = без лимита. Лимит дополняет, но не заменяет ограничения рецептурной скупки.
+  daily-turnover-limit: 0
+  # Сколько точек истории цен хранить на товар (спарклайн в /shop price и витрине)
+  history-points: 24
+  # Шаг истории в минутах (сделки дополнительно обновляют последнюю точку)
+  history-interval-minutes: 60
+
+# Товары магазина. Цена = base-price * clamp(ref-stock / stock, min-mult, max-mult):
+# игроки продают товар → запас растёт → цена падает; скупают → запас падает → цена растёт.
+# category — вкладка витрины: blocks, wood, minerals, mobs, food, utility, misc.
+# Пустое поле = misc (старые конфиги работают без миграции); all — служебный раздел.
+# Дубликаты материалов и валюта (DIAMOND* ) пропускаются с предупреждением.
+# Полный каталог, разделы и правила цен — docs/SHOP_CATALOG.md.
+items:
+  # ── Блоки и строительные материалы ──
+  - material: DIRT
+    category: blocks
+    base-price: 0.02
+    ref-stock: 20000
+  - material: NETHERRACK
+    category: blocks
+    base-price: 0.03
+    ref-stock: 20000
+  - material: COBBLESTONE
+    category: blocks
+    base-price: 0.04
+    ref-stock: 20000
+  - material: TUFF
+    category: blocks
+    base-price: 0.04
+    ref-stock: 15000
+  - material: ANDESITE
+    category: blocks
+    base-price: 0.05
+    ref-stock: 15000
+  - material: BASALT
+    category: blocks
+    base-price: 0.05
+    ref-stock: 15000
+  - material: DIORITE
+    category: blocks
+    base-price: 0.05
+    ref-stock: 15000
+  - material: GRANITE
+    category: blocks
+    base-price: 0.05
+    ref-stock: 15000
+  - material: GRAVEL
+    category: blocks
+    base-price: 0.05
+    ref-stock: 15000
+  - material: STONE
+    category: blocks
+    base-price: 0.05
+    ref-stock: 20000
+  - material: DEEPSLATE
+    category: blocks
+    base-price: 0.06
+    ref-stock: 15000
+  - material: BLACKSTONE
+    category: blocks
+    base-price: 0.07
+    ref-stock: 15000
+  - material: SNOW_BLOCK
+    category: blocks
+    base-price: 0.07
+    ref-stock: 12000
+  - material: CALCITE
+    category: blocks
+    base-price: 0.08
+    ref-stock: 12000
+  - material: END_STONE
+    category: blocks
+    base-price: 0.08
+    ref-stock: 10000
+  - material: SAND
+    category: blocks
+    base-price: 0.08
+    ref-stock: 15000
+  - material: SANDSTONE
+    category: blocks
+    base-price: 0.1
+    ref-stock: 12000
+  - material: CLAY
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+  - material: GLASS
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+  - material: BRICK
+    category: blocks
+    base-price: 0.15
+    ref-stock: 10000
+  - material: ICE
+    category: blocks
+    base-price: 0.2
+    ref-stock: 10000
+  - material: TERRACOTTA
+    category: blocks
+    base-price: 0.2
+    ref-stock: 10000
+  - material: PRISMARINE
+    category: blocks
+    base-price: 0.25
+    ref-stock: 8000
+  - material: SOUL_SAND
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+  - material: PRISMARINE_BRICKS
+    category: blocks
+    base-price: 0.4
+    ref-stock: 6000
+  - material: DARK_PRISMARINE
+    category: blocks
+    base-price: 0.45
+    ref-stock: 6000
+  - material: PACKED_ICE
+    category: blocks
+    base-price: 0.6
+    ref-stock: 6000
+  - material: MAGMA_BLOCK
+    category: blocks
+    base-price: 0.9
+    ref-stock: 5000
+  - material: GLOWSTONE
+    category: blocks
+    base-price: 1.0
+    ref-stock: 5000
+  - material: SEA_LANTERN
+    category: blocks
+    base-price: 1.3
+    ref-stock: 4000
+  - material: OBSIDIAN
+    category: blocks
+    base-price: 1.5
+    ref-stock: 3000
+  - material: BLUE_ICE
+    category: blocks
+    base-price: 2.0
+    ref-stock: 3000
+  - material: SLIME_BLOCK
+    category: blocks
+    base-price: 2.5
+    ref-stock: 2500
+  - material: HONEY_BLOCK
+    category: blocks
+    base-price: 3.0
+    ref-stock: 2500
+  - material: SPONGE
+    category: blocks
+    base-price: 8.0
+    ref-stock: 800
+    max-multiplier: 3.0
+
+  # Строительная палитра: готовые блоки только для покупки, без обратной скупки.
+  - material: WHITE_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: ORANGE_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: MAGENTA_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: LIGHT_BLUE_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: YELLOW_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: LIME_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: PINK_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: GRAY_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: LIGHT_GRAY_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: CYAN_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: PURPLE_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: BLUE_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: BROWN_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: GREEN_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: RED_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: BLACK_CONCRETE
+    category: blocks
+    base-price: 0.16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: WHITE_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: ORANGE_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: MAGENTA_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: LIGHT_BLUE_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: YELLOW_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: LIME_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: PINK_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: GRAY_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: LIGHT_GRAY_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: CYAN_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: PURPLE_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: BLUE_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: BROWN_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: GREEN_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: RED_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: BLACK_TERRACOTTA
+    category: blocks
+    base-price: 0.25
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: SMOOTH_STONE
+    category: blocks
+    base-price: 0.1
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: STONE_BRICKS
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: POLISHED_DEEPSLATE
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: QUARTZ_BRICKS
+    category: blocks
+    base-price: 2.6
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+
+  # ── Дерево и грибные стебли ──
+  - material: BAMBOO
+    category: wood
+    base-price: 0.1
+    ref-stock: 12000
+  - material: ACACIA_LOG
+    category: wood
+    base-price: 0.15
+    ref-stock: 12000
+  - material: BIRCH_LOG
+    category: wood
+    base-price: 0.15
+    ref-stock: 12000
+  - material: DARK_OAK_LOG
+    category: wood
+    base-price: 0.15
+    ref-stock: 12000
+  - material: JUNGLE_LOG
+    category: wood
+    base-price: 0.15
+    ref-stock: 12000
+  - material: OAK_LOG
+    category: wood
+    base-price: 0.15
+    ref-stock: 12000
+  - material: SPRUCE_LOG
+    category: wood
+    base-price: 0.15
+    ref-stock: 12000
+  - material: MANGROVE_LOG
+    category: wood
+    base-price: 0.18
+    ref-stock: 10000
+  - material: CHERRY_LOG
+    category: wood
+    base-price: 0.2
+    ref-stock: 10000
+  - material: CRIMSON_STEM
+    category: wood
+    base-price: 0.25
+    ref-stock: 8000
+  - material: WARPED_STEM
+    category: wood
+    base-price: 0.25
+    ref-stock: 8000
+
+  # ── Руды, металлы и самоцветы ──
+  - material: FLINT
+    category: minerals
+    base-price: 0.12
+    ref-stock: 8000
+  - material: CHARCOAL
+    category: minerals
+    base-price: 0.15
+    ref-stock: 8000
+  - material: COAL
+    category: minerals
+    base-price: 0.3
+    ref-stock: 9000
+  - material: LAPIS_LAZULI
+    category: minerals
+    base-price: 0.4
+    ref-stock: 6000
+  - material: RAW_COPPER
+    category: minerals
+    base-price: 0.47
+    ref-stock: 6000
+  - material: COPPER_INGOT
+    category: minerals
+    base-price: 0.5
+    ref-stock: 6000
+  - material: REDSTONE
+    category: minerals
+    base-price: 0.5
+    ref-stock: 6000
+  - material: QUARTZ
+    category: minerals
+    base-price: 0.6
+    ref-stock: 5000
+  - material: AMETHYST_SHARD
+    category: minerals
+    base-price: 0.8
+    ref-stock: 6000
+  - material: RAW_IRON
+    category: minerals
+    base-price: 0.95
+    ref-stock: 6000
+  - material: IRON_INGOT
+    category: minerals
+    base-price: 1.0
+    ref-stock: 6000
+  - material: RAW_GOLD
+    category: minerals
+    base-price: 1.85
+    ref-stock: 4000
+  - material: GOLD_INGOT
+    category: minerals
+    base-price: 2.0
+    ref-stock: 4000
+  - material: QUARTZ_BLOCK
+    category: minerals
+    base-price: 2.4
+    ref-stock: 3000
+  - material: COAL_BLOCK
+    category: minerals
+    base-price: 2.7
+    ref-stock: 3000
+  - material: EMERALD
+    category: minerals
+    base-price: 3.0
+    ref-stock: 3000
+  - material: LAPIS_BLOCK
+    category: minerals
+    base-price: 3.6
+    ref-stock: 3000
+  - material: COPPER_BLOCK
+    category: minerals
+    base-price: 4.5
+    ref-stock: 3000
+  - material: REDSTONE_BLOCK
+    category: minerals
+    base-price: 4.5
+    ref-stock: 3000
+  - material: IRON_BLOCK
+    category: minerals
+    base-price: 9.0
+    ref-stock: 3000
+  - material: GOLD_BLOCK
+    category: minerals
+    base-price: 18.0
+    ref-stock: 2000
+  - material: EMERALD_BLOCK
+    category: minerals
+    base-price: 27.0
+    ref-stock: 1000
+  - material: NETHERITE_SCRAP
+    category: minerals
+    base-price: 100.0
+    ref-stock: 100
+    max-multiplier: 3.0
+  - material: NETHERITE_INGOT
+    category: minerals
+    base-price: 400.0
+    ref-stock: 150
+    max-multiplier: 3.0
+
+  # ── Добыча мобов и моря ──
+  - material: FEATHER
+    category: mobs
+    base-price: 0.1
+    ref-stock: 10000
+  - material: BONE
+    category: mobs
+    base-price: 0.2
+    ref-stock: 8000
+  - material: STRING
+    category: mobs
+    base-price: 0.25
+    ref-stock: 8000
+  - material: RABBIT_HIDE
+    category: mobs
+    base-price: 0.3
+    ref-stock: 6000
+  - material: SPIDER_EYE
+    category: mobs
+    base-price: 0.3
+    ref-stock: 6000
+  - material: INK_SAC
+    category: mobs
+    base-price: 0.4
+    ref-stock: 6000
+  - material: LEATHER
+    category: mobs
+    base-price: 0.5
+    ref-stock: 8000
+  - material: PRISMARINE_SHARD
+    category: mobs
+    base-price: 0.6
+    ref-stock: 5000
+  - material: FERMENTED_SPIDER_EYE
+    category: mobs
+    base-price: 0.8
+    ref-stock: 4000
+  - material: GUNPOWDER
+    category: mobs
+    base-price: 0.8
+    ref-stock: 4000
+    min-multiplier: 0.2
+  - material: PRISMARINE_CRYSTALS
+    category: mobs
+    base-price: 0.9
+    ref-stock: 4000
+  - material: SLIME_BALL
+    category: mobs
+    base-price: 1.0
+    ref-stock: 5000
+  - material: GLOW_INK_SAC
+    category: mobs
+    base-price: 1.2
+    ref-stock: 4000
+  - material: RABBIT_FOOT
+    category: mobs
+    base-price: 1.5
+    ref-stock: 3000
+  - material: MAGMA_CREAM
+    category: mobs
+    base-price: 1.6
+    ref-stock: 3000
+  - material: PHANTOM_MEMBRANE
+    category: mobs
+    base-price: 1.6
+    ref-stock: 4000
+  - material: BLAZE_POWDER
+    category: mobs
+    base-price: 2.0
+    ref-stock: 3000
+  - material: BLAZE_ROD
+    category: mobs
+    base-price: 4.0
+    ref-stock: 1500
+  - material: ENDER_PEARL
+    category: mobs
+    base-price: 5.0
+    ref-stock: 2000
+  - material: GHAST_TEAR
+    category: mobs
+    base-price: 8.0
+    ref-stock: 800
+  - material: NAUTILUS_SHELL
+    category: mobs
+    base-price: 12.0
+    ref-stock: 500
+  - material: DRAGON_BREATH
+    category: mobs
+    base-price: 15.0
+    ref-stock: 500
+  - material: SHULKER_SHELL
+    category: mobs
+    base-price: 25.0
+    ref-stock: 300
+  - material: HEART_OF_THE_SEA
+    category: mobs
+    base-price: 40.0
+    ref-stock: 200
+    max-multiplier: 3.0
+
+  # ── Еда и фермерство ──
+  - material: DRIED_KELP
+    category: food
+    base-price: 0.05
+    ref-stock: 10000
+  - material: KELP
+    category: food
+    base-price: 0.05
+    ref-stock: 12000
+  - material: SUGAR
+    category: food
+    base-price: 0.07
+    ref-stock: 10000
+  - material: SUGAR_CANE
+    category: food
+    base-price: 0.08
+    ref-stock: 12000
+  - material: EGG
+    category: food
+    base-price: 0.1
+    ref-stock: 10000
+  - material: MELON_SLICE
+    category: food
+    base-price: 0.1
+    ref-stock: 10000
+  - material: BEETROOT
+    category: food
+    base-price: 0.15
+    ref-stock: 8000
+  - material: CARROT
+    category: food
+    base-price: 0.15
+    ref-stock: 10000
+  - material: POTATO
+    category: food
+    base-price: 0.15
+    ref-stock: 10000
+  - material: COCOA_BEANS
+    category: food
+    base-price: 0.2
+    ref-stock: 8000
+  - material: WHEAT
+    category: food
+    base-price: 0.2
+    ref-stock: 10000
+  - material: APPLE
+    category: food
+    base-price: 0.3
+    ref-stock: 8000
+  - material: PUMPKIN
+    category: food
+    base-price: 0.3
+    ref-stock: 8000
+  - material: COOKED_CHICKEN
+    category: food
+    base-price: 0.5
+    ref-stock: 6000
+  - material: COOKED_MUTTON
+    category: food
+    base-price: 0.5
+    ref-stock: 6000
+  - material: NETHER_WART
+    category: food
+    base-price: 0.5
+    ref-stock: 6000
+  - material: BREAD
+    category: food
+    base-price: 0.55
+    ref-stock: 8000
+  - material: COOKED_BEEF
+    category: food
+    base-price: 0.6
+    ref-stock: 6000
+  - material: COOKED_PORKCHOP
+    category: food
+    base-price: 0.6
+    ref-stock: 6000
+  - material: CHORUS_FRUIT
+    category: food
+    base-price: 0.8
+    ref-stock: 4000
+  - material: HONEY_BOTTLE
+    category: food
+    base-price: 1.0
+    ref-stock: 5000
+  - material: GOLDEN_CARROT
+    category: food
+    base-price: 1.8
+    ref-stock: 2000
+  - material: GOLDEN_APPLE
+    category: food
+    base-price: 15.0
+    ref-stock: 1500
+
+  # ── Полезные предметы и редстоун ──
+  - material: ARROW
+    category: utility
+    base-price: 0.06
+    ref-stock: 10000
+  - material: PAPER
+    category: utility
+    base-price: 0.08
+    ref-stock: 8000
+  - material: TORCH
+    category: utility
+    base-price: 0.08
+    ref-stock: 12000
+  - material: FIREWORK_ROCKET
+    category: utility
+    base-price: 0.3
+    ref-stock: 3000
+  - material: RAIL
+    category: utility
+    base-price: 0.3
+    ref-stock: 5000
+  - material: POWERED_RAIL
+    category: utility
+    base-price: 0.45
+    ref-stock: 3000
+  - material: BOOK
+    category: utility
+    base-price: 0.7
+    ref-stock: 6000
+  - material: REPEATER
+    category: utility
+    base-price: 0.7
+    ref-stock: 3000
+  - material: COMPARATOR
+    category: utility
+    base-price: 0.9
+    ref-stock: 3000
+  - material: OBSERVER
+    category: utility
+    base-price: 1.6
+    ref-stock: 2000
+  - material: LEAD
+    category: utility
+    base-price: 1.8
+    ref-stock: 2000
+  - material: PISTON
+    category: utility
+    base-price: 1.8
+    ref-stock: 2000
+  - material: DAYLIGHT_DETECTOR
+    category: utility
+    base-price: 2.0
+    ref-stock: 3000
+  - material: MAP
+    category: utility
+    base-price: 2.0
+    ref-stock: 3000
+  - material: BOOKSHELF
+    category: utility
+    base-price: 2.2
+    ref-stock: 3000
+  - material: STICKY_PISTON
+    category: utility
+    base-price: 2.5
+    ref-stock: 2000
+  - material: BREWING_STAND
+    category: utility
+    base-price: 4.0
+    ref-stock: 1000
+  - material: COMPASS
+    category: utility
+    base-price: 4.0
+    ref-stock: 3000
+  - material: HOPPER
+    category: utility
+    base-price: 5.0
+    ref-stock: 1500
+  - material: NAME_TAG
+    category: utility
+    base-price: 6.0
+    ref-stock: 800
+  - material: CAULDRON
+    category: utility
+    base-price: 6.5
+    ref-stock: 1000
+  - material: CLOCK
+    category: utility
+    base-price: 8.0
+    ref-stock: 3000
+  - material: ENCHANTING_TABLE
+    category: utility
+    base-price: 8.0
+    ref-stock: 800
+  - material: SADDLE
+    category: utility
+    base-price: 8.0
+    ref-stock: 600
+  - material: ANVIL
+    category: utility
+    base-price: 30.0
+    ref-stock: 1000
+
+# Глобальные границы мультипликатора, если у товара свои не заданы
+defaults:
+  min-multiplier: 0.25
+  max-multiplier: 4.0
+
+general:
+  # Язык сообщений (файл messages_<locale>.yml, по умолчанию ru)
+  locale: "ru"

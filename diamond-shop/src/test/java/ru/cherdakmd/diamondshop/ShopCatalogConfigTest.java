@@ -32,11 +32,10 @@ class ShopCatalogConfigTest {
     @Test
     void shippedCatalogIsLargeAndConsistent() throws IOException {
         List<RawItem> items = parse();
-        assertEquals(178,items.size(),"размер поставляемого каталога");
+        assertEquals(249,items.size(),"размер поставляемого каталога");
 
         Set<String> materials = new HashSet<>();
-        Set<String> currency = Set.of("DIAMOND", "DIAMOND_ORE", "DEEPSLATE_DIAMOND_ORE",
-                "DIAMOND_BLOCK");
+        Set<String> currency = Set.of("DIAMOND", "DIAMOND_BLOCK");
         Map<String, Integer> perCategory = new HashMap<>();
         for (RawItem item : items) {
             assertTrue(item.material().matches("[A-Z][A-Z0-9_]*"),

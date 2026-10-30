@@ -76,4 +76,11 @@ class ShopJournalTest {
     @Test void partialSaleRetainsFrozenQuantityAndDoesNotReplayWhenBankIsUnavailable() {var s=initial();long units=TradeAmounts.saleAll(64,3,63,2);long money=TradeAmounts.quote(64,3,units,false);var t=new ShopExchange(UUID.randomUUID(),s.market(),1,owner,false,"STONE",units,money,0,money,0,Map.of("DIAMOND",1),"before","after");assertTrue(s.prepare(t,item,time,0,100,24,3600000,1));var bank=new Bank();bank.state=ShopExchange.Status.UNAVAILABLE;assertFalse(ShopJournal.recover(load(),bank));assertEquals(43,load().pending().trade().units());bank.state=ShopExchange.Status.MISSING;assertTrue(ShopJournal.recover(load(),bank));assertEquals(1043,load().snapshotOf("STONE").stock);assertEquals(43,load().snapshotOf("STONE").soldByPlayers);assertEquals(2,load().turnover());}
     @Test void zeroMoneyPartialSaleCannotPrepareAnySourceIntent(){var s=initial();var t=new ShopExchange(UUID.randomUUID(),s.market(),1,owner,false,"STONE",1,0,0,0,0,Map.of("DIAMOND",1),"before","after");assertFalse(s.prepare(t,item,time,0,100,24,3600000,1));assertNull(load().pending());assertEquals(1000,load().snapshotOf("STONE").stock);}
 
+    @Test void exactZeroPayoutSaleRecoversStockAndZeroTurnoverWithoutDiscardingItsBankQuote() {
+        var s=initial(); var t=new ShopExchange(UUID.randomUUID(),s.market(),1,owner,false,"STONE",1,0,0,0,0,Map.of("DIAMOND",1),"before","after",64,1,"0/1","1/64");
+        assertTrue(s.prepare(t,item,time,0,100,24,3600000,1)); assertEquals("1/64",load().pending().trade().remainderAfter());
+        assertTrue(ShopJournal.recover(load(),new Bank())); assertEquals(1001,load().snapshotOf("STONE").stock);
+        assertEquals(0,load().turnover()); assertEquals(1,load().sequence());
+    }
+
 }

@@ -367,7 +367,7 @@ public final class ShopStore {
         return Double.isFinite(after)&&java.math.BigDecimal.valueOf(after).subtract(java.math.BigDecimal.valueOf(before)).compareTo(java.math.BigDecimal.valueOf(money))==0;
     }
     synchronized boolean prepare(ru.cherdakmd.chrdkregister.api.ShopExchange t,ShopConfig.ShopItem item,long now,double recovery,double limit,int points,long interval,double price) {
-        if(!legacyAvailable||!registered||pending!=null||!market.equals(t.market())||t.sequence()!=sequence+1||!t.valid()||!item.material().equals(t.material())||!canRecordTurnover(t.owner(),t.money(),limit,now)) return false;
+        if(!legacyAvailable||!registered||pending!=null||!market.equals(t.market())||t.sequence()!=sequence+1||!t.valid()||!item.material().equals(t.material())||!(t.money()==0 && t.carriesRemainder() ? legacyAvailable && Double.isFinite(limit) && limit>=0 && (limit==0 || usedToday(t.owner(),now)<=limit) : canRecordTurnover(t.owner(),t.money(),limit,now))) return false;
         try {
             stockOf(item,now,recovery); var state=items.get(item.material());
             var p=new ShopJournal.Pending(t,Math.max(1,Math.addExact(state.stock,t.buy()?-t.units():t.units())),
