@@ -10,6 +10,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.junit.jupiter.api.Test;
 import java.lang.reflect.Proxy;
@@ -30,8 +31,9 @@ class ServerGuardTest {
     private final Map<String,String[]> aliases=new HashMap<>();
     private final YamlConfiguration config=new YamlConfiguration();
     private record Client(Player player,AtomicInteger kicks,List<Component> messages) { }
-    private Client client(String ip) {
-        var id=UUID.randomUUID();var kicks=new AtomicInteger();var sent=new ArrayList<Component>();
+    private Client client(String ip) { return client(ip,UUID.randomUUID()); }
+    private Client client(String ip,UUID id) {
+        var kicks=new AtomicInteger();var sent=new ArrayList<Component>();
         Player player=(Player)Proxy.newProxyInstance(Player.class.getClassLoader(),new Class<?>[]{Player.class},(p,m,a)->switch(m.getName()) {
             case "getUniqueId"->id;
             case "getAddress"->new InetSocketAddress(ip,25565);
@@ -51,10 +53,11 @@ class ServerGuardTest {
     private PlayerCommandPreprocessEvent command(Client c,String text,boolean cancelled) {
         var e=new PlayerCommandPreprocessEvent(c.player,text,new HashSet<>());e.setCancelled(cancelled);return e;
     }
-    private AsyncPlayerPreLoginEvent login(String ip) throws Exception {
+    private AsyncPlayerPreLoginEvent login(String ip) throws Exception { return login(ip,UUID.randomUUID()); }
+    private AsyncPlayerPreLoginEvent login(String ip,UUID id) throws Exception {
         var profile=(com.destroystokyo.paper.profile.PlayerProfile)Proxy.newProxyInstance(
-                getClass().getClassLoader(),new Class<?>[]{com.destroystokyo.paper.profile.PlayerProfile.class},(p,m,a)->null);
-        return new AsyncPlayerPreLoginEvent("Player",InetAddress.getByName(ip),UUID.randomUUID(),false,profile);
+                getClass().getClassLoader(),new Class<?>[]{com.destroystokyo.paper.profile.PlayerProfile.class},(p,m,a)->m.getName().equals("getId")?id:null);
+        return new AsyncPlayerPreLoginEvent("Player",InetAddress.getByName(ip),id,false,profile);
     }
     @Test void authenticatedOpStillCannotUseAttackCommands() {
         var guard=guard();var client=client("192.0.2.1");authenticated.add(client.player.getUniqueId());
@@ -112,6 +115,8 @@ class ServerGuardTest {
         guard.onJoin(new PlayerJoinEvent(client.player,Component.empty()));
         now.set(119_000_000_000L);guard.reload(GuardSettings.parse(config));
         now.set(120_000_000_000L);guard.pulse(List.of(client.player));assertEquals(1,client.kicks.get());
+        guard.onQuit(new PlayerQuitEvent(client.player,Component.empty()));
+        guard.onJoin(new PlayerJoinEvent(client.player,Component.empty()));
         authenticated.add(client.player.getUniqueId());guard.pulse(List.of(client.player));
         authenticated.clear();now.set(500_000_000_000L);guard.pulse(List.of(client.player));assertEquals(1,client.kicks.get());
         now.set(620_000_000_000L);guard.pulse(List.of(client.player));assertEquals(2,client.kicks.get());
@@ -133,7 +138,7 @@ class ServerGuardTest {
                 if(m.getName().equals("sendMessage")){sent.incrementAndGet();return null;}
                 throw new AssertionError("Неожиданный вызов "+m);
             });
-            assertTrue(guard.status(sender));assertEquals(1,sent.get());
+            assertTrue(guard.status(sender));assertEquals(4,sent.get());
         }
     }
     @Test void disabledModeLeavesEventsUntouched() throws Exception {
@@ -142,4 +147,75 @@ class ServerGuardTest {
         var login=login("192.0.2.1");guard.onPreLogin(login);assertEquals(AsyncPlayerPreLoginEvent.Result.ALLOWED,login.getLoginResult());
         guard.pulse(List.of(client.player));assertEquals(0,client.kicks.get());
     }
+    private PlayerLoginEvent gate(Client client) {
+        return new PlayerLoginEvent(client.player,"localhost",client.player.getAddress().getAddress());
+    }
+    @Test void admissionReservesBeforeJoinAndReleasesAnotherPluginsDenial() {
+        config.set("security.unauthenticated-global",2);config.set("security.defense.reserved-slots",0);
+        var guard=guard();var first=client("192.0.2.1");var second=client("192.0.2.2");var third=client("192.0.2.3");
+        var a=gate(first);var b=gate(second);var c=gate(third);guard.onLogin(a);guard.onLogin(b);guard.onLogin(c);
+        assertEquals(PlayerLoginEvent.Result.ALLOWED,a.getResult());assertEquals(PlayerLoginEvent.Result.ALLOWED,b.getResult());
+        assertEquals(PlayerLoginEvent.Result.KICK_OTHER,c.getResult());
+        a.disallow(PlayerLoginEvent.Result.KICK_BANNED,Component.text("other ban"));guard.onLoginFinal(a);
+        var retry=gate(third);guard.onLogin(retry);assertEquals(PlayerLoginEvent.Result.ALLOWED,retry.getResult());
+    }
+    @Test void duplicateUuidConnectionsDoNotOverwriteEachOthersReservations() {
+        config.set("security.unauthenticated-global",2);config.set("security.defense.reserved-slots",0);
+        var guard=guard();UUID id=UUID.randomUUID();
+        var a=gate(client("192.0.2.1",id));var b=gate(client("192.0.2.2",id));var c=gate(client("192.0.2.3",id));
+        guard.onLogin(a);guard.onLogin(b);guard.onLogin(c);assertEquals(PlayerLoginEvent.Result.KICK_OTHER,c.getResult());
+    }
+    @Test void abandonedAdmissionExpiresAndJoinDoesNotRestartTheAuthDeadline() {
+        config.set("security.unauthenticated-global",1);var guard=guard();var first=client("192.0.2.1");var next=client("192.0.2.2");
+        guard.onLogin(gate(first));var denied=gate(next);guard.onLogin(denied);assertEquals(PlayerLoginEvent.Result.KICK_OTHER,denied.getResult());
+        now.set(15_000_000_000L);var accepted=gate(next);guard.onLogin(accepted);assertEquals(PlayerLoginEvent.Result.ALLOWED,accepted.getResult());
+        now.set(20_000_000_000L);guard.onJoin(new PlayerJoinEvent(next.player,Component.empty()));
+        now.set(135_000_000_000L);guard.pulse(List.of(next.player));assertEquals(1,next.kicks.get());
+    }
+    @Test void physicalCapacityAndReturningReserveAreEnforcedWithoutAuthBypass() {
+        config.set("security.defense.reserved-slots",2);
+        var guard=new ServerGuard(GuardSettings.parse(config),()->texts,p->authenticated.contains(p.getUniqueId()),registry::get,()->aliases,warnings::add,now::get,()->6);
+        var known=client("192.0.2.10");authenticated.add(known.player.getUniqueId());
+        guard.onJoin(new PlayerJoinEvent(known.player,Component.empty()));guard.pulse(List.of(known.player));
+        guard.onQuit(new PlayerQuitEvent(known.player,Component.empty()));authenticated.clear();
+        for(int i=1;i<=2;i++){var e=gate(client("192.0.2."+i));guard.onLogin(e);assertEquals(PlayerLoginEvent.Result.ALLOWED,e.getResult());}
+        var excess=gate(client("192.0.2.3"));guard.onLogin(excess);assertEquals(PlayerLoginEvent.Result.KICK_OTHER,excess.getResult());
+        var returning=gate(known);guard.onLogin(returning);assertEquals(PlayerLoginEvent.Result.ALLOWED,returning.getResult());
+        assertFalse(authenticated.contains(known.player.getUniqueId()));
+        guard.onJoin(new PlayerJoinEvent(known.player,Component.empty()));
+        now.set(120_000_000_000L);guard.pulse(List.of(known.player));assertEquals(1,known.kicks.get());
+    }
+    @Test void returningPriorityStillHonorsSharedIpPendingLimit() {
+        config.set("security.unauthenticated-per-ip",1);var guard=guard();var known=client("192.0.2.1");
+        authenticated.add(known.player.getUniqueId());guard.pulse(List.of(known.player));
+        guard.onQuit(new PlayerQuitEvent(known.player,Component.empty()));authenticated.clear();
+        guard.onLogin(gate(client("192.0.2.1")));var blocked=gate(known);guard.onLogin(blocked);
+        assertEquals(PlayerLoginEvent.Result.KICK_OTHER,blocked.getResult());
+    }
+    @Test void alreadyDeniedLoginIsNeverAllowedAndOldQuitDoesNotEraseNewSession() {
+        config.set("security.command-burst",1);var guard=guard();var old=client("192.0.2.1");var current=client("192.0.2.1",old.player.getUniqueId());
+        var banned=gate(old);banned.disallow(PlayerLoginEvent.Result.KICK_BANNED,Component.text("ban"));guard.onLogin(banned);
+        assertEquals(PlayerLoginEvent.Result.KICK_BANNED,banned.getResult());
+        guard.onJoin(new PlayerJoinEvent(current.player,Component.empty()));
+        for(int i=0;i<20;i++){var stale=command(old,"/login old",false);guard.onCommand(stale);assertTrue(stale.isCancelled());}
+        assertEquals(0,current.kicks.get());assertEquals(0,old.kicks.get());
+        guard.onCommand(command(current,"/login secret",true));
+        guard.onQuit(new PlayerQuitEvent(old.player,Component.empty()));guard.onCommand(command(current,"/login secret",true));
+        assertEquals(1,current.kicks.get());
+    }
+    @Test void queuedCommandsCountAsOneStrikePerConnectionAndReconnectsEscalate() throws Exception {
+        config.set("security.command-burst",1);var guard=guard();UUID id=UUID.randomUUID();
+        for(int connection=0;connection<3;connection++) {
+            var offender=client("192.0.2.1",id);guard.onJoin(new PlayerJoinEvent(offender.player,Component.empty()));
+            for(int packet=0;packet<20;packet++)guard.onCommand(command(offender,"/login secret",true));
+            assertEquals(1,offender.kicks.get());guard.onQuit(new PlayerQuitEvent(offender.player,Component.empty()));
+            var attempt=login("192.0.2.1",id);guard.onPreLogin(attempt);
+            assertEquals(connection==2?AsyncPlayerPreLoginEvent.Result.KICK_OTHER:AsyncPlayerPreLoginEvent.Result.ALLOWED,attempt.getLoginResult());
+        }
+        var family=login("192.0.2.1");guard.onPreLogin(family);assertEquals(AsyncPlayerPreLoginEvent.Result.ALLOWED,family.getLoginResult());
+        guard.reload(GuardSettings.parse(config));var stillCooling=login("192.0.2.1",id);guard.onPreLogin(stillCooling);
+        assertEquals(AsyncPlayerPreLoginEvent.Result.KICK_OTHER,stillCooling.getLoginResult());
+        now.set(30_000_000_000L);var retry=login("192.0.2.1",id);guard.onPreLogin(retry);assertEquals(AsyncPlayerPreLoginEvent.Result.ALLOWED,retry.getLoginResult());
+    }
+
 }
