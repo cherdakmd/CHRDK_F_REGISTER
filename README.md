@@ -6,6 +6,12 @@
 
 Начиная с версии 1.4.1: **интеграция с PlaceholderAPI** (мягкая зависимость) — плейсхолдеры `%chrdk_*%` для таб-листа, скорбордов и голограмм.
 
+## Как связаться
+
+- **Телеграм:** [t.me/cherdakmd](https://t.me/cherdakmd)
+- **ВК:** [vk.ru/chrdk_reborn](https://vk.ru/chrdk_reborn)
+- **Твич:** [twitch.tv/dedworkshop](https://www.twitch.tv/dedworkshop)
+
 ## 1.4.249 — кланы и добровольный доступ к личной земле
 
 **25 плагинов, Core API 28.** `/clan` — алиас `/guild`; `/claim clan` показывает

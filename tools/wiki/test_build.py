@@ -48,6 +48,27 @@ class WikiBuildTest(unittest.TestCase):
         self.assertIn("настройки сервера могут отличаться", page)
         self.assertIn('href="start.html"', page)
 
+    def test_contact_links_are_exact_and_visible_across_the_site(self):
+        contacts = (
+            "https://t.me/cherdakmd",
+            "https://vk.ru/chrdk_reborn",
+            "https://www.twitch.tv/dedworkshop",
+        )
+        for page in (self.root / "site").glob("*.html"):
+            content = page.read_text()
+            footer = content.split('<footer class="footer">', 1)[1].split("</footer>", 1)[0]
+            for url in contacts:
+                self.assertIn(f'href="{url}" target="_blank" rel="noopener noreferrer"', footer, page.name)
+        for name in ("README.md", "wiki/index.md", "wiki/about.md"):
+            content = (self.root / name).read_text()
+            self.assertIn("## Как связаться", content)
+            for url in contacts:
+                self.assertIn(f"]({url})", content, name)
+        search = json.loads((self.root / "site/search-index.json").read_text())
+        for slug in ("index.html", "about.html"):
+            entry = next(p for p in search if p["url"] == slug)
+            self.assertIn("Как связаться", entry["text"])
+
     def test_full_catalog_is_rendered_and_searchable_even_at_end_of_page(self):
         page = (self.root / "site/shop.html").read_text()
         index = json.loads((self.root / "site/search-index.json").read_text())

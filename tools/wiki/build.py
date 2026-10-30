@@ -437,7 +437,7 @@ PAGE_TEMPLATE = """<!doctype html>
 {hero}<article class="page">{heading}<p class="lead">{lead}</p>{body}</article>{cards}
 <nav class="pager" aria-label="Соседние страницы">{pager}</nav>
 <section class="page-source"><strong>Основано на исходниках</strong><p>Стандартная поставка · {version} · настройки сервера могут отличаться.</p><a href="{github}/blob/{commit}/wiki/{slug}.md">Текст страницы ↗</a><a href="{github}/tree/{commit}">Реализация ↗</a></section>
-<footer class="footer"><strong>CHRDK /</strong><span>Выживание. Ремесло. Своя история.</span><a href="{releases}">Релизы ↗</a><a href="about.html">О справочнике</a></footer></main>
+<footer class="footer"><strong>CHRDK /</strong><span>Выживание. Ремесло. Своя история.</span><a href="{releases}">Релизы ↗</a><a href="about.html">О справочнике</a><a href="https://t.me/cherdakmd" target="_blank" rel="noopener noreferrer">Телеграм ↗</a><a href="https://vk.ru/chrdk_reborn" target="_blank" rel="noopener noreferrer">ВК ↗</a><a href="https://www.twitch.tv/dedworkshop" target="_blank" rel="noopener noreferrer">Твич ↗</a></footer></main>
 <aside class="toc" aria-label="На этой странице"><p>НА ЭТОЙ СТРАНИЦЕ</p>{toc}</aside></div>
 <dialog class="search-modal" id="searchModal" aria-labelledby="searchTitle"><div class="search-head"><label id="searchTitle" for="searchInput">Что ищем?</label><button class="icon-button" id="searchClose" aria-label="Закрыть поиск">×</button></div>
 <input id="searchInput" type="search" placeholder="Например: аренда, пересадка, iron_ingot" autocomplete="off" spellcheck="false" autofocus>
