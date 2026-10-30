@@ -423,8 +423,6 @@ final class ClassesGui implements Listener {
             if (progress.ready() && progress.basis().freePoints() >= talent.cost()) {
                 lore.add(plugin.messages().get("passport-talent-remaining", "points",
                         String.valueOf(progress.basis().freePoints() - talent.cost())));
-            } else if (!progress.ready()) {
-                lore.add(plugin.messages().get("passport-data-unavailable"));
             }
         }
         if (talent.tier() >= MASTERY_TIER) {
@@ -443,12 +441,13 @@ final class ClassesGui implements Listener {
             }
         }
         lore.add(Component.empty());
-        lore.add(statusLine(state, talent, id));
+        lore.add(known || progress.ready() ? statusLine(state, talent, id)
+                : plugin.messages().get("passport-data-unavailable"));
         lore.add(plugin.messages().get("menu-talent-cost", "cost",
                 String.valueOf(talent.cost())));
 
         Material icon = known ? Material.LIME_DYE
-                : state.ok() ? materialFor(talent.kind()) : Material.GRAY_DYE;
+                : progress.ready() && state.ok() ? materialFor(talent.kind()) : Material.GRAY_DYE;
         return button(icon, "talent." + talent.id() + ".name", lore);
     }
 
