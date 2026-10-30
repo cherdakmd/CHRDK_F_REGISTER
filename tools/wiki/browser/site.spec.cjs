@@ -174,3 +174,17 @@ test("повреждённый поисковый индекс не ломает
   );
   expect(errors).toEqual([]);
 });
+
+// Каталог с тарифом покупки шире экрана: прокрутка должна работать без мыши.
+test("широкий каталог прокручивается с клавиатуры", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/shop.html");
+  const wide = page.locator(".table-wrap").last();
+  await expect(wide).toHaveAttribute("tabindex", "0");
+  await expect(wide).toHaveAttribute("role", "group");
+  await wide.focus();
+  await expect(wide).toBeFocused();
+  expect(await wide.evaluate(n => n.scrollWidth > n.clientWidth)).toBeTruthy();
+  await page.keyboard.press("ArrowRight");
+  await expect.poll(() => wide.evaluate(n => n.scrollLeft)).toBeGreaterThan(0);
+});

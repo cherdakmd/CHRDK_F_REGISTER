@@ -156,9 +156,13 @@ class ShopServiceEconomyTest {
         var s=service(10);var item=s.config().item("GHAST_TEAR").orElseThrow();
         s.store().setStock(item,item.refStock(),System.currentTimeMillis());
         int batch=s.batchSize(item); long paid=TradeAmounts.quote(batch,s.askPrice(item),2304,true);
+        // Исторический баг воспроизводим БЕЗ нового тарифа: он не заменяет защиту bid.
+        long oldAsk=WholeTrades.price(PriceEngine.ask(s.priceOf(item),10),batch,true);
+        long oldPaid=TradeAmounts.quote(batch,oldAsk,2304,true);
         s.store().setStock(item,1,System.currentTimeMillis());
         long legacyBid=WholeTrades.price(PriceEngine.bid(s.priceOf(item),10),batch,false);
-        assertTrue(TradeAmounts.quote(batch,legacyBid,2304,false)>paid,"Регрессия действительно воспроизводит прежний self-pump");
+        assertTrue(TradeAmounts.quote(batch,legacyBid,2304,false)>oldPaid,"Регрессия действительно воспроизводит прежний self-pump");
+        assertTrue(TradeAmounts.quote(batch,s.bidPrice(item),2304,false)<=oldPaid,"Bid защищён даже без дорогого ask");
         assertTrue(TradeAmounts.quote(batch,s.bidPrice(item),2304,false)<=paid);
         long ceiling=RecipeEconomy.cap(RecipeEconomy.Cost.of(PriceEngine.ask(PriceEngine.round(item.basePrice()*item.minMultiplier()),10)),batch,10);
         for(long stock:new long[]{1,item.refStock(),Long.MAX_VALUE}) {
