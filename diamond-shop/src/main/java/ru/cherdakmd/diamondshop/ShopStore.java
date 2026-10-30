@@ -201,6 +201,14 @@ public final class ShopStore {
         return state;
     }
 
+    /** Та же модель восстановления без инициализации товара, dirty и изменения часов. */
+    public synchronized long peekStock(ShopConfig.ShopItem item,long nowMillis,double recoveryPerHour) {
+        ItemState state=items.get(item.material());
+        if(state==null) return Math.max(1,item.refStock());
+        if(pending!=null) return state.stock;
+        return Math.max(1,PriceEngine.recover(state.stock,item.refStock(),recoveryPerHour,nowMillis-state.recoveryAt));
+    }
+
     /** Лениво применяет возврат запаса к эталону и возвращает актуальный stock. */
     public synchronized long stockOf(ShopConfig.ShopItem item, long nowMillis, double recoveryPerHour) {
         ItemState state = itemState(item, nowMillis);

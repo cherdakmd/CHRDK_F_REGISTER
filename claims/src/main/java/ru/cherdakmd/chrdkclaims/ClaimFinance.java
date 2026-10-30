@@ -23,6 +23,8 @@ final class ClaimFinance {
     private boolean planning;
     ClaimFinance(ClaimStore store,Bank bank) { this.store=store; this.bank=bank; }
     boolean busy() { return planning||store.financialPending()!=null||!store.moneyAvailable(); }
+    /** Только состояние существующей привязки; без регистрации/миграции или WAL. */
+    boolean readReady() { return !busy()&&store.financialRegistered()&&bank.registered(store.financialLineage()); }
     boolean binding() {
         if(!store.moneyAvailable()) return false;
         if(store.financialRegistered()) return bank.registered(store.financialLineage());

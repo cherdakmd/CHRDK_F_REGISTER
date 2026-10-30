@@ -47,6 +47,7 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
     private ClaimFinance finance;
     private BukkitTask financeTask;
     ClaimFinance finance() { return finance; }
+    boolean financeReadReady() { return finance!=null&&finance.readReady(); }
     boolean financeReady() { return finance!=null&&!finance.busy()&&finance.binding(); }
     private ClaimsService service;
     private ClaimAudit audit;
@@ -71,7 +72,7 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         saveDefaultConfig();
         reloadClaimsConfig();
         try {
-            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 28) throw new IllegalStateException("Нужен Core API 28+");
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 30) throw new IllegalStateException("Нужен Core API 30+");
             teleportPayments = new ru.cherdakmd.chrdkregister.api.PaidActions(this,this::coreApi,this::messages,"claim-teleports");
         } catch (Exception | LinkageError error) {
             getLogger().log(java.util.logging.Level.SEVERE,"Приваты остановлены: платёжный протокол недоступен; данные не сброшены",error);

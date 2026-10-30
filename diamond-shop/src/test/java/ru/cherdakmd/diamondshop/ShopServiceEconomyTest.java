@@ -32,6 +32,21 @@ class ShopServiceEconomyTest {
         var store=new ShopStore(dir,Logger.getAnonymousLogger());store.load();
         return new ShopService(config(spread),store,()->null);
     }
+    @Test void quotesAndCatalogueAuditDoNotInitializeStockOrTouchJournalOrSnapshots() throws Exception {
+        var s=service(10);String before=s.store().snapshotJson();boolean dirty=s.store().isDirty();
+        var audit=s.auditQuotes();assertEquals(249,audit.items());assertEquals(0,audit.errors());assertTrue(audit.buyOnly()>0);
+        for(var item:s.config().items()) {
+            long buy=s.quantityQuote(item,1,true);assertTrue(buy>0,item.material());
+            if(!item.sellEnabled()) assertEquals(-1,s.quantityQuote(item,1,false));
+            assertEquals(-1,s.quantityQuote(item,2305,true));
+        }
+        assertEquals(before,s.store().snapshotJson());assertEquals(dirty,s.store().isDirty());assertNull(s.store().pending());
+        for(var item:s.config().items()) {
+            int batch=s.batchSize(item);
+            assertEquals(s.askPrice(item),s.quantityQuote(item,batch,true),item.material());
+            if(item.sellEnabled()&&s.bidPrice(item)>0) assertEquals(s.bidPrice(item),s.quantityQuote(item,batch,false),item.material());
+        }
+    }
     @Test void everyTariffRaisesAskButLeavesAllBidsAndRecipeCeilingsUnchanged() throws Exception {
         var fresh=config(10);
         var oldItems=fresh.items().stream().map(i->new ShopConfig.ShopItem(i.material(),i.category(),i.basePrice(),

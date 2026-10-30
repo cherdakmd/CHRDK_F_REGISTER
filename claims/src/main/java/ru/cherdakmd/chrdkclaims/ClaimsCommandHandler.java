@@ -18,7 +18,7 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
 
     private static final List<String> SUBS = List.of("help", "menu", "tp", "info", "map", "list",
             "unclaim", "add", "remove", "deposit", "withdraw", "balance", "sell", "sellback",
-            "buy", "transfer", "forsale", "borders", "near", "notices", "greeting", "rent", "clan");
+            "buy", "transfer", "forsale", "borders", "near", "notices", "greeting", "rent", "clan", "budget");
 
     private final ClaimsPlugin plugin;
 
@@ -28,7 +28,8 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if(!plugin.financeReady()&&(args.length==0||!args[0].equalsIgnoreCase("recovery"))) { plugin.messages().send(sender,"finance.unavailable");return true; }
+        boolean quote=args.length>0&&(args[0].equalsIgnoreCase("budget")||args[0].equalsIgnoreCase("sellback"));
+        if(!(quote?plugin.financeReadReady():plugin.financeReady())&&(args.length==0||!args[0].equalsIgnoreCase("recovery"))) { plugin.messages().send(sender,"finance.unavailable");return true; }
 
         if (!(sender instanceof Player player)) {
             sender.sendMessage(plugin.messages().plain("player-only"));
@@ -59,9 +60,17 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
             case "rent" -> rental(player, args);
             case "clan" -> { if (ready(player)) service().clanSharing(player, args); }
             case "sell" -> sell(player, args);
+            case "budget" -> {
+                if(!ready(player)) return true;
+                int days=3;
+                try { if(args.length>2) throw new NumberFormatException(); if(args.length==2) days=Integer.parseInt(args[1]); }
+                catch(NumberFormatException e) {plugin.messages().send(player,"finance.budget-usage");return true;}
+                if(days<1||days>30) {plugin.messages().send(player,"finance.budget-usage");return true;}
+                service().budget(player,days);
+            }
             case "sellback" -> {
                 if (ready(player)) {
-                    service().sellback(player);
+                    service().sellback(player,args.length==2&&args[1].equalsIgnoreCase("confirm"));
                 }
             }
             case "buy" -> {
@@ -648,6 +657,10 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
                 }
             }
             return result;
+        }
+        if(args.length==2&&(args[0].equalsIgnoreCase("budget")||args[0].equalsIgnoreCase("sellback"))) {
+            var values=args[0].equalsIgnoreCase("budget")?List.of("1","3","7","14","30"):List.of("confirm");
+            return values.stream().filter(s->s.startsWith(args[1].toLowerCase(Locale.ROOT))).toList();
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("clan")) {
             String prefix = args[1].toLowerCase(Locale.ROOT);

@@ -466,6 +466,29 @@ public final class BankStore {
         return accounts.size();
     }
 
+    public record PersonalStats(long balance, long deposited, long withdrawn, long sent, long received) { }
+    public synchronized PersonalStats personalStats(UUID id) {
+        var a = account(id);
+        return a == null ? new PersonalStats(0,0,0,0,0) : new PersonalStats(a.balance,a.deposited,a.withdrawn,a.sent,a.received);
+    }
+    public record Health(boolean available, int accounts, long total, long topTen, int pending, int receipts) { }
+    public synchronized Health health() {
+        long largest = top(10).stream().mapToLong(Entry::balance).sum();
+        return new Health(available,accounts.size(),total(),largest,cashPending.size(),cashReceipts.size());
+    }
+    /** Только расчёт: не создаёт счета, не меняет имена/счётчики и не пишет файл. */
+    public synchronized TransferResult previewTransfer(UUID from, UUID to, long amount, int taxPercent) {
+        if (!available || cashLocked(from) || cashLocked(to)) return TransferResult.failed(Status.UNAVAILABLE,amount);
+        if (from == null || to == null) return TransferResult.failed(Status.UNKNOWN_PLAYER,amount);
+        if (from.equals(to)) return TransferResult.failed(Status.SELF_TRANSFER,amount);
+        if (amount < 1 || amount > MAX_BALANCE) return TransferResult.failed(Status.INVALID_AMOUNT,amount);
+        if (balance(from) < amount) return TransferResult.failed(Status.NOT_ENOUGH,amount);
+        long tax = amount * Math.clamp(taxPercent,0,50) / 100L;
+        long net = amount - tax;
+        if (balance(to) > MAX_BALANCE-net) return TransferResult.failed(Status.LIMIT_EXCEEDED,amount);
+        return new TransferResult(Status.OK,amount,tax,net,balance(from)-amount,balance(to)+net);
+    }
+
     /** Сумма всех счетов — для сводки администратора. */
     public synchronized long total() {
         long sum = 0L;

@@ -24,11 +24,13 @@ import java.util.Locale;
  */
 public final class BankCommandHandler implements CommandExecutor, TabCompleter {
 
-    private static final List<String> BAL_SUBCOMMANDS = List.of("deposit", "withdraw", "help", "recovery");
+    private static final List<String> BAL_SUBCOMMANDS = List.of("deposit", "withdraw", "help", "recovery", "stats", "health");
 
     private final RegisterPlugin plugin;
     private final BankService bank;
     private volatile Messages messages;
+    private final ru.cherdakmd.chrdkregister.api.EconomyConfirmations confirmations = new ru.cherdakmd.chrdkregister.api.EconomyConfirmations();
+    private record WithdrawQuote(long amount, int blockWorth) { }
 
     public BankCommandHandler(RegisterPlugin plugin, BankService bank, Messages messages) {
         this.plugin = plugin;
@@ -38,10 +40,12 @@ public final class BankCommandHandler implements CommandExecutor, TabCompleter {
 
     public void setMessages(Messages messages) {
         this.messages = messages;
+        confirmations.clear();
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if(sender instanceof Player player&&!bank.authenticated(player)) {messages.send(sender,"economy.need-auth");return true;}
         String name = command.getName().toLowerCase(Locale.ROOT);
         return switch (name) {
             case "pay" -> handlePay(sender, args);
@@ -53,6 +57,15 @@ public final class BankCommandHandler implements CommandExecutor, TabCompleter {
     /* ---------------------------------- /bal ---------------------------------- */
 
     private boolean handleBalance(CommandSender sender, String[] args) {
+        if(args.length==1&&args[0].equalsIgnoreCase("health")) {
+            if (!(sender instanceof org.bukkit.command.ConsoleCommandSender || sender instanceof org.bukkit.command.RemoteConsoleCommandSender)
+                    || !sender.hasPermission("chrdkregister.admin")) { messages.send(sender,"common.no-permission");return true; }
+            var h=bank.store().health();
+            String share=h.total()==0?"0":java.math.BigDecimal.valueOf(h.topTen()).multiply(java.math.BigDecimal.valueOf(100))
+                    .divide(java.math.BigDecimal.valueOf(h.total()),2,java.math.RoundingMode.HALF_UP).toPlainString();
+            messages.send(sender,"economy.health","healthy",h.available(),"accounts",h.accounts(),"total",BankService.format(h.total()),
+                    "share",share,"pending",h.pending(),"receipts",h.receipts());return true;
+        }
         if(args.length==1&&args[0].equalsIgnoreCase("recovery")) {
             if(!sender.hasPermission("chrdkregister.admin")) { messages.send(sender,"common.no-permission"); return true; }
             messages.send(sender,"economy.cash-status","healthy",bank.store().available(),"pending",bank.store().cashPendingCount(),"receipts",bank.store().cashReceiptCount()); return true;
@@ -66,6 +79,12 @@ public final class BankCommandHandler implements CommandExecutor, TabCompleter {
             if (!(sender instanceof Player player)) {
                 messages.send(sender, "common.player-only");
                 return true;
+            }
+            if(first.equals("stats")) {
+                if(!player.hasPermission("chrdkregister.bal")) {messages.send(player,"common.no-permission");return true;}
+                var s=bank.store().personalStats(player.getUniqueId());
+                messages.send(player,"economy.personal-stats","balance",BankService.format(s.balance()),"deposited",BankService.format(s.deposited()),
+                        "withdrawn",BankService.format(s.withdrawn()),"sent",BankService.format(s.sent()),"received",BankService.format(s.received()));return true;
             }
             switch (first) {
                 case "deposit" -> {
@@ -162,7 +181,7 @@ public final class BankCommandHandler implements CommandExecutor, TabCompleter {
             messages.send(player, "common.no-permission");
             return;
         }
-        if (args.length < 2) {
+        if (args.length < 2 || args.length > 3 || (args.length==3&&!args[2].equalsIgnoreCase("confirm"))) {
             messages.send(player, "economy.usage-withdraw");
             return;
         }
@@ -170,6 +189,15 @@ public final class BankCommandHandler implements CommandExecutor, TabCompleter {
         if (amount <= 0L) {
             messages.send(player, "economy.invalid-amount");
             return;
+        }
+        if (amount >= 64) {
+            var quote=new WithdrawQuote(amount,bank.settings().blockWorth());
+            boolean confirmed=args.length==3&&args[2].equalsIgnoreCase("confirm")
+                    && confirmations.consume(player.getUniqueId(),player,quote,System.nanoTime());
+            if(!confirmed) {
+                if(!confirmations.offer(player.getUniqueId(),player,quote,System.nanoTime())) {messages.send(player,"economy.confirm-busy");return;}
+                messages.send(player,"economy.withdraw-preview","amount",BankService.format(amount),"raw",amount);return;
+            }
         }
         BankService.WithdrawResult result = bank.withdraw(player, amount);
         switch (result.status()) {
@@ -214,6 +242,20 @@ public final class BankCommandHandler implements CommandExecutor, TabCompleter {
                     "min", BankService.format(config.minPay()),
                     "max", BankService.format(config.maxPay()));
             return true;
+        }
+        if(args.length>3 || (args.length==3&&!args[2].equalsIgnoreCase("confirm")&&!args[2].equalsIgnoreCase("preview"))) {
+            messages.send(player,"economy.usage-pay");return true;
+        }
+        var quote=bank.previewPay(player,args[0],amount);
+        if(quote.status()!=BankStore.Status.OK) {
+            messages.send(player,"economy.pay-preview-refused","reason",quote.status());return true;
+        }
+        boolean confirmed=args.length==3&&args[2].equalsIgnoreCase("confirm")
+                && confirmations.consume(player.getUniqueId(),player,quote,System.nanoTime());
+        if(!confirmed) {
+            if(!confirmations.offer(player.getUniqueId(),player,quote,System.nanoTime())) {messages.send(player,"economy.confirm-busy");return true;}
+            messages.send(player,"economy.pay-preview","player",quote.name(),"amount",BankService.format(amount),"tax",BankService.format(quote.tax()),
+                    "net",BankService.format(quote.net()),"raw",amount);return true;
         }
         BankService.PayResult result = bank.pay(player, args[0], amount);
         switch (result.status()) {
@@ -326,6 +368,8 @@ public final class BankCommandHandler implements CommandExecutor, TabCompleter {
         if (name.equals("pay") && args.length == 2) {
             return List.of("10", "50", "100", "500", "1000");
         }
+        if(name.equals("pay")&&args.length==3) return List.of("preview","confirm");
+        if(name.equals("bal")&&args.length==3&&args[0].equalsIgnoreCase("withdraw")) return List.of("confirm");
         if (name.equals("baltop")) {
             return List.of("1", "2", "3");
         }

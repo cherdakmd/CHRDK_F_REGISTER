@@ -809,7 +809,7 @@ messages:
     "health-stats": "<gray>Опросов: %attempts% (успешных %ok%, сбоев %fail%), uptime %uptime%%; латентность API ~%avg_ms% мс (пик %max_ms% мс)</gray>"
     "health-stats2": "<gray>Транзакций обработано: %processed%; ждут решения: %pending%%stale%</gray>"
     "health-footer": "<gray>Журнал: /%label% donations | Очередь: /%label% pending | Форс-опрос: /%label% recheck</gray>"
-    "note": 
+    "note":
       "test-payment": "🧪 тестовый платёж — оплата не реальная"
     "testpay-granted": "<green>[ТЕСТ] Донат на %amount% ₽ (игроку «%name%») обработан движком: ранг продлён до %until% (+%days% дн.).</green>"
     "testpay-group-skipped": "<gray>[ТЕСТ] Группа ранга «%group%» не выдана: тестовая оплата не считается покупкой.</gray>"
@@ -1146,20 +1146,27 @@ messages:
   # economy — банк алмазов, /bal, /pay, /baltop (1.4.138)
   # ---------------------------------------------------------------
   "economy":
+    need-auth: '<red>Сначала авторизуйтесь: /login.</red>'
+    confirm-busy: '<yellow>Сейчас нельзя сохранить подтверждение. Подождите 30 секунд и запросите условия ещё раз. Операция не выполнена.</yellow>'
+    personal-stats: '<gold>Личный банк: %balance% алм.</gold><newline><gray>Внесено: %deposited%; снято: %withdrawn%; отправлено: %sent%; получено: %received%. Исторические счётчики банка неполные: это не все доходы/расходы и не прибыль.</gray>'
+    health: '<gold>Банк: доступен %healthy%, счетов %accounts%, на счетах %total% алм.</gold><newline><gray>Доля топ-10: %share%%; ожидают обмена: %pending%, квитанций: %receipts%. Без физических алмазов и коллективных казён; это не полный аудит экономики и не показатель эмиссии.</gray>'
+    pay-preview: '<gold>Перевод %player%: списание %amount%, комиссия %tax%, получателю %net% алм.</gold><newline><yellow>В течение 30 секунд: /pay %player% %raw% confirm</yellow><newline><gray>Это не резерв: при подтверждении банк повторно проверит доступность, лимиты и паузу.</gray>'
+    pay-preview-refused: '<red>Предпросмотр перевода недоступен: %reason%. Проверьте получателя, сумму, баланс и состояние банка. Ничего не списано.</red>'
+    withdraw-preview: '<yellow>Снятие %amount% алм. в инвентарь. В течение 30 секунд: /bal withdraw %raw% confirm. После подтверждения банк заново проверит счёт, режим и место; это не резерв.</yellow>'
     cash-playerdata-lock: '<red>Банк: обмен предметов не подтверждён. Вход приостановлен до восстановления или сверки bank.json и playerdata. Не сбрасывайте данные.</red>'
     cash-unavailable: '<yellow>Обмен не подтверждён: проверьте режим Survival/Adventure и состояние банка. Незавершённая операция восстановится после авторизации; не повторяйте выдачу вручную.</yellow>'
     cash-status: '<gray>Обмен банка: исправен %healthy% · ожидают playerdata: %pending% · сохранённых квитанций: %receipts%. Диагностика не отменяет и не повторяет операции.</gray>'
     charge-playerdata-lock: '<red>Банк не может подтвердить сохранение предметной оплаты. Игра приостановлена до сверки playerdata и квитанций администратором. Не сбрасывайте данные.</red>'
     "disabled": "<red>Банк выключен в config.yml (economy.enabled).</red>"
-    "help": "<gold>Банк алмазов</gold>\n<gray>/bal — баланс счёта и алмазов в инвентаре</gray>\n<gray>/bal <ник> — баланс другого игрока</gray>\n<gray>/bal deposit [all|hand|сумма] — положить алмазы в банк</gray>\n<gray>/bal withdraw <сумма> — снять алмазы в инвентарь</gray>\n<gray>/pay <ник> <сумма> — перевод (работает и для офлайн-игрока)</gray>\n<gray>/baltop [страница] — топ счетов</gray>"
+    "help": "<gold>Банк алмазов</gold>\n<gray>/bal — баланс счёта и алмазов в инвентаре</gray>\n<gray>/bal stats — личные исторические счётчики банка</gray>\n<gray>/bal <ник> — баланс другого игрока</gray>\n<gray>/bal deposit [all|hand|сумма] — положить алмазы в банк</gray>\n<gray>/bal withdraw <сумма> [confirm] — от 64 алмазов нужно подтверждение</gray>\n<gray>/pay <ник> <сумма> [preview|confirm] — условия, затем подтверждение за 30 секунд</gray>\n<gray>/baltop [страница] — топ счетов</gray>"
     "balance": "<gold>Баланс: <white>%balance%</white> алмазов</gold> <dark_gray>·</dark_gray> <gray>в инвентаре: <white>%inventory%</white> <dark_gray>·</dark_gray> всего: <white>%total%</white></gray>"
     "balance-other": "<gold>Баланс игрока <white>%player%</white>: <white>%balance%</white> алмазов</gold>"
     "balance-hint": "<dark_gray>Депозит: /bal deposit · снятие: /bal withdraw · перевод: /pay ник сумма</dark_gray>"
     "unknown-player": "<red>Игрок %player% не найден: он не заходил после установки банка.</red>"
     "invalid-amount": "<red>Сумма должна быть целым числом алмазов: 100, 1 000, 1k, 1.5k.</red>"
     "usage-deposit": "<yellow>/bal deposit [all|hand|сумма]</yellow>"
-    "usage-withdraw": "<yellow>/bal withdraw <сумма></yellow>"
-    "usage-pay": "<yellow>/pay <ник> <сумма></yellow>"
+    "usage-withdraw": "<yellow>/bal withdraw <сумма> [confirm]</yellow>"
+    "usage-pay": "<yellow>/pay <ник> <сумма> [preview|confirm]</yellow>"
     "nothing-to-deposit": "<yellow>В инвентаре нет обычных алмазов или алмазных блоков.</yellow>"
     "not-enough-items": "<red>В инвентаре меньше <white>%amount%</white> обычных алмазов.</red>"
     "deposit-done": "<green>В банк положено <white>%amount%</white> алмазов. Баланс: <white>%balance%</white>.</green>"
