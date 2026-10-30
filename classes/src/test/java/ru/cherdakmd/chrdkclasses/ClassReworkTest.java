@@ -12,11 +12,47 @@ class ClassReworkTest {
     private TalentService fresh(Path dir) {
         ClassStore store=new ClassStore(dir,null);
         SkillSource skills=new SkillSource(){ public boolean available(){return true;} public int totalLevel(UUID id){return 1000;} public int level(UUID id,String key){return 100;} };
-        TalentService service=new TalentService(ClassConfig.defaults(),store,skills);
+        TalentService service=new TalentService(ClassConfig.defaults(),store,skills,rank(),achievements());
         service.enableDevelopment(LegacyClassRules.capture(ClassConfig.defaults()));
         assertTrue(service.development().prepare(ID,NOW));
         assertTrue(service.choose(ID,"warrior",NOW).ok());
         return service;
+    }
+    private RankSource rank() {return new RankSource(){public boolean available(){return true;}public int rankLevel(UUID id){return 0;}};}
+    private AchievementSource achievements() {return new AchievementSource(){public boolean available(){return true;}public int unlockedCount(UUID id){return 0;}};}
+    @Test void migrationWaitsForRealSourcesAndPreservesSpentFloor(@TempDir Path dir) {
+        boolean[] available={false};
+        SkillSource skills=new SkillSource(){public boolean available(){return available[0];}public int totalLevel(UUID id){return 0;}public int level(UUID id,String key){return 0;}};
+        var store=new ClassStore(dir,null);store.setClass(ID,"warrior",NOW-1000);store.clearTalents(ID,NOW-100);
+        store.learnTalent(ID,"warrior-stoyka-1");store.learnTalent(ID,"warrior-stoyka-2");
+        int spent=LegacyClassTalents.spent("warrior",store.talents(ID));
+        store.setAbilityAt(ID,NOW-10);
+        var service=new TalentService(ClassConfig.defaults(),store,skills,rank(),achievements());
+        service.enableDevelopment(LegacyClassRules.capture(ClassConfig.defaults()));
+        assertFalse(service.development().prepare(ID,NOW));assertNull(store.development(ID));assertEquals(2,store.talentCount(ID));
+        available[0]=true;assertTrue(service.development().prepare(ID,NOW));
+        assertEquals("warrior",store.classOf(ID));assertEquals(Math.max(1,spent),service.earnedPoints(ID));assertEquals(0,service.spentPoints(ID));
+        assertEquals(NOW-100,store.respecAt(ID));assertEquals(NOW-10,store.lastAbility(ID,"warrior"));
+        assertTrue(service.learn(ID,"warrior-path-0-1").ok());
+        var q=service.development().quote(ID,ClassBuild.empty("warrior"),NOW);
+        assertTrue(service.development().apply(ID,q,NOW+1).ok());assertFalse(store.development(ID).firstBuildAvailable());
+        assertEquals(NOW-10,store.lastAbility(ID,"warrior"));
+        assertTrue(service.learn(ID,"warrior-path-0-1").ok());
+        assertEquals("respec-cooldown",service.development().apply(ID,service.development().quote(ID,ClassBuild.empty("warrior"),NOW+2),NOW+3).key());
+        int earned=service.earnedPoints(ID);assertTrue(service.development().prepare(ID,NOW+4));assertEquals(earned,service.earnedPoints(ID));
+    }
+    @Test void rankBoundariesAreStrict() {
+        var node=ClassTrees.talent("warrior-path-0-1");
+        assertThrows(IllegalArgumentException.class,()->node.rankCost(0));assertThrows(IllegalArgumentException.class,()->node.rankCost(4));
+        assertEquals(6,node.totalCost(3));
+    }
+    @Test void abilityLevelAndMasteryExclusivityAreEnforced(@TempDir Path dir) {
+        var s=fresh(dir);
+        assertFalse(s.development().problems(ID,ClassBuild.empty("warrior").equip(1,"warrior-3")).isEmpty());
+        s.store().awardClassXp(ID,ClassDevelopment.Source.COMBAT,ClassDevelopmentRules.MAX_XP);
+        Map<String,Integer> ranks=new HashMap<>();
+        for(int path=0;path<2;path++)for(int tier=1;tier<=5;tier++)ranks.put("warrior-path-"+path+"-"+tier,1);
+        assertTrue(s.development().problems(ID,new ClassBuild("warrior",ranks,List.of("warrior-3","warrior-4"))).stream().anyMatch(r->r.key().equals("development-exclusive")));
     }
     @Test void catalogHas180MeaningfulRankedNodes() {
         Set<String> ids=new HashSet<>();

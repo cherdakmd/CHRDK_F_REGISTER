@@ -63,6 +63,7 @@ public final class ClassesPlaceholders extends PlaceholderExpansion {
         if (id == null) {
             return "";
         }
+        if(plugin.store().development(id)==null && java.util.Set.of("level","points","spent","talents","next","xp","earned","trials","ability","ability2","ability_ready","ability2_ready").contains(key))return "";
         Map<EffectKind, Double> effects = service.effects(id);
         return switch (key) {
             case "class" -> playerClass == null ? ""

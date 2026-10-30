@@ -89,7 +89,7 @@ final class AbilityService {
             return ClassResult.fail("ability-dead");
         }
         if (!plugin.ready(player)) return ClassResult.fail("development-pending");
-        if (plugin.gameplay().inPvp(id) || !plugin.gameplay().context(player)) return ClassResult.fail("development-pve-only");
+        if (!plugin.gameplay().supportAllowed(player) || !plugin.gameplay().context(player)) return ClassResult.fail("development-pve-only");
         ClassAbility ability = plugin.service().development().equipped(id, slot);
         if (ability == null) {
             return ClassResult.fail("class-required");
@@ -253,7 +253,9 @@ final class AbilityService {
             if (!(entity instanceof LivingEntity victim)) {
                 continue;
             }
+            double before = victim.getHealth();
             victim.damage(ability.power(), player);
+            if (victim.getHealth() >= before) continue;
             victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 1,
                     false, true, true));
             player.getWorld().spawnParticle(Particle.SNOWFLAKE, victim.getLocation().add(0.0, 1.0, 0.0),
@@ -285,7 +287,9 @@ final class AbilityService {
             if (!inCone(direction, toTarget, SCORCH_HALF_ANGLE)) {
                 continue;
             }
+            double before = victim.getHealth();
             victim.damage(ability.power(), player);
+            if (victim.getHealth() >= before) continue;
             victim.setFireTicks(Math.max(victim.getFireTicks(), SCORCH_FIRE_TICKS));
             player.getWorld().spawnParticle(Particle.FLAME, victim.getLocation().add(0.0, 1.0, 0.0),
                     12, 0.3, 0.5, 0.3, 0.02);
@@ -374,7 +378,9 @@ final class AbilityService {
                 };
                 if (!undead) damage/=2;
             }
+            double before=enemy.getHealth();
             enemy.damage(damage,player);
+            if (enemy.getHealth()>=before)continue;
             if (ability == ClassAbility.WARRIOR_BASH || ability == ClassAbility.WARRIOR_EARTH) {
                 Vector push=enemy.getLocation().toVector().subtract(player.getLocation().toVector());
                 if(push.lengthSquared()>.01) enemy.setVelocity(push.normalize().multiply(.5).setY(.25));

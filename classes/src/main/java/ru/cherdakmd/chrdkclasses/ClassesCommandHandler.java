@@ -168,10 +168,10 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
             plugin.messages().send(sender, "effect." + entry.getKey().id(),
                     "amount", ClassMath.amount(entry.getKey(), entry.getValue()));
         }
-        for (String branch : ClassCatalog.branches(target.id())) {
+        for (String branch : ClassTrees.branches(target.id())) {
             plugin.messages().send(sender, "info-branch-header", "branch",
                     Messages.trusted(plugin.messages().raw("branch." + branch)));
-            for (Talent talent : ClassCatalog.branch(target.id(), branch)) {
+            for (Talent talent : ClassTrees.talents(target.id()).stream().filter(t->t.branch().equals(branch)).toList()) {
                 plugin.messages().send(sender, "info-talent-line",
                         "talent", Messages.trusted(plugin.messages().raw(
                                 "talent." + talent.id() + ".name")),
@@ -395,7 +395,7 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
                         "class." + playerClass.id() + ".name")),
                 "level", String.valueOf(service.level(target)),
                 "points", String.valueOf(service.availablePoints(target)),
-                "talents", String.valueOf(plugin.store().talentCount(target)));
+                "talents", String.valueOf(plugin.store().build(target)==null?plugin.store().talentCount(target):plugin.store().build(target).ranks().size()));
     }
 
     private void adminSet(CommandSender sender, String[] args) {

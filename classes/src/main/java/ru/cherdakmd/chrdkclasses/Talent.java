@@ -28,7 +28,10 @@ public record Talent(String id, String classId, String branch, int tier, int cos
                   String skill, int skillLevel, EffectKind kind, double value) {
         this(id, classId, branch, tier, cost, requires, skill, skillLevel, kind, value, 1, 1, "");
     }
-    public int rankCost(int rank) { return maxRank == 1 ? cost : rank; }
+    public int rankCost(int rank) {
+        if (rank < 1 || rank > maxRank) throw new IllegalArgumentException("Некорректный следующий ранг");
+        return maxRank == 1 ? cost : rank;
+    }
     public int totalCost(int rank) {
         if (rank < 0 || rank > maxRank) throw new IllegalArgumentException("Некорректный ранг таланта");
         return maxRank == 1 ? rank * cost : rank * (rank + 1) / 2;

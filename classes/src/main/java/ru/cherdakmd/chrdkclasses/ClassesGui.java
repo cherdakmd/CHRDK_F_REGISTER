@@ -1,777 +1,87 @@
 package ru.cherdakmd.chrdkclasses;
 
 import net.kyori.adventure.text.Component;
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryDragEvent;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryHolder;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.event.*;
+import org.bukkit.event.inventory.*;
+import org.bukkit.inventory.*;
 import ru.cherdakmd.chrdkregister.Messages;
+import java.util.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.UUID;
-
-/**
- * Меню классов: выбор, карточка стиля и дерево талантов (1.4.164).
- *
- * <p>Три экрана: главный (кто я и кем могу стать), карточка класса (что он даёт
- * и кнопка подтверждения) и дерево (15 узлов тремя ветками). Меню ничего не
- * решает само: клик зовёт {@link TalentService}, поэтому выбрать класс или
- * выучить талант в обход очков и требований нельзя.</p>
- */
+/** Выбор четырёх ролей. Весь прогресс и распределение показывает DevelopmentGui. */
 final class ClassesGui implements Listener {
-
-    private static final int SIZE = 54;
-
-    /** Экран, который открыт: от него зависит разбор клика. */
-    enum Screen {
-        MAIN,
-        INFO,
-        TALENTS,
-        PASSPORT,
-        EFFECTS,
-        RESPEC_PREVIEW
-    }
-
-    static final class Holder implements InventoryHolder {
-        private final UUID owner;
-        private final Screen screen;
-        private final String classId;
-        private Inventory inventory;
-        private ClassRespecQuote quote;
-        private boolean consumed;
-        private Player quoteOwner;
-
-        Holder(UUID owner, Screen screen, String classId) {
-            this.owner = owner;
-            this.screen = screen;
-            this.classId = classId == null ? "" : classId;
-        }
-
-        @Override
-        public Inventory getInventory() {
-            return inventory;
-        }
-    }
-
-    private static final int INFO_SLOT = 4;
-    private static final int CLOSE_SLOT = 49;
-    private static final int BACK_SLOT = 45;
-    /**
-     * В дереве навигация сверху: пять ярусов занимают все нижние ряды, и
-     * кнопки в подвале отняли бы место у мастерского яруса.
-     */
-    private static final int TREE_CLOSE_SLOT = 8;
-    private static final int TREE_BACK_SLOT = 0;
-    /** Четыре класса в ряд: слоты 19, 21, 23, 25. */
-    private static final int[] CLASS_SLOTS = {19, 21, 23, 25};
-    private static final int TALENTS_SLOT = 39;
-    /** Умение класса — между деревом и пересборкой. */
-    private static final int ABILITY_SLOT = 40;
-    /** Второе умение — отдельная кнопка рядом (1.4.175). */
-    private static final int ABILITY2_SLOT = 42;
-    private static final int RESPEC_SLOT = 41;
-    private static final int TREE_RESPEC_SLOT = 45;
-    private static final int SUMMARY_SLOT = 46;
-    /** Карточка класса в дереве — правый нижний угол. */
-    private static final int TREE_SUMMARY_SLOT = 53;
-    /** Подтверждение выбора в карточке класса. */
-    private static final int CONFIRM_SLOT = 31;
-    /** Превью веток в карточке класса. */
-    private static final int[] PREVIEW_SLOTS = {19, 21, 23};
-    /** Заголовки веток в дереве — над колонками 1, 4 и 7. */
-    private static final int[] BRANCH_SLOTS = {1, 4, 7};
-    /** Ярусы дерева: пять рядов по три колонки (пятый — мастерский). */
-    private static final int[][] TALENT_SLOTS = {
-            {10, 13, 16},
-            {19, 22, 25},
-            {28, 31, 34},
-            {37, 40, 43},
-            {46, 49, 52}};
-
-    /** Ярус, который открывается только навыком 75; подсвечивается в тексте. */
-    static final int MASTERY_TIER = 5;
-
     private final ClassesPlugin plugin;
-
-    ClassesGui(ClassesPlugin plugin) {
-        this.plugin = plugin;
+    private static final int[] SLOTS={19,21,23,25};
+    private static final class Holder implements InventoryHolder {
+        final Player owner;
+        final PlayerClass candidate;
+        Inventory inventory;
+        boolean consumed;
+        Holder(Player owner,PlayerClass candidate){this.owner=owner;this.candidate=candidate;}
+        public Inventory getInventory(){return inventory;}
     }
-
-    /* --------------------------------- экраны --------------------------------- */
-
-    /** Выбранный класс ведёт в паспорт, первый выбор — в список ролей. */
-    void open(Player player) {
-        if (player == null) {
-            return;
-        }
-        if (!plugin.ready(player)) { plugin.messages().send(player,"development-pending"); return; }
-        if (plugin.service().classOf(player.getUniqueId()) != null) {
-            plugin.developmentGui().open(player);
-        } else {
-            openChoices(player);
-        }
+    ClassesGui(ClassesPlugin plugin){this.plugin=plugin;}
+    void open(Player p){if(p!=null)plugin.developmentGui().open(p);}
+    void openTalents(Player p){if(p!=null)plugin.developmentGui().tree(p,0);}
+    void openRespec(Player p){if(p!=null&&plugin.ready(p))plugin.developmentGui().reset(p);}
+    private void button(Holder h,int slot,Material material,String key,List<Component> lore,Object...args){
+        ItemStack item=new ItemStack(material);var meta=item.getItemMeta();
+        meta.displayName(plugin.messages().get(key,args));meta.lore(lore);item.setItemMeta(meta);h.inventory.setItem(slot,item);
     }
-
-    /** Список ролей доступен и после выбора: смена отдельно от просмотра паспорта. */
-    void openChoices(Player player) {
-        if (player == null) {
-            return;
-        }
-        UUID id = player.getUniqueId();
-        TalentService service = plugin.service();
-        PlayerClass current = service.classOf(id);
-        Holder holder = new Holder(id, Screen.MAIN, current == null ? "" : current.id());
-        Inventory inventory = Bukkit.createInventory(holder, SIZE,
-                plugin.messages().get("menu-title"));
-        holder.inventory = inventory;
-
-        inventory.setItem(INFO_SLOT, current == null
-                ? simple(Material.WHITE_BANNER, "menu-info-none")
-                : summaryItem(player, current));
-
-        List<PlayerClass> classes = ClassCatalog.classes();
-        for (int index = 0; index < classes.size() && index < CLASS_SLOTS.length; index++) {
-            PlayerClass candidate = classes.get(index);
-            inventory.setItem(CLASS_SLOTS[index], classItem(candidate, candidate == current));
-        }
-        List<Component> talentsLore = new ArrayList<>();
-        if (current == null) {
-            talentsLore.add(plugin.messages().get("menu-talents-none"));
-        } else {
-            var snapshot = service.progressSnapshot(id, System.currentTimeMillis());
-            talentsLore.add(snapshot.ready() ? plugin.messages().get("menu-talents-lore",
-                    "points", String.valueOf(snapshot.basis().freePoints()))
-                    : plugin.messages().get("passport-data-unavailable"));
-            talentsLore.add(plugin.messages().get("menu-talents-nodes",
-                    "count", String.valueOf(plugin.store().talentCount(id)),
-                    "max", String.valueOf(ClassCatalog.TALENTS_PER_CLASS)));
-        }
-        inventory.setItem(TALENTS_SLOT, button(Material.BOOK, "menu-talents-name", talentsLore));
-        inventory.setItem(ABILITY_SLOT, abilityItem(player, current, ClassAbility.FIRST));
-        inventory.setItem(ABILITY2_SLOT, abilityItem(player, current, ClassAbility.SECOND));
-        inventory.setItem(RESPEC_SLOT, respecItem(id));
-        inventory.setItem(CLOSE_SLOT, button(Material.BARRIER, "menu-close", List.of()));
-        player.openInventory(inventory);
+    private Holder holder(Player p,PlayerClass candidate){
+        Holder h=new Holder(p,candidate);h.inventory=Bukkit.createInventory(h,54,plugin.messages().get("menu-title"));
+        button(h,45,Material.ARROW,"menu-back",List.of());button(h,49,Material.BARRIER,"menu-close",List.of());return h;
     }
-
-    private static final int PASSPORT_PROGRESS = 13;
-    private static final int PASSPORT_EFFECTS = 22;
-    private static final int PASSPORT_REFRESH = 48;
-    private static final int PASSPORT_CHOICES = 50;
-
-    private void openPassport(Player player) {
-        if (plugin.service().development() != null) {plugin.developmentGui().open(player); return;}
-
-        UUID id = player.getUniqueId();
-        PlayerClass current = plugin.service().classOf(id);
-        if (current == null) {
-            openChoices(player);
-            return;
+    void openChoices(Player p){
+        if(!plugin.ready(p)){plugin.messages().send(p,"development-pending");return;}
+        Holder h=holder(p,null);
+        button(h,4,Material.EXPERIENCE_BOTTLE,"development-passport",plugin.developmentGui().progress(p.getUniqueId()));
+        for(int i=0;i<SLOTS.length;i++){
+            var role=PlayerClass.values()[i];List<Component> lore=new ArrayList<>();
+            lore.add(plugin.messages().get("class."+role.id()+".desc"));
+            for(var entry:ClassCatalog.passive(role.id()).entrySet())lore.add(plugin.messages().get("effect."+entry.getKey().id(),"amount",ClassMath.amount(entry.getKey(),entry.getValue())));
+            lore.add(plugin.messages().get(plugin.service().classOf(p.getUniqueId())==role?"menu-class-current":"menu-class-click"));
+            button(h,SLOTS[i],Material.matchMaterial(role.iconName()),"class."+role.id()+".name",lore);
         }
-        Holder holder = new Holder(id, Screen.PASSPORT, current.id());
-        Inventory inventory = Bukkit.createInventory(holder, SIZE, plugin.messages().get("passport-title"));
-        holder.inventory = inventory;
-        inventory.setItem(INFO_SLOT, button(material(current.iconName()), "class." + current.id() + ".name",
-                List.of(plugin.messages().get("passport-current-tree", "count", String.valueOf(plugin.store().talentCount(id)),
-                        "max", String.valueOf(ClassCatalog.TALENTS_PER_CLASS)))));
-        var snapshot = plugin.service().progressSnapshot(id, System.currentTimeMillis());
-        inventory.setItem(PASSPORT_PROGRESS, button(Material.EXPERIENCE_BOTTLE, "passport-progress-name",
-                ClassPassportText.progress(plugin.messages(), snapshot, plugin.service().spentPoints(id))));
-        inventory.setItem(PASSPORT_EFFECTS, button(Material.BEACON, "passport-effects-name",
-                List.of(plugin.messages().get("passport-effects-hint"))));
-        inventory.setItem(TALENTS_SLOT, button(Material.BOOK, "menu-talents-name",
-                List.of(plugin.messages().get("passport-tree-hint"))));
-        inventory.setItem(ABILITY_SLOT, abilityItem(player, current, ClassAbility.FIRST));
-        inventory.setItem(ABILITY2_SLOT, abilityItem(player, current, ClassAbility.SECOND));
-        inventory.setItem(RESPEC_SLOT, respecItem(id));
-        inventory.setItem(PASSPORT_REFRESH, simple(Material.CLOCK, "passport-refresh"));
-        inventory.setItem(PASSPORT_CHOICES, simple(Material.COMPASS, "passport-choices"));
-        inventory.setItem(CLOSE_SLOT, simple(Material.BARRIER, "menu-close"));
-        player.openInventory(inventory);
+        p.openInventory(h.inventory);
     }
-
-    private void openEffects(Player player) {
-        UUID id = player.getUniqueId();
-        PlayerClass current = plugin.service().classOf(id);
-        if (current == null) {
-            open(player);
-            return;
+    void openInfo(Player p,PlayerClass role){
+        if(role==null||!plugin.ready(p))return;
+        Holder h=holder(p,role);
+        button(h,4,Material.matchMaterial(role.iconName()),"class."+role.id()+".name",List.of(plugin.messages().get("class."+role.id()+".desc")));
+        for(int page=0;page<3;page++){
+            List<Component> lore=new ArrayList<>();lore.add(plugin.messages().get("development-tree-hint"));
+            for(Talent node:ClassTrees.page(role.id(),page))lore.add(plugin.messages().get("talent."+node.id()+".name"));
+            button(h,20+page*2,Material.ENCHANTED_BOOK,"development-spec-"+role.id()+"-"+page,lore);
         }
-        Holder holder = new Holder(id, Screen.EFFECTS, current.id());
-        Inventory inventory = Bukkit.createInventory(holder, SIZE, plugin.messages().get("passport-effects-name"));
-        holder.inventory = inventory;
-        List<Component> info = new ArrayList<>();
-        info.add(plugin.messages().get("passport-effects-scope"));
-        info.add(plugin.messages().get(plugin.config().effectsEnabled() ? "passport-effects-enabled" : "passport-effects-disabled"));
-        inventory.setItem(INFO_SLOT, button(Material.BEACON, "passport-effects-name", info));
-        int index = 0;
-        for (ClassEffectView view : plugin.service().effectDetails(id).values()) {
-            List<Component> lore = new ArrayList<>(ClassPassportText.effect(plugin.messages(), view));
-            if (view.kind() == EffectKind.REGEN || view.kind() == EffectKind.SATURATION) {
-                lore.add(plugin.messages().get("passport-effect-pulse", "seconds", String.valueOf(plugin.config().pulseSeconds()),
-                        "combat", String.valueOf(plugin.config().outOfCombatSeconds())));
-            }
-            if (view.kind() == EffectKind.SATURATION) {
-                lore.add(plugin.messages().get("passport-effect-food"));
-            }
-            inventory.setItem(19 + index++, button(materialFor(view.kind()), "passport-effect-name", lore,
-                    "effect", Messages.trusted(plugin.messages().raw("effect." + view.kind().id(),
-                            "amount", ClassMath.amount(view.kind(), view.effective())))));
-        }
-        inventory.setItem(BACK_SLOT, simple(Material.ARROW, "menu-back"));
-        inventory.setItem(CLOSE_SLOT, simple(Material.BARRIER, "menu-close"));
-        player.openInventory(inventory);
+        ClassResult check=plugin.service().checkChoose(p.getUniqueId(),role.id(),System.currentTimeMillis());
+        List<Component> lore=new ArrayList<>();
+        lore.add(plugin.messages().get("development-choose-consequences"));
+        lore.add(plugin.messages().get(check.key(),ClassText.localise(plugin.messages(),check).toArray()));
+        button(h,31,check.ok()?Material.LIME_DYE:Material.GRAY_DYE,"menu-confirm-name",lore);
+        p.openInventory(h.inventory);
     }
-
-    /** Открывается из GUI и команды: ещё ничего не стирает и не снимает откаты. */
-    void openRespec(Player player) {
-        if (plugin.service().development() != null) {if(plugin.ready(player))plugin.developmentGui().reset(player); return;}
-
-        UUID id = player.getUniqueId();
-        var snapshot = plugin.service().progressSnapshot(id, System.currentTimeMillis());
-        if (!snapshot.ready()) {
-            plugin.messages().send(player, "passport-data-unavailable");
-            open(player);
-            return;
-        }
-        if (snapshot.basis().deficit() > 0) {
-            plugin.messages().send(player, "respec-budget-unconfirmed");
-            return;
-        }
-        if (plugin.store().talentCount(id) == 0) {
-            plugin.messages().send(player, "respec-empty");
-            return;
-        }
-        Holder holder = new Holder(id, Screen.RESPEC_PREVIEW, snapshot.basis().classId());
-        holder.quote = ClassRespecQuote.create(snapshot.basis(), plugin.service().perks(id)
-                .respecCooldownSeconds(plugin.config().respecCooldownSeconds()));
-        holder.quoteOwner = player;
-        Inventory inventory = Bukkit.createInventory(holder, SIZE, plugin.messages().get("respec-preview-title"));
-        holder.inventory = inventory;
-        LegacyClassBasis basis = snapshot.basis();
-        List<Component> lore = new ArrayList<>();
-        lore.add(plugin.messages().get("respec-preview-points", "spent", String.valueOf(basis.spentPoints()),
-                "before", String.valueOf(basis.freePoints()), "after", String.valueOf(basis.earnedPoints())));
-        lore.add(plugin.messages().get("respec-preview-cooldown", "time", ClassMath.clock(
-                holder.quote.cooldownSeconds())));
-        lore.add(plugin.messages().get("respec-preview-abilities"));
-        lore.add(plugin.messages().get("respec-preview-lifetime"));
-        for (ClassEffectView view : plugin.service().effectDetails(id).values()) {
-            if (view.talents() > 0) {
-                lore.add(plugin.messages().get("respec-preview-effect", "before", Messages.trusted(
-                        plugin.messages().raw("effect." + view.kind().id(), "amount", ClassMath.amount(view.kind(), view.effective()))),
-                        "after", Messages.trusted(plugin.messages().raw("effect." + view.kind().id(), "amount",
-                                ClassMath.amount(view.kind(), ClassMath.total(view.kind(), view.passive()))))));
-            }
-        }
-        inventory.setItem(INFO_SLOT, button(Material.GRINDSTONE, "respec-preview-title", lore));
-        long left = plugin.service().respecCooldownLeft(id, System.currentTimeMillis());
-        inventory.setItem(CONFIRM_SLOT, left > 0 ? button(Material.CLOCK, "menu-confirm-name",
-                List.of(plugin.messages().get("respec-cooldown", "time", ClassMath.clock(left))))
-                : simple(Material.LIME_DYE, "respec-preview-confirm"));
-        inventory.setItem(BACK_SLOT, simple(Material.ARROW, "menu-back"));
-        inventory.setItem(CLOSE_SLOT, simple(Material.BARRIER, "menu-close"));
-        player.openInventory(inventory);
-    }
-
-    /** Карточка класса перед выбором. */
-    void openInfo(Player player, PlayerClass candidate) {
-        if (player == null || candidate == null) {
-            return;
-        }
-        Holder holder = new Holder(player.getUniqueId(), Screen.INFO, candidate.id());
-        Inventory inventory = Bukkit.createInventory(holder, SIZE,
-                plugin.messages().get("info-title", "class", Messages.trusted(
-                        plugin.messages().raw("class." + candidate.id() + ".name"))));
-        holder.inventory = inventory;
-
-        TalentService service = plugin.service();
-        PlayerClass current = service.classOf(player.getUniqueId());
-
-        List<Component> lore = new ArrayList<>();
-        lore.add(plugin.messages().get("class." + candidate.id() + ".desc"));
-        lore.add(Component.empty());
-        lore.add(plugin.messages().get("menu-class-passive"));
-        for (var entry : ClassCatalog.passive(candidate.id()).entrySet()) {
-            lore.add(effectLine(entry.getKey(), entry.getValue()));
-        }
-        inventory.setItem(INFO_SLOT, button(material(candidate.iconName()),
-                "class." + candidate.id() + ".name", lore));
-
-        List<String> branches = ClassCatalog.branches(candidate.id());
-        for (int index = 0; index < branches.size() && index < PREVIEW_SLOTS.length; index++) {
-            inventory.setItem(PREVIEW_SLOTS[index],
-                    branchItem(candidate.id(), branches.get(index), true));
-        }
-        inventory.setItem(CONFIRM_SLOT, confirmItem(player, candidate, current));
-        inventory.setItem(BACK_SLOT, button(Material.ARROW, "menu-back", List.of()));
-        inventory.setItem(CLOSE_SLOT, button(Material.BARRIER, "menu-close", List.of()));
-        player.openInventory(inventory);
-    }
-
-    /** Дерево талантов выбранного класса. */
-    void openTalents(Player player) {
-        if (plugin.service().development() != null) {plugin.developmentGui().tree(player,0); return;}
-
-        if (player == null) {
-            return;
-        }
-        TalentService service = plugin.service();
-        PlayerClass current = service.classOf(player.getUniqueId());
-        if (current == null) {
-            plugin.messages().send(player, "class-required");
-            open(player);
-            return;
-        }
-        Holder holder = new Holder(player.getUniqueId(), Screen.TALENTS, current.id());
-        Inventory inventory = Bukkit.createInventory(holder, SIZE,
-                plugin.messages().get("talents-title", "class", Messages.trusted(
-                        plugin.messages().raw("class." + current.id() + ".name"))));
-        holder.inventory = inventory;
-
-        List<String> branches = ClassCatalog.branches(current.id());
-        for (int index = 0; index < branches.size() && index < BRANCH_SLOTS.length; index++) {
-            inventory.setItem(BRANCH_SLOTS[index],
-                    branchItem(current.id(), branches.get(index), false));
-        }
-        var progressSnapshot = service.progressSnapshot(player.getUniqueId(), System.currentTimeMillis());
-        for (int branchIndex = 0; branchIndex < branches.size() && branchIndex < 3; branchIndex++) {
-            for (Talent talent : ClassCatalog.branch(current.id(), branches.get(branchIndex))) {
-                int tier = Math.clamp(talent.tier(), 1, TALENT_SLOTS.length);
-                if (branchIndex < TALENT_SLOTS[tier - 1].length) {
-                    inventory.setItem(TALENT_SLOTS[tier - 1][branchIndex],
-                            talentItem(player, talent, progressSnapshot));
-                }
-            }
-        }
-        inventory.setItem(TREE_SUMMARY_SLOT, summaryItem(player, current));
-        inventory.setItem(TREE_BACK_SLOT, button(Material.ARROW, "menu-back", List.of()));
-        inventory.setItem(TREE_RESPEC_SLOT, respecItem(player.getUniqueId()));
-        inventory.setItem(TREE_CLOSE_SLOT, button(Material.BARRIER, "menu-close", List.of()));
-        player.openInventory(inventory);
-    }
-
-    /* --------------------------------- предметы -------------------------------- */
-
-    private ItemStack summaryItem(Player player, PlayerClass playerClass) {
-        UUID id = player.getUniqueId();
-        TalentService service = plugin.service();
-        List<Component> lore = new ArrayList<>();
-        lore.add(plugin.messages().get("menu-summary-class",
-                "class", Messages.trusted(plugin.messages().raw(
-                        "class." + playerClass.id() + ".name"))));
-        var snapshot = service.progressSnapshot(id, System.currentTimeMillis());
-        lore.addAll(ClassPassportText.progress(plugin.messages(), snapshot, service.spentPoints(id)));
-        lore.add(plugin.messages().get("menu-summary-talents", "count", String.valueOf(service.store().talentCount(id)),
-                "max", String.valueOf(ClassCatalog.TALENTS_PER_CLASS)));
-        return button(material(playerClass.iconName()), "menu-summary-name", lore);
-    }
-
-    private ItemStack classItem(PlayerClass candidate, boolean current) {
-        List<Component> lore = new ArrayList<>();
-        lore.add(plugin.messages().get("class." + candidate.id() + ".desc"));
-        lore.add(Component.empty());
-        lore.add(plugin.messages().get("menu-class-passive"));
-        for (var entry : ClassCatalog.passive(candidate.id()).entrySet()) {
-            lore.add(effectLine(entry.getKey(), entry.getValue()));
-        }
-        lore.add(Component.empty());
-        lore.add(plugin.messages().get(current ? "menu-class-current" : "menu-class-click"));
-        return button(material(candidate.iconName()), "class." + candidate.id() + ".name", lore);
-    }
-
-    private ItemStack branchItem(String classId, String branch, boolean preview) {
-        List<Talent> talents = ClassCatalog.branch(classId, branch);
-        List<Component> lore = new ArrayList<>();
-        if (preview) {
-            for (Talent talent : talents) {
-                lore.add(plugin.messages().get("menu-branch-preview-line",
-                        "cost", String.valueOf(talent.cost()),
-                        "effect", Messages.trusted(plugin.messages().raw(
-                                "effect." + talent.kind().id(),
-                                "amount", ClassMath.amount(talent.kind(), talent.value())))));
-            }
-            if (!talents.isEmpty()) {
-                lore.add(Component.empty());
-                lore.add(plugin.messages().get("menu-branch-preview-hint"));
-            }
-        }
-        Material icon = talents.isEmpty() ? Material.BOOK : materialFor(talents.get(0).kind());
-        return button(icon, "branch." + branch, lore);
-    }
-
-    private ItemStack talentItem(Player player, Talent talent, LegacyClassSnapshotService.Result progress) {
-        UUID id = player.getUniqueId();
-        TalentService service = plugin.service();
-        ClassResult state = service.checkLearn(id, talent.id());
-        boolean known = state.key().equals("talent-known");
-
-        List<Component> lore = new ArrayList<>();
-        lore.add(plugin.messages().get("talent." + talent.id() + ".desc"));
-        lore.add(Component.empty());
-        lore.add(effectLine(talent.kind(), talent.value()));
-        if (!known) {
-            ClassEffectView view = service.effectDetails(id).get(talent.kind());
-            lore.add(plugin.messages().get("passport-talent-gain", "effect", Messages.trusted(
-                    plugin.messages().raw("effect." + talent.kind().id(), "amount", ClassMath.amount(talent.kind(), view.gain(talent.value()))))));
-            if (view.gain(talent.value()) + 0.0000001 < talent.value()) {
-                lore.add(plugin.messages().get("passport-talent-capped"));
-            }
-            if (progress.ready() && progress.basis().freePoints() >= talent.cost()) {
-                lore.add(plugin.messages().get("passport-talent-remaining", "points",
-                        String.valueOf(progress.basis().freePoints() - talent.cost())));
-            }
-        }
-        if (talent.tier() >= MASTERY_TIER) {
-            lore.add(plugin.messages().get("menu-talent-mastery"));
-        }
-        if (talent.needsSkill()) {
-            ClassDataRead have = service.skillSnapshot(id, talent.skill());
-            ClassDataRead rank = progress.sources().get(LegacyClassSnapshotService.Source.RANKS);
-            if (have.usable() && rank.usable()) {
-                int required = RankPerks.of(rank.value()).skillRequirement(talent.skillLevel());
-                lore.add(plugin.messages().get("menu-talent-skill", "skill", Messages.trusted(plugin.messages().raw(
-                        "skill." + talent.skill() + ".name")), "level", String.valueOf(required),
-                        "have", String.valueOf(have.value())));
-            } else {
-                lore.add(plugin.messages().get("passport-skill-unavailable"));
-            }
-        }
-        lore.add(Component.empty());
-        lore.add(known || progress.ready() ? statusLine(state, talent, id)
-                : plugin.messages().get("passport-data-unavailable"));
-        lore.add(plugin.messages().get("menu-talent-cost", "cost",
-                String.valueOf(talent.cost())));
-
-        Material icon = known ? Material.LIME_DYE
-                : progress.ready() && state.ok() ? materialFor(talent.kind()) : Material.GRAY_DYE;
-        return button(icon, "talent." + talent.id() + ".name", lore);
-    }
-
-    private Component statusLine(ClassResult state, Talent talent, UUID playerId) {
-        return switch (state.key()) {
-            case "talent-known" -> plugin.messages().get("menu-talent-known");
-            case "talent-locked" -> plugin.messages().get("menu-talent-locked", "talent",
-                    Messages.trusted(plugin.messages().raw(
-                            "talent." + talent.requires() + ".name")));
-            case "talent-skill" -> plugin.messages().get("menu-talent-skill-locked",
-                    "level", String.valueOf(plugin.service().requiredSkill(playerId, talent)));
-            case "talent-points" -> plugin.messages().get("menu-talent-no-points",
-                    "points", String.valueOf(plugin.service().availablePoints(playerId)));
-            case "class-required" -> plugin.messages().get("menu-talent-no-class");
-            default -> plugin.messages().get("menu-talent-ready");
-        };
-    }
-
-    private ItemStack confirmItem(Player player, PlayerClass candidate, PlayerClass current) {
-        UUID id = player.getUniqueId();
-        TalentService service = plugin.service();
-        List<Component> lore = new ArrayList<>();
-        if (current == candidate) {
-            lore.add(plugin.messages().get("menu-confirm-same"));
-            return button(Material.GRAY_DYE, "menu-confirm-name", lore);
-        }
-        if (current != null && service.spentPoints(id) > service.earnedPoints(id)) {
-            return button(Material.GRAY_DYE, "menu-confirm-name",
-                    List.of(plugin.messages().get("class-budget-unconfirmed")));
-        }
-        long left = service.changeCooldownLeft(id, System.currentTimeMillis());
-        if (left > 0) {
-            lore.add(plugin.messages().get("menu-confirm-cooldown", "time", ClassMath.clock(left)));
-            return button(Material.CLOCK, "menu-confirm-name", lore);
-        }
-        lore.add(current == null
-                ? plugin.messages().get("menu-confirm-choose-lore")
-                : plugin.messages().get("menu-confirm-change-lore",
-                "class", Messages.trusted(plugin.messages().raw(
-                        "class." + current.id() + ".name"))));
-        return button(current == null ? Material.LIME_DYE : Material.ORANGE_DYE,
-                "menu-confirm-name", lore);
-    }
-
-    /**
-     * Кнопка умения: имя, описание и состояние отката (1.4.175 — по слоту).
-     *
-     * <p>Оба умения выглядят одинаково и отличаются только содержимым: игроку
-     * не нужно помнить, что «кнопка справа — вторая», имя написано на самой
-     * кнопке.</p>
-     */
-    private ItemStack abilityItem(Player player, PlayerClass current, int slot) {
-        String nameKey = slot == ClassAbility.SECOND ? "menu-ability-second-name" : "menu-ability-name";
-        List<Component> lore = new ArrayList<>();
-        if (current == null) {
-            lore.add(plugin.messages().get("menu-ability-none"));
-            return button(Material.GRAY_DYE, nameKey, lore);
-        }
-        if (!player.hasPermission("chrdkclasses.ability")) {
-            return button(Material.GRAY_DYE, nameKey, List.of(plugin.messages().get("no-permission")));
-        }
-        ClassAbility ability = ClassAbility.of(current, slot);
-        if (!plugin.config().abilitiesEnabled() || ability == null) {
-            lore.add(plugin.messages().get("ability-disabled"));
-            return button(Material.GRAY_DYE, nameKey, lore);
-        }
-        lore.add(plugin.messages().get("ability." + ability.key() + ".name"));
-        lore.add(plugin.messages().get("ability." + ability.key() + ".desc"));
-        lore.add(Component.empty());
-        long left = plugin.abilities().cooldownLeft(player.getUniqueId(), current, slot);
-        lore.add(left > 0
-                ? plugin.messages().get("menu-ability-cooldown", "time", ClassMath.clockMillis(left))
-                : plugin.messages().get("menu-ability-ready"));
-        return button(material(ability.iconName()), nameKey, lore);
-    }
-
-    private ItemStack respecItem(UUID id) {
-        TalentService service = plugin.service();
-        List<Component> lore = new ArrayList<>();
-        lore.add(plugin.messages().get("menu-respec-lore"));
-        long left = service.respecCooldownLeft(id, System.currentTimeMillis());
-        if (left > 0) {
-            lore.add(plugin.messages().get("menu-respec-cooldown", "time", ClassMath.clock(left)));
-        } else if (service.store().talentCount(id) == 0) {
-            lore.add(plugin.messages().get("menu-respec-empty"));
-        } else {
-            lore.add(plugin.messages().get("menu-respec-ready",
-                    "talents", String.valueOf(service.store().talentCount(id)),
-                    "cost", String.valueOf(service.spentPoints(id))));
-        }
-        return button(Material.GRINDSTONE, "menu-respec-name", lore);
-    }
-
-    private Component effectLine(EffectKind kind, double value) {
-        return plugin.messages().get("effect." + kind.id(),
-                "amount", ClassMath.amount(kind, value));
-    }
-
-    /* ---------------------------------- клики --------------------------------- */
-
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    public void onClick(InventoryClickEvent event) {
-        if (!(event.getInventory().getHolder() instanceof Holder holder)) {
-            return;
-        }
+    @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=false)
+    public void click(InventoryClickEvent event){
+        if(!(event.getView().getTopInventory().getHolder() instanceof Holder h))return;
         event.setCancelled(true);
-        if (!(event.getWhoClicked() instanceof Player player)
-                || !holder.owner.equals(player.getUniqueId())
-                || event.getRawSlot() < 0 || event.getRawSlot() >= SIZE) {
-            return;
-        }
-        if (!player.hasPermission("chrdkclasses.use") || !plugin.config().enabled() || !plugin.ready(player)) {
-            player.closeInventory();
-            plugin.messages().send(player, plugin.config().enabled() ? "no-permission" : "disabled");
-            return;
-        }
-        int slot = event.getRawSlot();
-        // В дереве кнопки сверху: нижние ряды заняты ярусами.
-        boolean tree = holder.screen == Screen.TALENTS;
-        if (slot == (tree ? TREE_CLOSE_SLOT : CLOSE_SLOT)) {
-            player.closeInventory();
-            return;
-        }
-        if (slot == (tree ? TREE_BACK_SLOT : BACK_SLOT)) {
-            open(player);
-            return;
-        }
-        switch (holder.screen) {
-            case MAIN -> clickMain(player, slot);
-            case INFO -> clickInfo(player, holder, slot);
-            case TALENTS -> clickTalents(player, holder.classId, slot);
-            case PASSPORT -> {
-                if (slot == PASSPORT_EFFECTS) {
-                    openEffects(player);
-                } else if (slot == PASSPORT_REFRESH) {
-                    open(player);
-                } else if (slot == PASSPORT_CHOICES) {
-                    openChoices(player);
-                } else if (slot == TALENTS_SLOT || slot == ABILITY_SLOT || slot == ABILITY2_SLOT || slot == RESPEC_SLOT) {
-                    clickMain(player, slot);
-                }
-            }
-            case EFFECTS -> { }
-            case RESPEC_PREVIEW -> {
-                if (holder.quoteOwner != player) {
-                    player.closeInventory();
-                    return;
-                }
-                if (slot == CONFIRM_SLOT && !holder.consumed) {
-                    holder.consumed = true;
-                    var current = plugin.service().progressSnapshot(player.getUniqueId(), System.currentTimeMillis());
-                    if (!current.ready() || !holder.quote.matches(player.getUniqueId(), current.basis(), System.currentTimeMillis(),
-                            plugin.service().perks(player.getUniqueId()).respecCooldownSeconds(plugin.config().respecCooldownSeconds()))) {
-                        plugin.messages().send(player, "respec-preview-stale");
-                        open(player);
-                    } else {
-                        performRespec(player);
-                    }
-                }
-            }
-        }
+        if(!(event.getWhoClicked() instanceof Player p)||p!=h.owner||event.getRawSlot()<0||event.getRawSlot()>=54)return;
+        if(!p.hasPermission("chrdkclasses.use")||!plugin.ready(p)){p.closeInventory();return;}
+        int slot=event.getRawSlot();
+        if(slot==49){p.closeInventory();return;}
+        if(slot==45){if(h.candidate==null)open(p);else openChoices(p);return;}
+        if(h.candidate==null){for(int i=0;i<SLOTS.length;i++)if(slot==SLOTS[i])openInfo(p,PlayerClass.values()[i]);return;}
+        if(slot==20||slot==22||slot==24){plugin.developmentGui().catalog(p,h.candidate.id(),(slot-20)/2);return;}
+        if(slot!=31||h.consumed)return;
+        h.consumed=true;
+        ClassResult result=plugin.service().choose(p.getUniqueId(),h.candidate.id(),System.currentTimeMillis());
+        plugin.messages().send(p,result.key(),ClassText.localise(plugin.messages(),result).toArray());
+        if(result.ok()){
+            plugin.gameplay().clear(p.getUniqueId());plugin.effects().apply(p);plugin.requestSave();
+            plugin.progress().baseline(p.getUniqueId(),plugin.service().level(p.getUniqueId()));open(p);
+        }else openInfo(p,h.candidate);
     }
-
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    public void onDrag(InventoryDragEvent event) {
-        if (event.getInventory().getHolder() instanceof Holder) {
-            event.setCancelled(true);
-        }
-    }
-
-    private void clickMain(Player player, int slot) {
-        if (slot == TALENTS_SLOT) {
-            openTalents(player);
-            return;
-        }
-        if (slot == ABILITY_SLOT || slot == ABILITY2_SLOT) {
-            if (plugin.service().classOf(player.getUniqueId()) != null) {
-                // Меню закрывается только при выбранном классе: без него
-                // умение всё равно не сработает, и игрок прочитает подсказку
-                // в открытом меню, а не в пустоте.
-                player.closeInventory();
-            }
-            ClassResult result = plugin.abilities().use(player,
-                    slot == ABILITY2_SLOT ? ClassAbility.SECOND : ClassAbility.FIRST);
-            plugin.messages().send(player, result.key(),
-                    ClassText.localise(plugin.messages(), result).toArray());
-            return;
-        }
-        if (slot == RESPEC_SLOT) {
-            openRespec(player);
-            return;
-        }
-        List<PlayerClass> classes = ClassCatalog.classes();
-        for (int index = 0; index < CLASS_SLOTS.length && index < classes.size(); index++) {
-            if (CLASS_SLOTS[index] != slot) {
-                continue;
-            }
-            PlayerClass candidate = classes.get(index);
-            if (plugin.service().classOf(player.getUniqueId()) == candidate) {
-                openTalents(player);
-            } else {
-                openInfo(player, candidate);
-            }
-            return;
-        }
-    }
-
-    private void clickInfo(Player player, Holder holder, int slot) {
-        if (slot != CONFIRM_SLOT) {
-            return;
-        }
-        ClassResult result = plugin.service().choose(player.getUniqueId(), holder.classId,
-                System.currentTimeMillis());
-        plugin.messages().send(player, result.key(),
-                ClassText.localise(plugin.messages(), result).toArray());
-        if (result.ok()) {
-            plugin.requestSave();
-            plugin.effects().apply(player);
-            openTalents(player);
-        } else {
-            open(player);
-        }
-    }
-
-    private void clickTalents(Player player, String classId, int slot) {
-        if (slot == TREE_RESPEC_SLOT) {
-            openRespec(player);
-            return;
-        }
-        Talent talent = talentAt(classId, slot);
-        if (talent == null) {
-            return;
-        }
-        ClassResult result = plugin.service().learn(player.getUniqueId(), talent.id());
-        plugin.messages().send(player, result.key(),
-                ClassText.localise(plugin.messages(), result).toArray());
-        if (result.ok()) {
-            plugin.requestSave();
-            plugin.effects().apply(player);
-            if (plugin.config().actionbar()) {
-                player.sendActionBar(plugin.messages().get("talent-actionbar",
-                        "talent", Messages.trusted(plugin.messages().raw(
-                                "talent." + talent.id() + ".name"))));
-            }
-        }
-        openTalents(player);
-    }
-
-    private void performRespec(Player player) {
-        ClassResult result = plugin.service().respec(player.getUniqueId(),
-                System.currentTimeMillis());
-        plugin.messages().send(player, result.key(),
-                ClassText.localise(plugin.messages(), result).toArray());
-        if (result.ok()) {
-            plugin.requestSave();
-            plugin.effects().apply(player);
-        }
-        openTalents(player);
-    }
-
-    /** Талант, который стоит на слоте дерева, или {@code null}. */
-    private static Talent talentAt(String classId, int slot) {
-        List<String> branches = ClassCatalog.branches(classId);
-        for (int tier = 0; tier < TALENT_SLOTS.length; tier++) {
-            for (int branch = 0; branch < TALENT_SLOTS[tier].length; branch++) {
-                if (TALENT_SLOTS[tier][branch] != slot || branch >= branches.size()) {
-                    continue;
-                }
-                for (Talent talent : ClassCatalog.branch(classId, branches.get(branch))) {
-                    if (talent.tier() == tier + 1) {
-                        return talent;
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
-    /* -------------------------------- помощники -------------------------------- */
-
-    private ItemStack button(Material material, String nameKey, List<Component> lore,
-                             Object... placeholders) {
-        ItemStack stack = new ItemStack(material == null ? Material.PAPER : material);
-        ItemMeta meta = stack.getItemMeta();
-        if (meta != null) {
-            meta.displayName(plugin.messages().get(nameKey, placeholders));
-            if (!lore.isEmpty()) {
-                meta.lore(lore);
-            }
-            stack.setItemMeta(meta);
-        }
-        return stack;
-    }
-
-    private ItemStack simple(Material material, String nameKey) {
-        return button(material, nameKey, List.of());
-    }
-
-    private static Material material(String name) {
-        Material found = name == null ? null
-                : Material.matchMaterial(name.toUpperCase(Locale.ROOT));
-        return found == null ? Material.PAPER : found;
-    }
-
-    /** Иконка по виду эффекта: игрок узнаёт ветку по картинке, а не по тексту. */
-    static Material materialFor(EffectKind kind) {
-        return switch (kind) {
-            case MAX_HEALTH -> Material.GOLDEN_APPLE;
-            case ARMOR -> Material.IRON_CHESTPLATE;
-            case MOVEMENT_SPEED -> Material.FEATHER;
-            case KNOCKBACK_RESISTANCE -> Material.SHIELD;
-            case MELEE_DAMAGE -> Material.IRON_SWORD;
-            case ARROW_DAMAGE -> Material.ARROW;
-            case DAMAGE_REDUCTION -> Material.NETHERITE_INGOT;
-            case FALL_REDUCTION -> Material.SLIME_BALL;
-            case REGEN -> Material.GHAST_TEAR;
-            case SATURATION -> Material.BREAD;
-        };
-    }
+    @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=false)
+    public void drag(InventoryDragEvent event){if(event.getView().getTopInventory().getHolder() instanceof Holder)event.setCancelled(true);}
 }

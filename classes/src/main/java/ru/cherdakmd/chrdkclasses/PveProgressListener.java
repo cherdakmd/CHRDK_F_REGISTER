@@ -48,6 +48,8 @@ final class PveProgressListener implements Listener {
     }
     private Player attacker(Entity entity) {
         if (entity instanceof Player p) return p;
+        if (entity instanceof TNTPrimed tnt && tnt.getSource() instanceof Player p) return p;
+        if (entity instanceof Tameable tame && tame.getOwner() instanceof Player p) return p;
         if (entity instanceof Projectile shot && shot.getShooter() instanceof Player p) return p;
         return null;
     }

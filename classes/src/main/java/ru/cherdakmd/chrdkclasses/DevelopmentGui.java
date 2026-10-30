@@ -25,6 +25,7 @@ final class DevelopmentGui implements Listener {
         Inventory inventory;
         Confirmation confirmation;
         int pageLimit;
+        String role;
         Holder(Player owner,String screen,int page) { this.owner=owner;this.screen=screen;this.page=page; }
         public Inventory getInventory() { return inventory; }
     }
@@ -52,7 +53,7 @@ final class DevelopmentGui implements Listener {
         out.add(text("development-distribution","nodes",plugin.store().build(id)==null?0:plugin.store().build(id).ranks().size()));
         out.add(text("development-points","earned",d.earnedPoints(),"spent",plugin.service().spentPoints(id),"free",plugin.service().availablePoints(id)));
         out.add(text("development-sources","levels",d.levelPoints(),"trials",d.trialPoints(),"legacy",d.legacyCredit()));
-        for(var source:ClassDevelopment.Source.values()) out.add(text("development-source","source",Messages.trusted(plugin.messages().raw("development-source-"+source.name().toLowerCase(Locale.ROOT))),"xp",d.xpSources().getOrDefault(source,0L)));
+        for(var source:ClassDevelopment.Source.values()) if(source!=ClassDevelopment.Source.EXPLORATION||d.xpSources().containsKey(source)) out.add(text("development-source","source",Messages.trusted(plugin.messages().raw("development-source-"+source.name().toLowerCase(Locale.ROOT))),"xp",d.xpSources().getOrDefault(source,0L)));
         out.add(text("development-trials","count",plugin.store().milestone(id,plugin.store().classOf(id)),"receipts",d.trialPoints()));
         for(int target:new int[]{10,50,150,400,1000,2000})out.add(text(d.trialAwards().contains("trial-"+target)?"development-trial-done":"development-trial-pending","target",target));
         out.add(text("development-trial-rules"));
@@ -97,8 +98,15 @@ final class DevelopmentGui implements Listener {
         p.openInventory(h.inventory);
     }
     void tree(Player p,int page) {
-        if(!plugin.ready(p) || plugin.store().build(p.getUniqueId())==null)return;
-        Holder h=holder(p,"tree",page);ClassBuild build=plugin.store().build(p.getUniqueId());
+        PlayerClass role=plugin.service().classOf(p.getUniqueId());
+        if(role==null){plugin.gui().openChoices(p);return;}
+        catalog(p,role.id(),page);
+    }
+    void catalog(Player p,String role,int page) {
+        if(!plugin.ready(p) || PlayerClass.parse(role)==null || page<0 || page>2)return;
+        Holder h=holder(p,"tree",page);h.role=role;
+        ClassBuild active=plugin.store().build(p.getUniqueId());
+        ClassBuild build=active!=null&&active.classId().equals(role)?active:ClassBuild.empty(role);
         List<Talent> nodes=ClassTrees.page(build.classId(),page);
         for(int n=0;n<nodes.size();n++) {
             Talent node=nodes.get(n);int rank=build.ranks().getOrDefault(node.id(),0);
@@ -106,12 +114,23 @@ final class DevelopmentGui implements Listener {
             lore.add(text("development-rank","rank",rank,"max",node.maxRank(),"cost",rank==node.maxRank()?0:node.rankCost(rank+1),"level",node.minLevel()));
             lore.add(text("development-node-id","id",node.id()));
             lore.add(text("development-node-effect","value",ClassMath.amount(node.kind(),node.value()),"effect",Messages.trusted(plugin.messages().raw("effect."+node.kind().id(),"amount",ClassMath.amount(node.kind(),node.value())))));
-            ClassEffectView view=plugin.service().effectDetails(p.getUniqueId()).get(node.kind());
+            ClassEffectView view=active!=null&&active.classId().equals(role)?plugin.service().effectDetails(p.getUniqueId()).get(node.kind())
+                    :new ClassEffectView(node.kind(),ClassCatalog.passive(role).getOrDefault(node.kind(),0.0),0,ClassTrees.ceiling(role,node.kind()));
+            if(node.hasParent())lore.add(text("development-parent","parent",Messages.trusted(plugin.messages().raw("talent."+node.requires()+".name"))));
+            if(node.needsSkill()) {
+                ClassDataRead skill=plugin.service().skillSnapshot(p.getUniqueId(),node.skill()),rankRead=plugin.service().rankSnapshot(p.getUniqueId());
+                if(skill.usable()&&rankRead.usable())lore.add(text("development-skill-requirement","skill",Messages.trusted(plugin.messages().raw("skill."+node.skill()+".name")),"required",RankPerks.of(rankRead.value()).skillRequirement(node.skillLevel()),"have",skill.value()));
+                else lore.add(text("passport-skill-unavailable"));
+            }
             lore.add(text("development-node-gain","gain",ClassMath.amount(node.kind(),rank==node.maxRank()?0:view.gain(node.value())),"cap",ClassMath.amount(node.kind(),view.ceiling())));
             if(!node.exclusiveGroup().isEmpty())lore.add(text("development-exclusive"));
             var errors=plugin.service().development().learnProblems(p.getUniqueId(),node.id());
             for(ClassResult error:errors)lore.add(result(error));
-            if(errors.isEmpty())lore.add(text("development-learn"));
+            if(errors.isEmpty()) {
+                lore.add(text("development-learn"));
+                lore.add(text("development-free-after","points",plugin.service().availablePoints(p.getUniqueId())-node.rankCost(rank+1)));
+            }
+            if(rank<node.maxRank()&&view.gain(node.value())==0)lore.add(text("passport-talent-capped"));
             h.inventory.setItem(NODES[n],item(rank>0?Material.LIME_DYE:Material.ENCHANTED_BOOK,text("talent."+node.id()+".name"),lore));
         }
         for(int i=0;i<3;i++)button(h,47+i*2,Material.PAPER,"development-spec-"+build.classId()+"-"+i,List.of());
@@ -180,15 +199,15 @@ final class DevelopmentGui implements Listener {
         int slot=e.getRawSlot();
         if(slot==49 && !h.screen.equals("tree")){p.closeInventory();return;}
         if(slot==45){if(h.screen.equals("main"))plugin.gui().openChoices(p);else open(p);return;}
-        UUID id=p.getUniqueId();ClassBuild build=plugin.store().build(id);if(build==null)return;
+        UUID id=p.getUniqueId();ClassBuild build=plugin.store().build(id);if(build==null && !h.screen.equals("tree"))return;
         switch(h.screen) {
             case "main" -> {if(slot==20||slot==22||slot==24)tree(p,(slot-20)/2);else if(slot==37)abilities(p);else if(slot==39)builds(p);else if(slot==41)reset(p);else if(slot==43)effects(p);else if(slot==46||slot==48){
                 ClassResult r=plugin.abilities().use(p,slot==46?1:2);p.sendMessage(result(r));}}
             case "tree" -> {
-                if(slot==47||slot==49||slot==51){tree(p,(slot-47)/2);return;}
+                if(slot==47||slot==49||slot==51){catalog(p,h.role,(slot-47)/2);return;}
                 for(int i=0;i<NODES.length;i++)if(slot==NODES[i]) {
-                    ClassResult r=plugin.service().learn(id,ClassTrees.page(build.classId(),h.page).get(i).id());
-                    p.sendMessage(result(r));if(r.ok()){plugin.effects().apply(p);plugin.requestSave();}tree(p,h.page);break;
+                    ClassResult r=plugin.service().learn(id,ClassTrees.page(h.role,h.page).get(i).id());
+                    p.sendMessage(result(r));if(r.ok()){plugin.effects().apply(p);plugin.requestSave();}catalog(p,h.role,h.page);break;
                 }
             }
             case "abilities" -> {
