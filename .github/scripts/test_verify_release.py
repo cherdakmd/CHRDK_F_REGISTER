@@ -62,6 +62,18 @@ class ReleaseValidationTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             verify(self.directory, "1.4.189-SNAPSHOT", {"Core"})
 
+    def test_current_update_memo_matches_version_and_distribution(self):
+        import re
+        root = Path(__file__).resolve().parents[2]
+        version = re.search(r"^plugin_version=(.+)$", (root / "gradle.properties").read_text(), re.M).group(1)
+        memo = (root / "docs/releases/update-memo.txt").read_text(encoding="utf-8")
+        current = memo.split("Ниже — предыдущие изменения", 1)[0]
+        self.assertIn(f"Комплект {version}", current)
+        self.assertIn(f"{len(expected_plugins(root))} JAR одной версии", current)
+        self.assertIn("CHRDK_Queue", current)
+        self.assertIn("plugins/update/", current)
+        self.assertIn("вручную", current)
+
     def test_source_modules_have_unique_names(self):
         names = expected_plugins(Path(__file__).resolve().parents[2])
         self.assertIn("CHRDK_Core", names)
