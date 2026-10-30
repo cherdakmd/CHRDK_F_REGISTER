@@ -32,6 +32,12 @@ class GuardRatesTest {
         assertEquals(GuardRates.Admission.CAPACITY,rates.enter("extra",0));assertEquals(16,rates.tracked());
         assertEquals(GuardRates.Admission.ALLOW,rates.enter("extra",GuardRates.IDLE_NANOS+1));assertEquals(1,rates.tracked());
     }
+    @Test void capacityRejectionsDoNotStarveKnownAddresses() {
+        var rates=new GuardRates(settings(6,17,16),0);
+        for(int i=0;i<16;i++)assertEquals(GuardRates.Admission.ALLOW,rates.enter("ip"+i,0));
+        for(int i=0;i<100;i++)assertEquals(GuardRates.Admission.CAPACITY,rates.enter("extra",0));
+        assertEquals(GuardRates.Admission.ALLOW,rates.enter("ip0",0));
+    }
     @Test void saturatedGlobalQuotaDoesNotAllocateNewAddressEntries() {
         var rates=new GuardRates(settings(6,1,16),0);rates.enter("first",0);
         for(int i=0;i<10000;i++)assertEquals(GuardRates.Admission.GLOBAL_RATE,rates.enter("ip"+i,0));

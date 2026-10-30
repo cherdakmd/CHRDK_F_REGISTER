@@ -47,10 +47,10 @@ final class GuardRates {
             existing.seen=now;
             if(!existing.bucket.take(now)) return Admission.IP_RATE;
         }
-        // Один заблокированный IP не расходует общую квоту остальных игроков.
+        // Ни индивидуальный отказ, ни переполнение таблицы не расходуют квоту остальных.
+        if(existing==null && addresses.size()>=settings.maxAddresses()) return Admission.CAPACITY;
         if(!global.take(now)) return Admission.GLOBAL_RATE;
         if(existing==null) {
-            if(addresses.size()>=settings.maxAddresses()) return Admission.CAPACITY;
             Address added=new Address(settings,now); added.bucket.take(now);addresses.put(address,added);
         }
         return Admission.ALLOW;
