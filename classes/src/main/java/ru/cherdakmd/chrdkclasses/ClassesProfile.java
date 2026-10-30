@@ -42,12 +42,9 @@ final class ClassesProfile implements ChrdkRegisterApi.ProfileProvider {
         } else {
             lines.add(messages.get("profile-class", "class",
                     Messages.trusted(messages.raw("class." + playerClass.id() + ".name"))));
-            lines.add(messages.get("profile-level",
-                    "level", String.valueOf(plugin.service().level(context.playerId())),
-                    "total", String.valueOf(plugin.service().totalSkill(context.playerId()))));
-            lines.add(messages.get("profile-points",
-                    "points", String.valueOf(plugin.service().availablePoints(context.playerId())),
-                    "spent", String.valueOf(plugin.service().spentPoints(context.playerId()))));
+            var snapshot = plugin.service().progressSnapshot(context.playerId(), System.currentTimeMillis());
+            lines.addAll(ClassPassportText.progress(messages, snapshot, plugin.service().spentPoints(context.playerId())));
+            lines.add(messages.get("passport-profile-hint"));
             lines.add(messages.get("profile-talents",
                     "count", String.valueOf(plugin.store().talentCount(context.playerId())),
                     "max", String.valueOf(ClassCatalog.TALENTS_PER_CLASS)));

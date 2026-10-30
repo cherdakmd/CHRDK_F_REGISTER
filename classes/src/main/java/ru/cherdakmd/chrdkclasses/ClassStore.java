@@ -177,6 +177,10 @@ public final class ClassStore {
             }
             checkDevelopmentKeys(development);
             player.development = GSON.fromJson(GSON.toJson(development), ClassDevelopment.class);
+            LegacyClassMigration migration = player.development.migration();
+            if (migration != null && migration.basis() != null && !id.equals(migration.basis().playerId())) {
+                throw new IllegalArgumentException("Основа переноса принадлежит другому игроку");
+            }
         }
         return player;
     }
@@ -206,7 +210,7 @@ public final class ClassStore {
             throw new IllegalArgumentException("Повторные или некорректные испытания");
         }
         if (development.get("migration") instanceof Map<?, ?> migration) {
-            checkKeys(migration, Set.of("classId", "oldLevel", "earnedPoints", "talents", "capturedAt"));
+            checkKeys(migration, Set.of("classId", "oldLevel", "earnedPoints", "talents", "capturedAt", "basis"));
             for (String key : Set.of("oldLevel", "earnedPoints", "capturedAt")) {
                 requiredNumber(migration.get(key));
             }
@@ -216,8 +220,38 @@ public final class ClassStore {
                     || talents.stream().anyMatch(value -> !(value instanceof String))) {
                 throw new IllegalArgumentException("Некорректный отчёт переноса");
             }
+            if (migration.get("basis") != null) {
+                checkLegacyBasis(migration.get("basis"));
+            }
         } else if (development.get("migration") != null) {
             throw new IllegalArgumentException("Некорректный отчёт переноса");
+        }
+    }
+
+    private static void checkLegacyBasis(Object raw) {
+        if (!(raw instanceof Map<?, ?> basis)) {
+            throw new IllegalArgumentException("Некорректная сохранённая основа переноса");
+        }
+        checkKeys(basis, Set.of("playerId", "classId", "talents", "changedAt", "respecAt", "rules",
+                "skillTotal", "rank", "achievements", "capturedAt"));
+        if (parseUuid(basis.get("playerId")) == null || !(basis.get("classId") instanceof String)
+                || !(basis.get("talents") instanceof List<?> talents)
+                || new LinkedHashSet<>(talents).size() != talents.size()
+                || talents.stream().anyMatch(value -> !(value instanceof String))
+                || !(basis.get("rules") instanceof Map<?, ?> rules)) {
+            throw new IllegalArgumentException("Некорректные поля основы переноса");
+        }
+        for (String key : Set.of("changedAt", "respecAt", "skillTotal", "rank", "achievements", "capturedAt")) {
+            requiredNumber(basis.get(key));
+        }
+        checkKeys(rules, Set.of("version", "levelsPerLevel", "startingPoints", "pointsPerLevel",
+                "achievementEvery", "achievementMax", "ranksEnabled", "enabled"));
+        for (String key : Set.of("version", "levelsPerLevel", "startingPoints", "pointsPerLevel",
+                "achievementEvery", "achievementMax")) {
+            requiredNumber(rules.get(key));
+        }
+        if (!(rules.get("ranksEnabled") instanceof Boolean) || !(rules.get("enabled") instanceof Boolean)) {
+            throw new IllegalArgumentException("Некорректные переключатели исходных правил");
         }
     }
 
@@ -521,13 +555,17 @@ public final class ClassStore {
     }
 
     /** Вызывается мигратором только после получения достоверной старой основы. */
-    synchronized boolean migrateDevelopment(UUID id, int oldLevel, int oldEarned, long now) {
+    synchronized boolean migrateDevelopment(UUID id, LegacyClassBasis basis) {
         Player player = of(id);
         if (player.development != null) {
             return false;
         }
-        LegacyClassMigration report = new LegacyClassMigration(player.classId, oldLevel,
-                oldEarned, player.talents, now);
+        if (basis == null || !id.equals(basis.playerId()) || !player.classId.equals(basis.classId())
+                || !player.talents.equals(basis.talents()) || player.changedAt != basis.changedAt()
+                || player.respecAt != basis.respecAt()) {
+            throw new IllegalArgumentException("Снимок переноса устарел или принадлежит другому игроку");
+        }
+        LegacyClassMigration report = LegacyClassMigration.capture(basis);
         player.development = ClassDevelopment.migrate(report);
         player.talents.clear();
         // Откаты и сам класс не трогаются; первая сборка отмечена внутри прогресса.

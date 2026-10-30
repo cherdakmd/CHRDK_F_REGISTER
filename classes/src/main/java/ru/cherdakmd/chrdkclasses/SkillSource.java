@@ -20,4 +20,8 @@ public interface SkillSource {
 
     /** Сумма уровней всех навыков — из неё выводится уровень класса. */
     int totalLevel(UUID player);
+    /** Строгое чтение для отчётов и переноса, без подмены ошибки нулём. */
+    default ClassDataRead snapshotTotal(UUID player) {
+        return ClassDataRead.read(this::available, () -> totalLevel(player));
+    }
 }

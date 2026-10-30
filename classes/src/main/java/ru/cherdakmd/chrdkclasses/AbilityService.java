@@ -70,6 +70,9 @@ final class AbilityService {
         if (player == null) {
             return ClassResult.fail("player-only");
         }
+        if (!player.hasPermission("chrdkclasses.ability")) {
+            return ClassResult.fail("no-permission");
+        }
         ClassConfig config = plugin.config();
         if (!config.enabled()) {
             return ClassResult.fail("disabled");

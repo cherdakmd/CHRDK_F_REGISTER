@@ -10,7 +10,7 @@ softdepend: [CHRDK_Skills, CHRDK_Achievements, PlaceholderAPI]
 commands:
   class:
     description: "Класс, дерево талантов и очки"
-    usage: "/class [menu|choose <класс>|info [класс]|talents|learn <талант>|respec|points|top|ability [1|2]]"
+    usage: "/class [menu|passport|choose <класс>|info [класс]|talents|learn <талант>|respec|points|top|ability [1|2]]"
     aliases: [classes, klass, klassy]
     permission: chrdkclasses.use
   ability:

@@ -26,7 +26,7 @@ import java.util.UUID;
 public final class ClassesCommandHandler implements CommandExecutor, TabCompleter {
 
     private static final List<String> SUBS = List.of("help", "menu", "choose", "info", "talents",
-            "learn", "respec", "points", "top", "ability");
+            "learn", "respec", "points", "top", "ability", "passport");
     private static final List<String> ADMIN_SUBS = List.of("reload", "info", "set", "reset",
             "respec");
 
@@ -79,7 +79,7 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
         String sub = args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
             case "help" -> help(sender);
-            case "menu" -> menu(sender);
+            case "menu", "passport" -> menu(sender);
             case "choose" -> choose(sender, args);
             case "info" -> info(sender, args);
             case "talents" -> talents(sender);
@@ -193,13 +193,10 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
         }
         plugin.messages().send(sender, "info-header", "class",
                 Messages.trusted(plugin.messages().raw("class." + playerClass.id() + ".name")));
-        plugin.messages().send(sender, "info-level",
-                "level", String.valueOf(service.level(id)),
-                "total", String.valueOf(service.totalSkill(id)),
-                "next", String.valueOf(service.nextLevelIn(id)));
-        plugin.messages().send(sender, "info-points",
-                "points", String.valueOf(service.availablePoints(id)),
-                "spent", String.valueOf(service.spentPoints(id)));
+        for (var line : ClassPassportText.progress(plugin.messages(), service.progressSnapshot(id, System.currentTimeMillis()),
+                service.spentPoints(id))) {
+            sender.sendMessage(line);
+        }
         if (service.store().talentCount(id) == 0) {
             plugin.messages().send(sender, "info-talents-empty");
         } else {
@@ -300,13 +297,7 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
         if (player == null) {
             return;
         }
-        ClassResult result = plugin.service().respec(player.getUniqueId(),
-                System.currentTimeMillis());
-        sendResult(player, result);
-        if (result.ok()) {
-            plugin.requestSave();
-            plugin.effects().apply(player);
-        }
+        plugin.gui().openRespec(player);
     }
 
     private void points(CommandSender sender) {
@@ -320,48 +311,10 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
             plugin.messages().send(sender, "info-none");
             return;
         }
-        plugin.messages().send(sender, "info-level",
-                "level", String.valueOf(service.level(id)),
-                "total", String.valueOf(service.totalSkill(id)),
-                "next", String.valueOf(service.nextLevelIn(id)));
-        plugin.messages().send(sender, "info-points",
-                "points", String.valueOf(service.availablePoints(id)),
-                "spent", String.valueOf(service.spentPoints(id)));
-        showAchievements(sender, id);
-        showRank(sender, id);
-    }
-
-    /** Строка о бонусе за достижения: сколько открыто и сколько это даёт очков. */
-    private void showAchievements(CommandSender sender, UUID id) {
-        TalentService service = plugin.service();
-        if (plugin.achievements() == null || !plugin.achievements().available()) {
-            plugin.messages().send(sender, "info-achievements-none");
-            return;
+        var snapshot = service.progressSnapshot(id, System.currentTimeMillis());
+        for (var line : ClassPassportText.progress(plugin.messages(), snapshot, service.spentPoints(id))) {
+            sender.sendMessage(line);
         }
-        plugin.messages().send(sender, "info-achievements",
-                "count", String.valueOf(service.unlockedAchievements(id)),
-                "bonus", String.valueOf(service.achievementBonus(id)),
-                "max", String.valueOf(plugin.config().achievementMaxBonus()));
-    }
-
-    /** Строка о плюшках ранга: что именно ранг меняет — числами, без обещаний. */
-    private void showRank(CommandSender sender, UUID id) {
-        if (!plugin.config().ranksEnabled()) {
-            plugin.messages().send(sender, "info-rank-off");
-            return;
-        }
-        RankPerks perks = plugin.service().perks(id);
-        if (perks == RankPerks.NONE) {
-            plugin.messages().send(sender, "info-rank-none");
-            return;
-        }
-        plugin.messages().send(sender, "info-rank",
-                "level", String.valueOf(perks.level()),
-                "skill", String.valueOf(perks.thresholdDiscount()),
-                "step", String.valueOf(perks.levelStepDiscount()),
-                "cooldown", String.valueOf(Math.round((1.0 - perks.cooldownFactor()) * 100.0)),
-                "change", String.valueOf(perks.changeDaysOff()),
-                "respec", String.valueOf(perks.respecHoursOff()));
     }
 
     private void top(CommandSender sender) {

@@ -164,27 +164,39 @@ public final class TalentService {
         return ClassCatalog.playerClass(store.classOf(player));
     }
 
-    /** Итоговые эффекты: пассив класса плюс таланты, каждый вид — до потолка. */
-    public Map<EffectKind, Double> effects(UUID player) {
-        Map<EffectKind, Double> raw = new EnumMap<>(EffectKind.class);
+    /** Снимок текущих исходных правил; сам перенос здесь не запускается. */
+    LegacyClassSnapshotService.Result progressSnapshot(UUID player, long now) {
+        return new LegacyClassSnapshotService(store, LegacyClassRules.capture(config), skills, ranks,
+                achievements).read(player, now);
+    }
+
+    Map<EffectKind, ClassEffectView> effectDetails(UUID player) {
+        Map<EffectKind, Double> passives = new EnumMap<>(EffectKind.class);
+        Map<EffectKind, Double> talents = new EnumMap<>(EffectKind.class);
         PlayerClass playerClass = classOf(player);
         if (playerClass != null) {
-            for (Map.Entry<EffectKind, Double> entry
-                    : ClassCatalog.passive(playerClass.id()).entrySet()) {
-                raw.merge(entry.getKey(), entry.getValue(), Double::sum);
-            }
+            passives.putAll(ClassCatalog.passive(playerClass.id()));
             for (String id : store.talents(player)) {
                 Talent talent = ClassCatalog.talent(id);
                 if (talent != null && talent.classId().equals(playerClass.id())) {
-                    raw.merge(talent.kind(), talent.value(), Double::sum);
+                    talents.merge(talent.kind(), talent.value(), Double::sum);
                 }
             }
         }
+        Map<EffectKind, ClassEffectView> result = new EnumMap<>(EffectKind.class);
+        for (EffectKind kind : EffectKind.values()) {
+            result.put(kind, new ClassEffectView(kind, passives.getOrDefault(kind, 0.0),
+                    talents.getOrDefault(kind, 0.0)));
+        }
+        return java.util.Collections.unmodifiableMap(result);
+    }
+
+    /** Итоговые эффекты берутся из того же расчёта, который показывает паспорт. */
+    public Map<EffectKind, Double> effects(UUID player) {
         Map<EffectKind, Double> out = new EnumMap<>(EffectKind.class);
-        for (Map.Entry<EffectKind, Double> entry : raw.entrySet()) {
-            double value = ClassMath.total(entry.getKey(), entry.getValue());
-            if (value > 0.0) {
-                out.put(entry.getKey(), value);
+        for (ClassEffectView view : effectDetails(player).values()) {
+            if (view.effective() > 0.0) {
+                out.put(view.kind(), view.effective());
             }
         }
         return out;

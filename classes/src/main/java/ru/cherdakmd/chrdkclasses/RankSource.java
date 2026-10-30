@@ -17,4 +17,8 @@ public interface RankSource {
 
     /** Ступень действующего ранга: 0 — ранга нет. */
     int rankLevel(UUID player);
+    /** Строгое чтение для отчётов и переноса, без подмены ошибки нулём. */
+    default ClassDataRead snapshotRank(UUID player) {
+        return ClassDataRead.read(this::available, () -> rankLevel(player)).atMost(5);
+    }
 }

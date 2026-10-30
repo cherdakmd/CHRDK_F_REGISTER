@@ -183,7 +183,10 @@ class ClassStoreSafetyTest {
         store.learnTalent(PLAYER, "warrior-stoyka-2");
         store.setAbilityAt(PLAYER, NOW + 20);
         store.setAbility2At(PLAYER, NOW + 30);
-        assertTrue(store.migrateDevelopment(PLAYER, 10, 12, NOW + 40));
+        LegacyClassBasis basis = new LegacyClassBasis(PLAYER, "warrior", store.talents(PLAYER),
+                NOW, NOW + 10, new LegacyClassRules(1, 30, 1, 1, 15, 2, true, true),
+                270, 0, 30, NOW + 40);
+        assertTrue(store.migrateDevelopment(PLAYER, basis));
         ClassDevelopment migrated = store.development(PLAYER);
         assertEquals(3, migrated.migration().spentPoints());
         assertEquals(12, migrated.earnedPoints());
@@ -197,14 +200,14 @@ class ClassStoreSafetyTest {
         ClassStore reloaded = new ClassStore(dir, null);
         reloaded.load();
         assertEquals(migrated, reloaded.development(PLAYER));
-        assertFalse(reloaded.migrateDevelopment(PLAYER, 34, 177, NOW + 50));
+        assertFalse(reloaded.migrateDevelopment(PLAYER, basis));
         assertEquals(migrated, reloaded.development(PLAYER));
         assertTrue(reloaded.consumeFirstBuild(PLAYER));
         reloaded.flush();
         ClassStore third = new ClassStore(dir, null);
         third.load();
         assertFalse(third.consumeFirstBuild(PLAYER));
-        assertFalse(third.migrateDevelopment(PLAYER, 34, 177, NOW + 60));
+        assertFalse(third.migrateDevelopment(PLAYER, basis));
         assertEquals(12, third.development(PLAYER).earnedPoints());
         assertFalse(third.development(PLAYER).firstBuildAvailable());
     }

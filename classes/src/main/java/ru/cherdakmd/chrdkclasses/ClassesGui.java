@@ -36,7 +36,10 @@ final class ClassesGui implements Listener {
     enum Screen {
         MAIN,
         INFO,
-        TALENTS
+        TALENTS,
+        PASSPORT,
+        EFFECTS,
+        RESPEC_PREVIEW
     }
 
     static final class Holder implements InventoryHolder {
@@ -44,6 +47,9 @@ final class ClassesGui implements Listener {
         private final Screen screen;
         private final String classId;
         private Inventory inventory;
+        private ClassRespecQuote quote;
+        private boolean consumed;
+        private Player quoteOwner;
 
         Holder(UUID owner, Screen screen, String classId) {
             this.owner = owner;
@@ -103,8 +109,20 @@ final class ClassesGui implements Listener {
 
     /* --------------------------------- экраны --------------------------------- */
 
-    /** Главное меню: класс игрока и четыре варианта. */
+    /** Выбранный класс ведёт в паспорт, первый выбор — в список ролей. */
     void open(Player player) {
+        if (player == null) {
+            return;
+        }
+        if (plugin.service().classOf(player.getUniqueId()) != null) {
+            openPassport(player);
+        } else {
+            openChoices(player);
+        }
+    }
+
+    /** Список ролей доступен и после выбора: смена отдельно от просмотра паспорта. */
+    private void openChoices(Player player) {
         if (player == null) {
             return;
         }
@@ -140,6 +158,118 @@ final class ClassesGui implements Listener {
         inventory.setItem(ABILITY2_SLOT, abilityItem(player, current, ClassAbility.SECOND));
         inventory.setItem(RESPEC_SLOT, respecItem(id));
         inventory.setItem(CLOSE_SLOT, button(Material.BARRIER, "menu-close", List.of()));
+        player.openInventory(inventory);
+    }
+
+    private static final int PASSPORT_PROGRESS = 13;
+    private static final int PASSPORT_EFFECTS = 22;
+    private static final int PASSPORT_REFRESH = 48;
+    private static final int PASSPORT_CHOICES = 50;
+
+    private void openPassport(Player player) {
+        UUID id = player.getUniqueId();
+        PlayerClass current = plugin.service().classOf(id);
+        if (current == null) {
+            openChoices(player);
+            return;
+        }
+        Holder holder = new Holder(id, Screen.PASSPORT, current.id());
+        Inventory inventory = Bukkit.createInventory(holder, SIZE, plugin.messages().get("passport-title"));
+        holder.inventory = inventory;
+        inventory.setItem(INFO_SLOT, button(material(current.iconName()), "class." + current.id() + ".name",
+                List.of(plugin.messages().get("passport-current-tree", "count", String.valueOf(plugin.store().talentCount(id)),
+                        "max", String.valueOf(ClassCatalog.TALENTS_PER_CLASS)))));
+        var snapshot = plugin.service().progressSnapshot(id, System.currentTimeMillis());
+        inventory.setItem(PASSPORT_PROGRESS, button(Material.EXPERIENCE_BOTTLE, "passport-progress-name",
+                ClassPassportText.progress(plugin.messages(), snapshot, plugin.service().spentPoints(id))));
+        inventory.setItem(PASSPORT_EFFECTS, button(Material.BEACON, "passport-effects-name",
+                List.of(plugin.messages().get("passport-effects-hint"))));
+        inventory.setItem(TALENTS_SLOT, button(Material.BOOK, "menu-talents-name",
+                List.of(plugin.messages().get("passport-tree-hint"))));
+        inventory.setItem(ABILITY_SLOT, abilityItem(player, current, ClassAbility.FIRST));
+        inventory.setItem(ABILITY2_SLOT, abilityItem(player, current, ClassAbility.SECOND));
+        inventory.setItem(RESPEC_SLOT, respecItem(id));
+        inventory.setItem(PASSPORT_REFRESH, simple(Material.CLOCK, "passport-refresh"));
+        inventory.setItem(PASSPORT_CHOICES, simple(Material.COMPASS, "passport-choices"));
+        inventory.setItem(CLOSE_SLOT, simple(Material.BARRIER, "menu-close"));
+        player.openInventory(inventory);
+    }
+
+    private void openEffects(Player player) {
+        UUID id = player.getUniqueId();
+        PlayerClass current = plugin.service().classOf(id);
+        if (current == null) {
+            open(player);
+            return;
+        }
+        Holder holder = new Holder(id, Screen.EFFECTS, current.id());
+        Inventory inventory = Bukkit.createInventory(holder, SIZE, plugin.messages().get("passport-effects-name"));
+        holder.inventory = inventory;
+        List<Component> info = new ArrayList<>();
+        info.add(plugin.messages().get("passport-effects-scope"));
+        info.add(plugin.messages().get(plugin.config().effectsEnabled() ? "passport-effects-enabled" : "passport-effects-disabled"));
+        inventory.setItem(INFO_SLOT, button(Material.BEACON, "passport-effects-name", info));
+        int index = 0;
+        for (ClassEffectView view : plugin.service().effectDetails(id).values()) {
+            List<Component> lore = new ArrayList<>(ClassPassportText.effect(plugin.messages(), view));
+            if (view.kind() == EffectKind.REGEN || view.kind() == EffectKind.SATURATION) {
+                lore.add(plugin.messages().get("passport-effect-pulse", "seconds", String.valueOf(plugin.config().pulseSeconds()),
+                        "combat", String.valueOf(plugin.config().outOfCombatSeconds())));
+            }
+            if (view.kind() == EffectKind.SATURATION) {
+                lore.add(plugin.messages().get("passport-effect-food"));
+            }
+            inventory.setItem(19 + index++, button(materialFor(view.kind()), "passport-effect-name", lore,
+                    "effect", Messages.trusted(plugin.messages().raw("effect." + view.kind().id(),
+                            "amount", ClassMath.amount(view.kind(), view.effective())))));
+        }
+        inventory.setItem(BACK_SLOT, simple(Material.ARROW, "menu-back"));
+        inventory.setItem(CLOSE_SLOT, simple(Material.BARRIER, "menu-close"));
+        player.openInventory(inventory);
+    }
+
+    /** Открывается из GUI и команды: ещё ничего не стирает и не снимает откаты. */
+    void openRespec(Player player) {
+        UUID id = player.getUniqueId();
+        var snapshot = plugin.service().progressSnapshot(id, System.currentTimeMillis());
+        if (!snapshot.ready()) {
+            plugin.messages().send(player, "passport-data-unavailable");
+            open(player);
+            return;
+        }
+        if (plugin.store().talentCount(id) == 0) {
+            plugin.messages().send(player, "respec-empty");
+            return;
+        }
+        Holder holder = new Holder(id, Screen.RESPEC_PREVIEW, snapshot.basis().classId());
+        holder.quote = ClassRespecQuote.create(snapshot.basis(), plugin.service().perks(id)
+                .respecCooldownSeconds(plugin.config().respecCooldownSeconds()));
+        holder.quoteOwner = player;
+        Inventory inventory = Bukkit.createInventory(holder, SIZE, plugin.messages().get("respec-preview-title"));
+        holder.inventory = inventory;
+        LegacyClassBasis basis = snapshot.basis();
+        List<Component> lore = new ArrayList<>();
+        lore.add(plugin.messages().get("respec-preview-points", "spent", String.valueOf(basis.spentPoints()),
+                "before", String.valueOf(basis.freePoints()), "after", String.valueOf(basis.earnedPoints())));
+        lore.add(plugin.messages().get("respec-preview-cooldown", "time", ClassMath.clock(
+                holder.quote.cooldownSeconds())));
+        lore.add(plugin.messages().get("respec-preview-abilities"));
+        lore.add(plugin.messages().get("respec-preview-lifetime"));
+        for (ClassEffectView view : plugin.service().effectDetails(id).values()) {
+            if (view.talents() > 0) {
+                lore.add(plugin.messages().get("respec-preview-effect", "before", Messages.trusted(
+                        plugin.messages().raw("effect." + view.kind().id(), "amount", ClassMath.amount(view.kind(), view.effective()))),
+                        "after", Messages.trusted(plugin.messages().raw("effect." + view.kind().id(), "amount",
+                                ClassMath.amount(view.kind(), ClassMath.total(view.kind(), view.passive()))))));
+            }
+        }
+        inventory.setItem(INFO_SLOT, button(Material.GRINDSTONE, "respec-preview-title", lore));
+        long left = plugin.service().respecCooldownLeft(id, System.currentTimeMillis());
+        inventory.setItem(CONFIRM_SLOT, left > 0 ? button(Material.CLOCK, "menu-confirm-name",
+                List.of(plugin.messages().get("respec-cooldown", "time", ClassMath.clock(left))))
+                : simple(Material.LIME_DYE, "respec-preview-confirm"));
+        inventory.setItem(BACK_SLOT, simple(Material.ARROW, "menu-back"));
+        inventory.setItem(CLOSE_SLOT, simple(Material.BARRIER, "menu-close"));
         player.openInventory(inventory);
     }
 
@@ -294,6 +424,18 @@ final class ClassesGui implements Listener {
         lore.add(plugin.messages().get("talent." + talent.id() + ".desc"));
         lore.add(Component.empty());
         lore.add(effectLine(talent.kind(), talent.value()));
+        if (!known) {
+            ClassEffectView view = service.effectDetails(id).get(talent.kind());
+            lore.add(plugin.messages().get("passport-talent-gain", "effect", Messages.trusted(
+                    plugin.messages().raw("effect." + talent.kind().id(), "amount", ClassMath.amount(talent.kind(), view.gain(talent.value()))))));
+            if (view.gain(talent.value()) + 0.0000001 < talent.value()) {
+                lore.add(plugin.messages().get("passport-talent-capped"));
+            }
+            if (service.availablePoints(id) >= talent.cost()) {
+                lore.add(plugin.messages().get("passport-talent-remaining", "points",
+                        String.valueOf(service.availablePoints(id) - talent.cost())));
+            }
+        }
         if (talent.tier() >= MASTERY_TIER) {
             lore.add(plugin.messages().get("menu-talent-mastery"));
         }
@@ -365,6 +507,9 @@ final class ClassesGui implements Listener {
             lore.add(plugin.messages().get("menu-ability-none"));
             return button(Material.GRAY_DYE, nameKey, lore);
         }
+        if (!player.hasPermission("chrdkclasses.ability")) {
+            return button(Material.GRAY_DYE, nameKey, List.of(plugin.messages().get("no-permission")));
+        }
         ClassAbility ability = ClassAbility.of(current, slot);
         if (!plugin.config().abilitiesEnabled() || ability == null) {
             lore.add(plugin.messages().get("ability-disabled"));
@@ -412,7 +557,12 @@ final class ClassesGui implements Listener {
         event.setCancelled(true);
         if (!(event.getWhoClicked() instanceof Player player)
                 || !holder.owner.equals(player.getUniqueId())
-                || event.getRawSlot() >= SIZE) {
+                || event.getRawSlot() < 0 || event.getRawSlot() >= SIZE) {
+            return;
+        }
+        if (!player.hasPermission("chrdkclasses.use") || !plugin.config().enabled()) {
+            player.closeInventory();
+            plugin.messages().send(player, plugin.config().enabled() ? "no-permission" : "disabled");
             return;
         }
         int slot = event.getRawSlot();
@@ -430,6 +580,35 @@ final class ClassesGui implements Listener {
             case MAIN -> clickMain(player, slot);
             case INFO -> clickInfo(player, holder, slot);
             case TALENTS -> clickTalents(player, holder.classId, slot);
+            case PASSPORT -> {
+                if (slot == PASSPORT_EFFECTS) {
+                    openEffects(player);
+                } else if (slot == PASSPORT_REFRESH) {
+                    open(player);
+                } else if (slot == PASSPORT_CHOICES) {
+                    openChoices(player);
+                } else if (slot == TALENTS_SLOT || slot == ABILITY_SLOT || slot == ABILITY2_SLOT || slot == RESPEC_SLOT) {
+                    clickMain(player, slot);
+                }
+            }
+            case EFFECTS -> { }
+            case RESPEC_PREVIEW -> {
+                if (holder.quoteOwner != player) {
+                    player.closeInventory();
+                    return;
+                }
+                if (slot == CONFIRM_SLOT && !holder.consumed) {
+                    holder.consumed = true;
+                    var current = plugin.service().progressSnapshot(player.getUniqueId(), System.currentTimeMillis());
+                    if (!current.ready() || !holder.quote.matches(player.getUniqueId(), current.basis(), System.currentTimeMillis(),
+                            plugin.service().perks(player.getUniqueId()).respecCooldownSeconds(plugin.config().respecCooldownSeconds()))) {
+                        plugin.messages().send(player, "respec-preview-stale");
+                        open(player);
+                    } else {
+                        performRespec(player);
+                    }
+                }
+            }
         }
     }
 
@@ -459,7 +638,7 @@ final class ClassesGui implements Listener {
             return;
         }
         if (slot == RESPEC_SLOT) {
-            respec(player);
+            openRespec(player);
             return;
         }
         List<PlayerClass> classes = ClassCatalog.classes();
@@ -496,7 +675,7 @@ final class ClassesGui implements Listener {
 
     private void clickTalents(Player player, String classId, int slot) {
         if (slot == TREE_RESPEC_SLOT) {
-            respec(player);
+            openRespec(player);
             return;
         }
         Talent talent = talentAt(classId, slot);
@@ -518,7 +697,7 @@ final class ClassesGui implements Listener {
         openTalents(player);
     }
 
-    private void respec(Player player) {
+    private void performRespec(Player player) {
         ClassResult result = plugin.service().respec(player.getUniqueId(),
                 System.currentTimeMillis());
         plugin.messages().send(player, result.key(),

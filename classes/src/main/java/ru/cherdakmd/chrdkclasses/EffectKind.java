@@ -31,14 +31,14 @@ public enum EffectKind {
     DAMAGE_REDUCTION("damage-reduction", 0.35, Unit.PERCENT),
     /** Снижение урона от падения в долях. */
     FALL_REDUCTION("fall-reduction", 0.6, Unit.PERCENT),
-    /** Полусердца лечения за такт пульса вне боя. */
+    /** Внутренние единицы лечения: пульс даёт value / 2 здоровья, то есть value / 4 сердец. */
     REGEN("regen", 4.0, Unit.HALF_HEARTS),
     /** Единицы насыщения за такт пульса. */
     SATURATION("saturation", 8.0, Unit.POINTS);
 
     /** Как показывать величину в тексте. */
     public enum Unit {
-        /** Полусердца: 2 = одно сердце. */
+        /** Отображение сердцами: здоровье / 2, у REGEN исторически дополнительный делитель пульса. */
         HALF_HEARTS,
         /** Целые единицы (очки брони, насыщение). */
         POINTS,
