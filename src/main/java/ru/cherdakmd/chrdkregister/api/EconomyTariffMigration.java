@@ -75,8 +75,18 @@ public final class EconomyTariffMigration {
             if (config.getInt(MARKER, 0) >= 253) return false;
             int count = upgrade(config, changes);
             Path backup = file.resolveSibling("config-before-economy-1.4.253-" + System.currentTimeMillis() + ".yml");
-            Files.copy(file, backup);
+            var view = Files.getFileAttributeView(file, java.nio.file.attribute.PosixFileAttributeView.class);
+            var permissions = view == null ? null : view.readAttributes().permissions();
+            Files.copy(file, backup, StandardCopyOption.COPY_ATTRIBUTES);
             Path temp = file.resolveSibling("config-economy.tmp");
+            // В Core config могут быть токены. Не расширяем права даже на временный файл.
+            if (permissions != null) {
+                if (!Files.exists(temp, LinkOption.NOFOLLOW_LINKS))
+                    Files.createFile(temp, java.nio.file.attribute.PosixFilePermissions.asFileAttribute(permissions));
+                if (!Files.isRegularFile(temp, LinkOption.NOFOLLOW_LINKS))
+                    throw new java.io.IOException("Временный config не является обычным файлом");
+                Files.setPosixFilePermissions(temp, permissions);
+            }
             config.save(temp.toFile());
             try { Files.move(temp, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING); }
             catch (AtomicMoveNotSupportedException e) { Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING); }

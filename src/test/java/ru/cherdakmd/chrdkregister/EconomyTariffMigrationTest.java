@@ -41,6 +41,18 @@ class EconomyTariffMigrationTest {
         String now=Files.readString(file);assertTrue(now.contains("home-diamonds: 30"));
         assertFalse(EconomyTariffMigration.migrateFile(file,changes,Logger.getAnonymousLogger()));assertEquals(now,Files.readString(file));
     }
+    @Test void replacementAndBackupKeepPrivateConfigPermissions() throws Exception {
+        var file=dir.resolve("config.yml");Files.writeString(file,"economy: {pay-tax-percent: 0}");
+        org.junit.jupiter.api.Assumptions.assumeTrue(Files.getFileStore(file).supportsFileAttributeView("posix"));
+        var permissions=java.nio.file.attribute.PosixFilePermissions.fromString("rw-------");
+        Files.setPosixFilePermissions(file,permissions);
+        assertTrue(EconomyTariffMigration.migrateFile(file,EconomyTariffMigration.changes("CHRDK_Core"),Logger.getAnonymousLogger()));
+        assertEquals(permissions,Files.getPosixFilePermissions(file));
+        try(var files=Files.list(dir)) {
+            var backup=files.filter(p->p.getFileName().toString().startsWith("config-before-economy")).findFirst().orElseThrow();
+            assertEquals(permissions,Files.getPosixFilePermissions(backup));
+        }
+    }
     @Test void failedTemporaryWriteKeepsTheOriginalAndItsBackup() throws Exception {
         var file=dir.resolve("config.yml");String old="costs: {home-diamonds: 1}";Files.writeString(file,old);
         Files.createDirectory(dir.resolve("config-economy.tmp"));
