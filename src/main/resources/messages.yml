@@ -25,6 +25,7 @@
 
 messages:
   security:
+    policy-status: '<gray>Автоматический режим=%automatic%: %windows% окна по 10с, ≥%rejects% отказов и ≥%addresses% IP в каждом; затишье=%quiet%с. Пауза после %strikes% киков за %window%с: %initial%–%max%с; история успеха=%recent%с; ёмкость таблиц=%capacity%.</gray>'
     cooldown: '<yellow>После повторного спама действует пауза: осталось до %seconds% сек. Повторные подключения не продлевают её.</yellow>'
     defense-status: '<gray>Повышенный режим: %attack%; история пар UUID/IP: %history%; паузы: %cooling%; резервы до join: %reservations%. Отказы: IP=%ip%, общая квота=%global%, таблица=%capacity%, повышенный режим=%restricted%, пауза=%cooldown%.</gray>'
     rate-status: '<gray>Лимиты: IP=%ip_burst% + 1/%ip_seconds%с; общие=%global_burst% + %global_rate%/с; ожидание≤%pending% (сейчас≤%effective%, обычных≤%ordinary%), на IP≤%per_ip%, резерв=%reserved%, срок=%seconds%с; возврат=%recovery_burst% + %recovery_rate%/с; повышенный режим=%attack_burst% + %attack_rate%/с; команды=%command_burst% + %command_rate%/с, до входа=%pre_burst% + %pre_rate%/с, длина≤%length%.</gray>'

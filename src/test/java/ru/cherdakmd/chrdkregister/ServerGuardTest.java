@@ -138,7 +138,7 @@ class ServerGuardTest {
                 if(m.getName().equals("sendMessage")){sent.incrementAndGet();return null;}
                 throw new AssertionError("Неожиданный вызов "+m);
             });
-            assertTrue(guard.status(sender));assertEquals(3,sent.get());
+            assertTrue(guard.status(sender));assertEquals(4,sent.get());
         }
     }
     @Test void disabledModeLeavesEventsUntouched() throws Exception {

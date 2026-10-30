@@ -68,6 +68,19 @@ class GuardDefenseTest {
         assertEquals(GuardRates.Admission.GLOBAL_RATE,defense.enter(known,0));
         assertFalse(defense.returning(new GuardDefense.Key(known.id(),"different"),0));
     }
+    @Test void recoveryNeverBypassesTheIndividualIpBucket() {
+        config.set("security.ip-burst",1);config.set("security.global-burst",1);
+        var defense=new GuardDefense(settings(),0);var known=key("shared");defense.authenticated(known,0);
+        assertEquals(GuardRates.Admission.ALLOW,defense.enter(known,0));
+        assertEquals(GuardRates.Admission.IP_RATE,defense.enter(known,0));
+    }
+    @Test void tuningClampsUnsafeValuesAndCooldownMaximumCannotBeBelowInitial() {
+        config.set("security.defense.attack-addresses",10000);config.set("security.defense.attack-windows",0);
+        config.set("security.defense.reserved-slots",-5);config.set("security.defense.cooldown-seconds",300);
+        config.set("security.defense.max-cooldown-seconds",1);
+        var tuning=settings().defense();assertEquals(256,tuning.attackAddresses());assertEquals(2,tuning.attackWindows());
+        assertEquals(0,tuning.reservedSlots());assertEquals(300,tuning.maxCooldownSeconds());
+    }
     @Test void repeatedStrikesCoolOnlyTheSamePairAndRetriesDoNotExtendPenalty() {
         var defense=new GuardDefense(settings(),0);var offender=key("shared");
         for(int i=0;i<3;i++)defense.strike(offender,0);

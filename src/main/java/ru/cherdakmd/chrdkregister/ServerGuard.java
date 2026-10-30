@@ -262,6 +262,10 @@ final class ServerGuard implements Listener {
                 "pre_burst",s.unauthCommandBurst(),"pre_rate",s.unauthCommandsPerSecond(),"length",s.maxCommandLength(),
                 "effective",effective,"ordinary",ordinaryLimit(effective),"recovery_burst",s.defense().recoveryBurst(),
                 "recovery_rate",s.defense().recoveryPerSecond());
+        messages().send(sender,"security.policy-status","automatic",s.defense().automatic(),"windows",s.defense().attackWindows(),
+                "rejects",s.defense().attackRejects(),"addresses",s.defense().attackAddresses(),"quiet",s.defense().quietSeconds(),
+                "strikes",s.defense().strikes(),"window",s.defense().strikeSeconds(),"initial",s.defense().cooldownSeconds(),
+                "max",s.defense().maxCooldownSeconds(),"recent",s.defense().recentSeconds(),"capacity",s.maxAddresses());
         return true;
     }
 }
