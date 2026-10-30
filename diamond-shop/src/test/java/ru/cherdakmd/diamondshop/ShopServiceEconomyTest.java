@@ -113,11 +113,17 @@ class ShopServiceEconomyTest {
     @Test void sixArgumentCustomItemsKeepLegacyTwoWayTrading() {
         assertTrue(new ShopConfig.ShopItem("STONE","blocks",.05,20000,.25,4).sellEnabled());
     }
-    @Test void rawGoodsWithoutKnownCraftingRouteKeepTheirDynamicBid() throws Exception {
+    @Test void rawGoodsCannotBePumpedByBuyingTheSameMaterial() throws Exception {
         var s=service(10);var item=s.config().item("GHAST_TEAR").orElseThrow();
+        s.store().setStock(item,item.refStock(),System.currentTimeMillis());
+        int batch=s.batchSize(item); long paid=TradeAmounts.quote(batch,s.askPrice(item),2304,true);
+        s.store().setStock(item,1,System.currentTimeMillis());
+        long legacyBid=WholeTrades.price(PriceEngine.bid(s.priceOf(item),10),batch,false);
+        assertTrue(TradeAmounts.quote(batch,legacyBid,2304,false)>paid,"Регрессия действительно воспроизводит прежний self-pump");
+        assertTrue(TradeAmounts.quote(batch,s.bidPrice(item),2304,false)<=paid);
+        long ceiling=RecipeEconomy.cap(RecipeEconomy.Cost.of(PriceEngine.ask(PriceEngine.round(item.basePrice()*item.minMultiplier()),10)),batch,10);
         for(long stock:new long[]{1,item.refStock(),Long.MAX_VALUE}) {
-            s.store().setStock(item,stock,System.currentTimeMillis());
-            assertEquals(WholeTrades.price(PriceEngine.bid(s.priceOf(item),10),s.batchSize(item),false),s.bidPrice(item));
+            s.store().setStock(item,stock,System.currentTimeMillis()); assertTrue(s.bidPrice(item)<=ceiling);
         }
     }
 }

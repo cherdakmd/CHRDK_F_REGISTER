@@ -25,7 +25,9 @@ public final class ShopService {
                 PriceEngine.ask(PriceEngine.round(item.basePrice()*item.minMultiplier()),config.spreadPercent())));
         // Постоянный консервативный потолок: покупка ингредиента сама поднимает его цену.
         // Текущий снимок НЕ защищал бы от большой покупки и последующей переработки.
-        recipeFloors = RecipeEconomy.recipeCosts(minimum);
+        // Собственный нижний ask обязателен даже для сырья без рецепта:
+        // иначе покупка большого объёма поднимает spot bid и позволяет тут же продать дороже.
+        recipeFloors = RecipeEconomy.costs(minimum);
         var sizes = new HashMap<String,Integer>();
         for (var item : config.items()) {
             var bid = RecipeEconomy.Cost.of(PriceEngine.bid(PriceEngine.round(item.basePrice()*item.minMultiplier()),config.spreadPercent()));
