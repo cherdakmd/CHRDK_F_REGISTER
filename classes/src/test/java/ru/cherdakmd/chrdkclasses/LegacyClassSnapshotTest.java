@@ -232,4 +232,16 @@ class LegacyClassSnapshotTest {
         assertEquals(2, basis.deficit());
         assertEquals(Set.of("warrior-stoyka-1", "warrior-stoyka-2"), store.talents(PLAYER));
     }
+    @Test
+    void individualSkillReadDoesNotConcealAnApiFailure(@TempDir Path dir) {
+        SkillSource source = new SkillSource() {
+            public boolean available() { return true; }
+            public int totalLevel(UUID id) { return 300; }
+            public int level(UUID id, String skill) { throw new NoSuchMethodError(); }
+        };
+        TalentService service = new TalentService(ClassConfig.defaults(), store(dir), source);
+        assertEquals(ClassDataRead.Status.ERROR, service.skillSnapshot(PLAYER, "defense").status());
+        assertEquals(ClassDataRead.Status.INVALID, source.snapshotLevel(PLAYER, "").status());
+        assertEquals(ClassDataRead.Status.INVALID, source.snapshotLevel(null, "defense").status());
+    }
 }

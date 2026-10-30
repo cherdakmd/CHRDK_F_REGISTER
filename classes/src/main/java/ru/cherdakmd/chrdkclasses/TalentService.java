@@ -73,6 +73,18 @@ public final class TalentService {
                 ? 0 : Math.max(0, skills.level(player, skillId));
     }
 
+    ClassDataRead skillSnapshot(UUID player, String skillId) {
+        if (skills == null) {
+            return ClassDataRead.absent(ClassDataRead.Status.UNAVAILABLE);
+        }
+        try {
+            ClassDataRead result = skills.snapshotLevel(player, skillId);
+            return result == null ? ClassDataRead.absent(ClassDataRead.Status.ERROR) : result;
+        } catch (RuntimeException | LinkageError error) {
+            return ClassDataRead.absent(ClassDataRead.Status.ERROR);
+        }
+    }
+
     /* ------------------------------- ранги (1.4.175) ------------------------------- */
 
     /** Ступень донатного ранга: 0 — ранга нет или ядро не отвечает. */

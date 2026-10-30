@@ -147,8 +147,10 @@ final class ClassesGui implements Listener {
         if (current == null) {
             talentsLore.add(plugin.messages().get("menu-talents-none"));
         } else {
-            talentsLore.add(plugin.messages().get("menu-talents-lore",
-                    "points", String.valueOf(service.availablePoints(id))));
+            var snapshot = service.progressSnapshot(id, System.currentTimeMillis());
+            talentsLore.add(snapshot.ready() ? plugin.messages().get("menu-talents-lore",
+                    "points", String.valueOf(snapshot.basis().freePoints()))
+                    : plugin.messages().get("passport-data-unavailable"));
             talentsLore.add(plugin.messages().get("menu-talents-nodes",
                     "count", String.valueOf(plugin.store().talentCount(id)),
                     "max", String.valueOf(ClassCatalog.TALENTS_PER_CLASS)));
@@ -335,12 +337,13 @@ final class ClassesGui implements Listener {
             inventory.setItem(BRANCH_SLOTS[index],
                     branchItem(current.id(), branches.get(index), false));
         }
+        var progressSnapshot = service.progressSnapshot(player.getUniqueId(), System.currentTimeMillis());
         for (int branchIndex = 0; branchIndex < branches.size() && branchIndex < 3; branchIndex++) {
             for (Talent talent : ClassCatalog.branch(current.id(), branches.get(branchIndex))) {
                 int tier = Math.clamp(talent.tier(), 1, TALENT_SLOTS.length);
                 if (branchIndex < TALENT_SLOTS[tier - 1].length) {
                     inventory.setItem(TALENT_SLOTS[tier - 1][branchIndex],
-                            talentItem(player, talent));
+                            talentItem(player, talent, progressSnapshot));
                 }
             }
         }
@@ -360,28 +363,10 @@ final class ClassesGui implements Listener {
         lore.add(plugin.messages().get("menu-summary-class",
                 "class", Messages.trusted(plugin.messages().raw(
                         "class." + playerClass.id() + ".name"))));
-        lore.add(plugin.messages().get("menu-summary-level",
-                "level", String.valueOf(service.level(id)),
-                "total", String.valueOf(service.totalSkill(id))));
-        lore.add(plugin.messages().get("menu-summary-points",
-                "points", String.valueOf(service.availablePoints(id)),
-                "spent", String.valueOf(service.spentPoints(id))));
-        lore.add(plugin.messages().get("menu-summary-talents",
-                "count", String.valueOf(service.store().talentCount(id)),
+        var snapshot = service.progressSnapshot(id, System.currentTimeMillis());
+        lore.addAll(ClassPassportText.progress(plugin.messages(), snapshot, service.spentPoints(id)));
+        lore.add(plugin.messages().get("menu-summary-talents", "count", String.valueOf(service.store().talentCount(id)),
                 "max", String.valueOf(ClassCatalog.TALENTS_PER_CLASS)));
-        int bonus = service.achievementBonus(id);
-        if (bonus > 0) {
-            lore.add(plugin.messages().get("menu-summary-achievements",
-                    "bonus", String.valueOf(bonus)));
-        }
-        RankPerks perks = service.perks(id);
-        if (perks != RankPerks.NONE) {
-            lore.add(plugin.messages().get("menu-summary-rank",
-                    "level", String.valueOf(perks.level()),
-                    "step", String.valueOf(perks.levelStepDiscount()),
-                    "cooldown", String.valueOf(
-                            Math.round((1.0 - perks.cooldownFactor()) * 100.0))));
-        }
         return button(material(playerClass.iconName()), "menu-summary-name", lore);
     }
 
@@ -418,7 +403,7 @@ final class ClassesGui implements Listener {
         return button(icon, "branch." + branch, lore);
     }
 
-    private ItemStack talentItem(Player player, Talent talent) {
+    private ItemStack talentItem(Player player, Talent talent, LegacyClassSnapshotService.Result progress) {
         UUID id = player.getUniqueId();
         TalentService service = plugin.service();
         ClassResult state = service.checkLearn(id, talent.id());
@@ -435,20 +420,27 @@ final class ClassesGui implements Listener {
             if (view.gain(talent.value()) + 0.0000001 < talent.value()) {
                 lore.add(plugin.messages().get("passport-talent-capped"));
             }
-            if (service.availablePoints(id) >= talent.cost()) {
+            if (progress.ready() && progress.basis().freePoints() >= talent.cost()) {
                 lore.add(plugin.messages().get("passport-talent-remaining", "points",
-                        String.valueOf(service.availablePoints(id) - talent.cost())));
+                        String.valueOf(progress.basis().freePoints() - talent.cost())));
+            } else if (!progress.ready()) {
+                lore.add(plugin.messages().get("passport-data-unavailable"));
             }
         }
         if (talent.tier() >= MASTERY_TIER) {
             lore.add(plugin.messages().get("menu-talent-mastery"));
         }
         if (talent.needsSkill()) {
-            lore.add(plugin.messages().get("menu-talent-skill",
-                    "skill", Messages.trusted(plugin.messages().raw(
-                            "skill." + talent.skill() + ".name")),
-                    "level", String.valueOf(service.requiredSkill(id, talent)),
-                    "have", String.valueOf(service.skillLevel(id, talent.skill()))));
+            ClassDataRead have = service.skillSnapshot(id, talent.skill());
+            ClassDataRead rank = progress.sources().get(LegacyClassSnapshotService.Source.RANKS);
+            if (have.usable() && rank.usable()) {
+                int required = RankPerks.of(rank.value()).skillRequirement(talent.skillLevel());
+                lore.add(plugin.messages().get("menu-talent-skill", "skill", Messages.trusted(plugin.messages().raw(
+                        "skill." + talent.skill() + ".name")), "level", String.valueOf(required),
+                        "have", String.valueOf(have.value())));
+            } else {
+                lore.add(plugin.messages().get("passport-skill-unavailable"));
+            }
         }
         lore.add(Component.empty());
         lore.add(statusLine(state, talent, id));
