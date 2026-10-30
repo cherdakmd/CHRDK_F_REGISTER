@@ -40,13 +40,13 @@ class PlacedBlocksTest {
     }
 
     @Test
-    void otherPlayerAndWorldDoNotCount() {
+    void changingPlayerCannotBypassThePlacementGuard() {
         PlacedBlocks blocks = new PlacedBlocks(TTL, 100);
         blocks.record(PLAYER, "world", 1, 2, 3, 100L);
-        assertFalse(blocks.consume(OTHER, "world", 1, 2, 3, 200L));
         assertFalse(blocks.consume(PLAYER, "world_nether", 1, 2, 3, 200L));
         assertFalse(blocks.consume(PLAYER, "world", 1, 2, 4, 200L));
-        assertTrue(blocks.consume(PLAYER, "world", 1, 2, 3, 200L), "своя запись цела");
+        assertTrue(blocks.consume(OTHER, "world", 1, 2, 3, 200L), "другой игрок тоже не получает бонус за поставленный блок");
+        assertFalse(blocks.consume(PLAYER, "world", 1, 2, 3, 200L), "общая запись одноразовая");
     }
 
     @Test
@@ -81,7 +81,7 @@ class PlacedBlocksTest {
         PlacedBlocks blocks = new PlacedBlocks(TTL, 100);
         blocks.record(PLAYER, "world", 0, 0, 0, 0L);
         blocks.record(OTHER, "world", 0, 0, 0, 0L);
-        assertEquals(2, blocks.size());
+        assertEquals(1, blocks.size(), "одни координаты не дублируются по UUID");
         blocks.clear();
         assertEquals(0, blocks.size());
     }

@@ -884,6 +884,457 @@ items:
     base-price: 30.0
     ref-stock: 1000
 
+  # 1.4.250: земля и природные породы принимаются; обработанный декор и руды — только покупка.
+  - material: GRASS_BLOCK
+    category: blocks
+    base-price: 0.03
+    ref-stock: 20000
+  - material: COARSE_DIRT
+    category: blocks
+    base-price: 0.04
+    ref-stock: 20000
+  - material: ROOTED_DIRT
+    category: blocks
+    base-price: 0.03
+    ref-stock: 20000
+  - material: PODZOL
+    category: blocks
+    base-price: 0.04
+    ref-stock: 20000
+  - material: MYCELIUM
+    category: blocks
+    base-price: 0.04
+    ref-stock: 20000
+  - material: MUD
+    category: blocks
+    base-price: 0.03
+    ref-stock: 20000
+  - material: PACKED_MUD
+    category: blocks
+    base-price: 0.05
+    ref-stock: 20000
+  - material: RED_SAND
+    category: blocks
+    base-price: 0.08
+    ref-stock: 20000
+  - material: DIRT_PATH
+    category: blocks
+    base-price: 0.03
+    ref-stock: 20000
+  - material: SOUL_SOIL
+    category: blocks
+    base-price: 0.1
+    ref-stock: 20000
+  - material: DRIPSTONE_BLOCK
+    category: blocks
+    base-price: 0.06
+    ref-stock: 20000
+  - material: COBBLED_DEEPSLATE
+    category: blocks
+    base-price: 0.04
+    ref-stock: 20000
+  - material: MOSSY_COBBLESTONE
+    category: blocks
+    base-price: 0.06
+    ref-stock: 20000
+  - material: SMOOTH_BASALT
+    category: blocks
+    base-price: 0.06
+    ref-stock: 20000
+  - material: MOSS_BLOCK
+    category: blocks
+    base-price: 0.03
+    ref-stock: 20000
+  - material: PALE_MOSS_BLOCK
+    category: blocks
+    base-price: 0.03
+    ref-stock: 20000
+  - material: POLISHED_ANDESITE
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: POLISHED_DIORITE
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: POLISHED_GRANITE
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: POLISHED_BASALT
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: POLISHED_BLACKSTONE
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: POLISHED_BLACKSTONE_BRICKS
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: CRACKED_POLISHED_BLACKSTONE_BRICKS
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: CHISELED_POLISHED_BLACKSTONE
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: GILDED_BLACKSTONE
+    category: blocks
+    base-price: 12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: POLISHED_TUFF
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: TUFF_BRICKS
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: CHISELED_TUFF
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: CHISELED_TUFF_BRICKS
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: CHISELED_DEEPSLATE
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: DEEPSLATE_BRICKS
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: CRACKED_DEEPSLATE_BRICKS
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: DEEPSLATE_TILES
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: CRACKED_DEEPSLATE_TILES
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: MOSSY_STONE_BRICKS
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: CRACKED_STONE_BRICKS
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: CHISELED_STONE_BRICKS
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: END_STONE_BRICKS
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: RED_SANDSTONE
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: CHISELED_SANDSTONE
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: CUT_SANDSTONE
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: SMOOTH_SANDSTONE
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: CHISELED_RED_SANDSTONE
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: CUT_RED_SANDSTONE
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: SMOOTH_RED_SANDSTONE
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: CHISELED_QUARTZ_BLOCK
+    category: blocks
+    base-price: 2.6
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: QUARTZ_PILLAR
+    category: blocks
+    base-price: 2.6
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: SMOOTH_QUARTZ
+    category: blocks
+    base-price: 2.6
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: MUD_BRICKS
+    category: blocks
+    base-price: 0.12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: IRON_ORE
+    category: minerals
+    base-price: 12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: DEEPSLATE_IRON_ORE
+    category: minerals
+    base-price: 12
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: GOLD_ORE
+    category: minerals
+    base-price: 32
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: DEEPSLATE_GOLD_ORE
+    category: minerals
+    base-price: 32
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: COPPER_ORE
+    category: minerals
+    base-price: 16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: DEEPSLATE_COPPER_ORE
+    category: minerals
+    base-price: 16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: COAL_ORE
+    category: minerals
+    base-price: 4
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: DEEPSLATE_COAL_ORE
+    category: minerals
+    base-price: 4
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: REDSTONE_ORE
+    category: minerals
+    base-price: 32
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: DEEPSLATE_REDSTONE_ORE
+    category: minerals
+    base-price: 32
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: LAPIS_ORE
+    category: minerals
+    base-price: 32
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: DEEPSLATE_LAPIS_ORE
+    category: minerals
+    base-price: 32
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: EMERALD_ORE
+    category: minerals
+    base-price: 64
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: DEEPSLATE_EMERALD_ORE
+    category: minerals
+    base-price: 64
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: DIAMOND_ORE
+    category: minerals
+    base-price: 16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: DEEPSLATE_DIAMOND_ORE
+    category: minerals
+    base-price: 16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: NETHER_GOLD_ORE
+    category: minerals
+    base-price: 16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: NETHER_QUARTZ_ORE
+    category: minerals
+    base-price: 16
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: ANCIENT_DEBRIS
+    category: minerals
+    base-price: 128
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: RAW_IRON_BLOCK
+    category: minerals
+    base-price: 9
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: RAW_COPPER_BLOCK
+    category: minerals
+    base-price: 4.5
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+  - material: RAW_GOLD_BLOCK
+    category: minerals
+    base-price: 18
+    ref-stock: 10000
+    min-multiplier: 1.0
+    max-multiplier: 2.0
+    sell-enabled: false
+
 # Глобальные границы мультипликатора, если у товара свои не заданы
 defaults:
   min-multiplier: 0.25

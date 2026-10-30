@@ -101,7 +101,12 @@ class ReleaseWorkflowContractTest(unittest.TestCase):
         root = Path(__file__).resolve().parents[2]
         source = (root / ".github/workflows/release.yml").read_text()
         self.assertIn("cp docs/releases/update-memo.txt", source)
-        self.assertIn("1.4.{200,201,{220..248}}.md", source)
+        import re
+        notes = re.search(r"1\.4\.\{200,201,\{220\.\.(\d+)\}\}\.md", source)
+        self.assertIsNotNone(notes, "Release должен включать подробные инструкции перехода")
+        version = re.search(r"^plugin_version=1\.4\.(\d+)$", (root / "gradle.properties").read_text(), re.M)
+        self.assertIsNotNone(version)
+        self.assertGreaterEqual(int(notes.group(1)), int(version.group(1)), "Инструкция текущего релиза должна войти в ZIP")
         self.assertIn('unzip -t "chrdk-plugins-${version}.zip"', source)
         self.assertIn('python3 .github/scripts/pack_release.py release "$version" "chrdk-plugins-${version}.zip"', source)
         self.assertNotIn("zip -j -9", source)

@@ -121,9 +121,13 @@ public final class ShopConfig {
         String material = materialObj == null ? "" : String.valueOf(materialObj).trim().toUpperCase(java.util.Locale.ROOT);
         Material bukkitMaterial = material.isBlank() ? null : Material.matchMaterial(material);
         if (bukkitMaterial == null || !bukkitMaterial.isItem()
-                || bukkitMaterial == Material.DIAMOND || bukkitMaterial == Material.DIAMOND_ORE
-                || bukkitMaterial == Material.DEEPSLATE_DIAMOND_ORE || bukkitMaterial == Material.DIAMOND_BLOCK) {
+                || bukkitMaterial == Material.DIAMOND || bukkitMaterial == Material.DIAMOND_BLOCK) {
             logger.warning("[DiamondShop] items: неизвестный материал или валюта '" + material + "' — пропускаю.");
+            return null;
+        }
+        if ((bukkitMaterial == Material.DIAMOND_ORE || bukkitMaterial == Material.DEEPSLATE_DIAMOND_ORE)
+                && !Boolean.FALSE.equals(raw.get("sell-enabled"))) {
+            logger.warning("[DiamondShop] Алмазные руды доступны только для покупки: " + material);
             return null;
         }
         if (raw.containsKey("sell-enabled") && !(raw.get("sell-enabled") instanceof Boolean)) {

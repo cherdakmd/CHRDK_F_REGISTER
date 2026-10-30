@@ -11,7 +11,8 @@ import java.util.UUID;
  *
  * <p>Без неё любой игрок качает горное дело, ставя и ломая один и тот же
  * камень: опыт за блок, двойной дроп и автопосадка превращаются в бесконечный
- * станок. Запись живёт {@code limits.placed-block-seconds}, удаляется при
+ * станок. Владелец не входит в ключ: смена копающего не делает блок природным.
+ * Запись живёт {@code limits.placed-block-seconds}, удаляется при
  * первом использовании и ограничена по размеру.</p>
  *
  * <p>Класс без Bukkit-типов: координаты приходят числами, время — от
@@ -44,7 +45,7 @@ public final class PlacedBlocks {
     }
 
     /**
-     * Был ли блок недавно поставлен этим игроком. Запись удаляется сразу:
+     * Был ли блок недавно поставлен любым игроком. Запись удаляется сразу:
      * повторное разрушение того же места уже не должно скрывать прогресс.
      */
     public synchronized boolean consume(UUID player, String world, int x, int y, int z, long now) {
@@ -73,8 +74,7 @@ public final class PlacedBlocks {
     }
 
     private static String key(UUID player, String world, int x, int y, int z) {
-        String owner = player == null ? "?" : player.toString();
         String dimension = world == null ? "?" : world.toLowerCase(Locale.ROOT);
-        return owner + '@' + dimension + ':' + x + ':' + y + ':' + z;
+        return dimension + ':' + x + ':' + y + ':' + z;
     }
 }

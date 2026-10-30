@@ -25,7 +25,9 @@ public final class ShopService {
                 PriceEngine.ask(PriceEngine.round(item.basePrice()*item.minMultiplier()),config.spreadPercent())));
         // Постоянный консервативный потолок: покупка ингредиента сама поднимает его цену.
         // Текущий снимок НЕ защищал бы от большой покупки и последующей переработки.
-        recipeFloors = RecipeEconomy.recipeCosts(minimum);
+        // Собственный нижний ask обязателен даже для сырья без рецепта:
+        // иначе покупка большого объёма поднимает spot bid и позволяет тут же продать дороже.
+        recipeFloors = RecipeEconomy.costs(minimum);
         var sizes = new HashMap<String,Integer>();
         for (var item : config.items()) {
             var bid = RecipeEconomy.Cost.of(PriceEngine.bid(PriceEngine.round(item.basePrice()*item.minMultiplier()),config.spreadPercent()));
@@ -43,7 +45,9 @@ public final class ShopService {
     }
     public int batchSize(ShopConfig.ShopItem item) { return batches.getOrDefault(item.material(),0); }
     public long askPrice(ShopConfig.ShopItem item) {
-        return WholeTrades.price(PriceEngine.ask(priceOf(item),config.spreadPercent()),batchSize(item),true);
+        long price=WholeTrades.price(PriceEngine.ask(priceOf(item),config.spreadPercent()),batchSize(item),true);
+        long currency=(long)config.currencyRates().getOrDefault(item.material(),0)*batchSize(item);
+        return Math.max(price,currency)>WholeTrades.MAX ? -1 : Math.max(price,currency);
     }
     public long bidPrice(ShopConfig.ShopItem item) {
         if (!item.sellEnabled() || config.item(item.material()).filter(item::equals).isEmpty()) return 0;
@@ -104,15 +108,24 @@ public final class ShopService {
         return trade(player, item, units, buy, batch, price);
     }
     private TradeResult trade(Player player, ShopConfig.ShopItem item, long units, boolean buy, int expectedBatch, long expectedPrice) {
+        return trade(player,item,units,buy,expectedBatch,expectedPrice,false);
+    }
+    private TradeResult trade(Player player, ShopConfig.ShopItem item, long units, boolean buy, int expectedBatch, long expectedPrice, boolean carry) {
         if (!config.item(item.material()).filter(item::equals).isPresent()) return fail("trading.price-changed",0);
         if (!buy && !item.sellEnabled()) return fail("quantity.buy-only",0);
         if (!ready(player) || player.getGameMode() != GameMode.SURVIVAL) return fail("trading.unavailable", 0);
         int batch = batchSize(item); long price = buy ? askPrice(item) : bidPrice(item);
         if (expectedBatch >= 0 && (batch != expectedBatch || price != expectedPrice)) return fail("trading.price-changed", 0);
         if (batch < 1 || price < 1) return fail(buy?"trading.unavailable":"quantity.no-bid", 0);
-        long money=TradeAmounts.quote(batch,price,units,buy);
-        if(money<0)return fail("trading.invalid-number",0);
-        if(money==0)return fail("quantity.too-small",0);
+        String remainderBefore = carry ? api.get().shopSaleRemainder(player.getUniqueId()) : null;
+        ShopSaleRemainder.Quote exact = null;
+        if(carry) {
+            try { exact=ShopSaleRemainder.quote(remainderBefore,batch,price,units); }
+            catch(RuntimeException error) { return fail("trading.unavailable",0); }
+        }
+        long money=carry ? exact.money() : TradeAmounts.quote(batch,price,units,buy);
+        if(money<0 || money>WholeTrades.MAX)return fail("trading.invalid-number",0);
+        if(money==0 && !carry)return fail("quantity.too-small",0);
         Material material = Material.matchMaterial(item.material());
         if (material == null || !material.isItem()) return fail("trading.unknown-item", 0);
         var before = copy(player.getInventory().getStorageContents()); var after = copy(before);
@@ -137,10 +150,11 @@ public final class ShopService {
             if (!remove(after, material, units)) return fail("quantity.not-enough-items", money);
         }
         long now = System.currentTimeMillis();
-        if (!store.canRecordTurnover(player.getUniqueId(), money, config.dailyTurnoverLimit(), now)) return fail(store.legacyAvailable() ? "trading.daily-limit" : "trading.unavailable", money);
+        if (money>0 && !store.canRecordTurnover(player.getUniqueId(), money, config.dailyTurnoverLimit(), now)) return fail(store.legacyAvailable() ? "trading.daily-limit" : "trading.unavailable", money);
         var frozenRates=new LinkedHashMap<String,Integer>();
         config.currencyRates().forEach((key,value)->{ var m=Material.matchMaterial(key); if(m!=null&&m.isItem()&&m.name().equals(key)) frozenRates.put(key,value); });
         var t=new ShopExchange(UUID.randomUUID(),store.market(),store.sequence()+1,player.getUniqueId(),buy,item.material(),units,money,debit,credit,spent,frozenRates,ChargeInventory.encode(before),ChargeInventory.encode(after));
+        if(carry) t=new ShopExchange(t.transaction(),t.market(),t.sequence(),t.owner(),false,t.material(),t.units(),t.money(),0,t.credit(),0,t.rates(),t.before(),t.after(),batch,price,remainderBefore,exact.remainder());
         if(!ShopInventory.valid(t)) return fail("trading.unavailable",money);
         long stock=store.stockOf(item,now,config.stockRecoveryPerHour());
         long afterStock; try { afterStock=Math.max(1,Math.addExact(stock,buy?-units:units)); } catch(ArithmeticException e) { return fail("trading.unavailable",money); }
@@ -175,12 +189,25 @@ public final class ShopService {
         if(plan==null)return fail("quantity.sellall-none",0);
         return quoted(player,item,plan.units(),false,plan.batch(),plan.price());
     }
+    public String saleRemainder(Player player) {
+        var core=api.get(); return core==null ? null : core.shopSaleRemainder(player.getUniqueId());
+    }
+    private TradeResult sellAllUnits(Player player, ShopConfig.ShopItem item) {
+        if(!ready(player)||player.getGameMode()!=GameMode.SURVIVAL) return fail("trading.unavailable",0);
+        var material=Material.matchMaterial(item.material());
+        if(material==null || config.currencyRates().containsKey(item.material())) return fail("quantity.sellall-none",0);
+        int batch=batchSize(item); long price=bidPrice(item);
+        long budget=Math.max(0,WholeTrades.MAX-balance(player));
+        if(config.dailyTurnoverLimit()>0) budget=Math.min(budget,(long)Math.floor(Math.max(0,config.dailyTurnoverLimit()-store.usedToday(player.getUniqueId(),System.currentTimeMillis()))));
+        int units=CarrySale.maximum(saleRemainder(player),batch,price,countItems(player.getInventory(),material),budget);
+        return units==0 ? fail("quantity.sellall-none",0) : trade(player,item,units,false,batch,price,true);
+    }
     public SellAllResult sellAll(Player player) {
         long total=0,units=0;int kinds=0;
         for(var item:config.items()){
             if (!item.sellEnabled()) continue;
             if(!ready(player)||player.getGameMode()!=GameMode.SURVIVAL)break;
-            var result=sellMaximum(player,item);
+            var result=sellAllUnits(player,item);
             if(result.success()){total+=result.money();units+=result.units();kinds++;}
             else if(store.pending()!=null||!store.legacyAvailable())break;
         }

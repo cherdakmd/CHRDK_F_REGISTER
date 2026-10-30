@@ -94,7 +94,7 @@ class ShopServiceEconomyTest {
             assertEquals(0,s.maximumSale(null,item,s.batchSize(item),0));
             assertEquals(0,s.bidPrice(item));assertTrue(s.askPrice(item)>0);
         }
-        assertEquals(36,count);
+        assertEquals(91,count);
     }
     @Test void forgedLegacyItemCannotEnableBuybackForNewDecor() throws Exception {
         var s=service(10);var item=s.config().item("WHITE_CONCRETE").orElseThrow();
@@ -113,11 +113,29 @@ class ShopServiceEconomyTest {
     @Test void sixArgumentCustomItemsKeepLegacyTwoWayTrading() {
         assertTrue(new ShopConfig.ShopItem("STONE","blocks",.05,20000,.25,4).sellEnabled());
     }
-    @Test void rawGoodsWithoutKnownCraftingRouteKeepTheirDynamicBid() throws Exception {
+    @Test void everyDefaultBuybackIsBelowItsOwnLowestAskAtAllTestedSpreads() throws Exception {
+        for(double spread:new double[]{0,10,50,90}) {
+            var s=service(spread);
+            for(var item:s.config().items()) {
+                if(!item.sellEnabled())continue;
+                s.store().setStock(item,Long.MAX_VALUE,System.currentTimeMillis());
+                long lowestAsk=s.askPrice(item);
+                s.store().setStock(item,1,System.currentTimeMillis());
+                assertTrue(s.bidPrice(item)<=lowestAsk,item.material()+" spread="+spread);
+            }
+        }
+    }
+    @Test void rawGoodsCannotBePumpedByBuyingTheSameMaterial() throws Exception {
         var s=service(10);var item=s.config().item("GHAST_TEAR").orElseThrow();
+        s.store().setStock(item,item.refStock(),System.currentTimeMillis());
+        int batch=s.batchSize(item); long paid=TradeAmounts.quote(batch,s.askPrice(item),2304,true);
+        s.store().setStock(item,1,System.currentTimeMillis());
+        long legacyBid=WholeTrades.price(PriceEngine.bid(s.priceOf(item),10),batch,false);
+        assertTrue(TradeAmounts.quote(batch,legacyBid,2304,false)>paid,"Регрессия действительно воспроизводит прежний self-pump");
+        assertTrue(TradeAmounts.quote(batch,s.bidPrice(item),2304,false)<=paid);
+        long ceiling=RecipeEconomy.cap(RecipeEconomy.Cost.of(PriceEngine.ask(PriceEngine.round(item.basePrice()*item.minMultiplier()),10)),batch,10);
         for(long stock:new long[]{1,item.refStock(),Long.MAX_VALUE}) {
-            s.store().setStock(item,stock,System.currentTimeMillis());
-            assertEquals(WholeTrades.price(PriceEngine.bid(s.priceOf(item),10),s.batchSize(item),false),s.bidPrice(item));
+            s.store().setStock(item,stock,System.currentTimeMillis()); assertTrue(s.bidPrice(item)<=ceiling);
         }
     }
 }
