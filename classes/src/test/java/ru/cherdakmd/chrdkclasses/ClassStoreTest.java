@@ -14,13 +14,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Хранилище классов (1.4.164): {@code classes.json}, таланты и битые записи.
  *
- * <p>В файле только выбор игрока. Этот тест — про устойчивость: чужой класс в
- * талантах, неизвестный класс и битый JSON не должны ломать загрузку, иначе
- * один испорченный ключ стоил бы игроку всего дерева.</p>
+ * <p>Ошибка загрузки блокирует модуль, но не позволяет затереть исходник
+ * пустым файлом. Исправление данных выполняется явно, не удалением записей.</p>
  */
 class ClassStoreTest {
 
@@ -171,7 +171,7 @@ class ClassStoreTest {
         ClassStore reloaded = new ClassStore(dir, LOGGER);
         reloaded.load();
         assertEquals(NOW + 3_000L, reloaded.ability2At(PLAYER));
-        assertEquals(2, ClassStore.VERSION, "формат файла вырос вместе с новым полем");
+        assertEquals(3, ClassStore.VERSION, "формат поддерживает собственный прогресс");
     }
 
     @Test
@@ -197,40 +197,33 @@ class ClassStoreTest {
     }
 
     @Test
-    void brokenFileStartsClean(@TempDir Path dir) throws Exception {
+    void brokenFileCannotBeOverwritten(@TempDir Path dir) throws Exception {
         Files.createDirectories(dir);
-        Files.writeString(dir.resolve("classes.json"), "{[\"мусор", StandardCharsets.UTF_8);
+        String original = "{[\"мусор";
+        Files.writeString(dir.resolve("classes.json"), original, StandardCharsets.UTF_8);
         ClassStore store = new ClassStore(dir, LOGGER);
-        store.load();
+        assertThrows(IllegalStateException.class, store::load);
         assertEquals(0, store.size());
         assertFalse(store.isDirty());
-        assertEquals("", store.classOf(PLAYER));
+        assertThrows(IllegalStateException.class, () -> store.classOf(PLAYER));
+        store.flush();
+        store.saveNow();
+        assertEquals(original, Files.readString(store.file()));
     }
 
     @Test
-    void loadDropsUnknownClassAndForeignTalents(@TempDir Path dir) throws Exception {
-        Files.createDirectories(dir);
+    void versionOneStillLoadsWithoutResettingSelection(@TempDir Path dir) throws Exception {
         Files.writeString(dir.resolve("classes.json"), """
-                {
-                  "version": 1,
-                  "players": {
-                    "%s": {"name": "Чердак", "class": "WARRIOR",
-                           "talents": ["warrior-stoyka-1", "mage-chary-1", "нет-такого", ""],
-                           "changed-at": %d, "respec-at": -5},
-                    "%s": {"name": "Гость", "class": "паладин", "talents": ["mage-chary-1"]},
-                    "не-uuid": {"name": "Битый"}
-                  }
-                }
-                """.formatted(PLAYER, NOW, OTHER), StandardCharsets.UTF_8);
+                {"version":1,"players":{"%s":{"name":"Чердак","class":"WARRIOR",
+                "talents":["warrior-stoyka-1"],"changed-at":%d}}}
+                """.formatted(PLAYER, NOW));
         ClassStore store = new ClassStore(dir, LOGGER);
         store.load();
-        assertEquals(2, store.size(), "битый ключ пропущен");
+        assertEquals(1, store.size());
         assertEquals("warrior", store.classOf(PLAYER));
-        assertEquals(1, store.talentCount(PLAYER), "чужой и неизвестный таланты отброшены");
         assertTrue(store.hasTalent(PLAYER, "warrior-stoyka-1"));
-        assertEquals(0L, store.respecAt(PLAYER), "отрицательное время зажато в ноль");
-        assertEquals("", store.classOf(OTHER), "неизвестный класс снят");
-        assertEquals(0, store.talentCount(OTHER), "без класса талантов нет");
+        assertEquals(NOW, store.changedAt(PLAYER));
+        assertEquals(0, store.ability2At(PLAYER));
     }
 
     @Test

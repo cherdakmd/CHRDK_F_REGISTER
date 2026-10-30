@@ -2,14 +2,20 @@ package ru.cherdakmd.chrdkclasses;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
-import java.io.Reader;
-import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.HexFormat;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -24,9 +30,9 @@ import ru.cherdakmd.chrdkregister.storage.SafeJsonWriter;
 /**
  * Классы игроков в {@code classes.json} (1.4.164).
  *
- * <p>Хранится только выбор: сам класс, изученные таланты и моменты смены
- * класса, пересборки и применения умения. Уровень класса и число очков не сохраняются — они
- * выводятся из навыков, поэтому «файл говорит 12, а навыки дают 8» невозможно.</p>
+ * <p>Схема 3 сохраняет старый выбор и, после явной миграции, согласованный
+ * собственный прогресс. Не запускает миграцию автоматически: игровой каталог
+ * и потребители должны быть готовы до включения новых начислений.</p>
  *
  * <p>Паттерн записи общий для репозитория: мутации на главном потоке,
  * {@link #snapshotJson()} и асинхронная запись {@link #saveNow()}. Класс чистый
@@ -35,14 +41,12 @@ import ru.cherdakmd.chrdkregister.storage.SafeJsonWriter;
 public final class ClassStore {
 
     /** Версия формата файла. */
-    public static final int VERSION = 2;
+    public static final int VERSION = 3;
+    private static final int MAX_FILE_BYTES = 128 * 1024 * 1024;
     /** Потолок числа игроков в файле: защита от мусора. */
     public static final int MAX_PLAYERS = 200_000;
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Type DATA_TYPE = new TypeToken<LinkedHashMap<String, Object>>() {
-    }.getType();
-
     /** Данные одного игрока. Мутировать можно только через методы хранилища. */
     public static final class Player {
         private final UUID id;
@@ -53,6 +57,7 @@ public final class ClassStore {
         private long respecAt;
         private long abilityAt;
         private long ability2At;
+        private ClassDevelopment development;
 
         Player(UUID id, String name) {
             this.id = id;
@@ -64,6 +69,11 @@ public final class ClassStore {
     private final Logger logger;
     private final Map<UUID, Player> players = new LinkedHashMap<>();
     private boolean dirty;
+    private boolean writable = true;
+    private boolean loadAttempted;
+    private byte[] legacyBytes;
+    // Порядок снимков и записей общий для автосохранения и финального flush.
+    private final Object writeLock = new Object();
 
     public ClassStore(Path dataFolder, Logger logger) {
         this.file = dataFolder.resolve("classes.json");
@@ -76,73 +86,194 @@ public final class ClassStore {
 
     /* --------------------------------- чтение --------------------------------- */
 
-    /** Читает файл; битые записи пропускаются с предупреждением. */
+    /** Загружает целиком или отказывает без возможности затереть исходный файл. */
     public synchronized void load() {
-        if (!Files.isRegularFile(file)) {
-            return;
+        if (loadAttempted || !players.isEmpty() || dirty) {
+            throw new IllegalStateException("Повторная загрузка ClassStore не разрешена");
         }
-        try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
-            Map<String, Object> data = GSON.fromJson(reader, DATA_TYPE);
-            if (data == null) {
+        loadAttempted = true;
+        try {
+            BasicFileAttributes attributes;
+            try {
+                attributes = Files.readAttributes(file, BasicFileAttributes.class);
+            } catch (NoSuchFileException missing) {
                 return;
             }
-            int skipped = 0;
-            if (data.get("players") instanceof Map<?, ?> rows) {
-                for (Map.Entry<?, ?> entry : rows.entrySet()) {
-                    UUID id = parseUuid(entry.getKey());
-                    if (id == null || !(entry.getValue() instanceof Map<?, ?> row)
-                            || players.size() >= MAX_PLAYERS) {
-                        skipped++;
-                        continue;
-                    }
-                    players.put(id, readPlayer(id, row));
+            if (!attributes.isRegularFile() || attributes.size() > MAX_FILE_BYTES) {
+                throw new IOException("classes.json не является допустимым обычным файлом");
+            }
+            byte[] bytes;
+            try (var input = Files.newInputStream(file)) {
+                bytes = input.readNBytes(MAX_FILE_BYTES + 1);
+            }
+            if (bytes.length > MAX_FILE_BYTES) {
+                throw new IOException("Превышен размер classes.json");
+            }
+            Map<?, ?> data = ClassStorageJson.read(StandardCharsets.UTF_8.newDecoder()
+                    .decode(java.nio.ByteBuffer.wrap(bytes)).toString());
+            checkKeys(data, Set.of("version", "players"));
+            long version = requiredNumber(data.get("version"));
+            if (version < 1 || version > VERSION || !(data.get("players") instanceof Map<?, ?> rows)
+                    || rows.size() > MAX_PLAYERS) {
+                throw new IOException("Неподдерживаемая версия или структура classes.json");
+            }
+            Map<UUID, Player> loaded = new LinkedHashMap<>();
+            for (Map.Entry<?, ?> entry : rows.entrySet()) {
+                UUID id = parseUuid(entry.getKey());
+                if (id == null || !(entry.getValue() instanceof Map<?, ?> row)
+                        || loaded.containsKey(id)) {
+                    throw new IOException("Некорректный или повторный UUID игрока: " + entry.getKey());
                 }
+                if (version < 3 && row.containsKey("development")) {
+                    throw new IOException("Прогресс новой схемы в старом формате");
+                }
+                loaded.put(id, readPlayer(id, row));
             }
-            if (skipped > 0 && logger != null) {
-                logger.warning("[CHRDK_Classes] Пропущено записей classes.json: " + skipped + ".");
-            }
+            players.putAll(loaded);
+            legacyBytes = version < VERSION ? bytes : null;
         } catch (IOException | RuntimeException error) {
+            writable = false;
+            String message = "Не удалось безопасно прочитать " + file + ": " + error.getMessage()
+                    + ". Запись заблокирована; исходный файл сохранён. Восстановите резервную копию.";
             if (logger != null) {
-                logger.severe("[CHRDK_Classes] Не удалось прочитать " + file + ": "
-                        + error.getMessage() + " — начну с чистого листа.");
+                logger.severe("[CHRDK_Classes] " + message);
             }
+            throw new IllegalStateException(message, error);
         }
     }
 
     private static Player readPlayer(UUID id, Map<?, ?> row) {
-        String name = row.get("name") == null ? "" : row.get("name").toString();
+        checkKeys(row, Set.of("name", "class", "talents", "changed-at", "respec-at",
+                "ability-at", "ability2-at", "development"));
+        String name = text(row, "name", "");
+        if (name.length() > 64) {
+            throw new IllegalArgumentException("Слишком длинный ник игрока");
+        }
         Player player = new Player(id, name);
-        String classId = id(row.get("class"));
-        // Неизвестный класс (аддон обновили, класс убрали) — считаем, что выбора нет.
-        player.classId = ClassCatalog.exists(classId) ? classId : "";
-        if (row.get("talents") instanceof List<?> talents) {
+        player.classId = text(row, "class", "").trim().toLowerCase(Locale.ROOT);
+        if (!player.classId.isEmpty() && PlayerClass.parse(player.classId) == null) {
+            throw new IllegalArgumentException("Неизвестный класс: " + player.classId);
+        }
+        if (row.containsKey("talents")) {
+            if (!(row.get("talents") instanceof List<?> talents) || talents.size() > 60) {
+                throw new IllegalArgumentException("Некорректный список старых талантов");
+            }
             for (Object element : talents) {
-                String talent = id(element);
-                if (ClassCatalog.talent(talent) == null
-                        || !ClassCatalog.talent(talent).classId().equals(player.classId)) {
-                    continue;
+                if (!(element instanceof String talent) || !player.talents.add(talent)) {
+                    throw new IllegalArgumentException("Некорректный или повторный талант");
                 }
-                player.talents.add(talent);
+            }
+            // Именно замороженный каталог: обновление дерева не теряет доказательство вложений.
+            LegacyClassTalents.spent(player.classId, player.talents);
+        }
+        player.changedAt = timestamp(row, "changed-at");
+        player.respecAt = timestamp(row, "respec-at");
+        player.abilityAt = timestamp(row, "ability-at");
+        player.ability2At = timestamp(row, "ability2-at");
+        if (row.containsKey("development")) {
+            if (!(row.get("development") instanceof Map<?, ?> development)) {
+                throw new IllegalArgumentException("Некорректный собственный прогресс класса");
+            }
+            checkDevelopmentKeys(development);
+            player.development = GSON.fromJson(GSON.toJson(development), ClassDevelopment.class);
+        }
+        return player;
+    }
+
+    private static void checkDevelopmentKeys(Map<?, ?> development) {
+        checkKeys(development, Set.of("version", "xp", "xpSources", "trialAwards", "migration",
+                "firstBuildAvailable", "revision"));
+        for (String key : Set.of("version", "xp", "xpSources", "trialAwards", "firstBuildAvailable",
+                "revision")) {
+            if (!development.containsKey(key) || development.get(key) == null) {
+                throw new IllegalArgumentException("Отсутствует поле прогресса: " + key);
             }
         }
-        player.changedAt = Math.max(0L, number(row.get("changed-at")));
-        player.respecAt = Math.max(0L, number(row.get("respec-at")));
-        player.abilityAt = Math.max(0L, number(row.get("ability-at")));
-        player.ability2At = Math.max(0L, number(row.get("ability2-at")));
-        return player;
+        for (String key : Set.of("version", "xp", "revision")) {
+            requiredNumber(development.get(key));
+        }
+        if (!(development.get("firstBuildAvailable") instanceof Boolean)
+                || !(development.get("xpSources") instanceof Map<?, ?> sources)
+                || !(development.get("trialAwards") instanceof List<?> awards)) {
+            throw new IllegalArgumentException("Некорректные типы полей прогресса");
+        }
+        for (Object value : sources.values()) {
+            requiredNumber(value);
+        }
+        if (new LinkedHashSet<>(awards).size() != awards.size()
+                || awards.stream().anyMatch(value -> !(value instanceof String))) {
+            throw new IllegalArgumentException("Повторные или некорректные испытания");
+        }
+        if (development.get("migration") instanceof Map<?, ?> migration) {
+            checkKeys(migration, Set.of("classId", "oldLevel", "earnedPoints", "talents", "capturedAt"));
+            for (String key : Set.of("oldLevel", "earnedPoints", "capturedAt")) {
+                requiredNumber(migration.get(key));
+            }
+            if (!(migration.get("classId") instanceof String)
+                    || !(migration.get("talents") instanceof List<?> talents)
+                    || new LinkedHashSet<>(talents).size() != talents.size()
+                    || talents.stream().anyMatch(value -> !(value instanceof String))) {
+                throw new IllegalArgumentException("Некорректный отчёт переноса");
+            }
+        } else if (development.get("migration") != null) {
+            throw new IllegalArgumentException("Некорректный отчёт переноса");
+        }
+    }
+
+    private static void checkKeys(Map<?, ?> row, Set<String> allowed) {
+        for (Object key : row.keySet()) {
+            if (!allowed.contains(key)) {
+                throw new IllegalArgumentException("Неизвестное поле classes.json: " + key);
+            }
+        }
+    }
+
+    private static String text(Map<?, ?> row, String key, String fallback) {
+        if (!row.containsKey(key)) {
+            return fallback;
+        }
+        if (!(row.get(key) instanceof String result)) {
+            throw new IllegalArgumentException("Ожидалась строка: " + key);
+        }
+        return result;
+    }
+
+    private static long timestamp(Map<?, ?> row, String key) {
+        if (!row.containsKey(key)) {
+            return 0;
+        }
+        long result = requiredNumber(row.get(key));
+        if (result < 0 || result > Long.MAX_VALUE - 366L * 86_400_000L) {
+            throw new IllegalArgumentException("Некорректное время: " + key);
+        }
+        return result;
+    }
+
+    private static long requiredNumber(Object value) {
+        if (!(value instanceof BigDecimal number)) {
+            throw new IllegalArgumentException("Ожидалось целое JSON-число");
+        }
+        return number.longValueExact();
+    }
+
+    private void requireWritable() {
+        if (!writable) {
+            throw new IllegalStateException("ClassStore заблокирован после ошибки загрузки");
+        }
     }
 
     /* --------------------------------- доступ --------------------------------- */
 
     /** Данные игрока; создаются при первом обращении. */
     public synchronized Player of(UUID id) {
+        requireWritable();
         if (id == null) {
             throw new IllegalArgumentException("id игрока не может быть null");
         }
         Player player = players.get(id);
         if (player == null) {
             if (players.size() >= MAX_PLAYERS) {
-                return new Player(id, "");
+                throw new IllegalStateException("Достигнут предел игроков ClassStore");
             }
             player = new Player(id, "");
             players.put(id, player);
@@ -286,6 +417,9 @@ public final class ClassStore {
             return false;
         }
         Player player = of(id);
+        if (!ClassCatalog.talent(key).classId().equals(player.classId)) {
+            return false;
+        }
         if (player.talents.add(key)) {
             dirty = true;
             return true;
@@ -318,6 +452,7 @@ public final class ClassStore {
 
     /** Полный сброс: класс, таланты и оба момента. */
     public synchronized boolean reset(UUID id) {
+        requireWritable();
         Player player = players.get(id);
         if (player == null) {
             return false;
@@ -366,10 +501,85 @@ public final class ClassStore {
         return dirty;
     }
 
+    /* ------------------------- собственный прогресс --------------------------- */
+
+    synchronized ClassDevelopment development(UUID id) {
+        return of(id).development;
+    }
+
+    /** Вызывается мигратором только после получения достоверной старой основы. */
+    synchronized boolean migrateDevelopment(UUID id, int oldLevel, int oldEarned, long now) {
+        Player player = of(id);
+        if (player.development != null) {
+            return false;
+        }
+        LegacyClassMigration report = new LegacyClassMigration(player.classId, oldLevel,
+                oldEarned, player.talents, now);
+        player.development = ClassDevelopment.migrate(report);
+        player.talents.clear();
+        // Откаты и сам класс не трогаются; первая сборка отмечена внутри прогресса.
+        dirty = true;
+        return true;
+    }
+
+    synchronized void startDevelopment(UUID id) {
+        Player player = of(id);
+        if (player.development == null) {
+            if (!player.classId.isEmpty() || !player.talents.isEmpty()) {
+                throw new IllegalStateException("Существующий выбор требует переноса, а не нового старта");
+            }
+            player.development = ClassDevelopment.fresh();
+            dirty = true;
+        }
+    }
+
+    synchronized long awardClassXp(UUID id, ClassDevelopment.Source source, long amount) {
+        Player player = of(id);
+        ClassDevelopment old = requireDevelopment(player);
+        ClassDevelopment updated = old.awardXp(source, amount);
+        if (old != updated) {
+            player.development = updated;
+            dirty = true;
+        }
+        return updated.xp() - old.xp();
+    }
+
+    synchronized boolean awardClassTrial(UUID id, String trialId, long xpReward) {
+        Player player = of(id);
+        ClassDevelopment old = requireDevelopment(player);
+        ClassDevelopment updated = old.completeTrial(trialId, xpReward);
+        if (old == updated) {
+            return false;
+        }
+        player.development = updated;
+        dirty = true;
+        return true;
+    }
+
+    synchronized boolean consumeFirstBuild(UUID id) {
+        Player player = of(id);
+        ClassDevelopment old = requireDevelopment(player);
+        ClassDevelopment updated = old.consumeFirstBuild();
+        if (old == updated) {
+            return false;
+        }
+        player.development = updated;
+        dirty = true;
+        return true;
+    }
+
+    private static ClassDevelopment requireDevelopment(Player player) {
+        if (player.development == null) {
+            throw new IllegalStateException("Собственный прогресс класса ещё не создан");
+        }
+        return player.development;
+    }
+
     /* -------------------------------- запись ---------------------------------- */
 
-    /** Снимок для асинхронной записи; сбрасывает флаг «грязно». */
+    /** Чистый снимок: сам по себе не подтверждает успешную запись на диск. */
     public synchronized String snapshotJson() {
+        requireWritable();
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("version", VERSION);
         Map<String, Object> rows = new LinkedHashMap<>();
@@ -394,39 +604,86 @@ public final class ClassStore {
             if (player.ability2At > 0) {
                 row.put("ability2-at", player.ability2At);
             }
+            if (player.development != null) {
+                row.put("development", player.development);
+            }
             rows.put(player.id.toString(), row);
         }
         data.put("players", rows);
-        dirty = false;
         return GSON.toJson(data);
     }
 
-    /** Пишет файл, только если были изменения. */
+    /** Снимки и их записи сериализованы: старое автосохранение не затирает финальное. */
     public void saveNow() {
-        String json;
-        synchronized (this) {
-            if (!dirty) {
-                return;
+        synchronized (writeLock) {
+            String json;
+            synchronized (this) {
+                if (!writable || !dirty) {
+                    return;
+                }
+                json = snapshotJson();
+                dirty = false;
             }
-            json = snapshotJson();
+            write(json);
         }
-        write(json);
     }
 
-    /** Немедленная запись без проверки флага (выключение сервера, тесты). */
+    /** Заблокированное хранилище не пишется даже из onDisable после ошибки запуска. */
     public void flush() {
-        write(snapshotJson());
+        synchronized (writeLock) {
+            String json;
+            synchronized (this) {
+                if (!writable) {
+                    return;
+                }
+                json = snapshotJson();
+                dirty = false;
+            }
+            write(json);
+        }
     }
 
     private void write(String json) {
-        if (!SafeJsonWriter.write(file, json, logger, "[CHRDK_Classes]")) {
-            // Диск не принял данные — помечаем состояние изменённым, иначе
-            // следующее автосохранение решит, что писать нечего, и прогресс
-            // потеряется молча.
+        boolean success = false;
+        try {
+            backupLegacy();
+            success = SafeJsonWriter.write(file, json, logger, "[CHRDK_Classes]");
+        } catch (IOException error) {
+            if (logger != null) {
+                logger.severe("[CHRDK_Classes] Запись отложена: " + error.getMessage());
+            }
+        }
+        if (!success) {
             synchronized (this) {
                 dirty = true;
             }
         }
+    }
+
+    /** До первой записи схемы 3 сохраняем точные байты старого файла без перезаписи копии. */
+    private void backupLegacy() throws IOException {
+        if (legacyBytes == null) {
+            return;
+        }
+        if (!Arrays.equals(legacyBytes, Files.readAllBytes(file))) {
+            throw new IOException("Исходный classes.json изменён после загрузки; перенос остановлен");
+        }
+        String digest;
+        try {
+            digest = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(legacyBytes));
+        } catch (NoSuchAlgorithmException impossible) {
+            throw new IllegalStateException("SHA-256 недоступен", impossible);
+        }
+        Path backup = file.resolveSibling("classes.json.before-v3-" + digest + ".bak");
+        try {
+            Files.write(backup, legacyBytes, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+        } catch (FileAlreadyExistsException exists) {
+            if (Files.size(backup) != legacyBytes.length
+                    || !Arrays.equals(legacyBytes, Files.readAllBytes(backup))) {
+                throw new IOException("Существующая резервная копия повреждена: " + backup, exists);
+            }
+        }
+        legacyBytes = null;
     }
 
     /* -------------------------------- помощники ------------------------------- */
@@ -436,17 +693,14 @@ public final class ClassStore {
     }
 
     private static UUID parseUuid(Object raw) {
-        if (raw == null) {
+        if (!(raw instanceof String text)) {
             return null;
         }
         try {
-            return UUID.fromString(raw.toString());
+            UUID parsed = UUID.fromString(text);
+            return parsed.toString().equalsIgnoreCase(text) ? parsed : null;
         } catch (IllegalArgumentException broken) {
             return null;
         }
-    }
-
-    private static long number(Object raw) {
-        return raw instanceof Number value ? value.longValue() : 0L;
     }
 }
