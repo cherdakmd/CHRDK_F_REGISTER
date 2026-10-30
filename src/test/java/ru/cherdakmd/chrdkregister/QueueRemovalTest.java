@@ -149,7 +149,7 @@ class QueueRemovalTest {
     }
 
     @Test void bootstrapDoesNotGrantRetiredPermissionsEvenWhenDiscovered() {
-        var config = PluginConfig.fromBukkitConfig(yaml("config.yml"));
+        var config = PluginConfig.fromBukkitConfig(new YamlConfiguration());
         var bootstrap = new LuckPermsBootstrap(() -> config);
         assertTrue(bootstrap.scheme().stream().flatMap(group -> group.permissions().stream())
                 .noneMatch(permission -> permission.startsWith("chrdkqueue.")));

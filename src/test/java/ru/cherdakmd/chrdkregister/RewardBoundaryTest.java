@@ -12,12 +12,12 @@ import static org.junit.jupiter.api.Assertions.*;
 class RewardBoundaryTest {
     @Test void addonsNeverCallPaidGrantApisOrDispatchArbitraryConsoleRewards() throws Exception {
         Pattern paid = Pattern.compile("\\.grant(?:Pass|PassHours|Rank|RankPermanent|Entitlement)\\s*\\(");
-        int modules = 0;
+        var modules = new java.util.HashSet<String>();
         try (var folders = Files.list(Path.of("."))) {
             for (Path folder : folders.filter(Files::isDirectory).toList()) {
                 Path sources = folder.resolve("src/main/java");
                 if (!Files.isDirectory(sources)) continue;
-                modules++;
+                modules.add(folder.getFileName().toString());
                 try (var paths = Files.walk(sources)) {
                     for (Path source : paths.filter(path -> path.toString().endsWith(".java")).toList()) {
                         String text = Files.readString(source);
@@ -27,7 +27,12 @@ class RewardBoundaryTest {
                 }
             }
         }
-        assertTrue(modules >= 25, "audit must cover all gameplay modules, not only known reward sources");
+        var expected = new java.util.HashSet<String>();
+        var includes = Pattern.compile("^include\\s+['\"]([^'\"]+)['\"]", Pattern.MULTILINE)
+                .matcher(Files.readString(Path.of("settings.gradle")));
+        while (includes.find()) expected.add(includes.group(1));
+        assertFalse(expected.isEmpty());
+        assertEquals(expected, modules, "аудит охватывает все игровые модули сборки, без осиротевших каталогов");
     }
 
     @Test void oldAnnouncementsAndMessagesStopPromisingPaidTime() {

@@ -253,7 +253,7 @@ public final class PluginUpdateService implements AutoCloseable {
                 Descriptor descriptor = descriptor(path);
                 if (descriptor != null && RetiredAddons.plugin(descriptor.name()))
                     throw new IOException("Обнаружен снятый аддон " + descriptor.name()
-                            + ": архивируйте данные и уберите его JAR вручную по инструкции 1.4.239.");
+                            + ": архивируйте данные и уберите его JAR вручную по инструкции соответствующего обновления в docs/releases.");
                 if (descriptor == null || !MODULES.containsKey(descriptor.name())) continue;
                 if (found.put(descriptor.name(), new Installed(path, descriptor, hash(path))) != null)
                     throw new IOException("В plugins несколько JAR одного плагина: " + descriptor.name());

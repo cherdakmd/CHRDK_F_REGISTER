@@ -122,7 +122,7 @@ class PluginUpdateServiceTest {
 
     @Test void retiredJarBlocksStagingBeforeAnyDownloadAndNeverDeletesServerFiles() throws Exception {
         Fixture fixture = new Fixture(); fixture.install("CHRDK_Core", "1.4.72");
-        for (String plugin : List.of("CHRDK_Bosses", "CHRDK_Treasures", "CHRDK_Streams", "CHRDK_Events")) {
+        for (String plugin : List.of("CHRDK_Bosses", "CHRDK_Treasures", "CHRDK_Streams", "CHRDK_Events", "CHRDK_Queue")) {
             Path old = root.resolve("renamed-retired-plugin.jar"); byte[] original = jar(plugin, "1.4.72");
             Files.write(old, original);
             try (var updater = fixture.service()) {
@@ -179,17 +179,20 @@ class PluginUpdateServiceTest {
         }
     }
 
-    @Test void retiredQueueJarIsNeitherStagedNorSilentlyDeleted() throws Exception {
+    @Test void retiredQueueJarBlocksStagingAndIsNeverSilentlyDeleted() throws Exception {
         Fixture fixture = new Fixture();
         fixture.install("CHRDK_Core", "1.4.72");
         Path retired = root.resolve("renamed-old-module.jar");
         byte[] content = jar("CHRDK_Queue", "1.4.247");
         Files.write(retired, content);
         try (var updater = fixture.service()) {
-            var result = updater.execute(true, "1.4.72");
-            assertEquals(1, result.count());
+            IOException failure = assertThrows(IOException.class, () -> updater.execute(true, "1.4.72"));
+            assertTrue(failure.getMessage().contains("CHRDK_Queue"));
+            assertEquals(0, fixture.downloads);
+            assertFalse(Files.exists(root.resolve("update")));
             assertArrayEquals(content, Files.readAllBytes(retired), "снятие старого JAR — отдельная установка при остановке");
-            assertFalse(Files.exists(result.updateDirectory().resolve(retired.getFileName())));
+            Files.delete(retired); // имитация отдельно выполненного администратором снятия старого модуля
+            assertEquals(1, updater.execute(true, "1.4.72").count());
         }
     }
 
