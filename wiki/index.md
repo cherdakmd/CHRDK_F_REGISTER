@@ -41,3 +41,9 @@ CHRDK — выживание с ремеслом, исследованием и 
 Это описание **версии исходников**, не мониторинг запущенного сервера:
 администрация может менять настройки и устанавливать обновления позже.
 Подробнее — [о справочнике](about.html) и [обновлениях](updates.html).
+
+## Как связаться
+
+- **Телеграм:** [t.me/cherdakmd](https://t.me/cherdakmd)
+- **ВК:** [vk.ru/chrdk_reborn](https://vk.ru/chrdk_reborn)
+- **Твич:** [twitch.tv/dedworkshop](https://www.twitch.tv/dedworkshop)
