@@ -36,7 +36,10 @@ final class GuildsGui implements Listener {
     private static final int UPGRADE_SLOT = 47;
     private static final int WAR_SLOT = 48;
     private static final int CLOSE_SLOT = 49;
-    private static final int[] MEMBER_SLOTS = {19, 20, 21, 22, 23, 24, 25,
+    private static final int CLAIMS_SLOT = 52;
+    private static final int PERSONAL_SLOT = 51;
+    private static final int[] MEMBER_SLOTS = {10, 11, 12, 13, 14, 15, 16,
+            19, 20, 21, 22, 23, 24, 25,
             28, 29, 30, 31, 32, 33, 34,
             37, 38, 39, 40, 41, 42, 43};
 
@@ -67,11 +70,17 @@ final class GuildsGui implements Listener {
         if (player == null) {
             return;
         }
+        if (!plugin.visible(player)) { player.closeInventory(); return; }
         Guild guild = plugin.service().guildOf(player.getUniqueId());
         Holder holder = new Holder(player.getUniqueId());
         Inventory inventory = Bukkit.createInventory(holder, SIZE,
                 plugin.messages().get("menu-title"));
         holder.inventory = inventory;
+        inventory.setItem(CLAIMS_SLOT, item(Material.GRASS_BLOCK, "menu-claims-name", List.of(
+                plugin.messages().get("menu-claims-lore"))));
+        inventory.setItem(PERSONAL_SLOT, item(Material.EMERALD, "menu-personal-name", List.of(
+                plugin.messages().get("menu-personal-lore", "level", String.valueOf(plugin.coreApi() == null ? 0
+                        : plugin.coreApi().rankLevel(player.getName()))), plugin.messages().get("menu-personal-boundary"))));
 
         if (guild == null) {
             fillNoGuild(inventory, player);
@@ -241,6 +250,11 @@ final class GuildsGui implements Listener {
         }
         if (!plugin.authenticated(player) || !player.hasPermission("chrdkguilds.use") || !plugin.config().enabled()) return;
         int slot = event.getRawSlot();
+        if (slot == CLAIMS_SLOT || slot == PERSONAL_SLOT) {
+            player.closeInventory();
+            player.performCommand(slot == CLAIMS_SLOT ? "claim menu" : "rank my");
+            return;
+        }
         if (slot == CLOSE_SLOT || slot == BACK_SLOT) {
             player.closeInventory();
             return;

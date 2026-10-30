@@ -37,6 +37,8 @@ public final class ClaimMenuGui implements Listener {
     private static final int SLOT_TAB_MINE = 45;
     private static final int SLOT_TAB_SALE = 46;
     private static final int SLOT_CLOSE = 49;
+    private static final int SLOT_CLAN = 48;
+    private static final int SLOT_TAB_ACCESS = 47;
     /** Центр верхнего ряда карточек — пустое состояние. */
     private static final int SLOT_EMPTY = 22;
 
@@ -130,6 +132,8 @@ public final class ClaimMenuGui implements Listener {
             inventory.setItem(SLOT_TAB_SALE, tabIcon(ClaimMenuModel.Tab.FOR_SALE,
                     holder.tab == ClaimMenuModel.Tab.FOR_SALE));
         }
+        inventory.setItem(SLOT_TAB_ACCESS, tabIcon(ClaimMenuModel.Tab.ACCESSIBLE, holder.tab == ClaimMenuModel.Tab.ACCESSIBLE));
+        inventory.setItem(SLOT_CLAN, item(Material.WHITE_BANNER, "menu-clan-name", "menu-clan-lore"));
         inventory.setItem(SLOT_CLOSE, item(Material.BARRIER, "menu-close-name", null));
     }
 
@@ -187,6 +191,12 @@ public final class ClaimMenuGui implements Listener {
 
     private ItemStack tabIcon(ClaimMenuModel.Tab tab, boolean selected) {
         boolean mine = tab == ClaimMenuModel.Tab.MINE;
+        if (tab == ClaimMenuModel.Tab.ACCESSIBLE) {
+            ItemStack stack = item(Material.OAK_DOOR, "menu-tab-access-name", "menu-tab-access-lore");
+            ItemMeta meta = stack.getItemMeta();
+            if (selected && meta != null) { meta.setEnchantmentGlintOverride(true); stack.setItemMeta(meta); }
+            return stack;
+        }
         ItemStack stack = item(mine ? Material.MAP : Material.GOLD_INGOT,
                 mine ? "menu-tab-mine-name" : "menu-tab-sale-name",
                 mine ? "menu-tab-mine-lore" : "menu-tab-sale-lore");
@@ -227,17 +237,25 @@ public final class ClaimMenuGui implements Listener {
         if (!(event.getWhoClicked() instanceof Player player)) {
             return;
         }
+        if (!plugin.service().isAllowed(player)) { player.closeInventory(); return; }
         int slot = event.getSlot();
+        if (slot == SLOT_CLAN) {
+            boolean clanMenu = event.isRightClick();
+            plugin.getServer().getScheduler().runTask(plugin, () -> {
+                player.closeInventory(); player.performCommand(clanMenu ? "clan menu" : "claim clan");
+            });
+            return;
+        }
         if (slot == SLOT_CLOSE) {
             plugin.getServer().getScheduler().runTask(plugin, () -> player.closeInventory());
             return;
         }
         boolean left = event.isLeftClick();
         boolean right = event.isRightClick();
-        if (slot == SLOT_TAB_MINE || slot == SLOT_TAB_SALE) {
+        if (slot == SLOT_TAB_MINE || slot == SLOT_TAB_SALE || slot == SLOT_TAB_ACCESS) {
             ClaimMenuModel.Tab target = slot == SLOT_TAB_MINE
                     ? ClaimMenuModel.Tab.MINE
-                    : ClaimMenuModel.Tab.FOR_SALE;
+                    : slot == SLOT_TAB_ACCESS ? ClaimMenuModel.Tab.ACCESSIBLE : ClaimMenuModel.Tab.FOR_SALE;
             if (target == holder.tab) {
                 return;
             }

@@ -94,6 +94,7 @@ public final class GuildService {
         }
         String cleanName = Guild.cleanName(rawName);
         String cleanTag = Guild.cleanTag(rawTag);
+        if (cleanTag.length() < config.minTag()) return GuildResult.fail("tag-short", "min", String.valueOf(config.minTag()));
         if (store.byName(cleanName) != null) {
             return GuildResult.fail("name-taken", "name", cleanName);
         }
@@ -390,6 +391,7 @@ public final class GuildService {
         if (raw.length() > config.maxTag()) {
             return GuildResult.fail("tag-long", "max", String.valueOf(config.maxTag()));
         }
+        if (clean.length() < config.minTag()) return GuildResult.fail("tag-short", "min", String.valueOf(config.minTag()));
         Guild existing = store.byTag(clean);
         if (existing != null && !existing.id().equals(guild.id())) {
             return GuildResult.fail("tag-taken", "tag", clean);

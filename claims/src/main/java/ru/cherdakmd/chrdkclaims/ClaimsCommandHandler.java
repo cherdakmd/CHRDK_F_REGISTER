@@ -18,7 +18,7 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
 
     private static final List<String> SUBS = List.of("help", "menu", "tp", "info", "map", "list",
             "unclaim", "add", "remove", "deposit", "withdraw", "balance", "sell", "sellback",
-            "buy", "transfer", "forsale", "borders", "near", "notices", "greeting", "rent");
+            "buy", "transfer", "forsale", "borders", "near", "notices", "greeting", "rent", "clan");
 
     private final ClaimsPlugin plugin;
 
@@ -57,6 +57,7 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
             case "notices" -> notices(player, args);
             case "greeting" -> greeting(player, args);
             case "rent" -> rental(player, args);
+            case "clan" -> { if (ready(player)) service().clanSharing(player, args); }
             case "sell" -> sell(player, args);
             case "sellback" -> {
                 if (ready(player)) {
@@ -231,9 +232,11 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
         if (claim.hasGreeting()) {
             plugin.messages().send(player, "info-greeting", "text", claim.greeting);
         }
+        plugin.messages().send(player, "clan-status", "id", claim.clanId().isEmpty() ? "—" : claim.clanId(),
+                "role", claim.clanId().isEmpty() ? "—" : service().roleName(claim.clanRole()));
         if (claim.isOwner(player.getName())) {
             plugin.messages().send(player, "info-you-owner");
-        } else if (claim.isMember(player.getName())) {
+        } else if (claim.canUse(player.getName())) {
             plugin.messages().send(player, "info-you-role",
                     "role", service().roleName(claim.roleOf(player.getName())));
         }
@@ -645,6 +648,10 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
                 }
             }
             return result;
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("clan")) {
+            String prefix = args[1].toLowerCase(Locale.ROOT);
+            return List.of("access", "containers", "build", "off").stream().filter(s -> s.startsWith(prefix)).toList();
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("rent")) {
             String prefix = args[1].toLowerCase(Locale.ROOT);

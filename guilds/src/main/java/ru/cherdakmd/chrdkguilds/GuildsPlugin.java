@@ -42,7 +42,7 @@ public final class GuildsPlugin extends JavaPlugin {
             this.messages = Messages.load(this, config.locale(), getLogger());
             this.store = new GuildStore(getDataFolder().toPath(), getLogger());
             this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
-            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 22) throw new IllegalStateException("Нужен Core API 22+");
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 28) throw new IllegalStateException("Нужен Core API 28+");
             this.payments = new ru.cherdakmd.chrdkregister.api.PaidActions(this,this::coreApi,this::messages,"guilds");
             store.bind(payments.store());
             this.service = new GuildService(config, store);
@@ -64,6 +64,8 @@ public final class GuildsPlugin extends JavaPlugin {
                             + "(нужно ядро 1.4.156+): " + error);
                 }
             }
+            Bukkit.getServicesManager().register(ru.cherdakmd.chrdkregister.api.ClanMembershipIndex.class,
+                    this::membership, this, org.bukkit.plugin.ServicePriority.Normal);
             this.tickTask = getServer().getScheduler().runTaskTimer(this, this::tick, 20L, 20L);
 
             getLogger().info("CHRDK_Guilds включён: гильдий " + store.count()
@@ -78,6 +80,7 @@ public final class GuildsPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        Bukkit.getServicesManager().unregisterAll(this);
         if (coreApi != null) {
             try {
                 coreApi.unregisterProfile("guilds");
@@ -139,6 +142,22 @@ public final class GuildsPlugin extends JavaPlugin {
         } catch (RuntimeException error) {
             return false;
         }
+    }
+
+    private ru.cherdakmd.chrdkregister.api.ClanMembershipIndex.Membership membership(String name) {
+        if (name == null || coreApi == null || config == null || !config.enabled() || service == null
+                || payments == null || payments.paused()) return null;
+        java.util.UUID id = coreApi.knownBankPlayer(name);
+        if (id == null) return null;
+        Guild guild = service.guildOf(id);
+        if (guild == null) return null;
+        return new ru.cherdakmd.chrdkregister.api.ClanMembershipIndex.Membership(
+                guild.id(), guild.name(), guild.tag(), guild.rankOf(id).id());
+    }
+
+    boolean visible(org.bukkit.entity.Player player) {
+        return player != null && GuildVisibility.allowed(config.enabled(), authenticated(player),
+                player.hasPermission("chrdkguilds.use"));
     }
 
     private void registerCommands() {

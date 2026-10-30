@@ -30,6 +30,17 @@ class GuildModelTest {
         return guild;
     }
 
+    @Test void leaderCanOnlyBeChangedByExplicitTransfer() {
+        Guild g = guild();
+        assertFalse(g.setRank(MEMBER, GuildRank.LEADER));
+        assertFalse(g.setRank(OFFICER, GuildRank.LEADER));
+        assertEquals(LEADER, g.leader());
+        assertTrue(g.transferLeader(MEMBER));
+        assertEquals(GuildRank.LEADER, g.rankOf(MEMBER));
+        assertEquals(GuildRank.OFFICER, g.rankOf(LEADER));
+        assertEquals(1, g.members().values().stream().filter(r -> r == GuildRank.LEADER).count());
+    }
+
     /* ---------------------------------- ранги --------------------------------- */
 
     @Test

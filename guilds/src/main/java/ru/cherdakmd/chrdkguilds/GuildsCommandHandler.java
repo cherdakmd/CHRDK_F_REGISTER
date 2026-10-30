@@ -44,13 +44,6 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
         if (sender instanceof Player actor && !plugin.authenticated(actor)) {
             plugin.messages().send(sender,"finance-auth"); return true;
         }
-        if (command.getName().equalsIgnoreCase("gchat")) {
-            if (!(sender instanceof Player player)) {
-                plugin.messages().send(sender, "player-only");
-                return true;
-            }
-            return chat(player, args);
-        }
         if (command.getName().equalsIgnoreCase("guildadmin")) {
             return admin(sender, args);
         }
@@ -61,6 +54,13 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
         if (!plugin.config().enabled()) {
             plugin.messages().send(sender, "disabled");
             return true;
+        }
+        if (command.getName().equalsIgnoreCase("gchat")) {
+            if (!(sender instanceof Player player)) {
+                plugin.messages().send(sender, "player-only");
+                return true;
+            }
+            return chat(player, args);
         }
         if (args.length == 0) {
             return menu(sender);
@@ -168,7 +168,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
         }
         plugin.requestSave();
         Player target = Bukkit.getPlayer(targetId);
-        if (target != null) {
+        if (plugin.visible(target)) {
             Guild guild = plugin.service().guildOf(player.getUniqueId());
             plugin.messages().send(target, "invite-received",
                     "player", player.getName(),
@@ -244,7 +244,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
         plugin.requestSave();
         broadcastGuild(guild, "kick-broadcast", "player", args[1], "by", player.getName());
         Player target = Bukkit.getPlayer(targetId);
-        if (target != null) {
+        if (plugin.visible(target)) {
             plugin.messages().send(target, "kick-notice",
                     "name", guild == null ? "?" : guild.name());
         }
@@ -269,7 +269,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
         if (result.ok()) {
             plugin.requestSave();
             Player target = Bukkit.getPlayer(targetId);
-            if (target != null) {
+            if (plugin.visible(target)) {
                 plugin.messages().send(target, "promote-notice",
                         "rank", plugin.messages().mini("rank.officer"));
             }
@@ -295,7 +295,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
         if (result.ok()) {
             plugin.requestSave();
             Player target = Bukkit.getPlayer(targetId);
-            if (target != null) {
+            if (plugin.visible(target)) {
                 plugin.messages().send(target, "demote-notice",
                         "rank", plugin.messages().mini("rank.member"));
             }
@@ -321,7 +321,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
         if (result.ok()) {
             plugin.requestSave();
             Player target = Bukkit.getPlayer(targetId);
-            if (target != null) {
+            if (plugin.visible(target)) {
                 plugin.messages().send(target, "transfer-notice",
                         "player", player.getName());
             }
@@ -577,10 +577,10 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
         var message = plugin.messages().get("chat-format",
                 "tag", guild.tag().isEmpty() ? guild.name() : guild.tag(),
                 "player", player.getName(),
-                "message", Messages.escape(text));
+                "message", text);
         for (UUID member : guild.memberIds()) {
             Player online = Bukkit.getPlayer(member);
-            if (online != null) {
+            if (plugin.visible(online)) {
                 online.sendMessage(message);
             }
         }
@@ -817,7 +817,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
         var message = plugin.messages().get(key, (Object[]) pairs);
         for (UUID member : guild.memberIds()) {
             Player online = Bukkit.getPlayer(member);
-            if (online != null) {
+            if (plugin.visible(online)) {
                 online.sendMessage(message);
             }
         }
@@ -883,8 +883,8 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
         if (online != null) {
             return online.getUniqueId();
         }
-        OfflinePlayer offline = Bukkit.getOfflinePlayer(name);
-        return offline.getName() == null ? null : offline.getUniqueId();
+        OfflinePlayer offline = Bukkit.getOfflinePlayerIfCached(name);
+        return offline == null || offline.getName() == null ? null : offline.getUniqueId();
     }
 
     /* ------------------------------- автодополнение --------------------------- */

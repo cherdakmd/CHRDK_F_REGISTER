@@ -162,7 +162,7 @@ public final class Guild {
 
     /** Меняет ранг; лидера понизить нельзя. */
     public boolean setRank(UUID player, GuildRank rank) {
-        if (player == null || rank == null || player.equals(leader)) {
+        if (player == null || rank == null || rank == GuildRank.LEADER || player.equals(leader)) {
             return false;
         }
         GuildRank current = members.get(player);

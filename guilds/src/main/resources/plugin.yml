@@ -11,7 +11,7 @@ commands:
   guild:
     description: Меню гильдии, состав, казна и войны.
     usage: /guild [menu|create|invite|deposit|war|info|top]
-    aliases: [guilds, klan, gildiya]
+    aliases: [guilds, clan, clans, klan, gildiya]
     permission: chrdkguilds.use
   gchat:
     description: Написать в чат гильдии.

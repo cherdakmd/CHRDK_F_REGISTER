@@ -80,4 +80,30 @@ class ClaimFinanceTest {
     @Test void unreadableSourceCannotMakeUnknownLandUnprotected() throws Exception {start();String bad="{ broken JSON";Files.writeString(file(),bad);store=new ClaimStore(dir.resolve("claims"),log);store.load();assertFalse(store.moneyAvailable());assertNotNull(store.protectedClaimAt("world",123,456));store.save();assertEquals(bad,Files.readString(file()));}
     @Test void liveReloadCannotEvadeThePendingGuard() {start();bank.hideAfterCommit=true;buy();assertThrows(IllegalStateException.class,store::load);assertNotNull(store.financialPending());}
 
+    boolean shareClan(Claim.Role role) {
+        return store.finance.execute("clan-share", shadow -> ClaimClanSharing.set(shadow,"world",0,0,"Owner","stable-clan",role),Boolean.TRUE::equals,false);
+    }
+    @Test void sharingIsDurableWithoutChangingAnyPersonalOrCollectiveBalance() {
+        start(); var c=claim(); long before=bank.balance("Buyer");
+        assertTrue(shareClan(Claim.Role.CONTAINER)); assertSame(c,store.claimAt("world",0,0));
+        assertEquals("stable-clan",c.clanId()); assertEquals(before,bank.balance("Buyer")); assertEquals(0,bank.balance("Owner"));
+        restart(); assertEquals("stable-clan",store.claimAt("world",0,0).clanId());
+        assertEquals(Claim.Role.ACCESS,store.claimAt("world",0,0).roleOf("Friend"));
+    }
+    @Test void sharingUnknownCommitKeepsOldProtectionUntilExactFrozenRecovery() {
+        start(); claim(); bank.hideAfterCommit=true; assertFalse(shareClan(Claim.Role.BUILD));
+        assertEquals("",store.claimAt("world",0,0).clanId()); assertNotNull(store.financialPending());
+        restart(); assertEquals("stable-clan",store.claimAt("world",0,0).clanId());
+        assertEquals(1,store.financialSequence()); assertEquals(0,bank.balance("Owner"));
+    }
+    @Test void rejectedSharingNeverPublishesMetadata() {
+        start(); claim(); bank.refuse=true; assertFalse(shareClan(Claim.Role.BUILD));
+        assertEquals("",store.claimAt("world",0,0).clanId()); assertNull(store.financialPending());
+    }
+    @Test void saleClearsOldClanBindingInsideSameMoneyDomain() {
+        start(); var c=claim(); c.shareClan("old-clan",Claim.Role.BUILD); c.salePrice=30;
+        assertTrue(ClaimLand.trade(store,c,"Buyer",3)); assertEquals("",store.claimAt("world",0,0).clanId());
+        restart(); assertEquals("",store.claimAt("world",0,0).clanId());
+    }
+
 }

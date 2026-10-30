@@ -900,6 +900,39 @@ public final class ClaimsService {
         return false;
     }
 
+    /** Явное согласие собственника: вся связная личная территория, не общий владелец-клан. */
+    public void clanSharing(Player player, String[] args) {
+        if (plugin.coreApi() == null || !plugin.coreApi().isAuthenticated(player)) { plugin.messages().send(player, "need-auth"); return; }
+        if (!mutation(player)) return;
+        Claim here = claimHere(player);
+        if (here == null) { plugin.messages().send(player, "unclaim-none"); return; }
+        if (args.length == 1) {
+            plugin.messages().send(player, "clan-status", "id", here.clanId().isEmpty() ? "—" : here.clanId(),
+                    "role", here.clanId().isEmpty() ? "—" : roleName(here.clanRole()));
+            plugin.messages().send(player, "clan-usage"); return;
+        }
+        if (!here.isOwner(player.getName())) { plugin.messages().send(player, "no-permission"); return; }
+        if (args.length != 2) { plugin.messages().send(player, "clan-usage"); return; }
+        String action = args[1].toLowerCase(java.util.Locale.ROOT);
+        Claim.Role role = switch(action) {
+            case "access" -> Claim.Role.ACCESS;
+            case "containers" -> Claim.Role.CONTAINER;
+            case "build" -> Claim.Role.BUILD;
+            default -> null;
+        };
+        if (!action.equals("off") && role == null) { plugin.messages().send(player, "clan-usage"); return; }
+        var membership = role == null ? null : plugin.clanMembership(player.getName());
+        if (role != null && membership == null) { plugin.messages().send(player, "clan-unavailable"); return; }
+        String id = membership == null ? "" : membership.id();
+        boolean committed = plugin.finance().execute("clan-share", shadow ->
+                ClaimClanSharing.set(shadow, here.world, here.x, here.z, player.getName(), id, role),
+                Boolean.TRUE::equals, false);
+        if (!committed) { plugin.messages().send(player, "finance.unavailable"); return; }
+        audit("clan-share", player.getName() + " " + here.where() + " clan=" + id + " role=" + role);
+        plugin.messages().send(player, role == null ? "clan-off" : "clan-on",
+                "name", membership == null ? "" : membership.name(), "role", role == null ? "" : roleName(role));
+    }
+
     public void rental(Player player, String action, int price) {
         if(!mutation(player)) return;
         if (!isAllowed(player)) { plugin.messages().send(player, "need-auth"); return; }
