@@ -29,9 +29,12 @@ record GuardSettings(boolean enabled, int ipBurst, int ipRefillSeconds, int glob
     }
 
     static GuardSettings parse(FileConfiguration c) {
-        Set<String> blocked = c.contains("security.console-only-commands")
-                ? c.getStringList("security.console-only-commands").stream()
-                    .map(GuardPolicy::label).filter(s -> !s.isEmpty()).collect(Collectors.toSet())
+        var configured = c.getList("security.console-only-commands");
+        // Только явный [] снимает запрет. Ошибка типа/null/пустая строка не открывает OP-команды.
+        boolean valid = configured != null && configured.stream().allMatch(value ->
+                value instanceof String text && !GuardPolicy.label(text).isEmpty());
+        Set<String> blocked = valid
+                ? configured.stream().map(value -> GuardPolicy.label((String)value)).collect(Collectors.toSet())
                 : DEFAULT_CONSOLE_ONLY;
         return new GuardSettings(c.getBoolean("security.enabled", true),
                 limit(c,"ip-burst",6,1,1000), limit(c,"ip-refill-seconds",3,1,300),

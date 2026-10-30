@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Arrays;
 import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -38,6 +39,12 @@ class GuardPolicyTest {
         assertEquals(GuardSettings.DEFAULT_CONSOLE_ONLY,GuardSettings.parse(c).consoleOnly());
         c.set("security.console-only-commands",List.of());c.set("security.enabled",false);
         assertTrue(GuardSettings.parse(c).consoleOnly().isEmpty());assertFalse(GuardSettings.parse(c).enabled());
+    }
+    @Test void malformedConsoleOnlySettingCannotSilentlyDisableProtection() {
+        for(Object bad:List.of(false,"fill",List.of(""),List.of(12),Arrays.asList((Object)null))) {
+            var c=new YamlConfiguration();c.set("security.console-only-commands",bad);
+            assertEquals(GuardSettings.DEFAULT_CONSOLE_ONLY,GuardSettings.parse(c).consoleOnly(),String.valueOf(bad));
+        }
     }
     @Test void shippedDefaultsMatchFallbacksAndUnsafeNumericValuesAreClamped() {
         var c=YamlConfiguration.loadConfiguration(new InputStreamReader(getClass().getResourceAsStream("/config.yml"),StandardCharsets.UTF_8));
