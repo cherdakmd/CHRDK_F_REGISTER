@@ -138,6 +138,27 @@ class ClassReworkTest {
         for(Talent node:ClassTrees.talents("warrior"))if(node.tier()==1)for(int i=0;i<3;i++)s.learn(ID,node.id());
         for(var e:s.effects(ID).entrySet())assertTrue(e.getValue()<=ClassTrees.ceiling("warrior",e.getKey())+1e-9);
     }
+    @Test void corruptedModernBuildsCannotBeOverwritten(@TempDir Path dir) throws Exception {
+        var service=fresh(dir.resolve("source"));service.learn(ID,"warrior-path-0-1");
+        String valid=service.store().snapshotJson();
+        java.util.List<java.util.function.Consumer<com.google.gson.JsonObject>> edits=List.of(
+            row->row.getAsJsonObject("build").getAsJsonObject("ranks").addProperty("warrior-path-0-1",3),
+            row->row.getAsJsonObject("build").getAsJsonObject("ranks").addProperty("warrior-path-0-1",1.5),
+            row->row.getAsJsonObject("build").getAsJsonArray("abilities").set(1,new com.google.gson.JsonPrimitive("warrior")),
+            row->row.getAsJsonObject("build").addProperty("classId","mage"),
+            row->row.addProperty("build-revision",-1),
+            row->{var times=new com.google.gson.JsonObject();times.addProperty("unknown",NOW);row.add("ability-times",times);},
+            row->{var counters=new com.google.gson.JsonObject();counters.addProperty("warrior",2001);row.add("milestones",counters);}
+        );
+        int index=0;
+        for(var edit:edits){
+            var json=com.google.gson.JsonParser.parseString(valid).getAsJsonObject();
+            edit.accept(json.getAsJsonObject("players").getAsJsonObject(ID.toString()));
+            Path folder=Files.createDirectories(dir.resolve("bad-"+index++));
+            Path file=folder.resolve("classes.json");Files.writeString(file,json.toString());byte[] before=Files.readAllBytes(file);
+            var store=new ClassStore(folder,null);assertThrows(IllegalStateException.class,store::load);store.flush();assertArrayEquals(before,Files.readAllBytes(file));
+        }
+    }
     @Test void rulesAreFrozenAndCorruptionFailsClosed(@TempDir Path dir) throws Exception {
         var rules=LegacyRulesFile.loadOrCreate(dir,ClassConfig.defaults(),null);
         assertEquals(rules,LegacyRulesFile.loadOrCreate(dir,ClassConfig.defaults(),null));

@@ -13,7 +13,7 @@ import java.util.*;
 final class ClassesGui implements Listener {
     private final ClassesPlugin plugin;
     private static final int[] SLOTS={19,21,23,25};
-    private static final class Holder implements InventoryHolder {
+    static final class Holder implements InventoryHolder {
         final Player owner;
         final PlayerClass candidate;
         Inventory inventory;

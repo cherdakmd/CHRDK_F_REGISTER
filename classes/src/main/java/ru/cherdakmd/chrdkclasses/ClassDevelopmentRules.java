@@ -1,9 +1,6 @@
 package ru.cherdakmd.chrdkclasses;
 
-/**
- * Первая версия собственной кривой. Пока не подключена к игровым начислениям:
- * включение возможно только вместе с новым деревом и его проверкой бюджета.
- */
+/** Версия собственной кривой XP: 50 уровней и до шести уникальных очков испытаний. */
 final class ClassDevelopmentRules {
     static final int MAX_LEVEL = 50;
     static final int MAX_TRIAL_POINTS = 6;

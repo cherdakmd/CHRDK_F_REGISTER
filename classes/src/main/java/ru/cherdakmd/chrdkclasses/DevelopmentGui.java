@@ -18,7 +18,7 @@ final class DevelopmentGui implements Listener {
         boolean used;
         Confirmation(DevelopmentService.Quote quote) { this.quote=quote; }
     }
-    private static final class Holder implements InventoryHolder {
+    static final class Holder implements InventoryHolder {
         final Player owner;
         final String screen;
         final int page;

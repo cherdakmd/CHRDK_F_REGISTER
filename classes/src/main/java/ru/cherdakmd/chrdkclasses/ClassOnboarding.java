@@ -101,7 +101,8 @@ final class ClassOnboarding implements Listener {
         if (!(event.getPlayer() instanceof Player player)) {
             return;
         }
-        if (!(event.getInventory().getHolder() instanceof ClassesGui.Holder)) {
+        if (!(event.getInventory().getHolder() instanceof ClassesGui.Holder)
+                && !(event.getInventory().getHolder() instanceof DevelopmentGui.Holder)) {
             return;
         }
         if (!needed(player)) {
@@ -148,12 +149,13 @@ final class ClassOnboarding implements Listener {
             schedule(player, BUSY_RETRY_TICKS);
             return;
         }
+        if (!plugin.ready(player)) {schedule(player, BUSY_RETRY_TICKS); return;}
         plugin.gui().open(player);
     }
 
     private void remindAll() {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            if (!needed(player)) {
+            if (!needed(player) || plugin.coreApi()==null || !plugin.coreApi().isAuthenticated(player)) {
                 continue;
             }
             player.sendActionBar(plugin.messages().get("onboarding-remind"));
