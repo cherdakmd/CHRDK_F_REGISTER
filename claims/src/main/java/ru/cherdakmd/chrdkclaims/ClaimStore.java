@@ -50,6 +50,12 @@ public final class ClaimStore {
     private final Logger logger;
     /** world → (chunkKey → Claim). */
     private final Map<String, Map<Long, Claim>> claims = new HashMap<>();
+    private ru.cherdakmd.chrdkregister.api.ClanMembershipIndex clanIndex;
+    synchronized void membershipIndex(ru.cherdakmd.chrdkregister.api.ClanMembershipIndex index) {
+        clanIndex = index;
+        claims.values().forEach(world -> world.values().forEach(c -> c.membershipIndex(index)));
+    }
+    private Claim attach(Claim claim) { if (claim != null) claim.membershipIndex(clanIndex); return claim; }
     private ClaimAccounts accounts;
     ClaimFinance finance;
     private java.util.UUID financialLineage=java.util.UUID.randomUUID();
@@ -113,7 +119,7 @@ public final class ClaimStore {
             var n=e.getValue(); var old=claimAt(n.world,n.x,n.z); if(old==null) continue;
             old.owner=n.owner; old.paidUntil=n.paidUntil; old.debtDays=n.debtDays; old.salePrice=n.salePrice; old.greeting=n.greeting;
             old.rentOffer=n.rentOffer; old.tenant=n.tenant; old.rentPrice=n.rentPrice; old.rentUntil=n.rentUntil; old.rentRenew=n.rentRenew;
-            old.clearMembers(); old.members.addAll(n.members); n.explicitRoles().forEach(old::applyRole); world.put(e.getKey(),old);
+            old.clearMembers(); old.members.addAll(n.members); n.explicitRoles().forEach(old::applyRole); old.copyClanSharing(n); world.put(e.getKey(),old);
         }
         claims.clear(); claims.putAll(copy.claims); treasury.clear(); treasury.putAll(copy.treasury); notices.clear(); notices.putAll(copy.notices); limits.clear(); limits.putAll(copy.limits);
         chunksClaimedTotal=copy.chunksClaimedTotal; diamondsSpent=copy.diamondsSpent; taxBurned=copy.taxBurned; revision++;
@@ -310,6 +316,14 @@ public final class ClaimStore {
                     repairedDates++;
                 }
                 Claim claim = new Claim(world, x, z, owner, paidUntil);
+                if (map.containsKey("cg")) {
+                    if (!(map.get("cg") instanceof String id) || id.isBlank() || id.length() > 128
+                            || !(map.get("cgo") instanceof String host) || !claim.isOwner(host)
+                            || !(map.get("cgr") instanceof String role) || parseRole(role) == null)
+                        throw new LegacyMoneyException("Неверная клановая привязка");
+                    claim.shareClan(id, parseRole(role));
+                } else if (map.containsKey("cgr") || map.containsKey("cgo")) throw new LegacyMoneyException("Неполная клановая привязка");
+                claim.membershipIndex(clanIndex);
                 claim.debtDays = clamp((int) longOf(map.get("d")), 0, 100_000);
                 claim.salePrice = clamp((int) longOf(map.get("s")), 0, 1_000_000);
                 claim.greeting = Claim.normalizeGreeting(str(map.get("g")));
@@ -434,6 +448,9 @@ public final class ClaimStore {
                     entry.put("d", claim.debtDays);
                     entry.put("s", claim.salePrice);
                     entry.put("ro", claim.rentOffer);
+                    if (!claim.clanId().isEmpty()) {
+                        entry.put("cg", claim.clanId()); entry.put("cgo", claim.clanOwner()); entry.put("cgr", claim.clanRole().name());
+                    }
                     if (claim.tenant != null && !claim.tenant.isBlank()) {
                         entry.put("rt", claim.tenant); entry.put("rp", claim.rentPrice);
                         entry.put("ru", claim.rentUntil); entry.put("rr", claim.rentRenew);
@@ -505,6 +522,10 @@ public final class ClaimStore {
             var row=entry.getAsJsonObject(); var world=text(row,"w"); var owner=text(row,"o"); if(world.isBlank()||owner.isBlank()) throw new IllegalArgumentException("claim identity");
             for(String f:java.util.List.of("x","z","d","s","ro")) {long n=integer(row,f); Math.toIntExact(n); if(!f.equals("x")&&!f.equals("z")&&n<0) throw new IllegalArgumentException("negative claim counter");}
             if(integer(row,"p")<1||!seen.add(world+":"+integer(row,"x")+":"+integer(row,"z"))) throw new IllegalArgumentException("claim date/duplicate");
+            if(row.has("cg")) {
+                if(text(row,"cg").isBlank() || text(row,"cg").length()>128 || !owner.equalsIgnoreCase(text(row,"cgo"))
+                        || parseRole(text(row,"cgr"))==null) throw new IllegalArgumentException("clan sharing");
+            } else if(row.has("cgo") || row.has("cgr")) throw new IllegalArgumentException("partial clan sharing");
             if(row.has("rt")) {text(row,"rt");if(integer(row,"rp")<0||integer(row,"ru")<0)throw new IllegalArgumentException("rent amount/date");var renew=row.get("rr");if(renew==null||!renew.isJsonPrimitive()||!renew.getAsJsonPrimitive().isBoolean())throw new IllegalArgumentException("rent renew");}
         }
         var stats=json.getAsJsonObject("stats"); for(String f:java.util.List.of("chunksClaimedTotal","diamondsSpent","taxBurned")) if(integer(stats,f)<0) throw new IllegalArgumentException("claim statistic");
@@ -634,7 +655,7 @@ public final class ClaimStore {
 
     public synchronized Claim claimAt(String world, int chunkX, int chunkZ) {
         Map<Long, Claim> inWorld = claims.get(world);
-        return inWorld == null ? null : inWorld.get(ClaimMath.chunkKey(chunkX, chunkZ));
+        return inWorld == null ? null : attach(inWorld.get(ClaimMath.chunkKey(chunkX, chunkZ)));
     }
 
     /** Общая территория; записи оплаты и аренды по-прежнему принадлежат отдельным чанкам. */
@@ -750,7 +771,7 @@ public final class ClaimStore {
     public synchronized List<Claim> all() {
         List<Claim> result = new ArrayList<>();
         for (Map<Long, Claim> world : claims.values()) {
-            result.addAll(world.values());
+            world.values().forEach(c -> result.add(attach(c)));
         }
         return result;
     }
@@ -920,6 +941,7 @@ public final class ClaimStore {
             if (!claim.isOwner(from)) {
                 continue;
             }
+            claim.clearClanSharing();
             claim.owner = to;
             claim.removeMember(to);
             movedClaims++;

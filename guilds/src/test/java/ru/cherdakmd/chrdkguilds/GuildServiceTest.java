@@ -80,6 +80,16 @@ class GuildServiceTest {
         return store;
     }
 
+    @Test void cleanedTagsMustStillMeetMinimumAndRawLimitIsKept(@TempDir Path dir) {
+        var s = service(GuildConfig.defaults(), store(dir));
+        assertEquals("tag-short", s.checkCreate(LEADER, "Орден", "!!").key());
+        assertEquals("tag-short", s.checkCreate(LEADER, "Орден", "A!").key());
+        assertEquals("tag-long", s.checkCreate(LEADER, "Орден", "AB!!!!!!").key());
+        assertTrue(s.create(new Purse().put(LEADER,100), LEADER, "Орден", "AB", NOW).ok());
+        assertEquals("tag-short", s.retag(LEADER,"!!").key());
+        assertEquals("AB", s.guildOf(LEADER).tag());
+    }
+
     /* --------------------------------- создание -------------------------------- */
 
     @Test

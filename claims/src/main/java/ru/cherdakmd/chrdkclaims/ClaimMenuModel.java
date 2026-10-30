@@ -23,7 +23,9 @@ public final class ClaimMenuModel {
         /** Чанки игрока: сюда попадают только владения. */
         MINE,
         /** Витрина: все приваты с ценой продажи. */
-        FOR_SALE;
+        FOR_SALE,
+        /** Чужие территории с подтверждённым личным, клановым или арендным доступом. */
+        ACCESSIBLE;
 
         /** Вторая вкладка — для кнопки-переключателя. */
         public Tab other() {
@@ -54,7 +56,9 @@ public final class ClaimMenuModel {
             return result;
         }
         String name = viewer == null ? "" : viewer;
-        for (Claim claim : ClaimTerritories.representatives(claims)) {
+        for (List<Claim> group : ClaimTerritories.groups(claims)) {
+            Claim claim = tab == Tab.ACCESSIBLE ? group.stream()
+                    .filter(c -> !c.isOwner(name) && c.canUse(name)).findFirst().orElse(null) : group.getFirst();
             if (claim == null || claim.world == null || claim.world.isBlank()) {
                 continue;
             }
@@ -107,7 +111,7 @@ public final class ClaimMenuModel {
 
     /** Подпись вкладки для заголовка окна (без разметки, если сообщения нет). */
     public static String titleKey(Tab tab) {
-        return tab == Tab.FOR_SALE ? "menu-tab-sale" : "menu-tab-mine";
+        return tab == Tab.ACCESSIBLE ? "menu-tab-access" : tab == Tab.FOR_SALE ? "menu-tab-sale" : "menu-tab-mine";
     }
 
     private ClaimMenuModel() {

@@ -5,7 +5,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
 
 /**
  * События мира для гильдий (1.4.163).
@@ -52,20 +51,15 @@ final class GuildsListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onAuthenticated(ru.cherdakmd.chrdkregister.api.events.PlayerAuthCompletedEvent event) {
         plugin.payments().recover(event.getPlayer());
+        remind(event.getPlayer());
     }
 
     /** Напоминание о приглашении: игрок мог не видеть его в чате. */
-    @EventHandler
-    public void onJoin(PlayerJoinEvent event) {
-        if (!plugin.config().enabled()) {
-            return;
-        }
-        GuildInvite invite = plugin.store().inviteOf(event.getPlayer().getUniqueId());
-        if (invite == null || invite.expired(System.currentTimeMillis())) {
-            return;
-        }
-        plugin.messages().send(event.getPlayer(), "invite-reminder",
-                "name", invite.guildName(),
+    private void remind(Player player) {
+        if (!plugin.visible(player)) return;
+        GuildInvite invite = plugin.store().inviteOf(player.getUniqueId());
+        if (invite == null || invite.expired(System.currentTimeMillis())) return;
+        plugin.messages().send(player, "invite-reminder", "name", invite.guildName(),
                 "seconds", String.valueOf(invite.remainingSeconds(System.currentTimeMillis())));
     }
 

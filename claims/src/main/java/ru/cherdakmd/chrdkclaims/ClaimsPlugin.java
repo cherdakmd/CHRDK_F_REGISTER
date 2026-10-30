@@ -71,7 +71,7 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         saveDefaultConfig();
         reloadClaimsConfig();
         try {
-            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 24) throw new IllegalStateException("Нужен Core API 24+");
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 28) throw new IllegalStateException("Нужен Core API 28+");
             teleportPayments = new ru.cherdakmd.chrdkregister.api.PaidActions(this,this::coreApi,this::messages,"claim-teleports");
         } catch (Exception | LinkageError error) {
             getLogger().log(java.util.logging.Level.SEVERE,"Приваты остановлены: платёжный протокол недоступен; данные не сброшены",error);
@@ -80,6 +80,7 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         teleportFinanceTask=Bukkit.getScheduler().runTaskTimer(this,teleportPayments::tick,100L,100L);
         this.store = new ClaimStore(getDataFolder().toPath(), getLogger());
         store.load();
+        store.membershipIndex(this::clanMembership);
         this.audit = new ClaimAudit(getDataFolder().toPath(), getLogger());
         this.service = new ClaimsService(this);
         reloadClaimsConfig();
@@ -475,6 +476,14 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
             return false;
         }
         return true;
+    }
+
+    ru.cherdakmd.chrdkregister.api.ClanMembershipIndex.Membership clanMembership(String name) {
+        try {
+            if (coreApi == null) return null;
+            var index = Bukkit.getServicesManager().load(ru.cherdakmd.chrdkregister.api.ClanMembershipIndex.class);
+            return index == null ? null : index.membership(name);
+        } catch (RuntimeException | LinkageError error) { return null; }
     }
 
     public ChrdkRegisterApi coreApi() {

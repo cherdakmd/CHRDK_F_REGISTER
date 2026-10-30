@@ -2,6 +2,20 @@
 # MiniMessage: <red>, <gradient:#...>, <click:...>; старые &-коды тоже работают.
 # Подстановки %ключ% экранируются — ник игрока не сломает разметку.
 claims:
+  menu-tab-access: "Доступные"
+  menu-tab-access-name: "<green>Доступные мне территории</green>"
+  menu-tab-access-lore:
+    - "<gray>Личные приглашения, клановый доступ и аренда.</gray>"
+    - "<gray>Это не ваши владения; телепорт платный, права проверяются снова.</gray>"
+  clan-status: "<gray>Клановый доступ территории: ID <white>%id%</white>, роль <white>%role%</white>. При аренде действует только доступ арендатора и владельца.</gray>"
+  clan-usage: "<yellow>/claim clan access|containers|build</yellow> <gray>— открыть всю свою территорию текущему клану; <yellow>/claim clan off</yellow> — снять. build разрешает всем текущим и будущим участникам клана полную стройку. Личные приглашения сохраняются; персональная роль главнее клановой.</gray>"
+  clan-unavailable: "<red>Нет подтверждённого членства в действующем клане. Проверьте /clan menu; при недоступности Guilds новые разрешения не выдаются.</red>"
+  clan-on: "<green>Территория остаётся вашей. Клану «%name%» открыт доступ: %role%. Оплаченную аренду это не меняет.</green>"
+  clan-off: "<green>Клановый доступ территории снят. Персональные приглашения и оплаченная аренда не изменены.</green>"
+  menu-clan-name: "<green>Клан и доступ к моей земле</green>"
+  menu-clan-lore:
+    - "<gray>ЛКМ: /claim clan — настройка территории под вами.</gray>"
+    - "<gray>ПКМ: /clan menu. Земля и лимит всегда личные.</gray>"
   # -------------------------------- профиль ----------------------------------
   profile-title: "Приваты"
   profile-claims: "<gray>Чанков: </gray><white>%used%/%limit%</white>"
@@ -12,7 +26,7 @@ claims:
   no-permission: "<red>Недостаточно прав.</red>"
   unknown-sub: "<red>Неизвестная подкоманда. Смотрите /claim help.</red>"
   coords-invalid: "<red>Координаты чанка — два целых числа: /claim info <x> <z> или /claim tp <x> <z>.</red>"
-  usage: "<gray>/claim — купить чанк · menu · tp [x z] · info [x z] · map [радиус] · list [стр] · forsale [стр] · near [радиус] · borders · notices [on|off] · greeting [текст|снять] · rent · unclaim [all confirm] · add/remove <ник> [доступ|контейнеры|полный] [все] · transfer <ник> · deposit [n|все] · withdraw <n> · balance · sell <цена|снять> · sellback · buy [x z] · help</gray>"
+  usage: "<gray>/claim — купить чанк · menu · tp [x z] · info [x z] · map [радиус] · list [стр] · forsale [стр] · near [радиус] · borders · notices [on|off] · greeting [текст|снять] · rent · clan · unclaim [all confirm] · add/remove <ник> [доступ|контейнеры|полный] [все] · transfer <ник> · deposit [n|все] · withdraw <n> · balance · sell <цена|снять> · sellback · buy [x z] · help</gray>"
   # покупка/продажа
   bought: "<green>Чанк приватизирован за %price% ⛁! Рента %upkeep% ⛁/сутки, оплачен до %paid%. Участники: /claim add <ник>.</green>"
   already-claimed: "<red>Этот чанк уже занят (%owner%). Границы — /claim map.</red>"
@@ -343,7 +357,7 @@ claims:
     recovery: '<gray>Claims: исправность=%healthy%, источник=%lineage%, подтверждение регистрации=%registered%, последовательность=%sequence%, незавершённая операция=%pending%.</gray>'
     backup-protected: '<yellow>Финансовый источник нельзя откатывать отдельно в работающем сервере. Нужны остановка и согласованные копии Claims, банка и playerdata. Не удаляйте журналы и квитанции.</yellow>'
     unclaim-all-confirm: '<red>Будут сняты все ваши приваты (%count%). Возврата оплаты нет; личный /bal не обнуляется. Подтвердите: <yellow>/claim unclaim all confirm</yellow></red>'
-    usage: <gray>/claim — купить чанк · menu · tp [x z] · info [x z] · map [радиус] · list [стр] · forsale [стр] · near [радиус] · borders · notices [on|off] · greeting [текст|снять] · rent · unclaim [all confirm] · add/remove <ник> [доступ|контейнеры|полный]
+    usage: <gray>/claim — купить чанк · menu · tp [x z] · info [x z] · map [радиус] · list [стр] · forsale [стр] · near [радиус] · borders · notices [on|off] · greeting [текст|снять] · rent · clan · unclaim [all confirm] · add/remove <ник> [доступ|контейнеры|полный]
       [все] · transfer <ник> · balance (личный /bal) · sell <цена|снять> · sellback · buy [x z] · help</gray>
     withdraw-done: '<green>С личного /bal выдано %amount% ⛁ предметами. Баланс: %balance% ⛁.</green>'
     withdraw-not-enough: <red>На личном /bal всего %balance% ⛁.</red>

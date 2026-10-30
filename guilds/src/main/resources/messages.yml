@@ -3,6 +3,11 @@
 # Ключи без префикса: код обращается к ним как "create-ok" и т.п.
 # Разметка — MiniMessage, подстановки — %имя%.
 guilds:
+  menu-claims-name: "<green>Личные приваты и клановый доступ</green>"
+  menu-claims-lore: "<gray>/claim menu · доступ выдаёт только владелец через /claim clan</gray>"
+  menu-personal-name: "<aqua>Мой донатный ранг</aqua>"
+  menu-personal-lore: "<gray>Личная ступень: %level% · нажмите для /rank my</gray>"
+  menu-personal-boundary: "<gray>Не даёт клану мест, должностей или прав на землю.</gray>"
   # ------------------------------- служебные --------------------------------
   no-permission: "<red>Недостаточно прав.</red>"
   player-only: "<red>Эта команда только для игроков.</red>"

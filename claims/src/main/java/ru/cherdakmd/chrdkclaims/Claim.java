@@ -47,6 +47,35 @@ public final class Claim {
     public long rentUntil;
     public boolean rentRenew;
 
+    // Не личный список участников: производный доступ проверяется при каждом действии.
+    private String clanId = "";
+    private String clanOwner = "";
+    private Role clanRole = Role.ACCESS;
+    private transient ru.cherdakmd.chrdkregister.api.ClanMembershipIndex clanIndex;
+
+    public String clanId() { return clanId; }
+    public String clanOwner() { return clanOwner; }
+    public Role clanRole() { return clanRole; }
+    void membershipIndex(ru.cherdakmd.chrdkregister.api.ClanMembershipIndex index) { clanIndex = index; }
+    public void shareClan(String id, Role role) {
+        if (id == null || id.isBlank() || id.length() > 128 || role == null) throw new IllegalArgumentException("clan sharing");
+        clanId = id; clanOwner = owner; clanRole = role;
+    }
+    public void clearClanSharing() { clanId = ""; clanOwner = ""; clanRole = Role.ACCESS; }
+    void copyClanSharing(Claim source) {
+        clearClanSharing();
+        if (!source.clanId.isEmpty() && isOwner(source.clanOwner)) shareClan(source.clanId, source.clanRole);
+    }
+    private Role clanRoleFor(String name) {
+        if (name == null || clanId.isEmpty() || !isOwner(clanOwner) || clanIndex == null) return null;
+        try {
+            var host = clanIndex.membership(owner);
+            if (host == null || !clanId.equals(host.id())) return null;
+            var guest = clanIndex.membership(name);
+            return guest != null && clanId.equals(guest.id()) ? clanRole : null;
+        } catch (RuntimeException | LinkageError error) { return null; }
+    }
+
     public boolean rentedAt(long now) { return tenant != null && !tenant.isBlank() && rentUntil > now; }
     public void clearRental() { tenant = ""; rentPrice = 0; rentUntil = 0; rentRenew = false; }
     public String accessDomain(long now) { return rentedAt(now) ? "tenant:" + tenant.toLowerCase(Locale.ROOT) : "owner:" + owner.toLowerCase(Locale.ROOT); }
@@ -83,7 +112,9 @@ public final class Claim {
             return Role.BUILD;
         }
         if (rentedAt(now)) return tenant.equalsIgnoreCase(name) ? Role.BUILD : null;
-        return memberRole(name);
+        // Персональная роль главнее производной, в том числе явно ограниченный доступ.
+        Role personal = memberRole(name);
+        return personal != null ? personal : clanRoleFor(name);
     }
 
     Role memberRole(String name) {
@@ -139,6 +170,7 @@ public final class Claim {
 
     /** Очищает всех участников (передача/продажа привата). */
     public void clearMembers() {
+        clearClanSharing();
         members.clear();
         roles.clear();
     }

@@ -62,10 +62,15 @@ public final class ClaimTerritories {
             common.entrySet().removeIf(entry -> source.memberRole(entry.getKey()) == null);
             common.replaceAll((name, role) -> source.memberRole(name).ordinal() < role.ordinal() ? source.memberRole(name) : role);
         }
+        String clanId = first.clanId();
+        Claim.Role clanRole = first.clanRole();
+        boolean sameClan = !clanId.isEmpty() && seeds.stream().allMatch(c -> clanId.equals(c.clanId())
+                && c.isOwner(c.clanOwner()) && c.clanRole() == clanRole);
         String greeting = first.greeting;
         boolean inconsistentSale = seeds.stream().anyMatch(c -> c.salePrice != first.salePrice);
         for (Claim claim : group) {
             claim.clearMembers();
+            if (sameClan) claim.shareClan(clanId, clanRole);
             common.forEach((name, role) -> { claim.members.add(name); claim.setRole(name, role); });
             claim.greeting = greeting;
             if (cancelSale || inconsistentSale) claim.salePrice = 0;
