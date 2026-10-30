@@ -42,7 +42,7 @@ final class ClassesProfile implements ChrdkRegisterApi.ProfileProvider {
         } else {
             lines.add(messages.get("profile-class", "class",
                     Messages.trusted(messages.raw("class." + playerClass.id() + ".name"))));
-            lines.addAll(plugin.developmentGui().progress(context.playerId()));
+            lines.addAll(plugin.developmentGui().summary(context.playerId()));
             lines.add(messages.get("passport-profile-hint"));
             long left = plugin.service().changeCooldownLeft(context.playerId(),
                     System.currentTimeMillis());

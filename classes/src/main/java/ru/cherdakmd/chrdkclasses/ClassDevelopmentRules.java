@@ -44,6 +44,12 @@ final class ClassDevelopmentRules {
         return low;
     }
 
+    static int progressSegments(long xp,int width) {
+        if(width<1||width>100)throw new IllegalArgumentException("Некорректная ширина шкалы");
+        int level=level(xp);
+        return level==MAX_LEVEL?width:(int)((xp-THRESHOLDS[level])*width/(THRESHOLDS[level+1]-THRESHOLDS[level]));
+    }
+
     static long nextLevelIn(long xp) {
         int level = level(xp);
         return level == MAX_LEVEL ? 0L : THRESHOLDS[level + 1] - xp;

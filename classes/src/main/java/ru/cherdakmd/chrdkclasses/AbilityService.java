@@ -50,6 +50,10 @@ final class AbilityService {
     static final int SCORCH_FIRE_TICKS = 60;
 
     private final ClassesPlugin plugin;
+    private record Cast(UUID owner, ClassAbility ability) { }
+    private Cast executing;
+    boolean archerCasting(UUID id) {return executing!=null && executing.owner().equals(id) && executing.ability().playerClass()==PlayerClass.ARCHER;}
+
 
     AbilityService(ClassesPlugin plugin) {
         this.plugin = plugin;
@@ -105,7 +109,9 @@ final class AbilityService {
         // последовательно, и второй увидит уже записанный момент.
         plugin.store().useAbility(id, ability.key(), now);
         plugin.requestSave();
-        execute(player, ability);
+        Cast previous=executing;
+        executing=new Cast(id,ability);
+        try {execute(player, ability);} finally {executing=previous;}
         return ClassResult.ok("ability-used", "ability", ability.key());
     }
 
@@ -190,7 +196,6 @@ final class AbilityService {
      * чужой бой и он не спорит с испепелением мага.</p>
      */
     private void cry(Player player, ClassAbility ability) {
-        int amplifier = absorptionAmplifier(ability.power());
         // allies() всегда включает самого игрока: клич срабатывает и в одиночку.
         for (Player target : allies(player, ability.radius())) {
             plugin.gameplay().ward(target, ability.power(), 8);
@@ -342,7 +347,6 @@ final class AbilityService {
      * заменял молоко и не обесценивал предметы.</p>
      */
     private void ward(Player player, ClassAbility ability) {
-        int amplifier = absorptionAmplifier(ability.power());
         for (Player target : allies(player, ability.radius())) {
             plugin.gameplay().ward(target, ability.power(), 12);
             target.getWorld().spawnParticle(Particle.END_ROD,

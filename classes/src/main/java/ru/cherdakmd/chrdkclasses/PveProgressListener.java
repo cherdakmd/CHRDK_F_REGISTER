@@ -94,8 +94,9 @@ final class PveProgressListener implements Listener {
             if(honest(p) && !inPvp(p.getUniqueId())) {
                 Hit old=hits.get(enemy.getUniqueId());
                 double contribution=Math.min(event.getFinalDamage(),enemy.getHealth());
-                if(old!=null && old.player().equals(p.getUniqueId()) && now-old.at()<30_000) contribution+=old.damage();
-                hits.put(enemy.getUniqueId(),new Hit(p.getUniqueId(),contribution,now,event.getDamager() instanceof Projectile));
+                boolean ranged=event.getDamager() instanceof Projectile || plugin.abilities().archerCasting(p.getUniqueId());
+                if(old!=null && old.player().equals(p.getUniqueId()) && old.ranged()==ranged && now>=old.at() && now-old.at()<30_000) contribution+=old.damage();
+                hits.put(enemy.getUniqueId(),new Hit(p.getUniqueId(),contribution,now,ranged));
                 if(hits.size()>8192) hits.remove(hits.keySet().iterator().next());
             }
         }

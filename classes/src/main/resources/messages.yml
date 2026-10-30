@@ -469,7 +469,7 @@ classes:
   development-rank: "<white>Ранг %rank%/%max% · следующий стоит %cost% · класс от уровня %level%</white>"
   development-node-id: "<dark_gray>/class learn %id%</dark_gray>"
   development-node-effect: "<gray>За ранг: %effect%</gray>"
-  development-node-gain: "<aqua>Реальная прибавка следующего ранга: %gain%; потолок этого класса: %cap%</aqua>"
+  development-node-gain: "<aqua>Реальная прибавка следующего ранга: %gain% %unit%; потолок этого класса: %cap% %unit%</aqua>"
   development-learn: "<green>Нажмите для изучения следующего ранга.</green>"
   development-ability-level: "<gray>Класс от уровня %level% · базовый откат %cooldown% с</gray>"
   development-ability-equipped: "<gray>Экипировано в слоте %slot% (0 — нет) · осталось отката %left% с</gray>"
@@ -741,3 +741,13 @@ classes:
   branch.cleric-path-6: "<gold>Сияние</gold>"
   branch.cleric-path-7: "<gold>Паломник</gold>"
   branch.cleric-path-8: "<gold>Надежда</gold>"
+
+  development-choose-source-hint: "<gray>Выберите роль: паспорт покажет подходящие действия, требования и собственный PvE-XP.</gray>"
+
+  development-source-card: "<aqua>Источники собственного XP</aqua>"
+  development-trial-card: "<gold>Шесть уникальных испытаний</gold>"
+  development-migration-card: "<yellow>Перенос и пауза пересборки</yellow>"
+  development-no-migration: "<gray>Новый прогресс: сохранённого старого права нет.</gray>"
+  development-xp-bar: "%bar%"
+  development-bar-filled: "<green>▰</green>"
+  development-bar-empty: "<dark_gray>▱</dark_gray>"

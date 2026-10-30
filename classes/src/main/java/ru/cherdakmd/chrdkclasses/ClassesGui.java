@@ -36,7 +36,7 @@ final class ClassesGui implements Listener {
     void openChoices(Player p){
         if(!plugin.ready(p)){plugin.messages().send(p,"development-pending");return;}
         Holder h=holder(p,null);
-        button(h,4,Material.EXPERIENCE_BOTTLE,"development-passport",plugin.developmentGui().progress(p.getUniqueId()));
+        button(h,4,Material.EXPERIENCE_BOTTLE,"development-passport",plugin.developmentGui().summary(p.getUniqueId()));
         for(int i=0;i<SLOTS.length;i++){
             var role=PlayerClass.values()[i];List<Component> lore=new ArrayList<>();
             lore.add(plugin.messages().get("class."+role.id()+".desc"));

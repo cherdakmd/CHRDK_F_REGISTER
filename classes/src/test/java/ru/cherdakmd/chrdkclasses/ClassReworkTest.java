@@ -54,6 +54,11 @@ class ClassReworkTest {
         for(int path=0;path<2;path++)for(int tier=1;tier<=5;tier++)ranks.put("warrior-path-"+path+"-"+tier,1);
         assertTrue(s.development().problems(ID,new ClassBuild("warrior",ranks,List.of("warrior-3","warrior-4"))).stream().anyMatch(r->r.key().equals("development-exclusive")));
     }
+    @Test void xpBarUsesCurrentLevelAndStopsAtCap() {
+        assertEquals(0,ClassDevelopmentRules.progressSegments(0,10));assertEquals(5,ClassDevelopmentRules.progressSegments(50,10));
+        assertEquals(0,ClassDevelopmentRules.progressSegments(100,10));assertEquals(10,ClassDevelopmentRules.progressSegments(ClassDevelopmentRules.MAX_XP,10));
+        assertThrows(IllegalArgumentException.class,()->ClassDevelopmentRules.progressSegments(0,0));
+    }
     @Test void catalogHas180MeaningfulRankedNodes() {
         Set<String> ids=new HashSet<>();
         for(PlayerClass role:PlayerClass.values()) {

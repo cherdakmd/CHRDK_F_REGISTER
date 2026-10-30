@@ -107,7 +107,7 @@ public final class TalentService {
         return perks(player).levelStep(config.levelsPerLevel());
     }
 
-    /** Сколько уровней навыков нужно до следующего уровня класса с учётом ранга. */
+    /** XP до следующего собственного уровня; в режиме совместимости — уровни Skills. */
     public int nextLevelIn(UUID player) {
         if (development != null) return store.development(player) == null ? 0 : Math.toIntExact(ClassDevelopmentRules.nextLevelIn(store.development(player).xp()));
         return ClassMath.nextLevelIn(totalSkill(player), levelStep(player));
@@ -141,7 +141,7 @@ public final class TalentService {
                 : perks(player).skillRequirement(talent.skillLevel());
     }
 
-    /** Уровень класса, выведенный из навыков (шаг уменьшен рангом). */
+    /** Собственный уровень; прежняя арифметика доступна только без development. */
     public int level(UUID player) {
         if (development != null) return store.development(player) == null ? 1 : store.development(player).level();
         return ClassMath.level(totalSkill(player), levelStep(player));
@@ -283,7 +283,7 @@ public final class TalentService {
         }
         PlayerClass target = ClassCatalog.playerClass(classId);
         boolean changing = classOf(player) != null;
-        int lost = store.classOf(player).isEmpty() ? 0 : store.talentCount(player);
+        int lost = development == null ? store.talentCount(player) : store.build(player)==null ? 0 : store.build(player).ranks().size();
         store.setClass(player, target.id(), now);
         if (development != null) store.initializeBuild(player);
         return changing
