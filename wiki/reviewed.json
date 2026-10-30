@@ -1,178 +1,178 @@
 {
   "pages": {
     "about": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "d8f3dd68ac3707093b9ebfae7ffa7ec7b97ebbcb9f67ebf14d9ab71e711bb82d",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "928c51d72a616794a7d9771b497875e28e23ece7c8939e37cebe026bed64dd40",
       "text": "17788b7b4007e90c62acd266f95cec124e0a53b603a1b2e5d9a7c19fb304c7d9"
     },
     "achievements": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "f9ca5831f22169cfcb6e8adc37e7218ca440571893350959395e9a23e05c4f36",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "d4b7e2b994e45109934c1f4a39497920764c2746a66cf9ed22faca23eab08d25",
       "text": "839d6e42ff5471f7def5f1bcb063709bb4e8ec40a1732a5a1ce55754544329a3"
     },
     "artifacts": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "d0bbffba7dceea68baa50e1ec90f769aeb9fbebc8bb464b7498cd8749590752b",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "739ee0ae7483ce5776b1b64ece4a141869bcc1896b0373085cd43412b4ad8e82",
       "text": "d84ce5252984c944058764fb97c3c25b27e7690ecde9f50384f39ce5d25b856b"
     },
     "auction": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "e95e290d15f4c43540a136d50e04219e342bae4404aa737ccb869dd433946aa1",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "bcd8b17706e787be44f7dab17eacc034910f121765b90ba8b0a86587f5ad0746",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "11bbc2db03dcb2d6e022274dbfe17767fe0df593c365ab09a89dd4ee9b14360c",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "f51b9a54a716f757e12bba31113390d2d92f6b573a4c54c466ff9251f8136edb",
       "text": "0bb2af9ae7275a308eee69cb6b63893c060bcff763287fe0dfbd1965861c24c8"
     },
     "chat": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "d8f3dd68ac3707093b9ebfae7ffa7ec7b97ebbcb9f67ebf14d9ab71e711bb82d",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "928c51d72a616794a7d9771b497875e28e23ece7c8939e37cebe026bed64dd40",
       "text": "c03c96364340b409b884e396715623dcca281d5304c64094fa09927db2a44123"
     },
     "claims": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "619c8e6c0cbd38bed3a2628cda325046e58e0a347c6e0cd78ad15b49c7de00e2",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "8b5e11c560fded809badb356cbcfee98f0b790021532f6fae38da8177c227605",
       "text": "eb2eb2f84956c8b2daa19929bb1a85b29a58ddaaea0a5c7c8deead6c4fad01e9"
     },
     "classes": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "44241bbcfeaaf6dd2ebf001fbea416fa26ad3d3a87f207df3e4bf44fda17687a",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "7308eafa2cd7b09b59e76ee5b9e8b79a66d170a1d7fed21c6b0930b606e9028c",
       "text": "a6d399f4ed87adfc30fd2689bac809977227e8642eec7c7b6b7ee788571f6b74"
     },
     "commands": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "d8f3dd68ac3707093b9ebfae7ffa7ec7b97ebbcb9f67ebf14d9ab71e711bb82d",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "928c51d72a616794a7d9771b497875e28e23ece7c8939e37cebe026bed64dd40",
       "text": "f24d2d7b8d824c8496d597e6d64f4cdbc1213a33af32a285f8d126d901bb6619"
     },
     "cosmetics": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "749dcd6846f60a7c6dc4dbef866f69665cdea8a6db3180f55a5e0afc73c96fe2",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "192616f484bbc6a33e6966953cc5ea22d76f6a2036e18ab2f65a4e1bbab9a1ba",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "00aa0f5b0c9c0748f06179244ddcb35bceacc396c45cac5ac10ee08449706504",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "e31c1d03d00f40a9b6ef251a800fbcf003f4d4bf24439daf583c1f094088d8c9",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "economy": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "b1adb953c2e2816f8b2bd1bfb5ae4d30050daa196c2b5aae96a07afb0967a44a",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "56cf420b10dc443faf61e7dd53cd70af3d0aed71c26ef4f05de38a228fc947d1",
       "text": "5b6fdcd93fd736a7ad3e91ceffa2ad89c28ee42f1818a175d04f231ab46a28e7"
     },
     "enchants": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "ed63742403cbaef4b3610c7827a9aa0245357d389a596e777ba1eb820c368e2d",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "e0a48e3a6780ca344caf4789ee01fc70dadcc1e4500bb8cde5c6b022b479664d",
       "text": "7237739cff6a36edff803288ab8b9bfee64910fa416675d4a8f23651523c6c3e"
     },
     "faq": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "ebf939ea48bb688750ac266ab21c5deada6c1016b25f7d4c58a9cdf4907509dc",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "88e5496ef2cc4fbb482545f4d8d774f7862f78481a64a8ec85c20f3ddb3c8abe",
       "text": "1cf6ecc3bde411f47edb0c8c42031e07a3207f889b649a88a12101081a035dc8"
     },
     "goals": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "6dc1bae8f2771509828932dbe599e8c1badffb471e29b738fea77686b3f12767",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "91e2246cc95b02712ca6b8b9e2b7cae83254f5a90106d04c08b240820cf48865",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "619c8e6c0cbd38bed3a2628cda325046e58e0a347c6e0cd78ad15b49c7de00e2",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "8b5e11c560fded809badb356cbcfee98f0b790021532f6fae38da8177c227605",
       "text": "ad08d8f8543f32b700e604952c7be69c5164d5f0fbc6339e59966c610236e1bb"
     },
     "hunt": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "e05c52f1f282c3e638e08427e8a18abfd4676c7c5479ff188c44ce4104dfc530",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "fe056f3ea9abf093fce8ae0de197e77f34ba2c23f5f214a365fe6c2affb3ccdb",
       "text": "3b2066fce021118c9980313351d42317d07f8519b7c1404638d61ce4318d33e8"
     },
     "index": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "0a9c9042e235349ea2c34ba70d6f7ea781e3a0637decbeb99e9cd4b23f88ab5c",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "80dfed7889328f4245cd58b0c561da831b5184431331445f6f218294075fb035",
       "text": "2d543efd03d060e4d6f09da13921777186f30a145e3614fcc82b1dedcaf07777"
     },
     "lottery": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "b899d33dc8e27058caa947b2d598c0a8da326209e120d101b8b18c056d2f1962",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "0e2824403c25a07a630d495f3300066cb49a96f47c7f8ce4016302c8c95e6200",
       "text": "1d05c7d03ba10cbdc51a27bb6cc1ff68ec75f44ff7f8e91d05b92fc08dcd5931"
     },
     "menu": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "d8f3dd68ac3707093b9ebfae7ffa7ec7b97ebbcb9f67ebf14d9ab71e711bb82d",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "928c51d72a616794a7d9771b497875e28e23ece7c8939e37cebe026bed64dd40",
       "text": "e3d74f86376d4f1b3f9c3342d286890bc3425e5fdd4bbd98681ffa1345db3e57"
     },
     "orders": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "e71256fda4ff97c694fcf7fd000dd38ecc6e60677b8720a6da919e8784fd865a",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "3635caf87f728c5e138c8d41c2b6372d2ea931e591b47cb85cbeefbbb4e4999f",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "party": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "6659dd4e1e5c5034aec80446c7f7a47b6d44d7b88078cdd377937de679270442",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "1bc9c1d5954c1b20a344ddfc1a64de0ee0285cd04d12a2862f1bb7b87544382b",
       "text": "1907a324d824df3607e9932362f05cfd65b35cd5e8063296a269802a00c04fe6"
     },
     "pets": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "014d88263ca8eb5d394200100a92d1b84643af865b12cbd0cfb97381cc74cd45",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "bdfe19b87c4e5aa3e35776bd4e12cc4ea5f5a732fa71e1744b8d07a977890a75",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "6583623eb43b048379e260863160bf877406f5389a480de6d6986018a6709c64",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "0536578fe28abc2d761d1846e89d4ec4bb4c02e945364a34156eedc7937e9daa",
       "text": "022f2a0c132d5ab450e70b77c4c02d60d0750a86c70fe73d17d0b03817a16664"
     },
     "profile": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "9d28b55e31e7f32bfaf4c0e795025c60e23f17e55b71859f1c83c7cb800bdb07",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "31dc4cb351925971db2f5af03586157468c9993eefd1b91d5b4f2ac816a524fd",
       "text": "8bc7e40c312bba0db18d21fdf5a04116a94db91c209da54940302d51c86a9210"
     },
     "quests": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "0234f74ca38ed4e4d30a623780b91f2b67e2d25315d0f953e63d2df2e4050e41",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "c06682a791e5d6a93e05c88a6c707692eb5ece9397217c9b947c7cbedf3ca51e",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "c86da97d8ebebc41c34715034d83f521b61d269e92f41bbed88ad4706b5f0fd3",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "fefb8005f726bde93646b5fc9b3f1fdd45f8aba13346e73fd9241ff4683c70ba",
       "text": "1db00295907be029a91cc1a07b096816a661b2bd311cc271b20345587f2b71f5"
     },
     "referrals": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "cfc770d6f5e1befb9cb7355b9716a0901f74555dabbf3c52e29e60f0ac0f6239",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "1e0b5ea9576ff6a7483b4114eab1cd2a83564a257823e8394c37b8ed65b23ea4",
       "text": "802956a7c425a8c14bd0cbd56b600cbab5027bd5bc72c0b28232fd5ba5055b24"
     },
     "shop": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "0a9c9042e235349ea2c34ba70d6f7ea781e3a0637decbeb99e9cd4b23f88ab5c",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "80dfed7889328f4245cd58b0c561da831b5184431331445f6f218294075fb035",
       "text": "3ca5b2f6fc7bf1ff0d3796abfac2eb51b8a9d37763eb1b4e556a80155188e899"
     },
     "skills": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "cdb5423b544e6ca3d51e5431c13831b4d181468d5e6e2fb03a941c5f499d802d",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "6ede2e19cbe2ff3e41f8ac26bcbcdc8f26d9172c486412c48ed87b94a172d9d0",
       "text": "da88b0eff3b15dec9185ecfbb9a63b62c96e0a3aa5ab2dea53e0928a500b403a"
     },
     "start": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "abaeeb66bae7c1194cffcf9e87e53d0bacb7a6e9b4535dee7c8b463b175c7abf",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "38f2e7ad2d36f0736f8eecb9e741bd8ef614018e7f19a0e46a6e675eeae68d4b",
       "text": "dcacc80740255271f122c8ef12177e5fbabd19cc13accff78baba0121e5c8dad"
     },
     "teleports": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "b09a0de3464f6aedb221c218972ffe236a6dabb633273928d78927bb8bc6d63b",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "edcff1d212c73c3b7cfd1c648eac710cdd30eba23446b71ace9682dd6f09ad1c",
       "text": "5e3367b033c64d35c831f673dc79667f7d3c9ce2eec598076371f631aa471284"
     },
     "tierforge": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "36901e7b281575d0f594ddfdbed7f1e79b5df02f456b9f38d8a4d30f881722ca",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "41cec0932cec4f8440f8ab67e0f3f83c81155a6dc72e24653b9af2813b48301e",
       "text": "d3cd07c98bec6cb1e15ff875d5fd5394fcadb5db2931fc6724350721f98ed38c"
     },
     "titles": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "2150dcb03205a93fb73ffcbae8a2eb02496af0b3c9fff57df722595bef09c955",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "d40796481ba05bed91f61a7e4144de40dda9f0f8ac83810f11cf6e5ecb1bbff3",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "1.4.251: ServerGuard и console-only guard классифицированы; вики игрокам без административных инструкций, остальные механики сверены как неизменённые.",
-      "sources": "0a9c9042e235349ea2c34ba70d6f7ea781e3a0637decbeb99e9cd4b23f88ab5c",
+      "reason": "1.4.251: проверены case-insensitive commands.yml aliases, неизвестные FormattedAlias fail-closed и сообщения через общий контракт; остальные игровые механики не менялись.",
+      "sources": "80dfed7889328f4245cd58b0c561da831b5184431331445f6f218294075fb035",
       "text": "82cbef51d0e905b9db2f7a38198f2a576bf3026e0c19ac77bbf064ca4eddb5f7"
     }
   },

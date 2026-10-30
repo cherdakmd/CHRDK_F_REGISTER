@@ -2,6 +2,7 @@ package ru.cherdakmd.chrdkregister;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.FormattedCommandAlias;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.command.RemoteConsoleCommandSender;
 import org.bukkit.entity.Player;
@@ -58,6 +59,8 @@ final class ServerGuard implements Listener {
         lastReport=clock.getAsLong(); reload(settings);
     }
 
+    private Messages messages() { return messages.get(); }
+
     void reload(GuardSettings settings) {
         long now=clock.getAsLong();
         state=new State(settings,new GuardRates(settings,now));
@@ -70,7 +73,7 @@ final class ServerGuard implements Listener {
         if(!current.settings.enabled() || event.getLoginResult()!=AsyncPlayerPreLoginEvent.Result.ALLOWED) return;
         if(current.rates.enter(event.getAddress().getHostAddress(),clock.getAsLong())!=GuardRates.Admission.ALLOW) {
             loginRejected.incrementAndGet();
-            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER,messages.get().get("security.login-rate"));
+            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER,messages().get("security.login-rate"));
         }
     }
 
@@ -94,12 +97,12 @@ final class ServerGuard implements Listener {
         if(event.getMessage().length()>s.maxCommandLength() || !session.normal.take(now)
                 || (!authed && !session.unauthenticated.take(now))) {
             event.setCancelled(true); spamKicks.incrementAndGet();
-            player.kick(messages.get().get("security.command-spam"));
+            player.kick(messages().get("security.command-spam"));
             return;
         }
         if(GuardPolicy.consoleOnly(event.getMessage(),s.consoleOnly(),this::resolve)) {
             blockedCommands.incrementAndGet();
-            if(!event.isCancelled()) messages.get().send(player,"security.console-only");
+            if(!event.isCancelled()) messages().send(player,"security.console-only");
             event.setCancelled(true);
         }
     }
@@ -107,7 +110,15 @@ final class ServerGuard implements Listener {
     private GuardPolicy.Target resolve(String root) {
         Command command=commands.apply(root);
         String canonical=command==null ? GuardPolicy.label(root) : command.getName();
-        String[] expansion=aliases.get().get(GuardPolicy.label(canonical));
+        String[] expansion=null;
+        // В commands.yml ключ может сохранять регистр, хотя диспетчер приводит alias к нижнему.
+        for(var entry:aliases.get().entrySet()) {
+            if(GuardPolicy.token(entry.getKey()).equals(GuardPolicy.token(canonical))) {
+                expansion=entry.getValue();break;
+            }
+        }
+        if(expansion==null && command instanceof FormattedCommandAlias)
+            return new GuardPolicy.Target(canonical,List.of("$unknown-alias"));
         return new GuardPolicy.Target(canonical,expansion==null ? List.of() : List.of(expansion));
     }
 
@@ -123,12 +134,12 @@ final class ServerGuard implements Listener {
             if(authenticated.test(player)) { session.waiting=false; continue; }
             if(!session.waiting) { session.waiting=true;session.unauthSince=now; }
             if(now-session.unauthSince>=s.loginSeconds()*1_000_000_000L) {
-                timeoutKicks.incrementAndGet();player.kick(messages.get().get("security.login-timeout"));continue;
+                timeoutKicks.incrementAndGet();player.kick(messages().get("security.login-timeout"));continue;
             }
             String ip=player.getAddress()==null ? "unknown" : player.getAddress().getAddress().getHostAddress();
             int perIp=pendingByAddress.getOrDefault(ip,0);
             if(pending>=s.unauthGlobal() || perIp>=s.unauthPerIp()) {
-                slotKicks.incrementAndGet();player.kick(messages.get().get("security.login-slots"));continue;
+                slotKicks.incrementAndGet();player.kick(messages().get("security.login-slots"));continue;
             }
             pending++;pendingByAddress.put(ip,perIp+1);
         }
@@ -143,10 +154,10 @@ final class ServerGuard implements Listener {
 
     boolean status(CommandSender sender) {
         if(!(sender instanceof ConsoleCommandSender) && !(sender instanceof RemoteConsoleCommandSender)) {
-            messages.get().send(sender,"security.status-console");return true;
+            messages().send(sender,"security.status-console");return true;
         }
         GuardSettings s=state.settings;
-        messages.get().send(sender,"security.status","enabled",s.enabled(),"addresses",state.rates.tracked(),
+        messages().send(sender,"security.status","enabled",s.enabled(),"addresses",state.rates.tracked(),
                 "logins",loginRejected.get(),"spam",spamKicks.get(),"blocked",blockedCommands.get(),
                 "slots",slotKicks.get(),"timeouts",timeoutKicks.get());
         return true;

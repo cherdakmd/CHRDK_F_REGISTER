@@ -83,7 +83,7 @@ class ServerGuardTest {
     }
     @Test void actualCommandRegistryAndConfiguredAliasesAreUsed() {
         registry.put("alias",new Command("fill") { public boolean execute(CommandSender s,String l,String[] a){throw new AssertionError();} });
-        aliases.put("rename",new String[]{"minecraft:execute run say hello"});
+        aliases.put("ReNaMe",new String[]{"minecraft:execute run say hello"});
         var guard=guard();var client=client("192.0.2.1");
         for(String raw:List.of("/alias","/rename")){var e=command(client,raw,false);guard.onCommand(e);assertTrue(e.isCancelled());}
     }
