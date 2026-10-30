@@ -24,6 +24,7 @@ final class DevelopmentGui implements Listener {
         final int page;
         Inventory inventory;
         Confirmation confirmation;
+        int pageLimit;
         Holder(Player owner,String screen,int page) { this.owner=owner;this.screen=screen;this.page=page; }
         public Inventory getInventory() { return inventory; }
     }
@@ -47,11 +48,13 @@ final class DevelopmentGui implements Listener {
         ClassDevelopment d=plugin.store().development(id);
         if(d==null) return List.of(text("development-pending"));
         List<Component> out=new ArrayList<>();
-        out.add(text("development-xp","level",d.level(),"xp",d.xp(),"next",ClassDevelopmentRules.nextLevelIn(d.xp())));
+        out.add(text(d.level()==50?"development-max-level":"development-xp","level",d.level(),"xp",d.xp(),"next",ClassDevelopmentRules.nextLevelIn(d.xp())));
+        out.add(text("development-distribution","nodes",plugin.store().build(id)==null?0:plugin.store().build(id).ranks().size()));
         out.add(text("development-points","earned",d.earnedPoints(),"spent",plugin.service().spentPoints(id),"free",plugin.service().availablePoints(id)));
         out.add(text("development-sources","levels",d.levelPoints(),"trials",d.trialPoints(),"legacy",d.legacyCredit()));
         for(var source:ClassDevelopment.Source.values()) out.add(text("development-source","source",Messages.trusted(plugin.messages().raw("development-source-"+source.name().toLowerCase(Locale.ROOT))),"xp",d.xpSources().getOrDefault(source,0L)));
         out.add(text("development-trials","count",plugin.store().milestone(id,plugin.store().classOf(id)),"receipts",d.trialPoints()));
+        for(int target:new int[]{10,50,150,400,1000,2000})out.add(text(d.trialAwards().contains("trial-"+target)?"development-trial-done":"development-trial-pending","target",target));
         out.add(text("development-trial-rules"));
         out.add(text("development-earn-rules-"+plugin.store().classOf(id)));
         out.add(text("development-limit"));
@@ -59,6 +62,7 @@ final class DevelopmentGui implements Listener {
         if(d.migration()!=null) {
             var m=d.migration();
             out.add(text("development-migration","before",m.earnedPoints(),"spent",m.spentPoints(),"floor",m.preservedPoints(),"after",d.earnedPoints()));
+            out.add(text("development-level-migration","before",m.oldLevel(),"after",d.level()));
             out.add(text(d.firstBuildAvailable()?"development-first-build":"development-first-used"));
         }
         return out;
@@ -72,10 +76,24 @@ final class DevelopmentGui implements Listener {
         button(h,37,Material.BLAZE_ROD,"development-abilities",List.of(text("development-abilities-hint")));
         button(h,39,Material.WRITABLE_BOOK,"development-builds",List.of(text("development-builds-hint")));
         button(h,41,Material.GRINDSTONE,"development-respec",List.of(text("development-preview-hint")));
-        List<Component> effects=new ArrayList<>();
-        for(var view:plugin.service().effectDetails(p.getUniqueId()).values()) effects.addAll(ClassPassportText.effect(plugin.messages(),view));
-        button(h,43,Material.BEACON,"passport-effects-name",effects);
+        button(h,43,Material.BEACON,"passport-effects-name",List.of(text("passport-effects-hint")));
+        ClassBuild current=plugin.store().build(p.getUniqueId());
+        for(int slot=1;slot<=2;slot++) {
+            ClassAbility ability=plugin.service().development().equipped(p.getUniqueId(),slot);
+            button(h,slot==1?46:48,Material.matchMaterial(ability.iconName()),"ability."+ability.key()+".name",List.of(text("development-slot","slot",slot),text("development-cast-hint")));
+        }
         button(h,45,Material.COMPASS,"passport-choices",List.of());
+        p.openInventory(h.inventory);
+    }
+    private void effects(Player p) {
+        Holder h=holder(p,"effects",0);int slot=19;
+        for(var view:plugin.service().effectDetails(p.getUniqueId()).values()) {
+            List<Component> lines=new ArrayList<>(ClassPassportText.effect(plugin.messages(),view));
+            lines.add(text(plugin.config().effectsEnabled()?"passport-effects-enabled":"passport-effects-disabled"));
+            if(view.kind()==EffectKind.REGEN)lines.add(text("development-regen-rules","seconds",plugin.config().pulseSeconds()));
+            if(view.kind()==EffectKind.SATURATION)lines.add(text("passport-effect-food"));
+            h.inventory.setItem(slot++,item(Material.BEACON,text("effect."+view.kind().id(),"amount",ClassMath.amount(view.kind(),view.effective())),lines));
+        }
         p.openInventory(h.inventory);
     }
     void tree(Player p,int page) {
@@ -140,7 +158,12 @@ final class DevelopmentGui implements Listener {
             int old=before.ranks().getOrDefault(node.id(),0),next=after.ranks().getOrDefault(node.id(),0);
             if(old!=0 || next!=0)rows.add(item(Material.PAPER,text("talent."+node.id()+".name"),List.of(text("development-rank-change","before",old,"after",next))));
         }
+        var beforeEffects=plugin.service().effectDetails(p.getUniqueId());
+        var afterEffects=plugin.service().effectDetails(p.getUniqueId(),after);
+        for(var kind:EffectKind.values())rows.add(item(Material.BEACON,text("effect."+kind.id(),"amount",ClassMath.amount(kind,afterEffects.get(kind).effective())),List.of(
+                text("development-effect-change","before",ClassMath.amount(kind,beforeEffects.get(kind).effective()),"after",ClassMath.amount(kind,afterEffects.get(kind).effective()),"cap",ClassMath.amount(kind,afterEffects.get(kind).ceiling())))));
         for(int i=0;i<2;i++)rows.add(item(Material.BLAZE_ROD,text("development-slot","slot",i+1),List.of(text("development-ability-change","before",before.abilities().get(i),"after",after.abilities().get(i)))));
+        h.pageLimit=Math.max(0,(rows.size()-1)/28);
         button(h,4,Material.SUNFLOWER,"development-preview",List.of(text("development-point-change","before",before.spent(),"after",after.spent(),"free",plugin.service().earnedPoints(p.getUniqueId())-after.spent()),text("development-preview-hint")));
         for(int i=page*28;i<Math.min(rows.size(),(page+1)*28);i++)h.inventory.setItem(9+i-page*28,rows.get(i));
         button(h,46,Material.ARROW,"development-page-prev",List.of());
@@ -159,7 +182,8 @@ final class DevelopmentGui implements Listener {
         if(slot==45){if(h.screen.equals("main"))plugin.gui().openChoices(p);else open(p);return;}
         UUID id=p.getUniqueId();ClassBuild build=plugin.store().build(id);if(build==null)return;
         switch(h.screen) {
-            case "main" -> {if(slot==20||slot==22||slot==24)tree(p,(slot-20)/2);else if(slot==37)abilities(p);else if(slot==39)builds(p);else if(slot==41)reset(p);}
+            case "main" -> {if(slot==20||slot==22||slot==24)tree(p,(slot-20)/2);else if(slot==37)abilities(p);else if(slot==39)builds(p);else if(slot==41)reset(p);else if(slot==43)effects(p);else if(slot==46||slot==48){
+                ClassResult r=plugin.abilities().use(p,slot==46?1:2);p.sendMessage(result(r));}}
             case "tree" -> {
                 if(slot==47||slot==49||slot==51){tree(p,(slot-47)/2);return;}
                 for(int i=0;i<NODES.length;i++)if(slot==NODES[i]) {
@@ -183,7 +207,7 @@ final class DevelopmentGui implements Listener {
             }
             case "confirm" -> {
                 if(h.confirmation==null||h.confirmation.used)return;
-                if(slot==46||slot==48){previewPage(p,h.confirmation,Math.clamp(h.page+(slot==46?-1:1),0,1));return;}
+                if(slot==46||slot==48){previewPage(p,h.confirmation,Math.clamp(h.page+(slot==46?-1:1),0,h.pageLimit));return;}
                 if(slot==51){h.confirmation.used=true;ClassResult r=plugin.service().development().apply(id,h.confirmation.quote,System.currentTimeMillis());
                     p.sendMessage(result(r));if(r.ok()){plugin.gameplay().clear(id);plugin.effects().apply(p);plugin.requestSave();}open(p);}
             }

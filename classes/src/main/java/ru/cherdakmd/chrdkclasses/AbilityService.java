@@ -211,7 +211,7 @@ final class AbilityService {
             velocity.setY(velocity.getY() + 0.05);
             Arrow arrow = player.launchProjectile(Arrow.class, velocity);
             if (arrow != null) {
-                plugin.gameplay().tag(arrow);
+                plugin.gameplay().tag(arrow, player);
                 arrow.setDamage(ability.power());
                 arrow.setCritical(false);
             }
@@ -232,7 +232,7 @@ final class AbilityService {
         Vector velocity = player.getLocation().getDirection().normalize().multiply(AIM_SPEED);
         Arrow arrow = player.launchProjectile(Arrow.class, velocity);
         if (arrow != null) {
-            plugin.gameplay().tag(arrow);
+            plugin.gameplay().tag(arrow, player);
             arrow.setDamage(ability.power());
             arrow.setCritical(false);
             arrow.setPierceLevel(1);

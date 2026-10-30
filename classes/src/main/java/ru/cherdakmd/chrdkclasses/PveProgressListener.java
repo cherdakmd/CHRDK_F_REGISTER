@@ -13,14 +13,11 @@ final class PveProgressListener implements Listener {
     private final ClassesPlugin plugin;
     private final NamespacedKey natural, rewarded, projectile;
     private record Hit(UUID player, double damage, long at, boolean ranged) { }
-    private record Debt(double amount, long at) { }
     private record Shield(double amount, long until) { }
-    private record Rate(long since, int amount) { }
     private final Map<UUID,Hit> hits = new LinkedHashMap<>();
-    private final Map<UUID,Debt> debts = new HashMap<>();
+    private final PveContributionLedger ledger = new PveContributionLedger();
     private final Map<UUID,Shield> shields = new HashMap<>();
     private final Map<UUID,Long> pvp = new LinkedHashMap<>();
-    private final Map<UUID,Rate> rates = new HashMap<>();
     PveProgressListener(ClassesPlugin plugin) {
         this.plugin=plugin;
         natural=new NamespacedKey(plugin,"natural-v1"); rewarded=new NamespacedKey(plugin,"rewarded-v1");
@@ -36,8 +33,8 @@ final class PveProgressListener implements Listener {
         if (debt(p)>0) return true;
         return p.getNearbyEntities(8,5,8).stream().anyMatch(e -> e instanceof Enemy && e instanceof LivingEntity living && !living.isDead());
     }
-    void tag(Arrow arrow) {
-        arrow.getPersistentDataContainer().set(projectile,PersistentDataType.BYTE,(byte)1);
+    void tag(Arrow arrow, Player owner) {
+        arrow.getPersistentDataContainer().set(projectile,PersistentDataType.STRING,owner.getUniqueId().toString());
         arrow.setPickupStatus(AbstractArrow.PickupStatus.DISALLOWED);
     }
     private boolean natural(LivingEntity e) {
@@ -61,16 +58,19 @@ final class PveProgressListener implements Listener {
     }
     @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=true)
     public void protect(EntityDamageByEntityEvent event) {
-        if (event.getDamager() instanceof Projectile shot && shot.getPersistentDataContainer().has(projectile,PersistentDataType.BYTE)
-                && !(event.getEntity() instanceof Enemy)) {
-            event.setCancelled(true); shot.remove(); return;
+        if (event.getDamager() instanceof Projectile shot && shot.getPersistentDataContainer().has(projectile,PersistentDataType.STRING)) {
+            String owner=shot.getPersistentDataContainer().get(projectile,PersistentDataType.STRING);
+            if (!(shot.getShooter() instanceof Player shooter) || !shooter.getUniqueId().toString().equals(owner)
+                    || !honest(shooter) || inPvp(shooter.getUniqueId()) || !(event.getEntity() instanceof Enemy)) {
+                event.setCancelled(true); shot.remove(); return;
+            }
         }
         Player attacker = attacker(event.getDamager());
         if (event.getEntity() instanceof Player victim && attacker != null) {
             long now=System.currentTimeMillis();
             pvp.put(victim.getUniqueId(),now); pvp.put(attacker.getUniqueId(),now);
             shields.remove(victim.getUniqueId()); shields.remove(attacker.getUniqueId());
-            debts.remove(victim.getUniqueId()); debts.remove(attacker.getUniqueId());
+            ledger.forgetWound(victim.getUniqueId()); ledger.forgetWound(attacker.getUniqueId());
             if(pvp.size()>8192) pvp.remove(pvp.keySet().iterator().next());
         }
         if (event.getEntity() instanceof Player victim && mobAttacker(event.getDamager()) != null) {
@@ -100,12 +100,14 @@ final class PveProgressListener implements Listener {
         if(event.getEntity() instanceof Player p) {
             LivingEntity mob=mobAttacker(event.getDamager());
             if(mob!=null && natural(mob) && honest(p) && !inPvp(p.getUniqueId()))
-                debts.put(p.getUniqueId(),new Debt(Math.min(20,debt(p)+Math.min(event.getFinalDamage(),p.getHealth())),now));
+                ledger.hurt(p.getUniqueId(),Math.min(event.getFinalDamage(),p.getHealth()),now);
+            else ledger.forgetWound(p.getUniqueId());
         }
     }
     @EventHandler(priority=EventPriority.MONITOR)
     public void death(EntityDeathEvent event) {
         LivingEntity mob=event.getEntity();
+        if(mob instanceof Player p) {ledger.forgetWound(p.getUniqueId());shields.remove(p.getUniqueId());}
         Hit hit=hits.remove(mob.getUniqueId());
         if(!natural(mob) || hit==null || System.currentTimeMillis()-hit.at()>30_000
                 || mob.getPersistentDataContainer().has(rewarded,PersistentDataType.BYTE)) return;
@@ -118,25 +120,20 @@ final class PveProgressListener implements Listener {
         award(p,ClassDevelopment.Source.COMBAT,25,1);
     }
     private double debt(Player p) {
-        Debt d=debts.get(p.getUniqueId());
-        return d==null || System.currentTimeMillis()-d.at()>60_000 ? 0 : d.amount();
+        return ledger.debt(p.getUniqueId(),System.currentTimeMillis());
     }
     void healed(Player caster,Player target,double actual) {
         if(!honest(caster) || !supportAllowed(target) || caster.equals(target) || actual<=0
                 || plugin.service().classOf(caster.getUniqueId())!=PlayerClass.CLERIC) return;
-        double useful=Math.min(actual,debt(target));
+        double useful=ledger.healed(target.getUniqueId(),actual,System.currentTimeMillis());
         if(useful<.5) return;
-        debts.put(target.getUniqueId(),new Debt(Math.max(0,debt(target)-useful),System.currentTimeMillis()));
         award(caster,ClassDevelopment.Source.SUPPORT,Math.min(30,(int)Math.floor(useful*5)),Math.min(3,Math.max(1,(int)useful)));
     }
     private void award(Player p, ClassDevelopment.Source source, int xp, int units) {
         if(!plugin.ready(p) || plugin.store().build(p.getUniqueId())==null) return;
         long now=System.currentTimeMillis();
-        Rate rate=rates.get(p.getUniqueId());
-        if(rate==null || now-rate.since()>=60_000) rate=new Rate(now,0);
-        int accepted=Math.min(xp,500-rate.amount());
-        if(accepted<=0) return;
-        rates.put(p.getUniqueId(),new Rate(rate.since(),rate.amount()+accepted));
+        int accepted=ledger.accept(p.getUniqueId(),xp,now);
+        if(accepted<=0)return;
         plugin.store().awardClassXp(p.getUniqueId(),source,accepted);
         plugin.store().advanceMilestone(p.getUniqueId(),plugin.store().classOf(p.getUniqueId()),units);
         plugin.requestSave();
@@ -145,8 +142,17 @@ final class PveProgressListener implements Listener {
         if(supportAllowed(target)) shields.put(target.getUniqueId(),new Shield(Math.min(4,amount),System.currentTimeMillis()+seconds*1000L));
     }
     void clear(UUID id) { shields.remove(id); }
+    @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true)
+    public void environmental(org.bukkit.event.entity.EntityDamageEvent event) {
+        if(!(event instanceof EntityDamageByEntityEvent) && event.getEntity() instanceof Player p && event.getFinalDamage()>0)
+            ledger.forgetWound(p.getUniqueId());
+    }
+    @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true)
+    public void regain(EntityRegainHealthEvent event) {
+        if(event.getEntity() instanceof Player p) ledger.healed(p.getUniqueId(),event.getAmount(),System.currentTimeMillis());
+    }
     @EventHandler public void quit(PlayerQuitEvent e) {
-        debts.remove(e.getPlayer().getUniqueId()); shields.remove(e.getPlayer().getUniqueId()); rates.remove(e.getPlayer().getUniqueId());
+        ledger.forgetWound(e.getPlayer().getUniqueId()); shields.remove(e.getPlayer().getUniqueId());
         // Недавний PvP не очищается релогом; таблица ограничена по размеру.
     }
 }

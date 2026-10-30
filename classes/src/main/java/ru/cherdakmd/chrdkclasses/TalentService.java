@@ -197,15 +197,18 @@ public final class TalentService {
     }
 
     Map<EffectKind, ClassEffectView> effectDetails(UUID player) {
+        return effectDetails(player, development == null ? null : store.build(player));
+    }
+    Map<EffectKind, ClassEffectView> effectDetails(UUID player, ClassBuild selected) {
         Map<EffectKind, Double> passives = new EnumMap<>(EffectKind.class);
         Map<EffectKind, Double> talents = new EnumMap<>(EffectKind.class);
         PlayerClass playerClass = classOf(player);
         if (playerClass != null && (development == null || store.development(player) != null)) {
             passives.putAll(ClassCatalog.passive(playerClass.id()));
-            for (String id : development == null ? store.talents(player) : store.build(player) == null ? java.util.Set.<String>of() : store.build(player).ranks().keySet()) {
+            for (String id : development == null ? store.talents(player) : selected == null ? java.util.Set.<String>of() : selected.ranks().keySet()) {
                 Talent talent = development == null ? ClassCatalog.talent(id) : ClassTrees.talent(id);
                 if (talent != null && talent.classId().equals(playerClass.id())) {
-                    talents.merge(talent.kind(), talent.value() * (development == null ? 1 : store.build(player).ranks().get(id)), Double::sum);
+                    talents.merge(talent.kind(), talent.value() * (development == null ? 1 : selected.ranks().get(id)), Double::sum);
                 }
             }
         }
@@ -408,6 +411,7 @@ public final class TalentService {
 
     /** Админский полный сброс: класс, таланты, моменты. */
     public ClassResult resetByAdmin(UUID player) {
+        if (development != null && !development.prepare(player,System.currentTimeMillis())) return ClassResult.fail("development-pending");
         if (!store.reset(player)) {
             return ClassResult.fail("admin-reset-none");
         }

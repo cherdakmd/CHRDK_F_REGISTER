@@ -27,7 +27,7 @@ classes:
   help-points: "<yellow>/class points</yellow> <gray>— уровень, очки и сколько до следующего</gray>"
   help-ability: "<yellow>/class ability [1|2]</yellow> <gray>— умение класса (то же делает <yellow>/ability [1|2]</yellow>)</gray>"
   help-top: "<yellow>/class top</yellow> <gray>— сколько игроков в каждом классе</gray>"
-  help-footer: "<gray>Уровень класса растёт от навыков: один уровень за каждые %per% уровней навыков.</gray>"
+  help-footer: "<gray>Уровень класса растёт от собственного PvE-опыта. Навыки — только требования талантов. /class abilities · /class builds</gray>"
 
   # ------------------------------ выбор класса ------------------------------
   choose-usage: "<gray>/class choose <yellow><warrior|archer|mage|cleric></yellow></gray>"
@@ -481,8 +481,8 @@ classes:
   development-ability-change: "<white>%before% → %after%</white>"
   development-point-change: "<white>Вложено %before% → %after%; останется свободно %free%</white>"
   development-preview: "<gold>Проверка замены сборки · без списания валюты</gold>"
-  development-page-prev: "<yellow>Первая страница изменений</yellow>"
-  development-page-next: "<yellow>Вторая страница изменений</yellow>"
+  development-page-prev: "<yellow>Предыдущая страница изменений</yellow>"
+  development-page-next: "<yellow>Следующая страница изменений</yellow>"
   development-spec-warrior-0: "<gold>Страж</gold>"
   development-spec-warrior-1: "<gold>Берсерк</gold>"
   development-spec-warrior-2: "<gold>Авангард</gold>"
@@ -691,3 +691,12 @@ classes:
   ability.cleric-3.desc: "<gray>До 3 PvE-врагов: 4 HP нежити, 2 HP остальным.</gray>"
   ability.cleric-4.name: "<gold>Очищение</gold>"
   ability.cleric-4.desc: "<gray>Лечит союзников и снимает вредные эффекты. Полезное лечение подтверждается только PvE-раной.</gray>"
+
+  development-max-level: "<gold>Уровень 50/50 · максимальный XP %xp%. Испытания учитываются отдельно.</gold>"
+  development-distribution: "<gray>Текущая сборка: %nodes% из 45 узлов; ранги входят в общий бюджет.</gray>"
+  development-level-migration: "<yellow>Уровень при переносе: %before% → %after%; класс и прежние времена сохранены.</yellow>"
+  development-trial-done: "<green>Рубеж %target% · награда уже получена на аккаунте</green>"
+  development-trial-pending: "<gray>Рубеж %target% · ещё не получен</gray>"
+  development-cast-hint: "<gray>Нажать — применить экипированное PvE-умение. Замена в разделе выбора умений.</gray>"
+  development-regen-rules: "<gray>За пульс %seconds% с вне боя; единица REGEN = 0,25 сердца. Потолок механики не изменён.</gray>"
+  development-effect-change: "<white>Действующий эффект: %before% → %after%; потолок %cap%</white>"

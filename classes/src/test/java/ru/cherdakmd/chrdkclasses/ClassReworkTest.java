@@ -11,7 +11,7 @@ class ClassReworkTest {
     private static final long NOW=1_790_000_000_000L;
     private TalentService fresh(Path dir) {
         ClassStore store=new ClassStore(dir,null);
-        SkillSource skills=new SkillSource(){ public int totalLevel(UUID id){return 1000;} public int level(UUID id,String key){return 100;} };
+        SkillSource skills=new SkillSource(){ public boolean available(){return true;} public int totalLevel(UUID id){return 1000;} public int level(UUID id,String key){return 100;} };
         TalentService service=new TalentService(ClassConfig.defaults(),store,skills);
         service.enableDevelopment(LegacyClassRules.capture(ClassConfig.defaults()));
         assertTrue(service.development().prepare(ID,NOW));

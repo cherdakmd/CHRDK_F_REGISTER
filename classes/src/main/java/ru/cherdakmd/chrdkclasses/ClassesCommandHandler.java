@@ -139,6 +139,7 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
         sendResult(player, result);
         if (result.ok()) {
             plugin.requestSave();
+            plugin.gameplay().clear(player.getUniqueId());
             plugin.effects().apply(player);
             if (plugin.config().actionbar()) {
                 player.sendActionBar(plugin.messages().get("choose-actionbar", "class",
@@ -458,11 +459,14 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
         if (target == null) {
             return;
         }
-        if (plugin.store().talentCount(target) == 0) {
-            plugin.messages().send(sender, "respec-empty");
-            return;
+        if (!plugin.service().development().prepare(target,System.currentTimeMillis())) {
+            plugin.messages().send(sender,"development-pending");return;
         }
-        int cleared = plugin.store().clearTalents(target, 0L);
+        ClassBuild build=plugin.store().build(target);
+        if(build==null||build.ranks().isEmpty()){plugin.messages().send(sender,"respec-empty");return;}
+        int cleared=build.ranks().size();
+        plugin.store().installBuild(target,new ClassBuild(build.classId(),Map.of(),build.abilities()),System.currentTimeMillis(),true);
+        plugin.gameplay().clear(target);
         plugin.requestSave();
         plugin.messages().send(sender, "admin-respec",
                 "player", displayName(target, args[1]),
@@ -573,7 +577,7 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
         }
         List<String> ids = new ArrayList<>();
         for (Talent talent : ClassTrees.talents(playerClass.id())) {
-            if (!plugin.store().hasTalent(player.getUniqueId(), talent.id())) {
+            if (plugin.store().build(player.getUniqueId())!=null && plugin.store().build(player.getUniqueId()).ranks().getOrDefault(talent.id(),0)<talent.maxRank()) {
                 ids.add(talent.id());
             }
         }

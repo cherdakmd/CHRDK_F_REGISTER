@@ -566,7 +566,7 @@ final class ClassesGui implements Listener {
                 || event.getRawSlot() < 0 || event.getRawSlot() >= SIZE) {
             return;
         }
-        if (!player.hasPermission("chrdkclasses.use") || !plugin.config().enabled()) {
+        if (!player.hasPermission("chrdkclasses.use") || !plugin.config().enabled() || !plugin.ready(player)) {
             player.closeInventory();
             plugin.messages().send(player, plugin.config().enabled() ? "no-permission" : "disabled");
             return;
