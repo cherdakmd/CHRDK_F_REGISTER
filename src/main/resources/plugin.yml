@@ -107,11 +107,11 @@ commands:
     usage: /<command> <ник>
   bal:
     description: Баланс алмазного банка, депозит и снятие
-    usage: /<command> [ник|deposit [all|hand|сумма]|withdraw <сумма>]
+    usage: /<command> [ник|stats|deposit [all|hand|сумма]|withdraw <сумма> [confirm]]
     aliases: [balance, money, bank]
   pay:
-    description: Перевести алмазы другому игроку
-    usage: /<command> <ник> <сумма>
+    description: Предпросмотр и подтверждение перевода алмазов
+    usage: /<command> <ник> <сумма> [preview|confirm]
     aliases: [payto]
   baltop:
     description: Топ игроков по балансу банка

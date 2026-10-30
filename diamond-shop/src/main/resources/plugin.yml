@@ -9,11 +9,11 @@ commands:
   shop:
     aliases: [dshop, market, exchanger]
     description: Магазин обмена ресурсов за алмазы
-    usage: /<command> [balance|deposit|withdraw|price|buy|sell|stats|help]
+    usage: /<command> [balance|price|find|quote buy|sell <товар> <количество>|buy|sell|sellall|stats]
   shopadmin:
     aliases: [dshopadmin, marketadmin]
     description: Администрирование алмазного магазина
-    usage: /<command> [stock|top|reload|recovery]
+    usage: /<command> [stock|top|reload|recovery|audit]
     permission: chrdkshop.admin
 permissions:
   chrdkshop.use:

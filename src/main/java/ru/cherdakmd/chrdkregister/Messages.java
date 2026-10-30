@@ -132,6 +132,8 @@ public final class Messages {
         // Каждый из затронутых JAR хранит только свои точные старые подсказки.
         migrateStockOverrides(defaults, overrides, readResource(plugin,
                 "economy-messages-legacy-1.4.253.yml", logger));
+        migrateStockOverrides(defaults, overrides, readResource(plugin,
+                "economy-messages-legacy-1.4.254.yml", logger));
         overrides.replaceAll((key, text) -> GameplayRewardTexts.message(moduleName, key, text));
         Messages messages = new Messages(defaults, overrides, logger);
         messages.logMissingKeys(fileName);

@@ -22,11 +22,13 @@ commands:
     description: "Телепорт в точку дома (без имени — кровать или единственный дом)"
     usage: "/home [имя]"
   sethome:
-    description: Установить точку дома
+    description: Показать цену и подтвердить установку точки дома
+    usage: "/sethome <имя> [confirm]"
   delhome:
     description: Удалить точку дома
   homes:
-    description: Список точек дома
+    description: Список домов и личные цены перемещений
+    usage: "/homes [prices]"
   tpadmin:
     description: Управление телепортами
     permission: chrdktele.admin
