@@ -113,6 +113,18 @@ class ShopServiceEconomyTest {
     @Test void sixArgumentCustomItemsKeepLegacyTwoWayTrading() {
         assertTrue(new ShopConfig.ShopItem("STONE","blocks",.05,20000,.25,4).sellEnabled());
     }
+    @Test void everyDefaultBuybackIsBelowItsOwnLowestAskAtAllTestedSpreads() throws Exception {
+        for(double spread:new double[]{0,10,50,90}) {
+            var s=service(spread);
+            for(var item:s.config().items()) {
+                if(!item.sellEnabled())continue;
+                s.store().setStock(item,Long.MAX_VALUE,System.currentTimeMillis());
+                long lowestAsk=s.askPrice(item);
+                s.store().setStock(item,1,System.currentTimeMillis());
+                assertTrue(s.bidPrice(item)<=lowestAsk,item.material()+" spread="+spread);
+            }
+        }
+    }
     @Test void rawGoodsCannotBePumpedByBuyingTheSameMaterial() throws Exception {
         var s=service(10);var item=s.config().item("GHAST_TEAR").orElseThrow();
         s.store().setStock(item,item.refStock(),System.currentTimeMillis());
