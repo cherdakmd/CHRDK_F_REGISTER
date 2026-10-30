@@ -1,0 +1,5 @@
+# Только точные старые тексты: пользовательские переводы не заменяются.
+messages:
+  tp:
+    usage-home: '<gray>Используйте: <yellow>/home [имя]</yellow>, <yellow>/sethome <имя></yellow>, <yellow>/delhome <имя></yellow>.
+      Без имени — ближайший дом или кровать.</gray>'
