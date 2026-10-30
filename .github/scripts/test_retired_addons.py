@@ -30,13 +30,13 @@ class RetiredAddonsGuardTest(unittest.TestCase):
         for symbol in ("CHRDK_Bosses", "CHRDK_Treasures", "ru.cherdakmd.chrdktreasures",
                        "chrdk-bosses-1.4.238.jar", "ChrdkTreasureBookInfo", "CHRDK_Streams",
                        "chrdk-streams-1.4.240.jar", "ru.cherdakmd.chrdkstreams", "CHRDK_Events", "chrdk-events-1.4.241.jar",
-                       "ru.cherdakmd.chrdkevents"):
+                       "ru.cherdakmd.chrdkevents", "CHRDK_Queue", "chrdk-queue-1.4.247.jar", "ru.cherdakmd.chrdkqueue"):
             with self.subTest(symbol=symbol):
                 self.write("enchants/src/main/java/Source.java", f"import {symbol};")
                 self.assertTrue(check(self.root))
 
     def test_retired_pages_are_rejected_even_without_commands(self):
-        for page in ("bosses", "treasures", "streams", "events"):
+        for page in ("bosses", "treasures", "streams", "events", "queue"):
             with self.subTest(page=page):
                 self.write("tools/wiki/assets/app.js", f'const href = "{page}.html";')
                 self.assertTrue(check(self.root))
@@ -53,7 +53,7 @@ class RetiredAddonsGuardTest(unittest.TestCase):
         self.assertTrue(check(self.root))
         (self.root / "settings.gradle").unlink()
         for name in ("bosses/build.gradle", "treasures/build/libs/old.jar", "wiki/bosses.md",
-                     "wiki/treasures.md", "docs/TREASURES_ARSENAL.md", "streams/build.gradle", "wiki/streams.md", "events/build.gradle", "wiki/events.md"):
+                     "wiki/treasures.md", "docs/TREASURES_ARSENAL.md", "streams/build.gradle", "wiki/streams.md", "events/build.gradle", "wiki/events.md", "queue/build.gradle", "wiki/queue.md"):
             with self.subTest(name=name):
                 with tempfile.TemporaryDirectory() as directory:
                     root = Path(directory)
@@ -85,6 +85,15 @@ class RetiredAddonsGuardTest(unittest.TestCase):
         self.write("src/main/java/Legacy.java", 'Set.of("bosses", "treasures"); TREASURE; SHARDS;')
         self.write("artifacts/src/main/java/Loot.java", 'BOSSES_KILLED; fish_treasure; treasure_hunter;')
         self.assertEqual([], check(self.root))
+
+    def test_internal_and_payment_queues_remain_allowed(self):
+        self.write("src/main/java/Worker.java", "ConcurrentLinkedQueue<Runnable> queue; getQueue(); queueSize();")
+        self.write("wiki/payments.md", "Очередь решений /pass pending; асинхронная очередь записи")
+        self.assertEqual([], check(self.root))
+
+    def test_removed_login_priority_promise_is_rejected(self):
+        self.write("src/main/resources/messages.yml", "ability: Вход без очереди")
+        self.assertTrue(check(self.root))
 
     def test_shared_bukkit_and_core_event_paths_are_not_removed_modules(self):
         self.write("src/main/java/Listener.java",

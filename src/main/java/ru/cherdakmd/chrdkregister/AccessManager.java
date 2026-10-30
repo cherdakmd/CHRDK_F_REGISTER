@@ -327,7 +327,7 @@ public final class AccessManager {
         }
         if (!config.passEnabled()) {
             logger.warning("pass.enabled: false — донат-стена проходки ВЫКЛЮЧЕНА. "
-                    + "Вход контролирует только очередь (CHRDK_Queue) и лимиты сервера.");
+                    + "Регистрация, пароль и подключённая 2FA сохраняются; вместимость задаёт сервер.");
         }
         // Одноразовая подсказка: LuckPerms есть, а группа проходки (integrations.pass-group) не создана
         if (config.passGroup() != null && !config.passGroup().isBlank()) {

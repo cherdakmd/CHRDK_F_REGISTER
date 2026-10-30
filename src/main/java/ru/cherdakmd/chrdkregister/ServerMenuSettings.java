@@ -75,7 +75,7 @@ public record ServerMenuSettings(boolean enabled, String title, String categoryT
 
         boolean available(java.util.function.Predicate<String> plugins,
                           java.util.function.Predicate<String> permissions) {
-            return (plugin.isBlank() || plugins.test(plugin))
+            return !RetiredAddons.plugin(plugin) && (plugin.isBlank() || plugins.test(plugin))
                     && (permission.isBlank() || permissions.test(permission));
         }
     }

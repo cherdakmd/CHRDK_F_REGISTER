@@ -1285,7 +1285,7 @@ messages:
     "menu-title": "<dark_gray>Привилегии гильдии</dark_gray>"
     "card-name": "%badge% %rank%"
     "card-price": "<gray>30 дней — <gold>%month% ₽</gold> · год — <gold>%year% ₽</gold></gray>"
-    "ability-1": "<gray>· Вход без очереди</gray>\n<gray>· Знак ✦ и серый ник</gray>\n<gray>· 4 дома · 28 чанков · 12 лотов</gray>\n<gray>· Скидка на телепорты 10 %</gray>\n<green>· +10 % опыта профессий</green>"
+    "ability-1": "<gray>· Знак ✦ и серый ник</gray>\n<gray>· 4 дома · 28 чанков · 12 лотов</gray>\n<gray>· Скидка на телепорты 10 %</gray>\n<green>· +10 % опыта профессий</green>"
     "ability-2": "<gray>· Три шлейфа на выбор</gray>\n<gray>· Зелёный ник ❖</gray>\n<gray>· 6 домов · 34 чанка · 15 лотов</gray>\n<gray>· Скидка на телепорты 20 %</gray>\n<green>· +20 % опыта профессий</green>"
     "ability-3": "<gray>· Строка входа в чате</gray>\n<gray>· Бирюзовый ник ✧</gray>\n<gray>· 8 домов · 40 чанков · 18 лотов</gray>\n<gray>· Скидка на телепорты 30 %</gray>\n<green>· +30 % опыта · +15 % добычи</green>"
     "ability-4": "<gray>· Премиум-трек батлпасса</gray>\n<gray>· Золотой градиент ★ и «Золотая пыль»</gray>\n<gray>· 10 домов · 44 чанка · 24 лота</gray>\n<gray>· Скидка на телепорты 40 %</gray>\n<green>· +40 % опыта · +20 % добычи</green>"

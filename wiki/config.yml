@@ -62,7 +62,6 @@ groups:
   pages:
   - ranks
   - referrals
-  - queue
 - id: social
   title: Игра вместе
   description: Отряд, гильдия и собственное оформление.

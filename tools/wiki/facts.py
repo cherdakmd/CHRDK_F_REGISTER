@@ -60,7 +60,6 @@ FIELDS = {
     "daily_rank": ("daily-rewards", "vip.min-rank"),
     "ref_inviter": ("referrals", "bonus-hours.inviter"),
     "ref_invitee": ("referrals", "bonus-hours.invitee"),
-    "queue_regular": ("queue", "queue.regular-limit"),
     "enchant_max": ("enchants", "rules.max-per-item"),
     "legendary_max": ("enchants", "rules.max-legendary-per-item"),
     "season_name": ("battlepass", "battlepass.season-name"),

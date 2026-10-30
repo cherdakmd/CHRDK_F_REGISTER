@@ -24,7 +24,6 @@ class ResourcesYamlTest {
             "classes", "cosmetics", "daily-rewards", "diamond-shop", "enchants", "guilds",
             "hunt", "lottery",
             "orders", "party", "pets", "professions", "quests",
-            "queue",
             "ranks", "referrals", "skills", "teleports", "tier-forge");
 
     @Test

@@ -126,6 +126,8 @@ public final class Messages {
         if ("CHRDK_Core".equalsIgnoreCase(moduleName)) {
             Map<String, String> legacy = readResource(plugin, "shop-delivery-messages-legacy-1.4.193.yml", logger);
             migrateStockOverrides(defaults, overrides, legacy);
+            migrateStockOverrides(defaults, overrides, readResource(plugin,
+                    "presentation-legacy-messages-1.4.247.yml", logger));
         }
         overrides.replaceAll((key, text) -> GameplayRewardTexts.message(moduleName, key, text));
         Messages messages = new Messages(defaults, overrides, logger);

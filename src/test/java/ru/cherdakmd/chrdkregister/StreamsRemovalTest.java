@@ -32,7 +32,7 @@ class StreamsRemovalTest {
     }
     @Test void moduleIsAbsentFromTheDistributionAndLiveUi() {
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_Streams"));
-        assertEquals(26, PluginUpdateService.MODULES.size());
+        assertEquals(25, PluginUpdateService.MODULES.size());
         assertEquals(27, ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
         assertNull(LabelPreferences.Label.byId("streams"));
         assertNull(LabelsCommandHandler.singleOf("streams"));
@@ -41,8 +41,8 @@ class StreamsRemovalTest {
         assertEquals(7, LabelPreferences.Label.values().length);
         var current = yaml("config.yml");
         var items = current.getMapList("server-menu.items");
-        assertEquals(49, items.size());
-        assertEquals(5, items.stream().filter(item -> "social".equals(item.get("category"))).count());
+        assertEquals(48, items.size());
+        assertEquals(4, items.stream().filter(item -> "social".equals(item.get("category"))).count());
         assertFalse(items.stream().anyMatch(item -> RetiredAddons.command(String.valueOf(item.get("command")))
                 || RetiredAddons.plugin(String.valueOf(item.get("plugin")))));
         var announcements = ChatConfig.fromBukkitConfig(current).autoMessageEntries();
@@ -128,7 +128,7 @@ class StreamsRemovalTest {
         live.set("auto-messages.enabled", false); live.set("auto-messages.interval-seconds", 777);
         var changes = PresentationMigration.replacements(live, List.of(legacy), current);
         assertTrue(changes.containsAll(List.of("server-menu.items", "auto-messages.messages")));
-        assertEquals(2, legacy.getMapList("server-menu.items").size() - current.getMapList("server-menu.items").size());
+        assertEquals(3, legacy.getMapList("server-menu.items").size() - current.getMapList("server-menu.items").size());
         for (String key : changes) live.set(key, current.get(key));
         assertFalse(live.getBoolean("auto-messages.enabled")); assertEquals(777, live.getInt("auto-messages.interval-seconds"));
         assertTrue(PresentationMigration.replacements(live, List.of(legacy), current).isEmpty());

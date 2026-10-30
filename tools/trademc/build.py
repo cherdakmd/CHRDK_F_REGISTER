@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import json
 from pathlib import Path
@@ -62,7 +63,7 @@ def command(p):
     return f"pass shopbuy %username% {p['id']}"
 
 
-def description(p, cfg):
+def description(p, cfg, source_version=None):
     raw = p["description"]
     lines = [plain(line) for line in (raw if isinstance(raw, list) else [raw])]
     tier = p.get("rank", 0)
@@ -98,7 +99,9 @@ def description(p, cfg):
                   f"Надписи после ника: {slots}; сохранённых пресетов: {presets}. Ник всегда первый и не занимает место.",
                   f"Опыт профессий: +{xp}%; потолок профессии: {25 + extra} (25 + {extra} от ранга).",
                   f"Количество добычи в находках и охоте: +{drop}% с округлением вниз; это не гарантированное удвоение каждого блока.",
-                  "Вход без очереди в рамках вместимости сервера; оформление и возможности предыдущих ступеней."]
+                  ("Вход без очереди в рамках вместимости сервера; оформление и возможности предыдущих ступеней."
+                   if tuple(map(int, (source_version or version()).split('.'))) < (1, 4, 248)
+                   else "Ранг не обходит вместимость сервера; оформление и возможности предыдущих ступеней.")]
         cosmetics = yaml.safe_load((ROOT / "cosmetics/src/main/resources/config.yml").read_text(encoding="utf-8"))["cosmetics"]
         trails = [plain(x["name"]) for x in cosmetics["trail"]["defs"] if x.get("rank", 0) <= tier]
         lines.append("Шлейфы по рангу: " + "; ".join(trails) + ". Одновременно выбирается один.")
@@ -187,7 +190,7 @@ ID: {p['id']}
 Картинка: images/{image_name(index, p)}
 
 ОПИСАНИЕ ДЛЯ ТОВАРА:
-{description(p, cfg)}
+{description(p, cfg, source_version)}
 
 ОСНОВНАЯ КОМАНДА (рекомендуется, RCON):
 {command(p)}
@@ -261,7 +264,7 @@ def markdown_document(cfg, products, source_version=None):
         parts.append(f"\n## {i:02d}. {name} — {p['days']} дней\n\n")
         parts.append(f"- **ID:** `{p['id']}`\n- **Цена:** {p['price']} ₽\n- **Срок:** {p['days']} дней\n- **Картинка:** [{Path(image).name}]({image})\n\n")
         parts.append(f"![{name} — {p['days']} дней, {p['price']} ₽]({image})\n\n### Описание для товара\n\n")
-        parts.extend("- " + line + "\n" for line in description(p, cfg).splitlines())
+        parts.extend("- " + line + "\n" for line in description(p, cfg, source_version).splitlines())
         parts.append(f"\n### Основная команда — рекомендуется, RCON\n\n```text\n{command(p)}\n```\n\n")
         parts.append(f"### Альтернатива по сумме\n\n**Вместо основной команды, не вместе с ней:**\n\n```text\npass shoppay %username% {p['price']}\n```\n")
     appendix = txt.split("ДОПОЛНИТЕЛЬНЫЕ КОМАНДЫ И ПРИМЕЧАНИЯ ДЛЯ ВЛАДЕЛЬЦА\n", 1)[1].strip().splitlines()
@@ -430,7 +433,7 @@ def manifest(cfg, products, source_version=None):
         result["products"].append({"id": p["id"], "name": plain(p["name"]),
             "priceRubles": p["price"], "days": p["days"], "command": command(p),
             "alternativeCommand": f"pass shoppay %username% {p['price']}",
-            "description": description(p, cfg), "image": "images/" + path.name,
+            "description": description(p, cfg, source_version), "image": "images/" + path.name,
             "width": 1200, "height": 1200,
             "imageSha256": hashlib.sha256(path.read_bytes()).hexdigest()})
     return result
@@ -451,8 +454,30 @@ def snapshot_version():
     return value
 
 
+def snapshot_catalog():
+    """Read-only проверка старого комплекта, не подготовка материалов для текущей версии.
+
+    Единственное разрешённое расхождение 1.4.248 — снятая строка описания первого
+    ранга. Архив восстанавливается из точного stock-снимка 1.4.247 только при
+    полном совпадении остальных полей SKU. Любой дрейф цен/сроков/прав и другие
+    тексты по-прежнему проваливают check(). Живой catalog() не меняется.
+    """
+    cfg, products = copy.deepcopy(catalog())
+    if tuple(map(int, snapshot_version().split('.'))) < (1, 4, 248):
+        resource = ROOT / "src/main/resources/presentation-legacy-1.4.247.yml"
+        previous = yaml.safe_load(resource.read_text(encoding="utf-8"))["shop"]["products"]
+        old = next(p for p in previous if p["id"] == "rank-wanderer")
+        updated = old["description"].removeprefix("Вход без очереди, ")
+        revised = {**old, "description": updated[0].upper() + updated[1:]}
+        for i, product in enumerate(products):
+            if product == revised:
+                products[i] = copy.deepcopy(old)
+        cfg["shop"]["products"] = products
+    return cfg, products
+
+
 def check():
-    cfg, products = catalog()
+    cfg, products = snapshot_catalog()
     recorded_version = snapshot_version()
     expected = {image_name(i, p) for i, p in enumerate(products, 1)}
     actual = {p.name for p in (OUTPUT / "images").glob("*.png")}
@@ -475,7 +500,7 @@ def check():
         raise ValueError("Storefront audit report is stale")
     if (OUTPUT / "manifest.json").read_text(encoding="utf-8") != manifest_text(cfg, products, recorded_version):
         raise ValueError("Storefront manifest/catalog/hash mismatch")
-    print(f"TradeMC OK: {len(products)} products, commands, prices, durations and individual PNGs")
+    print(f"TradeMC archive {recorded_version} OK: {len(products)} products; read-only historical validation, not a current storefront publication")
 
 
 def build():
