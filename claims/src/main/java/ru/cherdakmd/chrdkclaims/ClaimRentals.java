@@ -6,10 +6,14 @@ final class ClaimRentals {
     private ClaimRentals() { }
 
     static String offer(ClaimStore store, Claim claim, String owner, int price, long now) {
+        return offer(store, claim, owner, price, now, 1);
+    }
+    static String offer(ClaimStore store, Claim claim, String owner, int price, long now, int minimum) {
         synchronized (store) {
             if(store.finance!=null&&store.finance.busy()) return "finance.unavailable";
             if (!current(store, claim) || !claim.isOwner(owner)) return "rent-not-owner";
             if (price < 0 || price > MAX_PRICE) return "rent-usage";
+            if (price > 0 && price < minimum) return "finance.rent-minimum";
             if (price > 0 && store.territory(claim).stream().anyMatch(c -> c.salePrice > 0)) return "rent-sale";
             claim.rentOffer = price;
             if (price == 0) claim.rentRenew = false; // Уже оплаченный срок не сокращаем.
@@ -19,13 +23,17 @@ final class ClaimRentals {
     }
 
     static String take(ClaimStore store, Claim claim, String tenant, int expectedPrice, long now, int serverRent) {
+        return take(store, claim, tenant, expectedPrice, now, serverRent, 1);
+    }
+    static String take(ClaimStore store, Claim claim, String tenant, int expectedPrice, long now, int serverRent, int minimum) {
         synchronized (store) {
             if(store.finance!=null) {
                 if(!current(store,claim)) return "rent-no-offer";
-                return store.finance.execute("rent-take",s->take(s,s.claimAt(claim.world,claim.x,claim.z),tenant,expectedPrice,now,serverRent),java.util.Objects::isNull,"finance.unavailable");
+                return store.finance.execute("rent-take",s->take(s,s.claimAt(claim.world,claim.x,claim.z),tenant,expectedPrice,now,serverRent,minimum),java.util.Objects::isNull,"finance.unavailable");
             }
             if (!current(store, claim) || claim.rentOffer <= 0) return "rent-no-offer";
             if (expectedPrice != claim.rentOffer) return "rent-price-changed";
+            if (claim.rentOffer < minimum) return "finance.rent-minimum";
             if (claim.isOwner(tenant)) return "rent-self";
             if (claim.rentedAt(now)) return "rent-busy";
             if (store.territory(claim).stream().anyMatch(c -> c.salePrice > 0)) return "rent-sale";
@@ -51,14 +59,17 @@ final class ClaimRentals {
 
     /** 0 — ничего, 1 — продлена, -1 — закончилась. Простой сервера не тарифицируется задним числом. */
     static int settle(ClaimStore store, Claim claim, long now, int serverRent) {
+        return settle(store, claim, now, serverRent, 1);
+    }
+    static int settle(ClaimStore store, Claim claim, long now, int serverRent, int minimum) {
         synchronized (store) {
             if(store.finance!=null) {
                 if(!current(store,claim)||claim.tenant.isBlank()||claim.rentedAt(now)) return 0;
-                return store.finance.execute("rent-renew",s->settle(s,s.claimAt(claim.world,claim.x,claim.z),now,serverRent),r->r!=0,0);
+                return store.finance.execute("rent-renew",s->settle(s,s.claimAt(claim.world,claim.x,claim.z),now,serverRent,minimum),r->r!=0,0);
             }
             if (!current(store, claim) || claim.tenant.isBlank() || claim.rentedAt(now)) return 0;
             if (!store.fundsReady(claim.owner) || !store.fundsReady(claim.tenant)) return 0;
-            String refusal = serverRent < 0 || !claim.rentRenew || claim.rentOffer <= 0 ? "rent-ended"
+            String refusal = serverRent < 0 || claim.rentPrice < minimum || !claim.rentRenew || claim.rentOffer <= 0 ? "rent-ended"
                     : payDay(store, claim, claim.tenant, claim.rentPrice, now, serverRent, false);
             if ("finance.unavailable".equals(refusal)) return 0;
             if (refusal != null) {

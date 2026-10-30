@@ -39,6 +39,7 @@ public final class LotteryPlugin extends JavaPlugin {
     @Override public void onDisable() { if (service != null) service.shutdown(); }
     public void reloadLotteryConfig() throws java.io.IOException {
         reloadConfig();
+        ru.cherdakmd.chrdkregister.api.EconomyTariffMigration.apply(this);
         config = LotteryConfig.parse(getConfig(), getLogger());
         messages = Messages.load(this, "ru", getLogger());
         if (service != null) { service.shutdown(); service.start(); }

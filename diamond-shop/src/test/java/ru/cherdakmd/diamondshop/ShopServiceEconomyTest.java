@@ -21,7 +21,7 @@ class ShopServiceEconomyTest {
                 items.add(new ShopConfig.ShopItem(r.get("material").toString(),r.get("category").toString(),
                         ((Number)r.get("base-price")).doubleValue(),((Number)r.get("ref-stock")).longValue(),
                         min instanceof Number n?n.doubleValue():.25,max instanceof Number n?n.doubleValue():4,
-                        !Boolean.FALSE.equals(r.get("sell-enabled"))));
+                        !Boolean.FALSE.equals(r.get("sell-enabled")), ShopConfig.purchaseMultiplier(yaml,r.get("category").toString())));
                 assertNotNull(org.bukkit.Material.valueOf(r.get("material").toString()));
             }
             return new ShopConfig.ShopConfigData(Map.of("DIAMOND",1,"DIAMOND_BLOCK",9),0,6400,.25,4,
@@ -31,6 +31,33 @@ class ShopServiceEconomyTest {
     private ShopService service(double spread) throws Exception {
         var store=new ShopStore(dir,Logger.getAnonymousLogger());store.load();
         return new ShopService(config(spread),store,()->null);
+    }
+    @Test void everyTariffRaisesAskButLeavesAllBidsAndRecipeCeilingsUnchanged() throws Exception {
+        var fresh=config(10);
+        var oldItems=fresh.items().stream().map(i->new ShopConfig.ShopItem(i.material(),i.category(),i.basePrice(),
+                i.refStock(),i.minMultiplier(),i.maxMultiplier(),i.sellEnabled())).toList();
+        var oldConfig=new ShopConfig.ShopConfigData(fresh.currencyRates(),0,6400,.25,4,oldItems,10,0,24,3600000);
+        var before=new ShopService(oldConfig,new ShopStore(dir.resolve("old"),Logger.getAnonymousLogger()),()->null);
+        var after=new ShopService(fresh,new ShopStore(dir.resolve("new"),Logger.getAnonymousLogger()),()->null);
+        for(var item:fresh.items()) {
+            var old=oldConfig.item(item.material()).orElseThrow();
+            assertTrue(item.purchaseMultiplier()>=4,item.material());
+            assertEquals(before.batchSize(old),after.batchSize(item),item.material());
+            for(long stock:new long[]{1,item.refStock(),Long.MAX_VALUE}) {
+                before.store().setStock(old,stock,System.currentTimeMillis());after.store().setStock(item,stock,System.currentTimeMillis());
+                assertEquals(before.bidPrice(old),after.bidPrice(item),item.material());
+                assertTrue(after.askPrice(item)>before.askPrice(old),item.material());
+            }
+        }
+    }
+    @Test void purchaseTariffsAreExactDecimalSafeAndInvalidConfigCannotCreateSubsidies() {
+        var yaml=new YamlConfiguration();
+        assertEquals(4,ShopConfig.purchaseMultiplier(yaml,"blocks"));assertEquals(8,ShopConfig.purchaseMultiplier(yaml,"minerals"));
+        yaml.set("pricing.purchase-multipliers.blocks",Double.NaN);assertEquals(4,ShopConfig.purchaseMultiplier(yaml,"blocks"));
+        yaml.set("pricing.purchase-multipliers.blocks",-1);assertEquals(1,ShopConfig.purchaseMultiplier(yaml,"blocks"));
+        yaml.set("pricing.purchase-multipliers.blocks",1000);assertEquals(100,ShopConfig.purchaseMultiplier(yaml,"blocks"));
+        assertEquals(6,WholeTrades.price(.1,10,true,6));assertEquals(21,WholeTrades.price(.35,10,true,6));
+        assertEquals(-1,WholeTrades.price(.35,10,true,Double.NaN));assertEquals(-1,WholeTrades.price(.35,10,true,.5));
     }
     @Test void everyDefaultQuoteIsWholePositiveAndBoundedAtAllStockExtremes() throws Exception {
         for (double spread:new double[]{0,10,90}) {
@@ -129,9 +156,13 @@ class ShopServiceEconomyTest {
         var s=service(10);var item=s.config().item("GHAST_TEAR").orElseThrow();
         s.store().setStock(item,item.refStock(),System.currentTimeMillis());
         int batch=s.batchSize(item); long paid=TradeAmounts.quote(batch,s.askPrice(item),2304,true);
+        // Исторический баг воспроизводим БЕЗ нового тарифа: он не заменяет защиту bid.
+        long oldAsk=WholeTrades.price(PriceEngine.ask(s.priceOf(item),10),batch,true);
+        long oldPaid=TradeAmounts.quote(batch,oldAsk,2304,true);
         s.store().setStock(item,1,System.currentTimeMillis());
         long legacyBid=WholeTrades.price(PriceEngine.bid(s.priceOf(item),10),batch,false);
-        assertTrue(TradeAmounts.quote(batch,legacyBid,2304,false)>paid,"Регрессия действительно воспроизводит прежний self-pump");
+        assertTrue(TradeAmounts.quote(batch,legacyBid,2304,false)>oldPaid,"Регрессия действительно воспроизводит прежний self-pump");
+        assertTrue(TradeAmounts.quote(batch,s.bidPrice(item),2304,false)<=oldPaid,"Bid защищён даже без дорогого ask");
         assertTrue(TradeAmounts.quote(batch,s.bidPrice(item),2304,false)<=paid);
         long ceiling=RecipeEconomy.cap(RecipeEconomy.Cost.of(PriceEngine.ask(PriceEngine.round(item.basePrice()*item.minMultiplier()),10)),batch,10);
         for(long stock:new long[]{1,item.refStock(),Long.MAX_VALUE}) {

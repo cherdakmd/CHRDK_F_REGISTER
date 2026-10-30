@@ -45,10 +45,10 @@ class TpConfigTest {
         assertEquals(24, config.rtpMaxAttempts());
         assertEquals(300, config.rtpCooldownSeconds());
         assertEquals(50, config.vipDiscountPercent());
-        assertEquals(5, config.costRtp());
-        assertEquals(2, config.costTpa());
-        assertEquals(1, config.costHome());
-        assertEquals(0, config.costSethome());
+        assertEquals(10, config.costRtp());
+        assertEquals(10, config.costTpa());
+        assertEquals(10, config.costHome());
+        assertEquals(20, config.costSethome());
         assertEquals(3, config.homeLimit(false));
         assertEquals(8, config.homeLimit(true));
         assertEquals("world", config.rtpWorld());

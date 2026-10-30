@@ -36,8 +36,13 @@ public final class ShopConfig {
             long refStock,
             double minMultiplier,
             double maxMultiplier,
-            boolean sellEnabled
+            boolean sellEnabled,
+            double purchaseMultiplier
     ) {
+        public ShopItem(String material, String category, double basePrice, long refStock,
+                        double minMultiplier, double maxMultiplier, boolean sellEnabled) {
+            this(material, category, basePrice, refStock, minMultiplier, maxMultiplier, sellEnabled, 1);
+        }
         public ShopItem(String material, String category, double basePrice, long refStock,
                         double minMultiplier, double maxMultiplier) {
             this(material, category, basePrice, refStock, minMultiplier, maxMultiplier, true);
@@ -101,7 +106,7 @@ public final class ShopConfig {
         List<ShopItem> items = new ArrayList<>();
         Set<String> seen = new HashSet<>();
         for (Map<?, ?> raw : config.getMapList("items")) {
-            ShopItem item = parseItem(raw, minMult, maxMult, logger);
+            ShopItem item = parseItem(raw, minMult, maxMult, config, logger);
             if (item == null) {
                 continue;
             }
@@ -116,7 +121,7 @@ public final class ShopConfig {
                 spread, dailyLimit, historyPoints, historyInterval);
     }
 
-    private static ShopItem parseItem(Map<?, ?> raw, double defMin, double defMax, Logger logger) {
+    private static ShopItem parseItem(Map<?, ?> raw, double defMin, double defMax, FileConfiguration config, Logger logger) {
         Object materialObj = raw.get("material");
         String material = materialObj == null ? "" : String.valueOf(materialObj).trim().toUpperCase(java.util.Locale.ROOT);
         Material bukkitMaterial = material.isBlank() ? null : Material.matchMaterial(material);
@@ -142,8 +147,9 @@ public final class ShopConfig {
         long refStock = Math.max(1, (long) numberOf(raw.get("ref-stock"), 1000));
         double minMult = Math.clamp(numberOf(raw.get("min-multiplier"), defMin), 0.01, 1d);
         double maxMult = Math.clamp(numberOf(raw.get("max-multiplier"), defMax), 1d, 100d);
-        return new ShopItem(material, categoryOf(raw.get("category"), logger, material),
-                basePrice, refStock, minMult, maxMult, !Boolean.FALSE.equals(raw.get("sell-enabled")));
+        String category = categoryOf(raw.get("category"), logger, material);
+        return new ShopItem(material, category, basePrice, refStock, minMult, maxMult,
+                !Boolean.FALSE.equals(raw.get("sell-enabled")), purchaseMultiplier(config, category));
     }
 
     /**
@@ -161,6 +167,17 @@ public final class ShopConfig {
             return ShopCategory.DEFAULT.id();
         }
         return parsed.get().id();
+    }
+
+    /** Тариф удобства покупки не меняет старую базу скупки и рецептурные потолки. */
+    static double purchaseMultiplier(FileConfiguration config, String category) {
+        double fallback = switch (category) {
+            case "blocks", "wood", "food" -> 4;
+            case "minerals", "utility" -> 8;
+            default -> 6;
+        };
+        double value = config.getDouble("pricing.purchase-multipliers." + category, fallback);
+        return Double.isFinite(value) ? Math.clamp(value, 1, 100) : fallback;
     }
 
     private static double numberOf(Object value, double fallback) {

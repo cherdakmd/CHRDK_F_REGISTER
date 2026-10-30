@@ -116,6 +116,7 @@ public final class GuildsPlugin extends JavaPlugin {
     /** Перечитывает конфиг; состав и войны остаются. */
     public void reloadGuilds() {
         reloadConfig();
+        ru.cherdakmd.chrdkregister.api.EconomyTariffMigration.apply(this);
         this.config = GuildConfig.parse(getConfig(), getLogger());
         this.messages = Messages.load(this, config.locale(), getLogger());
         this.service = new GuildService(config,store);

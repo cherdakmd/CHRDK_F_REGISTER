@@ -187,7 +187,7 @@ class Renderer:
                 else "right" if right else "left" if left else ""
             )
         body = [cells(row) for row in rows[2:]]
-        out = ['<div class="table-wrap"><table><thead><tr>']
+        out = ['<div class="table-wrap" tabindex="0" role="group" aria-label="Таблица с горизонтальной прокруткой"><table><thead><tr>']
         for index, cell in enumerate(header):
             style = (
                 f' class="al-{aligns[index]}"'

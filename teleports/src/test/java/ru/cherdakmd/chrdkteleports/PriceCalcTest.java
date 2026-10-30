@@ -1,33 +1,29 @@
 package ru.cherdakmd.chrdkteleports;
 
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-/** Стоимость телепортов: VIP-скидка, полная скидка, крайние случаи. */
 class PriceCalcTest {
-
-    @Test
-    void noDiscountForRegular() {
-        assertEquals(5, PriceCalc.apply(5, false, 50));
-        assertEquals(5, PriceCalc.apply(5, true, 0));
+    @Test void allDefaultRankPricesAndTheHighestRankRemainMeaningful() {
+        int[] discounts={0,10,20,30,40,50};
+        int[][] expected={{60,54,48,42,36,30},{40,36,32,28,24,20},{30,27,24,21,18,15},{20,18,16,14,12,10}};
+        int[] costs={60,40,30,20};
+        for(int i=0;i<costs.length;i++) for(int rank=0;rank<6;rank++)
+            assertEquals(expected[i][rank],PriceCalc.apply(costs[i],rank>0,discounts[rank]));
     }
-
-    @Test
-    void vipDiscountRoundsDownInFavorOfPlayer() {
-        assertEquals(2, PriceCalc.apply(5, true, 50), "5 - 50% = 2 (0,5 в пользу игрока)");
-        assertEquals(1, PriceCalc.apply(3, true, 34));
-        assertEquals(1, PriceCalc.apply(5, true, 100),
-                "даже 100 % скидки оставляют минимум один алмаз");
+    @Test void evenLegacyOneDiamondOrFullDiscountCannotGoBelowTen() {
+        for(int cost:new int[]{1,2,5,10,30,640}) for(int discount:new int[]{-1,0,50,100,999}) {
+            assertTrue(PriceCalc.apply(cost,true,discount)>=10);
+            assertTrue(PriceCalc.apply(cost,false,discount)>=10);
+        }
     }
-
-    @Test
-    void degenerateCases() {
-        assertEquals(0, PriceCalc.apply(0, true, 50));
-        assertEquals(0, PriceCalc.apply(0, false, 50));
-        assertEquals(1, PriceCalc.apply(5, true, 500), "процент зашкален — зажат к 100");
-        assertEquals(1, PriceCalc.apply(1, true, 50),
-                "половина от одного алмаза — всё равно один: бесплатных телепортов нет");
-        assertEquals(1, PriceCalc.apply(1, false, 50), "без скидки цена не меняется");
+    @Test void onlyExplicitlyFreePointSetupMayRemainZero() {
+        assertEquals(0,PriceCalc.apply(0,true,50));assertEquals(0,PriceCalc.apply(0,false,50));
+        assertEquals(0,PriceCalc.apply(-1,true,50));
+    }
+    @Test void wholeCostRoundsUpAndUsesLongBeforeMultiplication() {
+        assertEquals(16,PriceCalc.apply(31,true,50));
+        assertEquals(Integer.MAX_VALUE,PriceCalc.apply(Integer.MAX_VALUE,false,0));
+        assertEquals(1073741824,PriceCalc.apply(Integer.MAX_VALUE,true,50));
     }
 }

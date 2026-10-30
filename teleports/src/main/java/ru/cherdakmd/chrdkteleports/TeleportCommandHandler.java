@@ -478,7 +478,7 @@ public final class TeleportCommandHandler implements TabExecutor {
             plugin.messages().send(payer,"tp.world-denied"); return false;
         }
         String payload=target.getWorld().getName()+":"+target.getX()+":"+target.getY()+":"+target.getZ();
-        return plugin.payments().perform(payer,mover,Math.max(1,cost),kind,payload,()->ru.cherdakmd.chrdkregister.api.PaidActions.teleport(mover,target));
+        return plugin.payments().perform(payer,mover,Math.max(10,cost),kind,payload,()->ru.cherdakmd.chrdkregister.api.PaidActions.teleport(mover,target));
     }
 
     /* ------------------------------- /tpadmin ------------------------------- */

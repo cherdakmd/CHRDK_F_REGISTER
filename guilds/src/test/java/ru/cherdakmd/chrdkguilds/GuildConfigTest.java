@@ -51,7 +51,7 @@ class GuildConfigTest {
         assertEquals(defaults.warAcceptSeconds(), config.warAcceptSeconds());
         assertEquals(defaults.killWindowSeconds(), config.killWindowSeconds());
         assertTrue(defaults.claimedBonus());
-        assertEquals(27, defaults.creationCost());
+        assertEquals(270, defaults.creationCost());
     }
 
     @Test
@@ -113,7 +113,7 @@ class GuildConfigTest {
             GuildConfig config = GuildConfig.parse(yaml, LOGGER);
             assertTrue(config.enabled());
             assertTrue(config.warsEnabled());
-            assertEquals(27L, config.creationCost());
+            assertEquals(270L, config.creationCost());
             assertTrue(config.minName() <= config.maxName());
             assertTrue(config.minTag() <= config.maxTag());
             assertTrue(config.minWager() <= config.maxWager());

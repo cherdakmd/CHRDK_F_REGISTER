@@ -36,7 +36,7 @@ public record LotteryConfig(
     public static LotteryConfig parse(FileConfiguration config, Logger logger) {
         boolean requirePass = config.getBoolean("general.require-pass", false);
         int minRank = Math.max(0, Math.min(5, config.getInt("general.min-rank", requirePass ? 1 : 0)));
-        int cost = Math.max(1, Math.min(4096, config.getInt("tickets.cost-diamonds", 2)));
+        int cost = Math.max(1, Math.min(4096, config.getInt("tickets.cost-diamonds", 20)));
         int maxPerPlayer = Math.max(0, Math.min(LotteryStore.MAX_TICKETS, config.getInt("tickets.max-per-player", 64)));
         int maxPerPurchase = Math.max(1, Math.min(1024, config.getInt("tickets.max-per-purchase", 32)));
 

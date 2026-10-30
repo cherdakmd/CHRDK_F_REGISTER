@@ -25,11 +25,11 @@ class ClaimsConfigTest {
     void defaults() {
         ClaimsConfig config = parse("general: {}\n");
         assertTrue(config.requireAuth);
-        assertEquals(16, config.chunkPrice);
-        assertEquals(1, config.upkeepPerDay);
+        assertEquals(160, config.chunkPrice);
+        assertEquals(10, config.upkeepPerDay);
         assertEquals(3, config.graceDays);
         assertEquals(50, config.sellbackPercent);
-        assertEquals(10, config.saleTaxPercent);
+        assertEquals(15, config.saleTaxPercent);
         assertEquals(24, config.baseChunks);
         assertEquals(8, config.passBonusChunks);
         assertFalse(config.pvp);

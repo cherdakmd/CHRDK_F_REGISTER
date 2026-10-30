@@ -16,12 +16,12 @@ class GuildMathTest {
 
     @Test
     void upgradeCostGrowsAndStops() {
-        assertEquals(64, GuildMath.upgradeCost(1));
-        assertEquals(192, GuildMath.upgradeCost(2));
-        assertEquals(384, GuildMath.upgradeCost(3));
-        assertEquals(768, GuildMath.upgradeCost(4));
+        assertEquals(640, GuildMath.upgradeCost(1));
+        assertEquals(1920, GuildMath.upgradeCost(2));
+        assertEquals(3840, GuildMath.upgradeCost(3));
+        assertEquals(7680, GuildMath.upgradeCost(4));
         assertEquals(0, GuildMath.upgradeCost(5), "с пятого уровня расти некуда");
-        assertEquals(64, GuildMath.upgradeCost(-3), "мусорный уровень зажимается");
+        assertEquals(640, GuildMath.upgradeCost(-3), "мусорный уровень зажимается");
         assertEquals(0, GuildMath.upgradeCost(99));
     }
 

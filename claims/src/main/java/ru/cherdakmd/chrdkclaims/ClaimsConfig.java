@@ -24,6 +24,8 @@ public final class ClaimsConfig {
 
     public final boolean requireAuth;
     public final int chunkPrice;
+    public final int rentalMinPerDay;
+    public final int sellbackBaseCap;
     public final int upkeepPerDay;
     public final int graceDays;
     public final int sellbackPercent;
@@ -126,11 +128,13 @@ public final class ClaimsConfig {
 
     private ClaimsConfig(FileConfiguration cfg, Logger logger) {
         requireAuth = cfg.getBoolean("general.require-auth", true);
-        chunkPrice = clamped(cfg, logger, "pricing.chunk-price", 16, 1, 1_000_000);
-        upkeepPerDay = clamped(cfg, logger, "pricing.upkeep-per-day", 1, 0, 100_000);
+        chunkPrice = clamped(cfg, logger, "pricing.chunk-price", 160, 1, 1_000_000);
+        upkeepPerDay = clamped(cfg, logger, "pricing.upkeep-per-day", 10, 0, 100_000);
         graceDays = clamped(cfg, logger, "pricing.grace-days", 3, 0, 90);
+        rentalMinPerDay = clamped(cfg, logger, "pricing.rental-min-per-day", 20, 1, 1_000_000);
+        sellbackBaseCap = clamped(cfg, logger, "pricing.sellback-base-cap", 16, 1, 1_000_000);
         sellbackPercent = clamped(cfg, logger, "pricing.sellback-percent", 50, 0, 100);
-        saleTaxPercent = clamped(cfg, logger, "taxes.sale-tax-percent", 10, 0, 90);
+        saleTaxPercent = clamped(cfg, logger, "taxes.sale-tax-percent", 15, 0, 90);
         baseChunks = clamped(cfg, logger, "limits.base-chunks", 24, 1, 100_000);
         passBonusChunks = clamped(cfg, logger, "limits.pass-bonus-chunks", 8, 0, 100_000);
         rankChunks = rankList(cfg, "limits.rank-chunks", logger);
@@ -151,7 +155,7 @@ public final class ClaimsConfig {
 
         menuEnabled = cfg.getBoolean("menu.enabled", true);
         menuShowForSale = cfg.getBoolean("menu.show-for-sale", true);
-        teleportCost = clamped(cfg,logger,"teleport.cost-diamonds",1,1,1_000_000);
+        teleportCost = clamped(cfg,logger,"teleport.cost-diamonds",20,10,1_000_000);
         teleportEnabled = cfg.getBoolean("teleport.enabled", true);
         teleportWarmup = clamped(cfg, logger, "teleport.warmup-seconds", 5, 0, 30);
         teleportCooldown = clamped(cfg, logger, "teleport.cooldown-seconds", 10, 0, 600);
@@ -209,6 +213,12 @@ public final class ClaimsConfig {
     }
 
     /** Рента за сутки в конкретном мире (с множителем `worlds.upkeep-multiplier`). */
+    /** Старая земля не дорожает для серверного выкупа вместе с новой ценой покупки. */
+    public int sellbackIn(String world) {
+        int basis = ClaimMath.scaled(Math.min(chunkPrice, sellbackBaseCap), multiplier(priceMultipliers, world));
+        return ClaimMath.sellbackReward(basis, sellbackPercent);
+    }
+
     public int upkeepIn(String world) {
         return ClaimMath.scaled(upkeepPerDay, multiplier(upkeepMultipliers, world));
     }

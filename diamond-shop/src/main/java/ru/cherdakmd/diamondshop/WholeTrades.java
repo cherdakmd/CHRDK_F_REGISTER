@@ -14,8 +14,12 @@ final class WholeTrades {
         return 0;
     }
     static long price(double unitPrice, int batch, boolean buy) {
-        if (!Double.isFinite(unitPrice) || unitPrice <= 0 || batch <= 0) return -1;
-        var value = BigDecimal.valueOf(unitPrice).multiply(BigDecimal.valueOf(batch))
+        return price(unitPrice, batch, buy, 1);
+    }
+    static long price(double unitPrice, int batch, boolean buy, double tariff) {
+        if (!Double.isFinite(unitPrice) || unitPrice <= 0 || batch <= 0
+                || !Double.isFinite(tariff) || tariff < 1 || tariff > 100) return -1;
+        var value = BigDecimal.valueOf(unitPrice).multiply(BigDecimal.valueOf(batch)).multiply(BigDecimal.valueOf(tariff))
                 .setScale(0, buy ? RoundingMode.CEILING : RoundingMode.FLOOR);
         return value.signum() <= 0 || value.compareTo(BigDecimal.valueOf(MAX)) > 0 ? -1 : value.longValueExact();
     }

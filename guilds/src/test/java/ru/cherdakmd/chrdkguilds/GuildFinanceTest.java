@@ -19,7 +19,13 @@ class GuildFinanceTest {
     @TempDir Path dir;
     final UUID leader = UUID.randomUUID(), rival = UUID.randomUUID(), member = UUID.randomUUID();
     final long now = 1_792_000_000_000L;
-    final GuildConfig config = GuildConfig.defaults();
+    // Старые записи/ставки должны восстанавливаться и после смены стоковых тарифов.
+    final GuildConfig config = legacyConfig();
+    static GuildConfig legacyConfig() {
+        var y=new org.bukkit.configuration.file.YamlConfiguration();
+        y.set("general.creation-cost",27);y.set("wars.min-wager",32);y.set("wars.max-wager",1024);
+        return GuildConfig.parse(y,Logger.getAnonymousLogger());
+    }
     GuildStore store() { return new GuildStore(dir,Logger.getAnonymousLogger()); }
     GuildStore legacy(long money) {
         var store = store(); var one = new Guild("one","Первый","ONE",leader,now); one.deposit(money);

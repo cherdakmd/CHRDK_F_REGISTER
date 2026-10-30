@@ -24,10 +24,10 @@ final class GuildMath {
     /** Цена перехода с уровня {@code level} на следующий. */
     static int upgradeCost(int level) {
         return switch (Math.clamp(level, 1, MAX_LEVEL)) {
-            case 1 -> 64;
-            case 2 -> 192;
-            case 3 -> 384;
-            case 4 -> 768;
+            case 1 -> 640;
+            case 2 -> 1920;
+            case 3 -> 3840;
+            case 4 -> 7680;
             default -> 0;
         };
     }

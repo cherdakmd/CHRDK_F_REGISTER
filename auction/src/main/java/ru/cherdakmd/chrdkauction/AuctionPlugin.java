@@ -53,7 +53,8 @@ public final class AuctionPlugin extends JavaPlugin {
     }
     public void onDisable() { if (expiry!=null) expiry.cancel(); if (service!=null) service.shutdown(); if (gui!=null) gui.closeAll(); }
     void reloadAuction() {
-        reloadConfig(); AuctionConfig next=AuctionConfig.parse(getConfig());
+        reloadConfig();
+        ru.cherdakmd.chrdkregister.api.EconomyTariffMigration.apply(this); AuctionConfig next=AuctionConfig.parse(getConfig());
         Messages text=Messages.load(this,"ru",getLogger()); config=next; messages=text;
     }
     ChrdkRegisterApi api() { return api; }
