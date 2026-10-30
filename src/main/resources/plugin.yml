@@ -11,6 +11,9 @@ authors:
 description: Ядро CHERDAK для Purpur 26.3 — пять донатных рангов, регистрация, вход по паролю, TOTP 2FA, чат, банк и профиль игрока
 
 commands:
+  guard:
+    description: "Сводка встроенной защиты; только консоль сервера или RCON"
+    usage: /<command>
   register:
     description: Зарегистрировать аккаунт и получить приветственный XP-буст
     usage: /<command> <пароль> <повтор>

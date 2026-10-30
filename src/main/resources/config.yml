@@ -15,6 +15,92 @@ general:
   # (например locale: en подхватит messages_en.yml поверх русских значений по умолчанию)
   locale: "ru"
 
+# Встроенная защита самостоятельного сервера; не замена firewall/защите хостинга.
+# Новые ключи работают и в старом config.yml по этим значениям по умолчанию.
+security:
+  enabled: true
+  # Краткий всплеск с одного реального IP; затем один допуск за N секунд.
+  ip-burst: 6
+  ip-refill-seconds: 3
+  # Общая квота подключений с разных IP (не резервирует слоты для своих игроков).
+  global-burst: 60
+  global-per-second: 10
+  max-addresses: 20000
+  # Ограничения ожидающих авторизации; уже вошедшие не расходуют эти слоты.
+  unauthenticated-global: 32
+  unauthenticated-per-ip: 4
+  login-seconds: 120
+  # Общая частота команд и более строгая квота до пароля/2FA; OP не исключение.
+  command-burst: 40
+  commands-per-second: 10
+  unauthenticated-command-burst: 10
+  unauthenticated-commands-per-second: 2
+  max-command-length: 2048
+  # Если список отсутствует, применяется этот встроенный набор. [] явно снимает запрет.
+  # Команды остаются доступны консоли/RCON. Namespace и штатные aliases проверяются.
+  # Свои плагины-обёртки добавляйте сюда; защита не изолирует недоверенные плагины.
+  console-only-commands:
+    - op
+    - deop
+    - stop
+    - restart
+    - reload
+    - rl
+    - debug
+    - perf
+    - jfr
+    - paper
+    - purpur
+    - spigot
+    - fill
+    - fillbiome
+    - clone
+    - setblock
+    - execute
+    - function
+    - schedule
+    - return
+    - gamerule
+    - title
+    - particle
+    - summon
+    - forceload
+    - tick
+    - place
+    - data
+    - damage
+    - kill
+    - tp
+    - teleport
+    - spreadplayers
+    - give
+    - item
+    - clear
+    - gamemode
+    - defaultgamemode
+    - difficulty
+    - worldborder
+    - attribute
+    - effect
+    - enchant
+    - experience
+    - xp
+    - time
+    - weather
+    - ban
+    - ban-ip
+    - pardon
+    - pardon-ip
+    - kick
+    - whitelist
+    - save-all
+    - save-off
+    - save-on
+    - sudo
+    - runas
+    - dispatch
+    - console
+
 donatepay:
   # 1.4.167: продажи идут только через TradeMC (trademc.enabled: true), поэтому
   # автопровайдер по умолчанию выключен. Включать имеет смысл лишь для приёма
