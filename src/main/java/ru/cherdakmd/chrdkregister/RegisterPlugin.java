@@ -64,7 +64,7 @@ public final class RegisterPlugin extends JavaPlugin {
     public void onEnable() {
         migrateLegacyDataFolder();
         saveDefaultConfig();
-        ru.cherdakmd.chrdkregister.api.EconomyTariffMigration.apply(this);
+        migrateEconomyConfig();
         OptionalTotpMigration.apply(this);
         PresentationMigration.apply(this);
         PluginConfig config = PluginConfig.fromBukkitConfig(getConfig());
@@ -337,9 +337,18 @@ public final class RegisterPlugin extends JavaPlugin {
         getLogger().info("CHRDK_Core disabled.");
     }
 
+    /** Ошибка миграции налога не должна выключить регистрацию/защиту всего сервера. */
+    private void migrateEconomyConfig() {
+        try { ru.cherdakmd.chrdkregister.api.EconomyTariffMigration.apply(this); }
+        catch (IllegalStateException error) {
+            getLogger().log(java.util.logging.Level.SEVERE,
+                    "Тариф /pay не обновлён надёжно: проверьте config.yml/backup. Авторизация остаётся включена.", error);
+        }
+    }
+
     public void reloadPluginConfig() {
         reloadConfig();
-        ru.cherdakmd.chrdkregister.api.EconomyTariffMigration.apply(this);
+        migrateEconomyConfig();
         OptionalTotpMigration.apply(this);
         PresentationMigration.apply(this);
         PluginConfig updated = PluginConfig.fromBukkitConfig(getConfig());

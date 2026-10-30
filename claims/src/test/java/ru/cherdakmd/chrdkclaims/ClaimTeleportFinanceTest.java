@@ -5,8 +5,8 @@ import java.util.logging.Logger;
 import static org.junit.jupiter.api.Assertions.*;
 class ClaimTeleportFinanceTest {
     @Test void defaultAndConfiguredZeroAreNeverFree() {
-        var c=new org.bukkit.configuration.file.YamlConfiguration(); assertEquals(1,ClaimsConfig.parse(c,Logger.getAnonymousLogger()).teleportCost);
-        c.set("teleport.cost-diamonds",0); assertEquals(1,ClaimsConfig.parse(c,Logger.getAnonymousLogger()).teleportCost);
+        var c=new org.bukkit.configuration.file.YamlConfiguration(); assertEquals(20,ClaimsConfig.parse(c,Logger.getAnonymousLogger()).teleportCost);
+        c.set("teleport.cost-diamonds",0); assertEquals(10,ClaimsConfig.parse(c,Logger.getAnonymousLogger()).teleportCost);
     }
     @Test void lateChunkCallbackMustOwnLeaseAndRevalidateClaimBeforePayment() throws Exception {
         String code=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkclaims/ClaimTeleportService.java"));

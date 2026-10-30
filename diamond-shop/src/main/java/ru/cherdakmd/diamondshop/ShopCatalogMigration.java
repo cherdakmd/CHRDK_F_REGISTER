@@ -27,7 +27,7 @@ final class ShopCatalogMigration {
             live.load(file.toFile()); // Строгий parse: повреждённый YAML не перезаписываем.
             if (!shouldUpgrade(live,legacy,fresh) && !shouldUpgrade(live,prior,fresh)) {
                 if (!Objects.equals(live.get("items"),fresh.get("items")))
-                    plugin.getLogger().info("Пользовательский каталог сохранён. Новые товары при необходимости перенесите из config.yml внутри JAR.");
+                    plugin.getLogger().info("Базовые записи пользовательского каталога сохранены. Тариф покупки pricing.purchase-multipliers применяется отдельно; новые товары при необходимости перенесите из config.yml внутри JAR.");
                 return;
             }
             Path backup = file.resolveSibling("config-before-catalog-1.4.250-"+System.currentTimeMillis()+".yml");
