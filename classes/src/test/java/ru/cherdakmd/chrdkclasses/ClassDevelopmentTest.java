@@ -67,6 +67,8 @@ class ClassDevelopmentTest {
         assertThrows(IllegalArgumentException.class,
                 () -> original.awardXp(ClassDevelopment.Source.MIGRATION, 5));
         assertThrows(IllegalArgumentException.class,
+                () -> original.awardXp(ClassDevelopment.Source.TRIAL, 5));
+        assertThrows(IllegalArgumentException.class,
                 () -> original.awardXp(ClassDevelopment.Source.COMBAT, -1));
         assertThrows(IllegalArgumentException.class, () -> original.awardXp(null, 1));
     }
@@ -192,6 +194,9 @@ class ClassDevelopmentTest {
                         Set.of(), null, false, 0));
         assertThrows(IllegalArgumentException.class,
                 () -> new ClassDevelopment(1, 0, Map.of(), Set.of(), null, false, -1));
+        assertThrows(IllegalArgumentException.class,
+                () -> new ClassDevelopment(1, 10, Map.of(ClassDevelopment.Source.TRIAL, 10L),
+                        Set.of(), null, false, 0));
     }
 
     @Test

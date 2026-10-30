@@ -38,7 +38,8 @@ record ClassDevelopment(int version, long xp, Map<Source, Long> xpSources,
         }
         trialAwards = Set.copyOf(trialAwards);
         if (trialAwards.size() > ClassDevelopmentRules.MAX_TRIAL_POINTS
-                || trialAwards.stream().anyMatch(id -> !validTrial(id))) {
+                || trialAwards.stream().anyMatch(id -> !validTrial(id))
+                || (trialAwards.isEmpty() && xpSources.containsKey(Source.TRIAL))) {
             throw new IllegalArgumentException("Некорректный реестр наград испытаний");
         }
         long expectedMigrationXp = migration == null ? 0
@@ -85,17 +86,14 @@ record ClassDevelopment(int version, long xp, Map<Source, Long> xpSources,
     }
 
     ClassDevelopment awardXp(Source source, long amount) {
-        if (source == null || source == Source.MIGRATION || amount < 0) {
+        if (source == null || source == Source.MIGRATION || source == Source.TRIAL || amount < 0) {
             throw new IllegalArgumentException("Некорректное начисление XP класса");
         }
         long accepted = Math.min(amount, ClassDevelopmentRules.MAX_XP - xp);
         if (accepted == 0) {
             return this;
         }
-        Map<Source, Long> sources = new EnumMap<>(Source.class);
-        sources.putAll(xpSources);
-        sources.merge(source, accepted, Math::addExact);
-        return new ClassDevelopment(version, xp + accepted, sources, trialAwards, migration,
+        return new ClassDevelopment(version, xp + accepted, plusXp(source, accepted), trialAwards, migration,
                 firstBuildAvailable, Math.incrementExact(revision));
     }
 
@@ -107,17 +105,27 @@ record ClassDevelopment(int version, long xp, Map<Source, Long> xpSources,
         if (trialAwards.contains(id) || trialAwards.size() >= ClassDevelopmentRules.MAX_TRIAL_POINTS) {
             return this;
         }
-        ClassDevelopment withXp = awardXp(Source.TRIAL, xpReward);
+        long accepted = Math.min(xpReward, ClassDevelopmentRules.MAX_XP - xp);
         Set<String> awards = new LinkedHashSet<>(trialAwards);
         awards.add(id);
-        return new ClassDevelopment(version, withXp.xp, withXp.xpSources, awards, migration,
-                firstBuildAvailable, Math.incrementExact(revision));
+        return new ClassDevelopment(version, xp + accepted, plusXp(Source.TRIAL, accepted), awards,
+                migration, firstBuildAvailable, Math.incrementExact(revision));
     }
 
     ClassDevelopment consumeFirstBuild() {
         return firstBuildAvailable
                 ? new ClassDevelopment(version, xp, xpSources, trialAwards, migration, false,
                         Math.incrementExact(revision)) : this;
+    }
+
+    private Map<Source, Long> plusXp(Source source, long accepted) {
+        if (accepted == 0) {
+            return xpSources;
+        }
+        Map<Source, Long> sources = new EnumMap<>(Source.class);
+        sources.putAll(xpSources);
+        sources.merge(source, accepted, Math::addExact);
+        return sources;
     }
 
     private static boolean validTrial(String id) {
