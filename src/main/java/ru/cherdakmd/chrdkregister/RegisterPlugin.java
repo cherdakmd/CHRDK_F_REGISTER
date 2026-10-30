@@ -17,6 +17,7 @@ import java.util.logging.Level;
  */
 public final class RegisterPlugin extends JavaPlugin {
     private AccessManager accessManager;
+    private ServerGuard serverGuard;
     private RewardBoostService rewardBoosts;
     RewardBoostService rewardBoosts() { return rewardBoosts; }
     private ChatService chatService;
@@ -130,6 +131,14 @@ public final class RegisterPlugin extends JavaPlugin {
                 this, ServicePriority.Normal);
 
         getServer().getPluginManager().registerEvents(new PlayerRestrictionListener(accessManager), this);
+        serverGuard = new ServerGuard(GuardSettings.parse(getConfig()), this::messages,
+                player -> accessManager != null && accessManager.getStage(player) == AccessManager.PlayerStage.AUTHENTICATED,
+                name -> getServer().getCommandMap().getCommand(name), () -> getServer().getCommandAliases(),
+                getLogger()::warning, System::nanoTime);
+        getServer().getPluginManager().registerEvents(serverGuard, this);
+        getServer().getScheduler().runTaskTimer(this, () -> serverGuard.pulse(getServer().getOnlinePlayers()), 20L, 20L);
+        PluginCommand guardCommand = getCommand("guard");
+        if (guardCommand != null) guardCommand.setExecutor((sender, command, label, args) -> serverGuard.status(sender));
         getServer().getPluginManager().registerEvents(chatService, this);
         getServer().getPluginManager().registerEvents(passMenuService, this);
         getServer().getPluginManager().registerEvents(donateMenuService, this);
@@ -332,6 +341,7 @@ public final class RegisterPlugin extends JavaPlugin {
         OptionalTotpMigration.apply(this);
         PresentationMigration.apply(this);
         PluginConfig updated = PluginConfig.fromBukkitConfig(getConfig());
+        if (serverGuard != null) serverGuard.reload(GuardSettings.parse(getConfig()));
         if (accessManager != null) {
             accessManager.reload(updated);
         }

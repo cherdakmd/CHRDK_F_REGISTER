@@ -97,7 +97,7 @@ CORE_PUBLIC = {
     "pay",
     "baltop",
 }
-CORE_STAFF = {"pass", "rankadmin", "socialspy", "mute", "unmute"}
+CORE_STAFF = {"pass", "rankadmin", "socialspy", "mute", "unmute", "guard"}
 
 
 def clean(value):

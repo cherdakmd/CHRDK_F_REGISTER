@@ -128,6 +128,7 @@ class WikiBuildTest(unittest.TestCase):
     def test_admin_commands_are_not_presented_as_player_commands(self):
         rows = self.book.commands()
         self.assertNotIn("pass", {r[1] for r in rows})
+        self.assertNotIn("guard", {r[1] for r in rows})
         self.assertNotIn("socialspy", {r[1] for r in rows})
         self.assertTrue(all("admin" not in r[1] for r in rows))
         self.assertIn("shop", {r[1] for r in rows})
