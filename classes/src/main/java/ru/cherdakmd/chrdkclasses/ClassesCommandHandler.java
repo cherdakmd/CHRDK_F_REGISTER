@@ -26,7 +26,7 @@ import java.util.UUID;
 public final class ClassesCommandHandler implements CommandExecutor, TabCompleter {
 
     private static final List<String> SUBS = List.of("help", "menu", "choose", "info", "talents",
-            "learn", "respec", "points", "top", "ability");
+            "learn", "respec", "points", "top", "ability", "passport", "abilities", "builds");
     private static final List<String> ADMIN_SUBS = List.of("reload", "info", "set", "reset",
             "respec");
 
@@ -68,6 +68,9 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
             plugin.messages().send(sender, "disabled");
             return true;
         }
+        if (sender instanceof Player player && !plugin.ready(player)) {
+            plugin.messages().send(sender,"development-pending"); return true;
+        }
         if (args.length == 0) {
             if (sender instanceof Player player) {
                 plugin.gui().open(player);
@@ -78,8 +81,10 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
         }
         String sub = args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
+            case "abilities" -> { if(sender instanceof Player p) plugin.developmentGui().abilities(p); }
+            case "builds" -> { if(sender instanceof Player p) plugin.developmentGui().builds(p); }
             case "help" -> help(sender);
-            case "menu" -> menu(sender);
+            case "menu", "passport" -> menu(sender);
             case "choose" -> choose(sender, args);
             case "info" -> info(sender, args);
             case "talents" -> talents(sender);
@@ -134,6 +139,7 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
         sendResult(player, result);
         if (result.ok()) {
             plugin.requestSave();
+            plugin.gameplay().clear(player.getUniqueId());
             plugin.effects().apply(player);
             if (plugin.config().actionbar()) {
                 player.sendActionBar(plugin.messages().get("choose-actionbar", "class",
@@ -162,10 +168,10 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
             plugin.messages().send(sender, "effect." + entry.getKey().id(),
                     "amount", ClassMath.amount(entry.getKey(), entry.getValue()));
         }
-        for (String branch : ClassCatalog.branches(target.id())) {
+        for (String branch : ClassTrees.branches(target.id())) {
             plugin.messages().send(sender, "info-branch-header", "branch",
                     Messages.trusted(plugin.messages().raw("branch." + branch)));
-            for (Talent talent : ClassCatalog.branch(target.id(), branch)) {
+            for (Talent talent : ClassTrees.talents(target.id()).stream().filter(t->t.branch().equals(branch)).toList()) {
                 plugin.messages().send(sender, "info-talent-line",
                         "talent", Messages.trusted(plugin.messages().raw(
                                 "talent." + talent.id() + ".name")),
@@ -185,6 +191,7 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
         }
         UUID id = player.getUniqueId();
         TalentService service = plugin.service();
+        if(service.development()!=null) {plugin.developmentGui().progress(id).forEach(sender::sendMessage);return;}
         PlayerClass playerClass = service.classOf(id);
         if (playerClass == null) {
             plugin.messages().send(sender, "info-none");
@@ -193,13 +200,10 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
         }
         plugin.messages().send(sender, "info-header", "class",
                 Messages.trusted(plugin.messages().raw("class." + playerClass.id() + ".name")));
-        plugin.messages().send(sender, "info-level",
-                "level", String.valueOf(service.level(id)),
-                "total", String.valueOf(service.totalSkill(id)),
-                "next", String.valueOf(service.nextLevelIn(id)));
-        plugin.messages().send(sender, "info-points",
-                "points", String.valueOf(service.availablePoints(id)),
-                "spent", String.valueOf(service.spentPoints(id)));
+        for (var line : ClassPassportText.progress(plugin.messages(), service.progressSnapshot(id, System.currentTimeMillis()),
+                service.spentPoints(id))) {
+            sender.sendMessage(line);
+        }
         if (service.store().talentCount(id) == 0) {
             plugin.messages().send(sender, "info-talents-empty");
         } else {
@@ -270,7 +274,7 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
             return;
         }
         PlayerClass playerClass = plugin.service().classOf(player.getUniqueId());
-        ClassAbility ability = ClassAbility.of(playerClass, slot);
+        ClassAbility ability = plugin.service().development().equipped(player.getUniqueId(),slot);
         if (ability == null) {
             return;
         }
@@ -300,13 +304,7 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
         if (player == null) {
             return;
         }
-        ClassResult result = plugin.service().respec(player.getUniqueId(),
-                System.currentTimeMillis());
-        sendResult(player, result);
-        if (result.ok()) {
-            plugin.requestSave();
-            plugin.effects().apply(player);
-        }
+        plugin.gui().openRespec(player);
     }
 
     private void points(CommandSender sender) {
@@ -320,48 +318,11 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
             plugin.messages().send(sender, "info-none");
             return;
         }
-        plugin.messages().send(sender, "info-level",
-                "level", String.valueOf(service.level(id)),
-                "total", String.valueOf(service.totalSkill(id)),
-                "next", String.valueOf(service.nextLevelIn(id)));
-        plugin.messages().send(sender, "info-points",
-                "points", String.valueOf(service.availablePoints(id)),
-                "spent", String.valueOf(service.spentPoints(id)));
-        showAchievements(sender, id);
-        showRank(sender, id);
-    }
-
-    /** Строка о бонусе за достижения: сколько открыто и сколько это даёт очков. */
-    private void showAchievements(CommandSender sender, UUID id) {
-        TalentService service = plugin.service();
-        if (plugin.achievements() == null || !plugin.achievements().available()) {
-            plugin.messages().send(sender, "info-achievements-none");
-            return;
+        if(service.development()!=null) {plugin.developmentGui().progress(id).forEach(sender::sendMessage);return;}
+        var snapshot = service.progressSnapshot(id, System.currentTimeMillis());
+        for (var line : ClassPassportText.progress(plugin.messages(), snapshot, service.spentPoints(id))) {
+            sender.sendMessage(line);
         }
-        plugin.messages().send(sender, "info-achievements",
-                "count", String.valueOf(service.unlockedAchievements(id)),
-                "bonus", String.valueOf(service.achievementBonus(id)),
-                "max", String.valueOf(plugin.config().achievementMaxBonus()));
-    }
-
-    /** Строка о плюшках ранга: что именно ранг меняет — числами, без обещаний. */
-    private void showRank(CommandSender sender, UUID id) {
-        if (!plugin.config().ranksEnabled()) {
-            plugin.messages().send(sender, "info-rank-off");
-            return;
-        }
-        RankPerks perks = plugin.service().perks(id);
-        if (perks == RankPerks.NONE) {
-            plugin.messages().send(sender, "info-rank-none");
-            return;
-        }
-        plugin.messages().send(sender, "info-rank",
-                "level", String.valueOf(perks.level()),
-                "skill", String.valueOf(perks.thresholdDiscount()),
-                "step", String.valueOf(perks.levelStepDiscount()),
-                "cooldown", String.valueOf(Math.round((1.0 - perks.cooldownFactor()) * 100.0)),
-                "change", String.valueOf(perks.changeDaysOff()),
-                "respec", String.valueOf(perks.respecHoursOff()));
     }
 
     private void top(CommandSender sender) {
@@ -434,7 +395,7 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
                         "class." + playerClass.id() + ".name")),
                 "level", String.valueOf(service.level(target)),
                 "points", String.valueOf(service.availablePoints(target)),
-                "talents", String.valueOf(plugin.store().talentCount(target)));
+                "talents", String.valueOf(plugin.store().build(target)==null?plugin.store().talentCount(target):plugin.store().build(target).ranks().size()));
     }
 
     private void adminSet(CommandSender sender, String[] args) {
@@ -498,11 +459,14 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
         if (target == null) {
             return;
         }
-        if (plugin.store().talentCount(target) == 0) {
-            plugin.messages().send(sender, "respec-empty");
-            return;
+        if (!plugin.service().development().prepare(target,System.currentTimeMillis())) {
+            plugin.messages().send(sender,"development-pending");return;
         }
-        int cleared = plugin.store().clearTalents(target, 0L);
+        ClassBuild build=plugin.store().build(target);
+        if(build==null||build.ranks().isEmpty()){plugin.messages().send(sender,"respec-empty");return;}
+        int cleared=build.ranks().size();
+        plugin.store().installBuild(target,new ClassBuild(build.classId(),Map.of(),build.abilities()),System.currentTimeMillis(),true);
+        plugin.gameplay().clear(target);
         plugin.requestSave();
         plugin.messages().send(sender, "admin-respec",
                 "player", displayName(target, args[1]),
@@ -612,8 +576,8 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
             return List.of();
         }
         List<String> ids = new ArrayList<>();
-        for (Talent talent : ClassCatalog.talents(playerClass.id())) {
-            if (!plugin.store().hasTalent(player.getUniqueId(), talent.id())) {
+        for (Talent talent : ClassTrees.talents(playerClass.id())) {
+            if (plugin.store().build(player.getUniqueId())!=null && plugin.store().build(player.getUniqueId()).ranks().getOrDefault(talent.id(),0)<talent.maxRank()) {
                 ids.add(talent.id());
             }
         }

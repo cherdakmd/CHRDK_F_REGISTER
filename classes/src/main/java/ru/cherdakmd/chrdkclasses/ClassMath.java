@@ -87,6 +87,12 @@ final class ClassMath {
         if (kind == null) {
             return "0";
         }
+        // Пульс исторически добавляет regen / 2 единиц здоровья, то есть regen / 4 сердец.
+        // Исправляем только отображение: сила и частота лечения остаются прежними.
+        if (kind == EffectKind.REGEN) {
+            return java.math.BigDecimal.valueOf(value).divide(java.math.BigDecimal.valueOf(4))
+                    .stripTrailingZeros().toPlainString().replace('.', ',');
+        }
         return switch (kind.unit()) {
             case PERCENT -> percent(value);
             case HALF_HEARTS -> decimal(value / 2.0);

@@ -17,4 +17,8 @@ public interface AchievementSource {
 
     /** Сколько достижений открыто у игрока (0, если данных нет). */
     int unlockedCount(UUID player);
+    /** Строгое чтение для отчётов и переноса, без подмены ошибки нулём. */
+    default ClassDataRead snapshotCount(UUID player) {
+        return ClassDataRead.read(this::available, () -> unlockedCount(player));
+    }
 }

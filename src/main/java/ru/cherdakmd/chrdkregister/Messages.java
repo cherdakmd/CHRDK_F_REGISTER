@@ -134,6 +134,8 @@ public final class Messages {
                 "economy-messages-legacy-1.4.253.yml", logger));
         migrateStockOverrides(defaults, overrides, readResource(plugin,
                 "economy-messages-legacy-1.4.254.yml", logger));
+        migrateStockOverrides(defaults, overrides, readResource(plugin,
+                "classes-messages-legacy-1.4.255.yml", logger));
         overrides.replaceAll((key, text) -> GameplayRewardTexts.message(moduleName, key, text));
         Messages messages = new Messages(defaults, overrides, logger);
         messages.logMissingKeys(fileName);

@@ -20,4 +20,15 @@ public interface SkillSource {
 
     /** Сумма уровней всех навыков — из неё выводится уровень класса. */
     int totalLevel(UUID player);
+    /** Строгое чтение для отчётов и переноса, без подмены ошибки нулём. */
+    default ClassDataRead snapshotTotal(UUID player) {
+        return ClassDataRead.read(this::available, () -> totalLevel(player));
+    }
+    /** Строгое чтение конкретного требования: недоступный навык не становится нулём. */
+    default ClassDataRead snapshotLevel(UUID player, String skillId) {
+        if (player == null || skillId == null || skillId.isBlank()) {
+            return ClassDataRead.absent(ClassDataRead.Status.INVALID);
+        }
+        return ClassDataRead.read(this::available, () -> level(player, skillId));
+    }
 }

@@ -95,4 +95,15 @@ final class RanksBridge implements RankSource {
         String saved = plugin.store().name(player);
         return saved == null ? "" : saved.trim();
     }
+    @Override
+    public ClassDataRead snapshotRank(UUID player) {
+        Player online = player == null ? null : Bukkit.getPlayer(player);
+        if (online == null || !online.isOnline()) {
+            return ClassDataRead.absent(ClassDataRead.Status.OFFLINE);
+        }
+        return ClassDataRead.read(() -> api() != null, () -> {
+            var found = api();
+            return found.rankLevel(online.getName());
+        }).atMost(5);
+    }
 }

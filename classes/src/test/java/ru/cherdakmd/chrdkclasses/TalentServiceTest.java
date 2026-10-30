@@ -346,6 +346,21 @@ class TalentServiceTest {
         assertTrue(service.respecCooldownLeft(PLAYER, NOW + 2_000) > 0);
     }
 
+    @Test
+    void fallenDerivedBudgetCannotEraseEvidenceOfPreviousInvestment(@TempDir Path dir) {
+        Skills skills = new Skills().total(300).put("defense", 20);
+        TalentService service = new TalentService(freeConfig(), store(dir), skills);
+        assertTrue(service.choose(PLAYER, "warrior", NOW).ok());
+        assertTrue(service.learn(PLAYER, "warrior-stoyka-1").ok());
+        assertTrue(service.learn(PLAYER, "warrior-stoyka-2").ok());
+        skills.total(0);
+        String before = service.store().snapshotJson();
+        assertEquals("respec-budget-unconfirmed", service.respec(PLAYER, NOW + 1_000).key());
+        assertEquals("class-budget-unconfirmed", service.choose(PLAYER, "mage", NOW + 1_000).key());
+        assertEquals(before, service.store().snapshotJson());
+        assertEquals(2, service.store().talentCount(PLAYER));
+    }
+
     /* -------------------------------- служебное -------------------------------- */
 
     @Test

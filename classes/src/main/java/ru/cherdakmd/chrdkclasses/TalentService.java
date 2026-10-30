@@ -5,23 +5,10 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Правила классов и талантов (1.4.164).
- *
- * <p>Три числа определяют всё: уровень класса (сумма уровней навыков делить на
- * шаг), выданные очки (стартовые плюс по одному за уровень) и потраченные
- * (сумма цен изученных талантов). Доступные очки — их разность, поэтому очки
- * нельзя «накопить в файле» и нельзя получить дважды.</p>
- *
- * <p>Класс не даёт новых источников алмазов и не продаёт преимущество: всё, что
- * он добавляет — пассивные прибавки с жёсткими потолками
- * ({@link EffectKind#cap()}), а требует он прокачки навыков. Поэтому класс
- * растёт от игры, а не от даты входа.</p>
- *
- * <p>С 1.4.175 к двум числам добавились два необязательных источника:
- * {@link AchievementSource} даёт очки за открытые достижения (с потолком), а
- * {@link RankSource} — плюшки ранга {@link RankPerks}: ниже пороги навыков,
- * короче откаты и мельче шаг уровня. Ни один из них не поднимает потолки
- * эффектов и не меняет цену дерева.</p>
+ * Общая арифметика классов. В игровом плагине включён DevelopmentService:
+ * собственный XP, ранги, сборки и Skills только как требования.
+ * Явно не включённый development сохраняет прежнюю модель для проверки
+ * совместимости и замороженной миграции; игровой плагин её не использует.
  */
 public final class TalentService {
 
@@ -30,6 +17,16 @@ public final class TalentService {
     private final SkillSource skills;
     private final RankSource ranks;
     private final AchievementSource achievements;
+    private DevelopmentService development;
+    void enableDevelopment(LegacyClassRules rules) {
+        development = new DevelopmentService(this, new LegacyClassSnapshotService(store, rules, skills, ranks, achievements));
+    }
+    DevelopmentService development() { return development; }
+    ClassDataRead rankSnapshot(UUID id) {
+        if (!config.ranksEnabled()) return ClassDataRead.absent(ClassDataRead.Status.NOT_REQUIRED);
+        return ranks == null ? ClassDataRead.absent(ClassDataRead.Status.UNAVAILABLE) : ranks.snapshotRank(id);
+    }
+
 
     /** Сервис без рангов и достижений: базовые правила (так его видят тесты). */
     public TalentService(ClassConfig config, ClassStore store, SkillSource skills) {
@@ -73,6 +70,18 @@ public final class TalentService {
                 ? 0 : Math.max(0, skills.level(player, skillId));
     }
 
+    ClassDataRead skillSnapshot(UUID player, String skillId) {
+        if (skills == null) {
+            return ClassDataRead.absent(ClassDataRead.Status.UNAVAILABLE);
+        }
+        try {
+            ClassDataRead result = skills.snapshotLevel(player, skillId);
+            return result == null ? ClassDataRead.absent(ClassDataRead.Status.ERROR) : result;
+        } catch (RuntimeException | LinkageError error) {
+            return ClassDataRead.absent(ClassDataRead.Status.ERROR);
+        }
+    }
+
     /* ------------------------------- ранги (1.4.175) ------------------------------- */
 
     /** Ступень донатного ранга: 0 — ранга нет или ядро не отвечает. */
@@ -98,8 +107,9 @@ public final class TalentService {
         return perks(player).levelStep(config.levelsPerLevel());
     }
 
-    /** Сколько уровней навыков нужно до следующего уровня класса с учётом ранга. */
+    /** XP до следующего собственного уровня; в режиме совместимости — уровни Skills. */
     public int nextLevelIn(UUID player) {
+        if (development != null) return store.development(player) == null ? 0 : Math.toIntExact(ClassDevelopmentRules.nextLevelIn(store.development(player).xp()));
         return ClassMath.nextLevelIn(totalSkill(player), levelStep(player));
     }
 
@@ -131,19 +141,22 @@ public final class TalentService {
                 : perks(player).skillRequirement(talent.skillLevel());
     }
 
-    /** Уровень класса, выведенный из навыков (шаг уменьшен рангом). */
+    /** Собственный уровень; прежняя арифметика доступна только без development. */
     public int level(UUID player) {
+        if (development != null) return store.development(player) == null ? 1 : store.development(player).level();
         return ClassMath.level(totalSkill(player), levelStep(player));
     }
 
     /** Сколько очков игрок заработал за всё время: уровни плюс достижения. */
     public int earnedPoints(UUID player) {
+        if (development != null) return store.development(player) == null ? 0 : store.development(player).earnedPoints();
         return ClassMath.points(level(player), config.startingPoints(),
                 config.pointsPerLevel()) + achievementBonus(player);
     }
 
     /** Сколько очков стоит изученное дерево. */
     public int spentPoints(UUID player) {
+        if (development != null) return store.build(player) == null ? 0 : store.build(player).spent();
         int spent = 0;
         for (String id : store.talents(player)) {
             Talent talent = ClassCatalog.talent(id);
@@ -164,27 +177,42 @@ public final class TalentService {
         return ClassCatalog.playerClass(store.classOf(player));
     }
 
-    /** Итоговые эффекты: пассив класса плюс таланты, каждый вид — до потолка. */
-    public Map<EffectKind, Double> effects(UUID player) {
-        Map<EffectKind, Double> raw = new EnumMap<>(EffectKind.class);
+    /** Снимок текущих исходных правил; сам перенос здесь не запускается. */
+    LegacyClassSnapshotService.Result progressSnapshot(UUID player, long now) {
+        return new LegacyClassSnapshotService(store, LegacyClassRules.capture(config), skills, ranks,
+                achievements).read(player, now);
+    }
+
+    Map<EffectKind, ClassEffectView> effectDetails(UUID player) {
+        return effectDetails(player, development == null ? null : store.build(player));
+    }
+    Map<EffectKind, ClassEffectView> effectDetails(UUID player, ClassBuild selected) {
+        Map<EffectKind, Double> passives = new EnumMap<>(EffectKind.class);
+        Map<EffectKind, Double> talents = new EnumMap<>(EffectKind.class);
         PlayerClass playerClass = classOf(player);
-        if (playerClass != null) {
-            for (Map.Entry<EffectKind, Double> entry
-                    : ClassCatalog.passive(playerClass.id()).entrySet()) {
-                raw.merge(entry.getKey(), entry.getValue(), Double::sum);
-            }
-            for (String id : store.talents(player)) {
-                Talent talent = ClassCatalog.talent(id);
+        if (playerClass != null && (development == null || store.development(player) != null)) {
+            passives.putAll(ClassCatalog.passive(playerClass.id()));
+            for (String id : development == null ? store.talents(player) : selected == null ? java.util.Set.<String>of() : selected.ranks().keySet()) {
+                Talent talent = development == null ? ClassCatalog.talent(id) : ClassTrees.talent(id);
                 if (talent != null && talent.classId().equals(playerClass.id())) {
-                    raw.merge(talent.kind(), talent.value(), Double::sum);
+                    talents.merge(talent.kind(), talent.value() * (development == null ? 1 : selected.ranks().get(id)), Double::sum);
                 }
             }
         }
+        Map<EffectKind, ClassEffectView> result = new EnumMap<>(EffectKind.class);
+        for (EffectKind kind : EffectKind.values()) {
+            result.put(kind, new ClassEffectView(kind, passives.getOrDefault(kind, 0.0),
+                    talents.getOrDefault(kind, 0.0), development == null || playerClass == null ? kind.cap() : ClassTrees.ceiling(playerClass.id(), kind)));
+        }
+        return java.util.Collections.unmodifiableMap(result);
+    }
+
+    /** Итоговые эффекты берутся из того же расчёта, который показывает паспорт. */
+    public Map<EffectKind, Double> effects(UUID player) {
         Map<EffectKind, Double> out = new EnumMap<>(EffectKind.class);
-        for (Map.Entry<EffectKind, Double> entry : raw.entrySet()) {
-            double value = ClassMath.total(entry.getKey(), entry.getValue());
-            if (value > 0.0) {
-                out.put(entry.getKey(), value);
+        for (ClassEffectView view : effectDetails(player).values()) {
+            if (view.effective() > 0.0) {
+                out.put(view.kind(), view.effective());
             }
         }
         return out;
@@ -206,6 +234,7 @@ public final class TalentService {
 
     /** Сколько секунд осталось до пересборки дерева. */
     public long respecCooldownLeft(UUID player, long now) {
+        if (development != null) return development.cooldownLeft(player,now);
         long base = perks(player).respecCooldownSeconds(config.respecCooldownSeconds());
         long until = store.respecAt(player) + base * 1_000L;
         return until <= now ? 0L : (until - now + 999) / 1_000L;
@@ -215,6 +244,7 @@ public final class TalentService {
 
     /** Проверка выбора класса без записи — для меню и подтверждения. */
     public ClassResult checkChoose(UUID player, String classId, long now) {
+        if (development != null && store.development(player) == null) return ClassResult.fail("development-pending");
         if (!config.enabled()) {
             return ClassResult.fail("disabled");
         }
@@ -225,6 +255,9 @@ public final class TalentService {
         PlayerClass current = classOf(player);
         if (current == target) {
             return ClassResult.fail("class-same", "class", target.id());
+        }
+        if (current != null && spentPoints(player) > earnedPoints(player)) {
+            return ClassResult.fail("class-budget-unconfirmed");
         }
         long left = changeCooldownLeft(player, now);
         if (left > 0) {
@@ -250,8 +283,9 @@ public final class TalentService {
         }
         PlayerClass target = ClassCatalog.playerClass(classId);
         boolean changing = classOf(player) != null;
-        int lost = store.classOf(player).isEmpty() ? 0 : store.talentCount(player);
+        int lost = development == null ? store.talentCount(player) : store.build(player)==null ? 0 : store.build(player).ranks().size();
         store.setClass(player, target.id(), now);
+        if (development != null) store.initializeBuild(player);
         return changing
                 ? ClassResult.ok("class-changed", "class", target.id(),
                         "talents", String.valueOf(lost))
@@ -262,6 +296,10 @@ public final class TalentService {
 
     /** Проверка изучения таланта без записи. */
     public ClassResult checkLearn(UUID player, String talentId) {
+        if (development != null) {
+            var errors = development.learnProblems(player,talentId);
+            return errors.isEmpty() ? ClassResult.ok("talent-ready") : errors.getFirst();
+        }
         if (!config.enabled()) {
             return ClassResult.fail("disabled");
         }
@@ -304,6 +342,7 @@ public final class TalentService {
 
     /** Учит талант, если пройдены все проверки. */
     public ClassResult learn(UUID player, String talentId) {
+        if (development != null) return development.learn(player,talentId,System.currentTimeMillis());
         ClassResult check = checkLearn(player, talentId);
         if (!check.ok()) {
             return check;
@@ -321,6 +360,7 @@ public final class TalentService {
      * единственным способом играть. Класс при этом не меняется.</p>
      */
     public ClassResult respec(UUID player, long now) {
+        if (development != null) return ClassResult.fail("development-confirm-required");
         if (!config.enabled()) {
             return ClassResult.fail("disabled");
         }
@@ -334,6 +374,9 @@ public final class TalentService {
         if (left > 0) {
             return ClassResult.fail("respec-cooldown", "time", ClassMath.clock(left));
         }
+        if (spentPoints(player) > earnedPoints(player)) {
+            return ClassResult.fail("respec-budget-unconfirmed");
+        }
         int cleared = store.clearTalents(player, now);
         return ClassResult.ok("respec-done", "talents", String.valueOf(cleared),
                 "points", String.valueOf(availablePoints(player)));
@@ -343,16 +386,19 @@ public final class TalentService {
 
     /** Админская выдача класса в обход кулдауна. */
     public ClassResult setByAdmin(UUID player, String classId, long now) {
+        if (development != null && !development.prepare(player,now)) return ClassResult.fail("development-pending");
         PlayerClass target = ClassCatalog.playerClass(classId);
         if (target == null) {
             return ClassResult.fail("class-unknown", "class", classId == null ? "?" : classId);
         }
         store.setClass(player, target.id(), now);
+        if (development != null) store.initializeBuild(player);
         return ClassResult.ok("admin-class-set", "class", target.id());
     }
 
     /** Админский полный сброс: класс, таланты, моменты. */
     public ClassResult resetByAdmin(UUID player) {
+        if (development != null && !development.prepare(player,System.currentTimeMillis())) return ClassResult.fail("development-pending");
         if (!store.reset(player)) {
             return ClassResult.fail("admin-reset-none");
         }

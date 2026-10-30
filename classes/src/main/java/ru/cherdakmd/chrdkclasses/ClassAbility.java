@@ -6,28 +6,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Активные умения классов (1.4.173, второе умение — 1.4.175).
- *
- * <p>До 1.4.173 класс был только набором пассивных прибавок: выбор влиял на
- * цифры, но не на то, как проходит бой. Умение делает класс узнаваемым — воин
- * врывается в толпу, стрелок бьёт веером, маг замораживает стаю, жрец лечит
- * группу.</p>
- *
- * <p>В 1.4.175 у каждого класса появилось <b>второе</b> умение со своим откатом
- * и своей кнопкой в меню. Пара строится по одному принципу: первое — быстрый
- * «рабочий» приём на 18–25 секунд, второе — редкий «решающий» на 30–40. Второе
- * не сильнее первого в пересчёте на секунду: это другой ход, а не вторая
- * бесплатная кнопка.</p>
- *
- * <p>Баланс, как и деревья, живёт в коде: кулдаун и величины — часть баланса,
- * конфиг может только выключить умения и растянуть кулдаун. Умение не заменяет
- * бой: урон одного применения меньше трёх ударов мечом, а лечение — меньше
- * одного зелья. Ни одно умение не тратит и не даёт валюту и не трогает блоки.</p>
- *
- * <p>Значения {@code radius} и {@code power} толкуются по-разному, поэтому
- * смысл описан у каждой константы. Тексты — {@code ability.<ключ>.name} и
- * {@code ability.<ключ>.desc} в {@code messages.yml}; ключ — {@link #key()}:
- * ид класса у первого умения и {@code ид-2} у второго.</p>
+ * Четыре PvE-умения каждого класса, из которых экипированы два.
+ * slot — постоянный номер в каталоге, не место экипировки; key переживает
+ * перестановку, смену сборки и рестарт. Первые два ID сохранены совместимыми.
+ * Фактические цели и исполнение определяет AbilityService, тексты — Messages.
  */
 public enum ClassAbility {
 
@@ -77,7 +59,15 @@ public enum ClassAbility {
      * Жрец, слот 2: оберег. {@code radius} — радиус союзников, {@code power} —
      * полусердца поглощения. Не лечит: это защита до удара, а не после.
      */
-    CLERIC_WARD(PlayerClass.CLERIC, 2, "SHIELD", 40, 8.0, 4.0);
+    CLERIC_WARD(PlayerClass.CLERIC, 2, "SHIELD", 40, 8.0, 4.0),
+    WARRIOR_BASH(PlayerClass.WARRIOR, 3, "SHIELD", 24, 4, 3),
+    WARRIOR_EARTH(PlayerClass.WARRIOR, 4, "IRON_BOOTS", 35, 5, 2),
+    ARCHER_SNARE(PlayerClass.ARCHER, 3, "COBWEB", 26, 7, 2),
+    ARCHER_RETREAT(PlayerClass.ARCHER, 4, "FEATHER", 28, 6, .8),
+    MAGE_CHAIN(PlayerClass.MAGE, 3, "AMETHYST_SHARD", 28, 7, 3),
+    MAGE_SEAL(PlayerClass.MAGE, 4, "PRISMARINE_CRYSTALS", 34, 6, 2),
+    CLERIC_LIGHT(PlayerClass.CLERIC, 3, "GLOWSTONE_DUST", 28, 7, 4),
+    CLERIC_PURIFY(PlayerClass.CLERIC, 4, "MILK_BUCKET", 36, 8, 2);
 
     /** Границы множителя кулдауна из конфига. */
     public static final double MIN_MULTIPLIER = 0.5;
@@ -86,8 +76,8 @@ public enum ClassAbility {
     public static final int FIRST = 1;
     /** Второе умение класса — редкий приём. */
     public static final int SECOND = 2;
-    /** Сколько умений у класса: ровно два, оба на отдельных кнопках. */
-    public static final int PER_CLASS = 2;
+    /** Четыре доступных умения; экипированы два. */
+    public static final int PER_CLASS = 4;
 
     private static final Map<PlayerClass, ClassAbility> BY_CLASS = new EnumMap<>(PlayerClass.class);
     private static final Map<PlayerClass, ClassAbility> SECOND_BY_CLASS =
@@ -97,7 +87,7 @@ public enum ClassAbility {
         for (ClassAbility ability : values()) {
             if (ability.slot == FIRST) {
                 BY_CLASS.put(ability.playerClass, ability);
-            } else {
+            } else if (ability.slot == SECOND) {
                 SECOND_BY_CLASS.put(ability.playerClass, ability);
             }
         }
@@ -124,7 +114,7 @@ public enum ClassAbility {
         return playerClass;
     }
 
-    /** Слот умения: 1 или 2. */
+    /** Постоянный номер умения в каталоге: 1..4. */
     public int slot() {
         return slot;
     }
@@ -196,6 +186,16 @@ public enum ClassAbility {
 
     public double power() {
         return power;
+    }
+
+    public int requiredLevel() { return slot <= 2 ? 1 : slot == 3 ? 10 : 20; }
+    public static ClassAbility byKey(String id) {
+        if (id == null) return null;
+        for (ClassAbility ability : values()) if (ability.key().equals(id)) return ability;
+        return null;
+    }
+    public static List<ClassAbility> all(PlayerClass role) {
+        return java.util.Arrays.stream(values()).filter(a -> a.playerClass == role).toList();
     }
 
     /** Первое умение класса или {@code null}, если класс не выбран. */

@@ -53,7 +53,8 @@ class ClassAbilityTest {
             ClassAbility second = ClassAbility.of(playerClass, ClassAbility.SECOND);
             assertNotNull(first, playerClass.id() + ": нет первого умения");
             assertNotNull(second, playerClass.id() + ": нет второго умения");
-            assertEquals(ClassAbility.PER_CLASS, ClassAbility.both(playerClass).size());
+            assertEquals(2, ClassAbility.both(playerClass).size());
+            assertEquals(ClassAbility.PER_CLASS, ClassAbility.all(playerClass).size());
             assertEquals(playerClass.id(), first.key(), "ключ первого — ид класса");
             assertEquals(playerClass.id() + "-2", second.key(), "ключ второго — ид-2");
             assertTrue(second.cooldownSeconds() > first.cooldownSeconds(),
@@ -109,7 +110,7 @@ class ClassAbilityTest {
     void abilityNumbersStayInsideDesignCaps() {
         for (ClassAbility ability : ClassAbility.values()) {
             int low = ability.slot() == ClassAbility.SECOND ? 30 : 15;
-            int high = ability.slot() == ClassAbility.SECOND ? 45 : 30;
+            int high = ability.slot() == ClassAbility.SECOND || ability.slot() == 4 ? 45 : 30;
             assertTrue(ability.cooldownSeconds() >= low && ability.cooldownSeconds() <= high,
                     ability.key() + ": кулдаун вне " + low + ".." + high + " секунд");
             assertTrue(ability.power() > 0.0, ability.id() + ": сила должна быть положительной");

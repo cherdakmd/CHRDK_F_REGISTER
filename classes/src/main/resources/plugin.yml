@@ -2,7 +2,7 @@ name: CHRDK_Classes
 version: ${version}
 main: ru.cherdakmd.chrdkclasses.ClassesPlugin
 api-version: '26.3'
-description: "Классы с деревом талантов поверх навыков — четыре стиля игры, два активных умения у каждого, очки за уровни и достижения, плюшки донатных рангов, без новых источников алмазов"
+description: "Четыре класса с собственным PvE-XP, по 45 ранговых талантов и четыре умения на выбор, два активных слота, три сборки; без валюты"
 authors: [cherdakmd]
 website: https://github.com/cherdakmd/CHRDK_F_REGISTER
 depend: [CHRDK_Core]
@@ -10,7 +10,7 @@ softdepend: [CHRDK_Skills, CHRDK_Achievements, PlaceholderAPI]
 commands:
   class:
     description: "Класс, дерево талантов и очки"
-    usage: "/class [menu|choose <класс>|info [класс]|talents|learn <талант>|respec|points|top|ability [1|2]]"
+    usage: "/class [menu|passport|choose <класс>|info [класс]|talents|learn <талант>|respec|points|top|abilities|builds|ability [1|2]]"
     aliases: [classes, klass, klassy]
     permission: chrdkclasses.use
   ability:

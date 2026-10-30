@@ -71,4 +71,15 @@ final class AchievementsBridge implements AchievementSource {
             return 0;
         }
     }
+    @Override
+    public ClassDataRead snapshotCount(UUID player) {
+        Player online = player == null ? null : Bukkit.getPlayer(player);
+        if (online == null || !online.isOnline()) {
+            return ClassDataRead.absent(ClassDataRead.Status.OFFLINE);
+        }
+        return ClassDataRead.read(() -> api() != null, () -> {
+            var found = api();
+            return found.unlockedCount(online);
+        });
+    }
 }

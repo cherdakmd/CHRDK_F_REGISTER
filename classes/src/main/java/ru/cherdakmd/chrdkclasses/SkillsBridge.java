@@ -81,4 +81,26 @@ final class SkillsBridge implements SkillSource {
             return 0;
         }
     }
+    @Override
+    public ClassDataRead snapshotTotal(UUID player) {
+        Player online = player == null ? null : Bukkit.getPlayer(player);
+        if (online == null || !online.isOnline()) {
+            return ClassDataRead.absent(ClassDataRead.Status.OFFLINE);
+        }
+        return ClassDataRead.read(() -> api() != null, () -> {
+            var found = api();
+            return found.totalLevel(online);
+        });
+    }
+    @Override
+    public ClassDataRead snapshotLevel(UUID player, String skillId) {
+        if (skillId == null || skillId.isBlank()) {
+            return ClassDataRead.absent(ClassDataRead.Status.INVALID);
+        }
+        Player online = player == null ? null : Bukkit.getPlayer(player);
+        if (online == null || !online.isOnline()) {
+            return ClassDataRead.absent(ClassDataRead.Status.OFFLINE);
+        }
+        return ClassDataRead.read(() -> api() != null, () -> api().level(online, skillId));
+    }
 }

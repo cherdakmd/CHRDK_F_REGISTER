@@ -22,14 +22,29 @@ package ru.cherdakmd.chrdkclasses;
  */
 public record Talent(String id, String classId, String branch, int tier, int cost,
                      String requires, String skill, int skillLevel,
-                     EffectKind kind, double value) {
+                     EffectKind kind, double value, int maxRank, int minLevel, String exclusiveGroup) {
 
+    public Talent(String id, String classId, String branch, int tier, int cost, String requires,
+                  String skill, int skillLevel, EffectKind kind, double value) {
+        this(id, classId, branch, tier, cost, requires, skill, skillLevel, kind, value, 1, 1, "");
+    }
+    public int rankCost(int rank) {
+        if (rank < 1 || rank > maxRank) throw new IllegalArgumentException("Некорректный следующий ранг");
+        return maxRank == 1 ? cost : rank;
+    }
+    public int totalCost(int rank) {
+        if (rank < 0 || rank > maxRank) throw new IllegalArgumentException("Некорректный ранг таланта");
+        return maxRank == 1 ? rank * cost : rank * (rank + 1) / 2;
+    }
     public Talent {
         id = id == null ? "" : id.trim();
         classId = classId == null ? "" : classId.trim();
         branch = branch == null ? "" : branch.trim();
         requires = requires == null ? "" : requires.trim();
         skill = skill == null ? "" : skill.trim();
+        if (maxRank < 1 || maxRank > 3 || minLevel < 1 || minLevel > 50 || kind == null
+                || !Double.isFinite(value) || value < 0) throw new IllegalArgumentException("Некорректный талант");
+        exclusiveGroup = exclusiveGroup == null ? "" : exclusiveGroup;
         tier = Math.clamp(tier, 1, ClassMath.MAX_TIER);
         cost = Math.clamp(cost, 1, 10);
         skillLevel = Math.clamp(skillLevel, 0, 100);
