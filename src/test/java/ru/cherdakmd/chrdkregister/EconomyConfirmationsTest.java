@@ -24,6 +24,19 @@ class EconomyConfirmationsTest {
         assertFalse(c.consume(owner,new Object(),quote,21));
         assertFalse(c.consume(owner,session,quote,22));
     }
+    @Test void commandReplayCannotRearmConsentAndMutationsStayAfterConsent() throws Exception {
+        for(var path:java.util.List.of(
+                "src/main/java/ru/cherdakmd/chrdkregister/BankCommandHandler.java",
+                "teleports/src/main/java/ru/cherdakmd/chrdkteleports/TeleportCommandHandler.java",
+                "claims/src/main/java/ru/cherdakmd/chrdkclaims/ClaimsService.java")) {
+            String source=java.nio.file.Files.readString(java.nio.file.Path.of(path));
+            var guard=java.util.regex.Pattern.compile("if\\((confirmRequested|confirm)&&!confirmations\\.consume.*?\\{(.*?)\\}\\s*if\\(!\\1\\)",java.util.regex.Pattern.DOTALL).matcher(source);
+            int count=0;
+            while(guard.find()) {count++;assertTrue(guard.group(2).contains("confirm-missing"),path);assertTrue(guard.group(2).contains("return"),path);assertFalse(guard.group(2).contains("offer("),path);}
+            assertEquals(path.contains("BankCommandHandler")?2:1,count,path);
+            assertTrue(source.contains("confirmations.offer(player.getUniqueId(),player,quote,System.nanoTime())"),path);
+        }
+    }
     @Test void exactExpiryBackwardClockAndNanoTimeWrapAreSafe() {
         var c=new EconomyConfirmations();var owner=UUID.randomUUID();var session=new Object();
         long ttl=EconomyConfirmations.TTL_NANOS;
