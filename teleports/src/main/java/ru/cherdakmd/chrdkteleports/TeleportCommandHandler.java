@@ -35,6 +35,8 @@ public final class TeleportCommandHandler implements TabExecutor {
 
     private final TeleportsPlugin plugin;
     private final Random random = new Random();
+    private final ru.cherdakmd.chrdkregister.api.EconomyConfirmations confirmations = new ru.cherdakmd.chrdkregister.api.EconomyConfirmations();
+    private record HomeQuote(String key, String value, String previous, int price) { }
 
     public TeleportCommandHandler(TeleportsPlugin plugin) {
         this.plugin = plugin;
@@ -69,7 +71,7 @@ public final class TeleportCommandHandler implements TabExecutor {
             case "tpcancel" -> handleCancel(player);
             case "sethome" -> handleSetHome(player, args);
             case "delhome" -> handleDelHome(player, args);
-            case "homes" -> handleHomes(player);
+            case "homes" -> args.length==1&&args[0].equalsIgnoreCase("prices") ? prices(player) : handleHomes(player);
             case "home" -> handleHome(player, args);
             default -> false;
         };
@@ -129,6 +131,13 @@ public final class TeleportCommandHandler implements TabExecutor {
     private int chargedCost(Player player, int baseCost) {
         int rank = rank(player);
         return PriceCalc.apply(baseCost, rank > 0, plugin.config().discountFor(rank));
+    }
+
+    private boolean prices(Player player) {
+        var c=plugin.config();
+        plugin.messages().send(player,"finance.personal-prices","rank",rank(player),"discount",c.discountFor(rank(player)),
+                "rtp",chargedCost(player,c.costRtp()),"tpa",chargedCost(player,c.costTpa()),"home",chargedCost(player,c.costHome()),
+                "sethome",chargedCost(player,c.costSethome()));return true;
     }
 
     /* ------------------------------- /rtp ------------------------------- */
@@ -311,7 +320,7 @@ public final class TeleportCommandHandler implements TabExecutor {
     /* ------------------------------- дома ------------------------------- */
 
     private boolean handleSetHome(Player player, String[] args) {
-        if (args.length < 1) {
+        if (args.length < 1 || args.length > 2 || (args.length==2&&!args[1].equalsIgnoreCase("confirm"))) {
             plugin.messages().send(player, "tp.usage-home");
             return true;
         }
@@ -340,6 +349,18 @@ public final class TeleportCommandHandler implements TabExecutor {
         Location loc = player.getLocation();
         HomeLocation point = new HomeLocation(name,player.getWorld().getName(),loc.getX(),loc.getY(),loc.getZ(),loc.getYaw(),loc.getPitch());
         int price=chargedCost(player,plugin.config().costSethome());
+        if (price > 0) {
+            String key=HomeStore.financeKey(player.getUniqueId(),name);
+            var quote=new HomeQuote(key,HomeStore.financeValue(point),String.valueOf(store.get(player.getUniqueId(),HomeStore.normalize(name))),price);
+            boolean confirmRequested=args.length==2&&args[1].equalsIgnoreCase("confirm");
+            if(confirmRequested&&!confirmations.consume(player.getUniqueId(),player,quote,System.nanoTime())) {
+                plugin.messages().send(player,"finance.confirm-missing");return true;
+            }
+            if(!confirmRequested) {
+                if(!confirmations.offer(player.getUniqueId(),player,quote,System.nanoTime())) {plugin.messages().send(player,"finance.confirm-busy");return true;}
+                plugin.messages().send(player,"finance.home-preview","name",name,"cost",price,"replace",exists);return true;
+            }
+        }
         if (!plugin.payments().putValue(player,price,HomeStore.financeKey(player.getUniqueId(),name),HomeStore.financeValue(point))) return true;
         int used = store.countPlayerHomes(player.getUniqueId());
         if (price > 0) {
@@ -354,7 +375,7 @@ public final class TeleportCommandHandler implements TabExecutor {
     }
 
     private boolean handleDelHome(Player player, String[] args) {
-        if (args.length < 1) {
+        if (args.length < 1 || args.length > 2 || (args.length==2&&!args[1].equalsIgnoreCase("confirm"))) {
             plugin.messages().send(player, "tp.usage-home");
             return true;
         }
@@ -523,6 +544,8 @@ public final class TeleportCommandHandler implements TabExecutor {
                             .forEach(matches::add);
                 }
             }
+            case "homes" -> { if(args.length==1&&"prices".startsWith(prefix)) matches.add("prices"); }
+            case "sethome" -> { if(args.length==2&&"confirm".startsWith(prefix)) matches.add("confirm"); }
             case "tpadmin" -> {
                 if (args.length==1) for (String option:List.of("reload","finance","recover","resolve")) if (option.startsWith(prefix)) matches.add(option);
             }

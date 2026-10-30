@@ -1,0 +1,18 @@
+# Только точные старые тексты: пользовательские переводы не заменяются.
+messages:
+  economy:
+    help: '<gold>Банк алмазов</gold>
+
+      <gray>/bal — баланс счёта и алмазов в инвентаре</gray>
+
+      <gray>/bal <ник> — баланс другого игрока</gray>
+
+      <gray>/bal deposit [all|hand|сумма] — положить алмазы в банк</gray>
+
+      <gray>/bal withdraw <сумма> — снять алмазы в инвентарь</gray>
+
+      <gray>/pay <ник> <сумма> — перевод (работает и для офлайн-игрока)</gray>
+
+      <gray>/baltop [страница] — топ счетов</gray>'
+    usage-withdraw: <yellow>/bal withdraw <сумма></yellow>
+    usage-pay: <yellow>/pay <ник> <сумма></yellow>

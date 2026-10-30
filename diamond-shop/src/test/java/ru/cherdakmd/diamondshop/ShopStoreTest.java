@@ -39,6 +39,15 @@ class ShopStoreTest {
         java.nio.file.Files.writeString(dir.resolve("shop-data.json"),"{\"balances\":{\""+id+"\":"+amount+"}}");
     }
 
+    @Test void peekRecoveryMatchesLazyRecoveryWithoutCreatingStateOrAdvancingClock(@TempDir Path dir) {
+        var s=newStore(dir);var item=item("STONE",1000);long now=1_000_000;
+        String empty=s.snapshotJson();assertEquals(1000,s.peekStock(item,now,.1));assertEquals(empty,s.snapshotJson());
+        s.setStock(item,100,now);String before=s.snapshotJson();
+        long future=now+3_600_000;long peek=s.peekStock(item,future,.1);
+        assertEquals(before,s.snapshotJson());assertEquals(peek,s.stockOf(item,future,.1));
+        assertTrue(peek>100);assertEquals(peek,s.peekStock(item,future,.1));
+    }
+
     @Test
     void stockInitializesToReferenceAndAdjusts(@TempDir Path dir) {
         ShopStore store = newStore(dir);

@@ -1,0 +1,11 @@
+# Только точные старые тексты: пользовательские переводы не заменяются.
+messages:
+  shop:
+    usage: <gray>/shop — открыть магазин; /shop balance | deposit [hand|all] | withdraw <n> | price <товар> | find <текст>
+      | buy <товар> <партий> | sell <товар> [партий|all] | stats</gray>
+  trading:
+    usage: <gray>/shop — открыть магазин; /shop balance | deposit [hand|all] | withdraw <n> | price <товар> | find <текст>
+      | buy <товар> <партий> | sell <товар> [партий|all] | stats</gray>
+  quantity:
+    usage: <gray>/shop — витрина и выбор количества; /shop buy <товар> <штук> | sell <товар> [штук|all] | sellall | price
+      <товар> | find <текст> | balance</gray>

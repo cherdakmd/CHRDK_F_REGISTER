@@ -120,9 +120,12 @@ public final class BankService implements org.bukkit.event.Listener {
         return amount <= 0 ? 0 : depositPlanned(player, false, amount);
     }
 
-    private boolean authenticated(Player player) {
-        var api=Bukkit.getServicesManager().load(ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.class);
-        return Bukkit.isPrimaryThread()&&player!=null&&player.isOnline()&&!player.hasMetadata("NPC")&&api!=null&&api.isAuthenticated(player);
+    public boolean authenticated(Player player) {
+        if(!Bukkit.isPrimaryThread()||player==null||!player.isOnline()||player.hasMetadata("NPC")) return false;
+        try {
+            var api=Bukkit.getServicesManager().load(ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.class);
+            return api!=null&&api.isAuthenticated(player);
+        } catch(RuntimeException | LinkageError unavailable) { return false; }
     }
     private boolean cashReady(Player player) {
         if(!enabled()||!authenticated(player)||player.isDead()||!player.hasPermission("chrdkregister.bal")
@@ -259,6 +262,8 @@ public final class BankService implements org.bukkit.event.Listener {
      */
     public PayResult pay(Player source, String targetName, long amount) {
         EconomySettings config = settings();
+        if (!enabled() || !authenticated(source) || !source.hasPermission("chrdkregister.pay"))
+            return new PayResult(BankStore.Status.UNAVAILABLE,targetName,amount,0,0,0,0);
         String name = targetName == null ? "" : targetName.trim();
         if (source == null || name.isEmpty()) {
             return new PayResult(BankStore.Status.UNKNOWN_PLAYER, name, amount, 0, 0, 0, 0);
@@ -299,6 +304,20 @@ public final class BankService implements org.bukkit.event.Listener {
                 result.credited(), result.fromBalance(), 0L);
     }
 
+    public record PayQuote(BankStore.Status status, UUID recipient, String name, long amount,
+                           long tax, long net, int percent) { }
+    public PayQuote previewPay(Player player, String name, long amount) {
+        var c=settings();
+        if (!enabled() || !authenticated(player) || !player.hasPermission("chrdkregister.pay"))
+            return new PayQuote(BankStore.Status.UNAVAILABLE,null,name,amount,0,0,c.payTaxPercent());
+        Player online=Bukkit.getPlayerExact(name);
+        UUID id=online!=null?online.getUniqueId():(c.allowOfflinePay()?store.idByName(name):null);
+        String display=online==null?name:online.getName();
+        if(amount<c.minPay()||amount>c.maxPay()) return new PayQuote(BankStore.Status.INVALID_AMOUNT,id,display,amount,0,0,c.payTaxPercent());
+        var q=store.previewTransfer(player.getUniqueId(),id,amount,c.payTaxPercent());
+        return new PayQuote(q.status(),id,display,amount,q.tax(),q.credited(),c.payTaxPercent());
+    }
+
     /* ---------------------------------- топ ----------------------------------- */
 
     public List<BankStore.Entry> baltop() {
@@ -325,13 +344,10 @@ public final class BankService implements org.bukkit.event.Listener {
             value = value.substring(0, value.length() - 1);
         }
         try {
-            double parsed = Double.parseDouble(value);
-            if (!Double.isFinite(parsed) || parsed <= 0d) {
-                return -1L;
-            }
-            long amount = Math.round(parsed * multiplier);
-            return amount <= 0L ? -1L : Math.min(amount, BankStore.MAX_BALANCE);
-        } catch (NumberFormatException exception) {
+            if(value.length()>64||!value.matches("[0-9]+(?:\\.[0-9]+)?")) return -1L;
+            long amount=new java.math.BigDecimal(value).multiply(java.math.BigDecimal.valueOf(multiplier)).longValueExact();
+            return amount<1||amount>BankStore.MAX_BALANCE?-1L:amount;
+        } catch (NumberFormatException | ArithmeticException exception) {
             return -1L;
         }
     }

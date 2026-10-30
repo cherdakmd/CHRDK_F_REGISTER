@@ -44,18 +44,48 @@ public final class ShopService {
                 item.refStock(), item.minMultiplier(), item.maxMultiplier());
     }
     public int batchSize(ShopConfig.ShopItem item) { return batches.getOrDefault(item.material(),0); }
-    public long askPrice(ShopConfig.ShopItem item) {
-        long price=WholeTrades.price(PriceEngine.ask(priceOf(item),config.spreadPercent()),batchSize(item),true,item.purchaseMultiplier());
+    public long askPrice(ShopConfig.ShopItem item) { return askPrice(item,priceOf(item)); }
+    private long askPrice(ShopConfig.ShopItem item,double spot) {
+        long price=WholeTrades.price(PriceEngine.ask(spot,config.spreadPercent()),batchSize(item),true,item.purchaseMultiplier());
         if (price < 0) return -1;
         long currency=(long)config.currencyRates().getOrDefault(item.material(),0)*batchSize(item);
         return Math.max(price,currency)>WholeTrades.MAX ? -1 : Math.max(price,currency);
     }
-    public long bidPrice(ShopConfig.ShopItem item) {
+    public long bidPrice(ShopConfig.ShopItem item) { return bidPrice(item,priceOf(item)); }
+    private long bidPrice(ShopConfig.ShopItem item,double spot) {
         if (!item.sellEnabled() || config.item(item.material()).filter(item::equals).isEmpty()) return 0;
-        long bid = Math.max(0,WholeTrades.price(PriceEngine.bid(priceOf(item),config.spreadPercent()),batchSize(item),false));
+        long bid = Math.max(0,WholeTrades.price(PriceEngine.bid(spot,config.spreadPercent()),batchSize(item),false));
         var cost = recipeFloors.get(item.material());
         return cost == null ? bid : Math.min(bid,RecipeEconomy.cap(cost,batchSize(item),config.spreadPercent()));
     }
+    /** Котировка не трогает инвентарь, банк, WAL, остаток sellall или суточный оборот. */
+    public long quantityQuote(ShopConfig.ShopItem item,int units,boolean buy) {
+        if(config.item(item.material()).filter(item::equals).isEmpty()||(!buy&&!item.sellEnabled())) return -1;
+        double spot=peekPrice(item,System.currentTimeMillis());
+        return TradeAmounts.quote(batchSize(item),buy?askPrice(item,spot):bidPrice(item,spot),units,buy);
+    }
+    private double peekPrice(ShopConfig.ShopItem item,long now) {
+        return PriceEngine.price(item.basePrice(),store.peekStock(item,now,config.stockRecoveryPerHour()),
+                item.refStock(),item.minMultiplier(),item.maxMultiplier());
+    }
+    public record QuoteAudit(int items,int buyOnly,int errors,int capped) { }
+    public QuoteAudit auditQuotes() {
+        int buyOnly=0,errors=0,capped=0;long now=System.currentTimeMillis();
+        for(var item:config.items()) {
+            double current=peekPrice(item,now);long ask=askPrice(item,current),bid=bidPrice(item,current);int batch=batchSize(item);
+            if(!item.sellEnabled()) buyOnly++;
+            if(batch<1||batch>2304||ask<1||ask>WholeTrades.MAX||bid<0||bid>ask||(!item.sellEnabled()&&bid!=0)) errors++;
+            var cost=recipeFloors.get(item.material());
+            if(item.sellEnabled()&&cost!=null) {
+                long cap=RecipeEconomy.cap(cost,batch,config.spreadPercent());
+                if(bid>cap) errors++;
+                long spot=Math.max(0,WholeTrades.price(PriceEngine.bid(current,config.spreadPercent()),batch,false));
+                if(bid<spot) capped++;
+            }
+        }
+        return new QuoteAudit(config.items().size(),buyOnly,errors,capped);
+    }
+
     public void recordPricePoint(ShopConfig.ShopItem item) { store.recordPrice(item, priceOf(item), System.currentTimeMillis(), config.historyMaxPoints(), config.historyIntervalMillis()); }
     public double[] historyOf(ShopConfig.ShopItem item) { return store.historyOf(item.material()); }
     private boolean binding() {

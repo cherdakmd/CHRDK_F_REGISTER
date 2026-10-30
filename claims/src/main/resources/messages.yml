@@ -26,7 +26,7 @@ claims:
   no-permission: "<red>Недостаточно прав.</red>"
   unknown-sub: "<red>Неизвестная подкоманда. Смотрите /claim help.</red>"
   coords-invalid: "<red>Координаты чанка — два целых числа: /claim info <x> <z> или /claim tp <x> <z>.</red>"
-  usage: "<gray>/claim — купить чанк · menu · tp [x z] · info [x z] · map [радиус] · list [стр] · forsale [стр] · near [радиус] · borders · notices [on|off] · greeting [текст|снять] · rent · clan · unclaim [all confirm] · add/remove <ник> [доступ|контейнеры|полный] [все] · transfer <ник> · deposit [n|все] · withdraw <n> · balance · sell <цена|снять> · sellback · buy [x z] · help</gray>"
+  usage: "<gray>/claim — купить чанк · menu · tp [x z] · info [x z] · map [радиус] · list [стр] · forsale [стр] · near [радиус] · borders · notices [on|off] · greeting [текст|снять] · rent · clan · unclaim [all confirm] · add/remove <ник> [доступ|контейнеры|полный] [все] · transfer <ник> · deposit [n|все] · withdraw <n> · balance · sell <цена|снять> · sellback [confirm] · budget [1–30] · buy [x z] · help</gray>"
   # покупка/продажа
   bought: "<green>Чанк приватизирован за %price% ⛁! Рента %upkeep% ⛁/сутки, оплачен до %paid%. Участники: /claim add <ник>.</green>"
   already-claimed: "<red>Этот чанк уже занят (%owner%). Границы — /claim map.</red>"
@@ -308,6 +308,12 @@ claims:
 
   # Финансовая схема /bal 1.4.222: старые тексты о казне не подменяют эти ключи.
   finance:
+    confirm-missing: '<yellow>Нет действующего согласия: оно использовано, истекло, сменилось соединение или условия. Запросите условия исходной командой БЕЗ confirm, проверьте их и только затем подтвердите. Новая операция не выполнена.</yellow>'
+    confirm-busy: '<yellow>Подтверждений слишком много. Через 30 секунд запросите условия заново. Приват не продан.</yellow>'
+    sellback-preview: '<yellow>Сервер выкупит только чанк %where% за %reward% алм. в личный /bal. Земля будет освобождена. В этом чанке в течение 30 секунд: /claim sellback confirm. Это не продажа всей территории.</yellow>'
+    budget-usage: '<yellow>/claim budget [сутки 1–30]; по умолчанию 3.</yellow>'
+    budget: '<gold>Резерв на %days% сут.: свои чанки %owned%, продления аренды %rentals%.</gold><newline><gray>В сутки: содержание %upkeep%, аренда %rental%; долг %debt%. Резерв %reserve%, казна %balance%, не хватает %shortage%. Полных суток после долга: %coverage% (0 также при нулевой ставке).</gray><newline><gray>Это запас по текущим ставкам: предоплата не вычитается, календарь и будущие изменения не прогнозируются. Казна приватов — ваш личный /bal, без предметов и ещё не перенесённых старых средств. Арендатор платит со своего счёта, владелец — со своего; повторного кошелька нет.</gray>'
+    budget-warning: '<yellow>Казны может не хватить на 3 суток с долгом: есть %balance%, резерв %reserve%, не хватает %shortage% алм. Подробности: /claim budget 3. Это консервативный запас, не требование немедленной оплаты.</yellow>'
     service-quote: '<gray>Цена услуги: %cost% 💠. Оплата только после ожидания и выбора точки: /bal, затем обычные предметы; сдача и возврат — /bal.</gray>'
     service-mode: '<red>Оплата требует авторизации, живого игрока в Survival/Adventure; NPC не допускаются.</red>'
     service-wait: '<yellow>Платёж/исход услуги ожидает сверки. Новые сделки приостановлены; уже начатая оплата не объявляется отменённой. Администратору: finance / recover.</yellow>'
@@ -359,6 +365,6 @@ claims:
     backup-protected: '<yellow>Финансовый источник нельзя откатывать отдельно в работающем сервере. Нужны остановка и согласованные копии Claims, банка и playerdata. Не удаляйте журналы и квитанции.</yellow>'
     unclaim-all-confirm: '<red>Будут сняты все ваши приваты (%count%). Возврата оплаты нет; личный /bal не обнуляется. Подтвердите: <yellow>/claim unclaim all confirm</yellow></red>'
     usage: <gray>/claim — купить чанк · menu · tp [x z] · info [x z] · map [радиус] · list [стр] · forsale [стр] · near [радиус] · borders · notices [on|off] · greeting [текст|снять] · rent · clan · unclaim [all confirm] · add/remove <ник> [доступ|контейнеры|полный]
-      [все] · transfer <ник> · balance (личный /bal) · sell <цена|снять> · sellback · buy [x z] · help</gray>
+      [все] · transfer <ник> · balance (личный /bal) · sell <цена|снять> · sellback [confirm] · budget [1–30] · buy [x z] · help</gray>
     withdraw-done: '<green>С личного /bal выдано %amount% ⛁ предметами. Баланс: %balance% ⛁.</green>'
     withdraw-not-enough: <red>На личном /bal всего %balance% ⛁.</red>

@@ -5,7 +5,7 @@ tp:
   player-only: "<red>Команда доступна только игрокам.</red>"
   permission: "<red>Недостаточно прав.</red>"
   usage-tpa: "<gray>Используйте: <yellow>/tpa <ник></yellow> или <yellow>/tpahere <ник></yellow>.</gray>"
-  usage-home: "<gray>Используйте: <yellow>/home [имя]</yellow>, <yellow>/sethome <имя></yellow>, <yellow>/delhome <имя></yellow>. Без имени — ближайший дом или кровать.</gray>"
+  usage-home: "<gray>Используйте: <yellow>/home [имя]</yellow>, <yellow>/sethome <имя> [confirm]</yellow>, <yellow>/delhome <имя></yellow>. Без имени — ближайший дом или кровать.</gray>"
   cooldown: "<red>Подождите ещё %seconds% сек.</red>"
   world-denied: "<red>В этом мире телепортация отключена.</red>"
   in-progress: "<red>Сначала дождитесь текущей телепортации (или отойдите для отмены).</red>"
@@ -65,6 +65,10 @@ admin:
     - "<gray><yellow>/tpadmin reload</yellow> — перечитать конфиг</gray>"
 
 finance:
+  confirm-missing: '<yellow>Нет действующего согласия: оно использовано, истекло, сменилось соединение или условия. Запросите условия исходной командой БЕЗ confirm, проверьте их и только затем подтвердите. Новая операция не выполнена.</yellow>'
+  confirm-busy: '<yellow>Подтверждений слишком много. Подождите 30 секунд и запросите условия заново. Средства не списаны.</yellow>'
+  personal-prices: '<gold>Ваши тарифы: ранг %rank%, скидка %discount%%.</gold><newline><gray>RTP %rtp%, TPA %tpa%, дом %home%, установка/перенос дома %sethome% алм. Платный телепорт — минимум 10; это котировка без списания.</gray>'
+  home-preview: '<yellow>Дом %name%: цена %cost% алм.; замена существующего: %replace%. Не меняя точку и направление взгляда, в течение 30 секунд: /sethome %name% confirm. Оплата только при подтверждении.</yellow>'
   service-quote: '<gray>Цена услуги: %cost% 💠. Оплата только после ожидания и выбора точки: /bal, затем обычные предметы; сдача и возврат — /bal.</gray>'
   service-mode: '<red>Оплата требует авторизации, живого игрока в Survival/Adventure; NPC не допускаются.</red>'
   service-wait: '<yellow>Платёж/исход услуги ожидает сверки. Новые сделки приостановлены; уже начатая оплата не объявляется отменённой. Администратору: finance / recover.</yellow>'

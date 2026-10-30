@@ -45,9 +45,13 @@ public final class ShopCommandHandler implements TabExecutor {
             plugin.messages().send(sender, "quantity.usage");
             return true;
         }
-        if (!plugin.coreApi().isAuthenticated(player)) {
+        if (plugin.coreApi()==null || !plugin.coreApi().isAuthenticated(player)) {
             plugin.messages().send(player, "trading.need-auth");
             return true;
+        }
+        if(args.length>0&&args[0].equalsIgnoreCase("quote")) {
+            if(!player.hasPermission("chrdkshop.use")) {plugin.messages().send(player,"tools.permission");return true;}
+            quote(player,args);return true;
         }
         if (!plugin.shopService().ready(player)) { plugin.messages().send(player, "trading.unavailable"); return true; }
         if (args.length == 0) {
@@ -95,6 +99,21 @@ public final class ShopCommandHandler implements TabExecutor {
                     "history", PriceEngine.sparkline(history),
                     "trend", PriceEngine.trend(history));
         }
+    }
+
+    private void quote(Player player,String[] args) {
+        if(args.length!=4||(!args[1].equalsIgnoreCase("buy")&&!args[1].equalsIgnoreCase("sell"))) {
+            plugin.messages().send(player,"tools.quote-usage");return;
+        }
+        var service=plugin.shopService();var item=service.config().item(args[2]).orElse(null);
+        int units;
+        try { units=Integer.parseInt(args[3]); } catch(NumberFormatException e) {units=0;}
+        if(item==null||units<1||units>2304) {plugin.messages().send(player,"tools.quote-usage");return;}
+        boolean buy=args[1].equalsIgnoreCase("buy");
+        long value=service.quantityQuote(item,units,buy);
+        if(value<0) {plugin.messages().send(player,"tools.quote-unavailable");return;}
+        plugin.messages().send(player,"tools.quote","action",buy?"Покупка":"Продажа","material",item.material(),"units",units,
+                "price",value,"batch",service.batchSize(item));
     }
 
     /** Поиск товара по фрагменту имени материала: до 10 совпадений с ценами. */
@@ -216,6 +235,10 @@ public final class ShopCommandHandler implements TabExecutor {
     /* ------------------------------- /shopadmin ------------------------------- */
 
     private boolean handleAdmin(CommandSender sender, String[] args) {
+        if(!sender.hasPermission("chrdkshop.admin")) {plugin.messages().send(sender,"tools.permission");return true;}
+        if(sender instanceof Player player&&(plugin.coreApi()==null||!plugin.coreApi().isAuthenticated(player))) {
+            plugin.messages().send(sender,"trading.need-auth");return true;
+        }
         if (args.length == 0) {
             plugin.messages().send(sender, "admin.usage");
             return true;
@@ -231,6 +254,10 @@ public final class ShopCommandHandler implements TabExecutor {
                 plugin.messages().send(sender,"trading.recovery-status","healthy",store.legacyAvailable(),"binding",plugin.coreApi().shopRegistered(store.market()),"market",store.market(),"sequence",store.sequence(),
                     "pending",pending==null?"нет":pending.trade().transaction(),"owner",pending==null?"—":pending.trade().owner(),
                     "bank",pending==null?"—":plugin.coreApi().shopExchangeStatus(pending.trade()));
+            }
+            case "audit" -> {
+                var a=plugin.shopService().auditQuotes();
+                plugin.messages().send(sender,"tools.audit","items",a.items(),"buyOnly",a.buyOnly(),"errors",a.errors(),"capped",a.capped());
             }
             case "stock" -> handleAdminStock(sender, args);
             case "top" -> handleAdminTop(sender);
@@ -323,7 +350,7 @@ public final class ShopCommandHandler implements TabExecutor {
         String prefix = args[args.length - 1].toLowerCase(Locale.ROOT);
         if ("shopadmin".equalsIgnoreCase(command.getName())) {
             if (args.length == 1) {
-                addMatches(matches, prefix, List.of("stock", "top", "reload", "recovery"));
+                addMatches(matches, prefix, List.of("stock", "top", "reload", "recovery", "audit"));
             } else if (args.length == 2 && "stock".equalsIgnoreCase(args[0])) {
                 addItemMatches(matches, prefix);
             }
@@ -335,8 +362,9 @@ public final class ShopCommandHandler implements TabExecutor {
         switch (args.length) {
             case 1 -> addMatches(matches, prefix,
                     List.of("balance", "deposit", "withdraw", "price", "find", "buy", "sell",
-                            "sellall", "stats"));
+                            "sellall", "stats", "quote"));
             case 2 -> {
+                if("quote".equalsIgnoreCase(args[0])) addMatches(matches,prefix,List.of("buy","sell"));
                 if ("price".equalsIgnoreCase(args[0]) || "buy".equalsIgnoreCase(args[0])
                         || "sell".equalsIgnoreCase(args[0]) || "find".equalsIgnoreCase(args[0])) {
                     addItemMatches(matches, prefix);
@@ -344,7 +372,9 @@ public final class ShopCommandHandler implements TabExecutor {
                     addMatches(matches, prefix, List.of("all", "hand"));
                 }
             }
+            case 4 -> { if("quote".equalsIgnoreCase(args[0])) addMatches(matches,prefix,List.of("1","16","64")); }
             case 3 -> {
+                if("quote".equalsIgnoreCase(args[0])) addItemMatches(matches,prefix);
                 if ("sell".equalsIgnoreCase(args[0])) {
                     addMatches(matches, prefix, List.of("1", "8", "16", "32", "64", "all"));
                 } else if ("buy".equalsIgnoreCase(args[0])) {

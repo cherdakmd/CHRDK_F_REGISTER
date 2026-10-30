@@ -16,6 +16,9 @@ import java.util.Map;
 public final class ClaimsService {
 
     private final ClaimsPlugin plugin;
+    private final ru.cherdakmd.chrdkregister.api.EconomyConfirmations confirmations = new ru.cherdakmd.chrdkregister.api.EconomyConfirmations();
+    private final Map<java.util.UUID,Long> budgetWarnings = new java.util.HashMap<>();
+    private record SellbackQuote(Claim claim, String owner, int price, long paidUntil, int debt, int salePrice) { }
 
     public ClaimsService(ClaimsPlugin plugin) {
         this.plugin = plugin;
@@ -284,9 +287,12 @@ public final class ClaimsService {
     }
 
     /** Мгновенный обратный выкуп сервером за sellbackPercent от цены. */
-    public void sellback(Player player) {
-        if(!mutation(player)) return;
-        if (plugin.coreApi() == null || !plugin.coreApi().isAuthenticated(player) || player.getGameMode() != org.bukkit.GameMode.SURVIVAL) {
+    public void sellback(Player player) { sellback(player,false); }
+    public void sellback(Player player, boolean confirm) {
+        if(!plugin.financeReadReady()) {plugin.messages().send(player,"finance.unavailable");return;}
+        if (plugin.coreApi() == null || !plugin.coreApi().isAuthenticated(player) || !player.isOnline() || player.isDead() || player.hasMetadata("NPC")
+                || (!player.hasPermission("chrdkclaims.use")&&!player.hasPermission("chrdkclaims.admin"))
+                || player.getGameMode() != org.bukkit.GameMode.SURVIVAL) {
             plugin.messages().send(player,"finance.unavailable"); return;
         }
         Claim claim = ownClaimHere(player, "sell-not-yours");
@@ -295,6 +301,15 @@ public final class ClaimsService {
         }
         if (rentalLocked(player, List.of(claim))) return;
         int reward = plugin.config().sellbackIn(claim.world);
+        var quote=new SellbackQuote(claim,claim.owner,reward,claim.paidUntil,claim.debtDays,claim.salePrice);
+        if(confirm&&!confirmations.consume(player.getUniqueId(),player,quote,System.nanoTime())) {
+            plugin.messages().send(player,"finance.confirm-missing");return;
+        }
+        if(!confirm) {
+            if(!confirmations.offer(player.getUniqueId(),player,quote,System.nanoTime())) {plugin.messages().send(player,"finance.confirm-busy");return;}
+            plugin.messages().send(player,"finance.sellback-preview","reward",reward,"where",claim.where());return;
+        }
+        if (!mutation(player)) return;
         if (!ClaimLand.sellback(plugin.store(),claim,reward)) {
             plugin.messages().send(player, "finance.unavailable"); return;
         }
@@ -846,44 +861,29 @@ public final class ClaimsService {
         }
     }
 
-    /** Предупреждение после входа: казны не хватает на ближайшую ренту. */
+    /** Read-only: резерв включает свои чанки и активные допустимые продления аренды. */
+    public void budget(Player player, int days) {
+        if(plugin.coreApi()==null||!plugin.coreApi().isAuthenticated(player)||!plugin.financeReadReady()) {
+            plugin.messages().send(player,"finance.unavailable");return;
+        }
+        long balance=plugin.coreApi().bankBalance(player.getName());
+        var b=ClaimBudget.calculate(plugin.store().all(),plugin.config(),player.getName(),balance,days,System.currentTimeMillis());
+        plugin.messages().send(player,"finance.budget","days",days,"owned",b.owned(),"rentals",b.rentals(),
+                "upkeep",b.upkeep(),"rental",b.rental(),"debt",b.debt(),"reserve",b.reserve(),"balance",balance,
+                "shortage",b.shortage(),"coverage",b.fullDays());
+    }
+
+    /** После авторизации — не чаще раза в пять минут; только RAM и ограниченная таблица. */
     public void sendRentReminder(Player player) {
-        ClaimsConfig cfg = plugin.config();
-        if (!cfg.notifyRent) {
-            return;
-        }
-        List<Claim> claims = plugin.store().ofOwner(player.getName());
-        if (claims.isEmpty()) {
-            return;
-        }
-        long now = System.currentTimeMillis();
-        long earliest = Long.MAX_VALUE;
-        int chunks = 0;
-        long needTotal = 0;
-        for (Claim claim : claims) {
-            if (!cfg.worldEnabled(claim.world)) {
-                continue;
-            }
-            int rent = cfg.upkeepIn(claim.world);
-            if (rent <= 0) {
-                continue;
-            }
-            chunks++;
-            needTotal += (long) rent * (1L + Math.max(0, claim.debtDays));
-            earliest = Math.min(earliest, claim.paidUntil);
-        }
-        if (chunks == 0) {
-            return;
-        }
-        int balance = plugin.store().treasuryOf(player.getName());
-        int need = (int) Math.min(Integer.MAX_VALUE, needTotal);
-        if (balance >= need) {
-            return;
-        }
-        plugin.messages().send(player, "finance.rent-warning",
-                "balance", String.valueOf(balance),
-                "need", String.valueOf(need),
-                "date", formatDate(earliest == Long.MAX_VALUE ? now : earliest));
+        if(!plugin.config().notifyRent||plugin.coreApi()==null||!plugin.coreApi().isAuthenticated(player)||!plugin.financeReadReady()) return;
+        long now=System.nanoTime();
+        budgetWarnings.values().removeIf(t->now-t<0||now-t>=300_000_000_000L);
+        if(budgetWarnings.containsKey(player.getUniqueId())||budgetWarnings.size()>=4096) return;
+        long balance=plugin.coreApi().bankBalance(player.getName());
+        var b=ClaimBudget.calculate(plugin.store().all(),plugin.config(),player.getName(),balance,3,System.currentTimeMillis());
+        if(b.shortage().signum()==0) return;
+        budgetWarnings.put(player.getUniqueId(),now);
+        plugin.messages().send(player,"finance.budget-warning","balance",balance,"reserve",b.reserve(),"shortage",b.shortage());
     }
 
     public boolean rentalLocked(org.bukkit.command.CommandSender actor, List<Claim> claims) {

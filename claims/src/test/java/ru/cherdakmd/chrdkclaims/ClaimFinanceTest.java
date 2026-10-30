@@ -43,6 +43,13 @@ class ClaimFinanceTest {
     Path file() {return dir.resolve("claims/claims-data.json");}
     Claim claim() {var c=new Claim("world",0,0,"Owner",now);c.members.add("Friend");c.setRole("Friend",Claim.Role.ACCESS);store.add(c);return c;}
     boolean buy() {return ClaimLand.buy(store,"world",0,0,"Buyer",30,now+ClaimMath.DAY_MILLIS);}
+    @Test void readReadyCannotRegisterImportFundsRecoverOrChangeEitherSnapshot() {
+        start();String source=store.domainJson(),root=bank.root.snapshotJson();
+        assertTrue(store.finance.readReady());assertEquals(source,store.domainJson());assertEquals(root,bank.root.snapshotJson());
+        var fresh=new ClaimStore(dir.resolve("fresh"),log);fresh.load();
+        assertFalse(new ClaimFinance(fresh,bank).readReady());assertFalse(fresh.financialRegistered());assertEquals(root,bank.root.snapshotJson());
+        bank.hide=true;assertFalse(store.finance.readReady());assertEquals(source,store.domainJson());assertEquals(root,bank.root.snapshotJson());
+    }
     @Test void newLandAndStatisticsAppearOnlyWithDurableDebit() {start();assertTrue(buy());assertEquals(70,bank.balance("Buyer"));assertEquals("Buyer",store.claimAt("world",0,0).owner);assertEquals(30,store.diamondsSpent());assertEquals(1,store.financialSequence());restart();assertEquals(30,store.diamondsSpent());assertEquals(70,bank.balance("Buyer"));}
     @Test void unknownCommitKeepsBeforeLiveAndProtectsPendingNewChunk() {start();bank.hideAfterCommit=true;assertFalse(buy());assertNull(store.claimAt("world",0,0));assertNotNull(store.protectedClaimAt("world",0,0));assertEquals(0,store.diamondsSpent());assertEquals(70,bank.balance("Buyer"));assertTrue(store.finance.busy());restart();assertEquals("Buyer",store.claimAt("world",0,0).owner);assertEquals(70,bank.balance("Buyer"));assertEquals(30,store.diamondsSpent());}
     @Test void pendingPreventsAnotherPurchaseEvenForAnotherChunk() {start();bank.hideAfterCommit=true;buy();assertFalse(ClaimLand.buy(store,"world",1,0,"Buyer",30,now+1));assertEquals(70,bank.balance("Buyer"));assertNull(store.claimAt("world",1,0));}

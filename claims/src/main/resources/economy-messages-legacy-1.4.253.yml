@@ -1,0 +1,9 @@
+# Только точные старые тексты: пользовательские переводы не заменяются.
+messages:
+  usage: <gray>/claim — купить чанк · menu · tp [x z] · info [x z] · map [радиус] · list [стр] · forsale [стр] · near [радиус]
+    · borders · notices [on|off] · greeting [текст|снять] · rent · clan · unclaim [all confirm] · add/remove <ник> [доступ|контейнеры|полный]
+    [все] · transfer <ник> · deposit [n|все] · withdraw <n> · balance · sell <цена|снять> · sellback · buy [x z] · help</gray>
+  finance:
+    usage: <gray>/claim — купить чанк · menu · tp [x z] · info [x z] · map [радиус] · list [стр] · forsale [стр] · near [радиус]
+      · borders · notices [on|off] · greeting [текст|снять] · rent · clan · unclaim [all confirm] · add/remove <ник> [доступ|контейнеры|полный]
+      [все] · transfer <ник> · balance (личный /bal) · sell <цена|снять> · sellback · buy [x z] · help</gray>
