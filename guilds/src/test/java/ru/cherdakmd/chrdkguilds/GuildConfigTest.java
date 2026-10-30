@@ -51,7 +51,7 @@ class GuildConfigTest {
         assertEquals(defaults.warAcceptSeconds(), config.warAcceptSeconds());
         assertEquals(defaults.killWindowSeconds(), config.killWindowSeconds());
         assertTrue(defaults.claimedBonus());
-        assertEquals(27, defaults.creationCost());
+        assertEquals(270, defaults.creationCost());
     }
 
     @Test

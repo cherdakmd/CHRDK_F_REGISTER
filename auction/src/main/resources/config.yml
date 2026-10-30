@@ -4,10 +4,10 @@
 # Нужен CHRDK_Core API 15+. При сбое банка fallback к выдаче алмазов запрещён.
 # CHRDK_Auction — обычные алмазы, НЕ Vault и НЕ реальные деньги.
 market:
-  min-price: 20
+  min-price: 100
   max-price: 100000
   # Комиссия фиксируется при выставлении; округление ВВЕРХ до целого алмаза.
-  fee-percent: 5
+  fee-percent: 10
   duration-hours: 48
   # Лимит лотов по ступени ранга (1.4.167): [без ранга, I..V]. Пусто — max-per-player.
   rank-lots: [10, 12, 15, 18, 24, 30]

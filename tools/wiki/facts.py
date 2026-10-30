@@ -20,6 +20,8 @@ FIELDS = {
     "boost_bank": ("core", "reward-boost.max-bank-hours"),
     "welcome_boost": ("core", "reward-boost.welcome-hours"),
     "claim_price": ("claims", "pricing.chunk-price"),
+    "rent_min": ("claims", "pricing.rental-min-per-day"),
+    "sethome_cost": ("teleports", "costs.sethome-diamonds"),
     "claim_upkeep": ("claims", "pricing.upkeep-per-day"),
     "claim_grace": ("claims", "pricing.grace-days"),
     "claim_tax": ("claims", "taxes.sale-tax-percent"),
@@ -294,12 +296,13 @@ class FactBook:
             )
         if name == "shop":
             return table(
-                ["Материал / ID", "Раздел", "База за штуку, алм.", "Обратная скупка"],
+                ["Материал / ID", "Раздел", "База mid за штуку, алм.", "Тариф покупки", "Обратная скупка"],
                 [
                     (
                         f"`{r['material'].lower()}`",
                         r["category"],
                         r["base-price"],
+                        "×" + str(c["diamond-shop"]["pricing"]["purchase-multipliers"][r["category"]]),
                         "да" if r.get("sell-enabled", True) else "нет",
                     )
                     for r in c["diamond-shop"]["items"]

@@ -78,8 +78,8 @@ public final class GuildConfig {
 
     /** Умолчания: гильдии включены, войны включены, цена создания 27 алмазов. */
     public static GuildConfig defaults() {
-        return new GuildConfig(true, "ru", true, true, 27, 120, 200, 3, 16, 2, 5,
-                true, 32, 1_024, 3_600, 300, 3_600, 300, true, 2);
+        return new GuildConfig(true, "ru", true, true, 270, 120, 200, 3, 16, 2, 5,
+                true, 320, 10_240, 3_600, 300, 3_600, 300, true, 2);
     }
 
     /** Разбирает конфиг; {@code null} допустим — действуют умолчания. */

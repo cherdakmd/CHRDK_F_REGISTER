@@ -45,7 +45,7 @@ public final class ShopService {
     }
     public int batchSize(ShopConfig.ShopItem item) { return batches.getOrDefault(item.material(),0); }
     public long askPrice(ShopConfig.ShopItem item) {
-        long price=WholeTrades.price(PriceEngine.ask(priceOf(item),config.spreadPercent()),batchSize(item),true);
+        long price=WholeTrades.price(PriceEngine.ask(priceOf(item),config.spreadPercent()),batchSize(item),true,item.purchaseMultiplier());
         long currency=(long)config.currencyRates().getOrDefault(item.material(),0)*batchSize(item);
         return Math.max(price,currency)>WholeTrades.MAX ? -1 : Math.max(price,currency);
     }

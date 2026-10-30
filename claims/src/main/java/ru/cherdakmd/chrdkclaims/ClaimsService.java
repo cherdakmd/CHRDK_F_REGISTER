@@ -294,8 +294,7 @@ public final class ClaimsService {
             return;
         }
         if (rentalLocked(player, List.of(claim))) return;
-        int reward = ClaimMath.sellbackReward(
-                plugin.config().priceIn(claim.world), plugin.config().sellbackPercent);
+        int reward = plugin.config().sellbackIn(claim.world);
         if (!ClaimLand.sellback(plugin.store(),claim,reward)) {
             plugin.messages().send(player, "finance.unavailable"); return;
         }
@@ -941,10 +940,15 @@ public final class ClaimsService {
             plugin.messages().send(player, "unclaim-none"); return;
         }
         long now = System.currentTimeMillis();
+        int minimum = plugin.config().rentalMinPerDay;
+        if ((action.equals("offer") && price > 0 && price < minimum)
+                || (action.equals("take") && claim.rentOffer > 0 && claim.rentOffer < minimum)) {
+            plugin.messages().send(player, "finance.rent-minimum", "min", minimum); return;
+        }
         String refusal;
         switch (action) {
-            case "offer" -> refusal = ClaimRentals.offer(plugin.store(), claim, player.getName(), price, now);
-            case "take" -> refusal = ClaimRentals.take(plugin.store(), claim, player.getName(), price, now, serverRent(claim));
+            case "offer" -> refusal = ClaimRentals.offer(plugin.store(), claim, player.getName(), price, now, minimum);
+            case "take" -> refusal = ClaimRentals.take(plugin.store(), claim, player.getName(), price, now, serverRent(claim), minimum);
             case "stop" -> refusal = ClaimRentals.stop(plugin.store(), claim, player.getName());
             default -> { plugin.messages().send(player, "finance.rent-usage"); return; }
         }
@@ -973,7 +977,7 @@ public final class ClaimsService {
             if(plugin.finance().busy()) break;
             // Отключённый мир: оплаченный срок сохраняется, новых списаний нет.
             int result = ClaimRentals.settle(plugin.store(), claim, now,
-                    plugin.config().worldEnabled(claim.world) ? serverRent(claim) : -1);
+                    plugin.config().worldEnabled(claim.world) ? serverRent(claim) : -1, plugin.config().rentalMinPerDay);
             if (result != 0) audit(result > 0 ? "rent-renew" : "rent-end", claim.where());
         }
     }

@@ -26,7 +26,7 @@ public record EconomySettings(boolean enabled, int blockWorth, long minPay, long
 
     /** Значения по умолчанию, если секция отсутствует целиком. */
     public static final EconomySettings DEFAULTS =
-            new EconomySettings(true, 9, 1L, 1_000_000L, 0, 2, 10, true);
+            new EconomySettings(true, 9, 1L, 1_000_000L, 2, 2, 10, true);
 
     public EconomySettings {
         blockWorth = Math.clamp(blockWorth, 1, 64);

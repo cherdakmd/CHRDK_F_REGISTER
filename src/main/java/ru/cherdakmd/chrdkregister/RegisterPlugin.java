@@ -64,6 +64,7 @@ public final class RegisterPlugin extends JavaPlugin {
     public void onEnable() {
         migrateLegacyDataFolder();
         saveDefaultConfig();
+        ru.cherdakmd.chrdkregister.api.EconomyTariffMigration.apply(this);
         OptionalTotpMigration.apply(this);
         PresentationMigration.apply(this);
         PluginConfig config = PluginConfig.fromBukkitConfig(getConfig());
@@ -338,6 +339,7 @@ public final class RegisterPlugin extends JavaPlugin {
 
     public void reloadPluginConfig() {
         reloadConfig();
+        ru.cherdakmd.chrdkregister.api.EconomyTariffMigration.apply(this);
         OptionalTotpMigration.apply(this);
         PresentationMigration.apply(this);
         PluginConfig updated = PluginConfig.fromBukkitConfig(getConfig());

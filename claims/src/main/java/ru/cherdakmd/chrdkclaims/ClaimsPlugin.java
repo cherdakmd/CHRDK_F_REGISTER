@@ -187,11 +187,13 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
     /** Перечитывает config.yml/messages.yml. */
     public void reloadClaimsConfig() {
         reloadConfig();
+        ru.cherdakmd.chrdkregister.api.EconomyTariffMigration.apply(this);
         // Старый config.yml получает новые стоковые значения уведомлений один раз.
         // Файл правится построчно: комментарии и порядок ключей сохраняются.
         if (ClaimNoticeMigration.apply(getDataFolder().toPath().resolve("config.yml"),
                 getDataFolder().toPath(), getLogger())) {
             reloadConfig();
+        ru.cherdakmd.chrdkregister.api.EconomyTariffMigration.apply(this);
         }
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);

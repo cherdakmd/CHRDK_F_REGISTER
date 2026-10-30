@@ -85,7 +85,7 @@ class GuildServiceTest {
         assertEquals("tag-short", s.checkCreate(LEADER, "Орден", "!!").key());
         assertEquals("tag-short", s.checkCreate(LEADER, "Орден", "A!").key());
         assertEquals("tag-long", s.checkCreate(LEADER, "Орден", "AB!!!!!!").key());
-        assertTrue(s.create(new Purse().put(LEADER,100), LEADER, "Орден", "AB", NOW).ok());
+        assertTrue(s.create(new Purse().put(LEADER,1000), LEADER, "Орден", "AB", NOW).ok());
         assertEquals("tag-short", s.retag(LEADER,"!!").key());
         assertEquals("AB", s.guildOf(LEADER).tag());
     }
@@ -96,7 +96,7 @@ class GuildServiceTest {
     void createTakesDiamondsAndRejectsInvalidNames(@TempDir Path dir) {
         GuildService service = service(GuildConfig.defaults(), store(dir));
         Purse purse = new Purse();
-        purse.put(LEADER, 100);
+        purse.put(LEADER, 1000);
 
         assertEquals("name-short", service.create(purse, LEADER, "ab", "AB", NOW).key());
         assertEquals("tag-short", service.create(purse, LEADER, "Орден", "A", NOW).key());
@@ -107,8 +107,8 @@ class GuildServiceTest {
         assertTrue(created.ok(), created.key());
         assertEquals("Орден", created.args().get(1));
         assertEquals("ORD", created.args().get(3), "тег приводится к заглавным");
-        assertEquals(100 - 27, purse.balance.get(LEADER));
-        assertEquals(27, purse.taken);
+        assertEquals(1000 - 270, purse.balance.get(LEADER));
+        assertEquals(270, purse.taken);
 
         Guild guild = service.guildOf(LEADER);
         assertNotNull(guild);
@@ -133,8 +133,8 @@ class GuildServiceTest {
     void namesAndTagsAreUnique(@TempDir Path dir) {
         GuildService service = service(GuildConfig.defaults(), store(dir));
         Purse purse = new Purse();
-        purse.put(LEADER, 100);
-        purse.put(RIVAL, 100);
+        purse.put(LEADER, 1000);
+        purse.put(RIVAL, 1000);
         assertTrue(service.create(purse, LEADER, "Орден", "ORD", NOW).ok());
         assertEquals("name-taken", service.create(purse, RIVAL, "орден", "TWO", NOW).key());
         assertEquals("tag-taken", service.create(purse, RIVAL, "Другой", "ord", NOW).key());
@@ -158,7 +158,7 @@ class GuildServiceTest {
     void inviteRespectsRankAndCapacity(@TempDir Path dir) {
         GuildService service = service(GuildConfig.defaults(), store(dir));
         Purse purse = new Purse();
-        purse.put(LEADER, 100);
+        purse.put(LEADER, 1000);
         service.create(purse, LEADER, "Орден", "ORD", NOW);
 
         assertEquals("target-self", service.invite(LEADER, LEADER, NOW).key());
@@ -328,7 +328,7 @@ class GuildServiceTest {
         Guild guild = service.guildOf(LEADER);
 
         assertEquals("upgrade-no-money", service.upgrade(LEADER).key());
-        guild.deposit(64);
+        guild.deposit(640);
         GuildResult result = service.upgrade(LEADER);
         assertTrue(result.ok(), result.key());
         assertEquals(2, guild.level());
@@ -336,12 +336,12 @@ class GuildServiceTest {
         assertEquals("II", result.args().get(1));
         assertEquals("14", result.args().get(3));
 
-        guild.deposit(2_000);
+        guild.deposit(20_000);
         service.upgrade(LEADER);
         service.upgrade(LEADER);
         service.upgrade(LEADER);
         assertEquals(GuildMath.MAX_LEVEL, guild.level());
-        assertEquals(656L, guild.treasury(), "192 + 384 + 768 ушли из казны");
+        assertEquals(6560L, guild.treasury(), "1920 + 3840 + 7680 ушли из казны");
         assertEquals("upgrade-max", service.upgrade(LEADER).key());
     }
 

@@ -30,8 +30,8 @@ class HomeFinanceTest {
         assertEquals(HomeStore.financeValue(point),source.values().get(HomeStore.financeKey(owner,point.name())));
     }
     @Test void actualTeleportPricesCannotBeZeroButSettingPointCan() {
-        var c=new org.bukkit.configuration.file.YamlConfiguration(); c.set("costs.home-diamonds",0); c.set("costs.rtp-diamonds",0); c.set("costs.tpa-diamonds",0);
-        var parsed=TpConfig.parse(c,Logger.getAnonymousLogger()); assertEquals(1,parsed.costHome()); assertEquals(1,parsed.costRtp()); assertEquals(1,parsed.costTpa()); assertEquals(0,parsed.costSethome());
+        var c=new org.bukkit.configuration.file.YamlConfiguration(); c.set("costs.sethome-diamonds",0); c.set("costs.home-diamonds",0); c.set("costs.rtp-diamonds",0); c.set("costs.tpa-diamonds",0);
+        var parsed=TpConfig.parse(c,Logger.getAnonymousLogger()); assertEquals(10,parsed.costHome()); assertEquals(10,parsed.costRtp()); assertEquals(10,parsed.costTpa()); assertEquals(0,parsed.costSethome());
     }
     @Test void tpaPriceIsFrozenInRequestRatherThanReloadedAfterAcceptance() {
         var r=new TpaRequests(); var target=UUID.randomUUID();

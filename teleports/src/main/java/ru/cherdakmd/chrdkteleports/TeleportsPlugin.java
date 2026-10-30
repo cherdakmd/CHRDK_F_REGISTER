@@ -98,6 +98,7 @@ public final class TeleportsPlugin extends JavaPlugin implements org.bukkit.even
     /** Перечитывает config.yml/messages.yml. */
     public void reloadTeleportsConfig() {
         reloadConfig();
+        ru.cherdakmd.chrdkregister.api.EconomyTariffMigration.apply(this);
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
         this.config = TpConfig.parse(getConfig(), getLogger());

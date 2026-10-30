@@ -15,7 +15,7 @@ general:
 
 tickets:
   # Цена одного билета в алмазах
-  cost-diamonds: 2
+  cost-diamonds: 20
   # Максимум билетов на игрока в одном розыгрыше (0 = без лимита)
   max-per-player: 64
   # Максимум билетов за одну команду /lottery buy <n>
