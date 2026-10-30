@@ -56,8 +56,10 @@ public final class ShopCommandHandler implements TabExecutor {
         }
         String sub = args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
-            case "balance", "bal" -> plugin.messages().send(player, "trading.balance",
-                    "balance", plugin.shopService().balance(player), "physical", plugin.shopService().physical(player));
+            case "balance", "bal" -> {
+                plugin.messages().send(player, "trading.balance", "balance", plugin.shopService().balance(player), "physical", plugin.shopService().physical(player));
+                plugin.messages().send(player, "quantity.sale-remainder", "remainder", plugin.shopService().saleRemainder(player));
+            }
             case "deposit", "dep", "withdraw", "draw" -> plugin.messages().send(player, "trading.bank-commands");
             case "price" -> handlePrice(player, args);
             case "find", "search" -> handleFind(player, args);
