@@ -156,7 +156,7 @@ public final class SkillListener implements Listener {
                 && service.perksFor(player, SkillType.FARMING).flag(SkillPerk.Kind.AUTO_REPLANT));
     }
 
-    /** Запоминаем поставленные блоки — с них опыта не будет. */
+    /** Запоминаем поставленные блоки — смена игрока не возвращает XP и двойной дроп. */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event) {
         // Свой возраст-0 росток не является поставленной игроком зрелой культурой/рудой.
