@@ -28,6 +28,29 @@ class WikiBuildTest(unittest.TestCase):
         cls.root = HERE.parents[1]
         cls.book = FactBook(cls.root)
 
+    def test_economy_guides_keep_consent_and_carry_distinct(self):
+        faq = (self.root / "wiki/faq.md").read_text()
+        self.assertIn("точно сохраняет неоплаченную долю", faq)
+        self.assertNotIn("если они не\nувеличивают выплату", faq)
+        self.assertIn("без `confirm`", faq)
+        self.assertIn("30 секунд", faq)
+        self.assertIn("личного `/bal` арендатора", " ".join(faq.split()))
+        start = (self.root / "wiki/start.md").read_text()
+        self.assertIn("/sethome base confirm", start)
+        self.assertIn("/homes prices", start)
+        commands = (self.root / "wiki/commands.md").read_text()
+        self.assertIn("/pay Alex 100 preview", commands)
+        self.assertIn("/pay Alex 100 confirm", commands)
+        self.assertIn("/shop quote buy iron_ingot 3", commands)
+        readme = (self.root / "README.md").read_text()
+        shop = readme.split("## Аддон CHRDK_DiamondShop —", 1)[1].split("\n---\n", 1)[0]
+        self.assertIn("249 товаров", shop)
+        self.assertIn("/shop quote", shop)
+        self.assertIn("точная неоплаченная доля", shop)
+        self.assertNotIn("/shop withdraw 32", shop)
+        self.assertIn("/pay <ник> <сумма> confirm", readme)
+
+
     def test_all_pages_and_modules_are_covered(self):
         self.assertEqual([], freshness.check(self.root))
         info = json.loads((self.root / "site/build-info.json").read_text())

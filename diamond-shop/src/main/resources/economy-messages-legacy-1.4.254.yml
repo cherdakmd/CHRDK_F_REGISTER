@@ -1,0 +1,10 @@
+# Только точные старые строки справки; пользовательские переводы сохраняются.
+messages:
+  shop:
+    usage: <gray>/shop — открыть магазин; /shop balance | deposit [hand|all] | withdraw <n> | price <товар> | find <текст>
+      | quote buy|sell <товар> <количество> | buy <товар> <партий> | sell <товар> [партий|all] | stats</gray>
+  trading:
+    usage: <gray>/shop — открыть магазин; /shop balance | deposit [hand|all] | withdraw <n> | price <товар> | find <текст>
+      | quote buy|sell <товар> <количество> | buy <товар> <партий> | sell <товар> [партий|all] | stats</gray>
+  admin:
+    usage: <gray>/shopadmin stock <товар> [значение] | top | reload</gray>

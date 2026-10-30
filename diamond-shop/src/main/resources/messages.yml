@@ -2,7 +2,7 @@ messages:
   "shop":
     "no-api": "<red>Ядро CHRDK_F_REGISTER не найдено — магазин недоступен.</red>"
     "need-auth": "<red>Сначала войдите на сервер (/login), потом используйте магазин.</red>"
-    "usage": "<gray>/shop — открыть магазин; /shop balance | deposit [hand|all] | withdraw <n> | price <товар> | find <текст> | quote buy|sell <товар> <количество> | buy <товар> <партий> | sell <товар> [партий|all] | stats</gray>"
+    "usage": "<gray>/shop — открыть магазин; /shop balance | deposit [hand|all] | withdraw <n> | price <товар> | find <текст> | quote buy|sell <товар> <количество> | buy <товар> <штук> | sell <товар> [штук|all] | stats</gray>"
     "balance": "<gray>Личный счёт /bal: <aqua>%balance% ⛁</aqua>. В инвентаре: <aqua>%physical% ⛁</aqua>. Сначала счёт, затем недостача предметами.</gray>"
     "bank-commands": "<yellow>Отдельного счёта магазина больше нет. Пополнение: /bal deposit [all|hand|сумма]; снятие: /bal withdraw <сумма>. Для покупки заранее пополнять счёт не обязательно.</yellow>"
     "unavailable": "<red>Сделка недоступна: проверьте авторизацию, Survival, право магазина и актуальное ядро с включённым банком. Возможен предел счёта или неперенесённый старый остаток — деньги сохранены. Некорректная котировка также отклоняется.</red>"
@@ -67,7 +67,7 @@ messages:
     "storage-unavailable": "<red>Хранилище магазина остановлено после ошибки чтения или записи. Изменение запасов запрещено. Сохраните shop-data.json и согласованные резервные копии для сверки; reload не снимает блокировку.</red>"
     "no-api": "<red>Ядро CHRDK_F_REGISTER не найдено — магазин недоступен.</red>"
     "need-auth": "<red>Сначала войдите на сервер (/login), потом используйте магазин.</red>"
-    "usage": "<gray>/shop — открыть магазин; /shop balance | deposit [hand|all] | withdraw <n> | price <товар> | find <текст> | quote buy|sell <товар> <количество> | buy <товар> <партий> | sell <товар> [партий|all] | stats</gray>"
+    "usage": "<gray>/shop — открыть магазин; /shop balance | deposit [hand|all] | withdraw <n> | price <товар> | find <текст> | quote buy|sell <товар> <количество> | buy <товар> <штук> | sell <товар> [штук|all] | stats</gray>"
     "balance": "<gray>Личный счёт /bal: <aqua>%balance% ⛁</aqua>. В инвентаре: <aqua>%physical% ⛁</aqua>. Сначала счёт, затем недостача предметами.</gray>"
     "bank-commands": "<yellow>Отдельного счёта магазина больше нет. Пополнение: /bal deposit [all|hand|сумма]; снятие: /bal withdraw <сумма>. Для покупки заранее пополнять счёт не обязательно.</yellow>"
     "unavailable": "<red>Сделка недоступна: проверьте авторизацию, Survival, право магазина и актуальное ядро с включённым банком. Возможен предел счёта или неперенесённый старый остаток — деньги сохранены. Некорректная котировка также отклоняется.</red>"
@@ -125,7 +125,7 @@ messages:
         - "<yellow>ЛКМ — купить 1 партию | Shift+ЛКМ — 16 партий</yellow>"
         - "<yellow>ПКМ — продать 1 партию | Shift+ПКМ — 16 партий</yellow>"
   "admin":
-    "usage": "<gray>/shopadmin stock <товар> [значение] | top | reload</gray>"
+    "usage": "<gray>/shopadmin stock <товар> [значение] | top | reload | recovery | audit</gray>"
     "stock-info": "<gray>%material%: запас %stock%</gray>"
     "stock-set": "<green>%material%: запас установлен %stock%.</green>"
     "top-header": "<gold>=== Самые движимые товары ===</gold>"
