@@ -74,4 +74,11 @@ class ClassRespecQuoteTest {
         assertThrows(IllegalArgumentException.class,
                 () -> ClassRespecQuote.create(initial(), -1));
     }
+    @Test
+    void unconfirmedInvestmentCannotBeOfferedAsFullRefund() {
+        var deficit = basis(NOW, Set.of("warrior-stoyka-1", "warrior-stoyka-2"),
+                0, 0, 0, NOW - 1000, 0, initial().rules());
+        assertEquals(2, deficit.deficit());
+        assertThrows(IllegalArgumentException.class, () -> ClassRespecQuote.create(deficit, COOLDOWN));
+    }
 }

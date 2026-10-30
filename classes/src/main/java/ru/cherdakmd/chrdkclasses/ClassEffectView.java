@@ -10,7 +10,10 @@ record ClassEffectView(EffectKind kind, double passive, double talents) {
     }
     double raw() { return passive + talents; }
     double effective() { return ClassMath.total(kind, raw()); }
-    double clipped() { return Math.max(0, raw() - effective()); }
+    double clipped() {
+        double difference = raw() - effective();
+        return difference < 0.000000001 ? 0 : difference;
+    }
     double gain(double added) {
         if (!Double.isFinite(added) || added < 0) {
             throw new IllegalArgumentException("Некорректная прибавка таланта");

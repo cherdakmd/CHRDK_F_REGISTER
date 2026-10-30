@@ -34,6 +34,7 @@ class ClassPassportTest {
         assertEquals(0.15, view.effective(), 0.000001);
         assertEquals(0.05, view.clipped(), 0.000001);
         assertEquals(0, view.gain(0.03), 0.000001);
+        assertEquals(0, new ClassEffectView(EffectKind.MOVEMENT_SPEED, 0.15, 0.000000000000001).clipped());
         ClassEffectView partial = new ClassEffectView(EffectKind.MOVEMENT_SPEED, 0.1, 0.03);
         assertEquals(0.02, partial.gain(0.05), 0.000001);
         assertThrows(IllegalArgumentException.class, () -> partial.gain(Double.NaN));

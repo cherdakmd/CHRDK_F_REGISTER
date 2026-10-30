@@ -237,6 +237,10 @@ final class ClassesGui implements Listener {
             open(player);
             return;
         }
+        if (snapshot.basis().deficit() > 0) {
+            plugin.messages().send(player, "respec-budget-unconfirmed");
+            return;
+        }
         if (plugin.store().talentCount(id) == 0) {
             plugin.messages().send(player, "respec-empty");
             return;
@@ -478,6 +482,10 @@ final class ClassesGui implements Listener {
         if (current == candidate) {
             lore.add(plugin.messages().get("menu-confirm-same"));
             return button(Material.GRAY_DYE, "menu-confirm-name", lore);
+        }
+        if (current != null && service.spentPoints(id) > service.earnedPoints(id)) {
+            return button(Material.GRAY_DYE, "menu-confirm-name",
+                    List.of(plugin.messages().get("class-budget-unconfirmed")));
         }
         long left = service.changeCooldownLeft(id, System.currentTimeMillis());
         if (left > 0) {

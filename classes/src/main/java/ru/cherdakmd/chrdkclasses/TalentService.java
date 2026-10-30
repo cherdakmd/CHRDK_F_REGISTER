@@ -238,6 +238,9 @@ public final class TalentService {
         if (current == target) {
             return ClassResult.fail("class-same", "class", target.id());
         }
+        if (current != null && spentPoints(player) > earnedPoints(player)) {
+            return ClassResult.fail("class-budget-unconfirmed");
+        }
         long left = changeCooldownLeft(player, now);
         if (left > 0) {
             return ClassResult.fail("class-cooldown", "time", ClassMath.clock(left));
@@ -345,6 +348,9 @@ public final class TalentService {
         long left = respecCooldownLeft(player, now);
         if (left > 0) {
             return ClassResult.fail("respec-cooldown", "time", ClassMath.clock(left));
+        }
+        if (spentPoints(player) > earnedPoints(player)) {
+            return ClassResult.fail("respec-budget-unconfirmed");
         }
         int cleared = store.clearTalents(player, now);
         return ClassResult.ok("respec-done", "talents", String.valueOf(cleared),
