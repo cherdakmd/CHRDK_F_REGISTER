@@ -112,7 +112,7 @@ class ClassStoreSafetyTest {
         ClassStore store = load(dir, original);
         store.rename(PLAYER, "Чердак");
         store.flush();
-        assertTrue(Files.readString(store.file()).contains("\"version\": 3"));
+        assertTrue(Files.readString(store.file()).contains("\"version\": 4"));
         try (var paths = Files.list(dir)) {
             List<Path> backups = paths.filter(p -> p.toString().endsWith(".bak")).toList();
             assertEquals(1, backups.size());
@@ -143,7 +143,7 @@ class ClassStoreSafetyTest {
         first.flush();
         ClassStore again = load(dir, original);
         again.flush();
-        assertTrue(Files.readString(again.file()).contains("\"version\": 3"));
+        assertTrue(Files.readString(again.file()).contains("\"version\": 4"));
         Path backup;
         try (var paths = Files.list(dir)) {
             backup = paths.filter(p -> p.toString().endsWith(".bak")).findFirst().orElseThrow();

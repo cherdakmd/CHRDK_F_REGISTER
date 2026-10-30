@@ -71,7 +71,10 @@ public final class ClassesPlaceholders extends PlaceholderExpansion {
             case "level" -> playerClass == null ? "" : Integer.toString(service.level(id));
             case "points" -> playerClass == null ? "" : Integer.toString(service.availablePoints(id));
             case "spent" -> playerClass == null ? "" : Integer.toString(service.spentPoints(id));
-            case "talents" -> playerClass == null ? "" : Integer.toString(plugin.store().talentCount(id));
+            case "talents" -> playerClass == null ? "" : Integer.toString(plugin.store().build(id)==null?0:plugin.store().build(id).ranks().size());
+            case "xp" -> plugin.store().development(id)==null?"":Long.toString(plugin.store().development(id).xp());
+            case "earned" -> Integer.toString(service.earnedPoints(id));
+            case "trials" -> plugin.store().development(id)==null?"":Integer.toString(plugin.store().development(id).trialPoints());
             case "skills_total" -> playerClass == null ? "" : Integer.toString(service.totalSkill(id));
             case "next" -> playerClass == null ? ""
                     : Integer.toString(service.nextLevelIn(id));
@@ -83,11 +86,11 @@ public final class ClassesPlaceholders extends PlaceholderExpansion {
             case "speed" -> number(effects, EffectKind.MOVEMENT_SPEED);
             case "regen" -> number(effects, EffectKind.REGEN);
             case "ability" -> playerClass == null ? ""
-                    : plugin.messages().plain("ability." + playerClass.id() + ".name");
+                    : abilityName(id,1);
             case "ability_ready" -> playerClass == null ? ""
                     : Long.toString((plugin.abilities().cooldownLeft(id, playerClass) + 999L) / 1000L);
             case "ability2" -> playerClass == null ? ""
-                    : plugin.messages().plain("ability." + playerClass.id() + "-2.name");
+                    : abilityName(id,2);
             case "ability2_ready" -> playerClass == null ? ""
                     : Long.toString((plugin.abilities().cooldownLeft(id, playerClass,
                     ClassAbility.SECOND) + 999L) / 1000L);
@@ -99,6 +102,11 @@ public final class ClassesPlaceholders extends PlaceholderExpansion {
                     : Long.toString(service.respecCooldownLeft(id, System.currentTimeMillis()));
             default -> "";
         };
+    }
+
+    private String abilityName(UUID id,int slot) {
+        ClassAbility ability=plugin.service().development().equipped(id,slot);
+        return ability==null?"":plugin.messages().plain("ability."+ability.key()+".name");
     }
 
     /** Эффект в единицах своего вида: проценты без «%», сердца — в сердцах. */

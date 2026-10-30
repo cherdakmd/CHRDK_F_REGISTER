@@ -26,7 +26,7 @@ import java.util.UUID;
 public final class ClassesCommandHandler implements CommandExecutor, TabCompleter {
 
     private static final List<String> SUBS = List.of("help", "menu", "choose", "info", "talents",
-            "learn", "respec", "points", "top", "ability", "passport");
+            "learn", "respec", "points", "top", "ability", "passport", "abilities", "builds");
     private static final List<String> ADMIN_SUBS = List.of("reload", "info", "set", "reset",
             "respec");
 
@@ -68,6 +68,9 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
             plugin.messages().send(sender, "disabled");
             return true;
         }
+        if (sender instanceof Player player && !plugin.ready(player)) {
+            plugin.messages().send(sender,"development-pending"); return true;
+        }
         if (args.length == 0) {
             if (sender instanceof Player player) {
                 plugin.gui().open(player);
@@ -78,6 +81,8 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
         }
         String sub = args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
+            case "abilities" -> { if(sender instanceof Player p) plugin.developmentGui().abilities(p); }
+            case "builds" -> { if(sender instanceof Player p) plugin.developmentGui().builds(p); }
             case "help" -> help(sender);
             case "menu", "passport" -> menu(sender);
             case "choose" -> choose(sender, args);
@@ -185,6 +190,7 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
         }
         UUID id = player.getUniqueId();
         TalentService service = plugin.service();
+        if(service.development()!=null) {plugin.developmentGui().progress(id).forEach(sender::sendMessage);return;}
         PlayerClass playerClass = service.classOf(id);
         if (playerClass == null) {
             plugin.messages().send(sender, "info-none");
@@ -267,7 +273,7 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
             return;
         }
         PlayerClass playerClass = plugin.service().classOf(player.getUniqueId());
-        ClassAbility ability = ClassAbility.of(playerClass, slot);
+        ClassAbility ability = plugin.service().development().equipped(player.getUniqueId(),slot);
         if (ability == null) {
             return;
         }
@@ -311,6 +317,7 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
             plugin.messages().send(sender, "info-none");
             return;
         }
+        if(service.development()!=null) {plugin.developmentGui().progress(id).forEach(sender::sendMessage);return;}
         var snapshot = service.progressSnapshot(id, System.currentTimeMillis());
         for (var line : ClassPassportText.progress(plugin.messages(), snapshot, service.spentPoints(id))) {
             sender.sendMessage(line);
@@ -565,7 +572,7 @@ public final class ClassesCommandHandler implements CommandExecutor, TabComplete
             return List.of();
         }
         List<String> ids = new ArrayList<>();
-        for (Talent talent : ClassCatalog.talents(playerClass.id())) {
+        for (Talent talent : ClassTrees.talents(playerClass.id())) {
             if (!plugin.store().hasTalent(player.getUniqueId(), talent.id())) {
                 ids.add(talent.id());
             }

@@ -114,15 +114,16 @@ final class ClassesGui implements Listener {
         if (player == null) {
             return;
         }
+        if (!plugin.ready(player)) { plugin.messages().send(player,"development-pending"); return; }
         if (plugin.service().classOf(player.getUniqueId()) != null) {
-            openPassport(player);
+            plugin.developmentGui().open(player);
         } else {
             openChoices(player);
         }
     }
 
     /** Список ролей доступен и после выбора: смена отдельно от просмотра паспорта. */
-    private void openChoices(Player player) {
+    void openChoices(Player player) {
         if (player == null) {
             return;
         }
@@ -169,6 +170,8 @@ final class ClassesGui implements Listener {
     private static final int PASSPORT_CHOICES = 50;
 
     private void openPassport(Player player) {
+        if (plugin.service().development() != null) {plugin.developmentGui().open(player); return;}
+
         UUID id = player.getUniqueId();
         PlayerClass current = plugin.service().classOf(id);
         if (current == null) {
@@ -232,6 +235,8 @@ final class ClassesGui implements Listener {
 
     /** Открывается из GUI и команды: ещё ничего не стирает и не снимает откаты. */
     void openRespec(Player player) {
+        if (plugin.service().development() != null) {if(plugin.ready(player))plugin.developmentGui().reset(player); return;}
+
         UUID id = player.getUniqueId();
         var snapshot = plugin.service().progressSnapshot(id, System.currentTimeMillis());
         if (!snapshot.ready()) {
@@ -316,6 +321,8 @@ final class ClassesGui implements Listener {
 
     /** Дерево талантов выбранного класса. */
     void openTalents(Player player) {
+        if (plugin.service().development() != null) {plugin.developmentGui().tree(player,0); return;}
+
         if (player == null) {
             return;
         }

@@ -74,7 +74,7 @@ final class ClassPassportText {
         lines.add(messages.get("passport-effect-talents", "value", ClassMath.amount(view.kind(), view.talents()), "unit", unit));
         lines.add(messages.get("passport-effect-raw", "value", ClassMath.amount(view.kind(), view.raw()), "unit", unit));
         lines.add(messages.get("passport-effect-effective", "value", ClassMath.amount(view.kind(), view.effective()), "unit", unit));
-        lines.add(messages.get("passport-effect-cap", "value", ClassMath.amount(view.kind(), view.kind().cap()), "unit", unit));
+        lines.add(messages.get("passport-effect-cap", "value", ClassMath.amount(view.kind(), view.ceiling()), "unit", unit));
         if (view.clipped() > 0) {
             lines.add(messages.get("passport-effect-clipped", "value", ClassMath.amount(view.kind(), view.clipped()), "unit", unit));
         }

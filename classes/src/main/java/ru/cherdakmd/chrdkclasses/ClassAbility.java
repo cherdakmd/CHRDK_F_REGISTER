@@ -77,7 +77,15 @@ public enum ClassAbility {
      * Жрец, слот 2: оберег. {@code radius} — радиус союзников, {@code power} —
      * полусердца поглощения. Не лечит: это защита до удара, а не после.
      */
-    CLERIC_WARD(PlayerClass.CLERIC, 2, "SHIELD", 40, 8.0, 4.0);
+    CLERIC_WARD(PlayerClass.CLERIC, 2, "SHIELD", 40, 8.0, 4.0),
+    WARRIOR_BASH(PlayerClass.WARRIOR, 3, "SHIELD", 24, 4, 3),
+    WARRIOR_EARTH(PlayerClass.WARRIOR, 4, "IRON_BOOTS", 35, 5, 2),
+    ARCHER_SNARE(PlayerClass.ARCHER, 3, "COBWEB", 26, 7, 2),
+    ARCHER_RETREAT(PlayerClass.ARCHER, 4, "FEATHER", 28, 6, .8),
+    MAGE_CHAIN(PlayerClass.MAGE, 3, "AMETHYST_SHARD", 28, 7, 3),
+    MAGE_SEAL(PlayerClass.MAGE, 4, "PRISMARINE_CRYSTALS", 34, 6, 2),
+    CLERIC_LIGHT(PlayerClass.CLERIC, 3, "GLOWSTONE_DUST", 28, 7, 4),
+    CLERIC_PURIFY(PlayerClass.CLERIC, 4, "MILK_BUCKET", 36, 8, 2);
 
     /** Границы множителя кулдауна из конфига. */
     public static final double MIN_MULTIPLIER = 0.5;
@@ -87,7 +95,7 @@ public enum ClassAbility {
     /** Второе умение класса — редкий приём. */
     public static final int SECOND = 2;
     /** Сколько умений у класса: ровно два, оба на отдельных кнопках. */
-    public static final int PER_CLASS = 2;
+    public static final int PER_CLASS = 4;
 
     private static final Map<PlayerClass, ClassAbility> BY_CLASS = new EnumMap<>(PlayerClass.class);
     private static final Map<PlayerClass, ClassAbility> SECOND_BY_CLASS =
@@ -97,7 +105,7 @@ public enum ClassAbility {
         for (ClassAbility ability : values()) {
             if (ability.slot == FIRST) {
                 BY_CLASS.put(ability.playerClass, ability);
-            } else {
+            } else if (ability.slot == SECOND) {
                 SECOND_BY_CLASS.put(ability.playerClass, ability);
             }
         }
@@ -196,6 +204,16 @@ public enum ClassAbility {
 
     public double power() {
         return power;
+    }
+
+    public int requiredLevel() { return slot <= 2 ? 1 : slot == 3 ? 10 : 20; }
+    public static ClassAbility byKey(String id) {
+        if (id == null) return null;
+        for (ClassAbility ability : values()) if (ability.key().equals(id)) return ability;
+        return null;
+    }
+    public static List<ClassAbility> all(PlayerClass role) {
+        return java.util.Arrays.stream(values()).filter(a -> a.playerClass == role).toList();
     }
 
     /** Первое умение класса или {@code null}, если класс не выбран. */

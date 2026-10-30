@@ -40,6 +40,18 @@ public final class ClassesPlugin extends JavaPlugin {
     private ClassTag tag;
     private final ClassProgress progress = new ClassProgress();
     private ClassesGui gui;
+    private DevelopmentGui developmentGui;
+    private PveProgressListener gameplay;
+    ChrdkRegisterApi coreApi() { return coreApi; }
+    DevelopmentGui developmentGui() { return developmentGui; }
+    PveProgressListener gameplay() { return gameplay; }
+    boolean ready(Player player) {
+        if (player == null || coreApi == null || !coreApi.isAuthenticated(player)
+                || !config.enabled()) return false;
+        boolean ready = service.development().prepare(player.getUniqueId(), System.currentTimeMillis());
+        if (ready && store.isDirty()) requestSave();
+        return ready;
+    }
     /** 1.4.182: обязательный выбор класса — меню и напоминания. */
     private ClassOnboarding onboarding;
     private BukkitTask saveTask;
@@ -60,6 +72,9 @@ public final class ClassesPlugin extends JavaPlugin {
             this.achievementsBridge = new AchievementsBridge(this);
             this.service = new TalentService(config, store, skillsBridge, ranksBridge,
                     achievementsBridge);
+            service.enableDevelopment(LegacyRulesFile.loadOrCreate(getDataFolder().toPath(),config,getLogger()));
+            this.developmentGui = new DevelopmentGui(this);
+            this.gameplay = new PveProgressListener(this);
             this.effects = new ClassEffects(this);
             this.abilities = new AbilityService(this);
             this.tag = new ClassTag(this);
@@ -69,6 +84,8 @@ public final class ClassesPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(new ClassListener(this), this);
             getServer().getPluginManager().registerEvents(gui, this);
             getServer().getPluginManager().registerEvents(onboarding, this);
+            getServer().getPluginManager().registerEvents(developmentGui, this);
+            getServer().getPluginManager().registerEvents(gameplay, this);
             registerCommands();
             registerPlaceholders();
             registerProfile();
@@ -82,7 +99,7 @@ public final class ClassesPlugin extends JavaPlugin {
             warnMissingSections();
             getLogger().info("CHRDK_Classes включён: классов " + ClassCatalog.classes().size()
                     + ", талантов " + (ClassCatalog.classes().size()
-                    * ClassCatalog.TALENTS_PER_CLASS)
+                    * ClassTrees.PER_CLASS)
                     + ", навыки: " + (skillsBridge.available() ? "да" : "нет")
                     + ", достижения: " + (achievementsBridge.available() ? "да" : "нет")
                     + ", ранги: " + (ranksBridge.available() ? "да" : "нет"));
@@ -201,6 +218,7 @@ public final class ClassesPlugin extends JavaPlugin {
         boolean applyEffects = config.effectsEnabled();
         boolean notice = config.levelNotice();
         for (Player player : Bukkit.getOnlinePlayers()) {
+            if (!ready(player)) continue;
             if (applyEffects) {
                 effects.pulse(player, now);
             }

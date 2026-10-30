@@ -171,7 +171,7 @@ class ClassStoreTest {
         ClassStore reloaded = new ClassStore(dir, LOGGER);
         reloaded.load();
         assertEquals(NOW + 3_000L, reloaded.ability2At(PLAYER));
-        assertEquals(3, ClassStore.VERSION, "формат поддерживает собственный прогресс");
+        assertEquals(4, ClassStore.VERSION, "формат поддерживает собственный прогресс");
     }
 
     @Test

@@ -41,7 +41,7 @@ import ru.cherdakmd.chrdkregister.storage.SafeJsonWriter;
 public final class ClassStore {
 
     /** Версия формата файла. */
-    public static final int VERSION = 3;
+    public static final int VERSION = 4;
     private static final int MAX_FILE_BYTES = 128 * 1024 * 1024;
     private static final long MAX_TIMESTAMP = Long.MAX_VALUE - 366L * 86_400_000L;
     /** Потолок числа игроков в файле: защита от мусора. */
@@ -59,6 +59,11 @@ public final class ClassStore {
         private long abilityAt;
         private long ability2At;
         private ClassDevelopment development;
+        private ClassBuild build;
+        private final Map<Integer, ClassBuild> savedBuilds = new LinkedHashMap<>();
+        private final Map<String, Long> abilityTimes = new LinkedHashMap<>();
+        private final Map<String, Long> milestones = new LinkedHashMap<>();
+        private long buildRevision;
 
         Player(UUID id, String name) {
             this.id = id;
@@ -125,6 +130,10 @@ public final class ClassStore {
                         || loaded.containsKey(id)) {
                     throw new IOException("Некорректный или повторный UUID игрока: " + entry.getKey());
                 }
+                if (version < 4 && (row.containsKey("build") || row.containsKey("saved-builds")
+                        || row.containsKey("ability-times") || row.containsKey("milestones") || row.containsKey("build-revision"))) {
+                    throw new IOException("Новые поля сборок в старой схеме");
+                }
                 if (version < 3 && row.containsKey("development")) {
                     throw new IOException("Прогресс новой схемы в старом формате");
                 }
@@ -145,7 +154,7 @@ public final class ClassStore {
 
     private static Player readPlayer(UUID id, Map<?, ?> row) {
         checkKeys(row, Set.of("name", "class", "talents", "changed-at", "respec-at",
-                "ability-at", "ability2-at", "development"));
+                "ability-at", "ability2-at", "development", "build", "saved-builds", "ability-times", "milestones", "build-revision"));
         String name = text(row, "name", "");
         if (name.length() > 64) {
             throw new IllegalArgumentException("Слишком длинный ник игрока");
@@ -182,7 +191,76 @@ public final class ClassStore {
                 throw new IllegalArgumentException("Основа переноса принадлежит другому игроку");
             }
         }
+        if (row.containsKey("build")) {
+            player.build = readBuild(row.get("build"));
+            if (!player.build.classId().equals(player.classId) || player.development == null
+                    || !staticBuildValid(player.build, player.development)) {
+                throw new IllegalArgumentException("Активная сборка не соответствует прогрессу");
+            }
+        }
+        if (row.containsKey("saved-builds")) {
+            if (!(row.get("saved-builds") instanceof Map<?,?> saved) || saved.size() > 3)
+                throw new IllegalArgumentException("Некорректные сохранённые сборки");
+            for (var entry : saved.entrySet()) {
+                int slot = Integer.parseInt(entry.getKey().toString());
+                if (slot < 1 || slot > 3 || !entry.getKey().equals(String.valueOf(slot)))
+                    throw new IllegalArgumentException("Некорректный слот сборки");
+                ClassBuild build = readBuild(entry.getValue());
+                if (!build.classId().equals(player.classId)) throw new IllegalArgumentException("Чужая сборка");
+                player.savedBuilds.put(slot, build);
+            }
+        }
+        if (row.containsKey("ability-times")) {
+            if (!(row.get("ability-times") instanceof Map<?,?> times) || times.size() > 16)
+                throw new IllegalArgumentException("Некорректные откаты");
+            for (var entry : times.entrySet()) {
+                if (ClassAbility.byKey(entry.getKey().toString()) == null) throw new IllegalArgumentException("Неизвестный ID отката");
+                long time = requiredNumber(entry.getValue());
+                if (time < 0 || time > MAX_TIMESTAMP) throw new IllegalArgumentException("Некорректный откат");
+                player.abilityTimes.put(entry.getKey().toString(), time);
+            }
+        }
+        if (row.containsKey("milestones")) {
+            if (!(row.get("milestones") instanceof Map<?,?> counters) || counters.size() > 4)
+                throw new IllegalArgumentException("Некорректные испытания");
+            for (var entry : counters.entrySet()) {
+                long count = requiredNumber(entry.getValue());
+                if (PlayerClass.parse(entry.getKey().toString()) == null || count < 0 || count > 2000)
+                    throw new IllegalArgumentException("Некорректный счётчик испытания");
+                player.milestones.put(entry.getKey().toString(), count);
+            }
+        }
+        if (row.containsKey("build-revision")) {
+            player.buildRevision = requiredNumber(row.get("build-revision"));
+            if (player.buildRevision < 0) throw new IllegalArgumentException("Некорректная ревизия сборки");
+        }
         return player;
+    }
+
+    private static ClassBuild readBuild(Object raw) {
+        if (!(raw instanceof Map<?,?> row)) throw new IllegalArgumentException("Ожидалась сборка");
+        checkKeys(row, Set.of("classId", "ranks", "abilities"));
+        if (!(row.get("classId") instanceof String role) || !(row.get("ranks") instanceof Map<?,?> ranks)
+                || !(row.get("abilities") instanceof List<?> abilities)) throw new IllegalArgumentException("Некорректные поля сборки");
+        Map<String,Integer> nodes = new LinkedHashMap<>();
+        for (var entry : ranks.entrySet()) nodes.put(entry.getKey().toString(), Math.toIntExact(requiredNumber(entry.getValue())));
+        List<String> equipped = new ArrayList<>();
+        for (Object id : abilities) {
+            if (!(id instanceof String text)) throw new IllegalArgumentException("Некорректное умение");
+            equipped.add(text);
+        }
+        return new ClassBuild(role, nodes, equipped);
+    }
+
+    private static boolean staticBuildValid(ClassBuild build, ClassDevelopment progress) {
+        if (build.spent() > progress.earnedPoints()) return false;
+        Set<String> groups = new LinkedHashSet<>();
+        for (String id : build.ranks().keySet()) {
+            Talent node = ClassTrees.talent(id);
+            if (node.minLevel() > progress.level() || (node.hasParent() && !build.ranks().containsKey(node.requires()))
+                    || (!node.exclusiveGroup().isEmpty() && !groups.add(node.exclusiveGroup()))) return false;
+        }
+        return build.abilities().stream().allMatch(id -> ClassAbility.byKey(id).requiredLevel() <= progress.level());
     }
 
     private static void checkDevelopmentKeys(Map<?, ?> development) {
@@ -424,6 +502,9 @@ public final class ClassStore {
         long at = safeTimestamp(now);
         player.classId = value;
         player.talents.clear();
+        player.build = null;
+        player.savedBuilds.clear();
+        player.buildRevision = Math.incrementExact(player.buildRevision);
         player.changedAt = at;
         dirty = true;
         return true;
@@ -437,6 +518,9 @@ public final class ClassStore {
         }
         player.classId = "";
         player.talents.clear();
+        player.build = null;
+        player.savedBuilds.clear();
+        player.buildRevision = Math.incrementExact(player.buildRevision);
         player.changedAt = 0L;
         dirty = true;
         return true;
@@ -448,7 +532,8 @@ public final class ClassStore {
     }
 
     public synchronized int talentCount(UUID id) {
-        return of(id).talents.size();
+        Player player = of(id);
+        return player.build == null ? player.talents.size() : player.build.ranks().size();
     }
 
     public synchronized boolean hasTalent(UUID id, String talentId) {
@@ -506,6 +591,9 @@ public final class ClassStore {
         }
         player.classId = "";
         player.talents.clear();
+        player.build = null;
+        player.savedBuilds.clear();
+        player.buildRevision = Math.incrementExact(player.buildRevision);
         player.changedAt = 0L;
         player.respecAt = 0L;
         dirty = true;
@@ -626,6 +714,55 @@ public final class ClassStore {
         return player.development;
     }
 
+    synchronized ClassBuild build(UUID id) { return of(id).build; }
+    synchronized long buildRevision(UUID id) { return of(id).buildRevision; }
+    synchronized Map<Integer,ClassBuild> savedBuilds(UUID id) { return Map.copyOf(of(id).savedBuilds); }
+    synchronized void initializeBuild(UUID id) {
+        Player p = of(id);
+        if (p.build == null && !p.classId.isEmpty() && p.development != null) {
+            p.build = ClassBuild.empty(p.classId);
+            if (p.abilityAt > 0) p.abilityTimes.merge(p.classId, p.abilityAt, Math::max);
+            if (p.ability2At > 0) p.abilityTimes.merge(p.classId+"-2", p.ability2At, Math::max);
+            dirty = true;
+        }
+    }
+    synchronized void installBuild(UUID id, ClassBuild build, long now, boolean respec) {
+        Player p = of(id);
+        long time = safeTimestamp(now);
+        if (!build.classId().equals(p.classId) || p.development == null || !staticBuildValid(build, p.development))
+            throw new IllegalArgumentException("Недопустимая сборка");
+        long revision = Math.incrementExact(p.buildRevision);
+        p.build = build;
+        p.buildRevision = revision;
+        if (respec) {
+            p.respecAt = time;
+            p.development = p.development.consumeFirstBuild();
+        }
+        dirty = true;
+    }
+    synchronized void saveBuild(UUID id, int slot) {
+        Player p = of(id);
+        if (slot < 1 || slot > 3 || p.build == null) throw new IllegalArgumentException("Некорректный слот");
+        p.savedBuilds.put(slot, p.build);
+        dirty = true;
+    }
+    synchronized long lastAbility(UUID id, String key) { return of(id).abilityTimes.getOrDefault(key, 0L); }
+    synchronized void useAbility(UUID id, String key, long now) {
+        if (ClassAbility.byKey(key) == null) throw new IllegalArgumentException("Неизвестное умение");
+        of(id).abilityTimes.put(key, safeTimestamp(now));
+        dirty = true;
+    }
+    synchronized long milestone(UUID id, String role) { return of(id).milestones.getOrDefault(role,0L); }
+    synchronized void advanceMilestone(UUID id, String role, int units) {
+        if (PlayerClass.parse(role) == null || units < 0 || units > 10) throw new IllegalArgumentException("Некорректный вклад");
+        Player p = of(id);
+        p.milestones.put(role, Math.min(2000L, milestone(id,role)+units));
+        int[] targets = {10,50,150,400,1000,2000};
+        for (int target : targets) if (milestone(id,role) >= target)
+            p.development = requireDevelopment(p).completeTrial("trial-"+target, target);
+        dirty = true;
+    }
+
     /* -------------------------------- запись ---------------------------------- */
 
     /** Чистый снимок: сам по себе не подтверждает успешную запись на диск. */
@@ -658,6 +795,11 @@ public final class ClassStore {
             if (player.development != null) {
                 row.put("development", player.development);
             }
+            if (player.build != null) row.put("build", player.build);
+            if (!player.savedBuilds.isEmpty()) row.put("saved-builds", player.savedBuilds);
+            if (!player.abilityTimes.isEmpty()) row.put("ability-times", player.abilityTimes);
+            if (!player.milestones.isEmpty()) row.put("milestones", player.milestones);
+            if (player.buildRevision > 0) row.put("build-revision", player.buildRevision);
             rows.put(player.id.toString(), row);
         }
         data.put("players", rows);
@@ -725,7 +867,7 @@ public final class ClassStore {
         } catch (NoSuchAlgorithmException impossible) {
             throw new IllegalStateException("SHA-256 недоступен", impossible);
         }
-        Path backup = file.resolveSibling("classes.json.before-v3-" + digest + ".bak");
+        Path backup = file.resolveSibling("classes.json.before-v" + VERSION + "-" + digest + ".bak");
         try {
             Files.write(backup, legacyBytes, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
         } catch (FileAlreadyExistsException exists) {

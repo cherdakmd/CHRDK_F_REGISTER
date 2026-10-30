@@ -88,20 +88,22 @@ final class AbilityService {
         if (player.isDead() || !player.isOnline()) {
             return ClassResult.fail("ability-dead");
         }
-        ClassAbility ability = ClassAbility.of(playerClass, slot);
+        if (!plugin.ready(player)) return ClassResult.fail("development-pending");
+        if (plugin.gameplay().inPvp(id) || !plugin.gameplay().context(player)) return ClassResult.fail("development-pve-only");
+        ClassAbility ability = plugin.service().development().equipped(id, slot);
         if (ability == null) {
             return ClassResult.fail("class-required");
         }
         long now = System.currentTimeMillis();
         long cooldown = cooldownMillis(id, ability);
-        long left = ClassAbility.remaining(lastUseAt(id, ability.slot()), now, cooldown);
+        long left = ClassAbility.remaining(plugin.store().lastAbility(id, ability.key()), now, cooldown);
         if (left > 0L) {
             return ClassResult.fail("ability-cooldown", "time", ClassMath.clockMillis(left),
                     "ability", ability.key());
         }
         // Сначала время, потом действие: два клика в одном тике обрабатываются
         // последовательно, и второй увидит уже записанный момент.
-        setUseAt(id, ability.slot(), now);
+        plugin.store().useAbility(id, ability.key(), now);
         plugin.requestSave();
         execute(player, ability);
         return ClassResult.ok("ability-used", "ability", ability.key());
@@ -124,11 +126,12 @@ final class AbilityService {
 
     /** Сколько ждать до следующего применения умения слота; 0 — готово. */
     long cooldownLeft(UUID player, PlayerClass playerClass, int slot) {
-        ClassAbility ability = ClassAbility.of(playerClass, slot);
+        ClassAbility ability = plugin.service().development() == null ? ClassAbility.of(playerClass, slot)
+                : plugin.service().development().equipped(player, slot);
         if (ability == null || player == null) {
             return 0L;
         }
-        return ClassAbility.remaining(lastUseAt(player, ability.slot()),
+        return ClassAbility.remaining(plugin.store().lastAbility(player, ability.key()),
                 System.currentTimeMillis(), cooldownMillis(player, ability));
     }
 
@@ -157,6 +160,7 @@ final class AbilityService {
             case MAGE_SCORCH -> scorch(player, ability);
             case CLERIC -> heal(player, ability);
             case CLERIC_WARD -> ward(player, ability);
+            case WARRIOR_BASH, WARRIOR_EARTH, ARCHER_SNARE, ARCHER_RETREAT, MAGE_CHAIN, MAGE_SEAL, CLERIC_LIGHT, CLERIC_PURIFY -> extra(player,ability);
         }
     }
 
@@ -173,7 +177,7 @@ final class AbilityService {
         }
         Vector push = direction.normalize().multiply(ability.power()).setY(0.32);
         player.setVelocity(push);
-        player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 60, 0, false, false, true));
+        plugin.gameplay().ward(player, 3, 3);
         player.getWorld().spawnParticle(Particle.CLOUD, eye.clone().add(0.0, 0.15, 0.0),
                 12, 0.3, 0.1, 0.3, 0.02);
         player.getWorld().playSound(eye, Sound.ITEM_TRIDENT_RIPTIDE_1, 0.7f, 1.4f);
@@ -189,10 +193,7 @@ final class AbilityService {
         int amplifier = absorptionAmplifier(ability.power());
         // allies() всегда включает самого игрока: клич срабатывает и в одиночку.
         for (Player target : allies(player, ability.radius())) {
-            target.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 200,
-                    amplifier, false, true, true));
-            target.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 160, 0,
-                    false, true, true));
+            plugin.gameplay().ward(target, ability.power(), 8);
             target.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING,
                     target.getLocation().add(0.0, 1.2, 0.0), 6, 0.3, 0.4, 0.3, 0.01);
         }
@@ -210,6 +211,7 @@ final class AbilityService {
             velocity.setY(velocity.getY() + 0.05);
             Arrow arrow = player.launchProjectile(Arrow.class, velocity);
             if (arrow != null) {
+                plugin.gameplay().tag(arrow);
                 arrow.setDamage(ability.power());
                 arrow.setCritical(false);
             }
@@ -230,6 +232,7 @@ final class AbilityService {
         Vector velocity = player.getLocation().getDirection().normalize().multiply(AIM_SPEED);
         Arrow arrow = player.launchProjectile(Arrow.class, velocity);
         if (arrow != null) {
+            plugin.gameplay().tag(arrow);
             arrow.setDamage(ability.power());
             arrow.setCritical(false);
             arrow.setPierceLevel(1);
@@ -311,6 +314,7 @@ final class AbilityService {
         targets.sort(Comparator.comparingDouble(other -> other.getLocation().distanceSquared(center)));
         int healed = 0;
         for (Player target : targets) {
+            if (!plugin.gameplay().supportAllowed(target)) continue;
             if (healed >= SUPPORT_TARGETS) {
                 break;
             }
@@ -319,8 +323,7 @@ final class AbilityService {
             if (target.getHealth() > before) {
                 healed++;
             }
-            target.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 80, 0,
-                    false, true, true));
+            plugin.gameplay().healed(player, target, target.getHealth() - before);
             target.getWorld().spawnParticle(Particle.HEART, target.getLocation().add(0.0, 1.6, 0.0),
                     4, 0.3, 0.2, 0.3, 0.0);
         }
@@ -337,15 +340,50 @@ final class AbilityService {
     private void ward(Player player, ClassAbility ability) {
         int amplifier = absorptionAmplifier(ability.power());
         for (Player target : allies(player, ability.radius())) {
-            target.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 280,
-                    amplifier, false, true, true));
-            for (PotionEffectType harmful : harmfulEffects()) {
-                target.removePotionEffect(harmful);
-            }
+            plugin.gameplay().ward(target, ability.power(), 12);
             target.getWorld().spawnParticle(Particle.END_ROD,
                     target.getLocation().add(0.0, 1.2, 0.0), 10, 0.4, 0.6, 0.4, 0.01);
         }
         player.getWorld().playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 0.6f, 1.4f);
+    }
+
+    private void extra(Player player, ClassAbility ability) {
+        if (ability == ClassAbility.ARCHER_RETREAT) {
+            Vector direction = player.getLocation().getDirection().setY(0).normalize().multiply(-ability.power()).setY(.25);
+            player.setVelocity(direction); return;
+        }
+        if (ability == ClassAbility.CLERIC_PURIFY) {
+            for (Player target : allies(player, ability.radius())) if (plugin.gameplay().supportAllowed(target)) {
+                double before=target.getHealth();
+                healHalfHearts(target,ability.power());
+                plugin.gameplay().healed(player,target,target.getHealth()-before);
+                for (PotionEffectType type : harmfulEffects()) target.removePotionEffect(type);
+            }
+            return;
+        }
+        List<LivingEntity> enemies = player.getNearbyEntities(ability.radius(),4,ability.radius()).stream()
+                .filter(e -> e instanceof Enemy && e instanceof LivingEntity living && !living.isDead())
+                .map(e -> (LivingEntity)e).sorted(Comparator.comparingDouble(e -> e.getLocation().distanceSquared(player.getLocation()))).toList();
+        int limit = ability == ClassAbility.WARRIOR_BASH || ability == ClassAbility.ARCHER_SNARE ? 1 : 3;
+        for (LivingEntity enemy : enemies.stream().limit(limit).toList()) {
+            double damage=ability.power();
+            if (ability == ClassAbility.CLERIC_LIGHT) {
+                boolean undead=switch(enemy.getType()) {
+                    case ZOMBIE, ZOMBIE_VILLAGER, HUSK, DROWNED, SKELETON, STRAY, WITHER_SKELETON, PHANTOM, WITHER, ZOMBIFIED_PIGLIN, ZOGLIN -> true;
+                    default -> false;
+                };
+                if (!undead) damage/=2;
+            }
+            enemy.damage(damage,player);
+            if (ability == ClassAbility.WARRIOR_BASH || ability == ClassAbility.WARRIOR_EARTH) {
+                Vector push=enemy.getLocation().toVector().subtract(player.getLocation().toVector());
+                if(push.lengthSquared()>.01) enemy.setVelocity(push.normalize().multiply(.5).setY(.25));
+            }
+            if (ability == ClassAbility.ARCHER_SNARE || ability == ClassAbility.MAGE_SEAL || ability == ClassAbility.WARRIOR_EARTH)
+                enemy.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS,80,1));
+            if (ability == ClassAbility.MAGE_SEAL) enemy.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS,80,0));
+        }
+        player.getWorld().spawnParticle(Particle.ENCHANT,player.getLocation().add(0,1,0),20,1,1,1,.01);
     }
 
     /* -------------------------------- помощники ------------------------------- */
