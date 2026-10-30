@@ -121,8 +121,11 @@ public final class BankService implements org.bukkit.event.Listener {
     }
 
     public boolean authenticated(Player player) {
-        var api=Bukkit.getServicesManager().load(ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.class);
-        return Bukkit.isPrimaryThread()&&player!=null&&player.isOnline()&&!player.hasMetadata("NPC")&&api!=null&&api.isAuthenticated(player);
+        if(!Bukkit.isPrimaryThread()||player==null||!player.isOnline()||player.hasMetadata("NPC")) return false;
+        try {
+            var api=Bukkit.getServicesManager().load(ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.class);
+            return api!=null&&api.isAuthenticated(player);
+        } catch(RuntimeException | LinkageError unavailable) { return false; }
     }
     private boolean cashReady(Player player) {
         if(!enabled()||!authenticated(player)||player.isDead()||!player.hasPermission("chrdkregister.bal")

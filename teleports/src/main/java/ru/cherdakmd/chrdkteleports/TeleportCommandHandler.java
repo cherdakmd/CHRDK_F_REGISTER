@@ -352,9 +352,11 @@ public final class TeleportCommandHandler implements TabExecutor {
         if (price > 0) {
             String key=HomeStore.financeKey(player.getUniqueId(),name);
             var quote=new HomeQuote(key,HomeStore.financeValue(point),String.valueOf(store.get(player.getUniqueId(),HomeStore.normalize(name))),price);
-            boolean confirmed=args.length==2&&args[1].equalsIgnoreCase("confirm")
-                    && confirmations.consume(player.getUniqueId(),player,quote,System.nanoTime());
-            if(!confirmed) {
+            boolean confirmRequested=args.length==2&&args[1].equalsIgnoreCase("confirm");
+            if(confirmRequested&&!confirmations.consume(player.getUniqueId(),player,quote,System.nanoTime())) {
+                plugin.messages().send(player,"finance.confirm-missing");return true;
+            }
+            if(!confirmRequested) {
                 if(!confirmations.offer(player.getUniqueId(),player,quote,System.nanoTime())) {plugin.messages().send(player,"finance.confirm-busy");return true;}
                 plugin.messages().send(player,"finance.home-preview","name",name,"cost",price,"replace",exists);return true;
             }

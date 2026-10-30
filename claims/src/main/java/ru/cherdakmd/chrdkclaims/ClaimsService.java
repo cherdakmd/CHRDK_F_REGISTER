@@ -290,7 +290,9 @@ public final class ClaimsService {
     public void sellback(Player player) { sellback(player,false); }
     public void sellback(Player player, boolean confirm) {
         if(!plugin.financeReadReady()) {plugin.messages().send(player,"finance.unavailable");return;}
-        if (plugin.coreApi() == null || !plugin.coreApi().isAuthenticated(player) || player.getGameMode() != org.bukkit.GameMode.SURVIVAL) {
+        if (plugin.coreApi() == null || !plugin.coreApi().isAuthenticated(player) || !player.isOnline() || player.isDead() || player.hasMetadata("NPC")
+                || (!player.hasPermission("chrdkclaims.use")&&!player.hasPermission("chrdkclaims.admin"))
+                || player.getGameMode() != org.bukkit.GameMode.SURVIVAL) {
             plugin.messages().send(player,"finance.unavailable"); return;
         }
         Claim claim = ownClaimHere(player, "sell-not-yours");
@@ -300,7 +302,10 @@ public final class ClaimsService {
         if (rentalLocked(player, List.of(claim))) return;
         int reward = plugin.config().sellbackIn(claim.world);
         var quote=new SellbackQuote(claim,claim.owner,reward,claim.paidUntil,claim.debtDays,claim.salePrice);
-        if(!confirm || !confirmations.consume(player.getUniqueId(),player,quote,System.nanoTime())) {
+        if(confirm&&!confirmations.consume(player.getUniqueId(),player,quote,System.nanoTime())) {
+            plugin.messages().send(player,"finance.confirm-missing");return;
+        }
+        if(!confirm) {
             if(!confirmations.offer(player.getUniqueId(),player,quote,System.nanoTime())) {plugin.messages().send(player,"finance.confirm-busy");return;}
             plugin.messages().send(player,"finance.sellback-preview","reward",reward,"where",claim.where());return;
         }

@@ -63,7 +63,7 @@ public final class BankCommandHandler implements CommandExecutor, TabCompleter {
             var h=bank.store().health();
             String share=h.total()==0?"0":java.math.BigDecimal.valueOf(h.topTen()).multiply(java.math.BigDecimal.valueOf(100))
                     .divide(java.math.BigDecimal.valueOf(h.total()),2,java.math.RoundingMode.HALF_UP).toPlainString();
-            messages.send(sender,"economy.health","healthy",h.available(),"accounts",h.accounts(),"total",BankService.format(h.total()),
+            messages.send(sender,"economy.health","healthy",bank.enabled()&&h.available(),"accounts",h.accounts(),"total",BankService.format(h.total()),
                     "share",share,"pending",h.pending(),"receipts",h.receipts());return true;
         }
         if(args.length==1&&args[0].equalsIgnoreCase("recovery")) {
@@ -192,9 +192,11 @@ public final class BankCommandHandler implements CommandExecutor, TabCompleter {
         }
         if (amount >= 64) {
             var quote=new WithdrawQuote(amount,bank.settings().blockWorth());
-            boolean confirmed=args.length==3&&args[2].equalsIgnoreCase("confirm")
-                    && confirmations.consume(player.getUniqueId(),player,quote,System.nanoTime());
-            if(!confirmed) {
+            boolean confirmRequested=args.length==3&&args[2].equalsIgnoreCase("confirm");
+            if(confirmRequested&&!confirmations.consume(player.getUniqueId(),player,quote,System.nanoTime())) {
+                messages.send(player,"economy.confirm-missing");return;
+            }
+            if(!confirmRequested) {
                 if(!confirmations.offer(player.getUniqueId(),player,quote,System.nanoTime())) {messages.send(player,"economy.confirm-busy");return;}
                 messages.send(player,"economy.withdraw-preview","amount",BankService.format(amount),"raw",amount);return;
             }
@@ -250,9 +252,11 @@ public final class BankCommandHandler implements CommandExecutor, TabCompleter {
         if(quote.status()!=BankStore.Status.OK) {
             messages.send(player,"economy.pay-preview-refused","reason",quote.status());return true;
         }
-        boolean confirmed=args.length==3&&args[2].equalsIgnoreCase("confirm")
-                && confirmations.consume(player.getUniqueId(),player,quote,System.nanoTime());
-        if(!confirmed) {
+        boolean confirmRequested=args.length==3&&args[2].equalsIgnoreCase("confirm");
+        if(confirmRequested&&!confirmations.consume(player.getUniqueId(),player,quote,System.nanoTime())) {
+            messages.send(player,"economy.confirm-missing");return true;
+        }
+        if(!confirmRequested) {
             if(!confirmations.offer(player.getUniqueId(),player,quote,System.nanoTime())) {messages.send(player,"economy.confirm-busy");return true;}
             messages.send(player,"economy.pay-preview","player",quote.name(),"amount",BankService.format(amount),"tax",BankService.format(quote.tax()),
                     "net",BankService.format(quote.net()),"raw",amount);return true;

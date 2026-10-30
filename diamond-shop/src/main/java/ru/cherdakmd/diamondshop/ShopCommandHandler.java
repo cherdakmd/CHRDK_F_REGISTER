@@ -236,6 +236,9 @@ public final class ShopCommandHandler implements TabExecutor {
 
     private boolean handleAdmin(CommandSender sender, String[] args) {
         if(!sender.hasPermission("chrdkshop.admin")) {plugin.messages().send(sender,"tools.permission");return true;}
+        if(sender instanceof Player player&&(plugin.coreApi()==null||!plugin.coreApi().isAuthenticated(player))) {
+            plugin.messages().send(sender,"trading.need-auth");return true;
+        }
         if (args.length == 0) {
             plugin.messages().send(sender, "admin.usage");
             return true;
