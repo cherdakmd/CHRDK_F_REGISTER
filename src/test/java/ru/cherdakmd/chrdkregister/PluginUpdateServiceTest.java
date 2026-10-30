@@ -151,8 +151,8 @@ class PluginUpdateServiceTest {
         try (var updater = fixture.service()) {
             var result = updater.execute(true, "1.4.72");
             assertTrue(result.staged());
-            assertEquals(26, result.count());
-            try (var files = Files.list(result.updateDirectory())) { assertEquals(26, files.count()); }
+            assertEquals(25, result.count());
+            try (var files = Files.list(result.updateDirectory())) { assertEquals(25, files.count()); }
             for (var entry : originals.entrySet()) {
                 assertArrayEquals(entry.getValue(), Files.readAllBytes(entry.getKey()));
                 assertArrayEquals(entry.getValue(), Files.readAllBytes(result.backup().resolve(entry.getKey().getFileName())));
@@ -171,11 +171,25 @@ class PluginUpdateServiceTest {
     @Test void validatesAllModulesButOnlyStagesInstalledAddonsAndCanSynchronizeMixedVersions() throws Exception {
         Fixture fixture = new Fixture();
         fixture.install("CHRDK_Core", VERSION);
-        fixture.install("CHRDK_Queue", "1.4.72");
+        fixture.install("CHRDK_Claims", "1.4.72");
         try (var updater = fixture.service()) {
             var result = updater.execute(true, VERSION);
             assertTrue(result.staged());
             assertEquals(2, result.count());
+        }
+    }
+
+    @Test void retiredQueueJarIsNeitherStagedNorSilentlyDeleted() throws Exception {
+        Fixture fixture = new Fixture();
+        fixture.install("CHRDK_Core", "1.4.72");
+        Path retired = root.resolve("renamed-old-module.jar");
+        byte[] content = jar("CHRDK_Queue", "1.4.247");
+        Files.write(retired, content);
+        try (var updater = fixture.service()) {
+            var result = updater.execute(true, "1.4.72");
+            assertEquals(1, result.count());
+            assertArrayEquals(content, Files.readAllBytes(retired), "снятие старого JAR — отдельная установка при остановке");
+            assertFalse(Files.exists(result.updateDirectory().resolve(retired.getFileName())));
         }
     }
 
@@ -186,7 +200,7 @@ class PluginUpdateServiceTest {
             assertTrue(updater.execute(true, VERSION).filesCurrent());
             assertEquals(0, fixture.downloads);
             assertThrows(IOException.class, () -> updater.execute(true, "1.4.74"));
-            fixture.install("CHRDK_Queue", "1.4.74");
+            fixture.install("CHRDK_Claims", "1.4.74");
             assertThrows(IOException.class, () -> updater.execute(true, VERSION));
         }
     }
@@ -461,7 +475,7 @@ class PluginUpdateServiceTest {
         }
         CommandSender generic = (CommandSender) Proxy.newProxyInstance(CommandSender.class.getClassLoader(), new Class<?>[]{CommandSender.class}, (p, m, a) -> null);
         assertFalse(RegisterCommandHandler.canDownloadUpdates(generic));
-        assertEquals(26, PluginUpdateService.MODULES.size());
+        assertEquals(25, PluginUpdateService.MODULES.size());
         Set<String> actual = new HashSet<>();
         List<Path> descriptors = new ArrayList<>();
         descriptors.add(Path.of("src/main/resources/plugin.yml"));

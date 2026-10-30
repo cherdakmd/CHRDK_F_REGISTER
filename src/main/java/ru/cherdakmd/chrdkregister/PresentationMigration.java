@@ -8,7 +8,7 @@ import java.util.*;
 
 /**
  * Обновляет ТОЛЬКО точные стоковые значения презентационных секций: пункты меню,
- * автосообщения и таб-лист. Владельческие правки, расписания и закреплённые ники
+ * автосообщения, таб-лист и описания стандартного каталога. Владельческие правки, расписания и закреплённые ники
  * не трогаются: если значение в конфиге отличается от любого известного стокового
  * снимка, оно остаётся как есть.
  *
@@ -24,7 +24,7 @@ final class PresentationMigration {
 
     static final List<String> PATHS = List.of("server-menu.items", "server-menu.categories",
             "auto-messages.messages", "auto-messages.prefix", "tablist.header", "tablist.footer",
-            "tablist.player-name-format");
+            "tablist.player-name-format", "shop.products");
 
     /** Настройки меню, которые должны обновиться вместе с его пунктами. */
     static final List<String> MENU_COMPANIONS = List.of("server-menu.title",
@@ -39,7 +39,7 @@ final class PresentationMigration {
      * снимок 1.4.170 — без обеих (50 пунктов); снимок 1.4.169 — последний со
      * старой плоской структурой (6 разделов, 42 пункта).
      */
-    static final List<String> LEGACY_RESOURCES = List.of("presentation-legacy-1.4.246.yml", "presentation-legacy-1.4.244.yml", "presentation-legacy-1.4.241.yml", "presentation-legacy-1.4.240.yml", "presentation-legacy-1.4.239.yml", "presentation-legacy-1.4.238.yml", "presentation-legacy-1.4.192.yml", "presentation-legacy-1.4.185.yml",
+    static final List<String> LEGACY_RESOURCES = List.of("presentation-legacy-1.4.247.yml", "presentation-legacy-1.4.246.yml", "presentation-legacy-1.4.244.yml", "presentation-legacy-1.4.241.yml", "presentation-legacy-1.4.240.yml", "presentation-legacy-1.4.239.yml", "presentation-legacy-1.4.238.yml", "presentation-legacy-1.4.192.yml", "presentation-legacy-1.4.185.yml",
             "presentation-legacy-1.4.182.yml", "presentation-legacy-1.4.170.yml",
             "presentation-legacy-1.4.169.yml", "presentation-legacy-pre-1.4.138.yml",
             "presentation-legacy.yml");
@@ -63,6 +63,8 @@ final class PresentationMigration {
                 continue;
             }
             Object value = live.get(key);
+            // Снятие старой рекламы не должно обновлять цены/сроки из более ранних снимков.
+            if (key.equals("shop.products") && !sameCatalogTerms(value, fresh.get(key))) continue;
             boolean stock = false;
             for (YamlConfiguration legacy : legacies) {
                 if (legacy != null && legacy.contains(key, true) && Objects.equals(value, legacy.get(key))) {
@@ -83,6 +85,21 @@ final class PresentationMigration {
             }
         }
         return out;
+    }
+
+    /** Для каталога допустимы только отличия описаний при неизменных условиях каждого SKU. */
+    private static boolean sameCatalogTerms(Object before, Object after) {
+        if (!(before instanceof List<?> previous) || !(after instanceof List<?> current)
+                || previous.size() != current.size()) return false;
+        for (int i = 0; i < previous.size(); i++) {
+            if (!(previous.get(i) instanceof Map<?, ?> old) || !(current.get(i) instanceof Map<?, ?> fresh))
+                return false;
+            var left = new HashMap<Object, Object>(old);
+            var right = new HashMap<Object, Object>(fresh);
+            left.remove("description"); right.remove("description");
+            if (!left.equals(right)) return false;
+        }
+        return true;
     }
 
     static void apply(JavaPlugin plugin) {

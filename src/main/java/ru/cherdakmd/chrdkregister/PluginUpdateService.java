@@ -368,7 +368,6 @@ public final class PluginUpdateService implements AutoCloseable {
         result.put("CHRDK_Quests", "chrdk-quests");
         result.put("CHRDK_Pets", "chrdk-pets");
         result.put("CHRDK_Professions", "chrdk-professions");
-        result.put("CHRDK_Queue", "chrdk-queue");
         result.put("CHRDK_Ranks", "chrdk-ranks");
         result.put("CHRDK_Referrals", "chrdk-referrals");
         result.put("CHRDK_Skills", "chrdk-skills");

@@ -17,7 +17,7 @@ import build as kit
 class StorefrontTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.cfg, cls.products = kit.catalog()
+        cls.cfg, cls.products = kit.snapshot_catalog()
         cls.by_id = {p['id']: p for p in cls.products}
 
     def test_all_26_skus_and_periods(self):
@@ -41,7 +41,7 @@ class StorefrontTest(unittest.TestCase):
             self.assertEqual(p['price'], entry['priceRubles'])
             self.assertEqual(p['days'], entry['days'])
             self.assertEqual(kit.command(p), entry['command'])
-            self.assertEqual(kit.description(p, self.cfg), entry['description'])
+            self.assertEqual(kit.description(p, self.cfg, kit.snapshot_version()), entry['description'])
             image = kit.OUTPUT / entry['image']
             self.assertEqual(hashlib.sha256(image.read_bytes()).hexdigest(), entry['imageSha256'])
             with Image.open(image) as img:
@@ -123,6 +123,23 @@ class StorefrontTest(unittest.TestCase):
                 path.write_text(yaml.safe_dump(data, allow_unicode=True), encoding='utf-8')
                 with self.assertRaises(ValueError):
                     kit.catalog(root)
+
+    def test_current_presentation_has_no_priority_promise_and_does_not_mutate_archive(self):
+        cfg, products = kit.catalog()
+        self.assertNotIn('Вход без очереди', str(products))
+        for product in products:
+            self.assertNotIn('Вход без очереди', kit.description(product, cfg))
+        archived_cfg, archived = kit.snapshot_catalog()
+        self.assertIn('Вход без очереди', archived[0]['description'])
+        self.assertNotEqual(products[0]['description'], archived[0]['description'])
+        self.assertNotIn('Вход без очереди', kit.catalog()[1][0]['description'])
+
+    def test_unknown_presentation_drift_is_not_accepted_as_retirement(self):
+        cfg, products = kit.catalog()
+        products[0]['description'] = 'Другое описание'
+        with patch.object(kit, 'catalog', return_value=(cfg, products)):
+            with self.assertRaisesRegex(ValueError, 'TXT is stale'):
+                kit.check()
 
     def test_version_only_bump_preserves_existing_materials_but_not_catalog_drift(self):
         before = {p: hashlib.sha256(p.read_bytes()).digest() for p in kit.OUTPUT.rglob('*') if p.is_file()}

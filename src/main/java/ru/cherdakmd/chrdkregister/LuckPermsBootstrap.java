@@ -38,7 +38,6 @@ public final class LuckPermsBootstrap {
             "chrdkauction.use",
             "chrdkshop.use",
             "chrdkenchants.use",
-            "chrdkqueue.use",
             "chrdkranks.use",
             "chrdkref.use",
             "chrdktele.use",
@@ -64,7 +63,6 @@ public final class LuckPermsBootstrap {
             "chrdkauction.admin",
             "chrdkshop.admin",
             "chrdkenchants.admin",
-            "chrdkqueue.admin",
             "chrdkranks.admin",
             "chrdkref.admin",
             "chrdktele.admin",
@@ -199,7 +197,8 @@ public final class LuckPermsBootstrap {
         java.util.List<String> result = new ArrayList<>();
         for (String key : keys) {
             String normalized = key == null ? "" : key.trim().toLowerCase(Locale.ROOT);
-            if (normalized.startsWith("chrdk") && normalized.endsWith(suffix)) {
+            if (normalized.startsWith("chrdk") && normalized.endsWith(suffix)
+                    && !RetiredAddons.permission(normalized)) {
                 result.add(normalized);
             }
         }
