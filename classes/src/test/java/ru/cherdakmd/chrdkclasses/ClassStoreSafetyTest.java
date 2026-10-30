@@ -281,6 +281,25 @@ class ClassStoreSafetyTest {
     }
 
     @Test
+    void invalidMutationsCannotCreateAnUnreadableSave(@TempDir Path dir) {
+        ClassStore store = new ClassStore(dir, null);
+        store.setClass(PLAYER, "warrior", NOW);
+        store.learnTalent(PLAYER, "warrior-stoyka-1");
+        store.rename(PLAYER, "Чердак");
+        String before = store.snapshotJson();
+        assertThrows(IllegalArgumentException.class, () -> store.setClass(PLAYER, "mage", Long.MAX_VALUE));
+        assertThrows(IllegalArgumentException.class, () -> store.clearTalents(PLAYER, Long.MAX_VALUE));
+        assertThrows(IllegalArgumentException.class, () -> store.setAbilityAt(PLAYER, Long.MAX_VALUE));
+        assertThrows(IllegalArgumentException.class, () -> store.setAbility2At(PLAYER, Long.MAX_VALUE));
+        assertThrows(IllegalArgumentException.class, () -> store.rename(PLAYER, "A".repeat(65)));
+        assertEquals(before, store.snapshotJson(), "отказ не оставляет частично изменённого выбора");
+        store.flush();
+        ClassStore reloaded = new ClassStore(dir, null);
+        reloaded.load();
+        assertEquals(before, reloaded.snapshotJson());
+    }
+
+    @Test
     @Timeout(20)
     void concurrentSaveAndFlushEndWithLatestSnapshot(@TempDir Path dir) throws Exception {
         ClassStore store = new ClassStore(dir, null);

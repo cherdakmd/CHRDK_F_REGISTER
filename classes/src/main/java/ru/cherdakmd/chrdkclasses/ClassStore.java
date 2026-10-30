@@ -43,6 +43,7 @@ public final class ClassStore {
     /** Версия формата файла. */
     public static final int VERSION = 3;
     private static final int MAX_FILE_BYTES = 128 * 1024 * 1024;
+    private static final long MAX_TIMESTAMP = Long.MAX_VALUE - 366L * 86_400_000L;
     /** Потолок числа игроков в файле: защита от мусора. */
     public static final int MAX_PLAYERS = 200_000;
 
@@ -243,7 +244,7 @@ public final class ClassStore {
             return 0;
         }
         long result = requiredNumber(row.get(key));
-        if (result < 0 || result > Long.MAX_VALUE - 366L * 86_400_000L) {
+        if (result < 0 || result > MAX_TIMESTAMP) {
             throw new IllegalArgumentException("Некорректное время: " + key);
         }
         return result;
@@ -254,6 +255,13 @@ public final class ClassStore {
             throw new IllegalArgumentException("Ожидалось целое JSON-число");
         }
         return number.longValueExact();
+    }
+
+    private static long safeTimestamp(long value) {
+        if (value > MAX_TIMESTAMP) {
+            throw new IllegalArgumentException("Время за пределами безопасного диапазона");
+        }
+        return Math.max(0L, value);
     }
 
     private void requireWritable() {
@@ -285,6 +293,9 @@ public final class ClassStore {
     public synchronized void rename(UUID id, String name) {
         if (id == null || name == null || name.isBlank()) {
             return;
+        }
+        if (name.length() > 64) {
+            throw new IllegalArgumentException("Слишком длинный ник игрока");
         }
         Player player = of(id);
         if (!name.equals(player.name)) {
@@ -330,7 +341,7 @@ public final class ClassStore {
     /** Запоминает момент применения умения. */
     public synchronized void setAbilityAt(UUID id, long at) {
         Player player = of(id);
-        long value = Math.max(0L, at);
+        long value = safeTimestamp(at);
         if (player.abilityAt != value) {
             player.abilityAt = value;
             dirty = true;
@@ -351,7 +362,7 @@ public final class ClassStore {
     /** Запоминает момент применения второго умения. */
     public synchronized void setAbility2At(UUID id, long at) {
         Player player = of(id);
-        long value = Math.max(0L, at);
+        long value = safeTimestamp(at);
         if (player.ability2At != value) {
             player.ability2At = value;
             dirty = true;
@@ -376,9 +387,10 @@ public final class ClassStore {
         if (player.classId.equals(value)) {
             return false;
         }
+        long at = safeTimestamp(now);
         player.classId = value;
         player.talents.clear();
-        player.changedAt = Math.max(0L, now);
+        player.changedAt = at;
         dirty = true;
         return true;
     }
@@ -444,8 +456,9 @@ public final class ClassStore {
     public synchronized int clearTalents(UUID id, long now) {
         Player player = of(id);
         int count = player.talents.size();
+        long at = safeTimestamp(now);
         player.talents.clear();
-        player.respecAt = Math.max(0L, now);
+        player.respecAt = at;
         dirty = true;
         return count;
     }
