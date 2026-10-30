@@ -892,6 +892,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias,
                                       String[] args) {
+        if (sender instanceof Player actor && !plugin.authenticated(actor)) return List.of();
         if (command.getName().equalsIgnoreCase("guildadmin")) {
             if (!sender.hasPermission("chrdkguilds.admin")) {
                 return List.of();
@@ -918,13 +919,10 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
             }
             return List.of();
         }
-        if (sender instanceof Player actor && !plugin.authenticated(actor)) {
-            return List.of();
-        }
         if (command.getName().equalsIgnoreCase("gchat")) {
             return List.of();
         }
-        if (!sender.hasPermission("chrdkguilds.use")) {
+        if (!sender.hasPermission("chrdkguilds.use") || !plugin.config().enabled()) {
             return List.of();
         }
         if (args.length == 1) {

@@ -59,7 +59,7 @@ class ClaimClanSharingTest {
     @Test void actualOwnerChangeAndTransferResetBindingWithoutErasingPersonalInvitations() {
         var s=store(); var c=claim(0); c.members.add("Friend"); c.shareClan(clan.id(),Claim.Role.BUILD); s.add(c);
         s.transferAll("Owner","NewOwner"); assertEquals("",c.clanId()); assertTrue(c.isMember("Friend"));
-        c.shareClan(clan.id(),Claim.Role.BUILD); c.owner="Different"; assertNull(c.roleOf("Guest"));
+        c.shareClan(clan.id(),Claim.Role.BUILD); c.owner="Different"; members.put("Different",clan); c.membershipIndex(members::get); assertNull(c.roleOf("Guest"));
         c.clearMembers(); assertEquals("",c.clanId());
     }
     @Test void settingIsOwnerOnlyAndAppliesToWholeConnectedTerritoryNotOtherLand() {

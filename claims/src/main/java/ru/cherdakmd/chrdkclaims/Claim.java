@@ -70,8 +70,9 @@ public final class Claim {
         if (name == null || clanId.isEmpty() || !isOwner(clanOwner) || clanIndex == null) return null;
         try {
             var host = clanIndex.membership(owner);
+            if (host == null || !clanId.equals(host.id())) return null;
             var guest = clanIndex.membership(name);
-            return host != null && guest != null && clanId.equals(host.id()) && clanId.equals(guest.id()) ? clanRole : null;
+            return guest != null && clanId.equals(guest.id()) ? clanRole : null;
         } catch (RuntimeException | LinkageError error) { return null; }
     }
 

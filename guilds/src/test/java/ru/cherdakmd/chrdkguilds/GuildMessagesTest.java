@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class GuildMessagesTest {
 
     private static final List<String> REQUIRED = List.of(
+            "menu-claims-name", "menu-claims-lore", "menu-personal-name", "menu-personal-lore", "menu-personal-boundary",
             "no-permission", "player-only", "disabled", "unknown-subcommand", "guild-not-found",
             "not-in-guild", "not-leader", "already-in-guild", "target-not-found",
             "target-in-guild", "target-not-in-guild", "target-self", "guild-full", "max-guilds",
