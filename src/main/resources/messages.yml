@@ -25,6 +25,9 @@
 
 messages:
   security:
+    cooldown: '<yellow>После повторного спама действует пауза: осталось до %seconds% сек. Повторные подключения не продлевают её.</yellow>'
+    defense-status: '<gray>Повышенный режим: %attack%; история пар UUID/IP: %history%; паузы: %cooling%; резервы до join: %reservations%. Отказы: IP=%ip%, общая квота=%global%, таблица=%capacity%, повышенный режим=%restricted%, пауза=%cooldown%.</gray>'
+    rate-status: '<gray>Лимиты: IP=%ip_burst% + 1/%ip_seconds%с; общие=%global_burst% + %global_rate%/с; ожидание≤%pending% (сейчас≤%effective%, обычных≤%ordinary%), на IP≤%per_ip%, резерв=%reserved%, срок=%seconds%с; возврат=%recovery_burst% + %recovery_rate%/с; повышенный режим=%attack_burst% + %attack_rate%/с; команды=%command_burst% + %command_rate%/с, до входа=%pre_burst% + %pre_rate%/с, длина≤%length%.</gray>'
     login-rate: '<yellow>Слишком много подключений. Подождите немного и повторите вход.</yellow>'
     command-spam: '<red>Слишком частые или слишком длинные команды. Подождите перед повторным входом.</red>'
     console-only: '<red>Эта серверная команда доступна только из доверенной консоли.</red>'

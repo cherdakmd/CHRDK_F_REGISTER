@@ -19,6 +19,29 @@ general:
 # Новые ключи работают и в старом config.yml по этим значениям по умолчанию.
 security:
   enabled: true
+  defense:
+    # Два подряд окна по 10 секунд: не менее 30 отказов и 8 разных IP в каждом.
+    # Один IP не включает режим. Это индикатор нагрузки, не доказательство бота.
+    automatic: true
+    attack-rejects: 30
+    attack-addresses: 8
+    attack-windows: 2
+    quiet-seconds: 60
+    attack-burst: 12
+    attack-per-second: 3
+    # Недавно вошедшая пара UUID + реальный IP получает отдельную небольшую квоту.
+    # Это ТОЛЬКО приоритет подключения, не пропуск пароля/TOTP/банов.
+    recovery-burst: 4
+    recovery-per-second: 2
+    recent-seconds: 1800
+    # Резерв среди ожидающих — для таких пар; также учитывается max-players.
+    reserved-slots: 4
+    # Три отдельных кика за командный flood за 10 минут → пауза 30с, 60с...≤300с.
+    # Ключ UUID+IP: другой игрок за тем же NAT или тот же UUID с другого IP не блокируется.
+    strike-seconds: 600
+    strikes: 3
+    cooldown-seconds: 30
+    max-cooldown-seconds: 300
   # Краткий всплеск с одного реального IP; затем один допуск за N секунд.
   ip-burst: 6
   ip-refill-seconds: 3

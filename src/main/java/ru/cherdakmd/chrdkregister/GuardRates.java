@@ -5,7 +5,7 @@ import java.util.Map;
 
 /** Ограничители по монотонным наносекундам; единый замок для всех потоков pre-login. */
 final class GuardRates {
-    enum Admission { ALLOW, IP_RATE, GLOBAL_RATE, CAPACITY }
+    enum Admission { ALLOW, IP_RATE, GLOBAL_RATE, CAPACITY, ATTACK_RATE, COOLDOWN }
     static final long IDLE_NANOS = 300_000_000_000L;
 
     static final class Bucket {
@@ -33,11 +33,14 @@ final class GuardRates {
     }
     private final GuardSettings settings;
     private final Bucket global;
+    private final Bucket recovery;
     private final Map<String,Address> addresses=new HashMap<>();
     private long lastSweep;
-    GuardRates(GuardSettings s,long now) { settings=s;global=new Bucket(s.globalBurst(),s.globalPerSecond(),now);lastSweep=now; }
+    GuardRates(GuardSettings s,long now) { settings=s;global=new Bucket(s.globalBurst(),s.globalPerSecond(),now);lastSweep=now; recovery=new Bucket(s.defense().recoveryBurst(),s.defense().recoveryPerSecond(),now); }
 
-    synchronized Admission enter(String address,long now) {
+    synchronized Admission enter(String address,long now) { return enter(address,false,now); }
+
+    synchronized Admission enter(String address,boolean returning,long now) {
         if(now-lastSweep>=1_000_000_000L) {
             addresses.values().removeIf(entry -> now-entry.seen>=Math.max(IDLE_NANOS,settings.ipBurst()*(long)settings.ipRefillSeconds()*1_000_000_000L));
             lastSweep=now;
@@ -49,7 +52,7 @@ final class GuardRates {
         }
         // Ни индивидуальный отказ, ни переполнение таблицы не расходуют квоту остальных.
         if(existing==null && addresses.size()>=settings.maxAddresses()) return Admission.CAPACITY;
-        if(!global.take(now)) return Admission.GLOBAL_RATE;
+        if(!global.take(now) && !(returning && recovery.take(now))) return Admission.GLOBAL_RATE;
         if(existing==null) {
             Address added=new Address(settings,now); added.bucket.take(now);addresses.put(address,added);
         }

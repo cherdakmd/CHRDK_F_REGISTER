@@ -134,7 +134,7 @@ public final class RegisterPlugin extends JavaPlugin {
         serverGuard = new ServerGuard(GuardSettings.parse(getConfig()), this::messages,
                 player -> accessManager != null && accessManager.getStage(player) == AccessManager.PlayerStage.AUTHENTICATED,
                 name -> getServer().getCommandMap().getCommand(name), () -> getServer().getCommandAliases(),
-                getLogger()::warning, System::nanoTime);
+                getLogger()::warning, System::nanoTime, () -> getServer().getMaxPlayers());
         getServer().getPluginManager().registerEvents(serverGuard, this);
         getServer().getScheduler().runTaskTimer(this, () -> serverGuard.pulse(getServer().getOnlinePlayers()), 20L, 20L);
         PluginCommand guardCommand = getCommand("guard");

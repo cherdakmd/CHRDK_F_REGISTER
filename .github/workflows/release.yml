@@ -102,7 +102,7 @@ jobs:
           fi
           cp docs/releases/update-memo.txt 'release/ОБНОВЛЕНИЕ.txt'
           printf '\nВерсия: %s\nПлатформа: Purpur 26.3 / Java 25\n' "$version" >> 'release/ОБНОВЛЕНИЕ.txt'
-          for notes in docs/releases/1.4.{200,201,{220..251}}.md; do
+          for notes in docs/releases/1.4.{200,201,{220..252}}.md; do
             printf '\n\n' >> 'release/ОБНОВЛЕНИЕ.txt'
             cat "$notes" >> 'release/ОБНОВЛЕНИЕ.txt'
           done

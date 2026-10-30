@@ -9,7 +9,7 @@ record GuardSettings(boolean enabled, int ipBurst, int ipRefillSeconds, int glob
                      int globalPerSecond, int maxAddresses, int unauthGlobal, int unauthPerIp,
                      int loginSeconds, int commandBurst, int commandsPerSecond,
                      int unauthCommandBurst, int unauthCommandsPerSecond, int maxCommandLength,
-                     Set<String> consoleOnly) {
+                     Set<String> consoleOnly, GuardTuning defense) {
     static final Set<String> DEFAULT_CONSOLE_ONLY = Set.of(
             "op", "deop", "stop", "restart", "reload", "rl", "debug", "perf", "jfr", "paper", "purpur", "spigot", "fill", "fillbiome", "clone", "setblock",
             "execute", "function", "schedule", "return", "gamerule", "title", "particle", "summon",
@@ -44,7 +44,7 @@ record GuardSettings(boolean enabled, int ipBurst, int ipRefillSeconds, int glob
                 limit(c,"command-burst",40,1,1000), limit(c,"commands-per-second",10,1,100),
                 limit(c,"unauthenticated-command-burst",10,1,100),
                 limit(c,"unauthenticated-commands-per-second",2,1,20),
-                limit(c,"max-command-length",2048,256,32767), blocked);
+                limit(c,"max-command-length",2048,256,32767), blocked, GuardTuning.parse(c));
     }
 
     private static int limit(FileConfiguration c, String key, int value, int min, int max) {
