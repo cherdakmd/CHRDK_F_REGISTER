@@ -72,6 +72,11 @@ final class ProfessionOrigins implements Listener {
         p.set(outputCount,PersistentDataType.INTEGER,Math.max(0,n-amount));state.update(false,false);
         return own&&n>0;
     }
+    UUID peek(Block block,ItemStack input){
+        if(input==null||!(block.getState() instanceof TileState state))return null;var p=state.getPersistentDataContainer();
+        if(p.getOrDefault(budget,PersistentDataType.INTEGER,0)<=0||!input.getType().name().equals(p.get(material,PersistentDataType.STRING)))return null;
+        try{String actor=p.get(owner,PersistentDataType.STRING);return actor==null?null:UUID.fromString(actor);}catch(IllegalArgumentException bad){return null;}
+    }
     UUID take(Block block,ItemStack input){
         if(input==null||!(block.getState() instanceof TileState state))return null;
         var p=state.getPersistentDataContainer();String who=p.get(owner,PersistentDataType.STRING);

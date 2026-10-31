@@ -6,7 +6,6 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
-import org.bukkit.block.BrewingStand;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -23,7 +22,6 @@ import org.bukkit.event.inventory.SmithItemEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.PotionMeta;
@@ -57,10 +55,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 final class ProfessionListener implements Listener {
 
-    /** Сколько секунд помним, кто поставил ингредиент в варочную стойку. */
-    private static final long BREW_OWNER_TTL = 5 * 60 * 1_000L;
-    /** Потолок карты владельцев стоек: защита от утечки на больших фермах. */
-    private static final int BREW_OWNER_LIMIT = 1_024;
     /** Слот входа и слот результата камнереза (1.4.177). */
     private static final int STONECUTTER_INPUT = 0;
     private static final int STONECUTTER_RESULT = 1;
@@ -76,8 +70,6 @@ final class ProfessionListener implements Listener {
     private final java.util.Map<UUID,UUID> casts=new HashMap<>();
     private final java.util.Set<UUID> crafting=new java.util.HashSet<>();
     private final Random random = new Random();
-    /** Кто последним трогал варочную стойку: у BrewEvent нет игрока. */
-    private final Map<BlockKey, Owner> brewers = new ConcurrentHashMap<>();
     /** Кому уже сказали про суточный потолок (дата, чтобы сказать один раз в день). */
     private final Map<UUID, String> cappedNotice = new ConcurrentHashMap<>();
     /** Защита от повторного входа в PrepareAnvilEvent, если сервер пересчитает цену. */
@@ -86,9 +78,6 @@ final class ProfessionListener implements Listener {
     private final Map<UUID, Feedback> feedback = new HashMap<>();
 
     private record BlockKey(UUID world, int x, int y, int z) {
-    }
-
-    private record Owner(UUID player, long at) {
     }
 
     /** Строка «+N опыта» собирается из нескольких начислений подряд. */
@@ -167,15 +156,21 @@ final class ProfessionListener implements Listener {
         Bukkit.getScheduler().runTask(plugin, () -> give(player, extra));
     }
 
+    @EventHandler(priority=EventPriority.HIGH,ignoreCancelled=true)
+    public void brewBonus(BrewEvent event){
+        UUID owner=origins.peek(event.getBlock(),event.getContents().getIngredient());if(owner==null)return;
+        Player player=Bukkit.getPlayer(owner);
+        if(honest(player)&&plugin.service().active(owner)==Profession.ALCHEMIST&&plugin.config().perkAlchemistBottle()
+                &&random.nextInt(100)<plugin.service().alchemistChance(owner))duplicate(event.getResults());
+    }
     /** Опыт только тому, кто вручную внёс расходуемый реагент. */
     @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true)
     public void onBrew(BrewEvent event){
         UUID owner=origins.take(event.getBlock(),event.getContents().getIngredient());
         if(owner==null)return;Player player=Bukkit.getPlayer(owner);
         if(!honest(player)||plugin.service().active(owner)!=Profession.ALCHEMIST)return;
-        int count=bottles(event.getResults());if(count<=0)return;
+        int count=bottles(java.util.Arrays.asList(event.getContents().getContents()));if(count<=0)return;
         source(player,Profession.ALCHEMIST,"brew",Material.POTION,1,ProfessionCatalog.brewXp(Profession.ALCHEMIST,count));
-        if(plugin.config().perkAlchemistBottle()&&random.nextInt(100)<plugin.service().alchemistChance(owner))duplicate(event.getResults());
     }
     @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true)
     public void onClick(InventoryClickEvent event){
@@ -186,6 +181,7 @@ final class ProfessionListener implements Listener {
         if(event.getWhoClicked() instanceof Player player&&honest(player))watchStation(player,event.getInventory());
     }
     private void watchStation(Player player,org.bukkit.inventory.Inventory inventory){
+        if(!(inventory instanceof org.bukkit.inventory.FurnaceInventory)&&!(inventory instanceof org.bukkit.inventory.BrewerInventory))return;
         ItemStack input=stationInput(inventory);if(!(inventory.getHolder() instanceof org.bukkit.block.TileState state))return;
         Block block=state.getBlock();Material type=block.getType();ItemStack before=input==null?null:input.clone();
         BlockKey key=key(block);UUID existing=stationPending.putIfAbsent(key,player.getUniqueId());
@@ -246,9 +242,7 @@ final class ProfessionListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBreak(BlockBreakEvent event) {
         Block block = event.getBlock();
-        if (block.getType() == Material.BREWING_STAND) {
-            brewers.remove(key(block));
-        }
+        origins.clear(block);
         Player player = event.getPlayer();
         if (!honest(player)) {
             return;
@@ -681,18 +675,6 @@ final class ProfessionListener implements Listener {
     private boolean honest(Player player) {
         return plugin.config().enabled()&&player!=null&&player.isOnline()&&player.getGameMode()==GameMode.SURVIVAL
                 &&player.hasPermission("chrdkprofessions.use")&&plugin.authenticated(player);
-    }
-
-    private static Block brewingBlock(InventoryHolder holder) {
-        return holder instanceof BrewingStand stand ? stand.getBlock() : null;
-    }
-
-    private void remember(Block block, UUID player) {
-        long now = System.currentTimeMillis();
-        if (brewers.size() > BREW_OWNER_LIMIT) {
-            brewers.entrySet().removeIf(entry -> now - entry.getValue().at() > BREW_OWNER_TTL);
-        }
-        brewers.put(key(block), new Owner(player, now));
     }
 
     private static BlockKey key(Block block) {

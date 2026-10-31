@@ -249,7 +249,7 @@ final class ProfessionsGui implements Listener {
                 || event.getRawSlot() >= SIZE) {
             return;
         }
-        if (!player.hasPermission("chrdkprofessions.use")) return;
+        if (!player.hasPermission("chrdkprofessions.use")||!plugin.authenticated(player)||!plugin.config().enabled()) return;
         int slot = event.getRawSlot();
         if(slot>=46&&slot<=48||slot==50||slot==51){
             Profession target=Profession.parse(holder.professionId);if(target==null)target=plugin.service().active(player.getUniqueId());

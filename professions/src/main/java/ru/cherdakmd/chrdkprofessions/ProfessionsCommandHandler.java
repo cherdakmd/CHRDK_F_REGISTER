@@ -38,6 +38,7 @@ public final class ProfessionsCommandHandler implements CommandExecutor, TabComp
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if(sender instanceof Player player&&!plugin.authenticated(player)){plugin.messages().send(sender,"auth-required");return true;}
         if (command.getName().equalsIgnoreCase("profadmin")) {
             return admin(sender, args);
         }
@@ -442,7 +443,7 @@ public final class ProfessionsCommandHandler implements CommandExecutor, TabComp
             }
             if (args.length == 3) {
                 String sub = args[0].toLowerCase(Locale.ROOT);
-                return sub.equals("set") || sub.equals("xp")
+                return sub.equals("work")?filter(List.of("status","retry","abort"),args[2]):sub.equals("set") || sub.equals("xp")
                         ? filter(professionIds(), args[2]) : List.of();
             }
             return List.of();
@@ -458,7 +459,7 @@ public final class ProfessionsCommandHandler implements CommandExecutor, TabComp
             if (sub.equals("mastery") && sender instanceof Player player)
                 return filter(ProfessionMastery.of(plugin.service().active(player.getUniqueId())).stream()
                         .map(ProfessionMastery::id).toList(), args[1]);
-            return sub.equals("choose") || sub.equals("info")
+            return List.of("choose","info","sources","roadmap","abilities","trials","passport").contains(sub)
                     ? filter(professionIds(), args[1]) : List.of();
         }
         return List.of();

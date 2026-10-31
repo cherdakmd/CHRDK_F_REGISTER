@@ -324,3 +324,4 @@ professions:
   mastery.tackle-keeper.name: "<gray>Мастер снастей</gray>"
   mastery.tackle-keeper.desc: "<gray>Починка одной удочки на 15% максимальной прочности.</gray>"
   mastery.tackle-keeper.cost: "<gray>1 нить; чары, имя и свойства удочки сохраняются. Только удочки.</gray>"
+  auth-required: "<red>Сначала войдите в аккаунт: /login.</red>"

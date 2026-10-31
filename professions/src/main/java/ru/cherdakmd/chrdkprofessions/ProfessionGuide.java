@@ -92,7 +92,7 @@ final class ProfessionGuide implements Listener {
     @EventHandler(priority=EventPriority.HIGH,ignoreCancelled=true)
     public void click(InventoryClickEvent event){
         if(!(event.getInventory().getHolder() instanceof Holder h))return;event.setCancelled(true);
-        if(!(event.getWhoClicked() instanceof Player player)||!h.owner.equals(player.getUniqueId())||!player.hasPermission("chrdkprofessions.use")||!plugin.config().enabled())return;
+        if(!(event.getWhoClicked() instanceof Player player)||!h.owner.equals(player.getUniqueId())||!player.hasPermission("chrdkprofessions.use")||!plugin.config().enabled()||!plugin.authenticated(player))return;
         int slot=event.getRawSlot();if(slot<0||slot>=54)return;
         if(slot==49){player.closeInventory();return;}
         if(slot==45){plugin.gui().openInfo(player,h.profession);return;}

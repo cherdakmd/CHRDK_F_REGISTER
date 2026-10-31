@@ -38,7 +38,7 @@ final class ProfessionWorkRecipes {
             case SMELTER -> switch(input){case "RAW_IRON"->"IRON_INGOT";case "RAW_GOLD"->"GOLD_INGOT";case "RAW_COPPER"->"COPPER_INGOT";default->null;};
             case CRUSHER -> input.equals("COBBLESTONE")||input.equals("COBBLED_DEEPSLATE")?"GRAVEL":null;
             case MILLER -> input.equals("WHEAT")?"BREAD":null;
-            case COMPOSTER -> input.equals("WHEAT")_SEEDS||input.equals("BEETROOT_SEEDS")?"BONE_MEAL":null;
+            case COMPOSTER -> input.equals("WHEAT_SEEDS")||input.equals("BEETROOT_SEEDS")?"BONE_MEAL":null;
             case FISH_SMOKER -> input.equals("COD")?"COOKED_COD":input.equals("SALMON")?"COOKED_SALMON":null;
             case GRENADIER -> input.equals("POTION") ? "SPLASH_POTION" : null;
             case DISTILLER -> input.equals("SPLASH_POTION") ? "LINGERING_POTION" : null;
