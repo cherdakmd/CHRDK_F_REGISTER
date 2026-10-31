@@ -85,7 +85,7 @@ class ArtifactPresentationTest {
     void missingOrCustomLoreIsNotRebuiltOrAppended() {
         assertNull(ArtifactLore.replaceKnown(null, Map.of()));
         assertEquals(List.of(), ArtifactLore.replaceKnown(List.of(), Map.of()));
-        var custom = List.of(Component.text("Только мои строки"));
+        List<Component> custom = List.of(Component.text("Только мои строки"));
         assertEquals(custom, ArtifactLore.replaceKnown(custom,
                 Map.of(Component.text("Неизвестная строка"), Component.text("Новая"))));
     }
