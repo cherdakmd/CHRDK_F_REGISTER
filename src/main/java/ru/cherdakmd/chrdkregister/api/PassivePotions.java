@@ -35,7 +35,6 @@ public final class PassivePotions implements Listener {
     private final PassivePotionFrames<UUID, Source, PotionEffectType, PotionEffect> frames = new PassivePotionFrames<>();
     private final Map<Key, State> states = new HashMap<>();
     private final Set<Key> writing = new HashSet<>();
-    private final Map<Key, PotionEffect> forceOld = new HashMap<>();
     private BukkitTask task;
 
     private PassivePotions() { }
@@ -91,8 +90,8 @@ public final class PassivePotions implements Listener {
     }
 
     /** Длительность пульсового пассива не масштабируется как выпитое/боевое зелье. */
-    public static boolean isApplying(Player player) {
-        return service != null && service.writing.stream().anyMatch(key -> key.player().equals(player.getUniqueId()));
+    public static boolean isApplying(Player player, PotionEffectType type) {
+        return service != null && service.writing.contains(new Key(player.getUniqueId(), type));
     }
 
     private static long now() { return Integer.toUnsignedLong(Bukkit.getCurrentTick()); }
@@ -126,11 +125,19 @@ public final class PassivePotions implements Listener {
             State state = states.computeIfAbsent(key, ignored -> new State());
             PotionEffect current = player.getPotionEffect(key.type());
             boolean own = owns(state, current);
+            boolean changedHidden = !own && state.owned != null && current != null
+                    && state.owned.getAmplifier() != effect.getAmplifier();
+            boolean lowerOwned = own && current.getAmplifier() > effect.getAmplifier();
+            if (changedHidden || lowerOwned) {
+                if (!purgeOwned(player, key, state, current)) continue;
+                state.owned = null;
+                current = player.getPotionEffect(key.type());
+                own = false;
+            }
             if (!own && current != null && PassivePotionPolicy.protectsExternal(
                     current.getAmplifier(), current.getDuration(), effect.getAmplifier())) continue;
             if (own && current.getAmplifier() == effect.getAmplifier()
-                    && current.getDuration() > PassivePotionPolicy.REFRESH_AT
-                    && flags(current, effect)) continue;
+                    && current.getDuration() > PassivePotionPolicy.REFRESH_AT) continue;
             if (!own && current != null) {
                 state.fallback = current;
                 state.fallbackAt = now();
@@ -139,9 +146,13 @@ public final class PassivePotions implements Listener {
             if (own && current.getAmplifier() == effect.getAmplifier() && key.type().equals(PotionEffectType.REGENERATION)) {
                 duration = PassivePotionPolicy.renewalDuration(current.getDuration(), Math.max(1, 50 >> Math.min(30, effect.getAmplifier())));
             }
+            if (own && effect.getAmplifier() > current.getAmplifier()) {
+                // Иначе vanilla спрятала бы предыдущий собственный уровень под новым.
+                duration = Math.max(duration, current.getDuration());
+            }
             PotionEffect fresh = new PotionEffect(key.type(), duration,
                     effect.getAmplifier(), effect.isAmbient(), effect.hasParticles(), effect.hasIcon());
-            if (write(player, key, fresh, own ? current : null)) {
+            if (write(player, key, fresh)) {
                 PotionEffect actual = player.getPotionEffect(key.type());
                 state.owned = actual != null && flags(actual, fresh)
                         && actual.getAmplifier() == fresh.getAmplifier()
@@ -161,11 +172,41 @@ public final class PassivePotions implements Listener {
                 state.owned.getAmplifier(), state.owned.getDuration(), now() - state.ownedAt);
     }
 
-    private boolean write(Player player, Key key, PotionEffect fresh, PotionEffect oldOwned) {
+    private boolean write(Player player, Key key, PotionEffect fresh) {
         writing.add(key);
-        if (oldOwned != null) forceOld.put(key, oldOwned);
         try { return player.addPotionEffect(fresh); }
-        finally { writing.remove(key); forceOld.remove(key); }
+        finally { writing.remove(key); }
+    }
+
+    private static PassivePotionPolicy.Snapshot snapshot(PotionEffect effect, long elapsed) {
+        return new PassivePotionPolicy.Snapshot(effect.getAmplifier(),
+                PassivePotionPolicy.remaining(effect.getDuration(), elapsed),
+                effect.isAmbient(), effect.hasParticles(), effect.hasIcon());
+    }
+
+    private static List<PassivePotionPolicy.Snapshot> chain(PotionEffect effect, long elapsed) {
+        List<PassivePotionPolicy.Snapshot> result = new ArrayList<>();
+        for (int depth = 0; effect != null && depth <= 64; depth++, effect = effect.getHiddenPotionEffect()) {
+            result.add(snapshot(effect, elapsed));
+        }
+        return result;
+    }
+
+    private boolean purgeOwned(Player player, Key key, State state, PotionEffect current) {
+        var plan = PassivePotionPolicy.releasePlan(chain(current, 0),
+                state.owned == null ? null : snapshot(state.owned, 0), now() - state.ownedAt,
+                chain(state.fallback, now() - state.fallbackAt));
+        if (!plan.ownedFound()) return true;
+        writing.add(key);
+        try {
+            player.removePotionEffect(key.type());
+            if (player.hasPotionEffect(key.type())) return false;
+            for (var saved : plan.restore()) {
+                if (!player.addPotionEffect(new PotionEffect(key.type(), saved.duration(), saved.amplifier(),
+                        saved.ambient(), saved.particles(), saved.icon()))) break;
+            }
+            return true;
+        } finally { writing.remove(key); }
     }
 
     private void release(Key key) {
@@ -174,27 +215,10 @@ public final class PassivePotions implements Listener {
 
     private void release(Key key, Player player) {
         State state = states.remove(key);
-        if (state == null || player == null) return;
+        if (state == null || player == null || state.owned == null) return;
         PotionEffect current = player.getPotionEffect(key.type());
-        if (!owns(state, current)) return; // чужую замену не удаляем
-        PotionEffect fallback = state.fallback;
-        int left = fallback == null ? 0 : PassivePotionPolicy.remaining(fallback.getDuration(), now() - state.fallbackAt);
-        if (left == -1 || left > 0) {
-            write(player, key, new PotionEffect(key.type(), left, fallback.getAmplifier(),
-                    fallback.isAmbient(), fallback.hasParticles(), fallback.hasIcon()), current);
-        } else {
-            writing.add(key);
-            try { player.removePotionEffect(key.type()); }
-            finally { writing.remove(key); }
-        }
-    }
-
-    /** Меняем уровень собственного пассива без remove/add и разрыва эффекта. */
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    public void allowOwnedTransition(EntityPotionEffectEvent event) {
-        Key key = new Key(event.getEntity().getUniqueId(), event.getModifiedType());
-        PotionEffect expected = forceOld.get(key);
-        if (expected != null && expected.equals(event.getOldEffect())) event.setOverride(true);
+        // Также удаляем свой слой под коротким сильным зельем, иначе он вернулся бы без вещи.
+        purgeOwned(player, key, state, current);
     }
 
     /** Любая разрешённая внешняя замена больше не считается нашим эффектом. */
@@ -204,6 +228,10 @@ public final class PassivePotions implements Listener {
         State state = states.get(key);
         if (state == null || writing.contains(key)) return;
         PotionEffect incoming = event.getNewEffect();
+        if (event.getCause() == EntityPotionEffectEvent.Cause.EXPIRATION && owns(state, incoming)) return;
+        PotionEffect previous = event.getOldEffect();
+        if (incoming != null && previous != null && incoming.getAmplifier() > previous.getAmplifier()
+                && !event.isOverride()) return; // явно отклонённое усиление не возвращаем позже
         if (incoming != null) {
             // Даже короткое зелье под более длинным пассивом должно пережить снятие вещи.
             int oldLeft = state.fallback == null ? 0 : PassivePotionPolicy.remaining(state.fallback.getDuration(), now() - state.fallbackAt);
@@ -214,7 +242,11 @@ public final class PassivePotions implements Listener {
             }
         }
         if (event.getAction() != EntityPotionEffectEvent.Action.CHANGED || event.isOverride()) {
-            state.owned = null;
+            boolean hiddenOwn = state.owned != null && incoming != null
+                    && incoming.getAmplifier() > state.owned.getAmplifier()
+                    && incoming.getDuration() != -1
+                    && incoming.getDuration() < PassivePotionPolicy.remaining(state.owned.getDuration(), now() - state.ownedAt);
+            if (!hiddenOwn) state.owned = null;
             if (incoming == null && event.getCause() != EntityPotionEffectEvent.Cause.EXPIRATION) {
                 state.fallback = null; // молоко/очистка не должны возвращать ранее снятое зелье
             }

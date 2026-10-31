@@ -811,7 +811,7 @@ public final class ForgeUpgradeListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPotionEffect(EntityPotionEffectEvent event) {
         if (effectShifting.get() || !(event.getEntity() instanceof Player player)
-                || PassivePotions.isApplying(player)
+                || PassivePotions.isApplying(player, event.getModifiedType())
                 || event.getAction() != EntityPotionEffectEvent.Action.ADDED
                 || event.getCause() == EntityPotionEffectEvent.Cause.BEACON) {
             return;

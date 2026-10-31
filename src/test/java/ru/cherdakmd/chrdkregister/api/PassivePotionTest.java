@@ -111,4 +111,47 @@ class PassivePotionTest {
             }
         }
     }
+    private PassivePotionPolicy.Snapshot effect(int amplifier, int duration) {
+        return new PassivePotionPolicy.Snapshot(amplifier, duration, true, false, true);
+    }
+
+    @Test
+    void removingSourcePurgesItsHiddenLayerButKeepsStrongerPotion() {
+        var plan = PassivePotionPolicy.releasePlan(java.util.List.of(effect(1, 80), effect(0, 580)),
+                effect(0, 600), 20, java.util.List.of(effect(1, 80)));
+        assertTrue(plan.ownedFound());
+        assertEquals(java.util.List.of(effect(1, 80)), plan.restore());
+    }
+
+    @Test
+    void foreignChainIsRestoredWeakestFirstWithRemainingDurationsAndNoDuplicateLevel() {
+        var plan = PassivePotionPolicy.releasePlan(java.util.List.of(effect(2, 550), effect(1, 100), effect(0, 900)),
+                effect(2, 600), 50, java.util.List.of(effect(1, 90)));
+        assertTrue(plan.ownedFound());
+        assertEquals(java.util.List.of(effect(0, 900), effect(1, 100)), plan.restore());
+    }
+
+    @Test
+    void unknownReplacementAndDifferentDeadlineAreNotErased() {
+        var plan = PassivePotionPolicy.releasePlan(java.util.List.of(effect(0, 400)),
+                effect(0, 600), 20, java.util.List.of(effect(1, 100)));
+        assertFalse(plan.ownedFound());
+        assertTrue(plan.restore().isEmpty());
+    }
+
+    @Test
+    void promotedOwnLayerStillHasOriginalDeadlineAndExpiredFallbackDoesNotReturn() {
+        var plan = PassivePotionPolicy.releasePlan(java.util.List.of(effect(0, 500)),
+                effect(0, 600), 100, java.util.List.of(effect(1, 0)));
+        assertTrue(plan.ownedFound());
+        assertTrue(plan.restore().isEmpty());
+    }
+
+    @Test
+    void unexpectedlyDeepForeignChainIsLeftAlone() {
+        var chain = new java.util.ArrayList<PassivePotionPolicy.Snapshot>();
+        for (int i = 0; i < 65; i++) chain.add(effect(i, 600));
+        assertFalse(PassivePotionPolicy.releasePlan(chain, effect(0, 600), 0, java.util.List.of()).ownedFound());
+    }
+
 }

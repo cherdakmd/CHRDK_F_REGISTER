@@ -36,10 +36,12 @@ class PassivePotionIntegrationTest {
         assertTrue(core.contains("PassivePotions.start(this)"));
         assertTrue(core.contains("PassivePotions.stop()"));
         String forge = source("tier-forge/src/main/java/ru/cherdakmd/chrdktierforge/ForgeUpgradeListener.java");
-        assertTrue(forge.contains("PassivePotions.isApplying(player)"));
+        assertTrue(forge.contains("PassivePotions.isApplying(player, event.getModifiedType())"));
         String service = source("src/main/java/ru/cherdakmd/chrdkregister/api/PassivePotions.java");
         assertTrue(service.contains("ignoreCancelled = true"));
-        assertTrue(service.contains("event.setOverride(true)"));
+        assertTrue(service.contains("PassivePotionPolicy.releasePlan("));
+        assertTrue(service.contains("effect.getHiddenPotionEffect()"));
+        assertTrue(service.contains("duration = Math.max(duration, current.getDuration())"));
         assertTrue(service.contains("release(key, player)"));
         assertTrue(service.contains("Cause.EXPIRATION"));
         assertTrue(service.contains("renewalDuration(current.getDuration()"));
