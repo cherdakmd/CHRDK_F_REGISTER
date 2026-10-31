@@ -95,6 +95,17 @@ public final class LabelStyleService {
         return assemble(colorize(base, customColor, rank), selection(playerName, rank, customColor));
     }
 
+    /** Клан в TAB — статус PvP, а не платное косметическое место. Чат не меняется. */
+    public String decorateForTab(String playerName, String base, String customColor) {
+        Rank rank=ranks.view(playerName);
+        Selection selected=selection(playerName,rank,customColor);
+        List<Decoration> shown=selected.shown().stream()
+                .filter(entry -> entry.source()!=LabelPreferences.Label.GUILDS).toList();
+        String name=assemble(colorize(base,customColor,rank),new Selection(shown,selected.overflow(),selected.limit()));
+        String clan=project(tags.apply("guilds-tab",playerName,ANCHOR));
+        return clan.isBlank()?name:name+SEPARATOR+"<reset>"+clan+"<reset>";
+    }
+
     public void applyLimits(LabelLimits limits) {
         this.limits = limits == null ? LabelLimits.DEFAULT : limits;
     }

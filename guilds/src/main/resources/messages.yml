@@ -31,7 +31,7 @@ guilds:
   help-header: "<gold>Гильдии</gold> <dark_gray>·</dark_gray> <gray>казна, ранги и войны</gray>"
   help-create: "<yellow>/guild create <имя> <тег></yellow> <gray>— создать гильдию</gray>"
   help-invite: "<yellow>/guild invite <ник></yellow> <gray>— позвать · <yellow>/guild accept</yellow> — принять</gray>"
-  help-join: "<yellow>/guild menu</yellow> <gray>— меню гильдии, состав и казна</gray>"
+  help-join: "<yellow>/clan gui</yellow> <gray>— меню гильдии, состав и казна</gray>"
   help-leave: "<yellow>/guild leave</yellow> <gray>— выйти · <yellow>/guild disband confirm</yellow> — распустить</gray>"
   help-ranks: "<yellow>/guild promote|demote|transfer <ник></yellow> <gray>— ранги</gray>"
   help-treasury: "<yellow>/guild deposit <сумма|all></yellow> <gray>— взнос · <yellow>/guild upgrade</yellow> — уровень</gray>"
@@ -299,3 +299,9 @@ guilds:
   peace-settle-first: '<red>Есть неоплаченный период мирного режима. Сначала закройте его: смена режима не отменяет уже наступившую оплату и суточный срок исключения/роспуска.</red>'
   peace-leader-risk: '<red>Клан под угрозой роспуска: лидер не оплатил мирный режим. Крайний срок: %deadline%. Казна и военные остатки при роспуске не возвращаются.</red>'
   peace-pending-prefix: '<yellow>[⌛ %tag%]</yellow> '
+
+  tab-battle-prefix: '<red>[%tag%]</red> '
+  tab-peace-prefix: '<green>[☮ %tag%]</green> '
+  tab-peace-pending-prefix: '<green>[⌛ %tag%]</green> '
+  menu-mode-peaceful: '<green>Мирный клан</green>'
+  menu-mode-battle: '<red>Боевой клан</red>'

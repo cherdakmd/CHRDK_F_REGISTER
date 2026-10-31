@@ -128,6 +128,15 @@ public final class ChatService implements Listener {
      * и срок ранга остаются.</p>
      */
     public String decoratedName(String playerName) {
+        return decoratedName(playerName,false);
+    }
+
+    /** Имя для TAB с отдельной статусной меткой клана. */
+    public String decoratedTabName(String playerName) {
+        return decoratedName(playerName,true);
+    }
+
+    private String decoratedName(String playerName, boolean tab) {
         java.util.function.Function<String, String> resolver = tagResolver;
         String tag = resolver == null ? "" : resolver.apply(playerName);
         String base = ShopEntitlements.decorate(playerName, tag);
@@ -139,7 +148,8 @@ public final class ChatService implements Listener {
         }
         // Купленный тег каталога главнее выбора игрока: оплаченное вперёд не
         // отбираем. Иначе свой цвет из палитры, затем цвет ступени.
-        return styles.decorate(playerName, base, catalogTag ? null : customColor(playerName));
+        return tab ? styles.decorateForTab(playerName,base,catalogTag ? null : customColor(playerName))
+                : styles.decorate(playerName, base, catalogTag ? null : customColor(playerName));
     }
 
     /**

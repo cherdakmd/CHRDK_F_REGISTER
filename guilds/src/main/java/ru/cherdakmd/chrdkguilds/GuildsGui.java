@@ -79,7 +79,7 @@ final class GuildsGui implements Listener {
         holder.inventory = inventory;
         inventory.setItem(CLAIMS_SLOT, item(Material.GRASS_BLOCK, "menu-claims-name", List.of(
                 plugin.messages().get("menu-claims-lore"))));
-        if(guild!=null)inventory.setItem(MODE_SLOT,item(guild.peaceful()?Material.SHIELD:Material.IRON_SWORD,"peace-menu-name",List.of(
+        if(guild!=null)inventory.setItem(MODE_SLOT,item(guild.peaceful()?Material.SHIELD:Material.IRON_SWORD,guild.peaceful()?"menu-mode-peaceful":"menu-mode-battle",List.of(
                 plugin.messages().get("peace-menu-mode","mode",guild.mode().label()),
                 plugin.messages().get("peace-menu-price","rate",GuildPeaceService.DAILY,"total",(long)guild.size()*GuildPeaceService.DAILY),
                 plugin.messages().get("peace-menu-hint"))));
@@ -142,7 +142,8 @@ final class GuildsGui implements Listener {
                 "glory", String.valueOf(guild.glory()),
                 "won", String.valueOf(guild.warsWon()),
                 "lost", String.valueOf(guild.warsLost())));
-        return item(Material.WHITE_BANNER, "menu-info-title", lore);
+        lore.add(plugin.messages().get(guild.peaceful()?"menu-mode-peaceful":"menu-mode-battle"));
+        return item(guild.peaceful()?Material.GREEN_BANNER:Material.RED_BANNER, "menu-info-title", lore);
     }
 
     private ItemStack memberItem(Guild guild, UUID member) {

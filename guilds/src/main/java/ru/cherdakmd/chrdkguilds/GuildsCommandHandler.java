@@ -24,7 +24,7 @@ import java.util.UUID;
  */
 final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
 
-    private static final List<String> SUBS = List.of("help", "menu", "create", "invite",
+    private static final List<String> SUBS = List.of("help", "menu", "gui", "create", "invite",
             "accept", "decline", "leave", "kick", "promote", "demote", "transfer", "disband",
             "deposit", "withdraw", "upgrade", "info", "top", "members", "chat", "war",
             "rename", "retag", "mode", "peace");
@@ -37,6 +37,12 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
 
     GuildsCommandHandler(GuildsPlugin plugin) {
         this.plugin = plugin;
+    }
+
+    /** Общий маршрут GUI сохраняет все проверки авторизации, прав и режима. */
+    static String canonicalSubcommand(String argument) {
+        String key=argument.toLowerCase(Locale.ROOT);
+        return key.equals("gui")?"menu":key;
     }
 
     @Override
@@ -65,7 +71,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
         if (args.length == 0) {
             return menu(sender);
         }
-        switch (args[0].toLowerCase(Locale.ROOT)) {
+        switch (canonicalSubcommand(args[0])) {
             case "mode", "peace" -> { Player player=player(sender);if(player!=null)plugin.peace().command(player,args); }
             case "help" -> help(sender);
             case "menu" -> menu(sender);
