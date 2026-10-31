@@ -117,9 +117,10 @@ final class ProfessionWorkshop {
         }
         if (!ordinary(held)) return Result.fail("work-special");
         int ratio=ProfessionWorkRecipes.inputRatio(mastery),outRatio=ProfessionWorkRecipes.outputRatio(mastery);
-        int count=Math.min(held.getAmount()/ratio,batch);
+        int available=0;for(ItemStack item:contents)if(item!=null&&item.getType()==held.getType()&&ordinary(item))available+=item.getAmount();
+        int count=Math.min(available/ratio,batch);
         if(count<=0)return Result.fail("work-materials");
-        removeAt(contents,selected,count*ratio);
+        if(!consume(contents,held.getType(),count*ratio))return Result.fail("work-materials");
         if(ProfessionWorkRecipes.needsFuel(mastery)&&!consume(contents,Material.COAL,ProfessionWorkRecipes.fuel(count)))return Result.fail("work-materials");
         int outputCount=count*outRatio;
         while(outputCount>0){int n=Math.min(output.getMaxStackSize(),outputCount);if(!add(contents,new ItemStack(output,n)))return Result.fail("work-space");outputCount-=n;}

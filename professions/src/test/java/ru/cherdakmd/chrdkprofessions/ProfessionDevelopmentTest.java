@@ -121,4 +121,25 @@ class ProfessionDevelopmentTest {
         assertFalse(store.flushDurably());assertTrue(store.isDirty());
     }
 
+    @Test void legacyFullXpBankStillEarnsPracticeButCannotBypassDailyCap(){
+        var store=store();var service=new ProfessionService(ProfessionConfig.defaults(),store);
+        store.setActive(id,"forester",now);store.addXp(id,Profession.FORESTER,ProfessionStore.MAX_XP);
+        assertEquals(0,service.awardSource(id,Profession.FORESTER,"harvest",Material.OAK_LOG,1,3,now).added());
+        assertEquals(1,store.practice(id,Profession.FORESTER).get("harvest:oak_log"));
+        assertEquals(1197,service.dailyLeft(id,Profession.FORESTER,now));
+        service.award(id,Profession.FORESTER,1197,now);
+        service.awardSource(id,Profession.FORESTER,"harvest",Material.OAK_LOG,1,3,now);
+        assertEquals(1,store.practice(id,Profession.FORESTER).get("harvest:oak_log"));
+    }
+    @Test void rankFiveKeepsItsHistoricalPerksButNotExtraProgressionLevels(){
+        var store=store();var service=new ProfessionService(ProfessionConfig.defaults(),store);
+        service.setRankBonus(ignored->new ru.cherdakmd.chrdkregister.api.RankBonus(5,50,25,10));
+        assertEquals(100,service.maxLevel(id));assertEquals(35,service.powerCap(id));
+        for(var profession:Profession.values())store.addXp(id,profession,1_000_000);
+        store.setActive(id,"smith",now);assertEquals(60,service.smithDiscount(id));
+        store.setActive(id,"alchemist",now);assertEquals(30,service.alchemistChance(id));
+        store.setActive(id,"mason",now);assertEquals(25,service.masonChance(id));
+        store.setActive(id,"cook",now);assertEquals(3,service.cookSaturation(id));
+    }
+
 }

@@ -147,7 +147,7 @@ class PresentationUpdateTest {
         live.set("auto-messages.interval-seconds",777);live.set("server-menu.enabled",false);
         var changes=PresentationMigration.replacements(live,List.of(legacy),fresh);
         assertTrue(changes.containsAll(List.of("server-menu.items","auto-messages.messages")));
-        assertFalse(changes.contains("shop.products"));
+        assertTrue(changes.contains("shop.products"),"262 уточняет только описание исторического порога прибавок");
         for(var key:changes)live.set(key,fresh.get(key));
         assertEquals(777,live.getInt("auto-messages.interval-seconds"));assertFalse(live.getBoolean("server-menu.enabled"));
         assertTrue(PresentationMigration.replacements(live,List.of(legacy),fresh).isEmpty());

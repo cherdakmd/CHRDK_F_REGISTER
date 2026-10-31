@@ -55,7 +55,7 @@ public final class ProfessionService {
         return value == null ? RankBonus.NONE : value;
     }
 
-    /** Потолок уровня профессии игрока: 25 плюс уровни навыка от ранга. */
+    /** Шкала ремесла едина для всех; исторические прибавки ограничены powerCap. */
     public int maxLevel(UUID player) {
         return ProfessionMath.PROGRESSION_CAP;
     }
@@ -271,8 +271,8 @@ public final class ProfessionService {
         int after = store.addXp(player, profession, granted);
         int added = Math.max(0, after - before);
         int levelAfter = ProfessionMath.levelFor(after, cap);
-        if (left >= 0 && added > 0) {
-            store.setDaily(player, profession, utcDay(now), dailyUsed(player, profession, now) + added);
+        if (left >= 0 && granted > 0) {
+            store.setDaily(player, profession, utcDay(now), dailyUsed(player, profession, now) + granted);
         }
         return new Award(added, levelBefore, levelAfter, dailyLeft(player, profession, now), capped);
     }
@@ -299,9 +299,10 @@ public final class ProfessionService {
     }
 
     public Award awardSource(UUID player,Profession profession,String action,org.bukkit.Material material,int units,int xp,long now){
-        if(player==null||profession==null||material==null||units<=0||xp<=0||active(player)!=profession)return Award.none();
+        if(!config.enabled()||player==null||profession==null||material==null||units<=0||xp<=0||active(player)!=profession)return Award.none();
+        int before=store.xp(player,profession),daily=dailyUsed(player,profession,now);
         Award award=award(player,profession,(int)Math.min(Integer.MAX_VALUE,(long)units*xp),now);
-        if(award.added()>0)store.practice(player,profession,action+":"+material.name().toLowerCase(java.util.Locale.ROOT),units);
+        if(award.added()>0||(before>=ProfessionStore.MAX_XP&&(config.dailyXpCap()==0||dailyUsed(player,profession,now)>daily)))store.practice(player,profession,action+":"+material.name().toLowerCase(java.util.Locale.ROOT),units);
         return award;
     }
     public ProfessionTrials trials(){return new ProfessionTrials(this,store);}
