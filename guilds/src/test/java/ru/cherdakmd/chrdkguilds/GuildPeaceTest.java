@@ -44,7 +44,7 @@ class GuildPeaceTest {
     @Test void legacySchemaKeepsRosterTreasuryAndStartsWithoutNewFees() {
         var s=store();guild(s,777);
         var json=com.google.gson.JsonParser.parseString(s.snapshotJson()).getAsJsonObject();json.addProperty("version",1);
-        for(var element:json.getAsJsonArray("guilds")){var row=element.getAsJsonObject();row.remove("mode");row.remove("mode-changed-at");}
+        for(var element:json.getAsJsonArray("guilds")){var row=element.getAsJsonObject();row.remove("mode");row.remove("mode-changed-at");for(String key:java.util.List.of("dues-rate","dues-changed-at","dues-reserve","dues-terms"))row.remove(key);}
         var loaded=s.detached(json.toString());assertEquals(777,loaded.of(leader).treasury());assertEquals(2,loaded.of(leader).size());assertFalse(loaded.of(leader).peaceful());
     }
     @Test void modeCannotBeCancelledToAvoidAnAlreadyDuePeriod() {

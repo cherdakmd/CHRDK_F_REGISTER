@@ -109,7 +109,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
 
     private void help(CommandSender sender) {
         plugin.messages().send(sender, "help-header");
-        for (String key : List.of("peace-help", "help-create", "help-invite", "help-join", "help-leave",
+        for (String key : List.of("dues-help", "peace-help", "help-create", "help-invite", "help-join", "help-leave",
                 "help-ranks", "help-treasury", "help-war", "help-chat", "help-info", "help-top")) {
             plugin.messages().send(sender, key);
         }
@@ -956,6 +956,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
                 default -> List.of();
             };
         }
+        if(args.length==3&&sub.equals("dues"))return filter(List.of("confirm"),args[2]);
         if(args.length==3&&(sub.equals("mode")||sub.equals("peace")))return filter(args[1].equalsIgnoreCase("prepay")?List.of("1","3","7","14","30"):List.of("confirm"),args[2]);
         if(args.length==4&&(sub.equals("mode")||sub.equals("peace"))&&args[1].equalsIgnoreCase("prepay"))return filter(List.of("confirm"),args[3]);
         if (args.length == 3 && sub.equals("war") && args[1].equalsIgnoreCase("declare")) {

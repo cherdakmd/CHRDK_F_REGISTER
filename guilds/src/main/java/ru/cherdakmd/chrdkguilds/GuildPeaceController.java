@@ -208,9 +208,10 @@ final class GuildPeaceController {
             return changed;
         },GuildResult.fail("finance-paused"));
         send(player,result);
-        if(result.ok())for(UUID id:guild.memberIds())deliverNotices(id);
+        if(result.ok()){plugin.gui().refresh();for(UUID id:guild.memberIds())deliverNotices(id);}
     }
     boolean confirmCreate(Player player,String name,String tag,boolean confirmed){
+        if(plugin.payments().paused()||!plugin.coreApi().personalBankAvailable()){send(player,GuildResult.fail("finance-paused"));return false;}
         long now=System.currentTimeMillis();UUID owner=player.getUniqueId();
         String key="create:"+Guild.cleanName(name)+":"+Guild.cleanTag(tag);
         if(!confirmed){
@@ -225,7 +226,7 @@ final class GuildPeaceController {
     }
     void deliverNotices(UUID owner) {
         Player player=Bukkit.getPlayer(owner);
-        if(!plugin.visible(player))return;
+        if(player==null||!player.isOnline()||!plugin.authenticated(player))return;
         List<String> lines=plugin.store().peaceNotices(owner);
         if(lines.isEmpty())return;
         for(String line:lines)plugin.messages().send(player,"peace-personal-notice","text",line);
@@ -235,7 +236,7 @@ final class GuildPeaceController {
     static String time(long millis){return java.time.Instant.ofEpochMilli(millis).atZone(java.time.ZoneId.systemDefault()).format(java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"));}
     private void tell(UUID owner,GuildResult result){
         Player player=Bukkit.getPlayer(owner);
-        boolean personalPenalty=result.key().equals("peace-fined")||result.key().equals("peace-debt-collected");
+        boolean personalPenalty=result.key().startsWith("dues-")||result.key().equals("peace-fined")||result.key().equals("peace-debt-collected");
         if(plugin.visible(player)||(personalPenalty&&player!=null&&player.isOnline()&&plugin.authenticated(player)))send(player,result);
     }
     private void send(Player player,GuildResult result){

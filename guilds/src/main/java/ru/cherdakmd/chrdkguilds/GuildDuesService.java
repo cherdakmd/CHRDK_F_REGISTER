@@ -27,13 +27,14 @@ final class GuildDuesService {
         GuildDuesTerm t=g.duesTerm(owner);
         if(t==null||t.dueAt()>now)return plan(GuildResult.fail("peace-idle"));
         long required=(now-t.dueAt())/GuildPeaceTerm.DAY+1;
+        boolean affordsAll=spendable>=Math.addExact(t.amount(),Math.multiplyExact(required-1,(long)g.duesRate()));
         long budget=Math.min(1_000_000,spendable);
         long days=budget<t.amount()?0:1+Math.min(required-1,(budget-t.amount())/g.duesRate());
-        if(days<required&&t.graceSince()>0&&now>=t.deadline())return expire(g,owner);
+        if(!affordsAll&&days<required&&t.graceSince()>0&&now>=t.deadline())return expire(g,owner);
         if(days>0){
             int cost=Math.toIntExact(t.amount()+(days-1)*g.duesRate());
             long due=Math.addExact(t.dueAt(),Math.multiplyExact(days,GuildPeaceTerm.DAY));
-            long grace=due>now?0:(t.graceSince()==0?now:t.graceSince());
+            long grace=due>now?0:(t.graceSince()==0&&!affordsAll?now:t.graceSince());
             g.creditDues(cost);g.duesTerm(owner,new GuildDuesTerm(due,grace,g.duesRate()));
             return new GuildPeaceService.Plan(GuildResult.ok("dues-paid","cost",cost,"days",days,"due",due,"deadline",grace==0?due+GuildPeaceTerm.DAY:grace+GuildPeaceTerm.DAY),owner,cost,false);
         }

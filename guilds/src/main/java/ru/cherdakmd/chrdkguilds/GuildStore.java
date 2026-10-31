@@ -201,6 +201,8 @@ final class GuildStore {
         for (Map<?,?> row : rows(data,"guilds")) {
             Guild guild = readGuild(row,number(data.get("version")));
             guilds.put(guild.id(),guild);
+            if(number(data.get("version"))<3)for(UUID member:guild.memberIds())peaceNotice(member,
+                    "Введён обязательный взнос 10 алмазов/сутки лично в казну клана, дополнительно к мирному режиму. Первый срок после переходных суток: "+STAMP.format(Instant.ofEpochMilli(guild.duesTerm(member).dueAt()))+". /clan dues — условия и срок. Неоплата: ещё сутки, затем исключение; у лидера — роспуск клана.");
             for (UUID member : guild.memberIds()) byMember.put(member,guild.id());
         }
         for (Map<?,?> row : rows(data,"invites")) invites.add(readInvite(row));
@@ -741,7 +743,11 @@ final class GuildStore {
                 String rank = member.getValue().toString();
                 if (!(rank.equals("leader") || rank.equals("officer") || rank.equals("member")) || rank.equals("leader") != player.equals(leader)) bad("rank");
             }
+            if(number(data.get("version"))<3){
+                for(String key:List.of("dues-rate","dues-changed-at","dues-reserve","dues-terms"))if(row.containsKey(key))bad("downgraded dues schema");
+            }
             if(number(data.get("version"))>=3){
+                if(!row.containsKey("mode")||!row.containsKey("mode-changed-at"))bad("missing mode");
                 range(row,"dues-rate",10,1_000_000,true);range(row,"dues-changed-at",0,Long.MAX_VALUE-GuildPeaceTerm.DAY,true);
                 range(row,"dues-reserve",0,Long.MAX_VALUE,true);
                 if(!(row.get("dues-terms") instanceof Map<?,?> terms)||terms.size()!=roster.size())bad("dues roster");
