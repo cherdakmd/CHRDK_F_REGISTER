@@ -70,6 +70,11 @@ final class ProfessionListener implements Listener {
     private static final long FEEDBACK_DELAY_TICKS = 10L;
 
     private final ProfessionsPlugin plugin;
+    private final ProfessionOrigins origins;
+    private final java.util.Set<UUID> benchPending=new java.util.HashSet<>();
+    private final Map<BlockKey,UUID> stationPending=new HashMap<>();
+    private final java.util.Map<UUID,UUID> casts=new HashMap<>();
+    private final java.util.Set<UUID> crafting=new java.util.HashSet<>();
     private final Random random = new Random();
     /** Кто последним трогал варочную стойку: у BrewEvent нет игрока. */
     private final Map<BlockKey, Owner> brewers = new ConcurrentHashMap<>();
@@ -95,49 +100,45 @@ final class ProfessionListener implements Listener {
 
     ProfessionListener(ProfessionsPlugin plugin) {
         this.plugin = plugin;
+        this.origins=new ProfessionOrigins(plugin);
+        Bukkit.getPluginManager().registerEvents(origins,plugin);
     }
 
     /* ---------------------------------- опыт ---------------------------------- */
 
-    /** Крафт в верстаке: таблица профессий решает, считается ли предмет. */
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onCraft(CraftItemEvent event) {
-        if (!(event.getWhoClicked() instanceof Player player) || !honest(player)) {
-            return;
-        }
-        Profession active = plugin.service().active(player.getUniqueId());
-        if (active == null || event.getRecipe() == null) {
-            return;
-        }
-        ItemStack result = event.getRecipe().getResult();
-        if (result == null || result.getType().isAir()) {
-            return;
-        }
-        int per = ProfessionCatalog.craftXp(active, result.getType());
-        if (per > 0) {
-            award(player, active, per * Math.clamp(result.getAmount(), 1, 64));
-        }
+    /** Число рецептов определяется расходом матрицы, включая shift-click. */
+    @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true)
+    public void onCraft(CraftItemEvent event){
+        if(!(event.getWhoClicked() instanceof Player player)||!honest(player)||event.getRecipe()==null)return;
+        Profession active=plugin.service().active(player.getUniqueId());
+        if(active==null||!crafting.add(player.getUniqueId()))return;
+        ItemStack result=event.getRecipe().getResult();int per=ProfessionCatalog.craftXp(active,result.getType());
+        ItemStack[] before=java.util.Arrays.stream(event.getInventory().getMatrix()).map(i->i==null?null:i.clone()).toArray(ItemStack[]::new);
+        var inventory=event.getInventory();
+        Bukkit.getScheduler().runTask(plugin,()->{
+            crafting.remove(player.getUniqueId());if(!honest(player)||per<=0)return;
+            for(ItemStack item:before)if(item!=null&&!ProfessionCatalog.craftInput(active,item.getType()))return;
+            ItemStack[] after=inventory.getMatrix();if(before.length!=after.length)return;
+            int recipes=Integer.MAX_VALUE;
+            for(int i=0;i<before.length;i++)if(before[i]!=null&&!before[i].getType().isAir()){
+                ItemStack a=after[i];int remaining=a!=null&&a.isSimilar(before[i])?a.getAmount():0;
+                int used=before[i].getAmount()-remaining;
+                // Остатки вроде ведра не означают повторное использование входа.
+                if(used<=0)return;recipes=Math.min(recipes,used);
+            }
+            if(recipes!=Integer.MAX_VALUE)source(player,active,"craft",result.getType(),Math.min(4096,recipes*result.getAmount()),per);
+        });
     }
-
-    /** Выплавка: опыт по таблице и второй блок у камнереза. */
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onFurnaceExtract(FurnaceExtractEvent event) {
-        Player player = event.getPlayer();
-        if (!honest(player)) {
-            return;
-        }
-        Profession active = plugin.service().active(player.getUniqueId());
-        if (active == null) {
-            return;
-        }
-        int per = ProfessionCatalog.smeltXp(active, event.getItemType());
-        if (per <= 0) {
-            return;
-        }
-        award(player, active, per * Math.clamp(event.getItemAmount(), 1, 64));
-        if (active == Profession.MASON) {
-            extraFurnaceBlock(player, event.getItemType());
-        }
+    /** Получение результата не присваивает чужой/автоматический труд. */
+    @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true)
+    public void onSmelt(org.bukkit.event.inventory.FurnaceSmeltEvent event){
+        UUID owner=origins.take(event.getBlock(),event.getSource());if(owner==null)return;
+        Player player=Bukkit.getPlayer(owner);if(!honest(player))return;
+        Profession active=plugin.service().active(owner);if(active==null)return;
+        int per=ProfessionCatalog.smeltXp(active,event.getResult().getType());
+        if(per<=0)return;
+        source(player,active,"smelt",event.getResult().getType(),1,per);
+        if(active==Profession.MASON)extraFurnaceBlock(player,event.getResult().getType());
     }
 
     /** Прибавка камнереза: шанс на второй блок при плавке (печь, печь-домна, коптильня). */
@@ -153,55 +154,68 @@ final class ProfessionListener implements Listener {
         Bukkit.getScheduler().runTask(plugin, () -> give(player, extra));
     }
 
-    /** Варка: опыт алхимику и шанс на лишнюю склянку в свободном слоте. */
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    public void onBrew(BrewEvent event) {
-        long now = System.currentTimeMillis();
-        Owner owner = brewers.remove(key(event.getBlock()));
-        if (owner == null || now - owner.at() > BREW_OWNER_TTL) {
-            return;
-        }
-        Player player = Bukkit.getPlayer(owner.player());
-        if (!honest(player)) {
-            return;
-        }
-        Profession active = plugin.service().active(owner.player());
-        if (active != Profession.ALCHEMIST) {
-            return;
-        }
-        award(player, active, ProfessionCatalog.brewXp(active, bottles(event.getResults())));
-
-        if (!plugin.config().perkAlchemistBottle()) {
-            return;
-        }
-        int chance = plugin.service().alchemistChance(owner.player());
-        if (chance <= 0 || random.nextInt(100) >= chance) {
-            return;
-        }
-        duplicate(event.getResults());
+    /** Опыт только тому, кто вручную внёс расходуемый реагент. */
+    @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true)
+    public void onBrew(BrewEvent event){
+        UUID owner=origins.take(event.getBlock(),event.getContents().getIngredient());
+        if(owner==null)return;Player player=Bukkit.getPlayer(owner);
+        if(!honest(player)||plugin.service().active(owner)!=Profession.ALCHEMIST)return;
+        int count=bottles(event.getResults());if(count<=0)return;
+        source(player,Profession.ALCHEMIST,"brew",Material.POTION,1,ProfessionCatalog.brewXp(Profession.ALCHEMIST,count));
+        if(plugin.config().perkAlchemistBottle()&&random.nextInt(100)<plugin.service().alchemistChance(owner))duplicate(event.getResults());
     }
-
-    /** Кто-то открыл стойку — запоминаем, чтобы отдать ему опыт за варку. */
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onClick(InventoryClickEvent event) {
-        if (!(event.getWhoClicked() instanceof Player player)) {
-            return;
-        }
-        Block block = brewingBlock(event.getInventory().getHolder());
-        if (block != null) {
-            remember(block, player.getUniqueId());
-        }
+    @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true)
+    public void onClick(InventoryClickEvent event){
+        if(event.getWhoClicked() instanceof Player player&&honest(player))watchStation(player,event.getInventory());
     }
-
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onDrag(InventoryDragEvent event) {
-        if (!(event.getWhoClicked() instanceof Player player)) {
-            return;
-        }
-        Block block = brewingBlock(event.getInventory().getHolder());
-        if (block != null) {
-            remember(block, player.getUniqueId());
-        }
+    @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true)
+    public void onDrag(InventoryDragEvent event){
+        if(event.getWhoClicked() instanceof Player player&&honest(player))watchStation(player,event.getInventory());
+    }
+    private void watchStation(Player player,org.bukkit.inventory.Inventory inventory){
+        ItemStack input=stationInput(inventory);if(!(inventory.getHolder() instanceof org.bukkit.block.TileState state))return;
+        Block block=state.getBlock();Material type=block.getType();ItemStack before=input==null?null:input.clone();
+        BlockKey key=key(block);UUID existing=stationPending.putIfAbsent(key,player.getUniqueId());
+        if(existing!=null){if(!existing.equals(player.getUniqueId()))stationPending.put(key,new UUID(0,0));return;}
+        Map<Material,Integer> stock=stationStock(player);
+        Bukkit.getScheduler().runTask(plugin,()->{
+            UUID actor=stationPending.remove(key);
+            if(!player.getUniqueId().equals(actor)||!honest(player)||block.getType()!=type){origins.clear(block);return;}
+            ItemStack after=stationInput(inventory);if(java.util.Objects.equals(before,after))return;
+            int old=before!=null&&after!=null&&before.isSimilar(after)?before.getAmount():0;
+            int incoming=after==null?0:after.getAmount()-old;
+            if(incoming>0&&stock.getOrDefault(after.getType(),0)-stationStock(player).getOrDefault(after.getType(),0)<incoming){origins.clear(block);return;}
+            origins.load(block,player.getUniqueId(),before,after);
+        });
+    }
+    private static Map<Material,Integer> stationStock(Player player){
+        Map<Material,Integer> amounts=new java.util.EnumMap<>(Material.class);
+        for(ItemStack item:player.getInventory().getStorageContents())if(item!=null&&ProfessionWorkshop.ordinary(item))amounts.merge(item.getType(),item.getAmount(),Integer::sum);
+        ItemStack cursor=player.getItemOnCursor();if(cursor!=null&&ProfessionWorkshop.ordinary(cursor))amounts.merge(cursor.getType(),cursor.getAmount(),Integer::sum);
+        return amounts;
+    }
+    private static ItemStack stationInput(org.bukkit.inventory.Inventory inventory){
+        if(inventory instanceof org.bukkit.inventory.FurnaceInventory furnace)return furnace.getSmelting();
+        if(inventory instanceof org.bukkit.inventory.BrewerInventory brewer)return brewer.getIngredient();return null;
+    }
+    @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true)
+    public void onFish(org.bukkit.event.player.PlayerFishEvent event){
+        Player player=event.getPlayer();if(!honest(player))return;
+        if(event.getState()==org.bukkit.event.player.PlayerFishEvent.State.FISHING){casts.put(player.getUniqueId(),event.getHook().getUniqueId());return;}
+        if(event.getState()!=org.bukkit.event.player.PlayerFishEvent.State.CAUGHT_FISH)return;
+        UUID cast=casts.remove(player.getUniqueId());
+        if(cast==null||!cast.equals(event.getHook().getUniqueId())||!event.getHook().isInOpenWater()
+                ||!(event.getCaught() instanceof org.bukkit.entity.Item item))return;
+        if(plugin.service().active(player.getUniqueId())==Profession.FISHER)
+            source(player,Profession.FISHER,"fish",item.getItemStack().getType(),1,ProfessionCatalog.fishXp(item.getItemStack().getType()));
+    }
+    @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true)
+    public void onHarvest(org.bukkit.event.player.PlayerHarvestBlockEvent event){
+        Player player=event.getPlayer();if(!honest(player))return;
+        Profession active=plugin.service().active(player.getUniqueId());if(active==null)return;
+        Block block=event.getHarvestedBlock();
+        if(block.getType()!=Material.SWEET_BERRY_BUSH||!(block.getBlockData() instanceof org.bukkit.block.data.Ageable age)||age.getAge()<2)return;
+        source(player,active,"harvest",block.getType(),1,ProfessionCatalog.miningXp(active,block.getType()));
     }
 
     /**
@@ -226,9 +240,8 @@ final class ProfessionListener implements Listener {
             return;
         }
         int per = ProfessionCatalog.miningXp(active, block.getType());
-        if (per > 0) {
-            award(player, active, per);
-        }
+        boolean blocked=origins.placed(block)||(block.getType().name().endsWith("_ORE")&&player.getInventory().getItemInMainHand().containsEnchantment(org.bukkit.enchantments.Enchantment.SILK_TOUCH));origins.mark(block,false);origins.clear(block);
+        if(per>0&&!blocked&&ProfessionOrigins.mature(block))source(player,active,"harvest",block.getType(),1,per);
     }
 
     /**
@@ -264,11 +277,13 @@ final class ProfessionListener implements Listener {
         }
         ItemStack input = event.getView().getTopInventory().getItem(STONECUTTER_INPUT);
         Material inputType = input == null ? null : input.getType();
-        int before = input == null ? 0 : input.getAmount();
+        if(input==null||!ProfessionCatalog.cutInput(input.getType()))return;
+        int before = input.getAmount();
         ItemStack bonus = result.clone();
         bonus.setAmount(1);
-        Bukkit.getScheduler().runTask(plugin, () -> checkStonecut(player, active, per,
-                inputType, before, bonus));
+        if(!benchPending.add(player.getUniqueId()))return;
+        Bukkit.getScheduler().runTask(plugin, () -> {benchPending.remove(player.getUniqueId());checkStonecut(player, active, per,
+                inputType, before, bonus);});
     }
 
     /** Проверяет, что распил состоялся, и начисляет опыт за каждый срез. */
@@ -277,12 +292,12 @@ final class ProfessionListener implements Listener {
         if (!player.isOnline()) {
             return;
         }
-        int consumed = 1;
+        int consumed = 0;
         InventoryView view = player.getOpenInventory();
         if (view.getTopInventory().getType() == InventoryType.STONECUTTER) {
             ItemStack left = view.getTopInventory().getItem(STONECUTTER_INPUT);
             if (left == null || left.getType().isAir()) {
-                consumed = Math.max(1, before);
+                consumed = Math.max(0, before);
             } else if (inputType == null || left.getType() == inputType) {
                 consumed = Math.max(0, before - left.getAmount());
             }
@@ -290,10 +305,10 @@ final class ProfessionListener implements Listener {
                 return;
             }
         }
-        if (plugin.service().active(player.getUniqueId()) != active) {
+        if (!honest(player)||consumed<=0||plugin.service().active(player.getUniqueId()) != active) {
             return;
         }
-        award(player, active, per * consumed);
+        source(player, active,"cut",bonus.getType(),consumed,per);
         extraCutBlock(player, bonus);
     }
 
@@ -346,7 +361,8 @@ final class ProfessionListener implements Listener {
         int cost = event.getView() instanceof AnvilView anvil
                 ? Math.max(0, anvil.getRepairCost()) : 0;
         int levelBefore = player.getLevel();
-        Bukkit.getScheduler().runTask(plugin, () -> checkAnvil(player, active, levelBefore, cost));
+        if(!benchPending.add(player.getUniqueId()))return;
+        Bukkit.getScheduler().runTask(plugin, () -> {benchPending.remove(player.getUniqueId());checkAnvil(player, active, levelBefore, cost);});
     }
 
     /** Проверяет, что наковальня списала уровни, и начисляет опыт за работу. */
@@ -362,13 +378,13 @@ final class ProfessionListener implements Listener {
             ItemStack left = view.getTopInventory().getItem(ANVIL_RESULT);
             taken = left == null || left.getType().isAir();
         }
-        if (!paid && !(cost <= 0 && taken)) {
+        if (!honest(player)||!paid) {
             return;
         }
         if (plugin.service().active(player.getUniqueId()) != active) {
             return;
         }
-        award(player, active, ProfessionCatalog.anvilXp(cost));
+        source(player,active,"anvil",Material.ANVIL,1,ProfessionCatalog.anvilXp(cost));
     }
 
     /**
@@ -386,10 +402,15 @@ final class ProfessionListener implements Listener {
         if (active == null) {
             return;
         }
-        int xp = ProfessionCatalog.smithingXp(active);
-        if (xp > 0) {
-            award(player, active, xp);
-        }
+        int xp=ProfessionCatalog.smithingXp(active);var inventory=event.getInventory();
+        ItemStack template=inventory.getItem(0);if(xp<=0||template==null)return;
+        ItemStack before=template.clone();if(!benchPending.add(player.getUniqueId()))return;
+        Bukkit.getScheduler().runTask(plugin,()->{
+            benchPending.remove(player.getUniqueId());if(!honest(player))return;ItemStack after=inventory.getItem(0);
+            int rest=after!=null&&after.isSimilar(before)?after.getAmount():0;
+            int used=Math.max(0,before.getAmount()-rest);
+            if(used>0)source(player,active,"forge",Material.SMITHING_TABLE,used,xp);
+        });
     }
 
     /* --------------------------------- прибавки -------------------------------- */
@@ -476,7 +497,7 @@ final class ProfessionListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent event) {
         UUID id = event.getPlayer().getUniqueId();
-        cappedNotice.remove(id);
+        cappedNotice.remove(id);casts.remove(id);crafting.remove(id);benchPending.remove(id);
         Feedback pending = feedback.remove(id);
         if (pending != null && pending.taskId >= 0) {
             Bukkit.getScheduler().cancelTask(pending.taskId);
@@ -486,12 +507,11 @@ final class ProfessionListener implements Listener {
     /* -------------------------------- помощники -------------------------------- */
 
     /** Начисляет опыт и сообщает о новом уровне; про потолок — один раз в день. */
-    private void award(Player player, Profession profession, int xp) {
-        if (xp <= 0) {
-            return;
-        }
-        ProfessionService.Award award = plugin.service().award(player.getUniqueId(), profession,
-                xp, System.currentTimeMillis());
+    private void source(Player player,Profession profession,String action,Material material,int units,int per){
+        if(per<=0||units<=0)return;
+        processAward(player,profession,plugin.service().awardSource(player.getUniqueId(),profession,action,material,units,per,System.currentTimeMillis()));
+    }
+    private void processAward(Player player,Profession profession,ProfessionService.Award award){
         if (award.added() <= 0) {
             if (award.capped()) {
                 noticeCap(player, profession);

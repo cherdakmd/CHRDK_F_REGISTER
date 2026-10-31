@@ -82,6 +82,9 @@ public final class ProfessionsPlaceholders extends PlaceholderExpansion {
             }
             case "mastery_id" -> service.mastery(id) == null ? "" : service.mastery(id).id();
             case "work_cooldown" -> Long.toString(service.workCooldownLeft(id, System.currentTimeMillis()));
+            case "profession_rank" -> Integer.toString(service.trials().rank(id,active));
+            case "max_level" -> "100";
+            case "power_cap" -> Integer.toString(service.powerCap(id));
             case "level" -> Integer.toString(level);
             case "rank" -> ProfessionText.rankPlain(plugin.messages(), level);
             case "xp" -> Integer.toString(service.progress(id, active));
@@ -92,7 +95,8 @@ public final class ProfessionsPlaceholders extends PlaceholderExpansion {
             // 1.4.179: полоса опыта без разметки — для таба и скорбордов.
             case "bar" -> ProfessionText.barPlain(service.progressPercent(id, active));
             case "perk" -> {
-                int value = ProfessionMath.perkValue(active, level, maxLevel);
+                if(active.ordinal()>=Profession.FORESTER.ordinal())yield plugin.messages().plain("perk.utility");
+                int value = ProfessionMath.perkValue(active, level, service.powerCap(id));
                 yield value <= 0 ? plugin.messages().plain("perk.none")
                         : plugin.messages().plain("perk." + active.id(),
                         "value", String.valueOf(value));

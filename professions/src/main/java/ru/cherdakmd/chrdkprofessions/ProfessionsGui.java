@@ -39,7 +39,7 @@ final class ProfessionsGui implements Listener {
     private static final int SUMMARY_SLOT = 4;
     private static final int MASTERY_SLOT = 40;
     /** Четыре профессии в ряд: слоты 19, 21, 23, 25. */
-    private static final int[] PROFESSION_SLOTS = {19, 21, 23, 25};
+    private static final int[] PROFESSION_SLOTS = {19,21,23,25,28,30,32,34};
     private static final int CONFIRM_SLOT = 31;
     private static final int BACK_SLOT = 45;
     private static final int CLOSE_SLOT = 49;
@@ -91,6 +91,7 @@ final class ProfessionsGui implements Listener {
             inventory.setItem(PROFESSION_SLOTS[index], professionItem(player, values[index]));
         }
         inventory.setItem(MASTERY_SLOT, button(Material.SMITHING_TABLE, "mastery-menu", List.of(plugin.messages().get("mastery-menu-hint"))));
+        guideButtons(inventory);
         inventory.setItem(CLOSE_SLOT, button(Material.BARRIER, "menu-close", List.of()));
         player.openInventory(inventory);
     }
@@ -110,6 +111,7 @@ final class ProfessionsGui implements Listener {
         inventory.setItem(CONFIRM_SLOT, confirmItem(player, profession));
         inventory.setItem(BACK_SLOT, button(Material.ARROW, "menu-back", List.of()));
         inventory.setItem(MASTERY_SLOT, button(Material.SMITHING_TABLE, "mastery-menu", List.of(plugin.messages().get("mastery-menu-hint"))));
+        guideButtons(inventory);
         inventory.setItem(CLOSE_SLOT, button(Material.BARRIER, "menu-close", List.of()));
         player.openInventory(inventory);
     }
@@ -151,8 +153,9 @@ final class ProfessionsGui implements Listener {
         List<Component> lore = new ArrayList<>();
         lore.add(plugin.messages().get(choice.descKey()));
         lore.add(plugin.messages().get(choice.costKey()));
+        lore.add(plugin.messages().get("guide.batch","amount",plugin.service().trials().batch(player.getUniqueId(),choice)));
         lore.add(plugin.messages().get("mastery-requirement", "level", ProfessionMastery.UNLOCK_LEVEL));
-        lore.add(plugin.messages().get("mastery-interval", "time", ProfessionMath.clock(choice.cooldownSeconds())));
+        lore.add(plugin.messages().get("mastery-interval", "time", ProfessionMath.clock(plugin.service().trials().cooldown(player.getUniqueId(),choice))));
         if (choice == plugin.service().mastery(player.getUniqueId())) lore.add(plugin.messages().get("mastery-active"));
         else lore.add(plugin.messages().get("mastery-pick"));
         return button(material(choice.icon()), choice.nameKey(), lore);
@@ -194,8 +197,8 @@ final class ProfessionsGui implements Listener {
             lore.add(plugin.messages().get("menu-profession-max"));
         }
         lore.add(plugin.messages().get("menu-profession-perk",
-                "perk", ProfessionText.perk(plugin.messages(), profession, level, maxLevel)));
-        String next = ProfessionText.nextStepRaw(plugin.messages(), profession, level, maxLevel);
+                "perk", ProfessionText.perk(plugin.messages(), profession, level, plugin.service().powerCap(id))));
+        String next = ProfessionText.nextStepRaw(plugin.messages(), profession, level, plugin.service().powerCap(id));
         if (!next.isBlank()) {
             lore.add(plugin.messages().get("menu-profession-next", "next", Messages.trusted(next)));
         }
@@ -248,6 +251,11 @@ final class ProfessionsGui implements Listener {
         }
         if (!player.hasPermission("chrdkprofessions.use")) return;
         int slot = event.getRawSlot();
+        if(slot>=46&&slot<=48||slot==50||slot==51){
+            Profession target=Profession.parse(holder.professionId);if(target==null)target=plugin.service().active(player.getUniqueId());
+            ProfessionGuide.Page page=slot==46?ProfessionGuide.Page.SOURCES:slot==47?ProfessionGuide.Page.ROADMAP:slot==48?ProfessionGuide.Page.ABILITIES:slot==50?ProfessionGuide.Page.TRIALS:ProfessionGuide.Page.PASSPORT;
+            plugin.guide().open(player,target,page,0);return;
+        }
         if (slot == CLOSE_SLOT) {
             player.closeInventory();
             return;
@@ -312,6 +320,10 @@ final class ProfessionsGui implements Listener {
 
     /* -------------------------------- помощники -------------------------------- */
 
+    private void guideButtons(Inventory inventory){
+        int[] slots={46,47,48,50,51};Material[] icons={Material.BOOK,Material.EXPERIENCE_BOTTLE,Material.NETHER_STAR,Material.WRITABLE_BOOK,Material.PLAYER_HEAD};
+        for(int i=0;i<slots.length;i++)inventory.setItem(slots[i],button(icons[i],"guide.page."+ProfessionGuide.Page.values()[i].name().toLowerCase(Locale.ROOT),List.of(plugin.messages().get("guide.navigation"))));
+    }
     private ItemStack button(Material material, String nameKey, List<Component> lore,
                              Object... placeholders) {
         ItemStack stack = new ItemStack(material == null ? Material.PAPER : material);

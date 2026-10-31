@@ -26,8 +26,8 @@ import java.util.UUID;
  */
 public final class ProfessionsCommandHandler implements CommandExecutor, TabCompleter {
 
-    private static final List<String> SUBS = List.of("help", "menu", "choose", "info", "stats", "top", "mastery", "work");
-    private static final List<String> ADMIN_SUBS = List.of("reload", "info", "set", "xp", "reset");
+    private static final List<String> SUBS = List.of("help", "menu", "choose", "info", "stats", "top", "mastery", "work", "sources", "roadmap", "abilities", "trials", "passport");
+    private static final List<String> ADMIN_SUBS = List.of("reload", "info", "set", "xp", "reset", "work");
     private static final int MAX_ADMIN_XP = 100_000;
 
     private final ProfessionsPlugin plugin;
@@ -59,6 +59,12 @@ public final class ProfessionsCommandHandler implements CommandExecutor, TabComp
             case "choose" -> choose(sender, args);
             case "info" -> info(sender, args);
             case "stats" -> stats(sender);
+            case "sources","roadmap","abilities","trials","passport" -> {
+                Player player=requirePlayer(sender);if(player==null)return true;
+                Profession target=args.length>1?Profession.parse(args[1]):plugin.service().active(player.getUniqueId());
+                if(args.length>1&&target==null){plugin.messages().send(sender,"profession-unknown","profession",args[1]);return true;}
+                plugin.guide().open(player,target,ProfessionGuide.Page.valueOf(args[0].toUpperCase(Locale.ROOT)),0);
+            }
             case "top" -> top(sender);
             case "mastery" -> mastery(sender, args);
             case "work" -> {
@@ -81,6 +87,7 @@ public final class ProfessionsCommandHandler implements CommandExecutor, TabComp
         plugin.messages().send(sender, "help-top");
         plugin.messages().send(sender, "help-mastery");
         plugin.messages().send(sender, "help-work");
+        plugin.messages().send(sender,"guide.help");
         plugin.messages().send(sender, "help-footer",
                 "cap", cap() <= 0 ? "∞" : String.valueOf(cap()),
                 "hours", String.valueOf(plugin.config().chooseCooldownHours()));
@@ -155,17 +162,17 @@ public final class ProfessionsCommandHandler implements CommandExecutor, TabComp
         plugin.messages().send(sender, "info-bar",
                 "bar", ProfessionText.bar(plugin.service().progressPercent(player, target)));
         plugin.messages().send(sender, "info-perk",
-                "perk", ProfessionText.perk(plugin.messages(), target, level, maxLevel));
-        String next = ProfessionText.nextStepRaw(plugin.messages(), target, level, maxLevel);
+                "perk", ProfessionText.perk(plugin.messages(), target, level,plugin.service().powerCap(player)));
+        String next = ProfessionText.nextStepRaw(plugin.messages(), target, level,plugin.service().powerCap(player));
         if (!next.isBlank()) {
             plugin.messages().send(sender, "info-next", "next", Messages.trusted(next));
         }
         plugin.messages().send(sender, "info-hint",
                 "hint", ProfessionText.hintComponent(plugin.messages(), target));
-        if (maxLevel > ProfessionMath.MAX_LEVEL) {
+        if (plugin.service().powerCap(player) > ProfessionMath.MAX_LEVEL) {
             plugin.messages().send(sender, "info-rank-cap",
-                    "level", String.valueOf(maxLevel),
-                    "bonus", String.valueOf(maxLevel - ProfessionMath.MAX_LEVEL));
+                    "level", String.valueOf(plugin.service().powerCap(player)),
+                    "bonus", String.valueOf(plugin.service().powerCap(player) - ProfessionMath.MAX_LEVEL));
         }
         ProfessionMastery mastery = player == null ? null : plugin.store().mastery(player, target);
         plugin.messages().send(sender, "mastery-status", "specialization", mastery == null
@@ -240,6 +247,14 @@ public final class ProfessionsCommandHandler implements CommandExecutor, TabComp
             case "set" -> adminSet(sender, args);
             case "xp" -> adminXp(sender, args);
             case "reset" -> adminReset(sender, args);
+            case "work" -> {
+                Player target=args.length>1?Bukkit.getPlayerExact(args[1]):null;
+                if(target==null){plugin.messages().send(sender,"player-only");return true;}
+                String action=args.length>2?args[2]:"status";var journal=plugin.workshop().journal;
+                if(action.equalsIgnoreCase("retry"))plugin.messages().send(sender,journal.recover(target)?"work-recovered":"work-pending");
+                else if(action.equalsIgnoreCase("abort"))plugin.messages().send(sender,journal.abort(target)?"work-aborted":"work-pending");
+                else plugin.messages().send(sender,"work-status","state",journal.status(target));
+            }
             default -> plugin.messages().send(sender, "unknown-subcommand", "sub", args[0]);
         }
         return true;
@@ -337,6 +352,7 @@ public final class ProfessionsCommandHandler implements CommandExecutor, TabComp
         if (target == null) {
             return;
         }
+        if(plugin.workshop().journal.pending(target)){plugin.messages().send(sender,"work-pending");return;}
         ProfessionResult result = plugin.service().resetByAdmin(target);
         if (!result.ok()) {
             sendResult(sender, result);

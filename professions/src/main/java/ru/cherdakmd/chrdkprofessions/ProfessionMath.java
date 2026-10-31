@@ -14,7 +14,8 @@ package ru.cherdakmd.chrdkprofessions;
 final class ProfessionMath {
 
     /** Потолок уровня профессии. */
-    static final int MAX_LEVEL = 25;
+    static final int MAX_LEVEL = 25; // Исторический потолок СИЛЫ, не новой шкалы ремесла.
+    static final int PROGRESSION_CAP = 100;
     /** Опыт на переход с 1-го на 2-й уровень. */
     static final int BASE_XP = 120;
     /** Насколько дороже каждый следующий уровень. */
@@ -41,7 +42,7 @@ final class ProfessionMath {
         if (safe >= cap) {
             return 0;
         }
-        return BASE_XP + STEP_XP * (safe - 1);
+        return cap>35 && safe>25 ? 1560+(safe-25)*20 : BASE_XP + STEP_XP * (safe - 1);
     }
 
     /** Опыт до следующего уровня при обычном потолке. */
@@ -55,7 +56,7 @@ final class ProfessionMath {
         int safe = Math.clamp(level, 1, cap);
         int total = 0;
         for (int current = 1; current < safe; current++) {
-            total += needed(current);
+            total += needed(current,cap);
         }
         return total;
     }
@@ -229,6 +230,7 @@ final class ProfessionMath {
             case ALCHEMIST -> alchemistChance(level, maxLevel);
             case COOK -> cookSaturation(level, maxLevel);
             case MASON -> masonChance(level, maxLevel);
+            default -> 0;
         };
     }
 

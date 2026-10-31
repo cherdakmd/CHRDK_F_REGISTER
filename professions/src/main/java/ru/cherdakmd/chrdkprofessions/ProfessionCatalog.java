@@ -52,6 +52,22 @@ public final class ProfessionCatalog {
     /** Опыт за сломанный блок: повседневная работа каждого ремесла (1.4.177). */
     private static final Map<Profession, Map<Material, Integer>> MINING =
             new EnumMap<>(Profession.class);
+    /** Полный каталог реальных источников для меню; те же таблицы использует listener. */
+    public record Source(String action,Material material,int xp){}
+    public static java.util.List<Source> sources(Profession profession){
+        var rows=new java.util.ArrayList<Source>();
+        craftTable(profession).forEach((m,x)->rows.add(new Source("craft",m,x)));
+        smeltTable(profession).forEach((m,x)->rows.add(new Source("smelt",m,x)));
+        miningTable(profession).forEach((m,x)->rows.add(new Source("harvest",m,x)));
+        cutTable(profession).forEach((m,x)->rows.add(new Source("cut",m,x)));
+        if(profession==Profession.ALCHEMIST)rows.add(new Source("brew",Material.POTION,BREW_XP));
+        if(profession==Profession.SMITH){rows.add(new Source("anvil",Material.ANVIL,2));rows.add(new Source("forge",Material.SMITHING_TABLE,SMITHING_XP));}
+        if(profession==Profession.FISHER)for(Material m:new Material[]{Material.COD,Material.SALMON,Material.PUFFERFISH,Material.TROPICAL_FISH,Material.ENCHANTED_BOOK,Material.BOW,Material.FISHING_ROD,Material.NAME_TAG,Material.NAUTILUS_SHELL,Material.SADDLE})rows.add(new Source("fish",m,fishXp(m)));
+        return rows.stream().sorted(java.util.Comparator.comparing(Source::action).thenComparing(s->s.material().name())).toList();
+    }
+    public static int fishXp(Material material){return switch(material){
+        case COD,SALMON->8;case PUFFERFISH,TROPICAL_FISH->12;
+        case ENCHANTED_BOOK,BOW,FISHING_ROD,NAME_TAG,NAUTILUS_SHELL,SADDLE->20;default->0;};}
     /** Опыт за распил на камнерезе: результат, а не исходный блок (1.4.177). */
     private static final Map<Profession, Map<Material, Integer>> CUT =
             new EnumMap<>(Profession.class);
@@ -235,6 +251,25 @@ public final class ProfessionCatalog {
     /* ---------------------------------- доступ --------------------------------- */
 
     /** Опыт за крафт одного предмета (0 — не работа этой профессии). */
+    static {
+        // Не показываем несуществующие ванильные рецепты как способ развития.
+        CRAFT.get(Profession.SMITH).keySet().removeIf(m->m.name().startsWith("CHAINMAIL_")||m.name().startsWith("NETHERITE_"));
+        CRAFT.get(Profession.COOK).remove(Material.ENCHANTED_GOLDEN_APPLE);
+        var forester=new LinkedHashMap<Material,Integer>();
+        for(Material m:Material.values())if(m.name().endsWith("_LOG")&&!m.name().startsWith("STRIPPED_"))forester.put(m,3);
+        forester.put(Material.CRIMSON_STEM,3);forester.put(Material.WARPED_STEM,3);
+        MINING.put(Profession.FORESTER,forester);
+        var miner=new LinkedHashMap<Material,Integer>();
+        MINING.getOrDefault(Profession.SMITH,Map.of()).forEach(miner::put);
+        for(Material m:Material.values())if(m.name().endsWith("_ORE"))miner.put(m,m.name().contains("DIAMOND")||m.name().contains("EMERALD")?8:4);
+        miner.put(Material.ANCIENT_DEBRIS,12);miner.put(Material.AMETHYST_CLUSTER,4);miner.put(Material.OBSIDIAN,3);
+        MINING.put(Profession.MINER,miner);
+        var farmer=new LinkedHashMap<Material,Integer>();
+        for(Material m:new Material[]{Material.WHEAT,Material.CARROTS,Material.POTATOES,Material.BEETROOTS,Material.NETHER_WART,Material.COCOA,Material.SWEET_BERRY_BUSH,Material.PUMPKIN,Material.MELON})farmer.put(m,3);
+        MINING.put(Profession.FARMER,farmer);
+        SMELT.put(Profession.MINER,new LinkedHashMap<>(Map.of(Material.IRON_INGOT,3,Material.GOLD_INGOT,4,Material.COPPER_INGOT,2)));
+    }
+
     public static int craftXp(Profession profession, Material material) {
         return lookup(CRAFT, profession, material);
     }
@@ -326,6 +361,15 @@ public final class ProfessionCatalog {
         return row == null ? Map.of() : Collections.unmodifiableMap(new LinkedHashMap<>(row));
     }
 
+    /** Только первичная обработка: декоративные формы нельзя гонять по кругу. */
+    public static boolean cutInput(Material material){return material!=null&&switch(material){
+        case STONE,COBBLESTONE,GRANITE,DIORITE,ANDESITE,COBBLED_DEEPSLATE,TUFF,BLACKSTONE,
+             SANDSTONE,RED_SANDSTONE,QUARTZ_BLOCK,PURPUR_BLOCK,PRISMARINE,DARK_PRISMARINE,
+             PRISMARINE_BRICKS,END_STONE,BRICKS,MUD_BRICKS->true;default->false;};}
+    public static boolean craftInput(Profession profession,Material material){
+        if(material==null)return false;if(profession!=Profession.MASON)return true;
+        String n=material.name();return !n.endsWith("_SLAB")&&!n.endsWith("_STAIRS")&&!n.startsWith("CHISELED_")&&!n.endsWith("_PILLAR");
+    }
     private ProfessionCatalog() {
     }
 }

@@ -135,13 +135,14 @@ class ProfessionStoreTest {
     }
 
     @Test
-    void brokenFileStartsEmpty(@TempDir Path dir) throws Exception {
+    void brokenFileFailsClosed(@TempDir Path dir) throws Exception {
         Files.createDirectories(dir);
         Files.writeString(dir.resolve("professions.json"), "{[мусор", StandardCharsets.UTF_8);
         ProfessionStore store = new ProfessionStore(dir, LOGGER);
-        store.load();
-        assertEquals(0, store.size());
-        assertFalse(store.isDirty(), "битый файл не помечает данные изменёнными");
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class,store::load);
+        assertFalse(store.healthy());
+        store.flush();
+        assertEquals("{[мусор",Files.readString(store.file()));
     }
 
     @Test

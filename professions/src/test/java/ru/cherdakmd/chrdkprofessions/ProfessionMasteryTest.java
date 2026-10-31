@@ -26,12 +26,12 @@ class ProfessionMasteryTest {
     @Test void everyProfessionHasTwoBranchesAvailableWithoutAPaidRank() {
         var store = store();
         var service = new ProfessionService(ProfessionConfig.defaults(), store);
-        assertEquals(8, ProfessionMastery.values().length);
+        assertEquals(16, ProfessionMastery.values().length);
         for (Profession profession : Profession.values()) {
             assertEquals(2, ProfessionMastery.of(profession).size());
             unlock(store, profession);
             assertTrue(service.chooseMastery(PLAYER, ProfessionMastery.of(profession).getFirst().id(), NOW).ok());
-            assertEquals(25, service.maxLevel(PLAYER));
+            assertEquals(100, service.maxLevel(PLAYER));
         }
         assertNull(ProfessionMastery.parse("not-real"));
         assertNull(ProfessionMastery.parse(null));
@@ -89,7 +89,7 @@ class ProfessionMasteryTest {
         String snapshot = loaded.snapshotJson();
         assertTrue(snapshot.contains("2026-10-27"));
         assertTrue(snapshot.contains("250"));
-        assertTrue(snapshot.contains("\"version\": 2"));
+        assertTrue(snapshot.contains("\"version\": 3"));
     }
 
     @Test void malformedOrCrossProfessionChoicesAreNotActivated() throws Exception {

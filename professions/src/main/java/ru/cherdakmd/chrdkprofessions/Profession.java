@@ -20,7 +20,9 @@ public enum Profession {
     SMITH("smith", "ANVIL"),
     ALCHEMIST("alchemist", "BREWING_STAND"),
     COOK("cook", "CAMPFIRE"),
-    MASON("mason", "STONECUTTER");
+    MASON("mason", "STONECUTTER"),
+    FORESTER("forester", "OAK_LOG"), MINER("miner", "IRON_PICKAXE"),
+    FARMER("farmer", "WHEAT"), FISHER("fisher", "FISHING_ROD");
 
     private final String id;
     private final String iconName;

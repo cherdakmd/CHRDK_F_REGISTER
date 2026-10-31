@@ -22,12 +22,12 @@ class ProfessionCatalogTest {
     @Test
     void craftTableKnowsEachProfession() {
         assertEquals(4, ProfessionCatalog.craftXp(Profession.SMITH, Material.IRON_SWORD));
-        assertEquals(14, ProfessionCatalog.craftXp(Profession.SMITH,
+        assertEquals(0, ProfessionCatalog.craftXp(Profession.SMITH,
                 Material.NETHERITE_CHESTPLATE));
         assertEquals(1, ProfessionCatalog.craftXp(Profession.SMITH, Material.RAIL));
         assertEquals(8, ProfessionCatalog.craftXp(Profession.ALCHEMIST,
                 Material.BREWING_STAND));
-        assertEquals(20, ProfessionCatalog.craftXp(Profession.COOK,
+        assertEquals(0, ProfessionCatalog.craftXp(Profession.COOK,
                 Material.ENCHANTED_GOLDEN_APPLE));
         assertEquals(2, ProfessionCatalog.craftXp(Profession.MASON, Material.QUARTZ_BLOCK));
         assertEquals(1, ProfessionCatalog.craftXp(Profession.MASON, Material.GLASS_PANE));
@@ -101,10 +101,9 @@ class ProfessionCatalogTest {
         // Правило 1.4.177: у ремесла должен быть повседневный источник опыта,
         // иначе выбор выглядит как «ничего не происходит».
         for (Profession profession : Profession.values()) {
-            Map<Material, Integer> mining = ProfessionCatalog.miningTable(profession);
-            assertFalse(mining.isEmpty(), "добыча " + profession.id());
-            assertTrue(mining.values().stream().anyMatch(xp -> xp <= 2),
-                    "доступный блок " + profession.id());
+            var sources=ProfessionCatalog.sources(profession);
+            assertFalse(sources.isEmpty(),"рабочие источники "+profession.id());
+            assertTrue(sources.stream().anyMatch(row->row.xp()<=12),"доступная работа "+profession.id());
         }
         assertFalse(ProfessionCatalog.cutTable(Profession.MASON).isEmpty());
         assertTrue(ProfessionCatalog.cutTable(Profession.SMITH).isEmpty());
@@ -160,7 +159,7 @@ class ProfessionCatalogTest {
             Map<Material, Integer> smelt = ProfessionCatalog.smeltTable(profession);
             Map<Material, Integer> mining = ProfessionCatalog.miningTable(profession);
             Map<Material, Integer> cut = ProfessionCatalog.cutTable(profession);
-            assertFalse(craft.isEmpty(), "крафт " + profession.id());
+            assertFalse(ProfessionCatalog.sources(profession).isEmpty());
             for (int xp : craft.values()) {
                 assertTrue(xp >= 1 && xp <= ProfessionCatalog.MAX_XP, "крафт " + xp);
             }

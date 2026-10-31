@@ -52,6 +52,7 @@ final class ProfessionsProfile implements ChrdkRegisterApi.ProfileProvider {
             lines.add(messages.get("profile-level",
                     "level", String.valueOf(level),
                     "rank", Messages.trusted(messages.raw(ProfessionMath.rankKey(level)))));
+            lines.add(messages.get("guide.profile","rank",plugin.service().trials().rank(context.playerId(),profession)));
             int percent = plugin.service().progressPercent(context.playerId(), profession);
             lines.add(messages.get("profile-progress",
                     "xp", String.valueOf(plugin.service().progress(context.playerId(), profession)),
@@ -60,12 +61,12 @@ final class ProfessionsProfile implements ChrdkRegisterApi.ProfileProvider {
             if (needed > 0) {
                 lines.add(messages.get("profile-bar", "bar", ProfessionText.bar(percent)));
             }
-            String next = ProfessionText.nextStepRaw(messages, profession, level, maxLevel);
+            String next = ProfessionText.nextStepRaw(messages, profession, level,plugin.service().powerCap(context.playerId()));
             if (!next.isBlank()) {
                 lines.add(messages.get("profile-next", "next", Messages.trusted(next)));
             }
             lines.add(messages.get("profile-perk", "perk",
-                    Messages.trusted(ProfessionText.perkRaw(messages, profession, level, maxLevel))));
+                    Messages.trusted(ProfessionText.perkRaw(messages, profession, level,plugin.service().powerCap(context.playerId())))));
             lines.add(messages.get("profile-hint",
                     "hint", ProfessionText.hintComponent(messages, profession)));
             int left = plugin.service().dailyLeft(context.playerId(), profession,

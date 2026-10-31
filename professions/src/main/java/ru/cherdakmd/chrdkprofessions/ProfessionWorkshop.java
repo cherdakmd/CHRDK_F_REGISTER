@@ -22,8 +22,12 @@ import java.util.Set;
 final class ProfessionWorkshop {
     private static final Set<String> TIER_KEYS = Set.of("item_tier", "item_tier_source");
     private final ProfessionsPlugin plugin;
+    final ProfessionWorkJournal journal;
+    private final ProfessionCombat combat;
 
-    ProfessionWorkshop(ProfessionsPlugin plugin) { this.plugin = plugin; }
+    ProfessionWorkshop(ProfessionsPlugin plugin) { this.plugin = plugin;this.journal=new ProfessionWorkJournal(plugin);
+        this.combat=new ProfessionCombat();Bukkit.getPluginManager().registerEvents(combat,plugin);
+    }
 
     void perform(Player player) {
         if (!Bukkit.isPrimaryThread()) throw new IllegalStateException("Workshop requires server thread");
@@ -37,6 +41,11 @@ final class ProfessionWorkshop {
                 || !empty(player.getItemOnCursor())) {
             plugin.messages().send(player, "work-survival");
             return;
+        }
+        long combatLeft=combat.remaining(player.getUniqueId());
+        if(combatLeft>0){plugin.messages().send(player,"work-combat","time",ProfessionMath.clock((combatLeft+999)/1000));return;}
+        if(journal.pending(player.getUniqueId())){
+            boolean recovered=journal.recover(player);plugin.messages().send(player,recovered?"work-recovered":"work-pending");return;
         }
         var service = plugin.service();
         var check = service.checkMastery(player.getUniqueId());
@@ -54,27 +63,16 @@ final class ProfessionWorkshop {
         int selected = player.getInventory().getHeldItemSlot();
         ItemStack held = planned[selected];
         if (empty(held)) { plugin.messages().send(player, "work-invalid"); return; }
-        Result result = prepare(mastery, planned, selected);
+        Result result = prepare(mastery, planned, selected,service.trials().batch(player.getUniqueId(),mastery));
         if (!result.ok()) { plugin.messages().send(player, result.error()); return; }
         // Никаких отложенных списаний и изменений чужих инвентарей.
         if (!Arrays.equals(original, player.getInventory().getStorageContents())) {
             plugin.messages().send(player, "work-changed");
             return;
         }
-        try {
-            player.getInventory().setStorageContents(planned);
-        } catch (RuntimeException exception) {
-            player.getInventory().setStorageContents(original);
-            plugin.getLogger().warning("Не удалось применить приём профессии: " + exception.getMessage());
-            plugin.messages().send(player, "work-changed");
-            return;
+        if(!journal.apply(player,mastery.profession(),now+service.trials().cooldown(player.getUniqueId(),mastery)*1000L,original,planned)){
+            plugin.messages().send(player,"work-pending");return;
         }
-        if (!plugin.store().setWorkUntil(player.getUniqueId(), mastery.profession(), now + mastery.cooldownSeconds() * 1000L)) {
-            player.getInventory().setStorageContents(original);
-            plugin.messages().send(player, "mastery-storage-full");
-            return;
-        }
-        plugin.requestSave();
         if (result.repaired() > 0) {
             plugin.messages().send(player, "work-repaired", "amount", result.repaired());
         } else {
@@ -83,9 +81,12 @@ final class ProfessionWorkshop {
         }
     }
 
-    private Result prepare(ProfessionMastery mastery, ItemStack[] contents, int selected) {
+    private Result prepare(ProfessionMastery mastery, ItemStack[] contents, int selected,int batch) {
         ItemStack held = contents[selected];
-        if (mastery.profession() == Profession.SMITH) return repair(mastery, contents, selected);
+        if (mastery.repairPercent()>0){
+            if(mastery==ProfessionMastery.TACKLE_KEEPER&&held.getType()!=Material.FISHING_ROD)return Result.fail("work-invalid");
+            return repair(mastery,contents,selected);
+        }
         String target = ProfessionWorkRecipes.output(mastery, held.getType().name());
         if (target == null) return Result.fail("work-invalid");
         Material output = Material.matchMaterial(target);
@@ -96,10 +97,10 @@ final class ProfessionWorkshop {
             String catalyst = mastery == ProfessionMastery.GRENADIER ? "GUNPOWDER" : "DRAGON_BREATH";
             ItemStack fingerprint = held.clone();
             int amount = 0;
-            for (int i = 0; i < contents.length && amount < mastery.batch(); i++) {
+            for (int i = 0; i < contents.length && amount < batch; i++) {
                 ItemStack item = contents[i];
                 if (empty(item) || !item.isSimilar(fingerprint)) continue;
-                int take = Math.min(item.getAmount(), mastery.batch() - amount);
+                int take = Math.min(item.getAmount(), batch - amount);
                 ItemStack converted = new ItemStack(output, take);
                 if (!converted.setItemMeta(item.getItemMeta())) return Result.fail("work-special");
                 removeAt(contents, i, take);
@@ -107,19 +108,22 @@ final class ProfessionWorkshop {
                 amount += take;
             }
             if (amount == 0) return Result.fail("work-invalid");
-            if (!consume(contents, Material.valueOf(catalyst), 1)) return Result.fail("work-materials");
+            int catalysts=(amount+2)/3;
+            if (!consume(contents, Material.valueOf(catalyst), catalysts)) return Result.fail("work-materials");
             // В варке дыхание дракона возвращает стеклянный флакон.
-            if (mastery == ProfessionMastery.DISTILLER && !add(contents, new ItemStack(Material.GLASS_BOTTLE)))
+            if (mastery == ProfessionMastery.DISTILLER && !add(contents, new ItemStack(Material.GLASS_BOTTLE,catalysts)))
                 return Result.fail("work-space");
             return new Result("", output, amount, 0);
         }
         if (!ordinary(held)) return Result.fail("work-special");
-        int count = Math.min(held.getAmount(), mastery.batch());
-        removeAt(contents, selected, count);
-        if (mastery != ProfessionMastery.FINISHER
-                && !consume(contents, Material.COAL, ProfessionWorkRecipes.fuel(count))) return Result.fail("work-materials");
-        if (!add(contents, new ItemStack(output, count))) return Result.fail("work-space");
-        return new Result("", output, count, 0);
+        int ratio=ProfessionWorkRecipes.inputRatio(mastery),outRatio=ProfessionWorkRecipes.outputRatio(mastery);
+        int count=Math.min(held.getAmount()/ratio,batch);
+        if(count<=0)return Result.fail("work-materials");
+        removeAt(contents,selected,count*ratio);
+        if(ProfessionWorkRecipes.needsFuel(mastery)&&!consume(contents,Material.COAL,ProfessionWorkRecipes.fuel(count)))return Result.fail("work-materials");
+        int outputCount=count*outRatio;
+        while(outputCount>0){int n=Math.min(output.getMaxStackSize(),outputCount);if(!add(contents,new ItemStack(output,n)))return Result.fail("work-space");outputCount-=n;}
+        return new Result("",output,count*outRatio,0);
     }
 
     private Result repair(ProfessionMastery mastery, ItemStack[] contents, int selected) {

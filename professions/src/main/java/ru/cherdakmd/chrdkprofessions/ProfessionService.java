@@ -57,8 +57,10 @@ public final class ProfessionService {
 
     /** Потолок уровня профессии игрока: 25 плюс уровни навыка от ранга. */
     public int maxLevel(UUID player) {
-        return ProfessionMath.maxLevel(bonus(player).extraSkill());
+        return ProfessionMath.PROGRESSION_CAP;
     }
+
+    public int powerCap(UUID player){return ProfessionMath.maxLevel(bonus(player).extraSkill());}
 
     /** Перечитывает конфиг после {@code /profadmin reload}. */
     public void applyConfig(ProfessionConfig updated) {
@@ -296,6 +298,14 @@ public final class ProfessionService {
         }
     }
 
+    public Award awardSource(UUID player,Profession profession,String action,org.bukkit.Material material,int units,int xp,long now){
+        if(player==null||profession==null||material==null||units<=0||xp<=0||active(player)!=profession)return Award.none();
+        Award award=award(player,profession,(int)Math.min(Integer.MAX_VALUE,(long)units*xp),now);
+        if(award.added()>0)store.practice(player,profession,action+":"+material.name().toLowerCase(java.util.Locale.ROOT),units);
+        return award;
+    }
+    public ProfessionTrials trials(){return new ProfessionTrials(this,store);}
+
     /* --------------------------------- прибавки -------------------------------- */
 
     /** Скидка кузнеца на наковальню, %: 0, если профессия не активна. */
@@ -325,7 +335,7 @@ public final class ProfessionService {
         if (store.active(player) != profession) {
             return 0;
         }
-        return ProfessionMath.perkValue(profession, level(player, profession), maxLevel(player));
+        return ProfessionMath.perkValue(profession, Math.min(level(player, profession),powerCap(player)), powerCap(player));
     }
 
     /** Включена ли прибавка профессии в конфиге (для подсказок в меню). */
