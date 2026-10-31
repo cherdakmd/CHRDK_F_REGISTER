@@ -342,8 +342,10 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
         sendPageLine(player, "forsale-page", page, pages, "forsale");
     }
 
-    /** Подсветка границ текущего чанка частицами (только для этого игрока). */
+    /** Полный контур смерженной территории (только для этого игрока). */
     private void borders(Player player) {
+        if (!service().isAllowed(player)) { plugin.messages().send(player, "need-auth"); return; }
+        if (!plugin.config().worldEnabled(player.getWorld().getName())) { plugin.messages().send(player, "world-disabled", "world", player.getWorld().getName()); return; }
         boolean enabled = plugin.toggleBorders(player);
         if (!enabled) {
             plugin.messages().send(player, "borders-off");
@@ -354,7 +356,7 @@ public final class ClaimsCommandHandler implements CommandExecutor, TabCompleter
         if (claim == null) {
             plugin.messages().send(player, "borders-on-free", "seconds", seconds);
         } else {
-            plugin.messages().send(player, "borders-on", "seconds", seconds, "owner", claim.owner);
+            plugin.messages().send(player, "borders-territory-on", "seconds", seconds, "owner", claim.owner);
         }
     }
 

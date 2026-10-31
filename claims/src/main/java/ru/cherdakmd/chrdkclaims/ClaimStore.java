@@ -263,6 +263,9 @@ public final class ClaimStore {
         }
     }
 
+    /** Ревизия данных для сброса кэша контура, не платёжное действие. */
+    synchronized long borderRevision() { return revision; }
+
     public synchronized void markDirty() {
         touch();
     }
