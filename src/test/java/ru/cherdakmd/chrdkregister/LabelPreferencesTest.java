@@ -145,7 +145,7 @@ class LabelPreferencesTest {
         assertFalse(preferences.visible("Steve", LabelPreferences.Label.ACHIEVEMENTS));
         assertTrue(preferences.visible("Steve", LabelPreferences.Label.HEADER),
                 "шапка таба — отдельный переключатель");
-        assertEquals(5, LabelPreferences.badgeLabels().size(),
+        assertEquals(6, LabelPreferences.badgeLabels().size(),
                 "все NAME-надписи, кроме ранга");
 
         preferences.setGroup("Steve", LabelPreferences.badgeLabels(), true);

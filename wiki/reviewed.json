@@ -1,183 +1,183 @@
 {
   "pages": {
     "about": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "fc78d0695420fd7c9f08c44968258795cb4b6922b153afd78ff84f7f973a5f94",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "ed6ff19919fac964a27e103620f640770c0a01af5964a92d70d83e7ee1394133",
       "text": "17788b7b4007e90c62acd266f95cec124e0a53b603a1b2e5d9a7c19fb304c7d9"
     },
     "achievements": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "47184aaab23c40a63099d8a0271bb1ea9c3d95fedd21eb7baea17a4c83d4bb07",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "693422e92d77d21825682c21c015035ccea6b4177064975866d7e84b92ab8de3",
       "text": "839d6e42ff5471f7def5f1bcb063709bb4e8ec40a1732a5a1ce55754544329a3"
     },
     "artifacts": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "41df500a05d842c27a863fa09ce8f5c4915f99d52bb61e08bf24c0ca257113b9",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "7b7c20eeffa58d939944b8d5e36c5a379fc22a704f8c59f44321a664b4c1f269",
       "text": "d84ce5252984c944058764fb97c3c25b27e7690ecde9f50384f39ce5d25b856b"
     },
     "auction": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "1ef44167ff10099847198634ec2c9e924b47831e1336eafc7200e8827a1427cd",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "912ebada6bc5bcca91c01e7c7c2a7a70b2d5e8f48e63a9e49af6a6db8d4519b0",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "c590160a2fce435ace2dc01b4ad72e9e7a2462b348ce69e60c386d13afebdd9e",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "5be21254421216e82d1090e756468822b396a8b334a64da2dcb4ff8d5674c543",
       "text": "0bb2af9ae7275a308eee69cb6b63893c060bcff763287fe0dfbd1965861c24c8"
     },
     "chat": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "fc78d0695420fd7c9f08c44968258795cb4b6922b153afd78ff84f7f973a5f94",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "ed6ff19919fac964a27e103620f640770c0a01af5964a92d70d83e7ee1394133",
       "text": "ac4a8e23de6893fab669939fd2882e40f1604f1f8fddeaa1d3d3572d8c3d6572"
     },
     "claims": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "db7d5d3735a13498c58ef41d04b6adb0fbd9a5d6c59aea0b470f62ca5f5de87c",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "9b11c87e99e7057c3cf40c2e02e382e103388ab0b1fa7192e2b1e24c2e13d22b",
       "text": "2a1634efadca1810c82bc496b30432d553c72fb226a5e051443232224a366538"
     },
     "classes": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "eaba3af9515b190e7d6d46da443a76f441e8cc6a6ad5063f0052e918ff34060a",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "f00cfaf3b6fafb6e89000a2f352b6fca785dd62e72f5592a922f24e7bbf0583e",
       "text": "ee29d92bd4e9527924d14405057fd62402857c1a688439c7b9d86d4c9bf3b546"
     },
     "commands": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "7e16b12d64111b996976c8768bb721281f407e6c5e3ce3670dd5a2d150d18758",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "46559fa2e54a518ca65a7dfc5d93f7775ea92fb6ac70a11e6a23ff0a87932395",
       "text": "598a4781eada9b9d63fde19d90c0c4b7a20bb98e23f373320bce415127f0bc18"
     },
     "cosmetics": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "e75ba9c7e00aafe2985bf499fc56938f9c3e355fb74f19af1fb7da65b780cbf3",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "8e14f06610f8f5bda57b651619acc09e36d60b41a50434883b4bf10728528031",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "192965e3b28521a5434904a80083b43efc3ab0ff1bb9f393b7450c654b958d39",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "c7977dc3277b9b8fd96721691f6842338bc9bde253122520090636eae9f09a68",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "economy": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "140025ad8b15fc804e644a04fee38d9c99fd27ec14e73a12429dd90ab177ee9e",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "bd36d369769ad61cb0138c2d1a6e0d6c1b6e84595904561a1ae787165ffa0599",
       "text": "216cf9a664845fe452abd6742c8d56f486bba98eb4e43fad6fe1276269901369"
     },
     "enchants": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "b2195d6f091ba51b733eb95f1cf71c3d19070abcd0192ec1cb7fecce5549383e",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "a4d894c8ac6f5cfdb33f8ecd7d1e4e885d52b6034cf3b5ea07b758d3c8fbc353",
       "text": "7237739cff6a36edff803288ab8b9bfee64910fa416675d4a8f23651523c6c3e"
     },
     "faq": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "7e16b12d64111b996976c8768bb721281f407e6c5e3ce3670dd5a2d150d18758",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "46559fa2e54a518ca65a7dfc5d93f7775ea92fb6ac70a11e6a23ff0a87932395",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "8575bcf1c68544faa004b985ccbea22ee7809c6e413499d8b42b3aebf8e558c4",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "eb137cb891424fe023bfb6c7ab495108398e9f738dbbfd07f85d829172f8a5df",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "db7d5d3735a13498c58ef41d04b6adb0fbd9a5d6c59aea0b470f62ca5f5de87c",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "9b11c87e99e7057c3cf40c2e02e382e103388ab0b1fa7192e2b1e24c2e13d22b",
       "text": "442f5481c446db06532139f0b7c2f184858d17e99d0bebc46f50adab2aeefb61"
     },
     "hunt": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "c17ad335a9d3edba4bcd88d07266de95de7f0cc7585478cbe632357b3f87f264",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "a35b767b1b75288a3798263bff032f4ecfbdc1f060c767228668b87a5cc27240",
       "text": "3b2066fce021118c9980313351d42317d07f8519b7c1404638d61ce4318d33e8"
     },
     "index": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "052f0ffd0ee60a1be2b4965e0b375ff559eb0414a33c11c2fca8ae13d2693c34",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "f55fb88d30b8d6f3aaf064a454238c25723f215072979bf7eb9681649c814f37",
       "text": "2d543efd03d060e4d6f09da13921777186f30a145e3614fcc82b1dedcaf07777"
     },
     "lottery": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "8cdfad4c4ff95b4e11824a1244b4866773fd5639ba6c7004758d5f238663eec6",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "f63df9ea5740ccd47fbf7015b18161ed20792c1c5689b44d6c9e7aa7829961cc",
       "text": "1d05c7d03ba10cbdc51a27bb6cc1ff68ec75f44ff7f8e91d05b92fc08dcd5931"
     },
     "menu": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "7e16b12d64111b996976c8768bb721281f407e6c5e3ce3670dd5a2d150d18758",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "46559fa2e54a518ca65a7dfc5d93f7775ea92fb6ac70a11e6a23ff0a87932395",
       "text": "eaccb7ed1bf84b845f57ab3e722b9e3b706542bfb70c39fa9f82135cc875497c"
     },
     "orders": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "fe4d4b4b0f705f4f8e3ceb0f77b0e4e05f2c854c706b758c358c1eae75959a21",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "b38cced17cba228d180962547f3137abc031401264ab48ab5a07e336cf77a43d",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "party": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "6e464486a8b559009abe1c545ee4fcd823321709d4daae8a25b40b8ec278ebd4",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "f41844484def5a9aed16b9201f05ff25e4cd9d00792769f78ce4c929209627e2",
       "text": "1907a324d824df3607e9932362f05cfd65b35cd5e8063296a269802a00c04fe6"
     },
     "pets": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "7676d3acaedd6ce0112c1f1d568267f3f13b977f461eadfd14dabb5319d24e9f",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "445fcba4e3923c128e9ba436cb52c5cea487e96e2da3ec94b1b9c03ef5b7decf",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "bd71071eccfeee3fb2c3adda37b03ec55f250db357b4ebb171e4edaa2765fad8",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "78634d82c7edfdc99c86c520fcee4cdca2bc657dc6c8c7822372a10db2807254",
       "text": "022f2a0c132d5ab450e70b77c4c02d60d0750a86c70fe73d17d0b03817a16664"
     },
     "profile": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "2ab3ae80d6f017285933a05db148d62a2c5f355a9588182deccb721a49f6bb62",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "316f8bb9980940d808e089f9d95c75d7eda22444a482f815c90bddcb3ff3d348",
       "text": "b1ddb608cb3942be099223883d3c545c9ab409018276b58b94f5e85e796a3970"
     },
     "quests": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "fc38bf8b23845fa189f0d01f73e046869b5c9d1741c6b4e8823cf3aa95be2169",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "f7a6874dd8fcace989cdb6514a1fe7b845344553c1e4ff11f0fc02628e4e4e81",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "923b1bb065d1a25c898daace32ccf5e3a426215f153ddae2831c62420af49c79",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "051d82638dde2489a19aba4fb29895d8e8f644dc94359e5f512e7ec16800dd9a",
       "text": "1db00295907be029a91cc1a07b096816a661b2bd311cc271b20345587f2b71f5"
     },
     "referrals": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "24f178d977e06dae35cc006725d1034158845224d870fd7e782e5af7ed04849f",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "8e18a87fcfb1566fb93f0b9fa6bd1c82da347a1f05e04afa80741bb75b62d673",
       "text": "802956a7c425a8c14bd0cbd56b600cbab5027bd5bc72c0b28232fd5ba5055b24"
     },
     "shop": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "052f0ffd0ee60a1be2b4965e0b375ff559eb0414a33c11c2fca8ae13d2693c34",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "f55fb88d30b8d6f3aaf064a454238c25723f215072979bf7eb9681649c814f37",
       "text": "7311f2d070abe97d7b36552adaa74bf745062aceb2e239128d36cfe2a57b3975"
     },
     "skills": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "11d26f6c6e3c58a99f34478eec23c38002d7216c874b2d34681186fde45942da",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "0b84266ebe2a466894aafdb3b2fefe80217b2e4b37a481cf26bb44176ff16270",
       "text": "da88b0eff3b15dec9185ecfbb9a63b62c96e0a3aa5ab2dea53e0928a500b403a"
     },
     "start": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "390f7f249f4884187a854eb39ba5970c8555d4fdb4d2ba6f6f0ef4fe37aa2261",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "f1efb47fbe1f4940fa4bdc129125102e5d575518a90e489c4a5fc80b44204eb6",
       "text": "3f26288c52ae35e92097798a9a413933351e8e8422d33230a6322c69aedbb238"
     },
     "teleports": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "424d874f4ef637b3c05f02d4a3a5bf6fc98b9b5f0473c641608490ab52974652",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "d4a17e656b53277fb39bff51fcb07a2c060c7f2487d7cb7c27ed0bab6831cd70",
       "text": "896b72de8b56b3374b3a6346a701f45defae6e6ecff688868e02233aa040d1fa"
     },
     "tierforge": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "2487846b73fa3aeb8abf1b97a3b0dfcf210ec196b5f339329dc612c71eeb708f",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "afc9dd816d09821d2a587f1707fa6ef33b0417c3eeed2eea449411a494af8415",
       "text": "d3cd07c98bec6cb1e15ff875d5fd5394fcadb5db2931fc6724350721f98ed38c"
     },
     "titles": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "930955ce08d6b42caa4796df645fc1206c9a3d9a2f3610a0d8472dbf8c2306c8",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "739e1b86243bad36f491e1e7f8a601f803922b33348398e601f16acee72ff772",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "052f0ffd0ee60a1be2b4965e0b375ff559eb0414a33c11c2fca8ae13d2693c34",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "f55fb88d30b8d6f3aaf064a454238c25723f215072979bf7eb9681649c814f37",
       "text": "82cbef51d0e905b9db2f7a38198f2a576bf3026e0c19ac77bbf064ca4eddb5f7"
     },
     "vk": {
-      "reason": "Уточнено поле playerName в ChatService.deliverExternalGlobalChat",
-      "sources": "d083512b06e485581632233d9d87f3207eb34837540862ea2400b241ebd27c5d",
+      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
+      "sources": "0a96750c1dcd0a05b9abd49d9a3baf4fe1afb71387e3171c030138f729bdb0c2",
       "text": "ff5c8c793e8c69d3b15a4f6eca328c92962daf7d6d883b206b091a0bb018224b"
     }
   },

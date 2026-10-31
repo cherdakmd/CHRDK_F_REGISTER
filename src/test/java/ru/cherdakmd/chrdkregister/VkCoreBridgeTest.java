@@ -153,7 +153,7 @@ class VkCoreBridgeTest {
         ChatConfig chatCfg = ChatConfig.fromBukkitConfig(rawChat);
         ChatService chat = new ChatService(null, null, chatCfg, null, LOGGER);
 
-        assertEquals("привет *** всем",
+        assertEquals("привет ******* всем",
                 chat.moderateExternalMessage(store, "vk", "Steve", "Steve", "ПРИВЕТ badword ВСЕМ", now));
         assertNull(chat.moderateExternalMessage(store, "vk", "Steve", "Steve", "привет badword всем", now + 1_000L),
                 "дубликат от того же отправителя блокируется");
