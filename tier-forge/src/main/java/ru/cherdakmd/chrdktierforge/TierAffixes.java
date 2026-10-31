@@ -173,6 +173,17 @@ public final class TierAffixes {
         return List.copyOf(result);
     }
 
+    /** Все прежние наборы при допустимых потолках: для точного удаления старых строк. */
+    static List<TierAffix> possibleForItem(String uid, String tierId, ItemKind kind) {
+        java.util.Set<TierAffix> result = new java.util.LinkedHashSet<>();
+        for (int good = 0; good <= MAX_PER_SIGN; good++) {
+            for (int bad = 0; bad <= MAX_PER_SIGN; bad++) {
+                result.addAll(forItem(uid, tierId, kind, good, bad));
+            }
+        }
+        return List.copyOf(result);
+    }
+
     /** Детерминированный seed другого броска (зачарования) от того же предмета. */
     static long seed(String uid, String tierId, ItemKind kind, long salt) {
         return seed(uid, tierId, kind) * 31 + salt;

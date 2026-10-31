@@ -208,6 +208,11 @@ public final class TierForgePlugin extends JavaPlugin {
         nameTagRegistered = false;
     }
 
+    /** Сверка инвентаря, включая drag/respawn, делает следующий пульс свежим. */
+    void invalidateForgeGear(java.util.UUID player) {
+        if (forgeUpgrades != null) forgeUpgrades.invalidateGearCache(player);
+    }
+
     /** Пульс кузни раз в 2 секунды (тихий no-op, если ковка выключена). */
     private void startForgePulse() {
         this.forgePulseTask = Bukkit.getScheduler().runTaskTimer(this, () -> {
@@ -221,6 +226,7 @@ public final class TierForgePlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         if (awards != null) awards.close();
+        if (refreshListener != null) refreshListener.close();
         unregisterCollectionNameTag();
         if (tabService != null) {
             tabService.stop();
@@ -348,6 +354,7 @@ public final class TierForgePlugin extends JavaPlugin {
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
         this.config = TierForgeConfig.parse(getConfig(), getLogger());
+        if (forgeUpgrades != null) forgeUpgrades.invalidateGearCache();
         this.namePool = new ForgeNamePool(config.namesWeapons(), config.namesArmor(),
                 config.namesTools(), config.namesUtilities());
         if (identifyScanTask != null) {

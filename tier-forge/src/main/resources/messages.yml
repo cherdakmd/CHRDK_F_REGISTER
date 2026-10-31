@@ -117,6 +117,8 @@ tiers:
   tier-bonus-projectile: "%value%% к урону стрел"
   tier-bonus-mining: "%value%% к скорости добычи"
   tier-bonus-movement: "%value%% к скорости бега"
+  tier-bonus-armor: "%value%% к атрибуту брони"
+  tier-bonus-toughness: "%value%% к твёрдости брони"
   tier-bonus-luck: "%value% удачи"
   tier-bonus-separator: ", "
   list-drop-chances: "<gray>Дроп с мобов (на предмет): оружие <white>%weapons%%</white>, броня <white>%armor%%</white>, инструменты <white>%tools%%</white>, утилита <white>%utilities%%</white>.</gray>"
