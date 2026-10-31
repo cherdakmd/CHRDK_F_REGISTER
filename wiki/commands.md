@@ -57,6 +57,9 @@ review: [core, claims, teleports, diamond-shop]
 добровольным доступом к вашей личной территории; роли: `access`, `containers`,
 `build`, отключение: `off`. Донатный ранг и должность в клане — разные вещи.
 
+Профессии: `/profession sources|roadmap|abilities|trials|passport [id]`
+открывают каталог XP, карту 1–100, способности, разряды и паспорт восьми ремёсел.
+
 ## Одно имя — разные системы
 
 Для профиля используйте `/profile`. Для профессии надёжнее `/profession`:

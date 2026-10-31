@@ -31,6 +31,8 @@ public final class ProfessionsPlugin extends JavaPlugin {
     private ProfessionService service;
     private ProfessionsGui gui;
     private ProfessionWorkshop workshop;
+    private ProfessionGuide guide;
+    ProfessionGuide guide(){return guide;}
     /** 1.4.182: обязательный выбор профессии — меню и напоминания. */
     private ProfessionOnboarding onboarding;
     private BukkitTask saveTask;
@@ -48,6 +50,8 @@ public final class ProfessionsPlugin extends JavaPlugin {
             this.service = new ProfessionService(config, store);
             this.gui = new ProfessionsGui(this);
             this.workshop = new ProfessionWorkshop(this);
+            this.guide=new ProfessionGuide(this);
+            getServer().getPluginManager().registerEvents(guide,this);
             this.onboarding = new ProfessionOnboarding(this);
 
             getServer().getPluginManager().registerEvents(new ProfessionListener(this), this);

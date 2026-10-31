@@ -33,6 +33,13 @@ final class ProfessionWorkRecipes {
             case CAMP_COOK, CHEF -> COOK.get(input);
             case KILN_MASTER -> KILN.get(input);
             case FINISHER -> FINISH.get(input);
+            case SAWYER -> wood(input,false);
+            case CARVER -> wood(input,true);
+            case SMELTER -> switch(input){case "RAW_IRON"->"IRON_INGOT";case "RAW_GOLD"->"GOLD_INGOT";case "RAW_COPPER"->"COPPER_INGOT";default->null;};
+            case CRUSHER -> input.equals("COBBLESTONE")||input.equals("COBBLED_DEEPSLATE")?"GRAVEL":null;
+            case MILLER -> input.equals("WHEAT")?"BREAD":null;
+            case COMPOSTER -> input.equals("WHEAT_SEEDS")||input.equals("BEETROOT_SEEDS")?"BONE_MEAL":null;
+            case FISH_SMOKER -> input.equals("COD")?"COOKED_COD":input.equals("SALMON")?"COOKED_SALMON":null;
             case GRENADIER -> input.equals("POTION") ? "SPLASH_POTION" : null;
             case DISTILLER -> input.equals("SPLASH_POTION") ? "LINGERING_POTION" : null;
             default -> null;
@@ -54,11 +61,12 @@ final class ProfessionWorkRecipes {
         if (material.equals("BOW") || material.equals("CROSSBOW") || material.equals("FISHING_ROD")) return "STRING";
         if (material.equals("SHEARS") || material.equals("FLINT_AND_STEEL")) return "IRON_INGOT";
         // Материал из префикса недостаточен: DIAMOND/IRON_INGOT нельзя «чинить».
-        if (!(material.endsWith("_SWORD") || material.endsWith("_PICKAXE") || material.endsWith("_AXE")
+        if (!(material.endsWith("_SWORD") || material.endsWith("_SPEAR") || material.endsWith("_PICKAXE") || material.endsWith("_AXE")
                 || material.endsWith("_SHOVEL") || material.endsWith("_HOE") || material.endsWith("_HELMET")
                 || material.endsWith("_CHESTPLATE") || material.endsWith("_LEGGINGS") || material.endsWith("_BOOTS"))) return null;
         if (material.startsWith("WOODEN_")) return "OAK_PLANKS";
         if (material.startsWith("STONE_")) return "COBBLESTONE";
+        if (material.startsWith("COPPER_")) return "COPPER_INGOT";
         if (material.startsWith("IRON_") || material.startsWith("CHAINMAIL_")) return "IRON_INGOT";
         if (material.startsWith("GOLDEN_")) return "GOLD_INGOT";
         if (material.startsWith("DIAMOND_")) return "DIAMOND";
@@ -67,5 +75,13 @@ final class ProfessionWorkRecipes {
         return null;
     }
 
+    public static int inputRatio(ProfessionMastery mastery){return mastery==ProfessionMastery.MILLER?3:mastery==ProfessionMastery.COMPOSTER?8:1;}
+    public static int outputRatio(ProfessionMastery mastery){return mastery==ProfessionMastery.SAWYER?4:1;}
+    public static boolean needsFuel(ProfessionMastery mastery){return switch(mastery){case CAMP_COOK,CHEF,KILN_MASTER,SMELTER,CRUSHER,FISH_SMOKER->true;default->false;};}
+    private static String wood(String input,boolean stripped){
+        String n=input;if(n.startsWith("STRIPPED_"))return null;
+        if(!n.endsWith("_LOG")&&!n.equals("CRIMSON_STEM")&&!n.equals("WARPED_STEM"))return null;
+        return stripped?"STRIPPED_"+n:n.replace("_LOG","_PLANKS").replace("_STEM","_PLANKS");
+    }
     private ProfessionWorkRecipes() { }
 }

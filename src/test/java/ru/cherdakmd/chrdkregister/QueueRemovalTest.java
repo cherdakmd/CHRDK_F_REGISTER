@@ -84,7 +84,7 @@ class QueueRemovalTest {
         assertFalse(live.getBoolean("auto-messages.random-order"));
         assertEquals("Свой префикс", live.getString("auto-messages.prefix"));
         assertTrue(PresentationMigration.replacements(live, List.of(legacy), fresh).isEmpty());
-        // В каталоге снято только прежнее обещание: цены, сроки, права и товары не меняются.
+        // Снята очередь и уточнён порог прибавок262: только тексты, не условия SKU.
         var oldProducts = legacy.getMapList("shop.products");
         var newProducts = live.getMapList("shop.products");
         assertEquals(oldProducts.size(), newProducts.size());
@@ -96,7 +96,8 @@ class QueueRemovalTest {
             old.remove("description"); current.remove("description");
             assertEquals(old, current);
         }
-        assertEquals(1, changed);
+        assertEquals(2, changed);
+        assertTrue(newProducts.stream().filter(p->"rank-founder".equals(p.get("id"))).allMatch(p->p.get("description").toString().contains("порог ремесленных прибавок +10")));
     }
 
     @Test void customAndEmptyListsAndEditedPricesAreNotOverwritten() {

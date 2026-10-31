@@ -13,7 +13,15 @@ public enum ProfessionMastery {
     CAMP_COOK("camp-cook", Profession.COOK, "CAMPFIRE", 8, 120, 0),
     CHEF("chef", Profession.COOK, "SMOKER", 32, 480, 0),
     KILN_MASTER("kiln-master", Profession.MASON, "FURNACE", 32, 300, 0),
-    FINISHER("finisher", Profession.MASON, "STONECUTTER", 32, 180, 0);
+    FINISHER("finisher", Profession.MASON, "STONECUTTER", 32, 180, 0),
+    SAWYER("sawyer",Profession.FORESTER,"OAK_PLANKS",16,120,0),
+    CARVER("carver",Profession.FORESTER,"STRIPPED_OAK_LOG",16,180,0),
+    SMELTER("smelter",Profession.MINER,"BLAST_FURNACE",16,180,0),
+    CRUSHER("crusher",Profession.MINER,"GRAVEL",16,180,0),
+    MILLER("miller",Profession.FARMER,"BREAD",12,120,0),
+    COMPOSTER("composter",Profession.FARMER,"BONE_MEAL",8,180,0),
+    FISH_SMOKER("fish-smoker",Profession.FISHER,"SMOKER",16,120,0),
+    TACKLE_KEEPER("tackle-keeper",Profession.FISHER,"FISHING_ROD",1,180,15);
 
     public static final int UNLOCK_LEVEL = 5;
     public static final long CHANGE_MILLIS = 24 * 60 * 60 * 1000L;

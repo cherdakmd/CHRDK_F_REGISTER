@@ -87,7 +87,8 @@ final class ProfessionText {
         if (messages == null || profession == null) {
             return "";
         }
-        int value = ProfessionMath.perkValue(profession, level, maxLevel);
+        if(profession.ordinal()>=Profession.FORESTER.ordinal())return messages.raw("perk.utility");
+        int value = ProfessionMath.perkValue(profession, level, Math.min(35,maxLevel));
         return value <= 0 ? messages.raw("perk.none")
                 : messages.raw("perk." + profession.id(), "value", String.valueOf(value));
     }
