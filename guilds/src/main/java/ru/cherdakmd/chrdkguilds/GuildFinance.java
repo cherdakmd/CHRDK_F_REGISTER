@@ -27,6 +27,12 @@ final class GuildFinance {
 
     record Preview(GuildResult result, String domain, long debit, long credit) { }
 
+    /** Свободный остаток пополняется военными возвратами при withdraw: учитываем оба коллективных обязательства. */
+    static long treasurySpent(Guild before, Guild after) {
+        return Math.subtractExact(Math.addExact(before.treasury(),before.warReturns()),
+                Math.addExact(after.treasury(),after.warReturns()));
+    }
+
     /** Тот же production-путь preview проверяется без Bukkit-сервера. */
     static Preview preview(GuildStore live, GuildConfig config, BiFunction<GuildService,Quote,GuildResult> operation) {
         GuildStore copy = live.copy();
