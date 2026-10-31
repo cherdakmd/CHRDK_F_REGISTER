@@ -174,7 +174,11 @@ final class GuildPeaceController {
     }
     void quit(UUID owner){quotes.remove(owner);}
     static String time(long millis){return java.time.Instant.ofEpochMilli(millis).atZone(java.time.ZoneId.systemDefault()).format(java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"));}
-    private void tell(UUID owner,GuildResult result){Player player=Bukkit.getPlayer(owner);if(plugin.visible(player))send(player,result);}
+    private void tell(UUID owner,GuildResult result){
+        Player player=Bukkit.getPlayer(owner);
+        boolean personalPenalty=result.key().equals("peace-fined")||result.key().equals("peace-debt-collected");
+        if(plugin.visible(player)||(personalPenalty&&player!=null&&player.isOnline()&&plugin.authenticated(player)))send(player,result);
+    }
     private void send(Player player,GuildResult result){
         Object[] args=result.array();
         for(int i=0;i+1<args.length;i+=2)if(args[i].equals("deadline")&&args[i+1].toString().matches("[0-9]+"))args[i+1]=time(Long.parseLong(args[i+1].toString()));

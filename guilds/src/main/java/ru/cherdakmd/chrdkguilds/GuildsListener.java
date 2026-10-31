@@ -53,7 +53,7 @@ final class GuildsListener implements Listener {
         plugin.payments().recover(event.getPlayer());
         remind(event.getPlayer());
         plugin.peace().deliverNotices(event.getPlayer().getUniqueId());
-        if(plugin.service().guildOf(event.getPlayer().getUniqueId())!=null)plugin.peace().status(event.getPlayer());
+        if(plugin.visible(event.getPlayer())&&plugin.service().guildOf(event.getPlayer().getUniqueId())!=null)plugin.peace().status(event.getPlayer());
     }
 
     /** Напоминание о приглашении: игрок мог не видеть его в чате. */
