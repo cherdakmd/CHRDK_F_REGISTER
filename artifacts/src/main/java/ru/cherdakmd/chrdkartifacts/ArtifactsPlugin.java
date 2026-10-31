@@ -31,6 +31,7 @@ public final class ArtifactsPlugin extends JavaPlugin {
     private CooldownStore cooldownStore;
     private ArtifactTraitService traits;
     private PassiveEffectsService passives;
+    private ArtifactLifecycleListener lifecycle;
     private CollectionService collection;
     private CollectionGui collectionGui;
     private ArtifactFeedback feedback;
@@ -64,6 +65,8 @@ public final class ArtifactsPlugin extends JavaPlugin {
         this.collectionGui = new CollectionGui(this);
         reloadArtifactsConfig();
 
+        this.lifecycle = new ArtifactLifecycleListener(this, passives);
+        Bukkit.getPluginManager().registerEvents(lifecycle, this);
         Bukkit.getPluginManager().registerEvents(new ActiveEffectsListener(this), this);
         Bukkit.getPluginManager().registerEvents(new ArtifactLootListener(this), this);
         Bukkit.getPluginManager().registerEvents(new ArtifactEventListener(this), this);
@@ -112,6 +115,7 @@ public final class ArtifactsPlugin extends JavaPlugin {
             saveTask.cancel();
             saveTask = null;
         }
+        if (lifecycle != null) lifecycle.close();
         if (passives != null) {
             passives.stop();
         }

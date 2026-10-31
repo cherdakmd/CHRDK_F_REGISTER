@@ -24,10 +24,9 @@ final class ArtifactTraitModifiers {
      */
     static void replace(AttributeInstance instance, NamespacedKey key,
                         ArtifactTraits.Def def, int level) {
-        if (instance.getModifier(key) != null) {
-            instance.removeModifier(key);
-        }
+        AttributeModifier existing = instance.getModifier(key);
         if (level <= 0 || def.kind() == ArtifactTraits.Kind.POTION) {
+            if (existing != null) instance.removeModifier(key);
             return;
         }
         double amount = def.kind().percent() ? def.value(level) / 100.0 : def.value(level);
@@ -35,11 +34,18 @@ final class ArtifactTraitModifiers {
             amount = -Math.min(Math.max(0, instance.getBaseValue() - MIN_MAX_HEALTH), -amount);
         }
         if (amount == 0) {
+            if (existing != null) instance.removeModifier(key);
             return;
         }
         AttributeModifier.Operation operation = def.kind().percent()
                 ? AttributeModifier.Operation.MULTIPLY_SCALAR_1
                 : AttributeModifier.Operation.ADD_NUMBER;
+        // Не снимаем и не возвращаем неизменный бонус каждый пульс, особенно здоровье.
+        if (existing != null && existing.getOperation() == operation
+                && Double.compare(existing.getAmount(), amount) == 0) {
+            return;
+        }
+        if (existing != null) instance.removeModifier(key);
         try {
             instance.addTransientModifier(new AttributeModifier(key, amount, operation));
         } catch (IllegalArgumentException ignored) {

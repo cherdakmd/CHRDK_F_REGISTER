@@ -188,6 +188,44 @@ public final class ArtifactItems {
         return def.mode() == ArtifactDef.Mode.ACTIVE ? NamedTextColor.DARK_RED : NamedTextColor.RED;
     }
 
+    /** Бережно обновляет только прежние строки свойств в рюкзаке/броне/второй руке. */
+    public void refreshCarriedLore(Player player) {
+        var inventory = player.getInventory();
+        ItemStack[] contents = inventory.getContents();
+        for (int slot = 0; slot < contents.length; slot++) {
+            ItemStack item = contents[slot];
+            if (idOf(item) == null) continue;
+            Map<String, Integer> traits = traitsOf(item);
+            if (traits.isEmpty()) continue;
+            ItemMeta meta = item.getItemMeta();
+            List<Component> before = meta.lore();
+            if (before == null) continue;
+            Map<Component, Component> replacements = new LinkedHashMap<>();
+            traits.forEach((id, level) -> {
+                ArtifactTraits.Def trait = ArtifactTraits.byId(id);
+                replacements.put(traitLine(trait, level, false), traitLine(trait, level, true));
+            });
+            List<Component> after = ArtifactLore.replaceKnown(before, replacements);
+            if (!before.equals(after)) {
+                meta.lore(after);
+                item.setItemMeta(meta);
+                inventory.setItem(slot, item);
+            }
+        }
+    }
+
+    private Component traitLine(ArtifactTraits.Def trait, int level, boolean exact) {
+        int bounded = Math.max(1, Math.min(level, trait.maxLevel()));
+        return plugin.messages().get(trait.polarity().good() ? "trait-line-good" : "trait-line-bad",
+                "name", plugin.messages().mini("trait." + trait.id() + ".name"),
+                "levelroman", ArtifactTraitCodec.roman(bounded),
+                "desc", exact
+                        ? plugin.messages().mini("trait." + trait.id() + ".detail",
+                                "value", ArtifactTraitText.signedValue(trait, bounded),
+                                "effectlevel", ArtifactTraitText.effectLevel(trait, bounded))
+                        : plugin.messages().mini("trait." + trait.id() + ".desc"));
+    }
+
     private List<Component> buildLore(ArtifactDef def, Map<String, Integer> traits) {
         List<Component> lore = new ArrayList<>();
         String lineKey = switch (def.side()) {
@@ -207,12 +245,7 @@ public final class ArtifactItems {
                 if (trait == null) {
                     continue;
                 }
-                // 1.4.129: ▲ — польза, ▼ — вред; уровень римской цифрой
-                lore.add(plugin.messages().get(
-                        trait.polarity().good() ? "trait-line-good" : "trait-line-bad",
-                        "name", plugin.messages().mini("trait." + trait.id() + ".name"),
-                        "levelroman", ArtifactTraitCodec.roman(entry.getValue()),
-                        "desc", plugin.messages().mini("trait." + trait.id() + ".desc")));
+                lore.add(traitLine(trait, entry.getValue(), true));
             }
         }
         if (def.mode() == ArtifactDef.Mode.ACTIVE) {

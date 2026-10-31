@@ -41,21 +41,36 @@ public final class ArtifactTraitService {
         if (player == null || !player.isOnline()) {
             return;
         }
+        applyAttributes(player, traits);
+        refreshPotions(player, traits);
+    }
+
+    /** Зельевые свойства обновляет только штатный пульс, не события инвентаря. */
+    public void refreshPotions(Player player, Map<String, Integer> traits) {
+        if (player == null || !player.isOnline()) return;
         for (ArtifactTraits.Def def : ArtifactTraits.all()) {
             int level = traits == null ? 0 : traits.getOrDefault(def.id(), 0);
-            if (def.kind() == ArtifactTraits.Kind.POTION) {
-                if (level > 0) {
-                    applyPotion(player, def, level);
-                }
-                continue;
+            if (def.kind() == ArtifactTraits.Kind.POTION && level > 0) {
+                applyPotion(player, def, level);
             }
-            applyAttribute(player, def, level);
         }
     }
 
     /** Снимает все атрибутные свойства (зельевые истекают сами). */
     public void clear(Player player) {
-        apply(player, Map.of());
+        applyAttributes(player, Map.of());
+    }
+
+    /** Только атрибуты: безопасная синхронизация после изменения инвентаря без зельевых триггеров.
+     * Очистка допускается и во время выхода игрока, когда isOnline уже изменился.
+     */
+    public void applyAttributes(Player player, Map<String, Integer> traits) {
+        if (player == null) return;
+        for (ArtifactTraits.Def def : ArtifactTraits.all()) {
+            if (def.kind() != ArtifactTraits.Kind.POTION) {
+                applyAttribute(player, def, traits == null ? 0 : traits.getOrDefault(def.id(), 0));
+            }
+        }
     }
 
     private void applyAttribute(Player player, ArtifactTraits.Def def, int level) {

@@ -49,34 +49,47 @@ public final class PassiveEffectsService {
         // Лимит прыжка — модификатор игрока, а не эффект: без снятия он держался бы
         // до конца сессии. Снимаем у всех, кто онлайн. Свойства артефактов тоже.
         for (Player player : Bukkit.getOnlinePlayers()) {
-            jumpLimiter.clear(player);
-            if (plugin.traits() != null) {
-                plugin.traits().clear(player);
-            }
+            clearAttributes(player);
         }
+    }
+
+    /** Снимает только принадлежащие нам атрибуты, не удаляя чужие зелья. */
+    public void clearAttributes(Player player) {
+        jumpLimiter.clear(player);
+        if (plugin.traits() != null) plugin.traits().clear(player);
+    }
+
+    /** Событийная синхронизация не запускает проклятия, лечение и мировые эффекты. */
+    public void refreshAttributes(Player player) {
+        if (player == null || !player.isOnline()) return;
+        if (!canApply(player)) {
+            clearAttributes(player);
+            return;
+        }
+        plugin.items().refreshCarriedLore(player);
+        if (plugin.config().isEnabled(JUMP_WARD_ID)
+                && plugin.items().carriedIds(player).contains(JUMP_WARD_ID)) {
+            jumpLimiter.apply(player);
+        } else {
+            jumpLimiter.clear(player);
+        }
+        plugin.traits().applyAttributes(player, plugin.items().carriedTraitLevels(player));
+    }
+
+    private boolean canApply(Player player) {
+        return !player.isDead() && player.hasPermission("chrdkartifacts.use")
+                && (!plugin.config().requiresAuth()
+                || (plugin.coreApi() != null && plugin.coreApi().isAuthenticated(player)));
     }
 
     private void pulse() {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            if (player.isDead() || !player.isOnline()) {
-                continue;
-            }
-            if (!player.hasPermission("chrdkartifacts.use")) {
-                // права отозвали — снимаем и лимит прыжка, и свойства артефактов
-                jumpLimiter.clear(player);
-                plugin.traits().clear(player);
-                continue;
-            }
-            if (plugin.config().requiresAuth()
-                    && (plugin.coreApi() == null || !plugin.coreApi().isAuthenticated(player))) {
-                // Неавторизованному артефакты не работают — лимит прыжка тоже снимаем.
-                jumpLimiter.clear(player);
-                plugin.traits().clear(player);
-                continue;
-            }
+            refreshAttributes(player);
+            if (!canApply(player)) continue;
             Set<String> ids = plugin.items().carriedIds(player);
-            boolean jumpWard = false;
             for (String id : ids) {
+                // Проклятие выше могло вызвать смерть в этом же пульсе.
+                if (!canApply(player)) break;
                 ArtifactDef def = ArtifactRegistry.byId(id);
                 if (def == null || def.mode() != ArtifactDef.Mode.PASSIVE
                         || !plugin.config().isEnabled(id)) {
@@ -85,17 +98,11 @@ public final class PassiveEffectsService {
                 applyPotions(player, id);
                 rollTrigger(player, id);
                 runSpecial(player, id);
-                jumpWard |= id.equals(JUMP_WARD_ID);
             }
-            // «Глиняную душу» держим атрибутом, а не эффектом с переполнением:
-            // снимаем, как только артефакт убрали из инвентаря.
-            if (jumpWard) {
-                jumpLimiter.apply(player);
-            } else {
-                jumpLimiter.clear(player);
+            // Зельевые свойства обновляются только штатным пульсом.
+            if (canApply(player)) {
+                plugin.traits().refreshPotions(player, plugin.items().carriedTraitLevels(player));
             }
-            // 1.4.129: свойства ▲/▼ всех носимых артефактов (и пассивных, и активных)
-            plugin.traits().apply(player, plugin.items().carriedTraitLevels(player));
         }
     }
 

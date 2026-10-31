@@ -168,9 +168,52 @@ class ArtifactTraitModifiersTest {
         assertTrue(attribute.modifiers.isEmpty());
     }
 
+    @Test
+    void unchangedHealthAndDamageAreNotRemovedAndAddedAgain() {
+        for (String id : new String[]{"silnyj-zahvat", "zapas-sil", "slaboe-serdce"}) {
+            var def = ArtifactTraits.byId(id);
+            MemoryAttribute attribute = new MemoryAttribute(20);
+            ArtifactTraitModifiers.replace(attribute.instance, key(def), def, 3);
+            AttributeModifier same = attribute.modifiers.get(key(def));
+            for (int pulse = 0; pulse < 100; pulse++) {
+                ArtifactTraitModifiers.replace(attribute.instance, key(def), def, 3);
+            }
+            assertSame(same, attribute.modifiers.get(key(def)), id);
+            assertEquals(1, attribute.added, id);
+            assertEquals(0, attribute.removed, id);
+        }
+    }
+
+    @Test
+    void sameAmountWithWrongOperationIsStillReplaced() {
+        var grip = ArtifactTraits.byId("silnyj-zahvat");
+        MemoryAttribute attribute = new MemoryAttribute(1);
+        attribute.modifiers.put(key(grip), new AttributeModifier(key(grip), 0.08,
+                AttributeModifier.Operation.ADD_NUMBER));
+        ArtifactTraitModifiers.replace(attribute.instance, key(grip), grip, 3);
+        assertEquals(AttributeModifier.Operation.MULTIPLY_SCALAR_1,
+                attribute.modifiers.get(key(grip)).getOperation());
+        assertEquals(1, attribute.removed);
+    }
+
+    @Test
+    void healthClampIsRecalculatedWhenBaseChanges() {
+        var weak = ArtifactTraits.byId("slaboe-serdce");
+        MemoryAttribute attribute = new MemoryAttribute(20);
+        ArtifactTraitModifiers.replace(attribute.instance, key(weak), weak, 3);
+        attribute.base = 3;
+        ArtifactTraitModifiers.replace(attribute.instance, key(weak), weak, 3);
+        assertEquals(-1, attribute.modifiers.get(key(weak)).getAmount(), EPSILON);
+        attribute.base = 2;
+        ArtifactTraitModifiers.replace(attribute.instance, key(weak), weak, 3);
+        assertFalse(attribute.modifiers.containsKey(key(weak)));
+    }
+
     /** Узкая подмена только хранилища атрибута; сами модификаторы — из Bukkit API. */
     private static final class MemoryAttribute {
-        private final double base;
+        private double base;
+        private int added;
+        private int removed;
         private final Map<NamespacedKey, AttributeModifier> modifiers = new LinkedHashMap<>();
         private final AttributeInstance instance;
 
@@ -182,10 +225,12 @@ class ArtifactTraitModifiersTest {
                         case "getBaseValue" -> this.base;
                         case "getModifier" -> modifiers.get((NamespacedKey) args[0]);
                         case "removeModifier" -> {
+                            removed++;
                             modifiers.remove((NamespacedKey) args[0]);
                             yield null;
                         }
                         case "addTransientModifier" -> {
+                            added++;
                             AttributeModifier modifier = (AttributeModifier) args[0];
                             if (modifiers.putIfAbsent(modifier.getKey(), modifier) != null) {
                                 throw new IllegalArgumentException("Повторный ключ модификатора");
