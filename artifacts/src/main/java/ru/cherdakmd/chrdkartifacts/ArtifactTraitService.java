@@ -3,7 +3,6 @@ package ru.cherdakmd.chrdkartifacts;
 import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
-import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -27,9 +26,6 @@ import java.util.Map;
  * максимальный уровень (см. {@link ArtifactItems#carriedTraitLevels(Player)}).</p>
  */
 public final class ArtifactTraitService {
-
-    /** Ниже этого максимума здоровья свойство «Слабое сердце» не опускает. */
-    private static final double MIN_MAX_HEALTH = 2.0;
 
     private final ArtifactsPlugin plugin;
 
@@ -72,28 +68,7 @@ public final class ArtifactTraitService {
             return;
         }
         NamespacedKey key = new NamespacedKey(plugin, "trait_" + def.id());
-        if (instance.getModifier(key) != null) {
-            instance.removeModifier(key);
-        }
-        if (level <= 0) {
-            return;
-        }
-        double amount = def.value(level);
-        if (def.kind() == ArtifactTraits.Kind.MAX_HEALTH && amount < 0) {
-            // не даём уйти ниже одного сердца даже тремя «Слабыми сердцами»
-            amount = -Math.min(Math.max(0, instance.getBaseValue() - MIN_MAX_HEALTH), -amount);
-        }
-        if (amount == 0) {
-            return;
-        }
-        AttributeModifier.Operation operation = def.kind().percent()
-                ? AttributeModifier.Operation.MULTIPLY_SCALAR_1
-                : AttributeModifier.Operation.ADD_NUMBER;
-        try {
-            instance.addTransientModifier(new AttributeModifier(key, amount, operation));
-        } catch (IllegalArgumentException ignored) {
-            // атрибут не принимает такой модификатор — свойство просто не сработает
-        }
+        ArtifactTraitModifiers.replace(instance, key, def, level);
     }
 
     private void applyPotion(Player player, ArtifactTraits.Def def, int level) {
