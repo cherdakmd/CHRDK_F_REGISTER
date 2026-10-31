@@ -126,4 +126,19 @@ class VkApiClientTest {
         assertFalse(post.markedAsAds());
         assertTrue(post.repost());
     }
+
+    @Test
+    void sanitizesMassPingsForVkChatAndExtractsAttachmentsFromVkGroupChat() {
+        String sanitized = VkApiClient.sanitizeForVkChat("Привет @all и @online и *all и @все!");
+        assertFalse(sanitized.contains("@all"));
+        assertFalse(sanitized.contains("@online"));
+        assertFalse(sanitized.contains("*all"));
+        assertFalse(sanitized.contains("@все"));
+        assertTrue(sanitized.contains("@\u200Ball"));
+
+        var vkMsg = JsonParser.parseString(
+                "{\"text\":\"Привет [id77|Алекс] <red>!\",\"attachments\":[{\"type\":\"photo\"},{\"type\":\"sticker\"}]}")
+                .getAsJsonObject();
+        assertEquals("Привет Алекс ‹red›! [фото] [стикер]", VkApiClient.extractGroupChatText(vkMsg, 200));
+    }
 }

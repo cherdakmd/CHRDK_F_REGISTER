@@ -255,6 +255,105 @@ public final class VkApiClient {
     }
 
     /**
+     * Получает имя и фамилию пользователя ВКонтакте ({@code users.get})
+     * для отображения непривязанных участников беседы, когда {@code require-linked=false}.
+     */
+    public String fetchUserDisplayName(long userId) throws IOException, InterruptedException {
+        if (userId <= 0L) {
+            return "ВК";
+        }
+        JsonElement response = callMethod("users.get", Map.of("user_ids", Long.toString(userId)));
+        if (response.isJsonArray() && !response.getAsJsonArray().isEmpty()) {
+            JsonElement firstEl = response.getAsJsonArray().get(0);
+            if (firstEl.isJsonObject()) {
+                JsonObject u = firstEl.getAsJsonObject();
+                String first = stringOrEmpty(u, "first_name");
+                String last = stringOrEmpty(u, "last_name");
+                String full = (first + " " + last).trim();
+                if (!full.isEmpty()) {
+                    return full;
+                }
+            }
+        }
+        return "id" + userId;
+    }
+
+    /**
+     * Обезвреживает массовые пуш-упоминания беседы ВКонтакте ({@code @all}, {@code @online},
+     * {@code @everyone}, {@code @тут}, {@code @все}, {@code *all}, {@code [club...|...]}),
+     * чтобы игрок из Minecraft не мог вызвать массовый пинг участников чата ВК.
+     */
+    public static String sanitizeForVkChat(String rawText) {
+        if (rawText == null || rawText.isBlank()) {
+            return "";
+        }
+        String cleaned = VK_WIKI_LINK.matcher(rawText).replaceAll("$1")
+                .replace('\r', ' ')
+                .replace('\n', ' ')
+                .replace('\u00a7', ' ')
+                .replaceAll("(?iu)([@*])(all|online|everyone|here|тут|все|всё)\\b", "$1\u200B$2")
+                .replaceAll("\\s+", " ")
+                .trim();
+        return cleaned.length() > 350 ? cleaned.substring(0, 350).trim() + "…" : cleaned;
+    }
+
+    /**
+     * Извлекает безопасный однострочный текст сообщения из беседы ВК для отправки в игровой чат,
+     * раскрывая {@code [id123|Имя]} и добавляя краткие пометки вложений ({@code [фото]}, {@code [стикер]} и т.д.).
+     */
+    public static String extractGroupChatText(JsonObject message, int maxLength) {
+        if (message == null) {
+            return "";
+        }
+        String rawText = stringOrEmpty(message, "text");
+        String cleaned = VK_WIKI_LINK.matcher(rawText).replaceAll("$1")
+                .replace('<', '‹')
+                .replace('>', '›')
+                .replace('\u00a7', ' ')
+                .replaceAll("\\s+", " ")
+                .trim();
+
+        List<String> markers = new ArrayList<>(3);
+        if (message.has("attachments") && message.get("attachments").isJsonArray()) {
+            for (JsonElement attEl : message.getAsJsonArray("attachments")) {
+                if (!attEl.isJsonObject()) continue;
+                String type = stringOrEmpty(attEl.getAsJsonObject(), "type");
+                String label = switch (type) {
+                    case "photo" -> "[фото]";
+                    case "sticker" -> "[стикер]";
+                    case "audio_message" -> "[голосовое]";
+                    case "video" -> "[видео]";
+                    case "doc" -> "[файл]";
+                    case "wall" -> "[запись]";
+                    case "poll" -> "[опрос]";
+                    default -> "";
+                };
+                if (!label.isEmpty() && !markers.contains(label) && markers.size() < 3) {
+                    markers.add(label);
+                }
+            }
+        }
+        if (message.has("reply_message") && message.get("reply_message").isJsonObject() && markers.size() < 3) {
+            markers.add("[ответ]");
+        }
+
+        String combined;
+        if (cleaned.isEmpty()) {
+            combined = String.join(" ", markers);
+        } else if (markers.isEmpty()) {
+            combined = cleaned;
+        } else {
+            combined = cleaned + " " + String.join(" ", markers);
+        }
+        combined = combined.trim();
+        if (combined.isEmpty()) {
+            return "";
+        }
+        int limit = Math.clamp(maxLength, 40, 400);
+        return combined.length() <= limit ? combined : combined.substring(0, limit - 1).trim() + "…";
+    }
+
+    /**
      * Готовит безопасный однострочный анонс записи стены без сырой MiniMessage-разметки:
      * раскрывает {@code [id123|Имя]} и экранирует угловые скобки.
      */

@@ -622,7 +622,10 @@ public final class ShopService {
             } catch (RuntimeException ignored) {
             }
         }
-        return bestPercent > 0 ? ShopDiscount.of(true, bestPercent) : ShopDiscount.DISABLED;
+        int maxDays = discount.maxBonusDays() > 0
+                ? discount.maxBonusDays()
+                : ShopDiscount.DEFAULT_MAX_BONUS_DAYS;
+        return bestPercent > 0 ? ShopDiscount.of(true, bestPercent, maxDays) : ShopDiscount.DISABLED;
     }
 
     public void registerBonusProvider(String id, ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.ShopBonusProvider provider) {

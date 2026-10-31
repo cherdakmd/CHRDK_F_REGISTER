@@ -62,6 +62,7 @@ public final class VkStore {
     private static final class StoreDocument {
         int version = SCHEMA_VERSION;
         long lastAnnouncedPostId;
+        long groupChatPeerId;
         Map<String, StoredLink> links = new LinkedHashMap<>();
         Set<String> linkBoostClaimedPlayers = new LinkedHashSet<>();
         Set<Long> linkBoostClaimedVkIds = new LinkedHashSet<>();
@@ -324,7 +325,19 @@ public final class VkStore {
         dirty = true;
     }
 
-    /* ---------------- курсор стены сообщества ---------------- */
+    /* ---------------- курсор стены и привязка беседы ---------------- */
+
+    public synchronized long groupChatPeerId() {
+        return doc.groupChatPeerId;
+    }
+
+    public synchronized void setGroupChatPeerId(long peerId) {
+        long normalized = peerId >= VkConfig.MIN_CONVERSATION_PEER_ID ? peerId : 0L;
+        if (doc.groupChatPeerId != normalized) {
+            doc.groupChatPeerId = normalized;
+            dirty = true;
+        }
+    }
 
     public synchronized long lastAnnouncedPostId() {
         return doc.lastAnnouncedPostId;

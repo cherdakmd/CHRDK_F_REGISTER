@@ -93,6 +93,8 @@ public final class VkCommandHandler implements CommandExecutor, TabCompleter {
         msg.send(player, "vk.status-security",
                 "notify", link.notifyLogins() ? msg.mini("vk.state-on") : msg.mini("vk.state-off"),
                 "frozen", frozen ? msg.mini("vk.state-frozen") : msg.mini("vk.state-active"));
+        msg.send(player, "vk.status-group-chat",
+                "chat_bridge", service.groupChatBridgeReady() ? msg.mini("vk.state-on") : msg.mini("vk.state-off"));
         msg.send(player, "vk.status-rewards-hint");
     }
 
@@ -163,12 +165,55 @@ public final class VkCommandHandler implements CommandExecutor, TabCompleter {
             case "status" -> {
                 VkConfig cfg = plugin.config();
                 long now = System.currentTimeMillis();
+                long chatPeer = service.effectiveGroupChatPeerId();
                 msg.send(sender, "admin.status",
                         "configured", cfg.apiConfigured() ? msg.mini("vk.state-yes") : msg.mini("vk.state-no"),
                         "worker", service.longPollConnected() ? msg.mini("vk.state-on") : msg.mini("vk.state-off"),
+                        "chat_peer", chatPeer > 0L ? Long.toString(chatPeer) : "выкл",
                         "links", Integer.toString(service.store().linkCount()),
                         "donuts", Integer.toString(service.store().activeDonutCount(now, cfg.donutGraceHours())),
                         "last_post", Long.toString(service.store().lastAnnouncedPostId()));
+            }
+            case "setchat" -> {
+                if (args.length < 2) {
+                    msg.send(sender, "admin.usage");
+                    return true;
+                }
+                String rawPeer = args[1].trim();
+                if (rawPeer.equalsIgnoreCase("off") || rawPeer.equals("0") || rawPeer.equalsIgnoreCase("reset")) {
+                    service.store().setGroupChatPeerId(0L);
+                    service.store().saveNow();
+                    long configPeer = plugin.config().groupChatPeerId();
+                    msg.send(sender, "admin.setchat-off",
+                            "config_peer", configPeer > 0L ? Long.toString(configPeer) : "выкл");
+                    return true;
+                }
+                long parsedPeer;
+                try {
+                    parsedPeer = Long.parseLong(rawPeer);
+                } catch (NumberFormatException badNumber) {
+                    msg.send(sender, "admin.setchat-invalid");
+                    return true;
+                }
+                if (parsedPeer < VkConfig.MIN_CONVERSATION_PEER_ID) {
+                    msg.send(sender, "admin.setchat-invalid");
+                    return true;
+                }
+                service.store().setGroupChatPeerId(parsedPeer);
+                service.store().saveNow();
+                msg.send(sender, "admin.setchat-ok", "peer_id", Long.toString(parsedPeer));
+            }
+            case "testchat" -> {
+                if (!service.groupChatBridgeReady()) {
+                    msg.send(sender, "admin.testchat-not-ready");
+                    return true;
+                }
+                String text = args.length >= 2
+                        ? String.join(" ", java.util.Arrays.copyOfRange(args, 1, args.length))
+                        : "✅ Проверка моста глобального чата CHRDK_VK прошла успешно!";
+                service.sendToGroupChat(text);
+                msg.send(sender, "admin.testchat-queued",
+                        "peer_id", Long.toString(service.effectiveGroupChatPeerId()));
             }
             case "lookup" -> {
                 if (args.length < 2) {
@@ -240,7 +285,10 @@ public final class VkCommandHandler implements CommandExecutor, TabCompleter {
                 return List.of();
             }
             if (args.length == 1) {
-                return filterPrefix(List.of("status", "lookup", "unlink", "sync", "reload"), args[0]);
+                return filterPrefix(List.of("status", "lookup", "unlink", "setchat", "testchat", "sync", "reload"), args[0]);
+            }
+            if (args.length == 2 && args[0].equalsIgnoreCase("setchat")) {
+                return filterPrefix(List.of("off", "2000000001"), args[1]);
             }
             if (args.length == 2 && (args[0].equalsIgnoreCase("lookup") || args[0].equalsIgnoreCase("unlink"))) {
                 List<String> linkedPlayers = service.store().allLinks().stream()

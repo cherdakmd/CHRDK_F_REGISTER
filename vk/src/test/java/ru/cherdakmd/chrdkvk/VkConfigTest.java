@@ -25,6 +25,9 @@ class VkConfigTest {
         assertEquals(10, cfg.donutShopBonusPercent());
         assertTrue(cfg.allowRemoteLogout());
         assertTrue(cfg.allowRemoteFreeze());
+        assertTrue(cfg.groupChatEnabled());
+        assertEquals(0L, cfg.groupChatPeerId());
+        assertTrue(cfg.groupChatRequireLinked());
     }
 
     @Test
@@ -37,6 +40,7 @@ class VkConfigTest {
         yaml.set("rewards.link-boost-hours", 100);
         yaml.set("rewards.donut-shop-bonus-percent", 95);
         yaml.set("long-poll.wait-seconds", 999);
+        yaml.set("group-chat.peer-id", 12345L);
 
         VkConfig cfg = VkConfig.parse(yaml);
         assertTrue(cfg.apiConfigured());
@@ -46,6 +50,10 @@ class VkConfigTest {
         assertEquals(24, cfg.linkBoostHours());
         assertEquals(50, cfg.donutShopBonusPercent());
         assertEquals(25, cfg.longPollWaitSeconds());
+        assertEquals(0L, cfg.groupChatPeerId(), "peer_id ниже 2000000001 не является беседой ВК");
         assertEquals("https://vk.com/wall-123456_77", cfg.wallPostUrl(77L));
+
+        yaml.set("group-chat.peer-id", 2000000005L);
+        assertEquals(2000000005L, VkConfig.parse(yaml).groupChatPeerId());
     }
 }

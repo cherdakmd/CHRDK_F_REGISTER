@@ -475,6 +475,39 @@ public interface ChrdkRegisterApi {
         return 0;
     }
 
+    /**
+     * Слушатель принятых глобальных сообщений игрового чата для внешних мостов
+     * (например, беседы сообщества ВКонтакте) (API v32).
+     */
+    interface GlobalChatListener {
+        void onGlobalChat(String playerName, String plainMessage);
+    }
+
+    /** Регистрирует слушатель глобального чата (API v32). */
+    default void registerGlobalChatListener(String id, GlobalChatListener listener) {
+    }
+
+    /** Удаляет слушатель глобального чата (API v32). */
+    default void unregisterGlobalChatListener(String id) {
+    }
+
+    /**
+     * Доставляет сообщение из внешнего моста (например, беседы сообщества ВКонтакте)
+     * в глобальный чат сервера с применением проверки мута, заморозки аккаунта,
+     * фильтра слов и ссылок, анти-капса, {@code /ignore} и журнала чата (API v32).
+     *
+     * @param sourceId       идентификатор аддона-источника (например, {@code "vk"})
+     * @param badgeMini      MiniMessage-метка источника (например, {@code "<#0077FF>[ВК]</#0077FF>"})
+     * @param linkedPlayer   привязанный ник игрока (или {@code null}/пусто для гостя беседы)
+     * @param fallbackSender отображаемое имя отправителя, если {@code linkedPlayer} не задан
+     * @param rawMessage     исходный текст сообщения
+     * @return {@code true}, если сообщение прошло модерацию и отправлено в глобальный чат
+     */
+    default boolean deliverExternalGlobalChat(String sourceId, String badgeMini, String linkedPlayer,
+                                              String fallbackSender, String rawMessage) {
+        return false;
+    }
+
     /* ------------------------------ интеграции ------------------------------ */
 
     /**

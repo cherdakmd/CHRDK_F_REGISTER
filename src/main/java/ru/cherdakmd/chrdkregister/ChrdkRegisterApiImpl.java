@@ -470,6 +470,28 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
         return accessManager.store().sessionCount(playerName);
     }
 
+    @Override
+    public void registerGlobalChatListener(String id, ChrdkRegisterApi.GlobalChatListener listener) {
+        if (plugin != null && plugin.chatService() != null) {
+            plugin.chatService().registerGlobalChatListener(id, listener);
+        }
+    }
+
+    @Override
+    public void unregisterGlobalChatListener(String id) {
+        if (plugin != null && plugin.chatService() != null) {
+            plugin.chatService().unregisterGlobalChatListener(id);
+        }
+    }
+
+    @Override
+    public boolean deliverExternalGlobalChat(String sourceId, String badgeMini, String linkedPlayer,
+                                             String fallbackSender, String rawMessage) {
+        return plugin != null && plugin.chatService() != null
+                && plugin.chatService().deliverExternalGlobalChat(
+                sourceId, badgeMini, linkedPlayer, fallbackSender, rawMessage);
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public <T> Optional<T> economy() {

@@ -1,184 +1,184 @@
 {
   "pages": {
     "about": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "969117784c68b0a748f1a7e45f7c41b08a88062da0d76d447b14a099e2588569",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "72384670213f506b3b0c5c66144f4e55301a48ea359e705dddb85400cdb07aff",
       "text": "17788b7b4007e90c62acd266f95cec124e0a53b603a1b2e5d9a7c19fb304c7d9"
     },
     "achievements": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "5298aab259bbaa5808a4edca597c6ce18ec9aafebaff5ab8ab1dc84437406c00",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "1a3e0cf05f20402cdab82045415d328470a65c351b34cbaf808a169d10218bbc",
       "text": "839d6e42ff5471f7def5f1bcb063709bb4e8ec40a1732a5a1ce55754544329a3"
     },
     "artifacts": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "d5c26451cb7439507860c2c0c8ccc7de669efe7cee0d45259d42d0fa84216b69",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "c13020b8de736ab3b8ebbcea6b41c19997ba1596fcbe800e1b481e0d36ea3804",
       "text": "d84ce5252984c944058764fb97c3c25b27e7690ecde9f50384f39ce5d25b856b"
     },
     "auction": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "d2c03be94c0ed30eeeaa8ba097cb5ca8c190256e2314b81f84849d6c848c4408",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "60f66edffe23072150057f76ae032fd7480d907c486a8986375f3e71680e54c0",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "1e0afddbd498d27d73c148237d52eb46c4cae159ee2124e3edd3834b332b29a1",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "aecdce2e941226d3dcdd718bdea51f300e6c7b829d14b1463bc013b7024be2f3",
       "text": "0bb2af9ae7275a308eee69cb6b63893c060bcff763287fe0dfbd1965861c24c8"
     },
     "chat": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "969117784c68b0a748f1a7e45f7c41b08a88062da0d76d447b14a099e2588569",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "72384670213f506b3b0c5c66144f4e55301a48ea359e705dddb85400cdb07aff",
       "text": "ac4a8e23de6893fab669939fd2882e40f1604f1f8fddeaa1d3d3572d8c3d6572"
     },
     "claims": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "86adfa907f1fd454e602bbd4c22a187f9267e44ea6ee251bb1d0f09e596eb303",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "902c9b57fbaa2c26da52ddab95fd14431a511f322a975e2b2fcdb10f1439e026",
       "text": "2a1634efadca1810c82bc496b30432d553c72fb226a5e051443232224a366538"
     },
     "classes": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "59a6738f44e555322a4d081aea3c8946787692793e519abcc2885c742a8b6f82",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "6d2f2daafc6a951bd8e6948bffa84fd427019ebfd4fbc1dcbe72f70e67b6dbdd",
       "text": "ee29d92bd4e9527924d14405057fd62402857c1a688439c7b9d86d4c9bf3b546"
     },
     "commands": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "5fa42a21b7faed59ac1ab3849d1769388c59a8c44468e394dde72e82c3011ab7",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "fcd82c01613a327817982b9f858b64feb904dc367ca94db36fb1d19611d33e4a",
       "text": "598a4781eada9b9d63fde19d90c0c4b7a20bb98e23f373320bce415127f0bc18"
     },
     "cosmetics": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "e75209ee3ea366d49dda87bde0ccd883c8a995f87cdeac76970d5499e64d15cd",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "8a1ee28d8d9786b2ea83ffd818e7eb7f4d661e071fc90e1360a2054c70edd3b3",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "a55934972bd0ffcd0308d83b44229b15eba4603dc01831020253c58ce7ab38b8",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "c35857bca30ae2712eb4be1cb0d0ace8d3d743b8c5453fc440eb6a8648d24ac3",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "economy": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "0af490ba06dc9d595c7d830417a1131ae7b1242c653e90b8252b35c64540c8d3",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "fc288cf318983b3654df1dcab2e78448ef86504e11eb6d2b9aeab8fbda849414",
       "text": "216cf9a664845fe452abd6742c8d56f486bba98eb4e43fad6fe1276269901369"
     },
     "enchants": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "6f80594793cfa00251893ae198396204651bef08e2c272e97af3dfb81c31be30",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "39ac4c0cbf62170e424721b3e0db257761c13eb9e7fa19210c5b4fdea9d96c38",
       "text": "7237739cff6a36edff803288ab8b9bfee64910fa416675d4a8f23651523c6c3e"
     },
     "faq": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "5fa42a21b7faed59ac1ab3849d1769388c59a8c44468e394dde72e82c3011ab7",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "fcd82c01613a327817982b9f858b64feb904dc367ca94db36fb1d19611d33e4a",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "9587bea174b6c9cb95a97697d1b57fcd97d75f3a5818c7cd9df0353efe268685",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "46e92f19333e8346762afb8f762f49559a231c1f673a9059255aac80e5c17dbf",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "86adfa907f1fd454e602bbd4c22a187f9267e44ea6ee251bb1d0f09e596eb303",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "902c9b57fbaa2c26da52ddab95fd14431a511f322a975e2b2fcdb10f1439e026",
       "text": "442f5481c446db06532139f0b7c2f184858d17e99d0bebc46f50adab2aeefb61"
     },
     "hunt": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "e588064422181baf1982c096057a97e5615751a5826425365c0bea9380182177",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "b0749ccce933bb4cc3f818dc7f48e324ef36f7e72fd33ced1f47b49520c00481",
       "text": "3b2066fce021118c9980313351d42317d07f8519b7c1404638d61ce4318d33e8"
     },
     "index": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "d7f9c52d3891fe63612b5230b5358f19c60c6322b58557cd8c27193155fb7d3c",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "475e6e31e2e5c98dfea3b3e86ade0d7cd67e55cb0918b6b0888457456da723ed",
       "text": "2d543efd03d060e4d6f09da13921777186f30a145e3614fcc82b1dedcaf07777"
     },
     "lottery": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "0f0f7fc9db589093bd2b2a6784138e9b459889bf13b49d27e7dda98d7e1a279d",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "152d7df497e1509226e3f2ba0dbb934867b5eb55925cedc4187a4775a6783067",
       "text": "1d05c7d03ba10cbdc51a27bb6cc1ff68ec75f44ff7f8e91d05b92fc08dcd5931"
     },
     "menu": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "5fa42a21b7faed59ac1ab3849d1769388c59a8c44468e394dde72e82c3011ab7",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "fcd82c01613a327817982b9f858b64feb904dc367ca94db36fb1d19611d33e4a",
       "text": "eaccb7ed1bf84b845f57ab3e722b9e3b706542bfb70c39fa9f82135cc875497c"
     },
     "orders": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "9286b4b741467ee7c7cb2dc5510e021d18442deee9bd602d2a44c69768050ea2",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "3d25f56d42065e8d311e02cd5e823be5d4f76a4008d3e57dbb19040bb18b73b5",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "party": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "91773110f533f8cc3860c8b8d9a2d70d6eecb0073783153e80f9aa3b6d338655",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "339bbeae0c61f0ab488956b8b010f5df64e363ca20a657f0baa5fb98aa51c20c",
       "text": "1907a324d824df3607e9932362f05cfd65b35cd5e8063296a269802a00c04fe6"
     },
     "pets": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "75dd9ef501b344c0e67df1b54f17236c109eafdbdc215e0747e59225eb0c4904",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "418a63ad03fd4a7dcaa8f13948a4ee7502bbb1759ad479e892020aaedf96ca8f",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "2d305ec5cc9b0c47a0f5dc422545314ab8ed44ad29631cbb52efc091532a2a8c",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "3f7b25cf81504a61196546ee15d2d45b51a7056bff87319cffe854cb2e252cfa",
       "text": "022f2a0c132d5ab450e70b77c4c02d60d0750a86c70fe73d17d0b03817a16664"
     },
     "profile": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "b6b88221ab8f11563ad63272d03801e7fb8cc1c8b7cf75acedc0cf4b8fcec5e7",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "7c301962b77e362fd02b531a96b37e4f48cd29ea8388f1ba5fa9385eff58d18a",
       "text": "b1ddb608cb3942be099223883d3c545c9ab409018276b58b94f5e85e796a3970"
     },
     "quests": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "71840efcb59f19f5e044ce41f02099043a1d199ce4a371cd244ff66a1cd20bc2",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "7caab76832bb742455983c8e2c4676398197c2fbd3201208a3c74c4a0145eaf9",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "e8c31dda5b1ab7697fe861096e74186fa5a13b893958ac2759f835f9a2a7724e",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "71f592ceb11fae56dfdd3abe424b4ae80b11d1f65824a3f7244be164bf99077d",
       "text": "1db00295907be029a91cc1a07b096816a661b2bd311cc271b20345587f2b71f5"
     },
     "referrals": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "af119c763efc3fa05caec83c960005c54b54a11654a655cfda13d4490d78b531",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "823e7c0ff34c97a2f787ad52c329feb1026960cd7a7c67468990b7515d1d1755",
       "text": "802956a7c425a8c14bd0cbd56b600cbab5027bd5bc72c0b28232fd5ba5055b24"
     },
     "shop": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "d7f9c52d3891fe63612b5230b5358f19c60c6322b58557cd8c27193155fb7d3c",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "475e6e31e2e5c98dfea3b3e86ade0d7cd67e55cb0918b6b0888457456da723ed",
       "text": "7311f2d070abe97d7b36552adaa74bf745062aceb2e239128d36cfe2a57b3975"
     },
     "skills": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "057e2721ded2a9c52f02a9659176cb62507742baf2b3b55aa4891128ba028f97",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "c44504fbb0ee589fcd4ce94eb26cc17090974ce96fec192061646bb2a282843e",
       "text": "da88b0eff3b15dec9185ecfbb9a63b62c96e0a3aa5ab2dea53e0928a500b403a"
     },
     "start": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "fc85efdd31c9119ee15861927d860d65a3217d813e0b8b50c57f1ee2e61c78c0",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "9add7b7fa4dcd625e93d2e5ddf95d4ff97ba679cde6095a7b25848f0096384b1",
       "text": "3f26288c52ae35e92097798a9a413933351e8e8422d33230a6322c69aedbb238"
     },
     "teleports": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "4d99578e6bd9fbb08e6bfaf7a6ea4f188ac61bcf96222170dbae4089695e4ef1",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "1c1474a9fc8abb3da7aef79f697feccba1bb4a9168bef8a90f1625418935d70b",
       "text": "896b72de8b56b3374b3a6346a701f45defae6e6ecff688868e02233aa040d1fa"
     },
     "tierforge": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "4e50fc67bb9884c49fb2bc6f88e7c6d8e2cfef0fd1be517c51ccda5cf5a870d7",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "e415c2ef4e0d017a1c0a2b7c7b470f8c8536603bf5a29c85f296dfae4b49621f",
       "text": "d3cd07c98bec6cb1e15ff875d5fd5394fcadb5db2931fc6724350721f98ed38c"
     },
     "titles": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "0b02d8b57b7c51e442f8866dcbbbb870c3e2f9e6b0c12ec17fe0d0f2a4a9c6bf",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "2bbe9f0a4b7a5071aa8f650e8cf11dd780710a7e37683681c0b6e19e49794ff6",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "d7f9c52d3891fe63612b5230b5358f19c60c6322b58557cd8c27193155fb7d3c",
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "475e6e31e2e5c98dfea3b3e86ade0d7cd67e55cb0918b6b0888457456da723ed",
       "text": "82cbef51d0e905b9db2f7a38198f2a576bf3026e0c19ac77bbf064ca4eddb5f7"
     },
     "vk": {
-      "reason": "Комплект 1.4.262: добавлен аддон CHRDK_VK, API v32 мосты и страница vk.md",
-      "sources": "57b7cdba6f4d9a59a27a00f808a44a0f4e1658d265b817fbf9bb461893791114",
-      "text": "b1348f7e36698cd9b28ec486714707bc321c9a4554f44e06324c0638588d5b49"
+      "reason": "Добавлен двусторонний мост глобального чата с беседой группы ВК",
+      "sources": "3ee7bd8c4f087ce80a95e9193db40dcbdad7e50bb14a42493f4b0907975f6519",
+      "text": "ff5c8c793e8c69d3b15a4f6eca328c92962daf7d6d883b206b091a0bb018224b"
     }
   },
   "schema": 1

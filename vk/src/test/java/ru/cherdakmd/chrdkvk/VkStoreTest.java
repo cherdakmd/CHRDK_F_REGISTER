@@ -34,6 +34,9 @@ class VkStoreTest {
 
         store.updateMemberStatus(100500L, true);
         store.updateDonutStatus(100500L, true, now);
+        store.setGroupChatPeerId(99L);
+        assertEquals(0L, store.groupChatPeerId());
+        store.setGroupChatPeerId(2000000007L);
         assertTrue(store.advanceLastAnnouncedPostId(42L));
         assertFalse(store.advanceLastAnnouncedPostId(41L));
         assertTrue(store.saveNow());
@@ -42,6 +45,7 @@ class VkStoreTest {
         reloaded.load();
         assertEquals(1, reloaded.linkCount());
         assertEquals(42L, reloaded.lastAnnouncedPostId());
+        assertEquals(2000000007L, reloaded.groupChatPeerId());
         VkStore.LinkSnapshot snap = reloaded.byPlayer("steve").orElseThrow();
         assertEquals(100500L, snap.vkUserId());
         assertTrue(snap.member());

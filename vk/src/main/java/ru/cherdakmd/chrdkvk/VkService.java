@@ -1,12 +1,18 @@
 package ru.cherdakmd.chrdkvk;
 
+import com.google.gson.JsonObject;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
+import ru.cherdakmd.chrdkregister.api.events.PlayerAuthCompletedEvent;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -15,9 +21,12 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -26,18 +35,23 @@ import java.util.logging.Level;
 
 /**
  * Центральная служба {@code CHRDK_VK}: связывает хранилище привязок, одноразовые коды,
- * клиента VK API, фоновый Long Poll и мосты {@link ChrdkRegisterApi}.
+ * клиента VK API, фоновый Long Poll, двусторонний мост с беседой сообщества ВКонтакте
+ * и мосты {@link ChrdkRegisterApi}.
  */
-public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.SecurityListener {
+public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.SecurityListener, Listener {
 
     public static final String PROVIDER_ID = "vk";
     private static final DateTimeFormatter MSK_TIME = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
             .withZone(ZoneId.of("Europe/Moscow"));
+    private static final long DISPLAY_NAME_CACHE_TTL_MS = TimeUnit.HOURS.toMillis(6);
 
-    public record ServerPulse(int online, int maxPlayers, double tps) {
+    public record ServerPulse(int online, int maxPlayers, double tps, List<String> playerNames) {
     }
 
     public record SyncReport(int checkedLinks, int activeDonuts) {
+    }
+
+    private record CachedDisplayName(String name, long expiresAt) {
     }
 
     private final VkPlugin plugin;
@@ -45,10 +59,13 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
     private final VkLinkCodeManager codeManager = new VkLinkCodeManager();
     private final VkBotRouter router;
     private final ExecutorService outboundExecutor;
+    private final Map<Long, Long> vkChatCooldowns = new ConcurrentHashMap<>();
+    private final Map<Long, CachedDisplayName> vkDisplayNames = new ConcurrentHashMap<>();
+    private final Set<UUID> announcedOnlineSessions = ConcurrentHashMap.newKeySet();
 
     private volatile VkApiClient apiClient;
     private volatile VkLongPollWorker longPollWorker;
-    private volatile ServerPulse serverPulse = new ServerPulse(0, 0, 20.0);
+    private volatile ServerPulse serverPulse = new ServerPulse(0, 0, 20.0, List.of());
     private BukkitTask pulseTask;
     private BukkitTask syncTask;
     private BukkitTask wallTask;
@@ -162,11 +179,46 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
     }
 
     private void refreshServerPulse() {
+        ChrdkRegisterApi api = plugin.coreApi();
+        List<String> names = new ArrayList<>();
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (api == null || api.isAuthenticated(p)) {
+                names.add(p.getName());
+            }
+        }
+        names.sort(String.CASE_INSENSITIVE_ORDER);
         int online = Bukkit.getOnlinePlayers().size();
         int max = Bukkit.getMaxPlayers();
         double[] tpsArr = Bukkit.getTPS();
         double tps = tpsArr != null && tpsArr.length > 0 ? Math.min(20.0, tpsArr[0]) : 20.0;
-        this.serverPulse = new ServerPulse(online, max, tps);
+        this.serverPulse = new ServerPulse(online, max, tps, List.copyOf(names));
+    }
+
+    /** Возвращает действующий {@code peer_id} беседы ВК (переопределение {@code /vkadmin setchat} либо {@code config.yml}). */
+    public long effectiveGroupChatPeerId() {
+        long stored = store.groupChatPeerId();
+        if (stored >= VkConfig.MIN_CONVERSATION_PEER_ID) {
+            return stored;
+        }
+        return plugin.config().groupChatPeerId();
+    }
+
+    /** Активен ли сейчас мост глобального чата с беседой сообщества ВК. */
+    public boolean groupChatBridgeReady() {
+        VkConfig cfg = plugin.config();
+        return cfg.enabled()
+                && cfg.apiConfigured()
+                && cfg.groupChatEnabled()
+                && effectiveGroupChatPeerId() >= VkConfig.MIN_CONVERSATION_PEER_ID;
+    }
+
+    /** Отправляет произвольное сообщение в привязанную беседу ВК (например, {@code /vkadmin testchat}). */
+    public boolean sendToGroupChat(String text) {
+        if (!groupChatBridgeReady() || text == null || text.isBlank()) {
+            return false;
+        }
+        sendAsync(effectiveGroupChatPeerId(), text);
+        return true;
     }
 
     /* ---------------- мосты ChrdkRegisterApi ---------------- */
@@ -191,6 +243,7 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
             });
             api.registerSecurityListener(PROVIDER_ID, this);
             api.registerNotificationListener(PROVIDER_ID, this::forwardAdminNotification);
+            api.registerGlobalChatListener(PROVIDER_ID, this::onMinecraftGlobalChat);
             api.registerShopBonusProvider(PROVIDER_ID, new ChrdkRegisterApi.ShopBonusProvider() {
                 @Override
                 public boolean available() {
@@ -224,6 +277,7 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
             api.unregisterProfile(PROVIDER_ID);
             api.unregisterSecurityListener(PROVIDER_ID);
             api.unregisterNotificationListener(PROVIDER_ID);
+            api.unregisterGlobalChatListener(PROVIDER_ID);
             api.unregisterShopBonusProvider(PROVIDER_ID);
         } catch (RuntimeException | LinkageError ignored) {
         }
@@ -394,9 +448,131 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
     @Override
     public String formatServerOnline() {
         ServerPulse pulse = this.serverPulse;
-        return String.format(Locale.ROOT,
-                "🌐 Сервер CHRDK в сети\nОнлайн: %d / %d\nTPS: %.1f",
-                pulse.online(), pulse.maxPlayers(), pulse.tps());
+        StringBuilder sb = new StringBuilder(String.format(Locale.ROOT,
+                "🌐 Сервер CHRDK в сети\nОнлайн: %d / %d · TPS: %.1f",
+                pulse.online(), pulse.maxPlayers(), pulse.tps()));
+        List<String> names = pulse.playerNames();
+        if (names != null && !names.isEmpty()) {
+            int shown = Math.min(15, names.size());
+            sb.append("\nИгроки: ").append(String.join(", ", names.subList(0, shown)));
+            if (names.size() > shown) {
+                sb.append(" (+").append(names.size() - shown).append(")");
+            }
+        }
+        return sb.toString();
+    }
+
+    @Override
+    public long activeGroupChatPeerId() {
+        VkConfig cfg = plugin.config();
+        if (!cfg.enabled() || !cfg.groupChatEnabled()) {
+            return 0L;
+        }
+        return effectiveGroupChatPeerId();
+    }
+
+    @Override
+    public boolean groupChatInfoCommandsEnabled() {
+        VkConfig cfg = plugin.config();
+        return cfg.enabled() && cfg.groupChatEnabled() && cfg.groupChatAllowInfoCommands();
+    }
+
+    @Override
+    public void onGroupChatMessage(long peerId, long fromUserId, JsonObject message, long nowMillis) {
+        VkConfig cfg = plugin.config();
+        ChrdkRegisterApi api = plugin.coreApi();
+        if (api == null || !cfg.enabled() || !cfg.groupChatEnabled() || !cfg.groupChatVkToMc()) {
+            return;
+        }
+        if (peerId != effectiveGroupChatPeerId()) {
+            return;
+        }
+
+        int cooldownSec = cfg.groupChatVkCooldownSeconds();
+        if (cooldownSec > 0) {
+            Long prev = vkChatCooldowns.get(fromUserId);
+            if (prev != null && nowMillis - prev < cooldownSec * 1_000L) {
+                return;
+            }
+            vkChatCooldowns.put(fromUserId, nowMillis);
+        }
+
+        List<VkStore.LinkSnapshot> links = store.byVkUser(fromUserId);
+        if (links.isEmpty() && cfg.groupChatRequireLinked()) {
+            return;
+        }
+
+        String text = VkApiClient.extractGroupChatText(message, cfg.groupChatMaxLength());
+        if (text.isEmpty()) {
+            return;
+        }
+
+        String linkedPlayer = links.isEmpty() ? null : links.getFirst().playerName();
+        String fallbackSender = linkedPlayer != null ? linkedPlayer : resolveVkDisplayName(fromUserId, nowMillis);
+        api.deliverExternalGlobalChat(PROVIDER_ID, cfg.groupChatMcBadge(), linkedPlayer, fallbackSender, text);
+    }
+
+    private void onMinecraftGlobalChat(String playerName, String plainMessage) {
+        VkConfig cfg = plugin.config();
+        if (!cfg.enabled() || !cfg.apiConfigured() || !cfg.groupChatEnabled() || !cfg.groupChatMcToVk()) {
+            return;
+        }
+        long peerId = effectiveGroupChatPeerId();
+        if (peerId < VkConfig.MIN_CONVERSATION_PEER_ID) {
+            return;
+        }
+        String safePlayer = VkApiClient.sanitizeForVkChat(playerName);
+        String safeMessage = VkApiClient.sanitizeForVkChat(plainMessage);
+        if (safePlayer.isEmpty() || safeMessage.isEmpty()) {
+            return;
+        }
+        String formatted = cfg.groupChatVkFormat()
+                .replace("{player}", safePlayer)
+                .replace("{message}", safeMessage);
+        sendAsync(peerId, formatted);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPlayerAuthCompleted(PlayerAuthCompletedEvent event) {
+        Player player = event.getPlayer();
+        announcedOnlineSessions.add(player.getUniqueId());
+        VkConfig cfg = plugin.config();
+        if (!cfg.groupChatRelayJoinQuit() || !groupChatBridgeReady()) {
+            return;
+        }
+        sendAsync(effectiveGroupChatPeerId(), "🟢 " + player.getName() + " зашёл на сервер.");
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        Player player = event.getPlayer();
+        boolean wasAuthenticated = announcedOnlineSessions.remove(player.getUniqueId());
+        VkConfig cfg = plugin.config();
+        if (!wasAuthenticated || !cfg.groupChatRelayJoinQuit() || !groupChatBridgeReady()) {
+            return;
+        }
+        sendAsync(effectiveGroupChatPeerId(), "🔴 " + player.getName() + " вышел с сервера.");
+    }
+
+    private String resolveVkDisplayName(long vkUserId, long nowMillis) {
+        CachedDisplayName cached = vkDisplayNames.get(vkUserId);
+        if (cached != null && cached.expiresAt() > nowMillis) {
+            return cached.name();
+        }
+        VkApiClient client = this.apiClient;
+        if (client == null) {
+            return "id" + vkUserId;
+        }
+        try {
+            String fetched = client.fetchUserDisplayName(vkUserId);
+            vkDisplayNames.put(vkUserId, new CachedDisplayName(fetched, nowMillis + DISPLAY_NAME_CACHE_TTL_MS));
+            return fetched;
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            return "id" + vkUserId;
+        } catch (Exception ignored) {
+            return "id" + vkUserId;
+        }
     }
 
     @Override

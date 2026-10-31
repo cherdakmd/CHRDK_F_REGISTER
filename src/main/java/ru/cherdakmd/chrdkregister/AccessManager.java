@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
@@ -1084,7 +1085,7 @@ public final class AccessManager {
         if (failure.blocked()) {
             passwordVerifiedPlayers.remove(uuid);
             player.kick(messages.get("two-factor.login.kicked", "totp_max_attempts", config.totpMaxAttempts()));
-            notifyBruteForce(player, throttle.totalFailures(player.getName()));
+            notifyBruteForce(player, throttle.totalFailures(player.getName()), failure.blocked());
             return true;
         }
 

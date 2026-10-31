@@ -4,12 +4,17 @@ import com.google.gson.JsonObject;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 /**
  * Чистый маршрутизатор входящих уведомлений Bots Long Poll ВКонтакте
  * (не зависит от классов сервера Minecraft и полностью проверяется в модульных тестах).
  */
 public final class VkBotRouter {
+
+    /** Префикс упоминания бота в беседе ВК: {@code [club12345|@chrdk_reborn] текст}. */
+    private static final Pattern LEADING_BOT_MENTION =
+            Pattern.compile("^\\[(?:club|public)\\d+\\|[^\\]]+]\\s*,?\\s*", Pattern.CASE_INSENSITIVE);
 
     public interface Backend {
         String handleLinkCode(long vkUserId, String code, long nowMillis);
@@ -37,6 +42,20 @@ public final class VkBotRouter {
         void onDonutEnded(long vkUserId, long nowMillis);
 
         void onWallPost(VkApiClient.WallPost post);
+
+        /** Активный {@code peer_id} привязанной беседы сообщества ВК ({@code >= 2000000001}, иначе {@code 0}). */
+        default long activeGroupChatPeerId() {
+            return 0L;
+        }
+
+        /** Разрешены ли справочные команды ({@code /онлайн}, {@code /chatid}) внутри беседы ВК. */
+        default boolean groupChatInfoCommandsEnabled() {
+            return true;
+        }
+
+        /** Принято обычное сообщение из привязанной беседы сообщества ВК для моста в игру. */
+        default void onGroupChatMessage(long peerId, long fromUserId, JsonObject message, long nowMillis) {
+        }
     }
 
     private final Backend backend;
@@ -90,8 +109,21 @@ public final class VkBotRouter {
                 ? object.getAsJsonObject("message") : object;
         long peerId = longField(message, "peer_id");
         long fromId = longField(message, "from_id");
-        // Личные команды привязки и защиты принимаются строго в личном диалоге пользователя с группой.
-        if (fromId <= 0L || peerId != fromId) {
+        long out = longField(message, "out");
+        // Игнорируем исходящие сообщения и сообщения от ботов/сообществ (from_id <= 0) — защита от эхо-петель.
+        if (fromId <= 0L || out == 1L) {
+            return;
+        }
+
+        // 1. Беседа сообщества ВКонтакте (peer_id >= 2000000001).
+        if (peerId >= VkConfig.MIN_CONVERSATION_PEER_ID) {
+            handleGroupConversationMessage(peerId, fromId, message, nowMillis);
+            return;
+        }
+
+        // 2. Личный диалог пользователя с группой (peer_id == from_id):
+        // коды привязки и защитные команды (/выход, /заморозить) работают СТРОГО здесь.
+        if (peerId != fromId) {
             return;
         }
         String rawText = message.has("text") && !message.get("text").isJsonNull()
@@ -102,6 +134,39 @@ public final class VkBotRouter {
         String reply = dispatchDirectCommand(fromId, rawText, nowMillis);
         if (reply != null && !reply.isBlank()) {
             backend.sendDirectReply(peerId, reply);
+        }
+    }
+
+    private void handleGroupConversationMessage(long peerId, long fromId, JsonObject message, long nowMillis) {
+        String rawText = message.has("text") && !message.get("text").isJsonNull()
+                ? message.get("text").getAsString().trim() : "";
+        String stripped = LEADING_BOT_MENTION.matcher(rawText).replaceFirst("").trim();
+
+        if (!stripped.isEmpty() && (stripped.charAt(0) == '/' || stripped.charAt(0) == '!')) {
+            String cmd = stripPrefix(stripped.split("\\s+")[0]).toLowerCase(Locale.ROOT);
+            if (backend.groupChatInfoCommandsEnabled()) {
+                if (cmd.equals("chatid") || cmd.equals("peerid") || cmd.equals("idбеседы")) {
+                    backend.sendDirectReply(peerId, "💬 ID этой беседы (peer_id): " + peerId
+                            + "\nЧтобы подключить мост глобального чата на сервере: /vkadmin setchat " + peerId);
+                    return;
+                }
+                if (peerId == backend.activeGroupChatPeerId()
+                        && (cmd.equals("онлайн") || cmd.equals("online") || cmd.equals("сервер")
+                        || cmd.equals("кто") || cmd.equals("list"))) {
+                    String online = backend.formatServerOnline();
+                    if (online != null && !online.isBlank()) {
+                        backend.sendDirectReply(peerId, online);
+                    }
+                    return;
+                }
+            }
+            // Любые слэш-команды (например, ошибочно введённые /выход или /привязать)
+            // никогда не выполняются в общей беседе и не пересылаются в игровой чат.
+            return;
+        }
+
+        if (peerId == backend.activeGroupChatPeerId()) {
+            backend.onGroupChatMessage(peerId, fromId, message, nowMillis);
         }
     }
 
@@ -130,13 +195,12 @@ public final class VkBotRouter {
             case "отвязать", "unlink" -> backend.handleUnlinkFromVk(vkUserId);
             case "привязать", "link", "код", "code" -> {
                 if (parts.length < 2) {
-                    yield "Введите в игре команду /vk link и отправьте полученный одноразовый код сюда.";
+                    yield "Введите в игре команду /vk link, получите одноразовый код и отправьте его сюда.";
                 }
                 yield backend.handleLinkCode(vkUserId, parts[1], nowMillis);
             }
             default -> {
-                // Если прислан сам одноразовый код одним словом — принимаем его сразу без префикса.
-                if (parts.length == 1 && !VkLinkCodeManager.normalizeCode(parts[0]).isEmpty()) {
+                if (parts.length == 1 && looksLikeOtpCode(parts[0])) {
                     yield backend.handleLinkCode(vkUserId, parts[0], nowMillis);
                 }
                 yield helpText();
@@ -144,15 +208,33 @@ public final class VkBotRouter {
         };
     }
 
-    private static boolean isPasswordMutationAttempt(String cmd, String fullText) {
-        for (String token : List.of("пароль", "password", "changepassword", "resetpassword", "changepass", "восстановить")) {
-            if (cmd.equals(token)) {
-                return true;
+    static boolean isPasswordMutationAttempt(String firstWord, String fullText) {
+        String lowerFull = fullText.toLowerCase(Locale.ROOT);
+        if (List.of("пароль", "password", "pass", "changepassword", "resetpassword",
+                "сброспароля", "сменитьпароль", "восстановить", "recovery").contains(firstWord)) {
+            return true;
+        }
+        return lowerFull.contains("сброс парол")
+                || lowerFull.contains("сменить парол")
+                || lowerFull.contains("забыл парол")
+                || lowerFull.contains("восстановить парол")
+                || lowerFull.contains("reset pass")
+                || lowerFull.contains("change pass");
+    }
+
+    static boolean looksLikeOtpCode(String token) {
+        String norm = VkLinkCodeManager.normalizeCode(token);
+        if (norm.length() < 4 || norm.length() > 10) {
+            return false;
+        }
+        for (int i = 0; i < norm.length(); i++) {
+            char c = norm.charAt(i);
+            boolean ok = (c >= 'A' && c <= 'Z') || (c >= '2' && c <= '9');
+            if (!ok) {
+                return false;
             }
         }
-        String lower = fullText.toLowerCase(Locale.ROOT);
-        return lower.contains("сбросить пароль") || lower.contains("сменить пароль")
-                || lower.contains("забыл пароль") || lower.contains("восстановить пароль");
+        return true;
     }
 
     private static String stripPrefix(String word) {
@@ -162,28 +244,28 @@ public final class VkBotRouter {
         return word;
     }
 
-    private static String helpText() {
-        return """
-                Команды бота CHRDK:
-                • <код> — привязать аккаунт (получите код в игре: /vk link)
-                • /онлайн — текущий онлайн и состояние сервера
-                • /профиль — статус вашего аккаунта, ранга и VK Donut
-                • /выход — сбросить активные сессии и отключить персонажа
-                • /заморозить — заблокировать вход в аккаунт
-                • /разморозить — снова разрешить вход в аккаунт
-                • /уведомления — переключить уведомления о входах
-                • /отвязать — отвязать профиль ВКонтакте
-                Пароли через ВКонтакте никогда не меняются и не сбрасываются.""";
-    }
-
-    private static long longField(JsonObject obj, String name) {
-        if (obj == null || !obj.has(name) || obj.get(name).isJsonNull()) {
+    private static long longField(JsonObject obj, String key) {
+        if (obj == null || !obj.has(key) || obj.get(key).isJsonNull()) {
             return 0L;
         }
         try {
-            return obj.get(name).getAsLong();
-        } catch (RuntimeException ignored) {
+            return obj.get(key).getAsLong();
+        } catch (RuntimeException badNumber) {
             return 0L;
         }
+    }
+
+    public static String helpText() {
+        return """
+                👋 Бот сообщества CHRDK:
+                • Привязка: введите /vk link в игре и пришлите полученный код сюда.
+                • /профиль — статус привязки, подписки и VK Donut
+                • /онлайн — текущий онлайн сервера
+                • /уведомления — вкл/выкл уведомления о входах
+                • /выход — сбросить сохранённые сессии и кикнуть активный сеанс
+                • /заморозить — заблокировать вход в аккаунт
+                • /разморозить — снять блокировку входа
+                • /отвязать — отвязать страницу ВК от аккаунта
+                🔒 Пароли и 2FA через ВКонтакте никогда не меняются и не сбрасываются.""";
     }
 }

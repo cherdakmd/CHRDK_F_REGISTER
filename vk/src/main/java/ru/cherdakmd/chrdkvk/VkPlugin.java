@@ -41,6 +41,7 @@ public final class VkPlugin extends JavaPlugin {
         this.store.load();
         this.service = new VkService(this, store);
         this.service.start();
+        getServer().getPluginManager().registerEvents(this.service, this);
 
         VkCommandHandler handler = new VkCommandHandler(this, service);
         for (String cmd : List.of("vk", "vkadmin")) {

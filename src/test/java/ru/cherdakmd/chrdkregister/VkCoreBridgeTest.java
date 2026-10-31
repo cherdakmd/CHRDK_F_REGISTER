@@ -45,6 +45,11 @@ class VkCoreBridgeTest {
         assertTrue(ChrdkRegisterApi.class.getMethod("setLoginFrozen", String.class, boolean.class, String.class).isDefault());
         assertTrue(ChrdkRegisterApi.class.getMethod("terminateSessions", String.class, String.class).isDefault());
         assertTrue(ChrdkRegisterApi.class.getMethod("activeSessionCount", String.class).isDefault());
+        assertTrue(ChrdkRegisterApi.class.getMethod("registerGlobalChatListener", String.class,
+                ChrdkRegisterApi.GlobalChatListener.class).isDefault());
+        assertTrue(ChrdkRegisterApi.class.getMethod("unregisterGlobalChatListener", String.class).isDefault());
+        assertTrue(ChrdkRegisterApi.class.getMethod("deliverExternalGlobalChat",
+                String.class, String.class, String.class, String.class, String.class).isDefault());
 
         for (var method : ChrdkRegisterApi.class.getMethods()) {
             String lower = method.getName().toLowerCase(java.util.Locale.ROOT);
@@ -126,5 +131,39 @@ class VkCoreBridgeTest {
             live.set(key, fresh.get(key));
         }
         assertTrue(PresentationMigration.replacements(live, List.of(legacy), fresh).isEmpty());
+    }
+
+    @Test
+    void externalGlobalChatRespectsMutesFreezeWordFilterAndDuplicates() {
+        RegistrationStore store = new RegistrationStore(tempDir, LOGGER);
+        long now = 1_700_000_000_000L;
+        UUID id = UUID.randomUUID();
+        store.registerPassword("Steve", id, "StrongPass#2026", "127.0.0.1", now);
+
+        YamlConfiguration rawChat = new YamlConfiguration();
+        rawChat.set("chat.enabled", true);
+        rawChat.set("chat.anti-caps", true);
+        rawChat.set("chat.caps-percent", 70);
+        rawChat.set("chat.block-duplicates", true);
+        rawChat.set("chat.duplicate-window-seconds", 30);
+        rawChat.set("chat.cooldown-ms", 0);
+        rawChat.set("chat.filter.enabled", true);
+        rawChat.set("chat.filter.mode", "replace");
+        rawChat.set("chat.filter.words", List.of("badword"));
+        ChatConfig chatCfg = ChatConfig.fromBukkitConfig(rawChat);
+        ChatService chat = new ChatService(null, null, chatCfg, null, LOGGER);
+
+        assertEquals("привет *** всем",
+                chat.moderateExternalMessage(store, "vk", "Steve", "Steve", "ПРИВЕТ badword ВСЕМ", now));
+        assertNull(chat.moderateExternalMessage(store, "vk", "Steve", "Steve", "привет badword всем", now + 1_000L),
+                "дубликат от того же отправителя блокируется");
+
+        // Замороженный или замученный аккаунт не может писать в игру через беседу ВК.
+        store.setLoginFrozen("Steve", true, now + 2_000L);
+        assertNull(chat.moderateExternalMessage(store, "vk", "Steve", "Steve", "Обход заморозки", now + 3_000L));
+        store.setLoginFrozen("Steve", false, now + 4_000L);
+
+        store.setMute("Steve", now + 60_000L, "флуд", "admin");
+        assertNull(chat.moderateExternalMessage(store, "vk", "Steve", "Steve", "Обход мута", now + 6_000L));
     }
 }

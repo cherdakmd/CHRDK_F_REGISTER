@@ -1,5 +1,6 @@
 package ru.cherdakmd.chrdkvk;
 
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.junit.jupiter.api.Test;
 
@@ -11,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class VkBotRouterTest {
 
     @Test
-    void routesDirectCommandsBlocksPasswordResetAndIgnoresGroupChatSpam() {
+    void routesDirectCommandsAndGroupChatBridgeSafely() {
         List<String> replies = new ArrayList<>();
         List<String> actions = new ArrayList<>();
 
@@ -83,6 +84,16 @@ class VkBotRouterTest {
             public void onWallPost(VkApiClient.WallPost post) {
                 actions.add("wall:" + post.id());
             }
+
+            @Override
+            public long activeGroupChatPeerId() {
+                return 2000000001L;
+            }
+
+            @Override
+            public void onGroupChatMessage(long peerId, long fromUserId, JsonObject message, long nowMillis) {
+                actions.add("chat:" + peerId + ":" + fromUserId + ":" + message.get("text").getAsString());
+            }
         });
 
         // 1. Отказ на любые команды смены/сброса пароля.
@@ -91,20 +102,46 @@ class VkBotRouterTest {
             assertTrue(resp.contains("запрещены"), attempt);
         }
 
-        // 2. Прямая отправка 6-значного кода привязки без команды.
+        // 2. Прямая отправка 6-значного кода привязки без команды в ЛС.
         router.handleUpdate(JsonParser.parseString(
                 "{\"type\":\"message_new\",\"object\":{\"message\":{\"peer_id\":77,\"from_id\":77,\"text\":\"AB34CD\"}}}")
                 .getAsJsonObject(), 1000L);
         assertEquals(List.of("77->LINKED:AB34CD"), replies);
 
-        // 3. Сообщения в общей беседе (peer_id != from_id) игнорируются личным маршрутизатором.
+        // 3. В общей беседе личные защитные команды (/выход) НЕ выполняются и НЕ утекают в игровой чат.
         replies.clear();
         router.handleUpdate(JsonParser.parseString(
                 "{\"type\":\"message_new\",\"object\":{\"message\":{\"peer_id\":2000000001,\"from_id\":77,\"text\":\"/выход\"}}}")
                 .getAsJsonObject(), 1000L);
         assertTrue(replies.isEmpty());
+        assertFalse(actions.contains("logout:77"));
 
-        // 4. Экстренные команды /выход, /заморозить, /разморозить и события Donut/стены.
+        // 4. В беседе работают /chatid и /онлайн (в том числе с упоминанием бота [club1|@bot]),
+        // а обычные сообщения участников маршрутизируются в мост глобального чата.
+        router.handleUpdate(JsonParser.parseString(
+                "{\"type\":\"message_new\",\"object\":{\"message\":{\"peer_id\":2000000005,\"from_id\":77,\"text\":\"[club1|@chrdk_reborn] /chatid\"}}}")
+                .getAsJsonObject(), 1000L);
+        assertEquals(1, replies.size());
+        assertTrue(replies.getFirst().contains("2000000005"));
+
+        replies.clear();
+        router.handleUpdate(JsonParser.parseString(
+                "{\"type\":\"message_new\",\"object\":{\"message\":{\"peer_id\":2000000001,\"from_id\":77,\"text\":\"/онлайн\"}}}")
+                .getAsJsonObject(), 1000L);
+        assertEquals(List.of("2000000001->ONLINE:12"), replies);
+
+        router.handleUpdate(JsonParser.parseString(
+                "{\"type\":\"message_new\",\"object\":{\"message\":{\"peer_id\":2000000001,\"from_id\":77,\"text\":\"Всем привет из беседы!\"}}}")
+                .getAsJsonObject(), 1000L);
+        // Сообщение из чужой непривязанной беседы и сообщение от самого бота (from_id < 0) игнорируются.
+        router.handleUpdate(JsonParser.parseString(
+                "{\"type\":\"message_new\",\"object\":{\"message\":{\"peer_id\":2000000099,\"from_id\":77,\"text\":\"Чужая беседа\"}}}")
+                .getAsJsonObject(), 1000L);
+        router.handleUpdate(JsonParser.parseString(
+                "{\"type\":\"message_new\",\"object\":{\"message\":{\"peer_id\":2000000001,\"from_id\":-12345,\"text\":\"[MC] Steve: эхо\"}}}")
+                .getAsJsonObject(), 1000L);
+
+        // 5. Экстренные команды /выход, /заморозить, /разморозить в ЛС и события Donut/стены.
         assertEquals("LOGOUT_OK", router.dispatchDirectCommand(77L, "/выход", 1000L));
         assertEquals("FROZEN", router.dispatchDirectCommand(77L, "/заморозить", 1000L));
         assertEquals("UNFROZEN", router.dispatchDirectCommand(77L, "/разморозить", 1000L));
@@ -115,6 +152,9 @@ class VkBotRouterTest {
                 "{\"type\":\"wall_post_new\",\"object\":{\"id\":99,\"text\":\"Новость\"}}").getAsJsonObject(), 1000L);
 
         assertTrue(actions.containsAll(List.of(
-                "link:77:AB34CD", "logout:77", "freeze:77", "unfreeze:77", "donut_on:77", "wall:99")));
+                "link:77:AB34CD",
+                "chat:2000000001:77:Всем привет из беседы!",
+                "logout:77", "freeze:77", "unfreeze:77", "donut_on:77", "wall:99")));
+        assertFalse(actions.stream().anyMatch(a -> a.contains("Чужая беседа") || a.contains("эхо")));
     }
 }
