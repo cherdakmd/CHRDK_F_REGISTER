@@ -44,6 +44,8 @@ public final class ClaimsConfig {
     public final int mapRadius;
     /** Сколько секунд держится подсветка границ /claim borders. */
     public final int borderSeconds;
+    /** Автопоказ полного контура при входе в свою территорию. */
+    public final boolean borderOnOwnEntry;
     public final boolean notifyRent;
     /** Канал уведомлений о границах приватов. */
     public enum NoticeMode {
@@ -144,6 +146,7 @@ public final class ClaimsConfig {
         mapRadius = clamped(cfg, logger, "general.map-radius", ClaimMap.RADIUS,
                 ClaimMap.MIN_RADIUS, ClaimMap.MAX_RADIUS);
         borderSeconds = clamped(cfg, logger, "general.border-seconds", 10, 3, 60);
+        borderOnOwnEntry = cfg.getBoolean("general.border-on-own-entry", true);
         enterNotice = cfg.getBoolean("general.enter-notice", true);
         leaveNotice = cfg.getBoolean("general.leave-notice", true);
         noticeOwn = cfg.getBoolean("general.notice-own", true);

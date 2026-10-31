@@ -1,6 +1,7 @@
 package ru.cherdakmd.chrdkclaims;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
@@ -8,6 +9,7 @@ import org.bukkit.World;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -57,7 +59,21 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
     private BukkitTask teleportFinanceTask;
     private final Set<UUID> bypass = ConcurrentHashMap.newKeySet();
     /** Активные подсветки границ: игрок → задача (чтобы не плодить таймеры). */
-    private final Map<UUID, BukkitTask> borderTasks = new ConcurrentHashMap<>();
+    private static final class BorderSession {
+        final boolean manual;
+        int left;
+        BukkitTask task;
+        ClaimBorders.Outline outline;
+        String world;
+        long revision = -1;
+        long cursor;
+        BorderSession(boolean manual, int pulses) { this.manual = manual; this.left = pulses; }
+    }
+    private final Map<UUID, BorderSession> borderTasks = new ConcurrentHashMap<>();
+    private final ClaimBorderEntryTracker borderEntries = new ClaimBorderEntryTracker();
+    private static final Particle.DustOptions OWN_BORDER = new Particle.DustOptions(Color.fromRGB(80, 255, 80), 1.8f);
+    private static final Particle.DustOptions FOREIGN_BORDER = new Particle.DustOptions(Color.fromRGB(255, 170, 30), 1.8f);
+    private static final Particle.DustOptions FREE_BORDER = new Particle.DustOptions(Color.fromRGB(0, 210, 255), 1.8f);
     /** Последний приват игрока и кулдаун уведомлений о границах. */
     private final ClaimNoticeTracker claimNotices = new ClaimNoticeTracker();
     /** Персональный выключатель уведомлений (/claim notices) хранится в данных игрока. */
@@ -176,8 +192,9 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         if (saveTask != null) {
             saveTask.cancel();
         }
-        borderTasks.values().forEach(BukkitTask::cancel);
+        borderTasks.values().forEach(session -> session.task.cancel());
         borderTasks.clear();
+        borderEntries.clearAll();
         if (store != null) {
             store.markDirty();
             store.save();
@@ -205,10 +222,12 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
     @EventHandler
     public void onAuthCompleted(PlayerAuthCompletedEvent event) {
         Player player = event.getPlayer();
+        // Повторный вход после авторизации — новый визуальный сеанс.
+        borderEntries.clear(player.getUniqueId());
+        // Визуализация не зависит от готовности финансового журнала.
+        refreshNoticeLater(player);
         if(!financeReady()) return;
         store.fundsReady(player.getName());
-        // Стоящий на привате игрок должен увидеть, куда попал, не делая шага.
-        refreshNoticeLater(player);
         List<String> notices = store.pollNotices(player.getName());
         if (!notices.isEmpty()) {
             messages().send(player, "notices-join", "count", String.valueOf(notices.size()));
@@ -252,6 +271,7 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         bypass.remove(id);
         cancelBorders(id);
         claimNotices.clear(id);
+        borderEntries.clear(id);
     }
 
     /**
@@ -272,7 +292,10 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
     @EventHandler
     public void onDeath(PlayerDeathEvent event) {
         if (event.getEntity() != null) {
-            claimNotices.forget(event.getEntity().getUniqueId());
+            UUID id = event.getEntity().getUniqueId();
+            claimNotices.forget(id);
+            borderEntries.clear(id);
+            cancelBorders(id);
         }
     }
 
@@ -287,7 +310,7 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
      * посторонний. Обработчик вызывается на каждое движение, поэтому сначала
      * сравниваются чанки — память трогается только на реальной границе.
      */
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onMove(PlayerMoveEvent event) {
         Location from = event.getFrom();
         Location to = event.getTo();
@@ -324,16 +347,17 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
 
     /** Пересчитывает приват в новом чанке и отправляет уведомления о переходе. */
     private void updateClaimNotice(Player player, Location to) {
-        if (!config.enterNotice && !config.leaveNotice) {
-            return;
-        }
         if (!service.isAllowed(player)) {
+            borderEntries.clear(player.getUniqueId());
+            cancelBorders(player.getUniqueId());
             return;
         }
         String world = to.getWorld().getName();
         int chunkX = to.getBlockX() >> 4;
         int chunkZ = to.getBlockZ() >> 4;
         Claim claim = config.worldEnabled(world) ? store.claimAt(world, chunkX, chunkZ) : null;
+        updateOwnBorders(player, world, claim);
+        if (!config.enterNotice && !config.leaveNotice) return;
         ClaimNotice.Spot spot = claim == null ? null : new ClaimNotice.Spot(
                 world, chunkX, chunkZ, claim.owner, claim.salePrice,
                 claim.roleOf(player.getName()), claim.paidUntil, claim.greeting);
@@ -414,56 +438,91 @@ public final class ClaimsPlugin extends JavaPlugin implements Listener {
         return enabled;
     }
 
-    /**
-     * Включает/выключает подсветку границ текущего чанка.
-     *
-     * @return {@code true}, если подсветка включена, {@code false} — выключена
-     */
+    /** Автопоказ только владельцу и только при входе в другую связную территорию. */
+    private void updateOwnBorders(Player player, String world, Claim claim) {
+        UUID id = player.getUniqueId();
+        if (!config.borderOnOwnEntry || !canShowBorders(player) || claim == null || !claim.isOwner(player.getName())) {
+            borderEntries.clear(id);
+            BorderSession active = borderTasks.get(id);
+            if (active != null && !active.manual) cancelBorders(id);
+            return;
+        }
+        boolean entered = borderEntries.entered(id, player.getName(), claim,
+                (x, z) -> store.claimAt(world, x, z));
+        BorderSession active = borderTasks.get(id);
+        // Автоматический вход не перезапускает уже включённый ручной показ.
+        if (entered && (active == null || !active.manual)) startBorders(player, false);
+    }
+
+    private boolean canShowBorders(Player player) {
+        return player.isOnline() && !player.isDead() && service.isAllowed(player)
+                && (player.hasPermission("chrdkclaims.use") || player.hasPermission("chrdkclaims.admin"))
+                && config.worldEnabled(player.getWorld().getName());
+    }
+
+    /** Переключает текущий показ; повтор команды выключает и автоматическую подсветку. */
     public boolean toggleBorders(Player player) {
         UUID id = player.getUniqueId();
-        BukkitTask active = borderTasks.remove(id);
-        if (active != null) {
-            active.cancel();
+        if (borderTasks.containsKey(id)) {
+            cancelBorders(id);
             return false;
         }
-        int pulses = Math.max(1, config.borderSeconds * 2);
-        int[] left = {pulses};
-        BukkitTask task = Bukkit.getScheduler().runTaskTimer(this, () -> {
-            if (!player.isOnline() || left[0]-- <= 0) {
-                cancelBorders(id);
-                return;
-            }
-            drawBorder(player);
-        }, 0L, BORDER_PERIOD_TICKS);
-        borderTasks.put(id, task);
+        if (!canShowBorders(player)) return false;
+        startBorders(player, true);
         return true;
     }
 
-    private void cancelBorders(UUID id) {
-        BukkitTask task = borderTasks.remove(id);
-        if (task != null) {
-            task.cancel();
-        }
+    private void startBorders(Player player, boolean manual) {
+        UUID id = player.getUniqueId();
+        cancelBorders(id);
+        BorderSession session = new BorderSession(manual, Math.max(1, config.borderSeconds * 2));
+        session.task = Bukkit.getScheduler().runTaskTimer(this, () -> {
+            if (!canShowBorders(player) || session.left-- <= 0
+                    || (!session.manual && !config.borderOnOwnEntry)) {
+                cancelBorders(id);
+                return;
+            }
+            drawBorder(player, session);
+        }, 0L, BORDER_PERIOD_TICKS);
+        borderTasks.put(id, session);
     }
 
-    /** Ближайший внешний контур территории, без внутренних швов и без загрузки чанков. */
-    private void drawBorder(Player player) {
+    private void cancelBorders(UUID id) {
+        BorderSession session = borderTasks.remove(id);
+        if (session != null) session.task.cancel();
+    }
+
+    /** Весь внешний контур, три высоты и искры. Только получателю, без загрузки чанков. */
+    private void drawBorder(Player player, BorderSession session) {
         Location base = player.getLocation();
-        World world = base.getWorld();
-        var edges = ClaimBorders.visible(base.getBlockX() >> 4, base.getBlockZ() >> 4,
-                (x, z) -> store.claimAt(world.getName(), x, z));
-        int sent = 0;
-        for (var edge : edges) {
-            for (int offset = 0; offset <= 16; offset += 2) {
-                if (sent >= 512) return;
-                double x = edge.x1() + (edge.x2() - edge.x1()) * offset / 16.0;
-                double z = edge.z1() + (edge.z2() - edge.z1()) * offset / 16.0;
-                player.spawnParticle(Particle.END_ROD, new Location(world, x, base.getY() + .2, z), 1);
-                sent++;
-                if (offset % 4 == 0 && sent < 512) {
-                    player.spawnParticle(Particle.END_ROD, new Location(world, x, base.getY() + 2.2, z), 1);
-                    sent++;
-                }
+        String world = base.getWorld().getName();
+        int x = base.getBlockX() >> 4, z = base.getBlockZ() >> 4;
+        Claim current = store.claimAt(world, x, z);
+        if (!session.manual && (current == null || !current.isOwner(player.getName()))) {
+            cancelBorders(player.getUniqueId());
+            return;
+        }
+        long revision = store.borderRevision();
+        if (session.outline == null || !world.equals(session.world) || revision != session.revision
+                || !session.outline.contains(x, z)) {
+            // Не сбрасываем обход из-за оплаты/аренды: частые изменения метаданных
+            // не должны постоянно вытеснять дальние рёбра из бюджета частиц.
+            if (session.outline == null || !world.equals(session.world) || !session.outline.contains(x, z)) session.cursor = 0;
+            session.outline = ClaimBorders.outline(x, z, (cx, cz) -> store.claimAt(world, cx, cz));
+            session.world = world;
+            session.revision = revision;
+        }
+        Particle.DustOptions dust = current == null ? FREE_BORDER
+                : current.isOwner(player.getName()) ? OWN_BORDER : FOREIGN_BORDER;
+        var frame = ClaimBorderParticles.frame(session.outline.edges(), session.cursor);
+        session.cursor = frame.nextCursor();
+        for (var point : frame.points()) {
+            if (point.spark()) {
+                player.spawnParticle(Particle.ELECTRIC_SPARK, point.x(), base.getY() + point.height(), point.z(),
+                        1, 0, 0, 0, 0, null, true);
+            } else {
+                player.spawnParticle(Particle.DUST, point.x(), base.getY() + point.height(), point.z(),
+                        1, 0, 0, 0, 0, dust, true);
             }
         }
     }

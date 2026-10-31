@@ -368,3 +368,5 @@ claims:
       [все] · transfer <ник> · balance (личный /bal) · sell <цена|снять> · sellback [confirm] · budget [1–30] · buy [x z] · help</gray>
     withdraw-done: '<green>С личного /bal выдано %amount% ⛁ предметами. Баланс: %balance% ⛁.</green>'
     withdraw-not-enough: <red>На личном /bal всего %balance% ⛁.</red>
+
+  borders-territory-on: "<green>Внешний контур всей смерженной территории подсвечен на %seconds% сек. Владелец: %owner%. Свои границы — зелёные, чужие — золотые.</green>"
