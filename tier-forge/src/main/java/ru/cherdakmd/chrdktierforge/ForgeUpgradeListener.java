@@ -100,6 +100,11 @@ public final class ForgeUpgradeListener implements Listener {
         this.shotBonusKey = new NamespacedKey(plugin, "shot_bonus_v1");
     }
 
+    /** Reload должен сразу забыть отрицательный ответ, полученный при выключенных свойствах. */
+    void invalidateGearCache() {
+        gearCache.clear();
+    }
+
     /* ------------------------------- атака игрока ------------------------------- */
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)

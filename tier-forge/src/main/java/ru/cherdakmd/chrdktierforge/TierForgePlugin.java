@@ -349,6 +349,7 @@ public final class TierForgePlugin extends JavaPlugin {
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
         this.config = TierForgeConfig.parse(getConfig(), getLogger());
+        if (forgeUpgrades != null) forgeUpgrades.invalidateGearCache();
         this.namePool = new ForgeNamePool(config.namesWeapons(), config.namesArmor(),
                 config.namesTools(), config.namesUtilities());
         if (identifyScanTask != null) {
