@@ -62,6 +62,7 @@ public final class GuildsPlugin extends JavaPlugin {
             if (coreApi != null) {
                 try {
                     coreApi.registerProfile("guilds", new GuildsProfile(this));
+                    coreApi.registerNameTag("guilds-tab", new GuildNameTag(this,true));
                     if (config.chatPrefix()) {
                         coreApi.registerNameTag("guilds", new GuildNameTag(this));
                     }
@@ -91,6 +92,7 @@ public final class GuildsPlugin extends JavaPlugin {
             try {
                 coreApi.unregisterProfile("guilds");
                 coreApi.unregisterNameTag("guilds");
+                coreApi.unregisterNameTag("guilds-tab");
             } catch (RuntimeException | LinkageError ignored) {
                 // Ядро старше нужного API — снимать нечего.
             }
