@@ -139,14 +139,21 @@ final class ProfessionListener implements Listener {
     @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true)
     public void onSmelt(org.bukkit.event.inventory.FurnaceSmeltEvent event){
         UUID owner=origins.take(event.getBlock(),event.getSource());if(owner==null)return;
+        if(ProfessionCatalog.smeltXp(Profession.MASON,event.getResult().getType())>0)origins.output(event.getBlock(),owner,event.getResult().getType());
         Player player=Bukkit.getPlayer(owner);if(!honest(player))return;
         Profession active=plugin.service().active(owner);if(active==null)return;
         int per=ProfessionCatalog.smeltXp(active,event.getResult().getType());
         if(per<=0)return;
         source(player,active,"smelt",event.getResult().getType(),1,per);
-        if(active==Profession.MASON)extraFurnaceBlock(player,event.getResult().getType());
+
     }
 
+    @EventHandler(priority=EventPriority.MONITOR)
+    public void onFurnaceExtract(FurnaceExtractEvent event){
+        Player player=event.getPlayer();
+        boolean own=origins.extract(event.getBlock(),player.getUniqueId(),event.getItemType(),event.getItemAmount());
+        if(own&&honest(player)&&plugin.service().active(player.getUniqueId())==Profession.MASON)extraFurnaceBlock(player,event.getItemType());
+    }
     /** Прибавка камнереза: шанс на второй блок при плавке (печь, печь-домна, коптильня). */
     private void extraFurnaceBlock(Player player, Material material) {
         if (!plugin.config().perkMasonBlock()) {

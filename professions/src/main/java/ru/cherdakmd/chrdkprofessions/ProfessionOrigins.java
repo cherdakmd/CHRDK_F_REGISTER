@@ -15,10 +15,11 @@ import java.util.UUID;
 
 /** Происхождение хранится в chunk/PDC, не исчезает по TTL, смене игрока или рестарту. */
 final class ProfessionOrigins implements Listener {
-    private final NamespacedKey placed,owner,material,budget;
+    private final NamespacedKey placed,owner,material,budget,outputOwner,outputType,outputCount;
     ProfessionOrigins(ProfessionsPlugin plugin){
         placed=new NamespacedKey(plugin,"placed-v1");owner=new NamespacedKey(plugin,"station-owner");
         material=new NamespacedKey(plugin,"station-material");budget=new NamespacedKey(plugin,"station-budget");
+        outputOwner=new NamespacedKey(plugin,"output-owner");outputType=new NamespacedKey(plugin,"output-type");outputCount=new NamespacedKey(plugin,"output-count");
     }
     private int position(Block b){return (b.getY()-b.getWorld().getMinHeight())*256+(b.getZ()&15)*16+(b.getX()&15);}
     boolean placed(Block b){var data=b.getChunk().getPersistentDataContainer().get(placed,PersistentDataType.BYTE_ARRAY);return data!=null&&BitSet.valueOf(data).get(position(b));}
@@ -41,7 +42,7 @@ final class ProfessionOrigins implements Listener {
     @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true)
     public void falling(org.bukkit.event.entity.EntityChangeBlockEvent e){if(e.getEntity() instanceof org.bukkit.entity.FallingBlock)mark(e.getBlock(),true);}
     private void invalidate(Inventory inventory){if(inventory.getHolder() instanceof TileState state)clear(state.getBlock());}
-    void clear(Block block){if(block.getState() instanceof TileState state){var p=state.getPersistentDataContainer();p.remove(owner);p.remove(material);p.remove(budget);state.update(false,false);}}
+    void clear(Block block){if(block.getState() instanceof TileState state){var p=state.getPersistentDataContainer();p.remove(owner);p.remove(material);p.remove(budget);p.remove(outputOwner);p.remove(outputType);p.remove(outputCount);state.update(false,false);}}
     /** Только фактическое ручное увеличение входа, не открытие контейнера/добыча результата. */
     void load(Block block,UUID actor,ItemStack before,ItemStack after){
         if(after==null||after.getType().isAir()){clear(block);return;}
@@ -55,6 +56,21 @@ final class ProfessionOrigins implements Listener {
         int n=old==0?0:p.getOrDefault(budget,PersistentDataType.INTEGER,0);
         p.set(owner,PersistentDataType.STRING,actor.toString());p.set(material,PersistentDataType.STRING,after.getType().name());
         p.set(budget,PersistentDataType.INTEGER,Math.min(64,n+added));state.update(false,false);
+    }
+    /** Выход нужен только для прежнего бонуса на ручное извлечение, не на каждую плавку. */
+    void output(Block block,UUID actor,org.bukkit.Material type){
+        if(!(block.getState() instanceof TileState state))return;var p=state.getPersistentDataContainer();
+        boolean same=actor.toString().equals(p.get(outputOwner,PersistentDataType.STRING))&&type.name().equals(p.get(outputType,PersistentDataType.STRING));
+        int n=same?p.getOrDefault(outputCount,PersistentDataType.INTEGER,0):0;
+        p.set(outputOwner,PersistentDataType.STRING,actor.toString());p.set(outputType,PersistentDataType.STRING,type.name());
+        p.set(outputCount,PersistentDataType.INTEGER,Math.min(64,n+1));state.update(false,false);
+    }
+    boolean extract(Block block,UUID actor,org.bukkit.Material type,int amount){
+        if(!(block.getState() instanceof TileState state)||amount<=0)return false;var p=state.getPersistentDataContainer();
+        int n=p.getOrDefault(outputCount,PersistentDataType.INTEGER,0);
+        boolean own=actor.toString().equals(p.get(outputOwner,PersistentDataType.STRING))&&type.name().equals(p.get(outputType,PersistentDataType.STRING));
+        p.set(outputCount,PersistentDataType.INTEGER,Math.max(0,n-amount));state.update(false,false);
+        return own&&n>0;
     }
     UUID take(Block block,ItemStack input){
         if(input==null||!(block.getState() instanceof TileState state))return null;
