@@ -192,6 +192,12 @@ public final class PassiveEffectsService {
         }
     }
 
+    private static boolean shouldApplyPotionToMob(org.bukkit.entity.Monster mob, int duration) {
+        PotionEffect current = mob.getPotionEffect(PotionEffectType.SLOWNESS);
+        return current == null || PotionRefresh.shouldApply(true, current.getAmplifier(),
+                current.getDuration(), 1, duration);
+    }
+
     /**
      * Сообщение о сработавшем проклятии (1.4.130, аудит A-21).
      *
@@ -229,8 +235,11 @@ public final class PassiveEffectsService {
             case FROST_AURA -> {
                 for (org.bukkit.entity.Entity entity : player.getNearbyEntities(8, 5, 8)) {
                     if (entity instanceof org.bukkit.entity.Monster mob && !mob.isDead()) {
-                        mob.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS,
-                                100, 1, true, false, true));
+                        int duration = PotionRefresh.auraDurationTicks(plugin.config().refreshTicks());
+                        if (shouldApplyPotionToMob(mob, duration)) {
+                            mob.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS,
+                                    duration, 1, true, false, true));
+                        }
                         mob.setFreezeTicks(Math.max(mob.getFreezeTicks(), 40));
                     }
                 }
