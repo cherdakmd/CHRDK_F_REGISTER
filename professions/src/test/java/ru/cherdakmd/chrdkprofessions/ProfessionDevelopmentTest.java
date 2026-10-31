@@ -109,4 +109,16 @@ class ProfessionDevelopmentTest {
             store.addXp(id,Profession.SMITH,10);assertFalse(store.flushDurably());assertEquals(text,Files.readString(store.file()));
         }
     }
+    @Test void durableFileReplacesAtomicallyAndReportsFailedWrites()throws Exception{
+        Path file=folder.resolve("commit.json");assertTrue(ProfessionDurableFile.write(file,"first",null));
+        assertTrue(ProfessionDurableFile.write(file,"second",null));assertEquals("second",Files.readString(file));
+        assertFalse(ProfessionDurableFile.write(file.resolve("impossible.json"),"bad",null));
+        assertEquals("second",Files.readString(file));ProfessionDurableFile.delete(file);assertFalse(Files.exists(file));
+    }
+    @Test void failedDurableProgressWriteStaysDirty()throws Exception{
+        Files.writeString(folder.resolve("professions.json"),"occupied");
+        var store=new ProfessionStore(folder.resolve("professions.json"),null);store.addXp(id,Profession.SMITH,1);
+        assertFalse(store.flushDurably());assertTrue(store.isDirty());
+    }
+
 }

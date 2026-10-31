@@ -113,11 +113,13 @@ final class ProfessionListener implements Listener {
         Profession active=plugin.service().active(player.getUniqueId());
         if(active==null||!crafting.add(player.getUniqueId()))return;
         ItemStack result=event.getRecipe().getResult();int per=ProfessionCatalog.craftXp(active,result.getType());
+        int outputBefore=outputCount(player,result.getType());
         ItemStack[] before=java.util.Arrays.stream(event.getInventory().getMatrix()).map(i->i==null?null:i.clone()).toArray(ItemStack[]::new);
         var inventory=event.getInventory();
         Bukkit.getScheduler().runTask(plugin,()->{
             crafting.remove(player.getUniqueId());if(!honest(player)||per<=0)return;
             for(ItemStack item:before)if(item!=null&&!ProfessionCatalog.craftInput(active,item.getType()))return;
+            if(player.getOpenInventory().getTopInventory()!=inventory)return;
             ItemStack[] after=inventory.getMatrix();if(before.length!=after.length)return;
             int recipes=Integer.MAX_VALUE;
             for(int i=0;i<before.length;i++)if(before[i]!=null&&!before[i].getType().isAir()){
@@ -126,7 +128,11 @@ final class ProfessionListener implements Listener {
                 // Остатки вроде ведра не означают повторное использование входа.
                 if(used<=0)return;recipes=Math.min(recipes,used);
             }
-            if(recipes!=Integer.MAX_VALUE)source(player,active,"craft",result.getType(),Math.min(4096,recipes*result.getAmount()),per);
+            if(recipes!=Integer.MAX_VALUE){
+                int gained=Math.max(0,outputCount(player,result.getType())-outputBefore);
+                int units=Math.min(gained,Math.min(4096,recipes*result.getAmount()));
+                if(units>0)source(player,active,"craft",result.getType(),units,per);
+            }
         });
     }
     /** Получение результата не присваивает чужой/автоматический труд. */
@@ -187,6 +193,11 @@ final class ProfessionListener implements Listener {
             if(incoming>0&&stock.getOrDefault(after.getType(),0)-stationStock(player).getOrDefault(after.getType(),0)<incoming){origins.clear(block);return;}
             origins.load(block,player.getUniqueId(),before,after);
         });
+    }
+    private static int outputCount(Player player,Material type){
+        int amount=0;for(ItemStack item:player.getInventory().getStorageContents())if(item!=null&&item.getType()==type)amount+=item.getAmount();
+        ItemStack cursor=player.getItemOnCursor();if(cursor!=null&&cursor.getType()==type)amount+=cursor.getAmount();
+        ItemStack offhand=player.getInventory().getItemInOffHand();if(offhand.getType()==type)amount+=offhand.getAmount();return amount;
     }
     private static Map<Material,Integer> stationStock(Player player){
         Map<Material,Integer> amounts=new java.util.EnumMap<>(Material.class);
@@ -406,7 +417,7 @@ final class ProfessionListener implements Listener {
         ItemStack template=inventory.getItem(0);if(xp<=0||template==null)return;
         ItemStack before=template.clone();if(!benchPending.add(player.getUniqueId()))return;
         Bukkit.getScheduler().runTask(plugin,()->{
-            benchPending.remove(player.getUniqueId());if(!honest(player))return;ItemStack after=inventory.getItem(0);
+            benchPending.remove(player.getUniqueId());if(!honest(player)||player.getOpenInventory().getTopInventory()!=inventory)return;ItemStack after=inventory.getItem(0);
             int rest=after!=null&&after.isSimilar(before)?after.getAmount():0;
             int used=Math.max(0,before.getAmount()-rest);
             if(used>0)source(player,active,"forge",Material.SMITHING_TABLE,used,xp);
@@ -660,8 +671,9 @@ final class ProfessionListener implements Listener {
         }
     }
 
-    private static boolean honest(Player player) {
-        return player != null && player.isOnline() && player.getGameMode() != GameMode.CREATIVE;
+    private boolean honest(Player player) {
+        return plugin.config().enabled()&&player!=null&&player.isOnline()&&player.getGameMode()==GameMode.SURVIVAL
+                &&player.hasPermission("chrdkprofessions.use")&&plugin.authenticated(player);
     }
 
     private static Block brewingBlock(InventoryHolder holder) {

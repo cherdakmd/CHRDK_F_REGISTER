@@ -38,6 +38,8 @@ final class ProfessionOrigins implements Listener {
     @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true) public void fertilize(BlockFertilizeEvent e){for(var b:e.getBlocks())if(b.getBlockData() instanceof Ageable age&&age.getAge()==age.getMaximumAge())mark(b.getBlock(),false);}
     @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true) public void tree(StructureGrowEvent e){for(var b:e.getBlocks())mark(b.getBlock(),false);}
     @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true) public void hopper(InventoryMoveItemEvent e){invalidate(e.getSource());invalidate(e.getDestination());}
+    @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true)
+    public void falling(org.bukkit.event.entity.EntityChangeBlockEvent e){if(e.getEntity() instanceof org.bukkit.entity.FallingBlock)mark(e.getBlock(),true);}
     private void invalidate(Inventory inventory){if(inventory.getHolder() instanceof TileState state)clear(state.getBlock());}
     void clear(Block block){if(block.getState() instanceof TileState state){var p=state.getPersistentDataContainer();p.remove(owner);p.remove(material);p.remove(budget);state.update(false,false);}}
     /** Только фактическое ручное увеличение входа, не открытие контейнера/добыча результата. */

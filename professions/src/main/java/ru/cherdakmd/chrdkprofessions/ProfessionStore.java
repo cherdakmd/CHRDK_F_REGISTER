@@ -529,7 +529,7 @@ public final class ProfessionStore {
     /** Пишет файл, только если были изменения. */
     public void saveNow(){synchronized(ioLock){String json;synchronized(this){if(!dirty||!healthy)return;json=snapshotJson();}write(json);}}
     public void flush(){flushDurably();}
-    public boolean flushDurably(){synchronized(ioLock){if(!healthy())return false;return write(snapshotJson());}}
+    public boolean flushDurably(){synchronized(ioLock){if(!healthy())return false;String json=snapshotJson();boolean ok=ProfessionDurableFile.write(file,json,logger);if(!ok)synchronized(this){dirty=true;}return ok;}}
     private boolean write(String json){
         boolean saved=SafeJsonWriter.write(file,json,logger,"[CHRDK_Professions]");
         if(!saved)synchronized(this){dirty=true;}

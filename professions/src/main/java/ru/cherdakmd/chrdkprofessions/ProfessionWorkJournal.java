@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import ru.cherdakmd.chrdkregister.api.ChargeInventory;
-import ru.cherdakmd.chrdkregister.storage.SafeJsonWriter;
 import java.nio.file.*;
 import java.io.IOException;
 import java.util.UUID;
@@ -30,14 +29,20 @@ final class ProfessionWorkJournal {
     boolean apply(Player player,Profession profession,long until,ItemStack[] before,ItemStack[] after){
         UUID id=player.getUniqueId();if(pending(id))return false;
         Entry entry=new Entry(1,UUID.randomUUID().toString(),id.toString(),profession.id(),until,ChargeInventory.encode(before),ChargeInventory.encode(after));
-        if(!SafeJsonWriter.write(file(id),JSON.toJson(entry),plugin.getLogger(),"[Profession work]"))return false;
+        if(!ProfessionDurableFile.write(file(id),JSON.toJson(entry),plugin.getLogger()))return false;
         return recover(player);
     }
     boolean recover(Player player){
         UUID id=player.getUniqueId();if(!pending(id))return true;
         if(!plugin.authenticated(player)||player.getGameMode()!=org.bukkit.GameMode.SURVIVAL)return false;
         try{
-            Entry e=read(id);ItemStack[] current=player.getInventory().getStorageContents();
+            Entry e=read(id);
+            // Commit уже подтверждён: игрок мог законно изменить рюкзак после него.
+            if(plugin.store().receipt(id).equals(e.id())){
+                if(!plugin.store().flushDurably())return false;
+                ProfessionDurableFile.delete(file(id));return true;
+            }
+            ItemStack[] current=player.getInventory().getStorageContents();
             if(!ChargeInventory.matches(current,e.after())){
                 if(plugin.store().receipt(id).equals(e.id())||!ChargeInventory.matches(current,e.before()))return false;
                 player.getInventory().setStorageContents(ChargeInventory.decode(e.after()));
@@ -45,14 +50,14 @@ final class ProfessionWorkJournal {
             player.saveData();
             plugin.store().completeWork(id,Profession.parse(e.profession()),e.until(),e.id());
             if(!plugin.store().flushDurably())return false;
-            Files.delete(file(id));return true;
+            ProfessionDurableFile.delete(file(id));return true;
         }catch(IOException|RuntimeException bad){plugin.getLogger().severe("Мастерская "+id+": "+bad.getMessage());return false;}
     }
     boolean abort(Player player){
         try{
             UUID id=player.getUniqueId();Entry e=read(id);
             if(plugin.store().receipt(id).equals(e.id())||!ChargeInventory.matches(player.getInventory().getStorageContents(),e.before()))return false;
-            Files.delete(file(id));return true;
+            ProfessionDurableFile.delete(file(id));return true;
         }catch(IOException|RuntimeException bad){return false;}
     }
     String status(Player player){
