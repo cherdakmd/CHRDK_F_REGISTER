@@ -1,5 +1,6 @@
 package ru.cherdakmd.chrdktierforge;
 
+import ru.cherdakmd.chrdkregister.api.PassivePotions;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.AbstractArrow;
@@ -810,6 +811,7 @@ public final class ForgeUpgradeListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPotionEffect(EntityPotionEffectEvent event) {
         if (effectShifting.get() || !(event.getEntity() instanceof Player player)
+                || PassivePotions.isApplying(player)
                 || event.getAction() != EntityPotionEffectEvent.Action.ADDED
                 || event.getCause() == EntityPotionEffectEvent.Cause.BEACON) {
             return;
@@ -884,7 +886,9 @@ public final class ForgeUpgradeListener implements Listener {
     public void pulse() {
         long now = System.currentTimeMillis();
         for (Player player : org.bukkit.Bukkit.getOnlinePlayers()) {
+            List<PotionEffect> passive = new ArrayList<>();
             if (player.isDead()) {
+                PassivePotions.replace(plugin, player, passive, 40);
                 continue;
             }
             // 1.4.91: у кого ковки нет — скан PDC не нужен (кэш сбрасывают события
@@ -892,12 +896,14 @@ public final class ForgeUpgradeListener implements Listener {
             UUID playerId = player.getUniqueId();
             Boolean forged = gearCache.fresh(playerId, now);
             if (Boolean.FALSE.equals(forged)) {
+                PassivePotions.replace(plugin, player, passive, 40);
                 continue;
             }
             if (forged == null) {
                 boolean hasForge = hasForgeGear(player);
                 gearCache.put(playerId, hasForge, now);
                 if (!hasForge) {
+                    PassivePotions.replace(plugin, player, passive, 40);
                     continue;
                 }
             }
@@ -932,14 +938,7 @@ public final class ForgeUpgradeListener implements Listener {
             if (regen > 0 && player.getHealth() > 0 && player.getHealth() < maxHealth(player)) {
                 heal(player, Math.min(CAP_REGEN_HEAL, regen));
             }
-            if (nightVision) {
-                PotionEffect current = player.getPotionEffect(PotionEffectType.NIGHT_VISION);
-                if (current == null || ForgeWorkMath.refreshPotion(current.getAmplifier(),
-                        current.getDuration(), 0, 20 * 15)) {
-                    player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION,
-                            20 * 15, 0, false, false, false));
-                }
-            }
+            if (nightVision) passive.add(new PotionEffect(PotionEffectType.NIGHT_VISION, 1, 0, false, false, false));
             if (magnetBonus > 0) pullDrops(player, magnetBonus);
             // Шуба: замерзания не бывает вовсе
             if (noFreeze && player.getFreezeTicks() > 0) {
@@ -953,19 +952,20 @@ public final class ForgeUpgradeListener implements Listener {
             }
             // Трудоголик: Спешка I/II, пока инструмент с клеймом в руках
             if (haste > 0) {
-                applyFresh(player, PotionEffectType.HASTE, 20 * 15, Math.min(1, haste - 1));
+                passive.add(new PotionEffect(PotionEffectType.HASTE, 1, Math.min(1, haste - 1), false, true, true));
             }
             // Тропинка: Speed I на тропинках и траве
             if (pathSpeed && isWalkPath(player)) {
-                applyFresh(player, PotionEffectType.SPEED, 60, 0);
+                passive.add(new PotionEffect(PotionEffectType.SPEED, 1, 0, false, true, true));
             }
             // Ветер: Speed I после пяти секунд вне боя
             if (roamSpeed) {
                 Long last = lastCombat.get(player.getUniqueId());
                 if (last == null || last < System.currentTimeMillis() - 5000L) {
-                    applyFresh(player, PotionEffectType.SPEED, 60, 0);
+                    passive.add(new PotionEffect(PotionEffectType.SPEED, 1, 0, false, true, true));
                 }
             }
+            PassivePotions.replace(plugin, player, passive, 40);
         }
     }
 

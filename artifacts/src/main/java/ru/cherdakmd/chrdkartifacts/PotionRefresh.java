@@ -47,6 +47,7 @@ public final class PotionRefresh {
         if (!present) {
             return true;
         }
+        if (currentDurationTicks == -1) return false;
         // Чужой эффект сильнее — не понижаем.
         if (currentAmplifier > amplifier) {
             return false;

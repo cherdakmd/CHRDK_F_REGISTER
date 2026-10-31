@@ -54,7 +54,7 @@ public final class ArtifactsPlugin extends JavaPlugin {
         this.feedback = new ArtifactFeedback(this);
         reloadArtifactsConfig();
         try {
-            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 20) throw new IllegalStateException("Нужен Core API 20+");
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 32) throw new IllegalStateException("Нужен Core API 32+");
             this.awards = new ru.cherdakmd.chrdkregister.api.MilestoneAwards(this,this::coreApi,this::messages,"artifact-awards",ru.cherdakmd.chrdkregister.api.MilestoneMigration.json(getDataFolder().toPath().resolve("collection.json"),ru.cherdakmd.chrdkregister.api.MilestoneMigration.Kind.ARTIFACTS));
         } catch (Exception | LinkageError error) {
             getLogger().log(java.util.logging.Level.SEVERE,"Модуль остановлен без сброса прогресса/наград",error);

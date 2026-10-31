@@ -1,5 +1,6 @@
 package ru.cherdakmd.chrdkartifacts;
 
+import ru.cherdakmd.chrdkregister.api.PassivePotions;
 import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
@@ -45,19 +46,23 @@ public final class ArtifactTraitService {
         refreshPotions(player, traits);
     }
 
-    /** Зельевые свойства обновляет только штатный пульс, не события инвентаря. */
+    /** Непрерывный канал: безопасно и для пульса, и для синхронизации инвентаря. */
     public void refreshPotions(Player player, Map<String, Integer> traits) {
         if (player == null || !player.isOnline()) return;
+        java.util.List<PotionEffect> effects = new java.util.ArrayList<>();
         for (ArtifactTraits.Def def : ArtifactTraits.all()) {
             int level = traits == null ? 0 : traits.getOrDefault(def.id(), 0);
             if (def.kind() == ArtifactTraits.Kind.POTION && level > 0) {
-                applyPotion(player, def, level);
+                PotionEffectType type = Potions.resolve(def.potionType());
+                if (type != null && !type.isInstant()) effects.add(new PotionEffect(type, 1, def.amplifier(level), true, false, true));
             }
         }
+        PassivePotions.replace(plugin, "traits", player, effects, plugin.config().refreshTicks());
     }
 
-    /** Снимает все атрибутные свойства (зельевые истекают сами). */
+    /** Снимает атрибуты и только свой канал непрерывных зелий. */
     public void clear(Player player) {
+        if (player != null) PassivePotions.replace(plugin, "traits", player, java.util.List.of(), plugin.config().refreshTicks());
         applyAttributes(player, Map.of());
     }
 
@@ -84,21 +89,6 @@ public final class ArtifactTraitService {
         }
         NamespacedKey key = new NamespacedKey(plugin, "trait_" + def.id());
         ArtifactTraitModifiers.replace(instance, key, def, level);
-    }
-
-    private void applyPotion(Player player, ArtifactTraits.Def def, int level) {
-        PotionEffectType type = Potions.resolve(def.potionType());
-        if (type == null) {
-            return;
-        }
-        int duration = PotionRefresh.durationTicks(plugin.config().refreshTicks(), type.isInstant());
-        int amplifier = def.amplifier(level);
-        PotionEffect current = player.getPotionEffect(type);
-        if (current != null && !PotionRefresh.shouldApply(true, current.getAmplifier(),
-                current.getDuration(), amplifier, duration)) {
-            return;
-        }
-        player.addPotionEffect(new PotionEffect(type, duration, amplifier, true, false, true));
     }
 
     private static Attribute attributeOf(ArtifactTraits.Kind kind) {

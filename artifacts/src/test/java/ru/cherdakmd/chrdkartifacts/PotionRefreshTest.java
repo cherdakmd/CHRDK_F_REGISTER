@@ -31,6 +31,7 @@ class PotionRefreshTest {
         assertFalse(PotionRefresh.shouldApply(true, 1, 400, 0, 300),
                 "Speed II из зелья не понижается до Speed I артефакта");
         assertFalse(PotionRefresh.shouldApply(true, 2, 5, 1, 300));
+        assertFalse(PotionRefresh.shouldApply(true, 0, -1, 0, 300));
     }
 
     @Test

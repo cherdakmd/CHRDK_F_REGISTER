@@ -1,5 +1,6 @@
 package ru.cherdakmd.chrdkenchants;
 
+import ru.cherdakmd.chrdkregister.api.PassivePotions;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -50,6 +51,7 @@ public final class AuraService {
             task.cancel();
             task = null;
         }
+        PassivePotions.cancel(plugin);
         // честно возвращаем лаву на место
         lavaCrust.forEach((block, when) -> {
             if (block.getType() == Material.MAGMA_BLOCK) {
@@ -63,9 +65,13 @@ public final class AuraService {
         tickCounter++;
         revertExpiredCrust();
         for (Player player : Bukkit.getOnlinePlayers()) {
-            applyBootsAuras(player);
-            applyHelmetAuras(player);
-            applyGearAuras(player);
+            List<PotionEffect> passive = new java.util.ArrayList<>();
+            if (!player.isDead()) {
+                applyBootsAuras(player, passive);
+                applyHelmetAuras(player, passive);
+                applyGearAuras(player, passive);
+            }
+            PassivePotions.replace(plugin, player, passive, 20);
         }
     }
 
@@ -75,7 +81,7 @@ public final class AuraService {
      * Ауры экипировки: жизнь, спешка, усталость, голод и проклятая кровь.
      * Уровни брони берутся по максимуму — четыре «Живучести» не складываются.
      */
-    private void applyGearAuras(Player player) {
+    private void applyGearAuras(Player player, List<PotionEffect> passive) {
         Map<String, Integer> armor = new HashMap<>();
         for (ItemStack piece : player.getInventory().getArmorContents()) {
             if (piece == null) {
@@ -98,13 +104,13 @@ public final class AuraService {
         // Старатель: спешка при работе инструментом в руке
         int prospector = held.getOrDefault("prospector", 0);
         if (prospector > 0) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, 60,
+            passive.add(new PotionEffect(PotionEffectType.HASTE, 60,
                     EnchantParams.hasteAmplifier(prospector), true, false, false));
         }
         // Тупой резец: инструмент тянет руки вниз
         int dull = held.getOrDefault("dull_pick", 0);
         if (dull > 0) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.MINING_FATIGUE, 60,
+            passive.add(new PotionEffect(PotionEffectType.MINING_FATIGUE, 60,
                     EnchantParams.hasteAmplifier(dull), true, false, false));
         }
 
@@ -149,33 +155,33 @@ public final class AuraService {
 
     /* ------------------------------- ботинки ------------------------------- */
 
-    private void applyBootsAuras(Player player) {
+    private void applyBootsAuras(Player player, List<PotionEffect> passive) {
         ItemStack boots = player.getInventory().getBoots();
         Map<String, Integer> enchants = plugin.items().read(boots);
         int swift = enchants.getOrDefault("swiftfeet", 0);
         if (swift > 0 && player.isSprinting()) {
             // спринт ускоряет: короткий рефреш без перебивания сильных зелий
-            player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 40,
+            passive.add(new PotionEffect(PotionEffectType.SPEED, 40,
                     swift - 1, true, false, false));
         }
         int frog = enchants.getOrDefault("froggy", 0);
         if (frog > 0) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, 50,
+            passive.add(new PotionEffect(PotionEffectType.JUMP_BOOST, 50,
                     frog - 1, true, false, false));
         }
         if (enchants.containsKey("lavawalker")) {
-            walkLava(player);
+            walkLava(player, passive);
         }
     }
 
     /* ------------------------------- шлем ------------------------------- */
 
-    private void applyHelmetAuras(Player player) {
+    private void applyHelmetAuras(Player player, List<PotionEffect> passive) {
         ItemStack helmet = player.getInventory().getHelmet();
         Map<String, Integer> enchants = plugin.items().read(helmet);
         if (enchants.containsKey("seer")) {
             // длинный запас: мерцания нет
-            player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, 15 * 20,
+            passive.add(new PotionEffect(PotionEffectType.NIGHT_VISION, 15 * 20,
                     0, true, false, false));
         }
         if (enchants.containsKey("truesight") && tickCounter % 4 == 0) {
@@ -184,8 +190,12 @@ public final class AuraService {
                 if (entity instanceof LivingEntity living
                         && living != player
                         && (living.isInvisible() || living instanceof Monster)) {
-                    living.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 40,
-                            0, true, false, false));
+                    PotionEffect current = living.getPotionEffect(PotionEffectType.GLOWING);
+                    if (current == null || (current.getAmplifier() == 0 && !current.isInfinite()
+                            && current.getDuration() < 120)) {
+                        living.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 120,
+                                0, true, false, false));
+                    }
                 }
             }
         }
@@ -193,13 +203,12 @@ public final class AuraService {
 
     /* ------------------------------- лавоступ ------------------------------- */
 
-    private void walkLava(Player player) {
+    private void walkLava(Player player, List<PotionEffect> passive) {
         Block feet = player.getLocation().getBlock();
-        if (feet.getType() != Material.LAVA
-                && feet.getRelative(0, -1, 0).getType() != Material.LAVA) {
-            return;
-        }
-        player.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 60,
+        Block support = feet.getRelative(0, -1, 0);
+        boolean ownCrust = support.getType() == Material.MAGMA_BLOCK && lavaCrust.containsKey(support);
+        if (feet.getType() != Material.LAVA && support.getType() != Material.LAVA && !ownCrust) return;
+        passive.add(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 60,
                 0, true, false, false));
         player.setFireTicks(0);
         long revertAt = System.currentTimeMillis() + LAVA_CRUST_MILLIS;

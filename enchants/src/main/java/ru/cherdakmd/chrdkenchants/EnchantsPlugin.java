@@ -58,6 +58,14 @@ public final class EnchantsPlugin extends JavaPlugin {
             Bukkit.getPluginManager().disablePlugin(this);
             return;
         }
+        try {
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 32)
+                throw new IllegalStateException("Нужен Core API 32+");
+        } catch (ReflectiveOperationException | RuntimeException failure) {
+            getLogger().severe("Чары остановлены: нужен CHRDK_Core с API 32+");
+            Bukkit.getPluginManager().disablePlugin(this);
+            return;
+        }
         this.items = new EnchantItems(this);
         this.service = new EnchantService(this, items);
         this.gui = new EnchantGui(this);

@@ -1,5 +1,6 @@
 package ru.cherdakmd.chrdkartifacts;
 
+import ru.cherdakmd.chrdkregister.api.PassivePotions;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
@@ -46,6 +47,7 @@ public final class PassiveEffectsService {
             task.cancel();
             task = null;
         }
+        PassivePotions.cancel(plugin);
         // Лимит прыжка — модификатор игрока, а не эффект: без снятия он держался бы
         // до конца сессии. Снимаем у всех, кто онлайн. Свойства артефактов тоже.
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -55,6 +57,8 @@ public final class PassiveEffectsService {
 
     /** Снимает только принадлежащие нам атрибуты, не удаляя чужие зелья. */
     public void clearAttributes(Player player) {
+        PassivePotions.replace(plugin, player, java.util.List.of(), plugin.config().refreshTicks());
+        PassivePotions.replace(plugin, "traits", player, java.util.List.of(), plugin.config().refreshTicks());
         jumpLimiter.clear(player);
         if (plugin.traits() != null) plugin.traits().clear(player);
     }
@@ -73,7 +77,20 @@ public final class PassiveEffectsService {
         } else {
             jumpLimiter.clear(player);
         }
-        plugin.traits().applyAttributes(player, plugin.items().carriedTraitLevels(player));
+        var traits = plugin.items().carriedTraitLevels(player);
+        plugin.traits().applyAttributes(player, traits);
+        // События инвентаря меняют только непрерывные эффекты, не лечение/проклятия/сытость.
+        java.util.List<PotionEffect> continuous = new java.util.ArrayList<>();
+        for (String id : plugin.items().carriedIds(player)) {
+            ArtifactDef def = ArtifactRegistry.byId(id);
+            if (def == null || def.mode() != ArtifactDef.Mode.PASSIVE || !plugin.config().isEnabled(id)) continue;
+            for (ArtifactEffects.PotionSpec spec : ArtifactEffects.passivePotions(id)) {
+                PotionEffectType type = Potions.resolve(spec.type());
+                if (type != null && !type.isInstant()) continuous.add(new PotionEffect(type, 1, spec.amplifier(), true, false, true));
+            }
+        }
+        PassivePotions.replace(plugin, player, continuous, plugin.config().refreshTicks());
+        plugin.traits().refreshPotions(player, traits);
     }
 
     private boolean canApply(Player player) {
@@ -99,10 +116,6 @@ public final class PassiveEffectsService {
                 rollTrigger(player, id);
                 runSpecial(player, id);
             }
-            // Зельевые свойства обновляются только штатным пульсом.
-            if (canApply(player)) {
-                plugin.traits().refreshPotions(player, plugin.items().carriedTraitLevels(player));
-            }
         }
     }
 
@@ -110,8 +123,8 @@ public final class PassiveEffectsService {
         int refresh = plugin.config().refreshTicks();
         for (ArtifactEffects.PotionSpec spec : ArtifactEffects.passivePotions(id)) {
             PotionEffectType type = Potions.resolve(spec.type());
-            if (type == null) {
-                continue;
+            if (type == null || !type.isInstant()) {
+                continue; // непрерывные эффекты уже переданы общему владельцу
             }
             int duration = PotionRefresh.durationTicks(refresh, type.isInstant());
             if (!shouldApplyPotion(player, type, spec.amplifier(), duration)) {
