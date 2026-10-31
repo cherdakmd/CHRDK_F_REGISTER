@@ -121,8 +121,8 @@
       "text": "022f2a0c132d5ab450e70b77c4c02d60d0750a86c70fe73d17d0b03817a16664"
     },
     "profile": {
-      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
-      "sources": "316f8bb9980940d808e089f9d95c75d7eda22444a482f815c90bddcb3ff3d348",
+      "reason": "Уточнены Unicode-границы фильтра @все и детектор запросов пароля в CHRDK_VK",
+      "sources": "b00b657389778ded66f39856b20fdcb82e5ae9dd609ea4a8cece4cf776dfa1f8",
       "text": "b1ddb608cb3942be099223883d3c545c9ab409018276b58b94f5e85e796a3970"
     },
     "quests": {
@@ -176,8 +176,8 @@
       "text": "82cbef51d0e905b9db2f7a38198f2a576bf3026e0c19ac77bbf064ca4eddb5f7"
     },
     "vk": {
-      "reason": "Добавлена подсказка CHRDK_VK в auto-messages и обновлены тесты ядра",
-      "sources": "0a96750c1dcd0a05b9abd49d9a3baf4fe1afb71387e3171c030138f729bdb0c2",
+      "reason": "Уточнены Unicode-границы фильтра @все и детектор запросов пароля в CHRDK_VK",
+      "sources": "3b329fc409c7a476dc2c28d833903c38c38ca7d17fe3b0d20175a28fe82d3032",
       "text": "ff5c8c793e8c69d3b15a4f6eca328c92962daf7d6d883b206b091a0bb018224b"
     }
   },

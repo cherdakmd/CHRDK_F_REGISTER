@@ -214,12 +214,10 @@ public final class VkBotRouter {
                 "сброспароля", "сменитьпароль", "восстановить", "recovery").contains(firstWord)) {
             return true;
         }
-        return lowerFull.contains("сброс парол")
-                || lowerFull.contains("сменить парол")
-                || lowerFull.contains("забыл парол")
-                || lowerFull.contains("восстановить парол")
+        return lowerFull.contains("парол")
                 || lowerFull.contains("reset pass")
-                || lowerFull.contains("change pass");
+                || lowerFull.contains("change pass")
+                || lowerFull.contains("forgot pass");
     }
 
     static boolean looksLikeOtpCode(String token) {

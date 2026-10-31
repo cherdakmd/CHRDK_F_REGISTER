@@ -291,7 +291,7 @@ public final class VkApiClient {
                 .replace('\r', ' ')
                 .replace('\n', ' ')
                 .replace('\u00a7', ' ')
-                .replaceAll("(?iu)([@*])(all|online|everyone|here|тут|все|всё)\\b", "$1\u200B$2")
+                .replaceAll("(?iuU)([@*])(all|online|everyone|here|тут|все|всё)(?![\\p{L}\\p{N}_])", "$1\u200B$2")
                 .replaceAll("\\s+", " ")
                 .trim();
         return cleaned.length() > 350 ? cleaned.substring(0, 350).trim() + "…" : cleaned;
