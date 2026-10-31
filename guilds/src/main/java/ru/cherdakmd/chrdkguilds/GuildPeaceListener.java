@@ -40,6 +40,10 @@ final class GuildPeaceListener implements Listener {
     @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true)
     public void launch(ProjectileLaunchEvent event) {if(enabled())mark(event.getEntity(),owner(event.getEntity(),0));}
     @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true)
+    public void placeCrystal(EntityPlaceEvent event) {
+        if(enabled()&&event.getEntity() instanceof EnderCrystal&&event.getPlayer()!=null&&plugin.authenticated(event.getPlayer()))mark(event.getEntity(),event.getPlayer().getUniqueId());
+    }
+    @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true)
     public void primeCrystal(EntityDamageByEntityEvent event) {
         if(enabled()&&event.getEntity() instanceof EnderCrystal)mark(event.getEntity(),owner(event.getDamager(),0));
     }

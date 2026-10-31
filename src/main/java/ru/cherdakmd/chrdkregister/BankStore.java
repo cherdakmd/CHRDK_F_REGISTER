@@ -176,10 +176,10 @@ public final class BankStore {
         for(var pending:cashPending.values()) if(pending.shop()!=null&&pending.shop().market().equals(t.market())) return pending.shop().equals(t)?ShopExchange.Status.PREPARED:ShopExchange.Status.CONFLICT;
         if(t.sequence()!=(old==null?1:old.sequence()+1)) return ShopExchange.Status.CONFLICT;
         if(t.carriesRemainder() && !t.remainderBefore().equals(shopSaleRemainder(t.owner()))) return ShopExchange.Status.CONFLICT;
-        return cashLocked(t.owner()) || spendableBalance(t.owner())<t.debit()?ShopExchange.Status.UNAVAILABLE:ShopExchange.Status.MISSING;
+        return cashLocked(t.owner())?ShopExchange.Status.UNAVAILABLE:ShopExchange.Status.MISSING;
     }
     synchronized boolean prepareShop(ShopExchange t,String name) {
-        if(shopStatus(t)!=ShopExchange.Status.MISSING||!t.fits(balance(t.owner()))) return false;
+        if(shopStatus(t)!=ShopExchange.Status.MISSING||!t.fits(balance(t.owner()))||spendableBalance(t.owner())<t.debit()) return false;
         var receipt=cashReceipts.get(t.owner());
         var intent=new BankCash.Intent(t.transaction(),t.owner(),receipt==null?1:receipt.sequence()+1,BankCash.Kind.SHOP,t.money(),balance(t.owner()),1,-1,t.money(),t.before(),t.after(),t);
         if(!intent.valid()) return false;
@@ -742,7 +742,7 @@ public final class BankStore {
     /** Расход и банковская сдача одним файлом с high-water квитанцией. */
     public synchronized boolean settleCharge(BankCharge payment) { return settleCharge(payment, false); }
     synchronized boolean settleCharge(BankCharge payment, boolean collectingDebt) {
-        if (collectingDebt && (payment == null || !payment.source().equals("guilds") || payment.cash()!=0 || payment.change()!=0)) return false;
+        if (collectingDebt && (payment == null || !"guilds".equals(payment.source()) || payment.cash()!=0 || payment.change()!=0)) return false;
         var status = bankChargeStatus(payment);
         if (status == BankCharge.Status.COMMITTED) return true;
         if (status != BankCharge.Status.MISSING) return false;

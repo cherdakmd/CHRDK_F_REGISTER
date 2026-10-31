@@ -28,9 +28,9 @@ final class GuildPeaceController {
     boolean attack(UUID attacker,UUID victim,boolean launchedPeaceful,boolean penalize,long now) {
         if(attacker==null || victim==null || attacker.equals(victim))return false;
         boolean protectedVictim=protects(victim,now);
-        boolean outgoing=peaceful(attacker)||launchedPeaceful;
-        if(protectedVictim || outgoing) {
-            if(!outgoing && protectedVictim && penalize) {
+        GuildPvpDecision decision=GuildPvpDecision.decide(false,peaceful(attacker),launchedPeaceful,protectedVictim,penalize);
+        if(decision!=GuildPvpDecision.ALLOW) {
+            if(decision==GuildPvpDecision.BLOCK_AND_FINE) {
                 combat.mark(attacker,now);
                 GuildResult result=plugin.store().transaction(copy->new GuildPeaceService(copy).fine(attacker,now),GuildResult.fail("finance-paused"));
                 if(result.ok()) {

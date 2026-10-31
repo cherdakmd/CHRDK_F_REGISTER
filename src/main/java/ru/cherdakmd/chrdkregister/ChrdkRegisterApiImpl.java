@@ -160,6 +160,9 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
     @Override public boolean commitGuildBankCharge(ru.cherdakmd.chrdkregister.api.BankCharge payment, boolean collectingDebt) {
         if (!auctionBankReady() || payment == null || !payment.valid() || !payment.source().equals("guilds")
                 || payment.cash()!=0 || payment.change()!=0 || payment.price()!=payment.debit() || !bank.knows(payment.payer())) return false;
+        String empty=ru.cherdakmd.chrdkregister.api.ChargeInventory.encode(new org.bukkit.inventory.ItemStack[36]);
+        if(!payment.inventoryHash().equals(ru.cherdakmd.chrdkregister.api.AuctionPayment.hash(empty,empty)))return false;
+        if(collectingDebt&&bank.reservedDebt(payment.payer())<payment.debit())return false;
         return bank.settleCharge(payment, collectingDebt);
     }
     @Override public boolean personalBankAvailable() { return auctionBankReady(); }
