@@ -140,5 +140,30 @@ class VkApiClientTest {
                 "{\"text\":\"Привет [id77|Алекс] <red>!\",\"attachments\":[{\"type\":\"photo\"},{\"type\":\"sticker\"}]}")
                 .getAsJsonObject();
         assertEquals("Привет Алекс ‹red›! [фото] [стикер]", VkApiClient.extractGroupChatText(vkMsg, 200));
+
+        // Ответ на реплику из игры [MC] Steve: ... автоматически превращается в ↪ @Steve ...
+        var replyToMc = JsonParser.parseString(
+                "{\"text\":\"Бегу на спавн!\",\"reply_message\":{\"from_id\":-123,\"text\":\"[MC] Steve: Кто на спавн?\"}}")
+                .getAsJsonObject();
+        assertEquals("↪ @Steve Бегу на спавн!",
+                VkApiClient.extractGroupChatText(replyToMc, 200, vkId -> null));
+
+        // Ответ привязанному участнику беседы ВК также проставляет ↪ @Alex ...
+        var replyToLinkedVk = JsonParser.parseString(
+                "{\"text\":\"Согласен\",\"reply_message\":{\"from_id\":505,\"text\":\"Го в шахту\"}}")
+                .getAsJsonObject();
+        assertEquals("↪ @Alex Согласен",
+                VkApiClient.extractGroupChatText(replyToLinkedVk, 200, vkId -> vkId == 505L ? "Alex" : null));
+
+        // Раскрытие @Ник привязанных игроков в нативный пинг [id...|@Ник] с сохранением анти-масспинга
+        String formattedToVk = VkApiClient.formatMinecraftToVkLine(
+                "[MC] {player}: {message}",
+                "Steve",
+                "Привет @Alex, передай @Unlinked и @все!",
+                nick -> "Alex".equalsIgnoreCase(nick)
+                        ? java.util.OptionalLong.of(505L)
+                        : java.util.OptionalLong.empty()
+        );
+        assertEquals("[MC] Steve: Привет [id505|@Alex], передай @Unlinked и @\u200Bвсе!", formattedToVk);
     }
 }

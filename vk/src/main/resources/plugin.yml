@@ -7,13 +7,13 @@ depend:
 description: "Интеграция с группой ВКонтакте: привязка аккаунта, защита сессий, VK Donut и новости стены"
 commands:
   vk:
-    aliases: [vkontakte]
-    description: "Привязка аккаунта к боту группы ВКонтакте и настройка уведомлений"
-    usage: "/<command> [link|unlink|status|notify]"
+    aliases: [vkontakte, вк]
+    description: "Интерактивное меню, привязка аккаунта, мост беседы ВКонтакте и уведомления"
+    usage: "/<command> [menu|status|link|notify|chat|mentions|unlink]"
     permission: chrdkvk.use
   vkadmin:
-    description: "Администрирование интеграции ВКонтакте"
-    usage: "/<command> [status|lookup <ник>|unlink <ник>|sync|reload]"
+    description: "Администрирование интеграции и беседы ВКонтакте"
+    usage: "/<command> [status|lookup|chatban|unlink|setchat|testchat|sync|reload]"
     permission: chrdkvk.admin
 permissions:
   chrdkvk.use:

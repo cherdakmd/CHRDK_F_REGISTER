@@ -141,7 +141,20 @@ class VkBotRouterTest {
                 "{\"type\":\"message_new\",\"object\":{\"message\":{\"peer_id\":2000000001,\"from_id\":-12345,\"text\":\"[MC] Steve: эхо\"}}}")
                 .getAsJsonObject(), 1000L);
 
-        // 5. Экстренные команды /выход, /заморозить, /разморозить в ЛС и события Donut/стены.
+        // 5. Экстренные команды /выход, /заморозить, /разморозить в ЛС, нажатие inline-кнопки с payload и /вики в беседе.
+        replies.clear();
+        router.handleUpdate(JsonParser.parseString(
+                "{\"type\":\"message_new\",\"object\":{\"message\":{\"peer_id\":77,\"from_id\":77,\"text\":\"🧊 Заморозить вход\",\"payload\":\"{\\\"cmd\\\":\\\"freeze\\\"}\"}}}")
+                .getAsJsonObject(), 1000L);
+        assertEquals(List.of("77->FROZEN"), replies);
+
+        replies.clear();
+        router.handleUpdate(JsonParser.parseString(
+                "{\"type\":\"message_new\",\"object\":{\"message\":{\"peer_id\":2000000001,\"from_id\":77,\"text\":\"/вики\"}}}")
+                .getAsJsonObject(), 1000L);
+        assertEquals(1, replies.size());
+        assertTrue(replies.getFirst().contains("https://cherdakmd.github.io/CHRDK_F_REGISTER/"));
+
         assertEquals("LOGOUT_OK", router.dispatchDirectCommand(77L, "/выход", 1000L));
         assertEquals("FROZEN", router.dispatchDirectCommand(77L, "/заморозить", 1000L));
         assertEquals("UNFROZEN", router.dispatchDirectCommand(77L, "/разморозить", 1000L));

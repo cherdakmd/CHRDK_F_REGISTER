@@ -15,20 +15,25 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Хранилище привязок {@code CHRDK_VK} ({@code vk-links.json}):
  * связи игрок ↔ {@code vk_user_id}, статусы подписки и VK Donut,
- * реестры одноразовых XP-наград (защита от повторного фарма перепривязкой)
- * и курсор последней объявленной записи со стены группы.
+ * личные настройки моста чата, список блокировок моста и реестры одноразовых XP-наград.
  */
 public final class VkStore {
 
-    public static final int SCHEMA_VERSION = 1;
+    public static final int SCHEMA_VERSION = 2;
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+    private static final Pattern VK_ID_TOKEN = Pattern.compile(
+            "^(?:https?://(?:www\\.|m\\.)?vk\\.(?:com|ru)/)?(?:@?id)?(\\d{1,18})/?$",
+            Pattern.CASE_INSENSITIVE);
 
     public enum LinkStatus {
         LINKED,
@@ -45,7 +50,8 @@ public final class VkStore {
             boolean member,
             boolean donut,
             long donutVerifiedAt,
-            boolean notifyLogins
+            boolean notifyLogins,
+            boolean allowVkChatMentions
     ) {
     }
 
@@ -57,6 +63,7 @@ public final class VkStore {
         boolean donut;
         long donutVerifiedAt;
         boolean notifyLogins = true;
+        Boolean allowVkChatMentions = Boolean.TRUE;
     }
 
     private static final class StoreDocument {
@@ -64,6 +71,8 @@ public final class VkStore {
         long lastAnnouncedPostId;
         long groupChatPeerId;
         Map<String, StoredLink> links = new LinkedHashMap<>();
+        Set<String> hiddenGroupChatPlayers = new LinkedHashSet<>();
+        Set<Long> bannedChatVkIds = new LinkedHashSet<>();
         Set<String> linkBoostClaimedPlayers = new LinkedHashSet<>();
         Set<Long> linkBoostClaimedVkIds = new LinkedHashSet<>();
         Set<String> memberBoostClaimedPlayers = new LinkedHashSet<>();
@@ -96,10 +105,13 @@ public final class VkStore {
                 loaded = new StoreDocument();
             }
             if (loaded.links == null) loaded.links = new LinkedHashMap<>();
+            if (loaded.hiddenGroupChatPlayers == null) loaded.hiddenGroupChatPlayers = new LinkedHashSet<>();
+            if (loaded.bannedChatVkIds == null) loaded.bannedChatVkIds = new LinkedHashSet<>();
             if (loaded.linkBoostClaimedPlayers == null) loaded.linkBoostClaimedPlayers = new LinkedHashSet<>();
             if (loaded.linkBoostClaimedVkIds == null) loaded.linkBoostClaimedVkIds = new LinkedHashSet<>();
             if (loaded.memberBoostClaimedPlayers == null) loaded.memberBoostClaimedPlayers = new LinkedHashSet<>();
             if (loaded.memberBoostClaimedVkIds == null) loaded.memberBoostClaimedVkIds = new LinkedHashSet<>();
+            loaded.version = SCHEMA_VERSION;
             this.doc = loaded;
             this.dirty = false;
         } catch (Exception exception) {
@@ -262,6 +274,77 @@ public final class VkStore {
         return Optional.of(link.notifyLogins);
     }
 
+    public synchronized Optional<Boolean> toggleVkChatMentions(String playerName) {
+        StoredLink link = doc.links.get(canonical(playerName));
+        if (link == null) {
+            return Optional.empty();
+        }
+        boolean current = link.allowVkChatMentions == null || link.allowVkChatMentions;
+        link.allowVkChatMentions = !current;
+        dirty = true;
+        return Optional.of(link.allowVkChatMentions);
+    }
+
+    public synchronized boolean receivesGroupChat(String playerName) {
+        String key = canonical(playerName);
+        return key.isEmpty() || !doc.hiddenGroupChatPlayers.contains(key);
+    }
+
+    public synchronized boolean toggleReceiveGroupChat(String playerName) {
+        String key = canonical(playerName);
+        if (key.isEmpty()) {
+            return true;
+        }
+        boolean nowReceiving;
+        if (doc.hiddenGroupChatPlayers.remove(key)) {
+            nowReceiving = true;
+        } else {
+            doc.hiddenGroupChatPlayers.add(key);
+            nowReceiving = false;
+        }
+        dirty = true;
+        return nowReceiving;
+    }
+
+    public synchronized boolean isVkUserChatBanned(long vkUserId) {
+        return vkUserId > 0L && doc.bannedChatVkIds.contains(vkUserId);
+    }
+
+    public synchronized boolean setVkUserChatBanned(long vkUserId, boolean banned) {
+        if (vkUserId <= 0L) {
+            return false;
+        }
+        boolean changed = banned ? doc.bannedChatVkIds.add(vkUserId) : doc.bannedChatVkIds.remove(vkUserId);
+        if (changed) {
+            dirty = true;
+        }
+        return changed;
+    }
+
+    public synchronized int bannedChatVkCount() {
+        return doc.bannedChatVkIds.size();
+    }
+
+    /**
+     * Разбирает токен профиля ВК вида {@code 12345}, {@code id12345}, {@code @id12345}
+     * или {@code https://vk.com/id12345} (без обращения к сети).
+     */
+    public static OptionalLong parseVkUserIdToken(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return OptionalLong.empty();
+        }
+        Matcher m = VK_ID_TOKEN.matcher(raw.trim());
+        if (!m.matches()) {
+            return OptionalLong.empty();
+        }
+        try {
+            long value = Long.parseLong(m.group(1));
+            return value > 0L ? OptionalLong.of(value) : OptionalLong.empty();
+        } catch (NumberFormatException overflow) {
+            return OptionalLong.empty();
+        }
+    }
+
     public synchronized boolean updateMemberStatus(long vkUserId, boolean member) {
         boolean changed = false;
         for (StoredLink link : doc.links.values()) {
@@ -361,7 +444,8 @@ public final class VkStore {
                 stored.member,
                 stored.donut,
                 stored.donutVerifiedAt,
-                stored.notifyLogins
+                stored.notifyLogins,
+                stored.allowVkChatMentions == null || stored.allowVkChatMentions
         );
     }
 }

@@ -18,8 +18,12 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Function;
+import java.util.function.LongFunction;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -33,6 +37,12 @@ public final class VkApiClient {
 
     /** Разметка ссылок ВКонтакте вида {@code [id123|Имя]} или {@code [club123|Группа]}. */
     private static final Pattern VK_WIKI_LINK = Pattern.compile("\\[(?:id|club|public)\\d+\\|([^\\]]+)]");
+    /** Распознавание реплики игрового моста при ответе в беседе ВК: {@code [MC] Steve: текст}. */
+    private static final Pattern BRIDGED_MC_LINE =
+            Pattern.compile("^(?:\\[[^\\]]{1,16}]\\s*)?([A-Za-z0-9_]{1,16}):\\s");
+    /** Упоминание игрового ника {@code @Player_Name}. */
+    private static final Pattern PLAYER_MENTION =
+            Pattern.compile("(?<![\\p{L}\\p{N}_])@([A-Za-z0-9_]{1,16})(?![\\p{L}\\p{N}_])");
 
     public interface Transport {
         String postForm(URI uri, String formBody, Duration timeout) throws IOException, InterruptedException;
@@ -156,6 +166,12 @@ public final class VkApiClient {
 
     /** Отправляет текстовое сообщение пользователю или в беседу ({@code messages.send}). */
     public boolean sendMessage(long peerId, String text) throws IOException, InterruptedException {
+        return sendMessage(peerId, text, null);
+    }
+
+    /** Отправляет текстовое сообщение с опциональной JSON-клавиатурой бота ({@code keyboard}). */
+    public boolean sendMessage(long peerId, String text, String keyboardJson)
+            throws IOException, InterruptedException {
         if (peerId <= 0L || text == null || text.isBlank()) {
             return false;
         }
@@ -165,6 +181,9 @@ public final class VkApiClient {
         params.put("random_id", Long.toString(ThreadLocalRandom.current().nextLong(1L, Long.MAX_VALUE)));
         params.put("message", cropped);
         params.put("dont_parse_links", "1");
+        if (keyboardJson != null && !keyboardJson.isBlank()) {
+            params.put("keyboard", keyboardJson);
+        }
         callMethod("messages.send", params);
         return true;
     }
@@ -298,10 +317,55 @@ public final class VkApiClient {
     }
 
     /**
+     * Форматирует сообщение глобального чата игры для беседы ВК с защитой от массовых пингов
+     * и опциональным раскрытием до двух упоминаний привязанных игроков в нативный тег {@code [id...|@Ник]}.
+     */
+    public static String formatMinecraftToVkLine(String template, String playerName, String plainMessage,
+                                                 Function<String, OptionalLong> mentionableVkLookup) {
+        String safePlayer = sanitizeForVkChat(playerName);
+        String safeMessage = sanitizeForVkChat(plainMessage);
+        if (safePlayer.isEmpty() || safeMessage.isEmpty()) {
+            return "";
+        }
+        if (mentionableVkLookup != null && safeMessage.indexOf('@') >= 0) {
+            Matcher matcher = PLAYER_MENTION.matcher(safeMessage);
+            StringBuilder resolved = new StringBuilder();
+            int resolvedCount = 0;
+            while (matcher.find()) {
+                String candidate = matcher.group(1);
+                if (resolvedCount < 2) {
+                    OptionalLong vkId = mentionableVkLookup.apply(candidate);
+                    if (vkId != null && vkId.isPresent() && vkId.getAsLong() > 0L) {
+                        matcher.appendReplacement(resolved,
+                                Matcher.quoteReplacement("[id" + vkId.getAsLong() + "|@" + candidate + "]"));
+                        resolvedCount++;
+                        continue;
+                    }
+                }
+                matcher.appendReplacement(resolved, Matcher.quoteReplacement(matcher.group()));
+            }
+            matcher.appendTail(resolved);
+            safeMessage = resolved.toString();
+        }
+        String fmt = template == null || template.isBlank() ? "[MC] {player}: {message}" : template;
+        return fmt.replace("{player}", safePlayer).replace("{message}", safeMessage);
+    }
+
+    /**
      * Извлекает безопасный однострочный текст сообщения из беседы ВК для отправки в игровой чат,
      * раскрывая {@code [id123|Имя]} и добавляя краткие пометки вложений ({@code [фото]}, {@code [стикер]} и т.д.).
      */
     public static String extractGroupChatText(JsonObject message, int maxLength) {
+        return extractGroupChatText(message, maxLength, null);
+    }
+
+    /**
+     * Перегрузка {@link #extractGroupChatText(JsonObject, int)} с определением адресата ответа ({@code reply_message}):
+     * если в беседе ВК ответили на реплику игрока {@code [MC] Steve: ...} или другого привязанного игрока,
+     * автоматически подставляется {@code ↪ @Steve }, что подсвечивает обращение и уведомляет адресата в игре.
+     */
+    public static String extractGroupChatText(JsonObject message, int maxLength,
+                                              LongFunction<String> vkUserToPlayerLookup) {
         if (message == null) {
             return "";
         }
@@ -312,6 +376,8 @@ public final class VkApiClient {
                 .replace('\u00a7', ' ')
                 .replaceAll("\\s+", " ")
                 .trim();
+
+        String replyPrefix = resolveReplyPrefix(message, vkUserToPlayerLookup);
 
         List<String> markers = new ArrayList<>(3);
         if (message.has("attachments") && message.get("attachments").isJsonArray()) {
@@ -333,7 +399,8 @@ public final class VkApiClient {
                 }
             }
         }
-        if (message.has("reply_message") && message.get("reply_message").isJsonObject() && markers.size() < 3) {
+        if (replyPrefix.isEmpty() && message.has("reply_message")
+                && message.get("reply_message").isJsonObject() && markers.size() < 3) {
             markers.add("[ответ]");
         }
 
@@ -345,12 +412,42 @@ public final class VkApiClient {
         } else {
             combined = cleaned + " " + String.join(" ", markers);
         }
-        combined = combined.trim();
+        combined = (replyPrefix + combined).trim();
         if (combined.isEmpty()) {
             return "";
         }
         int limit = Math.clamp(maxLength, 40, 400);
         return combined.length() <= limit ? combined : combined.substring(0, limit - 1).trim() + "…";
+    }
+
+    private static String resolveReplyPrefix(JsonObject message, LongFunction<String> vkUserToPlayerLookup) {
+        JsonObject reply = null;
+        if (message.has("reply_message") && message.get("reply_message").isJsonObject()) {
+            reply = message.getAsJsonObject("reply_message");
+        } else if (message.has("fwd_messages") && message.get("fwd_messages").isJsonArray()
+                && !message.getAsJsonArray("fwd_messages").isEmpty()
+                && message.getAsJsonArray("fwd_messages").get(0).isJsonObject()) {
+            reply = message.getAsJsonArray("fwd_messages").get(0).getAsJsonObject();
+        }
+        if (reply == null) {
+            return "";
+        }
+        long replyFrom = reply.has("from_id") && !reply.get("from_id").isJsonNull()
+                ? reply.get("from_id").getAsLong() : 0L;
+        if (replyFrom <= 0L) {
+            String repliedText = stringOrEmpty(reply, "text");
+            // В склеенном сообщении из нескольких строк берём первую строку или ищем ник.
+            Matcher m = BRIDGED_MC_LINE.matcher(repliedText);
+            if (m.find()) {
+                return "↪ @" + m.group(1) + " ";
+            }
+        } else if (vkUserToPlayerLookup != null) {
+            String linkedTarget = vkUserToPlayerLookup.apply(replyFrom);
+            if (linkedTarget != null && !linkedTarget.isBlank()) {
+                return "↪ @" + linkedTarget.trim() + " ";
+            }
+        }
+        return "";
     }
 
     /**

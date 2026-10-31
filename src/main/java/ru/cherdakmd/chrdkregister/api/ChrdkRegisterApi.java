@@ -508,6 +508,16 @@ public interface ChrdkRegisterApi {
         return false;
     }
 
+    /**
+     * Перегрузка {@link #deliverExternalGlobalChat(String, String, String, String, String)}
+     * с дополнительным фильтром получателей по нику (например, личное скрытие моста чата {@code /vk chat}) (API v32).
+     */
+    default boolean deliverExternalGlobalChat(String sourceId, String badgeMini, String linkedPlayer,
+                                              String fallbackSender, String rawMessage,
+                                              java.util.function.Predicate<String> recipientFilter) {
+        return deliverExternalGlobalChat(sourceId, badgeMini, linkedPlayer, fallbackSender, rawMessage);
+    }
+
     /* ------------------------------ интеграции ------------------------------ */
 
     /**

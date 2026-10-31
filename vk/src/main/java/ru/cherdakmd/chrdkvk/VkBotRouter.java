@@ -21,6 +21,11 @@ public final class VkBotRouter {
 
         String formatServerOnline();
 
+        default String formatWikiLinks() {
+            return "📖 Полевой справочник сервера: " + VkConfig.DEFAULT_WIKI_URL
+                    + "\n💬 Сообщество ВКонтакте: " + VkConfig.DEFAULT_COMMUNITY_URL;
+        }
+
         String formatAccountProfile(long vkUserId, long nowMillis);
 
         String handleRemoteLogout(long vkUserId);
@@ -32,6 +37,10 @@ public final class VkBotRouter {
         String handleUnlinkFromVk(long vkUserId);
 
         void sendDirectReply(long peerId, String text);
+
+        default void sendDirectReplyWithMenu(long peerId, String text) {
+            sendDirectReply(peerId, text);
+        }
 
         void onGroupJoin(long vkUserId, long nowMillis);
 
@@ -48,7 +57,7 @@ public final class VkBotRouter {
             return 0L;
         }
 
-        /** Разрешены ли справочные команды ({@code /онлайн}, {@code /chatid}) внутри беседы ВК. */
+        /** Разрешены ли справочные команды ({@code /онлайн}, {@code /вики}, {@code /chatid}) внутри беседы ВК. */
         default boolean groupChatInfoCommandsEnabled() {
             return true;
         }
@@ -122,18 +131,23 @@ public final class VkBotRouter {
         }
 
         // 2. Личный диалог пользователя с группой (peer_id == from_id):
-        // коды привязки и защитные команды (/выход, /заморозить) работают СТРОГО здесь.
+        // коды привязки, кнопки самозащиты и команды (/выход, /заморозить) работают СТРОГО здесь.
         if (peerId != fromId) {
             return;
         }
-        String rawText = message.has("text") && !message.get("text").isJsonNull()
-                ? message.get("text").getAsString().trim() : "";
+        String payloadRaw = message.has("payload") && !message.get("payload").isJsonNull()
+                ? message.get("payload").getAsString() : "";
+        String payloadCmd = VkKeyboards.extractCommandFromPayload(payloadRaw);
+        String rawText = !payloadCmd.isEmpty()
+                ? payloadCmd
+                : (message.has("text") && !message.get("text").isJsonNull()
+                ? message.get("text").getAsString().trim() : "");
         if (rawText.isEmpty()) {
             return;
         }
         String reply = dispatchDirectCommand(fromId, rawText, nowMillis);
         if (reply != null && !reply.isBlank()) {
-            backend.sendDirectReply(peerId, reply);
+            backend.sendDirectReplyWithMenu(peerId, reply);
         }
     }
 
@@ -150,14 +164,22 @@ public final class VkBotRouter {
                             + "\nЧтобы подключить мост глобального чата на сервере: /vkadmin setchat " + peerId);
                     return;
                 }
-                if (peerId == backend.activeGroupChatPeerId()
-                        && (cmd.equals("онлайн") || cmd.equals("online") || cmd.equals("сервер")
-                        || cmd.equals("кто") || cmd.equals("list"))) {
-                    String online = backend.formatServerOnline();
-                    if (online != null && !online.isBlank()) {
-                        backend.sendDirectReply(peerId, online);
+                if (peerId == backend.activeGroupChatPeerId()) {
+                    if (cmd.equals("онлайн") || cmd.equals("online") || cmd.equals("сервер")
+                            || cmd.equals("кто") || cmd.equals("list")) {
+                        String online = backend.formatServerOnline();
+                        if (online != null && !online.isBlank()) {
+                            backend.sendDirectReply(peerId, online);
+                        }
+                        return;
                     }
-                    return;
+                    if (cmd.equals("вики") || cmd.equals("wiki") || cmd.equals("гайд") || cmd.equals("сайт")) {
+                        String wiki = backend.formatWikiLinks();
+                        if (wiki != null && !wiki.isBlank()) {
+                            backend.sendDirectReply(peerId, wiki);
+                        }
+                        return;
+                    }
                 }
             }
             // Любые слэш-команды (например, ошибочно введённые /выход или /привязать)
@@ -185,8 +207,9 @@ public final class VkBotRouter {
         }
 
         return switch (first) {
-            case "начать", "start", "помощь", "help", "команды" -> helpText();
+            case "начать", "start", "помощь", "help", "команды", "меню" -> helpText();
             case "онлайн", "online", "сервер" -> backend.formatServerOnline();
+            case "вики", "wiki", "гайд", "сайт" -> backend.formatWikiLinks();
             case "профиль", "profile", "статус", "status", "аккаунт" -> backend.formatAccountProfile(vkUserId, nowMillis);
             case "выход", "logout", "кик", "сессии" -> backend.handleRemoteLogout(vkUserId);
             case "заморозить", "freeze", "блок", "lock" -> backend.handleRemoteFreeze(vkUserId, true);
@@ -258,7 +281,8 @@ public final class VkBotRouter {
                 👋 Бот сообщества CHRDK:
                 • Привязка: введите /vk link в игре и пришлите полученный код сюда.
                 • /профиль — статус привязки, подписки и VK Donut
-                • /онлайн — текущий онлайн сервера
+                • /онлайн — текущий онлайн сервера и список игроков
+                • /вики — полевой справочник и ссылки сервера
                 • /уведомления — вкл/выкл уведомления о входах
                 • /выход — сбросить сохранённые сессии и кикнуть активный сеанс
                 • /заморозить — заблокировать вход в аккаунт

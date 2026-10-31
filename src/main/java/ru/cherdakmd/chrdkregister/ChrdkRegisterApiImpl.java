@@ -487,9 +487,16 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
     @Override
     public boolean deliverExternalGlobalChat(String sourceId, String badgeMini, String linkedPlayer,
                                              String fallbackSender, String rawMessage) {
+        return deliverExternalGlobalChat(sourceId, badgeMini, linkedPlayer, fallbackSender, rawMessage, null);
+    }
+
+    @Override
+    public boolean deliverExternalGlobalChat(String sourceId, String badgeMini, String linkedPlayer,
+                                             String fallbackSender, String rawMessage,
+                                             java.util.function.Predicate<String> recipientFilter) {
         return plugin != null && plugin.chatService() != null
                 && plugin.chatService().deliverExternalGlobalChat(
-                sourceId, badgeMini, linkedPlayer, fallbackSender, rawMessage);
+                sourceId, badgeMini, linkedPlayer, fallbackSender, rawMessage, recipientFilter);
     }
 
     @SuppressWarnings("unchecked")

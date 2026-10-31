@@ -34,6 +34,12 @@ class VkStoreTest {
 
         store.updateMemberStatus(100500L, true);
         store.updateDonutStatus(100500L, true, now);
+        assertTrue(store.receivesGroupChat("Steve"));
+        assertFalse(store.toggleReceiveGroupChat("STEVE"));
+        assertFalse(store.receivesGroupChat("steve"));
+        assertEquals(Boolean.FALSE, store.toggleVkChatMentions("Steve").orElseThrow());
+        assertTrue(store.setVkUserChatBanned(999888L, true));
+        assertTrue(store.isVkUserChatBanned(999888L));
         store.setGroupChatPeerId(99L);
         assertEquals(0L, store.groupChatPeerId());
         store.setGroupChatPeerId(2000000007L);
@@ -46,11 +52,21 @@ class VkStoreTest {
         assertEquals(1, reloaded.linkCount());
         assertEquals(42L, reloaded.lastAnnouncedPostId());
         assertEquals(2000000007L, reloaded.groupChatPeerId());
+        assertFalse(reloaded.receivesGroupChat("Steve"));
+        assertTrue(reloaded.isVkUserChatBanned(999888L));
         VkStore.LinkSnapshot snap = reloaded.byPlayer("steve").orElseThrow();
         assertEquals(100500L, snap.vkUserId());
         assertTrue(snap.member());
+        assertFalse(snap.allowVkChatMentions());
         assertTrue(reloaded.donutPerkActive("Steve", now + TimeUnit.HOURS.toMillis(24), 72));
         assertFalse(reloaded.donutPerkActive("Steve", now + TimeUnit.HOURS.toMillis(80), 72));
         assertFalse(reloaded.canClaimLinkBoost("Steve", 200600L));
+
+        assertEquals(12345L, VkStore.parseVkUserIdToken("12345").orElse(-1L));
+        assertEquals(12345L, VkStore.parseVkUserIdToken("id12345").orElse(-1L));
+        assertEquals(12345L, VkStore.parseVkUserIdToken("@id12345").orElse(-1L));
+        assertEquals(12345L, VkStore.parseVkUserIdToken("https://vk.com/id12345").orElse(-1L));
+        assertEquals(12345L, VkStore.parseVkUserIdToken("https://vk.ru/id12345/").orElse(-1L));
+        assertTrue(VkStore.parseVkUserIdToken("Steve").isEmpty());
     }
 }

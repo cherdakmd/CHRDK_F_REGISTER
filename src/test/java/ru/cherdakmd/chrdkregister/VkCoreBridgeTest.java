@@ -50,6 +50,9 @@ class VkCoreBridgeTest {
         assertTrue(ChrdkRegisterApi.class.getMethod("unregisterGlobalChatListener", String.class).isDefault());
         assertTrue(ChrdkRegisterApi.class.getMethod("deliverExternalGlobalChat",
                 String.class, String.class, String.class, String.class, String.class).isDefault());
+        assertTrue(ChrdkRegisterApi.class.getMethod("deliverExternalGlobalChat",
+                String.class, String.class, String.class, String.class, String.class,
+                java.util.function.Predicate.class).isDefault());
 
         for (var method : ChrdkRegisterApi.class.getMethods()) {
             String lower = method.getName().toLowerCase(java.util.Locale.ROOT);

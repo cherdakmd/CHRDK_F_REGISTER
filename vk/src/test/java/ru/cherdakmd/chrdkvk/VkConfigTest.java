@@ -28,6 +28,11 @@ class VkConfigTest {
         assertTrue(cfg.groupChatEnabled());
         assertEquals(0L, cfg.groupChatPeerId());
         assertTrue(cfg.groupChatRequireLinked());
+        assertTrue(cfg.keyboardsEnabled());
+        assertTrue(cfg.inlineSecurityButtons());
+        assertTrue(cfg.groupChatResolveMentions());
+        assertEquals(500, cfg.groupChatBatchWindowMs());
+        assertEquals(VkConfig.DEFAULT_WIKI_URL, cfg.wikiUrl());
     }
 
     @Test

@@ -44,6 +44,9 @@ public final class VkPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(this.service, this);
 
         VkCommandHandler handler = new VkCommandHandler(this, service);
+        VkMenuGui menuGui = new VkMenuGui(this, service, handler);
+        handler.attachGui(menuGui);
+        getServer().getPluginManager().registerEvents(menuGui, this);
         for (String cmd : List.of("vk", "vkadmin")) {
             PluginCommand pluginCommand = getCommand(cmd);
             if (pluginCommand != null) {

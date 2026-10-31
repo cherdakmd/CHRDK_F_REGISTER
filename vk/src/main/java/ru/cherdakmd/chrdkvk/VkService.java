@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -65,6 +66,7 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
 
     private volatile VkApiClient apiClient;
     private volatile VkLongPollWorker longPollWorker;
+    private volatile VkChatBatcher chatBatcher;
     private volatile ServerPulse serverPulse = new ServerPulse(0, 0, 20.0, List.of());
     private BukkitTask pulseTask;
     private BukkitTask syncTask;
@@ -119,6 +121,8 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
         }
         VkApiClient client = new VkApiClient(cfg);
         this.apiClient = client;
+        this.chatBatcher = new VkChatBatcher(
+                cfg.groupChatBatchWindowMs(), 5, 1_500, (peer, batchText) -> sendAsync(peer, batchText, null));
 
         if (cfg.longPollEnabled()) {
             VkLongPollWorker worker = new VkLongPollWorker(
@@ -170,6 +174,11 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
         if (wallTask != null) {
             wallTask.cancel();
             wallTask = null;
+        }
+        VkChatBatcher batcher = this.chatBatcher;
+        this.chatBatcher = null;
+        if (batcher != null) {
+            batcher.close();
         }
         VkLongPollWorker worker = this.longPollWorker;
         this.longPollWorker = null;
@@ -309,16 +318,16 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
         if (context == null || !plugin.config().enabled()) {
             return null;
         }
-        Messages msg = plugin.messages();
+        Messages messages = plugin.messages();
         Optional<VkStore.LinkSnapshot> opt = store.byPlayer(context.playerName());
         if (opt.isEmpty()) {
             if (!context.self()) {
                 return null;
             }
             return new ChrdkRegisterApi.ProfileSection(
-                    msg.raw("vk.profile-title"),
+                    messages.raw("vk.profile-title"),
                     Material.LAPIS_LAZULI,
-                    List.of(msg.get("vk.profile-unlinked"))
+                    List.of(messages.get("vk.profile-unlinked"))
             );
         }
         VkStore.LinkSnapshot link = opt.get();
@@ -326,14 +335,14 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
                 context.playerName(), System.currentTimeMillis(), plugin.config().donutGraceHours());
         List<Component> lines = new ArrayList<>(2);
         if (context.self()) {
-            lines.add(msg.get("vk.profile-linked",
+            lines.add(messages.get("vk.profile-linked",
                     "vk_id", Long.toString(link.vkUserId()),
-                    "member", link.member() ? msg.mini("vk.state-yes") : msg.mini("vk.state-no")));
+                    "member", link.member() ? messages.mini("vk.state-yes") : messages.mini("vk.state-no")));
         }
-        lines.add(msg.get("vk.profile-donut",
-                "donut", donutActive ? msg.mini("vk.state-yes") : msg.mini("vk.state-no")));
+        lines.add(messages.get("vk.profile-donut",
+                "donut", donutActive ? messages.mini("vk.state-yes") : messages.mini("vk.state-no")));
         return new ChrdkRegisterApi.ProfileSection(
-                msg.raw("vk.profile-title"),
+                messages.raw("vk.profile-title"),
                 Material.LAPIS_LAZULI,
                 lines
         );
@@ -356,8 +365,9 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
                     + "Игрок: " + link.playerName() + "\n"
                     + "Способ: " + mode + "\n"
                     + "IP: " + (maskedIp == null || maskedIp.isBlank() ? "скрыт" : maskedIp) + "\n"
-                    + "Если это были не вы — немедленно отправьте /заморозить.";
-            sendAsync(link.vkUserId(), text);
+                    + "Если это были не вы — нажмите «Заморозить вход» ниже или отправьте /заморозить.";
+            String inlineKb = cfg.inlineSecurityButtons() ? VkKeyboards.securityAlertInlineKeyboard() : null;
+            sendAsync(link.vkUserId(), text, inlineKb);
         });
     }
 
@@ -373,8 +383,9 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
                     + "Неудачных попыток: " + failures + "\n"
                     + "IP: " + (maskedIp == null || maskedIp.isBlank() ? "скрыт" : maskedIp) + "\n"
                     + status + "\n"
-                    + "Вы можете временно заблокировать вход командой /заморозить.";
-            sendAsync(link.vkUserId(), text);
+                    + "Вы можете временно заблокировать вход кнопкой ниже или командой /заморозить.";
+            String inlineKb = cfg.inlineSecurityButtons() ? VkKeyboards.securityAlertInlineKeyboard() : null;
+            sendAsync(link.vkUserId(), text, inlineKb);
         });
     }
 
@@ -463,6 +474,13 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
     }
 
     @Override
+    public String formatWikiLinks() {
+        VkConfig cfg = plugin.config();
+        return "📖 Полевой справочник CHRDK: " + cfg.wikiUrl()
+                + "\n💬 Сообщество ВКонтакте: " + cfg.communityUrl();
+    }
+
+    @Override
     public long activeGroupChatPeerId() {
         VkConfig cfg = plugin.config();
         if (!cfg.enabled() || !cfg.groupChatEnabled()) {
@@ -484,7 +502,7 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
         if (api == null || !cfg.enabled() || !cfg.groupChatEnabled() || !cfg.groupChatVkToMc()) {
             return;
         }
-        if (peerId != effectiveGroupChatPeerId()) {
+        if (peerId != effectiveGroupChatPeerId() || store.isVkUserChatBanned(fromUserId)) {
             return;
         }
 
@@ -502,14 +520,18 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
             return;
         }
 
-        String text = VkApiClient.extractGroupChatText(message, cfg.groupChatMaxLength());
+        String text = VkApiClient.extractGroupChatText(message, cfg.groupChatMaxLength(), replyVkId -> {
+            List<VkStore.LinkSnapshot> targetLinks = store.byVkUser(replyVkId);
+            return targetLinks.isEmpty() ? null : targetLinks.getFirst().playerName();
+        });
         if (text.isEmpty()) {
             return;
         }
 
         String linkedPlayer = links.isEmpty() ? null : links.getFirst().playerName();
         String fallbackSender = linkedPlayer != null ? linkedPlayer : resolveVkDisplayName(fromUserId, nowMillis);
-        api.deliverExternalGlobalChat(PROVIDER_ID, cfg.groupChatMcBadge(), linkedPlayer, fallbackSender, text);
+        api.deliverExternalGlobalChat(
+                PROVIDER_ID, cfg.groupChatMcBadge(), linkedPlayer, fallbackSender, text, store::receivesGroupChat);
     }
 
     private void onMinecraftGlobalChat(String playerName, String plainMessage) {
@@ -521,15 +543,26 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
         if (peerId < VkConfig.MIN_CONVERSATION_PEER_ID) {
             return;
         }
-        String safePlayer = VkApiClient.sanitizeForVkChat(playerName);
-        String safeMessage = VkApiClient.sanitizeForVkChat(plainMessage);
-        if (safePlayer.isEmpty() || safeMessage.isEmpty()) {
+        String formatted = VkApiClient.formatMinecraftToVkLine(
+                cfg.groupChatVkFormat(),
+                playerName,
+                plainMessage,
+                cfg.groupChatResolveMentions()
+                        ? candidate -> store.byPlayer(candidate)
+                        .filter(VkStore.LinkSnapshot::allowVkChatMentions)
+                        .map(l -> OptionalLong.of(l.vkUserId()))
+                        .orElse(OptionalLong.empty())
+                        : null
+        );
+        if (formatted.isEmpty()) {
             return;
         }
-        String formatted = cfg.groupChatVkFormat()
-                .replace("{player}", safePlayer)
-                .replace("{message}", safeMessage);
-        sendAsync(peerId, formatted);
+        VkChatBatcher batcher = this.chatBatcher;
+        if (batcher != null) {
+            batcher.enqueue(peerId, formatted);
+        } else {
+            sendAsync(peerId, formatted);
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -694,7 +727,14 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
 
     @Override
     public void sendDirectReply(long peerId, String text) {
-        sendAsync(peerId, text);
+        sendAsync(peerId, text, null);
+    }
+
+    @Override
+    public void sendDirectReplyWithMenu(long peerId, String text) {
+        String kb = plugin.config().keyboardsEnabled() && peerId < VkConfig.MIN_CONVERSATION_PEER_ID
+                ? VkKeyboards.directMenuKeyboard() : null;
+        sendAsync(peerId, text, kb);
     }
 
     @Override
@@ -742,7 +782,13 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
             Component line = plugin.messages().get("vk.wall-broadcast",
                     "preview", preview,
                     "post_url", postUrl);
-            Bukkit.getServer().broadcast(line);
+            ChrdkRegisterApi api = plugin.coreApi();
+            for (Player online : Bukkit.getOnlinePlayers()) {
+                if (api != null && !api.isAuthenticated(online)) continue;
+                if (!store.receivesGroupChat(online.getName())) continue;
+                online.sendMessage(line);
+            }
+            Bukkit.getConsoleSender().sendMessage(line);
         };
         if (Bukkit.isPrimaryThread()) {
             broadcastTask.run();
@@ -923,13 +969,17 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
     }
 
     private void sendAsync(long peerId, String text) {
+        sendAsync(peerId, text, null);
+    }
+
+    private void sendAsync(long peerId, String text, String keyboardJson) {
         VkApiClient client = this.apiClient;
         if (client == null || peerId <= 0L || text == null || text.isBlank()) {
             return;
         }
         outboundExecutor.execute(() -> {
             try {
-                client.sendMessage(peerId, text);
+                client.sendMessage(peerId, text, keyboardJson);
             } catch (InterruptedException interrupted) {
                 Thread.currentThread().interrupt();
             } catch (Exception exception) {

@@ -570,6 +570,12 @@ public final class ChatService implements Listener {
      */
     public boolean deliverExternalGlobalChat(String sourceId, String badgeMini, String linkedPlayer,
                                              String fallbackSender, String rawMessage) {
+        return deliverExternalGlobalChat(sourceId, badgeMini, linkedPlayer, fallbackSender, rawMessage, null);
+    }
+
+    public boolean deliverExternalGlobalChat(String sourceId, String badgeMini, String linkedPlayer,
+                                             String fallbackSender, String rawMessage,
+                                             Predicate<String> recipientFilter) {
         long now = System.currentTimeMillis();
         String moderated = moderateExternalMessage(sourceId, linkedPlayer, fallbackSender, rawMessage, now);
         if (moderated == null) {
@@ -594,6 +600,12 @@ public final class ChatService implements Listener {
             for (Player online : Bukkit.getOnlinePlayers()) {
                 if (accessManager.getStage(online) != AccessManager.PlayerStage.AUTHENTICATED) continue;
                 if (resolvedPlayer != null && isIgnoring(online, resolvedPlayer)) continue;
+                if (recipientFilter != null) {
+                    try {
+                        if (!recipientFilter.test(online.getName())) continue;
+                    } catch (RuntimeException ignored) {
+                    }
+                }
                 recipients.add(online);
                 viewerNames.add(online.getName().toLowerCase(Locale.ROOT));
             }

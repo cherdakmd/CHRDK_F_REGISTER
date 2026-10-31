@@ -16,9 +16,12 @@ public record VkConfig(
         boolean enabled,
         long groupId,
         String communityUrl,
+        String wikiUrl,
         String accessToken,
         String apiVersion,
         String apiBaseUrl,
+        boolean keyboardsEnabled,
+        boolean inlineSecurityButtons,
         boolean longPollEnabled,
         int longPollWaitSeconds,
         int longPollReconnectSeconds,
@@ -45,6 +48,8 @@ public record VkConfig(
         boolean groupChatVkToMc,
         boolean groupChatRequireLinked,
         boolean groupChatAllowInfoCommands,
+        boolean groupChatResolveMentions,
+        int groupChatBatchWindowMs,
         boolean groupChatRelayJoinQuit,
         int groupChatVkCooldownSeconds,
         int groupChatMaxLength,
@@ -61,6 +66,7 @@ public record VkConfig(
 ) {
 
     public static final String DEFAULT_COMMUNITY_URL = "https://vk.ru/chrdk_reborn";
+    public static final String DEFAULT_WIKI_URL = "https://cherdakmd.github.io/CHRDK_F_REGISTER/";
     public static final String DEFAULT_API_BASE_URL = "https://api.vk.com/method/";
     public static final String DEFAULT_API_VERSION = "5.199";
     public static final long MIN_CONVERSATION_PEER_ID = 2_000_000_001L;
@@ -70,6 +76,8 @@ public record VkConfig(
         long groupId = Math.max(0L, cfg.getLong("community.group-id", 0L));
         String communityUrl = sanitizeHttpsUrl(cfg.getString("community.url", DEFAULT_COMMUNITY_URL),
                 DEFAULT_COMMUNITY_URL);
+        String wikiUrl = sanitizeHttpsUrl(cfg.getString("community.wiki-url", DEFAULT_WIKI_URL),
+                DEFAULT_WIKI_URL);
         String accessToken = trim(cfg.getString("community.access-token", ""));
         String apiVersion = trimOrDefault(cfg.getString("community.api-version", DEFAULT_API_VERSION),
                 DEFAULT_API_VERSION);
@@ -78,6 +86,9 @@ public record VkConfig(
         if (!apiBase.endsWith("/")) {
             apiBase = apiBase + "/";
         }
+
+        boolean keyboardsEnabled = cfg.getBoolean("keyboard.enabled", true);
+        boolean inlineSecurityButtons = cfg.getBoolean("keyboard.inline-security-buttons", true);
 
         boolean longPollEnabled = cfg.getBoolean("long-poll.enabled", true);
         int waitSeconds = Math.clamp(cfg.getInt("long-poll.wait-seconds", 25), 5, 25);
@@ -113,6 +124,8 @@ public record VkConfig(
         boolean groupChatVkToMc = cfg.getBoolean("group-chat.vk-to-minecraft", true);
         boolean groupChatRequireLinked = cfg.getBoolean("group-chat.require-linked", true);
         boolean groupChatAllowInfoCommands = cfg.getBoolean("group-chat.allow-info-commands", true);
+        boolean groupChatResolveMentions = cfg.getBoolean("group-chat.resolve-linked-mentions", true);
+        int groupChatBatchWindowMs = Math.clamp(cfg.getInt("group-chat.batch-window-ms", 500), 0, 3_000);
         boolean groupChatRelayJoinQuit = cfg.getBoolean("group-chat.relay-join-quit", false);
         int groupChatVkCooldownSeconds = Math.clamp(
                 cfg.getInt("group-chat.vk-sender-cooldown-seconds", 3), 0, 60);
@@ -136,15 +149,17 @@ public record VkConfig(
         boolean allowRemoteFreeze = cfg.getBoolean("security.allow-remote-freeze", true);
 
         return new VkConfig(
-                enabled, groupId, communityUrl, accessToken, apiVersion, apiBase,
+                enabled, groupId, communityUrl, wikiUrl, accessToken, apiVersion, apiBase,
+                keyboardsEnabled, inlineSecurityButtons,
                 longPollEnabled, waitSeconds, reconnectSeconds,
                 codeLength, codeTtlSeconds, cooldownSeconds, maxAccountsPerVk,
                 linkBoostHours, memberBoostHours, recheckMinutes, donutShopBonusPercent, donutGraceHours,
                 labelsEnabled, labelsRequireMembership, memberTag, donutTag,
                 loginAlerts, bruteforceAlerts, expiryAlerts, adminPeerId,
                 groupChatEnabled, groupChatPeerId, groupChatMcToVk, groupChatVkToMc,
-                groupChatRequireLinked, groupChatAllowInfoCommands, groupChatRelayJoinQuit,
-                groupChatVkCooldownSeconds, groupChatMaxLength, groupChatMcBadge, groupChatVkFormat,
+                groupChatRequireLinked, groupChatAllowInfoCommands, groupChatResolveMentions,
+                groupChatBatchWindowMs, groupChatRelayJoinQuit, groupChatVkCooldownSeconds,
+                groupChatMaxLength, groupChatMcBadge, groupChatVkFormat,
                 announceWallPosts, wallPollMinutes, wallIgnorePinned, wallIgnoreAds, wallIgnoreReposts,
                 wallPreviewLength, allowRemoteLogout, allowRemoteFreeze
         );
