@@ -60,6 +60,25 @@ class TierMaintenanceTest {
     }
 
     @Test
+    void legacyForgeDescriptionsMigrateOnceAndSimilarForeignLineSurvives() {
+        var mender = ForgeUpgrade.byId("mender");
+        Component tier = Component.text("Легендарный · +6% скорости");
+        Component old = Component.text("✦ Мастеровой III — " + ForgeUpgrade.describeBefore266(mender, 3));
+        Component next = Component.text("✦ Мастеровой III — " + ForgeUpgrade.describe(mender, 3));
+        Component foreign = Component.text("✦ Мастеровой друга — чинит себя: 1 прочности/2с");
+        var plain = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText();
+        Map<String, Component> replacements = new LinkedHashMap<>();
+        replacements.put(plain.serialize(old), null);
+        replacements.put(plain.serialize(next), next);
+        List<Component> migrated = TierLore.refresh(List.of(tier, old, foreign),
+                Set.of("Легендарный"), tier, replacements);
+        assertEquals(List.of(tier, foreign, next), migrated);
+        assertEquals(migrated, TierLore.refresh(migrated, Set.of("Легендарный"), tier, replacements));
+        assertEquals(migrated, TierLore.refresh(List.of(tier, old, foreign, next),
+                Set.of("Легендарный"), tier, replacements));
+    }
+
+    @Test
     void unrecognizedCustomLayoutAndMissingLoreStayUntouched() {
         List<Component> custom = List.of(Component.text("✧ Только собственная карточка"));
         assertSame(custom, TierLore.refresh(custom, Set.of("Легендарный"), Component.text("Новая"), Map.of()));

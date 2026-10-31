@@ -1244,8 +1244,20 @@ public final class TierItems {
         java.util.Set<String> names = new java.util.HashSet<>();
         for (String id : TierDef.LADDER) names.add(plugin.messages().plain("tier." + id + ".name"));
         Map<String, Component> replacements = new LinkedHashMap<>();
+        for (Map.Entry<ForgeUpgrade.Def, Integer> entry : upgradesFromMeta(meta, null).entrySet()) {
+            ForgeUpgrade.Def def = entry.getKey();
+            int level = entry.getValue();
+            rememberLore(replacements, upgradeLine(def, level), null);
+            rememberLore(replacements, upgradeLine(def, level, ForgeUpgrade.describeBefore266(def, level)), null);
+        }
+        for (Map.Entry<ForgeUpgrade.Def, Integer> entry : upgradesFromMeta(meta, kind).entrySet()) {
+            Component line = upgradeLine(entry.getKey(), entry.getValue());
+            rememberLore(replacements, line, line);
+        }
         for (TierProperty property : rawPropertiesFromMeta(meta)) {
-            replacements.put(PlainTextComponentSerializer.plainText().serialize(propertyLine(property)), null);
+            rememberLore(replacements, propertyLine(property), null);
+            rememberLore(replacements, propertyLine(property,
+                    ForgeUpgrade.describeBefore266(property.asDef(), 1)), null);
         }
         for (TierProperty property : propertiesFromMeta(meta, kind)) {
             Component line = propertyLine(property);
@@ -1254,13 +1266,19 @@ public final class TierItems {
         // Все варианты аффиксов того же uid известны детерминированно, включая отключённые.
         String uid = meta.getPersistentDataContainer().get(modifierUidKey, PersistentDataType.STRING);
         for (TierAffix affix : TierAffixes.possibleForItem(uid, tier.id(), kind)) {
-            replacements.put(PlainTextComponentSerializer.plainText().serialize(affixLine(affix)), null);
+            rememberLore(replacements, affixLine(affix), null);
+            rememberLore(replacements, affixLine(affix,
+                    ForgeUpgrade.describeBefore266(affix.asDef(), 1)), null);
         }
         for (TierAffix affix : affixesFromMeta(meta, kind)) {
             Component line = affixLine(affix);
             replacements.put(PlainTextComponentSerializer.plainText().serialize(line), line);
         }
         meta.lore(TierLore.refresh(before, names, tierLine(tier, kind), replacements));
+    }
+
+    private static void rememberLore(Map<String, Component> replacements, Component known, Component next) {
+        replacements.put(PlainTextComponentSerializer.plainText().serialize(known), next);
     }
 
     private void replaceLore(ItemMeta meta, TierDef.Snapshot tier, ItemKind kind) {
@@ -1341,26 +1359,38 @@ public final class TierItems {
 
     /** Строка свойства улучшения: «✦ Кромка III — +6% урона». */
     private Component upgradeLine(ForgeUpgrade.Def def, int level) {
+        return upgradeLine(def, level, ForgeUpgrade.describe(def, level));
+    }
+
+    private Component upgradeLine(ForgeUpgrade.Def def, int level, String description) {
         return net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(
                 "<gold>" + FORGE_LORE_MARKER + " " + def.displayName() + " "
                         + ForgeUpgrade.roman(level) + "</gold>"
-                        + " <gray>— " + ForgeUpgrade.describe(def, level) + "</gray>");
+                        + " <gray>— " + description + "</gray>");
     }
 
     /** Строка свойства тира: «✧ Ржавчина — -6% урона». */
     private Component propertyLine(TierProperty property) {
+        return propertyLine(property, property.describe());
+    }
+
+    private Component propertyLine(TierProperty property, String description) {
         return net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(
                 "<aqua>" + PROPERTY_LORE_MARKER + " " + property.name() + "</aqua>"
-                        + " <gray>— " + property.describe() + "</gray>");
+                        + " <gray>— " + description + "</gray>");
     }
 
     /** Строка аффикса: «◆ Жажда — вампиризм 2% урона» или «✖ Скол — -0.5 к урону». */
     private Component affixLine(TierAffix affix) {
+        return affixLine(affix, affix.describe());
+    }
+
+    private Component affixLine(TierAffix affix, String description) {
         String color = affix.good() ? "green" : "red";
         return net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(
                 "<" + color + ">" + affix.polarity().marker() + " " + affix.name()
                         + "</" + color + ">"
-                        + " <gray>— " + affix.describe() + "</gray>");
+                        + " <gray>— " + description + "</gray>");
     }
 
     private boolean isTierLine(Component line) {
