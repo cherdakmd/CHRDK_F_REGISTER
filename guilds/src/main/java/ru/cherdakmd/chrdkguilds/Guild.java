@@ -41,6 +41,21 @@ public final class Guild {
     private int warsWon;
     private int warsLost;
     private long warCooldownUntil;
+    private GuildMode mode = GuildMode.BATTLE;
+    private long modeChangedAt;
+    private final Map<UUID, GuildPeaceTerm> peaceTerms = new LinkedHashMap<>();
+
+    public GuildMode mode() { return mode; }
+    public boolean peaceful() { return mode == GuildMode.PEACEFUL; }
+    long modeChangedAt() { return modeChangedAt; }
+    Map<UUID, GuildPeaceTerm> peaceTerms() { return Map.copyOf(peaceTerms); }
+    GuildPeaceTerm peaceTerm(UUID owner) { return peaceTerms.get(owner); }
+    void peaceTerm(UUID owner, GuildPeaceTerm term) {
+        if (!isMember(owner) || !peaceful()) throw new IllegalArgumentException("peace member");
+        peaceTerms.put(owner, term);
+    }
+    void mode(GuildMode value, long changedAt) { mode = java.util.Objects.requireNonNull(value); modeChangedAt = changedAt; peaceTerms.clear(); }
+
 
     public Guild(String id, String name, String tag, UUID leader, long createdAt) {
         this.id = id == null ? UUID.randomUUID().toString() : id;
@@ -157,6 +172,7 @@ public final class Guild {
             return false;
         }
         members.remove(player);
+        peaceTerms.remove(player);
         return true;
     }
 

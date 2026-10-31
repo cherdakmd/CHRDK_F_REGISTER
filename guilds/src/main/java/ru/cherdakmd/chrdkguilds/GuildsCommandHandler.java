@@ -27,7 +27,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
     private static final List<String> SUBS = List.of("help", "menu", "create", "invite",
             "accept", "decline", "leave", "kick", "promote", "demote", "transfer", "disband",
             "deposit", "withdraw", "upgrade", "info", "top", "members", "chat", "war",
-            "rename", "retag");
+            "rename", "retag", "mode", "peace");
     private static final List<String> WAR_SUBS = List.of("declare", "accept", "decline",
             "status", "surrender");
     private static final List<String> ADMIN_SUBS = List.of("reload", "info", "disband",
@@ -66,11 +66,12 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
             return menu(sender);
         }
         switch (args[0].toLowerCase(Locale.ROOT)) {
+            case "mode", "peace" -> { Player player=player(sender);if(player!=null)plugin.peace().command(player,args); }
             case "help" -> help(sender);
             case "menu" -> menu(sender);
             case "create" -> create(sender, args);
             case "invite" -> invite(sender, args);
-            case "accept" -> join(sender);
+            case "accept" -> join(sender,args);
             case "decline" -> decline(sender);
             case "leave" -> leave(sender);
             case "kick" -> kick(sender, args);
@@ -101,7 +102,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
 
     private void help(CommandSender sender) {
         plugin.messages().send(sender, "help-header");
-        for (String key : List.of("help-create", "help-invite", "help-join", "help-leave",
+        for (String key : List.of("peace-help", "help-create", "help-invite", "help-join", "help-leave",
                 "help-ranks", "help-treasury", "help-war", "help-chat", "help-info", "help-top")) {
             plugin.messages().send(sender, key);
         }
@@ -177,13 +178,17 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
         }
     }
 
-    private void join(CommandSender sender) {
+    private void join(CommandSender sender,String[] args) {
         Player player = player(sender);
         if (player == null) {
             return;
         }
-        GuildResult result = plugin.service().accept(player.getUniqueId(),
-                System.currentTimeMillis());
+        var invitation=plugin.store().inviteOf(player.getUniqueId());
+        Guild invited=invitation==null?null:plugin.store().guild(invitation.guildId());
+        boolean peaceful=invited!=null&&invited.peaceful();
+        if(peaceful&&!plugin.peace().confirmJoin(player,args.length==2&&args[1].equalsIgnoreCase("confirm")))return;
+        GuildResult result = peaceful?plugin.finance().join(player,System.currentTimeMillis())
+                :plugin.service().accept(player.getUniqueId(),System.currentTimeMillis());
         plugin.messages().send(sender, result.key(), result.array());
         if (!result.ok()) {
             return;
@@ -931,15 +936,19 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
         String sub = args[0].toLowerCase(Locale.ROOT);
         if (args.length == 2) {
             return switch (sub) {
+                case "mode", "peace" -> filter(List.of("status","peaceful","battle","prepay"),args[1]);
                 case "war" -> filter(WAR_SUBS, args[1]);
                 case "info" -> filter(guildNames(), args[1]);
                 case "invite", "kick", "promote", "demote", "transfer" -> filter(memberNames(sender),
                         args[1]);
                 case "deposit", "withdraw" -> filter(List.of("all"), args[1]);
+                case "accept" -> filter(List.of("confirm"),args[1]);
                 case "disband" -> filter(List.of("confirm"), args[1]);
                 default -> List.of();
             };
         }
+        if(args.length==3&&(sub.equals("mode")||sub.equals("peace")))return filter(args[1].equalsIgnoreCase("prepay")?List.of("1","3","7","14","30"):List.of("confirm"),args[2]);
+        if(args.length==4&&(sub.equals("mode")||sub.equals("peace"))&&args[1].equalsIgnoreCase("prepay"))return filter(List.of("confirm"),args[3]);
         if (args.length == 3 && sub.equals("war") && args[1].equalsIgnoreCase("declare")) {
             return filter(guildNames(), args[2]);
         }

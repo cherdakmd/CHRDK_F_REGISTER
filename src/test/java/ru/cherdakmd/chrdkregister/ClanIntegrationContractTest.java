@@ -13,7 +13,7 @@ class ClanIntegrationContractTest {
         assertThrows(IllegalArgumentException.class,()->new ClanMembershipIndex.Membership("a".repeat(129),"name","tag","leader"));
         var member = new ClanMembershipIndex.Membership("id",null,null,null);
         assertEquals("id",member.id()); assertEquals("",member.name());
-        assertEquals(30,ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
+        assertEquals(31,ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
     }
     @Test void commandAndRecipientsUseThePrivateBoundary() throws Exception {
         String handler=source("guilds/src/main/java/ru/cherdakmd/chrdkguilds/GuildsCommandHandler.java");

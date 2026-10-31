@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class GuildMessagesTest {
 
     private static final List<String> REQUIRED = List.of(
+            "peace-help", "peace-usage", "peace-same-mode", "peace-war-busy", "peace-war-disabled", "peace-combat", "peace-mode-cooldown", "peace-debt-mode", "peace-no-money", "peace-mode-battle", "peace-mode-on", "peace-not-peaceful", "peace-days", "peace-treasury-low", "peace-prepay-cap", "peace-prepay-behind", "peace-prepaid", "peace-idle", "peace-paid", "peace-leader-grace", "peace-member-grace", "peace-auto-disband", "peace-auto-kick", "peace-fined", "peace-incident-active", "peace-debt-collected", "peace-confirm", "peace-preview-cost", "peace-quote-expired", "peace-mode-notice", "peace-debt-status", "peace-status", "peace-term-status", "peace-grace-status", "peace-leader-help", "peace-personal-notice", "peace-join-required", "peace-menu-name", "peace-menu-mode", "peace-menu-price", "peace-menu-hint", "peace-chat-prefix", "peace-profile-mode", "peace-profile-term", "peace-join-confirm", "peace-join-terms", "peace-settle-first", "peace-leader-risk", "peace-pending-prefix",
             "menu-claims-name", "menu-claims-lore", "menu-personal-name", "menu-personal-lore", "menu-personal-boundary",
             "no-permission", "player-only", "disabled", "unknown-subcommand", "guild-not-found",
             "not-in-guild", "not-leader", "already-in-guild", "target-not-found",
@@ -126,6 +127,33 @@ class GuildMessagesTest {
     void placeholdersMatchTheCode() throws Exception {
         ConfigurationSection section = load();
         Map<String, List<String>> expected = new LinkedHashMap<>();
+        expected.put("peace-mode-on", List.of("%seconds%", "%cost%", "%treasury%", "%personal%"));
+        expected.put("peace-treasury-low", List.of("%cost%"));
+        expected.put("peace-prepaid", List.of("%members%", "%days%", "%cost%"));
+        expected.put("peace-paid", List.of("%days%", "%cost%"));
+        expected.put("peace-leader-grace", List.of("%deadline%"));
+        expected.put("peace-member-grace", List.of("%deadline%"));
+        expected.put("peace-auto-disband", List.of("%name%", "%treasury%", "%returns%"));
+        expected.put("peace-auto-kick", List.of("%name%"));
+        expected.put("peace-fined", List.of("%fine%", "%debt%"));
+        expected.put("peace-debt-collected", List.of("%paid%", "%debt%"));
+        expected.put("peace-confirm", List.of("%action%", "%days%", "%personal%", "%rate%"));
+        expected.put("peace-preview-cost", List.of("%treasury%", "%personal%"));
+        expected.put("peace-mode-notice", List.of("%mode%", "%rate%"));
+        expected.put("peace-debt-status", List.of("%debt%"));
+        expected.put("peace-status", List.of("%mode%", "%rate%", "%total%"));
+        expected.put("peace-term-status", List.of("%paid%", "%active%", "%deadline%"));
+        expected.put("peace-grace-status", List.of("%deadline%"));
+        expected.put("peace-personal-notice", List.of("%text%"));
+        expected.put("peace-menu-mode", List.of("%mode%"));
+        expected.put("peace-menu-price", List.of("%rate%", "%total%"));
+        expected.put("peace-chat-prefix", List.of("%tag%"));
+        expected.put("peace-profile-mode", List.of("%mode%", "%rate%"));
+        expected.put("peace-profile-term", List.of("%paid%"));
+        expected.put("peace-join-confirm", List.of("%cost%"));
+        expected.put("peace-join-terms", List.of("%cost%"));
+        expected.put("peace-leader-risk", List.of("%deadline%"));
+        expected.put("peace-pending-prefix", List.of("%tag%"));
         expected.put("treasury-war-returns", List.of("%amount%"));
         expected.put("finance.service-insufficient", List.of("%cost%"));
         expected.put("unknown-subcommand", List.of("%sub%"));

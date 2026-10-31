@@ -86,6 +86,18 @@ public final class RegisterPlugin extends JavaPlugin {
         this.rankMenuService = new RankMenuService(this, accessManager, messages);
         this.bankStore = new BankStore(getDataFolder().toPath(), getLogger());
         this.bankStore.load();
+        this.bankStore.debtReserve(owner -> {
+            var providers = getServer().getServicesManager().getRegistrations(ru.cherdakmd.chrdkregister.api.PersonalDebtIndex.class);
+            // Если установленный модуль не смог прочитать долговой WAL, расходы закрыты до восстановления.
+            if (providers.isEmpty() && getServer().getPluginManager().getPlugin("CHRDK_Guilds") != null) return -1;
+            long total = 0;
+            for (var registration : providers) {
+                long amount = registration.getProvider().reserved(owner);
+                if (amount < 0) return -1;
+                total = Math.min(BankStore.MAX_BALANCE, Math.addExact(total, Math.min(amount, BankStore.MAX_BALANCE)));
+            }
+            return total;
+        });
         this.bankService = new BankService(this, bankStore, () -> accessManager.config().economy());
         this.bankService.start();
         var chargeGuard = new BankChargeGuard(this, bankStore);

@@ -2,7 +2,7 @@ name: CHRDK_Guilds
 version: ${version}
 main: ru.cherdakmd.chrdkguilds.GuildsPlugin
 api-version: '26.3'
-description: Гильдии с казной, рангами и войнами на ставку.
+description: Мирные и боевые кланы, казна, роли и войны на ставку.
 authors: [cherdakmd]
 website: https://github.com/cherdakmd/CHRDK_F_REGISTER
 depend: [CHRDK_Core]
@@ -10,18 +10,18 @@ softdepend: [PlaceholderAPI, CHRDK_Claims]
 commands:
   guild:
     description: Меню гильдии, состав, казна и войны.
-    usage: /guild [menu|create|invite|deposit|war|info|top]
-    aliases: [guilds, clan, clans, klan, gildiya]
+    usage: /guild [menu|create|invite|deposit|war|info|top|mode <status|peaceful|battle|prepay>]
+    aliases: [guilds, clan, clans, klan, klans, gildiya, gildii]
     permission: chrdkguilds.use
   gchat:
     description: Написать в чат гильдии.
     usage: /gchat <текст>
-    aliases: [gc]
+    aliases: [gc, clanchat, cc]
     permission: chrdkguilds.use
   guildadmin:
     description: Управление гильдиями и войнами.
     usage: /guildadmin <reload|info|disband|endwar|cooldown|history|finance|recover>
-    aliases: [guildsadmin, ga]
+    aliases: [guildsadmin, clanadmin, clansadmin, ga]
     permission: chrdkguilds.admin
 permissions:
   chrdkguilds.use:

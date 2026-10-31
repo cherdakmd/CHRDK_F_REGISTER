@@ -38,7 +38,11 @@ review: [core, claims, teleports, diamond-shop]
 
 {{table:commands}}
 
-`/clan` и `/guild` — один клановый интерфейс. `/claim clan` управляет только
+`/clan`, `/clans`, `/guild`, `/guilds`, `/klan`, `/klans`, `/gildiya`, `/gildii` — один интерфейс.
+`/clan mode status` показывает режим, оплату и долг; `peaceful|battle` меняет режим,
+`prepay <1–30>` оплачивает состав из казны. Сначала условия, затем та же команда
+с `confirm` за 30 секунд. Приглашение в мирный клан тоже требует `/clan accept confirm`.
+ `/claim clan` управляет только
 добровольным доступом к вашей личной территории; роли: `access`, `containers`,
 `build`, отключение: `off`. Донатный ранг и должность в клане — разные вещи.
 

@@ -119,6 +119,8 @@ public final class BankCommandHandler implements CommandExecutor, TabCompleter {
                 "balance", BankService.format(balance),
                 "inventory", BankService.format(inInventory),
                 "total", BankService.format(balance + inInventory));
+        long reserved=bank.store().reservedDebt(player.getUniqueId());
+        if(reserved>0)messages.send(player,"economy.personal-debt","reserved",BankService.format(reserved),"available",BankService.format(bank.store().spendableBalance(player.getUniqueId())));
         messages.send(sender, "economy.balance-hint");
         return true;
     }

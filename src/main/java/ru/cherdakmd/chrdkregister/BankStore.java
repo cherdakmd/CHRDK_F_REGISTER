@@ -131,10 +131,18 @@ public final class BankStore {
     synchronized int cashReceiptCount() { return cashReceipts.size(); }
     synchronized BankCash.Intent cashPending(UUID id) { return cashPending.get(id); }
     synchronized BankCash.Receipt cashReceipt(UUID id) { return cashReceipts.get(id); }
+    private java.util.function.ToLongFunction<UUID> debtReserve = owner -> 0;
+    synchronized void debtReserve(java.util.function.ToLongFunction<UUID> reserve) { debtReserve = java.util.Objects.requireNonNull(reserve); }
+    public synchronized long reservedDebt(UUID owner) {
+        try { long debt = debtReserve.applyAsLong(owner); return debt < 0 ? MAX_BALANCE : Math.min(MAX_BALANCE, debt); }
+        catch (RuntimeException | LinkageError error) { return MAX_BALANCE; }
+    }
+    public synchronized long spendableBalance(UUID owner) { return Math.max(0, balance(owner) - reservedDebt(owner)); }
     public synchronized boolean cashLocked(UUID id) { return cashPending.containsKey(id); }
     synchronized void quarantineCash() { available=false; }
     synchronized BankCash.Intent prepareCash(UUID owner,String name,BankCash.Kind kind,long amount,int blockWorth,int selected,long request,String before,String after) {
-        if(!available||owner==null||cashLocked(owner)||kind==BankCash.Kind.SHOP) return null;
+        if(!available||owner==null||cashLocked(owner)||kind==BankCash.Kind.SHOP
+                || kind==BankCash.Kind.WITHDRAW && spendableBalance(owner)<amount) return null;
         var old=cashReceipts.get(owner); long sequence=old==null?1:old.sequence()+1;
         var intent=new BankCash.Intent(UUID.randomUUID(),owner,sequence,kind,amount,balance(owner),blockWorth,selected,request,before,after);
         if(!intent.valid()) return null;
@@ -171,7 +179,7 @@ public final class BankStore {
         return cashLocked(t.owner())?ShopExchange.Status.UNAVAILABLE:ShopExchange.Status.MISSING;
     }
     synchronized boolean prepareShop(ShopExchange t,String name) {
-        if(shopStatus(t)!=ShopExchange.Status.MISSING||!t.fits(balance(t.owner()))) return false;
+        if(shopStatus(t)!=ShopExchange.Status.MISSING||!t.fits(balance(t.owner()))||spendableBalance(t.owner())<t.debit()) return false;
         var receipt=cashReceipts.get(t.owner());
         var intent=new BankCash.Intent(t.transaction(),t.owner(),receipt==null?1:receipt.sequence()+1,BankCash.Kind.SHOP,t.money(),balance(t.owner()),1,-1,t.money(),t.before(),t.after(),t);
         if(!intent.valid()) return false;
@@ -192,7 +200,7 @@ public final class BankStore {
     }
     public synchronized ClaimExchange.Status commitClaim(ClaimExchange t) {
         var status=claimStatus(t); if(status!=ClaimExchange.Status.MISSING) return status;
-        for(var e:t.deltas().entrySet()) { long balance=balance(e.getKey()); if(balance+e.getValue()<0||balance+e.getValue()>MAX_BALANCE) return ClaimExchange.Status.MISSING; }
+        for(var e:t.deltas().entrySet()) { long balance=balance(e.getKey()); if(balance+e.getValue()<0||balance+e.getValue()>MAX_BALANCE || e.getValue()<0 && spendableBalance(e.getKey()) < -e.getValue()) return ClaimExchange.Status.MISSING; }
         var next=envelope(); t.deltas().forEach((id,delta)->adjust(next.accounts.get(id.toString()),delta));
         next.claimSettlements.put(t.lineage(),t); return publishAuction(next)?ClaimExchange.Status.COMMITTED:ClaimExchange.Status.UNAVAILABLE;
     }
@@ -482,7 +490,7 @@ public final class BankStore {
         if (from == null || to == null) return TransferResult.failed(Status.UNKNOWN_PLAYER,amount);
         if (from.equals(to)) return TransferResult.failed(Status.SELF_TRANSFER,amount);
         if (amount < 1 || amount > MAX_BALANCE) return TransferResult.failed(Status.INVALID_AMOUNT,amount);
-        if (balance(from) < amount) return TransferResult.failed(Status.NOT_ENOUGH,amount);
+        if (spendableBalance(from) < amount) return TransferResult.failed(Status.NOT_ENOUGH,amount);
         long tax = amount * Math.clamp(taxPercent,0,50) / 100L;
         long net = amount - tax;
         if (balance(to) > MAX_BALANCE-net) return TransferResult.failed(Status.LIMIT_EXCEEDED,amount);
@@ -572,7 +580,7 @@ public final class BankStore {
             return false;
         }
         Account account = accounts.get(id);
-        if (account == null || account.balance < amount) {
+        if (account == null || spendableBalance(id) < amount) {
             return false;
         }
         account.balance -= amount;
@@ -633,7 +641,7 @@ public final class BankStore {
             target.name = targetName;
             byName.put(normalize(targetName), to);
         }
-        if (source.balance < amount) {
+        if (spendableBalance(from) < amount) {
             return TransferResult.failed(Status.NOT_ENOUGH, amount);
         }
         int percent = Math.clamp(taxPercent, 0, 50);
@@ -675,7 +683,8 @@ public final class BankStore {
         if (!available || deltas == null || deltas.isEmpty() || deltas.size() > 8 || commit == null) return false;
         for (var entry : deltas.entrySet()) {
             Long delta = entry.getValue();
-            if (cashLocked(entry.getKey()) || entry.getKey() == null || delta == null || delta < -MAX_BALANCE || delta > MAX_BALANCE) return false;
+            if (cashLocked(entry.getKey()) || entry.getKey() == null || delta == null || delta < -MAX_BALANCE || delta > MAX_BALANCE
+                    || delta < 0 && spendableBalance(entry.getKey()) < -delta) return false;
             long next = balance(entry.getKey()) + delta;
             if (next < 0 || next > MAX_BALANCE) return false;
         }
@@ -704,7 +713,7 @@ public final class BankStore {
     public synchronized boolean exchange(UUID id, String name, long debit, long credit, Runnable inventoryCommit) {
         if (!available || cashLocked(id) || id == null || inventoryCommit == null || debit < 0 || credit < 0 || debit > MAX_BALANCE || credit > MAX_BALANCE) return false;
         var account = open(id, name);
-        if (account.balance < debit || account.balance - debit > MAX_BALANCE - credit) return false;
+        if (spendableBalance(id) < debit || account.balance - debit > MAX_BALANCE - credit) return false;
         inventoryCommit.run(); // Не вызывает событий/команд; исключение не меняет деньги.
         account.balance = account.balance - debit + credit;
         account.withdrawn += debit; account.deposited += credit;
@@ -731,13 +740,16 @@ public final class BankStore {
         return payment.sequence() == (last == null ? 1 : last.sequence() + 1) ? BankCharge.Status.MISSING : BankCharge.Status.CONFLICT;
     }
     /** Расход и банковская сдача одним файлом с high-water квитанцией. */
-    public synchronized boolean settleCharge(BankCharge payment) {
+    public synchronized boolean settleCharge(BankCharge payment) { return settleCharge(payment, false); }
+    synchronized boolean settleCharge(BankCharge payment, boolean collectingDebt) {
+        if (collectingDebt && (payment == null || !"guilds".equals(payment.source()) || payment.cash()!=0 || payment.change()!=0)) return false;
         var status = bankChargeStatus(payment);
         if (status == BankCharge.Status.COMMITTED) return true;
         if (status != BankCharge.Status.MISSING) return false;
         if(cashLocked(payment.payer())) return false;
         long balance = balance(payment.payer());
-        if (balance < payment.debit() || balance - payment.debit() + payment.change() > MAX_BALANCE) return false;
+        if (balance < payment.debit() || !collectingDebt && spendableBalance(payment.payer()) < payment.debit()
+                || balance - payment.debit() + payment.change() > MAX_BALANCE) return false;
         var next = envelope();
         adjust(next.accounts.computeIfAbsent(payment.payer().toString(), ignored -> new Account()), -payment.debit() + payment.change());
         next.chargeSettlements.put(payment.source(), payment);
@@ -818,7 +830,7 @@ public final class BankStore {
                 || !auctionImports.get(payment.seller()).market().equals(payment.market())) return false;
         if(cashLocked(payment.buyer())||cashLocked(payment.seller())) return false;
         long buyerAfter = balance(payment.buyer()) - payment.debit() + payment.change();
-        if (balance(payment.buyer()) < payment.debit() || buyerAfter > MAX_BALANCE
+        if (spendableBalance(payment.buyer()) < payment.debit() || buyerAfter > MAX_BALANCE
                 || balance(payment.seller()) > MAX_BALANCE - (payment.price() - payment.fee())) return false;
         var next = envelope();
         adjust(next.accounts.get(payment.buyer().toString()), -payment.debit() + payment.change());

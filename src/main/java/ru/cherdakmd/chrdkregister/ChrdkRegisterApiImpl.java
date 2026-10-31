@@ -149,12 +149,21 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
         String permission = ru.cherdakmd.chrdkregister.api.BankCharge.permission(payment.source());
         if (permission == null || !payer.hasPermission(permission)) return false;
         if (bank.bankChargeStatus(payment) == ru.cherdakmd.chrdkregister.api.BankCharge.Status.COMMITTED) return true;
-        var plan = ru.cherdakmd.chrdkregister.api.ChargeInventory.plan(expected, payment.price(), bank.balance(payer.getUniqueId()));
+        var plan = ru.cherdakmd.chrdkregister.api.ChargeInventory.plan(expected, payment.price(), bank.spendableBalance(payer.getUniqueId()));
         if (plan == null || plan.debit() != payment.debit() || plan.cash() != payment.cash() || plan.change() != payment.change()
                 || !payment.inventoryHash().equals(ru.cherdakmd.chrdkregister.api.AuctionPayment.hash(
                     ru.cherdakmd.chrdkregister.api.ChargeInventory.encode(expected), ru.cherdakmd.chrdkregister.api.ChargeInventory.encode(plan.after())))) return false;
         bank.open(payer.getUniqueId(), payer.getName());
         return bank.settleCharge(payment);
+    }
+    @Override public long spendableBankBalance(java.util.UUID owner) { return auctionBankReady() && owner != null ? bank.spendableBalance(owner) : -1; }
+    @Override public boolean commitGuildBankCharge(ru.cherdakmd.chrdkregister.api.BankCharge payment, boolean collectingDebt) {
+        if (!auctionBankReady() || payment == null || !payment.valid() || !payment.source().equals("guilds")
+                || payment.cash()!=0 || payment.change()!=0 || payment.price()!=payment.debit() || !bank.knows(payment.payer())) return false;
+        String empty=ru.cherdakmd.chrdkregister.api.ChargeInventory.encode(new org.bukkit.inventory.ItemStack[36]);
+        if(!payment.inventoryHash().equals(ru.cherdakmd.chrdkregister.api.AuctionPayment.hash(empty,empty)))return false;
+        if(collectingDebt&&bank.reservedDebt(payment.payer())<payment.debit())return false;
+        return bank.settleCharge(payment, collectingDebt);
     }
     @Override public boolean personalBankAvailable() { return auctionBankReady(); }
     @Override public boolean registerIncomeSource(String source, java.util.UUID lineage) { return auctionBankReady() && bank.registerIncomeSource(source, lineage); }
