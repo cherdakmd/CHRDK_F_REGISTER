@@ -117,7 +117,7 @@ final class GuildPeaceController {
             quotes.put(owner,new Quote(action,days,plugin.store().snapshotJson(),now+30_000));
             send(player,GuildResult.ok("peace-confirm","action",action,"days",days,"personal",preview.debit(),"rate",GuildPeaceService.DAILY));
             Guild before=plugin.store().of(owner),after=plugin.store().detached(preview.domain()).of(owner);
-            send(player,GuildResult.ok("peace-preview-cost","treasury",before.treasury()-after.treasury(),"personal",preview.debit()));
+            send(player,GuildResult.ok("peace-preview-cost","treasury",GuildFinance.treasurySpent(before,after),"personal",preview.debit()));
             return;
         }
         Quote quote=quotes.remove(owner);
