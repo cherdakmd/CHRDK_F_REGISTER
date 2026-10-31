@@ -33,6 +33,6 @@ final class GuildNameTag implements ChrdkRegisterApi.NameTagProvider {
         if (guild == null || guild.tag().isEmpty()) {
             return null;
         }
-        return plugin.messages().raw("chat-prefix", "tag", guild.tag()) + decoratedName;
+        return plugin.messages().raw(guild.peaceful()?(plugin.peace().protects(player.getUniqueId(),System.currentTimeMillis())?"peace-chat-prefix":"peace-pending-prefix"):"chat-prefix", "tag", guild.tag()) + decoratedName;
     }
 }

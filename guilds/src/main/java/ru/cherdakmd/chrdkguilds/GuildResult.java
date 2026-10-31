@@ -31,6 +31,14 @@ public record GuildResult(boolean ok, String key, List<String> args) {
         return new GuildResult(false, key, pairs == null ? List.of() : List.of(pairs));
     }
 
+    /** Числовые подстановки приводятся одинаково для команды, меню и фонового списания. */
+    public static GuildResult ok(String key, Object... pairs) {
+        return new GuildResult(true,key,pairs==null?List.of():java.util.Arrays.stream(pairs).map(String::valueOf).toList());
+    }
+    public static GuildResult fail(String key, Object... pairs) {
+        return new GuildResult(false,key,pairs==null?List.of():java.util.Arrays.stream(pairs).map(String::valueOf).toList());
+    }
+
     /** Те же подстановки в виде массива — для {@code Messages.send}. */
     public Object[] array() {
         List<String> copy = new ArrayList<>(args);

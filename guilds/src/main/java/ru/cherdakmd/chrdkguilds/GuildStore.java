@@ -37,7 +37,7 @@ import ru.cherdakmd.chrdkregister.storage.SafeJsonWriter;
 final class GuildStore {
 
     /** Версия формата файла. */
-    static final int VERSION = 1;
+    static final int VERSION = 2;
     /** Сколько последних войн хранится в истории. */
     static final int MAX_HISTORY = 50;
 
@@ -64,6 +64,22 @@ final class GuildStore {
     private final List<GuildInvite> invites = new ArrayList<>();
     private final List<GuildWar> wars = new ArrayList<>();
     private final List<WarRecord> history = new ArrayList<>();
+    private final Map<UUID,GuildSanction> sanctions = new LinkedHashMap<>();
+    private final Map<UUID,List<String>> peaceNotices = new LinkedHashMap<>();
+    private java.util.function.Predicate<UUID> combatGuard = player -> false;
+    void combatGuard(java.util.function.Predicate<UUID> guard) { combatGuard=guard; }
+    boolean combatBlocked(UUID player) { return combatGuard.test(player); }
+    synchronized void peaceNotice(UUID player,String text) {
+        detachedOnly(); var rows=peaceNotices.computeIfAbsent(player,id->new ArrayList<>());
+        if(rows.size()>=8)rows.removeFirst();rows.add(text);dirty=true;
+    }
+    synchronized List<String> peaceNotices(UUID player) { refresh();return List.copyOf(peaceNotices.getOrDefault(player,List.of())); }
+    synchronized void clearPeaceNotices(UUID player) { detachedOnly();peaceNotices.remove(player);dirty=true; }
+
+    synchronized GuildSanction sanction(UUID owner) { refresh(); return sanctions.getOrDefault(owner,new GuildSanction(0,0)); }
+    synchronized Map<UUID,GuildSanction> sanctions() { refresh(); return Map.copyOf(sanctions); }
+    synchronized void sanction(UUID owner,GuildSanction value) { detachedOnly(); sanctions.put(owner,value); dirty=true; }
+
     private boolean dirty;
     private boolean healthy = true;
     private ru.cherdakmd.chrdkregister.api.PaidActionStore finance;
@@ -96,6 +112,8 @@ final class GuildStore {
             invites.clear(); invites.addAll(parsed.invites);
             wars.clear(); wars.addAll(parsed.wars);
             history.clear(); history.addAll(parsed.history);
+            sanctions.clear(); sanctions.putAll(parsed.sanctions);
+            peaceNotices.clear();peaceNotices.putAll(parsed.peaceNotices);
             lastDomain = json;
         }
     }
@@ -103,6 +121,7 @@ final class GuildStore {
     synchronized GuildStore detached(String json) {
         GuildStore copy = new GuildStore(file.getParent(), logger);
         copy.readData(json);
+        copy.combatGuard=combatGuard;
         return copy;
     }
 
@@ -156,6 +175,8 @@ final class GuildStore {
             invites.clear(); invites.addAll(parsed.invites);
             wars.clear(); wars.addAll(parsed.wars);
             history.clear(); history.addAll(parsed.history);
+            sanctions.clear(); sanctions.putAll(parsed.sanctions);
+            peaceNotices.clear();peaceNotices.putAll(parsed.peaceNotices);
         } catch (IOException | RuntimeException error) {
             healthy = false;
             throw new IllegalStateException("Повреждён guilds.json; исходник не перезаписывается",error);
@@ -165,6 +186,14 @@ final class GuildStore {
     private void readData(String json) {
         Map<String,Object> data = GSON.fromJson(json, DATA_TYPE);
         validateInput(data);
+        if(data.get("peace-notices") instanceof Map<?,?> outbox)for(var entry:outbox.entrySet()) {
+            var lines=new ArrayList<String>();for(Object text:(List<?>)entry.getValue())lines.add((String)text);
+            peaceNotices.put(strictUuid(entry.getKey()),lines);
+        }
+        if (data.get("sanctions") instanceof Map<?,?> fines) for (var entry:fines.entrySet()) {
+            Map<?,?> row=(Map<?,?>)entry.getValue();
+            sanctions.put(strictUuid(entry.getKey()), new GuildSanction(number(row.get("debt")),number(row.get("next-incident-at"))));
+        }
         for (Map<?,?> row : rows(data,"guilds")) {
             Guild guild = readGuild(row);
             guilds.put(guild.id(),guild);
@@ -200,6 +229,11 @@ final class GuildStore {
                 (int) number(row.get("wars-lost")));
         guild.setWarCooldownUntil(number(row.get("war-cooldown-until")));
         guild.restoreWarReturns(number(row.get("war-returns")));
+        guild.mode(row.containsKey("mode") ? GuildMode.valueOf(string(row.get("mode"))) : GuildMode.BATTLE, number(row.get("mode-changed-at")));
+        if (row.get("peace-terms") instanceof Map<?,?> terms) for(var entry:terms.entrySet()) {
+            Map<?,?> term=(Map<?,?>)entry.getValue();
+            guild.peaceTerm(strictUuid(entry.getKey()),new GuildPeaceTerm(number(term.get("paid-until")),number(term.get("grace-since")),number(term.get("activates-at"))));
+        }
         return guild;
     }
 
@@ -512,6 +546,7 @@ final class GuildStore {
         refresh();
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("version", VERSION);
+        if(!peaceNotices.isEmpty()) {Map<String,Object> outbox=new LinkedHashMap<>();peaceNotices.forEach((id,lines)->outbox.put(id.toString(),List.copyOf(lines)));data.put("peace-notices",outbox);}
         List<Map<String, Object>> guildRows = new ArrayList<>();
         for (Guild guild : guilds.values()) {
             Map<String, Object> row = new LinkedHashMap<>();
@@ -522,6 +557,13 @@ final class GuildStore {
             }
             row.put("leader", String.valueOf(guild.leader()));
             row.put("created-at", guild.createdAt());
+            row.put("mode",guild.mode().name());
+            row.put("mode-changed-at",guild.modeChangedAt());
+            if(guild.peaceful()) {
+                Map<String,Object> terms=new LinkedHashMap<>();
+                guild.peaceTerms().forEach((id,t)->terms.put(id.toString(),Map.of("paid-until",t.paidUntil(),"grace-since",t.graceSince(),"activates-at",t.activatesAt())));
+                row.put("peace-terms",terms);
+            }
             Map<String, Object> members = new LinkedHashMap<>();
             for (Map.Entry<UUID, GuildRank> entry : guild.members().entrySet()) {
                 members.put(entry.getKey().toString(), entry.getValue().id());
@@ -539,6 +581,9 @@ final class GuildStore {
             guildRows.add(row);
         }
         data.put("guilds", guildRows);
+        Map<String,Object> fines=new LinkedHashMap<>();
+        sanctions.forEach((id,t)->fines.put(id.toString(),Map.of("debt",t.debt(),"next-incident-at",t.nextIncidentAt())));
+        if(!fines.isEmpty())data.put("sanctions",fines);
 
         List<Map<String, Object>> inviteRows = new ArrayList<>();
         for (GuildInvite invite : invites) {
@@ -638,7 +683,24 @@ final class GuildStore {
 
     /** Строгая граница: нельзя округлять деньги, чинить владельца или терять резерв. */
     private static void validateInput(Map<String,Object> data) {
-        if (data == null || number(data.get("version")) != VERSION || !(data.get("guilds") instanceof List<?>)) bad("schema");
+        if (data == null || (number(data.get("version")) != VERSION && number(data.get("version")) != 1) || !(data.get("guilds") instanceof List<?>)) bad("schema");
+        if(data.containsKey("peace-notices")) {
+            if(!(data.get("peace-notices") instanceof Map<?,?>))bad("peace outbox");
+            Map<?,?> outbox=(Map<?,?>)data.get("peace-notices");if(outbox.size()>100_000)bad("peace outbox capacity");
+            for(var entry:outbox.entrySet()) {
+                strictUuid(entry.getKey());if(!(entry.getValue() instanceof List<?>))bad("peace notice");
+                List<?> lines=(List<?>)entry.getValue();if(lines.size()>8)bad("peace notice capacity");
+                for(Object text:lines)if(!(text instanceof String)||text.toString().length()>512)bad("peace notice text");
+            }
+        }
+        if(data.containsKey("sanctions")) {
+            if(!(data.get("sanctions") instanceof Map<?,?> fines) || fines.size()>100_000)bad("sanctions");
+            for(var entry:((Map<?,?>)data.get("sanctions")).entrySet()) {
+                strictUuid(entry.getKey()); if(!(entry.getValue() instanceof Map<?,?>))bad("sanction");
+                Map<?,?> fine=(Map<?,?>)entry.getValue();
+                range(fine,"debt",0,Long.MAX_VALUE,true);range(fine,"next-incident-at",0,Long.MAX_VALUE,true);
+            }
+        }
         var ids = new java.util.HashSet<String>();
         var names = new java.util.HashSet<String>();
         var tags = new java.util.HashSet<String>();
@@ -659,6 +721,21 @@ final class GuildStore {
                 String rank = member.getValue().toString();
                 if (!(rank.equals("leader") || rank.equals("officer") || rank.equals("member")) || rank.equals("leader") != player.equals(leader)) bad("rank");
             }
+            if(row.containsKey("mode")) {
+                String mode=text(row,"mode",true);
+                if(!(mode.equals("BATTLE")||mode.equals("PEACEFUL")))bad("mode");
+                range(row,"mode-changed-at",0,Long.MAX_VALUE,true);
+                if(mode.equals("PEACEFUL")) {
+                    if(!(row.get("peace-terms") instanceof Map<?,?> terms) || terms.size()!=roster.size())bad("peace roster");
+                    for(var entry:((Map<?,?>)row.get("peace-terms")).entrySet()) {
+                        if(!roster.containsKey(entry.getKey()) || !(entry.getValue() instanceof Map<?,?>))bad("peace owner");
+                        Map<?,?> term=(Map<?,?>)entry.getValue();
+                        range(term,"paid-until",1,Long.MAX_VALUE-GuildPeaceTerm.DAY,true);
+                        range(term,"grace-since",0,Long.MAX_VALUE-GuildPeaceTerm.DAY,true);
+                        range(term,"activates-at",0,number(term.get("paid-until"))-1,true);
+                    }
+                } else if(row.containsKey("peace-terms"))bad("battle terms");
+            } else if(row.containsKey("peace-terms")||row.containsKey("mode-changed-at"))bad("orphan peace terms");
             range(row,"created-at",0,Long.MAX_VALUE,true);
             range(row,"treasury",0,Guild.MAX_TREASURY,true);
             range(row,"war-returns",0,Long.MAX_VALUE,false);
@@ -684,6 +761,7 @@ final class GuildStore {
             String challenger = text(row,"challenger",true), target = text(row,"target",true);
             if (!warIds.add(text(row,"id",true)) || !ids.contains(challenger) || !ids.contains(target)
                     || challenger.equals(target) || !reserved.add(challenger) || !reserved.add(target)) bad("war ownership");
+            for(var guildRow:guildRows)if((challenger.equals(string(guildRow.get("id")))||target.equals(string(guildRow.get("id"))))&&"PEACEFUL".equals(guildRow.get("mode")))bad("peace war");
             String status = text(row,"status",true);
             if (!(status.equals("PENDING") || status.equals("ACTIVE")) || row.containsKey("result")) bad("closed/unknown war");
             range(row,"wager",0,Guild.MAX_TREASURY,true);

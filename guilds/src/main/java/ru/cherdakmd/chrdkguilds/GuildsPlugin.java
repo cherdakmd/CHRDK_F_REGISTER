@@ -31,6 +31,7 @@ public final class GuildsPlugin extends JavaPlugin {
     private GuildsGui gui;
     private ru.cherdakmd.chrdkregister.api.PaidActions payments;
     private GuildFinance finance;
+    private GuildPeaceController peace;
     private BukkitTask tickTask;
     private ChrdkRegisterApi coreApi;
 
@@ -42,11 +43,16 @@ public final class GuildsPlugin extends JavaPlugin {
             this.messages = Messages.load(this, config.locale(), getLogger());
             this.store = new GuildStore(getDataFolder().toPath(), getLogger());
             this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
-            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 28) throw new IllegalStateException("Нужен Core API 28+");
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 31) throw new IllegalStateException("Нужен Core API 31+");
             this.payments = new ru.cherdakmd.chrdkregister.api.PaidActions(this,this::coreApi,this::messages,"guilds");
             store.bind(payments.store());
             this.service = new GuildService(config, store);
             this.finance = new GuildFinance(this,payments);
+            this.peace = new GuildPeaceController(this);
+            this.store.combatGuard(peace::combatBlocked);
+            Bukkit.getServicesManager().register(ru.cherdakmd.chrdkregister.api.PersonalDebtIndex.class,
+                    peace::reserved,this,org.bukkit.plugin.ServicePriority.Normal);
+            getServer().getPluginManager().registerEvents(new GuildPeaceListener(this),this);
             this.gui = new GuildsGui(this);
             getServer().getPluginManager().registerEvents(new GuildsListener(this), this);
             getServer().getPluginManager().registerEvents(gui, this);
@@ -104,6 +110,8 @@ public final class GuildsPlugin extends JavaPlugin {
         payments.tick();
         if (payments.paused()) return;
         long now = System.currentTimeMillis();
+        peace.tick(now);
+        if(payments.paused())return;
         for (GuildResult notice : service.tick(now)) {
             if (notice.key().isEmpty()) {
                 continue;
@@ -214,6 +222,7 @@ public final class GuildsPlugin extends JavaPlugin {
         return gui;
     }
 
+    GuildPeaceController peace() { return peace; }
     GuildFinance finance() { return finance; }
     public ru.cherdakmd.chrdkregister.api.PaidActions payments() { return payments; }
     public ChrdkRegisterApi coreApi() { return coreApi; }

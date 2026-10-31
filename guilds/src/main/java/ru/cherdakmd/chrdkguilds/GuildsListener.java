@@ -52,6 +52,8 @@ final class GuildsListener implements Listener {
     public void onAuthenticated(ru.cherdakmd.chrdkregister.api.events.PlayerAuthCompletedEvent event) {
         plugin.payments().recover(event.getPlayer());
         remind(event.getPlayer());
+        plugin.peace().deliverNotices(event.getPlayer().getUniqueId());
+        if(plugin.service().guildOf(event.getPlayer().getUniqueId())!=null)plugin.peace().status(event.getPlayer());
     }
 
     /** Напоминание о приглашении: игрок мог не видеть его в чате. */
@@ -59,6 +61,8 @@ final class GuildsListener implements Listener {
         if (!plugin.visible(player)) return;
         GuildInvite invite = plugin.store().inviteOf(player.getUniqueId());
         if (invite == null || invite.expired(System.currentTimeMillis())) return;
+        Guild guild=plugin.store().guild(invite.guildId());
+        if(guild!=null&&guild.peaceful())plugin.messages().send(player,"peace-join-terms","cost",GuildPeaceService.DAILY);
         plugin.messages().send(player, "invite-reminder", "name", invite.guildName(),
                 "seconds", String.valueOf(invite.remainingSeconds(System.currentTimeMillis())));
     }

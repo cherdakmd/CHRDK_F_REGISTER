@@ -46,7 +46,7 @@ public final class PaidActions {
         if (!eligible(payer)) { say(payer,"mode"); return false; }
         if (!ready()) { say(payer,"wait"); return false; }
         var before=ChargeInventory.copy(payer.getInventory().getStorageContents());
-        var plan=ChargeInventory.plan(before,price,api.get().auctionBankBalance(payer.getUniqueId()));
+        var plan=ChargeInventory.plan(before,price,api.get().spendableBankBalance(payer.getUniqueId()));
         if (plan==null) { say(payer,"insufficient","cost",price); return false; }
         String afterState=preview.get();
         var payment=journal.prepare(payer.getUniqueId(),price,plan.debit(),plan.cash(),plan.change(),ChargeInventory.encode(before),ChargeInventory.encode(plan.after()),store.snapshot(),afterState);
@@ -91,6 +91,18 @@ public final class PaidActions {
             return pay(payer,price,()->store.previewValue(key,value));
         } catch (Exception error) { failure(payer,error); return false; }
     }
+    /** API 31: ежедневная оплата/взыскание с offline UUID, без чтения playerdata и без предметной доплаты. */
+    public boolean putGuildBankValue(UUID payer, int price, String key, String value, boolean collectingDebt) {
+        try {
+            if (!source.equals("guilds") || payer == null || price < 1 || price > 1_000_000 || occupied(payer) || !ready()) return false;
+            String empty = ChargeInventory.encode(new org.bukkit.inventory.ItemStack[36]);
+            var payment = journal.prepare(payer, price, price, 0, 0, empty, empty, store.snapshot(), store.previewValue(key, value));
+            api.get().commitGuildBankCharge(payment, collectingDebt);
+            var decision = ChargeInventory.recover(journal, api.get(), null, store);
+            return decision == ChargeRecovery.Decision.COMPLETE;
+        } catch (Exception error) { failure(null, error); return false; }
+    }
+
     /** API 19: снятие из коллективного источника — только в банк, без предметной выдачи.
      * После успешного source replace ошибка доставки не отменяет уже созданное обязательство. */
     public boolean creditValue(Player player, String key, String value, long amount) {

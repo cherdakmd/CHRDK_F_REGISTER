@@ -36,6 +36,7 @@ final class GuildsGui implements Listener {
     private static final int UPGRADE_SLOT = 47;
     private static final int WAR_SLOT = 48;
     private static final int CLOSE_SLOT = 49;
+    private static final int MODE_SLOT = 50;
     private static final int CLAIMS_SLOT = 52;
     private static final int PERSONAL_SLOT = 51;
     private static final int[] MEMBER_SLOTS = {10, 11, 12, 13, 14, 15, 16,
@@ -78,6 +79,10 @@ final class GuildsGui implements Listener {
         holder.inventory = inventory;
         inventory.setItem(CLAIMS_SLOT, item(Material.GRASS_BLOCK, "menu-claims-name", List.of(
                 plugin.messages().get("menu-claims-lore"))));
+        if(guild!=null)inventory.setItem(MODE_SLOT,item(guild.peaceful()?Material.SHIELD:Material.IRON_SWORD,"peace-menu-name",List.of(
+                plugin.messages().get("peace-menu-mode","mode",guild.mode().label()),
+                plugin.messages().get("peace-menu-price","rate",GuildPeaceService.DAILY,"total",(long)guild.size()*GuildPeaceService.DAILY),
+                plugin.messages().get("peace-menu-hint"))));
         inventory.setItem(PERSONAL_SLOT, item(Material.EMERALD, "menu-personal-name", List.of(
                 plugin.messages().get("menu-personal-lore", "level", String.valueOf(plugin.coreApi() == null ? 0
                         : plugin.coreApi().rankLevel(player.getName()))), plugin.messages().get("menu-personal-boundary"))));
@@ -261,6 +266,12 @@ final class GuildsGui implements Listener {
         }
         Guild guild = plugin.service().guildOf(player.getUniqueId());
         if (guild == null) {
+            return;
+        }
+        if(slot==MODE_SLOT) {
+            if(event.isRightClick() && guild.leader().equals(player.getUniqueId()))
+                player.performCommand("clan mode "+(guild.peaceful()?"battle":"peaceful"));
+            else player.performCommand("clan mode status");
             return;
         }
         if (slot == UPGRADE_SLOT) {

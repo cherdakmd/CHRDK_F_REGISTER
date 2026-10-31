@@ -149,6 +149,7 @@ public final class GuildService {
         if (!guild.leader().equals(actor)) {
             return GuildResult.fail("not-leader");
         }
+        if(guild.memberIds().stream().anyMatch(store::combatBlocked))return GuildResult.fail("peace-combat");
         String warKey = cancelWarsOnDisband(guild);
         store.remove(guild);
         return GuildResult.ok("disband-ok", "name", guild.name(), "treasury",
@@ -212,7 +213,8 @@ public final class GuildService {
     }
 
     /** Принимает приглашение и вступает в гильдию. */
-    public GuildResult accept(UUID player, long now) {
+    public GuildResult accept(UUID player, long now) { return accept(null,player,now); }
+    GuildResult accept(GuildPurse purse, UUID player, long now) {
         if (store.financed()) return store.transaction(copy -> new GuildService(config, copy).accept(player, now), GuildResult.fail("finance-paused"));
         if (store.of(player) != null) {
             return GuildResult.fail("already-in-guild");
@@ -234,7 +236,17 @@ public final class GuildService {
             return GuildResult.fail("guild-full", "max",
                     String.valueOf(GuildMath.memberCap(guild.level())));
         }
+        if(guild.peaceful()) {
+            if(store.combatBlocked(player))return GuildResult.fail("peace-combat");
+            if(store.sanction(player).debt()>0)return GuildResult.fail("peace-debt-mode");
+            if(purse==null)return GuildResult.fail("peace-join-required");
+            if(purse.take(player,GuildPeaceService.DAILY)!=GuildPeaceService.DAILY)return GuildResult.fail("peace-no-money");
+        }
         guild.addMember(player, GuildRank.MEMBER);
+        if(guild.peaceful()) {
+            long active=Math.addExact(now,GuildPeaceService.WARMUP);
+            guild.peaceTerm(player,new GuildPeaceTerm(Math.addExact(active,GuildPeaceTerm.DAY),0,active));
+        }
         store.reindex(guild);
         store.removeInvite(player);
         return GuildResult.ok("join-ok", "name", guild.label(), "tag", guild.tag(),
@@ -261,6 +273,7 @@ public final class GuildService {
         if (guild.leader().equals(player)) {
             return GuildResult.fail("leave-leader");
         }
+        if(store.combatBlocked(player))return GuildResult.fail("peace-combat");
         guild.removeMember(player);
         store.reindex(guild);
         return GuildResult.ok("leave-ok", "name", guild.name());
@@ -275,6 +288,7 @@ public final class GuildService {
         if (!guild.isMember(target)) {
             return GuildResult.fail("target-not-in-guild");
         }
+        if(store.combatBlocked(actor)||store.combatBlocked(target))return GuildResult.fail("peace-combat");
         GuildRank actorRank = guild.rankOf(actor);
         GuildRank targetRank = guild.rankOf(target);
         if (actorRank == null || !actorRank.canKick(targetRank)) {
@@ -295,6 +309,7 @@ public final class GuildService {
         if (!guild.isMember(target)) {
             return GuildResult.fail("target-not-in-guild");
         }
+        if(store.combatBlocked(actor)||store.combatBlocked(target))return GuildResult.fail("peace-combat");
         GuildRank actorRank = guild.rankOf(actor);
         GuildRank targetRank = guild.rankOf(target);
         if (actorRank == null || actorRank != GuildRank.LEADER) {
@@ -317,6 +332,7 @@ public final class GuildService {
         if (!guild.isMember(target)) {
             return GuildResult.fail("target-not-in-guild");
         }
+        if(store.combatBlocked(actor)||store.combatBlocked(target))return GuildResult.fail("peace-combat");
         GuildRank actorRank = guild.rankOf(actor);
         GuildRank targetRank = guild.rankOf(target);
         if (actorRank == null || actorRank != GuildRank.LEADER) {
@@ -341,6 +357,7 @@ public final class GuildService {
         if (!guild.isMember(target) || target.equals(actor)) {
             return GuildResult.fail("transfer-no-target");
         }
+        if(store.combatBlocked(actor)||store.combatBlocked(target))return GuildResult.fail("peace-combat");
         guild.transferLeader(target);
         store.reindex(guild);
         return GuildResult.ok("transfer-ok", "name", guild.name());
@@ -515,6 +532,7 @@ public final class GuildService {
         if (target == null || target.id().equals(challenger.id())) {
             return GuildResult.fail("war-no-target");
         }
+        if(challenger.peaceful()||target.peaceful())return GuildResult.fail("peace-war-disabled");
         if (challenger.warCooldownUntil() > now) {
             long seconds = (challenger.warCooldownUntil() - now + 999) / 1_000L;
             return GuildResult.fail("war-cooldown", "time", GuildMath.clock(seconds));
@@ -755,6 +773,7 @@ public final class GuildService {
         if (guild == null) {
             return GuildResult.fail("guild-not-found", "name", query == null ? "?" : query);
         }
+        if(guild.memberIds().stream().anyMatch(store::combatBlocked))return GuildResult.fail("peace-combat");
         String warKey = cancelWarsOnDisband(guild);
         store.remove(guild);
         return GuildResult.ok("admin-disbanded", "name", guild.name(),

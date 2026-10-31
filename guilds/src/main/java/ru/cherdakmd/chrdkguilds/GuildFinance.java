@@ -42,6 +42,12 @@ final class GuildFinance {
     GuildResult create(Player player,String name,String tag,long now) {
         return execute(player,(service,quote) -> service.create(quote,player.getUniqueId(),name,tag,now));
     }
+    GuildResult mode(Player player,GuildMode mode,long now) {
+        return execute(player,(service,quote)->new GuildPeaceService(service.store()).mode(quote,player.getUniqueId(),mode,now));
+    }
+    GuildResult join(Player player,long now) {
+        return execute(player,(service,quote)->service.accept(quote,player.getUniqueId(),now));
+    }
     GuildResult deposit(Player player,long amount) {
         return execute(player,(service,quote) -> service.deposit(quote,player.getUniqueId(),amount));
     }
