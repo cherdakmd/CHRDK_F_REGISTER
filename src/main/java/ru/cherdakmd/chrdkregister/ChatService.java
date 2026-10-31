@@ -576,9 +576,11 @@ public final class ChatService implements Listener {
             return false;
         }
         String src = sourceId.trim().toLowerCase(Locale.ROOT);
-        String resolvedPlayer = linkedPlayer != null && !linkedPlayer.isBlank()
-                ? store().getAccount(linkedPlayer.trim()).map(a -> a.name).orElse(linkedPlayer.trim())
-                : null;
+        String resolvedPlayer = linkedPlayer != null && !linkedPlayer.isBlank() && store() != null
+                ? store().getAccount(linkedPlayer.trim())
+                .map(a -> a.playerName == null || a.playerName.isBlank() ? linkedPlayer.trim() : a.playerName)
+                .orElse(linkedPlayer.trim())
+                : (linkedPlayer != null && !linkedPlayer.isBlank() ? linkedPlayer.trim() : null);
         String safeGuest = sanitizeExternalSender(fallbackSender);
         String actorLabel = resolvedPlayer != null ? resolvedPlayer : (safeGuest.isEmpty() ? src : safeGuest);
 
