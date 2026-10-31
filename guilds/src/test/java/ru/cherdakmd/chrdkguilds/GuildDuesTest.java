@@ -51,4 +51,11 @@ class GuildDuesTest {
         ru.cherdakmd.chrdkregister.api.ChargeInventory.recover(replay,api,null,restarted);assertEquals(10,boot.of(member).treasury());assertEquals(40,bank.balance(member));
     }
 
+    @Test void changingCreationPriceDuringConfirmationRequiresFreshQuote(){
+        assertTrue(GuildPeaceController.sameCreatePrice(280,GuildConfig.defaults()));
+        var yaml=new org.bukkit.configuration.file.YamlConfiguration();yaml.set("general.creation-cost",400);
+        var changed=GuildConfig.parse(yaml,java.util.logging.Logger.getAnonymousLogger());
+        assertFalse(GuildPeaceController.sameCreatePrice(280,changed));assertTrue(GuildPeaceController.sameCreatePrice(410,changed));
+    }
+
 }

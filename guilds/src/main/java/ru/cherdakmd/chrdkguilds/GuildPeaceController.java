@@ -210,6 +210,7 @@ final class GuildPeaceController {
         send(player,result);
         if(result.ok()){plugin.gui().refresh();for(UUID id:guild.memberIds())deliverNotices(id);}
     }
+    static boolean sameCreatePrice(int quoted,GuildConfig config){return quoted==Math.addExact(config.creationCost(),10);}
     boolean confirmCreate(Player player,String name,String tag,boolean confirmed){
         if(plugin.payments().paused()||!plugin.coreApi().personalBankAvailable()){send(player,GuildResult.fail("finance-paused"));return false;}
         long now=System.currentTimeMillis();UUID owner=player.getUniqueId();
@@ -217,11 +218,11 @@ final class GuildPeaceController {
         if(!confirmed){
             var plan=GuildFinance.preview(plugin.store(),plugin.config(),(service,purse)->service.create(purse,owner,name,tag,now));
             if(!plan.result().ok()){send(player,plan.result());return false;}
-            quotes.put(owner,new Quote(key,0,plugin.store().snapshotJson(),now+30_000));
+            quotes.put(owner,new Quote(key,Math.toIntExact(plan.debit()),plugin.store().snapshotJson(),now+30_000));
             send(player,GuildResult.ok("dues-create-confirm","cost",plan.debit(),"command","/clan create "+Guild.cleanName(name)+" "+Guild.cleanTag(tag)+" confirm"));return false;
         }
         Quote q=quotes.remove(owner);
-        if(q==null||!q.action().equals(key)||q.expires()<now||!q.state().equals(plugin.store().snapshotJson())){send(player,GuildResult.fail("peace-quote-expired"));return false;}
+        if(q==null||!q.action().equals(key)||!sameCreatePrice(q.days(),plugin.config())||q.expires()<now||!q.state().equals(plugin.store().snapshotJson())){send(player,GuildResult.fail("peace-quote-expired"));return false;}
         return true;
     }
     void deliverNotices(UUID owner) {
