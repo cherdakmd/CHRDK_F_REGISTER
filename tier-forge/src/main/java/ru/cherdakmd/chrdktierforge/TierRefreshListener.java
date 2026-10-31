@@ -87,6 +87,7 @@ public final class TierRefreshListener implements Listener {
     /** Обновить все слоты с явной записью изменённых стеков обратно в инвентарь. */
     void refreshAll(Player player) {
         if (!player.isOnline() || player.isDead()) return;
+        plugin.invalidateForgeGear(player.getUniqueId());
         var inventory = player.getInventory();
         ItemStack[] contents = inventory.getContents();
         for (int slot = 0; slot < contents.length; slot++) {

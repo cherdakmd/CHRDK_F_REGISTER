@@ -105,6 +105,10 @@ public final class ForgeUpgradeListener implements Listener {
         gearCache.clear();
     }
 
+    void invalidateGearCache(UUID player) {
+        gearCache.invalidate(player);
+    }
+
     /* ------------------------------- атака игрока ------------------------------- */
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)

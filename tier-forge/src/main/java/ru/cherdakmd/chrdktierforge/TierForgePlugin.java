@@ -208,6 +208,11 @@ public final class TierForgePlugin extends JavaPlugin {
         nameTagRegistered = false;
     }
 
+    /** Сверка инвентаря, включая drag/respawn, делает следующий пульс свежим. */
+    void invalidateForgeGear(java.util.UUID player) {
+        if (forgeUpgrades != null) forgeUpgrades.invalidateGearCache(player);
+    }
+
     /** Пульс кузни раз в 2 секунды (тихий no-op, если ковка выключена). */
     private void startForgePulse() {
         this.forgePulseTask = Bukkit.getScheduler().runTaskTimer(this, () -> {
