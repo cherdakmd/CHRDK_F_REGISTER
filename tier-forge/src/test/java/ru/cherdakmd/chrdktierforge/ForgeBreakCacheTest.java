@@ -37,6 +37,11 @@ class ForgeBreakCacheTest {
         assertEquals(3, cache.get(a));
         assertNull(cache.get(b));
         assertEquals(4, cache.get(c));
+        // Даже если новая обычная кирка не создаёт снимка, прошлый уже снят.
+        assertEquals(3, cache.remove(a));
+        assertNull(cache.get(a));
+        assertNull(cache.remove(a));
+        cache.put(a, 5);
         cache.clear();
         assertNull(cache.get(a));
         assertNull(cache.get(c));

@@ -528,13 +528,16 @@ public final class ForgeUpgradeListener implements Listener {
     /** Дроп может прийти уже после поломки инструмента: не угадываем источник по новой руке. */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void captureBreakTool(BlockBreakEvent event) {
+        ForgeBreakCache.Key key = breakKey(event.getPlayer(), event.getBlock());
+        // Повторная ломка той же позиции обычным инструментом не наследует старый снимок.
+        breakCache.remove(key);
         ItemStack tool = event.getPlayer().getInventory().getItemInMainHand();
         Map<ForgeUpgrade.Def, Integer> effects = plugin.items().effectsOf(tool);
         if (effects.isEmpty()) return;
         ItemStack identity = ItemKind.classify(tool.getType().name()) == ItemKind.PICKAXE
                 && ForgeWorkMath.columnSides(sumAbs(effects, ForgeUpgrade.Effect.ZONE_BREAK)) > 0
                 ? toolIdentity(tool) : null;
-        breakCache.put(breakKey(event.getPlayer(), event.getBlock()),
+        breakCache.put(key,
                 new BreakSnapshot(event, event.getBlock().getType(), Map.copyOf(effects), identity));
         if (!breakCleanupQueued) {
             breakCleanupQueued = true;
