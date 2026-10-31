@@ -7,6 +7,14 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PotionRefreshTest {
+    @Test
+    void frostAuraCoversEvenTheLongestConfiguredPulseWithoutChangingDefault() {
+        assertEquals(100, PotionRefresh.auraDurationTicks(40));
+        for (int refresh : new int[]{10, 40, 100, 120, 200}) {
+            assertTrue(PotionRefresh.auraDurationTicks(refresh) > refresh);
+        }
+    }
+
 
     @Test
     void durationAlwaysOutlivesThePulse() {
@@ -31,6 +39,7 @@ class PotionRefreshTest {
         assertFalse(PotionRefresh.shouldApply(true, 1, 400, 0, 300),
                 "Speed II из зелья не понижается до Speed I артефакта");
         assertFalse(PotionRefresh.shouldApply(true, 2, 5, 1, 300));
+        assertFalse(PotionRefresh.shouldApply(true, 0, -1, 0, 300));
     }
 
     @Test

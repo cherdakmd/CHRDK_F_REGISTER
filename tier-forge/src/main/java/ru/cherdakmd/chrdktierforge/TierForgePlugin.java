@@ -64,7 +64,7 @@ public final class TierForgePlugin extends JavaPlugin {
         saveDefaultConfig();
         reloadTierConfig();
         try {
-            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 20) throw new IllegalStateException("Нужен Core API 20+");
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 32) throw new IllegalStateException("Нужен Core API 32+");
             this.awards = new ru.cherdakmd.chrdkregister.api.MilestoneAwards(this,this::coreApi,this::messages,"tierforge-awards",ru.cherdakmd.chrdkregister.api.MilestoneMigration.tierForge(getDataFolder().toPath().resolve("stats.yml")));
         } catch (Exception | LinkageError error) {
             getLogger().log(java.util.logging.Level.SEVERE,"Модуль остановлен без сброса прогресса/наград",error);
@@ -219,6 +219,8 @@ public final class TierForgePlugin extends JavaPlugin {
             TierForgeConfig cfg = this.config;
             if (cfg != null && cfg.improveEnabled() && forgeUpgrades != null) {
                 forgeUpgrades.pulse();
+            } else {
+                ru.cherdakmd.chrdkregister.api.PassivePotions.cancel(this);
             }
         }, 40L, 40L);
     }
