@@ -37,16 +37,16 @@ final class ProfessionWorkJournal {
         if(!plugin.authenticated(player)||player.getGameMode()!=org.bukkit.GameMode.SURVIVAL)return false;
         try{
             Entry e=read(id);
-            // Commit уже подтверждён: игрок мог законно изменить рюкзак после него.
-            if(plugin.store().receipt(id).equals(e.id())){
+            ItemStack[] current=player.getInventory().getStorageContents();
+            var decision=ProfessionWorkRecovery.decide(plugin.store().receipt(id).equals(e.id()),
+                    ChargeInventory.matches(current,e.before()),ChargeInventory.matches(current,e.after()));
+            // Завершённый commit подтверждается без чтения/замены нового содержимого рюкзака.
+            if(decision==ProfessionWorkRecovery.Decision.FINISH_COMMITTED){
                 if(!plugin.store().flushDurably())return false;
                 ProfessionDurableFile.delete(file(id));return true;
             }
-            ItemStack[] current=player.getInventory().getStorageContents();
-            if(!ChargeInventory.matches(current,e.after())){
-                if(plugin.store().receipt(id).equals(e.id())||!ChargeInventory.matches(current,e.before()))return false;
-                player.getInventory().setStorageContents(ChargeInventory.decode(e.after()));
-            }
+            if(decision==ProfessionWorkRecovery.Decision.HOLD||!plugin.store().canTrack(id))return false;
+            if(decision==ProfessionWorkRecovery.Decision.APPLY_BEFORE)player.getInventory().setStorageContents(ChargeInventory.decode(e.after()));
             player.saveData();
             plugin.store().completeWork(id,Profession.parse(e.profession()),e.until(),e.id());
             if(!plugin.store().flushDurably())return false;

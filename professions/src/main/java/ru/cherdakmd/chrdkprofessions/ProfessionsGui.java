@@ -204,6 +204,7 @@ final class ProfessionsGui implements Listener {
         }
         lore.add(plugin.messages().get("menu-profession-hint",
                 "hint", ProfessionText.hintComponent(plugin.messages(), profession)));
+        lore.add(plugin.messages().get("guide.profile","rank",plugin.service().trials().rank(id,profession)));
         lore.add(Component.empty());
         lore.add(profession == plugin.service().active(id)
                 ? plugin.messages().get("menu-profession-current")

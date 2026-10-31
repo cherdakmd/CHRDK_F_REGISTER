@@ -69,7 +69,7 @@ final class ProfessionGuide implements Listener {
     private ItemStack ability(Player player,Profession profession,int index){
         UUID id=player.getUniqueId();
         if(index==0)return item(Material.SHIELD,"guide.passive",List.of(
-                plugin.messages().get("guide.passive-effect","effect",ProfessionText.perk(plugin.messages(),profession,plugin.service().level(id,profession),plugin.service().powerCap(id))),
+                plugin.messages().get("guide.passive-effect","effect",plugin.service().active(id)!=profession?plugin.messages().get("guide.inactive"):!plugin.service().perkEnabled(profession)?plugin.messages().get("guide.effects-disabled"):ProfessionText.perk(plugin.messages(),profession,plugin.service().level(id,profession),plugin.service().powerCap(id))),
                 plugin.messages().get(plugin.service().active(id)==profession?"guide.active":"guide.inactive"),plugin.messages().get("guide.power-cap")));
         var mastery=ProfessionMastery.of(profession).get(index-1);
         return item(Material.matchMaterial(mastery.icon()),mastery.nameKey(),List.of(plugin.messages().get(mastery.descKey()),plugin.messages().get(mastery.costKey()),

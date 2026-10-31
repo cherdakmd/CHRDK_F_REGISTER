@@ -168,10 +168,17 @@ class ProfessionMasteryTest {
     @Test void workshopOnlyCommitsPreparedStorageAndDoesNotAwardOrTouchWorld() throws Exception {
         String source = Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkprofessions/ProfessionWorkshop.java"));
         assertTrue(source.contains("ItemStack[] planned = copy(original)"));
-        assertTrue(source.indexOf("Result result = prepare(") < source.indexOf("setStorageContents(planned)"));
+        assertTrue(source.indexOf("Result result = prepare(") < source.indexOf("journal.apply("));
         assertTrue(source.contains("if (!result.ok())"));
         assertTrue(source.contains("Arrays.equals(original, player.getInventory().getStorageContents())"));
-        assertTrue(source.contains("player.getInventory().setStorageContents(original)"));
+        assertFalse(source.contains("setStorageContents("),"Рюкзак изменяет только журнал после записи плана");
+        String journal=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkprofessions/ProfessionWorkJournal.java"));
+        assertTrue(journal.indexOf("ProfessionDurableFile.write(")<journal.indexOf("return recover(player)"));
+        assertTrue(journal.contains("ProfessionWorkRecovery.decide("));
+        assertTrue(journal.indexOf("player.saveData()")<journal.indexOf("plugin.store().completeWork("));
+        int completed=journal.indexOf("plugin.store().completeWork(");
+        assertTrue(completed<journal.indexOf("flushDurably()",completed));
+        assertTrue(journal.indexOf("flushDurably()",completed)<journal.indexOf("ProfessionDurableFile.delete(",completed));
         assertTrue(source.contains("!plugin.authenticated(player)"));
         assertTrue(source.contains("potion.hasCustomEffects()"));
         assertFalse(source.contains("award("));
