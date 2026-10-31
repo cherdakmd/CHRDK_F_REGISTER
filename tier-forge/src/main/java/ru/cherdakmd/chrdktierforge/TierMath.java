@@ -1,5 +1,8 @@
 package ru.cherdakmd.chrdktierforge;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 /**
  * Формулы бонусов: из одного процента тира выводятся величины атрибутов по kind-у.
  * Чистая математика — юнит-тестируема.
@@ -32,6 +35,11 @@ public final class TierMath {
     /** Множитель для защиты (каждый слот брони). */
     public static double defenseScalar(int percent) {
         return percent / 100.0;
+    }
+
+    /** Реальный модификатор брони за деталь: прежняя половина силы тира. */
+    public static double armorScalar(int percent) {
+        return defenseScalar(percent) * 0.5;
     }
 
     /** Множитель для твёрдости брони (половина базового процента). */
@@ -77,8 +85,9 @@ public final class TierMath {
 
     /** Процент со знаком: 0.6 → "+60", −0.4 → "-40". */
     public static String signedPercent(double scalar) {
-        int value = percentOf(scalar);
-        return (value > 0 ? "+" : "") + value;
+        BigDecimal value = BigDecimal.valueOf(scalar).movePointRight(2)
+                .setScale(6, RoundingMode.HALF_UP).stripTrailingZeros();
+        return (value.signum() > 0 ? "+" : "") + value.toPlainString();
     }
 
     private static double clamp(double value, double min, double max) {

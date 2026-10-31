@@ -1,6 +1,12 @@
 package ru.cherdakmd.chrdktierforge;
 
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.entity.AbstractArrow;
+import org.bukkit.entity.Trident;
+import org.bukkit.event.entity.EntityShootBowEvent;
+import org.bukkit.event.entity.ProjectileLaunchEvent;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.Sound;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
@@ -48,7 +54,8 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Событийная половина кузнечных свойств: бой, добыча, прочность, пассивный пульс
  * и «привязка души». Атрибутная половина живёт в {@link TierItems}. Уровни
- * читаются из PDC предмета в руке/на теле в момент события — кэшей самих предметов
+ * читаются из PDC предмета в руке/на теле; снаряд хранит снимок бонуса выстрела.
+ * Кэшей самих предметов
  * нет. С 1.4.91 есть только кэш «есть ли ковка в экипировке» для пульса
  * ({@link ForgeGearCache}) плюс кулдауны по игрокам и очередь воскрешения.
  */
@@ -69,6 +76,7 @@ public final class ForgeUpgradeListener implements Listener {
     static final long LASTSTAND_CD_MS = 60_000L;
 
     private final TierForgePlugin plugin;
+    private final NamespacedKey shotBonusKey;
     private final Random random = new Random();
     private final Map<UUID, Long> adrenalineCooldown = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastStandCooldown = new ConcurrentHashMap<>();
@@ -89,46 +97,27 @@ public final class ForgeUpgradeListener implements Listener {
 
     public ForgeUpgradeListener(TierForgePlugin plugin) {
         this.plugin = plugin;
+        this.shotBonusKey = new NamespacedKey(plugin, "shot_bonus_v1");
     }
 
     /* ------------------------------- атака игрока ------------------------------- */
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onPlayerHit(EntityDamageByEntityEvent event) {
-        Player attacker;
-        boolean projectileHit = false;
-        if (event.getDamager() instanceof Player melee) {
-            attacker = melee;
-        } else if (event.getDamager() instanceof Projectile shot
+        if (event.getDamager() instanceof Projectile shot
                 && shot.getShooter() instanceof Player shooter) {
-            attacker = shooter;
-            projectileHit = true;
-        } else {
+            TierShotBonus bonus = shotBonus(shot);
+            if (!bonus.equals(TierShotBonus.NONE)) {
+                lastCombat.put(shooter.getUniqueId(), System.currentTimeMillis());
+                event.setDamage(bonus.apply(event.getDamage()));
+            }
             return;
         }
+        if (!(event.getDamager() instanceof Player attacker)) return;
         ItemStack weapon = attacker.getInventory().getItemInMainHand();
         Map<ForgeUpgrade.Def, Integer> ups = plugin.items().effectsOf(weapon);
-        // 1.4.124: лук/арбалет/трезубец не получают урон стрелы от ATTACK_DAMAGE —
-        // процент тира начисляется здесь, по факту попадания снаряда.
-        TierDef.Snapshot tier = projectileHit ? rangedTier(weapon) : null;
-        if (ups.isEmpty() && tier == null) {
-            return;
-        }
+        if (ups.isEmpty()) return;
         lastCombat.put(attacker.getUniqueId(), System.currentTimeMillis());
-
-        // Снаряды: сначала процент тира, затем «Снайпер». Проки ближнего боя не работают
-        if (projectileHit) {
-            if (tier != null && tier.percent() != 0) {
-                event.setDamage(event.getDamage()
-                        * (1.0 + TierMath.projectileScalar(tier.percent())));
-            }
-            int snipe = levelOf(ups, ForgeUpgrade.Effect.SNIPE);
-            if (snipe > 0) {
-                event.setDamage(event.getDamage()
-                        * (1.0 + snipe * fraction(ups, ForgeUpgrade.Effect.SNIPE)));
-            }
-            return;
-        }
 
         double damage = event.getDamage();
 
@@ -295,6 +284,41 @@ public final class ForgeUpgradeListener implements Listener {
             return;
         }
         target.addPotionEffect(new PotionEffect(type, ticks, amplifier, false, true, true));
+    }
+
+    /** Рука выстрела берётся из события, поэтому вторая рука и залп арбалета тоже корректны. */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBowShot(EntityShootBowEvent event) {
+        if (event.getEntity() instanceof Player && event.getProjectile() instanceof Projectile shot) {
+            shot.getPersistentDataContainer().set(shotBonusKey, PersistentDataType.STRING,
+                    bonusOf(event.getBow()).encode());
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onTridentLaunch(ProjectileLaunchEvent event) {
+        if (event.getEntity() instanceof Trident trident && trident.getShooter() instanceof Player) {
+            trident.getPersistentDataContainer().set(shotBonusKey, PersistentDataType.STRING,
+                    bonusOf(trident.getItemStack()).encode());
+        }
+    }
+
+    private TierShotBonus bonusOf(ItemStack weapon) {
+        if (weapon == null || (weapon.getType() != Material.BOW
+                && weapon.getType() != Material.CROSSBOW && weapon.getType() != Material.TRIDENT)) {
+            return TierShotBonus.NONE;
+        }
+        TierDef.Snapshot tier = rangedTier(weapon);
+        return TierShotBonus.capture(tier == null ? 0 : tier.percent(), plugin.items().effectsOf(weapon));
+    }
+
+    private TierShotBonus shotBonus(Projectile shot) {
+        String saved = shot.getPersistentDataContainer().get(shotBonusKey, PersistentDataType.STRING);
+        if (saved != null) return TierShotBonus.decode(saved);
+        // Старые снаряды: только собственное сохранённое оружие, никогда текущая рука игрока.
+        if (shot instanceof Trident trident) return bonusOf(trident.getItemStack());
+        if (shot instanceof AbstractArrow arrow) return bonusOf(arrow.getWeapon());
+        return TierShotBonus.NONE;
     }
 
     /**

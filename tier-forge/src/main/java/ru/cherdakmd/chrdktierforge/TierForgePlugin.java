@@ -221,6 +221,7 @@ public final class TierForgePlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         if (awards != null) awards.close();
+        if (refreshListener != null) refreshListener.close();
         unregisterCollectionNameTag();
         if (tabService != null) {
             tabService.stop();

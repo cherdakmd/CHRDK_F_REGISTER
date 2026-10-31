@@ -184,6 +184,7 @@ public final class TierItems {
 
         clearTierModifiers(meta);
         clearForgeModifiers(meta);
+        ItemAttributes.keep(item, meta);
         ensureForgeName(item, meta);
         refreshUpgradeIndex(meta, kind); // 1.4.82: индекс строится при каждой пересборке
         syncProperties(item, meta, tier, preset); // 1.4.118: свойство живёт вместе с тиром
@@ -196,7 +197,8 @@ public final class TierItems {
         replaceLore(meta, tier, kind);
         stampVisuals(meta, tier); // 1.4.119: свой блеск у каждого тира
         meta.getPersistentDataContainer().set(modifiersKey, PersistentDataType.STRING,
-                modifierStamp());
+                modifierStamp(kind, tier));
+        ItemAttributes.dropEmpty(meta);
         item.setItemMeta(meta);
         // волна 18: кастомные чары — после setItemMeta, потому что API аддона
         // читает и пишет готовый ItemStack, а не ItemMeta
@@ -275,8 +277,9 @@ public final class TierItems {
      * скорость добычи. С 1.4.124 у каждого предмета свой суффикс id модификаторов
      * (иначе сет брони «склеивался» в один бонус), а формулы стали сильнее —
      * поэтому предмет без актуального {@code modifiers_stamp} пересобирается
-     * целиком. Кличка, лор, уровни улучшений и уже выданные свойства тира
-     * сохраняются.</p>
+     * по атрибутам. С 1.4.265 это не полная выдача: кличка, чары, уровни
+     * улучшений и сохранённый набор свойств не переролливаются; свой лор
+     * обновляется отдельно, чужие строки сохраняются.</p>
      *
      * @return {@code true} — предмет обновлён (инвентарь стоит перерисовать)
      */
@@ -306,16 +309,19 @@ public final class TierItems {
         if (!modifiers && !visuals) {
             return false;
         }
-        if (modifiers && !modifierStamp().equals(modifiersStamp(meta))) {
-            // 1.4.124: отпечаток старее текущего — пересобираем предмет целиком:
-            // уникальные id, новые формулы и все модификаторы ковки/свойств.
-            // Свойства тира при том же тире сохраняются (syncProperties).
-            apply(item, tier);
-            return true;
-        }
         if (modifiers) {
+            // Только атрибуты: никакой выдачи имён, свойств или чар при миграции/reload.
+            String uid = ensureModifierUid(meta, null);
             clearTierModifiers(meta);
-            applyModifiers(item, meta, tier, ensureModifierUid(meta, null));
+            clearForgeModifiers(meta);
+            ItemAttributes.keep(item, meta);
+            applyModifiers(item, meta, tier, uid);
+            applyUpgradeModifiers(item, meta, uid);
+            applyPropertyModifiers(item, meta, uid);
+            applyAffixModifiers(item, meta, uid);
+            refreshOwnedLore(meta, tier, kind);
+            meta.getPersistentDataContainer().set(modifiersKey, PersistentDataType.STRING,
+                    modifierStamp(kind, tier));
         }
         stampVisuals(meta, tier);
         // 1.4.140: пустой компонент атрибутов перекрывает ванильные значения —
@@ -330,7 +336,7 @@ public final class TierItems {
      * инструментов или отсутствие скорости добычи у инструмента.
      */
     private boolean needsModifierRefresh(ItemMeta meta, ItemKind kind, TierDef.Snapshot tier) {
-        if (!modifierStamp().equals(modifiersStamp(meta))) {
+        if (!modifierStamp(kind, tier).equals(modifiersStamp(meta))) {
             return true; // раскладка до 1.4.124: общие id и старые формулы
         }
         if (hasTierModifier(meta, "attack_tool", Attribute.ATTACK_DAMAGE)
@@ -347,14 +353,15 @@ public final class TierItems {
      * предметах уже навешенные модификаторы: событийные эффекты гаснут сразу,
      * а атрибуты ждали бы пересборки, которой без смены отпечатка не будет.
      */
-    private String modifierStamp() {
+    private String modifierStamp(ItemKind kind, TierDef.Snapshot tier) {
         TierForgeConfig config = plugin.config();
         if (config == null) {
             return TierModifierIds.STAMP;
         }
         return TierModifierIds.stamp(config.affixes().enabled(),
                 config.affixes().goodLimit(), config.affixes().badLimit(),
-                config.enchants().enabled());
+                config.enchants().enabled(), kind == null ? "unknown" : kind.name(), tier.percent(),
+                config.propertiesEnabled(), config.propertiesPerItem());
     }
 
     /** Отпечаток раскладки модификаторов на предмете (null — версия до 1.4.124). */
@@ -514,17 +521,9 @@ public final class TierItems {
      * считается устаревшим и переролливается целиком.
      */
     private List<TierProperty> propertiesFromMeta(ItemMeta meta, ItemKind kind) {
-        List<TierProperty> all = rawPropertiesFromMeta(meta);
-        if (kind == null || all.isEmpty()) {
-            return kind == null ? all : List.of();
-        }
-        List<TierProperty> result = new ArrayList<>(all.size());
-        for (TierProperty property : all) {
-            if (property.fits(kind)) {
-                result.add(property);
-            }
-        }
-        return result;
+        String tier = meta.getPersistentDataContainer().get(key, PersistentDataType.STRING);
+        return TierPropertySelection.active(rawPropertiesFromMeta(meta), kind, tier,
+                plugin.config().propertiesEnabled(), desiredProperties());
     }
 
     private List<TierProperty> rawPropertiesFromMeta(ItemMeta meta) {
@@ -775,7 +774,7 @@ public final class TierItems {
                     // попаданий (ForgeUpgradeListener) по тиру оружия в руке.
                 }
                 case ARMOR -> add(item, meta, Attribute.ARMOR, "armor",
-                        TierMath.defenseScalar(percent) * 0.5, slot, uid);
+                        TierMath.armorScalar(percent), slot, uid);
                 case ARMOR_TOUGHNESS -> add(item, meta, Attribute.ARMOR_TOUGHNESS, "toughness",
                         TierMath.toughnessScalar(percent), slot, uid);
                 case MOVEMENT_SPEED -> {
@@ -1057,7 +1056,8 @@ public final class TierItems {
         // (проклятый). На 1.21.5+ геттер падает, если компонента нет, — сначала
         // проверяем hasEnchantmentGlintOverride(). Отпечаток стиля тоже чистим:
         // следующий stampVisuals поставит актуальный.
-        if (meta.hasEnchantmentGlintOverride()) {
+        if (meta.getPersistentDataContainer().has(visualsKey, PersistentDataType.STRING)
+                && meta.hasEnchantmentGlintOverride()) {
             meta.setEnchantmentGlintOverride(null);
         }
         meta.getPersistentDataContainer().remove(visualsKey);
@@ -1237,6 +1237,32 @@ public final class TierItems {
         }
     }
 
+    /** Миграция обновляет только распознанные строки; чужие маркеры не удаляем. */
+    private void refreshOwnedLore(ItemMeta meta, TierDef.Snapshot tier, ItemKind kind) {
+        List<Component> before = meta.lore();
+        if (before == null) return;
+        java.util.Set<String> names = new java.util.HashSet<>();
+        for (String id : TierDef.LADDER) names.add(plugin.messages().plain("tier." + id + ".name"));
+        Map<String, Component> replacements = new LinkedHashMap<>();
+        for (TierProperty property : rawPropertiesFromMeta(meta)) {
+            replacements.put(PlainTextComponentSerializer.plainText().serialize(propertyLine(property)), null);
+        }
+        for (TierProperty property : propertiesFromMeta(meta, kind)) {
+            Component line = propertyLine(property);
+            replacements.put(PlainTextComponentSerializer.plainText().serialize(line), line);
+        }
+        // Все варианты аффиксов того же uid известны детерминированно, включая отключённые.
+        String uid = meta.getPersistentDataContainer().get(modifierUidKey, PersistentDataType.STRING);
+        for (TierAffix affix : TierAffixes.possibleForItem(uid, tier.id(), kind)) {
+            replacements.put(PlainTextComponentSerializer.plainText().serialize(affixLine(affix)), null);
+        }
+        for (TierAffix affix : affixesFromMeta(meta, kind)) {
+            Component line = affixLine(affix);
+            replacements.put(PlainTextComponentSerializer.plainText().serialize(line), line);
+        }
+        meta.lore(TierLore.refresh(before, names, tierLine(tier, kind), replacements));
+    }
+
     private void replaceLore(ItemMeta meta, TierDef.Snapshot tier, ItemKind kind) {
         List<Component> lore = meta.hasLore() && meta.lore() != null
                 ? new ArrayList<>(meta.lore()) : new ArrayList<>();
@@ -1291,7 +1317,7 @@ public final class TierItems {
                         "value", TierMath.signedPercent(TierMath.miningScalar(percent))));
                 case MOVEMENT_SPEED -> {
                     double scalar = TierMath.movementScalar(percent);
-                    if (TierMath.percentOf(scalar) > 0) {
+                    if (scalar > 0) {
                         parts.add(plugin.messages().raw("tier-bonus-movement",
                                 "value", TierMath.signedPercent(scalar)));
                     }
@@ -1304,9 +1330,10 @@ public final class TierItems {
                                 "value", (luck > 0 ? "+" : "") + (int) luck));
                     }
                 }
-                default -> {
-                    // броня/твёрдость — мелкий пассив, в плашку не выносим
-                }
+                case ARMOR -> parts.add(plugin.messages().raw("tier-bonus-armor",
+                        "value", TierMath.signedPercent(TierMath.armorScalar(percent))));
+                case ARMOR_TOUGHNESS -> parts.add(plugin.messages().raw("tier-bonus-toughness",
+                        "value", TierMath.signedPercent(TierMath.toughnessScalar(percent))));
             }
         }
         return String.join(plugin.messages().raw("tier-bonus-separator"), parts);
