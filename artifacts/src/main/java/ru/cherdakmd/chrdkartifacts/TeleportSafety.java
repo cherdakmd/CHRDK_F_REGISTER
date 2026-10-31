@@ -1,5 +1,7 @@
 package ru.cherdakmd.chrdkartifacts;
 
+import java.util.function.BooleanSupplier;
+
 /**
  * Правила безопасного телепорта «Ключа странника» и «Мембраны призрака».
  *
@@ -17,6 +19,13 @@ public final class TeleportSafety {
     static final int ATTEMPTS = 16;
 
     private TeleportSafety() {
+    }
+
+    /** Один отказ — окончательный отказ активации, без обхода другим кандидатом. */
+    static boolean perform(BooleanSupplier teleport, Runnable rejected) {
+        if (teleport.getAsBoolean()) return true;
+        rejected.run();
+        return false;
     }
 
     /**

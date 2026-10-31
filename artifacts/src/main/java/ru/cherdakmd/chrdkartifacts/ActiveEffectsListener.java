@@ -117,6 +117,12 @@ public final class ActiveEffectsListener implements Listener {
         plugin.feedback().activated(player, def);
     }
 
+    /** Отмена PlayerTeleportEvent не считается успехом: ни XP, ни кулдауна, ни побочных эффектов. */
+    private boolean teleport(Player player, Location destination) {
+        return TeleportSafety.perform(() -> player.teleport(destination),
+                () -> plugin.messages().send(player, "teleport-denied"));
+    }
+
     /**
      * Артефакт — не строительный материал. Приседание перед блоком отдаёт клик
      * игре, поэтому размещение (руда, обсидиан, снег, паутина…) отсекается
@@ -229,8 +235,7 @@ public final class ActiveEffectsListener implements Listener {
             plugin.messages().send(player, "home-missing");
             return false;
         }
-        player.teleport(home.clone().add(0.5, 0.05, 0.5));
-        return true;
+        return teleport(player, home.clone().add(0.5, 0.05, 0.5));
     }
 
     /** Ледяная Стена: мобов вокруг сковывает льдом. */
@@ -291,7 +296,7 @@ public final class ActiveEffectsListener implements Listener {
             plugin.messages().send(player, "dash-blocked");
             return false;
         }
-        player.teleport(spot.setDirection(from.getDirection()));
+        if (!teleport(player, spot.setDirection(from.getDirection()))) return false;
         player.getWorld().playSound(spot, org.bukkit.Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
         return true;
     }
@@ -404,10 +409,17 @@ public final class ActiveEffectsListener implements Listener {
         for (int y = base.getBlockY() - 2; y > base.getWorld().getMinHeight() + 1
                 && y > base.getBlockY() - 60; y--) {
             Location probe = new Location(base.getWorld(), base.getX(), y, base.getZ());
-            if (probe.getBlock().isPassable()
-                    && probe.clone().add(0, 1, 0).getBlock().isPassable()
-                    && probe.clone().add(0, -1, 0).getBlock().getType().isSolid()) {
-                player.teleport(probe.add(0.5, 1.0, 0.5).setDirection(base.getDirection()));
+            Block feet = probe.getBlock();
+            Block head = probe.clone().add(0, 1, 0).getBlock();
+            Block ground = probe.clone().add(0, -1, 0).getBlock();
+            if (TeleportSafety.isSafeSpot(feet.isPassable() && !feet.isLiquid(),
+                    head.isPassable() && !head.isLiquid(), ground.getType().isSolid(),
+                    HAZARDOUS_GROUND.contains(ground.getType()))) {
+                // probe — проверенная ячейка ног; +1 поставил бы голову в непроверенный потолок.
+                if (!teleport(player, probe.add(0.5, 0.0, 0.5)
+                        .setDirection(player.getLocation().getDirection()))) {
+                    return false;
+                }
                 player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 40, 0,
                         true, false, true));
                 return true;
@@ -460,7 +472,7 @@ public final class ActiveEffectsListener implements Listener {
             plugin.messages().send(player, "dash-blocked");
             return false;
         }
-        player.teleport(spot.setDirection(from.getDirection()));
+        if (!teleport(player, spot.setDirection(from.getDirection()))) return false;
         player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 60, 1, true, false, true));
         return true;
     }
@@ -502,8 +514,7 @@ public final class ActiveEffectsListener implements Listener {
             if (spot == null || !world.getWorldBorder().isInside(spot)) {
                 continue;
             }
-            player.teleport(spot);
-            return true;
+            return teleport(player, spot);
         }
         plugin.messages().send(player, "teleport-failed");
         return false;
@@ -613,7 +624,7 @@ public final class ActiveEffectsListener implements Listener {
             if (spot == null || !world.getWorldBorder().isInside(spot)) {
                 continue;
             }
-            player.teleport(spot);
+            if (!teleport(player, spot)) return false;
             player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 100, 0,
                     true, false, true));
             return true;
