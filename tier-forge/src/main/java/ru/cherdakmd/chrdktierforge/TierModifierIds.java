@@ -25,8 +25,9 @@ final class TierModifierIds {
      * компонент {@code attribute_modifiers} целиком, и меч бил на «полсердечка».
      * После пересборки в компонент возвращается базовый урон/скорость атаки.
      * Версия 4 (1.4.265) учитывает роль/процент/свойства и не запускает выдачу заново.
+     * Версия 5 (1.4.266) обновляет известные прежние описания ковки/свойств.
      */
-    static final String STAMP = "4";
+    static final String STAMP = "5";
 
     static final String TIER_PREFIX = "tier_";
     static final String UPGRADE_PREFIX = "fu_";

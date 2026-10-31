@@ -438,6 +438,19 @@ public final class ForgeUpgrade {
         };
     }
 
+    /** Только известные описания до 1.4.266; не эвристика по чужому маркеру лора. */
+    static String describeBefore266(Def def, int level) {
+        double total = def.perLevel() * level;
+        return switch (def.effect()) {
+            case ORE_DOUBLE -> fmt(total) + "% шанс дубля руды";
+            case ZONE_BREAK -> "копает колонну боков";
+            case FEED_PULSE -> "+" + fmt(total) + " сытости/2с голодающему";
+            case PULSE_MEND -> "чинит себя: " + fmt(def.perLevel()) + " прочности/2с";
+            case MAGNET -> "магнит дропа (до " + fmt(1.5 + total) + " м)";
+            default -> describe(def, level);
+        };
+    }
+
     /** Строка свойства для лора при заданном суммарном уровне («+6% урона»). */
     public static String describe(Def def, int level) {
         double total = def.perLevel() * level;
@@ -455,7 +468,7 @@ public final class ForgeUpgrade {
             case MAX_HEALTH -> signed(total) + "❤ к здоровью";
             case THORNS -> value + "% шанс вернуть 25% урона";
             case DAMAGE_TAKEN_PERCENT -> "-" + value + "% входящего урона";
-            case ORE_DOUBLE -> value + "% шанс дубля руды";
+            case ORE_DOUBLE -> value + "% шанс дубля сырья руды (не блока)";
             case DIG_SPEED_PERCENT -> signed(total) + "% скорости добычи";
             case DURABILITY_SAVE -> value + "% шанс сберечь прочность";
             case RAW_DAMAGE -> signed(total) + " к урону";
@@ -487,11 +500,13 @@ public final class ForgeUpgrade {
             case BLOCK_REACH -> signed(total) + " м дальности руки";
             case SMELT_ORE -> value + "% переплавить дроп руды";
             case BLOCK_XP -> "+" + value + "% опыта с блоков";
-            case ZONE_BREAK -> "копает колонну боков";
+            case ZONE_BREAK -> ForgeWorkMath.columnSides(total) >= 2
+                    ? "колонна: +1 блок сверху и +1 снизу"
+                    : "колонна: +1 блок сверху";
             case SOULBOUND -> "не выпадает при смерти";
             case XP_REPAIR -> value + "% опыта чинит предмет";
             case NIGHT_VISION -> "ночное зрение (пассивно)";
-            case MAGNET -> "магнит дропа (до " + fmt(1.5 + total) + " м)";
+            case MAGNET -> "магнит дропа (до " + fmt(ForgeWorkMath.magnetRadius(total)) + " м)";
             case SCALE_UP -> "+" + value + "% роста";
             // --- 1.4.57 ---
             case THUNDER -> value + "% ударить громом (+" + fmt(level / 2.0) + "❤)";
@@ -514,7 +529,7 @@ public final class ForgeUpgrade {
             case EXPLOSION_DAMAGE_DOWN -> "-" + value + "% урона взрывов";
             case MAGIC_DAMAGE_DOWN -> "-" + value + "% урона магии";
             case NO_FREEZE -> "не замерзает никогда";
-            case FEED_PULSE -> "+" + value + " сытости/2с голодающему";
+            case FEED_PULSE -> "+" + value + " насыщения/2с (до 6; не шкала еды)";
             case PROJECTILE_REFLECT -> value + "% отразить снаряд";
             case GOOD_EFFECTS_LONGER -> "+" + value + "% длительности добрых эффектов";
             case BAD_EFFECTS_SHORTER -> "-" + value + "% длительности злых эффектов";
@@ -525,7 +540,7 @@ public final class ForgeUpgrade {
             case GOLD_FIND -> value + "% найти золотую крупицу в камне";
             case DEEP_DOUBLE -> value + "% дубль добычи глубже нуля";
             case XP_GAIN -> "+" + value + "% опыта из любых источников";
-            case PULSE_MEND -> "чинит себя: " + fmt(def.perLevel()) + " прочности/2с";
+            case PULSE_MEND -> "чинит себя: " + value + " прочности/2с";
             case PATH_SPEED -> "скорость на тропинках и траве";
             case ROAM_SPEED -> "скорость вне боя (после 5 с тишины)";
             case SNIPE -> signed(total) + "% урона стрелам";
