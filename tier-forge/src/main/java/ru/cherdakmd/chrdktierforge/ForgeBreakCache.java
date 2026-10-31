@@ -26,6 +26,10 @@ final class ForgeBreakCache<T> {
         return entries.get(key);
     }
 
+    T remove(Key key) {
+        return entries.remove(key);
+    }
+
     void clear() {
         entries.clear();
     }
