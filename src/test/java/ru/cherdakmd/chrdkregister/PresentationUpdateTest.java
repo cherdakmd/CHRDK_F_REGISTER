@@ -116,7 +116,7 @@ class PresentationUpdateTest {
         var changes=PresentationMigration.replacements(live,List.of(legacy),fresh);
         assertTrue(changes.contains("server-menu.items"));
         assertTrue(changes.contains("auto-messages.messages"));
-        assertEquals(live.getMapList("server-menu.items").size()-2, fresh.getMapList("server-menu.items").size());
+        assertEquals(live.getMapList("server-menu.items").size()-1, fresh.getMapList("server-menu.items").size());
         for (var entry:fresh.getMapList("server-menu.items")) {
             assertFalse(RetiredAddons.plugin(String.valueOf(entry.get("plugin"))));
             assertFalse(RetiredAddons.command(String.valueOf(entry.get("command"))));
@@ -211,7 +211,7 @@ class PresentationUpdateTest {
         assertEquals(7,categories.size(),"разделы меню: "+categories);
         assertEquals(7,new HashSet<>(categories).size(),"ид разделов уникальны");
         var entries=config.getMapList("server-menu.items").stream().map(this::menuEntry).toList();
-        assertEquals(50,entries.size(),"актуальное меню с донатом и двумя просмотрами экономики, без снятых аддонов");
+        assertEquals(51,entries.size(),"актуальное меню с донатом, просмотрами экономики и CHRDK_VK, без снятых аддонов");
         for(String expected:List.of("bal stats","homes prices","claim budget"))
             assertEquals(1,entries.stream().filter(e->e.command().equals(expected)).count(),expected);
         for (var entry : entries) {

@@ -31,8 +31,8 @@ import java.util.UUID;
  */
 public interface ChrdkRegisterApi {
 
-    /** Версия контракта API. API 30: общий helper одноразового согласия с котировкой; API 29: точный остаток выручки магазина; API 28: индекс членства кланов; API 27: снят источник оформления удалённого аддона; API 26: сняты контракты удалённых аддонов; API 25: durable checkpoint игровых наград; API 24 — Claims domain settlement. */
-    int API_VERSION = 31;
+    /** Версия контракта API. API 32: мосты внешних интеграций (слушатели безопасности и уведомлений, бонус длительности покупок, заморозка входа и сброс сессий без смены пароля); API 30: общий helper одноразового согласия с котировкой; API 29: точный остаток выручки магазина; API 28: индекс членства кланов; API 27: снят источник оформления удалённого аддона; API 26: сняты контракты удалённых аддонов; API 25: durable checkpoint игровых наград; API 24 — Claims domain settlement. */
+    int API_VERSION = 32;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -383,6 +383,96 @@ public interface ChrdkRegisterApi {
 
     /** Убирает раздел, зарегистрированный под этим id (API v8). */
     default void unregisterProfile(String id) {
+    }
+
+    /* ------------------- безопасность и внешние интеграции (API v32) ------------------- */
+
+    /**
+     * Слушатель событий безопасности аккаунта и предупреждений об истечении ранга (API v32).
+     *
+     * <p>Передаётся только маскированный IP; пароли и секреты 2FA наружу не выдаются.</p>
+     */
+    interface SecurityListener {
+        /** Успешное завершение входа ({@code password}, {@code session}, {@code 2fa-enrolled} и т.п.). */
+        default void onLoginSuccess(String playerName, String maskedIp, String method) {
+        }
+
+        /** Предупреждение о переборе пароля на аккаунте. */
+        default void onBruteForceAlert(String playerName, String maskedIp, int failures, boolean blocked) {
+        }
+
+        /** Предупреждение о скором окончании срока ранга. */
+        default void onPassExpiring(String playerName, long passUntilMillis, long remainingMinutes) {
+        }
+    }
+
+    /** Подписывает аддон на события входа, перебора пароля и истечения ранга (API v32). */
+    default void registerSecurityListener(String id, SecurityListener listener) {
+    }
+
+    /** Снимает подписку {@link #registerSecurityListener(String, SecurityListener)} (API v32). */
+    default void unregisterSecurityListener(String id) {
+    }
+
+    /** Слушатель исходящих административных уведомлений {@code NotificationService} (API v32). */
+    @FunctionalInterface
+    interface NotificationListener {
+        void onNotification(String event, String title, String description, String severity);
+    }
+
+    /** Подписывает аддон на административные уведомления ядра и других аддонов (API v32). */
+    default void registerNotificationListener(String id, NotificationListener listener) {
+    }
+
+    /** Снимает подписку {@link #registerNotificationListener(String, NotificationListener)} (API v32). */
+    default void unregisterNotificationListener(String id) {
+    }
+
+    /**
+     * Внешний источник процентной прибавки к сроку покупок каталога (например, VK Donut) (API v32).
+     *
+     * <p>Процент ограничивается потолком {@code ShopDiscount.MAX_PERCENT} и не складывается с Boosty:
+     * применяется наибольший активный процент подписчика.</p>
+     */
+    interface ShopBonusProvider {
+        default boolean available() {
+            return true;
+        }
+
+        int bonusPercent(String playerName);
+    }
+
+    /** Регистрирует провайдер бонусных дней каталога (API v32). */
+    default void registerShopBonusProvider(String id, ShopBonusProvider provider) {
+    }
+
+    /** Удаляет провайдер бонусных дней каталога (API v32). */
+    default void unregisterShopBonusProvider(String id) {
+    }
+
+    /** Заморожен ли вход в аккаунт владельцем через внешний привязанный канал (API v32). */
+    default boolean isLoginFrozen(String playerName) {
+        return false;
+    }
+
+    /**
+     * Замораживает или размораживает вход в зарегистрированный аккаунт (API v32).
+     *
+     * <p>При заморозке также сбрасываются активные IP-сессии и завершается текущий сеанс
+     * онлайн-игрока. Пароль и 2FA при этом не изменяются.</p>
+     */
+    default boolean setLoginFrozen(String playerName, boolean frozen, String source) {
+        return false;
+    }
+
+    /** Сбрасывает все сохранённые сессии аккаунта и отключает активный сеанс на сервере (API v32). */
+    default boolean terminateSessions(String playerName, String source) {
+        return false;
+    }
+
+    /** Количество сохранённых IP-сессий аккаунта (API v32). */
+    default int activeSessionCount(String playerName) {
+        return 0;
     }
 
     /* ------------------------------ интеграции ------------------------------ */

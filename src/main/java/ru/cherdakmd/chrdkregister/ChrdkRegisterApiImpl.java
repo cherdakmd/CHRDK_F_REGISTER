@@ -416,6 +416,60 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
         accessManager.notifications().notify(event, title, description, severity);
     }
 
+    @Override
+    public void registerSecurityListener(String id, ChrdkRegisterApi.SecurityListener listener) {
+        accessManager.registerSecurityListener(id, listener);
+    }
+
+    @Override
+    public void unregisterSecurityListener(String id) {
+        accessManager.unregisterSecurityListener(id);
+    }
+
+    @Override
+    public void registerNotificationListener(String id, ChrdkRegisterApi.NotificationListener listener) {
+        accessManager.notifications().registerListener(id, listener);
+    }
+
+    @Override
+    public void unregisterNotificationListener(String id) {
+        accessManager.notifications().unregisterListener(id);
+    }
+
+    @Override
+    public void registerShopBonusProvider(String id, ChrdkRegisterApi.ShopBonusProvider provider) {
+        if (shop != null) {
+            shop.registerBonusProvider(id, provider);
+        }
+    }
+
+    @Override
+    public void unregisterShopBonusProvider(String id) {
+        if (shop != null) {
+            shop.unregisterBonusProvider(id);
+        }
+    }
+
+    @Override
+    public boolean isLoginFrozen(String playerName) {
+        return accessManager.store().isLoginFrozen(playerName);
+    }
+
+    @Override
+    public boolean setLoginFrozen(String playerName, boolean frozen, String source) {
+        return accessManager.setLoginFrozen(playerName, frozen, source);
+    }
+
+    @Override
+    public boolean terminateSessions(String playerName, String source) {
+        return accessManager.terminateSessions(playerName, source);
+    }
+
+    @Override
+    public int activeSessionCount(String playerName) {
+        return accessManager.store().sessionCount(playerName);
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public <T> Optional<T> economy() {

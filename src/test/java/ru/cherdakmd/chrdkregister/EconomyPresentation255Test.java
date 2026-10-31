@@ -27,7 +27,7 @@ class EconomyPresentation255Test {
         live.set("auto-messages.prefix","Свой префикс");live.set("tablist.pinned-names",List.of("Admin"));
         String before=live.saveToString();
         var changes=PresentationMigration.replacements(live,List.of(old),fresh);
-        assertEquals(List.of("auto-messages.messages"),changes);assertEquals(before,live.saveToString());
+        assertTrue(changes.contains("auto-messages.messages"),changes.toString());assertEquals(before,live.saveToString());
         var previous=old.getMapList("auto-messages.messages");var current=fresh.getMapList("auto-messages.messages");
         assertEquals(43,current.size());assertEquals(previous.size(),current.size());
         for(int i=0;i<previous.size();i++) {

@@ -832,6 +832,7 @@ server-menu:
     - {"category": "account", "icon": "WRITABLE_BOOK", "name": "<gold><bold>Путеводитель</bold></gold>", "lore": "<gray>Книга с командами и первыми шагами</gray>", "command": "guide"}
     - {"category": "account", "icon": "TRIPWIRE_HOOK", "name": "<gold><bold>Защита 2FA</bold></gold>", "lore": "<gray>Статус двухфакторной защиты</gray>\n<dark_gray>Подключение: /2fa setup</dark_gray>", "command": "2fa status"}
     - {"category": "account", "icon": "COMPASS", "name": "<gold><bold>Сессии входа</bold></gold>", "lore": "<gray>Активные сессии аккаунта</gray>\n<dark_gray>Выход: /logout</dark_gray>", "command": "session"}
+    - {"category": "account", "icon": "LAPIS_LAZULI", "name": "<gold><bold>Привязка ВКонтакте</bold></gold>", "lore": "<gray>Уведомления о входах, контроль сессий и бонусы</gray>\n<dark_gray>Клик: /vk</dark_gray>", "command": "vk", "plugin": "CHRDK_VK", "permission": "chrdkvk.use"}
     # ------------------------------ прогресс ------------------------------
     - {"category": "progress", "icon": "FIREWORK_ROCKET", "name": "<gold><bold>Боевой пропуск</bold></gold>", "lore": "<gray>Экран сезона: недели и награды</gray>\n<dark_gray>Забрать награды: /battlepass claim</dark_gray>", "command": "battlepass menu", "plugin": "CHRDK_BattlePass", "permission": "chrdkbp.use"}
     - {"category": "progress", "icon": "DRAGON_EGG", "name": "<gold><bold>Достижения</bold></gold>", "lore": "<gray>72 цели, бейджи и награды</gray>", "command": "achievements", "plugin": "CHRDK_Achievements", "permission": "chrdkachievements.use"}

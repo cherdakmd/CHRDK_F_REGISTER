@@ -124,6 +124,7 @@ messages:
     "name-guilds": "<white>Гильдия</white> <dark_gray>(название и метка гильдии)</dark_gray>"
     "name-quests": "<white>Квесты</white> <dark_gray>(метка прогресса заданий)</dark_gray>"
     "name-achievements": "<white>Достижения</white> <dark_gray>(значок за собранное)</dark_gray>"
+    "name-vk": "<white>ВКонтакте</white> <dark_gray>(метка сообщества и VK Donut)</dark_gray>"
     "name-header": "<white>Шапка таба</white> <dark_gray>(видит только сам игрок)</dark_gray>"
     "desc-rank": "<dark_gray>Знак ступени и слово «Покровитель» рядом с ником.</dark_gray>"
     "desc-tierforge": "<dark_gray>Титул за закрытые разделы коллекции кузни.</dark_gray>"
@@ -131,6 +132,7 @@ messages:
     "desc-guilds": "<dark_gray>Метка гильдии, в которой вы состоите.</dark_gray>"
     "desc-quests": "<dark_gray>Метка квестов и общего прогресса заданий.</dark_gray>"
     "desc-achievements": "<dark_gray>Значок за собранные достижения.</dark_gray>"
+    "desc-vk": "<dark_gray>Значок привязанного сообщества ВКонтакте или подписки VK Donut.</dark_gray>"
     "desc-header": "<dark_gray>Онлайн, TPS и ссылки над списком игроков.</dark_gray>"
     "value-on": "<green>видно</green>"
     "value-waiting": "<yellow>сохранено на закрытом месте</yellow>"
@@ -166,7 +168,7 @@ messages:
     "all-off": "<gray>Все надписи скрыты</gray> <dark_gray>·</dark_gray> <gray>в табе и чате останется только ник. Настройка личная и не влияет на права.</gray>"
     "reset": "<green>Оформление сброшено</green> <gray>— обычный цвет, порядок и лимит вашей ступени.</gray>"
     "hint": "<gray>Тонко: <yellow>/labels</yellow> — меню, где каждая надпись включается отдельно.</gray>"
-    "usage": "<yellow>Использование: /%label% [меню|rank|tierforge|classes|guilds|quests|achievements|header|badges|all|on|off|reset|status]</yellow>"
+    "usage": "<yellow>Использование: /%label% [меню|rank|tierforge|classes|guilds|quests|achievements|vk|header|badges|all|on|off|reset|status]</yellow>"
     # ---- меню «Оформление ника» (1.4.186) ----
     "menu-title": "<gold>Оформление ника</gold>"
     "menu-head": "<gold>%player%</gold> <dark_gray>·</dark_gray> <gray>надписей %visible% / %total%</gray>"
@@ -359,6 +361,7 @@ messages:
     "empty": "<red>Вы ничего не набрали.</red>"
     "full": "<red>Максимальная длина набрана — подтвердите или сотрите пароль.</red>"
   "login":
+    "account-frozen": "<red>Вход в аккаунт заморожен владельцем через привязанного бота ВКонтакте. Разморозьте вход командой /разморозить в личных сообщениях группы.</red>"
     "already-authenticated": "<green>Вы уже вошли в аккаунт!</green>"
     "password-ok-two-factor": "<green>✓ Пароль верный!</green> <aqua>Осталось привязать 2FA — инструкция ниже.</aqua>"
     "prompt": "<yellow>Введите пароль для входа на сервер: </yellow><click:suggest_command:'/login '><hover:show_text:'<green>Подставить команду в чат</green>'><gold><bold>/login \\<пароль></bold></gold></hover></click>"
@@ -1123,6 +1126,7 @@ messages:
   # logout — logout
   # ---------------------------------------------------------------
   "logout":
+    "remote-kick": "<red>Сеанс завершён владельцем аккаунта через привязанного бота.</red>"
     "success": "<green>✓ Вы вышли из аккаунта. Сессия по IP сброшена, пароль потребуется снова.</green>"
 
 

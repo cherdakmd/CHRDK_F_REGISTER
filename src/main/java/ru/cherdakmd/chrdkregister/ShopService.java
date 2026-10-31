@@ -88,6 +88,8 @@ public final class ShopService {
     private final AccessManager access;
     private final ExternalHooks hooks;
     private final Logger logger;
+    private final Map<String, ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.ShopBonusProvider> bonusProviders =
+            new java.util.concurrent.ConcurrentHashMap<>();
 
     public ShopService(RegisterPlugin plugin, AccessManager access, ExternalHooks hooks, Logger logger) {
         this.plugin = plugin;
@@ -576,30 +578,61 @@ public final class ShopService {
 
     /**
      * Настроена ли скидка так, чтобы когда-нибудь сработать: включена в каталоге и
-     * Boosty не выключен и не в холостом прогоне. Нужна витрине, чтобы не обещать
-     * бонус, которого не будет.
+     * Boosty не выключен и не в холостом прогоне, либо зарегистрирован внешний провайдер бонуса.
      */
     public boolean bonusAvailable() {
         PluginConfig config = access.config();
-        return config.shopDiscount().usable() && config.boosty().enabled() && !config.boosty().dryRun();
+        if (config.shopDiscount().usable() && config.boosty().enabled() && !config.boosty().dryRun()) {
+            return true;
+        }
+        for (var provider : bonusProviders.values()) {
+            try {
+                if (provider.available()) {
+                    return true;
+                }
+            } catch (RuntimeException ignored) {
+            }
+        }
+        return false;
     }
 
     /**
      * Скидка, которая действует для игрока прямо сейчас.
      *
-     * <p>Ноль, если скидка выключена в конфиге, Boosty недоступен, игрок не привязан
-     * или подписка не подтверждалась дольше окна {@code boosty.perk-grace-hours}.</p>
+     * <p>Берётся наибольший активный процент между Boosty и внешними провайдерами
+     * (например, VK Donut), ограниченный {@link ShopDiscount#MAX_PERCENT}.</p>
      */
     public ShopDiscount discountFor(String playerName) {
+        if (playerName == null || playerName.isBlank()) {
+            return ShopDiscount.DISABLED;
+        }
+        int bestPercent = 0;
         ShopDiscount discount = access.config().shopDiscount();
-        if (!discount.usable() || playerName == null || playerName.isBlank()) {
-            return ShopDiscount.DISABLED;
-        }
         BoostyManager boosty = access.boostyManager();
-        if (boosty == null || !boosty.perkActive(playerName, access.config().boosty())) {
-            return ShopDiscount.DISABLED;
+        if (discount.usable() && boosty != null && boosty.perkActive(playerName, access.config().boosty())) {
+            bestPercent = discount.percent();
         }
-        return discount;
+        for (var provider : bonusProviders.values()) {
+            try {
+                if (!provider.available()) continue;
+                int pct = Math.clamp(provider.bonusPercent(playerName), 0, ShopDiscount.MAX_PERCENT);
+                if (pct > bestPercent) {
+                    bestPercent = pct;
+                }
+            } catch (RuntimeException ignored) {
+            }
+        }
+        return bestPercent > 0 ? ShopDiscount.of(true, bestPercent) : ShopDiscount.DISABLED;
+    }
+
+    public void registerBonusProvider(String id, ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.ShopBonusProvider provider) {
+        if (id == null || id.isBlank() || provider == null || RetiredAddons.source(id)) return;
+        bonusProviders.put(id.trim().toLowerCase(java.util.Locale.ROOT), provider);
+    }
+
+    public void unregisterBonusProvider(String id) {
+        if (id == null || id.isBlank()) return;
+        bonusProviders.remove(id.trim().toLowerCase(java.util.Locale.ROOT));
     }
 
     private static UUID parseUuid(String raw) {
