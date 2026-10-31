@@ -36,6 +36,16 @@ final class GuildPeaceListener implements Listener {
         if(owner==null)return;
         entity.getPersistentDataContainer().set(ownerKey,PersistentDataType.STRING,owner.toString());
         if(plugin.peace().peaceful(owner))entity.getPersistentDataContainer().set(peacefulKey,PersistentDataType.BYTE,(byte)1);
+        else entity.getPersistentDataContainer().remove(peacefulKey);
+    }
+    private void markFrom(Entity child,Entity parent) {
+        if(parent==null)return;
+        mark(child,owner(parent,0));
+        if(launchedPeaceful(parent))child.getPersistentDataContainer().set(peacefulKey,PersistentDataType.BYTE,(byte)1);
+    }
+    @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true)
+    public void tntSpawn(EntitySpawnEvent event) {
+        if(enabled()&&event.getEntity() instanceof TNTPrimed tnt)markFrom(tnt,tnt.getSource());
     }
     @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true)
     public void launch(ProjectileLaunchEvent event) {if(enabled())mark(event.getEntity(),owner(event.getEntity(),0));}
@@ -64,7 +74,7 @@ final class GuildPeaceListener implements Listener {
         }
     }
     @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true)
-    public void cloudSpawn(LingeringPotionSplashEvent event) {if(enabled())mark(event.getAreaEffectCloud(),owner(event.getEntity(),0));}
+    public void cloudSpawn(LingeringPotionSplashEvent event) {if(enabled())markFrom(event.getAreaEffectCloud(),event.getEntity());}
     @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=true)
     public void cloud(AreaEffectCloudApplyEvent event) {
         if(!enabled())return;
