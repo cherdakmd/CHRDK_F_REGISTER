@@ -29,8 +29,8 @@ final class GuildFinance {
 
     /** Свободный остаток пополняется военными возвратами при withdraw: учитываем оба коллективных обязательства. */
     static long treasurySpent(Guild before, Guild after) {
-        return Math.subtractExact(Math.addExact(before.treasury(),before.warReturns()),
-                Math.addExact(after.treasury(),after.warReturns()));
+        return Math.subtractExact(Math.addExact(Math.addExact(before.treasury(),before.warReturns()),before.duesReserve()),
+                Math.addExact(Math.addExact(after.treasury(),after.warReturns()),after.duesReserve()));
     }
 
     /** Тот же production-путь preview проверяется без Bukkit-сервера. */
@@ -46,13 +46,13 @@ final class GuildFinance {
     }
 
     GuildResult create(Player player,String name,String tag,long now) {
-        return execute(player,(service,quote) -> service.create(quote,player.getUniqueId(),name,tag,now));
+        return execute(player,(service,quote) -> service.create(quote,player.getUniqueId(),name,tag,now),true);
     }
     GuildResult mode(Player player,GuildMode mode,long now) {
         return execute(player,(service,quote)->new GuildPeaceService(service.store()).mode(quote,player.getUniqueId(),mode,now));
     }
     GuildResult join(Player player,long now) {
-        return execute(player,(service,quote)->service.accept(quote,player.getUniqueId(),now));
+        return execute(player,(service,quote)->service.accept(quote,player.getUniqueId(),now),true);
     }
     GuildResult deposit(Player player,long amount) {
         return execute(player,(service,quote) -> service.deposit(quote,player.getUniqueId(),amount));
@@ -62,6 +62,9 @@ final class GuildFinance {
     }
 
     private GuildResult execute(Player player,BiFunction<GuildService,Quote,GuildResult> operation) {
+        return execute(player,operation,false);
+    }
+    private GuildResult execute(Player player,BiFunction<GuildService,Quote,GuildResult> operation,boolean bankOnly) {
         if (!plugin.authenticated(player) || !player.isOnline() || player.isDead() || player.hasMetadata("NPC")
                 || !player.hasPermission("chrdkguilds.use") || !plugin.config().enabled()
                 || !(player.getGameMode() == GameMode.SURVIVAL || player.getGameMode() == GameMode.ADVENTURE)) return GuildResult.fail("finance-mode");
@@ -69,6 +72,13 @@ final class GuildFinance {
         try {
             Preview preview = preview(plugin.store(),plugin.config(),operation);
             if (!preview.result().ok()) return preview.result();
+            if(bankOnly){
+                long spendable=plugin.coreApi().spendableBankBalance(player.getUniqueId());
+                if(spendable<0)return GuildResult.fail("finance-paused");
+                if(spendable<preview.debit())return GuildResult.fail("dues-bank","cost",preview.debit());
+                return payments.putGuildBankValue(player.getUniqueId(),Math.toIntExact(preview.debit()),GuildStore.FINANCE_KEY,preview.domain(),false)
+                        ?preview.result():GuildResult.fail("finance-paused");
+            }
             boolean confirmed = preview.credit() > 0
                     ? payments.creditValue(player,GuildStore.FINANCE_KEY,preview.domain(),preview.credit())
                     : payments.putValue(player,(int)preview.debit(),GuildStore.FINANCE_KEY,preview.domain());

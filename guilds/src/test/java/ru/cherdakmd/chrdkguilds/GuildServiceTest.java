@@ -30,7 +30,7 @@ class GuildServiceTest {
     private static final UUID SECOND = UUID.fromString("00000000-0000-0000-0000-0000000000b2");
     private static final UUID THIRD = UUID.fromString("00000000-0000-0000-0000-0000000000c3");
     private static final UUID RIVAL = UUID.fromString("00000000-0000-0000-0000-0000000000d4");
-    private static final long NOW = 1_792_000_000_000L;
+    private static final long NOW = 1_900_000_000_000L;
 
     /** Кошелёк-заглушка: помнит выданное и списанное. */
     private static final class Purse implements GuildPurse {
@@ -80,6 +80,18 @@ class GuildServiceTest {
         return store;
     }
 
+    /** Старые тесты казны начинают с нуля ПОСЛЕ фактической оплаты первых взносов. */
+    private static GuildResult fundedCreate(GuildService service,UUID owner,String name,String tag,long now){
+        var result=service.create(new Purse().put(owner,100_000),owner,name,tag,now);
+        if(result.ok())service.guildOf(owner).withdraw(10);
+        return result;
+    }
+    private static GuildResult fundedAccept(GuildService service,UUID owner,long now){
+        var result=service.accept(new Purse().put(owner,100_000),owner,now);
+        if(result.ok())service.guildOf(owner).withdraw(service.guildOf(owner).duesRate());
+        return result;
+    }
+
     @Test void cleanedTagsMustStillMeetMinimumAndRawLimitIsKept(@TempDir Path dir) {
         var s = service(GuildConfig.defaults(), store(dir));
         assertEquals("tag-short", s.checkCreate(LEADER, "Орден", "!!").key());
@@ -107,8 +119,8 @@ class GuildServiceTest {
         assertTrue(created.ok(), created.key());
         assertEquals("Орден", created.args().get(1));
         assertEquals("ORD", created.args().get(3), "тег приводится к заглавным");
-        assertEquals(1000 - 270, purse.balance.get(LEADER));
-        assertEquals(270, purse.taken);
+        assertEquals(1000 - 280, purse.balance.get(LEADER));
+        assertEquals(280, purse.taken);
 
         Guild guild = service.guildOf(LEADER);
         assertNotNull(guild);
@@ -143,12 +155,14 @@ class GuildServiceTest {
     }
 
     @Test
-    void freeCreationSkipsPurse(@TempDir Path dir) {
+    void freeCreationStillRequiresFirstDues(@TempDir Path dir) {
         GuildService service = service(config("""
                 general:
                   creation-cost: 0
                 """), store(dir));
-        assertTrue(service.create(null, LEADER, "Орден", "ORD", NOW).ok());
+        assertFalse(service.create(null,LEADER,"Орден","ORD",NOW).ok());
+        assertTrue(service.create(new Purse().put(LEADER,10),LEADER,"Орден","ORD",NOW).ok());
+        assertEquals(10,service.guildOf(LEADER).treasury());
         assertEquals(1, service.count());
     }
 
@@ -163,7 +177,7 @@ class GuildServiceTest {
 
         assertEquals("target-self", service.invite(LEADER, LEADER, NOW).key());
         assertEquals("invite-sent", service.invite(LEADER, SECOND, NOW).key());
-        assertEquals("join-ok", service.accept(SECOND, NOW + 1_000).key());
+        assertEquals("join-ok", fundedAccept(service,SECOND, NOW + 1_000).key());
         assertEquals(2, service.guildOf(LEADER).size());
         assertEquals("target-in-guild", service.invite(LEADER, SECOND, NOW).key());
         assertEquals("invite-no-rank", service.invite(SECOND, THIRD, NOW).key(),
@@ -172,7 +186,7 @@ class GuildServiceTest {
         assertTrue(service.promote(LEADER, SECOND).ok());
         assertEquals("invite-sent", service.invite(SECOND, THIRD, NOW).key(),
                 "офицер приглашать может");
-        assertEquals("already-in-guild", service.accept(LEADER, NOW).key());
+        assertEquals("already-in-guild", fundedAccept(service,LEADER, NOW).key());
     }
 
     @Test
@@ -182,10 +196,10 @@ class GuildServiceTest {
                   creation-cost: 0
                   invite-seconds: 30
                 """), store(dir));
-        service.create(null, LEADER, "Орден", "ORD", NOW);
+        fundedCreate(service, LEADER, "Орден", "ORD", NOW);
         assertEquals("invite-sent", service.invite(LEADER, SECOND, NOW).key());
-        assertEquals("invite-expired", service.accept(SECOND, NOW + 31_000).key());
-        assertEquals("invite-none", service.accept(SECOND, NOW + 32_000).key());
+        assertEquals("invite-expired", fundedAccept(service,SECOND, NOW + 31_000).key());
+        assertEquals("invite-none", fundedAccept(service,SECOND, NOW + 32_000).key());
     }
 
     @Test
@@ -194,7 +208,7 @@ class GuildServiceTest {
                 general:
                   creation-cost: 0
                 """), store(dir));
-        service.create(null, LEADER, "Орден", "ORD", NOW);
+        fundedCreate(service, LEADER, "Орден", "ORD", NOW);
         Guild guild = service.guildOf(LEADER);
         for (int index = 0; index < GuildMath.memberCap(1) - 1; index++) {
             guild.addMember(UUID.randomUUID(), GuildRank.MEMBER);
@@ -210,11 +224,11 @@ class GuildServiceTest {
                 general:
                   creation-cost: 0
                 """), store(dir));
-        service.create(null, LEADER, "Орден", "ORD", NOW);
+        fundedCreate(service, LEADER, "Орден", "ORD", NOW);
         service.invite(LEADER, SECOND, NOW);
-        service.accept(SECOND, NOW);
+        fundedAccept(service,SECOND, NOW);
         service.invite(LEADER, THIRD, NOW);
-        service.accept(THIRD, NOW);
+        fundedAccept(service,THIRD, NOW);
 
         assertEquals("rank-no-rights", service.promote(SECOND, THIRD).key(),
                 "рядовой не повышает");
@@ -237,9 +251,9 @@ class GuildServiceTest {
                 general:
                   creation-cost: 0
                 """), store(dir));
-        service.create(null, LEADER, "Орден", "ORD", NOW);
+        fundedCreate(service, LEADER, "Орден", "ORD", NOW);
         service.invite(LEADER, SECOND, NOW);
-        service.accept(SECOND, NOW);
+        fundedAccept(service,SECOND, NOW);
 
         assertEquals("leave-leader", service.leave(LEADER).key());
         assertEquals("transfer-no-target", service.transfer(LEADER, THIRD).key());
@@ -256,7 +270,7 @@ class GuildServiceTest {
                 general:
                   creation-cost: 0
                 """), store(dir));
-        service.create(null, LEADER, "Орден", "ORD", NOW);
+        fundedCreate(service, LEADER, "Орден", "ORD", NOW);
         Guild guild = service.guildOf(LEADER);
         guild.deposit(60);
         GuildResult result = service.disband(LEADER);
@@ -275,9 +289,9 @@ class GuildServiceTest {
                 general:
                   creation-cost: 0
                 """), store(dir));
-        service.create(null, LEADER, "Орден", "ORD", NOW);
+        fundedCreate(service, LEADER, "Орден", "ORD", NOW);
         service.invite(LEADER, SECOND, NOW);
-        service.accept(SECOND, NOW);
+        fundedAccept(service,SECOND, NOW);
         Purse purse = new Purse();
         purse.put(LEADER, 500);
         purse.put(SECOND, 50);
@@ -304,7 +318,7 @@ class GuildServiceTest {
                 general:
                   creation-cost: 0
                 """), store(dir));
-        service.create(null, LEADER, "Орден", "ORD", NOW);
+        fundedCreate(service, LEADER, "Орден", "ORD", NOW);
         Guild guild = service.guildOf(LEADER);
         guild.deposit(Guild.MAX_TREASURY - 5);
         Purse purse = new Purse();
@@ -324,7 +338,7 @@ class GuildServiceTest {
                 general:
                   creation-cost: 0
                 """), store(dir));
-        service.create(null, LEADER, "Орден", "ORD", NOW);
+        fundedCreate(service, LEADER, "Орден", "ORD", NOW);
         Guild guild = service.guildOf(LEADER);
 
         assertEquals("upgrade-no-money", service.upgrade(LEADER).key());
@@ -359,8 +373,8 @@ class GuildServiceTest {
                   cooldown-seconds: 120
                   kill-window-seconds: 60
                 """), store(dir));
-        service.create(null, LEADER, "Орден", "ORD", NOW);
-        service.create(null, RIVAL, "Риваль", "RIV", NOW);
+        fundedCreate(service, LEADER, "Орден", "ORD", NOW);
+        fundedCreate(service, RIVAL, "Риваль", "RIV", NOW);
         service.guildOf(LEADER).deposit(200);
         service.guildOf(RIVAL).deposit(200);
         return service;

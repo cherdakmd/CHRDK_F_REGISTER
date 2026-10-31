@@ -116,7 +116,7 @@ public final class GuildService {
         if (!check.ok()) {
             return check;
         }
-        long cost = config.creationCost();
+        long cost = Math.addExact(config.creationCost(),10);
         if (cost > 0) {
             if (purse == null) {
                 return GuildResult.fail("create-no-economy");
@@ -135,6 +135,7 @@ public final class GuildService {
         }
         Guild guild = new Guild(UUID.randomUUID().toString(), Guild.cleanName(name),
                 Guild.cleanTag(tag), leader, now);
+        guild.creditDues(10);
         store.add(guild);
         return GuildResult.ok("create-ok", "name", guild.name(), "tag", guild.tag());
     }
@@ -154,10 +155,10 @@ public final class GuildService {
         store.remove(guild);
         return GuildResult.ok("disband-ok", "name", guild.name(), "treasury",
                 GuildMath.diamonds(guild.treasury()), "members",
-                String.valueOf(guild.size()), "war", warKey, "returns", GuildMath.diamonds(guild.warReturns()));
+                String.valueOf(guild.size()), "war", warKey, "returns", GuildMath.diamonds(Math.addExact(guild.warReturns(),guild.duesReserve())));
     }
 
-    private String cancelWarsOnDisband(Guild guild) {
+    String cancelWarsOnDisband(Guild guild) {
         GuildWar war = store.warOf(guild.id());
         if (war == null) {
             return "disband-war-none";
@@ -239,10 +240,14 @@ public final class GuildService {
         if(guild.peaceful()) {
             if(store.combatBlocked(player))return GuildResult.fail("peace-combat");
             if(store.sanction(player).debt()>0)return GuildResult.fail("peace-debt-mode");
-            if(purse==null)return GuildResult.fail("peace-join-required");
-            if(purse.take(player,GuildPeaceService.DAILY)!=GuildPeaceService.DAILY)return GuildResult.fail("peace-no-money");
+
         }
+        long fee=guild.duesRate()+(guild.peaceful()?GuildPeaceService.DAILY:0);
+        if(purse==null)return GuildResult.fail("dues-join-required");
+        long taken=purse.take(player,fee);
+        if(taken!=fee){if(taken>0)purse.give(player,taken);return GuildResult.fail("dues-bank","cost",fee);}
         guild.addMember(player, GuildRank.MEMBER);
+        guild.duesTerm(player,GuildDuesTerm.start(now,guild.duesRate()));guild.creditDues(guild.duesRate());
         if(guild.peaceful()) {
             long active=Math.addExact(now,GuildPeaceService.WARMUP);
             guild.peaceTerm(player,new GuildPeaceTerm(Math.addExact(active,GuildPeaceTerm.DAY),0,active));
@@ -264,8 +269,9 @@ public final class GuildService {
     /* ---------------------------------- состав -------------------------------- */
 
     /** Выход из гильдии: лидер сначала передаёт её или распускает. */
-    public GuildResult leave(UUID player) {
-        if (store.financed()) return store.transaction(copy -> new GuildService(config, copy).leave(player), GuildResult.fail("finance-paused"));
+    public GuildResult leave(UUID player) {return leave(player,System.currentTimeMillis());}
+    GuildResult leave(UUID player,long now) {
+        if (store.financed()) return store.transaction(copy -> new GuildService(config, copy).leave(player,now), GuildResult.fail("finance-paused"));
         Guild guild = store.of(player);
         if (guild == null) {
             return GuildResult.fail("not-in-guild");
@@ -274,13 +280,15 @@ public final class GuildService {
             return GuildResult.fail("leave-leader");
         }
         if(store.combatBlocked(player))return GuildResult.fail("peace-combat");
+        if(GuildDuesService.overdue(guild,player,now))return GuildResult.fail("dues-settle-first");
         guild.removeMember(player);
         store.reindex(guild);
         return GuildResult.ok("leave-ok", "name", guild.name());
     }
 
-    public GuildResult kick(UUID actor, UUID target) {
-        if (store.financed()) return store.transaction(copy -> new GuildService(config, copy).kick(actor, target), GuildResult.fail("finance-paused"));
+    public GuildResult kick(UUID actor, UUID target) {return kick(actor, target,System.currentTimeMillis());}
+    GuildResult kick(UUID actor, UUID target,long now) {
+        if (store.financed()) return store.transaction(copy -> new GuildService(config, copy).kick(actor, target,now), GuildResult.fail("finance-paused"));
         Guild guild = store.of(actor);
         if (guild == null) {
             return GuildResult.fail("not-in-guild");
@@ -294,6 +302,7 @@ public final class GuildService {
         if (actorRank == null || !actorRank.canKick(targetRank)) {
             return GuildResult.fail("kick-no-rank");
         }
+        if(GuildDuesService.overdue(guild,actor,now)||GuildDuesService.overdue(guild,target,now))return GuildResult.fail("dues-settle-first");
         guild.removeMember(target);
         store.reindex(guild);
         return GuildResult.ok("kick-ok", "name", guild.name(), "members",
@@ -345,8 +354,9 @@ public final class GuildService {
         return GuildResult.ok("demote-ok", "name", guild.name());
     }
 
-    public GuildResult transfer(UUID actor, UUID target) {
-        if (store.financed()) return store.transaction(copy -> new GuildService(config, copy).transfer(actor, target), GuildResult.fail("finance-paused"));
+    public GuildResult transfer(UUID actor, UUID target) {return transfer(actor, target,System.currentTimeMillis());}
+    GuildResult transfer(UUID actor, UUID target,long now) {
+        if (store.financed()) return store.transaction(copy -> new GuildService(config, copy).transfer(actor, target,now), GuildResult.fail("finance-paused"));
         Guild guild = store.of(actor);
         if (guild == null) {
             return GuildResult.fail("not-in-guild");
@@ -358,6 +368,7 @@ public final class GuildService {
             return GuildResult.fail("transfer-no-target");
         }
         if(store.combatBlocked(actor)||store.combatBlocked(target))return GuildResult.fail("peace-combat");
+        if(GuildDuesService.overdue(guild,actor,now)||GuildDuesService.overdue(guild,target,now))return GuildResult.fail("dues-settle-first");
         guild.transferLeader(target);
         store.reindex(guild);
         return GuildResult.ok("transfer-ok", "name", guild.name());
@@ -777,7 +788,7 @@ public final class GuildService {
         String warKey = cancelWarsOnDisband(guild);
         store.remove(guild);
         return GuildResult.ok("admin-disbanded", "name", guild.name(),
-                "treasury", GuildMath.diamonds(guild.treasury()), "war", warKey, "returns", GuildMath.diamonds(guild.warReturns()));
+                "treasury", GuildMath.diamonds(guild.treasury()), "war", warKey, "returns", GuildMath.diamonds(Math.addExact(guild.warReturns(),guild.duesReserve())));
     }
 
     /** Снимает кулдаун войны — после ручного разбора ситуации. */

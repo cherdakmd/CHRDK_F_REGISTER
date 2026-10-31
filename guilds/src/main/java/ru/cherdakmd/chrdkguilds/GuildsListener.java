@@ -62,6 +62,7 @@ final class GuildsListener implements Listener {
         GuildInvite invite = plugin.store().inviteOf(player.getUniqueId());
         if (invite == null || invite.expired(System.currentTimeMillis())) return;
         Guild guild=plugin.store().guild(invite.guildId());
+        if(guild!=null)plugin.messages().send(player,"dues-invite","rate",guild.duesRate(),"peace",guild.peaceful()?10:0);
         if(guild!=null&&guild.peaceful())plugin.messages().send(player,"peace-join-terms","cost",GuildPeaceService.DAILY);
         plugin.messages().send(player, "invite-reminder", "name", invite.guildName(),
                 "seconds", String.valueOf(invite.remainingSeconds(System.currentTimeMillis())));

@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class GuildFinanceTest {
     @TempDir Path dir;
     final UUID leader = UUID.randomUUID(), rival = UUID.randomUUID(), member = UUID.randomUUID();
-    final long now = 1_792_000_000_000L;
+    final long now = 1_900_000_000_000L;
     // Старые записи/ставки должны восстанавливаться и после смены стоковых тарифов.
     final GuildConfig config = legacyConfig();
     static GuildConfig legacyConfig() {
@@ -172,7 +172,7 @@ class GuildFinanceTest {
     @Test void creationPreviewQuotesOldPriceAndNeverCreatesBeforeReceipt() throws Exception {
         legacy(100); var source=source(); var live=bind(source); UUID creator=UUID.randomUUID();
         var preview=GuildFinance.preview(live,config,(s,q)->s.create(q,creator,"Третий","THR",now));
-        assertTrue(preview.result().ok()); assertEquals(27,preview.debit()); assertEquals(0,preview.credit());
+        assertTrue(preview.result().ok()); assertEquals(37,preview.debit()); assertEquals(0,preview.credit());
         assertEquals(2,live.count()); assertNull(live.of(creator)); assertNotNull(live.detached(preview.domain()).of(creator));
     }
     @Test void expiredStakeReturnsAtCapOnlyOnceAndHistorySurvivesRestart() throws Exception {

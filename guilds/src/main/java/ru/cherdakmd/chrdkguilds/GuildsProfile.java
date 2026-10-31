@@ -40,7 +40,9 @@ final class GuildsProfile implements ChrdkRegisterApi.ProfileProvider {
             lines.add(messages.get("profile-none", "cost",
                     GuildMath.diamonds(plugin.config().creationCost())));
             lines.add(messages.get("profile-none-hint"));
+            lines.add(messages.get("dues-new-clan"));
         } else {
+            lines.add(messages.get("dues-info","rate",guild.duesRate(),"reserve",guild.duesReserve()));
             lines.add(messages.get("peace-profile-mode","mode",guild.mode().label(),"rate",GuildPeaceService.DAILY));
             var term=guild.peaceTerm(context.playerId());
             if(term!=null)lines.add(messages.get("peace-profile-term","paid",GuildPeaceController.time(term.paidUntil())));
