@@ -60,6 +60,9 @@ public final class GuildsPlaceholders extends PlaceholderExpansion {
             case "cap" -> guild == null ? "" : Integer.toString(GuildMath.memberCap(guild.level()));
             case "level" -> guild == null ? "" : Integer.toString(guild.level());
             case "level_roman" -> guild == null ? "" : GuildMath.roman(guild.level());
+            case "dues" -> guild==null?"":Integer.toString(guild.duesRate());
+            case "dues_reserve" -> guild==null?"":Long.toString(guild.duesReserve());
+            case "dues_next" -> guild==null||player==null?"":Long.toString(guild.duesTerm(player.getUniqueId()).dueAt());
             case "mode" -> guild==null?"":guild.mode().label();
             case "peaceful" -> guild!=null&&guild.peaceful()?"true":"false";
             case "peace_debt" -> player==null?"":Long.toString(plugin.store().sanction(player.getUniqueId()).debt());

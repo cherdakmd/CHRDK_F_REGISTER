@@ -41,6 +41,25 @@ public final class Guild {
     private int warsWon;
     private int warsLost;
     private long warCooldownUntil;
+    private int duesRate=10;
+    private long duesChangedAt;
+    private long duesReserve;
+    private final Map<UUID,GuildDuesTerm> duesTerms=new LinkedHashMap<>();
+    int duesRate(){return duesRate;}
+    long duesChangedAt(){return duesChangedAt;}
+    long duesReserve(){return duesReserve;}
+    Map<UUID,GuildDuesTerm> duesTerms(){return Map.copyOf(duesTerms);}
+    GuildDuesTerm duesTerm(UUID owner){return duesTerms.get(owner);}
+    void duesTerm(UUID owner,GuildDuesTerm term){if(!isMember(owner))throw new IllegalArgumentException("dues owner");duesTerms.put(owner,term);}
+    void duesRate(int rate,long changed){if(rate<10||rate>1_000_000||changed<0)throw new IllegalArgumentException("dues rate");duesRate=rate;duesChangedAt=changed;}
+    void restoreDuesReserve(long amount){if(amount<0||amount>0&&treasury!=MAX_TREASURY)throw new IllegalArgumentException("dues reserve");duesReserve=amount;}
+    /** Переполнение не теряется и не становится личными деньгами лидера. */
+    void creditDues(long amount){
+        if(amount<=0)throw new IllegalArgumentException("dues credit");
+        Math.addExact(Math.addExact(treasury,warReturns),Math.addExact(duesReserve,amount));
+        long accepted=Math.min(amount,MAX_TREASURY-treasury);
+        duesReserve=Math.addExact(duesReserve,amount-accepted);treasury+=accepted;
+    }
     private GuildMode mode = GuildMode.BATTLE;
     private long modeChangedAt;
     private final Map<UUID, GuildPeaceTerm> peaceTerms = new LinkedHashMap<>();
@@ -65,6 +84,7 @@ public final class Guild {
         this.createdAt = createdAt;
         if (leader != null) {
             members.put(leader, GuildRank.LEADER);
+            duesTerms.put(leader,GuildDuesTerm.start(Math.max(0,createdAt),duesRate));
         }
         this.level = 1;
     }
@@ -163,6 +183,7 @@ public final class Guild {
             return false;
         }
         members.put(player, rank == null || rank == GuildRank.LEADER ? GuildRank.MEMBER : rank);
+        duesTerms.put(player,GuildDuesTerm.start(Math.max(0,createdAt),duesRate));
         return true;
     }
 
@@ -173,6 +194,7 @@ public final class Guild {
         }
         members.remove(player);
         peaceTerms.remove(player);
+        duesTerms.remove(player);
         return true;
     }
 
@@ -236,6 +258,8 @@ public final class Guild {
         long refill = Math.min(warReturns, MAX_TREASURY - treasury);
         treasury += refill;
         warReturns -= refill;
+        long duesRefill=Math.min(duesReserve,MAX_TREASURY-treasury);
+        treasury+=duesRefill;duesReserve-=duesRefill;
         return taken;
     }
 

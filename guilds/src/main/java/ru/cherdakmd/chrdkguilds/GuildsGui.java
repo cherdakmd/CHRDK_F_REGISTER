@@ -38,6 +38,7 @@ final class GuildsGui implements Listener {
     private static final int CLOSE_SLOT = 49;
     private static final int MODE_SLOT = 50;
     private static final int CLAIMS_SLOT = 52;
+    private static final int DUES_SLOT = 53;
     private static final int PERSONAL_SLOT = 51;
     private static final int[] MEMBER_SLOTS = {10, 11, 12, 13, 14, 15, 16,
             19, 20, 21, 22, 23, 24, 25,
@@ -93,6 +94,10 @@ final class GuildsGui implements Listener {
             return;
         }
 
+        GuildDuesTerm dues=guild.duesTerm(player.getUniqueId());
+        inventory.setItem(DUES_SLOT,item(Material.DIAMOND,"dues-menu-name",List.of(
+                plugin.messages().get("dues-status","rate",guild.duesRate(),"amount",dues.amount(),"due",GuildPeaceController.time(dues.dueAt()),"reserve",guild.duesReserve()),
+                plugin.messages().get("dues-menu-hint"))));
         inventory.setItem(INFO_SLOT, infoItem(guild, player));
         List<UUID> members = guild.memberIds();
         for (int index = 0; index < members.size() && index < MEMBER_SLOTS.length; index++) {
@@ -111,6 +116,7 @@ final class GuildsGui implements Listener {
         lore.add(plugin.messages().get("menu-no-guild", "cost",
                 GuildMath.diamonds(plugin.config().creationCost())));
         lore.add(plugin.messages().get("menu-no-guild-hint"));
+        lore.add(plugin.messages().get("dues-new-clan"));
         inventory.setItem(INFO_SLOT, item(Material.WHITE_BANNER, "menu-info-no-guild", lore));
         GuildInvite invite = plugin.store().inviteOf(player.getUniqueId());
         if (invite != null && !invite.expired(System.currentTimeMillis())) {
@@ -131,6 +137,7 @@ final class GuildsGui implements Listener {
         List<Component> lore = new ArrayList<>();
         lore.add(plugin.messages().get("menu-info-name", "name", guild.name(),
                 "tag", guild.tag().isEmpty() ? "—" : guild.tag()));
+        lore.add(plugin.messages().get("dues-info","rate",guild.duesRate(),"reserve",guild.duesReserve()));
         lore.add(plugin.messages().get("menu-info-rank",
                 "rank", plugin.messages().mini("rank." + rankOf(guild, player.getUniqueId()))));
         lore.add(plugin.messages().get("menu-info-members",
@@ -168,6 +175,7 @@ final class GuildsGui implements Listener {
         List<Component> lore = new ArrayList<>();
         lore.add(plugin.messages().get("menu-treasury-balance",
                 "amount", GuildMath.diamonds(guild.treasury())));
+        lore.add(plugin.messages().get("dues-info","rate",guild.duesRate(),"reserve",guild.duesReserve()));
         lore.add(plugin.messages().get("menu-treasury-hint"));
         return item(Material.DIAMOND_BLOCK, "menu-treasury-name", lore);
     }
@@ -269,6 +277,7 @@ final class GuildsGui implements Listener {
         if (guild == null) {
             return;
         }
+        if(slot==DUES_SLOT){player.performCommand("clan dues");return;}
         if(slot==MODE_SLOT) {
             if(event.isRightClick() && guild.leader().equals(player.getUniqueId()))
                 player.performCommand("clan mode "+(guild.peaceful()?"battle":"peaceful"));

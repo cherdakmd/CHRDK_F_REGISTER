@@ -37,7 +37,7 @@ import ru.cherdakmd.chrdkregister.storage.SafeJsonWriter;
 final class GuildStore {
 
     /** Версия формата файла. */
-    static final int VERSION = 2;
+    static final int VERSION = 3;
     /** Сколько последних войн хранится в истории. */
     static final int MAX_HISTORY = 50;
 
@@ -98,6 +98,10 @@ final class GuildStore {
         if (source.values().size() != 1 || !source.values().containsKey(FINANCE_KEY)) throw new IOException("Неверный источник гильдий");
         finance = source;
         refresh();
+        // Миграция срока первого взноса фиксируется до запуска биллинга, а не сдвигается при restart.
+        if(com.google.gson.JsonParser.parseString(source.values().get(FINANCE_KEY)).getAsJsonObject().get("version").getAsInt()<VERSION){
+            source.putValue(FINANCE_KEY,snapshotJson());refresh();
+        }
         dirty = false;
     }
 
@@ -195,7 +199,7 @@ final class GuildStore {
             sanctions.put(strictUuid(entry.getKey()), new GuildSanction(number(row.get("debt")),number(row.get("next-incident-at"))));
         }
         for (Map<?,?> row : rows(data,"guilds")) {
-            Guild guild = readGuild(row);
+            Guild guild = readGuild(row,number(data.get("version")));
             guilds.put(guild.id(),guild);
             for (UUID member : guild.memberIds()) byMember.put(member,guild.id());
         }
@@ -206,7 +210,7 @@ final class GuildStore {
                 string(row.get("winner")),string(row.get("result")),number(row.get("wager")),number(row.get("ended-at"))));
     }
 
-    private static Guild readGuild(Map<?, ?> row) {
+    private static Guild readGuild(Map<?, ?> row,long version) {
         String id = string(row.get("id"));
         String name = string(row.get("name"));
         if (id.isEmpty() || name.isEmpty()) {
@@ -233,6 +237,17 @@ final class GuildStore {
         if (row.get("peace-terms") instanceof Map<?,?> terms) for(var entry:terms.entrySet()) {
             Map<?,?> term=(Map<?,?>)entry.getValue();
             guild.peaceTerm(strictUuid(entry.getKey()),new GuildPeaceTerm(number(term.get("paid-until")),number(term.get("grace-since")),number(term.get("activates-at"))));
+        }
+        if(version>=3){
+            guild.duesRate(Math.toIntExact(number(row.get("dues-rate"))),number(row.get("dues-changed-at")));
+            guild.restoreDuesReserve(number(row.get("dues-reserve")));
+            for(var entry:((Map<?,?>)row.get("dues-terms")).entrySet()){
+                Map<?,?> term=(Map<?,?>)entry.getValue();
+                guild.duesTerm(strictUuid(entry.getKey()),new GuildDuesTerm(number(term.get("due-at")),number(term.get("grace-since")),Math.toIntExact(number(term.get("amount")))));
+            }
+        }else{
+            long migration=System.currentTimeMillis();
+            for(UUID owner:guild.memberIds())guild.duesTerm(owner,GuildDuesTerm.start(migration,10));
         }
         return guild;
     }
@@ -557,6 +572,11 @@ final class GuildStore {
             }
             row.put("leader", String.valueOf(guild.leader()));
             row.put("created-at", guild.createdAt());
+            row.put("dues-rate",guild.duesRate());row.put("dues-changed-at",guild.duesChangedAt());
+            row.put("dues-reserve",guild.duesReserve());
+            Map<String,Object> dues=new LinkedHashMap<>();
+            guild.duesTerms().forEach((id,t)->dues.put(id.toString(),Map.of("due-at",t.dueAt(),"grace-since",t.graceSince(),"amount",t.amount())));
+            row.put("dues-terms",dues);
             row.put("mode",guild.mode().name());
             row.put("mode-changed-at",guild.modeChangedAt());
             if(guild.peaceful()) {
@@ -683,7 +703,7 @@ final class GuildStore {
 
     /** Строгая граница: нельзя округлять деньги, чинить владельца или терять резерв. */
     private static void validateInput(Map<String,Object> data) {
-        if (data == null || (number(data.get("version")) != VERSION && number(data.get("version")) != 1) || !(data.get("guilds") instanceof List<?>)) bad("schema");
+        if (data == null || (number(data.get("version")) < 1 || number(data.get("version")) > VERSION) || !(data.get("guilds") instanceof List<?>)) bad("schema");
         if(data.containsKey("peace-notices")) {
             if(!(data.get("peace-notices") instanceof Map<?,?>))bad("peace outbox");
             Map<?,?> outbox=(Map<?,?>)data.get("peace-notices");if(outbox.size()>100_000)bad("peace outbox capacity");
@@ -720,6 +740,19 @@ final class GuildStore {
                 if (!members.add(player) || !(member.getValue() instanceof String)) bad("member identity");
                 String rank = member.getValue().toString();
                 if (!(rank.equals("leader") || rank.equals("officer") || rank.equals("member")) || rank.equals("leader") != player.equals(leader)) bad("rank");
+            }
+            if(number(data.get("version"))>=3){
+                range(row,"dues-rate",10,1_000_000,true);range(row,"dues-changed-at",0,Long.MAX_VALUE-GuildPeaceTerm.DAY,true);
+                range(row,"dues-reserve",0,Long.MAX_VALUE,true);
+                if(!(row.get("dues-terms") instanceof Map<?,?> terms)||terms.size()!=roster.size())bad("dues roster");
+                for(var entry:((Map<?,?>)row.get("dues-terms")).entrySet()){
+                    if(!roster.containsKey(entry.getKey())||!(entry.getValue() instanceof Map<?,?>))bad("dues owner");
+                    Map<?,?> term=(Map<?,?>)entry.getValue();
+                    range(term,"due-at",1,Long.MAX_VALUE-GuildPeaceTerm.DAY,true);
+                    range(term,"grace-since",0,Long.MAX_VALUE-GuildPeaceTerm.DAY,true);range(term,"amount",10,1_000_000,true);
+                }
+                if(number(row.get("dues-reserve"))>0&&number(row.get("treasury"))!=Guild.MAX_TREASURY)bad("unfunded dues reserve");
+                Math.addExact(Math.addExact(number(row.get("treasury")),number(row.get("war-returns"))),number(row.get("dues-reserve")));
             }
             if(row.containsKey("mode")) {
                 String mode=text(row,"mode",true);

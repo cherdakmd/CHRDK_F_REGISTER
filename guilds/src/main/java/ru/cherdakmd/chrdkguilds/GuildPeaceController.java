@@ -55,12 +55,25 @@ final class GuildPeaceController {
         }
         if(!plugin.config().enabled())return;
         List<UUID> roster=new ArrayList<>();
-        for(Guild guild:plugin.store().guilds())if(guild.peaceful())roster.addAll(guild.memberIds());
+        for(Guild guild:plugin.store().guilds())roster.addAll(guild.memberIds());
         // Не более четырёх участников за такт: нет лавины fsync при общем сроке оплаты.
         for(int i=0;i<Math.min(4,roster.size());i++) {
             if(plugin.payments().paused())return;
             UUID owner=roster.get(Math.floorMod(cursor++,roster.size()));
             Guild guild=plugin.store().of(owner);
+            if(guild==null)continue;
+            if(guild.duesTerm(owner).dueAt()<=now){
+                List<UUID> members=guild.memberIds();
+                long spendable=plugin.coreApi().spendableBankBalance(owner);
+                GuildResult dues=publish(copy->new GuildDuesService(copy,plugin.config()).daily(owner,now,spendable));
+                if(dues!=null&&dues.ok()){
+                    if(dues.key().equals("dues-auto-disband"))for(UUID id:members)deliverNotices(id);
+                    else if(dues.key().equals("dues-auto-kick"))deliverNotices(owner);
+                    else if(dues.key().equals("dues-leader-grace"))for(UUID id:members)tell(id,dues);
+                    else tell(owner,dues);
+                }
+                guild=plugin.store().of(owner);
+            }
             if(guild==null || !guild.peaceful() || guild.peaceTerm(owner).paidUntil()>now)continue;
             List<UUID> recipients=guild.memberIds();
             long balance=plugin.coreApi().spendableBankBalance(owner);
@@ -141,7 +154,8 @@ final class GuildPeaceController {
             var preview=GuildFinance.preview(plugin.store(),plugin.config(),(service,purse)->service.accept(purse,owner,now));
             if(!preview.result().ok()){send(player,preview.result());return false;}
             quotes.put(owner,new Quote("join",0,plugin.store().snapshotJson(),now+30_000));
-            send(player,GuildResult.ok("peace-join-confirm","cost",GuildPeaceService.DAILY));return false;
+            Guild g=plugin.store().guild(plugin.store().inviteOf(owner).guildId());
+            send(player,GuildResult.ok("dues-join-confirm","rate",g.duesRate(),"peace",g.peaceful()?GuildPeaceService.DAILY:0,"cost",preview.debit()));return false;
         }
         Quote quote=quotes.remove(owner);
         if(quote==null||!quote.action().equals("join")||quote.expires()<now||!quote.state().equals(plugin.store().snapshotJson())){
@@ -154,6 +168,7 @@ final class GuildPeaceController {
         long debt=reserved(player.getUniqueId());
         send(player,GuildResult.ok("peace-debt-status","debt",debt));
         if(guild==null){send(player,GuildResult.fail("not-in-guild"));return;}
+        duesStatus(player,guild);
         send(player,GuildResult.ok("peace-status","mode",guild.mode().label(),"rate",GuildPeaceService.DAILY,"total",(long)guild.size()*GuildPeaceService.DAILY));
         if(guild.peaceful()) {
             var term=guild.peaceTerm(player.getUniqueId());
@@ -163,6 +178,50 @@ final class GuildPeaceController {
         var leaderTerm=guild.peaceTerm(guild.leader());
         if(leaderTerm!=null&&leaderTerm.graceSince()>0)send(player,GuildResult.ok("peace-leader-risk","deadline",time(leaderTerm.deadline())));
         if(guild.leader().equals(player.getUniqueId()))send(player,GuildResult.ok("peace-leader-help"));
+    }
+    void duesStatus(Player player,Guild guild){
+        GuildDuesTerm t=guild.duesTerm(player.getUniqueId());
+        send(player,GuildResult.ok("dues-status","rate",guild.duesRate(),"amount",t.amount(),"due",time(t.dueAt()),"reserve",guild.duesReserve()));
+        if(t.graceSince()>0)send(player,GuildResult.ok("dues-member-grace","deadline",t.deadline()));
+        GuildDuesTerm leader=guild.duesTerm(guild.leader());
+        if(leader.graceSince()>0)send(player,GuildResult.ok("dues-leader-grace","deadline",leader.deadline()));
+    }
+    void dues(Player player,String[] args){
+        Guild guild=plugin.store().of(player.getUniqueId());
+        if(guild==null){send(player,GuildResult.fail("not-in-guild"));return;}
+        if(args.length<2||args[1].equalsIgnoreCase("status")){duesStatus(player,guild);return;}
+        int rate;
+        try{rate=Integer.parseInt(args[1]);}catch(NumberFormatException error){send(player,GuildResult.fail("dues-range"));return;}
+        if(plugin.payments().paused()||!plugin.coreApi().personalBankAvailable()){send(player,GuildResult.fail("finance-paused"));return;}
+        boolean confirmed=args.length==3&&args[2].equalsIgnoreCase("confirm");long now=System.currentTimeMillis();
+        if(!confirmed){
+            GuildResult check=new GuildDuesService(plugin.store().copy(),plugin.config()).rate(player.getUniqueId(),rate,now);
+            if(!check.ok()){send(player,check);return;}
+            quotes.put(player.getUniqueId(),new Quote("dues",rate,plugin.store().snapshotJson(),now+30_000));
+            send(player,GuildResult.ok("dues-rate-confirm","rate",rate));return;
+        }
+        Quote q=quotes.remove(player.getUniqueId());
+        if(q==null||!q.action().equals("dues")||q.days()!=rate||q.expires()<now||!q.state().equals(plugin.store().snapshotJson())){send(player,GuildResult.fail("peace-quote-expired"));return;}
+        GuildResult result=plugin.store().transaction(copy->{
+            GuildResult changed=new GuildDuesService(copy,plugin.config()).rate(player.getUniqueId(),rate,now);
+            if(changed.ok())for(UUID id:copy.of(player.getUniqueId()).memberIds())copy.peaceNotice(id,"Лидер установил взнос в казну "+rate+" алмазов/сутки. Следующий ранее объявленный платёж каждого участника сохраняется; новый тариф — с последующего периода. Мирный режим оплачивается отдельно.");
+            return changed;
+        },GuildResult.fail("finance-paused"));
+        send(player,result);
+        if(result.ok())for(UUID id:guild.memberIds())deliverNotices(id);
+    }
+    boolean confirmCreate(Player player,String name,String tag,boolean confirmed){
+        long now=System.currentTimeMillis();UUID owner=player.getUniqueId();
+        String key="create:"+Guild.cleanName(name)+":"+Guild.cleanTag(tag);
+        if(!confirmed){
+            var plan=GuildFinance.preview(plugin.store(),plugin.config(),(service,purse)->service.create(purse,owner,name,tag,now));
+            if(!plan.result().ok()){send(player,plan.result());return false;}
+            quotes.put(owner,new Quote(key,0,plugin.store().snapshotJson(),now+30_000));
+            send(player,GuildResult.ok("dues-create-confirm","cost",plan.debit(),"command","/clan create "+Guild.cleanName(name)+" "+Guild.cleanTag(tag)+" confirm"));return false;
+        }
+        Quote q=quotes.remove(owner);
+        if(q==null||!q.action().equals(key)||q.expires()<now||!q.state().equals(plugin.store().snapshotJson())){send(player,GuildResult.fail("peace-quote-expired"));return false;}
+        return true;
     }
     void deliverNotices(UUID owner) {
         Player player=Bukkit.getPlayer(owner);
@@ -181,7 +240,7 @@ final class GuildPeaceController {
     }
     private void send(Player player,GuildResult result){
         Object[] args=result.array();
-        for(int i=0;i+1<args.length;i+=2)if(args[i].equals("deadline")&&args[i+1].toString().matches("[0-9]+"))args[i+1]=time(Long.parseLong(args[i+1].toString()));
+        for(int i=0;i+1<args.length;i+=2)if((args[i].equals("deadline")||args[i].equals("due"))&&args[i+1].toString().matches("[0-9]+"))args[i+1]=time(Long.parseLong(args[i+1].toString()));
         plugin.messages().send(player,result.key(),args);
     }
 }
