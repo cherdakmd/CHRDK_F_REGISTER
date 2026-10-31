@@ -61,11 +61,12 @@ final class ProfessionWorkRecipes {
         if (material.equals("BOW") || material.equals("CROSSBOW") || material.equals("FISHING_ROD")) return "STRING";
         if (material.equals("SHEARS") || material.equals("FLINT_AND_STEEL")) return "IRON_INGOT";
         // Материал из префикса недостаточен: DIAMOND/IRON_INGOT нельзя «чинить».
-        if (!(material.endsWith("_SWORD") || material.endsWith("_PICKAXE") || material.endsWith("_AXE")
+        if (!(material.endsWith("_SWORD") || material.endsWith("_SPEAR") || material.endsWith("_PICKAXE") || material.endsWith("_AXE")
                 || material.endsWith("_SHOVEL") || material.endsWith("_HOE") || material.endsWith("_HELMET")
                 || material.endsWith("_CHESTPLATE") || material.endsWith("_LEGGINGS") || material.endsWith("_BOOTS"))) return null;
         if (material.startsWith("WOODEN_")) return "OAK_PLANKS";
         if (material.startsWith("STONE_")) return "COBBLESTONE";
+        if (material.startsWith("COPPER_")) return "COPPER_INGOT";
         if (material.startsWith("IRON_") || material.startsWith("CHAINMAIL_")) return "IRON_INGOT";
         if (material.startsWith("GOLDEN_")) return "GOLD_INGOT";
         if (material.startsWith("DIAMOND_")) return "DIAMOND";

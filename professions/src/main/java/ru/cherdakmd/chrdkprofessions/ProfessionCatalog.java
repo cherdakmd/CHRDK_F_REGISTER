@@ -255,6 +255,13 @@ public final class ProfessionCatalog {
         // Не показываем несуществующие ванильные рецепты как способ развития.
         CRAFT.get(Profession.SMITH).keySet().removeIf(m->m.name().startsWith("CHAINMAIL_")||m.name().startsWith("NETHERITE_"));
         CRAFT.get(Profession.COOK).remove(Material.ENCHANTED_GOLDEN_APPLE);
+        for(Material material:new Material[]{Material.CRACKED_STONE_BRICKS,Material.SMOOTH_STONE,Material.SMOOTH_QUARTZ})CRAFT.get(Profession.MASON).remove(material);
+        // Современные медные инструменты/доспехи и копья: только реально существующие Material.
+        for(Material material:Material.values()){
+            String name=material.name();
+            if(name.startsWith("COPPER_")&&ProfessionWorkRecipes.repairMaterial(name)!=null)CRAFT.get(Profession.SMITH).put(material,2);
+            if(name.endsWith("_SPEAR")&&(name.startsWith("IRON_")||name.startsWith("GOLDEN_")||name.startsWith("DIAMOND_")))CRAFT.get(Profession.SMITH).put(material,name.startsWith("DIAMOND_")?8:4);
+        }
         var forester=new LinkedHashMap<Material,Integer>();
         for(Material m:Material.values())if(m.name().endsWith("_LOG")&&!m.name().startsWith("STRIPPED_"))forester.put(m,3);
         forester.put(Material.CRIMSON_STEM,3);forester.put(Material.WARPED_STEM,3);

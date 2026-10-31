@@ -93,6 +93,10 @@ class ProfessionDevelopmentTest {
         assertEquals("BONE_MEAL",ProfessionWorkRecipes.output(ProfessionMastery.COMPOSTER,"WHEAT_SEEDS"));
         assertEquals("COOKED_SALMON",ProfessionWorkRecipes.output(ProfessionMastery.FISH_SMOKER,"SALMON"));
         assertEquals(15,ProfessionMastery.TACKLE_KEEPER.repairPercent());
+        assertEquals("COPPER_INGOT",ProfessionWorkRecipes.repairMaterial("COPPER_PICKAXE"));
+        assertEquals("IRON_INGOT",ProfessionWorkRecipes.repairMaterial("IRON_SPEAR"));
+        assertEquals(0,ProfessionCatalog.craftXp(Profession.MASON,Material.SMOOTH_STONE));
+        for(Material m:Material.values())if(m.name().startsWith("COPPER_")&&ProfessionWorkRecipes.repairMaterial(m.name())!=null)assertEquals(2,ProfessionCatalog.craftXp(Profession.SMITH,m));
     }
     @Test void allProfessionsHaveSourcesAndTwoDistinctWorkingSpecializations(){
         assertEquals(8,Profession.values().length);assertEquals(16,ProfessionMastery.values().length);
