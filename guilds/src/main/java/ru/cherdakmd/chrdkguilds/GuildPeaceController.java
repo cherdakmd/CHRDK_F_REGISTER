@@ -32,6 +32,8 @@ final class GuildPeaceController {
         if(decision!=GuildPvpDecision.ALLOW) {
             if(decision==GuildPvpDecision.BLOCK_AND_FINE) {
                 combat.mark(attacker,now);
+                // Повторный удар не копирует/не сериализует весь домен: горячий путь — индекс UUID.
+                if(now<plugin.store().sanction(attacker).nextIncidentAt())return true;
                 GuildResult result=plugin.store().transaction(copy->new GuildPeaceService(copy).fine(attacker,now),GuildResult.fail("finance-paused"));
                 if(result.ok()) {
                     tell(attacker,result);
@@ -98,6 +100,7 @@ final class GuildPeaceController {
     void command(Player player,String[] args) {
         UUID owner=player.getUniqueId();String action=args.length<2?"status":args[1].toLowerCase(Locale.ROOT);
         if(action.equals("status")) { status(player);return; }
+        if(plugin.payments().paused()||plugin.coreApi()==null||!plugin.coreApi().personalBankAvailable()) {send(player,GuildResult.fail("finance-paused"));return;}
         int days=0;
         if(action.equals("prepay")) {
             if(args.length<3){send(player,GuildResult.fail("peace-days"));return;}

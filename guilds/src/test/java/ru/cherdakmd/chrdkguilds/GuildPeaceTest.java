@@ -41,5 +41,16 @@ class GuildPeaceTest {
     @Test void indebtedMemberPreventsPeaceModeAndCombatPreventsSwitch() {var s=store();guild(s,100);new GuildPeaceService(s).fine(member,now);assertEquals("peace-debt-mode",new GuildPeaceService(s).mode(purse(100),leader,GuildMode.PEACEFUL,now).key());s.combatGuard(id->id.equals(leader));assertEquals("peace-combat",new GuildPeaceService(s).mode(purse(100),leader,GuildMode.PEACEFUL,now).key());}
     @Test void pendingWarCannotBeHiddenByPeaceMode() {var s=store();var g=guild(s,1000);var other=new Guild("other","OtherGuild","OTH",outsider,now);other.deposit(1000);s.add(other);s.addWar(new GuildWar("war",g.id(),other.id(),320,now));assertEquals("peace-war-busy",new GuildPeaceService(s).mode(purse(100),leader,GuildMode.PEACEFUL,now).key());}
     @Test void malformedTermsCannotSilentlyDropPaidProtection() {var s=store();activate(s,100);String json=s.snapshotJson();assertThrows(RuntimeException.class,()->s.detached(json.replace("PEACEFUL","UNKNOWN")));assertThrows(RuntimeException.class,()->s.detached(json.replace("\"paid-until\": ","\"paid-until\": -")));}
+    @Test void legacySchemaKeepsRosterTreasuryAndStartsWithoutNewFees() {
+        var s=store();guild(s,777);
+        var json=com.google.gson.JsonParser.parseString(s.snapshotJson()).getAsJsonObject();json.addProperty("version",1);
+        for(var element:json.getAsJsonArray("guilds")){var row=element.getAsJsonObject();row.remove("mode");row.remove("mode-changed-at");}
+        var loaded=s.detached(json.toString());assertEquals(777,loaded.of(leader).treasury());assertEquals(2,loaded.of(leader).size());assertFalse(loaded.of(leader).peaceful());
+    }
+    @Test void modeCannotBeCancelledToAvoidAnAlreadyDuePeriod() {
+        var s=store();var g=activate(s,20);long due=g.peaceTerm(leader).paidUntil();
+        new GuildPeaceService(s).daily(leader,due,0);
+        assertEquals("peace-settle-first",new GuildPeaceService(s).mode(purse(100),leader,GuildMode.BATTLE,due+1000).key());
+    }
     @Test void combatWindowIsBoundedAndDoesNotDependOnOnlineStatus() {var combat=new GuildCombatTracker();combat.mark(member,now);assertTrue(combat.blocked(member,now+29_999));assertFalse(combat.blocked(member,now+30_000));combat.prune(now+30_000);assertFalse(combat.blocked(member,now+30_001));}
 }
