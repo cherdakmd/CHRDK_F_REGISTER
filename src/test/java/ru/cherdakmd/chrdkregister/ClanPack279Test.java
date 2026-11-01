@@ -40,6 +40,27 @@ class ClanPack279Test {
         assertTrue(ShopDeliveryPolicy.fitsBundle(pack, cat, NOW, 30, p -> NOW + 335 * DAY));
         assertFalse(ShopDeliveryPolicy.fitsBundle(pack, cat, NOW, 1, p -> 0));
     }
+    @Test void malformedReservedRecipeAndNestingCannotSilentlyLoseTheBonus() throws Exception {
+        for (Map<String,Object> change : List.of(
+                Map.<String,Object>of("commands", List.of("say invalid")),
+                Map.<String,Object>of("includes", List.of("clan-emblem")),
+                Map.<String,Object>of("days", 7), Map.<String,Object>of("group", "custom"))) {
+            var cfg = yaml();
+            var products = new ArrayList<Map<?,?>>(cfg.getMapList("shop.products"));
+            for (int index = 0; index < products.size(); index++) if ("clan-style-pack".equals(products.get(index).get("id"))) {
+                var altered = new LinkedHashMap<Object,Object>(products.get(index));
+                altered.putAll(change); products.set(index, altered);
+            }
+            cfg.set("shop.products", products);
+            var catalog = ShopCatalog.from(cfg); var pack = catalog.find("clan-style-pack").orElseThrow();
+            assertFalse(pack.retainsBundleEntitlement()); assertFalse(ShopDeliveryPolicy.complete(pack, catalog));
+        }
+        var cfg = yaml(); var products = new ArrayList<Map<?,?>>(cfg.getMapList("shop.products"));
+        products.add(Map.of("id", "nested-clan", "name", "Nested", "price", 1000, "days", 30,
+                "includes-days", 30, "includes", List.of("clan-style-pack")));
+        cfg.set("shop.products", products); var cat = ShopCatalog.from(cfg);
+        assertFalse(ShopDeliveryPolicy.complete(cat.find("nested-clan").orElseThrow(), cat));
+    }
     @Test void liveChatStatusDoesNotConsumeOrDuplicatePersonalSlotsAndHonorsHiding(@org.junit.jupiter.api.io.TempDir java.nio.file.Path dir) {
         var prefs = new LabelPreferences(dir, Logger.getAnonymousLogger()); prefs.load();
         prefs.setSlots("Steve", List.of("classes", "achievements", "guilds"));
