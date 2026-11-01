@@ -139,7 +139,8 @@ public record VkConfig(
                 "[MC] {player}: {message}");
 
         boolean announceWallPosts = cfg.getBoolean("wall.announce-new-posts", true);
-        int wallPollMinutes = Math.clamp(cfg.getInt("wall.poll-minutes", 10), 0, 720);
+        // Community token не поддерживает wall.get: оставляем только события Long Poll.
+        int wallPollMinutes = 0;
         boolean wallIgnorePinned = cfg.getBoolean("wall.ignore-pinned", true);
         boolean wallIgnoreAds = cfg.getBoolean("wall.ignore-ads", true);
         boolean wallIgnoreReposts = cfg.getBoolean("wall.ignore-reposts", true);

@@ -155,6 +155,38 @@ class VkBotRouterTest {
         assertEquals(1, replies.size());
         assertTrue(replies.getFirst().contains("https://cherdakmd.github.io/CHRDK_F_REGISTER/"));
 
+        // Новая справка — в ЛС и только подключённой беседе; не команда самозащиты.
+        assertTrue(router.dispatchDirectCommand(77L, "/новости", 1000L).contains("/releases"));
+        assertTrue(VkBotRouter.helpText().contains("/новости"));
+        replies.clear();
+        int previousActions = actions.size();
+        for (String text : List.of("/новости", "#chrdk-news-setup")) {
+            JsonObject message = new JsonObject();
+            message.addProperty("peer_id", 2000000001L);
+            message.addProperty("from_id", 77L);
+            message.addProperty("text", text);
+            JsonObject object = new JsonObject(); object.add("message", message);
+            JsonObject update = new JsonObject(); update.addProperty("type", "message_new"); update.add("object", object);
+            router.handleUpdate(update, 1000L);
+        }
+        assertEquals(1, replies.size());
+        assertTrue(replies.getFirst().contains("/releases"));
+        assertEquals(previousActions, actions.size(), "Маркер настройки не передаётся в игру");
+        for (long author : List.of(-237779683L, 77L)) {
+            JsonObject message = new JsonObject();
+            message.addProperty("peer_id", 2000000001L);
+            message.addProperty("from_id", author);
+            message.addProperty("out", 1);
+            message.addProperty("text", "CHERDAK · вышла версия1.4.276\n#chrdk_release_marker");
+            JsonObject object = new JsonObject(); object.add("message", message);
+            JsonObject update = new JsonObject(); update.addProperty("type", "message_new"); update.add("object", object);
+            router.handleUpdate(update, 1000L);
+        }
+        assertEquals(previousActions, actions.size(), "Автопост и исходящие сообщения не замыкают мост");
+        replies.clear();
+        router.handleUpdate(JsonParser.parseString("{\"type\":\"message_new\",\"object\":{\"message\":{\"peer_id\":2000000009,\"from_id\":77,\"text\":\"/новости\"}}}").getAsJsonObject(), 1000L);
+        assertTrue(replies.isEmpty(), "Чужая беседа не получает справку");
+
         assertEquals("LOGOUT_OK", router.dispatchDirectCommand(77L, "/выход", 1000L));
         assertEquals("FROZEN", router.dispatchDirectCommand(77L, "/заморозить", 1000L));
         assertEquals("UNFROZEN", router.dispatchDirectCommand(77L, "/разморозить", 1000L));

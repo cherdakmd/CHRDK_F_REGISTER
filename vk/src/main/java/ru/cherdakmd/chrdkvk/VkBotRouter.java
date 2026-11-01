@@ -26,6 +26,11 @@ public final class VkBotRouter {
                     + "\n💬 Сообщество ВКонтакте: " + VkConfig.DEFAULT_COMMUNITY_URL;
         }
 
+        default String formatNewsLinks() {
+            return "📰 Новости CHERDAK: " + VkConfig.DEFAULT_COMMUNITY_URL
+                    + "\nВыпуски комплекта: https://github.com/cherdakmd/CHRDK_F_REGISTER/releases";
+        }
+
         String formatAccountProfile(long vkUserId, long nowMillis);
 
         String handleRemoteLogout(long vkUserId);
@@ -157,6 +162,8 @@ public final class VkBotRouter {
     private void handleGroupConversationMessage(long peerId, long fromId, JsonObject message, long nowMillis) {
         String rawText = message.has("text") && !message.get("text").isJsonNull()
                 ? message.get("text").getAsString().trim() : "";
+        // Служебный маркер настройки Actions не является репликой игрока.
+        if (rawText.equals("#chrdk-news-setup")) return;
         String stripped = LEADING_BOT_MENTION.matcher(rawText).replaceFirst("").trim();
 
         if (!stripped.isEmpty() && (stripped.charAt(0) == '/' || stripped.charAt(0) == '!')) {
@@ -174,6 +181,11 @@ public final class VkBotRouter {
                         if (online != null && !online.isBlank()) {
                             backend.sendDirectReply(peerId, online);
                         }
+                        return;
+                    }
+                    if (cmd.equals("новости") || cmd.equals("news")) {
+                        String news = backend.formatNewsLinks();
+                        if (news != null && !news.isBlank()) backend.sendDirectReply(peerId, news);
                         return;
                     }
                     if (cmd.equals("вики") || cmd.equals("wiki") || cmd.equals("гайд") || cmd.equals("сайт")) {
@@ -213,6 +225,7 @@ public final class VkBotRouter {
             case "начать", "start", "помощь", "help", "команды", "меню" -> helpText();
             case "онлайн", "online", "сервер" -> backend.formatServerOnline();
             case "вики", "wiki", "гайд", "сайт" -> backend.formatWikiLinks();
+            case "новости", "news" -> backend.formatNewsLinks();
             case "профиль", "profile", "статус", "status", "аккаунт" -> backend.formatAccountProfile(vkUserId, nowMillis);
             case "выход", "logout", "кик", "сессии" -> backend.handleRemoteLogout(vkUserId);
             case "заморозить", "freeze", "блок", "lock" -> backend.handleRemoteFreeze(vkUserId, true);
@@ -281,16 +294,18 @@ public final class VkBotRouter {
 
     public static String helpText() {
         return """
-                👋 Бот сообщества CHRDK:
-                • Привязка: введите /vk link в игре и пришлите полученный код сюда.
+                👋 CHERDAK — сообщество и защита аккаунта:
+                • Привязка: /vk link в игре → отправьте только код привязки в ЛС сообщества.
                 • /профиль — статус привязки, подписки и VK Donut
                 • /онлайн — текущий онлайн сервера и список игроков
-                • /вики — полевой справочник и ссылки сервера
+                • /вики — справочник команд и игровых правил
+                • /новости — сообщество и выпуски комплекта
                 • /уведомления — вкл/выкл уведомления о входах
-                • /выход — сбросить сохранённые сессии и кикнуть активный сеанс
+                • /выход — завершить активный вход и сбросить IP-сессии
                 • /заморозить — заблокировать вход в аккаунт
                 • /разморозить — снять блокировку входа
                 • /отвязать — отвязать страницу ВК от аккаунта
-                🔒 Пароли и 2FA через ВКонтакте никогда не меняются и не сбрасываются.""";
+                💬 В подключённой беседе доступны /онлайн, /вики и /новости; самозащита — только в ЛС.
+                🔒 Не отправляйте боту пароль или код 2FA. Они через ВКонтакте не меняются и не сбрасываются.""";
     }
 }

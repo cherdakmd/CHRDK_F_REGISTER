@@ -70,7 +70,6 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
     private volatile ServerPulse serverPulse = new ServerPulse(0, 0, 20.0, List.of());
     private BukkitTask pulseTask;
     private BukkitTask syncTask;
-    private BukkitTask wallTask;
 
     public VkService(VkPlugin plugin, VkStore store) {
         this.plugin = plugin;
@@ -141,11 +140,7 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
         this.syncTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
                 plugin, () -> runSyncSafely(null), 100L, recheckTicks);
 
-        if (cfg.announceWallPosts() && cfg.wallPollMinutes() > 0) {
-            long wallTicks = cfg.wallPollMinutes() * 60L * 20L;
-            this.wallTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
-                    plugin, this::pollWallSafely, 160L, wallTicks);
-        }
+
     }
 
     public synchronized void shutdown() {
@@ -170,10 +165,6 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
         if (syncTask != null) {
             syncTask.cancel();
             syncTask = null;
-        }
-        if (wallTask != null) {
-            wallTask.cancel();
-            wallTask = null;
         }
         VkChatBatcher batcher = this.chatBatcher;
         this.chatBatcher = null;
@@ -361,11 +352,9 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
                 return;
             }
             String mode = "session".equalsIgnoreCase(method) ? "восстановление IP-сессии" : "вход по паролю";
-            String text = "✅ Вход на сервер CHRDK\n"
-                    + "Игрок: " + link.playerName() + "\n"
-                    + "Способ: " + mode + "\n"
-                    + "IP: " + (maskedIp == null || maskedIp.isBlank() ? "скрыт" : maskedIp) + "\n"
-                    + "Если это были не вы — нажмите «Заморозить вход» ниже или отправьте /заморозить.";
+            String text = plugin.messages().plain("bot.login-alert",
+                    "player", link.playerName(), "method", mode,
+                    "ip", maskedIp == null || maskedIp.isBlank() ? "скрыт" : maskedIp);
             String inlineKb = cfg.inlineSecurityButtons() ? VkKeyboards.securityAlertInlineKeyboard() : null;
             sendAsync(link.vkUserId(), text, inlineKb);
         });
@@ -379,11 +368,9 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
         }
         store.byPlayer(playerName).ifPresent(link -> {
             String status = blocked ? "Вход с этого адреса временно заблокирован." : "Подбор продолжается.";
-            String text = "⚠ Попытка подбора пароля к аккаунту " + link.playerName() + "!\n"
-                    + "Неудачных попыток: " + failures + "\n"
-                    + "IP: " + (maskedIp == null || maskedIp.isBlank() ? "скрыт" : maskedIp) + "\n"
-                    + status + "\n"
-                    + "Вы можете временно заблокировать вход кнопкой ниже или командой /заморозить.";
+            String text = plugin.messages().plain("bot.brute-alert",
+                    "player", link.playerName(), "failures", failures, "status", status,
+                    "ip", maskedIp == null || maskedIp.isBlank() ? "скрыт" : maskedIp);
             String inlineKb = cfg.inlineSecurityButtons() ? VkKeyboards.securityAlertInlineKeyboard() : null;
             sendAsync(link.vkUserId(), text, inlineKb);
         });
@@ -400,8 +387,8 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
                     ? MSK_TIME.format(Instant.ofEpochMilli(passUntilMillis)) + " МСК"
                     : "скоро";
             long hours = Math.max(1L, remainingMinutes / 60L);
-            String text = "⏳ Срок ранга на аккаунте " + link.playerName()
-                    + " истекает примерно через " + hours + " ч. (до " + until + ").";
+            String text = plugin.messages().plain("bot.expiry-alert",
+                    "player", link.playerName(), "hours", hours, "until", until);
             sendAsync(link.vkUserId(), text);
         });
     }
@@ -450,7 +437,7 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
                 grantEligibleBoostsOnMainThread(playerName, vkUserId, isMember);
                 notifyPlayerLinkedInGame(playerName, vkUserId);
                 yield "✅ Аккаунт " + playerName + " успешно привязан к ВКонтакте!\n"
-                        + "• Уведомления о входах и переборе пароля активны.\n"
+                        + "• Проверьте уведомления и настройки самозащиты в меню /vk в игре.\n"
                         + "• Экстренные команды: /выход, /заморозить, /разморозить, /профиль.";
             }
         };
@@ -471,6 +458,11 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
             }
         }
         return sb.toString();
+    }
+
+    @Override
+    public String formatNewsLinks() {
+        return plugin.messages().plain("bot.news-links", "url", plugin.config().communityUrl());
     }
 
     @Override
@@ -853,7 +845,6 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
             }
         }
         store.saveIfDirty();
-        pollWallSafely();
         int activeDonuts = store.activeDonutCount(now, cfg.donutGraceHours());
         deliverSyncCallback(callback, new SyncReport(checked, activeDonuts));
     }
@@ -863,35 +854,6 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
             return;
         }
         Bukkit.getScheduler().runTask(plugin, () -> callback.accept(report));
-    }
-
-    private void pollWallSafely() {
-        VkApiClient client = this.apiClient;
-        VkConfig cfg = plugin.config();
-        if (client == null || !cfg.apiConfigured() || !cfg.announceWallPosts()) {
-            return;
-        }
-        try {
-            List<VkApiClient.WallPost> posts = client.fetchWallPosts(cfg.groupId(), 5);
-            if (posts.isEmpty()) {
-                return;
-            }
-            // При самом первом запуске фиксируем текущую верхушку стены без массовой рассылки старых записей.
-            if (store.lastAnnouncedPostId() == 0L) {
-                long newest = posts.stream().mapToLong(VkApiClient.WallPost::id).max().orElse(0L);
-                if (newest > 0L) {
-                    store.advanceLastAnnouncedPostId(newest);
-                    store.saveIfDirty();
-                }
-                return;
-            }
-            posts.stream()
-                    .filter(p -> p.id() > store.lastAnnouncedPostId())
-                    .sorted(Comparator.comparingLong(VkApiClient.WallPost::id))
-                    .forEach(this::onWallPost);
-        } catch (Exception exception) {
-            plugin.getLogger().fine("[CHRDK_VK] Резервный опрос wall.get не выполнен: " + exception.getMessage());
-        }
     }
 
     private boolean queryMembershipSafe(long vkUserId) {

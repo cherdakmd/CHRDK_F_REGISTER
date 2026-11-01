@@ -100,7 +100,7 @@ def tip(slot, topic=None, root=ROOT):
     site = yaml.safe_load((root / 'wiki/config.yml').read_text(encoding='utf-8'))['site']['url']
     label = {'tip': 'Совет', 'feature': 'Возможности сервера', 'reminder': 'Напоминание'}[topic['kind']]
     body = f"{label} CHERDAK · {topic['title']}\n\n{plain(text)}\n\nПодробнее: {site.rstrip('/')}/{slug}.html"
-    body += '\n\nПо стандартным настройкам проекта. Доступность и точные условия проверяйте в игре.'
+    body += '\n\nПодсказка по стандартным правилам CHERDAK. Точные условия и доступность проверяйте в игре.'
     # Вечер сохраняет старый дневной ключ: уже опубликованный пост не дублируется.
     key = 'tip:' + slot.date().isoformat() + (':12' if slot.hour == 12 else '')
     return Post(key, topic['kind'], topic['title'], topic['caption'], body, slot.strftime('%Y-%m'))

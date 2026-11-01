@@ -36,6 +36,16 @@ class VkConfigTest {
     }
 
     @Test
+    void communityTokenNeverEnablesUnsupportedWallPolling() {
+        YamlConfiguration yaml = new YamlConfiguration();
+        yaml.set("wall.poll-minutes", 10);
+        yaml.set("wall.announce-new-posts", true);
+        VkConfig cfg = VkConfig.parse(yaml);
+        assertEquals(0, cfg.wallPollMinutes());
+        assertTrue(cfg.announceWallPosts(), "События wall_post_new остаются доступны");
+    }
+
+    @Test
     void unsafeUrlsFallBackAndNumbersClamp() {
         YamlConfiguration yaml = new YamlConfiguration();
         yaml.set("community.group-id", 123456L);
