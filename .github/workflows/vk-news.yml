@@ -10,9 +10,9 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'preview — картинка; check_connection — без отправки; test_post — один настоящий пост'
+        description: 'preview — картинка; find_chat — ID беседы; check_connection — проверка; test_post — одно сообщение'
         type: choice
-        options: [preview, check_connection, test_post]
+        options: [preview, find_chat, check_connection, test_post]
         default: preview
       publish:
         description: 'Реально отправить в ВК (по умолчанию только превью)'
@@ -77,20 +77,29 @@ jobs:
         shell: bash
         run: |
           if [[ "$MODE" != "preview" && ( "$PUBLISH" == "true" || "$POST_KIND" != "tip" || -n "$RELEASE_TAG" ) ]]; then
-            echo '::error::Для check_connection/test_post: publish выключен, kind=tip, release_tag пустой.'
+            echo '::error::Для find_chat/check_connection/test_post: publish выключен, kind=tip, release_tag пустой.'
             exit 1
           fi
+      - name: Find marked chat without sending messages
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'find_chat' && !inputs.publish
+        env:
+          VK_NEWS_GROUP_ID: ${{ vars.VK_NEWS_GROUP_ID }}
+          VK_NEWS_PEER_ID: ${{ vars.VK_NEWS_PEER_ID }}
+          VK_NEWS_ACCESS_TOKEN: ${{ secrets.VK_NEWS_ACCESS_TOKEN }}
+        run: python3 tools/social/run.py --find-chat
       - name: Check VK connection without publication
         if: github.event_name == 'workflow_dispatch' && inputs.mode == 'check_connection' && !inputs.publish
         env:
           VK_NEWS_GROUP_ID: ${{ vars.VK_NEWS_GROUP_ID }}
+          VK_NEWS_PEER_ID: ${{ vars.VK_NEWS_PEER_ID }}
           VK_NEWS_ACCESS_TOKEN: ${{ secrets.VK_NEWS_ACCESS_TOKEN }}
         run: python3 tools/social/run.py --check-connection
-      - name: Publish one explicit test post (schedule unchanged)
+      - name: Send one explicit test message (schedule unchanged)
         if: github.event_name == 'workflow_dispatch' && inputs.mode == 'test_post' && !inputs.publish
         env:
           GH_TOKEN: ${{ github.token }}
           VK_NEWS_GROUP_ID: ${{ vars.VK_NEWS_GROUP_ID }}
+          VK_NEWS_PEER_ID: ${{ vars.VK_NEWS_PEER_ID }}
           VK_NEWS_ACCESS_TOKEN: ${{ secrets.VK_NEWS_ACCESS_TOKEN }}
         run: python3 tools/social/run.py --test-post
       - name: Prepare preview
@@ -106,6 +115,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VK_AUTOPUBLISH_ENABLED: ${{ vars.VK_AUTOPUBLISH_ENABLED }}
           VK_NEWS_GROUP_ID: ${{ vars.VK_NEWS_GROUP_ID }}
+          VK_NEWS_PEER_ID: ${{ vars.VK_NEWS_PEER_ID }}
           VK_NEWS_ACCESS_TOKEN: ${{ secrets.VK_NEWS_ACCESS_TOKEN }}
           POST_KIND: ${{ inputs.kind || 'tip' }}
           RELEASE_TAG: ${{ inputs.release_tag }}
