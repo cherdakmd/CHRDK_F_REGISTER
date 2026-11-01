@@ -16,6 +16,19 @@ class ClanPack279Test {
             return YamlConfiguration.loadConfiguration(new InputStreamReader(input, StandardCharsets.UTF_8));
         }
     }
+    @Test void fastFramesAreOptInAndDisappearWithTheProvider() {
+        var tags = new NameTags(Logger.getAnonymousLogger());
+        tags.register("guilds-tab", (player, name) -> name);
+        assertFalse(tags.animated("guilds-tab", "Steve"));
+        tags.register("guilds-tab", new ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.NameTagProvider() {
+            public String decorate(String player, String name) { return name; }
+            public boolean animated(String player) { return true; }
+        });
+        assertTrue(tags.animated("guilds-tab", "Steve"));
+        tags.unregister("guilds-tab"); assertFalse(tags.animated("guilds-tab", "Steve"));
+        assertEquals(5, TabListService.animationTicks(0)); assertEquals(10, TabListService.animationTicks(10));
+        assertEquals(40, TabListService.animationTicks(Integer.MAX_VALUE));
+    }
     @Test void bundleHasThreeLeavesAndItsOwnBonusButOldBundlesDoNot() throws Exception {
         var cat = ShopCatalog.from(yaml());
         var pack = cat.find("clan-style-pack").orElseThrow();

@@ -31,6 +31,14 @@ final class GuildNameTag implements ChrdkRegisterApi.NameTagProvider {
         return peaceful ? (protectedNow ? "tab-peace-prefix" : "tab-peace-pending-prefix") : "tab-battle-prefix";
     }
 
+    @Override public boolean animated(String playerName) {
+        if (!tab || !plugin.config().enabled()) return false;
+        Player player = Bukkit.getPlayerExact(playerName);
+        if (player == null || !plugin.authenticated(player)) return false;
+        Guild guild = plugin.service().guildOf(player.getUniqueId());
+        return guild != null && plugin.styles().active(guild, "animation") != null;
+    }
+
     @Override
     public String decorate(String playerName, String decoratedName) {
         if (playerName == null || !plugin.config().enabled() || (!tab && !plugin.config().chatPrefix())) {

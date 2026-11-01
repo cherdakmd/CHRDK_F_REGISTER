@@ -294,6 +294,9 @@ public interface ChrdkRegisterApi {
          * @return новое имя; {@code null} — оставить как было
          */
         String decorate(String playerName, String decoratedName);
+
+        /** API35: нужен ли частый кадр имени в TAB. По умолчанию старые аддоны статичны. */
+        default boolean animated(String playerName) { return false; }
     }
 
     /**

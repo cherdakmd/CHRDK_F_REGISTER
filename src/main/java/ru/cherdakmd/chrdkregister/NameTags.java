@@ -53,6 +53,15 @@ final class NameTags {
         return entries.removeIf(entry -> entry.id().equals(key));
     }
 
+    /** Только состояние провайдера, без рендера и без диска; сбой выключает быстрые кадры. */
+    boolean animated(String id, String playerName) {
+        for (Entry entry : entries) if (entry.id().equals(id)) {
+            try { return entry.provider().animated(playerName); }
+            catch (RuntimeException | LinkageError ignored) { return false; }
+        }
+        return false;
+    }
+
     /** Применить все оформления по очереди. */
     String decorate(String playerName, String decoratedName) {
         return decorate(playerName, decoratedName, id -> true);

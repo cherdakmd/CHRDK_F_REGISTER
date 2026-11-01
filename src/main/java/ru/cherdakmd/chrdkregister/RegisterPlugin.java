@@ -122,6 +122,7 @@ public final class RegisterPlugin extends JavaPlugin {
         labelPreferences.load();
         this.tabListService = new TabListService(this, accessManager);
         this.tabListService.setNameDecorator(chatService::decoratedTabName);
+        this.tabListService.setAnimationPredicate(chatService::animatedTabName);
         this.tabListService.setLabelPreferences(labelPreferences);
         this.chatService.setLabelPreferences(labelPreferences);
         profileService.setLabelPreferences(labelPreferences);

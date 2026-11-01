@@ -135,6 +135,9 @@ public final class ChatService implements Listener {
         return decoratedName(playerName,false);
     }
 
+    /** API35: ускоряется только активная анимация клана, не весь TAB/шапка/скорборд. */
+    public boolean animatedTabName(String playerName) { return nameTags.animated("guilds-tab", playerName); }
+
     /** Имя для TAB с отдельной статусной меткой клана. */
     public String decoratedTabName(String playerName) {
         return decoratedName(playerName,true);
