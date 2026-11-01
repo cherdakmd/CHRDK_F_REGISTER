@@ -60,7 +60,7 @@ class VkApiSafety276Test {
             URI uri = URI.create("http://127.0.0.1:" + server.getAddress().getPort() + "/redirect");
             VkApiClient.HttpTransport transport = new VkApiClient.HttpTransport();
             assertThrows(IOException.class, () -> transport.postForm(uri, "access_token=SECRET", Duration.ofSeconds(3)));
-            assertThrows(IOException.class, () -> transport.get(uri, Duration.ofSeconds(3)));
+            assertThrows(IOException.class, () -> transport.get(URI.create(uri + "?key=SECRET"), Duration.ofSeconds(3)));
             assertEquals(0, forwarded.get());
         } finally {
             server.stop(0);
