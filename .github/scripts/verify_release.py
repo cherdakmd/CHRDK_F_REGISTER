@@ -43,8 +43,8 @@ def standalone_plugins(root: Path) -> dict[str, str]:
 
 
 def verify_standalone_jar(jar: Path, expected_name: str, version: str) -> str:
-    if not re.fullmatch(r"\d+\.\d+\.\d+", version):
-        raise ValueError("standalone JAR requires a stable version")
+    if not re.fullmatch(r"\d+\.\d+\.\d+(?:-rc\.[1-9]\d*)?", version):
+        raise ValueError("standalone JAR requires a stable or numbered rc version")
     if not jar.is_file() or jar.is_symlink():
         raise ValueError(f"{jar}: missing or symlink")
     with zipfile.ZipFile(jar) as archive:
@@ -64,8 +64,8 @@ def verify_standalone_jar(jar: Path, expected_name: str, version: str) -> str:
 
 
 def verify(directory: Path, version: str, expected: set[str]) -> dict[str, str]:
-    if not expected or not re.fullmatch(r"\d+\.\d+\.\d+", version):
-        raise ValueError("release requires a non-empty plugin set and a stable version")
+    if not expected or not re.fullmatch(r"\d+\.\d+\.\d+(?:-rc\.[1-9]\d*)?", version):
+        raise ValueError("release requires a non-empty plugin set and a stable or numbered rc version")
     jars = sorted(directory.glob("*.jar"))
     actual = {}
     for jar in jars:

@@ -31,7 +31,7 @@ class VkCoreBridgeTest {
 
     @Test
     void apiV33MethodsAreAdditiveAndNeverExposePasswordMutation() throws Exception {
-        assertEquals(35, ChrdkRegisterApi.API_VERSION);
+        assertEquals(36, ChrdkRegisterApi.API_VERSION);
         assertTrue(ChrdkRegisterApi.class.getMethod("registerSecurityListener", String.class,
                 ChrdkRegisterApi.SecurityListener.class).isDefault());
         assertTrue(ChrdkRegisterApi.class.getMethod("unregisterSecurityListener", String.class).isDefault());

@@ -2022,6 +2022,24 @@ public final class RegistrationStore {
         return name == null ? "" : name.trim().toLowerCase(Locale.ROOT);
     }
 
+    /** Не обрезает приз, не удаляет старые receipt: повтор после сбоя подтверждает ту же выдачу. */
+    public synchronized ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.BoostGrant grantRewardBoostOnce(
+            UUID uuid, String name, int hours, int bankHours, String receipt) {
+        var failed=ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.BoostGrant.FAILED;
+        if(uuid==null || !AccessManager.isValidMinecraftName(name) || hours<1 || hours>24
+                || receipt==null || !receipt.matches("bp:[a-f0-9]{64}")) return failed;
+        PlayerAccount account=data.accounts.get(canonicalName(name));
+        if(account==null || !uuid.toString().equals(account.uuid)) return failed;
+        if(account.rewardBoostReceipts==null)account.rewardBoostReceipts=new LinkedHashMap<>();
+        if(account.rewardBoostReceipts.containsKey(receipt))
+            return checkpointGameplayRewards()?ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.BoostGrant.ALREADY:failed;
+        if(account.rewardBoostReceipts.size()>=100_000)return failed;
+        long amount=hours*RewardBoostMath.HOUR, cap=Math.clamp(bankHours,1,24*365)*RewardBoostMath.HOUR;
+        if(account.rewardBoostMillis>cap-amount)return ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.BoostGrant.FULL;
+        account.rewardBoostMillis+=amount;account.rewardBoostReceipts.put(receipt,hours);dirty=true;
+        return checkpointGameplayRewards()?ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.BoostGrant.ADDED:failed;
+    }
+
     /** Отдельный запас онлайн-времени: не изменяет ни одного платного поля. */
     public synchronized long grantRewardBoost(String playerName, int hours, int bankHours) {
         if (!AccessManager.isValidMinecraftName(playerName) || hours <= 0) return rewardBoostRemaining(playerName);
@@ -2121,6 +2139,7 @@ public final class RegistrationStore {
         result.rankGrantedAt = source.rankGrantedAt;
         result.lastGrantHours = source.lastGrantHours;
         result.rewardBoostMillis = source.rewardBoostMillis;
+        result.rewardBoostReceipts = source.rewardBoostReceipts==null?new LinkedHashMap<>():new LinkedHashMap<>(source.rewardBoostReceipts);
         result.rewardBoostFractions = source.rewardBoostFractions == null ? new LinkedHashMap<>()
                 : new LinkedHashMap<>(source.rewardBoostFractions);
         result.trialConsumed = source.trialConsumed;
@@ -2290,6 +2309,8 @@ public final class RegistrationStore {
     /** An account of a player: pass, credentials, 2FA, sessions, ignore list and mute. */
     public static final class PlayerAccount {
         public long rewardBoostMillis;
+        /** Идемпотентные игровые выдачи; не журнал оплаты и не платные права. */
+        public Map<String,Integer> rewardBoostReceipts=new LinkedHashMap<>();
         public Map<String, Double> rewardBoostFractions = new LinkedHashMap<>();
         public String uuid = "";
         public String playerName = "";

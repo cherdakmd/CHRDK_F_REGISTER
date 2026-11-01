@@ -52,6 +52,8 @@ final class BattlePassStore {
     private final Logger logger;
     private final Map<UUID, Row> rows = new HashMap<>();
     private volatile boolean dirty;
+    private boolean healthy=true;
+    synchronized boolean healthy(){return healthy;}
 
     BattlePassStore(Path dataFolder, Logger logger) {
         this.file = dataFolder.resolve("battlepass-data.json");
@@ -60,6 +62,7 @@ final class BattlePassStore {
 
     synchronized void load() {
         rows.clear();
+        healthy=true;
         if (!Files.exists(file)) {
             return;
         }
@@ -98,6 +101,7 @@ final class BattlePassStore {
                 rows.put(uuid, row);
             }
         } catch (IOException | RuntimeException exception) {
+            healthy=false;
             logger.log(Level.WARNING, "[CHRDK_BattlePass] Не удалось прочитать battlepass-data.json: "
                     + exception.getMessage());
         }
@@ -115,6 +119,7 @@ final class BattlePassStore {
     }
 
     private void saveLocked() {
+        if(!healthy)return;
         Map<String, Object> out = new LinkedHashMap<>();
         for (Map.Entry<UUID, Row> entry : rows.entrySet()) {
             Row row = entry.getValue();
@@ -156,7 +161,7 @@ final class BattlePassStore {
     /** Прогресс по заданию растёт только до цели — лишние тиксы не храним. */
     synchronized int addProgress(UUID uuid, String missionId, int delta, int target) {
         Row row = row(uuid);
-        int next = Math.min(target, row.progress.getOrDefault(missionId, 0) + Math.max(0, delta));
+        int next = Math.min(target, (int)Math.min(Integer.MAX_VALUE,(long)row.progress.getOrDefault(missionId, 0) + Math.max(0, delta)));
         if (!Integer.valueOf(next).equals(row.progress.get(missionId))) {
             row.progress.put(missionId, next);
             dirty = true;

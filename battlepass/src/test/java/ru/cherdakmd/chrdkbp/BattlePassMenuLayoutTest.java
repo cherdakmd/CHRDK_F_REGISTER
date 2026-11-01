@@ -55,7 +55,7 @@ class BattlePassMenuLayoutTest {
                 BattlePassMenuLayout.actionFor(BattlePassMenuLayout.SLOT_CLOSE, 0, 1, 0));
         assertEquals(BattlePassMenuLayout.Action.SUMMARY,
                 BattlePassMenuLayout.actionFor(BattlePassMenuLayout.SLOT_SUMMARY, 0, 1, 0));
-        assertEquals(BattlePassMenuLayout.Action.NONE,
+        assertEquals(BattlePassMenuLayout.Action.FILTER,
                 BattlePassMenuLayout.actionFor(51, 0, 1, 0), "пустая кнопка нижнего ряда");
     }
     @Test

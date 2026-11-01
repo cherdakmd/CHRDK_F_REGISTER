@@ -351,6 +351,10 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
         plugin.rewardBoosts().grant(playerName, hours, source);
     }
 
+    @Override public BoostGrant grantRewardBoostOnce(java.util.UUID player,String name,int hours,String receipt) {
+        return plugin.rewardBoosts().grantOnce(player,name,hours,receipt);
+    }
+
     @Override
     public long rewardBoostRemainingMillis(String playerName) {
         return accessManager.store().rewardBoostRemaining(playerName);

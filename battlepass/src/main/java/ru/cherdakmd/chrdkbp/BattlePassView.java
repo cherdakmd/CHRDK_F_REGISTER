@@ -107,7 +107,7 @@ final class BattlePassView {
          * с боевым пропуском, иначе «волна пройдена» не наступила бы никогда.
          */
         int availableTracks() {
-            return (hasFree() ? 1 : 0) + (hasVip() ? 1 : 0)
+            return (hasFree() ? 1 : 0) + (hasVip() && vipActive ? 1 : 0)
                     + (hasPremium() && premiumActive ? 1 : 0);
         }
 

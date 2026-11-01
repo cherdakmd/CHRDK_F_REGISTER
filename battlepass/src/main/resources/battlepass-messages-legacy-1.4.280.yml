@@ -1,0 +1,16 @@
+battlepass:
+  menu-lore-claim: <green><bold>Нажмите, чтобы забрать</bold></green>
+  help:
+  - <gold><bold>Боевой пропуск — команды</bold></gold>
+  - '<yellow>/%label%</yellow> <gray>— GUI сезона: задания, прогресс и получение наград</gray>'
+  - '<yellow>/%label% menu</yellow> <gray>— то же в виде меню: клик по готовому заданию
+    забирает награду</gray>'
+  - <yellow>/%label% progress</yellow> <gray>— текстовый прогресс в чате</gray>
+  - <yellow>/%label% claim</yellow> <gray>— забрать все готовые награды сразу</gray>
+  - <yellow>/%label% claim <id></yellow> <gray>— забрать награду за одно задание</gray>
+  - '<yellow>/%label% info <id></yellow> <gray>— подробности задания: цель, награды,
+    очки, условия</gray>'
+  - <yellow>/%label% top</yellow> <gray>— рейтинг сезона по очкам</gray>
+  - <dark_gray>Награды выдаются часами буста; VIP-ветка доступна владельцам активного
+    ранга.</dark_gray>
+  usage: '<yellow>Использование: /%label% [menu|progress|top|info <id>|claim [id|all]|help]</yellow>'

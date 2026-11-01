@@ -59,7 +59,7 @@ battlepass:
   "no-season": "<yellow>Сезон батлпасса не настроен — ждите анонса.</yellow>"
   "no-core": "<red>Ядро сервера сейчас недоступно — награду выдать нельзя. Попробуйте позже.</red>"
   "no-permission": "<red>У вас нет доступа к батлпассу.</red>"
-  "usage": "<yellow>Использование: /%label% [menu|progress|top|info <id>|claim [id|all]|help]</yellow>"
+  "usage": "<yellow>Использование: /%label% [menu|tasks|rewards|progress|top|info <id>|claim [id|all]|help]</yellow>"
   "claim-all-summary": "<green>Забрано наград: %count%</green> <dark_gray>·</dark_gray> <green>+%hours% ч. буста</green> <gray>• только онлайн; запас — /profile</gray>"
   "claim-all-products": "<green>Забрано наград: %count%</green> <dark_gray>·</dark_gray> <gold>подарки активированы</gold>"
   "claim-all-empty": "<yellow>Готовых наград нет: сначала выполните задания.</yellow> <gray>Прогресс —</gray> <yellow>/battlepass</yellow>"
@@ -70,7 +70,7 @@ battlepass:
   "help":
     - "<gold><bold>Боевой пропуск — команды</bold></gold>"
     - "<yellow>/%label%</yellow> <gray>— GUI сезона: задания, прогресс и получение наград</gray>"
-    - "<yellow>/%label% menu</yellow> <gray>— то же в виде меню: клик по готовому заданию забирает награду</gray>"
+    - "<yellow>/%label% menu</yellow> <gray>— главная: что делать, призы, банк времени и справка</gray>"
     - "<yellow>/%label% progress</yellow> <gray>— текстовый прогресс в чате</gray>"
     - "<yellow>/%label% claim</yellow> <gray>— забрать все готовые награды сразу</gray>"
     - "<yellow>/%label% claim <id></yellow> <gray>— забрать награду за одно задание</gray>"
@@ -100,7 +100,7 @@ battlepass:
     - "%bar% <white>%progress%/%target%</white>"
     - "<gray>Награда:</gray> %reward%"
     - "<gray>Очки:</gray> <gold>%points%</gold>"
-  "menu-lore-claim": "<green><bold>Нажмите, чтобы забрать</bold></green>"
+  "menu-lore-claim": "<green><bold>Нажмите: условия и награды</bold></green>"
   "menu-lore-vip": "<light_purple>VIP-награда: нужен ранг</light_purple>"
   "menu-lore-premium": "<gold>★ Премиум-награда: нужен боевой пропуск (/pass shop)</gold>"
   "menu-lore-claimed": "<dark_gray>Награда уже забрана</dark_gray>"
@@ -157,3 +157,57 @@ battlepass:
   "admin-validate-hint": "<gray>Задания с ошибками пропущены; остальные загружены. Исправьте config.yml и выполните</gray> <yellow>/bpadmin reload</yellow>"
   "usage-admin": "<yellow>Использование: /bpadmin <reload|info|stats|list|validate|reset <ник>|resetall|addprogress <ник> <id> <n>|setprogress <ник> <id> <n>></yellow>"
   "admin-usage-progress": "<yellow>Использование: /bpadmin addprogress|setprogress <ник> <id> <n></yellow>"
+  "access-unavailable": "<yellow>Пропуск недоступен: войдите в аккаунт и проверьте состояние аддона.</yellow>"
+  "reward-bank-full": "<yellow>Наград ждут места в банке буста: %count%. Ничего не сгорело — потратьте онлайн-время и заберите позже.</yellow>"
+  "reward-retry": "<red>Выдача не подтверждена. Не удаляйте данные; повторите получение после проверки Core. Повтор не начислит награду дважды.</red>"
+  "reward-locked": "<yellow>Готовых закрытых наград: %count%. Бесплатная ветка доступна всем; VIP — рангу, золотая — премиуму.</yellow>"
+  "menu-filter": "<aqua>Фильтр: %filter%</aqua>"
+  "filter-all": "Все задания"
+  "filter-active": "В работе"
+  "filter-ready": "Можно забрать"
+  "filter-future": "Будущие волны"
+  "filter-done": "Цель выполнена"
+  "guide-home": "<dark_gray>Боевой пропуск · главная</dark_gray>"
+  "guide-season": "%season%"
+  "guide-overview": ["<gray>Состояние: %status%</gray>", "<gray>Уровень прогресса: %level%/%max%</gray>", "<gray>Очки: %points%/%total% · до следующего: %next%</gray>", "<gray>Задания: %done%/%count%</gray>", "<gray>Окончание (UTC): %end%</gray>", "<dark_gray>Уровень — индикатор; призы за задания.</dark_gray>"]
+  "guide-no-end": "Без фиксированной даты"
+  "guide-ended": "Завершён · призы можно забрать"
+  "guide-not-started": "Ожидает старта"
+  "guide-running": "Идёт"
+  "guide-tasks": "<aqua>Задания и мой прогресс</aqua>"
+  "guide-tasks-lore": ["<gray>Цели, счётчики, награды и даты открытия.</gray>", "<gray>Фильтры: в работе / готовы / будущие / выполнены.</gray>", "<yellow>Нажмите задание: точные условия.</yellow>"]
+  "guide-rewards": "<gold>Лента наград</gold>"
+  "guide-rewards-lore": ["<gray>Три дорожки рядом: всем, рангу и премиуму.</gray>", "<gray>Каждый приз виден до получения.</gray>", "<yellow>Нажмите приз: подробности, не покупка.</yellow>"]
+  "guide-help": "<yellow>Как работает пропуск?</yellow>"
+  "guide-help-lore": ["<gray>1. Откройте задания и выберите понятную цель.</gray>", "<gray>2. Выполняйте её в обычной игре.</gray>", "<gray>3. Дождитесь заполнения счётчика.</gray>", "<gray>4. Заберите приз здесь или кнопкой «Забрать всё».</gray>", "<gray>Волны открываются по дням от начала сезона.</gray>", "<gray>Старые задания не пропадают при новой волне.</gray>", "<gray>Это постоянные цели, не ежедневный сброс.</gray>", "<gray>Очки дают уровень-индикатор и место в рейтинге.</gray>", "<gray>Волны не перезапускаются при покупке премиума.</gray>"]
+  "guide-claim-lore": ["<gray>Забрать выполненные доступные ветки.</gray>", "<gray>Права и прогресс проверяются заново.</gray>", "<yellow>Целый приз не помещается? Он подождёт.</yellow>"]
+  "guide-tracks": ["<green>Бесплатная дорожка: всем.</green>", "<light_purple>VIP: дополнительно при активном ранге.</light_purple>", "<gold>Премиум: покупка пропуска или ранг IV–V.</gold>", "<gray>Премиум не выполняет задания за вас.</gray>", "<yellow>Нажмите: магазин. Это не покупка.</yellow>"]
+  "guide-bank": "<green>Что даёт приз и где он хранится?</green>"
+  "guide-bank-lore": ["<gray>Отдельный игровой буст: +10% XP.</gray>", "<gray>Работает на обычный XP, профессии и навыки.</gray>", "<gray>Остаток в банке: %minutes% минут.</gray>", "<gray>Время идёт только онлайн после входа.</gray>", "<gray>Не продлевает ранг и платные покупки.</gray>", "<gray>Стоковый банк Core: до 24 часов.</gray>", "<gray>Неполученные призы ждут в заданиях.</gray>", "<gray>Пустые слоты инвентаря не требуются.</gray>"]
+  "guide-recommended": "<yellow>Что сделать сейчас?</yellow>"
+  "guide-recommended-lore": ["%desc%", "<gray>Счётчик: %progress%/%target%</gray>", "<yellow>Нажмите: условия и награды.</yellow>"]
+  "guide-reward-page": "<gold>Награды · страница %page%/%pages%</gold>"
+  "guide-reward-page-lore": ["<gray>Колонка — задание; три ряда — его дорожки.</gray>", "<gray>Серый: получено. Зелёный: можно забрать.</gray>", "<gray>Преграда: нет доступа; это не ошибка.</gray>"]
+  "guide-free": "Бесплатно · всем"
+  "guide-vip": "VIP · активный ранг"
+  "guide-premium": "Золотая · премиум"
+  "guide-mission-name": "%desc%"
+  "guide-no-reward": "Нет приза этой ветки"
+  "guide-received": "Уже получено"
+  "guide-future": "Волна ещё закрыта"
+  "guide-access-locked": "Нужен доступ к дорожке"
+  "guide-in-progress": "Сначала выполните цель"
+  "guide-ready": "Можно забрать"
+  "guide-track-reward": "<gold>%track% · %hours% ч. буста</gold>"
+  "guide-track-lore": ["<gray>Статус: %state%</gray>", "<gray>Часы отдельного +10% XP-буста.</gray>", "<yellow>Нажмите: условия задания.</yellow>"]
+  "guide-detail": "<dark_gray>Задание · условия и награды</dark_gray>"
+  "guide-conditions": ["<gray>Прогресс: %progress%/%target% · осталось: %remaining%</gray>", "<gray>За выполнение: %points% очков сезона.</gray>", "<gray>Миры: %worlds%</gray>", "<gray>Право: %permission%</gray>", "<gray>Открытие: день %day% · %date% UTC</gray>", "<yellow>Точные цели — значок подзорной трубы справа.</yellow>"]
+  "guide-any-world": "Любой мир"
+  "guide-no-permission": "Без специального права"
+  "guide-targets": "<aqua>Что именно засчитывается?</aqua>"
+  "guide-any-target": "<gray>Любая цель этого вида задания.</gray>"
+  "guide-claim-one": "<green>Забрать доступные призы задания</green>"
+  "guide-back": "<gray>На главную пропуска</gray>"
+  "guide-fair": "<yellow>Почему счётчик может не расти?</yellow>"
+  "guide-fair-lore": ["<gray>Проверьте дату открытия и список целей.</gray>", "<gray>Мир и права могут ограничивать задание.</gray>", "<gray>Креатив по умолчанию не засчитывается.</gray>", "<gray>Свои недавно поставленные блоки не добыча.</gray>", "<gray>Плавка — выемка результата из печи.</gray>", "<gray>Рыбалка — пойманный улов, не взмах удочки.</gray>", "<gray>После конца сезона прогресс заморожен.</gray>", "<gray>Готовые призы остаются доступны.</gray>"]
+  "menu-filter-empty": "<gray>Заданий в этом фильтре пока нет</gray>"

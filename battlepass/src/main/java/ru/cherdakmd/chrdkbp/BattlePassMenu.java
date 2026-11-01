@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Меню батлпасса: задания иконками, клик по готовому заданию забирает награду.
+ * Меню батлпасса: задания иконками, клик открывает понятные условия и отдельную кнопку получения.
  * Раскладка и действия вынесены в {@link BattlePassMenuLayout} и покрыты тестами.
  */
 final class BattlePassMenu implements Listener {
@@ -43,6 +43,7 @@ final class BattlePassMenu implements Listener {
         private Inventory inventory;
         private List<String> missionIds = List.of();
         private int itemCount;
+        private BattlePassFilter filter=BattlePassFilter.ALL;
 
         Holder(UUID owner, int page, BattlePassConfig.Season season) {
             this.owner = owner;
@@ -63,8 +64,9 @@ final class BattlePassMenu implements Listener {
     }
 
     /** Открыть меню на указанной странице (страница зажимается в допустимые границы). */
-    void open(Player player, int page) {
-        if (!player.hasPermission("chrdkbp.use")) {
+    void missions(Player player, int page) { missions(player,page,BattlePassFilter.ALL); }
+    void missions(Player player, int page,BattlePassFilter filter) {
+        if (!plugin.canUse(player)) {
             plugin.messages().send(player, "no-permission");
             return;
         }
@@ -77,16 +79,18 @@ final class BattlePassMenu implements Listener {
             plugin.messages().send(player, "no-season");
             return;
         }
-        List<Entry> entries = entries(player, season);
+        List<Entry> entries = entries(player, season).stream().filter(e->filter.includes(e.unlocked(),e.view())).toList();
         List<String> ids = entries.stream().map(entry -> entry.view().def().id()).toList();
         int safePage = BattlePassMenuLayout.clampPage(page, entries.size());
         Holder holder = new Holder(player.getUniqueId(), safePage, season);
+        holder.filter=filter;
         Inventory inventory = Bukkit.createInventory(holder, BattlePassMenuLayout.SIZE,
                 plugin.messages().get("menu-title",
                         "season", BattlePassScreen.described(season.name()),
                         "page", safePage + 1, "pages", BattlePassMenuLayout.pageCount(entries.size())));
         holder.bind(inventory, ids, entries.size());
 
+        if(entries.isEmpty())inventory.setItem(22,button(Material.GRAY_DYE,"menu-filter-empty"));
         int from = safePage * BattlePassMenuLayout.ITEMS_PER_PAGE;
         for (int slot = 0; slot < BattlePassMenuLayout.ITEMS_PER_PAGE; slot++) {
             int index = from + slot;
@@ -115,8 +119,13 @@ final class BattlePassMenu implements Listener {
         }
         inventory.setItem(BattlePassMenuLayout.SLOT_PREMIUM, premium);
         inventory.setItem(BattlePassMenuLayout.SLOT_CLOSE, button(Material.BARRIER, "menu-close"));
+        ItemStack filterButton=button(Material.HOPPER,"menu-filter");
+        var filterMeta=filterButton.getItemMeta();filterMeta.displayName(plugin.messages().get("menu-filter","filter",plugin.messages().plain("filter-"+filter.name().toLowerCase(java.util.Locale.ROOT))));filterButton.setItemMeta(filterMeta);
+        inventory.setItem(51,filterButton);
         player.openInventory(inventory);
     }
+
+    void open(Player player,int page){plugin.guide().home(player);}
 
     /** Все задания сезона: будущие волны видны с датой открытия. */
     private List<Entry> entries(Player player, BattlePassConfig.Season season) {
@@ -257,40 +266,41 @@ final class BattlePassMenu implements Listener {
             if (!player.isOnline() || player.getOpenInventory().getTopInventory().getHolder() != holder) {
                 return;
             }
-            if (!player.hasPermission("chrdkbp.use") || !plugin.settings().menuEnabled()) {
+            if (!plugin.canUse(player) || !plugin.settings().menuEnabled()) {
                 player.closeInventory();
                 return;
             }
             if (plugin.season() != holder.season) {
-                open(player, 0); // после reload старый id не должен выдать награду другого сезона
+                missions(player, 0); // после reload старый id не должен выдать награду другого сезона
                 return;
             }
             int pages = BattlePassMenuLayout.pageCount(holder.itemCount);
             BattlePassMenuLayout.Action action = BattlePassMenuLayout.actionFor(
                     slot, holder.page, pages, holder.itemCount);
             switch (action) {
+                case FILTER -> missions(player,0,holder.filter.next());
                 case CLOSE -> player.closeInventory();
-                case PREV -> open(player, holder.page - 1);
-                case NEXT -> open(player, holder.page + 1);
-                case REFRESH -> open(player, holder.page);
+                case PREV -> missions(player, holder.page - 1,holder.filter);
+                case NEXT -> missions(player, holder.page + 1,holder.filter);
+                case REFRESH -> missions(player, holder.page,holder.filter);
                 case BACK -> {
                     player.closeInventory();
-                    player.performCommand("menu");
+                    plugin.guide().home(player);
                 }
+                case SUMMARY -> plugin.guide().home(player);
                 case PREMIUM -> {
                     player.closeInventory();
                     player.performCommand("pass shop");
                 }
                 case CLAIM_ALL -> {
                     plugin.claims().claimAll(player);
-                    open(player, holder.page);
+                    missions(player, holder.page,holder.filter);
                 }
                 case MISSION -> {
                     int index = BattlePassMenuLayout.missionIndex(slot, holder.page, holder.itemCount);
                     if (index >= 0 && index < holder.missionIds.size()) {
                         // Claims повторно проверяет волну, прогресс, права и уже выданные награды.
-                        plugin.claims().claimOne(player, holder.missionIds.get(index));
-                        open(player, holder.page);
+                        plugin.guide().detail(player, holder.missionIds.get(index));
                     }
                 }
                 default -> { }

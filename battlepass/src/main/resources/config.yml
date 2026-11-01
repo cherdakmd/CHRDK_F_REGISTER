@@ -1,179 +1,245 @@
+# Пререлиз 1.4.281-rc.1: 5 постоянных волн, не ежедневный сброс.
+# Награды — часы отдельного +10% XP-буста; не ранг, алмазы или платные товары.
+# Лимит банка Core не увеличивается: не поместившийся приз остаётся доступен.
+# Не меняйте season-start ради рестарта: он задаёт область receipt наград.
 battlepass:
-  # Имя сезона (MiniMessage или старые &-коды), показывается в /battlepass.
-  # Плагин вставляет его как готовую разметку, поэтому <gold>…</gold> здесь — цвет,
-  # а не текст.
-  season-name: "<gold>Сезон «Первая стужа»</gold>"
-  # Дата старта сезона (UTC). От неё считаются волны.
-  season-start: "2026-10-13"
-  # Дата окончания сезона (UTC). Пусто — сезон бессрочный.
-  # После этой даты прогресс замораживается (новые задания не засчитываются),
-  # но награды за уже выполненные задания можно забрать.
-  season-end: ""
-  # Как часто сохранять прогресс на диск, секунды (30–3600). Дополнительно прогресс
-  # сохраняется при выходе игрока и при выключении сервера.
+  season-name: <gold>Сезон «Первая стужа»</gold>
+  season-start: '2026-10-13'
+  season-end: ''
   autosave-seconds: 300
-  # Считать ли глубокосланцевую руду за обычную, а обтёсанное бревно — за то же
-  # дерево (см. BattlePassVariants). false — только точное совпадение материала.
   match-variants: true
-
-  # Премиум-трек: дополнительная колонка наград за задания.
-  # Открывается товаром каталога ядра (shop в config.yml ядра) или рангом IV–V.
-  # Награды премиум-трека: часы отдельного XP-буста, без выдачи платных товаров.
-  # Платные товары каталога в наградах запрещены, даже если указаны в старом конфиге.
   premium:
-    # Со ступени донатного ранга премиум-трек открыт без отдельной покупки (1.4.167).
     min-rank: 4
-    # false — премиум-колонка не показывается и не выдаётся.
     enabled: true
-    # id товара каталога ядра, который открывает премиум-трек.
-    # Товар продаётся на витрине той же командой pass shopbuy.
     product: battlepass-premium
-
-  # Честная игра: что не должно засчитываться в задания.
   fair-play:
-    # Считать прогресс игроков в креативе (по умолчанию нет).
     count-creative: false
-    # Не засчитывать блок, который игрок сам поставил и тут же сломал.
     ignore-player-placed: true
-    # Сколько секунд помнить поставленные блоки (30–7200).
     placed-memory-seconds: 600
-
-  # Оформление и подсказки.
   display:
-    # Длина полосы прогресса в секциях (3–16).
     bar-width: 8
-    # Звук при выполнении задания и получении награды.
     sounds: true
-    # Короткие подсказки над хотбаром.
     actionbar: true
-    # Сообщать игроку, что открылась новая волна (один раз на волну).
     announce-new-waves: true
-    # GUI по /battlepass, /bp и /battlepass menu. false — текстовый экран по /bp.
     menu: true
-
-  # Награды за задания: часы буста (с 1.4.184; раньше единицей были сутки).
-  # free-boost-hours — всем, vip-boost-hours — дополнительно владельцам активного ранга.
-  # Ключи старого вида free-days/vip-days/premium-days читаются как часы, поэтому
-  # конфиг, не перезаписанный после обновления, награду не потеряет.
-  # points — очки сезона для /battlepass top (по умолчанию 10).
-  #
-  # id задания — короткое имя для /battlepass claim <id>; desc — строка в списке
-  # заданий (MiniMessage или &-коды, как у season-name).
-  #
-  # Виды заданий (type):
-  #   MINE <материал>   — добыть блоки (material: DIAMOND_ORE, ANCIENT_DEBRIS…)
-  #   PLACE <материал>  — поставить блоки
-  #   KILL <сущность>   — победить мобов (entity: ZOMBIE, SKELETON, ANY…)
-  #   BREED <сущность>  — развести животных
-  #   CRAFT <материал>  — скрафтить предметы
-  #   SMELT <материал>  — выплавить в печи (засчитывается при выемке)
-  #   ENCHANT <материал> — зачаровать предметы
-  #   FISH any          — выловить рыбу (entity: ANY ловит любой улов)
-  #
-  # Несколько целей в одном задании: material/entity: "ZOMBIE|HUSK|DROWNED".
-  # Дополнительные ключи задания (все необязательные):
-  #   worlds: [world]           — считать только в этих мирах (пусто — везде)
-  #   permission: chrdkbp.vip   — задание считается только с этим правом
-  #   icon: DIAMOND             — иконка в меню (пусто — по типу задания)
-  #   premium-boost-hours: 3          — часы буста в премиум-треке (потолок 24)
-  # Старые premium-products игнорируются; награда без часов заменяется 1 часом буста.
   weeks:
-    - unlock-day: 0
-      missions:
-        - id: mine_diamonds
-          desc: "<gray>Добыть алмазную руду</gray>"
-          type: MINE
-          material: DIAMOND_ORE
-          target: 16
-          free-boost-hours: 1
-          vip-boost-hours: 2
-          premium-boost-hours: 2
-          points: 20
-        - id: hunt_zombies
-          desc: "<gray>Победить зомби</gray>"
-          type: KILL
-          entity: "ZOMBIE|HUSK|DROWNED"
-          target: 40
-          free-boost-hours: 1
-          vip-boost-hours: 1
-          points: 20
-        - id: angler
-          desc: "<gray>Поймать рыбу</gray>"
-          type: FISH
-          entity: ANY
-          target: 10
-          free-boost-hours: 1
-          vip-boost-hours: 1
-          points: 10
-        - id: builder
-          desc: "<gray>Построить 128 блоков</gray>"
-          type: PLACE
-          material: "COBBLESTONE|STONE|OAK_PLANKS"
-          target: 128
-          free-boost-hours: 1
-          vip-boost-hours: 1
-          points: 15
-          icon: BRICKS
-    - unlock-day: 7
-      missions:
-        - id: mine_ancient
-          desc: "<gray>Добыть древние обломки</gray>"
-          type: MINE
-          material: ANCIENT_DEBRIS
-          target: 6
-          free-boost-hours: 2
-          vip-boost-hours: 3
-          premium-boost-hours: 3
-          points: 30
-        - id: craft_netherite
-          desc: "<gray>Сковать незеритовый предмет</gray>"
-          type: CRAFT
-          material: NETHERITE_INGOT
-          target: 2
-          free-boost-hours: 1
-          vip-boost-hours: 2
-          points: 25
-        - id: hunt_skeletons
-          desc: "<gray>Победить скелетов</gray>"
-          type: KILL
-          entity: "SKELETON|STRAY|BOGGED"
-          target: 60
-          free-boost-hours: 1
-          vip-boost-hours: 1
-          points: 20
-        - id: smelter
-          desc: "<gray>Выплавить 64 слитка</gray>"
-          type: SMELT
-          material: "IRON_INGOT|GOLD_INGOT"
-          target: 64
-          free-boost-hours: 1
-          vip-boost-hours: 2
-          points: 20
-    - unlock-day: 14
-      missions:
-        - id: enchanter
-          desc: "<gray>Зачаровать 3 предмета</gray>"
-          type: ENCHANT
-          material: "DIAMOND_SWORD|DIAMOND_PICKAXE|DIAMOND_CHESTPLATE"
-          target: 3
-          free-boost-hours: 2
-          vip-boost-hours: 2
-          premium-boost-hours: 4
-          points: 30
-        - id: farmer
-          desc: "<gray>Развести 10 животных</gray>"
-          type: BREED
-          entity: "COW|PIG|SHEEP|CHICKEN"
-          target: 10
-          free-boost-hours: 1
-          vip-boost-hours: 1
-          points: 15
-        - id: nether_miner
-          desc: "<gray>Добыть 256 блоков в Нижнем мире</gray>"
-          type: MINE
-          material: "NETHERRACK|BLACKSTONE"
-          target: 256
-          free-boost-hours: 1
-          vip-boost-hours: 2
-          points: 25
-          worlds: ["world_nether"]
+  - unlock-day: 0
+    missions:
+    - id: mine_diamonds
+      desc: <gray>Добыть алмазную руду</gray>
+      type: MINE
+      material: DIAMOND_ORE
+      target: 16
+      free-boost-hours: 6
+      vip-boost-hours: 8
+      premium-boost-hours: 12
+      points: 20
+    - id: hunt_zombies
+      desc: <gray>Победить зомби</gray>
+      type: KILL
+      entity: ZOMBIE|HUSK|DROWNED
+      target: 40
+      free-boost-hours: 6
+      vip-boost-hours: 4
+      premium-boost-hours: 12
+      points: 20
+    - id: angler
+      desc: <gray>Поймать 10 уловов</gray>
+      type: FISH
+      entity: ANY
+      target: 10
+      free-boost-hours: 6
+      vip-boost-hours: 4
+      premium-boost-hours: 12
+      points: 10
+    - id: builder
+      desc: <gray>Построить 128 блоков</gray>
+      type: PLACE
+      material: COBBLESTONE|STONE|OAK_PLANKS
+      target: 128
+      free-boost-hours: 6
+      vip-boost-hours: 4
+      premium-boost-hours: 12
+      points: 15
+      icon: BRICKS
+    - id: starter_lumber
+      desc: <gray>Заготовить 32 бревна</gray>
+      type: MINE
+      material: OAK_LOG|BIRCH_LOG|SPRUCE_LOG
+      target: 32
+      free-boost-hours: 6
+      vip-boost-hours: 8
+      premium-boost-hours: 12
+      points: 25
+    - id: starter_cook
+      desc: <gray>Приготовить 16 порций еды</gray>
+      type: SMELT
+      material: COOKED_BEEF|COOKED_PORKCHOP|COOKED_COD
+      target: 16
+      free-boost-hours: 6
+      vip-boost-hours: 8
+      premium-boost-hours: 12
+      points: 25
+  - unlock-day: 7
+    missions:
+    - id: mine_ancient
+      desc: <gray>Добыть древние обломки</gray>
+      type: MINE
+      material: ANCIENT_DEBRIS
+      target: 6
+      free-boost-hours: 12
+      vip-boost-hours: 12
+      premium-boost-hours: 18
+      points: 30
+    - id: craft_netherite
+      desc: <gray>Скрафтить 2 незеритовых слитка</gray>
+      type: CRAFT
+      material: NETHERITE_INGOT
+      target: 2
+      free-boost-hours: 6
+      vip-boost-hours: 8
+      premium-boost-hours: 12
+      points: 25
+    - id: hunt_skeletons
+      desc: <gray>Победить скелетов</gray>
+      type: KILL
+      entity: SKELETON|STRAY|BOGGED
+      target: 60
+      free-boost-hours: 6
+      vip-boost-hours: 4
+      premium-boost-hours: 12
+      points: 20
+    - id: smelter
+      desc: <gray>Выплавить 64 слитка</gray>
+      type: SMELT
+      material: IRON_INGOT|GOLD_INGOT
+      target: 64
+      free-boost-hours: 6
+      vip-boost-hours: 8
+      premium-boost-hours: 12
+      points: 20
+    - id: iron_worker
+      desc: <gray>Добыть 64 железных руды</gray>
+      type: MINE
+      material: IRON_ORE
+      target: 64
+      free-boost-hours: 6
+      vip-boost-hours: 8
+      premium-boost-hours: 12
+      points: 25
+  - unlock-day: 14
+    missions:
+    - id: enchanter
+      desc: <gray>Зачаровать 3 предмета</gray>
+      type: ENCHANT
+      material: DIAMOND_SWORD|DIAMOND_PICKAXE|DIAMOND_CHESTPLATE
+      target: 3
+      free-boost-hours: 12
+      vip-boost-hours: 8
+      premium-boost-hours: 24
+      points: 30
+    - id: farmer
+      desc: <gray>Развести 10 животных</gray>
+      type: BREED
+      entity: COW|PIG|SHEEP|CHICKEN
+      target: 10
+      free-boost-hours: 6
+      vip-boost-hours: 4
+      premium-boost-hours: 12
+      points: 15
+    - id: nether_miner
+      desc: <gray>Добыть 256 блоков в Нижнем мире</gray>
+      type: MINE
+      material: NETHERRACK|BLACKSTONE
+      target: 256
+      free-boost-hours: 6
+      vip-boost-hours: 8
+      premium-boost-hours: 12
+      points: 25
+      worlds:
+      - world_nether
+    - id: deep_digger
+      desc: <gray>Добыть 512 глубинных блоков</gray>
+      type: MINE
+      material: DEEPSLATE|TUFF
+      target: 512
+      free-boost-hours: 6
+      vip-boost-hours: 8
+      premium-boost-hours: 12
+      points: 25
+  - unlock-day: 21
+    missions:
+    - id: night_watch
+      desc: <gray>Победить 128 ночных монстров</gray>
+      type: KILL
+      entity: ZOMBIE|SKELETON|SPIDER
+      target: 128
+      free-boost-hours: 12
+      vip-boost-hours: 12
+      premium-boost-hours: 18
+      points: 40
+    - id: stone_architect
+      desc: <gray>Построить 512 каменных блоков</gray>
+      type: PLACE
+      material: STONE_BRICKS|COBBLESTONE|DEEPSLATE_BRICKS
+      target: 512
+      free-boost-hours: 12
+      vip-boost-hours: 12
+      premium-boost-hours: 18
+      points: 40
+    - id: master_angler
+      desc: <gray>Поймать 64 улова</gray>
+      type: FISH
+      entity: ANY
+      target: 64
+      free-boost-hours: 12
+      vip-boost-hours: 12
+      premium-boost-hours: 18
+      points: 40
+    - id: ranch_keeper
+      desc: <gray>Развести 32 животных</gray>
+      type: BREED
+      entity: COW|SHEEP|PIG|CHICKEN
+      target: 32
+      free-boost-hours: 12
+      vip-boost-hours: 12
+      premium-boost-hours: 18
+      points: 40
+  - unlock-day: 28
+    missions:
+    - id: ancient_expert
+      desc: <gray>Добыть 12 древних обломков</gray>
+      type: MINE
+      material: ANCIENT_DEBRIS
+      target: 12
+      free-boost-hours: 18
+      vip-boost-hours: 16
+      premium-boost-hours: 24
+      points: 60
+    - id: diamond_expert
+      desc: <gray>Добыть 32 алмазные руды</gray>
+      type: MINE
+      material: DIAMOND_ORE
+      target: 32
+      free-boost-hours: 18
+      vip-boost-hours: 16
+      premium-boost-hours: 24
+      points: 60
+    - id: enchant_expert
+      desc: <gray>Зачаровать 8 предметов</gray>
+      type: ENCHANT
+      material: ANY
+      target: 8
+      free-boost-hours: 18
+      vip-boost-hours: 16
+      premium-boost-hours: 24
+      points: 60
+    - id: tool_expert
+      desc: <gray>Скрафтить 3 алмазные кирки</gray>
+      type: CRAFT
+      material: DIAMOND_PICKAXE
+      target: 3
+      free-boost-hours: 18
+      vip-boost-hours: 16
+      premium-boost-hours: 24
+      points: 60

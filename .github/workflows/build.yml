@@ -190,7 +190,10 @@ jobs:
         run: |
           python3 tools/social/run.py --check
           python3 -m unittest discover -s tools/social -p 'test_*.py' -v
-          python3 tools/social/run.py --news-version "$(sed -n 's/^plugin_version=//p' gradle.properties)"
+          version="$(sed -n 's/^plugin_version=//p' gradle.properties)"
+          if [[ "$version" != *-rc.* ]]; then
+            python3 tools/social/run.py --news-version "$version"
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: social-preview-${{ github.sha }}

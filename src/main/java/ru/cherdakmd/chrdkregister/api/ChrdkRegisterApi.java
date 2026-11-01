@@ -32,7 +32,7 @@ import java.util.UUID;
 public interface ChrdkRegisterApi {
 
     /** Версия контракта API. API 33: мосты внешних интеграций (слушатели безопасности, уведомлений и глобального чата с фильтром получателей, бонус длительности покупок, заморозка входа и сброс сессий без смены пароля); API 32: общий владелец непрерывных пассивных зелий PassivePotions; API 30: общий helper одноразового согласия с котировкой; API 29: точный остаток выручки магазина; API 28: индекс членства кланов; API 27: снят источник оформления удалённого аддона; API 26: сняты контракты удалённых аддонов; API 25: durable checkpoint игровых наград; API 24 — Claims domain settlement. */
-    int API_VERSION = 35;
+    int API_VERSION = 36;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -137,6 +137,14 @@ public interface ChrdkRegisterApi {
 
     /** Игровая награда: +10 % XP, только авторизованное онлайн-время, без платных прав. */
     default void grantRewardBoostHours(String playerName, int hours, String source) { }
+
+    /** Результат атомарной игровой награды API36: FULL ничего не обрезает. */
+    enum BoostGrant { ADDED, ALREADY, FULL, FAILED }
+
+    /** UUID + стабильный receipt; буст и receipt сохраняются одним checkpoint до ACK. */
+    default BoostGrant grantRewardBoostOnce(java.util.UUID player, String name, int hours, String receipt) {
+        return BoostGrant.FAILED;
+    }
 
     /** Остаток отдельного буста; это не Unix timestamp и не срок ранга. */
     default long rewardBoostRemainingMillis(String playerName) { return 0L; }

@@ -121,7 +121,7 @@ class ReleaseWorkflowContractTest(unittest.TestCase):
         import re
         notes = re.search(r"1\.4\.\{200,201,\{220\.\.(\d+)\}\}\.md", source)
         self.assertIsNotNone(notes, "Release должен включать подробные инструкции перехода")
-        version = re.search(r"^plugin_version=1\.4\.(\d+)$", (root / "gradle.properties").read_text(), re.M)
+        version = re.search(r"^plugin_version=1\.4\.(\d+)(?:-rc\.[1-9]\d*)?$", (root / "gradle.properties").read_text(), re.M)
         self.assertIsNotNone(version)
         self.assertGreaterEqual(int(notes.group(1)), int(version.group(1)), "Инструкция текущего релиза должна войти в ZIP")
         self.assertIn("! -name 'chrdk-vk-*.jar'", source)

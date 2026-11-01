@@ -141,7 +141,7 @@ def validate(root=ROOT):
     for topic in catalog(root):
         tip(datetime(2026, 11, 1, 18, tzinfo=MOSCOW), topic, root)
     version = re.search(r'^plugin_version=(.+)$', (root / 'gradle.properties').read_text(), re.M)[1]
-    if not (root / 'docs/social/releases' / (version + '.json')).is_file():
+    if '-rc.' not in version and not (root / 'docs/social/releases' / (version + '.json')).is_file():
         raise SafetyError('Для текущей версии нужна краткая заметка игрокам')
     for path in (root / 'docs/social/releases').glob('*.json'):
         tag = 'v' + path.stem

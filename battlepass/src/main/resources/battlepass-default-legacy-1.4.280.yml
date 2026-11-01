@@ -1,0 +1,102 @@
+battlepass:
+  weeks:
+  - unlock-day: 0
+    missions:
+    - id: mine_diamonds
+      desc: <gray>Добыть алмазную руду</gray>
+      type: MINE
+      material: DIAMOND_ORE
+      target: 16
+      free-boost-hours: 1
+      vip-boost-hours: 2
+      premium-boost-hours: 2
+      points: 20
+    - id: hunt_zombies
+      desc: <gray>Победить зомби</gray>
+      type: KILL
+      entity: ZOMBIE|HUSK|DROWNED
+      target: 40
+      free-boost-hours: 1
+      vip-boost-hours: 1
+      points: 20
+    - id: angler
+      desc: <gray>Поймать рыбу</gray>
+      type: FISH
+      entity: ANY
+      target: 10
+      free-boost-hours: 1
+      vip-boost-hours: 1
+      points: 10
+    - id: builder
+      desc: <gray>Построить 128 блоков</gray>
+      type: PLACE
+      material: COBBLESTONE|STONE|OAK_PLANKS
+      target: 128
+      free-boost-hours: 1
+      vip-boost-hours: 1
+      points: 15
+      icon: BRICKS
+  - unlock-day: 7
+    missions:
+    - id: mine_ancient
+      desc: <gray>Добыть древние обломки</gray>
+      type: MINE
+      material: ANCIENT_DEBRIS
+      target: 6
+      free-boost-hours: 2
+      vip-boost-hours: 3
+      premium-boost-hours: 3
+      points: 30
+    - id: craft_netherite
+      desc: <gray>Сковать незеритовый предмет</gray>
+      type: CRAFT
+      material: NETHERITE_INGOT
+      target: 2
+      free-boost-hours: 1
+      vip-boost-hours: 2
+      points: 25
+    - id: hunt_skeletons
+      desc: <gray>Победить скелетов</gray>
+      type: KILL
+      entity: SKELETON|STRAY|BOGGED
+      target: 60
+      free-boost-hours: 1
+      vip-boost-hours: 1
+      points: 20
+    - id: smelter
+      desc: <gray>Выплавить 64 слитка</gray>
+      type: SMELT
+      material: IRON_INGOT|GOLD_INGOT
+      target: 64
+      free-boost-hours: 1
+      vip-boost-hours: 2
+      points: 20
+  - unlock-day: 14
+    missions:
+    - id: enchanter
+      desc: <gray>Зачаровать 3 предмета</gray>
+      type: ENCHANT
+      material: DIAMOND_SWORD|DIAMOND_PICKAXE|DIAMOND_CHESTPLATE
+      target: 3
+      free-boost-hours: 2
+      vip-boost-hours: 2
+      premium-boost-hours: 4
+      points: 30
+    - id: farmer
+      desc: <gray>Развести 10 животных</gray>
+      type: BREED
+      entity: COW|PIG|SHEEP|CHICKEN
+      target: 10
+      free-boost-hours: 1
+      vip-boost-hours: 1
+      points: 15
+    - id: nether_miner
+      desc: <gray>Добыть 256 блоков в Нижнем мире</gray>
+      type: MINE
+      material: NETHERRACK|BLACKSTONE
+      target: 256
+      free-boost-hours: 1
+      vip-boost-hours: 2
+      points: 25
+      worlds:
+      - world_nether
