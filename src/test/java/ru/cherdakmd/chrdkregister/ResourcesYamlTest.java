@@ -24,7 +24,7 @@ class ResourcesYamlTest {
             "classes", "cosmetics", "daily-rewards", "diamond-shop", "enchants", "guilds",
             "hunt", "lottery",
             "orders", "party", "pets", "professions", "quests",
-            "ranks", "referrals", "skills", "teleports", "tier-forge");
+            "ranks", "referrals", "skills", "teleports", "tier-forge", "vk");
 
     @Test
     void allResourceYamlsParse() throws Exception {

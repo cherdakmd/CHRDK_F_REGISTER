@@ -47,7 +47,7 @@ public final class LabelsMenuService implements Listener {
     /** Как ник выглядит для остальных — ровно та строка, что уходит в чат и таб. */
     static final int PREVIEW_SLOT = 8;
     /** Переключатели источников под выбранными местами; шапка TAB отдельно. */
-    static final int[] ENTRY_SLOTS = {28, 29, 30, 31, 32, 33, 34};
+    static final int[] ENTRY_SLOTS = {28, 29, 30, 31, 32, 33, 34, 35};
     static final int[] PLACE_SLOTS = {19, 20, 21, 22, 23, 24, 25, 26};
     static final int ENABLE_ALL_SLOT = 45;
     static final int DISABLE_ALL_SLOT = 47;
@@ -310,6 +310,7 @@ public final class LabelsMenuService implements Listener {
             case GUILDS -> messages.mini("labels.name-guilds");
             case QUESTS -> messages.mini("labels.name-quests");
             case ACHIEVEMENTS -> messages.mini("labels.name-achievements");
+            case VK -> messages.mini("labels.name-vk");
             case HEADER -> messages.mini("labels.name-header");
         };
     }
@@ -323,6 +324,7 @@ public final class LabelsMenuService implements Listener {
             case GUILDS -> plugin.messages().get("labels.desc-guilds");
             case QUESTS -> plugin.messages().get("labels.desc-quests");
             case ACHIEVEMENTS -> plugin.messages().get("labels.desc-achievements");
+            case VK -> plugin.messages().get("labels.desc-vk");
             case HEADER -> plugin.messages().get("labels.desc-header");
         };
     }
@@ -336,6 +338,7 @@ public final class LabelsMenuService implements Listener {
             case GUILDS -> Material.WHITE_BANNER;
             case QUESTS -> Material.WRITABLE_BOOK;
             case ACHIEVEMENTS -> Material.EXPERIENCE_BOTTLE;
+            case VK -> Material.LAPIS_LAZULI;
             case HEADER -> Material.PAPER;
         };
     }

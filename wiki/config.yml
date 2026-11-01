@@ -69,6 +69,7 @@ groups:
   - party
   - guilds
   - profile
+  - vk
 - id: reference
   title: Версия и источники
   description: Как обновляется справочник и чему доверять.

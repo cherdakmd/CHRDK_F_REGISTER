@@ -100,6 +100,10 @@ public final class ChatService implements Listener {
     /** Дополнительные подстановки от других сервисов ядра (баланс банка и т.п.). */
     private volatile java.util.function.BiConsumer<Player, java.util.Map<String, Object>> placeholderProvider;
     private volatile long lastGlobalMessageAt;
+    private final Map<String, ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.GlobalChatListener> globalChatListeners =
+            new ConcurrentHashMap<>();
+    private final Map<String, Long> externalLastMessageAt = new ConcurrentHashMap<>();
+    private final Map<String, String> externalLastMessageText = new ConcurrentHashMap<>();
 
     public ChatService(JavaPlugin plugin, AccessManager accessManager, ChatConfig config,
                        Messages messages, Logger logger) {
@@ -430,6 +434,232 @@ public final class ChatService implements Listener {
                     player.getName(), null, text);
         }
         notifyMentions(player, text, mentionCandidates, cfg);
+        if (channel == ChatConfig.Channel.GLOBAL) {
+            fireGlobalChat(player.getName(), text);
+        }
+    }
+
+    /** Регистрирует внешний слушатель принятых сообщений глобального чата (API v32). */
+    public void registerGlobalChatListener(String id,
+            ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.GlobalChatListener listener) {
+        if (id == null || id.isBlank() || listener == null || RetiredAddons.source(id)) return;
+        globalChatListeners.put(id.trim().toLowerCase(Locale.ROOT), listener);
+    }
+
+    /** Удаляет внешний слушатель глобального чата (API v32). */
+    public void unregisterGlobalChatListener(String id) {
+        if (id == null || id.isBlank()) return;
+        globalChatListeners.remove(id.trim().toLowerCase(Locale.ROOT));
+    }
+
+    private void fireGlobalChat(String playerName, String plainMessage) {
+        for (var listener : globalChatListeners.values()) {
+            try {
+                listener.onGlobalChat(playerName, plainMessage);
+            } catch (RuntimeException exception) {
+                logger.log(Level.FINE, "Global chat listener failed", exception);
+            }
+        }
+    }
+
+    /**
+     * Проверяет и нормализует сообщение внешнего моста (например, беседы ВК) по правилам глобального чата:
+     * мут и заморозка привязанного аккаунта, фильтр слов и ссылок, лимит упоминаний, длина, анти-капс и дубликаты.
+     *
+     * @return нормализованный текст сообщения либо {@code null}, если сообщение отклонено модерацией
+     */
+    String moderateExternalMessage(String sourceId, String linkedPlayer, String fallbackSender,
+                                   String rawMessage, long now) {
+        return moderateExternalMessage(store(), sourceId, linkedPlayer, fallbackSender, rawMessage, now);
+    }
+
+    String moderateExternalMessage(RegistrationStore store, String sourceId, String linkedPlayer,
+                                   String fallbackSender, String rawMessage, long now) {
+        if (sourceId == null || sourceId.isBlank() || RetiredAddons.source(sourceId)) return null;
+        ChatConfig cfg = this.config;
+        if (cfg == null || !cfg.enabled() || rawMessage == null) return null;
+
+        String cleaned = rawMessage.replace('\r', ' ').replace('\n', ' ').replace('\t', ' ').trim();
+        if (cleaned.isEmpty()) return null;
+
+        String resolvedPlayer = null;
+        if (linkedPlayer != null && !linkedPlayer.isBlank()) {
+            resolvedPlayer = linkedPlayer.trim();
+            if (store != null) {
+                if (store.getMute(resolvedPlayer, now).isPresent()) {
+                    return null;
+                }
+                if (store.isLoginFrozen(resolvedPlayer)) {
+                    return null;
+                }
+            }
+        }
+
+        if (cfg.maxMentions() > 0 && countMentions(cleaned) > cfg.maxMentions()) {
+            return null;
+        }
+
+        String actorLabel = resolvedPlayer != null ? resolvedPlayer
+                : (fallbackSender == null || fallbackSender.isBlank() ? sourceId : fallbackSender.trim());
+        String filtered = applyExternalFilter(actorLabel, cleaned, cfg);
+        if (filtered == null) return null;
+        String text = filtered;
+
+        if (cfg.maxMessageLength() > 0 && text.length() > cfg.maxMessageLength()) {
+            text = text.substring(0, cfg.maxMessageLength()).trim();
+            if (text.isEmpty()) return null;
+        }
+        if (cfg.antiCaps()) {
+            text = applyCapsRule(text, cfg.capsPercent());
+        }
+
+        String senderKey = sourceId.trim().toLowerCase(Locale.ROOT) + ":"
+                + actorLabel.toLowerCase(Locale.ROOT);
+        if (cfg.blockDuplicates() && cfg.duplicateWindowMillis() > 0) {
+            String previous = externalLastMessageText.get(senderKey);
+            long previousAt = externalLastMessageAt.getOrDefault(senderKey, 0L);
+            if (previous != null && now - previousAt <= cfg.duplicateWindowMillis() && isDuplicate(previous, text)) {
+                return null;
+            }
+        }
+        if (cfg.cooldownMillis() > 0) {
+            long last = externalLastMessageAt.getOrDefault(senderKey, 0L);
+            if (last > 0 && now - last < cfg.cooldownMillis()) {
+                return null;
+            }
+        }
+        externalLastMessageAt.put(senderKey, now);
+        externalLastMessageText.put(senderKey, text);
+        return text;
+    }
+
+    private String applyExternalFilter(String actorLabel, String text, ChatConfig cfg) {
+        ChatConfig.ChatFilter filter = cfg.filter();
+        if (filter == null || !filter.enabled() || text.isEmpty()) return text;
+        String lowered = text.toLowerCase(Locale.ROOT);
+        if (filter.isWhitelisted(lowered)) return text;
+
+        boolean matched = false;
+        for (String word : filter.words()) {
+            if (!word.isBlank() && lowered.contains(word)) {
+                matched = true;
+                break;
+            }
+        }
+        if (!matched) {
+            for (var pattern : filter.patterns()) {
+                if (pattern.matcher(text).find()) {
+                    matched = true;
+                    break;
+                }
+            }
+        }
+        if (!matched) return text;
+
+        if (accessManager != null && accessManager.audit() != null) {
+            accessManager.audit().log(AuditLog.CHAT_FILTER, actorLabel, "", null,
+                    AuditLog.details("message", text.length() > 120 ? text.substring(0, 120) + "…" : text,
+                            "mode", filter.blockMode() ? "block" : "replace"));
+        }
+        return filter.blockMode() ? null : maskMatches(text, filter);
+    }
+
+    /**
+     * Доставляет сообщение из внешнего моста (например, беседы сообщества ВК) в глобальный чат игры (API v32).
+     * Не вызывает {@link #fireGlobalChat}, поэтому эхо-петля обратно во внешний мост невозможна.
+     */
+    public boolean deliverExternalGlobalChat(String sourceId, String badgeMini, String linkedPlayer,
+                                             String fallbackSender, String rawMessage) {
+        return deliverExternalGlobalChat(sourceId, badgeMini, linkedPlayer, fallbackSender, rawMessage, null);
+    }
+
+    public boolean deliverExternalGlobalChat(String sourceId, String badgeMini, String linkedPlayer,
+                                             String fallbackSender, String rawMessage,
+                                             Predicate<String> recipientFilter) {
+        long now = System.currentTimeMillis();
+        String moderated = moderateExternalMessage(sourceId, linkedPlayer, fallbackSender, rawMessage, now);
+        if (moderated == null) {
+            return false;
+        }
+        String src = sourceId.trim().toLowerCase(Locale.ROOT);
+        String resolvedPlayer = linkedPlayer != null && !linkedPlayer.isBlank() && store() != null
+                ? store().getAccount(linkedPlayer.trim())
+                .map(a -> a.playerName == null || a.playerName.isBlank() ? linkedPlayer.trim() : a.playerName)
+                .orElse(linkedPlayer.trim())
+                : (linkedPlayer != null && !linkedPlayer.isBlank() ? linkedPlayer.trim() : null);
+        String safeGuest = sanitizeExternalSender(fallbackSender);
+        String actorLabel = resolvedPlayer != null ? resolvedPlayer : (safeGuest.isEmpty() ? src : safeGuest);
+
+        Runnable deliverTask = () -> {
+            if (Bukkit.getServer() == null) return;
+            ChatConfig cfg = this.config;
+            if (cfg == null || !cfg.enabled()) return;
+
+            Set<String> viewerNames = new HashSet<>();
+            List<Player> recipients = new ArrayList<>();
+            for (Player online : Bukkit.getOnlinePlayers()) {
+                if (accessManager.getStage(online) != AccessManager.PlayerStage.AUTHENTICATED) continue;
+                if (resolvedPlayer != null && isIgnoring(online, resolvedPlayer)) continue;
+                if (recipientFilter != null) {
+                    try {
+                        if (!recipientFilter.test(online.getName())) continue;
+                    } catch (RuntimeException ignored) {
+                    }
+                }
+                recipients.add(online);
+                viewerNames.add(online.getName().toLowerCase(Locale.ROOT));
+            }
+
+            Component prefix = badgeMini == null || badgeMini.isBlank()
+                    ? Component.empty()
+                    : legacy(badgeMini).append(Component.space());
+            Component senderPart = resolvedPlayer != null
+                    ? legacy(decorated(resolvedPlayer))
+                    : Component.text(safeGuest.isEmpty() ? "ВК" : safeGuest, NamedTextColor.AQUA);
+            Component body = buildMessageBody(
+                    moderated,
+                    false,
+                    cfg,
+                    cfg.mentionHighlight(),
+                    NamedTextColor.WHITE,
+                    candidate -> viewerNames.contains(candidate.toLowerCase(Locale.ROOT)),
+                    messages
+            );
+            Component line = prefix
+                    .append(senderPart)
+                    .append(Component.text(": ", NamedTextColor.GRAY))
+                    .append(body);
+
+            for (Player recipient : recipients) {
+                recipient.sendMessage(line);
+                if (cfg.mentionHighlight() && hasMention(moderated, recipient.getName())) {
+                    recipient.sendActionBar(messages.get("chat.mention-notify", "sender_name", actorLabel));
+                }
+                if (cfg.mentionSound() && hasMention(moderated, recipient.getName())) {
+                    recipient.playSound(recipient.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.5f);
+                }
+            }
+            Bukkit.getConsoleSender().sendMessage(line);
+            if (cfg.chatLogEnabled() && accessManager.audit() != null) {
+                accessManager.audit().chat("global-" + src, actorLabel, null, moderated);
+            }
+        };
+
+        if (Bukkit.getServer() != null) {
+            if (Bukkit.isPrimaryThread()) {
+                deliverTask.run();
+            } else if (plugin != null && plugin.isEnabled()) {
+                Bukkit.getScheduler().runTask(plugin, deliverTask);
+            }
+        }
+        return true;
+    }
+
+    private static String sanitizeExternalSender(String raw) {
+        if (raw == null || raw.isBlank()) return "";
+        String cleaned = raw.replace('<', '‹').replace('>', '›').replace('\u00a7', ' ')
+                .replace('\r', ' ').replace('\n', ' ').trim();
+        return cleaned.length() > 36 ? cleaned.substring(0, 36).trim() : cleaned;
     }
 
     /** Counts {@code @nickname} mentions in a message. */
@@ -1403,7 +1633,7 @@ public final class ChatService implements Listener {
     }
 
     private RegistrationStore store() {
-        return accessManager.store();
+        return accessManager == null ? null : accessManager.store();
     }
 
     /* ------------------------------------------------------------------ *

@@ -1,179 +1,184 @@
 {
   "pages": {
     "about": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "77d202560453457599572bccb967f39e5e0e9dbf8bef726902a59e73731261e5",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "121a169cd102b402305fd3815def4c0cdc23f8e4716e141a773edb0c3587229b",
       "text": "17788b7b4007e90c62acd266f95cec124e0a53b603a1b2e5d9a7c19fb304c7d9"
     },
     "achievements": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "eb47d54b6121cf85b8e7fe58dfe2561f0f36724eff30251391b3b3f02c0f124a",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "c65c1e75fe4d11b4dcfc6b55b3ff0817baa381a93f10756dcbaeaa110832832a",
       "text": "839d6e42ff5471f7def5f1bcb063709bb4e8ec40a1732a5a1ce55754544329a3"
     },
     "artifacts": {
-      "reason": "1.4.267: дополнительно сверена Ледяная аура — длительность замедления больше редкого пульса, стандартные100тиков/уровень/радиус/freeze ticks прежние; сильные внешние эффекты защищены.",
-      "sources": "2f071ae722967975b21db737dd6d30bca40c0e84f4d6e35b51ef44eb4640ce7a",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "2ccd1ca85a2b4ac70d0c59aa5f44bb2e9fd4670b4bd5ea022e25f4b6108c70a8",
       "text": "a4a922729b6635a6d286fcc3c9f18c8c57a0c98a19ec05c44f8d448dc422a84f"
     },
     "auction": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "8e9c296ef8b472e7552c8a8d79223dc6da9823a15cbfe220265a52997d34ef16",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "8939449ac2309fa2ff0b60d2f3de4464f136adc58850c3c0528dd27ad313db49",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "48aab283f873f140bc385ffb29b144deb48dccfae0aa7086cab206c5bf84d186",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "54ae9ccae515a2f8ec2c6b84d230f1715d99df05496bd46c9461e6ed274336f3",
       "text": "0bb2af9ae7275a308eee69cb6b63893c060bcff763287fe0dfbd1965861c24c8"
     },
     "chat": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "77d202560453457599572bccb967f39e5e0e9dbf8bef726902a59e73731261e5",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "121a169cd102b402305fd3815def4c0cdc23f8e4716e141a773edb0c3587229b",
       "text": "ac4a8e23de6893fab669939fd2882e40f1604f1f8fddeaa1d3d3572d8c3d6572"
     },
     "claims": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "b30b59288028f64e0b8848adda75d1ea816c43b038586a57443950eb493a2f74",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "b7d6287fcd27d5c148af2a19c54fcef5c779e8e8e88d4826959ef44e931931ae",
       "text": "2a1634efadca1810c82bc496b30432d553c72fb226a5e051443232224a366538"
     },
     "classes": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "e76dcfddb32973cad0d70789bfacfc377a1358820fe80f7677b014b7966b09c1",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "639421141ad203e9b3278d4c80808ef501a759df093f600831ac74712a5edabc",
       "text": "ee29d92bd4e9527924d14405057fd62402857c1a688439c7b9d86d4c9bf3b546"
     },
     "commands": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "c81fee3dd515fa7e9e7999729157d82636cd3f2f83b6436e42e2f3a83988717e",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "3095447495cf80cb4ddbc2f3b271236700d6483f80ad8588c20bcccd915d8408",
       "text": "5170af8688ec0094f48161c332e5c95516c206065f48391d275c4db5eb2baeed"
     },
     "cosmetics": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "2403666f096491a5a042b439cca9ee4623a7026ffbf7bf78a21cf2b96b0c819d",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "1e1b856d2199fe7e1871f9d0ce69db5e35b7f6fdd447359f07451dde8750274a",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "bececffec86a10553238dde4549771fa5690198b4eb3f6f6afe931818e22d6ad",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "44f05e05838626162011a8c2f14fe2004c230a235fa49f024ddad9fcc6d5fb46",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "economy": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "108ddb02a10670c282cef784896cb1e291f351f813d66e30d7a42ef9dbe102a6",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "2e4d1a31f7fb592a5d6d4ce73b2831ac7869bdf40f09059f98669fa7eebf4003",
       "text": "216cf9a664845fe452abd6742c8d56f486bba98eb4e43fad6fe1276269901369"
     },
     "enchants": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "5364e77dd68bef945b028cd1d9bf2651ed1a8e3808a8e5fb6f220dc2b0e65ae8",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "fc12df5550d5e3d7d3a8d784bba3dc9d88dac404dfbc522bc9833b6bd0c1eaac",
       "text": "70b6bd31d749073c4e4144ebb536661042f7f925d3ccb838f294fb031e4a8558"
     },
     "faq": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "c81fee3dd515fa7e9e7999729157d82636cd3f2f83b6436e42e2f3a83988717e",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "3095447495cf80cb4ddbc2f3b271236700d6483f80ad8588c20bcccd915d8408",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "ea6a06174439d82c9b98618e9dbedd6fc2e7d2f580575f93264b7588d8522bb1",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "261368725dfa60338e962a4e4344af0c534774f2ceafa5ba092fd34fdb34694b",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "b30b59288028f64e0b8848adda75d1ea816c43b038586a57443950eb493a2f74",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "b7d6287fcd27d5c148af2a19c54fcef5c779e8e8e88d4826959ef44e931931ae",
       "text": "442f5481c446db06532139f0b7c2f184858d17e99d0bebc46f50adab2aeefb61"
     },
     "hunt": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "af15b7849e2d30ab563ca6ece74a36e1a57aaf8b6b8b7a516c03e67e343c28ef",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "191f9126d2e19627950fa6ca0f7fff862578b2ae8f3f61619a137ee6b19673ce",
       "text": "3b2066fce021118c9980313351d42317d07f8519b7c1404638d61ce4318d33e8"
     },
     "index": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "254b7902271e5546b1bedcc4512ee0d9012e01360ad7877b1b724f217cc24c88",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "96bd05af94751c4e07cec90c349efedc1c68b0b54a64899ef0b6180e2115308d",
       "text": "2d543efd03d060e4d6f09da13921777186f30a145e3614fcc82b1dedcaf07777"
     },
     "lottery": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "8b471f4d14b996fad69c51e7eadcac3f7c884d9b663750c506223d559af7635f",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "ec110fc45a636bb4737b7fc3a0244511270ce1f90dcb9e17206bac371ce2d033",
       "text": "1d05c7d03ba10cbdc51a27bb6cc1ff68ec75f44ff7f8e91d05b92fc08dcd5931"
     },
     "menu": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "c81fee3dd515fa7e9e7999729157d82636cd3f2f83b6436e42e2f3a83988717e",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "3095447495cf80cb4ddbc2f3b271236700d6483f80ad8588c20bcccd915d8408",
       "text": "eaccb7ed1bf84b845f57ab3e722b9e3b706542bfb70c39fa9f82135cc875497c"
     },
     "orders": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "1bbd4a3078ad3645984b942c11e1c447a8187f07e8054af2b54e058e889916f5",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "a242fd58a4a4f2a25eb73e3b29bc7438fa988bcf13fa2957f70f5f473b2def65",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "party": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "528e55a2794763af297b3665554b465af4eb600c3a1d9e432d100de4ca037d39",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "af6a1298c3b58b0761934fc0f343b4ba31efee1f154894b7eca2a03ea3c8c84d",
       "text": "1907a324d824df3607e9932362f05cfd65b35cd5e8063296a269802a00c04fe6"
     },
     "pets": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "33b71e871386073673c99f6edc673a2cbe1a5a02fe233bf111f49ec299b62c51",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "04e40f6ee08ad2c833fe262aaba57e3abb168b34b49d4a0eeb1b16eced82a634",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "fd2ccbfff2202269346cf1db8ea2d8a2ef697fdafde573b385b25d1ccb7a2c58",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "20ccfd19e860ac50741f099528d772fea5e1066daf34ec332d4d6c85c4d9711d",
       "text": "ced22f9d3bdafb0c5f5e4027849d8cf32dd0530d5a937f0c409e07546439d01a"
     },
     "profile": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "30fddc9d90da6fb5e0d09c55fdef17d6a4851736529df6747d28e4738382bad4",
-      "text": "26fbc5b8060bbb468b13958f3f490aae8d4cead1ffadb8af855ff8b4138dcaf7"
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "67b2f71c02efb53b22a46736f80708ecefffc3cb2b001cd95538bd2e80fbaabb",
+      "text": "b1ddb608cb3942be099223883d3c545c9ab409018276b58b94f5e85e796a3970"
     },
     "quests": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "42c1b55e7d3606adc24b4bf4a1764c916581b318391f89dd5307d9d5f39eba19",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "96f4cff61f41b39447137f19211a3bf6fba42aac359ca2b39727949a377d452a",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "669e33c7d835db4f7798e5568de30f58dd9a62219627af105e220045f6471e1a",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "a68204516fa4e3cfaafb33e13fae6ae536cef570d59dd6d2e5a0b2cf86096d39",
       "text": "75ea871bcb9481fc9eaa1e1f260b628010a904955fe7501d40cb257b9b455c50"
     },
     "referrals": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "9285fce8d825fa542487c486944c7c449dece4d696bd673b76ef3ef9527ae943",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "f44f01b115b0599c865a0efc0266fbdb130841fd6a6c4210ed3fa313f32c2460",
       "text": "802956a7c425a8c14bd0cbd56b600cbab5027bd5bc72c0b28232fd5ba5055b24"
     },
     "shop": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "254b7902271e5546b1bedcc4512ee0d9012e01360ad7877b1b724f217cc24c88",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "96bd05af94751c4e07cec90c349efedc1c68b0b54a64899ef0b6180e2115308d",
       "text": "7311f2d070abe97d7b36552adaa74bf745062aceb2e239128d36cfe2a57b3975"
     },
     "skills": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "5dad30c0f4a22049744434c5af7493a3f3b2ecfe6ba2cc2c4ca30e01b785954a",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "2b3284552ad213f0ea903bb2508632f3875da02adac6525f6bd68152d28655cf",
       "text": "da88b0eff3b15dec9185ecfbb9a63b62c96e0a3aa5ab2dea53e0928a500b403a"
     },
     "start": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "b601e57ac7f1229e9d64e24497c473e1609cbf63839e61691dfdec191c32bff4",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "1f55d045bce65a52d5df6d403175062921cf2abbe2ea8498b3a01956b618449e",
       "text": "3f26288c52ae35e92097798a9a413933351e8e8422d33230a6322c69aedbb238"
     },
     "teleports": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "e9d08942d3bfda1c09554ab337dac324cff31c54165e05626db8908242c5d31a",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "8f16c04ce2f5e18bbf9d195dca158f6dfebcf290e88fe46981d3f6083f8b67bc",
       "text": "896b72de8b56b3374b3a6346a701f45defae6e6ecff688868e02233aa040d1fa"
     },
     "tierforge": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "28a506d1419a971d3aae0a70fb8e14f89e582067a2215e2bdb9efc7d4522c62a",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "d4ac9f121cf79ea669d013940fe715cba6a2184dbcec054ddc566ebd4c2a2e23",
       "text": "bb59e5c05ec16e1951d67e444a35885ce8a38805d367f3e73f09a0fd74cce12c"
     },
     "titles": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "151dac171a6f41c573c6fd596987be542b2ee794d2fbfc613cf4f4bcb8e91703",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "b4f0c95cabe8ba42ddc910c21049bbfdedbae10ec990673d8c3b0d0bc87043f5",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "1.4.267: финальная сверка Core API32 и общих пассивов; чтение скрытой цепочки Paper, исключение собственного слоя и восстановление остатков, без ложного force-override. Вне артефактов/чар/ковки бизнес-логика Core и игровых систем не меняется.",
-      "sources": "254b7902271e5546b1bedcc4512ee0d9012e01360ad7877b1b724f217cc24c88",
-      "text": "6da1c475a5deebb8b0217117f628a5d9a57137f3095598c46ae16fb335d6b56e"
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "96bd05af94751c4e07cec90c349efedc1c68b0b54a64899ef0b6180e2115308d",
+      "text": "1123de78494b056782a9f1c435dc651aefc6eebcd8d86083351a8710eb2d4cd6"
+    },
+    "vk": {
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "4d61c90b1f127186488b71df903b939b6aac7a13a6410bbaee0872abd54e9baf",
+      "text": "e9037fef5c1f36cf0f114228ced538a7a303aeae2417bc01c09ca96db64ca3b7"
     }
   },
   "schema": 1

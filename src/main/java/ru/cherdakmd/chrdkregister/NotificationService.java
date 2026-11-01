@@ -2,6 +2,7 @@ package ru.cherdakmd.chrdkregister;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -40,6 +41,7 @@ public final class NotificationService {
     private final ExecutorService worker;
     private final Map<String, Long> lastSentAt = new ConcurrentHashMap<>();
     private final Map<String, Integer> dropped = new ConcurrentHashMap<>();
+    private final Map<String, ChrdkRegisterApi.NotificationListener> listeners = new ConcurrentHashMap<>();
     private volatile boolean running = true;
 
     public NotificationService(Supplier<PluginConfig> configSupplier, Logger logger) {
@@ -56,6 +58,16 @@ public final class NotificationService {
         });
     }
 
+    public void registerListener(String id, ChrdkRegisterApi.NotificationListener listener) {
+        if (id == null || id.isBlank() || listener == null || RetiredAddons.source(id)) return;
+        listeners.put(id.trim().toLowerCase(java.util.Locale.ROOT), listener);
+    }
+
+    public void unregisterListener(String id) {
+        if (id == null || id.isBlank()) return;
+        listeners.remove(id.trim().toLowerCase(java.util.Locale.ROOT));
+    }
+
     /**
      * Queues a notification.
      *
@@ -66,7 +78,9 @@ public final class NotificationService {
      */
     public void notify(String event, String title, String description, String severity) {
         PluginConfig config = configSupplier.get();
-        if (!config.discordEnabled() || !config.notifyOn(event)) return;
+        boolean discord = config.discordEnabled();
+        boolean external = !listeners.isEmpty();
+        if ((!discord && !external) || !config.notifyOn(event)) return;
         long now = System.currentTimeMillis();
         Long previous = lastSentAt.get(event);
         if (previous != null && now - previous < THROTTLE_MILLIS) {
@@ -78,7 +92,18 @@ public final class NotificationService {
         dropped.remove(event);
         String body = suppressed > 0 ? description + "\n(пропущено событий: " + suppressed + ")" : description;
         String webhook = config.discordWebhookUrl();
-        worker.execute(() -> send(webhook, title, body, severity, config.notificationMentions()));
+        worker.execute(() -> {
+            if (discord) {
+                send(webhook, title, body, severity, config.notificationMentions());
+            }
+            for (ChrdkRegisterApi.NotificationListener listener : listeners.values()) {
+                try {
+                    listener.onNotification(event, title, body, severity);
+                } catch (RuntimeException exception) {
+                    logger.log(Level.FINE, "Could not deliver notification to addon listener", exception);
+                }
+            }
+        });
     }
 
     /** Convenience helper mapping audit event names to notification severities. */

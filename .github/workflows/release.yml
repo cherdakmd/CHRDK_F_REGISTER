@@ -45,8 +45,8 @@ jobs:
         run: |
           python3 .github/scripts/check_retired_addons.py
           python3 -m unittest discover -s .github/scripts -p 'test_retired_addons.py' -v
-          python3 .github/scripts/check_messages.py
           python3 -m unittest discover -s .github/scripts -p 'test_*release.py' -v
+          python3 .github/scripts/check_messages.py
 
       - name: Verify TradeMC kit and regression tests
         run: |
@@ -84,7 +84,7 @@ jobs:
         shell: bash
         run: python3 .github/scripts/report_tests.py
 
-      - name: Pack all plugin JARs and the update memo into one ZIP
+      - name: Pack general plugin ZIP and prepare standalone CHRDK_VK JAR
         shell: bash
         run: |
           set -euo pipefail
@@ -92,9 +92,10 @@ jobs:
           mkdir -p release
           find . -path '*/build/libs/*.jar' -type f \
             ! -name '*-sources.jar' ! -name '*-javadoc.jar' ! -name '*-dev.jar' \
+            ! -name 'chrdk-vk-*.jar' \
             -exec cp '{}' release/ \;
           count="$(find release -maxdepth 1 -name '*.jar' | wc -l)"
-          echo "Собрано JAR: $count"
+          echo "Собрано JAR общего комплекта: $count"
           find release -maxdepth 1 -name '*.jar' -printf '%f\n' | sort
           if [[ "$count" -lt 1 ]]; then
             echo 'Не найден ни один JAR — архив не собран.' >&2
@@ -102,7 +103,7 @@ jobs:
           fi
           cp docs/releases/update-memo.txt 'release/ОБНОВЛЕНИЕ.txt'
           printf '\nВерсия: %s\nПлатформа: Purpur 26.3 / Java 25\n' "$version" >> 'release/ОБНОВЛЕНИЕ.txt'
-          for notes in docs/releases/1.4.{200,201,{220..267}}.md; do
+          for notes in docs/releases/1.4.{200,201,{220..268}}.md; do
             printf '\n\n' >> 'release/ОБНОВЛЕНИЕ.txt'
             cat "$notes" >> 'release/ОБНОВЛЕНИЕ.txt'
           done
@@ -110,9 +111,12 @@ jobs:
           python3 .github/scripts/pack_release.py release "$version" "chrdk-plugins-${version}.zip"
           unzip -t "chrdk-plugins-${version}.zip"
           unzip -l "chrdk-plugins-${version}.zip"
+          cp "vk/build/libs/chrdk-vk-${version}.jar" "chrdk-vk-${version}.jar"
+          python3 .github/scripts/verify_release.py --standalone "chrdk-vk-${version}.jar" CHRDK_VK "$version"
           echo "zip=chrdk-plugins-${version}.zip" >> "$GITHUB_ENV"
+          echo "vk_jar=chrdk-vk-${version}.jar" >> "$GITHUB_ENV"
 
-      - name: Attach the plugin ZIP only
+      - name: Attach general ZIP and standalone CHRDK_VK JAR
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "${{ env.zip }}" --clobber
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ env.zip }}" "${{ env.vk_jar }}" --clobber

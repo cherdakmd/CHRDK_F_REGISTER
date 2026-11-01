@@ -45,6 +45,8 @@ public final class AuditLog {
     public static final String LOGIN_FAIL = "login.fail";
     public static final String SESSION_RESTORE = "session.restore";
     public static final String SESSION_END = "session.end";
+    public static final String ACCOUNT_FREEZE = "account.freeze";
+    public static final String ACCOUNT_UNFREEZE = "account.unfreeze";
     public static final String BRUTEFORCE_ALERT = "bruteforce.alert";
     public static final String MULTIALT_ALERT = "multialt.alert";
     public static final String DONATION_PENDING = "donation.pending";

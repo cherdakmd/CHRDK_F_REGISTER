@@ -145,7 +145,7 @@ class LabelPreferencesTest {
         assertFalse(preferences.visible("Steve", LabelPreferences.Label.ACHIEVEMENTS));
         assertTrue(preferences.visible("Steve", LabelPreferences.Label.HEADER),
                 "шапка таба — отдельный переключатель");
-        assertEquals(5, LabelPreferences.badgeLabels().size(),
+        assertEquals(6, LabelPreferences.badgeLabels().size(),
                 "все NAME-надписи, кроме ранга");
 
         preferences.setGroup("Steve", LabelPreferences.badgeLabels(), true);
@@ -350,7 +350,7 @@ class LabelPreferencesTest {
         assertTrue(preferences.setAll("", false));
         assertEquals(0, preferences.size());
         assertNull(LabelPreferences.Label.byId("хедер"), "неизвестный ид — null");
-        assertEquals(6, LabelPreferences.Label.nameTags().size(),
-                "шесть надписей рядом с ником + шапка таба отдельно");
+        assertEquals(7, LabelPreferences.Label.nameTags().size(),
+                "семь надписей рядом с ником + шапка таба отдельно");
     }
 }
