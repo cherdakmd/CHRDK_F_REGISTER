@@ -16,7 +16,7 @@ final class GuildStyleStore {
     record Row(UUID owner, String name, String guild, long movedAt, Map<String, Choice> choices) {
         Row {
             if (owner == null || name == null || !name.matches("[A-Za-z0-9_]{1,16}") || guild == null
-                    || !guild.matches("[A-Za-z0-9_-]{1,64}") || movedAt < 0 || choices == null || choices.size() > 3)
+                    || !guild.matches("[A-Za-z0-9_-]{1,64}") || movedAt < 0 || movedAt > Long.MAX_VALUE - TRANSFER_COOLDOWN || choices == null || choices.size() > 3)
                 throw new IllegalArgumentException("binding");
             choices.forEach((kind, choice) -> { if (choice == null || !GuildStyleDefs.valid(kind, choice.preset())) throw new IllegalArgumentException("preset"); });
             choices = Map.copyOf(choices);
