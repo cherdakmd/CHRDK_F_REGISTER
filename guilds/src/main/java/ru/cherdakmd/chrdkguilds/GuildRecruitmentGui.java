@@ -25,7 +25,7 @@ final class GuildRecruitmentGui implements Listener {
         Inventory inventory;
         Holder(UUID owner,int page,GuildJoinTerms terms,long expires) { this.owner=owner;this.page=page;this.terms=terms;this.expires=expires; }
         @Override public Inventory getInventory() { return inventory; }
-        boolean consume(long now) { if (used || terms == null || now >= expires) return false; used=true; return true; }
+        boolean consume(long now) { if (used || terms == null) return false; used=true; return now < expires; }
     }
     private final GuildsPlugin plugin;
     GuildRecruitmentGui(GuildsPlugin plugin) { this.plugin=plugin; }
@@ -57,7 +57,8 @@ final class GuildRecruitmentGui implements Listener {
             lore.add(plugin.messages().get("recruit-list-members","count",guild.size(),"cap",GuildMath.memberCap(guild.level()),"level",GuildMath.roman(guild.level())));
             lore.add(plugin.messages().get("recruit-list-mode","mode",guild.mode().label()));
             lore.add(plugin.messages().get("dues-invite","rate",guild.duesRate(),"peace",guild.peaceful()?GuildPeaceService.DAILY:0));
-            lore.add(plugin.messages().get(invited?"recruit-invited":guild.recruitmentOpen()?"recruit-open-hint":"recruit-closed"));
+            lore.add(plugin.messages().get(guild.recruitmentOpen()?"recruit-open-hint":"recruit-closed"));
+            if(invited)lore.add(plugin.messages().get("recruit-invited"));
             ItemStack entry=item(guild.recruitmentOpen()?Material.LIME_BANNER:Material.GRAY_BANNER,"recruit-entry",lore,"name",guild.name(),"tag",guild.tag());
             h.inventory.setItem(SLOTS[i],entry);h.targets.put(SLOTS[i],guild.id());
         }
@@ -86,6 +87,7 @@ final class GuildRecruitmentGui implements Listener {
         Holder h=new Holder(player.getUniqueId(),0,terms,now+CONSENT_MILLIS);
         h.inventory=Bukkit.createInventory(h,54,plugin.messages().get("recruit-confirm-title"));
         List<Component> lore=new ArrayList<>();
+        lore.add(plugin.messages().get(terms.open()?"recruit-open-button":"recruit-closed-button"));
         lore.add(plugin.messages().get("recruit-list-mode","mode",terms.mode().label()));
         lore.add(plugin.messages().get("recruit-fees","rate",terms.dues(),"peace",terms.mode()==GuildMode.PEACEFUL?GuildPeaceService.DAILY:0,"cost",terms.fee()));
         lore.add(plugin.messages().get("recruit-daily"));

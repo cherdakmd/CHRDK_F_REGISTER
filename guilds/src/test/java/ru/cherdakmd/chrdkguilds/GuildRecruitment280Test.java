@@ -111,7 +111,8 @@ class GuildRecruitment280Test {
         var s=store();s.guild("alpha").recruitment(true);var terms=GuildJoinTerms.capture(s,guest,"alpha",now);
         var holder=new GuildRecruitmentGui.Holder(guest,0,terms,now+30_000);
         assertTrue(holder.consume(now));assertFalse(holder.consume(now));
-        assertFalse(new GuildRecruitmentGui.Holder(guest,0,terms,now+30_000).consume(now+30_000));
+        var expired=new GuildRecruitmentGui.Holder(guest,0,terms,now+30_000);
+        assertFalse(expired.consume(now+30_000));assertFalse(expired.consume(now));
         assertEquals(28,Arrays.stream(GuildRecruitmentGui.SLOTS).distinct().count());
     }
     @Test void legacyAbsentFlagsAreClosedAndMalformedFlagFailsClosed() {
