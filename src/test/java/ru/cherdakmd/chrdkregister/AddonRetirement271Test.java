@@ -83,7 +83,14 @@ class AddonRetirement271Test {
         old.set("auto-messages.interval-seconds",777);old.set("tablist.pinned-names",List.of("Admin"));
         var changes=PresentationMigration.replacements(old,List.of(yaml("presentation-legacy-1.4.270.yml")),fresh);
         assertTrue(changes.containsAll(List.of("server-menu.items","server-menu.categories","auto-messages.messages")));
-        assertFalse(changes.contains("shop.products"));assertEquals(48,fresh.getMapList("server-menu.items").size());
+        assertTrue(changes.contains("shop.products"), "278 добавляет три косметических SKU");
+        var retained = fresh.getMapList("shop.products").stream()
+                .filter(product -> !PremiumPresentationMigration.PRODUCTS.contains(product.get("id")))
+                .map(product -> { var terms = new LinkedHashMap<>(product); terms.remove("description"); return terms; }).toList();
+        var previous = old.getMapList("shop.products").stream()
+                .map(product -> { var terms = new LinkedHashMap<>(product); terms.remove("description"); return terms; }).toList();
+        assertEquals(previous, retained, "условия прежних товаров не меняются");
+        assertEquals(48,fresh.getMapList("server-menu.items").size());
         assertEquals(41,fresh.getMapList("auto-messages.messages").size());
         for(String key:changes)old.set(key,fresh.get(key));
         assertTrue(PresentationMigration.replacements(old,List.of(yaml("presentation-legacy-1.4.270.yml")),fresh).isEmpty());

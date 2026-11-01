@@ -27,7 +27,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
     private static final List<String> SUBS = List.of("help", "menu", "gui", "create", "invite",
             "accept", "decline", "leave", "kick", "promote", "demote", "transfer", "disband",
             "deposit", "withdraw", "upgrade", "info", "top", "members", "chat", "war",
-            "rename", "retag", "mode", "peace", "dues", "discipline");
+            "rename", "retag", "mode", "peace", "dues", "discipline", "style");
     private static final List<String> WAR_SUBS = List.of("declare", "accept", "decline",
             "status", "surrender");
     private static final List<String> ADMIN_SUBS = List.of("reload", "info", "disband",
@@ -72,6 +72,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
             return menu(sender);
         }
         switch (canonicalSubcommand(args[0])) {
+            case "style" -> { Player p=player(sender); if(p!=null)plugin.styles().command(p,args); }
             case "discipline" -> new GuildDisciplineCommands(plugin).status(sender,args);
             case "dues" -> {Player p=player(sender);if(p!=null)plugin.peace().dues(p,args);}
             case "mode", "peace" -> { Player player=player(sender);if(player!=null)plugin.peace().command(player,args); }
@@ -110,7 +111,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
 
     private void help(CommandSender sender) {
         plugin.messages().send(sender, "help-header");
-        for (String key : List.of("discipline-public-help", "discipline-rules", "dues-help", "peace-help", "help-create", "help-invite", "help-join", "help-leave",
+        for (String key : List.of("style-help", "discipline-public-help", "discipline-rules", "dues-help", "peace-help", "help-create", "help-invite", "help-join", "help-leave",
                 "help-ranks", "help-treasury", "help-war", "help-chat", "help-info", "help-top")) {
             plugin.messages().send(sender, key);
         }
@@ -494,7 +495,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
 
     private void showGuild(CommandSender sender, Guild guild) {
         String leaderName = nameOf(guild.leader());
-        plugin.messages().send(sender, "info-header", "name", guild.name(),
+        plugin.messages().send(sender, "info-header", "name", Messages.trusted(plugin.styles().name(guild)),
                 "tag", guild.tag().isEmpty() ? "—" : guild.tag());
         plugin.messages().send(sender, "info-leader", "leader", leaderName);
         plugin.messages().send(sender, "info-members",
@@ -954,6 +955,15 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
             return List.of();
         }
         if (!sender.hasPermission("chrdkguilds.use") || !plugin.config().enabled()) {
+            return List.of();
+        }
+        if (args.length >= 2 && args[0].equalsIgnoreCase("style")) {
+            if (args.length == 2) return filter(List.of("name","emblem","frame","accept","off","clear"),args[1]);
+            if (args.length == 3) {
+                if (args[1].equalsIgnoreCase("accept")) return filter(Bukkit.getOnlinePlayers().stream().filter(plugin::visible).map(Player::getName).toList(),args[2]);
+                if (args[1].equalsIgnoreCase("off") || args[1].equalsIgnoreCase("clear")) return filter(List.of("name","emblem","frame"),args[2]);
+                return filter(GuildStyleDefs.options(args[1].toLowerCase(Locale.ROOT)),args[2]);
+            }
             return List.of();
         }
         if (args.length == 1) {

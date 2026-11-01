@@ -31,6 +31,7 @@ final class GuildsGui implements Listener {
 
     private static final int SIZE = 54;
     private static final int INFO_SLOT = 4;
+    private static final int STYLE_SLOT = 0;
     private static final int BACK_SLOT = 45;
     private static final int TREASURY_SLOT = 46;
     private static final int UPGRADE_SLOT = 47;
@@ -99,6 +100,7 @@ final class GuildsGui implements Listener {
                 plugin.messages().get("dues-status","rate",guild.duesRate(),"amount",dues.amount(),"due",GuildPeaceController.time(dues.dueAt()),"reserve",guild.duesReserve()),
                 plugin.messages().get("dues-menu-hint"))));
         inventory.setItem(INFO_SLOT, infoItem(guild, player));
+        inventory.setItem(STYLE_SLOT, item(Material.PAINTING, "style-menu-name", List.of(plugin.messages().get("style-menu-hint"))));
         List<UUID> members = guild.memberIds();
         for (int index = 0; index < members.size() && index < MEMBER_SLOTS.length; index++) {
             inventory.setItem(MEMBER_SLOTS[index], memberItem(guild, members.get(index)));
@@ -108,6 +110,7 @@ final class GuildsGui implements Listener {
         inventory.setItem(WAR_SLOT, warItem(guild));
         inventory.setItem(BACK_SLOT, button(Material.ARROW, "menu-back"));
         inventory.setItem(CLOSE_SLOT, button(Material.BARRIER, "menu-close"));
+        plugin.styles().frame(inventory,guild);
         player.openInventory(inventory);
     }
 
@@ -135,7 +138,7 @@ final class GuildsGui implements Listener {
 
     private ItemStack infoItem(Guild guild, Player player) {
         List<Component> lore = new ArrayList<>();
-        lore.add(plugin.messages().get("menu-info-name", "name", guild.name(),
+        lore.add(plugin.messages().get("menu-info-name", "name", ru.cherdakmd.chrdkregister.Messages.trusted(plugin.styles().name(guild)),
                 "tag", guild.tag().isEmpty() ? "—" : guild.tag()));
         lore.add(plugin.messages().get("dues-info","rate",guild.duesRate(),"reserve",guild.duesReserve()));
         lore.add(plugin.messages().get("menu-info-rank",
@@ -150,7 +153,12 @@ final class GuildsGui implements Listener {
                 "won", String.valueOf(guild.warsWon()),
                 "lost", String.valueOf(guild.warsLost())));
         lore.add(plugin.messages().get(guild.peaceful()?"menu-mode-peaceful":"menu-mode-battle"));
-        return item(guild.peaceful()?Material.GREEN_BANNER:Material.RED_BANNER, "menu-info-title", lore);
+        ItemStack card = item(guild.peaceful()?Material.GREEN_BANNER:Material.RED_BANNER, "menu-info-title", lore);
+        var meta = card.getItemMeta();
+        if (plugin.styles().active(guild,"name") != null || plugin.styles().active(guild,"emblem") != null)
+            meta.displayName(plugin.messages().markup(plugin.styles().name(guild)));
+        card.setItemMeta(meta);
+        return card;
     }
 
     private ItemStack memberItem(Guild guild, UUID member) {
@@ -278,6 +286,7 @@ final class GuildsGui implements Listener {
         if (guild == null) {
             return;
         }
+        if(slot==STYLE_SLOT){player.performCommand("clan style");return;}
         if(slot==DUES_SLOT){player.performCommand("clan dues");return;}
         if(slot==MODE_SLOT) {
             if(event.isRightClick() && guild.leader().equals(player.getUniqueId()))

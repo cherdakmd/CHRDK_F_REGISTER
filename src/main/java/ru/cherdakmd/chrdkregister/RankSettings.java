@@ -40,6 +40,8 @@ public final class RankSettings {
                             + "<gray>входит в летопись гильдии</gray>")
     );
 
+    private final RankJoinMessages joinSelector = new RankJoinMessages();
+    private final Map<Integer, List<String>> joinPools = new LinkedHashMap<>();
     private final boolean enabled;
     private final boolean showNameInChat;
     private final boolean welcomeEnabled;
@@ -74,6 +76,13 @@ public final class RankSettings {
             index.put(tier.level(), tier);
         }
         this.byLevel = Map.copyOf(index);
+        for (RankTier tier : this.tiers) {
+            RankTier stock = DEFAULT_TIERS.stream().filter(t -> t.level() == tier.level()).findFirst().orElse(null);
+            // Только точный старый сток получает новый пул; собственная строка/отключение сохраняются.
+            boolean oldStock = stock != null && stock.equals(tier);
+            joinPools.put(tier.level(), oldStock ? RankJoinMessages.defaults(tier)
+                    : tier.hasJoinLine() ? List.of(tier.joinLine()) : List.of());
+        }
     }
 
     /** Значения по умолчанию: лестница включена, приветственный ранг — 1 день. */
@@ -97,12 +106,20 @@ public final class RankSettings {
         if (tiers.isEmpty()) {
             tiers = DEFAULT_TIERS;
         }
-        return new RankSettings(enabled, showName, welcomeEnabled, welcomeLevel, welcomeDays,
+        RankSettings settings = new RankSettings(enabled, showName, welcomeEnabled, welcomeLevel, welcomeDays,
                 announceJoin, tiers,
                 config.getInt("ranks.hat.min-level", 5),
                 intList(config, "ranks.bonuses.xp-percent", BonusDefaults.XP),
                 intList(config, "ranks.bonuses.drop-percent", BonusDefaults.DROP),
                 intList(config, "ranks.bonuses.skill-levels", BonusDefaults.SKILL));
+        for (Map<?, ?> entry : config.getMapList("ranks.levels")) {
+            int level = intOf(entry.get("level"), -1);
+            if (settings.byLevel.containsKey(level) && entry.get("join-lines") instanceof List<?> lines) {
+                settings.joinPools.put(level, lines.stream().filter(String.class::isInstance).map(String.class::cast)
+                        .map(String::trim).filter(line -> !line.isBlank()).distinct().limit(100).toList());
+            }
+        }
+        return settings;
     }
 
     /** Таблицы бонусов по умолчанию — те, что согласованы с владельцем (1.4.167). */
@@ -267,6 +284,11 @@ public final class RankSettings {
         }
         return tier.joinLine().replace("%player%", playerName == null ? "" : playerName);
     }
+
+    public String nextJoinLine(int level, String name) {
+        return joinSelector.next(level, name, joinPools.getOrDefault(level, List.of()));
+    }
+    List<String> joinPool(int level) { return joinPools.getOrDefault(level, List.of()); }
 
     /** Наибольший настроенный уровень. */
     public int maxLevel() {

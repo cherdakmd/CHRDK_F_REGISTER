@@ -55,6 +55,10 @@ def catalog(root=ROOT):
     for p in products:
         if not re.fullmatch(r"[a-z0-9-]+", p["id"]) or p["price"] <= 0 or p["days"] <= 0:
             raise ValueError(f"Invalid product: {p}")
+    products = [p for p in products if not (p["id"] in {"clan-name-style", "clan-emblem", "clan-card-frame"}
+                                           and p.get("trademc-export") is False)]
+    data = copy.deepcopy(data)
+    data["shop"]["products"] = products
     audit_catalog(root, data, products)
     return data, products
 

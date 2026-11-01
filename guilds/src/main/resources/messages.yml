@@ -348,3 +348,27 @@ guilds:
   discipline-no-incident: '<red>Такого действующего инцидента в сохранённом окне нет. Возьмите ID из истории.</red>'
   discipline-no-brand: '<red>У игрока нет действующего клейма.</red>'
   discipline-reason: '<red>Укажите причину от 1 до 160 символов без управляющих знаков.</red>'
+
+  # Личные лицензии оформления. Права и сроки принадлежат Core, не клану.
+  style-help: "<gold>Оформление:</gold> <white>/clan style [name|emblem|frame] [вариант]</white><gray> · off [тип] — снять своё · clear [тип] — убрать в клане (глава) · accept [ник] — принять предложение.</gray>"
+  style-rules: "<gray>Три личные лицензии на 30 дней: цвет названия, значок и рамка. Один свой клан, перенос не чаще раза в 24 часа. Участнику нужно согласие главы; действует только пока покупатель состоит в клане. Не меняет силу, состав, землю и мирный/боевой режим.</gray>"
+  style-kind-name: "Цвет/градиент названия"
+  style-kind-emblem: "Значок"
+  style-kind-frame: "Рамка карточки"
+  style-license: "<gray>%kind%: <white>%until%</white></gray>"
+  style-not-owned: "нет активной покупки"
+  style-options: "<gray>/clan style %kind% <white>%options%</white></gray>"
+  style-binding: "<gray>Личное оформление: <white>%clan%</white> · перенос в другой клан после <white>%move%</white>.</gray>"
+  style-disbanded: "прежний клан распущен"
+  style-license-missing: "<red>У покупателя нет действующей личной лицензии на это оформление. Ранг её не заменяет.</red>"
+  style-unavailable: "<red>Оформление временно недоступно. Повторите позже; покупки не изменены.</red>"
+  style-saving: "<gray>Сохраняем оформление. Дождитесь подтверждения; повторные действия пока не принимаются.</gray>"
+  style-save-failed: "<red>Не удалось сохранить оформление. Старый выбор и оплаченные лицензии не изменены.</red>"
+  style-saved: "<green>Настройки оформления сохранены. Эффект действует только при активной личной лицензии и членстве покупателя.</green>"
+  style-transfer-cooldown: "<yellow>Перенос личного оформления в другой клан доступен раз в 24 часа. Снятие эффекта и перезапуск не сбрасывают этот срок.</yellow>"
+  style-offered: "<green>Предложение отправлено главе на 2 минуты. Попросите его выполнить /clan style accept ваш_ник. При переносе все ваши выбранные украшения переедут в этот клан.</green>"
+  style-approval: "<gold>%player%</gold><gray> предлагает оформление %kind%: %preset%. Одобрить: </gray><click:suggest_command:'/clan style accept %player%'><yellow>/clan style accept %player%</yellow></click><gray>. Срок — 2 минуты. При переносе переедут все выбранные украшения этого покупателя.</gray>"
+  style-no-offer: "<red>Нет действующего предложения от этого участника. Он должен быть авторизован и находиться в вашем клане.</red>"
+  style-menu-name: "<gold>Оформление клана</gold>"
+  style-menu-hint: "<gray>Личные лицензии, варианты и сроки. Нажмите: /clan style</gray>"
+  style-frame-item: "<dark_gray>Оформление клана</dark_gray>"

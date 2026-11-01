@@ -20,6 +20,15 @@ class StorefrontTest(unittest.TestCase):
         cls.cfg, cls.products = kit.snapshot_catalog()
         cls.by_id = {p['id']: p for p in cls.products}
 
+    def test_278_clan_licenses_do_not_prepare_or_republish_external_store(self):
+        live = yaml.safe_load((kit.ROOT / 'src/main/resources/config.yml').read_text(encoding='utf-8'))['shop']['products']
+        new = [p for p in live if p['id'] in {'clan-name-style', 'clan-emblem', 'clan-card-frame'}]
+        self.assertEqual(3, len(new))
+        self.assertTrue(all(p.get('trademc-export') is False for p in new))
+        self.assertEqual(29, len(live))
+        self.assertEqual(26, len(kit.catalog()[1]))
+        self.assertEqual(26, len(kit.snapshot_catalog()[1]))
+
     def test_262_term_clarification_does_not_republish_historical_archive(self):
         cfg, live = kit.catalog()
         founder = next(p for p in live if p['id'] == 'rank-founder')

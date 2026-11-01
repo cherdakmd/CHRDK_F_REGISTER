@@ -53,7 +53,7 @@ final class GuildsProfile implements ChrdkRegisterApi.ProfileProvider {
             if(term!=null)lines.add(messages.get("peace-profile-term","paid",GuildPeaceController.time(term.paidUntil())));
             GuildRank rank = guild.rankOf(context.playerId());
             lines.add(messages.get("profile-name",
-                    "name", guild.name(),
+                    "name", Messages.trusted(plugin.styles().name(guild)),
                     "tag", guild.tag().isEmpty() ? "—" : guild.tag()));
             lines.add(messages.get("profile-rank",
                     "rank", messages.mini("rank." + (rank == null
