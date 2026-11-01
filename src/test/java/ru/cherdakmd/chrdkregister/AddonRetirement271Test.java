@@ -54,6 +54,10 @@ class AddonRetirement271Test {
         }
         for(String permission:List.of("chrdklottery.use","chrdklottery.admin","chrdkparty.use","chrdkparty.admin","chrdkref.use","chrdkref.admin"))
             assertTrue(RetiredAddons.permission(permission));
+        var permissionOnly=new ServerMenuSettings.Entry(-1,Material.PAPER,"Custom","","custom","","chrdkref.use");
+        assertFalse(permissionOnly.available(p->true,permission->true));
+        assertFalse(AutoMessage.parse(Map.of("text","Custom","permission","chrdkparty.use"))
+                .eligible(p->true,permission->true,false,false));
         assertFalse(RetiredAddons.permission("chrdkguilds.use"));assertFalse(RetiredAddons.plugin("CHRDK_VK"));
     }
     @Test void savedAnnouncementsAreSuppressedWithoutSuppressingOrdinaryGameplay() {

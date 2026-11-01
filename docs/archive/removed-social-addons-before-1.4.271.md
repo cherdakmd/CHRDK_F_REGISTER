@@ -230,4 +230,3 @@ Discord использует вебхук ядра: добавьте **`lottery.
 **Тесты.** `PartyConfigTest`, `PartyServiceTest`, `PartyStoreTest` и
 `PartyMessagesTest`; счётчик модулей в апдейтере и список YAML-контракта ядра
 обновлены до 24.
-

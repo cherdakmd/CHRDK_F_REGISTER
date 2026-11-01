@@ -75,7 +75,7 @@ public record ServerMenuSettings(boolean enabled, String title, String categoryT
 
         boolean available(java.util.function.Predicate<String> plugins,
                           java.util.function.Predicate<String> permissions) {
-            return !RetiredAddons.plugin(plugin) && (plugin.isBlank() || plugins.test(plugin))
+            return !RetiredAddons.plugin(plugin) && !RetiredAddons.permission(permission) && (plugin.isBlank() || plugins.test(plugin))
                     && (permission.isBlank() || permissions.test(permission));
         }
     }
@@ -106,7 +106,7 @@ public record ServerMenuSettings(boolean enabled, String title, String categoryT
 
         boolean available(java.util.function.Predicate<String> plugins,
                           java.util.function.Predicate<String> permissions) {
-            return !RetiredAddons.plugin(plugin) && !RetiredAddons.command(command)
+            return !RetiredAddons.plugin(plugin) && !RetiredAddons.permission(permission) && !RetiredAddons.command(command)
                     && (plugin.isBlank() || plugins.test(plugin))
                     && (permission.isBlank() || permissions.test(permission));
         }
