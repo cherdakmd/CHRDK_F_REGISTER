@@ -68,6 +68,37 @@ class GuildRecruitment280Test {
         s.sanction(guest,new GuildSanction(0,0).brand(now,"test"));
         assertEquals("discipline-brand-block",service(s).joinOpen(new GuildFinance.Quote(),guest,"alpha",now).key());
     }
+    @Test void invitationInOpenClanDoesNotFallBackToOpenAfterExpiryAndModeChangeNeedsNewConsent() {
+        var s=store();var g=s.guild("alpha");g.recruitment(true);service(s).invite(officer,guest,now);
+        var terms=GuildJoinTerms.capture(s,guest,"alpha",now);assertNotNull(terms.invitation());
+        long expired=terms.invitation().expiresAt();
+        assertNull(GuildJoinTerms.capture(s,guest,"alpha",expired).invitation());
+        assertFalse(terms.matches(s,guest,expired));
+        var denied=GuildFinance.preview(s,GuildConfig.defaults(),(svc,q)->GuildFinance.confirmedJoin(svc,q,guest,terms,expired+1,expired));
+        assertEquals("recruit-changed",denied.result().key());assertEquals(0,denied.debit());
+        g.mode(GuildMode.PEACEFUL,now+1);
+        assertFalse(terms.matches(s,guest,now+1));
+    }
+    @Test void flagPairMustBeCompleteTypedAndIntegral() {
+        String original=store().snapshotJson();
+        for(int kind=0;kind<5;kind++) {
+            var json=com.google.gson.JsonParser.parseString(original).getAsJsonObject();
+            var guild=json.getAsJsonArray("guilds").get(0).getAsJsonObject();
+            switch(kind) {
+                case 0->guild.remove("recruitment-revision");
+                case 1->guild.remove("recruitment-open");
+                case 2->guild.addProperty("recruitment-revision",-1);
+                case 3->guild.addProperty("recruitment-revision",0.5);
+                case 4->guild.addProperty("recruitment-revision","1");
+            }
+            assertThrows(RuntimeException.class,()->store().detached(json.toString()));
+        }
+    }
+    @Test void directorySortsOpenFirstAndThenByNameWithStableIds() {
+        var s=store();var z=new Guild("z","Zeta","ZZZ",UUID.randomUUID(),now);z.recruitment(true);
+        var b=new Guild("b","Beta","BBB",UUID.randomUUID(),now);b.recruitment(true);
+        assertEquals(List.of("b","z","alpha"),GuildRecruitmentGui.ordered(List.of(s.guild("alpha"),z,b)).stream().map(Guild::id).toList());
+    }
     @Test void fullClanInsufficientFundsAndNoPurseNeverJoin() {
         var s=store();var g=s.guild("alpha");g.recruitment(true);
         assertFalse(service(s).joinOpen(null,guest,"alpha",now).ok());
