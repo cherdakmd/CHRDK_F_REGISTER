@@ -14,6 +14,19 @@ final class ShopDeliveryPolicy {
         return base <= ceiling && (long) paidDays * ShopEntitlements.DAY_MILLIS <= ceiling - base;
     }
 
+    /** Проверка всех листьев и бонусного корневого права до первого изменения аккаунта. */
+    static boolean fitsBundle(ShopProduct product, ShopCatalog catalog, long now, int days,
+                              java.util.function.ToLongFunction<ShopProduct> until) {
+        if (!complete(product, catalog)) return false;
+        if (product.retainsBundleEntitlement() && (days != product.includedDays()
+                || !fits(now, until.applyAsLong(product), days, catalog.maxTotalDays()))) return false;
+        for (String id : product.resolvedIncludes()) {
+            ShopProduct part = catalog.find(id).orElse(null);
+            if (part == null || !fits(now, until.applyAsLong(part), product.includedDays(part), catalog.maxTotalDays())) return false;
+        }
+        return true;
+    }
+
     static int bonusDays(long actualUntil, long paidUntil) {
         return (int) Math.max(0, (actualUntil - paidUntil) / ShopEntitlements.DAY_MILLIS);
     }
@@ -45,6 +58,7 @@ final class ShopDeliveryPolicy {
     private static boolean complete(ShopProduct product, ShopCatalog catalog, Set<String> path, int depth) {
         if (product == null || depth > ShopCatalog.MAX_BUNDLE_DEPTH + 1 || !path.add(product.id())) return false;
         try {
+            if ("clan-style-pack".equals(product.id()) && (!product.retainsBundleEntitlement() || depth > 0)) return false;
             // Ранг допустим только на корне явного гибрида, не внутри другого набора.
             if (product.hasRank() && (depth > 0 || product.includedDays() <= 0)) return false;
             if (product.includes().isEmpty()) return !product.hasRank();

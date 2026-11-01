@@ -286,7 +286,7 @@ final class GuildsGui implements Listener {
         if (guild == null) {
             return;
         }
-        if(slot==STYLE_SLOT){player.performCommand("clan style");return;}
+        if(slot==STYLE_SLOT){Bukkit.getScheduler().runTask(plugin, () -> plugin.styles().command(player,new String[]{"style"}));return;}
         if(slot==DUES_SLOT){player.performCommand("clan dues");return;}
         if(slot==MODE_SLOT) {
             if(event.isRightClick() && guild.leader().equals(player.getUniqueId()))

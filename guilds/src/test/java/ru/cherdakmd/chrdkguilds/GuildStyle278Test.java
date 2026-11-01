@@ -99,7 +99,7 @@ class GuildStyle278Test {
         assertEquals("tab-battle-prefix",GuildNameTag.tabKey(false,false));
         assertEquals("tab-peace-prefix",GuildNameTag.tabKey(true,true));
         String source=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkguilds/GuildNameTag.java"));
-        String tab=source.substring(source.indexOf("if (tab) return"),source.indexOf("return plugin.messages().raw(guild.peaceful()"));
-        assertFalse(tab.contains("styles()"));
+        assertTrue(source.contains("prefix(tabKey(guild.peaceful()"));
+        assertTrue(source.contains("styles().tag(guild)"));
     }
 }

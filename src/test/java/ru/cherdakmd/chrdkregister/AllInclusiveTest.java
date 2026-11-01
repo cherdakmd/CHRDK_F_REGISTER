@@ -113,10 +113,11 @@ class AllInclusiveTest {
     @Test void bothPreflightsRunBeforeRankOrLeafMutationAndSaleIsRecordedOnlyOnce() throws Exception {
         String source = Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkregister/ShopService.java"));
         int firstRankGrant = source.indexOf("until = grantRankProduct(");
-        assertTrue(source.indexOf("!fitsProduct(canonical, part, now, product.includedDays(part))") < firstRankGrant);
+        int preflight = source.indexOf("!ShopDeliveryPolicy.fitsBundle(product, catalog, now, length");
+        assertTrue(preflight >= 0 && preflight < firstRankGrant);
         assertTrue(source.contains("int partDays = product.includedDays(part)"));
         assertTrue(source.contains("grantOne(canonical, part, now, partDays, discount)"));
-        assertTrue(source.contains("if (!product.hasRank()) {\n                until = now;"));
+        assertTrue(source.contains("if (!product.hasRank() && !product.retainsBundleEntitlement()) {\n                until = now;"));
         assertEquals(1, source.split("recordShopSale\\(", -1).length - 1);
         assertTrue(source.contains("!product.isBundle() && product.rank() == level"));
         assertTrue(source.contains("product.hasRank() && product.isBundle()) return false"));

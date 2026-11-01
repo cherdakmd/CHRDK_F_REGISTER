@@ -42,7 +42,7 @@ class PremiumPresentation278Test {
         var before=live.getMapList("shop.products");
         assertTrue(PremiumPresentationMigration.update(live,old,fresh));
         assertEquals(fresh.get("ranks.levels"),live.get("ranks.levels"));
-        assertEquals(29,live.getMapList("shop.products").size());
+        assertEquals(30,live.getMapList("shop.products").size());
         assertEquals(before,live.getMapList("shop.products").subList(0,26));
         assertFalse(PremiumPresentationMigration.update(live,old,fresh));
     }
@@ -52,7 +52,7 @@ class PremiumPresentation278Test {
         var products=new ArrayList<Map<?,?>>(live.getMapList("shop.products"));
         products.add(Map.of("id","clan-emblem","price",777,"days",42)); live.set("shop.products",products);
         PremiumPresentationMigration.update(live,old,fresh);
-        assertEquals(tiers,live.get("ranks.levels")); assertEquals(29,live.getMapList("shop.products").size());
+        assertEquals(tiers,live.get("ranks.levels")); assertEquals(30,live.getMapList("shop.products").size());
         assertEquals(products,live.getMapList("shop.products").subList(0,27));
     }
     @Test void clanLicensesArePersonalThirtyDayCosmeticsWithNoConsoleCommands() throws Exception {

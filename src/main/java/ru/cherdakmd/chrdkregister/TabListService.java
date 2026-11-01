@@ -94,6 +94,14 @@ public final class TabListService implements Listener {
     private final AccessManager accessManager;
     private Settings settings = Settings.disabled();
     private BukkitTask refreshTask;
+    private BukkitTask animationTask;
+    private java.util.function.Predicate<String> animationPredicate = name -> false;
+    private final java.util.Set<java.util.UUID> animatedNames = new java.util.HashSet<>();
+
+    public void setAnimationPredicate(java.util.function.Predicate<String> predicate) {
+        animationPredicate = predicate == null ? name -> false : predicate;
+    }
+    static int animationTicks(int ticks) { return Math.clamp(ticks, 5, 40); }
     private final java.util.Set<java.util.UUID> managedNames = new java.util.HashSet<>();
     private final java.util.Set<java.util.UUID> managedHeaders = new java.util.HashSet<>();
     /** Оформление ника из ядра (тег каталога + метки аддонов) для {@code %player_tagged%}. */
@@ -151,6 +159,8 @@ public final class TabListService implements Listener {
     }
 
     public void shutdown() {
+        if (animationTask != null) { animationTask.cancel(); animationTask = null; }
+        animatedNames.clear();
         if (refreshTask != null) {
             refreshTask.cancel();
             refreshTask = null;
@@ -170,6 +180,7 @@ public final class TabListService implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
+        animatedNames.remove(event.getPlayer().getUniqueId());
         managedNames.remove(event.getPlayer().getUniqueId());
         managedHeaders.remove(event.getPlayer().getUniqueId());
         if (!settings.enabled()) {
@@ -179,11 +190,28 @@ public final class TabListService implements Listener {
     }
 
     private void reschedule() {
+        if (animationTask != null) { animationTask.cancel(); animationTask = null; }
+        animatedNames.clear();
         if (refreshTask != null) { refreshTask.cancel(); refreshTask = null; }
         clearPinned();
         if (settings.enabled() && settings.refreshTicks() > 0) {
             refreshTask = Bukkit.getScheduler().runTaskTimer(plugin, this::applyAll,
                     settings.refreshTicks(), settings.refreshTicks());
+            if (!settings.nameFormat().isBlank()) {
+                int period = animationTicks(plugin.getConfig().getInt("tablist.animation-refresh-ticks", 10));
+                animationTask = Bukkit.getScheduler().runTaskTimer(plugin, this::animateNames, period, period);
+            }
+        }
+    }
+
+    /** Один общий таймер: меняются только действительно анимированные имена, не шапки/команды. */
+    private void animateNames() {
+        if (!settings.enabled() || settings.nameFormat().isBlank()) return;
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            boolean active = animationPredicate.test(player.getName());
+            boolean previous = animatedNames.contains(player.getUniqueId());
+            if (active) animatedNames.add(player.getUniqueId()); else animatedNames.remove(player.getUniqueId());
+            if (active || previous) applyName(player, contextOf(player, System.currentTimeMillis()));
         }
     }
 
@@ -213,9 +241,13 @@ public final class TabListService implements Listener {
                 ? joinLines(renderLines(messages, settings.footer(), context)) : Component.empty();
         player.sendPlayerListHeaderAndFooter(header, footer);
         managedHeaders.add(player.getUniqueId());
+        applyName(player, context);
+    }
+
+    private void applyName(Player player, TabContext context) {
         if (!settings.nameFormat().isBlank()) {
-            player.playerListName(renderName(messages,
-                    nameFormat(settings.nameFormat(), settings.showRankName()), context));
+            Component name = renderName(plugin.messages(), nameFormat(settings.nameFormat(), settings.showRankName()), context);
+            if (!name.equals(player.playerListName())) player.playerListName(name);
             managedNames.add(player.getUniqueId());
         } else if (managedNames.remove(player.getUniqueId())) player.playerListName(null);
     }
