@@ -56,6 +56,7 @@ def main(argv=None):
     actions = parser.add_mutually_exclusive_group()
     actions.add_argument('--check', action='store_true')
     actions.add_argument('--publish', action='store_true')
+    actions.add_argument('--find-chat', action='store_true')
     actions.add_argument('--check-connection', action='store_true')
     actions.add_argument('--test-post', action='store_true')
     parser.add_argument('--kind', choices=('tip', 'news'), default='tip')
@@ -65,15 +66,24 @@ def main(argv=None):
     parser.add_argument('--out', type=Path, default=ROOT / 'social-preview')
     args = parser.parse_args(argv)
     event_name = os.environ.get('GITHUB_EVENT_NAME', '')
-    if args.check_connection or args.test_post:
+    if args.check_connection or args.test_post or args.find_chat:
         if (os.environ.get('GITHUB_REF') != 'refs/heads/main' or event_name != 'workflow_dispatch'
                 or args.at or args.news_version or args.kind != 'tip' or args.release_tag):
             raise SafetyError('Проверка VK разрешена только вручную на main, без даты/тега/новости')
+    if args.find_chat:
+        report = configured_vk(require_peer=False).discover_chat()
+        args.out.mkdir(parents=True, exist_ok=True)
+        (args.out / 'connection.json').write_text(json.dumps(report, indent=2)+'\n', encoding='utf-8')
+        print('Найдена беседа для бота. Сообщений не отправляли; Variables не изменяли.')
+        print(f"VK_NEWS_PEER_ID={report['peer_id']}")
+        if os.environ.get('GITHUB_ACTIONS') == 'true':
+            print(f"::notice title=VK chat::VK_NEWS_PEER_ID={report['peer_id']}")
+        return 0
     if args.check_connection:
         report = configured_vk().check_connection()
         args.out.mkdir(parents=True, exist_ok=True)
         (args.out / 'connection.json').write_text(json.dumps(report, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
-        print('Проверка чтения пройдена. wall.post и сохранение фотографии НЕ проверялись. Публикаций не было.')
+        print('Проверка чтения пройдена. messages.send и сохранение фотографии НЕ проверялись. Публикаций не было.')
         return 0
     validate()
     if args.check:
@@ -118,7 +128,7 @@ def main(argv=None):
             # Превью не зависит от дня запуска, но в подписи/ключе не притворяется публикацией.
             slot = datetime(2026, 11, 1, 18, tzinfo=MOSCOW)
         post = tip(slot)
-    if len(post.text) > 8000:
+    if len(post.text) > 4000:
         raise SafetyError('Публикация слишком длинная')
     args.out.mkdir(parents=True, exist_ok=True)
     render(post, args.out / 'card.png')
@@ -129,21 +139,24 @@ def main(argv=None):
         return 0
     gh = github()
     vk = configured_vk()
+    vk.check_connection()
     if args.test_post:
-        vk.check_connection()
-        print('Разовый тест: один настоящий пост, расписание и его флаг не изменяются.')
-    ledger = Ledger(gh, vk.group)
-    post_id, created = publish(post, (args.out / 'card.png').read_bytes(), ledger, vk)
-    print(('Опубликовано: ' if created else 'Уже опубликовано: ') + f'https://vk.com/wall-{vk.group}_{post_id}')
+        print('Разовый тест: одно настоящее сообщение, расписание и его флаг не изменяются.')
+    ledger = Ledger(gh, vk.group, vk.peer)
+    message_id, created = publish(post, (args.out / 'card.png').read_bytes(), ledger, vk)
+    print(('Отправлено в беседу: ' if created else 'Уже отправлено в беседу: ') + str(vk.peer))
     return 0
 
 
-def configured_vk():
+def configured_vk(*, require_peer=True):
     token = os.environ.get('VK_NEWS_ACCESS_TOKEN', '')
     group = os.environ.get('VK_NEWS_GROUP_ID', '')
     if not token or not re.fullmatch(r'[1-9][0-9]*', group):
         raise SafetyError('Нужны VK_NEWS_ACCESS_TOKEN в Secrets и положительный VK_NEWS_GROUP_ID в Variables')
-    return VK(int(group), token)
+    peer = os.environ.get('VK_NEWS_PEER_ID', '')
+    if require_peer and (not re.fullmatch(r'[1-9][0-9]*', peer) or not 2_000_000_000 < int(peer) <= 9_223_372_036_854_775_807):
+        raise SafetyError('Нужен VK_NEWS_PEER_ID беседы для бота в Variables; сначала выполните find_chat')
+    return VK(int(group), token, peer=int(peer) if require_peer else None)
 
 
 def test_post(now):
@@ -152,7 +165,7 @@ def test_post(now):
                 'Полезное о CHERDAK — в новом игровом формате.',
                 'Готовим больше полезного о CHERDAK 🌿\n\n'
                 'Советы, возможности сервера и напоминания — с новыми игровыми карточками.\n\n'
-                'Это одна тестовая публикация: проверяем картинку и отправку в группу. '
+                'Это одна тестовая публикация: проверяем картинку и отправку в беседу сообщества. '
                 'Автоматическое расписание этим запуском не включается.',
                 now.astimezone(MOSCOW).strftime('%Y-%m'))
 
