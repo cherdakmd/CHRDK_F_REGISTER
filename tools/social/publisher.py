@@ -73,7 +73,7 @@ class Ledger:
                         or not isinstance(body.get('records'), dict)):
                     raise SafetyError('Конфликт или неподдерживаемая схема журнала')
                 for key, record in body['records'].items():
-                    if (not re.fullmatch(r'(tip:\d{4}-\d{2}-\d{2}(?::12)?|release:v1\.\d+\.\d+)', key)
+                    if (not re.fullmatch(r'(tip:\d{4}-\d{2}-\d{2}(?::12)?|release:v1\.\d+\.\d+|test:1\.\d+\.\d+)', key)
                             or not isinstance(record, dict) or record.get('status') not in ('prepared', 'posting', 'posted')
                             or not re.fullmatch(r'[0-9a-f]{64}', record.get('digest', ''))
                             or (record['status'] == 'posted' and (type(record.get('post_id')) is not int or record['post_id'] <= 0))):
@@ -112,7 +112,7 @@ class Ledger:
 class VK:
     def __init__(self, group, token, transport=None, sleeper=time.sleep):
         if type(group) is not int or group <= 0 or not token:
-            raise SafetyError('Нужны положительный ID сообщества и отдельный пользовательский токен')
+            raise SafetyError('Нужны положительный ID сообщества и ключ доступа VK')
         self.group, self.token = group, token
         self.transport, self.sleep = transport or Transport(), sleeper
 
@@ -132,8 +132,33 @@ class VK:
             if code in (6, 9) and attempt < 2:
                 self.sleep(2 ** attempt)
                 continue
-            raise SafetyError(f'VK отклонил запрос (код {code}); параметры и токен скрыты')
+            label = method if method in ('wall.get', 'wall.post', 'photos.getWallUploadServer', 'photos.saveWallPhoto') else 'API'
+            raise SafetyError(f'VK {label} отклонил запрос (код {code}); параметры и токен скрыты')
         raise SafetyError('VK не подтвердил операцию')
+
+    @staticmethod
+    def validate_upload_url(url):
+        if not isinstance(url, str):
+            raise SafetyError('VK не подтвердил адрес загрузки фото')
+        parsed = urlparse(url)
+        host = parsed.hostname or ''
+        if (parsed.scheme != 'https' or parsed.username or parsed.password or parsed.port not in (None, 443)
+                or parsed.fragment or not any(host.endswith('.' + d) for d in ('vk.com', 'userapi.com', 'vkuserphoto.ru'))):
+            raise SafetyError('VK вернул недопустимый адрес загрузки фото')
+
+    def check_connection(self, progress=print):
+        """Только чтение и запрос адреса загрузки: ни фото, ни постов, ни журналов."""
+        wall = self.call('wall.get', {'owner_id': -self.group, 'count': 1, 'filter': 'owner'})
+        if not isinstance(wall, dict) or not isinstance(wall.get('items'), list):
+            raise SafetyError('VK wall.get вернул неподдерживаемый ответ')
+        progress('wall.get: OK — доступ к чтению стены подтверждён')
+        server = self.call('photos.getWallUploadServer', {'group_id': self.group})
+        if not isinstance(server, dict):
+            raise SafetyError('VK photos.getWallUploadServer вернул неподдерживаемый ответ')
+        self.validate_upload_url(server.get('upload_url'))
+        progress('photos.getWallUploadServer: OK — адрес загрузки получен, фото не загружалось')
+        return {'group_id': self.group, 'verified': ['wall.get', 'photos.getWallUploadServer'],
+                'not_verified': ['photos.saveWallPhoto', 'wall.post'], 'published': False}
 
     def find(self, marker):
         # Серверная сверка после неоднозначной отправки; ограничена 1000 свежими постами.
@@ -153,11 +178,7 @@ class VK:
     def upload(self, image):
         server = self.call('photos.getWallUploadServer', {'group_id': self.group})
         url = server['upload_url']
-        parsed = urlparse(url)
-        host = parsed.hostname or ''
-        if (parsed.scheme != 'https' or parsed.username or parsed.password or parsed.port not in (None, 443)
-                or parsed.fragment or not any(host.endswith('.' + d) for d in ('vk.com', 'userapi.com', 'vkuserphoto.ru'))):
-            raise SafetyError('VK вернул недопустимый адрес загрузки фото')
+        self.validate_upload_url(url)
         if len(image) > 5 * 1024 * 1024 or not image.startswith(b'\x89PNG\r\n\x1a\n'):
             raise SafetyError('Неверная PNG-карточка')
         boundary = 'chrdk' + uuid.uuid4().hex

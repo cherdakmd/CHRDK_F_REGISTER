@@ -11,7 +11,7 @@ import re
 import sys
 import tempfile
 from urllib.parse import quote
-from content import ROOT, SafetyError, catalog, due_slot, news, tip, validate, MOSCOW, TAG
+from content import ROOT, Post, SafetyError, catalog, due_slot, news, tip, validate, MOSCOW, TAG
 from cards import render
 from publisher import GitHub, Ledger, VK, publish
 
@@ -53,14 +53,28 @@ def release_for_run(gh, run):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--check', action='store_true')
-    parser.add_argument('--publish', action='store_true')
+    actions = parser.add_mutually_exclusive_group()
+    actions.add_argument('--check', action='store_true')
+    actions.add_argument('--publish', action='store_true')
+    actions.add_argument('--check-connection', action='store_true')
+    actions.add_argument('--test-post', action='store_true')
     parser.add_argument('--kind', choices=('tip', 'news'), default='tip')
     parser.add_argument('--release-tag', default='')
     parser.add_argument('--news-version', help='Локальное превью заметки до выпуска релиза')
     parser.add_argument('--at', help='Дата ISO только для локального превью')
     parser.add_argument('--out', type=Path, default=ROOT / 'social-preview')
     args = parser.parse_args(argv)
+    event_name = os.environ.get('GITHUB_EVENT_NAME', '')
+    if args.check_connection or args.test_post:
+        if (os.environ.get('GITHUB_REF') != 'refs/heads/main' or event_name != 'workflow_dispatch'
+                or args.at or args.news_version or args.kind != 'tip' or args.release_tag):
+            raise SafetyError('Проверка VK разрешена только вручную на main, без даты/тега/новости')
+    if args.check_connection:
+        report = configured_vk().check_connection()
+        args.out.mkdir(parents=True, exist_ok=True)
+        (args.out / 'connection.json').write_text(json.dumps(report, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
+        print('Проверка чтения пройдена. wall.post и сохранение фотографии НЕ проверялись. Публикаций не было.')
+        return 0
     validate()
     if args.check:
         with tempfile.TemporaryDirectory() as folder:
@@ -71,7 +85,6 @@ def main(argv=None):
                 render(post, Path(folder) / (file.stem + '.png'))
         print('Социальные публикации: источники, заметки и все карточки проверены.')
         return 0
-    event_name = os.environ.get('GITHUB_EVENT_NAME', '')
     if args.publish:
         if (os.environ.get('VK_AUTOPUBLISH_ENABLED') != 'true'
                 or os.environ.get('GITHUB_REF') != 'refs/heads/main'
@@ -79,9 +92,11 @@ def main(argv=None):
                 or args.at or args.news_version):
             raise SafetyError('Отправка запрещена: нужен main, разрешённый запуск и VK_AUTOPUBLISH_ENABLED=true')
         if not os.environ.get('VK_NEWS_ACCESS_TOKEN') or not re.fullmatch(r'[1-9][0-9]*', os.environ.get('VK_NEWS_GROUP_ID', '')):
-            raise SafetyError('Настройте отдельный пользовательский токен и числовой ID сообщества в Secrets/Variables')
+            raise SafetyError('Настройте ключ доступа VK и числовой ID сообщества в Secrets/Variables')
     now = datetime.fromisoformat(args.at) if args.at else datetime.now(timezone.utc)
-    if event_name == 'workflow_run' and not args.news_version:
+    if args.test_post:
+        post = test_post(now)
+    elif event_name == 'workflow_run' and not args.news_version:
         event = json.loads(Path(os.environ['GITHUB_EVENT_PATH']).read_text())
         gh = github()
         release = release_for_run(gh, event['workflow_run'])
@@ -109,15 +124,45 @@ def main(argv=None):
     render(post, args.out / 'card.png')
     (args.out / 'post.txt').write_text(post.text + '\n', encoding='utf-8')
     (args.out / 'metadata.json').write_text(json.dumps({'key': post.key, 'kind': post.kind, 'month': post.month}, indent=2)+'\n')
-    if not args.publish:
+    if not (args.publish or args.test_post):
         print('PREVIEW: текст и карточка готовы; обращений к VK и записи журнала не было.')
         return 0
     gh = github()
-    vk = VK(int(os.environ['VK_NEWS_GROUP_ID']), os.environ['VK_NEWS_ACCESS_TOKEN'])
+    vk = configured_vk()
+    if args.test_post:
+        vk.check_connection()
+        print('Разовый тест: один настоящий пост, расписание и его флаг не изменяются.')
     ledger = Ledger(gh, vk.group)
     post_id, created = publish(post, (args.out / 'card.png').read_bytes(), ledger, vk)
     print(('Опубликовано: ' if created else 'Уже опубликовано: ') + f'https://vk.com/wall-{vk.group}_{post_id}')
     return 0
+
+
+def configured_vk():
+    token = os.environ.get('VK_NEWS_ACCESS_TOKEN', '')
+    group = os.environ.get('VK_NEWS_GROUP_ID', '')
+    if not token or not re.fullmatch(r'[1-9][0-9]*', group):
+        raise SafetyError('Нужны VK_NEWS_ACCESS_TOKEN в Secrets и положительный VK_NEWS_GROUP_ID в Variables')
+    return VK(int(group), token)
+
+
+def test_post(now):
+    version = re.search(r'^plugin_version=(1\.\d+\.\d+)$', (ROOT/'gradle.properties').read_text(), re.M)[1]
+    return Post('test:'+version, 'feature', 'Твой мир. Твоя история.',
+                'Полезное о CHERDAK — в новом игровом формате.',
+                'Готовим больше полезного о CHERDAK 🌿\n\n'
+                'Советы, возможности сервера и напоминания — с новыми игровыми карточками.\n\n'
+                'Это одна тестовая публикация: проверяем картинку и отправку в группу. '
+                'Автоматическое расписание этим запуском не включается.',
+                now.astimezone(MOSCOW).strftime('%Y-%m'))
+
+
+def report_failure(message):
+    print('Публикация остановлена: ' + message, file=sys.stderr)
+    if os.environ.get('GITHUB_ACTIONS') == 'true':
+        # Только контролируемые сообщения SafetyError; секретных HTTP-ответов здесь нет.
+        escaped = message.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+        print('::error title=VK publication::' + escaped)
 
 
 def github():
@@ -141,9 +186,9 @@ if __name__ == '__main__':
     try:
         sys.exit(main())
     except SafetyError as error:
-        print('Публикация остановлена: ' + str(error), file=sys.stderr)
+        report_failure(str(error))
         sys.exit(1)
     except Exception:
         # Не печатаем traceback: HTTP/upload-ответы могут содержать секретные параметры.
-        print('Публикация остановлена: неподдерживаемый ответ или конфигурация; секретные детали скрыты.', file=sys.stderr)
+        report_failure('Неподдерживаемый ответ или конфигурация; секретные детали скрыты.')
         sys.exit(1)
