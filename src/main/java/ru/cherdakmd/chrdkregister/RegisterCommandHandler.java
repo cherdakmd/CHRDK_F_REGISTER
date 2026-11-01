@@ -240,6 +240,7 @@ public final class RegisterCommandHandler implements CommandExecutor, TabComplet
                 return true;
             }
             String sub = args[0].toLowerCase(Locale.ROOT);
+            if ("resend".equals(sub) && accessManager.resendVkCode(player)) return true;
             if (("verify".equals(sub) || "confirm".equals(sub) || "code".equals(sub)) && args.length >= 2) {
                 return accessManager.handleTwoFactorLoginCode(player, joinArgsFrom(args, 1));
             }

@@ -416,6 +416,16 @@ final class ChrdkRegisterApiImpl implements ChrdkRegisterApi {
         accessManager.notifications().notify(event, title, description, severity);
     }
 
+    @Override public void registerVkCodeDelivery(VkCodeDelivery delivery) { accessManager.registerVkCodeDelivery(delivery); }
+    @Override public void unregisterVkCodeDelivery(VkCodeDelivery delivery) { accessManager.unregisterVkCodeDelivery(delivery); }
+    @Override public boolean vkTwoFactorEnabled(String name) { return accessManager.vkTwoFactorEnabled(name); }
+    @Override public boolean requestVkTwoFactor(org.bukkit.entity.Player player, long userId, boolean enable) {
+        return accessManager.requestVkTwoFactor(player, userId, enable);
+    }
+    @Override public boolean confirmVkTwoFactor(org.bukkit.entity.Player player, long vkUserId, String code) {
+        return accessManager.confirmVkTwoFactor(player, vkUserId, code);
+    }
+
     @Override
     public void registerSecurityListener(String id, ChrdkRegisterApi.SecurityListener listener) {
         accessManager.registerSecurityListener(id, listener);

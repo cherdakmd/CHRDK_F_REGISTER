@@ -73,6 +73,11 @@ public final class AccessManager {
 
     private final RegisterPlugin plugin;
     private final RegistrationStore store;
+    private final VkSecondFactor vkFactor;
+    private volatile ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.VkCodeDelivery vkDelivery;
+    private final Set<String> vkChangesInFlight = ConcurrentHashMap.newKeySet();
+    private final Set<UUID> vkTotpAtGate = ConcurrentHashMap.newKeySet();
+    private final Map<UUID, String> vkLoginSuccess = new ConcurrentHashMap<>();
     private final DonatePayClient donatePay;
     private final Logger logger;
 
@@ -152,6 +157,7 @@ public final class AccessManager {
         this.config = config;
         this.messages = messages;
         this.store = store;
+        this.vkFactor = new VkSecondFactor(plugin.getDataFolder().toPath(), logger);
         this.donatePay = donatePay;
         this.logger = logger;
         donationPulses.put(donatePay.key(), new ProviderPulse(donatePay));
@@ -490,7 +496,7 @@ public final class AccessManager {
             store.touchSession(player.getName(), uuid, ip, now);
             authSource.put(uuid, "password");
             completeAuthentication(player, "two-factor.optional-login-complete");
-            if (config.auditLogLogins()) audit.log(AuditLog.LOGIN_SUCCESS, player.getName(), player.getName(), ip,
+            if (!vkLoginSuccess.containsKey(uuid) && config.auditLogLogins()) audit.log(AuditLog.LOGIN_SUCCESS, player.getName(), player.getName(), ip,
                     AuditLog.details("method", "password", "reason", "optional-2fa-reload"));
         }
     }
@@ -507,6 +513,9 @@ public final class AccessManager {
         authenticatedPlayers.clear();
         passwordVerifiedPlayers.clear();
         pendingTotpSecrets.clear();
+        vkLoginSuccess.clear();
+        vkTotpAtGate.clear();
+        vkFactor.forgetAll();
         freezeLocations.clear();
         lastChatReminderAt.clear();
         authSource.clear();
@@ -583,6 +592,9 @@ public final class AccessManager {
     }
 
     private boolean removeAuthentication(UUID uuid) {
+        vkLoginSuccess.remove(uuid);
+        vkTotpAtGate.remove(uuid);
+        vkFactor.forget(uuid);
         if (plugin.rewardBoosts() != null) plugin.rewardBoosts().pause(uuid);
         return authenticatedPlayers.remove(uuid);
     }
@@ -601,6 +613,7 @@ public final class AccessManager {
             passwordVerifiedPlayers.remove(uuid);
             return PlayerStage.NEEDS_REGISTER;
         }
+        if (vkLoginSuccess.containsKey(uuid)) return PlayerStage.NEEDS_2FA;
         if (authenticatedPlayers.contains(uuid)) {
             return PlayerStage.AUTHENTICATED;
         }
@@ -679,7 +692,8 @@ public final class AccessManager {
 
         long sessionDurationMillis = TimeUnit.MINUTES.toMillis(config.sessionMinutes());
         String ip = getPlayerIp(player);
-        if (store.hasValidIpSession(name, uuid, ip, now, sessionDurationMillis, config.sessionRequireSameUuid())) {
+        // VK-фактор всегда требует новый пароль: IP-сессия не заменяет ни один его шаг.
+        if (!vkTwoFactorEnabled(name) && store.hasValidIpSession(name, uuid, ip, now, sessionDurationMillis, config.sessionRequireSameUuid())) {
             store.touchSession(name, uuid, ip, now);
             player.clearTitle();
             // Security first: a stored IP session restores the password step only, 2FA is still
@@ -949,6 +963,7 @@ public final class AccessManager {
             store.touchSession(player.getName(), uuid, getPlayerIp(player), now);
             authSource.put(uuid, "password");
             completeAuthentication(player, "login.success");
+            if (vkLoginSuccess.containsKey(uuid)) return true;
             logger.info("Player " + player.getName() + " logged in.");
             if (config.auditLogLogins()) {
                 audit.log(AuditLog.LOGIN_SUCCESS, player.getName(), player.getName(), getPlayerIp(player),
@@ -1044,6 +1059,34 @@ public final class AccessManager {
             return handleTwoFactorConfirmSetup(player, rawCode);
         }
 
+        if (vkLoginSuccess.containsKey(uuid)) {
+            VkSecondFactor.Ticket ticket = vkFactor.verify(player.getName(), uuid,
+                    VkSecondFactor.Purpose.LOGIN, rawCode, now);
+            if (ticket == null || ticket.recipient != vkFactor.recipient(player.getName()) || !vkFactor.healthy()) {
+                messages.send(player, "vk-factor.invalid");
+                var failed = vkFactor.pending(uuid);
+                if (failed != null && failed.attempts >= VkSecondFactor.ATTEMPTS) {
+                    vkFactor.forget(uuid); player.kick(messages.get("vk-factor.too-many"));
+                }
+                return true;
+            }
+            String success = vkLoginSuccess.remove(uuid);
+            if (success != null) {
+                boolean totpPassed = vkTotpAtGate.remove(uuid);
+                if (requiresTotpEnrollment(player.getName())) { beginForcedEnrollment(player, null); return true; }
+                if (config.totpEnabled() && store.isTotpEnabled(player.getName()) && !totpPassed) {
+                    sendTwoFactorPrompt(player, true); return true;
+                }
+                authSource.put(uuid, "password+vk-2fa");
+                String denied = enforceAntiMultiAlt(player, player.getName(), getPlayerIp(player), now);
+                if (denied != null) { player.kick(Component.text(denied, NamedTextColor.RED)); return true; }
+                finishAuthentication(player, success);
+                if (config.auditLogLogins()) audit.log(AuditLog.LOGIN_SUCCESS, player.getName(), player.getName(),
+                        getPlayerIp(player), AuditLog.details("method", "password+vk-2fa"));
+            }
+            return true;
+        }
+
         if (!TotpService.isValidCodeFormat(rawCode)) {
             messages.send(player, "two-factor.login.bad-format");
             return true;
@@ -1073,6 +1116,7 @@ public final class AccessManager {
             store.touchSession(player.getName(), uuid, getPlayerIp(player), now);
             authSource.put(uuid, "2fa");
             completeAuthentication(player, "two-factor.login.success");
+            if (vkLoginSuccess.containsKey(uuid)) return true;
             logger.info("Player " + player.getName() + " logged in with TOTP 2FA.");
             if (config.auditLogLogins()) {
                 audit.log(AuditLog.LOGIN_SUCCESS, player.getName(), player.getName(), getPlayerIp(player),
@@ -1782,7 +1826,84 @@ public final class AccessManager {
         return true;
     }
 
+    public void registerVkCodeDelivery(ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.VkCodeDelivery delivery) {
+        this.vkDelivery = delivery;
+    }
+    public void unregisterVkCodeDelivery(ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.VkCodeDelivery delivery) {
+        if (this.vkDelivery == delivery) this.vkDelivery = null;
+    }
+    public boolean vkLoginPending(Player player) { return vkLoginSuccess.containsKey(player.getUniqueId()); }
+    public boolean vkTwoFactorEnabled(String name) { return vkFactor.required(name) || vkChangesInFlight.contains(VkSecondFactor.key(name)); }
+
+    private void issueVkCode(Player player, VkSecondFactor.Purpose purpose, long recipient) {
+        var delivery = vkDelivery;
+        if (delivery == null || !vkFactor.healthy() || recipient <= 0) {
+            messages.send(player, "vk-factor.unavailable"); return;
+        }
+        var issued = vkFactor.issue(player.getName(), player.getUniqueId(), recipient, purpose, System.currentTimeMillis());
+        if (issued == null) { messages.send(player, "vk-factor.cooldown"); return; }
+        messages.send(player, "vk-factor.sending");
+        try {
+            delivery.sendVkCode(recipient, issued.code, purpose.name(), ok -> {
+                if (!plugin.isEnabled()) return;
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    // Запоздавший ACK не активирует новый вход того же UUID.
+                    if (vkFactor.pending(player.getUniqueId()) != issued.ticket) return;
+                    vkFactor.delivered(issued.ticket, Boolean.TRUE.equals(ok));
+                    if (player.isOnline()) messages.send(player, Boolean.TRUE.equals(ok) ? "vk-factor.sent" : "vk-factor.unavailable");
+                });
+            });
+        } catch (RuntimeException failure) {
+            messages.send(player, "vk-factor.unavailable");
+        }
+    }
+    public boolean resendVkCode(Player player) {
+        if (getStage(player) != PlayerStage.NEEDS_2FA || !vkLoginSuccess.containsKey(player.getUniqueId())) return false;
+        issueVkCode(player, VkSecondFactor.Purpose.LOGIN, vkFactor.recipient(player.getName())); return true;
+    }
+    public boolean requestVkTwoFactor(Player player, long recipient, boolean enable) {
+        if (!Bukkit.isPrimaryThread() || getStage(player) != PlayerStage.AUTHENTICATED) return false;
+        if (!vkFactor.healthy() || enable == vkFactor.required(player.getName())) {
+            messages.send(player, "vk-factor.state", "state", vkFactor.required(player.getName()) ? "включена" : "выключена"); return true;
+        }
+        issueVkCode(player, enable ? VkSecondFactor.Purpose.ENABLE : VkSecondFactor.Purpose.DISABLE,
+                enable ? recipient : vkFactor.recipient(player.getName())); return true;
+    }
+    public boolean confirmVkTwoFactor(Player player, long vkUserId, String code) {
+        if (!Bukkit.isPrimaryThread() || getStage(player) != PlayerStage.AUTHENTICATED) return false;
+        var pending = vkFactor.pending(player.getUniqueId());
+        if (pending == null || pending.recipient != vkUserId || pending.purpose == VkSecondFactor.Purpose.LOGIN) { messages.send(player, "vk-factor.invalid"); return true; }
+        var verified = vkFactor.verify(player.getName(), player.getUniqueId(), pending.purpose, code, System.currentTimeMillis());
+        if (verified == null) { messages.send(player, "vk-factor.invalid"); return true; }
+        if (!vkChangesInFlight.add(verified.name)) { messages.send(player, "vk-factor.save-failed"); return true; }
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            boolean saved;
+            try { saved = vkFactor.commit(verified); }
+            finally { vkChangesInFlight.remove(verified.name); }
+            if (plugin.isEnabled()) Bukkit.getScheduler().runTask(plugin, () -> {
+                if (player.isOnline()) messages.send(player, saved ? "vk-factor.saved" : "vk-factor.save-failed");
+                if (saved) audit.log("vk.2fa.changed", player.getName(), player.getName(), "",
+                        AuditLog.details("enabled", verified.purpose == VkSecondFactor.Purpose.ENABLE));
+            });
+        });
+        return true;
+    }
+
     private void completeAuthentication(Player player, String successKey) {
+        if (vkTwoFactorEnabled(player.getName())) {
+            UUID uuid = player.getUniqueId();
+            vkLoginSuccess.put(uuid, successKey);
+            if (config.totpEnabled() && store.isTotpEnabled(player.getName())) vkTotpAtGate.add(uuid);
+            else vkTotpAtGate.remove(uuid);
+            passwordVerifiedPlayers.add(uuid);
+            freezeLocations.putIfAbsent(uuid, player.getLocation().clone());
+            issueVkCode(player, VkSecondFactor.Purpose.LOGIN, vkFactor.recipient(player.getName()));
+            return;
+        }
+        finishAuthentication(player, successKey);
+    }
+
+    private void finishAuthentication(Player player, String successKey) {
         UUID uuid = player.getUniqueId();
         // Карта с QR больше не нужна: секрет привязан, картинка на ней уже «закрыта».
         clearTotpQrMaps(player);
@@ -1908,7 +2029,9 @@ public final class AccessManager {
                 continue;
             }
 
-            if (requiresTotpEnrollment(player.getName()) && passwordVerifiedPlayers.contains(uuid)) {
+            if (vkLoginSuccess.containsKey(uuid)) {
+                sendTwoFactorReminder(player, now);
+            } else if (requiresTotpEnrollment(player.getName()) && passwordVerifiedPlayers.contains(uuid)) {
                 sendTotpEnrollmentReminder(player, now);
             } else if (config.totpEnabled() && store.isTotpEnabled(player.getName())
                     && passwordVerifiedPlayers.contains(uuid)) {
@@ -2119,6 +2242,9 @@ public final class AccessManager {
     }
 
     public void sendTwoFactorPrompt(Player player, boolean showTitle) {
+        if (vkLoginSuccess.containsKey(player.getUniqueId())) {
+            messages.send(player, "vk-factor.prompt"); return;
+        }
         messages.sendList(player, "two-factor.prompt");
         if (showTitle) {
             Title title = Title.title(

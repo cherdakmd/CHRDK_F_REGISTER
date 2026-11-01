@@ -39,7 +39,7 @@ import java.util.logging.Level;
  * клиента VK API, фоновый Long Poll, двусторонний мост с беседой сообщества ВКонтакте
  * и мосты {@link ChrdkRegisterApi}.
  */
-public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.SecurityListener, Listener {
+public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.SecurityListener, ChrdkRegisterApi.VkCodeDelivery, Listener {
 
     public static final String PROVIDER_ID = "vk";
     private static final DateTimeFormatter MSK_TIME = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
@@ -59,6 +59,10 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
     private final VkStore store;
     private final VkLinkCodeManager codeManager = new VkLinkCodeManager();
     private final VkBotRouter router;
+    private final ExecutorService securityExecutor = new ThreadPoolExecutor(1, 1, 30L, TimeUnit.SECONDS,
+            new ArrayBlockingQueue<>(32), runnable -> {
+                Thread thread = new Thread(runnable, "CHRDK-VK-Security"); thread.setDaemon(true); return thread;
+            });
     private final ExecutorService outboundExecutor;
     private final Map<Long, Long> vkChatCooldowns = new ConcurrentHashMap<>();
     private final Map<Long, CachedDisplayName> vkDisplayNames = new ConcurrentHashMap<>();
@@ -68,6 +72,10 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
     private volatile VkLongPollWorker longPollWorker;
     private volatile VkChatBatcher chatBatcher;
     private volatile ServerPulse serverPulse = new ServerPulse(0, 0, 20.0, List.of());
+    private BukkitTask onboardingTask;
+    private final Map<UUID, Long> onboardingDue = new ConcurrentHashMap<>();
+    private final Set<UUID> onboardingCompleted = ConcurrentHashMap.newKeySet();
+    private final java.util.concurrent.atomic.AtomicBoolean onboardingBusy = new java.util.concurrent.atomic.AtomicBoolean();
     private BukkitTask pulseTask;
     private BukkitTask syncTask;
 
@@ -107,12 +115,14 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
     public void start() {
         registerCoreBridges();
         applyRuntimeConfig();
+        this.onboardingTask = Bukkit.getScheduler().runTaskTimer(plugin, this::remindOnboarding, 200L, 400L);
         this.pulseTask = Bukkit.getScheduler().runTaskTimer(plugin, this::refreshServerPulse, 1L, 100L);
     }
 
     /** Пересобирает сетевых клиентов и задачи опроса после старта или {@code /vkadmin reload}. */
     public synchronized void applyRuntimeConfig() {
         stopNetworkWorkers();
+        onboardingCompleted.clear(); onboardingDue.clear();
         VkConfig cfg = plugin.config();
         if (!cfg.apiConfigured()) {
             this.apiClient = null;
@@ -144,12 +154,15 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
     }
 
     public synchronized void shutdown() {
+        if (onboardingTask != null) { onboardingTask.cancel(); onboardingTask = null; }
+        onboardingDue.clear(); onboardingCompleted.clear();
         if (pulseTask != null) {
             pulseTask.cancel();
             pulseTask = null;
         }
         stopNetworkWorkers();
         unregisterCoreBridges();
+        securityExecutor.shutdownNow();
         outboundExecutor.shutdown();
         try {
             if (!outboundExecutor.awaitTermination(3, TimeUnit.SECONDS)) {
@@ -242,6 +255,7 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
                 }
             });
             api.registerSecurityListener(PROVIDER_ID, this);
+            api.registerVkCodeDelivery(this);
             api.registerNotificationListener(PROVIDER_ID, this::forwardAdminNotification);
             api.registerGlobalChatListener(PROVIDER_ID, this::onMinecraftGlobalChat);
             api.registerShopBonusProvider(PROVIDER_ID, new ChrdkRegisterApi.ShopBonusProvider() {
@@ -276,6 +290,7 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
             api.unregisterNameTag(PROVIDER_ID);
             api.unregisterProfile(PROVIDER_ID);
             api.unregisterSecurityListener(PROVIDER_ID);
+            api.unregisterVkCodeDelivery(this);
             api.unregisterNotificationListener(PROVIDER_ID);
             api.unregisterGlobalChatListener(PROVIDER_ID);
             api.unregisterShopBonusProvider(PROVIDER_ID);
@@ -570,6 +585,8 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerQuit(PlayerQuitEvent event) {
+        onboardingDue.remove(event.getPlayer().getUniqueId());
+        onboardingCompleted.remove(event.getPlayer().getUniqueId());
         Player player = event.getPlayer();
         boolean wasAuthenticated = announcedOnlineSessions.remove(player.getUniqueId());
         VkConfig cfg = plugin.config();
@@ -701,6 +718,9 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
 
     @Override
     public String handleUnlinkFromVk(long vkUserId) {
+        ChrdkRegisterApi securityApi = plugin.coreApi();
+        if (securityApi == null || store.byVkUser(vkUserId).stream().anyMatch(link -> securityApi.vkTwoFactorEnabled(link.playerName())))
+            return "Сначала отключите ВК-2FA в игре с подтверждением кода. Отвязка не может отменить защиту входа.";
         List<VkStore.LinkSnapshot> removed = store.unlinkByVkUser(vkUserId);
         if (removed.isEmpty()) {
             return "К вашему профилю ВКонтакте не привязан ни один аккаунт.";
@@ -928,6 +948,96 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
                         "vk_id", Long.toString(vkUserId));
             }
         });
+    }
+
+    @Override
+    public void sendVkCode(long vkUserId, String code, String purpose, Consumer<Boolean> ack) {
+        VkApiClient client = apiClient;
+        if (client == null || !plugin.config().enabled() || vkUserId <= 0 || vkUserId >= VkConfig.MIN_CONVERSATION_PEER_ID) { ack.accept(false); return; }
+        String action = switch (purpose) {
+            case "LOGIN" -> "вход в игру";
+            case "ENABLE" -> "включение ВК-2FA";
+            case "DISABLE" -> "отключение ВК-2FA";
+            default -> "";
+        };
+        if (action.isEmpty()) { ack.accept(false); return; }
+        try {
+            securityExecutor.execute(() -> {
+                boolean ok = false;
+                try {
+                    String text = plugin.messages().plain("bot.factor-code", "code", code, "action", action);
+                    ok = client.sendMessage(vkUserId, text);
+                } catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); }
+                catch (Exception ignored) { /* Код и ответы доставки никогда не логируются. */ }
+                ack.accept(ok);
+            });
+        } catch (java.util.concurrent.RejectedExecutionException busy) { ack.accept(false); }
+    }
+
+    private long onboardingPeer(VkConfig cfg) {
+        return cfg.onboardingPeerId() > 0 ? cfg.onboardingPeerId() : effectiveGroupChatPeerId();
+    }
+    private record OnboardingPlayer(Player player, long vkId) { }
+
+    /** Только напоминание: ни kick, ни ограничения игровых действий здесь нет. */
+    private void remindOnboarding() {
+        VkConfig cfg = plugin.config();
+        ChrdkRegisterApi core = plugin.coreApi();
+        VkApiClient client = apiClient;
+        if (!cfg.enabled() || !cfg.onboardingEnabled() || core == null || client == null || onboardingBusy.get()) return;
+        long now = System.currentTimeMillis();
+        List<OnboardingPlayer> due = new ArrayList<>();
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (!core.isAuthenticated(player) || onboardingDue.getOrDefault(player.getUniqueId(), 0L) > now) continue;
+            onboardingDue.put(player.getUniqueId(), now + cfg.onboardingIntervalSeconds() * 1000L);
+            due.add(new OnboardingPlayer(player, store.byPlayer(player.getName()).map(VkStore.LinkSnapshot::vkUserId).orElse(0L)));
+            if (due.size() >= 20) break;
+        }
+        if (due.isEmpty() || !onboardingBusy.compareAndSet(false, true)) return;
+        long peer = onboardingPeer(cfg);
+        try {
+            outboundExecutor.execute(() -> {
+                try {
+                    Set<Long> members = null;
+                    if (peer >= VkConfig.MIN_CONVERSATION_PEER_ID) {
+                        try { members = client.fetchConversationMemberIds(cfg.groupId(), peer); }
+                        catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); }
+                        catch (Exception ignored) { /* Не выдаём ошибку за отсутствие участника. */ }
+                    }
+                    for (OnboardingPlayer entry : due) {
+                        Boolean group = null;
+                        if (entry.vkId() > 0) {
+                            try { group = client.isGroupMember(cfg.groupId(), entry.vkId()); }
+                            catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); }
+                            catch (Exception ignored) { }
+                        }
+                        Boolean inGroup = group;
+                        Boolean inChat = entry.vkId() == 0 ? false : members == null ? null : members.contains(entry.vkId());
+                        if (plugin.isEnabled()) Bukkit.getScheduler().runTask(plugin, () -> {
+                            Player player = entry.player();
+                            if (!player.isOnline() || Bukkit.getPlayer(player.getUniqueId()) != player
+                                    || plugin.config() != cfg || apiClient != client || onboardingPeer(cfg) != peer
+                                    || !core.isAuthenticated(player)) return;
+                            long linkedNow = store.byPlayer(player.getName()).map(VkStore.LinkSnapshot::vkUserId).orElse(0L);
+                            if (linkedNow != entry.vkId()) return;
+                            boolean complete = entry.vkId() > 0 && Boolean.TRUE.equals(inGroup) && Boolean.TRUE.equals(inChat);
+                            if (complete) { onboardingCompleted.add(player.getUniqueId()); return; }
+                            if (!Boolean.FALSE.equals(inGroup) && !Boolean.FALSE.equals(inChat) && onboardingCompleted.contains(player.getUniqueId())) return;
+                            onboardingCompleted.remove(player.getUniqueId());
+                            plugin.messages().send(player, "vk.onboarding-header");
+                            if (entry.vkId() == 0) plugin.messages().send(player, "vk.onboarding-link");
+                            if (entry.vkId() == 0 || !Boolean.TRUE.equals(inGroup)) plugin.messages().send(player,
+                                    inGroup == null && entry.vkId() > 0 ? "vk.onboarding-unknown" : "vk.onboarding-group", "url", cfg.communityUrl());
+                            if (!Boolean.TRUE.equals(inChat)) {
+                                if (inChat == null && entry.vkId() > 0) plugin.messages().send(player, "vk.onboarding-unknown");
+                                plugin.messages().send(player, cfg.onboardingInviteUrl().isEmpty() ? "vk.onboarding-chat-no-url" : "vk.onboarding-chat",
+                                        "url", cfg.onboardingInviteUrl());
+                            }
+                        });
+                    }
+                } finally { onboardingBusy.set(false); }
+            });
+        } catch (java.util.concurrent.RejectedExecutionException busy) { onboardingBusy.set(false); }
     }
 
     private void sendAsync(long peerId, String text) {

@@ -194,6 +194,27 @@ public final class VkApiClient {
         return true;
     }
 
+    /** Полная ограниченная сверка участников. Ошибка/обрезанный ответ — не отсутствие участника. */
+    public Set<Long> fetchConversationMemberIds(long groupId, long peerId) throws IOException, InterruptedException {
+        if (peerId < VkConfig.MIN_CONVERSATION_PEER_ID) throw new IOException("VK conversation is not configured");
+        Set<Long> ids = new LinkedHashSet<>();
+        for (int offset = 0; offset < 10000; offset += 1000) {
+            JsonObject response = callMethod("messages.getConversationMembers", Map.of(
+                    "peer_id", Long.toString(peerId), "group_id", Long.toString(groupId),
+                    "count", "1000", "offset", Integer.toString(offset))).getAsJsonObject();
+            int count = response.get("count").getAsInt();
+            if (count < 0 || count > 10000) throw new IOException("VK conversation membership exceeds verification limit");
+            JsonArray items = response.getAsJsonArray("items");
+            for (JsonElement item : items) {
+                long id = item.getAsJsonObject().get("member_id").getAsLong();
+                if (id > 0) ids.add(id);
+            }
+            if (offset + items.size() >= count) return Set.copyOf(ids);
+            if (items.size() != 1000) throw new IOException("VK conversation membership response incomplete");
+        }
+        throw new IOException("VK conversation membership scan incomplete");
+    }
+
     /** Проверяет подписку пользователя на сообщество ({@code groups.isMember}). */
     public boolean isGroupMember(long groupId, long userId) throws IOException, InterruptedException {
         JsonElement response = callMethod("groups.isMember", Map.of(

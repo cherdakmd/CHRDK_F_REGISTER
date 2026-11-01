@@ -1,6 +1,14 @@
 # Локализация аддона CHRDK_VK (MiniMessage, подстановки вида %name%)
 
 vk:
+  factor-help: "<gray>ВК-2FA: %state%. <white>/vk 2fa on</white> — включить; <white>/vk 2fa off</white> — отключить; затем <white>/vk 2fa confirm код</white>. Код приходит только в ЛС привязанному профилю. Сначала привяжите аккаунт: /vk link.</gray>"
+  factor-unlink-blocked: "<red>Сначала отключите ВК-2FA в игре с подтверждением кода. Отвязка ВК не отменяет защиту входа.</red>"
+  onboarding-header: "<gold>CHERDAK в ВК — новости, общение и защита аккаунта. Осталось выполнить:</gold>"
+  onboarding-link: "<gray>• Привязать аккаунт: <click:run_command:'/vk link'><white><underlined>/vk link</underlined></white></click>. Код привязки отправьте в ЛС сообщества, не в беседу.</gray>"
+  onboarding-group: "<gray>• Вступить в <click:open_url:'%url%'><aqua><underlined>сообщество ВК</underlined></aqua></click>.</gray>"
+  onboarding-chat: "<gray>• Вступить в <click:open_url:'%url%'><aqua><underlined>беседу сообщества</underlined></aqua></click>. Проверка произойдёт автоматически.</gray>"
+  onboarding-chat-no-url: "<gray>• Вступить в беседу сообщества. Ссылку приглашения уточните у администрации; напоминание не блокирует игру.</gray>"
+  onboarding-unknown: "<gray>• ВК временно не подтвердил участие; проверим позже. Это не означает, что вы не вступили.</gray>"
   no-api: "<red>Модуль авторизации CHRDK_Core недоступен.</red>"
   disabled: "<yellow>Интеграция ВКонтакте временно отключена на сервере.</yellow>"
   player-only: "<red>Эта команда доступна только игрокам в игре.</red>"
@@ -111,6 +119,7 @@ admin:
 
 # Личные уведомления бота: обычный текст без игровых click/hover-тегов.
 bot:
+  factor-code: "🔐 CHERDAK — %action%\nКод: %code%\nДействует 2 минуты, до 5 попыток. Для входа введите /2fa код в игре; для настройки — /vk 2fa confirm код. Не отправляйте код в беседу или другим людям. Если запрос не ваш — ничего не подтверждайте."
   login-alert: "✅ Вход в CHERDAK\nИгрок: %player%\nСпособ: %method%\nIP: %ip%\nНе ваш вход? Отправьте /заморозить в личные сообщения сообщества. Пароль и коды 2FA боту не нужны."
   brute-alert: "⚠ Неудачные попытки входа в CHERDAK\nИгрок: %player%\nПопыток: %failures%\nIP: %ip%\n%status%\nДля защиты аккаунта отправьте /заморозить в личные сообщения сообщества. Никому не передавайте пароль и коды 2FA."
   expiry-alert: "⏳ Срок ранга CHERDAK\nАккаунт: %player%\nОсталось примерно %hours% ч., до %until%.\nПрава и точный срок: /rank my в игре. Привязка ВК не продлевает ранг."

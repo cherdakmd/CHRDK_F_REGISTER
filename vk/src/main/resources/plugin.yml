@@ -9,7 +9,7 @@ commands:
   vk:
     aliases: [vkontakte, вк]
     description: "Интерактивное меню, привязка аккаунта, мост беседы ВКонтакте и уведомления"
-    usage: "/<command> [menu|status|link|notify|chat|mentions|unlink]"
+    usage: "/<command> [menu|status|link|notify|chat|mentions|unlink|2fa]"
     permission: chrdkvk.use
   vkadmin:
     description: "Администрирование интеграции и беседы ВКонтакте"

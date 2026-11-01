@@ -93,6 +93,14 @@ public final class VkCommandHandler implements CommandExecutor, TabCompleter {
             }
             case "status", "info", "статус" -> showStatus(player, api, cfg);
             case "link", "code", "привязать", "код" -> issueLinkCode(player, cfg);
+            case "2fa" -> {
+                String action = args.length >= 2 ? args[1].toLowerCase(Locale.ROOT) : "status";
+                var link = service.store().byPlayer(player.getName());
+                if (action.equals("confirm") && args.length == 3 && link.isPresent()) api.confirmVkTwoFactor(player, link.get().vkUserId(), args[2]);
+                else if (action.equals("off")) api.requestVkTwoFactor(player, 0, false);
+                else if (action.equals("on") && link.isPresent()) api.requestVkTwoFactor(player, link.get().vkUserId(), true);
+                else messages.send(player, "vk.factor-help", "state", api.vkTwoFactorEnabled(player.getName()) ? "включена" : "выключена");
+            }
             case "notify", "alerts", "уведомления" -> toggleNotify(player);
             case "chat", "чат", "беседа" -> toggleGroupChatVisibility(player);
             case "mentions", "пинг", "упоминания" -> toggleMentions(player);
@@ -176,6 +184,7 @@ public final class VkCommandHandler implements CommandExecutor, TabCompleter {
     }
 
     private void unlinkSelf(Player player, ChrdkRegisterApi api, boolean confirmedArg) {
+        if (api.vkTwoFactorEnabled(player.getName())) { plugin.messages().send(player, "vk.factor-unlink-blocked"); return; }
         Messages messages = plugin.messages();
         Optional<VkStore.LinkSnapshot> existing = service.store().byPlayer(player.getName());
         if (existing.isEmpty()) {
@@ -311,6 +320,7 @@ public final class VkCommandHandler implements CommandExecutor, TabCompleter {
                     return true;
                 }
                 String target = args[1];
+                if (api.vkTwoFactorEnabled(target)) { messages.send(sender, "vk.factor-unlink-blocked"); return true; }
                 Optional<VkStore.LinkSnapshot> removed = service.store().unlink(target);
                 if (removed.isEmpty()) {
                     messages.send(sender, "admin.lookup-none", "player", target);
@@ -457,7 +467,7 @@ public final class VkCommandHandler implements CommandExecutor, TabCompleter {
             return List.of();
         }
         if (args.length == 1) {
-            return filterPrefix(List.of("menu", "status", "link", "notify", "chat", "mentions", "unlink"), args[0]);
+            return filterPrefix(List.of("menu", "status", "link", "notify", "chat", "mentions", "unlink", "2fa"), args[0]);
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("unlink")) {
             return filterPrefix(List.of("confirm"), args[1]);
