@@ -1,0 +1,30 @@
+guilds:
+  invite-received: '<gold>%player% зовёт вас в гильдию <white>%name%</white>.</gold>
+    <gray>Принять: <yellow>/guild accept</yellow> · отказаться: <yellow>/guild decline</yellow>
+    · %seconds% с</gray>'
+  invite-reminder: <gold>Вас ждут в <white>%name%</white>:</gold> <gray><yellow>/guild
+    accept</yellow> — осталось %seconds% с</gray>
+  menu-invite-lore: '<gray>Вас ждут в <white>%name%</white></gray>
+
+    <gray>Принять: <yellow>/guild accept</yellow> · осталось %seconds% с</gray>'
+  dues-join-required: '<yellow>Вступление требует первого взноса: /clan accept, затем
+    /clan accept confirm.</yellow>'
+  dues-join-confirm: '<yellow>Взнос в казну: %rate% 💠/сутки, дополнительно мирный
+    режим: %peace% 💠/сутки. Первый платёж сейчас: %cost% 💠 с /bal; далее каждые реальные
+    сутки, включая офлайн. Неоплата — 24 ч до исключения, у лидера — до роспуска.
+    Подтвердите /clan accept confirm за 30 секунд.</yellow> <yellow>10 нарушений мира
+    за 30 дней — исключение и клеймо на 7 дней; личный штраф 100 💠 за инцидент. Глава:
+    без исключения/клейма.</yellow>'
+  help-join: <yellow>/clan gui</yellow> <gray>— меню гильдии, состав и казна</gray>
+  menu-no-guild-hint: <gray>Приглашение в чужую гильдию появится здесь.</gray>
+  peace-join-required: '<yellow>Мирный клан: 10 💠/сутки с личного /bal, первые сутки
+    при вступлении; защита через минуту. Используйте обычное /clan accept для оплаты
+    через меню команд.</yellow>'
+  peace-join-confirm: '<yellow>Мирный клан: первые сутки %cost% 💠, затем столько же
+    с личного /bal каждые сутки, включая офлайн. При неоплате — сутки до исключения;
+    предоплата не возвращается. Защита начнётся через минуту. Подтвердите /clan accept
+    confirm за 30 секунд.</yellow>'
+  peace-join-terms: '<yellow>Приглашение в мирный клан: %cost% 💠/сутки с каждого,
+    включая офлайн; первые сутки при вступлении, с отдельным подтверждением /clan
+    accept.</yellow> <yellow>10 нарушений мира за 30 дней — исключение и клеймо на
+    7 дней; личный штраф 100 💠 за инцидент. Глава: без исключения/клейма.</yellow>'

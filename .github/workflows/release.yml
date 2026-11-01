@@ -57,6 +57,13 @@ jobs:
           python3 tools/wiki/build.py --check
           python3 -m unittest discover -s tools/wiki -p 'test_*.py' -v
 
+      - name: Verify clan product cards without publication
+        run: |
+          python3 -m pip install -r tools/clan_shop/requirements.txt
+          python3 tools/clan_shop/build.py --check
+          python3 tools/clan_shop/build_bundle.py --check
+          python3 -m unittest discover -s tools/clan_shop -p 'test_*.py' -v
+
       - name: Build plugins
         shell: bash
         run: |
@@ -103,7 +110,7 @@ jobs:
           fi
           cp docs/releases/update-memo.txt 'release/ОБНОВЛЕНИЕ.txt'
           printf '\nВерсия: %s\nПлатформа: Purpur 26.3 / Java 25\n' "$version" >> 'release/ОБНОВЛЕНИЕ.txt'
-          for notes in docs/releases/1.4.{200,201,{220..279}}.md; do
+          for notes in docs/releases/1.4.{200,201,{220..280}}.md; do
             printf '\n\n' >> 'release/ОБНОВЛЕНИЕ.txt'
             cat "$notes" >> 'release/ОБНОВЛЕНИЕ.txt'
           done

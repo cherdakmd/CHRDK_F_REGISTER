@@ -1,0 +1,26 @@
+{
+  "id": "clan-style-pack",
+  "minimumPluginVersion": "1.4.279",
+  "priceRubles": 449,
+  "days": 30,
+  "includesDays": 30,
+  "parts": [
+    "clan-card-frame",
+    "clan-emblem",
+    "clan-name-style"
+  ],
+  "bonusEntitlement": "clan-style-pack",
+  "bonusAnimations": [
+    "aurora",
+    "shine",
+    "pulse"
+  ],
+  "command": "pass shopbuy %username% clan-style-pack",
+  "image": "clan-style-pack.png",
+  "width": 1200,
+  "height": 1200,
+  "publishedToStore": false,
+  "sha256": "213476055f6e780bba87bfcd6389baf77a22c28112e3860d4ab1d8be16c86037",
+  "sourceArtworkSha256": "9d3794c7aed2f8e0011f80d9b00adde7964c38c6a28d51b095aa6f42a3f09c09",
+  "rendererSha256": "3a1c82f6f4bab8c8fcae6016b81c577f4d0831e6621bff05a6051315d0e64628"
+}

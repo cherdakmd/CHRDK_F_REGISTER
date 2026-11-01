@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class GuildMessagesTest {
 
     private static final List<String> REQUIRED = List.of(
+            "recruit-list-button", "recruit-open-button", "recruit-closed-button", "recruit-toggle-hint", "recruit-list-title", "recruit-list-heading", "recruit-list-page", "recruit-list-hint", "recruit-list-members", "recruit-list-mode", "recruit-invited", "recruit-open-hint", "recruit-closed", "recruit-empty", "recruit-entry", "recruit-back", "recruit-cancel", "recruit-previous", "recruit-next", "recruit-confirm-title", "recruit-fees", "recruit-daily", "recruit-nonpayment", "recruit-leader-risk", "recruit-peace-warmup", "recruit-peace-fine", "recruit-peace-brand", "recruit-peace-head", "recruit-consent-time", "recruit-confirm-button", "recruit-pay-now", "recruit-setting-help", "recruit-same", "recruit-opened", "recruit-closed-ok", "recruit-changed",
             "style-kind-animation", "style-gui-title", "style-gui-boundary", "style-gui-chat", "style-gui-animation", "style-gui-category", "style-gui-preset", "style-gui-selected", "style-gui-apply", "style-gui-off", "style-gui-clear", "style-gui-back", "style-gui-close", "style-gui-offers", "style-gui-offer", "style-gui-offer-detail", "style-gui-approve", "style-gui-previous", "style-gui-next", "style-preset-name-gold", "style-preset-name-aqua", "style-preset-name-green", "style-preset-name-violet", "style-preset-name-white", "style-preset-name-blue", "style-preset-name-aurora", "style-preset-name-sunset", "style-preset-name-forest", "style-preset-name-frost", "style-preset-name-ember", "style-preset-name-pearl", "style-preset-emblem-star", "style-preset-emblem-diamond", "style-preset-emblem-spark", "style-preset-emblem-crown", "style-preset-emblem-sun", "style-preset-emblem-snow", "style-preset-emblem-moon", "style-preset-emblem-comet", "style-preset-frame-gold", "style-preset-frame-amethyst", "style-preset-frame-ocean", "style-preset-frame-forest", "style-preset-frame-ember", "style-preset-frame-frost", "style-preset-animation-aurora", "style-preset-animation-shine", "style-preset-animation-pulse", "style-gui-choice", "style-gui-transfer-warning",
             "style-help", "style-rules", "style-kind-name", "style-kind-emblem", "style-kind-frame", "style-license", "style-not-owned", "style-options", "style-binding", "style-disbanded", "style-license-missing", "style-unavailable", "style-saving", "style-save-failed", "style-saved", "style-transfer-cooldown", "style-offered", "style-approval", "style-no-offer", "style-menu-name", "style-menu-hint", "style-frame-item",
             "discipline-public-help", "discipline-rules", "discipline-player", "discipline-status", "discipline-brand-status", "discipline-brand-block", "discipline-fined", "discipline-warning", "discipline-last-warning", "discipline-expelled", "discipline-leader-warning", "discipline-admin-help", "discipline-history", "discipline-page", "discipline-audit", "discipline-admin-done", "discipline-no-incident", "discipline-no-brand", "discipline-reason",
@@ -135,6 +136,12 @@ class GuildMessagesTest {
         expected.put("style-gui-selected", List.of("%personal%", "%active%"));
         expected.put("style-gui-offer", List.of("%player%"));
         expected.put("style-gui-offer-detail", List.of("%kind%", "%preset%"));
+        expected.put("recruit-list-page", List.of("%page%", "%pages%", "%total%"));
+        expected.put("recruit-list-members", List.of("%count%", "%cap%", "%level%"));
+        expected.put("recruit-list-mode", List.of("%mode%"));
+        expected.put("recruit-entry", List.of("%name%", "%tag%"));
+        expected.put("recruit-fees", List.of("%rate%", "%peace%"));
+        expected.put("recruit-pay-now", List.of("%cost%"));
         expected.put("discipline-player", List.of("%player%"));
         expected.put("discipline-status", List.of("%count%"));
         expected.put("discipline-brand-status", List.of("%until%"));

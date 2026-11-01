@@ -27,7 +27,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
     private static final List<String> SUBS = List.of("help", "menu", "gui", "create", "invite",
             "accept", "decline", "leave", "kick", "promote", "demote", "transfer", "disband",
             "deposit", "withdraw", "upgrade", "info", "top", "members", "chat", "war",
-            "rename", "retag", "mode", "peace", "dues", "discipline", "style");
+            "rename", "retag", "mode", "peace", "dues", "discipline", "style", "list", "recruit");
     private static final List<String> WAR_SUBS = List.of("declare", "accept", "decline",
             "status", "surrender");
     private static final List<String> ADMIN_SUBS = List.of("reload", "info", "disband",
@@ -72,6 +72,8 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
             return menu(sender);
         }
         switch (canonicalSubcommand(args[0])) {
+            case "list" -> { Player p=player(sender); if(p!=null)plugin.recruitment().browse(p,0); }
+            case "recruit" -> { Player p=player(sender); if(p!=null)plugin.recruitment().setting(p,args); }
             case "style" -> { Player p=player(sender); if(p!=null)plugin.styles().command(p,args); }
             case "discipline" -> new GuildDisciplineCommands(plugin).status(sender,args);
             case "dues" -> {Player p=player(sender);if(p!=null)plugin.peace().dues(p,args);}
@@ -196,15 +198,8 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
         if (player == null) {
             return;
         }
-        if(!plugin.peace().confirmJoin(player,args.length==2&&args[1].equalsIgnoreCase("confirm")))return;
-        GuildResult result = plugin.finance().join(player,System.currentTimeMillis());
-        plugin.messages().send(sender, result.key(), result.array());
-        if (!result.ok()) {
-            return;
-        }
-        plugin.requestSave();
-        Guild guild = plugin.service().guildOf(player.getUniqueId());
-        broadcastGuild(guild, "join-broadcast", "player", player.getName());
+        // Даже прежнее /clan accept confirm теперь открывает окно, а не списывает деньги.
+        plugin.recruitment().invitation(player);
     }
 
     private void decline(CommandSender sender) {
@@ -980,7 +975,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
                 case "invite", "kick", "promote", "demote", "transfer" -> filter(memberNames(sender),
                         args[1]);
                 case "deposit", "withdraw" -> filter(List.of("all"), args[1]);
-                case "accept" -> filter(List.of("confirm"),args[1]);
+                case "recruit" -> filter(List.of("open","closed"),args[1]);
                 case "disband" -> filter(List.of("confirm"), args[1]);
                 default -> List.of();
             };

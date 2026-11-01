@@ -157,22 +157,6 @@ final class GuildPeaceController {
             }
         }
     }
-    boolean confirmJoin(Player player,boolean confirmed) {
-        UUID owner=player.getUniqueId();long now=System.currentTimeMillis();
-        if(!confirmed) {
-            var preview=GuildFinance.preview(plugin.store(),plugin.config(),(service,purse)->service.accept(purse,owner,now));
-            if(!preview.result().ok()){send(player,preview.result());return false;}
-            quotes.put(owner,new Quote("join",0,plugin.store().snapshotJson(),now+30_000));
-            Guild g=plugin.store().guild(plugin.store().inviteOf(owner).guildId());
-            if(g.peaceful())send(player,GuildResult.ok("discipline-rules"));
-            send(player,GuildResult.ok("dues-join-confirm","rate",g.duesRate(),"peace",g.peaceful()?GuildPeaceService.DAILY:0,"cost",preview.debit()));return false;
-        }
-        Quote quote=quotes.remove(owner);
-        if(quote==null||!quote.action().equals("join")||quote.expires()<now||!quote.state().equals(plugin.store().snapshotJson())){
-            send(player,GuildResult.fail("peace-quote-expired"));return false;
-        }
-        return true;
-    }
     void status(Player player) {
         Guild guild=plugin.store().of(player.getUniqueId());
         long debt=reserved(player.getUniqueId());

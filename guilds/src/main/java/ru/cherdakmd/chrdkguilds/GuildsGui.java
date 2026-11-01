@@ -79,6 +79,11 @@ final class GuildsGui implements Listener {
         Inventory inventory = Bukkit.createInventory(holder, SIZE,
                 plugin.messages().get("menu-title"));
         holder.inventory = inventory;
+        inventory.setItem(7, button(Material.BOOK, "recruit-list-button"));
+        if (guild != null && guild.rankOf(player.getUniqueId()) != null && guild.rankOf(player.getUniqueId()).canInvite())
+            inventory.setItem(8, item(guild.recruitmentOpen() ? Material.LIME_DYE : Material.RED_DYE,
+                    guild.recruitmentOpen() ? "recruit-open-button" : "recruit-closed-button",
+                    List.of(plugin.messages().get("recruit-toggle-hint"))));
         inventory.setItem(CLAIMS_SLOT, item(Material.GRASS_BLOCK, "menu-claims-name", List.of(
                 plugin.messages().get("menu-claims-lore"))));
         if(guild!=null)inventory.setItem(MODE_SLOT,item(guild.peaceful()?Material.SHIELD:Material.IRON_SWORD,guild.peaceful()?"menu-mode-peaceful":"menu-mode-battle",List.of(
@@ -273,6 +278,15 @@ final class GuildsGui implements Listener {
         }
         if (!plugin.authenticated(player) || !player.hasPermission("chrdkguilds.use") || !plugin.config().enabled()) return;
         int slot = event.getRawSlot();
+        if (event.getClick() != org.bukkit.event.inventory.ClickType.LEFT && event.getClick() != org.bukkit.event.inventory.ClickType.RIGHT) return;
+        if (slot == 7 || slot == 8 || slot == 22 && plugin.service().guildOf(player.getUniqueId()) == null) {
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (player.getOpenInventory().getTopInventory().getHolder() != holder || !plugin.visible(player)) return;
+                if (slot == 7) plugin.recruitment().browse(player,0);
+                else if (slot == 22) plugin.recruitment().invitation(player);
+                else plugin.recruitment().toggle(player);
+            }); return;
+        }
         if (slot == CLAIMS_SLOT || slot == PERSONAL_SLOT) {
             player.closeInventory();
             player.performCommand(slot == CLAIMS_SLOT ? "claim menu" : "rank my");
