@@ -43,7 +43,7 @@ class StreamsRemovalTest {
         var current = yaml("config.yml");
         var items = current.getMapList("server-menu.items");
         assertEquals(48, items.size());
-        assertEquals(4, items.stream().filter(item -> "social".equals(item.get("category"))).count());
+        assertEquals(3, items.stream().filter(item -> "social".equals(item.get("category"))).count());
         assertFalse(items.stream().anyMatch(item -> RetiredAddons.command(String.valueOf(item.get("command")))
                 || RetiredAddons.plugin(String.valueOf(item.get("plugin")))));
         var announcements = ChatConfig.fromBukkitConfig(current).autoMessageEntries();

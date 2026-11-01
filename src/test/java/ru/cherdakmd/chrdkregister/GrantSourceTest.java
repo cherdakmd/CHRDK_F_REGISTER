@@ -16,8 +16,9 @@ class GrantSourceTest {
                 AccessManager.describeGrantSource("battlepass:mission_1"));
         assertEquals("наградой ежедневного входа",
                 AccessManager.describeGrantSource("daily-rewards:day3"));
-        assertEquals("бонусом за приглашённого друга",
-                AccessManager.describeGrantSource("referral:Steve"));
+        assertEquals(AccessManager.describeGrantSource("uninstalled-addon"),
+                AccessManager.describeGrantSource("referral:Steve"),
+                "снятый источник больше не рекламируется как действующая награда");
         assertEquals("подарком", AccessManager.describeGrantSource("gift:Alex"));
         assertEquals("покупкой в магазине", AccessManager.describeGrantSource("shop:vip-queue"));
     }
