@@ -38,3 +38,6 @@ config/chrdk_f_register-data.json
 /tools/wiki/node_modules/
 /tools/wiki/test-results/
 /tools/wiki/playwright-report/
+
+# Локальные превью социальных публикаций
+/social-preview/

@@ -17,12 +17,12 @@ PATTERNS = (
 )
 RETIRED_PATHS = ("bosses", "treasures", "wiki/bosses.md", "wiki/treasures.md", "docs/TREASURES_ARSENAL.md", "streams", "wiki/streams.md", "events", "wiki/events.md", "queue", "wiki/queue.md", "lottery", "party", "referrals", "wiki/lottery.md", "wiki/party.md", "wiki/referrals.md")
 GENERATED_DIRS = {"node_modules", "test-results", "playwright-report", "__pycache__"}
-SUFFIXES = {".java", ".yml", ".yaml", ".md", ".py", ".js", ".html", ".gradle", ".properties"}
+SUFFIXES = {".json", ".java", ".yml", ".yaml", ".md", ".py", ".js", ".html", ".gradle", ".properties"}
 
 
 def active_files(root: Path) -> list[Path]:
     # Включая осиротевший модуль, который уже убрали из settings.gradle.
-    trees = [root / "src/main", root / "wiki", root / "tools/wiki", *root.glob("*/src/main")]
+    trees = [root / "src/main", root / "wiki", root / "tools/wiki", root / "tools/social", root / "docs/social", *root.glob("*/src/main")]
     files = {p for tree in trees if tree.is_dir() for p in tree.rglob("*")
              if p.is_file() and p.suffix in SUFFIXES
              and not GENERATED_DIRS.intersection(p.relative_to(root).parts)}

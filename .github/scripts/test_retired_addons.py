@@ -16,6 +16,12 @@ class RetiredAddonsGuardTest(unittest.TestCase):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding="utf-8")
 
+    def test_social_catalogs_cannot_restore_removed_player_features(self):
+        for path in ("tools/social/topics.json", "docs/social/releases/1.4.999.json"):
+            with self.subTest(path=path):
+                self.write(path, '{"text": "/party create"}')
+                self.assertTrue(check(self.root))
+
     def test_current_repository_is_clean(self):
         self.assertEqual([], check(ROOT))
 

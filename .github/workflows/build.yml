@@ -165,3 +165,27 @@ jobs:
         uses: actions/deploy-pages@v4
       - name: Report source revision
         run: echo "Published wiki from $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+
+  social:
+    name: Social automation (offline)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install renderer and fonts
+        run: |
+          python3 -m pip install -r tools/social/requirements.txt
+          sudo apt-get update -qq
+          sudo apt-get install -y fonts-dejavu-core
+      - name: Validate sources and test without external publication
+        run: |
+          python3 tools/social/run.py --check
+          python3 -m unittest discover -s tools/social -p 'test_*.py' -v
+          python3 tools/social/run.py --news-version "$(sed -n 's/^plugin_version=//p' gradle.properties)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: social-preview-${{ github.sha }}
+          path: social-preview/
+          retention-days: 14
