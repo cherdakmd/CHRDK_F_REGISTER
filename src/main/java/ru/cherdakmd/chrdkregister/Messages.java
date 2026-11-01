@@ -140,6 +140,8 @@ public final class Messages {
                 "classes-messages-legacy-1.4.255.yml", logger));
         migrateStockOverrides(defaults, overrides, readResource(plugin,
                 "vk-messages-legacy-1.4.268.yml", logger));
+        migrateStockOverrides(defaults, overrides, readResource(plugin,
+                "guild-admission-messages-legacy-1.4.279.yml", logger));
         overrides.replaceAll((key, text) -> GameplayRewardTexts.message(moduleName, key, text));
         Messages messages = new Messages(defaults, overrides, logger);
         messages.logMissingKeys(fileName);

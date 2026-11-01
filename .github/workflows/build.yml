@@ -56,6 +56,7 @@ jobs:
         run: |
           python3 -m pip install -r tools/clan_shop/requirements.txt
           python3 tools/clan_shop/build.py --check
+          python3 tools/clan_shop/build_bundle.py --check
           python3 -m unittest discover -s tools/clan_shop -p 'test_*.py' -v
 
       - name: Build plugin

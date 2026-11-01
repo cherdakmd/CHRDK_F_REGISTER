@@ -41,6 +41,18 @@ public final class Guild {
     private int warsWon;
     private int warsLost;
     private long warCooldownUntil;
+    // Старые и новые кланы закрыты, пока администрация явно не откроет набор.
+    private boolean recruitmentOpen;
+    private long recruitmentRevision;
+    public boolean recruitmentOpen() { return recruitmentOpen; }
+    long recruitmentRevision() { return recruitmentRevision; }
+    void recruitment(boolean open) {
+        if (open != recruitmentOpen) { recruitmentRevision = Math.incrementExact(recruitmentRevision); recruitmentOpen = open; }
+    }
+    void restoreRecruitment(boolean open, long revision) {
+        if (revision < 0) throw new IllegalArgumentException("recruitment revision");
+        recruitmentOpen = open; recruitmentRevision = revision;
+    }
     private int duesRate=10;
     private long duesChangedAt;
     private long duesReserve;

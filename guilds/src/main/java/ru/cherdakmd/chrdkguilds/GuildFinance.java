@@ -51,8 +51,16 @@ final class GuildFinance {
     GuildResult mode(Player player,GuildMode mode,long now) {
         return execute(player,(service,quote)->new GuildPeaceService(service.store()).mode(quote,player.getUniqueId(),mode,now));
     }
-    GuildResult join(Player player,long now) {
-        return execute(player,(service,quote)->service.accept(quote,player.getUniqueId(),now),true);
+    GuildResult join(Player player, GuildJoinTerms terms, long expires, long now) {
+        return execute(player, (service, quote) -> confirmedJoin(service,quote,player.getUniqueId(),terms,expires,now), true);
+    }
+    /** Та же повторная проверка согласия в production и тесте, внутри detached preview. */
+    static GuildResult confirmedJoin(GuildService service, Quote quote, java.util.UUID player,
+                                     GuildJoinTerms terms, long expires, long now) {
+        if (terms == null || now >= expires || !terms.matches(service.store(), player, now))
+            return GuildResult.fail("recruit-changed");
+        return terms.invitation() == null ? service.joinOpen(quote,player,terms.guild(),now)
+                : service.accept(quote,player,now);
     }
     GuildResult deposit(Player player,long amount) {
         return execute(player,(service,quote) -> service.deposit(quote,player.getUniqueId(),amount));

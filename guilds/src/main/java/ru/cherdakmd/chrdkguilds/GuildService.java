@@ -235,6 +235,32 @@ public final class GuildService {
             store.removeInvite(player);
             return GuildResult.fail("invite-guild-gone");
         }
+        return enter(purse, player, guild, now);
+    }
+
+    /** Вступление без искусственного приглашения, через тот же финансовый план. */
+    GuildResult joinOpen(GuildPurse purse, UUID player, String guildId, long now) {
+        if (store.financed()) return GuildResult.fail("dues-join-required");
+        if (store.of(player) != null) return GuildResult.fail("already-in-guild");
+        Guild guild = store.guild(guildId);
+        if (guild == null) return GuildResult.fail("invite-guild-gone");
+        if (!guild.recruitmentOpen()) return GuildResult.fail("recruit-closed");
+        return enter(purse, player, guild, now);
+    }
+
+    GuildResult recruitment(UUID actor, boolean open) {
+        if (store.financed()) return store.transaction(copy -> new GuildService(config, copy).recruitment(actor, open), GuildResult.fail("finance-paused"));
+        Guild guild = store.of(actor);
+        if (guild == null) return GuildResult.fail("not-in-guild");
+        GuildRank rank = guild.rankOf(actor);
+        if (rank == null || !rank.canInvite()) return GuildResult.fail("invite-no-rank");
+        if (guild.recruitmentOpen() == open) return GuildResult.fail("recruit-same");
+        if (guild.recruitmentRevision() == Long.MAX_VALUE) return GuildResult.fail("finance-paused");
+        guild.recruitment(open);
+        return GuildResult.ok(open ? "recruit-opened" : "recruit-closed-ok");
+    }
+
+    private GuildResult enter(GuildPurse purse, UUID player, Guild guild, long now) {
         if (guild.size() >= GuildMath.memberCap(guild.level())) {
             return GuildResult.fail("guild-full", "max",
                     String.valueOf(GuildMath.memberCap(guild.level())));

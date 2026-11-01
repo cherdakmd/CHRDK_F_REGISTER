@@ -267,6 +267,7 @@ final class GuildStore {
                 (int) number(row.get("wars-lost")));
         guild.setWarCooldownUntil(number(row.get("war-cooldown-until")));
         guild.restoreWarReturns(number(row.get("war-returns")));
+        guild.restoreRecruitment(Boolean.TRUE.equals(row.get("recruitment-open")), number(row.get("recruitment-revision")));
         guild.mode(row.containsKey("mode") ? GuildMode.valueOf(string(row.get("mode"))) : GuildMode.BATTLE, number(row.get("mode-changed-at")));
         if (row.get("peace-terms") instanceof Map<?,?> terms) for(var entry:terms.entrySet()) {
             Map<?,?> term=(Map<?,?>)entry.getValue();
@@ -611,6 +612,8 @@ final class GuildStore {
             Map<String,Object> dues=new LinkedHashMap<>();
             guild.duesTerms().forEach((id,t)->dues.put(id.toString(),Map.of("due-at",t.dueAt(),"grace-since",t.graceSince(),"amount",t.amount())));
             row.put("dues-terms",dues);
+            row.put("recruitment-open", guild.recruitmentOpen());
+            row.put("recruitment-revision", guild.recruitmentRevision());
             row.put("mode",guild.mode().name());
             row.put("mode-changed-at",guild.modeChangedAt());
             if(guild.peaceful()) {
@@ -801,6 +804,10 @@ final class GuildStore {
                 }
                 if(number(row.get("dues-reserve"))>0&&number(row.get("treasury"))!=Guild.MAX_TREASURY)bad("unfunded dues reserve");
                 Math.addExact(Math.addExact(number(row.get("treasury")),number(row.get("war-returns"))),number(row.get("dues-reserve")));
+            }
+            if (row.containsKey("recruitment-open") || row.containsKey("recruitment-revision")) {
+                if (!(row.get("recruitment-open") instanceof Boolean)) bad("recruitment flag");
+                range(row,"recruitment-revision",0,Long.MAX_VALUE,true);
             }
             if(row.containsKey("mode")) {
                 String mode=text(row,"mode",true);

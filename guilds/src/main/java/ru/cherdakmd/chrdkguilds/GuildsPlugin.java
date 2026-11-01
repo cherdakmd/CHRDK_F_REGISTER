@@ -31,6 +31,7 @@ public final class GuildsPlugin extends JavaPlugin {
     private GuildsGui gui;
     private GuildStyleController styles;
     private GuildStyleGui styleGui;
+    private GuildRecruitmentGui recruitment;
     private ru.cherdakmd.chrdkregister.api.PaidActions payments;
     private GuildFinance finance;
     private GuildPeaceController peace;
@@ -57,6 +58,8 @@ public final class GuildsPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(new GuildPeaceListener(this),this);
             this.styles = new GuildStyleController(this);
             this.gui = new GuildsGui(this);
+            this.recruitment = new GuildRecruitmentGui(this);
+            getServer().getPluginManager().registerEvents(recruitment, this);
             this.styleGui = new GuildStyleGui(this);
             getServer().getPluginManager().registerEvents(styleGui, this);
             getServer().getPluginManager().registerEvents(new GuildsListener(this), this);
@@ -92,6 +95,7 @@ public final class GuildsPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (recruitment != null) recruitment.closeAll();
         if (styles != null) styles.close();
         Bukkit.getServicesManager().unregisterAll(this);
         if (coreApi != null) {
@@ -133,6 +137,7 @@ public final class GuildsPlugin extends JavaPlugin {
 
     /** Перечитывает конфиг; состав и войны остаются. */
     public void reloadGuilds() {
+        if (recruitment != null) recruitment.closeAll();
         reloadConfig();
         ru.cherdakmd.chrdkregister.api.EconomyTariffMigration.apply(this);
         this.config = GuildConfig.parse(getConfig(), getLogger());
@@ -230,6 +235,7 @@ public final class GuildsPlugin extends JavaPlugin {
 
     GuildStyleController styles() { return styles; }
     GuildStyleGui styleGui() { return styleGui; }
+    GuildRecruitmentGui recruitment() { return recruitment; }
 
     public GuildsGui gui() {
         return gui;
