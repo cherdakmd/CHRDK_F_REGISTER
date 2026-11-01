@@ -243,6 +243,10 @@ final class BattlePassMenu implements Listener {
         };
     }
 
+    void closeAll() {
+        for(Player player:Bukkit.getOnlinePlayers())
+            if(player.getOpenInventory().getTopInventory().getHolder() instanceof Holder)player.closeInventory();
+    }
     @EventHandler(priority = EventPriority.HIGHEST,ignoreCancelled=true)
     public void onClick(InventoryClickEvent event) {
         if (!(event.getView().getTopInventory().getHolder() instanceof Holder holder)) {

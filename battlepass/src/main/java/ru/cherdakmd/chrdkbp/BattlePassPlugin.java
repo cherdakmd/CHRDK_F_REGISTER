@@ -113,6 +113,7 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
     @Override
     public void onDisable() {
         if(guide!=null)guide.closeAll();
+        if(menu!=null)menu.closeAll();
         if (coreApi != null) {
             try {
                 coreApi.unregisterProfile("battlepass");
@@ -137,6 +138,7 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
     /** Перечитать config.yml и messages.yml, не перезапуская сервер. */
     public void reloadBattlePassConfig() {
         if(guide!=null)guide.closeAll();
+        if(menu!=null)menu.closeAll();
         reloadConfig();
         try(var stream=getResource("battlepass-default-legacy-1.4.280.yml")) {
             if(stream!=null) {

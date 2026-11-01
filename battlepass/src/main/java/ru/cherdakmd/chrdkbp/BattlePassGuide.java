@@ -89,12 +89,17 @@ final class BattlePassGuide implements Listener {
         p.openInventory(h.inventory);
     }
     private void track(Holder h,Player p,BattlePassConfig.MissionDef m,String track,int hours,boolean access,int slot) {
+        track(h,p,m,track,hours,access,slot,false);
+    }
+    private void track(Holder h,Player p,BattlePassConfig.MissionDef m,String track,int hours,boolean access,int slot,boolean claim) {
         var found=BattlePassConfig.find(h.season,m.id());
         boolean unlocked=BattlePassConfig.isUnlocked(h.season,found.weekIndex(),System.currentTimeMillis());
         boolean claimed=plugin.store().isClaimed(p.getUniqueId(),m.id(),track);
         String state=hours==0?"guide-no-reward":claimed?"guide-received":!unlocked?"guide-future":!access?"guide-access-locked":plugin.store().progressOf(p.getUniqueId(),m.id())<m.target()?"guide-in-progress":"guide-ready";
         put(h,slot,claimed?Material.GRAY_DYE:state.equals("guide-ready")?Material.LIME_CONCRETE:access?Material.EXPERIENCE_BOTTLE:Material.BARRIER,
-                "guide-track-reward","guide-track-lore",x->detail(x,m.id()),"track",plugin.messages().plain("guide-"+track.toLowerCase(Locale.ROOT)),
+                "guide-track-reward",claim?"guide-track-claim-lore":"guide-track-lore",x->{
+                    if(claim)plugin.claims().claimTrack(x,m.id(),track);detail(x,m.id());
+                },"track",plugin.messages().plain("guide-"+track.toLowerCase(Locale.ROOT)),
                 "hours",hours,"state",plugin.messages().plain(state));
     }
     void detail(Player p,String id) {
@@ -116,7 +121,7 @@ final class BattlePassGuide implements Listener {
             } catch(IllegalArgumentException ignored){targets.add(Component.text(key));}
         }
         ItemStack target=new ItemStack(Material.SPYGLASS);var meta=target.getItemMeta();meta.displayName(plugin.messages().get("guide-targets"));meta.lore(targets);target.setItemMeta(meta);h.inventory.setItem(15,target);
-        track(h,p,m,"FREE",m.freeHours(),true,20);track(h,p,m,"VIP",m.vipHours(),plugin.vipActive(p),22);track(h,p,m,"PREMIUM",m.premiumHours(),plugin.premiumActive(p),24);
+        track(h,p,m,"FREE",m.freeHours(),true,20,true);track(h,p,m,"VIP",m.vipHours(),plugin.vipActive(p),22,true);track(h,p,m,"PREMIUM",m.premiumHours(),plugin.premiumActive(p),24,true);
         put(h,31,Material.ENDER_CHEST,"guide-claim-one","guide-claim-lore",x->{plugin.claims().claimOne(x,id);detail(x,id);});
         controls(h);put(h,45,Material.ARROW,"guide-tasks",null,x->plugin.menu().missions(x,0));p.openInventory(h.inventory);
     }

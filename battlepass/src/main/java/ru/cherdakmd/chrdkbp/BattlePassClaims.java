@@ -19,9 +19,13 @@ final class BattlePassClaims {
             return "bp:"+HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(identity.getBytes(StandardCharsets.UTF_8)));
         } catch(java.security.NoSuchAlgorithmException e){throw new IllegalStateException(e);}
     }
-    int claimAll(Player player){return claim(player,null);}
-    boolean claimOne(Player player,String id){return claim(player,id)>0;}
-    private int claim(Player player,String id) {
+    int claimAll(Player player){return claim(player,null,null);}
+    boolean claimOne(Player player,String id){return claim(player,id,null)>0;}
+    boolean claimTrack(Player player,String id,String track) {
+        if(!java.util.Set.of("FREE","VIP","PREMIUM").contains(track))return false;
+        return claim(player,id,track)>0;
+    }
+    private int claim(Player player,String id,String selected) {
         if(!plugin.canUse(player)){plugin.messages().send(player,"access-unavailable");return 0;}
         var season=plugin.season();
         if(season==null||season.empty()){plugin.messages().send(player,"no-season");return 0;}
@@ -38,6 +42,7 @@ final class BattlePassClaims {
                 int[] amounts={mission.freeHours(),mission.vipHours(),mission.premiumHours()};
                 boolean[] available={true,plugin.vipActive(player),plugin.premiumActive(player)};
                 for(int t=0;t<tracks.length;t++) {
+                    if(selected!=null&&!selected.equals(tracks[t]))continue;
                     if(amounts[t]<=0||plugin.store().isClaimed(uuid,mission.id(),tracks[t]))continue;
                     if(!available[t]){locked++;continue;}
                     ChrdkRegisterApi.BoostGrant result;
