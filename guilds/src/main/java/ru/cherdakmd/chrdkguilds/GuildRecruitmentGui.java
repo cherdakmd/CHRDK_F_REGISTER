@@ -56,7 +56,7 @@ final class GuildRecruitmentGui implements Listener {
             List<Component> lore=new ArrayList<>();
             lore.add(plugin.messages().get("recruit-list-members","count",guild.size(),"cap",GuildMath.memberCap(guild.level()),"level",GuildMath.roman(guild.level())));
             lore.add(plugin.messages().get("recruit-list-mode","mode",guild.mode().label()));
-            lore.add(plugin.messages().get("dues-invite","rate",guild.duesRate(),"peace",guild.peaceful()?GuildPeaceService.DAILY:0));
+            lore.add(plugin.messages().get("recruit-fees","rate",guild.duesRate(),"peace",guild.peaceful()?GuildPeaceService.DAILY:0));
             lore.add(plugin.messages().get(guild.recruitmentOpen()?"recruit-open-hint":"recruit-closed"));
             if(invited)lore.add(plugin.messages().get("recruit-invited"));
             ItemStack entry=item(guild.recruitmentOpen()?Material.LIME_BANNER:Material.GRAY_BANNER,"recruit-entry",lore,"name",guild.name(),"tag",guild.tag());
