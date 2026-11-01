@@ -183,7 +183,10 @@ public final class VkPlugin extends JavaPlugin {
 
             int migratedKeys = 0;
             for (String key : legacyLeafKeys) {
-                if (live.contains(key) && Objects.equals(live.get(key), legacy.get(key)) && current.contains(key)) {
+                if (live.contains(key)
+                        && current.contains(key)
+                        && !Objects.equals(legacy.get(key), current.get(key))
+                        && Objects.equals(live.get(key), legacy.get(key))) {
                     live.set(key, current.get(key));
                     migratedKeys++;
                 }

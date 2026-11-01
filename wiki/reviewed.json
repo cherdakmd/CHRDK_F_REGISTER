@@ -121,8 +121,8 @@
       "text": "ced22f9d3bdafb0c5f5e4027849d8cf32dd0530d5a937f0c409e07546439d01a"
     },
     "profile": {
-      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
-      "sources": "26a3450900988aaecf805ff5337daf556e16c1ae83c12e58e34a7a0eaef1c08a",
+      "reason": "1.4.269: строгая идемпотентность миграции messages.yml в VkPlugin",
+      "sources": "d65a8f48d0a140694fdeacfd0045e3018153b83e65afc4f996f00f22375d594f",
       "text": "b1ddb608cb3942be099223883d3c545c9ab409018276b58b94f5e85e796a3970"
     },
     "quests": {
@@ -176,8 +176,8 @@
       "text": "50e65941c65b669556894aa1cf998349f25f10f17c8a5f27918fcb280d86abfa"
     },
     "vk": {
-      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
-      "sources": "5c56ada8cc85f31742eb83eb6df3d84237ddf78f0cd265a5ba32dbbccdc7790f",
+      "reason": "1.4.269: строгая идемпотентность миграции messages.yml в VkPlugin",
+      "sources": "3fa441ac76ba0837fbee19ff9e6cad0b947d49cc2abf3c1f14799cddd3429edd",
       "text": "e9037fef5c1f36cf0f114228ced538a7a303aeae2417bc01c09ca96db64ca3b7"
     }
   },
