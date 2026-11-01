@@ -78,19 +78,30 @@ class QueueTransport:
 
 
 class ScheduleTest(unittest.TestCase):
-    def test_exact_wednesday_and_sunday_1800_moscow(self):
-        self.assertEqual(NOW, due_slot(NOW))
-        self.assertIsNone(due_slot(NOW-timedelta(seconds=1)))
-        wed = NOW+timedelta(days=3)
-        self.assertEqual(wed, due_slot(wed.astimezone(timezone.utc)))
-        self.assertIsNone(due_slot(wed+timedelta(days=1, seconds=1)))
+    def test_daily_noon_and_evening_including_weekdays(self):
+        noon = NOW.replace(hour=12)
+        for days in range(7):
+            for slot in (noon+timedelta(days=days), NOW+timedelta(days=days)):
+                self.assertEqual(slot, due_slot(slot.astimezone(timezone.utc)))
+        self.assertIsNone(due_slot(noon-timedelta(seconds=1)))
+        self.assertEqual(noon, due_slot(NOW-timedelta(seconds=1)))
 
-    def test_late_run_uses_same_slot_no_catchup_spam(self):
-        self.assertEqual(NOW, due_slot(NOW+timedelta(hours=23)))
-        self.assertIsNone(due_slot(NOW+timedelta(hours=25)))
-        self.assertEqual(0, topic_index(NOW))
-        self.assertEqual(1, topic_index(NOW+timedelta(days=3)))
-        self.assertEqual(2, topic_index(NOW+timedelta(days=7)))
+    def test_late_runs_do_not_catch_up_old_slots(self):
+        self.assertEqual(NOW, due_slot(NOW+timedelta(hours=5, minutes=59)))
+        self.assertIsNone(due_slot(NOW+timedelta(hours=6)))
+        self.assertIsNone(due_slot(NOW+timedelta(hours=17)))
+        noon = NOW.replace(hour=12)
+        self.assertEqual(0, topic_index(noon))
+        self.assertEqual(1, topic_index(NOW))
+        self.assertEqual(2, topic_index(noon+timedelta(days=1)))
+        self.assertEqual(3, topic_index(NOW+timedelta(days=1)))
+
+    def test_slot_keys_are_distinct_and_evening_keeps_legacy_identity(self):
+        noon, evening = tip(NOW.replace(hour=12)), tip(NOW)
+        self.assertEqual('tip:2026-11-01:12', noon.key)
+        self.assertEqual('tip:2026-11-01', evening.key)
+        self.assertNotEqual(noon.guid, evening.guid)
+        self.assertNotEqual(noon.title, evening.title)
 
     def test_naive_time_is_rejected(self):
         with self.assertRaises(SafetyError):
@@ -155,6 +166,16 @@ class DurablePublishingTest(unittest.TestCase):
         self.assertEqual((42, False), publish(edited, IMAGE, self.ledger(), self.vk))
         self.assertEqual(1, self.vk.posts)
         self.assertEqual(1, self.vk.uploads)
+
+    def test_both_daily_slots_publish_once_and_survive_restart(self):
+        noon = tip(NOW.replace(hour=12))
+        evening = tip(NOW)
+        publish(noon, IMAGE, self.ledger(), self.vk)
+        publish(evening, IMAGE, self.ledger(), self.vk)
+        publish(noon, IMAGE, self.ledger(), self.vk)
+        publish(evening, IMAGE, self.ledger(), self.vk)
+        self.assertEqual(2, self.vk.posts)
+        self.assertEqual(2, len(self.ledger().shards['2026-11'][1]['records']))
 
     def test_timeout_after_commit_reconciles_without_second_post(self):
         self.vk.lost_response = True
@@ -298,7 +319,7 @@ class EntryPointTest(unittest.TestCase):
 
     def test_workflow_gates_are_present(self):
         workflow = (ROOT/'.github/workflows/vk-news.yml').read_text()
-        self.assertIn("cron: '0 15 * * 0,3'", workflow)
+        self.assertIn("cron: '0 9,15 * * *'", workflow)
         self.assertIn('cancel-in-progress: false', workflow)
         self.assertIn('persist-credentials: false', workflow)
         self.assertIn('ref: main', workflow)
