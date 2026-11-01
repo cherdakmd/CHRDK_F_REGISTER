@@ -73,6 +73,15 @@ class GuildStyle278Test {
         assertFalse(GuildStyleDefs.valid("rank","gold"));
         assertTrue(GuildStyleDefs.name("<red>Bad", "gold", "crown").contains("\\<red>"));
     }
+    @Test void userSuppliedNameCannotInjectTagsOrLegacyColors() throws Exception {
+        String markup=GuildStyleDefs.name("&c<red>Clan",null,"crown");
+        var component=net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(markup);
+        assertEquals("⚜ &c<red>Clan",net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(component));
+        String gui=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkguilds/GuildsGui.java"));
+        assertTrue(gui.contains("messages().markup(plugin.styles().name(guild))"));
+        assertFalse(gui.contains("Messages.format(plugin.styles().name(guild))"));
+    }
+
     @Test void diskFailureKeepsOldChoiceAndDoesNotBlockReaders(@TempDir Path folder) throws Exception {
         var entered=new CountDownLatch(1);var release=new CountDownLatch(1);
         var store=new GuildStyleStore(folder,logger,(file,json)->{

@@ -156,7 +156,7 @@ final class GuildsGui implements Listener {
         ItemStack card = item(guild.peaceful()?Material.GREEN_BANNER:Material.RED_BANNER, "menu-info-title", lore);
         var meta = card.getItemMeta();
         if (plugin.styles().active(guild,"name") != null || plugin.styles().active(guild,"emblem") != null)
-            meta.displayName(ru.cherdakmd.chrdkregister.Messages.format(plugin.styles().name(guild)));
+            meta.displayName(plugin.messages().markup(plugin.styles().name(guild)));
         card.setItemMeta(meta);
         return card;
     }
