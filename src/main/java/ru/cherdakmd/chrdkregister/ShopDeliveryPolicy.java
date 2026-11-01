@@ -14,6 +14,19 @@ final class ShopDeliveryPolicy {
         return base <= ceiling && (long) paidDays * ShopEntitlements.DAY_MILLIS <= ceiling - base;
     }
 
+    /** Проверка всех листьев и бонусного корневого права до первого изменения аккаунта. */
+    static boolean fitsBundle(ShopProduct product, ShopCatalog catalog, long now, int days,
+                              java.util.function.ToLongFunction<ShopProduct> until) {
+        if (!complete(product, catalog)) return false;
+        if (product.retainsBundleEntitlement() && (days != product.includedDays()
+                || !fits(now, until.applyAsLong(product), days, catalog.maxTotalDays()))) return false;
+        for (String id : product.resolvedIncludes()) {
+            ShopProduct part = catalog.find(id).orElse(null);
+            if (part == null || !fits(now, until.applyAsLong(part), product.includedDays(part), catalog.maxTotalDays())) return false;
+        }
+        return true;
+    }
+
     static int bonusDays(long actualUntil, long paidUntil) {
         return (int) Math.max(0, (actualUntil - paidUntil) / ShopEntitlements.DAY_MILLIS);
     }

@@ -10,7 +10,7 @@ import java.util.*;
 
 /** Аддитивные SKU и точное обновление стоковых приветствий, без изменения старых покупок. */
 final class PremiumPresentationMigration {
-    static final Set<String> PRODUCTS = Set.of("clan-name-style", "clan-emblem", "clan-card-frame");
+    static final Set<String> PRODUCTS = Set.of("clan-name-style", "clan-emblem", "clan-card-frame", "clan-style-pack");
 
     static boolean update(YamlConfiguration live, YamlConfiguration old, YamlConfiguration fresh) {
         boolean changed = false;
@@ -40,7 +40,7 @@ final class PremiumPresentationMigration {
             var old = YamlConfiguration.loadConfiguration(new InputStreamReader(oldStream, StandardCharsets.UTF_8));
             var fresh = YamlConfiguration.loadConfiguration(new InputStreamReader(freshStream, StandardCharsets.UTF_8));
             if (!update(live, old, fresh)) return;
-            Files.copy(file, file.resolveSibling("config-before-premium-1.4.278-" + System.currentTimeMillis() + ".yml"));
+            Files.copy(file, file.resolveSibling("config-before-premium-1.4.279-" + System.currentTimeMillis() + ".yml"));
             if (SafeJsonWriter.write(file, live.saveToString(), plugin.getLogger(), "[Оформление]")) plugin.reloadConfig();
         } catch (Exception error) {
             plugin.getLogger().warning("Обновление оформления пропущено, конфиг сохранён: " + error.getClass().getSimpleName());

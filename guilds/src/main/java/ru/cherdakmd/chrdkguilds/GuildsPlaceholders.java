@@ -52,6 +52,8 @@ public final class GuildsPlaceholders extends PlaceholderExpansion {
         return switch (key) {
             case "total" -> Integer.toString(service.count());
             case "name" -> guild == null ? "" : guild.name();
+            case "styled_tag" -> guild == null ? "" : plugin.styles().tag(guild);
+            case "animation" -> guild == null ? "" : java.util.Objects.toString(plugin.styles().active(guild,"animation"), "");
             case "styled_name" -> guild == null ? "" : plugin.styles().name(guild);
             case "emblem" -> guild == null ? "" : GuildStyleDefs.EMBLEMS.getOrDefault(java.util.Objects.toString(plugin.styles().active(guild,"emblem"),""),"");
             case "card_frame" -> guild == null ? "" : java.util.Objects.toString(plugin.styles().active(guild,"frame"),"");

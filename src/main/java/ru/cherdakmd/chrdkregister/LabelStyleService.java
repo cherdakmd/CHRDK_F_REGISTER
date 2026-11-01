@@ -92,7 +92,11 @@ public final class LabelStyleService {
      */
     public String decorate(String playerName, String base, String customColor) {
         Rank rank = ranks.view(playerName);
-        return assemble(colorize(base, customColor, rank), selection(playerName, rank, customColor));
+        Selection selected = selection(playerName, rank, customColor);
+        String name = assemble(colorize(base, customColor, rank), selected);
+        if (selected.displayed(LabelPreferences.Label.GUILDS) || !preferences.visible(playerName, LabelPreferences.Label.GUILDS)) return name;
+        String clan = project(tags.apply("guilds-chat", playerName, ANCHOR), true);
+        return clan.isBlank() ? name : name + SEPARATOR + "<reset>" + clan + "<reset>";
     }
 
     /** Клан в TAB — статус PvP, а не платное косметическое место. Чат не меняется. */
@@ -102,7 +106,7 @@ public final class LabelStyleService {
         List<Decoration> shown=selected.shown().stream()
                 .filter(entry -> entry.source()!=LabelPreferences.Label.GUILDS).toList();
         String name=assemble(colorize(base,customColor,rank),new Selection(shown,selected.overflow(),selected.limit()));
-        String clan=project(tags.apply("guilds-tab",playerName,ANCHOR));
+        String clan=project(tags.apply("guilds-tab",playerName,ANCHOR), true);
         return clan.isBlank()?name:name+SEPARATOR+"<reset>"+clan+"<reset>";
     }
 
@@ -199,7 +203,7 @@ public final class LabelStyleService {
                 markup = project(ANCHOR + " " + (badge == null ? "" : badge) + " "
                         + (rankName == null ? "" : rankName));
             } else {
-                markup = project(tags == null ? null : tags.apply(label.id(), playerName, ANCHOR));
+                markup = project(tags == null ? null : tags.apply(label.id(), playerName, ANCHOR), label == LabelPreferences.Label.GUILDS);
             }
             if (!markup.isBlank()) entries.add(new Decoration(label, markup));
         }
@@ -214,9 +218,11 @@ public final class LabelStyleService {
      * пробелы/разделители. Вложенные цвета, градиенты и форматирование остаются.
      * Провайдер, потерявший/продублировавший имя, не может испортить общую строку.
      */
-    static String project(String decorated) {
+    static String project(String decorated) { return project(decorated, false); }
+
+    private static String project(String decorated, boolean markupOnly) {
         if (decorated == null) return "";
-        Component component = Messages.format(decorated);
+        Component component = markupOnly ? MINI.deserialize(decorated) : Messages.format(decorated);
         String text = PLAIN.serialize(component);
         int anchor = text.indexOf(ANCHOR);
         if (anchor < 0 || text.indexOf(ANCHOR, anchor + ANCHOR.length()) >= 0) return "";

@@ -5,7 +5,7 @@ import ru.cherdakmd.chrdkregister.Messages;
 
 /** Только серверные пресеты: пользователь не может внедрить MiniMessage/команду. */
 final class GuildStyleDefs {
-    static final Map<String, String> PRODUCTS = Map.of("name", "clan-name-style", "emblem", "clan-emblem", "frame", "clan-card-frame");
+    static final Map<String, String> PRODUCTS = Map.of("name", "clan-name-style", "emblem", "clan-emblem", "frame", "clan-card-frame", "animation", "clan-style-pack");
     static final Map<String, String> COLORS = Map.ofEntries(
             Map.entry("gold", "<gold>%name%</gold>"), Map.entry("aqua", "<aqua>%name%</aqua>"),
             Map.entry("green", "<green>%name%</green>"), Map.entry("violet", "<light_purple>%name%</light_purple>"),
@@ -22,11 +22,14 @@ final class GuildStyleDefs {
             "ocean", "CYAN_STAINED_GLASS_PANE", "forest", "GREEN_STAINED_GLASS_PANE",
             "ember", "ORANGE_STAINED_GLASS_PANE", "frost", "LIGHT_BLUE_STAINED_GLASS_PANE");
 
+    static final List<String> ANIMATIONS = List.of("aurora", "shine", "pulse");
+
     static List<String> options(String kind) {
         return switch (kind) {
             case "name" -> COLORS.keySet().stream().sorted().toList();
             case "emblem" -> EMBLEMS.keySet().stream().sorted().toList();
             case "frame" -> FRAMES.keySet().stream().sorted().toList();
+            case "animation" -> ANIMATIONS;
             default -> List.of();
         };
     }

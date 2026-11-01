@@ -835,6 +835,19 @@ shop:
       commands: []
       trademc-export: false
 
+    - id: clan-style-pack
+      name: "<gradient:#67e8f9:#c084fc>Полное оформление клана</gradient>"
+      price: 449
+      days: 30
+      includes-days: 30
+      includes: [clan-name-style, clan-emblem, clan-card-frame]
+      group: ""
+      tag: ""
+      permissions: []
+      commands: []
+      description: "Цвет, значок и рамка на 30 дней; три анимации на выбор бонусом. Личные лицензии, один свой клан, перенос раз в 24 часа, согласие главы. /clan style"
+      trademc-export: false
+
     # --- Наборы -------------------------------------------------------------
     # Набор — рецепт покупки: записей в аккаунте он не создаёт, игрок получает
     # ровно перечисленные товары, каждый со своим сроком (см. /pass my).

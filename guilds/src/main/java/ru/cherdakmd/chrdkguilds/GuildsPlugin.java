@@ -30,6 +30,7 @@ public final class GuildsPlugin extends JavaPlugin {
     private GuildService service;
     private GuildsGui gui;
     private GuildStyleController styles;
+    private GuildStyleGui styleGui;
     private ru.cherdakmd.chrdkregister.api.PaidActions payments;
     private GuildFinance finance;
     private GuildPeaceController peace;
@@ -44,7 +45,7 @@ public final class GuildsPlugin extends JavaPlugin {
             this.messages = Messages.load(this, config.locale(), getLogger());
             this.store = new GuildStore(getDataFolder().toPath(), getLogger());
             this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
-            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 31) throw new IllegalStateException("Нужен Core API 31+");
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 35) throw new IllegalStateException("Нужен Core API 35+ (Core 1.4.279+ для бонуса комплекта)");
             this.payments = new ru.cherdakmd.chrdkregister.api.PaidActions(this,this::coreApi,this::messages,"guilds");
             store.bind(payments.store());
             this.service = new GuildService(config, store);
@@ -56,6 +57,8 @@ public final class GuildsPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(new GuildPeaceListener(this),this);
             this.styles = new GuildStyleController(this);
             this.gui = new GuildsGui(this);
+            this.styleGui = new GuildStyleGui(this);
+            getServer().getPluginManager().registerEvents(styleGui, this);
             getServer().getPluginManager().registerEvents(new GuildsListener(this), this);
             getServer().getPluginManager().registerEvents(gui, this);
             registerCommands();
@@ -65,9 +68,9 @@ public final class GuildsPlugin extends JavaPlugin {
                 try {
                     coreApi.registerProfile("guilds", new GuildsProfile(this));
                     coreApi.registerNameTag("guilds-tab", new GuildNameTag(this,true));
-                    if (config.chatPrefix()) {
-                        coreApi.registerNameTag("guilds", new GuildNameTag(this));
-                    }
+                    // Провайдер сам проверяет chat-prefix, в том числе после reload.
+                    coreApi.registerNameTag("guilds", new GuildNameTag(this));
+                    coreApi.registerNameTag("guilds-chat", new GuildNameTag(this));
                 } catch (RuntimeException | LinkageError error) {
                     getLogger().warning("[CHRDK_Guilds] профиль и тег недоступны "
                             + "(нужно ядро 1.4.156+): " + error);
@@ -96,6 +99,7 @@ public final class GuildsPlugin extends JavaPlugin {
                 coreApi.unregisterProfile("guilds");
                 coreApi.unregisterNameTag("guilds");
                 coreApi.unregisterNameTag("guilds-tab");
+                coreApi.unregisterNameTag("guilds-chat");
             } catch (RuntimeException | LinkageError ignored) {
                 // Ядро старше нужного API — снимать нечего.
             }
@@ -112,6 +116,7 @@ public final class GuildsPlugin extends JavaPlugin {
     /** Один такт: срок приглашений, конец войн и объявления о них. */
     private void tick() {
         if (service == null || payments == null) return;
+        styleGui.refresh();
         payments.tick();
         if (payments.paused()) return;
         long now = System.currentTimeMillis();
@@ -224,6 +229,7 @@ public final class GuildsPlugin extends JavaPlugin {
     }
 
     GuildStyleController styles() { return styles; }
+    GuildStyleGui styleGui() { return styleGui; }
 
     public GuildsGui gui() {
         return gui;

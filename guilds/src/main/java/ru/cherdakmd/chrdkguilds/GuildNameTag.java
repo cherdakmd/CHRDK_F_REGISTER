@@ -41,11 +41,16 @@ final class GuildNameTag implements ChrdkRegisterApi.NameTagProvider {
             return null;
         }
         Guild guild = plugin.service().guildOf(player.getUniqueId());
-        if (guild == null || (!tab && guild.tag().isEmpty())) {
+        if (guild == null) {
             return null;
         }
-        if (tab) return plugin.messages().raw(tabKey(guild.peaceful(),plugin.peace().protects(player.getUniqueId(),System.currentTimeMillis())),
-                "tag",guild.tag().isEmpty()?guild.name():guild.tag()) + decoratedName;
-        return plugin.messages().raw(guild.peaceful()?(plugin.peace().protects(player.getUniqueId(),System.currentTimeMillis())?"peace-chat-prefix":"peace-pending-prefix"):"chat-prefix", "tag", ru.cherdakmd.chrdkregister.Messages.trusted(plugin.styles().tag(guild))) + decoratedName;
+        if (tab) return prefix(tabKey(guild.peaceful(), plugin.peace().protects(player.getUniqueId(), System.currentTimeMillis())), guild) + decoratedName;
+        return prefix(guild.peaceful() ? (plugin.peace().protects(player.getUniqueId(), System.currentTimeMillis())
+                ? "peace-chat-prefix" : "peace-pending-prefix") : "chat-prefix", guild) + decoratedName;
+    }
+    private String prefix(String key, Guild guild) {
+        // Legacy-коды разрешены только в шаблоне владельца, не в подставляемом названии.
+        return net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().serialize(plugin.messages().get(key,
+                "tag", ru.cherdakmd.chrdkregister.Messages.trusted(plugin.styles().tag(guild))));
     }
 }

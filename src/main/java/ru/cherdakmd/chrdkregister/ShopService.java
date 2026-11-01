@@ -209,12 +209,13 @@ public final class ShopService {
                     monthlyPrice(current), monthlyPrice(product.rank()), catalog.maxTotalDays());
             if (plan.status() != Status.GRANTED) return Result.failure(plan.status(), canonical);
         }
+        if (product.retainsBundleEntitlement() && length != product.includedDays()) {
+            return Result.failure(Status.INVALID_BUNDLE, canonical);
+        }
         if (product.isBundle()) {
-            for (String id : product.resolvedIncludes()) {
-                ShopProduct part = catalog.find(id).orElseThrow(); // проверено complete()
-                if (!fitsProduct(canonical, part, now, product.includedDays(part))) {
-                    return Result.failure(Status.TIME_LIMIT, canonical);
-                }
+            if (!ShopDeliveryPolicy.fitsBundle(product, catalog, now, length,
+                    part -> "homes-plus".equals(part.id()) ? 0 : access.store().entitlementUntil(canonical, part.id()))) {
+                return Result.failure(Status.TIME_LIMIT, canonical);
             }
         } else if (!product.hasRank() && !fitsProduct(canonical, product, now, length)) {
             return Result.failure(Status.TIME_LIMIT, canonical);
@@ -237,12 +238,12 @@ public final class ShopService {
         } else {
             long current = "homes-plus".equals(product.id()) ? 0 : access.store().entitlementUntil(canonical, product.id());
             long baseline = ShopEntitlements.extend(now, current, length, catalog.maxTotalDays());
-            until = product.isBundle() ? 0L : grantOne(canonical, product, now, length, discount);
-            bonusDays = product.isBundle() ? 0 : ShopDeliveryPolicy.bonusDays(until, baseline);
+            until = product.isBundle() && !product.retainsBundleEntitlement() ? 0L : grantOne(canonical, product, now, length, discount);
+            bonusDays = product.isBundle() && !product.retainsBundleEntitlement() ? 0 : ShopDeliveryPolicy.bonusDays(until, baseline);
         }
         List<String> included = new ArrayList<>();
         if (product.isBundle()) {
-            if (!product.hasRank()) {
+            if (!product.hasRank() && !product.retainsBundleEntitlement()) {
                 until = now;
                 bonusDays = 0;
             }

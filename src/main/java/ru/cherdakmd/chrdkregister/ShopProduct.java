@@ -89,6 +89,12 @@ public record ShopProduct(
         rank = Math.max(0, Math.min(RankLadder.MAX_LEVEL, rank));
     }
 
+    /** Клановый комплект сохраняет собственный срок как бонусную лицензию анимации.
+     * Старые наборы по-прежнему являются только рецептами, без нового права. */
+    public boolean retainsBundleEntitlement() {
+        return "clan-style-pack".equals(id) && isBundle();
+    }
+
     /** Товар выдаёт временную группу LuckPerms. */
     public boolean hasGroup() {
         return !group.isBlank();

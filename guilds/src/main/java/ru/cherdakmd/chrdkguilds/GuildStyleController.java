@@ -29,8 +29,9 @@ final class GuildStyleController implements AutoCloseable {
         if (!plugin.visible(actor)) return;
         if (!store.healthy() || plugin.payments().paused()) { send(actor, "style-unavailable"); return; }
         offers.values().removeIf(offer -> offer.expires() <= System.currentTimeMillis());
-        if (args.length == 1) { status(actor); return; }
+        if (args.length == 1 || (args.length == 2 && args[1].equalsIgnoreCase("gui"))) { plugin.styleGui().open(actor, "name", 0); return; }
         String action = args[1].toLowerCase(Locale.ROOT);
+        if (action.equals("status")) { status(actor); return; }
         if (action.equals("off")) {
             if (args.length != 3 || !GuildStyleDefs.PRODUCTS.containsKey(args[2])) { send(actor, "style-help"); return; }
             submit(actor, actor.getUniqueId(), () -> store.remove(actor.getUniqueId(), args[2])
@@ -86,7 +87,7 @@ final class GuildStyleController implements AutoCloseable {
                     busy.remove(owner);
                     if (actor.isOnline()) send(actor, finalResult == GuildStyleStore.Result.OK ? "style-saved"
                             : finalResult == GuildStyleStore.Result.COOLDOWN ? "style-transfer-cooldown" : "style-save-failed");
-                    if (finalResult == GuildStyleStore.Result.OK) plugin.gui().refresh();
+                    if (finalResult == GuildStyleStore.Result.OK) { plugin.gui().refresh(); plugin.styleGui().refresh(); }
                 });
             });
             send(actor, "style-saving");
@@ -94,7 +95,7 @@ final class GuildStyleController implements AutoCloseable {
     }
     private void status(Player actor) {
         send(actor, "style-help"); send(actor, "style-rules");
-        for (String kind : List.of("name", "emblem", "frame")) {
+        for (String kind : List.of("name", "emblem", "frame", "animation")) {
             long until = plugin.coreApi().entitlementUntil(actor.getName(), GuildStyleDefs.PRODUCTS.get(kind));
             plugin.messages().send(actor, "style-license", "kind", plugin.messages().plain("style-kind-" + kind),
                     "until", until > System.currentTimeMillis() ? GuildPeaceController.time(until) : plugin.messages().plain("style-not-owned"));
@@ -107,14 +108,35 @@ final class GuildStyleController implements AutoCloseable {
                     "move", GuildPeaceController.time(row.movedAt() + GuildStyleStore.TRANSFER_COOLDOWN));
         }
     }
+    void approve(Player leader, Pending expected) {
+        if (pending(leader).contains(expected)) command(leader, new String[]{"style", "accept", expected.owner()});
+        else send(leader, "style-no-offer");
+    }
     String active(Guild guild, String kind) {
         if (guild == null || !store.healthy() || !plugin.config().enabled() || plugin.coreApi() == null || plugin.payments().paused()) return null;
         return GuildStylePolicy.active(store.forGuild(guild.id()), guild, kind, System.currentTimeMillis(),
                 row -> plugin.coreApi().entitlementUntil(row.name(), GuildStyleDefs.PRODUCTS.get(kind)),
                 row -> row.owner().equals(plugin.coreApi().knownBankPlayer(row.name())));
     }
-    String name(Guild guild) { return GuildStyleDefs.name(guild.name(), active(guild, "name"), active(guild, "emblem")); }
-    String tag(Guild guild) { return GuildStyleDefs.name(guild.tag(), active(guild, "name"), active(guild, "emblem")); }
+    String name(Guild guild) { return render(guild, guild.name()); }
+    String tag(Guild guild) { return render(guild, guild.tag().isEmpty() ? guild.name() : guild.tag()); }
+    private String render(Guild guild, String text) {
+        return GuildStyleAnimation.render(text, active(guild, "name"), active(guild, "emblem"),
+                active(guild, "animation"), System.currentTimeMillis());
+    }
+    GuildStyleStore.Row selection(UUID owner) { return store.of(owner); }
+    record Pending(String owner, String kind, String preset, long expires) { }
+    List<Pending> pending(Player leader) {
+        Guild guild = plugin.service().guildOf(leader.getUniqueId());
+        if (guild == null || !guild.leader().equals(leader.getUniqueId())) return List.of();
+        long now = System.currentTimeMillis();
+        return offers.values().stream().filter(offer -> offer.guild().equals(guild.id()) && offer.expires() > now)
+                .filter(offer -> {
+                    Player buyer = Bukkit.getPlayerExact(offer.name());
+                    return buyer != null && guild.isMember(buyer.getUniqueId()) && plugin.visible(buyer) && licensed(buyer, offer.kind());
+                })
+                .sorted(Comparator.comparing(Offer::name)).map(offer -> new Pending(offer.name(), offer.kind(), offer.preset(), offer.expires())).toList();
+    }
     void frame(Inventory inventory, Guild guild) {
         String preset = active(guild, "frame"); if (preset == null) return;
         Material material = Material.matchMaterial(GuildStyleDefs.FRAMES.get(preset)); if (material == null) return;

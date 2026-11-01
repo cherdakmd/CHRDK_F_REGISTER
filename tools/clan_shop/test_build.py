@@ -97,7 +97,7 @@ class ClanShopTest(unittest.TestCase):
         source = (kit.ROOT / "guilds/src/main/java/ru/cherdakmd/chrdkguilds/GuildStyleDefs.java").read_text(encoding="utf-8")
         colors = source.split("COLORS =", 1)[1].split("static final", 1)[0]
         emblems = source.split("EMBLEMS =", 1)[1].split("static final", 1)[0]
-        frames = source.split("FRAMES =", 1)[1].split("static List", 1)[0]
+        frames = source.split("FRAMES =", 1)[1].split("static final List", 1)[0]
         self.assertEqual(12, len(re.findall(r'Map.entry\("([a-z]+)"', colors)))
         self.assertEqual(8, len(re.findall(r'"([a-z]+)",\s*"', emblems)))
         self.assertEqual(6, len(re.findall(r'"([a-z]+)",\s*"', frames)))
