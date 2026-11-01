@@ -52,9 +52,10 @@ class LuckPermsBootstrapTest {
         assertFalse(base.permissions().isEmpty(), "default наполняется правами игрока");
         assertTrue(base.permissions().contains("chrdkregister.menu"));
         assertTrue(admin.permissions().contains("chrdkregister.admin"));
-        assertTrue(base.permissions().contains("chrdklottery.use"));
-        assertTrue(admin.permissions().contains("chrdklottery.admin"));
-        assertFalse(base.permissions().contains("chrdklottery.admin"));
+        for (String prefix : List.of("chrdklottery.", "chrdkparty.", "chrdkref.", "chrdkevents.")) {
+            assertFalse(base.permissions().stream().anyMatch(key -> key.startsWith(prefix)));
+            assertFalse(admin.permissions().stream().anyMatch(key -> key.startsWith(prefix)));
+        }
         assertTrue(base.permissions().contains("chrdkauction.use"));
         assertTrue(admin.permissions().contains("chrdkauction.admin"));
         assertFalse(base.permissions().contains("chrdkauction.admin"));

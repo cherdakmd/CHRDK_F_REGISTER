@@ -51,7 +51,6 @@ public final class EconomyTariffMigration {
                 result.put("market.min-price", new Change(20, 100));
                 result.put("market.fee-percent", new Change(5, 10));
             }
-            case "CHRDK_Lottery" -> result.put("tickets.cost-diamonds", new Change(2, 20));
             case "CHRDK_Guilds" -> {
                 result.put("general.creation-cost", new Change(27, 270));
                 result.put("wars.min-wager", new Change(32, 320));

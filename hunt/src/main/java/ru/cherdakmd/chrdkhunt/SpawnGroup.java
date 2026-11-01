@@ -5,7 +5,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
-/** Локальная группа при spawn — не гильдия/party, никаких долговечных списков игроков. */
+/** Локальная группа при spawn — не клан и не долговечная группа, никаких долговечных списков игроков. */
 final class SpawnGroup {
     record Settings(boolean enabled, double radius, int limit) {
         static Settings bounded(boolean enabled, double radius, int limit) {

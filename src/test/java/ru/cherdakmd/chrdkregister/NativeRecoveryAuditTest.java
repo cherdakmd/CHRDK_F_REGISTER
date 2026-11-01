@@ -22,7 +22,7 @@ class NativeRecoveryAuditTest {
     }
     ChargeRecovery.Decision recover(BankCharge.Status status,InventoryTransfer.Inventory bag) throws Exception { return ChargeRecovery.recover(journal(),status,bag,source()); }
     @Test void guildsPermissionIsNotMissingAndUnknownSourcesRemainDenied() {
-        assertEquals("chrdkguilds.use",BankCharge.permission("guilds")); assertEquals("chrdklottery.use",BankCharge.permission("lottery"));
+        assertEquals("chrdkguilds.use",BankCharge.permission("guilds")); assertNull(BankCharge.permission("lottery"),"снятый источник не разрешает новые покупки; квитанции проверяются отдельно");
         assertEquals("chrdkgoals.use",BankCharge.permission("common-goals")); assertEquals("chrdktele.use",BankCharge.permission("teleports")); assertEquals("chrdkclaims.teleport",BankCharge.permission("claim-teleports")); assertNull(BankCharge.permission("other")); assertNull(BankCharge.permission(null));
     }
     @Test void committedCashPublishesOnlyAfterDurableNativeProof() throws Exception {

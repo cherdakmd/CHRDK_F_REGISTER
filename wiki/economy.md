@@ -1,7 +1,7 @@
 ---
 title: "Алмазы и баланс"
 description: "Единый личный счёт, физические предметы и отдельные казны."
-review: [core, diamond-shop, auction, guilds, hunt, claims, teleports, lottery]
+review: [core, diamond-shop, auction, guilds, hunt, claims, teleports]
 ---
 
 ## Что хранит /bal
@@ -79,7 +79,7 @@ review: [core, diamond-shop, auction, guilds, hunt, claims, teleports, lottery]
   новая аренда от **{{fact:rent_min}}/сутки**. Несколько чанков — регулярные расходы,
   не разовая покупка. Храните резерв содержания, иначе возможна потеря защиты.
 - Аукцион от **{{fact:auction_min}}**, комиссия новых лотов **{{fact:auction_fee}}%**;
-  билет лотереи **{{fact:ticket_cost}}**, создание гильдии **{{fact:guild_create}}**.
+  создание гильдии **{{fact:guild_create}}**.
 - Покупка в магазине ×4/×6/×8 по разделам до округления; скупка, заказы и награды
   автоматически не повышаются. Повышенная цена покупки — не обещание дохода продавцу.
 

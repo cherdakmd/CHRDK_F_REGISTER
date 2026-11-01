@@ -32,7 +32,6 @@ groups:
   - shop
   - auction
   - orders
-  - lottery
 - id: progress
   title: Развитие
   description: Ремесло, навыки, таланты и награды за игру.
@@ -58,15 +57,13 @@ groups:
   - cosmetics
 - id: ranks
   title: Ранги и доступ
-  description: Покупки, приглашения и приоритет подключения.
+  description: Ранги, покупки и личные удобства.
   pages:
   - ranks
-  - referrals
 - id: social
   title: Игра вместе
-  description: Отряд, гильдия и собственное оформление.
+  description: Гильдия, общение и собственное оформление.
   pages:
-  - party
   - guilds
   - profile
   - vk

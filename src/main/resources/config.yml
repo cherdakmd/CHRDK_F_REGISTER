@@ -809,11 +809,11 @@ server-menu:
   categories:
     - {"id": "account", "slot": 10, "icon": "PAPER", "name": "<gold><bold>Ранг и аккаунт</bold></gold>", "lore": "<gray>Ранг, оплата, награды входа и защита аккаунта</gray>"}
     - {"id": "progress", "slot": 11, "icon": "EXPERIENCE_BOTTLE", "name": "<gold><bold>Прогресс и награды</bold></gold>", "lore": "<gray>Сезон, задания, навыки, класс и достижения</gray>"}
-    - {"id": "economy", "slot": 12, "icon": "DIAMOND", "name": "<gold><bold>Экономика</bold></gold>", "lore": "<gray>Банк, магазин, аукцион, заказы и лотерея</gray>"}
+    - {"id": "economy", "slot": 12, "icon": "DIAMOND", "name": "<gold><bold>Экономика</bold></gold>", "lore": "<gray>Банк, магазин, аукцион и заказы</gray>"}
     - {"id": "world", "slot": 13, "icon": "GRASS_BLOCK", "name": "<gold><bold>Мир и территории</bold></gold>", "lore": "<gray>Приваты, дома и телепорты</gray>"}
     - {"id": "gear", "slot": 14, "icon": "ANVIL", "name": "<gold><bold>Снаряжение и питомцы</bold></gold>", "lore": "<gray>Чары, тиры, артефакты, косметика и питомцы</gray>"}
     - {"id": "adventure", "slot": 15, "icon": "IRON_SWORD", "name": "<gold><bold>Охота</bold></gold>", "lore": "<gray>Охота, бестиарий и трофеи</gray>"}
-    - {"id": "social", "slot": 16, "icon": "BELL", "name": "<gold><bold>Общество</bold></gold>", "lore": "<gray>Чат, отряд, гильдия</gray>"}
+    - {"id": "social", "slot": 16, "icon": "BELL", "name": "<gold><bold>Общество</bold></gold>", "lore": "<gray>Чат, гильдия, оформление</gray>"}
   # Пункты. category — id раздела; без category пункт живёт на главной странице.
   # Без command — подсказка (клик игнорируется).
   items:
@@ -842,7 +842,6 @@ server-menu:
     - {"category": "progress", "icon": "IRON_SWORD", "name": "<gold><bold>Класс и таланты</bold></gold>", "lore": "<gray>Выбор класса и дерево талантов</gray>", "command": "class menu", "plugin": "CHRDK_Classes", "permission": "chrdkclasses.use"}
     - {"category": "progress", "icon": "IRON_PICKAXE", "name": "<gold><bold>Профессии</bold></gold>", "lore": "<gray>Ремесло, опыт и прибавки</gray>", "command": "prof menu", "plugin": "CHRDK_Professions", "permission": "chrdkprofessions.use"}
     - {"category": "progress", "icon": "BEACON", "name": "<gold><bold>Общие цели</bold></gold>", "lore": "<gray>Вклад в цели всего сообщества</gray>", "command": "goals", "plugin": "CHRDK_CommonGoals", "permission": "chrdkgoals.use"}
-    - {"category": "progress", "icon": "PLAYER_HEAD", "name": "<gold><bold>Пригласить друга</bold></gold>", "lore": "<gray>Реферальный статус и бонусные дни</gray>", "command": "ref", "plugin": "CHRDK_Referrals", "permission": "chrdkref.use"}
     # ------------------------------ экономика ------------------------------
     - {"category": "economy", "icon": "GOLD_INGOT", "name": "<gold><bold>Мой баланс</bold></gold>", "lore": "<gray>Счёт банка и алмазы в инвентаре</gray>\n<dark_gray>/bal stats · /pay ник сумма → confirm</dark_gray>", "command": "bal", "permission": "chrdkregister.bal"}
     - {"category": "economy", "icon": "DIAMOND", "name": "<gold><bold>Топ богачей</bold></gold>", "lore": "<gray>Кто копит алмазы усерднее всех</gray>", "command": "baltop", "permission": "chrdkregister.baltop"}
@@ -852,7 +851,6 @@ server-menu:
     - {"category": "economy", "icon": "GOLD_BLOCK", "name": "<gold><bold>Аукцион игроков</bold></gold>", "lore": "<gray>Лоты и подтверждение покупки</gray>\n<dark_gray>Выставить: /auction sell цена</dark_gray>", "command": "auction", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
     - {"category": "economy", "icon": "ENDER_CHEST", "name": "<gold><bold>Почта аукциона</bold></gold>", "lore": "<gray>Купленное и возврат непроданного</gray>", "command": "auction mail", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
     - {"category": "economy", "icon": "OAK_SIGN", "name": "<gold><bold>Доска заказов</bold></gold>", "lore": "<gray>Заказы от ботов: принеси и получи</gray>", "command": "orders list", "plugin": "CHRDK_Orders", "permission": "chrdkorders.use"}
-    - {"category": "economy", "icon": "SUNFLOWER", "name": "<gold><bold>Лотерея недели</bold></gold>", "lore": "<gray>Банк, шанс и время розыгрыша</gray>", "command": "lottery info", "plugin": "CHRDK_Lottery", "permission": "chrdklottery.use"}
     - {"category": "economy", "icon": "HOPPER", "name": "<gold><bold>Бюджет приватов</bold></gold>", "lore": "<gray>Личный /bal и запас на 3 суток</gray>\n<dark_gray>/claim budget 1–30 · не календарь списаний</dark_gray>", "command": "claim budget", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
     # ------------------------------ мир ------------------------------
     - {"category": "world", "icon": "MAP", "name": "<gold><bold>Мои территории</bold></gold>", "lore": "<gray>Меню приватов: клик — телепорт</gray>\n<dark_gray>Список чанков и витрина продаж</dark_gray>", "command": "claim menu", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
@@ -873,7 +871,6 @@ server-menu:
     - {"category": "adventure", "icon": "BOW", "name": "<gold><bold>Охота</bold></gold>", "lore": "<gray>Пять семейств, трофеи и моб-ключи</gray>", "command": "hunt", "plugin": "CHRDK_Hunt", "permission": "chrdkhunt.use"}
     # ------------------------------ общество ------------------------------
     - {"category": "social", "icon": "FEATHER", "name": "<gold><bold>Чат</bold></gold>", "lore": "<gray>Клик — переключить канал</gray>\n<dark_gray>Локальный слышат рядом, глобальный — все</dark_gray>", "command": "chat"}
-    - {"category": "social", "icon": "SHIELD", "name": "<gold><bold>Отряд</bold></gold>", "lore": "<gray>Вместе: приглашения и общий чат</gray>", "command": "party", "plugin": "CHRDK_Party", "permission": "chrdkparty.use"}
     - {"category": "social", "icon": "WHITE_BANNER", "name": "<gold><bold>Гильдия</bold></gold>", "lore": "<gray>Казна, ранги и войны</gray>", "command": "guild menu", "plugin": "CHRDK_Guilds", "permission": "chrdkguilds.use"}
     # 1.4.183: свой ник — что видно в табе и чате. 1.4.186: каждое звание отдельно.
     # Настройка личная, права и прогресс не меняет.
@@ -1064,9 +1061,9 @@ notifications:
   discord-webhook-url: ""
   # Какие события отправлять: pass.granted, pass.revoked, bruteforce.alert, totp.reset, password.reset,
   # multialt.alert, donate.pending, donatepay.error, donatepay.down, donatepay.up,
-  # chat.mute, totp.enabled, totp.disabled, password.change, update.available, lottery.draw
+  # chat.mute, totp.enabled, totp.disabled, password.change, update.available
   events: [pass.granted, pass.revoked, bruteforce.alert, totp.reset, password.reset, donate.pending,
-          donatepay.error, donatepay.down, donatepay.up, update.available, lottery.draw]
+          donatepay.error, donatepay.down, donatepay.up, update.available]
   # Упоминания в сообщении (например, "<@&1234567890>")
   mentions: []
 
@@ -1213,7 +1210,6 @@ auto-messages:
     - {"text": "<gray>Купленное, возвраты и непроданное — <white>/auction mail</white>. Выручка успешной продажи поступает в <white>/bal</white>; <white>/auction money</white> показывает банк, а не выдаёт отдельный кошелёк.</gray>", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
     - {"text": "<gray>Предмет из руки выставляется через <white>/auction sell цена</white>. Покупка: <white>/auction buy id confirm</white>. Проверяйте свойства вещи, комиссию и сумму до сделки.</gray>", "plugin": "CHRDK_Auction", "permission": "chrdkauction.use"}
     - {"text": "<gray>Ресурсы заказчикам-ботам: <white>/orders list</white>, сдача — <white>/orders deliver номер</white>. Проверяйте срок и награду; репутация доски не равна репутации фракций.</gray>", "plugin": "CHRDK_Orders", "permission": "chrdkorders.use"}
-    - {"text": "<gray>Розыгрыш, банк и расписание — <white>/lottery info</white>, билеты — <white>/lottery buy число</white>. Ожидающий выигрыш: <white>/lottery claim</white>. Покупка билета не гарантирует доход.</gray>", "plugin": "CHRDK_Lottery", "permission": "chrdklottery.use"}
     - {"text": "<gray>Содержание своих чанков идёт с личного <white>/bal</white>. <white>/claim budget 3</white> считает запас с долгом и допустимыми продлениями аренды: предоплата не вычитается, это не календарь списаний. <white>/claim sellback</white> сначала показывает выплату, затем нужен confirm.</gray>", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
     - {"text": "<gray>Аренда чанка — <white>/claim rent</white>. Продление оплачивается с личного <white>/bal</white> арендатора, содержание — со счёта владельца. Нехватка завершает аренду; оплаченный срок защищён, собственность не передаётся.</gray>", "plugin": "CHRDK_Claims", "permission": "chrdkclaims.use"}
     - {"text": "<gray>Ваши цены — <white>/homes prices</white>. Платный <white>/sethome имя</white> сначала показывает стоимость: в той же точке и с тем же взглядом за 30 секунд введите <white>/sethome имя confirm</white>. Перемещения платные и после скидки.</gray>", "plugin": "CHRDK_Teleports", "permission": "chrdktele.use"}
@@ -1223,10 +1219,8 @@ auto-messages:
     - {"text": "<gray>Опасность мира и разбор охоты — <white>/hunt danger</white> и <white>/hunt inspect</white>. Не каждое убийство подходит для награды; спавнерные мобы стандартно исключены.</gray>", "plugin": "CHRDK_Hunt", "permission": "chrdkhunt.use"}
     - {"text": "<gray>Монеты, осколки и ключи охоты — отдельные ресурсы. <white>/hunt stats</white> показывает прогресс, <white>/hunt exchange</white> — обмен по правилам и дневному лимиту.</gray>", "plugin": "CHRDK_Hunt", "permission": "chrdkhunt.use"}
     - {"text": "<gray>Развиваются уже приручённые ванильные кошки и волки: <white>/pet list</white>. Опыт и бонусы зависят от действий и близости владельца; уровень не делает питомца бессмертным.</gray>", "plugin": "CHRDK_Pets", "permission": "chrdkpets.use"}
-    - {"text": "<gray>Соберите отряд: <white>/party create</white>, приглашение — <white>/party invite ник</white>. Бонус требует игры рядом; просто находиться в списке участников недостаточно.</gray>", "plugin": "CHRDK_Party", "permission": "chrdkparty.use"}
     - {"text": "<gray>Постоянное объединение — <white>/guild menu</white>. Казна гильдии отдельна от личного <white>/bal</white>; перед внесением средств и войной проверяйте условия.</gray>", "plugin": "CHRDK_Guilds", "permission": "chrdkguilds.use"}
     - {"text": "<gray>Выбор доступного шлейфа — <white>/cosmetics trails</white>, отключение — <white>/cosmetics off</white>. Каталог не означает владение; право может иметь срок.</gray>", "plugin": "CHRDK_Cosmetics", "permission": "chrdkcosmetics.use"}
-    - {"text": "<gray>Пригласил друг? <white>/ref use его_ник</white> фиксирует привязку по правилам системы. Статус — <white>/ref</white>. Подходящая первая оплата даёт игровой буст, не продление ранга.</gray>", "plugin": "CHRDK_Referrals", "permission": "chrdkref.use"}
     - {"text": "<gray>Поддержать сервер можно через <click:run_command:'/donate'><white>/donate</white></click>. Используйте официальную ссылку, не передавайте деньги по реквизитам из чужих личных сообщений.</gray>", "permission": "chrdkregister.donate"}
     - {"text": "<gray>Привяжите ВКонтакте через <white>/vk link</white>: уведомления о входах, заморозка сессий без риска для пароля, общий чат с беседой группы и однократный игровой буст. Статус — <white>/vk</white>.</gray>", "plugin": "CHRDK_VK", "permission": "chrdkvk.use"}
 

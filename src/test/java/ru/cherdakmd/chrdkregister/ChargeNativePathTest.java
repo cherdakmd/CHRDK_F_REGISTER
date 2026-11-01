@@ -21,7 +21,7 @@ class ChargeNativePathTest {
         assertTrue(executor.indexOf("InventoryTransfer.recover(")<executor.indexOf("source.publish("));
         assertTrue(executor.indexOf("source.publish(")<executor.indexOf("journal.complete("));
         String permission=Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkregister/api/BankCharge.java"));
-        for(String source:new String[]{"lottery","common-goals","teleports","claim-teleports","guilds"}) assertTrue(permission.contains("case \""+source+"\""));
+        for(String source:new String[]{"common-goals","teleports","claim-teleports","guilds"}) assertTrue(permission.contains("case \""+source+"\""));
         assertFalse(code.contains("deposit(")); assertFalse(code.contains("dropItem"));
     }
 }

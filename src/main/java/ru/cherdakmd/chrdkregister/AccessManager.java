@@ -1601,7 +1601,7 @@ public final class AccessManager {
      *
      * <p>Событие {@link PassGrantedEvent} здесь не поднимается намеренно: это
      * сигнал «ранг куплен/выдан человеком», а награда не должна запускать
-     * реферальные бонусы и прочие реакции на оплату.</p>
+     * повторные награды и прочие реакции на оплату.</p>
      *
      * @param hours  длительность в часах; {@code <= 0} — ничего не делать
      * @param source метка источника для аудита и поздравления (artifacts, battlepass, ...)
@@ -1631,9 +1631,6 @@ public final class AccessManager {
         }
         if (source.startsWith("daily-rewards")) {
             return "наградой ежедневного входа";
-        }
-        if (source.startsWith("referral")) {
-            return "бонусом за приглашённого друга";
         }
         if (source.startsWith("achievements")) {
             return "наградой за достижение";

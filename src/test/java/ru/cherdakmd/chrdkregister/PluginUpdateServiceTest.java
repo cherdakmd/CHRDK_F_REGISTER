@@ -122,7 +122,7 @@ class PluginUpdateServiceTest {
 
     @Test void retiredJarBlocksStagingBeforeAnyDownloadAndNeverDeletesServerFiles() throws Exception {
         Fixture fixture = new Fixture(); fixture.install("CHRDK_Core", "1.4.72");
-        for (String plugin : List.of("CHRDK_Bosses", "CHRDK_Treasures", "CHRDK_Streams", "CHRDK_Events", "CHRDK_Queue")) {
+        for (String plugin : List.of("CHRDK_Bosses", "CHRDK_Treasures", "CHRDK_Streams", "CHRDK_Events", "CHRDK_Queue", "CHRDK_Lottery", "CHRDK_Party", "CHRDK_Referrals")) {
             Path old = root.resolve("renamed-retired-plugin.jar"); byte[] original = jar(plugin, "1.4.72");
             Files.write(old, original);
             try (var updater = fixture.service()) {
@@ -151,8 +151,8 @@ class PluginUpdateServiceTest {
         try (var updater = fixture.service()) {
             var result = updater.execute(true, "1.4.72");
             assertTrue(result.staged());
-            assertEquals(25, result.count());
-            try (var files = Files.list(result.updateDirectory())) { assertEquals(25, files.count()); }
+            assertEquals(22, result.count());
+            try (var files = Files.list(result.updateDirectory())) { assertEquals(22, files.count()); }
             for (var entry : originals.entrySet()) {
                 assertArrayEquals(entry.getValue(), Files.readAllBytes(entry.getKey()));
                 assertArrayEquals(entry.getValue(), Files.readAllBytes(result.backup().resolve(entry.getKey().getFileName())));
@@ -478,7 +478,7 @@ class PluginUpdateServiceTest {
         }
         CommandSender generic = (CommandSender) Proxy.newProxyInstance(CommandSender.class.getClassLoader(), new Class<?>[]{CommandSender.class}, (p, m, a) -> null);
         assertFalse(RegisterCommandHandler.canDownloadUpdates(generic));
-        assertEquals(25, PluginUpdateService.MODULES.size());
+        assertEquals(22, PluginUpdateService.MODULES.size());
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_VK"),
                 "CHRDK_VK публикуется отдельным JAR рядом с общим архивом, а не внутри ZIP");
         Set<String> standalone = Set.of("CHRDK_VK");

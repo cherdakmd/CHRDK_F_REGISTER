@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class EconomyTariffMigrationTest {
     @TempDir Path dir;
     @Test void everyKnownOldTariffChangesExactlyOnce() {
-        for(String plugin:List.of("CHRDK_Core","CHRDK_Teleports","CHRDK_Claims","CHRDK_Auction","CHRDK_Lottery","CHRDK_Guilds")) {
+        for(String plugin:List.of("CHRDK_Core","CHRDK_Teleports","CHRDK_Claims","CHRDK_Auction","CHRDK_Guilds")) {
             var c=new YamlConfiguration();var changes=EconomyTariffMigration.changes(plugin);
             changes.forEach((key,v)->c.set(key,v.previous()));
             assertEquals(changes.size(),EconomyTariffMigration.upgrade(c,changes));

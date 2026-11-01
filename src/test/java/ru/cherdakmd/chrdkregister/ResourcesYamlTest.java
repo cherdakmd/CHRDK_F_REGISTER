@@ -22,9 +22,9 @@ class ResourcesYamlTest {
     private static final List<String> MODULES = List.of(
             "", "achievements", "artifacts", "auction", "battlepass", "claims", "common-goals",
             "classes", "cosmetics", "daily-rewards", "diamond-shop", "enchants", "guilds",
-            "hunt", "lottery",
-            "orders", "party", "pets", "professions", "quests",
-            "ranks", "referrals", "skills", "teleports", "tier-forge", "vk");
+            "hunt",
+            "orders", "pets", "professions", "quests",
+            "ranks", "skills", "teleports", "tier-forge", "vk");
 
     @Test
     void allResourceYamlsParse() throws Exception {
