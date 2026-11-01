@@ -375,5 +375,104 @@ class ReleaseBindingTest(unittest.TestCase):
                 news(self.release(), note={'version': '1.4.272', 'title': 'title', 'caption': 'caption', 'points': points})
 
 
+class ConnectionAndPosterTest(unittest.TestCase):
+    def test_connection_check_never_uploads_or_posts_or_exposes_signed_url(self):
+        t = QueueTransport({'response': {'items': []}},
+                           {'response': {'upload_url': 'https://pu.vk.com/upload?private=SECRET'}})
+        progress = []
+        report = VK(123, 'SECRET', t).check_connection(progress.append)
+        self.assertEqual(2, len(t.calls))
+        self.assertEqual(['wall.get', 'photos.getWallUploadServer'], report['verified'])
+        self.assertFalse(report['published'])
+        self.assertIn('wall.post', report['not_verified'])
+        self.assertNotIn('SECRET', str(report)+str(progress))
+        self.assertEqual(['wall.get', 'photos.getWallUploadServer'], [c[0].rsplit('/', 1)[1] for c in t.calls])
+
+    def test_method_error_is_clear_but_never_echoes_token(self):
+        t = QueueTransport({'error': {'error_code': 27, 'error_msg': 'SECRET'}})
+        with self.assertRaises(SafetyError) as error:
+            VK(123, 'SECRET', t).check_connection(lambda x: None)
+        self.assertIn('wall.get', str(error.exception))
+        self.assertIn('27', str(error.exception))
+        self.assertNotIn('SECRET', str(error.exception))
+        self.assertEqual(1, len(t.calls))
+
+    def test_connection_report_is_not_a_posting_permission_guarantee(self):
+        t = QueueTransport({'response': {'items': []}},
+                           {'error': {'error_code': 7}})
+        progress = []
+        with self.assertRaises(SafetyError):
+            VK(123, 'secret', t).check_connection(progress.append)
+        self.assertEqual(1, len(progress))
+        self.assertIn('wall.get: OK', progress[0])
+
+    def test_read_only_cli_works_with_schedule_disabled_and_without_github(self):
+        class Client:
+            def check_connection(self):
+                return {'group_id': 123, 'published': False, 'verified': [], 'not_verified': ['wall.post']}
+        env = {'GITHUB_REF': 'refs/heads/main', 'GITHUB_EVENT_NAME': 'workflow_dispatch',
+               'VK_AUTOPUBLISH_ENABLED': 'false'}
+        with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ, env, clear=True), \
+                patch('run.configured_vk', return_value=Client()), patch('run.github', side_effect=AssertionError('journal')), \
+                patch('run.validate', side_effect=AssertionError('content')), patch('run.render', side_effect=AssertionError('image')):
+            self.assertEqual(0, run.main(['--check-connection', '--out', folder]))
+            self.assertFalse(json.loads((Path(folder)/'connection.json').read_text())['published'])
+            self.assertFalse((Path(folder)/'card.png').exists())
+
+    def test_checks_and_test_posts_require_manual_trusted_main(self):
+        for option in ('--test-post', '--check-connection'):
+            for env in ({}, {'GITHUB_REF': 'refs/heads/main', 'GITHUB_EVENT_NAME': 'schedule'},
+                        {'GITHUB_REF': 'refs/heads/other', 'GITHUB_EVENT_NAME': 'workflow_dispatch'}):
+                with patch.dict(os.environ, env, clear=True), self.assertRaises(SafetyError):
+                    run.main([option])
+            env = {'GITHUB_REF': 'refs/heads/main', 'GITHUB_EVENT_NAME': 'workflow_dispatch'}
+            with patch.dict(os.environ, env, clear=True), self.assertRaises(SafetyError):
+                run.main([option, '--at', NOW.isoformat()])
+
+    def test_one_test_post_is_durable_and_never_enables_schedule(self):
+        class Client(FakeVK):
+            def check_connection(self):
+                return {'published': False}
+        gh, vk = FakeGH(), Client()
+        env = {'GITHUB_REF': 'refs/heads/main', 'GITHUB_EVENT_NAME': 'workflow_dispatch',
+               'VK_AUTOPUBLISH_ENABLED': 'false'}
+        with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ, env, clear=True), \
+                patch('run.configured_vk', return_value=vk), patch('run.github', return_value=gh):
+            self.assertEqual(0, run.main(['--test-post', '--out', folder]))
+            self.assertEqual(0, run.main(['--test-post', '--out', folder]))
+            self.assertEqual('false', os.environ['VK_AUTOPUBLISH_ENABLED'])
+        self.assertEqual(1, vk.posts)
+        self.assertEqual(1, vk.uploads)
+        key = run.test_post(NOW).key
+        self.assertTrue(key.startswith('test:1.'))
+        self.assertEqual(key, run.test_post(NOW+timedelta(days=100)).key)
+        self.assertEqual('posted', Ledger(gh, 123).locate(key)[1]['status'])
+
+    def test_failed_preflight_never_creates_journal_or_post(self):
+        class Client(FakeVK):
+            def check_connection(self):
+                raise SafetyError('VK wall.get отклонил запрос (код 27)')
+        vk = Client()
+        env = {'GITHUB_REF': 'refs/heads/main', 'GITHUB_EVENT_NAME': 'workflow_dispatch'}
+        with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ, env, clear=True), \
+                patch('run.configured_vk', return_value=vk), patch('run.github', return_value=FakeGH()), \
+                patch('run.Ledger', side_effect=AssertionError('journal')), self.assertRaises(SafetyError):
+            run.main(['--test-post', '--out', folder])
+        self.assertEqual(0, vk.posts)
+        self.assertEqual(0, vk.uploads)
+
+    def test_failures_are_visible_in_github_annotations(self):
+        import io
+        from contextlib import redirect_stdout, redirect_stderr
+        output = io.StringIO()
+        with patch.dict(os.environ, {'GITHUB_ACTIONS': 'true'}), redirect_stdout(output), redirect_stderr(io.StringIO()):
+            run.report_failure('wall.get: отказ%\nпроверка')
+        self.assertIn('::error title=VK publication::wall.get: отказ%25%0Aпроверка', output.getvalue())
+
+    def test_missing_illustration_stops_instead_of_fake_technical_fallback(self):
+        with patch('cards.BACKGROUND', Path('/missing-approved-background.jpg')), self.assertRaises(SafetyError):
+            render(POST, 'should-not-exist.png')
+
+
 if __name__ == '__main__':
     unittest.main()
