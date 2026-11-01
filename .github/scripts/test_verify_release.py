@@ -92,12 +92,14 @@ class ReleaseValidationTest(unittest.TestCase):
         self.assertIn("CHRDK_Core", names)
         self.assertIn("CHRDK_BattlePass", names)
         self.assertIn("CHRDK_Professions", names)
-        self.assertEqual(25, len(names))
+        self.assertEqual(22, len(names))
         self.assertNotIn("CHRDK_VK", names, "CHRDK_VK публикуется отдельно, а не внутри общего ZIP")
         self.assertEqual({"CHRDK_VK": "vk"}, standalone_plugins(root))
         self.assertNotIn("CHRDK_Bosses", names)
         self.assertNotIn("CHRDK_Treasures", names)
         self.assertNotIn("CHRDK_Streams", names)
+        for retired in ("CHRDK_Events", "CHRDK_Lottery", "CHRDK_Party", "CHRDK_Referrals"):
+            self.assertNotIn(retired, names)
         self.assertNotIn("CHRDK_Events", names)
         self.assertNotIn("CHRDK_Queue", names)
 

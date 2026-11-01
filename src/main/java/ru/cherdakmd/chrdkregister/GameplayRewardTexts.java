@@ -6,7 +6,7 @@ import java.util.Set;
 /** Совместимость старых пользовательских messages.yml без перезаписи владельческих файлов. */
 final class GameplayRewardTexts {
     private static final Set<String> MODULES = Set.of("chrdk_achievements", "chrdk_artifacts", "chrdk_battlepass",
-            "chrdk_dailyrewards", "chrdk_orders", "chrdk_referrals", "chrdk_tierforge");
+            "chrdk_dailyrewards", "chrdk_orders", "chrdk_tierforge");
     private GameplayRewardTexts() { }
 
     static String reward(String text) {

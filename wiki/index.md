@@ -22,7 +22,7 @@ CHRDK — выживание с ремеслом, исследованием и 
 | Заработать или купить ресурсы | [Экономика](economy.html) → [магазин](shop.html) → [заказы](orders.html) |
 | Развивать персонажа | [Профессия](professions.html) → [навыки](skills.html) → [класс](classes.html) |
 | Найти снаряжение | [Охота](hunt.html) → [редкости](tierforge.html) → [чары](enchants.html) |
-| Играть вместе | [Отряд](party.html) → [гильдия](guilds.html) |
+| Играть вместе | [Клан](guilds.html) → [общение](chat.html) |
 
 ## Коротко о деньгах
 

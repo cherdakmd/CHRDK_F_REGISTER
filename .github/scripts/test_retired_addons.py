@@ -30,13 +30,14 @@ class RetiredAddonsGuardTest(unittest.TestCase):
         for symbol in ("CHRDK_Bosses", "CHRDK_Treasures", "ru.cherdakmd.chrdktreasures",
                        "chrdk-bosses-1.4.238.jar", "ChrdkTreasureBookInfo", "CHRDK_Streams",
                        "chrdk-streams-1.4.240.jar", "ru.cherdakmd.chrdkstreams", "CHRDK_Events", "chrdk-events-1.4.241.jar",
-                       "ru.cherdakmd.chrdkevents", "CHRDK_Queue", "chrdk-queue-1.4.247.jar", "ru.cherdakmd.chrdkqueue"):
+                       "ru.cherdakmd.chrdkevents", "CHRDK_Queue", "chrdk-queue-1.4.247.jar", "ru.cherdakmd.chrdkqueue", "CHRDK_Lottery", "CHRDK_Party", "CHRDK_Referrals",
+                       "ru.cherdakmd.chrdkparty", "chrdk-lottery-1.4.270.jar", "chrdk-referrals-1.4.270.jar"):
             with self.subTest(symbol=symbol):
                 self.write("enchants/src/main/java/Source.java", f"import {symbol};")
                 self.assertTrue(check(self.root))
 
     def test_retired_pages_are_rejected_even_without_commands(self):
-        for page in ("bosses", "treasures", "streams", "events", "queue"):
+        for page in ("bosses", "treasures", "streams", "events", "queue", "lottery", "party", "referrals"):
             with self.subTest(page=page):
                 self.write("tools/wiki/assets/app.js", f'const href = "{page}.html";')
                 self.assertTrue(check(self.root))
@@ -53,7 +54,8 @@ class RetiredAddonsGuardTest(unittest.TestCase):
         self.assertTrue(check(self.root))
         (self.root / "settings.gradle").unlink()
         for name in ("bosses/build.gradle", "treasures/build/libs/old.jar", "wiki/bosses.md",
-                     "wiki/treasures.md", "docs/TREASURES_ARSENAL.md", "streams/build.gradle", "wiki/streams.md", "events/build.gradle", "wiki/events.md", "queue/build.gradle", "wiki/queue.md"):
+                     "wiki/treasures.md", "docs/TREASURES_ARSENAL.md", "streams/build.gradle", "wiki/streams.md", "events/build.gradle", "wiki/events.md", "queue/build.gradle", "wiki/queue.md", "lottery/build.gradle", "party/build.gradle",
+                     "referrals/build.gradle", "wiki/lottery.md", "wiki/party.md", "wiki/referrals.md"):
             with self.subTest(name=name):
                 with tempfile.TemporaryDirectory() as directory:
                     root = Path(directory)
@@ -64,6 +66,7 @@ class RetiredAddonsGuardTest(unittest.TestCase):
 
     def test_legacy_snapshots_archives_and_test_fixtures_remain_allowed(self):
         for name in ("src/main/resources/presentation-legacy-1.4.238.yml",
+                     "src/main/resources/removal-messages-legacy-1.4.270.yml",
                      "docs/releases/1.4.238.md", "docs/audits/old.md",
                      "src/test/java/LegacyTest.java"):
             self.write(name, "CHRDK_Treasures /boss")
@@ -87,7 +90,7 @@ class RetiredAddonsGuardTest(unittest.TestCase):
         self.assertEqual([], check(self.root))
 
     def test_internal_and_payment_queues_remain_allowed(self):
-        self.write("src/main/java/Worker.java", "ConcurrentLinkedQueue<Runnable> queue; getQueue(); queueSize();")
+        self.write("src/main/java/Worker.java", "ConcurrentLinkedQueue<Runnable> queue; getQueue(); queueSize(); third-party API;")
         self.write("wiki/payments.md", "Очередь решений /pass pending; асинхронная очередь записи")
         self.assertEqual([], check(self.root))
 

@@ -534,7 +534,7 @@ messages:
       - "<green><bold>Первые шаги</bold></green><newline><gray>Не стройтесь у спавна: /rtp перенесёт в случайную точку мира (стоит алмазы). Осмотритесь и поставьте кровать — после смерти вы вернётесь к ней.</gray>"
       - "<yellow><bold>Защита дома</bold></yellow><newline><gray>Купите приват: /claim — это чанк 16×16. Пополняйте казну: /claim deposit, проверка: /claim balance. Команды и карта: /claim help.</gray>"
       - "<aqua><bold>Дом и перемещения</bold></aqua><newline><gray>/sethome дом — сохранить точку, /home дом — вернуться, /homes — список. Позвать к себе: /tpahere ник, прийти к игроку: /tpa ник. Ответ: /tpaccept.</gray>"
-      - "<light_purple><bold>Экономика</bold></light_purple><newline><gray>Магазин: /shop. Аукцион: /ah. Лотерея: /lottery. Ежедневная награда: /daily — не пропускайте стрик. Валюта — алмазы.</gray>"
+      - "<light_purple><bold>Экономика</bold></light_purple><newline><gray>Магазин: /shop. Аукцион: /ah. Ежедневная награда: /daily — не пропускайте стрик. Валюта — алмазы.</gray>"
       - "<red><bold>Развитие</bold></red><newline><gray>Редкости снаряжения: /tiers. Артефакты: /artifacts. Чары: /enchants. Звания за стаж: /ranks. Сезон: /battlepass. Общие цели: /goals. Вся карточка прогресса: /profile.</gray>"
       - "<white><bold>Общение и помощь</bold></white><newline><gray>/chat — локальный и общий чат. /msg ник текст — личное сообщение, /r — ответ. Главное меню: /menu, весь сайт с ценами: /wiki. Эта книга снова: /guide.</gray>"
 

@@ -9,7 +9,6 @@ public record BankCharge(String source, UUID lineage, long sequence, UUID transa
     public static String permission(String source) {
         if(source==null) return null;
         return switch(source) {
-            case "lottery" -> "chrdklottery.use";
             case "common-goals" -> "chrdkgoals.use";
             case "teleports" -> "chrdktele.use";
             case "claim-teleports" -> "chrdkclaims.teleport";
