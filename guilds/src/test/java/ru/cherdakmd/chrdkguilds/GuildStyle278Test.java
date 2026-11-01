@@ -45,6 +45,19 @@ class GuildStyle278Test {
         var recreated=new Guild("clan-b","Alpha","ABC",owner,1000);
         assertNull(GuildStylePolicy.active(rows,recreated,"name",2000,row->3000,row->true));
     }
+    @Test void latestValidSponsorWinsWithoutChangingPriorityOfOtherKinds(@TempDir Path folder) {
+        var store=new GuildStyleStore(folder,logger); UUID other=UUID.randomUUID();
+        store.select(owner,"Steve","clan-a","name","gold",1000);
+        store.select(other,"Alex","clan-a","name","aqua",2000);
+        store.select(owner,"Steve","clan-a","frame","gold",3000);
+        var guild=new Guild("clan-a","Alpha","ABC",owner,1000);
+        guild.addMember(other,GuildRank.MEMBER);
+        var rows=store.forGuild("clan-a");
+        assertEquals("aqua",GuildStylePolicy.active(rows,guild,"name",3000,row->5000,row->true));
+        assertEquals("gold",GuildStylePolicy.active(rows,guild,"name",3000,row->row.owner().equals(other)?3000:5000,row->true));
+        assertEquals("gold",GuildStylePolicy.active(rows,guild,"frame",3000,row->5000,row->true));
+    }
+
     @Test void removingEffectsDoesNotErasePersonalBinding(@TempDir Path folder) {
         var store=new GuildStyleStore(folder,logger);store.select(owner,"Steve","clan-a","name","gold",1000);
         assertTrue(store.clear("clan-a","name")); assertTrue(store.of(owner).choices().isEmpty());

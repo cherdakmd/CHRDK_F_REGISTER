@@ -957,6 +957,15 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
         if (!sender.hasPermission("chrdkguilds.use") || !plugin.config().enabled()) {
             return List.of();
         }
+        if (args.length >= 2 && args[0].equalsIgnoreCase("style")) {
+            if (args.length == 2) return filter(List.of("name","emblem","frame","accept","off","clear"),args[1]);
+            if (args.length == 3) {
+                if (args[1].equalsIgnoreCase("accept")) return filter(Bukkit.getOnlinePlayers().stream().filter(plugin::visible).map(Player::getName).toList(),args[2]);
+                if (args[1].equalsIgnoreCase("off") || args[1].equalsIgnoreCase("clear")) return filter(List.of("name","emblem","frame"),args[2]);
+                return filter(GuildStyleDefs.options(args[1].toLowerCase(Locale.ROOT)),args[2]);
+            }
+            return List.of();
+        }
         if (args.length == 1) {
             return filter(SUBS, args[0]);
         }
