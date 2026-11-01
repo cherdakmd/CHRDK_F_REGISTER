@@ -1,0 +1,110 @@
+# Локализация аддона CHRDK_VK (MiniMessage, подстановки вида %name%)
+
+vk:
+  no-api: "<red>Модуль авторизации CHRDK_Core недоступен.</red>"
+  disabled: "<yellow>Интеграция ВКонтакте временно отключена на сервере.</yellow>"
+  player-only: "<red>Эта команда доступна только игрокам в игре.</red>"
+  need-auth: "<red>Сначала войдите в аккаунт на сервере.</red>"
+  not-linked: "<yellow>Ваш аккаунт ещё не привязан к ВКонтакте. Нажмите <click:run_command:'/vk link'><hover:show_text:'<green>Получить одноразовый код привязки</green>'><white><underlined>/vk link</underlined></white></hover></click>.</yellow>"
+  usage: "<gray>Использование: <aqua>/vk</aqua> <dark_gray>|</dark_gray> <white>/vk [status|link|notify|chat|mentions|unlink]</white></gray>"
+
+  state-yes: "<green>да</green>"
+  state-no: "<gray>нет</gray>"
+  state-on: "<green>вкл</green>"
+  state-off: "<red>выкл</red>"
+  state-frozen: "<red>заморожен</red>"
+  state-active: "<green>разрешён</green>"
+
+  status-header: "<aqua>━━━ Сообщество ВКонтакте CHRDK ━━━</aqua>"
+  status-community: "<gray>Группа: <click:open_url:'%url%'><hover:show_text:'<aqua>Открыть группу ВКонтакте в браузере</aqua>'><underlined><aqua>%url%</aqua></underlined></hover></click></gray>"
+  status-unlinked: "<yellow>Статус: аккаунт ещё не привязан (<click:run_command:'/vk link'><hover:show_text:'<green>Нажмите, чтобы получить код</green>'><green><underlined>/vk link</underlined></green></hover></click>).</yellow>"
+  status-linked: "<gray>Профиль ВК: <white>id%vk_id%</white> <dark_gray>(привязан)</dark_gray></gray>"
+  status-membership: "<gray>Подписка на группу: %member% <dark_gray>·</dark_gray> VK Donut: %donut%</gray>"
+  status-security: "<gray>Оповещения о входах: %notify% <dark_gray>·</dark_gray> Вход в аккаунт: %frozen%</gray>"
+  status-group-chat: "<gray>Мост беседы ВК: %chat_bridge% <dark_gray>·</dark_gray> Видимость: %receive% <dark_gray>·</dark_gray> Пинг @ник в ВК: %mentions%</gray>"
+  status-rewards-hint: "<dark_gray>Подсказка: <click:run_command:'/vk'><hover:show_text:'<aqua>Открыть интерактивное меню ВК</aqua>'><white><underlined>/vk</underlined></white></hover></click> — меню · <click:run_command:'/labels'><hover:show_text:'<aqua>Настроить значок у ника</aqua>'><white><underlined>/labels</underlined></white></hover></click> — значок [ВК].</dark_gray>"
+
+  link-already: "<yellow>Ваш аккаунт уже привязан к профилю <white>id%vk_id%</white>. Для смены сначала выполните <click:run_command:'/vk unlink'><hover:show_text:'<yellow>Отвязать профиль ВКонтакте</yellow>'><white><underlined>/vk unlink</underlined></white></hover></click>.</yellow>"
+  link-not-configured: "<yellow>Бот сообщества ВКонтакте сейчас не настроен администратором.</yellow>"
+  link-cooldown: "<yellow>Подождите ещё <white>%seconds% сек.</white> перед запросом нового кода.</yellow>"
+  link-code-issued:
+    - "<aqua>Одноразовый код привязки ВКонтакте:</aqua> <click:copy_to_clipboard:'%code%'><hover:show_text:'<green>Нажмите, чтобы скопировать код %code%</green>'><bold><gold>[%code%]</gold></bold></hover></click> <dark_gray>(действует %minutes% мин.)</dark_gray>"
+    - "<gray>Откройте сообщения группы <click:open_url:'%url%'><hover:show_text:'<aqua>Открыть группу ВКонтакте в браузере</aqua>'><underlined><aqua>%url%</aqua></underlined></hover></click> и отправьте туда этот код.</gray>"
+  linked-ingame: "<green>✔ Аккаунт успешно привязан к ВКонтакте (<white>id%vk_id%</white>)! Настроить уведомления и мост чата: <click:run_command:'/vk'><hover:show_text:'<aqua>Открыть меню ВКонтакте</aqua>'><white><underlined>/vk</underlined></white></hover></click>.</green>"
+
+  unlink-confirm-prompt: "<gold>⚠ Вы уверены, что хотите отвязать <white>id%vk_id%</white>?</gold> <gray>Нажмите <click:run_command:'/vk unlink confirm'><hover:show_text:'<red>Подтвердить отвязку</red>'><underlined><red>[/vk unlink confirm]</red></underlined></hover></click> в течение 30 сек. (повторная выдача одноразовых XP-бустов невозможна).</gray>"
+  unlink-ok: "<yellow>Привязка к профилю ВКонтакте (<white>id%vk_id%</white>) снята.</yellow>"
+  notify-toggled: "<gray>Уведомления о входах в личные сообщения ВК: %state%.</gray>"
+  chat-toggled: "<gray>Отображение сообщений беседы <aqua>[ВК-чат]</aqua> и записей стены: %state%.</gray>"
+  mentions-toggled: "<gray>Пересылка упоминаний <aqua>@ваш_ник</aqua> в беседу ВК: %state%.</gray>"
+
+  boost-link-granted: "<green>✦ Бонус за привязку ВКонтакте: не-боевой буст <gold>x2 XP</gold> на <white>%hours% ч.</white> активирован!</green>"
+  boost-member-granted: "<green>✦ Спасибо за подписку на группу ВК! Буст <gold>x2 XP</gold> на <white>%hours% ч.</white> и значок в <white>/labels</white> разблокированы!</green>"
+
+  wall-broadcast: "<#0077FF>[ВК]</#0077FF> <white>Новая запись в группе:</white> <gray>%preview%</gray> <click:open_url:'%post_url%'><hover:show_text:'<aqua>Открыть запись ВКонтакте</aqua>'><aqua><underlined>[Читать ↗]</underlined></aqua></hover></click>"
+
+  profile-title: "ВКонтакте"
+  profile-unlinked: "<gray>Не привязан <dark_gray>(/vk)</dark_gray></gray>"
+  profile-linked: "<gray>Профиль: <white>id%vk_id%</white> · Группа: %member%</gray>"
+  profile-donut: "<gray>Поддержка VK Donut: %donut%</gray>"
+
+  gui-title: "<dark_aqua>Сообщество ВКонтакте</dark_aqua>"
+  gui-link-unlinked-name: "<!italic><aqua>Привязать ВКонтакте</aqua>"
+  gui-link-unlinked-lore:
+    - "<!italic><gray>Статус: <yellow>не привязан</yellow></gray>"
+    - "<!italic><gray>Награды: <gold>+%link_hours% ч.</gold> и <gold>+%member_hours% ч. x2 XP</gold></gray>"
+    - "<!italic><dark_gray>▸ Нажмите, чтобы получить одноразовый код</dark_gray>"
+  gui-link-linked-name: "<!italic><green>Профиль ВК: <white>id%vk_id%</white></green>"
+  gui-link-linked-lore:
+    - "<!italic><gray>Подписка на группу: %member%</gray>"
+    - "<!italic><gray>Поддержка VK Donut: %donut%</gray>"
+    - "<!italic><dark_gray>▸ Нажмите для вывода карточки в чат</dark_gray>"
+  gui-notify-name: "<!italic><gold>Оповещения о входах в ЛС ВК</gold>"
+  gui-notify-lore:
+    - "<!italic><gray>Текущий режим: %state%</gray>"
+    - "<!italic><gray>Экстренные тревоги подбора пароля</gray>"
+    - "<!italic><gray>остаются активными всегда.</gray>"
+    - "<!italic><dark_gray>▸ Нажмите, чтобы переключить</dark_gray>"
+  gui-chat-name: "<!italic><#0077FF>Мост беседы ВК и анонсы стены</#0077FF>"
+  gui-chat-lore:
+    - "<!italic><gray>Мост на сервере: %bridge%</gray>"
+    - "<!italic><gray>Показывать вам [ВК-чат]: %receive%</gray>"
+    - "<!italic><gray>Пинговать вас по @нику в ВК: %mentions%</gray>"
+    - "<!italic><dark_gray>▸ ЛКМ — видимость чата · ПКМ — @упоминания</dark_gray>"
+  gui-badge-name: "<!italic><aqua>Косметический значок у ника</aqua>"
+  gui-badge-lore:
+    - "<!italic><gray>Ваш значок: %badge%</gray>"
+    - "<!italic><dark_gray>▸ Нажмите, чтобы открыть меню /labels</dark_gray>"
+  gui-security-name: "<!italic><yellow>Самозащита аккаунта</yellow>"
+  gui-security-lore:
+    - "<!italic><gray>Доступ ко входу: %frozen%</gray>"
+    - "<!italic><gray>В боте ВК доступны кнопки <white>/выход</white></gray>"
+    - "<!italic><gray>и <white>/заморозить</white> в одно касание.</gray>"
+    - "<!italic><dark_gray>▸ Shift + клик — отвязать страницу ВК</dark_gray>"
+  gui-security-shift-hint: "<yellow>Для защиты от случайного нажатия используйте <white>Shift + клик</white> по щиту (или введите <click:run_command:'/vk unlink'><hover:show_text:'<yellow>Отвязать ВКонтакте</yellow>'><white><underlined>/vk unlink</underlined></white></hover></click>).</yellow>"
+  gui-unlink-confirm-name: "<!italic><red><bold>Подтвердите отвязку ВК</bold></red>"
+  gui-unlink-confirm-lore:
+    - "<!italic><gray>Повторная выдача одноразовых XP-бустов</gray>"
+    - "<!italic><gray>после отвязки невозможна.</gray>"
+    - "<!italic><red>▸ Нажмите ещё раз в течение 15 сек. для отвязки</red>"
+  gui-close-name: "<!italic><red>Закрыть</red>"
+
+admin:
+  usage: "<gray>Использование: <aqua>/vkadmin [status|lookup|chatban|unlink|setchat|testchat|sync|reload]</aqua></gray>"
+  status: "<aqua>[CHRDK_VK]</aqua> <gray>API: %configured% · Long Poll: %worker% · Беседа: <white>%chat_peer%</white> · Привязок: <white>%links%</white> · VK Donut: <gold>%donuts%</gold> · Банов чата: <white>%chatbans%</white> · Пост: <white>#%last_post%</white></gray>"
+  setchat-ok: "<green>Мост глобального чата подключён к беседе ВК <white>peer_id=%peer_id%</white>.</green>"
+  setchat-off: "<yellow>Оперативная привязка беседы сброшена (значение из config.yml: <white>%config_peer%</white>).</yellow>"
+  setchat-invalid: "<red>Укажите корректный peer_id беседы ВКонтакте (число >= 2000000001, узнать в беседе: /chatid) или off.</red>"
+  testchat-not-ready: "<yellow>Мост беседы ВК не активен: проверьте токен группы и peer_id (<white>/vkadmin setchat [peer_id]</white>).</yellow>"
+  testchat-queued: "<green>Тестовое сообщение отправлено в беседу ВК (<white>peer_id=%peer_id%</white>).</green>"
+  lookup-none: "<yellow>Привязка ВКонтакте для <white>%player%</white> не найдена.</yellow>"
+  lookup-vk-unlinked: "<yellow>Профиль <white>id%vk_id%</white> сейчас не привязан ни к одному игроку <dark_gray>(бан моста чата: %chatban%)</dark_gray>.</yellow>"
+  lookup-found: "<aqua>[CHRDK_VK]</aqua> <white>%player%</white> <gray>→ <white>id%vk_id%</white> · группа: %member% · Donut: %donut% · оповещения: %notify% · вход: %frozen% · бан моста: %chatban%</gray>"
+  chatban-invalid: "<red>Не удалось распознать игрока или профиль ВК: <white>%target%</white> (укажите ник или id12345).</red>"
+  chatban-added: "<yellow>Профиль <white>%target%</white> заблокирован в мосте беседы <aqua>[ВК-чат]</aqua>.</yellow>"
+  chatban-removed: "<green>Блокировка моста беседы снята для <white>%target%</white>.</green>"
+  unlink-ok: "<green>Привязка ВКонтакте игрока <white>%player%</white> сброшена администратором.</green>"
+  sync-started: "<gray>Запущена внеочередная сверка подписок, стены и VK Donut…</gray>"
+  sync-done: "<green>Сверка завершена: проверено привязок <white>%checked%</white>, активных VK Donut: <gold>%donuts%</gold>.</green>"
+  reloaded: "<green>Конфигурация и сообщения CHRDK_VK перезагружены.</green>"
+  reload-failed: "<red>Ошибка при перезагрузке CHRDK_VK — подробности в консоли сервера.</red>"

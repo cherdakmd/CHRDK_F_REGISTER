@@ -65,7 +65,7 @@ vk:
     - "<!italic><gray>Экстренные тревоги подбора пароля</gray>"
     - "<!italic><gray>остаются активными всегда.</gray>"
     - "<!italic><dark_gray>▸ Нажмите, чтобы переключить</dark_gray>"
-  gui-chat-name: "<!italic><#0077FF>Мост беседы ВК и анонсы стены</#0077FF>"
+  gui-chat-name: "<!italic><#0077FF>Беседа сообщества и игровой чат</#0077FF>"
   gui-chat-lore:
     - "<!italic><gray>Мост на сервере: %bridge%</gray>"
     - "<!italic><gray>Показывать вам [ВК-чат]: %receive%</gray>"
@@ -96,7 +96,7 @@ admin:
   setchat-off: "<yellow>Оперативная привязка беседы сброшена (значение из config.yml: <white>%config_peer%</white>).</yellow>"
   setchat-invalid: "<red>Укажите корректный peer_id беседы ВКонтакте (число >= 2000000001, узнать в беседе: /chatid) или off.</red>"
   testchat-not-ready: "<yellow>Мост беседы ВК не активен: проверьте токен группы и peer_id (<white>/vkadmin setchat [peer_id]</white>).</yellow>"
-  testchat-queued: "<green>Тестовое сообщение отправлено в беседу ВК (<white>peer_id=%peer_id%</white>).</green>"
+  testchat-queued: "<green>Тестовое сообщение поставлено в очередь в беседу ВК (<white>peer_id=%peer_id%</white>).</green>"
   lookup-none: "<yellow>Привязка ВКонтакте для <white>%player%</white> не найдена.</yellow>"
   lookup-vk-unlinked: "<yellow>Профиль <white>id%vk_id%</white> сейчас не привязан ни к одному игроку <dark_gray>(бан моста чата: %chatban%)</dark_gray>.</yellow>"
   lookup-found: "<aqua>[CHRDK_VK]</aqua> <white>%player%</white> <gray>→ <white>id%vk_id%</white> · группа: %member% · Donut: %donut% · оповещения: %notify% · вход: %frozen% · бан моста: %chatban%</gray>"
@@ -104,7 +104,14 @@ admin:
   chatban-added: "<yellow>Профиль <white>%target%</white> заблокирован в мосте беседы <aqua>[ВК-чат]</aqua>.</yellow>"
   chatban-removed: "<green>Блокировка моста беседы снята для <white>%target%</white>.</green>"
   unlink-ok: "<green>Привязка ВКонтакте игрока <white>%player%</white> сброшена администратором.</green>"
-  sync-started: "<gray>Запущена внеочередная сверка подписок, стены и VK Donut…</gray>"
+  sync-started: "<gray>Запущена внеочередная сверка подписок и VK Donut…</gray>"
   sync-done: "<green>Сверка завершена: проверено привязок <white>%checked%</white>, активных VK Donut: <gold>%donuts%</gold>.</green>"
   reloaded: "<green>Конфигурация и сообщения CHRDK_VK перезагружены.</green>"
   reload-failed: "<red>Ошибка при перезагрузке CHRDK_VK — подробности в консоли сервера.</red>"
+
+# Личные уведомления бота: обычный текст без игровых click/hover-тегов.
+bot:
+  login-alert: "✅ Вход в CHERDAK\nИгрок: %player%\nСпособ: %method%\nIP: %ip%\nНе ваш вход? Отправьте /заморозить в личные сообщения сообщества. Пароль и коды 2FA боту не нужны."
+  brute-alert: "⚠ Неудачные попытки входа в CHERDAK\nИгрок: %player%\nПопыток: %failures%\nIP: %ip%\n%status%\nДля защиты аккаунта отправьте /заморозить в личные сообщения сообщества. Никому не передавайте пароль и коды 2FA."
+  expiry-alert: "⏳ Срок ранга CHERDAK\nАккаунт: %player%\nОсталось примерно %hours% ч., до %until%.\nПрава и точный срок: /rank my в игре. Привязка ВК не продлевает ранг."
+  news-links: "📰 Новости CHERDAK: %url%\n📦 Выпуски комплекта: https://github.com/cherdakmd/CHRDK_F_REGISTER/releases\nНовость о выпуске не означает, что обновление уже установлено на игровой сервер."

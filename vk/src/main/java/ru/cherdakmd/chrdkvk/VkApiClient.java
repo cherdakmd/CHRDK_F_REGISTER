@@ -53,7 +53,7 @@ public final class VkApiClient {
     public static final class HttpTransport implements Transport {
         private final HttpClient client = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
-                .followRedirects(HttpClient.Redirect.NORMAL)
+                .followRedirects(HttpClient.Redirect.NEVER)
                 .build();
 
         @Override
@@ -145,8 +145,14 @@ public final class VkApiClient {
                 + "act=a_check&key=" + encode(endpoint.key())
                 + "&ts=" + encode(endpoint.ts())
                 + "&wait=" + safeWait);
-        String raw = transport.get(uri, Duration.ofSeconds(safeWait + 12L));
-        JsonObject root = JsonParser.parseString(raw).getAsJsonObject();
+        String raw;
+        try {
+            raw = transport.get(uri, Duration.ofSeconds(safeWait + 12L));
+        } catch (IOException exception) {
+            // URI Long Poll содержит секретный key; исходное исключение не логируем.
+            throw new IOException("VK Long Poll network error; details hidden");
+        }
+        JsonObject root = parseResponseObject(raw);
         int failed = root.has("failed") && !root.get("failed").isJsonNull()
                 ? root.get("failed").getAsInt() : 0;
         String nextTs = stringOrEmpty(root, "ts");
@@ -178,7 +184,7 @@ public final class VkApiClient {
         String cropped = text.length() > 3_800 ? text.substring(0, 3_800) + "…" : text;
         Map<String, String> params = new LinkedHashMap<>();
         params.put("peer_id", Long.toString(peerId));
-        params.put("random_id", Long.toString(ThreadLocalRandom.current().nextLong(1L, Long.MAX_VALUE)));
+        params.put("random_id", Integer.toString(ThreadLocalRandom.current().nextInt(1, Integer.MAX_VALUE)));
         params.put("message", cropped);
         params.put("dont_parse_links", "1");
         if (keyboardJson != null && !keyboardJson.isBlank()) {
@@ -485,18 +491,32 @@ public final class VkApiClient {
         form.append("&v=").append(encode(apiVersion));
 
         URI uri = URI.create(apiBaseUrl + method);
-        String body = transport.postForm(uri, form.toString(), Duration.ofSeconds(15));
-        JsonObject root = JsonParser.parseString(body).getAsJsonObject();
+        String body;
+        try {
+            body = transport.postForm(uri, form.toString(), Duration.ofSeconds(15));
+        } catch (IOException exception) {
+            throw new IOException("VK API network error in " + method + "; details hidden");
+        }
+        JsonObject root = parseResponseObject(body);
         if (root.has("error") && root.get("error").isJsonObject()) {
             JsonObject err = root.getAsJsonObject("error");
-            int code = err.has("error_code") ? err.get("error_code").getAsInt() : -1;
-            String msg = stringOrEmpty(err, "error_msg");
-            throw new IOException("VK API error " + code + " in " + method + ": " + msg);
+            JsonElement value = err.get("error_code");
+            int code = value != null && value.isJsonPrimitive() && value.getAsJsonPrimitive().isNumber()
+                    ? value.getAsInt() : -1;
+            throw new IOException("VK API error " + code + " in " + method + "; response hidden");
         }
         if (!root.has("response")) {
             throw new IOException("VK API missing response field in " + method);
         }
         return root.get("response");
+    }
+
+    private static JsonObject parseResponseObject(String body) throws IOException {
+        try {
+            return JsonParser.parseString(body).getAsJsonObject();
+        } catch (RuntimeException exception) {
+            throw new IOException("VK API malformed response; contents hidden");
+        }
     }
 
     private static String encode(String value) {

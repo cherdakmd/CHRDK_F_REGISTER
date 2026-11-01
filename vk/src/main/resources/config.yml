@@ -13,7 +13,7 @@ community:
   url: "https://vk.ru/chrdk_reborn"
   # Публичный адрес полевого справочника сервера (для команды /вики в боте и беседе)
   wiki-url: "https://cherdakmd.github.io/CHRDK_F_REGISTER/"
-  # Ключ доступа сообщества с правами manage, messages, wall (хранить в секрете!)
+  # Ключ сообщества для сообщений, подписок и Bots Long Poll (хранить в секрете!)
   access-token: ""
   # Версия VK API и базовый адрес методов
   api-version: "5.199"
@@ -108,8 +108,10 @@ group-chat:
 wall:
   # Автоматически объявлять новые записи стены сообщества в игровой чат
   announce-new-posts: true
-  # Резервный интервал проверки wall.get в минутах (0 = только мгновенный Long Poll)
-  poll-minutes: 10
+  # Устаревший параметр: игнорируется. wall.get не поддерживает ключ сообщества.
+  # Анонсы стены поступают только из wall_post_new через Bots Long Poll.
+  # Новости в беседу отправляет отдельный workflow GitHub Actions, не этот модуль.
+  poll-minutes: 0
   # Пропускать закреплённые, рекламные записи и репосты без собственного текста
   ignore-pinned: true
   ignore-ads: true

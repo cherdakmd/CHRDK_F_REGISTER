@@ -24,6 +24,29 @@ class VkMessagesTest {
     private static final Path LEGACY_1_4_268 = Path.of("src/main/resources/vk-messages-legacy-1.4.268.yml");
 
     @Test
+    void stock275MigratesAndCustomTextsStayUntouched(@TempDir Path tempDir) throws Exception {
+        Path legacy = Path.of("src/main/resources/vk-messages-legacy-1.4.275.yml");
+        Path live = tempDir.resolve("messages.yml");
+        Files.copy(legacy, live);
+        assertTrue(VkPlugin.migrateLegacyMessagesFile(live, () -> uncheckedStream(STOCK_MESSAGES),
+                () -> uncheckedStream(legacy), Logger.getAnonymousLogger()));
+        assertTrue(Files.readString(live).contains("bot:"));
+        assertFalse(VkPlugin.migrateLegacyMessagesFile(live, () -> uncheckedStream(STOCK_MESSAGES),
+                () -> uncheckedStream(legacy), Logger.getAnonymousLogger()));
+        Files.writeString(live, Files.readString(legacy).replace("Мост беседы ВК и анонсы стены", "Мой заголовок"));
+        assertTrue(VkPlugin.migrateLegacyMessagesFile(live, () -> uncheckedStream(STOCK_MESSAGES),
+                () -> uncheckedStream(legacy), Logger.getAnonymousLogger()));
+        assertTrue(Files.readString(live).contains("Мой заголовок"));
+        try (InputStream in = Files.newInputStream(STOCK_MESSAGES)) {
+            Messages messages = Messages.from(in, null, Logger.getAnonymousLogger());
+            String text = messages.plain("bot.login-alert", "player", "Steve", "method", "пароль", "ip", "скрыт");
+            assertTrue(text.contains("Steve") && text.contains("/заморозить"));
+            assertTrue(text.contains("\n") && !text.contains("%"));
+            assertTrue(messages.plain("bot.news-links", "url", "https://vk.ru/chrdk_reborn").contains("не означает"));
+        }
+    }
+
+    @Test
     void linkCodeAndCommunityClicksRenderValidClickEventsWithoutRawMarkup() throws Exception {
         try (InputStream defaults = Files.newInputStream(STOCK_MESSAGES)) {
             Messages msg = Messages.fromChecked(defaults, STOCK_MESSAGES, Logger.getAnonymousLogger());

@@ -44,12 +44,7 @@ public final class VkPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
-        migrateLegacyMessagesFile(
-                getDataFolder().toPath().resolve("messages.yml"),
-                () -> getResource("messages.yml"),
-                () -> getResource(LEGACY_MESSAGES_1_4_268),
-                getLogger()
-        );
+        migrateBundledMessages(getDataFolder().toPath().resolve("messages.yml"));
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
         this.config = VkConfig.parse(getConfig());
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
@@ -113,12 +108,7 @@ public final class VkPlugin extends JavaPlugin {
     public boolean reloadBundle() {
         Path folder = getDataFolder().toPath();
         try {
-            migrateLegacyMessagesFile(
-                    folder.resolve("messages.yml"),
-                    () -> getResource("messages.yml"),
-                    () -> getResource(LEGACY_MESSAGES_1_4_268),
-                    getLogger()
-            );
+            migrateBundledMessages(folder.resolve("messages.yml"));
             ConfigSnapshot<VkConfig> snapshot = ConfigSnapshot.load(
                     folder.resolve("config.yml"),
                     getResource("config.yml"),
@@ -138,8 +128,15 @@ public final class VkPlugin extends JavaPlugin {
         }
     }
 
+    private void migrateBundledMessages(Path userFile) {
+        for (String legacy : List.of("vk-messages-legacy-1.4.275.yml", LEGACY_MESSAGES_1_4_268)) {
+            migrateLegacyMessagesFile(userFile, () -> getResource("messages.yml"),
+                    () -> getResource(legacy), getLogger());
+        }
+    }
+
     /**
-     * Обновляет на диске стоковые строки {@code messages.yml} из версии 1.4.268 (где подстановки
+     * Обновляет на диске стоковые строки {@code messages.yml} из известного стокового снимка (в1.4.268 подстановки
      * были записаны в угловых скобках {@code <url>}/{@code <code>} вместо {@code %url%}/{@code %code%}),
      * сохраняя любые пользовательские правки администратора.
      */
@@ -173,7 +170,7 @@ public final class VkPlugin extends JavaPlugin {
                         String freshText = new String(rawCurrent.readAllBytes(), StandardCharsets.UTF_8);
                         if (SafeJsonWriter.write(userFile, freshText, logger, "[CHRDK_VK]")) {
                             if (logger != null) {
-                                logger.info("[CHRDK_VK] Обновлён стоковый messages.yml (1.4.268 -> %placeholder%).");
+                                logger.info("[CHRDK_VK] Обновлён стоковый messages.yml до текущей версии.");
                             }
                             return true;
                         }
@@ -200,7 +197,7 @@ public final class VkPlugin extends JavaPlugin {
                 if (SafeJsonWriter.write(userFile, live.saveToString(), logger, "[CHRDK_VK]")) {
                     if (logger != null) {
                         logger.info("[CHRDK_VK] Обновлено " + migratedKeys
-                                + " устаревших шаблонов в messages.yml (1.4.268 -> %placeholder%).");
+                                + " устаревших шаблонов в messages.yml до текущей версии.");
                     }
                     return true;
                 }
