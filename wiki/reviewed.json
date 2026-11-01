@@ -1,183 +1,183 @@
 {
   "pages": {
     "about": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "121a169cd102b402305fd3815def4c0cdc23f8e4716e141a773edb0c3587229b",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "5531cb329093c546bbcb740c5a2c07a884f85ae01fd99dd80340efac5eb74b2f",
       "text": "17788b7b4007e90c62acd266f95cec124e0a53b603a1b2e5d9a7c19fb304c7d9"
     },
     "achievements": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "c65c1e75fe4d11b4dcfc6b55b3ff0817baa381a93f10756dcbaeaa110832832a",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "0fedbdd6c6c81f6c28b477f4233ca57b5602944f07027d07f56a457917feb69b",
       "text": "839d6e42ff5471f7def5f1bcb063709bb4e8ec40a1732a5a1ce55754544329a3"
     },
     "artifacts": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "2ccd1ca85a2b4ac70d0c59aa5f44bb2e9fd4670b4bd5ea022e25f4b6108c70a8",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "845fb93d4b81afba8ebb041fec6c05c44f29b6f6b74c07ca23248cf0e721ab12",
       "text": "a4a922729b6635a6d286fcc3c9f18c8c57a0c98a19ec05c44f8d448dc422a84f"
     },
     "auction": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "8939449ac2309fa2ff0b60d2f3de4464f136adc58850c3c0528dd27ad313db49",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "a790718ab739a33255bf6d545cb0a238d6e7c2e805901329f1ed4096a7dd19fb",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "54ae9ccae515a2f8ec2c6b84d230f1715d99df05496bd46c9461e6ed274336f3",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "bd2bb10bd29cb9dc4b472ae68e5e68b1e614c39852602278a1414dd5df3ebadc",
       "text": "0bb2af9ae7275a308eee69cb6b63893c060bcff763287fe0dfbd1965861c24c8"
     },
     "chat": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "121a169cd102b402305fd3815def4c0cdc23f8e4716e141a773edb0c3587229b",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "5531cb329093c546bbcb740c5a2c07a884f85ae01fd99dd80340efac5eb74b2f",
       "text": "ac4a8e23de6893fab669939fd2882e40f1604f1f8fddeaa1d3d3572d8c3d6572"
     },
     "claims": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "b7d6287fcd27d5c148af2a19c54fcef5c779e8e8e88d4826959ef44e931931ae",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "d7c21ad8bef51e4dcf86ec25660cdfb03f489e2fbe656f6ad265ee6a3e734cea",
       "text": "2a1634efadca1810c82bc496b30432d553c72fb226a5e051443232224a366538"
     },
     "classes": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "639421141ad203e9b3278d4c80808ef501a759df093f600831ac74712a5edabc",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "669fc7a12c71d9d170d6ef1e986a989e11464a96cacd957a4067b96274189580",
       "text": "ee29d92bd4e9527924d14405057fd62402857c1a688439c7b9d86d4c9bf3b546"
     },
     "commands": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "3095447495cf80cb4ddbc2f3b271236700d6483f80ad8588c20bcccd915d8408",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "ee87f9b09fef6e3e28bccd1b835dd97d04acdab731fc1a11d524d442ebcb38e7",
       "text": "5170af8688ec0094f48161c332e5c95516c206065f48391d275c4db5eb2baeed"
     },
     "cosmetics": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "1e1b856d2199fe7e1871f9d0ce69db5e35b7f6fdd447359f07451dde8750274a",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "4ace99511d5f2e3c9304ed79fa18e972c461b35408e2207f035e5449937087c2",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "44f05e05838626162011a8c2f14fe2004c230a235fa49f024ddad9fcc6d5fb46",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "f221e40fb9dbc7bcfa80f5b0718bcb998ed61018f2e2e2fb2bf7e73533ef0735",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "economy": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "2e4d1a31f7fb592a5d6d4ce73b2831ac7869bdf40f09059f98669fa7eebf4003",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "3d3fea84b080d4bf317c760bcff8e6ccb4d3a4d9ec88766d5b50a2b51c6721e3",
       "text": "216cf9a664845fe452abd6742c8d56f486bba98eb4e43fad6fe1276269901369"
     },
     "enchants": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "fc12df5550d5e3d7d3a8d784bba3dc9d88dac404dfbc522bc9833b6bd0c1eaac",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "084d97f47ff60182335e8f0745da8ed5812f0c1e6322112159b006cae3a13a28",
       "text": "70b6bd31d749073c4e4144ebb536661042f7f925d3ccb838f294fb031e4a8558"
     },
     "faq": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "3095447495cf80cb4ddbc2f3b271236700d6483f80ad8588c20bcccd915d8408",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "ee87f9b09fef6e3e28bccd1b835dd97d04acdab731fc1a11d524d442ebcb38e7",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "261368725dfa60338e962a4e4344af0c534774f2ceafa5ba092fd34fdb34694b",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "e2bd678971c4abad3eeda3617bcb9472d8e80646693c3625a1dd1d5a142d7bbd",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "b7d6287fcd27d5c148af2a19c54fcef5c779e8e8e88d4826959ef44e931931ae",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "d7c21ad8bef51e4dcf86ec25660cdfb03f489e2fbe656f6ad265ee6a3e734cea",
       "text": "442f5481c446db06532139f0b7c2f184858d17e99d0bebc46f50adab2aeefb61"
     },
     "hunt": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "191f9126d2e19627950fa6ca0f7fff862578b2ae8f3f61619a137ee6b19673ce",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "6f0c97efe382576d78287d420299266e6c0edde2798ead8db65415b72c12f9c3",
       "text": "3b2066fce021118c9980313351d42317d07f8519b7c1404638d61ce4318d33e8"
     },
     "index": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "96bd05af94751c4e07cec90c349efedc1c68b0b54a64899ef0b6180e2115308d",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "4047195c7991af13981084c4f0fbbdc5879c58664acc9d0a4231b72475d1d569",
       "text": "2d543efd03d060e4d6f09da13921777186f30a145e3614fcc82b1dedcaf07777"
     },
     "lottery": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "ec110fc45a636bb4737b7fc3a0244511270ce1f90dcb9e17206bac371ce2d033",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "6e956030cd069e732a2de98c790e05f39e02fdf99b77a61b0ad424a7b448c6d7",
       "text": "1d05c7d03ba10cbdc51a27bb6cc1ff68ec75f44ff7f8e91d05b92fc08dcd5931"
     },
     "menu": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "3095447495cf80cb4ddbc2f3b271236700d6483f80ad8588c20bcccd915d8408",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "ee87f9b09fef6e3e28bccd1b835dd97d04acdab731fc1a11d524d442ebcb38e7",
       "text": "eaccb7ed1bf84b845f57ab3e722b9e3b706542bfb70c39fa9f82135cc875497c"
     },
     "orders": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "a242fd58a4a4f2a25eb73e3b29bc7438fa988bcf13fa2957f70f5f473b2def65",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "b7d424a0462df0a49380db41ac10f02ede2b2e6fb60a877c656e0dafd39f524f",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "party": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "af6a1298c3b58b0761934fc0f343b4ba31efee1f154894b7eca2a03ea3c8c84d",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "4c85140650198654a205672bad1d0d7b5c9c27fa05c8a85f2ed9259004f26827",
       "text": "1907a324d824df3607e9932362f05cfd65b35cd5e8063296a269802a00c04fe6"
     },
     "pets": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "04e40f6ee08ad2c833fe262aaba57e3abb168b34b49d4a0eeb1b16eced82a634",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "c262d478e19d40825fab392308f1c880db87a8c072e6a8c265d41931885bb93e",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "20ccfd19e860ac50741f099528d772fea5e1066daf34ec332d4d6c85c4d9711d",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "478f1c17fa15f83f40eb3606d91c0c96af85030caef078f0643e9216a54dd084",
       "text": "ced22f9d3bdafb0c5f5e4027849d8cf32dd0530d5a937f0c409e07546439d01a"
     },
     "profile": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "67b2f71c02efb53b22a46736f80708ecefffc3cb2b001cd95538bd2e80fbaabb",
+      "reason": "1.4.269: строгая идемпотентность миграции messages.yml в VkPlugin",
+      "sources": "d65a8f48d0a140694fdeacfd0045e3018153b83e65afc4f996f00f22375d594f",
       "text": "b1ddb608cb3942be099223883d3c545c9ab409018276b58b94f5e85e796a3970"
     },
     "quests": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "96f4cff61f41b39447137f19211a3bf6fba42aac359ca2b39727949a377d452a",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "7cc2fcaf7d7696fa45c240eb7cba57e3f49ddb451d2ea8ec95f90e1202bbff5e",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "a68204516fa4e3cfaafb33e13fae6ae536cef570d59dd6d2e5a0b2cf86096d39",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "571c2fce4145691d9283063f582482aceae475248300833a3abd52c958d580da",
       "text": "75ea871bcb9481fc9eaa1e1f260b628010a904955fe7501d40cb257b9b455c50"
     },
     "referrals": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "f44f01b115b0599c865a0efc0266fbdb130841fd6a6c4210ed3fa313f32c2460",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "a9dd3f1e585b1add27a1e3564803a1dbc2d112ab6df118efb4953e9fa2bc74b0",
       "text": "802956a7c425a8c14bd0cbd56b600cbab5027bd5bc72c0b28232fd5ba5055b24"
     },
     "shop": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "96bd05af94751c4e07cec90c349efedc1c68b0b54a64899ef0b6180e2115308d",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "4047195c7991af13981084c4f0fbbdc5879c58664acc9d0a4231b72475d1d569",
       "text": "7311f2d070abe97d7b36552adaa74bf745062aceb2e239128d36cfe2a57b3975"
     },
     "skills": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "2b3284552ad213f0ea903bb2508632f3875da02adac6525f6bd68152d28655cf",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "22d42e00088cb9422409cde2e5bdcf3d56c6d01e3ea8941b99543b358f599029",
       "text": "da88b0eff3b15dec9185ecfbb9a63b62c96e0a3aa5ab2dea53e0928a500b403a"
     },
     "start": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "1f55d045bce65a52d5df6d403175062921cf2abbe2ea8498b3a01956b618449e",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "2a518f515d0e27906d582226489d19f9afee8e1d633c6d5686236e26e635f5fc",
       "text": "3f26288c52ae35e92097798a9a413933351e8e8422d33230a6322c69aedbb238"
     },
     "teleports": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "8f16c04ce2f5e18bbf9d195dca158f6dfebcf290e88fe46981d3f6083f8b67bc",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "cc94e4a3ff5bbaeed3ed93225adc20fbe45ed37b83d07bff3ee53237bef0a8df",
       "text": "896b72de8b56b3374b3a6346a701f45defae6e6ecff688868e02233aa040d1fa"
     },
     "tierforge": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "d4ac9f121cf79ea669d013940fe715cba6a2184dbcec054ddc566ebd4c2a2e23",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "a30f592fd4d84112432bf0c3c4a85153b77e05578aa6d0e2b0a8940984edcb54",
       "text": "bb59e5c05ec16e1951d67e444a35885ce8a38805d367f3e73f09a0fd74cce12c"
     },
     "titles": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "b4f0c95cabe8ba42ddc910c21049bbfdedbae10ec990673d8c3b0d0bc87043f5",
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "862e061c4a89a26c785df31cc4129e21a72bdbacd05f65589171b97696121848",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "96bd05af94751c4e07cec90c349efedc1c68b0b54a64899ef0b6180e2115308d",
-      "text": "1123de78494b056782a9f1c435dc651aefc6eebcd8d86083351a8710eb2d4cd6"
+      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "sources": "4047195c7991af13981084c4f0fbbdc5879c58664acc9d0a4231b72475d1d569",
+      "text": "50e65941c65b669556894aa1cf998349f25f10f17c8a5f27918fcb280d86abfa"
     },
     "vk": {
-      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
-      "sources": "4d61c90b1f127186488b71df903b939b6aac7a13a6410bbaee0872abd54e9baf",
+      "reason": "1.4.269: строгая идемпотентность миграции messages.yml в VkPlugin",
+      "sources": "3fa441ac76ba0837fbee19ff9e6cad0b947d49cc2abf3c1f14799cddd3429edd",
       "text": "e9037fef5c1f36cf0f114228ced538a7a303aeae2417bc01c09ca96db64ca3b7"
     }
   },

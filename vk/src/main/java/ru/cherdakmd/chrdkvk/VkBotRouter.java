@@ -135,8 +135,11 @@ public final class VkBotRouter {
         if (peerId != fromId) {
             return;
         }
-        String payloadRaw = message.has("payload") && !message.get("payload").isJsonNull()
-                ? message.get("payload").getAsString() : "";
+        String payloadRaw = "";
+        if (message.has("payload") && !message.get("payload").isJsonNull()) {
+            var payloadEl = message.get("payload");
+            payloadRaw = payloadEl.isJsonPrimitive() ? payloadEl.getAsString() : payloadEl.toString();
+        }
         String payloadCmd = VkKeyboards.extractCommandFromPayload(payloadRaw);
         String rawText = !payloadCmd.isEmpty()
                 ? payloadCmd

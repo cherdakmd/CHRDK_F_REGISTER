@@ -175,7 +175,9 @@ public record VkConfig(
         if (groupId <= 0L || postId <= 0L) {
             return communityUrl;
         }
-        return "https://vk.com/wall-" + groupId + "_" + postId;
+        String host = communityUrl != null && communityUrl.toLowerCase(Locale.ROOT).contains("vk.ru")
+                ? "vk.ru" : "vk.com";
+        return "https://" + host + "/wall-" + groupId + "_" + postId;
     }
 
     static String sanitizeHttpsUrl(String raw, String fallback) {

@@ -8,6 +8,7 @@ import ru.cherdakmd.chrdkregister.libs.bstats.bukkit.Metrics;
 import ru.cherdakmd.chrdkregister.libs.bstats.charts.SimplePie;
 import ru.cherdakmd.chrdkregister.libs.bstats.charts.SingleLineChart;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.logging.Level;
@@ -177,7 +178,10 @@ public final class RegisterPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(guideBookService, this);
         guideBookService.start();
 
-        this.pluginUpdater = new PluginUpdateService(getDataFolder().getParentFile().toPath(),
+        Path pluginsFolder = getDataFolder().getParentFile() != null
+                ? getDataFolder().getParentFile().toPath() : getDataFolder().toPath();
+        DuplicatePluginJarDetector.warnIfDuplicates(pluginsFolder, getLogger());
+        this.pluginUpdater = new PluginUpdateService(pluginsFolder,
                 getServer().getUpdateFolderFile().toPath(), getDataFolder().toPath(),
                 () -> accessManager.config().updatesRepo(), getServer().getBukkitVersion());
         this.commandHandler = new RegisterCommandHandler(this, accessManager);

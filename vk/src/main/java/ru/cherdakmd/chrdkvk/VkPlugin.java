@@ -2,15 +2,27 @@ package ru.cherdakmd.chrdkvk;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import ru.cherdakmd.chrdkregister.Messages;
 import ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi;
 import ru.cherdakmd.chrdkregister.configuration.ConfigSnapshot;
+import ru.cherdakmd.chrdkregister.storage.SafeJsonWriter;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Supplier;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Аддон {@code CHRDK_VK} — интеграция сервера с сообществом ВКонтакте:
@@ -19,6 +31,8 @@ import java.util.logging.Level;
  * бонусы подписки и VK Donut, а также анонсы записей стены сообщества.
  */
 public final class VkPlugin extends JavaPlugin {
+
+    private static final String LEGACY_MESSAGES_1_4_268 = "vk-messages-legacy-1.4.268.yml";
 
     private volatile ChrdkRegisterApi coreApi;
     private volatile VkConfig config;
@@ -30,6 +44,12 @@ public final class VkPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        migrateLegacyMessagesFile(
+                getDataFolder().toPath().resolve("messages.yml"),
+                () -> getResource("messages.yml"),
+                () -> getResource(LEGACY_MESSAGES_1_4_268),
+                getLogger()
+        );
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
         this.config = VkConfig.parse(getConfig());
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
@@ -93,6 +113,12 @@ public final class VkPlugin extends JavaPlugin {
     public boolean reloadBundle() {
         Path folder = getDataFolder().toPath();
         try {
+            migrateLegacyMessagesFile(
+                    folder.resolve("messages.yml"),
+                    () -> getResource("messages.yml"),
+                    () -> getResource(LEGACY_MESSAGES_1_4_268),
+                    getLogger()
+            );
             ConfigSnapshot<VkConfig> snapshot = ConfigSnapshot.load(
                     folder.resolve("config.yml"),
                     getResource("config.yml"),
@@ -110,6 +136,103 @@ public final class VkPlugin extends JavaPlugin {
             getLogger().log(Level.WARNING, "[CHRDK_VK] Ошибка перезагрузки конфигурации", exception);
             return false;
         }
+    }
+
+    /**
+     * Обновляет на диске стоковые строки {@code messages.yml} из версии 1.4.268 (где подстановки
+     * были записаны в угловых скобках {@code <url>}/{@code <code>} вместо {@code %url%}/{@code %code%}),
+     * сохраняя любые пользовательские правки администратора.
+     */
+    static boolean migrateLegacyMessagesFile(Path userFile,
+                                             Supplier<InputStream> currentSupplier,
+                                             Supplier<InputStream> legacySupplier,
+                                             Logger logger) {
+        if (userFile == null || !Files.isRegularFile(userFile)) {
+            return false;
+        }
+        try {
+            YamlConfiguration live = new YamlConfiguration();
+            try (BufferedReader reader = Files.newBufferedReader(userFile, StandardCharsets.UTF_8)) {
+                live.load(reader);
+            }
+            YamlConfiguration current = loadYamlResource(currentSupplier.get());
+            YamlConfiguration legacy = loadYamlResource(legacySupplier.get());
+            if (current == null || legacy == null) {
+                return false;
+            }
+
+            Set<String> liveLeafKeys = leafKeys(live);
+            Set<String> legacyLeafKeys = leafKeys(legacy);
+            boolean pureLegacyStock = !liveLeafKeys.isEmpty()
+                    && legacyLeafKeys.containsAll(liveLeafKeys)
+                    && liveLeafKeys.stream().allMatch(k -> Objects.equals(live.get(k), legacy.get(k)));
+
+            if (pureLegacyStock) {
+                try (InputStream rawCurrent = currentSupplier.get()) {
+                    if (rawCurrent != null) {
+                        String freshText = new String(rawCurrent.readAllBytes(), StandardCharsets.UTF_8);
+                        if (SafeJsonWriter.write(userFile, freshText, logger, "[CHRDK_VK]")) {
+                            if (logger != null) {
+                                logger.info("[CHRDK_VK] Обновлён стоковый messages.yml (1.4.268 -> %placeholder%).");
+                            }
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            int migratedKeys = 0;
+            for (String key : legacyLeafKeys) {
+                if (live.contains(key)
+                        && current.contains(key)
+                        && !Objects.equals(legacy.get(key), current.get(key))
+                        && Objects.equals(live.get(key), legacy.get(key))) {
+                    live.set(key, current.get(key));
+                    migratedKeys++;
+                }
+            }
+            if (migratedKeys > 0) {
+                for (String key : leafKeys(current)) {
+                    if (!live.contains(key)) {
+                        live.set(key, current.get(key));
+                    }
+                }
+                if (SafeJsonWriter.write(userFile, live.saveToString(), logger, "[CHRDK_VK]")) {
+                    if (logger != null) {
+                        logger.info("[CHRDK_VK] Обновлено " + migratedKeys
+                                + " устаревших шаблонов в messages.yml (1.4.268 -> %placeholder%).");
+                    }
+                    return true;
+                }
+            }
+        } catch (Exception exception) {
+            if (logger != null) {
+                logger.log(Level.WARNING, "[CHRDK_VK] Не удалось проверить миграцию messages.yml", exception);
+            }
+        }
+        return false;
+    }
+
+    private static YamlConfiguration loadYamlResource(InputStream stream) throws Exception {
+        if (stream == null) {
+            return null;
+        }
+        try (InputStream in = stream;
+             InputStreamReader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
+            YamlConfiguration yaml = new YamlConfiguration();
+            yaml.load(reader);
+            return yaml;
+        }
+    }
+
+    private static Set<String> leafKeys(YamlConfiguration yaml) {
+        java.util.LinkedHashSet<String> keys = new java.util.LinkedHashSet<>();
+        for (String key : yaml.getKeys(true)) {
+            if (!yaml.isConfigurationSection(key)) {
+                keys.add(key);
+            }
+        }
+        return keys;
     }
 
     public ChrdkRegisterApi coreApi() {
