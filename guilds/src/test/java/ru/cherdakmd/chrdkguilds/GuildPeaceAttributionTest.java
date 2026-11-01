@@ -54,7 +54,7 @@ class GuildPeaceAttributionTest {
         return proxy(type,(p,m,a)->switch(m.getName()) {
             case "getUniqueId" -> state.id;
             case "getPersistentDataContainer" -> pdc;
-            case "getShooter" -> state.shooter;
+            case "getShooter", "getOwner" -> state.shooter;
             case "getWorld" -> world;
             case "hasMetadata" -> false;
             case "isDead" -> state.dead;
@@ -129,4 +129,23 @@ class GuildPeaceAttributionTest {
     @Test void deadTargetNeverInvokesSanctions() {
         var target=new State();target.dead=true;assertFalse(listener().attack(entity(Player.class,new State()),entity(Player.class,target),"melee"));assertEquals(0,calls);
     }
+    @Test void legacyParentCannotManufactureFreshProofThroughCloudOrCrystal() {
+        var state=new State();state.shooter=entity(Player.class,new State());
+        var old=entity(ThrownPotion.class,state);var child=entity(AreaEffectCloud.class,new State());var listener=listener();
+        listener.markFrom(child,old);listener.attack(child,entity(Player.class,new State()),"potion");
+        assertNotNull(attacker);assertFalse(penalty);
+    }
+    @Test void petProjectileCannotManufactureFreshProofAgainstItsOwner() {
+        var state=new State();var owner=new State();state.shooter=entity(Player.class,owner);
+        var pet=entity(Wolf.class,state);var shot=entity(Arrow.class,new State());var listener=listener();
+        listener.markFrom(shot,pet);listener.attack(shot,entity(Player.class,new State()),"projectile");
+        assertEquals(owner.id,attacker);assertFalse(penalty);
+    }
+    @Test void unknownNewActivationClearsOldCrystalBlame() {
+        var crystal=entity(EnderCrystal.class,new State());var listener=listener();
+        listener.mark(crystal,UUID.randomUUID());
+        var unknown=entity(Entity.class,new State());listener.markFrom(crystal,unknown);
+        listener.attack(crystal,entity(Player.class,new State()),"explosion");assertEquals(0,calls);
+    }
+
 }

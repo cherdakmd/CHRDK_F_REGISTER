@@ -58,8 +58,10 @@ final class GuildPeaceListener implements Listener {
     }
     private boolean launchedPeaceful(Entity entity){return Byte.valueOf((byte)1).equals(entity.getPersistentDataContainer().get(peacefulKey,PersistentDataType.BYTE));}
     void mark(Entity entity,UUID owner) {
-        if(owner==null)return;
         var data=entity.getPersistentDataContainer();
+        // Повторная активация кристалла неизвестным источником не наследует старого виновника.
+        for(var key:java.util.List.of(ownerKey,peacefulKey,sourceKey,usedKey,createdKey))data.remove(key);
+        if(owner==null)return;
         data.set(ownerKey,PersistentDataType.STRING,owner.toString());
         // Ноль тоже важен: старый/неизвестный источник нельзя обвинить задним числом.
         data.set(peacefulKey,PersistentDataType.BYTE,(byte)(access.peaceful(owner)?1:0));
@@ -75,6 +77,10 @@ final class GuildPeaceListener implements Listener {
         if(created!=null)to.set(createdKey,PersistentDataType.LONG,created);
         String source=from.get(sourceKey,PersistentDataType.STRING);
         if(source!=null)to.set(sourceKey,PersistentDataType.STRING,source);
+        else if(!(parent instanceof Player)) {
+            // Старый снаряд/автоматика питомца не становятся новым доказанным действием через потомка.
+            to.remove(sourceKey);to.remove(createdKey);
+        }
         Byte peaceful=from.get(peacefulKey,PersistentDataType.BYTE);
         if(peaceful!=null)to.set(peacefulKey,PersistentDataType.BYTE,peaceful);
         if(from.has(usedKey,PersistentDataType.BYTE))to.set(usedKey,PersistentDataType.BYTE,(byte)1);
@@ -109,7 +115,12 @@ final class GuildPeaceListener implements Listener {
         if(enabled()&&event.getEntity() instanceof TNTPrimed tnt)markFrom(tnt,tnt.getSource());
     }
     @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true)
-    public void launch(ProjectileLaunchEvent event) {if(enabled())mark(event.getEntity(),owner(event.getEntity(),0));}
+    public void launch(ProjectileLaunchEvent event) {
+        if(!enabled())return;
+        var shot=event.getEntity();
+        if(shot.getShooter() instanceof Player player)mark(shot,owner(player,0));
+        else if(shot.getShooter() instanceof Entity parent)markFrom(shot,parent);
+    }
     @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true)
     public void primeCrystal(EntityDamageByEntityEvent event) {
         // Виновник — доказанный инициатор взрыва, а не тот, кто когда-то поставил кристалл.
