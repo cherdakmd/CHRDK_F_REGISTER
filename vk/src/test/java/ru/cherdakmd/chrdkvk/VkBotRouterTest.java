@@ -163,6 +163,8 @@ class VkBotRouterTest {
                 "{\"type\":\"donut_subscription_create\",\"object\":{\"user_id\":77}}").getAsJsonObject(), 1000L);
         router.handleUpdate(JsonParser.parseString(
                 "{\"type\":\"wall_post_new\",\"object\":{\"id\":99,\"text\":\"Новость\"}}").getAsJsonObject(), 1000L);
+        router.handleUpdate(JsonParser.parseString(
+                "{\"type\":\"message_new\",\"object\":{\"message\":{\"peer_id\":77,\"from_id\":77,\"text\":\"Начать\",\"payload\":{\"command\":\"start\"}}}}").getAsJsonObject(), 1000L);
 
         assertTrue(actions.containsAll(List.of(
                 "link:77:AB34CD",

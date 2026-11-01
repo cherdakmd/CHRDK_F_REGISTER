@@ -7,6 +7,7 @@ import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
@@ -171,6 +172,10 @@ public final class VkMenuGui implements Listener {
         if (!(event.getWhoClicked() instanceof Player player)) {
             return;
         }
+        ClickType click = event.getClick();
+        if (click == ClickType.DOUBLE_CLICK || click == ClickType.UNKNOWN) {
+            return;
+        }
         if (event.getRawSlot() < 0 || event.getRawSlot() >= SIZE) {
             return;
         }
@@ -223,6 +228,8 @@ public final class VkMenuGui implements Listener {
                     unlinkArmedUntil.put(player.getUniqueId(), now + UNLINK_ARM_MILLIS);
                     playClick(player);
                     render(player, event.getInventory());
+                } else {
+                    plugin.messages().send(player, "vk.gui-security-shift-hint");
                 }
             }
             case SLOT_CLOSE -> player.closeInventory();
