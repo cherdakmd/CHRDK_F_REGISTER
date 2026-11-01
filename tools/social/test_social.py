@@ -312,5 +312,47 @@ class EntryPointTest(unittest.TestCase):
         self.assertEqual([], gh.calls)
 
 
+class ReleaseBindingTest(unittest.TestCase):
+    def release(self):
+        return {'tag_name': 'v1.4.272', 'draft': False, 'prerelease': False,
+                'assets': [{'name': 'chrdk-plugins-1.4.272.zip', 'state': 'uploaded', 'size': 123}],
+                'published_at': '2026-11-01T15:00:00Z',
+                'html_url': 'https://github.com/owner/repo/releases/tag/v1.4.272'}
+
+    def test_run_resolves_annotated_tag_and_rejects_other_commit(self):
+        release = self.release()
+        class API:
+            repository = 'owner/repo'
+            def call(self, path):
+                return {'releases?per_page=100': [release],
+                        'git/ref/tags/v1.4.272': {'object': {'type': 'tag', 'sha': 'tag-object'}},
+                        'git/tags/tag-object': {'object': {'type': 'commit', 'sha': 'built-commit'}}}[path]
+        event = {'conclusion': 'success', 'event': 'release', 'head_sha': 'built-commit',
+                 'head_repository': {'full_name': 'owner/repo'}}
+        self.assertEqual(release, run.release_for_run(API(), event))
+        with self.assertRaises(SafetyError):
+            run.release_for_run(API(), {**event, 'head_sha': 'different-commit'})
+
+    def test_news_comes_from_release_tag_not_main_or_release_body(self):
+        import base64
+        release = self.release()
+        release['body'] = 'Технический журнал не должен попасть в пост'
+        note = {'version': '1.4.272', 'title': 'Заметка из тега', 'caption': 'Подпись', 'points': ['Понятное игрокам изменение.']}
+        class API:
+            def call(self, path):
+                if path != 'contents/docs/social/releases/1.4.272.json?ref=v1.4.272':
+                    raise AssertionError(path)
+                return {'encoding': 'base64', 'content': base64.b64encode(json.dumps(note).encode()).decode()}
+        post = run.tagged_news(API(), release)
+        self.assertEqual('Заметка из тега', post.title)
+        self.assertNotIn('Технический журнал', post.text)
+        self.assertIn('Понятное игрокам изменение.', post.text)
+
+    def test_malformed_and_empty_news_cannot_be_published(self):
+        for points in ('oops', [], [''], ['x' * 601], ['x'] * 7):
+            with self.assertRaises(SafetyError):
+                news(self.release(), note={'version': '1.4.272', 'title': 'title', 'caption': 'caption', 'points': points})
+
+
 if __name__ == '__main__':
     unittest.main()
