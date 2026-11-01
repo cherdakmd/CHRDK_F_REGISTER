@@ -3,7 +3,7 @@ from pathlib import Path
 import tempfile
 import unittest
 import zipfile
-from verify_release import expected_plugins, verify
+from verify_release import expected_plugins, standalone_plugins, verify, verify_standalone_jar
 
 
 class ReleaseValidationTest(unittest.TestCase):
@@ -62,6 +62,17 @@ class ReleaseValidationTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             verify(self.directory, "1.4.189-SNAPSHOT", {"Core"})
 
+    def test_standalone_jar_validation(self):
+        self.jar("chrdk-vk-1.4.268.jar", name="CHRDK_VK", version="1.4.268")
+        self.assertEqual(
+            "chrdk-vk-1.4.268.jar",
+            verify_standalone_jar(self.directory / "chrdk-vk-1.4.268.jar", "CHRDK_VK", "1.4.268"),
+        )
+        with self.assertRaisesRegex(ValueError, "name"):
+            verify_standalone_jar(self.directory / "chrdk-vk-1.4.268.jar", "CHRDK_Core", "1.4.268")
+        with self.assertRaisesRegex(ValueError, "version"):
+            verify_standalone_jar(self.directory / "chrdk-vk-1.4.268.jar", "CHRDK_VK", "1.4.267")
+
     def test_current_update_memo_matches_version_and_distribution(self):
         import re
         root = Path(__file__).resolve().parents[2]
@@ -73,13 +84,17 @@ class ReleaseValidationTest(unittest.TestCase):
         self.assertIn("CHRDK_Queue", current)
         self.assertIn("plugins/update/", current)
         self.assertIn("вручную", current)
+        self.assertIn(f"chrdk-vk-{version}.jar", current)
 
     def test_source_modules_have_unique_names(self):
-        names = expected_plugins(Path(__file__).resolve().parents[2])
+        root = Path(__file__).resolve().parents[2]
+        names = expected_plugins(root)
         self.assertIn("CHRDK_Core", names)
         self.assertIn("CHRDK_BattlePass", names)
         self.assertIn("CHRDK_Professions", names)
         self.assertEqual(25, len(names))
+        self.assertNotIn("CHRDK_VK", names, "CHRDK_VK публикуется отдельно, а не внутри общего ZIP")
+        self.assertEqual({"CHRDK_VK": "vk"}, standalone_plugins(root))
         self.assertNotIn("CHRDK_Bosses", names)
         self.assertNotIn("CHRDK_Treasures", names)
         self.assertNotIn("CHRDK_Streams", names)
@@ -107,11 +122,13 @@ class ReleaseWorkflowContractTest(unittest.TestCase):
         version = re.search(r"^plugin_version=1\.4\.(\d+)$", (root / "gradle.properties").read_text(), re.M)
         self.assertIsNotNone(version)
         self.assertGreaterEqual(int(notes.group(1)), int(version.group(1)), "Инструкция текущего релиза должна войти в ZIP")
+        self.assertIn("! -name 'chrdk-vk-*.jar'", source)
         self.assertIn('unzip -t "chrdk-plugins-${version}.zip"', source)
         self.assertIn('python3 .github/scripts/pack_release.py release "$version" "chrdk-plugins-${version}.zip"', source)
+        self.assertIn('--standalone "chrdk-vk-${version}.jar" CHRDK_VK "$version"', source)
         self.assertNotIn("zip -j -9", source)
         self.assertNotIn("--zip", source)
-        self.assertIn('"${{ env.zip }}" --clobber', source)
+        self.assertIn('"${{ env.zip }}" "${{ env.vk_jar }}" --clobber', source)
         # GitHub limits each run script to 21000 characters. Avoid parsing YAML/dependencies.
         for section in source.split("run: |\n")[1:]:
             script = section.split("\n      - name:", 1)[0]

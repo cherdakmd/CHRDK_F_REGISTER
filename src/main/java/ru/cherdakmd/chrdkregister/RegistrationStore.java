@@ -1310,6 +1310,31 @@ public final class RegistrationStore {
         return had;
     }
 
+    /** Returns {@code true} when account login is frozen by owner self-service lock. */
+    public synchronized boolean isLoginFrozen(String playerName) {
+        if (playerName == null || playerName.isBlank()) return false;
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        return account != null && account.loginFrozen;
+    }
+
+    /** Sets or clears the login freeze flag on an existing registered account. */
+    public synchronized boolean setLoginFrozen(String playerName, boolean frozen, long nowMillis) {
+        if (playerName == null || playerName.isBlank()) return false;
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        if (account == null || !account.isRegistered()) return false;
+        account.loginFrozen = frozen;
+        account.loginFrozenAt = frozen ? nowMillis : 0L;
+        markDirtyNow();
+        return true;
+    }
+
+    /** Count of stored IP sessions on the account. */
+    public synchronized int sessionCount(String playerName) {
+        if (playerName == null || playerName.isBlank()) return 0;
+        PlayerAccount account = data.accounts.get(canonicalName(playerName));
+        return account == null || account.sessions == null ? 0 : account.sessions.size();
+    }
+
     /** Clears only the session bound to the given IP. */
     public synchronized boolean clearSession(String playerName, String ipAddress) {
         if (playerName == null || playerName.isBlank() || ipAddress == null || ipAddress.isBlank()) return false;
@@ -2293,6 +2318,8 @@ public final class RegistrationStore {
         public long lastTotpStep = -1;
         public String lastAuthIp = "";
         public long lastAuthAt;
+        public boolean loginFrozen;
+        public long loginFrozenAt;
         public Set<String> ignoredPlayers = new LinkedHashSet<>();
         public List<SessionEntry> sessions = new ArrayList<>();
         public Set<Long> expiryWarningsSent = new LinkedHashSet<>();

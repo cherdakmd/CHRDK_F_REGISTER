@@ -119,6 +119,7 @@ public final class LabelsCommandHandler implements CommandExecutor, TabCompleter
             case "гильдия", "гильдии" -> LabelPreferences.Label.GUILDS;
             case "квесты", "квест" -> LabelPreferences.Label.QUESTS;
             case "достижения" -> LabelPreferences.Label.ACHIEVEMENTS;
+            case "вк", "вконтакте" -> LabelPreferences.Label.VK;
             case "шапка", "таб" -> LabelPreferences.Label.HEADER;
             default -> LabelPreferences.Label.byId(key);
         };

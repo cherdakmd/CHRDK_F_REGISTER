@@ -71,6 +71,8 @@ public final class LabelPreferences {
         QUESTS("quests", Group.NAME),
         /** Значок за собранные достижения. */
         ACHIEVEMENTS("achievements", Group.NAME),
+        /** Метка привязанного сообщества ВКонтакте или подписчика VK Donut. */
+        VK("vk", Group.NAME),
         /** Шапка и подвал таб-листа. */
         HEADER("header", Group.TAB);
 

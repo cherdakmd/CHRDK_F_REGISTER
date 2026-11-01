@@ -1,0 +1,24 @@
+name: CHRDK_VK
+version: '${version}'
+main: ru.cherdakmd.chrdkvk.VkPlugin
+api-version: '26.3'
+depend:
+  - CHRDK_Core
+description: "Интеграция с группой ВКонтакте: привязка аккаунта, защита сессий, VK Donut и новости стены"
+commands:
+  vk:
+    aliases: [vkontakte, вк]
+    description: "Интерактивное меню, привязка аккаунта, мост беседы ВКонтакте и уведомления"
+    usage: "/<command> [menu|status|link|notify|chat|mentions|unlink]"
+    permission: chrdkvk.use
+  vkadmin:
+    description: "Администрирование интеграции и беседы ВКонтакте"
+    usage: "/<command> [status|lookup|chatban|unlink|setchat|testchat|sync|reload]"
+    permission: chrdkvk.admin
+permissions:
+  chrdkvk.use:
+    description: "Использование команды /vk"
+    default: true
+  chrdkvk.admin:
+    description: "Управление CHRDK_VK через /vkadmin"
+    default: op

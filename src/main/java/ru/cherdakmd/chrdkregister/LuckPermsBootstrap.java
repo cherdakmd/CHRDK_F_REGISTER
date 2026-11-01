@@ -41,7 +41,8 @@ public final class LuckPermsBootstrap {
             "chrdkranks.use",
             "chrdkref.use",
             "chrdktele.use",
-            "chrdktierforge.use"
+            "chrdktierforge.use",
+            "chrdkvk.use"
     );
 
     /** Админские права семейства + модераторские права чата. */
@@ -66,7 +67,8 @@ public final class LuckPermsBootstrap {
             "chrdkranks.admin",
             "chrdkref.admin",
             "chrdktele.admin",
-            "chrdktierforge.admin"
+            "chrdktierforge.admin",
+            "chrdkvk.admin"
     );
 
     /** Описание одной группы схемы: имя, вес, родитель, список нод-прав. */

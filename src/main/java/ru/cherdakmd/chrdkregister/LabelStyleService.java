@@ -304,7 +304,8 @@ public final class LabelStyleService {
         return List.of(LabelPreferences.Label.RANK, LabelPreferences.Label.CLASSES,
                 LabelPreferences.Label.GUILDS,
                 LabelPreferences.Label.TIERFORGE,
-                LabelPreferences.Label.QUESTS, LabelPreferences.Label.ACHIEVEMENTS);
+                LabelPreferences.Label.QUESTS, LabelPreferences.Label.ACHIEVEMENTS,
+                LabelPreferences.Label.VK);
     }
 
     /**

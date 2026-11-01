@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
@@ -132,6 +133,8 @@ public final class AccessManager {
     private BukkitTask boostyRecheckTask;
     private final BoostyManager boostyManager;
     private final LuckPermsBootstrap luckPermsBootstrap;
+    private final Map<String, ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.SecurityListener> securityListeners =
+            new ConcurrentHashMap<>();
     private volatile long lastBackupAtMillis;
     private volatile long lastPurgeAtMillis;
     private volatile long serverStartedAtMillis;
@@ -668,6 +671,12 @@ public final class AccessManager {
             return;
         }
 
+        if (store.isLoginFrozen(name)) {
+            player.closeInventory();
+            messages.send(player, "login.account-frozen");
+            return;
+        }
+
         long sessionDurationMillis = TimeUnit.MINUTES.toMillis(config.sessionMinutes());
         String ip = getPlayerIp(player);
         if (store.hasValidIpSession(name, uuid, ip, now, sessionDurationMillis, config.sessionRequireSameUuid())) {
@@ -709,6 +718,7 @@ public final class AccessManager {
             player.sendActionBar(messages.get("session.restored-actionbar"));
             showSessionNotice(player);
             announceRankJoin(player);
+            fireLoginSuccess(name, AuditLog.maskIp(ip), "session");
             return;
         }
 
@@ -872,6 +882,10 @@ public final class AccessManager {
             messages.send(player, "login.already-authenticated");
             return true;
         }
+        if (store.isLoginFrozen(player.getName())) {
+            messages.send(player, "login.account-frozen");
+            return true;
+        }
         if (stage == PlayerStage.NEEDS_2FA) {
             if (optionalTotpCode == null && TotpService.isValidCodeFormat(password)) {
                 return handleTwoFactorLoginCode(player, password);
@@ -952,7 +966,7 @@ public final class AccessManager {
                 banIpTemporarily(player, failure);
             }
             player.kick(messages.get("login.temp-ban", "temp_ip_ban_minutes", config.tempIpBanMinutes()));
-            notifyBruteForce(player, totalFailures);
+            notifyBruteForce(player, totalFailures, true);
             return true;
         }
         int remaining = Math.max(0, config.accountMaxAttempts() - totalFailures);
@@ -960,7 +974,7 @@ public final class AccessManager {
         player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
         showAuthDialog(player, PlayerStage.NEEDS_LOGIN);
         if (totalFailures >= 3 && totalFailures % 3 == 0) {
-            notifyBruteForce(player, totalFailures);
+            notifyBruteForce(player, totalFailures, false);
         }
         return true;
     }
@@ -978,8 +992,9 @@ public final class AccessManager {
         }
     }
 
-    private void notifyBruteForce(Player player, int failures) {
-        String message = "Перебор пароля: игрок " + player.getName() + " (" + AuditLog.maskIp(getPlayerIp(player))
+    private void notifyBruteForce(Player player, int failures, boolean blocked) {
+        String maskedIp = AuditLog.maskIp(getPlayerIp(player));
+        String message = "Перебор пароля: игрок " + player.getName() + " (" + maskedIp
                 + "), неудачных попыток: " + failures;
         if (config.bruteForceNotifyAdmins()) {
             for (Player online : Bukkit.getOnlinePlayers()) {
@@ -991,8 +1006,9 @@ public final class AccessManager {
         audit.log(AuditLog.BRUTEFORCE_ALERT, player.getName(), player.getName(), getPlayerIp(player),
                 AuditLog.details("failures", failures));
         notifications.notify("bruteforce.alert", "Перебор паролей",
-                "Игрок: " + player.getName() + "\nIP: " + AuditLog.maskIp(getPlayerIp(player))
+                "Игрок: " + player.getName() + "\nIP: " + maskedIp
                         + "\nНеудачных попыток: " + failures, "warn");
+        fireBruteForceAlert(player.getName(), maskedIp, failures, blocked);
     }
 
     /**
@@ -1017,6 +1033,10 @@ public final class AccessManager {
         }
         if (stage == PlayerStage.AUTHENTICATED) {
             messages.send(player, "two-factor.login.already-authenticated");
+            return true;
+        }
+        if (store.isLoginFrozen(player.getName())) {
+            messages.send(player, "login.account-frozen");
             return true;
         }
         if (stage == PlayerStage.NEEDS_2FA_SETUP) {
@@ -1065,7 +1085,7 @@ public final class AccessManager {
         if (failure.blocked()) {
             passwordVerifiedPlayers.remove(uuid);
             player.kick(messages.get("two-factor.login.kicked", "totp_max_attempts", config.totpMaxAttempts()));
-            notifyBruteForce(player, throttle.totalFailures(player.getName()));
+            notifyBruteForce(player, throttle.totalFailures(player.getName()), failure.blocked());
             return true;
         }
 
@@ -1784,6 +1804,10 @@ public final class AccessManager {
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.2f);
         announceRankJoin(player);
         fireEventSync(new PlayerAuthCompletedEvent(player));
+        if (!"register.success".equals(successKey)) {
+            fireLoginSuccess(player.getName(), AuditLog.maskIp(getPlayerIp(player)),
+                    authSource.getOrDefault(uuid, "password"));
+        }
     }
 
     /** Строка входа ранга III+: «Хранитель Имя вернулся в гильдию» (1.4.167). */
@@ -1928,6 +1952,7 @@ public final class AccessManager {
             if (config.expiryWarningSound()) {
                 player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1.0f, 0.8f);
             }
+            firePassExpiring(player.getName(), passUntil, warnMinutes);
             break;
         }
         return true;
@@ -2594,6 +2619,101 @@ public final class AccessManager {
                     AuditLog.details("reason", "sessions cleared"));
         }
         return cleared;
+    }
+
+    /** Registers an addon listener for account security and pass-expiry alerts (API v32). */
+    public void registerSecurityListener(String id,
+            ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.SecurityListener listener) {
+        if (id == null || id.isBlank() || listener == null || RetiredAddons.source(id)) return;
+        securityListeners.put(id.trim().toLowerCase(Locale.ROOT), listener);
+    }
+
+    /** Unregisters an addon security listener (API v32). */
+    public void unregisterSecurityListener(String id) {
+        if (id == null || id.isBlank()) return;
+        securityListeners.remove(id.trim().toLowerCase(Locale.ROOT));
+    }
+
+    private void fireLoginSuccess(String playerName, String maskedIp, String method) {
+        for (var listener : securityListeners.values()) {
+            try {
+                listener.onLoginSuccess(playerName, maskedIp, method);
+            } catch (RuntimeException exception) {
+                logger.log(Level.FINE, "Security listener failed on login", exception);
+            }
+        }
+    }
+
+    private void fireBruteForceAlert(String playerName, String maskedIp, int failures, boolean blocked) {
+        for (var listener : securityListeners.values()) {
+            try {
+                listener.onBruteForceAlert(playerName, maskedIp, failures, blocked);
+            } catch (RuntimeException exception) {
+                logger.log(Level.FINE, "Security listener failed on brute-force alert", exception);
+            }
+        }
+    }
+
+    private void firePassExpiring(String playerName, long passUntilMillis, long remainingMinutes) {
+        for (var listener : securityListeners.values()) {
+            try {
+                listener.onPassExpiring(playerName, passUntilMillis, remainingMinutes);
+            } catch (RuntimeException exception) {
+                logger.log(Level.FINE, "Security listener failed on pass expiry warning", exception);
+            }
+        }
+    }
+
+    /**
+     * Terminates all stored IP sessions of an account and disconnects any active session (API v32).
+     * Does not modify passwords or TOTP secrets.
+     */
+    public boolean terminateSessions(String playerName, String source) {
+        if (playerName == null || playerName.isBlank() || !store.isRegistered(playerName)) {
+            return false;
+        }
+        String actor = source == null || source.isBlank() ? "addon" : source.trim();
+        boolean cleared = store.clearSessions(playerName);
+        audit.log(AuditLog.SESSION_END, actor, playerName, "",
+                AuditLog.details("reason", "remote-logout"));
+        Runnable disconnectTask = () -> {
+            if (Bukkit.getServer() == null) return;
+            for (Player online : Bukkit.getOnlinePlayers()) {
+                if (online.getName().equalsIgnoreCase(playerName)) {
+                    UUID uuid = online.getUniqueId();
+                    removeAuthentication(uuid);
+                    passwordVerifiedPlayers.remove(uuid);
+                    authSource.remove(uuid);
+                    online.kick(messages.get("logout.remote-kick"));
+                }
+            }
+        };
+        if (Bukkit.getServer() != null) {
+            if (Bukkit.isPrimaryThread()) {
+                disconnectTask.run();
+            } else if (plugin != null && plugin.isEnabled()) {
+                Bukkit.getScheduler().runTask(plugin, disconnectTask);
+            }
+        }
+        return cleared || true;
+    }
+
+    /**
+     * Freezes or unfreezes login for a registered account (API v32).
+     * Freezing also terminates all active sessions and disconnects any online session.
+     */
+    public boolean setLoginFrozen(String playerName, boolean frozen, String source) {
+        long now = System.currentTimeMillis();
+        if (!store.setLoginFrozen(playerName, frozen, now)) {
+            return false;
+        }
+        String actor = source == null || source.isBlank() ? "addon" : source.trim();
+        audit.log(frozen ? AuditLog.ACCOUNT_FREEZE : AuditLog.ACCOUNT_UNFREEZE,
+                actor, playerName, "", AuditLog.details("frozen", frozen));
+        if (frozen) {
+            terminateSessions(playerName, actor);
+        }
+        return true;
     }
 
     /** Reapplies the locked state of an online player (used after an admin session reset). */
