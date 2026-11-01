@@ -68,9 +68,7 @@ final class BattlePassStore {
         }
         try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
             Map<String, Map<String, Object>> parsed = GSON.fromJson(reader, MAP_TYPE);
-            if (parsed == null) {
-                return;
-            }
+            if (parsed == null) throw new IOException("Пустой JSON-домен battlepass");
             for (Map.Entry<String, Map<String, Object>> entry : parsed.entrySet()) {
                 UUID uuid;
                 try {
@@ -150,7 +148,9 @@ final class BattlePassStore {
             try (Writer writer = Files.newBufferedWriter(tmp, StandardCharsets.UTF_8)) {
                 GSON.toJson(out, writer);
             }
-            Files.move(tmp, file, StandardCopyOption.REPLACE_EXISTING);
+            try(var channel=java.nio.channels.FileChannel.open(tmp,java.nio.file.StandardOpenOption.WRITE)){channel.force(true);}
+            Files.move(tmp, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            if(parent!=null)try(var channel=java.nio.channels.FileChannel.open(parent,java.nio.file.StandardOpenOption.READ)){channel.force(true);}
             dirty = false;
         } catch (IOException exception) {
             logger.log(Level.WARNING, "[CHRDK_BattlePass] Не удалось записать battlepass-data.json: "

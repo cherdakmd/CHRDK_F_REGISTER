@@ -86,6 +86,20 @@ class ReleaseValidationTest(unittest.TestCase):
         self.assertIn("вручную", current)
         self.assertIn(f"chrdk-vk-{version}.jar", current)
 
+    def test_numbered_rc_archive_is_valid_but_arbitrary_suffixes_are_not(self):
+        self.jar("core.jar", version="1.4.281-rc.1")
+        self.assertEqual({"Core"}, set(verify(self.directory, "1.4.281-rc.1", {"Core"})))
+        for version in ("1.4.281-rc.0", "1.4.281-beta", "1.4.281-rc.x", "1.4.281-rc.-1"):
+            with self.subTest(version=version), self.assertRaises(ValueError):
+                verify(self.directory, version, {"Core"})
+
+    def test_rc_workflow_never_publishes_as_stable(self):
+        root = Path(__file__).resolve().parents[2]
+        workflow = (root / ".github/workflows/release.yml").read_text()
+        self.assertIn("RC can only be published as a GitHub prerelease", workflow)
+        updater = (root / "src/main/java/ru/cherdakmd/chrdkregister/PluginUpdateService.java").read_text()
+        self.assertIn("prerelease", updater)
+
     def test_source_modules_have_unique_names(self):
         root = Path(__file__).resolve().parents[2]
         names = expected_plugins(root)

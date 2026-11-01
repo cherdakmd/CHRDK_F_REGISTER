@@ -40,7 +40,13 @@ final class BattlePassClaims {
                 for(int t=0;t<tracks.length;t++) {
                     if(amounts[t]<=0||plugin.store().isClaimed(uuid,mission.id(),tracks[t]))continue;
                     if(!available[t]){locked++;continue;}
-                    var result=plugin.coreApi().grantRewardBoostOnce(uuid,player.getName(),amounts[t],receipt(season.startEpochMillis(),uuid,mission.id(),tracks[t]));
+                    ChrdkRegisterApi.BoostGrant result;
+                    try {
+                        result=plugin.coreApi().grantRewardBoostOnce(uuid,player.getName(),amounts[t],receipt(season.startEpochMillis(),uuid,mission.id(),tracks[t]));
+                    } catch(RuntimeException | LinkageError error) {
+                        plugin.getLogger().log(java.util.logging.Level.SEVERE,"Battlepass: выдача не подтверждена; сохраните данные Core/аддона для сверки",error);
+                        failed=true;break;
+                    }
                     if(result==ChrdkRegisterApi.BoostGrant.FULL){full++;continue;}
                     if(result!=ChrdkRegisterApi.BoostGrant.ADDED&&result!=ChrdkRegisterApi.BoostGrant.ALREADY){failed=true;break;}
                     plugin.store().markClaimed(uuid,mission.id(),tracks[t]);rewards++;

@@ -30,6 +30,12 @@ class BattlePass281Test {
         }
         assertTrue(all.stream().allMatch(m->m.premiumProducts().isEmpty()&&m.freeHours()<=24&&m.premiumHours()<=24));
     }
+    @Test void stockMigrationNeverOverwritesCustomListsOrEmptyLegacy() {
+        var old=List.of(Map.of("id","one","target",16));
+        assertTrue(BattlePassConfig.stockUpgrade(List.of(Map.of("id","one","target",16)),old));
+        assertFalse(BattlePassConfig.stockUpgrade(List.of(Map.of("id","one","target",17)),old));
+        assertFalse(BattlePassConfig.stockUpgrade(List.of(),List.of()));assertFalse(BattlePassConfig.stockUpgrade(null,old));
+    }
     @Test void receiptsAreStableButScopedByUuidSeasonMissionAndTrack() {
         UUID id=UUID.randomUUID();String first=BattlePassClaims.receipt(100,id,"one","FREE");
         assertTrue(first.matches("bp:[a-f0-9]{64}"));assertEquals(first,BattlePassClaims.receipt(100,id,"one","FREE"));

@@ -141,7 +141,7 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
         try(var stream=getResource("battlepass-default-legacy-1.4.280.yml")) {
             if(stream!=null) {
                 var legacy=org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(new java.io.InputStreamReader(stream,java.nio.charset.StandardCharsets.UTF_8));
-                if(java.util.Objects.equals(getConfig().getList("battlepass.weeks"),legacy.getList("battlepass.weeks"))) {
+                if(BattlePassConfig.stockUpgrade(getConfig().getList("battlepass.weeks"),legacy.getList("battlepass.weeks"))) {
                     try(var current=getResource("config.yml")) {
                         var defaults=org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(new java.io.InputStreamReader(current,java.nio.charset.StandardCharsets.UTF_8));
                         getConfig().set("battlepass.weeks",defaults.getList("battlepass.weeks"));saveConfig();
@@ -389,7 +389,7 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
      */
     private void announceWave(Player player) {
         BattlePassConfig.Season current = season;
-        if (current == null || current.empty() || !settings.announceNewWaves()) {
+        if (current == null || current.empty() || !settings.announceNewWaves() || !canUse(player)) {
             return;
         }
         int week = BattlePassConfig.currentWeek(current, System.currentTimeMillis());
