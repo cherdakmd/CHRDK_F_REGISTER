@@ -20,6 +20,16 @@ class StorefrontTest(unittest.TestCase):
         cls.cfg, cls.products = kit.snapshot_catalog()
         cls.by_id = {p['id']: p for p in cls.products}
 
+    def test_262_term_clarification_does_not_republish_historical_archive(self):
+        cfg, live = kit.catalog()
+        founder = next(p for p in live if p['id'] == 'rank-founder')
+        self.assertIn('порог ремесленных прибавок +10', founder['description'])
+        _, archived = kit.snapshot_catalog()
+        old = next(p for p in archived if p['id'] == 'rank-founder')
+        self.assertIn('потолок профессии +10', old['description'])
+        self.assertEqual({k: v for k, v in founder.items() if k != 'description'},
+                         {k: v for k, v in old.items() if k != 'description'})
+
     def test_all_26_skus_and_periods(self):
         self.assertEqual(26, len(self.products))
         self.assertEqual(10, sum(bool(p.get('rank')) and not p.get('includes') for p in self.products))

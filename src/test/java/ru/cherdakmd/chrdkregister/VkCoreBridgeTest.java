@@ -30,8 +30,8 @@ class VkCoreBridgeTest {
     Path tempDir;
 
     @Test
-    void apiV32MethodsAreAdditiveAndNeverExposePasswordMutation() throws Exception {
-        assertEquals(32, ChrdkRegisterApi.API_VERSION);
+    void apiV33MethodsAreAdditiveAndNeverExposePasswordMutation() throws Exception {
+        assertEquals(33, ChrdkRegisterApi.API_VERSION);
         assertTrue(ChrdkRegisterApi.class.getMethod("registerSecurityListener", String.class,
                 ChrdkRegisterApi.SecurityListener.class).isDefault());
         assertTrue(ChrdkRegisterApi.class.getMethod("unregisterSecurityListener", String.class).isDefault());

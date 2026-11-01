@@ -3,7 +3,7 @@ package ru.cherdakmd.chrdkprofessions;
 import java.util.Locale;
 
 /**
- * Четыре ремесленные профессии сервера (1.4.165).
+ * Восемь ремесленных профессий сервера (1.4.262).
  *
  * <p>Профессия — это не вторая прокачка и не класс: она не даёт ни урона, ни
  * брони. Она определяет, за какую работу игрок получает опыт ремесленника и
@@ -20,7 +20,9 @@ public enum Profession {
     SMITH("smith", "ANVIL"),
     ALCHEMIST("alchemist", "BREWING_STAND"),
     COOK("cook", "CAMPFIRE"),
-    MASON("mason", "STONECUTTER");
+    MASON("mason", "STONECUTTER"),
+    FORESTER("forester", "OAK_LOG"), MINER("miner", "IRON_PICKAXE"),
+    FARMER("farmer", "WHEAT"), FISHER("fisher", "FISHING_ROD");
 
     private final String id;
     private final String iconName;

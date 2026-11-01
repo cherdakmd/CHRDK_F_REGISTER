@@ -1,183 +1,183 @@
 {
   "pages": {
     "about": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "a1b28bc40c8799c4087ac9ef92a758c8f33580061f40719a5ba1f10962a3729b",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "121a169cd102b402305fd3815def4c0cdc23f8e4716e141a773edb0c3587229b",
       "text": "17788b7b4007e90c62acd266f95cec124e0a53b603a1b2e5d9a7c19fb304c7d9"
     },
     "achievements": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "826de13ce6f4a21b7fb8f9e0cb044d7d060290b9700de2d899a130ce77ac8b6d",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "c65c1e75fe4d11b4dcfc6b55b3ff0817baa381a93f10756dcbaeaa110832832a",
       "text": "839d6e42ff5471f7def5f1bcb063709bb4e8ec40a1732a5a1ce55754544329a3"
     },
     "artifacts": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "e369501af7da5fbc0e470e181b192a5df5c3d4d3dc9ecbf978d4a330b122813a",
-      "text": "d84ce5252984c944058764fb97c3c25b27e7690ecde9f50384f39ce5d25b856b"
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "2ccd1ca85a2b4ac70d0c59aa5f44bb2e9fd4670b4bd5ea022e25f4b6108c70a8",
+      "text": "a4a922729b6635a6d286fcc3c9f18c8c57a0c98a19ec05c44f8d448dc422a84f"
     },
     "auction": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "0ec8416246e4ac2db38df42ddb3491152b6d115225e185311160ed5578629b80",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "8939449ac2309fa2ff0b60d2f3de4464f136adc58850c3c0528dd27ad313db49",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "0d149d91efca3de668590d085d7a42b188d27aea060ddc6c8e84690fb30f0264",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "54ae9ccae515a2f8ec2c6b84d230f1715d99df05496bd46c9461e6ed274336f3",
       "text": "0bb2af9ae7275a308eee69cb6b63893c060bcff763287fe0dfbd1965861c24c8"
     },
     "chat": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "a1b28bc40c8799c4087ac9ef92a758c8f33580061f40719a5ba1f10962a3729b",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "121a169cd102b402305fd3815def4c0cdc23f8e4716e141a773edb0c3587229b",
       "text": "ac4a8e23de6893fab669939fd2882e40f1604f1f8fddeaa1d3d3572d8c3d6572"
     },
     "claims": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "586b3ced18b83d4dba5d2b563ce24b2a887edbda5d0a2a3be54c96e890c9fe42",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "b7d6287fcd27d5c148af2a19c54fcef5c779e8e8e88d4826959ef44e931931ae",
       "text": "2a1634efadca1810c82bc496b30432d553c72fb226a5e051443232224a366538"
     },
     "classes": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "681953ac9a6617e945860cbf725f48637cd9503163f93b4920d1dee1e8f460e0",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "639421141ad203e9b3278d4c80808ef501a759df093f600831ac74712a5edabc",
       "text": "ee29d92bd4e9527924d14405057fd62402857c1a688439c7b9d86d4c9bf3b546"
     },
     "commands": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "bdc819be25522c738b9f84d6a709f705a9770db322825bb543ff1d238b0b6819",
-      "text": "598a4781eada9b9d63fde19d90c0c4b7a20bb98e23f373320bce415127f0bc18"
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "3095447495cf80cb4ddbc2f3b271236700d6483f80ad8588c20bcccd915d8408",
+      "text": "5170af8688ec0094f48161c332e5c95516c206065f48391d275c4db5eb2baeed"
     },
     "cosmetics": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "a9b3b75ed74cfcac4d58b41fa9c109d0b46edd02380ec97d093aa5e1a6532330",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "1e1b856d2199fe7e1871f9d0ce69db5e35b7f6fdd447359f07451dde8750274a",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "ba73703ea70297e69085dcbe80c7566c96df6c358c0a52a321a81b4b1197f54d",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "44f05e05838626162011a8c2f14fe2004c230a235fa49f024ddad9fcc6d5fb46",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "economy": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "bd0e0ab62211af223931e426e9bb02921afcb0de64ea025b7fdd8d6d0cc96192",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "2e4d1a31f7fb592a5d6d4ce73b2831ac7869bdf40f09059f98669fa7eebf4003",
       "text": "216cf9a664845fe452abd6742c8d56f486bba98eb4e43fad6fe1276269901369"
     },
     "enchants": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "3ac5179c99f512efc4b7cb7e986165412f03a20d569be59570a4ef04c9a9eaf4",
-      "text": "7237739cff6a36edff803288ab8b9bfee64910fa416675d4a8f23651523c6c3e"
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "fc12df5550d5e3d7d3a8d784bba3dc9d88dac404dfbc522bc9833b6bd0c1eaac",
+      "text": "70b6bd31d749073c4e4144ebb536661042f7f925d3ccb838f294fb031e4a8558"
     },
     "faq": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "bdc819be25522c738b9f84d6a709f705a9770db322825bb543ff1d238b0b6819",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "3095447495cf80cb4ddbc2f3b271236700d6483f80ad8588c20bcccd915d8408",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "ee1d2df13220ce16fe7904d49ef15e23eee617862e0b44034cca6eaae4d5177e",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "261368725dfa60338e962a4e4344af0c534774f2ceafa5ba092fd34fdb34694b",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "586b3ced18b83d4dba5d2b563ce24b2a887edbda5d0a2a3be54c96e890c9fe42",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "b7d6287fcd27d5c148af2a19c54fcef5c779e8e8e88d4826959ef44e931931ae",
       "text": "442f5481c446db06532139f0b7c2f184858d17e99d0bebc46f50adab2aeefb61"
     },
     "hunt": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "12f051c93233ec5d4ab75e88ceeb6f3fea3bb477d11df7da94ab2679f8b6e185",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "191f9126d2e19627950fa6ca0f7fff862578b2ae8f3f61619a137ee6b19673ce",
       "text": "3b2066fce021118c9980313351d42317d07f8519b7c1404638d61ce4318d33e8"
     },
     "index": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "2beb1c4a422d5eb3b7bfb49e2c9db927599fe659dfcf8a9717d22cd0ece7801d",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "96bd05af94751c4e07cec90c349efedc1c68b0b54a64899ef0b6180e2115308d",
       "text": "2d543efd03d060e4d6f09da13921777186f30a145e3614fcc82b1dedcaf07777"
     },
     "lottery": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "68c495cc91d84e0b4432de40924dbc6462fc5b3ad5977c9a82b0821d8de1ab43",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "ec110fc45a636bb4737b7fc3a0244511270ce1f90dcb9e17206bac371ce2d033",
       "text": "1d05c7d03ba10cbdc51a27bb6cc1ff68ec75f44ff7f8e91d05b92fc08dcd5931"
     },
     "menu": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "bdc819be25522c738b9f84d6a709f705a9770db322825bb543ff1d238b0b6819",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "3095447495cf80cb4ddbc2f3b271236700d6483f80ad8588c20bcccd915d8408",
       "text": "eaccb7ed1bf84b845f57ab3e722b9e3b706542bfb70c39fa9f82135cc875497c"
     },
     "orders": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "195c06279d00f3e9c95fe09160dd455199266ccba2c20dfd5522bd5a82f00994",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "a242fd58a4a4f2a25eb73e3b29bc7438fa988bcf13fa2957f70f5f473b2def65",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "party": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "68ecd1d3c5d083e1a8888180ffeb8dc0869a381988425fdde6034a3e40111cef",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "af6a1298c3b58b0761934fc0f343b4ba31efee1f154894b7eca2a03ea3c8c84d",
       "text": "1907a324d824df3607e9932362f05cfd65b35cd5e8063296a269802a00c04fe6"
     },
     "pets": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "52194994039db8e8091fd01f719d3d0482d2214d3eada5db6633aaf765451a40",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "04e40f6ee08ad2c833fe262aaba57e3abb168b34b49d4a0eeb1b16eced82a634",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "f9a894568939f31ff201ff79812eb879b82238c1438fe814afa45b282dd210d9",
-      "text": "022f2a0c132d5ab450e70b77c4c02d60d0750a86c70fe73d17d0b03817a16664"
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "20ccfd19e860ac50741f099528d772fea5e1066daf34ec332d4d6c85c4d9711d",
+      "text": "ced22f9d3bdafb0c5f5e4027849d8cf32dd0530d5a937f0c409e07546439d01a"
     },
     "profile": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "16cb95b5ea0b47428317a8ce77a64108627b8f70d6aaec7049da6998d545bf1d",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "67b2f71c02efb53b22a46736f80708ecefffc3cb2b001cd95538bd2e80fbaabb",
       "text": "b1ddb608cb3942be099223883d3c545c9ab409018276b58b94f5e85e796a3970"
     },
     "quests": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "e15f908d2366f27ace15593545a37c561d1258f79aacad3b78c5103e63d75603",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "96f4cff61f41b39447137f19211a3bf6fba42aac359ca2b39727949a377d452a",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "2bd2f1fa71bdf6638e4db8f40a427b24ae1032248c36b9e52a27967cf0078819",
-      "text": "1db00295907be029a91cc1a07b096816a661b2bd311cc271b20345587f2b71f5"
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "a68204516fa4e3cfaafb33e13fae6ae536cef570d59dd6d2e5a0b2cf86096d39",
+      "text": "75ea871bcb9481fc9eaa1e1f260b628010a904955fe7501d40cb257b9b455c50"
     },
     "referrals": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "e7a7ba9f90867d1159c25857de322417221ee7d631854bb5a5e223ad9306cc38",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "f44f01b115b0599c865a0efc0266fbdb130841fd6a6c4210ed3fa313f32c2460",
       "text": "802956a7c425a8c14bd0cbd56b600cbab5027bd5bc72c0b28232fd5ba5055b24"
     },
     "shop": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "2beb1c4a422d5eb3b7bfb49e2c9db927599fe659dfcf8a9717d22cd0ece7801d",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "96bd05af94751c4e07cec90c349efedc1c68b0b54a64899ef0b6180e2115308d",
       "text": "7311f2d070abe97d7b36552adaa74bf745062aceb2e239128d36cfe2a57b3975"
     },
     "skills": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "9acf434e2302a4aeb2fba59bd6d4a48899c45236a080121a17a75cd5b3947fe0",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "2b3284552ad213f0ea903bb2508632f3875da02adac6525f6bd68152d28655cf",
       "text": "da88b0eff3b15dec9185ecfbb9a63b62c96e0a3aa5ab2dea53e0928a500b403a"
     },
     "start": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "334d1e5038f4555cac050653a6f85706beaadd86cc0d2e7da7dcf3cf3443a0e6",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "1f55d045bce65a52d5df6d403175062921cf2abbe2ea8498b3a01956b618449e",
       "text": "3f26288c52ae35e92097798a9a413933351e8e8422d33230a6322c69aedbb238"
     },
     "teleports": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "2dd10c5052d31f2572d72cd3c7ad720442b3547d91a18c7902fe60a87dbc8c0a",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "8f16c04ce2f5e18bbf9d195dca158f6dfebcf290e88fe46981d3f6083f8b67bc",
       "text": "896b72de8b56b3374b3a6346a701f45defae6e6ecff688868e02233aa040d1fa"
     },
     "tierforge": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "47c2265e07cce754eb0f52469a9f17bfe2fcf93ddc99286af08e30f8b43b655b",
-      "text": "d3cd07c98bec6cb1e15ff875d5fd5394fcadb5db2931fc6724350721f98ed38c"
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "d4ac9f121cf79ea669d013940fe715cba6a2184dbcec054ddc566ebd4c2a2e23",
+      "text": "bb59e5c05ec16e1951d67e444a35885ce8a38805d367f3e73f09a0fd74cce12c"
     },
     "titles": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "bcd00de6f3769b6edaf725ebf8e6c69cb8d9b2ac434371f3600dbe38c1429719",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "b4f0c95cabe8ba42ddc910c21049bbfdedbae10ec990673d8c3b0d0bc87043f5",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "2beb1c4a422d5eb3b7bfb49e2c9db927599fe659dfcf8a9717d22cd0ece7801d",
-      "text": "82cbef51d0e905b9db2f7a38198f2a576bf3026e0c19ac77bbf064ca4eddb5f7"
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "96bd05af94751c4e07cec90c349efedc1c68b0b54a64899ef0b6180e2115308d",
+      "text": "1123de78494b056782a9f1c435dc651aefc6eebcd8d86083351a8710eb2d4cd6"
     },
     "vk": {
-      "reason": "Upgrade CHRDK_VK with GUI, VK keyboards, smart group-chat replies/mentions, batcher and moderation",
-      "sources": "574f01c868009c89e56a8c0f977b9f4ade6da5134e809022d1c0704568d9d1c4",
+      "reason": "1.4.268: Core API 33 bridges + standalone CHRDK_VK asset outside general ZIP",
+      "sources": "4d61c90b1f127186488b71df903b939b6aac7a13a6410bbaee0872abd54e9baf",
       "text": "e9037fef5c1f36cf0f114228ced538a7a303aeae2417bc01c09ca96db64ca3b7"
     }
   },

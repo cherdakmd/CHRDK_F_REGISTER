@@ -24,8 +24,10 @@ final class TierModifierIds {
      * (1.4.140) чинит потерю ванильных атрибутов: свои модификаторы писали
      * компонент {@code attribute_modifiers} целиком, и меч бил на «полсердечка».
      * После пересборки в компонент возвращается базовый урон/скорость атаки.
+     * Версия 4 (1.4.265) учитывает роль/процент/свойства и не запускает выдачу заново.
+     * Версия 5 (1.4.266) обновляет известные прежние описания ковки/свойств.
      */
-    static final String STAMP = "3";
+    static final String STAMP = "5";
 
     static final String TIER_PREFIX = "tier_";
     static final String UPGRADE_PREFIX = "fu_";
@@ -45,6 +47,13 @@ final class TierModifierIds {
      */
     static String stamp(boolean affixes, int maxGood, int maxBad, boolean enchants) {
         return STAMP + (affixes ? "-a" + maxGood + maxBad : "-A") + (enchants ? "-e" : "-E");
+    }
+
+    /** Фактическая сила/роль и выключатель свойств тоже требуют пересчёта атрибутов. */
+    static String stamp(boolean affixes, int maxGood, int maxBad, boolean enchants,
+                        String kind, int percent, boolean properties, int propertyLimit) {
+        return stamp(affixes, maxGood, maxBad, enchants) + "-k" + kind + "-p" + percent
+                + (properties ? "-s" + propertyLimit : "-S");
     }
 
     private TierModifierIds() {

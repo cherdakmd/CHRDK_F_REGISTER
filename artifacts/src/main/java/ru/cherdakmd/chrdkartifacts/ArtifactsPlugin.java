@@ -31,6 +31,7 @@ public final class ArtifactsPlugin extends JavaPlugin {
     private CooldownStore cooldownStore;
     private ArtifactTraitService traits;
     private PassiveEffectsService passives;
+    private ArtifactLifecycleListener lifecycle;
     private CollectionService collection;
     private CollectionGui collectionGui;
     private ArtifactFeedback feedback;
@@ -53,7 +54,7 @@ public final class ArtifactsPlugin extends JavaPlugin {
         this.feedback = new ArtifactFeedback(this);
         reloadArtifactsConfig();
         try {
-            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 20) throw new IllegalStateException("Нужен Core API 20+");
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 32) throw new IllegalStateException("Нужен Core API 32+");
             this.awards = new ru.cherdakmd.chrdkregister.api.MilestoneAwards(this,this::coreApi,this::messages,"artifact-awards",ru.cherdakmd.chrdkregister.api.MilestoneMigration.json(getDataFolder().toPath().resolve("collection.json"),ru.cherdakmd.chrdkregister.api.MilestoneMigration.Kind.ARTIFACTS));
         } catch (Exception | LinkageError error) {
             getLogger().log(java.util.logging.Level.SEVERE,"Модуль остановлен без сброса прогресса/наград",error);
@@ -64,6 +65,8 @@ public final class ArtifactsPlugin extends JavaPlugin {
         this.collectionGui = new CollectionGui(this);
         reloadArtifactsConfig();
 
+        this.lifecycle = new ArtifactLifecycleListener(this, passives);
+        Bukkit.getPluginManager().registerEvents(lifecycle, this);
         Bukkit.getPluginManager().registerEvents(new ActiveEffectsListener(this), this);
         Bukkit.getPluginManager().registerEvents(new ArtifactLootListener(this), this);
         Bukkit.getPluginManager().registerEvents(new ArtifactEventListener(this), this);
@@ -112,6 +115,7 @@ public final class ArtifactsPlugin extends JavaPlugin {
             saveTask.cancel();
             saveTask = null;
         }
+        if (lifecycle != null) lifecycle.close();
         if (passives != null) {
             passives.stop();
         }

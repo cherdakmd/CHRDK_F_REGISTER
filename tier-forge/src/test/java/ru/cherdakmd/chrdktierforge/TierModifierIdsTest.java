@@ -8,6 +8,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -47,15 +48,25 @@ class TierModifierIdsTest {
     @Test
     void stampReflectsAffixAndEnchantSwitches() {
         String defaults = TierModifierIds.stamp(true, 2, 2, true);
-        assertEquals("3-a22-e", defaults);
-        assertEquals("3-a22-E", TierModifierIds.stamp(true, 2, 2, false),
+        assertEquals("5-a22-e", defaults);
+        assertEquals("5-a22-E", TierModifierIds.stamp(true, 2, 2, false),
                 "выключенные зачарования — другой отпечаток, иначе старые предметы"
                         + " не пересоберутся");
-        assertEquals("3-A-e", TierModifierIds.stamp(false, 2, 2, true));
+        assertEquals("5-A-e", TierModifierIds.stamp(false, 2, 2, true));
         assertFalse(defaults.equals(TierModifierIds.stamp(true, 3, 2, true)),
                 "новый потолок аффиксов запускает пересборку");
         assertFalse(defaults.equals(TierModifierIds.stamp(true, 2, 1, true)));
         assertTrue(defaults.startsWith(TierModifierIds.STAMP), "версия раскладки впереди");
+    }
+
+    @Test
+    void activePowerAndPropertyPolicyAreInFingerprintButNotRollWeights() {
+        String original = TierModifierIds.stamp(true, 2, 2, true, "SWORD", 30, true, 1);
+        assertNotEquals(original, TierModifierIds.stamp(true, 2, 2, true, "SWORD", 20, true, 1));
+        assertNotEquals(original, TierModifierIds.stamp(true, 2, 2, true, "AXE", 30, true, 1));
+        assertNotEquals(original, TierModifierIds.stamp(true, 2, 2, true, "SWORD", 30, false, 1));
+        assertNotEquals(original, TierModifierIds.stamp(true, 2, 2, true, "SWORD", 30, true, 2));
+        assertEquals(original, TierModifierIds.stamp(true, 2, 2, true, "SWORD", 30, true, 1));
     }
 
     @Test

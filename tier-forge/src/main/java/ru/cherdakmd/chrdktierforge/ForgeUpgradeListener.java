@@ -1,6 +1,13 @@
 package ru.cherdakmd.chrdktierforge;
 
+import ru.cherdakmd.chrdkregister.api.PassivePotions;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.entity.AbstractArrow;
+import org.bukkit.entity.Trident;
+import org.bukkit.event.entity.EntityShootBowEvent;
+import org.bukkit.event.entity.ProjectileLaunchEvent;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.Sound;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
@@ -48,8 +55,9 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Событийная половина кузнечных свойств: бой, добыча, прочность, пассивный пульс
  * и «привязка души». Атрибутная половина живёт в {@link TierItems}. Уровни
- * читаются из PDC предмета в руке/на теле в момент события — кэшей самих предметов
- * нет. С 1.4.91 есть только кэш «есть ли ковка в экипировке» для пульса
+ * читаются из PDC предмета в руке/на теле; снаряд хранит снимок бонуса выстрела.
+ * Снимок инструмента добычи живёт не дольше следующего тика.
+ * С 1.4.91 есть кэш «есть ли ковка в экипировке» для пульса
  * ({@link ForgeGearCache}) плюс кулдауны по игрокам и очередь воскрешения.
  */
 public final class ForgeUpgradeListener implements Listener {
@@ -69,7 +77,12 @@ public final class ForgeUpgradeListener implements Listener {
     static final long LASTSTAND_CD_MS = 60_000L;
 
     private final TierForgePlugin plugin;
+    private final NamespacedKey shotBonusKey;
     private final Random random = new Random();
+    private record BreakSnapshot(BlockBreakEvent source, Material type,
+                                 Map<ForgeUpgrade.Def, Integer> effects, ItemStack identity) { }
+    private final ForgeBreakCache<BreakSnapshot> breakCache = new ForgeBreakCache<>(4096);
+    private boolean breakCleanupQueued;
     private final Map<UUID, Long> adrenalineCooldown = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastStandCooldown = new ConcurrentHashMap<>();
     /** Где умер владелец — туда вернём вещи, если он выйдет, не дождавшись респауна (1.4.86). */
@@ -89,46 +102,36 @@ public final class ForgeUpgradeListener implements Listener {
 
     public ForgeUpgradeListener(TierForgePlugin plugin) {
         this.plugin = plugin;
+        this.shotBonusKey = new NamespacedKey(plugin, "shot_bonus_v1");
+    }
+
+    /** Reload должен сразу забыть отрицательный ответ, полученный при выключенных свойствах. */
+    void invalidateGearCache() {
+        gearCache.clear();
+    }
+
+    void invalidateGearCache(UUID player) {
+        gearCache.invalidate(player);
     }
 
     /* ------------------------------- атака игрока ------------------------------- */
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onPlayerHit(EntityDamageByEntityEvent event) {
-        Player attacker;
-        boolean projectileHit = false;
-        if (event.getDamager() instanceof Player melee) {
-            attacker = melee;
-        } else if (event.getDamager() instanceof Projectile shot
+        if (event.getDamager() instanceof Projectile shot
                 && shot.getShooter() instanceof Player shooter) {
-            attacker = shooter;
-            projectileHit = true;
-        } else {
+            TierShotBonus bonus = shotBonus(shot);
+            if (!bonus.equals(TierShotBonus.NONE)) {
+                lastCombat.put(shooter.getUniqueId(), System.currentTimeMillis());
+                event.setDamage(bonus.apply(event.getDamage()));
+            }
             return;
         }
+        if (!(event.getDamager() instanceof Player attacker)) return;
         ItemStack weapon = attacker.getInventory().getItemInMainHand();
         Map<ForgeUpgrade.Def, Integer> ups = plugin.items().effectsOf(weapon);
-        // 1.4.124: лук/арбалет/трезубец не получают урон стрелы от ATTACK_DAMAGE —
-        // процент тира начисляется здесь, по факту попадания снаряда.
-        TierDef.Snapshot tier = projectileHit ? rangedTier(weapon) : null;
-        if (ups.isEmpty() && tier == null) {
-            return;
-        }
+        if (ups.isEmpty()) return;
         lastCombat.put(attacker.getUniqueId(), System.currentTimeMillis());
-
-        // Снаряды: сначала процент тира, затем «Снайпер». Проки ближнего боя не работают
-        if (projectileHit) {
-            if (tier != null && tier.percent() != 0) {
-                event.setDamage(event.getDamage()
-                        * (1.0 + TierMath.projectileScalar(tier.percent())));
-            }
-            int snipe = levelOf(ups, ForgeUpgrade.Effect.SNIPE);
-            if (snipe > 0) {
-                event.setDamage(event.getDamage()
-                        * (1.0 + snipe * fraction(ups, ForgeUpgrade.Effect.SNIPE)));
-            }
-            return;
-        }
 
         double damage = event.getDamage();
 
@@ -290,11 +293,46 @@ public final class ForgeUpgradeListener implements Listener {
     /** Не накладываем эффект поверх более сильного действующего. */
     static void applyFresh(LivingEntity target, PotionEffectType type, int ticks, int amplifier) {
         PotionEffect current = target.getPotionEffect(type);
-        if (current != null && current.getDuration() > ticks
-                && current.getAmplifier() >= amplifier) {
+        if (current != null && !ForgeWorkMath.refreshPotion(current.getAmplifier(),
+                current.getDuration(), amplifier, ticks)) {
             return;
         }
         target.addPotionEffect(new PotionEffect(type, ticks, amplifier, false, true, true));
+    }
+
+    /** Рука выстрела берётся из события, поэтому вторая рука и залп арбалета тоже корректны. */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBowShot(EntityShootBowEvent event) {
+        if (event.getEntity() instanceof Player && event.getProjectile() instanceof Projectile shot) {
+            shot.getPersistentDataContainer().set(shotBonusKey, PersistentDataType.STRING,
+                    bonusOf(event.getBow()).encode());
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onTridentLaunch(ProjectileLaunchEvent event) {
+        if (event.getEntity() instanceof Trident trident && trident.getShooter() instanceof Player) {
+            trident.getPersistentDataContainer().set(shotBonusKey, PersistentDataType.STRING,
+                    bonusOf(trident.getItemStack()).encode());
+        }
+    }
+
+    private TierShotBonus bonusOf(ItemStack weapon) {
+        if (weapon == null || (weapon.getType() != Material.BOW
+                && weapon.getType() != Material.CROSSBOW && weapon.getType() != Material.TRIDENT)) {
+            return TierShotBonus.NONE;
+        }
+        TierDef.Snapshot tier = rangedTier(weapon);
+        return TierShotBonus.capture(tier == null ? 0 : tier.percent(), plugin.items().effectsOf(weapon));
+    }
+
+    private TierShotBonus shotBonus(Projectile shot) {
+        String saved = shot.getPersistentDataContainer().get(shotBonusKey, PersistentDataType.STRING);
+        if (saved != null) return TierShotBonus.decode(saved);
+        // Старые снаряды: только собственное сохранённое оружие, никогда текущая рука игрока.
+        if (shot instanceof Trident trident) return bonusOf(trident.getItemStack());
+        if (shot instanceof AbstractArrow arrow) return bonusOf(arrow.getWeapon());
+        return TierShotBonus.NONE;
     }
 
     /**
@@ -478,149 +516,179 @@ public final class ForgeUpgradeListener implements Listener {
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onOreBreak(BlockBreakEvent event) {
-        Material type = event.getBlock().getType();
-        ItemStack tool = event.getPlayer().getInventory().getItemInMainHand();
-        Map<ForgeUpgrade.Def, Integer> ups = plugin.items().effectsOf(tool);
-        if (ups.isEmpty()) {
-            return;
-        }
-
-        // Геолог: +% опыта с блока
+        Map<ForgeUpgrade.Def, Integer> ups = plugin.items().effectsOf(
+                event.getPlayer().getInventory().getItemInMainHand());
+        // Только правка самого события: поздний запрет не оставляет дропа/соседних дыр.
         int geologist = levelOf(ups, ForgeUpgrade.Effect.BLOCK_XP);
         if (geologist > 0 && event.getExpToDrop() > 0) {
             double bonus = geologist * fraction(ups, ForgeUpgrade.Effect.BLOCK_XP);
-            event.setExpToDrop((int) Math.round(event.getExpToDrop() * (1.0 + bonus)));
+            event.setExpToDrop(ForgeWorkMath.boostedXp(event.getExpToDrop(), bonus));
         }
+    }
 
-        // Рудачир: шанс дубля дропа руды
-        int prospector = levelOf(ups, ForgeUpgrade.Effect.ORE_DOUBLE);
-        if (prospector > 0 && isOre(type)
-                && random.nextDouble() < Math.min(CAP_ORE_DOUBLE,
-                        prospector * fraction(ups, ForgeUpgrade.Effect.ORE_DOUBLE))) {
-            for (ItemStack drop : event.getBlock().getDrops(tool, event.getPlayer())) {
-                if (drop != null && !drop.getType().isAir()) {
-                    event.getBlock().getWorld().dropItemNaturally(
-                            event.getBlock().getLocation().add(0.5, 0.5, 0.5), drop.clone());
-                }
-            }
+    /** Дроп может прийти уже после поломки инструмента: не угадываем источник по новой руке. */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void captureBreakTool(BlockBreakEvent event) {
+        ForgeBreakCache.Key key = breakKey(event.getPlayer(), event.getBlock());
+        // Повторная ломка той же позиции обычным инструментом не наследует старый снимок.
+        breakCache.remove(key);
+        ItemStack tool = event.getPlayer().getInventory().getItemInMainHand();
+        Map<ForgeUpgrade.Def, Integer> effects = plugin.items().effectsOf(tool);
+        if (effects.isEmpty()) return;
+        ItemStack identity = ItemKind.classify(tool.getType().name()) == ItemKind.PICKAXE
+                && ForgeWorkMath.columnSides(sumAbs(effects, ForgeUpgrade.Effect.ZONE_BREAK)) > 0
+                ? toolIdentity(tool) : null;
+        breakCache.put(key,
+                new BreakSnapshot(event, event.getBlock().getType(), Map.copyOf(effects), identity));
+        if (!breakCleanupQueued) {
+            breakCleanupQueued = true;
+            org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
+                breakCache.clear(); // в том числе отменённые/no-drop события без BlockDropItemEvent
+                breakCleanupQueued = false;
+            });
         }
+    }
 
-        // Забойщик: кирка выбивает колонну того же блока (ур I — сверху, II — и снизу)
-        int hewer = levelOf(ups, ForgeUpgrade.Effect.ZONE_BREAK);
-        if (hewer > 0 && !zoneBreaking.get()
-                && ItemKind.classify(tool.getType().name()) == ItemKind.PICKAXE
-                && type.isBlock() && type.getHardness() >= 0 && type.getHardness() < 50) {
+    private static ForgeBreakCache.Key breakKey(Player player, Block block) {
+        return new ForgeBreakCache.Key(player.getUniqueId(), block.getWorld().getUID(),
+                block.getX(), block.getY(), block.getZ());
+    }
+
+    private BreakSnapshot breakSnapshot(BlockDropItemEvent event) {
+        BreakSnapshot snapshot = breakCache.get(breakKey(event.getPlayer(), event.getBlock()));
+        return snapshot != null && snapshot.type() == event.getBlockState().getType()
+                && !snapshot.source().isCancelled() && snapshot.source().isDropItems()
+                ? snapshot : null;
+    }
+
+    /**
+     * Колонна запускается только после настоящей добычи. Следующий тик позволяет
+     * увидеть окончательную отмену даже более поздним обработчиком события дропа.
+     * Каждый сосед проходит штатный player break: приваты, dropItems, XP и износ.
+     */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onColumnDrops(BlockDropItemEvent event) {
+        if (zoneBreaking.get() || event.getItems().isEmpty()) return;
+        Player player = event.getPlayer();
+        BreakSnapshot snapshot = breakSnapshot(event);
+        if (snapshot == null || snapshot.identity() == null) return;
+        int sides = ForgeWorkMath.columnSides(sumAbs(snapshot.effects(), ForgeUpgrade.Effect.ZONE_BREAK));
+        Material type = snapshot.type();
+        if (!type.isBlock() || type.getHardness() < 0 || type.getHardness() >= 50) return;
+        ItemStack identity = snapshot.identity();
+        Block origin = event.getBlock();
+        org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
+            if (event.isCancelled() || event.getItems().isEmpty()
+                    || !player.isOnline() || player.isDead()
+                    || !player.getWorld().equals(origin.getWorld())
+                    || player.getLocation().distanceSquared(origin.getLocation().add(.5, .5, .5)) > 64
+                    || (!origin.getType().isAir() && !origin.isLiquid())) return;
             zoneBreaking.set(true);
             try {
-                breakColumnSibling(event.getBlock(), 1, type, tool, event.getPlayer());
-                if (hewer >= 2) {
-                    breakColumnSibling(event.getBlock(), -1, type, tool, event.getPlayer());
-                }
+                breakColumnSibling(origin, 1, type, identity, player);
+                if (sides >= 2) breakColumnSibling(origin, -1, type, identity, player);
             } finally {
-                zoneBreaking.set(false);
+                zoneBreaking.remove();
             }
-        }
+        });
     }
 
-    /**
-     * Добить соседний по вертикали блок того же типа этим же инструментом (1.4.92).
-     *
-     * <p>Раньше блок ломался напрямую через {@code breakNaturally} — в обход
-     * {@code BlockBreakEvent}. На сервере с приватами это позволяло выбить колонну
-     * под чужим регионом, а лог-плагины не видели второй блок. Теперь запрос
-     * проходит обычным событием: защита и права могут его отменить.
-     */
-    private void breakColumnSibling(Block origin, int dy, Material type, ItemStack tool,
+    /** Износ меняется при каждой штатной ломке; остальные свойства должны совпадать. */
+    private static ItemStack toolIdentity(ItemStack tool) {
+        ItemStack identity = tool.clone();
+        ItemMeta meta = identity.getItemMeta();
+        if (meta instanceof Damageable damage) {
+            damage.setDamage(0);
+            identity.setItemMeta(meta);
+        }
+        return identity;
+    }
+
+    private void breakColumnSibling(Block origin, int dy, Material type, ItemStack identity,
                                     Player player) {
         Block sibling = origin.getRelative(0, dy, 0);
-        if (sibling.getType() != type) {
-            return;
-        }
-        BlockBreakEvent request = new BlockBreakEvent(sibling, player);
-        org.bukkit.Bukkit.getPluginManager().callEvent(request);
-        if (request.isCancelled()) {
-            return;
-        }
-        if (sibling.getType() != type) {
-            return; // другой плагин мог заменить блок, пока шёл обработчик
-        }
-        sibling.breakNaturally(tool);
+        if (sibling.getType() != type) return;
+        ItemStack current = player.getInventory().getItemInMainHand();
+        if (!identity.isSimilar(toolIdentity(current))) return; // сломался/сменился инструмент
+        int sides = ForgeWorkMath.columnSides(sumAbs(plugin.items().effectsOf(current),
+                ForgeUpgrade.Effect.ZONE_BREAK));
+        if (sides < (dy < 0 ? 2 : 1)) return; // reload мог отключить свойство
+        player.breakBlock(sibling);
     }
 
-    /**
-     * Плавильня/Земледел/Лесник/Златолюб/Глубинник: дроп блоков может обернуться
-     * слитками, удвоиться (по типу блока) или породить золотой самородок.
-     */
+    /** Все дополнительные Item остаются в отменяемом списке, не спавнятся заранее. */
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onBlockDrops(BlockDropItemEvent event) {
-        ItemStack tool = event.getPlayer().getInventory().getItemInMainHand();
-        Map<ForgeUpgrade.Def, Integer> ups = plugin.items().effectsOf(tool);
-        if (ups.isEmpty()) {
-            return;
-        }
+        BreakSnapshot snapshot = breakSnapshot(event);
+        if (snapshot == null || event.getItems().isEmpty()) return;
+        Map<ForgeUpgrade.Def, Integer> ups = snapshot.effects();
         int smelter = levelOf(ups, ForgeUpgrade.Effect.SMELT_ORE);
+        int prospector = levelOf(ups, ForgeUpgrade.Effect.ORE_DOUBLE);
         int gardener = levelOf(ups, ForgeUpgrade.Effect.CROP_DOUBLE);
         int logger = levelOf(ups, ForgeUpgrade.Effect.LOG_DOUBLE);
         int goldbug = levelOf(ups, ForgeUpgrade.Effect.GOLD_FIND);
         int delver = levelOf(ups, ForgeUpgrade.Effect.DEEP_DOUBLE);
-        if (smelter <= 0 && gardener <= 0 && logger <= 0 && goldbug <= 0 && delver <= 0) {
-            return;
-        }
+        if (smelter <= 0 && prospector <= 0 && gardener <= 0 && logger <= 0
+                && goldbug <= 0 && delver <= 0) return;
         Material blockType = event.getBlockState().getType();
         boolean crop = isCropBlock(blockType);
         boolean log = isLogBlock(blockType);
         boolean deep = delver > 0 && event.getBlock().getY() < 0;
-        double smeltChance = smelter * fraction(ups, ForgeUpgrade.Effect.SMELT_ORE);
-        double cropChance = Math.min(CAP_PROC, gardener * fraction(ups, ForgeUpgrade.Effect.CROP_DOUBLE));
-        double logChance = Math.min(CAP_PROC, logger * fraction(ups, ForgeUpgrade.Effect.LOG_DOUBLE));
-        double deepChance = Math.min(CAP_PROC, delver * fraction(ups, ForgeUpgrade.Effect.DEEP_DOUBLE));
-
+        // Один бросок на блок, как прежде; бонус руды не проходит второе умножение глубиной.
+        boolean oreBonus = prospector > 0 && isOre(blockType) && random.nextDouble()
+                < Math.min(CAP_ORE_DOUBLE, sumFraction(ups, ForgeUpgrade.Effect.ORE_DOUBLE));
+        double smeltChance = sumFraction(ups, ForgeUpgrade.Effect.SMELT_ORE);
+        double cropChance = Math.min(CAP_PROC, sumFraction(ups, ForgeUpgrade.Effect.CROP_DOUBLE));
+        double logChance = Math.min(CAP_PROC, sumFraction(ups, ForgeUpgrade.Effect.LOG_DOUBLE));
+        double deepChance = Math.min(CAP_PROC, sumFraction(ups, ForgeUpgrade.Effect.DEEP_DOUBLE));
+        List<Item> additions = new ArrayList<>();
+        boolean ordinaryLoot = false;
         for (Item dropEntity : event.getItems()) {
             ItemStack stack = dropEntity.getItemStack();
-            Material smelted = smeltResultOf(stack.getType());
-            if (smelted != null && smelter > 0 && random.nextDouble() < smeltChance) {
-                dropEntity.setItemStack(new ItemStack(smelted, stack.getAmount()));
-                stack = dropEntity.getItemStack();
+            // Чужие награды, именованные/PDC-предметы и нестандартные стопки не переписываем.
+            if (stack.getType().isAir() || stack.hasItemMeta() || stack.getAmount() <= 0
+                    || stack.getAmount() > stack.getMaxStackSize()
+                    || !dropEntity.getPersistentDataContainer().isEmpty()) continue;
+            ordinaryLoot = true;
+            Material result = smeltResultOf(stack.getType());
+            if (smelter > 0 && result != null && random.nextDouble() < smeltChance) {
+                stack = new ItemStack(result, stack.getAmount());
             }
-            if (crop && gardener > 0 && random.nextDouble() < cropChance) {
-                doubleDrop(dropEntity);
-            }
-            if (log && logger > 0 && random.nextDouble() < logChance) {
-                doubleDrop(dropEntity);
-            }
-            if (deep && random.nextDouble() < deepChance) {
-                doubleDrop(dropEntity);
+            // Сам блок руды (Silk Touch/древние обломки) нельзя размножить и поставить вновь.
+            boolean resource = !isOre(stack.getType());
+            int total = ForgeWorkMath.dropTotal(stack.getAmount(), oreBonus && resource,
+                    crop && gardener > 0 && random.nextDouble() < cropChance,
+                    log && logger > 0 && random.nextDouble() < logChance,
+                    deep && resource && random.nextDouble() < deepChance);
+            List<Integer> parts = DropAmounts.split(total, stack.getMaxStackSize());
+            ItemStack first = stack.clone();
+            first.setAmount(parts.getFirst());
+            dropEntity.setItemStack(first);
+            for (int index = 1; index < parts.size(); index++) {
+                ItemStack extra = stack.clone();
+                extra.setAmount(parts.get(index));
+                additions.add(detachedDrop(dropEntity.getLocation(), extra, dropEntity));
             }
         }
-        // Златолюб: крупица золота поверх дропа камня
-        if (goldbug > 0 && isStoneForGold(blockType)
-                && random.nextDouble()
-                        < goldbug * fraction(ups, ForgeUpgrade.Effect.GOLD_FIND)) {
-            event.getBlock().getWorld().dropItemNaturally(
-                    event.getBlock().getLocation().add(0.5, 0.5, 0.5),
-                    new ItemStack(Material.GOLD_NUGGET));
+        if (ordinaryLoot && goldbug > 0 && isStoneForGold(blockType)
+                && random.nextDouble() < sumFraction(ups, ForgeUpgrade.Effect.GOLD_FIND)) {
+            additions.add(detachedDrop(event.getBlock().getLocation().add(.5, .5, .5),
+                    new ItemStack(Material.GOLD_NUGGET), null));
         }
+        // Сервер сам добавит сущности в мир, только если окончательное событие разрешено.
+        event.getItems().addAll(additions);
     }
 
-    /**
-     * Удвоить дроп в существующей Item-сущности, не превышая maxStackSize:
-     * излишек выкладывается отдельными стопками рядом (1.4.92).
-     */
-    private static void doubleDrop(Item dropEntity) {
-        ItemStack stack = dropEntity.getItemStack();
-        List<Integer> parts = DropAmounts.split(stack.getAmount() * 2,
-                stack.getType().getMaxStackSize());
-        if (parts.isEmpty()) {
-            return;
+    static Item detachedDrop(org.bukkit.Location location, ItemStack stack, Item source) {
+        Item extra = location.getWorld().createEntity(location, Item.class);
+        extra.setItemStack(stack);
+        if (source != null) {
+            extra.setVelocity(source.getVelocity());
+            extra.setPickupDelay(source.getPickupDelay());
+            extra.setOwner(source.getOwner());
+            extra.setThrower(source.getThrower());
         }
-        ItemStack first = stack.clone();
-        first.setAmount(parts.get(0));
-        dropEntity.setItemStack(first);
-        for (int i = 1; i < parts.size(); i++) {
-            ItemStack extra = stack.clone();
-            extra.setAmount(parts.get(i));
-            dropEntity.getWorld().dropItemNaturally(dropEntity.getLocation(), extra);
-        }
+        return extra;
     }
 
     /** Культуры, чей дроп считается урожаем (для «Земледела»). */
@@ -702,12 +770,8 @@ public final class ForgeUpgradeListener implements Listener {
                 continue;
             }
             double perPoint = selfmend * fraction(ups, ForgeUpgrade.Effect.XP_REPAIR);
-            int repairs = 0;
-            for (int point = 0; point < amount; point++) {
-                if (random.nextDouble() < perPoint) {
-                    repairs++;
-                }
-            }
+            int repairs = ForgeWorkMath.repairs(amount, state.getDamage(), perPoint,
+                    random::nextDouble);
             if (repairs > 0) {
                 ItemMeta meta = piece.getItemMeta();
                 ((Damageable) meta).setDamage(Math.max(0, ((Damageable) meta).getDamage() - repairs));
@@ -721,7 +785,7 @@ public final class ForgeUpgradeListener implements Listener {
             scholarBonus += sumFraction(plugin.items().effectsOf(piece), ForgeUpgrade.Effect.XP_GAIN);
         }
         if (scholarBonus > 0) {
-            event.setAmount(Math.max(1, (int) Math.round(amount * (1.0 + scholarBonus))));
+            event.setAmount(ForgeWorkMath.boostedXp(amount, scholarBonus));
         }
     }
 
@@ -747,6 +811,7 @@ public final class ForgeUpgradeListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPotionEffect(EntityPotionEffectEvent event) {
         if (effectShifting.get() || !(event.getEntity() instanceof Player player)
+                || PassivePotions.isApplying(player, event.getModifiedType())
                 || event.getAction() != EntityPotionEffectEvent.Action.ADDED
                 || event.getCause() == EntityPotionEffectEvent.Cause.BEACON) {
             return;
@@ -821,7 +886,9 @@ public final class ForgeUpgradeListener implements Listener {
     public void pulse() {
         long now = System.currentTimeMillis();
         for (Player player : org.bukkit.Bukkit.getOnlinePlayers()) {
+            List<PotionEffect> passive = new ArrayList<>();
             if (player.isDead()) {
+                PassivePotions.replace(plugin, player, passive, 40);
                 continue;
             }
             // 1.4.91: у кого ковки нет — скан PDC не нужен (кэш сбрасывают события
@@ -829,17 +896,19 @@ public final class ForgeUpgradeListener implements Listener {
             UUID playerId = player.getUniqueId();
             Boolean forged = gearCache.fresh(playerId, now);
             if (Boolean.FALSE.equals(forged)) {
+                PassivePotions.replace(plugin, player, passive, 40);
                 continue;
             }
             if (forged == null) {
                 boolean hasForge = hasForgeGear(player);
                 gearCache.put(playerId, hasForge, now);
                 if (!hasForge) {
+                    PassivePotions.replace(plugin, player, passive, 40);
                     continue;
                 }
             }
             double regen = 0;
-            double magnetLevels = 0;
+            double magnetBonus = 0;
             boolean nightVision = false;
             boolean noFreeze = false;
             double satiate = 0;
@@ -849,7 +918,7 @@ public final class ForgeUpgradeListener implements Listener {
             for (ItemStack piece : gearPieces(player)) {
                 Map<ForgeUpgrade.Def, Integer> ups = plugin.items().effectsOf(piece);
                 regen += sumAbs(ups, ForgeUpgrade.Effect.REGEN_PULSE);
-                magnetLevels += levelOf(ups, ForgeUpgrade.Effect.MAGNET);
+                magnetBonus += sumAbs(ups, ForgeUpgrade.Effect.MAGNET);
                 nightVision |= levelOf(ups, ForgeUpgrade.Effect.NIGHT_VISION) > 0;
                 noFreeze |= levelOf(ups, ForgeUpgrade.Effect.NO_FREEZE) > 0;
                 satiate += sumAbs(ups, ForgeUpgrade.Effect.FEED_PULSE);
@@ -869,37 +938,34 @@ public final class ForgeUpgradeListener implements Listener {
             if (regen > 0 && player.getHealth() > 0 && player.getHealth() < maxHealth(player)) {
                 heal(player, Math.min(CAP_REGEN_HEAL, regen));
             }
-            if (nightVision && !player.hasPotionEffect(PotionEffectType.NIGHT_VISION)) {
-                player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION,
-                        20 * 15, 0, false, false, false));
-            }
-            if (magnetLevels > 0) {
-                pullDrops(player, magnetLevels);
-            }
+            if (nightVision) passive.add(new PotionEffect(PotionEffectType.NIGHT_VISION, 1, 0, false, false, false));
+            if (magnetBonus > 0) pullDrops(player, magnetBonus);
             // Шуба: замерзания не бывает вовсе
             if (noFreeze && player.getFreezeTicks() > 0) {
                 player.setFreezeTicks(0);
             }
-            // Кормилец: тихий паёк, пока сытость не восстановилась
-            if (satiate > 0 && player.getSaturation() < 6.0f) {
-                player.setSaturation((float) Math.min(player.getFoodLevel(),
-                        player.getSaturation() + satiate));
+            // Кормилец добавляет насыщение, не пункты голода; потолок — 6 и food level.
+            if (satiate > 0) {
+                float current = player.getSaturation();
+                float next = ForgeWorkMath.feed(current, player.getFoodLevel(), satiate);
+                if (next > current) player.setSaturation(next);
             }
             // Трудоголик: Спешка I/II, пока инструмент с клеймом в руках
             if (haste > 0) {
-                applyFresh(player, PotionEffectType.HASTE, 20 * 15, Math.min(1, haste - 1));
+                passive.add(new PotionEffect(PotionEffectType.HASTE, 1, Math.min(1, haste - 1), false, true, true));
             }
             // Тропинка: Speed I на тропинках и траве
             if (pathSpeed && isWalkPath(player)) {
-                applyFresh(player, PotionEffectType.SPEED, 60, 0);
+                passive.add(new PotionEffect(PotionEffectType.SPEED, 1, 0, false, true, true));
             }
             // Ветер: Speed I после пяти секунд вне боя
             if (roamSpeed) {
                 Long last = lastCombat.get(player.getUniqueId());
                 if (last == null || last < System.currentTimeMillis() - 5000L) {
-                    applyFresh(player, PotionEffectType.SPEED, 60, 0);
+                    passive.add(new PotionEffect(PotionEffectType.SPEED, 1, 0, false, true, true));
                 }
             }
+            PassivePotions.replace(plugin, player, passive, 40);
         }
     }
 
@@ -934,8 +1000,8 @@ public final class ForgeUpgradeListener implements Listener {
      * С 1.4.82 — импульсом скорости, а не {@code teleport}: дроп не проваливается
      * в блок/под пол и не «моргает» сквозь стены.
      */
-    private void pullDrops(Player player, double levels) {
-        double radius = Math.min(5.5, 1.5 + 0.5 * levels);
+    private void pullDrops(Player player, double bonus) {
+        double radius = ForgeWorkMath.magnetRadius(bonus);
         int pulled = 0;
         for (org.bukkit.entity.Entity entity : player.getNearbyEntities(radius, radius / 2, radius)) {
             if (!(entity instanceof Item drop) || drop.isDead() || drop.getPickupDelay() > 0) {

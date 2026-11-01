@@ -64,7 +64,7 @@ public final class TierForgePlugin extends JavaPlugin {
         saveDefaultConfig();
         reloadTierConfig();
         try {
-            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 20) throw new IllegalStateException("Нужен Core API 20+");
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 32) throw new IllegalStateException("Нужен Core API 32+");
             this.awards = new ru.cherdakmd.chrdkregister.api.MilestoneAwards(this,this::coreApi,this::messages,"tierforge-awards",ru.cherdakmd.chrdkregister.api.MilestoneMigration.tierForge(getDataFolder().toPath().resolve("stats.yml")));
         } catch (Exception | LinkageError error) {
             getLogger().log(java.util.logging.Level.SEVERE,"Модуль остановлен без сброса прогресса/наград",error);
@@ -208,12 +208,19 @@ public final class TierForgePlugin extends JavaPlugin {
         nameTagRegistered = false;
     }
 
+    /** Сверка инвентаря, включая drag/respawn, делает следующий пульс свежим. */
+    void invalidateForgeGear(java.util.UUID player) {
+        if (forgeUpgrades != null) forgeUpgrades.invalidateGearCache(player);
+    }
+
     /** Пульс кузни раз в 2 секунды (тихий no-op, если ковка выключена). */
     private void startForgePulse() {
         this.forgePulseTask = Bukkit.getScheduler().runTaskTimer(this, () -> {
             TierForgeConfig cfg = this.config;
             if (cfg != null && cfg.improveEnabled() && forgeUpgrades != null) {
                 forgeUpgrades.pulse();
+            } else {
+                ru.cherdakmd.chrdkregister.api.PassivePotions.cancel(this);
             }
         }, 40L, 40L);
     }
@@ -221,6 +228,7 @@ public final class TierForgePlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         if (awards != null) awards.close();
+        if (refreshListener != null) refreshListener.close();
         unregisterCollectionNameTag();
         if (tabService != null) {
             tabService.stop();
@@ -348,6 +356,7 @@ public final class TierForgePlugin extends JavaPlugin {
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
         this.config = TierForgeConfig.parse(getConfig(), getLogger());
+        if (forgeUpgrades != null) forgeUpgrades.invalidateGearCache();
         this.namePool = new ForgeNamePool(config.namesWeapons(), config.namesArmor(),
                 config.namesTools(), config.namesUtilities());
         if (identifyScanTask != null) {

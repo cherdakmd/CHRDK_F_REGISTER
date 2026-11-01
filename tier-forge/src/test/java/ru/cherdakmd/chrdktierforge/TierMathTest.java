@@ -7,6 +7,21 @@ import static org.junit.jupiter.api.Assertions.*;
 class TierMathTest {
 
     @Test
+    void fractionalLoreMatchesAllConfiguredScalarsWithoutBinaryTails() {
+        assertEquals("+1.2", TierMath.signedPercent(TierMath.movementScalar(6)));
+        assertEquals("+2.4", TierMath.signedPercent(TierMath.movementScalar(12)));
+        assertEquals("-2.5", TierMath.signedPercent(TierMath.armorScalar(-5)));
+        assertEquals("+90", TierMath.signedPercent(TierMath.miningScalar(30)));
+        for (int percent = -50; percent <= 60; percent++) {
+            for (double scalar : new double[]{TierMath.damageScalar(percent), TierMath.miningScalar(percent),
+                    TierMath.armorScalar(percent), TierMath.toughnessScalar(percent), TierMath.movementScalar(percent)}) {
+                assertEquals(scalar * 100, Double.parseDouble(TierMath.signedPercent(scalar)), 1e-10);
+            }
+            assertEquals(TierMath.defenseScalar(percent) * 0.5, TierMath.armorScalar(percent), 1e-12);
+        }
+    }
+
+    @Test
     void rerollCostGrowsWithCurrentTier() {
         // проклятый (индекс 0) перекатывать дёшево — это жалоба на судьбу, не инвестиция
         assertEquals(5, TierMath.rerollXpCost(5, 0));

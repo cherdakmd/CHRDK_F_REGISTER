@@ -56,7 +56,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          ./gradlew --no-daemon build 2>&1 | tee build.log
+          ./gradlew --no-daemon build --continue 2>&1 | tee build.log
           status=${PIPESTATUS[0]}
           if [[ $status -ne 0 ]]; then
             {

@@ -33,6 +33,11 @@ public final class PotionRefresh {
         return Math.max(MIN_TICKS, refreshTicks) + BUFFER_TICKS;
     }
 
+    /** Ледяная аура: прежние 100 тиков по умолчанию, запас и при редком пульсе. */
+    public static int auraDurationTicks(int refreshTicks) {
+        return Math.max(100, Math.max(MIN_TICKS, refreshTicks) + BUFFER_TICKS);
+    }
+
     /**
      * Нужно ли вообще вешать эффект.
      *
@@ -47,6 +52,7 @@ public final class PotionRefresh {
         if (!present) {
             return true;
         }
+        if (currentDurationTicks == -1) return false;
         // Чужой эффект сильнее — не понижаем.
         if (currentAmplifier > amplifier) {
             return false;

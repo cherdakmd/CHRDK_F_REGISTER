@@ -473,6 +473,20 @@ def snapshot_catalog():
             if product == revised:
                 products[i] = copy.deepcopy(old)
         cfg["shop"]["products"] = products
+    # Только read-only восстановление формулировки архивного SKU до школы ремёсел262.
+    # Живые права/цены и архивные файлы не меняются; допускается ровно смена термина.
+    if tuple(map(int, snapshot_version().split('.'))) < (1, 4, 262):
+        resource = ROOT / "src/main/resources/presentation-legacy-1.4.247.yml"
+        previous = yaml.safe_load(resource.read_text(encoding="utf-8"))["shop"]["products"]
+        for old in previous:
+            text = old.get("description", "")
+            if "потолок профессии +10" not in text:
+                continue
+            revised = {**old, "description": text.replace("потолок профессии +10", "порог ремесленных прибавок +10")}
+            for i, product in enumerate(products):
+                if product == revised:
+                    products[i] = copy.deepcopy(old)
+        cfg["shop"]["products"] = products
     return cfg, products
 
 

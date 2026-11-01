@@ -33,7 +33,7 @@ import ru.cherdakmd.chrdkregister.storage.SafeJsonWriter;
  */
 public final class ProfessionStore {
 
-    public static final int VERSION = 2;
+    public static final int VERSION = 3;
     /** Потолок числа игроков в файле: защита от мусора. */
     public static final int MAX_PLAYERS = 200_000;
     /** Потолок опыта одной профессии: защита от правки файла руками. */
@@ -65,6 +65,9 @@ public final class ProfessionStore {
         private final Map<String, Integer> xp = new LinkedHashMap<>();
         private final Map<String, Daily> daily = new LinkedHashMap<>();
         private long changedAt;
+        private final Map<String,Map<String,Integer>> practice=new LinkedHashMap<>();
+        private final Map<String,Integer> trials=new LinkedHashMap<>();
+        private String workReceipt="";
         private final Map<String, String> mastery = new LinkedHashMap<>();
         private final Map<String, Long> masteryChanged = new LinkedHashMap<>();
         private final Map<String, Long> workUntil = new LinkedHashMap<>();
@@ -79,6 +82,9 @@ public final class ProfessionStore {
     private final Logger logger;
     private final Map<UUID, Player> players = new LinkedHashMap<>();
     private boolean dirty;
+    private boolean healthy=true;
+    private final Object ioLock=new Object();
+    public synchronized boolean healthy(){return healthy;}
 
     public ProfessionStore(Path dataFolder, Logger logger) {
         this.file = dataFolder.resolve("professions.json");
@@ -98,17 +104,16 @@ public final class ProfessionStore {
         }
         try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
             Map<String, Object> data = GSON.fromJson(reader, DATA_TYPE);
-            if (data == null) {
-                return;
-            }
+            if (data == null)throw new IllegalArgumentException("null professions file");
+            long version=number(data.get("version"));
+            if(version<1||version>VERSION||!(data.get("players") instanceof Map<?,?>))throw new IllegalArgumentException("profession schema");
             int skipped = 0;
             if (data.get("players") instanceof Map<?, ?> rows) {
                 for (Map.Entry<?, ?> entry : rows.entrySet()) {
                     UUID id = parseUuid(entry.getKey());
                     if (id == null || !(entry.getValue() instanceof Map<?, ?> row)
                             || players.size() >= MAX_PLAYERS) {
-                        skipped++;
-                        continue;
+                        throw new IllegalArgumentException("invalid profession player");
                     }
                     players.put(id, readPlayer(id, row));
                 }
@@ -118,10 +123,12 @@ public final class ProfessionStore {
                         + skipped + ".");
             }
         } catch (IOException | RuntimeException error) {
+            healthy=false;
             if (logger != null) {
                 logger.severe("[CHRDK_Professions] Не удалось прочитать " + file + ": "
-                        + error.getMessage() + " — начну с чистого листа.");
+                        + error.getMessage() + " — исходник не перезаписывается.");
             }
+            throw new IllegalStateException("Повреждён professions.json",error);
         }
     }
 
@@ -165,6 +172,23 @@ public final class ProfessionStore {
         }
         readTimes(row.get("mastery-changed"), player.masteryChanged);
         readTimes(row.get("work-until"), player.workUntil);
+        if(row.get("practice") instanceof Map<?,?> all)for(Profession profession:Profession.values()){
+            if(all.get(profession.id()) instanceof Map<?,?> counts){
+                var values=new LinkedHashMap<String,Integer>();
+                if(counts.size()>512)throw new IllegalArgumentException("practice capacity");
+                for(var entry:counts.entrySet()){
+                    String key=entry.getKey().toString();long n=number(entry.getValue());
+                    if(!key.matches("[a-z0-9_:.-]{1,100}")||n<0||n>MAX_XP)throw new IllegalArgumentException("practice row");
+                    values.put(key,(int)n);
+                }
+                player.practice.put(profession.id(),values);
+            }
+        }
+        if(row.get("trials") instanceof Map<?,?> all)for(Profession profession:Profession.values()){
+            long n=number(all.get(profession.id()));if(n<0||n>15)throw new IllegalArgumentException("trials");
+            if(n>0)player.trials.put(profession.id(),(int)n);
+        }
+        player.workReceipt=row.get("work-receipt") instanceof String text?text:"";
         player.changedAt = Math.max(0L, number(row.get("changed-at")));
         return player;
     }
@@ -211,6 +235,29 @@ public final class ProfessionStore {
         dirty = true;
         return true;
     }
+
+    public synchronized Map<String,Integer> practice(UUID id,Profession profession){
+        return Map.copyOf(of(id).practice.getOrDefault(profession.id(),Map.of()));
+    }
+    public synchronized void practice(UUID id,Profession profession,String source,int units){
+        if(!canTrack(id)||units<=0||!source.matches("[a-z0-9_:.-]{1,100}"))return;
+        var map=of(id).practice.computeIfAbsent(profession.id(),k->new LinkedHashMap<>());
+        if(map.size()>=512&&!map.containsKey(source))return;
+        map.put(source,(int)Math.min(MAX_XP,(long)map.getOrDefault(source,0)+units));dirty=true;
+    }
+    public synchronized int trials(UUID id,Profession profession){return of(id).trials.getOrDefault(profession.id(),0);}
+    public synchronized boolean claimTrial(UUID id,Profession profession,int index){
+        if(index<0||index>3||!canTrack(id))return false;
+        int mask=trials(id,profession),bit=1<<index;if((mask&bit)!=0)return false;
+        of(id).trials.put(profession.id(),mask|bit);dirty=true;return true;
+    }
+    /** Идемпотентное завершение мастерской после сохранения playerdata. */
+    public synchronized void completeWork(UUID id,Profession profession,long until,String receipt){
+        Player p=of(id);if(p.workReceipt.equals(receipt))return;
+        p.workUntil.put(profession.id(),Math.max(until,p.workUntil.getOrDefault(profession.id(),0L)));
+        practice(id,profession,"work",1);p.workReceipt=receipt;dirty=true;
+    }
+    public synchronized String receipt(UUID id){return of(id).workReceipt;}
 
     /* --------------------------------- доступ --------------------------------- */
 
@@ -426,7 +473,7 @@ public final class ProfessionStore {
         for (Player player : players.values()) {
             int xp = player.xp.getOrDefault(profession.id(), 0);
             if (xp > 0) {
-                sum += ProfessionMath.levelFor(xp);
+                sum += ProfessionMath.levelFor(xp,ProfessionMath.PROGRESSION_CAP);
             }
         }
         return sum;
@@ -446,6 +493,9 @@ public final class ProfessionStore {
         for (Player player : players.values()) {
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("name", player.name);
+            if(!player.practice.isEmpty())row.put("practice",player.practice);
+            if(!player.trials.isEmpty())row.put("trials",player.trials);
+            if(!player.workReceipt.isEmpty())row.put("work-receipt",player.workReceipt);
             if (!player.mastery.isEmpty()) row.put("mastery", new LinkedHashMap<>(player.mastery));
             if (!player.masteryChanged.isEmpty()) row.put("mastery-changed", new LinkedHashMap<>(player.masteryChanged));
             if (!player.workUntil.isEmpty()) row.put("work-until", new LinkedHashMap<>(player.workUntil));
@@ -477,31 +527,13 @@ public final class ProfessionStore {
     }
 
     /** Пишет файл, только если были изменения. */
-    public void saveNow() {
-        String json;
-        synchronized (this) {
-            if (!dirty) {
-                return;
-            }
-            json = snapshotJson();
-        }
-        write(json);
-    }
-
-    /** Немедленная запись без проверки флага (выключение сервера, тесты). */
-    public void flush() {
-        write(snapshotJson());
-    }
-
-    private void write(String json) {
-        if (!SafeJsonWriter.write(file, json, logger, "[CHRDK_Professions]")) {
-            // Диск не принял данные — помечаем состояние изменённым, иначе
-            // следующее автосохранение решит, что писать нечего, и прогресс
-            // потеряется молча.
-            synchronized (this) {
-                dirty = true;
-            }
-        }
+    public void saveNow(){synchronized(ioLock){String json;synchronized(this){if(!dirty||!healthy)return;json=snapshotJson();}write(json);}}
+    public void flush(){flushDurably();}
+    public boolean flushDurably(){synchronized(ioLock){if(!healthy())return false;String json=snapshotJson();boolean ok=ProfessionDurableFile.write(file,json,logger);if(!ok)synchronized(this){dirty=true;}return ok;}}
+    private boolean write(String json){
+        boolean saved=SafeJsonWriter.write(file,json,logger,"[CHRDK_Professions]");
+        if(!saved)synchronized(this){dirty=true;}
+        return saved;
     }
 
     /* -------------------------------- помощники ------------------------------- */
@@ -522,6 +554,6 @@ public final class ProfessionStore {
     }
 
     private static long number(Object raw) {
-        return raw instanceof Number value ? value.longValue() : 0L;
+        return raw instanceof Number ? new java.math.BigDecimal(raw.toString()).longValueExact() : 0L;
     }
 }

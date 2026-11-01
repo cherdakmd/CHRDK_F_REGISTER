@@ -252,6 +252,7 @@ public final class ProfessionConfig {
             case ALCHEMIST -> perkAlchemistBottle;
             case COOK -> perkCookSaturation;
             case MASON -> perkMasonBlock;
+            default -> perksEnabled;
         };
     }
 }

@@ -478,7 +478,10 @@ class PluginUpdateServiceTest {
         }
         CommandSender generic = (CommandSender) Proxy.newProxyInstance(CommandSender.class.getClassLoader(), new Class<?>[]{CommandSender.class}, (p, m, a) -> null);
         assertFalse(RegisterCommandHandler.canDownloadUpdates(generic));
-        assertEquals(26, PluginUpdateService.MODULES.size());
+        assertEquals(25, PluginUpdateService.MODULES.size());
+        assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_VK"),
+                "CHRDK_VK публикуется отдельным JAR рядом с общим архивом, а не внутри ZIP");
+        Set<String> standalone = Set.of("CHRDK_VK");
         Set<String> actual = new HashSet<>();
         List<Path> descriptors = new ArrayList<>();
         descriptors.add(Path.of("src/main/resources/plugin.yml"));
@@ -488,6 +491,7 @@ class PluginUpdateServiceTest {
         for (Path file : descriptors) {
             var yaml = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(file.toFile());
             String plugin = yaml.getString("name");
+            if (standalone.contains(plugin)) continue;
             actual.add(plugin);
             String basename;
             if ("CHRDK_Core".equals(plugin)) {
@@ -503,5 +507,20 @@ class PluginUpdateServiceTest {
             assertEquals(basename, PluginUpdateService.MODULES.get(plugin), "Имя архива сборки: " + plugin);
         }
         assertEquals(actual, PluginUpdateService.MODULES.keySet());
+    }
+
+    @Test void standaloneVkAssetAndInstalledJarDoNotBreakGeneralPackUpdater() throws Exception {
+        Fixture fixture = new Fixture();
+        fixture.install("CHRDK_Core", "1.4.72");
+        byte[] vkJar = jar("CHRDK_VK", VERSION);
+        fixture.addAsset("chrdk-vk-" + VERSION + ".jar", vkJar);
+        Path installedVk = root.resolve("chrdk-vk-1.4.72.jar");
+        Files.write(installedVk, jar("CHRDK_VK", "1.4.72"));
+        try (var updater = fixture.service()) {
+            var result = updater.execute(true, "1.4.72");
+            assertTrue(result.staged());
+            assertEquals(1, result.count(), "обновляются установленные плагины общего комплекта, а отдельный CHRDK_VK не блокирует обновление");
+            assertTrue(Files.exists(installedVk));
+        }
     }
 }

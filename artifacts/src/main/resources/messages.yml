@@ -11,6 +11,7 @@ messages:
   not-enough-levels: "<red>Не хватает уровней опыта: нужно %need%.</red>"
   item-protected: "<gray>Артефакт нельзя поставить, съесть или использовать как обычный предмет.</gray>"
   dash-blocked: "<red>Тайга не пускает: впереди толща.</red>"
+  teleport-denied: "<red>Переход отменён. Опыт не потрачен, перезарядка не запущена.</red>"
   teleport-failed: "<red>Артефакт не нашёл безопасного места для перехода. Попробуйте ещё раз.</red>"
   world-effect-blocked: "<gray>Погода и время этого мира не подчиняются артефакту.</gray>"
   revealed: "<light_purple>✦ Линза обнажила %count% существ вокруг.</light_purple>"
@@ -308,94 +309,124 @@ messages:
   trait.silnyj-zahvat:
     name: "Сильный захват"
     desc: "+4–8% к урону"
+    detail: "%value%% к атрибуту урона"
   trait.tverdost-kozh:
     name: "Твёрдость кожи"
     desc: "+5–9% к броне"
+    detail: "%value%% к броне"
   trait.legkij-shag:
     name: "Лёгкий шаг"
     desc: "+3–5% к скорости"
+    detail: "%value%% к скорости"
   trait.bytroe-serdce:
     name: "Быстрое сердце"
     desc: "+4–10% к скорости атаки"
+    detail: "%value%% к скорости атаки"
   trait.zapas-sil:
     name: "Запас сил"
     desc: "+1–2 к максимуму здоровья"
+    detail: "%value% к максимуму здоровья"
   trait.udacha-talismana:
     name: "Удача талисмана"
     desc: "+1–2 к удаче"
+    detail: "%value% к удаче"
   trait.ustojchivost:
     name: "Устойчивость"
     desc: "+0.05–0.12 к сопротивлению отбросу"
+    detail: "%value% к сопротивлению отбросу"
   trait.glubokoe-dyhanie:
     name: "Глубокое дыхание"
     desc: "+1–3 к запасу воздуха"
+    detail: "%value% к запасу воздуха"
   trait.myagkoe-padenie:
     name: "Мягкое падение"
     desc: "−0.5–1.5 м урона от падения"
+    detail: "Безопасная высота падения: %value% м"
   trait.bystraya-kopka:
     name: "Быстрая копка"
     desc: "+5–12% к скорости разрушения блоков"
+    detail: "%value%% к скорости разрушения блоков"
   trait.tihaya-postup:
     name: "Тихая поступь"
     desc: "+10–20% к скорости красться"
+    detail: "%value%% к скорости красться"
   trait.regeneraciya:
     name: "Регенерация"
     desc: "Медленно лечит носителя"
+    detail: "Регенерация %effectlevel%"
   trait.noschnoe-zrenie:
     name: "Ночное зрение"
     desc: "Видно в темноте"
+    detail: "Ночное зрение %effectlevel%"
   trait.plavuchest:
     name: "Плавучесть"
     desc: "Дыхание под водой"
+    detail: "Дыхание под водой %effectlevel%"
   trait.ognezashchita:
     name: "Огнестойкость"
     desc: "Огонь и лава не жгут"
+    detail: "Огнестойкость %effectlevel%"
 
   # --- 15 вредных свойств ▼ (1.4.129) ---
   trait.tyazhelyj-gruz:
     name: "Тяжёлый груз"
     desc: "−3–7% к скорости"
+    detail: "%value%% к скорости"
   trait.slabaya-ruka:
     name: "Слабая рука"
     desc: "−4–8% к урону"
+    detail: "%value%% к атрибуту урона"
   trait.zamedlennyj-zamah:
     name: "Замедленный замах"
     desc: "−5–12% к скорости атаки"
+    detail: "%value%% к скорости атаки"
   trait.hrupkaya-oprava:
     name: "Хрупкая оправа"
     desc: "−4–8% к броне"
+    detail: "%value%% к броне"
   trait.slaboe-serdce:
     name: "Слабое сердце"
     desc: "−1–2 к максимуму здоровья"
+    detail: "%value% к максимуму здоровья"
   trait.zlye-ogljadki:
     name: "Злые оглядки"
     desc: "−1–2 к удаче"
+    detail: "%value% к удаче"
   trait.zharkoe-plamya:
     name: "Жаркое пламя"
     desc: "+15–35% ко времени горения"
+    detail: "%value%% ко времени горения"
   trait.korotkaya-ruka:
     name: "Короткая рука"
     desc: "−0.2–0.5 м к дальности удара"
+    detail: "%value% м к дальности удара"
   trait.vysokoe-padenie:
     name: "Высокое падение"
     desc: "+0.5–1.5 м урона от падения"
+    detail: "Безопасная высота падения: %value% м"
   trait.dolgaya-kopka:
     name: "Долгая копка"
     desc: "−5–12% к скорости разрушения блоков"
+    detail: "%value%% к скорости разрушения блоков"
   trait.skolzkij-shag:
     name: "Скользкий шаг"
     desc: "−10–20% к скорости красться"
+    detail: "%value%% к скорости красться"
   trait.tormoz:
     name: "Тормоз"
     desc: "Замедление"
+    detail: "Замедление %effectlevel%"
   trait.slabost:
     name: "Слабость"
     desc: "Слабее бьёт в ближнем бою"
+    detail: "Слабость %effectlevel%"
   trait.tyazhelye-ruki:
     name: "Тяжёлые руки"
     desc: "Усталость при работе инструментом"
+    detail: "Усталость %effectlevel%"
   trait.vechnyj-golod:
     name: "Вечный голод"
     desc: "Голод наступает быстрее"
+    detail: "Голод %effectlevel%"
 
   finance.award-status: '<gray>Награды /bal: %source%, lineage=%lineage%, получателей с доходом=%count%, исправен=%healthy%, конфликт=%conflict%. Это не сброс IO-карантина.</gray>'

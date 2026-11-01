@@ -70,6 +70,7 @@ public final class RegisterPlugin extends JavaPlugin {
         PluginConfig config = PluginConfig.fromBukkitConfig(getConfig());
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
 
+        ru.cherdakmd.chrdkregister.api.PassivePotions.start(this);
         this.executor = new ExecutionService(getLogger());
         this.store = new RegistrationStore(getDataFolder().toPath(), getLogger(),
                 config.storageWriteAsync() ? executor.taskExecutor() : null);
@@ -302,6 +303,7 @@ public final class RegisterPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        ru.cherdakmd.chrdkregister.api.PassivePotions.stop();
         ru.cherdakmd.chrdkregister.api.CropReplanting.clear();
         if (pluginUpdater != null) pluginUpdater.close();
         if (serverMenuService != null) serverMenuService.shutdown();

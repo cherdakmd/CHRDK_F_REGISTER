@@ -1,5 +1,6 @@
 package ru.cherdakmd.chrdkartifacts;
 
+import ru.cherdakmd.chrdkregister.api.PassivePotions;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
@@ -46,37 +47,66 @@ public final class PassiveEffectsService {
             task.cancel();
             task = null;
         }
+        PassivePotions.cancel(plugin);
         // Лимит прыжка — модификатор игрока, а не эффект: без снятия он держался бы
         // до конца сессии. Снимаем у всех, кто онлайн. Свойства артефактов тоже.
         for (Player player : Bukkit.getOnlinePlayers()) {
+            clearAttributes(player);
+        }
+    }
+
+    /** Снимает только принадлежащие нам атрибуты, не удаляя чужие зелья. */
+    public void clearAttributes(Player player) {
+        PassivePotions.replace(plugin, player, java.util.List.of(), plugin.config().refreshTicks());
+        PassivePotions.replace(plugin, "traits", player, java.util.List.of(), plugin.config().refreshTicks());
+        jumpLimiter.clear(player);
+        if (plugin.traits() != null) plugin.traits().clear(player);
+    }
+
+    /** Событийная синхронизация не запускает проклятия, лечение и мировые эффекты. */
+    public void refreshAttributes(Player player) {
+        if (player == null || !player.isOnline()) return;
+        if (!canApply(player)) {
+            clearAttributes(player);
+            return;
+        }
+        plugin.items().refreshCarriedLore(player);
+        if (plugin.config().isEnabled(JUMP_WARD_ID)
+                && plugin.items().carriedIds(player).contains(JUMP_WARD_ID)) {
+            jumpLimiter.apply(player);
+        } else {
             jumpLimiter.clear(player);
-            if (plugin.traits() != null) {
-                plugin.traits().clear(player);
+        }
+        var traits = plugin.items().carriedTraitLevels(player);
+        plugin.traits().applyAttributes(player, traits);
+        // События инвентаря меняют только непрерывные эффекты, не лечение/проклятия/сытость.
+        java.util.List<PotionEffect> continuous = new java.util.ArrayList<>();
+        for (String id : plugin.items().carriedIds(player)) {
+            ArtifactDef def = ArtifactRegistry.byId(id);
+            if (def == null || def.mode() != ArtifactDef.Mode.PASSIVE || !plugin.config().isEnabled(id)) continue;
+            for (ArtifactEffects.PotionSpec spec : ArtifactEffects.passivePotions(id)) {
+                PotionEffectType type = Potions.resolve(spec.type());
+                if (type != null && !type.isInstant()) continuous.add(new PotionEffect(type, 1, spec.amplifier(), true, false, true));
             }
         }
+        PassivePotions.replace(plugin, player, continuous, plugin.config().refreshTicks());
+        plugin.traits().refreshPotions(player, traits);
+    }
+
+    private boolean canApply(Player player) {
+        return !player.isDead() && player.hasPermission("chrdkartifacts.use")
+                && (!plugin.config().requiresAuth()
+                || (plugin.coreApi() != null && plugin.coreApi().isAuthenticated(player)));
     }
 
     private void pulse() {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            if (player.isDead() || !player.isOnline()) {
-                continue;
-            }
-            if (!player.hasPermission("chrdkartifacts.use")) {
-                // права отозвали — снимаем и лимит прыжка, и свойства артефактов
-                jumpLimiter.clear(player);
-                plugin.traits().clear(player);
-                continue;
-            }
-            if (plugin.config().requiresAuth()
-                    && (plugin.coreApi() == null || !plugin.coreApi().isAuthenticated(player))) {
-                // Неавторизованному артефакты не работают — лимит прыжка тоже снимаем.
-                jumpLimiter.clear(player);
-                plugin.traits().clear(player);
-                continue;
-            }
+            refreshAttributes(player);
+            if (!canApply(player)) continue;
             Set<String> ids = plugin.items().carriedIds(player);
-            boolean jumpWard = false;
             for (String id : ids) {
+                // Проклятие выше могло вызвать смерть в этом же пульсе.
+                if (!canApply(player)) break;
                 ArtifactDef def = ArtifactRegistry.byId(id);
                 if (def == null || def.mode() != ArtifactDef.Mode.PASSIVE
                         || !plugin.config().isEnabled(id)) {
@@ -85,17 +115,7 @@ public final class PassiveEffectsService {
                 applyPotions(player, id);
                 rollTrigger(player, id);
                 runSpecial(player, id);
-                jumpWard |= id.equals(JUMP_WARD_ID);
             }
-            // «Глиняную душу» держим атрибутом, а не эффектом с переполнением:
-            // снимаем, как только артефакт убрали из инвентаря.
-            if (jumpWard) {
-                jumpLimiter.apply(player);
-            } else {
-                jumpLimiter.clear(player);
-            }
-            // 1.4.129: свойства ▲/▼ всех носимых артефактов (и пассивных, и активных)
-            plugin.traits().apply(player, plugin.items().carriedTraitLevels(player));
         }
     }
 
@@ -103,8 +123,8 @@ public final class PassiveEffectsService {
         int refresh = plugin.config().refreshTicks();
         for (ArtifactEffects.PotionSpec spec : ArtifactEffects.passivePotions(id)) {
             PotionEffectType type = Potions.resolve(spec.type());
-            if (type == null) {
-                continue;
+            if (type == null || !type.isInstant()) {
+                continue; // непрерывные эффекты уже переданы общему владельцу
             }
             int duration = PotionRefresh.durationTicks(refresh, type.isInstant());
             if (!shouldApplyPotion(player, type, spec.amplifier(), duration)) {
@@ -172,6 +192,12 @@ public final class PassiveEffectsService {
         }
     }
 
+    private static boolean shouldApplyPotionToMob(org.bukkit.entity.Monster mob, int duration) {
+        PotionEffect current = mob.getPotionEffect(PotionEffectType.SLOWNESS);
+        return current == null || PotionRefresh.shouldApply(true, current.getAmplifier(),
+                current.getDuration(), 1, duration);
+    }
+
     /**
      * Сообщение о сработавшем проклятии (1.4.130, аудит A-21).
      *
@@ -209,8 +235,11 @@ public final class PassiveEffectsService {
             case FROST_AURA -> {
                 for (org.bukkit.entity.Entity entity : player.getNearbyEntities(8, 5, 8)) {
                     if (entity instanceof org.bukkit.entity.Monster mob && !mob.isDead()) {
-                        mob.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS,
-                                100, 1, true, false, true));
+                        int duration = PotionRefresh.auraDurationTicks(plugin.config().refreshTicks());
+                        if (shouldApplyPotionToMob(mob, duration)) {
+                            mob.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS,
+                                    duration, 1, true, false, true));
+                        }
                         mob.setFreezeTicks(Math.max(mob.getFreezeTicks(), 40));
                     }
                 }

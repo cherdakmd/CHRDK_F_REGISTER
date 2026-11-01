@@ -2,7 +2,7 @@ name: CHRDK_Professions
 version: ${version}
 main: ru.cherdakmd.chrdkprofessions.ProfessionsPlugin
 api-version: '26.3'
-description: "Ремесленные профессии — кузнец, алхимик, повар и камнерез: опыт за честную работу, ранги и тихие прибавки без новых источников силы"
+description: "Восемь профессий, 100 уровней, 16 специализаций и испытания: честная работа без новой боевой силы"
 authors: [cherdakmd]
 website: https://github.com/cherdakmd/CHRDK_F_REGISTER
 depend: [CHRDK_Core]
@@ -10,7 +10,7 @@ softdepend: [PlaceholderAPI]
 commands:
   prof:
     description: "Профессия, опыт и прибавки"
-    usage: "/prof [menu|choose <профессия>|info [профессия]|stats|top|mastery [специализация]|work]"
+    usage: "/prof [menu|choose <профессия>|info [профессия]|stats|top|mastery [специализация]|work|sources|roadmap|abilities|trials|passport]"
     aliases: [profession, professions, professii]
     permission: chrdkprofessions.use
   profadmin:

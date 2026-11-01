@@ -9,6 +9,22 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class TeleportSafetyTest {
 
     @Test
+    void refusedTeleportIsFailureAndIsNotRetried() {
+        int[] calls = {0, 0};
+        assertFalse(TeleportSafety.perform(() -> { calls[0]++; return false; }, () -> calls[1]++));
+        assertEquals(1, calls[0]);
+        assertEquals(1, calls[1]);
+    }
+
+    @Test
+    void acceptedTeleportReturnsSuccessWithoutFailureMessage() {
+        int[] calls = {0, 0};
+        assertTrue(TeleportSafety.perform(() -> { calls[0]++; return true; }, () -> calls[1]++));
+        assertEquals(1, calls[0]);
+        assertEquals(0, calls[1]);
+    }
+
+    @Test
     void safeColumnNeedsFreeFeetHeadSolidGroundAndNoHazard() {
         assertTrue(TeleportSafety.isSafeSpot(true, true, true, false));
         assertFalse(TeleportSafety.isSafeSpot(false, true, true, false), "ноги в блоке");

@@ -35,6 +35,16 @@ public final class VkPlugin extends JavaPlugin {
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
         if (this.coreApi == null) {
             getLogger().warning("[CHRDK_VK] Сервис ChrdkRegisterApi не найден — проверьте порядок запуска CHRDK_Core.");
+        } else {
+            try {
+                if (ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 33) {
+                    getLogger().severe("[CHRDK_VK] Требуется CHRDK_Core API 33+ (версия 1.4.268 или новее).");
+                    this.coreApi = null;
+                }
+            } catch (ReflectiveOperationException badApi) {
+                getLogger().severe("[CHRDK_VK] Несовместимая версия CHRDK_Core: обновите комплект до 1.4.268+.");
+                this.coreApi = null;
+            }
         }
 
         this.store = new VkStore(getDataFolder().toPath(), getLogger());
