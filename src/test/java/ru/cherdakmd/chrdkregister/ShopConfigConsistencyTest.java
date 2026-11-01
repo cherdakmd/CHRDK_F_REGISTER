@@ -208,7 +208,7 @@ class ShopConfigConsistencyTest {
                 missions++;
             }
         }
-        assertEquals(11, missions, "audit must cover every shipped season mission");
+        assertEquals(23, missions, "audit must cover every shipped season mission");
     }
 
     @Test

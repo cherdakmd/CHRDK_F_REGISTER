@@ -22,7 +22,7 @@ final class BattlePassClaims {
     int claimAll(Player player){return claim(player,null,null);}
     boolean claimOne(Player player,String id){return claim(player,id,null)>0;}
     boolean claimTrack(Player player,String id,String track) {
-        if(!java.util.Set.of("FREE","VIP","PREMIUM").contains(track))return false;
+        if(track==null||!java.util.Set.of("FREE","VIP","PREMIUM").contains(track))return false;
         return claim(player,id,track)>0;
     }
     private int claim(Player player,String id,String selected) {
