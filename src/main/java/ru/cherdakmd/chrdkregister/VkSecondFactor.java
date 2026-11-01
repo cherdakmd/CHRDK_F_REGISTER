@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.function.BiPredicate;
 
 /** Core владеет обязательством второго фактора; отсутствие аддона не отменяет его. */
 final class VkSecondFactor {
@@ -20,7 +21,7 @@ final class VkSecondFactor {
         final Purpose purpose;
         private final byte[] hash;
         int attempts;
-        boolean delivered;
+        boolean delivered, verified, committed;
         Ticket(String name, UUID session, long recipient, Purpose purpose, long now, String code) {
             this.name = name; this.session = session; this.recipient = recipient;
             this.purpose = purpose; this.expires = now + TTL; this.hash = digest(code, nonce);
@@ -35,13 +36,18 @@ final class VkSecondFactor {
     }
     private final Path file;
     private final Logger logger;
+    private final Object commitLock = new Object();
+    private final BiPredicate<Path, String> writer;
     private final SecureRandom random = new SecureRandom();
     private final Map<String, Long> enabled = new HashMap<>(), lastSent = new HashMap<>();
     private final Map<UUID, Ticket> pending = new HashMap<>();
     private boolean blocked;
 
     VkSecondFactor(Path folder, Logger logger) {
-        file = folder.resolve("vk-second-factor.json"); this.logger = logger;
+        this(folder, logger, (file, json) -> SafeJsonWriter.write(file, json, logger, "[VK 2FA]"));
+    }
+    VkSecondFactor(Path folder, Logger logger, BiPredicate<Path, String> writer) {
+        file = folder.resolve("vk-second-factor.json"); this.logger = logger; this.writer = writer;
         if (!Files.exists(file)) return;
         try {
             if (Files.size(file) > 1_000_000) throw new IllegalStateException();
@@ -87,19 +93,28 @@ final class VkSecondFactor {
         if (!ticket.delivered) return null;
         ticket.attempts++;
         if (code == null || !code.matches("[0-9]{6}") || !MessageDigest.isEqual(ticket.hash, digest(code, ticket.nonce))) return null;
-        pending.remove(session); return ticket;
+        pending.remove(session); ticket.verified = true; return ticket;
     }
     /** Вызывать вне игрового потока. ACK только после атомарной записи; ошибка не меняет защиту. */
-    synchronized boolean commit(Ticket ticket) {
-        if (blocked || ticket.purpose == Purpose.LOGIN) return false;
-        long current = recipient(ticket.name);
-        if (ticket.purpose == Purpose.ENABLE && current != 0 || ticket.purpose == Purpose.DISABLE && current != ticket.recipient) return false;
-        Map<String, Long> next = new TreeMap<>(enabled);
-        if (ticket.purpose == Purpose.ENABLE) next.put(ticket.name, ticket.recipient); else next.remove(ticket.name);
-        JsonObject root = new JsonObject(); root.addProperty("schema", 1);
-        root.add("accounts", new Gson().toJsonTree(next));
-        if (!SafeJsonWriter.write(file, root.toString(), logger, "[VK 2FA]")) return false;
-        enabled.clear(); enabled.putAll(next); return true;
+    boolean commit(Ticket ticket) {
+        // Записи сериализованы отдельно: чтение защиты в игровом потоке не ждёт диск.
+        synchronized (commitLock) {
+            Map<String, Long> next;
+            synchronized (this) {
+                if (blocked || ticket == null || !ticket.verified || ticket.committed || ticket.purpose == Purpose.LOGIN) return false;
+                ticket.committed = true;
+                long current = recipient(ticket.name);
+                if (ticket.purpose == Purpose.ENABLE && current != 0 || ticket.purpose == Purpose.DISABLE && current != ticket.recipient) return false;
+                next = new TreeMap<>(enabled);
+                if (ticket.purpose == Purpose.ENABLE) next.put(ticket.name, ticket.recipient); else next.remove(ticket.name);
+            }
+            JsonObject root = new JsonObject(); root.addProperty("schema", 1);
+            root.add("accounts", new Gson().toJsonTree(next));
+            String json = root.toString();
+            if (json.length() > 1_000_000 || !writer.test(file, json)) return false;
+            synchronized (this) { enabled.clear(); enabled.putAll(next); }
+            return true;
+        }
     }
     private static byte[] digest(String code, UUID nonce) {
         try { return MessageDigest.getInstance("SHA-256").digest((nonce + ":" + code).getBytes(StandardCharsets.UTF_8)); }

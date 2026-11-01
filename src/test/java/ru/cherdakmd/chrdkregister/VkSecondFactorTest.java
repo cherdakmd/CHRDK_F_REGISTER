@@ -5,6 +5,8 @@ import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.*;
 import java.util.UUID;
 import java.util.logging.Logger;
+import java.util.concurrent.*;
+import java.time.Duration;
 import static org.junit.jupiter.api.Assertions.*;
 
 class VkSecondFactorTest {
@@ -13,10 +15,11 @@ class VkSecondFactorTest {
         var factor = broker(folder); var session = UUID.randomUUID();
         var issued = factor.issue("Steve", session, 77, VkSecondFactor.Purpose.ENABLE, 1000);
         assertNotNull(issued); assertFalse(issued.toString().contains(issued.code));
+        assertFalse(factor.commit(issued.ticket));
         assertNull(factor.verify("Steve", session, VkSecondFactor.Purpose.ENABLE, issued.code, 1001));
         factor.delivered(issued.ticket, true);
         var ticket = factor.verify("Steve", session, VkSecondFactor.Purpose.ENABLE, issued.code, 1002);
-        assertNotNull(ticket); assertTrue(factor.commit(ticket));
+        assertNotNull(ticket); assertTrue(factor.commit(ticket)); assertFalse(factor.commit(ticket));
         assertTrue(broker(folder).required("STEVE")); assertEquals(77, broker(folder).recipient("steve"));
         String json = Files.readString(folder.resolve("vk-second-factor.json"));
         assertFalse(json.contains(issued.code)); assertFalse(json.contains("hash"));
@@ -78,6 +81,28 @@ class VkSecondFactorTest {
         assertTrue(source.contains("ticket.recipient != vkFactor.recipient(player.getName())"));
         assertTrue(source.contains("requiresTotpEnrollment(player.getName())"));
         assertTrue(source.contains("vkFactor.forget(uuid)"));
+    }
+
+    @Test void failedWriteDoesNotPublishStateAndReadsDoNotWaitForDisk(@TempDir Path folder) throws Exception {
+        var entered = new CountDownLatch(1); var release = new CountDownLatch(1);
+        var factor = new VkSecondFactor(folder, Logger.getAnonymousLogger(), (file, json) -> {
+            entered.countDown();
+            try { release.await(5, TimeUnit.SECONDS); } catch (InterruptedException ex) { Thread.currentThread().interrupt(); }
+            return false;
+        });
+        var session = UUID.randomUUID();
+        var issued = factor.issue("Steve", session, 77, VkSecondFactor.Purpose.ENABLE, 1000);
+        factor.delivered(issued.ticket, true);
+        var ticket = factor.verify("Steve", session, VkSecondFactor.Purpose.ENABLE, issued.code, 1001);
+        try (var worker = Executors.newSingleThreadExecutor()) {
+            Future<Boolean> result = worker.submit(() -> factor.commit(ticket));
+            try {
+                assertTrue(entered.await(2, TimeUnit.SECONDS));
+                assertTimeoutPreemptively(Duration.ofSeconds(1), () -> assertFalse(factor.required("Steve")));
+            } finally { release.countDown(); }
+            assertFalse(result.get(2, TimeUnit.SECONDS));
+        }
+        assertFalse(factor.required("Steve")); assertFalse(factor.commit(ticket));
     }
 
     @Test void codeSettingsAreMaskedLikeLoginCommands() {
