@@ -63,6 +63,11 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
             new ArrayBlockingQueue<>(32), runnable -> {
                 Thread thread = new Thread(runnable, "CHRDK-VK-Security"); thread.setDaemon(true); return thread;
             });
+    // Задачу сверки нельзя терять из-за DiscardOldestPolicy обычных уведомлений.
+    private final ExecutorService onboardingExecutor = new ThreadPoolExecutor(
+            1, 1, 0L, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(1), runnable -> {
+                Thread thread = new Thread(runnable, "CHRDK-VK-Onboarding"); thread.setDaemon(true); return thread;
+            }, new ThreadPoolExecutor.AbortPolicy());
     private final ExecutorService outboundExecutor;
     private final Map<Long, Long> vkChatCooldowns = new ConcurrentHashMap<>();
     private final Map<Long, CachedDisplayName> vkDisplayNames = new ConcurrentHashMap<>();
@@ -156,6 +161,7 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
     public synchronized void shutdown() {
         if (onboardingTask != null) { onboardingTask.cancel(); onboardingTask = null; }
         onboardingDue.clear(); onboardingCompleted.clear();
+        onboardingExecutor.shutdownNow();
         if (pulseTask != null) {
             pulseTask.cancel();
             pulseTask = null;
@@ -277,7 +283,7 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
             });
         } catch (RuntimeException | LinkageError error) {
             plugin.getLogger().log(Level.WARNING,
-                    "[CHRDK_VK] Не удалось зарегистрировать мосты в CHRDK_Core (нужен API v32+)", error);
+                    "[CHRDK_VK] Не удалось зарегистрировать мосты в CHRDK_Core (нужен API v34+)", error);
         }
     }
 
@@ -987,7 +993,9 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
         if (!cfg.enabled() || !cfg.onboardingEnabled() || core == null || client == null || onboardingBusy.get()) return;
         long now = System.currentTimeMillis();
         List<OnboardingPlayer> due = new ArrayList<>();
-        for (Player player : Bukkit.getOnlinePlayers()) {
+        List<Player> candidates = new ArrayList<>(Bukkit.getOnlinePlayers());
+        candidates.sort(java.util.Comparator.comparingLong(player -> onboardingDue.getOrDefault(player.getUniqueId(), 0L)));
+        for (Player player : candidates) {
             if (!core.isAuthenticated(player) || onboardingDue.getOrDefault(player.getUniqueId(), 0L) > now) continue;
             onboardingDue.put(player.getUniqueId(), now + cfg.onboardingIntervalSeconds() * 1000L);
             due.add(new OnboardingPlayer(player, store.byPlayer(player.getName()).map(VkStore.LinkSnapshot::vkUserId).orElse(0L)));
@@ -996,7 +1004,7 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
         if (due.isEmpty() || !onboardingBusy.compareAndSet(false, true)) return;
         long peer = onboardingPeer(cfg);
         try {
-            outboundExecutor.execute(() -> {
+            onboardingExecutor.execute(() -> {
                 try {
                     Set<Long> members = null;
                     if (peer >= VkConfig.MIN_CONVERSATION_PEER_ID) {
