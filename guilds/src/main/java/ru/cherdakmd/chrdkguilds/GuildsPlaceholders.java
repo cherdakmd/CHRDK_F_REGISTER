@@ -65,6 +65,9 @@ public final class GuildsPlaceholders extends PlaceholderExpansion {
             case "dues_next" -> guild==null||player==null?"":Long.toString(guild.duesTerm(player.getUniqueId()).dueAt());
             case "mode" -> guild==null?"":guild.mode().label();
             case "peaceful" -> guild!=null&&guild.peaceful()?"true":"false";
+            case "peace_violations" -> player==null?"":Integer.toString(plugin.store().sanction(player.getUniqueId()).violations(System.currentTimeMillis()));
+            case "peace_branded" -> player!=null&&plugin.store().sanction(player.getUniqueId()).branded(System.currentTimeMillis())?"true":"false";
+            case "peace_brand_until" -> player==null?"":Long.toString(plugin.store().sanction(player.getUniqueId()).brandUntil());
             case "peace_debt" -> player==null?"":Long.toString(plugin.store().sanction(player.getUniqueId()).debt());
             case "peace_paid_until" -> guild==null||player==null||guild.peaceTerm(player.getUniqueId())==null?"":Long.toString(guild.peaceTerm(player.getUniqueId()).paidUntil());
             case "treasury" -> guild == null ? "" : Long.toString(guild.treasury());

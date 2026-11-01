@@ -30,7 +30,7 @@ final class GuildDuesService {
         boolean affordsAll=spendable>=Math.addExact(t.amount(),Math.multiplyExact(required-1,(long)g.duesRate()));
         long budget=Math.min(1_000_000,spendable);
         long days=budget<t.amount()?0:1+Math.min(required-1,(budget-t.amount())/g.duesRate());
-        if(!affordsAll&&days<required&&t.graceSince()>0&&now>=t.deadline())return expire(g,owner);
+        if(!affordsAll&&days<required&&t.graceSince()>0&&now>=t.deadline())return expire(g,owner,now);
         if(days>0){
             int cost=Math.toIntExact(t.amount()+(days-1)*g.duesRate());
             long due=Math.addExact(t.dueAt(),Math.multiplyExact(days,GuildPeaceTerm.DAY));
@@ -44,11 +44,12 @@ final class GuildDuesService {
         }
         return plan(GuildResult.fail("peace-idle"));
     }
-    private GuildPeaceService.Plan expire(Guild g,UUID owner){
+    private GuildPeaceService.Plan expire(Guild g,UUID owner,long now){
         if(owner.equals(g.leader())){
             for(UUID id:g.memberIds())store.peaceNotice(id,"Клан «"+g.name()+"» распущен: лидер не оплатил обязательный взнос в казну за дополнительные сутки. Казна и коллективные резервы уничтожены.");
             // Ставки не исчезают: незакрытая война завершается по прежним правилам роспуска.
             new GuildService(config,store).cancelWarsOnDisband(g);store.remove(g);
+            new GuildPeaceService(store).enforce(owner,now);
             return plan(GuildResult.ok("dues-auto-disband","name",g.name()));
         }
         store.peaceNotice(owner,"Вы исключены из клана «"+g.name()+"»: обязательный взнос в казну не оплачен за дополнительные сутки.");

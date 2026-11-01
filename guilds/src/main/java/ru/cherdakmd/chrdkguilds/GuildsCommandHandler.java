@@ -27,11 +27,11 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
     private static final List<String> SUBS = List.of("help", "menu", "gui", "create", "invite",
             "accept", "decline", "leave", "kick", "promote", "demote", "transfer", "disband",
             "deposit", "withdraw", "upgrade", "info", "top", "members", "chat", "war",
-            "rename", "retag", "mode", "peace", "dues");
+            "rename", "retag", "mode", "peace", "dues", "discipline");
     private static final List<String> WAR_SUBS = List.of("declare", "accept", "decline",
             "status", "surrender");
     private static final List<String> ADMIN_SUBS = List.of("reload", "info", "disband",
-            "endwar", "cooldown", "history", "finance", "recover");
+            "endwar", "cooldown", "history", "finance", "recover", "discipline");
 
     private final GuildsPlugin plugin;
 
@@ -72,6 +72,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
             return menu(sender);
         }
         switch (canonicalSubcommand(args[0])) {
+            case "discipline" -> new GuildDisciplineCommands(plugin).status(sender,args);
             case "dues" -> {Player p=player(sender);if(p!=null)plugin.peace().dues(p,args);}
             case "mode", "peace" -> { Player player=player(sender);if(player!=null)plugin.peace().command(player,args); }
             case "help" -> help(sender);
@@ -109,7 +110,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
 
     private void help(CommandSender sender) {
         plugin.messages().send(sender, "help-header");
-        for (String key : List.of("dues-help", "peace-help", "help-create", "help-invite", "help-join", "help-leave",
+        for (String key : List.of("discipline-public-help", "discipline-rules", "dues-help", "peace-help", "help-create", "help-invite", "help-join", "help-leave",
                 "help-ranks", "help-treasury", "help-war", "help-chat", "help-info", "help-top")) {
             plugin.messages().send(sender, key);
         }
@@ -698,6 +699,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
             plugin.messages().send(sender, "admin-usage");
             return true;
         }
+        if(args[0].equalsIgnoreCase("discipline")){new GuildDisciplineCommands(plugin).admin(sender,args);return true;}
         if (plugin.payments().admin(sender,args)) return true;
         switch (args[0].toLowerCase(Locale.ROOT)) {
             case "reload" -> {
@@ -913,6 +915,13 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
             if (args.length == 1) {
                 return filter(ADMIN_SUBS, args[0]);
             }
+            if(args[0].equalsIgnoreCase("discipline")) {
+                if(args.length==2)return filter(Bukkit.getOnlinePlayers().stream().filter(plugin::visible).map(Player::getName).toList(),args[1]);
+                if(args.length==3)return filter(List.of("history","forgive","unbrand"),args[2]);
+                if(args.length==4&&args[2].equalsIgnoreCase("unbrand"))return filter(List.of("confirm"),args[3]);
+                if(args.length==5&&args[2].equalsIgnoreCase("forgive"))return filter(List.of("confirm"),args[4]);
+                return List.of();
+            }
             if (args.length == 2) {
                 if (args[0].equalsIgnoreCase("cooldown")) {
                     return filter(List.of("reset"), args[1]);
@@ -944,6 +953,7 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
         String sub = args[0].toLowerCase(Locale.ROOT);
         if (args.length == 2) {
             return switch (sub) {
+                case "discipline" -> filter(Bukkit.getOnlinePlayers().stream().filter(plugin::visible).map(Player::getName).toList(),args[1]);
                 case "dues" -> filter(List.of("status","10","20","50","100"),args[1]);
                 case "mode", "peace" -> filter(List.of("status","peaceful","battle","prepay"),args[1]);
                 case "war" -> filter(WAR_SUBS, args[1]);
