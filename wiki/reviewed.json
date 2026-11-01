@@ -31,8 +31,8 @@
       "text": "ac4a8e23de6893fab669939fd2882e40f1604f1f8fddeaa1d3d3572d8c3d6572"
     },
     "claims": {
-      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
-      "sources": "d7c21ad8bef51e4dcf86ec25660cdfb03f489e2fbe656f6ad265ee6a3e734cea",
+      "reason": "Проверена невозможность подставы через дочерние эффекты старых снарядов/питомцев и повторную активацию кристалла; остальные правила дисциплины прежние",
+      "sources": "3a5bc6fb8691b4955e048b24a506e2ea48469e1e109818826c8fa21f3b30a280",
       "text": "2a1634efadca1810c82bc496b30432d553c72fb226a5e051443232224a366538"
     },
     "classes": {
@@ -41,9 +41,9 @@
       "text": "ee29d92bd4e9527924d14405057fd62402857c1a688439c7b9d86d4c9bf3b546"
     },
     "commands": {
-      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
+      "reason": "Проверена невозможность подставы через дочерние эффекты старых снарядов/питомцев и повторную активацию кристалла; остальные правила дисциплины прежние",
       "sources": "ee87f9b09fef6e3e28bccd1b835dd97d04acdab731fc1a11d524d442ebcb38e7",
-      "text": "5170af8688ec0094f48161c332e5c95516c206065f48391d275c4db5eb2baeed"
+      "text": "2548a714efd7c79f7d9884291f643731eb308f36ed8de303a7fb1b564f1a7134"
     },
     "cosmetics": {
       "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
@@ -56,9 +56,9 @@
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "economy": {
-      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
-      "sources": "3d3fea84b080d4bf317c760bcff8e6ccb4d3a4d9ec88766d5b50a2b51c6721e3",
-      "text": "216cf9a664845fe452abd6742c8d56f486bba98eb4e43fad6fe1276269901369"
+      "reason": "Проверена невозможность подставы через дочерние эффекты старых снарядов/питомцев и повторную активацию кристалла; остальные правила дисциплины прежние",
+      "sources": "cd7a6fa2ec6cb80b05349dc32a07163b16277686fba6117798027b830526b953",
+      "text": "e11074de9941019f0c6c050df93a888fba7610eb6d2748511a07765049156e93"
     },
     "enchants": {
       "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
@@ -76,9 +76,9 @@
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
-      "sources": "d7c21ad8bef51e4dcf86ec25660cdfb03f489e2fbe656f6ad265ee6a3e734cea",
-      "text": "442f5481c446db06532139f0b7c2f184858d17e99d0bebc46f50adab2aeefb61"
+      "reason": "Проверена невозможность подставы через дочерние эффекты старых снарядов/питомцев и повторную активацию кристалла; остальные правила дисциплины прежние",
+      "sources": "3a5bc6fb8691b4955e048b24a506e2ea48469e1e109818826c8fa21f3b30a280",
+      "text": "f7d8e00700e899e23e8c2bfb53ae6bf304d08b8589f2b9940adecab6756971b1"
     },
     "hunt": {
       "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",
@@ -121,9 +121,9 @@
       "text": "ced22f9d3bdafb0c5f5e4027849d8cf32dd0530d5a937f0c409e07546439d01a"
     },
     "profile": {
-      "reason": "1.4.269: строгая идемпотентность миграции messages.yml в VkPlugin",
-      "sources": "d65a8f48d0a140694fdeacfd0045e3018153b83e65afc4f996f00f22375d594f",
-      "text": "b1ddb608cb3942be099223883d3c545c9ab409018276b58b94f5e85e796a3970"
+      "reason": "Проверена невозможность подставы через дочерние эффекты старых снарядов/питомцев и повторную активацию кристалла; остальные правила дисциплины прежние",
+      "sources": "fee328526c519e50ef4cc91e086e6f07e0405aa348b09e8be12e2614bfb95284",
+      "text": "54e3f32931d043add66cd8c79174f90ac3597ce659e68de8f5ed05a6e37a45e8"
     },
     "quests": {
       "reason": "1.4.269: исправлены %placeholder% и клики в CHRDK_VK с автомиграцией messages.yml, добавлена диагностика дубликатов JAR в plugins/",

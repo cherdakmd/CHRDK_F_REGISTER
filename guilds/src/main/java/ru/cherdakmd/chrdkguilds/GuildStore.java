@@ -37,7 +37,7 @@ import ru.cherdakmd.chrdkregister.storage.SafeJsonWriter;
 final class GuildStore {
 
     /** Версия формата файла. */
-    static final int VERSION = 3;
+    static final int VERSION = 4;
     /** Сколько последних войн хранится в истории. */
     static final int MAX_HISTORY = 50;
 
@@ -196,7 +196,7 @@ final class GuildStore {
         }
         if (data.get("sanctions") instanceof Map<?,?> fines) for (var entry:fines.entrySet()) {
             Map<?,?> row=(Map<?,?>)entry.getValue();
-            sanctions.put(strictUuid(entry.getKey()), new GuildSanction(number(row.get("debt")),number(row.get("next-incident-at"))));
+            sanctions.put(strictUuid(entry.getKey()), readSanction(row,number(data.get("version"))));
         }
         for (Map<?,?> row : rows(data,"guilds")) {
             Guild guild = readGuild(row,number(data.get("version")));
@@ -210,6 +210,38 @@ final class GuildStore {
         for (Map<?,?> row : rows(data,"history")) history.add(new WarRecord(
                 string(row.get("id")),string(row.get("challenger")),string(row.get("target")),
                 string(row.get("winner")),string(row.get("result")),number(row.get("wager")),number(row.get("ended-at"))));
+    }
+
+    private static GuildSanction readSanction(Map<?,?> row,long version) {
+        range(row,"debt",0,Long.MAX_VALUE,true);range(row,"next-incident-at",0,Long.MAX_VALUE,true);
+        if(version<4 && (row.containsKey("incidents")||row.containsKey("brand-until")
+                ||row.containsKey("cycle-started-at")||row.containsKey("discipline-audit")))bad("downgraded discipline schema");
+        if(version<4)return new GuildSanction(number(row.get("debt")),number(row.get("next-incident-at")));
+        range(row,"brand-until",0,Long.MAX_VALUE,true);range(row,"cycle-started-at",0,Long.MAX_VALUE,true);
+        if(!(row.get("incidents") instanceof List<?> events) || events.size()>GuildSanction.MAX_INCIDENTS)bad("incidents");
+        if(!(row.get("discipline-audit") instanceof List<?> logs) || logs.size()>GuildSanction.MAX_AUDIT)bad("discipline audit");
+        var incidents=new ArrayList<GuildViolation>();
+        var ids=new java.util.HashSet<UUID>();var sources=new java.util.HashSet<UUID>();
+        long previous=-GuildPeaceService.INCIDENT;
+        for(Object item:(List<?>)row.get("incidents")) {
+            if(!(item instanceof Map<?,?>))bad("incident");
+            Map<?,?> event=(Map<?,?>)item;
+            range(event,"at",0,Long.MAX_VALUE,true);
+            if(!(event.get("peaceful") instanceof Boolean)||!(event.get("forgiven") instanceof Boolean))bad("incident flags");
+            var v=new GuildViolation(strictUuid(event.get("id")),number(event.get("at")),strictUuid(event.get("victim")),
+                    strictUuid(event.get("source")),(String)event.get("kind"),(Boolean)event.get("peaceful"),(Boolean)event.get("forgiven"));
+            if(!ids.add(v.id())||!sources.add(v.source()) || v.at()-previous<GuildPeaceService.INCIDENT)bad("incident order/duplicate");
+            previous=v.at();incidents.add(v);
+        }
+        var audit=new ArrayList<GuildDisciplineAudit>();
+        for(Object item:(List<?>)row.get("discipline-audit")) {
+            if(!(item instanceof Map<?,?>))bad("audit row");
+            Map<?,?> log=(Map<?,?>)item;range(log,"at",0,Long.MAX_VALUE,true);
+            audit.add(new GuildDisciplineAudit(number(log.get("at")),(String)log.get("actor"),(String)log.get("action"),(String)log.get("reason")));
+        }
+        if(!incidents.isEmpty() && number(row.get("next-incident-at"))<Math.addExact(incidents.getLast().at(),GuildPeaceService.INCIDENT))bad("incident boundary");
+        return new GuildSanction(number(row.get("debt")),number(row.get("next-incident-at")),incidents,
+                number(row.get("brand-until")),number(row.get("cycle-started-at")),audit);
     }
 
     private static Guild readGuild(Map<?, ?> row,long version) {
@@ -604,7 +636,17 @@ final class GuildStore {
         }
         data.put("guilds", guildRows);
         Map<String,Object> fines=new LinkedHashMap<>();
-        sanctions.forEach((id,t)->fines.put(id.toString(),Map.of("debt",t.debt(),"next-incident-at",t.nextIncidentAt())));
+        sanctions.forEach((id,t)-> {
+            Map<String,Object> row=new LinkedHashMap<>();
+            row.put("debt",t.debt());row.put("next-incident-at",t.nextIncidentAt());
+            row.put("brand-until",t.brandUntil());row.put("cycle-started-at",t.cycleStartedAt());
+            row.put("incidents",t.incidents().stream().map(v->Map.of("id",v.id().toString(),"at",v.at(),
+                    "victim",v.victim().toString(),"source",v.source().toString(),"kind",v.kind(),
+                    "peaceful",v.peaceful(),"forgiven",v.forgiven())).toList());
+            row.put("discipline-audit",t.audit().stream().map(a->Map.of("at",a.at(),"actor",a.actor(),
+                    "action",a.action(),"reason",a.reason())).toList());
+            fines.put(id.toString(),row);
+        });
         if(!fines.isEmpty())data.put("sanctions",fines);
 
         List<Map<String, Object>> inviteRows = new ArrayList<>();
@@ -720,7 +762,7 @@ final class GuildStore {
             for(var entry:((Map<?,?>)data.get("sanctions")).entrySet()) {
                 strictUuid(entry.getKey()); if(!(entry.getValue() instanceof Map<?,?>))bad("sanction");
                 Map<?,?> fine=(Map<?,?>)entry.getValue();
-                range(fine,"debt",0,Long.MAX_VALUE,true);range(fine,"next-incident-at",0,Long.MAX_VALUE,true);
+                readSanction(fine,number(data.get("version")));
             }
         }
         var ids = new java.util.HashSet<String>();

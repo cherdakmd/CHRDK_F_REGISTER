@@ -141,8 +141,9 @@ public final class GuildService {
     }
 
     /** Распускает гильдию; казна сгорает вместе с ней — так решил лидер. */
-    public GuildResult disband(UUID actor) {
-        if (store.financed()) return store.transaction(copy -> new GuildService(config, copy).disband(actor), GuildResult.fail("finance-paused"));
+    public GuildResult disband(UUID actor) { return disband(actor,System.currentTimeMillis()); }
+    GuildResult disband(UUID actor,long now) {
+        if (store.financed()) return store.transaction(copy -> new GuildService(config, copy).disband(actor,now), GuildResult.fail("finance-paused"));
         Guild guild = store.of(actor);
         if (guild == null) {
             return GuildResult.fail("not-in-guild");
@@ -153,6 +154,7 @@ public final class GuildService {
         if(guild.memberIds().stream().anyMatch(store::combatBlocked))return GuildResult.fail("peace-combat");
         String warKey = cancelWarsOnDisband(guild);
         store.remove(guild);
+        new GuildPeaceService(store).enforce(actor,now);
         return GuildResult.ok("disband-ok", "name", guild.name(), "treasury",
                 GuildMath.diamonds(guild.treasury()), "members",
                 String.valueOf(guild.size()), "war", warKey, "returns", GuildMath.diamonds(Math.addExact(guild.warReturns(),guild.duesReserve())));
@@ -239,6 +241,7 @@ public final class GuildService {
         }
         if(guild.peaceful()) {
             if(store.combatBlocked(player))return GuildResult.fail("peace-combat");
+            if(store.sanction(player).branded(now))return GuildResult.fail("discipline-brand-block");
             if(store.sanction(player).debt()>0)return GuildResult.fail("peace-debt-mode");
 
         }
@@ -370,6 +373,7 @@ public final class GuildService {
         if(store.combatBlocked(actor)||store.combatBlocked(target))return GuildResult.fail("peace-combat");
         if(GuildDuesService.overdue(guild,actor,now)||GuildDuesService.overdue(guild,target,now))return GuildResult.fail("dues-settle-first");
         guild.transferLeader(target);
+        new GuildPeaceService(store).enforce(actor,now);
         store.reindex(guild);
         return GuildResult.ok("transfer-ok", "name", guild.name());
     }
@@ -787,6 +791,7 @@ public final class GuildService {
         if(guild.memberIds().stream().anyMatch(store::combatBlocked))return GuildResult.fail("peace-combat");
         String warKey = cancelWarsOnDisband(guild);
         store.remove(guild);
+        new GuildPeaceService(store).enforce(guild.leader(),System.currentTimeMillis());
         return GuildResult.ok("admin-disbanded", "name", guild.name(),
                 "treasury", GuildMath.diamonds(guild.treasury()), "war", warKey, "returns", GuildMath.diamonds(Math.addExact(guild.warReturns(),guild.duesReserve())));
     }

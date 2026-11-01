@@ -24,26 +24,33 @@ final class GuildPeaceController {
     boolean peaceful(UUID player) { Guild g=plugin.store().of(player);return g!=null&&g.peaceful(); }
 
     /** Возвращает true, если собственное правило кланов должно остановить PvP. */
-    boolean attack(UUID attacker,UUID victim,boolean launchedPeaceful,long now) { return attack(attacker,victim,launchedPeaceful,true,now); }
-    boolean attack(UUID attacker,UUID victim,boolean launchedPeaceful,boolean penalize,long now) {
-        if(attacker==null || victim==null || attacker.equals(victim))return false;
+    record AttackOutcome(boolean blocked,boolean accounted) { }
+    AttackOutcome attack(UUID attacker,UUID victim,boolean launchedPeaceful,boolean peacefulAction,
+                         boolean penalize,UUID source,String kind,long now) {
+        if(attacker==null || victim==null || attacker.equals(victim))return new AttackOutcome(false,false);
         boolean protectedVictim=protects(victim,now);
-        GuildPvpDecision decision=GuildPvpDecision.decide(false,peaceful(attacker),launchedPeaceful,protectedVictim,penalize);
+        boolean deliberate=penalize&&(!peaceful(attacker)||peacefulAction||protectedVictim);
+        GuildPvpDecision decision=GuildPvpDecision.decide(false,peaceful(attacker),launchedPeaceful,protectedVictim,deliberate);
         if(decision!=GuildPvpDecision.ALLOW) {
             if(decision==GuildPvpDecision.BLOCK_AND_FINE) {
                 combat.mark(attacker,now);
-                // Повторный удар не копирует/не сериализует весь домен: горячий путь — индекс UUID.
-                if(now<plugin.store().sanction(attacker).nextIncidentAt())return true;
-                GuildResult result=plugin.store().transaction(copy->new GuildPeaceService(copy).fine(attacker,now),GuildResult.fail("finance-paused"));
+                // Не переписываем домен поверх незавершённой банковской WAL-операции.
+                if(plugin.payments().paused())return new AttackOutcome(true,false);
+                var sanction=plugin.store().sanction(attacker);
+                if(now<sanction.nextIncidentAt() || sanction.seen(source))return new AttackOutcome(true,true);
+                GuildResult result=plugin.store().transaction(copy->new GuildPeaceService(copy)
+                        .fine(attacker,victim,source,kind,peacefulAction,now),GuildResult.fail("finance-paused"));
                 if(result.ok()) {
                     tell(attacker,result);
                     collect(attacker);
+                    deliverNotices(attacker);
                 }
+                return new AttackOutcome(true,result.ok());
             }
-            return true;
+            return new AttackOutcome(true,false);
         }
         combat.mark(attacker,now);combat.mark(victim,now);
-        return false;
+        return new AttackOutcome(false,false);
     }
     void tick(long now) {
         combat.prune(now);quotes.entrySet().removeIf(e->e.getValue().expires()<now);
@@ -60,6 +67,7 @@ final class GuildPeaceController {
         for(int i=0;i<Math.min(4,roster.size());i++) {
             if(plugin.payments().paused())return;
             UUID owner=roster.get(Math.floorMod(cursor++,roster.size()));
+            deliverNotices(owner);
             Guild guild=plugin.store().of(owner);
             if(guild==null)continue;
             if(guild.duesTerm(owner).dueAt()<=now){
@@ -128,6 +136,7 @@ final class GuildPeaceController {
                     :new GuildPeaceService(service.store()).mode(purse,owner,action.equals("peaceful")?GuildMode.PEACEFUL:GuildMode.BATTLE,now));
             if(!preview.result().ok()){send(player,preview.result());return;}
             quotes.put(owner,new Quote(action,days,plugin.store().snapshotJson(),now+30_000));
+            if(action.equals("peaceful"))send(player,GuildResult.ok("discipline-rules"));
             send(player,GuildResult.ok("peace-confirm","action",action,"days",days,"personal",preview.debit(),"rate",GuildPeaceService.DAILY));
             Guild before=plugin.store().of(owner),after=plugin.store().detached(preview.domain()).of(owner);
             send(player,GuildResult.ok("peace-preview-cost","treasury",GuildFinance.treasurySpent(before,after),"personal",preview.debit()));
@@ -155,6 +164,7 @@ final class GuildPeaceController {
             if(!preview.result().ok()){send(player,preview.result());return false;}
             quotes.put(owner,new Quote("join",0,plugin.store().snapshotJson(),now+30_000));
             Guild g=plugin.store().guild(plugin.store().inviteOf(owner).guildId());
+            if(g.peaceful())send(player,GuildResult.ok("discipline-rules"));
             send(player,GuildResult.ok("dues-join-confirm","rate",g.duesRate(),"peace",g.peaceful()?GuildPeaceService.DAILY:0,"cost",preview.debit()));return false;
         }
         Quote quote=quotes.remove(owner);
@@ -167,6 +177,7 @@ final class GuildPeaceController {
         Guild guild=plugin.store().of(player.getUniqueId());
         long debt=reserved(player.getUniqueId());
         send(player,GuildResult.ok("peace-debt-status","debt",debt));
+        disciplineStatus(player,player.getUniqueId());
         if(guild==null){send(player,GuildResult.fail("not-in-guild"));return;}
         duesStatus(player,guild);
         send(player,GuildResult.ok("peace-status","mode",guild.mode().label(),"rate",GuildPeaceService.DAILY,"total",(long)guild.size()*GuildPeaceService.DAILY));
@@ -178,6 +189,11 @@ final class GuildPeaceController {
         var leaderTerm=guild.peaceTerm(guild.leader());
         if(leaderTerm!=null&&leaderTerm.graceSince()>0)send(player,GuildResult.ok("peace-leader-risk","deadline",time(leaderTerm.deadline())));
         if(guild.leader().equals(player.getUniqueId()))send(player,GuildResult.ok("peace-leader-help"));
+    }
+    void disciplineStatus(org.bukkit.command.CommandSender viewer,UUID owner) {
+        var sanction=plugin.store().sanction(owner);long now=System.currentTimeMillis();
+        plugin.messages().send(viewer,"discipline-status","count",sanction.violations(now));
+        if(sanction.branded(now))plugin.messages().send(viewer,"discipline-brand-status","until",time(sanction.brandUntil()));
     }
     void duesStatus(Player player,Guild guild){
         GuildDuesTerm t=guild.duesTerm(player.getUniqueId());
@@ -230,19 +246,26 @@ final class GuildPeaceController {
         if(player==null||!player.isOnline()||!plugin.authenticated(player))return;
         List<String> lines=plugin.store().peaceNotices(owner);
         if(lines.isEmpty())return;
-        for(String line:lines)plugin.messages().send(player,"peace-personal-notice","text",line);
+        for(String line:lines) {
+            var matcher=java.util.regex.Pattern.compile("\\[player:([0-9a-f-]{36})\\]").matcher(line);
+            String rendered=matcher.replaceAll(match->{
+                var offline=Bukkit.getOfflinePlayer(UUID.fromString(match.group(1)));
+                return java.util.regex.Matcher.quoteReplacement(offline.getName()==null?match.group(1):offline.getName());
+            });
+            plugin.messages().send(player,"peace-personal-notice","text",rendered);
+        }
         plugin.store().transaction(copy->{copy.clearPeaceNotices(owner);return true;},false);
     }
     void quit(UUID owner){quotes.remove(owner);}
     static String time(long millis){return java.time.Instant.ofEpochMilli(millis).atZone(java.time.ZoneId.systemDefault()).format(java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"));}
     private void tell(UUID owner,GuildResult result){
         Player player=Bukkit.getPlayer(owner);
-        boolean personalPenalty=result.key().startsWith("dues-")||result.key().equals("peace-fined")||result.key().equals("peace-debt-collected");
+        boolean personalPenalty=result.key().startsWith("dues-")||result.key().equals("peace-fined")||result.key().equals("peace-debt-collected")||result.key().startsWith("discipline-");
         if(plugin.visible(player)||(personalPenalty&&player!=null&&player.isOnline()&&plugin.authenticated(player)))send(player,result);
     }
     private void send(Player player,GuildResult result){
         Object[] args=result.array();
-        for(int i=0;i+1<args.length;i+=2)if((args[i].equals("deadline")||args[i].equals("due"))&&args[i+1].toString().matches("[0-9]+"))args[i+1]=time(Long.parseLong(args[i+1].toString()));
+        for(int i=0;i+1<args.length;i+=2)if((args[i].equals("deadline")||args[i].equals("due")||args[i].equals("until"))&&args[i+1].toString().matches("[0-9]+"))args[i+1]=time(Long.parseLong(args[i+1].toString()));
         plugin.messages().send(player,result.key(),args);
     }
 }

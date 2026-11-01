@@ -28,6 +28,7 @@ final class GuildPeaceService {
         if(guild.modeChangedAt()>0 && now<Math.addExact(guild.modeChangedAt(),MODE_COOLDOWN))return GuildResult.fail("peace-mode-cooldown");
         if(guild.peaceful()&&guild.peaceTerms().values().stream().anyMatch(term->term.paidUntil()<=now))return GuildResult.fail("peace-settle-first");
         if(mode==GuildMode.BATTLE) { guild.mode(mode,now);return GuildResult.ok("peace-mode-battle"); }
+        if(guild.memberIds().stream().anyMatch(id->store.sanction(id).branded(now)))return GuildResult.fail("discipline-brand-block");
         if(guild.memberIds().stream().anyMatch(id->store.sanction(id).debt()>0))return GuildResult.fail("peace-debt-mode");
         long cost=Math.multiplyExact(guild.size(),DAILY);
         long fromTreasury=Math.min(cost,guild.treasury());
@@ -86,6 +87,7 @@ final class GuildPeaceService {
         if(leader) {
             for(UUID owner:guild.memberIds())store.peaceNotice(owner,"Клан «"+guild.name()+"» распущен: мирный режим лидера не оплачен за дополнительные сутки. Остатки казны и военных возвратов уничтожены.");
             store.remove(guild);
+            enforce(member,now);
             return result(GuildResult.ok("peace-auto-disband","name",guild.name(),"treasury",guild.treasury(),"returns",guild.warReturns()));
         }
         store.peaceNotice(member,"Вы исключены из клана «"+guild.name()+"»: мирный режим не оплачен за дополнительные сутки.");
@@ -93,17 +95,75 @@ final class GuildPeaceService {
         return result(GuildResult.ok("peace-auto-kick","name",guild.name()));
     }
     GuildResult fine(UUID attacker,long now) {
+        return fine(attacker,attacker,UUID.randomUUID(),"melee",false,now);
+    }
+    /** Штраф, доказательство, клеймо и исключение входят в один снимок домена/WAL. */
+    GuildResult fine(UUID attacker,UUID victim,UUID source,String kind,boolean peacefulAction,long now) {
         var before=store.sanction(attacker);
-        if(now<before.nextIncidentAt())return GuildResult.fail("peace-incident-active");
-        long debt=Math.addExact(before.debt(),FINE);
-        store.sanction(attacker,new GuildSanction(debt,Math.addExact(now,INCIDENT)));
-        return GuildResult.ok("peace-fined","fine",FINE,"debt",debt);
+        if(now<before.nextIncidentAt() || before.seen(source))return GuildResult.fail("peace-incident-active");
+        Guild guild=store.of(attacker);
+        int previous=before.violations(now);
+        var event=new GuildViolation(UUID.randomUUID(),now,victim,source,kind,peacefulAction,false);
+        var after=before.incident(event,Math.addExact(now,INCIDENT));
+        store.sanction(attacker,after);
+        String key="peace-fined";
+        if(peacefulAction && !before.branded(now)) {
+            int count=after.violations(now);
+            boolean leader=guild!=null&&guild.leader().equals(attacker);
+            if(count>=GuildSanction.LIMIT && !leader) {
+                punish(attacker,now,"Десять нарушений мирного режима за 30 дней");
+                key="discipline-expelled";
+            } else {
+                key=leader&&count>=GuildSanction.LIMIT?"discipline-leader-warning"
+                        :count>=9?"discipline-last-warning":count>=7?"discipline-warning":"discipline-fined";
+                if(leader && previous<GuildSanction.LIMIT && count>=GuildSanction.LIMIT) {
+                    store.sanction(attacker,after.log(now,"system","leader-threshold","Глава достиг 10 нарушений мирного режима"));
+                    notice(guild,"Глава клана достиг 10 нарушений мирного режима. Атаки блокируются, личные штрафы сохраняются. Глава освобождён от исключения и клейма.");
+                }
+            }
+        }
+        return GuildResult.ok(key,"fine",FINE,"debt",store.sanction(attacker).debt(),
+                "count",after.violations(now),"until",store.sanction(attacker).brandUntil(),"id",event.id());
+    }
+    /** Проверяется и после передачи руководства: должность не обнуляет накопленные нарушения. */
+    boolean enforce(UUID owner,long now) {
+        var before=store.sanction(owner);
+        Guild guild=store.of(owner);
+        if(before.branded(now) || before.violations(now)<GuildSanction.LIMIT
+                || (guild!=null&&guild.leader().equals(owner)))return false;
+        punish(owner,now,"Проверка накопленных нарушений после изменения роли/состава");
+        return true;
+    }
+    private void punish(UUID owner,long now,String reason) {
+        var before=store.sanction(owner);
+        store.sanction(owner,before.brand(now,reason));
+        Guild guild=store.of(owner);
+        if(guild!=null) {
+            notice(guild,"Участник [player:"+owner+"] с позором исключён за систематическое нарушение мира. Клеймо «Нарушитель мира» — 7 дней.");
+            guild.removeMember(owner);store.reindex(guild);
+        }
+        store.peaceNotice(owner,"Вы получили клеймо «Нарушитель мира» на 7 дней. Защита мирного клана потеряна. Вступление в мирные кланы запрещено; штрафной долг сохраняется.");
+    }
+    private void notice(Guild guild,String text) { for(UUID member:guild.memberIds())store.peaceNotice(member,text); }
+    GuildResult forgive(UUID owner,UUID incident,long now,String actor,String reason) {
+        var before=store.sanction(owner);
+        if(before.incidents().stream().noneMatch(v->v.id().equals(incident)&&!v.forgiven()))return GuildResult.fail("discipline-no-incident");
+        store.sanction(owner,before.forgive(incident,now,actor,reason));
+        store.peaceNotice(owner,"Администратор отменил нарушение "+incident+". Причина: "+reason+". Денежный долг не изменён; снятие клейма оформляется отдельно.");
+        return GuildResult.ok("discipline-admin-done");
+    }
+    GuildResult unbrand(UUID owner,long now,String actor,String reason) {
+        var before=store.sanction(owner);
+        if(!before.branded(now))return GuildResult.fail("discipline-no-brand");
+        store.sanction(owner,before.unbrand(now,actor,reason));
+        store.peaceNotice(owner,"Администратор снял клеймо. Причина: "+reason+". Денежный долг сохраняется; прежнее членство автоматически не восстанавливается.");
+        return GuildResult.ok("discipline-admin-done");
     }
     Plan collect(UUID owner,long available) {
         var before=store.sanction(owner);
         int debit=(int)Math.min(1_000_000,Math.min(before.debt(),Math.max(0,available)));
         if(debit==0)return result(GuildResult.fail("peace-idle"));
-        store.sanction(owner,new GuildSanction(before.debt()-debit,before.nextIncidentAt()));
+        store.sanction(owner,before.debt(before.debt()-debit));
         return new Plan(GuildResult.ok("peace-debt-collected","paid",debit,"debt",before.debt()-debit),owner,debit,true);
     }
 }

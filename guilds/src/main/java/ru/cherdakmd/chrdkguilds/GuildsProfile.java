@@ -36,6 +36,11 @@ final class GuildsProfile implements ChrdkRegisterApi.ProfileProvider {
         Messages messages = plugin.messages();
         Guild guild = plugin.service().guildOf(context.playerId());
         List<Component> lines = new ArrayList<>();
+        var sanction=plugin.store().sanction(context.playerId());
+        long now=System.currentTimeMillis();
+        lines.add(messages.get("discipline-status","count",sanction.violations(now)));
+        lines.add(messages.get("peace-debt-status","debt",sanction.debt()));
+        if(sanction.branded(now))lines.add(messages.get("discipline-brand-status","until",GuildPeaceController.time(sanction.brandUntil())));
         if (guild == null) {
             lines.add(messages.get("profile-none", "cost",
                     GuildMath.diamonds(plugin.config().creationCost())));
@@ -46,7 +51,6 @@ final class GuildsProfile implements ChrdkRegisterApi.ProfileProvider {
             lines.add(messages.get("peace-profile-mode","mode",guild.mode().label(),"rate",GuildPeaceService.DAILY));
             var term=guild.peaceTerm(context.playerId());
             if(term!=null)lines.add(messages.get("peace-profile-term","paid",GuildPeaceController.time(term.paidUntil())));
-            lines.add(messages.get("peace-debt-status","debt",plugin.store().sanction(context.playerId()).debt()));
             GuildRank rank = guild.rankOf(context.playerId());
             lines.add(messages.get("profile-name",
                     "name", guild.name(),

@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class GuildMessagesTest {
 
     private static final List<String> REQUIRED = List.of(
+            "discipline-public-help", "discipline-rules", "discipline-player", "discipline-status", "discipline-brand-status", "discipline-brand-block", "discipline-fined", "discipline-warning", "discipline-last-warning", "discipline-expelled", "discipline-leader-warning", "discipline-admin-help", "discipline-history", "discipline-page", "discipline-audit", "discipline-admin-done", "discipline-no-incident", "discipline-no-brand", "discipline-reason",
             "dues-help", "dues-bank","dues-join-required","dues-range","dues-same","dues-cooldown","dues-settle-first","dues-rate-set","dues-paid","dues-member-grace","dues-leader-grace","dues-auto-kick","dues-auto-disband","dues-join-confirm","dues-create-confirm","dues-rate-confirm","dues-status","dues-info","dues-invite","dues-menu-name","dues-menu-hint","dues-new-clan", "tab-battle-prefix", "tab-peace-prefix", "tab-peace-pending-prefix", "menu-mode-peaceful", "menu-mode-battle", "peace-help", "peace-usage", "peace-same-mode", "peace-war-busy", "peace-war-disabled", "peace-combat", "peace-mode-cooldown", "peace-debt-mode", "peace-no-money", "peace-mode-battle", "peace-mode-on", "peace-not-peaceful", "peace-days", "peace-treasury-low", "peace-prepay-cap", "peace-prepay-behind", "peace-prepaid", "peace-idle", "peace-paid", "peace-leader-grace", "peace-member-grace", "peace-auto-disband", "peace-auto-kick", "peace-fined", "peace-incident-active", "peace-debt-collected", "peace-confirm", "peace-preview-cost", "peace-quote-expired", "peace-mode-notice", "peace-debt-status", "peace-status", "peace-term-status", "peace-grace-status", "peace-leader-help", "peace-personal-notice", "peace-join-required", "peace-menu-name", "peace-menu-mode", "peace-menu-price", "peace-menu-hint", "peace-chat-prefix", "peace-profile-mode", "peace-profile-term", "peace-join-confirm", "peace-join-terms", "peace-settle-first", "peace-leader-risk", "peace-pending-prefix",
             "menu-claims-name", "menu-claims-lore", "menu-personal-name", "menu-personal-lore", "menu-personal-boundary",
             "no-permission", "player-only", "disabled", "unknown-subcommand", "guild-not-found",
@@ -127,6 +128,17 @@ class GuildMessagesTest {
     void placeholdersMatchTheCode() throws Exception {
         ConfigurationSection section = load();
         Map<String, List<String>> expected = new LinkedHashMap<>();
+        expected.put("discipline-player", List.of("%player%"));
+        expected.put("discipline-status", List.of("%count%"));
+        expected.put("discipline-brand-status", List.of("%until%"));
+        expected.put("discipline-fined", List.of("%count%", "%fine%", "%debt%", "%id%"));
+        expected.put("discipline-warning", List.of("%count%", "%fine%", "%debt%", "%id%"));
+        expected.put("discipline-last-warning", List.of("%count%", "%fine%", "%debt%", "%id%"));
+        expected.put("discipline-expelled", List.of("%until%", "%fine%", "%debt%", "%id%"));
+        expected.put("discipline-leader-warning", List.of("%count%", "%fine%", "%debt%", "%id%"));
+        expected.put("discipline-history", List.of("%time%", "%id%", "%victim%", "%kind%", "%peaceful%", "%forgiven%", "%source%"));
+        expected.put("discipline-page", List.of("%page%", "%pages%"));
+        expected.put("discipline-audit", List.of("%time%", "%actor%", "%action%", "%reason%"));
         expected.put("peace-mode-on", List.of("%seconds%", "%cost%", "%treasury%", "%personal%"));
         expected.put("peace-treasury-low", List.of("%cost%"));
         expected.put("peace-prepaid", List.of("%members%", "%days%", "%cost%"));

@@ -10,7 +10,7 @@ softdepend: [PlaceholderAPI, CHRDK_Claims]
 commands:
   guild:
     description: Меню гильдии, состав, казна и войны.
-    usage: /guild [menu|gui|create|invite|deposit|war|info|top|mode <status|peaceful|battle|prepay>|dues [10+]]
+    usage: /guild [menu|gui|create|invite|deposit|war|info|top|mode <status|peaceful|battle|prepay>|dues [10+]|discipline [игрок]]
     aliases: [guilds, clan, clans, klan, klans, gildiya, gildii]
     permission: chrdkguilds.use
   gchat:
@@ -20,7 +20,7 @@ commands:
     permission: chrdkguilds.use
   guildadmin:
     description: Управление гильдиями и войнами.
-    usage: /guildadmin <reload|info|disband|endwar|cooldown|history|finance|recover>
+    usage: /guildadmin <reload|info|disband|endwar|cooldown|history|finance|recover|discipline>
     aliases: [guildsadmin, clanadmin, clansadmin, ga]
     permission: chrdkguilds.admin
 permissions:

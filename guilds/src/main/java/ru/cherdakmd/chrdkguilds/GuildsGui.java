@@ -159,6 +159,7 @@ final class GuildsGui implements Listener {
         List<Component> lore = new ArrayList<>();
         lore.add(plugin.messages().get("menu-member-rank",
                 "rank", plugin.messages().mini("rank." + rankOf(guild, member))));
+        lore.add(plugin.messages().get("discipline-status","count",plugin.store().sanction(member).violations(System.currentTimeMillis())));
         lore.add(plugin.messages().get("menu-member-click"));
         ItemStack head = new ItemStack(Material.PLAYER_HEAD);
         ItemMeta meta = head.getItemMeta();
@@ -314,6 +315,7 @@ final class GuildsGui implements Listener {
                         "name", name == null ? member.toString().substring(0, 8) : name,
                         "rank", plugin.messages().mini("rank." + rankOf(guild, member)),
                         "guild", guild.label());
+                plugin.peace().disciplineStatus(player,member);
             }
         }
     }
