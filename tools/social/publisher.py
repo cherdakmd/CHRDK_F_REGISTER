@@ -73,7 +73,7 @@ class Ledger:
                         or not isinstance(body.get('records'), dict)):
                     raise SafetyError('Конфликт или неподдерживаемая схема журнала')
                 for key, record in body['records'].items():
-                    if (not re.fullmatch(r'(tip:\d{4}-\d{2}-\d{2}|release:v1\.\d+\.\d+)', key)
+                    if (not re.fullmatch(r'(tip:\d{4}-\d{2}-\d{2}(?::12)?|release:v1\.\d+\.\d+)', key)
                             or not isinstance(record, dict) or record.get('status') not in ('prepared', 'posting', 'posted')
                             or not re.fullmatch(r'[0-9a-f]{64}', record.get('digest', ''))
                             or (record['status'] == 'posted' and (type(record.get('post_id')) is not int or record['post_id'] <= 0))):

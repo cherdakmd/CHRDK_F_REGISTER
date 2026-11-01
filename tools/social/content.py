@@ -59,18 +59,19 @@ def due_slot(now: datetime):
     if now.tzinfo is None:
         raise SafetyError('Нужна дата с часовым поясом')
     local = now.astimezone(MOSCOW)
-    for days in range(8):
-        slot = (local - timedelta(days=days)).replace(hour=18, minute=0, second=0, microsecond=0)
-        if slot.weekday() in (2, 6) and slot <= local:
-            # Допускаем задержку Actions, но не недельный догоняющий спам.
-            return slot if local - slot <= timedelta(hours=24) else None
+    for days in range(2):
+        for hour in (18, 12):
+            slot = (local - timedelta(days=days)).replace(hour=hour, minute=0, second=0, microsecond=0)
+            if slot <= local:
+                # Только последний актуальный слот; пропущенные посты не догоняем пачкой.
+                return slot if local - slot < timedelta(hours=6) else None
     return None
 
 
 def topic_index(slot):
-    sunday = slot.date() - timedelta(days=(slot.weekday() + 1) % 7)
+    local = slot.astimezone(MOSCOW)
     anchor = datetime(2026, 11, 1).date()
-    return ((sunday - anchor).days // 7) * 2 + (slot.weekday() == 2)
+    return (local.date() - anchor).days * 2 + (local.hour == 18)
 
 
 def catalog(root=ROOT):
@@ -100,7 +101,9 @@ def tip(slot, topic=None, root=ROOT):
     label = {'tip': 'Совет', 'feature': 'Возможности сервера', 'reminder': 'Напоминание'}[topic['kind']]
     body = f"{label} CHERDAK · {topic['title']}\n\n{plain(text)}\n\nПодробнее: {site.rstrip('/')}/{slug}.html"
     body += '\n\nПо стандартным настройкам проекта. Доступность и точные условия проверяйте в игре.'
-    return Post('tip:' + slot.date().isoformat(), topic['kind'], topic['title'], topic['caption'], body, slot.strftime('%Y-%m'))
+    # Вечер сохраняет старый дневной ключ: уже опубликованный пост не дублируется.
+    key = 'tip:' + slot.date().isoformat() + (':12' if slot.hour == 12 else '')
+    return Post(key, topic['kind'], topic['title'], topic['caption'], body, slot.strftime('%Y-%m'))
 
 
 def news(release, root=ROOT, note=None):

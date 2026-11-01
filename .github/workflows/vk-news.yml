@@ -2,8 +2,8 @@ name: VK news and server tips
 
 on:
   schedule:
-    # UTC: среда и воскресенье, 18:00 Europe/Moscow (UTC+3).
-    - cron: '0 15 * * 0,3'
+    # UTC: ежедневно 12:00 и 18:00 Europe/Moscow (UTC+3).
+    - cron: '0 9,15 * * *'
   workflow_run:
     workflows: [Release]
     types: [completed]

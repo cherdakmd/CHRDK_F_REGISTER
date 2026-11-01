@@ -98,7 +98,7 @@ def main(argv=None):
         slot = due_slot(now)
         if slot is None:
             if args.publish or event_name == 'schedule':
-                print('Сейчас нет слота среды/воскресенья: отправки нет.')
+                print('Сейчас нет актуального слота 12:00/18:00 по Москве: отправки нет.')
                 return 0
             # Превью не зависит от дня запуска, но в подписи/ключе не притворяется публикацией.
             slot = datetime(2026, 11, 1, 18, tzinfo=MOSCOW)
