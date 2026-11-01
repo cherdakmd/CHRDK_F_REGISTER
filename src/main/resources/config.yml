@@ -336,7 +336,7 @@ ranks:
   # флаг ИЛИ tablist.show-rank-name. Для одного знака выключите оба флага.
   # Знак и название всегда ПОСЛЕ ника, вместе занимают одно место лимита.
   show-name-in-chat: false
-  # Анонсировать вход в чат для ступеней, у которых задана join-line.
+  # Анонсировать вход после авторизации. join-lines — пул, пустой список выключает анонс.
   announce-join: true
   # /hat — надеть блок из руки на голову. Со ступени ниже нужен только права
   # chrdkregister.hat (у администраторов).
@@ -365,30 +365,135 @@ ranks:
       format: "<gray>%name%</gray>"
       badge: "✦"
       join-line: ""
+      join-lines:
+        - "<gray>✦ Странник</gray> <white>%player%</white> <gray>вернулся к общему костру</gray>"
+        - "<gray>✦ Странник</gray> <white>%player%</white> <gray>открыл новую главу приключений</gray>"
+        - "<gray>✦ Странник</gray> <white>%player%</white> <gray>снова шагает по тропам CHERDAK</gray>"
+        - "<gray>✦ Странник</gray> <white>%player%</white> <gray>заглянул на огонёк</gray>"
+        - "<gray>✦ Странник</gray> <white>%player%</white> <gray>принёс с собой настроение для приключений</gray>"
+        - "<gray>✦ Странник</gray> <white>%player%</white> <gray>готов оставить след в этом мире</gray>"
+        - "<gray>✦ Странник</gray> <white>%player%</white> <gray>сменил реальный мир на кубический</gray>"
+        - "<gray>✦ Странник</gray> <white>%player%</white> <gray>вновь распахнул двери мастерской</gray>"
+        - "<gray>✦ Странник</gray> <white>%player%</white> <gray>проверяет, всё ли на месте в сундуках</gray>"
+        - "<gray>✦ Странник</gray> <white>%player%</white> <gray>вернулся за новыми открытиями</gray>"
+        - "<gray>✦ Странник</gray> <white>%player%</white> <gray>стряхнул пыль с походного плаща</gray>"
+        - "<gray>✦ Странник</gray> <white>%player%</white> <gray>снова с нами — встречайте!</gray>"
+        - "<gray>✦ Странник</gray> <white>%player%</white> <gray>снаряжает рюкзак для новой вылазки</gray>"
+        - "<gray>✦ Странник</gray> <white>%player%</white> <gray>прибыл с большими планами на вечер</gray>"
+        - "<gray>✦ Странник</gray> <white>%player%</white> <gray>зажёг ещё один огонёк на карте</gray>"
+        - "<gray>✦ Странник</gray> <white>%player%</white> <gray>выбрал отличный день для приключений</gray>"
+        - "<gray>✦ Странник</gray> <white>%player%</white> <gray>готов строить то, чего ещё не было</gray>"
+        - "<gray>✦ Странник</gray> <white>%player%</white> <gray>вернулся туда, где ждут друзья</gray>"
+        - "<gray>✦ Странник</gray> <white>%player%</white> <gray>отправляется навстречу новым историям</gray>"
+        - "<gray>✦ Странник</gray> <white>%player%</white> <gray>снова пополнил ряды искателей приключений</gray>"
     - level: 2
       id: pathfinder
       name: "Следопыт"
       format: "<green>%name%</green>"
       badge: "❖"
       join-line: ""
+      join-lines:
+        - "<green>❖ Следопыт</green> <white>%player%</white> <gray>вернулся к общему костру</gray>"
+        - "<green>❖ Следопыт</green> <white>%player%</white> <gray>открыл новую главу приключений</gray>"
+        - "<green>❖ Следопыт</green> <white>%player%</white> <gray>снова шагает по тропам CHERDAK</gray>"
+        - "<green>❖ Следопыт</green> <white>%player%</white> <gray>заглянул на огонёк</gray>"
+        - "<green>❖ Следопыт</green> <white>%player%</white> <gray>принёс с собой настроение для приключений</gray>"
+        - "<green>❖ Следопыт</green> <white>%player%</white> <gray>готов оставить след в этом мире</gray>"
+        - "<green>❖ Следопыт</green> <white>%player%</white> <gray>сменил реальный мир на кубический</gray>"
+        - "<green>❖ Следопыт</green> <white>%player%</white> <gray>вновь распахнул двери мастерской</gray>"
+        - "<green>❖ Следопыт</green> <white>%player%</white> <gray>проверяет, всё ли на месте в сундуках</gray>"
+        - "<green>❖ Следопыт</green> <white>%player%</white> <gray>вернулся за новыми открытиями</gray>"
+        - "<green>❖ Следопыт</green> <white>%player%</white> <gray>стряхнул пыль с походного плаща</gray>"
+        - "<green>❖ Следопыт</green> <white>%player%</white> <gray>снова с нами — встречайте!</gray>"
+        - "<green>❖ Следопыт</green> <white>%player%</white> <gray>снаряжает рюкзак для новой вылазки</gray>"
+        - "<green>❖ Следопыт</green> <white>%player%</white> <gray>прибыл с большими планами на вечер</gray>"
+        - "<green>❖ Следопыт</green> <white>%player%</white> <gray>зажёг ещё один огонёк на карте</gray>"
+        - "<green>❖ Следопыт</green> <white>%player%</white> <gray>выбрал отличный день для приключений</gray>"
+        - "<green>❖ Следопыт</green> <white>%player%</white> <gray>готов строить то, чего ещё не было</gray>"
+        - "<green>❖ Следопыт</green> <white>%player%</white> <gray>вернулся туда, где ждут друзья</gray>"
+        - "<green>❖ Следопыт</green> <white>%player%</white> <gray>отправляется навстречу новым историям</gray>"
+        - "<green>❖ Следопыт</green> <white>%player%</white> <gray>снова пополнил ряды искателей приключений</gray>"
     - level: 3
       id: keeper
       name: "Хранитель"
       format: "<aqua>%name%</aqua>"
       badge: "✧"
       join-line: "<aqua>✧ Хранитель</aqua> <white>%player%</white> <gray>вернулся в гильдию</gray>"
+      join-lines:
+        - "<aqua>✧ Хранитель</aqua> <white>%player%</white> <gray>вернулся к общему костру</gray>"
+        - "<aqua>✧ Хранитель</aqua> <white>%player%</white> <gray>открыл новую главу приключений</gray>"
+        - "<aqua>✧ Хранитель</aqua> <white>%player%</white> <gray>снова шагает по тропам CHERDAK</gray>"
+        - "<aqua>✧ Хранитель</aqua> <white>%player%</white> <gray>заглянул на огонёк</gray>"
+        - "<aqua>✧ Хранитель</aqua> <white>%player%</white> <gray>принёс с собой настроение для приключений</gray>"
+        - "<aqua>✧ Хранитель</aqua> <white>%player%</white> <gray>готов оставить след в этом мире</gray>"
+        - "<aqua>✧ Хранитель</aqua> <white>%player%</white> <gray>сменил реальный мир на кубический</gray>"
+        - "<aqua>✧ Хранитель</aqua> <white>%player%</white> <gray>вновь распахнул двери мастерской</gray>"
+        - "<aqua>✧ Хранитель</aqua> <white>%player%</white> <gray>проверяет, всё ли на месте в сундуках</gray>"
+        - "<aqua>✧ Хранитель</aqua> <white>%player%</white> <gray>вернулся за новыми открытиями</gray>"
+        - "<aqua>✧ Хранитель</aqua> <white>%player%</white> <gray>стряхнул пыль с походного плаща</gray>"
+        - "<aqua>✧ Хранитель</aqua> <white>%player%</white> <gray>снова с нами — встречайте!</gray>"
+        - "<aqua>✧ Хранитель</aqua> <white>%player%</white> <gray>снаряжает рюкзак для новой вылазки</gray>"
+        - "<aqua>✧ Хранитель</aqua> <white>%player%</white> <gray>прибыл с большими планами на вечер</gray>"
+        - "<aqua>✧ Хранитель</aqua> <white>%player%</white> <gray>зажёг ещё один огонёк на карте</gray>"
+        - "<aqua>✧ Хранитель</aqua> <white>%player%</white> <gray>выбрал отличный день для приключений</gray>"
+        - "<aqua>✧ Хранитель</aqua> <white>%player%</white> <gray>готов строить то, чего ещё не было</gray>"
+        - "<aqua>✧ Хранитель</aqua> <white>%player%</white> <gray>вернулся туда, где ждут друзья</gray>"
+        - "<aqua>✧ Хранитель</aqua> <white>%player%</white> <gray>отправляется навстречу новым историям</gray>"
+        - "<aqua>✧ Хранитель</aqua> <white>%player%</white> <gray>снова пополнил ряды искателей приключений</gray>"
     - level: 4
       id: patron
       name: "Меценат"
       format: "<gradient:#ffd700:#ff8800>%name%</gradient>"
       badge: "★"
       join-line: "<gradient:#ffd700:#ff8800>★ Меценат</gradient> <white>%player%</white> <gray>снаряжает новую экспедицию</gray>"
+      join-lines:
+        - "<gradient:#ffd700:#ff8800>★ Меценат</gradient> <white>%player%</white> <gray>вернулся к общему костру</gray>"
+        - "<gradient:#ffd700:#ff8800>★ Меценат</gradient> <white>%player%</white> <gray>открыл новую главу приключений</gray>"
+        - "<gradient:#ffd700:#ff8800>★ Меценат</gradient> <white>%player%</white> <gray>снова шагает по тропам CHERDAK</gray>"
+        - "<gradient:#ffd700:#ff8800>★ Меценат</gradient> <white>%player%</white> <gray>заглянул на огонёк</gray>"
+        - "<gradient:#ffd700:#ff8800>★ Меценат</gradient> <white>%player%</white> <gray>принёс с собой настроение для приключений</gray>"
+        - "<gradient:#ffd700:#ff8800>★ Меценат</gradient> <white>%player%</white> <gray>готов оставить след в этом мире</gray>"
+        - "<gradient:#ffd700:#ff8800>★ Меценат</gradient> <white>%player%</white> <gray>сменил реальный мир на кубический</gray>"
+        - "<gradient:#ffd700:#ff8800>★ Меценат</gradient> <white>%player%</white> <gray>вновь распахнул двери мастерской</gray>"
+        - "<gradient:#ffd700:#ff8800>★ Меценат</gradient> <white>%player%</white> <gray>проверяет, всё ли на месте в сундуках</gray>"
+        - "<gradient:#ffd700:#ff8800>★ Меценат</gradient> <white>%player%</white> <gray>вернулся за новыми открытиями</gray>"
+        - "<gradient:#ffd700:#ff8800>★ Меценат</gradient> <white>%player%</white> <gray>стряхнул пыль с походного плаща</gray>"
+        - "<gradient:#ffd700:#ff8800>★ Меценат</gradient> <white>%player%</white> <gray>снова с нами — встречайте!</gray>"
+        - "<gradient:#ffd700:#ff8800>★ Меценат</gradient> <white>%player%</white> <gray>снаряжает рюкзак для новой вылазки</gray>"
+        - "<gradient:#ffd700:#ff8800>★ Меценат</gradient> <white>%player%</white> <gray>прибыл с большими планами на вечер</gray>"
+        - "<gradient:#ffd700:#ff8800>★ Меценат</gradient> <white>%player%</white> <gray>зажёг ещё один огонёк на карте</gray>"
+        - "<gradient:#ffd700:#ff8800>★ Меценат</gradient> <white>%player%</white> <gray>выбрал отличный день для приключений</gray>"
+        - "<gradient:#ffd700:#ff8800>★ Меценат</gradient> <white>%player%</white> <gray>готов строить то, чего ещё не было</gray>"
+        - "<gradient:#ffd700:#ff8800>★ Меценат</gradient> <white>%player%</white> <gray>вернулся туда, где ждут друзья</gray>"
+        - "<gradient:#ffd700:#ff8800>★ Меценат</gradient> <white>%player%</white> <gray>отправляется навстречу новым историям</gray>"
+        - "<gradient:#ffd700:#ff8800>★ Меценат</gradient> <white>%player%</white> <gray>снова пополнил ряды искателей приключений</gray>"
     - level: 5
       id: founder
       name: "Покровитель"
       format: "<gradient:#b388ff:#ffd700>%name%</gradient>"
       badge: "⚜"
       join-line: "<gradient:#b388ff:#ffd700>⚜ Покровитель</gradient> <white>%player%</white> <gray>входит в летопись гильдии</gray>"
+      join-lines:
+        - "<gradient:#b388ff:#ffd700>⚜ Покровитель</gradient> <white>%player%</white> <gray>вернулся к общему костру</gray>"
+        - "<gradient:#b388ff:#ffd700>⚜ Покровитель</gradient> <white>%player%</white> <gray>открыл новую главу приключений</gray>"
+        - "<gradient:#b388ff:#ffd700>⚜ Покровитель</gradient> <white>%player%</white> <gray>снова шагает по тропам CHERDAK</gray>"
+        - "<gradient:#b388ff:#ffd700>⚜ Покровитель</gradient> <white>%player%</white> <gray>заглянул на огонёк</gray>"
+        - "<gradient:#b388ff:#ffd700>⚜ Покровитель</gradient> <white>%player%</white> <gray>принёс с собой настроение для приключений</gray>"
+        - "<gradient:#b388ff:#ffd700>⚜ Покровитель</gradient> <white>%player%</white> <gray>готов оставить след в этом мире</gray>"
+        - "<gradient:#b388ff:#ffd700>⚜ Покровитель</gradient> <white>%player%</white> <gray>сменил реальный мир на кубический</gray>"
+        - "<gradient:#b388ff:#ffd700>⚜ Покровитель</gradient> <white>%player%</white> <gray>вновь распахнул двери мастерской</gray>"
+        - "<gradient:#b388ff:#ffd700>⚜ Покровитель</gradient> <white>%player%</white> <gray>проверяет, всё ли на месте в сундуках</gray>"
+        - "<gradient:#b388ff:#ffd700>⚜ Покровитель</gradient> <white>%player%</white> <gray>вернулся за новыми открытиями</gray>"
+        - "<gradient:#b388ff:#ffd700>⚜ Покровитель</gradient> <white>%player%</white> <gray>стряхнул пыль с походного плаща</gray>"
+        - "<gradient:#b388ff:#ffd700>⚜ Покровитель</gradient> <white>%player%</white> <gray>снова с нами — встречайте!</gray>"
+        - "<gradient:#b388ff:#ffd700>⚜ Покровитель</gradient> <white>%player%</white> <gray>снаряжает рюкзак для новой вылазки</gray>"
+        - "<gradient:#b388ff:#ffd700>⚜ Покровитель</gradient> <white>%player%</white> <gray>прибыл с большими планами на вечер</gray>"
+        - "<gradient:#b388ff:#ffd700>⚜ Покровитель</gradient> <white>%player%</white> <gray>зажёг ещё один огонёк на карте</gray>"
+        - "<gradient:#b388ff:#ffd700>⚜ Покровитель</gradient> <white>%player%</white> <gray>выбрал отличный день для приключений</gray>"
+        - "<gradient:#b388ff:#ffd700>⚜ Покровитель</gradient> <white>%player%</white> <gray>готов строить то, чего ещё не было</gray>"
+        - "<gradient:#b388ff:#ffd700>⚜ Покровитель</gradient> <white>%player%</white> <gray>вернулся туда, где ждут друзья</gray>"
+        - "<gradient:#b388ff:#ffd700>⚜ Покровитель</gradient> <white>%player%</white> <gray>отправляется навстречу новым историям</gray>"
+        - "<gradient:#b388ff:#ffd700>⚜ Покровитель</gradient> <white>%player%</white> <gray>снова пополнил ряды искателей приключений</gray>"
 
 # ================================================================
 #  Каталог товаров (1.4.110, ранги — 1.4.167). Пять ступеней рангов,
@@ -695,6 +800,40 @@ shop:
       tag: ""
       permissions: []
       commands: []
+
+    # Личные лицензии оформления клана; не экспортируются в TradeMC без отдельного разрешения.
+    - id: clan-name-style
+      name: "<gold>Цвет и градиент названия клана</gold>"
+      price: 189
+      days: 30
+      group: ""
+      description: "Личная лицензия на 30 дней для одного своего клана; перенос не чаще раза в 24 часа, применение с согласия главы. Только внешний вид. /clan style"
+      tag: ""
+      permissions: []
+      commands: []
+      trademc-export: false
+
+    - id: clan-emblem
+      name: "<gold>Значок клана</gold>"
+      price: 179
+      days: 30
+      group: ""
+      description: "Личная лицензия на 30 дней для одного своего клана; перенос не чаще раза в 24 часа, применение с согласия главы. Только внешний вид. /clan style"
+      tag: ""
+      permissions: []
+      commands: []
+      trademc-export: false
+
+    - id: clan-card-frame
+      name: "<gold>Рамка карточки клана</gold>"
+      price: 219
+      days: 30
+      group: ""
+      description: "Личная лицензия на 30 дней для одного своего клана; перенос не чаще раза в 24 часа, применение с согласия главы. Только внешний вид. /clan style"
+      tag: ""
+      permissions: []
+      commands: []
+      trademc-export: false
 
     # --- Наборы -------------------------------------------------------------
     # Набор — рецепт покупки: записей в аккаунте он не создаёт, игрок получает

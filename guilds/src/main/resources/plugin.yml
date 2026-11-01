@@ -10,7 +10,7 @@ softdepend: [PlaceholderAPI, CHRDK_Claims]
 commands:
   guild:
     description: Меню гильдии, состав, казна и войны.
-    usage: /guild [menu|gui|create|invite|deposit|war|info|top|mode <status|peaceful|battle|prepay>|dues [10+]|discipline [игрок]]
+    usage: /guild [menu|gui|create|invite|deposit|war|info|top|mode <status|peaceful|battle|prepay>|dues [10+]|discipline [игрок]|style]
     aliases: [guilds, clan, clans, klan, klans, gildiya, gildii]
     permission: chrdkguilds.use
   gchat:

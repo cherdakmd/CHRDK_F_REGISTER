@@ -68,6 +68,7 @@ public final class RegisterPlugin extends JavaPlugin {
         migrateEconomyConfig();
         OptionalTotpMigration.apply(this);
         PresentationMigration.apply(this);
+        PremiumPresentationMigration.apply(this);
         PluginConfig config = PluginConfig.fromBukkitConfig(getConfig());
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"), getLogger());
 
@@ -369,6 +370,7 @@ public final class RegisterPlugin extends JavaPlugin {
         migrateEconomyConfig();
         OptionalTotpMigration.apply(this);
         PresentationMigration.apply(this);
+        PremiumPresentationMigration.apply(this);
         PluginConfig updated = PluginConfig.fromBukkitConfig(getConfig());
         if (serverGuard != null) serverGuard.reload(GuardSettings.parse(getConfig()));
         if (accessManager != null) {

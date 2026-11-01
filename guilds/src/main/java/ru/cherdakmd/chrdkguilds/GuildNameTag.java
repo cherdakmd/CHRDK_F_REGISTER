@@ -46,6 +46,6 @@ final class GuildNameTag implements ChrdkRegisterApi.NameTagProvider {
         }
         if (tab) return plugin.messages().raw(tabKey(guild.peaceful(),plugin.peace().protects(player.getUniqueId(),System.currentTimeMillis())),
                 "tag",guild.tag().isEmpty()?guild.name():guild.tag()) + decoratedName;
-        return plugin.messages().raw(guild.peaceful()?(plugin.peace().protects(player.getUniqueId(),System.currentTimeMillis())?"peace-chat-prefix":"peace-pending-prefix"):"chat-prefix", "tag", guild.tag()) + decoratedName;
+        return plugin.messages().raw(guild.peaceful()?(plugin.peace().protects(player.getUniqueId(),System.currentTimeMillis())?"peace-chat-prefix":"peace-pending-prefix"):"chat-prefix", "tag", ru.cherdakmd.chrdkregister.Messages.trusted(plugin.styles().tag(guild))) + decoratedName;
     }
 }

@@ -74,6 +74,7 @@ public final class AccessManager {
     private final RegisterPlugin plugin;
     private final RegistrationStore store;
     private final VkSecondFactor vkFactor;
+    private final Set<UUID> rankJoinAnnounced = ConcurrentHashMap.newKeySet();
     private volatile ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.VkCodeDelivery vkDelivery;
     private final Set<String> vkChangesInFlight = ConcurrentHashMap.newKeySet();
     private final Set<UUID> vkTotpAtGate = ConcurrentHashMap.newKeySet();
@@ -661,6 +662,7 @@ public final class AccessManager {
         String name = player.getName();
         long now = System.currentTimeMillis();
 
+        rankJoinAnnounced.remove(uuid);
         store.recordPlayerSeen(uuid, name);
         removeAuthentication(uuid);
         passwordVerifiedPlayers.remove(uuid);
@@ -777,6 +779,7 @@ public final class AccessManager {
 
     public void onPlayerQuit(Player player) {
         UUID uuid = player.getUniqueId();
+        rankJoinAnnounced.remove(uuid);
         if (removeAuthentication(uuid)) {
             store.touchSession(player.getName(), uuid, getPlayerIp(player), System.currentTimeMillis());
         }
@@ -1935,10 +1938,12 @@ public final class AccessManager {
             return;
         }
         int level = store.rankLevel(player.getName(), System.currentTimeMillis());
-        String line = ranks.joinLine(level, player.getName());
+        if (rankJoinAnnounced.contains(player.getUniqueId())) return;
+        String line = ranks.nextJoinLine(level, player.getName());
         if (line.isBlank()) {
             return;
         }
+        rankJoinAnnounced.add(player.getUniqueId());
         Bukkit.getServer().broadcast(Messages.format(line));
     }
 

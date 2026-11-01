@@ -29,6 +29,7 @@ public final class GuildsPlugin extends JavaPlugin {
     private GuildStore store;
     private GuildService service;
     private GuildsGui gui;
+    private GuildStyleController styles;
     private ru.cherdakmd.chrdkregister.api.PaidActions payments;
     private GuildFinance finance;
     private GuildPeaceController peace;
@@ -53,6 +54,7 @@ public final class GuildsPlugin extends JavaPlugin {
             Bukkit.getServicesManager().register(ru.cherdakmd.chrdkregister.api.PersonalDebtIndex.class,
                     peace::reserved,this,org.bukkit.plugin.ServicePriority.Normal);
             getServer().getPluginManager().registerEvents(new GuildPeaceListener(this),this);
+            this.styles = new GuildStyleController(this);
             this.gui = new GuildsGui(this);
             getServer().getPluginManager().registerEvents(new GuildsListener(this), this);
             getServer().getPluginManager().registerEvents(gui, this);
@@ -87,6 +89,7 @@ public final class GuildsPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (styles != null) styles.close();
         Bukkit.getServicesManager().unregisterAll(this);
         if (coreApi != null) {
             try {
@@ -219,6 +222,8 @@ public final class GuildsPlugin extends JavaPlugin {
     public GuildService service() {
         return service;
     }
+
+    GuildStyleController styles() { return styles; }
 
     public GuildsGui gui() {
         return gui;

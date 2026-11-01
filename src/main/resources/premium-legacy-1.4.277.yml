@@ -1,0 +1,305 @@
+ranks:
+  levels:
+  - level: 1
+    id: wanderer
+    name: Странник
+    format: <gray>%name%</gray>
+    badge: ✦
+    join-line: ''
+  - level: 2
+    id: pathfinder
+    name: Следопыт
+    format: <green>%name%</green>
+    badge: ❖
+    join-line: ''
+  - level: 3
+    id: keeper
+    name: Хранитель
+    format: <aqua>%name%</aqua>
+    badge: ✧
+    join-line: <aqua>✧ Хранитель</aqua> <white>%player%</white> <gray>вернулся в гильдию</gray>
+  - level: 4
+    id: patron
+    name: Меценат
+    format: <gradient:#ffd700:#ff8800>%name%</gradient>
+    badge: ★
+    join-line: <gradient:#ffd700:#ff8800>★ Меценат</gradient> <white>%player%</white>
+      <gray>снаряжает новую экспедицию</gray>
+  - level: 5
+    id: founder
+    name: Покровитель
+    format: <gradient:#b388ff:#ffd700>%name%</gradient>
+    badge: ⚜
+    join-line: <gradient:#b388ff:#ffd700>⚜ Покровитель</gradient> <white>%player%</white>
+      <gray>входит в летопись гильдии</gray>
+shop:
+  products:
+  - id: rank-wanderer
+    name: <gray>Странник</gray>
+    price: 99
+    days: 30
+    rank: 1
+    group: ''
+    description: Знак ✦, +10 % опыта, 4 дома, 28 чанков, скидка 10 %
+    tag: ''
+    permissions: []
+    commands: []
+  - id: rank-wanderer-year
+    name: <gray>Странник — год</gray>
+    price: 990
+    days: 365
+    rank: 1
+    group: ''
+    description: 'Год Странника: 365 дней по цене десяти покупок по 30 дней'
+    tag: ''
+    permissions: []
+    commands: []
+  - id: rank-pathfinder
+    name: <green>Следопыт</green>
+    price: 159
+    days: 30
+    rank: 2
+    group: ''
+    description: Всё из Странника, 3 шлейфа, +20 % опыта, 6 домов, 34 чанка
+    tag: ''
+    permissions: []
+    commands: []
+  - id: rank-pathfinder-year
+    name: <green>Следопыт — год</green>
+    price: 1590
+    days: 365
+    rank: 2
+    group: ''
+    description: 'Год Следопыта: 365 дней по цене десяти покупок по 30 дней'
+    tag: ''
+    permissions: []
+    commands: []
+  - id: rank-keeper
+    name: <aqua>Хранитель</aqua>
+    price: 229
+    days: 30
+    rank: 3
+    group: ''
+    description: Всё из Следопыта, строка входа, +30 % опыта, +15 % добычи, 8 домов
+    tag: ''
+    permissions: []
+    commands: []
+  - id: rank-keeper-year
+    name: <aqua>Хранитель — год</aqua>
+    price: 2290
+    days: 365
+    rank: 3
+    group: ''
+    description: 'Год Хранителя: 365 дней по цене десяти покупок по 30 дней'
+    tag: ''
+    permissions: []
+    commands: []
+  - id: rank-patron
+    name: <gradient:#ffd700:#ff8800>Меценат</gradient>
+    price: 299
+    days: 30
+    rank: 4
+    group: ''
+    description: Всё из Хранителя, градиент, свой шлейф, премиум-трек, +40 % опыта
+    tag: ''
+    permissions: []
+    commands: []
+  - id: rank-patron-year
+    name: <gradient:#ffd700:#ff8800>Меценат — год</gradient>
+    price: 2990
+    days: 365
+    rank: 4
+    group: ''
+    description: 'Год Мецената: 365 дней по цене десяти покупок по 30 дней'
+    tag: ''
+    permissions: []
+    commands: []
+  - id: rank-founder
+    name: <gradient:#b388ff:#ffd700>Покровитель</gradient>
+    price: 365
+    days: 30
+    rank: 5
+    group: ''
+    description: Всё из Мецената, /hat, знак ⚜, +50 % опыта, +25 % добычи, порог ремесленных
+      прибавок +10
+    tag: ''
+    permissions: []
+    commands: []
+  - id: rank-founder-year
+    name: <gradient:#b388ff:#ffd700>Покровитель — год</gradient>
+    price: 3650
+    days: 365
+    rank: 5
+    group: ''
+    description: 'Год Покровителя — вершина лестницы: 3650 ₽, все бонусы максимума'
+    tag: ''
+    permissions: []
+    commands: []
+  - id: homes-plus
+    name: '<aqua>Дома: +8 точек</aqua>'
+    price: 109
+    days: 30
+    group: homesplus
+    description: +8 точек дома на 30 дней за каждую покупку; складываются с рангом
+      и другими активными пакетами, без общего потолка
+    tag: ''
+    permissions:
+    - chrdktele.homes.plus
+    commands: []
+  - id: trail-flame
+    name: <red>Огненный шлейф</red>
+    price: 39
+    days: 30
+    group: ''
+    description: Шлейф огня за спиной — 30 дней
+    tag: ''
+    permissions: []
+    commands: []
+  - id: trail-hearts
+    name: <light_purple>Сердечки</light_purple>
+    price: 49
+    days: 30
+    group: ''
+    description: Шлейф сердечек за спиной — 30 дней
+    tag: ''
+    permissions: []
+    commands: []
+  - id: trail-notes
+    name: <aqua>Ноты</aqua>
+    price: 59
+    days: 30
+    group: ''
+    description: Шлейф нот за спиной — 30 дней
+    tag: ''
+    permissions: []
+    commands: []
+  - id: trail-sparkles
+    name: <yellow>Искры Энда</yellow>
+    price: 69
+    days: 30
+    group: ''
+    description: Шлейф искр Энда за спиной — 30 дней
+    tag: ''
+    permissions: []
+    commands: []
+  - id: trail-magic
+    name: <dark_purple>Ведьмина магия</dark_purple>
+    price: 79
+    days: 30
+    group: ''
+    description: Шлейф ведьминой магии за спиной — 30 дней
+    tag: ''
+    permissions: []
+    commands: []
+  - id: join-effect
+    name: <gold>Торжественный вход</gold>
+    price: 89
+    days: 30
+    group: ''
+    description: Вспышка тотема и звук при входе на сервер — 30 дней
+    tag: ''
+    permissions: []
+    commands: []
+  - id: nick-aurora
+    name: '<gradient:#00e5ff:#8a2be2>Цвет ника: Сияние</gradient>'
+    price: 119
+    days: 30
+    group: ''
+    description: Градиент «Сияние» для ника — 30 дней
+    tag: ''
+    permissions: []
+    commands: []
+  - id: nick-flame
+    name: '<gradient:#ff3d00:#ffd54f>Цвет ника: Пламя</gradient>'
+    price: 129
+    days: 30
+    group: ''
+    description: Градиент «Пламя» для ника — 30 дней
+    tag: ''
+    permissions: []
+    commands: []
+  - id: nick-pearl
+    name: '<gradient:#ffffff:#9fd8ff>Цвет ника: Жемчуг</gradient>'
+    price: 139
+    days: 30
+    group: ''
+    description: Градиент «Жемчуг» для ника — 30 дней
+    tag: ''
+    permissions: []
+    commands: []
+  - id: nick-lagoon
+    name: '<gradient:#00c9a7:#7ae582>Цвет ника: Лагуна</gradient>'
+    price: 149
+    days: 30
+    group: ''
+    description: Градиент «Лагуна» для ника — 30 дней
+    tag: ''
+    permissions: []
+    commands: []
+  - id: nick-crimson
+    name: '<gradient:#7b0d1e:#ff5c8a>Цвет ника: Багрянец</gradient>'
+    price: 169
+    days: 30
+    group: ''
+    description: Градиент «Багрянец» для ника — 30 дней
+    tag: ''
+    permissions: []
+    commands: []
+  - id: battlepass-premium
+    name: <gold>Боевой пропуск</gold>
+    price: 249
+    days: 90
+    group: ''
+    description: 'Золотые награды всех заданий сезона: часы отдельного буста'
+    tag: ''
+    permissions: []
+    commands: []
+  - id: trails-pack
+    name: <gold>Набор шлейфов</gold>
+    price: 199
+    days: 30
+    group: ''
+    description: Все пять каталожных шлейфов сразу — вместо 295 ₽, выгода 96 ₽
+    tag: ''
+    permissions: []
+    commands: []
+    includes:
+    - trail-flame
+    - trail-hearts
+    - trail-notes
+    - trail-sparkles
+    - trail-magic
+  - id: look-pack
+    name: <gradient:#00e5ff:#ffd54f>Весь вид</gradient>
+    price: 599
+    days: 30
+    group: ''
+    description: Пять каталожных шлейфов и пять градиентов на 30 дней; поштучно 1
+      000 ₽, через набор шлейфов 904 ₽
+    tag: ''
+    permissions: []
+    commands: []
+    includes:
+    - trails-pack
+    - nick-aurora
+    - nick-flame
+    - nick-pearl
+    - nick-lagoon
+    - nick-crimson
+  - id: all-inclusive
+    name: <gradient:#ffd700:#b388ff>Всё включено</gradient>
+    price: 899
+    days: 30
+    rank: 5
+    includes-days: 30
+    group: ''
+    description: Покровитель V, +8 домов, пять шлейфов, пять платных цветов, эффект
+      входа и премиум-трек — на 30 дней
+    tag: ''
+    permissions: []
+    commands: []
+    includes:
+    - homes-plus
+    - look-pack
+    - join-effect
+    - battlepass-premium

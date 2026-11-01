@@ -80,6 +80,7 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
     private BukkitTask onboardingTask;
     private final Map<UUID, Long> onboardingDue = new ConcurrentHashMap<>();
     private final Set<UUID> onboardingCompleted = ConcurrentHashMap.newKeySet();
+    private final Set<UUID> premiumOnboardingShown = ConcurrentHashMap.newKeySet();
     private final java.util.concurrent.atomic.AtomicBoolean onboardingBusy = new java.util.concurrent.atomic.AtomicBoolean();
     private BukkitTask pulseTask;
     private BukkitTask syncTask;
@@ -160,7 +161,7 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
 
     public synchronized void shutdown() {
         if (onboardingTask != null) { onboardingTask.cancel(); onboardingTask = null; }
-        onboardingDue.clear(); onboardingCompleted.clear();
+        onboardingDue.clear(); onboardingCompleted.clear(); premiumOnboardingShown.clear();
         onboardingExecutor.shutdownNow();
         if (pulseTask != null) {
             pulseTask.cancel();
@@ -593,6 +594,7 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
     public void onPlayerQuit(PlayerQuitEvent event) {
         onboardingDue.remove(event.getPlayer().getUniqueId());
         onboardingCompleted.remove(event.getPlayer().getUniqueId());
+        premiumOnboardingShown.remove(event.getPlayer().getUniqueId());
         Player player = event.getPlayer();
         boolean wasAuthenticated = announcedOnlineSessions.remove(player.getUniqueId());
         VkConfig cfg = plugin.config();
@@ -997,6 +999,7 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
         candidates.sort(java.util.Comparator.comparingLong(player -> onboardingDue.getOrDefault(player.getUniqueId(), 0L)));
         for (Player player : candidates) {
             if (!core.isAuthenticated(player) || onboardingDue.getOrDefault(player.getUniqueId(), 0L) > now) continue;
+            if (VkOnboardingPolicy.suppress(core.rankLevel(player.getName()), premiumOnboardingShown.contains(player.getUniqueId()))) continue;
             onboardingDue.put(player.getUniqueId(), now + cfg.onboardingIntervalSeconds() * 1000L);
             due.add(new OnboardingPlayer(player, store.byPlayer(player.getName()).map(VkStore.LinkSnapshot::vkUserId).orElse(0L)));
             if (due.size() >= 20) break;
@@ -1031,6 +1034,7 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
                             boolean complete = entry.vkId() > 0 && Boolean.TRUE.equals(inGroup) && Boolean.TRUE.equals(inChat);
                             if (complete) { onboardingCompleted.add(player.getUniqueId()); return; }
                             if (!Boolean.FALSE.equals(inGroup) && !Boolean.FALSE.equals(inChat) && onboardingCompleted.contains(player.getUniqueId())) return;
+                            if (core.rankLevel(player.getName()) > 0 && !premiumOnboardingShown.add(player.getUniqueId())) return;
                             onboardingCompleted.remove(player.getUniqueId());
                             plugin.messages().send(player, "vk.onboarding-header");
                             if (entry.vkId() == 0) plugin.messages().send(player, "vk.onboarding-link");
