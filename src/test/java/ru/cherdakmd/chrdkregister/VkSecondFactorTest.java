@@ -70,6 +70,16 @@ class VkSecondFactorTest {
         }
     }
 
+    @Test void coreGlueHasOnlyGatedAuthenticationPaths() throws Exception {
+        String source = Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkregister/AccessManager.java"));
+        assertEquals(2, source.split("authenticatedPlayers.add\\(uuid\\)", -1).length - 1);
+        assertTrue(source.contains("!vkTwoFactorEnabled(name) && store.hasValidIpSession"));
+        assertTrue(source.contains("if (vkTwoFactorEnabled(player.getName()))"));
+        assertTrue(source.contains("ticket.recipient != vkFactor.recipient(player.getName())"));
+        assertTrue(source.contains("requiresTotpEnrollment(player.getName())"));
+        assertTrue(source.contains("vkFactor.forget(uuid)"));
+    }
+
     @Test void codeSettingsAreMaskedLikeLoginCommands() {
         assertFalse(LogMasker.mask("Steve issued server command: /vk 2fa confirm 123456").contains("123456"));
         assertFalse(LogMasker.mask("Steve issued server command: /вк 2fa confirm 123456").contains("123456"));

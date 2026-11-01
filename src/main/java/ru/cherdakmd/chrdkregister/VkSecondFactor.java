@@ -83,7 +83,7 @@ final class VkSecondFactor {
     synchronized Ticket verify(String name, UUID session, Purpose purpose, String code, long now) {
         Ticket ticket = pending.get(session);
         if (ticket == null || !ticket.name.equals(key(name)) || ticket.purpose != purpose) return null;
-        if (now >= ticket.expires || ticket.attempts >= ATTEMPTS) { pending.remove(session); return null; }
+        if (now < ticket.expires - TTL || now >= ticket.expires || ticket.attempts >= ATTEMPTS) { pending.remove(session); return null; }
         if (!ticket.delivered) return null;
         ticket.attempts++;
         if (code == null || !code.matches("[0-9]{6}") || !MessageDigest.isEqual(ticket.hash, digest(code, ticket.nonce))) return null;

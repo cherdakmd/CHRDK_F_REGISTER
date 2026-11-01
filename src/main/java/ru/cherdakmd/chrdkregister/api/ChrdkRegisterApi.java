@@ -394,7 +394,7 @@ public interface ChrdkRegisterApi {
      */
     /** API34: доставка кода только в ЛС закреплённому профилю, ACK не означает проверку кода. */
     interface VkCodeDelivery {
-        void sendVkCode(long vkUserId, String code, String purpose, java.util.function.Consumer<Boolean> ack);
+        void sendVkCode(long vkUserId, String playerName, String code, String purpose, java.util.function.Consumer<Boolean> ack);
     }
     default void registerVkCodeDelivery(VkCodeDelivery delivery) { }
     default void unregisterVkCodeDelivery(VkCodeDelivery delivery) { }

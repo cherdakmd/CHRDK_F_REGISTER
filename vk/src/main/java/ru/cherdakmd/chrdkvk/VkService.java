@@ -951,7 +951,7 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
     }
 
     @Override
-    public void sendVkCode(long vkUserId, String code, String purpose, Consumer<Boolean> ack) {
+    public void sendVkCode(long vkUserId, String playerName, String code, String purpose, Consumer<Boolean> ack) {
         VkApiClient client = apiClient;
         if (client == null || !plugin.config().enabled() || vkUserId <= 0 || vkUserId >= VkConfig.MIN_CONVERSATION_PEER_ID) { ack.accept(false); return; }
         String action = switch (purpose) {
@@ -965,7 +965,7 @@ public final class VkService implements VkBotRouter.Backend, ChrdkRegisterApi.Se
             securityExecutor.execute(() -> {
                 boolean ok = false;
                 try {
-                    String text = plugin.messages().plain("bot.factor-code", "code", code, "action", action);
+                    String text = plugin.messages().plain("bot.factor-code", "code", code, "action", action, "player", playerName);
                     ok = client.sendMessage(vkUserId, text);
                 } catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); }
                 catch (Exception ignored) { /* Код и ответы доставки никогда не логируются. */ }

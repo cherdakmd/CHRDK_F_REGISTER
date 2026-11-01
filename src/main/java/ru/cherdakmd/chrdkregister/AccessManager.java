@@ -1844,7 +1844,7 @@ public final class AccessManager {
         if (issued == null) { messages.send(player, "vk-factor.cooldown"); return; }
         messages.send(player, "vk-factor.sending");
         try {
-            delivery.sendVkCode(recipient, issued.code, purpose.name(), ok -> {
+            delivery.sendVkCode(recipient, player.getName(), issued.code, purpose.name(), ok -> {
                 if (!plugin.isEnabled()) return;
                 Bukkit.getScheduler().runTask(plugin, () -> {
                     // Запоздавший ACK не активирует новый вход того же UUID.

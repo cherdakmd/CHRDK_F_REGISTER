@@ -205,6 +205,7 @@ public final class VkApiClient {
             int count = response.get("count").getAsInt();
             if (count < 0 || count > 10000) throw new IOException("VK conversation membership exceeds verification limit");
             JsonArray items = response.getAsJsonArray("items");
+            if (items.size() > 1000 || count < offset + items.size()) throw new IOException("VK membership count inconsistent");
             for (JsonElement item : items) {
                 long id = item.getAsJsonObject().get("member_id").getAsLong();
                 if (id > 0) ids.add(id);
