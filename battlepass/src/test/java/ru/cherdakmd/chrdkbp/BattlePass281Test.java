@@ -54,6 +54,12 @@ class BattlePass281Test {
         var restored=new BattlePassStore(dir,Logger.getAnonymousLogger());restored.load();assertEquals(10,restored.progressOf(id,"one"));assertTrue(restored.isClaimed(id,"one","FREE"));
         restored.addProgress(id,"big",Integer.MAX_VALUE-1,Integer.MAX_VALUE);assertEquals(Integer.MAX_VALUE,restored.addProgress(id,"big",100,Integer.MAX_VALUE));
     }
+    @Test void malformedRowsFailClosedWithoutDiscardingOriginalFile() throws Exception {
+        for(String json:List.of("null","{\"not-a-uuid\":{}}","{\""+UUID.randomUUID()+"\":{\"progress\":{\"one\":-1}}}")) {
+            Path file=dir.resolve("battlepass-data.json");Files.writeString(file,json);var store=new BattlePassStore(dir,Logger.getAnonymousLogger());store.load();
+            assertFalse(store.healthy());store.save();assertEquals(json,Files.readString(file));
+        }
+    }
     @Test void corruptedFileIsNotReplacedWithEmptyProgress() throws Exception {
         Path file=dir.resolve("battlepass-data.json");Files.writeString(file,"{broken");var store=new BattlePassStore(dir,Logger.getAnonymousLogger());store.load();
         assertFalse(store.healthy());store.save();assertEquals("{broken",Files.readString(file));

@@ -243,7 +243,7 @@ final class BattlePassMenu implements Listener {
         };
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.HIGHEST,ignoreCancelled=true)
     public void onClick(InventoryClickEvent event) {
         if (!(event.getView().getTopInventory().getHolder() instanceof Holder holder)) {
             return;

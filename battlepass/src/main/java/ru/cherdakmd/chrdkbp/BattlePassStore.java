@@ -74,14 +74,17 @@ final class BattlePassStore {
                 try {
                     uuid = UUID.fromString(entry.getKey());
                 } catch (IllegalArgumentException exception) {
-                    continue;
+                    throw new IOException("Некорректный UUID в battlepass-data.json",exception);
                 }
                 Row row = new Row();
+                if(entry.getValue().containsKey("progress") && !(entry.getValue().get("progress") instanceof Map<?,?>))throw new IOException("Некорректная таблица прогресса");
+                if(entry.getValue().containsKey("claimed") && !(entry.getValue().get("claimed") instanceof Iterable<?>))throw new IOException("Некорректные отметки наград");
                 if (entry.getValue().get("progress") instanceof Map<?, ?> progress) {
                     for (Map.Entry<?, ?> cell : progress.entrySet()) {
-                        if (cell.getValue() instanceof Number number) {
-                            row.progress.put(String.valueOf(cell.getKey()), number.intValue());
-                        }
+                        if(!(cell.getValue() instanceof Number number))throw new IOException("Прогресс не является числом");
+                        int value=new java.math.BigDecimal(number.toString()).intValueExact();
+                        if(value<0)throw new IOException("Отрицательный прогресс");
+                        row.progress.put(String.valueOf(cell.getKey()),value);
                     }
                 }
                 if (entry.getValue().get("claimed") instanceof Iterable<?> marks) {

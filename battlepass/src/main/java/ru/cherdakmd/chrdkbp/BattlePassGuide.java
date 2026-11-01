@@ -128,7 +128,7 @@ final class BattlePassGuide implements Listener {
         controls(h);p.openInventory(h.inventory);
     }
     void closeAll(){for(Player p:Bukkit.getOnlinePlayers())if(p.getOpenInventory().getTopInventory().getHolder() instanceof Holder h){h.consumed=true;p.closeInventory();}}
-    @EventHandler public void click(InventoryClickEvent event) {
+    @EventHandler(priority=org.bukkit.event.EventPriority.HIGHEST,ignoreCancelled=true) public void click(InventoryClickEvent event) {
         if(!(event.getView().getTopInventory().getHolder() instanceof Holder h))return;event.setCancelled(true);
         if(!(event.getWhoClicked() instanceof Player p)||!h.owner.equals(p.getUniqueId())||!plugin.canUse(p)||h.consumed)return;
         if(event.getClick()!=ClickType.LEFT&&event.getClick()!=ClickType.RIGHT)return;

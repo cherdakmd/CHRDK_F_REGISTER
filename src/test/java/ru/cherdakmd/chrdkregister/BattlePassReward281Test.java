@@ -37,6 +37,16 @@ class BattlePassReward281Test {
         assertEquals(ALREADY,s.grantRewardBoostOnce(player,"Steve",8,24,key));
         assertEquals(8*RewardBoostMath.HOUR,new RegistrationStore(dir,Logger.getAnonymousLogger()).rewardBoostRemaining("Steve"));
     }
+    @Test void receiptSnapshotCannotBeClearedByCallerAndPaidStateIsUntouched() {
+        var s=store();long now=1_800_000_000_000L;
+        s.grantRankPermanent("Steve",now,5,"shop");s.grantEntitlement("Steve","nick-aurora",now,30,365);
+        var before=s.getAccount("Steve").orElseThrow();
+        assertEquals(ADDED,s.grantRewardBoostOnce(player,"Steve",8,24,key));
+        var copy=s.getAccount("Steve").orElseThrow();copy.rewardBoostReceipts.clear();
+        assertEquals(ALREADY,s.grantRewardBoostOnce(player,"Steve",8,24,key));
+        var after=s.getAccount("Steve").orElseThrow();
+        assertEquals(before.passUntil,after.passUntil);assertEquals(before.rankLevel,after.rankLevel);assertEquals(before.entitlements,after.entitlements);
+    }
     @Test void olderQueuedSnapshotCannotOverwriteConfirmedReceipt() {
         var queue=new ArrayList<Runnable>();var s=new RegistrationStore(dir,Logger.getAnonymousLogger(),queue::add);
         s.recordPlayerSeen(player,"Steve");s.grantRewardBoost("Steve",1,24);
