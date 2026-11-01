@@ -61,8 +61,8 @@ class GuildStyle279Test {
     @Test void everyPresetAndGuiControlHasRussianMessages() throws Exception {
         var yaml = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(Path.of("src/main/resources/messages.yml").toFile());
         for (String kind : GuildStyleGui.KINDS) {
-            assertTrue(yaml.contains("ru.style-kind-" + kind));
-            for (String preset : GuildStyleDefs.options(kind)) assertTrue(yaml.contains("ru.style-preset-" + kind + "-" + preset), kind + ":" + preset);
+            assertTrue(yaml.contains("guilds.style-kind-" + kind));
+            for (String preset : GuildStyleDefs.options(kind)) assertTrue(yaml.contains("guilds.style-preset-" + kind + "-" + preset), kind + ":" + preset);
         }
         assertEquals(14, Arrays.stream(GuildStyleGui.OPTIONS).distinct().count());
         assertTrue(Arrays.stream(GuildStyleGui.OPTIONS).allMatch(slot -> slot >= 19 && slot <= 34));

@@ -58,6 +58,7 @@ final class ShopDeliveryPolicy {
     private static boolean complete(ShopProduct product, ShopCatalog catalog, Set<String> path, int depth) {
         if (product == null || depth > ShopCatalog.MAX_BUNDLE_DEPTH + 1 || !path.add(product.id())) return false;
         try {
+            if ("clan-style-pack".equals(product.id()) && (!product.retainsBundleEntitlement() || depth > 0)) return false;
             // Ранг допустим только на корне явного гибрида, не внутри другого набора.
             if (product.hasRank() && (depth > 0 || product.includedDays() <= 0)) return false;
             if (product.includes().isEmpty()) return !product.hasRank();

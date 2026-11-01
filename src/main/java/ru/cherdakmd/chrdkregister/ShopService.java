@@ -198,6 +198,11 @@ public final class ShopService {
                 .filter(name -> name != null && !name.isBlank())
                 .orElse(playerName);
 
+        // Совпавший владельческий SKU не переписывается миграцией: несовместимый рецепт
+        // нельзя выдать как комплект без трёх частей/бонуса или запустить его команды.
+        if ("clan-style-pack".equals(product.id()) && !product.retainsBundleEntitlement()) {
+            return Result.failure(Status.INVALID_BUNDLE, canonical);
+        }
         // До любых изменений проверяем весь набор и все оплаченные дни.
         if (!product.includes().isEmpty() && !ShopDeliveryPolicy.complete(product, catalog)) {
             return Result.failure(Status.INVALID_BUNDLE, canonical);
