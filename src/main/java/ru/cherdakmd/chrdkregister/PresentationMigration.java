@@ -89,8 +89,16 @@ final class PresentationMigration {
 
     /** Для каталога допустимы только отличия описаний при неизменных условиях каждого SKU. */
     private static boolean sameCatalogTerms(Object before, Object after) {
-        if (!(before instanceof List<?> previous) || !(after instanceof List<?> current)
-                || previous.size() != current.size()) return false;
+        if (!(before instanceof List<?> previous) || !(after instanceof List<?> current)) return false;
+        // 278 добавляет ровно три косметических SKU. Условия всех прежних товаров
+        // должны совпасть; это не разрешение заменять владельческие цены или наборы.
+        if (current.size() == previous.size() + PremiumPresentationMigration.PRODUCTS.size()
+                && previous.stream().noneMatch(value -> value instanceof Map<?, ?> item
+                    && PremiumPresentationMigration.PRODUCTS.contains(item.get("id")))) {
+            current = current.stream().filter(value -> !(value instanceof Map<?, ?> item)
+                    || !PremiumPresentationMigration.PRODUCTS.contains(item.get("id"))).toList();
+        }
+        if (previous.size() != current.size()) return false;
         for (int i = 0; i < previous.size(); i++) {
             if (!(previous.get(i) instanceof Map<?, ?> old) || !(current.get(i) instanceof Map<?, ?> fresh))
                 return false;
