@@ -52,6 +52,12 @@ jobs:
           python3 tools/trademc/build.py --check
           python3 -m unittest discover -s tools/trademc -p 'test_*.py' -v
 
+      - name: Verify separate clan product kit
+        run: |
+          python3 -m pip install -r tools/clan_shop/requirements.txt
+          python3 tools/clan_shop/build.py --check
+          python3 -m unittest discover -s tools/clan_shop -p 'test_*.py' -v
+
       - name: Build plugin
         shell: bash
         run: |
