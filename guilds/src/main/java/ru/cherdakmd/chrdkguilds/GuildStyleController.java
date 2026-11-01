@@ -30,9 +30,15 @@ final class GuildStyleController implements AutoCloseable {
         if (!store.healthy() || plugin.payments().paused()) { send(actor, "style-unavailable"); return; }
         offers.values().removeIf(offer -> offer.expires() <= System.currentTimeMillis());
         if (args.length == 1) { status(actor); return; }
+        String action = args[1].toLowerCase(Locale.ROOT);
+        if (action.equals("off")) {
+            if (args.length != 3 || !GuildStyleDefs.PRODUCTS.containsKey(args[2])) { send(actor, "style-help"); return; }
+            submit(actor, actor.getUniqueId(), () -> store.remove(actor.getUniqueId(), args[2])
+                    ? GuildStyleStore.Result.OK : GuildStyleStore.Result.FAILED);
+            return;
+        }
         Guild guild = plugin.service().guildOf(actor.getUniqueId());
         if (guild == null) { send(actor, "not-in-guild"); return; }
-        String action = args[1].toLowerCase(Locale.ROOT);
         if (action.equals("accept")) {
             if (!guild.leader().equals(actor.getUniqueId())) { send(actor, "not-leader"); return; }
             if (args.length != 3) { send(actor, "style-help"); return; }
@@ -44,11 +50,11 @@ final class GuildStyleController implements AutoCloseable {
             offers.remove(owner.getUniqueId());
             apply(actor, offer); return;
         }
-        if (action.equals("off") || action.equals("clear")) {
+        if (action.equals("clear")) {
             if (args.length != 3 || !GuildStyleDefs.PRODUCTS.containsKey(args[2])) { send(actor, "style-help"); return; }
-            if (action.equals("clear") && !guild.leader().equals(actor.getUniqueId())) { send(actor, "not-leader"); return; }
+            if (!guild.leader().equals(actor.getUniqueId())) { send(actor, "not-leader"); return; }
             String kind = args[2];
-            submit(actor, actor.getUniqueId(), () -> (action.equals("clear") ? store.clear(guild.id(), kind) : store.remove(actor.getUniqueId(), kind))
+            submit(actor, actor.getUniqueId(), () -> store.clear(guild.id(), kind)
                     ? GuildStyleStore.Result.OK : GuildStyleStore.Result.FAILED);
             return;
         }

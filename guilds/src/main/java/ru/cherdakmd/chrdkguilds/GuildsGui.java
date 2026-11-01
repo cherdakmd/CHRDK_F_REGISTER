@@ -155,7 +155,9 @@ final class GuildsGui implements Listener {
         lore.add(plugin.messages().get(guild.peaceful()?"menu-mode-peaceful":"menu-mode-battle"));
         ItemStack card = item(guild.peaceful()?Material.GREEN_BANNER:Material.RED_BANNER, "menu-info-title", lore);
         var meta = card.getItemMeta();
-        meta.displayName(ru.cherdakmd.chrdkregister.Messages.format(plugin.styles().name(guild))); card.setItemMeta(meta);
+        if (plugin.styles().active(guild,"name") != null || plugin.styles().active(guild,"emblem") != null)
+            meta.displayName(ru.cherdakmd.chrdkregister.Messages.format(plugin.styles().name(guild)));
+        card.setItemMeta(meta);
         return card;
     }
 
