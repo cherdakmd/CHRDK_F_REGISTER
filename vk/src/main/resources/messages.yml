@@ -14,7 +14,7 @@ vk:
   player-only: "<red>Эта команда доступна только игрокам в игре.</red>"
   need-auth: "<red>Сначала войдите в аккаунт на сервере.</red>"
   not-linked: "<yellow>Ваш аккаунт ещё не привязан к ВКонтакте. Нажмите <click:run_command:'/vk link'><hover:show_text:'<green>Получить одноразовый код привязки</green>'><white><underlined>/vk link</underlined></white></hover></click>.</yellow>"
-  usage: "<gray>Использование: <aqua>/vk</aqua> <dark_gray>|</dark_gray> <white>/vk [status|link|notify|chat|mentions|unlink]</white></gray>"
+  usage: "<gray>Меню: <aqua>/vk</aqua> · привязка: <white>/vk link</white> · защита кодом из ВК: <white>/vk 2fa</white> · /vk [status|notify|chat|mentions|unlink]</gray>"
 
   state-yes: "<green>да</green>"
   state-no: "<gray>нет</gray>"
@@ -85,6 +85,7 @@ vk:
     - "<!italic><dark_gray>▸ Нажмите, чтобы открыть меню /labels</dark_gray>"
   gui-security-name: "<!italic><yellow>Самозащита аккаунта</yellow>"
   gui-security-lore:
+    - "<!italic><gray>Код входа в ЛС: /vk 2fa</gray>"
     - "<!italic><gray>Доступ ко входу: %frozen%</gray>"
     - "<!italic><gray>В боте ВК доступны кнопки <white>/выход</white></gray>"
     - "<!italic><gray>и <white>/заморозить</white> в одно касание.</gray>"

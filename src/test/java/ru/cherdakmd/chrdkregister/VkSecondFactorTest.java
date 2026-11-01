@@ -63,6 +63,13 @@ class VkSecondFactorTest {
         var factor = broker(folder); assertFalse(factor.healthy()); assertTrue(factor.required("Anyone"));
         assertNull(factor.issue("Steve", UUID.randomUUID(), 77, VkSecondFactor.Purpose.DISABLE, 1000));
     }
+    @Test void invalidPersistedRecipientCannotTurnIntoChatOrRoundedUser(@TempDir Path folder) throws Exception {
+        for (String id : new String[]{"77.5", "2000000001", "-77", "\"77\""}) {
+            Files.writeString(folder.resolve("vk-second-factor.json"), "{\"schema\":1,\"accounts\":{\"steve\":" + id + "}}");
+            var factor = broker(folder); assertFalse(factor.healthy()); assertTrue(factor.required("Steve"));
+        }
+    }
+
     @Test void codeSettingsAreMaskedLikeLoginCommands() {
         assertFalse(LogMasker.mask("Steve issued server command: /vk 2fa confirm 123456").contains("123456"));
         assertFalse(LogMasker.mask("Steve issued server command: /вк 2fa confirm 123456").contains("123456"));

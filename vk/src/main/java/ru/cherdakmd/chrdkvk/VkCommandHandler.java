@@ -320,7 +320,7 @@ public final class VkCommandHandler implements CommandExecutor, TabCompleter {
                     return true;
                 }
                 String target = args[1];
-                if (api.vkTwoFactorEnabled(target)) { messages.send(sender, "vk.factor-unlink-blocked"); return true; }
+                if (plugin.coreApi() == null || plugin.coreApi().vkTwoFactorEnabled(target)) { messages.send(sender, "vk.factor-unlink-blocked"); return true; }
                 Optional<VkStore.LinkSnapshot> removed = service.store().unlink(target);
                 if (removed.isEmpty()) {
                     messages.send(sender, "admin.lookup-none", "player", target);

@@ -46,8 +46,9 @@ final class VkSecondFactor {
         try {
             if (Files.size(file) > 1_000_000) throw new IllegalStateException();
             JsonObject root = JsonParser.parseString(Files.readString(file)).getAsJsonObject();
-            if (root.get("schema").getAsInt() != 1) throw new IllegalStateException();
+            if (!root.get("schema").toString().equals("1")) throw new IllegalStateException();
             for (var entry : root.getAsJsonObject("accounts").entrySet()) {
+                if (!entry.getValue().toString().matches("[1-9][0-9]{0,9}")) throw new IllegalStateException();
                 long id = entry.getValue().getAsLong();
                 if (!entry.getKey().matches("[a-z0-9_]{1,16}") || id <= 0 || id >= 2_000_000_000L) throw new IllegalStateException();
                 enabled.put(entry.getKey(), id);
