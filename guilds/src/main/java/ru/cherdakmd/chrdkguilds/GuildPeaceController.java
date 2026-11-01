@@ -34,6 +34,8 @@ final class GuildPeaceController {
         if(decision!=GuildPvpDecision.ALLOW) {
             if(decision==GuildPvpDecision.BLOCK_AND_FINE) {
                 combat.mark(attacker,now);
+                // Не переписываем домен поверх незавершённой банковской WAL-операции.
+                if(plugin.payments().paused())return new AttackOutcome(true,false);
                 var sanction=plugin.store().sanction(attacker);
                 if(now<sanction.nextIncidentAt() || sanction.seen(source))return new AttackOutcome(true,true);
                 GuildResult result=plugin.store().transaction(copy->new GuildPeaceService(copy)
@@ -134,6 +136,7 @@ final class GuildPeaceController {
                     :new GuildPeaceService(service.store()).mode(purse,owner,action.equals("peaceful")?GuildMode.PEACEFUL:GuildMode.BATTLE,now));
             if(!preview.result().ok()){send(player,preview.result());return;}
             quotes.put(owner,new Quote(action,days,plugin.store().snapshotJson(),now+30_000));
+            if(action.equals("peaceful"))send(player,GuildResult.ok("discipline-rules"));
             send(player,GuildResult.ok("peace-confirm","action",action,"days",days,"personal",preview.debit(),"rate",GuildPeaceService.DAILY));
             Guild before=plugin.store().of(owner),after=plugin.store().detached(preview.domain()).of(owner);
             send(player,GuildResult.ok("peace-preview-cost","treasury",GuildFinance.treasurySpent(before,after),"personal",preview.debit()));
@@ -161,6 +164,7 @@ final class GuildPeaceController {
             if(!preview.result().ok()){send(player,preview.result());return false;}
             quotes.put(owner,new Quote("join",0,plugin.store().snapshotJson(),now+30_000));
             Guild g=plugin.store().guild(plugin.store().inviteOf(owner).guildId());
+            if(g.peaceful())send(player,GuildResult.ok("discipline-rules"));
             send(player,GuildResult.ok("dues-join-confirm","rate",g.duesRate(),"peace",g.peaceful()?GuildPeaceService.DAILY:0,"cost",preview.debit()));return false;
         }
         Quote quote=quotes.remove(owner);

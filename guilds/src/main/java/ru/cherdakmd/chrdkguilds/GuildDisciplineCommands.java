@@ -53,6 +53,7 @@ final class GuildDisciplineCommands {
         if(reason.isBlank()||reason.length()>160||reason.chars().anyMatch(Character::isISOControl)) {
             plugin.messages().send(sender,"discipline-reason");return;
         }
+        if(plugin.payments().paused()){plugin.messages().send(sender,"finance-paused");return;}
         UUID id=incident;
         String actor=sender instanceof Player p?p.getUniqueId().toString():"console";
         GuildResult result=plugin.store().transaction(copy->forgive

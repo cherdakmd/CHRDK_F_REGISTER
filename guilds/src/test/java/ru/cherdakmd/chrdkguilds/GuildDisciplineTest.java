@@ -189,4 +189,25 @@ class GuildDisciplineTest {
         for(int i=0;i<100;i++)sanction=sanction.log(now+i,"console","review","Проверено");
         assertEquals(64,sanction.audit().size());assertEquals(now+36,sanction.audit().getFirst().at());assertEquals(100,sanction.debt());
     }
+    @Test void failedWriteBeforeReplaceCannotPublishPartialPunishment() throws Exception {
+        var s=store();incidents(s,member,9);s.saveNow();s.bind(new PaidActionStore(dir));
+        java.nio.file.Files.createDirectory(dir.resolve("paid-actions.json.tmp"));
+        var result=s.transaction(copy->new GuildPeaceService(copy).fine(member,victim,UUID.randomUUID(),"melee",true,now+9*minute),GuildResult.fail("failed"));
+        assertFalse(result.ok());assertNotNull(s.of(member));assertEquals(900,s.sanction(member).debt());
+        var boot=new GuildStore(dir,Logger.getAnonymousLogger());boot.bind(new PaidActionStore(dir));
+        assertNotNull(boot.of(member));assertFalse(boot.sanction(member).branded(now+9*minute));assertEquals(900,boot.sanction(member).debt());
+    }
+    @Test void crashAfterAtomicReplaceRecoversWholePunishmentWithoutDoubleFine() throws Exception {
+        var s=store();incidents(s,member,9);s.saveNow();
+        var crash=new java.util.concurrent.atomic.AtomicBoolean();
+        var paid=new PaidActionStore(dir,()->{if(crash.get())throw new java.io.IOException("crash after replace");});s.bind(paid);
+        crash.set(true);UUID action=UUID.randomUUID();
+        var result=s.transaction(copy->new GuildPeaceService(copy).fine(member,victim,action,"melee",true,now+9*minute),GuildResult.fail("failed"));
+        assertFalse(result.ok()); // Клиенту не объявляем неподтверждённый успех.
+        var boot=new GuildStore(dir,Logger.getAnonymousLogger());boot.bind(new PaidActionStore(dir));
+        assertNull(boot.of(member));assertTrue(boot.sanction(member).branded(now+9*minute));assertEquals(1000,boot.sanction(member).debt());
+        assertFalse(boot.transaction(copy->new GuildPeaceService(copy).fine(member,victim,action,"melee",true,now+11*minute),GuildResult.fail("failed")).ok());
+        assertEquals(1000,boot.sanction(member).debt());assertFalse(boot.peaceNotices(member).isEmpty());
+    }
+
 }
