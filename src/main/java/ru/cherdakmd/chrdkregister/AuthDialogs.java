@@ -117,7 +117,7 @@ public final class AuthDialogs {
                 .base(DialogBase.builder(title(messages.get("dialog.two-factor.title")))
                         .canCloseWithEscape(false)
                         .pause(false)
-                        .body(List.of(DialogBody.plainMessage(messages.get("dialog.two-factor.body"))))
+                        .body(List.of(DialogBody.plainMessage(messages.get(accessManager.vkLoginPending(player) ? "vk-factor.dialog-body" : "dialog.two-factor.body"))))
                         .inputs(List.of(DialogInput.text(KEY_CODE, label(messages.get("dialog.two-factor.code-label")))
                                 .maxLength(8)
                                 .width(INPUT_WIDTH)

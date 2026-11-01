@@ -103,7 +103,11 @@ class AddonRetirement271Test {
         var overrides=new LinkedHashMap<>(legacy);
         Messages.migrateStockOverrides(fresh,overrides,legacy);
         assertFalse(overrides.values().stream().anyMatch(v->v.contains("/lottery")));
-        assertEquals(fresh,overrides);
+        // Новые ключи (например, ВК-2FA) берутся из defaults, а не обязаны попасть в overrides.
+        var migratedExisting = new LinkedHashMap<>(fresh);
+        migratedExisting.keySet().retainAll(legacy.keySet());
+        assertEquals(migratedExisting,overrides);
+        assertTrue(fresh.containsKey("vk-factor.prompt"));
         overrides.put("guide.pages","Собственный путеводитель администратора");
         Messages.migrateStockOverrides(fresh,overrides,legacy);
         assertEquals("Собственный путеводитель администратора",overrides.get("guide.pages"));
@@ -119,7 +123,7 @@ class AddonRetirement271Test {
         assertNull(BankCharge.permission("lottery"));
     }
     @Test void sharedCoreBukkitAndBankContractsStillExist() {
-        assertEquals(33,ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
+        assertEquals(34,ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
         assertTrue(org.bukkit.event.Event.class.isAssignableFrom(ru.cherdakmd.chrdkregister.api.events.PassGrantedEvent.class));
         assertNotNull(ru.cherdakmd.chrdkregister.api.ChargeRecovery.class);
         assertNotNull(ru.cherdakmd.chrdkregister.api.MilestoneAwards.class);

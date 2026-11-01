@@ -62,7 +62,11 @@ public record VkConfig(
         boolean wallIgnoreReposts,
         int wallPreviewLength,
         boolean allowRemoteLogout,
-        boolean allowRemoteFreeze
+        boolean allowRemoteFreeze,
+        boolean onboardingEnabled,
+        int onboardingIntervalSeconds,
+        long onboardingPeerId,
+        String onboardingInviteUrl
 ) {
 
     public static final String DEFAULT_COMMUNITY_URL = "https://vk.ru/chrdk_reborn";
@@ -162,7 +166,11 @@ public record VkConfig(
                 groupChatBatchWindowMs, groupChatRelayJoinQuit, groupChatVkCooldownSeconds,
                 groupChatMaxLength, groupChatMcBadge, groupChatVkFormat,
                 announceWallPosts, wallPollMinutes, wallIgnorePinned, wallIgnoreAds, wallIgnoreReposts,
-                wallPreviewLength, allowRemoteLogout, allowRemoteFreeze
+                wallPreviewLength, allowRemoteLogout, allowRemoteFreeze,
+                cfg.getBoolean("onboarding.enabled", true),
+                Math.clamp(cfg.getInt("onboarding.interval-seconds", 180), 60, 3600),
+                cfg.getLong("onboarding.peer-id", 0) >= MIN_CONVERSATION_PEER_ID ? cfg.getLong("onboarding.peer-id") : 0,
+                sanitizeHttpsUrl(cfg.getString("onboarding.chat-invite-url", ""), "")
         );
     }
 

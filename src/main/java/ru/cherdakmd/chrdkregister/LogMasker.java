@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 public final class LogMasker {
     private static final String FILTER_NAME = "CHRDK-auth-mask";
     private static final Pattern AUTH_COMMAND = Pattern.compile(
-            "(?i)(issued server command:\\s*|command:\\s*)?/(login|register|reg|changepassword|changepass|cp|2fa|totp|twofactor)\\b(.*)");
+            "(?iu)(issued server command:\\s*|command:\\s*)?/((?:[a-z0-9_]+:)?(?:login|register|reg|changepassword|changepass|cp|2fa|totp|twofactor|vk|vkontakte|вк))(?=\\s|$)(.*)");
 
     private final Logger logger;
     private Object rootLogger;

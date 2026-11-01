@@ -32,7 +32,7 @@ import java.util.UUID;
 public interface ChrdkRegisterApi {
 
     /** Версия контракта API. API 33: мосты внешних интеграций (слушатели безопасности, уведомлений и глобального чата с фильтром получателей, бонус длительности покупок, заморозка входа и сброс сессий без смены пароля); API 32: общий владелец непрерывных пассивных зелий PassivePotions; API 30: общий helper одноразового согласия с котировкой; API 29: точный остаток выручки магазина; API 28: индекс членства кланов; API 27: снят источник оформления удалённого аддона; API 26: сняты контракты удалённых аддонов; API 25: durable checkpoint игровых наград; API 24 — Claims domain settlement. */
-    int API_VERSION = 33;
+    int API_VERSION = 34;
 
     /** Версия основного плагина, например {@code "1.4.6"}. */
     String pluginVersion();
@@ -392,6 +392,16 @@ public interface ChrdkRegisterApi {
      *
      * <p>Передаётся только маскированный IP; пароли и секреты 2FA наружу не выдаются.</p>
      */
+    /** API34: доставка кода только в ЛС закреплённому профилю, ACK не означает проверку кода. */
+    interface VkCodeDelivery {
+        void sendVkCode(long vkUserId, String playerName, String code, String purpose, java.util.function.Consumer<Boolean> ack);
+    }
+    default void registerVkCodeDelivery(VkCodeDelivery delivery) { }
+    default void unregisterVkCodeDelivery(VkCodeDelivery delivery) { }
+    default boolean vkTwoFactorEnabled(String playerName) { return false; }
+    default boolean requestVkTwoFactor(org.bukkit.entity.Player player, long vkUserId, boolean enable) { return false; }
+    default boolean confirmVkTwoFactor(org.bukkit.entity.Player player, long vkUserId, String code) { return false; }
+
     interface SecurityListener {
         /** Успешное завершение входа ({@code password}, {@code session}, {@code 2fa-enrolled} и т.п.). */
         default void onLoginSuccess(String playerName, String maskedIp, String method) {
