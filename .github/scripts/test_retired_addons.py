@@ -27,7 +27,7 @@ class RetiredAddonsGuardTest(unittest.TestCase):
                     self.assertTrue(check(self.root))
 
     def test_plugin_namespace_artifact_and_deleted_api_are_rejected(self):
-        for symbol in ("CHRDK_Bosses", "CHRDK_Treasures", "ru.cherdakmd.chrdktreasures",
+        for symbol in ("chrdkref.use", "chrdkref.admin", "chrdkref.*", "CHRDK_Bosses", "CHRDK_Treasures", "ru.cherdakmd.chrdktreasures",
                        "chrdk-bosses-1.4.238.jar", "ChrdkTreasureBookInfo", "CHRDK_Streams",
                        "chrdk-streams-1.4.240.jar", "ru.cherdakmd.chrdkstreams", "CHRDK_Events", "chrdk-events-1.4.241.jar",
                        "ru.cherdakmd.chrdkevents", "CHRDK_Queue", "chrdk-queue-1.4.247.jar", "ru.cherdakmd.chrdkqueue", "CHRDK_Lottery", "CHRDK_Party", "CHRDK_Referrals",

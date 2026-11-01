@@ -7,6 +7,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 ALIASES = r"boss|bosses|bossy|bosss|bossadmin|bossesadmin|treasures|treasuresadmin|stream|streams|strimer|events|event|sobytiya|eventsadmin|queue|qjoin|ochered|lottery|lot|loto|lotteryadmin|lotadmin|party|pt|group|gruppa|pc|pchat|partychat|partyadmin|ref|referral|invite|refadmin|referraladmin"
 PATTERNS = (
+    re.compile(r"(?i)\bchrdkref\.[a-z*][a-z0-9_.*-]*"),
     re.compile(r"(?iu)вход\s+без\s+очереди|queue\.(?:regular-limit|rank-priority)"),
     re.compile(r"(?i)chrdk[_-]?(?:bosses|treasures|streams|events|queue|lottery|party|referrals)|ChrdkTreasureBookInfo"),
     re.compile(r"(?i)/(?:[a-z0-9_.-]+:)?(?:" + ALIASES + r")(?![a-z0-9_/-])"),
