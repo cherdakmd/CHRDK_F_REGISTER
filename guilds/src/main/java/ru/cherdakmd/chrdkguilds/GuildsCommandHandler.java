@@ -332,6 +332,9 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
         GuildResult result = plugin.service().transfer(player.getUniqueId(), targetId);
         plugin.messages().send(sender, result.key(), result.array());
         if (result.ok()) {
+            plugin.peace().deliverNotices(player.getUniqueId());
+            Guild current=plugin.service().guildOf(targetId);
+            if(current!=null)for(UUID id:current.memberIds())plugin.peace().deliverNotices(id);
             plugin.requestSave();
             Player target = Bukkit.getPlayer(targetId);
             if (plugin.visible(target)) {
@@ -354,7 +357,10 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
                     "returns", guild == null ? "0" : GuildMath.diamonds(Math.addExact(guild.warReturns(),guild.duesReserve())));
             return;
         }
+        Guild beforeDisband=plugin.service().guildOf(player.getUniqueId());
+        List<UUID> notified=beforeDisband==null?List.of():beforeDisband.memberIds();
         GuildResult result = plugin.service().disband(player.getUniqueId());
+        if(result.ok())for(UUID id:notified)plugin.peace().deliverNotices(id);
         if (!result.ok()) {
             plugin.messages().send(sender, result.key(), result.array());
             return;
@@ -732,7 +738,10 @@ final class GuildsCommandHandler implements CommandExecutor, TabCompleter {
                     plugin.messages().send(sender, "admin-usage");
                     return true;
                 }
+                Guild before=plugin.service().find(args[1]);
+                List<UUID> notified=before==null?List.of():before.memberIds();
                 GuildResult result = plugin.service().forceDisband(args[1]);
+                if(result.ok())for(UUID id:notified)plugin.peace().deliverNotices(id);
                 if (!result.ok()) {
                     plugin.messages().send(sender, result.key(), result.array());
                     return true;
