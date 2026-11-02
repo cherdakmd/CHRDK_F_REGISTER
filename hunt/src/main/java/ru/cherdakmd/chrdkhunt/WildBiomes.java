@@ -83,6 +83,7 @@ final class WildBiomes implements Listener {
         if (v == null) return;
         int nearby = 0;
         for (var s : states.values()) { var other = s.mob.get(); if (other != null && other.isValid() && other.getWorld().equals(mob.getWorld()) && other.getLocation().distanceSquared(mob.getLocation()) < 64 * 64) nearby++; }
+        for (var ref : pending.values()) { var other = ref.get(); if (other != null && other.isValid() && other.getWorld().equals(mob.getWorld()) && other.getLocation().distanceSquared(mob.getLocation()) < 64 * 64) nearby++; }
         if (nearby >= 2) return;
         // В vanilla болото не порождает утопленника напрямую. Заменяем ОДНОГО уже подтверждённого
         // природного зомби, а не добавляем ещё одного моба и не принимаем DROWNED-конверсионные фермы.
@@ -99,7 +100,7 @@ final class WildBiomes implements Listener {
         pending.remove(original.getUniqueId()); original.getPersistentDataContainer().remove(pendingKey);
         if (source.isCancelled() || !enabled || stopped || !original.isValid() || original.isDead()
                 || states.size() >= cap || !WildSafety.healthyTick(40) || !safety.clear(original.getLocation(), protection)) return;
-        Drowned replacement = original.getWorld().spawn(original.getLocation(), Drowned.class, CreatureSpawnEvent.SpawnReason.NATURAL, mob -> {
+        Drowned replacement = original.getWorld().spawn(original.getLocation(), Drowned.class, CreatureSpawnEvent.SpawnReason.NATURAL, false, mob -> {
             mob.getPersistentDataContainer().set(variantKey, PersistentDataType.STRING, WildVariant.BOG.id);
             mob.setCanPickupItems(false);
             if (mob.getEquipment() != null) mob.getEquipment().clear();
@@ -217,6 +218,23 @@ final class WildBiomes implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void teleport(EntityTeleportEvent e) {
         if (enabled && plugin.config().enabled() && kind(e.getEntity()) != null && !safety.clear(e.getTo(), protection)) e.setCancelled(true);
+    }
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void grief(EntityChangeBlockEvent e) { if (kind(e.getEntity()) != null) e.setCancelled(true); }
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void transform(EntityTransformEvent e) {
+        WildVariant v = kind(e.getEntity());
+        if (v == null) return;
+        var name = e.getEntity().customName();
+        replacements.submit(e.getEntity().getUniqueId(), "transform", () -> {
+            if (e.isCancelled()) return;
+            states.remove(e.getEntity().getUniqueId());
+            for (Entity replacement : e.getTransformedEntities()) if (replacement.getType() != v.type && replacement.isValid()) {
+                replacement.getPersistentDataContainer().remove(variantKey);
+                replacement.getPersistentDataContainer().remove(pendingKey);
+                if (Objects.equals(name, plugin.messages().get("wild-name-" + v.id)) && Objects.equals(replacement.customName(), name)) replacement.customName(null);
+            }
+        });
     }
     @EventHandler public void load(EntitiesLoadEvent e) { for (Entity entity : e.getEntities()) loaded(entity); }
     @EventHandler public void unload(EntitiesUnloadEvent e) { for (Entity entity : e.getEntities()) states.remove(entity.getUniqueId()); }

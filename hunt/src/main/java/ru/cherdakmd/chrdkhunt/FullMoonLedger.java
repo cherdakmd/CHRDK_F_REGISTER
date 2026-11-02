@@ -41,10 +41,10 @@ final class FullMoonLedger {
     boolean healthy() { return healthy; }
     Night get(UUID world) { return rows.get(world); }
     synchronized boolean put(UUID world, Night night) {
-        if (!healthy) return false;
+        if (!healthy || world == null || night == null) return false;
         if (rows.size() >= 128 && !rows.containsKey(world)) { healthy = false; return false; }
         Night prior = rows.get(world);
-        if (night.day() < 0 || night.started() < 0 || night.token() == null || world == null
+        if (night.day() < 0 || night.started() < 0 || night.token() == null
                 || prior != null && (night.day() < prior.day() || night.day() == prior.day()
                 && (!night.token().equals(prior.token()) || night.selected() != prior.selected()
                 || prior.finished() && !night.finished() || prior.started() > 0 && night.started() != prior.started()))) return false;

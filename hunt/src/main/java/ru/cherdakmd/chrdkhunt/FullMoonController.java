@@ -34,6 +34,7 @@ final class FullMoonController implements Listener {
     private final BukkitTask clock;
     private FullMoonRules.Settings settings;
     private int cursor, pulse, overloaded;
+    private long overloadSince;
     private volatile boolean stopped;
 
     FullMoonController(HuntPlugin plugin, WildSafety safety) {
@@ -130,7 +131,10 @@ final class FullMoonController implements Listener {
         if (++pulse % 10 != 0) return;
         long now = System.currentTimeMillis();
         if (!settings.enabled() || !plugin.config().enabled() || failed || !ledger.healthy() || !safety.available()) endAll("moon-stopped");
-        if (!WildSafety.healthyTick(65)) overloaded++; else overloaded = 0;
+        if (!WildSafety.healthyTick(65)) {
+            if (overloadSince == 0 || now < overloadSince) overloadSince = now;
+            overloaded = now - overloadSince >= 15_000 ? 30 : 1;
+        } else { overloaded = 0; overloadSince = 0; }
         if (overloaded >= 30) endAll("moon-overload");
         if (settings.enabled() && plugin.config().enabled() && !failed && ledger.healthy() && safety.available()) {
             for (World w : Bukkit.getWorlds()) updateNight(w, now);
@@ -157,6 +161,7 @@ final class FullMoonController implements Listener {
             if (prior.day() == day && prior.selected() && !prior.finished() && FullMoonRules.blocksSleep(phase)
                     && !FullMoonRules.expired(prior.started(), now, settings.maxSeconds())) {
                 nights.put(id, prior);
+                if (prior.started() == 0 && FullMoonRules.warning(phase)) tell(w, "moon-warning");
                 if (prior.started() == 0 && FullMoonRules.night(phase)) start(w, prior, now);
             }
             return;
@@ -216,9 +221,14 @@ final class FullMoonController implements Listener {
             Location spot = position(p, probes);
             if (spot == null) continue;
             // Consumer ставит метку до CreatureSpawnEvent: чужие награды/прогрессия сразу видят временного моба.
-            Zombie z = p.getWorld().spawn(spot, Zombie.class, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.CUSTOM, mob -> {
+            Zombie z = p.getWorld().spawn(spot, Zombie.class, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.CUSTOM, false, mob -> {
                 mob.getPersistentDataContainer().set(MobRewardPolicy.TEMPORARY, PersistentDataType.STRING, night.token().toString());
                 mob.getPersistentDataContainer().set(ownerKey, PersistentDataType.STRING, p.getUniqueId().toString());
+                var reinforcements = mob.getAttribute(org.bukkit.attribute.Attribute.SPAWN_REINFORCEMENTS);
+                if (reinforcements != null) {
+                    for (var modifier : reinforcements.getModifiers()) reinforcements.removeModifier(modifier);
+                    reinforcements.setBaseValue(0);
+                }
                 mob.setPersistent(false); mob.setRemoveWhenFarAway(true); mob.setCanPickupItems(false); mob.setCanBreakDoors(false); mob.setBaby(false);
                 if (mob.getEquipment() != null) mob.getEquipment().clear();
                 mob.customName(plugin.messages().get("moon-zombie")); mob.setCustomNameVisible(false);
@@ -266,7 +276,10 @@ final class FullMoonController implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void move(PlayerMoveEvent e) {
         if (!e.hasChangedPosition() || e.getTo() == null || !e.getFrom().getWorld().equals(e.getTo().getWorld())) return;
-        if (e.getFrom().distanceSquared(e.getTo()) >= .0025 && safety.player(e.getPlayer())) activity.put(e.getPlayer().getUniqueId(), System.currentTimeMillis());
+        if (e.getFrom().distanceSquared(e.getTo()) >= .0025 && safety.player(e.getPlayer())) {
+            Long prior = activity.put(e.getPlayer().getUniqueId(), System.currentTimeMillis());
+            if (prior == null && running(e.getPlayer().getWorld())) plugin.messages().send(e.getPlayer(), "moon-joined");
+        }
     }
     @EventHandler public void quit(PlayerQuitEvent e) { activity.remove(e.getPlayer().getUniqueId()); }
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -305,7 +318,10 @@ final class FullMoonController implements Listener {
         // Временные мобы не должны сохраняться вообще. Старые аварийные остатки не возвращаем в бой.
         for (Entity entity : e.getEntities()) if (MobRewardPolicy.temporary(entity)) { mobs.remove(entity.getUniqueId()); entity.remove(); }
     }
-    @EventHandler public void worldUnload(WorldUnloadEvent e) { finish(e.getWorld(), "moon-ended"); }
+    @EventHandler public void changedWorld(PlayerChangedWorldEvent e) {
+        if (safety.player(e.getPlayer()) && running(e.getPlayer().getWorld())) plugin.messages().send(e.getPlayer(), "moon-joined");
+    }
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true) public void worldUnload(WorldUnloadEvent e) { finish(e.getWorld(), "moon-ended"); }
     String status(World world) {
         return failed || !ledger.healthy() ? "error" : !settings.enabled() || !plugin.config().enabled() ? "disabled"
                 : running(world) ? (nights.get(world.getUID()).started() == 0 ? "warning" : "active") : "quiet";
