@@ -50,6 +50,11 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
     private BattlePassMenu menu;
     private BattlePassGuide guide;
     BattlePassGuide guide(){return guide;}
+    private ru.cherdakmd.chrdkregister.api.exploration.ExplorationStore explorationStore;
+    private ru.cherdakmd.chrdkregister.api.exploration.ExplorationAtlas atlas;
+    private BattlePassExpeditions expeditions;
+    ru.cherdakmd.chrdkregister.api.exploration.ExplorationAtlas atlas() { return atlas; }
+    BattlePassExpeditions expeditions() { return expeditions; }
     private BattlePassFx fx;
     private volatile BattlePassRecentPlaces recentPlaces;
     private volatile List<String> problems = List.of();
@@ -57,7 +62,7 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
     private BukkitTask announceTask;
 
     private boolean supportsRewardReceipts() {
-        try { return ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)>=36; }
+        try { return ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)>=38; }
         catch(ReflectiveOperationException e){return false;}
     }
     boolean canUse(Player player) {
@@ -71,7 +76,7 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
         store.load();
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
         if(coreApi==null || !supportsRewardReceipts()) {
-            getLogger().severe("Нужен Core API36 (1.4.281-rc.1+): безопасная выдача наград battlepass");
+            getLogger().severe("Нужен Core API38 (1.4.281-rc.3+): безопасная выдача наград battlepass");
             Bukkit.getPluginManager().disablePlugin(this);return;
         }
         reloadBattlePassConfig();
@@ -81,6 +86,13 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
         this.fx = new BattlePassFx(this);
         this.guide = new BattlePassGuide(this);
         Bukkit.getPluginManager().registerEvents(guide,this);
+        explorationStore = new ru.cherdakmd.chrdkregister.api.exploration.ExplorationStore(getDataFolder().toPath().resolve("exploration.json"), getLogger());
+        explorationStore.load();
+        atlas = new ru.cherdakmd.chrdkregister.api.exploration.ExplorationAtlas(this, explorationStore, this::messages,
+                () -> "season:" + season().startEpochMillis(), this::canUse,
+                () -> season() != null && !season().empty() && System.currentTimeMillis() >= season().startEpochMillis()
+                        && !season().ended(System.currentTimeMillis()), p -> guide.home(p));
+        expeditions = new BattlePassExpeditions(this, explorationStore);
 
         Bukkit.getPluginManager().registerEvents(this, this);
         Bukkit.getPluginManager().registerEvents(menu, this);
@@ -112,6 +124,8 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        if (atlas != null) atlas.close();
+        if (expeditions != null) expeditions.close();
         if(guide!=null)guide.closeAll();
         if(menu!=null)menu.closeAll();
         if (coreApi != null) {
@@ -137,6 +151,8 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
 
     /** Перечитать config.yml и messages.yml, не перезапуская сервер. */
     public void reloadBattlePassConfig() {
+        if (atlas != null) atlas.closeWindows();
+        if (expeditions != null) expeditions.closeWindows();
         if(guide!=null)guide.closeAll();
         if(menu!=null)menu.closeAll();
         reloadConfig();
@@ -250,6 +266,7 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEntityDeath(EntityDeathEvent event) {
+        if (ru.cherdakmd.chrdkregister.api.MobRewardPolicy.temporary(event.getEntity())) return;
         Player killer = event.getEntity().getKiller();
         if (killer == null) {
             return;

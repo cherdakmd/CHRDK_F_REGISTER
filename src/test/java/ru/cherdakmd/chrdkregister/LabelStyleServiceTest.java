@@ -241,8 +241,8 @@ class LabelStyleServiceTest {
         List<LabelPreferences.Label> order = styles.order("Steve");
         assertEquals(arranged, order, "сохранённый порядок не переставляется");
         assertEquals(R, order.get(1), "ранг остался там, куда его поставил игрок");
-        assertEquals(LabelPreferences.Label.nameTags().size(), order.size(),
-                "недостающие метки не потерялись");
+        assertEquals(styles.defaultOrder().size(), order.size(),
+                "старый порядок сохраняется; новый источник BP доступен для выбора, но не занимает пустое место автоматически");
     }
 
     @Test

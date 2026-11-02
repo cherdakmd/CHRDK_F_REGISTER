@@ -74,6 +74,8 @@ public final class HuntStore {
         private final Map<String, Integer> purchases = new LinkedHashMap<>();
         private final Set<String> trophies = new LinkedHashSet<>();
         private final Map<String, Long> bestiary = new LinkedHashMap<>();
+        private final Set<String> wildSeen = new LinkedHashSet<>();
+        private final Map<String, Long> wildKills = new LinkedHashMap<>();
         private final Set<String> bestiaryAwards = new LinkedHashSet<>();
 
         private PlayerData(String name) {
@@ -251,6 +253,10 @@ public final class HuntStore {
                     readCounters(row.get("kills"), player.kills, Long.MAX_VALUE);
                     readCounters(row.get("bestiary"), player.bestiary, Long.MAX_VALUE);
                     readIds(row.get("bestiary-awards"), player.bestiaryAwards);
+                    readIds(row.get("wild-seen"), player.wildSeen);
+                    readCounters(row.get("wild-kills"), player.wildKills, Long.MAX_VALUE);
+                    player.wildSeen.removeIf(key -> WildVariant.byId(key) == null);
+                    player.wildKills.keySet().removeIf(key -> WildVariant.byId(key) == null);
                     if (row.get("purchases") instanceof Map<?, ?> purchases) {
                         for (Map.Entry<?, ?> purchase : purchases.entrySet()) {
                             String key = string(purchase.getKey()).trim().toLowerCase(java.util.Locale.ROOT);
@@ -384,6 +390,21 @@ public final class HuntStore {
         if (elite > 0) changed |= data.observedElites.add(elite);
         dirty |= changed;
         return changed;
+    }
+    /** Коллекционные записи, не финансовые награды и не новые условия старого бестиария. */
+    public synchronized boolean wild(UUID id, String name, String variant, boolean kill) {
+        if (!healthy || id == null || WildVariant.byId(variant) == null) return false;
+        PlayerData data = ensure(id, name);
+        boolean changed = data.wildSeen.add(variant);
+        if (kill) { data.wildKills.put(variant, saturatingAdd(data.wildKills.getOrDefault(variant, 0L), 1)); changed = true; }
+        dirty |= changed;
+        return changed;
+    }
+    public synchronized boolean wildSeen(UUID id, String variant) {
+        PlayerData data = player(id); return data != null && data.wildSeen.contains(variant);
+    }
+    public synchronized long wildKills(UUID id, String variant) {
+        PlayerData data = player(id); return data == null ? 0 : data.wildKills.getOrDefault(variant, 0L);
     }
     public synchronized Set<Integer> observedLevels(UUID id) {
         PlayerData data = player(id); return data == null ? Set.of() : Set.copyOf(data.observedLevels);
@@ -933,6 +954,8 @@ public final class HuntStore {
             row.put("trophies", new ArrayList<>(player.trophies));
             row.put("bestiary", new LinkedHashMap<>(player.bestiary));
             row.put("bestiary-awards", new ArrayList<>(player.bestiaryAwards));
+            row.put("wild-seen", new ArrayList<>(player.wildSeen));
+            row.put("wild-kills", new LinkedHashMap<>(player.wildKills));
             rows.put(entry.getKey().toString(), row);
         }
         data.put("players", rows);

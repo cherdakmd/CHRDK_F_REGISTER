@@ -29,7 +29,7 @@ final class BattlePassCommandHandler implements CommandExecutor, TabCompleter {
     private static final DateTimeFormatter SHORT_DATE = DateTimeFormatter.ofPattern("dd.MM")
             .withZone(ZoneId.systemDefault());
     private static final List<String> SUBCOMMANDS =
-            List.of("tasks", "rewards", "claim", "menu", "progress", "top", "info", "help");
+            List.of("biomes", "expedition", "tasks", "rewards", "claim", "menu", "progress", "top", "info", "help");
 
     private final BattlePassPlugin plugin;
 
@@ -58,6 +58,11 @@ final class BattlePassCommandHandler implements CommandExecutor, TabCompleter {
             return true;
         }
         switch (args[0].toLowerCase(Locale.ROOT)) {
+            case "biomes", "atlas" -> {
+                if (args.length == 2 && args[1].equalsIgnoreCase("study")) plugin.atlas().study(player);
+                else plugin.atlas().open(player, 0);
+            }
+            case "expedition" -> plugin.expeditions().command(player, args);
             case "tasks" -> plugin.menu().missions(player,0);
             case "rewards" -> plugin.guide().rewards(player,0);
             case "claim" -> {
@@ -313,6 +318,10 @@ final class BattlePassCommandHandler implements CommandExecutor, TabCompleter {
                                                 @NotNull Command command,
                                                 @NotNull String alias, @NotNull String[] args) {
         BattlePassConfig.Season season = plugin.season();
+        if (args.length >= 2 && sender instanceof Player p && plugin.canUse(p)) {
+            if (args[0].equalsIgnoreCase("expedition")) return plugin.expeditions().completions(p,args);
+            if (args.length == 2 && args[0].equalsIgnoreCase("biomes")) return "study".startsWith(args[1].toLowerCase(Locale.ROOT)) ? List.of("study") : List.of();
+        }
         if (args.length == 1) {
             String prefix = args[0].toLowerCase(Locale.ROOT);
             List<String> matches = new ArrayList<>();

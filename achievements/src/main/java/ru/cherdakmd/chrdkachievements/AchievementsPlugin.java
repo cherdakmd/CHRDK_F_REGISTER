@@ -28,6 +28,9 @@ public final class AchievementsPlugin extends JavaPlugin {
     private AchievementService service;
     private AchievementListener listener;
     private AchievementGui gui;
+    private ru.cherdakmd.chrdkregister.api.exploration.ExplorationStore explorationStore;
+    private ru.cherdakmd.chrdkregister.api.exploration.ExplorationAtlas atlas;
+    ru.cherdakmd.chrdkregister.api.exploration.ExplorationAtlas atlas() { return atlas; }
     private BukkitTask saveTask;
     private BukkitTask tickTask;
     /** Секунды с включения — по ним считаются время игры и опрос API. */
@@ -42,7 +45,7 @@ public final class AchievementsPlugin extends JavaPlugin {
         this.store = new AchievementStore(getDataFolder().toPath(), getLogger());
         reloadAchievementsConfig();
         try {
-            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 20) throw new IllegalStateException("Нужен Core API 20+");
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 38) throw new IllegalStateException("Нужен Core API38 (1.4.281-rc.3+)");
             this.awards = new ru.cherdakmd.chrdkregister.api.MilestoneAwards(this,this::coreApi,this::messages,"achievements-awards",ru.cherdakmd.chrdkregister.api.MilestoneMigration.json(getDataFolder().toPath().resolve("achievements.json"),ru.cherdakmd.chrdkregister.api.MilestoneMigration.Kind.ACHIEVEMENTS));
         } catch (Exception | LinkageError error) {
             getLogger().log(java.util.logging.Level.SEVERE,"Модуль остановлен без сброса прогресса/наград",error);
@@ -54,6 +57,11 @@ public final class AchievementsPlugin extends JavaPlugin {
         awards.reconciler(player -> service.check(player));
         this.listener = new AchievementListener(this, service);
         this.gui = new AchievementGui(this, service);
+        explorationStore = new ru.cherdakmd.chrdkregister.api.exploration.ExplorationStore(getDataFolder().toPath().resolve("exploration.json"), getLogger());
+        explorationStore.load();
+        atlas = new ru.cherdakmd.chrdkregister.api.exploration.ExplorationAtlas(this, explorationStore, this::messages,
+                () -> "lifetime", p -> service.enabled() && coreApi() != null && coreApi().isAuthenticated(p)
+                        && p.hasPermission("chrdkachievements.use"), () -> service.enabled(), p -> gui.open(p, null));
         reloadAchievementsConfig();
 
         Bukkit.getPluginManager().registerEvents(listener, this);
@@ -116,6 +124,8 @@ public final class AchievementsPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (atlas != null) atlas.close();
+        if (gui != null) gui.closeAll();
         if (awards != null) awards.close();
         if (coreApi != null) {
             try {
@@ -149,6 +159,8 @@ public final class AchievementsPlugin extends JavaPlugin {
 
     /** Перечитывает config.yml/messages.yml, сохраняя прогресс и бейджи. */
     public void reloadAchievementsConfig() {
+        if (atlas != null) atlas.closeWindows();
+        if (gui != null) gui.closeAll();
         reloadConfig();
         this.messages = Messages.load(this, getConfig().getString("general.locale", "ru"),
                 getLogger());

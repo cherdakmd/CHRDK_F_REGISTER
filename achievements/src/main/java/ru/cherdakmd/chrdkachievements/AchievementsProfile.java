@@ -36,7 +36,7 @@ final class AchievementsProfile implements ChrdkRegisterApi.ProfileProvider {
         }
         String key = context.playerId().toString();
         Set<String> unlocked = plugin.store().unlocked(key);
-        if (unlocked.isEmpty()) {
+        if (unlocked.isEmpty() && (plugin.atlas() == null || plugin.atlas().visited(context.playerId()) == 0)) {
             return null;
         }
         Messages messages = plugin.messages();
@@ -51,6 +51,8 @@ final class AchievementsProfile implements ChrdkRegisterApi.ProfileProvider {
             lines.add(messages.get("profile-badge",
                     "badge", Messages.trusted(messages.raw("badge." + badge))));
         }
+        if (plugin.atlas() != null) lines.add(messages.get("profile-atlas", "visited", plugin.atlas().visited(context.playerId()),
+                "total", plugin.atlas().catalog().size(), "done", plugin.atlas().completed(context.playerId()), "tasks", plugin.atlas().catalog().size() * 5));
         return new ChrdkRegisterApi.ProfileSection(messages.raw("profile-title"),
                 Material.ENCHANTED_BOOK, lines);
     }

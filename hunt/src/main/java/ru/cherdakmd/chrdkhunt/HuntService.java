@@ -57,6 +57,7 @@ public final class HuntService {
      * @return {@code true}, если моб вообще входит в охоту
      */
     public boolean handleDeath(Player killer, LivingEntity dead) {
+        if (ru.cherdakmd.chrdkregister.api.MobRewardPolicy.temporary(dead)) return false;
         if (killer == null || dead == null) {
             return false;
         }

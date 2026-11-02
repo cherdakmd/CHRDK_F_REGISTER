@@ -74,7 +74,9 @@ public final class LabelPreferences {
         /** Метка привязанного сообщества ВКонтакте или подписчика VK Donut. */
         VK("vk", Group.NAME),
         /** Шапка и подвал таб-листа. */
-        HEADER("header", Group.TAB);
+        HEADER("header", Group.TAB),
+        /** Наградные ранги BP. Append only: старые ordinal-биты HEADER не сдвигать. */
+        EXPEDITIONS("bp-expeditions", Group.NAME);
 
         private final String id;
         private final Group group;

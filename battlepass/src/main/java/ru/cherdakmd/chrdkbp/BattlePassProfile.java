@@ -37,7 +37,7 @@ final class BattlePassProfile implements ChrdkRegisterApi.ProfileProvider {
         int completed = BattlePassScore.completed(plugin.season(), progress);
         int claimed = BattlePassScore.claimed(plugin.season(),
                 plugin.store().claimsOf(context.playerId()));
-        if (completed <= 0 && claimed <= 0) {
+        if (completed <= 0 && claimed <= 0 && (plugin.atlas() == null || plugin.atlas().visited(context.playerId()) == 0)) {
             return null;
         }
         List<Component> lines = new ArrayList<>();
@@ -50,6 +50,8 @@ final class BattlePassProfile implements ChrdkRegisterApi.ProfileProvider {
             lines.add(plugin.messages().get("profile-claimed",
                     "claimed", String.valueOf(claimed)));
         }
+        if (plugin.atlas() != null) lines.add(plugin.messages().get("profile-atlas", "visited", plugin.atlas().visited(context.playerId()),
+                "total", plugin.atlas().catalog().size(), "done", plugin.atlas().completed(context.playerId()), "tasks", plugin.atlas().catalog().size() * 5));
         return new ChrdkRegisterApi.ProfileSection(plugin.messages().raw("profile-title"),
                 Material.NETHER_STAR, lines);
     }

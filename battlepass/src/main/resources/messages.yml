@@ -212,3 +212,89 @@ battlepass:
   "guide-fair-lore": ["<gray>Проверьте дату открытия и список целей.</gray>", "<gray>Мир и права могут ограничивать задание.</gray>", "<gray>Креатив по умолчанию не засчитывается.</gray>", "<gray>Свои недавно поставленные блоки не добыча.</gray>", "<gray>Плавка — выемка результата из печи.</gray>", "<gray>Рыбалка — пойманный улов, не взмах удочки.</gray>", "<gray>После конца сезона прогресс заморожен.</gray>", "<gray>Готовые призы остаются доступны.</gray>"]
   "menu-filter-empty": "<gray>Заданий в этом фильтре пока нет</gray>"
   "guide-track-claim-lore": ["<gray>Статус: %state%</gray>", "<gray>Приз: %hours% ч. отдельного +10% XP-буста.</gray>", "<yellow>Нажмите: забрать только эту дорожку.</yellow>", "<gray>Можно выбрать крупный приз первым.</gray>"]
+
+  # Биомный атлас и наградные ранги — 1.4.281-rc.2
+  "atlas-title-lifetime": "<dark_gray>Биомные достижения · навсегда</dark_gray>"
+  "atlas-title-season": "<dark_gray>Биомы · дополнительные задания BP</dark_gray>"
+  "atlas-entry-lore": ["<gray>Посещение и ещё пять заданий в каждом биоме.</gray>", "<gray>Все ванильные биомы трёх измерений, кроме the_void.</gray>", "<gray>Здесь — сезон; в достижениях — постоянная коллекция.</gray>"]
+  "atlas-discovered": "<aqua>Открыт биом: %biome%</aqua>"
+  "atlas-task-done": "<green>%biome% · выполнено: %task%</green>"
+  "atlas-biome-done": "<green>Биом %biome% исследован: все пять заданий выполнены!</green>"
+  "atlas-all-visited": "<gold>Рубеж атласа: посещены все обязательные биомы трёх измерений!</gold>"
+  "atlas-all-done": "<gold>Рубеж атласа: все биомы посещены, в каждом выполнено пять заданий!</gold>"
+  "atlas-survey": "<aqua>Картирование: 8 разных чанков</aqua>"
+  "atlas-path": "<aqua>Экспедиция: пройти или проплыть 600 м</aqua>"
+  "atlas-geology": "<aqua>Геолог: добыть 32 блока местной породы</aqua>"
+  "atlas-breed": "<aqua>Живая природа: 3 успешных разведения</aqua>"
+  "atlas-fish": "<aqua>Водный мир: поймать 5 рыб</aqua>"
+  "atlas-kill": "<aqua>Дозор: победить 5 местных монстров</aqua>"
+  "atlas-study": "<aqua>Наблюдения: изучить 8 разных блоков</aqua>"
+  "atlas-camp": "<aqua>Полевой лагерь: 300 секунд активной игры</aqua>"
+  "atlas-task-lore": ["<gray>Прогресс: %progress%/%target%</gray>", "<gray>Считается действие внутри этого биома.</gray>", "<gray>Одинаковые координаты добычи/наблюдений не повторяются.</gray>", "<gray>Полёт, транспорт и креатив не засчитываются.</gray>", "<gray>Допустимые цели:</gray>"]
+  "atlas-study-help": ["<gray>Наведите прицел на один из указанных блоков (до 5 м).</gray>", "<gray>Нажмите «Изучить» или /bp biomes study.</gray>", "<gray>В достижениях: /ach biomes study.</gray>", "<gray>Изучение не ломает и не изменяет блок.</gray>"]
+  "atlas-study-button": "<aqua>Изучить блок под прицелом</aqua>"
+  "atlas-no-target": "<yellow>Наведите прицел на подходящий для наблюдений блок не дальше 5 м. Цели указаны в задании этого биома.</yellow>"
+  "atlas-observed": "<gray>Наблюдение проверено. Повторный осмотр той же позиции не увеличивает счётчик.</gray>"
+  "atlas-readonly": "<yellow>Сейчас прогресс атласа недоступен: проверьте вход, сезон и режим игры.</yellow>"
+  "atlas-unavailable": "<red>Атлас недоступен. Войдите в аккаунт; при ошибке данных обратитесь к администрации — файл не сбрасывайте.</red>"
+  "atlas-biome-lore": ["<gray>Посещён: %visit%</gray>", "<gray>Дополнительные задания: %done%/5</gray>", "<yellow>Нажмите: условия и конкретные цели.</yellow>"]
+  "atlas-summary": "<gold>Атлас: посещения и исследования</gold>"
+  "atlas-summary-lore": ["<gray>Посещено: %visited%/%total%</gray>", "<gray>Выполнено заданий: %done%/%tasks%</gray>", "<gray>На посещения нельзя получить зачёт задним числом.</gray>", "<gray>Лагерь считает секунды только после движения (не AFK).</gray>", "<gray>Исторические рубежи достижений не повышаются.</gray>"]
+  "atlas-any-block": "<gray>Любой блок (в этом биоме).</gray>"
+  "atlas-yes": "Да"
+  "atlas-no": "Нет"
+  "atlas-back": "<gray>Назад</gray>"
+  "atlas-close": "<gray>Закрыть</gray>"
+  "atlas-prev": "<gray>Предыдущая страница</gray>"
+  "atlas-next": "<gray>Следующая страница</gray>"
+  "profile-atlas": "<gray>Биомы: %visited%/%total% · заданий: %done%/%tasks%</gray>"
+  "exp-title-free": "<aqua>Экспедитор</aqua>"
+  "exp-title-premium": "<gradient:gold:yellow>Покоритель миров</gradient>"
+  "exp-menu": "<dark_gray>Особые ранги BattlePass</dark_gray>"
+  "exp-free-lore": ["<gray>Получен: %owned% · навсегда.</gray>", "<gray>За завершение основной ленты BP.</gray>", "<gray>8 меток, 1 маршрут до 8 точек, компас и журнал.</gray>", "<gray>Переход между точками маршрута — вручную.</gray>", "<gray>Уникальный бирюзовый эффект, без игровой силы.</gray>"]
+  "exp-premium-lore": ["<gray>Получен: %owned% · навсегда.</gray>", "<gray>Основная лента пройдена + премиум действует при выдаче.</gray>", "<gray>24 метки, 5 маршрутов до 24 точек.</gray>", "<gray>Автоматический переход к следующей точке в радиусе 4 м.</gray>", "<gray>Уникальный золотой эффект.</gray>", "<gray>Включает Экспедитора; лимиты не складываются.</gray>"]
+  "exp-condition": ["<gray>Выполните все задания основной ленты.</gray>", "<gray>Биомный атлас — дополнительная ветка, не условие ранга.</gray>", "<gray>Покупка премиума без прохождения ранг не даёт.</gray>", "<gray>Не нужно сначала потратить все часы буста.</gray>", "<gray>Оплаченные ранги I–V и их права не заменяются.</gray>"]
+  "exp-unavailable": "<red>Выдача/запись не подтверждена. Повторите позже; повреждённые данные не удаляйте.</red>"
+  "exp-not-ready": "<yellow>Для особого ранга завершите все задания основной ленты BattlePass. Биомные задания для этого не обязательны.</yellow>"
+  "exp-not-owned": "<yellow>Сначала получите Экспедитора или Покорителя миров за основную ленту BP.</yellow>"
+  "exp-premium-locked": "<yellow>Экспедитор уже получен. Для Покорителя миров нужен действующий премиум при получении финальной награды.</yellow>"
+  "exp-already": "<gray>Оба особых ранга уже получены навсегда.</gray>"
+  "exp-awarded-free": "<aqua>Вы заслужили постоянный ранг «Экспедитор»! Метки, маршруты, журнал: /bp expedition.</aqua>"
+  "exp-awarded-premium": "<gold>Вы заслужили постоянный ранг «Покоритель миров»! Возможности Экспедитора включены. /bp expedition</gold>"
+  "exp-profile-title": "<gold>Наградные ранги BattlePass</gold>"
+  "exp-owned-free": "<aqua>Экспедитор · получен навсегда</aqua>"
+  "exp-owned-premium": "<gold>Покоритель миров · получен навсегда</gold>"
+  "exp-profile-limits": "<gray>Лимиты: %marks% меток, %routes% маршрутов. Без телепортации.</gray>"
+  "exp-journal": "<gold>Личный журнал экспедиций</gold>"
+  "exp-journal-lore": ["<gray>Ваши постоянные метки и маршруты.</gray>", "<yellow>Нажмите: список и команды.</yellow>"]
+  "exp-mark-line": "<aqua>%name%</aqua> <gray>· %world% · %x%, %y%, %z%</gray>"
+  "exp-route-line": "<gold>%name%</gold> <gray>· %marks%</gray>"
+  "exp-world-offline": "мир временно недоступен"
+  "exp-title-button": "<aqua>Сменить оформление ранга</aqua>"
+  "exp-title-lore": ["<gray>По кругу: Экспедитор → Покоритель миров → выкл.</gray>", "<gray>Доступны только заработанные оформления.</gray>", "<gray>Оба полученных ранга остаются в профиле.</gray>"]
+  "exp-effect": "<gold>Личный эффект экспедиции</gold>"
+  "exp-effect-lore": ["<gray>Включён: %state%</gray>", "<gray>Нажмите, чтобы переключить.</gray>", "<gray>Виден только вам; без баффов, без раскрытия невидимости.</gray>"]
+  "exp-claim": "<green>Получить доступные особые ранги</green>"
+  "exp-saved": "<green>Изменение сохранено.</green>"
+  "exp-invalid": "<yellow>Не удалось сохранить: проверьте имя (1–24 буквы/цифры/_/-), лимит и существование точек. Метку в маршруте удалять нельзя; сначала удалите маршрут. При ошибке диска повторите позже.</yellow>"
+  "exp-navigation-started": "<aqua>Навигация включена. Она показывает направление, но не телепортирует. /bp expedition stop</aqua>"
+  "exp-navigation-next": "<aqua>Точка переключена; на последней точке навигация завершена.</aqua>"
+  "exp-navigation-stopped": "<gray>Навигация выключена.</gray>"
+  "exp-other-world": "<yellow>Метка в другом мире. Навигация возобновится после самостоятельного перехода.</yellow>"
+  "exp-arrived": "<green>Вы у последней точки маршрута.</green>"
+  "exp-manual-next": "<aqua>Точка достигнута · следующая: /bp expedition next</aqua>"
+  "exp-direction": "<aqua>%arrow% %name%</aqua> <gray>· %distance% м · Y%height%</gray>"
+  "exp-help": ["<aqua>/bp expedition mark \\<имя></aqua> <gray>— сохранить текущую точку.</gray>", "<aqua>/bp expedition unmark \\<имя></aqua> <gray>— удалить точку вне маршрутов.</gray>", "<aqua>/bp expedition go \\<имя></aqua> <gray>— направление к метке.</gray>", "<aqua>/bp expedition route \\<маршрут> \\<метка1> \\<метка2> …</aqua>", "<aqua>/bp expedition follow \\<маршрут></aqua> <gray>— пройти маршрут.</gray>", "<aqua>/bp expedition next|stop|list</aqua>", "<aqua>/bp expedition unroute \\<маршрут></aqua>", "<aqua>/bp expedition title free|premium|off</aqua>", "<aqua>/bp expedition effect</aqua> <gray>— переключить личный эффект.</gray>"]
+  "exp-labels": "<aqua>Разместить ранг в чате и TAB</aqua>"
+  "exp-labels-lore": ["<gray>Открыть /labels и выбрать источник «Ранг BattlePass».</gray>", "<gray>Нужно назначить доступное место; чужие метки не заменяем.</gray>", "<gray>Число мест не увеличивается от наградного ранга.</gray>"]
+  "exp-mark-current": "<aqua>Запомнить текущее место</aqua>"
+  "exp-mark-current-lore": ["<gray>Сохранить новую метку одним нажатием.</gray>", "<gray>Имя точка1, точка2…; старые метки не заменяются.</gray>"]
+  "exp-marks": "<aqua>Мои метки · выбрать направление</aqua>"
+  "exp-marks-lore": ["<gray>Открыть личные метки.</gray>", "<gray>Левая кнопка — идти к метке, правая — удалить.</gray>", "<gray>Метка в маршруте защищена от удаления.</gray>"]
+  "exp-routes": "<gold>Мои маршруты</gold>"
+  "exp-routes-lore": ["<gray>Выбрать маршрут или создать по сохранённым меткам.</gray>", "<gray>Экспедитор переключает точки вручную: /bp expedition next.</gray>", "<gray>Покоритель миров — автоматически в радиусе 4 м.</gray>"]
+  "exp-point-name": "<aqua>%name%</aqua>"
+  "exp-point-lore": ["<gray>%world% · %x%, %y%, %z%</gray>", "<yellow>Левая кнопка: направление (без телепорта).</yellow>", "<gray>Правая: удалить, если точка не входит в маршрут.</gray>"]
+  "exp-saved-route-lore": ["<gray>%marks%</gray>", "<yellow>Левая кнопка: начать навигацию.</yellow>", "<gray>Правая: удалить этот маршрут и остановить навигацию.</gray>"]
+  "exp-route-create": "<green>Новый маршрут по всем меткам</green>"
+  "exp-route-create-lore": ["<gray>В порядке создания меток, без замены старых маршрутов.</gray>", "<gray>Другая последовательность: /bp expedition route имя метка1 метка2…</gray>"]

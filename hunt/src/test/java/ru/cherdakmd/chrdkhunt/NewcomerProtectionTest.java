@@ -68,7 +68,7 @@ class NewcomerProtectionTest {
         assertTrue(method.contains("mob.hasLineOfSight(player)"));
         assertTrue(method.contains("distanceSquared(mob.getLocation())"));
         assertTrue(method.contains("event.isCancelled()"));
-        assertTrue(method.contains("!mob.getPersistentDataContainer().getKeys().isEmpty()"));
+        assertTrue(method.contains("!ru.cherdakmd.chrdkregister.api.MobRewardPolicy.onlyNaturalProvenance(mob)"));
         assertFalse(method.contains("setTarget("));
     }
 }

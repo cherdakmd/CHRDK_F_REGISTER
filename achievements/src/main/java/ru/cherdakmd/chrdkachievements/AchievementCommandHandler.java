@@ -49,6 +49,12 @@ public final class AchievementCommandHandler implements CommandExecutor, TabComp
             plugin.messages().send(sender, "no-permission");
             return true;
         }
+        if (args.length > 0 && (args[0].equalsIgnoreCase("biomes") || args[0].equalsIgnoreCase("atlas"))) {
+            if (!(sender instanceof Player player)) { plugin.messages().send(sender,"player-only"); return true; }
+            if (args.length == 2 && args[1].equalsIgnoreCase("study")) plugin.atlas().study(player);
+            else plugin.atlas().open(player,0);
+            return true;
+        }
         if (args.length == 0 || args[0].equalsIgnoreCase("menu")) {
             if (!(sender instanceof Player player)) {
                 plugin.messages().send(sender, "player-only");
@@ -171,7 +177,7 @@ public final class AchievementCommandHandler implements CommandExecutor, TabComp
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (command.getName().equalsIgnoreCase("achievements")) {
             if (args.length == 1) {
-                return filter(List.of("menu", "list", "badge"), args[0]);
+                return filter(List.of("menu", "biomes", "list", "badge"), args[0]);
             }
             if (args.length == 2 && args[0].equalsIgnoreCase("badge")) {
                 List<String> ids = new ArrayList<>();

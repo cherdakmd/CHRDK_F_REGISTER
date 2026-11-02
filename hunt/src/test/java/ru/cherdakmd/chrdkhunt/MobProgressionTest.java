@@ -74,7 +74,7 @@ class MobProgressionTest {
         String source = Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkhunt/MobProgression.java"));
         assertTrue(source.contains("generation != expected || event.isCancelled()"));
         assertTrue(Files.readString(Path.of("src/main/java/ru/cherdakmd/chrdkhunt/MobTaskQueue.java")).contains("LIMIT = 4096"));
-        assertTrue(source.contains("!mob.getPersistentDataContainer().getKeys().isEmpty()"));
+        assertTrue(source.contains("!ru.cherdakmd.chrdkregister.api.MobRewardPolicy.onlyNaturalProvenance(mob)"));
         assertTrue(source.contains("instance.removeModifier(key)"));
         assertFalse(source.contains(".customName(" + "plugin"));
         assertFalse(source.contains("setCustomName"));

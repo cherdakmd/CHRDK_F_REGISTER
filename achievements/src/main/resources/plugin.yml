@@ -9,7 +9,7 @@ commands:
   achievements:
     description: "Достижения: витрина, список и выбор бейджа"
     aliases: [ach]
-    usage: "/achievements [menu|list|badge <ид|off>]"
+    usage: "/achievements [menu|biomes [study]|list|badge <ид|off>]"
   achadmin:
     description: "Администрирование достижений"
     permission: chrdkachievements.admin

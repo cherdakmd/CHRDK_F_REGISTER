@@ -107,7 +107,7 @@ final class MobProgression implements Listener {
         tasks.submit(event.getEntity().getUniqueId(), "spawn", () -> {
             LivingEntity mob = event.getEntity();
             if (generation != expected || event.isCancelled() || !mob.isValid() || mob.isDead()
-                    || !allowed(mob) || !eligibleMob(mob) || !mob.getPersistentDataContainer().getKeys().isEmpty()) return;
+                    || !allowed(mob) || !eligibleMob(mob) || !ru.cherdakmd.chrdkregister.api.MobRewardPolicy.onlyNaturalProvenance(mob)) return;
             Player nearest = null; double best = 128 * 128;
             boolean nearbyNewcomer = false;
             var group = new SpawnGroup(groupSettings);

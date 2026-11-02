@@ -27,6 +27,7 @@ public final class TierMobDropListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onEntityDeath(EntityDeathEvent event) {
+        if (ru.cherdakmd.chrdkregister.api.MobRewardPolicy.temporary(event.getEntity())) return;
         if (!plugin.config().mobDropEnabled()) return;
         LivingEntity entity = event.getEntity();
         // Стойки и (на всякий случай) игроки не «мертвецы» для этой лотереи (1.4.83).
@@ -38,7 +39,7 @@ public final class TierMobDropListener implements Listener {
         // именной моб остаётся «мини-боссом» как и раньше.
         boolean boss = multiplier > 1.0
                 && (entity instanceof Boss
-                || (entity.getCustomName() != null && !entity.getCustomName().isBlank()));
+                || (!ru.cherdakmd.chrdkregister.api.MobRewardPolicy.wild(entity) && entity.getCustomName() != null && !entity.getCustomName().isBlank()));
         boolean identify = plugin.config().identifyUnidentified();
         for (ItemStack drop : event.getDrops()) {
             if (drop == null) continue;

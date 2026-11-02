@@ -185,7 +185,7 @@ public final class SkillListener implements Listener {
             event.setDamage(event.getDamage() * (1.0 + bonus));
         }
         long units = Math.min(MAX_COMBAT_UNITS, Math.max(1L, (long) Math.ceil(event.getFinalDamage())));
-        service.award(player, SkillType.COMBAT, units);
+        if (!ru.cherdakmd.chrdkregister.api.MobRewardPolicy.temporary(victim)) service.award(player, SkillType.COMBAT, units);
         double lifesteal = perks.value(SkillPerk.Kind.LIFESTEAL);
         if (lifesteal > 0.0) {
             heal(player, event.getFinalDamage() * lifesteal);
@@ -208,7 +208,7 @@ public final class SkillListener implements Listener {
             event.setDamage(event.getDamage() * (1.0 + bonus));
         }
         long units = Math.min(MAX_COMBAT_UNITS, Math.max(1L, (long) Math.ceil(event.getFinalDamage())));
-        service.award(player, SkillType.ARCHERY, units);
+        if (!ru.cherdakmd.chrdkregister.api.MobRewardPolicy.temporary(victim)) service.award(player, SkillType.ARCHERY, units);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -242,7 +242,7 @@ public final class SkillListener implements Listener {
         }
         long units = Math.min(MAX_COMBAT_UNITS,
                 Math.max(1L, (long) Math.ceil(event.getFinalDamage() / 2.0)));
-        service.award(player, SkillType.DEFENSE, units);
+        if (!ru.cherdakmd.chrdkregister.api.MobRewardPolicy.temporary(byEntity.getDamager())) service.award(player, SkillType.DEFENSE, units);
     }
 
     /**

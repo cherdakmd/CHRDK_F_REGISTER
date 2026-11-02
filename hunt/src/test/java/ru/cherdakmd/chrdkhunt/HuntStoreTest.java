@@ -22,6 +22,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class HuntStoreTest {
 
+    @Test
+    void wildJournalAddsNoFinancialRewardsOrOldBestiaryRequirements(@TempDir Path dir) {
+        HuntStore store = new HuntStore(dir, Logger.getAnonymousLogger()); UUID id = UUID.randomUUID();
+        assertTrue(store.wild(id, "Аня", "ash", false)); assertFalse(store.wild(id, "Аня", "ash", false));
+        assertTrue(store.wild(id, "Аня", "ash", true)); assertTrue(store.wild(id, "Аня", "ash", true));
+        assertFalse(store.wild(id, "Аня", "boss", true)); assertFalse(store.wild(null, "Аня", "ash", true));
+        assertTrue(store.wildSeen(id, "ash")); assertEquals(2, store.wildKills(id, "ash"));
+        assertEquals(0, store.coins(id)); assertEquals(0, store.earned(id)); assertEquals(0, store.bestiaryKills(id, "husk"));
+        store.saveNow(); HuntStore copy = new HuntStore(dir, Logger.getAnonymousLogger()); copy.load();
+        assertTrue(copy.wildSeen(id, "ash")); assertEquals(2, copy.wildKills(id, "ash"));
+        assertEquals(0, copy.coins(id)); assertEquals(0, copy.bestiaryAwards(id).size());
+    }
+
     private static final Logger LOGGER = Logger.getLogger("HuntStoreTest");
 
     @Test

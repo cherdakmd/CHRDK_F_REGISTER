@@ -54,6 +54,7 @@ public final class ClassesPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         try {
+            if (ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 38) throw new IllegalStateException("Нужен Core API 38+");
             saveDefaultConfig();
             this.config = ClassConfig.parse(getConfig(), getLogger());
             this.messages = Messages.load(this, config.locale(), getLogger());
@@ -95,7 +96,7 @@ public final class ClassesPlugin extends JavaPlugin {
                     + ", навыки: " + (skillsBridge.available() ? "да" : "нет")
                     + ", достижения: " + (achievementsBridge.available() ? "да" : "нет")
                     + ", ранги: " + (ranksBridge.available() ? "да" : "нет"));
-        } catch (RuntimeException exception) {
+        } catch (ReflectiveOperationException | RuntimeException exception) {
             getLogger().severe("CHRDK_Classes не смог запуститься: " + exception.getMessage());
             exception.printStackTrace();
             getServer().getPluginManager().disablePlugin(this);

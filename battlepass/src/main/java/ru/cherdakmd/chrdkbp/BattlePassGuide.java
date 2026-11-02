@@ -53,6 +53,8 @@ final class BattlePassGuide implements Listener {
         put(h,30,Material.KNOWLEDGE_BOOK,"guide-help","guide-help-lore",this::help);
         put(h,31,Material.ENDER_CHEST,"menu-claim-all","guide-claim-lore",x->{plugin.claims().claimAll(x);home(x);});
         put(h,32,Material.GOLD_INGOT,"menu-premium-name","guide-tracks",x->{x.closeInventory();x.performCommand("pass shop");});
+        put(h,38,Material.FILLED_MAP,"atlas-title-season","atlas-entry-lore",x->plugin.atlas().open(x,0));
+        put(h,42,Material.COMPASS,"exp-menu","exp-condition",x->plugin.expeditions().open(x));
         put(h,40,Material.EXPERIENCE_BOTTLE,"guide-bank","guide-bank-lore",null,
                 "minutes",(plugin.coreApi().rewardBoostRemainingMillis(p.getName())+59_999)/60_000);
         var recommended=season.weeks().stream().filter(w->now>=season.startEpochMillis()+w.unlockDay()*86_400_000L)

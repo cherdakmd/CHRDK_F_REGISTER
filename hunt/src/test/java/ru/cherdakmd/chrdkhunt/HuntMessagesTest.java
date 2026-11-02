@@ -87,6 +87,16 @@ class HuntMessagesTest {
     }
 
     @Test
+    void wildVariantsAndEveryMoonStateHaveTranslatedText() throws Exception {
+        var texts = load();
+        for (var v : WildVariant.values()) for (String prefix : List.of("wild-name-", "wild-habitat-", "wild-counter-")) {
+            assertTrue(texts.isString(prefix + v.id)); assertFalse(texts.getString(prefix + v.id).isBlank());
+        }
+        for (String state : List.of("quiet", "active", "warning", "disabled", "error")) assertTrue(texts.isString("moon-status-" + state));
+        for (String event : List.of("warning", "started", "ended", "stopped", "overload", "bed", "zombie")) assertTrue(texts.isString("moon-" + event));
+    }
+
+    @Test
     void everyKeyUsedByCodeExists() throws Exception {
         ConfigurationSection section = load();
         for (String key : REQUIRED) {

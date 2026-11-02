@@ -37,7 +37,8 @@ import java.util.UUID;
  */
 public final class AchievementGui implements Listener {
 
-    private static final int SLOTS = 45;
+    private static final int SLOTS = 44;
+    private static final int SLOT_ATLAS = 44;
     private static final int SLOT_PATH = 45;
     private static final int SLOT_COMBAT = 46;
     private static final int SLOT_CRAFT = 47;
@@ -89,6 +90,7 @@ public final class AchievementGui implements Listener {
         for (int index = from; index < Math.min(defs.size(), from + PAGE_SIZE); index++) {
             holder.inventory.setItem(index - from, icon(player, defs.get(index)));
         }
+        holder.inventory.setItem(SLOT_ATLAS, button(Material.FILLED_MAP, "atlas-title-lifetime"));
         holder.inventory.setItem(SLOT_PATH, tab(Material.GRASS_BLOCK, "tab-path",
                 category == AchievementDef.Category.PATH));
         holder.inventory.setItem(SLOT_COMBAT, tab(Material.IRON_SWORD, "tab-combat",
@@ -215,6 +217,11 @@ public final class AchievementGui implements Listener {
         };
     }
 
+    void closeAll() {
+        for (Player player : Bukkit.getOnlinePlayers())
+            if (player.getOpenInventory().getTopInventory().getHolder() instanceof Holder) player.closeInventory();
+    }
+
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onClick(InventoryClickEvent event) {
         if (!(event.getView().getTopInventory().getHolder() instanceof Holder holder)) {
@@ -230,6 +237,9 @@ public final class AchievementGui implements Listener {
             return;
         }
         switch (slot) {
+            case SLOT_ATLAS -> Bukkit.getScheduler().runTask(plugin, () -> {
+                if (player.isOnline() && player.getOpenInventory().getTopInventory().getHolder() == holder) plugin.atlas().open(player,0);
+            });
             case SLOT_PATH -> open(player, AchievementDef.Category.PATH);
             case SLOT_COMBAT -> open(player, AchievementDef.Category.COMBAT);
             case SLOT_CRAFT -> open(player, AchievementDef.Category.CRAFT);

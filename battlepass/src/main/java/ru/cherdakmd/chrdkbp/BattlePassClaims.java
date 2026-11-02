@@ -19,7 +19,11 @@ final class BattlePassClaims {
             return "bp:"+HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(identity.getBytes(StandardCharsets.UTF_8)));
         } catch(java.security.NoSuchAlgorithmException e){throw new IllegalStateException(e);}
     }
-    int claimAll(Player player){return claim(player,null,null);}
+    int claimAll(Player player){
+        int result = claim(player,null,null);
+        if (plugin.expeditions() != null) plugin.expeditions().claim(player,false);
+        return result;
+    }
     boolean claimOne(Player player,String id){return claim(player,id,null)>0;}
     boolean claimTrack(Player player,String id,String track) {
         if(track==null||!java.util.Set.of("FREE","VIP","PREMIUM").contains(track))return false;

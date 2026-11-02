@@ -34,12 +34,12 @@ class StreamsRemovalTest {
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_Streams"));
         assertFalse(PluginUpdateService.MODULES.containsKey("CHRDK_VK"));
         assertEquals(22, PluginUpdateService.MODULES.size());
-        assertEquals(36, ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
+        assertEquals(38, ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
         assertNull(LabelPreferences.Label.byId("streams"));
         assertNull(LabelsCommandHandler.singleOf("streams"));
         assertNull(LabelsCommandHandler.singleOf("стример"));
-        assertEquals(7, LabelPreferences.Label.nameTags().size());
-        assertEquals(8, LabelPreferences.Label.values().length);
+        assertEquals(8, LabelPreferences.Label.nameTags().size());
+        assertEquals(9, LabelPreferences.Label.values().length);
         var current = yaml("config.yml");
         var items = current.getMapList("server-menu.items");
         assertEquals(48, items.size());
