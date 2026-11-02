@@ -25,6 +25,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class GuildMessagesTest {
 
     private static final List<String> REQUIRED = List.of(
+            "style-transfer-blocked", "style-gui-other-binding", "style-gui-transfer-blocked",
+            "style-animation-status", "style-animation-inactive",
             "recruit-list-button", "recruit-open-button", "recruit-closed-button", "recruit-toggle-hint", "recruit-list-title", "recruit-list-heading", "recruit-list-page", "recruit-list-hint", "recruit-list-members", "recruit-list-mode", "recruit-invited", "recruit-open-hint", "recruit-closed", "recruit-empty", "recruit-entry", "recruit-back", "recruit-cancel", "recruit-previous", "recruit-next", "recruit-confirm-title", "recruit-fees", "recruit-daily", "recruit-nonpayment", "recruit-leader-risk", "recruit-peace-warmup", "recruit-peace-fine", "recruit-peace-brand", "recruit-peace-head", "recruit-consent-time", "recruit-confirm-button", "recruit-pay-now", "recruit-setting-help", "recruit-same", "recruit-opened", "recruit-closed-ok", "recruit-changed",
             "style-kind-animation", "style-gui-title", "style-gui-boundary", "style-gui-chat", "style-gui-animation", "style-gui-category", "style-gui-preset", "style-gui-selected", "style-gui-apply", "style-gui-off", "style-gui-clear", "style-gui-back", "style-gui-close", "style-gui-offers", "style-gui-offer", "style-gui-offer-detail", "style-gui-approve", "style-gui-previous", "style-gui-next", "style-preset-name-gold", "style-preset-name-aqua", "style-preset-name-green", "style-preset-name-violet", "style-preset-name-white", "style-preset-name-blue", "style-preset-name-aurora", "style-preset-name-sunset", "style-preset-name-forest", "style-preset-name-frost", "style-preset-name-ember", "style-preset-name-pearl", "style-preset-emblem-star", "style-preset-emblem-diamond", "style-preset-emblem-spark", "style-preset-emblem-crown", "style-preset-emblem-sun", "style-preset-emblem-snow", "style-preset-emblem-moon", "style-preset-emblem-comet", "style-preset-frame-gold", "style-preset-frame-amethyst", "style-preset-frame-ocean", "style-preset-frame-forest", "style-preset-frame-ember", "style-preset-frame-frost", "style-preset-animation-aurora", "style-preset-animation-shine", "style-preset-animation-pulse", "style-gui-choice", "style-gui-transfer-warning",
             "style-help", "style-rules", "style-kind-name", "style-kind-emblem", "style-kind-frame", "style-license", "style-not-owned", "style-options", "style-binding", "style-disbanded", "style-license-missing", "style-unavailable", "style-saving", "style-save-failed", "style-saved", "style-transfer-cooldown", "style-offered", "style-approval", "style-no-offer", "style-menu-name", "style-menu-hint", "style-frame-item",
@@ -131,6 +133,9 @@ class GuildMessagesTest {
     void placeholdersMatchTheCode() throws Exception {
         ConfigurationSection section = load();
         Map<String, List<String>> expected = new LinkedHashMap<>();
+        expected.put("style-transfer-blocked", List.of("%clan%", "%until%"));
+        expected.put("style-gui-transfer-blocked", List.of("%until%"));
+        expected.put("style-animation-status", List.of("%effect%"));
         expected.put("style-gui-choice", List.of("%choice%"));
         expected.put("style-gui-preset", List.of("%preset%"));
         expected.put("style-gui-selected", List.of("%personal%", "%active%"));
