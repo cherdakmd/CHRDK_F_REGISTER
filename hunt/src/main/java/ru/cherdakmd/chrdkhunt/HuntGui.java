@@ -21,7 +21,7 @@ import java.util.UUID;
 /**
  * Главное меню охоты и меню ключей (1.4.155).
  *
- * <p>Пять кнопок ведут в лавку, коллекцию трофеев, сундуки и обмен, а карточка
+ * <p>Кнопки ведут в лавку, коллекции, полнолуние, справку, сундуки и обмен, а карточка
  * профиля показывает кошелёк, звание и остаток суточного обмена. Меню только
  * показывает и передаёт нажатие: все правила (цена, лимит, списание) живут в
  * {@link HuntService}, поэтому клик и команда не могут разойтись.</p>
@@ -38,6 +38,10 @@ public final class HuntGui implements Listener {
     private static final int TROPHIES_SLOT = 21;
     private static final int KEYS_SLOT = 23;
     private static final int EXCHANGE_SLOT = 25;
+    static final int WILD_SLOT = 30;
+    static final int MOON_SLOT = 32;
+    static final int GUIDE_SLOT = 40;
+    static final int HUD_SLOT = 42;
     private static final int STATS_SLOT = 45;
     private static final int TOP_SLOT = 49;
     private static final int CLOSE_SLOT = 53;
@@ -88,20 +92,55 @@ public final class HuntGui implements Listener {
         this.plugin = plugin;
     }
 
+    private static final class GuideHolder implements InventoryHolder {
+        final UUID owner;
+        Inventory inventory;
+        GuideHolder(UUID owner) { this.owner = owner; }
+        @Override public Inventory getInventory() { return inventory; }
+    }
+
+    private boolean eligible(Player player) {
+        if (!plugin.config().enabled()) { plugin.messages().send(player, "disabled"); return false; }
+        if (!plugin.finance().eligible(player)) { plugin.messages().send(player, "finance-mode"); return false; }
+        return true;
+    }
+
+    private void openGuide(Player player) {
+        if (!eligible(player)) return;
+        GuideHolder holder = new GuideHolder(player.getUniqueId());
+        holder.inventory = Bukkit.createInventory(holder, 27, plugin.messages().get("menu-guide"));
+        holder.inventory.setItem(4, plugin.items().icon(Material.BOOK, plugin.messages().get("menu-guide"), plugin.messages().getList("menu-guide-lore")));
+        holder.inventory.setItem(11, plugin.items().icon(Material.IRON_SWORD, plugin.messages().get("menu-guide-combat"), plugin.messages().getList("menu-guide-combat-lore")));
+        holder.inventory.setItem(13, plugin.items().icon(Material.MOSS_BLOCK, plugin.messages().get("wild-title"), plugin.messages().getList("wild-info-lore")));
+        holder.inventory.setItem(15, plugin.items().icon(Material.CLOCK, plugin.messages().get("moon-title"), plugin.messages().getList("moon-rules")));
+        holder.inventory.setItem(22, button(Material.ARROW, "menu-main-back", null));
+        holder.inventory.setItem(26, button(Material.BARRIER, "menu-close", null));
+        player.openInventory(holder.inventory);
+    }
+
     /* -------------------------------- открытие -------------------------------- */
 
     public void open(Player player) {
         if (player == null) {
             return;
         }
-        if (!plugin.config().enabled()) {
-            plugin.messages().send(player, "disabled");
-            return;
-        }
+        if (!eligible(player)) return;
         MainHolder holder = new MainHolder(player.getUniqueId());
         holder.inventory = Bukkit.createInventory(holder, MAIN_SIZE,
                 plugin.messages().get("menu-title"));
+        for (int slot = 0; slot < MAIN_SIZE; slot++) {
+            if (slot < 9 || slot >= 45 || slot % 9 == 0 || slot % 9 == 8) holder.inventory.setItem(slot,
+                    plugin.items().icon(Material.GRAY_STAINED_GLASS_PANE, Component.empty(), List.of()));
+        }
         holder.inventory.setItem(INFO_SLOT, infoIcon(player));
+        holder.inventory.setItem(WILD_SLOT, button(Material.MOSS_BLOCK, "wild-title", "menu-wild-lore"));
+        holder.inventory.setItem(MOON_SLOT, plugin.items().icon(Material.CLOCK, plugin.messages().get("moon-title"), List.of(
+                plugin.messages().get("moon-status-" + plugin.fullMoon().status(player.getWorld())),
+                plugin.messages().get("moon-limits", "count", plugin.fullMoon().count()), plugin.messages().get("menu-moon-open"))));
+        holder.inventory.setItem(GUIDE_SLOT, button(Material.BOOK, "menu-guide", "menu-guide-open"));
+        holder.inventory.setItem(HUD_SLOT, plugin.items().icon(Material.SPYGLASS, plugin.messages().get("menu-hud"), List.of(
+                plugin.messages().get("menu-hud-state", "state", plugin.store().mobHud(player.getUniqueId()) ? plugin.messages().mini("mob-on") : plugin.messages().mini("mob-off")),
+                plugin.messages().get("menu-hud-toggle"))));
         holder.inventory.setItem(SHOP_SLOT, button(Material.EMERALD,
                 "menu-shop", "menu-shop-lore"));
         holder.inventory.setItem(BESTIARY_SLOT, plugin.config().bestiary().empty()
@@ -241,7 +280,7 @@ public final class HuntGui implements Listener {
                              Object... placeholders) {
         List<Component> lore = new ArrayList<>();
         if (loreKey != null) {
-            lore.add(plugin.messages().get(loreKey, placeholders));
+            lore.addAll(plugin.messages().getList(loreKey, placeholders));
         }
         return plugin.items().icon(material, plugin.messages().get(nameKey), lore);
     }
@@ -253,28 +292,56 @@ public final class HuntGui implements Listener {
         InventoryHolder top = event.getView().getTopInventory().getHolder();
         boolean main = top instanceof MainHolder;
         boolean keys = top instanceof KeysHolder;
-        if (!main && !keys) {
+        boolean guide = top instanceof GuideHolder;
+        if (!main && !keys && !guide) {
             return;
         }
         event.setCancelled(true);
         if (!(event.getWhoClicked() instanceof Player player)) {
             return;
         }
-        UUID owner = main ? ((MainHolder) top).owner : ((KeysHolder) top).owner;
+        UUID owner = main ? ((MainHolder) top).owner : guide ? ((GuideHolder) top).owner : ((KeysHolder) top).owner;
         if (!owner.equals(player.getUniqueId())) {
             return;
         }
         int slot = event.getRawSlot();
-        if (main) {
-            handleMain(player, slot);
+        if (slot < 0 || slot >= event.getView().getTopInventory().getSize()) return;
+        if (main && !mainAction(slot) || guide && slot != 22 && slot != 26) return;
+        if (main || guide) {
+            // InventoryClickEvent: смена окна только после завершения транзакции инвентаря.
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (!player.isOnline() || player.getOpenInventory().getTopInventory().getHolder() != top) return;
+                if (guide) {
+                    if (slot == 26) player.closeInventory();
+                    else if (slot == 22) open(player);
+                } else handleMain(player, slot);
+            });
         } else {
             handleKeys(player, (KeysHolder) top, slot);
         }
     }
 
+    static boolean mainAction(int slot) {
+        return switch (slot) {
+            case SHOP_SLOT, BESTIARY_SLOT, TROPHIES_SLOT, KEYS_SLOT, EXCHANGE_SLOT,
+                    STATS_SLOT, TOP_SLOT, CLOSE_SLOT, WILD_SLOT, MOON_SLOT, GUIDE_SLOT, HUD_SLOT -> true;
+            default -> false;
+        };
+    }
+
     private void handleMain(Player player, int slot) {
         if (slot == CLOSE_SLOT) {
             player.closeInventory();
+            return;
+        }
+        if (!eligible(player)) return;
+        if (slot == WILD_SLOT) { plugin.wildGui().open(player); return; }
+        if (slot == MOON_SLOT) { plugin.wildGui().openMoon(player); return; }
+        if (slot == GUIDE_SLOT) { openGuide(player); return; }
+        if (slot == HUD_SLOT) {
+            plugin.store().mobHud(player.getUniqueId(), player.getName(), !plugin.store().mobHud(player.getUniqueId()));
+            plugin.requestSave();
+            open(player);
             return;
         }
         if (slot == SHOP_SLOT) {
@@ -329,7 +396,7 @@ public final class HuntGui implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onDrag(InventoryDragEvent event) {
         InventoryHolder top = event.getView().getTopInventory().getHolder();
-        if (top instanceof MainHolder || top instanceof KeysHolder) {
+        if (top instanceof MainHolder || top instanceof KeysHolder || top instanceof GuideHolder) {
             event.setCancelled(true);
         }
     }
@@ -347,7 +414,7 @@ public final class HuntGui implements Listener {
     public void closeAll() {
         for (Player player : Bukkit.getOnlinePlayers()) {
             InventoryHolder holder = player.getOpenInventory().getTopInventory().getHolder();
-            if (holder instanceof MainHolder || holder instanceof KeysHolder) {
+            if (holder instanceof MainHolder || holder instanceof KeysHolder || holder instanceof GuideHolder) {
                 player.closeInventory();
             }
         }

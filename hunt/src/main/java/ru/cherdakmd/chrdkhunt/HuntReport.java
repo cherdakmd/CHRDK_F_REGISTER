@@ -133,6 +133,7 @@ public final class HuntReport {
     /** Справка по командам охоты. */
     public void help(CommandSender sender) {
         plugin.messages().send(sender, "help-header");
+        plugin.messages().send(sender, "help-gui");
         plugin.messages().send(sender, "help-stats");
         plugin.messages().send(sender, "help-shop");
         plugin.messages().send(sender, "help-buy");

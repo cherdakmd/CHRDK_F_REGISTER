@@ -22,7 +22,7 @@ import java.util.UUID;
 public final class HuntCommandHandler implements CommandExecutor, TabCompleter {
 
     private static final List<String> PLAYER_SUBCOMMANDS =
-            List.of("help", "stats", "shop", "buy", "exchange", "keys", "chest",
+            List.of("gui", "menu", "help", "stats", "shop", "buy", "exchange", "keys", "chest",
                     "bestiary", "trophies", "trophy", "top", "danger", "inspect", "observations", "elites", "hud", "history", "wild", "moon");
     private static final List<String> ADMIN_SUBCOMMANDS =
             List.of("reload", "give", "reset", "info", "awards");
@@ -56,6 +56,11 @@ public final class HuntCommandHandler implements CommandExecutor, TabCompleter {
             return true;
         }
         return switch (args[0].toLowerCase(Locale.ROOT)) {
+            case "gui", "menu" -> {
+                if (sender instanceof Player player) plugin.gui().open(player);
+                else plugin.messages().send(sender, "player-only");
+                yield true;
+            }
             case "help" -> {
                 plugin.report().help(sender);
                 yield true;
@@ -67,7 +72,7 @@ public final class HuntCommandHandler implements CommandExecutor, TabCompleter {
             case "keys" -> keys(sender);
             case "chest" -> chest(sender, args);
             case "wild", "moon" -> {
-                if (sender instanceof Player p) yield plugin.wildGui().open(p);
+                if (sender instanceof Player p) yield args[0].equalsIgnoreCase("moon") ? plugin.wildGui().openMoon(p) : plugin.wildGui().open(p);
                 plugin.messages().send(sender, "player-only"); yield true;
             }
             case "bestiary" -> bestiary(sender, args);
