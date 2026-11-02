@@ -21,17 +21,17 @@ class GuildStyle278Test {
         String json=Files.readString(folder.resolve("clan-styles.json"));
         assertFalse(json.contains("entitlement")); assertFalse(json.contains("paidUntil"));
     }
-    @Test void transferMovesWholePersonalSelectionAndOffCannotResetCooldown(@TempDir Path folder) {
+    @Test void transferMovesWholePersonalSelectionImmediatelyAndAfterRestart(@TempDir Path folder) {
         var store=new GuildStyleStore(folder,logger);
         store.select(owner,"Steve","clan-a","name","aurora",1000);
         store.select(owner,"Steve","clan-a","emblem","crown",1001);
-        assertEquals(GuildStyleStore.Result.COOLDOWN,store.select(owner,"Steve","clan-b","frame","gold",1002));
+        assertEquals(GuildStyleStore.Result.OK,store.select(owner,"Steve","clan-b","frame","gold",1002));
         assertTrue(store.remove(owner,"name")); assertTrue(store.remove(owner,"emblem"));
         store=new GuildStyleStore(folder,logger);
-        assertEquals(GuildStyleStore.Result.COOLDOWN,store.select(owner,"Steve","clan-b","frame","gold",1002));
+        assertEquals(GuildStyleStore.Result.OK,store.select(owner,"Steve","clan-b","frame","gold",1002));
         assertEquals(GuildStyleStore.Result.OK,store.select(owner,"Steve","clan-b","frame","gold",86_401_000));
         assertEquals("clan-b",store.of(owner).guild()); assertTrue(store.forGuild("clan-a").isEmpty());
-        assertEquals(GuildStyleStore.Result.COOLDOWN,store.select(owner,"Steve","clan-a","frame","gold",86_401_001));
+        assertEquals(GuildStyleStore.Result.OK,store.select(owner,"Steve","clan-a","frame","gold",86_401_001));
     }
     @Test void licenseExpiryMembershipAndOwnerIdentityAreCheckedOnEachRender(@TempDir Path folder) {
         var store=new GuildStyleStore(folder,logger);store.select(owner,"Steve","clan-a","name","gold",1000);
@@ -45,7 +45,7 @@ class GuildStyle278Test {
         var recreated=new Guild("clan-b","Alpha","ABC",owner,1000);
         assertNull(GuildStylePolicy.active(rows,recreated,"name",2000,row->3000,row->true));
     }
-    @Test void latestValidSponsorWinsWithoutChangingPriorityOfOtherKinds(@TempDir Path folder) {
+    @Test void onlyCurrentLeaderChoiceIsVisibleEvenWhenMemberHasNewerPaidChoices(@TempDir Path folder) {
         var store=new GuildStyleStore(folder,logger); UUID other=UUID.randomUUID();
         store.select(owner,"Steve","clan-a","name","gold",1000);
         store.select(other,"Alex","clan-a","name","aqua",2000);
@@ -53,7 +53,7 @@ class GuildStyle278Test {
         var guild=new Guild("clan-a","Alpha","ABC",owner,1000);
         guild.addMember(other,GuildRank.MEMBER);
         var rows=store.forGuild("clan-a");
-        assertEquals("aqua",GuildStylePolicy.active(rows,guild,"name",3000,row->5000,row->true));
+        assertEquals("gold",GuildStylePolicy.active(rows,guild,"name",3000,row->5000,row->true));
         assertEquals("gold",GuildStylePolicy.active(rows,guild,"name",3000,row->row.owner().equals(other)?3000:5000,row->true));
         assertEquals("gold",GuildStylePolicy.active(rows,guild,"frame",3000,row->5000,row->true));
     }
@@ -62,7 +62,7 @@ class GuildStyle278Test {
         var store=new GuildStyleStore(folder,logger);store.select(owner,"Steve","clan-a","name","gold",1000);
         assertTrue(store.clear("clan-a","name")); assertTrue(store.of(owner).choices().isEmpty());
         assertEquals(1000,store.of(owner).movedAt());
-        assertEquals(GuildStyleStore.Result.COOLDOWN,store.select(owner,"Steve","clan-b","name","gold",1002));
+        assertEquals(GuildStyleStore.Result.OK,store.select(owner,"Steve","clan-b","name","gold",1002));
     }
     @Test void corruptOrUnknownStyleDisablesWithoutOverwriting(@TempDir Path folder) throws Exception {
         Path file=folder.resolve("clan-styles.json"); Files.writeString(file,"broken");

@@ -88,25 +88,17 @@ class GuildAnimation282Test {
         for (Component child : component.children()) colors(child, color, result);
     }
 
-    @Test void refusedTransferKeepsTheOldBindingAndChoiceAndReportsTheExactBoundary() {
+    @Test void transferHasNoWaitEvenAfterFirstAssignmentAndRestart() {
         var store = new GuildStyleStore(folder, Logger.getAnonymousLogger());
         UUID owner = UUID.randomUUID();
         assertEquals(GuildStyleStore.Result.OK, store.select(owner, "Steve", "old", "animation", "shine", 1000));
-        var before = store.of(owner);
-        long until = GuildStyleStore.transferAvailableAt(before);
-        assertEquals(86_401_000L, until);
-        assertTrue(GuildStyleStore.transferBlocked(before, "new", until - 1));
-        assertTrue(GuildStyleStore.transferBlocked(before, "new", 999));
-        assertFalse(GuildStyleStore.transferBlocked(before, "old", 1001));
-        assertFalse(GuildStyleStore.transferBlocked(null, "new", 1001));
-        assertEquals(GuildStyleStore.Result.COOLDOWN, store.select(owner, "Steve", "new", "animation", "pulse", until - 1));
-        assertEquals(before, store.of(owner));
-        assertTrue(store.forGuild("new").isEmpty());
+        assertEquals(GuildStyleStore.Result.OK, store.select(owner, "Steve", "new", "name", "gold", 1001));
+        assertTrue(store.forGuild("old").isEmpty());
+        assertEquals("shine", store.of(owner).choices().get("animation").preset());
         var restored = new GuildStyleStore(folder, Logger.getAnonymousLogger());
-        assertEquals(before, restored.of(owner));
-        assertFalse(GuildStyleStore.transferBlocked(restored.of(owner), "new", until));
-        assertEquals(GuildStyleStore.Result.OK, restored.select(owner, "Steve", "new", "animation", "pulse", until));
-        assertTrue(restored.forGuild("old").isEmpty());
+        assertEquals(GuildStyleStore.Result.OK, restored.select(owner, "Steve", "old", "animation", "pulse", 1002));
+        assertTrue(restored.forGuild("new").isEmpty());
+        assertEquals(2, restored.of(owner).choices().size());
         assertEquals("pulse", restored.of(owner).choices().get("animation").preset());
     }
 }
