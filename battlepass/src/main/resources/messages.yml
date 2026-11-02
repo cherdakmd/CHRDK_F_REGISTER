@@ -283,5 +283,7 @@ battlepass:
   "exp-other-world": "<yellow>Метка в другом мире. Навигация возобновится после самостоятельного перехода.</yellow>"
   "exp-arrived": "<green>Вы у последней точки маршрута.</green>"
   "exp-manual-next": "<aqua>Точка достигнута · следующая: /bp expedition next</aqua>"
-  "exp-direction": "<aqua>%arrow% %name%</aqua> <gray>· %distance% м</gray>"
+  "exp-direction": "<aqua>%arrow% %name%</aqua> <gray>· %distance% м · Y%height%</gray>"
   "exp-help": ["<aqua>/bp expedition mark \\<имя></aqua> <gray>— сохранить текущую точку.</gray>", "<aqua>/bp expedition unmark \\<имя></aqua> <gray>— удалить точку вне маршрутов.</gray>", "<aqua>/bp expedition go \\<имя></aqua> <gray>— направление к метке.</gray>", "<aqua>/bp expedition route \\<маршрут> \\<метка1> \\<метка2> …</aqua>", "<aqua>/bp expedition follow \\<маршрут></aqua> <gray>— пройти маршрут.</gray>", "<aqua>/bp expedition next|stop|list</aqua>", "<aqua>/bp expedition unroute \\<маршрут></aqua>", "<aqua>/bp expedition title free|premium|off</aqua>", "<aqua>/bp expedition effect</aqua> <gray>— переключить личный эффект.</gray>"]
+  "exp-labels": "<aqua>Разместить ранг в чате и TAB</aqua>"
+  "exp-labels-lore": ["<gray>Открыть /labels и выбрать источник «Ранг BattlePass».</gray>", "<gray>Нужно назначить доступное место; чужие метки не заменяем.</gray>", "<gray>Число мест не увеличивается от наградного ранга.</gray>"]

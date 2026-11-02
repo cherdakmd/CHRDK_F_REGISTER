@@ -143,6 +143,7 @@ final class BattlePassExpeditions implements Listener, AutoCloseable {
         });
         item(h, 32, Material.GLOWSTONE_DUST, "exp-effect", "exp-effect-lore", x -> { result(x, store.toggleEffect(x.getUniqueId())); open(x); },
                 "state", plugin.messages().plain(store.effect(p.getUniqueId()) ? "atlas-yes" : "atlas-no"));
+        item(h, 34, Material.NAME_TAG, "exp-labels", "exp-labels-lore", x -> { x.closeInventory(); x.performCommand("labels"); });
         item(h, 40, Material.ENDER_CHEST, "exp-claim", "exp-condition", x -> { claim(x, true); open(x); });
         item(h, 45, Material.ARROW, "guide-back", null, x -> plugin.guide().home(x));
         item(h, 49, Material.OAK_DOOR, "menu-close", null, Player::closeInventory);
@@ -185,7 +186,7 @@ final class BattlePassExpeditions implements Listener, AutoCloseable {
         }
         String[] arrows = {"↑", "↗", "→", "↘", "↓", "↙", "←", "↖"};
         int index = Math.floorMod((int) Math.round((Math.toDegrees(Math.atan2(-dx, dz)) - l.getYaw()) / 45), 8);
-        p.sendActionBar(plugin.messages().get("exp-direction", "arrow", arrows[index], "name", n.marks.get(n.index), "distance", (long) Math.ceil(distance)));
+        p.sendActionBar(plugin.messages().get("exp-direction", "arrow", arrows[index], "name", n.marks.get(n.index), "distance", (long) Math.ceil(distance), "height", (int) point.y()));
     }
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void click(InventoryClickEvent e) {

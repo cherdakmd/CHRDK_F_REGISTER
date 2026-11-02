@@ -311,7 +311,7 @@ public final class LabelStyleService {
                 LabelPreferences.Label.GUILDS,
                 LabelPreferences.Label.TIERFORGE,
                 LabelPreferences.Label.QUESTS, LabelPreferences.Label.ACHIEVEMENTS,
-                LabelPreferences.Label.VK);
+                LabelPreferences.Label.VK, LabelPreferences.Label.EXPEDITIONS);
     }
 
     /**

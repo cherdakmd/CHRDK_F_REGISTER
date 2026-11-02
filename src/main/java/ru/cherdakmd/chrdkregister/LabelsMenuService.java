@@ -311,6 +311,7 @@ public final class LabelsMenuService implements Listener {
             case QUESTS -> messages.mini("labels.name-quests");
             case ACHIEVEMENTS -> messages.mini("labels.name-achievements");
             case VK -> messages.mini("labels.name-vk");
+            case EXPEDITIONS -> messages.mini("labels.name-bp-expeditions");
             case HEADER -> messages.mini("labels.name-header");
         };
     }
@@ -325,6 +326,7 @@ public final class LabelsMenuService implements Listener {
             case QUESTS -> plugin.messages().get("labels.desc-quests");
             case ACHIEVEMENTS -> plugin.messages().get("labels.desc-achievements");
             case VK -> plugin.messages().get("labels.desc-vk");
+            case EXPEDITIONS -> plugin.messages().get("labels.desc-bp-expeditions");
             case HEADER -> plugin.messages().get("labels.desc-header");
         };
     }
@@ -339,6 +341,7 @@ public final class LabelsMenuService implements Listener {
             case QUESTS -> Material.WRITABLE_BOOK;
             case ACHIEVEMENTS -> Material.EXPERIENCE_BOTTLE;
             case VK -> Material.LAPIS_LAZULI;
+            case EXPEDITIONS -> Material.COMPASS;
             case HEADER -> Material.PAPER;
         };
     }

@@ -165,12 +165,13 @@ public final class ExplorationAtlas implements Listener, AutoCloseable {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void teleport(PlayerTeleportEvent e) { active.remove(e.getPlayer().getUniqueId()); walkRemainders.remove(e.getPlayer().getUniqueId()); }
     /** Read-only observation: target must actually be visible and within five blocks. */
-    public void study(Player p) {
+    public void study(Player p) { study(p, null); }
+    private void study(Player p, String expectedBiome) {
         if (!honest(p)) { messages.get().send(p, "atlas-readonly"); return; }
         Block b = p.getTargetBlockExact(5);
         if (b == null || b.getType().isAir()) { messages.get().send(p, "atlas-no-target"); return; }
         String key = biome(b.getLocation());
-        if (key == null || ExplorationCatalog.tasks(key).stream().noneMatch(t -> t.kind() == ExplorationCatalog.Kind.STUDY && t.accepts(b.getType().getKey().getKey()))) {
+        if (key == null || expectedBiome != null && !expectedBiome.equals(key) || ExplorationCatalog.tasks(key).stream().noneMatch(t -> t.kind() == ExplorationCatalog.Kind.STUDY && t.accepts(b.getType().getKey().getKey()))) {
             messages.get().send(p, "atlas-no-target"); return;
         }
         add(p, b.getLocation(), ExplorationCatalog.Kind.STUDY, b.getType().getKey().getKey(), 1, coordinate(b.getLocation(), false));
@@ -233,7 +234,7 @@ public final class ExplorationAtlas implements Listener, AutoCloseable {
             }
             item(h, slots[i++], progress >= t.target() ? Material.LIME_DYE : Material.BOOK, messages.get().get(t.textKey()), lore, null);
         }
-        item(h, 40, Material.SPYGLASS, messages.get().get("atlas-study-button"), messages.get().getList("atlas-study-help"), x -> { study(x); detail(x, biome, page); });
+        item(h, 40, Material.SPYGLASS, messages.get().get("atlas-study-button"), messages.get().getList("atlas-study-help"), x -> { study(x, biome); detail(x, biome, page); });
         controls(h); item(h, 48, Material.ARROW, messages.get().get("atlas-back"), List.of(), x -> open(x, page));
         p.openInventory(h.inventory);
     }
