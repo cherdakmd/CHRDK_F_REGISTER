@@ -1,168 +1,168 @@
 {
   "pages": {
     "about": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "a251101c35ee464e9a15f8ecfd6d446fe90e595355f5684df83934d13ec709c1",
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "ecd34ab9685304c55042e675322f0842c2a8b58c60baa7ee5bab451b61877361",
       "text": "17788b7b4007e90c62acd266f95cec124e0a53b603a1b2e5d9a7c19fb304c7d9"
     },
     "achievements": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "1152c0d9d5733114a6bfa603c90e0f52c77cee20363ef02a330f42b66b37dbec",
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "af76ccdfdf2ff787482b47d7b40bb6186cee571c7a332d9104d78d5a9440f56a",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "1e97a28e24f6de0734f51fcf29ed8a2fd5f7844d0ab7eba2f2016757886dcf9e",
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "616fe985e6177c8fb46dc6f8afab88d3567b51a26ecddd3dfc4cf7cf90121eb7",
       "text": "a4a922729b6635a6d286fcc3c9f18c8c57a0c98a19ec05c44f8d448dc422a84f"
     },
     "auction": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "09dc0016178c28620210e1e77b7bda364fce74a92348849554a3e7d0f8038a4e",
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "c6c1008098ef9b6caaa7938d346f1ed4352572448d7851c299987364985ce65e",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "aebd57da379665e4ef209feaae348c722be6ba7050bd0c993a74379d6805613c",
-      "text": "8c9b9c293eaf15de6299076f301d6d3044b79d7b8dea404be789d4b2538cd9f9"
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "df5a788409a521459008f9b4505007d6385f76026a9a9474f3e9be2caf007e00",
+      "text": "560e37a4f6f5bccf400555548f2b9d2c845c0c1099893bc22228c9e65b778ec0"
     },
     "chat": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "a251101c35ee464e9a15f8ecfd6d446fe90e595355f5684df83934d13ec709c1",
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "ecd34ab9685304c55042e675322f0842c2a8b58c60baa7ee5bab451b61877361",
       "text": "b46e914efbafe7696687ae47b1604592151aaacaaccd2264d4a5d7b6efc5845a"
     },
     "claims": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "7d25aacdc8bb40814dfcb5bedb14e8b7d50714fa8eb9bac9e2a942ca319e2f41",
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "8bac3b3e8e68a32863e9a5acfc8856fd758f5b4f1ff5bee7e7c728651a4a37dc",
       "text": "2a1634efadca1810c82bc496b30432d553c72fb226a5e051443232224a366538"
     },
     "classes": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "91eb72d18e053dda60e2e7e18c1315c442e74225873b6d8335a01be959877679",
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "fd900eccce85520cbe2b06b91d0499ba92babeb80b3ad0dfa182cc81c9a0bad4",
       "text": "ee29d92bd4e9527924d14405057fd62402857c1a688439c7b9d86d4c9bf3b546"
     },
     "commands": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "ce7fe58b365bfaac011118c9fa3c915ccfbae01f9d3876239c82c3183dd2dafc",
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "9024270f5fd7a50854e22cb5ad6c431522bf37c02ebbde70b9ed2453dd7dfb83",
       "text": "7cad9d77bd280628e514082fba018af5aaee1e7e0db4f648354e18f1399a47e8"
     },
     "cosmetics": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "c2664fc3e89aae12a6d4d572045e7be3a4f79ac9709fe628dc4e469ee3563d30",
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "a3a597cc1d34ae0788fa9ea3772291ec3be7abc02ab94fed0c9f7afd8e5d24bf",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "d6b27813193bf53b09860577c1b661bba5e4b0d7d7f6bc81a799e33eda88612e",
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "e0689afce2d046a896ae20850cc8bcd855309fc8219aeb7eb9e821dac6414fd3",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "economy": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "a6bb3e34f997e7f40d24f833270bbb24e528b74861860ce8b164a4f5cb210ec9",
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "616867d9b14a458ec438e8674740a64576d9c90bd44936d0359ea8b3956a5120",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "c1c09d28ff795026d2d4f7b1f91c4236fd99ef0895c2450457d644f3980f3fba",
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "f985c28ec7a9ccfacacb6818e8d63d11fe4923a560de1bc74187f253c0204020",
       "text": "70b6bd31d749073c4e4144ebb536661042f7f925d3ccb838f294fb031e4a8558"
     },
     "faq": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "ce7fe58b365bfaac011118c9fa3c915ccfbae01f9d3876239c82c3183dd2dafc",
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "9024270f5fd7a50854e22cb5ad6c431522bf37c02ebbde70b9ed2453dd7dfb83",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "455a801bfa58eed405da77e10f9d5e271ca14004b3eae3be7c6770018f964f95",
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "d8f07f83ad43b5b1ee29089a69fa428488b589d2add6decdaf7b55d75fada305",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "7d25aacdc8bb40814dfcb5bedb14e8b7d50714fa8eb9bac9e2a942ca319e2f41",
-      "text": "7b3380b868b53dda76d8b8675112984a43396a2de0ce509a9197844c18979d5c"
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "8bac3b3e8e68a32863e9a5acfc8856fd758f5b4f1ff5bee7e7c728651a4a37dc",
+      "text": "6bc2fbfcb9975a022ee631df507eecd3ffc6037de041f3d176aedc6d9b598e65"
     },
     "hunt": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "c3a07f9a2f76981c39467ea3923b4a696dacc5e79b1fb9d0a221cd043c3120d7",
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "95bc6083d9e8cf41ccfa0959bf9ee090caf6645baf176a02792a93b8bf96ef0e",
       "text": "015888ca48f96ca58dc6c772713f4c8874e0b63e83ab67112a4422095ccc81ed"
     },
     "index": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "6299884124c14950959677f67889973c6c2baa9a9c4dfa7b3dd759fb0cdf67e2",
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "6dbb59822e4adf4b13741baa7b79f04fca9ebe753d2c870ac96e49e81e83d280",
       "text": "9e4a54959f53e85f3e1076c43f2f7863fbaf499584948d064d72367538e0dbd2"
     },
     "menu": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "66501c797366a7ae6e287fc1890ddc59639a31a5a8ce1a95adc5487b854fd864",
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "fc285b024d810ddd6d47f9a361609a5cdfde45cb85c5651a390e3a4b1b211f42",
       "text": "a1dfc008dd62fc9f9505ee4384c3bb5191a013a3d512f68a6d0f5e2700e5d622"
     },
     "orders": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "2302397438bee315b54ca31aa6ba866b81e0183631118f625d8b7b15f6bea199",
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "f6ac77d5cde6fe62adb3ed25f2a8c80a0eddbb6389c0c45469e8ee8af438c203",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "pets": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "0423b89993a83f3370ea2e5ce60da1813597ae0a03b29b420b01717b225e417f",
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "95ee707ad8e0ee63b148fece77ebbcaeff76b2669bbf0729afb05ee174f1ce49",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "dd07122669beef264424e62c66dfd199ab5fd3d72210ce3ce26157e3c8fa9e5f",
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "957be292a8296e39d1739083e74721f066e1028ddaf18918e09a6fe1e71bb795",
       "text": "ced22f9d3bdafb0c5f5e4027849d8cf32dd0530d5a937f0c409e07546439d01a"
     },
     "profile": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "38ca38755908c7241fcd17b14e5c2a2d3bd87a129b80136c91b468ac7fc98321",
-      "text": "23935a01c53d303a4a6cfbe2aac339b2753a7309c53e8afeef08abdb93a15802"
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "a2130fbbe7e542dfd817980dbda23cb68a2405d27bc8ed481ce91e3efe8705c1",
+      "text": "3bb49572a3294a8471fdb67b06c534471a9d8bae23c84c565bbbffac1a6daf31"
     },
     "quests": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "8e7668857f85a0702678e19257f5580018f33e1a84b5048d840f00b851de4d0b",
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "c67b21a0c8add54250fa20a0602c20c1f13644834e0c8beefb757e74921d7287",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "0632e66f3d9b7871dfa3fc735fd3ab05ad773808fdec60bc2f22f3aea90c4c19",
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "70d038d0ffe9c04b9689d086120df09d027ea53ef22529bf90c7b4a14f0932b1",
       "text": "83fdfb3ddc5551875ec1f031676a80e3adb73e448dffae614c489441ea6f2c33"
     },
     "shop": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "6299884124c14950959677f67889973c6c2baa9a9c4dfa7b3dd759fb0cdf67e2",
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "6dbb59822e4adf4b13741baa7b79f04fca9ebe753d2c870ac96e49e81e83d280",
       "text": "62e3ad5ae040c7c30a1e73d314c1e226426dc47e287a7fceaa18ad975e73296b"
     },
     "skills": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "2dfe5b3bc93a9559effcb3e3d594a5640bf5b4d013a18305ac20fecae16ad41d",
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "bf1220ac2ce847cbefc5f5024f9048c665510a20fe439f64983d85391169566a",
       "text": "da88b0eff3b15dec9185ecfbb9a63b62c96e0a3aa5ab2dea53e0928a500b403a"
     },
     "start": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "9de5d3b58497d806a40fb01f169c54424a1259349798695dc6c28bf967f3ceae",
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "386305f1fc0d31b70c512240c665f70978f385674427a1fa93a48bcc02571a9d",
       "text": "3f26288c52ae35e92097798a9a413933351e8e8422d33230a6322c69aedbb238"
     },
     "teleports": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "76a9091ef8af8a230de5fae2149c3c48e903216d9513e5c1ed2bd6de7d0d1023",
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "700998f2fc8af56c5e13ad05677d7304ea3b99ecf77077c9a505b823febe8bfe",
       "text": "896b72de8b56b3374b3a6346a701f45defae6e6ecff688868e02233aa040d1fa"
     },
     "tierforge": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "e3db143c16f7a49ee40db9415a4717a48b337fc7258a757d63c98e31a205ce93",
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "7965997c7c7ca88a3e57e417f29c37f5d0c22813907529ec7c30c0c1aaa1f842",
       "text": "bb59e5c05ec16e1951d67e444a35885ce8a38805d367f3e73f09a0fd74cce12c"
     },
     "titles": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "aec1c7e2e5ef35738c66e799c5472ad35040df99575b899ef494625bda9ed6e1",
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "888f85446e49670b06e0fe23a5851a08b71c9545dbf21769af773a1fc9b119a7",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "6299884124c14950959677f67889973c6c2baa9a9c4dfa7b3dd759fb0cdf67e2",
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "6dbb59822e4adf4b13741baa7b79f04fca9ebe753d2c870ac96e49e81e83d280",
       "text": "dfac37460071169331d2b9242834257df9651801a744d3c0894dfd032227397a"
     },
     "vk": {
-      "reason": "1.4.282 RC4: сверены новый TAB и auth-gating, постоянные оплаченные клановые кадры вне мест/скрытия и split RGB рамки, admin tabcheck с честными ограничениями; BP ×10 (17400/8700/26100), immutable receipts и stock/custom migration. Статические метки по-прежнему скрываемые; остальные механики и права не менялись.",
-      "sources": "cb9722ab2cb8bb2d9e4212f7dbf4584780ba64e9732483aeb53f64b05ffc884c",
+      "reason": "1.4.282 RC5: сверены исправления TAB lifecycle/auth/custom header, независимое освобождение header/footer без стирания чужого кадра, coalesced/cancelled задачи и 14 компонентных сценариев с 200 join/30 reload. BP 52200 и прочие механики не менялись; без живого smoke/MSPT.",
+      "sources": "0a903f5175f4e3047f94c10c85e08fcc01ec732321366aeeeae2b8c15797141f",
       "text": "2b67feb5684b14875601ba47314694afa598ff87f6dd74350a06f65029a735eb"
     }
   },
