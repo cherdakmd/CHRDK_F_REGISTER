@@ -62,7 +62,7 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
     private BukkitTask announceTask;
 
     private boolean supportsRewardReceipts() {
-        try { return ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)>=37; }
+        try { return ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)>=38; }
         catch(ReflectiveOperationException e){return false;}
     }
     boolean canUse(Player player) {
@@ -76,7 +76,7 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
         store.load();
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
         if(coreApi==null || !supportsRewardReceipts()) {
-            getLogger().severe("Нужен Core API37 (1.4.281-rc.2+): безопасная выдача наград battlepass");
+            getLogger().severe("Нужен Core API38 (1.4.281-rc.3+): безопасная выдача наград battlepass");
             Bukkit.getPluginManager().disablePlugin(this);return;
         }
         reloadBattlePassConfig();

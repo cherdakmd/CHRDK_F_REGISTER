@@ -35,6 +35,7 @@ public final class QuestsPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         try {
+            if (ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 38) throw new IllegalStateException("Нужен Core API 38+");
             saveDefaultConfig();
             this.config = QuestConfig.parse(getConfig(), getLogger());
             this.messages = Messages.load(this, config.locale(), getLogger());
@@ -64,7 +65,7 @@ public final class QuestsPlugin extends JavaPlugin {
                     + ", персонажей " + config.npcList().size()
                     + ", заданий " + config.totalQuests()
                     + ", сдач в день " + config.claimsPerDay() + ".");
-        } catch (RuntimeException exception) {
+        } catch (ReflectiveOperationException | RuntimeException exception) {
             getLogger().severe("CHRDK_Quests не смог запуститься: " + exception.getMessage());
             exception.printStackTrace();
             getServer().getPluginManager().disablePlugin(this);

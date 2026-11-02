@@ -45,7 +45,7 @@ public final class AchievementsPlugin extends JavaPlugin {
         this.store = new AchievementStore(getDataFolder().toPath(), getLogger());
         reloadAchievementsConfig();
         try {
-            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 37) throw new IllegalStateException("Нужен Core API37 (1.4.281-rc.2+)");
+            if (coreApi == null || ChrdkRegisterApi.class.getField("API_VERSION").getInt(null) < 38) throw new IllegalStateException("Нужен Core API38 (1.4.281-rc.3+)");
             this.awards = new ru.cherdakmd.chrdkregister.api.MilestoneAwards(this,this::coreApi,this::messages,"achievements-awards",ru.cherdakmd.chrdkregister.api.MilestoneMigration.json(getDataFolder().toPath().resolve("achievements.json"),ru.cherdakmd.chrdkregister.api.MilestoneMigration.Kind.ACHIEVEMENTS));
         } catch (Exception | LinkageError error) {
             getLogger().log(java.util.logging.Level.SEVERE,"Модуль остановлен без сброса прогресса/наград",error);

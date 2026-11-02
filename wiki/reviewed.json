@@ -1,167 +1,167 @@
 {
   "pages": {
     "about": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
       "sources": "4eca58b96f73ed9650e118aedcfca9e907463a24b83c56ee975b30b4c5ffdc28",
       "text": "17788b7b4007e90c62acd266f95cec124e0a53b603a1b2e5d9a7c19fb304c7d9"
     },
     "achievements": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
-      "sources": "ad423f7d9db12599309ba7aa3bd974aefe5377ee7f5cb13f5e0b646891337641",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
+      "sources": "247f9aa11167bb2b1a51986a58fc64072b878318a8e03cc7535053711ead8bc5",
       "text": "8bee3ba1090d0e3c0f3556b298bbd858a866bd4a410cea37411049753b61fc9c"
     },
     "artifacts": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
-      "sources": "d8671ab616a3b9316a7800028adc1464319bf8a66910338db11261e10a7ba851",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
+      "sources": "3966de0286b8115f3af0a427e08b17ed4bb3881d5e5bea842a77529ceb9390a5",
       "text": "a4a922729b6635a6d286fcc3c9f18c8c57a0c98a19ec05c44f8d448dc422a84f"
     },
     "auction": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
       "sources": "18c1adac6c90f3f20a524f300ba8d444c81883029f3f377c978ab3ac1bb5ba0c",
       "text": "3bc0d9e7bfc0f74951b7302b7af777bd9737e4d46f2f4c6f78abf9094dc0aa62"
     },
     "battlepass": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
-      "sources": "b340af8dc21806122579a5fe2e3718fad00dc9207b94b3fc91a16000cf992baf",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
+      "sources": "595d8c4120fb809f209adab3b152ab95254d8a7be1338761cec0a4a581d31d7d",
       "text": "8c59b8f155d7cd9cd41bfb109879b7a18f51b84d24bb86ba4dd49980a2ac4b03"
     },
     "chat": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
       "sources": "4eca58b96f73ed9650e118aedcfca9e907463a24b83c56ee975b30b4c5ffdc28",
       "text": "57513afb6138ab9df3d1e2e450db3738a1a61aa9e06071d1fc217a719537604b"
     },
     "claims": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
       "sources": "68c1ccadf1b1da88ba0b40426dc03bba3e3cb575744f42dcf942fa0d32eafe4b",
       "text": "2a1634efadca1810c82bc496b30432d553c72fb226a5e051443232224a366538"
     },
     "classes": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
-      "sources": "3a56e43e40a45a403e0c20457876c098f9563cb030048dc12da517baa093465e",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
+      "sources": "d73b7f075f8be428698b0d56823c5048076bdd0e7277abebbcb39282865257b1",
       "text": "ee29d92bd4e9527924d14405057fd62402857c1a688439c7b9d86d4c9bf3b546"
     },
     "commands": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
       "sources": "fcac3be1f0001bdd063cb1095d06b45b4c03297aad521349f3e30d3ace64344a",
       "text": "7cad9d77bd280628e514082fba018af5aaee1e7e0db4f648354e18f1399a47e8"
     },
     "cosmetics": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
       "sources": "edd2dfebbbd67b84301703b02f843d41b1e2dbf330ea1d07d6e0206f1d388cd5",
       "text": "ec9cbd7ac478d7bccaeebc62811efd7fe576a3b979b1438b793e35cd3becb4e2"
     },
     "dailies": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
       "sources": "1b8ca9afd819e29b24044730951abe8740ace0b9c2ddf5e9853141e1b9d052a6",
       "text": "f641cc23dc9d0988d9257c07dcfcdc877e0df26326d582f703ea712b8c82429f"
     },
     "economy": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
-      "sources": "148dda9beff8286f775f2cdd0cbc1b32d0700c1dcaa39b711515da3ffb4394c7",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
+      "sources": "57d13169297274f34020326577cd651ef62e94f91cf903b60e0aa268bfc57d53",
       "text": "9ff730d0156c7963d58ba5777b232a99a0e8fd9a1a83966ac35b574648f9c5d8"
     },
     "enchants": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
-      "sources": "6ed57cb4f2020eb1a1cd5baf65d0d134312079cfe31a91c5abfc0bfcc7e4c1a7",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
+      "sources": "4e23601f1d928eaede59db558d3847885ccaaf6ced2b22698a308b68b3380839",
       "text": "70b6bd31d749073c4e4144ebb536661042f7f925d3ccb838f294fb031e4a8558"
     },
     "faq": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
       "sources": "fcac3be1f0001bdd063cb1095d06b45b4c03297aad521349f3e30d3ace64344a",
       "text": "834157e20f321cf97ebe94bf04acf5389cb1a15b9bb2e745b1544200528cd03b"
     },
     "goals": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
-      "sources": "4beea4121720dcb0ca37c5fc63c9359844a863002dbdf5fbaeffb78a759e3cd4",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
+      "sources": "abb6c69c6bd6307c2fa670d9e3d6bfddd7caedc9623488cffcb6557174781e7b",
       "text": "2382a84da22e5ae59469cf58cd24beadc0650ace221e0eccfbd0654d1ecf11ab"
     },
     "guilds": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
       "sources": "68c1ccadf1b1da88ba0b40426dc03bba3e3cb575744f42dcf942fa0d32eafe4b",
       "text": "ec70e9288fed4df23e0069944b09928f9fcadbe4d08509ecceba85df191560fb"
     },
     "hunt": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
-      "sources": "f118564d5aeebc10865885aa9d3387512ef6b7fc3cd5b435a9c743ba4934d046",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
+      "sources": "dff2fb6afb7f4852ac3a54b258d0020dcfb5a79c1b3607d0c994e477f6b742a6",
       "text": "dee83d9d70517cd115825365df992ebca6966d7c1df3dd9784be9b7f6750fbea"
     },
     "index": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
       "sources": "d7cca716d88301d1fa70f6fae7a18ae14ffd1ea3076215749da9be12a62295be",
       "text": "9e4a54959f53e85f3e1076c43f2f7863fbaf499584948d064d72367538e0dbd2"
     },
     "menu": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
       "sources": "fcac3be1f0001bdd063cb1095d06b45b4c03297aad521349f3e30d3ace64344a",
       "text": "b92e2c5dbbe8d24fcd1ff87d82fb6cac768346e465ef7689ee508f1e23adff74"
     },
     "orders": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
       "sources": "a139bdc45e1be90459d6c2a10e5de3a8b1469cd68861d82f573c4866298b6870",
       "text": "86800cc030e1c3254622b8f556b3860e1655fe6d85e9c6242f67793351c8ca51"
     },
     "pets": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
       "sources": "a544baa9342225b0e5041db6a6096b75eb63552bef91985c212c54ef3ac4cddb",
       "text": "f867a99a5298d6ae41e8eecd08daaaf3cf33313e4908ac40f6f04782af6d7c29"
     },
     "professions": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
-      "sources": "de271a028eb312e4da52902dd91f025a466a8fab426970e5c8ee0808b3495f3e",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
+      "sources": "2bad6f8370bff8ed3b9d5c97b000dd7d5b45b12d0f28b984db0e1fb9f59fbcf0",
       "text": "ced22f9d3bdafb0c5f5e4027849d8cf32dd0530d5a937f0c409e07546439d01a"
     },
     "profile": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
-      "sources": "10b8413994bdde01c20c1937020d6ad526bcf99d56dec9fc30101c23c3afbcd4",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
+      "sources": "9f684c3cabd75fc10a6a86102b51dfded55fb2b0006d5d20d34f6b30bedef095",
       "text": "54e3f32931d043add66cd8c79174f90ac3597ce659e68de8f5ed05a6e37a45e8"
     },
     "quests": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
-      "sources": "9c357a8297e348116bc3fa692af3a34e4f7c686ef99a8b616c2492b4346424dc",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
+      "sources": "3d2081de8c60a71e1a0d382e43c87cd611d5f7eb3dec19b06a4f14c6c111d5ad",
       "text": "06fce0e26e24d81073b3d47d74bcd766ce577d671e502acec7d045254b6f2228"
     },
     "ranks": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
-      "sources": "9110fb72ad33ae4c65e2268ad3191f3cb4c6fd4232ac1816ae1fc198ac540531",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
+      "sources": "233d518227ad681217d83d350e5df7425b05ee734db5de103167b6a423724f22",
       "text": "c7aa463665be522c2f69c0eafd2844684e5fdf656825e6b80b86235ad4bc3be6"
     },
     "shop": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
       "sources": "d7cca716d88301d1fa70f6fae7a18ae14ffd1ea3076215749da9be12a62295be",
       "text": "8a9f3417fcec3f9dc08115a0508ded1d695be00f7792ea97644f177c8ab0d05d"
     },
     "skills": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
-      "sources": "6e52e416b5f7e3b9350e64e291c992be617c573ba450fb571be238b85d6907bc",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
+      "sources": "a0bd65cc0fd336e01d5e01d56dae071965cc9da4741709db56c88ef8355a00b1",
       "text": "da88b0eff3b15dec9185ecfbb9a63b62c96e0a3aa5ab2dea53e0928a500b403a"
     },
     "start": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
-      "sources": "b4cb9bb7e25e88e22c117fe209fcce5dd090a9a7b3914fd83328b00a0ecd9843",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
+      "sources": "2cfd04c10471bced85246f018b8810924a88d711ed442c127fdd1b1b688ac655",
       "text": "3f26288c52ae35e92097798a9a413933351e8e8422d33230a6322c69aedbb238"
     },
     "teleports": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
       "sources": "c69fa8ed4b44d9ee787d6724ba890a8c7c8d18f32f0ad9dc012b79005ab76cb9",
       "text": "896b72de8b56b3374b3a6346a701f45defae6e6ecff688868e02233aa040d1fa"
     },
     "tierforge": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
-      "sources": "cfe64d34becd88c3d050e7f6acf63042a8b7cf80afd7b7253e906cb6f358a74d",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
+      "sources": "b9eba80350d3209d43e1c9a41d9f5d3f26794081eb8416f11b78945184da0973",
       "text": "bb59e5c05ec16e1951d67e444a35885ce8a38805d367f3e73f09a0fd74cce12c"
     },
     "titles": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
       "sources": "ea60a9d44427aa86b5e363217c3b8f34141648c0a577747d3ae605e1d7fb9c0b",
       "text": "0e8b6aca3edc660475d726e274051b34621d55cb6ac42fd80f40029eb498e114"
     },
     "updates": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
       "sources": "d7cca716d88301d1fa70f6fae7a18ae14ffd1ea3076215749da9be12a62295be",
       "text": "5e9f5f8464ab8f431e152f6fa6fb6e74ea60b672934731ea8d66605066914d9e"
     },
     "vk": {
-      "reason": "RC.3: проверены защита/бюджеты полнолуния, force каталога в IO-worker, provenance Classes и идентичность цели морозного выстрела; прежние экономики/ранги/PvP не меняются.",
+      "reason": "RC.3: дескриптор /hunt wild|moon и startup API38-гейты всех потребителей MobRewardPolicy; несовместимый Core останавливает аддоны, а не сыплет ошибками на убийствах. Действующие правила/цены/PvP сохранены.",
       "sources": "22b562a25793ae500367117c4073d149014a7e1a2e9e3934b092390f62ffb6e1",
       "text": "2b67feb5684b14875601ba47314694afa598ff87f6dd74350a06f65029a735eb"
     }

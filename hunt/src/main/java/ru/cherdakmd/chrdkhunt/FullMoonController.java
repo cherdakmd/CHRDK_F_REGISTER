@@ -69,7 +69,7 @@ final class FullMoonController implements Listener {
     }
     private boolean active(Player p, long now) {
         Long last = p == null ? null : activity.get(p.getUniqueId());
-        return last != null && now >= last && now - last < 90_000 && safety.target(p, settings.spawnProtection());
+        return last != null && now >= last && now - last < 90_000 && !p.isInvisible() && safety.target(p, settings.spawnProtection());
     }
     private boolean running(World w) {
         var n = nights.get(w.getUID());

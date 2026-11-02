@@ -2,7 +2,7 @@ name: CHRDK_Hunt
 version: ${version}
 main: ru.cherdakmd.chrdkhunt.HuntPlugin
 api-version: '26.3'
-description: "Охота на мобов: монеты, осколки семейств, трофеи и моб-ключи"
+description: "Охота на мобов: монеты, осколки семейств, трофеи и моб-ключи, дикие биомы и полнолуние"
 author: cherdakmd
 depend: [CHRDK_Core]
 softdepend: [PlaceholderAPI, CHRDK_Skills, CHRDK_Claims, CHRDK_Classes]
@@ -10,7 +10,7 @@ commands:
   hunt:
     description: "Охота: кошелёк, обмен, лавка, ключи и трофеи"
     aliases: [ohota, hunter]
-    usage: "/hunt [stats [ник]|shop|buy <id>|exchange <алмазы|max>|keys|chest <семейство>|trophies|trophy <id>|top|danger|inspect|observations|elites|hud [on|off]|history [страница]|help]"
+    usage: "/hunt [stats [ник]|shop|buy <id>|exchange <алмазы|max>|keys|chest <семейство>|trophies|trophy <id>|top|danger|inspect|observations|elites|hud [on|off]|history [страница]|bestiary|wild|moon|help]"
   huntadmin:
     description: "Управление охотой"
     permission: chrdkhunt.admin
