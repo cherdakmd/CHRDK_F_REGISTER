@@ -57,8 +57,12 @@ final class GuildNameTag implements ChrdkRegisterApi.NameTagProvider {
                 ? "peace-chat-prefix" : "peace-pending-prefix") : "chat-prefix", guild) + decoratedName;
     }
     private String prefix(String key, Guild guild) {
+        return prefix(plugin.messages(), key, plugin.styles().tag(guild));
+    }
+    /** Общий путь чата/TAB: кадр вставляется как серверная разметка, не как ввод игрока. */
+    static String prefix(ru.cherdakmd.chrdkregister.Messages messages, String key, String tag) {
         // Legacy-коды разрешены только в шаблоне владельца, не в подставляемом названии.
-        return net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().serialize(plugin.messages().get(key,
-                "tag", ru.cherdakmd.chrdkregister.Messages.trusted(plugin.styles().tag(guild))));
+        return net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().serialize(messages.get(key,
+                "tag", ru.cherdakmd.chrdkregister.Messages.trusted(tag)));
     }
 }

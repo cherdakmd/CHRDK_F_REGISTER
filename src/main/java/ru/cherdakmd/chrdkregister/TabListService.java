@@ -102,6 +102,9 @@ public final class TabListService implements Listener {
         animationPredicate = predicate == null ? name -> false : predicate;
     }
     static int animationTicks(int ticks) { return Math.clamp(ticks, 5, 40); }
+    static boolean animationEnabled(Settings settings) {
+        return settings.enabled() && settings.nameFormat() != null && !settings.nameFormat().isBlank();
+    }
     private final java.util.Set<java.util.UUID> managedNames = new java.util.HashSet<>();
     private final java.util.Set<java.util.UUID> managedHeaders = new java.util.HashSet<>();
     /** Оформление ника из ядра (тег каталога + метки аддонов) для {@code %player_tagged%}. */
@@ -197,10 +200,12 @@ public final class TabListService implements Listener {
         if (settings.enabled() && settings.refreshTicks() > 0) {
             refreshTask = Bukkit.getScheduler().runTaskTimer(plugin, this::applyAll,
                     settings.refreshTicks(), settings.refreshTicks());
-            if (!settings.nameFormat().isBlank()) {
-                int period = animationTicks(plugin.getConfig().getInt("tablist.animation-refresh-ticks", 10));
-                animationTask = Bukkit.getScheduler().runTaskTimer(plugin, this::animateNames, period, period);
-            }
+        }
+        // refresh-ticks=0 выключает общую перерисовку, но не кадры оплаченного эффекта.
+        // Отдельная задача обновляет только имена с действующей анимацией.
+        if (animationEnabled(settings)) {
+            int period = animationTicks(plugin.getConfig().getInt("tablist.animation-refresh-ticks", 10));
+            animationTask = Bukkit.getScheduler().runTaskTimer(plugin, this::animateNames, period, period);
         }
     }
 

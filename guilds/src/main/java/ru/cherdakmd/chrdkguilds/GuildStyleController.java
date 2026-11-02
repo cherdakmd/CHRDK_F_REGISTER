@@ -85,13 +85,23 @@ final class GuildStyleController implements AutoCloseable {
                 GuildStyleStore.Result finalResult = result;
                 if (plugin.isEnabled()) Bukkit.getScheduler().runTask(plugin, () -> {
                     busy.remove(owner);
-                    if (actor.isOnline()) send(actor, finalResult == GuildStyleStore.Result.OK ? "style-saved"
-                            : finalResult == GuildStyleStore.Result.COOLDOWN ? "style-transfer-cooldown" : "style-save-failed");
+                    if (actor.isOnline()) {
+                        if (finalResult == GuildStyleStore.Result.COOLDOWN) transferBlocked(actor, owner);
+                        else send(actor, finalResult == GuildStyleStore.Result.OK ? "style-saved" : "style-save-failed");
+                    }
                     if (finalResult == GuildStyleStore.Result.OK) { plugin.gui().refresh(); plugin.styleGui().refresh(); }
                 });
             });
             send(actor, "style-saving");
         } catch (RejectedExecutionException full) { busy.remove(owner); send(actor, "style-unavailable"); }
+    }
+    private void transferBlocked(Player actor, UUID owner) {
+        GuildStyleStore.Row row = store.of(owner);
+        if (row == null) { send(actor, "style-save-failed"); return; }
+        Guild bound = plugin.store().guild(row.guild());
+        plugin.messages().send(actor, "style-transfer-blocked", "clan",
+                bound == null ? plugin.messages().plain("style-disbanded") : bound.name(),
+                "until", GuildPeaceController.time(GuildStyleStore.transferAvailableAt(row)));
     }
     private void status(Player actor) {
         send(actor, "style-help"); send(actor, "style-rules");
@@ -101,6 +111,11 @@ final class GuildStyleController implements AutoCloseable {
                     "until", until > System.currentTimeMillis() ? GuildPeaceController.time(until) : plugin.messages().plain("style-not-owned"));
             plugin.messages().send(actor, "style-options", "kind", kind, "options", String.join(", ", GuildStyleDefs.options(kind)));
         }
+        Guild current = plugin.service().guildOf(actor.getUniqueId());
+        String animation = active(current, "animation");
+        plugin.messages().send(actor, "style-animation-status", "effect", animation == null
+                ? plugin.messages().plain("style-animation-inactive")
+                : plugin.messages().plain("style-preset-animation-" + animation));
         GuildStyleStore.Row row = store.of(actor.getUniqueId());
         if (row != null) {
             Guild guild = plugin.store().guild(row.guild());

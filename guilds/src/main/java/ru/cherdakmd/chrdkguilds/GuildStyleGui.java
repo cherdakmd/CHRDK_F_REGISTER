@@ -58,7 +58,18 @@ final class GuildStyleGui implements Listener {
             Guild bound = plugin.store().guild(row.guild());
             info.add(plugin.messages().get("style-binding", "clan", bound == null ? plugin.messages().plain("style-disbanded") : bound.name(),
                     "move", GuildPeaceController.time(row.movedAt() + GuildStyleStore.TRANSFER_COOLDOWN)));
+            if (!row.guild().equals(guild.id())) {
+                info.add(plugin.messages().get("style-gui-other-binding"));
+                if (GuildStyleStore.transferBlocked(row, guild.id(), System.currentTimeMillis())) {
+                    info.add(plugin.messages().get("style-gui-transfer-blocked", "until",
+                            GuildPeaceController.time(GuildStyleStore.transferAvailableAt(row))));
+                }
+            }
         }
+        String animation = plugin.styles().active(guild, "animation");
+        info.add(plugin.messages().get("style-animation-status", "effect", animation == null
+                ? plugin.messages().plain("style-animation-inactive")
+                : label("animation", animation)));
         inv.setItem(4, item(Material.WHITE_BANNER, plugin.messages().markup(plugin.styles().name(guild)), info));
         for (int index = 0; index < KINDS.size(); index++) {
             String kind = KINDS.get(index);
@@ -84,7 +95,7 @@ final class GuildStyleGui implements Listener {
             int index = 0;
             for (String preset : GuildStyleDefs.options(h.kind)) {
                 String current = plugin.styles().active(guild, h.kind);
-                String personal = row != null && row.choices().containsKey(h.kind) ? row.choices().get(h.kind).preset() : "";
+                String personal = row != null && row.guild().equals(guild.id()) && row.choices().containsKey(h.kind) ? row.choices().get(h.kind).preset() : "";
                 List<Component> lore = new ArrayList<>();
                 lore.add(plugin.messages().get("style-gui-choice", "choice", label(h.kind, preset)));
                 lore.add(plugin.messages().get("style-gui-preset", "preset", preset));

@@ -63,7 +63,7 @@ final class GuildStyleStore {
         synchronized (writeLock) {
             Row old = of(owner);
             boolean moved = old != null && !old.guild().equals(guild);
-            if (moved && (now < old.movedAt() || now - old.movedAt() < TRANSFER_COOLDOWN)) return Result.COOLDOWN;
+            if (transferBlocked(old, guild, now)) return Result.COOLDOWN;
             Map<String, Choice> choices = new LinkedHashMap<>(old == null ? Map.of() : old.choices());
             if (moved) choices.replaceAll((key, value) -> new Choice(value.preset(), now));
             choices.put(kind, new Choice(preset, now));
@@ -72,6 +72,11 @@ final class GuildStyleStore {
             return publish(next) ? Result.OK : Result.FAILED;
         }
     }
+    static long transferAvailableAt(Row row) { return row.movedAt() + TRANSFER_COOLDOWN; }
+    static boolean transferBlocked(Row row, String guild, long now) {
+        return row != null && !row.guild().equals(guild) && now < transferAvailableAt(row);
+    }
+
     boolean remove(UUID owner, String kind) {
         synchronized (writeLock) {
             Row old = of(owner); if (old == null) return healthy;
