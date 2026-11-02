@@ -11,6 +11,10 @@ class BattlePassExpeditionRulesTest {
         return new BattlePassConfig.Season("Test", 1000, List.of(new BattlePassConfig.WeekDef(0, List.of(a)),
                 new BattlePassConfig.WeekDef(7, List.of(b))));
     }
+    @Test void generatedJournalNamesNeverOverwriteExistingData() {
+        assertEquals("точка2", BattlePassExpeditions.freeName("точка", Set.of("точка1", "точка3"), 3));
+        assertNull(BattlePassExpeditions.freeName("путь", Set.of("путь1"), 1));
+    }
     @Test void everyMainMissionMustBeCompletedAndWaveUnlocked() {
         long now = 1000 + 8 * 86_400_000L;
         assertFalse(BattlePassExpeditionRules.complete(null, Map.of(), now));

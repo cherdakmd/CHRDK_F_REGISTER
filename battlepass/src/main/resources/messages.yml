@@ -287,3 +287,14 @@ battlepass:
   "exp-help": ["<aqua>/bp expedition mark \\<имя></aqua> <gray>— сохранить текущую точку.</gray>", "<aqua>/bp expedition unmark \\<имя></aqua> <gray>— удалить точку вне маршрутов.</gray>", "<aqua>/bp expedition go \\<имя></aqua> <gray>— направление к метке.</gray>", "<aqua>/bp expedition route \\<маршрут> \\<метка1> \\<метка2> …</aqua>", "<aqua>/bp expedition follow \\<маршрут></aqua> <gray>— пройти маршрут.</gray>", "<aqua>/bp expedition next|stop|list</aqua>", "<aqua>/bp expedition unroute \\<маршрут></aqua>", "<aqua>/bp expedition title free|premium|off</aqua>", "<aqua>/bp expedition effect</aqua> <gray>— переключить личный эффект.</gray>"]
   "exp-labels": "<aqua>Разместить ранг в чате и TAB</aqua>"
   "exp-labels-lore": ["<gray>Открыть /labels и выбрать источник «Ранг BattlePass».</gray>", "<gray>Нужно назначить доступное место; чужие метки не заменяем.</gray>", "<gray>Число мест не увеличивается от наградного ранга.</gray>"]
+  "exp-mark-current": "<aqua>Запомнить текущее место</aqua>"
+  "exp-mark-current-lore": ["<gray>Сохранить новую метку одним нажатием.</gray>", "<gray>Имя точка1, точка2…; старые метки не заменяются.</gray>"]
+  "exp-marks": "<aqua>Мои метки · выбрать направление</aqua>"
+  "exp-marks-lore": ["<gray>Открыть личные метки.</gray>", "<gray>Левая кнопка — идти к метке, правая — удалить.</gray>", "<gray>Метка в маршруте защищена от удаления.</gray>"]
+  "exp-routes": "<gold>Мои маршруты</gold>"
+  "exp-routes-lore": ["<gray>Выбрать маршрут или создать по сохранённым меткам.</gray>", "<gray>Экспедитор переключает точки вручную: /bp expedition next.</gray>", "<gray>Покоритель миров — автоматически в радиусе 4 м.</gray>"]
+  "exp-point-name": "<aqua>%name%</aqua>"
+  "exp-point-lore": ["<gray>%world% · %x%, %y%, %z%</gray>", "<yellow>Левая кнопка: направление (без телепорта).</yellow>", "<gray>Правая: удалить, если точка не входит в маршрут.</gray>"]
+  "exp-saved-route-lore": ["<gray>%marks%</gray>", "<yellow>Левая кнопка: начать навигацию.</yellow>", "<gray>Правая: удалить этот маршрут и остановить навигацию.</gray>"]
+  "exp-route-create": "<green>Новый маршрут по всем меткам</green>"
+  "exp-route-create-lore": ["<gray>В порядке создания меток, без замены старых маршрутов.</gray>", "<gray>Другая последовательность: /bp expedition route имя метка1 метка2…</gray>"]

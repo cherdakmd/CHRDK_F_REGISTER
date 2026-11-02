@@ -178,11 +178,11 @@ public final class ExplorationStore {
     }
     public static boolean validName(String name) { return name != null && name.matches("[a-zA-Zа-яА-ЯёЁ0-9_-]{1,24}"); }
     public synchronized Map<String, Waypoint> marks(UUID id) {
-        var p = existing("licenses", id); return p == null ? Map.of() : Map.copyOf(p.marks);
+        var p = existing("licenses", id); return p == null ? Map.of() : Collections.unmodifiableMap(new LinkedHashMap<>(p.marks));
     }
     public synchronized Map<String, List<String>> routes(UUID id) {
         var p = existing("licenses", id); if (p == null) return Map.of();
-        Map<String, List<String>> copy = new LinkedHashMap<>(); p.routes.forEach((k, v) -> copy.put(k, List.copyOf(v))); return Map.copyOf(copy);
+        Map<String, List<String>> copy = new LinkedHashMap<>(); p.routes.forEach((k, v) -> copy.put(k, List.copyOf(v))); return Collections.unmodifiableMap(copy);
     }
     public synchronized boolean mark(UUID id, String name, Waypoint point) {
         int level = license(id);

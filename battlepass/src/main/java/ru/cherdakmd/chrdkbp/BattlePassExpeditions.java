@@ -31,6 +31,7 @@ final class BattlePassExpeditions implements Listener, AutoCloseable {
         final UUID owner;
         final BattlePassConfig.Season season;
         final Map<Integer, Consumer<Player>> actions = new HashMap<>();
+        final Map<Integer, Consumer<Player>> rightActions = new HashMap<>();
         boolean consumed;
         Inventory inventory;
         Holder(Player p, BattlePassConfig.Season season) { owner = p.getUniqueId(); this.season = season; }
@@ -135,6 +136,14 @@ final class BattlePassExpeditions implements Listener, AutoCloseable {
         int level = store.license(p.getUniqueId());
         item(h, 11, Material.COMPASS, "exp-title-free", "exp-free-lore", x -> { claim(x, true); open(x); }, "owned", plugin.messages().plain(level >= 1 ? "atlas-yes" : "atlas-no"));
         item(h, 15, Material.NETHER_STAR, "exp-title-premium", "exp-premium-lore", x -> { claim(x, true); open(x); }, "owned", plugin.messages().plain(level == 2 ? "atlas-yes" : "atlas-no"));
+        item(h, 20, Material.LODESTONE, "exp-mark-current", "exp-mark-current-lore", x -> {
+            var marks = store.marks(x.getUniqueId());
+            String name = freeName("точка", marks.keySet(), 24);
+            if (name == null) { result(x, false); open(x); return; }
+            command(x, new String[]{"expedition", "mark", name}); open(x);
+        });
+        item(h, 24, Material.RECOVERY_COMPASS, "exp-marks", "exp-marks-lore", this::marksMenu);
+        item(h, 31, Material.MAP, "exp-routes", "exp-routes-lore", this::routesMenu);
         item(h, 22, Material.WRITABLE_BOOK, "exp-journal", "exp-journal-lore", x -> { x.closeInventory(); list(x); });
         item(h, 30, Material.NAME_TAG, "exp-title-button", "exp-title-lore", x -> {
             String old = store.title(x.getUniqueId());
@@ -152,6 +161,67 @@ final class BattlePassExpeditions implements Listener, AutoCloseable {
     private void item(Holder h, int slot, Material mat, String name, String lore, Consumer<Player> action, Object... params) {
         ItemStack item = new ItemStack(mat); var meta = item.getItemMeta(); meta.displayName(plugin.messages().get(name, params));
         if (lore != null) meta.lore(plugin.messages().getList(lore, params)); item.setItemMeta(meta); h.inventory.setItem(slot, item); h.actions.put(slot, action);
+    }
+    static String freeName(String prefix, Set<String> occupied, int limit) {
+        for (int i = 1; i <= limit; i++) if (!occupied.contains(prefix + i)) return prefix + i;
+        return null;
+    }
+    private Holder journalWindow(Player p, String title) {
+        if (!access(p) || store.license(p.getUniqueId()) == 0) { plugin.messages().send(p, "exp-not-owned"); return null; }
+        Holder h = new Holder(p, plugin.season()); h.inventory = Bukkit.createInventory(h, 54, plugin.messages().get(title));
+        item(h, 45, Material.ARROW, "atlas-back", null, this::open);
+        item(h, 49, Material.OAK_DOOR, "menu-close", null, Player::closeInventory); return h;
+    }
+    private void marksMenu(Player p) {
+        Holder h = journalWindow(p, "exp-marks"); if (h == null) return;
+        int slot = 0;
+        for (var entry : store.marks(p.getUniqueId()).entrySet()) {
+            String name = entry.getKey(); var w = entry.getValue(); World world = Bukkit.getWorld(UUID.fromString(w.world()));
+            int at = slot++;
+            item(h, at, Material.COMPASS, "exp-point-name", "exp-point-lore", x -> {
+                x.closeInventory(); command(x, new String[]{"expedition", "go", name});
+            }, "name", name, "world", world == null ? plugin.messages().plain("exp-world-offline") : world.getName(),
+                    "x", (int) Math.floor(w.x()), "y", (int) Math.floor(w.y()), "z", (int) Math.floor(w.z()));
+            h.rightActions.put(at, x -> { result(x, store.removeMark(x.getUniqueId(), name)); marksMenu(x); });
+        }
+        p.openInventory(h.inventory);
+    }
+    private void routesMenu(Player p) {
+        Holder h = journalWindow(p, "exp-routes"); if (h == null) return;
+        int slot = 0;
+        for (var entry : store.routes(p.getUniqueId()).entrySet()) {
+            String name = entry.getKey(); int at = slot++;
+            item(h, at, Material.MAP, "exp-point-name", "exp-saved-route-lore", x -> {
+                x.closeInventory(); command(x, new String[]{"expedition", "follow", name});
+            }, "name", name, "marks", String.join(" → ", entry.getValue()));
+            h.rightActions.put(at, x -> {
+                result(x, store.removeRoute(x.getUniqueId(), name)); navigation.remove(x.getUniqueId()); routesMenu(x);
+            });
+        }
+        item(h, 40, Material.WRITABLE_BOOK, "exp-route-create", "exp-route-create-lore", x -> {
+            String name = freeName("путь", store.routes(x.getUniqueId()).keySet(), 5);
+            result(x, name != null && store.route(x.getUniqueId(), name, List.copyOf(store.marks(x.getUniqueId()).keySet())));
+            routesMenu(x);
+        });
+        p.openInventory(h.inventory);
+    }
+    List<String> completions(Player p, String[] args) {
+        if (!access(p)) return List.of();
+        var id = p.getUniqueId();
+        if (args.length == 2) return filter(List.of("claim", "mark", "unmark", "route", "unroute", "go", "follow", "next", "stop", "list", "title", "effect"), args[1]);
+        if (args.length == 3) {
+            return switch (args[1].toLowerCase(Locale.ROOT)) {
+                case "go", "unmark" -> filter(store.marks(id).keySet(), args[2]);
+                case "follow", "unroute" -> filter(store.routes(id).keySet(), args[2]);
+                case "title" -> filter(store.license(id) == 2 ? List.of("off", "free", "premium") : List.of("off", "free"), args[2]);
+                default -> List.of();
+            };
+        }
+        if (args.length >= 4 && args[1].equalsIgnoreCase("route")) return filter(store.marks(id).keySet(), args[args.length - 1]);
+        return List.of();
+    }
+    private static List<String> filter(Collection<String> choices, String prefix) {
+        return choices.stream().filter(s -> s.toLowerCase(Locale.ROOT).startsWith(prefix.toLowerCase(Locale.ROOT))).sorted().toList();
     }
     private void tick() {
         ticks++;
@@ -194,7 +264,7 @@ final class BattlePassExpeditions implements Listener, AutoCloseable {
         e.setCancelled(true);
         if (!(e.getWhoClicked() instanceof Player p) || !h.owner.equals(p.getUniqueId()) || h.consumed || !access(p)) return;
         if (e.getClick() != ClickType.LEFT && e.getClick() != ClickType.RIGHT) return;
-        Consumer<Player> action = h.actions.get(e.getRawSlot()); if (action == null) return; h.consumed = true;
+        Consumer<Player> action = e.getClick() == ClickType.RIGHT ? h.rightActions.getOrDefault(e.getRawSlot(), h.actions.get(e.getRawSlot())) : h.actions.get(e.getRawSlot()); if (action == null) return; h.consumed = true;
         Bukkit.getScheduler().runTask(plugin, () -> {
             if (access(p) && p.getOpenInventory().getTopInventory().getHolder() == h) {
                 if (h.season != plugin.season()) { p.closeInventory(); return; } action.accept(p);

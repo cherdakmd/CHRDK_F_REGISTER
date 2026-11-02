@@ -318,6 +318,10 @@ final class BattlePassCommandHandler implements CommandExecutor, TabCompleter {
                                                 @NotNull Command command,
                                                 @NotNull String alias, @NotNull String[] args) {
         BattlePassConfig.Season season = plugin.season();
+        if (args.length >= 2 && sender instanceof Player p && plugin.canUse(p)) {
+            if (args[0].equalsIgnoreCase("expedition")) return plugin.expeditions().completions(p,args);
+            if (args.length == 2 && args[0].equalsIgnoreCase("biomes")) return "study".startsWith(args[1].toLowerCase(Locale.ROOT)) ? List.of("study") : List.of();
+        }
         if (args.length == 1) {
             String prefix = args[0].toLowerCase(Locale.ROOT);
             List<String> matches = new ArrayList<>();
