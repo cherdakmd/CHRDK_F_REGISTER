@@ -301,3 +301,5 @@ battlepass:
 
   reward-money: "<green>%track%: %diamonds% 💠 в /bal</green>"
   money-granted: "<green>BattlePass: +%diamonds% 💠 на личный /bal.</green>"
+
+  reload-config-failed: "<red>Конфигурация BP не подтверждена: награды приостановлены, прогресс сохранён. Проверьте журнал, config.yml и backup, исправьте причину и повторите /bpadmin reload.</red>"

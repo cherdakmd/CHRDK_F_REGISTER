@@ -48,6 +48,7 @@ final class BattlePassAdminCommandHandler implements CommandExecutor, TabComplet
         switch (args[0].toLowerCase(Locale.ROOT)) {
             case "reload" -> {
                 plugin.reloadBattlePassConfig();
+                if (!plugin.configReady()) { plugin.messages().send(sender, "reload-config-failed"); return true; }
                 int missions = plugin.missionCount();
                 plugin.messages().send(sender, "admin-reloaded",
                         "weeks", plugin.season().weeks().size(), "missions", missions);

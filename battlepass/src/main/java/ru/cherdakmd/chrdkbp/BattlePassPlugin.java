@@ -48,6 +48,8 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
     private BattlePassStore store;
     private BattlePassClaims claims;
     private boolean moneyReady;
+    private volatile boolean configReady;
+    boolean configReady() { return configReady; }
     boolean moneyReady() { return moneyReady; }
     private BattlePassMenu menu;
     private BattlePassGuide guide;
@@ -68,7 +70,7 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
         catch(ReflectiveOperationException e){return false;}
     }
     boolean canUse(Player player) {
-        return player!=null && player.isOnline() && !player.isDead() && !player.hasMetadata("NPC")
+        return configReady && player!=null && player.isOnline() && !player.isDead() && !player.hasMetadata("NPC")
                 && player.hasPermission("chrdkbp.use") && coreApi!=null && coreApi.isAuthenticated(player) && store.healthy();
     }
     @Override
@@ -82,6 +84,7 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
             Bukkit.getPluginManager().disablePlugin(this);return;
         }
         reloadBattlePassConfig();
+        if (!configReady) { Bukkit.getPluginManager().disablePlugin(this); return; }
 
         this.claims = new BattlePassClaims(this);
         this.menu = new BattlePassMenu(this);
@@ -153,26 +156,23 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
 
     /** Перечитать config.yml и messages.yml, не перезапуская сервер. */
     public void reloadBattlePassConfig() {
-        moneyReady = BattlePassMoneySource.initialize(getDataFolder().toPath(), coreApi, getLogger());
-        if (!moneyReady) getLogger().severe("Денежные награды BP приостановлены: проверьте банк и battlepass-money.json, затем выполните reload. Прогресс и буст сохранены.");
+        configReady = false;
+        moneyReady = false;
         if (atlas != null) atlas.closeWindows();
         if (expeditions != null) expeditions.closeWindows();
         if(guide!=null)guide.closeAll();
         if(menu!=null)menu.closeAll();
+        try {
+            var migration = BattlePassStockMigration.apply(getDataFolder().toPath().resolve("config.yml"), this::getResource);
+            if (migration.updated()) getLogger().info("Стоковые награды BP обновлены; ID/цели/прогресс сохранены. Backup: " + migration.backup().getFileName());
+        } catch (java.io.IOException | org.bukkit.configuration.InvalidConfigurationException error) {
+            getLogger().log(java.util.logging.Level.SEVERE,
+                    "BattlePass config не подтверждён; выдачи приостановлены без сброса прогресса. Сохраните config.yml и config-before-battlepass-*.yml, исправьте файл/запись и повторите reload.", error);
+            return;
+        }
         reloadConfig();
-        for (String legacyFile : java.util.List.of("battlepass-default-legacy-1.4.280.yml", "battlepass-default-legacy-1.4.282.yml", "battlepass-default-legacy-1.4.282-money-rc3.yml"))
-        try(var stream=getResource(legacyFile)) {
-            if(stream!=null) {
-                var legacy=org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(new java.io.InputStreamReader(stream,java.nio.charset.StandardCharsets.UTF_8));
-                if(BattlePassConfig.stockUpgrade(getConfig().getList("battlepass.weeks"),legacy.getList("battlepass.weeks"))) {
-                    try(var current=getResource("config.yml")) {
-                        var defaults=org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(new java.io.InputStreamReader(current,java.nio.charset.StandardCharsets.UTF_8));
-                        getConfig().set("battlepass.weeks",defaults.getList("battlepass.weeks"));saveConfig();
-                        getLogger().info("Стоковые награды battlepass усилены; ID, цели и прогресс сохранены.");
-                    }
-                }
-            }
-        } catch(java.io.IOException e){getLogger().warning("Миграция стокового battlepass не подтверждена: "+e.getMessage());}
+        moneyReady = BattlePassMoneySource.initialize(getDataFolder().toPath(), coreApi, getLogger());
+        if (!moneyReady) getLogger().severe("Денежные награды BP приостановлены: проверьте банк и battlepass-money.json, затем выполните reload. Прогресс и буст сохранены.");
 
         this.messages = Messages.load(this,
                 getConfig().getString("general.locale", "ru"), getLogger());
@@ -192,8 +192,8 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
             }
         } catch (IllegalStateException exception) {
             getLogger().severe("[CHRDK_BattlePass] Ошибка конфига: " + exception.getMessage());
-            weeks = List.of();
             problems = List.of(exception.getMessage());
+            return;
         }
         try {
             this.season = BattlePassConfig.season(
@@ -203,14 +203,16 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
                     weeks);
         } catch (IllegalStateException exception) {
             getLogger().severe("[CHRDK_BattlePass] " + exception.getMessage());
-            this.season = new BattlePassConfig.Season("Сезон", 0L, weeks);
+            // Не создаём новую область receipts с epoch=0 при ошибке даты.
             List<String> merged = new ArrayList<>(problems);
             merged.add(exception.getMessage());
             problems = List.copyOf(merged);
+            return;
         }
         if (claims != null) {
             startTasks();
         }
+        configReady = true;
     }
 
     /** Сырые волны из конфига — для разбора и админской диагностики. */
