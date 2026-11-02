@@ -52,6 +52,8 @@ final class BattlePassStore {
     private final Logger logger;
     private final Map<UUID, Row> rows = new HashMap<>();
     private volatile boolean dirty;
+    private boolean healthy=true;
+    synchronized boolean healthy(){return healthy;}
 
     BattlePassStore(Path dataFolder, Logger logger) {
         this.file = dataFolder.resolve("battlepass-data.json");
@@ -60,27 +62,29 @@ final class BattlePassStore {
 
     synchronized void load() {
         rows.clear();
+        healthy=true;
         if (!Files.exists(file)) {
             return;
         }
         try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
             Map<String, Map<String, Object>> parsed = GSON.fromJson(reader, MAP_TYPE);
-            if (parsed == null) {
-                return;
-            }
+            if (parsed == null) throw new IOException("Пустой JSON-домен battlepass");
             for (Map.Entry<String, Map<String, Object>> entry : parsed.entrySet()) {
                 UUID uuid;
                 try {
                     uuid = UUID.fromString(entry.getKey());
                 } catch (IllegalArgumentException exception) {
-                    continue;
+                    throw new IOException("Некорректный UUID в battlepass-data.json",exception);
                 }
                 Row row = new Row();
+                if(entry.getValue().containsKey("progress") && !(entry.getValue().get("progress") instanceof Map<?,?>))throw new IOException("Некорректная таблица прогресса");
+                if(entry.getValue().containsKey("claimed") && !(entry.getValue().get("claimed") instanceof Iterable<?>))throw new IOException("Некорректные отметки наград");
                 if (entry.getValue().get("progress") instanceof Map<?, ?> progress) {
                     for (Map.Entry<?, ?> cell : progress.entrySet()) {
-                        if (cell.getValue() instanceof Number number) {
-                            row.progress.put(String.valueOf(cell.getKey()), number.intValue());
-                        }
+                        if(!(cell.getValue() instanceof Number number))throw new IOException("Прогресс не является числом");
+                        int value=new java.math.BigDecimal(number.toString()).intValueExact();
+                        if(value<0)throw new IOException("Отрицательный прогресс");
+                        row.progress.put(String.valueOf(cell.getKey()),value);
                     }
                 }
                 if (entry.getValue().get("claimed") instanceof Iterable<?> marks) {
@@ -98,6 +102,7 @@ final class BattlePassStore {
                 rows.put(uuid, row);
             }
         } catch (IOException | RuntimeException exception) {
+            healthy=false;
             logger.log(Level.WARNING, "[CHRDK_BattlePass] Не удалось прочитать battlepass-data.json: "
                     + exception.getMessage());
         }
@@ -115,6 +120,7 @@ final class BattlePassStore {
     }
 
     private void saveLocked() {
+        if(!healthy)return;
         Map<String, Object> out = new LinkedHashMap<>();
         for (Map.Entry<UUID, Row> entry : rows.entrySet()) {
             Row row = entry.getValue();
@@ -145,7 +151,9 @@ final class BattlePassStore {
             try (Writer writer = Files.newBufferedWriter(tmp, StandardCharsets.UTF_8)) {
                 GSON.toJson(out, writer);
             }
-            Files.move(tmp, file, StandardCopyOption.REPLACE_EXISTING);
+            try(var channel=java.nio.channels.FileChannel.open(tmp,java.nio.file.StandardOpenOption.WRITE)){channel.force(true);}
+            Files.move(tmp, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            if(parent!=null)try(var channel=java.nio.channels.FileChannel.open(parent,java.nio.file.StandardOpenOption.READ)){channel.force(true);}
             dirty = false;
         } catch (IOException exception) {
             logger.log(Level.WARNING, "[CHRDK_BattlePass] Не удалось записать battlepass-data.json: "
@@ -156,7 +164,7 @@ final class BattlePassStore {
     /** Прогресс по заданию растёт только до цели — лишние тиксы не храним. */
     synchronized int addProgress(UUID uuid, String missionId, int delta, int target) {
         Row row = row(uuid);
-        int next = Math.min(target, row.progress.getOrDefault(missionId, 0) + Math.max(0, delta));
+        int next = Math.min(target, (int)Math.min(Integer.MAX_VALUE,(long)row.progress.getOrDefault(missionId, 0) + Math.max(0, delta)));
         if (!Integer.valueOf(next).equals(row.progress.get(missionId))) {
             row.progress.put(missionId, next);
             dirty = true;

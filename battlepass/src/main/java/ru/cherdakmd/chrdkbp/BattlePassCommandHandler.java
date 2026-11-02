@@ -29,7 +29,7 @@ final class BattlePassCommandHandler implements CommandExecutor, TabCompleter {
     private static final DateTimeFormatter SHORT_DATE = DateTimeFormatter.ofPattern("dd.MM")
             .withZone(ZoneId.systemDefault());
     private static final List<String> SUBCOMMANDS =
-            List.of("claim", "menu", "progress", "top", "info", "help");
+            List.of("tasks", "rewards", "claim", "menu", "progress", "top", "info", "help");
 
     private final BattlePassPlugin plugin;
 
@@ -48,6 +48,7 @@ final class BattlePassCommandHandler implements CommandExecutor, TabCompleter {
             plugin.messages().send(player, "no-permission");
             return true;
         }
+        if(!plugin.canUse(player)){plugin.messages().send(player,"access-unavailable");return true;}
         if (args.length == 0) {
             if (plugin.settings().menuEnabled()) {
                 plugin.menu().open(player, 0);
@@ -57,6 +58,8 @@ final class BattlePassCommandHandler implements CommandExecutor, TabCompleter {
             return true;
         }
         switch (args[0].toLowerCase(Locale.ROOT)) {
+            case "tasks" -> plugin.menu().missions(player,0);
+            case "rewards" -> plugin.guide().rewards(player,0);
             case "claim" -> {
                 if (args.length == 1 || (args.length == 2 && "all".equalsIgnoreCase(args[1]))) {
                     plugin.claims().claimAll(player);

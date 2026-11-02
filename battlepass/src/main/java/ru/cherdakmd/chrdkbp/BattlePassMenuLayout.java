@@ -23,7 +23,7 @@ final class BattlePassMenuLayout {
     }
 
     enum Action {
-        NONE, MISSION, PREV, NEXT, CLOSE, SUMMARY, CLAIM_ALL, BACK, PREMIUM, REFRESH
+        NONE, MISSION, PREV, NEXT, CLOSE, SUMMARY, CLAIM_ALL, BACK, PREMIUM, REFRESH, FILTER
     }
 
     /** Сколько страниц нужно для такого числа заданий (минимум одна). */
@@ -66,6 +66,7 @@ final class BattlePassMenuLayout {
         if (slot == SLOT_CLAIM_ALL) return Action.CLAIM_ALL;
         if (slot == SLOT_BACK) return Action.BACK;
         if (slot == SLOT_PREMIUM) return Action.PREMIUM;
+        if (slot == 51) return Action.FILTER;
         if (slot == SLOT_REFRESH) return Action.REFRESH;
         if (slot == SLOT_SUMMARY) {
             return Action.SUMMARY;

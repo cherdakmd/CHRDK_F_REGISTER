@@ -39,7 +39,7 @@ def plain(value):
 
 def version(root=ROOT):
     text = (root / "gradle.properties").read_text(encoding="utf-8")
-    return re.search(r"^plugin_version=(\d+\.\d+\.\d+)$", text, re.M).group(1)
+    return re.search(r"^plugin_version=(\d+\.\d+\.\d+(?:-rc\.[1-9]\d*)?)$", text, re.M).group(1)
 
 
 def catalog(root=ROOT):
@@ -104,7 +104,7 @@ def description(p, cfg, source_version=None):
                   f"Опыт профессий: +{xp}%; потолок профессии: {25 + extra} (25 + {extra} от ранга).",
                   f"Количество добычи в находках и охоте: +{drop}% с округлением вниз; это не гарантированное удвоение каждого блока.",
                   ("Вход без очереди в рамках вместимости сервера; оформление и возможности предыдущих ступеней."
-                   if tuple(map(int, (source_version or version()).split('.'))) < (1, 4, 248)
+                   if tuple(map(int, (source_version or version()).split('-')[0].split('.'))) < (1, 4, 248)
                    else "Ранг не обходит вместимость сервера; оформление и возможности предыдущих ступеней.")]
         cosmetics = yaml.safe_load((ROOT / "cosmetics/src/main/resources/config.yml").read_text(encoding="utf-8"))["cosmetics"]
         trails = [plain(x["name"]) for x in cosmetics["trail"]["defs"] if x.get("rank", 0) <= tier]
@@ -453,7 +453,7 @@ def snapshot_version():
     value = saved.get("pluginVersion", "")
     if not isinstance(value, str) or not re.fullmatch(r"\d+\.\d+\.\d+", value):
         raise ValueError("Storefront manifest/catalog/hash mismatch: invalid pluginVersion")
-    if tuple(map(int, value.split('.'))) > tuple(map(int, version().split('.'))):
+    if tuple(map(int, value.split('.'))) > tuple(map(int, version().split('-')[0].split('.'))):
         raise ValueError("Storefront manifest/catalog/hash mismatch: snapshot is from a future version")
     return value
 
@@ -467,7 +467,7 @@ def snapshot_catalog():
     тексты по-прежнему проваливают check(). Живой catalog() не меняется.
     """
     cfg, products = copy.deepcopy(catalog())
-    if tuple(map(int, snapshot_version().split('.'))) < (1, 4, 248):
+    if tuple(map(int, snapshot_version().split('-')[0].split('.'))) < (1, 4, 248):
         resource = ROOT / "src/main/resources/presentation-legacy-1.4.247.yml"
         previous = yaml.safe_load(resource.read_text(encoding="utf-8"))["shop"]["products"]
         old = next(p for p in previous if p["id"] == "rank-wanderer")
@@ -479,7 +479,7 @@ def snapshot_catalog():
         cfg["shop"]["products"] = products
     # Только read-only восстановление формулировки архивного SKU до школы ремёсел262.
     # Живые права/цены и архивные файлы не меняются; допускается ровно смена термина.
-    if tuple(map(int, snapshot_version().split('.'))) < (1, 4, 262):
+    if tuple(map(int, snapshot_version().split('-')[0].split('.'))) < (1, 4, 262):
         resource = ROOT / "src/main/resources/presentation-legacy-1.4.247.yml"
         previous = yaml.safe_load(resource.read_text(encoding="utf-8"))["shop"]["products"]
         for old in previous:

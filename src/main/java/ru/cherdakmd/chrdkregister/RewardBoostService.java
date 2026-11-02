@@ -78,6 +78,14 @@ final class RewardBoostService implements Listener {
         resume(event.getPlayer());
     }
 
+    ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.BoostGrant grantOnce(UUID uuid,String name,int hours,String receipt) {
+        if(!Bukkit.isPrimaryThread())return ChrdkRegisterApi.BoostGrant.FAILED;
+        Player player=Bukkit.getPlayer(uuid);
+        if(!authenticated(player) || !player.getName().equals(name))return ChrdkRegisterApi.BoostGrant.FAILED;
+        clock.settle(name,System.nanoTime());
+        return store.grantRewardBoostOnce(uuid,name,hours,maxBankHours,receipt);
+    }
+
     void grant(String name, int hours, String source) {
         if (!AccessManager.isValidMinecraftName(name) || hours <= 0) return;
         // Само пополнение синхронно и потокобезопасно: аддон может сохранить claim сразу после API.

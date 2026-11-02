@@ -160,7 +160,8 @@ def configured_vk(*, require_peer=True):
 
 
 def test_post(now):
-    version = re.search(r'^plugin_version=(1\.\d+\.\d+)$', (ROOT/'gradle.properties').read_text(), re.M)[1]
+    # Один ключ теста на базовую версию, не новая реальная публикация на каждый RC.
+    version = re.search(r'^plugin_version=(1\.\d+\.\d+)(?:-rc\.[1-9]\d*)?$', (ROOT/'gradle.properties').read_text(), re.M)[1]
     return Post('test:'+version, 'feature', 'Твой мир. Твоя история.',
                 'Полезное о CHERDAK — в новом игровом формате.',
                 'Готовим больше полезного о CHERDAK 🌿\n\n'

@@ -164,7 +164,7 @@ def report(root, cfg, products, version):
 ранг и подключение проверок к командам. Полный Build CI выполняется перед релизом.
 ''')
     result = ''.join(lines)
-    if tuple(map(int, version.split('.'))) >= (1, 4, 248):
+    if tuple(map(int, version.split('-')[0].split('.'))) >= (1, 4, 248):
         result = result.replace("Вход без очереди не обходит физическую вместимость сервера.",
                                 "Ранг не даёт приоритета подключения и не обходит вместимость сервера.")
     return result

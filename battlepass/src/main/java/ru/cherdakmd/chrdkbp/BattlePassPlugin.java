@@ -48,23 +48,39 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
     private BattlePassStore store;
     private BattlePassClaims claims;
     private BattlePassMenu menu;
+    private BattlePassGuide guide;
+    BattlePassGuide guide(){return guide;}
     private BattlePassFx fx;
     private volatile BattlePassRecentPlaces recentPlaces;
     private volatile List<String> problems = List.of();
     private BukkitTask autosaveTask;
     private BukkitTask announceTask;
 
+    private boolean supportsRewardReceipts() {
+        try { return ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)>=36; }
+        catch(ReflectiveOperationException e){return false;}
+    }
+    boolean canUse(Player player) {
+        return player!=null && player.isOnline() && !player.isDead() && !player.hasMetadata("NPC")
+                && player.hasPermission("chrdkbp.use") && coreApi!=null && coreApi.isAuthenticated(player) && store.healthy();
+    }
     @Override
     public void onEnable() {
         saveDefaultConfig();
         this.store = new BattlePassStore(getDataFolder().toPath(), getLogger());
         store.load();
         this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
+        if(coreApi==null || !supportsRewardReceipts()) {
+            getLogger().severe("Нужен Core API36 (1.4.281-rc.1+): безопасная выдача наград battlepass");
+            Bukkit.getPluginManager().disablePlugin(this);return;
+        }
         reloadBattlePassConfig();
 
         this.claims = new BattlePassClaims(this);
         this.menu = new BattlePassMenu(this);
         this.fx = new BattlePassFx(this);
+        this.guide = new BattlePassGuide(this);
+        Bukkit.getPluginManager().registerEvents(guide,this);
 
         Bukkit.getPluginManager().registerEvents(this, this);
         Bukkit.getPluginManager().registerEvents(menu, this);
@@ -96,6 +112,8 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        if(guide!=null)guide.closeAll();
+        if(menu!=null)menu.closeAll();
         if (coreApi != null) {
             try {
                 coreApi.unregisterProfile("battlepass");
@@ -119,7 +137,22 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
 
     /** Перечитать config.yml и messages.yml, не перезапуская сервер. */
     public void reloadBattlePassConfig() {
+        if(guide!=null)guide.closeAll();
+        if(menu!=null)menu.closeAll();
         reloadConfig();
+        try(var stream=getResource("battlepass-default-legacy-1.4.280.yml")) {
+            if(stream!=null) {
+                var legacy=org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(new java.io.InputStreamReader(stream,java.nio.charset.StandardCharsets.UTF_8));
+                if(BattlePassConfig.stockUpgrade(getConfig().getList("battlepass.weeks"),legacy.getList("battlepass.weeks"))) {
+                    try(var current=getResource("config.yml")) {
+                        var defaults=org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(new java.io.InputStreamReader(current,java.nio.charset.StandardCharsets.UTF_8));
+                        getConfig().set("battlepass.weeks",defaults.getList("battlepass.weeks"));saveConfig();
+                        getLogger().info("Стоковые награды battlepass усилены; ID, цели и прогресс сохранены.");
+                    }
+                }
+            }
+        } catch(java.io.IOException e){getLogger().warning("Миграция стокового battlepass не подтверждена: "+e.getMessage());}
+
         this.messages = Messages.load(this,
                 getConfig().getString("general.locale", "ru"), getLogger());
         this.settings = BattlePassSettings.parse(getConfig());
@@ -295,7 +328,7 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
                                                      String actualKey, int delta) {
         List<BattlePassConfig.MissionDef> completedNow = new ArrayList<>();
         BattlePassConfig.Season current = season;
-        if (current == null || current.empty() || player == null) {
+        if (current == null || current.empty() || !canUse(player)) {
             return completedNow;
         }
         long now = System.currentTimeMillis();
@@ -358,7 +391,7 @@ public final class BattlePassPlugin extends JavaPlugin implements Listener {
      */
     private void announceWave(Player player) {
         BattlePassConfig.Season current = season;
-        if (current == null || current.empty() || !settings.announceNewWaves()) {
+        if (current == null || current.empty() || !settings.announceNewWaves() || !canUse(player)) {
             return;
         }
         int week = BattlePassConfig.currentWeek(current, System.currentTimeMillis());

@@ -2,14 +2,14 @@ name: CHRDK_BattlePass
 version: ${version}
 main: ru.cherdakmd.chrdkbp.BattlePassPlugin
 api-version: '26.3'
-description: "Батлпасс: сезоны с недельными волнами заданий и двумя ветками наград — бесплатной и VIP для владельцев ранга (аддон CHRDK_Core)"
+description: "Батлпасс: сезоны с недельными волнами заданий и тремя дорожками наград, главным меню и лентой призов (аддон CHRDK_Core)"
 author: cherdakmd
 depend: [CHRDK_Core]
 commands:
   battlepass:
     description: "Батлпасс: задания сезона, меню, рейтинг и награды"
     aliases: [bp, pass2]
-    usage: "/battlepass [menu|progress|top|info <id>|claim [id|all]|help]"
+    usage: "/battlepass [menu|tasks|rewards|progress|top|info <id>|claim [id|all]|help]"
   bpadmin:
     description: "Администрирование батлпасса"
     permission: chrdkbp.admin

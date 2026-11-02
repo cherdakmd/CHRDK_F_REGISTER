@@ -26,6 +26,10 @@ final class BattlePassConfig {
     /** Допустимый id товара каталога: те же правила, что у shop.products в ядре. */
     private static final Pattern PRODUCT_ID = Pattern.compile("[a-z0-9][a-z0-9_-]{0,31}");
 
+    static boolean stockUpgrade(Object current,Object legacy) {
+        return legacy instanceof List<?> rows && !rows.isEmpty() && current instanceof List<?> && current.equals(legacy);
+    }
+
     private BattlePassConfig() {
     }
 

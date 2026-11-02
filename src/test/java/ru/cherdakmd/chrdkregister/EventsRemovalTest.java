@@ -99,7 +99,7 @@ class EventsRemovalTest {
         assertFalse(changes.contains("server-menu.items")); assertFalse(changes.contains("auto-messages.messages"));
     }
     @Test void coreEventContractsAndSharedMonetaryInfrastructureAreStillPresent() {
-        assertEquals(35, ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
+        assertEquals(36, ru.cherdakmd.chrdkregister.api.ChrdkRegisterApi.API_VERSION);
         assertTrue(org.bukkit.event.Event.class.isAssignableFrom(
                 ru.cherdakmd.chrdkregister.api.events.PassGrantedEvent.class));
         assertTrue(org.bukkit.event.Event.class.isAssignableFrom(
