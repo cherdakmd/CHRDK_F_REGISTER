@@ -189,11 +189,13 @@ public final class Messages {
     /** Строгая загрузка с точным прежним stock; меняется только эффективный текст, не файл владельца. */
     public static Messages fromChecked(InputStream defaultsStream, Path userFile, InputStream legacyStream, Logger logger)
             throws IOException, org.bukkit.configuration.InvalidConfigurationException {
-        YamlConfiguration base = readChecked(defaultsStream);
-        var defaults = flatten(base);
-        var overrides = checkedOverrides(base, userFile);
-        migrateCheckedStock(defaults, overrides, legacyStream);
-        return checkedMessages(defaults, overrides, logger);
+        try (InputStream legacy = legacyStream) {
+            YamlConfiguration base = readChecked(defaultsStream);
+            var defaults = flatten(base);
+            var overrides = checkedOverrides(base, userFile);
+            migrateCheckedStock(defaults, overrides, legacy);
+            return checkedMessages(defaults, overrides, logger);
+        }
     }
     private static void migrateCheckedStock(Map<String, String> defaults, Map<String, String> overrides, InputStream legacy)
             throws IOException, org.bukkit.configuration.InvalidConfigurationException {

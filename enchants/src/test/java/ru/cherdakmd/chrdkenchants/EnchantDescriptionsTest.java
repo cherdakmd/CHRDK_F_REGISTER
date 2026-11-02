@@ -94,6 +94,16 @@ class EnchantDescriptionsTest {
         assertThrows(org.bukkit.configuration.InvalidConfigurationException.class, () -> migrated(file));
         assertEquals(broken, Files.readString(file));
     }
+    @Test void suppliedLegacyStreamIsClosedEvenWhenOwnerYamlFailsBeforeMigration() throws Exception {
+        Path file = folder.resolve("messages.yml"); Files.writeString(file, "enchants: [broken");
+        var closed = new java.util.concurrent.atomic.AtomicBoolean();
+        var legacy = new java.io.ByteArrayInputStream("{}".getBytes(java.nio.charset.StandardCharsets.UTF_8)) {
+            @Override public void close() throws java.io.IOException { closed.set(true); super.close(); }
+        };
+        assertThrows(org.bukkit.configuration.InvalidConfigurationException.class, () ->
+                Messages.fromChecked(getClass().getResourceAsStream("/messages.yml"), file, legacy, LOG));
+        assertTrue(closed.get());
+    }
     @Test void descriptionRefreshIsExplicitAndOnlyChangesLoreOnAValidatedBook() throws Exception {
         String items = source("EnchantItems"), commands = source("EnchantCommandHandler");
         String refresh = items.substring(items.indexOf("public boolean refreshBookDescription"), items.indexOf("Перерисовывает секцию лора"));
