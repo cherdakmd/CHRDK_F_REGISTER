@@ -86,7 +86,12 @@ class BattlePassUpgrade281Test {
                 assertEquals(current().getList("battlepass.weeks"),yaml(file).getList("battlepass.weeks"));
                 assertFalse(BattlePassStockMigration.apply(file,this::resource).updated());
             }
-            try(var paths=Files.list(dir)){assertTrue(paths.noneMatch(p->p.toString().endsWith(".tmp")));}
+            try(var paths=Files.list(dir)) {
+                var files=paths.toList();assertTrue(files.stream().noneMatch(p->p.toString().endsWith(".tmp")));
+                var saved=files.stream().filter(p->p.getFileName().toString().startsWith("config-before-battlepass-")).toList();
+                assertEquals(phase==BattlePassStockMigration.Phase.BEFORE_BACKUP?0:1,saved.size());
+                for(Path backup:saved)assertEquals(original,Files.readString(backup));
+            }
         }
     }
     @Test void ownerEditDuringPreparationAndSymbolicLinkAreNotOverwritten() throws Exception {

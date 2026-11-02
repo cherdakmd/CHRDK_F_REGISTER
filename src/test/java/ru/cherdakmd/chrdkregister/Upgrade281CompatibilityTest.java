@@ -38,12 +38,12 @@ class Upgrade281CompatibilityTest {
         var fresh=yaml("config.yml");var snapshots=snapshots();
         for(List<String> header:List.of(List.<String>of(),List.of(""),List.of(" ",""),List.of("Owner layout %player%"))) {
             for(String format:List.of("","  ","<red>%player%</red>")) {
-                var live=yaml("upgrade-1.4.281/core-config.yml");live.set("tablist.header",header);live.set("tablist.player-name-format",format);
+                var live=yaml("upgrade-1.4.281/core-config.yml");live.set("tablist.header",header);live.set("tablist.footer",header);live.set("tablist.player-name-format",format);
                 var replacements=PresentationMigration.replacements(live,snapshots,fresh);
                 assertFalse(replacements.contains("tablist.header"));assertFalse(replacements.contains("tablist.player-name-format"));
-                assertTrue(replacements.contains("tablist.footer"));
+                assertFalse(replacements.contains("tablist.footer"));
                 for(String key:replacements)live.set(key,fresh.get(key));
-                assertEquals(header,live.getStringList("tablist.header"));assertEquals(format,live.getString("tablist.player-name-format"));
+                assertEquals(header,live.getStringList("tablist.header"));assertEquals(header,live.getStringList("tablist.footer"));assertEquals(format,live.getString("tablist.player-name-format"));
             }
         }
     }
