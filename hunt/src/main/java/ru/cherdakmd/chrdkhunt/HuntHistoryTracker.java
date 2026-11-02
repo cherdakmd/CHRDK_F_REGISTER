@@ -36,6 +36,7 @@ final class HuntHistoryTracker implements Listener {
     }
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void death(EntityDeathEvent event) {
+        if (ru.cherdakmd.chrdkregister.api.MobRewardPolicy.temporary(event.getEntity())) return;
         var mob = event.getEntity(); Player killer = mob.getKiller();
         if (!enabled() || !eligible(killer) || plugin.progression() == null
                 || !killer.getWorld().getUID().equals(mob.getWorld().getUID())

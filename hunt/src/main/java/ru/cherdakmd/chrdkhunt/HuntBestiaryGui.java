@@ -114,6 +114,7 @@ public final class HuntBestiaryGui implements Listener {
             holder.inventory.setItem(SECTION_SLOTS[index], sectionIcon(player, sections.get(index)));
         }
         holder.inventory.setItem(INFO_SLOT, infoIcon(player, bestiary));
+        holder.inventory.setItem(51, plugin.items().icon(Material.MOSS_BLOCK, plugin.messages().get("wild-title"), List.of(plugin.messages().get("wild-open"))));
         holder.inventory.setItem(CLOSE_SLOT, button(Material.BARRIER, "menu-close"));
         player.openInventory(holder.inventory);
         return true;
@@ -329,6 +330,10 @@ public final class HuntBestiaryGui implements Listener {
             return;
         }
         int slot = event.getRawSlot();
+        if (slot == 51 && sections) {
+            Bukkit.getScheduler().runTask(plugin, () -> { if (player.isOnline() && player.getOpenInventory().getTopInventory().getHolder() == top) plugin.wildGui().open(player); });
+            return;
+        }
         if (slot == CLOSE_SLOT) {
             player.closeInventory();
             return;

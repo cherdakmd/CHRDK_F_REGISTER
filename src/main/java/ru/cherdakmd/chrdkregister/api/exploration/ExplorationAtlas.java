@@ -147,6 +147,7 @@ public final class ExplorationAtlas implements Listener, AutoCloseable {
     }
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void death(EntityDeathEvent e) {
+        if (ru.cherdakmd.chrdkregister.api.MobRewardPolicy.temporary(e.getEntity())) return;
         if (e.getEntity() instanceof Player || e.getEntity().hasMetadata("NPC")) return;
         Player p = e.getEntity().getKiller();
         if (p != null) add(p, e.getEntity().getLocation(), ExplorationCatalog.Kind.KILL,

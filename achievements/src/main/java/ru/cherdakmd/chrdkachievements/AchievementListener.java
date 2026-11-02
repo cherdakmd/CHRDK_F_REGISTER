@@ -136,6 +136,7 @@ public final class AchievementListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onEntityDeath(EntityDeathEvent event) {
+        if (ru.cherdakmd.chrdkregister.api.MobRewardPolicy.temporary(event.getEntity())) return;
         Player killer = event.getEntity().getKiller();
         if (killer == null || !honest(killer) || event.getEntity() instanceof Player) {
             return;

@@ -38,7 +38,7 @@ final class PveProgressListener implements Listener {
         arrow.setPickupStatus(AbstractArrow.PickupStatus.DISALLOWED);
     }
     private boolean natural(LivingEntity e) {
-        return e instanceof Enemy && e.getPersistentDataContainer().has(natural,PersistentDataType.BYTE);
+        return !ru.cherdakmd.chrdkregister.api.MobRewardPolicy.temporary(e) && e instanceof Enemy && e.getPersistentDataContainer().has(natural,PersistentDataType.BYTE);
     }
     @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true)
     public void spawn(CreatureSpawnEvent event) {

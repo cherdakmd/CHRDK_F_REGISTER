@@ -27,6 +27,7 @@ public final class TierMobDropListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onEntityDeath(EntityDeathEvent event) {
+        if (ru.cherdakmd.chrdkregister.api.MobRewardPolicy.temporary(event.getEntity())) return;
         if (!plugin.config().mobDropEnabled()) return;
         LivingEntity entity = event.getEntity();
         // Стойки и (на всякий случай) игроки не «мертвецы» для этой лотереи (1.4.83).

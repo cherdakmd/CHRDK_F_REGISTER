@@ -37,6 +37,12 @@ public final class HuntPlugin extends JavaPlugin {
     private EliteAdaptation adaptation;
     private EliteFleeing fleeing;
     private HuntHistoryTracker historyTracker;
+    private WildBiomes wildBiomes;
+    private FullMoonController fullMoon;
+    private WildBestiaryGui wildGui;
+    WildBiomes wildBiomes() { return wildBiomes; }
+    FullMoonController fullMoon() { return fullMoon; }
+    WildBestiaryGui wildGui() { return wildGui; }
     HuntHistoryTracker historyTracker() { return historyTracker; }
 
     /**
@@ -58,7 +64,7 @@ public final class HuntPlugin extends JavaPlugin {
                 return;
             }
             this.coreApi = Bukkit.getServicesManager().load(ChrdkRegisterApi.class);
-            if(coreApi==null||ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)<21) throw new IllegalStateException("Нужен Core API 21+");
+            if(coreApi==null||ChrdkRegisterApi.class.getField("API_VERSION").getInt(null)<38) throw new IllegalStateException("Нужен Core API 38+");
             this.store = new HuntStore(getDataFolder().toPath(), getLogger());
             store.load();
             this.finance = new HuntFinance(this);
@@ -95,6 +101,13 @@ public final class HuntPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(fleeing, this);
             historyTracker = new HuntHistoryTracker(this);
             getServer().getPluginManager().registerEvents(historyTracker, this);
+            var wildSafety = new WildSafety(this);
+            wildBiomes = new WildBiomes(this, wildSafety);
+            fullMoon = new FullMoonController(this, wildSafety);
+            wildGui = new WildBestiaryGui(this);
+            getServer().getPluginManager().registerEvents(wildBiomes, this);
+            getServer().getPluginManager().registerEvents(fullMoon, this);
+            getServer().getPluginManager().registerEvents(wildGui, this);
             registerCommands();
             registerPlaceholders();
             scheduleTasks();
@@ -114,6 +127,9 @@ public final class HuntPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (fullMoon != null) fullMoon.stop();
+        if (wildBiomes != null) wildBiomes.stop();
+        if (wildGui != null) wildGui.closeAll();
         if(finance!=null) finance.close();
         if (fleeing != null) fleeing.stop();
         if (adaptation != null) adaptation.stop();
@@ -175,6 +191,9 @@ public final class HuntPlugin extends JavaPlugin {
         }
         settings = candidate; // До этого места никакой cleanup/закрытие GUI не выполняется.
         candidate.committed(getLogger(),
+                () -> { if (fullMoon != null) fullMoon.reload(); },
+                () -> { if (wildBiomes != null) wildBiomes.reload(); },
+                () -> { if (wildGui != null) wildGui.closeAll(); },
                 () -> { if (historyTracker != null) historyTracker.clear(); },
                 () -> { if (fleeing != null) fleeing.reload(); },
                 () -> { if (adaptation != null) adaptation.reload(); },

@@ -30,6 +30,7 @@ final class MobBookListener implements Listener {
     void clear() { pending.clear(); claims.clear(); }
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void death(EntityDeathEvent event) {
+        if (ru.cherdakmd.chrdkregister.api.MobRewardPolicy.temporary(event.getEntity())) return;
         if (!plugin.getConfig().getBoolean("sources.mobs.enabled", true)
                 || !Bukkit.getPluginManager().isPluginEnabled("CHRDK_Hunt")) return;
         Player killer = event.getEntity().getKiller();

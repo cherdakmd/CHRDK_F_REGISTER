@@ -23,7 +23,7 @@ public final class HuntCommandHandler implements CommandExecutor, TabCompleter {
 
     private static final List<String> PLAYER_SUBCOMMANDS =
             List.of("help", "stats", "shop", "buy", "exchange", "keys", "chest",
-                    "bestiary", "trophies", "trophy", "top", "danger", "inspect", "observations", "elites", "hud", "history");
+                    "bestiary", "trophies", "trophy", "top", "danger", "inspect", "observations", "elites", "hud", "history", "wild", "moon");
     private static final List<String> ADMIN_SUBCOMMANDS =
             List.of("reload", "give", "reset", "info", "awards");
     private static final List<String> GIVE_KINDS = List.of("coins", "shards", "keys");
@@ -66,6 +66,10 @@ public final class HuntCommandHandler implements CommandExecutor, TabCompleter {
             case "exchange" -> exchange(sender, args);
             case "keys" -> keys(sender);
             case "chest" -> chest(sender, args);
+            case "wild", "moon" -> {
+                if (sender instanceof Player p) yield plugin.wildGui().open(p);
+                plugin.messages().send(sender, "player-only"); yield true;
+            }
             case "bestiary" -> bestiary(sender, args);
             case "trophies" -> trophies(sender);
             case "trophy" -> trophy(sender, args);

@@ -488,6 +488,7 @@ public final class ForgeUpgradeListener implements Listener {
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onMobDeath(EntityDeathEvent event) {
+        if (ru.cherdakmd.chrdkregister.api.MobRewardPolicy.temporary(event.getEntity())) return;
         Player killer = event.getEntity().getKiller();
         if (killer == null) {
             return;
